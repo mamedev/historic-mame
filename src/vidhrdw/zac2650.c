@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "artwork.h"
 
 unsigned char *s2636ram;
 struct mame_bitmap *spritebitmap;
@@ -14,19 +13,6 @@ struct mame_bitmap *spritebitmap;
 int dirtychar[16];
 int CollisionBackground;
 int CollisionSprite;
-
-#define WHITE           0xff,0xff,0xff
-#define GREEN 			0x20,0xff,0x20
-#define PURPLE			0xff,0x20,0xff
-
-static const struct artwork_element tinv2650_overlay[]=
-{
-	{{	 0, 255,   0, 255}, WHITE,  OVERLAY_DEFAULT_OPACITY},
-	{{  16,  71,   0, 255}, GREEN,  OVERLAY_DEFAULT_OPACITY},
-	{{   0,  15,  48, 133}, GREEN,  OVERLAY_DEFAULT_OPACITY},
-	{{ 192, 208,   0, 255}, PURPLE, OVERLAY_DEFAULT_OPACITY},
-	{{  -1,  -1,  -1,  -1}, 0,0,0,0}
-};
 
 /**************************************************************/
 /* The S2636 is a standard sprite chip used by several boards */
@@ -147,8 +133,6 @@ int SpriteCollision(int first,int second)
 
 VIDEO_START( tinvader )
 {
-// 	overlay_create(tinv2650_overlay, 1, 8);
-
 	video_start_generic();
 
 	if ((spritebitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -220,7 +204,6 @@ VIDEO_UPDATE( tinvader )
             }
 
             /* Sprite->Background collision detection */
-
 			drawgfx(bitmap,Machine->gfx[expand],
 				    spriteno,
 					1,
@@ -258,7 +241,6 @@ VIDEO_UPDATE( tinvader )
     }
 
     /* Sprite->Sprite collision detection */
-
     CollisionSprite = 0;
 //  if(SpriteCollision(0,1)) CollisionSprite |= 0x20;	/* Not Used */
     if(SpriteCollision(0,2)) CollisionSprite |= 0x10;

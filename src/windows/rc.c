@@ -299,6 +299,12 @@ int rc_read(struct rc_struct *rc, FILE *f, const char *description,
 
       /* get complete rest of line */
       arg = strtok(NULL, "\r\n");
+	  if (!arg)
+	  {
+		  fprintf(stderr, "error: garbage \"%s\" on line %d of file: %s\n",
+			  buf, line, description);
+		  continue;
+	  }
 
       /* ignore white space */
       for (; (*arg == '\t' || *arg == ' '); arg++) {}

@@ -65,7 +65,9 @@ static data16_t *exterm_master_speedup, *exterm_slave_speedup;
 
 extern data16_t *exterm_master_videoram, *exterm_slave_videoram;
 
-static int aimpos1, aimpos2;
+static data8_t aimpos[2];
+static data8_t trackball_old[2];
+
 
 /* Functions in vidhrdw/exterm.c */
 PALETTE_INIT( exterm );
@@ -119,24 +121,41 @@ READ16_HANDLER( exterm_host_data_r )
  *
  *************************************/
 
-READ16_HANDLER( exterm_input_port_0_1_r )
+static data16_t exterm_trackball_port_r(int which, data16_t mem_mask)
 {
-	int hi = readinputport(1);
-	if (!(hi & 2)) aimpos1++;
-	if (!(hi & 1)) aimpos1--;
-	aimpos1 &= 0x3f;
+	data16_t port;
 
-	return ((hi & 0x80) << 8) | (aimpos1 << 8) | readinputport(0);
+	/* Read the fake input port */
+	data8_t trackball_pos = readinputport(3 + which);
+
+	/* Calculate the change from the last position. */
+	data8_t trackball_diff = trackball_old[which] - trackball_pos;
+
+	/* Store the new position for the next comparision. */
+	trackball_old[which] = trackball_pos;
+
+	/* Move the sign bit to the high bit of the 6-bit trackball count. */
+	if (trackball_diff & 0x80)
+		trackball_diff |= 0x20;
+
+	/* Keep adding the changes.  The counters will be reset later by a hardware write. */
+	aimpos[which] = (aimpos[which] + trackball_diff) & 0x3f;
+
+	/* Combine it with the standard input bits */
+	port = which ? input_port_1_word_r(0, mem_mask) :
+				   input_port_0_word_r(0, mem_mask);
+
+	return (port & 0xc0ff) | (aimpos[which] << 8);
 }
 
-READ16_HANDLER( exterm_input_port_2_3_r )
+READ16_HANDLER( exterm_input_port_0_r )
 {
-	int hi = readinputport(3);
-	if (!(hi & 2)) aimpos2++;
-	if (!(hi & 1)) aimpos2--;
-	aimpos2 &= 0x3f;
+	return exterm_trackball_port_r(0, mem_mask);
+}
 
-	return (aimpos2 << 8) | readinputport(2);
+READ16_HANDLER( exterm_input_port_1_r )
+{
+	return exterm_trackball_port_r(1, mem_mask);
 }
 
 
@@ -157,10 +176,10 @@ WRITE16_HANDLER( exterm_output_port_0_w )
 	{
 		/* Bit 0-1= Resets analog controls */
 		if ((data & 0x0001) && !(last & 0x0001))
-			aimpos1 = 0;
+			aimpos[0] = 0;
 
 		if ((data & 0x0002) && !(last & 0x0002))
-			aimpos2 = 0;
+			aimpos[1] = 0;
 	}
 
 	if (ACCESSING_MSB)
@@ -244,9 +263,9 @@ static MEMORY_READ16_START( master_readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA16_RAM },
 	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
-	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_1_r },
-	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_2_3_r },
-	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_word_r },
+	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_r },
+	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_1_r },
+	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_2_word_r },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), MRA16_RAM },
 	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA16_RAM },
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), MRA16_BANK1 },
@@ -325,64 +344,66 @@ MEMORY_END
  *************************************/
 
 INPUT_PORTS_START( exterm )
-	PORT_START      /* IN0 LO */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x3f00, IP_ACTIVE_LOW, IPT_SPECIAL) /* trackball data */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
-	PORT_START      /* IN0 HI */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Aim Left",  KEYCODE_Z, IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Aim Right", KEYCODE_X, IP_JOY_DEFAULT )
-	PORT_BIT( 0xec, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START      /* IN1 LO */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-
-	PORT_START      /* IN1 HI */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "2 Aim Left",  KEYCODE_H, IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "2 Aim Right", KEYCODE_J, IP_JOY_DEFAULT )
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x3f00, IP_ACTIVE_LOW, IPT_SPECIAL) /* trackball data */
+	PORT_BIT( 0xc000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) ) /* According to the test screen */
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unused ) ) /* According to the test screen */
+	PORT_DIPSETTING(	  0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	/* Note that the coin settings don't match the setting shown on the test screen,
 	   but instead what the game appears to used. This is either a bug in the game,
 	   or I don't know what else. */
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_8C ) )
-	PORT_DIPNAME( 0x40, 0x40, "Memory Test" )
-	PORT_DIPSETTING(    0x40, "Single" )
-	PORT_DIPSETTING(    0x00, "Continous" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0006, 0x0006, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Memory Test" )
+	PORT_DIPSETTING(      0x0040, "Once" )
+	PORT_DIPSETTING(      0x0000, "Continous" )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* IN3, fake trackball input port */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER1, 50, 10, 0, 0)
+
+	PORT_START /* IN4, fake trackball input port. */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 50, 10, 0, 0)
+
 INPUT_PORTS_END
 
 
@@ -460,7 +481,7 @@ static MACHINE_DRIVER_START( exterm )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(exterm)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 

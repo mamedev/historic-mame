@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
+#include "meadows.h"
 
 
 unsigned char meadows_0c00 = 0;

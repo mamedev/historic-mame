@@ -251,7 +251,7 @@ if (serial_count)
 
 	serial_count = 0;
 	sending = 0;
-	reset_delay = 5;	/* delay a little before returning setting data to 1 (needed by wbeachvl) */
+	reset_delay = intf->reset_delay;	/* delay a little before returning setting data to 1 (needed by wbeachvl) */
 }
 
 

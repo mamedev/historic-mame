@@ -16,7 +16,7 @@
  The rest all TTl chips
 
  8 dipswitches (1 bank)
- speed : 14.31818Mhz
+ speed : 14.31818MHz
  Rest see pic
  (included was scans of the board)
 
@@ -286,7 +286,7 @@ static struct YM2203interface ym2203_interface =
 /* todo : theres probably something missing from the sound hardware */
 static MACHINE_DRIVER_START( pass )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10mhz? */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10MHz? */
 	MDRV_CPU_MEMORY(pass_readmem,pass_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* all the same */
 

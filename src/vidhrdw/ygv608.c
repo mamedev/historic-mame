@@ -406,6 +406,8 @@ VIDEO_START( ygv608 )
 
 VIDEO_STOP( ygv608 )
 {
+	tilemap_A = NULL;
+	tilemap_B = NULL;
 #ifdef _ENABLE_ROTATE_ZOOM
 	if( work_bitmap )
 		bitmap_free( work_bitmap );

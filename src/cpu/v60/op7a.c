@@ -875,7 +875,7 @@ UINT32 opSUBDC(void)
 
 	F7CLOADOP2BYTE(appb);
 
-	src = (appb >> 4) * 10 + (appb & 0xF);
+	src = ((appb & 0xF0) >> 4) * 10 + (appb & 0xF);
 	dst = (UINT32)(f7cOp1 >> 4) * 10 + (UINT32)(f7cOp1 & 0xF);
 
 	// Note that this APPB must be SIGNED!

@@ -23,9 +23,6 @@
 /*  To Do:                                                                  */
 /*  -----                                                                   */
 /*                                                                          */
-/*  - 4 Player Bowling has an offscreen display that show how many points   */
-/*    the player will be rewarded for hitting the dot in the Flash game.    */
-/*                                                                          */
 /*  - Space Invaders Deluxe: overlay                                        */
 /*                                                                          */
 /*  - Space Encounters: 'trench' circuit                                    */
@@ -34,7 +31,7 @@
 /*                                                                          */
 /*  - Helifire: analog wave and star background                             */
 /*                                                                          */
-/*  - Sheriff: overlay/color PROM                                           */
+/*  - Sheriff: color PROM                                           		*/
 /*                                                                          */
 /*                                                                          */
 /*  Games confirmed not use an overlay (pure black and white):              */
@@ -87,8 +84,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( c8080bw_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x63ff, MWA_ROM },
 MEMORY_END
 
@@ -132,15 +128,15 @@ static MACHINE_DRIVER_START( 8080bw )
 	MDRV_CPU_PORTS(c8080bw_readport,writeport_2_4)
 	MDRV_CPU_VBLANK_INT(c8080bw_interrupt,2)    /* two interrupts per frame */
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
-	MDRV_PALETTE_LENGTH(32768+2)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(2)
 	MDRV_PALETTE_INIT(8080bw)
-	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
@@ -203,6 +199,9 @@ static MACHINE_DRIVER_START( invaders )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_MACHINE_INIT(invaders)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
@@ -321,16 +320,11 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( invadpt2 )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_INIT(invaders)
+	MDRV_IMPORT_FROM(invaders)
 
 	/* video hardware */
+	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invaders_sn76477_interface)
 MACHINE_DRIVER_END
 
 
@@ -492,6 +486,17 @@ INPUT_PORTS_START( invrvnge )
 INPUT_PORTS_END
 
 
+static MACHINE_DRIVER_START( invrvnge )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(8080bw)
+	MDRV_CPU_MODIFY("main")
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+MACHINE_DRIVER_END
+
+
 /*******************************************************/
 /*                                                     */
 /* Midway "Space Invaders II Cocktail"                 */
@@ -562,7 +567,7 @@ MACHINE_DRIVER_END
 static PORT_READ_START( sstrangr_readport )
 	{ 0x41, 0x41, input_port_2_r },
 	{ 0x42, 0x42, input_port_1_r },
-	{ 0x44, 0x44, sstrangr_port_4_r },
+	{ 0x44, 0x44, input_port_4_r },
 PORT_END
 
 static PORT_WRITE_START( sstrangr_writeport )
@@ -613,7 +618,7 @@ INPUT_PORTS_START( sstrangr )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 
 	PORT_START      /* External switches */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
 	PORT_DIPSETTING(    0x00, "Slow" )
 	PORT_BITX(0,  0x02, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Fast", IP_KEY_NONE, IP_JOY_NONE )
@@ -625,8 +630,11 @@ static MACHINE_DRIVER_START( sstrangr )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(sstrangr_readport,sstrangr_writeport)
-	MDRV_CPU_VBLANK_INT(sstrangr_interrupt,2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_MACHINE_INIT(sstrangr)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
@@ -686,7 +694,7 @@ INPUT_PORTS_START( sstrngr2 )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 
 	PORT_START      /* External switches */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
 	PORT_DIPSETTING(    0x00, "Slow" )
 	PORT_BITX(0,  0x02, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Fast", IP_KEY_NONE, IP_JOY_NONE )
@@ -698,12 +706,13 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(sstrangr_readport,sstrangr_writeport)
-	MDRV_CPU_VBLANK_INT(sstrangr_interrupt,2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_MACHINE_INIT(sstrangr)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
@@ -988,16 +997,15 @@ static MEMORY_READ_START( rollingc_readmem )
 //  { 0x2000, 0x2002, MRA_RAM },
 //  { 0x2003, 0x2003, hack },
 	{ 0x4000, 0x5fff, MRA_ROM },
-	{ 0xa400, 0xbfff, schaser_colorram_r },
+	{ 0xa000, 0xbfff, schaser_colorram_r },
 	{ 0xe400, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( rollingc_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x5fff, MWA_ROM },
-	{ 0xa400, 0xbfff, schaser_colorram_w, &colorram },
+	{ 0xa000, 0xbfff, schaser_colorram_w, &colorram },
 	{ 0xe400, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -1073,13 +1081,13 @@ MACHINE_DRIVER_END
 
 static MEMORY_READ_START( sheriff_readmem )
 	{ 0x0000, 0x27ff, MRA_ROM },
-	{ 0x4200, 0x7fff, MRA_RAM },
+	{ 0x4000, 0x7fff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( sheriff_writemem )
 	{ 0x0000, 0x27ff, MWA_ROM },
-	{ 0x4200, 0x5dff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x5e00, 0x7fff, MWA_RAM },
+	{ 0x4000, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x6000, 0x7fff, MWA_RAM },
 MEMORY_END
 
 static PORT_READ_START( sheriff_readport )
@@ -1241,6 +1249,9 @@ static MACHINE_DRIVER_START( sheriff )
 	MDRV_CPU_PORTS(sheriff_sound_readport,sheriff_sound_writeport)
 
 	MDRV_MACHINE_INIT(sheriff)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, sheriff_dac_interface)
@@ -1517,15 +1528,14 @@ static MEMORY_READ_START( schaser_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_ROM },
-	{ 0xc400, 0xdfff, schaser_colorram_r },
+	{ 0xc000, 0xdfff, schaser_colorram_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( schaser_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x5fff, MWA_ROM },
-	{ 0xc400, 0xdfff, schaser_colorram_w, &colorram },
+	{ 0xc000, 0xdfff, schaser_colorram_w, &colorram },
 MEMORY_END
 
 INPUT_PORTS_START( schaser )
@@ -1589,6 +1599,7 @@ static MACHINE_DRIVER_START( schaser )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76477, schaser_sn76477_interface)
@@ -1863,6 +1874,7 @@ static MACHINE_DRIVER_START( lupin3 )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -1876,15 +1888,15 @@ MACHINE_DRIVER_END
 
 static MEMORY_READ_START( helifire_readmem )
 	{ 0x0000, 0x27ff, MRA_ROM },
-	{ 0x4200, 0x7fff, MRA_RAM },
-	{ 0xc200, 0xddff, MRA_RAM },
+	{ 0x4000, 0x7fff, MRA_RAM },
+	{ 0xc000, 0xddff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( helifire_writemem )
 	{ 0x0000, 0x27ff, MWA_ROM },
-	{ 0x4200, 0x5dff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x5e00, 0x7fff, MWA_RAM },
-	{ 0xc200, 0xddff, helifire_colorram_w, &colorram },
+	{ 0x4000, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x6000, 0x7fff, MWA_RAM },
+	{ 0xc000, 0xdfff, helifire_colorram_w, &colorram },
 MEMORY_END
 
 static MEMORY_READ_START( helifire_sound_readmem )
@@ -1973,6 +1985,7 @@ static MACHINE_DRIVER_START( helifire )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(helifire)
+	MDRV_VISIBLE_AREA(1*8, 32*8-1, 2*8, 30*8-1)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2082,6 +2095,7 @@ static MACHINE_DRIVER_START( polaris )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2184,8 +2198,8 @@ static MACHINE_DRIVER_START( phantom2 )
 	MDRV_MACHINE_INIT(phantom2)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 28*8-1)
-	MDRV_PALETTE_LENGTH(32768+3)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(3)
 	MDRV_PALETTE_INIT(phantom2)
 
 	/* sound hardware */
@@ -2295,6 +2309,11 @@ static MACHINE_DRIVER_START( bowler )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(bowler_readport,writeport_1_2)
+	MDRV_MACHINE_INIT(bowler)
+
+	/* video hardware */
+	MDRV_SCREEN_SIZE(35*8, 32*8)	/* Extra 3 lines for the bonus display */
+	MDRV_VISIBLE_AREA(0*8, 35*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2462,7 +2481,7 @@ MACHINE_DRIVER_END
 
 INPUT_PORTS_START( desertgu )
 	PORT_START      /* IN0 */
-	PORT_ANALOG( 0x7f, 0x45, IPT_AD_STICK_X, 70, 10, 0xf, 0x7f)
+	PORT_ANALOG( 0x7f, 0x55, IPT_LIGHTGUN_X, 70, 10, 0xf, 0x7f)
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x00, "Time" )
@@ -2484,7 +2503,7 @@ INPUT_PORTS_START( desertgu )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG( 0x7f, 0x45, IPT_AD_STICK_Y, 70, 10, 0xf, 0x7f)
+	PORT_ANALOG( 0x7f, 0x45, IPT_LIGHTGUN_Y, 70, 10, 0xf, 0x7f)
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( desertgu )
@@ -2769,9 +2788,9 @@ INPUT_PORTS_START( ozmawars )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus Energy" )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_DIPSETTING(    0x08, "10000" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
@@ -2807,15 +2826,15 @@ INPUT_PORTS_START( spaceph )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Fuel" )
-	PORT_DIPSETTING(    0x03, "35000" )
-	PORT_DIPSETTING(    0x02, "25000" )
-	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPNAME( 0x03, 0x00, "Energy" )
 	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "25000" )
+	PORT_DIPSETTING(    0x03, "35000" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus Fuel" )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus Energy" )
 	PORT_DIPSETTING(    0x08, "10000" )
 	PORT_DIPSETTING(    0x00, "15000" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Fire */
@@ -2995,6 +3014,26 @@ static MACHINE_DRIVER_START( ballbomb )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+
+	/* sound hardware */
+MACHINE_DRIVER_END
+
+
+/*******************************************************/
+/*                                                     */
+/* Yosaku To Donbee                                    */
+/*                                                     */
+/*******************************************************/
+
+static MACHINE_DRIVER_START( yosakdon )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(8080bw)
+	MDRV_CPU_MODIFY("main")
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -3757,6 +3796,10 @@ ROM_START( sheriff )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x75731745 )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )	/* color maps player 1/player 2 (missing) */
+	ROM_LOAD( "sheriff.cl1",  0x0000, 0x0400, 0x00000000 )	/* no idea about the # of */
+	ROM_LOAD( "sheriff.cl2",  0x0400, 0x0400, 0x00000000 )  /* PROMs or the size */
 ROM_END
 
 ROM_START( bandido )
@@ -3873,7 +3916,7 @@ ROM_END
 /* 605 */ GAMEX(1976, tornbase, 0,        8080bw,   tornbase, 8080bw,	ROT0,   "Midway", "Tornado Baseball", GAME_NO_SOUND )
 /* 610 */ GAMEX(1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   "Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
 /* 611 */ GAMEX(1976, maze,     0,        8080bw,   maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND )
-/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, boothill, ROT0,   "Midway", "Boot Hill" )
+/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   "Midway", "Boot Hill" )
 /* 615 */ GAMEX(1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   "Midway", "Checkmate", GAME_NO_SOUND )
 /* 618 */ GAMEX(1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   "Midway", "Desert Gun", GAME_NO_SOUND )
 /* 619 */ GAMEX(1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   "Midway", "Double Play", GAME_NO_SOUND )
@@ -3886,9 +3929,9 @@ ROM_END
 /* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
 /* 644 */ GAMEX(1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   "Midway", "Dog Patch", GAME_NO_SOUND )
-/* 645 */ GAMEX(1980, spcenctr, 0,        spcenctr, spcenctr, spcenctr,	ROT0,   "Midway", "Space Encounters", GAME_NO_SOUND )
+/* 645 */ GAMEX(1980, spcenctr, 0,        spcenctr, spcenctr, 8080bw,	ROT0,   "Midway", "Space Encounters", GAME_NO_SOUND )
 /* 652 */ GAMEX(1979, phantom2, 0,        phantom2, phantom2, phantom2, ROT0,   "Midway", "Phantom II", GAME_NO_SOUND )
-/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   8080bw,	ROT90,  "Midway", "4 Player Bowling Alley", GAME_NO_SOUND )
+/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   bowler,	ROT90,  "Midway", "4 Player Bowling Alley", GAME_NO_SOUND )
 /* 739 */ GAME( 1978, invaders, 0,        invaders, invaders, invaders, ROT270, "Midway", "Space Invaders" )
 /* 742 */ GAMEX(1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   "Midway", "Blue Shark", GAME_NO_SOUND )
 /* 851 */ GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, invad2ct, ROT90,  "Midway", "Space Invaders II (Midway, cocktail)" )
@@ -3918,7 +3961,7 @@ ROM_END
 
 /* Nintendo games */
 
-		  GAMEX(1980, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, "Nintendo", "Sheriff", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, "Nintendo", "Sheriff", GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS )
 		  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  bandido,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
 		  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
 		  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
@@ -3944,8 +3987,8 @@ ROM_END
 		  GAME( 1978, sstrangr, 0,		  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger" )
 		  GAME( 1979, sstrngr2, 0,        sstrngr2, sstrngr2, sstrngr2, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2" )
 		  GAME( 19??, moonbase, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Nichibutsu", "Moon Base" )
-		  GAMEX(19??, invrvnge, 0,        8080bw,   invrvnge, invrvnge, ROT270, "Zenitone Microsec", "Invader's Revenge",  GAME_NO_SOUND )
-		  GAMEX(19??, invrvnga, invrvnge, 8080bw,   invrvnge, invrvnge, ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
+		  GAMEX(19??, invrvnge, 0,        invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec", "Invader's Revenge",  GAME_NO_SOUND )
+		  GAMEX(19??, invrvnga, invrvnge, invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
 		  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "Game Plan, Inc. (Taito)", "Space Laser" )
 		  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser" )
 		  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)" )
@@ -3954,4 +3997,5 @@ ROM_END
 		  GAME( 1979, ozmawar2, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "SNK", "Ozma Wars (set 2)" ) /* Uses Taito's three board colour version of Space Invaders PCB */
 		  GAME( 1979, solfight, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "bootleg", "Solar Fight" )
 		  GAME( 1979, spaceph,  ozmawars, invaders, spaceph,  8080bw,   ROT270, "Zilec Games", "Space Phantoms" )
-		  GAMEX(1979, yosakdon, 0,        8080bw,   lrescue,  8080bw,   ROT270, "bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )
+		  GAMEX(1979, yosakdon, 0,        yosakdon, lrescue,  8080bw,   ROT270, "bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )
+

@@ -33,18 +33,11 @@ MACHINE_DRIVER_EXTERN( demon_sound );
 
 /*----------- defined in vidhrdw/cinemat.c -----------*/
 
-extern struct artwork_element starcas_overlay[];
-extern struct artwork_element tailg_overlay[];
-extern struct artwork_element sundance_overlay[];
-extern struct artwork_element solarq_overlay[];
-
 void CinemaVectorData(int fromx, int fromy, int tox, int toy, int color);
 
-void cinemat_select_artwork(int monitor_type, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay);
-
 PALETTE_INIT( cinemat );
+PALETTE_INIT( cinemat_color );
 VIDEO_START( cinemat );
 VIDEO_EOF( cinemat );
 
-PALETTE_INIT( spacewar );
 VIDEO_UPDATE( spacewar );

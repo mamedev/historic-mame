@@ -714,6 +714,7 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 	int regbank = (dma_register[DMA_CONFIG] >> 5) & 1;
 	int command, bpp, regnum;
 	UINT32 gfxoffset;
+	int pixels = 0;
 
 	/* blend with the current register contents */
 	regnum = register_map[regbank][offset];
@@ -819,6 +820,8 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 			(*dma_draw_skip_noscale[command & 0x1f])();
 		else
 			(*dma_draw_noskip_noscale[command & 0x1f])();
+
+		pixels = dma_state.width * dma_state.height;
 	}
 	else
 	{
@@ -826,6 +829,11 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 			(*dma_draw_skip_scale[command & 0x1f])();
 		else
 			(*dma_draw_noskip_scale[command & 0x1f])();
+
+		if (dma_state.xstep && dma_state.ystep)
+			pixels = ((dma_state.width << 8) / dma_state.xstep) * ((dma_state.height << 8) / dma_state.ystep);
+		else
+			pixels = 0;
 	}
 
 	/* signal we're done */
@@ -842,13 +850,13 @@ skipdma:
 		else
 		{
 			TMS_SET_IRQ_LINE(CLEAR_LINE);
-			timer_set(TIME_IN_NSEC(41 * dma_state.width * dma_state.height * 4), 0, dma_callback);
+			timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 		}
 	}
 	else
 	{
 		TMS_SET_IRQ_LINE(CLEAR_LINE);
-		timer_set(TIME_IN_NSEC(41 * dma_state.width * dma_state.height), 0, dma_callback);
+		timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 	}
 
 	profiler_mark(PROFILER_END);

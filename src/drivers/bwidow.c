@@ -7,12 +7,6 @@
 		* Black Widow
 		* Gravitar
 
-	Known bugs:
-		* Black Widow cannot use the the earom routines
-		* she writes into some locations at $2fac-$2fd7, which is clearly
-		  the vector rom. Perhaps there is some address-logic that is not yet
-		  emulated
-
 ****************************************************************************
 
 	Black Widow memory map (preliminary)
@@ -292,7 +286,7 @@ static READ_HANDLER( spacduel_IN3_r )
 			res = (0x00 /* upright */ | (0 & 0x40));
 			break;
 	}
-		
+
 	return res;
 }
 
@@ -403,16 +397,16 @@ MEMORY_END
 
 INPUT_PORTS_START( bwidow )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
-	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )	// To fit "Coin B" Dip Switch
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )	// To fit "Coin A" Dip Switch
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	/* bit 7 is tied to a 3kHz clock */
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
@@ -429,12 +423,12 @@ INPUT_PORTS_START( bwidow )
 	PORT_DIPSETTING (  0x00, "*1" )
 	PORT_DIPSETTING (  0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x80, "1 each 5" )
+	PORT_DIPSETTING (  0x60, "2 each 4" )
+	PORT_DIPSETTING (  0x40, "1 each 4" )
+	PORT_DIPSETTING (  0xa0, "1 each 3" )
+	PORT_DIPSETTING (  0x20, "1 each 2" )
 	PORT_DIPSETTING (  0x00, "None" )
-	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
-	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x01, "Max Start" )
@@ -464,8 +458,8 @@ INPUT_PORTS_START( bwidow )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 - Firing joystick */
@@ -482,16 +476,16 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gravitar )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
-	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )	// To fit "Coin B" Dip Switch
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )	// To fit "Coin A" Dip Switch
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	/* bit 7 is tied to a 3kHz clock */
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
 
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -525,47 +519,81 @@ INPUT_PORTS_START( gravitar )
 	PORT_DIPSETTING (  0x00, "*1" )
 	PORT_DIPSETTING (  0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x80, "1 each 5" )
+	PORT_DIPSETTING (  0x60, "2 each 4" )
+	PORT_DIPSETTING (  0x40, "1 each 4" )
+	PORT_DIPSETTING (  0xa0, "1 each 3" )
+	PORT_DIPSETTING (  0x20, "1 each 2" )
 	PORT_DIPSETTING (  0x00, "None" )
-	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
-	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
 
-	PORT_START	/* IN3 - Player 1 */
+	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_START	/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( lunarbat )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )	// To be similar with other games
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )	// To be similar with other games
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	/* bit 7 is tied to a 3kHz clock */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
+
+	PORT_START	/* DSW0 - Not read */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW1 - Not read */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN4 - Not read */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( spacduel )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
-	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )	// To fit "Coin B" Dip Switch
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )	// To fit "Coin A" Dip Switch
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	/* bit 7 is tied to a 3kHz clock */
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME(0x03, 0x01, DEF_STR( Lives ) )
@@ -604,22 +632,22 @@ INPUT_PORTS_START( spacduel )
 	PORT_DIPSETTING (  0x00, "*1" )
 	PORT_DIPSETTING (  0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x80, "1 each 5" )
+	PORT_DIPSETTING (  0x60, "2 each 4" )
+	PORT_DIPSETTING (  0x40, "1 each 4" )
+	PORT_DIPSETTING (  0xa0, "1 each 3" )
+	PORT_DIPSETTING (  0x20, "1 each 2" )
 	PORT_DIPSETTING (  0x00, "None" )
-	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
-	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
 
 	/* See machine/spacduel.c for more info on these 2 ports */
 	PORT_START	/* IN3 - Player 1 - spread over 8 memory locations */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START1, "Start", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_START2, "Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN4 - Player 2 - spread over 8 memory locations */
@@ -628,8 +656,8 @@ INPUT_PORTS_START( spacduel )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -675,9 +703,10 @@ static MACHINE_DRIVER_START( bwidow )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) 		/* 4.1ms */
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 480, 0, 440)
 	MDRV_PALETTE_LENGTH(32768)
@@ -695,10 +724,23 @@ static MACHINE_DRIVER_START( gravitar )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(bwidow)
-	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 420, 0, 400)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( lunarbat )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gravitar)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(spacduel_readmem,spacduel_writemem)
+
+	MDRV_FRAMES_PER_SECOND(45)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 500, 0, 440)
 MACHINE_DRIVER_END
 
 
@@ -735,11 +777,10 @@ ROM_START( bwidow )
 	ROM_LOAD( "136017.102",   0xa000, 0x1000, 0x10ad0376 )
 	ROM_LOAD( "136017.103",   0xb000, 0x1000, 0x8a1430ee )
 	ROM_LOAD( "136017.104",   0xc000, 0x1000, 0x44f9943f )
-	ROM_LOAD( "136017.105",   0xd000, 0x1000, 0xa046a2e2 )
-	ROM_LOAD( "136017.106",   0xe000, 0x1000, 0x4dc28b22 )
-	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "136017.105",   0xd000, 0x1000, 0x1fdf801c )
+	ROM_LOAD( "136017.106",   0xe000, 0x1000, 0xccc9b26c )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
-
 
 ROM_START( gravitar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -758,7 +799,6 @@ ROM_START( gravitar )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-
 ROM_START( gravitr2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* Vector ROM */
@@ -776,6 +816,42 @@ ROM_START( gravitr2 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
+ROM_START( gravp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* Vector ROM */
+	ROM_LOAD( "l7.bin",   0x2800, 0x0800, 0x1da0d845 )
+	ROM_LOAD( "mn7.bin",  0x3000, 0x1000, 0x650ba31e )
+	ROM_LOAD( "np7.bin",  0x4000, 0x1000, 0x5119c0b2 )
+	ROM_LOAD( "r7.bin",   0x5000, 0x1000, 0xdefa8cbc )
+	/* Program ROM */
+	ROM_LOAD( "d1.bin",   0x9000, 0x1000, 0xacbc0e2c )
+	ROM_LOAD( "ef1.bin",  0xa000, 0x1000, 0x88f98f8f )
+	ROM_LOAD( "h1.bin",   0xb000, 0x1000, 0x68a85703 )
+	ROM_LOAD( "j1.bin",   0xc000, 0x1000, 0x33d19ef6 )
+	ROM_LOAD( "kl1.bin",  0xd000, 0x1000, 0x032b5806 )
+	ROM_LOAD( "m1.bin",   0xe000, 0x1000, 0x47fe97a0 )
+	ROM_RELOAD(           0xf000, 0x1000 )	/* for reset/interrupt vectors */
+ROM_END
+
+ROM_START( lunarbat )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* Vector ROM */
+	ROM_LOAD( "vrom1.bin",   0x2800, 0x0800, 0xc60634d9 )
+	ROM_LOAD( "vrom2.bin",   0x3000, 0x1000, 0x53d9a8a2 )
+	/* Program ROM */
+	ROM_LOAD( "rom0.bin",    0x4000, 0x1000, 0xcc4691c6 )
+	ROM_LOAD( "rom1.bin",    0x5000, 0x1000, 0x4df71d07 )
+	ROM_LOAD( "rom2.bin",    0x6000, 0x1000, 0xc6ff04cb )
+	ROM_LOAD( "rom3.bin",    0x7000, 0x1000, 0xa7dc9d1b )
+	ROM_LOAD( "rom4.bin",    0x8000, 0x1000, 0x788bf976 )
+	ROM_LOAD( "rom5.bin",    0x9000, 0x1000, 0x16121e13 )
+	ROM_RELOAD(              0xa000, 0x1000 )
+	ROM_RELOAD(              0xb000, 0x1000 )
+	ROM_RELOAD(              0xc000, 0x1000 )
+	ROM_RELOAD(              0xd000, 0x1000 )
+	ROM_RELOAD(              0xe000, 0x1000 )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+ROM_END
 
 ROM_START( spacduel )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -809,3 +885,5 @@ GAME( 1980, spacduel, 0,        spacduel, spacduel, 0, ROT0, "Atari", "Space Due
 GAME( 1982, bwidow,   0,        bwidow,   bwidow,   0, ROT0, "Atari", "Black Widow" )
 GAME( 1982, gravitar, 0,        gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 3)" )
 GAME( 1982, gravitr2, gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 2)" )
+GAME( 1982, gravp,    gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (prototype)" )
+GAME( 1982, lunarbat, gravitar, lunarbat, lunarbat, 0, ROT0, "Atari", "Lunar Battle (prototype)" )

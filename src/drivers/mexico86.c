@@ -35,29 +35,29 @@ Revision:
 - Collision is not working on some sprites and the exact reason is unknown.
   My investigation so far has dismissed the following possibilities:
 
-  1) Hidden IRQ's - RST38 and NMI are the only interrupts operatubg in mode 1
-     and they both work as supposed to.
+ 1) Hidden IRQ's - RST38 and NMI are the only interrupts operatubg in mode 1
+	and they both work as supposed to.
 
-  2) Collision code missing - I've located collision routines responsible for
-     over 90% of the enemies. They're called by individual sprite handlers
-     everytime after VRAM update - except those with collision problems.
+ 2) Collision code missing - I've located collision routines responsible for
+	over 90% of the enemies. They're called by individual sprite handlers
+	everytime after VRAM update - except those with collision problems.
 
-  3) Collision data missing - Sprite information is stored at $D800. Data of
-     the questionable sprites is further formatted, tagged and copied to the
-     memory area shared with the MCU.
+ 3) Collision data missing - Sprite information is stored at $D800. Data of
+	 the questionable sprites is further formatted, tagged and copied to the
+	 memory area shared with the MCU.
 
-  4) MCU not working - The MCU latches specially formatted sprite data at
-     $E820 byte-by-byte, one after another into the accumulator, but does
-     not process nor store them into memory. It then asserts $E8A3 when
-     the reading is done. The code is about a kilobyte long and I checked
-     everywhere including IRQ services but no sign of collision functions.
-     The main CPU expects a result at $E8A2 however. The problrm is quite
-     similar to the randomization at $C07C in Bubble Bobble.
+ 4) MCU not working - The MCU latches specially formatted sprite data at
+	$E820 byte-by-byte, one after another into the accumulator, but does
+	not process nor store them into memory. It then asserts $E8A3 when
+	the reading is done. The code is about a kilobyte long and I checked
+	everywhere including IRQ services but no sign of collision functions.
+	The main CPU expects a result at $E8A2 however. The problrm is quite
+	similar to the randomization at $C07C in Bubble Bobble.
 
-  Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
-  added a function in machine\mexico86.c to simulate its I/O behavior but we
-  need real board owners to verify. Mexico86 and Kick'n Run don't use
-  $E8A2-$E8A3 so they're not affected in any way.
+	Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
+	added a function in machine\mexico86.c to simulate its I/O behavior but we
+	need real board owners to verify. Mexico86 and Kick'n Run don't use
+	$E8A2-$E8A3 so they're not affected in any way.
 
 - Modified VIDEO_UPDATE. The orignal is a Mexico86 duplicate which produces
   graphics artifacts especially beyond stage 3.
@@ -89,7 +89,7 @@ VIDEO_UPDATE( kikikai );
 //AT
 static READ_HANDLER( kiki_2203_r )
 {
-        return(YM2203Read(0,0) & 0x7f);
+	return(YM2203Read(0,0) & 0x7f);
 }
 //ZT
 
@@ -126,26 +126,26 @@ static WRITE_HANDLER( mexico86_f008_w )
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },	/* banked roms */
-	{ 0xc000, 0xe7ff, shared_r },	/* shared with sound cpu */
-	{ 0xe800, 0xe8ff, MRA_RAM },	/* protection ram */
+	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked roms */
+	{ 0xc000, 0xe7ff, shared_r },   /* shared with sound cpu */
+	{ 0xe800, 0xe8ff, MRA_RAM },    /* protection ram */
 	{ 0xe900, 0xefff, MRA_RAM },
 	{ 0xf010, 0xf010, input_port_5_r },
-	{ 0xf800, 0xffff, MRA_RAM },	/* communication ram - to connect 4 players's subboard */
+	{ 0xf800, 0xffff, MRA_RAM },    /* communication ram - to connect 4 players's subboard */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xe7ff, shared_w, &shared },	/* shared with sound cpu */
+	{ 0xc000, 0xe7ff, shared_w, &shared },  /* shared with sound cpu */
 	//{ 0xc000, 0xcfff, MWA_RAM, &mexico86_videoram },
 	{ 0xc000, 0xd4ff, MWA_RAM, &mexico86_videoram }, //AT: corrected size
 	{ 0xd500, 0xd7ff, MWA_RAM, &mexico86_objectram, &mexico86_objectram_size },
-	{ 0xe800, 0xe8ff, MWA_RAM, &mexico86_protection_ram },	/* shared with mcu */
+	{ 0xe800, 0xe8ff, MWA_RAM, &mexico86_protection_ram },  /* shared with mcu */
 	{ 0xe900, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf000, mexico86_bankswitch_w },	/* program and gfx ROM banks */
-	{ 0xf008, 0xf008, mexico86_f008_w },	/* cpu reset lines + other unknown stuff */
-	{ 0xf018, 0xf018, MWA_NOP },	// watchdog_reset_w },
-	{ 0xf800, 0xffff, MWA_RAM },	/* communication ram */
+	{ 0xf000, 0xf000, mexico86_bankswitch_w },  /* program and gfx ROM banks */
+	{ 0xf008, 0xf008, mexico86_f008_w },    /* cpu reset lines + other unknown stuff */
+	{ 0xf018, 0xf018, MWA_NOP },    // watchdog_reset_w },
+	{ 0xf800, 0xffff, MWA_RAM },    /* communication ram */
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -168,7 +168,7 @@ MEMORY_END
 static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, mexico86_68705_portA_r },
 	{ 0x0001, 0x0001, mexico86_68705_portB_r },
-	{ 0x0002, 0x0002, input_port_0_r },	/* COIN */
+	{ 0x0002, 0x0002, input_port_0_r }, /* COIN */
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
 MEMORY_END
@@ -178,7 +178,7 @@ static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0001, 0x0001, mexico86_68705_portB_w },
 	{ 0x0004, 0x0004, mexico86_68705_ddrA_w },
 	{ 0x0005, 0x0005, mexico86_68705_ddrB_w },
-	{ 0x000a, 0x000a, MWA_NOP },	/* looks like a bug in the code, writes to */
+	{ 0x000a, 0x000a, MWA_NOP },    /* looks like a bug in the code, writes to */
 									/* 0x0a (=10dec) instead of 0x10 */
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
@@ -205,7 +205,7 @@ INPUT_PORTS_START( mexico86 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service 2 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )    /* service 2 */
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
@@ -310,6 +310,7 @@ INPUT_PORTS_START( kikikai )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 //AT
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
@@ -322,7 +323,8 @@ INPUT_PORTS_START( kikikai )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-#if 0 //AT: copied from the manual but type B doesn't work
+
+#if 0 // old coinage settings
 	PORT_DIPNAME( 0x30, 0x30, "Coin 1" )
 	PORT_DIPSETTING(    0x30, "A:1C/1C B:1C/1C" )
 	PORT_DIPSETTING(    0x20, "A:1C/2C B:2C/1C" )
@@ -334,6 +336,8 @@ INPUT_PORTS_START( kikikai )
 	PORT_DIPSETTING(    0x40, "A:2C/1C B:1C/4C" )
 	PORT_DIPSETTING(    0x00, "A:2C/3C B:1C/6C" )
 #endif
+
+	// coinage copied from Japanese manual but type B doesn't work
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
@@ -368,6 +372,7 @@ INPUT_PORTS_START( kikikai )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 //ZT
+
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -402,8 +407,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? */
+	1,          /* 1 chip */
+	3000000,    /* 3 MHz ??? */
 	{ YM2203_VOL(40,40) },
 	{ input_port_3_r },
 	{ input_port_4_r },
@@ -416,20 +421,20 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( mexico86 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz??? */
+	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
 	MDRV_CPU_MEMORY(readmem,writemem)
 
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz??? */
+	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(M68705, 4000000/2)	/* xtal is 4MHz (????) I think it's divided by 2 internally */
+	MDRV_CPU_ADD(M68705, 4000000/2) /* xtal is 4MHz (????) I think it's divided by 2 internally */
 	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
 
 	/* video hardware */
@@ -464,16 +469,16 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( kikikai )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
-	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
-	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
-	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
-        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )    /* 196k for code */
+	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code        */
+	ROM_CONTINUE(           0x20000, 0x08000 )             /* 2nd half, banked at 0x8000 */
+	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000           */
+	ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for the audio cpu */
 	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
 	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
@@ -489,17 +494,17 @@ ROM_START( kikikai )
 ROM_END
 
 ROM_START( kicknrun )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
-	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code		 */
-	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
-	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000			 */
-        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )    /* 196k for code */
+	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code        */
+	ROM_CONTINUE(           0x20000, 0x08000 )             /* 2nd half, banked at 0x8000 */
+	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000           */
+	ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )	/* manually crafted from the Mexico '86 one */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
+	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )  /* manually crafted from the Mexico '86 one */
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a87-05.bin", 0x08000, 0x08000, 0x4eee3a8a )
@@ -518,16 +523,16 @@ ROM_START( kicknrun )
 ROM_END
 
 ROM_START( mexico86 )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
-	ROM_LOAD( "2_g.bin",    0x00000, 0x08000, 0x2bbfe0fb ) /* 1st half, main code		 */
-	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
-	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000			 */
-        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )    /* 196k for code */
+	ROM_LOAD( "2_g.bin",    0x00000, 0x08000, 0x2bbfe0fb ) /* 1st half, main code        */
+	ROM_CONTINUE(           0x20000, 0x08000 )             /* 2nd half, banked at 0x8000 */
+	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000           */
+	ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
 	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, 0xff92f816 )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )

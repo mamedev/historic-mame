@@ -124,7 +124,7 @@ VIDEO_UPDATE( iremm15 )
 
 			iremm15_drawgfx(tmpbitmap,
 							videoram[offs],
-							Machine->pens[colorram[offs]],
+							Machine->pens[colorram[offs] & 7],
 							Machine->pens[7], // space beam not color 0
 							8*sx,8*sy);
 		}

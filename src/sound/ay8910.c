@@ -276,13 +276,17 @@ unsigned char AYReadReg(int n, int r)
 	case AY_PORTA:
 		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
 			logerror("warning: read from 8910 #%d Port A set as output\n",n);
-		else if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
+		/*
+		   even if the port is set as output, we still need to return the external
+		   data. Some games, like kidniki, need this to work.
+		 */
+		if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
 		else logerror("PC %04x: warning - read 8910 #%d Port A\n",activecpu_get_pc(),n);
 		break;
 	case AY_PORTB:
 		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
 			logerror("warning: read from 8910 #%d Port B set as output\n",n);
-		else if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
+		if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
 		else logerror("PC %04x: warning - read 8910 #%d Port B\n",activecpu_get_pc(),n);
 		break;
 	}
@@ -642,7 +646,7 @@ void AY8910_set_clock(int chip,int clock)
 	/* at the given sample rate. No. of events = sample rate / (clock/8).    */
 	/* STEP is a multiplier used to turn the fraction into a fixed point     */
 	/* number.                                                               */
-	PSG->UpdateStep = ((double)STEP * PSG->SampleRate * 8) / clock;
+	PSG->UpdateStep = ((double)STEP * PSG->SampleRate * 8 + clock/2) / clock;
 }
 
 
@@ -717,6 +721,10 @@ static int AY8910_init(const char *chip_name,int chip,
 	const char *name[3];
 	int vol[3];
 
+
+// causes crashes with YM2610 games - overflow?
+//	if (options.use_filter)
+//		sample_rate = clock/8;
 
 	memset(PSG,0,sizeof(struct AY8910));
 	PSG->SampleRate = sample_rate;

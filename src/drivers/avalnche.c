@@ -29,7 +29,29 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "artwork.h"
 #include "avalnche.h"
+
+
+
+/*************************************
+ *
+ *	Overlay
+ *
+ *************************************/
+
+#define OVERLAY_CYAN		MAKE_ARGB(0x04,0x80,0xff,0xff)
+#define OVERLAY_BLUE		MAKE_ARGB(0x04,0x20,0x20,0xff)
+#define OVERLAY_YELLOW		MAKE_ARGB(0x04,0xff,0xff,0x20)
+#define OVERLAY_ORANGE		MAKE_ARGB(0x04,0xff,0x80,0x10)
+
+OVERLAY_START( avalnche_overlay )
+	OVERLAY_RECT(   0,   0, 256,  10, OVERLAY_CYAN )
+	OVERLAY_RECT(   0,  10, 256,  20, OVERLAY_BLUE )
+	OVERLAY_RECT(   0,  20, 256,  29, OVERLAY_YELLOW )
+	OVERLAY_RECT(   0,  29, 256,  40, OVERLAY_ORANGE )
+	OVERLAY_RECT(   0,  40, 256, 240, OVERLAY_CYAN )
+OVERLAY_END
 
 
 
@@ -39,17 +61,11 @@
  *
  *************************************/
 
-#define ARTWORK_COLORS (2 + 32768)
-
 static PALETTE_INIT( avalnche )
 {
 	/* 2 colors in the palette: black & white */
 	palette_set_color(0,0x00,0x00,0x00);
 	palette_set_color(1,0xff,0xff,0xff);
-
-	/* 4 entries in the color table */
-	memset(colortable, 0, ARTWORK_COLORS * sizeof(colortable[0]));
-	colortable[1] = 1;
 }
 
 
@@ -155,11 +171,10 @@ static MACHINE_DRIVER_START( avalnche )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
-	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)
+	MDRV_PALETTE_LENGTH(2)
 	
 	MDRV_PALETTE_INIT(avalnche)
-	MDRV_VIDEO_START(avalnche)
+	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(avalnche)
 
 	/* sound hardware */
@@ -210,6 +225,8 @@ static DRIVER_INIT( avalnche )
 		rom[0x6000+i] = (rom[0x8000+i]<<4)+rom[0xA000+i];
 		rom[0xE000+i] = (rom[0x8000+i]<<4)+rom[0xA000+i];
 	}
+	
+	artwork_set_overlay(avalnche_overlay);
 }
 
 

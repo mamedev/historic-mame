@@ -765,7 +765,7 @@ static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 	p.width = bitmap->width;
 	p.height = bitmap->height;
 
-	if ((Machine->color_depth == 16) && (Machine->drv->total_colors <= 256))
+	if ((bitmap->depth == 16) && (Machine->drv->total_colors <= 256))
 	{
 		p.color_type = 3;
 		if((p.palette = (UINT8 *)malloc (3*256))==NULL)
@@ -809,7 +809,7 @@ static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 
 		ip = p.image;
 
-		switch (Machine->color_depth)
+		switch (bitmap->depth)
 		{
 		case 16: /* 16BIT */
 			for (i = 0; i < p.height; i++)
@@ -854,6 +854,7 @@ static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 			break;
 		}
 	}
+
 	if(png_filter (&p)==0)
 		return 0;
 

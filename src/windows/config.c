@@ -22,12 +22,18 @@
   * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
+
+// compiler options
+#define BLIT_ROTATE		1
+
+
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
 #include "driver.h"
 #include "rc.h"
 #include "misc.h"
+#include "video.h"
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -56,10 +62,6 @@ extern int verbose;
 
 struct rc_struct *rc;
 
-/* fix me - need to have the core call osd_set_gamma with this value */
-/* instead of relying on the name of an osd variable */
-extern float gamma_correct;
-
 /* fix me - need to have the core call osd_set_mastervolume with this value */
 /* instead of relying on the name of an osd variable */
 extern int attenuation;
@@ -73,8 +75,15 @@ char *rompath_extra;
 
 static float f_beam;
 static float f_flicker;
+static float f_intensity;
 
 static int enable_sound = 1;
+
+static int use_artwork = 1;
+static int use_backdrops = -1;
+static int use_overlays = -1;
+static int use_bezels = -1;
+
 
 static int video_set_beam(struct rc_option *option, const char *arg, int priority)
 {
@@ -94,6 +103,13 @@ static int video_set_flicker(struct rc_option *option, const char *arg, int prio
 		options.vector_flicker = 0;
 	if (options.vector_flicker > 255)
 		options.vector_flicker = 255;
+	option->priority = priority;
+	return 0;
+}
+
+static int video_set_intensity(struct rc_option *option, const char *arg, int priority)
+{
+	options.vector_intensity = f_intensity;
 	option->priority = priority;
 	return 0;
 }
@@ -159,15 +175,14 @@ static struct rc_option opts[] = {
 	/* options supported by the mame core */
 	/* video */
 	{ "Mame CORE video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "bpp", NULL, rc_int, &options.color_depth, "0",	0, 0, video_verify_bpp, "specify the colordepth the core should render in bits per pixel (bpp), one of: auto(0), 8, 16, 32" },
-	{ "norotate", NULL, rc_bool , &options.norotate, "0", 0, 0, NULL, "do not apply rotation" },
+	{ "norotate", NULL, rc_bool, &options.norotate, "0", 0, 0, NULL, "do not apply rotation" },
 	{ "ror", NULL, rc_bool, &options.ror, "0", 0, 0, NULL, "rotate screen clockwise" },
 	{ "rol", NULL, rc_bool, &options.rol, "0", 0, 0, NULL, "rotate screen anti-clockwise" },
 	{ "flipx", NULL, rc_bool, &options.flipx, "0", 0, 0, NULL, "flip screen upside-down" },
 	{ "flipy", NULL, rc_bool, &options.flipy, "0", 0, 0, NULL, "flip screen left-right" },
 	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
-	/* make it options.gamma_correction? */
-	{ "gamma", NULL, rc_float, &gamma_correct , "1.0", 0.5, 2.0, NULL, "gamma correction"},
+	{ "gamma", NULL, rc_float, &options.gamma, "1.0", 0.5, 2.0, NULL, "gamma correction"},
+	{ "brightness", "bright", rc_float, &options.brightness, "1.0", 0.5, 2.0, NULL, "brightness correction"},
 
 	/* vector */
 	{ "Mame CORE vector game options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -175,6 +190,7 @@ static struct rc_option opts[] = {
 	{ "translucency", "tl", rc_bool, &options.translucency, "1", 0, 0, NULL, "draw translucent vectors" },
 	{ "beam", NULL, rc_float, &f_beam, "1.0", 1.0, 16.0, video_set_beam, "set beam width in vector games" },
 	{ "flicker", NULL, rc_float, &f_flicker, "0.0", 0.0, 100.0, video_set_flicker, "set flickering in vector games" },
+	{ "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_set_intensity, "set intensity in vector games" },
 
 	/* sound */
 	{ "Mame CORE sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -186,7 +202,12 @@ static struct rc_option opts[] = {
 
 	/* misc */
 	{ "Mame CORE misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "artwork", "art", rc_bool, &options.use_artwork, "1", 0, 0, NULL, "use additional game artwork" },
+	{ "artwork", "art", rc_bool, &use_artwork, "1", 0, 0, NULL, "use additional game artwork (sets default for specific options below)" },
+	{ "use_backdrops", "backdrop", rc_bool, &use_backdrops, "1", 0, 0, NULL, "use backdrop artwork" },
+	{ "use_overlays", "overlay", rc_bool, &use_overlays, "1", 0, 0, NULL, "use overlay artwork" },
+	{ "use_bezels", "bezel", rc_bool, &use_bezels, "1", 0, 0, NULL, "use bezel artwork" },
+	{ "artwork_crop", "artcrop", rc_bool, &options.artwork_crop, "0", 0, 0, NULL, "crop artwork to game screen only" },
+	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
@@ -322,21 +343,31 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	}
 
 	if (verbose)
-		fprintf(stderr, "trying to parse %s\n", buffer);
+		fprintf(stderr, "parsing %s...", buffer);
 
-	f = fopen (buffer, "r");
+	f = osd_fopen (buffer, NULL, OSD_FILETYPE_INI, 0);
 	if (f)
 	{
-		if(rc_read(rc, f, buffer, 1, 1))
+		if(osd_rc_read(rc, f, buffer, 1, 1))
 		{
 			if (verbose)
 				fprintf (stderr, "problem parsing %s\n", buffer);
 			retval = 1;
 		}
+		else
+		{
+			if (verbose)
+				fprintf (stderr, "OK.\n");
+		}
+	}
+	else
+	{
+		if (verbose)
+			fprintf (stderr, "N/A\n");
 	}
 
 	if (f)
-		fclose (f);
+		osd_fclose (f);
 
 	return retval;
 }
@@ -394,7 +425,22 @@ int cli_frontend_init (int argc, char **argv)
 
 	sprintf (buffer, "%s.ini", cmd_name);
 
-	/* parse the global configfile */
+	/* parse mame.ini/mess.ini even if called with another name */
+#ifdef MESS
+	if (strcmp(cmd_name, "mess") != 0)
+	{
+		if (parse_config ("mess.ini", NULL))
+			exit(1);
+	}
+#else
+	if (strcmp(cmd_name, "mame") != 0)
+	{
+		if (parse_config ("mame.ini", NULL))
+			exit(1);
+	}
+#endif
+
+	/* parse cmd_name.ini */
 	if (parse_config (buffer, NULL))
 		exit(1);
 
@@ -403,6 +449,7 @@ int cli_frontend_init (int argc, char **argv)
 		exit(1);
 #endif
 
+	/* if requested, write out cmd_name.ini (normally "mame.ini") */
 	if (createconfig)
 	{
 		rc_save(rc, buffer, 0);
@@ -495,9 +542,11 @@ int cli_frontend_init (int argc, char **argv)
 			while (drivers[i]) i++;	/* count available drivers */
 
 			srand(time(0));
+			/* call rand() once to get away from the seed */
+			rand();
 			game_index = rand() % i;
 
-			fprintf(stderr, "running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
+			fprintf(stderr, "running %s (%s) [press return]",drivers[game_index]->name,drivers[game_index]->description);
 			getchar();
 		}
 	}
@@ -520,12 +569,28 @@ int cli_frontend_init (int argc, char **argv)
 		if (parse_config ("vector.ini", NULL))
 			exit(1);
 
-	/* nice hack: load source_file.ini */
-	sprintf(buffer, "%s", drivers[game_index]->source_file+12);
-	buffer[strlen(buffer) - 2] = 0;
-	strcat(buffer, ".ini");
-	if (parse_config (buffer, NULL))
-		exit(1);
+	/* nice hack: load source_file.ini (omit if referenced later any) */
+	{
+		const struct GameDriver *tmp_gd;
+
+		sprintf(buffer, "%s", drivers[game_index]->source_file+12);
+		buffer[strlen(buffer) - 2] = 0;
+
+		tmp_gd = drivers[game_index];
+		while (tmp_gd != NULL)
+		{
+			if (strcmp(tmp_gd->name, buffer) == 0) break;
+			tmp_gd = tmp_gd->clone_of;
+		}
+
+		if (tmp_gd == NULL)
+		/* not referenced later, so load it here */
+		{
+			strcat(buffer, ".ini");
+			if (parse_config (buffer, NULL))
+				exit(1);
+		}
+	}
 
 	/* now load gamename.ini */
 	/* this possibly checks for clonename.ini recursively! */
@@ -566,10 +631,78 @@ int cli_frontend_init (int argc, char **argv)
 		options.debug_width = 640;
 	if (options.debug_height == 0)
 		options.debug_height = 480;
+	options.debug_depth = 8;
 
 	/* no sound is indicated by a 0 samplerate */
 	if (!enable_sound)
 		options.samplerate = 0;
+
+	/* set the artwork options */
+	options.use_artwork = ARTWORK_USE_ALL;
+	if (use_backdrops == 0)
+		options.use_artwork &= ~ARTWORK_USE_BACKDROPS;
+	if (use_overlays == 0)
+		options.use_artwork &= ~ARTWORK_USE_OVERLAYS;
+	if (use_bezels == 0)
+		options.use_artwork &= ~ARTWORK_USE_BEZELS;
+	if (!use_artwork)
+		options.use_artwork = ARTWORK_USE_NONE;
+
+#if BLIT_ROTATE
+{
+	/* first start with the game's built in orientation */
+	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
+	options.ui_orientation = orientation;
+
+	if (options.ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			options.ui_orientation ^= ROT180;
+	}
+
+	/* override if no rotation requested */
+	if (options.norotate)
+		orientation = options.ui_orientation = ROT0;
+
+	/* rotate right */
+	if (options.ror)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT90;
+	}
+
+	/* rotate left */
+	if (options.rol)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT270;
+	}
+
+	/* flip X/Y */
+	if (options.flipx)
+		orientation ^= ORIENTATION_FLIP_X;
+	if (options.flipy)
+		orientation ^= ORIENTATION_FLIP_Y;
+
+	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
+	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
+	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
+
+	/* disable rotation in the core */
+	options.norotate = 1;
+	options.ror = options.rol = options.flipx = options.flipy = 0;
+}
+#endif
 
 	return game_index;
 }

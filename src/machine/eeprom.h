@@ -11,6 +11,8 @@ struct EEPROM_interface
 	char *cmd_lock;		/*   lock command string, or 0 if n/a */
 	char *cmd_unlock;	/* unlock command string, or 0 if n/a */
 	int enable_multi_read;/* set to 1 to enable multiple values to be read from one read command */
+	int reset_delay;	/* number of times EEPROM_read_bit() should return 0 after a reset, */
+						/* before starting to return 1. */
 };
 
 

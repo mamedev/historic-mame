@@ -53,6 +53,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/konamiic.h"
 
 /* Variables that driver has access to: */
 
@@ -68,7 +69,7 @@ static int support_8bpp,support_16x16;
 static int has_zoom;
 
 
-data16_t *metro_K053936_ram,*metro_K053936_ctrl;
+data16_t *metro_K053936_ram;
 static struct tilemap *metro_K053936_tilemap;
 
 static data16_t *metro_tiletable_old;
@@ -92,50 +93,6 @@ WRITE16_HANDLER( metro_K053936_w )
 	COMBINE_DATA(&metro_K053936_ram[offset]);
 	if (oldword != metro_K053936_ram[offset])
 		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
-}
-
-void K053936_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
-{
-	UINT32 startx,starty;
-	int incxx,incxy,incyx,incyy;
-
-	startx = 256 * (INT16)(metro_K053936_ctrl[0x00]);
-	starty = 256 * (INT16)(metro_K053936_ctrl[0x01]);
-	incyx  =       (INT16)(metro_K053936_ctrl[0x02]);
-	incxx  =       (INT16)(metro_K053936_ctrl[0x03]);
-	incyy  =       (INT16)(metro_K053936_ctrl[0x04]);
-	incxy  =       (INT16)(metro_K053936_ctrl[0x05]);
-
-	startx += 21 * incyx;
-	starty += 21 * incyy;
-
-	startx += 69 * incxx;
-	starty += 69 * incxy;
-
-	tilemap_draw_roz(bitmap,cliprect,metro_K053936_tilemap,startx << 5,starty << 5,
-			incxx << 5,incxy << 5,incyx << 5,incyy << 5,
-			0,	/* no wraparound */
-			0,0);
-
-#if 0
-	usrintf_showmessage("%04x%04x%04x%04x %04x%04x%04x%04x\n%04x%04x%04x%04x %04x%04x%04x%04x",
-			metro_K053936_ctrl[0x00],
-			metro_K053936_ctrl[0x01],
-			metro_K053936_ctrl[0x02],
-			metro_K053936_ctrl[0x03],
-			metro_K053936_ctrl[0x04],
-			metro_K053936_ctrl[0x05],
-			metro_K053936_ctrl[0x06],
-			metro_K053936_ctrl[0x07],
-			metro_K053936_ctrl[0x08],
-			metro_K053936_ctrl[0x09],
-			metro_K053936_ctrl[0x0a],
-			metro_K053936_ctrl[0x0b],
-			metro_K053936_ctrl[0x0c],
-			metro_K053936_ctrl[0x0d],
-			metro_K053936_ctrl[0x0e],
-			metro_K053936_ctrl[0x0f]);
-#endif
 }
 
 
@@ -522,6 +479,9 @@ VIDEO_START( blzntrnd )
 
 	if (!metro_K053936_tilemap)
 		return 1;
+
+	K053936_wraparound_enable(0, 0);
+	K053936_set_offset(0, -69, -21);
 
 	tilemap_set_scrolldx(tilemap[0], 8, -8);
 	tilemap_set_scrolldx(tilemap[1], 8, -8);
@@ -937,7 +897,7 @@ if (keyboard_pressed(KEYCODE_Z))
 				*metro_screenctrl);					}
 #endif
 
-	if (has_zoom) K053936_zoom_draw(bitmap,cliprect);
+	if (has_zoom) K053936_0_zoom_draw(bitmap,cliprect,metro_K053936_tilemap,0,0);
 
 	/* Sprites priority wrt layers: 3..0 (low..high) */
 	sprites_pri	=	(metro_videoregs[0x02/2] & 0x0300) >> 8;

@@ -212,11 +212,11 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( grobda )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809,	 1500000)	/* 1.5 MHz? */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(grobda_interrupt_1,1)
 
-	MDRV_CPU_ADD(M6809,	1500000)	/* 1.5 MHz? */
+	MDRV_CPU_ADD(M6809,	18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(grobda_interrupt_2,1)
 

@@ -1,9 +1,9 @@
 /***************************************************************************
 
 	Midway Omega Race hardware
-	
+
 	driver by Bernd Wiebelt
-	
+
 	Games supported:
 		* Omega Race
 
@@ -331,6 +331,18 @@ WRITE_HANDLER( omegrace_soundlatch_w )
 
 /*************************************
  *
+ *	Overlay
+ *
+ *************************************/
+
+OVERLAY_START( omegrace_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0xff,0xe4,0x57) )
+OVERLAY_END
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -429,10 +441,10 @@ INPUT_PORTS_START( omegrace )
 	PORT_DIPSETTING (   0x10, "1C/2S 2C/5S" )
 	PORT_DIPSETTING (   0x20, "1C/3S 2C/6S" )
 	PORT_DIPSETTING (   0x30, "1C/3S 2C/7S" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (   0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
 
@@ -462,7 +474,7 @@ INPUT_PORTS_START( omegrace )
 	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING (   0x80, DEF_STR( Cocktail ) )
 
-	PORT_START /* IN2 -port 0x11 */
+	PORT_START /* IN2 - port 0x11 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -475,12 +487,12 @@ INPUT_PORTS_START( omegrace )
 	PORT_START /* IN3 - port 0x12 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_START3 | IPF_COCKTAIL )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START4 | IPF_COCKTAIL )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_START2, "2 Players Start (1 credit)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_START4, "2 Players Start (2 credits)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_START1, "1 Player Start (1 credit)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_START3, "1 Player Start (2 credits)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START /* IN4 - port 0x15 - spinner */
 	PORT_ANALOG(0x3f, 0x00, IPT_DIAL, 12, 10, 0, 0 )
@@ -536,11 +548,11 @@ static MACHINE_DRIVER_START( omegrace )
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1020, -10, 1010)
 	MDRV_PALETTE_LENGTH(32768)
-	
+
 	MDRV_PALETTE_INIT(avg_white)
 	MDRV_VIDEO_START(dvg)
 	MDRV_VIDEO_UPDATE(vector)
@@ -574,9 +586,22 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( omegrace )
+{
+	artwork_set_overlay(omegrace_overlay);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
 
-GAMEX( 1981, omegrace, 0, omegrace, omegrace, 0, ROT0, "Midway", "Omega Race", GAME_NO_COCKTAIL )
+GAMEX( 1981, omegrace, 0, omegrace, omegrace, omegrace, ROT0, "Midway", "Omega Race", GAME_NO_COCKTAIL )
 

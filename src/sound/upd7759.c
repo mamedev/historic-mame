@@ -18,9 +18,9 @@
  - an adpcm engine
  - a 4-to-9 bit adpcm converter
 
- The clock divider takes the base 640Khz clock and divides it first
+ The clock divider takes the base 640KHz clock and divides it first
  by a fixed divisor of 4 and then by a value between 9 and 32.  The
- result gives a clock between 5Khz and 17.78Khz.  It's probably
+ result gives a clock between 5KHz and 17.78KHz.  It's probably
  possible, but not recommended and certainly out-of-spec, to push the
  chip harder by reducing the divider.
 
@@ -81,8 +81,8 @@
  connected directly to the adpcm engine.  The first write to the
  input port activates the engine (the value itself is ignored).  The
  engine activates the clock output and waits for commands.  The clock
- speed is unknown, but its probably a divider of 640Khz.   We use 40Khz
- here because 80Khz crashes altbeast.  The chip probably has an internal
+ speed is unknown, but its probably a divider of 640KHz.   We use 40KHz
+ here because 80KHz crashes altbeast.  The chip probably has an internal
  fifo to the converter and suspends the clock when the fifo is full.
  The first command is always 0xFF.  A second 0xFF marks the end of the
  sample and the engine stops.

@@ -505,7 +505,7 @@ static MACHINE_DRIVER_START( zodiack )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
-	
+
 	MDRV_MACHINE_INIT(zodiack)
 
 	/* video hardware */
@@ -642,7 +642,7 @@ ROM_END
 
 
 GAMEX(1983, zodiack,  0, zodiack, zodiack,  0, ROT270, "Orca (Esco Trading Co, Inc)", "Zodiack", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
-GAMEX(1983, dogfight, 0, zodiack, dogfight, 0, ROT270, "[Orca] Thunderbolt", "Dog Fight", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
+GAMEX(1983, dogfight, 0, zodiack, dogfight, 0, ROT270, "[Orca] Thunderbolt", "Dog Fight (Thunderbolt)", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
 GAMEX(1982, moguchan, 0, zodiack, moguchan, 0, ROT270, "Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */ "Moguchan", GAME_WRONG_COLORS )
 GAME( 1981, percuss,  0, percuss, percuss,  0, ROT270, "Orca", "The Percussor" )
 GAME( 1982, bounty,   0, percuss, bounty,   0, ROT180, "Orca", "The Bounty" )

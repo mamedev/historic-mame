@@ -201,6 +201,7 @@
 #include "vidhrdw/avgdvg.h"
 #include "machine/mathbox.h"
 #include "machine/atari_vg.h"
+#include "artwork.h"
 #include "bzone.h"
 
 #define IN0_3KHZ (1<<7)
@@ -288,6 +289,19 @@ static READ_HANDLER( redbaron_joy_r )
 {
 	return readinputport(rb_input_select ? 5 : 6);
 }
+
+
+
+/*************************************
+ *
+ *	Battle Zone overlay
+ *
+ *************************************/
+
+OVERLAY_START( bzone_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 0.2, MAKE_ARGB(0x04,0xff,0x20,0x20) )
+	OVERLAY_RECT( 0.0, 0.2, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0x20) )
+OVERLAY_END
 
 
 
@@ -699,12 +713,12 @@ static MACHINE_DRIVER_START( bzone )
 	MDRV_FRAMES_PER_SECOND(40)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 580, 0, 400)
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(avg_bzone)
+	MDRV_PALETTE_INIT(avg_white)
 	MDRV_VIDEO_START(avg_bzone)
 	MDRV_VIDEO_UPDATE(vector)
 
@@ -738,7 +752,6 @@ static MACHINE_DRIVER_START( redbaron )
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 520, 0, 400)
 
-	MDRV_PALETTE_INIT(avg_aqua)
 	MDRV_VIDEO_START(avg_redbaron)
 
 	/* sound hardware */
@@ -855,6 +868,12 @@ static WRITE_HANDLER( analog_select_w )
 }
 
 
+static DRIVER_INIT( bzone )
+{
+	artwork_set_overlay(bzone_overlay);
+}
+
+
 static DRIVER_INIT( bradley )
 {
 	install_mem_read_handler(0, 0x400, 0x7ff, MRA_RAM);
@@ -866,6 +885,16 @@ static DRIVER_INIT( bradley )
 }
 
 
+static DRIVER_INIT( redbaron )
+{
+	OVERLAY_START( redbaron_overlay )
+		OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x88,0xff,0xff) )
+	OVERLAY_END
+
+	artwork_set_overlay(redbaron_overlay);
+}
+
+
 
 /*************************************
  *
@@ -873,8 +902,8 @@ static DRIVER_INIT( bradley )
  *
  *************************************/
 
-GAME( 1980, bzone,    0,     bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (set 1)" )
-GAME( 1980, bzone2,   bzone, bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (set 2)" )
-GAMEX(1980, bzonec,   bzone, bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL )
-GAMEX(1980, bradley,  bzone, bradley,  bradley,  bradley, ROT0, "Atari", "Bradley Trainer", GAME_NOT_WORKING )
-GAME( 1980, redbaron, 0,     redbaron, redbaron, 0,       ROT0, "Atari", "Red Baron" )
+GAME( 1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)" )
+GAME( 1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)" )
+GAMEX(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL )
+GAMEX(1980, bradley,  bzone, bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer", GAME_NOT_WORKING )
+GAME( 1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron" )

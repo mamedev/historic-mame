@@ -4,9 +4,7 @@ various SNK triple Z80 games
 
 Known Issues:
 - sound glitches:
-	Touchdown Fever, Fighting Soccer: crashes if Y8950 is used
 	Psycho Soldier: some samples aren't played
-	Chopper1: YM3812 interferes with Y8950
 - consolidate gfx decode/drivers, if possible
 - emulate protection (get rid of patches)
 - translucency issues in Bermuda Triangle? (see brick tiles in title screen)
@@ -243,20 +241,6 @@ static struct YM3812interface ym3812_interface = {
 	{ snk_sound_callback0_w } /* ? */
 };
 
-/*	We don't actually have any games that use two Y8950s,
-	but the soundchip implementation misbehaves if we
-	declare both a YM3526 and Y8950.
-
-	Since Y8950 is a superset of YM3526, this works.
-*/
-static struct Y8950interface ym3526_y8950_interface = {
-	2,			/* number of chips */
-	4000000,	/* 4 MHz */
-	{ 100, 100 },		/* mixing level */
-	{ snk_sound_callback0_w, snk_sound_callback1_w }, /* ? */
-	{ REGION_SOUND1, REGION_SOUND1 }
-};
-
 static WRITE_HANDLER( snk_soundlatch_w ){
 	snk_sound_register |= 0x08 | 0x04;
 	soundlatch_w( offset, data );
@@ -308,18 +292,18 @@ static MEMORY_READ_START( YM3526_Y8950_readmem_sound )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xe800, 0xe800, Y8950_status_port_0_r }, // YM3526_status_port_0_r
-	{ 0xf000, 0xf000, Y8950_status_port_1_r },
+	{ 0xe800, 0xe800, YM3526_status_port_0_r },
+	{ 0xf000, 0xf000, Y8950_status_port_0_r },
 	{ 0xf800, 0xf800, snk_sound_register_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( YM3526_Y8950_writemem_sound )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xe800, 0xe800, Y8950_control_port_0_w }, // YM3526_control_port_0_w
-	{ 0xec00, 0xec00, Y8950_write_port_0_w }, // YM3526_write_port_0_w
-	{ 0xf000, 0xf000, Y8950_control_port_1_w },
-	{ 0xf400, 0xf400, Y8950_write_port_1_w },
+	{ 0xe800, 0xe800, YM3526_control_port_0_w },
+	{ 0xec00, 0xec00, YM3526_write_port_0_w },
+	{ 0xf000, 0xf000, Y8950_control_port_0_w },
+	{ 0xf400, 0xf400, Y8950_write_port_0_w },
 	{ 0xf800, 0xf800, snk_sound_register_w },
 MEMORY_END
 
@@ -346,18 +330,15 @@ static MEMORY_READ_START( Y8950_readmem_sound )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xf000, 0xf000, YM3526_status_port_0_r },
-//	{ 0xf000, 0xf000, Y8950_status_port_0_r },
+	{ 0xf000, 0xf000, Y8950_status_port_0_r },
 	{ 0xf800, 0xf800, snk_sound_register_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( Y8950_writemem_sound )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xf000, 0xf000, YM3526_control_port_0_w },
-	{ 0xf400, 0xf400, YM3526_write_port_0_w },
-//	{ 0xf000, 0xf000, Y8950_control_port_0_w },
-//	{ 0xf400, 0xf400, Y8950_write_port_0_w },
+	{ 0xf000, 0xf000, Y8950_control_port_0_w },
+	{ 0xf400, 0xf400, Y8950_write_port_0_w },
 	{ 0xf800, 0xf800, snk_sound_register_w },
 MEMORY_END
 
@@ -923,7 +904,8 @@ static MACHINE_DRIVER_START( victroad )
 	MDRV_VIDEO_UPDATE(ikari)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -959,7 +941,8 @@ static MACHINE_DRIVER_START( gwar )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -996,7 +979,8 @@ static MACHINE_DRIVER_START( bermudat )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -1032,7 +1016,8 @@ static MACHINE_DRIVER_START( psychos )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -1086,7 +1071,6 @@ static MACHINE_DRIVER_START( tdfever )
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
-	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1105,8 +1089,8 @@ static MACHINE_DRIVER_START( tdfever )
 	MDRV_VIDEO_UPDATE(tdfever)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
-//	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -1142,8 +1126,7 @@ static MACHINE_DRIVER_START( ftsoccer )
 	MDRV_VIDEO_UPDATE(ftsoccer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-//	MDRV_SOUND_ADD(Y8950, y8950_interface)
+	MDRV_SOUND_ADD(Y8950, y8950_interface)
 MACHINE_DRIVER_END
 
 
@@ -3450,8 +3433,8 @@ GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270, "SNK", "B
 GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270, "SNK", "World Wars (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I", GAME_NO_COCKTAIL )
+GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1988, ftsoccer, 0,        ftsoccer, ftsoccer, ftsoccer, ROT0,   "SNK", "Fighting Soccer", GAME_NO_COCKTAIL )

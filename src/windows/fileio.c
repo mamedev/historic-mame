@@ -104,8 +104,13 @@ static const char **samplepathv = NULL;
 static int samplepathc = 0;
 static int samplepath_needs_decomposition = 1;
 
+static const char **inipathv = NULL;
+static int inipathc = 0;
+static int inipath_needs_decomposition = 1;
+
 static const char *rompath;
 static const char *samplepath;
+static const char *inipath;
 static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir, *diffdir, *ctrlrdir;
 static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 
@@ -129,7 +134,7 @@ static int checksum_file(const char *file, UINT8 **p, unsigned int *size, unsign
 
 static int request_decompose_rompath(struct rc_option *option, const char *arg, int priority);
 static int request_decompose_samplepath(struct rc_option *option, const char *arg, int priority);
-
+static int request_decompose_inipath(struct rc_option *option, const char *arg, int priority);
 
 
 //============================================================
@@ -142,6 +147,7 @@ struct rc_option fileio_opts[] =
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, request_decompose_rompath, "path to romsets" },
 	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, request_decompose_samplepath, "path to samplesets" },
+	{ "inipath", NULL, rc_string, &inipath, ".;ini", 0, 0, request_decompose_inipath, "path to ini files" },
 	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
 	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
 	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
@@ -182,6 +188,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 		case OSD_FILETYPE_ARTWORK:
 		case OSD_FILETYPE_HISTORY:
 		case OSD_FILETYPE_LANGUAGE:
+		case OSD_FILETYPE_INI:
 			if (openforwrite)
 			{
 				logerror("osd_fopen: type %02x write not supported\n", filetype);
@@ -288,6 +295,10 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 		case OSD_FILETYPE_CTRLR:
 			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
 
+		// game specific ini files
+		case OSD_FILETYPE_INI:
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, FILEFLAG_OPENREAD);
+
 		// anything else
 		default:
 			logerror("osd_fopen(): unknown filetype %02x\n", filetype);
@@ -367,25 +378,26 @@ int osd_faccess(const char *filename, int filetype)
 			if (cache_stat(name, &stat_buffer) == 0)
 				return 1;
 
-			// does such a directory (or file) exist?
-			sprintf(name, "%s/%s", dir_name, modified_filename);
-			LOG(("osd_faccess: trying %s\n", name));
-			if (cache_stat(name, &stat_buffer) == 0)
-				return 1;
-
 			// try again with a .zip extension
-			sprintf(name, "%s/%s.zip", dir_name, modified_filename);
+			sprintf(name, "%s/%s.zip", dir_name, filename);
 			LOG(("osd_faccess: trying %s\n", name));
 			if (cache_stat(name, &stat_buffer) == 0)
 				return 1;
 
 #if SUPPORT_AUTOZIP_UTILITIES
 			// try again with a .zif extension
-			sprintf(name, "%s/%s.zif", dir_name, modified_filename);
+			sprintf(name, "%s/%s.zif", dir_name, filename);
 			LOG(("osd_faccess: trying %s\n", name));
 			if (cache_stat(name, &stat_buffer) == 0)
 				return 1;
 #endif
+
+			// does such a directory (or file) exist?
+			sprintf(name, "%s/%s", dir_name, modified_filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
+
 		}
 	}
 
@@ -882,6 +894,7 @@ char *osd_strip_extension(char *filename)
 // called while loading ROMs. It is called a last time with name == 0 to signal
 // that the ROM loading process is finished.
 // return non-zero to abort loading
+#ifndef WINUI
 int osd_display_loading_rom_message(const char *name, int current, int total)
 {
 	if (name)
@@ -892,6 +905,7 @@ int osd_display_loading_rom_message(const char *name, int current, int total)
 
 	return 0;
 }
+#endif
 
 
 
@@ -1071,7 +1085,6 @@ static int request_decompose_rompath(struct rc_option *option, const char *arg, 
 }
 
 
-
 //============================================================
 //	request_decompose_samplepath
 //============================================================
@@ -1083,6 +1096,17 @@ static int request_decompose_samplepath(struct rc_option *option, const char *ar
 	return 0;
 }
 
+
+//============================================================
+//	request_decompose_inipath
+//============================================================
+
+static int request_decompose_inipath(struct rc_option *option, const char *arg, int priority)
+{
+	inipath_needs_decomposition = 1;
+	option->priority = priority;
+	return 0;
+}
 
 
 //============================================================
@@ -1101,6 +1125,12 @@ static void decompose_paths_if_needed(void)
 	{
 		decompose_path(samplepath, NULL, &samplepathc, &samplepathv);
 		samplepath_needs_decomposition = 0;
+	}
+
+	if (inipath_needs_decomposition)
+	{
+		decompose_path(inipath, NULL, &inipathc, &inipathv);
+		inipath_needs_decomposition = 0;
 	}
 }
 
@@ -1262,6 +1292,12 @@ static int get_pathlist_for_filetype(int filetype, const char ***pathlist, const
 			*pathlist = &ctrlrdir;
 			*extension = "ini";
 			return 1;
+
+		// game specific ini files
+		case OSD_FILETYPE_INI:
+			*pathlist = (const char **)inipathv;
+			*extension = "ini";
+			return inipathc;
 
 		// anything else
 		default:

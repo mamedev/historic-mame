@@ -727,7 +727,7 @@ INPUT_PORTS_END
 static struct SN76496interface sn76489_intf =
 {
 	2,		/* 2 chips */
-	{ 4000000, 4000000 },	/* 4 mhz? (guess) */
+	{ 4000000, 4000000 },	/* 4 MHz? (guess) */
 	{ 50, 50 }
 };
 

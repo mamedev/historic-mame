@@ -44,6 +44,8 @@ static void sprite_callback(int *code,int *color,int *priority_mask)
 
 VIDEO_START( surpratk )
 {
+	K053251_vh_start();
+
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
@@ -92,9 +94,9 @@ VIDEO_UPDATE( surpratk )
 
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],cliprect);
-	K052109_tilemap_draw(bitmap,cliprect,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,cliprect,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,cliprect,layer[2],0,4);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[0]],0,1);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[1]],0,2);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[2]],0,4);
 
 	K053245_sprites_draw(bitmap,cliprect);
 }

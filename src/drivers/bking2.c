@@ -1,7 +1,7 @@
 /***************************************************************************
 
-Birdie King II Memory Map
--------------------------
+Birdie King / Birdie King II Memory Map
+---------------------------------------
 
 0000-7fff ROM
 8000-83ff Scratch RAM
@@ -10,7 +10,9 @@ Birdie King II Memory Map
 A000-Bfff Unused?
 
 
-NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
+NOTE:
+ROM DM03 is missing from all known ROM sets.  This is a color palette.
+* is this note out of date?, DM_03.d1 in bking.zip = 82s141.2d in bking2.zip
 
 ***************************************************************************/
 
@@ -359,6 +361,43 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
+ROM_START( bking )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "dm_11.f13", 0x0000, 0x1000, 0xd84fe4f7 )
+	ROM_LOAD( "dm_12.f11", 0x1000, 0x1000, 0xe065bbe6 )
+	ROM_LOAD( "dm_13.f10", 0x2000, 0x1000, 0xaac7cddd )
+	ROM_LOAD( "dm_14.f8",  0x3000, 0x1000, 0x1179d074 )
+	ROM_LOAD( "dm_15.f7",  0x4000, 0x1000, 0xfda31475 )
+	ROM_LOAD( "dm_16.f5",  0x5000, 0x1000, 0xb6c3c3ed )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound ROMs */
+	ROM_LOAD( "dm_17.f4",  0x0000, 0x1000, 0x54840bc3 )
+	ROM_LOAD( "dm_18.d4",  0x1000, 0x1000, 0x2abadd42 )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "dm_10.a5",  0x0000, 0x1000, 0xfe96dd67 )
+	ROM_LOAD( "dm_09.a7",  0x1000, 0x1000, 0x80c675d7 )
+	ROM_LOAD( "dm_08.a8",  0x2000, 0x1000, 0xd9bd6b60 )
+	ROM_LOAD( "dm_07.a10", 0x3000, 0x1000, 0x65f7a0e4 )
+	ROM_LOAD( "dm_06.a11", 0x4000, 0x1000, 0x00fdbafc )
+	ROM_LOAD( "dm_05.a13", 0x5000, 0x1000, 0x3e4fe925 )
+
+	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "dm_01.e10", 0x0000, 0x0800, 0xe5663f0b ) /* crow graphics */
+
+	ROM_REGION( 0x0800, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "dm_02.e7",  0x0000, 0x0800, 0xfc9cec31 ) /* ball 1 graphics. Only the first 128 bytes used */
+
+	ROM_REGION( 0x0800, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "dm_02.e9",  0x0000, 0x0800, 0xfc9cec31 ) /* ball 2 graphics. Only the first 128 bytes used */
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "dm_03.d1",  0x0000, 0x0200, 0x61b7a9ff ) /* palette */
+	/* Collision detection prom 32x1 (not currently used) */
+	/* HIT0-1 go to A3-A4. Character image goes to A0-A2 */
+	ROM_LOAD( "dm04.c2",   0x0200, 0x0020, 0x4cb5bd32 )
+ROM_END
+
 ROM_START( bking2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "01.13f",       0x0000, 0x1000, 0x078ada3f )
@@ -398,6 +437,5 @@ ROM_START( bking2 )
 	ROM_LOAD( "mb7051.2c",    0x0200, 0x0020, 0x4cb5bd32 )
 ROM_END
 
-
-
-GAME( 1983, bking2, 0, bking2, bking2, 0, ROT90, "Taito Corporation", "Birdie King 2" )
+GAMEX( 1982, bking,  0, bking2, bking2, 0, ROT270, "Taito Corporation", "Birdie King", GAME_NOT_WORKING )
+GAMEX( 1983, bking2, 0, bking2, bking2, 0, ROT90,  "Taito Corporation", "Birdie King 2", GAME_NOT_WORKING )

@@ -25,10 +25,6 @@ VIDEO_START( tail2nos );
 VIDEO_UPDATE( tail2nos );
 
 
-static READ_HANDLER( pip )
-{
-	return rand()&0xffff;
-}
 static MACHINE_INIT( tail2nos )
 {
 	/* point to the extra ROMs */
@@ -192,7 +188,7 @@ INPUT_PORTS_START( tail2nos )
 	PORT_DIPSETTING(      0x0100, "Easy" )
 	PORT_DIPSETTING(      0x0000, "Normal" )
 	PORT_DIPSETTING(      0x0200, "Hard" )
-	PORT_DIPSETTING(      0x0300, "Super" )
+	PORT_DIPSETTING(      0x0300, "Hardest" )
 	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )

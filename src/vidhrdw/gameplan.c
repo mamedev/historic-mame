@@ -226,7 +226,7 @@ WRITE_HANDLER( gameplan_video_w )
 					xpos++;
 			}
 
-			plot_pixel2(Machine->scrbitmap, tmpbitmap, xpos, ypos, Machine->pens[colour]);
+			plot_pixel(tmpbitmap, xpos, ypos, Machine->pens[colour]);
 		}
 		else if (r0 == 1)
 		{
@@ -340,7 +340,6 @@ void gameplan_clear_screen(void)
 #endif
 
 	fillbitmap(tmpbitmap, Machine->pens[clear_to_colour], 0);
-	fillbitmap(Machine->scrbitmap, Machine->pens[clear_to_colour], 0);
 
 	fix_clear_to_colour = -1;
 }

@@ -230,37 +230,40 @@ int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const UINT16 
 		UINT16 tsource[4];
 		UINT16 width;
 		int gfx;
-		tsource[2]=source[2];
-		tsource[3]=source[3];
+
+		if (spr_pri) { /* MASH - ?? */
+			tsource[2]=source[2];
+			tsource[3]=source[3];
 #ifndef TRANSPARENT_SHADOWS
-		if( pal==0x3f ) pal = (bank<<1); // shadow sprite
+			if( pal==0x3f ) pal = (bank<<1); // shadow sprite
 #endif
-		if((tsource[3] & 0x7f80) == 0x7f80){
-			bank=(bank-1)&0xf;
-			tsource[3]^=0x8000;
-		}
-		tsource[2] &= 0x00ff;
-		if (tsource[3]&0x8000){ // reverse
-			tsource[2] |= 0x0100;
-			tsource[3] &= 0x7fff;
-		}
-		gfx = tsource[3]*4;
-		width = tsource[2];
-		top++;
-		bottom++;
-		sprite->x = source[1] + sys16_sprxoffset;
-		if(sprite->x > 0x140) sprite->x-=0x200;
-		sprite->y = top;
-		sprite->priority = spr_pri;
-		sprite->color = 1024/16 + pal;
-		sprite->screen_height = bottom-top;
-		sprite->pitch = width&0xff;
-		sprite->flags = SYS16_SPR_VISIBLE;
-		if( width&0x100 ) sprite->flags |= SYS16_SPR_FLIPX;
+			if((tsource[3] & 0x7f80) == 0x7f80){
+				bank=(bank-1)&0xf;
+				tsource[3]^=0x8000;
+			}
+			tsource[2] &= 0x00ff;
+			if (tsource[3]&0x8000){ // reverse
+				tsource[2] |= 0x0100;
+				tsource[3] &= 0x7fff;
+			}
+			gfx = tsource[3]*4;
+			width = tsource[2];
+			top++;
+			bottom++;
+			sprite->x = source[1] + sys16_sprxoffset;
+			if(sprite->x > 0x140) sprite->x-=0x200;
+			sprite->y = top;
+			sprite->priority = spr_pri;
+			sprite->color = 1024/16 + pal;
+			sprite->screen_height = bottom-top;
+			sprite->pitch = width&0xff;
+			sprite->flags = SYS16_SPR_VISIBLE;
+			if( width&0x100 ) sprite->flags |= SYS16_SPR_FLIPX;
 #ifdef TRANSPARENT_SHADOWS
-		if( pal==0x3f ) sprite->flags|= SYS16_SPR_SHADOW; // shadow sprite
+			if( pal==0x3f ) sprite->flags|= SYS16_SPR_SHADOW; // shadow sprite
 #endif
-		sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
+			sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
+		}
 	}
 	return 0;
 }
@@ -346,13 +349,13 @@ int sys16_sprite_sharrier( struct sys16_sprite_attributes *sprite, const UINT16 
 		if(sprite->x >= 0x200) sprite->x-=0x200;
 		sprite->y = top+1;
 		sprite->priority = 0;
-		sprite->screen_height = bottom-top;
+		sprite->screen_height = bottom-top-1;
 		sprite->pitch = (source[2]&0x7f)*2;
 		sprite->flags = SYS16_SPR_VISIBLE;
 		if( source[3]&0x8000 ) sprite->flags |= SYS16_SPR_FLIPX;
 #ifdef TRANSPARENT_SHADOWS
 		if (sys16_sh_shadowpal == 0){ // space harrier
-			if( pal==sys16_sh_shadowpal ) sprite->flags|= SYS16_SPR_SHADOW;
+			if( ((source[2]>>8)&0x3f)==sys16_sh_shadowpal ) sprite->flags|= SYS16_SPR_SHADOW;
 		}
 		else { // enduro
 			sprite->flags|= SYS16_SPR_PARTIAL_SHADOW;
@@ -395,7 +398,7 @@ int sys16_sprite_outrun( struct sys16_sprite_attributes *sprite, const UINT16 *s
 		sprite->y = source[0]&0xff;
 		sprite->priority = 3;
 		sprite->color = 0x80 + (source[5]&0x7f);
-		sprite->screen_height = (source[5]>>8)+1;
+		sprite->screen_height = (source[5]>>8)-1;
 		sprite->pitch = (source[2]>>8)&0xfe; /* 32 bit sprites */
 		if( (source[4]&0x4000)==0 ) sprite->flags |= SYS16_SPR_FLIPX;
 		if( (source[4]&0x2000)==0 ) sprite->flags |= SYS16_SPR_DRAW_TO_LEFT;
@@ -405,7 +408,7 @@ int sys16_sprite_outrun( struct sys16_sprite_attributes *sprite, const UINT16 *s
 		sprite->zoomy = zoomy;
 		sprite->gfx = gfx;
 #ifdef TRANSPARENT_SHADOWS
-		if( pal==0 ) sprite->flags|= SYS16_SPR_SHADOW;
+		if( (source[5]&0x7f)==0 ) sprite->flags|= SYS16_SPR_SHADOW;
 		else if( source[3]&0x4000 ){
 			sprite->flags|= SYS16_SPR_PARTIAL_SHADOW;
 			sprite->shadow_pen=10;
@@ -446,7 +449,7 @@ int sys16_sprite_aburner( struct sys16_sprite_attributes *sprite, const UINT16 *
 		sprite->y = source[0]&0xff;
 		sprite->priority = 0;
 		sprite->color = source[6]&0xff;
-		sprite->screen_height = (source[5]&0xff)+1;
+		sprite->screen_height = (source[5]&0xff)-1;
 		sprite->pitch = (source[2]>>8)&0xfe; /* 32 bit sprites */
 		if( (source[4]&0x4000)==0 ) sprite->flags |= SYS16_SPR_FLIPX;
 		if( (source[4]&0x2000)==0 ) sprite->flags |= SYS16_SPR_DRAW_TO_LEFT;

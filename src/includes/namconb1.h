@@ -15,16 +15,6 @@
 #define NAMCONB1_SPRITEGFX		1
 #define NAMCONB1_ROTGFX			2
 
-extern enum namconb1_type
-{
-	key_nebulray,
-	key_gunbulet,
-	key_gslgr94u,
-	key_sws96,
-	key_sws97,
-	key_outfoxies
-} namconb1_type;
-
 extern data32_t *namconb1_workram32;
 extern data32_t *namconb1_spritebank32;
 extern data32_t *namconb1_scrollram32;

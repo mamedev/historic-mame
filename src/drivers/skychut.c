@@ -56,7 +56,7 @@ static PALETTE_INIT( greenber )
 static MEMORY_READ_START( skychut_readmem )
 	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
 	{ 0x1000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x4400, MRA_RAM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x4800, 0x4bff, MRA_RAM }, /* Foreground colour  */
 	{ 0x5000, 0x53ff, MRA_RAM }, /* BKgrnd colour ??? */
 	{ 0xa200, 0xa200, input_port_1_r },
@@ -69,18 +69,18 @@ MEMORY_END
 static MEMORY_WRITE_START( skychut_writemem )
 	{ 0x0000, 0x02ff, MWA_RAM, &memory },
 	{ 0x1000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x4400, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4bff, skychut_colorram_w,&colorram }, /* foreground colour  */
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
 	{ 0x5000, 0x53ff, MWA_RAM, &iremm15_chargen }, /* background ????? */
 	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0Xa400, 0xa400, skychut_vh_flipscreen_w },
+	{ 0xa400, 0xa400, skychut_vh_flipscreen_w },
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
 static MEMORY_READ_START( greenberet_readmem )
 	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
 	{ 0x1000, 0x33ff, MRA_ROM },
-	{ 0x4000, 0x4400, MRA_RAM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x4800, 0x4bff, MRA_RAM }, /* Foreground colour  */
 	{ 0x5000, 0x57ff, MRA_RAM },
 	{ 0xa000, 0xa000, input_port_3_r },
@@ -92,11 +92,11 @@ MEMORY_END
 static MEMORY_WRITE_START( greenberet_writemem )
 	{ 0x0000, 0x02ff, MWA_RAM, &memory },
 	{ 0x1000, 0x33ff, MWA_ROM },
-	{ 0x4000, 0x4400, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4bff, skychut_colorram_w,&colorram }, /* foreground colour  */
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
 	{ 0x5000, 0x57ff, MWA_RAM, &iremm15_chargen },
 	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0Xa400, 0xa400, skychut_vh_flipscreen_w },
+	{ 0xa400, 0xa400, skychut_vh_flipscreen_w },
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
@@ -188,13 +188,13 @@ static MACHINE_DRIVER_START( skychut )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(7)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
-	
+
 	MDRV_PALETTE_INIT(skychut)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(skychut)
@@ -214,7 +214,7 @@ static MACHINE_DRIVER_START( greenberet )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(8)

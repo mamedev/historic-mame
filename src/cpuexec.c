@@ -1150,6 +1150,9 @@ static void cpu_vblankcallback(int param)
 {
 	int cpunum;
 
+   if (vblank_countdown == 1)
+      vblank = 1;
+
 	/* loop over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
@@ -1194,7 +1197,6 @@ static void cpu_vblankcallback(int param)
 
 		/* Set the timer to update the screen */
 		timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, cpu_updatecallback);
-		vblank = 1;
 
 		/* reset the globals */
 		cpu_vblankreset();

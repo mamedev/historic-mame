@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Centuri Aztarac hardware
-	
+
 	driver by Mathis Rosenhauer
 	Thanks to David Fish for additional hardware information.
 
@@ -189,7 +189,7 @@ static MACHINE_DRIVER_START( aztarac )
 	MDRV_CPU_ADD(M68000, 8000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
-	
+
 	MDRV_CPU_ADD(Z80, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
@@ -200,7 +200,7 @@ static MACHINE_DRIVER_START( aztarac )
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1024-1, 0, 768-1)
 	MDRV_PALETTE_LENGTH(32768)

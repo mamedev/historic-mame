@@ -331,9 +331,6 @@ extern data8_t *generic_nvram;
 extern void nvram_handler_generic_0fill(void *file, int read_or_write);
 extern void nvram_handler_generic_1fill(void *file, int read_or_write);
 
-/* controls the global visible area */
-void set_visible_area(int min_x,int max_x,int min_y,int max_y);
-
 /* bitmap allocation */
 struct mame_bitmap *bitmap_alloc(int width,int height);
 struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
@@ -354,10 +351,11 @@ struct mame_bitmap *auto_bitmap_alloc(int width,int height);
 struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 
 /* screen snapshots */
-void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap);
-void save_screen_snapshot(struct mame_bitmap *bitmap);
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds);
+void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds);
 
 /* ROM processing */
+int rom_load(const struct RomModule *romp);
 const struct RomModule *rom_first_region(const struct GameDriver *drv);
 const struct RomModule *rom_next_region(const struct RomModule *romp);
 const struct RomModule *rom_first_file(const struct RomModule *romp);
@@ -365,7 +363,6 @@ const struct RomModule *rom_next_file(const struct RomModule *romp);
 const struct RomModule *rom_first_chunk(const struct RomModule *romp);
 const struct RomModule *rom_next_chunk(const struct RomModule *romp);
 
-int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);
 
 

@@ -48,8 +48,6 @@ CHANGELOG
 
 VIDEO_START(moo);
 VIDEO_UPDATE(moo);
-VIDEO_START(bucky);
-VIDEO_UPDATE(bucky);
 
 static int cur_control2;
 
@@ -521,6 +519,12 @@ static struct K054539interface k054539_interface =
 	{ { 100, 100 } },
 };
 
+static MACHINE_INIT( moo )
+{
+	init_nosound_count = 0;
+}
+
+
 static MACHINE_DRIVER_START( moo )
 
 	/* basic machine hardware */
@@ -535,6 +539,8 @@ static MACHINE_DRIVER_START( moo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_INIT(moo)
+
 	MDRV_NVRAM_HANDLER(moo)
 
 	/* video hardware */
@@ -543,7 +549,7 @@ static MACHINE_DRIVER_START( moo )
 	/* visrgn derived by opening it all the way up, taking snapshots,
 	   and measuring in the GIMP.  The character select screen demands this
 	   geometry or stuff gets cut off */
-	MDRV_VISIBLE_AREA(34, 34+384-1, 16, 16+224-1)
+	MDRV_VISIBLE_AREA(8*8, 56*8-1, 2*8, 30*8-1)
 
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -561,16 +567,9 @@ static MACHINE_DRIVER_START( bucky )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(buckyreadmem,buckywritemem)
-	MDRV_CPU_VBLANK_INT(moo_interrupt, 2)
 
 	/* video hardware */
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(38, 38+384-1, 2*8, 2*8+224-1)
-
 	MDRV_PALETTE_LENGTH(4096)
-
-	MDRV_VIDEO_START(bucky)
-	MDRV_VIDEO_UPDATE(bucky)
 MACHINE_DRIVER_END
 
 
@@ -651,7 +650,7 @@ ROM_START( bucky )
 
 	ROM_REGION( 0x050000, REGION_CPU2, 0 )
 	/* Z80 sound program */
-	ROM_LOAD("173.a07", 0x000000, 0x40000, 0x4cdaee71)
+	ROM_LOAD("173.a07", 0x000000, 0x40000, 0x4cdaee71 )
 	ROM_RELOAD(         0x010000, 0x040000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 )
@@ -684,7 +683,7 @@ ROM_START( buckyua )
 
 	ROM_REGION( 0x050000, REGION_CPU2, 0 )
 	/* Z80 sound program */
-	ROM_LOAD("f5", 0x000000, 0x40000, 0x4cdaee71)
+	ROM_LOAD("173.a07", 0x000000, 0x40000, 0x4cdaee71 )
 	ROM_RELOAD(         0x010000, 0x040000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 )
@@ -706,20 +705,17 @@ ROM_START( buckyua )
 ROM_END
 
 
-static void init_moo(void)
+static DRIVER_INIT( moo )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-
-	init_nosound_count = 0;
 
 	state_save_register_INT32("Moo", 0, "control2", (INT32 *)&cur_control2, 1);
 	state_save_register_UINT16("Moo", 0, "protram", (UINT16 *)protram, 1);
 }
 
 
-GAME( 1992, moo,      0,       moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (World version EA)")
-GAME( 1992, mooua,    moo,     moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (US version UA)")
-GAME( 1992, bucky,    0,       bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (World version EA)")
-GAME( 1992, buckyua,  bucky,   bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (US version UA)")
-
+GAME( 1992, moo,     0,       moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (World version EA)")
+GAME( 1992, mooua,   moo,     moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (US version UA)")
+GAME( 1992, bucky,   0,       bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (World version EA)")
+GAME( 1992, buckyua, bucky,   bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (US version UA)")

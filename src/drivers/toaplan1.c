@@ -15,20 +15,26 @@ Supported games:
 	--------------------------------------------------
 	rallybik	TP-012		Rally Bike/Dash Yarou
 	truxton		TP-013B		Truxton/Tatsujin
-	hellfire	TP-???		HellFire
+	hellfire	TP-???		HellFire (2 Player version)
+	hellfir1	TP-???		HellFire (1 Player version)
 	zerowing	TP-015		Zero Wing
 	demonwld	TP-016		Demon's World/Horror Story [1990]
 	demonwl1	TP-016		Demon's World/Horror Story [1989] (Taito license)
-	fireshrk	TP-017		Fire Shark (World)		 [1990]
-	samesame	TP-017		Same Same Same! (Japan)	 [1989]
+	fireshrk	TP-017		Fire Shark (World)			 [1990]
+	samesame	TP-017		Same! Same! Same! (Japan)	 [1989] (1 Player version)
+	samesam2	TP-017		Same! Same! Same! (Japan)	 [1989] (2 Player version)
 	outzone		TP-018		Out Zone
-	outzonea	TP-018		Out Zone
-	vimana		TP-019		Vimana
+	outzonea	TP-018		Out Zone (From board serial number 2122)
+	vimana		TP-019		Vimana (From board serial number 1547.04 [July '94])
 	vimana1		TP-019		Vimana (older version)
 	vimanan		TP-019		Vimana (Nova Apparate GMBH & Co  license)
 
 
 Notes:
+	Fire Shark and Same! Same! Same! have a hidden function for the
+	service input. When invulnerability is enabled, pressing the
+	service input makes the screen scroll faster.
+
 	OutZone (set 2) has a bug in the 68K code. An Jump instruction at $3E6
 	goes to to an invalid instruction at $13DA4. It should really jump to
 	$13DAA. This bad jump is executed by flicking the 'Service DSW' while
@@ -488,7 +494,7 @@ PORT_END
 
 #define  TOAPLAN1_SYSTEM_INPUTS						\
 	PORT_START										\
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) 	\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 ) 	\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		\
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	\
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )		\
@@ -679,8 +685,8 @@ INPUT_PORTS_START( hellfire )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-    PORT_DIPSETTING(    0x00, "70K, every 200K" )
-    PORT_DIPSETTING(    0x04, "100K, every 250K" )
+	PORT_DIPSETTING(    0x00, "70K, every 200K" )
+	PORT_DIPSETTING(    0x04, "100K, every 250K" )
 	PORT_DIPSETTING(    0x08, "100K" )
 	PORT_DIPSETTING(    0x0c, "200K" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -694,6 +700,75 @@ INPUT_PORTS_START( hellfire )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	TOAPLAN1_SYSTEM_INPUTS
+
+	PORT_START		/* Territory Jumper block */
+	PORT_DIPNAME( 0x03, 0x02, "Territory" )
+	PORT_DIPSETTING(    0x02, "Europe" )
+//	PORT_DIPSETTING(    0x03, "Europe" )
+	PORT_DIPSETTING(    0x01, "US" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hellfir1 )
+	TOAPLAN1_VBLANK_INPUT
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN )
+
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START		/* DSWB */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "70K, every 200K" )
+	PORT_DIPSETTING(    0x04, "100K, every 250K" )
+	PORT_DIPSETTING(    0x08, "100K" )
+	PORT_DIPSETTING(    0x0c, "200K" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
 	TOAPLAN1_SYSTEM_INPUTS
 
@@ -748,8 +823,8 @@ INPUT_PORTS_START( zerowing )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-    PORT_DIPSETTING(    0x00, "200K, every 500K" )
-    PORT_DIPSETTING(    0x04, "500K, every 1M" )
+	PORT_DIPSETTING(    0x00, "200K, every 500K" )
+	PORT_DIPSETTING(    0x04, "500K, every 1M" )
 	PORT_DIPSETTING(    0x08, "500K" )
 	PORT_DIPSETTING(    0x0c, "None" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -1002,6 +1077,97 @@ INPUT_PORTS_START( samesame )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( samesam2 )
+	TOAPLAN1_VBLANK_INPUT
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN )
+
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+/* settings listed in service mode, but not actually used ???
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+*/
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "50K, every 150K" )
+	PORT_DIPSETTING(    0x00, "70K, every 200K" )
+	PORT_DIPSETTING(    0x08, "100K" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	TOAPLAN1_SYSTEM_INPUTS
+
+	PORT_START		/* Territory Jumper Block */
+/* settings listed in service mode, but not actually used
+	PORT_DIPNAME( 0x03, 0x00, "Territory" )
+//	PORT_DIPSETTING(    0x01, "Europe" )
+//	PORT_DIPSETTING(    0x02, "Europe" )
+	PORT_DIPSETTING(    0x03, "Europe" )
+	PORT_DIPSETTING(    0x00, "USA" )
+*/
+	PORT_DIPNAME( 0x01, 0x00, "Show Territory Notice" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+//	PORT_DIPNAME( 0x02, 0x00, "Show Territory Notice" )	/* Same as Bit 1 */
+//	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf2, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Mask bit 2 aswell */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fireshrk )
@@ -1428,9 +1594,10 @@ static MACHINE_DRIVER_START( truxton )
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(truxton_sound_readport,truxton_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 270) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
+
 
 	MDRV_MACHINE_INIT(toaplan1)
 
@@ -1560,7 +1727,7 @@ static MACHINE_DRIVER_START( samesame )
 	MDRV_CPU_MEMORY(samesame_readmem,samesame_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 270) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(toaplan1)
@@ -1592,7 +1759,7 @@ static MACHINE_DRIVER_START( outzone )
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(outzone_sound_readport,outzone_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 282) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
@@ -1698,27 +1865,60 @@ ROM_START( truxton )
 	ROM_LOAD( "b65_03.bin",  0x20000, 0x20000, 0x58b1350b )
 	ROM_LOAD( "b65_02.bin",  0x40000, 0x20000, 0x1dd55161 )
 	ROM_LOAD( "b65_01.bin",  0x60000, 0x20000, 0xe974937f )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "b65_12.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "b65_13.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( hellfire )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "b90-14.bin",  0x000000, 0x20000, 0x101df9f5 )
-	ROM_LOAD16_BYTE( "b90-15.bin",  0x000001, 0x20000, 0xe67fd452 )
+	ROM_LOAD16_BYTE( "b90_14.0",    0x000000, 0x20000, 0x101df9f5 )
+	ROM_LOAD16_BYTE( "b90_15.1",    0x000001, 0x20000, 0xe67fd452 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
-	ROM_LOAD( "b90-03.bin",  0x0000, 0x8000, 0x4058fa67 )
+	ROM_LOAD( "b90_03.2",   0x0000, 0x8000, 0x4058fa67 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b90-04.bin",  0x00000, 0x20000, 0xea6150fc )
-	ROM_LOAD( "b90-05.bin",  0x20000, 0x20000, 0xbb52c507 )
-	ROM_LOAD( "b90-06.bin",  0x40000, 0x20000, 0xcf5b0252 )
-	ROM_LOAD( "b90-07.bin",  0x60000, 0x20000, 0xb98af263 )
+	ROM_LOAD( "b90_04.3",   0x00000, 0x20000, 0xea6150fc )
+	ROM_LOAD( "b90_05.4",   0x20000, 0x20000, 0xbb52c507 )
+	ROM_LOAD( "b90_06.5",   0x40000, 0x20000, 0xcf5b0252 )
+	ROM_LOAD( "b90_07.6",   0x60000, 0x20000, 0xb98af263 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b90-11.bin",  0x00000, 0x20000, 0xc33e543c )
-	ROM_LOAD( "b90-10.bin",  0x20000, 0x20000, 0x35fd1092 )
-	ROM_LOAD( "b90-09.bin",  0x40000, 0x20000, 0xcf01009e )
-	ROM_LOAD( "b90-08.bin",  0x60000, 0x20000, 0x3404a5e3 )
+	ROM_LOAD( "b90_11.10",  0x00000, 0x20000, 0xc33e543c )
+	ROM_LOAD( "b90_10.9",   0x20000, 0x20000, 0x35fd1092 )
+	ROM_LOAD( "b90_09.8",   0x40000, 0x20000, 0xcf01009e )
+	ROM_LOAD( "b90_08.7",   0x60000, 0x20000, 0x3404a5e3 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "3w.bpr",     0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "6b.bpr",     0x20, 0x20, 0xa1e17492 )	/* ??? */
+ROM_END
+
+ROM_START( hellfir1 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "b90_14x.0",   0x000000, 0x20000, 0xa3141ea5 )
+	ROM_LOAD16_BYTE( "b90_15x.1",   0x000001, 0x20000, 0xe864daf4 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
+	ROM_LOAD( "b90_03x.2",  0x0000, 0x8000, 0xf58c368f )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b90_04.3",   0x00000, 0x20000, 0xea6150fc )
+	ROM_LOAD( "b90_05.4",   0x20000, 0x20000, 0xbb52c507 )
+	ROM_LOAD( "b90_06.5",   0x40000, 0x20000, 0xcf5b0252 )
+	ROM_LOAD( "b90_07.6",   0x60000, 0x20000, 0xb98af263 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b90_11.10",  0x00000, 0x20000, 0xc33e543c )
+	ROM_LOAD( "b90_10.9",   0x20000, 0x20000, 0x35fd1092 )
+	ROM_LOAD( "b90_09.8",   0x40000, 0x20000, 0xcf01009e )
+	ROM_LOAD( "b90_08.7",   0x60000, 0x20000, 0x3404a5e3 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "3w.bpr",     0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "6b.bpr",     0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( zerowing )
@@ -1742,6 +1942,10 @@ ROM_START( zerowing )
 	ROM_LOAD( "o15-04.rom",  0x20000, 0x20000, 0x0b1a1289 )
 	ROM_LOAD( "o15-01.rom",  0x40000, 0x20000, 0x70570e43 )
 	ROM_LOAD( "o15-02.rom",  0x60000, 0x20000, 0x724b487f )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp015_14.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp015_15.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( demonwld )
@@ -1824,14 +2028,18 @@ ROM_START( samesame )
 	ROM_LOAD( "o17_02.bin",  0x20000, 0x20000, 0x32a13a9f )
 	ROM_LOAD( "o17_03.bin",  0x40000, 0x20000, 0x68723dc9 )
 	ROM_LOAD( "o17_04.bin",  0x60000, 0x20000, 0xfe0ecb13 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp017_13.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp017_14.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
-ROM_START( fireshrk )
+ROM_START( samesam2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "9.bin",  0x000000, 0x08000, 0xf0c70e6f )
-	ROM_LOAD16_BYTE( "10.bin", 0x000001, 0x08000, 0x9d253d77 )
-	ROM_LOAD16_BYTE( "11.bin", 0x040000, 0x20000, 0x6beac378 )
-	ROM_LOAD16_BYTE( "12.bin", 0x040001, 0x20000, 0x6adb6eb5 )
+	ROM_LOAD16_BYTE( "o17_09x.bin", 0x000000, 0x08000, 0x3472e03e )
+	ROM_LOAD16_BYTE( "o17_10x.bin", 0x000001, 0x08000, 0xa3ac49b5 )
+	ROM_LOAD16_BYTE( "o17_11x.bin", 0x040000, 0x20000, 0x6beac378 )
+	ROM_LOAD16_BYTE( "o17_12x.bin", 0x040001, 0x20000, 0x6adb6eb5 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
@@ -1848,6 +2056,38 @@ ROM_START( fireshrk )
 	ROM_LOAD( "o17_02.bin",  0x20000, 0x20000, 0x32a13a9f )
 	ROM_LOAD( "o17_03.bin",  0x40000, 0x20000, 0x68723dc9 )
 	ROM_LOAD( "o17_04.bin",  0x60000, 0x20000, 0xfe0ecb13 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp017_13.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp017_14.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
+ROM_END
+
+ROM_START( fireshrk )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "09.bin",      0x000000, 0x08000, 0xf0c70e6f )
+	ROM_LOAD16_BYTE( "10.bin",      0x000001, 0x08000, 0x9d253d77 )
+	ROM_LOAD16_BYTE( "o17_11x.bin", 0x040000, 0x20000, 0x6beac378 )
+	ROM_LOAD16_BYTE( "o17_12x.bin", 0x040001, 0x20000, 0x6adb6eb5 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
+	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
+	ROM_LOAD( "hd647180.017",  0x00000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "o17_05.bin",  0x00000, 0x20000, 0x565315f8 )
+	ROM_LOAD( "o17_06.bin",  0x20000, 0x20000, 0x95262d4c )
+	ROM_LOAD( "o17_07.bin",  0x40000, 0x20000, 0x4c4b735c )
+	ROM_LOAD( "o17_08.bin",  0x60000, 0x20000, 0x95c6586c )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "o17_01.bin",  0x00000, 0x20000, 0xea12e491 )
+	ROM_LOAD( "o17_02.bin",  0x20000, 0x20000, 0x32a13a9f )
+	ROM_LOAD( "o17_03.bin",  0x40000, 0x20000, 0x68723dc9 )
+	ROM_LOAD( "o17_04.bin",  0x60000, 0x20000, 0xfe0ecb13 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp017_13.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp017_14.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( outzone )
@@ -1867,9 +2107,13 @@ ROM_START( outzone )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
 	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, 0x50cbf1a8 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp018_10.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
-ROM_START( outzonea )
+ROM_START( outzonea )					/* From board serial number 2122 */
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "18.bin",  0x000000, 0x20000, 0x31a171bb )
 	ROM_LOAD16_BYTE( "19.bin",  0x000001, 0x20000, 0x804ecfd1 )
@@ -1904,9 +2148,13 @@ ROM_START( outzonea )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
 	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, 0x50cbf1a8 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp018_10.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
-ROM_START( vimana )
+ROM_START( vimana )			/* From board serial number 1547.04 (July '94) */
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "tp019-7a.bin",  0x000000, 0x20000, 0x5a4bf73e )
 	ROM_LOAD16_BYTE( "tp019-8a.bin",  0x000001, 0x20000, 0x03ba27e8 )
@@ -1983,11 +2231,13 @@ ROM_END
 GAME ( 1988, rallybik, 0,        rallybik, rallybik, 0, ROT270, "[Toaplan] Taito Corporation", "Rally Bike / Dash Yarou" )
 GAME ( 1988, truxton,  0,        truxton,  truxton,  0, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin" )
 GAME ( 1989, hellfire, 0,        hellfire, hellfire, 0, ROT0,   "Toaplan (Taito license)", "Hellfire" )
+GAME ( 1989, hellfir1, hellfire, hellfire, hellfir1, 0, ROT0,   "Toaplan (Taito license)", "Hellfire (1P Ver.)" )
 GAME ( 1989, zerowing, 0,        zerowing, zerowing, 0, ROT0,   "Toaplan", "Zero Wing" )
 GAME ( 1990, demonwld, 0,        demonwld, demonwld, 0, ROT0,   "Toaplan", "Demon's World / Horror Story" )
 GAME ( 1989, demonwl1, demonwld, demonwld, demonwl1, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story (Taito license)" )
 GAMEX( 1990, fireshrk, 0,        samesame, fireshrk, 0, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
 GAMEX( 1989, samesame, fireshrk, samesame, samesame, 0, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
+GAMEX( 1989, samesam2, fireshrk, samesame, samesam2, 0, ROT270, "Toaplan", "Same! Same! Same! (2P Ver.)", GAME_NO_SOUND )
 GAME ( 1990, outzone,  0,        outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 1)" )
 GAME ( 1990, outzonea, outzone,  outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 2)" )
 GAMEX( 1991, vimana,   0,        vimana,   vimana,   0, ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )

@@ -13,6 +13,7 @@
 #include "blit.h"
 #include "video.h"
 #include "window.h"
+#include "vidhrdw/vector.h"
 
 
 
@@ -32,6 +33,7 @@ extern int verbose;
 #define DEBUG_BLITTERS		0
 #define MAX_BLITTER_SIZE	8192
 #define MAX_RGB_ROWS		8
+#define MAX_SCREEN_DIM		2048
 
 #undef RGB
 #define RGB					0
@@ -70,16 +72,6 @@ extern void asmblit1_16_to_24_x3(void);
 extern void asmblit1_16_to_32_x1(void);
 extern void asmblit1_16_to_32_x2(void);
 extern void asmblit1_16_to_32_x3(void);
-
-extern void asmblit1_24_to_16_x1(void);
-extern void asmblit1_24_to_16_x2(void);
-extern void asmblit1_24_to_16_x3(void);
-extern void asmblit1_24_to_24_x1(void);
-extern void asmblit1_24_to_24_x2(void);
-extern void asmblit1_24_to_24_x3(void);
-extern void asmblit1_24_to_32_x1(void);
-extern void asmblit1_24_to_32_x2(void);
-extern void asmblit1_24_to_32_x3(void);
 
 extern void asmblit1_32_to_16_x1(void);
 extern void asmblit1_32_to_16_x2(void);
@@ -133,27 +125,16 @@ extern void asmblit1_16_to_32_rgb(void);
 extern void asmblit16_16_to_32_rgb(void);
 
 extern void asmblit_header(void);
-extern void asmblit_header_dirty(void);
 extern void asmblit_yloop_top(void);
-extern void asmblit_yloop_top_dirty(void);
 extern void asmblit_middlexloop_header(void);
-extern void asmblit_middlexloop_header_dirty(void);
 extern void asmblit_middlexloop_top(void);
-extern void asmblit_middlexloop_top_dirty(void);
 extern void asmblit_middlexloop_bottom(void);
-extern void asmblit_middlexloop_bottom_dirty(void);
 extern void asmblit_lastxloop_header(void);
-extern void asmblit_lastxloop_header_dirty(void);
 extern void asmblit_lastxloop_top(void);
-extern void asmblit_lastxloop_top_dirty(void);
 extern void asmblit_lastxloop_bottom(void);
-extern void asmblit_lastxloop_bottom_dirty(void);
-extern void asmblit_yloop_bottom_dirty(void);
 extern void asmblit_yloop_bottom(void);
 extern void asmblit_footer(void);
-extern void asmblit_footer_dirty(void);
 extern void asmblit_footer_mmx(void);
-extern void asmblit_footer_mmx_dirty(void);
 
 extern int asmblit_has_mmx(void);
 extern int asmblit_has_xmm(void);
@@ -170,8 +151,6 @@ void *asmblit_srclookup;
 void *asmblit_dstdata;
 UINT32 asmblit_dstpitch;
 
-void *asmblit_dirtydata;
-
 UINT32 asmblit_mmxmask[4];
 UINT32 asmblit_rgbmask[MAX_VIDEO_HEIGHT * 2 * 16];
 
@@ -186,6 +165,11 @@ static UINT8				active_update_blitter[MAX_BLITTER_SIZE];
 
 // current parameters
 static struct win_blit_params	active_blitter_params;
+static struct win_blit_params	active_vector_params;
+
+// coordinate transforms
+static int					xtrans[MAX_SCREEN_DIM];
+static int					ytrans[MAX_SCREEN_DIM];
 
 // MMX/XMM supported?
 static int					use_mmx = -1;
@@ -316,7 +300,9 @@ static struct rgb_descriptor sharp_desc =
 //	PROTOTYPES
 //============================================================
 
+static int blit_vectors(const struct win_blit_params *blit);
 static void generate_blitter(const struct win_blit_params *blit);
+static void compute_source_fixups(const struct win_blit_params *blit, UINT32 valuefixups[]);
 
 
 
@@ -434,7 +420,14 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 {
 	int srcdepth = (blit->srcdepth + 7) / 8;
 	int dstdepth = (blit->dstdepth + 7) / 8;
+	struct rectangle temprect;
 	blitter_func blitter;
+	int srcx, srcy;
+	
+	// if we have a vector dirty array, alter the plan
+	if (blit->vecdirty && !update)
+		if (blit_vectors(blit))
+			return 1;
 
 	// if anything important has changed, fix it
 	if (blit->srcwidth != active_blitter_params.srcwidth ||
@@ -446,29 +439,128 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 		blit->dstxscale != active_blitter_params.dstxscale ||
 		blit->dstyscale != active_blitter_params.dstyscale ||
 		blit->dsteffect != active_blitter_params.dsteffect ||
-		(blit->dirtydata != NULL) != (active_blitter_params.dirtydata != NULL))
+		blit->flipx != active_blitter_params.flipx ||
+		blit->flipy != active_blitter_params.flipy ||
+		blit->swapxy != active_blitter_params.swapxy)
 	{
 		generate_blitter(blit);
 		active_blitter_params = *blit;
 	}
+	
+	// determine the starting source X/Y
+	temprect.min_x = blit->srcxoffs;
+	temprect.min_y = blit->srcyoffs;
+	temprect.max_x = blit->srcxoffs + blit->srcwidth - 1;
+	temprect.max_y = blit->srcyoffs + blit->srcheight - 1;
+	win_disorient_rect(&temprect);
+
+	if (!blit->swapxy)
+	{
+		srcx = blit->flipx ? (temprect.max_x + 1) : temprect.min_x;
+		srcy = blit->flipy ? (temprect.max_y + 1) : temprect.min_y;
+	}
+	else
+	{
+		srcx = blit->flipy ? (temprect.max_x + 1) : temprect.min_x;
+		srcy = blit->flipx ? (temprect.max_y + 1) : temprect.min_y;
+	}
 
 	// copy data to the globals
-	asmblit_srcdata = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + srcdepth * blit->srcxoffs;
+	asmblit_srcdata = (UINT8 *)blit->srcdata + blit->srcpitch * srcy + srcdepth * srcx;
 	asmblit_srcheight = blit->srcheight;
 	asmblit_srclookup = blit->srclookup;
 
 	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
 	asmblit_dstpitch = blit->dstpitch;
-
-	asmblit_dirtydata = blit->dirtydata;
-
-	if (((UINT32)asmblit_dstdata & 7) != 0)
-		fprintf(stderr, "Misaligned blit to: %08x\n", (UINT32)asmblit_dstdata);
-
+	
 	// pick the blitter
 	blitter = update ? (blitter_func)active_update_blitter : (blitter_func)active_fast_blitter;
 	(*blitter)();
 	return 1;
+}
+
+
+
+//============================================================
+//	blit_vectors
+//============================================================
+
+static int blit_vectors(const struct win_blit_params *blit)
+{
+	int srcdepth = (blit->srcdepth + 7) / 8;
+	int dstdepth = (blit->dstdepth + 7) / 8;
+	void *srcbase = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + srcdepth * blit->srcxoffs;
+	void *dstbase = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
+	UINT32 srcpitch = blit->srcpitch;
+	vector_pixel_t *list = blit->vecdirty;
+	
+	// skip if not 1:1
+	if (blit->dstxscale != 1 || blit->dstyscale != 1)
+		return 0;
+	
+	// can't handle anything but 15bpp
+	if (blit->srcdepth != 15)
+		return 0;
+	
+	// recompute the lookups
+	if (blit->srcwidth != active_vector_params.srcwidth ||
+		blit->srcpitch != active_vector_params.srcpitch ||
+		blit->dstdepth != active_vector_params.dstdepth ||
+		blit->dstpitch != active_vector_params.dstpitch ||
+		blit->flipx != active_vector_params.flipx ||
+		blit->flipy != active_vector_params.flipy ||
+		blit->swapxy != active_vector_params.swapxy)
+	{
+		struct rectangle temprect;
+		int x;
+		
+		for (x = 0; x < MAX_SCREEN_DIM; x++)
+		{
+			temprect.min_x = temprect.max_x = x;
+			temprect.min_y = temprect.max_y = 0;
+			win_orient_rect(&temprect);
+			xtrans[x] = blit->swapxy ? (temprect.max_y * blit->dstpitch) : (temprect.max_x * dstdepth);
+			
+			temprect.min_x = temprect.max_x = 0;
+			temprect.min_y = temprect.max_y = x;
+			win_orient_rect(&temprect);
+			ytrans[x] = blit->swapxy ? (temprect.max_x * dstdepth) : (temprect.max_y * blit->dstpitch);
+		}
+		
+		active_vector_params = *blit;
+	}
+	
+	// 16-bit to 16-bit
+	if (blit->dstdepth == 15)
+	{
+		UINT32 *srclookup = blit->srclookup;
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			*(UINT16 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) = 
+					srclookup[*(UINT16 *)((UINT8 *)srcbase + y * srcpitch + x * 2)];
+		}
+		return 1;
+	}
+	
+	// 16-bit to 32-bit
+	else if (blit->dstdepth == 32)
+	{
+		UINT32 *srclookup = blit->srclookup;
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			*(UINT32 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) =
+					srclookup[*(UINT16 *)((UINT8 *)srcbase + y * srcpitch + x * 2)];
+		}
+		return 1;
+	}
+	
+	return 0;
 }
 
 
@@ -482,7 +574,7 @@ static int snippet_length(void *snippet)
 	UINT8 *current = snippet;
 
 	// determine the length of a code snippet
-	while (current[0] != 0xcc || current[1] != 0xcc || current[2] != 0xcc || current[3] != 0xf0)
+	while (current[0] != 0xcc || current[1] != 0xcc || current[2] != 0xcc || current[3] != 0xe0)
 		current++;
 	return current - (UINT8 *)snippet;
 }
@@ -1079,7 +1171,7 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 	}
 
 	// copy until the end
-	while (blitter[0] != 0xcc || blitter[1] != 0xcc || blitter[2] != 0xcc || blitter[3] != 0xf0)
+	while (blitter[0] != 0xcc || blitter[1] != 0xcc || blitter[2] != 0xcc || blitter[3] != 0xe0)
 	{
 		UINT8 reglist[8];
 		UINT32 offslist[8];
@@ -1093,7 +1185,7 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 		}
 
 		// if we're at a shift tag, process it
-		if ((blitter[3] & 0xf0) == 0x20)
+		if ((blitter[3] & 0xe0) == 0x40)
 		{
 			int dstreg = 0, rshift1 = 0, rshift2 = 0, lshift = 0;
 			int shifttype = blitter[3] & 15;
@@ -1131,18 +1223,17 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 		}
 
 		// if we're at an expansion tag, process it
-		else if ((blitter[3] & 0xf0) == 0x30 || (blitter[3] & 0xf0) == 0x40)
+		else if ((blitter[3] & 0xe0) == 0x60)
 		{
 			// store the first one
 			count = 1;
-			reglist[0] = blitter[3] - 0x30;
+			reglist[0] = blitter[3] - 0x60;
 			blitter += 4;
 
 			// loop over all the remaining
-			while (blitter[0] == 0xcc && blitter[1] == 0xcc && blitter[2] == 0xcc &&
-					((blitter[3] & 0xf0) == 0x30 || (blitter[3] & 0xf0) == 0x40))
+			while (blitter[0] == 0xcc && blitter[1] == 0xcc && blitter[2] == 0xcc && (blitter[3] & 0xe0) == 0x60)
 			{
-				reglist[count++] = blitter[3] - 0x30;
+				reglist[count++] = blitter[3] - 0x60;
 				blitter += 4;
 			}
 
@@ -1175,9 +1266,9 @@ static void fixup_addresses(UINT8 **fixups, UINT8 *start, UINT8 *end)
 	for ( ; start < end; start++)
 	{
 		// if this is an address fixup, do it
-		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xf0) == 0x00)
+		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xe0) == 0x00)
 		{
-			int idx = start[3] & 0x0f;
+			int idx = start[3] & 0x1f;
 			*(UINT32 *)start = fixups[idx] - (start + 4);
 		}
 	}
@@ -1195,10 +1286,121 @@ static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
 	for ( ; start < end; start++)
 	{
 		// if this is an address fixup, do it
-		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xf0) == 0x10)
+		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xe0) == 0x20)
 		{
-			int idx = start[3] & 0x0f;
+			int idx = start[3] & 0x1f;
 			*(UINT32 *)start = fixups[idx];
+		}
+	}
+}
+
+
+
+//============================================================
+//	compute_source_fixups
+//============================================================
+
+static void compute_source_fixups(const struct win_blit_params *blit, UINT32 valuefixups[])
+{
+	int srcxsize = (blit->srcdepth + 7) / 8;
+	int srcysize = blit->srcpitch;
+	int pix;
+
+	if (!blit->swapxy)
+	{
+		if (!blit->flipx)
+		{
+			// no flipping, no swapping
+			if (!blit->flipy)
+			{
+				valuefixups[5] = srcxsize;
+				valuefixups[6] = srcxsize * 16;
+				valuefixups[7] = srcysize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = pix * srcxsize;
+			}
+			
+			// Y flipping, no swapping
+			else
+			{
+				valuefixups[5] = srcxsize;
+				valuefixups[6] = srcxsize * 16;
+				valuefixups[7] = -srcysize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = pix * srcxsize - srcysize;
+			}
+		}
+		
+		else
+		{
+			// X flipping, no swapping
+			if (!blit->flipy)
+			{
+				valuefixups[5] = -srcxsize;
+				valuefixups[6] = -srcxsize * 16;
+				valuefixups[7] = srcysize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = -(pix + 1) * srcxsize;
+			}
+			
+			// X and Y flipping, no swapping
+			else
+			{
+				valuefixups[5] = -srcxsize;
+				valuefixups[6] = -srcxsize * 16;
+				valuefixups[7] = -srcysize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = -(pix + 1) * srcxsize - srcysize;
+			}
+		}
+	}
+	
+	else
+	{
+		if (!blit->flipx)
+		{
+			// no flipping, swapped
+			if (!blit->flipy)
+			{
+				valuefixups[5] = srcysize;
+				valuefixups[6] = srcysize * 16;
+				valuefixups[7] = srcxsize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = pix * srcysize;
+			}
+			
+			// Y flipping, swapped
+			else
+			{
+				valuefixups[5] = srcysize;
+				valuefixups[6] = srcysize * 16;
+				valuefixups[7] = -srcxsize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = pix * srcysize - srcxsize;
+			}
+		}
+		
+		else
+		{
+			// X flipping, swapped
+			if (!blit->flipy)
+			{
+				valuefixups[5] = -srcysize;
+				valuefixups[6] = -srcysize * 16;
+				valuefixups[7] = srcxsize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = -(pix + 1) * srcysize;
+			}
+			
+			// X and Y flipping, swapped
+			else
+			{
+				valuefixups[5] = -srcysize;
+				valuefixups[6] = -srcysize * 16;
+				valuefixups[7] = -srcxsize;
+				for (pix = 0; pix < 16; pix++)
+					valuefixups[8+pix] = -(pix + 1) * srcysize - srcxsize;
+			}
 		}
 	}
 }
@@ -1211,11 +1413,9 @@ static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
 
 #define EMIT_SNIPPET_PAIR(snipname) \
 	emit_snippet(asmblit_##snipname, &fastptr); \
-	if (blit->dirtydata) emit_snippet(asmblit_##snipname##_dirty, &fastptr); \
 	emit_snippet(asmblit_##snipname, &updateptr); \
 
 #define EMIT_SNIPPET_PAIR_REVERSE(snipname) \
-	if (blit->dirtydata) emit_snippet(asmblit_##snipname##_dirty, &fastptr); \
 	emit_snippet(asmblit_##snipname, &fastptr); \
 	emit_snippet(asmblit_##snipname, &updateptr); \
 
@@ -1232,8 +1432,8 @@ static void generate_blitter(const struct win_blit_params *blit)
 	UINT8 *fastptr = active_fast_blitter;
 	UINT8 *updateptr = active_update_blitter;
 
-	UINT8 *addrfixups[2][16];
-	UINT32 valuefixups[16];
+	UINT8 *addrfixups[2][32];
+	UINT32 valuefixups[32];
 	int middle, last;
 
 #if DEBUG_BLITTERS
@@ -1289,15 +1489,15 @@ static void generate_blitter(const struct win_blit_params *blit)
 	fixup_addresses(&addrfixups[1][0], active_update_blitter, updateptr);
 
 	// fixup data values
-	valuefixups[0] = (blit->srcdepth + 7) / 8;
-	valuefixups[1] = ((blit->dstdepth + 7) / 8) * blit->dstxscale;
-	valuefixups[2] = valuefixups[0] * 16;
-	valuefixups[3] = valuefixups[1] * 16;
-	valuefixups[4] = blit->srcpitch;
-	valuefixups[5] = blit->dstpitch * (blit->dstyscale + blit->dstyskip);
-	valuefixups[6] = blit->dirtypitch;
-	valuefixups[7] = middle;
-	valuefixups[8] = last;
+	valuefixups[0] = ((blit->dstdepth + 7) / 8) * blit->dstxscale;
+	valuefixups[1] = valuefixups[0] * 16;
+	valuefixups[2] = blit->dstpitch * (blit->dstyscale + blit->dstyskip);
+	valuefixups[3] = middle;
+	valuefixups[4] = last;
+	
+	// compute the fixup values
+	compute_source_fixups(blit, valuefixups);
+	
 	fixup_values(valuefixups, active_fast_blitter, fastptr);
 	fixup_values(valuefixups, active_update_blitter, updateptr);
 

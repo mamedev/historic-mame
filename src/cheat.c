@@ -456,10 +456,18 @@ enum
 	kActionFlag_IgnoreMask =		1 << 2,
 
 	// set if the lastValue field contains valid data and can be restored if needed
-	kActionFlag_LastValueGood =	1 << 3,
+	kActionFlag_LastValueGood =		1 << 3,
+
+	// set after value changes from prefill value
+	kActionFlag_PrefillDone =		1 << 4,
+
+	// set after prefill value written
+	kActionFlag_PrefillWritten =	1 << 5,
 
 	kActionFlag_StateMask =		kActionFlag_OperationDone |
-								kActionFlag_LastValueGood,
+								kActionFlag_LastValueGood |
+								kActionFlag_PrefillDone |
+								kActionFlag_PrefillWritten,
 	kActionFlag_InfoMask =		kActionFlag_WasModified |
 								kActionFlag_IgnoreMask
 };
@@ -1002,6 +1010,14 @@ static const int kOldStatusComparisonTable[] =
 	kSearchComparison_NotEqual
 };
 
+static const UINT32 kPrefillValueTable[] =
+{
+	0x00,
+	0xFF,
+	0x00,
+	0x01
+};
+
 /**** Function Prototypes ****************************************************/
 
 static int		ShiftKeyPressed(void);
@@ -1134,6 +1150,7 @@ static void		WriteData(CheatAction * action, UINT32 data);
 
 static void		WatchCheatEntry(CheatEntry * entry, UINT8 associate);
 static void		AddActionWatch(CheatAction * action, CheatEntry * entry);
+static void		RemoveAssociatedWatches(CheatEntry * entry);
 
 static void		ResetAction(CheatAction * action);
 static void		ActivateCheat(CheatEntry * entry);
@@ -4593,6 +4610,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 		switch(sel)
 		{
 			case kMenu_Value:
+				search->bytes =			kSearchSize_8Bit;
 				search->lhs =			kSearchOperand_Current;
 				search->rhs =			kSearchOperand_Value;
 				search->comparison =	kSearchComparison_NearTo;
@@ -4603,6 +4621,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 				break;
 
 			case kMenu_Time:
+				search->bytes =			kSearchSize_8Bit;
 				search->lhs =			kSearchOperand_Current;
 				search->rhs =			kSearchOperand_Previous;
 				search->comparison =	kSearchComparison_IncreasedBy;
@@ -4612,6 +4631,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 				break;
 
 			case kMenu_Energy:
+				search->bytes =			kSearchSize_8Bit;
 				search->lhs =			kSearchOperand_Current;
 				search->rhs =			kSearchOperand_Previous;
 				search->comparison =	kOldEnergyComparisonTable[search->oldOptions.energy];
@@ -4629,6 +4649,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 				break;
 
 			case kMenu_Slow:
+				search->bytes =			kSearchSize_8Bit;
 				search->lhs =			kSearchOperand_Current;
 				search->rhs =			kSearchOperand_First;
 				search->comparison =	kOldStatusComparisonTable[search->oldOptions.slow];
@@ -5551,6 +5572,8 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
 		{
 			InvalidateRegionOffset(search, region, selectedOffset);
+			search->numResults--;
+			region->numResults--;
 		}
 	}
 
@@ -6555,7 +6578,7 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 				submenuChoice = SelectSearch(bitmap, submenuChoice);
 				break;
 
-			case kMenu_Return:
+			default:
 				submenuChoice = 0;
 				sel = -1;
 				break;
@@ -6668,7 +6691,8 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 				usrintf_showmessage_secs(1, "cheat database reloaded");
 				break;
 
-			default:
+			case kMenu_SelectSearchRegions:
+			case kMenu_SelectSearch:
 				submenuChoice = 1;
 				schedule_full_refresh();
 				break;
@@ -7248,7 +7272,7 @@ static void AddCheatFromWatch(WatchInfo * watch)
 
 static void SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch)
 {
-	if(watch && entry)
+	if(watch && entry && watch->numElements)
 	{
 		CheatAction	* action;
 		char		tempString[1024];
@@ -7269,7 +7293,7 @@ static void SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch)
 		SET_FIELD(action->type, Type, kType_Watch);
 		SET_FIELD(action->type, BytesUsed, kSearchByteIncrementTable[watch->elementBytes] - 1);
 		action->address = watch->address;
-		action->data  =	((watch->numElements + 1) & 0xFF) |
+		action->data  =	((watch->numElements - 1) & 0xFF) |
 						((watch->skip & 0xFF) << 8) |
 						((watch->elementsPerLine & 0xFF) << 16);
 		action->originalDataField = action->data;
@@ -7505,7 +7529,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
-#ifndef MMSND
 
 			// for neogeo, search bank one
 			if(	(Machine->gamedrv->clone_of == &driver_neogeo) &&
@@ -7514,7 +7537,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				(handler == MWA_BANK1))
 				return 1;
 
-#endif
 #endif
 #endif
 #endif
@@ -8096,8 +8118,12 @@ static void LoadCheatFile(char * fileName)
 #endif
 		}
 
+		//logerror("cheat: processing %s\n", buf);
+
 		if(TEST_FIELD(type, RemoveFromList))
 		{
+			//logerror("cheat: cheat line removed\n", buf);
+
 			HandleLocalCommandCheat(type, address, data, extendData, name, description);
 		}
 		else
@@ -8111,12 +8137,16 @@ static void LoadCheatFile(char * fileName)
 					goto bail;
 				}
 
+				//logerror("cheat: doing link cheat\n");
+
 				entry = &cheatList[cheatListLength - 1];
 			}
 			else
 			{
 				// go to the next cheat
 				ResizeCheatList(cheatListLength + 1);
+
+				//logerror("cheat: doing normal cheat\n");
 
 				if(cheatListLength == 0)
 				{
@@ -9318,6 +9348,7 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 		info->linkedCheat =		entry;
 		info->numElements =		1;
 		info->skip =			0;
+		info->linkedCheat =		entry;
 
 		if(EXTRACT_FIELD(action->type, Type) == kType_Watch)
 		{
@@ -9332,6 +9363,19 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 				info->y += (action->extendData >>  0) & 0xFFFF;
 			}
 		}
+	}
+}
+
+static void RemoveAssociatedWatches(CheatEntry * entry)
+{
+	int	i;
+
+	for(i = watchListLength - 1; i >= 0; i--)
+	{
+		WatchInfo	* info = &watchList[i];
+
+		if(info->linkedCheat == entry)
+			DeleteWatchAt(i);
 	}
 }
 
@@ -9378,6 +9422,8 @@ static void DeactivateCheat(CheatEntry * entry)
 			action->flags &= ~kActionFlag_LastValueGood;
 		}
 	}
+
+	RemoveAssociatedWatches(entry);
 
 	entry->flags &= ~kCheatFlag_StateMask;
 }
@@ -9441,19 +9487,15 @@ static void DoCheatOperation(CheatAction * action)
 			{
 				// subtract
 
-				temp -= action->data;
-
-				if(temp < action->extendData)
-					temp = action->extendData;
+				if(temp > action->extendData + action->data)
+					temp -= action->data;
 			}
 			else
 			{
 				// add
 
-				temp += action->data;
-
-				if(temp > action->extendData)
-					temp = action->extendData;
+				if(temp < action->extendData - action->data)
+					temp += action->data;
 			}
 
 			WriteData(action, temp);
@@ -9516,6 +9558,28 @@ static void DoCheatAction(CheatAction * action)
 
 	if(action->flags & kActionFlag_OperationDone)
 		return;
+
+	if(	TEST_FIELD(action->type, Prefill) &&
+		(!(action->flags & kActionFlag_PrefillDone)))
+	{
+		UINT32	prefillValue = kPrefillValueTable[EXTRACT_FIELD(action->type, Prefill)];
+
+		if(!(action->flags & kActionFlag_PrefillWritten))
+		{
+			WriteData(action, prefillValue);
+
+			action->flags |= kActionFlag_PrefillWritten;
+
+			return;
+		}
+		else
+		{
+			if(ReadData(action) == prefillValue)
+				return;
+
+			action->flags |= kActionFlag_PrefillDone;
+		}
+	}
 
 	switch(EXTRACT_FIELD(action->type, Type))
 	{

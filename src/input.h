@@ -146,4 +146,10 @@ int seq_read_async(InputSeq* code, int first);
 int input_ui_pressed(int code);
 int input_ui_pressed_repeat(int code, int speed);
 
+/***************************************************************************/
+/* analog joy code functions */
+
+int is_joystick_axis_code(unsigned code);
+int return_os_joycode(InputCode code);
+
 #endif

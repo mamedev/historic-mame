@@ -196,7 +196,7 @@ VIDEO_UPDATE( system32 )
 static MACHINE_DRIVER_START( ga2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V60, 8000000) // Reality is 16Mhz
+	MDRV_CPU_ADD(V60, 8000000) // Reality is 16MHz
 	MDRV_CPU_MEMORY(ga2_readmem,ga2_writemem)
 	MDRV_CPU_VBLANK_INT(system32_interrupt,2)
 

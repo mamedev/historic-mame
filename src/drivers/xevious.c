@@ -201,6 +201,7 @@ S-RAMS in schematic
 #include "vidhrdw/generic.h"
 
 
+/* XEVIOUS */
 extern unsigned char *xevious_sharedram;
 READ_HANDLER( xevious_sharedram_r );
 WRITE_HANDLER( xevious_sharedram_w );
@@ -234,6 +235,30 @@ VIDEO_UPDATE( xevious );
 
 WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
+
+
+/* BATTLES */
+extern unsigned char *battles_sharedram;
+READ_HANDLER( battles_sharedram_r );
+READ_HANDLER( battles_customio0_r );
+READ_HANDLER( battles_customio_data0_r );
+READ_HANDLER( battles_customio3_r );
+READ_HANDLER( battles_customio_data3_r );
+READ_HANDLER( battles_input_port_r );
+
+WRITE_HANDLER( battles_halt_w );
+WRITE_HANDLER( battles_sharedram_w );
+WRITE_HANDLER( battles_customio0_w );
+WRITE_HANDLER( battles_customio_data0_w );
+WRITE_HANDLER( battles_customio3_w );
+WRITE_HANDLER( battles_customio_data3_w );
+WRITE_HANDLER( battles_CPU4_4000_w );
+WRITE_HANDLER( battles_noise_sound_w );
+
+INTERRUPT_GEN( battles_interrupt_4 );
+
+MACHINE_INIT( battles );
+PALETTE_INIT( battles );
 
 
 
@@ -297,6 +322,60 @@ static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
 	{ 0x7800, 0xcfff, xevious_sharedram_w },
 MEMORY_END
+
+
+
+static MEMORY_READ_START( battles_readmem_cpu1 )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x6800, 0x6807, xevious_dsw_r },
+	{ 0x7000, 0x700f, battles_customio_data0_r },
+	{ 0x7100, 0x7100, battles_customio0_r },
+	{ 0x7800, 0xcfff, xevious_sharedram_r },
+	{ 0xf000, 0xffff, xevious_bb_r },
+MEMORY_END
+
+static MEMORY_READ_START( battles_readmem_cpu4 )
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x4000, 0x4000, input_port_2_r },	/* IN2 */
+	{ 0x4001, 0x4001, input_port_3_r },	/* IN3 */
+	{ 0x4002, 0x4002, input_port_4_r },	/* IN4 */
+	{ 0x4003, 0x4003, input_port_5_r },	/* IN5 */
+	{ 0x4004, 0x400f, battles_input_port_r },
+	{ 0x6000, 0x6000, battles_customio3_r },
+	{ 0x7000, 0x700f, battles_customio_data3_r },
+	{ 0x8000, 0x80ff, battles_sharedram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( battles_writemem_cpu1 )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6820, 0x6820, xevious_interrupt_enable_1_w },
+	{ 0x6821, 0x6821, xevious_interrupt_enable_2_w },
+	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
+	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
+	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
+	{ 0x7000, 0x700f, battles_customio_data0_w },
+	{ 0x7100, 0x7100, battles_customio0_w },
+	{ 0x7800, 0xafff, xevious_sharedram_w, &xevious_sharedram },
+	{ 0xb000, 0xb7ff, xevious_fg_colorram_w, &xevious_fg_colorram },
+	{ 0xb800, 0xbfff, xevious_bg_colorram_w, &xevious_bg_colorram },
+	{ 0xc000, 0xc7ff, xevious_fg_videoram_w, &xevious_fg_videoram },
+	{ 0xc800, 0xcfff, xevious_bg_videoram_w, &xevious_bg_videoram },
+	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
+	{ 0xf000, 0xffff, xevious_bs_w },
+	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
+	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
+	{ 0xa780, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },	/* the pointers */
+MEMORY_END
+
+static MEMORY_WRITE_START( battles_writemem_cpu4 )
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x4000, 0x4005, battles_CPU4_4000_w }, /* ??? */
+	{ 0x5000, 0x5000, battles_noise_sound_w },
+	{ 0x6000, 0x6000, battles_customio3_w },
+	{ 0x7000, 0x700f, battles_customio_data3_w },
+	{ 0x8000, 0x80ff, battles_sharedram_w, &battles_sharedram },
+MEMORY_END
+
 
 
 
@@ -565,6 +644,94 @@ INPUT_PORTS_START( xeviousb )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( battles )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze?" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
+	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x04, "20K 60K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	/* Bonus scores for 5 lives
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x14, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x1c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x0c, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x04, "20K 80K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	*/
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+
+	PORT_START	/* 4000 IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* 4001 IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* 4002 IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+
+	PORT_START	/* 4003 IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	/*	PORT_SERVICE( 0x80, IP_ACTIVE_LOW ) */
+INPUT_PORTS_END
+
 /* same as xevious but different "Coin B" Dip Switch and inverted "Freeze?" Dip Switch */
 INPUT_PORTS_START( sxevious )
 	PORT_START	/* DSW0 */
@@ -729,6 +896,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+/*static struct GfxDecodeInfo battles_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &charlayout,      128*4 + 128*8, 128 },
+	{ REGION_GFX2, 0x0000, &bgcharlayout,                0, 128 },
+	{ REGION_GFX3, 0x0000, &spritelayout1,   128*4        , 128 },
+	{ REGION_GFX3, 0x2000, &spritelayout2,   128*4        , 128 },
+	{ REGION_GFX3, 0x6000, &spritelayout3,   128*4        , 128 },
+	{ -1 }
+};
+*/
 
 
 static struct namco_interface namco_interface =
@@ -754,6 +931,22 @@ struct Samplesinterface samples_interface =
 	1,	/* one channel */
 	80,	/* volume */
 	xevious_sample_names
+};
+
+
+static const char *battles_sample_names[] =
+{
+	"*battles",
+	"explo1.wav",	/* ground target explosion */
+	"explo2.wav",	/* Solvalou explosion */
+	0	/* end of array */
+};
+
+struct Samplesinterface battles_samples_interface =
+{
+	1,	/* one channel */
+	80,	/* volume */
+	battles_sample_names
 };
 
 
@@ -796,6 +989,49 @@ static MACHINE_DRIVER_START( xevious )
 	MDRV_SOUND_ADD(SAMPLES, samples_interface)
 MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( battles )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(battles_readmem_cpu1,battles_writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(battles_readmem_cpu4,battles_writemem_cpu4)
+	MDRV_CPU_VBLANK_INT(battles_interrupt_4,1)
+
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(battles)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+1)
+	MDRV_COLORTABLE_LENGTH(128*4+64*8+64*2)
+
+	MDRV_PALETTE_INIT(battles)
+	MDRV_VIDEO_START(xevious)
+	MDRV_VIDEO_UPDATE(xevious)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, battles_samples_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -992,6 +1228,53 @@ ROM_START( xevios )
 	ROM_LOAD( "2.17b",        0x1000, 0x2000, 0xde359fac )
 ROM_END
 
+ROM_START( battles )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
+	ROM_LOAD( "b_1.bin",      0x0000, 0x2000, 0xb6e4f4f3 )
+	ROM_LOAD( "b_2.bin",      0x2000, 0x2000, 0x47017bc8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b_3.bin",      0x0000, 0x2000, 0x0ede5706 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for the CUSTOM I/O Emulation CPU */
+	ROM_LOAD( "b_5.bin",      0x0000, 0x1000, 0x23107dfb )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b_9.bin",      0x0000, 0x1000, 0x5bd6e9ae )	/* foreground characters */
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b_10.bin",     0x0000, 0x1000, 0xb43ea55d )	/* bg pattern B0 */
+	ROM_LOAD( "b_11.bin",     0x1000, 0x1000, 0x73603931 )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
+
+	ROM_REGION( 0x4000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
+
+	ROM_REGION( 0x1400, REGION_PROMS, 0 )
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "b_-bpr.bin",   0x0300, 0x0400, 0xd2d208b1 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "b_6bpr.bin",   0x0700, 0x0400, 0x0260c041 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "b_4bpr.bin",   0x0b00, 0x0400, 0x33764974 ) /* sprite lookup table low bits */
+	ROM_LOAD( "b_5bpr.bin",   0x0f00, 0x0400, 0x43674c7e ) /* sprite lookup table high bits */
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( sxevious )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
 	ROM_LOAD( "cpu_3p.rom",   0x0000, 0x1000, 0x1c8d27d5 )
@@ -1094,6 +1377,7 @@ static DRIVER_INIT( xevios )
 GAME( 1982, xevious,  0,       xevious, xevious,  0,      ROT90, "Namco", "Xevious (Namco)" )
 GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 1)" )
 GAME( 1982, xeviousb, xevious, xevious, xeviousb, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 2)" )
-GAME( 1983, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
+GAME( 1982, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
+GAME( 1982, battles,  xevious, battles, battles,  0,      ROT90, "bootleg", "Battles" )
 GAME( 1984, sxevious, xevious, xevious, sxevious, 0,      ROT90, "Namco", "Super Xevious" )
 

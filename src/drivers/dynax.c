@@ -658,7 +658,7 @@ MACHINE_DRIVER_END
 static struct YM2413interface ym2413_intf =
 {
 	1,
-	8000000,	/* ? */
+	3579545,	/* ???? */
 	{ 100 },
 };
 
@@ -667,7 +667,7 @@ static struct OKIM6295interface okim6295_intf =
 	1,
 	{ 8000 },	/* ? */
 	{ REGION_SOUND1 },
-	{ 100 }
+	{ 50 }
 };
 
 static MACHINE_DRIVER_START( ddenlovr )

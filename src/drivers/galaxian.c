@@ -133,14 +133,16 @@ write:
 Moon Cresta versions supported:
 ------------------------------
 
-mooncrst    Nichibutsu - later revision with better demo mode and
+mooncrst    Nichibutsu     - later revision with better demo mode and
 						 text for docking. Encrypted. No ROM/RAM check
-mooncrsa    Nichibutsu - older revision with better demo mode and
+mooncrsu    Nichibutsu USA - later revision with better demo mode and
+						 text for docking. Unencrypted. No ROM/RAM check
+mooncrsa    Nichibutsu     - older revision with better demo mode and
 						 text for docking. Encrypted. No ROM/RAM check
-mooncrs2    Nichibutsu - probably first revision (no patches) and ROM/RAM check code.
-                         This came from a bootleg board, with the logos erased
+mooncrs2    Nichibutsu     - probably first revision (no patches) and ROM/RAM check code.
+                             This came from a bootleg board, with the logos erased
 						 from the graphics
-mooncrsg    Gremlin    - same docking text as mooncrst
+mooncrsg    Gremlin        - same docking text as mooncrst
 mooncrsb    bootleg of mooncrs2. ROM/RAM check erased.
 
 
@@ -360,6 +362,16 @@ static READ_HANDLER( checkmaj_protection_r )
 	return 0;
 }
 
+static READ_HANDLER( dingo_3000_r )
+{
+	return 0xaa;
+}
+
+static READ_HANDLER( dingo_3035_r )
+{
+	return 0x8c;
+}
+
 /* Send sound data to the sound cpu and cause an nmi */
 static WRITE_HANDLER( checkman_sound_command_w )
 {
@@ -372,6 +384,48 @@ static WRITE_HANDLER( galaxian_coin_counter_w )
 	coin_counter_w(offset, data & 0x01);
 }
 
+static char fourin1_bank;
+
+static void set_fourin1_gfx (char data)
+{
+	/* we decode the new gfx on a bank change, easier than changing the vidhrdw file */
+	int  fourin1_gfxbank,i;
+
+	fourin1_gfxbank = (data % 4) * 0x2000;
+
+	for (i = 0; i < 256; i++)
+		decodechar(Machine->gfx[0], i, memory_region(REGION_GFX1)+fourin1_gfxbank, Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
+	for (i = 0; i < 64; i++)
+		decodechar(Machine->gfx[1], i, memory_region(REGION_GFX1)+fourin1_gfxbank+0x1000, Machine->drv->gfxdecodeinfo[1].gfxlayout);
+}
+
+static void set_fourin1_banks (char data)
+{
+	/* games are banked at 0x0000 - 0x3fff */
+	int bankaddress;
+	data8_t *RAM=memory_region(REGION_CPU1);
+
+	bankaddress = (data * 0x4000) + 0x10000;
+	cpu_setbank (1, &RAM[bankaddress]);
+}
+
+static WRITE_HANDLER( fourin1_banking_w )
+{
+	fourin1_bank = data % 4;
+	set_fourin1_banks(data);
+	set_fourin1_gfx(data);
+}
+
+static READ_HANDLER( fourin1_IN1_r )
+{
+	return (readinputport(1) & ~0xc0) | (readinputport(3+fourin1_bank) & 0xc0);
+}
+
+static READ_HANDLER( fourin1_DSW0_r )
+{
+	return (readinputport(2) & 0x04) | (readinputport(3+fourin1_bank) & ~0xc4);
+}
 
 static MEMORY_READ_START( galaxian_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -570,7 +624,6 @@ static MEMORY_WRITE_START( checkman_writemem )
 	{ 0xb800, 0xb800, galaxian_pitch_w },
 MEMORY_END
 
-
 static MEMORY_WRITE_START( checkmaj_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
@@ -615,13 +668,13 @@ PORT_END
 
 static MEMORY_READ_START( checkmaj_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x8000, 0x81ff, MRA_RAM },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa002, 0xa002, AY8910_read_port_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( checkmaj_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x8000, 0x81ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xa000, 0xa000, AY8910_control_port_0_w },
 	{ 0xa001, 0xa001, AY8910_write_port_0_w },
 MEMORY_END
@@ -669,6 +722,85 @@ static PORT_WRITE_START( kingball_sound_writeport )
 	{ 0x00, 0x00, DAC_0_data_w },
 PORT_END
 
+static MEMORY_READ_START( fourin1_readmem )
+	{ 0x0000, 0x3fff, MRA_BANK1 }, /* Banked Game Code */
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x5000, 0x53ff, MRA_RAM },
+	{ 0x5400, 0x57ff, galaxian_videoram_r },
+	{ 0x5800, 0x58ff, MRA_RAM },
+	{ 0x6000, 0x6000, input_port_0_r },
+	{ 0x6800, 0x6800, fourin1_IN1_r },
+	{ 0x7000, 0x7000, fourin1_DSW0_r },
+	{ 0x7800, 0x78ff, watchdog_reset_r },
+	{ 0xc000, 0xdfff, MRA_ROM }, /* Fixed Menu Code */
+MEMORY_END
+
+static MEMORY_WRITE_START( fourin1_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM }, /* Banked Game Code */
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x5000, 0x53ff, MWA_RAM, &galaxian_videoram },
+	{ 0x5800, 0x583f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5840, 0x585f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5880, 0x58ff, MWA_RAM },
+	{ 0x6000, 0x6001, galaxian_leds_w },
+//	{ 0x6002, 0x6002, galaxian_coin_lockout_w },
+	{ 0x6003, 0x6003, galaxian_coin_counter_w },
+	{ 0x6004, 0x6007, galaxian_lfo_freq_w },
+	{ 0x6800, 0x6802, galaxian_background_enable_w },
+//	{ 0x6803, 0x6803, galaxian_noise_enable_w }, /* not hooked up? */
+	{ 0x6805, 0x6805, galaxian_shoot_enable_w },
+	{ 0x6806, 0x6807, galaxian_vol_w },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7003, 0x7003, MWA_NOP },	// unknown - used in Scramble PT2 - clear screen ?
+	{ 0x7004, 0x7004, galaxian_stars_enable_w },
+	{ 0x7006, 0x7006, galaxian_flip_screen_x_w },
+	{ 0x7007, 0x7007, galaxian_flip_screen_y_w },
+	{ 0x7800, 0x7800, galaxian_pitch_w },
+	{ 0x8000, 0x8000, fourin1_banking_w },
+	{ 0xc000, 0xdfff, MWA_ROM }, /* Fixed Menu Code */
+MEMORY_END
+
+static MEMORY_READ_START( bagmang_readmem )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x6000, 0x67ff, MRA_RAM },
+	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9400, 0x97ff, galaxian_videoram_r },
+	{ 0x9800, 0x98ff, MRA_RAM },
+	{ 0xa000, 0xa000, input_port_0_r },
+	{ 0xa800, 0xa800, input_port_1_r },
+	{ 0xb000, 0xb000, input_port_2_r },
+	{ 0xb800, 0xb800, watchdog_reset_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( bagmang_writemem )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x67ff, MWA_RAM },
+	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
+	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x9880, 0x98ff, MWA_RAM },
+//	{ 0xa000, 0xa002, mooncrst_gfxextend_w },
+//	{ 0xa003, 0xa003, galaxian_coin_counter_w },
+//	{ 0xa004, 0xa007, galaxian_lfo_freq_w },
+//	{ 0xa800, 0xa802, galaxian_background_enable_w },
+//	{ 0xa803, 0xa803, galaxian_noise_enable_w },
+//	{ 0xa805, 0xa805, galaxian_shoot_enable_w },
+	{ 0xa000, 0xa000, galaxian_coin_counter_w },
+	{ 0xa001, 0xa001, gteikob2_flip_screen_x_w },	// leftover from original version
+	{ 0xa002, 0xa002, gteikob2_flip_screen_y_w },	// (when entering initials)
+	{ 0xa003, 0xa003, MWA_NOP },
+	{ 0xa004, 0xa004, galaxian_lfo_freq_w },	// when a coin is inserted (lasts 32 times)
+	{ 0xa007, 0xa007, MWA_NOP },			// before and after testing inputs
+	{ 0xa803, 0xa803, galaxian_noise_enable_w },
+	{ 0xb000, 0xb000, MWA_NOP },
+	{ 0xb002, 0xb002, MWA_NOP },
+	{ 0xb001, 0xb001, interrupt_enable_w },
+	{ 0xb006, 0xb006, galaxian_flip_screen_x_w },
+	{ 0xb007, 0xb007, galaxian_flip_screen_y_w },
+	{ 0xb800, 0xb800, galaxian_pitch_w },
+MEMORY_END
 
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
 static WRITE_HANDLER( zigzag_sillyprotection_w )
@@ -813,7 +945,7 @@ INPUT_PORTS_START( galaxian )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -854,7 +986,7 @@ INPUT_PORTS_START( superg )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -977,7 +1109,7 @@ INPUT_PORTS_START( pisces )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1019,7 +1151,7 @@ INPUT_PORTS_START( piscesb )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1054,7 +1186,7 @@ INPUT_PORTS_START( gteikokb )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "7000" )
 	PORT_DIPSETTING(    0x01, "None" )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )		// Not read due to code at 0x012b
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )		// Not read due to code at 0x012b
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
@@ -1096,7 +1228,7 @@ INPUT_PORTS_START( gteikob2 )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "7000" )
 	PORT_DIPSETTING(    0x01, "None" )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )		// Not read due to code at 0x012b
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )		// Not read due to code at 0x012b
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
@@ -1143,7 +1275,7 @@ INPUT_PORTS_START( spacbatt )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1178,7 +1310,7 @@ INPUT_PORTS_START( batman2 )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x01, "50000" )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
@@ -1222,7 +1354,7 @@ INPUT_PORTS_START( warofbug )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
-	PORT_DIPNAME( 0x04, 0x00, "Unused SW 0-2" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
@@ -1299,7 +1431,7 @@ INPUT_PORTS_START( exodus )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "7000" )
 	PORT_DIPSETTING(    0x01, "None" )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )		// Not read due to code at 0x012b
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )		// Not read due to code at 0x012b
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
@@ -1663,10 +1795,10 @@ INPUT_PORTS_START( orbitron )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Unused SW 0-0" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
@@ -1709,10 +1841,10 @@ INPUT_PORTS_START( blkhole )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unused SW 0-2" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1797,6 +1929,47 @@ INPUT_PORTS_START( checkmaj )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* p1 tiles right */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* p1 tiles left */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dingo )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )	/* 1st Button 1 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )	/* 2nd Button 1 */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x80, "A 1C/1C  B 1C/5C" )
+	PORT_DIPSETTING(    0x00, "A 2C/1C  B 1C/3C" )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easiest" )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+ 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* Yes, the game reads both of these */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* Check code at 0x22e1 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( mooncrst )
@@ -2121,7 +2294,7 @@ INPUT_PORTS_START( mooncrgx )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x01, "30000" )
 	PORT_DIPSETTING(    0x00, "50000" )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 //	PORT_DIPNAME( 0x04, 0x04, "Language" )			Always "English" due to code removed at 0x2f4b
@@ -2288,7 +2461,7 @@ INPUT_PORTS_START( moonal2 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x08, 0x00, "Unused SW 0-3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -2425,7 +2598,7 @@ INPUT_PORTS_START( frogg )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )		// also affects coinage (see 'res' intruction at 0x3084)
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unused SW 0-1" )		// not tested due to code at 0x3084
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )		// not tested due to code at 0x3084
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )		// when "Cabinet" Dip Switch set to "Upright"
@@ -2438,6 +2611,173 @@ INPUT_PORTS_START( frogg )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( fourin1 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// See fake ports
+
+	PORT_START      /* DSW0 */
+	PORT_BIT( 0x3b, IP_ACTIVE_HIGH, IPT_SPECIAL )	// See fake ports
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )			// 2 when continue (Scramble PT2)
+	PORT_DIPSETTING(    0x04, "5" )			// 2 when continue (Scramble PT2)
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START      /* The Ghost Muncher PT3 - FAKE DSW0 (bits 0 to 5) and IN1 (bits 6 and 7) */
+	PORT_DIPNAME( 0x03, 0x00, "Bonus Life (GM PT3)" )
+	PORT_DIPSETTING(    0x01, "10000" )
+	PORT_DIPSETTING(    0x02, "15000" )
+	PORT_DIPSETTING(    0x03, "20000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	// Lives
+//	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage (GM PT3)" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START      /* Scramble PT2 - FAKE DSW0 (bits 0 to 5) and IN1 (bits 6 and 7) */
+//	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	// Lives
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue (S PT2)" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	// Scramble PT2 - Check code at 0x00c2
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )	// Scramble PT2 - Check code at 0x00cc
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage (S PT2)" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START      /* Galaxian PT5 - FAKE DSW0 (bits 0 to 5) and IN1 (bits 6 and 7) */
+	PORT_DIPNAME( 0x03, 0x00, "Bonus Life (G PT5)" )
+	PORT_DIPSETTING(    0x01, "4000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "7000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	// Lives
+//	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage (G PT5)" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START      /* Galactic Convoy - FAKE DSW0 (bits 0 to 5) and IN1 (bits 6 and 7) */
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life (GC)" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPSETTING(    0x01, "80000" )
+//	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	// Lives
+//	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage (GC)" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	// 1 credit for 1st coin !
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bagmang )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x00, "A 2C/1C  B 1C/1C" )
+	PORT_DIPSETTING(	0x04, "A 1C/1C  B 1C/2C" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x18, "Easy" )
+	PORT_DIPSETTING(	0x10, "Medium" )
+	PORT_DIPSETTING(	0x08, "Hard" )
+	PORT_DIPSETTING(	0x00, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, "Language" )
+	PORT_DIPSETTING(	0x20, "English" )
+	PORT_DIPSETTING(	0x00, "French" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x40, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )	// Check code at 0x2d78 and 0x2e6b
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
 
 static struct GfxLayout galaxian_charlayout =
 {
@@ -2783,7 +3123,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( checkmaj )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_ADD_TAG("main",Z80,18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_MEMORY(galaxian_readmem,checkmaj_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
@@ -2856,6 +3196,29 @@ static MACHINE_DRIVER_START( scorpng )
 	MDRV_VIDEO_START(batman2)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( fourin1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(fourin1_readmem,fourin1_writemem)
+
+	MDRV_GFXDECODE(pacmanbl_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( bagmang )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(bagmang_readmem,bagmang_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_GFXDECODE(pacmanbl_gfxdecodeinfo)
+
+	/* video hardware */
+	MDRV_VIDEO_START(skybase)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -3565,6 +3928,23 @@ ROM_START( checkmaj )
 	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
 ROM_END
 
+ROM_START( dingo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "003.e7",       0x0000, 0x1000, 0xd088550f )
+	ROM_LOAD( "004.h7",       0x1000, 0x1000, 0xa228446a )
+	ROM_LOAD( "005.j7",       0x2000, 0x0800, 0x14d680bb )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound code */
+	ROM_LOAD( "6.7l",         0x0000, 0x1000, 0x047092e0 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "001.h1",       0x0000, 0x0800, 0x1ab1dd4d )
+	ROM_LOAD( "002.k1",       0x0800, 0x0800, 0x4be375ee )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "18s030.l6",	  0x0000, 0x0020, 0x3061d0f9 )
+ROM_END
+
 ROM_START( blkhole )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "bh1",          0x0000, 0x0800, 0x64998819 )
@@ -3592,6 +3972,27 @@ ROM_START( mooncrst )
 	ROM_LOAD( "mc6.8d",       0x2800, 0x0800, 0x69bcafdb )
 	ROM_LOAD( "mc7.8e",       0x3000, 0x0800, 0xb50dbc46 )
 	ROM_LOAD( "mc8",          0x3800, 0x0800, 0x18ca312b )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mcs_b",        0x0000, 0x0800, 0xfb0f1f81 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "mcs_a",        0x1000, 0x0800, 0x631ebb5a )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( mooncrsu )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "smc1f",        0x0000, 0x0800, 0x389ca0d6 )
+	ROM_LOAD( "smc2f",        0x0800, 0x0800, 0x410ab430 )
+	ROM_LOAD( "smc3f",        0x1000, 0x0800, 0xa6b4144b )
+	ROM_LOAD( "smc4f",        0x1800, 0x0800, 0x4cc046fe )
+	ROM_LOAD( "e5",       	  0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "bepr199",      0x2800, 0x0800, 0x6e84a927 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "smc8f",        0x3800, 0x0800, 0xf42164c5 )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mcs_b",        0x0000, 0x0800, 0xfb0f1f81 )
@@ -3954,14 +4355,86 @@ ROM_START( frogg )
 	ROM_LOAD( "p7.bin",       0x3000, 0x0800, 0xde3edc8c )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "k.bin",        0x0000, 0x0800, 0x05f7d883 )
+	ROM_LOAD( "k.bin",       0x0000, 0x0800, 0x05f7d883 )
 	ROM_LOAD( "h.bin",       0x0800, 0x0800, 0x658745f8 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( 4in1 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )   /* 64k for code  64k for banked code, encrypted */
+	/* Menu Code, Fixed at 0xc000 - 0xdfff */
+	ROM_LOAD( "rom1a",     0xc000, 0x1000, 0xce1af4d9 )
+	ROM_LOAD( "rom1b",     0xd000, 0x1000, 0x18484f9b )
+	/* Ghost Muncher PT3 - banked at 0x0000 - 0x3fff */
+	ROM_LOAD( "rom1c",       0x10000, 0x1000, 0x83248a8b )
+	ROM_LOAD( "rom1d",       0x11000, 0x1000, 0x053f6da0 )
+	ROM_LOAD( "rom1e",       0x12000, 0x1000, 0x43c546f3 )
+	ROM_LOAD( "rom1f",       0x13000, 0x1000, 0x3a086b46 )
+	/* Scramble PT2 - banked at 0x0000 - 0x3fff */
+	ROM_LOAD( "rom1g",       0x14000, 0x1000, 0xac0e2050 )
+	ROM_LOAD( "rom1h",       0x15000, 0x1000, 0xdc11a513 )
+	ROM_LOAD( "rom1i",       0x16000, 0x1000, 0xa5fb6be4 )
+	ROM_LOAD( "rom1j",       0x17000, 0x1000, 0x9054cfbe )
+	/* Galaxian PT5 - banked at 0x0000 - 0x3fff */
+	ROM_LOAD( "rom2c",       0x18000, 0x1000, 0x7cd98e11 )
+	ROM_LOAD( "rom2d",       0x19000, 0x1000, 0x9402f32e )
+	ROM_LOAD( "rom2e",       0x1a000, 0x1000, 0x468e81df )
+	/* Galactic Convoy - banked at 0x0000 - 0x3fff */
+	ROM_LOAD( "rom2g",       0x1c000, 0x1000, 0xb1ce3976 )
+	ROM_LOAD( "rom2h",       0x1d000, 0x1000, 0x7eab5670 )
+	ROM_LOAD( "rom2i",       0x1e000, 0x1000, 0x44565ac5 )
 
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )
+	/* Ghost Muncher PT3 GFX */
+	ROM_LOAD( "rom4b",        0x1000, 0x0800, 0x7e6495af )
+	ROM_CONTINUE (0x0000, 0x800)
+	ROM_LOAD( "rom3b",        0x1800, 0x0800, 0x7475f72f )
+	ROM_CONTINUE (0x0800, 0x800)
+	/* Galaxians PT5 GFX */
+	ROM_LOAD( "rom4c",        0x2000, 0x0800, 0x3355d46d ) // bad?
+	ROM_RELOAD(               0x3000, 0x0800)
+	ROM_LOAD( "rom3c",        0x2800, 0x0800, 0xac755a25 ) // bad?
+	ROM_RELOAD(               0x3800, 0x0800)
+	/* Scramble PT2 GFX */
+	ROM_LOAD( "rom4d",        0x4000, 0x1000, 0xbbdddb65 )
+	ROM_LOAD( "rom3d",        0x5000, 0x1000, 0x91a00204 )
+	/* Galactic Convoy GFX */
+	ROM_LOAD( "rom4e",        0x7000, 0x0800, 0x0cb9e297 )
+	ROM_CONTINUE (0x6000, 0x800)
+	ROM_LOAD( "rom3e",        0x7800, 0x0800, 0xa1fe77f9 )
+	ROM_CONTINUE (0x6800, 0x800)
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+    ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+
+ROM_START( bagmang )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "b1.bin",       0x0000, 0x1000, 0xb74c75ee )
+	ROM_LOAD( "b2.bin",       0x1000, 0x1000, 0xa7d99916 )
+	ROM_LOAD( "b3.bin",       0x2000, 0x1000, 0xc78f5360 )
+	ROM_LOAD( "b4.bin",       0x3000, 0x1000, 0xeebd3bd1 )
+	ROM_LOAD( "b5.bin",       0x4000, 0x1000, 0x0fe24b8c )
+	ROM_LOAD( "b6.bin",       0x5000, 0x1000, 0xf50390e7 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* these don't have an entire set of letters but it looks intentional */
+	ROM_LOAD( "g1-u.bin",     0x0000, 0x0800, 0xb63cfae4 )	// characters
+	ROM_CONTINUE ( 0x1000, 0x0800 ) // sprites
+	ROM_LOAD( "g2-u.bin",     0x0800, 0x0800, 0xa2790089 )	// characters
+	ROM_CONTINUE ( 0x1800, 0x0800 ) // sprites
+
+	/* these look like they should be for the title screen, but they seem corrupt
+	   unless thats intentional to wipe out the copyright? */
+	ROM_LOAD( "g1-l.bin",     0x2000, 0x0800, 0x2ae6b5ab )	// unused
+	ROM_LOAD( "g2-l.bin",     0x3000, 0x0800, 0x98b37397 )	// unused
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "bagmang.clr",       0x0000, 0x0020, 0x00000000 )
+ROM_END
 
 static DRIVER_INIT( pisces )
 {
@@ -3973,6 +4446,12 @@ static DRIVER_INIT( checkmaj )
 {
 	/* for the title screen */
 	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
+}
+
+static DRIVER_INIT( dingo )
+{
+	install_mem_read_handler(0, 0x3000, 0x3000, dingo_3000_r);
+	install_mem_read_handler(0, 0x3035, 0x3035, dingo_3035_r);
 }
 
 static DRIVER_INIT( kingball )
@@ -4112,6 +4591,19 @@ static DRIVER_INIT( azurian )
 	install_mem_read_handler(0, 0x7000, 0x7000, azurian_IN2_r);
 }
 
+static DRIVER_INIT( fourin1 )
+{
+	int i;
+	data8_t *RAM = memory_region(REGION_CPU1);
+
+	/* Decrypt Program Roms */
+	for (i = 0x00000; i < 0x20000; i++)
+		RAM[i] = RAM[i] ^ (i % 256);
+
+	fourin1_bank = 0;
+	set_fourin1_banks(fourin1_bank); /* set the initial CPU bank */
+}
+
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
@@ -4149,8 +4641,10 @@ GAME( 1982, azurian,  0,        galaxian, azurian,  azurian,  ROT90,  "Rait Elec
 GAME( 19??, orbitron, 0,        galaxian, orbitron, batman2,  ROT270, "Signatron USA", "Orbitron" )
 GAME( 1982, checkman, 0,        checkman, checkman, checkman, ROT90,  "Zilec-Zenitone", "Checkman" )
 GAME( 1982, checkmaj, checkman, checkmaj, checkmaj, checkmaj, ROT90,  "Jaleco", "Checkman (Japan)" )
+GAME( 1983, dingo,    0,        checkmaj, dingo,    dingo,    ROT90,  "Ashby Computers and Graphics LTD. (Jaleco license)", "Dingo" )
 GAME( 1981, blkhole,  0,        galaxian, blkhole,  0,        ROT90,  "TDS", "Black Hole" )
 GAME( 1980, mooncrst, 0,        mooncrst, mooncrst, mooncrst, ROT90,  "Nichibutsu", "Moon Cresta (Nichibutsu)" )
+GAME( 1980, mooncrsu, mooncrst, mooncrst, mooncrst, 0,        ROT90,  "Nichibutsu USA", "Moon Cresta (Nichibutsu, unencrypted)" )
 GAME( 1980, mooncrsa, mooncrst, mooncrst, mooncrsa, mooncrst, ROT90,  "Nichibutsu", "Moon Cresta (Nichibutsu, old rev)" )
 GAME( 1980, mooncrsg, mooncrst, mooncrst, mooncrsg, 0,        ROT90,  "Gremlin", "Moon Cresta (Gremlin)" )
 GAME( 1980?,smooncrs, mooncrst, mooncrst, smooncrs, 0,        ROT90,  "Gremlin", "Super Moon Cresta" )
@@ -4169,3 +4663,5 @@ GAME( 1980, kingball, 0,        kingball, kingball, kingball, ROT90,  "Namco", "
 GAME( 1980, kingbalj, kingball, kingball, kingball, kingball, ROT90,  "Namco", "King & Balloon (Japan)" )
 GAME( 19??, scorpng,  0,        scorpng,  scorpng,  0,        ROT90,  "Dorneer", "Scorpion (bootleg on Galaxian hardware)" )
 GAME( 19??, frogg,    frogger,  galaxian, frogg,    0,        ROT90,  "bootleg", "Frog (Galaxian hardware)" )
+GAMEX(1981, 4in1,     0,        fourin1,  fourin1,  fourin1,  ROT90,  "Armenia / Food and Fun", "4 Fun in 1", GAME_IMPERFECT_SOUND )
+GAMEX(1982, bagmang,  bagman,   bagmang,  bagmang,  0,        ROT90,  "bootleg", "Bagman (bootleg on Galaxian hardware)", GAME_WRONG_COLORS  )

@@ -7,64 +7,24 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-extern unsigned char* berzerk_magicram;
-
-MACHINE_INIT( berzerk );
-
-VIDEO_UPDATE( berzerk );
-
-INTERRUPT_GEN( berzerk_interrupt );
-WRITE_HANDLER( berzerk_irq_enable_w );
-WRITE_HANDLER( berzerk_nmi_enable_w );
-WRITE_HANDLER( berzerk_nmi_disable_w );
-READ_HANDLER( berzerk_nmi_enable_r );
-READ_HANDLER( berzerk_nmi_disable_r );
-READ_HANDLER( berzerk_led_on_r );
-READ_HANDLER( berzerk_led_off_r );
-READ_HANDLER( berzerk_voiceboard_r );
-WRITE_HANDLER( berzerk_videoram_w );
-WRITE_HANDLER( berzerk_colorram_w );
-
-WRITE_HANDLER( berzerk_magicram_w );
-WRITE_HANDLER( berzerk_magicram_control_w );
-READ_HANDLER( berzerk_collision_r );
-
-WRITE_HANDLER( berzerk_sound_control_a_w );
-int  berzerk_sh_start(const struct MachineSound *msound);
-void berzerk_sh_update(void);
-
-
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static NVRAM_HANDLER( berzerk )
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-	}
-}
+#include "includes/berzerk.h"
 
 
 
 static MEMORY_READ_START( berzerk_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x09ff, MRA_RAM },
-	{ 0x1000, 0x3fff, MRA_ROM },
+	{ 0x1000, 0x37ff, MRA_ROM },
 	{ 0x4000, 0x87ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( berzerk_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0800, 0x09ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
-	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
-	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
+	{ 0x0800, 0x09ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+	{ 0x1000, 0x37ff, MWA_ROM },
+	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram },
+	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram },
+	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram },
 MEMORY_END
 
 
@@ -77,40 +37,40 @@ MEMORY_END
 
 static MEMORY_WRITE_START( frenzy_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
-	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
-	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
+	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram },
+	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram },
+	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram },
 	{ 0xc000, 0xcfff, MWA_ROM },
 	{ 0xf800, 0xf9ff, MWA_RAM },
 MEMORY_END
 
+
 static PORT_READ_START( readport )
-	{ 0x44, 0x44, berzerk_voiceboard_r}, /* Sound stuff */
-	{ 0x48, 0x48, input_port_0_r},
-	{ 0x49, 0x49, input_port_1_r},
-	{ 0x4a, 0x4a, input_port_2_r},
-	{ 0x4c, 0x4c, berzerk_nmi_enable_r},
-	{ 0x4d, 0x4d, berzerk_nmi_disable_r},
-	{ 0x4e, 0x4e, berzerk_collision_r},
-	{ 0x60, 0x60, input_port_3_r},
-	{ 0x61, 0x61, input_port_4_r},
-	{ 0x62, 0x62, input_port_5_r},
-	{ 0x63, 0x63, input_port_6_r},
-	{ 0x64, 0x64, input_port_7_r},
-	{ 0x65, 0x65, input_port_8_r},
-	{ 0x66, 0x66, berzerk_led_off_r},
-	{ 0x67, 0x67, berzerk_led_on_r},
+	{ 0x44, 0x44, berzerk_voiceboard_r },
+	{ 0x48, 0x48, input_port_0_r },
+	{ 0x49, 0x49, input_port_1_r },
+	{ 0x4a, 0x4a, input_port_2_r },
+	{ 0x4c, 0x4c, berzerk_nmi_enable_r },
+	{ 0x4d, 0x4d, berzerk_nmi_disable_r },
+	{ 0x4e, 0x4e, berzerk_port_4e_r },
+	{ 0x60, 0x60, input_port_4_r },
+	{ 0x61, 0x61, input_port_5_r },
+	{ 0x62, 0x62, input_port_6_r },
+	{ 0x63, 0x63, input_port_7_r },
+	{ 0x64, 0x64, input_port_8_r },
+	{ 0x65, 0x65, input_port_9_r },
+	{ 0x66, 0x66, berzerk_led_off_r },
+	{ 0x67, 0x67, berzerk_led_on_r },
 PORT_END
 
-
 static PORT_WRITE_START( writeport )
-	{ 0x40, 0x46, berzerk_sound_control_a_w}, /* First sound board */
-	{ 0x47, 0x47, IOWP_NOP}, /* not used sound stuff */
-	{ 0x4b, 0x4b, berzerk_magicram_control_w},
-	{ 0x4c, 0x4c, berzerk_nmi_enable_w},
-	{ 0x4d, 0x4d, berzerk_nmi_disable_w},
-	{ 0x4f, 0x4f, berzerk_irq_enable_w},
-	{ 0x50, 0x57, IOWP_NOP}, /* Second sound board but not used */
+	{ 0x40, 0x46, berzerk_sound_control_a_w }, /* First sound board */
+	{ 0x47, 0x47, IOWP_NOP }, /* not used sound stuff */
+	{ 0x4b, 0x4b, berzerk_magicram_control_w },
+	{ 0x4c, 0x4c, berzerk_nmi_enable_w },
+	{ 0x4d, 0x4d, berzerk_nmi_disable_w },
+	{ 0x4f, 0x4f, berzerk_irq_enable_w },
+	{ 0x50, 0x57, IOWP_NOP }, /* Second sound board but not used */
 PORT_END
 
 
@@ -164,6 +124,11 @@ INPUT_PORTS_START( berzerk )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* Collision */
+
+	PORT_START      /* IN4 */
 	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -177,7 +142,7 @@ INPUT_PORTS_START( berzerk )
 	PORT_DIPSETTING(    0x80, "French" )
 	PORT_DIPSETTING(    0xc0, "Spanish" )
 
-	PORT_START      /* IN4 */
+	PORT_START      /* IN5 */
 	PORT_BITX(    0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color Test", KEYCODE_F5, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( On ) )
@@ -188,16 +153,16 @@ INPUT_PORTS_START( berzerk )
 	PORT_DIPSETTING(    0x80, "10000" )
 	PORT_DIPSETTING(    0x00, "None" )
 
-	PORT_START      /* IN5 */
+	PORT_START      /* IN6 */
 	COINAGE(3)
 
-	PORT_START      /* IN6 */
+	PORT_START      /* IN7 */
 	COINAGE(2)
 
-	PORT_START      /* IN7 */
+	PORT_START      /* IN8 */
 	COINAGE(1)
 
-	PORT_START      /* IN8 */
+	PORT_START      /* IN9 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -233,6 +198,11 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* Collision */
+
+	PORT_START      /* IN4 */
 	PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x01, "1000" )
 	PORT_DIPSETTING(    0x02, "2000" )
@@ -257,7 +227,7 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x80, "French" )
 	PORT_DIPSETTING(    0xc0, "Spanish" )
 
-	PORT_START      /* IN4 */
+	PORT_START      /* IN5 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Bit 0 does some more hardware tests */
 	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -268,7 +238,7 @@ INPUT_PORTS_START( frenzy )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	/* The following 3 ports use all 8 bits, but I didn't feel like adding all 256 values :-) */
-	PORT_START      /* IN5 */
+	PORT_START      /* IN6 */
 	PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit B" )
 	/*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
 	PORT_DIPSETTING(    0x01, "1" )
@@ -288,7 +258,7 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x0f, "15" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
-	PORT_START      /* IN6 */
+	PORT_START      /* IN7 */
 	PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit A" )
 	/*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
 	PORT_DIPSETTING(    0x01, "1" )
@@ -308,7 +278,7 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x0f, "15" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
-	PORT_START      /* IN7 */
+	PORT_START      /* IN8 */
 	PORT_DIPNAME( 0x0f, 0x01, "Coin Multiplier" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x01, "1" )
@@ -328,87 +298,11 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x0f, "15" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
-	PORT_START      /* IN8 */
+	PORT_START      /* IN9 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", KEYCODE_F1, IP_JOY_NONE )
 INPUT_PORTS_END
-
-
-
-
-/* Simple 1-bit RGBI palette */
-static PALETTE_INIT( berzerk )
-{
-	int i;
-	
-	for (i = 0; i < 16; i++)
-	{
-		int bk = (i & 8) ? 0x40 : 0x00;
-		int r = (i & 1) ? 0xff : bk;
-		int g = (i & 2) ? 0xff : bk;
-		int b = (i & 4) ? 0xff : bk;
-		palette_set_color(i,r,g,b);
-	}
-}
-
-
-
-static const char *berzerk_sample_names[] =
-{
-	"*berzerk", /* universal samples directory */
-	"",
-	"01.wav", // "kill"
-	"02.wav", // "attack"
-	"03.wav", // "charge"
-	"04.wav", // "got"
-	"05.wav", // "to"
-	"06.wav", // "get"
-	"",
-	"08.wav", // "alert"
-	"09.wav", // "detected"
-	"10.wav", // "the"
-	"11.wav", // "in"
-	"12.wav", // "it"
-	"",
-	"",
-	"15.wav", // "humanoid"
-	"16.wav", // "coins"
-	"17.wav", // "pocket"
-	"18.wav", // "intruder"
-	"",
-	"20.wav", // "escape"
-	"21.wav", // "destroy"
-	"22.wav", // "must"
-	"23.wav", // "not"
-	"24.wav", // "chicken"
-	"25.wav", // "fight"
-	"26.wav", // "like"
-	"27.wav", // "a"
-	"28.wav", // "robot"
-	"",
-	"30.wav", // player fire
-	"31.wav", // baddie fire
-	"32.wav", // kill baddie
-	"33.wav", // kill human (real)
-	"34.wav", // kill human (cheat)
-	0	/* end of array */
-};
-
-static struct Samplesinterface berzerk_samples_interface =
-{
-	8,	/* 8 channels */
-	25,	/* volume */
-	berzerk_sample_names
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	berzerk_sh_start,
-	0,
-	berzerk_sh_update
-};
-
 
 
 static MACHINE_DRIVER_START( berzerk )
@@ -420,24 +314,24 @@ static MACHINE_DRIVER_START( berzerk )
 	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
-
+	MDRV_VBLANK_DURATION(2500)  /* Needs to be long enough so 2 of the 8 */
+								/* interrupts fall inside the VBLANK */
 	MDRV_MACHINE_INIT(berzerk)
-	MDRV_NVRAM_HANDLER(berzerk)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 32, 256-1)
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(berzerk)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(berzerk)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, berzerk_samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(CUSTOM, berzerk_custom_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( frenzy )
@@ -446,7 +340,7 @@ static MACHINE_DRIVER_START( frenzy )
 	MDRV_IMPORT_FROM(berzerk)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(frenzy_readmem,frenzy_writemem)
-	
+
 	MDRV_MACHINE_INIT(NULL)
 	MDRV_NVRAM_HANDLER(NULL)
 MACHINE_DRIVER_END

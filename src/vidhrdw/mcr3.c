@@ -10,16 +10,6 @@
 #include "mcr.h"
 
 
-#ifndef MIN
-#define MIN(x,y) (x)<(y)?(x):(y)
-#endif
-
-/* These are used to align Discs of Tron with the backdrop */
-#define DOTRON_X_START 90
-#define DOTRON_Y_START 118
-static struct artwork_info *backdrop[2];
-
-
 
 /*************************************
  *
@@ -31,8 +21,6 @@ static struct artwork_info *backdrop[2];
 UINT8 spyhunt_sprite_color_mask;
 INT16 spyhunt_scrollx, spyhunt_scrolly;
 INT16 spyhunt_scroll_offset;
-UINT8 spyhunt_draw_lamps;
-UINT8 spyhunt_lamp[8];
 
 UINT8 *spyhunt_alpharam;
 size_t spyhunt_alpharam_size;
@@ -45,10 +33,98 @@ size_t spyhunt_alpharam_size;
  *
  *************************************/
 
-/* Spy Hunter-specific scrolling background */
-static struct mame_bitmap *spyhunt_backbitmap;
+static struct tilemap *bg_tilemap;
+static struct tilemap *alpha_tilemap;
 
-static UINT8 last_cocktail_flip;
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	int data = videoram[tile_index * 2] | (videoram[tile_index * 2 + 1] << 8);
+	int code = (data & 0x3ff) | ((data >> 4) & 0x400);
+	int color = (data >> 12) & 3;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 10) & 3));
+}
+
+
+static void mcrmono_get_bg_tile_info(int tile_index)
+{
+	int data = videoram[tile_index * 2] | (videoram[tile_index * 2 + 1] << 8);
+	int code = (data & 0x3ff) | ((data >> 4) & 0x400);
+	int color = ((data >> 12) & 3) ^ 3;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 10) & 3));
+}
+
+
+static UINT32 spyhunt_bg_scan(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (row & 0x0f) | ((col & 0x3f) << 4) | ((row & 0x10) << 6);
+}
+
+
+static void spyhunt_get_bg_tile_info(int tile_index)
+{
+	int data = videoram[tile_index];
+	int code = (data & 0x3f) | ((data >> 1) & 0x40);
+	SET_TILE_INFO(0, code, 0, (data & 0x40) ? TILE_FLIPY : 0);
+}
+
+
+static void spyhunt_get_alpha_tile_info(int tile_index)
+{
+	SET_TILE_INFO(2, spyhunt_alpharam[tile_index], 0, 0);
+}
+
+
+
+/*************************************
+ *
+ *	Video startup
+ *
+ *************************************/
+
+VIDEO_START( mcr3 )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	return 0;
+}
+
+
+VIDEO_START( mcrmono )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(mcrmono_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	return 0;
+}
+
+
+VIDEO_START( spyhunt )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(spyhunt_get_bg_tile_info, spyhunt_bg_scan, TILEMAP_OPAQUE, 64,32, 64,32);
+	if (!bg_tilemap)
+		return 1;
+
+	/* initialize the text tilemap */
+	alpha_tilemap = tilemap_create(spyhunt_get_alpha_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT, 16,16, 32,32);
+	if (!alpha_tilemap)
+		return 1;
+	tilemap_set_transparent_pen(alpha_tilemap, 0);
+	tilemap_set_scrollx(alpha_tilemap, 0, 16);
+	return 0;
+}
 
 
 
@@ -88,45 +164,22 @@ WRITE_HANDLER( mcr3_paletteram_w )
 
 WRITE_HANDLER( mcr3_videoram_w )
 {
-	if (videoram[offset] != data)
-	{
-		dirtybuffer[offset & ~1] = 1;
-		videoram[offset] = data;
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 }
 
 
-
-/*************************************
- *
- *	Background update
- *
- *************************************/
-
-static void mcr3_update_background(struct mame_bitmap *bitmap, UINT8 color_xor)
+WRITE_HANDLER( spyhunt_videoram_w )
 {
-	int offs;
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
+}
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
-		if (dirtybuffer[offs])
-		{
-			int mx = (offs / 2) % 32;
-			int my = (offs / 2) / 32;
-			int attr = videoram[offs + 1];
-			int color = ((attr & 0x30) >> 4) ^ color_xor;
-			int code = videoram[offs] | ((attr & 0x03) << 8) | ((attr & 0x40) << 4);
 
-			if (!mcr_cocktail_flip)
-				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
-						16 * mx, 16 * my, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			else
-				drawgfx(bitmap, Machine->gfx[0], code, color, !(attr & 0x04), !(attr & 0x08),
-						16 * (31 - mx), 16 * (29 - my), &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-			dirtybuffer[offs] = 0;
-		}
+WRITE_HANDLER( spyhunt_alpharam_w )
+{
+	spyhunt_alpharam[offset] = data;
+	tilemap_mark_tile_dirty(alpha_tilemap, offset);
 }
 
 
@@ -201,44 +254,30 @@ void mcr3_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( mcr3 )
 {
-	/* mark everything dirty on a cocktail flip change */
-	if (last_cocktail_flip != mcr_cocktail_flip)
-		memset(dirtybuffer, 1, videoram_size);
-	last_cocktail_flip = mcr_cocktail_flip;
+	/* update the flip state */
+	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 
-	/* redraw the background */
-	mcr3_update_background(tmpbitmap, 0);
-
-	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	/* draw the background */
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);
 }
 
 
-
-/*************************************
- *
- *	MCR monoboard-specific redraw
- *
- *************************************/
-
-VIDEO_UPDATE( mcrmono )
+VIDEO_UPDATE( spyhunt )
 {
-	/* mark everything dirty on a cocktail flip change */
-	if (last_cocktail_flip != mcr_cocktail_flip)
-		memset(dirtybuffer, 1, videoram_size);
-	last_cocktail_flip = mcr_cocktail_flip;
-
-	/* redraw the background */
-	mcr3_update_background(tmpbitmap, 3);
-
-	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	tilemap_set_scrollx(bg_tilemap, 0, spyhunt_scrollx * 2 + spyhunt_scroll_offset);
+	tilemap_set_scrolly(bg_tilemap, 0, spyhunt_scrolly * 2);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
-	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);
+	mcr3_update_sprites(bitmap, cliprect, spyhunt_sprite_color_mask, 0x80, -12, 0);
+
+	/* render any characters on top */
+	tilemap_draw(bitmap, cliprect, alpha_tilemap, 0, 0);
 }
 
 
@@ -252,213 +291,8 @@ VIDEO_UPDATE( mcrmono )
 PALETTE_INIT( spyhunt )
 {
 	/* add some colors for the alpha RAM */
-	palette_set_color(4*16,  0x00,0x00,0x00);
+	palette_set_color(4*16+0,0x00,0x00,0x00);
 	palette_set_color(4*16+1,0x00,0xff,0x00);
 	palette_set_color(4*16+2,0x00,0x00,0xff);
 	palette_set_color(4*16+3,0xff,0xff,0xff);
-}
-
-
-
-/*************************************
- *
- *	Spy Hunter-specific video startup
- *
- *************************************/
-
-VIDEO_START( spyhunt )
-{
-	/* allocate our own dirty buffer */
-	dirtybuffer = auto_malloc(videoram_size);
-	if (!dirtybuffer)
-		return 1;
-	memset(dirtybuffer, 1, videoram_size);
-
-	/* allocate a bitmap for the background */
-	spyhunt_backbitmap = auto_bitmap_alloc(64*64, 32*32);
-	if (!spyhunt_backbitmap)
-		return 1;
-
-	/* reset the scrolling */
-	spyhunt_scrollx = spyhunt_scrolly = 0;
-
-	return 0;
-}
-
-
-
-/*************************************
- *
- *	Spy Hunter-specific redraw
- *
- *************************************/
-
-VIDEO_UPDATE( spyhunt )
-{
-	struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
-	int offs, scrollx, scrolly;
-
-	sect_rect(&clip, cliprect);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1; offs >= 0; offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int code = videoram[offs];
-			int vflip = code & 0x40;
-			int mx = (offs >> 4) & 0x3f;
-			int my = (offs & 0x0f) | ((offs >> 6) & 0x10);
-
-			code = (code & 0x3f) | ((code & 0x80) >> 1);
-
-			drawgfx(spyhunt_backbitmap, Machine->gfx[0], code, 0, 0, vflip,
-					64 * mx, 32 * my, NULL, TRANSPARENCY_NONE, 0);
-
-			dirtybuffer[offs] = 0;
-		}
-	}
-
-	/* copy it to the destination */
-	scrollx = -spyhunt_scrollx * 2 + spyhunt_scroll_offset;
-	scrolly = -spyhunt_scrolly * 2;
-	copyscrollbitmap(bitmap, spyhunt_backbitmap, 1, &scrollx, 1, &scrolly, &clip, TRANSPARENCY_NONE, 0);
-
-	/* draw the sprites */
-	mcr3_update_sprites(bitmap, &clip, spyhunt_sprite_color_mask, 0x80, -12, 0);
-
-	/* render any characters on top */
-	for (offs = spyhunt_alpharam_size - 1; offs >= 0; offs--)
-	{
-		int ch = spyhunt_alpharam[offs];
-		if (ch)
-		{
-			int mx = offs / 32;
-			int my = offs % 32;
-
-			drawgfx(bitmap, Machine->gfx[2], ch, 0, 0, 0,
-					16 * mx - 16, 16 * my, &clip, TRANSPARENCY_PEN, 0);
-		}
-	}
-
-	/* lamp indicators */
-	if (spyhunt_draw_lamps)
-	{
-		char buffer[32];
-
-		sprintf(buffer, "%s  %s  %s  %s  %s",
-				spyhunt_lamp[0] ? "OIL" : "   ",
-				spyhunt_lamp[1] ? "MISSILE" : "       ",
-				spyhunt_lamp[2] ? "VAN" : "   ",
-				spyhunt_lamp[3] ? "SMOKE" : "     ",
-				spyhunt_lamp[4] ? "GUNS" : "    ");
-		for (offs = 0; offs < 30; offs++)
-			drawgfx(bitmap, Machine->gfx[2], buffer[offs], 0, 0, 0,
-					30 * 16, (29 - offs) * 16, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-}
-
-
-
-/*************************************
- *
- *	Discs of Tron-specific video startup
- *
- *************************************/
-
-VIDEO_START( dotron )
-{
-	/* do generic initialization to start */
-	if (video_start_generic())
-		return 1;
-
-	/* load the backdrop */
-	backdrop_load("dotron1.png", 64);
-	if (artwork_backdrop)
-	{
-		backdrop[0] = artwork_backdrop;
-		artwork_load (&backdrop[1], "dotron2.png", 64);
-	}
-	else backdrop[0] = backdrop[1] = NULL;
-
-	/* need to clear the border outside the game display */
-	fillbitmap(tmpbitmap,Machine->pens[64],&Machine->visible_area);	/* artwork's black */
-
-	if (!artwork_backdrop)
-	{
-		/* if no artwork available, reduce visible area to the game display */
-		set_visible_area(DOTRON_X_START,DOTRON_X_START + 32*16-1,DOTRON_Y_START,DOTRON_Y_START + 30*16-1);
-	}
-
-	return 0;
-}
-
-
-
-/*************************************
- *
- *	Discs of Tron light management
- *
- *************************************/
-
-void dotron_change_light(int light)
-{
-	set_led_status(0,light & 1);	/* background light */
-	set_led_status(1,light & 2);	/* strobe */
-
-	if (backdrop[light & 1])
-		artwork_backdrop = backdrop[light & 1];
-}
-
-
-
-/*************************************
- *
- *	Discs of Tron-specific redraw
- *
- *************************************/
-
-VIDEO_UPDATE( dotron )
-{
-	struct rectangle sclip;
-	int offs;
-
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer, 1 ,videoram_size);
-
-	/* Screen clip, because our backdrop is a different resolution than the game */
-	sclip.min_x = DOTRON_X_START;
-	sclip.max_x = DOTRON_X_START + 32*16-1;
-	sclip.min_y = DOTRON_Y_START;
-	sclip.max_y = DOTRON_Y_START + 30*16-1;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
-	{
-		if (dirtybuffer[offs])
-		{
-			int attr = videoram[offs+1];
-			int code = videoram[offs] + 256 * (attr & 0x03);
-			int color = (attr & 0x30) >> 4;
-			int mx = ((offs / 2) % 32) * 16;
-			int my = ((offs / 2) / 32) * 16;
-
-			/* center for the backdrop */
-			mx += DOTRON_X_START;
-			my += DOTRON_Y_START;
-
-			drawgfx(tmpbitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
-					mx, my, &sclip, TRANSPARENCY_NONE, 0);
-
-			dirtybuffer[offs] = 0;
-		}
-	}
-
-	/* copy the resulting bitmap to the screen */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
-
-	/* draw the sprites */
-	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, DOTRON_X_START, DOTRON_Y_START);
 }

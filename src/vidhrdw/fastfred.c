@@ -7,11 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "fastfred.h"
 
 
-unsigned char *fastfred_attributesram;
-static const unsigned char *fastfred_color_prom;
+data8_t *fastfred_videoram;
+data8_t *fastfred_spriteram;
+size_t fastfred_spriteram_size;
+data8_t *fastfred_attributesram;
 
 
 static struct rectangle spritevisiblearea =
@@ -26,13 +28,23 @@ static struct rectangle spritevisibleareaflipx =
         2*8, 30*8-1
 };
 
-static int character_bank[2];
-static int color_bank[2];
-static int canspritesflipx = 0;
+static data16_t charbank;
+static data8_t colorbank;
+static int flip_screen_x;
+static int flip_screen_y;
+static int fastfred_hardware;
+static const UINT8 *fastfred_color_prom;
+static struct tilemap *bg_tilemap;
+
+
+MACHINE_INIT( fastfred )
+{
+	fastfred_hardware = 1;
+}
 
 MACHINE_INIT( jumpcoas )
 {
-	canspritesflipx = 1;
+	fastfred_hardware = 0;
 }
 
 /***************************************************************************
@@ -46,32 +58,35 @@ MACHINE_INIT( jumpcoas )
 
 ***************************************************************************/
 
-static void convert_color(int i, int* r, int* g, int* b)
+static void set_color(pen_t pen, int i)
 {
+	UINT8 r,g,b;
 	int bit0, bit1, bit2, bit3;
-	const unsigned char *prom = fastfred_color_prom;
-	int total = Machine->drv->total_colors;
 
-	bit0 = (prom[i + 0*total] >> 0) & 0x01;
-	bit1 = (prom[i + 0*total] >> 1) & 0x01;
-	bit2 = (prom[i + 0*total] >> 2) & 0x01;
-	bit3 = (prom[i + 0*total] >> 3) & 0x01;
-	*r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-	bit0 = (prom[i + 1*total] >> 0) & 0x01;
-	bit1 = (prom[i + 1*total] >> 1) & 0x01;
-	bit2 = (prom[i + 1*total] >> 2) & 0x01;
-	bit3 = (prom[i + 1*total] >> 3) & 0x01;
-	*g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-	bit0 = (prom[i + 2*total] >> 0) & 0x01;
-	bit1 = (prom[i + 2*total] >> 1) & 0x01;
-	bit2 = (prom[i + 2*total] >> 2) & 0x01;
-	bit3 = (prom[i + 2*total] >> 3) & 0x01;
-	*b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	pen_t total = Machine->drv->total_colors;
+
+	bit0 = (fastfred_color_prom[i + 0*total] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i + 0*total] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i + 0*total] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i + 0*total] >> 3) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	bit0 = (fastfred_color_prom[i + 1*total] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i + 1*total] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i + 1*total] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i + 1*total] >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	bit0 = (fastfred_color_prom[i + 2*total] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i + 2*total] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i + 2*total] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i + 2*total] >> 3) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	palette_set_color(pen,r,g,b);
 }
 
 PALETTE_INIT( fastfred )
 {
-	int i;
+	pen_t i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
@@ -80,165 +95,210 @@ PALETTE_INIT( fastfred )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r,g,b;
-
-		convert_color(i, &r, &g, &b);
-		palette_set_color(i,r,g,b);
+		set_color(i, i);
 	}
 
 
 	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
+	for (i = 0; i < TOTAL_COLORS(0); i++)
 	{
-		int color;
+		pen_t color;
 
-		if (!(i & 0x07))
-		{
+		if ((i & 0x07) == 0)
 			color = 0;
-		}
 		else
-		{
 			color = i;
-		}
 
 		COLOR(0,i) = COLOR(1,i) = color;
 	}
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_tile_info(int tile_index)
+{
+	data8_t x = tile_index & 0x1f;
+
+	data16_t code = charbank | fastfred_videoram[tile_index];
+	data8_t color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+
+
+/*************************************
+ *
+ *	Video system start
+ *
+ *************************************/
+
+VIDEO_START( fastfred )
+{
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+
+	if (!bg_tilemap)
+		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+
+	return 0;
+}
+
+
+/*************************************
+ *
+ *	Memory handlers
+ *
+ *************************************/
+
+WRITE_HANDLER( fastfred_videoram_w )
+{
+	if (fastfred_videoram[offset] != data)
+	{
+		fastfred_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+
 WRITE_HANDLER( fastfred_attributes_w )
 {
-	if ((offset & 1) && fastfred_attributesram[offset] != data)
+	if (fastfred_attributesram[offset] != data)
 	{
-		int i;
+		if (offset & 0x01)
+		{
+			/* color change */
+			int i;
 
+			for (i = offset / 2; i < 0x0400; i += 32)
+				tilemap_mark_tile_dirty(bg_tilemap, i);
+		}
+		else
+		{
+			/* coloumn scroll */
+			tilemap_set_scrolly(bg_tilemap, offset / 2, data);
+		}
 
-		for (i = offset / 2;i < videoram_size;i += 32)
-			dirtybuffer[i] = 1;
+		fastfred_attributesram[offset] = data;
 	}
-
-	fastfred_attributesram[offset] = data;
 }
 
 
-WRITE_HANDLER( fastfred_character_bank_select_w )
+WRITE_HANDLER( fastfred_charbank1_w )
 {
-	set_vh_global_attribute(&character_bank[offset], data & 0x01);
+	data16_t new_data = (charbank & 0x0200) | ((data & 0x01) << 8);
 
+	if (new_data != charbank)
+	{
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+		charbank = new_data;
+	}
+}
+
+WRITE_HANDLER( fastfred_charbank2_w )
+{
+	data16_t new_data = (charbank & 0x0100) | ((data & 0x01) << 9);
+
+	if (new_data != charbank)
+	{
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+		charbank = new_data;
+	}
 }
 
 
-WRITE_HANDLER( fastfred_color_bank_select_w )
+WRITE_HANDLER( fastfred_colorbank1_w )
 {
-	set_vh_global_attribute(&color_bank[offset], data & 0x01);
+	data8_t new_data = (colorbank & 0x10) | ((data & 0x01) << 3);
+
+	if (new_data != colorbank)
+	{
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+		colorbank = new_data;
+	}
+}
+
+WRITE_HANDLER( fastfred_colorbank2_w )
+{
+	data8_t new_data = (colorbank & 0x08) | ((data & 0x01) << 4);
+
+	if (new_data != colorbank)
+	{
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+		colorbank = new_data;
+	}
 }
 
 
 WRITE_HANDLER( fastfred_background_color_w )
 {
-	int r,g,b;
-
-	//logerror("Background color = %02X\n", data);
-
-	convert_color(data, &r, &g, &b);
-
-	palette_set_color(0,r,g,b);
+	set_color(0, data);
 }
 
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( fastfred )
+WRITE_HANDLER( fastfred_flip_screen_x_w )
 {
-	int offs, charbank, colorbank;
-
-
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
-
-
-	charbank   = ((character_bank[1] << 9) | (character_bank[0] << 8));
-	colorbank  = ((color_bank[1]     << 4) | (color_bank[0]     << 3));
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (flip_screen_x != (data & 0x01))
 	{
-		int color;
+		flip_screen_x = data & 0x01;
 
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			color = colorbank | (fastfred_attributesram[2 * sx + 1] & 0x07);
-
-			if (flip_screen_x) sx = 31 - sx;
-			if (flip_screen_y) sy = 31 - sy;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charbank | videoram[offs],
-					color,
-					flip_screen_x,flip_screen_y,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
 	}
+}
 
-
-	/* copy the temporary bitmap to the screen */
+WRITE_HANDLER( fastfred_flip_screen_y_w )
+{
+	if (flip_screen_y != (data & 0x01))
 	{
-		int i, scroll[32];
+		flip_screen_y = data & 0x01;
 
-		if (flip_screen_x)
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Video update
+ *
+ *************************************/
+
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	int offs;
+
+	for (offs = fastfred_spriteram_size - 4; offs >= 0; offs -= 4)
+	{
+		UINT8 code,sx,sy;
+		int flipx,flipy;
+
+		sx = fastfred_spriteram[offs + 3];
+		sy = 240 - fastfred_spriteram[offs];
+
+		if (fastfred_hardware)
 		{
-			for (i = 0;i < 32;i++)
-			{
-				scroll[31-i] = -fastfred_attributesram[2 * i];
-				if (flip_screen_y) scroll[31-i] = -scroll[31-i];
-			}
+			// Fly-Boy/Fast Freddie/Red Robin
+			code  =  fastfred_spriteram[offs + 1] & 0x7f;
+			flipx =  0;
+			flipy = ~fastfred_spriteram[offs + 1] & 0x80;
 		}
 		else
-		{
-			for (i = 0;i < 32;i++)
-			{
-				scroll[i] = -fastfred_attributesram[2 * i];
-				if (flip_screen_y) scroll[i] = -scroll[i];
-			}
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the sprites */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int code,sx,sy,flipx,flipy;
-
-		sx = spriteram[offs + 3];
-		sy = 240 - spriteram[offs];
-
-		if (canspritesflipx)
 		{
 			// Jump Coaster
-			code  =  spriteram[offs + 1] & 0x3f;
-			flipx = ~spriteram[offs + 1] & 0x40;
-			flipy =  spriteram[offs + 1] & 0x80;
-		}
-		else
-		{
-			// Fast Freddie
-			code  =  spriteram[offs + 1] & 0x7f;
-			flipx =  0;
-			flipy = ~spriteram[offs + 1] & 0x80;
+			code  = (fastfred_spriteram[offs + 1] & 0x3f) | 0x40;
+			flipx = ~fastfred_spriteram[offs + 1] & 0x40;
+			flipy =  fastfred_spriteram[offs + 1] & 0x80;
 		}
 
 
@@ -255,9 +315,17 @@ VIDEO_UPDATE( fastfred )
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
-				colorbank | (spriteram[offs + 2] & 0x07),
+				colorbank | (fastfred_spriteram[offs + 2] & 0x07),
 				flipx,flipy,
 				sx,sy,
 				flip_screen_x ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
+}
+
+
+VIDEO_UPDATE( fastfred )
+{
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
+	draw_sprites(bitmap, cliprect);
 }

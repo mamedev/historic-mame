@@ -372,11 +372,11 @@ static struct namco_interface namco_interface =
 static MACHINE_DRIVER_START( superpac )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1100000)
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(M6809, 1100000)
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

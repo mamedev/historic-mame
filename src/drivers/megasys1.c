@@ -106,6 +106,7 @@ RAM			RW		0f0000-0f3fff		0e0000-0effff?		<
   This is likely an interrupt timing issue: changing the order in
   interrupt_A() from 3 2 1 to 1 2 3 makes it work reasonably well for a very
   short while.
+  ( Fixed by Kale 21 May 2002 )
 
 - VERY bad sprite lag in iganinju and plusalph and generally others.
   Is this a sprites buffer issue ?
@@ -186,6 +187,16 @@ INTERRUPT_GEN( interrupt_A )
 		case 0:		cpu_set_irq_line(0, 3, HOLD_LINE);	break;
 		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 		case 2:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+	}
+}
+
+INTERRUPT_GEN( interrupt_A_iganinju )
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+	//	case 2:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
 	}
 }
 
@@ -671,6 +682,13 @@ static MACHINE_DRIVER_START( system_A )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( system_A_iganinju )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system_A)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(interrupt_A_iganinju,INTERRUPT_NUM_A)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( system_B )
 
@@ -3511,30 +3529,30 @@ static DRIVER_INIT( stdragon )
 
 
 
-GAME( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,   "Jaleco", "Legend of Makai (World)" )
-GAME( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,   "Jaleco", "Makai Densetsu (Japan)" )
-GAME( 1988, p47,      0,        system_A, p47,      0,        ROT0,   "Jaleco", "P-47 - The Phantom Fighter (World)" )
-GAME( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,   "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
-GAME( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,   "Jaleco", "Kick Off (Japan)" )
-GAME( 1988, tshingen, 0,        system_A, tshingen, phantasm, ROT0,   "Jaleco", "Takeda Shingen (Japan, Japanese)" )
-GAME( 1988, tshingna, tshingen, system_A, tshingen, phantasm, ROT0,   "Jaleco", "Shingen Samurai-Fighter (Japan, English)" )
-GAME( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)" )
-GAME( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax" )
-GAME( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)" )
-GAMEX(1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
-GAME( 1989, jitsupro, 0,        system_A, jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
-GAME( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270, "Jaleco", "Plus Alpha" )
-GAME( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,   "Jaleco", "Saint Dragon" )
-GAME( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,   "Jaleco", "Rod-Land (World)" )
-GAME( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,   "Jaleco", "Rod-Land (Japan)" )
-GAME( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,   "Jaleco", "Rod-Land (Japan bootleg)" )
-GAME( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,   "Jaleco", "Avenging Spirit" )
-GAME( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,   "Jaleco", "Phantasm (Japan)" )
-GAME( 1991, edf,      0,        system_B, edf,      edf,      ROT0,   "Jaleco", "Earth Defense Force" )
-GAME( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (World)" )
-GAME( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (Japan)" )
-GAME( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,   "Jaleco", "Soldam (Japan)" )
-GAME( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,   "Jaleco", "Big Striker" )
-GAME( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,   "Jaleco", "Chimera Beast" )
-GAME( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,  "Jaleco", "Cybattler" )
-GAME( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,   "Jaleco", "Peek-a-Boo!" )
+GAME( 1988, lomakai,  0,        system_Z,          lomakai,  0,        ROT0,   "Jaleco", "Legend of Makai (World)" )
+GAME( 1988, makaiden, lomakai,  system_Z,          lomakai,  0,        ROT0,   "Jaleco", "Makai Densetsu (Japan)" )
+GAME( 1988, p47,      0,        system_A,          p47,      0,        ROT0,   "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME( 1988, p47j,     p47,      system_A,          p47,      0,        ROT0,   "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME( 1988, kickoff,  0,        system_A,          kickoff,  0,        ROT0,   "Jaleco", "Kick Off (Japan)" )
+GAME( 1988, tshingen, 0,        system_A,          tshingen, phantasm, ROT0,   "Jaleco", "Takeda Shingen (Japan, Japanese)" )
+GAME( 1988, tshingna, tshingen, system_A,          tshingen, phantasm, ROT0,   "Jaleco", "Shingen Samurai-Fighter (Japan, English)" )
+GAME( 1988, iganinju, 0,        system_A_iganinju, iganinju, iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME( 1989, astyanax, 0,        system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax" )
+GAME( 1989, lordofk,  astyanax, system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)" )
+GAMEX(1989, hachoo,   0,        system_A,          hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME( 1989, jitsupro, 0,        system_A,          jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
+GAME( 1989, plusalph, 0,        system_A,          plusalph, plusalph, ROT270, "Jaleco", "Plus Alpha" )
+GAME( 1989, stdragon, 0,        system_A,          stdragon, stdragon, ROT0,   "Jaleco", "Saint Dragon" )
+GAME( 1990, rodland,  0,        system_A,          rodland,  rodland,  ROT0,   "Jaleco", "Rod-Land (World)" )
+GAME( 1990, rodlandj, rodland,  system_A,          rodland,  rodlandj, ROT0,   "Jaleco", "Rod-Land (Japan)" )
+GAME( 1990, rodlndjb, rodland,  system_A,          rodland,  0,        ROT0,   "Jaleco", "Rod-Land (Japan bootleg)" )
+GAME( 1991, avspirit, 0,        system_B,          avspirit, avspirit, ROT0,   "Jaleco", "Avenging Spirit" )
+GAME( 1990, phantasm, avspirit, system_A,          avspirit, phantasm, ROT0,   "Jaleco", "Phantasm (Japan)" )
+GAME( 1991, edf,      0,        system_B,          edf,      edf,      ROT0,   "Jaleco", "Earth Defense Force" )
+GAME( 1991, 64street, 0,        system_C,          64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME( 1991, 64streej, 64street, system_C,          64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME( 1992, soldamj,  0,        system_A,          soldamj,  soldam,   ROT0,   "Jaleco", "Soldam (Japan)" )
+GAME( 1992, bigstrik, 0,        system_C,          bigstrik, bigstrik, ROT0,   "Jaleco", "Big Striker" )
+GAME( 1993, chimerab, 0,        system_C,          chimerab, chimerab, ROT0,   "Jaleco", "Chimera Beast" )
+GAME( 1993, cybattlr, 0,        system_C,          cybattlr, cybattlr, ROT90,  "Jaleco", "Cybattler" )
+GAME( 1993, peekaboo, 0,        system_D,          peekaboo, peekaboo, ROT0,   "Jaleco", "Peek-a-Boo!" )

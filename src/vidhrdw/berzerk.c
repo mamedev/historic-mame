@@ -8,23 +8,39 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-unsigned char *berzerk_magicram;
-extern int berzerk_irq_end_of_screen;
-
-static int magicram_control = 0xff;
-static int magicram_latch = 0xff;
-static int collision = 0;
+#include "includes/berzerk.h"
 
 
-INLINE void copy_byte(int x, int y, int data, int col)
+data8_t *berzerk_magicram;
+
+static data8_t magicram_control = 0xff;
+static data8_t magicram_latch = 0xff;
+static data8_t collision = 0;
+
+
+PALETTE_INIT( berzerk )
 {
-	UINT16 fore, back;
+	int i;
+
+	/* Simple 1-bit RGBI palette */
+	for (i = 0; i < 16; i++)
+	{
+		int bk = (i & 8) ? 0x40 : 0x00;
+		int r = (i & 1) ? 0xff : bk;
+		int g = (i & 2) ? 0xff : bk;
+		int b = (i & 4) ? 0xff : bk;
+
+		palette_set_color(i,r,g,b);
+	}
+}
 
 
-	if (y < 32)  return;
+INLINE void copy_byte(UINT8 x, UINT8 y, data8_t data, data8_t col)
+{
+	pen_t fore, back;
 
-	fore  = Machine->pens[(col >> 4) & 0x0f];
+
+	fore  = Machine->pens[col >> 4];
 	back  = Machine->pens[0];
 
 	plot_pixel(tmpbitmap, x  , y, (data & 0x80) ? fore : back);
@@ -43,15 +59,17 @@ INLINE void copy_byte(int x, int y, int data, int col)
 
 WRITE_HANDLER( berzerk_videoram_w )
 {
-	int coloroffset, x, y;
+	offs_t coloroffset;
+	UINT8 x, y;
+
 
 	videoram[offset] = data;
 
 	/* Get location of color RAM for this offset */
 	coloroffset = ((offset & 0xff80) >> 2) | (offset & 0x1f);
 
-	y = (offset >> 5);
-	x = (offset & 0x1f) << 3;
+	y = offset >> 5;
+	x = offset << 3;
 
     copy_byte(x, y, data, colorram[coloroffset]);
 }
@@ -59,95 +77,81 @@ WRITE_HANDLER( berzerk_videoram_w )
 
 WRITE_HANDLER( berzerk_colorram_w )
 {
-	int x, y, i;
+	int i;
+	UINT8 x, y;
+
 
 	colorram[offset] = data;
 
 	/* Need to change the affected pixels' colors */
 
-	y = ((offset >> 3) & 0xfc);
-	x = (offset & 0x1f) << 3;
+	y = (offset >> 3) & 0xfc;
+	x = offset << 3;
 
 	for (i = 0; i < 4; i++, y++)
 	{
-		int byte = videoram[(y << 5) | (x >> 3)];
+		data8_t byte = videoram[(y << 5) | (x >> 3)];
 
-		if (byte)
-		{
-			copy_byte(x, y, byte, data);
-		}
+		copy_byte(x, y, byte, data);
 	}
-}
-
-INLINE unsigned char reverse_byte(unsigned char data)
-{
-	return ((data & 0x01) << 7) |
-		   ((data & 0x02) << 5) |
-		   ((data & 0x04) << 3) |
-		   ((data & 0x08) << 1) |
-		   ((data & 0x10) >> 1) |
-		   ((data & 0x20) >> 3) |
-		   ((data & 0x40) >> 5) |
-		   ((data & 0x80) >> 7);
-}
-
-INLINE int shifter_flopper(unsigned char data)
-{
-	int shift_amount, outval;
-
-	/* Bits 0-2 are the shift amount */
-
-	shift_amount = magicram_control & 0x06;
-
-	outval = ((data >> shift_amount) | (magicram_latch << (8 - shift_amount))) & 0x1ff;
-	outval >>= (magicram_control & 0x01);
-
-
-	/* Bit 3 is the flip bit */
-	if (magicram_control & 0x08)
-	{
-		outval = reverse_byte(outval);
-	}
-
-	return outval;
 }
 
 
 WRITE_HANDLER( berzerk_magicram_w )
 {
-	int data2;
+	data16_t data2;
+	data8_t data3;
+	int shift_amount;
 
-	data2 = shifter_flopper(data);
+
+	/* Bits 0-2 are the shift amount */
+
+	shift_amount = magicram_control & 0x06;
+
+	data2 = ((data >> shift_amount) | (magicram_latch << (8 - shift_amount))) & 0x1ff;
+	data2 >>= (magicram_control & 0x01);
+
+
+	data3 = (data8_t)data2;		/* mask off bit 8 */
+
+
+	/* Bit 3 is the flip bit */
+	if (magicram_control & 0x08)
+	{
+		data3 = BITSWAP8(data3,0,1,2,3,4,5,6,7);
+	}
+
 
 	magicram_latch = data;
 
+
 	/* Check for collision */
-	if (!collision)
-	{
-		collision = (data2 & videoram[offset]);
-	}
+	collision |= ((data3 & videoram[offset]) ? 0x80 : 0);
+
 
 	switch (magicram_control & 0xf0)
 	{
-	case 0x00: berzerk_magicram[offset] = data2; 						break;
-	case 0x10: berzerk_magicram[offset] = data2 |  videoram[offset]; 	break;
-	case 0x20: berzerk_magicram[offset] = data2 | ~videoram[offset]; 	break;
-	case 0x30: berzerk_magicram[offset] = 0xff;  						break;
-	case 0x40: berzerk_magicram[offset] = data2 & videoram[offset]; 	break;
-	case 0x50: berzerk_magicram[offset] = videoram[offset]; 			break;
-	case 0x60: berzerk_magicram[offset] = ~(data2 ^ videoram[offset]); 	break;
-	case 0x70: berzerk_magicram[offset] = ~data2 | videoram[offset]; 	break;
-	case 0x80: berzerk_magicram[offset] = data2 & ~videoram[offset];	break;
-	case 0x90: berzerk_magicram[offset] = data2 ^ videoram[offset];		break;
-	case 0xa0: berzerk_magicram[offset] = ~videoram[offset];			break;
-	case 0xb0: berzerk_magicram[offset] = ~(data2 & videoram[offset]); 	break;
-	case 0xc0: berzerk_magicram[offset] = 0x00; 						break;
-	case 0xd0: berzerk_magicram[offset] = ~data2 & videoram[offset]; 	break;
-	case 0xe0: berzerk_magicram[offset] = ~(data2 | videoram[offset]); 	break;
-	case 0xf0: berzerk_magicram[offset] = ~data2; 						break;
+	case 0x00: 										 break;	/* No change */
+	case 0x10: data3 |=  videoram[offset]; 			 break;
+	case 0x20: data3 |= ~videoram[offset]; 			 break;
+	case 0x30: data3  = 0xff;  						 break;
+	case 0x40: data3 &=  videoram[offset]; 			 break;
+	case 0x50: data3  =  videoram[offset]; 			 break;
+	case 0x60: data3  = ~(data3 ^ videoram[offset]); break;
+	case 0x70: data3  = ~data3 | videoram[offset]; 	 break;
+	case 0x80: data3 &= ~videoram[offset];			 break;
+	case 0x90: data3 ^=  videoram[offset];			 break;
+	case 0xa0: data3  = ~videoram[offset];			 break;
+	case 0xb0: data3  = ~(data3 & videoram[offset]); break;
+	case 0xc0: data3  = 0x00; 						 break;
+	case 0xd0: data3  = ~data3 & videoram[offset]; 	 break;
+	case 0xe0: data3  = ~(data3 | videoram[offset]); break;
+	case 0xf0: data3  = ~data3; 					 break;
 	}
 
-	berzerk_videoram_w(offset, berzerk_magicram[offset]);
+	berzerk_magicram[offset] = data3;
+
+	berzerk_videoram_w(offset, data3);
 }
 
 
@@ -159,33 +163,7 @@ WRITE_HANDLER( berzerk_magicram_control_w )
 }
 
 
-READ_HANDLER( berzerk_collision_r )
+READ_HANDLER( berzerk_port_4e_r )
 {
-	int ret = (collision ? 0x80 : 0x00);
-
-	return ret | berzerk_irq_end_of_screen;
-}
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  To be used by bitmapped games not using sprites.
-
-***************************************************************************/
-VIDEO_UPDATE( berzerk )
-{
-	if (get_vh_global_attribute_changed())
-	{
-		/* redraw bitmap */
-
-		int offs;
-
-		for (offs = 0; offs < videoram_size; offs++)
-		{
-			berzerk_videoram_w(offs, videoram[offs]);
-		}
-	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	return input_port_3_r(0) | collision;
 }

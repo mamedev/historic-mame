@@ -1,202 +1,489 @@
 /***************************************************************************
 
-	Atari Fire Truck hardware
+Atari Fire Truck + Super Bug + Monte Carlo video emulation
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "firetrk.h"
 
-static struct mame_bitmap *buf;
+UINT8* firetrk_alpha_num_ram;
+UINT8* firetrk_playfield_ram;
 
-VIDEO_START( firetrk )
+int firetrk_skid[2];
+int firetrk_crash[2];
+
+static struct mame_bitmap *helper1;
+static struct mame_bitmap *helper2;
+
+static int blink;
+static int flash;
+static int drone_hpos;
+static int drone_vpos;
+
+static const struct rectangle playfield_window = { 0x02A, 0x115, 0x000, 0x0FF };
+
+struct sprite_data
 {
-	buf = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	if (!buf)
-		return 1;
-	
+	int layout;
+	int number;
+	int x;
+	int y;
+	int flipx;
+	int flipy;
+	int color;
+};
+
+static struct sprite_data car[2];
+
+static struct tilemap* tilemap1; /* for screen display */
+static struct tilemap* tilemap2; /* for collision detection */
+
+
+
+INLINE int arrow_code(int c)
+{
+	if (GAME_IS_FIRETRUCK)
+	{
+		return (c & 0x3F) >= 0x4 && (c & 0x3F) <= 0xB;
+	}
+	if (GAME_IS_SUPERBUG)
+	{
+		return (c & 0x3F) >= 0x8 && (c & 0x3F) <= 0xF;
+	}
+
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+
+void firetrk_set_flash(int flag)
 {
-	int color		= firetrk_invert_display?3:7; /* invert display */
-	int track_color = Machine->pens[firetrk_invert_display?0:3];
-	int bgcolor		= firetrk_invert_display?4:0;
-	int cabrot		= videoram[0x1080];
-	int hpos		= videoram[0x1460];
-	int vpos		= videoram[0x1480];
-	int tailrot		= videoram[0x14a0];
-	int pen;
-	int sx, sy;
-	int x,y;
-	int flipx,flipy;
-	int pitch;
+	tilemap_mark_all_tiles_dirty(tilemap1);
 
-	pitch = (bitmap->depth==8)?bitmap->width:(bitmap->width*2);
-
-	/* This isn't the most efficient way to handle collision detection, but it works:
-	 *
-	 *	1. draw background
-	 *	2. copy background to screen-sized private buffer
-	 *	3. draw sprites using background color
-	 *	4. compare buffer and background; if they differ, a collision occured
-	 *	5. use the color of the background pixel where a collision occured to
-	 *		flag collision type appropriately.
-	 *	6. draw sprites normally
-	 *
-	 */
-	for( sy=0; sy<bitmap->height; sy++ )
+	if (GAME_IS_FIRETRUCK || GAME_IS_SUPERBUG)
 	{
-		memcpy( buf->line[sy], bitmap->line[sy], pitch );
-	}
-
-	flipx = tailrot&0x08;
-	flipy = tailrot&0x10;
-	sx = flipx?(hpos-47):(255-hpos-47);
-	sy = flipy?(vpos-47):(255-vpos-47);
-
-	drawgfx( bitmap,
-		Machine->gfx[2],
-		tailrot&0x07, /* code */
-		bgcolor,
-		flipx,flipy,
-		sx,sy,
-		&Machine->visible_area,
-		TRANSPARENCY_PEN,0 );
-
-	drawgfx( bitmap,
-		Machine->gfx[(cabrot&0x10)?3:4],
-		cabrot&0x03, /* code */
-		bgcolor,
-		cabrot&0x04, /* flipx */
-		cabrot&0x08, /* flipy */
-		124,120,
-		&Machine->visible_area,
-		TRANSPARENCY_PEN,0 );
-
-	if( bitmap->depth==8 )
-	{
-		for( y=0; y<bitmap->height; y++ )
+		if (flag)
 		{
-			for( x=0; x<bitmap->width; x++ )
-			{
-				pen = ((UINT8 *)buf->line[y])[x];
-				if( pen != ((UINT8 *)bitmap->line[y])[x] )
-				{
-					if( pen == track_color )
-					{
-						firetrk_bit7_flags |= 0x40; /* crash */
-					}
-					else
-					{
-						firetrk_bit0_flags |= 0x40; /* skid */
-					}
-				}
-			}
+			car[0].color = 1;
+			car[1].color = 1;
 		}
-	}
-	else
-	{
-		for( y=0; y<bitmap->height; y++ )
+		else
 		{
-			for( x=0; x<bitmap->width; x++ )
-			{
-				pen = ((UINT16 *)buf->line[y])[x];
-				if( pen != ((UINT16 *)bitmap->line[y])[x] )
-				{
-					if( pen == track_color )
-					{
-						firetrk_bit7_flags |= 0x40; /* crash */
-					}
-					else
-					{
-						firetrk_bit0_flags |= 0x40; /* skid */
-					}
-				}
-			}
+			car[0].color = 0;
+			car[1].color = 0;
 		}
 	}
 
-	drawgfx( bitmap,
-		Machine->gfx[2],
-		tailrot&0x07, /* code */
-		color,
-		flipx,flipy,
-		sx,sy,
-		&Machine->visible_area,
-		TRANSPARENCY_PEN,0 );
-
-	drawgfx( bitmap,
-		Machine->gfx[(cabrot&0x10)?3:4],
-		cabrot&0x03, /* code */
-		color,
-		cabrot&0x04, /* flipx */
-		cabrot&0x08, /* flipy */
-		124,120,
-		&Machine->visible_area,
-		TRANSPARENCY_PEN,0 );
+	flash = flag;
 }
 
-static void draw_text( struct mame_bitmap *bitmap )
+
+void firetrk_set_blink(int flag)
 {
-	int color = firetrk_invert_display?3:7; /* invert display */
-	int x,y,tile_number;
-	const UINT8 *source = videoram;
+	int offset;
 
-	for( x=0; x<=256-16; x+=256-16 )
+	for (offset = 0; offset < 0x100; offset++)
 	{
-		for( y=0; y<256; y+=16 )
+		if (arrow_code(firetrk_playfield_ram[offset]))
 		{
-			tile_number = *source++;
+			tilemap_mark_tile_dirty(tilemap1, offset);
+		}
+	}
 
-			drawgfx( bitmap,
-				Machine->gfx[0],
-				tile_number,
-				color,
-				0,0, /* flip */
-				x,y,
-				&Machine->visible_area,
-				TRANSPARENCY_NONE,0 );
+	blink = flag;
+}
+
+
+static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	return num_cols * row + col;
+}
+
+
+static void get_tile_info1(int tile_index)
+{
+	UINT8 code = firetrk_playfield_ram[tile_index];
+
+	int color = code >> 6;
+
+	if (blink && arrow_code(code))
+	{
+		color = 0;
+	}
+	if (flash)
+	{
+		color |= 4;
+	}
+
+	SET_TILE_INFO(1, code & 0x3f, color, 0)
+}
+
+
+static void get_tile_info2(int tile_index)
+{
+	UINT8 code = firetrk_playfield_ram[tile_index];
+
+	int color = 0;
+
+	/* palette 1 for crash and palette 2 for skid */
+
+	if (GAME_IS_FIRETRUCK)
+	{
+		if ((code & 0x30) != 0x00 || (code & 0x0c) == 0x00)
+		{
+			color = 1;   /* palette 0, 1 */
+		}
+		if ((code & 0x3c) == 0x0c)
+		{
+			color = 2;   /* palette 0, 2 */
+		}
+	}
+
+	if (GAME_IS_SUPERBUG)
+	{
+		if ((code & 0x30) != 0x00)
+		{
+			color = 1;   /* palette 0, 1 */
+		}
+		if ((code & 0x38) == 0x00)
+		{
+			color = 2;   /* palette 0, 2 */
+		}
+	}
+
+	if (GAME_IS_MONTECARLO)
+	{
+		if ((code & 0xc0) == 0x40 || (code & 0xc0) == 0x80)
+		{
+			color = 2;   /* palette 2, 1 */
+		}
+		if ((code & 0xc0) == 0xc0)
+		{
+			color = 1;   /* palette 2, 0 */
+		}
+		if ((code & 0xc0) == 0x00)
+		{
+			color = 3;   /* palette 2, 2 */
+		}
+		if ((code & 0x30) == 0x30)
+		{
+			color = 0;   /* palette 0, 0 */
+		}
+	}
+
+	SET_TILE_INFO(2, code & 0x3f, color, 0)
+}
+
+
+WRITE_HANDLER( firetrk_vert_w )
+{
+	tilemap_set_scrolly(tilemap1, 0, data);
+	tilemap_set_scrolly(tilemap2, 0, data);
+}
+
+
+WRITE_HANDLER( firetrk_horz_w )
+{
+	tilemap_set_scrollx(tilemap1, 0, data - 37);
+	tilemap_set_scrollx(tilemap2, 0, data - 37);
+}
+
+
+WRITE_HANDLER( firetrk_drone_hpos_w )
+{
+	drone_hpos = data;
+}
+
+
+WRITE_HANDLER( firetrk_drone_vpos_w )
+{
+	drone_vpos = data;
+}
+
+
+WRITE_HANDLER( firetrk_car_rot_w )
+{
+	if (GAME_IS_FIRETRUCK)
+	{
+		car[0].number = data & 0x03;
+
+		if (data & 0x10) /* swap xy */
+		{
+			car[0].layout = 4;
+		}
+		else
+		{
+			car[0].layout = 3;
+		}
+
+		car[0].flipx = data & 0x04;
+		car[0].flipy = data & 0x08;
+	}
+
+	if (GAME_IS_SUPERBUG)
+	{
+		car[0].number = (data & 0x03) ^ 3;
+
+		if (data & 0x10) /* swap xy */
+		{
+			car[0].layout = 4;
+		}
+		else
+		{
+			car[0].layout = 3;
+		}
+
+		car[0].flipx = data & 0x04;
+		car[0].flipy = data & 0x08;
+	}
+
+	if (GAME_IS_MONTECARLO)
+	{
+		car[0].number = data & 0x07;
+
+		if (data & 0x80)
+		{
+			car[1].color |= 2;
+		}
+		else
+		{
+			car[1].color &= ~2;
+		}
+
+		car[0].flipx = data & 0x10;
+		car[0].flipy = data & 0x08;
+	}
+}
+
+
+WRITE_HANDLER( firetrk_drone_rot_w )
+{
+	car[1].number = data & 0x07;
+
+	if (GAME_IS_FIRETRUCK)
+	{
+		car[1].flipx = data & 0x08;
+		car[1].flipy = data & 0x10;
+	}
+
+	if (GAME_IS_MONTECARLO)
+	{
+		car[1].flipx = data & 0x10;
+		car[1].flipy = data & 0x08;
+
+		if (data & 0x80)
+		{
+			car[1].color |= 1;
+		}
+		else
+		{
+			car[1].color &= ~1;
 		}
 	}
 }
 
-static void draw_background( struct mame_bitmap *bitmap )
+
+WRITE_HANDLER( firetrk_playfield_w )
 {
-	int color = firetrk_invert_display?4:0; /* invert display */
-	int pvpload = videoram[0x1000];
-	int phpload = videoram[0x1020];
-
-	int x,y,tile_number;
-	const UINT8 *source = videoram+0x800;
-
-	for( y=0; y<256; y+=16 )
+	if (firetrk_playfield_ram[offset] != data)
 	{
-		for( x=0; x<256; x+=16 )
-		{
-			tile_number = *source++;
+		tilemap_mark_tile_dirty(tilemap1, offset);
+		tilemap_mark_tile_dirty(tilemap2, offset);
+	}
 
-			drawgfx( bitmap,
-				Machine->gfx[1],
-				tile_number&0x3f,
-				color+(tile_number>>6), /* color */
-				0,0, /* flip */
-				(x-phpload)&0xff,(y-pvpload)&0xff,
-				&Machine->visible_area,
-				TRANSPARENCY_NONE,0 );
+	firetrk_playfield_ram[offset] = data;
+}
+
+
+VIDEO_START( firetrk )
+{
+	helper1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	helper2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+
+	if (helper1 == NULL || helper2 == NULL)
+	{
+		return 1;
+	}
+
+	tilemap1 = tilemap_create(get_tile_info1, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
+	tilemap2 = tilemap_create(get_tile_info2, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
+
+	if (tilemap1 == NULL || tilemap2 == NULL)
+	{
+		return 1;
+	}
+
+	memset(&car[0], 0, sizeof (struct sprite_data));
+	memset(&car[1], 0, sizeof (struct sprite_data));
+
+	if (GAME_IS_FIRETRUCK)
+	{
+		car[0].layout = 3;
+		car[1].layout = 5;
+	}
+	if (GAME_IS_SUPERBUG)
+	{
+		car[0].layout = 3;
+		car[1].layout = 0;
+	}
+	if (GAME_IS_MONTECARLO)
+	{
+		car[0].layout = 3;
+		car[1].layout = 4;
+	}
+
+	return 0;
+}
+
+
+static void calc_car_positions(void)
+{
+	car[0].x = 144;
+	car[0].y = 104;
+
+	if (GAME_IS_FIRETRUCK)
+	{
+		car[1].x = car[1].flipx ? drone_hpos - 63 : 192 - drone_hpos;
+		car[1].y = car[1].flipy ? drone_vpos - 63 : 192 - drone_vpos;
+
+		car[1].x += 36;
+	}
+
+	if (GAME_IS_MONTECARLO)
+	{
+		car[1].x = car[1].flipx ? drone_hpos - 31 : 224 - drone_hpos;
+		car[1].y = car[1].flipy ? drone_vpos - 31 : 224 - drone_vpos;
+
+		car[1].x += 34;
+	}
+}
+
+
+static void draw_text(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+{
+	const UINT8* p = firetrk_alpha_num_ram;
+
+	int i;
+
+	for (i = 0; i < 2; i++)
+	{
+		int x = 0;
+		int y = 0;
+
+		if (GAME_IS_SUPERBUG || GAME_IS_FIRETRUCK)
+		{
+			x = (i == 0) ? 296 : 8;
+		}
+		if (GAME_IS_MONTECARLO)
+		{
+			x = (i == 0) ? 24 : 16;
+		}
+
+		for (y = 0; y < 256; y += Machine->gfx[0]->width)
+		{
+			drawgfx(bitmap, Machine->gfx[0], *p++, 0, 0, 0,
+				x, y, cliprect, TRANSPARENCY_NONE, 0);
 		}
 	}
 }
+
 
 VIDEO_UPDATE( firetrk )
 {
-	draw_background( bitmap );
-	draw_text( bitmap );
-	draw_sprites( bitmap );
+	int i;
 
-	// Map horn button onto discrete sound emulation
-	discrete_sound_w(0x01,input_port_6_r(0));
+	tilemap_draw(bitmap, &playfield_window, tilemap1, 0, 0);
+
+	calc_car_positions();
+
+	for (i = 1; i >= 0; i--)
+	{
+		if (GAME_IS_SUPERBUG && i == 1)
+		{
+			continue;
+		}
+
+		drawgfx(bitmap,
+			Machine->gfx[car[i].layout],
+			car[i].number,
+			car[i].color,
+			car[i].flipx,
+			car[i].flipy,
+			car[i].x,
+			car[i].y,
+			&playfield_window,
+			TRANSPARENCY_PEN, 0);
+	}
+
+	draw_text(bitmap, cliprect);
 }
 
+
+VIDEO_EOF( firetrk )
+{
+	int i;
+
+	tilemap_draw(helper1, &playfield_window, tilemap2, 0, 0);
+
+	calc_car_positions();
+
+	for (i = 1; i >= 0; i--)
+	{
+		int width = Machine->gfx[car[i].layout]->width;
+		int height = Machine->gfx[car[i].layout]->height;
+
+		int x;
+		int y;
+
+		if (GAME_IS_SUPERBUG && i == 1)
+		{
+			continue;
+		}
+
+		drawgfx(helper2,
+			Machine->gfx[car[i].layout],
+			car[i].number,
+			0,
+			car[i].flipx,
+			car[i].flipy,
+			car[i].x,
+			car[i].y,
+			&playfield_window,
+			TRANSPARENCY_NONE, 0);
+
+		for (y = car[i].y; y < car[i].y + height; y++)
+		{
+			for (x = car[i].x; x < car[i].x + width; x++)
+			{
+				pen_t a;
+				pen_t b;
+
+				if (x < playfield_window.min_x)
+					continue;
+				if (x > playfield_window.max_x)
+					continue;
+				if (y < playfield_window.min_y)
+					continue;
+				if (y > playfield_window.max_y)
+					continue;
+
+				a = read_pixel(helper1, x, y);
+				b = read_pixel(helper2, x, y);
+
+				if (b != 0 && a == 1)
+				{
+					firetrk_crash[i] = 1;
+				}
+				if (b != 0 && a == 2)
+				{
+					firetrk_skid[i] = 1;
+				}
+			}
+		}
+	}
+
+	if (blink)
+	{
+		firetrk_set_blink(0);
+	}
+}

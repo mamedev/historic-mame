@@ -289,9 +289,17 @@ int YM2612_num(const struct MachineSound *msound) { return ((struct YM2612interf
 int POKEY_clock(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->baseclock; }
 int POKEY_num(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->num; }
 #endif
-#if (HAS_YM3812 || HAS_YM3526 || HAS_Y8950)
+#if (HAS_YM3812)
 int YM3812_clock(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->baseclock; }
 int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM3526)
+int YM3526_clock(const struct MachineSound *msound) { return ((struct YM3526interface*)msound->sound_interface)->baseclock; }
+int YM3526_num(const struct MachineSound *msound) { return ((struct YM3526interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_Y8950)
+int Y8950_clock(const struct MachineSound *msound) { return ((struct Y8950interface*)msound->sound_interface)->baseclock; }
+int Y8950_num(const struct MachineSound *msound) { return ((struct Y8950interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YMZ280B)
 int YMZ280B_clock(const struct MachineSound *msound) { return ((struct YMZ280Binterface*)msound->sound_interface)->baseclock[0]; }
@@ -568,10 +576,10 @@ struct snd_interface sndintf[] =
     {
 		SOUND_YM3526,
 		"YM3526",
-		YM3812_num,
-		YM3812_clock,
-		YM3812_sh_start,
-		YM3812_sh_stop,
+		YM3526_num,
+		YM3526_clock,
+		YM3526_sh_start,
+		YM3526_sh_stop,
 		0,
 		0
 	},
@@ -592,8 +600,8 @@ struct snd_interface sndintf[] =
 	{
 		SOUND_Y8950,
 		"Y8950",	/* (MSX-AUDIO) */
-		YM3812_num,
-		YM3812_clock,
+		Y8950_num,
+		Y8950_clock,
 		Y8950_sh_start,
 		Y8950_sh_stop,
 		0,

@@ -134,11 +134,6 @@ static int num_sprites;
 
 #define MAXCOLOURS 0x2000 /* 8192 */
 
-#ifdef TRANSPARENT_SHADOWS
-#define ShadowColorsShift 8
-UINT16 shade_table[MAXCOLOURS];
-#endif
-
 int sys16_sh_shadowpal;
 int sys16_MaxShadowColors;
 
@@ -233,9 +228,15 @@ static void draw_sprite(
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
-	int priority )
+	int priority,
+	int shadow,
+	int shadow_pen)
 {
+	const pen_t *shadow_base = Machine->gfx[0]->colortable + (Machine->drv->total_colors/2);
 	int dx,dy;
+	int full_shadow=shadow&SYS16_SPR_SHADOW;
+	int partial_shadow=shadow&SYS16_SPR_PARTIAL_SHADOW;
+	int shadow_mask=(Machine->drv->total_colors/2)-1;
 	priority = 1<<priority;
 
 	if( flipy ){
@@ -281,7 +282,12 @@ static void draw_sprite(
 							int pen = data>>4;
 							if( pen!=0x0 && pen!=0xf && sx>=cliprect->min_x && sx<=cliprect->max_x ){
 								if( (pri[sx]&priority)==0 ){
-									dest[sx] = paldata[pen];
+									if (full_shadow)
+										dest[sx] = shadow_base[dest[sx]&shadow_mask];
+									else if (partial_shadow && pen==shadow_pen)
+										dest[sx] = shadow_base[dest[sx]&shadow_mask];
+									else
+										dest[sx] = paldata[pen];
 								}
 							}
 							xcount -= width;
@@ -293,7 +299,12 @@ static void draw_sprite(
 							int pen = data&0xf;
 							if(  pen!=0x0 && pen!=0xf && sx>=cliprect->min_x && sx<=cliprect->max_x ){
 								if( (pri[sx]&priority)==0 ){
-									dest[sx] = paldata[pen];
+									if (full_shadow)
+										dest[sx] = shadow_base[dest[sx]&shadow_mask];
+									else if (partial_shadow && pen==shadow_pen)
+										dest[sx] = shadow_base[dest[sx]&shadow_mask];
+									else
+										dest[sx] = paldata[pen];
 								}
 							}
 							xcount -= width;
@@ -337,9 +348,11 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 			if( sys16_spritesystem==sys16_sprite_sharrier ){
 				logical_height = ((sprite.screen_height)<<4|0xf)*(0x400+sprite.zoomy)/0x4000;
+				if( flipx ) gfx += 2;
 			}
 			else if( b3d ){ // outrun/aburner
 				logical_height = ((sprite.screen_height<<4)|0xf)*sprite.zoomy/0x2000;
+				if( flipx ) gfx += 2;
 			}
 			else {
 				logical_height = sprite.screen_height*(0x400+sprite.zoomy)/0x400;
@@ -375,7 +388,9 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				xpos, ypos, screen_width, sprite.screen_height,
 				width, logical_height,
 				flipx, flipy,
-				sprite.priority
+				sprite.priority,
+				sprite.flags,
+				sprite.shadow_pen
 			);
 		}
 		source+=8;
@@ -437,14 +452,7 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 				(b << 3) | (b >> 2) /* 5 bits blue */
 			);
 #else
-		if (Machine->scrbitmap->depth == 8){ /* 8 bit shadows */
-			palette_set_color( offset,
-					(r << 3) | (r >> 3), /* 5 bits red */
-					(g << 2) | (g >> 4), /* 6 bits green */
-					(b << 3) | (b >> 3) /* 5 bits blue */
-				);
-		}
-		else {
+		{
 			r=(r << 3) | (r >> 2); /* 5 bits red */
 			g=(g << 2) | (g >> 4); /* 6 bits green */
 			b=(b << 3) | (b >> 2); /* 5 bits blue */
@@ -776,33 +784,12 @@ VIDEO_START( system16 ){
 
 	num_sprites = 128*2; /* only 128 for most games; aburner uses 256 */
 
-#ifdef TRANSPARENT_SHADOWS
-	sprite_set_shade_table(shade_table);
-#endif
-
 	if( background && foreground && text_layer ){
 		/* initialize all entries to black - needed for Golden Axe*/
 		int i;
 		for( i=0; i<Machine->drv->total_colors; i++ ){
 			palette_set_color( i, 0,0,0 );
 		}
-#ifdef TRANSPARENT_SHADOWS
-		if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
-		{
-			int j,color;
-			for(j = 0, i = Machine->drv->total_colors/2;j<sys16_MaxShadowColors;i++,j++)
-			{
-				color=j * 160 / (sys16_MaxShadowColors-1);
-				color=color | 0x04;
-				palette_set_color(i, color, color, color);
-			}
-		}
-		if(sys16_MaxShadowColors==32)
-			sys16_MaxShadowColors_Shift = ShadowColorsShift;
-		else if(sys16_MaxShadowColors==16)
-			sys16_MaxShadowColors_Shift = ShadowColorsShift+1;
-
-#endif
 
 		if(sys16_bg1_trans) tilemap_set_transparent_pen( background, 0 );
 		tilemap_set_transparent_pen( foreground, 0 );
@@ -932,53 +919,6 @@ VIDEO_START( system18 ){
 }
 
 /***************************************************************************/
-
-#ifdef TRANSPARENT_SHADOWS
-static void build_shadow_table(void)
-{
-	int i,size;
-	int color_start=Machine->drv->total_colors/2;
-	/* build the shading lookup table */
-	if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
-	{
-		if(sys16_MaxShadowColors == 0) return;
-		for (i = 0; i < 256; i++)
-		{
-			unsigned char r, g, b;
-			int y;
-			osd_get_pen(i, &r, &g, &b);
-			y = (r * 10 + g * 18 + b * 4) >> sys16_MaxShadowColors_Shift;
-			shade_table[i] = Machine->pens[color_start + y];
-		}
-		for(i=0;i<sys16_MaxShadowColors;i++)
-		{
-			shade_table[Machine->pens[color_start + i]]=Machine->pens[color_start + i];
-		}
-	}
-	else
-	{
-		if(sys16_MaxShadowColors != 0)
-		{
-			size=Machine->drv->total_colors/2;
-			for(i=0;i<size;i++)
-			{
-				shade_table[Machine->pens[i]]=Machine->pens[size + i];
-				shade_table[Machine->pens[size+i]]=Machine->pens[size + i];
-			}
-		}
-		else
-		{
-			size=Machine->drv->total_colors;
-			for(i=0;i<size;i++)
-			{
-				shade_table[Machine->pens[i]]=Machine->pens[i];
-			}
-		}
-	}
-}
-#else
-#define build_shadow_table()
-#endif
 
 static void sys16_vh_refresh_helper( void ){
 	if( sys18_splittab_bg_x ){
@@ -1141,8 +1081,6 @@ VIDEO_UPDATE( system16 ){
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	build_shadow_table();
-
 	tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY, 0x00 );
 	if(sys16_bg_priority_mode) tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY | 1, 0x00 );
 //	sprite_draw(sprite_list,3); // needed for Aurail
@@ -1165,8 +1103,7 @@ VIDEO_UPDATE( system18 ){
 	update_page();
 	sys18_vh_screenrefresh_helper(); /* set scroll registers */
 
-	build_shadow_table();
-
+	fillbitmap(priority_bitmap,0,NULL);
 	if(sys18_bg2_active)
 		tilemap_draw( bitmap,cliprect, background2, 0, 0 );
 	else
@@ -1383,8 +1320,6 @@ VIDEO_UPDATE( hangon ){
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	build_shadow_table();
-
 	render_gr(bitmap,cliprect,0); /* sky */
 	tilemap_draw( bitmap,cliprect, background, 0, 0 );
 	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
@@ -1582,8 +1517,6 @@ VIDEO_UPDATE( outrun ){
 
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-		build_shadow_table();
 
 		render_grv2(bitmap,cliprect,1);
 		tilemap_draw( bitmap,cliprect, background, 0, 0 );

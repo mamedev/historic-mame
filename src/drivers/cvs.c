@@ -436,7 +436,7 @@ static struct GfxDecodeInfo cvs_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( cvs )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,894886.25)
+	MDRV_CPU_ADD(S2650,894886.25/3)
 	MDRV_CPU_MEMORY(cvs_readmem,cvs_writemem)
 	MDRV_CPU_PORTS(cvs_readport,cvs_writeport)
 	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
@@ -486,34 +486,34 @@ ROM_END
 ROM_START( name )                                               \
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 						\
 	ROM_LOAD( #p1"-gp1.bin",   0x0000, 0x0400, gp1 )        	\
-	ROM_CONTINUE(                  0x2000, 0x0400 )             \
-	ROM_CONTINUE(                  0x4000, 0x0400 )             \
-	ROM_CONTINUE(                  0x6000, 0x0400 )             \
+	ROM_CONTINUE(              0x2000, 0x0400 )                 \
+	ROM_CONTINUE(              0x4000, 0x0400 )                 \
+	ROM_CONTINUE(              0x6000, 0x0400 )                 \
 	ROM_LOAD( #p2"-gp2.bin",   0x0400, 0x0400, gp2 )        	\
-	ROM_CONTINUE(                  0x2400, 0x0400 )             \
-	ROM_CONTINUE(                  0x4400, 0x0400 )             \
-	ROM_CONTINUE(                  0x6400, 0x0400 )             \
+	ROM_CONTINUE(              0x2400, 0x0400 )                 \
+	ROM_CONTINUE(              0x4400, 0x0400 )                 \
+	ROM_CONTINUE(              0x6400, 0x0400 )                 \
 	ROM_LOAD( #p3"-gp3.bin",   0x0800, 0x0400, gp3 )        	\
-	ROM_CONTINUE(                  0x2800, 0x0400 )             \
-	ROM_CONTINUE(                  0x4800, 0x0400 )             \
-	ROM_CONTINUE(                  0x6800, 0x0400 )             \
-	ROM_LOAD( #p4"-gp4.bin",   0x0C00, 0x0400, gp4 )        	\
-	ROM_CONTINUE(                  0x2C00, 0x0400 )             \
-	ROM_CONTINUE(                  0x4C00, 0x0400 )             \
-	ROM_CONTINUE(                  0x6C00, 0x0400 )             \
+	ROM_CONTINUE(              0x2800, 0x0400 )                 \
+	ROM_CONTINUE(              0x4800, 0x0400 )                 \
+	ROM_CONTINUE(              0x6800, 0x0400 )                 \
+	ROM_LOAD( #p4"-gp4.bin",   0x0c00, 0x0400, gp4 )        	\
+	ROM_CONTINUE(              0x2c00, 0x0400 )                 \
+	ROM_CONTINUE(              0x4c00, 0x0400 )                 \
+	ROM_CONTINUE(              0x6c00, 0x0400 )                 \
 	ROM_LOAD( #p5"-gp5.bin",   0x1000, 0x0400, gp5 )        	\
-	ROM_CONTINUE(                  0x3000, 0x0400 )             \
-	ROM_CONTINUE(                  0x5000, 0x0400 )             \
-	ROM_CONTINUE(                  0x7000, 0x0400 )             \
+	ROM_CONTINUE(              0x3000, 0x0400 )                 \
+	ROM_CONTINUE(              0x5000, 0x0400 )                 \
+	ROM_CONTINUE(              0x7000, 0x0400 )                 \
                                                                 \
 	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 						\
 	ROM_LOAD( #p9"-sdp1.bin",  0x0000, size1, sdp1 )  			\
                                                                 \
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 						\
-	ROM_LOAD( "5b.bin",            0x0000, 0x0800, 0xf055a624)  \
+	ROM_LOAD( "5b.bin",        0x0000, 0x0800, 0xf055a624)      \
                                                                 \
 	ROM_REGION( 0x1000, REGION_SOUND1, 0 ) 						\
-    ROM_LOAD( #p10"-sp1.bin",   0x0000, size2, sp1 )  			\
+    ROM_LOAD( #p10"-sp1.bin",  0x0000, size2, sp1 )  			\
                                                                 \
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )        \
 	ROM_LOAD( #p6"-cp1.bin",   0x0000, 0x0800, cp1 )        	\
@@ -521,8 +521,8 @@ ROM_START( name )                                               \
 	ROM_LOAD( #p8"-cp3.bin",   0x1000, 0x0800, cp3 )        	\
                                                                 \
 	ROM_REGION( 0x0820, REGION_PROMS, 0 )						\
-    ROM_LOAD( "82s185.10h",        0x0000, 0x0800, 0xc205bca6 )	\
-	ROM_LOAD( "82s123.10k",        0x0800, 0x0020, 0xb5221cec )	\
+    ROM_LOAD( "82s185.10h",    0x0000, 0x0800, 0xc205bca6 )	    \
+	ROM_LOAD( "82s123.10k",    0x0800, 0x0020, 0xb5221cec )	    \
 ROM_END
 
 CVS_ROM(huncholy,ho,0x4f17cda7,ho,0x70fa52c7,ho,0x931934b1,ho,0xaf5cd501,ho,0x658e8974,ho,0xc6c73d46,ho,0xe596371c,ho,0x11fae1cf,ho,0x3efb3ffd,0x1000,ho,0x3fd39b1e,0x1000)

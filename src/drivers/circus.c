@@ -20,24 +20,27 @@ D000      Paddle Position and Interrupt Reset
 
   CHANGES:
   MAB 09 MAR 99 - changed overlay support to use artwork functions
+  AAT 12 MAY 02 - General: fixed red and white hue and removed dirty flags.
+                  Ripcord: rewrote video driver, fixed gameplay, flipped
+                           control and tuned DIP switches.
+                  (Thanks Gregf for introducing these cool classics.)
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 WRITE_HANDLER( circus_clown_x_w );
 WRITE_HANDLER( circus_clown_y_w );
 WRITE_HANDLER( circus_clown_z_w );
 
-extern VIDEO_START( circus );
-
 extern VIDEO_UPDATE( crash );
 extern VIDEO_UPDATE( circus );
 extern VIDEO_UPDATE( robotbowl );
-
+extern VIDEO_UPDATE( ripcord ); //AT
+extern VIDEO_EOF( ripcord ); //AT
 extern INTERRUPT_GEN( crash_interrupt );
-
 static int circus_interrupt;
 
 static READ_HANDLER( ripcord_IN2_r )
@@ -47,14 +50,33 @@ static READ_HANDLER( ripcord_IN2_r )
 	return readinputport (2);
 }
 
+
+
+OVERLAY_START( circus_overlay )
+	OVERLAY_RECT(   0,  20, 248, 36, MAKE_ARGB(0x04,0x20,0x20,0xff) )
+	OVERLAY_RECT(   0,  36, 248, 48, MAKE_ARGB(0x04,0x20,0xff,0x20) )
+	OVERLAY_RECT(   0,  48, 248, 64, MAKE_ARGB(0x04,0xff,0xff,0x20) )
+OVERLAY_END
+
+
+
+static PALETTE_INIT( circus )
+{
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+}
+
+
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x1000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x8000, 0x8000, MRA_RAM },
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xc000, 0xc000, input_port_1_r }, /* DSW */
-//	{ 0xd000, 0xd000, input_port_2_r },
-	{ 0xd000, 0xd000, ripcord_IN2_r },
+	{ 0xd000, 0xd000, input_port_2_r }, //AT
+	//{ 0xd000, 0xd000, ripcord_IN2_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 MEMORY_END
 
@@ -83,7 +105,7 @@ INPUT_PORTS_START( circus )
 	PORT_DIPSETTING(    0x02, "7" )
 	PORT_DIPSETTING(    0x03, "9" )
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
-//	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -128,7 +150,7 @@ INPUT_PORTS_START( robotbwl )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin - 2 Players game" )
-//	PORT_DIPSETTING(    0x18, "1 Coin - 2 Players game" )
+//  PORT_DIPSETTING(    0x18, "1 Coin - 2 Players game" )
 	PORT_DIPNAME( 0x60, 0x00, "Bowl Timer" )
 	PORT_DIPSETTING(    0x00, "3 seconds" )
 	PORT_DIPSETTING(    0x20, "5 seconds" )
@@ -188,23 +210,17 @@ INPUT_PORTS_START( ripcord )
 	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
 	PORT_DIPSETTING(    0x04, "1 Player - 1 Coin" )
 	PORT_DIPSETTING(    0x08, "1 Player - 2 Coin" )
-//	PORT_DIPSETTING(    0x0c, "1 Player - ? Coin" )
-	PORT_DIPNAME( 0x10, 0x10, "Top Score" )
+	//PORT_DIPSETTING(    0x0c, "1 Player - ? Coin" )
+	//PORT_DIPNAME( 0x10, 0x10, "Top Score" )
+	PORT_DIPNAME( 0x10, 0x00, "Top Score" ) //AT
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_DIPSETTING(    0x00, "No Award" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
-	PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
+	//PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
+	PORT_ANALOG( 0xff, 115, IPT_PADDLE|IPF_REVERSE, 30, 10, 64, 167 ) //AT
 INPUT_PORTS_END
-
-#define ARTWORK_COLORS (254 + 32768)
-
-static PALETTE_INIT( circus )
-{
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(0,0xff,0xff,0xff); /* WHITE */
-}
 
 
 static struct GfxLayout charlayout =
@@ -276,23 +292,22 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( circus )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
+	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
-	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
-	
+	MDRV_PALETTE_LENGTH(2)
+
 	MDRV_PALETTE_INIT(circus)
-	MDRV_VIDEO_START(circus)
+	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(circus)
 
 	/* sound hardware */
@@ -303,20 +318,19 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( robotbwl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
+	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(robotbowl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(circus)
 	MDRV_VIDEO_START(generic)
@@ -329,20 +343,19 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( crash )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
+	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(circus)
 	MDRV_VIDEO_START(generic)
@@ -357,22 +370,23 @@ static MACHINE_DRIVER_START( ripcord )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 705562)        /* 11.289MHz / 16 */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(ripcord_interrupt,1)
+	//MDRV_CPU_VBLANK_INT(ripcord_interrupt,1) //AT
 
 	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
+	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(circus)
 	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(crash)
+	//MDRV_VIDEO_UPDATE(crash)
+	MDRV_VIDEO_UPDATE(ripcord) //AT
+	MDRV_VIDEO_EOF(ripcord) //AT
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
@@ -393,13 +407,13 @@ ROM_START( circus )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "circus.4c",    0x0000, 0x0200, 0x6efc315a )	/* Character Set */
+	ROM_LOAD( "circus.4c",    0x0000, 0x0200, 0x6efc315a )  /* Character Set */
 	ROM_LOAD( "circus.3c",    0x0200, 0x0200, 0x30d72ef5 )
 	ROM_LOAD( "circus.2c",    0x0400, 0x0200, 0x361da7ee )
 	ROM_LOAD( "circus.1c",    0x0600, 0x0200, 0x1f954bb3 )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "circus.14d",   0x0000, 0x0200, 0x2fde3930 )	/* Clown */
+	ROM_LOAD( "circus.14d",   0x0000, 0x0200, 0x2fde3930 )  /* Clown */
 ROM_END
 
 ROM_START( robotbwl )
@@ -414,13 +428,13 @@ ROM_START( robotbwl )
 	ROM_LOAD( "robotbwl.9a",  0xfe00, 0x0200, 0x07487e27 )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, 0xa5f7acb9 )	/* Character Set */
+	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, 0xa5f7acb9 )  /* Character Set */
 	ROM_LOAD( "robotbwl.3c",  0x0200, 0x0200, 0xd5380c9b )
 	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, 0x47b3e39c )
 	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, 0xb2991e7e )
 
 	ROM_REGION( 0x0020, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, 0xa402ac06 )	/* Ball */
+	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, 0xa402ac06 )  /* Ball */
 ROM_END
 
 ROM_START( crash )
@@ -436,13 +450,13 @@ ROM_START( crash )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "crash.c4",     0x0000, 0x0200, 0xba16f9e8 )	/* Character Set */
+	ROM_LOAD( "crash.c4",     0x0000, 0x0200, 0xba16f9e8 )  /* Character Set */
 	ROM_LOAD( "crash.c3",     0x0200, 0x0200, 0x3c8f7560 )
 	ROM_LOAD( "crash.c2",     0x0400, 0x0200, 0x38f3e4ed )
 	ROM_LOAD( "crash.c1",     0x0600, 0x0200, 0xe9adf1e1 )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "crash.d14",    0x0000, 0x0200, 0x833f81e4 )	/* Cars */
+	ROM_LOAD( "crash.d14",    0x0000, 0x0200, 0x833f81e4 )  /* Cars */
 ROM_END
 
 ROM_START( ripcord )
@@ -458,7 +472,7 @@ ROM_START( ripcord )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "9026.5c",      0x0000, 0x0200, 0x06e7adbb )	/* Character Set */
+	ROM_LOAD( "9026.5c",      0x0000, 0x0200, 0x06e7adbb )  /* Character Set */
 	ROM_LOAD( "9025.4c",      0x0200, 0x0200, 0x3129527e )
 	ROM_LOAD( "9024.2c",      0x0400, 0x0200, 0xbcb88396 )
 	ROM_LOAD( "9023.1c",      0x0600, 0x0200, 0x9f86ed5b )
@@ -468,8 +482,13 @@ ROM_START( ripcord )
 ROM_END
 
 
+static DRIVER_INIT( circus )
+{
+	artwork_set_overlay(circus_overlay);
+}
 
-GAMEX( 1977, circus,   0, circus,   circus,   0, ROT0, "Exidy", "Circus", GAME_IMPERFECT_SOUND )
-GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, 0, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
-GAMEX( 1979, crash,    0, crash,    crash,    0, ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0, ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )
+
+GAMEX( 1977, circus,   0, circus,   circus,   circus, ROT0, "Exidy", "Circus", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, 0,      ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, crash,    0, crash,    crash,    0,      ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0,      ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

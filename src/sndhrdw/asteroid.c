@@ -128,7 +128,7 @@ DISCRETE_SOUND_START(asteroid_sound_interface)
 	DISCRETE_RCFILTER(NODE_60,1,NODE_61,400,1e-6)
 
 	/************************************************/
-	/* Life enable is just 3Khz tone from the clock */
+	/* Life enable is just 3KHz tone from the clock */
 	/* generation cct according to schematics       */
 	/************************************************/
 	DISCRETE_SINEWAVE(NODE_70,ASTEROID_LIFE_ENAB,3000,100.0,0)

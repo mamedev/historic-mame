@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "cpu/z80/z80.h"
 
 #include <math.h> /* for sin() and cos() */
@@ -595,14 +596,14 @@ static void init_star_field(void)
  *   7 Drv7
  *
  * IO 16
- *   0
- *   1
- *   2
- *   3
- *   4
- *   5
+ *   0 Space Cadet Lamp
+ *   1 Space Captain Lamp
+ *   2 Space Colonel Lamp
+ *   3 Space General Lamp
+ *   4 Space Warrior Lamp
+ *   5 Space Avanger Lamp
  *   6
- *   7 Space Cadet Light ?
+ *   7 ?
  *
  */
 
@@ -617,17 +618,23 @@ READ_HANDLER( gorf_io_r )
 
 	switch (offset)
 	{
-		case 0: coin_counter_w(0,data); break;
-		case 1: coin_counter_w(1,data); break;
-		case 2: sparkle[CurrentScan][0] = data; break;
-		case 3: sparkle[CurrentScan][1] = data; break;
-		case 4: sparkle[CurrentScan][2] = data; break;
-		case 5: sparkle[CurrentScan][3] = data; break;
-	}
-
+	case 0x00: coin_counter_w(0,data); break;
+	case 0x01: coin_counter_w(1,data); break;
+	case 0x02: sparkle[CurrentScan][0] = data; break;
+	case 0x03: sparkle[CurrentScan][1] = data; break;
+	case 0x04: sparkle[CurrentScan][2] = data; break;
+	case 0x05: sparkle[CurrentScan][3] = data; break;
+	case 0x08: artwork_show("lamp0", !data); break;
+	case 0x09: artwork_show("lamp1", !data); break;
+	case 0x0a: artwork_show("lamp2", !data); break;
+	case 0x0b: artwork_show("lamp3", !data); break;
+	case 0x0c: artwork_show("lamp4", !data); break;
+	case 0x0d: artwork_show("lamp5", !data); break;
 #ifdef MAME_DEBUG
-	logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
+	default:
+		logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
 #endif
+	}
 
 	return 0;
 }

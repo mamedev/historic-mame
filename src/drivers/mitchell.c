@@ -956,8 +956,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2413interface ym2413_interface =
 {
 	1,	/* 1 chip */
-	8000000,	/* 8MHz ??? (hand tuned) */
-	{ 50 },	/* Volume */
+	3579545,	/* ??? */
+	{ 100 },	/* Volume */
 };
 
 static struct OKIM6295interface okim6295_interface =

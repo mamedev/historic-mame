@@ -297,7 +297,7 @@ ROM_END
 ROM_START( theglob3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "theglob3.u10",	0x0000, 0x1000, 0x969cfaf6 )
-	ROM_LOAD( "theglob3.u9",	0x1000, 0x1000, 0x00000000 )	/* bad, all 0xff's */
+	ROM_LOAD( "theglob3.u9",	0x1000, 0x1000, 0x8e6c010a )
 	ROM_LOAD( "theglob3.u8",	0x2000, 0x1000, 0x1c1ca5c8 )
 	ROM_LOAD( "theglob3.u7",	0x3000, 0x1000, 0xa54b9d22 )
 	ROM_LOAD( "theglob3.u6",	0x4000, 0x1000, 0x5a6f82a9 )
@@ -336,5 +336,5 @@ ROM_END
 GAME ( 1983, suprglob, 0,        epos, suprglob, 0, ROT270, "Epos Corporation", "Super Glob" )
 GAME ( 1983, theglob,  suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob" )
 GAME ( 1983, theglob2, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (earlier)" )
-GAMEX( 1983, theglob3, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (set 3)", GAME_NOT_WORKING )
+GAME ( 1983, theglob3, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (set 3)" )
 GAMEX( 1984, igmo,     0,        epos, igmo,     0, ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )

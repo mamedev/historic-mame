@@ -760,11 +760,11 @@ static MACHINE_DRIVER_START( fromanc2 )
 	MDRV_CPU_VBLANK_INT(fromanc2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 Mhz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 MHz */
 	MDRV_CPU_MEMORY(fromanc2_readmem_sound,fromanc2_writemem_sound)
 	MDRV_CPU_PORTS(fromanc2_readport_sound,fromanc2_writeport_sound)
 
-	MDRV_CPU_ADD(Z80,32000000/4)		/* 8.00 Mhz */
+	MDRV_CPU_ADD(Z80,32000000/4)		/* 8.00 MHz */
 	MDRV_CPU_MEMORY(fromanc2_readmem_sub,fromanc2_writemem_sub)
 	MDRV_CPU_PORTS(fromanc2_readport_sub,fromanc2_writeport_sub)
 
@@ -797,11 +797,11 @@ static MACHINE_DRIVER_START( fromancr )
 	MDRV_CPU_VBLANK_INT(fromanc2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 Mhz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 MHz */
 	MDRV_CPU_MEMORY(fromanc2_readmem_sound,fromanc2_writemem_sound)
 	MDRV_CPU_PORTS(fromanc2_readport_sound,fromanc2_writeport_sound)
 
-	MDRV_CPU_ADD(Z80,32000000/4)		/* 8.00 Mhz */
+	MDRV_CPU_ADD(Z80,32000000/4)		/* 8.00 MHz */
 	MDRV_CPU_MEMORY(fromanc2_readmem_sub,fromanc2_writemem_sub)
 	MDRV_CPU_PORTS(fromanc2_readport_sub,fromanc2_writeport_sub)
 
@@ -834,7 +834,7 @@ static MACHINE_DRIVER_START( fromanc4 )
 	MDRV_CPU_VBLANK_INT(fromanc2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 Mhz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 8.00 MHz */
 	MDRV_CPU_MEMORY(fromanc2_readmem_sound,fromanc2_writemem_sound)
 	MDRV_CPU_PORTS(fromanc2_readport_sound,fromanc2_writeport_sound)
 

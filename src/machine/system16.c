@@ -2209,9 +2209,9 @@ struct UPD7759_interface sys16_upd7759_interface =
 };
 
 struct YM2413interface sys16_ym2413_interface= {
-    1,
-    8000000,	/* ??? */
-    { 30 },
+	1,
+	3579545,	/* ??? */
+	{ 60 },
 };
 
 struct RF5C68interface sys18_rf5c68_interface = {

@@ -40,14 +40,3 @@ extern struct discrete_sound_block llander_sound_interface[];
 
 WRITE_HANDLER( llander_snd_reset_w );
 WRITE_HANDLER( llander_sounds_w );
-
-
-/*----------- defined in vidhrdw/llander.c -----------*/
-
-PALETTE_INIT( llander );
-
-VIDEO_START( llander );
-
-VIDEO_UPDATE( llander );
-
-WRITE_HANDLER( llander_led_w );

@@ -311,7 +311,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,
 	{ ATARI_CLOCK_14MHz/4/3/165 },
 	{ REGION_SOUND1 },
-	{ 75 }
+	{ 50 }
 };
 
 
@@ -319,7 +319,7 @@ static struct YM2413interface ym2413_interface =
 {
 	1,
 	ATARI_CLOCK_14MHz/4,
-	{ 75 }
+	{ 100 }
 };
 
 

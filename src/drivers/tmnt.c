@@ -9,7 +9,19 @@ driver by Nicola Salmoria
 
 TODO:
 
-- 053936 support in glfgreat and premsocr.
+- glfgreat always thinks you are on the green after the first shot. This could
+  be protection related, see ball_r().
+- glfgretj is in worse shape than glfgreat, the latter is at least playable,
+  the former hangs.
+- glfgretj uses a special controller.
+  1 "shot controller (with stance selection button on the top of it)" and 3
+  buttons for shot direction (right/left) and club selection.
+  Twist the "shot controller" to adjust shot power, then release it.
+  The controller returns to its default position by internal spring.
+- prmrsocr: when the field rotates before the penalty kicks, parts of the
+  053936 tilemap that shouldn't be seen are visible. Maybe the tilemap ROM is
+  banked, or there are controls to clip the visible region (registers 0x06 and
+  0x07 of the 053936) or both.
 - detatwin: sprites are left on screen during attract mode
 - a garbage sprite is STILL sticking on screen from time to time in ssriders.
 - sprite colors / zoomed placement in tmnt2 (protection)
@@ -35,6 +47,7 @@ WRITE16_HANDLER( tmnt_0a0000_w );
 WRITE16_HANDLER( punkshot_0a0020_w );
 WRITE16_HANDLER( lgtnfght_0a0018_w );
 WRITE16_HANDLER( detatwin_700300_w );
+READ16_HANDLER( glfgreat_rom_r );
 WRITE16_HANDLER( glfgreat_122000_w );
 WRITE16_HANDLER( ssriders_1c0300_w );
 WRITE16_HANDLER( prmrsocr_122000_w );
@@ -810,6 +823,7 @@ static MEMORY_READ16_START( glfgreat_readmem )
 	{ 0x121000, 0x121001, ball_r },	/* protection? returning 0, every shot is a "water" */
 	{ 0x125000, 0x125003, glfgreat_sound_r },	/* K053260 */
 	{ 0x200000, 0x207fff, K052109_word_noA12_r },
+	{ 0x300000, 0x3fffff, glfgreat_rom_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( glfgreat_writemem )
@@ -817,15 +831,46 @@ static MEMORY_WRITE16_START( glfgreat_writemem )
 	{ 0x100000, 0x103fff, MWA16_RAM },	/* main RAM */
 	{ 0x104000, 0x107fff, K053245_scattered_word_w, &spriteram16 },
 	{ 0x108000, 0x108fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x10c000, 0x10cfff, MWA16_RAM },	/* 053936 3D rotation control? */
+	{ 0x10c000, 0x10cfff, MWA16_RAM, &K053936_0_linectrl },
 	{ 0x110000, 0x11001f, K053244_word_noA1_w },	/* duplicate! */
-	{ 0x114000, 0x11401f, K053244_lsb_w },		/* duplicate! */
-	{ 0x118000, 0x11801f, MWA16_NOP },	/* 053936 control */
+	{ 0x114000, 0x11401f, K053244_lsb_w },			/* duplicate! */
+	{ 0x118000, 0x11801f, MWA16_RAM, &K053936_0_ctrl },
 	{ 0x11c000, 0x11c01f, K053251_msb_w },
 	{ 0x122000, 0x122001, glfgreat_122000_w },
 	{ 0x124000, 0x124001, watchdog_reset16_w },
 	{ 0x125000, 0x125003, glfgreat_sound_w },	/* K053260 */
 	{ 0x200000, 0x207fff, K052109_word_noA12_w },
+MEMORY_END
+
+
+static MEMORY_READ16_START( prmrsocr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_r },
+	{ 0x108000, 0x108fff, MRA16_RAM },
+	{ 0x10c000, 0x10cfff, MRA16_RAM },
+	{ 0x114000, 0x11401f, K053244_lsb_r },
+	{ 0x120000, 0x120001, prmrsocr_IN0_r },
+	{ 0x120002, 0x120003, prmrsocr_eeprom_r },
+	{ 0x121014, 0x121015, prmrsocr_sound_r },
+	{ 0x200000, 0x207fff, K052109_word_noA12_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( prmrsocr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_w, &spriteram16 },
+	{ 0x108000, 0x108fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x10c000, 0x10cfff, MWA16_RAM, &K053936_0_linectrl },
+	{ 0x110000, 0x11001f, K053244_word_noA1_w },	/* duplicate! */
+	{ 0x114000, 0x11401f, K053244_lsb_w },			/* duplicate! */
+	{ 0x118000, 0x11801f, MWA16_RAM, &K053936_0_ctrl },
+	{ 0x11c000, 0x11c01f, K053251_msb_w },
+	{ 0x122000, 0x122001, prmrsocr_eeprom_w },	/* EEPROM + video control */
+	{ 0x12100c, 0x12100f, prmrsocr_sound_cmd_w },
+	{ 0x123000, 0x123001, prmrsocr_sound_irq_w },
+	{ 0x200000, 0x207fff, K052109_word_noA12_w },
+	{ 0x280000, 0x280001, watchdog_reset16_w },
 MEMORY_END
 
 
@@ -1016,37 +1061,6 @@ static MEMORY_WRITE16_START( thndrx2_writemem )
 	{ 0x600000, 0x607fff, K052109_word_noA12_w },
 	{ 0x700000, 0x700007, K051937_word_w },
 	{ 0x700400, 0x7007ff, K051960_word_w },
-MEMORY_END
-
-
-static MEMORY_READ16_START( prmrsocr_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },	/* main RAM */
-	{ 0x104000, 0x107fff, K053245_scattered_word_r },
-	{ 0x108000, 0x108fff, MRA16_RAM },
-	{ 0x10c000, 0x10cfff, MRA16_RAM },	/* 053936? */
-	{ 0x114000, 0x11401f, K053244_lsb_r },
-	{ 0x120000, 0x120001, prmrsocr_IN0_r },
-	{ 0x120002, 0x120003, prmrsocr_eeprom_r },
-	{ 0x121014, 0x121015, prmrsocr_sound_r },
-	{ 0x200000, 0x207fff, K052109_word_noA12_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( prmrsocr_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },	/* main RAM */
-	{ 0x104000, 0x107fff, K053245_scattered_word_w, &spriteram16 },
-	{ 0x108000, 0x108fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x10c000, 0x10cfff, MWA16_RAM },	/* 053936 3D rotation control? */
-	{ 0x110000, 0x11001f, K053244_word_noA1_w },	/* duplicate! */
-	{ 0x114000, 0x11401f, K053244_lsb_w },		/* duplicate! */
-	{ 0x118000, 0x11801f, MWA16_NOP },	/* 053936 control */
-	{ 0x11c000, 0x11c01f, K053251_msb_w },
-	{ 0x122000, 0x122001, prmrsocr_eeprom_w },	/* EEPROM + video control */
-	{ 0x12100c, 0x12100f, prmrsocr_sound_cmd_w },
-	{ 0x123000, 0x123001, prmrsocr_sound_irq_w },
-	{ 0x200000, 0x207fff, K052109_word_noA12_w },
-	{ 0x280000, 0x280001, watchdog_reset16_w },
 MEMORY_END
 
 
@@ -2280,17 +2294,19 @@ MACHINE_DRIVER_END
 
 static struct GfxLayout zoomlayout =
 {
-	8,8,
+	16,16,
 	RGN_FRAC(1,1),
-	8,
-	{ STEP8(0,1) },
-	{ STEP8(0,8) },
-	{ STEP8(0,8*8) },
-	8*8*8
+	4,
+	{ 0, 1, 2, 3 },
+	{ 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4,
+			9*4, 8*4, 11*4, 10*4, 13*4, 12*4, 15*4, 14*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64, },
+	16*64
 };
 static struct GfxDecodeInfo glfgreat_gfxdecodeinfo[] =
 {
-	{ REGION_GFX3, 0, &zoomlayout, 0x400, 1 },
+	{ REGION_GFX3, 0, &zoomlayout, 0x400, 16 },
 	{ -1 }
 };
 
@@ -2321,6 +2337,53 @@ static MACHINE_DRIVER_START( glfgreat )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(K053260, glfgreat_k053260_interface)
+MACHINE_DRIVER_END
+
+
+static void sound_nmi(void)
+{
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct K054539interface k054539_interface =
+{
+	1,			/* 1 chip */
+	48000,
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ 0 },
+	{ sound_nmi }
+};
+
+static MACHINE_DRIVER_START( prmrsocr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* ? */
+	MDRV_CPU_MEMORY(prmrsocr_readmem,prmrsocr_writemem)
+	MDRV_CPU_VBLANK_INT(lgtnfght_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(prmrsocr_s_readmem,prmrsocr_s_writemem)
+								/* NMIs are generated by the 054539 */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(thndrx2)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(glfgreat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(prmrsocr)
+	MDRV_VIDEO_UPDATE(glfgreat)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
 MACHINE_DRIVER_END
 
 
@@ -2421,53 +2484,6 @@ static MACHINE_DRIVER_START( thndrx2 )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
-MACHINE_DRIVER_END
-
-
-static void sound_nmi(void)
-{
-	cpu_set_nmi_line(1, PULSE_LINE);
-}
-
-static struct K054539interface k054539_interface =
-{
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-	{ 0 },
-	{ sound_nmi }
-};
-
-static MACHINE_DRIVER_START( prmrsocr )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* ? */
-	MDRV_CPU_MEMORY(prmrsocr_readmem,prmrsocr_writemem)
-	MDRV_CPU_VBLANK_INT(lgtnfght_interrupt,1)
-
-	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(prmrsocr_s_readmem,prmrsocr_s_writemem)
-								/* NMIs are generated by the 054539 */
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	MDRV_NVRAM_HANDLER(thndrx2)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
-	MDRV_GFXDECODE(glfgreat_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2048)
-
-	MDRV_VIDEO_START(prmrsocr)
-	MDRV_VIDEO_UPDATE(glfgreat)
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
 MACHINE_DRIVER_END
 
 
@@ -2931,7 +2947,7 @@ ROM_START( glfgreat )
 	ROM_LOAD( "061b09.15g",   0x080000, 0x080000, 0x42c7a603 )
 	ROM_LOAD( "061b10.17g",   0x100000, 0x080000, 0x10f89ce7 )
 
-	ROM_REGION( 0x120000, REGION_USER1, 0 )	/* unknown (further data for the 053936?) */
+	ROM_REGION( 0x120000, REGION_USER1, 0 )	/* 053936 tilemaps */
 	ROM_LOAD( "061b07.18d",   0x000000, 0x080000, 0x517887e2 )
 	ROM_LOAD( "061b06.16d",   0x080000, 0x080000, 0x41ada2ad )
 	ROM_LOAD( "061b05.15d",   0x100000, 0x020000, 0x2456fb11 )
@@ -2961,7 +2977,7 @@ ROM_START( glfgretj )
 	ROM_LOAD( "061b09.15g",   0x080000, 0x080000, 0x42c7a603 )
 	ROM_LOAD( "061b10.17g",   0x100000, 0x080000, 0x10f89ce7 )
 
-	ROM_REGION( 0x120000, REGION_USER1, 0 )	/* unknown (further data for the 053936?) */
+	ROM_REGION( 0x120000, REGION_USER1, 0 )	/* 053936 tilemaps */
 	ROM_LOAD( "061b07.18d",   0x000000, 0x080000, 0x517887e2 )
 	ROM_LOAD( "061b06.16d",   0x080000, 0x080000, 0x41ada2ad )
 	ROM_LOAD( "061b05.15d",   0x100000, 0x020000, 0x2456fb11 )
@@ -3283,10 +3299,10 @@ ROM_START( prmrsocr )
 	ROM_LOAD( "101a09.3l",    0x000000, 0x200000, 0xb6a1b424 )	/* sprites */
 	ROM_LOAD( "101a10.8l",    0x200000, 0x200000, 0xbbd58adc )
 
-	ROM_REGION( 0x080000, REGION_GFX3, 0 )	/* 053936 tiles */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* 053936 tiles */
 	ROM_LOAD( "101a03.18f",   0x000000, 0x080000, 0x59a1a91c )
 
-	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* unknown (further data for the 053936?) */
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* 053936 tilemaps */
 	ROM_LOAD( "101a01.18d",   0x000000, 0x020000, 0x716f910f )
 	ROM_LOAD( "101a02.16d",   0x020000, 0x020000, 0x222869c7 )
 
@@ -3559,8 +3575,8 @@ GAME( 1990, trigon,   lgtnfght, lgtnfght, lgtnfght, gfx,      ROT90, "Konami", "
 GAME( 1991, blswhstl, 0,        detatwin, detatwin, gfx,      ROT90, "Konami", "Bells & Whistles" )			// version L
 GAME( 1991, detatwin, blswhstl, detatwin, detatwin, gfx,      ROT90, "Konami", "Detana!! Twin Bee (Japan)" )	// version J
 
-GAMEX(1991, glfgreat, 0,        glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats", GAME_NOT_WORKING )
-GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats (Japan)", GAME_NOT_WORKING )
+GAMEX(1991, glfgreat, 0,        glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 4 Players)", GAME_UNEMULATED_PROTECTION )		// ver. UAA
 GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 2 Players)", GAME_UNEMULATED_PROTECTION )		// ver. UDA
@@ -3579,4 +3595,4 @@ GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )
 
-GAMEX(1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (Japan)" )

@@ -7,167 +7,135 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/6522via.h"
 #include "vidhrdw/generic.h"
 
 
-static int x,y,screen_width;
-static int last_command;
+static data8_t x,y,color;
+static data8_t graphics_command;
+static int pending;
 
-// We reason we need this pending business, is that otherwise, when the guy
-// walks on the rainbow, he'd leave a trail behind him
-static int pending, pending_x, pending_y, pending_color;
+
+/* RGBI palette. Is it correct? */
+PALETTE_INIT( leprechn )
+{
+	int i;
+
+	for (i = 0; i < 16; i++)
+	{
+		int bk = (i & 8) ? 0x40 : 0x00;
+		int r = (i & 1) ? 0xff : bk;
+		int g = (i & 2) ? 0xff : bk;
+		int b = (i & 4) ? 0xff : bk;
+
+		palette_set_color(i,r,g,b);
+	}
+}
+
+
+
+VIDEO_START( leprechn )
+{
+	videoram_size = Machine->drv->screen_width * Machine->drv->screen_height;
+
+	/* allocate our own dirty buffer */
+	videoram = auto_malloc(videoram_size);
+	if (!videoram)
+		return 1;
+
+	return video_start_generic_bitmapped();
+}
+
 
 WRITE_HANDLER( leprechn_graphics_command_w )
 {
-    last_command = data;
+    graphics_command = data;
 }
 
-WRITE_HANDLER( leprechn_graphics_data_w )
-{
-    int direction;
 
-    if (pending)
-    {
-		plot_pixel(tmpbitmap, pending_x, pending_y, Machine->pens[pending_color]);
-        videoram[pending_y * screen_width + pending_x] = pending_color;
+static void clear_screen_done_callback(int param)
+{
+	// Indicate that the we are done
+	via_0_ca1_w(0, 0);
+}
+
+
+WRITE_HANDLER( leprechn_videoram_w )
+{
+	int sx,sy;
+
+	if (pending)
+	{
+		plot_pixel(tmpbitmap, x, y, Machine->pens[color]);
+        videoram[y * Machine->drv->screen_width + x] = color;
 
         pending = 0;
-    }
+   	}
 
-    switch (last_command)
+    switch (graphics_command)
     {
-    // Write Command
-    case 0x00:
-        direction = (data & 0xf0) >> 4;
-        switch (direction)
-        {
-        case 0x00:
-        case 0x04:
-        case 0x08:
-        case 0x0c:
-            break;
+    case 0x00:	// Move and plot
 
-        case 0x01:
-        case 0x09:
-            x++;
-            break;
+        color = data & 0x0f;
 
-        case 0x02:
-        case 0x06:
-            y++;
-            break;
-
-        case 0x03:
-            x++;
-            y++;
-            break;
-
-        case 0x05:
-        case 0x0d:
-            x--;
-            break;
-
-        case 0x07:
-            x--;
-            y++;
-            break;
-
-        case 0x0a:
-        case 0x0e:
-            y--;
-            break;
-
-        case 0x0b:
-            x++;
-            y--;
-            break;
-
-        case 0x0f:
-            x--;
-            y--;
-            break;
-        }
-
-        x = x & 0xff;
-        y = y & 0xff;
-
-        pending = 1;
-        pending_x = x;
-        pending_y = y;
-        pending_color = data & 0x0f;
-
-        return;
-
-    // X Position Write
-    case 0x08:
-        x = data;
-        return;
-
-    // Y Position Write
-    case 0x10:
-        y = data;
-        return;
-
-    // Clear Bitmap
-    case 0x18:
-        fillbitmap(tmpbitmap,Machine->pens[data],0);
-        memset(videoram, data, screen_width * Machine->drv->screen_height);
-        return;
-    }
-
-    // Just a precaution. Doesn't seem to happen.
-    logerror("Unknown Graphics Command #%2X at %04X\n", last_command, activecpu_get_pc());
-}
-
-
-READ_HANDLER( leprechn_graphics_data_r )
-{
-    return videoram[y * screen_width + x];
-}
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-VIDEO_START( leprechn )
-{
-    screen_width = Machine->drv->screen_width;
-
-    if ((videoram = auto_malloc(screen_width*Machine->drv->screen_height)) == 0)
-        return 1;
-
-    if ((tmpbitmap = auto_bitmap_alloc(screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-
-    pending = 0;
-
-    return 0;
-}
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( leprechn )
-{
-	if (get_vh_global_attribute_changed())
-	{
-		int sx, sy;
-
-		/* redraw bitmap */
-
-		for (sx = 0; sx < screen_width; sx++)
+		if (data & 0x10)
 		{
-			for (sy = 0; sy < Machine->drv->screen_height; sy++)
-			{
-				plot_pixel(tmpbitmap, sx, sy, Machine->pens[videoram[sy * screen_width + sx]]);
+			if (data & 0x40)
+				x--;
+			else
+				x++;
+		}
+
+		if (data & 0x20)
+		{
+			if (data & 0x80)
+				y--;
+			else
+				y++;
+		}
+
+		pending = 1;
+
+		break;
+
+    case 0x08:  // X position write
+        x = data;
+        break;
+
+    case 0x10:  // Y position write
+        y = data;
+        break;
+
+    case 0x18:  // Clear bitmap
+
+		// Indicate that the we are busy
+		via_0_ca1_w(0, 1);
+
+        memset(videoram, data, videoram_size);
+
+        for (sx = 0; sx < Machine->drv->screen_width; sx++)
+        {
+	        for (sy = 0; sy < Machine->drv->screen_height; sy++)
+	        {
+				plot_pixel(tmpbitmap, sx, sy, Machine->pens[data]);
 			}
 		}
-	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+		// Set a timer for an arbitrarily short period.
+		// The real time it takes to clear to screen is not
+		// significant for the software.
+		timer_set(TIME_NOW, 0, clear_screen_done_callback);
+
+        break;
+
+	default:
+	    // Doesn't seem to happen.
+	    logerror("Unknown Graphics Command #%2X at %04X\n", graphics_command, activecpu_get_pc());
+    }
+}
+
+
+READ_HANDLER( leprechn_videoram_r )
+{
+    return videoram[y * Machine->drv->screen_width + x];
 }

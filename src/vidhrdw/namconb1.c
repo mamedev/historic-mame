@@ -205,7 +205,7 @@ VIDEO_UPDATE( namconb1 )
 
 	video_update_common( bitmap, cliprect, 0 );
 
-	if( namconb1_type == key_gunbulet )
+	if( namcos2_gametype == NAMCONB1_GUNBULET )
 	{
 		beamx = ((readinputport(4)) * 320)/256;
 		beamy = readinputport(5);
@@ -233,7 +233,6 @@ VIDEO_START( namconb1 )
 		tilemapNB1_get_info3, tilemapNB1_get_info4, tilemapNB1_get_info5
 	};
 
-	namcos2_gametype = NAMCONB1;
 	namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB1objcode2tile);
 	mpMaskData = (UINT8 *)memory_region( NAMCONB1_TILEMASKREGION );
 	for( i=0; i<6; i++ )
@@ -257,57 +256,6 @@ VIDEO_START( namconb1 )
 
 		tilemap_palette_bank[i] = -1;
 	}
-
-	/* Rotate the mask ROM if needed */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		/* borrowed from Namco SystemII */
-		int loopX,loopY,tilenum;
-		unsigned char tilecache[8],*tiledata;
-
-		for(tilenum=0;tilenum<0x10000;tilenum++)
-		{
-			tiledata=memory_region(REGION_GFX3)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Wipe source data */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=0;
-			/* Swap X/Y data */
-			for(loopY=0;loopY<8;loopY++)
-			{
-				for(loopX=0;loopX<8;loopX++)
-				{
-					tiledata[loopX]|=(tilecache[loopY]&(0x01<<loopX))?(1<<loopY):0x00;
-				}
-			}
-		}
-
-		/* preprocess bitmask */
-		for(tilenum=0;tilenum<0x10000;tilenum++){
-			tiledata=memory_region(REGION_GFX3)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Flip in Y - write back in reverse */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=tilecache[7-loopY];
-		}
-
-		for(tilenum=0;tilenum<0x10000;tilenum++){
-			tiledata=memory_region(REGION_GFX3)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Wipe source data */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=0;
-			/* Flip in X - do bit reversal */
-			for(loopY=0;loopY<8;loopY++)
-			{
-				for(loopX=0;loopX<8;loopX++)
-				{
-					tiledata[loopY]|=(tilecache[loopY]&(1<<loopX))?(0x80>>loopX):0x00;
-				}
-			}
-		}
-	}
-
 	return 0; /* no error */
 }
 
@@ -319,11 +267,17 @@ tilemapNB2_get_info(int tile_index,int which,const data32_t *tilemap_videoram)
 	data16_t tile = nth_word32( tilemap_videoram, tile_index );
 	int mangle;
 
-	/* the pixmap index is mangled, the transparency bitmask index is not */
-	mangle = tile&~(0x140);
-	if( tile&0x100 ) mangle |= 0x040;
-	if( tile&0x040 ) mangle |= 0x100;
-
+	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
+	{
+		mangle = tile;
+	}
+	else
+	{
+		/* the pixmap index is mangled, the transparency bitmask index is not */
+		mangle = tile&~(0x140);
+		if( tile&0x100 ) mangle |= 0x040;
+		if( tile&0x040 ) mangle |= 0x100;
+	}
 	SET_TILE_INFO( NAMCONB1_TILEGFX,mangle,tilemap_palette_bank[which],0)
 	tile_info.mask_data = 8*tile + mpMaskData;
 } /* tilemapNB2_get_info */
@@ -345,12 +299,24 @@ static int NB2objcode2tile( int code )
 	int bank;
 	bank = nth_byte32( namconb1_spritebank32, (code>>11)&0xf );
 	code &= 0x7ff;
-	if( bank&0x01 ) code += 0x01*0x800;
-	if( bank&0x02 ) code += 0x04*0x800;
-	if( bank&0x04 ) code += 0x02*0x800;
-	if( bank&0x08 ) code += 0x08*0x800;
-	if( bank&0x10 ) code += 0x10*0x800;
-	if( bank&0x40 ) code += 0x20*0x800;
+	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
+	{
+		if( bank&0x01 ) code |= 0x01*0x800;
+		if( bank&0x02 ) code |= 0x02*0x800;
+		if( bank&0x04 ) code |= 0x04*0x800;
+		if( bank&0x08 ) code |= 0x08*0x800;
+		if( bank&0x10 ) code |= 0x10*0x800;
+		if( bank&0x40 ) code |= 0x20*0x800;
+	}
+	else
+	{
+		if( bank&0x01 ) code |= 0x01*0x800;
+		if( bank&0x02 ) code |= 0x04*0x800;
+		if( bank&0x04 ) code |= 0x02*0x800;
+		if( bank&0x08 ) code |= 0x08*0x800;
+		if( bank&0x10 ) code |= 0x10*0x800;
+		if( bank&0x40 ) code |= 0x20*0x800;
+	}
 	return code;
 }
 
@@ -361,10 +327,10 @@ VIDEO_START( namconb2 )
 		{ tilemapNB2_get_info0, tilemapNB2_get_info1, tilemapNB2_get_info2,
 		  tilemapNB2_get_info3, tilemapNB2_get_info4, tilemapNB2_get_info5 };
 
-	namcos2_gametype = NAMCONB2;
+	namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB2objcode2tile);
+
 	if( namco_roz_init(NAMCONB1_ROTGFX,NAMCONB1_ROTMASKREGION)!=0 ) return 1;
 
-	namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB2objcode2tile);
 	mpMaskData = (UINT8 *)memory_region( NAMCONB1_TILEMASKREGION );
 	for( i=0; i<6; i++ )
 	{

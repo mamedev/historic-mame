@@ -208,7 +208,7 @@ static void madmotor_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	int offs;
 
 	offs = 0;
-	while (offs < 0x400)
+	while (offs < spriteram_size/2)
 	{
 		int sx,sy,code,color,w,h,flipx,flipy,incy,flash,mult,x,y;
 
@@ -266,10 +266,13 @@ static void madmotor_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 			}
 
 			offs += 4;
-			if (spriteram16[offs] & 0x8000) break;	// seems the expected behaviour on the title screen
+			if (offs >= spriteram_size/2 ||
+					spriteram16[offs] & 0x8000)	// seems the expected behaviour on the title screen
+				 break;
 		}
 	}
 }
+
 
 /******************************************************************************/
 

@@ -465,7 +465,7 @@ static MACHINE_DRIVER_START( metrocrs )
 	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
 	MDRV_CPU_MEMORY(baraduke_readmem,baraduke_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	
+
 	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
 	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
 	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
@@ -520,6 +520,35 @@ ROM_START( baraduke )
 	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
 ROM_END
 
+ROM_START( baraduka )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
+	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, 0xea2ea790 )
+	ROM_LOAD( "bd1_1.9a",	0x8000, 0x04000, 0x4e9f2bdc )
+	ROM_LOAD( "bd1_2.9b",	0xc000, 0x04000, 0x40617fcd )
+
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
+	ROM_LOAD( "bd1_4b.3b",	0x8000,  0x4000, 0xa47ecd32 )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+															/* Using Pacland code (probably similar) */
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, 0xb0bb0710 )	/* tiles */
+	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, 0x0d7ebec9 )
+	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, 0xe5da0896 )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, 0x87a29acc )	/* sprites */
+	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, 0x72b6d20c )
+	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, 0x3076af9c )
+	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, 0x8b4c09a3 )
+
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )
+	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
+	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
+ROM_END
+
 ROM_START( metrocrs )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
 	ROM_LOAD( "mc1-3.9c",	0x6000, 0x02000, 0x3390b33c )
@@ -548,7 +577,33 @@ ROM_START( metrocrs )
 	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
 ROM_END
 
+ROM_START( metrocra )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
+	ROM_LOAD( "mc2-3.9b",	0x6000, 0x02000, 0xffe08075 )
+	ROM_LOAD( "mc2-1.9a ",	0x8000, 0x04000, 0x05a239ea )
+	ROM_LOAD( "mc2-2.9a",	0xc000, 0x04000, 0xdb9b0e6d )
 
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
+	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+															/* Using Pacland code (probably similar) */
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, 0xc9dfa003 )	/* tiles */
+	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, 0x9686dc3c )
+	/* empty space to decode the roms as 3bpp */
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, 0x265b31fa )	/* sprites */
+	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, 0x541ec029 )
+	/* 8000-ffff empty */
+
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )
+	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
+	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
+ROM_END
 
 static DRIVER_INIT( metrocrs )
 {
@@ -561,5 +616,7 @@ static DRIVER_INIT( metrocrs )
 
 
 
-GAME( 1985, baraduke, 0, baraduke, baraduke, 0,        ROT0, "Namco", "Baraduke" )
-GAME( 1985, metrocrs, 0, metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross" )
+GAME( 1985, baraduke, 0,        baraduke, baraduke, 0,        ROT0, "Namco", "Baraduke (set 1)" )
+GAME( 1985, baraduka, baraduke, baraduke, baraduke, 0,        ROT0, "Namco", "Baraduke (set 2)" )
+GAME( 1985, metrocrs, 0,        metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross (set 1)" )
+GAME( 1985, metrocra, metrocrs, metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross (set 2)" )

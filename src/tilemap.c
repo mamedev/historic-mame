@@ -22,7 +22,7 @@
 #include "state.h"
 
 #define SWAP(X,Y) { UINT32 temp=X; X=Y; Y=temp; }
-#define MAX_TILESIZE 32
+#define MAX_TILESIZE 64
 
 #define TILE_FLAG_DIRTY	(0x80)
 
@@ -79,6 +79,7 @@ struct tilemap
 	UINT16 tile_depth, tile_granularity;
 	UINT8 *tile_dirty_map;
 	UINT8 all_tiles_dirty;
+	UINT8 all_tiles_clean;
 
 	/* cached color data */
 	struct mame_bitmap *pixmap;
@@ -860,6 +861,7 @@ void tilemap_mark_tile_dirty( struct tilemap *tilemap, int memory_offset )
 		if( cached_indx>=0 )
 		{
 			tilemap->transparency_data[cached_indx] = TILE_FLAG_DIRTY;
+			tilemap->all_tiles_clean = 0;
 		}
 	}
 }
@@ -878,6 +880,7 @@ void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap )
 	else
 	{
 		tilemap->all_tiles_dirty = 1;
+		tilemap->all_tiles_clean = 0;
 	}
 }
 
@@ -909,30 +912,37 @@ struct mame_bitmap *tilemap_get_pixmap( struct tilemap * tilemap )
 	UINT32 cached_indx = 0;
 	UINT32 row,col;
 
+	if (tilemap->all_tiles_clean == 0)
+	{
 profiler_mark(PROFILER_TILEMAP_DRAW);
-	memset( &tile_info, 0x00, sizeof(tile_info) ); /* initialize defaults */
 
-	/* if the whole map is dirty, mark it as such */
-	if (tilemap->all_tiles_dirty)
-	{
-		memset( tilemap->transparency_data, TILE_FLAG_DIRTY, tilemap->num_tiles );
-		tilemap->all_tiles_dirty = 0;
-	}
-
-	/* walk over cached rows/cols (better to walk screen coords) */
-	for( row=0; row<tilemap->num_cached_rows; row++ )
-	{
-		for( col=0; col<tilemap->num_cached_cols; col++ )
+		/* if the whole map is dirty, mark it as such */
+		if (tilemap->all_tiles_dirty)
 		{
-			if( tilemap->transparency_data[cached_indx] == TILE_FLAG_DIRTY )
+			memset( tilemap->transparency_data, TILE_FLAG_DIRTY, tilemap->num_tiles );
+			tilemap->all_tiles_dirty = 0;
+		}
+
+		memset( &tile_info, 0x00, sizeof(tile_info) ); /* initialize defaults */
+
+		/* walk over cached rows/cols (better to walk screen coords) */
+		for( row=0; row<tilemap->num_cached_rows; row++ )
+		{
+			for( col=0; col<tilemap->num_cached_cols; col++ )
 			{
-				update_tile_info( tilemap, cached_indx, col, row );
-			}
-			cached_indx++;
-		} /* next col */
-	} /* next row */
+				if( tilemap->transparency_data[cached_indx] == TILE_FLAG_DIRTY )
+				{
+					update_tile_info( tilemap, cached_indx, col, row );
+				}
+				cached_indx++;
+			} /* next col */
+		} /* next row */
+
+		tilemap->all_tiles_clean = 1;
 
 profiler_mark(PROFILER_END);
+	}
+
 	return tilemap->pixmap;
 }
 
@@ -1501,8 +1511,8 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 
 	blit.clip_left		= 0;
 	blit.clip_top		= 0;
-	blit.clip_right		= dest->width;
-	blit.clip_bottom	= dest->height;
+	blit.clip_right		= (dest->width < tilemap->cached_width) ? dest->width : tilemap->cached_width;
+	blit.clip_bottom	= (dest->height < tilemap->cached_height) ? dest->height : tilemap->cached_height;
 
 	for(
 		ypos = scrolly - tilemap->cached_height;

@@ -70,19 +70,19 @@ struct rc_option frontend_opts[] = {
 	{ "wrongfps", NULL, rc_set_int, &list, NULL, LIST_WRONGFPS, 0, NULL, "wrong fps" },
 	{ "clones", NULL, rc_bool, &listclones, "1", 0, 0, NULL, "enable/disable clones" },
 #ifdef MESS
-	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
-	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
+	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, "list available devices" },
+	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, "list available file extensions" },
 	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
 #endif
-	{ "listroms", NULL, rc_set_int, &list, NULL, LIST_ROMS, 0, NULL, NULL },
-	{ "listsamples", NULL, rc_set_int, &list, NULL, LIST_SAMPLES, 0, NULL, NULL },
-	{ "verifyroms", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS, 0, NULL, NULL },
-	{ "verifysets", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS|VERIFY_VERBOSE|VERIFY_TERSE, 0, NULL, NULL },
-	{ "vset", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS|VERIFY_VERBOSE, 0, NULL, NULL },
-	{ "verifysamples", NULL, rc_set_int, &verify, NULL, VERIFY_SAMPLES|VERIFY_VERBOSE, 0, NULL, NULL },
-	{ "vsam", NULL, rc_set_int, &list, NULL, VERIFY_SAMPLES|VERIFY_VERBOSE, 0, NULL, NULL },
-	{ "romident", NULL, rc_set_int, &ident, NULL, 1, 0, NULL, NULL },
-	{ "isknown", NULL, rc_set_int, &ident, NULL, 2, 0, NULL, NULL },
+	{ "listroms", NULL, rc_set_int, &list, NULL, LIST_ROMS, 0, NULL, "list required roms for a driver" },
+	{ "listsamples", NULL, rc_set_int, &list, NULL, LIST_SAMPLES, 0, NULL, "list optional samples for a driver" },
+	{ "verifyroms", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS, 0, NULL, "report romsets that have problems" },
+	{ "verifysets", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS|VERIFY_VERBOSE|VERIFY_TERSE, 0, NULL, "verify checksums of romsets (terse)" },
+	{ "vset", NULL, rc_set_int, &verify, NULL, VERIFY_ROMS|VERIFY_VERBOSE, 0, NULL, "verify checksums of a romset (verbose)" },
+	{ "verifysamples", NULL, rc_set_int, &verify, NULL, VERIFY_SAMPLES|VERIFY_VERBOSE, 0, NULL, "report samplesets that have problems" },
+	{ "vsam", NULL, rc_set_int, &verify, NULL, VERIFY_SAMPLES|VERIFY_VERBOSE, 0, NULL, "verify a sampleset" },
+	{ "romident", NULL, rc_set_int, &ident, NULL, 1, 0, NULL, "compare files with known MAME roms" },
+	{ "isknown", NULL, rc_set_int, &ident, NULL, 2, 0, NULL, "compare files with known MAME roms (brief)" },
 	{ "sortname", NULL, rc_set_int, &sortby, NULL, 1, 0, NULL, "sort by descriptive name" },
 	{ "sortdriver", NULL, rc_set_int, &sortby, NULL, 2, 0, NULL, "sort by driver" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
@@ -147,45 +147,6 @@ int strwildcmp(const char *sp1, const char *sp2)
 
 	return stricmp(s1, s2);
 }
-#if 0
-/* fuzzy string compare, compare short string against long string        */
-/* e.g. astdel == "Asteroids Deluxe". The return code is the fuzz index, */
-/* we simply count the gaps between maching chars.                       */
-int fuzzycmp (const char *s, const char *l)
-{
-	int gaps = 0;
-	int match = 0;
-	int last = 1;
-
-	for (; *s && *l; l++)
-	{
-		if (*s == *l)
-			match = 1;
-		else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
-			match = 1;
-		else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
-			match = 1;
-		else
-			match = 0;
-
-		if (match)
-			s++;
-
-		if (match != last)
-		{
-			last = match;
-			if (!match)
-				gaps++;
-		}
-	}
-
-	/* penalty if short string does not completely fit in */
-	for (; *s; s++)
-		gaps++;
-
-	return gaps;
-}
-#endif
 
 /* Identifies a rom from from this checksum */
 void identify_rom(const char* name, int checksum, int length)
@@ -205,7 +166,7 @@ void identify_rom(const char* name, int checksum, int length)
 		}
 	}
 	if (!silentident)
-		printf("%-12s ",&name[i]);
+		printf("%s ",&name[0]);
 
 	for (i = 0; drivers[i]; i++)
 	{
@@ -352,7 +313,8 @@ void identify_zip(const char* zipname)
 		/* Skip empty file and directory */
 		if (ent->uncompressed_size!=0) {
 			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
-			sprintf(buf,"%s/%s",zipname,ent->name);
+//			sprintf(buf,"%s/%s",zipname,ent->name);
+			sprintf(buf,"%-12s",ent->name);
 			identify_rom(buf,ent->crc32,ent->uncompressed_size);
 			free(buf);
 		}

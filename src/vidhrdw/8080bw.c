@@ -17,9 +17,7 @@ static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static int color_map_select;
 static int background_color;
 static UINT8 cloud_pos;
-
-static int artwork_type;
-static const void *init_artwork;
+static data8_t bowler_bonus_display;
 
 static mem_write_handler videoram_w_p;
 static void (*video_update_p)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
@@ -30,6 +28,7 @@ static WRITE_HANDLER( lupin3_videoram_w );
 static WRITE_HANDLER( polaris_videoram_w );
 static WRITE_HANDLER( invadpt2_videoram_w );
 static WRITE_HANDLER( astinvad_videoram_w );
+static WRITE_HANDLER( spcking2_videoram_w );
 static WRITE_HANDLER( sstrngr2_videoram_w );
 static WRITE_HANDLER( spaceint_videoram_w );
 static WRITE_HANDLER( helifire_videoram_w );
@@ -39,97 +38,87 @@ static VIDEO_UPDATE( 8080bw_common );
 static VIDEO_UPDATE( seawolf );
 static VIDEO_UPDATE( blueshrk );
 static VIDEO_UPDATE( desertgu );
+static VIDEO_UPDATE( bowler );
 
 static void plot_pixel_8080(int x, int y, int col);
 
 /* smoothed colors, overlays are not so contrasted */
-
-#define RED				0xff,0x20,0x20,OVERLAY_DEFAULT_OPACITY
-#define GREEN 			0x20,0xff,0x20,OVERLAY_DEFAULT_OPACITY
-#define BLUE			0x20,0x20,0xff,OVERLAY_DEFAULT_OPACITY
-#define LT_BLUE 		0xa0,0xa0,0xff,OVERLAY_DEFAULT_OPACITY
-#define YELLOW			0xff,0xff,0x20,OVERLAY_DEFAULT_OPACITY
-#define CYAN			0x20,0xff,0xff,OVERLAY_DEFAULT_OPACITY
-
-#define	END  {{ -1, -1, -1, -1}, 0,0,0,0}
+#define OVERLAY_RED			MAKE_ARGB(0x08,0xff,0x20,0x20)
+#define OVERLAY_GREEN		MAKE_ARGB(0x08,0x20,0xff,0x20)
+#define OVERLAY_BLUE		MAKE_ARGB(0x08,0x20,0x20,0xff)
+#define OVERLAY_YELLOW		MAKE_ARGB(0x08,0xff,0xff,0x20)
+#define OVERLAY_CYAN		MAKE_ARGB(0x08,0x20,0xff,0xff)
+#define OVERLAY_LT_BLUE		MAKE_ARGB(0x08,0xa0,0xa0,0xff)
 
 
-static const struct artwork_element invaders_overlay[]=
-{
-	{{  16,  71,   0, 255}, GREEN },
-	{{   0,  15,  16, 133}, GREEN },
-	{{ 192, 223,   0, 255}, RED   },
-	END
-};
-
-/*static const struct artwork_element invdpt2m_overlay[]= */
-/*{ */
-/*	{{  16,  71,   0, 255}, GREEN  }, */
-/*	{{   0,  15,  16, 133}, GREEN  }, */
-/*	{{  72, 191,   0, 255}, YELLOW }, */
-/*	{{ 192, 223,   0, 255}, RED    }, */
-/*	END */
-/*}; */
-
-static const struct artwork_element invrvnge_overlay[]=
-{
-	{{   0,  71,   0, 255}, GREEN },
-	{{ 192, 223,   0, 255}, RED   },
-	END
-};
-
-static const struct artwork_element invad2ct_overlay[]=
-{
-	{{	 0,  47,   0, 255}, YELLOW },
-	{{	25,  70,   0, 255}, GREEN  },
-	{{	48, 139,   0, 255}, CYAN   },
-	{{ 117, 185,   0, 255}, GREEN  },
-	{{ 163, 231,   0, 255}, YELLOW },
-	{{ 209, 255,   0, 255}, RED    },
-	END
-};
-
-static const struct artwork_element phantom2_overlay[]=
-{
-	{{   0,  255, 0, 255}, LT_BLUE },
-	END
-};
-
-static const struct artwork_element gunfight_overlay[]=
-{
-	{{   0,  255, 0, 255}, YELLOW },
-	END
-};
-
-static const struct artwork_element bandido_overlay[]=
-{
-	{{   0,  23,   0, 255}, BLUE },
-	{{  24,  39,   0,  99}, BLUE },
-	{{  24,  39, 124, 255}, BLUE },
-	{{  24,  39, 100, 123}, GREEN },
-	{{  40, 183,   0,  23}, BLUE },
-	{{  40,  99,  24,  31}, BLUE },
-	{{ 124, 183,  24,  31}, BLUE },
-	{{ 100, 123,  24,  39}, RED },
-	{{ 184, 199, 100, 123}, GREEN },
-	{{ 184, 199,   0,  99}, BLUE },
-	{{ 184, 199, 124, 255}, BLUE },
-	{{ 200, 231,   0, 255}, BLUE },
-	{{ 232, 255,   0, 255}, RED },
-	{{  40,  99,  32,  39}, YELLOW },
-	{{ 124, 183,  32,  39}, YELLOW },
-	{{  40, 183,  40, 183}, YELLOW },
-	{{  40,  99, 184, 191}, YELLOW },
-	{{ 124, 183, 184, 191}, YELLOW },
-	{{  40,  99, 192, 199}, BLUE },
-	{{ 124, 183, 192, 199}, BLUE },
-	{{  40, 183, 200, 255}, BLUE },
-	{{ 100, 123, 184, 199}, RED },
-	END
-};
+OVERLAY_START( invaders_overlay )
+	OVERLAY_RECT(   8,   0,  64, 224, OVERLAY_GREEN )
+	OVERLAY_RECT(   0,  16,   8, 134, OVERLAY_GREEN )
+	OVERLAY_RECT( 184,   0, 216, 224, OVERLAY_RED )
+OVERLAY_END
 
 
-enum { NO_ARTWORK = 0, SIMPLE_OVERLAY, FILE_OVERLAY, SIMPLE_BACKDROP, FILE_BACKDROP };
+/*
+OVERLAY_START( invdpt2m_overlay )
+	OVERLAY_RECT(  16,   0,  72, 224, OVERLAY_GREEN )
+	OVERLAY_RECT(   0,  16,  16, 134, OVERLAY_GREEN )
+	OVERLAY_RECT(  72,   0, 192, 224, OVERLAY_YELLOW )
+	OVERLAY_RECT( 192,   0, 224, 224, OVERLAY_RED )
+OVERLAY_END
+*/
+
+
+OVERLAY_START( invrvnge_overlay )
+	OVERLAY_RECT(   0,   0,  64, 224, OVERLAY_GREEN )
+	OVERLAY_RECT( 184,   0, 224, 224, OVERLAY_RED )
+OVERLAY_END
+
+
+OVERLAY_START( invad2ct_overlay )
+	OVERLAY_RECT(   0,   0,  48, 224, OVERLAY_YELLOW )
+	OVERLAY_RECT(  25,   0,  71, 224, OVERLAY_GREEN )
+	OVERLAY_RECT(  48,   0, 140, 224, OVERLAY_CYAN )
+	OVERLAY_RECT( 117,   0, 186, 224, OVERLAY_GREEN )
+	OVERLAY_RECT( 163,   0, 232, 224, OVERLAY_YELLOW )
+	OVERLAY_RECT( 209,   0, 256, 224, OVERLAY_RED )
+OVERLAY_END
+
+
+OVERLAY_START( phantom2_overlay )
+	OVERLAY_RECT(   0,   0, 240, 224, OVERLAY_LT_BLUE )
+OVERLAY_END
+
+
+OVERLAY_START( gunfight_overlay )
+	OVERLAY_RECT(   0,   0, 256, 224, OVERLAY_YELLOW )
+OVERLAY_END
+
+
+OVERLAY_START( bandido_overlay )
+	OVERLAY_RECT(   0,   0,  24, 224, OVERLAY_BLUE )
+	OVERLAY_RECT(  24,   0,  40, 100, OVERLAY_BLUE )
+	OVERLAY_RECT(  24, 124,  40, 224, OVERLAY_BLUE )
+	OVERLAY_RECT(  24, 100,  40, 124, OVERLAY_GREEN )
+	OVERLAY_RECT(  40,   0, 184,  24, OVERLAY_BLUE )
+	OVERLAY_RECT(  40,  24, 100,  32, OVERLAY_BLUE )
+	OVERLAY_RECT( 124,  24, 184,  32, OVERLAY_BLUE )
+	OVERLAY_RECT( 100,  24, 124,  40, OVERLAY_RED )
+	OVERLAY_RECT( 184, 100, 200, 124, OVERLAY_GREEN )
+	OVERLAY_RECT( 184,   0, 200, 100, OVERLAY_BLUE )
+	OVERLAY_RECT( 184, 124, 200, 224, OVERLAY_BLUE )
+	OVERLAY_RECT( 200,   0, 232, 224, OVERLAY_BLUE )
+	OVERLAY_RECT( 232,   0, 256, 224, OVERLAY_RED )
+	OVERLAY_RECT(  40,  32, 100,  40, OVERLAY_YELLOW )
+	OVERLAY_RECT( 124,  32, 184,  40, OVERLAY_YELLOW )
+	OVERLAY_RECT(  40,  40, 184, 184, OVERLAY_YELLOW )
+	OVERLAY_RECT(  40, 184, 100, 192, OVERLAY_YELLOW )
+	OVERLAY_RECT( 124, 184, 184, 192, OVERLAY_YELLOW )
+	OVERLAY_RECT(  40, 192, 100, 200, OVERLAY_BLUE )
+	OVERLAY_RECT( 124, 192, 184, 200, OVERLAY_BLUE )
+	OVERLAY_RECT(  40, 200, 184, 224, OVERLAY_BLUE )
+	OVERLAY_RECT( 100, 184, 124, 200, OVERLAY_RED )
+OVERLAY_END
+
 
 DRIVER_INIT( 8080bw )
 {
@@ -137,7 +126,6 @@ DRIVER_INIT( 8080bw )
 	video_update_p = video_update_8080bw_common;
 	screen_red = 0;
 	screen_red_enabled = 0;
-	artwork_type = NO_ARTWORK;
 	color_map_select = 0;
 	flip_screen_set(0);
 }
@@ -145,29 +133,25 @@ DRIVER_INIT( 8080bw )
 DRIVER_INIT( invaders )
 {
 	init_8080bw();
-	init_artwork = invaders_overlay;
-	artwork_type = SIMPLE_OVERLAY;
+	artwork_set_overlay(invaders_overlay);
 }
 
 DRIVER_INIT( invaddlx )
 {
 	init_8080bw();
-	/*init_artwork = invdpt2m_overlay; */
-	/*artwork_type = SIMPLE_OVERLAY; */
+/*	artwork_set_overlay(invdpt2m_overlay);*/
 }
 
 DRIVER_INIT( invrvnge )
 {
 	init_8080bw();
-	init_artwork = invrvnge_overlay;
-	artwork_type = SIMPLE_OVERLAY;
+	artwork_set_overlay(invrvnge_overlay);
 }
 
 DRIVER_INIT( invad2ct )
 {
 	init_8080bw();
-	init_artwork = invad2ct_overlay;
-	artwork_type = SIMPLE_OVERLAY;
+	artwork_set_overlay(invad2ct_overlay);
 }
 
 DRIVER_INIT( sstrngr2 )
@@ -207,7 +191,6 @@ DRIVER_INIT( lupin3 )
 {
 	init_8080bw();
 	videoram_w_p = lupin3_videoram_w;
-	background_color = 0;	/* black */
 }
 
 DRIVER_INIT( invadpt2 )
@@ -235,10 +218,23 @@ DRIVER_INIT( desertgu )
 	video_update_p = video_update_desertgu;
 }
 
+DRIVER_INIT( bowler )
+{
+	init_8080bw();
+	video_update_p = video_update_bowler;
+}
+
 DRIVER_INIT( astinvad )
 {
 	init_8080bw();
 	videoram_w_p = astinvad_videoram_w;
+	screen_red_enabled = 1;
+}
+
+DRIVER_INIT( spcking2 )
+{
+	init_8080bw();
+	videoram_w_p = spcking2_videoram_w;
 	screen_red_enabled = 1;
 }
 
@@ -248,78 +244,25 @@ DRIVER_INIT( spaceint )
 	videoram_w_p = spaceint_videoram_w;
 }
 
-DRIVER_INIT( spcenctr )
-{
-	extern struct GameDriver driver_spcenctr;
-
-	init_8080bw();
-	init_artwork = driver_spcenctr.name;
-	artwork_type = FILE_OVERLAY;
-}
-
 DRIVER_INIT( phantom2 )
 {
 	init_8080bw();
 	videoram_w_p = phantom2_videoram_w;
-	init_artwork = phantom2_overlay;
-	artwork_type = SIMPLE_OVERLAY;
-}
-
-DRIVER_INIT( boothill )
-{
-	extern struct GameDriver driver_boothill;
-
-	init_8080bw();
-	init_artwork = driver_boothill.name;
-	artwork_type = FILE_BACKDROP;
+	artwork_set_overlay(phantom2_overlay);
 }
 
 DRIVER_INIT( gunfight )
 {
 	init_8080bw();
-	init_artwork = gunfight_overlay;
-	artwork_type = SIMPLE_OVERLAY;
+	artwork_set_overlay(gunfight_overlay);
 }
 
 DRIVER_INIT( bandido )
 {
 	init_8080bw();
-	init_artwork = bandido_overlay;
-	artwork_type = SIMPLE_OVERLAY;
+	artwork_set_overlay(bandido_overlay);
 }
 
-
-VIDEO_START( 8080bw )
-{
-	int start_pen = Machine->drv->total_colors - 32768;
-
-
-	/* create overlay if one of was specified in init_X */
-	switch (artwork_type)
-	{
-	case SIMPLE_OVERLAY:
-		overlay_create((const struct artwork_element *)init_artwork, start_pen);
-		break;
-	case FILE_OVERLAY:
-		overlay_load((const char *)init_artwork, start_pen);
-		break;
-	case SIMPLE_BACKDROP:
-		break;
-	case FILE_BACKDROP:
-		backdrop_load((const char *)init_artwork, start_pen);
-		break;
-	case NO_ARTWORK:
-		break;
-	default:
-		logerror("Unknown artwork type.\n");
-		break;
-	}
-
-	/* make sure that the screen matches the videoram, this fixes invad2ct */
-	set_vh_global_attribute(NULL,0);
-
-	return video_start_generic_bitmapped();
-}
 
 
 void c8080bw_flip_screen_w(int data)
@@ -452,7 +395,7 @@ static WRITE_HANDLER( lupin3_videoram_w )
 
 	col = ~colorram[offset & 0x1f1f] & 0x07;
 
-	plot_byte(x, y, data, col, background_color);
+	plot_byte(x, y, data, col, 0);
 }
 
 static WRITE_HANDLER( polaris_videoram_w )
@@ -470,7 +413,7 @@ static WRITE_HANDLER( polaris_videoram_w )
 	   is different from what the schematics shows, but it's supported
 	   by screenshots. */
 
-	color_map = memory_region(REGION_PROMS)[(((y+32)/8)*32) + (x/8)];
+	color_map = memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)];
 	back_color = (color_map & 1) ? 6 : 2;
 	fore_color = ~colorram[offset & 0x1f1f] & 0x07;
 
@@ -725,7 +668,7 @@ static VIDEO_UPDATE( seawolf )
 	/* update the bitmap (and erase old cross) */
 	video_update_8080bw_common(bitmap, cliprect);
 
-    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x1f) * 8) + 4, 31);
+    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x1f) * 8) + 4, 63);
 }
 
 static VIDEO_UPDATE( blueshrk )
@@ -733,7 +676,7 @@ static VIDEO_UPDATE( blueshrk )
 	/* update the bitmap (and erase old cross) */
 	video_update_8080bw_common(bitmap, cliprect);
 
-    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x7f) * 2) - 12, 31);
+    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x7f) * 2) - 12, 63);
 }
 
 static VIDEO_UPDATE( desertgu )
@@ -743,7 +686,70 @@ static VIDEO_UPDATE( desertgu )
 
 	draw_sight(bitmap,cliprect,
 			   ((input_port_0_r(0) & 0x7f) * 2) - 30,
-			   ((input_port_2_r(0) & 0x7f) * 2) - 30);
+			   ((input_port_2_r(0) & 0x7f) * 2) + 2);
+}
+
+
+WRITE_HANDLER( bowler_bonus_display_w )
+{
+	/* Bits 0-6 control which score is lit.
+	   Bit 7 appears to be a global enable, but the exact
+	   effect is not known. */
+
+	bowler_bonus_display = data;
+}
+
+
+static VIDEO_UPDATE( bowler )
+{
+	int x,y,i;
+
+	char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
+	char score_line_2[] = "      110 220 330 550 330 220 110";
+
+
+	/* update the bitmap */
+	video_update_8080bw_common(bitmap, cliprect);
+
+
+	/* draw the current bonus value - on the original game this
+	   was done using lamps that lit score displays on the bezel. */
+
+	x = 33 * 8;
+	y = 31 * 8;
+
+	for (i = 0; i < 33; i++)
+	{
+		int col;
+
+
+		col = UI_COLOR_NORMAL;
+
+		if ((i >= 6) && ((i % 4) != 1))
+		{
+			int bit = (i - 6) / 4;
+
+			if (bowler_bonus_display & (1 << bit))
+			{
+				col = UI_COLOR_INVERSE;
+			}
+		}
+
+
+		drawgfx(bitmap,Machine->uifont,
+				score_line_1[i],col,
+				0,1,
+				x,y,
+				cliprect,TRANSPARENCY_NONE,0);
+
+		drawgfx(bitmap,Machine->uifont,
+				score_line_2[i],col,
+				0,1,
+				x+8,y,
+				cliprect,TRANSPARENCY_NONE,0);
+
+		y -= Machine->uifontwidth;
+	}
 }
 
 
@@ -791,8 +797,8 @@ static WRITE_HANDLER( invadpt2_videoram_w )
 	{
 		UINT16 colbase;
 
-		colbase = color_map_select ? 0x400 : 0;
-		col = memory_region(REGION_PROMS)[colbase + (((y+32)/8)*32) + (x/8)] & 7;
+		colbase = color_map_select ? 0x0400 : 0;
+		col = memory_region(REGION_PROMS)[colbase | (y >> 3 << 5) | (x >> 3)] & 0x07;
 	}
 	else
 		col = 1;	/* red */
@@ -815,7 +821,7 @@ static WRITE_HANDLER( sstrngr2_videoram_w )
 		UINT16 colbase;
 
 		colbase = color_map_select ? 0 : 0x0200;
-		col = memory_region(REGION_PROMS)[colbase + ((y/16+2) & 0x0f)*32 + (x/8)] & 0x0f;
+		col = memory_region(REGION_PROMS)[colbase | (y >> 4 << 5) | (x >> 3)] & 0x0f;
 	}
 	else
 		col = 1;	/* red */
@@ -823,7 +829,7 @@ static WRITE_HANDLER( sstrngr2_videoram_w )
 	if (color_map_select)
 	{
 		x = 240 - x;
-		y = 223 - y;
+		y = 31 - y;
 	}
 
 	plot_byte(x, y, data, col, 0);
@@ -841,9 +847,9 @@ static WRITE_HANDLER( astinvad_videoram_w )
 	if (!screen_red)
 	{
 		if (flip_screen)
-			col = memory_region(REGION_PROMS)[((y+32)/8)*32 + (x/8)] >> 4;
+			col = (memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)] >> 4) & 0x07;
 		else
-			col = memory_region(REGION_PROMS)[(31-y/8)*32 + (31-x/8)] & 0x0f;
+			col = (memory_region(REGION_PROMS)[(((((UINT8)~y >> 3) + 4) & 0x1f) << 5) | ((UINT8)~x >> 3)]) & 0x07;
 	}
 	else
 		col = 1; /* red */
@@ -851,9 +857,43 @@ static WRITE_HANDLER( astinvad_videoram_w )
 	plot_byte(x, y, data, col, 0);
 }
 
-static WRITE_HANDLER( spaceint_videoram_w )
+static WRITE_HANDLER( spcking2_videoram_w )
 {
 	UINT8 x,y,col;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	if (!screen_red)
+	{
+		if (flip_screen)
+			col = (memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)] >> 4) & 0x07;
+		else
+			col = (memory_region(REGION_PROMS)[((UINT8)~y >> 3 << 5) | ((UINT8)~x >> 3)]) & 0x07;
+	}
+	else
+		col = 1; /* red */
+
+	plot_byte(x, y, data, col, 0);
+}
+
+
+static data8_t spaceint_color;
+
+WRITE_HANDLER( spaceint_color_w )
+{
+	spaceint_color = data ^ 0x0f;
+
+	if (spaceint_color == 0x08)
+		spaceint_color = 0x07;
+}
+
+
+static WRITE_HANDLER( spaceint_videoram_w )
+{
+	UINT8 x,y;
 	int i;
 
 	videoram[offset] = data;
@@ -861,12 +901,9 @@ static WRITE_HANDLER( spaceint_videoram_w )
 	y = 8 * (offset / 256);
 	x = offset % 256;
 
-	/* this is wrong */
-	col = memory_region(REGION_PROMS)[(y/16)+16*((x+16)/32)];
-
 	for (i = 0; i < 8; i++)
 	{
-		plot_pixel_8080(x, y, (data & 0x01) ? col : 0);
+		plot_pixel_8080(x, y, (data & 0x01) ? spaceint_color : 0);
 
 		y++;
 		data >>= 1;

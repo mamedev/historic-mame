@@ -1,15 +1,38 @@
 # a tiny compile is without Neogeo games
 COREDEFS += -DTINY_COMPILE=1
-COREDEFS += -DTINY_NAME="driver_taxidrvr"
-COREDEFS += -DTINY_POINTER="&driver_taxidrvr"
+COREDEFS += -DTINY_NAME="driver_findout"
+COREDEFS += -DTINY_POINTER="&driver_findout"
 
 # uses these CPUs
+CPUS+=M68000@
+CPUS+=M68010@
+CPUS+=M68EC020@
+CPUS+=M68020@
 CPUS+=Z80@
+CPUS+=M6502@
+CPUS+=M6809@
 
 # uses these SOUNDs
+SOUNDS+=DAC@
 SOUNDS+=AY8910@
+SOUNDS+=YM2203@
+SOUNDS+=YM2151_ALT@
+SOUNDS+=YM2608@
+SOUNDS+=YM2610@
+SOUNDS+=YM2610B@
+SOUNDS+=YM2612@
+SOUNDS+=YM3438@
+SOUNDS+=YM2413@
+SOUNDS+=YM3812@
+SOUNDS+=YMZ280B@
+SOUNDS+=YM3526@
+SOUNDS+=Y8950@
+SOUNDS+=SN76477@
+SOUNDS+=SN76496@
+SOUNDS+=OKIM6295@
+SOUNDS+=MSM5205@
 
-OBJS = $(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o
+OBJS = $(OBJ)/drivers/findout.o
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

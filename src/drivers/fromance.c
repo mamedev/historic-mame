@@ -1036,7 +1036,7 @@ static struct GfxDecodeInfo fromance_gfxdecodeinfo[] =
 static struct YM2413interface ym2413_interface=
 {
 	1,						/* 1 chip */
-	3579545*2,				/* 3.579545 MHz ? */
+	3579545,				/* 3.579545 MHz ? */
 	{ 100 },				/* Volume */
 };
 
@@ -1068,7 +1068,7 @@ static struct MSM5205interface fromance_msm5205_interface =
 	384000,					/* 384 KHz */
 	{ fromance_adpcm_int },	/* IRQ handler */
 	{ MSM5205_S48_4B },		/* 8 KHz */
-	{ 20 }					/* volume */
+	{ 10 }					/* volume */
 };
 
 
@@ -1360,10 +1360,10 @@ ROM_END
  *
  *************************************/
 
-GAMEX(1988, nekkyoku, 0, nekkyoku, nekkyoku, 0, ROT0, "Video System", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1988, nekkyoku, 0, nekkyoku, nekkyoku, 0, ROT0, "Video System Co.", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1988, idolmj,   0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)" )
-GAME( 1989, mjnatsu,  0, fromance, mjnatsu,  0, ROT0, "Video System", "Mahjong Natsu Monogatari (Japan)" )
-GAME( 1989, mfunclub, 0, fromance, mfunclub, 0, ROT0, "Video System", "Mahjong Fun Club - Idol Saizensen (Japan)" )
-GAME( 1990, daiyogen, 0, fromance, daiyogen, 0, ROT0, "Video System", "Mahjong Daiyogen (Japan)" )
-GAME( 1991, nmsengen, 0, fromance, nmsengen, 0, ROT0, "Video System", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)" )
-GAME( 1991, fromance, 0, fromance, fromance, 0, ROT0, "Video System", "Idol-Mahjong Final Romance (Japan)" )
+GAME( 1989, mjnatsu,  0, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Mahjong Natsu Monogatari (Japan)" )
+GAME( 1989, mfunclub, 0, fromance, mfunclub, 0, ROT0, "Video System Co.", "Mahjong Fun Club - Idol Saizensen (Japan)" )
+GAME( 1990, daiyogen, 0, fromance, daiyogen, 0, ROT0, "Video System Co.", "Mahjong Daiyogen (Japan)" )
+GAME( 1991, nmsengen, 0, fromance, nmsengen, 0, ROT0, "Video System Co.", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)" )
+GAME( 1991, fromance, 0, fromance, fromance, 0, ROT0, "Video System Co.", "Idol-Mahjong Final Romance (Japan)" )

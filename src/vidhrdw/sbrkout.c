@@ -12,34 +12,6 @@
 unsigned char *sbrkout_horiz_ram;
 unsigned char *sbrkout_vert_ram;
 
-/* The first entry defines the color with which the bitmap is filled initially */
-/* The array is terminated with an entry with negative coordinates. */
-/* At least two entries are needed. */
-static const struct artwork_element sbrkout_ol[] =
-{
-	{{208, 247,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{176, 207,   8, 217}, 0xff, 0x80, 0x10,   OVERLAY_DEFAULT_OPACITY},	/* orange */
-	{{144, 175,   8, 217}, 0x20, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* green */
-	{{ 96, 143,   8, 217}, 0xff, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* yellow */
-	{{ 16,	23,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{-1,-1,-1,-1},0,0,0,0}
-};
-
-
-/***************************************************************************
-***************************************************************************/
-
-VIDEO_START( sbrkout )
-{
-	int start_pen = 2;	/* leave space for black and white */
-
-	if (video_start_generic())
-		return 1;
-
-	overlay_create(sbrkout_ol, start_pen);
-
-	return 0;
-}
 
 /***************************************************************************
 
@@ -63,7 +35,7 @@ VIDEO_UPDATE( sbrkout )
 	{
 		if (dirtybuffer[offs])
 		{
-			int code,sx,sy,color;
+			int code,sx,sy;
 
 
 			dirtybuffer[offs]=0;
@@ -74,12 +46,20 @@ VIDEO_UPDATE( sbrkout )
 			sy = 8*(offs / 32);
 
 			/* Check the "draw" bit */
-			color = ((videoram[offs] & 0x80)>>7);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					code, color,
-					0,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			if (videoram[offs] & 0x80)
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						code, 0,
+						0,0,sx,sy,
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
+			else
+			{
+				struct rectangle bounds;
+				bounds.min_x = sx;
+				bounds.min_y = sy;
+				bounds.max_x = sx + 7;
+				bounds.max_y = sy + 7;
+				fillbitmap(tmpbitmap, 0, &bounds);
+			}
 		}
 	}
 
@@ -98,7 +78,7 @@ VIDEO_UPDATE( sbrkout )
 		code = ((sbrkout_vert_ram[ball*2+1] & 0x80) >> 7);
 
 		drawgfx(bitmap,Machine->gfx[1],
-				code,1,
+				code,0,
 				0,0,sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}

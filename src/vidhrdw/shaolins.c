@@ -122,7 +122,7 @@ VIDEO_UPDATE( shaolins )
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs <= videoram_size;offs++)
+	for (offs = 0;offs < videoram_size;offs++)
 	{
 		if (dirtybuffer[offs])
 		{

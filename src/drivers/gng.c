@@ -579,7 +579,7 @@ ROM_START( makaimur )
 	ROM_LOAD( "gng13.n4",     0x00000, 0x4000, 0x4613afdc ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gng16.l4",     0x0c000, 0x4000, 0x608d68d5 )     /* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gng16.l4",     0x0c000, 0x4000, 0x608d68d5 ) /* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 

@@ -298,7 +298,7 @@ struct InternalMachineDriver
 	UINT32 total_colors;
 	UINT32 color_table_len;
 
-	void (*init_palette)(unsigned short *colortable,const unsigned char *color_prom);
+	void (*init_palette)(UINT16 *colortable,const UINT8 *color_prom);
 	int (*video_start)(void);
 	void (*video_stop)(void);
 	void (*video_eof)(void);
@@ -338,9 +338,6 @@ struct InternalMachineDriver
 
 
 /* ----- flags for video_attributes ----- */
-
-/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
-#define	VIDEO_SUPPORTS_DIRTY		0x0002
 
 /* bit 0 of the video attributes indicates raster or vector video hardware */
 #define	VIDEO_TYPE_RASTER			0x0000

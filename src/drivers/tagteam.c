@@ -10,6 +10,15 @@ family and the later Technos games, like Mat Mania and Mysterious Stones.
 The video hardware supports 3 sprite banks instead of 1
 The sound hardware appears nearly identical to Mat Mania
 
+
+Stephh's notes :
+
+  - When the "Cabinet" Dip Switch is set to "Cocktail", the screen status
+    depends on which player is the main wrestler on the ring :
+
+      * player 1 : normal screen
+      * player 2 : inverted screen
+
 TODO:
         * fix hi-score (reset) bug
 
@@ -30,6 +39,11 @@ WRITE_HANDLER( tagteam_control_w );
 
 VIDEO_START( tagteam );
 VIDEO_UPDATE( tagteam );
+
+static WRITE_HANDLER( flip_screen_w )
+{
+	flip_screen_set(data & 1);
+}
 
 static WRITE_HANDLER( sound_command_w )
 {
@@ -52,7 +66,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
-//	{ 0x2000, 0x2000, tagteam_unk_w },
+	{ 0x2000, 0x2000, flip_screen_w },
 	{ 0x2001, 0x2001, tagteam_control_w },
 	{ 0x2002, 0x2002, sound_command_w },
 //	{ 0x2003, 0x2003, MWA_NOP }, /* Appears to increment when you're out of the ring */
@@ -100,6 +114,77 @@ static INTERRUPT_GEN( tagteam_interrupt )
 	else coin = 0;
 }
 
+
+INPUT_PORTS_START( bigprowr )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )			// "Upright, Single Controls"
+	PORT_DIPSETTING(    0x40, "Upright, Dual Controls" )
+//	PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" )	// IMPOSSIBLE !
+	PORT_DIPSETTING(    0x60, DEF_STR( Cocktail ) )			// "Cocktail, Dual Controls"
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+/* Same as 'bigprowr', but additional "Coin Mode" Dip Switch */
 INPUT_PORTS_START( tagteam )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -112,69 +197,56 @@ INPUT_PORTS_START( tagteam )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
 
-	PORT_START      /* DSW1 - 7 not used?, 8 = VBLANK! */
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, "A 2C/1C B 1C/1C" )
-	PORT_DIPSETTING(    0x08, "A 2C/1C B 1C/2C" )
-	PORT_DIPSETTING(    0x04, "A 2C/1C B 1C/3C" )
-	PORT_DIPSETTING(    0x03, "A 1C/1C B 2C/1C" )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0b, "A 1C/1C B 1C/2C" )
-	PORT_DIPSETTING(    0x07, "A 1C/1C B 1C/3C" )
-	PORT_DIPSETTING(    0x02, "A 1C/2C B 2C/1C" )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0e, "A 1C/2C B 1C/1C" )
-	PORT_DIPSETTING(    0x06, "A 1C/2C B 1C/3C" )
-	PORT_DIPSETTING(    0x01, "A 1C/3C B 2C/1C" )
-	PORT_DIPSETTING(    0x0d, "A 1C/3C B 1C/1C" )
-	PORT_DIPSETTING(    0x09, "A 1C/3C B 1C/2C" )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "Control Panel" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )			// 1C_6C when "Coin Mode 2"
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )			// 1C_6C when "Coin Mode 2"
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )			// "Upright, Single Controls"
+	PORT_DIPSETTING(    0x40, "Upright, Dual Controls" )
+//	PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" )	// IMPOSSIBLE !
+	PORT_DIPSETTING(    0x60, DEF_STR( Cocktail ) )			// "Cocktail, Dual Controls"
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
-	PORT_START      /* DSW2 - 3,4,5,6,7,8 = not used? */
+	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x00, "Coin Mode" )				// Check code at 0xff5c
+	PORT_DIPSETTING(    0x00, "Mode 1" )
+	PORT_DIPSETTING(    0x80, "Mode 2" )
+	/* Other values (0x20, 0x40, 0x60, 0xa0, 0xc0, 0xe0) : "Mode 1" */
 INPUT_PORTS_END
 
 
@@ -328,5 +400,5 @@ ROM_END
 
 
 
-GAME( 1983, bigprowr, 0,        tagteam, tagteam, 0, ROT270, "Technos", "The Big Pro Wrestling!" )
-GAME( 1983, tagteam,  bigprowr, tagteam, tagteam, 0, ROT270, "Technos (Data East license)", "Tag Team Wrestling" )
+GAME( 1983, bigprowr, 0,        tagteam, bigprowr, 0, ROT270, "Technos", "The Big Pro Wrestling!" )
+GAME( 1983, tagteam,  bigprowr, tagteam, tagteam,  0, ROT270, "Technos (Data East license)", "Tag Team Wrestling" )

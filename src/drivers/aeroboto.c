@@ -262,7 +262,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( formatz )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1250000) // 1.25Mhz
+	MDRV_CPU_ADD(M6809, 1250000) // 1.25MHz
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(aeroboto_interrupt,1)
 

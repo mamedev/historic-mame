@@ -6,6 +6,15 @@ Similar to Bottom of the Ninth
 
 driver by Nicola Salmoria
 
+
+Revisions:
+
+05-10-2002 Acho A. Tang
+- simulated PMCU protection(guess only)
+- changed priority scheme to fix graphics in 3D levels
+- fixed crashes caused by bank switching
+- disabled logging and debug messages
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -40,12 +49,12 @@ static READ_HANDLER( spy_bankedram1_r )
 	{
 		if (pmcbank)
 		{
-			logerror("%04x read pmcram %04x\n",activecpu_get_pc(),offset);
+			//logerror("%04x read pmcram %04x\n",activecpu_get_pc(),offset);
 			return pmcram[offset];
 		}
 		else
 		{
-			logerror("%04x read pmc internal ram %04x\n",activecpu_get_pc(),offset);
+			//logerror("%04x read pmc internal ram %04x\n",activecpu_get_pc(),offset);
 			return 0;
 		}
 	}
@@ -63,11 +72,11 @@ static WRITE_HANDLER( spy_bankedram1_w )
 	{
 		if (pmcbank)
 		{
-//			logerror("%04x pmcram %04x = %02x\n",activecpu_get_pc(),offset,data);
+			//logerror("%04x pmcram %04x = %02x\n",activecpu_get_pc(),offset,data);
 			pmcram[offset] = data;
 		}
-		else
-			logerror("%04x pmc internal ram %04x = %02x\n",activecpu_get_pc(),offset,data);
+		//else
+			//logerror("%04x pmc internal ram %04x = %02x\n",activecpu_get_pc(),offset,data);
 	}
 	else
 		ram[offset] = data;
@@ -155,6 +164,86 @@ if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
 	cpu_setbank(1,&rom[offs]);
 }
 
+//AT
+void spy_collision(void)
+{
+#define MAX_SPRITES 64
+#define DEF_NEAR_PLANE 0x6400
+#define NEAR_PLANE_ZOOM 0x0100
+#define FAR_PLANE_ZOOM 0x0000
+
+	int op1, x1, w1, z1, d1, y1, h1;
+	int op2, x2, w2, z2, d2, y2, h2;
+	int mode, i, loopend, nearplane;
+
+	mode = pmcram[0x1];
+	op1 = pmcram[0x2];
+	if (op1 == 1)
+	{
+		x1 = (pmcram[0x3]<<8) + pmcram[0x4];
+		w1 = (pmcram[0x5]<<8) + pmcram[0x6];
+		z1 = (pmcram[0x7]<<8) + pmcram[0x8];
+		d1 = (pmcram[0x9]<<8) + pmcram[0xa];
+		y1 = (pmcram[0xb]<<8) + pmcram[0xc];
+		h1 = (pmcram[0xd]<<8) + pmcram[0xe];
+
+		for (i=16; i<14*MAX_SPRITES + 2; i+=14)
+		{
+			op2 = pmcram[i];
+			if (op2 || mode==0x0c)
+			{
+				x2 = (pmcram[i+0x1]<<8) + pmcram[i+0x2];
+				w2 = (pmcram[i+0x3]<<8) + pmcram[i+0x4];
+				z2 = (pmcram[i+0x5]<<8) + pmcram[i+0x6];
+				d2 = (pmcram[i+0x7]<<8) + pmcram[i+0x8];
+				y2 = (pmcram[i+0x9]<<8) + pmcram[i+0xa];
+				h2 = (pmcram[i+0xb]<<8) + pmcram[i+0xc];
+/*
+	The mad scientist's laser truck has both a high sprite center and a small height value.
+	It has to be measured from the ground to detect correctly.
+*/
+				if (w2==0x58 && d2==0x04 && h2==0x10 && y2==0x30) h2 = y2;
+
+				// what other sprites fall into:
+				if ( (abs(x1-x2)<w1+w2) && (abs(z1-z2)<d1+d2) && (abs(y1-y2)<h1+h2) )
+				{
+					pmcram[0xf] = 0;
+					pmcram[i+0xd] = 0;
+				}
+				else
+					pmcram[i+0xd] = 1;
+			}
+		}
+	}
+	else if (op1 > 1)
+	{
+/*
+	The PMCU also projects geometries to screen coordinates. Unfortunately I'm unable to figure
+	the scale factors from the PMCU code. Plugging 0 and 0x100 to the far and near planes seems
+	to do the trick though.
+*/
+		loopend = (pmcram[0]<<8) + pmcram[1];
+		nearplane = (pmcram[2]<<8) + pmcram[3];
+
+		// fail safe
+		if (loopend > MAX_SPRITES) loopend = MAX_SPRITES;
+		if (!nearplane) nearplane = DEF_NEAR_PLANE;
+
+		loopend = (loopend<<1) + 4;
+
+		for (i=4; i<loopend; i+=2)
+		{
+			op2 = (pmcram[i]<<8) + pmcram[i+1];
+			op2 = (op2 * (NEAR_PLANE_ZOOM - FAR_PLANE_ZOOM)) / nearplane + FAR_PLANE_ZOOM;
+			pmcram[i] = op2 >> 8;
+			pmcram[i+1] = op2 & 0xff;
+		}
+
+		memset(pmcram+loopend, 0, 0x800-loopend); // clean up for next frame
+	}
+}
+//ZT
+
 static WRITE_HANDLER( spy_3f90_w )
 {
 	extern int spy_video_enable;
@@ -214,11 +303,13 @@ static WRITE_HANDLER( spy_3f90_w )
 	/* bit 7 = PMC-BK */
 	pmcbank = (data & 0x80) >> 7;
 
-logerror("%04x: 3f90_w %02x\n",activecpu_get_pc(),data);
+//logerror("%04x: 3f90_w %02x\n",activecpu_get_pc(),data);
 	/* bit 6 = PMC-START */
 	if ((data & 0x40) && !(old & 0x40))
 	{
 		/* we should handle collision here */
+//AT
+/*
 int i;
 
 logerror("collision test:\n");
@@ -228,8 +319,9 @@ for (i = 0;i < 0xfe;i++)
 	if (i == 0x0f || (i > 0x10 && (i - 0x10) % 14 == 13))
 		logerror("\n");
 }
-
-
+*/
+		spy_collision();
+//ZT
 		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
@@ -313,8 +405,8 @@ INPUT_PORTS_START( spy )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 */
 
 	PORT_START
@@ -323,8 +415,8 @@ INPUT_PORTS_START( spy )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 */
 
 	PORT_START
@@ -361,7 +453,7 @@ INPUT_PORTS_START( spy )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -378,13 +470,13 @@ INPUT_PORTS_START( spy )
 	PORT_DIPSETTING(    0x08, "20k only" )
 	PORT_DIPSETTING(    0x00, "30k only" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x60, "Easy" )
-	PORT_DIPSETTING(	0x40, "Normal" )
-	PORT_DIPSETTING(	0x20, "Difficult" )
-	PORT_DIPSETTING(	0x00, "Very Difficult" )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -479,9 +571,36 @@ MACHINE_DRIVER_END
 
 ROM_START( spy )
 	ROM_REGION( 0x29000, REGION_CPU1, 0 ) /* code + banked roms + space for banked ram */
+	ROM_LOAD( "857n03.bin",   0x10000, 0x10000, 0x97993b38 )
+	ROM_LOAD( "857n02.bin",   0x20000, 0x08000, 0x31a97efe )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code */
+	ROM_LOAD( "857d01.bin",   0x0000, 0x8000, 0xaad4210f )
+
+	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
+	ROM_LOAD( "857b09.bin",   0x00000, 0x40000, 0xb8780966 )	/* characters */
+	ROM_LOAD( "857b08.bin",   0x40000, 0x40000, 0x3e4d8d50 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
+	ROM_LOAD( "857b06.bin",   0x00000, 0x80000, 0x7b515fb1 )	/* sprites */
+	ROM_LOAD( "857b05.bin",   0x80000, 0x80000, 0x27b0f73b )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "857a10.bin",   0x0000, 0x0100, 0x32758507 )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* samples for 007232 #0 */
+	ROM_LOAD( "857b07.bin",   0x00000, 0x40000, 0xce3512d4 )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 ) /* samples for 007232 #1 */
+	ROM_LOAD( "857b04.bin",   0x00000, 0x40000, 0x20b83c13 )
+ROM_END
+
+ROM_START( spyu )
+	ROM_REGION( 0x29000, REGION_CPU1, 0 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "857m03.bin",   0x10000, 0x10000, 0x3bd87fa4 )
-    ROM_LOAD( "857m02.bin",   0x20000, 0x08000, 0x306cc659 )
-    ROM_CONTINUE(             0x08000, 0x08000 )
+	ROM_LOAD( "857m02.bin",   0x20000, 0x08000, 0x306cc659 )
+	ROM_CONTINUE(             0x08000, 0x08000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code */
 	ROM_LOAD( "857d01.bin",   0x0000, 0x8000, 0xaad4210f )
@@ -521,4 +640,5 @@ static DRIVER_INIT( spy )
 
 
 
-GAMEX( 1989, spy, 0, spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (US)", GAME_NOT_WORKING )
+GAME( 1989, spy,  0,   spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (World ver. N)")
+GAME( 1989, spyu, spy, spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (US ver. M)")

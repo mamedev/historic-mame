@@ -307,3 +307,39 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 
 	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }
+
+/* Same as 'afega', but no screen flip support */
+VIDEO_UPDATE( bubl2000 )
+{
+	int layers_ctrl = -1;
+
+/* I really would like somebody to see the schematics of 'bubl2000' for confirmation */
+#if 0
+	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
+	flip_screen_x_set(~readinputport(2) & 0x0100);
+	flip_screen_y_set(~readinputport(2) & 0x0200);
+#endif
+
+	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]);
+	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1] - 0x100);
+
+	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
+	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
+
+#ifdef MAME_DEBUG
+if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
+{	int msk = 0;
+	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
+	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
+	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
+	if (msk != 0) layers_ctrl &= msk;	}
+#endif
+
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
+	else					fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
+
+	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+}
+

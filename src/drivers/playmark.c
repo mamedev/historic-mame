@@ -75,13 +75,15 @@ static WRITE16_HANDLER( coinctrl_w )
 
 static struct EEPROM_interface eeprom_interface =
 {
-	6,			/* address bits */
-	16,			/* data bits */
-	"110",		/*  read command */
-	"101",		/* write command */
-	0,			/* erase command */
-	"100000000",/* lock command */
-	"100110000"	/* unlock command */
+	6,				/* address bits */
+	16,				/* data bits */
+	"*110",			/*  read command */
+	"*101",			/* write command */
+	0,				/* erase command */
+	"*10000xxxx",	/* lock command */
+	"*10011xxxx",	/* unlock command */
+	0,				/* enable_multi_read */
+	5				/* reset_delay (otherwise wbeachvl will hang when saving settings) */
 };
 
 static NVRAM_HANDLER( wbeachvl )
@@ -496,7 +498,7 @@ static MACHINE_DRIVER_START( wbeachvl )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(wbeachvl)
 
 	/* video hardware */

@@ -1,82 +1,13 @@
 /***************************************************************************
 
-Fast Freddie/Jump Coaster memory map (preliminary)
-
-driver by Zsolt Vasvari
-
-These games run on a modified Galaxian board.
-
-Main CPU
-
-Fast Fred  Jump Coas
-0000-7fff             ROM
-c000-c7ff             RAM
-d000-d3ff  d800-dbff  Video RAM
-d400-d7ff  dc00-dfff  Mirrored Video RAM
-d800-d83f  d000-d03f  Attributes RAM
-d840-d85f  d040-d05f  Sprite RAM
-
-I/O read:
-
-c800-cfff             Custom I/O (Protection)
-e000       e802       Input Port 1
-e800       e803       Input Port 2
-f000       e800       Dip Switches
-f800                  Watchdog Reset
-
-I/O write:
-
-c800-cfff             Custom I/O write
-e000                  Background color write
-fXX1                  NMI Enable
-fXX2-fXX3             Palette Select (?)
-fXX4-fXX5             Character Bank Select
-fXX6                  Screen Flip X
-fXX7                  Screen Flip Y
-
-f800                  Sound Command Write (AY8910 #1 Control Port on Jump Coaster)
-f801                  AY8910 #1 Write Port on Jump Coaster
-
-
-Sound CPU (Only on Fast Freddie)
-
-0000-1fff ROM
-2000-23ff RAM
-
-I/O read:
-
-3000 Sound Command Read
-
-I/O write:
-
-3000 NMI Enable
-4000 Reset PSG's (?)
-5000 AY8910 #1 Control Port
-5001 AY8910 #1 Write Port
-6000 AY8910 #2 Control Port
-6001 AY8910 #2 Write Port
+  Fast Freddie/Jump Coaster hardware
+  driver by Zsolt Vasvari
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "fastfred.h"
 
-extern unsigned char *fastfred_attributesram;
-WRITE_HANDLER( fastfred_attributes_w );
-
-PALETTE_INIT( fastfred );
-VIDEO_UPDATE( fastfred );
-WRITE_HANDLER( fastfred_character_bank_select_w );
-WRITE_HANDLER( fastfred_color_bank_select_w );
-WRITE_HANDLER( fastfred_background_color_w );
-MACHINE_INIT( jumpcoas );
-
-static READ_HANDLER( jumpcoas_custom_io_r )
-{
-	if (offset == 0x100)  return 0x63;
-
-	return 0x00;
-}
 
 // This routine is a big hack, but the only way I can get the game working
 // without knowing anything about the way the protection chip works.
@@ -115,24 +46,16 @@ static READ_HANDLER( fastfred_custom_io_r )
     return 0x00;
 }
 
-static WRITE_HANDLER( flip_screen_x_w )
+static READ_HANDLER( jumpcoas_custom_io_r )
 {
-	flip_screen_x_set(data);
-}
+	if (offset == 0x100)  return 0x63;
 
-static WRITE_HANDLER( flip_screen_y_w )
-{
-	flip_screen_y_set(data);
+	return 0x00;
 }
-
 
 
 static MEMORY_READ_START( fastfred_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_NOP }, // There is a bug in Fast Freddie that causes
-								 // these locations to be read. See 1b5a
-								 // One of the instructions should be ld de,
-								 // instead of ld hl,
+	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd3ff, MRA_RAM },
 	{ 0xd800, 0xd8ff, MRA_RAM },
@@ -143,23 +66,24 @@ static MEMORY_READ_START( fastfred_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( fastfred_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, MWA_NOP },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, videoram_w },  // Mirrored for above
+	{ 0xd000, 0xd3ff, fastfred_videoram_w, &fastfred_videoram },
+	{ 0xd400, 0xd7ff, fastfred_videoram_w },  // Mirrored for above
 	{ 0xd800, 0xd83f, fastfred_attributes_w, &fastfred_attributesram },
-	{ 0xd840, 0xd85f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd840, 0xd85f, MWA_RAM, &fastfred_spriteram, &fastfred_spriteram_size },
 	{ 0xd860, 0xdbff, MWA_RAM }, // Unused, but initialized
 	{ 0xe000, 0xe000, fastfred_background_color_w },
 	{ 0xf000, 0xf000, MWA_NOP }, // Unused, but initialized
 	{ 0xf001, 0xf001, interrupt_enable_w },
-	{ 0xf002, 0xf003, fastfred_color_bank_select_w },
-	{ 0xf004, 0xf005, fastfred_character_bank_select_w },
-	{ 0xf006, 0xf006, flip_screen_x_w },
-	{ 0xf007, 0xf007, flip_screen_y_w },
-	{ 0xf116, 0xf116, flip_screen_x_w },
-	{ 0xf117, 0xf117, flip_screen_y_w },
+	{ 0xf002, 0xf002, fastfred_colorbank1_w },
+	{ 0xf003, 0xf003, fastfred_colorbank2_w },
+	{ 0xf004, 0xf004, fastfred_charbank1_w },
+	{ 0xf005, 0xf005, fastfred_charbank2_w },
+	{ 0xf006, 0xf006, fastfred_flip_screen_x_w },
+	{ 0xf007, 0xf007, fastfred_flip_screen_y_w },
+	{ 0xf116, 0xf116, fastfred_flip_screen_x_w },
+	{ 0xf117, 0xf117, fastfred_flip_screen_y_w },
 	{ 0xf800, 0xf800, soundlatch_w },
 MEMORY_END
 
@@ -171,7 +95,7 @@ static MEMORY_READ_START( jumpcoas_readmem )
 	{ 0xd800, 0xdbff, MRA_RAM },
 	{ 0xe800, 0xe800, input_port_0_r },
 	{ 0xe802, 0xe802, input_port_1_r },
-	{ 0xe802, 0xe803, input_port_2_r },
+	{ 0xe803, 0xe803, input_port_2_r },
 	//{ 0xf800, 0xf800, watchdog_reset_r },  // Why doesn't this work???
 	{ 0xf800, 0xf800, MRA_NOP },
 MEMORY_END
@@ -180,21 +104,22 @@ MEMORY_END
 static MEMORY_WRITE_START( jumpcoas_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, MWA_NOP },
 	{ 0xd000, 0xd03f, fastfred_attributes_w, &fastfred_attributesram },
-	{ 0xd040, 0xd05f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd040, 0xd05f, MWA_RAM, &fastfred_spriteram, &fastfred_spriteram_size },
 	{ 0xd060, 0xd3ff, MWA_NOP },
-	{ 0xd800, 0xdbff, videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdfff, videoram_w },	/* mirror address, used in the name entry screen */
+	{ 0xd800, 0xdbff, fastfred_videoram_w, &fastfred_videoram },
+	{ 0xdc00, 0xdfff, fastfred_videoram_w },	/* mirror address, used in the name entry screen */
 	{ 0xe000, 0xe000, fastfred_background_color_w },
 	{ 0xf000, 0xf000, MWA_NOP }, // Unused, but initialized
 	{ 0xf001, 0xf001, interrupt_enable_w },
-	{ 0xf002, 0xf003, fastfred_color_bank_select_w },
-	{ 0xf004, 0xf005, fastfred_character_bank_select_w },
-	{ 0xf006, 0xf006, flip_screen_x_w },
-	{ 0xf007, 0xf007, flip_screen_y_w },
-	{ 0xf116, 0xf116, flip_screen_x_w },
-	{ 0xf117, 0xf117, flip_screen_y_w },
+	{ 0xf002, 0xf002, fastfred_colorbank1_w },
+	{ 0xf003, 0xf003, fastfred_colorbank2_w },
+	{ 0xf004, 0xf004, fastfred_charbank1_w },
+	{ 0xf005, 0xf005, fastfred_charbank2_w },
+	{ 0xf006, 0xf006, fastfred_flip_screen_x_w },
+	{ 0xf007, 0xf007, fastfred_flip_screen_y_w },
+	{ 0xf116, 0xf116, fastfred_flip_screen_x_w },
+	{ 0xf117, 0xf117, fastfred_flip_screen_y_w },
 	{ 0xf800, 0xf800, AY8910_control_port_0_w },
 	{ 0xf801, 0xf801, AY8910_write_port_0_w },
 MEMORY_END
@@ -208,6 +133,7 @@ MEMORY_END
 
 
 static MEMORY_WRITE_START( sound_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x3000, 0x3000, interrupt_enable_w },
 	{ 0x4000, 0x4000, MWA_RAM },  // Reset PSG's
@@ -226,8 +152,8 @@ INPUT_PORTS_START( fastfred )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -278,8 +204,8 @@ INPUT_PORTS_START( flyboy )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -360,66 +286,82 @@ INPUT_PORTS_START( jumpcoas )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( redrobin )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-static struct GfxLayout fastfred_charlayout =
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START      /* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x40, "50000" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )	/* most likely "Difficulty" */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )		/* it somehow effects the */
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )		/* monsters */
+INPUT_PORTS_END
+
+
+static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	1024,   /* 1024 characters */
-	3,      /* 3 bits per pixel */
-	{ 0x4000*8, 0x2000*8, 0 }, /* the three bitplanes are separated */
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 8 consecutive bytes */
+	8*8
 };
 
-static struct GfxLayout jumpcoas_charlayout =
+static struct GfxLayout spritelayout =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	3,      /* 3 bits per pixel */
-	{ 0x2000*8, 0x1000*8, 0 }, /* the three bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 8 consecutive bytes */
-};
-
-static struct GfxLayout fastfred_spritelayout =
-{
-	16,16,  /* 16*16 sprites */
-	128,    /* 128 sprites */
-	3,      /* 3 bits per pixel */
-	{ 0x2000*8, 0x1000*8, 0 }, /* the three bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 	  8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8     /* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxLayout jumpcoas_spritelayout =
-{
-	16,16,  /* 16*16 sprites */
-	64,     /* 64 sprites */
-	3,      /* 3 bits per pixel */
-	{ 0x2000*8, 0x1000*8, 0 }, /* the three bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-	  8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8     /* every sprite takes 32 consecutive bytes */
+	  16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8
 };
 
 static struct GfxDecodeInfo fastfred_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &fastfred_charlayout,     0, 32 },
-	{ REGION_GFX2, 0, &fastfred_spritelayout,   0, 32 },
+	{ REGION_GFX1, 0, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &jumpcoas_charlayout,     0, 32 },
-	{ REGION_GFX1, 0x0800, &jumpcoas_spritelayout,   0, 32 },
+	{ REGION_GFX1, 0, &charlayout,   0, 32 },
+	{ REGION_GFX1, 0, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -452,17 +394,18 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 static MACHINE_DRIVER_START( fastfred )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, CLOCK/6)     /* 3.072 MHz */
+	MDRV_CPU_ADD_TAG("main", Z80, CLOCK/6)     /* 3.072 MHz */
 	MDRV_CPU_MEMORY(fastfred_readmem,fastfred_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(Z80, CLOCK/12)
+	MDRV_CPU_ADD_TAG("audio", Z80, CLOCK/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 1.536 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)//CLOCK/16/60,
+	MDRV_MACHINE_INIT(fastfred)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -473,38 +416,29 @@ static MACHINE_DRIVER_START( fastfred )
 	MDRV_COLORTABLE_LENGTH(32*8)
 
 	MDRV_PALETTE_INIT(fastfred)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(fastfred)
 	MDRV_VIDEO_UPDATE(fastfred)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, fastfred_ay8910_interface)
+	MDRV_SOUND_ADD_TAG("ay8910", AY8910, fastfred_ay8910_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( jumpcoas )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, CLOCK/6)     /* 3.072 MHz */
+	MDRV_IMPORT_FROM(fastfred)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(jumpcoas_readmem,jumpcoas_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0)//CLOCK/16/60,
+	MDRV_CPU_REMOVE("audio")
+
 	MDRV_MACHINE_INIT(jumpcoas)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(jumpcoas_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-	MDRV_COLORTABLE_LENGTH(32*8)
-
-	MDRV_PALETTE_INIT(fastfred)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(fastfred)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, jumpcoas_ay8910_interface)
+	MDRV_SOUND_REPLACE("ay8910", AY8910, jumpcoas_ay8910_interface)
 MACHINE_DRIVER_END
 
 #undef CLOCK
@@ -544,9 +478,9 @@ ROM_START( fastfred )
 	ROM_LOAD( "ffr.13",       0x2000, 0x1000, 0x3fcfaa8e )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
-	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
-	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
+	ROM_LOAD( "red.9h",       0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "green.8h",     0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "blue.7h",      0x0200, 0x0100, 0x85c05c18 )
 ROM_END
 
 ROM_START( flyboy )
@@ -578,9 +512,9 @@ ROM_START( flyboy )
 	ROM_LOAD( "rom13.rom",    0x2000, 0x1000, 0xfcb33ff4 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
-	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
-	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
+	ROM_LOAD( "red.9h",       0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "green.8h",     0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "blue.7h",      0x0200, 0x0100, 0x85c05c18 )
 ROM_END
 
 ROM_START( flyboyb )
@@ -612,9 +546,9 @@ ROM_START( flyboyb )
 	ROM_LOAD( "rom13.rom",    0x2000, 0x1000, 0xfcb33ff4 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
-	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
-	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
+	ROM_LOAD( "red.9h",       0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "green.8h",     0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "blue.7h",      0x0200, 0x0100, 0x85c05c18 )
 ROM_END
 
 ROM_START( jumpcoas )
@@ -635,15 +569,52 @@ ROM_START( jumpcoas )
 	ROM_LOAD( "jumpcoas.blu", 0x0200, 0x0100, 0xf4662db7 )
 ROM_END
 
+ROM_START( redrobin )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "redro01f.16d", 0x0000, 0x1000, 0x0788ce10 )
+	ROM_LOAD( "redrob02.17d", 0x1000, 0x1000, 0xbf9b95b4 )
+	ROM_LOAD( "redrob03.14b", 0x2000, 0x1000, 0x9386e40b )
+	ROM_LOAD( "redrob04.16b", 0x3000, 0x1000, 0x5cafffc4 )
+	ROM_LOAD( "redrob05.17b", 0x4000, 0x1000, 0xa224d41e )
+	ROM_LOAD( "redrob06.14a", 0x5000, 0x1000, 0x822e0bd7 )
+	ROM_LOAD( "redrob07.15a", 0x6000, 0x1000, 0x0deacf17 )
+	ROM_LOAD( "redrob08.17a", 0x7000, 0x1000, 0x095cf908 )
+	ROM_LOAD( "redrob20.15e", 0x8000, 0x4000, 0x5cce22b7 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "redrob09.1f",  0x0000, 0x1000, 0x21af2d03 )
+	ROM_LOAD( "redro10f.1e",  0x1000, 0x1000, 0xbf0e772f )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "redrob14.17l", 0x0000, 0x1000, 0xf6c571e0 )
+	ROM_LOAD( "redrob17.17j", 0x1000, 0x1000, 0x86dcdf21 )
+	ROM_LOAD( "redrob15.15k", 0x2000, 0x1000, 0x05f7df48 )
+	ROM_LOAD( "redrob18.16j", 0x3000, 0x1000, 0x7aeb2bb9 )
+	ROM_LOAD( "redrob16.14l", 0x4000, 0x1000, 0x21349d09 )
+	ROM_LOAD( "redrob19.14j", 0x5000, 0x1000, 0x7184d999 )
+
+	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "redrob11.17m", 0x0000, 0x1000, 0x559f7894 )
+	ROM_LOAD( "redrob12.15m", 0x1000, 0x1000, 0xa763b11d )
+	ROM_LOAD( "redrob13.14m", 0x2000, 0x1000, 0xd667f45b )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "red.9h",       0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "green.8h",     0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "blue.7h",      0x0200, 0x0100, 0x85c05c18 )
+ROM_END
+
 
 static DRIVER_INIT( fastfred )
 {
-	install_mem_read_handler(0, 0xc800, 0xcfff, fastfred_custom_io_r);
+	install_mem_write_handler(0, 0xc800, 0xcfff, MWA_NOP );
+	install_mem_read_handler( 0, 0xc800, 0xcfff, fastfred_custom_io_r);
 }
 
 static DRIVER_INIT( jumpcoas )
 {
-	install_mem_read_handler(0, 0xc800, 0xcfff, jumpcoas_custom_io_r);
+	install_mem_write_handler(0, 0xc800, 0xcfff, MWA_NOP );
+	install_mem_read_handler(0,  0xc800, 0xcfff, jumpcoas_custom_io_r);
 }
 
 
@@ -652,3 +623,4 @@ GAMEX(1982, flyboy,   0,      fastfred, flyboy,   0,        ROT90, "Kaneko", "Fl
 GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   0,        ROT90, "Kaneko", "Fly-Boy (bootleg)" )
 GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fast Freddie" )
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
+GAME( 1986, redrobin, 0,      fastfred, redrobin, 0,        ROT90, "Elettronolo", "Red Robin" )

@@ -12,18 +12,47 @@
 #include "mcr.h"
 
 
-static UINT8 last_cocktail_flip;
+INT8 mcr12_sprite_xoffs;
+INT8 mcr12_sprite_xoffs_flip;
+
 static UINT8 *spritebitmap;
 static UINT32 spritebitmap_width;
 static UINT32 spritebitmap_height;
 
-static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip);
-static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int sx, int sy);
-
-INT8 mcr12_sprite_xoffs;
-INT8 mcr12_sprite_xoffs_flip;
-
 static UINT8 xtiles, ytiles;
+static struct tilemap *bg_tilemap;
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void mcr1_get_bg_tile_info(int tile_index)
+{
+	SET_TILE_INFO(0, videoram[tile_index], 0, 0);
+}
+
+
+static void mcr2_get_bg_tile_info(int tile_index)
+{
+	int data = videoram[tile_index * 2] | (videoram[tile_index * 2 + 1] << 8);
+	int code = data & 0x1ff;
+	int color = (data >> 11) & 3;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 9) & 3));
+}
+
+
+static void twotigra_get_bg_tile_info(int tile_index)
+{
+	int data = videoram[tile_index] | (videoram[tile_index + 0x400] << 8);
+	int code = data & 0x1ff;
+	int color = (data >> 11) & 3;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 9) & 3));
+}
+
 
 
 /*************************************
@@ -32,9 +61,14 @@ static UINT8 xtiles, ytiles;
  *
  *************************************/
 
-VIDEO_START( mcr12 )
+static int video_start_common(void)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
+
+	/* allocate a dirty buffer */
+	dirtybuffer = auto_malloc(videoram_size);
+	if (!dirtybuffer)
+		return 1;
 
 	/* allocate a temporary bitmap for the sprite rendering */
 	spritebitmap_width = Machine->drv->screen_width + 2 * 32;
@@ -46,7 +80,7 @@ VIDEO_START( mcr12 )
 
 	/* if we're swapped in X/Y, the sprite data will be swapped */
 	/* but that's not what we want, so we swap it back here */
-	if (gfx && (Machine->orientation & ORIENTATION_SWAP_XY))
+	if (gfx && (Machine->orientation & ORIENTATION_SWAP_XY) && !(gfx->flags & GFX_SWAPXY))
 	{
 		UINT8 *base = gfx->gfxdata;
 		int c, x, y;
@@ -66,35 +100,53 @@ VIDEO_START( mcr12 )
 	/* compute tile counts */
 	xtiles = Machine->drv->screen_width / 16;
 	ytiles = Machine->drv->screen_height / 16;
-	last_cocktail_flip = 0;
-
-	/* start up the generic system */
-	return video_start_generic();
+	return 0;
 }
 
 
-
-/*************************************
- *
- *	MCR2 palette writes
- *
- *************************************/
-
-static WRITE_HANDLER( mcr2_paletteram_w )
+VIDEO_START( mcr1 )
 {
-	int r, g, b;
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(mcr1_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	
+	/* handle the rest */
+	return video_start_common();
+}
 
-	/* bit 2 of the red component is taken from bit 0 of the address */
-	r = ((offset & 1) << 2) + (data >> 6);
-	g = (data >> 0) & 7;
-	b = (data >> 3) & 7;
 
-	/* up to 8 bits */
-	r = (r << 5) | (r << 2) | (r >> 1);
-	g = (g << 5) | (g << 2) | (g >> 1);
-	b = (b << 5) | (b << 2) | (b >> 1);
+VIDEO_START( mcr2 )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(mcr2_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	
+	/* handle the rest */
+	return video_start_common();
+}
 
-	palette_set_color(offset / 2, r, g, b);
+
+VIDEO_START( twotigra )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(twotigra_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	
+	/* handle the rest */
+	return video_start_common();
+}
+
+
+VIDEO_START( journey )
+{
+	/* initialize the background tilemap */
+	bg_tilemap = tilemap_create(mcr2_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	if (!bg_tilemap)
+		return 1;
+	return 0;
 }
 
 
@@ -107,141 +159,55 @@ static WRITE_HANDLER( mcr2_paletteram_w )
 
 WRITE_HANDLER( mcr1_videoram_w )
 {
-	if (videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-		videoram[offset] = data;
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
-
-READ_HANDLER( mcr2_videoram_r )
-{
-	return videoram[offset];
-}
-
-READ_HANDLER( twotigra_videoram_r )
-{
-	return videoram[((offset & 0x400) >> 10) | ((offset & 0x3ff) << 1)];
-}
 
 WRITE_HANDLER( mcr2_videoram_w )
 {
 	videoram[offset] = data;
-	if ((offset & 0x780) != 0x780)
-		dirtybuffer[offset & ~1] = 1;
-	else
+	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+
+	/* palette RAM is mapped into the upper 0x80 bytes here */
+	if ((offset & 0x780) == 0x780)
 	{
-		offset -= 0x780;
-		mcr2_paletteram_w(offset,data);
+		/* bit 2 of the red component is taken from bit 0 of the address */
+		int idx = (offset >> 1) & 0x3f;
+		int r = ((offset & 1) << 2) + (data >> 6);
+		int g = (data >> 0) & 7;
+		int b = (data >> 3) & 7;
+
+		/* up to 8 bits */
+		r = (r << 5) | (r << 2) | (r >> 1);
+		g = (g << 5) | (g << 2) | (g >> 1);
+		b = (b << 5) | (b << 2) | (b >> 1);
+
+		palette_set_color(idx, r, g, b);
 	}
 }
+
 
 WRITE_HANDLER( twotigra_videoram_w )
 {
-	offset = ((offset & 0x400) >> 10) | ((offset & 0x3ff) << 1);
-
 	videoram[offset] = data;
-	if ((offset & 0x780) != (0x780))
-		dirtybuffer[offset & ~1] = 1;
-	else
+	tilemap_mark_tile_dirty(bg_tilemap, offset & 0x3ff);
+
+	/* palette RAM is mapped into the upper 0x40 bytes of each bank */
+	if ((offset & 0x3c0) == 0x3c0)
 	{
-		offset -= 0x780;
-		offset = ((offset & 0x7e) >> 1) | ((offset & 0x01) << 6);
-		mcr2_paletteram_w(offset,data);
-	}
-}
+		/* bit 2 of the red component is taken from bit 0 of the address */
+		int idx = ((offset & 0x400) >> 5) | ((offset >> 1) & 0x1f);
+		int r = ((offset & 1) << 2) + (data >> 6);
+		int g = (data >> 0) & 7;
+		int b = (data >> 3) & 7;
 
+		/* up to 8 bits */
+		r = (r << 5) | (r << 2) | (r >> 1);
+		g = (g << 5) | (g << 2) | (g >> 1);
+		b = (b << 5) | (b << 2) | (b >> 1);
 
-
-/*************************************
- *
- *	Background updates
- *
- *************************************/
-
-static void mcr1_update_background(struct mame_bitmap *bitmap)
-{
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1; offs >= 0; offs--)
-	{
-		int dirty = dirtybuffer[offs];
-		if (dirty || bitmap != tmpbitmap)
-		{
-			int mx = offs % 32;
-			int my = offs / 32;
-			int sx = 16 * mx;
-			int sy = 16 * my;
-
-			int code = videoram[offs];
-
-			/* adjust for cocktail mode */
-			if (mcr_cocktail_flip)
-			{
-				sx = (xtiles - 1) * 16 - sx;
-				sy = (ytiles - 1) * 16 - sy;
-			}
-
-			/* draw the tile */
-			drawgfx(bitmap, Machine->gfx[0], code, 0, mcr_cocktail_flip, mcr_cocktail_flip,
-					sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-			/* if there's live sprite data here, draw the sprite data */
-			if (dirty & 2)
-				render_sprite_tile(bitmap, &Machine->pens[16], sx, sy);
-
-			/* shift off the low bit of the dirty buffer */
-			dirtybuffer[offs] = dirty >> 1;
-		}
-	}
-}
-
-
-static void mcr2_update_background(struct mame_bitmap *bitmap, int check_sprites)
-{
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
-	{
-		int dirty = dirtybuffer[offs];
-		if (dirty || bitmap != tmpbitmap)
-		{
-			int mx = (offs / 2) % 32;
-			int my = (offs / 2) / 32;
-			int sx = 16 * mx;
-			int sy = 16 * my;
-
-			int attr = videoram[offs + 1];
-			int code = videoram[offs] + 256 * (attr & 0x01);
-			int hflip = attr & 0x02;
-			int vflip = attr & 0x04;
-			int color = (attr & 0x18) >> 3;
-
-			/* adjust for cocktail mode */
-			if (mcr_cocktail_flip)
-			{
-				sx = (xtiles - 1) * 16 - sx;
-				sy = (ytiles - 1) * 16 - sy;
-				hflip = !hflip;
-				vflip = !vflip;
-			}
-
-			/* draw the tile */
-			drawgfx(bitmap, Machine->gfx[0], code, color, hflip, vflip,
-					sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-			/* if there's live sprite data here, draw the sprite data */
-			if (check_sprites && (dirty & 2))
-				render_sprite_tile(bitmap, &Machine->pens[(attr & 0xc0) >> 2], sx, sy);
-
-			/* shift off the low bit of the dirty buffer */
-			dirtybuffer[offs] = dirty >> 1;
-		}
+		palette_set_color(idx, r, g, b);
 	}
 }
 
@@ -258,6 +224,10 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
 	const struct GfxElement *gfx = Machine->gfx[1];
 	UINT8 *src = gfx->gfxdata + gfx->char_modulo * code;
 	int y, x;
+	
+	/* offset for the extra top/left area */
+	sx += 32;
+	sy += 32;
 
 	/* adjust for vflip */
 	if (vflip)
@@ -292,39 +262,11 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
 
 /*************************************
  *
- *	Sprite bitmap drawing
- *
- *************************************/
-
-static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int sx, int sy)
-{
-	int x, y;
-
-	/* draw any dirty scanlines from the VRAM directly */
-	for (y = 0; y < 16; y++, sy++)
-	{
-		UINT8 *src = &spritebitmap[(sy + 32) * spritebitmap_width + (sx + 32)];
-
-		/* redraw the sprite scanline, erasing as we go */
-		for (x = 0; x < 16; x++)
-		{
-			int pixel = *src;
-			if (pixel & 7)
-				plot_pixel(bitmap, sx + x, sy, pens[pixel]);
-			*src++ = 0;
-		}
-	}
-}
-
-
-
-/*************************************
- *
  *	Common sprite update
  *
  *************************************/
 
-static void mcr12_update_sprites(int scale)
+static void mcr12_update_sprites(void)
 {
 	int offs;
 
@@ -364,7 +306,7 @@ static void mcr12_update_sprites(int scale)
 			continue;
 
 		/* draw the sprite into the sprite bitmap */
-		render_one_sprite(code, x + 32, y + 32, hflip, vflip);
+		render_one_sprite(code, x, y, hflip, vflip);
 
 		/* determine which tiles we will overdraw with this sprite */
 		sx = x / 16;
@@ -376,15 +318,102 @@ static void mcr12_update_sprites(int scale)
 		for (ytile = sy; ytile < sy + ycount; ytile++)
 			for (xtile = sx; xtile < sx + xcount; xtile++)
 				if (xtile >= 0 && xtile < xtiles && ytile >= 0 && ytile < ytiles)
-				{
-					int off;
-					if (!mcr_cocktail_flip)
-						off = 32 * ytile + xtile;
-					else
-						off = 32 * (ytiles - 1 - ytile) + (xtiles - 1 - xtile);
-					dirtybuffer[off << scale] |= 2;
-				}
+					dirtybuffer[32 * ytile + xtile] = 1;
 	}
+}
+
+
+
+/*************************************
+ *
+ *	Sprite bitmap drawing
+ *
+ *************************************/
+
+static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int tile_index)
+{
+	int sx = tile_index % 32;
+	int sy = tile_index / 32;
+	int x, y;
+	
+	/* skip if out of range */
+	if (sx >= xtiles || sy >= ytiles)
+		return;
+	
+	/* convert to pixel coordinates */
+	sx *= 16;
+	sy *= 16;
+
+	/* draw any dirty scanlines from the VRAM directly */
+	for (y = 0; y < 16; y++, sy++)
+	{
+		UINT8 *src = &spritebitmap[(sy + 32) * spritebitmap_width + (sx + 32)];
+
+		/* redraw the sprite scanline, erasing as we go */
+		for (x = 0; x < 16; x++)
+		{
+			int pixel = *src;
+			if (pixel & 7)
+				plot_pixel(bitmap, sx + x, sy, pens[pixel]);
+			*src++ = 0;
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Sprite rendering
+ *
+ *************************************/
+
+static void mcr1_render_sprites(struct mame_bitmap *bitmap)
+{
+	int offs;
+
+	/* first render them raw */
+	mcr12_update_sprites();
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1; offs >= 0; offs--)
+		if (dirtybuffer[offs])
+		{
+			render_sprite_tile(bitmap, &Machine->pens[16], offs);
+			dirtybuffer[offs] = 0;
+		}
+}
+
+
+static void mcr2_render_sprites(struct mame_bitmap *bitmap)
+{
+	int offs;
+
+	/* first render them raw */
+	mcr12_update_sprites();
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size / 2 - 1; offs >= 0; offs--)
+		if (dirtybuffer[offs])
+		{
+			int tx = offs % 32;
+			int ty = offs / 32;
+			int attr;
+			
+			/* adjust for cocktail flip */
+			if (mcr_cocktail_flip)
+			{
+				tx = xtiles - 1 - tx;
+				ty = ytiles - 1 - ty;
+			}
+
+			/* lookup the attributes for the tile underneath to get the color */
+			attr = videoram[(ty * 32 + tx) * 2 + 1];
+			render_sprite_tile(bitmap, &Machine->pens[(attr & 0xc0) >> 2], offs);
+			dirtybuffer[offs] = 0;
+		}
 }
 
 
@@ -397,55 +426,37 @@ static void mcr12_update_sprites(int scale)
 
 VIDEO_UPDATE( mcr1 )
 {
-	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (get_vh_global_attribute_changed() || last_cocktail_flip != mcr_cocktail_flip)
-		memset(dirtybuffer, 1, videoram_size);
-	last_cocktail_flip = mcr_cocktail_flip;
+	/* update the flip state */
+	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 
-	/* update the sprites */
-	mcr12_update_sprites(0);
+	/* draw the background */
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
-	/* redraw everything, merging the bitmaps */
-	mcr1_update_background(bitmap);
+	/* update the sprites and render them */
+	mcr1_render_sprites(bitmap);
 }
 
 
 VIDEO_UPDATE( mcr2 )
 {
-	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (get_vh_global_attribute_changed() || last_cocktail_flip != mcr_cocktail_flip)
-		memset(dirtybuffer, 1, videoram_size);
-	last_cocktail_flip = mcr_cocktail_flip;
+	/* update the flip state */
+	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 
-	/* update the sprites */
-	mcr12_update_sprites(1);
+	/* draw the background */
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
-	/* redraw everything, merging the bitmaps */
-	mcr2_update_background(bitmap, 1);
+	/* update the sprites and render them */
+	mcr2_render_sprites(bitmap);
 }
 
 
-
-/*************************************
- *
- *	Journey-specific MCR2 redraw
- *
- *	Uses the MCR3 sprite drawing
- *
- *************************************/
-
 VIDEO_UPDATE( journey )
 {
-	/* mark everything dirty on a cocktail flip change */
-	if (last_cocktail_flip != mcr_cocktail_flip)
-		memset(dirtybuffer, 1, videoram_size);
-	last_cocktail_flip = mcr_cocktail_flip;
+	/* update the flip state */
+	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 
-	/* redraw the background */
-	mcr2_update_background(tmpbitmap, 0);
-
-	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	/* draw the background */
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);

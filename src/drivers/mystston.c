@@ -50,13 +50,17 @@ static INTERRUPT_GEN( mystston_interrupt )
 }
 
 
+static int soundlatch;
+
+static WRITE_HANDLER( mystston_soundlatch_w )
+{
+	soundlatch = data;
+}
+
 static WRITE_HANDLER( mystston_soundcontrol_w )
 {
 	static int last;
-	int soundlatch;
 
-
-	soundlatch = soundlatch_r(0);
 
 	/* bit 5 goes to 8910 #0 BDIR pin  */
 	if ((last & 0x20) == 0x20 && (data & 0x20) == 0x00)
@@ -100,10 +104,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1000, 0x17ff, &mystston_fgvideoram_w, &mystston_fgvideoram },
 	{ 0x1800, 0x1bff, &mystston_bgvideoram_w, &mystston_bgvideoram },
 	{ 0x1c00, 0x1fff, MWA_RAM },	/* work RAM? This gets copied to videoram */
-	{ 0x2000, 0x2000, mystston_2000_w },	/* flip screen & coin counters */
+	{ 0x2000, 0x2000, mystston_2000_w },	/* text color, flip screen & coin counters */
 	{ 0x2010, 0x2010, watchdog_reset_w },	/* or IRQ acknowledge maybe? */
 	{ 0x2020, 0x2020, mystston_scroll_w },
-	{ 0x2030, 0x2030, soundlatch_w },
+	{ 0x2030, 0x2030, mystston_soundlatch_w },
 	{ 0x2040, 0x2040, mystston_soundcontrol_w },
 	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -247,7 +251,6 @@ static MACHINE_DRIVER_START( mystston )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(24+32)
-	MDRV_COLORTABLE_LENGTH(24+32)
 
 	MDRV_PALETTE_INIT(mystston)
 	MDRV_VIDEO_START(mystston)

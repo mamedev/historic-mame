@@ -752,7 +752,7 @@ ROM_END
 							[ Ultra Ballon ]
 
 the gameplay on this game a like bubble bobble in many ways,it uses a
-68k@8mhz as the main cpu,2 z80's and a ym2151,the names of the rom files
+68k@8MHz as the main cpu,2 z80's and a ym2151,the names of the rom files
 are just my guess.
 
 prg1.rom      27c040

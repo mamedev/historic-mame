@@ -422,7 +422,7 @@ static READ16_HANDLER( pbobble_input_bypass_r )
 #define TC0180VCU_MEMR( ADDR )											\
 	{ ADDR+0x00000, ADDR+0x0ffff, TC0180VCU_word_r },					\
 	{ ADDR+0x10000, ADDR+0x1197f, MRA16_RAM },							\
-	{ ADDR+0x11980, ADDR+0x11fff, MRA16_RAM },							\
+	{ ADDR+0x11980, ADDR+0x137ff, MRA16_RAM },							\
 	{ ADDR+0x13800, ADDR+0x13fff, MRA16_RAM },							\
 	{ ADDR+0x18000, ADDR+0x1801f, taitob_v_control_r },					\
 	{ ADDR+0x40000, ADDR+0x7ffff, TC0180VCU_framebuffer_word_r },

@@ -53,11 +53,21 @@ static unsigned short input_vblank[MAX_INPUT_PORTS];
 static struct InputPort *input_analog[MAX_INPUT_PORTS];
 static int input_analog_current_value[MAX_INPUT_PORTS],input_analog_previous_value[MAX_INPUT_PORTS];
 static int input_analog_init[MAX_INPUT_PORTS];
+static int input_analog_scale[MAX_INPUT_PORTS];
 
-static int mouse_delta_x[OSD_MAX_JOY_ANALOG], mouse_delta_y[OSD_MAX_JOY_ANALOG];
-static int analog_current_x[OSD_MAX_JOY_ANALOG], analog_current_y[OSD_MAX_JOY_ANALOG];
-static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_ANALOG];
+static InputCode analogjoy_input[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];	/* [player#][mame axis#] array */
 
+static int mouse_delta_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
+static int lightgun_delta_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
+static int analog_current_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
+static int analog_previous_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
+
+#if 0
+static int mouse_delta_x[OSD_MAX_JOY_ANALOG], mouse_delta_y[OSD_MAX_JOY_ANALOG];			/* replaced by mouse_delta_axis[][] */
+static int lightgun_delta_x[OSD_MAX_JOY_ANALOG], lightgun_delta_y[OSD_MAX_JOY_ANALOG];			/* replaced by lightgun_delta_axis[][] */
+static int analog_current_x[OSD_MAX_JOY_ANALOG], analog_current_y[OSD_MAX_JOY_ANALOG];		/* replaced by analog_current_axis[][] */
+static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_ANALOG];	/* replaced by analog_previous_axis[][] */
+#endif
 
 /***************************************************************************
 
@@ -66,7 +76,7 @@ static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_
 ***************************************************************************/
 
 /* this must match the enum in inptport.h */
-char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
+const char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 {
 	"Off",
 	"On",
@@ -158,6 +168,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_SAVE_CHEAT,		"Save Cheat",			SEQ_DEF_1(KEYCODE_S) },
 	{ IPT_UI_WATCH_VALUE,		"Watch Value",			SEQ_DEF_1(KEYCODE_W) },
 	{ IPT_UI_EDIT_CHEAT,		"Edit Cheat",			SEQ_DEF_1(KEYCODE_E) },
+	{ IPT_UI_TOGGLE_CROSSHAIR,	"Toggle Crosshair",		SEQ_DEF_1(KEYCODE_F1) },
 	{ IPT_START1, "1 Player Start",  SEQ_DEF_3(KEYCODE_1, CODE_OR, JOYCODE_1_START) },
 	{ IPT_START2, "2 Players Start", SEQ_DEF_3(KEYCODE_2, CODE_OR, JOYCODE_2_START) },
 	{ IPT_START3, "3 Players Start", SEQ_DEF_3(KEYCODE_3, CODE_OR, JOYCODE_3_START) },
@@ -240,14 +251,23 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    SEQ_DEF_1(JOYCODE_4_BUTTON3) },
 	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    SEQ_DEF_1(JOYCODE_4_BUTTON4) },
 
-	{ IPT_PEDAL	                | IPF_PLAYER1, "Pedal 1",        SEQ_DEF_3(KEYCODE_LCONTROL, CODE_OR, JOYCODE_1_BUTTON1) },
+	{ IPT_PEDAL	                | IPF_PLAYER1, "P1 Pedal 1",     SEQ_DEF_3(KEYCODE_LCONTROL, CODE_OR, JOYCODE_1_BUTTON1) },
 	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER1, "P1 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
-	{ IPT_PEDAL                 | IPF_PLAYER2, "Pedal 2",        SEQ_DEF_3(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1) },
+	{ IPT_PEDAL                 | IPF_PLAYER2, "P2 Pedal 1",     SEQ_DEF_3(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1) },
 	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER2, "P2 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
-	{ IPT_PEDAL                 | IPF_PLAYER3, "Pedal 3",        SEQ_DEF_3(KEYCODE_RCONTROL, CODE_OR, JOYCODE_3_BUTTON1) },
+	{ IPT_PEDAL                 | IPF_PLAYER3, "P3 Pedal 1",     SEQ_DEF_3(KEYCODE_RCONTROL, CODE_OR, JOYCODE_3_BUTTON1) },
 	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER3, "P3 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
-	{ IPT_PEDAL                 | IPF_PLAYER4, "Pedal 4",        SEQ_DEF_1(JOYCODE_4_BUTTON1) },
+	{ IPT_PEDAL                 | IPF_PLAYER4, "P4 Pedal 1",     SEQ_DEF_1(JOYCODE_4_BUTTON1) },
 	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER4, "P4 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
+
+	{ IPT_PEDAL2	             | IPF_PLAYER1, "P1 Pedal 2",    SEQ_DEF_1(JOYCODE_1_DOWN) },
+	{ (IPT_PEDAL2+IPT_EXTENSION) | IPF_PLAYER1, "P1 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
+	{ IPT_PEDAL2                 | IPF_PLAYER2, "P2 Pedal 2",    SEQ_DEF_1(JOYCODE_2_DOWN) },
+	{ (IPT_PEDAL2+IPT_EXTENSION) | IPF_PLAYER2, "P2 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
+	{ IPT_PEDAL2                 | IPF_PLAYER3, "P3 Pedal 2",    SEQ_DEF_1(JOYCODE_3_DOWN) },
+	{ (IPT_PEDAL2+IPT_EXTENSION) | IPF_PLAYER3, "P3 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
+	{ IPT_PEDAL2                 | IPF_PLAYER4, "P4 Pedal 2",    SEQ_DEF_1(JOYCODE_4_DOWN) },
+	{ (IPT_PEDAL2+IPT_EXTENSION) | IPF_PLAYER4, "P4 Auto Release <Y/N>", SEQ_DEF_1(KEYCODE_Y) },
 
 	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT) },
 	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        SEQ_DEF_3(KEYCODE_RIGHT, CODE_OR, JOYCODE_1_RIGHT)  },
@@ -317,6 +337,33 @@ struct ipd inputport_defaults[] =
 	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_3_DOWN) },
 	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", SEQ_DEF_1(JOYCODE_4_UP) },
 	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", SEQ_DEF_1(JOYCODE_4_DOWN) },
+
+	{ IPT_AD_STICK_Z | IPF_PLAYER1, "AD Stick Z",   SEQ_DEF_0 },
+	{ (IPT_AD_STICK_Z | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Z",   SEQ_DEF_0 },
+	{ IPT_AD_STICK_Z | IPF_PLAYER2, "AD Stick Z 2", SEQ_DEF_0 },
+	{ (IPT_AD_STICK_Z | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Z 2", SEQ_DEF_0 },
+	{ IPT_AD_STICK_Z | IPF_PLAYER3, "AD Stick Z 3", SEQ_DEF_0 },
+	{ (IPT_AD_STICK_Z | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Z 3", SEQ_DEF_0 },
+	{ IPT_AD_STICK_Z | IPF_PLAYER4, "AD Stick Z 4", SEQ_DEF_0 },
+	{ (IPT_AD_STICK_Z | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Z 4", SEQ_DEF_0 },
+
+	{ IPT_LIGHTGUN_X | IPF_PLAYER1, "Lightgun X",   SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT) },
+	{ (IPT_LIGHTGUN_X | IPF_PLAYER1)+IPT_EXTENSION,                "Lightgun X",   SEQ_DEF_3(KEYCODE_RIGHT, CODE_OR, JOYCODE_1_RIGHT) },
+	{ IPT_LIGHTGUN_X | IPF_PLAYER2, "Lightgun X 2", SEQ_DEF_3(KEYCODE_D, CODE_OR, JOYCODE_2_LEFT) },
+	{ (IPT_LIGHTGUN_X | IPF_PLAYER2)+IPT_EXTENSION,                "Lightgun X 2", SEQ_DEF_3(KEYCODE_G, CODE_OR, JOYCODE_2_RIGHT) },
+	{ IPT_LIGHTGUN_X | IPF_PLAYER3, "Lightgun X 3", SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_3_LEFT) },
+	{ (IPT_LIGHTGUN_X | IPF_PLAYER3)+IPT_EXTENSION,                "Lightgun X 3", SEQ_DEF_3(KEYCODE_L, CODE_OR, JOYCODE_3_RIGHT) },
+	{ IPT_LIGHTGUN_X | IPF_PLAYER4, "Lightgun X 4", SEQ_DEF_1(JOYCODE_4_LEFT) },
+	{ (IPT_LIGHTGUN_X | IPF_PLAYER4)+IPT_EXTENSION,                "Lightgun X 4", SEQ_DEF_1(JOYCODE_4_RIGHT) },
+
+	{ IPT_LIGHTGUN_Y | IPF_PLAYER1, "Lightgun Y",   SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP) },
+	{ (IPT_LIGHTGUN_Y | IPF_PLAYER1)+IPT_EXTENSION,                "Lightgun Y",   SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN) },
+	{ IPT_LIGHTGUN_Y | IPF_PLAYER2, "Lightgun Y 2", SEQ_DEF_3(KEYCODE_R, CODE_OR, JOYCODE_2_UP) },
+	{ (IPT_LIGHTGUN_Y | IPF_PLAYER2)+IPT_EXTENSION,                "Lightgun Y 2", SEQ_DEF_3(KEYCODE_F, CODE_OR, JOYCODE_2_DOWN) },
+	{ IPT_LIGHTGUN_Y | IPF_PLAYER3, "Lightgun Y 3", SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_3_UP) },
+	{ (IPT_LIGHTGUN_Y | IPF_PLAYER3)+IPT_EXTENSION,                "Lightgun Y 3", SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_3_DOWN) },
+	{ IPT_LIGHTGUN_Y | IPF_PLAYER4, "Lightgun Y 4", SEQ_DEF_1(JOYCODE_4_UP) },
+	{ (IPT_LIGHTGUN_Y | IPF_PLAYER4)+IPT_EXTENSION,                "Lightgun Y 4", SEQ_DEF_1(JOYCODE_4_DOWN) },
 
 	{ IPT_UNKNOWN,             "UNKNOWN",         SEQ_DEF_0 },
 	{ IPT_OSD_RESERVED,        "",                SEQ_DEF_0 },
@@ -535,6 +582,7 @@ struct ik input_keywords[] =
 	{ "UI_SAVE_CHEAT",			IKT_IPT,		IPT_UI_SAVE_CHEAT },
 	{ "UI_WATCH_VALUE",			IKT_IPT,		IPT_UI_WATCH_VALUE },
 	{ "UI_EDIT_CHEAT",			IKT_IPT,		IPT_UI_EDIT_CHEAT },
+	{ "UI_TOGGLE_CROSSHAIR",	IKT_IPT,		IPT_UI_TOGGLE_CROSSHAIR },
 	{ "START1",					IKT_IPT,		IPT_START1 },
 	{ "START2",					IKT_IPT,		IPT_START2 },
 	{ "START3",					IKT_IPT,		IPT_START3 },
@@ -613,7 +661,7 @@ struct ik input_keywords[] =
 	{ "P4_BUTTON3",				IKT_IPT,		IPF_PLAYER4 | IPT_BUTTON3 },
 	{ "P4_BUTTON4",				IKT_IPT,		IPF_PLAYER4 | IPT_BUTTON4 },
 
-	{ "P1_PEDAL	",				IKT_IPT,		IPF_PLAYER1 | IPT_PEDAL },
+	{ "P1_PEDAL",				IKT_IPT,		IPF_PLAYER1 | IPT_PEDAL },
 	{ "P1_PEDAL_EXT",			IKT_IPT_EXT,	IPF_PLAYER1 | IPT_PEDAL },
 	{ "P2_PEDAL",				IKT_IPT,		IPF_PLAYER2 | IPT_PEDAL },
 	{ "P2_PEDAL_EXT",			IKT_IPT_EXT,	IPF_PLAYER2 | IPT_PEDAL },
@@ -621,6 +669,15 @@ struct ik input_keywords[] =
 	{ "P3_PEDAL_EXT",			IKT_IPT_EXT,	IPF_PLAYER3 | IPT_PEDAL },
 	{ "P4_PEDAL",				IKT_IPT,		IPF_PLAYER4 | IPT_PEDAL },
 	{ "P4_PEDAL_EXT",			IKT_IPT_EXT,	IPF_PLAYER4 | IPT_PEDAL },
+
+	{ "P1_PEDAL2",				IKT_IPT,		IPF_PLAYER1 | IPT_PEDAL2 },
+	{ "P1_PEDAL2_EXT",			IKT_IPT_EXT,	IPF_PLAYER1 | IPT_PEDAL2 },
+	{ "P2_PEDAL2",				IKT_IPT,		IPF_PLAYER2 | IPT_PEDAL2 },
+	{ "P2_PEDAL2_EXT",			IKT_IPT_EXT,	IPF_PLAYER2 | IPT_PEDAL2 },
+	{ "P3_PEDAL2",				IKT_IPT,		IPF_PLAYER3 | IPT_PEDAL2 },
+	{ "P3_PEDAL2_EXT",			IKT_IPT_EXT,	IPF_PLAYER3 | IPT_PEDAL2 },
+	{ "P4_PEDAL2",				IKT_IPT,		IPF_PLAYER4 | IPT_PEDAL2 },
+	{ "P4_PEDAL2_EXT",			IKT_IPT_EXT,	IPF_PLAYER4 | IPT_PEDAL2 },
 
 	{ "P1_PADDLE",				IKT_IPT,		IPF_PLAYER1 | IPT_PADDLE },
 	{ "P1_PADDLE_EXT",			IKT_IPT_EXT,	IPF_PLAYER1 | IPT_PADDLE },
@@ -691,6 +748,33 @@ struct ik input_keywords[] =
 	{ "P3_AD_STICK_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER3 | IPT_AD_STICK_Y },
 	{ "P4_AD_STICK_Y",			IKT_IPT,		IPF_PLAYER4 | IPT_AD_STICK_Y },
 	{ "P4_AD_STICK_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER4 | IPT_AD_STICK_Y },
+
+	{ "P1_LIGHTGUN_X",			IKT_IPT,		IPF_PLAYER1 | IPT_LIGHTGUN_X },
+	{ "P1_LIGHTGUN_X_EXT",		IKT_IPT_EXT,	IPF_PLAYER1 | IPT_LIGHTGUN_X },
+	{ "P2_LIGHTGUN_X",			IKT_IPT,		IPF_PLAYER2 | IPT_LIGHTGUN_X },
+	{ "P2_LIGHTGUN_X_EXT",		IKT_IPT_EXT,	IPF_PLAYER2 | IPT_LIGHTGUN_X },
+	{ "P3_LIGHTGUN_X",			IKT_IPT,		IPF_PLAYER3 | IPT_LIGHTGUN_X },
+	{ "P3_LIGHTGUN_X_EXT",		IKT_IPT_EXT,	IPF_PLAYER3 | IPT_LIGHTGUN_X },
+	{ "P4_LIGHTGUN_X",			IKT_IPT,		IPF_PLAYER4 | IPT_LIGHTGUN_X },
+	{ "P4_LIGHTGUN_X_EXT",		IKT_IPT_EXT,	IPF_PLAYER4 | IPT_LIGHTGUN_X },
+
+	{ "P1_LIGHTGUN_Y",			IKT_IPT,		IPF_PLAYER1 | IPT_LIGHTGUN_Y },
+	{ "P1_LIGHTGUN_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER1 | IPT_LIGHTGUN_Y },
+	{ "P2_LIGHTGUN_Y",			IKT_IPT,		IPF_PLAYER2 | IPT_LIGHTGUN_Y },
+	{ "P2_LIGHTGUN_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER2 | IPT_LIGHTGUN_Y },
+	{ "P3_LIGHTGUN_Y",			IKT_IPT,		IPF_PLAYER3 | IPT_LIGHTGUN_Y },
+	{ "P3_LIGHTGUN_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER3 | IPT_LIGHTGUN_Y },
+	{ "P4_LIGHTGUN_Y",			IKT_IPT,		IPF_PLAYER4 | IPT_LIGHTGUN_Y },
+	{ "P4_LIGHTGUN_Y_EXT",		IKT_IPT_EXT,	IPF_PLAYER4 | IPT_LIGHTGUN_Y },
+
+	{ "P1_AD_STICK_Z",			IKT_IPT,		IPF_PLAYER1 | IPT_AD_STICK_Z },
+	{ "P1_AD_STICK_Z_EXT",		IKT_IPT_EXT,	IPF_PLAYER1 | IPT_AD_STICK_Z },
+	{ "P2_AD_STICK_Z",			IKT_IPT,		IPF_PLAYER2 | IPT_AD_STICK_Z },
+	{ "P2_AD_STICK_Z_EXT",		IKT_IPT_EXT,	IPF_PLAYER2 | IPT_AD_STICK_Z },
+	{ "P3_AD_STICK_Z",			IKT_IPT,		IPF_PLAYER3 | IPT_AD_STICK_Z },
+	{ "P3_AD_STICK_Z_EXT",		IKT_IPT_EXT,	IPF_PLAYER3 | IPT_AD_STICK_Z },
+	{ "P4_AD_STICK_Z",			IKT_IPT,		IPF_PLAYER4 | IPT_AD_STICK_Z },
+	{ "P4_AD_STICK_Z_EXT",		IKT_IPT_EXT,	IPF_PLAYER4 | IPT_AD_STICK_Z },
 
 	{ "OSD_1",					IKT_IPT,		IPT_OSD_1 },
 	{ "OSD_2",					IKT_IPT,		IPT_OSD_2 },
@@ -1140,8 +1224,11 @@ getout:
 					((in->type & ~IPF_MASK) == IPT_DIAL) ||
 					((in->type & ~IPF_MASK) == IPT_TRACKBALL_X) ||
 					((in->type & ~IPF_MASK) == IPT_TRACKBALL_Y) ||
+					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_X) ||
+					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_Y) ||
 					((in->type & ~IPF_MASK) == IPT_AD_STICK_X) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y))
+					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y) ||
+					((in->type & ~IPF_MASK) == IPT_AD_STICK_Z))
 				{
 					switch (default_player)
 					{
@@ -1196,6 +1283,8 @@ getout:
 	/* TODO: at this point the games should initialize peers to same as server */
 
 #endif /* MAME_NET */
+
+	init_analog_seq();
 
 	update_input_ports();
 
@@ -1269,8 +1358,11 @@ void save_input_port_settings(void)
 					((in->type & ~IPF_MASK) == IPT_DIAL) ||
 					((in->type & ~IPF_MASK) == IPT_TRACKBALL_X) ||
 					((in->type & ~IPF_MASK) == IPT_TRACKBALL_Y) ||
+					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_X) ||
+					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_Y) ||
 					((in->type & ~IPF_MASK) == IPT_AD_STICK_X) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y))
+					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y) ||
+					((in->type & ~IPF_MASK) == IPT_AD_STICK_Z))
 				{
 					switch (default_player)
 					{
@@ -1463,7 +1555,7 @@ void update_analog_port(int port)
 {
 	struct InputPort *in;
 	int current, delta, type, sensitivity, min, max, default_value;
-	int axis, is_stick, check_bounds;
+	int axis, is_stick, is_gun, check_bounds;
 	InputSeq* incseq;
 	InputSeq* decseq;
 	int keydelta;
@@ -1484,26 +1576,34 @@ void update_analog_port(int port)
 	switch (type)
 	{
 		case IPT_PADDLE:
-			axis = X_AXIS; is_stick = 1; check_bounds = 1; break;
+			axis = X_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
 		case IPT_PADDLE_V:
-			axis = Y_AXIS; is_stick = 1; check_bounds = 1; break;
+			axis = Y_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
 		case IPT_DIAL:
-			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
+			axis = X_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
 		case IPT_DIAL_V:
-			axis = Y_AXIS; is_stick = 0; check_bounds = 0; break;
+			axis = Y_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
 		case IPT_TRACKBALL_X:
-			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
+			axis = X_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
 		case IPT_TRACKBALL_Y:
-			axis = Y_AXIS; is_stick = 0; check_bounds = 0; break;
+			axis = Y_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
 		case IPT_AD_STICK_X:
-			axis = X_AXIS; is_stick = 1; check_bounds = 1; break;
+			axis = X_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
 		case IPT_AD_STICK_Y:
-			axis = Y_AXIS; is_stick = 1; check_bounds = 1; break;
+			axis = Y_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
+		case IPT_AD_STICK_Z:
+			axis = Z_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
+		case IPT_LIGHTGUN_X:
+			axis = X_AXIS; is_stick = 1; is_gun=1; check_bounds = 1; break;
+		case IPT_LIGHTGUN_Y:
+			axis = Y_AXIS; is_stick = 1; is_gun=1; check_bounds = 1; break;
 		case IPT_PEDAL:
-			axis = Y_AXIS; is_stick = 0; check_bounds = 1; break;
+			axis = PEDAL_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
+		case IPT_PEDAL2:
+			axis = Z_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
 		default:
 			/* Use some defaults to prevent crash */
-			axis = X_AXIS; is_stick = 0; check_bounds = 0;
+			axis = X_AXIS; is_stick = 0; is_gun=0; check_bounds = 0;
 			logerror("Oops, polling non analog device in update_analog_port()????\n");
 	}
 
@@ -1518,7 +1618,6 @@ void update_analog_port(int port)
 		if (in->mask > 0xff) min = min - 0x10000;
 		else min = min - 0x100;
 	}
-
 
 	input_analog_previous_value[port] = input_analog_current_value[port];
 
@@ -1539,14 +1638,11 @@ void update_analog_port(int port)
 		case IPF_PLAYER1: default: player = 0; break;
 	}
 
-	if (axis == X_AXIS)
-		delta = mouse_delta_x[player];
-	else
-		delta = mouse_delta_y[player];
+	delta = mouse_delta_axis[player][axis];
 
 	if (seq_pressed(decseq)) delta -= keydelta;
 
-	if (type != IPT_PEDAL)
+	if (type != IPT_PEDAL && type != IPT_PEDAL2)
 	{
 		if (seq_pressed(incseq)) delta += keydelta;
 	}
@@ -1558,6 +1654,40 @@ void update_analog_port(int port)
 	}
 
 	if (in->type & IPF_REVERSE) delta = -delta;
+
+	if (is_gun)
+	{
+		/* The OSD lightgun call should return the delta from the middle of the screen
+		when the gun is fired (not the absolute pixel value), and 0 when the gun is
+		inactive.  We take advantage of this to provide support for other controllers
+		in place of a physical lightgun.  When the OSD lightgun returns 0, then control
+		passes through to the analog joystick, and mouse, in that order.  When the OSD
+		lightgun returns a value it overrides both mouse & analog joystick.
+
+		The value returned by the OSD layer should be -128 to 128, same as analog
+		joysticks.
+
+		There is an ugly hack to stop scaling of lightgun returned values.  It really
+		needs rewritten...
+		*/
+		if (axis == X_AXIS) {
+			if (lightgun_delta_axis[player][X_AXIS] || lightgun_delta_axis[player][Y_AXIS]) {
+				analog_previous_axis[player][X_AXIS]=0;
+				analog_current_axis[player][X_AXIS]=lightgun_delta_axis[player][X_AXIS];
+				input_analog_scale[port]=0;
+				sensitivity=100;
+			}
+		}
+		else
+		{
+			if (lightgun_delta_axis[player][X_AXIS] || lightgun_delta_axis[player][Y_AXIS]) {
+				analog_previous_axis[player][Y_AXIS]=0;
+				analog_current_axis[player][Y_AXIS]=lightgun_delta_axis[player][Y_AXIS];
+				input_analog_scale[port]=0;
+				sensitivity=100;
+			}
+		}
+	}
 
 	if (is_stick)
 	{
@@ -1576,22 +1706,26 @@ void update_analog_port(int port)
 		/* moved there) takes precedence over all other computations */
 		/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
 
-		if (axis == X_AXIS)
-		{
-			new  = analog_current_x[player];
-			prev = analog_previous_x[player];
-		}
-		else
-		{
-			new  = analog_current_y[player];
-			prev = analog_previous_y[player];
-		}
+		new  = analog_current_axis[player][axis];
+		prev = analog_previous_axis[player][axis];
 
 		if ((new != 0) || (new-prev != 0))
 		{
 			delta=0;
 
-			if (in->type & IPF_REVERSE)
+			/* for pedals, need to change to possitive number */
+			/* and, if needed, reverse pedal input */
+			if (type == IPT_PEDAL || type == IPT_PEDAL2)
+			{
+				new  = -new;
+				prev = -prev;
+				if (in->type & IPF_REVERSE)		// a reversed pedal is diff than normal reverse
+				{								// 128 = no gas, 0 = all gas
+					new  = 128-new;				// the default "new=-new" doesn't handle this
+					prev = 128-prev;
+				}
+			}
+			else if (in->type & IPF_REVERSE)
 			{
 				new  = -new;
 				prev = -prev;
@@ -1674,11 +1808,15 @@ profiler_mark(PROFILER_INPUT);
 		delta = -cpu_scalebyfcount(-delta);
 
 	current = input_analog_previous_value[port] + delta;
-	/* apply scaling fairly in both positive and negative directions */
-	if (current >= 0)
-		current = (current * sensitivity + 50) / 100;
-	else
-		current = (-current * sensitivity + 50) / -100;
+
+	/* An ugly hack to remove scaling on lightgun ports */
+	if (input_analog_scale[port]) {
+		/* apply scaling fairly in both positive and negative directions */
+		if (current >= 0)
+			current = (current * sensitivity + 50) / 100;
+		else
+			current = (-current * sensitivity + 50) / -100;
+	}
 
 	input_port_value[port] &= ~in->mask;
 	input_port_value[port] |= current & in->mask;
@@ -1912,6 +2050,7 @@ if (Machine->drv->vblank_duration == 0)
 					if (input_analog_init[port])
 					{
 						input_analog_init[port] = 0;
+						input_analog_scale[port] = 1;
 						input_analog_current_value[port] = input_analog_previous_value[port]
 							= in->default_value * 100 / IP_GET_SENSITIVITY(in);
 					}
@@ -2086,12 +2225,18 @@ profiler_mark(PROFILER_INPUT);
 	for (i = 0;i < OSD_MAX_JOY_ANALOG;i++)
 	{
 		/* update the analog joystick position */
-		analog_previous_x[i] = analog_current_x[i];
-		analog_previous_y[i] = analog_current_y[i];
-		osd_analogjoy_read (i, &(analog_current_x[i]), &(analog_current_y[i]));
+		int a;
+		for (a=0; a<MAX_ANALOG_AXES ; a++)
+		{
+			analog_previous_axis[i][a] = analog_current_axis[i][a];
+		}
+		osd_analogjoy_read (i, analog_current_axis[i], analogjoy_input[i]);
 
 		/* update mouse/trackball position */
-		osd_trak_read (i, &mouse_delta_x[i], &mouse_delta_y[i]);
+		osd_trak_read (i, &(mouse_delta_axis[i])[X_AXIS], &(mouse_delta_axis[i])[Y_AXIS]);
+
+		/* update lightgun position, if any */
+ 		osd_lightgun_read (i, &(lightgun_delta_axis[i])[X_AXIS], &(lightgun_delta_axis[i])[Y_AXIS]);
 	}
 
 	for (i = 0;i < MAX_INPUT_PORTS;i++)
@@ -2358,4 +2503,112 @@ void seq_set_string(InputSeq* a, const char *buf)
 		arg = strtok(NULL, " \t\r\n");
 	}
 	free (lbuf);
+}
+
+void init_analog_seq()
+{
+	struct InputPort *in;
+	int player, axis;
+
+/* init analogjoy_input array */
+	for (player=0; player<OSD_MAX_JOY_ANALOG; player++)
+	{
+		for (axis=0; axis<MAX_ANALOG_AXES; axis++)
+		{
+			analogjoy_input[player][axis] = CODE_NONE;
+		}
+	}
+
+	in = Machine->input_ports;
+	if (in->type == IPT_END) return; 	/* nothing to do */
+
+	/* make sure the InputPort definition is correct */
+	if (in->type != IPT_PORT)
+	{
+		logerror("Error in InputPort definition: expecting PORT_START\n");
+		return;
+	}
+	else
+	{
+		in++;
+	}
+
+	while (in->type != IPT_END)
+	{
+		if (in->type != IPT_PORT && ((in->type & ~IPF_MASK) > IPT_ANALOG_START)
+			&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
+		{
+			int j, invert;
+			InputSeq *seq;
+			InputCode analog_seq;
+
+			seq = input_port_seq(in);
+			invert = 0;
+			analog_seq = CODE_NONE;
+
+			for(j=0; j<SEQ_MAX && analog_seq == CODE_NONE; ++j)
+			{
+				switch ((*seq)[j])
+				{
+					case CODE_NONE :
+						continue;
+					case CODE_NOT :
+						invert = !invert;
+						break;
+					case CODE_OR :
+						invert = 0;
+						break;
+					default:
+						if (!invert && is_joystick_axis_code((*seq)[j]) )
+						{
+							analog_seq = return_os_joycode((*seq)[j]);
+						}
+						invert = 0;
+						break;
+				}
+			}
+			if (analog_seq != CODE_NONE)
+			{
+				switch (in->type & IPF_PLAYERMASK)
+				{
+					case IPF_PLAYER2:          player = 1; break;
+					case IPF_PLAYER3:          player = 2; break;
+					case IPF_PLAYER4:          player = 3; break;
+					case IPF_PLAYER1: default: player = 0; break;
+				}
+
+				switch (in->type & ~IPF_MASK)
+				{
+					case IPT_DIAL:
+					case IPT_PADDLE:
+					case IPT_TRACKBALL_X:
+					case IPT_AD_STICK_X:
+						axis = X_AXIS;
+						break;
+					case IPT_DIAL_V:
+					case IPT_PADDLE_V:
+					case IPT_TRACKBALL_Y:
+					case IPT_AD_STICK_Y:
+						axis = Y_AXIS;
+						break;
+					case IPT_AD_STICK_Z:
+					case IPT_PEDAL2:
+						axis = Z_AXIS;
+						break;
+					case IPT_PEDAL:
+						axis = PEDAL_AXIS;
+						break;
+					default:
+						axis = 0;
+						break;
+				}
+
+				analogjoy_input[player][axis] = analog_seq;
+			}
+		}
+
+		in++;
+	}
+
+	return;
 }

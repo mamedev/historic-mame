@@ -93,30 +93,30 @@ MEMORY_END
 				INPUT PORTS
 ***********************************************************/
 
-#define VOLFIED_INPUT_BITS                                                       \
-	PORT_START                                                                   \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )                                  \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )                                  \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )                                \
-	                                                                             \
-	PORT_START                                                                   \
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )                       \
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )                       \
-	                                                                             \
-	PORT_START                                                                   \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )                                    \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )               \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )               \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )               \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )               \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )                                 \
-	                                                                             \
-	PORT_START                                                                   \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+#define VOLFIED_INPUT_BITS                                                          \
+	PORT_START                                                                    \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )                                   \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )                                   \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )                                 \
+	                                                                              \
+	PORT_START                                                                    \
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )                        \
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )                        \
+	                                                                              \
+	PORT_START                                                                    \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )                                     \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )                \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )                \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )                \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )                \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )                                  \
+	                                                                              \
+	PORT_START                                                                    \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 
 INPUT_PORTS_START( volfied )
@@ -143,16 +143,16 @@ INPUT_PORTS_START( volfied )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START	/* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k,40k,120k,480k,2400k" )
-	PORT_DIPSETTING(    0x04, "50k,150k,600k,3000k" )
-	PORT_DIPSETTING(    0x08, "70k,280k,1400k" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
+	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
+	PORT_DIPSETTING(    0x01, "70k,280k,1400k" )
 	PORT_DIPSETTING(    0x00, "100k,500k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -193,16 +193,16 @@ INPUT_PORTS_START( volfiedu )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k,40k,120k,480k,2400k" )
-	PORT_DIPSETTING(    0x04, "50k,150k,600k,3000k" )
-	PORT_DIPSETTING(    0x08, "70k,280k,1400k" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
+	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
+	PORT_DIPSETTING(    0x01, "70k,280k,1400k" )
 	PORT_DIPSETTING(    0x00, "100k,500k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -242,16 +242,16 @@ INPUT_PORTS_START( volfiedj )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START	/* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k,40k,120k,480k,2400k" )
-	PORT_DIPSETTING(    0x04, "50k,150k,600k,3000k" )
-	PORT_DIPSETTING(    0x08, "70k,280k,1400k" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
+	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
+	PORT_DIPSETTING(    0x01, "70k,280k,1400k" )
 	PORT_DIPSETTING(    0x00, "100k,500k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )

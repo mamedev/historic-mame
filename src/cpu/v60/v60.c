@@ -217,24 +217,91 @@ const char *v60_reg_names[58] = {
 }
 
 #define MemRead8		cpu_readmem24lew
-#define MemRead16		cpu_readmem24lew_word
 #define MemWrite8		cpu_writemem24lew
-#define MemWrite16		cpu_writemem24lew_word
-#define PortRead8		cpu_readport24lew
-#define PortRead16		cpu_readport24lew_word
-#define PortWrite8		cpu_writeport24lew
-#define PortWrite16		cpu_writeport24lew_word
+
+static UINT16 MemRead16(offs_t address)
+{
+	if (!(address & 1))
+	{
+		return cpu_readmem24lew_word(address);
+	}
+	else
+	{
+		UINT16 result = cpu_readmem24lew(address);
+		return result | cpu_readmem24lew(address + 1) << 8;
+	}
+}
+
+static void MemWrite16(offs_t address, UINT16 data)
+{
+	if (!(address & 1))
+	{
+		cpu_writemem24lew_word(address, data);
+	}
+	else
+	{
+		cpu_writemem24lew(address, data);
+		cpu_writemem24lew(address + 1, data >> 8);
+	}
+}
 
 static UINT32 MemRead32(offs_t address)
 {
-	UINT32 result = cpu_readmem24lew_word(address);
-	return result | (cpu_readmem24lew_word(address + 2) << 16);
+	if (!(address & 1))
+	{
+		UINT32 result = cpu_readmem24lew_word(address);
+		return result | (cpu_readmem24lew_word(address + 2) << 16);
+	}
+	else
+	{
+		UINT32 result = cpu_readmem24lew(address);
+		result |= cpu_readmem24lew_word(address + 1) << 8;
+		return result | cpu_readmem24lew(address + 3) << 24;
+	}
 }
 
 static void MemWrite32(offs_t address, UINT32 data)
 {
-	cpu_writemem24lew_word(address, data);
-	cpu_writemem24lew_word(address + 2, data >> 16);
+	if (!(address & 1))
+	{
+		cpu_writemem24lew_word(address, data);
+		cpu_writemem24lew_word(address + 2, data >> 16);
+	}
+	else
+	{
+		cpu_writemem24lew(address, data);
+		cpu_writemem24lew_word(address + 1, data >> 8);
+		cpu_writemem24lew(address + 3, data >> 24);
+	}
+}
+
+#define PortRead8		cpu_readport24lew
+#define PortWrite8		cpu_writeport24lew
+
+static UINT16 PortRead16(offs_t address)
+{
+	if (!(address & 1))
+	{
+		return cpu_readport24lew_word(address);
+	}
+	else
+	{
+		UINT16 result = cpu_readport24lew(address);
+		return result | cpu_readport24lew(address + 1) << 8;
+	}
+}
+
+static void PortWrite16(offs_t address, UINT16 data)
+{
+	if (!(address & 1))
+	{
+		cpu_writeport24lew_word(address, data);
+	}
+	else
+	{
+		cpu_writeport24lew(address, data);
+		cpu_writeport24lew(address + 1, data >> 8);
+	}
 }
 
 static UINT32 PortRead32(offs_t address)
@@ -312,7 +379,7 @@ static void v60WritePSW(UINT32 newval)
 
 UINT32 opUNHANDLED(void)
 {
-	logerror("Unhandled OpCode found : %02x at %08x", cpu_readmem24lew(PC), PC);
+	logerror("Unhandled OpCode found : %02x at %08x\n", cpu_readmem24lew(PC), PC);
 	return 1;
 }
 

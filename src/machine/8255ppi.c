@@ -82,7 +82,7 @@ int ppi8255_r(int which, int offset)
 				if (chip->portAread)
 					result = (*chip->portAread)(0) & chip->in_mask[0];
 				else
-					logerror("8255 chip %d: Port A is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
+					logerror("8255 chip %d: Port A is being read (mask %02x) but has no handler.  PC: %08X\n", which, chip->in_mask[0], activecpu_get_pc());
 			}
 			result |= chip->latch[0] & chip->out_mask[0] & ~chip->in_mask[0];
 			break;
@@ -93,7 +93,7 @@ int ppi8255_r(int which, int offset)
 				if (chip->portBread)
 					result = (*chip->portBread)(0) & chip->in_mask[1];
 				else
-					logerror("8255 chip %d: Port B is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
+					logerror("8255 chip %d: Port B is being read (mask %02x) but has no handler.  PC: %08X\n", which, chip->in_mask[1], activecpu_get_pc());
 			}
 			result |= chip->latch[1] & chip->out_mask[1] & ~chip->in_mask[1];
 			break;
@@ -104,7 +104,7 @@ int ppi8255_r(int which, int offset)
 				if (chip->portCread)
 					result = (*chip->portCread)(0) & chip->in_mask[2];
 				else
-					logerror("8255 chip %d: Port C is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
+					logerror("8255 chip %d: Port C is being read (mask %02x) but has no handler.  PC: %08X\n", which, chip->in_mask[2], activecpu_get_pc());
 			}
 			result |= chip->latch[2] & chip->out_mask[2] & ~chip->in_mask[2];
 			break;
@@ -126,7 +126,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portAwrite)								\
 		(*chip->portAwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port A is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port A is being written to (mask %02x) but has no handler.  PC: %08X - %02X\n", which, chip->out_mask[0], activecpu_get_pc(), write_data);	\
 }
 
 #define PPI8255_PORT_B_WRITE()							\
@@ -136,7 +136,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portBwrite)								\
 		(*chip->portBwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port B is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port B is being written to (mask %02x) but has no handler.  PC: %08X - %02X\n", which, chip->out_mask[1], activecpu_get_pc(), write_data);	\
 }
 
 #define PPI8255_PORT_C_WRITE()							\
@@ -146,7 +146,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portCwrite)								\
 		(*chip->portCwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port C is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port C is being written to (mask %02x) but has no handler.  PC: %08X - %02X\n", which, chip->out_mask[2], activecpu_get_pc(), write_data);	\
 }
 
 
@@ -201,7 +201,7 @@ void ppi8255_w(int which, int offset, int data)
 				else
 					chip->latch[2] &= ~(1<<bit);	/* reset bit */
 
-				if (chip->portCwrite)  PPI8255_PORT_C_WRITE();
+				PPI8255_PORT_C_WRITE();
 			}
 	}
 }

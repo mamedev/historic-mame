@@ -21,7 +21,4 @@ READ_HANDLER( videopin_in2_r );
 /*----------- defined in vidhrdw/videopin.c -----------*/
 
 WRITE_HANDLER( videopin_videoram_w );
-VIDEO_START( videopin );
 VIDEO_UPDATE( videopin );
-
-extern struct artwork_info *videopin_backdrop;

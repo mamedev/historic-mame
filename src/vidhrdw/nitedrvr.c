@@ -91,9 +91,6 @@ VIDEO_UPDATE( nitedrvr )
 		nitedrvr_draw_block(bitmap,bx,by,ex,ey);
 	}
 
-	/* Draw the "car backlight" */
-	nitedrvr_draw_block(bitmap,64,232,192,256);
-
 	/* gear shift indicator - not a part of the original game!!! */
 	gear_buf[5]=0x30 + nitedrvr_gear;
 	for (offs = 0; offs < 6; offs++)

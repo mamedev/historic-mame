@@ -48,6 +48,8 @@ static void sprite_callback(int *code,int *color,int *priority_mask)
 
 VIDEO_START( vendetta )
 {
+	K053251_vh_start();
+
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K053247_vh_start(REGION_GFX2,53,6,NORMAL_PLANE_ORDER,sprite_callback))
@@ -102,9 +104,9 @@ VIDEO_UPDATE( vendetta )
 	sortlayers(layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,cliprect);
-	K052109_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	K052109_tilemap_draw(bitmap,cliprect,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,cliprect,layer[2],0,4);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[0]],TILEMAP_IGNORE_TRANSPARENCY,1);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[1]],0,2);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[2]],0,4);
 
 	K053247_sprites_draw(bitmap,cliprect);
 }

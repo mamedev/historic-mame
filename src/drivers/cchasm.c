@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Cinematronics Cosmic Chasm hardware
-	
+
 	driver by Mathis Rosenhauer
 
 	Games supported:
@@ -185,7 +185,7 @@ static MACHINE_DRIVER_START( cchasm )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,8000000)	/* 8 MHz (from schematics) */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	
+
 	MDRV_CPU_ADD(Z80,3584229)		/* 3.58  MHz (from schematics) */
 	MDRV_CPU_CONFIG(daisy_chain)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
@@ -194,7 +194,7 @@ static MACHINE_DRIVER_START( cchasm )
 	MDRV_FRAMES_PER_SECOND(40)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1024-1, 0, 768-1)
 	MDRV_PALETTE_LENGTH(32768)
@@ -238,7 +238,6 @@ ROM_START( cchasm )
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 
-
 ROM_START( cchasm1 )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 )
     ROM_LOAD16_BYTE( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
@@ -258,9 +257,10 @@ ROM_START( cchasm1 )
     ROM_LOAD16_BYTE( "chasm.u5",  0x00e000, 0x001000, 0xe4a58b7d )
     ROM_LOAD16_BYTE( "chasm.u13", 0x00e001, 0x001000, 0x877e849c )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* 4k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
+
 
 
 

@@ -278,7 +278,20 @@ WRITE16_HANDLER( welltris_charvideoram_w );
 VIDEO_START( welltris );
 VIDEO_UPDATE( welltris );
 
-static WRITE16_HANDLER( welltris_sound_w )
+
+
+
+static WRITE_HANDLER( welltris_sh_bankswitch_w )
+{
+	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+
+	cpu_setbank(1,rom + (data & 0x03) * 0x8000);
+}
+
+
+static int pending_command;
+
+static WRITE16_HANDLER( sound_command_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -286,6 +299,17 @@ static WRITE16_HANDLER( welltris_sound_w )
 		cpu_set_nmi_line(1, PULSE_LINE);
 	}
 }
+
+static READ16_HANDLER( in0_r )
+{
+	return readinputport(0) | (pending_command ? 0x80 : 0);
+}
+
+static WRITE_HANDLER( pending_command_clear_w )
+{
+	pending_command = 0;
+}
+
 
 static MEMORY_READ16_START( welltris_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
@@ -301,7 +325,7 @@ static MEMORY_READ16_START( welltris_readmem )
 	{ 0xfff004, 0xfff005, input_port_3_word_r }, /* Left Side Ctrls */
 	{ 0xfff006, 0xfff007, input_port_4_word_r }, /* Right Side Ctrls */
 
-	{ 0xfff008, 0xfff009, input_port_0_word_r }, /* Coinage, Start Buttons etc. */  /* Bit 5 Tested at start of irq 1 */
+	{ 0xfff008, 0xfff009, in0_r }, /* Coinage, Start Buttons, pending sound command etc. */  /* Bit 5 Tested at start of irq 1 */
 	{ 0xfff00a, 0xfff00b, input_port_5_word_r }, /* P3+P4 Coin + Start Buttons */
 	{ 0xfff00c, 0xfff00d, input_port_6_word_r }, /* DSW0 Coinage */
 	{ 0xfff00e, 0xfff00f, input_port_7_word_r }, /* DSW1 Game Options */
@@ -320,7 +344,7 @@ static MEMORY_WRITE16_START( welltris_writemem )
 	{ 0xfff002, 0xfff003, welltris_gfxbank_w },
 //	{ 0xfff004, 0xfff005, ?? },
 //	{ 0xfff006, 0xfff007, ?? },
-	{ 0xfff008, 0xfff009, welltris_sound_w },
+	{ 0xfff008, 0xfff009, sound_command_w },
 //	{ 0xfff00c, 0xfff00d, ?? },
 //	{ 0xfff00e, 0xfff00f, ?? },
 MEMORY_END
@@ -328,7 +352,7 @@ MEMORY_END
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x8000, 0xffff, MRA_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
@@ -344,12 +368,12 @@ static PORT_READ_START( sound_readport )
 PORT_END
 
 static PORT_WRITE_START( sound_writeport )
-//	{ 0x00, 0x00, ?? },
+	{ 0x00, 0x00, welltris_sh_bankswitch_w },
 	{ 0x08, 0x08, YM2610_control_port_0_A_w },
 	{ 0x09, 0x09, YM2610_data_port_0_A_w },
 	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
 	{ 0x0b, 0x0b, YM2610_data_port_0_B_w },
-//	{ 0x18, 0x18, ?? },
+	{ 0x18, 0x18, pending_command_clear_w },
 PORT_END
 
 
@@ -360,10 +384,10 @@ INPUT_PORTS_START( welltris )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 ) /* Test (used to go through tests in service mode) */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 ) /* Service (adds a coin) */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Sound CPU Related */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )	/* Test (used to go through tests in service mode) */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )		/* Tested at start of irq 1 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* Service (adds a coin) */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* pending sound command */
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -514,6 +538,8 @@ INPUT_PORTS_START( welltris )
   	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+
+
 static struct GfxLayout welltris_charlayout =
 {
 	8,8,
@@ -540,10 +566,12 @@ static struct GfxLayout welltris_spritelayout =
 
 static struct GfxDecodeInfo welltris_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &welltris_charlayout,   0, 64 },
+	{ REGION_GFX1, 0, &welltris_charlayout,   0x000, 64 },
 	{ REGION_GFX2, 0, &welltris_spritelayout, 0x700, 64 },
 	{ -1 } /* end of array */
 };
+
+
 
 static void irqhandler(int irq)
 {
@@ -606,6 +634,8 @@ static MACHINE_DRIVER_START( welltris )
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
 MACHINE_DRIVER_END
 
+
+
 ROM_START( welltris )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "j2.8",			0x000000, 0x20000, 0x68ec5691 )
@@ -633,4 +663,6 @@ ROM_START( welltris )
 	ROM_LOAD( "lh534j10.124",          0x80000, 0x80000, 0xe3682221 )
 ROM_END
 
-GAMEX( 1991, welltris, 0,        welltris, welltris, welltris, ROT0,   "Video System Co.", "Welltris (Japan, 2 Players)", GAME_NO_COCKTAIL )
+
+
+GAMEX( 1991, welltris, 0,        welltris, welltris, welltris, ROT0,   "Video System Co.", "Welltris (Japan, 2 players)", GAME_NO_COCKTAIL )

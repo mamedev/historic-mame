@@ -504,12 +504,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 */
 
 static MACHINE_DRIVER_START( angelkds )
-	MDRV_CPU_ADD(Z80, 8000000) /* 8mhz? 6 seems too slow? */
+	MDRV_CPU_ADD(Z80, 8000000) /* 8MHz? 6 seems too slow? */
 	MDRV_CPU_MEMORY(readmem_main,writemem_main)
 	MDRV_CPU_PORTS(readport_main,writeport_main)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000) /* 8 Mhz? */
+	MDRV_CPU_ADD(Z80, 4000000) /* 8 MHz? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
 	MDRV_CPU_PORTS(readport_sub,writeport_sub)

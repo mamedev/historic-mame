@@ -12,7 +12,6 @@
 
 
 static int shift_data1,shift_data2,shift_amount;
-static int interrupt_counter;
 
 
 WRITE_HANDLER( c8080bw_shift_amount_w )
@@ -39,16 +38,7 @@ READ_HANDLER( c8080bw_shift_data_rev_r )
 {
 	int	ret = SHIFT;
 
-	ret = ((ret & 0x01) << 7)
-	    | ((ret & 0x02) << 5)
-	    | ((ret & 0x04) << 3)
-	    | ((ret & 0x08) << 1)
-	    | ((ret & 0x10) >> 1)
-	    | ((ret & 0x20) >> 3)
-	    | ((ret & 0x40) >> 5)
-	    | ((ret & 0x80) >> 7);
-
-	return ret;
+	return BITSWAP8(ret,0,1,2,3,4,5,6,7);
 }
 
 READ_HANDLER( c8080bw_shift_data_comp_r )
@@ -59,20 +49,11 @@ READ_HANDLER( c8080bw_shift_data_comp_r )
 
 INTERRUPT_GEN( c8080bw_interrupt )
 {
-	interrupt_counter++;
+	int vector = cpu_getvblank() ? 0xcf : 0xd7;  /* RST 08h/10h */
 
-	if (interrupt_counter & 1)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);  /* RST 08h */
-	else
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);  /* RST 10h */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
 }
 
-INTERRUPT_GEN( sstrangr_interrupt )
-{
-	interrupt_counter++;
-
-	irq0_line_hold();
-}
 
 /****************************************************************************
 	Extra / Different functions for Boot Hill                (MJC 300198)
@@ -167,10 +148,4 @@ READ_HANDLER( desertgu_port_1_r )
 WRITE_HANDLER( desertgu_controller_select_w )
 {
 	desertgu_controller_select = data & 0x08;
-}
-
-
-READ_HANDLER( sstrangr_port_4_r )
-{
-	return (input_port_4_r(0) & 0xfe) | (interrupt_counter & 0x01);
 }

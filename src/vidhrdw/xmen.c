@@ -107,9 +107,9 @@ VIDEO_UPDATE( xmen )
 	fillbitmap(priority_bitmap,0,cliprect);
 	/* note the '+1' in the background color!!! */
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],cliprect);
-	K052109_tilemap_draw(bitmap,cliprect,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,cliprect,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,cliprect,layer[2],0,4);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[0]],0,1);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[1]],0,2);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[2]],0,4);
 
 	pdrawgfx_shadow_lowpri = 1;	/* fix shadows of boulders in front of feet */
 	K053247_sprites_draw(bitmap,cliprect);

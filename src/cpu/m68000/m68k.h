@@ -22,6 +22,12 @@
  * http://kstenerud.cjb.net
  */
 
+/* ======================================================================== */
+/* ============================= CONFIGURATION ============================ */
+/* ======================================================================== */
+
+/* Import the configuration for this build */
+#include "m68kconf.h"
 
 
 /* ======================================================================== */
@@ -147,13 +153,13 @@ unsigned int  m68k_read_memory_16(unsigned int address);
 unsigned int  m68k_read_memory_32(unsigned int address);
 
 /* Read data immediately following the PC */
-INLINE unsigned int  m68k_read_immediate_16(unsigned int address);
-INLINE unsigned int  m68k_read_immediate_32(unsigned int address);
+unsigned int  m68k_read_immediate_16(unsigned int address);
+unsigned int  m68k_read_immediate_32(unsigned int address);
 
 /* Read data relative to the PC */
-INLINE unsigned int  m68k_read_pcrelative_8(unsigned int address);
-INLINE unsigned int  m68k_read_pcrelative_16(unsigned int address);
-INLINE unsigned int  m68k_read_pcrelative_32(unsigned int address);
+unsigned int  m68k_read_pcrelative_8(unsigned int address);
+unsigned int  m68k_read_pcrelative_16(unsigned int address);
+unsigned int  m68k_read_pcrelative_32(unsigned int address);
 
 /* Memory access for the disassembler */
 unsigned int m68k_read_disassembler_8  (unsigned int address);
@@ -172,7 +178,7 @@ void m68k_write_memory_32(unsigned int address, unsigned int value);
  *
  * Enable this functionality with M68K_SIMULATE_PD_WRITES in m68kconf.h.
  */
-INLINE void m68k_write_memory_32_pd(unsigned int address, unsigned int value);
+void m68k_write_memory_32_pd(unsigned int address, unsigned int value);
 
 
 
@@ -328,12 +334,12 @@ unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_
 
 
 /* ======================================================================== */
-/* ============================= CONFIGURATION ============================ */
+/* ============================== MAME STUFF ============================== */
 /* ======================================================================== */
 
-/* Import the configuration for this build */
-#include "m68kconf.h"
-
+#if M68K_COMPILE_FOR_MAME == OPT_ON
+#include "m68kmame.h"
+#endif /* M68K_COMPILE_FOR_MAME */
 
 
 /* ======================================================================== */

@@ -94,10 +94,10 @@ VIDEO_UPDATE( bottom9 )
 		K051960_sprites_draw(bitmap,cliprect,1,1);
 		K051316_zoom_draw_0(bitmap,cliprect,0,0);
 		K051960_sprites_draw(bitmap,cliprect,0,0);
-		K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[2],0,0);
 		/* note that priority 3 is opposite to the basic layer priority! */
 		/* (it IS used, but hopefully has no effect) */
 		K051960_sprites_draw(bitmap,cliprect,2,3);
-		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 	}
 }

@@ -107,7 +107,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		*/
 		if ( attributes & 0x01 ){ /* visible */
 			if( bFlicker || (attributes&0x02)==0 ){
-				int priority_mask = (attributes&0x08)?0xaa:0;
+				int priority_mask = (attributes&0x08)?0x2:0;
 				int sx = (240 - source[2])&0xff;
 				int sy = (240 - source[0])&0xff;
 				int number = source[3] | ((attributes<<bank_bits)&0x700);
@@ -154,7 +154,7 @@ VIDEO_UPDATE( shootouj )
 {
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,cliprect,background,0,1);
-	tilemap_draw(bitmap,cliprect,foreground,0,2);
+	tilemap_draw(bitmap,cliprect,background,0,0);
+	tilemap_draw(bitmap,cliprect,foreground,0,1);
 	draw_sprites(bitmap,cliprect,2/*bank bits*/);
 }

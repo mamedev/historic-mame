@@ -42,7 +42,7 @@
 	1000-1001     W     JUMP LITE 1
 	1002-1003     W     COIN LOCK OUT
 	1006-1007     W     JUMP LITE 2
-	1008-1009     W     WHISTLE
+	1008-1009     W     WHISTLE 1
 	100A-100B     W     WHISTLE 2
 	100C-100D     W     NMION
 	100E-100F     W     WIDTH
@@ -83,7 +83,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "skydiver.h"
 
 static int skydiver_nmion;
@@ -98,93 +97,19 @@ static int skydiver_nmion;
 
 static unsigned short colortable_source[] =
 {
-	0x02, 0x01,
 	0x02, 0x00,
-	0x01, 0x02,
+	0x02, 0x01,
 	0x00, 0x02,
-	0x00, 0x00, /* used only to draw the SKYDIVER LEDs */
-	0x00, 0x01, /* used only to draw the SKYDIVER LEDs */
+	0x01, 0x02
 };
 
 static PALETTE_INIT( skydiver )
 {
-#if 0
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
-	palette_set_color(2,0x80,0x80,0x80); /* GREY */
-#else
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xbf,0xbf,0xff); /* LT BLUE */
-	palette_set_color(2,0x7f,0x7f,0xff); /* BLUE */
-#endif
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff); /* white */
+	palette_set_color(2,0xa0,0xa0,0xa0); /* grey */
+
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
-}
-
-
-
-/*************************************
- *
- *	Input ports
- *
- *************************************/
-
-READ_HANDLER( skydiver_input_0_r )
-{
-	int data = input_port_0_r(0);
-
-	switch(offset)
-	{
-		case 0:		return ((data & 0x03) << 6);
-		case 1:		return ((data & 0x0C) << 4);
-		case 2:		return ((data & 0x30) << 2);
-		case 3:		return ((data & 0xC0) << 0);
-		default:		return 0;
-	}
-}
-
-
-READ_HANDLER( skydiver_input_1_r )
-{
-	int data = input_port_1_r(0);
-
-	switch(offset)
-	{
-		case 0:		return ((data & 0x03) << 6);
-		case 1:		return ((data & 0x0C) << 4);
-		case 2:		return ((data & 0x30) << 2);
-		case 3:		return ((data & 0xC0) << 0);
-		default:		return 0;
-	}
-}
-
-
-READ_HANDLER( skydiver_input_2_r )
-{
-	int data = input_port_2_r(0);
-
-	switch(offset)
-	{
-		case 0:		return ((data & 0x03) << 6);
-		case 1:		return ((data & 0x0C) << 4);
-		case 2:		return ((data & 0x30) << 2);
-		case 3:		return ((data & 0xC0) << 0);
-		default:		return 0;
-	}
-}
-
-
-READ_HANDLER( skydiver_input_3_r )
-{
-	int data = input_port_3_r(0);
-
-	switch(offset)
-	{
-		case 0:		return ((data & 0x03) << 6);
-		case 1:		return ((data & 0x0C) << 4);
-		case 2:		return ((data & 0x30) << 2);
-		case 3:		return ((data & 0xC0) << 0);
-		default:		return 0;
-	}
 }
 
 
@@ -195,14 +120,13 @@ READ_HANDLER( skydiver_input_3_r )
  *
  *************************************/
 
-WRITE_HANDLER( skydiver_nmion_w )
+static WRITE_HANDLER( skydiver_nmion_w )
 {
-//	logerror("nmi_on: %02x:%02x\n", offset, data);
 	skydiver_nmion = offset;
 }
 
 
-INTERRUPT_GEN( skydiver_interrupt )
+static INTERRUPT_GEN( skydiver_interrupt )
 {
 	if (skydiver_nmion)
 		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
@@ -217,13 +141,23 @@ INTERRUPT_GEN( skydiver_interrupt )
  *************************************/
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0400, 0x077f, MRA_RAM },
-//  { 0x780, 0x7ff, MRA_RAM },
-	{ 0x1800, 0x1803, skydiver_input_0_r },
-	{ 0x1804, 0x1807, skydiver_input_1_r },
-	{ 0x1808, 0x180b, skydiver_input_2_r },
-	{ 0x1810, 0x1811, skydiver_input_3_r },
+	{ 0x0000, 0x007f, skydiver_wram_r },
+	{ 0x0080, 0x00ff, MRA_RAM },		/* RAM B1 */
+	{ 0x0400, 0x07ff, MRA_RAM },		/* RAMs K1,M1,P1,J1,N1,K/L1,L1,H/J1 */
+	{ 0x1800, 0x1800, input_port_0_r },
+	{ 0x1801, 0x1801, input_port_1_r },
+	{ 0x1802, 0x1802, input_port_2_r },
+	{ 0x1803, 0x1803, input_port_3_r },
+	{ 0x1804, 0x1804, input_port_4_r },
+	{ 0x1805, 0x1805, input_port_5_r },
+	{ 0x1806, 0x1806, input_port_6_r },
+	{ 0x1807, 0x1807, input_port_7_r },
+	{ 0x1808, 0x1808, input_port_8_r },
+	{ 0x1809, 0x1809, input_port_9_r },
+	{ 0x180a, 0x180a, input_port_10_r },
+	{ 0x180b, 0x180b, input_port_11_r },
+	{ 0x1810, 0x1810, input_port_12_r },
+	{ 0x1811, 0x1811, input_port_13_r },
 	{ 0x2000, 0x2000, watchdog_reset_r },
 	{ 0x2800, 0x3fff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_ROM },
@@ -232,24 +166,32 @@ MEMORY_END
 
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0010, 0x001f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x0400, 0x077f, videoram_w, &videoram, &videoram_size },
-	// { 0x0780, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0803, skydiver_sk_lamps_w },
-	// { 0x0804, 0x0807, skydiver_start_lamps_w },
-	{ 0x0808, 0x080b, skydiver_yd_lamps_w },
+	{ 0x0000, 0x007f, skydiver_wram_w },
+	{ 0x0080, 0x00ff, MWA_RAM },
+	{ 0x0400, 0x07ff, skydiver_videoram_w, &skydiver_videoram },
+	{ 0x0800, 0x0801, skydiver_lamp_s_w },
+	{ 0x0802, 0x0803, skydiver_lamp_k_w },
+	{ 0x0804, 0x0805, skydiver_start_lamp_1_w },
+	{ 0x0806, 0x0807, skydiver_start_lamp_2_w },
+	{ 0x0808, 0x0809, skydiver_lamp_y_w },
+	{ 0x080a, 0x080b, skydiver_lamp_d_w },
 	// { 0x080c, 0x080d, skydiver_sound_enable_w },
 	// { 0x1000, 0x1001, skydiver_jump1_lamps_w },
-	// { 0x1002, 0x1003, skydiver_coin_lockout_w },
+	{ 0x1002, 0x1003, skydiver_coin_lockout_w },
 	// { 0x1006, 0x1007, skydiver_jump2_lamps_w },
 	// { 0x1008, 0x100b, skydiver_whistle_w },
 	{ 0x100c, 0x100d, skydiver_nmion_w },
 	{ 0x100e, 0x100f, skydiver_width_w },
-	{ 0x2002, 0x2009, skydiver_iver_lamps_w },
+	{ 0x2000, 0x2000, watchdog_reset_w },
+	{ 0x2002, 0x2003, skydiver_lamp_i_w },
+	{ 0x2004, 0x2005, skydiver_lamp_v_w },
+	{ 0x2006, 0x2007, skydiver_lamp_e_w },
+	{ 0x2008, 0x2009, skydiver_lamp_r_w },
 	// { 0x200a, 0x200d, skydiver_oct_w },
 	// { 0x200e, 0x200f, skydiver_noise_reset_w },
 	{ 0x2800, 0x3fff, MWA_ROM },
+	{ 0x7800, 0x7fff, MWA_ROM },
+	{ 0xf800, 0xffff, MWA_ROM },
 MEMORY_END
 
 
@@ -261,54 +203,88 @@ MEMORY_END
  *************************************/
 
 INPUT_PORTS_START( skydiver )
-	PORT_START /* fake port, gets mapped to Sky Diver ports */
-	PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
-	PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* Jump 1 */
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* Chute 1 */
+	PORT_START /* IN0 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+
+	PORT_START /* IN1 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+
+	PORT_START /* IN2 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* Jump 1 */
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* Chute 1 */
+
+	PORT_START /* IN3 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	/* Jump 2 */
 	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	/* Chute 2 */
 
-	PORT_START		/* fake port, gets mapped to Sky Diver ports */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "(D) OPT SW NEXT TEST", KEYCODE_D, IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "(F) OPT SW", KEYCODE_F, IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "(E) OPT SW", KEYCODE_E, IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "(H) OPT SW DIAGNOSTICS", KEYCODE_H, IP_JOY_NONE )
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_START /* IN4 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON3, "(D) OPT SW NEXT TEST", KEYCODE_D, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON4, "(F) OPT SW", KEYCODE_F, IP_JOY_NONE )
+
+	PORT_START /* IN5 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON5, "(E) OPT SW", KEYCODE_E, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON6, "(H) OPT SW DIAGNOSTICS", KEYCODE_H, IP_JOY_NONE )
+
+	PORT_START /* IN6 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+
+	PORT_START /* IN7 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 
-	PORT_START		/* fake port, gets mapped to Sky Diver ports */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_START /* IN8 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0xc0, "6" )
+
+	PORT_START /* IN9 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
+
+	PORT_START /* IN10 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x00, "Extended Play" )
-	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPNAME( 0x80, 0x00, "Extended Play" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START /* IN11 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0xc0, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x40, "French" )
 	PORT_DIPSETTING(    0x80, "Spanish" )
 	PORT_DIPSETTING(    0xc0, "German" )
 
-	PORT_START		/* fake port, gets mapped to Sky Diver ports */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT (0xF8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START /* IN12 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START /* IN13 */
+	PORT_BIT (0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -345,29 +321,10 @@ static struct GfxLayout motion_layout =
 };
 
 
-static struct GfxLayout wide_motion_layout =
-{
-	32,16,
-	32,
-	1,
-	{ 0 },
-	{ 4, 4, 5, 5, 6, 6, 7, 7,
-	  4 + 0x400*8, 4 + 0x400*8, 5 + 0x400*8, 5 + 0x400*8,
-	  6 + 0x400*8, 6 + 0x400*8, 7 + 0x400*8, 7 + 0x400*8,
-	  12, 12, 13, 13, 14, 14, 15, 15,
-	  12 + 0x400*8, 12 + 0x400*8, 13 + 0x400*8, 13 + 0x400*8,
-	  14 + 0x400*8, 14 + 0x400*8, 15 + 0x400*8, 15 + 0x400*8 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	8*32
-};
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,         0, 6 },
-	{ REGION_GFX2, 0, &motion_layout,      0, 6 },
-	{ REGION_GFX2, 0, &wide_motion_layout, 0, 6 },
+	{ REGION_GFX1, 0, &charlayout,    0, 4 },
+	{ REGION_GFX2, 0, &motion_layout, 0, 4 },
 	{ -1 }
 };
 
@@ -388,17 +345,18 @@ static MACHINE_DRIVER_START( skydiver )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(skydiver)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 29*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(3)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(skydiver)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(skydiver)
 	MDRV_VIDEO_UPDATE(skydiver)
 MACHINE_DRIVER_END
 
@@ -416,7 +374,7 @@ ROM_START( skydiver )
 	ROM_LOAD( "33164-02.e1", 0x3000, 0x0800, 0xa348ac39 )
 	ROM_LOAD( "33165-02.d1", 0x3800, 0x0800, 0xa1fc5504 )
 	ROM_LOAD( "33166-02.c1", 0x7800, 0x0800, 0x3d26da2b )
-	ROM_RELOAD(              0xF800, 0x0800 )
+	ROM_RELOAD(              0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "33163-01.h5", 0x0000, 0x0400, 0x5b9bb7c2 )

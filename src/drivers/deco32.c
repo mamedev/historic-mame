@@ -574,6 +574,51 @@ MEMORY_END
 
 /**********************************************************************************/
 
+/* Notes (2002.02.05) :
+
+When the "Continue Coin" Dip Switch is set to "2 Start/1 Continue",
+the "Coinage" Dip Switches have no effect.
+
+START, BUTTON1 and COIN effects :
+
+  2 players, common coin slots
+
+STARTn starts a game for player n. It adds 100 energy points each time it is pressed
+(provided there are still some credits, and energy is <= 900).
+
+BUTTON1n selects the character for player n.
+
+COIN1n adds credit(s)/coin(s).
+
+  2 players, individual coin slots
+
+NO STARTn button !
+
+BUTTON1n starts a game for player n. It also adds 100 energy points for each credit
+inserted for the player. It then selects the character for player n.
+
+COIN1n adds 100 energy points (based on "Coinage") for player n when ingame if energy
+<= 900, else adds credit(s)/coin(s) for player n.
+
+  4 players, common coin slots
+
+NO STARTn button !
+
+BUTTON1n starts a game for player n. It gives 100 energy points. It then selects the
+character for player n.
+
+  4 players, individual coin slots
+
+NO STARTn button !
+
+BUTTON1n starts a game for player n. It also adds 100 energy points for each credit
+inserted for the player. It then selects the character for player n.
+
+COIN1n adds 100 energy points (based on "Coinage") for player n when ingame if energy
+<= 900, else adds credit(s)/coin(s) for player n.
+
+*/
+
 INPUT_PORTS_START( captaven )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
@@ -656,11 +701,12 @@ INPUT_PORTS_START( captaven )
 	PORT_DIPSETTING(      0x0000, "2 Start/1 Continue" )
 
 	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0100, "1" )
-	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_DIPSETTING(      0x0300, "3" )
-	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0800, "Easy" )
 	PORT_DIPSETTING(      0x0c00, "Normal" )
@@ -669,9 +715,9 @@ INPUT_PORTS_START( captaven )
 	PORT_DIPNAME( 0x1000, 0x1000, "Coin Slots" )
 	PORT_DIPSETTING(      0x1000, "Common" )
 	PORT_DIPSETTING(      0x0000, "Individual" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Mode Select" )
-	PORT_DIPSETTING(      0x2000, "2 Player" )
-	PORT_DIPSETTING(      0x0000, "4 Player" )
+	PORT_DIPNAME( 0x2000, 0x2000, "Max Players" )
+	PORT_DIPSETTING(      0x2000, "2" )
+	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
@@ -808,6 +854,112 @@ INPUT_PORTS_START( lockload )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tattass )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Continue Coin" )
+	PORT_DIPSETTING(      0x0080, "1 Start/1 Continue" )
+	PORT_DIPSETTING(      0x0000, "2 Start/1 Continue" )
+
+	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0100, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x0c00, "Normal" )
+	PORT_DIPSETTING(      0x0400, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Coin Slots" )
+	PORT_DIPSETTING(      0x1000, "Common" )
+	PORT_DIPSETTING(      0x0000, "Individual" )
+	PORT_DIPNAME( 0x2000, 0x2000, "Max Players" )
+	PORT_DIPSETTING(      0x2000, "2" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /**********************************************************************************/
@@ -1638,4 +1790,4 @@ GAMEX(1993, dragngun, 0,        dragngun, lockload, dragngun, ROT0, "Data East C
 GAMEX(1993, fghthist, 0,        fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1993, fghthstw, fghthist, fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (World)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, lockload, 0,        dragngun, lockload, lockload, ROT0, "Data East Corporation", "Locked 'N Loaded (US)", GAME_IMPERFECT_GRAPHICS  )
-GAMEX(1994, tattass,  0,        tattass,  captaven, 0,        ROT0, "Data East Pinball",     "Tattoo Assassins (Prototype)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, tattass,  0,        tattass,  tattass,  0,        ROT0, "Data East Pinball",     "Tattoo Assassins (Prototype)", GAME_IMPERFECT_GRAPHICS )

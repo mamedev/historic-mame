@@ -17,8 +17,6 @@
 static UINT16 sprite_ctrl = 0;
 static UINT16 sprites_flipscreen = 0;
 
-static int beamx,beamy;
-
 /***************************************************************************/
 
 VIDEO_START( rastan )
@@ -144,14 +142,6 @@ VIDEO_UPDATE( rastan )
 
 /***************************************************************************/
 
-VIDEO_EOF( opwolf )
-{
-	/* Ensure the analog x,y values are read _exactly once_ */
-	/* per frame irrespective of frameskip and fake DSW */
-	beamx = ((input_port_5_r(0) * 256) >> 8);	//+3
-	beamy = ((input_port_6_r(0) * 256) >> 8);	//+19
-}
-
 VIDEO_UPDATE( opwolf )
 {
 	int layer[2];
@@ -168,11 +158,15 @@ VIDEO_UPDATE( opwolf )
 
 	PC090OJ_draw_sprites(bitmap,cliprect,1);
 
+//	if (input_port_5_word_r(0,0xffff))
+
+//	usrintf_showmessage("%d %d",input_port_5_word_r(0,0xffff),input_port_6_word_r(0,0xffff));
+
 	/* See if we should draw artificial gun targets */
-	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
+	if (1) //input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
 	{
 		/* Draw an aiming crosshair */
-		draw_crosshair(bitmap,beamx,beamy,cliprect);
+		draw_crosshair(bitmap,(input_port_4_word_r(0,0xffff)*320)/256,input_port_5_word_r(0,0xffff),cliprect);
 	}
 }
 

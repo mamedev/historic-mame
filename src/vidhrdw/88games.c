@@ -85,20 +85,20 @@ VIDEO_UPDATE( 88games )
 
 	if (k88games_priority)
 	{
-		K052109_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 		K051960_sprites_draw(bitmap,cliprect,1,1);
-		K052109_tilemap_draw(bitmap,cliprect,2,0,0);
-		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[2],0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 		K051960_sprites_draw(bitmap,cliprect,0,0);
 		K051316_zoom_draw_0(bitmap,cliprect,0,0);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,cliprect,2,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[2],TILEMAP_IGNORE_TRANSPARENCY,0);
 		K051316_zoom_draw_0(bitmap,cliprect,0,0);
 		K051960_sprites_draw(bitmap,cliprect,0,0);
-		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 		K051960_sprites_draw(bitmap,cliprect,1,1);
-		K052109_tilemap_draw(bitmap,cliprect,0,0,0);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,0);
 	}
 }

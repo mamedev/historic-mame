@@ -5,6 +5,8 @@ Fast Lane(GX752) (c) 1987 Konami
 Driver by Manuel Abadia <manu@teleline.es>
 
 TODO:
+- is the game playable? How do you end a level?
+- colors don't seem 100% accurate.
 - verify that sound is correct (volume and bank switching)
 
 ***************************************************************************/
@@ -325,5 +327,4 @@ ROM_END
 
 
 
-GAMEX( 1987, fastlane, 0, fastlane, fastlane, 0, ROT90, "Konami", "Fast Lane", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS )
-
+GAMEX( 1987, fastlane, 0, fastlane, fastlane, 0, ROT90, "Konami", "Fast Lane", GAME_IMPERFECT_COLORS )

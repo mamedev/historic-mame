@@ -265,8 +265,8 @@ static struct GfxDecodeInfo cbasebal_gfxdecodeinfo[] =
 static struct YM2413interface ym2413_interface=
 {
 	1,	/* 1 chip */
-	8000000,	/* 8MHz ??? (hand tuned) */
-	{ 50 },	/* Volume */
+	3579545,	/* ???? */
+	{ 100 },	/* Volume */
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -289,7 +289,7 @@ static MACHINE_DRIVER_START( cbasebal )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(cbasebal)
 
 	/* video hardware */

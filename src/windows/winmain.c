@@ -60,6 +60,10 @@ static int get_code_base_size(UINT32 *base, UINT32 *size);
 //	main
 //============================================================
 
+#ifdef WINUI
+#define main main_
+#endif
+
 int main(int argc, char **argv)
 {
 	int game_index;

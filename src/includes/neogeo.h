@@ -8,7 +8,6 @@
 
 extern unsigned int neogeo_frame_counter;
 extern unsigned int neogeo_frame_counter_speed;
-extern int neogeo_raster_enable;
 extern int neogeo_has_trackball;
 
 

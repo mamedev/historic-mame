@@ -233,12 +233,6 @@ Options:
               there for information on DB9 interface, the cheapest
               (wires-only) joystick interface ever.
 
--hotrod       Sets a default keyboard configuration suitable for the HotRod
-              joystick by HanaHo Games.
-
--hotrodse     Sets a default keyboard configuration suitable for the HotRod SE
-              joystick by HanaHo Games.
-
 -steadykey    Some games require two or more buttons to be pressed at exactly
               the same time to make special moves. Due to limitations in the PC
               keyboard hardware, it can be difficult or even impossible to

@@ -81,7 +81,8 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 	int color;
 
 	palette = pSource[6];
-	if( namcos2_gametype == NAMCONB2 )
+	if( namcos2_gametype == NAMCONB2_OUTFOXIES ||
+		namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 	{
 		/* is this correct? it looks like priority may have 4 bits, not 3 */
 		if( pri != ((palette>>5)&7) ) return;
@@ -126,8 +127,14 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 		}
 		break;
 
-	case NAMCONB1:
-	case NAMCONB2:
+	case NAMCONB1_NEBULRAY:
+	case NAMCONB1_GUNBULET:
+	case NAMCONB1_GSLGR94U:
+	case NAMCONB1_SWS96:
+	case NAMCONB1_SWS97:
+	case NAMCONB1_VSHOOT:
+	case NAMCONB2_OUTFOXIES:
+	case NAMCONB2_MACH_BREAKERS:
 		hpos -= nth_word32( namconb1_spritepos32,1 ) + 0x26;
 		vpos -= nth_word32( namconb1_spritepos32,0 ) + 0x19;
 		/* fallthrough */
@@ -279,7 +286,7 @@ READ32_HANDLER( namco_obj32_r )
 /* ROZ abstraction (preliminary)
  *
  * Used in:
- *	Namco NB2 - The Outfoxies)
+ *	Namco NB2 - The Outfoxies, Mach Breakers
  *	Namco System 2 - Metal Hawk, Lucky and Wild
  */
 static data16_t *rozbank16; /* TBA: use callback */
@@ -298,17 +305,24 @@ roz_get_info( int tile_index,int which )
 	int bank;
 	int mangle;
 
-	if( namcos2_gametype == NAMCONB2 )
-	{ /* Outfoxies */
+	switch( namcos2_gametype )
+	{
+	case NAMCONB2_MACH_BREAKERS:
+		bank = nth_byte16( &rozbank16[which*8/2], (tile>>11)&0x7 );
+		tile = (tile&0x7ff)|(bank*0x800);
+		mangle = tile;
+		break;
+
+	case NAMCONB2_OUTFOXIES:
 		bank = nth_byte16( &rozbank16[which*8/2], (tile>>11)&0x7 );
 		tile = (tile&0x7ff)|(bank*0x800);
 		mangle = tile&~(0x50);
 		/* the pixmap index is mangled, the transparency bitmask index is not */
 		if( tile&0x10 ) mangle |= 0x40;
 		if( tile&0x40 ) mangle |= 0x10;
-	}
-	else
-	{ /* Lucky and Wild */
+		break;
+
+	default: /* Lucky and Wild */
 		mangle	= tile&0x01ff;
 		tile &= 0x3fff;
 		switch( tile>>9 )
@@ -329,6 +343,7 @@ roz_get_info( int tile_index,int which )
 		case 0x19: mangle |= 0x0e00; break;
 		case 0x1a: mangle |= 0x0600; break;
 		}
+		break;
 	}
 	SET_TILE_INFO( mRozGfxBank,mangle,mRozColor[which],0 );
 	tile_info.mask_data = 32*tile + (UINT8 *)memory_region( mRozMaskRegion );
@@ -411,7 +426,8 @@ void namco_roz_draw(
 		/* other bits of attrs appear to be related to gfx priority */
 
 		/* HACK! */
-		if( namcos2_gametype == NAMCONB2 )
+		if( namcos2_gametype == NAMCONB2_OUTFOXIES ||
+			namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 		{ /* Outfoxies */
 			roz_pri = pri_hack[which];
 			if( attrs == 0x0211 ) roz_pri = 1;

@@ -10,26 +10,11 @@
 #include "copsnrob.h"
 
 
-static const struct artwork_element copsnrob_overlay[] =
-{
-	{{  0,  71, 0, 255}, 0x40, 0x40, 0xc0, OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{ 72, 187, 0, 255}, 0xf0, 0xf0, 0x30, OVERLAY_DEFAULT_OPACITY},	/* yellow */
-	{{188, 255, 0, 255}, 0xbd, 0x9b, 0x13, OVERLAY_DEFAULT_OPACITY},	/* amber */
-	{{-1,-1,-1,-1},0,0,0,0}
-};
-
 unsigned char *copsnrob_bulletsram;
 unsigned char *copsnrob_carimage;
 unsigned char *copsnrob_cary;
 unsigned char *copsnrob_trucky;
 unsigned char *copsnrob_truckram;
-
-
-VIDEO_START( copsnrob )
-{
-	overlay_create(copsnrob_overlay, 2);
-    return 0;
-}
 
 
 /***************************************************************************

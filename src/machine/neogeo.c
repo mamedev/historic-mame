@@ -10,6 +10,8 @@ static offs_t sram_protection_hack;
 extern void *record;
 extern void *playback;
 
+extern int neogeo_rng;
+
 data16_t *neogeo_ram16;
 data16_t *neogeo_sram16;
 
@@ -86,6 +88,8 @@ MACHINE_INIT( neogeo )
 		pd4990a.year = (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
 		pd4990a.weekday = today->tm_wday;
 	}
+
+	neogeo_rng = 0x2345;	/* seed for the protection RNG in KOF99 onwards */
 }
 
 
@@ -647,6 +651,19 @@ static void neogeo_custom_memory(void)
 
 		mem16[0x3c36/2] = 0x4e71;
 		mem16[0x3c38/2] = 0x4e71;
+	}
+
+	{
+		//AT: Patches a common bug in the sound codes of early ADK games where DEC's
+		//    should have been INC's. Magician Lord is unaffected and ADK appeared to
+		//    to have fixed it in World Heroes and later games.
+		data8_t *mem8 = memory_region(REGION_CPU2);
+
+		if (!strcmp(Machine->gamedrv->name,"ncombat")) mem8[0xeb99] = 0x0c;
+		if (!strcmp(Machine->gamedrv->name,"bjourney")) mem8[0xec7a] = 0x0c;
+		if (!strcmp(Machine->gamedrv->name,"crsword")) mem8[0x23db] = 0x0c;
+		if (!strcmp(Machine->gamedrv->name,"trally")) mem8[0x23e4] = 0x0c;
+		if (!strcmp(Machine->gamedrv->name,"ncommand")) mem8[0x2456]= mem8[0x2485] = 0x0c;
 	}
 }
 

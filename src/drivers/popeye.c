@@ -6,10 +6,6 @@ driver by Marc Lafontaine
 
 To enter service mode, reset keeping the service button pressed.
 
-TODO:
-- Wrong sprite colors in Sky Skipper level 2. Either the color PROM is bad, or
-  the palette bank selection is slightly different from Popeye.
-
 Notes:
 - The main set has a protection device mapped at E000/E001. The second set
   (which is the same revision of the program code) has the protection disabled
@@ -535,30 +531,30 @@ MACHINE_DRIVER_END
 
 ROM_START( skyskipr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "tnx1-c.2a",    0x0000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2b",    0x1000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2c",    0x2000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2d",    0x3000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2e",    0x4000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2f",    0x5000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-c.2g",    0x6000, 0x1000, 0x00000001 )
+	ROM_LOAD( "tnx1-c.2a",    0x0000, 0x1000, 0xbdc7f218 )
+	ROM_LOAD( "tnx1-c.2b",    0x1000, 0x1000, 0xcbe601a8 )
+	ROM_LOAD( "tnx1-c.2c",    0x2000, 0x1000, 0x5ca79abf )
+	ROM_LOAD( "tnx1-c.2d",    0x3000, 0x1000, 0x6b7a7071 )
+	ROM_LOAD( "tnx1-c.2e",    0x4000, 0x1000, 0x6b0c0525 )
+	ROM_LOAD( "tnx1-c.2f",    0x5000, 0x1000, 0xd1712424 )
+	ROM_LOAD( "tnx1-c.2g",    0x6000, 0x1000, 0x8b33c4cf )
 	/* 7000-7fff empty */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tnx1-v.3h",    0x0000, 0x0800, 0x00000001 )
+	ROM_LOAD( "tnx1-v.3h",    0x0000, 0x0800, 0xecb6a046 )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "tnx1-t.1e",    0x0000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-t.2e",    0x1000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-t.3e",    0x2000, 0x1000, 0x00000001 )
-	ROM_LOAD( "tnx1-t.5e",    0x3000, 0x1000, 0x00000001 )
+	ROM_LOAD( "tnx1-t.1e",    0x0000, 0x1000, 0x01c1120e )
+	ROM_LOAD( "tnx1-t.2e",    0x1000, 0x1000, 0x70292a71 )
+	ROM_LOAD( "tnx1-t.3e",    0x2000, 0x1000, 0x92b6a0e8 )
+	ROM_LOAD( "tnx1-t.5e",    0x3000, 0x1000, 0xcc5f0ac3 )
 
 	ROM_REGION( 0x0340, REGION_PROMS, 0 )
-	ROM_LOAD( "tnx1-t.4a",    0x0000, 0x0020, 0x00000001 ) /* background palette */
-	ROM_LOAD( "tnx1-t.1a",    0x0020, 0x0020, 0x00000001 ) /* char palette */
-	ROM_LOAD( "tnx1-t.3a",    0x0040, 0x0100, 0x00000001 ) /* sprite palette - low 4 bits */
-	ROM_LOAD( "tnx1-t.2a",    0x0140, 0x0100, 0x00000001 ) /* sprite palette - high 4 bits */
-	ROM_LOAD( "tnx1-t.3j",    0x0240, 0x0100, 0x00000001 ) /* timing for the protection ALU */
+	ROM_LOAD( "tnx1-t.4a",    0x0000, 0x0020, 0x98846924 ) /* background palette */
+	ROM_LOAD( "tnx1-t.1a",    0x0020, 0x0020, 0xc2bca435 ) /* char palette */
+	ROM_LOAD( "tnx1-t.3a",    0x0040, 0x0100, 0x8abf9de4 ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "tnx1-t.2a",    0x0140, 0x0100, 0xaa7ff322 ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "tnx1-t.3j",    0x0240, 0x0100, 0x1c5c8dea ) /* timing for the protection ALU */
 ROM_END
 
 ROM_START( popeye )

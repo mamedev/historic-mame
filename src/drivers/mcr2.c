@@ -207,7 +207,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xf000, 0xf1ff, MRA_RAM },
-	{ 0xf800, 0xffff, mcr2_videoram_r },
+	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 
@@ -502,6 +502,7 @@ INPUT_PORTS_START( twotiger )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( twotigra )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -596,12 +597,20 @@ static MACHINE_DRIVER_START( mcr2 )
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-
-	MDRV_VIDEO_START(mcr12)
+	
+	MDRV_VIDEO_START(mcr2)
 	MDRV_VIDEO_UPDATE(mcr2)
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(mcr_ssio)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( twotigra )
+	MDRV_IMPORT_FROM(mcr2)
+
+	/* video hardware */
+	MDRV_VIDEO_START(twotigra)
 MACHINE_DRIVER_END
 
 
@@ -612,7 +621,7 @@ static MACHINE_DRIVER_START( journey )
 	MDRV_CPU_REPLACE("main", Z80, 7500000)
 
 	/* video hardware */
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(journey)
 	MDRV_VIDEO_UPDATE(journey)
 MACHINE_DRIVER_END
 
@@ -966,8 +975,7 @@ static DRIVER_INIT( twotigra )
 	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
 	install_port_read_handler(0, 0x01, 0x01, twotigra_yoke2_r);
 	install_port_read_handler(0, 0x02, 0x02, twotigra_yoke1_r);
-
-	install_mem_read_handler(0, 0xf800, 0xffff, twotigra_videoram_r);
+	
 	install_mem_write_handler(0, 0xf800, 0xffff, twotigra_videoram_w);
 
 	mcr12_sprite_xoffs = 0;
@@ -982,13 +990,13 @@ static DRIVER_INIT( twotigra )
  *
  *************************************/
 
-GAME( 1981, shollow,  0,        mcr2,    shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
-GAME( 1981, shollow2, shollow,  mcr2,    shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
-GAME( 1982, tron,     0,        mcr2,    tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 1)" )
-GAME( 1982, tron2,    tron,     mcr2,    tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 2)" )
-GAME( 1982, kroozr,   0,        mcr2,    kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
-GAME( 1982, domino,   0,        mcr2,    domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
-GAME( 1982, wacko,    0,        mcr2,    wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
-GAME( 1984, twotiger, 0,        mcr2,    twotiger, mcr2,     ROT0,  "Bally Midway", "Two Tigers" )
-GAME( 1984, twotigra, twotiger, mcr2,    twotigra, twotigra, ROT0,  "Bally Midway", "Two Tigers (dedicated)" )
-GAMEX(1983, journey,  0,        journey, domino,   mcr2,     ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )
+GAME( 1981, shollow,  0,        mcr2,     shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
+GAME( 1981, shollow2, shollow,  mcr2,     shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
+GAME( 1982, tron,     0,        mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 1)" )
+GAME( 1982, tron2,    tron,     mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 2)" )
+GAME( 1982, kroozr,   0,        mcr2,     kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
+GAME( 1982, domino,   0,        mcr2,     domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
+GAME( 1982, wacko,    0,        mcr2,     wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
+GAME( 1984, twotiger, 0,        mcr2,     twotiger, mcr2,     ROT0,  "Bally Midway", "Two Tigers" )
+GAME( 1984, twotigra, twotiger, twotigra, twotigra, twotigra, ROT0,  "Bally Midway", "Two Tigers (dedicated)" )
+GAMEX(1983, journey,  0,        journey,  domino,   mcr2,     ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )

@@ -65,7 +65,6 @@ WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
 
 VIDEO_START( opwolf );
-VIDEO_EOF( opwolf );
 VIDEO_UPDATE( opwolf );
 
 static int opwolf_gun_xoffs,opwolf_gun_yoffs;
@@ -86,12 +85,15 @@ static WRITE16_HANDLER( cchip_w )
 
 static READ16_HANDLER( opwolf_lightgun_r )
 {
+	int scaled;
+
 	switch (offset)
 	{
-		case 0x00:	/* P1X */
-			return (input_port_5_word_r(0,mem_mask) + 0x15 + opwolf_gun_xoffs);
+		case 0x00:	/* P1X - Have to remap 8 bit input value, into 0-319 visible range */
+			scaled=(input_port_4_word_r(0,mem_mask) * 320 ) / 256;
+			return (scaled + 0x15 + opwolf_gun_xoffs);
 		case 0x01:	/* P1Y */
-			return (input_port_6_word_r(0,mem_mask) - 0x24 + opwolf_gun_yoffs);
+			return (input_port_5_word_r(0,mem_mask) - 0x24 + opwolf_gun_yoffs);
 	}
 
 	return 0xff;
@@ -116,7 +118,6 @@ static WRITE_HANDLER( sound_bankswitch_w )
 {
 	cpu_setbank( 10, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
-
 
 /***********************************************************
 			 MEMORY STRUCTURES
@@ -240,12 +241,12 @@ static WRITE_HANDLER( opwolf_adpcm_c_w )
 
 static WRITE_HANDLER( opwolf_adpcm_d_w )
 {
-	logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+	/*logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
 }
 
 static WRITE_HANDLER( opwolf_adpcm_e_w )
 {
-	logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+	/*logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
 }
 
 
@@ -340,16 +341,11 @@ INPUT_PORTS_START( opwolf )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 	PORT_DIPSETTING(    0x00, "English" )
 
-	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-
 	PORT_START	/* P1X (span allows you to shoot enemies behind status bar) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 25, 15, 0x00, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER1, 25, 15, 0x00, 0xff)
 
 	PORT_START	/* P1Y (span allows you to be slightly offscreen) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 15, 0x00, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER1, 25, 15, 0x00, 0xff)
 INPUT_PORTS_END
 
 
@@ -454,14 +450,14 @@ static struct ADPCMinterface adpcm_interface =
 static MACHINE_DRIVER_START( opwolf )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_ADD(M68000, 12000000 )	/* 12 MHz ??? */
 	MDRV_CPU_MEMORY(opwolf_readmem,opwolf_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_ADD(Z80, 4000000 )	/* 4 MHz ??? */
 	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* fake, not present on the original board */
+	MDRV_CPU_ADD(Z80, 4000000 )	/* fake, not present on the original board */
 	MDRV_CPU_MEMORY(sub_z80_readmem,sub_z80_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -477,7 +473,6 @@ static MACHINE_DRIVER_START( opwolf )
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_VIDEO_START(opwolf)
-	MDRV_VIDEO_EOF(opwolf)
 	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */
@@ -512,7 +507,6 @@ static MACHINE_DRIVER_START( opwolfb )
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_VIDEO_START(opwolf)
-	MDRV_VIDEO_EOF(opwolf)
 	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */

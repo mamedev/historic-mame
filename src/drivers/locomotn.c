@@ -648,6 +648,34 @@ ROM_START( tactcian )
 //	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
+ROM_START( tactcan2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "tan1",         0x0000, 0x1000, 0xddf38b75 )
+	ROM_LOAD( "tan2",         0x1000, 0x1000, 0xf065ee2e )
+	ROM_LOAD( "tan3",         0x2000, 0x1000, 0x2dba64fe )
+	ROM_LOAD( "tan4",         0x3000, 0x1000, 0x2ba07847 )
+	ROM_LOAD( "tan5",         0x4000, 0x1000, 0x1dae4c61 )
+	ROM_LOAD( "tan6",         0x5000, 0x1000, 0x2b36a18d )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	/* sound ROMs were missing - using the ones from the other set */
+	ROM_LOAD( "tacticia.s2",  0x0000, 0x1000, 0x97d145a7 )
+	ROM_LOAD( "tacticia.s1",  0x1000, 0x1000, 0x067f781b )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c1",           0x0000, 0x1000, 0x5399471f )
+	ROM_LOAD( "c2",           0x1000, 0x1000, 0x8e8861e8 )
+
+	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "tact6301.004", 0x0000, 0x0100, 0x88b0b511 ) /* dots */	// tac.a7
+
+	ROM_REGION( 0x0160, REGION_PROMS, 0 )
+	ROM_LOAD( "tact6331.002", 0x0000, 0x0020, 0xb7ef83b7 ) /* palette */
+	ROM_LOAD( "tact6301.003", 0x0020, 0x0100, 0xa92796f2 ) /* loookup table */	// tac.b4
+	ROM_LOAD( "tact6331.001", 0x0120, 0x0020, 0x8f574815 ) /* video layout (not used) */
+//	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
+ROM_END
+
 ROM_START( locomotn )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
@@ -752,7 +780,8 @@ ROM_END
 
 GAME( 1981, jungler,  0,        jungler,  jungler,  0, ROT90, "Konami", "Jungler" )
 GAME( 1981, junglers, jungler,  jungler,  jungler,  0, ROT90, "[Konami] (Stern license)", "Jungler (Stern)" )
-GAME( 1982, tactcian, 0,        tactcian, tactcian, 0, ROT90, "[Konami] (Sega license)", "Tactician" )
+GAME( 1982, tactcian, 0,        tactcian, tactcian, 0, ROT90, "[Konami] (Sega license)", "Tactician (set 1)" )
+GAME( 1981, tactcan2, tactcian, tactcian, tactcian, 0, ROT90, "[Konami] (Sega license)", "Tactician (set 2)" )
 GAME( 1982, locomotn, 0,        locomotn, locomotn, 0, ROT90, "Konami (Centuri license)", "Loco-Motion" )
 GAME( 1982, gutangtn, locomotn, locomotn, locomotn, 0, ROT90, "Konami (Sega license)", "Guttang Gottong" )
 GAME( 1982, cottong,  locomotn, locomotn, locomotn, 0, ROT90, "bootleg", "Cotocoto Cottong" )

@@ -2521,6 +2521,58 @@ OSC:	28.0, 16.0, 16.9 MHz
 
 ROM_START( esprade )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u42_i.bin", 0x000000, 0x080000, 0x3b510a73 )
+	ROM_LOAD16_BYTE( "u41_i.bin", 0x000001, 0x080000, 0x97c1b649 )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, 0x2f2fe92c )
+	ROM_LOAD16_BYTE( "u64.bin", 0x000001, 0x400000, 0x491a3da4 )
+	ROM_LOAD16_BYTE( "u65.bin", 0x800000, 0x400000, 0x06563efe )
+	ROM_LOAD16_BYTE( "u66.bin", 0x800001, 0x400000, 0x7bbe4cfc )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u54.bin", 0x000000, 0x400000, 0xe7ca6936 )
+	ROM_LOAD( "u55.bin", 0x400000, 0x400000, 0xf53bd94f )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u52.bin", 0x000000, 0x400000, 0xe7abe7b4 )
+	ROM_LOAD( "u53.bin", 0x400000, 0x400000, 0x51a0f391 )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u51.bin", 0x000000, 0x400000, 0x0b9b875c )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "u19.bin", 0x000000, 0x400000, 0xf54b1cab )
+ROM_END
+
+ROM_START( espradej )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u42_ver2.bin", 0x000000, 0x080000, 0x75d03c42 )
+	ROM_LOAD16_BYTE( "u41_ver2.bin", 0x000001, 0x080000, 0x734b3ef0 )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, 0x2f2fe92c )
+	ROM_LOAD16_BYTE( "u64.bin", 0x000001, 0x400000, 0x491a3da4 )
+	ROM_LOAD16_BYTE( "u65.bin", 0x800000, 0x400000, 0x06563efe )
+	ROM_LOAD16_BYTE( "u66.bin", 0x800001, 0x400000, 0x7bbe4cfc )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u54.bin", 0x000000, 0x400000, 0xe7ca6936 )
+	ROM_LOAD( "u55.bin", 0x400000, 0x400000, 0xf53bd94f )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u52.bin", 0x000000, 0x400000, 0xe7abe7b4 )
+	ROM_LOAD( "u53.bin", 0x400000, 0x400000, 0x51a0f391 )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u51.bin", 0x000000, 0x400000, 0x0b9b875c )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "u19.bin", 0x000000, 0x400000, 0xf54b1cab )
+ROM_END
+
+ROM_START( espradeo )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "u42.bin", 0x000000, 0x080000, 0x0718c7e5 )
 	ROM_LOAD16_BYTE( "u41.bin", 0x000001, 0x080000, 0xdef30539 )
 
@@ -3183,7 +3235,9 @@ GAME( 1996, agallet,  0,        sailormn, cave,     agallet,  ROT270, "Banpresto
 GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"               )
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )
 GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"     )
-GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan)"         )
+GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (International Ver 1998 4/22)" )
+GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)" )
+GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )
 GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
 GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
 

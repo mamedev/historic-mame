@@ -30,8 +30,24 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "sbrkout.h"
+
+
+/*************************************
+ *
+ *	Video overlay
+ *
+ *************************************/
+
+OVERLAY_START( sbrkout_overlay )
+	OVERLAY_RECT( 208,   8, 248, 218, MAKE_ARGB(0x04,0x20,0x20,0xff) )
+	OVERLAY_RECT( 176,   8, 208, 218, MAKE_ARGB(0x04,0xff,0x80,0x10) )
+	OVERLAY_RECT( 144,   8, 176, 218, MAKE_ARGB(0x04,0x20,0xff,0x20) )
+	OVERLAY_RECT(  96,   8, 144, 218, MAKE_ARGB(0x04,0xff,0xff,0x20) )
+	OVERLAY_RECT(  16,   8,  24, 218, MAKE_ARGB(0x04,0x20,0x20,0xff) )
+OVERLAY_END
 
 
 
@@ -76,17 +92,10 @@ static MACHINE_INIT( sbrkout )
  *
  *************************************/
 
-#define ARTWORK_COLORS (2 + 32768)
-
 static PALETTE_INIT( sbrkout )
 {
-	/* 2 colors in the palette: black & white */
 	palette_set_color(0,0x00,0x00,0x00);
 	palette_set_color(1,0xff,0xff,0xff);
-
-	/* 4 entries in the color table */
-	memset(colortable, 0, ARTWORK_COLORS * sizeof(colortable[0]));
-	colortable[3] = 1;
 }
 
 
@@ -227,8 +236,8 @@ static struct GfxLayout balllayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout, 0, 2 },
-	{ REGION_GFX2, 0, &balllayout, 0, 2 },
+	{ REGION_GFX1, 0, &charlayout, 0, 1 },
+	{ REGION_GFX2, 0, &balllayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -271,11 +280,10 @@ static MACHINE_DRIVER_START( sbrkout )
 	MDRV_SCREEN_SIZE(32*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
-	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)
+	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(sbrkout)
-	MDRV_VIDEO_START(sbrkout)
+	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(sbrkout)
 
 	/* sound hardware */
@@ -313,8 +321,21 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( sbrkout )
+{
+	artwork_set_overlay(sbrkout_overlay);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
 
-GAME( 1978, sbrkout, 0, sbrkout, sbrkout, 0, ROT270, "Atari", "Super Breakout" )
+GAME( 1978, sbrkout, 0, sbrkout, sbrkout, sbrkout, ROT270, "Atari", "Super Breakout" )

@@ -7,13 +7,18 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
+data8_t *espial_videoram;
+data8_t *espial_colorram;
+data8_t *espial_attributeram;
+data8_t *espial_scrollram;
+data8_t *espial_spriteram_1;
+data8_t *espial_spriteram_2;
+data8_t *espial_spriteram_3;
 
-unsigned char *espial_attributeram;
-unsigned char *espial_column_scroll;
-
+static int flipscreen;
+static struct tilemap *tilemap;
 
 
 /***************************************************************************
@@ -67,100 +72,189 @@ PALETTE_INIT( espial )
 
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_tile_info(int tile_index)
+{
+	data8_t code = espial_videoram[tile_index];
+	data8_t col = espial_colorram[tile_index];
+	data8_t attr = espial_attributeram[tile_index];
+	SET_TILE_INFO(0,
+				  code | ((attr & 0x03) << 8),
+				  col & 0x3f,
+				  TILE_FLIPYX(attr >> 2))
+}
+
+
+
+/*************************************
+ *
+ *	Video system start
+ *
+ *************************************/
+
+VIDEO_START( espial )
+{
+	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+
+	if (!tilemap)
+		return 1;
+
+	tilemap_set_scroll_cols(tilemap, 32);
+
+	return 0;
+}
+
+VIDEO_START( netwars )
+{
+	/* Net Wars has a tile map that's twice as big as Espial's */
+	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
+
+	if (!tilemap)
+		return 1;
+
+	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scrolldy(tilemap, 0, 0x100);
+
+	return 0;
+}
+
+
+/*************************************
+ *
+ *	Memory handlers
+ *
+ *************************************/
+
+WRITE_HANDLER( espial_videoram_w )
+{
+	if (espial_videoram[offset] != data)
+	{
+		espial_videoram[offset] = data;
+		tilemap_mark_tile_dirty(tilemap, offset);
+	}
+}
+
+
+WRITE_HANDLER( espial_colorram_w )
+{
+	if (espial_colorram[offset] != data)
+	{
+		espial_colorram[offset] = data;
+		tilemap_mark_tile_dirty(tilemap, offset);
+	}
+}
+
+
 WRITE_HANDLER( espial_attributeram_w )
 {
 	if (espial_attributeram[offset] != data)
 	{
 		espial_attributeram[offset] = data;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_tile_dirty(tilemap, offset);
 	}
 }
 
 
+WRITE_HANDLER( espial_scrollram_w )
+{
+	espial_scrollram[offset] = data;
+	tilemap_set_scrolly(tilemap, offset, data);
+}
 
-/***************************************************************************
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+WRITE_HANDLER( espial_flipscreen_w )
+{
+	flipscreen = data;
 
-***************************************************************************/
-VIDEO_UPDATE( espial )
+	tilemap_set_flip(0, flipscreen ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
+}
+
+
+/*************************************
+ *
+ *	Video update
+ *
+ *************************************/
+
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256*(espial_attributeram[offs] & 0x03),
-					colorram[offs],
-					espial_attributeram[offs] & 0x04,espial_attributeram[offs] & 0x08,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = -espial_column_scroll[offs];
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 0;offs < spriteram_size/2;offs++)
+	for (offs = 0;offs < 16;offs++)
 	{
 		int sx,sy,code,color,flipx,flipy;
 
 
-		sx = spriteram[offs + 16];
-		sy = 240 - spriteram_2[offs];
-		code = spriteram[offs] >> 1;
-		color = spriteram_2[offs + 16];
-		flipx = spriteram_3[offs] & 0x04;
-		flipy = spriteram_3[offs] & 0x08;
+		sx = espial_spriteram_1[offs + 16];
+		sy = espial_spriteram_2[offs];
+		code = espial_spriteram_1[offs] >> 1;
+		color = espial_spriteram_2[offs + 16];
+		flipx = espial_spriteram_3[offs] & 0x04;
+		flipy = espial_spriteram_3[offs] & 0x08;
 
-		if (spriteram[offs] & 1)	/* double height */
+		if (flipscreen)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					color,
-					flipx,flipy,
-					sx,sy - 16,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			drawgfx(bitmap,Machine->gfx[1],
-					code + 1,
-					color,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			flipx = !flipx;
+			flipy = !flipy;
 		}
 		else
+		{
+			sy = 240 - sy;
+		}
+
+		if (espial_spriteram_1[offs] & 1)	/* double height */
+		{
+			if (flipscreen)
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						code,color,
+						flipx,flipy,
+						sx,sy + 16,
+						cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[1],
+						code + 1,
+						color,
+						flipx,flipy,
+						sx,sy,
+						cliprect,TRANSPARENCY_PEN,0);
+			}
+			else
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						code,color,
+						flipx,flipy,
+						sx,sy - 16,
+						cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[1],
+						code + 1,color,
+						flipx,flipy,
+						sx,sy,
+						cliprect,TRANSPARENCY_PEN,0);
+			}
+		}
+		else
+		{
 			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					color,
+					code,color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
+		}
 	}
+}
+
+
+VIDEO_UPDATE( espial )
+{
+	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+
+	draw_sprites(bitmap, cliprect);
 }

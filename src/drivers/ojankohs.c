@@ -767,7 +767,7 @@ static struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( ojankohs )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
 	MDRV_CPU_MEMORY(readmem_ojankohs,writemem_ojankohs)
 	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankohs)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -797,7 +797,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( ojankoy )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
 	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
 	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankoy)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -829,7 +829,7 @@ static MACHINE_DRIVER_START( ccasino )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)		/* 6.00 Mhz ? */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)		/* 6.00 MHz ? */
 	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
 	MDRV_CPU_PORTS(readport_ccasino,writeport_ccasino)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -931,7 +931,7 @@ ROM_START( ccasino )
 ROM_END
 
 
-GAME( 1986,  ojankoy, 0,  ojankoy,  ojankoy, 0, ROT0, "Video System", "Ojanko Yakata (Japan)" )
-GAME( 1987,  ojanko2, 0,  ojankoy,  ojankoy, 0, ROT0, "Video System", "Ojanko Yakata 2bankan (Japan)" )
-GAME( 1987,  ccasino, 0,  ccasino,  ccasino, 0, ROT0, "Video System", "Chinese Casino [BET] (Japan)" )
-GAME( 1988, ojankohs, 0, ojankohs, ojankohs, 0, ROT0, "Video System", "Ojanko High School (Japan)" )
+GAME( 1986, ojankoy,  0, ojankoy,  ojankoy,  0, ROT0, "V-System Co.", "Ojanko Yakata (Japan)" )
+GAME( 1987, ojanko2,  0, ojankoy,  ojankoy,  0, ROT0, "V-System Co.", "Ojanko Yakata 2bankan (Japan)" )
+GAME( 1987, ccasino,  0, ccasino,  ccasino,  0, ROT0, "V-System Co.", "Chinese Casino [BET] (Japan)" )
+GAME( 1988, ojankohs, 0, ojankohs, ojankohs, 0, ROT0, "V-System Co.", "Ojanko High School (Japan)" )

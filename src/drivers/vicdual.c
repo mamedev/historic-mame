@@ -1051,7 +1051,7 @@ static MACHINE_DRIVER_START( 2ports )
 	MDRV_VBLANK_DURATION(5000)	/* frames per second, vblank duration */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1097,7 +1097,7 @@ static MACHINE_DRIVER_START( depthch )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(2ports)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_depthch)
 MACHINE_DRIVER_END
@@ -1107,7 +1107,7 @@ static MACHINE_DRIVER_START( invinco3 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(3ports)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
 MACHINE_DRIVER_END
@@ -1117,7 +1117,7 @@ static MACHINE_DRIVER_START( invinco4 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(4ports)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
 MACHINE_DRIVER_END
@@ -1127,7 +1127,7 @@ static MACHINE_DRIVER_START( pulsar )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(4ports)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_pulsar)
 MACHINE_DRIVER_END
@@ -1164,7 +1164,7 @@ static MACHINE_DRIVER_START( carnival )
 	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)

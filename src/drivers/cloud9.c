@@ -63,7 +63,6 @@
 #include "cloud9.h"
 
 
-
 /*************************************
  *
  *	Output ports
@@ -124,7 +123,6 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x5b00, 0x5b0f, pokey2_w },
 	{ 0x5c00, 0x5cff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ 0x10600,0x13fff, MWA_RAM, &cloud9_vram2 },
 MEMORY_END
 
 
@@ -276,14 +274,12 @@ static MACHINE_DRIVER_START( cloud9 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
 
-	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_START(cloud9)
 	MDRV_VIDEO_UPDATE(cloud9)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
-
-
 
 /*************************************
  *
@@ -292,7 +288,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( cloud9 )
-	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code + extra VRAM space */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "c9_6000.bin", 0x6000, 0x2000, 0xb5d95d98 )
 	ROM_LOAD( "c9_8000.bin", 0x8000, 0x2000, 0x49af8f22 )
 	ROM_LOAD( "c9_a000.bin", 0xa000, 0x2000, 0x7cf404a6 )

@@ -1403,18 +1403,18 @@ static struct OKIM6295interface okim6295_intf =
 };
 
 
-	 
+
 static MACHINE_DRIVER_START( bigrun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu1", M68000, 10000000)
 	MDRV_CPU_MEMORY(bigrun_readmem,bigrun_writemem)
 	MDRV_CPU_VBLANK_INT(cischeat_interrupt,CISCHEAT_INTERRUPT_NUM)
-	
+
 	MDRV_CPU_ADD_TAG("cpu2", M68000, 10000000)
 	MDRV_CPU_MEMORY(bigrun_readmem2,bigrun_writemem2)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SUB_INTERRUPT_NUM)
-	
+
 	MDRV_CPU_ADD_TAG("cpu3", M68000, 10000000)
 	MDRV_CPU_MEMORY(bigrun_readmem3,bigrun_writemem3)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SUB_INTERRUPT_NUM)
@@ -1423,11 +1423,11 @@ static MACHINE_DRIVER_START( bigrun )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(bigrun_sound_readmem,bigrun_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SOUND_INTERRUPT_NUM)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(20)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(256, 256)
@@ -1451,16 +1451,16 @@ static MACHINE_DRIVER_START( cischeat )
 	MDRV_IMPORT_FROM(bigrun)
 	MDRV_CPU_MODIFY("cpu1")
 	MDRV_CPU_MEMORY(cischeat_readmem,cischeat_writemem)
-	
+
 	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_MEMORY(cischeat_readmem2,cischeat_writemem2)
-	
+
 	MDRV_CPU_MODIFY("cpu3")
 	MDRV_CPU_MEMORY(cischeat_readmem3,cischeat_writemem3)
 
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(cischeat_sound_readmem,cischeat_sound_writemem)
-	
+
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 256-1,	0+16, 256-16-8-1)
 	MDRV_GFXDECODE(cischeat_gfxdecodeinfo)
@@ -1477,16 +1477,16 @@ static MACHINE_DRIVER_START( f1gpstar )
 	MDRV_IMPORT_FROM(bigrun)
 	MDRV_CPU_REPLACE("cpu1", M68000, 12000000)
 	MDRV_CPU_MEMORY(f1gpstar_readmem,f1gpstar_writemem)
-	
+
 	MDRV_CPU_REPLACE("cpu2", M68000, 12000000)
 	MDRV_CPU_MEMORY(f1gpstar_readmem2,f1gpstar_writemem2)
-	
+
 	MDRV_CPU_REPLACE("cpu3", M68000, 12000000)
 	MDRV_CPU_MEMORY(f1gpstar_readmem3,f1gpstar_writemem3)
 
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(f1gpstar_sound_readmem,f1gpstar_sound_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(f1gpstar_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
@@ -1519,9 +1519,9 @@ INTERRUPT_GEN( interrupt_scudhamm )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		cpu_set_irq_line(0, 3, HOLD_LINE);	// update palette, layers etc. Not the sprites.
-		case 14:	cpu_set_irq_line(0, 2, HOLD_LINE);	// "real" vblank. It just sets a flag that
-								// the main loop polls before updating the sprites.
+		case 0:		cpu_set_irq_line(0, 3, PULSE_LINE);	// update palette, layers etc. Not the sprites.
+		case 14:	cpu_set_irq_line(0, 2, PULSE_LINE);	// "real" vblank. It just sets a flag that
+														// the main loop polls before updating the sprites.
 	}
 }
 
@@ -1542,7 +1542,7 @@ static MACHINE_DRIVER_START( scudhamm )
 	MDRV_VISIBLE_AREA(0, 256-1, 0 +16, 256-1 -16)
 	MDRV_GFXDECODE(gfxdecodeinfo_scudhamm)
 	MDRV_PALETTE_LENGTH(16*16+16*16+128*16)
-	
+
 	MDRV_VIDEO_START(f1gpstar)
 	MDRV_VIDEO_UPDATE(scudhamm)
 

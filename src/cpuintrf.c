@@ -271,7 +271,6 @@ static void dummy_init(void);
 static void dummy_reset(void *param);
 static void dummy_exit(void);
 static int dummy_execute(int cycles);
-static void dummy_burn(int cycles);
 static unsigned dummy_get_context(void *regs);
 static void dummy_set_context(void *regs);
 static unsigned dummy_get_reg(int regnum);
@@ -1376,7 +1375,6 @@ static void dummy_init(void) { }
 static void dummy_reset(void *param) { }
 static void dummy_exit(void) { }
 static int dummy_execute(int cycles) { return cycles; }
-static void dummy_burn(int cycles) { }
 static unsigned dummy_get_context(void *regs) { return 0; }
 static void dummy_set_context(void *regs) { }
 static unsigned dummy_get_reg(int regnum) { return 0; }
@@ -1415,6 +1413,8 @@ static unsigned dummy_dasm(char *buffer, unsigned pc)
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 {
 	void m68k_set_reset_instr_callback(void (*callback)(void));
+	void m68000_set_reset_callback(void (*callback)(void));
+	void m68020_set_reset_callback(void (*callback)(void));
 
 	if ( 1
 #if (HAS_M68000)
@@ -1436,7 +1436,30 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 	}
 
 	cpuintrf_push_context(cpunum);
-	m68k_set_reset_instr_callback(resetfn);
+
+	if ( 0
+#if (HAS_M68000)
+		|| cpu[cpunum].cputype == CPU_M68000
+#endif
+#if (HAS_M68010)
+		|| cpu[cpunum].cputype == CPU_M68010
+#endif
+	   )
+	{
+#ifdef A68K0
+		m68000_set_reset_callback(resetfn);
+#else
+		m68k_set_reset_instr_callback(resetfn);
+#endif
+	}
+	else
+	{
+#ifdef A68K2
+		m68020_set_reset_callback(resetfn);
+#else
+		m68k_set_reset_instr_callback(resetfn);
+#endif
+	}
 	cpuintrf_pop_context();
 }
 #endif

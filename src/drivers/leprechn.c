@@ -1,6 +1,6 @@
 /***************************************************************************
 
- Leprechaun memory map (preliminary)
+ Leprechaun/Pot of Gold
 
  driver by Zsolt Vasvari
 
@@ -8,166 +8,68 @@
  cycle through test and hit F2 to execute.
 
 
- Main CPU
+ TODO:
+ -----
 
- 0000-03ff RAM
- 8000-ffff ROM
+ - Is the 0800-081e range on the sound board mapped to a VIA?
+   I don't think so, but needs to be checked.
 
- 2000-200f, 2800-280f and 3000-300f might be some kind of programmable I/O
- controller. I'm not knowledgable enough about them to be able to tell for sure.
- I based the observation of the locations being written/read. They seem to
- follow a similar pattern across all 3 areas. Anyone with schematics?
+ - The following VIA lines appear to be used but aren't mapped:
 
- I/O Read
-
- 2000 Video RAM Read Back
- 200d ???
- 3002-3003 ???
- 2801 Input Port Read
-
- I/O Write
-
- 2000 Graphics Command Write
- 2001 Graphics Data Write
- 2002-2003 ???
- 200c-200e ???
- 2800 Input Port Select
- 2802-2803 ???
- 280c ???
- 3001 Sound Command Write
- 3002-3003 ???
- 300c ???
-
-
- Sound CPU
-
- 0000-01ff RAM
- f000-ffff ROM
-
- I/O Read
-
- 0800 Sound Command Read
- 0804-0805 ???
- 080c ???
- a001 ???
-
- I/O Write
-
- 0801-0803 ???
- 0806 ???
- 081e ???
- a000 AY8910 Control Port
- a002 AY8910 Write Port
+   VIA #0 CA2
+   VIA #0 IRQ
+   VIA #2 CB2 - This is probably a sound CPU halt or reset.  See potogold $8a5a
 
  ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-
-
-VIDEO_START( leprechn );
-VIDEO_UPDATE( leprechn );
-
-WRITE_HANDLER( leprechn_graphics_command_w );
-READ_HANDLER( leprechn_graphics_data_r );
-WRITE_HANDLER( leprechn_graphics_data_w );
-
-
-
-static UINT8 input_port_select;
-
-static WRITE_HANDLER( leprechn_input_port_select_w )
-{
-    input_port_select = data;
-}
-
-static READ_HANDLER( leprechn_input_port_r )
-{
-    switch (input_port_select)
-    {
-    case 0x01:
-        return input_port_0_r(0);
-    case 0x02:
-        return input_port_2_r(0);
-    case 0x04:
-        return input_port_3_r(0);
-    case 0x08:
-        return input_port_1_r(0);
-    case 0x40:
-        return input_port_5_r(0);
-    case 0x80:
-        return input_port_4_r(0);
-    }
-
-    return 0xff;
-}
-
-static READ_HANDLER( leprechn_200d_r )
-{
-    // Maybe a VSYNC line?
-    return 0x02;
-}
-
-static READ_HANDLER( leprechn_0805_r )
-{
-    return 0xc0;
-}
-
-static WRITE_HANDLER( leprechn_sh_w )
-{
-    soundlatch_w(offset,data);
-    cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
-}
+#include "machine/6522via.h"
+#include "vidhrdw/generic.h"
+#include "leprechn.h"
 
 
 
 static MEMORY_READ_START( readmem )
-    { 0x0000, 0x03ff, MRA_RAM},
-    { 0x2000, 0x2000, leprechn_graphics_data_r},
-    { 0x200d, 0x200d, leprechn_200d_r },
-    { 0x2801, 0x2801, leprechn_input_port_r },
-    { 0x3002, 0x3003, MRA_RAM},
-    { 0x8000, 0xffff, MRA_ROM},
+    { 0x0000, 0x03ff, MRA_RAM },
+	{ 0x2000, 0x200f, via_0_r },
+	{ 0x2800, 0x280f, via_1_r },
+	{ 0x3000, 0x300f, via_2_r },
+    { 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x03ff, MWA_RAM},
-    { 0x2000, 0x2000, leprechn_graphics_command_w},
-    { 0x2001, 0x2001, leprechn_graphics_data_w},
-    { 0x2002, 0x2003, MWA_NOP },  // ???
-    { 0x200c, 0x200e, MWA_NOP },  // ???
-    { 0x2800, 0x2800, leprechn_input_port_select_w},
-    { 0x2802, 0x2803, MWA_NOP },  // ???
-    { 0x280c, 0x280c, MWA_NOP },  // ???
-    { 0x3001, 0x3001, leprechn_sh_w },
-    { 0x3002, 0x3003, MWA_RAM},   // ???
-    { 0x300c, 0x300c, MWA_NOP },  // ???
-    { 0x8000, 0xffff, MWA_ROM},
+    { 0x0000, 0x03ff, MWA_RAM },
+	{ 0x2000, 0x200f, via_0_w },
+	{ 0x2800, 0x280f, via_1_w },
+	{ 0x3000, 0x300f, via_2_w },
+    { 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( sound_readmem )
-    { 0x0000, 0x01ff, MRA_RAM},
-    { 0x0800, 0x0800, soundlatch_r},
-    { 0x0804, 0x0804, MRA_RAM},   // ???
-    { 0x0805, 0x0805, leprechn_0805_r},   // ???
-    { 0x080c, 0x080c, MRA_RAM},   // ???
-    { 0xa001, 0xa001, MRA_RAM},   // ???
+    { 0x0000, 0x01ff, MRA_RAM },
+    { 0x0800, 0x0800, soundlatch_r },
+    { 0x0804, 0x0804, MRA_RAM },   // ???
+    { 0x0805, 0x0805, leprechn_sh_0805_r },   // ???
+    { 0x080c, 0x080c, MRA_RAM },   // ???
+    { 0xa001, 0xa001, AY8910_read_port_0_r }, // ???
     { 0xf000, 0xffff, MRA_ROM},
 MEMORY_END
 
-
 static MEMORY_WRITE_START( sound_writemem )
-    { 0x0000, 0x01ff, MWA_RAM},
-    { 0x0801, 0x0803, MWA_RAM},   // ???
-    { 0x0806, 0x0806, MWA_RAM},   // ???
-    { 0x081e, 0x081e, MWA_RAM},   // ???
+    { 0x0000, 0x01ff, MWA_RAM },
+    { 0x0801, 0x0803, MWA_RAM },   // ???
+    { 0x0806, 0x0806, MWA_RAM },   // ???
+    { 0x081e, 0x081e, MWA_RAM },   // ???
     { 0xa000, 0xa000, AY8910_control_port_0_w },
     { 0xa002, 0xa002, AY8910_write_port_0_w },
     { 0xf000, 0xffff, MWA_ROM},
 MEMORY_END
 
+
 INPUT_PORTS_START( leprechn )
-    // All of these ports are read indirectly through 2800/2801
+    // All of these ports are read indirectly through a VIA mapped at 0x2800
     PORT_START      /* Input Port 0 */
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // This is called "Slam" in the game
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -246,23 +148,6 @@ INPUT_PORTS_END
 
 
 
-/* RGBI palette. Is it correct? */
-static PALETTE_INIT( leprechn )
-{
-	int i;
-	
-	for (i = 0; i < 16; i++)
-	{
-		int bk = (i & 8) ? 0x40 : 0x00;
-		int r = (i & 1) ? 0xff : bk;
-		int g = (i & 2) ? 0xff : bk;
-		int b = (i & 4) ? 0xff : bk;
-		palette_set_color(i,r,g,b);
-	}
-}
-
-
-
 static struct AY8910interface ay8910_interface =
 {
     1,      /* 1 chip */
@@ -294,14 +179,14 @@ static MACHINE_DRIVER_START( leprechn )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(leprechn)
 	MDRV_VIDEO_START(leprechn)
-	MDRV_VIDEO_UPDATE(leprechn)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
@@ -346,5 +231,5 @@ ROM_END
 
 
 
-GAME( 1982, leprechn, 0,        leprechn, leprechn, 0, ROT0, "Tong Electronic", "Leprechaun" )
-GAME( 1982, potogold, leprechn, leprechn, leprechn, 0, ROT0, "GamePlan", "Pot of Gold" )
+GAME( 1982, leprechn, 0,        leprechn, leprechn, leprechn, ROT0, "Tong Electronic", "Leprechaun" )
+GAME( 1982, potogold, leprechn, leprechn, leprechn, leprechn, ROT0, "GamePlan", "Pot of Gold" )

@@ -60,6 +60,8 @@ The callback must put:
   structure (e.g. TILE_FLIPX). Note that TILE_FLIPY is handled internally by the
   chip so it must not be set by the callback.
 */
+extern struct tilemap *K052109_tilemap[3];
+
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int layer,int bank,int *code,int *color));
 /* plain 8-bit access */
@@ -71,7 +73,6 @@ READ16_HANDLER( K052109_lsb_r );
 WRITE16_HANDLER( K052109_lsb_w );
 void K052109_set_RMRD_line(int state);
 void K052109_tilemap_update(void);
-void K052109_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int num,int flags,UINT32 priority);
 int K052109_is_IRQ_enabled(void);
 
 
@@ -125,6 +126,8 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
+int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, 
+		void (*callback)(int *code,int *color,int *priority));
 READ16_HANDLER( K053247_word_r );
 WRITE16_HANDLER( K053247_word_w );
 READ_HANDLER( K053247_r );
@@ -178,12 +181,26 @@ void K051316_wraparound_enable(int chip, int status);
 void K051316_set_offset(int chip, int xoffs, int yoffs);
 
 
+extern data16_t *K053936_0_ctrl,*K053936_0_linectrl;
+extern data16_t *K053936_1_ctrl,*K053936_1_linectrl;
+void K053936_0_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority);
+void K053936_1_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority);
+void K053936_wraparound_enable(int chip, int status);
+void K053936_set_offset(int chip, int xoffs, int yoffs);
+
+
+/*
+  Note: K053251_w() automatically does a tilemap_mark_all_tiles_dirty(ALL_TILEMAPS)
+  when some palette index changes. If ALL_TILEMAPS is too expensive, use
+  K053251_set_tilemaps() to indicate which tilemap is associated with each index.
+ */
 WRITE_HANDLER( K053251_w );
 WRITE16_HANDLER( K053251_lsb_w );
 WRITE16_HANDLER( K053251_msb_w );
 enum { K053251_CI0=0,K053251_CI1,K053251_CI2,K053251_CI3,K053251_CI4 };
 int K053251_get_priority(int ci);
 int K053251_get_palette_index(int ci);
+void K053251_set_tilemaps(struct tilemap *ci0,struct tilemap *ci1,struct tilemap *ci2,struct tilemap *ci3,struct tilemap *ci4);
 int K053251_vh_start(void);
 
 
@@ -208,7 +225,6 @@ WRITE16_HANDLER( K054157_b_word_w );
 void K054157_tilemap_update(void);
 void K054157_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
 void K054157_tilemap_draw_alpha(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, int alpha);
-void K054157_mark_plane_dirty(int num);
 int K054157_is_IRQ_enabled(void);
 int K054157_get_lookup(int bits);
 void K054157_set_tile_bank(int bank);	/* Asterix */

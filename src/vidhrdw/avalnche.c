@@ -10,32 +10,6 @@
 #include "avalnche.h"
 
 
-/* The first entry defines the color with which the bitmap is filled initially */
-/* The array is terminated with an entry with negative coordinates. */
-/* At least two entries are needed. */
-static const struct artwork_element avalnche_ol[] =
-{
-	{{  0, 255,  16,  25}, 0x20, 0xff, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* cyan */
-	{{  0, 255,  26,  35}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{  0, 255,  36,  44}, 0xff, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* yellow */
-	{{  0, 255,  45,  55}, 0xff, 0x80, 0x10,   OVERLAY_DEFAULT_OPACITY},	/* orange */
-	{{  0, 255,  56, 255}, 0x20, 0xff, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* cyan */
-	{{-1,-1,-1,-1},0,0,0,0}
-};
-
-
-VIDEO_START( avalnche )
-{
-	int start_pen = 2;	/* leave space for black and white */
-
-	if (video_start_generic())
-		return 1;
-
-	overlay_create(avalnche_ol, start_pen);
-	return 0;
-}
-
-
 WRITE_HANDLER( avalnche_videoram_w )
 {
 	videoram[offset] = data;

@@ -1,9 +1,18 @@
 /***************************************************************************
-	meadows.c
-	Machine driver
-	Dead Eye, Gypsy Juggler
 
-	J. Buchmueller, June '98
+	Meadows S2650 driver
+
+	driver by J. Buchmueller, June '98
+
+	Games supported:
+		* Dead Eye
+		* Gypsy Juggler
+		* Inferno
+
+	Known issues:
+		* none at this time
+
+****************************************************************************
 
     ***********************************************
     memory map CPU #0 (preliminary)
@@ -19,8 +28,10 @@
 
 			1 R analog control
 				D0-D7	center is 0x7f
+
 			2 R horizontal sync divider chain
 				D7 9.765kHz ... D0 2.5MHz
+
 			3 R dip switch settings
 				D0-D2	select 2 to 9 coins
 				D3-D4	Coins per play D3 D4
@@ -95,136 +106,161 @@
 	0e00-0eff	RAM
 
 
-
+	********************************************
+	Inferno memory map (very incomplete)
+	********************************************
+	0000..0bff	ROM part one
+	1c00..1eff	video buffer
+	1f00..1f03	hardware?
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
-
-/*************************************************************/
-/*                                                           */
-/* Externals                                                 */
-/*                                                           */
-/*************************************************************/
-VIDEO_START( deadeye );
-VIDEO_START( gypsyjug );
-VIDEO_UPDATE( meadows );
-WRITE_HANDLER( meadows_videoram_w );
-WRITE_HANDLER( meadows_sprite_w );
-
-int meadows_sh_start(const struct MachineSound *msound);
-void meadows_sh_stop(void);
-void meadows_sh_dac_w(int data);
-void meadows_sh_update(void);
-extern unsigned char meadows_0c00;
-extern unsigned char meadows_0c01;
-extern unsigned char meadows_0c02;
-extern unsigned char meadows_0c03;
+#include "cpu/s2650/s2650.h"
+#include "meadows.h"
 
 
-/*************************************************************/
-/*                                                           */
-/* Statics                                                   */
-/*                                                           */
-/*************************************************************/
-static  unsigned char flip_bits[0x100] = {
-	0x00,0x80,0x40,0xc0,0x20,0xa0,0x60,0xe0,0x10,0x90,0x50,0xd0,0x30,0xb0,0x70,0xf0,
-	0x08,0x88,0x48,0xc8,0x28,0xa8,0x68,0xe8,0x18,0x98,0x58,0xd8,0x38,0xb8,0x78,0xf8,
-	0x04,0x84,0x44,0xc4,0x24,0xa4,0x64,0xe4,0x14,0x94,0x54,0xd4,0x34,0xb4,0x74,0xf4,
-	0x0c,0x8c,0x4c,0xcc,0x2c,0xac,0x6c,0xec,0x1c,0x9c,0x5c,0xdc,0x3c,0xbc,0x7c,0xfc,
-	0x02,0x82,0x42,0xc2,0x22,0xa2,0x62,0xe2,0x12,0x92,0x52,0xd2,0x32,0xb2,0x72,0xf2,
-	0x0a,0x8a,0x4a,0xca,0x2a,0xaa,0x6a,0xea,0x1a,0x9a,0x5a,0xda,0x3a,0xba,0x7a,0xfa,
-	0x06,0x86,0x46,0xc6,0x26,0xa6,0x66,0xe6,0x16,0x96,0x56,0xd6,0x36,0xb6,0x76,0xf6,
-	0x0e,0x8e,0x4e,0xce,0x2e,0xae,0x6e,0xee,0x1e,0x9e,0x5e,0xde,0x3e,0xbe,0x7e,0xfe,
-	0x01,0x81,0x41,0xc1,0x21,0xa1,0x61,0xe1,0x11,0x91,0x51,0xd1,0x31,0xb1,0x71,0xf1,
-	0x09,0x89,0x49,0xc9,0x29,0xa9,0x69,0xe9,0x19,0x99,0x59,0xd9,0x39,0xb9,0x79,0xf9,
-	0x05,0x85,0x45,0xc5,0x25,0xa5,0x65,0xe5,0x15,0x95,0x55,0xd5,0x35,0xb5,0x75,0xf5,
-	0x0d,0x8d,0x4d,0xcd,0x2d,0xad,0x6d,0xed,0x1d,0x9d,0x5d,0xdd,0x3d,0xbd,0x7d,0xfd,
-	0x03,0x83,0x43,0xc3,0x23,0xa3,0x63,0xe3,0x13,0x93,0x53,0xd3,0x33,0xb3,0x73,0xf3,
-	0x0b,0x8b,0x4b,0xcb,0x2b,0xab,0x6b,0xeb,0x1b,0x9b,0x5b,0xdb,0x3b,0xbb,0x7b,0xfb,
-	0x07,0x87,0x47,0xc7,0x27,0xa7,0x67,0xe7,0x17,0x97,0x57,0xd7,0x37,0xb7,0x77,0xf7,
-	0x0f,0x8f,0x4f,0xcf,0x2f,0xaf,0x6f,0xef,0x1f,0x9f,0x5f,0xdf,0x3f,0xbf,0x7f,0xff,
-};
-static int cycles_at_vsync = 0;
 
-/*************************************************************/
-/*                                                           */
-/* Hardware read/write from the main CPU                     */
-/*                                                           */
-/*************************************************************/
-READ_HANDLER( meadows_hardware_r )
+/*************************************
+ *
+ *	Local variables
+ *
+ *************************************/
+
+static int cycles_at_vsync;
+static UINT8 main_sense_state;
+static UINT8 sound_sense_state;
+static UINT8 coin1_state;
+static UINT8 minferno_sense;
+
+
+
+/*************************************
+ *
+ *	Special input ports
+ *
+ *************************************/
+
+static READ_HANDLER( hsync_chain_r )
 {
-	switch( offset ) {
-        case 0: /* buttons */
-            return input_port_0_r(0);
-        case 1: /* AD stick */
-            return input_port_1_r(0);
-        case 2: /* horizontal sync divider chain */
-			return flip_bits[(cycles_currently_ran() - cycles_at_vsync) & 0xff];
-        case 3: /* dip switches */
-            return input_port_2_r(0);
-    }
-    return 0;
+	/* horizontal sync divider chain */
+	UINT8 val = (cycles_currently_ran() - cycles_at_vsync) & 0xff;
+	return BITSWAP8(val,0,1,2,3,4,5,6,7);
 }
 
-WRITE_HANDLER( meadows_hardware_w )
+
+static READ_HANDLER( vsync_chain_hi_r )
 {
-	switch( offset ) {
+	/* vertical sync divider chain */
+	UINT8 val = cpu_getscanline();
+	return ((val >> 1) & 0x08) | ((val >> 3) & 0x04) | ((val >> 5) & 0x02) | (val >> 7);
+}
+
+
+static READ_HANDLER( vsync_chain_lo_r )
+{
+	/* vertical sync divider chain */
+	UINT8 val = cpu_getscanline();
+	return val & 0x0f;
+}
+
+
+
+/*************************************
+ *
+ *	Sound control writes
+ *
+ *************************************/
+
+static WRITE_HANDLER( meadows_sound_w )
+{
+	switch (offset)
+	{
 		case 0:
 			if (meadows_0c00 == data)
 				break;
-			logerror("meadows_hardware_w %d $%02x\n", offset, data);
+			logerror("meadows_sound_w %d $%02x\n", offset, data);
 			meadows_0c00 = data;
             break;
+
 		case 1:
-			logerror("meadows_hardware_w %d $%02x\n", offset, data);
+			logerror("meadows_sound_w %d $%02x\n", offset, data);
             break;
+
         case 2:
-			logerror("meadows_hardware_w %d $%02x\n", offset, data);
+			logerror("meadows_sound_w %d $%02x\n", offset, data);
             break;
+
 		case 3:
-//			S2650_Clear_Pending_Interrupts();
+/*			S2650_Clear_Pending_Interrupts(); */
 			break;
 	}
 }
 
-/*************************************************************/
-/*                                                           */
-/* Interrupt for the main cpu                                */
-/*                                                           */
-/*************************************************************/
-INTERRUPT_GEN( meadows_interrupt )
+
+
+/*************************************
+ *
+ *	Main CPU interrupt
+ *
+ *************************************/
+
+static INTERRUPT_GEN( meadows_interrupt )
 {
-static  int sense_state = 0;
-static	int coin1_state = 0;
 	/* preserve the actual cycle count */
     cycles_at_vsync = cycles_currently_ran();
+
     /* fake something toggling the sense input line of the S2650 */
-	sense_state ^= 1;
-	cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE);
-	if( input_port_3_r(0) & 0x01 ) {
-		if( !coin1_state ) {
+	main_sense_state ^= 1;
+	cpu_set_irq_line(0, 1, main_sense_state ? ASSERT_LINE : CLEAR_LINE);
+
+	/* check the fake coin input */
+	if (readinputport(3) & 0x01)
+	{
+		if (!coin1_state)
+		{
 			coin1_state = 1;
-			/* S2650 interrupt vector */
-			cpu_irq_line_vector_w(0,0,0x82);
-			cpu_set_irq_line(0,0,PULSE_LINE);
+			cpu_set_irq_line_and_vector(0, 0, PULSE_LINE, 0x82);
 		}
 	}
-	coin1_state = 0;
+	else
+		coin1_state = 0;
 }
 
-/*************************************************************/
-/*                                                           */
-/* Hardware read/write for the sound CPU                     */
-/*                                                           */
-/*************************************************************/
+
+
+/*************************************
+ *
+ *	Main CPU interrupt (Inferno)
+ *
+ *************************************/
+
+static INTERRUPT_GEN( minferno_interrupt )
+{
+	/* preserve the actual cycle count */
+	cycles_at_vsync = cycles_currently_ran();
+	minferno_sense++;
+	cpu_set_irq_line(0, 1, (minferno_sense & 0x40) ? ASSERT_LINE : CLEAR_LINE );
+}
+
+
+
+/*************************************
+ *
+ *	Sound hardware output control
+ *
+ *************************************/
+
 static WRITE_HANDLER( sound_hardware_w )
 {
-	switch( offset & 3 ) {
+	switch (offset & 3)
+	{
 		case 0: /* DAC */
 			meadows_sh_dac_w(data ^ 0xff);
             break;
+
 		case 1: /* counter clk 5 MHz / 256 */
 			if (data == meadows_0c01)
 				break;
@@ -232,6 +268,7 @@ static WRITE_HANDLER( sound_hardware_w )
 			meadows_0c01 = data;
 			meadows_sh_update();
 			break;
+
 		case 2: /* counter clk 5 MHz / 32 (/ 2 or / 4) */
 			if (data == meadows_0c02)
                 break;
@@ -239,6 +276,7 @@ static WRITE_HANDLER( sound_hardware_w )
 			meadows_0c02 = data;
 			meadows_sh_update();
             break;
+
 		case 3: /* sound enable */
 			if (data == meadows_0c03)
                 break;
@@ -249,23 +287,24 @@ static WRITE_HANDLER( sound_hardware_w )
 	}
 }
 
+
+
+/*************************************
+ *
+ *	Sound hardware read
+ *
+ *************************************/
+
 static READ_HANDLER( sound_hardware_r )
 {
 	int data = 0;
 
-	switch( offset ) {
+	switch (offset)
+	{
 		case 0:
 			data = meadows_0c00;
-#if 0
-            {
-				static int last_data = 0;
-				if (data != last_data) {
-					last_data = data;
-					logerror("sound_r %d $%02x\n", offset, data);
-				}
-			}
-#endif
             break;
+
 		case 1: break;
 		case 2: break;
 		case 3: break;
@@ -273,41 +312,128 @@ static READ_HANDLER( sound_hardware_r )
     return data;
 }
 
-/*************************************************************/
-/*                                                           */
-/* Interrupt for the sound cpu                               */
-/*                                                           */
-/*************************************************************/
+
+
+/*************************************
+ *
+ *	Sound hardware interrupts
+ *
+ *************************************/
+
 static INTERRUPT_GEN( sound_interrupt )
 {
-	static	int sense_state = 0;
-
     /* fake something toggling the sense input line of the S2650 */
-	sense_state ^= 1;
-	cpu_set_irq_line( 1, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
+	sound_sense_state ^= 1;
+	cpu_set_irq_line(1, 1, sound_sense_state ? ASSERT_LINE : CLEAR_LINE);
 }
 
-/*************************************************************/
-/*                                                           */
-/* Memory layout                                             */
-/*                                                           */
-/*************************************************************/
+
+
+/*************************************
+ *
+ *	Overlays
+ *
+ *************************************/
+
+/* some constants to make life easier */
+#define SCR_HORZ        32
+#define SCR_VERT        28
+
+OVERLAY_START( deadeye_overlay )
+	OVERLAY_RECT(            0,    0, SCR_HORZ*8,        2*8, MAKE_ARGB(0x04, 32,192, 64))
+	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
+	OVERLAY_RECT(            0,  6*8, SCR_HORZ*8,        9*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT(            0,  9*8,        1*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT( SCR_HORZ*8-8,  9*8, SCR_HORZ*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT(            0, 24*8, SCR_HORZ*8, SCR_VERT*8, MAKE_ARGB(0x04, 64, 64,192))
+OVERLAY_END
+
+
+OVERLAY_START( gypsyjug_overlay )
+	OVERLAY_RECT(            0,    0, SCR_HORZ*8,        2*8, MAKE_ARGB(0x04, 32,192, 64))
+//	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
+	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        3*8, MAKE_ARGB(0x04, 32,192, 64))
+	OVERLAY_RECT(            0,  3*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
+	OVERLAY_RECT(            0,  6*8, SCR_HORZ*8,        9*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT(            0,  9*8,        1*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT( SCR_HORZ*8-8,  9*8, SCR_HORZ*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
+	OVERLAY_RECT(            0, 24*8, SCR_HORZ*8, SCR_VERT*8, MAKE_ARGB(0x04,192,160, 32))
+OVERLAY_END
+
+
+
+/*************************************
+ *
+ *	Palette init
+ *
+ *************************************/
+
+static PALETTE_INIT( meadows )
+{
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0c03, meadows_hardware_w },
-	{ 0x0d00, 0x0d0f, meadows_sprite_w },
+	{ 0x0c00, 0x0c03, meadows_sound_w },
+	{ 0x0d00, 0x0d0f, meadows_spriteram_w, &spriteram },
 	{ 0x0e00, 0x0eff, MWA_RAM },
 	{ 0x1000, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0c03, meadows_hardware_r },
+	{ 0x0c00, 0x0c00, input_port_0_r },
+	{ 0x0c01, 0x0c01, input_port_1_r },
+	{ 0x0c02, 0x0c02, hsync_chain_r },
+	{ 0x0c03, 0x0c03, input_port_2_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
 	{ 0x1000, 0x1bff, MRA_ROM },
 	{ 0x1c00, 0x1fff, MRA_RAM },
 MEMORY_END
+
+
+static MEMORY_WRITE_START( minferno_writemem )
+	{ 0x0000, 0x0bff, MWA_ROM },
+	{ 0x1c00, 0x1eff, meadows_videoram_w, &videoram, &videoram_size },
+	{ 0x1f00, 0x1f03, meadows_sound_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( minferno_readmem )
+	{ 0x0000, 0x0bff, MRA_ROM },
+	{ 0x1c00, 0x1eff, MRA_RAM },
+	{ 0x1f00, 0x1f00, input_port_0_r },
+	{ 0x1f01, 0x1f01, input_port_1_r },
+	{ 0x1f02, 0x1f02, input_port_2_r },
+	{ 0x1f03, 0x1f03, input_port_3_r },
+	{ 0x1f04, 0x1f04, vsync_chain_hi_r },
+	{ 0x1f05, 0x1f05, vsync_chain_lo_r },
+MEMORY_END
+
+
+static PORT_READ_START( minferno_readport )
+	{ S2650_DATA_PORT, S2650_DATA_PORT, input_port_4_r },
+PORT_END
+
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
@@ -315,11 +441,20 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0e00, 0x0eff, MWA_RAM },
 MEMORY_END
 
+
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, sound_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( meadows )
 	PORT_START		/* IN0 buttons */
@@ -350,7 +485,7 @@ INPUT_PORTS_START( meadows )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds?" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
@@ -364,6 +499,68 @@ INPUT_PORTS_START( meadows )
 	PORT_BIT( 0x8e, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( minferno )
+	PORT_START		/* IN0 left joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+
+	PORT_START		/* IN1 right joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+
+	PORT_START		/* IN2 buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* IN3 coinage */
+	PORT_DIPNAME( 0x01, 0x01, "Coin Option" )
+	PORT_DIPSETTING(    0x00, "1 Game/Coin" )
+	PORT_DIPSETTING(    0x01, "1 Player/Coin" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START		/* IN4 dip switch */
+	PORT_DIPNAME( 0x03, 0x00, "Game Time" )
+	PORT_DIPSETTING(    0x00, "60s" )
+	PORT_DIPSETTING(    0x01, "90s" )
+	PORT_DIPSETTING(    0x02, "120s" )
+	PORT_DIPSETTING(    0x03, "180s" )
+	PORT_DIPNAME( 0x0c, 0x04, "Extended Play Score" )
+	PORT_DIPSETTING(    0x00, "3000/6000" )
+	PORT_DIPSETTING(    0x04, "4000/7000" )
+	PORT_DIPSETTING(    0x08, "5000/8000" )
+	PORT_DIPSETTING(    0x0c, "6000/9000" )
+	PORT_DIPNAME( 0x30, 0x10, "Extended Play Time" )
+	PORT_DIPSETTING(    0x00, "none" )
+	PORT_DIPSETTING(    0x10, "20s" )
+	PORT_DIPSETTING(    0x20, "40s" )
+	PORT_DIPSETTING(    0x30, "60s" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
 	8,8,							/* 8*8 characters */
@@ -374,6 +571,7 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 							/* every char takes 8 bytes */
 };
+
 
 static struct GfxLayout spritelayout =
 {
@@ -388,36 +586,38 @@ static struct GfxLayout spritelayout =
 	16*2*8							/* every sprite takes 32 bytes */
 };
 
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,	 0, 4 },		/* character generator */
-	{ REGION_GFX2, 0, &spritelayout, 0, 4 },		/* sprite prom 1 */
-	{ REGION_GFX3, 0, &spritelayout, 0, 4 },		/* sprite prom 2 */
-	{ REGION_GFX4, 0, &spritelayout, 0, 4 },		/* sprite prom 3 (unused) */
-	{ REGION_GFX5, 0, &spritelayout, 0, 4 },		/* sprite prom 4 (unused) */
+	{ REGION_GFX1, 0, &charlayout,	 0, 1 },		/* character generator */
+	{ REGION_GFX2, 0, &spritelayout, 0, 1 },		/* sprite prom 1 */
+	{ REGION_GFX3, 0, &spritelayout, 0, 1 },		/* sprite prom 2 */
+	{ REGION_GFX4, 0, &spritelayout, 0, 1 },		/* sprite prom 3 (unused) */
+	{ REGION_GFX5, 0, &spritelayout, 0, 1 },		/* sprite prom 4 (unused) */
 	{ -1 } /* end of array */
 };
 
-#define ARTWORK_COLORS (2 + 32768)
 
-static unsigned short colortable_source[ARTWORK_COLORS] =
+static struct GfxDecodeInfo minferno_gfxdecodeinfo[] =
 {
-	0,0,
-	0,1,
+	{ REGION_GFX1, 0, &charlayout,   0, 4 },
+	{ -1 } /* end of array */
 };
-static PALETTE_INIT( meadows )
-{
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
-	memcpy(colortable,colortable_source,sizeof(colortable_source));
-}
 
+
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct DACinterface dac_interface =
 {
 	1,
 	{ 100 }
 };
+
 
 static struct CustomSound_interface custom_interface =
 {
@@ -428,10 +628,16 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static MACHINE_DRIVER_START( deadeye )
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( meadows )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
 
@@ -445,15 +651,14 @@ static MACHINE_DRIVER_START( deadeye )
 	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
-	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
-	
+	MDRV_PALETTE_LENGTH(2)
+
 	MDRV_PALETTE_INIT(meadows)
-	MDRV_VIDEO_START(deadeye)
+	MDRV_VIDEO_START(meadows)
 	MDRV_VIDEO_UPDATE(meadows)
 
 	/* sound hardware */
@@ -462,44 +667,38 @@ static MACHINE_DRIVER_START( deadeye )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( gypsyjug )
+static MACHINE_DRIVER_START( minferno )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
-
-	MDRV_CPU_ADD(S2650, 625000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 	/* 5MHz / 8 = 625 kHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PERIODIC_INT(sound_interrupt,38)	/* 5000000/131072 interrupts per frame */
+	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_MEMORY(minferno_readmem,minferno_writemem)
+	MDRV_CPU_PORTS(minferno_readport,0)
+	MDRV_CPU_VBLANK_INT(minferno_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10)
+	MDRV_VBLANK_DURATION(0)		/* VBLANK is defined by visible area */
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
-	MDRV_SCREEN_SIZE(32*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
-	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
-	
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 24*8-1)
+	MDRV_GFXDECODE(minferno_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+
 	MDRV_PALETTE_INIT(meadows)
-	MDRV_VIDEO_START(gypsyjug)
+	MDRV_VIDEO_START(meadows)
 	MDRV_VIDEO_UPDATE(meadows)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( deadeye )
 	ROM_REGION( 0x08000, REGION_CPU1, 0 ) 	/* 32K for code */
@@ -527,6 +726,7 @@ ROM_START( deadeye )
 	ROM_REGION( 0x08000, REGION_CPU2, 0 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "de_snd",       0x0000, 0x0400, 0xc10a1b1a )
 ROM_END
+
 
 ROM_START( gypsyjug )
 	ROM_REGION( 0x08000, REGION_CPU1, 0 ) 	/* 32K for code */
@@ -558,16 +758,44 @@ ROM_START( gypsyjug )
 ROM_END
 
 
+ROM_START( minferno )
+	ROM_REGION( 0x08000, REGION_CPU1, ROMREGION_INVERT )	/* 32K for code */
+	ROM_LOAD_NIB_LOW ( "inferno.f5",	0x0000, 0x0400, 0x58472a73 )
+	ROM_LOAD_NIB_HIGH( "inferno.e5",	0x0000, 0x0400, 0x451942af )
+	ROM_LOAD_NIB_LOW ( "inferno.f6",	0x0400, 0x0400, 0xd85a195b )
+	ROM_LOAD_NIB_HIGH( "inferno.e6",	0x0400, 0x0400, 0x788ccfac )
+	ROM_LOAD_NIB_LOW ( "inferno.f7",	0x0800, 0x0400, 0x73b4e9a3 )
+	ROM_LOAD_NIB_HIGH( "inferno.e7",	0x0800, 0x0400, 0x902d9b78 )
+
+	ROM_REGION( 0x00400, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "inferno.b8",		0x0200, 0x0200, 0x1b06466b )
+ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( deadeye )
+{
+	artwork_set_overlay(deadeye_overlay);
+}
+
 
 /* A fake for the missing ball sprites #3 and #4 */
 static DRIVER_INIT( gypsyjug )
 {
-int i;
-static unsigned char ball[16*2] = {
-	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
-	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
-	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
-	0x01,0x80, 0x03,0xc0, 0x03,0xc0, 0x01,0x80};
+	static unsigned char ball[16*2] =
+	{
+		0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+		0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+		0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+		0x01,0x80, 0x03,0xc0, 0x03,0xc0, 0x01,0x80
+	};
+	int i;
 
 	memcpy(memory_region(REGION_GFX3),memory_region(REGION_GFX2),memory_region_length(REGION_GFX3));
 
@@ -576,9 +804,32 @@ static unsigned char ball[16*2] = {
 		memcpy(memory_region(REGION_GFX4) + i, ball, sizeof(ball));
 		memcpy(memory_region(REGION_GFX5) + i, ball, sizeof(ball));
 	}
+
+	artwork_set_overlay(gypsyjug_overlay);
+}
+
+
+/* A fake for inverting the data bus */
+static DRIVER_INIT( minferno )
+{
+	int i, length;
+	unsigned char *mem;
+
+	/* Create an inverted copy of the graphics data */
+	mem = memory_region(REGION_GFX1);
+	length = memory_region_length(REGION_GFX1);
+	for (i = 0; i < length/2; i++)
+		mem[i] = ~mem[i + length/2];
 }
 
 
 
-GAME( 1978, deadeye,  0, deadeye,  meadows, 0,        ROT0, "Meadows", "Dead Eye" )
-GAME( 1978, gypsyjug, 0, gypsyjug, meadows, gypsyjug, ROT0, "Meadows", "Gypsy Juggler" )
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1978, deadeye,  0, meadows,  meadows,  deadeye,  ROT0, "Meadows", "Dead Eye" )
+GAME( 1978, gypsyjug, 0, meadows,  meadows,  gypsyjug, ROT0, "Meadows", "Gypsy Juggler" )
+GAME( 1978, minferno, 0, minferno, minferno, minferno, ROT0, "Meadows", "Inferno (S2650)" )

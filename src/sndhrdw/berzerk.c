@@ -17,8 +17,49 @@
  */
 
 #include "driver.h"
-#include <math.h>
+#include "includes/berzerk.h"
 
+
+static const char *sample_names[] =
+{
+	"*berzerk", /* universal samples directory */
+	"",
+	"01.wav", // "kill"
+	"02.wav", // "attack"
+	"03.wav", // "charge"
+	"04.wav", // "got"
+	"05.wav", // "to"
+	"06.wav", // "get"
+	"",
+	"08.wav", // "alert"
+	"09.wav", // "detected"
+	"10.wav", // "the"
+	"11.wav", // "in"
+	"12.wav", // "it"
+	"",
+	"",
+	"15.wav", // "humanoid"
+	"16.wav", // "coins"
+	"17.wav", // "pocket"
+	"18.wav", // "intruder"
+	"",
+	"20.wav", // "escape"
+	"21.wav", // "destroy"
+	"22.wav", // "must"
+	"23.wav", // "not"
+	"24.wav", // "chicken"
+	"25.wav", // "fight"
+	"26.wav", // "like"
+	"27.wav", // "a"
+	"28.wav", // "robot"
+	"",
+	"30.wav", // player fire
+	"31.wav", // baddie fire
+	"32.wav", // kill baddie
+	"33.wav", // kill human (real)
+	"34.wav", // kill human (cheat)
+	0	/* end of array */
+};
 
 
 #define VOICE_PITCH_MODULATION	/* remove this to disable voice pitch modulation */
@@ -37,22 +78,19 @@
 #define DEATH_CHANNEL 6    /* special channel for fake death sound only */
 
 /* berzerk sound */
-int lastfreq = 0;
-int lastnoise = 0;
-int lastvoice = 0;
-int lastdata = 0;
+static int lastfreq = 0;
+static int lastnoise = 0;
+static int lastvoice = 0;
 
 /* sound controls */
-int berzerknoisemulate = 0;
-int samplereset = 0;
-int voicevolume = 100;
-long samplefrequency = 22320;
-extern int berzerkplayvoice; /* works in parallel with the read function in machine.c */
-extern int collision;
-int deathsound = 0;          /* trigger for playing collision sound */
-int nextdata5 = -1;
+static int berzerknoisemulate = 0;
+static int voicevolume = 100;
+static long samplefrequency = 22320;
+static int voice_playing;
+static int deathsound = 0;          /* trigger for playing collision sound */
+static int nextdata5 = -1;
 
-int berzerk_sh_start(const struct MachineSound *msound)
+static int berzerk_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
@@ -87,7 +125,7 @@ WRITE_HANDLER( berzerk_sound_control_a_w )
 		if ((data & 0x40) == 0)
 		{
 			voice = data;
-			berzerkplayvoice = 0;
+			voice_playing = 0;
 		}
 		else
 		{
@@ -254,9 +292,33 @@ WRITE_HANDLER( berzerk_sound_control_b_w )
 	logerror("B Data value %d and offset %d at %d\n", data, offset, lastfreq);
 }
 
-void berzerk_sh_update(void)
+static void berzerk_sh_update(void)
 {
-	berzerkplayvoice = !sample_playing(VOICE_CHANNEL);
+	voice_playing = !sample_playing(VOICE_CHANNEL);
 	if (deathsound==3 && sample_playing(DEATH_CHANNEL) == 0 && lastnoise != 70)
 		deathsound=0;               /* reset death sound */
 }
+
+
+READ_HANDLER( berzerk_voiceboard_r )
+{
+   if (!voice_playing)
+      return 0x00;
+   else
+      return 0x40;
+}
+
+
+struct Samplesinterface berzerk_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	sample_names
+};
+
+struct CustomSound_interface berzerk_custom_interface =
+{
+	berzerk_sh_start,
+	0,
+	berzerk_sh_update
+};

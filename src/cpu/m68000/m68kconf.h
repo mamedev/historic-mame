@@ -47,10 +47,8 @@
 #define M68K_COMPILE_FOR_MAME      OPT_ON
 #endif /* M68K_COMPILE_FOR_MAME */
 
-#if M68K_COMPILE_FOR_MAME == OPT_ON
-#include "m68kmame.h"
-#else
 
+#if M68K_COMPILE_FOR_MAME == OPT_OFF
 
 
 /* ======================================================================== */
@@ -135,7 +133,7 @@
 
 /* If ON, the CPU will generate address error exceptions if it tries to
  * access a word or longword at an odd address.
- * NOTE: Do not enable this!  It is not working!
+ * NOTE: This is only emulated properly for 68000 mode.
  */
 #define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
 

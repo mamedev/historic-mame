@@ -50,6 +50,8 @@ static int scrolld[2][4][2] = {
 
 VIDEO_START( asterix )
 {
+	K053251_vh_start();
+
 	K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, asterix_tile_callback);
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER, asterix_sprite_callback))
 		return 1;
@@ -75,38 +77,17 @@ static void sortlayers(int *layer,int *pri)
 VIDEO_UPDATE( asterix )
 {
 	int layer[3];
-	int new_base;
 
 	tilebanks[0] = (K054157_get_lookup(0) << 10);
 	tilebanks[1] = (K054157_get_lookup(1) << 10);
 	tilebanks[2] = (K054157_get_lookup(2) << 10);
 	tilebanks[3] = (K054157_get_lookup(3) << 10);
 
-	new_base = K053251_get_palette_index(K053251_CI0);
-	if(layer_colorbase[0] != new_base) {
-		layer_colorbase[0] = new_base;
-		K054157_mark_plane_dirty(0);
-	}
-
-	new_base = K053251_get_palette_index(K053251_CI2);
-	if(layer_colorbase[1] != new_base) {
-		layer_colorbase[1] = new_base;
-		K054157_mark_plane_dirty(1);
-	}
-
-	new_base = K053251_get_palette_index(K053251_CI3);
-	if(layer_colorbase[2] != new_base) {
-		layer_colorbase[2] = new_base;
-		K054157_mark_plane_dirty(2);
-	}
-
-	new_base = K053251_get_palette_index(K053251_CI4);
-	if(layer_colorbase[3] != new_base) {
-		layer_colorbase[3] = new_base;
-		K054157_mark_plane_dirty(3);
-	}
-
-	sprite_colorbase = K053251_get_palette_index(K053251_CI1);
+	layer_colorbase[0] = K053251_get_palette_index(K053251_CI0);
+	layer_colorbase[1] = K053251_get_palette_index(K053251_CI2);
+	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
+	layer_colorbase[3] = K053251_get_palette_index(K053251_CI4);
+	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
 
 	K054157_tilemap_update();
 

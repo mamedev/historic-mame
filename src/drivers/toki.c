@@ -31,6 +31,7 @@ extern data16_t *toki_scrollram16;
 INTERRUPT_GEN( toki_interrupt );
 VIDEO_START( toki );
 VIDEO_EOF( toki );
+VIDEO_EOF( tokib );
 VIDEO_UPDATE( toki );
 VIDEO_UPDATE( tokib );
 WRITE16_HANDLER( toki_background1_videoram16_w );
@@ -507,7 +508,7 @@ static MACHINE_DRIVER_START( tokib )
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(toki)
-	MDRV_VIDEO_EOF(toki)
+	MDRV_VIDEO_EOF(tokib)
 	MDRV_VIDEO_UPDATE(tokib)
 
 	/* sound hardware */

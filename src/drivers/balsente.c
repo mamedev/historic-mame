@@ -33,7 +33,7 @@
 		* Euro Stocker
 		* Team Hat Trick
 		* Trivial Pursuit (Spanish)
-	
+
 	Known bugs:
 		* CEM3394 emulation is not perfect
 		* Shrike Avenger doesn't work properly
@@ -297,9 +297,9 @@ MEMORY_END
 
 #define PLAYER1_CROSSHAIRS \
 	PORT_START				/* fake analog X */\
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )\
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X, 50, 10, 0, 255 )\
 	PORT_START				/* fake analog Y */\
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y, 70, 10, 0, 255 )
 
 
 INPUT_PORTS_START( sentetst )
@@ -1526,28 +1526,28 @@ static MACHINE_DRIVER_START( balsente )
 	MDRV_CPU_ADD(M6809, 5000000/4)
 	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(balsente_update_analog_inputs,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
 	MDRV_MACHINE_INIT(balsente)
 	MDRV_NVRAM_HANDLER(generic_0fill)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(256, 240)
 	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_PALETTE_LENGTH(1024)
-	
+
 	MDRV_VIDEO_START(balsente)
 	MDRV_VIDEO_UPDATE(balsente)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(CEM3394, cem_interface)
 MACHINE_DRIVER_END
@@ -1557,12 +1557,12 @@ static MACHINE_DRIVER_START( shrike )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(balsente)
-	
+
 	MDRV_CPU_ADD(M68000, 8000000)
 	MDRV_CPU_MEMORY(readmem_shrike68k,writemem_shrike68k)
-	
+
 	MDRV_INTERLEAVE(100)
-	
+
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(1025)
 MACHINE_DRIVER_END

@@ -183,6 +183,42 @@ VIDEO_UPDATE( shangkid )
 
 
 
+PALETTE_INIT( dynamski )
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int r,g,b;
+
+		r = (color_prom[32 + i] >> 1) & 0x1f;
+		g = ((color_prom[32 + i] >> 6) & 0x03) | ((color_prom[i] << 2) & 0x1c);
+		b = (color_prom[i] >> 3) & 0x1f;
+
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
+	}
+
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
+
+	/* sprites */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = color_prom[i] & 0x0f;
+	color_prom += 0x100;
+
+	/* characters */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = (color_prom[i] & 0x0f) + 0x10;
+}
+
+
 static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
 	int i;
@@ -228,7 +264,7 @@ static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct r
 				bitmap,
 				Machine->gfx[0],
 				tile,
-				0, /* color */
+				attr & 0x0f,
 				0,0,//xflip,yflip,
 				sx,sy,
 				cliprect,

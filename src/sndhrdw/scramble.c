@@ -104,7 +104,8 @@ READ_HANDLER( frogger_portB_r )
 WRITE_HANDLER( scramble_sh_irqtrigger_w )
 {
 	/* the complement of bit 3 is connected to the flip-flop's clock */
-	TTL7474_set_inputs(0, -1, -1, ~data & 0x08, -1);
+	TTL7474_clock_w(0, ~data & 0x08);
+	TTL7474_update(0);
 
 	/* bit 4 is sound disable */
 	mixer_sound_enable_global_w(~data & 0x10);
@@ -113,7 +114,8 @@ WRITE_HANDLER( scramble_sh_irqtrigger_w )
 WRITE_HANDLER( froggrmc_sh_irqtrigger_w )
 {
 	/* the complement of bit 0 is connected to the flip-flop's clock */
-	TTL7474_set_inputs(0, -1, -1, ~data & 0x01, -1);
+	TTL7474_clock_w(0, ~data & 0x01);
+	TTL7474_update(0);
 }
 
 
@@ -122,8 +124,11 @@ static int scramble_sh_irq_callback(int irqline)
 	/* interrupt acknowledge clears the flip-flop --
 	   we need to pulse the CLR line because MAME's core never clears this
 	   line, only asserts it */
-	TTL7474_set_inputs(0, 1, -1, -1, -1);
-	TTL7474_set_inputs(0, 0, -1, -1, -1);
+	TTL7474_clear_w(0, 0);
+	TTL7474_update(0);
+
+	TTL7474_clear_w(0, 1);
+	TTL7474_update(0);
 
 	return 0xff;
 }
@@ -182,5 +187,5 @@ void scramble_sh_init(void)
 	TTL7474_config(0, &scramble_sh_7474_intf);
 
 	/* PR is always 0, D is always 1 */
-	TTL7474_set_inputs(0, 0, 0, -1, 1);
+	TTL7474_d_w(0, 1);
 }

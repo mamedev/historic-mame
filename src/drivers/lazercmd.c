@@ -221,6 +221,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/lazercmd.h"
 #include "cpu/s2650/s2650.h"
@@ -419,6 +420,27 @@ static READ_HANDLER( lazercmd_hardware_r )
 	}
 	return data;
 }
+
+
+/*************************************************************
+ *
+ * Video overlay
+ *
+ *************************************************************/
+
+#define JADE	MAKE_ARGB(0x04,0x2e,0xff,0x2e)
+#define MUSTARD MAKE_ARGB(0x04,0xff,0xb9,0x2e)
+
+OVERLAY_START( lazercmd_overlay )
+	OVERLAY_RECT(  0*HORZ_CHR,  0*VERT_CHR, 16*HORZ_CHR,  1*VERT_CHR, MUSTARD )
+	OVERLAY_RECT( 16*HORZ_CHR,  0*VERT_CHR, 32*HORZ_CHR,  1*VERT_CHR, JADE )
+	OVERLAY_RECT(  0*HORZ_CHR,  1*VERT_CHR, 16*HORZ_CHR, 22*VERT_CHR, JADE )
+	OVERLAY_RECT( 16*HORZ_CHR,  1*VERT_CHR, 32*HORZ_CHR, 22*VERT_CHR, MUSTARD )
+	OVERLAY_RECT(  0*HORZ_CHR, 22*VERT_CHR, 16*HORZ_CHR, 23*VERT_CHR, MUSTARD )
+	OVERLAY_RECT( 16*HORZ_CHR, 22*VERT_CHR, 32*HORZ_CHR, 23*VERT_CHR, JADE )
+OVERLAY_END
+
+
 
 static MEMORY_WRITE_START( lazercmd_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
@@ -662,12 +684,12 @@ static MACHINE_DRIVER_START( lazercmd )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
 	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
 						0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_PALETTE_LENGTH(3)
 	MDRV_COLORTABLE_LENGTH(2*2)
 
 	MDRV_PALETTE_INIT(lazercmd)
@@ -695,12 +717,12 @@ static MACHINE_DRIVER_START( medlanes )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
 	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
 						 0 * VERT_CHR, VERT_RES * VERT_CHR - 1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_PALETTE_LENGTH(3)
 	MDRV_COLORTABLE_LENGTH(2*2)
 
 	MDRV_VIDEO_START(lazercmd)
@@ -727,12 +749,12 @@ static MACHINE_DRIVER_START( bbonk )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
 	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
 						0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_PALETTE_LENGTH(3)
 	MDRV_COLORTABLE_LENGTH(2*2)
 
 	MDRV_PALETTE_INIT(lazercmd)
@@ -795,6 +817,8 @@ ROM_END
 DRIVER_INIT( lazercmd )
 {
 int i, y;
+
+	artwork_set_overlay(lazercmd_overlay);
 
 /******************************************************************
  * The ROMs are 1K x 4 bit, so we have to mix

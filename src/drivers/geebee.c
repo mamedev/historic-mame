@@ -67,6 +67,7 @@
  ****************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 /* from machine/geebee.c */
@@ -90,6 +91,36 @@ WRITE_HANDLER( geebee_sound_w );
 extern int geebee_sh_start(const struct MachineSound *msound);
 extern void geebee_sh_stop(void);
 extern void geebee_sh_update(void);
+
+
+/*******************************************************
+ *
+ * Gee Bee overlay
+ *
+ *******************************************************/
+
+#define PINK1	MAKE_ARGB(0x04,0xa0,0x00,0xe0)
+#define PINK2 	MAKE_ARGB(0x04,0xe0,0x00,0xf0)
+#define ORANGE	MAKE_ARGB(0x04,0xff,0xd0,0x00)
+#define BLUE	MAKE_ARGB(0x04,0x00,0x00,0xff)
+
+OVERLAY_START( geebee_overlay )
+	OVERLAY_RECT(  1*8,  0*8,  4*8, 28*8, PINK2 )
+	OVERLAY_RECT(  4*8,  0*8,  5*8,  4*8, PINK1 )
+	OVERLAY_RECT(  4*8, 24*8,  5*8, 28*8, PINK1 )
+	OVERLAY_RECT(  4*8,  4*8,  5*8, 24*8, ORANGE )
+	OVERLAY_RECT(  5*8,  0*8, 28*8,  1*8, PINK1 )
+	OVERLAY_RECT(  5*8, 27*8, 28*8, 28*8, PINK1 )
+	OVERLAY_RECT(  5*8,  1*8, 28*8,  4*8, BLUE )
+	OVERLAY_RECT(  5*8, 24*8, 28*8, 27*8, BLUE )
+	OVERLAY_RECT( 12*8, 13*8, 13*8, 15*8, BLUE )
+	OVERLAY_RECT( 21*8, 10*8, 23*8, 12*8, BLUE )
+	OVERLAY_RECT( 21*8, 16*8, 23*8, 18*8, BLUE )
+	OVERLAY_RECT( 28*8,  0*8, 29*8, 28*8, PINK2 )
+	OVERLAY_RECT( 29*8,  0*8, 32*8, 28*8, PINK1 )
+OVERLAY_END
+
+
 
 /*******************************************************
  *
@@ -449,8 +480,8 @@ static MACHINE_DRIVER_START( geebee )
 	MDRV_SCREEN_SIZE(34*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_1k)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
-	MDRV_COLORTABLE_LENGTH(4*2)		
+	MDRV_PALETTE_LENGTH(3)
+	MDRV_COLORTABLE_LENGTH(4*2)
 
 	MDRV_PALETTE_INIT(geebee)
 	MDRV_VIDEO_START(geebee)
@@ -477,8 +508,8 @@ static MACHINE_DRIVER_START( navalone )
 	MDRV_SCREEN_SIZE(34*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_2k)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
-	MDRV_COLORTABLE_LENGTH(4*2)		
+	MDRV_PALETTE_LENGTH(3)
+	MDRV_COLORTABLE_LENGTH(4*2)
 
 	MDRV_PALETTE_INIT(navalone)
 	MDRV_VIDEO_START(navalone)
@@ -505,8 +536,8 @@ static MACHINE_DRIVER_START( kaitei )
 	MDRV_SCREEN_SIZE(34*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_2k)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
-	MDRV_COLORTABLE_LENGTH(4*2)		
+	MDRV_PALETTE_LENGTH(3)
+	MDRV_COLORTABLE_LENGTH(4*2)
 
 	MDRV_PALETTE_INIT(navalone)
 	MDRV_VIDEO_START(kaitei)
@@ -533,8 +564,8 @@ static MACHINE_DRIVER_START( sos )
 	MDRV_SCREEN_SIZE(34*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_2k)
-	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
-	MDRV_COLORTABLE_LENGTH(4*2)		
+	MDRV_PALETTE_LENGTH(3)
+	MDRV_COLORTABLE_LENGTH(4*2)
 
 	MDRV_PALETTE_INIT(navalone)
 	MDRV_VIDEO_START(sos)
@@ -592,10 +623,17 @@ ROM_START( sos )
 ROM_END
 
 
-GAME ( 1978, geebee,   0,        geebee,   geebee,   0, ROT90, "Namco", "Gee Bee" )
-GAME ( 1978, geebeeg,  geebee,	 geebee,   geebee,   0, ROT90, "[Namco] (Gremlin license)", "Gee Bee (Gremlin)" )
-GAMEX( 1980, navalone, 0,        navalone, navalone, 0, ROT90, "Namco", "Navalone", GAME_IMPERFECT_SOUND )
-GAME ( 1980, kaitei,   0,        kaitei,   kaitei,   0, ROT90, "K.K. Tokki", "Kaitei Takara Sagashi" )
-GAME ( 1980, kaitein,  kaitei,	 kaitei,   kaitein,  0, ROT90, "Namco", "Kaitei Takara Sagashi (Namco)" )
-GAMEX( 1980, sos,	   0,        sos,      sos,      0, ROT90, "Namco", "SOS", GAME_IMPERFECT_SOUND )
+
+static DRIVER_INIT( geebee )
+{
+	artwork_set_overlay(geebee_overlay);
+}
+
+
+GAME ( 1978, geebee,   0,        geebee,   geebee,   geebee, ROT90, "Namco", "Gee Bee" )
+GAME ( 1978, geebeeg,  geebee,	 geebee,   geebee,   geebee, ROT90, "[Namco] (Gremlin license)", "Gee Bee (Gremlin)" )
+GAMEX( 1980, navalone, 0,        navalone, navalone, 0,      ROT90, "Namco", "Navalone", GAME_IMPERFECT_SOUND )
+GAME ( 1980, kaitei,   0,        kaitei,   kaitei,   0,      ROT90, "K.K. Tokki", "Kaitei Takara Sagashi" )
+GAME ( 1980, kaitein,  kaitei,	 kaitei,   kaitein,  0,      ROT90, "Namco", "Kaitei Takara Sagashi (Namco)" )
+GAMEX( 1980, sos,	   0,        sos,      sos,      0,      ROT90, "Namco", "SOS", GAME_IMPERFECT_SOUND )
 

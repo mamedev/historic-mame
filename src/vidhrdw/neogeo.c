@@ -70,7 +70,8 @@ static int fix_bank;
 
 extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
-extern int neogeo_game_fix;
+
+int neogeo_fix_bank_type;
 
 
 /*
@@ -400,6 +401,7 @@ VIDEO_UPDATE( neogeo )
 	int sx =0,sy =0,my =0,zx = 0x0f, zy = 0xff;
 	int offs,count;
 	int tileno,tileatr,t1,t2,t3;
+	char fullmode = 0;
 	void **line=bitmap->line;
 	unsigned int *pen_usage;
 	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
@@ -443,16 +445,22 @@ profiler_mark(PROFILER_VIDEO);
 
 			/* Number of tiles in this strip */
 			my = t1 & 0x3f;
-#if 0
-			if (my == 0x20) fullmode = 1;
-			else if (my >= 0x21) fullmode = 2;	/* most games use 0x21, but */
-												/* Alpha Mission II uses 0x3f */
-			else fullmode = 0;
-#endif
 
 			sy = 0x200 - (t1 >> 7);
 
-			if (my > 0x20) my=0x20;
+			if (my > 0x20)
+			{
+				my = 0x20;
+
+				if (sy < 248)
+					fullmode = 1;
+				else
+					/* kludge to avoid a white line in KOF94 Japan stage... */
+					/* probably indication of a subtle bug somewhere else */
+					fullmode = 0;
+			}
+			else
+				fullmode = 0;
 		}
 
 		/* No point doing anything if tile strip is 0 */
@@ -484,7 +492,7 @@ profiler_mark(PROFILER_VIDEO);
 					zoom_line ^= 0xff;
 					invert = 1;
 				}
-				if (my == 0x20)	/* fix for joyjoy, trally... */
+				if (fullmode)	/* fix for joyjoy, trally... */
 				{
 					if (zy)
 					{

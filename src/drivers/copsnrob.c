@@ -54,6 +54,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "artwork.h"
 #include "copsnrob.h"
 
 
@@ -64,17 +65,25 @@
  *
  *************************************/
 
-static unsigned short colortable_source[] =
-{
-	0x00, 0x01
-};
-
 static PALETTE_INIT( copsnrob )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* black */
 	palette_set_color(1,0xff,0xff,0xff);  /* white */
-	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
+
+
+
+/*************************************
+ *
+ *	Video overlay
+ *
+ *************************************/
+
+OVERLAY_START( copsnrob_overlay )
+	OVERLAY_RECT(   0,   0,  72, 208, MAKE_ARGB(0x04,0x40,0x40,0xc0) )
+	OVERLAY_RECT(  72,   0, 188, 208, MAKE_ARGB(0x04,0xf0,0xf0,0x30) )
+	OVERLAY_RECT( 188,   0, 256, 208, MAKE_ARGB(0x04,0xbd,0x9b,0x13) )
+OVERLAY_END
 
 
 
@@ -257,11 +266,9 @@ static MACHINE_DRIVER_START( copsnrob )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 26*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2+32768)
-	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(copsnrob)
-	MDRV_VIDEO_START(copsnrob)
 	MDRV_VIDEO_UPDATE(copsnrob)
 MACHINE_DRIVER_END
 
@@ -308,8 +315,21 @@ ROM_END
 
 /*************************************
  *
+ *	Driver init
+ *
+ *************************************/
+
+static DRIVER_INIT( copsnrob )
+{
+	artwork_set_overlay(copsnrob_overlay);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
 
-GAMEX( 1976, copsnrob, 0, copsnrob, copsnrob, 0, ROT0, "Atari", "Cops'n Robbers", GAME_NO_SOUND )
+GAMEX( 1976, copsnrob, 0, copsnrob, copsnrob, copsnrob, ROT0, "Atari", "Cops'n Robbers", GAME_NO_SOUND )

@@ -633,6 +633,19 @@ MACHINE_INIT( phantom2 )
 
 /*******************************************************/
 /*                                                     */
+/* Midway "4 Player Bowling Alley"					   */
+/*                                                     */
+/*******************************************************/
+
+MACHINE_INIT( bowler )
+{
+	install_port_write_handler(0, 0x04, 0x04, watchdog_reset_w);
+	install_port_write_handler(0, 0x07, 0x07, bowler_bonus_display_w);
+}
+
+
+/*******************************************************/
+/*                                                     */
 /* Midway "Sea Wolf"                                   */
 /*                                                     */
 /*******************************************************/

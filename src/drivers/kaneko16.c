@@ -31,6 +31,8 @@ Year + Game					PCB			Notes
 	Blaze On							2 Sprites Chips !?
 	Sand Scorpion (by Face)				MCU protection (collision detection etc.)
 	Shogun Warriors						MCU protection (68k code snippets, NOT WORKING)
+    B.Rap Boys                          MCU protection (not working, game can be
+                                                        run on a shoggwar board ok)
 94	Great 1000 Miles Rally				MCU protection (EEPROM handling etc.)
 95	Great 1000 Miles Rally 2			MCU protection (EEPROM handling etc.)
 ---------------------------------------------------------------------------
@@ -3110,10 +3112,6 @@ ROMs   :  (filename is ROM Label, extension is PCB 'u' location)
 
 ***************************************************************************/
 
-/* Change to 1 if you want to use the GFX ROM from 'gtmr' to see the "alphabet"
-   (but the 3 first cars will have a wrong display) */
-#define USE_GTMR_GFX_ROM	0
-
 ROM_START( gtmr2 )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
 	ROM_LOAD16_BYTE( "m2p0x1.u8",  0x000000, 0x080000, 0x525f6618 )
@@ -3123,15 +3121,7 @@ ROM_START( gtmr2 )
 	ROM_LOAD( "m2d0x0.u31",        0x000000, 0x020000, 0x2e1a06ff )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	/* removing u49 from the real board gets rid of the startup text
-	   + car graphics, so its probably incomplete since the u49 we have
-	   doens't appear to contain all the needed sprites */
-	#if USE_GTMR_GFX_ROM
-	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, 0xc0ab3efc )
-	#else
-	ROM_FILL( 0, 0x200000, 0xff )	// missing data should be in u49?
-	#endif
-	ROM_LOAD( "m2-200-0.u49",      0x200000, 0x200000, BADCRC( 0xd50f9d80 ) )	// incomplete?
+	ROM_LOAD( "m2-200-0.u49",      0x000000, 0x400000, 0x93aafc53 )
 	ROM_LOAD( "m2-201-0.u50",      0x400000, 0x200000, 0x39b60a83 )
 	ROM_LOAD( "m2-202-0.u51",      0x600000, 0x200000, 0xfd06b339 )
 	ROM_LOAD16_BYTE( "m2s0x1.u32", 0x700000, 0x080000, 0x4069d6c7 )
@@ -3397,6 +3387,155 @@ DRIVER_INIT( shogwarr )
 */
 }
 
+/***************************************************************************
+
+								B.Rap Boys
+
+B.Rap Boys
+Kaneko, 1992
+
+Game is a beat-em up, where a bunch of rapping boys (The B.Rap Boys) beats
+up anyone and anything that gets in their way, smashing shop windows
+and other property with their fists, chairs, wooden bats and whatever else
+they can lay their hands on!
+
+
+Main PCB No: ZO1DK-002
+ROM PCB No:  ZO1DK-EXROM
+CPU: TMP68HC000N-12
+SND: OKI M6295 x 2
+OSC: 16.000MHz, 12.000MHz
+DIP: 1 x 8 POSITION
+SW1 - PCB location for 2 position DIP but location is unpopulated.
+SW2:
+
+					1	2	3	4	5	6	7	8
+SCREEN FLIP		NORMAL		OFF
+			FLIP		ON
+MODE			NORMAL			OFF
+			TEST			ON
+SWITCH TEST [1]		NO				OFF
+			YES				ON
+POSITION #4		NOT USED				OFF
+COIN TYPE	 	LOCAL COIN					OFF
+			COMMON COIN					ON
+GAME TYPE		3 PLAYERS	 					OFF
+			2 PLAYERS						ON
+DIFFICULTY [2]		EASY								ON	OFF
+			NORMAL								OFF	OFF
+			HARD								OFF	ON
+			VERY HARD							ON	ON
+
+[1] This additional test becomes available in test mode when this DIP is ON.
+[2] Additional settings available in test mode via another on-screen menu.
+Some text is written in Japanese. See scan in archive for details.
+
+Control is via 8 Way Joystick and 2 buttons
+
+There are two extra pin connectors near the JAMMA connector.
+Pinouts are....
+
+(A)
+10 3P START SW
+ 9 3P COIN SW
+ 8 3P BUTTON 2
+ 7 3P BUTTON 1
+ 6 3P UP
+ 5 3P DOWN
+ 4 3P LEFT
+ 3 3P RIGHT
+ 2 GND
+ 1 GND
+
+(B)
+6 COIN COUNTER 3
+5 COIN LOCKOUT 3
+4 TOTAL COIN COUNTER
+3 NC
+2 NC
+1 NC
+
+RAM:
+M5M4464 x 6, M51257AL x 2, KM6264BLS x 2, D42101C x 2, LH5116D x 2, CAT71C256 x 2
+
+OTHER:
+93C46 (8 PIN DIP, EEPROM, LINKED TO RB-006.U33)
+KANEKO JAPAN 9152EV 175101 (160 PIN PQFP)
+KANEKO VIEW2-CHIP (144 PIN PQFP)
+KANEKO MUX2-CHIP (64 PIN PQFP)
+KANEKO CALC3 508 (74 PIN PQFP, MCU, LINKED TO RB-006.U33)
+KANEKO JAPAN 9204 T (44 PIN PQFP)
+PALs (x 11, read protected, not dumped)
+
+ROMs:
+RB-004.U61	27C010	  \     Main program
+RB-005.U62	27C010    /
+
+RB-000.U43	2M mask	  \
+RB-001.U44	4M mask	   |    Located near main program and OKI M6295 chips
+RB-002.U45	4M mask	   |    Possibly sound related / OKI Samples etc..
+RB-003.101	4M mask	  /
+
+RB-006.U33	27C010	  	MCU program? (Linked to CALC3 508)
+
+RB-010.U65	8M mask   \
+RB-011.U66	8M mask	   |    GFX
+RB-012.U67	8M mask    |
+RB-013.U68	8M mask   /
+
+RB-021.U76	4M mask   \
+RB-022.U77	4M mask    |
+RB-023.U78	4M mask	   |	GFX (located under a plug-in ROM PCB)
+RB-024.U79	4M mask   /
+
+RB-020.U2	4M mask   \
+RB-025.U4	27C040	   |	GFX (located on a plug-in ROM PCB)
+RB-026.U5	27C040    /
+
+More info reqd? Problems with the archive? Email me....
+theguru@emuunlim.com
+
+-----
+
+Game can be ROM Swapped onto a Shogun Warriors board and works
+
+***************************************************************************/
+
+ROM_START( brapboys )
+ 	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "rb-004.u61", 0x000000, 0x020000, 0x5432442c )
+	ROM_LOAD16_BYTE( "rb-005.u62", 0x000001, 0x020000, 0x118b3cfb )
+
+ 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code */
+	ROM_LOAD( "rb-006.u33",  0x000000, 0x020000, 0xf1d76b20 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	/* order is probably wrong, but until it does more we can't tell */
+	ROM_LOAD( "rb-020.u2",  0x000000, 0x080000, 0xb038440e )
+	ROM_LOAD( "rb-025.u4",  0x080000, 0x080000, 0xaa795ba5 )
+	ROM_LOAD( "rb-026.u5",  0x100000, 0x080000, 0xbb7604d4 )
+
+	ROM_LOAD( "rb-021.u76", 0x200000, 0x080000, 0xb7e2d362 )
+	ROM_LOAD( "rb-022.u77", 0x280000, 0x080000, 0x8d40c97a ) // right pos. (text)
+	ROM_LOAD( "rb-023.u78", 0x300000, 0x080000, 0xdcf11c8d )
+	ROM_LOAD( "rb-024.u79", 0x380000, 0x080000, 0x65fa6447 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "rb-010.u65",  0x000000, 0x100000, 0xffd73f87 )
+	ROM_LOAD( "rb-011.u66",  0x100000, 0x100000, 0xd9325f78 )
+	ROM_LOAD( "rb-012.u67",  0x200000, 0x100000, 0xbfdbe0d1 ) // same as shoggwar
+	ROM_LOAD( "rb-013.u68",  0x300000, 0x100000, 0x28c37fe8 ) // same as shoggwar
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	/* order is probably wrong, but until it does more we can't tell */
+	ROM_LOAD( "rb-003.101",  0x000000, 0x080000, 0x2cac25d7 )
+	ROM_LOAD( "rb-000.u43",  0x080000, 0x040000, 0xc7c848ac )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
+	/* order is probably wrong, but until it does more we can't tell */
+	ROM_LOAD( "rb-001.u44",   0x000000, 0x080000, 0x09c779e3 )
+	ROM_LOAD( "rb-002.u45",   0x080000, 0x080000, 0x55de7003 )
+ROM_END
 
 /***************************************************************************
 
@@ -3420,7 +3559,8 @@ GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "
 
 /* Non-working games (mainly due to incomplete dumps) */
 
-GAMEX(1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally", GAME_NOT_WORKING )
+GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally" )
 
 GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, 0,        ROT90,      "Kaneko", "Bakuretsu Breaker",         GAME_NOT_WORKING  )
 GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors",           GAME_NOT_WORKING  )
+GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,       "Kaneko", "B.Rap Boys",                GAME_NOT_WORKING  )

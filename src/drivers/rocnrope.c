@@ -314,12 +314,14 @@ ROM_END
 
 static DRIVER_INIT( rocnrope )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
-
 	konami1_decode();
-	rom[0x703d + diff] = 0x98;	/* fix one instruction */
+
+	{
+		unsigned char *rom = memory_region(REGION_CPU1);
+		int diff = memory_region_length(REGION_CPU1) / 2;
+
+		rom[0x703d + diff] = 0x98;	/* fix one instruction */
+	}
 }
 
 static DRIVER_INIT( rocnropk )

@@ -1848,6 +1848,88 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+								Storm Blade
+***************************************************************************/
+
+INPUT_PORTS_START( stmblade )
+	PORT_START	// IN0 - $210002
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Rapid Fire" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN1 - $210004
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0030, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0040, "600000" )
+	PORT_DIPSETTING(      0x0000, "800000" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_START	// IN2 - $210008
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	// IN3 - $21000a
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	// IN4 - $21000c
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 10 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 10 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+INPUT_PORTS_END
+
+
+/***************************************************************************
 
 
 							Graphics Layouts
@@ -1982,6 +2064,9 @@ DRIVER_INIT( sxyreact )	{	hypreac2_init();	// different
 DRIVER_INIT( twineag2 )	{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
+DRIVER_INIT( stmblade )	{	init_ssv();
+								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
 
 
 static MACHINE_DRIVER_START( ssv )
@@ -2034,7 +2119,7 @@ static MACHINE_DRIVER_START( hypreact )
 	MDRV_CPU_MEMORY(hypreact_readmem, hypreact_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
+	MDRV_VISIBLE_AREA(8, 0x148-1, 16, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -2169,6 +2254,20 @@ static MACHINE_DRIVER_START( twineag2 )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( stmblade )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_16MHz)
+	MDRV_CPU_MEMORY(drifto94_readmem, drifto94_writemem)
+
+	MDRV_NVRAM_HANDLER(ssv)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -2780,6 +2879,51 @@ ROM_START( twineag2 )
 ROM_END
 
 
+/***************************************************************************
+
+								Storm Blade
+CPU  : NEC D70615GD-16-S (V60)
+Sound: Ensoniq ES5506 (OTTOR2)
+
+
+Rom board  001B
+SSV mother board
+
+U37, U33 = 27c040
+U22, U41, U35, U25, U21, U11, U7  = 16 MEG MASK ROMS
+U32, U18, U4 = 4 MEG MASK ROMS
+U26 = 8 MEG MASK ROM
+
+There is a battery on the rom board @ BT1 (battery # CR2032 - 3 volts)
+
+***************************************************************************/
+
+
+ROM_START( stmblade )
+	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_WORD( "sb-pd0.u26",  0x000000, 0x100000, 0x91c4fbf7 )
+	ROM_LOAD16_BYTE( "s-blade.u37", 0x200000, 0x080000, 0xa6a42cc7 )
+	ROM_RELOAD(                     0x300000, 0x080000             )
+	ROM_LOAD16_BYTE( "s-blade.u33", 0x200001, 0x080000, 0x16104ca6 )
+	ROM_RELOAD(                     0x300001, 0x080000             )
+
+	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "sb-a0.u41", 0x0000000, 0x200000, 0x2a327b51 )
+	ROM_LOAD( "sb-a1.u35", 0x0200000, 0x200000, 0x246f6f28 )
+	ROM_LOAD( "sb-a2.u32", 0x0400000, 0x080000, 0x2049acf3 )
+	ROM_LOAD( "sb-b0.u25", 0x0600000, 0x200000, 0xb3aa3e68 )
+	ROM_LOAD( "sb-b1.u21", 0x0800000, 0x200000, 0xe95b38e7 )
+	ROM_LOAD( "sb-b2.u18", 0x0a00000, 0x080000, 0xd080e620 )
+	ROM_LOAD( "sb-c0.u11", 0x0c00000, 0x200000, 0x825dd8f1 )
+	ROM_LOAD( "sb-c1.u7",  0x0e00000, 0x200000, 0x744afcd7 )
+	ROM_LOAD( "sb-c2.u4",  0x1000000, 0x080000, 0xfd1d2a92 )
+	ROM_FILL(              0x1200000, 0x600000, 0          )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_BYTE( "sb-snd0.u22", 0x000000, 0x200000, 0x4efd605b )
+ROM_END
+
+
 
 /***************************************************************************
 
@@ -2791,24 +2935,24 @@ ROM_END
 
 //     year   rom       clone     machine   inputs    init      monitor manufacturer          title                                           flags
 
-GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",               GAME_NO_COCKTAIL )
+GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
+
 GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy (American)",   "Survival Arts (USA)",                          GAME_NO_COCKTAIL )
-GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",       GAME_NO_COCKTAIL )
-GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",  GAME_NO_COCKTAIL )
+GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",               GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                         GAME_NO_COCKTAIL )
 GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",             GAME_NO_COCKTAIL )
+GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",               GAME_NO_COCKTAIL )
+
+GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",       GAME_NO_COCKTAIL )
+GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",  GAME_NO_COCKTAIL )
 GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                       GAME_NO_COCKTAIL )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryorioh CooKing (Japan)",  GAME_NO_COCKTAIL )
-GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",               GAME_NO_COCKTAIL )
 
 // Games not working properly:
 
-// Breaks at the end of the first match (unimplemented BCD opcode at F0763E: 59 E0 80 81 00)
-GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",               GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-// Breaks at the end of the first match (unimplemented BCD opcode at F23BF0)
-GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",               GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-// Sometimes gets stuck in an infinite loop at F013FA during play
-GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                             GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 
 // Games not working at all:
 

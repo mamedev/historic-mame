@@ -1,6 +1,7 @@
 /*----------------------------------------------------------------
    Psikyo SH-2 Based Systems
-   driver by David Haywood
+   driver by David Haywood (+ Paul Priest)
+   thanks to Farfetch'd for information about the sprite zoom table.
 ------------------------------------------------------------------
 
 Moving on from the 68020 based system used for the first Strikers
@@ -23,6 +24,10 @@ There appear to be multiple revisions of this board
  Lode Runner - The Dig Fight (c)2000
  Quiz de Idol Hot Debut (c)2001 *not confirmed*
 
+ The PS4 board appears to be a cheaper board, with only simple sprites, no bgs,
+ smaller palette etc, probably only 8bpp sprites too.
+ Supports dual-screen though.
+
  Board PS5 (Custom Chip PS6406B)
  -------------------------------
  Gunbird 2 (c)1998
@@ -40,35 +45,80 @@ YMF278B-F (80 pin PQFP) & YAC513 (16 pin SOIC)
 
 To Do:
 
-Gunbird 2 has some bad tiles on levels 5 and 7.
-Bad tiles are between 0x30000 - 0x33000.
-Either 3l.u6 or 3h.u13 is bad.
-
-Backgrounds (I think its the ram after the sprite ram .. ) *started*
+Backgrounds
   - see notes in vidhrdw file-
 
 Sound (Sound Chip Isn't Emulated)
 
-Investigate why other games don't work.  *different custom chip, different features?*
-they might be waiting on some register at the end of sprite ram ..
+Improve PS4 games, why doesn't the 2nd hot gimmick game boot?
+Sprite List format not 100% understood.
 
 Strikers 1945 II hangs on one of the bosses sometimes, core bug?
-or something to do with unknown / incorrectly handled reads?
-
-are sprite colours 100% now? black clouds in one level of sbomberb, maybe alpha, yep alpha.
-See small submarines on sea level of Strikers.
+Maybe the other Hot Gimmick Game not booting is a core bug too?
 
 Getting the priorities right is a pain ;)
 
-We probably need some addition type blend effect which the mame core doesn't support
 
-Fixed:
+*-----------------------------------*
+|         Tips and Tricks           |
+*-----------------------------------*
 
-Games Hang when Saving EEProm (verify code) *done*
-Sprite Zoom *done* -Paul Priest
-Gunbird 2 crashes after inserting a coin if the eeprom test pass *fixed*
-Find Idle Loops for Speed Up *done*
-why does s1945ii boot as japan when the board was world? eeprom value? *done* -Paul Priest
+Hold PL1 Button 1 and Test Mode button to get Maintenance mode for:
+
+Space Bomber (Stage Select with choice of ships, BG Test)
+Strikers 1945 II (Stage Select - buggy!, BG Test)
+Sol Divide (Stage Select)
+Daraku (Obj Test, Obj Dump etc.)
+(this works for earlier Psikyo games as well)
+
+--- Space Bomber ---
+Keywords, what are these for???, you earn them when you complete the game
+th
+different points.:
+
+DOG-1
+CAT-2
+BUTA-3
+KAME-4
+IKA-5
+RABBIT-6
+FROG-7
+TAKO-8
+
+--- Lode Runner: The Dig Fight ---
+Maintenance Code:
+5-0-8-2-0
+
+   Stage Select
+    - You can have a proper single-screen battle using this
+   Obj Dump
+   Obj Test
+   Map Editor
+    -How does this work?
+   Program Test
+   Sequence Test
+   Game Adjustment
+    -You can switch the game to English temporarily.
+
+Or use this cheat:
+:loderndf:00000000:0600A533:00000001:FFFFFFFF:Language = English
+
+--- Gunbird 2 ---
+Maintenance Codes:
+5-3-5-7-3 All Data Initialised
+5-3-7-6-5 Sit an AINE Flag1
+   Displays "AINE ?" at test
+5-1-0-2-4 Sit an AINE Flag2
+   Displays "AINE OK" at test
+5-3-1-5-7 AINE Flag Cancelled
+   Clears AINE message
+
+5-2-0-4-8 Maintenace Mode
+   Stage Select (Loads of cool stuff here)
+   Obj Test
+   BG Test
+   Play Status
+   Stage Status
 
 ----------------------------------------------------------------*/
 
@@ -80,17 +130,10 @@ why does s1945ii boot as japan when the board was world? eeprom value? *done* -P
 #include "cpu/sh2/sh2.h"
 #include "machine/eeprom.h"
 
-#define MASTER_CLOCK 57272700	// main oscillator frequency
+#include "psikyosh.h"
 
-data32_t *psikyosh_bgram, *psikyosh_unknownram2, *psikyosh_vidregs, *psh_ram;
-int psikyosh_drawbg;
-
-int use_factory_eeprom;
 static data8_t factory_eeprom[16] =	{0x00,0x02,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00 };
-
-VIDEO_START( psikyosh );
-VIDEO_EOF( psikyosh );
-VIDEO_UPDATE( psikyosh );
+int use_factory_eeprom;
 
 static struct GfxLayout layout_16x16x4 =
 {
@@ -179,7 +222,33 @@ static READ32_HANDLER( psh_eeprom_r )
 {
 	if (ACCESSING_MSB32)
 	{
-		return ((EEPROM_read_bit() << 28) | (readinputport(4) << 24));
+		return ((EEPROM_read_bit() << 28) | (readinputport(4) << 24)); /* EEPROM | Region */
+	}
+
+	logerror("Unk EEPROM read mask %x\n", mem_mask);
+
+	return 0;
+}
+
+static WRITE32_HANDLER( ps4_eeprom_w )
+{
+	if (ACCESSING_MSW32)
+	{
+		EEPROM_write_bit((data & 0x00200000) ? 1 : 0);
+		EEPROM_set_cs_line((data & 0x00800000) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x00400000) ? ASSERT_LINE : CLEAR_LINE);
+
+		return;
+	}
+
+	logerror("Unk EEPROM write %x mask %x\n", data, mem_mask);
+}
+
+static READ32_HANDLER( ps4_eeprom_r )
+{
+	if (ACCESSING_MSW32)
+	{
+		return ((EEPROM_read_bit() << 20)); /* EEPROM */
 	}
 
 	logerror("Unk EEPROM read mask %x\n", mem_mask);
@@ -189,15 +258,58 @@ static READ32_HANDLER( psh_eeprom_r )
 
 static INTERRUPT_GEN(psikyosh_interrupt)
 {
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 static READ32_HANDLER(io32_r)
 {
-	return ((readinputport(0) << 24) |  (readinputport(1) << 16) | (readinputport(2) << 8) | (readinputport(3) << 0));
+	return ((readinputport(0) << 24) | (readinputport(1) << 16) | (readinputport(2) << 8) | (readinputport(3) << 0));
 }
 
-static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
+static READ32_HANDLER(ps4_io32_1_r) /* used by hotgmck for Screen1 */
+{
+	switch ((ps4_io_select[0] & 0x0000ff00) >> 8)
+	{
+		case 0x00:
+		case 0x01:
+			return ((readinputport(0) << 24) | (readinputport(4) << 0));
+		case 0x02:
+			return ((readinputport(1) << 24) | (readinputport(4) << 0));
+		case 0x04:
+			return ((readinputport(2) << 24) | (readinputport(4) << 0));
+		case 0x08:
+			return ((readinputport(3) << 24) | (readinputport(4) << 0));
+	}
+	return 0;
+}
+
+static READ32_HANDLER(ps4_io32_2_r) /* used by hotgmck for Screen2 */
+{
+	switch ((ps4_io_select[0] & 0x0000ff00) >> 8)
+	{
+		case 0x01:
+			return (readinputport(5) << 24);
+		case 0x02:
+			return (readinputport(6) << 24);
+		case 0x04:
+			return (readinputport(7) << 24);
+		case 0x08:
+			return (readinputport(8) << 24);
+	}
+	return 0;
+}
+
+static READ32_HANDLER(loderndf_io32_1_r) /* used by loderndf for Screen1 */
+{
+	return ((readinputport(0) << 24) | (readinputport(1) << 16) | (readinputport(2) << 8) | (readinputport(3) << 0));
+}
+
+static READ32_HANDLER(loderndf_io32_2_r) /* used by loderndf for Screen2 */
+{
+	return ((readinputport(4) << 24) | (readinputport(5) << 16) | (readinputport(6) << 8) | (readinputport(7) << 0));
+}
+
+static WRITE32_HANDLER( paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w )
 {
 	int r,g,b;
 	COMBINE_DATA(&paletteram32[offset]); /* is this ok .. */
@@ -208,6 +320,86 @@ static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 
 	palette_set_color(offset,r,g,b);
 }
+
+static WRITE32_HANDLER( ps4_paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&paletteram32[offset]);
+
+	b = ((paletteram32[offset] & 0x0000ff00) >>8);
+	g = ((paletteram32[offset] & 0x00ff0000) >>16);
+	r = ((paletteram32[offset] & 0xff000000) >>24);
+
+	palette_set_color(offset,r,g,b);
+	palette_set_color(offset+0x800,r,g,b); // For screen 2
+}
+
+static WRITE32_HANDLER( ps4_bgpen_1_dword_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&bgpen_1[0]);
+
+	b = ((bgpen_1[0] & 0x0000ff00) >>8);
+	g = ((bgpen_1[0] & 0x00ff0000) >>16);
+	r = ((bgpen_1[0] & 0xff000000) >>24);
+
+	palette_set_color(0x1000,r,g,b); // Clear colour for screen 1
+}
+
+static WRITE32_HANDLER( ps4_bgpen_2_dword_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&bgpen_2[0]);
+
+	b = ((bgpen_2[0] & 0x0000ff00) >>8);
+	g = ((bgpen_2[0] & 0x00ff0000) >>16);
+	r = ((bgpen_2[0] & 0xff000000) >>24);
+
+	palette_set_color(0x1001,r,g,b); // Clear colour for screen 2
+}
+
+static WRITE32_HANDLER( ps4_screen1_brt_w )
+{
+	if(ACCESSING_LSB32) {
+		/* Need seperate brightness for both screens if displaying together */
+		int i;
+		double brt1 = (0xff - (data & 0xff)) / 255.0;
+		static double oldbrt1;
+
+		if (oldbrt1 != brt1)
+		{
+			for (i = 0; i < 0x800; i++)
+				palette_set_brightness(i,brt1);
+
+			oldbrt1 = brt1;
+		}
+	} else {
+		logerror("Unk Scr 1 brt write %x mask %x\n", data, mem_mask);
+	}
+}
+
+static WRITE32_HANDLER( ps4_screen2_brt_w )
+{
+	if(ACCESSING_LSB32) {
+		/* Need seperate brightness for both screens if displaying together */
+		int i;
+		double brt2 = (0xff - (data & 0xff)) / 255.0;
+		static double oldbrt2;
+
+		if (oldbrt2 != brt2)
+		{
+			for (i = 0x800; i < 0x1000; i++)
+				palette_set_brightness(i,brt2);
+
+			oldbrt2 = brt2;
+		}
+	} else {
+		logerror("Unk Scr 2 brt write %x mask %x\n", data, mem_mask);
+	}
+}
+
+
+#if SOUND_HOLDERS
 
 static READ32_HANDLER( psh_ymf_fm_r )
 {
@@ -253,6 +445,7 @@ static WRITE32_HANDLER( psh_ymf_pcm_w )
 		logerror("PCM: write %x to register %x\n", data>>16, pcm_adr);
 	}
 }
+#endif
 
 static MEMORY_READ32_START( ps3v1_readmem )
 	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
@@ -263,7 +456,11 @@ static MEMORY_READ32_START( ps3v1_readmem )
 	{ 0x03050000, 0x030501ff, MRA32_RAM },
 //	{ 0x0305ffdc, 0x0305ffdf, MRA32_RAM }, // also writes to this address - might be vblank reads?
 	{ 0x0305ffe0, 0x0305ffff, MRA32_RAM }, //  video registers .. or so it seems, needed by s1945ii
+#if SOUND_HOLDERS
 	{ 0x05000000, 0x05000003, psh_ymf_fm_r }, // read YMF status
+#else
+	{ 0x05000000, 0x05000003, MRA32_NOP }, // read YMF status
+#endif
 	{ 0x05800000, 0x05800003, io32_r },
 	{ 0x05800004, 0x05800007, psh_eeprom_r },
 	{ 0x06000000, 0x060fffff, MRA32_RAM },	// main RAM (1 meg)
@@ -274,13 +471,75 @@ static MEMORY_WRITE32_START( ps3v1_writemem )
 	{ 0x02000000, 0x021fffff, MWA32_ROM }, // data ROM */
 	{ 0x03000000, 0x03003fff, MWA32_RAM, &spriteram32, &spriteram_size },	// sprites (might be a bit longer)
 	{ 0x03004000, 0x0300ffff, MWA32_RAM, &psikyosh_bgram }, // backgrounds I think
-	{ 0x03040000, 0x03044fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 }, // palette..
-	{ 0x03050000, 0x030501ff, MWA32_RAM, &psikyosh_unknownram2 }, // a gradient sometimes ...
+	{ 0x03040000, 0x03044fff, paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w, &paletteram32 }, // palette..
+	{ 0x03050000, 0x030501ff, MWA32_RAM, &psikyosh_zoomram }, // a gradient sometimes ...
 //	{ 0x0305ffdc, 0x0305ffdf, MWA32_RAM }, // also reads from this address
-	{ 0x0305ffe0, 0x0305ffff, MWA32_RAM, &psikyosh_vidregs }, //  video registers .. or so it seems
+	{ 0x0305ffe0, 0x0305ffff, MWA32_RAM, &psikyosh_vidregs }, //  video registers
+#if SOUND_HOLDERS
 	{ 0x05000000, 0x05000003, psh_ymf_fm_w }, // first 2 OPL4 register banks
 	{ 0x05000004, 0x05000007, psh_ymf_pcm_w }, // third OPL4 register bank
+#else
+	{ 0x05000000, 0x05000003, MWA32_NOP }, // first 2 OPL4 register banks
+	{ 0x05000004, 0x05000007, MWA32_NOP }, // third OPL4 register bank
+#endif
 	{ 0x05800004, 0x05800007, psh_eeprom_w },
+	{ 0x06000000, 0x060fffff, MWA32_RAM, &psh_ram },	// work RAM
+MEMORY_END
+
+static MEMORY_READ32_START( ps4_readmem )
+	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
+	{ 0x02000000, 0x021fffff, MRA32_BANK1 }, // data ROM */
+	{ 0x03000000, 0x030037ff, MRA32_RAM },
+	{ 0x03003fe0, 0x03003fe3, ps4_eeprom_r },
+	{ 0x03003fe4, 0x03003fe7, MRA32_NOP }, // also writes to this address - might be vblank?
+//	{ 0x03003fe8, 0x03003fef, MRA32_RAM }, // vid regs?
+#if SOUND_HOLDERS
+	{ 0x05000000, 0x05000003, psh_ymf_fm_r }, // read YMF status
+#else
+	{ 0x05000000, 0x05000003, MRA32_NOP }, // read YMF status
+#endif
+	{ 0x05800000, 0x05800003, ps4_io32_1_r },
+	{ 0x05800004, 0x05800007, ps4_io32_2_r }, // Screen 2's Controls
+
+	{ 0x06000000, 0x060fffff, MRA32_RAM },	// main RAM (1 meg)
+MEMORY_END
+
+static MEMORY_READ32_START( loderndf_readmem )
+	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
+	{ 0x02000000, 0x021fffff, MRA32_BANK1 }, // data ROM */
+	{ 0x03000000, 0x030037ff, MRA32_RAM },
+	{ 0x03003fe0, 0x03003fe3, ps4_eeprom_r },
+	{ 0x03003fe4, 0x03003fe7, MRA32_NOP }, // also writes to this address - might be vblank?
+//	{ 0x03003fe8, 0x03003fef, MRA32_RAM }, // vid regs?
+#if SOUND_HOLDERS
+	{ 0x05000000, 0x05000003, psh_ymf_fm_r }, // read YMF status
+#else
+	{ 0x05000000, 0x05000003, MRA32_NOP }, // read YMF status
+#endif
+	{ 0x05800000, 0x05800003, loderndf_io32_1_r },
+	{ 0x05800004, 0x05800007, loderndf_io32_2_r }, // Screen 2's Controls
+	{ 0x06000000, 0x060fffff, MRA32_RAM },	// main RAM (1 meg)
+MEMORY_END
+
+static MEMORY_WRITE32_START( ps4_writemem )
+	{ 0x00000000, 0x000fffff, MWA32_ROM },	// program ROM (1 meg)
+	{ 0x03000000, 0x030037ff, MWA32_RAM, &spriteram32, &spriteram_size },
+	{ 0x03003fe0, 0x03003fe3, ps4_eeprom_w },
+//	{ 0x03003fe4, 0x03003fe7, MWA32_NOP }, // might be vblank?
+	{ 0x03003fe4, 0x03003fef, MWA32_RAM, &psikyosh_vidregs }, // vid regs?
+	{ 0x03003ff0, 0x03003ff3, ps4_screen1_brt_w }, // screen 1 brightness
+	{ 0x03003ff4, 0x03003ff7, ps4_bgpen_1_dword_w, &bgpen_1 }, // screen 1 clear colour
+	{ 0x03003ff8, 0x03003ffb, ps4_screen2_brt_w }, // screen 2 brightness
+	{ 0x03003ffc, 0x03003fff, ps4_bgpen_2_dword_w, &bgpen_2 }, // screen 2 clear colour
+	{ 0x03004000, 0x03005fff, ps4_paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w, &paletteram32 }, // palette..
+#if SOUND_HOLDERS
+	{ 0x05000000, 0x05000003, psh_ymf_fm_w }, // first 2 OPL4 register banks
+	{ 0x05000004, 0x05000007, psh_ymf_pcm_w }, // third OPL4 register bank
+#else
+	{ 0x05000000, 0x05000003, MWA32_NOP }, // first 2 OPL4 register banks
+	{ 0x05000004, 0x05000007, MWA32_NOP }, // third OPL4 register bank
+#endif
+	{ 0x05800008, 0x0580000b, MWA32_RAM, &ps4_io_select }, // Used by Mahjong games to choose input
 	{ 0x06000000, 0x060fffff, MWA32_RAM, &psh_ram },	// work RAM
 MEMORY_END
 
@@ -288,24 +547,33 @@ static MEMORY_READ32_START( ps5_readmem )
 	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
 	{ 0x03000000, 0x03000003, io32_r },
 	{ 0x03000004, 0x03000007, psh_eeprom_r },
+#if SOUND_HOLDERS
 	{ 0x03100000, 0x03100003, psh_ymf_fm_r },
+#else
+	{ 0x03100000, 0x03100003, MRA32_NOP },
+#endif
 	{ 0x04000000, 0x04003fff, MRA32_RAM },
 	{ 0x04004000, 0x0400ffff, MRA32_RAM },
 	{ 0x04040000, 0x04044fff, MRA32_RAM },
 	{ 0x04050000, 0x040501ff, MRA32_RAM },
 	{ 0x05000000, 0x0507ffff, MRA32_BANK1 },
-	{ 0x0405ffe0, 0x0405ffff, MRA32_RAM }, //  video registers .. or so it seems
+	{ 0x0405ffe0, 0x0405ffff, MRA32_RAM }, //  video registers
 	{ 0x06000000, 0x060fffff, MRA32_RAM },
 MEMORY_END
 
 static MEMORY_WRITE32_START( ps5_writemem )
 	{ 0x03000004, 0x03000007, psh_eeprom_w },
+#if SOUND_HOLDERS
 	{ 0x03100000, 0x03100003, psh_ymf_fm_w }, // first 2 OPL4 register banks
 	{ 0x03100004, 0x03100007, psh_ymf_pcm_w }, // third OPL4 register bank
+#else
+	{ 0x03100000, 0x03100003, MWA32_NOP }, // first 2 OPL4 register banks
+	{ 0x03100004, 0x03100007, MWA32_NOP }, // third OPL4 register bank
+#endif
 	{ 0x04000000, 0x04003fff, MWA32_RAM, &spriteram32, &spriteram_size },
 	{ 0x04004000, 0x0400ffff, MWA32_RAM, &psikyosh_bgram },
-	{ 0x04040000, 0x04044fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 },
-	{ 0x04050000, 0x040501ff, MWA32_RAM, &psikyosh_unknownram2 },
+	{ 0x04040000, 0x04044fff, paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w, &paletteram32 },
+	{ 0x04050000, 0x040501ff, MWA32_RAM, &psikyosh_zoomram },
 	{ 0x0405ffe0, 0x0405ffff, MWA32_RAM, &psikyosh_vidregs }, //  video registers .. or so it seems
 	{ 0x06000000, 0x060fffff, MWA32_RAM, &psh_ram },
 MEMORY_END
@@ -318,6 +586,7 @@ static void irqhandler(int linestate)
 		cpu_set_irq_line(0, 12, CLEAR_LINE);
 }
 
+#if SOUND_HOLDERS
 static struct YM3812interface ym3812_interface =
 {
 	1,
@@ -325,9 +594,9 @@ static struct YM3812interface ym3812_interface =
 	{ 35 },
 	{ irqhandler },
 };
+#endif
 
 static MACHINE_DRIVER_START( psikyo3v1 )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", SH2, MASTER_CLOCK/2)
 	MDRV_CPU_MEMORY(ps3v1_readmem,ps3v1_writemem)
@@ -339,25 +608,74 @@ static MACHINE_DRIVER_START( psikyo3v1 )
 	MDRV_NVRAM_HANDLER(93C56)
 
 	/* video hardware */
-//	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT) /* If using alpha */
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	// more colours breaks mame? ...
-	MDRV_PALETTE_LENGTH((0x4000/4)*2)
+	MDRV_PALETTE_LENGTH(0x5000/4)
 
 	MDRV_VIDEO_START(psikyosh)
 	MDRV_VIDEO_EOF(psikyosh)
 	MDRV_VIDEO_UPDATE(psikyosh)
 
 	/* sound hardware */
+#if SOUND_HOLDERS
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+#endif
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( psikyo4 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", SH2, MASTER_CLOCK/2)
+	MDRV_CPU_MEMORY(ps4_readmem,ps4_writemem)
+	MDRV_CPU_VBLANK_INT(psikyosh_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(93C56)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR)
+#if DUAL_SCREEN
+	MDRV_ASPECT_RATIO(8,3)
+	MDRV_SCREEN_SIZE(80*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 80*8-1, 0, 28*8-1)
+#else
+	MDRV_ASPECT_RATIO(4,3)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 28*8-1)
+#endif
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH((0x2000/4)*2 + 2) /* 0x2000/4 for each screen. 1 for each screen clear colour */
+
+	MDRV_VIDEO_START(psikyo4)
+	MDRV_VIDEO_UPDATE(psikyo4)
+
+	/* sound hardware */
+#if SOUND_HOLDERS
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+#endif
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( loderndf )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(psikyo4)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(loderndf_readmem,ps4_writemem)
+
+#if DUAL_SCREEN
+	MDRV_VISIBLE_AREA(0, 80*8-1, 0, 30*8-1)
+#else
+	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 30*8-1)
+#endif
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( psikyo5 )
-
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(psikyo3v1)
 
@@ -365,8 +683,35 @@ static MACHINE_DRIVER_START( psikyo5 )
 	MDRV_CPU_MEMORY(ps5_readmem,ps5_writemem)
 MACHINE_DRIVER_END
 
+#define UNUSED_PORT \
+	PORT_START	/* not read? */ \
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
 INPUT_PORTS_START( psikyosh )
-	PORT_START	/* player 1 controls */
+	PORT_START	/* IN0 player 1 controls */
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1                       )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
@@ -376,7 +721,7 @@ INPUT_PORTS_START( psikyosh )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 
-	PORT_START	/* player 2 controls */
+	PORT_START	/* IN1 player 2 controls */
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2                       )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
@@ -386,34 +731,9 @@ INPUT_PORTS_START( psikyosh )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 
+	UNUSED_PORT /* IN2 unused? */
 
-	PORT_START	/* not read? */
-	PORT_DIPNAME( 0x01, 0x01, "3" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START	/* system inputs */
+	PORT_START	/* IN3 system inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
@@ -423,14 +743,14 @@ INPUT_PORTS_START( psikyosh )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN     )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 
-	PORT_START /* fake region */
+	PORT_START /* IN4 fake region */
 	PORT_DIPNAME( 0x01, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gunbird2 )
-	PORT_START	/* player 1 controls */
+	PORT_START	/* IN0 player 1 controls */
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1                       )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
@@ -440,7 +760,7 @@ INPUT_PORTS_START( gunbird2 )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 
-	PORT_START	/* player 2 controls */
+	PORT_START	/* IN1 player 2 controls */
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2                       )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
@@ -450,34 +770,9 @@ INPUT_PORTS_START( gunbird2 )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 
+	UNUSED_PORT /* IN2 unused? */
 
-	PORT_START	/* not read? */
-	PORT_DIPNAME( 0x01, 0x01, "3" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START	/* system inputs */
+	PORT_START	/* IN3 system inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
@@ -487,7 +782,7 @@ INPUT_PORTS_START( gunbird2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 
-	PORT_START /* fake region */
+	PORT_START /* IN4 fake region */
 	PORT_DIPNAME( 0x03, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "International Ver A." )
@@ -495,51 +790,220 @@ INPUT_PORTS_START( gunbird2 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( daraku )
-    PORT_START /* player 1 controls */
-    PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1                       )
-    PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
-    PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
-    PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
-    PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-    PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
-    PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_START /* IN0 player 1 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1                       )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 
-    PORT_START /* player 2 controls */
-    PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2                       )
-    PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
-    PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
-    PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
-    PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-    PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-    PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_START /* IN1 player 2 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2                       )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 
-    PORT_START  /* more controls */
-    PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
-    PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
-    PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
-    PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
-    PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_START  /* IN2 more controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
 
-    PORT_START /* system inputs */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-    PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_START /* IN3 system inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 
-	PORT_START /* fake region */
+	PORT_START /* IN4 fake region */
 	PORT_DIPNAME( 0x01, 0x00, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" ) /* Title screen is different, but English region text is missing */
 INPUT_PORTS_END
+
+INPUT_PORTS_START( loderndf )
+	PORT_START	/* IN0 player 1 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 ) // Can be used as Retry button
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN1 player 2 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 ) // Can be used as Retry button
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	UNUSED_PORT /* IN2 unused? */
+
+	PORT_START /* IN3 system inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    ) // Screen 1
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    ) // Screen 1 - 2nd slot
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN3    ) // Screen 2
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN4    ) // Screen 2 - 2nd slot
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 ) // Screen 1
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_SERVICE2 ) // Screen 2
+
+	PORT_START	/* IN4 player 1 controls on second screen */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER3 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER3 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER3 ) // Can be used as Retry button
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START3 )
+
+	PORT_START	/* IN5 player 2 controls on second screen */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER4 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER4 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER4 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER4 ) // Can be used as Retry button
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START4 )
+
+	UNUSED_PORT /* IN6 unused? */
+
+	UNUSED_PORT /* IN7 unused? */
+
+#if !DUAL_SCREEN
+	UNUSED_PORT /* IN8 dummy, to pad below to IN9 */
+	PORT_START /* IN9 fake port for screen switching */
+	PORT_BITX(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select PL1+PL2 Screen", KEYCODE_MINUS, IP_JOY_NONE )
+	PORT_BITX(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select PL3+PL4 Screen", KEYCODE_EQUALS, IP_JOY_NONE )
+	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+#endif
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hotgmck )
+	PORT_START	/* IN0 fake player 1 controls 1st bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 A",     KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 E",     KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 I",     KEYCODE_I,        IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P1 M",     KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 Kan",   KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 fake player 1 controls 2nd bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 B",     KEYCODE_B,        IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 F",     KEYCODE_F,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 J",     KEYCODE_J,        IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P1 N",     KEYCODE_N,        IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 Reach", KEYCODE_LSHIFT,   IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 fake player 1 controls 3rd bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 C",     KEYCODE_C,        IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 G",     KEYCODE_G,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 K",     KEYCODE_K,        IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P1 Chi",   KEYCODE_SPACE,    IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 Ron",   KEYCODE_Z,        IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 fake player 1 controls 4th bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 D",     KEYCODE_D,        IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 H",     KEYCODE_H,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 L",     KEYCODE_L,        IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P1 Pon",   KEYCODE_LALT,     IP_JOY_NONE )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* IN4 system inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    ) // Screen 1
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN2    ) // Screen 2
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 ) // Screen 1
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_SERVICE2 ) // Screen 2
+
+	PORT_START	/* IN5 fake player 2 controls 1st bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 A",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P2 E",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P2 I",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P2 M",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 Kan",   IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN6 fake player 2 controls 2nd bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 B",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P2 F",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P2 J",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P2 N",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 Reach", IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN7 fake player 2 controls 3rd bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 C",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P2 G",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P2 K",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P2 Chi",   IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 Ron",   IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN8 fake player 2 controls 4th bank */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 D",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P2 H",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P2 L",     IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "P2 Pon",   IP_KEY_DEFAULT,   IP_JOY_NONE )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+#if !DUAL_SCREEN
+	PORT_START /* IN9 fake port for screen switching */
+	PORT_BITX(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select PL1 Screen", KEYCODE_MINUS, IP_JOY_NONE )
+	PORT_BITX(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select PL2 Screen", KEYCODE_EQUALS, IP_JOY_NONE )
+	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+#endif
+INPUT_PORTS_END
+
+
 
 
 ROM_START( sbomberb )
@@ -569,15 +1033,15 @@ ROM_START( gunbird2 )
 	ROM_LOAD32_WORD_SWAP( "1_prog_h.u17", 0x000000, 0x080000, 0x7328d8bf )
 	ROM_LOAD16_WORD_SWAP( "3_pdata.u1",   0x100000, 0x080000, 0xa5b697e6 )
 
-	ROM_REGION( 0x4000000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x3800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD32_WORD( "0l.u3",  0x0000000, 0x800000, 0x5c826bc8 )
 	ROM_LOAD32_WORD( "0h.u10", 0x0000002, 0x800000, 0x3df0cb6c )
 	ROM_LOAD32_WORD( "1l.u4",  0x1000000, 0x800000, 0x8df0c310 )
 	ROM_LOAD32_WORD( "1h.u11", 0x1000002, 0x800000, 0x4ee0103b )
 	ROM_LOAD32_WORD( "2l.u5",  0x2000000, 0x800000, 0xe1c7a7b8 )
 	ROM_LOAD32_WORD( "2h.u12", 0x2000002, 0x800000, 0xbc8a41df )
-	ROM_LOAD32_WORD( "3l.u6",  0x3000000, 0x800000, BADCRC(0x5102f479) ) // FIRST AND SECOND HALF IDENTICAL
-	ROM_LOAD32_WORD( "3h.u13", 0x3000002, 0x800000, 0xaf9bd58c )
+	ROM_LOAD32_WORD( "3l.u6",  0x3000000, 0x400000, 0x0229d37f )
+	ROM_LOAD32_WORD( "3h.u13", 0x3000002, 0x400000, 0xf41bbf2b )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "sound.u9", 0x000000, 0x400000, 0xf19796ab )
@@ -653,11 +1117,11 @@ ROM_END
 
 ROM_START( hgkairak )
 	ROM_REGION( 0x300000, REGION_CPU1, 0)
-	ROM_LOAD32_WORD_SWAP( "2.u23", 0x000002, 0x080000, 0x1c1a034d )
-	ROM_LOAD32_WORD_SWAP( "1.u22", 0x000000, 0x080000, 0x24b04aa2 )
-	ROM_LOAD16_WORD_SWAP( "prog.u1",  0x100000, 0x100000, 0x83cff542 )
+	ROM_LOAD32_WORD_SWAP( "2.u23",   0x000002, 0x080000, 0x1c1a034d )
+	ROM_LOAD32_WORD_SWAP( "1.u22",   0x000000, 0x080000, 0x24b04aa2 )
+	ROM_LOAD16_WORD_SWAP( "prog.u1", 0x100000, 0x100000, 0x83cff542 )
 
-	ROM_REGION( 0x3400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x3000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x400000, 0xf7472212 )
 	ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x400000, 0x30019d0f )
 	ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, 0xf46d5002 )
@@ -723,7 +1187,7 @@ PC  : 0609FC70: MOV.L   @R3,R0  // whats there into r0
 PC  : 0609FC72: TST     R0,R0 // test
 PC  : 0609FC74: BT      $0609FC68
 */
-	if (activecpu_get_pc()==0x609fc6a) cpu_spinuntil_int(); // Title Screens
+	if (activecpu_get_pc()==0x609FC6A) cpu_spinuntil_int(); // Title Screens
 	if (activecpu_get_pc()==0x609FED4) cpu_spinuntil_int(); // In Game
 	if (activecpu_get_pc()==0x60A0172) cpu_spinuntil_int(); // Attract Demo
 	return psh_ram[0x00000C/4];
@@ -796,32 +1260,44 @@ PC  : 0602897E: BT      $06028972
 	return psh_ram[0x04000C/4];
 }
 
+static READ32_HANDLER( loderndf_speedup_r )
+{
+/*
+PC  :00001B3C: MOV.L   @R14,R3  R14 = 0x6000020
+PC  :00001B3E: ADD     #$01,R3
+PC  :00001B40: MOV.L   R3,@R14
+PC  :00001B42: MOV.L   @($54,PC),R1
+PC  :00001B44: MOV.L   @R1,R2
+PC  :00001B46: TST     R2,R2
+PC  :00001B48: BT      $00001B3C
+*/
+
+	if (activecpu_get_pc()==0x00001B3E) cpu_spinuntil_int();
+	return psh_ram[0x000020/4];
+}
+
 static DRIVER_INIT( psh )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
-	psikyosh_drawbg=0;
 	use_factory_eeprom=0;
 }
 
 static DRIVER_INIT( s1945ii )
 {
-	install_mem_read32_handler(0, 0x600000C, 0x600000f, s1945ii_speedup_r );
-	psikyosh_drawbg=1;
+	install_mem_read32_handler(0, 0x600000C, 0x600000F, s1945ii_speedup_r );
 	use_factory_eeprom=1;
 }
 
 static DRIVER_INIT( soldivid )
 {
-	install_mem_read32_handler(0, 0x600000C, 0x600000f, soldivid_speedup_r );
-	psikyosh_drawbg=1;
+	install_mem_read32_handler(0, 0x600000C, 0x600000F, soldivid_speedup_r );
 	use_factory_eeprom=0;
 }
 
 static DRIVER_INIT( sbomberb )
 {
-	install_mem_read32_handler(0, 0x600000C, 0x600000f, sbomberb_speedup_r );
-	psikyosh_drawbg=1;
+	install_mem_read32_handler(0, 0x600000C, 0x600000F, sbomberb_speedup_r );
 	use_factory_eeprom=1;
 }
 
@@ -829,8 +1305,7 @@ static DRIVER_INIT( daraku )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
-	install_mem_read32_handler(0, 0x600000C, 0x600000f, daraku_speedup_r );
-	psikyosh_drawbg=1;
+	install_mem_read32_handler(0, 0x600000C, 0x600000F, daraku_speedup_r );
 	use_factory_eeprom=0;
 }
 
@@ -838,10 +1313,16 @@ static DRIVER_INIT( gunbird2 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
-	install_mem_read32_handler(0, 0x604000C, 0x604000f, gunbird2_speedup_r );
-	psikyosh_drawbg=1;
+	install_mem_read32_handler(0, 0x604000C, 0x604000F, gunbird2_speedup_r );
 	use_factory_eeprom=1;
 }
+
+static DRIVER_INIT( loderndf )
+{
+	install_mem_read32_handler(0, 0x6000020, 0x6000023, loderndf_speedup_r );
+}
+
+/*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
 GAMEX( 1997, s1945ii,  0,        psikyo3v1, psikyosh, s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
@@ -850,9 +1331,9 @@ GAMEX( 1998, sbomberb, 0,        psikyo3v1, psikyosh, sbomberb, ROT270, "Psikyo"
 GAMEX( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* ps4 */
-GAMEX( 1997, hotgmck,  0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_NOT_WORKING )
-GAMEX( 1998, hgkairak, 0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_NOT_WORKING )
-GAMEX( 2000, loderndf, 0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B)  (Japan)", GAME_NOT_WORKING )
+GAMEX( 1997, hotgmck,  0,        psikyo4,   hotgmck,  psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_NOT_WORKING )
+GAMEX( 1998, hgkairak, 0,        psikyo4,   hotgmck,  psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_NOT_WORKING )
+GAMEX( 2000, loderndf, 0,        loderndf,  loderndf, loderndf, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B) (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* ps5 */
 GAMEX( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

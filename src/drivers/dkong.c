@@ -336,9 +336,6 @@ MEMORY_END
 
 static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_ROM },
 	{ 0x1400, 0x1400, input_port_0_r },		/* IN0 */
 	{ 0x1480, 0x1480, input_port_1_r },		/* IN1 */
 	{ 0x1500, 0x1500, input_port_2_r },		/* IN2/DSW2 */
@@ -346,16 +343,16 @@ static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x1580, 0x1580, input_port_3_r },		/* DSW1 */
 	{ 0x1600, 0x1bff, MRA_RAM },			/* video RAM */
 	{ 0x1c00, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2fff, MRA_ROM },
     { 0x3000, 0x3fff, hunchbks_mirror_r },
+	{ 0x4000, 0x4fff, MRA_ROM },
     { 0x5000, 0x5fff, hunchbks_mirror_r },
+	{ 0x6000, 0x6fff, MRA_ROM },
     { 0x7000, 0x7fff, hunchbks_mirror_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( hunchbkd_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x6000, 0x6fff, MWA_ROM },
 	{ 0x1400, 0x1400, dkong_sh_tuneselect_w },
 	{ 0x1480, 0x1480, dkongjr_gfxbank_w },
 	{ 0x1580, 0x1580, dkong_sh_w },
@@ -366,8 +363,11 @@ static MEMORY_WRITE_START( hunchbkd_writemem )
 	{ 0x1600, 0x17ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
 	{ 0x1C00, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2fff, MWA_ROM },
     { 0x3000, 0x3fff, hunchbks_mirror_w },
+	{ 0x4000, 0x4fff, MWA_ROM },
     { 0x5000, 0x5fff, hunchbks_mirror_w },
+	{ 0x6000, 0x6fff, MWA_ROM },
     { 0x7000, 0x7fff, hunchbks_mirror_w },
 MEMORY_END
 
@@ -1049,7 +1049,7 @@ static INTERRUPT_GEN( hunchbkd_interrupt )
 static MACHINE_DRIVER_START( hunchbkd )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3072000/4)	/* ??? */
+	MDRV_CPU_ADD(S2650, 3072000/2/3)	/* ??? */
 	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
 	MDRV_CPU_PORTS(hunchbkd_readport,hunchbkd_writeport)
 	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)
@@ -1081,7 +1081,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( herbiedk )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3072000/4)	/* ??? */
+	MDRV_CPU_ADD(S2650, 3072000/2/3)	/* ??? */
 	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
 	MDRV_CPU_PORTS(herbiedk_readport,hunchbkd_writeport)
 

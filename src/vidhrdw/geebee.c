@@ -58,42 +58,13 @@ static unsigned short navalone_colortable[] =
 };
 
 
-#define PINK1	0xa0,0x00,0xe0,OVERLAY_DEFAULT_OPACITY
-#define PINK2 	0xe0,0x00,0xf0,OVERLAY_DEFAULT_OPACITY
-#define ORANGE	0xff,0xd0,0x00,OVERLAY_DEFAULT_OPACITY
-#define BLUE	0x00,0x00,0xff,OVERLAY_DEFAULT_OPACITY
-
-#define	END  {{ -1, -1, -1, -1}, 0,0,0,0}
-
-static const struct artwork_element geebee_overlay[]=
-{
-	{{  1*8,  4*8-1,    0,32*8-1 }, PINK2  },
-	{{  4*8,  5*8-1,    0, 6*8-1 }, PINK1  },
-	{{  4*8,  5*8-1, 26*8,32*8-1 }, PINK1  },
-	{{  4*8,  5*8-1,  6*8,26*8-1 }, ORANGE },
-	{{  5*8, 28*8-1,    0, 3*8-1 }, PINK1  },
-	{{  5*8, 28*8-1, 29*8,32*8-1 }, PINK1  },
-	{{  5*8, 28*8-1,  3*8, 6*8-1 }, BLUE   },
-	{{  5*8, 28*8-1, 26*8,29*8-1 }, BLUE   },
-	{{ 12*8, 13*8-1, 15*8,17*8-1 }, BLUE   },
-	{{ 21*8, 23*8-1, 12*8,14*8-1 }, BLUE   },
-	{{ 21*8, 23*8-1, 18*8,20*8-1 }, BLUE   },
-	{{ 28*8, 29*8-1,    0,32*8-1 }, PINK2  },
-	{{ 29*8, 32*8-1,    0,32*8-1 }, PINK1  },
-	END
-};
-
 VIDEO_START( geebee )
 {
 	if( video_start_generic() )
 		return 1;
 
 	/* use an overlay only in upright mode */
-
-	if( (readinputport(2) & 0x01) == 0 )
-	{
-		overlay_create(geebee_overlay, 3);
-	}
+	artwork_show(OVERLAY_TAG, (readinputport(2) & 0x01) == 0);
 
 	return 0;
 }
@@ -151,29 +122,6 @@ INLINE void geebee_plot(struct mame_bitmap *bitmap, const struct rectangle *clip
 {
 	if (x >= cliprect->min_x && x <= cliprect->max_x && y >= cliprect->min_y && y <= cliprect->max_y)
 		plot_pixel(bitmap,x,y,Machine->pens[1]);
-}
-
-INLINE void geebee_mark_dirty(int x, int y)
-{
-	int cx, cy, offs;
-	cy = y / 8;
-	cx = x / 8;
-    if (geebee_inv)
-	{
-		offs = (32 - cx) + (31 - cy) * 32;
-		dirtybuffer[offs % videoram_size] = 1;
-		dirtybuffer[(offs - 1) & (videoram_size - 1)] = 1;
-		dirtybuffer[(offs - 32) & (videoram_size - 1)] = 1;
-		dirtybuffer[(offs - 32 - 1) & (videoram_size - 1)] = 1;
-	}
-	else
-	{
-		offs = (cx - 1) + cy * 32;
-		dirtybuffer[offs & (videoram_size - 1)] = 1;
-		dirtybuffer[(offs + 1) & (videoram_size - 1)] = 1;
-		dirtybuffer[(offs + 32) & (videoram_size - 1)] = 1;
-		dirtybuffer[(offs + 32 + 1) & (videoram_size - 1)] = 1;
-	}
 }
 
 VIDEO_UPDATE( geebee )
@@ -237,7 +185,6 @@ VIDEO_UPDATE( geebee )
 	{
 		int x, y;
 
-		geebee_mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
 		for( y = 0; y < 4; y++ )
 			for( x = 0; x < 4; x++ )
 				geebee_plot(bitmap,cliprect,geebee_ball_h+x+5,geebee_ball_v+y-2);

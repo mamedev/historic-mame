@@ -27,7 +27,7 @@ static int memory;
 
 
 static int FILO_type[10];
-static unsigned int FILO_start[10];
+static cycles_t FILO_start[10];
 static int FILO_length;
 
 void profiler_start(void)
@@ -43,7 +43,7 @@ void profiler_stop(void)
 
 void profiler__mark(int type)
 {
-	unsigned int curr_cycles;
+	cycles_t curr_cycles;
 
 
 	if (!use_profiler)
@@ -68,7 +68,7 @@ logerror("Profiler error: FILO buffer overflow\n");
 		if (FILO_length > 0)
 		{
 			/* handle nested calls */
-			profile.count[memory][FILO_type[FILO_length-1]] += (unsigned int)(curr_cycles - FILO_start[FILO_length-1]);
+			profile.count[memory][FILO_type[FILO_length-1]] += curr_cycles - FILO_start[FILO_length-1];
 		}
 		FILO_type[FILO_length] = type;
 		FILO_start[FILO_length] = curr_cycles;
@@ -82,7 +82,7 @@ logerror("Profiler error: FILO buffer underflow\n");
 			return;
 		}
 
-		profile.count[memory][FILO_type[FILO_length-1]] += (unsigned int)(curr_cycles - FILO_start[FILO_length-1]);
+		profile.count[memory][FILO_type[FILO_length-1]] += curr_cycles - FILO_start[FILO_length-1];
 		FILO_length--;
 		if (FILO_length > 0)
 		{
@@ -117,6 +117,7 @@ void profiler_show(struct mame_bitmap *bitmap)
 		"tmdraw ",
 		"tmdrroz",
 		"tmupdat",
+		"Artwork",
 		"Blit   ",
 		"Sound  ",
 		"Mixer  ",

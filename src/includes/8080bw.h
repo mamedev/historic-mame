@@ -12,7 +12,6 @@ READ_HANDLER( c8080bw_shift_data_r );
 READ_HANDLER( c8080bw_shift_data_rev_r );
 READ_HANDLER( c8080bw_shift_data_comp_r );
 INTERRUPT_GEN( c8080bw_interrupt );
-INTERRUPT_GEN( sstrangr_interrupt );
 
 READ_HANDLER( boothill_shift_data_r );
 
@@ -30,8 +29,6 @@ READ_HANDLER( seawolf_port_1_r );
 WRITE_HANDLER( desertgu_controller_select_w );
 READ_HANDLER( desertgu_port_1_r );
 
-READ_HANDLER( sstrangr_port_4_r );
-
 /*----------- defined in sndhrdw/8080bw.c -----------*/
 
 MACHINE_INIT( invaders );
@@ -42,6 +39,7 @@ MACHINE_INIT( gunfight );
 MACHINE_INIT( boothill );
 MACHINE_INIT( helifire );
 MACHINE_INIT( phantom2 );
+MACHINE_INIT( bowler );
 MACHINE_INIT( ballbomb );
 MACHINE_INIT( seawolf );
 MACHINE_INIT( desertgu );
@@ -68,8 +66,6 @@ extern struct SN76477interface schaser_sn76477_interface;
 
 /*----------- defined in vidhrdw/8080bw.c -----------*/
 
-VIDEO_START( 8080bw );
-
 DRIVER_INIT( 8080bw );
 DRIVER_INIT( invaders );
 DRIVER_INIT( invadpt2 );
@@ -84,10 +80,9 @@ DRIVER_INIT( lupin3 );
 DRIVER_INIT( seawolf );
 DRIVER_INIT( blueshrk );
 DRIVER_INIT( desertgu );
-DRIVER_INIT( spcenctr );
 DRIVER_INIT( helifire );
 DRIVER_INIT( phantom2 );
-DRIVER_INIT( boothill );
+DRIVER_INIT( bowler );
 DRIVER_INIT( gunfight );
 DRIVER_INIT( bandido );
 
@@ -101,8 +96,11 @@ WRITE_HANDLER( c8080bw_videoram_w );
 WRITE_HANDLER( schaser_colorram_w );
 READ_HANDLER( schaser_colorram_r );
 WRITE_HANDLER( helifire_colorram_w );
+WRITE_HANDLER( spaceint_color_w );
 
 VIDEO_UPDATE( 8080bw );
 
 PALETTE_INIT( invadpt2 );
 PALETTE_INIT( helifire );
+
+WRITE_HANDLER( bowler_bonus_display_w );

@@ -238,6 +238,12 @@ static void print_game_input(FILE* out, const struct GameDriver* game)
 			case IPT_BUTTON8:
 				if (nbutton<8) nbutton = 8;
 				break;
+			case IPT_BUTTON9:
+				if (nbutton<9) nbutton = 9;
+				break;
+			case IPT_BUTTON10:
+				if (nbutton<10) nbutton = 10;
+				break;
 			case IPT_PADDLE:
 				control = "paddle";
 				break;
@@ -251,6 +257,10 @@ static void print_game_input(FILE* out, const struct GameDriver* game)
 			case IPT_AD_STICK_X:
 			case IPT_AD_STICK_Y:
 				control = "stick";
+				break;
+			case IPT_LIGHTGUN_X:
+			case IPT_LIGHTGUN_Y:
+				control = "lightgun";
 				break;
 			case IPT_COIN1:
 				if (ncoin < 1) ncoin = 1;
@@ -636,11 +646,6 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 		fprintf(out, L2P "sound good" L2N);
 
 	fprintf(out, L2P "palettesize %d" L2N, driver.total_colors);
-
-	if (driver.video_attributes & VIDEO_SUPPORTS_DIRTY)
-		fprintf(out, L2P "blit dirty" L2N);
-	else
-		fprintf(out, L2P "blit plain" L2N);
 
 	fprintf(out, L2E L1N);
 }

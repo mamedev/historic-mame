@@ -17,7 +17,7 @@ inputs etc. by Stephane Humbert
 
 TPC 1020AFN-084c
 
-32Mhz crystal colse to this.
+32MHz crystal colse to this.
 
 1 GAL
 5 PROMS  (16S25H)

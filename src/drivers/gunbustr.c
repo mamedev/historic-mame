@@ -196,8 +196,8 @@ static WRITE32_HANDLER( motor_control_w )
 
 static READ32_HANDLER( gunbustr_gun_r )
 {
-	return (input_port_3_word_r(0,0) << 24) | (input_port_4_word_r(0,0) << 16) |
-		 (input_port_5_word_r(0,0) << 8)  |  input_port_6_word_r(0,0);
+	return ( input_port_3_word_r(0,0) << 24) | (input_port_4_word_r(0,0) << 16) |
+		 ( input_port_5_word_r(0,0) << 8)  |  input_port_6_word_r(0,0);
 }
 
 static WRITE32_HANDLER( gunbustr_gun_w )
@@ -324,16 +324,16 @@ INPUT_PORTS_START( gunbustr )
 	/* Light gun inputs */
 
 	PORT_START	/* IN 3, P1X */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 30, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER1, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 4, P1Y */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 30, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_REVERSE | IPF_PLAYER1, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 5, P2X */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER2, 30, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 6, P2Y */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2, 30, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_REVERSE | IPF_PLAYER2, 30, 20, 0, 0xff)
 INPUT_PORTS_END
 
 
@@ -393,7 +393,7 @@ static MACHINE_INIT( gunbustr )
 static struct ES5505interface es5505_interface =
 {
 	1,					/* total number of chips */
-	{ 16000000 },		/* freq */
+	{ 30476100/2 },		/* freq */
 	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
 	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */

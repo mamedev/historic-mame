@@ -30,3 +30,9 @@ LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
 
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./
+
+# if building with a UI, set the C flags and include the ui.mak
+ifneq ($(WINUI),)
+CFLAGS+= -DWINUI=1
+include src/ui/ui.mak
+endif

@@ -357,6 +357,8 @@ static struct CPS1config cps1_config_table[]=
 };
 
 static int cps_version;
+int scanline1;
+int scanline2;
 
 void cps_setversion(int v)
 {
@@ -490,6 +492,12 @@ WRITE16_HANDLER( cps1_output_w )
 	}
 
 	data = COMBINE_DATA(&cps1_output[offset]);
+
+	/* To mark scanlines for raster effects */
+	if(offset == 0x52/2)
+		scanline2 = data;
+	if(offset == 0x50/2)
+		scanline1 = data;
 
 #ifdef MAME_DEBUG
 if (cps1_game_config->control_reg && offset == cps1_game_config->control_reg/2 && data != 0x3f)
@@ -1433,10 +1441,8 @@ static data16_t *cps2_objbase(void)
 //usrintf_showmessage("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
 
 	if (baseptr == 0x7000)
-//ks		return cps2_buffered_obj;
 		return cps2_objram1;
 	else //if (baseptr == 0x7080)
-//ks		return cps2_buffered_obj+cps2_obj_size/2;
 		return cps2_objram2;
 }
 
@@ -1819,7 +1825,6 @@ if (0 && keyboard_pressed(KEYCODE_Z))
 			if (i <= l1pri) primasks[i] |= 0xcc;
 			if (i <= l2pri) primasks[i] |= 0xf0;
 		}
-
 		cps1_render_layer(bitmap,cliprect,l0,1);
 		cps1_render_layer(bitmap,cliprect,l1,2);
 		cps1_render_layer(bitmap,cliprect,l2,4);
@@ -1842,8 +1847,6 @@ VIDEO_EOF( cps1 )
 //ks s
 	if (cps_version == 2)
 	{
-//		memcpy(cps2_buffered_obj,                cps2_objram1,cps2_obj_size);
-//		memcpy(cps2_buffered_obj+cps2_obj_size/2,cps2_objram2,cps2_obj_size);
 		pri_ctrl = cps2_port(CPS2_OBJ_PRI); 		/* delay sprite priorities also */
 		cps2_objram_bank_lagged = cps2_objram_bank; 	/* delay object bank by 1 frame */
 	}

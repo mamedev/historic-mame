@@ -101,6 +101,38 @@ static READ16_HANDLER( boxingb_input_port_1_r )
 
 /*************************************
  *
+ *	Video overlays
+ *
+ *************************************/
+
+OVERLAY_START( starcas_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0,       MAKE_ARGB(0x24,0x00,0x3c,0xff) )
+	OVERLAY_DISK_NOBLEND( 0.5, 0.5, 0.1225, MAKE_ARGB(0x24,0xff,0x20,0x20) )
+	OVERLAY_DISK_NOBLEND( 0.5, 0.5, 0.0950, MAKE_ARGB(0x24,0xff,0x80,0x10) )
+	OVERLAY_DISK_NOBLEND( 0.5, 0.5, 0.0725, MAKE_ARGB(0x24,0xff,0xff,0x20) )
+OVERLAY_END
+
+
+OVERLAY_START( tailg_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0xff) )
+OVERLAY_END
+
+
+OVERLAY_START( sundance_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0xff,0xff,0x20) )
+OVERLAY_END
+
+
+OVERLAY_START( solarq_overlay )
+	OVERLAY_RECT( 0.0, 0.1, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0x20,0xff) )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 0.1, MAKE_ARGB(0x04,0xff,0x20,0x20) )
+	OVERLAY_DISK_NOBLEND( 0.5, 0.5, 0.03, MAKE_ARGB(0x04,0xff,0xff,0x20) )
+OVERLAY_END
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -868,10 +900,10 @@ static MACHINE_DRIVER_START( cinemat )
 	MDRV_MACHINE_INIT(cinemat_sound)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1024, 0, 768)
-	MDRV_PALETTE_LENGTH(256+32768)
+	MDRV_PALETTE_LENGTH(32768)
 
 	MDRV_PALETTE_INIT(cinemat)
 	MDRV_VIDEO_START(cinemat)
@@ -888,7 +920,6 @@ static MACHINE_DRIVER_START( spacewar )
 	MDRV_IMPORT_FROM(cinemat)
 
 	/* video hardware */
-	MDRV_PALETTE_INIT(spacewar)
 	MDRV_VIDEO_UPDATE(spacewar)
 
 	/* sound hardware */
@@ -960,6 +991,16 @@ static MACHINE_DRIVER_START( demon )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( cincolor )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* video hardware */
+	MDRV_PALETTE_INIT(cinemat_color)
+MACHINE_DRIVER_END
+
+
 
 
 /*************************************
@@ -1016,18 +1057,18 @@ ROM_END
 
 ROM_START( starcase )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
-	ROM_LOAD16_BYTE( "mottoeis.t7", 0x8000, 0x0800, 0x65d0a225 )
-	ROM_LOAD16_BYTE( "mottoeis.p7", 0x8001, 0x0800, 0xd8f58d9a )
-	ROM_LOAD16_BYTE( "mottoeis.u7", 0x9000, 0x0800, 0xd4f35b82 )
+	ROM_LOAD16_BYTE( "starcast.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "starcast.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "starcast.u7", 0x9000, 0x0800, 0xd4f35b82 )
 	ROM_LOAD16_BYTE( "mottoeis.r7", 0x9001, 0x0800, 0xa2c1ed52 )
 ROM_END
 
 ROM_START( stellcas )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
-	ROM_LOAD16_BYTE( "elttron.t7", 0x8000, 0x0800, 0x65d0a225 )
-	ROM_LOAD16_BYTE( "elttron.p7", 0x8001, 0x0800, 0xd8f58d9a )
-	ROM_LOAD16_BYTE( "elttron.u7", 0x9000, 0x0800, 0xd5b44050 )
-	ROM_LOAD16_BYTE( "elttron.r7", 0x9001, 0x0800, 0x6f1f261e )
+	ROM_LOAD16_BYTE( "starcast.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "starcast.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "elttron.u7",  0x9000, 0x0800, 0xd5b44050 )
+	ROM_LOAD16_BYTE( "elttron.r7",  0x9001, 0x0800, 0x6f1f261e )
 ROM_END
 
 
@@ -1086,10 +1127,10 @@ ROM_END
 
 ROM_START( armorap )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
-	ROM_LOAD16_BYTE( "armorp.t7", 0x8000, 0x1000, 0xd7e71f84 )
-	ROM_LOAD16_BYTE( "armorp.p7", 0x8001, 0x1000, 0xdf1c2370 )
-	ROM_LOAD16_BYTE( "armorp.u7", 0xa000, 0x1000, 0x4a86bd8a )
-	ROM_LOAD16_BYTE( "armorp.r7", 0xa001, 0x1000, 0xd2dd4eae )
+	ROM_LOAD16_BYTE( "ar414le.t6", 0x8000, 0x1000, 0xd7e71f84 )
+	ROM_LOAD16_BYTE( "ar414lo.p6", 0x8001, 0x1000, 0xdf1c2370 )
+	ROM_LOAD16_BYTE( "armorp.u7",  0xa000, 0x1000, 0x4a86bd8a )
+	ROM_LOAD16_BYTE( "armorp.r7",  0xa001, 0x1000, 0xd2dd4eae )
 ROM_END
 
 ROM_START( armorar )
@@ -1162,7 +1203,6 @@ static DRIVER_INIT( barrier )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
 }
 
 
@@ -1170,7 +1210,6 @@ static DRIVER_INIT( starhawk )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
 }
 
 
@@ -1178,7 +1217,7 @@ static DRIVER_INIT( starcas )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = starcas_sound_w;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, starcas_overlay);
+	artwork_set_overlay(starcas_overlay);
 }
 
 
@@ -1186,7 +1225,7 @@ static DRIVER_INIT( tailg )
 {
 	ccpu_Config(0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, tailg_overlay);
+	artwork_set_overlay(tailg_overlay);
 }
 
 
@@ -1194,7 +1233,6 @@ static DRIVER_INIT( ripoff )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = ripoff_sound_w;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
 }
 
 
@@ -1202,7 +1240,6 @@ static DRIVER_INIT( speedfrk )
 {
 	ccpu_Config(0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
 
 	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r);
 }
@@ -1212,7 +1249,7 @@ static DRIVER_INIT( sundance )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_16LEV, 1, 0, sundance_overlay);
+	artwork_set_overlay(sundance_overlay);
 }
 
 
@@ -1220,7 +1257,6 @@ static DRIVER_INIT( warrior )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = warrior_sound_w;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 1, 0);
 }
 
 
@@ -1228,14 +1264,12 @@ static DRIVER_INIT( armora )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
 }
 
 static DRIVER_INIT( armorar )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
 }
 
 
@@ -1243,7 +1277,7 @@ static DRIVER_INIT( solarq )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = solarq_sound_w;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 1, solarq_overlay);
+	artwork_set_overlay(solarq_overlay);
 }
 
 
@@ -1253,7 +1287,6 @@ static DRIVER_INIT( demon )
 
 	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = demon_sound_w;
-	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
 
 	RAM[0x0091]=0xcb;	/* bit 7,a */
 	RAM[0x0092]=0x7f;
@@ -1270,7 +1303,6 @@ static DRIVER_INIT( wotw )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_WOWCOL);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_WOWCOL, 0, 0, 0);
 }
 
 
@@ -1278,7 +1310,6 @@ static DRIVER_INIT( boxingb )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_32K, CCPU_MONITOR_WOWCOL);
 	cinemat_sound_handler = 0;
-	cinemat_select_artwork(CCPU_MONITOR_WOWCOL, 0, 0, 0);
 
 	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, boxingb_input_port_1_r);
 }
@@ -1305,9 +1336,9 @@ GAMEX(19??, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam
 GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
 GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
-GAMEX(1980, armorap,  0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )
-GAMEX(1980, armorar,  0,       armora,   armora,   armorar,  ROT0,  "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_NO_SOUND )
+GAMEX(1980, armorap,  armora,  armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )
+GAMEX(1980, armorar,  armora,  armora,   armora,   armorar,  ROT0,  "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_NO_SOUND )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1982, demon,    0,       demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
-GAMEX(1981, wotw,     0,       cinemat,  wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
-GAMEX(1981, boxingb,  0,       cinemat,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
+GAMEX(1981, wotw,     0,       cincolor, wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
+GAMEX(1981, boxingb,  0,       cincolor, boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )

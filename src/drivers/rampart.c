@@ -98,7 +98,7 @@ static WRITE16_HANDLER( ym2413_w )
 {
 	if (ACCESSING_MSB)
 	{
-		if (offset & 2)
+		if (offset & 1)
 			YM2413_data_port_0_w(0, (data >> 8) & 0xff);
 		else
 			YM2413_register_port_0_w(0, (data >> 8) & 0xff);
@@ -347,7 +347,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,
 	{ ATARI_CLOCK_14MHz/4/3/165 },
 	{ REGION_SOUND1 },
-	{ 100 }
+	{ 60 }
 };
 
 
@@ -355,7 +355,7 @@ static struct YM2413interface ym2413_interface =
 {
 	1,
 	ATARI_CLOCK_14MHz/4,
-	{ 75 }
+	{ 100 }
 };
 
 
@@ -375,7 +375,7 @@ static MACHINE_DRIVER_START( rampart )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(rampart)
 	MDRV_NVRAM_HANDLER(atarigen)
 

@@ -10,6 +10,7 @@
 
 #include "driver.h"
 #include "8080bw.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 
@@ -23,6 +24,18 @@ WRITE_HANDLER( tinvader_sound_w );
 
 READ_HANDLER( zac_s2636_r );
 READ_HANDLER( tinvader_port_0_r );
+
+
+#define WHITE           MAKE_ARGB(0x04,0xff,0xff,0xff)
+#define GREEN 			MAKE_ARGB(0x04,0x20,0xff,0x20)
+#define PURPLE			MAKE_ARGB(0x04,0xff,0x20,0xff)
+
+OVERLAY_START( tinv2650_overlay )
+	OVERLAY_RECT(   0,   0, 240, 256, WHITE )
+	OVERLAY_RECT(  16,   0,  72, 256, GREEN )
+	OVERLAY_RECT(   0,  48,  16, 134, GREEN )
+	OVERLAY_RECT( 192,   0, 209, 256, PURPLE )
+OVERLAY_END
 
 
 
@@ -151,17 +164,12 @@ INPUT_PORTS_END
 
 static PALETTE_INIT( zac2650 )
 {
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
 	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
-	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
-	palette_set_color(3,0xff,0x20,0xff); /* PURPLE */
-
-	COLOR(0,0) = 0;		/* Game uses first two only */
-	COLOR(0,1) = 1;
-    COLOR(0,2) = 0;
-    COLOR(0,3) = 0;
+	colortable[0] = 0;
+	colortable[1] = 1;
+	colortable[2] = 0;
+	colortable[3] = 0;
 }
 
 static struct GfxLayout tinvader_character =
@@ -203,16 +211,16 @@ static struct GfxLayout s2636_character16 =
 
 static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tinvader_character,  0, 8 },
-  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 8 },	/* dynamic */
-  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 8 },	/* dynamic */
+	{ REGION_GFX1, 0, &tinvader_character,  0, 2 },
+  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 2 },	/* dynamic */
+  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 2 },	/* dynamic */
 	{ -1 } /* end of array */
 };
 
 static MACHINE_DRIVER_START( tinvader )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3800000)
+	MDRV_CPU_ADD(S2650, 3800000/4/3)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,0)
 
@@ -224,8 +232,8 @@ static MACHINE_DRIVER_START( tinvader )
 	MDRV_SCREEN_SIZE(30*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 239, 0, 255)
 	MDRV_GFXDECODE(tinvader_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(8)
-	MDRV_COLORTABLE_LENGTH(8)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(4)
 
 	MDRV_PALETTE_INIT(zac2650)
 	MDRV_VIDEO_START(tinvader)
@@ -297,10 +305,10 @@ static MACHINE_DRIVER_START( embargo )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(zac2650)
-	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
@@ -319,6 +327,13 @@ ROM_START( embargo )
 ROM_END
 
 
-GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,      ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
-GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, 0,      ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
-GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw, ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )
+
+static DRIVER_INIT( tinvader )
+{
+	artwork_set_overlay(tinv2650_overlay);
+}
+
+
+GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
+GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
+GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

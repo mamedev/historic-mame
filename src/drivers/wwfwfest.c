@@ -12,9 +12,9 @@
 
  Hardware:
 
- Primary CPU : 68000 - 12mhz
+ Primary CPU : 68000 - 12MHz
 
- Sound CPUs : Z80 - 3.579mhz
+ Sound CPUs : Z80 - 3.579MHz
 
  Sound Chips : YM2151, M6295
 

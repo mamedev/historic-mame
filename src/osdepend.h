@@ -26,18 +26,38 @@ void osd_exit(void);
 
 /******************************************************************************
 
-  Display
+	Display
 
 ******************************************************************************/
 
 /* mame_bitmap used to be declared here, but has moved to common.c */
 /* sadly, the include order requires that at least this forward declaration is here */
 struct mame_bitmap;
+struct mame_display;
+struct performance_info;
+struct rectangle;
+
+
+/* these are the parameters passed into osd_create_display */
+struct osd_create_params
+{
+	int width, height;			/* width and height */
+	int aspect_x, aspect_y;		/* aspect ratio X:Y */
+	int depth;					/* depth, either 16(palette), 15(RGB) or 32(RGB) */
+	int colors;					/* colors in the palette (including UI) */
+	float fps;					/* frame rate */
+	int video_attributes;		/* video flags from driver */
+	int orientation;			/* orientation requested by the user */
+};
+
+
 
 /*
   Create a display screen, or window, of the given dimensions (or larger). It is
   acceptable to create a smaller display if necessary, in that case the user must
   have a way to move the visibility window around.
+
+  The params contains all the information the
   Attributes are the ones defined in driver.h, they can be used to perform
   optimizations, e.g. dirty rectangle handling if the game supports it, or faster
   blitting routines with fixed palette if the game doesn't change the palette at
@@ -56,56 +76,9 @@ struct mame_bitmap;
 
   Returns 0 on success.
 */
-int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
+int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
-
-/*
-  Set the portion of the screen bitmap that has to be drawn on screen. The OS
-  dependant code is allowed to display a smaller portion of the bitmap if
-  necessary, in that case the user must have a way to move the visibility
-  window around.
-  Parts of the bitmap outside the specified rectangle must never be drawn
-  because they might contain garbage.
-  The function must call set_ui_visarea() to tell the core the portion of the
-  bitmap actually visible (which might be smaller than requested), so the user
-  interface can be drawn accordingly. If the visible area is smaller than
-  requested, set_ui_visarea() must also be called whenever the user moves the
-  visibility window, so the user interface will remain at a fixed position on
-  screen while the game display moves around.
-*/
-void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
-
-
-
-/*
-  osd_allocate_colors() is called after osd_create_display(), to create and
-  initialize the palette.
-
-  palette is an array of 'totalcolors' R,G,B triplets.
-
-  For direct mapped modes, the palette contains just three entries, a pure red,
-  pure green and pure blue. Of course this is not the game palette, it is only
-  used by the core to determine the layout (RGB, BGR etc.) so the OS code can
-  do a straight copy of the bitmap without having to remap it. RGB 565 modes
-  are NOT supported yet by the core, only 555. The function must return in
-  *rgb_components the values corresponding to the requested colors.
-
-  The function must also initialize Machine->uifont->colortable[] to get proper
-  white-on-black and black-on-white text.
-
-  The debug_* parameters are for the debugger display, and may be NULL if the
-  debugger is not enabled. The debugger always uses DEBUGGER_TOTAL_COLORS
-  colors and the palette doesn't change at run time.
-
-  Return 0 for success.
-*/
-int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT32 *rgb_components,
-		const UINT8 *debug_palette,UINT32 *debug_pens);
-void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
-
-void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
 
 /*
   osd_skip_this_frame() must return 0 if the current frame will be displayed.
@@ -118,6 +91,7 @@ void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
   already know exactly whether the next frame will be skipped or not.
 */
 int osd_skip_this_frame(void);
+
 
 /*
   Update video and audio. game_bitmap contains the game display, while
@@ -132,15 +106,8 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
-void osd_update_video_and_audio(
-		struct mame_bitmap *game_bitmap,struct mame_bitmap *debug_bitmap,int leds_status);
+void osd_update_video_and_audio(struct mame_display *display);
 
-void osd_debugger_focus(int debugger_has_focus);
-
-void osd_set_gamma(float _gamma);
-float osd_get_gamma(void);
-void osd_set_brightness(int brightness);
-int osd_get_brightness(void);
 
 /*
   Save a screen shot of the game display. It is suggested to use the core
@@ -150,12 +117,20 @@ int osd_get_brightness(void);
   file name. This isn't scrictly necessary, so you can just call
   save_screen_snapshot() to let the core automatically pick a default name.
 */
-void osd_save_snapshot(struct mame_bitmap *bitmap);
+void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds);
+
+/*
+  Returns a pointer to the text to display when the FPS display is toggled.
+  This normally includes information about the frameskip, FPS, and percentage
+  of full game speed.
+*/
+const char *osd_get_fps_text(const struct performance_info *performance);
+
 
 
 /******************************************************************************
 
-  Sound
+	Sound
 
 ******************************************************************************/
 
@@ -196,9 +171,10 @@ int osd_get_mastervolume(void);
 void osd_sound_enable(int enable);
 
 
+
 /******************************************************************************
 
-  Keyboard
+	Keyboard
 
 ******************************************************************************/
 
@@ -225,9 +201,10 @@ int osd_is_key_pressed(int keycode);
 int osd_readkey_unicode(int flush);
 
 
+
 /******************************************************************************
 
-  Joystick & Mouse/Trackball
+	Joystick & Mouse/Trackball
 
 ******************************************************************************/
 
@@ -246,26 +223,33 @@ int osd_is_joy_pressed(int joycode);
 
 /* We support 4 players for each analog control / trackball */
 #define OSD_MAX_JOY_ANALOG	4
-#define X_AXIS          1
-#define Y_AXIS          2
+#define X_AXIS			0
+#define Y_AXIS			1
+#define Z_AXIS			2
+#define PEDAL_AXIS		3
+#define MAX_ANALOG_AXES	4
+
+/* added for building joystick seq for analog inputs */
+int osd_is_joystick_axis_code(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
 /* Do we need to calibrate the joystick at all? */
-int osd_joystick_needs_calibration (void);
+int osd_joystick_needs_calibration(void);
 /* Preprocessing for joystick calibration. Returns 0 on success */
-void osd_joystick_start_calibration (void);
+void osd_joystick_start_calibration(void);
 /* Prepare the next calibration step. Return a description of this step. */
 /* (e.g. "move to upper left") */
-const char *osd_joystick_calibrate_next (void);
+const char *osd_joystick_calibrate_next(void);
 /* Get the actual joystick calibration data for the current position */
-void osd_joystick_calibrate (void);
+void osd_joystick_calibrate(void);
 /* Postprocessing (e.g. saving joystick data to config) */
-void osd_joystick_end_calibration (void);
+void osd_joystick_end_calibration(void);
 
-void osd_trak_read(int player,int *deltax,int *deltay);
+void osd_lightgun_read(int player, int *deltax, int *deltay);
+void osd_trak_read(int player, int *deltax, int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
+void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode analogjoy_input[MAX_ANALOG_AXES]);
 
 
 /*
@@ -280,9 +264,10 @@ void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
 void osd_customize_inputport_defaults(struct ipd *defaults);
 
 
+
 /******************************************************************************
 
-  File I/O
+	File I/O
 
 ******************************************************************************/
 
@@ -317,6 +302,7 @@ enum
 	OSD_FILETYPE_CHEAT,
 	OSD_FILETYPE_LANGUAGE,
 	OSD_FILETYPE_CTRLR,
+	OSD_FILETYPE_INI,
 	OSD_FILETYPE_end /* dummy last entry */
 };
 
@@ -325,11 +311,11 @@ enum
 /* it is opened for read. */
 
 int osd_faccess(const char *filename, int filetype);
-void *osd_fopen(const char *gamename,const char *filename,int filetype,int read_or_write);
-int osd_fread(void *file,void *buffer,int length);
-int osd_fwrite(void *file,const void *buffer,int length);
-int osd_fread_swap(void *file,void *buffer,int length);
-int osd_fwrite_swap(void *file,const void *buffer,int length);
+void *osd_fopen(const char *gamename, const char *filename, int filetype, int read_or_write);
+int osd_fread(void *file, void *buffer, int length);
+int osd_fwrite(void *file, const void *buffer, int length);
+int osd_fread_swap(void *file, void *buffer, int length);
+int osd_fwrite_swap(void *file, const void *buffer, int length);
 #ifdef LSB_FIRST
 #define osd_fread_msbfirst osd_fread_swap
 #define osd_fwrite_msbfirst osd_fwrite_swap
@@ -341,18 +327,16 @@ int osd_fwrite_swap(void *file,const void *buffer,int length);
 #define osd_fread_lsbfirst osd_fread_swap
 #define osd_fwrite_lsbfirst osd_fwrite_swap
 #endif
-int osd_fseek(void *file,int offset,int whence);
+int osd_fseek(void *file, int offset, int whence);
 void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
 unsigned int osd_fcrc(void *file);
-/* LBO 040400 - start */
 int osd_fgetc(void *file);
 int osd_ungetc(int c, void *file);
 char *osd_fgets(char *s, int n, void *file);
 int osd_feof(void *file);
 int osd_ftell(void *file);
-/* LBO 040400 - end */
 /* strip directory part from a filename, does _not_ malloc */
 char *osd_basename(char *filename);
 /* get directory part of a filename in malloced buffer */
@@ -360,9 +344,27 @@ char *osd_dirname(char *filename);
 /* strip extension from a filename, copy to malloced buffer */
 char *osd_strip_extension(char *filename);
 
+
+
 /******************************************************************************
 
-  Miscellaneous
+	Timing
+
+******************************************************************************/
+
+typedef INT64 cycles_t;
+
+/* return the current number of cycles, or some other high-resolution timer */
+cycles_t osd_cycles(void);
+
+/* return the number of cycles per second */
+cycles_t osd_cycles_per_second(void);
+
+
+
+/******************************************************************************
+
+	Miscellaneous
 
 ******************************************************************************/
 

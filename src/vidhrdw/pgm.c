@@ -3,7 +3,7 @@
 
 #include "driver.h"
 
-extern data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs;
+extern data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
 static struct tilemap *pgm_tx_tilemap, *pgm_bg_tilemap;
 static UINT16 *sprite_bitmap;
 
@@ -192,7 +192,7 @@ static void pgm_drawsprites(int priority)
 		if (xpos > 0x3ff) xpos -=0x800;
 		if (ypos > 0x1ff) ypos -=0x400;
 
-		if (boff == 0) break; /* is this right? */
+		if (high == 0) break; /* is this right? */
 
 		if (priority == pri)
 		pgm_drawsprite(wide, high, xpos, ypos, palt, boff, flip);
@@ -271,11 +271,12 @@ static void get_pgm_bg_tilemap_tile_info(int tile_index)
 
 VIDEO_START( pgm )
 {
-	pgm_tx_tilemap= tilemap_create(get_pgm_tx_tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	pgm_tx_tilemap= tilemap_create(get_pgm_tx_tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	tilemap_set_transparent_pen(pgm_tx_tilemap,15);
 
 	pgm_bg_tilemap = tilemap_create(get_pgm_bg_tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 32, 32,64,64);
 	tilemap_set_transparent_pen(pgm_bg_tilemap,31);
+//	tilemap_set_scroll_rows(pgm_bg_tilemap,64*32);
 
 	sprite_bitmap		= auto_malloc((448+32+32) * 224 * sizeof(UINT16));
 	if (!sprite_bitmap) return 1;
@@ -294,7 +295,11 @@ VIDEO_UPDATE( pgm )
 		draw_scanline16(bitmap, 0, y, 448, &sprite_bitmap[y * (448+32+32)+32], Machine->pens, 0x400);
 
 	tilemap_set_scrolly(pgm_bg_tilemap,0, pgm_videoregs[0x2000/2]);
-	tilemap_set_scrollx(pgm_bg_tilemap,0, pgm_videoregs[0x3000/2]);
+
+//	for (y = 0; y < 64*32; y++)
+	//	tilemap_set_scrollx(pgm_bg_tilemap,y, pgm_videoregs[0x3000/2]+pgm_rowscrollram[y]);
+tilemap_set_scrollx(pgm_bg_tilemap,0, pgm_videoregs[0x3000/2]);
+
 	tilemap_draw(bitmap,cliprect,pgm_bg_tilemap,0,0);
 
 	pgm_drawsprites(0);

@@ -31,19 +31,10 @@
  *
  *************************************/
 
-static unsigned short videopin_colortable[] =
-{
-	0x00, 0x01
-};
-
 static PALETTE_INIT( videopin )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK (transparent) */
 	palette_set_color(1,0xff,0xff,0xff);  /* WHITE */
-	memcpy(colortable,videopin_colortable,sizeof(videopin_colortable));
-
-	/* Get Artwork */
-	artwork_load(&videopin_backdrop, "videopin.png", 2);
 }
 
 
@@ -193,13 +184,12 @@ static MACHINE_DRIVER_START( videopin )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(45*8, 39*8)
-	MDRV_VISIBLE_AREA(0*8, 45*8-1, 0*8, 39*8-1)
+	MDRV_VISIBLE_AREA(0*8, 37*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(videopin_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256+32768)
-	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(videopin)
-	MDRV_VIDEO_START(videopin)
+	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(videopin)
 
 	/* sound hardware */

@@ -17,5 +17,4 @@ extern unsigned char *copsnrob_cary;
 extern unsigned char *copsnrob_trucky;
 extern unsigned char *copsnrob_truckram;
 
-VIDEO_START( copsnrob );
 VIDEO_UPDATE( copsnrob );

@@ -84,10 +84,10 @@ struct atarirle_data
 	int					objectcount;		/* number of objects in the ROM */
 	struct atarirle_info *info;				/* list of info records */
 	struct atarirle_entry *spriteram;		/* pointer to sprite RAM */
-	
+
 	struct mame_bitmap *vram[2][2];			/* pointers to VRAM bitmaps and backbuffers */
 	int					partial_scanline;	/* partial update scanline */
-	
+
 	UINT8				control_bits;		/* current control bits */
 };
 
@@ -323,7 +323,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
-	
+
 	/* allocate bitmaps */
 	mo->vram[0][0] = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	mo->vram[0][1] = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
@@ -331,7 +331,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 		return 0;
 	fillbitmap(mo->vram[0][0], 0, NULL);
 	fillbitmap(mo->vram[0][1], 0, NULL);
-	
+
 	/* allocate alternate bitmaps if needed */
 	if (mo->vrammask.mask != 0)
 	{
@@ -342,7 +342,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 		fillbitmap(mo->vram[1][0], 0, NULL);
 		fillbitmap(mo->vram[1][1], 0, NULL);
 	}
-	
+
 	mo->partial_scanline = -1;
 	return 1;
 }
@@ -360,19 +360,19 @@ void atarirle_control_w(int map, UINT8 bits)
 	int oldbits = mo->control_bits;
 
 //logerror("atarirle_control_w(%d)\n", bits);
-	
+
 	/* do nothing if nothing changed */
 	if (oldbits == bits)
 		return;
-	
+
 	/* force a partial update first */
 	force_partial_update(scanline);
-	
+
 	/* if the erase flag was set, erase the front map */
 	if (oldbits & ATARIRLE_CONTROL_ERASE)
 	{
 		struct rectangle cliprect = mo->cliprect;
-		
+
 		/* compute the top and bottom of the rect */
 		if (mo->partial_scanline + 1 > cliprect.min_y)
 			cliprect.min_y = mo->partial_scanline + 1;
@@ -380,13 +380,13 @@ void atarirle_control_w(int map, UINT8 bits)
 			cliprect.max_y = scanline;
 
 //logerror("  partial erase %d-%d (frame %d)\n", cliprect.min_y, cliprect.max_y, (oldbits & ATARIRLE_CONTROL_FRAME) >> 2);
-		
+
 		/* erase the bitmap */
 		fillbitmap(mo->vram[0][(oldbits & ATARIRLE_CONTROL_FRAME) >> 2], 0, &cliprect);
 		if (mo->vrammask.mask != 0)
 			fillbitmap(mo->vram[1][(oldbits & ATARIRLE_CONTROL_FRAME) >> 2], 0, &cliprect);
 	}
-	
+
 	/* update the bits */
 	mo->control_bits = bits;
 
@@ -396,7 +396,7 @@ void atarirle_control_w(int map, UINT8 bits)
 //logerror("  render to frame %d\n", (~bits & ATARIRLE_CONTROL_FRAME) >> 2);
 		sort_and_render(mo);
 	}
-	
+
 	/* remember where we left off */
 	mo->partial_scanline = scanline;
 }
@@ -410,23 +410,23 @@ void atarirle_control_w(int map, UINT8 bits)
 VIDEO_EOF( atarirle )
 {
 	int i;
-	
+
 //logerror("video_eof_atarirle\n");
 
 	/* loop over all RLE handlers */
 	for (i = 0; i < ATARIRLE_MAX; i++)
 	{
 		struct atarirle_data *mo = &atarirle[i];
-		
+
 		/* if the erase flag is set, erase to the end of the screen */
 		if (mo->control_bits & ATARIRLE_CONTROL_ERASE)
 		{
 			struct rectangle cliprect = mo->cliprect;
-			
+
 			/* compute top only; bottom is equal to visible_area */
 			if (mo->partial_scanline + 1 > cliprect.min_y)
 				cliprect.min_y = mo->partial_scanline + 1;
-			
+
 //logerror("  partial erase %d-%d (frame %d)\n", cliprect.min_y, cliprect.max_y, (mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2);
 
 			/* erase the bitmap */
@@ -434,7 +434,7 @@ VIDEO_EOF( atarirle )
 			if (mo->vrammask.mask != 0)
 				fillbitmap(mo->vram[1][(mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2], 0, &cliprect);
 		}
-		
+
 		/* reset the partial scanline to -1 so we can detect full updates */
 		mo->partial_scanline = -1;
 	}
@@ -450,11 +450,11 @@ WRITE16_HANDLER( atarirle_0_spriteram_w )
 {
 	int entry = (offset >> 3) & atarirle[0].spriterammask;
 	int idx = offset & 7;
-	
+
 	/* combine raw data */
 	COMBINE_DATA(&atarirle_0_spriteram[offset]);
 
-	/* store a copy in our local spriteram */ 
+	/* store a copy in our local spriteram */
 	atarirle[0].spriteram[entry].data[idx] = atarirle_0_spriteram[offset];
 }
 
@@ -472,7 +472,7 @@ WRITE32_HANDLER( atarirle_0_spriteram32_w )
 	/* combine raw data */
 	COMBINE_DATA(&atarirle_0_spriteram32[offset]);
 
-	/* store a copy in our local spriteram */ 
+	/* store a copy in our local spriteram */
 	atarirle[0].spriteram[entry].data[idx+0] = atarirle_0_spriteram32[offset] >> 16;
 	atarirle[0].spriteram[entry].data[idx+1] = atarirle_0_spriteram32[offset];
 }
@@ -502,8 +502,8 @@ static int build_rle_tables(void)
 	int i;
 
 	/* if we've already done it, don't bother */
-	if (rle_table[0])
-		return 0;
+//	if (rle_table[0])
+//		return 0;
 
 	/* allocate all 5 tables */
 	base = auto_malloc(0x500 * sizeof(UINT16));
@@ -679,14 +679,14 @@ static void sort_and_render(struct atarirle_data *mo)
 
 struct atarirle_entry *hilite = NULL;
 int count = 0;
-	
+
 // expected pit fighter checksums
 //		0xc289, 0x3103, 0x2b8d, 0xe048, 0xc12e, 0x0ede, 0x2cd7, 0x7dc8,
 //		0x58fc, 0xb877, 0x9449, 0x59d4, 0x8b63, 0x241b, 0xa3de, 0x4724
 	/* special case: checksum the sprite ROMs */
 	if ((obj->data[0] & 0x000f) == 0x000f)
 	{
-/*		
+/*
 		int sum1, sum2, sum3, sum4, sum5;
 		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
 		{
@@ -705,7 +705,7 @@ int count = 0;
 		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
 			sum1 += mo->rombase[i] & 0xff;
 		fprintf(stderr, "sum.bytelo = %04x\n", sum1 & 0xffff);
-	
+
 		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
 			sum1 ^= mo->rombase[i];
 		fprintf(stderr, "xor.word = %04x\n", sum1 & 0xffff);
@@ -717,7 +717,7 @@ int count = 0;
 		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
 			sum1 ^= mo->rombase[i] & 0xff;
 		fprintf(stderr, "xor.bytelo = %04x\n", sum1 & 0xffff);
-	
+
 		for (i = 1; i < 5; i++)
 			if (obj->data[i] != 0)
 				break;
@@ -745,7 +745,7 @@ int count = 0;
 		for (current = list_head[i]; current; current = current->next)
 		{
 			int scale, code;
-			
+
 			/* extract scale and code */
 			obj = &mo->spriteram[current->entry];
 			scale = EXTRACT_DATA(obj, mo->scalemask);
@@ -769,7 +769,7 @@ if (count++ == atarirle_hilite_index)
 				if (y & ((mo->yposmask.mask + 1) >> 1))
 					y = (INT16)(y | ~mo->yposmask.mask);
 				x += mo->cliprect.min_x;
-				
+
 				/* merge priority and color */
 				color = (color << 4) | (priority << ATARIRLE_PRIORITY_SHIFT);
 
@@ -784,7 +784,7 @@ if (count++ == atarirle_hilite_index)
 if (hilite)
 {
 	int scale, code, which;
-	
+
 	/* extract scale and code */
 	obj = hilite;
 	scale = EXTRACT_DATA(obj, mo->scalemask);
@@ -807,7 +807,7 @@ if (hilite)
 		if (y & ((mo->yposmask.mask + 1) >> 1))
 			y = (INT16)(y | ~mo->yposmask.mask);
 		x += mo->cliprect.min_x;
-		
+
 		/* merge priority and color */
 		color = (color << 4) | (priority << ATARIRLE_PRIORITY_SHIFT);
 
@@ -822,7 +822,7 @@ if (hilite)
 		/* adjust for the x and y offsets */
 		x -= scaled_xoffs;
 		y -= scaled_yoffs;
-	
+
 		do
 		{
 			int scaled_width = (scale * info->width + 0x7fff) >> 12;
@@ -862,7 +862,7 @@ if (hilite)
 				ey = Machine->visible_area.max_y;
 			else if (ey < Machine->visible_area.min_y)
 				break;
-			
+
 			for (ty = sy; ty <= ey; ty++)
 			{
 				plot_pixel(bitmap1, sx, ty, rand() & 0xff);
@@ -874,7 +874,7 @@ if (hilite)
 				plot_pixel(bitmap1, tx, ey, rand() & 0xff);
 			}
 		} while (0);
-fprintf(stderr, "   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d h=%d) s=%04X\n", 
+fprintf(stderr, "   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d h=%d) s=%04X\n",
 	code, color, hflip,
 	x, -scaled_xoffs, (scale * info->width) >> 12,
 	y, -scaled_yoffs, (scale * info->height) >> 12, scale);
@@ -903,7 +903,7 @@ void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, in
 		scaled_xoffs = ((xscale * info->width) >> 12) - scaled_xoffs;
 
 //if (clip->min_y == Machine->visible_area.min_y)
-//logerror("   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d h=%d) s=%04X\n", 
+//logerror("   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d h=%d) s=%04X\n",
 //	code, color, hflip,
 //	x, -scaled_xoffs, (xscale * info->width) >> 12,
 //	y, -scaled_yoffs, (yscale * info->height) >> 12, xscale);

@@ -15,35 +15,37 @@ driver by Eisuke Watanabe
 based on driver from drivers/metro.c by Luca Elia
 spthx to kikur,Cha,teioh,kokkyusan,teruchu
 
-ToDo:
-background raster effects is incorrect.
 Note:
 sub68k is performing not only processing of sound but assistance of main68k.
-many interruption has not been solved.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* Variables defined in vidhrdw/metro.c */
-extern data16_t *metro_videoregs;
-extern data16_t *metro_screenctrl;
-extern data16_t *metro_scroll;
-extern data16_t *metro_tiletable;
-extern size_t metro_tiletable_size;
-extern data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
-extern data16_t *metro_window;
+#define RASTER_LINES 262
+#define FIRST_VISIBLE_LINE 0
+#define LAST_VISIBLE_LINE 223
 
-/* Functions defined in vidhrdw/metro.c */
-WRITE16_HANDLER( metro_paletteram_w );
-WRITE16_HANDLER( metro_window_w );
-WRITE16_HANDLER( metro_vram_0_w );
-WRITE16_HANDLER( metro_vram_1_w );
-WRITE16_HANDLER( metro_vram_2_w );
+/* Variables defined in vidhrdw: */
+extern data16_t *hyprduel_videoregs;
+extern data16_t *hyprduel_screenctrl;
+extern data16_t *hyprduel_tiletable;
+extern size_t hyprduel_tiletable_size;
+extern data16_t *hyprduel_vram_0, *hyprduel_vram_1, *hyprduel_vram_2;
+extern data16_t *hyprduel_window;
+extern data16_t hyprduel_scrollx[3][RASTER_LINES+1];
+extern data16_t hyprduel_scrolly[3][RASTER_LINES+1];
 
-VIDEO_START( metro_14220 );
-VIDEO_UPDATE( metro );
+/* Functions defined in vidhrdw: */
+WRITE16_HANDLER( hyprduel_paletteram_w );
+WRITE16_HANDLER( hyprduel_window_w );
+WRITE16_HANDLER( hyprduel_vram_0_w );
+WRITE16_HANDLER( hyprduel_vram_1_w );
+WRITE16_HANDLER( hyprduel_vram_2_w );
+
+VIDEO_START( hyprduel_14220 );
+VIDEO_UPDATE( hyprduel );
 
 /***************************************************************************
 								Interrupts
@@ -51,6 +53,10 @@ VIDEO_UPDATE( metro );
 
 static int blitter_bit;
 static int requested_int;
+static data16_t *hypr_irq_enable;
+static int subcpu_resetline;
+
+static int rastersplit;
 
 static data16_t *hypr_sharedram1;
 static data16_t *hypr_sharedram2;
@@ -58,14 +64,13 @@ static data16_t *hypr_sub_sharedram1_1;
 static data16_t *hypr_sub_sharedram1_2;
 static data16_t *hypr_sub_sharedram2_1;
 static data16_t *hypr_sub_sharedram2_2;
-static int subcpu_resetline;
 
 
 static WRITE16_HANDLER( hypr_sharedram1_w )
 {
 	COMBINE_DATA(&hypr_sharedram1[offset]);
 	COMBINE_DATA(&hypr_sub_sharedram1_1[offset]);
-	if (offset < 0x400/2)
+	if (offset < 0x4000/2)
 		COMBINE_DATA(&hypr_sub_sharedram1_2[offset]);
 }
 
@@ -73,10 +78,16 @@ static WRITE16_HANDLER( hypr_sharedram2_w )
 {
 	COMBINE_DATA(&hypr_sharedram2[offset]);
 	COMBINE_DATA(&hypr_sub_sharedram2_1[offset]);
-	if ((offset >= 0x400/2) && (offset < 0x7fff/2))
-		COMBINE_DATA(&hypr_sub_sharedram2_2[offset-0x400/2]);
+	if ((offset >= 0x4000/2) && (offset < 0x7fff/2))
+		COMBINE_DATA(&hypr_sub_sharedram2_2[offset-0x4000/2]);
 }
 
+static void update_irq_state(void)
+{
+	int irq = requested_int & ~*hypr_irq_enable;
+
+	cpu_set_irq_line(0, 3, (irq & 0x02) ? ASSERT_LINE : CLEAR_LINE);
+}
 
 static READ16_HANDLER( hyprduel_irq_cause_r )
 {
@@ -86,18 +97,76 @@ static READ16_HANDLER( hyprduel_irq_cause_r )
 static WRITE16_HANDLER( hyprduel_irq_cause_w )
 {
 	if (ACCESSING_LSB)
-		requested_int &= ~data;
-}
+	{
+		if (data == 0x02)
+			requested_int &= ~(0x02 & ~*hypr_irq_enable);
+		else
+			requested_int &= ~(data & *hypr_irq_enable);
 
-static void update_irq_state(void)
-{
-	cpu_set_irq_line(0, 2, (requested_int & 0x01) ? ASSERT_LINE : CLEAR_LINE);
-	cpu_set_irq_line(1, 1, (requested_int & 0x01) ? ASSERT_LINE : CLEAR_LINE);
+		update_irq_state();
+	}
 }
 
 static WRITE16_HANDLER( hypr_subcpu_control_w )
 {
-	cpu_set_reset_line(1, (data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
+	int pc = activecpu_get_pc();
+
+	if (data & 0x01)
+	{
+		if (!subcpu_resetline)
+		{
+			if (pc != 0x95f2)
+			{
+				cpu_set_reset_line(1, ASSERT_LINE);
+				subcpu_resetline = 1;
+			} else {
+				cpu_set_halt_line(1, ASSERT_LINE);
+				subcpu_resetline = -1;
+			}
+		}
+	} else {
+		if (subcpu_resetline == 1 && (data != 0x0c))
+		{
+			cpu_set_reset_line(1, CLEAR_LINE);
+			subcpu_resetline = 0;
+			if (pc == 0xbb0 || pc == 0x9d30 || pc == 0xb19c)
+				cpu_spinuntil_time(TIME_IN_USEC(10000));
+		}
+		else if (subcpu_resetline == -1)
+		{
+			cpu_set_halt_line(1, CLEAR_LINE);
+			subcpu_resetline = 0;
+		}
+	}
+}
+
+static WRITE16_HANDLER( hypr_scrollreg_w )
+{
+	int i;
+
+	if (offset & 0x01)
+	{
+		for (i = rastersplit; i < RASTER_LINES; i++)
+			hyprduel_scrollx[offset>>1][i] = data;
+	} else {
+		for (i = rastersplit; i < RASTER_LINES; i++)
+			hyprduel_scrolly[offset>>1][i] = data;
+	}
+}
+
+static WRITE16_HANDLER( hypr_scrollreg_init_w )
+{
+	int i;
+
+	for (i = 0; i < RASTER_LINES; i++)
+	{
+		hyprduel_scrollx[0][i] = data;
+		hyprduel_scrollx[1][i] = data;
+		hyprduel_scrollx[2][i] = data;
+		hyprduel_scrolly[0][i] = data;
+		hyprduel_scrolly[1][i] = data;
+		hyprduel_scrolly[2][i] = data;
+	}
 }
 
 static void vblank_end_callback(int param)
@@ -108,21 +177,28 @@ static void vblank_end_callback(int param)
 
 INTERRUPT_GEN( hyprduel_interrupt )
 {
-	if (!cpu_getiloops())
+	int line = RASTER_LINES - cpu_getiloops();
+
+	if (line == RASTER_LINES)
 	{
 		requested_int |= 0x01;		/* vblank */
 		requested_int |= 0x20;
+		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpu_set_irq_line(1, 1, HOLD_LINE);
 		timer_set(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION), 0x20, vblank_end_callback);
+		rastersplit = 0;
 	} else {
-		requested_int |= 0x10;
+		requested_int |= 0x12;		/* hsync */
+		rastersplit = line + 1;
 	}
+
 	update_irq_state();
 }
 
 MACHINE_INIT( hyprduel )
 {
 	/* start with cpu2 halted */
-	cpu_set_reset_line(1,ASSERT_LINE);
+	cpu_set_reset_line(1, ASSERT_LINE);
 	subcpu_resetline = 1;
 }
 
@@ -139,7 +215,7 @@ MACHINE_INIT( hyprduel )
 	that the blitter can readily use (which is a form of compression)
 */
 
-static data16_t *metro_rombank;
+static data16_t *hyprduel_rombank;
 
 READ16_HANDLER( hyprduel_bankedrom_r )
 {
@@ -148,7 +224,7 @@ READ16_HANDLER( hyprduel_bankedrom_r )
 	data8_t *ROM = memory_region( region );
 	size_t  len  = memory_region_length( region );
 
-	offset = offset * 2 + 0x10000 * (*metro_rombank);
+	offset = offset * 2 + 0x10000 * (*hyprduel_rombank);
 
 	if ( offset < len )	return ((ROM[offset+0]<<8)+ROM[offset+1])^0xffff;
 	else				return 0xffff;
@@ -215,15 +291,15 @@ INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, co
 {
 	switch( tmap )
 	{
-		case 1:	metro_vram_0_w(offs,data,mask);	break;
-		case 2:	metro_vram_1_w(offs,data,mask);	break;
-		case 3:	metro_vram_2_w(offs,data,mask);	break;
+		case 1:	hyprduel_vram_0_w(offs,data,mask);	break;
+		case 2:	hyprduel_vram_1_w(offs,data,mask);	break;
+		case 3:	hyprduel_vram_2_w(offs,data,mask);	break;
 	}
 //	logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
 }
 
 
-static WRITE16_HANDLER( metro_blitter_w )
+static WRITE16_HANDLER( hyprduel_blitter_w )
 {
 	COMBINE_DATA( &hyprduel_blitter_regs[offset] );
 
@@ -372,7 +448,7 @@ static MEMORY_READ16_START( hyprduel_readmem )
 	{ 0x475000, 0x477fff, MRA16_RAM				},	// (only used memory test)
 	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
 	{ 0x4788a2, 0x4788a3, hyprduel_irq_cause_r	},	// IRQ Cause
-	{ 0xc00000, 0xc07fff, MRA16_RAM				},	// (sound driver)
+	{ 0xc00000, 0xc07fff, MRA16_RAM				},	// (sound driver controls)
 	{ 0xe00000, 0xe00001, input_port_0_word_r	},	// Inputs
 	{ 0xe00002, 0xe00003, input_port_1_word_r	},	//
 	{ 0xe00004, 0xe00005, input_port_2_word_r	},	//
@@ -382,24 +458,25 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( hyprduel_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM 					},
-	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0x400000, 0x41ffff, hyprduel_vram_0_w, &hyprduel_vram_0	},	// Layer 0
+	{ 0x420000, 0x43ffff, hyprduel_vram_1_w, &hyprduel_vram_1	},	// Layer 1
+	{ 0x440000, 0x45ffff, hyprduel_vram_2_w, &hyprduel_vram_2	},	// Layer 2
+	{ 0x470000, 0x473fff, hyprduel_paletteram_w, &paletteram16	},	// Palette
+	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x475000, 0x477fff, MWA16_RAM 					},
-	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x478840, 0x47884d, metro_blitter_w, &hyprduel_blitter_regs	},	// Tiles Blitter
-	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x478870, 0x47887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
+	{ 0x478000, 0x4787ff, MWA16_RAM, &hyprduel_tiletable, &hyprduel_tiletable_size	},	// Tiles Set
+	{ 0x478840, 0x47884d, hyprduel_blitter_w, &hyprduel_blitter_regs	},	// Tiles Blitter
+	{ 0x478860, 0x47886b, hyprduel_window_w, &hyprduel_window	},	// Tilemap Window
+	{ 0x478870, 0x47887b, hypr_scrollreg_w				},	// Scroll Regs
+	{ 0x47887c, 0x47887d, hypr_scrollreg_init_w			},	// scroll regs all sets
 	{ 0x478880, 0x478881, MWA16_NOP						},
 	{ 0x478890, 0x478891, MWA16_NOP						},
 	{ 0x4788a0, 0x4788a1, MWA16_NOP						},
 	{ 0x4788a2, 0x4788a3, hyprduel_irq_cause_w			},	// IRQ Acknowledge
-//	{ 0x4788a4, 0x4788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x4788aa, 0x4788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x4788ac, 0x4788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x479700, 0x479713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+	{ 0x4788a4, 0x4788a5, MWA16_RAM, &hypr_irq_enable	},	// IRQ Enable
+	{ 0x4788aa, 0x4788ab, MWA16_RAM, &hyprduel_rombank		},	// Rom Bank
+	{ 0x4788ac, 0x4788ad, MWA16_RAM, &hyprduel_screenctrl	},	// Screen Control
+	{ 0x479700, 0x479713, MWA16_RAM, &hyprduel_videoregs	},	// Video Registers
 	{ 0x800000, 0x800001, hypr_subcpu_control_w			},
 	{ 0xc00000, 0xc07fff, MWA16_RAM, &hypr_sharedram1	},
 	{ 0xe00000, 0xe00001, MWA16_NOP						},
@@ -407,8 +484,8 @@ static MEMORY_WRITE16_START( hyprduel_writemem )
 MEMORY_END
 
 static MEMORY_READ16_START( hyprduel_readmem2 )
-	{ 0x000000, 0x0003ff, MRA16_RAM						},
-	{ 0x000400, 0x007fff, MRA16_RAM						},
+	{ 0x000000, 0x003fff, MRA16_RAM						},
+	{ 0x004000, 0x007fff, MRA16_RAM						},
 	{ 0x400002, 0x400003, YM2151_status_port_0_lsb_r	},
 	{ 0x400004, 0x400005, OKIM6295_status_0_lsb_r		},
 	{ 0xc00000, 0xc07fff, MRA16_RAM						},
@@ -416,13 +493,13 @@ static MEMORY_READ16_START( hyprduel_readmem2 )
 MEMORY_END
 
 static MEMORY_WRITE16_START( hyprduel_writemem2 )
-	{ 0x000000, 0x0003ff, MWA16_RAM, &hypr_sub_sharedram1_2	},	// shadow ($c00000 - $c003ff : vector)
-	{ 0x000400, 0x007fff, MWA16_RAM, &hypr_sub_sharedram2_2	},	// shadow ($fe0400 - $fe7fff)
+	{ 0x000000, 0x003fff, MWA16_RAM, &hypr_sub_sharedram1_2	},	// shadow ($c00000 - $c03fff : vector, write ok)
+	{ 0x004000, 0x007fff, MWA16_RAM, &hypr_sub_sharedram2_2	},	// shadow ($fe4000 - $fe7fff : read only)
 	{ 0x400000, 0x400001, YM2151_register_port_0_lsb_w	},
 	{ 0x400002, 0x400003, YM2151_data_port_0_lsb_w		},
 	{ 0x400004, 0x400005, OKIM6295_data_0_lsb_w			},
 	{ 0x800000, 0x800001, MWA16_NOP						},
-	{ 0xc00000, 0xc07fff, MWA16_RAM, &hypr_sub_sharedram1_1	},
+	{ 0xc00000, 0xc07fff, MWA16_RAM, &hypr_sub_sharedram1_1	},	// (sound driver)
 	{ 0xfe0000, 0xffffff, MWA16_RAM, &hypr_sub_sharedram2_1	},
 MEMORY_END
 
@@ -584,7 +661,7 @@ static MACHINE_DRIVER_START( hyprduel )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
 	MDRV_CPU_MEMORY(hyprduel_readmem,hyprduel_writemem)
-	MDRV_CPU_VBLANK_INT(hyprduel_interrupt,2)
+	MDRV_CPU_VBLANK_INT(hyprduel_interrupt,RASTER_LINES)
 
 	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
 	MDRV_CPU_MEMORY(hyprduel_readmem2,hyprduel_writemem2)
@@ -597,12 +674,12 @@ static MACHINE_DRIVER_START( hyprduel )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(320, 224)
-	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_VISIBLE_AREA(0, 320-1, FIRST_VISIBLE_LINE, LAST_VISIBLE_LINE)
 	MDRV_GFXDECODE(gfxdecodeinfo_14220)
 	MDRV_PALETTE_LENGTH(8192)
 
-	MDRV_VIDEO_START(metro_14220)
-	MDRV_VIDEO_UPDATE(metro)
+	MDRV_VIDEO_START(hyprduel_14220)
+	MDRV_VIDEO_UPDATE(hyprduel)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -630,13 +707,14 @@ static DRIVER_INIT( hyprduel )
 
 	install_mem_write16_handler(0, 0xc00000, 0xc07fff, hypr_sharedram1_w);
 	install_mem_write16_handler(1, 0xc00000, 0xc07fff, hypr_sharedram1_w);
-	install_mem_write16_handler(1, 0x000000, 0x0003ff, hypr_sharedram1_w);
+	install_mem_write16_handler(1, 0x000000, 0x003fff, hypr_sharedram1_w);
 
 	install_mem_write16_handler(0, 0xfe0000, 0xffffff, hypr_sharedram2_w);
 	install_mem_write16_handler(1, 0xfe0000, 0xffffff, hypr_sharedram2_w);
 
 	requested_int = 0x00;
 	blitter_bit = 2;
+	*hypr_irq_enable = 0xff;
 }
 
 
@@ -647,11 +725,11 @@ ROM_START( hyprduel )
 
 	ROM_REGION( 0x8000, REGION_CPU2, 0 )
 
-	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
-	ROMX_LOAD( "hd_m1.rom", 0x000000, 0x100000, 0x582aab46, ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m2.rom", 0x000002, 0x100000, 0x63da509e, ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m3.rom", 0x000004, 0x100000, 0x4dbb5a79, ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m4.rom", 0x000006, 0x100000, 0x8061d5dd, ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Prg + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "hd_m1.rom", 0x000000, 0x100000, BADCRC( 0x582aab46 ), ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
+	ROMX_LOAD( "hd_m2.rom", 0x000002, 0x100000, BADCRC( 0x63da509e ), ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
+	ROMX_LOAD( "hd_m3.rom", 0x000004, 0x100000, BADCRC( 0x4dbb5a79 ), ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
+	ROMX_LOAD( "hd_m4.rom", 0x000006, 0x100000, BADCRC( 0x8061d5dd ), ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "97.11", 0x00000, 0x40000, 0xbf3f8574 )
@@ -664,7 +742,7 @@ ROM_START( hyprdelj )
 
 	ROM_REGION( 0x8000, REGION_CPU2, 0 )
 
-	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Prg + Data (Addressable by CPU & Blitter) */
 	ROMX_LOAD( "hyper-1.4", 0x000000, 0x100000, 0x4b3b2d3c, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "hyper-2.6", 0x000002, 0x100000, 0xdc230116, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "hyper-3.3", 0x000004, 0x100000, 0x2d770dd0, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -675,6 +753,6 @@ ROM_START( hyprdelj )
 ROM_END
 
 
-GAMEX( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (World)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (World)", GAME_NOT_WORKING )
+GAME ( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan)" )
 

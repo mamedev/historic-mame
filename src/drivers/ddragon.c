@@ -5,6 +5,32 @@ Double Dragon II  (c) 1988 Technos Japan
 
 Driver by Carlos A. Lozano, Rob Rosenbrock, Phil Stroffolino, Ernesto Corvi
 
+Toffy / Super Toffy added by David Haywood
+Thanks to Bryan McPhail for spotting the Toffy program rom encryption
+
+todo:
+
+banking in Toffy / Super toffy
+make Dangerous Dungeons work
+DIPS etc. in Toffy / Super Toffy
+sound in Toffy / Super Toffy
+
+-- Read Me --
+
+Super Toffy - Unico 1994
+
+Main cpu: 	MC6809EP
+Sound cpu: 	MC6809P
+Sound: 		YM2151
+Clocks:		12 MHz, 3.579MHz
+
+Graphics custom: MDE-2001
+
+-- --
+
+Does this make Super Toffy the sequel to a rip-off / bootleg of a
+conversion kit which could be applied to a bootleg double dragon :-p?
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -78,6 +104,26 @@ static WRITE_HANDLER( ddragon_bankswitch_w )
 		cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
+}
+
+static WRITE_HANDLER( toffy_bankswitch_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
+	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
+
+//	flip_screen_set(~data & 0x04);
+
+	/* bit 3 unknown */
+
+//	if (data & 0x10)
+//		dd_sub_cpu_busy = 0x00;
+//	else if (dd_sub_cpu_busy == 0x00)
+//		cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+
+	/* I don't know ... */
+	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0x20) >> 5 ) ) ] );
 }
 
 static WRITE_HANDLER( ddragon_forcedIRQ_w )
@@ -227,6 +273,23 @@ static MEMORY_WRITE_START( dd2_writemem )
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
+static MEMORY_WRITE_START( toffy_writemem )
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
+	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
+	{ 0x1400, 0x17ff, MWA_RAM },
+	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
+	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
+	{ 0x3000, 0x37ff, ddragon_bgvideoram_w, &ddragon_bgvideoram },
+	{ 0x3808, 0x3808, toffy_bankswitch_w },
+	{ 0x3809, 0x3809, MWA_RAM, &ddragon_scrollx_lo },
+	{ 0x380a, 0x380a, MWA_RAM, &ddragon_scrolly_lo },
+	{ 0x380b, 0x380d, MWA_RAM },	/* ??? */
+	{ 0x380e, 0x380e, cpu_sound_command_w },
+	{ 0x380f, 0x380f, ddragon_forcedIRQ_w },
+	{ 0x4000, 0xffff, MWA_ROM },
+MEMORY_END
+
 static MEMORY_READ_START( sub_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x8000, 0x8fff, ddragon_spriteram_r },
@@ -282,8 +345,6 @@ static MEMORY_WRITE_START( dd2_sound_writemem )
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
 MEMORY_END
-
-
 
 #define COMMON_PORT4	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
@@ -394,6 +455,89 @@ INPUT_PORTS_START( ddragon2 )
 	PORT_DIPSETTING(    0x80, "2" )
 	PORT_DIPSETTING(    0x40, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
+
+	COMMON_PORT4
+INPUT_PORTS_END
+
+INPUT_PORTS_START( toffy )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x0f, "4 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x0a, "3 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0e, "3 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0xf0, "4 Coin/6 Credits" )
+	PORT_DIPSETTING(    0xa0, "3 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xe0, "3 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "30k, 50k and 100k" )
+	PORT_DIPSETTING(    0x08, "50k and 100k" )
+	PORT_DIPSETTING(    0x18, "100k and 200k" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, "Easy" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -583,6 +727,34 @@ static MACHINE_DRIVER_START( ddragon2 )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( toffy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,3579545) // 12 MHz / 2 or 3.579545 ?
+	MDRV_CPU_MEMORY(readmem,toffy_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon_interrupt,1)
+
+//	MDRV_CPU_ADD(M6809, 3579545)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(ddragon)
+	MDRV_VIDEO_UPDATE(ddragon)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -785,10 +957,117 @@ ROM_START( ddragn2u )
 	ROM_LOAD( "prom.16",      0x0000, 0x0200, 0x46339529 )	/* unknown (same as ddragon) */
 ROM_END
 
+ROM_START( toffy )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* Main CPU? */
+	ROM_LOAD( "2-27512.rom", 0x00000, 0x10000, 0x244709dd )
+	ROM_RELOAD( 0x10000, 0x10000 )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU? */
+	ROM_LOAD( "u142.1", 0x00000, 0x10000, 0x541bd7f0 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 ) /* GFX? */
+	ROM_LOAD( "7-27512.rom", 0x000, 0x10000, 0xf9e8ec64 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* GFX */
+	/* the same as 'Dangerous Dungeons' once decrypted */
+	ROM_LOAD( "4-27512.rom", 0x00000, 0x10000, 0x94b5ef6f )
+	ROM_LOAD( "3-27512.rom", 0x10000, 0x10000, 0xa7a053a3 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* GFX */
+	ROM_LOAD( "6-27512.rom", 0x00000, 0x10000, 0x2ba7ca47 )
+	ROM_LOAD( "5-27512.rom", 0x10000, 0x10000, 0x4f91eec6 )
+ROM_END
+
+ROM_START( stoffy )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* Main CPU? */
+	ROM_LOAD( "u70.2", 0x00000, 0x10000, 0x3c156610 )
+	ROM_RELOAD( 0x10000, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU? */
+	ROM_LOAD( "u142.1", 0x00000, 0x10000, 0x541bd7f0 ) // same as 'toffy'
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 ) /* GFX? */
+	ROM_LOAD( "u35.7", 0x00000, 0x10000, 0x83735d25 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* GFX */
+	ROM_LOAD( "u78.4", 0x00000, 0x10000, 0x9743a74d ) // 0
+	ROM_LOAD( "u77.3", 0x10000, 0x10000, 0xf267109a ) // 0
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* GFX */
+	ROM_LOAD( "u80.5", 0x00000, 0x10000, 0xff190865 ) // 1 | should be u80.6 ?
+	ROM_LOAD( "u79.5", 0x10000, 0x10000, 0x333d5b8a ) // 1
+ROM_END
+
+ROM_START( ddungeon )
+	/* there were various double dragon roms in the zip but
+	I'm not sure they're needed, there is also an undumped MCU */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* Main CPU? */
+	ROM_LOAD( "dd3.bin", 0x10000, 0x8000, 0x922e719c )
+	ROM_LOAD( "dd2.bin", 0x08000, 0x8000, 0xa6e7f608 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU? */
+	// I guess it uses ddragon's Sound Rom?
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 ) /* GFX? */
+	ROM_LOAD( "dd6.bin", 0x00000, 0x08000, 0x057588ca )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* GFX */
+	ROM_LOAD( "dd-6b.bin", 0x00000, 0x08000, 0x3deacae9 ) // 0
+	ROM_LOAD( "dd-7c.bin", 0x10000, 0x08000, 0x5a2f31eb ) // 0
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* GFX */
+	ROM_LOAD( "dd-7r.bin", 0x00000, 0x08000, 0x50d6ab5d ) // 1
+	ROM_LOAD( "dd-7k.bin", 0x10000, 0x08000, 0x43264ad8 ) // 1
+ROM_END
+
+/** INITS **
+toffy / stoffy are 'encrytped
+
+*/
+
+static DRIVER_INIT( toffy )
+{
+	/* the program rom has a simple bitswap encryption */
+	data8_t *rom=memory_region(REGION_CPU1);
+	int i;
+
+	for (i = 0;i < 0x20000;i++)
+		rom[i] = BITSWAP8(rom[i] , 6,7,5,4,3,2,1,0);
+
+	/* and the fg gfx ... */
+	rom=memory_region(REGION_GFX1);
+
+	for (i = 0;i < 0x10000;i++)
+		rom[i] = BITSWAP8(rom[i] , 7,6,5,3,4,2,1,0);
+
+	/* and the bg gfx */
+	rom=memory_region(REGION_GFX3);
+
+	for (i = 0;i < 0x10000;i++)
+	{
+		rom[i] = BITSWAP8(rom[i] , 7,6,1,4,3,2,5,0);
+		rom[i+0x10000] = BITSWAP8(rom[i+0x10000] , 7,6,2,4,3,5,1,0);
+	}
+
+	/* and the sprites gfx */
+	rom=memory_region(REGION_GFX2);
+
+	for (i = 0;i < 0x20000;i++)
+		rom[i] = BITSWAP8(rom[i] , 7,6,5,4,3,2,0,1);
+
+	/* should the sound rom be bitswapped too? */
+
+}
 
 GAME( 1987, ddragon,  0,        ddragon,  ddragon,  0, ROT0, "Technos", "Double Dragon (Japan)" )
 GAME( 1987, ddragonu, ddragon,  ddragon,  ddragon,  0, ROT0, "[Technos] (Taito America license)", "Double Dragon (US)" )
 GAME( 1987, ddragonb, ddragon,  ddragonb, ddragon,  0, ROT0, "bootleg", "Double Dragon (bootleg)" )
 GAME( 1988, ddragon2, 0,        ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (World)" )
 GAME( 1988, ddragn2u, ddragon2, ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (US)" )
+
+/* this was a conversion of a double dragon board */
+GAMEX( 199?, ddungeon, 0, toffy, toffy, 0, ROT0, "East Coast Coin Company (Melbourne)", "Dangerous Dungeons", GAME_NOT_WORKING )
+
+/* these run on their own board but are the basically the same game, Toffy even has 'dangerous dungeons' text in it */
+GAMEX( 1993, toffy,  0, toffy, toffy, toffy, ROT0, "Midas",                 "Toffy", GAME_NO_SOUND )
+GAMEX( 1994, stoffy, 0, toffy, toffy, toffy, ROT0, "Midas (Unico license)", "Super Toffy", GAME_NO_SOUND )

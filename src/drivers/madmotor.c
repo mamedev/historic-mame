@@ -75,7 +75,7 @@ static MEMORY_WRITE16_START( madmotor_writemem )
 	{ 0x1a0000, 0x1a001f, madmotor_pf3_control_w },
 	{ 0x1a4000, 0x1a4fff, madmotor_pf3_data_w, &madmotor_pf3_data },
 	{ 0x3e0000, 0x3e3fff, MWA16_RAM },
-	{ 0x3e8000, 0x3e87ff, MWA16_RAM, &spriteram16 },
+	{ 0x3e8000, 0x3e87ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x3f0000, 0x3f07ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x3fc004, 0x3fc005, madmotor_sound_w },
 MEMORY_END

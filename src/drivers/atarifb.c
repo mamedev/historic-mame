@@ -109,6 +109,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "atarifb.h"
+#include "artwork.h"
 
 
 int atarifb_game;
@@ -196,19 +197,27 @@ static WRITE_HANDLER( soccer_out2_w )
 
 static WRITE_HANDLER( atarifb_out3_w )
 {
-	int loop = cpu_getiloops ();
+	int loop = cpu_getiloops();
 
 	switch (loop)
 	{
 		case 0x00:
 			/* Player 1 play select lamp */
 			atarifb_lamp1 = data;
+			artwork_show("ledleft0", (atarifb_lamp1 >> 0) & 1);
+			artwork_show("ledleft1", (atarifb_lamp1 >> 1) & 1);
+			artwork_show("ledleft2", (atarifb_lamp1 >> 2) & 1);
+			artwork_show("ledleft3", (atarifb_lamp1 >> 3) & 1);
 			break;
 		case 0x01:
 			break;
 		case 0x02:
 			/* Player 2 play select lamp */
 			atarifb_lamp2 = data;
+			artwork_show("ledright0", (atarifb_lamp2 >> 0) & 1);
+			artwork_show("ledright1", (atarifb_lamp2 >> 1) & 1);
+			artwork_show("ledright2", (atarifb_lamp2 >> 2) & 1);
+			artwork_show("ledright3", (atarifb_lamp2 >> 3) & 1);
 			break;
 		case 0x03:
 			break;
@@ -705,7 +714,7 @@ static MACHINE_DRIVER_START( atarifb )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(38*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 1*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
@@ -725,6 +734,16 @@ static MACHINE_DRIVER_START( atarifb4 )
 	MDRV_IMPORT_FROM(atarifb)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(atarifb4_readmem,atarifb4_writemem)
+
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( abaseb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(atarifb)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 MACHINE_DRIVER_END
 
 
@@ -736,6 +755,7 @@ static MACHINE_DRIVER_START( soccer )
 	MDRV_CPU_MEMORY(soccer_readmem,soccer_writemem)
 
 	/* video hardware */
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(soccer_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -935,6 +955,6 @@ static DRIVER_INIT( soccer )
 GAME( 1978, atarifb,  0,       atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)" )
 GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)" )
 GAME( 1979, atarifb4, atarifb, atarifb4, atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)" )
-GAME( 1979, abaseb,   0,       atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)" )
-GAME( 1979, abaseb2,  abaseb,  atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)" )
+GAME( 1979, abaseb,   0,       abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)" )
+GAME( 1979, abaseb2,  abaseb,  abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)" )
 GAME( 1980, soccer,   0,       soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer" )

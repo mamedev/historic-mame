@@ -265,9 +265,7 @@ VIDEO_UPDATE( othunder )
 		othunder_draw_sprites_16x8(bitmap,cliprect,primasks,3);
 	}
 
-	/* See if we should draw artificial gun targets */
-
-	if (input_port_9_word_r(0,0) & 0x1)	/* Fake DSW */
+	/* Draw artificial gun targets */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 

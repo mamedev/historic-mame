@@ -604,11 +604,11 @@ static struct namco_interface namco_interface =
 static MACHINE_DRIVER_START( mappy )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(mappy_readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
 
-	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(mappy_readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
 
@@ -638,11 +638,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( digdug2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(digdug2_readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
 
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(digdug2_readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
 
@@ -672,11 +672,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( motos )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(motos_readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
 
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(motos_readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
 
@@ -706,11 +706,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( todruaga )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(todruaga_readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
 
-	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/12)	/* 1.536 MHz */
 	MDRV_CPU_MEMORY(todruaga_readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
 

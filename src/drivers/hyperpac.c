@@ -27,7 +27,7 @@ Soft Mfg date : 05/09/95
 
 CPU : MC68000P10
 
-Xtal : 12.000000 Mhz & 16.000000 Mhz
+Xtal : 12.000000 MHz & 16.000000 MHz
 
 Miscelaneaous :
 

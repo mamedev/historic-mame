@@ -11,7 +11,7 @@
 #include "memory.h"
 
 /* Set this to 1 to disassemble using Z80 style mnemonics */
-#define HJB     1
+#define HJB     0
 
 /* Set this to 1 to give names to condition codes and flag bits */
 #define MNEMO   1
@@ -662,7 +662,7 @@ int Dasm2650(char * buff, int PC)
 			break;
 		case 0xb5:
 #if HJB
-			sprintf(buff, "bit  psl,%s", IMM_PSU(pc));
+			sprintf(buff, "bit  psl,%s", IMM_PSL(pc));
 #else
             sprintf(buff, "tpsl   %s", IMM_PSL(pc));
 #endif

@@ -285,6 +285,7 @@ GFX:                Custom 145     ( 80 pin PQFP)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namconb1.h"
+#include "namcos2.h"
 #include "namcoic.h"
 
 #define NB1_NVMEM_SIZE (0x800)
@@ -294,14 +295,13 @@ data32_t *namconb1_workram32;
 data32_t *namconb1_spritebank32;
 data32_t *namconb1_scrollram32;
 
-enum namconb1_type namconb1_type;
-
 static NVRAM_HANDLER( namconb1 ){
 	if( read_or_write )
 	{
 		osd_fwrite( file, nvmem32, NB1_NVMEM_SIZE );
 	}
-	else {
+	else
+	{
 		if (file)
 		{
 			osd_fread( file, nvmem32, NB1_NVMEM_SIZE );
@@ -315,28 +315,28 @@ static NVRAM_HANDLER( namconb1 ){
 
 static DRIVER_INIT( nebulray )
 {
-	namconb1_type = key_nebulray;
+	namcos2_gametype = NAMCONB1_NEBULRAY;
 }
 
 static DRIVER_INIT( gslgr94u )
 {
-	namconb1_type = key_gslgr94u;
+	namcos2_gametype = NAMCONB1_GSLGR94U;
 }
 
 static DRIVER_INIT( sws96 )
 {
-	namconb1_type = key_sws96;
+	namcos2_gametype = NAMCONB1_SWS96;
 }
 
 static DRIVER_INIT( sws97 )
 {
-	namconb1_type = key_sws97;
+	namcos2_gametype = NAMCONB1_SWS97;
 }
 
 static DRIVER_INIT( gunbulet )
 {
-//	data32_t *pMem = (data32_t *)memory_region(REGION_CPU1);
-	namconb1_type = key_gunbulet;
+	//data32_t *pMem = (data32_t *)memory_region(REGION_CPU1);
+	namcos2_gametype = NAMCONB1_GUNBULET;
 
 	//p1 gun patch; without it you cannot shoot in the left 24 pixels
 	//pMem[0xA798/4] = 0x4E714E71;
@@ -347,21 +347,36 @@ static DRIVER_INIT( gunbulet )
 	//pMem[0xA898/4] = 0x4E714E71;
 }
 
-static DRIVER_INIT( outfxies )
+static DRIVER_INIT( vshoot )
+{
+	namcos2_gametype = NAMCONB1_VSHOOT;
+}
+
+static void
+ShuffleDataROMs( void )
 {
 	data8_t *pMem8 = (data8_t *)memory_region( REGION_USER1 );
 	data32_t *pMem32 = (data32_t *)pMem8;
 	int i;
 
-	namconb1_type = key_outfoxies;
-
-	/* shuffle data ROMs */
-	for( i=0; i<0x100000/4; i++ )
+	for( i=0; i<0x80000/4; i++ )
 	{
 		pMem32[i] = (pMem8[0]<<16)|(pMem8[1]<<24)|(pMem8[2]<<0)|(pMem8[3]<<8);
 		pMem8+=4;
 	}
 	cpu_setbank( 1, pMem32 );
+}
+
+static DRIVER_INIT( machbrkr )
+{
+	namcos2_gametype = NAMCONB2_MACH_BREAKERS;
+	ShuffleDataROMs();
+}
+
+static DRIVER_INIT( outfxies )
+{
+	namcos2_gametype = NAMCONB2_OUTFOXIES;
+	ShuffleDataROMs();
 }
 
 static READ32_HANDLER( custom_key_r )
@@ -375,12 +390,12 @@ static READ32_HANDLER( custom_key_r )
 		count = rand();
 	} while( count==old_count );
 
-	switch( namconb1_type )
+	switch( namcos2_gametype )
 	{
-	case key_gunbulet:
+	case NAMCONB1_GUNBULET:
 		return 0; /* no protection */
 
-	case key_sws96:
+	case NAMCONB1_SWS96:
 		switch( offset )
 		{
 		case 0: return 0x01aa<<16;
@@ -388,7 +403,7 @@ static READ32_HANDLER( custom_key_r )
 		}
 		break;
 
-	case key_sws97:
+	case NAMCONB1_SWS97:
 		switch( offset )
 		{
 		case 2: return 0x1b2<<16;
@@ -396,7 +411,7 @@ static READ32_HANDLER( custom_key_r )
 		}
 		break;
 
-	case key_gslgr94u:
+	case NAMCONB1_GSLGR94U:
 		switch( offset )
 		{
 		case 0: return 0x0167;
@@ -404,7 +419,7 @@ static READ32_HANDLER( custom_key_r )
 		}
 		break;
 
-	case key_nebulray:
+	case NAMCONB1_NEBULRAY:
 		switch( offset )
 		{
 		case 1: return 0x016e;
@@ -412,13 +427,24 @@ static READ32_HANDLER( custom_key_r )
 		}
 		break;
 
-	case key_outfoxies:
+	case NAMCONB1_VSHOOT:
+		switch( offset )
+		{
+		case 2: return count<<16;
+		case 3: return 0x0170<<16;
+		}
+		break;
+
+	case NAMCONB2_OUTFOXIES:
 		switch( offset )
 		{
 		case 0: /* 0x00 */ return 0x0186;
 		case 1: /* 0x04 */ return count<<16;
 		}
 		break;
+
+	case NAMCONB2_MACH_BREAKERS:
+		break; /* no protection? */
 	}
 
 	logerror( "custom_key_r(%d); pc=%08x\n", offset, activecpu_get_pc() );
@@ -473,6 +499,19 @@ static struct GfxLayout roz_layout =
 	16*128
 };
 
+/*
+static struct GfxLayout mask_layout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 },
+	{ 0*16,1*16,2*16,3*16,4*16,5*16,6*16,7*16,8*16,9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
+	16*16
+};
+*/
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x10 },
@@ -485,8 +524,9 @@ static struct GfxDecodeInfo gfxdecodeinfo2[] =
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x08 },
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },
 	{ NAMCONB1_ROTGFXREGION,	0, &roz_layout,		0x1800, 0x08 },
+//	{ NAMCONB1_ROTMASKREGION,	0, &mask_layout,	0x1800, 0x08 },
 	{ -1 }
-}; /* gfxdecodeinfo */
+}; /* gfxdecodeinfo2 */
 
 /***************************************************************/
 
@@ -510,6 +550,7 @@ static MEMORY_READ32_START( namconb1_readmem )
 	{ 0x1c0000, 0x1cffff, MRA32_RAM }, /* workram */
 	{ 0x1e4000, 0x1e4003, MRA32_NOP }, /* unknown */
 	{ 0x200000, 0x23ffff, MRA32_RAM }, /* workram (shared with MCU) */
+	{ 0x240000, 0x2fffff, MRA32_RAM }, /* vshoot */
 	{ 0x400000, 0x40001f, MRA32_RAM }, /* ? */
 	{ 0x580000, 0x5807ff, MRA32_RAM }, /* nvmem */
 	{ 0x600000, 0x6141ff, namco_obj32_r },
@@ -524,7 +565,8 @@ MEMORY_END
 static MEMORY_WRITE32_START( namconb1_writemem )
 	{ 0x000000, 0x0fffff, MWA32_ROM },
 	{ 0x1c0000, 0x1cffff, MWA32_RAM }, /* workram */
-	{ 0x200000, 0x23ffff, MWA32_RAM, &namconb1_workram32 },
+//	{ 0x200000, 0x23ffff, MWA32_RAM, &namconb1_workram32 },
+	{ 0x200000, 0x2fffff, MWA32_RAM, &namconb1_workram32 }, /* vshoot */
 	{ 0x400000, 0x40001f, MWA32_RAM }, /* cpu control registers */
 	/*  400016: watchdog */
 	{ 0x580000, 0x5807ff, MWA32_RAM, &nvmem32 },
@@ -546,6 +588,7 @@ static MEMORY_READ32_START( namconb2_readmem )
 	{ 0x000000, 0x0fffff, MRA32_ROM },
 	{ 0x1c0000, 0x1cffff, MRA32_RAM },	/* workram */
 	{ 0x1e4000, 0x1e4003, MRA32_NOP },	/* ? */
+//	{ 0x200000, 0x23ffff, MRA32_RAM },	/* workram (shared with MCU) */
 	{ 0x200000, 0x2fffff, MRA32_RAM },	/* workram (shared with MCU) */
 	{ 0x400000, 0x4fffff, MRA32_BANK1 },/* data ROMs */
 	{ 0x600000, 0x6023ff, MRA32_RAM }, /* ? */
@@ -594,8 +637,14 @@ MEMORY_END /* namconb2_writemem */
 
 static INTERRUPT_GEN( namconb1_interrupt )
 {
-	if( namconb1_type == key_gunbulet ) cpu_set_irq_line(0, 5, HOLD_LINE);
-	else cpu_set_irq_line(0, 2, HOLD_LINE);
+	if( namcos2_gametype == NAMCONB1_GUNBULET )
+	{
+		cpu_set_irq_line(0, 5, HOLD_LINE);
+	}
+	else
+	{
+		cpu_set_irq_line(0, 2, HOLD_LINE);
+	}
 }
 
 static INTERRUPT_GEN( namconb2_interrupt )
@@ -860,6 +909,33 @@ ROM_START( sws97 )
 	ROM_LOAD( "ss71sha0.bin", 0, 0x80000, 0xbe8c2758 )
 ROM_END
 
+ROM_START( vshoot )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_WORD( "vsj1mprl.15b", 0x00002, 0x80000, 0x83a60d92 )
+	ROM_LOAD32_WORD( "vsj1mpru.13b", 0x00000, 0x80000, 0xc63eb92d )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "vsj1spr0.5b", 0, 0x80000, 0xb0c71aa6 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "vsjvoi-0.5j", 0, 0x200000, 0x0528c9ed )
+
+	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "vsjobj0l.ic1", 0x000001, 0x200000, 0xe134faa7 )
+	ROM_LOAD16_BYTE( "vsjobj0u.ic2", 0x000000, 0x200000, 0x974d0714 )
+	ROM_LOAD16_BYTE( "vsjobj1l.ic3", 0x400000, 0x200000, 0xba46f967 )
+	ROM_LOAD16_BYTE( "vsjobj1u.ic4", 0x400000, 0x200000, 0x09da7e9c )
+
+	ROM_REGION( 0x400000, NAMCONB1_TILEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD( "vsjchr-0.8j", 0x000000, 0x100000, 0x2af8ba7c )
+	ROM_LOAD( "vsjchr-1.9j", 0x100000, 0x100000, BADCRC(0xb789d53e) )
+	ROM_LOAD( "vsjchr-2.10j", 0x200000, 0x100000, 0x7ef80758 )
+	ROM_LOAD( "vsjchr-3.11j", 0x300000, 0x100000, 0x73ca58f6 )
+
+	ROM_REGION( 0x80000, NAMCONB1_TILEMASKREGION, 0 )
+	ROM_LOAD( "vsjsha-0.5m", 0, 0x80000, 0x78335ea4 )
+ROM_END
+
 ROM_START( outfxies )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD32_WORD( "ou2mprl.11c", 0x00002, 0x80000, 0xf414a32e )
@@ -902,6 +978,92 @@ ROM_START( outfxies )
 	ROM_LOAD( "ou1dat1.20b", 0x80000, 0x80000, 0x63bb119d )
 ROM_END
 
+ROM_START( outfxesj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_WORD( "ou1-mprl.11c", 0x00002, 0x80000, 0xd3b9e530 )
+	ROM_LOAD32_WORD( "ou1-mpru.11d", 0x00000, 0x80000, 0xd98308fb )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "ou1spr0.5b", 0, 0x80000, 0x60cee566 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "ou1voi0.6n", 0, 0x200000, 0x2d8fb271 )
+
+	ROM_REGION( 0x200000, NAMCONB1_TILEMASKREGION, 0 )
+	ROM_LOAD( "ou1shas.12s", 0, 0x200000,0x9bcb0397	)
+
+	ROM_REGION( 0x200000, NAMCONB1_ROTMASKREGION, 0 )
+	ROM_LOAD( "ou1shar.18s", 0, 0x200000,	0xfbb48194 )
+
+	ROM_REGION( 0x2000000, NAMCONB1_SPRITEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "ou1obj0l", 0x0000001, 0x200000, 0x1b4f7184 )
+	ROM_LOAD16_BYTE( "ou1obj0u", 0x0000000, 0x200000, 0xd0a69794 )
+	ROM_LOAD16_BYTE( "ou1obj1l", 0x0400001, 0x200000, 0x48a93e84 )
+	ROM_LOAD16_BYTE( "ou1obj1u", 0x0400000, 0x200000, 0x999de386 )
+	ROM_LOAD16_BYTE( "ou1obj2l", 0x0800001, 0x200000, 0x30386cd0 )
+	ROM_LOAD16_BYTE( "ou1obj2u", 0x0800000, 0x200000, 0xccada5f8 )
+	ROM_LOAD16_BYTE( "ou1obj3l", 0x0c00001, 0x200000, 0x5f41b44e )
+	ROM_LOAD16_BYTE( "ou1obj3u", 0x0c00000, 0x200000, 0xbc852c8e )
+	ROM_LOAD16_BYTE( "ou1obj4l", 0x1000001, 0x200000, 0x99a5f9d7 )
+	ROM_LOAD16_BYTE( "ou1obj4u", 0x1000000, 0x200000, 0x70ecaabb )
+
+	ROM_REGION( 0x600000, NAMCONB1_ROTGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD( "ou1-rot0", 0x000000, 0x200000, 0xa50c67c8 )
+	ROM_LOAD( "ou1-rot1", 0x200000, 0x200000, 0x14866780 )
+	ROM_LOAD( "ou1-rot2", 0x400000, 0x200000, 0x55ccf3af )
+
+	ROM_REGION( 0x200000, NAMCONB1_TILEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD( "ou1-scr0", 0x000000, 0x200000, 0xb3b3f2e9 )
+
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	ROM_LOAD( "ou1dat0.20a", 0x00000, 0x80000, 0x1a49aead )
+	ROM_LOAD( "ou1dat1.20b", 0x80000, 0x80000, 0x63bb119d )
+ROM_END
+
+
+ROM_START( machbrkr )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_WORD( "mb1_mprl.11c", 0x00002, 0x80000, 0x86cf0644 )
+	ROM_LOAD32_WORD( "mb1_mpru.11d", 0x00000, 0x80000, 0xfb1ff916 )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "mb1_spr0.5b", 0, 0x80000, 0xd10f6272 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "mb1_voi0.6n", 0x000000, 0x200000, 0xd363ca3b )
+	ROM_LOAD( "mb1_voi1.6p", 0x200000, 0x200000, 0x7e1c2603 )
+
+	ROM_REGION( 0x100000, NAMCONB1_TILEMASKREGION, 0 )
+	ROM_LOAD( "mb1_shas.12s", 0, 0x100000, 0xc51c614b )
+
+	ROM_REGION( 0x200000, NAMCONB1_ROTMASKREGION, 0 )
+	ROM_LOAD( "mb1_shar.18s", 0, 0x080000, 0xd9329b10 )
+
+	ROM_REGION( 0x2000000, NAMCONB1_SPRITEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mb1obj0l.4c", 0x0000001, 0x200000, 0x56e6b1c )
+	ROM_LOAD16_BYTE( "mb1obj0u.8c", 0x0000000, 0x200000, 0xe19b1714 )
+	ROM_LOAD16_BYTE( "mb1obj1l.4b", 0x0400001, 0x200000, 0xaf69f7f1 )
+	ROM_LOAD16_BYTE( "mb1obj1u.8b", 0x0400000, 0x200000, 0xe8ff9082 )
+	ROM_LOAD16_BYTE( "mb1obj2l.4a", 0x0800001, 0x200000, 0x3a5c7379 )
+	ROM_LOAD16_BYTE( "mb1obj2u.8b", 0x0800000, 0x200000, 0xb59cf5e0 )
+	ROM_LOAD16_BYTE( "mb1obj3l.6c", 0x0c00001, 0x200000, 0x9a765d58 )
+	ROM_LOAD16_BYTE( "mb1obj3u.9c", 0x0c00000, 0x200000, 0x5329c693 )
+	ROM_LOAD16_BYTE( "mb1obj4l.6b", 0x1000001, 0x200000, 0xa650b05e )
+	ROM_LOAD16_BYTE( "mb1obj4u.9b", 0x1000000, 0x200000, 0x6d0c37e9 )
+
+	ROM_REGION( 0x400000, NAMCONB1_ROTGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD( "mb1_rot0.3d", 0x000000, 0x200000, 0xbc353630 )
+	ROM_LOAD( "mb1_rot1.3c", 0x200000, 0x200000, 0xcf7688cb )
+
+	ROM_REGION( 0x600000, NAMCONB1_TILEGFXREGION, ROMREGION_DISPOSE )
+	ROM_LOAD( "mb1_scr0.1d", 0x000000, 0x200000, 0xc678d5f3 )
+	ROM_LOAD( "mb1_scr1.1c", 0x200000, 0x200000, 0xfb2b1939 )
+	ROM_LOAD( "mb1_scr2.1b", 0x400000, 0x200000, 0x0e6097a5 )
+
+	ROM_REGION( 0x080000, REGION_USER1, 0 )
+	ROM_LOAD( "mb1_dat0.20a", 0x00000, 0x80000, 0xfb2e3cd1 )
+ROM_END
+
 /***************************************************************/
 
 INPUT_PORTS_START( gunbulet )
@@ -928,16 +1090,16 @@ INPUT_PORTS_START( gunbulet )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 
 	PORT_START /* inp4: fake analog X (p1 gun) */
-	PORT_ANALOG( 0xff, 30, IPT_AD_STICK_X, 50, 4, 0, 230 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X, 50, 4, 0, 230 )
 
 	PORT_START /* inp5: fake analog Y (p1 gun) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 50, 4, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y, 50, 4, 0, 255 )
 
 	PORT_START /* inp6: fake analog X (p2 gun) */
-	PORT_ANALOG( 0xff, 200, IPT_AD_STICK_X | IPF_PLAYER2, 50, 4, 0, 230 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 50, 4, 0, 230 )
 
 	PORT_START /* inp7: fake analog Y (p2 gun) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 50, 4, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 50, 4, 0, 255 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( namconb1 )
@@ -997,6 +1159,9 @@ GAMEX( 1994, gunbulet, ptblank,  namconb1, gunbulet, gunbulet, ROT0,  "Namco", "
 GAMEX( 1994, gslgr94u, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers '94", GAME_NO_SOUND )
 GAMEX( 1996, sws96,    0,        namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
 GAMEX( 1997, sws97,    0,        namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )
+GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "VShoot", GAME_NOT_WORKING )
 
 //     YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,   FLAGS)
 GAMEX( 1994, outfxies, 0,		 namconb2, namconb1, outfxies, ROT0, "Namco", "Outfoxies", GAME_NO_SOUND )
+GAMEX( 1994, outfxesj, outfxies, namconb2, namconb1, outfxies, ROT0, "Namco", "Outfoxies (Japan)", GAME_NO_SOUND )
+GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Match Breakers (Japan)", GAME_NO_SOUND )

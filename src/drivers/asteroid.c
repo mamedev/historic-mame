@@ -163,6 +163,27 @@ static WRITE_HANDLER( astdelux_coin_counter_w )
 
 /*************************************
  *
+ *	Land Lander LEDs/lamps
+ *
+ *************************************/
+
+static WRITE_HANDLER( llander_led_w )
+{
+	static const char *lampname[] =
+	{
+		"lamp0", "lamp1", "lamp2", "lamp3", "lamp4"
+	};
+    int i;
+
+    for (i = 0; i < 5; i++)
+		artwork_show(lampname[i], (data >> (4 - i)) & 1);
+}
+
+
+
+
+/*************************************
+ *
  *	Lunar Lander mirrors page 0 & 1
  *
  *************************************/
@@ -590,7 +611,7 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_MACHINE_INIT(asteroid)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400,300)
 	MDRV_VISIBLE_AREA(0, 1040, 70, 950)
 	MDRV_PALETTE_LENGTH(32768)
@@ -613,9 +634,6 @@ static MACHINE_DRIVER_START( astdelux )
 
 	MDRV_NVRAM_HANDLER(atari_vg)
 
-	/* video hardware */
-	MDRV_PALETTE_INIT(avg_astdelux)
-
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_sound_interface)
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
@@ -636,9 +654,9 @@ static MACHINE_DRIVER_START( llander )
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 1050, 0, 900)
 
-	MDRV_PALETTE_INIT(llander)
-	MDRV_VIDEO_START(llander)
-	MDRV_VIDEO_UPDATE(llander)
+	MDRV_PALETTE_INIT(avg_white)
+	MDRV_VIDEO_START(dvg)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_sound_interface)
@@ -757,6 +775,16 @@ static DRIVER_INIT( asteroib )
 }
 
 
+static DRIVER_INIT( astdelux )
+{
+	OVERLAY_START( astdelux_overlay )
+		OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x88,0xff,0xff) )
+	OVERLAY_END
+
+	artwork_set_overlay(astdelux_overlay);
+}
+
+
 
 /*************************************
  *
@@ -764,11 +792,11 @@ static DRIVER_INIT( asteroib )
  *
  *************************************/
 
-GAME( 1979, asteroid, 0,		asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 2)" )
+GAME( 1979, asteroid, 0,        asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 2)" )
 GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 1)" )
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
-GAME( 1980, astdelux, 0,		astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
-GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
-GAME( 1979, llander,  0,		llander,  llander,	0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
-GAME( 1979, llander1, llander,	llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
+GAME( 1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
+GAME( 1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
+GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
+GAME( 1979, llander1, llander,  llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
 

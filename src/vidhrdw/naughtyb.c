@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "res_net.h"
 
 /* from sndhrdw/pleiads.c */
 WRITE_HANDLER( pleiads_sound_control_c_w );
@@ -74,6 +74,16 @@ PALETTE_INIT( naughtyb )
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
+	/* note: there is no resistor on second PROM so we define second resistance as 0 */
+	const int resistances[2] = { 270, 0 };
+	double weights_r[2], weights_g[2], weights_b[2];
+
+
+	compute_resistor_weights(0,	255,	-1.0,
+			2,	resistances,	weights_r,	270,	270,
+			2,	resistances,	weights_g,	270,	270,
+			2,	resistances,	weights_b,	270,	270);
+
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -82,13 +92,21 @@ PALETTE_INIT( naughtyb )
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		r = 0x55 * bit0 + 0xaa * bit1;
+
+		/*r = 0x55 * bit0 + 0xaa * bit1;*/
+		r = combine_2_weights(weights_r, bit0, bit1);
+
 		bit0 = (color_prom[0] >> 2) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		g = 0x55 * bit0 + 0xaa * bit1;
+
+		/*g = 0x55 * bit0 + 0xaa * bit1;*/
+		g = combine_2_weights(weights_g, bit0, bit1);
+
 		bit0 = (color_prom[0] >> 1) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		b = 0x55 * bit0 + 0xaa * bit1;
+
+		/*b = 0x55 * bit0 + 0xaa * bit1;*/
+		b = combine_2_weights(weights_b, bit0, bit1);
 
 		palette_set_color(i,r,g,b);
 		color_prom++;

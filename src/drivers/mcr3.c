@@ -90,6 +90,7 @@
 #include "machine/z80fmly.h"
 #include "sndhrdw/mcr.h"
 #include "vidhrdw/generic.h"
+#include "artwork.h"
 #include "mcr.h"
 
 
@@ -167,7 +168,9 @@ static READ_HANDLER( dotron_port_2_r )
 static WRITE_HANDLER( dotron_port_4_w )
 {
 	/* light control is in the top 2 bits */
-	dotron_change_light(data >> 6);
+	set_led_status(0, data & 0x40);		/* background light */
+	set_led_status(1, data & 0x80);		/* strobe */
+	artwork_show("backdrop", (data >> 6) & 1);
 
 	/* low 5 bits go to control the Squawk & Talk */
 	squawkntalk_data_w(offset, data);
@@ -377,7 +380,14 @@ static WRITE_HANDLER( spyhunt_port_4_w )
 
 	/* lamp driver command triggered by bit 5, data is in low four bits */
 	if (((lastport4 ^ data) & 0x20) && !(data & 0x20))
-		spyhunt_lamp[data & 7] = (data >> 3) & 1;
+	{
+		static const char *lampname[8] = 
+		{
+			"lamp0", "lamp1", "lamp2", "lamp3", 
+			"lamp4", "lamp5", "lamp6", "lamp7"
+		};
+		artwork_show(lampname[data & 7], (data >> 3) & 1);
+	}
 
 	/* low 5 bits go to control the Chip Squeak Deluxe */
 	csdeluxe_data_w(offset, data);
@@ -510,8 +520,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( spyhunt_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe800, 0xebff, MWA_RAM, &spyhunt_alpharam, &spyhunt_alpharam_size },
+	{ 0xe000, 0xe7ff, spyhunt_videoram_w, &videoram, &videoram_size },
+	{ 0xe800, 0xebff, spyhunt_alpharam_w, &spyhunt_alpharam },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xfa00, 0xfaff, mcr3_paletteram_w, &paletteram },
@@ -1246,8 +1256,8 @@ static MACHINE_DRIVER_START( mcr3 )
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-
-	MDRV_VIDEO_START(generic)
+	
+	MDRV_VIDEO_START(mcr3)
 	MDRV_VIDEO_UPDATE(mcr3)
 MACHINE_DRIVER_END
 
@@ -1261,20 +1271,12 @@ static MACHINE_DRIVER_START( mcr3_ssio )
 MACHINE_DRIVER_END
 
 
-/* Discs of Tron = General MCR3 with Squawk & Talk, and backdrop support */
+/* Discs of Tron = General MCR3 with Squawk & Talk */
 static MACHINE_DRIVER_START( dotron )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr3_ssio)
 	MDRV_IMPORT_FROM(squawk_n_talk)
-
-	/* video hardware */
-	MDRV_SCREEN_SIZE(684, 642)
-	MDRV_VISIBLE_AREA(0, 684-1, 0, 642-1)
-	MDRV_PALETTE_LENGTH(64+32768)
-
-	MDRV_VIDEO_START(dotron)
-	MDRV_VIDEO_UPDATE(dotron)
 MACHINE_DRIVER_END
 
 
@@ -1299,9 +1301,9 @@ static MACHINE_DRIVER_START( mcrmono )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem,mcrmono_writemem)
 	MDRV_CPU_PORTS(readport,mcrmono_writeport)
-
+	
 	/* video hardware */
-	MDRV_VIDEO_UPDATE(mcrmono)
+	MDRV_VIDEO_START(mcrmono)
 MACHINE_DRIVER_END
 
 
@@ -1348,18 +1350,13 @@ static MACHINE_DRIVER_START( mcrscroll )
 MACHINE_DRIVER_END
 
 
-/* Spy Hunter = scrolling system with special lamps, and a chip squeak deluxe */
+/* Spy Hunter = scrolling system with an SSIO and a chip squeak deluxe */
 static MACHINE_DRIVER_START( spyhunt )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcrscroll)
 	MDRV_IMPORT_FROM(mcr_ssio)
 	MDRV_IMPORT_FROM(chip_squeak_deluxe)
-
-	/* video hardware */
-	MDRV_ASPECT_RATIO(62,45)
-	MDRV_SCREEN_SIZE(31*16, 30*16)
-	MDRV_VISIBLE_AREA(0, 31*16-1, 0, 30*16-1)
 MACHINE_DRIVER_END
 
 
@@ -1584,6 +1581,43 @@ ROM_START( dotron )
 ROM_END
 
 
+ROM_START( dotrona )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "aloc-pg0.1c",  0x0000, 0x4000, 0x40d00195 )
+	ROM_LOAD( "aloc-pg1.2c",  0x4000, 0x4000, 0x5a7d1300 )
+	ROM_LOAD( "aloc-pg2.3c",  0x8000, 0x4000, 0xcb89c9be )
+	ROM_LOAD( "aloc-pg1.4c",  0xc000, 0x2000, 0x5098faf4 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "asound0.a7",   0x00000, 0x1000, 0x7fb54293 )
+	ROM_LOAD( "asound1.a8",   0x01000, 0x1000, 0xedef7326 )
+	ROM_LOAD( "sound2.a9",    0x02000, 0x1000, 0xe8ef6519 )
+	ROM_LOAD( "sound3.a10",   0x03000, 0x1000, 0x6b5aeb02 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "pre.u3",       0x0d000, 0x1000, 0xc3d0f762 )
+	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
+	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
+	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, 0xbb2d7a5d )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "loc-g.cp4",    0x00000, 0x2000, 0x57a2b1ff )
+	ROM_LOAD( "loc-h.cp3",    0x02000, 0x2000, 0x3bb4d475 )
+	ROM_LOAD( "loc-e.cp6",    0x04000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x06000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-c.cp8",    0x08000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, 0x565a5c48 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
+ROM_END
+
+
 ROM_START( dotrone )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "loc-cpu1",     0x00000, 0x4000, 0xeee31b8c )
@@ -1690,9 +1724,6 @@ ROM_START( sarge )
 	ROM_LOAD( "spr_6e.bin",   0x08000, 0x8000, 0x7cc6fb28 )
 	ROM_LOAD( "spr_5e.bin",   0x10000, 0x8000, 0xc832375c )
 	ROM_LOAD( "spr_4e.bin",   0x18000, 0x8000, 0xc382267d )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1716,9 +1747,6 @@ ROM_START( maxrpm )
 	ROM_LOAD( "fg-1",         0x08000, 0x8000, 0xe54b7f2a )
 	ROM_LOAD( "fg-2",         0x10000, 0x8000, 0x38be8505 )
 	ROM_LOAD( "fg-3",         0x18000, 0x8000, 0x9ae3eb52 )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1742,9 +1770,6 @@ ROM_START( rampage )
 	ROM_LOAD( "fg-1",         0x10000, 0x10000, 0x8728532b )
 	ROM_LOAD( "fg-2",         0x20000, 0x10000, 0x9489f714 )
 	ROM_LOAD( "fg-3",         0x30000, 0x10000, 0x81e1de40 )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -2032,8 +2057,7 @@ static DRIVER_INIT( spyhunt )
 	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
-	spyhunt_scroll_offset = -16;
-	spyhunt_draw_lamps = 1;
+	spyhunt_scroll_offset = 16;
 }
 
 
@@ -2042,8 +2066,7 @@ static DRIVER_INIT( crater )
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 
 	spyhunt_sprite_color_mask = 0x03;
-	spyhunt_scroll_offset = -96;
-	spyhunt_draw_lamps = 0;
+	spyhunt_scroll_offset = 96;
 }
 
 
@@ -2054,8 +2077,7 @@ static DRIVER_INIT( turbotag )
 	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
-	spyhunt_scroll_offset = -88;
-	spyhunt_draw_lamps = 0;
+	spyhunt_scroll_offset = 88;
 
 	/* kludge for bad ROM read */
 	install_mem_read_handler(0, 0x0b53, 0x0b53, turbotag_kludge_r);
@@ -2076,6 +2098,7 @@ GAME( 1983, sutapper, tapper,   mcr3_ssio,tapper,   tapper,   ROT0,  "Bally Midw
 GAME( 1984, rbtapper, tapper,   mcr3_ssio,tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Root Beer)" )
 GAME( 1984, timber,   0,        mcr3_ssio,timber,   timber,   ROT0,  "Bally Midway", "Timber" )
 GAME( 1983, dotron,   0,        dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)" )
+GAME( 1983, dotrona,  dotron,   dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright alternate)" )
 GAME( 1983, dotrone,  dotron,   dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
 GAME( 1984, demoderb, 0,        demoderb, demoderb, demoderb, ROT0,  "Bally Midway", "Demolition Derby" )
 

@@ -51,13 +51,13 @@ Devil World / Dark  GX687*1987 2x68000           TWIN16
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 007452
 Kitten Kaboodle /   GX712*1988                   GX400                    007593 051550
   Nyan Nyan Panic
-Chequered Flag      GX717*1988  052001               051960 051937(x2)           051316(x2) (zoom/rotation) 051733 (protection)
+Chequered Flag      GX717*1988  052001               051960 051937(x2)           051316(x2) (roz) 051733 (protection)
 Fast Lane           GX752*1987    6309           007121                          051733 (protection) 007801
-Hot Chase           GX763*1988 2x68000                                           051316(x3) (zoom/rotation) 007634 007635 007558 007557
+Hot Chase           GX763*1988 2x68000                                           051316(x3) (roz) 007634 007635 007558 007557
 Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 007324
   The Hustler
 Haunted Castle      GX768*1988  052001           007121(x2)               007327
-Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  007327 051316 (zoom/rotation)
+Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  007327 051316 (roz)
                                 052001
 Labyrinth Runner /  GX771*1987    6309           007121                   007593 051733 (protection) 051550
   Trick Trap
@@ -66,7 +66,7 @@ Battlantis          GX777*1987    6309 007342        007420               007327
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
 City Bomber         GX787*1987   68000           GX400                    007593 051550
-Over Drive          GX789*1990 2x68000               053247 053246 053251 051316(x2) (zoom/rotation) 053249 053250(x2) (road) 053252(*)
+Over Drive          GX789*1990 2x68000               053247 053246 053251 051316(x2) (roz) 053249 053250(x2) (road) 053252(*)
 Hyper Crash         GX790 1987
 Blades of Steel     GX797*1987    6309 007342        007420               007327 051733 (protection)
 The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
@@ -74,17 +74,17 @@ Missing in Action   GX808*1989   68000 052109 051962 051960 051937  PROM
 Missing in Action J GX808*1989 2x68000           TWIN16
 Crime Fighters      GX821*1989  052526 052109 051962 051960 051937  PROM
 Special Project Y   GX857*1989    6309 052109 051962 051960 051937  PROM         052591 (protection)
-'88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM         051316 (zoom/rotation)
+'88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM         051316 (roz)
 Final Round /       GX870*1988 1x68000           TWIN16?
   Hard Puncher
 Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 052591 (protection)
 Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
 Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
 Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM         007324 051733 (protection)
-Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM         051316 (zoom/rotation)
+Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM         051316 (roz)
 Cue Brick           GX903*1989 2x68000           TWIN16
 Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
-Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM         051316(x3) (zoom/rotation) 051550
+Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM         051316(x3) (roz) 051550
 Surprise Attack     GX911*1990  053248 052109 051962 053245 053244 053251
 Lightning Fighters /GX939*1990   68000 052109 051962 053245 053244 053251
   Trigon
@@ -93,10 +93,10 @@ Parodius            GX955*1990  053248 052109 051962 053245 053244 053251
 TMNT                GX963*1989   68000 052109 051962 051960 051937  PROM
 Block Hole          GX973*1989  052526 052109 051962 051960 051937  PROM
 Escape Kids         GX975 1991  053248 052109 051962 053247 053246 053251        053252(*) - same board as Vendetta
-Rollergames         GX999*1991  053248 ------ ------ 053245 053244               051316 (zoom/rotation) 053252(*)
+Rollergames         GX999*1991  053248 ------ ------ 053245 053244               051316 (roz) 053252(*)
 Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251        054000 (collision)
   Detana!! Twin Bee
-Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251        053936 (3D)
+Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251        053936 (roz+)
 TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251        053990 (protection) 051550
 Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251        054358
 X-Men               GX065*1992   68000 052109 051962 053247 053246 053251        054539 (sound)
@@ -107,29 +107,31 @@ The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
 Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251        054000 (collision)
 Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251        054000 (collision)
   Crime Fighters 2
-Premier Soccer      GX101*1993   68000 052109 051962 053245 053244 053251        053936 (3D) 054986
+Premier Soccer      GX101*1993   68000 052109 051962 053245 053244 053251        053936 (roz+) 054986
 Hexion              GX122*1992     Z80                                           052591 (protection) 053252(*)
-Entapous /          GX123+1993   68000 054157 054156 055673 053246               053252(*) 054000 055555
+Entapous /          GX123+1993   68000 054157 054156 055673 053246 055555        053252(*) 054000 053936 (roz+)
   Gaiapolis
-Mystic Warrior      GX128+1993   68000 054157 054156 055673 053246               054338 053252(*) 055555 054539(x2) (sound)
-Cowboys of Moo Mesa GX151*1992   68000 054157 054156 053247 053246               053252(*) 054338 053990 (protection)
-Violent Storm       GX168+1993   68000 054157 054156 055673 053246               054338 055550 055555 054539(x2) (sound)
-Monster Maulers /   GX170+1993   68000 054157 054156 055673 053246               053252(*) 055550 055555 054338 054539 (sound) 053936 (3D)
+Mystic Warrior      GX128+1993   68000 054157 054156 055673 053246 055555        054338 (alpha) 053252(*) 054539(x2) (sound)
+Cowboys of Moo Mesa GX151*1992   68000 054157 054156 053247 053246 053251        053252(*) 054338 053990 (protection)
+Violent Storm       GX168+1993   68000 054157 054156 055673 053246 055555        054338 (alpha) 055550 054539(x2) (sound)
+Monster Maulers /   GX170+1993   68000 054157 054156 055673 053246 055555        053252(*) 055550 054338 (alpha) 054539 (sound) 053936 (roz+)
   Ultimate Battler Dadandarn
-Bucky 'O Hare       GX173*1992   68000 054157 054156 053247 053246 053251        054338 054539 (sound)
+Bucky 'O Hare       GX173*1992   68000 054157 054156 053247 053246 053251        054338 (alpha) 054539 (sound)
 Potrio              GX174 1992
 Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054906 054539 (sound)
-Metamorphic Force   GX224+1993
-Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252(*) 054338 055555 053990 (protection) 054986 054573 054539 (sound)
-Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 053252(*) 053936 (3D) 054539(x2) (sound)
+Metamorphic Force   GX224+1993   68000 054157 054157 055673 053246 055555
+Martial Champion    GX234+1993   68000 054157 054156 055673 053246 055555        053252(*) 054338 (alpha) 053990 054539 (sound)
+Run and Gun         GX247*1993   68000 (TTL tilemap) 055673 053246               053253(x2) 053252(*) 053936 (roz+) 054539(x2) (sound)
 Quiz Gakumon no     GX248*1993   68000 052109 051962 053245 053244 053251        053990 (protection) 051550 - same board as TMNT2
   Susume
-Polygonet CommandersGX305+1993   68020                                           056230?063936?054986?054539?
-
-Tail to Nose             *1989   68000          V-System                         051316 (zoom/rotation)
-Blazing Tornado          *1991   68000            Metro                          053936 (3D)
-Dragonball Z             +1994   68000 054157 054156 053247 053246 053251(x2)    053936(x2) (3D) 053252(*)
-
+Polygonet Commander GX305+1993   68020 (TTL tilemap)                             XC56156-40(3D DSP) 054009(x2) 054010(x2) 054539 (sound)
+System GX           GX300*1993   68020 056832 054156 055673 053246 055555        054338 (alpha) 054539(x2) (sound) 053252(*) 053936 (optional on ROM board, roz+)
+Tail to Nose             *1989   68000          V-System                         051316 (roz)
+F-1 Grand Prix           *1991 2x68000          V-System                         053936 (roz+)
+Lethal Crash Race        *1993   68000          V-System                         053936 (roz+)
+Super Slams              *1995   68000          V-System                         053936 (roz+)
+Blazing Tornado          *1991   68000            Metro                          053936 (roz+)
+Dragonball Z 2           *1994   68000 054157 054156 053247 053246 053251(x2)    053936(x2) (roz+) 053252(*)
 
 
 Notes:
@@ -169,7 +171,7 @@ TMNT                pass
 Block Hole          pass
 Rollergames         pass
 Bells & Whistles    pass
-Golfing Greats      fails B05..B10 (053936)
+Golfing Greats      pass
 TMNT 2              pass
 Sunset Riders       pass
 X-Men               pass
@@ -181,6 +183,7 @@ GiJoe				pass
 Vendetta            pass
 Premier Soccer		fails 16D 18D 18F (053936)
 Hexion              pass
+Dragonball Z 2      fails
 
 
 THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
@@ -532,9 +535,8 @@ Known configurations:
 8 2000 bytes banks, no tile banking, 64x32 or 64x64 tilemaps:
   - xexex
 
-Preliminary results indicate that konami system gx seems to use a
-similar chip with 16 banks and 128x64 tilemaps.
-
+16 2000 byte banks, external tile banking, tilemaps up to 256x128:
+  - System GX, some "PreGX" games
 In 4 banks configurations, the banks are numbered 0, 1, 8 and 9 and
 are associated to tilemaps 0..3 in that order.
 
@@ -785,7 +787,6 @@ signal is not asserted. The external circuitry might ignore that signal and
 still generate the pixel, therefore making the tilemap a continuous playfield
 that wraps around instead of a large sprite.
 
-
 control registers
 000-001 X counter starting value / 256
 002-003 amount to add to the X counter after each horizontal pixel
@@ -800,6 +801,54 @@ control registers
         bit 1 = unknown
         bit 2 = unknown
 00f     unused
+
+
+
+053936
+------
+Evolution of the 051316. The data bus is 16-bit instead of 8-bit.
+When used in "simple" mode it can generate the same effects of the 051316, but it
+doesn't have internal tilemap RAM, so it just generates a couple of X/Y coordinates
+indicating the pixel to display at each moment. Therefore, the tilemap (and tile)
+size are not fixed.
+The important addition over the 051316 is 512x4 words of internal RAM used to control
+rotation and zoom scanline by scanline instead that on the whole screen, allowing for
+effects like linescroll (Super Slams) or 3D rotation of the tilemap (Golfing Greats,
+Premier Soccer).
+
+control registers
+000 X counter starting value / 256
+001 Y counter starting value / 256
+002 ["simple" mode only] amount to add to the X counter after each line (0 = no rotation)
+003 ["simple" mode only] amount to add to the X counter after each horizontal pixel
+004 ["simple" mode only] amount to add to the Y counter after each line
+005 ["simple" mode only] amount to add to the Y counter after each horizontal pixel (0 = no rotation)
+006 x------- -------- when set, register (line*4)+2 must be multiplied by 256
+    -x------ -------- when set, registers 002 and 003 must be multiplied by 256
+    --xxxxxx -------- clipping for the generated address? usually 3F, Premier Soccer
+                      sets it to 07 before penalty kicks
+    -------- x------- when set, register (line*4)+3 must be multiplied by 256
+    -------- -x------ when set, registers 004 and 005 must be multiplied by 256
+    -------- --xxxxxx clipping for the generated address? usually 3F, Premier Soccer
+                      sets it to 0F before penalty kicks
+007 -------- -x------ enable "super" mode
+    -------- --x----- unknown (enable address clipping from register 006?)
+    -------- ---x---- unknown
+    -------- ------x- (not sure) enable clipping with registers 008-00b
+008 min x screen coordinate to draw to (only when enabled by register 7)
+009 max x screen coordinate to draw to (only when enabled by register 7)
+00a min y screen coordinate to draw to (only when enabled by register 7)
+00b max y screen coordinate to draw to (only when enabled by register 7)
+00c unknown
+00d unknown
+00e unknown
+00f unknown
+
+additional control from extra RAM:
+(line*4)+0 X counter starting value / 256 (add to register 000)
+(line*4)+1 Y counter starting value / 256 (add to register 001)
+(line*4)+2 amount to add to the X counter after each horizontal pixel
+(line*4)+3 amount to add to the Y counter after each horizontal pixel
 
 
 
@@ -960,7 +1009,7 @@ Memory map(preliminary):
 02-03 R operand 1 % operand 2?
 04-05 R sqrt(operand 3<<16)
 
-06-07 W Radius
+06-07 W distance for collision check
 08-09 W Y pos of obj1
 0a-0b W X pos of obj1
 0c-0d W Y pos of obj2
@@ -996,6 +1045,44 @@ Devastators:
 $6ce8:
 reads from 0x0006, and only uses bit 1.
 
+K055555
+-------
+
+Priority encoder.  Always found in conjunction with K054338, but the reverse 
+isn't true.
+
+Lots of byte-wise registers.  Few are yet known.  Those are:
+
+1: related to tilemap brightness control
+7-14: priority levels
+23-27: palette bases
+38: ???
+40-41: related to shadow/highlight operation.  0 in both disables s/h.
+42-43: related to tilemap brightness control.  0 in both disables tilemap brightness.
+45: input enables.  bits 0-3 = tilemaps, bit 4 = sprites for GX (as per gokuparo level 1)
+
+Additionally the 55555 can provide a gradient background with one palette entry
+per scanline.  This is fairly rarely used, but does turn up in Gokujou Parodius as
+well as the Sexy Parodius title screen.
+
+
+K054338
+-------
+Color combiner engine.  Designed for use with the 55555, but also found in games 
+without one.
+
+Registers (word-wise):
+
+0: first 8 bits unknown, second 8 bits are the R component of the background color
+1: G and B components (8 bits each) of the background color
+2+3: both shadow/highlight related
+4+5: both shadow/highlight related 
+6+7: both shadow/highlight related 
+8+9: both shadow/highlight related 
+A: shadow/highlight related
+B: second 8 bits R component of tilemap brightness
+C: G and B components of tilemap brightness
+D: second 8 bits = blend level for tilemap planes (0-1f, 1f = totally transparent, 0 = totally opaque)
 ***************************************************************************/
 
 #include "driver.h"
@@ -1049,6 +1136,11 @@ void konami_rom_deinterleave_4(int mem_region)
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 007121                                  */
+/*                                                                         */
+/***************************************************************************/
 
 
 /*static*/ unsigned char K007121_ctrlram[MAX_K007121][8];
@@ -1162,7 +1254,9 @@ if (keyboard_pressed(KEYCODE_D))
 	}
 	else	/* all others */
 	{
-		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;	/* WRONG!!! (needed by combasc)  */
+		//num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;	/* WRONG!!! (needed by combasc)  */
+		num = 0x40; //AT: Combasc writes 70 sprites to VRAM at peak but the chip only processes the first 64.
+
 		inc = 5;
 		offs[0] = 0x00;
 		offs[1] = 0x01;
@@ -1269,6 +1363,11 @@ if (keyboard_pressed(KEYCODE_D))
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 007342                                  */
+/*                                                                         */
+/***************************************************************************/
 
 
 
@@ -1689,6 +1788,14 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 052109                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+
 static int K052109_memory_region;
 static int K052109_gfxnum;
 static void (*K052109_callback)(int tilemap,int bank,int *code,int *color);
@@ -1702,7 +1809,7 @@ static int K052109_RMRD_line;
 static int K052109_tileflip_enable;
 static int K052109_irq_enabled;
 static unsigned char K052109_romsubbank,K052109_scrollctrl;
-static struct tilemap *K052109_tilemap[3];
+struct tilemap *K052109_tilemap[3];
 
 
 
@@ -2213,11 +2320,6 @@ if (keyboard_pressed(KEYCODE_F))
 #endif
 }
 
-void K052109_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int num,int flags,UINT32 priority)
-{
-	tilemap_draw(bitmap,cliprect,K052109_tilemap[num],flags,priority);
-}
-
 int K052109_is_IRQ_enabled(void)
 {
 	return K052109_irq_enabled;
@@ -2226,6 +2328,12 @@ int K052109_is_IRQ_enabled(void)
 
 
 
+
+/***************************************************************************/
+/*                                                                         */
+/*                                 051960                                  */
+/*                                                                         */
+/***************************************************************************/
 
 
 
@@ -2687,6 +2795,14 @@ WRITE_HANDLER( K052109_051960_w )
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 053245                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+
 static int K053245_memory_region=2;
 static struct GfxElement *K053245_gfx;
 static void (*K053245_callback)(int *code,int *color,int *priority);
@@ -3132,6 +3248,14 @@ if (keyboard_pressed(KEYCODE_D))
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 053247                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+
 static int K053247_memory_region, K053247_dx, K053247_dy;
 static unsigned char K053246_regs[8];
 static data16_t *K053247_ram;
@@ -3174,6 +3298,118 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 
 	/* decode the graphics */
 	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
+	if (!Machine->gfx[gfx_index])
+		return 1;
+
+	/* set the color information */
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
+
+if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+
+	/* prepare shadow draw table */
+	gfx_drawmode_table[0] = DRAWMODE_NONE;
+	for (i = 1;i < 15;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
+	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
+
+	K053247_dx = dx;
+	K053247_dy = dy;
+	K053247_memory_region = gfx_memory_region;
+	K053247_gfx = Machine->gfx[gfx_index];
+	K053247_callback = callback;
+	K053246_OBJCHA_line = CLEAR_LINE;
+	K053247_ram = auto_malloc(0x1000);
+	if (!K053247_ram) return 1;
+
+	memset(K053247_ram,  0, 0x1000);
+	memset(K053246_regs, 0, 8);
+
+	state_save_register_UINT16("K053246", 0, "memory",    K053247_ram,  0x800);
+	state_save_register_UINT8 ("K053246", 0, "registers", K053246_regs, 8);
+	state_save_register_int   ("K053246", 0, "objcha",    &K053246_OBJCHA_line);
+
+	return 0;
+}
+
+/* K055673 used with the 54246 in PreGX/Run and Gun/System GX games */
+int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, void (*callback)(int *code,int *color,int *priority))
+{
+	int gfx_index;
+	static struct GfxLayout spritelayout =	/* System GX sprite layout */
+	{
+		16,16,
+		32768,				/* filled in later */
+		5,
+		{ 32, 24, 16, 8, 0 },
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47 },
+		{ 0, 10*8, 10*8*2, 10*8*3, 10*8*4, 10*8*5, 10*8*6, 10*8*7, 10*8*8, 
+		  10*8*9, 10*8*10, 10*8*11, 10*8*12, 10*8*13, 10*8*14, 10*8*15 },
+		16*16*5
+	};
+	static struct GfxLayout spritelayout2 =	/* Run and Gun sprite layout */
+	{
+		16,16,
+		32768,				/* filled in later */
+		4,
+		{ 24, 8, 16, 0 },
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39 },
+		{ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960 },
+		16*16*4
+	};
+	unsigned char *s1, *s2, *d;
+	long i;
+	data16_t *K055673_rom;
+
+	/* find first empty slot to decode gfx */
+	for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
+		if (Machine->gfx[gfx_index] == 0)
+			break;
+	if (gfx_index == MAX_GFX_ELEMENTS)
+		return 1;
+
+	if (!alt_layout)
+	{
+		/* set the # of tiles based on the 4bpp section */
+		spritelayout.total = (4*1024*1024) / 128;
+
+		K055673_rom = (data16_t *)auto_malloc(20*1024*1024);
+		d = (data8_t *)K055673_rom;
+
+		// now combine the graphics together to form 5bpp
+		s1 = memory_region(gfx_memory_region); // 4bpp area
+		s2 = s1 + (4*1024*1024);	 // 1bpp area
+
+		for (i = 0; i < 4*1024*1024; i+= 4)
+		{
+			*d++ = *s1++;
+			*d++ = *s1++;
+			*d++ = *s1++;
+			*d++ = *s1++;
+			*d++ = *s2++;
+		}
+
+		/* decode the graphics */
+		Machine->gfx[gfx_index] = decodegfx((data8_t *)K055673_rom, &spritelayout);
+	}
+	else
+	{
+		K055673_rom = (data16_t *)memory_region(gfx_memory_region);
+		spritelayout2.total = memory_region_length(gfx_memory_region) / (16*16/2);
+
+		/* decode the graphics */
+		Machine->gfx[gfx_index] = decodegfx((data8_t *)K055673_rom, &spritelayout2);
+	}
+
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
@@ -3590,6 +3826,17 @@ if (keyboard_pressed(KEYCODE_D))
 }
 
 
+
+
+
+/***************************************************************************/
+/*                                                                         */
+/*                                 051316                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+
 #define MAX_K051316 3
 
 static int K051316_memory_region[MAX_K051316];
@@ -3935,8 +4182,167 @@ void K051316_zoom_draw_2(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 053936                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+#define K053936_MAX_CHIPS 2
+
+data16_t *K053936_0_ctrl,*K053936_0_linectrl;
+data16_t *K053936_1_ctrl,*K053936_1_linectrl;
+static int K053936_offset[K053936_MAX_CHIPS][2];
+static int K053936_wraparound[K053936_MAX_CHIPS];
+
+
+static void K053936_zoom_draw(int chip,data16_t *ctrl,data16_t *linectrl,struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority)
+{
+	if (ctrl[0x07] & 0x0040)	/* "super" mode */
+	{
+		UINT32 startx,starty;
+		int incxx,incxy;
+		struct rectangle my_clip;
+		int y,maxy;
+
+		if (ctrl[0x07] & 0x0002)	/* not sure but fixes glfgreat */
+		{
+			my_clip.min_x = ctrl[0x08] + K053936_offset[chip][0]+2;
+			my_clip.max_x = ctrl[0x09] + K053936_offset[chip][0]+2 - 1;
+			if (my_clip.min_x < cliprect->min_x)
+				my_clip.min_x = cliprect->min_x;
+			if (my_clip.max_x > cliprect->max_x)
+				my_clip.max_x = cliprect->max_x;
+
+			y = ctrl[0x0a] + K053936_offset[chip][1]-2;
+			if (y < cliprect->min_y)
+				y = cliprect->min_y;
+			maxy = ctrl[0x0b] + K053936_offset[chip][1]-2 - 1;
+			if (maxy > cliprect->max_y)
+				maxy = cliprect->max_y;
+		}
+		else
+		{
+			my_clip.min_x = cliprect->min_x;
+			my_clip.max_x = cliprect->max_x;
+
+			y = cliprect->min_y;
+			maxy = cliprect->max_y;
+		}
+
+if (!keyboard_pressed(KEYCODE_Z))
+		while (y <= maxy)
+		{
+			my_clip.min_y = my_clip.max_y = y;
+
+			startx = 256 * (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 0] + ctrl[0x00]);
+			starty = 256 * (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 1] + ctrl[0x01]);
+			incxx  =       (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 2]);
+			incxy  =       (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 3]);
+
+			if (ctrl[0x06] & 0x8000) incxx *= 256;
+			if (ctrl[0x06] & 0x0080) incxy *= 256;
+
+			startx -= K053936_offset[chip][0] * incxx;
+			starty -= K053936_offset[chip][0] * incxy;
+
+			tilemap_draw_roz(bitmap,&my_clip,tilemap,startx << 5,starty << 5,
+					incxx << 5,incxy << 5,0,0,
+					K053936_wraparound[chip],
+					flags,priority);
+
+			y++;
+		}
+	}
+	else	/* "simple" mode */
+	{
+		UINT32 startx,starty;
+		int incxx,incxy,incyx,incyy;
+
+		startx = 256 * (INT16)(ctrl[0x00]);
+		starty = 256 * (INT16)(ctrl[0x01]);
+		incyx  =       (INT16)(ctrl[0x02]);
+		incxx  =       (INT16)(ctrl[0x03]);
+		incyy  =       (INT16)(ctrl[0x04]);
+		incxy  =       (INT16)(ctrl[0x05]);
+
+		if (ctrl[0x06] & 0x4000) { incyx *= 256; incxx *= 256; }
+		if (ctrl[0x06] & 0x0040) { incyy *= 256; incxy *= 256; }
+
+		startx -= K053936_offset[chip][1] * incyx;
+		starty -= K053936_offset[chip][1] * incyy;
+
+		startx -= K053936_offset[chip][0] * incxx;
+		starty -= K053936_offset[chip][0] * incxy;
+
+		tilemap_draw_roz(bitmap,cliprect,tilemap,startx << 5,starty << 5,
+				incxx << 5,incxy << 5,incyx << 5,incyy << 5,
+				K053936_wraparound[chip],
+				flags,priority);
+	}
+
+#if 0
+if (keyboard_pressed(KEYCODE_D))
+	usrintf_showmessage("%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x",
+			ctrl[0x00],
+			ctrl[0x01],
+			ctrl[0x02],
+			ctrl[0x03],
+			ctrl[0x04],
+			ctrl[0x05],
+			ctrl[0x06],
+			ctrl[0x07],
+			ctrl[0x08],
+			ctrl[0x09],
+			ctrl[0x0a],
+			ctrl[0x0b],
+			ctrl[0x0c],
+			ctrl[0x0d],
+			ctrl[0x0e],
+			ctrl[0x0f]);
+#endif
+}
+
+
+void K053936_0_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority)
+{
+	K053936_zoom_draw(0,K053936_0_ctrl,K053936_0_linectrl,bitmap,cliprect,tilemap,flags,priority);
+}
+
+void K053936_1_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority)
+{
+	K053936_zoom_draw(1,K053936_1_ctrl,K053936_1_linectrl,bitmap,cliprect,tilemap,flags,priority);
+}
+
+
+void K053936_wraparound_enable(int chip, int status)
+{
+	K053936_wraparound[chip] = status;
+}
+
+
+void K053936_set_offset(int chip, int xoffs, int yoffs)
+{
+	K053936_offset[chip][0] = xoffs;
+	K053936_offset[chip][1] = yoffs;
+}
+
+
+
+
+
+/***************************************************************************/
+/*                                                                         */
+/*                                 053251                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
 static unsigned char K053251_ram[16];
 static int K053251_palette_index[5];
+static struct tilemap *K053251_tilemaps[5];
+static int K053251_tilemaps_set;
 
 static void K053251_reset_indexes(void)
 {
@@ -3949,13 +4355,29 @@ static void K053251_reset_indexes(void)
 
 int K053251_vh_start(void)
 {
+	K053251_set_tilemaps(NULL,NULL,NULL,NULL,NULL);
+
 	state_save_register_UINT8("K053251", 0, "registers", K053251_ram, 16);
 	state_save_register_func_postload(K053251_reset_indexes);
+
 	return 0;
+}
+
+void K053251_set_tilemaps(struct tilemap *ci0,struct tilemap *ci1,struct tilemap *ci2,struct tilemap *ci3,struct tilemap *ci4)
+{
+	K053251_tilemaps[0] = ci0;
+	K053251_tilemaps[1] = ci1;
+	K053251_tilemaps[2] = ci2;
+	K053251_tilemaps[3] = ci3;
+	K053251_tilemaps[4] = ci4;
+
+	K053251_tilemaps_set = (ci0 || ci1 || ci2 || ci3 || ci4) ? 1 : 0;
 }
 
 WRITE_HANDLER( K053251_w )
 {
+	int i,newind;
+
 	data &= 0x3f;
 
 	if (K053251_ram[offset] != data)
@@ -3964,17 +4386,38 @@ WRITE_HANDLER( K053251_w )
 		if (offset == 9)
 		{
 			/* palette base index */
-			K053251_palette_index[0] = 32 * ((data >> 0) & 0x03);
-			K053251_palette_index[1] = 32 * ((data >> 2) & 0x03);
-			K053251_palette_index[2] = 32 * ((data >> 4) & 0x03);
-			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+			for (i = 0;i < 3;i++)
+			{
+				newind = 32 * ((data >> 2*i) & 0x03);
+				if (K053251_palette_index[i] != newind)
+				{
+					K053251_palette_index[i] = newind;
+					if (K053251_tilemaps[i])
+						tilemap_mark_all_tiles_dirty(K053251_tilemaps[i]);
+
+				}
+			}
+
+			if (!K053251_tilemaps_set)
+				tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 		}
 		else if (offset == 10)
 		{
 			/* palette base index */
-			K053251_palette_index[3] = 16 * ((data >> 0) & 0x07);
-			K053251_palette_index[4] = 16 * ((data >> 3) & 0x07);
-			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+			for (i = 0;i < 2;i++)
+			{
+				newind = 16 * ((data >> 3*i) & 0x07);
+				if (K053251_palette_index[3+i] != newind)
+				{
+					K053251_palette_index[3+i] = newind;
+					if (K053251_tilemaps[3+i])
+						tilemap_mark_all_tiles_dirty(K053251_tilemaps[3+i]);
+
+				}
+			}
+
+			if (!K053251_tilemaps_set)
+				tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 		}
 	}
 }
@@ -4001,6 +4444,14 @@ int K053251_get_palette_index(int ci)
 	return K053251_palette_index[ci];
 }
 
+
+
+
+/***************************************************************************/
+/*                                                                         */
+/*                                 054000                                  */
+/*                                                                         */
+/***************************************************************************/
 
 
 static unsigned char K054000_ram[0x20];
@@ -4073,6 +4524,14 @@ WRITE16_HANDLER( K054000_lsb_w )
 
 
 
+/***************************************************************************/
+/*                                                                         */
+/*                                 051733                                  */
+/*                                                                         */
+/***************************************************************************/
+
+
+
 static unsigned char K051733_ram[0x20];
 
 WRITE_HANDLER( K051733_w )
@@ -4140,16 +4599,16 @@ logerror("%04x: read 051733 address %02x\n",activecpu_get_pc(),offset);
 			return int_sqrt(op3<<16) & 0xff;
 
 		case 0x07:{
-			if (xobj1c + rad < xobj2c - rad)
+			if (xobj1c + rad < xobj2c)
 				return 0x80;
 
-			if (xobj2c + rad < xobj1c - rad)
+			if (xobj2c + rad < xobj1c)
 				return 0x80;
 
-			if (yobj1c + rad < yobj2c - rad)
+			if (yobj1c + rad < yobj2c)
 				return 0x80;
 
-			if (yobj2c + rad < yobj1c - rad)
+			if (yobj2c + rad < yobj1c)
 				return 0x80;
 
 			return 0;
@@ -4158,6 +4617,16 @@ logerror("%04x: read 051733 address %02x\n",activecpu_get_pc(),offset);
 			return K051733_ram[offset];
 	}
 }
+
+
+
+
+
+/***************************************************************************/
+/*                                                                         */
+/*                                 054157                                  */
+/*                                                                         */
+/***************************************************************************/
 
 
 
@@ -4620,11 +5089,6 @@ void K054157_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 	tilemap_draw(bitmap,cliprect, K054157_tilemap[num], flags, priority);
 }
 
-void K054157_mark_plane_dirty(int num)
-{
-	tilemap_mark_all_tiles_dirty(K054157_tilemap[num]);
-}
-
 int K054157_is_IRQ_enabled(void)
 {
 	return K054157_regs[3] & 1;
@@ -4650,10 +5114,10 @@ void K054157_set_tile_bank(int bank)
 	{
 		K054157_cur_tile_bank = bank;
 
-		K054157_mark_plane_dirty(0);
-		K054157_mark_plane_dirty(1);
-		K054157_mark_plane_dirty(2);
-		K054157_mark_plane_dirty(3);
+		tilemap_mark_all_tiles_dirty(K054157_tilemap[0]);
+		tilemap_mark_all_tiles_dirty(K054157_tilemap[1]);
+		tilemap_mark_all_tiles_dirty(K054157_tilemap[2]);
+		tilemap_mark_all_tiles_dirty(K054157_tilemap[3]);
 	}
 
 	K054157_change_rombank();

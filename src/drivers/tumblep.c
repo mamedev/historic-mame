@@ -4,11 +4,76 @@
   Tumblepop (Japan)     (c) 1991 Data East Corporation
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 1)
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
-
+  Jump Kids	            (c) 1993 Comad
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 
+  If you reset the game while pressing START1 and START2, "VER 0.00 JAPAN"
+  is put into tile ram then MAME crashes !
+
+  One of the Jump Kids Sprite roms is bad, same with
+  the Sound CPU code, there's one unknown ROM.
+
   Emulation by Bryan McPhail, mish@tendril.co.uk
+
+
+Stephh's notes (based on the games M68000 code and some tests) :
+
+  - I don't understand the interest of the "Remove Monsters" Dip Switch :
+    as I haven't found a way to "end" a level, I guess that it was used to
+    test the backgrounds and the "platforms".
+
+  - The "Edit Levels" Dip Switch allows you to add/delete monsters and
+    change their position.
+
+    Notes (for 'tumblep', 'tumblepj', 'tumblep2') :
+      * "worlds" and levels are 0-based (00-09 & 00-09) :
+
+          World      Name
+            0      America
+            1      Brazil
+            2      Asia
+            3      Soviet
+            4      Europe
+            5      Egypt
+            6      Australia
+            7      Antartica
+            8      Stratosphere
+            9      Space
+
+      * As levels x-9 and 9-x are only constitued of a "big boss", you can't
+        edit them !
+      * All data is stored within the range 0x02b8c8-0x02d2c9, but it should be
+        extended to 0x02ebeb (and perhaps 0x02ffff). TO BE CONFIRMED !
+      * Once your levels are ready, turn the Dip Switch OFF and reset the game.
+      * Of course, there is no possibility to save the levels when you exit
+        MAME, nor the way to reload the default ones 8(
+
+    Additional notes (for 'tumblepb') :
+      * All data is stored within the range 0x02b8c8-0x02d2c9, but it should be
+        extended to 0x02ebeb (and perhaps 0x02ebff). TO BE CONFIRMED !
+
+    Additional notes (for 'jumpkids') :
+      * As there are only 9 "worlds", editing "world" 9 ("Space") might cause
+        unpredictable weird results !
+      * The "worlds" names are the same, but the background is different :
+
+          World      Name            Background
+            0      America         Stadium
+            1      Brazil          Beach
+            2      Asia            Planet
+            3      Soviet          Prehistoric Ages
+            4      Europe          Castle
+            5      Egypt           Pyramids
+            6      Australia       Lunar base
+            7      Antartica       Bridge
+            8      Stratosphere    ???
+            9      Space           DOES NOT EXIST !
+
+        As I'm not sure of the description of the background, feel free to
+        improve the previous list.
+      * All data is stored within the range 0x02776e-0x029207, but it should be
+        extended to 0x02ab29 (and perhaps 0x02ab49). TO BE CONFIRMED !
 
 ***************************************************************************/
 
@@ -17,9 +82,12 @@
 #include "cpu/h6280/h6280.h"
 #include "decocrpt.h"
 
+#define TUMBLEP_HACK	0
+
 VIDEO_START( tumblep );
 VIDEO_UPDATE( tumblep );
 VIDEO_UPDATE( tumblepb );
+VIDEO_UPDATE( jumpkids );
 
 WRITE16_HANDLER( tumblep_pf1_data_w );
 WRITE16_HANDLER( tumblep_pf2_data_w );
@@ -66,9 +134,6 @@ static READ16_HANDLER( tumblepop_controls_r )
 	return ~0;
 }
 
-static READ16_HANDLER( tumblep_pf1_data_r ) { return tumblep_pf1_data[offset]; }
-static READ16_HANDLER( tumblep_pf2_data_r ) { return tumblep_pf2_data[offset]; }
-
 /******************************************************************************/
 
 static MEMORY_READ16_START( tumblepop_readmem )
@@ -77,12 +142,16 @@ static MEMORY_READ16_START( tumblepop_readmem )
 	{ 0x140000, 0x1407ff, MRA16_RAM },
 	{ 0x180000, 0x18000f, tumblepop_controls_r },
 	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
-	{ 0x320000, 0x320fff, tumblep_pf1_data_r },
-	{ 0x322000, 0x322fff, tumblep_pf2_data_r },
+	{ 0x320000, 0x320fff, MRA16_RAM },
+	{ 0x322000, 0x322fff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( tumblepop_writemem )
+#if TUMBLEP_HACK
+	{ 0x000000, 0x07ffff, MWA16_RAM },	// To write levels modifications
+#else
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+#endif
 	{ 0x100000, 0x100001, tumblep_sound_w },
 	{ 0x120000, 0x123fff, MWA16_RAM },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
@@ -108,11 +177,15 @@ static MEMORY_READ16_START( tumblepopb_readmem )
 MEMORY_END
 
 static MEMORY_WRITE16_START( tumblepopb_writemem )
+#if TUMBLEP_HACK
+	{ 0x000000, 0x07ffff, MWA16_RAM },	// To write levels modifications
+#else
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+#endif
 	{ 0x100000, 0x100001, tumblep_oki_w },
 	{ 0x120000, 0x123fff, MWA16_RAM },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x160000, 0x160807, MWA16_RAM, &spriteram16 }, /* Bootleg sprite buffer */
+	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 }, /* Bootleg sprite buffer */
 	{ 0x18000c, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
@@ -164,12 +237,12 @@ MEMORY_END
 
 INPUT_PORTS_START( tumblep )
 	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
@@ -186,7 +259,7 @@ INPUT_PORTS_START( tumblep )
 	PORT_START	/* Credits */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -215,7 +288,7 @@ INPUT_PORTS_START( tumblep )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x01, 0x01, "2 Coins to Start, 1 to Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -230,10 +303,18 @@ INPUT_PORTS_START( tumblep )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+#if TUMBLEP_HACK
+	PORT_DIPNAME( 0x08, 0x08, "Remove Monsters" )
+#else
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )		// See notes
+#endif
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+#if TUMBLEP_HACK
+	PORT_DIPNAME( 0x04, 0x04, "Edit Levels" )
+#else
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )		// See notes
+#endif
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
@@ -310,7 +391,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static MACHINE_DRIVER_START( tumblepop )
+static MACHINE_DRIVER_START( tumblep )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
@@ -360,6 +441,32 @@ static MACHINE_DRIVER_START( tumblepb )
 
 	MDRV_VIDEO_START(tumblep)
 	MDRV_VIDEO_UPDATE(tumblepb)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( jumpkids )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_MEMORY(tumblepopb_readmem,tumblepopb_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	/* z80? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(tumblep)
+	MDRV_VIDEO_UPDATE(jumpkids)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
@@ -439,16 +546,43 @@ ROM_START( tumblep2 )
 	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, 0xfabbf15d )
 ROM_END
 
+ROM_START( jumpkids )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "23.15c", 0x00000, 0x40000, 0x6ba11e91 )
+	ROM_LOAD16_BYTE( "24.16c", 0x00001, 0x40000, 0x5795d98b )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "23.3c", 0x00000, 0x10000, BADCRC(0xd7dbbd8c) ) // bad
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD16_BYTE( "30.15j", 0x00000, 0x40000, 0x44b9a089 )
+	ROM_LOAD16_BYTE( "29.13j", 0x00001, 0x40000, 0x3f98ec69 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD16_BYTE( "25.1g",  0x00000, 0x40000, 0x176ae857 )
+	ROM_LOAD16_BYTE( "28.1l",  0x00001, 0x40000, BADCRC(0xdc35c5a0) ) // bad
+	ROM_LOAD16_BYTE( "26.2g",  0x80000, 0x40000, 0xe8b34980 )
+	ROM_LOAD16_BYTE( "27.1j",  0x80001, 0x40000, 0x3918dda3 )
+
+	ROM_REGION( 0x80000, REGION_USER1, 0 ) /* ? */
+	ROM_LOAD( "21.1c", 0x00000, 0x80000, 0xe5094f75 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "22.2c", 0x00000, 0x20000, 0xfae44fbf )
+ROM_END
 
 /******************************************************************************/
 
-
-static DRIVER_INIT( tumblep )
+void tumblep_patch_code(UINT16 offset)
 {
-	deco56_decrypt(REGION_GFX1);
+	/* A hack which enables all Dip Switches effects */
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	RAM[(offset + 0)/2] = 0x0240;
+	RAM[(offset + 2)/2] = 0xffff;	// andi.w  #$f3ff, D0
 }
 
-static DRIVER_INIT( tumblepb )
+
+static void tumblepb_gfx1_decrypt(void)
 {
 	data8_t *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
@@ -469,10 +603,38 @@ static DRIVER_INIT( tumblepb )
 	}
 }
 
+static DRIVER_INIT( tumblep )
+{
+	deco56_decrypt(REGION_GFX1);
+
+	#if TUMBLEP_HACK
+	tumblep_patch_code(0x000132);
+	#endif
+}
+
+static DRIVER_INIT( tumblepb )
+{
+	tumblepb_gfx1_decrypt();
+
+	#if TUMBLEP_HACK
+	tumblep_patch_code(0x000132);
+	#endif
+}
+
+static DRIVER_INIT( jumpkids )
+{
+	tumblepb_gfx1_decrypt();
+
+	#if TUMBLEP_HACK
+	tumblep_patch_code(0x00013a);
+	#endif
+}
+
 
 /******************************************************************************/
 
-GAME( 1991, tumblep,  0,       tumblepop, tumblep, tumblep,  ROT0, "Data East Corporation", "Tumble Pop (World)" )
-GAME( 1991, tumblepj, tumblep, tumblepop, tumblep, tumblep,  ROT0, "Data East Corporation", "Tumble Pop (Japan)" )
-GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1991, tumblep,  0,       tumblep,   tumblep,  tumblep,  ROT0, "Data East Corporation", "Tumble Pop (World)" )
+GAME( 1991, tumblepj, tumblep, tumblep,   tumblep,  tumblep,  ROT0, "Data East Corporation", "Tumble Pop (Japan)" )
+GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )

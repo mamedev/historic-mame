@@ -308,12 +308,12 @@ static WRITE_HANDLER(scobra_soundram_w)
 }
 
 MEMORY_READ_START( scobra_sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x8000, 0x8fff, scobra_soundram_r },
 MEMORY_END
 
 MEMORY_WRITE_START( scobra_sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x8000, 0x8fff, scobra_soundram_w },
 	{ 0x8000, 0x83ff, MWA_NOP, &scobra_soundram },  /* only here to initialize pointer */
 	{ 0x9000, 0x9fff, scramble_filter_w },
@@ -1509,11 +1509,11 @@ MACHINE_DRIVER_END
 
 ROM_START( scobra )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2c",           0x0000, 0x1000, 0xa0744b3f )
+	ROM_LOAD( "epr1265.2c",   0x0000, 0x1000, 0xa0744b3f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0x8e7245cd )
-	ROM_LOAD( "2f",           0x2000, 0x1000, 0x47a4e6fb )
+	ROM_LOAD( "epr1267.2f",   0x2000, 0x1000, 0x47a4e6fb )
 	ROM_LOAD( "2h",           0x3000, 0x1000, 0x7244f21c )
-	ROM_LOAD( "2j",           0x4000, 0x1000, 0xe1f8a801 )
+	ROM_LOAD( "epr1269.2j",   0x4000, 0x1000, 0xe1f8a801 )
 	ROM_LOAD( "2l",           0x5000, 0x1000, 0xd52affde )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
@@ -1522,8 +1522,8 @@ ROM_START( scobra )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0x1628c53f )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
+	ROM_LOAD( "epr1274.5h",   0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "epr1273.5f",   0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
@@ -1539,16 +1539,38 @@ ROM_START( scobras )
 	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
-	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
-	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
+	ROM_LOAD( "epr1275.5c",   0x0000, 0x0800, 0xdeeb0dd3 )
+	ROM_LOAD( "epr1276.5d",   0x0800, 0x0800, 0x872c1a74 )
+	ROM_LOAD( "epr1277.5e",   0x1000, 0x0800, 0xccd7a110 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
+	ROM_LOAD( "epr1274.5h",   0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "epr1273.5f",   0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
+ROM_END
+
+ROM_START( scobrase )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "epr1265.2c",   0x0000, 0x1000, 0xa0744b3f )
+	ROM_LOAD( "epr1266.2e",   0x1000, 0x1000, 0x65306279 )
+	ROM_LOAD( "epr1267.2f",   0x2000, 0x1000, 0x47a4e6fb )
+	ROM_LOAD( "epr1268.2h",   0x3000, 0x1000, 0x53eecaf2 )
+	ROM_LOAD( "epr1269.2j",   0x4000, 0x1000, 0xe1f8a801 )
+	ROM_LOAD( "epr1270.2l",   0x5000, 0x1000, 0xf7709710 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "epr1275.5c",   0x0000, 0x0800, 0xdeeb0dd3 )
+	ROM_LOAD( "epr1276.5d",   0x0800, 0x0800, 0x872c1a74 )
+	ROM_LOAD( "epr1277.5e",   0x1000, 0x0800, 0xccd7a110 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr1274.5h",   0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "epr1273.5f",   0x0800, 0x0800, 0xa96316d3 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "pr1278.6e",    0x0000, 0x0020, 0xfd35c561 )
 ROM_END
 
 ROM_START( scobrab )
@@ -1567,8 +1589,8 @@ ROM_START( scobrab )
 	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
+	ROM_LOAD( "epr1274.5h",   0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "epr1273.5f",   0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
@@ -1988,6 +2010,7 @@ ROM_END
 
 GAME( 1981, scobra,   0,        type1,    scobra,   scobra,       ROT90,  "Konami", "Super Cobra" )
 GAME( 1981, scobras,  scobra,   type1,    scobras,  scobra,       ROT90,  "[Konami] (Stern license)", "Super Cobra (Stern)" )
+GAME( 1981, scobrase, scobra,   type1,    scobras,  scobra,       ROT90,  "[Konami] (Sega license)", "Super Cobra (Sega)" )
 GAME( 1981, scobrab,  scobra,   type1,    scobras,  scobra,       ROT90,  "bootleg", "Super Cobra (bootleg)" )
 GAME( 1981, stratgyx, 0,        stratgyx, stratgyx, stratgyx,     ROT0,   "Konami", "Strategy X" )
 GAME( 1981, stratgys, stratgyx, stratgyx, stratgyx, stratgyx,     ROT0,   "[Konami] (Stern license)", "Strategy X (Stern)" )

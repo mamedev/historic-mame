@@ -121,9 +121,13 @@ enum
 	TRANSPARENCY_BLEND_RAW,		/* blend two bitmaps, shifting the source and ORing to the dest with no remapping */
 	TRANSPARENCY_ALPHAONE,		/* single pen transparency, single pen alpha */
 	TRANSPARENCY_ALPHA,			/* single pen transparency, other pens alpha */
+	TRANSPARENCY_ALPHARANGE,	/* single pen transparency, multiple pens alpha depending on array, see psikyosh.c */
 
 	TRANSPARENCY_MODES			/* total number of modes; must be last */
 };
+
+/* drawing mode case TRANSPARENCY_ALPHARANGE */
+extern UINT8 gfx_alpharange_table[256];
 
 /* drawing mode case TRANSPARENCY_PEN_TABLE */
 extern UINT8 gfx_drawmode_table[256];
@@ -139,12 +143,7 @@ enum
 extern int pdrawgfx_shadow_lowpri;
 
 
-typedef void (*mark_dirty_proc)(int sx,int sy,int ex,int ey);
-extern mark_dirty_proc mark_dirty;
-
-
-/* pointers to pixel functions.  They're set based on orientation, depthness and whether
-   dirty rectangle handling is enabled */
+/* pointers to pixel functions.  They're set based on orientation and depth */
 #define plot_pixel(bm,x,y,p)	(*(bm)->plot)(bm,x,y,p)
 #define read_pixel(bm,x,y)		(*(bm)->read)(bm,x,y)
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)
@@ -209,6 +208,22 @@ INLINE UINT32 alpha_blend32( UINT32 d, UINT32 s )
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
 
+INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
+{
+	const UINT8 *alphas = alpha_cache.alpha[level];
+	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
+		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
+}
+
+
+INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
+{
+	const UINT8 *alphas = alpha_cache.alpha[level];
+	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
+		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
+}
 
 /*
   Copy a bitmap applying rotation, zooming, and arbitrary distortion.
@@ -243,7 +258,6 @@ void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
 
 void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip);
-void plot_pixel2(struct mame_bitmap *bitmap1,struct mame_bitmap *bitmap2,int x,int y,pen_t pen);
 void drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
@@ -256,6 +270,7 @@ void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
 
+void drawgfx_toggle_crosshair(void);
 void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip);
 
 INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)

@@ -426,7 +426,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( trisport_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x100000, 0x103fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x120000, 0x12007f, mcr68_paletteram_w, &paletteram16 },
 	{ 0x140000, 0x1407ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x160000, 0x160fff, mcr68_videoram_w, &videoram16, &videoram_size },
@@ -932,22 +932,22 @@ static MACHINE_DRIVER_START( zwackery )
 	MDRV_CPU_ADD(M68000, 7652400)
 	MDRV_CPU_MEMORY(zwackery_readmem,zwackery_writemem)
 	MDRV_CPU_VBLANK_INT(mcr68_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_MACHINE_INIT(zwackery)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*16, 30*16)
 	MDRV_VISIBLE_AREA(0, 32*16-1, 0, 30*16-1)
 	MDRV_GFXDECODE(zwackery_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
-	
+
 	MDRV_PALETTE_INIT(zwackery)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(zwackery)
 	MDRV_VIDEO_UPDATE(zwackery)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(chip_squeak_deluxe)
 MACHINE_DRIVER_END
@@ -959,7 +959,7 @@ static MACHINE_DRIVER_START( mcr68 )
 	MDRV_CPU_ADD_TAG("main", M68000, 7723800)
 	MDRV_CPU_MEMORY(mcr68_readmem,mcr68_writemem)
 	MDRV_CPU_VBLANK_INT(mcr68_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_MACHINE_INIT(mcr68)
@@ -970,10 +970,10 @@ static MACHINE_DRIVER_START( mcr68 )
 	MDRV_VISIBLE_AREA(0, 32*16-1, 0, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	
-	MDRV_VIDEO_START(generic)
+
+	MDRV_VIDEO_START(mcr68)
 	MDRV_VIDEO_UPDATE(mcr68)
-	
+
 	/* sound hardware -- determined by specific machine */
 MACHINE_DRIVER_END
 
@@ -1007,7 +1007,7 @@ static MACHINE_DRIVER_START( pigskin )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr68)
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
-	
+
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(pigskin_readmem,pigskin_writemem)
 MACHINE_DRIVER_END
@@ -1018,9 +1018,11 @@ static MACHINE_DRIVER_START( trisport )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr68)
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
-	
+
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(trisport_readmem,trisport_writemem)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
 MACHINE_DRIVER_END
 
 
@@ -1068,7 +1070,7 @@ ROM_START( zwackery )
 	ROM_LOAD( "spr10j.bin",   0x18000, 0x4000, 0x4dd04376 )
 	ROM_LOAD( "spr11j.bin",   0x1c000, 0x4000, 0xe8c6a880 )
 
-	ROM_REGION( 0x8000, REGION_GFX3, 0 )	/* bg color maps */
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_DISPOSE )	/* bg color maps */
 	ROM_LOAD16_BYTE( "tilef.bin",  0x0000, 0x4000, 0xa0dfcd7e )
 	ROM_LOAD16_BYTE( "tilee.bin",  0x0001, 0x4000, 0xab504dc8 )
 ROM_END

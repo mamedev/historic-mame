@@ -49,6 +49,7 @@ extern int neogeo_memcard_create(int);
 /* MARTINEZ.F 990207 Memory Card End */
 
 
+UINT8 ui_dirty;
 
 static int setup_selected;
 static int osd_selected;
@@ -57,13 +58,39 @@ static int single_step;
 static int trueorientation;
 static int orientation_count;
 
+static int showfps;
+static int showfpstemp;
+
 
 void switch_ui_orientation(struct mame_bitmap *bitmap)
 {
+	/* we assume here that if we're switching to the UI orientation */
+	/* we will be dirtying the UI; we set it to 2 to make sure we */
+	/* render at least one frame to erase it afterwards */
+	ui_dirty = 5;
+
 	if (orientation_count == 0)
 	{
 		trueorientation = Machine->orientation;
 		Machine->orientation = Machine->ui_orientation;
+		if (bitmap)
+			set_pixel_functions(bitmap);
+	}
+
+	orientation_count++;
+}
+
+void switch_debugger_orientation(struct mame_bitmap *bitmap)
+{
+	/* we assume here that if we're switching to the UI orientation */
+	/* we will be dirtying the UI; we set it to 2 to make sure we */
+	/* render at least one frame to erase it afterwards */
+	ui_dirty = 5;
+
+	if (orientation_count == 0)
+	{
+		trueorientation = Machine->orientation;
+		Machine->orientation = 0;
 		if (bitmap)
 			set_pixel_functions(bitmap);
 	}
@@ -86,7 +113,7 @@ void switch_true_orientation(struct mame_bitmap *bitmap)
 
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 {
-	int temp,w,h;
+	int temp;
 
 	/* special case for vectors */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -99,16 +126,8 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 	}
 	else
 	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			w = Machine->drv->screen_height;
-			h = Machine->drv->screen_width;
-		}
-		else
-		{
-			w = Machine->drv->screen_width;
-			h = Machine->drv->screen_height;
-		}
+		int w,h;
+		artwork_get_screensize(&w, &h);
 
 		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
 		{
@@ -129,7 +148,6 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 			temp = xmin; xmin = ymin; ymin = temp;
 			temp = xmax; xmax = ymax; ymax = temp;
 		}
-
 	}
 	Machine->uiwidth = xmax-xmin+1;
 	Machine->uiheight = ymax-ymin+1;
@@ -141,7 +159,7 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 
 struct GfxElement *builduifont(void)
 {
-    static unsigned char fontdata6x8[] =
+    static const unsigned char fontdata6x8[] =
 	{
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x7c,0x80,0x98,0x90,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x64,0x44,0x04,0xf4,0x04,0xf8,
@@ -272,77 +290,8 @@ struct GfxElement *builduifont(void)
 		0x50,0x00,0x88,0x88,0x88,0x98,0x68,0x00,0x10,0x20,0x88,0x88,0x88,0x78,0x08,0x70,
 		0x80,0xF0,0x88,0x88,0xF0,0x80,0x80,0x80,0x50,0x00,0x88,0x88,0x88,0x78,0x08,0x70
     };
-#if 0
-	static unsigned char fontdata6x8[] =
-	{
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x7c,0x80,0x98,0x90,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x64,0x44,0x04,0xf4,0x04,0xf8,
-		0x7c,0x80,0x98,0x88,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x64,0x24,0x04,0xf4,0x04,0xf8,
-		0x7c,0x80,0x88,0x98,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x24,0x64,0x04,0xf4,0x04,0xf8,
-		0x7c,0x80,0x90,0x98,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x44,0x64,0x04,0xf4,0x04,0xf8,
-		0x30,0x48,0x84,0xb4,0xb4,0x84,0x48,0x30,0x30,0x48,0x84,0x84,0x84,0x84,0x48,0x30,
-		0x00,0xfc,0x84,0x8c,0xd4,0xa4,0xfc,0x00,0x00,0xfc,0x84,0x84,0x84,0x84,0xfc,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x30,0x68,0x78,0x78,0x30,0x00,0x00,
-		0x80,0xc0,0xe0,0xf0,0xe0,0xc0,0x80,0x00,0x04,0x0c,0x1c,0x3c,0x1c,0x0c,0x04,0x00,
-		0x20,0x70,0xf8,0x20,0x20,0xf8,0x70,0x20,0x48,0x48,0x48,0x48,0x48,0x00,0x48,0x00,
-		0x00,0x00,0x30,0x68,0x78,0x30,0x00,0x00,0x00,0x30,0x68,0x78,0x78,0x30,0x00,0x00,
-		0x70,0xd8,0xe8,0xe8,0xf8,0xf8,0x70,0x00,0x1c,0x7c,0x74,0x44,0x44,0x4c,0xcc,0xc0,
-		0x20,0x70,0xf8,0x70,0x70,0x70,0x70,0x00,0x70,0x70,0x70,0x70,0xf8,0x70,0x20,0x00,
-		0x00,0x10,0xf8,0xfc,0xf8,0x10,0x00,0x00,0x00,0x20,0x7c,0xfc,0x7c,0x20,0x00,0x00,
-		0xb0,0x54,0xb8,0xb8,0x54,0xb0,0x00,0x00,0x00,0x28,0x6c,0xfc,0x6c,0x28,0x00,0x00,
-		0x00,0x30,0x30,0x78,0x78,0xfc,0x00,0x00,0xfc,0x78,0x78,0x30,0x30,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x20,0x20,0x20,0x20,0x00,0x20,0x00,
-		0x50,0x50,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x50,0xf8,0x50,0xf8,0x50,0x00,0x00,
-		0x20,0x70,0xc0,0x70,0x18,0xf0,0x20,0x00,0x40,0xa4,0x48,0x10,0x20,0x48,0x94,0x08,
-		0x60,0x90,0xa0,0x40,0xa8,0x90,0x68,0x00,0x10,0x20,0x40,0x00,0x00,0x00,0x00,0x00,
-		0x20,0x40,0x40,0x40,0x40,0x40,0x20,0x00,0x10,0x08,0x08,0x08,0x08,0x08,0x10,0x00,
-		0x20,0xa8,0x70,0xf8,0x70,0xa8,0x20,0x00,0x00,0x20,0x20,0xf8,0x20,0x20,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x30,0x30,0x60,0x00,0x00,0x00,0xf8,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x30,0x30,0x00,0x00,0x08,0x10,0x20,0x40,0x80,0x00,0x00,
-		0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x00,0x10,0x30,0x10,0x10,0x10,0x10,0x10,0x00,
-		0x70,0x88,0x08,0x10,0x20,0x40,0xf8,0x00,0x70,0x88,0x08,0x30,0x08,0x88,0x70,0x00,
-		0x10,0x30,0x50,0x90,0xf8,0x10,0x10,0x00,0xf8,0x80,0xf0,0x08,0x08,0x88,0x70,0x00,
-		0x70,0x80,0xf0,0x88,0x88,0x88,0x70,0x00,0xf8,0x08,0x08,0x10,0x20,0x20,0x20,0x00,
-		0x70,0x88,0x88,0x70,0x88,0x88,0x70,0x00,0x70,0x88,0x88,0x88,0x78,0x08,0x70,0x00,
-		0x00,0x00,0x30,0x30,0x00,0x30,0x30,0x00,0x00,0x00,0x30,0x30,0x00,0x30,0x30,0x60,
-		0x10,0x20,0x40,0x80,0x40,0x20,0x10,0x00,0x00,0x00,0xf8,0x00,0xf8,0x00,0x00,0x00,
-		0x40,0x20,0x10,0x08,0x10,0x20,0x40,0x00,0x70,0x88,0x08,0x10,0x20,0x00,0x20,0x00,
-		0x30,0x48,0x94,0xa4,0xa4,0x94,0x48,0x30,0x70,0x88,0x88,0xf8,0x88,0x88,0x88,0x00,
-		0xf0,0x88,0x88,0xf0,0x88,0x88,0xf0,0x00,0x70,0x88,0x80,0x80,0x80,0x88,0x70,0x00,
-		0xf0,0x88,0x88,0x88,0x88,0x88,0xf0,0x00,0xf8,0x80,0x80,0xf0,0x80,0x80,0xf8,0x00,
-		0xf8,0x80,0x80,0xf0,0x80,0x80,0x80,0x00,0x70,0x88,0x80,0x98,0x88,0x88,0x70,0x00,
-		0x88,0x88,0x88,0xf8,0x88,0x88,0x88,0x00,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,
-		0x08,0x08,0x08,0x08,0x88,0x88,0x70,0x00,0x88,0x90,0xa0,0xc0,0xa0,0x90,0x88,0x00,
-		0x80,0x80,0x80,0x80,0x80,0x80,0xf8,0x00,0x88,0xd8,0xa8,0x88,0x88,0x88,0x88,0x00,
-		0x88,0xc8,0xa8,0x98,0x88,0x88,0x88,0x00,0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x00,
-		0xf0,0x88,0x88,0xf0,0x80,0x80,0x80,0x00,0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x08,
-		0xf0,0x88,0x88,0xf0,0x88,0x88,0x88,0x00,0x70,0x88,0x80,0x70,0x08,0x88,0x70,0x00,
-		0xf8,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x88,0x88,0x88,0x88,0x88,0x88,0x70,0x00,
-		0x88,0x88,0x88,0x88,0x88,0x50,0x20,0x00,0x88,0x88,0x88,0x88,0xa8,0xd8,0x88,0x00,
-		0x88,0x50,0x20,0x20,0x20,0x50,0x88,0x00,0x88,0x88,0x88,0x50,0x20,0x20,0x20,0x00,
-		0xf8,0x08,0x10,0x20,0x40,0x80,0xf8,0x00,0x30,0x20,0x20,0x20,0x20,0x20,0x30,0x00,
-		0x40,0x40,0x20,0x20,0x10,0x10,0x08,0x08,0x30,0x10,0x10,0x10,0x10,0x10,0x30,0x00,
-		0x20,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xfc,
-		0x40,0x20,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x70,0x08,0x78,0x88,0x78,0x00,
-		0x80,0x80,0xf0,0x88,0x88,0x88,0xf0,0x00,0x00,0x00,0x70,0x88,0x80,0x80,0x78,0x00,
-		0x08,0x08,0x78,0x88,0x88,0x88,0x78,0x00,0x00,0x00,0x70,0x88,0xf8,0x80,0x78,0x00,
-		0x18,0x20,0x70,0x20,0x20,0x20,0x20,0x00,0x00,0x00,0x78,0x88,0x88,0x78,0x08,0x70,
-		0x80,0x80,0xf0,0x88,0x88,0x88,0x88,0x00,0x20,0x00,0x20,0x20,0x20,0x20,0x20,0x00,
-		0x20,0x00,0x20,0x20,0x20,0x20,0x20,0xc0,0x80,0x80,0x90,0xa0,0xe0,0x90,0x88,0x00,
-		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x00,0x00,0xf0,0xa8,0xa8,0xa8,0xa8,0x00,
-		0x00,0x00,0xb0,0xc8,0x88,0x88,0x88,0x00,0x00,0x00,0x70,0x88,0x88,0x88,0x70,0x00,
-		0x00,0x00,0xf0,0x88,0x88,0xf0,0x80,0x80,0x00,0x00,0x78,0x88,0x88,0x78,0x08,0x08,
-		0x00,0x00,0xb0,0xc8,0x80,0x80,0x80,0x00,0x00,0x00,0x78,0x80,0x70,0x08,0xf0,0x00,
-		0x20,0x20,0x70,0x20,0x20,0x20,0x18,0x00,0x00,0x00,0x88,0x88,0x88,0x98,0x68,0x00,
-		0x00,0x00,0x88,0x88,0x88,0x50,0x20,0x00,0x00,0x00,0xa8,0xa8,0xa8,0xa8,0x50,0x00,
-		0x00,0x00,0x88,0x50,0x20,0x50,0x88,0x00,0x00,0x00,0x88,0x88,0x88,0x78,0x08,0x70,
-		0x00,0x00,0xf8,0x10,0x20,0x40,0xf8,0x00,0x08,0x10,0x10,0x20,0x10,0x10,0x08,0x00,
-		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x40,0x20,0x20,0x10,0x20,0x20,0x40,0x00,
-		0x00,0x68,0xb0,0x00,0x00,0x00,0x00,0x00,0x20,0x50,0x20,0x50,0xa8,0x50,0x00,0x00,
-	};
-#endif
 
-	static struct GfxLayout fontlayout6x8 =
+	static const struct GfxLayout fontlayout6x8 =
 	{
 		6,8,	/* 6*8 characters */
 		256,	/* 256 characters */
@@ -352,7 +301,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout12x8 =
+	static const struct GfxLayout fontlayout12x8 =
 	{
 		12,8,	/* 12*8 characters */
 		256,	/* 256 characters */
@@ -362,7 +311,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout6x16 =
+	static const struct GfxLayout fontlayout6x16 =
 	{
 		6,16,	/* 6*8 characters */
 		256,	/* 256 characters */
@@ -372,7 +321,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8,0*8, 1*8,1*8, 2*8,2*8, 3*8,3*8, 4*8,4*8, 5*8,5*8, 6*8,6*8, 7*8,7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout12x16 =
+	static const struct GfxLayout fontlayout12x16 =
 	{
 		12,16,	/* 12*16 characters */
 		256,	/* 256 characters */
@@ -451,8 +400,6 @@ void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt)
 {
 	switch_ui_orientation(bitmap);
 
-	osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
-
 	while (dt->text)
 	{
 		int x,y;
@@ -505,6 +452,8 @@ void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt)
 
 			if (!wrapped)
 			{
+				artwork_mark_ui_dirty(x + Machine->uixmin, y + Machine->uiymin,
+						x + Machine->uixmin + Machine->uifontwidth - 1, y + Machine->uiymin + Machine->uifontheight - 1);
 				drawgfx(bitmap,Machine->uifont,*c,dt->color,0,0,x+Machine->uixmin,y+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 				x += Machine->uifontwidth;
 			}
@@ -527,6 +476,8 @@ static void ui_text_ex(struct mame_bitmap *bitmap,const char* buf_begin, const c
 
 	for (;buf_begin != buf_end; ++buf_begin)
 	{
+		artwork_mark_ui_dirty(x + Machine->uixmin, y + Machine->uiymin,
+				x + Machine->uixmin + Machine->uifontwidth - 1, y + Machine->uiymin + Machine->uifontheight - 1);
 		drawgfx(bitmap,Machine->uifont,*buf_begin,color,0,0,
 				x + Machine->uixmin,
 				y + Machine->uiymin, 0,TRANSPARENCY_NONE,0);
@@ -565,6 +516,7 @@ void ui_drawbox(struct mame_bitmap *bitmap,int leftx,int topy,int width,int heig
 	plot_box(bitmap,leftx,        topy,         1,      height,  white);
 	plot_box(bitmap,leftx+width-1,topy,         1,      height,  white);
 	plot_box(bitmap,leftx+1,      topy+1,       width-2,height-2,black);
+	artwork_mark_ui_dirty(leftx, topy, leftx + width - 1, topy + height - 1);
 
 	switch_true_orientation(bitmap);
 }
@@ -597,6 +549,7 @@ static void drawbar(struct mame_bitmap *bitmap,int leftx,int topy,int width,int 
 	plot_box(bitmap,leftx,topy+height-height/8-1,width,1,white);
 
 	plot_box(bitmap,leftx+(width-1)*default_percentage/100,topy+height-height/8,1,height/8,white);
+	artwork_mark_ui_dirty(leftx, topy, leftx + width - 1, topy + height - 1);
 
 	switch_true_orientation(bitmap);
 }
@@ -991,6 +944,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 	do
 	{
+		/* mark the whole thing dirty */
+		artwork_mark_ui_dirty(0, 0, 10000, 10000);
+
 		switch (mode)
 		{
 			case 0: /* palette or clut */
@@ -1014,20 +970,27 @@ static void showcharset(struct mame_bitmap *bitmap)
 					colortable = 0;
 				}
 
-				if (changed)
+				/*if (changed) -- temporary */
 				{
 					erase_screen(bitmap);
 
 					if (total_colors)
 					{
 						int sx,sy,colors;
+						int column_heading_max;
 
 						switch_ui_orientation(bitmap);
 
 						colors = total_colors - 256 * palpage;
 						if (colors > 256) colors = 256;
 
-						for (i = 0;i < 16;i++)
+						/* min(colors, 16) */
+						if (colors < 16)
+							column_heading_max = colors;
+						else
+							column_heading_max = 16;
+
+						for (i = 0;i < column_heading_max;i++)
 						{
 							char bf[40];
 
@@ -1064,7 +1027,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 				cpx = Machine->uiwidth / Machine->gfx[bank]->width;
 				cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
 				skip_chars = cpx * cpy;
-				if (changed)
+				/*if (changed) -- temporary */
 				{
 					int flipx,flipy;
 					int lastdrawn=0;
@@ -1097,11 +1060,11 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 					{
+						int x = (i % cpx) * Machine->gfx[bank]->width + Machine->uixmin;
+						int y = Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin;
 						drawgfx(bitmap,Machine->gfx[bank],
 								i+firstdrawn,color,  /*sprite num, color*/
-								flipx,flipy,
-								(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-								Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+								flipx,flipy,x,y,
 								0,Machine->gfx[bank]->colortable ? TRANSPARENCY_NONE : TRANSPARENCY_NONE_RAW,0);
 
 						lastdrawn = i+firstdrawn;
@@ -1118,7 +1081,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			}
 			case 2: /* Tilemaps */
 			{
-				if (changed)
+				/*if (changed) -- temporary */
 				{
 					UINT32 tilemap_width, tilemap_height;
 					tilemap_nb_size (bank, &tilemap_width, &tilemap_height);
@@ -1365,7 +1328,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 		}
 
 		if (input_ui_pressed(IPT_UI_SNAPSHOT))
-			osd_save_snapshot(bitmap);
+			artwork_save_snapshot(bitmap);
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
 
@@ -1625,6 +1588,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 			record_first_insert = ret != 0;
 		}
 
+		init_analog_seq();
 
 		return sel + 1;
 	}
@@ -1757,6 +1721,8 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 
 			record_first_insert = ret != 0;
 		}
+
+		init_analog_seq();
 
 		return sel + 1;
 	}
@@ -2144,14 +2110,15 @@ int showcopyright(struct mame_bitmap *bitmap)
 	strcat (buf, "\n\n");
 	strcat (buf, ui_getstring(UI_copyright3));
 
-	erase_screen(bitmap);
-	ui_displaymessagewindow(bitmap,buf);
-
 	setup_selected = -1;////
 	done = 0;
 
 	do
 	{
+		erase_screen(bitmap);
+		ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
+		ui_displaymessagewindow(bitmap,buf);
+
 		update_video_and_audio();
 		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
@@ -2443,12 +2410,13 @@ int showgamewarnings(struct mame_bitmap *bitmap)
 		strcat(buf,"\n\n");
 		strcat(buf,ui_getstring (UI_typeok));
 
-		erase_screen(bitmap);
-		ui_displaymessagewindow(bitmap,buf);
-
 		done = 0;
 		do
 		{
+			erase_screen(bitmap);
+			ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
+			ui_displaymessagewindow(bitmap,buf);
+
 			update_video_and_audio();
 			if (input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
@@ -3256,39 +3224,39 @@ static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
 static void onscrd_brightness(struct mame_bitmap *bitmap,int increment,int arg)
 {
 	char buf[20];
-	int brightness;
+	double brightness;
 
 
 	if (increment)
 	{
-		brightness = osd_get_brightness();
-		brightness += 5 * increment;
-		if (brightness < 0) brightness = 0;
-		if (brightness > 100) brightness = 100;
-		osd_set_brightness(brightness);
+		brightness = palette_get_global_brightness();
+		brightness += 0.05 * increment;
+		if (brightness < 0.1) brightness = 0.1;
+		if (brightness > 2.0) brightness = 2.0;
+		palette_set_global_brightness(brightness);
 	}
-	brightness = osd_get_brightness();
+	brightness = palette_get_global_brightness();
 
-	sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), brightness);
-	displayosd(bitmap,buf,brightness,100);
+	sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), (int)(brightness * 100));
+	displayosd(bitmap,buf,brightness*50,100);
 }
 
 static void onscrd_gamma(struct mame_bitmap *bitmap,int increment,int arg)
 {
 	char buf[20];
-	float gamma_correction;
+	double gamma_correction;
 
 	if (increment)
 	{
-		gamma_correction = osd_get_gamma();
+		gamma_correction = palette_get_global_gamma();
 
 		gamma_correction += 0.05 * increment;
 		if (gamma_correction < 0.5) gamma_correction = 0.5;
 		if (gamma_correction > 2.0) gamma_correction = 2.0;
 
-		osd_set_gamma(gamma_correction);
+		palette_set_global_gamma(gamma_correction);
 	}
-	gamma_correction = osd_get_gamma();
+	gamma_correction = palette_get_global_gamma();
 
 	sprintf(buf,"%s %1.2f", ui_getstring (UI_gamma), gamma_correction);
 	displayosd(bitmap,buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
@@ -3502,7 +3470,7 @@ static void displaymessage(struct mame_bitmap *bitmap,const char *text)
 }
 
 
-static char messagetext[80];
+static char messagetext[200];
 static int messagecounter;
 
 void CLIB_DECL usrintf_showmessage(const char *text,...)
@@ -3527,8 +3495,7 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 {
 	int file = 0;
 
-	osd_sound_enable(0);
-	osd_pause(1);
+	mame_pause(1);
 
 	do
 	{
@@ -3558,8 +3525,7 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 	}
 	while (!file);
 
-	osd_pause(0);
-	osd_sound_enable(1);
+	mame_pause(0);
 
 	if (file > 0)
 	{
@@ -3577,6 +3543,61 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 			usrintf_showmessage("Load cancelled");
 	}
 }
+
+
+void ui_show_fps_temp(double seconds)
+{
+	if (!showfps)
+		showfpstemp = (int)(seconds * Machine->drv->frames_per_second);
+}
+
+
+static void display_fps(struct mame_bitmap *bitmap)
+{
+	const char *text, *end;
+	char textbuf[256];
+	int done = 0;
+	int y = 0;
+
+	/* if we're not currently displaying, skip it */
+	if (!showfps && !showfpstemp)
+		return;
+
+	/* get the current FPS text */
+	text = osd_get_fps_text(mame_get_performance_info());
+
+	/* loop over lines */
+	while (!done)
+	{
+		/* find the end of this line and copy it to the text buf */
+		end = strchr(text, '\n');
+		if (end)
+		{
+			memcpy(textbuf, text, end - text);
+			textbuf[end - text] = 0;
+			text = end + 1;
+		}
+		else
+		{
+			strcpy(textbuf, text);
+			done = 1;
+		}
+
+		/* render */
+		ui_text(bitmap, textbuf, Machine->uiwidth - strlen(textbuf) * Machine->uifontwidth, y);
+		y += Machine->uifontheight;
+	}
+
+	/* update the temporary FPS display state */
+	if (showfpstemp)
+	{
+		showfpstemp--;
+		if (!showfps && showfpstemp == 0)
+			schedule_full_refresh();
+	}
+}
+
+
 
 int handle_user_interface(struct mame_bitmap *bitmap)
 {
@@ -3607,11 +3628,13 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		if( ui_display_count > 0 )
 		{
-			char text[] = "KBD: UI  (ScrLock)";
+			const char text[] = "KBD: UI  (ScrLock)";
 			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
 			for( x = 0; text[x]; x++ )
 			{
+				artwork_mark_ui_dirty(x0 + x * Machine->uifont->width, y0,
+						x0 + x * Machine->uifont->width + Machine->uifontwidth - 1, y0 + Machine->uifontheight - 1);
 				drawgfx(bitmap,
 					Machine->uifont,text[x],0,0,0,
 					x0+x*Machine->uifont->width,
@@ -3625,11 +3648,13 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		if( ui_display_count > 0 )
 		{
-			char text[] = "KBD: EMU (ScrLock)";
+			const char text[] = "KBD: EMU (ScrLock)";
 			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
 			for( x = 0; text[x]; x++ )
 			{
+				artwork_mark_ui_dirty(x0 + x * Machine->uifont->width, y0,
+						x0 + x * Machine->uifont->width + Machine->uifontwidth - 1, y0 + Machine->uifontheight - 1);
 				drawgfx(bitmap,
 					Machine->uifont,text[x],0,0,0,
 					x0+x*Machine->uifont->width,
@@ -3645,7 +3670,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 
 	/* if the user pressed F12, save the screen to a file */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		osd_save_snapshot(bitmap);
+		artwork_save_snapshot(bitmap);
 
 	/* This call is for the cheat, it must be called once a frame */
 	if (options.cheat) DoCheat(bitmap);
@@ -3741,10 +3766,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 							/* to change parameters affected by it */
 
 		if (single_step == 0)
-		{
-			osd_sound_enable(0);
-			osd_pause(1);
-		}
+			mame_pause(1);
 
 		while (!input_ui_pressed(IPT_UI_PAUSE))
 		{
@@ -3761,7 +3783,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			profiler_mark(PROFILER_END);
 
 			if (input_ui_pressed(IPT_UI_SNAPSHOT))
-				osd_save_snapshot(bitmap);
+				artwork_save_snapshot(bitmap);
 
 
 			if (input_ui_pressed(IPT_UI_SAVE_STATE))
@@ -3819,9 +3841,10 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		else
 		{
 			single_step = 0;
-			osd_pause(0);
-			osd_sound_enable(1);
+			mame_pause(0);
 		}
+
+		schedule_full_refresh();
 	}
 
 
@@ -3850,6 +3873,26 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	if (show_profiler) profiler_show(bitmap);
 
 
+	/* show FPS display? */
+	if (input_ui_pressed(IPT_UI_SHOW_FPS))
+	{
+		/* if we're temporarily on, turn it off immediately */
+		if (showfpstemp)
+		{
+			showfpstemp = 0;
+			schedule_full_refresh();
+		}
+
+		/* otherwise, just toggle; force a refresh if going off */
+		else
+		{
+			showfps ^= 1;
+			if (!showfps)
+				schedule_full_refresh();
+		}
+	}
+
+
 	/* if the user pressed F4, show the character set */
 	if (input_ui_pressed(IPT_UI_SHOW_GFX))
 	{
@@ -3859,6 +3902,15 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 
 		osd_sound_enable(1);
 	}
+
+	/* if the user pressed F1 and this is a lightgun game, toggle the crosshair */
+	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
+	{
+		drawgfx_toggle_crosshair();
+	}
+
+	/* add the FPS counter */
+	display_fps(bitmap);
 
 	return 0;
 }

@@ -69,6 +69,11 @@ VIDEO_EOF( toki )
 	buffer_spriteram16_w(0,0,0);
 }
 
+VIDEO_EOF( tokib )
+{
+	buffer_spriteram16_w(0,0,0);
+}
+
 static void get_text_tile_info(int tile_index)
 {
 	int tile = videoram16[tile_index];

@@ -2085,6 +2085,14 @@ static READ_HANDLER( uccops_cycle_r )
 
 static READ_HANDLER( rtypeleo_cycle_r )
 {
+	if (activecpu_get_pc()==0x30791 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
+		cpu_spinuntil_int();
+
+	return m92_ram[0x32 + offset];
+}
+
+static READ_HANDLER( rtypelej_cycle_r )
+{
 	if (activecpu_get_pc()==0x307a3 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
 		cpu_spinuntil_int();
 
@@ -2225,6 +2233,14 @@ static DRIVER_INIT( rtypeleo )
 	m92_game_kludge=1;
 }
 
+static DRIVER_INIT( rtypelej )
+{
+	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypelej_cycle_r);
+	init_m92(rtypeleo_decryption_table);
+	m92_irq_vectorbase=0x20;
+	m92_game_kludge=1;
+}
+
 static DRIVER_INIT( majtitl2 )
 {
 	init_m92(majtitl2_decryption_table);
@@ -2309,7 +2325,7 @@ GAMEX(1992, skingam2, majtitl2, raster,    majtitl2, majtitl2, ROT0,   "Irem Ame
 GAME( 1992, hook,     0,        nonraster, hook,     hook,     ROT0,   "Irem",         "Hook (World)" )
 GAME( 1992, hooku,    hook,     nonraster, hook,     hook,     ROT0,   "Irem America", "Hook (US)" )
 GAME( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (World rev. C)" )
-GAME( 1992, rtypelej, rtypeleo, raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (Japan rev. D)" )
+GAME( 1992, rtypelej, rtypeleo, raster,    rtypeleo, rtypelej, ROT0,   "Irem",         "R-Type Leo (Japan rev. D)" )
 GAME( 1993, inthunt,  0,        raster,    inthunt,  inthunt,  ROT0,   "Irem",         "In The Hunt (World)" )
 GAME( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem America", "In The Hunt (US)" )
 GAME( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)" )

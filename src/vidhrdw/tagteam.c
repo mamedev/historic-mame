@@ -9,10 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen = 0;
 static int palettebank;
-
-
 
 PALETTE_INIT( tagteam )
 {
@@ -111,6 +108,8 @@ the main emulation engine.
 ***************************************************************************/
 static void drawchars(struct mame_bitmap *bitmap,int color)
 {
+	static int prev_flip_screen = 0;
+
 	int offs;
 
 
@@ -123,14 +122,14 @@ static void drawchars(struct mame_bitmap *bitmap,int color)
 	{
 		int sx,sy;
 
-		if (dirtybuffer[offs])
+		if ((flip_screen != prev_flip_screen) || dirtybuffer[offs])
 		{
 			dirtybuffer[offs] = 0;
 
 			sx = 31 - offs % 32;
 			sy = offs / 32;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -141,7 +140,7 @@ static void drawchars(struct mame_bitmap *bitmap,int color)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 256 * colorram[offs],
 					2*color,	/* guess */
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -149,6 +148,7 @@ static void drawchars(struct mame_bitmap *bitmap,int color)
 
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	prev_flip_screen = flip_screen;
 }
 
 static void drawsprites(struct mame_bitmap *bitmap,int color)
@@ -170,11 +170,10 @@ static void drawsprites(struct mame_bitmap *bitmap,int color)
 		flipy = videoram[offs + 0] & 0x02;
 		spritebank = (videoram[offs] & 0x30) << 4;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
-
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -186,9 +185,9 @@ static void drawsprites(struct mame_bitmap *bitmap,int color)
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 
-		sy += (flipscreen ? -256 : 256);
+		sy += (flip_screen ? -256 : 256);
 
-		// Wrap around
+		/* Wrap around */
 		drawgfx(bitmap,Machine->gfx[1],
 				videoram[offs + 0x20] + 256 * spritebank,
 				color,
@@ -201,7 +200,6 @@ static void drawsprites(struct mame_bitmap *bitmap,int color)
 VIDEO_UPDATE( tagteam )
 {
 	drawchars(bitmap,palettebank);
-
 	drawsprites(bitmap,palettebank);
 }
 

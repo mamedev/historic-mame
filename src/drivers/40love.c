@@ -114,7 +114,7 @@ The following are board layouts, and component locations.
  =       81416                 cable     =          ===  Wiring harness
  =       81416                 to sound  S          ===  connector
  |       81416                 board --> =          ===
- | 8Mhz                                  =          |
+ | 8MHz                                  =          |
  +--------------------------------------------------+
 
      ROM board     J9100005A / K9100008A
@@ -1201,7 +1201,7 @@ static MACHINE_DRIVER_START( undoukai )
 	MDRV_VISIBLE_AREA(128,128+255, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
-	
+
 	MDRV_PALETTE_INIT(fortyl)
 	MDRV_VIDEO_START(fortyl)
 	MDRV_VIDEO_UPDATE(fortyl)

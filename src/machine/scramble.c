@@ -35,7 +35,7 @@ MACHINE_INIT( scramble )
 
 static READ_HANDLER( scrambls_input_port_2_r )
 {
-	int res;
+	data8_t res;
 
 
 	res = readinputport(2);
@@ -59,7 +59,7 @@ static READ_HANDLER( ckongs_input_port_2_r )
 }
 
 
-static int moonwar_port_select;
+static data8_t moonwar_port_select;
 
 static WRITE_HANDLER( moonwar_port_select_w )
 {
@@ -68,8 +68,8 @@ static WRITE_HANDLER( moonwar_port_select_w )
 
 static READ_HANDLER( moonwar_input_port_0_r )
 {
-	int sign;
-	int delta;
+	data8_t sign;
+	data8_t delta;
 
 	delta = (moonwar_port_select ? readinputport(3) : readinputport(4));
 
@@ -94,15 +94,15 @@ static READ_HANDLER( stratgyx_input_port_3_r )
 
 static READ_HANDLER( darkplnt_input_port_1_r )
 {
-	static UINT8 remap[] = {0x03, 0x02, 0x00, 0x01, 0x21, 0x20, 0x22, 0x23,
-						    0x33, 0x32, 0x30, 0x31, 0x11, 0x10, 0x12, 0x13,
-						    0x17, 0x16, 0x14, 0x15, 0x35, 0x34, 0x36, 0x37,
-						    0x3f, 0x3e, 0x3c, 0x3d, 0x1d, 0x1c, 0x1e, 0x1f,
-						    0x1b, 0x1a, 0x18, 0x19, 0x39, 0x38, 0x3a, 0x3b,
-						    0x2b, 0x2a, 0x28, 0x29, 0x09, 0x08, 0x0a, 0x0b,
-						    0x0f, 0x0e, 0x0c, 0x0d, 0x2d, 0x2c, 0x2e, 0x2f,
-						    0x27, 0x26, 0x24, 0x25, 0x05, 0x04, 0x06, 0x07 };
-	int val;
+	static data8_t remap[] = {0x03, 0x02, 0x00, 0x01, 0x21, 0x20, 0x22, 0x23,
+							  0x33, 0x32, 0x30, 0x31, 0x11, 0x10, 0x12, 0x13,
+							  0x17, 0x16, 0x14, 0x15, 0x35, 0x34, 0x36, 0x37,
+							  0x3f, 0x3e, 0x3c, 0x3d, 0x1d, 0x1c, 0x1e, 0x1f,
+							  0x1b, 0x1a, 0x18, 0x19, 0x39, 0x38, 0x3a, 0x3b,
+							  0x2b, 0x2a, 0x28, 0x29, 0x09, 0x08, 0x0a, 0x0b,
+							  0x0f, 0x0e, 0x0c, 0x0d, 0x2d, 0x2c, 0x2e, 0x2f,
+							  0x27, 0x26, 0x24, 0x25, 0x05, 0x04, 0x06, 0x07 };
+	data8_t val;
 
 	val = readinputport(1);
 
@@ -206,7 +206,7 @@ static void cavelon_banksw(void)
 
 	static int cavelon_bank;
 
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	if (cavelon_bank)
 	{
@@ -455,70 +455,77 @@ DRIVER_INIT( mariner )
 
 DRIVER_INIT( frogger )
 {
-	int A;
-	unsigned char *rom;
+	offs_t A;
+	UINT8 *ROM;
 
 
 	init_scramble_ppi();
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	rom = memory_region(REGION_CPU2);
+	ROM = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
-		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
+		ROM[A] = BITSWAP8(ROM[A],7,6,5,4,3,2,0,1);
 
 	/* likewise, the 2nd gfx ROM has data lines D0 and D1 swapped. Decode it. */
-	rom = memory_region(REGION_GFX1);
+	ROM = memory_region(REGION_GFX1);
 	for (A = 0x0800;A < 0x1000;A++)
-		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
+		ROM[A] = BITSWAP8(ROM[A],7,6,5,4,3,2,0,1);
 }
 
 DRIVER_INIT( froggers )
 {
-	int A;
-	unsigned char *rom;
+	offs_t A;
+	UINT8 *ROM;
 
 
 	init_scramble_ppi();
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	rom = memory_region(REGION_CPU2);
+	ROM = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
-		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
+		ROM[A] = BITSWAP8(ROM[A],7,6,5,4,3,2,0,1);
 }
 
-DRIVER_INIT( mars )
+DRIVER_INIT( devilfsh )
 {
-	int i;
-	unsigned char *RAM;
+	offs_t i;
+	UINT8 *RAM;
 
 
 	init_scramble_ppi();
 
 
-	ppi8255_set_portCread(1, input_port_3_r);
+	/* Address lines are scrambled on the main CPU */
 
-
-	/* Address lines are scrambled on the main CPU:
-
-		A0 -> A2
-		A1 -> A0
-		A2 -> A3
-		A3 -> A1 */
+	/* A0 -> A2 */
+	/* A1 -> A0 */
+	/* A2 -> A3 */
+	/* A3 -> A1 */
 
 	RAM = memory_region(REGION_CPU1);
 	for (i = 0; i < 0x10000; i += 16)
 	{
-		int j;
-		unsigned char swapbuffer[16];
+		offs_t j;
+		UINT8 swapbuffer[16];
 
 		for (j = 0; j < 16; j++)
 		{
-			swapbuffer[j] = RAM[i + ((j & 1) << 2) + ((j & 2) >> 1) + ((j & 4) << 1) + ((j & 8) >> 2)];
+			offs_t new = BITSWAP8(j,7,6,5,4,2,0,3,1);
+
+			swapbuffer[j] = RAM[i + new];
 		}
 
 		memcpy(&RAM[i], swapbuffer, 16);
 	}
+}
+
+DRIVER_INIT( mars )
+{
+	init_devilfsh();
+
+	/* extra port */
+	ppi8255_set_portCread(1, input_port_3_r);
 }
 
 DRIVER_INIT( hotshock )
@@ -572,9 +579,9 @@ static int bit(int i,int n)
 
 DRIVER_INIT( anteater )
 {
-	int i;
-	unsigned char *RAM;
-	unsigned char *scratch;
+	offs_t i;
+	UINT8 *RAM;
+	UINT8 *scratch;
 
 
 	init_scobra();
@@ -611,9 +618,9 @@ DRIVER_INIT( anteater )
 
 DRIVER_INIT( rescue )
 {
-	int i;
-	unsigned char *RAM;
-	unsigned char *scratch;
+	offs_t i;
+	UINT8 *RAM;
+	UINT8 *scratch;
 
 
 	init_scobra();
@@ -650,9 +657,9 @@ DRIVER_INIT( rescue )
 
 DRIVER_INIT( minefld )
 {
-	int i;
-	unsigned char *RAM;
-	unsigned char *scratch;
+	offs_t i;
+	UINT8 *RAM;
+	UINT8 *scratch;
 
 
 	init_scobra();
@@ -689,9 +696,9 @@ DRIVER_INIT( minefld )
 
 DRIVER_INIT( losttomb )
 {
-	int i;
-	unsigned char *RAM;
-	unsigned char *scratch;
+	offs_t i;
+	UINT8 *RAM;
+	UINT8 *scratch;
 
 
 	init_scramble();
@@ -728,15 +735,13 @@ DRIVER_INIT( losttomb )
 
 DRIVER_INIT( superbon )
 {
-	int i;
-	unsigned char *RAM;
+	offs_t i;
+	UINT8 *RAM;
 
 
 	init_scramble();
 
-	/*
-	*   Code rom deryption worked out by hand by Chris Hardy.
-	*/
+	/* Deryption worked out by hand by Chris Hardy. */
 
 	RAM = memory_region(REGION_CPU1);
 
@@ -764,7 +769,7 @@ DRIVER_INIT( superbon )
 
 DRIVER_INIT( hustler )
 {
-	int A;
+	offs_t A;
 
 
 	init_scramble_ppi();
@@ -772,10 +777,10 @@ DRIVER_INIT( hustler )
 
 	for (A = 0;A < 0x4000;A++)
 	{
-		unsigned char xormask;
+		UINT8 xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = memory_region(REGION_CPU1);
+		UINT8 *RAM = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -796,17 +801,17 @@ DRIVER_INIT( hustler )
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = memory_region(REGION_CPU2);
+		UINT8 *RAM = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
-			RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+			RAM[A] = BITSWAP8(RAM[A],7,6,5,4,3,2,0,1);
 	}
 }
 
 DRIVER_INIT( billiard )
 {
-	int A;
+	offs_t A;
 
 
 	init_scramble_ppi();
@@ -814,10 +819,10 @@ DRIVER_INIT( billiard )
 
 	for (A = 0;A < 0x4000;A++)
 	{
-		unsigned char xormask;
+		UINT8 xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = memory_region(REGION_CPU1);
+		UINT8 *RAM = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -839,22 +844,22 @@ DRIVER_INIT( billiard )
 			bits[i] = (RAM[A] >> i) & 1;
 
 		RAM[A] =
-			(bits[7] << 0) +
-			(bits[0] << 1) +
-			(bits[3] << 2) +
-			(bits[4] << 3) +
-			(bits[5] << 4) +
-			(bits[2] << 5) +
-			(bits[1] << 6) +
+			(bits[7] << 0) |
+			(bits[0] << 1) |
+			(bits[3] << 2) |
+			(bits[4] << 3) |
+			(bits[5] << 4) |
+			(bits[2] << 5) |
+			(bits[1] << 6) |
 			(bits[6] << 7);
 	}
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = memory_region(REGION_CPU2);
+		UINT8 *RAM = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
-			RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+			RAM[A] = BITSWAP8(RAM[A],7,6,5,4,3,2,0,1);
 	}
 }

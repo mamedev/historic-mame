@@ -52,6 +52,8 @@ Mighty Guy board layout:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#define MIGHTGUY_HACK	0
+
 
 extern data8_t *cop01_bgvideoram,*cop01_fgvideoram;
 
@@ -90,6 +92,24 @@ static READ_HANDLER( cop01_sound_command_r )
 }
 
 
+static READ_HANDLER( mightguy_dsw_r )
+{
+	int data = 0xff;
+
+	switch (offset)
+	{
+		case 0 :				// DSW1
+			data = (readinputport(3) & 0x7f) | ((readinputport(5) & 0x04) << 5);
+			break;
+		case 1 :				// DSW2
+			data = (readinputport(4) & 0x3f) | ((readinputport(5) & 0x03) << 6);
+			break;
+		}
+
+	return (data);
+}
+
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },	/* c000-c7ff in cop01 */
@@ -110,6 +130,13 @@ static PORT_READ_START( readport )
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
 	{ 0x04, 0x04, input_port_4_r },
+PORT_END
+
+static PORT_READ_START( mightguy_readport )
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x04, mightguy_dsw_r },
 PORT_END
 
 static PORT_WRITE_START( writeport )
@@ -160,7 +187,7 @@ PORT_END
 
 
 INPUT_PORTS_START( cop01 )
-	PORT_START      /* IN0 */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -170,7 +197,7 @@ INPUT_PORTS_START( cop01 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN1 */
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -180,7 +207,7 @@ INPUT_PORTS_START( cop01 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START  /* TEST, COIN, START */
+	PORT_START	/* TEST, COIN, START */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -238,8 +265,10 @@ INPUT_PORTS_START( cop01 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+/* There is an ingame bug at 0x00e4 to 0x00e6 that performs the 'rrca' instead of 'rlca'
+   so you DSW1-8 has no effect and you can NOT start a game at areas 5 to 8. */
 INPUT_PORTS_START( mightguy )
-	PORT_START /* IN0 */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -249,7 +278,7 @@ INPUT_PORTS_START( mightguy )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START /* IN1 */
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -259,7 +288,7 @@ INPUT_PORTS_START( mightguy )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START /* IN2 */
+	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -288,9 +317,7 @@ INPUT_PORTS_START( mightguy )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	// "Start Area" - see fake Dip Switch
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
@@ -308,12 +335,21 @@ INPUT_PORTS_START( mightguy )
 	PORT_DIPSETTING(	0x20, "Normal" )
 	PORT_DIPSETTING(	0x10, "Hard" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invincibility", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_SPECIAL )	// "Start Area" - see fake Dip Switch
+
+	PORT_START	/* FAKE Dip Switch */
+	PORT_DIPNAME( 0x07, 0x07, "Starting Area" )
+	PORT_DIPSETTING(	0x07, "1" )
+	PORT_DIPSETTING(	0x06, "2" )
+	PORT_DIPSETTING(	0x05, "3" )
+	PORT_DIPSETTING(	0x04, "4" )
+	/* Not working due to ingame bug (see above) */
+#if MIGHTGUY_HACK
+	PORT_DIPSETTING(	0x03, "5" )
+	PORT_DIPSETTING(	0x02, "6" )
+	PORT_DIPSETTING(	0x01, "7" )
+	PORT_DIPSETTING(	0x00, "8" )
+#endif
 INPUT_PORTS_END
 
 
@@ -426,7 +462,7 @@ static MACHINE_DRIVER_START( mightguy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* ???? */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PORTS(mightguy_readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
@@ -561,7 +597,22 @@ ROM_START( mightguy )
 ROM_END
 
 
+static DRIVER_INIT( mightguy )
+{
+#if MIGHTGUY_HACK
+	/* This is a hack to fix the game code to get a fully working
+	   "Starting Area" fake Dip Switch */
+	data8_t *RAM = (data8_t *)memory_region(REGION_CPU1);
+	RAM[0x00e4] = 0x07;	// rlca
+	RAM[0x00e5] = 0x07;	// rlca
+	RAM[0x00e6] = 0x07;	// rlca
+	/* To avoid checksum error */
+	RAM[0x027f] = 0x00;
+	RAM[0x0280] = 0x00;
+#endif
+}
 
-GAME( 1985, cop01,    0,     cop01,    cop01,    0, ROT0,   "Nichibutsu", "Cop 01 (set 1)" )
-GAME( 1985, cop01a,   cop01, cop01,    cop01,    0, ROT0,   "Nichibutsu", "Cop 01 (set 2)" )
-GAMEX(1986, mightguy, 0,     mightguy, mightguy, 0, ROT270, "Nichibutsu", "Mighty Guy", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+
+GAME( 1985, cop01,    0,     cop01,    cop01,    0,        ROT0,   "Nichibutsu", "Cop 01 (set 1)" )
+GAME( 1985, cop01a,   cop01, cop01,    cop01,    0,        ROT0,   "Nichibutsu", "Cop 01 (set 2)" )
+GAMEX(1986, mightguy, 0,     mightguy, mightguy, mightguy, ROT270, "Nichibutsu", "Mighty Guy", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )

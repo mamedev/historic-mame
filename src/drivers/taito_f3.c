@@ -7,11 +7,10 @@
 	Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
 	rom interface and ES5505 emulator!
 	Thanks to Acho A. Tang for Kirameki Star Road sound banking info!
+	Thank you to Shiriru for the scanline rendering (including alpha blending),
+	sprite sync fixes, sprite zoom fixes and others!
 
 	Main Issues:
-		Alpha blending not supported (sprite & playfield).
-		Some early games could fit in 8 bit colour - but marking pens is difficult
-			because graphics are 6bpp with 4bpp palette indexes.
 		Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
 			use by the current ES5505 core (which rightly should be 16 bit).
 		Zoomed layers are not always positioned quite correctly in flipscreen mode
@@ -39,11 +38,10 @@
 #include "taito_f3.h"
 #include "state.h"
 
-#define TRY_ALPHA 0
-
 VIDEO_START( f3 );
 VIDEO_UPDATE( f3 );
 VIDEO_EOF( f3 );
+VIDEO_STOP( f3 );
 
 extern data32_t *f3_vram,*f3_line_ram;
 extern data32_t *f3_pf_data,*f3_pivot_ram;
@@ -190,7 +188,7 @@ static MEMORY_READ32_START( f3_readmem )
 MEMORY_END
 
 static MEMORY_WRITE32_START( f3_writemem )
-	{ 0x000000, 0x1fffff, MWA32_RAM },
+	{ 0x000000, 0x1fffff, MWA32_ROM },
 	{ 0x300000, 0x30007f, f3_sound_bankswitch_w },
 	{ 0x400000, 0x43ffff, MWA32_RAM, &f3_ram },
 	{ 0x440000, 0x447fff, f3_palette_24bit_w, &paletteram32 },
@@ -468,28 +466,6 @@ static struct ES5505interface es5505_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
 };
 
-static struct EEPROM_interface f3_eeprom_interface =
-{
-	6,				/* address bits */
-	16,				/* data bits */
-	"0110",			/* read command */
-	"0101",			/* write command */
-	"0111",			/* erase command */
-	"0100000000",	/* unlock command */
-	"0100110000",	/* lock command */
-};
-
-static NVRAM_HANDLER( f3 )
-{
-	if (read_or_write)
-		EEPROM_save(file);
-	else {
-		EEPROM_init(&f3_eeprom_interface);
-		if (file)
-			EEPROM_load(file);
-	}
-}
-
 static MACHINE_DRIVER_START( f3 )
 
 	/* basic machine hardware */
@@ -505,26 +481,43 @@ static MACHINE_DRIVER_START( f3 )
 	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
 
 	MDRV_MACHINE_INIT(f3)
-	MDRV_NVRAM_HANDLER(f3)
+	MDRV_NVRAM_HANDLER(93C46)
 
  	/* video hardware */
-#if TRY_ALPHA
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-#else
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-#endif
 	MDRV_SCREEN_SIZE(40*8+48*2, 32*8)
-	MDRV_VISIBLE_AREA(46, 40*8-1+46, 3*8, 32*8-1)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 24, 24+232-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_VIDEO_START(f3)
 	MDRV_VIDEO_EOF(f3)
 	MDRV_VIDEO_UPDATE(f3)
+	MDRV_VIDEO_STOP(f3)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
+
+/* These games reprogram the video output registers to display different scanlines,
+ we can't change our screen display at runtime, so we do it here instead.  None
+ of the games change the registers during the game (to do so would probably require
+ monitor recalibration.)
+*/
+static MACHINE_DRIVER_START( f3_224a )
+	MDRV_IMPORT_FROM(f3)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 31, 31+224-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( f3_224b )
+	MDRV_IMPORT_FROM(f3)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 32, 32+224-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( f3_224c )
+	MDRV_IMPORT_FROM(f3)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 24, 24+224-1)
 MACHINE_DRIVER_END
 
 /******************************************************************************/
@@ -1228,6 +1221,68 @@ ROM_START( scfinals )
 	ROM_LOAD16_BYTE("d49-05", 0x600000, 0x100000, 0xed894fe1 )
 ROM_END
 
+ROM_START( dungeonm )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d69-20.bin", 0x000000, 0x80000, 0x33650fe4 )
+	ROM_LOAD32_BYTE("d69-13.bin", 0x000001, 0x80000, 0xdec2ec17 )
+	ROM_LOAD32_BYTE("d69-15.bin", 0x000002, 0x80000, 0x323e1955 )
+	ROM_LOAD32_BYTE("d69-wrld.bin", 0x000003, 0x80000, 0xf99e175d )
+
+	ROM_REGION(0xc00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d69-06.bin", 0x000000, 0x200000, 0xcb4aac81 )
+  	ROM_LOAD16_BYTE("d69-07.bin", 0x000001, 0x200000, 0xb749f984 )
+	ROM_LOAD16_BYTE("d69-09.bin", 0x400000, 0x100000, 0xa96c19b8 )
+	ROM_LOAD16_BYTE("d69-10.bin", 0x400001, 0x100000, 0x36aa80c6 )
+	ROM_LOAD       ("d69-08.bin", 0x900000, 0x200000, 0x5b68d7d8 )
+	ROM_LOAD       ("d69-11.bin", 0xb00000, 0x100000, 0xc11adf92 )
+	ROM_FILL       (              0x600000, 0x300000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d69-03.bin", 0x000000, 0x200000, 0x6999c86f )
+  	ROM_LOAD16_BYTE("d69-04.bin", 0x000001, 0x200000, 0xcc91dcb7 )
+	ROM_LOAD       ("d69-05.bin", 0x600000, 0x200000, 0xf9f5433c )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x140000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d69-18.bin", 0x100000, 0x20000, 0x04600d7b )
+	ROM_LOAD16_BYTE("d69-19.bin", 0x100001, 0x20000, 0x1484e853 )
+
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d69-01.bin", 0x000000, 0x200000, 0x9ac93ac2 )
+	ROM_LOAD16_BYTE("d69-02.bin", 0xc00000, 0x200000, 0xdce28dd7 )
+ROM_END
+
+ROM_START( dungenmu )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d69-20.bin", 0x000000, 0x80000, 0x33650fe4 )
+	ROM_LOAD32_BYTE("d69-13.bin", 0x000001, 0x80000, 0xdec2ec17 )
+	ROM_LOAD32_BYTE("d69-15.bin", 0x000002, 0x80000, 0x323e1955 )
+	ROM_LOAD32_BYTE("d69-usa.bin", 0x000003, 0x80000, 0xc9d4e051 )
+
+	ROM_REGION(0xc00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d69-06.bin", 0x000000, 0x200000, 0xcb4aac81 )
+  	ROM_LOAD16_BYTE("d69-07.bin", 0x000001, 0x200000, 0xb749f984 )
+	ROM_LOAD16_BYTE("d69-09.bin", 0x400000, 0x100000, 0xa96c19b8 )
+	ROM_LOAD16_BYTE("d69-10.bin", 0x400001, 0x100000, 0x36aa80c6 )
+	ROM_LOAD       ("d69-08.bin", 0x900000, 0x200000, 0x5b68d7d8 )
+	ROM_LOAD       ("d69-11.bin", 0xb00000, 0x100000, 0xc11adf92 )
+	ROM_FILL       (              0x600000, 0x300000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d69-03.bin", 0x000000, 0x200000, 0x6999c86f )
+  	ROM_LOAD16_BYTE("d69-04.bin", 0x000001, 0x200000, 0xcc91dcb7 )
+	ROM_LOAD       ("d69-05.bin", 0x600000, 0x200000, 0xf9f5433c )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x140000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d69-18.bin", 0x100000, 0x20000, 0x04600d7b )
+	ROM_LOAD16_BYTE("d69-19.bin", 0x100001, 0x20000, 0x1484e853 )
+
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d69-01.bin", 0x000000, 0x200000, 0x9ac93ac2 )
+	ROM_LOAD16_BYTE("d69-02.bin", 0xc00000, 0x200000, 0xdce28dd7 )
+ROM_END
+
 ROM_START( lightbr )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("d69-20.bin", 0x000000, 0x80000, 0x33650fe4 )
@@ -1296,8 +1351,8 @@ ROM_START( kaiserkn )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0xc00000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0x800000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( kaiserkj )
@@ -1337,8 +1392,8 @@ ROM_START( kaiserkj )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0xc00000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0x800000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( gblchmp )
@@ -1378,8 +1433,8 @@ ROM_START( gblchmp )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0xc00000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0x800000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( dankuga )
@@ -1419,8 +1474,8 @@ ROM_START( dankuga )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0xc00000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0x800000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( dariusg )
@@ -1428,7 +1483,63 @@ ROM_START( dariusg )
  	ROM_LOAD32_BYTE("d87-12.bin", 0x000000, 0x80000, 0xde78f328 )
 	ROM_LOAD32_BYTE("d87-11.bin", 0x000001, 0x80000, 0xf7bed18e )
 	ROM_LOAD32_BYTE("d87-10.bin", 0x000002, 0x80000, 0x4149f66f )
+	ROM_LOAD32_BYTE("d87-wrld.bin", 0x000003, 0x80000, 0x8f7e5901 )
+
+	ROM_REGION(0x800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d87-03.bin", 0x000000, 0x200000, 0x4be1666e )
+	ROM_LOAD16_BYTE("d87-04.bin", 0x000001, 0x200000, 0x2616002c )
+	ROM_LOAD       ("d87-05.bin", 0x600000, 0x200000, 0x4e5891a9 )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d87-06.bin", 0x000000, 0x200000, 0x3b97a07c )
+	ROM_LOAD16_BYTE("d87-17.bin", 0x000001, 0x200000, 0xe601d63e )
+	ROM_LOAD       ("d87-08.bin", 0x600000, 0x200000, 0x76d23602 )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d87-13.bin", 0x100000, 0x40000, 0x15b1fff4 )
+	ROM_LOAD16_BYTE("d87-14.bin", 0x100001, 0x40000, 0xeecda29a )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d87-01.bin", 0x000000, 0x200000, 0x3848a110 )
+	ROM_LOAD16_BYTE("d87-02.bin", 0xc00000, 0x200000, 0x9250abae )
+ROM_END
+
+ROM_START( dariusgj )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d87-12.bin", 0x000000, 0x80000, 0xde78f328 )
+	ROM_LOAD32_BYTE("d87-11.bin", 0x000001, 0x80000, 0xf7bed18e )
+	ROM_LOAD32_BYTE("d87-10.bin", 0x000002, 0x80000, 0x4149f66f )
 	ROM_LOAD32_BYTE("d87-09.bin", 0x000003, 0x80000, 0x6170382d )
+
+	ROM_REGION(0x800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d87-03.bin", 0x000000, 0x200000, 0x4be1666e )
+	ROM_LOAD16_BYTE("d87-04.bin", 0x000001, 0x200000, 0x2616002c )
+	ROM_LOAD       ("d87-05.bin", 0x600000, 0x200000, 0x4e5891a9 )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d87-06.bin", 0x000000, 0x200000, 0x3b97a07c )
+	ROM_LOAD16_BYTE("d87-17.bin", 0x000001, 0x200000, 0xe601d63e )
+	ROM_LOAD       ("d87-08.bin", 0x600000, 0x200000, 0x76d23602 )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d87-13.bin", 0x100000, 0x40000, 0x15b1fff4 )
+	ROM_LOAD16_BYTE("d87-14.bin", 0x100001, 0x40000, 0xeecda29a )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d87-01.bin", 0x000000, 0x200000, 0x3848a110 )
+	ROM_LOAD16_BYTE("d87-02.bin", 0xc00000, 0x200000, 0x9250abae )
+ROM_END
+
+ROM_START( dariusgu )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d87-12.bin", 0x000000, 0x80000, 0xde78f328 )
+	ROM_LOAD32_BYTE("d87-11.bin", 0x000001, 0x80000, 0xf7bed18e )
+	ROM_LOAD32_BYTE("d87-10.bin", 0x000002, 0x80000, 0x4149f66f )
+	ROM_LOAD32_BYTE("d87-usa.bin", 0x000003, 0x80000, 0xf8796997 )
 
 	ROM_REGION(0x800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
 	ROM_LOAD16_BYTE("d87-03.bin", 0x000000, 0x200000, 0x4be1666e )
@@ -1745,12 +1856,40 @@ ROM_START( qtheater )
 	ROM_LOAD16_BYTE("d95-04.41", 0x400000, 0x200000, 0xe9049d16 )
 ROM_END
 
-ROM_START( spcinv95 )
+ROM_START( spcnv95u )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("e06.14",     0x000000, 0x20000, 0x71ba7f00 )
 	ROM_LOAD32_BYTE("e06.13",     0x000001, 0x20000, 0xf506ba4b )
 	ROM_LOAD32_BYTE("e06.12",     0x000002, 0x20000, 0x06cbd72b )
 	ROM_LOAD32_BYTE("e06-15.u17", 0x000003, 0x20000, 0xa6ec0103 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("e06.03", 0x000000, 0x100000, 0xa24070ef )
+	ROM_LOAD16_BYTE("e06.02", 0x000001, 0x100000, 0x8f646dea )
+	ROM_LOAD       ("e06.01", 0x300000, 0x100000, 0x51721b15 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("e06.08", 0x000000, 0x100000, 0x72ae2fbf )
+	ROM_LOAD16_BYTE("e06.07", 0x000001, 0x100000, 0x4b02e8f5 )
+	ROM_LOAD       ("e06.06", 0x300000, 0x100000, 0x9380db3c )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e06.09", 0x100000, 0x40000, 0x9bcafc87 )
+	ROM_LOAD16_BYTE("e06.10", 0x100001, 0x40000, 0xb752b61f )
+
+	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e06.04", 0x000000, 0x200000, 0x1dac29df )
+ 	ROM_LOAD16_BYTE("e06.05", 0x400000, 0x200000, 0xf370ff15 )
+ROM_END
+
+ROM_START( spcinv95 )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("e06.14",     0x000000, 0x20000, 0x71ba7f00 )
+	ROM_LOAD32_BYTE("e06.13",     0x000001, 0x20000, 0xf506ba4b )
+	ROM_LOAD32_BYTE("e06.12",     0x000002, 0x20000, 0x06cbd72b )
+	ROM_LOAD32_BYTE("e06-wrld.u17", 0x000003, 0x20000, 0xd1eb3195 )
 
 	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
 	ROM_LOAD16_BYTE("e06.03", 0x000000, 0x100000, 0xa24070ef )
@@ -1825,7 +1964,7 @@ ROM_START( elvactr )
 	ROM_LOAD16_BYTE("e02-14.33", 0x100001, 0x40000, 0x706671a5 )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("e02-04.38", 0x000000, 0x200000, 0xb74307af )
+	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 
@@ -1853,7 +1992,7 @@ ROM_START( elvactrj )
 	ROM_LOAD16_BYTE("e02-14.33", 0x100001, 0x40000, 0x706671a5 )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("e02-04.38", 0x000000, 0x200000, 0xb74307af )
+	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 
@@ -1881,7 +2020,7 @@ ROM_START( elvact2u )
 	ROM_LOAD16_BYTE("e02-14.33", 0x100001, 0x40000, 0x706671a5 )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("e02-04.38", 0x000000, 0x200000, 0xb74307af )
+	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 
@@ -2512,6 +2651,34 @@ ROM_START( popnpop )
 	ROM_LOAD16_BYTE("e51-05.41", 0xc00000, 0x200000, 0x4d08b26d )
 ROM_END
 
+ROM_START( popnpopu )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("e51-12.20", 0x000000, 0x80000, 0x86a237d5 )
+	ROM_LOAD32_BYTE("e51-11.19", 0x000001, 0x80000, 0x8a49f34f )
+	ROM_LOAD32_BYTE("e51-10.18", 0x000002, 0x80000, 0x4bce68f8 )
+	ROM_LOAD32_BYTE("e51-usa.17", 0x000003, 0x80000, 0x1ad77903 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("e51-03.12",0x000000, 0x100000, 0xa24c4607 )
+	ROM_LOAD16_BYTE("e51-02.8", 0x000001, 0x100000, 0x6aa8b96c )
+	ROM_LOAD       ("e51-01.4", 0x300000, 0x100000, 0x70347e24 )
+	ROM_FILL       (            0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("e51-08.47", 0x000000, 0x200000, 0x3ad41f02 )
+	ROM_LOAD16_BYTE("e51-07.45", 0x000001, 0x200000, 0x95873e46 )
+	ROM_LOAD       ("e51-06.43", 0x600000, 0x200000, 0xc240d6c8 )
+	ROM_FILL       (             0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e51-13.32", 0x100000, 0x40000, 0x3b9e3986 )
+	ROM_LOAD16_BYTE("e51-14.33", 0x100001, 0x40000, 0x1f9a5015 )
+
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e51-04.38", 0x000000, 0x200000, 0x66790f55 )
+	ROM_LOAD16_BYTE("e51-05.41", 0xc00000, 0x200000, 0x4d08b26d )
+ROM_END
+
 ROM_START( landmakr )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("e61-13.20", 0x000000, 0x80000, 0x0af756a2 )
@@ -2673,11 +2840,6 @@ static DRIVER_INIT( arabianm )
 
 static DRIVER_INIT( ridingf )
 {
-	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU2);
-
-	RAM[0x19a02/2]=0x4e71;
-	RAM[0x19a04/2]=0x4e71;
-
 	f3_game=RIDINGF;
 	tile_decode(1);
 }
@@ -2767,16 +2929,6 @@ static DRIVER_INIT( qtheater )
 
 static DRIVER_INIT( spcinv95 )
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
-
-	/* Rogue eprom 0 bit at the end of read commands - would be ignored on real eprom
-		(Leading zeros are ignored until first start bit) */
-    RAM[0x4ae0/4]=(RAM[0x4ae0/4]&0xffff0000) | 0x00004e71;
-    RAM[0x4ae4/4]=(RAM[0x4ae4/4]&0x0000ffff) | 0x4e710000;
-
-	/* Fix ROM checksum error */
-	RAM[0xfd8/4]=0x4e714e71;
-
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_spcinv95 );
 	f3_game=SPCINV95;
 	tile_decode(1);
@@ -2812,12 +2964,6 @@ static DRIVER_INIT( bubblem )
 
 static DRIVER_INIT( cleopatr )
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
-
-	/* Rogue eprom 0 bit at the end of read commands - would be ignored on real eprom
-		(Leading zeros are ignored until first start bit) */
-    RAM[0x42d0/4]=0x4e714e71;
-
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_cleopatr );
 	f3_game=CLEOPATR;
 	tile_decode(0);
@@ -2880,13 +3026,6 @@ static DRIVER_INIT( hthero95 )
 
 static DRIVER_INIT( kirameki )
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
-
-	/* Rogue eprom 0 bit at the end of read commands - would be ignored on real eprom
-		(Leading zeros are ignored until first start bit) */
-    RAM[0x4aec/4]=(RAM[0x4aec/4]&0xffff0000) | 0x00004e71;
-    RAM[0x4af0/4]=(RAM[0x4af0/4]&0x0000ffff) | 0x4e710000;
-
 	install_mem_read32_handler(0, 0x400414, 0x400417, irq_speedup_r_kirameki );
 	f3_game=KIRAMEKI;
 	tile_decode(0);
@@ -2915,75 +3054,80 @@ static DRIVER_INIT( arkretrn )
 
 /******************************************************************************/
 
-GAMEX(1992, ringrage, 0,        f3, f3, ringrage, ROT0,   "Taito Corporation Japan",   "Ring Rage (World)", GAME_NO_SOUND )
-GAMEX(1992, ringragj, ringrage, f3, f3, ringrage, ROT0,   "Taito Corporation",         "Ring Rage (Japan)", GAME_NO_SOUND )
-GAMEX(1992, ringragu, ringrage, f3, f3, ringrage, ROT0,   "Taito America Corporation", "Ring Rage (US)", GAME_NO_SOUND )
-GAME( 1992, arabianm, 0,        f3, f3, arabianm, ROT0,   "Taito Corporation Japan",   "Arabian Magic (World)" )
-GAME( 1992, arabiamj, arabianm, f3, f3, arabianm, ROT0,   "Taito Corporation",         "Arabian Magic (Japan)" )
-GAME( 1992, arabiamu, arabianm, f3, f3, arabianm, ROT0,   "Taito America Corporation", "Arabian Magic (US)" )
-GAMEX(1992, ridingf,  0,        f3, f3, ridingf,  ROT0,   "Taito Corporation Japan",   "Riding Fight (World)", GAME_NO_SOUND )
-GAMEX(1992, ridefgtj, ridingf,  f3, f3, ridingf,  ROT0,   "Taito Corporation",         "Riding Fight (Japan)", GAME_NO_SOUND )
-GAMEX(1992, ridefgtu, ridingf,  f3, f3, ridingf,  ROT0,   "Taito America Corporation", "Riding Fight (US)", GAME_NO_SOUND )
-GAME( 1992, gseeker,  0,        f3, f3, gseeker,  ROT90,  "Taito Corporation Japan",   "Grid Seeker: Project Stormhammer (World)" )
-GAME( 1992, gseekerj, gseeker,  f3, f3, gseeker,  ROT90,  "Taito Corporation",         "Grid Seeker: Project Stormhammer (Japan)" )
-GAME( 1992, gseekeru, gseeker,  f3, f3, gseeker,  ROT90,  "Taito America Corporation", "Grid Seeker: Project Stormhammer (US)" )
-GAME( 1993, gunlock,  0,        f3, f3, gunlock,  ROT90,  "Taito Corporation Japan",   "Gunlock (World)" )
-GAME( 1993, rayforcj, gunlock,  f3, f3, gunlock,  ROT90,  "Taito Corporation",         "Rayforce (Japan)" )
-GAME( 1993, rayforce, gunlock,  f3, f3, gunlock,  ROT90,  "Taito America Corporation", "Rayforce (US)" )
-GAME( 1993, scfinals, 0,        f3, f3, scfinals, ROT0,   "Taito Corporation Japan",   "Super Cup Finals (World)" )
+GAMEX(1992, ringrage, 0,        f3_224a, f3, ringrage, ROT0,   "Taito Corporation Japan",   "Ring Rage (World)", GAME_NO_SOUND )
+GAMEX(1992, ringragj, ringrage, f3_224a, f3, ringrage, ROT0,   "Taito Corporation",         "Ring Rage (Japan)", GAME_NO_SOUND )
+GAMEX(1992, ringragu, ringrage, f3_224a, f3, ringrage, ROT0,   "Taito America Corporation", "Ring Rage (US)", GAME_NO_SOUND )
+GAME( 1992, arabianm, 0,        f3_224a, f3, arabianm, ROT0,   "Taito Corporation Japan",   "Arabian Magic (World)" )
+GAME( 1992, arabiamj, arabianm, f3_224a, f3, arabianm, ROT0,   "Taito Corporation",         "Arabian Magic (Japan)" )
+GAME( 1992, arabiamu, arabianm, f3_224a, f3, arabianm, ROT0,   "Taito America Corporation", "Arabian Magic (US)" )
+GAMEX(1992, ridingf,  0,        f3_224b, f3, ridingf,  ROT0,   "Taito Corporation Japan",   "Riding Fight (World)", GAME_NO_SOUND )
+GAMEX(1992, ridefgtj, ridingf,  f3_224b, f3, ridingf,  ROT0,   "Taito Corporation",         "Riding Fight (Japan)", GAME_NO_SOUND )
+GAMEX(1992, ridefgtu, ridingf,  f3_224b, f3, ridingf,  ROT0,   "Taito America Corporation", "Riding Fight (US)", GAME_NO_SOUND )
+GAME( 1992, gseeker,  0,        f3_224b, f3, gseeker,  ROT90,  "Taito Corporation Japan",   "Grid Seeker: Project Stormhammer (World)" )
+GAME( 1992, gseekerj, gseeker,  f3_224b, f3, gseeker,  ROT90,  "Taito Corporation",         "Grid Seeker: Project Stormhammer (Japan)" )
+GAME( 1992, gseekeru, gseeker,  f3_224b, f3, gseeker,  ROT90,  "Taito America Corporation", "Grid Seeker: Project Stormhammer (US)" )
+GAME( 1993, gunlock,  0,        f3_224a, f3, gunlock,  ROT90,  "Taito Corporation Japan",   "Gunlock (World)" )
+GAME( 1993, rayforcj, gunlock,  f3_224a, f3, gunlock,  ROT90,  "Taito Corporation",         "Rayforce (Japan)" )
+GAME( 1993, rayforce, gunlock,  f3_224a, f3, gunlock,  ROT90,  "Taito America Corporation", "Rayforce (US)" )
+GAME( 1993, scfinals, 0,        f3_224a, f3, scfinals, ROT0,   "Taito Corporation Japan",   "Super Cup Finals (World)" )
 /* I don't think these really are clones of SCFinals - SCFinals may be a sequel that just shares graphics roms (Different Taito ROM code) */
-GAME( 1992, hthero93, scfinals, f3, f3, cupfinal, ROT0,   "Taito Corporation",         "Hat Trick Hero '93 (Japan)" )
-GAME( 1993, cupfinal, scfinals, f3, f3, cupfinal, ROT0,   "Taito Corporation Japan",   "Taito Cup Finals (World)" )
-GAME( 1993, trstar,   0,        f3, f3, trstaroj, ROT0,   "Taito Corporation Japan",   "Top Ranking Stars (World new version)" )
-GAME( 1993, trstarj,  trstar,   f3, f3, trstaroj, ROT0,   "Taito Corporation",         "Top Ranking Stars (Japan new version)" )
-GAME( 1993, prmtmfgt, trstar,   f3, f3, trstaroj, ROT0,   "Taito America Corporation", "Prime Time Fighter (US new version)" )
-GAME( 1993, trstaro,  trstar,   f3, f3, trstaroj, ROT0,   "Taito Corporation Japan",   "Top Ranking Stars (World old version)" )
-GAME( 1993, trstaroj, trstar,   f3, f3, trstaroj, ROT0,   "Taito Corporation",         "Top Ranking Stars (Japan old version)" )
-GAME( 1993, prmtmfgo, trstar,   f3, f3, trstaroj, ROT0,   "Taito America Corporation", "Prime Time Fighter (US old version)" )
-GAME( 1993, lightbr,  0,        f3, f3, lightbr,  ROT0,   "Taito Corporation",         "Lightbringer (Japan)" )
-/* Hacking the Lightbringer rom enables American & World versions called 'Dungeon Magic' - were they ever officially released? */
-GAME( 1994, kaiserkn, 0,        f3, kn, kaiserkn, ROT0,   "Taito Corporation Japan",   "Kaiser Knuckle (World)" )
-GAME( 1994, kaiserkj, kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",         "Kaiser Knuckle (Japan)" )
-GAME( 1994, gblchmp,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito America Corporation", "Global Champion (US)" )
-GAME( 1994, dankuga,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",         "Dan-Ku-Ga (Prototype)" )
-GAME( 1994, dariusg,  0,        f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk" )
-GAME( 1994, dariusgx, dariusg,  f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version) [Official Hack]" )
-GAME( 1994, bublbob2, 0,        f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Bobble 2 (World)" )
-GAME( 1994, bubsympe, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Symphony (Europe)" )
-GAME( 1994, bubsympu, bublbob2, f3, f3, bubsymph, ROT0,   "Taito America Corporation", "Bubble Symphony (US)" )
-GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
-GAME( 1994, spcinvdj, spacedx,  f3, f3, spcinvdj, ROT0,   "Taito Corporation",         "Space Invaders DX (Japan F3 version)" )
-GAME( 1994, pwrgoal,  0,        f3, f3, hthero95, ROT0,   "Taito Corporation Japan",   "Power Goal (World)" )
-GAME( 1994, hthero95, pwrgoal,  f3, f3, hthero95, ROT0,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
-GAME( 1994, hthro95u, pwrgoal,  f3, f3, hthero95, ROT0,   "Taito America Corporation", "Hat Trick Hero '95 (US)" )
-GAME( 1994, qtheater, 0,        f3, f3, qtheater, ROT0,   "Taito Corporation",         "Quiz Theater - 3tsu no Monogatari (Japan)" )
-GAME( 1994, elvactr,  0,        f3, f3, elvactr,  ROT0,   "Taito Corporation Japan",   "Elevator Action Returns (World)" )
-GAME( 1994, elvactrj, elvactr,  f3, f3, elvactr,  ROT0,   "Taito Corporation",         "Elevator Action Returns (Japan)" )
-GAME( 1994, elvact2u, elvactr,  f3, f3, elvactr,  ROT0,   "Taito America Corporation", "Elevator Action 2 (US)" )
+GAME( 1992, hthero93, scfinals, f3_224a, f3, cupfinal, ROT0,   "Taito Corporation",         "Hat Trick Hero '93 (Japan)" )
+GAME( 1993, cupfinal, scfinals, f3_224a, f3, cupfinal, ROT0,   "Taito Corporation Japan",   "Taito Cup Finals (World)" )
+GAME( 1993, trstar,   0,        f3,      f3, trstaroj, ROT0,   "Taito Corporation Japan",   "Top Ranking Stars (World new version)" )
+GAME( 1993, trstarj,  trstar,   f3,      f3, trstaroj, ROT0,   "Taito Corporation",         "Top Ranking Stars (Japan new version)" )
+GAME( 1993, prmtmfgt, trstar,   f3,      f3, trstaroj, ROT0,   "Taito America Corporation", "Prime Time Fighter (US new version)" )
+GAME( 1993, trstaro,  trstar,   f3,      f3, trstaroj, ROT0,   "Taito Corporation Japan",   "Top Ranking Stars (World old version)" )
+GAME( 1993, trstaroj, trstar,   f3,      f3, trstaroj, ROT0,   "Taito Corporation",         "Top Ranking Stars (Japan old version)" )
+GAME( 1993, prmtmfgo, trstar,   f3,      f3, trstaroj, ROT0,   "Taito America Corporation", "Prime Time Fighter (US old version)" )
+GAME( 1993, dungeonm, 0,        f3_224a, f3, lightbr,  ROT0,   "Taito Corporation Japan",   "Dungeon Magic (World)" )
+GAME( 1993, lightbr,  dungeonm, f3_224a, f3, lightbr,  ROT0,   "Taito Corporation",         "Lightbringer (Japan)" )
+GAME( 1993, dungenmu, dungeonm, f3_224a, f3, lightbr,  ROT0,   "Taito America Corporation", "Dungeon Magic (US)" )
+GAME( 1994, kaiserkn, 0,        f3_224a, kn, kaiserkn, ROT0,   "Taito Corporation Japan",   "Kaiser Knuckle (World)" )
+GAME( 1994, kaiserkj, kaiserkn, f3_224a, kn, kaiserkn, ROT0,   "Taito Corporation",         "Kaiser Knuckle (Japan)" )
+GAME( 1994, gblchmp,  kaiserkn, f3_224a, kn, kaiserkn, ROT0,   "Taito America Corporation", "Global Champion (US)" )
+GAME( 1994, dankuga,  kaiserkn, f3_224a, kn, kaiserkn, ROT0,   "Taito Corporation",         "Dan-Ku-Ga (Prototype)" )
+GAME( 1994, dariusg,  0,        f3,      f3, dariusg,  ROT0,   "Taito Corporation Japan",   "Darius Gaiden - Silver Hawk (World)" )
+GAME( 1994, dariusgj, dariusg,  f3,      f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Japan)" )
+GAME( 1994, dariusgu, dariusg,  f3,      f3, dariusg,  ROT0,   "Taito America Corporation", "Darius Gaiden - Silver Hawk (US)" )
+GAME( 1994, dariusgx, dariusg,  f3,      f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version) [Official Hack]" )
+GAME( 1994, bublbob2, 0,        f3_224a, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Bobble 2 (World)" )
+GAME( 1994, bubsympe, bublbob2, f3_224a, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Symphony (Europe)" )
+GAME( 1994, bubsympu, bublbob2, f3_224a, f3, bubsymph, ROT0,   "Taito America Corporation", "Bubble Symphony (US)" )
+GAME( 1994, bubsymph, bublbob2, f3_224a, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
+GAME( 1994, spcinvdj, spacedx,  f3,      f3, spcinvdj, ROT0,   "Taito Corporation",         "Space Invaders DX (Japan F3 version)" )
+GAME( 1994, pwrgoal,  0,        f3_224a, f3, hthero95, ROT0,   "Taito Corporation Japan",   "Power Goal (World)" )
+GAME( 1994, hthero95, pwrgoal,  f3_224a, f3, hthero95, ROT0,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
+GAME( 1994, hthro95u, pwrgoal,  f3_224a, f3, hthero95, ROT0,   "Taito America Corporation", "Hat Trick Hero '95 (US)" )
+GAME( 1994, qtheater, 0,        f3_224c, f3, qtheater, ROT0,   "Taito Corporation",         "Quiz Theater - 3tsu no Monogatari (Japan)" )
+GAME( 1994, elvactr,  0,        f3,      f3, elvactr,  ROT0,   "Taito Corporation Japan",   "Elevator Action Returns (World)" )
+GAME( 1994, elvactrj, elvactr,  f3,      f3, elvactr,  ROT0,   "Taito Corporation",         "Elevator Action Returns (Japan)" )
+GAME( 1994, elvact2u, elvactr,  f3,      f3, elvactr,  ROT0,   "Taito America Corporation", "Elevator Action 2 (US)" )
 /* There is also a prototype Elevator Action 2 (US) pcb with the graphics in a different rom format (same program code) */
-GAME( 1995, spcinv95, 0,        f3, f3, spcinv95, ROT270, "Taito America Corporation", "Space Invaders '95 - Attack Of The Lunar Loonies (US)" )
-GAME( 1995, akkanvdr, spcinv95, f3, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
-GAME( 1995, twinqix,  0,        f3, f3, twinqix,  ROT0,   "Taito America Corporation", "Twin Qix (US Prototype)" )
-GAME( 1995, gekirido, 0,        f3, f3, gekirido, ROT270, "Taito Corporation",         "Gekirindan (Japan)" )
-GAME( 1995, quizhuhu, 0,        f3, f3, quizhuhu, ROT0,   "Taito Corporation",         "Moriguchi Hiroko no Quiz de Hyuuhyuu (Japan)" )
-GAME( 1995, pbobble2, 0,        f3, f3, pbobble2, ROT0,   "Taito Corporation Japan",   "Puzzle Bobble 2 (World)" )
-GAME( 1995, pbobbl2j, pbobble2, f3, f3, pbobble2, ROT0,   "Taito Corporation",         "Puzzle Bobble 2 (Japan)" )
-GAME( 1995, pbobbl2u, pbobble2, f3, f3, pbobble2, ROT0,   "Taito America Corporation", "Bust-A-Move Again (US)" )
-GAME( 1995, pbobbl2x, pbobble2, f3, f3, pbobbl2x, ROT0,   "Taito Corporation",         "Puzzle Bobble 2X (Japan)" )
-GAME( 1995, ktiger2,  0,        f3, f3, ktiger2,  ROT270, "Taito Corporation",         "Kyukyoku Tiger 2 (Japan)" )
+GAME( 1995, spcinv95, 0,        f3_224a, f3, spcinv95, ROT270, "Taito Corporation Japan",   "Space Invaders '95 - Attack Of The Lunar Loonies (World)" )
+GAME( 1995, spcnv95u, spcinv95, f3_224a, f3, spcinv95, ROT270, "Taito America Corporation", "Space Invaders '95 - Attack Of The Lunar Loonies (US)" )
+GAME( 1995, akkanvdr, spcinv95, f3_224a, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
+GAME( 1995, twinqix,  0,        f3_224a, f3, twinqix,  ROT0,   "Taito America Corporation", "Twin Qix (US Prototype)" )
+GAME( 1995, gekirido, 0,        f3,      f3, gekirido, ROT270, "Taito Corporation",         "Gekirindan (Japan)" )
+GAME( 1995, quizhuhu, 0,        f3,      f3, quizhuhu, ROT0,   "Taito Corporation",         "Moriguchi Hiroko no Quiz de Hyuuhyuu (Japan)" )
+GAME( 1995, pbobble2, 0,        f3,      f3, pbobble2, ROT0,   "Taito Corporation Japan",   "Puzzle Bobble 2 (World)" )
+GAME( 1995, pbobbl2j, pbobble2, f3,      f3, pbobble2, ROT0,   "Taito Corporation",         "Puzzle Bobble 2 (Japan)" )
+GAME( 1995, pbobbl2u, pbobble2, f3,      f3, pbobble2, ROT0,   "Taito America Corporation", "Bust-A-Move Again (US)" )
+GAME( 1995, pbobbl2x, pbobble2, f3,      f3, pbobbl2x, ROT0,   "Taito Corporation",         "Puzzle Bobble 2X (Japan)" )
+GAME( 1995, ktiger2,  0,        f3,      f3, ktiger2,  ROT270, "Taito Corporation",         "Kyukyoku Tiger 2 (Japan)" )
 /* Twin Cobra 2 (US & World) is known to exist */
-GAME( 1995, bubblem,  0,        f3, f3, bubblem,  ROT0,   "Taito Corporation Japan",   "Bubble Memories - The Story Of Bubble Bobble 3 (World)" )
-GAME( 1995, bubblemj, bubblem,  f3, f3, bubblem,  ROT0,   "Taito Corporation",         "Bubble Memories - The Story Of Bubble Bobble 3 (Japan)" )
-GAME( 1996, cleopatr, 0,        f3, f3, cleopatr, ROT0,   "Taito Corporation",         "Cleopatra Fortune (Japan)" )
-GAME( 1996, pbobble3, 0,        f3, f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (World)" )
-GAME( 1996, pbobbl3u, pbobble3, f3, f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (US)" )
-GAME( 1996, pbobbl3j, pbobble3, f3, f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (Japan)" )
-GAME( 1997, arkretrn, 0,        f3, f3, arkretrn, ROT0,   "Taito Corporation",         "Arkanoid Returns (Japan)" )
-GAME( 1997, kirameki, 0,        f3, f3, kirameki, ROT0,   "Taito Corporation",         "Kirameki Star Road (Japan)" )
-GAME( 1997, puchicar, 0,        f3, f3, puchicar, ROT0,   "Taito Corporation",         "Puchi Carat (Japan)" )
-GAME( 1997, pbobble4, 0,        f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (World)" )
-GAME( 1997, pbobbl4j, pbobble4, f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (Japan)" )
-GAME( 1997, pbobbl4u, pbobble4, f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (US)" )
-GAME( 1997, popnpop,  0,        f3, f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Asia)" )
-GAME( 1997, popnpopj, popnpop,  f3, f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Japan)" )
-GAME( 1998, landmakr, 0,        f3, f3, landmakr, ROT0,   "Taito Corporation",         "Landmaker (Japan)" )
+GAME( 1995, bubblem,  0,        f3_224a, f3, bubblem,  ROT0,   "Taito Corporation Japan",   "Bubble Memories - The Story Of Bubble Bobble 3 (World)" )
+GAME( 1995, bubblemj, bubblem,  f3_224a, f3, bubblem,  ROT0,   "Taito Corporation",         "Bubble Memories - The Story Of Bubble Bobble 3 (Japan)" )
+GAME( 1996, cleopatr, 0,        f3_224a, f3, cleopatr, ROT0,   "Taito Corporation",         "Cleopatra Fortune (Japan)" )
+GAME( 1996, pbobble3, 0,        f3,      f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (World)" )
+GAME( 1996, pbobbl3u, pbobble3, f3,      f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (US)" )
+GAME( 1996, pbobbl3j, pbobble3, f3,      f3, pbobble3, ROT0,   "Taito Corporation",         "Puzzle Bobble 3 (Japan)" )
+GAME( 1997, arkretrn, 0,        f3,      f3, arkretrn, ROT0,   "Taito Corporation",         "Arkanoid Returns (Japan)" )
+GAME( 1997, kirameki, 0,        f3_224a, f3, kirameki, ROT0,   "Taito Corporation",         "Kirameki Star Road (Japan)" )
+GAME( 1997, puchicar, 0,        f3,      f3, puchicar, ROT0,   "Taito Corporation",         "Puchi Carat (Japan)" )
+GAME( 1997, pbobble4, 0,        f3,      f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (World)" )
+GAME( 1997, pbobbl4j, pbobble4, f3,      f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (Japan)" )
+GAME( 1997, pbobbl4u, pbobble4, f3,      f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (US)" )
+GAME( 1997, popnpop,  0,        f3,      f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (World)" )
+GAME( 1997, popnpopj, popnpop,  f3,      f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Japan)" )
+GAME( 1997, popnpopu, popnpop,  f3,      f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (US)" )
+GAME( 1998, landmakr, 0,        f3,      f3, landmakr, ROT0,   "Taito Corporation",         "Landmaker (Japan)" )

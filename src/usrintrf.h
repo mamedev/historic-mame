@@ -25,6 +25,8 @@ struct DisplayText
 #define SEL_MASK ((1<<SEL_BITS)-1)
 #define SEL_MASK2 ((1<<SEL_BITS2)-1)
 
+extern UINT8 ui_dirty;
+
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);
 void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt);
@@ -39,10 +41,13 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);
 void init_user_interface(void);
 int handle_user_interface(struct mame_bitmap *bitmap);
 
+void ui_show_fps_temp(double seconds);
+
 int onscrd_active(void);
 int setup_active(void);
 
 void switch_ui_orientation(struct mame_bitmap *bitmap);
+void switch_debugger_orientation(struct mame_bitmap *bitmap);
 void switch_true_orientation(struct mame_bitmap *bitmap);
 
 void CLIB_DECL usrintf_showmessage(const char *text,...);

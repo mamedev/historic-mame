@@ -15,8 +15,10 @@ Sound Chips	:	M6295 (AD-65)  +  YM2151 (BS901)  +  YM3014 (BS90?)
 ---------------------------------------------------------------------------
 Year + Game						Notes
 ---------------------------------------------------------------------------
+97 Red Hawk                     US Version of Stagger 1
 98 Sen Jin - Guardian Storm		Some text missing (protection, see service mode)
 98 Stagger I
+98 Bubble 2000                  By Tuning, but it seems to be the same HW
 ---------------------------------------------------------------------------
 
 ***************************************************************************/
@@ -39,6 +41,7 @@ PALETTE_INIT( grdnstrm );
 
 VIDEO_START( afega );
 VIDEO_UPDATE( afega );
+VIDEO_UPDATE( bubl2000 );
 
 
 /***************************************************************************
@@ -75,6 +78,7 @@ static MEMORY_READ16_START( afega_readmem )
 	{ 0x3c0000, 0x3c7fff, MRA16_RAM					},	// RAM
 	{ 0x3c8000, 0x3c8fff, MRA16_RAM					},	// Sprites
 	{ 0x3c9000, 0x3cffff, MRA16_RAM					},	// RAM
+	{ 0xff8000, 0xff8fff, MRA16_BANK1				},	// Sprites Mirror
 MEMORY_END
 
 static MEMORY_WRITE16_START( afega_writemem )
@@ -93,6 +97,45 @@ static MEMORY_WRITE16_START( afega_writemem )
 	{ 0x3c0000, 0x3c7fff, MWA16_RAM						},	// RAM
 	{ 0x3c8000, 0x3c8fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x3c9000, 0x3cffff, MWA16_RAM						},	// RAM
+	{ 0xff8000, 0xff8fff, MWA16_BANK1				},	// Sprites Mirror
+MEMORY_END
+
+/* redhawk has main ram / sprites in a different location */
+
+static MEMORY_READ16_START( redhawk_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
+	{ 0x080000, 0x080001, input_port_0_word_r		},	// Buttons
+	{ 0x080002, 0x080003, input_port_1_word_r		},	// P1 + P2
+	{ 0x080004, 0x080005, input_port_2_word_r		},	// 2 x DSW
+/**/{ 0x088000, 0x0885ff, MRA16_RAM					},	// Palette
+/**/{ 0x08c000, 0x08c003, MRA16_RAM					},	// Scroll
+/**/{ 0x08c004, 0x08c007, MRA16_RAM					},	//
+/**/{ 0x090000, 0x091fff, MRA16_RAM					},	// Layer 0
+/**/{ 0x092000, 0x093fff, MRA16_RAM					},	// ?
+/**/{ 0x09c000, 0x09c7ff, MRA16_RAM					},	// Layer 1
+	{ 0x0c0000, 0x0c7fff, MRA16_RAM					},	// RAM
+	{ 0x0c8000, 0x0c8fff, MRA16_RAM					},	// Sprites
+	{ 0x0c9000, 0x0cffff, MRA16_RAM					},	// RAM
+	{ 0xff8000, 0xff8fff, MRA16_BANK1				},	// Sprites Mirror
+MEMORY_END
+
+static MEMORY_WRITE16_START( redhawk_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0x080000, 0x08001d, MWA16_RAM						},	//
+	{ 0x08001e, 0x08001f, afega_soundlatch_w			},	// To Sound CPU
+	{ 0x080020, 0x087fff, MWA16_RAM						},	//
+	{ 0x088000, 0x0885ff, afega_palette_w, &paletteram16},	// Palette
+	{ 0x088600, 0x08bfff, MWA16_RAM						},	//
+	{ 0x08c000, 0x08c003, MWA16_RAM, &afega_scroll_0	},	// Scroll
+	{ 0x08c004, 0x08c007, MWA16_RAM, &afega_scroll_1	},	//
+	{ 0x08c008, 0x08ffff, MWA16_RAM						},	//
+	{ 0x090000, 0x091fff, afega_vram_0_w, &afega_vram_0	},	// Layer 0
+	{ 0x092000, 0x093fff, MWA16_RAM						},	// ?
+	{ 0x09c000, 0x09c7ff, afega_vram_1_w, &afega_vram_1	},	// Layer 1
+	{ 0x0c0000, 0x0c7fff, MWA16_RAM						},	// RAM
+	{ 0x0c8000, 0x0c8fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x0c9000, 0x0cffff, MWA16_RAM						},	// RAM
+	{ 0xff8000, 0xff8fff, MWA16_BANK1				},	// Sprites Mirror
 MEMORY_END
 
 
@@ -130,11 +173,11 @@ MEMORY_END
 ***************************************************************************/
 
 /***************************************************************************
-							Sen Jin - Guardian Storm
+								Stagger I
 ***************************************************************************/
 
-INPUT_PORTS_START( grdnstrm )
-	PORT_START	// IN0 - $800000.w
+INPUT_PORTS_START( stagger1 )
+	PORT_START	// IN0 - $080000.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -145,7 +188,7 @@ INPUT_PORTS_START( grdnstrm )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
-	PORT_START	// IN1 - $800002.w
+	PORT_START	// IN1 - $080002.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
@@ -164,21 +207,21 @@ INPUT_PORTS_START( grdnstrm )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	// IN2 - $800004.w
+	PORT_START	// IN2 - $080004.w
 	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Bombs" )
-	PORT_DIPSETTING(      0x0008, "2" )
-	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-5" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
@@ -192,7 +235,90 @@ INPUT_PORTS_START( grdnstrm )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPSETTING(      0x0200, "Horizontally" )
 	PORT_DIPSETTING(      0x0100, "Vertically" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 2-2" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x1800, "Normal" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
+INPUT_PORTS_END
+
+
+/***************************************************************************
+							Sen Jin - Guardian Storm
+***************************************************************************/
+
+INPUT_PORTS_START( grdnstrm )
+	PORT_START	// IN0 - $080000.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN1 - $080002.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - $080004.w
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Bombs" )
+	PORT_DIPSETTING(      0x0008, "2" )
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0080, "2" )
+	PORT_DIPSETTING(      0x00c0, "3" )
+	PORT_DIPSETTING(      0x0040, "5" )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0200, "Horizontally" )
+	PORT_DIPSETTING(      0x0100, "Vertically" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Difficulty ) )
@@ -216,8 +342,8 @@ INPUT_PORTS_END
 								Stagger I
 ***************************************************************************/
 
-INPUT_PORTS_START( stagger1 )
-	PORT_START	// IN0 - $800000.w
+INPUT_PORTS_START( bubl2000 )
+	PORT_START	// IN0 - $080000.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -228,7 +354,7 @@ INPUT_PORTS_START( stagger1 )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
-	PORT_START	// IN1 - $800002.w
+	PORT_START	// IN1 - $080002.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
@@ -247,51 +373,54 @@ INPUT_PORTS_START( stagger1 )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	// IN2 - $800004.w
-	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_START	// IN2 - $080004.w
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-5" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x0080, "2" )
-	PORT_DIPSETTING(      0x00c0, "3" )
-	PORT_DIPSETTING(      0x0040, "5" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, "Free Credit" )
+	PORT_DIPSETTING(      0x0080, "500k" )
+	PORT_DIPSETTING(      0x00c0, "800k" )
+	PORT_DIPSETTING(      0x0040, "1000k" )
+	PORT_DIPSETTING(      0x0000, "1500k" )
 
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0300, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPSETTING(      0x0200, "Horizontally" )
-	PORT_DIPSETTING(      0x0100, "Vertically" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 2-2" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0800, "Easy" )
-	PORT_DIPSETTING(      0x1800, "Normal" )
-	PORT_DIPSETTING(      0x1000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0xc000, DEF_STR( 3C_2C ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x1c00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x1400, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+//	PORT_DIPSETTING(      0x0000, "Disabled" )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_4C ) )
+//	PORT_DIPSETTING(      0x0000, "Disabled" )
 INPUT_PORTS_END
 
 
@@ -403,6 +532,53 @@ INTERRUPT_GEN( interrupt_afega )
 	}
 }
 
+MACHINE_INIT( afega )
+{
+	/* Sprites Mirror required due to bug in the game code ( movem.w instead of movem.l ) */
+	cpu_setbank( 1, spriteram16 );
+}
+
+static MACHINE_DRIVER_START( stagger1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main",M68000,10000000)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
+	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(afega)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(stagger1_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(afega)
+	MDRV_VIDEO_UPDATE(afega)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, afega_ym2151_intf)
+	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( redhawk )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(stagger1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(redhawk_readmem,redhawk_writemem)
+
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( grdnstrm )
 
 	/* basic machine hardware */
@@ -416,6 +592,8 @@ static MACHINE_DRIVER_START( grdnstrm )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(afega)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -435,36 +613,14 @@ static MACHINE_DRIVER_START( grdnstrm )
 	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( stagger1 )
+static MACHINE_DRIVER_START( bubl2000 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
-	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
-
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_IMPORT_FROM(grdnstrm)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
-	MDRV_GFXDECODE(stagger1_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(768)
-
-	MDRV_VIDEO_START(afega)
-	MDRV_VIDEO_UPDATE(afega)
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, afega_ym2151_intf)
-	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
+	MDRV_VIDEO_UPDATE(bubl2000)
 MACHINE_DRIVER_END
-
 
 /***************************************************************************
 
@@ -473,6 +629,28 @@ MACHINE_DRIVER_END
 
 
 ***************************************************************************/
+
+/* Address lines scrambling */
+
+static void decryptcode( int a23, int a22, int a21, int a20, int a19, int a18, int a17, int a16, int a15, int a14, int a13, int a12,
+	int a11, int a10, int a9, int a8, int a7, int a6, int a5, int a4, int a3, int a2, int a1, int a0 )
+{
+	int i;
+	data8_t *RAM = memory_region( REGION_CPU1 );
+	size_t  size = memory_region_length( REGION_CPU1 );
+	data8_t *buffer = malloc( size );
+
+	if( buffer )
+	{
+		memcpy( buffer, RAM, size );
+		for( i = 0; i < size; i++ )
+		{
+			RAM[ i ] = buffer[ BITSWAP24( i, a23, a22, a21, a20, a19, a18, a17, a16, a15, a14, a13, a12,
+				a11, a10, a9, a8, a7, a6, a5, a4, a3, a2, a1, a0 ) ];
+		}
+		free( buffer );
+	}
+}
 
 /***************************************************************************
 
@@ -506,28 +684,59 @@ ROM_START( stagger1 )
 	// Unused
 
 	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD( "5.bin", 0x00000, 0x40000, 0x525eec4a )	// FIRST AND SECOND HALF IDENTICAL
-	ROM_CONTINUE(      0x00000, 0x40000             )
+	ROM_LOAD( "5", 0x00000, 0x40000, 0xe911ce33 )
 ROM_END
 
-DRIVER_INIT( stagger1 )
+
+/***************************************************************************
+
+							Red Hawk (c)1997 Afega
+
+
+
+    6116         ym2145(?)  MSM6295   5    4MHz
+    1
+    Z80        pLSI1032    4
+                                      76C88
+       6116   76C256                  76C88
+       6116   76C256
+    2  76C256 76C256
+    3  76C256 76C256
+
+    68000-10        6116
+                    6116
+   SW1                             6
+   SW21                pLSI1032    7
+    12MHz
+
+***************************************************************************/
+
+ROM_START( redhawk )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "2", 0x000000, 0x020000, 0x3ef5f326 )
+	ROM_LOAD16_BYTE( "3", 0x000001, 0x020000, 0x9b3a10ef )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "1.bin", 0x00000, 0x10000, 0x5d8cf28e )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites, 16x16x4 */
+	ROM_LOAD16_BYTE( "6", 0x000001, 0x080000, 0x61560164 )
+	ROM_LOAD16_BYTE( "7", 0x000000, 0x080000, 0x66a8976d )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0, 16x16x8 */
+	ROM_LOAD( "4", 0x000000, 0x080000, 0xd6427b8a )
+
+	ROM_REGION( 0x00100, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )	/* Layer 1, 8x8x4 */
+	// Unused
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "5", 0x00000, 0x40000, 0xe911ce33 )
+ROM_END
+
+static DRIVER_INIT( redhawk )
 {
-	data16_t *RAM = (data16_t*)memory_region( REGION_CPU1 );
-
-	/* Is this a 68k emulation bug ? */
-	/* Patch movem.w A5, -(A7)	to	movem.l A5, -(A7) */
-	RAM[0x1b6a0/2] = 0x48e7;
-	RAM[0x1b6c0/2] = 0x48e7;
-	RAM[0x1d15e/2] = 0x48e7;
-	RAM[0x1d17e/2] = 0x48e7;
-
-	/* Patch movem.w (A7)+, A5	to	movem.l (A7)+, A5 */
-	RAM[0x1b6b8/2] = 0x4cdf;
-	RAM[0x1b6d8/2] = 0x4cdf;
-	RAM[0x1d176/2] = 0x4cdf;
-	RAM[0x1d196/2] = 0x4cdf;
+	decryptcode( 23, 22, 21, 20, 19, 18, 16, 15, 14, 17, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 );
 }
-
 
 /***************************************************************************
 
@@ -581,41 +790,94 @@ ROM_START( grdnstrm )
 	ROM_LOAD( "gst-02.u95", 0x00000, 0x40000, 0xe911ce33 )
 ROM_END
 
-/* Address lines scrambling + Protection */
-DRIVER_INIT( grdnstrm )
+static DRIVER_INIT( grdnstrm )
 {
-	data8_t *RAM = memory_region       ( REGION_CPU1 );
-	size_t  size = memory_region_length( REGION_CPU1 );
-	int i;
+	data16_t *RAM = (data16_t *)memory_region( REGION_CPU1 );
 
-#define SWAP( b1, b2 ) \
-{	data8_t t; \
-	int i1 = ((i&(1<<b1))?(1<<b2):0)|((i&(1<<b2))?(1<<b1):0)|(i&~((1<<b1)|(1<<b2))); \
-	if (i1>i)	continue; \
-	t = RAM[i];	RAM[i] = RAM[i1];	RAM[i1] = t;	}
-
-	for (i = 0; i < size; i++)	SWAP(0x10,0x11)
-	for (i = 0; i < size; i++)	SWAP(0x0e,0x0f)
+	decryptcode( 23, 22, 21, 20, 19, 18, 16, 17, 14, 15, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 );
 
 	/* Patch Protection (that supplies some 68k code seen in the
 	   2760-29cf range */
-	((data16_t*)RAM)[0x0027a/2] = 0x4e71;
-	((data16_t*)RAM)[0x02760/2] = 0x4e75;
-
-	/* Is this a 68k emulation bug ? */
-	/* Patch movem.w A5, -(A7)	to	movem.l A5, -(A7) */
-	((data16_t*)RAM)[0x2402a/2] = 0x48e7;
-	((data16_t*)RAM)[0x2404a/2] = 0x48e7;
-	((data16_t*)RAM)[0x24892/2] = 0x48e7;
-	((data16_t*)RAM)[0x248b2/2] = 0x48e7;
-
-	/* Patch movem.w (A7)+, A5	to	movem.l (A7)+, A5 */
-	((data16_t*)RAM)[0x24042/2] = 0x4cdf;
-	((data16_t*)RAM)[0x24062/2] = 0x4cdf;
-	((data16_t*)RAM)[0x248aa/2] = 0x4cdf;
-	((data16_t*)RAM)[0x248ca/2] = 0x4cdf;
+	RAM[0x0027a/2] = 0x4e71;
+	RAM[0x02760/2] = 0x4e75;
 }
 
+
+/***************************************************************************
+
+							Bubble 2000 (c)1998 Tuning
+
+Bubble 2000
+Tuning, 1998
+
+CPU   : TMP68HC000P-10 (68000)
+SOUND : Z840006 (Z80, 44 pin QFP), YM2151, OKI M6295
+OSC   : 4.000MHZ, 12.000MHz
+DIPSW : 8 position (x2)
+RAM   : 6116 (x5, gfx related?) 6116 (x1, sound program ram), 6116 (x1, near rom3)
+        64256 (x4, gfx related?), 62256 (x2, main program ram), 6264 (x2, gfx related?)
+PALs/PROMs: None
+Custom: Unknown 208 pin QFP labelled LTC2 (Graphics generator)
+        Unknown 68 pin PLCC labelled LTC1 (?, near rom 2 and rom 3)
+ROMs  :
+
+Filename    Type        Possible Use
+----------------------------------------------
+rom01.92    27C512      Sound Program
+rom02.95    27C020      Oki Samples
+rom03.4     27C512      ? (located near rom 1 and 2 and near LTC1)
+rom04.1     27C040   \
+rom05.3     27C040    |
+rom06.6     27C040    |
+rom07.9     27C040    | Gfx
+rom08.11    27C040    |
+rom09.14    27C040    |
+rom12.2     27C040    |
+rom13.7     27C040   /
+
+rom10.112   27C040   \  Main Program
+rom11.107   27C040   /
+
+
+Developers......
+                More info reqd? or a redump?
+                Email me....
+                theguru@emuunlim.com
+
+
+***************************************************************************/
+
+ROM_START( bubl2000 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom10.112", 0x00000, 0x20000, 0x87f960d7 )
+	ROM_LOAD16_BYTE( "rom11.107", 0x00001, 0x20000, 0xb386041a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "rom01.92", 0x00000, 0x10000, 0x5d8cf28e ) /* same as the other games on this driver */
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites, 16x16x4 */
+	ROM_LOAD16_BYTE( "rom08.11", 0x000000, 0x040000, 0x519dfd82 )
+	ROM_LOAD16_BYTE( "rom09.14", 0x000001, 0x040000, 0x04fcb5c6 )
+
+	ROM_REGION( 0x300000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0, 16x16x8 */
+	ROM_LOAD( "rom06.6",  0x000000, 0x080000, 0xac1aabf5 )
+	ROM_LOAD( "rom07.9",  0x080000, 0x080000, 0x69aff769 )
+	ROM_LOAD( "rom13.7",  0x100000, 0x080000, 0x3a5b7226 )
+	ROM_LOAD( "rom04.1",  0x180000, 0x080000, 0x46acd054 )
+	ROM_LOAD( "rom05.3",  0x200000, 0x080000, 0x37deb6a1 )
+	ROM_LOAD( "rom12.2",  0x280000, 0x080000, 0x1fdc59dd )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1, 8x8x4 */
+	ROM_LOAD( "rom03.4",  0x00000, 0x10000, 0xf4c15588 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "rom02.95", 0x00000, 0x40000, 0x859a86e5 )
+ROM_END
+
+static DRIVER_INIT( bubl2000 )
+{
+	decryptcode( 23, 22, 21, 20, 19, 18, 13, 14, 15, 16, 17, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 );
+}
 
 /***************************************************************************
 
@@ -625,5 +887,7 @@ DRIVER_INIT( grdnstrm )
 
 ***************************************************************************/
 
-GAMEX( 1998, stagger1, 0, stagger1, stagger1, stagger1, ROT270, "Afega", "Stagger I (Japan)",                GAME_NOT_WORKING )
-GAMEX( 1998, grdnstrm, 0, grdnstrm, grdnstrm, grdnstrm, ROT270, "Afega", "Sen Jin - Guardian Storm (Korea)", GAME_NOT_WORKING )
+GAMEX( 1998, stagger1, 0,        stagger1, stagger1, 0,        ROT270, "Afega", "Stagger I (Japan)",                GAME_NOT_WORKING )
+GAMEX( 1997, redhawk,  stagger1, redhawk,  stagger1, redhawk,  ROT270, "Afega", "Red Hawk (US)", GAME_NOT_WORKING )
+GAMEX( 1998, grdnstrm, 0,        grdnstrm, grdnstrm, grdnstrm, ROT270, "Afega", "Sen Jin - Guardian Storm (Korea)", GAME_NOT_WORKING )
+GAMEX( 1998, bubl2000, 0,        bubl2000, bubl2000, bubl2000, ROT0,   "Tuning", "Bubble 2000", GAME_IMPERFECT_GRAPHICS )

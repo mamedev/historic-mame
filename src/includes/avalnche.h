@@ -15,5 +15,4 @@ INTERRUPT_GEN( avalnche_interrupt );
 /*----------- defined in vidhrdw/avalnche.c -----------*/
 
 WRITE_HANDLER( avalnche_videoram_w );
-VIDEO_START( avalnche );
 VIDEO_UPDATE( avalnche );

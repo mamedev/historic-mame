@@ -825,7 +825,7 @@ static void cave_sprite_check( const struct rectangle *clip )
 
 			case CAVE_SPRITETYPE_ZOOM | CAVE_SPRITETYPE_ZBUF:
 				cave_sprite_draw = sprite_draw_cave_zbuf;
-				if(!partial_update_count)
+				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
 						fillbitmap(sprite_zbuf,0,&Machine->visible_area);
@@ -834,7 +834,7 @@ static void cave_sprite_check( const struct rectangle *clip )
 
 			case CAVE_SPRITETYPE_ZBUF:
 				cave_sprite_draw = sprite_draw_donpachi_zbuf;
-				if(!partial_update_count)
+				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
 						fillbitmap(sprite_zbuf,0,&Machine->visible_area);
@@ -1613,7 +1613,7 @@ VIDEO_UPDATE( cave )
 }
 #endif
 
-	if(!partial_update_count) (*get_sprite_info)();
+	if(!mame_get_performance_info()->partial_updates_this_frame) (*get_sprite_info)();
 
 	cave_sprite_check(cliprect);
 

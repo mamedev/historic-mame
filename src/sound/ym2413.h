@@ -1,136 +1,75 @@
-#ifndef _EMU2413_H_
-#define _EMU2413_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _YM2413_H_
+#define _YM2413_H_
 
-/*#define OPLL_ENABLE_DEBUG*/
-/*#define OPLL_LOGFILE*/
+#include "2413intf.h"
 
-/*#define PI 3.14159265358979*/
+/* Total # of YM2413's that can be used at once - change as needed */
+#define MAX_YM2413 MAX_2413
 
-/* voice data */
-typedef struct {
-  unsigned int TL,FB,EG,ML,AR,DR,SL,RR,KR,KL,AM,PM,WF ;
-  int update ; /* for real-time update */
-} OPLL_PATCH ;
 
-/* slot */
-typedef struct {
+/* YM2413 ROM file. If you want it to be loaded, define this. */
+/*#define YM2413_ROM_FILE "./ym2413.rom"*/
 
-  OPLL_PATCH *patch;
+/* Choose *one* of this banks (in order: best->worse) */
+#define PATCH_OKAZAKI
+// #define PATCH_ALLEGRO
+// #define PATCH_MAME
+// #define PATCH_GUIJT
 
-  int type ;          /* 0 : modulator 1 : carrier */
-  int update ;
+#define PATCH_RHYTHM_FRS
+// #define PATCH_RHYTHM_OKAZAKI
+// #define PATCH_RHYTHM_MAME
 
-  /* OUTPUT */
-  INT32 output[2] ;      /* Output value of slot */
+/* YM2413 context */
+typedef struct
+{
+	unsigned char reg[0x40];            /* 64 registers */
+	unsigned char latch;                /* Register latch */
+	unsigned char rhythm;               /* Rhythm instruments loaded flag */
+	unsigned char user[0x10];           /* User instrument settings */
+	struct
+	{
+		unsigned short int frequency;   /* Channel frequency */
+		unsigned char volume;           /* Channel volume */
+		unsigned char instrument;       /* Channel instrument */
+	unsigned char oldSUSKEY;	/* Previous SUS state */
+	}channel[9];
+	int DAC_stream;
+}t_ym2413;
 
-  /* for Phase Generator (PG) */
-  INT32 *sintbl ;     /* Wavetable */
-  UINT32 phase ;      /* Phase */
-  UINT32 dphase ;     /* Phase increment amount */
-  UINT32 pgout ;      /* output */
+/* YM3812 context */
+/* This values must be cached */
+typedef struct
+{
+	struct
+	{
+		unsigned char KSLm;	/* We must write this whem the ym2413 volume  */
+							/* is changed */
+		unsigned char KSLc;
+		unsigned char TLc;	/* Is the YM2413 volume and internal TLc */
+							/* combined */
+						/* YM3812 :  YM2413  */
+						/* TLc    =  VOL+((63-VOL)*(63/(TLc+1))) */
+						/* *** But before this VOL must be adjusted *** */
+						/* VOL = VOL*4+3*(VOL&1) */
+		unsigned char TLm;	/* The same idea, but for rhythm mode */
+		unsigned char SLRRc;	/* Release Rate is modified when SUS=1 */
+	}channel[9];
+}t_ym3812;
 
-  /* for Envelope Generator (EG) */
-  int fnum ;          /* F-Number */
-  int block ;         /* Block */
-  int volume ;        /* Current volume */
-  int sustine ;       /* Sustine 1 = ON, 0 = OFF */
-  UINT32 tll ;	      /* Total Level + Key scale level*/
-  UINT32 rks ;        /* Key scale offset (Rks) */
-  int eg_mode ;       /* Current state */
-  UINT32 eg_phase ;   /* Phase */
-  UINT32 eg_dphase ;  /* Phase increment amount */
-  UINT32 egout ;      /* output */
 
-  /* LFO (refer to opll->*) */
-  INT32 *plfo_am ;
-  INT32 *plfo_pm ;
+/* Global data */
+extern t_ym2413 ym2413[MAX_YM2413];
 
-} OPLL_SLOT ;
+/* Function prototypes */
 
-/* Channel */
-typedef struct {
+/* Reset a given chip in the chip context */
+void ym2413_reset(int chip);
 
-  int patch_number ;
-  int key_status ;
-  OPLL_SLOT *mod, *car ;
+/* Write to a chip in the chip context */
+void ym2413_write(int chip, int address, int data);
 
-#ifdef OPLL_ENABLE_DEBUG
-  int debug_keyonpatch[4] ;
-#endif
 
-} OPLL_CH ;
-
-/* opll */
-typedef struct {
-
-  INT32 output[4] ;
-
-  /* Register */
-  unsigned char reg[0x40] ;
-  int slot_on_flag[18] ;
-
-  /* Rythm Mode : 0 = OFF, 1 = ON */
-  int rythm_mode ;
-
-  /* Pitch Modulator */
-  UINT32 pm_phase ;
-  UINT32 pm_dphase ;
-  INT32 lfo_pm ;
-
-  /* Amp Modulator */
-  UINT32 am_phase ;
-  UINT32 am_dphase ;
-  INT32 lfo_am ;
-
-  /* Noise Generator */
-  UINT32 whitenoise ;
-
-  /* Channel & Slot */
-  OPLL_CH *ch[9] ;
-  OPLL_SLOT *slot[18] ;
-
-  /* Voice Data */
-  OPLL_PATCH *patch[19] ;
-  int user_patch_update[2] ; /* flag for check patch update */
-
-  int mask[10] ; /* mask[9] = RYTHM */
-
-  int masterVolume ; /* 0min -- 64 -- 127 max (Liner) */
-  int rythmVolume ;  /* 0min -- 64 -- 127 max (Liner) */
-
-#ifdef OPLL_ENABLE_DEBUG
-  int debug_rythm_flag ;
-  int debug_base_ml ;
-  int feedback_type ;    /* feedback type select */
-  FILE *logfile ;
-#endif
-
-} OPLL ;
-
-void OPLL_init(UINT32 clk, UINT32 rate) ;
-void OPLL_close(void) ;
-OPLL *OPLL_new(void) ;
-void OPLL_reset(OPLL *) ;
-void OPLL_reset_patch(OPLL *) ;
-void OPLL_delete(OPLL *) ;
-void OPLL_writeReg(OPLL *, UINT32, UINT32) ;
-INT16 OPLL_calc(OPLL *) ;
-void OPLL_setPatch(OPLL *, int, OPLL_PATCH *) ;
-void OPLL_forceRefresh(OPLL *) ;
-void dump2patch(unsigned char *dump, OPLL_PATCH *patch) ;
-
-#ifdef OPLL_ENABLE_DEBUG
-void debug_base_ml_ctrl(OPLL *,int) ;
-void OPLL_changeFeedbackMode(OPLL *opll) ;
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* _YM2413_H_ */
 

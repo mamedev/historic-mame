@@ -14,22 +14,6 @@ extern int marker_x, marker_y;
 static int video_inverted = 0;
 
 
-#define JADE	0x20,0xb0,0x20,OVERLAY_DEFAULT_OPACITY
-#define MUSTARD 0xb0,0x80,0x20,OVERLAY_DEFAULT_OPACITY
-
-#define	END  {{ -1, -1, -1, -1}, 0,0,0,0}
-
-static const struct artwork_element overlay[]=
-{
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1,  0*VERT_CHR, 1*VERT_CHR-1 }, MUSTARD },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1,  0*VERT_CHR, 1*VERT_CHR-1 }, JADE    },
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1,  1*VERT_CHR,22*VERT_CHR-1 }, JADE    },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1,  1*VERT_CHR,22*VERT_CHR-1 }, MUSTARD },
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1, 22*VERT_CHR,23*VERT_CHR-1 }, MUSTARD },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1, 22*VERT_CHR,23*VERT_CHR-1 }, JADE    },
-	END
-};
-
 /* scale a markers vertical position */
 /* the following table shows how the markers */
 /* vertical position worked in hardware  */
@@ -101,11 +85,7 @@ VIDEO_START( lazercmd )
 		return 1;
 
 	/* is overlay enabled? */
-
-	if (input_port_2_r(0) & 0x80)
-	{
-		overlay_create(overlay, 3);
-	}
+	artwork_show(OVERLAY_TAG, (input_port_2_r(0) & 0x80) >> 7);
 
 	return 0;
 }

@@ -58,7 +58,7 @@ static void set_bg2_page( int data ){
 
 /* hang-on's accel/brake are really both analog controls, but I've added them
 as digital as well to see what works better */
-//#define HANGON_DIGITAL_CONTROLS
+#define HANGON_DIGITAL_CONTROLS
 
 static READ16_HANDLER( ho_io_x_r ){ return input_port_0_r( offset ); }
 #ifdef HANGON_DIGITAL_CONTROLS

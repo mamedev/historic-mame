@@ -91,16 +91,6 @@ data8_t *generic_nvram;
 
 /***************************************************************************
 
-	Prototypes
-
-***************************************************************************/
-
-static int rom_load_new(const struct RomModule *romp);
-
-
-
-/***************************************************************************
-
 	Functions
 
 ***************************************************************************/
@@ -514,59 +504,6 @@ void nvram_handler_generic_1fill(void *file, int read_or_write)
 
 
 
-/*-------------------------------------------------
-	set_visible_area - adjusts the visible portion
-	of the bitmap area dynamically
--------------------------------------------------*/
-
-void set_visible_area(int min_x,int max_x,int min_y,int max_y)
-{
-	Machine->visible_area.min_x = min_x;
-	Machine->visible_area.max_x = max_x;
-	Machine->visible_area.min_y = min_y;
-	Machine->visible_area.max_y = max_y;
-
-	/* vector games always use the whole bitmap */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		min_x = 0;
-		max_x = Machine->scrbitmap->width - 1;
-		min_y = 0;
-		max_y = Machine->scrbitmap->height - 1;
-	}
-	else
-	{
-		int temp;
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			temp = min_x; min_x = min_y; min_y = temp;
-			temp = max_x; max_x = max_y; max_y = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			temp = Machine->scrbitmap->width - min_x - 1;
-			min_x = Machine->scrbitmap->width - max_x - 1;
-			max_x = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			temp = Machine->scrbitmap->height - min_y - 1;
-			min_y = Machine->scrbitmap->height - max_y - 1;
-			max_y = temp;
-		}
-	}
-
-	osd_set_visible_area(min_x,max_x,min_y,max_y);
-
-	Machine->absolute_visible_area.min_x = min_x;
-	Machine->absolute_visible_area.max_x = max_x;
-	Machine->absolute_visible_area.min_y = min_y;
-	Machine->absolute_visible_area.max_y = max_y;
-}
-
-
-
 /***************************************************************************
 
 	Bitmap allocation/freeing code
@@ -816,7 +753,7 @@ void end_resource_tracking(void)
 	the given filename
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds)
 {
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		png_write_bitmap(fp,bitmap);
@@ -825,20 +762,21 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
 		struct mame_bitmap *copy;
 		int sizex, sizey, scalex, scaley;
 
-		sizex = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
-		sizey = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
+		sizex = bounds->max_x - bounds->min_x + 1;
+		sizey = bounds->max_y - bounds->min_y + 1;
 
 		scalex = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_2_1) ? 2 : 1;
 		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
 
 		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
-
 		if (copy)
 		{
+			struct rectangle temprect = *bounds;
 			int x,y,sx,sy;
 
-			sx = Machine->absolute_visible_area.min_x;
-			sy = Machine->absolute_visible_area.min_y;
+			orient_rect(&temprect, bitmap);
+			sx = temprect.min_x;
+			sy = temprect.min_y;
 			if (Machine->orientation & ORIENTATION_SWAP_XY)
 			{
 				int t;
@@ -892,7 +830,7 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
 	save_screen_snapshot - save a screen snapshot
 -------------------------------------------------*/
 
-void save_screen_snapshot(struct mame_bitmap *bitmap)
+void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds)
 {
 	char name[20];
 	void *fp;
@@ -911,7 +849,7 @@ void save_screen_snapshot(struct mame_bitmap *bitmap)
 
 	if ((fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_SCREENSHOT, 1)) != NULL)
 	{
-		save_screen_snapshot_as(fp,bitmap);
+		save_screen_snapshot_as(fp,bitmap,bounds);
 		osd_fclose(fp);
 	}
 }
@@ -1598,21 +1536,11 @@ fatalerror:
 
 
 /*-------------------------------------------------
-	readroms - load all the ROMs for this machine
--------------------------------------------------*/
-
-int readroms(void)
-{
-	return rom_load_new(Machine->gamedrv->rom);
-}
-
-
-/*-------------------------------------------------
-	rom_load_new - new, more flexible ROM
+	rom_load - new, more flexible ROM
 	loading system
 -------------------------------------------------*/
 
-int rom_load_new(const struct RomModule *romp)
+int rom_load(const struct RomModule *romp)
 {
 	const struct RomModule *regionlist[REGION_MAX];
 	const struct RomModule *region;

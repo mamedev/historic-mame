@@ -12,6 +12,7 @@ struct sys16_sprite_attributes {
 	UINT8 pitch;
 	int zoomx, zoomy;
 	int x,y, screen_height;	/* in screen coordinates */
+	int shadow_pen;
 };
 
 extern int (*sys16_spritesystem)(
@@ -28,6 +29,8 @@ extern int sys16_sprite_hangon( struct sys16_sprite_attributes *sprite, const UI
 extern int sys16_sprite_sharrier( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_outrun( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_aburner( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
+
+#define TRANSPARENT_SHADOWS
 
 #ifdef TRANSPARENT_SHADOWS
 #define NumOfShadowColors 32

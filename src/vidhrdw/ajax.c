@@ -101,20 +101,20 @@ VIDEO_UPDATE( ajax )
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
-	K052109_tilemap_draw(bitmap,cliprect,2,0,1);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[2],0,1);
 	if (ajax_priority)
 	{
 		/* basic layer order is B, zoom, A, F */
 		K051316_zoom_draw_0(bitmap,cliprect,0,4);
-		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,2);
 	}
 	else
 	{
 		/* basic layer order is B, A, zoom, F */
-		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
+		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,2);
 		K051316_zoom_draw_0(bitmap,cliprect,0,4);
 	}
-	K052109_tilemap_draw(bitmap,cliprect,0,0,8);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,8);
 
 	K051960_sprites_draw(bitmap,cliprect,-1,-1);
 }

@@ -3668,10 +3668,10 @@ INPUT_PORTS_START( metalb )
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "70k and every 150k" )
-	PORT_DIPSETTING(    0x0c, "80k 150k 240k 400k" )
-	PORT_DIPSETTING(    0x00, "80k 170k 290k 410k" )
-	PORT_DIPSETTING(    0x08, "100k and every 200k" )
+	PORT_DIPSETTING(    0x04, "80k and every 160k" )
+	PORT_DIPSETTING(    0x0c, "70k and every 150k" )
+	PORT_DIPSETTING(    0x00, "100k and every 200k" )
+	PORT_DIPSETTING(    0x08, "50k and every 120k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
@@ -3719,10 +3719,10 @@ INPUT_PORTS_START( metalbj )
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "70k and every 150k" )
-	PORT_DIPSETTING(    0x0c, "80k 150k 240k 400k" )
-	PORT_DIPSETTING(    0x00, "80k 170k 290k 410k" )
-	PORT_DIPSETTING(    0x08, "100k and every 200k" )
+	PORT_DIPSETTING(    0x04, "80k and every 160k" )
+	PORT_DIPSETTING(    0x0c, "70k and every 150k" )
+	PORT_DIPSETTING(    0x00, "100k and every 200k" )
+	PORT_DIPSETTING(    0x08, "50k and every 120k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
@@ -4763,7 +4763,7 @@ static MACHINE_DRIVER_START( taito_f2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
@@ -4993,7 +4993,7 @@ static MACHINE_DRIVER_START( yuyugogo )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(yuyugogo_readmem,yuyugogo_writemem)
-	
+
 	MDRV_MACHINE_INIT(qcrayon)
 
 	/* video hardware */
@@ -5009,7 +5009,7 @@ static MACHINE_DRIVER_START( ninjak )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(ninjak_readmem,ninjak_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_ninjak)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5022,7 +5022,7 @@ static MACHINE_DRIVER_START( solfigtr )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(solfigtr_readmem,solfigtr_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_solfigtr)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5035,7 +5035,7 @@ static MACHINE_DRIVER_START( qzquest )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(qzquest_readmem,qzquest_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
 MACHINE_DRIVER_END
@@ -5047,7 +5047,7 @@ static MACHINE_DRIVER_START( pulirula )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(pulirula_readmem,pulirula_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
 	MDRV_VIDEO_START(taitof2_pulirula)
@@ -5061,7 +5061,7 @@ static MACHINE_DRIVER_START( metalb )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(metalb_readmem,metalb_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192)
@@ -5076,7 +5076,7 @@ static MACHINE_DRIVER_START( qzchikyu )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(qzchikyu_readmem,qzchikyu_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_qzchikyu)
 	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed_qzchikyu)
@@ -5089,7 +5089,7 @@ static MACHINE_DRIVER_START( yesnoj )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(yesnoj_readmem,yesnoj_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(yuyugogo_gfxdecodeinfo)
 	MDRV_VIDEO_START(taitof2_yesnoj)
@@ -5103,7 +5103,7 @@ static MACHINE_DRIVER_START( deadconx )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(deadconx_readmem,deadconx_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
 	MDRV_VIDEO_START(taitof2_deadconx)
@@ -5117,7 +5117,7 @@ static MACHINE_DRIVER_START( deadconj )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(deadconx_readmem,deadconx_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
 	MDRV_VIDEO_START(taitof2_deadconj)
@@ -5131,7 +5131,7 @@ static MACHINE_DRIVER_START( dinorex )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(dinorex_readmem,dinorex_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_dinorex)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5144,7 +5144,7 @@ static MACHINE_DRIVER_START( qjinsei )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(qjinsei_readmem,qjinsei_writemem)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_quiz)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5157,9 +5157,9 @@ static MACHINE_DRIVER_START( qcrayon )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(qcrayon_readmem,qcrayon_writemem)
-	
+
 	MDRV_MACHINE_INIT(qcrayon)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_quiz)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5172,9 +5172,9 @@ static MACHINE_DRIVER_START( qcrayon2 )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(qcrayon2_readmem,qcrayon2_writemem)
-	
+
 	MDRV_MACHINE_INIT(qcrayon)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_quiz)
 	MDRV_VIDEO_UPDATE(taitof2_pri)
@@ -5187,7 +5187,7 @@ static MACHINE_DRIVER_START( driftout )
 	MDRV_IMPORT_FROM(taito_f2)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(driftout_readmem,driftout_writemem)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
 	MDRV_VIDEO_START(taitof2_driftout)
