@@ -592,12 +592,12 @@ ROM_START( blockade )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       blockade_rom_init()                           */
-    ROM_LOAD( "316-04.u2", 0x1000, 0x0400, 0xa93833e9 )
-    ROM_LOAD( "316-03.u3", 0x1400, 0x0400, 0x85960d3b )
+    ROM_LOAD( "316-04.u2", 0x1000, 0x0400, CRC(a93833e9) SHA1(e29e7b29900f8305effa700a53806a12bf9d37bd) )
+    ROM_LOAD( "316-03.u3", 0x1400, 0x0400, CRC(85960d3b) SHA1(aabfe8f9c26126299d6c07a31ef1aac5300deff5) )
 
     ROM_REGION( 0x200, REGION_GFX1, ROMREGION_DISPOSE )
-    ROM_LOAD( "316-02.u29", 0x0000, 0x0100, 0x409f610f )
-    ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x41a00b28 )
+    ROM_LOAD( "316-02.u29", 0x0000, 0x0100, CRC(409f610f) SHA1(0c2253f4b72d8aa395f87cc0abe07f0b46fa538b) )
+    ROM_LOAD( "316-01.u43", 0x0100, 0x0100, CRC(41a00b28) SHA1(2d0a90aac9d10a1ded240e5202fdf9cd7f70c4a7) )
 ROM_END
 
 ROM_START( comotion )
@@ -606,14 +606,14 @@ ROM_START( comotion )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "316-07.u2", 0x1000, 0x0400, 0x5b9bd054 )
-    ROM_LOAD( "316-08.u3", 0x1400, 0x0400, 0x1a856042 )
-    ROM_LOAD( "316-09.u4", 0x1800, 0x0400, 0x2590f87c )
-    ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, 0xfb49a69b )
+    ROM_LOAD( "316-07.u2", 0x1000, 0x0400, CRC(5b9bd054) SHA1(324b844788945e7bc82d096d6d375e79e3e1a634) )
+    ROM_LOAD( "316-08.u3", 0x1400, 0x0400, CRC(1a856042) SHA1(91bdc260e8c88ce2b6ac05bfba043ed611bc30de) )
+    ROM_LOAD( "316-09.u4", 0x1800, 0x0400, CRC(2590f87c) SHA1(95a7af04b610d79fb3f6d74dda322e66164b9484) )
+    ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, CRC(fb49a69b) SHA1(4009c3256a86508d981c1f77b65e6bff1face1e7) )
 
     ROM_REGION( 0x200, REGION_GFX1, ROMREGION_DISPOSE )
-    ROM_LOAD( "316-06.u43", 0x0000, 0x0100, 0x8f071297 )  /* Note: these are reversed */
-    ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x53fb8821 )
+    ROM_LOAD( "316-06.u43", 0x0000, 0x0100, CRC(8f071297) SHA1(811471c87b77b4b9ab056cf0c0743fc2616b754c) )  /* Note: these are reversed */
+    ROM_LOAD( "316-05.u29", 0x0100, 0x0100, CRC(53fb8821) SHA1(0a499aa4cf15f7ebea155aacd914de8851544215) )
 ROM_END
 
 ROM_START( blasto )
@@ -622,14 +622,14 @@ ROM_START( blasto )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "blasto.u2", 0x1000, 0x0400, 0xec99d043 )
-    ROM_LOAD( "blasto.u3", 0x1400, 0x0400, 0xbe333415 )
-    ROM_LOAD( "blasto.u4", 0x1800, 0x0400, 0x1c889993 )
-    ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, 0xefb640cb )
+    ROM_LOAD( "blasto.u2", 0x1000, 0x0400, CRC(ec99d043) SHA1(10650e54bf55f3ace5c199215c2fce211916d3b7) )
+    ROM_LOAD( "blasto.u3", 0x1400, 0x0400, CRC(be333415) SHA1(386cab720f0c2da16b9ec84f67ccebf23406c58d) )
+    ROM_LOAD( "blasto.u4", 0x1800, 0x0400, CRC(1c889993) SHA1(e23c72d075cf3d209081bca5a953c33c8ae042ea) )
+    ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, CRC(efb640cb) SHA1(2dff5b249f876d7d13cc6dfad652ce7e5af10370) )
 
     ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
-    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0x4dd69499 )
-    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0x104051a4 )
+    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, CRC(4dd69499) SHA1(34f097477a297bf5f986804e5967c92f9292be29) )
+    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, CRC(104051a4) SHA1(cae6b9d48e3eda5ba12ff5d9835ce2733e90f774) )
 ROM_END
 
 ROM_START( hustle )
@@ -638,14 +638,14 @@ ROM_START( hustle )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "3160016.u2", 0x1000, 0x0400, 0xd983de7c )
-    ROM_LOAD( "3160017.u3", 0x1400, 0x0400, 0xedec9cb9 )
-    ROM_LOAD( "3160018.u4", 0x1800, 0x0400, 0xf599b9c0 )
-    ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, 0x7794bc7e )
+    ROM_LOAD( "3160016.u2", 0x1000, 0x0400, CRC(d983de7c) SHA1(af6e0ea78449bfba4fe8affd724d7b0eb3d38706) )
+    ROM_LOAD( "3160017.u3", 0x1400, 0x0400, CRC(edec9cb9) SHA1(548cc7b0a15a1c977b7ef4a99ff88101893f661a) )
+    ROM_LOAD( "3160018.u4", 0x1800, 0x0400, CRC(f599b9c0) SHA1(c55ed33ac51b9cfbb2fe4321bbb1e0a16694f065) )
+    ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, CRC(7794bc7e) SHA1(b3d577291dea0e096b2ee56b0ef612f41b2e859c) )
 
     ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
-    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0x541d2c67 )
-    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0xb5083128 )
+    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, CRC(541d2c67) SHA1(abdb918f302352693870b0a50eabaf95acf1cf63) )
+    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, CRC(b5083128) SHA1(d7e8242e9d12d09f3d69c08e373ede2bdd4deba9) )
 ROM_END
 
 ROM_START( mineswpr )
@@ -654,12 +654,12 @@ ROM_START( mineswpr )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       blockade_rom_init()                           */
-    ROM_LOAD( "mineswee.h0p", 0x1000, 0x0400, 0x5850a4ba )
-    ROM_LOAD( "mineswee.l0p", 0x1400, 0x0400, 0x05961379 )
+    ROM_LOAD( "mineswee.h0p", 0x1000, 0x0400, CRC(5850a4ba) SHA1(9f097d31428f4494573187049c53fbed2075ff32) )
+    ROM_LOAD( "mineswee.l0p", 0x1400, 0x0400, CRC(05961379) SHA1(3d59341be8a663e8c54c1556442c992a6eb886ab) )
 
     ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
-    ROM_LOAD( "mineswee.ums", 0x0000, 0x0200, 0x0e1c5c37 )
-    ROM_LOAD( "mineswee.uls", 0x0200, 0x0200, 0x3a4f66e1 )
+    ROM_LOAD( "mineswee.ums", 0x0000, 0x0200, CRC(0e1c5c37) SHA1(d4d56bd63307e387771c48304724dfc1ea1306d9) )
+    ROM_LOAD( "mineswee.uls", 0x0200, 0x0200, CRC(3a4f66e1) SHA1(bd7f6c51d568a79fb06414b2a6ef245d0d983c3e) )
 ROM_END
 
 GAMEX( 1976, blockade, 0, blockade, blockade, blockade, ROT0, "Gremlin", "Blockade", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

@@ -333,42 +333,42 @@ MACHINE_DRIVER_END
 
 ROM_START( spiders )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
-	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
-	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
-	ROM_LOAD( "sp-ic71",      0xf000, 0x1000, 0xa9539b18 )
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, CRC(6a2578f6) SHA1(ddfe4fb2ccc925df7ae97821f8681b32e47630b4) )
+	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, CRC(d69b2f21) SHA1(ea2b07d19bd50c3b57da8fd8e13b8ab0e8ca3084) )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, CRC(464125da) SHA1(94e9edd52e8bd72bbb5dc91b0aa11955e940799c) )
+	ROM_LOAD( "sp-ic71",      0xf000, 0x1000, CRC(a9539b18) SHA1(2d02343a78a4a65e5a1798552cd015f16ad5423a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
-	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, CRC(944d761e) SHA1(23b1f9234e0de678e96d1a6876d8d0a341150385) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )     /* 64k graphics block used at runtime */
-	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
-	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
-	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
-	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
-	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
-	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
-	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, CRC(b6731baa) SHA1(b551030df417b40f4a8488fc82a8b5809d3d32f6) )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, CRC(baec64e7) SHA1(beb45e2e6270607c14cdf964c08fe320ce8236a0) )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, CRC(a40a5517) SHA1(3f524c7dbbfe8aad7860d15c38d2702732895681) )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, CRC(3ca08053) SHA1(20c5709d9650c426b91aed5318a9ab0a10009f17) )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, CRC(07ea073c) SHA1(2e57831092730db5fbdb97c2d78d8842868906f4) )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, CRC(41b344b4) SHA1(c0eac1e332da1eada062059ae742b666051da76c) )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, CRC(4d37da5a) SHA1(37567d19596506385e9dcc7a7c0cf65120189ae0) )
 ROM_END
 
 ROM_START( spiders2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
-	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
-	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
-	ROM_LOAD( "sp4.bin",      0xf000, 0x1000, 0xf3d126bb )
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, CRC(6a2578f6) SHA1(ddfe4fb2ccc925df7ae97821f8681b32e47630b4) )
+	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, CRC(cf71d12b) SHA1(369e91f637e8cd898354ddee04e24d4894968f79) )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, CRC(464125da) SHA1(94e9edd52e8bd72bbb5dc91b0aa11955e940799c) )
+	ROM_LOAD( "sp4.bin",      0xf000, 0x1000, CRC(f3d126bb) SHA1(ecc9156a7da661fa7543d7656aa7da77274e0842) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
-	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, CRC(944d761e) SHA1(23b1f9234e0de678e96d1a6876d8d0a341150385) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )     /* 64k graphics block used at runtime */
-	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
-	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
-	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
-	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
-	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
-	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
-	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, CRC(b6731baa) SHA1(b551030df417b40f4a8488fc82a8b5809d3d32f6) )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, CRC(baec64e7) SHA1(beb45e2e6270607c14cdf964c08fe320ce8236a0) )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, CRC(a40a5517) SHA1(3f524c7dbbfe8aad7860d15c38d2702732895681) )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, CRC(3ca08053) SHA1(20c5709d9650c426b91aed5318a9ab0a10009f17) )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, CRC(07ea073c) SHA1(2e57831092730db5fbdb97c2d78d8842868906f4) )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, CRC(41b344b4) SHA1(c0eac1e332da1eada062059ae742b666051da76c) )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, CRC(4d37da5a) SHA1(37567d19596506385e9dcc7a7c0cf65120189ae0) )
 ROM_END
 
 

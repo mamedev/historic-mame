@@ -21,6 +21,7 @@
 #include "driver.h"
 #include "window.h"
 #include "winddraw.h"
+#include "wind3d.h"
 #include "video.h"
 #include "blit.h"
 #include "mamedbg.h"
@@ -70,9 +71,12 @@ extern UINT8 win_trying_to_quit;
 // command line config
 int	win_window_mode;
 int	win_wait_vsync;
-int	win_use_ddraw;
 int	win_triple_buffer;
-int	win_hw_stretch;
+int	win_use_ddraw;
+int	win_use_d3d;
+int	win_dd_hw_stretch;
+int	win_d3d_filter;
+int win_d3d_tex_manage;
 int	win_gfx_width;
 int	win_gfx_height;
 int win_gfx_depth;
@@ -121,6 +125,11 @@ int win_physical_height;
 //============================================================
 //	LOCAL VARIABLES
 //============================================================
+
+// config
+static int win_use_directx;
+#define USE_DDRAW 1
+#define USE_D3D 2
 
 // DIB bitmap data
 static UINT8 video_dib_info_data[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
@@ -506,16 +515,33 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	// copy that same data into the debug DIB info
 	memcpy(debug_dib_info_data, video_dib_info_data, sizeof(debug_dib_info_data));
 
-	// finish off by trying to initialize DirectDraw
-	if (win_use_ddraw)
+	// Determine which DirectX components to use
+	if (win_use_d3d) {
+		win_use_directx = USE_D3D;
+	}
+	else if (win_use_ddraw)
 	{
-		result = win_ddraw_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
+		win_use_directx = USE_DDRAW;
+	}
+	
+	// finish off by trying to initialize DirectX	
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			result = win_d3d_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
+		}
+		else
+		{
+			result = win_ddraw_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
+		}
+		
 		if (result)
 			return result;
 	}
 
 	// determine the aspect ratio: hardware stretch case
-	if (win_hw_stretch && win_use_ddraw)
+	if (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch))
 	{
 		aspect_ratio = aspect;
 	}
@@ -640,8 +666,20 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 	}
 
 	// if we have a blit surface, use that
-	if (win_use_ddraw && win_ddraw_draw(bitmap, bounds, vector_dirty_pixels, update))
-		return;
+	
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			if (win_d3d_draw(bitmap, bounds, vector_dirty_pixels, update))
+				return;
+		}
+		else
+		{
+			if (win_ddraw_draw(bitmap, bounds, vector_dirty_pixels, update))
+				return;
+		}
+	}
 
 	// draw to the window with a DIB
 	dib_draw_window(dc, bitmap, bounds, vector_dirty_pixels, update);
@@ -763,7 +801,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	RECT rectcopy = *rect;
 
 	// adjust if hardware stretching
-	if (win_use_ddraw && win_hw_stretch)
+	if (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch))
 		adjusted_ratio *= win_aspect_ratio_adjust;
 
 	// determine the minimum rect
@@ -897,7 +935,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 	win_visible_height = win_visible_rect.bottom - win_visible_rect.top;
 
 	// if we're not using hardware stretching, recompute the aspect ratio
-	if (!win_hw_stretch || !win_use_ddraw)
+	if (win_use_directx != USE_D3D && (win_use_directx != USE_DDRAW || !win_dd_hw_stretch))
 	{
 		aspect_ratio = (double)win_visible_width / (double)win_visible_height;
 		if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
@@ -938,7 +976,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 		}
 
 		// kludge to fix full screen mode for the non-ddraw case
-		if (!win_use_ddraw && !win_window_mode)
+		if (!win_use_directx && !win_window_mode)
 		{
 			win_window_mode = 1;
 			win_toggle_full_screen();
@@ -995,7 +1033,7 @@ void win_toggle_maximize(void)
 		win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT);
 
 		// if we're not stretching, compute the multipliers
-		if (!win_hw_stretch || !win_use_ddraw)
+		if (win_use_directx != USE_D3D && (win_use_directx != USE_DDRAW || !win_dd_hw_stretch))
 		{
 			int xmult, ymult;
 
@@ -1030,8 +1068,17 @@ void win_toggle_maximize(void)
 void win_toggle_full_screen(void)
 {
 	// rip down DirectDraw
-	if (win_use_ddraw)
-		win_ddraw_kill();
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			win_d3d_kill();
+		}
+		else
+		{
+			win_ddraw_kill();
+		}
+	}
 
 	// hide the window
 	ShowWindow(win_video_window, SW_HIDE);
@@ -1088,9 +1135,19 @@ void win_toggle_full_screen(void)
 		ShowWindow(win_debug_window, SW_SHOW);
 
 	// reinit
-	if (win_use_ddraw)
-		if (win_ddraw_init(0, 0, 0, 0, NULL))
-			exit(1);
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			if (win_d3d_init(0, 0, 0, 0, NULL))
+				exit(1);
+		}
+		else
+		{
+			if (win_ddraw_init(0, 0, 0, 0, NULL))
+				exit(1);
+		}
+	}
 
 	// make sure the window is properly readjusted
 	win_adjust_window();
@@ -1207,8 +1264,17 @@ int win_process_events(void)
 void win_wait_for_vsync(void)
 {
 	// if we have DirectDraw, we can use that
-	if (win_use_ddraw)
-		win_ddraw_wait_vsync();
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			win_d3d_wait_vsync();
+		}
+		else
+		{
+			win_ddraw_wait_vsync();
+		}
+	}
 }
 
 

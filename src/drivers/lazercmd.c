@@ -773,44 +773,44 @@ MACHINE_DRIVER_END
 
 ROM_START( lazercmd )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "lc.e5",        0x0000, 0x0400, 0x56dc7a40 )
-	ROM_LOAD( "lc.e6",        0x0400, 0x0400, 0xb1ef0aa2 )
-	ROM_LOAD( "lc.e7",        0x0800, 0x0400, 0x8e6ffc97 )
-	ROM_LOAD( "lc.f5",        0x1000, 0x0400, 0xfc5b38a4 )
-	ROM_LOAD( "lc.f6",        0x1400, 0x0400, 0x26eaee21 )
-	ROM_LOAD( "lc.f7",        0x1800, 0x0400, 0x9ec3534d )
+	ROM_LOAD( "lc.e5",        0x0000, 0x0400, CRC(56dc7a40) SHA1(1324d5d6a44d7314723a0b5745d89f8e27f49d25) )
+	ROM_LOAD( "lc.e6",        0x0400, 0x0400, CRC(b1ef0aa2) SHA1(3edeaa4d4f4e18536066898284d430a1ac00512e) )
+	ROM_LOAD( "lc.e7",        0x0800, 0x0400, CRC(8e6ffc97) SHA1(d5243ce88585db91573b6586d3d47d13b5b473c8) )
+	ROM_LOAD( "lc.f5",        0x1000, 0x0400, CRC(fc5b38a4) SHA1(bff670d7b78c6b9324d2bf4b2d8a4f9dbfe82158) )
+	ROM_LOAD( "lc.f6",        0x1400, 0x0400, CRC(26eaee21) SHA1(9c0a4a22abb0b0466378f067ef52a45f86cc4369) )
+	ROM_LOAD( "lc.f7",        0x1800, 0x0400, CRC(9ec3534d) SHA1(98f15c5828ad2743bf205f71b8e69abd4db78a58) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "lc.b8",        0x0a00, 0x0200, 0x6d708edd )
+	ROM_LOAD( "lc.b8",        0x0a00, 0x0200, CRC(6d708edd) SHA1(85a45a292eb7bca288b06a118658bf754f828a92) )
 ROM_END
 
 ROM_START( medlanes )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "medlanes.2a", 0x0000, 0x0400, 0x9c77566a )
-	ROM_LOAD( "medlanes.2b", 0x0400, 0x0400, 0x7841b1a9 )
-	ROM_LOAD( "medlanes.2c", 0x0800, 0x0400, 0xa359b5b8 )
-	ROM_LOAD( "medlanes.1a", 0x1000, 0x0400, 0x0d57c596 )
-	ROM_LOAD( "medlanes.1b", 0x1400, 0x0400, 0x1d451630 )
-	ROM_LOAD( "medlanes.3a", 0x4000, 0x0400, 0x22bc56a6 )
-	ROM_LOAD( "medlanes.3b", 0x4400, 0x0400, 0x6616dbef )
-	ROM_LOAD( "medlanes.3c", 0x4800, 0x0400, 0xb3db0f3d )
-	ROM_LOAD( "medlanes.4a", 0x5000, 0x0400, 0x30d495e9 )
-	ROM_LOAD( "medlanes.4b", 0x5400, 0x0400, 0xa4abb5db )
+	ROM_LOAD( "medlanes.2a", 0x0000, 0x0400, CRC(9c77566a) SHA1(60e1820012b47da8b86d54f00b6f60d2d0123745) )
+	ROM_LOAD( "medlanes.2b", 0x0400, 0x0400, CRC(7841b1a9) SHA1(80621d30995dad42ae44c62494922ca8b75415cf) )
+	ROM_LOAD( "medlanes.2c", 0x0800, 0x0400, CRC(a359b5b8) SHA1(dbc3c286951c50e3465132fc0d6054f06026425d) )
+	ROM_LOAD( "medlanes.1a", 0x1000, 0x0400, CRC(0d57c596) SHA1(f3ce4802fc777c57f75fe691c93b7062903bdf06) )
+	ROM_LOAD( "medlanes.1b", 0x1400, 0x0400, CRC(1d451630) SHA1(bf9de3096e98685355c906ab7e1dc2628dce79d6) )
+	ROM_LOAD( "medlanes.3a", 0x4000, 0x0400, CRC(22bc56a6) SHA1(7444170c19274d9d889df61796e6f61af2361f3e) )
+	ROM_LOAD( "medlanes.3b", 0x4400, 0x0400, CRC(6616dbef) SHA1(9506177315883b7d87a9bfada712ddeea12fd446) )
+	ROM_LOAD( "medlanes.3c", 0x4800, 0x0400, CRC(b3db0f3d) SHA1(57c28a54f7a1f17df3a24b61dd0cf37f9f6bc7d8) )
+	ROM_LOAD( "medlanes.4a", 0x5000, 0x0400, CRC(30d495e9) SHA1(4f2414bf60ef91093bedf5e9ae16833e9e135aa7) )
+	ROM_LOAD( "medlanes.4b", 0x5400, 0x0400, CRC(a4abb5db) SHA1(a20da872b0f7d6b16b9551233af4269db9d1b55f) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "medlanes.8b", 0x0a00, 0x0200, 0x44e5de8f )
+	ROM_LOAD( "medlanes.8b", 0x0a00, 0x0200, CRC(44e5de8f) SHA1(fc797fa137f0c11a15caf9c0013aac668fd69a3c) )
 ROM_END
 
 
 ROM_START( bbonk )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "bbonk.e5",     0x0000, 0x0400, 0xd032baa0 )
-	ROM_LOAD( "bbonk.e6",     0x0400, 0x0400, 0x71df0e25 )
-	ROM_LOAD( "bbonk.f5",     0x1000, 0x0400, 0x748e8c7f )
-	ROM_LOAD( "bbonk.f6",     0x1400, 0x0400, 0x5ce183ed )
+	ROM_LOAD( "bbonk.e5",     0x0000, 0x0400, CRC(d032baa0) SHA1(09cba16f6a2b7d8a8c501db639bd5eeefb63dc0f) )
+	ROM_LOAD( "bbonk.e6",     0x0400, 0x0400, CRC(71df0e25) SHA1(c2f78490816add1296923861a89df15be9822fed) )
+	ROM_LOAD( "bbonk.f5",     0x1000, 0x0400, CRC(748e8c7f) SHA1(99e4e182ee41c246e31f656411a9f09d7b617f92) )
+	ROM_LOAD( "bbonk.f6",     0x1400, 0x0400, CRC(5ce183ed) SHA1(7c78dfa463a37605e8423104426af2f5906fae24) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbonk.b8",     0x0a00, 0x0200, 0x5ac34260 )
+	ROM_LOAD( "bbonk.b8",     0x0a00, 0x0200, CRC(5ac34260) SHA1(7c2b1e378d2b9fed27117f9adab1381507f5d554) )
 ROM_END
 
 

@@ -9,8 +9,7 @@
 	This hardware is capable of alpha-blending on sprites and playfields
 
 	Todo:  On Wizard Fire when you insert a coin and press start, the start
-	button being held seems to select the knight right away.  Check on
-	real board.
+	button being held seems to select the knight right away.  Emulation bug.
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
@@ -25,10 +24,13 @@
 
 VIDEO_START( rohga );
 VIDEO_START( wizdfire );
+VIDEO_START( nitrobal );
 VIDEO_UPDATE( rohga );
 VIDEO_UPDATE( wizdfire );
+VIDEO_UPDATE( nitrobal );
 
 static READ16_HANDLER( rohga_dip3_r ) { return readinputport(3); }
+static READ16_HANDLER( nitrobal_control_r ) { return readinputport(3); }
 
 /**********************************************************************************/
 
@@ -116,21 +118,21 @@ static MEMORY_WRITE16_START( wizdfire_writemem )
 	{ 0xfdc000, 0xfeffff, MWA16_RAM }, /* Main ram */
 MEMORY_END
 
-static READ16_HANDLER( hr ) { return rand()%0xffff; }
-static READ16_HANDLER( hr2 ) { return readinputport(0); }
-
 static MEMORY_READ16_START( nitrobal_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM },
+
 	{ 0x200000, 0x200fff, MRA16_RAM },
 	{ 0x202000, 0x202fff, MRA16_RAM },
+	{ 0x204000, 0x2047ff, MRA16_RAM },
+	{ 0x206000, 0x2067ff, MRA16_RAM },
 	{ 0x208000, 0x208fff, MRA16_RAM },
 	{ 0x20a000, 0x20afff, MRA16_RAM },
+	{ 0x20c000, 0x20c7ff, MRA16_RAM },
+	{ 0x20e000, 0x20e7ff, MRA16_RAM },
 
 	{ 0x300000, 0x30000f, MRA16_RAM },
 	{ 0x310000, 0x31000f, MRA16_RAM },
-
-	{ 0x320000, 0x320001, hr2 },
-	{ 0x320000, 0x32000f, hr },
+	{ 0x320000, 0x320001, nitrobal_control_r },
 
 	{ 0x340000, 0x3407ff, MRA16_RAM },
 	{ 0x360000, 0x3607ff, MRA16_RAM },
@@ -156,30 +158,23 @@ static MEMORY_WRITE16_START( nitrobal_writemem )
 	{ 0x300000, 0x30000f, MWA16_RAM, &deco16_pf12_control },
 	{ 0x310000, 0x31000f, MWA16_RAM, &deco16_pf34_control },
 
+	{ 0x320000, 0x320001, deco16_priority_w }, /* Priority */
+	{ 0x320002, 0x320003, MWA16_NOP }, /* ? */
+	{ 0x320004, 0x320005, MWA16_NOP }, /* VBL IRQ ack */
+
 	{ 0x340000, 0x3407ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x350000, 0x350001, buffer_spriteram16_w }, /* Triggers DMA for spriteram */
 	{ 0x360000, 0x3607ff, MWA16_RAM, &spriteram16_2, &spriteram_2_size },
 	{ 0x370000, 0x370001, buffer_spriteram16_2_w }, /* Triggers DMA for spriteram */
 
-	{ 0x380000, 0x381fff, deco16_nonbuffered_palette_w, &paletteram16 }, //check
+	{ 0x380000, 0x381fff, deco16_buffered_palette_w, &paletteram16 },
+	{ 0x390008, 0x390009, deco16_palette_dma_w },
 
 	{ 0xff4000, 0xff47ff, deco16_146_nitroball_prot_w, &deco16_prot_ram }, /* Protection writes */
 	{ 0xfec000, 0xffffff, MWA16_RAM }, /* Main ram */
 MEMORY_END
 
 /******************************************************************************/
-
-static WRITE_HANDLER( YM2151_w )
-{
-	switch (offset) {
-	case 0:
-		YM2151_register_port_0_w(0,data);
-		break;
-	case 1:
-		YM2151_data_port_0_w(0,data);
-		break;
-	}
-}
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -194,7 +189,7 @@ MEMORY_END
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, MWA_NOP }, /* Todo:  Check Nitroball/Rohga */
-	{ 0x110000, 0x110001, YM2151_w },
+	{ 0x110000, 0x110001, YM2151_word_0_w },
 	{ 0x120000, 0x120001, OKIM6295_data_0_w },
 	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
@@ -377,6 +372,86 @@ INPUT_PORTS_START( wizdfire )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( nitrobal )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START	/* Dip switch bank 1/2 */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START /* There's an unused(?) connector on the pcb which presumably is this */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE2 )
+INPUT_PORTS_END
+
 /**********************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -421,7 +496,20 @@ static struct GfxLayout tilelayout =
 	16,16,
 	RGN_FRAC(1,2),
 	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0,  },
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0 },
+	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
+		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8
+};
+
+static struct GfxLayout tilelayout_8bpp =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	8,
+	{ RGN_FRAC(3,4)+8, RGN_FRAC(3,4), RGN_FRAC(1,4)+8, RGN_FRAC(1,4), RGN_FRAC(2,4)+8, RGN_FRAC(2,4), 8, 0 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 		0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -448,6 +536,16 @@ static struct GfxDecodeInfo gfxdecodeinfo_wizdfire[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo gfxdecodeinfo_nitrobal[] =
+{
+	{ REGION_GFX1, 0, &charlayout,        0, 32 },	/* Gfx chip 1 as 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,        0, 32 },	/* Gfx chip 1 as 16x16 */
+	{ REGION_GFX3, 0, &tilelayout_8bpp, 512,  2 },  /* Gfx chip 2 as 16x16 */
+	{ REGION_GFX4, 0, &spritelayout,   1024, 32 },  /* Sprites 16x16 */
+	{ REGION_GFX5, 0, &spritelayout,   1536, 32 },
+	{ -1 } /* end of array */
+};
+
 /**********************************************************************************/
 
 static void sound_irq(int state)
@@ -465,7 +563,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ sound_irq },
 	{ sound_bankswitch_w }
 };
@@ -475,7 +573,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
 	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 75, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 95, 40 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 /**********************************************************************************/
@@ -558,11 +656,11 @@ static MACHINE_DRIVER_START( nitrobal )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_wizdfire)
+	MDRV_GFXDECODE(gfxdecodeinfo_nitrobal)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(rohga)
-	MDRV_VIDEO_UPDATE(rohga)
+	MDRV_VIDEO_START(nitrobal)
+	MDRV_VIDEO_UPDATE(nitrobal)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -574,252 +672,252 @@ MACHINE_DRIVER_END
 
 ROM_START( rohgau )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "ha00.2a",  0x000000, 0x40000, 0xd8d13052 )
-	ROM_LOAD16_BYTE( "ha03.2d",  0x000001, 0x40000, 0x5f683bbf )
-	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, 0x0fa440a6 )
-	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, 0xf8bc7f20 )
+	ROM_LOAD16_BYTE( "ha00.2a",  0x000000, 0x40000, CRC(d8d13052) )
+	ROM_LOAD16_BYTE( "ha03.2d",  0x000001, 0x40000, CRC(5f683bbf) )
+	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, CRC(0fa440a6) )
+	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, CRC(f8bc7f20) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  0xeb6608eb )
+	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  CRC(eb6608eb) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  0xfb8f8519 ) /* Encrypted tiles */
-	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  0xaa47c17f )
+	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  CRC(fb8f8519) ) /* Encrypted tiles */
+	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  CRC(aa47c17f) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  0xdbf4fbcc ) /* Encrypted tiles */
-	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  0xb1fac481 )
+	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  CRC(dbf4fbcc) ) /* Encrypted tiles */
+	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  CRC(b1fac481) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  0xca97a83f ) /* tiles 1 & 2 */
-	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  0x3f57d56f )
+	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  CRC(ca97a83f) ) /* tiles 1 & 2 */
+	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  CRC(3f57d56f) )
 
 	ROM_REGION( 0x600000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  0x307a2cd1 ) /* 6bpp sprites */
-	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  0xa1119a2d )
-	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  0x99f48f9f )
-	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  0xc3f12859 )
-	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  0xfc4dfd48 )
-	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  0x7d3b38bf )
+	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  CRC(307a2cd1) ) /* 6bpp sprites */
+	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  CRC(a1119a2d) )
+	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  CRC(99f48f9f) )
+	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  CRC(c3f12859) )
+	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) )
+	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  0x6f00b791 )
+	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  0x525b9461 )
+	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
-	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  0xb7a7baad )	/* ? */
+	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  CRC(b7a7baad) )	/* ? */
 ROM_END
 
 ROM_START( rohgah )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "jd00-2.2a", 0x000000, 0x40000, 0xec70646a )
-	ROM_LOAD16_BYTE( "jd03-2.2d", 0x000001, 0x40000, 0x11d4c9a2 )
-	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, 0x0fa440a6 )
-	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, 0xf8bc7f20 )
+	ROM_LOAD16_BYTE( "jd00-2.2a", 0x000000, 0x40000, CRC(ec70646a) )
+	ROM_LOAD16_BYTE( "jd03-2.2d", 0x000001, 0x40000, CRC(11d4c9a2) )
+	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, CRC(0fa440a6) )
+	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, CRC(f8bc7f20) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  0xeb6608eb )
+	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  CRC(eb6608eb) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  0xfb8f8519 ) /* Encrypted tiles */
-	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  0xaa47c17f )
+	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  CRC(fb8f8519) ) /* Encrypted tiles */
+	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  CRC(aa47c17f) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  0xdbf4fbcc ) /* Encrypted tiles */
-	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  0xb1fac481 )
+	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  CRC(dbf4fbcc) ) /* Encrypted tiles */
+	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  CRC(b1fac481) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  0xca97a83f ) /* tiles 1 & 2 */
-	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  0x3f57d56f )
+	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  CRC(ca97a83f) ) /* tiles 1 & 2 */
+	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  CRC(3f57d56f) )
 
 	ROM_REGION( 0x600000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  0x307a2cd1 ) /* 6bpp sprites */
-	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  0xa1119a2d )
-	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  0x99f48f9f )
-	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  0xc3f12859 )
-	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  0xfc4dfd48 )
-	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  0x7d3b38bf )
+	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  CRC(307a2cd1) ) /* 6bpp sprites */
+	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  CRC(a1119a2d) )
+	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  CRC(99f48f9f) )
+	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  CRC(c3f12859) )
+	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) )
+	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  0x6f00b791 )
+	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  0x525b9461 )
+	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
-	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  0xb7a7baad )	/* ? */
+	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  CRC(b7a7baad) )	/* ? */
 ROM_END
 
 ROM_START( rohga )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "jd00.bin",  0x000000, 0x40000, 0xe046c77a )
-	ROM_LOAD16_BYTE( "jd03.bin",  0x000001, 0x40000, 0x2c5120b8 )
-	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, 0x0fa440a6 )
-	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, 0xf8bc7f20 )
+	ROM_LOAD16_BYTE( "jd00.bin",  0x000000, 0x40000, CRC(e046c77a) )
+	ROM_LOAD16_BYTE( "jd03.bin",  0x000001, 0x40000, CRC(2c5120b8) )
+	ROM_LOAD16_BYTE( "mam00.8a",  0x100000, 0x80000, CRC(0fa440a6) )
+	ROM_LOAD16_BYTE( "mam07.8d",  0x100001, 0x80000, CRC(f8bc7f20) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  0xeb6608eb )
+	ROM_LOAD( "ha04.18p",  0x00000,  0x10000,  CRC(eb6608eb) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  0xfb8f8519 ) /* Encrypted tiles */
-	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  0xaa47c17f )
+	ROM_LOAD16_BYTE( "ha01.13a",  0x00000,  0x10000,  CRC(fb8f8519) ) /* Encrypted tiles */
+	ROM_LOAD16_BYTE( "ha02.14a",  0x00001,  0x10000,  CRC(aa47c17f) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  0xdbf4fbcc ) /* Encrypted tiles */
-	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  0xb1fac481 )
+	ROM_LOAD( "mam01.10a", 0x000000, 0x080000,  CRC(dbf4fbcc) ) /* Encrypted tiles */
+	ROM_LOAD( "mam02.11a", 0x080000, 0x080000,  CRC(b1fac481) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  0xca97a83f ) /* tiles 1 & 2 */
-	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  0x3f57d56f )
+	ROM_LOAD( "mam08.17d",  0x000000, 0x100000,  CRC(ca97a83f) ) /* tiles 1 & 2 */
+	ROM_LOAD( "mam09.18d",  0x100000, 0x100000,  CRC(3f57d56f) )
 
 	ROM_REGION( 0x600000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  0x307a2cd1 ) /* 6bpp sprites */
-	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  0xa1119a2d )
-	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  0x99f48f9f )
-	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  0xc3f12859 )
-	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  0xfc4dfd48 )
-	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  0x7d3b38bf )
+	ROM_LOAD( "mam05.19a", 0x000000, 0x100000,  CRC(307a2cd1) ) /* 6bpp sprites */
+	ROM_LOAD( "mam06.20a", 0x100000, 0x100000,  CRC(a1119a2d) )
+	ROM_LOAD( "mam10.19d", 0x200000, 0x100000,  CRC(99f48f9f) )
+	ROM_LOAD( "mam11.20d", 0x300000, 0x100000,  CRC(c3f12859) )
+	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) )
+	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  0x6f00b791 )
+	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  0x525b9461 )
+	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
-	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  0xb7a7baad )	/* ? */
+	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  CRC(b7a7baad) )	/* ? */
 ROM_END
 
 ROM_START( wizdfire )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "jf-01.3d",   0x000000, 0x20000, 0xbde42a41 )
-	ROM_LOAD16_BYTE( "jf-00.3a",   0x000001, 0x20000, 0xbca3c995 )
-	ROM_LOAD16_BYTE( "jf-03.5d",   0x040000, 0x20000, 0x5217d404 )
-	ROM_LOAD16_BYTE( "jf-02.5a",   0x040001, 0x20000, 0x36a1ce28 )
-	ROM_LOAD16_BYTE( "mas13",   0x080000, 0x80000, 0x7e5256ce )
-	ROM_LOAD16_BYTE( "mas12",   0x080001, 0x80000, 0x005bd499 )
+	ROM_LOAD16_BYTE( "jf-01.3d",   0x000000, 0x20000, CRC(bde42a41) SHA1(0379de9c4cdcce35554b5dc15241ed2c4f0d7611) )
+	ROM_LOAD16_BYTE( "jf-00.3a",   0x000001, 0x20000, CRC(bca3c995) SHA1(dbebc9e301c04ee82ca4b658d3ab870790d1605b) )
+	ROM_LOAD16_BYTE( "jf-03.5d",   0x040000, 0x20000, CRC(5217d404) SHA1(7cfcdb9e2c812bf0d4ac8306834242876ac47844) )
+	ROM_LOAD16_BYTE( "jf-02.5a",   0x040001, 0x20000, CRC(36a1ce28) SHA1(62d52d720c89022de97759777230c45c460d8fb6) )
+	ROM_LOAD16_BYTE( "mas13",   0x080000, 0x80000, CRC(7e5256ce) SHA1(431d78ad185ba0216097f131fb2583a1a067e4f0) )
+	ROM_LOAD16_BYTE( "mas12",   0x080001, 0x80000, CRC(005bd499) SHA1(862079022f97bd11f2f33677dce55bd3b144a81b) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "jf-06.20r",  0x00000,  0x10000,  0x79042546 )
+	ROM_LOAD( "jf-06.20r",  0x00000,  0x10000,  CRC(79042546) SHA1(231561df9415a289756a533709f610894fb9176e) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "jf-04.10d",  0x00000,  0x10000,  0x73cba800 ) /* Chars */
-	ROM_LOAD16_BYTE( "jf-05.12d",  0x00001,  0x10000,  0x22e2c49d )
+	ROM_LOAD16_BYTE( "jf-04.10d",  0x00000,  0x10000,  CRC(73cba800) SHA1(dd7612fe1482713fcee5960b7db158be872d7fda) ) /* Chars */
+	ROM_LOAD16_BYTE( "jf-05.12d",  0x00001,  0x10000,  CRC(22e2c49d) SHA1(06cc2d0476156d1f521c4c57621ce3922a23aa04) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mas00", 0x000000, 0x100000,  0x3d011034 ) /* Tiles */
-	ROM_LOAD( "mas01", 0x100000, 0x100000,  0x6d0c9d0b )
+	ROM_LOAD( "mas00", 0x000000, 0x100000,  CRC(3d011034) SHA1(167d6d088d51a41f196be104d795ffe24297c96a) ) /* Tiles */
+	ROM_LOAD( "mas01", 0x100000, 0x100000,  CRC(6d0c9d0b) SHA1(63e19dfd6451810637664b08e880aef139ca6ed5) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mas02", 0x000000, 0x080000,  0xaf00e620 )
-	ROM_LOAD( "mas03", 0x080000, 0x080000,  0x2fe61ea2 )
+	ROM_LOAD( "mas02", 0x000000, 0x080000,  CRC(af00e620) SHA1(43f4680b22ac6baf840274462c07fee68a2fbdfb) )
+	ROM_LOAD( "mas03", 0x080000, 0x080000,  CRC(2fe61ea2) SHA1(0909e6c689c3e10225d7c074bd654ff2ada96983) )
 
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "mas04", 0x000001, 0x100000,  0x1e56953b ) /* Sprites #1 */
-	ROM_LOAD16_BYTE( "mas05", 0x000000, 0x100000,  0x3826b8f8 )
-	ROM_LOAD16_BYTE( "mas06", 0x200001, 0x100000,  0x3b8bbd45 )
-	ROM_LOAD16_BYTE( "mas07", 0x200000, 0x100000,  0x31303769 )
+	ROM_LOAD16_BYTE( "mas04", 0x000001, 0x100000,  CRC(1e56953b) SHA1(0655ac7f3c5030a80c2d6bad5c3a79b2cb1ae4a2) ) /* Sprites #1 */
+	ROM_LOAD16_BYTE( "mas05", 0x000000, 0x100000,  CRC(3826b8f8) SHA1(d59197b4e0525b86876f9cce6fbf80caba976851) )
+	ROM_LOAD16_BYTE( "mas06", 0x200001, 0x100000,  CRC(3b8bbd45) SHA1(c9f9d4daf9c0cba5385af26f3762b29c291ff62b) )
+	ROM_LOAD16_BYTE( "mas07", 0x200000, 0x100000,  CRC(31303769) SHA1(509604be06ec8e0c1b56a81a8ffccdf0f79e9fd7) )
 
 	ROM_REGION( 0x100000, REGION_GFX5, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "mas08", 0x000001, 0x080000,  0xe224fb7a ) /* Sprites #2 */
-	ROM_LOAD16_BYTE( "mas09", 0x000000, 0x080000,  0x5f6deb41 )
+	ROM_LOAD16_BYTE( "mas08", 0x000001, 0x080000,  CRC(e224fb7a) SHA1(9aa92fb98bddff313db2077c4db102e94c7af09b) ) /* Sprites #2 */
+	ROM_LOAD16_BYTE( "mas09", 0x000000, 0x080000,  CRC(5f6deb41) SHA1(850d0e157b4355e866ec770a2012293b2c55648f) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "mas10",  0x00000,  0x80000,  0x6edc06a7 )
+	ROM_LOAD( "mas10",  0x00000,  0x80000,  CRC(6edc06a7) SHA1(8ab92cca9d4a5d4fed3d99737c6f023f3f606db2) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "mas11",  0x00000,  0x80000,  0xc2f0a4f2 )
+	ROM_LOAD( "mas11",  0x00000,  0x80000,  CRC(c2f0a4f2) SHA1(af71d649aea273c17d7fbcf8693e8a1d4b31f7f8) )
 
 	ROM_REGION( 1024, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7122h.16l", 0x00000,  0x400,  0x2bee57cc )	/* Priority (unused) */
+	ROM_LOAD( "mb7122h.16l", 0x00000,  0x400,  CRC(2bee57cc) SHA1(bc48670aa7c39f6ff7fae4c819eab22ed2db875b) )	/* Priority (unused) */
 ROM_END
 
 ROM_START( darksel2 )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "jb01-3",  0x000000, 0x20000, 0x82308c01 )
-	ROM_LOAD16_BYTE( "jb00-3",  0x000001, 0x20000, 0x1d38113a )
-	ROM_LOAD16_BYTE( "jf-03.5d",0x040000, 0x20000, 0x5217d404 )
-	ROM_LOAD16_BYTE( "jf-02.5a",0x040001, 0x20000, 0x36a1ce28 )
-	ROM_LOAD16_BYTE( "mas13",   0x080000, 0x80000, 0x7e5256ce )
-	ROM_LOAD16_BYTE( "mas12",   0x080001, 0x80000, 0x005bd499 )
+	ROM_LOAD16_BYTE( "jb01-3",  0x000000, 0x20000, CRC(82308c01) SHA1(aa0733e244f14f2c84b6929236771cbc99532bb2) )
+	ROM_LOAD16_BYTE( "jb00-3",  0x000001, 0x20000, CRC(1d38113a) SHA1(69dc5a4dbe9d9737df198240f3db6f2115e311a5) )
+	ROM_LOAD16_BYTE( "jf-03.5d",0x040000, 0x20000, CRC(5217d404) SHA1(7cfcdb9e2c812bf0d4ac8306834242876ac47844) )
+	ROM_LOAD16_BYTE( "jf-02.5a",0x040001, 0x20000, CRC(36a1ce28) SHA1(62d52d720c89022de97759777230c45c460d8fb6) )
+	ROM_LOAD16_BYTE( "mas13",   0x080000, 0x80000, CRC(7e5256ce) SHA1(431d78ad185ba0216097f131fb2583a1a067e4f0) )
+	ROM_LOAD16_BYTE( "mas12",   0x080001, 0x80000, CRC(005bd499) SHA1(862079022f97bd11f2f33677dce55bd3b144a81b) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "jb06",  0x00000,  0x10000,  0x2066a1dd )
+	ROM_LOAD( "jb06",  0x00000,  0x10000,  CRC(2066a1dd) SHA1(a0d136e90825fa9c089894a6852c634676d64579) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "jf-04.10d",  0x00000,  0x10000,  0x73cba800 ) /* Chars */
-	ROM_LOAD16_BYTE( "jf-05.12d",  0x00001,  0x10000,  0x22e2c49d )
+	ROM_LOAD16_BYTE( "jf-04.10d",  0x00000,  0x10000,  CRC(73cba800) SHA1(dd7612fe1482713fcee5960b7db158be872d7fda) ) /* Chars */
+	ROM_LOAD16_BYTE( "jf-05.12d",  0x00001,  0x10000,  CRC(22e2c49d) SHA1(06cc2d0476156d1f521c4c57621ce3922a23aa04) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mas00", 0x000000, 0x100000,  0x3d011034 ) /* Tiles */
-	ROM_LOAD( "mas01", 0x100000, 0x100000,  0x6d0c9d0b )
+	ROM_LOAD( "mas00", 0x000000, 0x100000,  CRC(3d011034) SHA1(167d6d088d51a41f196be104d795ffe24297c96a) ) /* Tiles */
+	ROM_LOAD( "mas01", 0x100000, 0x100000,  CRC(6d0c9d0b) SHA1(63e19dfd6451810637664b08e880aef139ca6ed5) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mas02", 0x000000, 0x080000,  0xaf00e620 )
-	ROM_LOAD( "mas03", 0x080000, 0x080000,  0x2fe61ea2 )
+	ROM_LOAD( "mas02", 0x000000, 0x080000,  CRC(af00e620) SHA1(43f4680b22ac6baf840274462c07fee68a2fbdfb) )
+	ROM_LOAD( "mas03", 0x080000, 0x080000,  CRC(2fe61ea2) SHA1(0909e6c689c3e10225d7c074bd654ff2ada96983) )
 
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "mas04", 0x000001, 0x100000,  0x1e56953b ) /* Sprites #1 */
-	ROM_LOAD16_BYTE( "mas05", 0x000000, 0x100000,  0x3826b8f8 )
-	ROM_LOAD16_BYTE( "mas06", 0x200001, 0x100000,  0x3b8bbd45 )
-	ROM_LOAD16_BYTE( "mas07", 0x200000, 0x100000,  0x31303769 )
+	ROM_LOAD16_BYTE( "mas04", 0x000001, 0x100000,  CRC(1e56953b) SHA1(0655ac7f3c5030a80c2d6bad5c3a79b2cb1ae4a2) ) /* Sprites #1 */
+	ROM_LOAD16_BYTE( "mas05", 0x000000, 0x100000,  CRC(3826b8f8) SHA1(d59197b4e0525b86876f9cce6fbf80caba976851) )
+	ROM_LOAD16_BYTE( "mas06", 0x200001, 0x100000,  CRC(3b8bbd45) SHA1(c9f9d4daf9c0cba5385af26f3762b29c291ff62b) )
+	ROM_LOAD16_BYTE( "mas07", 0x200000, 0x100000,  CRC(31303769) SHA1(509604be06ec8e0c1b56a81a8ffccdf0f79e9fd7) )
 
 	ROM_REGION( 0x100000, REGION_GFX5, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "mas08", 0x000001, 0x080000,  0xe224fb7a ) /* Sprites #2 */
-	ROM_LOAD16_BYTE( "mas09", 0x000000, 0x080000,  0x5f6deb41 )
+	ROM_LOAD16_BYTE( "mas08", 0x000001, 0x080000,  CRC(e224fb7a) SHA1(9aa92fb98bddff313db2077c4db102e94c7af09b) ) /* Sprites #2 */
+	ROM_LOAD16_BYTE( "mas09", 0x000000, 0x080000,  CRC(5f6deb41) SHA1(850d0e157b4355e866ec770a2012293b2c55648f) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "mas10",  0x00000,  0x80000,  0x6edc06a7 )
+	ROM_LOAD( "mas10",  0x00000,  0x80000,  CRC(6edc06a7) SHA1(8ab92cca9d4a5d4fed3d99737c6f023f3f606db2) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "mas11",  0x00000,  0x80000,  0xc2f0a4f2 )
+	ROM_LOAD( "mas11",  0x00000,  0x80000,  CRC(c2f0a4f2) SHA1(af71d649aea273c17d7fbcf8693e8a1d4b31f7f8) )
 
 	ROM_REGION( 1024, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7122h.16l", 0x00000,  0x400,  0x2bee57cc )	/* Priority (unused) */
+	ROM_LOAD( "mb7122h.16l", 0x00000,  0x400,  CRC(2bee57cc) SHA1(bc48670aa7c39f6ff7fae4c819eab22ed2db875b) )	/* Priority (unused) */
 ROM_END
 
-ROM_START( nitrobal ) /* Todo - rename these roms to correct DE codes */
+ROM_START( nitrobal )
 	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "nitrobal.d3",   0x000000, 0x20000, 0x0414e409 )
-	ROM_LOAD16_BYTE( "nitrobal.b3",   0x000001, 0x20000, 0xdd9e2bcc )
-	ROM_LOAD16_BYTE( "nitrobal.d5",   0x040000, 0x20000, 0xea264ac5 )
-	ROM_LOAD16_BYTE( "nitrobal.b5",   0x040001, 0x20000, 0x74047997 )
-	ROM_LOAD16_BYTE( "nitrobal.d6",   0x080000, 0x40000, 0xb820fa20 )
-	ROM_LOAD16_BYTE( "nitrobal.b6",   0x080001, 0x40000, 0x1fd8995b )
+	ROM_LOAD16_BYTE( "jl01-4.d3",   0x000000, 0x20000, CRC(0414e409) SHA1(bc19e7d2d9e768ce4052511043867c0ef9b0b61b) )
+	ROM_LOAD16_BYTE( "jl00-4.b3",   0x000001, 0x20000, CRC(dd9e2bcc) SHA1(dede49a4fafcfa03f38ba6c1149c9f8b115fb306) )
+	ROM_LOAD16_BYTE( "jl03-4.d5",   0x040000, 0x20000, CRC(ea264ac5) SHA1(ccdb87bbdd9e38537dd290d237d76ec32559efa3) )
+	ROM_LOAD16_BYTE( "jl02-4.b5",   0x040001, 0x20000, CRC(74047997) SHA1(bfd2f24889250e06945bb4798b40a56f832a9b19) )
+	ROM_LOAD16_BYTE( "jl05-2.d6",   0x080000, 0x40000, CRC(b820fa20) SHA1(8509567cf988fe27552d37241b25b66a6e1a9c39) )
+	ROM_LOAD16_BYTE( "jl04-2.b6",   0x080001, 0x40000, CRC(1fd8995b) SHA1(75d77835500e4b7caca92ba634859d7a2ad9b84c) )
 	/* Two empty rom slots at d7, b7 */
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "nitrobal.r20",  0x00000,  0x10000,  0x93d93fe1 )
+	ROM_LOAD( "jl08.r20",  0x00000,  0x10000,  CRC(93d93fe1) SHA1(efc618724251d23a23b3019d475f7739a7e88751) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "nitrobal.d10",  0x00000,  0x10000,  0x91cf668e ) /* Chars */
-	ROM_LOAD16_BYTE( "nitrobal.d12",  0x00001,  0x10000,  0xe61d0e42 )
+	ROM_LOAD16_BYTE( "jl06.d10",  0x00000,  0x10000,  CRC(91cf668e) SHA1(fc153eaa09777f79369037a139470ad1118e8d7e) ) /* Chars */
+	ROM_LOAD16_BYTE( "jl07.d12",  0x00001,  0x10000,  CRC(e61d0e42) SHA1(80d6ada356c721b0be826554ec6731dbbc19e0ab) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nitrobal.b10", 0x00000, 0x80000,  0x34785d97 ) /* Tiles */
-	ROM_LOAD( "nitrobal.b12", 0x80000, 0x80000,  0x8b531b16 )
+	ROM_LOAD( "mav00.b10", 0x00000, 0x80000,  CRC(34785d97) SHA1(094f881cd699d1b9fd079778f20f8c9d83283e6e) ) /* Tiles */
+	ROM_LOAD( "mav01.b12", 0x80000, 0x80000,  CRC(8b531b16) SHA1(f734286f4510b2c09dc2d6d2b8c8da9dc4424287) )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "nitrobal.16e", 0x000000, 0x100000,  0xef6195f0 )
-	ROM_LOAD( "nitrobal.b16", 0x100000, 0x100000,  0x20723bf7 )
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) 
+	ROM_LOAD( "mav02.b16", 0x000000, 0x100000,  CRC(20723bf7) SHA1(b3491d98ff415701fec2b58d85f99c743d71b013) ) /* Tiles */
+	ROM_LOAD( "mav03.e16", 0x100000, 0x100000,  CRC(ef6195f0) SHA1(491bc030519c78b84396f7f8a21df9daf8acc140) )
 
 	ROM_REGION( 0x300000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "nitrobal.e19", 0x000000, 0x100000,  0xd92d769c ) /* Sprites #1 */
-	ROM_LOAD16_BYTE( "nitrobal.b19", 0x000001, 0x100000,  0x8ba48385 )
-	ROM_LOAD16_BYTE( "nitrobal.e20", 0x200000, 0x080000,  0x5fc10ccd )
-	ROM_LOAD16_BYTE( "nitrobal.b20", 0x200001, 0x080000,  0xae6201a5 )
+	ROM_LOAD16_BYTE( "mav05.e19", 0x000000, 0x100000,  CRC(d92d769c) SHA1(8012e7f2b9a7cbccde8da90025647443beb6c47c) ) /* Sprites #1 */
+	ROM_LOAD16_BYTE( "mav04.b19", 0x000001, 0x100000,  CRC(8ba48385) SHA1(926ae1e0e99b8e022b6798ceb29dd080cfc1bada) )
+	ROM_LOAD16_BYTE( "mav07.e20", 0x200000, 0x080000,  CRC(5fc10ccd) SHA1(7debcf223802d5c2ea3d29d39850c8756c863b31) )
+	ROM_LOAD16_BYTE( "mav06.b20", 0x200001, 0x080000,  CRC(ae6201a5) SHA1(c0ae87fa96d12377c5522cb8adfed03373ab3757) )
 
 	ROM_REGION( 0x80000, REGION_GFX5, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "nitrobal.e23", 0x000000, 0x040000,  0x1ce7b51a ) /* Sprites #2 */
-	ROM_LOAD16_BYTE( "nitrobal.b23", 0x000001, 0x040000,  0x64966576 )
+	ROM_LOAD16_BYTE( "mav09.e23", 0x000000, 0x040000,  CRC(1ce7b51a) SHA1(17ed8f34bf6d057e0504e72e95f448d5923aa82e) ) /* Sprites #2 */
+	ROM_LOAD16_BYTE( "mav08.b23", 0x000001, 0x040000,  CRC(64966576) SHA1(40c14c0f62eef0317abfb7192505e0337fb5cde5) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "nitrobal.r17",  0x00000,  0x80000,  0x8ad734b0 )
+	ROM_LOAD( "mav10.r17",  0x00000,  0x80000,  CRC(8ad734b0) SHA1(768b9f54bbf4b54591cafecb7a27960da919ce84) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
-	ROM_LOAD( "nitrobal.r19",  0x00000,  0x80000,  0xef513908 )
+	ROM_LOAD( "mav11.r19",  0x00000,  0x80000,  CRC(ef513908) SHA1(72db6c704071d7a784b3768c256fc51087e9e93c) )
 ROM_END
 
 /**********************************************************************************/
@@ -849,4 +947,4 @@ GAMEX(1991, rohgah,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East 
 GAMEX(1991, rohgau,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (US v1.0)", GAME_UNEMULATED_PROTECTION )
 GAME( 1992, wizdfire, 0,       wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Wizard Fire (US v1.1)" )
 GAME( 1992, darksel2, wizdfire,wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Dark Seal 2 (Japan v2.1)" )
-GAMEX(1992, nitrobal, 0,       nitrobal, rohga,    nitrobal, ROT270, "Data East Corporation", "Nitro Ball (US)", GAME_UNEMULATED_PROTECTION )
+GAME( 1992, nitrobal, 0,       nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Nitroball (US)" )

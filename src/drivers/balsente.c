@@ -1629,531 +1629,531 @@ MACHINE_DRIVER_END
 
 ROM_START( sentetst )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "sdiagef.bin",  0x2e000, 0x2000, 0x2a39fc53 )
+	ROM_LOAD( "sdiagef.bin",  0x2e000, 0x2000, CRC(2a39fc53) SHA1(04ea68bfad455cc928e57390eba5597c38bbab69) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",     0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "sdiaggr0.bin", 0x00000, 0x2000, 0x5e0ff62a )
+	ROM_LOAD( "sdiaggr0.bin", 0x00000, 0x2000, CRC(5e0ff62a) SHA1(3f0ebebb2f58530af7fac57a4780dfb37ef1ee1d) )
 ROM_END
 
 
 ROM_START( cshift )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "cs-ab0.bin", 0x10000, 0x2000, 0xd2069e75 )
-	ROM_LOAD( "cs-ab1.bin", 0x12000, 0x2000, 0x198f25a8 )
-	ROM_LOAD( "cs-ab2.bin", 0x14000, 0x2000, 0x2e2b2b82 )
-	ROM_LOAD( "cs-ab3.bin", 0x16000, 0x2000, 0xb97fc520 )
-	ROM_LOAD( "cs-ab4.bin", 0x18000, 0x2000, 0xb4f0d673 )
-	ROM_LOAD( "cs-ab5.bin", 0x1a000, 0x2000, 0xb1f8e589 )
-	ROM_LOAD( "cs-cd.bin",  0x2c000, 0x2000, 0xf555a0b2 )
-	ROM_LOAD( "cs-ef.bin",  0x2e000, 0x2000, 0x368b1ce3 )
+	ROM_LOAD( "cs-ab0.bin", 0x10000, 0x2000, CRC(d2069e75) SHA1(17d5719e6e1976cebb332932cf3e900a88136928) )
+	ROM_LOAD( "cs-ab1.bin", 0x12000, 0x2000, CRC(198f25a8) SHA1(5ca25fe57e94d8362896c903196e0080efd35ef5) )
+	ROM_LOAD( "cs-ab2.bin", 0x14000, 0x2000, CRC(2e2b2b82) SHA1(a540f3ff2a0a10b19aafe1528b7dcaeae9b7393d) )
+	ROM_LOAD( "cs-ab3.bin", 0x16000, 0x2000, CRC(b97fc520) SHA1(f45c5ec93eab1bfd1f9533df7ac624c2e99f6573) )
+	ROM_LOAD( "cs-ab4.bin", 0x18000, 0x2000, CRC(b4f0d673) SHA1(cb97dc8836c497fa03a862227340f8c351986a39) )
+	ROM_LOAD( "cs-ab5.bin", 0x1a000, 0x2000, CRC(b1f8e589) SHA1(d837beff063ed987571c5af6130f2c7d637d7c39) )
+	ROM_LOAD( "cs-cd.bin",  0x2c000, 0x2000, CRC(f555a0b2) SHA1(49668f8363fdcec4686ec80bf2e99003cd11e2c1) )
+	ROM_LOAD( "cs-ef.bin",  0x2e000, 0x2000, CRC(368b1ce3) SHA1(8003ef99adcb26feb42e1b0945b1185e438582b2) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",   0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "cs-gr0.bin", 0x00000, 0x2000, 0x67f9d3b3 )
-	ROM_LOAD( "cs-gr1.bin", 0x02000, 0x2000, 0x78973d50 )
-	ROM_LOAD( "cs-gr2.bin", 0x04000, 0x2000, 0x1784f939 )
-	ROM_LOAD( "cs-gr3.bin", 0x06000, 0x2000, 0xb43916a2 )
-	ROM_LOAD( "cs-gr4.bin", 0x08000, 0x2000, 0xa94cd35b )
+	ROM_LOAD( "cs-gr0.bin", 0x00000, 0x2000, CRC(67f9d3b3) SHA1(4f3f80e4272b20611206636b6ccb627087efd0c3) )
+	ROM_LOAD( "cs-gr1.bin", 0x02000, 0x2000, CRC(78973d50) SHA1(de7891ef47c277d733d9b4810d68621718644655) )
+	ROM_LOAD( "cs-gr2.bin", 0x04000, 0x2000, CRC(1784f939) SHA1(ff7f43451580e3b314c24b00a66765c0b395ddf6) )
+	ROM_LOAD( "cs-gr3.bin", 0x06000, 0x2000, CRC(b43916a2) SHA1(8d42fb6ae7cf8b2d94eb0c14e00bb115f8ef01b4) )
+	ROM_LOAD( "cs-gr4.bin", 0x08000, 0x2000, CRC(a94cd35b) SHA1(0ca0497a1b055ff1ae6b7bc36ae45749dff50caa) )
 ROM_END
 
 
 ROM_START( gghost )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ggh-ab0.bin", 0x10000, 0x2000, 0xed0fdeac )
-	ROM_LOAD( "ggh-ab1.bin", 0x12000, 0x2000, 0x5bfbae58 )
-	ROM_LOAD( "ggh-ab2.bin", 0x14000, 0x2000, 0xf0baf921 )
-	ROM_LOAD( "ggh-ab3.bin", 0x16000, 0x2000, 0xed0fdeac )
-	ROM_LOAD( "ggh-ab4.bin", 0x18000, 0x2000, 0x5bfbae58 )
-	ROM_LOAD( "ggh-ab5.bin", 0x1a000, 0x2000, 0xf0baf921 )
-	ROM_LOAD( "ggh-cd.bin",  0x2c000, 0x2000, 0xd3d75f84 )
-	ROM_LOAD( "ggh-ef.bin",  0x2e000, 0x2000, 0xa02b4243 )
+	ROM_LOAD( "ggh-ab0.bin", 0x10000, 0x2000, CRC(ed0fdeac) SHA1(294cee47c0541c58d4d766388c281ed30b8f5426) )
+	ROM_LOAD( "ggh-ab1.bin", 0x12000, 0x2000, CRC(5bfbae58) SHA1(65c795354223cd5e2474ad9e779b77f58ed5b896) )
+	ROM_LOAD( "ggh-ab2.bin", 0x14000, 0x2000, CRC(f0baf921) SHA1(4b7ee06838dcdb68ddec51f5eafab53ff3f25bfe) )
+	ROM_LOAD( "ggh-ab3.bin", 0x16000, 0x2000, CRC(ed0fdeac) SHA1(294cee47c0541c58d4d766388c281ed30b8f5426) )
+	ROM_LOAD( "ggh-ab4.bin", 0x18000, 0x2000, CRC(5bfbae58) SHA1(65c795354223cd5e2474ad9e779b77f58ed5b896) )
+	ROM_LOAD( "ggh-ab5.bin", 0x1a000, 0x2000, CRC(f0baf921) SHA1(4b7ee06838dcdb68ddec51f5eafab53ff3f25bfe) )
+	ROM_LOAD( "ggh-cd.bin",  0x2c000, 0x2000, CRC(d3d75f84) SHA1(f19f99ea05ad5b7e4b0485e80d7b6a329b8ef4d8) )
+	ROM_LOAD( "ggh-ef.bin",  0x2e000, 0x2000, CRC(a02b4243) SHA1(f242fc017c9ae1997409825c34e8f5c6e6a0615e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "ggh-gr0.bin", 0x00000, 0x2000, 0x03515526 )
-	ROM_LOAD( "ggh-gr1.bin", 0x02000, 0x2000, 0xb4293435 )
-	ROM_LOAD( "ggh-gr2.bin", 0x04000, 0x2000, 0xece0cb97 )
-	ROM_LOAD( "ggh-gr3.bin", 0x06000, 0x2000, 0xdd7e25d0 )
-	ROM_LOAD( "ggh-gr4.bin", 0x08000, 0x2000, 0xb4293435 )
-	ROM_LOAD( "ggh-gr5.bin", 0x0a000, 0x2000, 0xd3da0093 )
+	ROM_LOAD( "ggh-gr0.bin", 0x00000, 0x2000, CRC(03515526) SHA1(bceb7c8c3aa4c39b6cf1b976c5765c920399fe31) )
+	ROM_LOAD( "ggh-gr1.bin", 0x02000, 0x2000, CRC(b4293435) SHA1(5e2b96c19c4f5c63a5afa2de504d29fe64a4c908) )
+	ROM_LOAD( "ggh-gr2.bin", 0x04000, 0x2000, CRC(ece0cb97) SHA1(13bfb38de30992b9597c9d0f87f7b2a5c061ba51) )
+	ROM_LOAD( "ggh-gr3.bin", 0x06000, 0x2000, CRC(dd7e25d0) SHA1(cc6402835d1b46d160869ba1d1cad54f24d3fe86) )
+	ROM_LOAD( "ggh-gr4.bin", 0x08000, 0x2000, CRC(b4293435) SHA1(5e2b96c19c4f5c63a5afa2de504d29fe64a4c908) )
+	ROM_LOAD( "ggh-gr5.bin", 0x0a000, 0x2000, CRC(d3da0093) SHA1(7474901b089ea62abad0a2f657fd8c4a1be09bf0) )
 ROM_END
 
 
 ROM_START( hattrick )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xf25c1b99 )
-	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0xc1df3d1f )
-	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, 0xf6c41257 )
-	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, 0xfc44f36c )
-	ROM_LOAD( "rom-ef.u2a",  0x2e000, 0x2000, 0xd8f910fb )
+	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, CRC(f25c1b99) SHA1(43b2334be7cfb8091eea963e10547295362372d3) )
+	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, CRC(c1df3d1f) SHA1(754f537d12efe8891638fd11a2ee8a5b234fb079) )
+	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, CRC(f6c41257) SHA1(05f5e71d08241c559da3bfc286c76cbb22710586) )
+	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, CRC(fc44f36c) SHA1(227d0c93c579d743b615b1fa6da56128e8202e51) )
+	ROM_LOAD( "rom-ef.u2a",  0x2e000, 0x2000, CRC(d8f910fb) SHA1(b74a305dd848c7bf574e4b0aa32147b8d5c89e9e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x9f41baba )
-	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0x951f08c9 )
+	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, CRC(9f41baba) SHA1(fa817a8e4d2f7b86a2294132e3991f7b6d8cb11a) )
+	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, CRC(951f08c9) SHA1(059a575dd35cd8e822e12ac2606b47b6272bbb41) )
 ROM_END
 
 
 ROM_START( otwalls )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "otw-ab0.bin", 0x10000, 0x2000, 0x474441c7 )
-	ROM_LOAD( "otw-ab1.bin", 0x12000, 0x2000, 0x2e9e9411 )
-	ROM_LOAD( "otw-ab2.bin", 0x14000, 0x2000, 0xba092128 )
-	ROM_LOAD( "otw-ab3.bin", 0x16000, 0x2000, 0x74bc479d )
-	ROM_LOAD( "otw-ab4.bin", 0x18000, 0x2000, 0xf5f67619 )
-	ROM_LOAD( "otw-ab5.bin", 0x1a000, 0x2000, 0xf5f67619 )
-	ROM_LOAD( "otw-cd.bin",  0x2c000, 0x2000, 0x8e2d15ab )
-	ROM_LOAD( "otw-ef.bin",  0x2e000, 0x2000, 0x57eab299 )
+	ROM_LOAD( "otw-ab0.bin", 0x10000, 0x2000, CRC(474441c7) SHA1(16fb5be9f94e072d4f3003abcc9dcf6d7af2359a) )
+	ROM_LOAD( "otw-ab1.bin", 0x12000, 0x2000, CRC(2e9e9411) SHA1(7dfd8dafa34e4d22fa0c5e472e3e98a1c0969f43) )
+	ROM_LOAD( "otw-ab2.bin", 0x14000, 0x2000, CRC(ba092128) SHA1(a38305c3ea9c8bf3596c18829655049f9468166e) )
+	ROM_LOAD( "otw-ab3.bin", 0x16000, 0x2000, CRC(74bc479d) SHA1(905dab90aa11f3f4359185bb67d8c2bdc957516d) )
+	ROM_LOAD( "otw-ab4.bin", 0x18000, 0x2000, CRC(f5f67619) SHA1(e3eb1434dff987d27056ae0749046f32f280160b) )
+	ROM_LOAD( "otw-ab5.bin", 0x1a000, 0x2000, CRC(f5f67619) SHA1(e3eb1434dff987d27056ae0749046f32f280160b) )
+	ROM_LOAD( "otw-cd.bin",  0x2c000, 0x2000, CRC(8e2d15ab) SHA1(8043fdf637de7752e8d42554ebad2e155a6f5939) )
+	ROM_LOAD( "otw-ef.bin",  0x2e000, 0x2000, CRC(57eab299) SHA1(475d800c03d6b2786bd23861d61dc113b837a585) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "otw-gr0.bin", 0x00000, 0x2000, 0x210bad3c )
-	ROM_LOAD( "otw-gr1.bin", 0x02000, 0x2000, 0x13e6aaa5 )
-	ROM_LOAD( "otw-gr2.bin", 0x04000, 0x2000, 0x5cfefee5 )
-	ROM_LOAD( "otw-gr3.bin", 0x06000, 0x2000, 0x6b17e4a9 )
-	ROM_LOAD( "otw-gr4.bin", 0x08000, 0x2000, 0x15985c8c )
-	ROM_LOAD( "otw-gr5.bin", 0x0a000, 0x2000, 0x448f7e3c )
+	ROM_LOAD( "otw-gr0.bin", 0x00000, 0x2000, CRC(210bad3c) SHA1(703769c6a569b17f2ad18441da7de0237be4721e) )
+	ROM_LOAD( "otw-gr1.bin", 0x02000, 0x2000, CRC(13e6aaa5) SHA1(ac8b9d16d2159d4a578d8fa988b59c058c5efc88) )
+	ROM_LOAD( "otw-gr2.bin", 0x04000, 0x2000, CRC(5cfefee5) SHA1(9aa74f0e1116098f43a4f8b4957db8923ddaf780) )
+	ROM_LOAD( "otw-gr3.bin", 0x06000, 0x2000, CRC(6b17e4a9) SHA1(f9c57da863d613a456ee056569a87a9552ad3874) )
+	ROM_LOAD( "otw-gr4.bin", 0x08000, 0x2000, CRC(15985c8c) SHA1(94f21c348bfbe4db6d0cfa5b5e35d2df4b8f936d) )
+	ROM_LOAD( "otw-gr5.bin", 0x0a000, 0x2000, CRC(448f7e3c) SHA1(505724e90f17b05ccf0137dbed0d33e39db1d5ab) )
 ROM_END
 
 
 ROM_START( snakepit )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "spit-ab0.bin", 0x10000, 0x2000, 0x5aa86081 )
-	ROM_LOAD( "spit-ab1.bin", 0x12000, 0x2000, 0x588228b8 )
-	ROM_LOAD( "spit-ab2.bin", 0x14000, 0x2000, 0x60173ab6 )
-	ROM_LOAD( "spit-ab3.bin", 0x16000, 0x2000, 0x56cb51a8 )
-	ROM_LOAD( "spit-ab4.bin", 0x18000, 0x2000, 0x40ba61e0 )
-	ROM_LOAD( "spit-ab5.bin", 0x1a000, 0x2000, 0x2a1d9d8f )
-	ROM_LOAD( "spit-cd.bin",  0x2c000, 0x2000, 0x54095cbb )
-	ROM_LOAD( "spit-ef.bin",  0x2e000, 0x2000, 0x5f836a66 )
+	ROM_LOAD( "spit-ab0.bin", 0x10000, 0x2000, CRC(5aa86081) SHA1(e65e256661b13a0631398e115dd02fce281bafa4) )
+	ROM_LOAD( "spit-ab1.bin", 0x12000, 0x2000, CRC(588228b8) SHA1(b64032a4fd1f52179d38e2073380bba6ec321302) )
+	ROM_LOAD( "spit-ab2.bin", 0x14000, 0x2000, CRC(60173ab6) SHA1(45b27492023771a53ea5857592a2a113746a72b6) )
+	ROM_LOAD( "spit-ab3.bin", 0x16000, 0x2000, CRC(56cb51a8) SHA1(fceb2fbae91bbab0b25410072805449ef531f360) )
+	ROM_LOAD( "spit-ab4.bin", 0x18000, 0x2000, CRC(40ba61e0) SHA1(91b06d116633c5261f3aa97d4e65bd61bae3c0eb) )
+	ROM_LOAD( "spit-ab5.bin", 0x1a000, 0x2000, CRC(2a1d9d8f) SHA1(3364f4bc507576323560bf14fc99036c47d0297c) )
+	ROM_LOAD( "spit-cd.bin",  0x2c000, 0x2000, CRC(54095cbb) SHA1(a43b78b2876359a29ecb2f169c876a0026375ea2) )
+	ROM_LOAD( "spit-ef.bin",  0x2e000, 0x2000, CRC(5f836a66) SHA1(cc3c11003f9e49cac10c0296ab6d156e5677d0f8) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",     0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "spit-gr0.bin", 0x00000, 0x2000, 0xf77fd85d )
-	ROM_LOAD( "spit-gr1.bin", 0x02000, 0x2000, 0x3ad10334 )
-	ROM_LOAD( "spit-gr2.bin", 0x04000, 0x2000, 0x24887703 )
-	ROM_LOAD( "spit-gr3.bin", 0x06000, 0x2000, 0xc6703ec2 )
-	ROM_LOAD( "spit-gr4.bin", 0x08000, 0x2000, 0xb4293435 )
-	ROM_LOAD( "spit-gr5.bin", 0x0a000, 0x2000, 0xdc27c970 )
+	ROM_LOAD( "spit-gr0.bin", 0x00000, 0x2000, CRC(f77fd85d) SHA1(f8e69d1d0030412d6129a8ebfee40b3f1f189d8d) )
+	ROM_LOAD( "spit-gr1.bin", 0x02000, 0x2000, CRC(3ad10334) SHA1(1d82a7948fbee627c80a9e03ade90e57972a6a31) )
+	ROM_LOAD( "spit-gr2.bin", 0x04000, 0x2000, CRC(24887703) SHA1(089f077400c9a3e3f5b43e8aa60b41160e296d52) )
+	ROM_LOAD( "spit-gr3.bin", 0x06000, 0x2000, CRC(c6703ec2) SHA1(0f5d7c17ee508f8fea316b7f92cdd7cc174b155f) )
+	ROM_LOAD( "spit-gr4.bin", 0x08000, 0x2000, CRC(b4293435) SHA1(5e2b96c19c4f5c63a5afa2de504d29fe64a4c908) )
+	ROM_LOAD( "spit-gr5.bin", 0x0a000, 0x2000, CRC(dc27c970) SHA1(291ef10a8c330ef8e47622246b6301d2e5171df7) )
 ROM_END
 
 
 ROM_START( snakjack )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xda2dd119 )
-	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0x657ddf26 )
-	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, 0x15333dcf )
-	ROM_LOAD( "rom-ab3.u6a", 0x16000, 0x2000, 0x57671f6f )
-	ROM_LOAD( "rom-ab4.u5a", 0x18000, 0x2000, 0xc16c5dc0 )
-	ROM_LOAD( "rom-ab5.u4a", 0x1a000, 0x2000, 0xd7019747 )
-	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, 0x7b44ca4c )
-	ROM_LOAD( "rom-ef.u1a",  0x2e000, 0x2000, 0xf5309b38 )
+	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, CRC(da2dd119) SHA1(85ae452b137e69e051fa66648f295d180339794e) )
+	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, CRC(657ddf26) SHA1(48591a6b0c30d576f0e08dd54c95cbda76b5dfbd) )
+	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, CRC(15333dcf) SHA1(13546bd058a10513fe4cbe3a3fa268b7c38b5993) )
+	ROM_LOAD( "rom-ab3.u6a", 0x16000, 0x2000, CRC(57671f6f) SHA1(49e76e03d828fed28e7e0608985172af20084f7f) )
+	ROM_LOAD( "rom-ab4.u5a", 0x18000, 0x2000, CRC(c16c5dc0) SHA1(93e36758f4e5bb8dac29f9a2bc3ac5f9589e8c9a) )
+	ROM_LOAD( "rom-ab5.u4a", 0x1a000, 0x2000, CRC(d7019747) SHA1(c8b1a6ea463b5932bc9ed2c91faea2e2639d7934) )
+	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, CRC(7b44ca4c) SHA1(8697055da489fcf0244dc94fe5393418a8003bf7) )
+	ROM_LOAD( "rom-ef.u1a",  0x2e000, 0x2000, CRC(f5309b38) SHA1(864f759dc6822b548742140b7ea2ea2aba43beba) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x3e64b5d5 )
-	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0xb3b8baee )
-	ROM_LOAD( "rom-gr2.u7b", 0x04000, 0x2000, 0xe9d89dac )
-	ROM_LOAD( "rom-gr3.u6b", 0x06000, 0x2000, 0xb6602be8 )
-	ROM_LOAD( "rom-gr4.u5b", 0x08000, 0x2000, 0x3fbfa686 )
-	ROM_LOAD( "rom-gr5.u4b", 0x0a000, 0x2000, 0x345f94fb )
+	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, CRC(3e64b5d5) SHA1(ab681eabb4f8e5b946c288ffb8df0624c0473d82) )
+	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, CRC(b3b8baee) SHA1(b37638784a3903f2dcd698104da75b4ab59e8257) )
+	ROM_LOAD( "rom-gr2.u7b", 0x04000, 0x2000, CRC(e9d89dac) SHA1(570809ec5f8a64f280e13cbf801664cb548997e9) )
+	ROM_LOAD( "rom-gr3.u6b", 0x06000, 0x2000, CRC(b6602be8) SHA1(c5bc95e0116fb2cf86a694561dc2c21612ba4434) )
+	ROM_LOAD( "rom-gr4.u5b", 0x08000, 0x2000, CRC(3fbfa686) SHA1(6c137d177c7aa2701497ac3ac922fdb8cd9f52b3) )
+	ROM_LOAD( "rom-gr5.u4b", 0x0a000, 0x2000, CRC(345f94fb) SHA1(0af24f4e1a797efe5272f64b8a34483fe6002436) )
 ROM_END
 
 
 ROM_START( stocker )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "stkr-ab0.bin", 0x10000, 0x2000, 0x784a00ad )
-	ROM_LOAD( "stkr-ab1.bin", 0x12000, 0x2000, 0xcdae01dc )
-	ROM_LOAD( "stkr-ab2.bin", 0x14000, 0x2000, 0x18527d57 )
-	ROM_LOAD( "stkr-ab3.bin", 0x16000, 0x2000, 0x028f6c06 )
-	ROM_LOAD( "stkr-cd.bin",  0x2c000, 0x2000, 0x53dbc4e5 )
-	ROM_LOAD( "stkr-ef.bin",  0x2e000, 0x2000, 0xcdcf46bc )
+	ROM_LOAD( "stkr-ab0.bin", 0x10000, 0x2000, CRC(784a00ad) SHA1(33e76be44207bc24dbb9c2f04204df22ba5154ff) )
+	ROM_LOAD( "stkr-ab1.bin", 0x12000, 0x2000, CRC(cdae01dc) SHA1(7c2956acae639fd2f2cf061d1c32ae9edabe9270) )
+	ROM_LOAD( "stkr-ab2.bin", 0x14000, 0x2000, CRC(18527d57) SHA1(cbb85f9e0b6169f4c2e03dc54b4937043535fc42) )
+	ROM_LOAD( "stkr-ab3.bin", 0x16000, 0x2000, CRC(028f6c06) SHA1(f1d30efcd7e967b0390f441848bb655111fdde65) )
+	ROM_LOAD( "stkr-cd.bin",  0x2c000, 0x2000, CRC(53dbc4e5) SHA1(e389978b5472174681fa180c6a2edf49903a6514) )
+	ROM_LOAD( "stkr-ef.bin",  0x2e000, 0x2000, CRC(cdcf46bc) SHA1(8b1e801dab1efed002d484135264998d255dc041) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "stkr-gr0.bin", 0x00000, 0x2000, 0x76d5694c )
-	ROM_LOAD( "stkr-gr1.bin", 0x02000, 0x2000, 0x4a5cc00b )
-	ROM_LOAD( "stkr-gr2.bin", 0x04000, 0x2000, 0x70002382 )
-	ROM_LOAD( "stkr-gr3.bin", 0x06000, 0x2000, 0x68c862d8 )
+	ROM_LOAD( "stkr-gr0.bin", 0x00000, 0x2000, CRC(76d5694c) SHA1(e2b155fc7178886eb37a532d961b99b8c864397c) )
+	ROM_LOAD( "stkr-gr1.bin", 0x02000, 0x2000, CRC(4a5cc00b) SHA1(9ce46ed94e715a5997998aee6377baf2869ab3a6) )
+	ROM_LOAD( "stkr-gr2.bin", 0x04000, 0x2000, CRC(70002382) SHA1(c151ad3df2714a2f9f8b047894e7585ca16bd29e) )
+	ROM_LOAD( "stkr-gr3.bin", 0x06000, 0x2000, CRC(68c862d8) SHA1(302ce10e23d17af9aa7fa13d18c602656a262eaa) )
 ROM_END
 
 
 ROM_START( triviag1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "tpg1-ab0.bin", 0x10000, 0x2000, 0x79fd3ac3 )
-	ROM_LOAD( "tpg1-ab1.bin", 0x12000, 0x2000, 0x0ff677e9 )
-	ROM_LOAD( "tpg1-ab2.bin", 0x14000, 0x2000, 0x3b4d03e7 )
-	ROM_LOAD( "tpg1-ab3.bin", 0x16000, 0x2000, 0x2c6c0651 )
-	ROM_LOAD( "tpg1-ab4.bin", 0x18000, 0x2000, 0x397529e7 )
-	ROM_LOAD( "tpg1-ab5.bin", 0x1a000, 0x2000, 0x499773a4 )
-	ROM_LOAD( "tpg1-cd.bin",  0x2c000, 0x2000, 0x35c9b9c2 )
-	ROM_LOAD( "tpg1-ef.bin",  0x2e000, 0x2000, 0x64878342 )
+	ROM_LOAD( "tpg1-ab0.bin", 0x10000, 0x2000, CRC(79fd3ac3) SHA1(52db0ba445f9a953f6ceb43c3d173b73c71af192) )
+	ROM_LOAD( "tpg1-ab1.bin", 0x12000, 0x2000, CRC(0ff677e9) SHA1(14fdc1ee87893ea91eea40949aeac5381c569bdd) )
+	ROM_LOAD( "tpg1-ab2.bin", 0x14000, 0x2000, CRC(3b4d03e7) SHA1(b5bb541daf59b2a62b17a10afa37bfae50563393) )
+	ROM_LOAD( "tpg1-ab3.bin", 0x16000, 0x2000, CRC(2c6c0651) SHA1(9ff5dcc4a54df653ae43d503e153f4e48ea4735b) )
+	ROM_LOAD( "tpg1-ab4.bin", 0x18000, 0x2000, CRC(397529e7) SHA1(af1898dc35545981513ec251eed162b329709692) )
+	ROM_LOAD( "tpg1-ab5.bin", 0x1a000, 0x2000, CRC(499773a4) SHA1(c0c0ad2a63a9dbb7585cab7e21162bbc58fec0d8) )
+	ROM_LOAD( "tpg1-cd.bin",  0x2c000, 0x2000, CRC(35c9b9c2) SHA1(aac57022098656dac99bf9ceeaa2bf9a3d139986) )
+	ROM_LOAD( "tpg1-ef.bin",  0x2e000, 0x2000, CRC(64878342) SHA1(dd93d64b3fe351a9d2bd4c473ecefde58f0b0041) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "tpg1-gr0.bin", 0x00000, 0x2000, 0x20c9217a )
-	ROM_LOAD( "tpg1-gr1.bin", 0x02000, 0x2000, 0xd7f44504 )
-	ROM_LOAD( "tpg1-gr2.bin", 0x04000, 0x2000, 0x4e59a15d )
-	ROM_LOAD( "tpg1-gr3.bin", 0x06000, 0x2000, 0x323a8640 )
-	ROM_LOAD( "tpg1-gr4.bin", 0x08000, 0x2000, 0x673acf42 )
-	ROM_LOAD( "tpg1-gr5.bin", 0x0a000, 0x2000, 0x067bfd66 )
+	ROM_LOAD( "tpg1-gr0.bin", 0x00000, 0x2000, CRC(20c9217a) SHA1(79ef058633149da8d2835405954ac31c661bf660) )
+	ROM_LOAD( "tpg1-gr1.bin", 0x02000, 0x2000, CRC(d7f44504) SHA1(804dbc4c006b20bdb01bdf02754e0d98f6fbacbe) )
+	ROM_LOAD( "tpg1-gr2.bin", 0x04000, 0x2000, CRC(4e59a15d) SHA1(c584bae32e2e5d8b5a48c44a31272b4f9dadfcd1) )
+	ROM_LOAD( "tpg1-gr3.bin", 0x06000, 0x2000, CRC(323a8640) SHA1(7ec6f8f9bcfa5de442dce4f6e81e697da34dbab8) )
+	ROM_LOAD( "tpg1-gr4.bin", 0x08000, 0x2000, CRC(673acf42) SHA1(7b36a86441732ba14576f9c1dd14fe0da575d4bf) )
+	ROM_LOAD( "tpg1-gr5.bin", 0x0a000, 0x2000, CRC(067bfd66) SHA1(32f5973f2f0aed67c8f9b5886f52b9dc516a611e) )
 ROM_END
 
 
 ROM_START( triviag2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x4fca20c5 )
-	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x6cf2ddeb )
-	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xa7ff789c )
-	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0xcc5c68ef )
-	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xfc9c752a )
-	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x23b56fb8 )
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, CRC(4fca20c5) SHA1(595b32ff035036cafbf49d75aa170f39e9f52b38) )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, CRC(6cf2ddeb) SHA1(0d6667babd9ab70820cf165900d90003f0893be7) )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, CRC(a7ff789c) SHA1(a3421ae46dadd6f514cfc514ff07dfcca2cb1478) )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, CRC(cc5c68ef) SHA1(38713796e07f84c9a1b21d8c66f76e620132d77e) )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, CRC(fc9c752a) SHA1(239507fb5d75e86aca295978aab1dd4514d8d761) )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, CRC(23b56fb8) SHA1(9ac726de69e4b374886a3542829745f7477d7556) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.bin",  0x00000, 0x4000, 0x6829de8e )
-	ROM_LOAD( "gr23.bin",  0x04000, 0x4000, 0x89398700 )
-	ROM_LOAD( "gr45.bin",  0x08000, 0x4000, 0x1e870293 )
+	ROM_LOAD( "gr01.bin",  0x00000, 0x4000, CRC(6829de8e) SHA1(4ec494883ba358f2ac7ce8d5a623a2f34b5bc843) )
+	ROM_LOAD( "gr23.bin",  0x04000, 0x4000, CRC(89398700) SHA1(771ee04baa9a31d435a6234490105878713e7845) )
+	ROM_LOAD( "gr45.bin",  0x08000, 0x4000, CRC(1e870293) SHA1(32149c9c8047854f2b2ad8844c4bd00a8ded588e) )
 ROM_END
 
 
 ROM_START( triviasp )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "allsport.8a", 0x10000, 0x4000, 0x54b7ff31 )
-	ROM_LOAD( "allsport.7a", 0x14000, 0x4000, 0x59fae9d2 )
-	ROM_LOAD( "allsport.6a", 0x18000, 0x4000, 0x237b6b95 )
-	ROM_LOAD( "allsport.5a", 0x1c000, 0x4000, 0xb64d7f61 )
-	ROM_LOAD( "allsport.3a", 0x28000, 0x4000, 0xe45d09d6 )
-	ROM_LOAD( "allsport.1a", 0x2c000, 0x4000, 0x8bb3e831 )
+	ROM_LOAD( "allsport.8a", 0x10000, 0x4000, CRC(54b7ff31) SHA1(1bdf9c9eb1a0fb4c1013680372d289882abf4b47) )
+	ROM_LOAD( "allsport.7a", 0x14000, 0x4000, CRC(59fae9d2) SHA1(a555f0679c59bf7c9dad0ecb9656a2f8faf39902) )
+	ROM_LOAD( "allsport.6a", 0x18000, 0x4000, CRC(237b6b95) SHA1(9d2937c1ecea9d92775f380d40f465f68c44fe06) )
+	ROM_LOAD( "allsport.5a", 0x1c000, 0x4000, CRC(b64d7f61) SHA1(25a7034b18a1623209dc0d06bdb4490243d43261) )
+	ROM_LOAD( "allsport.3a", 0x28000, 0x4000, CRC(e45d09d6) SHA1(8bde18d25f8bd1056e42672d428473be23eab260) )
+	ROM_LOAD( "allsport.1a", 0x2c000, 0x4000, CRC(8bb3e831) SHA1(ecc8fb0f2143e3ea03bb52773cc0a81d4dcc742d) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",     0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.bin",    0x00000, 0x4000, 0x6829de8e )
-	ROM_LOAD( "gr23.bin",    0x04000, 0x4000, 0x89398700 )
-	ROM_LOAD( "allsport.3b", 0x08000, 0x4000, 0x7415a7fc )
+	ROM_LOAD( "gr01.bin",    0x00000, 0x4000, CRC(6829de8e) SHA1(4ec494883ba358f2ac7ce8d5a623a2f34b5bc843) )
+	ROM_LOAD( "gr23.bin",    0x04000, 0x4000, CRC(89398700) SHA1(771ee04baa9a31d435a6234490105878713e7845) )
+	ROM_LOAD( "allsport.3b", 0x08000, 0x4000, CRC(7415a7fc) SHA1(93d832434f359ce7b02aef276c89456b16438979) )
 ROM_END
 
 
 ROM_START( triviayp )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x97d35a85 )
-	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x2ff67c70 )
-	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0x511a0fab )
-	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0xdf99d00c )
-	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xac45809e )
-	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0xa008059f )
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, CRC(97d35a85) SHA1(3ee8400fc3a2bf8a2f6374ffc34a4d295ee13bab) )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, CRC(2ff67c70) SHA1(c45b5fde4ec979322c9e251e66183632552d35bd) )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, CRC(511a0fab) SHA1(a2fefe2b86028c7e8c15d6a737509b7dc30430cd) )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, CRC(df99d00c) SHA1(7eba6b85e2d9a06635e97d12123fd2a17368e6bc) )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, CRC(ac45809e) SHA1(1151c4e55f21a7e2eb8e163ac782b4449af84cdc) )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, CRC(a008059f) SHA1(45e4cfc259e801a189ec19fdc58135dbbbe130ea) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
-	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
-	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x1242033e )
+	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, CRC(6829de8e) SHA1(4ec494883ba358f2ac7ce8d5a623a2f34b5bc843) )
+	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, CRC(89398700) SHA1(771ee04baa9a31d435a6234490105878713e7845) )
+	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, CRC(1242033e) SHA1(1a3fe186bb261e2c7d9fbbb2a3103b39bf029b35) )
 ROM_END
 
 
 ROM_START( triviabb )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x1b7c439d )
-	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0xe4f1e704 )
-	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xdaa2d8bc )
-	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0x3622c4f1 )
-	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0x07fd88ff )
-	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x2d03f241 )
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, CRC(1b7c439d) SHA1(8b3020dcb375b2f2e5e975a8067df6504aa8691e) )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, CRC(e4f1e704) SHA1(e5135134b54e1e2e95c5bfe6e5f0e2dd280db69d) )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, CRC(daa2d8bc) SHA1(feae215877ba42ab33182dfd74083f1d48443d8c) )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, CRC(3622c4f1) SHA1(d180bb1c4a73d95c369cc507697421fb38a92d2c) )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, CRC(07fd88ff) SHA1(c3168ecf6562e09790c4f18cdd91c7a347223323) )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, CRC(2d03f241) SHA1(986ca6ea20c306e83ae88acc2d6837c7ed5fe351) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
-	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
-	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x92fb6fb1 )
+	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, CRC(6829de8e) SHA1(4ec494883ba358f2ac7ce8d5a623a2f34b5bc843) )
+	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, CRC(89398700) SHA1(771ee04baa9a31d435a6234490105878713e7845) )
+	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, CRC(92fb6fb1) SHA1(1a322bd3cfacdf82d4fcc4b4d47f78a701411919) )
 ROM_END
 
 
 ROM_START( gimeabrk )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x18cc53db )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x6bd4190a )
-	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x5dca4f33 )
-	ROM_LOAD( "cd6ef.uia", 0x2c000, 0x4000, 0x5e2b3510 )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, CRC(18cc53db) SHA1(3bb47c349b3ab7b81e3557e3b4877617fb549c9e) )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, CRC(6bd4190a) SHA1(b6562b3575dc8265c01719cfbcb554b69bc1b37f) )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, CRC(5dca4f33) SHA1(aa45d5a960491c85f332f22cffe61999fe3db826) )
+	ROM_LOAD( "cd6ef.uia", 0x2c000, 0x4000, CRC(5e2b3510) SHA1(e3501b9bd73bc724aee0436700625bd2af94f72d) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0xe3cdc476 )
-	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x0555d9c0 )
+	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, CRC(e3cdc476) SHA1(2f17c3f84767850d45192dfb507dd2716ecadc20) )
+	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, CRC(0555d9c0) SHA1(da0d1f207ad056b2d82a5ad6382372066883d161) )
 ROM_END
 
 
 ROM_START( minigolf )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x348f827f )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
-	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x925d76eb )
-	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x6a311c9a )
-	ROM_LOAD( "1a-ver2",   0x20000, 0x10000, 0x60b6cd58 )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, CRC(348f827f) SHA1(a013ef3068e14e0738bcfa4de26c0c2df4c0a7f6) )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, CRC(19a6ff47) SHA1(70b6da3b4186e5b9463f2ea0fefefad21ec80637) )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, CRC(925d76eb) SHA1(29d2d7b26d2e81817c4d135935dab70a5aa2d146) )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, CRC(6a311c9a) SHA1(b0409e5f4bd3bf898b8701561aac6dbbc28417bd) )
+	ROM_LOAD( "1a-ver2",   0x20000, 0x10000, CRC(60b6cd58) SHA1(f79bf2d1f6c4e63f666073c5ecb22604c1ab57d8) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0x8e24d594 )
-	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x3bf355ef )
-	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, 0x8eb14921 )
+	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, CRC(8e24d594) SHA1(d35329fb78f90ec478418917aa1ef06d0967e6f8) )
+	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, CRC(3bf355ef) SHA1(691df25b35b00e21ad09d17a21fe98a353aa3dda) )
+	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, CRC(8eb14921) SHA1(fda8b8f8e801360310f7cb1aa4c6aea1fa0a4b25) )
 ROM_END
 
 
 ROM_START( minigol2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x348f827f )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
-	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x925d76eb )
-	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x6a311c9a )
-	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x52279801 )
-	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0x34c64f4c )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, CRC(348f827f) SHA1(a013ef3068e14e0738bcfa4de26c0c2df4c0a7f6) )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, CRC(19a6ff47) SHA1(70b6da3b4186e5b9463f2ea0fefefad21ec80637) )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, CRC(925d76eb) SHA1(29d2d7b26d2e81817c4d135935dab70a5aa2d146) )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, CRC(6a311c9a) SHA1(b0409e5f4bd3bf898b8701561aac6dbbc28417bd) )
+	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, CRC(52279801) SHA1(d8de92c296d5c91db3bea7a0093260158961036e) )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, CRC(34c64f4c) SHA1(ce55f5f6ebddcacf20cb78fb738b5f569b531b61) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0x8e24d594 )
-	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x3bf355ef )
-	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, 0x8eb14921 )
+	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, CRC(8e24d594) SHA1(d35329fb78f90ec478418917aa1ef06d0967e6f8) )
+	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, CRC(3bf355ef) SHA1(691df25b35b00e21ad09d17a21fe98a353aa3dda) )
+	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, CRC(8eb14921) SHA1(fda8b8f8e801360310f7cb1aa4c6aea1fa0a4b25) )
 ROM_END
 
 
 ROM_START( toggle )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "tgle-ab0.bin", 0x10000, 0x2000, 0x8c7b7fad )
-	ROM_LOAD( "tgle-ab1.bin", 0x12000, 0x2000, 0x771e5434 )
-	ROM_LOAD( "tgle-ab2.bin", 0x14000, 0x2000, 0x9b4baa3f )
-	ROM_LOAD( "tgle-ab3.bin", 0x16000, 0x2000, 0x35308a41 )
-	ROM_LOAD( "tgle-ab4.bin", 0x18000, 0x2000, 0xbaf5617b )
-	ROM_LOAD( "tgle-ab5.bin", 0x1a000, 0x2000, 0x88077dad )
-	ROM_LOAD( "tgle-cd.bin",  0x2c000, 0x2000, 0x0a2bb949 )
-	ROM_LOAD( "tgle-ef.bin",  0x2e000, 0x2000, 0x3ec10804 )
+	ROM_LOAD( "tgle-ab0.bin", 0x10000, 0x2000, CRC(8c7b7fad) SHA1(13eaf5b3727ff8b7ce2cfbab99541ca1e538aeba) )
+	ROM_LOAD( "tgle-ab1.bin", 0x12000, 0x2000, CRC(771e5434) SHA1(b1bcefc81054c81a22a91106c5bc99ef204cd009) )
+	ROM_LOAD( "tgle-ab2.bin", 0x14000, 0x2000, CRC(9b4baa3f) SHA1(5b0776d983ad40a0051939810bb854f014fea28b) )
+	ROM_LOAD( "tgle-ab3.bin", 0x16000, 0x2000, CRC(35308a41) SHA1(3846446b60897bfce8fcfd1561b5b74cdd19c36e) )
+	ROM_LOAD( "tgle-ab4.bin", 0x18000, 0x2000, CRC(baf5617b) SHA1(95c91fc81c975f522c1bd4f14bfb5f453801ffb6) )
+	ROM_LOAD( "tgle-ab5.bin", 0x1a000, 0x2000, CRC(88077dad) SHA1(51b36177a4bfbb62c91d87282bfc1ff791626d19) )
+	ROM_LOAD( "tgle-cd.bin",  0x2c000, 0x2000, CRC(0a2bb949) SHA1(350dc782fc21640794c6ecb502554cb693adbb7d) )
+	ROM_LOAD( "tgle-ef.bin",  0x2e000, 0x2000, CRC(3ec10804) SHA1(ae719081e8114ccc23c6b24c7fe904a11fbdd992) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "tgle-gr0.bin", 0x00000, 0x2000, 0x0e0e5d0e )
-	ROM_LOAD( "tgle-gr1.bin", 0x02000, 0x2000, 0x3b141ad2 )
+	ROM_LOAD( "tgle-gr0.bin", 0x00000, 0x2000, CRC(0e0e5d0e) SHA1(363858ce08767f8a9b8eaec56405377cdd74b178) )
+	ROM_LOAD( "tgle-gr1.bin", 0x02000, 0x2000, CRC(3b141ad2) SHA1(72430fd616adbc72d86a5f10672572a31bed0b5d) )
 ROM_END
 
 
 ROM_START( nametune )
 	ROM_REGION( 0x70000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "nttab01.bin",  0x10000, 0x4000, 0xf99054f1 )
+	ROM_LOAD( "nttab01.bin",  0x10000, 0x4000, CRC(f99054f1) SHA1(aaa3aae71f67be2df34b9682b1b4092a208fbf26) )
 	ROM_CONTINUE(             0x40000, 0x4000 )
-	ROM_LOAD( "nttab23.bin",  0x14000, 0x4000, 0xf2b8f7fa )
+	ROM_LOAD( "nttab23.bin",  0x14000, 0x4000, CRC(f2b8f7fa) SHA1(b9f81a29b031af31118b77e77fc29e59f2059109) )
 	ROM_CONTINUE(             0x44000, 0x4000 )
-	ROM_LOAD( "nttab45.bin",  0x18000, 0x4000, 0x89e1c769 )
+	ROM_LOAD( "nttab45.bin",  0x18000, 0x4000, CRC(89e1c769) SHA1(8e976182d99b93bb1cf6e306d134b66ba6fe6052) )
 	ROM_CONTINUE(             0x48000, 0x4000 )
-	ROM_LOAD( "nttab67.bin",  0x1c000, 0x4000, 0x7e5572a1 )
+	ROM_LOAD( "nttab67.bin",  0x1c000, 0x4000, CRC(7e5572a1) SHA1(d957a495ad4100b857e163d7399528f62e8a39a7) )
 	ROM_CONTINUE(             0x4c000, 0x4000 )
-	ROM_LOAD( "nttcd01.bin",  0x20000, 0x4000, 0xdb9d6154 )
+	ROM_LOAD( "nttcd01.bin",  0x20000, 0x4000, CRC(db9d6154) SHA1(8db17fda6c4113f5b791163fc9e289cf3f003a51) )
 	ROM_CONTINUE(             0x50000, 0x4000 )
-	ROM_LOAD( "nttcd23.bin",  0x24000, 0x4000, 0x9d2e458f )
+	ROM_LOAD( "nttcd23.bin",  0x24000, 0x4000, CRC(9d2e458f) SHA1(f08c2d7ba6be9745d13fc9dc7141ad101a8b747e) )
 	ROM_CONTINUE(             0x54000, 0x4000 )
-	ROM_LOAD( "nttcd45.bin",  0x28000, 0x4000, 0x9a4b87aa )
+	ROM_LOAD( "nttcd45.bin",  0x28000, 0x4000, CRC(9a4b87aa) SHA1(ca82ddd4d8d40b35ba21cb9333e182b8a2e7f95e) )
 	ROM_CONTINUE(             0x58000, 0x4000 )
-	ROM_LOAD( "nttcd6ef.bin", 0x2c000, 0x4000, 0x0459e6f8 )
+	ROM_LOAD( "nttcd6ef.bin", 0x2c000, 0x4000, CRC(0459e6f8) SHA1(7dbdbfa8f2e9e3956af926f5f782b8d3c3334099) )
 	ROM_CONTINUE(             0x5c000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "nttgr0.bin",  0x00000, 0x8000, 0x6b75bb4b )
+	ROM_LOAD( "nttgr0.bin",  0x00000, 0x8000, CRC(6b75bb4b) SHA1(e7131d112fb0b36985c5b6383700f55728a1c4fd) )
 ROM_END
 
 
 ROM_START( nstocker )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
-	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x27a728b5 )
-	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x2999cdf2 )
-	ROM_LOAD( "cd01.u4a",  0x20000, 0x4000, 0x75e9b51a )
-	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x0a32e0a5 )
-	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, 0x9bb292fe )
-	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xe77c1aea )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, CRC(a635f973) SHA1(edb12469818a3114fb97d21e11c63eb37678a07b) )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, CRC(223acbb2) SHA1(195ebd349722cce323616c81cc4e86f0a9c6fa13) )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, CRC(27a728b5) SHA1(c72634112a04d58a695fb43bf30f44e3f7ba7de2) )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, CRC(2999cdf2) SHA1(a64ae04f264ad286a87069cfb176e7511df08e78) )
+	ROM_LOAD( "cd01.u4a",  0x20000, 0x4000, CRC(75e9b51a) SHA1(dbe575d37836245746ea85ffe85e8e6665ec37ea) )
+	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, CRC(0a32e0a5) SHA1(dedbe08aed483bae27e1a607334e24cdfcb2f851) )
+	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, CRC(9bb292fe) SHA1(6fc7abcc110c2cf7399d11a478cfdadb3439b6ab) )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, CRC(e77c1aea) SHA1(9e2e595530cb15c634a6052c773ff5d998c0c828) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0xfd0c38be )
-	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x35d4433e )
-	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x734b858a )
-	ROM_LOAD( "gr67.u1c", 0x0c000, 0x4000, 0x3311f9c0 )
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, CRC(fd0c38be) SHA1(b9e12e76f44f2b2b3ca6a57c58f0cbb019b1971f) )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, CRC(35d4433e) SHA1(399d04c2a29d993f77d0d5c2d62915081d4a85dd) )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, CRC(734b858a) SHA1(71763789807021938b840a88af34aad7f4751298) )
+	ROM_LOAD( "gr67.u1c", 0x0c000, 0x4000, CRC(3311f9c0) SHA1(63b185c761b258113c31cc269ce0b1462bf37f40) )
 ROM_END
 
 
 ROM_START( sfootbal )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
-	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
-	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, 0x91ad42c5 )
-	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, 0xbf80bb1a )
+	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, CRC(2a69803f) SHA1(ca86c9d079fbebae4c93c889d98a8573facc05da) )
+	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, CRC(89f157c2) SHA1(59701b7770dce7ec01d0feb01d67450943e6cfbb) )
+	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, CRC(91ad42c5) SHA1(0b6fc3ed3a633c825809668d49f209c130f3e978) )
+	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, CRC(bf80bb1a) SHA1(2b70b36d946c36e3f354c7edfd3e34784ffce406) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "sfbgr01.bin", 0x00000, 0x4000, 0xe3108d35 )
-	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, 0x5c5af726 )
-	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, 0xe767251e )
-	ROM_LOAD( "sfbgr67.bin", 0x0c000, 0x4000, 0x42452a7a )
+	ROM_LOAD( "sfbgr01.bin", 0x00000, 0x4000, CRC(e3108d35) SHA1(05b7f1a1a18d7f72a3d3f6102cb8ab42421b7366) )
+	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, CRC(5c5af726) SHA1(04cdd476e6689d17273659fb1fe0ca642edbe5a8) )
+	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, CRC(e767251e) SHA1(3c05295317a673fb1de5924f27de276d2846d805) )
+	ROM_LOAD( "sfbgr67.bin", 0x0c000, 0x4000, CRC(42452a7a) SHA1(37479d6e9071ac775215a6815dbaf280b3c6a57f) )
 ROM_END
 
 
 ROM_START( spiker )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x2d53d023 )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x3be87edf )
-	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xf2c73ece )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, CRC(2d53d023) SHA1(01c1d2cd7d8be60c40527e9c1571b84388a39bd8) )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, CRC(3be87edf) SHA1(0d4f1ff501d5d865abc3906f6b232ec04586d3dc) )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, CRC(f2c73ece) SHA1(4fc108823102fd17c5b7d9be1a0c76667788ba1a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0x0caa6e3e )
-	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x970c81f6 )
-	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x90ddd737 )
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, CRC(0caa6e3e) SHA1(ce6765d44e444d24129ec99f04a41a866a32eee2) )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, CRC(970c81f6) SHA1(f22189e172a795d115597feb48ccbc04be3859b9) )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, CRC(90ddd737) SHA1(8e1dde2f42e9bf755dedeef218745d1fc54faac7) )
 ROM_END
 
 
 ROM_START( stompin )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x46f428c6 )
-	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x0e13132f )
-	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0x6ed26069 )
-	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0x7f63b516 )
-	ROM_LOAD( "cd23.bin",  0x24000, 0x4000, 0x52b29048 )
-	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0xb880961a )
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, CRC(46f428c6) SHA1(06c59d06ccc0bd7067e419f12781050ab4ac98c2) )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, CRC(0e13132f) SHA1(d572e5d170df99bb99db7d41ede881c24e5b8d1c) )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, CRC(6ed26069) SHA1(35f6b8cff54c35a1a0eeb9c23e446ade69d13375) )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, CRC(7f63b516) SHA1(4ffd9dd579c8c4574f2f039b30761e901ee6dd5c) )
+	ROM_LOAD( "cd23.bin",  0x24000, 0x4000, CRC(52b29048) SHA1(e0873137201ad9b2e87a17dd68046e88dbeeb5e1) )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, CRC(b880961a) SHA1(11700af516517b7176a840fd5a8fd5ed0fb9bd6e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0x14ffdd1e )
-	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x761abb80 )
-	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x0d2cf2e6 )
-	ROM_LOAD( "gr67.u2c", 0x0c000, 0x4000, 0x2bab2784 )
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, CRC(14ffdd1e) SHA1(4528548c07789f9dca2cabd2c64ea1ff8f36a99e) )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, CRC(761abb80) SHA1(a1278e93a4fa66cc4d347954dd45121120da568d) )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, CRC(0d2cf2e6) SHA1(beccb1342127e79a845c4b6b20f20052097ebb98) )
+	ROM_LOAD( "gr67.u2c", 0x0c000, 0x4000, CRC(2bab2784) SHA1(a4020fd8f5ca2fdb37efd37cbccf86cae0468eb0) )
 ROM_END
 
 
 ROM_START( rescraid )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab1.a10",   0x10000, 0x8000, 0x33a76b47 )
-	ROM_LOAD( "ab12.a12",  0x18000, 0x8000, 0x7c7a9f12 )
-	ROM_LOAD( "cd8.a16",   0x20000, 0x8000, 0x90917a43 )
-	ROM_LOAD( "cd12.a18",  0x28000, 0x8000, 0x0450e9d7 )
+	ROM_LOAD( "ab1.a10",   0x10000, 0x8000, CRC(33a76b47) SHA1(72cefb3ae7d0ecfc099f9d09a26533dd7ca7c4f2) )
+	ROM_LOAD( "ab12.a12",  0x18000, 0x8000, CRC(7c7a9f12) SHA1(2dbe1158d124ecd24aeb6e46079a8e08fda61208) )
+	ROM_LOAD( "cd8.a16",   0x20000, 0x8000, CRC(90917a43) SHA1(3abd68d0c147ed792ace41f701c04bc225efede4) )
+	ROM_LOAD( "cd12.a18",  0x28000, 0x8000, CRC(0450e9d7) SHA1(b5d0a79d1bac3596d241f80ac4e3e13c98d28709) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, 0xe0dfc133 )
-	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, 0x952ade30 )
+	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, CRC(e0dfc133) SHA1(0b120b4410098d8db26b5819043d4fe7c426b948) )
+	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, CRC(952ade30) SHA1(f065368f645616d6d84be469ba45a9afa8788eda) )
 ROM_END
 
 
 ROM_START( rescrdsa )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab1-sa.a10",   0x10000, 0x8000, 0xaa0a9f48 )
-	ROM_LOAD( "ab12-sa.a12",  0x18000, 0x8000, 0x16d4da86 )
-	ROM_LOAD( "cd8-sa.a16",   0x20000, 0x8000, 0x9dfb50c2 )
-	ROM_LOAD( "cd12-sa.a18",  0x28000, 0x8000, 0x18c62613 )
+	ROM_LOAD( "ab1-sa.a10",   0x10000, 0x8000, CRC(aa0a9f48) SHA1(b871573df0abdba20de78f655da846423191f0b4) )
+	ROM_LOAD( "ab12-sa.a12",  0x18000, 0x8000, CRC(16d4da86) SHA1(240cfe8c5c4c005da9b9f370a04ed32fc245ec64) )
+	ROM_LOAD( "cd8-sa.a16",   0x20000, 0x8000, CRC(9dfb50c2) SHA1(24280b48106cbcedeb6d7b10f951db906a123819) )
+	ROM_LOAD( "cd12-sa.a18",  0x28000, 0x8000, CRC(18c62613) SHA1(a55b4b948805bdd5d1e8c8ff803826a7bbfa383e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, 0xe0dfc133 )
-	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, 0x952ade30 )
+	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, CRC(e0dfc133) SHA1(0b120b4410098d8db26b5819043d4fe7c426b948) )
+	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, CRC(952ade30) SHA1(f065368f645616d6d84be469ba45a9afa8788eda) )
 ROM_END
 
 
 ROM_START( grudge )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "grudge.ab0", 0x10000, 0x8000, 0x260965ca )
-	ROM_LOAD( "grudge.ab4", 0x18000, 0x8000, 0xc6cd734d )
-	ROM_LOAD( "grudge.cd0", 0x20000, 0x8000, 0xe51db1f2 )
-	ROM_LOAD( "grudge.cd4", 0x28000, 0x8000, 0x6b60e47e )
+	ROM_LOAD( "grudge.ab0", 0x10000, 0x8000, CRC(260965ca) SHA1(79eb5dc6605974ece3d5564f10c4598204907398) )
+	ROM_LOAD( "grudge.ab4", 0x18000, 0x8000, CRC(c6cd734d) SHA1(076546569e9c8ff40f96bd2cac014bcabc53099d) )
+	ROM_LOAD( "grudge.cd0", 0x20000, 0x8000, CRC(e51db1f2) SHA1(57fc0f1df358dd6ea982dcbe9c3f79b3f072be53) )
+	ROM_LOAD( "grudge.cd4", 0x28000, 0x8000, CRC(6b60e47e) SHA1(5a399942d4ef9b7349fffd07c07092b667cf6247) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",   0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x8000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "grudge.gr0", 0x00000, 0x8000, 0xb9681f53 )
+	ROM_LOAD( "grudge.gr0", 0x00000, 0x8000, CRC(b9681f53) SHA1(bb0c516408f1769e018f0ec8707786d4d1e9ef7e) )
 ROM_END
 
 
 ROM_START( shrike )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "savgu35.bin", 0x10000, 0x2000, 0xdd2230a0 )
-	ROM_LOAD( "savgu20.bin", 0x12000, 0x2000, 0x3d140edc )
-	ROM_LOAD( "savgu34.bin", 0x14000, 0x2000, 0x779eca9d )
-	ROM_LOAD( "savgu19.bin", 0x16000, 0x2000, 0x9ec89a80 )
-	ROM_LOAD( "savgu33.bin", 0x18000, 0x2000, 0x20596f48 )
-	ROM_LOAD( "savgu18.bin", 0x1a000, 0x2000, 0x7abc3f14 )
-	ROM_LOAD( "savgu32.bin", 0x1c000, 0x2000, 0x807f0a3b )
-	ROM_LOAD( "savgu17.bin", 0x1e000, 0x2000, 0xe0dbf6ad )
-	ROM_LOAD( "savgu21.bin", 0x2c000, 0x2000, 0xc22b93e1 )
-	ROM_LOAD( "savgu36.bin", 0x2e000, 0x2000, 0x28431c4a )
+	ROM_LOAD( "savgu35.bin", 0x10000, 0x2000, CRC(dd2230a0) SHA1(72be0e07d76ee1f170ab457ae62db87111758697) )
+	ROM_LOAD( "savgu20.bin", 0x12000, 0x2000, CRC(3d140edc) SHA1(6c7e7dda7718e3f9644aad317da0b2277c2c1402) )
+	ROM_LOAD( "savgu34.bin", 0x14000, 0x2000, CRC(779eca9d) SHA1(6783a62885ed129f436471a1c4a93ad898eb7965) )
+	ROM_LOAD( "savgu19.bin", 0x16000, 0x2000, CRC(9ec89a80) SHA1(0a862d2a58adaf6726654a9a7b1b4b13e14d4d4b) )
+	ROM_LOAD( "savgu33.bin", 0x18000, 0x2000, CRC(20596f48) SHA1(11827b86d184231d3d4f82496a0bb9ac7ac874dc) )
+	ROM_LOAD( "savgu18.bin", 0x1a000, 0x2000, CRC(7abc3f14) SHA1(0a18be804927181c1bc86def595b22b3249fb6a0) )
+	ROM_LOAD( "savgu32.bin", 0x1c000, 0x2000, CRC(807f0a3b) SHA1(b2df2422751b32a25258134f571a5f874ebc3a09) )
+	ROM_LOAD( "savgu17.bin", 0x1e000, 0x2000, CRC(e0dbf6ad) SHA1(4618723116e2d83f9a775bb8b503faea995fda1b) )
+	ROM_LOAD( "savgu21.bin", 0x2c000, 0x2000, CRC(c22b93e1) SHA1(15d3925abb3e7e928925f5781f228d1bc0dfe31c) )
+	ROM_LOAD( "savgu36.bin", 0x2e000, 0x2000, CRC(28431c4a) SHA1(522df8224c559f51c36d2bc01c189b019fabc5eb) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
 
 	ROM_REGION( 0x4000, REGION_CPU3, 0 )		/* 16k for M68000 */
-	ROM_LOAD16_BYTE( "savgu22.bin", 0x00000, 0x2000, 0xc7787162 )
-	ROM_LOAD16_BYTE( "savgu24.bin", 0x00001, 0x2000, 0xa9105ca8 )
+	ROM_LOAD16_BYTE( "savgu22.bin", 0x00000, 0x2000, CRC(c7787162) SHA1(52d8d148206c6ceb9c28ba747b301121a7790802) )
+	ROM_LOAD16_BYTE( "savgu24.bin", 0x00001, 0x2000, CRC(a9105ca8) SHA1(1a94a052a4a8d221e1eafec0cd5b0ada6f1987f4) )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "savgu8.bin",  0x00000, 0x2000, 0x499a1d06 )
-	ROM_LOAD( "savgu7.bin",  0x02000, 0x2000, 0xce0607f9 )
-	ROM_LOAD( "savgu6.bin",  0x04000, 0x2000, 0x01d1b31e )
-	ROM_LOAD( "savgu5.bin",  0x06000, 0x2000, 0x8bc6d101 )
-	ROM_LOAD( "savgu4.bin",  0x08000, 0x2000, 0x72644753 )
-	ROM_LOAD( "savgu3.bin",  0x0a000, 0x2000, 0x606a9cfd )
-	ROM_LOAD( "savgu2.bin",  0x0c000, 0x2000, 0x69f600f6 )
-	ROM_LOAD( "savgu1.bin",  0x0e000, 0x2000, 0x303b8e7b )
-	ROM_LOAD( "savgu16.bin", 0x10000, 0x2000, 0xb8f60607 )
-	ROM_LOAD( "savgu15.bin", 0x12000, 0x2000, 0x6b332a5d )
-	ROM_LOAD( "savgu14.bin", 0x14000, 0x2000, 0x8d5117aa )
-	ROM_LOAD( "savgu13.bin", 0x16000, 0x2000, 0xd3ce645e )
-	ROM_LOAD( "savgu12.bin", 0x18000, 0x2000, 0xccdfedb1 )
-	ROM_LOAD( "savgu11.bin", 0x1a000, 0x2000, 0xdb11ff4c )
-	ROM_LOAD( "savgu10.bin", 0x1c000, 0x2000, 0x6f3d9aa1 )
+	ROM_LOAD( "savgu8.bin",  0x00000, 0x2000, CRC(499a1d06) SHA1(0f3ed5ff345abb655f5a9f926ac3eb5dbca72a14) )
+	ROM_LOAD( "savgu7.bin",  0x02000, 0x2000, CRC(ce0607f9) SHA1(0f6708d92e69a67b3eaba98f7ab4ad70eda3c854) )
+	ROM_LOAD( "savgu6.bin",  0x04000, 0x2000, CRC(01d1b31e) SHA1(8061227f18f08e3b74bc6fc341ed4902c415db6c) )
+	ROM_LOAD( "savgu5.bin",  0x06000, 0x2000, CRC(8bc6d101) SHA1(24f0b3ec3ed56b0496d07caa2475fca49a4a9b19) )
+	ROM_LOAD( "savgu4.bin",  0x08000, 0x2000, CRC(72644753) SHA1(01bdb39d32df6d8cf69cbc9370033db46e18cb59) )
+	ROM_LOAD( "savgu3.bin",  0x0a000, 0x2000, CRC(606a9cfd) SHA1(ce99a0e6d09580d35ec423177cdf41c35c7eecb7) )
+	ROM_LOAD( "savgu2.bin",  0x0c000, 0x2000, CRC(69f600f6) SHA1(5b9545897f59b5049adc0fd910c7d65f38696d30) )
+	ROM_LOAD( "savgu1.bin",  0x0e000, 0x2000, CRC(303b8e7b) SHA1(29055b621c68e93649eb0aa9cc9ecc43ac6f6eb8) )
+	ROM_LOAD( "savgu16.bin", 0x10000, 0x2000, CRC(b8f60607) SHA1(4971db01a87bd80c23b7a0ab8aaa7c8300be4ec9) )
+	ROM_LOAD( "savgu15.bin", 0x12000, 0x2000, CRC(6b332a5d) SHA1(58939cec237db1f741d24eb9f94488e3cf8700d2) )
+	ROM_LOAD( "savgu14.bin", 0x14000, 0x2000, CRC(8d5117aa) SHA1(a82911219c49ff96e3c16acec7ef37406dae2be4) )
+	ROM_LOAD( "savgu13.bin", 0x16000, 0x2000, CRC(d3ce645e) SHA1(4e775af7886d699675941f74e18be2d4dbd6f41b) )
+	ROM_LOAD( "savgu12.bin", 0x18000, 0x2000, CRC(ccdfedb1) SHA1(b87e885df46e814626f46102f323ccd8396bcf8f) )
+	ROM_LOAD( "savgu11.bin", 0x1a000, 0x2000, CRC(db11ff4c) SHA1(cd85486cd08ec4392421e9b94d380b81a575c811) )
+	ROM_LOAD( "savgu10.bin", 0x1c000, 0x2000, CRC(6f3d9aa1) SHA1(7616dd016f5c8990b4972cf6edf758e27857aa1e) )
 ROM_END
 
 

@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "sndhrdw/m72.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 
 
@@ -160,6 +161,19 @@ static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 
 ***************************************************************************/
 
+static void register_savestate(void)
+{
+	state_save_register_int  ("video", 0, "rastersplit",      &rastersplit);
+	state_save_register_int  ("video", 0, "splitline",        &splitline);
+	state_save_register_int  ("video", 0, "video_off",        &video_off);
+	state_save_register_UINT8("video", 0, "scrollx1",(UINT8*) scrollx1, sizeof(scrollx1));
+	state_save_register_UINT8("video", 0, "scrolly1",(UINT8*) scrolly1, sizeof(scrolly1));
+	state_save_register_UINT8("video", 0, "scrollx2",(UINT8*) scrollx2, sizeof(scrollx2));
+	state_save_register_UINT8("video", 0, "scrolly2",(UINT8*) scrolly2, sizeof(scrolly2));
+	state_save_register_UINT8("video", 0, "m72_spriteram",    m72_spriteram, spriteram_size);
+}
+
+
 VIDEO_START( m72 )
 {
 	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
@@ -181,6 +195,8 @@ VIDEO_START( m72 )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = 0;
+
+	register_savestate();
 
 	return 0;
 }
@@ -207,6 +223,8 @@ VIDEO_START( rtype2 )
 
 	xadjust = -4;
 
+	register_savestate();
+
 	return 0;
 }
 
@@ -215,6 +233,8 @@ VIDEO_START( poundfor )
 	int res = video_start_rtype2();
 
 	xadjust = -6;
+
+	register_savestate();
 
 	return res;
 }
@@ -246,6 +266,8 @@ VIDEO_START( majtitle )
 
 	xadjust = -4;
 
+	register_savestate();
+
 	return 0;
 }
 
@@ -270,6 +292,8 @@ VIDEO_START( hharry )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = -4;
+
+	register_savestate();
 
 	return 0;
 }

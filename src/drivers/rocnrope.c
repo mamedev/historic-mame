@@ -255,58 +255,58 @@ MACHINE_DRIVER_END
 
 ROM_START( rocnrope )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, 0x83093134 )
-	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, 0x75af8697 )
-	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, 0xb21372b1 )
-	ROM_LOAD( "rr4.4h",       0xc000, 0x2000, 0x7acb2a05 )
-	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
+	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, CRC(83093134) SHA1(c9509cfb9f9043cd6c226cc84dbc2e2b744488f6) )
+	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, CRC(75af8697) SHA1(70bb4b838cdafedf3d94425fad84f77815898d83) )
+	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, CRC(b21372b1) SHA1(c08ab3caaa646f4752f890d8339bce6b723864bb) )
+	ROM_LOAD( "rr4.4h",       0xc000, 0x2000, CRC(7acb2a05) SHA1(93762d1890f40abc98372a2aa9fe0f63252b6389) )
+	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, CRC(150a6264) SHA1(930ccf8dcf4971d0a15f406d9114be5ecfaa1727) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, CRC(75d2c4e2) SHA1(b701019b4e7b06b268be660ce7958b5367318c27) )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, CRC(ca4325ae) SHA1(34ac035c0c2ed6bcafde1491d976bb9e9d2a2a7d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
-	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
+	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, CRC(e2114539) SHA1(0ea19ae4d7c2da14f23c81abb8e2c931785b2715) )
+	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, CRC(169a8f3f) SHA1(182c7c9b9849ebb57b3ff7c0b629f2f8e2efa9ba) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
+	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, CRC(afdaba5e) SHA1(27c090cb1c3767c997daeedbe1ba24786f9e78f1) )
+	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, CRC(054cafeb) SHA1(4c3cd850b347217af3dd5c9bb84bcff7b30689bd) )
+	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, CRC(9d2166b2) SHA1(42d2b05360e58b1b2b3ad06c98eb46d9da2b1c21) )
+	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, CRC(aff6e22f) SHA1(476d67821519feddc9f9c8537b46e6eede790035) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
-	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
-	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
+	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, CRC(22ad2c3e) SHA1(1c2198b286c75aa9e78d000432795b1ce86ad6b9) )
+	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, CRC(750a9677) SHA1(7a5b4aed5f87180850657b8852bb3f3138d58b5b) )
+	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, CRC(b5c75a27) SHA1(923d6ccf015fd7458494416cc05426cc922a9238) )
 ROM_END
 
 ROM_START( rocnropk )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
-	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
-	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, 0x6d278459 )
-	ROM_LOAD( "rnr_h4.vid",   0xc000, 0x2000, 0x9b2e5f2a )
-	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
+	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, CRC(0fddc1f6) SHA1(a9c6c033799883dc45eaa448387d4f0728b9e47e) )
+	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, CRC(ce9db49a) SHA1(7a6ffb65cb65aa90e953706ee67c6ae91322ebf6) )
+	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, CRC(6d278459) SHA1(a1417f158f288b0b0cbffc58f9e22b6c7cdf0fc7) )
+	ROM_LOAD( "rnr_h4.vid",   0xc000, 0x2000, CRC(9b2e5f2a) SHA1(e91d7a9141dbe0fc5eacc2c5a672935993a3316f) )
+	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, CRC(150a6264) SHA1(930ccf8dcf4971d0a15f406d9114be5ecfaa1727) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, CRC(75d2c4e2) SHA1(b701019b4e7b06b268be660ce7958b5367318c27) )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, CRC(ca4325ae) SHA1(34ac035c0c2ed6bcafde1491d976bb9e9d2a2a7d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
-	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
+	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, CRC(e2114539) SHA1(0ea19ae4d7c2da14f23c81abb8e2c931785b2715) )
+	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, CRC(169a8f3f) SHA1(182c7c9b9849ebb57b3ff7c0b629f2f8e2efa9ba) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
+	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, CRC(afdaba5e) SHA1(27c090cb1c3767c997daeedbe1ba24786f9e78f1) )
+	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, CRC(054cafeb) SHA1(4c3cd850b347217af3dd5c9bb84bcff7b30689bd) )
+	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, CRC(9d2166b2) SHA1(42d2b05360e58b1b2b3ad06c98eb46d9da2b1c21) )
+	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, CRC(aff6e22f) SHA1(476d67821519feddc9f9c8537b46e6eede790035) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
-	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
-	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
+	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, CRC(22ad2c3e) SHA1(1c2198b286c75aa9e78d000432795b1ce86ad6b9) )
+	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, CRC(750a9677) SHA1(7a5b4aed5f87180850657b8852bb3f3138d58b5b) )
+	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, CRC(b5c75a27) SHA1(923d6ccf015fd7458494416cc05426cc922a9238) )
 ROM_END
 
 

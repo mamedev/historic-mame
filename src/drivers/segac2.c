@@ -335,6 +335,11 @@ static READ16_HANDLER( ym3438_r )
 	return 0xff;
 }
 
+static READ16_HANDLER( puckpkmn_YM3438_r )
+{
+	return	YM2612_status_port_0_A_r(0) << 8;
+}
+
 
 /* handle writes to the YM3438 */
 static WRITE16_HANDLER( ym3438_w )
@@ -360,6 +365,22 @@ static WRITE16_HANDLER( ym3438_w )
 		}
 	}
 }
+
+static WRITE16_HANDLER( puckpkmn_YM3438_w )
+{
+	switch (offset)
+	{
+		case 0:
+			if (ACCESSING_MSB)	YM2612_control_port_0_A_w	(0,	(data >> 8) & 0xff);
+			else 				YM2612_data_port_0_A_w		(0,	(data >> 0) & 0xff);
+			break;
+		case 1:
+			if (ACCESSING_MSB)	YM2612_control_port_0_B_w	(0,	(data >> 8) & 0xff);
+			else 				YM2612_data_port_0_B_w		(0,	(data >> 0) & 0xff);
+			break;
+	}
+}
+
 
 
 /* handle writes to the UPD7759 */
@@ -857,6 +878,43 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0xff0000, 0xffffff, MWA16_RAM, &main_ram },		/* Main Ram */
 MEMORY_END
 
+
+static MEMORY_READ16_START( puckpkmn_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM },					/* Main 68k Program Roms */
+	{ 0x700010, 0x700011, input_port_0_word_r },		/* Input (P2) */
+	{ 0x700012, 0x700013, input_port_1_word_r },		/* Input (P1) */
+	{ 0x700014, 0x700015, input_port_2_word_r },		/* Input (?) */
+	{ 0x700016, 0x700017, input_port_3_word_r },		/* Input (DSW1) */
+	{ 0x700018, 0x700019, input_port_4_word_r },		/* Input (DSW2) */
+	{ 0x700022, 0x700023, OKIM6295_status_0_lsb_r },	/* M6295 Sound Chip Status Register */
+	{ 0xa04000, 0xa04001, puckpkmn_YM3438_r },			/* Ym3438 Sound Chip Status Register */
+	{ 0xc00000, 0xc0001f, segac2_vdp_r },				/* VDP Access */
+	{ 0xe00000, 0xe1ffff, MRA16_BANK1 },				/* VDP sees the roms here */
+	{ 0xfe0000, 0xfeffff, MRA16_BANK2 },				/* VDP sees the ram here */
+	{ 0xff0000, 0xffffff, MRA16_RAM	},					/* Main Ram */
+
+	/* Unknown reads: */
+//	{ 0xa10000, 0xa10001, MRA16_NOP },					/* ? once */
+	{ 0xa10002, 0xa10005, MRA16_NOP },					/* ? alternative way of reading inputs ? */
+	{ 0xa11100, 0xa11101, MRA16_NOP },					/* ? */
+MEMORY_END
+
+static MEMORY_WRITE16_START( puckpkmn_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM },					/* Main 68k Program Roms */
+	{ 0x700022, 0x700023, OKIM6295_data_0_lsb_w },		/* M6295 Sound Chip Writes */
+	{ 0xa04000, 0xa04003, puckpkmn_YM3438_w },			/* Ym3438 Sound Chip Writes */
+	{ 0xc00000, 0xc0000f, segac2_vdp_w },				/* VDP Access */
+	{ 0xc00010, 0xc00017, sn76489_w },					/* SN76489 Access */
+	{ 0xff0000, 0xffffff, MWA16_RAM, &main_ram },		/* Main Ram */
+
+	/* Unknown writes: */
+	{ 0xa00000, 0xa00551, MWA16_RAM },					/* ? */
+	{ 0xa10002, 0xa10005, MWA16_NOP },					/* ? alternative way of reading inputs ? */
+//	{ 0xa10008, 0xa1000d, MWA16_NOP },					/* ? once */
+//	{ 0xa14000, 0xa14003, MWA16_NOP },					/* ? once */
+	{ 0xa11100, 0xa11101, MWA16_NOP },					/* ? */
+	{ 0xa11200, 0xa11201, MWA16_NOP },					/* ? */
+MEMORY_END
 
 
 /******************************************************************************
@@ -1537,6 +1595,78 @@ INPUT_PORTS_START( puyopuy2 ) /*  Puyo Puyo 2 Input Ports */
     PORT_DIPSETTING(    0x80, "2" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( puckpkmn ) /* Puckman Pockimon Input Ports */
+	PORT_START	/* Player 2 Controls ($700011.b) */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+
+	PORT_START	/* Player 1 Controls ($700013.b) */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN1, 10 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+
+	PORT_START	/* ? ($700015.b) */
+
+	PORT_START	/* DSW 1 ($700017.b) */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x38, 0x28, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x38, "1" )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x28, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x18, "5" )
+	PORT_DIPSETTING(    0x10, "6" )
+	PORT_DIPSETTING(    0x08, "7" )
+	PORT_DIPSETTING(    0x00, "8" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, "Easy"    )
+	PORT_DIPSETTING(    0x80, "Normal"  )
+	PORT_DIPSETTING(    0x40, "Hard"    )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* DSW 1 ($700019.b) */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 
 /******************************************************************************
@@ -1570,6 +1700,13 @@ static struct SN76496interface sn76489_intf =
 	{ 50 }							/* Volume */
 };
 
+static struct OKIM6295interface puckpkmn_m6295_intf =
+{
+	1,
+	{ 8000 },	/* ? */
+	{ REGION_SOUND1 },
+	{ 50 }
+};
 
 
 /******************************************************************************
@@ -1587,7 +1724,7 @@ static struct SN76496interface sn76489_intf =
 static MACHINE_DRIVER_START( segac )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, MASTER_CLOCK/7) 		/* yes, there is a divide-by-7 circuit */
+	MDRV_CPU_ADD_TAG("main",M68000, MASTER_CLOCK/7) 		/* yes, there is a divide-by-7 circuit */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
 
@@ -1615,31 +1752,27 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( segac2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, MASTER_CLOCK/7) 		/* yes, there is a divide-by-7 circuit */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
-
-	MDRV_MACHINE_INIT(segac2)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
-	MDRV_SCREEN_SIZE(320,224)
-	MDRV_VISIBLE_AREA(0, 319, 0, 223)
-	MDRV_PALETTE_LENGTH(2048)
-
-	MDRV_VIDEO_START(segac2)
-	MDRV_VIDEO_EOF(segac2)
-	MDRV_VIDEO_UPDATE(segac2)
+	MDRV_IMPORT_FROM( segac )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2612, ym3438_intf)
-	MDRV_SOUND_ADD(SN76496, sn76489_intf)
 	MDRV_SOUND_ADD(UPD7759, upd7759_intf)
 MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( puckpkmn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( segac )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(puckpkmn_readmem,puckpkmn_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(puckpkmn)
+	MDRV_VISIBLE_AREA(8, 319, 0, 223)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, puckpkmn_m6295_intf)
+MACHINE_DRIVER_END
 
 
 /******************************************************************************
@@ -1660,44 +1793,119 @@ MACHINE_DRIVER_END
 
 ******************************************************************************/
 
+/***************************************************************************
+Puckman Pokemon Genie 2000
+(c) 2000?  Manufacturer ?
+
+Hardware looks bootleg-ish, but is newly manufactured.
+
+CPU: ? (one of the SMD chips)
+SND: OKI6295, U6612 (probably YM3812), U6614B (Probably YM3014B)
+XTAL: 3.579545MHz, 4.0000MHz
+OSC: 53.693175MHz
+Other Chips: Possible CPU: TA-06SD 9933 B816453 128 pin square SMD
+             GFX support chips: Y-BOX TA891945 100 pin SMD
+                                TV16B 0010 ME251271 160 pin SMD
+
+There are 13 PAL's on the PCB !
+
+RAM: 62256 x 3, D41264 x 2 (ZIP Ram)
+DIPS: 2 x 8 position
+SW1:
+               			1	2	3	4	5	6	7	8
+coins   1coin 1 Cred.  	off	off	off
+		2c 1c			on	off	off
+		3c 1c			off	on	off
+		4c 1c			on	on	off
+		5c 1c			off	off	on
+		1c 2c			on	off	on
+		1c 3c			off	on	on
+		1c 4c			on	on	on
+
+players	1							off	off	off
+ 		2							on	off	off
+		3							off	on	off
+		4							on	on	off
+		5							off	off	on
+		6							on	off	on
+		7							off	on	on
+		8							on	on	on
+
+diffic-
+ulty	v.easy									off	off
+		normal									on	off
+		diffic.									off	on
+		v. diffic.								on	on
+
+
+SW2
+
+note position 3-8 not used
+
+               		1	2	3	4	5	6	7	8
+test mode	no		off
+			yes		on
+
+demo sound	yes			off
+			no			on
+
+
+ROMS:
+PUCKPOKE.U3	M5M27C201	Sound
+PUCKPOKE.U4	27C040--\
+PUCKPOKE.U5	27C040---\
+PUCKPOKE.U7	27C040----- Main program & GFX
+PUCKPOKE.U8	27C4001---/
+
+ROM sockets U63 & U64 empty
+
+Hi-res PCB scan available on request.
+Screenshots available on my site at http://unemulated.emuunlim.com (under PCB Shop Raid #2)
+
+More info reqd? email me.
+theguru@emuunlim.com
+
+****************************************************************************/
+
+
 /* ----- System C Games ----- */
 
 ROM_START( bloxeedc ) /* Bloxeed (C System Version)  (c)1989 Sega / Elorg */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr12908.32", 0x000000, 0x020000, 0xfc77cb91 )
-	ROM_LOAD16_BYTE( "epr12907.31", 0x000001, 0x020000, 0xe5fcbac6 )
-	ROM_LOAD16_BYTE( "epr12993.34", 0x040000, 0x020000, 0x487bc8fc )
-	ROM_LOAD16_BYTE( "epr12992.33", 0x040001, 0x020000, 0x19b0084c )
+	ROM_LOAD16_BYTE( "epr12908.32", 0x000000, 0x020000, CRC(fc77cb91) SHA1(248a462e3858ffdc171af7d806e57deecb5dae50) )
+	ROM_LOAD16_BYTE( "epr12907.31", 0x000001, 0x020000, CRC(e5fcbac6) SHA1(a1adec5ef5574bff96a3d66619a24a6715097bb9) )
+	ROM_LOAD16_BYTE( "epr12993.34", 0x040000, 0x020000, CRC(487bc8fc) SHA1(3fb205bf56f35443e993e08b39c1a08c13ca5e3b) )
+	ROM_LOAD16_BYTE( "epr12992.33", 0x040001, 0x020000, CRC(19b0084c) SHA1(b3ba0f3d8d39a19aa66edb24885ea21192e22704) )
 ROM_END
 
 
 ROM_START( columns ) /* Columns (US) (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr13114.32", 0x000000, 0x020000, 0xff78f740 )
-	ROM_LOAD16_BYTE( "epr13113.31", 0x000001, 0x020000, 0x9a426d9b )
+	ROM_LOAD16_BYTE( "epr13114.32", 0x000000, 0x020000, CRC(ff78f740) SHA1(0a034103a4b942f43e62f6e717f5dbf1bfb0b613) )
+	ROM_LOAD16_BYTE( "epr13113.31", 0x000001, 0x020000, CRC(9a426d9b) SHA1(3322e65ebf8d0a6047f7d408387c63ea401b8973) )
 ROM_END
 
 
 ROM_START( columnsj ) /* Columns (Jpn) (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr13112.32", 0x000000, 0x020000, 0xbae6e53e )
-	ROM_LOAD16_BYTE( "epr13111.31", 0x000001, 0x020000, 0xaa5ccd6d )
+	ROM_LOAD16_BYTE( "epr13112.32", 0x000000, 0x020000, CRC(bae6e53e) SHA1(2c2fd621eecd55591f22d076323972a7d0314615) )
+	ROM_LOAD16_BYTE( "epr13111.31", 0x000001, 0x020000, CRC(aa5ccd6d) SHA1(480e29e3112282d1790f1fb68075453325ba4336) )
 ROM_END
 
 
 ROM_START( columns2 ) /* Columns II - The Voyage Through Time (Jpn)  (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr13361.rom", 0x000000, 0x020000, 0xb54b5f12 )
-	ROM_LOAD16_BYTE( "epr13360.rom", 0x000001, 0x020000, 0xa59b1d4f )
+	ROM_LOAD16_BYTE( "epr13361.rom", 0x000000, 0x020000, CRC(b54b5f12) SHA1(4d7fbae7d9bcadd433ebc25aef255dc43df611bc) )
+	ROM_LOAD16_BYTE( "epr13360.rom", 0x000001, 0x020000, CRC(a59b1d4f) SHA1(e9ee315677782e1c61ae8f11260101cc03176188) )
 ROM_END
 
 
 ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Board?, No Samples) */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "trb2_2.32",    0x000000, 0x080000, 0x8fc99c48 )
-	ROM_LOAD16_BYTE( "trb2_1.31",    0x000001, 0x080000, 0xc318d00d )
-	ROM_LOAD16_BYTE( "mpr15616.34",  0x100000, 0x080000, 0x17b80202 )
-	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, 0x36a88bd4 )
+	ROM_LOAD16_BYTE( "trb2_2.32",    0x000000, 0x080000, CRC(8fc99c48) SHA1(d90ed673fe1f6e1f878c0d8fc62f5439b56d0a47) )
+	ROM_LOAD16_BYTE( "trb2_1.31",    0x000001, 0x080000, CRC(c318d00d) SHA1(703760d4ddc45bc0921ae96a27d9a8fbf12a1e96) )
+	ROM_LOAD16_BYTE( "mpr15616.34",  0x100000, 0x080000, CRC(17b80202) SHA1(f47bf2aa0c5972647438619b8453c7dede5c422f) )
+	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, CRC(36a88bd4) SHA1(cc7f6a947d1b79bb86957c43035b53d6d2bcfa28) )
 ROM_END
 
 
@@ -1705,195 +1913,207 @@ ROM_END
 
 ROM_START( borench ) /* Borench  (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ic32.bin", 0x000000, 0x040000, 0x2c54457d )
-	ROM_LOAD16_BYTE( "ic31.bin", 0x000001, 0x040000, 0xb46445fc )
+	ROM_LOAD16_BYTE( "ic32.bin", 0x000000, 0x040000, CRC(2c54457d) SHA1(adf3ea5393d2633ec6215e64f0cd89ad4567e765) )
+	ROM_LOAD16_BYTE( "ic31.bin", 0x000001, 0x040000, CRC(b46445fc) SHA1(24e85ef5abbc5376a854b13ed90f08f0c30d7f25) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ic4.bin", 0x000000, 0x020000, 0x62b85e56 )
+	ROM_LOAD( "ic4.bin", 0x000000, 0x020000, CRC(62b85e56) SHA1(822ab733c87938bb70a9e32cc5dd36bbf6f21d11) )
 ROM_END
 
 
 ROM_START( tfrceac ) /* ThunderForce AC  (c)1990 Technosoft / Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ic32.bin", 0x000000, 0x040000, 0x95ecf202 )
-	ROM_LOAD16_BYTE( "ic31.bin", 0x000001, 0x040000, 0xe63d7f1a )
+	ROM_LOAD16_BYTE( "ic32.bin", 0x000000, 0x040000, CRC(95ecf202) SHA1(92b0f351f2bee7d59873a4991615f14f1afe4da7) )
+	ROM_LOAD16_BYTE( "ic31.bin", 0x000001, 0x040000, CRC(e63d7f1a) SHA1(a40d0a5a96f379a467048dc8fddd8aaaeb94da1d) )
 	/* 0x080000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "ic34.bin", 0x100000, 0x040000, 0x29f23461 )
-	ROM_LOAD16_BYTE( "ic33.bin", 0x100001, 0x040000, 0x9e23734f )
+	ROM_LOAD16_BYTE( "ic34.bin", 0x100000, 0x040000, CRC(29f23461) SHA1(032a7125fef5a660b85654d595aafc46812cdde6) )
+	ROM_LOAD16_BYTE( "ic33.bin", 0x100001, 0x040000, CRC(9e23734f) SHA1(64d27dc53f0ffc3513345a26ed077751b25d15f1) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, 0xe09961f6 )
+	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, CRC(e09961f6) SHA1(e109b5f41502b765d191f22e3bbcff97d6defaa1) )
 ROM_END
 
 
 ROM_START( tfrceacj ) /* ThunderForce AC (Jpn)  (c)1990 Technosoft / Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr13657.32", 0x000000, 0x040000, 0xa0f38ffd )
-	ROM_LOAD16_BYTE( "epr13656.31", 0x000001, 0x040000, 0xb9438d1e )
+	ROM_LOAD16_BYTE( "epr13657.32", 0x000000, 0x040000, CRC(a0f38ffd) SHA1(da548e7f61aed0e82a460553a119941da8857bc4) )
+	ROM_LOAD16_BYTE( "epr13656.31", 0x000001, 0x040000, CRC(b9438d1e) SHA1(598209c9fec3527fde720af09e5bebd7379f5b2b) )
 	/* 0x080000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "ic34.bin",    0x100000, 0x040000, 0x29f23461 )
-	ROM_LOAD16_BYTE( "ic33.bin",    0x100001, 0x040000, 0x9e23734f )
+	ROM_LOAD16_BYTE( "ic34.bin",    0x100000, 0x040000, CRC(29f23461) SHA1(032a7125fef5a660b85654d595aafc46812cdde6) )
+	ROM_LOAD16_BYTE( "ic33.bin",    0x100001, 0x040000, CRC(9e23734f) SHA1(64d27dc53f0ffc3513345a26ed077751b25d15f1) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, 0xe09961f6 )
+	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, CRC(e09961f6) SHA1(e109b5f41502b765d191f22e3bbcff97d6defaa1) )
 ROM_END
 
 
 ROM_START( tfrceacb ) /* ThunderForce AC (Bootleg)  (c)1990 Technosoft / Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "4.bin",    0x000000, 0x040000, 0xeba059d3 )
-	ROM_LOAD16_BYTE( "3.bin",    0x000001, 0x040000, 0x3e5dc542 )
+	ROM_LOAD16_BYTE( "4.bin",    0x000000, 0x040000, CRC(eba059d3) SHA1(7bc04401f9a138fa151ac09a528b70acfb2021e3) )
+	ROM_LOAD16_BYTE( "3.bin",    0x000001, 0x040000, CRC(3e5dc542) SHA1(4a66dc842afaa145dab82b232738eea107bdf0f8) )
 	/* 0x080000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "ic34.bin", 0x100000, 0x040000, 0x29f23461 )
-	ROM_LOAD16_BYTE( "ic33.bin", 0x100001, 0x040000, 0x9e23734f )
+	ROM_LOAD16_BYTE( "ic34.bin", 0x100000, 0x040000, CRC(29f23461) SHA1(032a7125fef5a660b85654d595aafc46812cdde6) )
+	ROM_LOAD16_BYTE( "ic33.bin", 0x100001, 0x040000, CRC(9e23734f) SHA1(64d27dc53f0ffc3513345a26ed077751b25d15f1) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, 0xe09961f6 )
+	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, CRC(e09961f6) SHA1(e109b5f41502b765d191f22e3bbcff97d6defaa1) )
 ROM_END
 
 
 ROM_START( ribbit ) /* Ribbit  (c)1991 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ep13833.32", 0x000000, 0x040000, 0x5347f8ce )
-	ROM_LOAD16_BYTE( "ep13832.31", 0x000001, 0x040000, 0x889c42c2 )
+	ROM_LOAD16_BYTE( "ep13833.32", 0x000000, 0x040000, CRC(5347f8ce) SHA1(b95b99536157edfbf0d74a42f64235f47dca7ee1) )
+	ROM_LOAD16_BYTE( "ep13832.31", 0x000001, 0x040000, CRC(889c42c2) SHA1(0839a50a68b64a66d995f1bfaff42fcb60bb4d45) )
 	ROM_COPY( REGION_CPU1, 0x000000, 0x080000, 0x080000 )
-	ROM_LOAD16_BYTE( "ep13838.34", 0x100000, 0x080000, 0xa5d62ac3 )
-	ROM_LOAD16_BYTE( "ep13837.33", 0x100001, 0x080000, 0x434de159 )
+	ROM_LOAD16_BYTE( "ep13838.34", 0x100000, 0x080000, CRC(a5d62ac3) SHA1(8d83a7bc4017e125ef4231278f766b2368d5fc1f) )
+	ROM_LOAD16_BYTE( "ep13837.33", 0x100001, 0x080000, CRC(434de159) SHA1(cf2973131cabf2bc0ebb2bfe9f804ad3d7d0a733) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ep13834.4", 0x000000, 0x020000, 0xab0c1833 )
+	ROM_LOAD( "ep13834.4", 0x000000, 0x020000, CRC(ab0c1833) SHA1(f864e12ecf6c0524da20fc66747a4fa4280e67e9) )
 ROM_END
 
 
 ROM_START( tantr ) /* Tant-R (Puzzle & Action)  (c)1992 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr15614.32", 0x000000, 0x080000, 0x557782bc )
-	ROM_LOAD16_BYTE( "epr15613.31", 0x000001, 0x080000, 0x14bbb235 )
-	ROM_LOAD16_BYTE( "mpr15616.34", 0x100000, 0x080000, 0x17b80202 )
-	ROM_LOAD16_BYTE( "mpr15615.33", 0x100001, 0x080000, 0x36a88bd4 )
+	ROM_LOAD16_BYTE( "epr15614.32", 0x000000, 0x080000, CRC(557782bc) SHA1(1546a999ab97c380dc87f6c95d5687722206740d) )
+	ROM_LOAD16_BYTE( "epr15613.31", 0x000001, 0x080000, CRC(14bbb235) SHA1(8dbfec5fb1d7a695acbb2fc0e78e4bdf76eb8d9d) )
+	ROM_LOAD16_BYTE( "mpr15616.34", 0x100000, 0x080000, CRC(17b80202) SHA1(f47bf2aa0c5972647438619b8453c7dede5c422f) )
+	ROM_LOAD16_BYTE( "mpr15615.33", 0x100001, 0x080000, CRC(36a88bd4) SHA1(cc7f6a947d1b79bb86957c43035b53d6d2bcfa28) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr15617.4", 0x000000, 0x040000, 0x338324a1 )
+	ROM_LOAD( "epr15617.4", 0x000000, 0x040000, CRC(338324a1) SHA1(79e2782d0d4764dd723886f846c852a6f6c1fb64) )
 ROM_END
 
 
 ROM_START( tantrbl ) /* Tant-R (Puzzle & Action) (Bootleg)  (c)1992 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "pa_e10.bin",  0x000000, 0x080000, 0x6c3f711f )
-	ROM_LOAD16_BYTE( "pa_f10.bin",  0x000001, 0x080000, 0x75526786 )
-	ROM_LOAD16_BYTE( "mpr15616.34", 0x100000, 0x080000, 0x17b80202 )
-	ROM_LOAD16_BYTE( "mpr15615.33", 0x100001, 0x080000, 0x36a88bd4 )
+	ROM_LOAD16_BYTE( "pa_e10.bin",  0x000000, 0x080000, CRC(6c3f711f) SHA1(55aa2d50422134b95d9a7c5cbdc453b207b91b4c) )
+	ROM_LOAD16_BYTE( "pa_f10.bin",  0x000001, 0x080000, CRC(75526786) SHA1(8f5aa7f6918b71a79e6fca18194beec2aef15844) )
+	ROM_LOAD16_BYTE( "mpr15616.34", 0x100000, 0x080000, CRC(17b80202) SHA1(f47bf2aa0c5972647438619b8453c7dede5c422f) )
+	ROM_LOAD16_BYTE( "mpr15615.33", 0x100001, 0x080000, CRC(36a88bd4) SHA1(cc7f6a947d1b79bb86957c43035b53d6d2bcfa28) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "pa_e03.bin", 0x000000, 0x020000, 0x72918c58 )
-	ROM_LOAD( "pa_e02.bin", 0x020000, 0x020000, 0x4e85b2a3 )
+	ROM_LOAD( "pa_e03.bin", 0x000000, 0x020000, CRC(72918c58) SHA1(cb42363b163727a887a0b762519c72dcdf0a6460) )
+	ROM_LOAD( "pa_e02.bin", 0x020000, 0x020000, CRC(4e85b2a3) SHA1(3f92fb931d315c5a2d6c54b3204718574928cb7b) )
 ROM_END
 
 
 ROM_START( puyopuyo	) /* Puyo Puyo  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr15036", 0x000000, 0x020000, 0x5310ca1b )
-	ROM_LOAD16_BYTE( "epr15035", 0x000001, 0x020000, 0xbc62e400 )
+	ROM_LOAD16_BYTE( "epr15036", 0x000000, 0x020000, CRC(5310ca1b) SHA1(dcfe2bf7476b640dfb790e8716e75b483d535e48) )
+	ROM_LOAD16_BYTE( "epr15035", 0x000001, 0x020000, CRC(bc62e400) SHA1(12bb6031574838a28889f6edb31dbb689265287c) )
 	/* 0x040000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "epr15038", 0x100000, 0x020000, 0x3b9eea0c )
-	ROM_LOAD16_BYTE( "epr15037", 0x100001, 0x020000, 0xbe2f7974 )
+	ROM_LOAD16_BYTE( "epr15038", 0x100000, 0x020000, CRC(3b9eea0c) SHA1(e3e6148c1769834cc0061932eb035daa79673144) )
+	ROM_LOAD16_BYTE( "epr15037", 0x100001, 0x020000, CRC(be2f7974) SHA1(77027ced7a62f94e9fc6e8a0a4ac0c62f7ea813b) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr15034", 0x000000, 0x020000, 0x5688213b )
+	ROM_LOAD( "epr15034", 0x000000, 0x020000, CRC(5688213b) SHA1(f3f234e482871ca903a782e51008f3bfed04ee63) )
 ROM_END
 
 
 ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ep15036a.32", 0x000000, 0x020000, 0x61b35257 )
-	ROM_LOAD16_BYTE( "ep15035a.31", 0x000001, 0x020000, 0xdfebb6d9 )
+	ROM_LOAD16_BYTE( "ep15036a.32", 0x000000, 0x020000, CRC(61b35257) SHA1(e09a7e992999befc88fc7928a478d1e2d14d7b08) )
+	ROM_LOAD16_BYTE( "ep15035a.31", 0x000001, 0x020000, CRC(dfebb6d9) SHA1(6f685729ef4660c2eba409c5236c6d2f313eef5b) )
 	/* 0x040000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "epr15038",    0x100000, 0x020000, 0x3b9eea0c )
-	ROM_LOAD16_BYTE( "epr15037",    0x100001, 0x020000, 0xbe2f7974 )
+	ROM_LOAD16_BYTE( "epr15038",    0x100000, 0x020000, CRC(3b9eea0c) SHA1(e3e6148c1769834cc0061932eb035daa79673144) )
+	ROM_LOAD16_BYTE( "epr15037",    0x100001, 0x020000, CRC(be2f7974) SHA1(77027ced7a62f94e9fc6e8a0a4ac0c62f7ea813b) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr15034", 0x000000, 0x020000, 0x5688213b )
+	ROM_LOAD( "epr15034", 0x000000, 0x020000, CRC(5688213b) SHA1(f3f234e482871ca903a782e51008f3bfed04ee63) )
 ROM_END
 
 
 ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, 0x89ea4d33 )
-	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, 0xc002e545 )
+	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, CRC(89ea4d33) SHA1(bef9d011524e71c072d309f6da3c2ebc38878e0e) )
+	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, CRC(c002e545) SHA1(7a59ac764d60e9955830d9617b0bd122b44e7b2f) )
 	/* 0x040000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, 0xa0692e5 )
-	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, 0x353109b8 )
+	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
+	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, 0x79112b3b )
+	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
 ROM_END
 
 
 ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr16886", 0x000000, 0x080000, 0x38208e28 )
-	ROM_LOAD16_BYTE( "epr16885", 0x000001, 0x080000, 0x1ce4e837 )
-	ROM_LOAD16_BYTE( "epr16888", 0x100000, 0x080000, 0x85d73722 )
-	ROM_LOAD16_BYTE( "epr16887", 0x100001, 0x080000, 0xbc3bbf25 )
+	ROM_LOAD16_BYTE( "epr16886", 0x000000, 0x080000, CRC(38208e28) SHA1(07fc634bdf2d3e25274c9c374b3506dec765114c) )
+	ROM_LOAD16_BYTE( "epr16885", 0x000001, 0x080000, CRC(1ce4e837) SHA1(16600600e12e3f35e3da89524f7f51f019b5ad17) )
+	ROM_LOAD16_BYTE( "epr16888", 0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )
+	ROM_LOAD16_BYTE( "epr16887", 0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr16884", 0x000000, 0x080000, 0xfd9dcdd6)
+	ROM_LOAD( "epr16884", 0x000000, 0x080000, CRC(fd9dcdd6) SHA1(b8053a2e68072e7664ffc3c53f983f3ba72a892b) )
 ROM_END
 
 
 ROM_START( ichidnte ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "pa2_32.bin", 0x000000, 0x080000, 0x7ba0c025 )
-	ROM_LOAD16_BYTE( "pa2_31.bin", 0x000001, 0x080000, 0x5f86e5cc )
-	ROM_LOAD16_BYTE( "epr16888",   0x100000, 0x080000, 0x85d73722 )
-	ROM_LOAD16_BYTE( "epr16887",   0x100001, 0x080000, 0xbc3bbf25 )
+	ROM_LOAD16_BYTE( "pa2_32.bin", 0x000000, 0x080000, CRC(7ba0c025) SHA1(855e9bb2a20c6f51b26381233c57c26aa96ad1f6) )
+	ROM_LOAD16_BYTE( "pa2_31.bin", 0x000001, 0x080000, CRC(5f86e5cc) SHA1(44e201de00dfbf7c66d0e0d40d17b162c6f0625b) )
+	ROM_LOAD16_BYTE( "epr16888",   0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )
+	ROM_LOAD16_BYTE( "epr16887",   0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "pa2_02.bin", 0x000000, 0x080000, 0xfc7b0da5 )
+	ROM_LOAD( "pa2_02.bin", 0x000000, 0x080000, CRC(fc7b0da5) SHA1(46770aa7e19b4f8a183be3f433c48ad677b552b1) )
 ROM_END
 
 
 ROM_START( stkclmns ) /* Stack Columns  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr16795.32", 0x000000, 0x080000, 0xb478fd02 )
-	ROM_LOAD16_BYTE( "epr16794.31", 0x000001, 0x080000, 0x6d0e8c56 )
-	ROM_LOAD16_BYTE( "mpr16797.34", 0x100000, 0x080000, 0xb28e9bd5 )
-	ROM_LOAD16_BYTE( "mpr16796.33", 0x100001, 0x080000, 0xec7de52d )
+	ROM_LOAD16_BYTE( "epr16795.32", 0x000000, 0x080000, CRC(b478fd02) SHA1(aaf9d9f9f4dc900b4e8ff6f258f26e782e5c3166) )
+	ROM_LOAD16_BYTE( "epr16794.31", 0x000001, 0x080000, CRC(6d0e8c56) SHA1(8f98d9fd98a1faa70b173cfd72f15102d11e79ae) )
+	ROM_LOAD16_BYTE( "mpr16797.34", 0x100000, 0x080000, CRC(b28e9bd5) SHA1(227eb591d10c9dbc52b35954ebd322e2a4451df2) )
+	ROM_LOAD16_BYTE( "mpr16796.33", 0x100001, 0x080000, CRC(ec7de52d) SHA1(85bc48cef15e615ad9059500808d17916c854a87) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr16793.4", 0x000000, 0x020000, 0xebb2d057 )
+	ROM_LOAD( "epr16793.4", 0x000000, 0x020000, CRC(ebb2d057) SHA1(4a19ee5d71e4aabe7d9b9b968ab5ee4bc6262aad) )
 ROM_END
 
 
 ROM_START( puyopuy2 ) /* Puyo Puyo 2  (c)1994 Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "pp2.eve", 0x000000, 0x080000, 0x1cad1149 )
-	ROM_LOAD16_BYTE( "pp2.odd", 0x000001, 0x080000, 0xbeecf96d )
+	ROM_LOAD16_BYTE( "pp2.eve", 0x000000, 0x080000, CRC(1cad1149) SHA1(77fb0482fa35e615c0bed65f4d7f4dd89b241f23) )
+	ROM_LOAD16_BYTE( "pp2.odd", 0x000001, 0x080000, CRC(beecf96d) SHA1(c2bdad4b6184c11f81f2a5db409cb4ea186205a7) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "pp2.snd", 0x000000, 0x080000, 0x020ff6ef )
+	ROM_LOAD( "pp2.snd", 0x000000, 0x080000, CRC(020ff6ef) SHA1(6095b8277b47a6fd7a9721f15a70ae5bf6be9b1a) )
 ROM_END
 
 
 ROM_START( potopoto ) /* Poto Poto  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr16662", 0x000000, 0x040000, 0xbbd305d6 )
-	ROM_LOAD16_BYTE( "epr16661", 0x000001, 0x040000, 0x5a7d14f4 )
+	ROM_LOAD16_BYTE( "epr16662", 0x000000, 0x040000, CRC(bbd305d6) SHA1(1a4f4869fefac188c69bc67df0b625e43a0c3f1f) )
+	ROM_LOAD16_BYTE( "epr16661", 0x000001, 0x040000, CRC(5a7d14f4) SHA1(a615b5f481256366db7b1c6302a8dcb69708102b) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr16660", 0x000000, 0x040000, 0x8251c61c )
+	ROM_LOAD( "epr16660", 0x000000, 0x040000, CRC(8251c61c) SHA1(03eef3aa0bdde2c1d93128648f54fd69278d85dd) )
 ROM_END
 
 
 ROM_START( zunkyou ) /* Zunzunkyou No Yabou  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr16812.32", 0x000000, 0x080000, 0xeb088fb0 )
-	ROM_LOAD16_BYTE( "epr16811.31", 0x000001, 0x080000, 0x9ac7035b )
-	ROM_LOAD16_BYTE( "epr16814.34", 0x100000, 0x080000, 0x821b3b77 )
-	ROM_LOAD16_BYTE( "epr16813.33", 0x100001, 0x080000, 0x3cba9e8f )
+	ROM_LOAD16_BYTE( "epr16812.32", 0x000000, 0x080000, CRC(eb088fb0) SHA1(69089a3516ad50f35e81971ef3c33eb3f5d52374) )
+	ROM_LOAD16_BYTE( "epr16811.31", 0x000001, 0x080000, CRC(9ac7035b) SHA1(1803ffbadc1213e04646d483e27da1591e22cd06) )
+	ROM_LOAD16_BYTE( "epr16814.34", 0x100000, 0x080000, CRC(821b3b77) SHA1(c45c7393a792ce8306a52f83f8ed8f6b0d7c11e9) )
+	ROM_LOAD16_BYTE( "epr16813.33", 0x100001, 0x080000, CRC(3cba9e8f) SHA1(208819bc1a205eaab089542afc7a59f69ce5bb81) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr16810.4", 0x000000, 0x080000, 0xd542f0fe )
+	ROM_LOAD( "epr16810.4", 0x000000, 0x080000, CRC(d542f0fe) SHA1(23ea50110dfe1cd9f286a535d15e0c3bcba73b00) )
+ROM_END
+
+
+ROM_START( puckpkmn ) /* Puckman Pockimon  (c)2000 Genie */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "puckpoke.u5", 0x000000, 0x080000, CRC(fd334b91) SHA1(cf8bf6645a4082ea4392937e169b1686c9c7e246) )
+	ROM_LOAD16_BYTE( "puckpoke.u4", 0x000001, 0x080000, CRC(839cc76b) SHA1(e15662a7175db7a8e222dda176a8ed92e0d56e9d) )
+	ROM_LOAD16_BYTE( "puckpoke.u8", 0x100000, 0x080000, CRC(7936bec8) SHA1(4b350105abe514fbfeabae1c6f3aeee695c3d07a) )
+	ROM_LOAD16_BYTE( "puckpoke.u7", 0x100001, 0x080000, CRC(96b66bdf) SHA1(3cc2861ad9bc232cbe683e01b58090f832d03db5) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "puckpoke.u3", 0x00000, 0x40000, CRC(7b066bac) SHA1(429616e21c672b07e0705bc63234249cac3af56f) )
 ROM_END
 
 
@@ -2203,6 +2423,19 @@ static DRIVER_INIT( zunkyou )
 	init_saves();
 }
 
+DRIVER_INIT( puckpkmn )
+{
+	data8_t *rom	=	memory_region(REGION_CPU1);
+	size_t len		=	memory_region_length(REGION_CPU1);
+	int i;
+	for (i = 0; i < len; i++)
+		rom[i] = BITSWAP8(rom[i],1,4,2,0,7,5,3,6);
+
+	cpu_setbank(1, memory_region(REGION_CPU1) );	// VDP reads the roms from here
+	cpu_setbank(2, main_ram );						// VDP reads the ram from here
+
+	init_segac2();
+}
 
 
 /******************************************************************************
@@ -2223,26 +2456,28 @@ static DRIVER_INIT( zunkyou )
 ******************************************************************************/
 
 /* System C Games */
-GAME ( 1989, bloxeedc, bloxeed,  segac,  bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)" )
-GAME ( 1990, columns,  0,        segac,  columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
-GAME ( 1990, columnsj, columns,  segac,  columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
-GAME ( 1990, columns2, 0,        segac,  columns2, columns2, ROT0, "Sega",                   "Columns II - The Voyage Through Time (Japan)" )
+GAME ( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)" )
+GAME ( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
+GAME ( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
+GAME ( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II - The Voyage Through Time (Japan)" )
 
 /* System C-2 Games */
-GAME ( 1990, borench,  0,        segac2, borench,  borench,  ROT0, "Sega",                   "Borench" )
-GAME ( 1990, tfrceac,  0,        segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
-GAME ( 1990, tfrceacj, tfrceac,  segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
-GAME ( 1990, tfrceacb, tfrceac,  segac2, tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)" )
-GAME ( 1991, ribbit,   0,        segac2, ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!" )
-GAME ( 1992, tantr,    0,        segac2, ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
-GAME ( 1992, tantrbl,  tantr,    segac2, ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
-GAME ( 1994, tantrbl2, tantr,    segac,  ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
-GAME ( 1992, puyopuyo, 0,        segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
-GAME ( 1992, puyopuya, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
-GAME ( 1992, puyopuyb, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (English) (bootleg)" )
-GAME ( 1994, ichidant, 0,        segac2, ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
-GAME ( 1994, ichidnte, ichidant, segac2, ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
-GAME ( 1994, stkclmns, 0,        segac2, stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )
-GAME ( 1994, puyopuy2, 0,        segac2, puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
-GAME ( 1994, potopoto, 0,        segac2, potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)" )
-GAME ( 1994, zunkyou,  0,        segac2, zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)" )
+GAME ( 1990, borench,  0,        segac2,   borench,  borench,  ROT0, "Sega",                   "Borench" )
+GAME ( 1990, tfrceac,  0,        segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
+GAME ( 1990, tfrceacj, tfrceac,  segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
+GAME ( 1990, tfrceacb, tfrceac,  segac2,   tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)" )
+GAME ( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!" )
+GAME ( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
+GAME ( 1992, tantrbl,  tantr,    segac2,   ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
+GAME ( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
+GAME ( 1992, puyopuyo, 0,        segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
+GAME ( 1992, puyopuya, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
+GAME ( 1992, puyopuyb, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (English) (bootleg)" )
+GAME ( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
+GAME ( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
+GAME ( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )
+GAME ( 1994, puyopuy2, 0,        segac2,   puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
+GAME ( 1994, potopoto, 0,        segac2,   potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)" )
+GAME ( 1994, zunkyou,  0,        segac2,   zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)" )
+GAME ( 2000, puckpkmn, 0,        puckpkmn, puckpkmn, puckpkmn, ROT0, "Genie",                  "Puckman Pockimon" )
+

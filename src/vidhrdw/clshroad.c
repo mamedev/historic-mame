@@ -338,7 +338,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 				attr & 0x0f,
 				flipx,flipy,
 				x,y,
-				cliprect,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,15 );
 	}
 }
 

@@ -178,9 +178,9 @@ INPUT_PORTS_START( commando )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright One Player" )
 	PORT_DIPSETTING(    0x40, "Upright Two Players" )
@@ -256,9 +256,9 @@ INPUT_PORTS_START( commandu )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright One Player" )
 	PORT_DIPSETTING(    0x40, "Upright Two Players" )
@@ -370,146 +370,146 @@ MACHINE_DRIVER_END
 
 ROM_START( commando )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0x8438b694 )
-	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x35486542 )
+	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, CRC(8438b694) SHA1(e154478d8f1b635355bd777370acabe49cb9d309) )
+	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, CRC(35486542) SHA1(531a85c9e03970ce037be84f2240c2df6f6e3ec1) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, CRC(f9cc4a74) SHA1(ee8dd73919c6f47f62cc6d999de9510db9f79b8f) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, CRC(505726e0) SHA1(2435c87c9c9d78a6e703cf0e1f6a0288207fcd4c) )	/* characters */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, 0x14178237 )
+	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, CRC(7b2e1b48) SHA1(5d49e1d8146e4ef744445b68f35677302e875a85) )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, CRC(81b417d3) SHA1(5ec7e3f0c8069384a5f6eb39232c228b9d7b8c0c) )
+	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, CRC(5612dbd2) SHA1(9e4e1a22b6cbf60607b9a81dae34482ae55f7c47) )
+	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, CRC(2b2dee36) SHA1(8792278464fa3da47176582025f6673a15a581e2) )
+	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, CRC(de70babf) SHA1(6717e23baf55f84d3143fb432140a7c3e102ac26) )
+	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, CRC(14178237) SHA1(f896e71c7004349c9a46155edfd9f0aaa186065d) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, 0x79f16e3d )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, 0xca88bdfd )
-	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, 0x2019c883 )
-	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
+	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, CRC(79f16e3d) SHA1(04e1f03a4d6b4cc2b81bce3a290bbb95de900d35) )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, CRC(26fee521) SHA1(2fbfc73ee860f72a20229a01d4da9f5cc2e858d3) )
+	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, CRC(ca88bdfd) SHA1(548b05460bc7983cc81f15c70e87f47d10db2812) )
+	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, CRC(2019c883) SHA1(883c0156ceab99f4849fe36972c4162b4ac8c216) )
+	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, CRC(98703982) SHA1(ba9a9b0dcadd4f52502828408c4a19b0bd518351) )
+	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, CRC(f069d2f8) SHA1(2c92300a9407470b34965021de882f1f7a84730c) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
-	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
-	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, CRC(3aba15a1) SHA1(8b057f6e26155dd9e48bde182e680fce4519f600) )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, CRC(88865754) SHA1(ca6dddca98baf00a65b2fb70b69cf4704ef8c831) )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, CRC(4c14c3f6) SHA1(644ac17c7413f094ec9a15cba87bbd421b26321f) )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, CRC(b388c246) SHA1(038f9851699331ad887b6281a9df053dca3db8fd) )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
 ROM_START( commandu )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "u4-f",         0x0000, 0x8000, 0xa6118935 )
-	ROM_LOAD( "u3-f",         0x8000, 0x4000, 0x24f49684 )
+	ROM_LOAD( "u4-f",         0x0000, 0x8000, CRC(a6118935) SHA1(d5811968b23d61e344e151747bcc3c0ed2b9497b) )
+	ROM_LOAD( "u3-f",         0x8000, 0x4000, CRC(24f49684) SHA1(d38a7bd9f3b506747a03f6b94c3f8a2d9fc59166) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, CRC(f9cc4a74) SHA1(ee8dd73919c6f47f62cc6d999de9510db9f79b8f) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, CRC(505726e0) SHA1(2435c87c9c9d78a6e703cf0e1f6a0288207fcd4c) )	/* characters */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, 0x14178237 )
+	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, CRC(7b2e1b48) SHA1(5d49e1d8146e4ef744445b68f35677302e875a85) )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, CRC(81b417d3) SHA1(5ec7e3f0c8069384a5f6eb39232c228b9d7b8c0c) )
+	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, CRC(5612dbd2) SHA1(9e4e1a22b6cbf60607b9a81dae34482ae55f7c47) )
+	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, CRC(2b2dee36) SHA1(8792278464fa3da47176582025f6673a15a581e2) )
+	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, CRC(de70babf) SHA1(6717e23baf55f84d3143fb432140a7c3e102ac26) )
+	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, CRC(14178237) SHA1(f896e71c7004349c9a46155edfd9f0aaa186065d) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, 0x79f16e3d )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, 0xca88bdfd )
-	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, 0x2019c883 )
-	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
+	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, CRC(79f16e3d) SHA1(04e1f03a4d6b4cc2b81bce3a290bbb95de900d35) )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, CRC(26fee521) SHA1(2fbfc73ee860f72a20229a01d4da9f5cc2e858d3) )
+	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, CRC(ca88bdfd) SHA1(548b05460bc7983cc81f15c70e87f47d10db2812) )
+	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, CRC(2019c883) SHA1(883c0156ceab99f4849fe36972c4162b4ac8c216) )
+	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, CRC(98703982) SHA1(ba9a9b0dcadd4f52502828408c4a19b0bd518351) )
+	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, CRC(f069d2f8) SHA1(2c92300a9407470b34965021de882f1f7a84730c) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
-	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
-	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, CRC(3aba15a1) SHA1(8b057f6e26155dd9e48bde182e680fce4519f600) )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, CRC(88865754) SHA1(ca6dddca98baf00a65b2fb70b69cf4704ef8c831) )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, CRC(4c14c3f6) SHA1(644ac17c7413f094ec9a15cba87bbd421b26321f) )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, CRC(b388c246) SHA1(038f9851699331ad887b6281a9df053dca3db8fd) )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
 ROM_START( commandj )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xd3f2bfb3 )
-	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xed01f472 )
+	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, CRC(d3f2bfb3) SHA1(738a5673ac6a907cb04cfb125e8aab3f7437b9d2) )
+	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, CRC(ed01f472) SHA1(fa181293ae8f0fee78d412259eb81f6de1e1307a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xca20aca5 )
+	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, CRC(ca20aca5) SHA1(206a8fd4a8985e7ceed7de8349ba02627e881503) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, CRC(505726e0) SHA1(2435c87c9c9d78a6e703cf0e1f6a0288207fcd4c) )	/* characters */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, 0x14178237 )
+	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, CRC(7b2e1b48) SHA1(5d49e1d8146e4ef744445b68f35677302e875a85) )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, CRC(81b417d3) SHA1(5ec7e3f0c8069384a5f6eb39232c228b9d7b8c0c) )
+	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, CRC(5612dbd2) SHA1(9e4e1a22b6cbf60607b9a81dae34482ae55f7c47) )
+	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, CRC(2b2dee36) SHA1(8792278464fa3da47176582025f6673a15a581e2) )
+	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, CRC(de70babf) SHA1(6717e23baf55f84d3143fb432140a7c3e102ac26) )
+	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, CRC(14178237) SHA1(f896e71c7004349c9a46155edfd9f0aaa186065d) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, 0x79f16e3d )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, 0xca88bdfd )
-	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, 0x2019c883 )
-	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
+	ROM_LOAD( "e07_vt05.bin", 0x00000, 0x4000, CRC(79f16e3d) SHA1(04e1f03a4d6b4cc2b81bce3a290bbb95de900d35) )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, CRC(26fee521) SHA1(2fbfc73ee860f72a20229a01d4da9f5cc2e858d3) )
+	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, CRC(ca88bdfd) SHA1(548b05460bc7983cc81f15c70e87f47d10db2812) )
+	ROM_LOAD( "h07_vt08.bin", 0x0c000, 0x4000, CRC(2019c883) SHA1(883c0156ceab99f4849fe36972c4162b4ac8c216) )
+	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, CRC(98703982) SHA1(ba9a9b0dcadd4f52502828408c4a19b0bd518351) )
+	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, CRC(f069d2f8) SHA1(2c92300a9407470b34965021de882f1f7a84730c) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
-	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
-	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, CRC(3aba15a1) SHA1(8b057f6e26155dd9e48bde182e680fce4519f600) )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, CRC(88865754) SHA1(ca6dddca98baf00a65b2fb70b69cf4704ef8c831) )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, CRC(4c14c3f6) SHA1(644ac17c7413f094ec9a15cba87bbd421b26321f) )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, CRC(b388c246) SHA1(038f9851699331ad887b6281a9df053dca3db8fd) )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
 ROM_START( spaceinv )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "u4",           0x0000, 0x8000, 0x834ba0de )
-	ROM_LOAD( "u3",           0x8000, 0x4000, 0x07e4ee3a )
+	ROM_LOAD( "u4",           0x0000, 0x8000, CRC(834ba0de) SHA1(85f40559e6a436f3f752b6e862a419a5b9481fa8) )
+	ROM_LOAD( "u3",           0x8000, 0x4000, CRC(07e4ee3a) SHA1(6d7665b3072f075893ef37e55147b10271d069ef) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "u2",           0x0000, 0x4000, 0xcbf8c40e )
+	ROM_LOAD( "u2",           0x0000, 0x4000, CRC(cbf8c40e) SHA1(0c8dce034d96d075e012cbb8f68c2817b860d969) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "u1",           0x00000, 0x4000, 0xf477e13a )	/* characters */
+	ROM_LOAD( "u1",           0x00000, 0x4000, CRC(f477e13a) SHA1(ec5b80f5d508501e72cba028dc45b2c307ac452b) )	/* characters */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, 0x14178237 )
+	ROM_LOAD( "a05_vt11.bin", 0x00000, 0x4000, CRC(7b2e1b48) SHA1(5d49e1d8146e4ef744445b68f35677302e875a85) )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x04000, 0x4000, CRC(81b417d3) SHA1(5ec7e3f0c8069384a5f6eb39232c228b9d7b8c0c) )
+	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000, CRC(5612dbd2) SHA1(9e4e1a22b6cbf60607b9a81dae34482ae55f7c47) )
+	ROM_LOAD( "a08_vt14.bin", 0x0c000, 0x4000, CRC(2b2dee36) SHA1(8792278464fa3da47176582025f6673a15a581e2) )
+	ROM_LOAD( "a09_vt15.bin", 0x10000, 0x4000, CRC(de70babf) SHA1(6717e23baf55f84d3143fb432140a7c3e102ac26) )
+	ROM_LOAD( "a10_vt16.bin", 0x14000, 0x4000, CRC(14178237) SHA1(f896e71c7004349c9a46155edfd9f0aaa186065d) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "u5",           0x00000, 0x4000, 0x2a97c933 )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, 0xca88bdfd )
-	ROM_LOAD( "u8",           0x0c000, 0x4000, 0xd6b4aa2e )
-	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
+	ROM_LOAD( "u5",           0x00000, 0x4000, CRC(2a97c933) SHA1(bfddb0c0f930a7caffad7e52d394d72c09ffb45f) )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x04000, 0x4000, CRC(26fee521) SHA1(2fbfc73ee860f72a20229a01d4da9f5cc2e858d3) )
+	ROM_LOAD( "e09_vt07.bin", 0x08000, 0x4000, CRC(ca88bdfd) SHA1(548b05460bc7983cc81f15c70e87f47d10db2812) )
+	ROM_LOAD( "u8",           0x0c000, 0x4000, CRC(d6b4aa2e) SHA1(5bbf536f73010182b9150dd4fb1e2a42b5b380b0) )
+	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, CRC(98703982) SHA1(ba9a9b0dcadd4f52502828408c4a19b0bd518351) )
+	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, CRC(f069d2f8) SHA1(2c92300a9407470b34965021de882f1f7a84730c) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
-	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
-	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, CRC(3aba15a1) SHA1(8b057f6e26155dd9e48bde182e680fce4519f600) )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, CRC(88865754) SHA1(ca6dddca98baf00a65b2fb70b69cf4704ef8c831) )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, CRC(4c14c3f6) SHA1(644ac17c7413f094ec9a15cba87bbd421b26321f) )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, CRC(b388c246) SHA1(038f9851699331ad887b6281a9df053dca3db8fd) )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
 

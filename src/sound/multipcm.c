@@ -1,7 +1,7 @@
 /*
  * Sega System 32 Multi/Model 1 custom PCM chip (315-5560) emulation.
  *
- * by R. Belmont.  Info from AMUSE, Hoot, and the YMF278B.
+ * by R. Belmont.  Info from AMUSE, Hoot, and the YMF278B (OPL4).
  * This chip is sort of a dry run for the PCM section of the YMF278B,
  * and it has many obvious similarities to that chip.
  *
@@ -33,6 +33,7 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "multipcm.h"
+#include "state.h"
 
 #define MULTIPCM_CLOCKDIV    	(360.0)
 #define MULTIPCM_ONE		(18)
@@ -59,29 +60,29 @@ static long pantbl[16];		// pre-calculated panning table
 // sample info struct
 typedef struct PCM_t
 {
-	long	st;
-	long	size;
-	long	loop;
-	unsigned char	env[4];
+	INT32	st;
+	INT32	size;
+	INT32	loop;
+	UINT8	env[4];
 } PCMInfoT;
 
 // voice structure
 typedef struct Voice_t
 {
-	char    active;		// active flag
-	char	loop;	        // loop flag
-	long    end;		// length of sample
-	long	loopst;		// loop start offset
+	INT8    active;		// active flag
+	INT8	loop;	        // loop flag
+	INT32   end;		// length of sample
+	INT32	loopst;		// loop start offset
 	int     pan;		// panning
-	long 	vol;		// volume
-	signed char *pSamp;	// pointer to start of sample data
+	INT32 	vol;		// volume
+	INT8    *pSamp;		// pointer to start of sample data
 
-	long	ptdelta;	// pitch step
-	long	ptoffset;	// fixed point offset
-	long	ptsum;		// fixed point sum
+	INT32	ptdelta;	// pitch step
+	INT32	ptoffset;	// fixed point offset
+	INT32	ptsum;		// fixed point sum
   	int 	relamt;		// release amount
   	int 	relcount;	// release counter
-	char	relstage;	// release stage
+	INT8	relstage;	// release stage
 } VoiceT;
 
 // chip structure
@@ -104,6 +105,21 @@ typedef struct MultiPCM_t
 } MultiPCMT;
 
 static MultiPCMT mpcm[MAX_MULTIPCM];
+
+static void MultiPCM_postload(void)
+{
+	int i, j, inum;
+
+	// recalculate all the proper voice pointers
+	for (i = 0; i < 2; i++)
+	{
+		for (j = 0; j < 28; j++)
+		{
+			inum = mpcm[i].registers[j][1] | ((mpcm[i].registers[j][2]&0x1)<<8);
+		  	mpcm[i].Voices[j].pSamp = &mpcm[i].romptr[mpcm[i].samples[inum].st];
+		}
+	}
+}
 
 static void MultiPCM_update(int chip, INT16 **buffer, int length )
 {
@@ -201,7 +217,7 @@ static void MultiPCM_update(int chip, INT16 **buffer, int length )
 
 int MultiPCM_sh_start(const struct MachineSound *msound)
 {
-	int i, chip;
+	int i, j, chip;
 	double unity = (double)(1<<MULTIPCM_ONE);
 	unsigned char* phdr;
 	long nowadrs;
@@ -209,9 +225,7 @@ int MultiPCM_sh_start(const struct MachineSound *msound)
 	char buf[2][40];
 	const char *name[2];
 	int vol[2];
-	struct MultiPCM_interface *intf;
-
-	intf = msound->sound_interface;
+	struct MultiPCM_interface *intf = msound->sound_interface;
 
 	// make volume table
 	double	max=255.0;
@@ -293,6 +307,50 @@ int MultiPCM_sh_start(const struct MachineSound *msound)
 			}
 		}
 	}
+
+	/* set up the save state info */
+	for (i = 0; i < MAX_MULTIPCM; i++)
+	{
+		int v;
+		char mname[20];
+
+		sprintf(mname, "MultiPCM %d", i);
+
+		state_save_register_int(mname, i, "bankL", &mpcm[i].bankL);
+		state_save_register_int(mname, i, "bankR", &mpcm[i].bankR);
+
+		for (v = 0; v < 28; v++)
+		{
+			char mname2[32];
+
+			sprintf(mname2, "MultiPCM %d v %d", i, v);
+
+			for (j = 0; j < 8; j++)
+			{
+				char sname[20];
+
+				sprintf(sname, "rawreg %d", j);
+
+				state_save_register_UINT8(mname2, 1, sname, &mpcm[i].registers[v][j], 1);
+			}
+			state_save_register_INT8(mname2, 1, "active", &mpcm[i].Voices[v].active, 1);
+			state_save_register_INT8(mname2, 1, "loop", &mpcm[i].Voices[v].loop, 1);
+			state_save_register_INT32(mname2, 1, "end", &mpcm[i].Voices[v].end, 1);
+			state_save_register_INT32(mname2, 1, "lpstart", &mpcm[i].Voices[v].loopst, 1);
+			state_save_register_int(mname2, 1, "pan", &mpcm[i].Voices[v].pan);
+			state_save_register_INT32(mname2, 1, "vol", &mpcm[i].Voices[v].vol, 1);
+			state_save_register_INT32(mname2, 1, "ptdelta", &mpcm[i].Voices[v].ptdelta, 1);
+			state_save_register_INT32(mname2, 1, "ptoffset", &mpcm[i].Voices[v].ptoffset, 1);
+			state_save_register_INT32(mname2, 1, "ptsum", &mpcm[i].Voices[v].ptsum, 1);
+			state_save_register_int(mname2, 1, "relamt", &mpcm[i].Voices[v].relamt);
+			state_save_register_INT8(mname2, 1, "relstage", &mpcm[i].Voices[v].relstage, 1);
+		}
+
+		state_save_register_int(mname, i, "curreg", &mpcm[i].curreg);
+		state_save_register_int(mname, i, "curvoice", &mpcm[i].curvoice);
+	}
+
+	state_save_register_func_postload(MultiPCM_postload);
 
 	return 0;
 }
@@ -466,108 +524,7 @@ static unsigned char MultiPCM_reg_r(int chip, int offset)
 	return retval;
 }
 
-
-/* save state */
-
-int MultiPCMGetContextSize(void)
-{
-	return sizeof(MultiPCMT)*2;
-}
-
-// save state
-void MultiPCMGetContext(void* ctx)
-{
-#if 0
-	int i, j;
-
-	StateHelperSetPtr(ctx);
-
-	for (i = 0; i < MAX_MULTIPCM; i++)
-	{
-		int v;
-
-		StateSaveInt(&mpcm[i].bankL, 1);
-		StateSaveInt(&mpcm[i].bankR, 1);
-
-		for (v = 0; v < 28; v++)
-		{
-			for (j = 0; j < 8; j++)
-			{
-				StateSaveUChar(&mpcm[i].registers[v][j], 1);
-			}
-			StateSaveChar(&mpcm[i].Voices[v].active, 1);
-			StateSaveChar(&mpcm[i].Voices[v].loop, 1);
-			StateSaveLong(&mpcm[i].Voices[v].end, 1);
-			StateSaveLong(&mpcm[i].Voices[v].loopst, 1);
-			StateSaveInt(&mpcm[i].Voices[v].pan, 1);
-			StateSaveLong(&mpcm[i].Voices[v].vol, 1);
-			StateSaveLong(&mpcm[i].Voices[v].ptdelta, 1);
-			StateSaveLong(&mpcm[i].Voices[v].ptoffset, 1);
-			StateSaveLong(&mpcm[i].Voices[v].ptsum, 1);
-			StateSaveInt(&mpcm[i].Voices[v].relamt, 1);
-			StateSaveInt(&mpcm[i].Voices[v].relamt, 1);
-			StateSaveChar(&mpcm[i].Voices[v].relstage, 1);
-		}
-
-		StateSaveInt(&mpcm[i].curreg, 1);
-		StateSaveInt(&mpcm[i].curvoice, 1);
-	}
-#endif
-}
-
-// load state
-void MultiPCMSetContext(void* ctx)
-{
-#if 0
-	int i, j;
-	long inum;
-
-	StateHelperSetPtr(ctx);
-
-	for (i = 0; i < MAX_MULTIPCM; i++)
-	{
-		int v;
-
-		StateLoadInt(&mpcm[i].bankL, 1);
-		StateLoadInt(&mpcm[i].bankR, 1);
-
-		for (v = 0; v < 28; v++)
-		{
-			for (j = 0; j < 8; j++)
-			{
-				StateLoadUChar(&mpcm[i].registers[v][j], 1);
-			}
-			StateLoadChar(&mpcm[i].Voices[v].active, 1);
-			StateLoadChar(&mpcm[i].Voices[v].loop, 1);
-			StateLoadLong(&mpcm[i].Voices[v].end, 1);
-			StateLoadLong(&mpcm[i].Voices[v].loopst, 1);
-			StateLoadInt(&mpcm[i].Voices[v].pan, 1);
-			StateLoadLong(&mpcm[i].Voices[v].vol, 1);
-			StateLoadLong(&mpcm[i].Voices[v].ptdelta, 1);
-			StateLoadLong(&mpcm[i].Voices[v].ptoffset, 1);
-			StateLoadLong(&mpcm[i].Voices[v].ptsum, 1);
-			StateLoadInt(&mpcm[i].Voices[v].relamt, 1);
-			StateLoadInt(&mpcm[i].Voices[v].relamt, 1);
-			StateLoadChar(&mpcm[i].Voices[v].relstage, 1);
-		}
-
-		StateLoadInt(&mpcm[i].curreg, 1);
-		StateLoadInt(&mpcm[i].curvoice, 1);
-	}
-
-	// now recalculate all the proper voice pointers
-	for (i = 0; i < 2; i++)
-	{
-		for (j = 0; j < 28; j++)
-		{
-			inum = mpcm[i].registers[j][1] | ((mpcm[i].registers[j][2]&0x1)<<8);
-		  	mpcm[i].Voices[j].pSamp = &mpcm[i].romptr[mpcm[i].samples[inum].st];
-		}
-	}
-#endif
-}
-
-/* MAME access functions */
+/* MAME/M1 access functions */
 
 READ_HANDLER( MultiPCM_reg_0_r )
 {

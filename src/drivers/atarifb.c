@@ -18,10 +18,6 @@
 		  no backdrop/overlay is supported yet. High quality artwork would be
 		  appreciated.
 
-		* The sound is ripped for the most part from the Basketball driver and
-		  is missing the kick, hit and whistle tones. I don't know if the noise
-		  is entirely accurate either.
-
 		* I'm not good at reading the schematics, so I'm unsure about the
 		  exact vblank duration. I'm pretty sure it is one of two values though.
 
@@ -109,121 +105,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "atarifb.h"
-#include "artwork.h"
 
 
 int atarifb_game;
 int atarifb_lamp1, atarifb_lamp2;
-
-/* sound code shamelessly ripped from bsktball.c */
-static int crowd_mask;
-static int noise_b10=0;
-static int noise_a10=0;
-static int noise=0;
-
-#define TIME_32H 10582*2
-#define TIME_256H TIME_32H*4
-
-
-
-/*************************************
- *
- *	Sound control
- *
- *************************************/
-
-static void atarifb_noise_256H(int foo)
-{
-	int b10_input;
-	int a10_input;
-
-	b10_input = (noise_b10 & 0x01) ^ (((~noise_a10) & 0x40) >> 6);
-	a10_input = (noise_b10 & 0x80) >> 7;
-
-	noise_b10 = ((noise_b10 << 1) | b10_input) & 0xFF;
-	noise_a10 = ((noise_a10 << 1) | a10_input) & 0xFF;
-
-	noise = (noise_a10 & 0x80) >> 7;
-
-	if (noise)
-		DAC_data_w(2,crowd_mask);
-	else
-		DAC_data_w(2,0);
-}
-
-
-static MACHINE_INIT( atarifb )
-{
-	timer_pulse(TIME_IN_NSEC(TIME_256H), 0, atarifb_noise_256H);
-}
-
-
-static WRITE_HANDLER( atarifb_out2_w )
-{
-	/* D0-D3 = crowd */
-	crowd_mask = (data & 0x0F) << 4;
-	if (noise)
-		DAC_data_w(2,crowd_mask);
-	else
-		DAC_data_w(2,0);
-
-	coin_counter_w (0, data & 0x10);
-//	logerror("out2_w: %02x\n", data & ~0x0f);
-}
-
-
-static WRITE_HANDLER( soccer_out2_w )
-{
-	/* D0-D3 = crowd */
-	crowd_mask = (data & 0x0F) << 4;
-	if (noise)
-		DAC_data_w(2,crowd_mask);
-	else
-		DAC_data_w(2,0);
-
-	coin_counter_w (0, data & 0x40);
-	coin_counter_w (1, data & 0x20);
-	coin_counter_w (2, data & 0x10);
-//	logerror("out2_w: %02x\n", data & ~0x0f);
-}
-
-
-
-/*************************************
- *
- *	LED control
- *
- *************************************/
-
-static WRITE_HANDLER( atarifb_out3_w )
-{
-	int loop = cpu_getiloops();
-
-	switch (loop)
-	{
-		case 0x00:
-			/* Player 1 play select lamp */
-			atarifb_lamp1 = data;
-			artwork_show("ledleft0", (atarifb_lamp1 >> 0) & 1);
-			artwork_show("ledleft1", (atarifb_lamp1 >> 1) & 1);
-			artwork_show("ledleft2", (atarifb_lamp1 >> 2) & 1);
-			artwork_show("ledleft3", (atarifb_lamp1 >> 3) & 1);
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			/* Player 2 play select lamp */
-			atarifb_lamp2 = data;
-			artwork_show("ledright0", (atarifb_lamp2 >> 0) & 1);
-			artwork_show("ledright1", (atarifb_lamp2 >> 1) & 1);
-			artwork_show("ledright2", (atarifb_lamp2 >> 2) & 1);
-			artwork_show("ledright3", (atarifb_lamp2 >> 3) & 1);
-			break;
-		case 0x03:
-			break;
-	}
-//	logerror("out3_w, %02x:%02x\n", loop, data);
-}
 
 
 
@@ -280,7 +165,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1000, 0x13bf, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2000, 0x2000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x2001, 0x2001, atarifb4_out1_w }, /* OUT 1 */
+	{ 0x2001, 0x2001, atarifb_out1_w }, /* OUT 1 */
 	{ 0x2002, 0x2002, atarifb_out2_w }, /* OUT 2 */
 	{ 0x2003, 0x2003, atarifb_out3_w }, /* OUT 3 */
 	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
@@ -339,8 +224,8 @@ static MEMORY_WRITE_START( soccer_writemem )
 	{ 0x0800, 0x0bbf, videoram_w, &videoram, &videoram_size },
 	{ 0x0bc0, 0x0bff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1000, 0x1000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x1001, 0x1001, soccer_out1_w }, /* OUT 1 */
-	{ 0x1002, 0x1002, soccer_out2_w }, /* OUT 2 */
+	{ 0x1001, 0x1001, atarifb_out1_w }, /* OUT 1 */
+	{ 0x1002, 0x1002, atarifb_out2_w }, /* OUT 2 */
 	{ 0x1004, 0x1004, MWA_NOP }, /* Interrupt Acknowledge */
 	{ 0x1005, 0x1005, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
@@ -685,11 +570,141 @@ static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct DACinterface dac_interface =
-{
-	3,
-	{ 50, 50, 50 }
+
+/************************************************************************/
+/* atarifb Sound System Analog emulation                                */
+/************************************************************************/
+
+int atarifbWhistl555 = DISC_555_ASTBL_CAP | DISC_555_ASTBL_AC;
+
+const struct discrete_lfsr_desc atarifb_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	0,			/* Use Bit 0 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is already inverted by XNOR */
+	16			/* Output bit is feedback bit */
 };
+
+/* Nodes - Inputs */
+#define ATARIFB_WHISTLE_EN		NODE_01
+#define ATARIFB_CROWD_DATA		NODE_02
+#define ATARIFB_ATTRACT_EN		NODE_03
+#define ATARIFB_NOISE_EN		NODE_04
+#define ATARIFB_HIT_EN			NODE_05
+/* Nodes - Sounds */
+#define ATARIFB_NOISE			NODE_10
+#define ATARIFB_HIT_SND			NODE_11
+#define ATARIFB_WHISTLE_SND		NODE_12
+#define ATARIFB_CROWD_SND		NODE_13
+
+static DISCRETE_SOUND_START(atarifb_sound_interface)
+	/************************************************/
+	/* atarifb  Effects Relataive Gain Table        */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Hit           3.8      47/47         760.0   */
+	/* Whistle       5.0      47/47        1000.0   */
+	/* Crowd         3.8      47/220        162.4   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for atarifb           */
+	/************************************************/
+	/*              NODE                 ADDR  MASK    GAIN     OFFSET  INIT */
+	DISCRETE_INPUT (ATARIFB_WHISTLE_EN,  0x00, 0x000f,                  0.0)
+	DISCRETE_INPUTX(ATARIFB_CROWD_DATA,  0x01, 0x000f, 162.4/15, 0,     0.0)
+	DISCRETE_INPUTX(ATARIFB_HIT_EN,      0x02, 0x000f, 760.0/2,  0,     0.0)
+	DISCRETE_INPUT (ATARIFB_ATTRACT_EN,  0x03, 0x000f,                  0.0)
+	DISCRETE_INPUT (ATARIFB_NOISE_EN,    0x04, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Hit is a trigger fed directly to the amp     */
+	/************************************************/
+	DISCRETE_FILTER2(ATARIFB_HIT_SND, 1, ATARIFB_HIT_EN, 10.0, 5, DISC_FILTER_HIGHPASS)	// remove DC
+
+	/************************************************/
+	/* Crowd effect is variable amplitude, filtered */
+	/* random noise.                                */
+	/* LFSR clk = 256H = 15750.0Hz                  */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(ATARIFB_NOISE, ATARIFB_NOISE_EN, ATARIFB_NOISE_EN, 15750.0, ATARIFB_CROWD_DATA, 0, 0, &atarifb_lfsr)
+	DISCRETE_FILTER2(ATARIFB_CROWD_SND, 1, ATARIFB_NOISE, 330.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+
+	/************************************************/
+	/* Whistle effect is a triggered 555 cap charge */
+	/************************************************/
+	DISCRETE_555_ASTABLE(ATARIFB_WHISTLE_SND, ATARIFB_WHISTLE_EN, 1000, 2200, 2200, 1e-7, NODE_NC, &atarifbWhistl555)
+
+	DISCRETE_ADDER3(NODE_90, ATARIFB_ATTRACT_EN, ATARIFB_HIT_SND, ATARIFB_WHISTLE_SND, ATARIFB_CROWD_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(506.7+1000.0+760.0))
+	DISCRETE_OUTPUT(NODE_91, 100)
+DISCRETE_SOUND_END
+
+
+/************************************************************************/
+/* abaseb Sound System Analog emulation                                 */
+/************************************************************************/
+/* Sounds indentical to atarifb, but gain values are different          */
+
+/* Nodes - Inputs */
+#define ABASEB_WHISTLE_EN		NODE_01
+#define ABASEB_CROWD_DATA		NODE_02
+#define ABASEB_ATTRACT_EN		NODE_03
+#define ABASEB_NOISE_EN			NODE_04
+#define ABASEB_HIT_EN			NODE_05
+/* Nodes - Sounds */
+#define ABASEB_NOISE			NODE_10
+#define ABASEB_HIT_SND			NODE_11
+#define ABASEB_WHISTLE_SND		NODE_12
+#define ABASEB_CROWD_SND		NODE_13
+
+static DISCRETE_SOUND_START(abaseb_sound_interface)
+	/************************************************/
+	/* abaseb  Effects Relataive Gain Table         */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Hit           3.8      47/330        506.7   */
+	/* Whistle       5.0      47/220       1000.0   */
+	/* Crowd         3.8      47/220        760.0   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for abaseb            */
+	/************************************************/
+	/*              NODE                 ADDR  MASK    GAIN     OFFSET  INIT */
+	DISCRETE_INPUT (ABASEB_WHISTLE_EN,   0x00, 0x000f,                  0.0)
+	DISCRETE_INPUTX(ABASEB_CROWD_DATA,   0x01, 0x000f, 760.0/15, 0,     0.0)
+	DISCRETE_INPUTX(ABASEB_HIT_EN,       0x02, 0x000f, 506.7/2,  0,     0.0)
+	DISCRETE_INPUT (ABASEB_ATTRACT_EN,   0x03, 0x000f,                  0.0)
+	DISCRETE_INPUT (ABASEB_NOISE_EN,     0x04, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Hit is a trigger fed directly to the amp     */
+	/************************************************/
+	DISCRETE_FILTER2(ABASEB_HIT_SND, 1, ABASEB_HIT_EN, 10.0, 5, DISC_FILTER_HIGHPASS)	// remove DC
+
+	/************************************************/
+	/* Crowd effect is variable amplitude, filtered */
+	/* random noise.                                */
+	/* LFSR clk = 256H = 15750.0Hz                  */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(ABASEB_NOISE, ABASEB_NOISE_EN, ABASEB_NOISE_EN, 15750.0, ABASEB_CROWD_DATA, 0, 0, &atarifb_lfsr)
+	DISCRETE_FILTER2(ABASEB_CROWD_SND, 1, ABASEB_NOISE, 330.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+
+	/************************************************/
+	/* Whistle effect is a triggered 555 cap charge */
+	/************************************************/
+	DISCRETE_555_ASTABLE(ABASEB_WHISTLE_SND, ABASEB_WHISTLE_EN, 1000, 2200, 2200, 1e-7, NODE_NC, &atarifbWhistl555)
+
+	DISCRETE_ADDER3(NODE_90, ABASEB_ATTRACT_EN, ABASEB_HIT_SND, ABASEB_WHISTLE_SND, ABASEB_CROWD_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(506.7+1000.0+760.0))
+	DISCRETE_OUTPUT(NODE_91, 100)
+DISCRETE_SOUND_END
 
 
 
@@ -709,12 +724,10 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2037)	/* 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
 
-	MDRV_MACHINE_INIT(atarifb)
-
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(38*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 1*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
@@ -724,7 +737,7 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_VIDEO_UPDATE(atarifb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, atarifb_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -743,7 +756,9 @@ static MACHINE_DRIVER_START( abaseb )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarifb)
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, abaseb_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -755,7 +770,7 @@ static MACHINE_DRIVER_START( soccer )
 	MDRV_CPU_MEMORY(soccer_readmem,soccer_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 2*8, 32*8-1)
 	MDRV_GFXDECODE(soccer_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -769,144 +784,144 @@ MACHINE_DRIVER_END
 
 ROM_START( atarifb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, 0x352e35db )
-	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
-	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, 0xe7e916ae )
+	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, CRC(352e35db) SHA1(ae3f1bdb274858edf203dbffe4ba2912c065cff2) )
+	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, CRC(a79c79ca) SHA1(7791b431e9aadb09fd286ae56699c4beda54830a) )
+	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, CRC(e7e916ae) SHA1(d3a188809e83c311699cb103040c4525b36a56e3) )
 	ROM_RELOAD( 			    0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
+	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, CRC(eac9ef90) SHA1(0e6284392852695ab7323be82105d32f57ad00f1) )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, CRC(89d619b8) SHA1(0af5d1f4e6f9a377dc2d49a8039866b1857af01f) )
 ROM_END
 
 
 ROM_START( atarifb1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, 0xf8ce7ed8 )
-	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
-	ROM_LOAD( "03302701.n1", 0x7800, 0x0800, 0x7740be51 )
+	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, CRC(f8ce7ed8) SHA1(54520d7d31c6c8f9028b7253a33aba3b2c35ae7c) )
+	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, CRC(a79c79ca) SHA1(7791b431e9aadb09fd286ae56699c4beda54830a) )
+	ROM_LOAD( "03302701.n1", 0x7800, 0x0800, CRC(7740be51) SHA1(3f610061f081eb5589b00a496877bc58f6e0f09f) )
 	ROM_RELOAD( 			    0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
+	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, CRC(eac9ef90) SHA1(0e6284392852695ab7323be82105d32f57ad00f1) )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, CRC(89d619b8) SHA1(0af5d1f4e6f9a377dc2d49a8039866b1857af01f) )
 ROM_END
 
 
 ROM_START( atarifb4 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
-	ROM_LOAD_NIB_LOW ( "34889.m1", 0x6000, 0x0400, 0x5c63974a )
-	ROM_LOAD_NIB_HIGH( "34891.m2", 0x6000, 0x0400, 0x9d03baa1 )
-	ROM_LOAD_NIB_LOW ( "34890.n1", 0x6400, 0x0400, 0x2deb5844 )
-	ROM_LOAD_NIB_HIGH( "34892.n2", 0x6400, 0x0400, 0xad212d2d )
-	ROM_LOAD_NIB_LOW ( "34885.k1", 0x6800, 0x0400, 0xfdd272a1 )
-	ROM_LOAD_NIB_HIGH( "34887.k2", 0x6800, 0x0400, 0xfa2b8b52 )
-	ROM_LOAD_NIB_LOW ( "34886.l1", 0x6c00, 0x0400, 0xbe912ccb )
-	ROM_LOAD_NIB_HIGH( "34888.l2", 0x6c00, 0x0400, 0x3f8e96c1 )
-	ROM_LOAD_NIB_LOW ( "34877.e1", 0x7000, 0x0400, 0xfd8832fa )
-	ROM_LOAD_NIB_HIGH( "34879.e2", 0x7000, 0x0400, 0x7053ffbc )
-	ROM_LOAD_NIB_LOW ( "34878.f1", 0x7400, 0x0400, 0x329eb720 )
-	ROM_LOAD_NIB_HIGH( "34880.f2", 0x7400, 0x0400, 0xe0c9b4c2 )
-	ROM_LOAD_NIB_LOW ( "34881.h1", 0x7800, 0x0400, 0xd9055541 )
-	ROM_LOAD_NIB_HIGH( "34883.h2", 0x7800, 0x0400, 0x8a912448 )
-	ROM_LOAD_NIB_LOW ( "34882.j1", 0x7c00, 0x0400, 0x060c9cdb )
+	ROM_LOAD_NIB_LOW ( "34889.m1", 0x6000, 0x0400, CRC(5c63974a) SHA1(e91f318be80d985a09ff92f4db5792290a06dc0f) )
+	ROM_LOAD_NIB_HIGH( "34891.m2", 0x6000, 0x0400, CRC(9d03baa1) SHA1(1b57f39fa4d43e3f3d22f2d9a5478b5f5e4d0cb1) )
+	ROM_LOAD_NIB_LOW ( "34890.n1", 0x6400, 0x0400, CRC(2deb5844) SHA1(abc7cc80d5fcac13f50f6cc550ea7a8f322434c9) )
+	ROM_LOAD_NIB_HIGH( "34892.n2", 0x6400, 0x0400, CRC(ad212d2d) SHA1(df77ed3d59b497d0f4fe7b275f1cce6c4a5aa0b2) )
+	ROM_LOAD_NIB_LOW ( "34885.k1", 0x6800, 0x0400, CRC(fdd272a1) SHA1(619c7b1ced1e397a4aa5fcaf0afe84c2b39ba5fd) )
+	ROM_LOAD_NIB_HIGH( "34887.k2", 0x6800, 0x0400, CRC(fa2b8b52) SHA1(aff26efcf70fe63819a80977853e8f58c17cb32b) )
+	ROM_LOAD_NIB_LOW ( "34886.l1", 0x6c00, 0x0400, CRC(be912ccb) SHA1(6ed05d011a1fe06831883fdbdf7153b0ec624de9) )
+	ROM_LOAD_NIB_HIGH( "34888.l2", 0x6c00, 0x0400, CRC(3f8e96c1) SHA1(c188eb39a00943d9eb62b8a70ad3bd108fc768e9) )
+	ROM_LOAD_NIB_LOW ( "34877.e1", 0x7000, 0x0400, CRC(fd8832fa) SHA1(83f874d5c178846bdfb7609c2738c03e3369743b) )
+	ROM_LOAD_NIB_HIGH( "34879.e2", 0x7000, 0x0400, CRC(7053ffbc) SHA1(cec5efb005833da448f67b9811719099d6980dcd) )
+	ROM_LOAD_NIB_LOW ( "34878.f1", 0x7400, 0x0400, CRC(329eb720) SHA1(fa9e8c25c9e20fea72d1314297b77ffe599a5a74) )
+	ROM_LOAD_NIB_HIGH( "34880.f2", 0x7400, 0x0400, CRC(e0c9b4c2) SHA1(1cc0900bb62c672a870fc465f5691039bb487571) )
+	ROM_LOAD_NIB_LOW ( "34881.h1", 0x7800, 0x0400, CRC(d9055541) SHA1(ffbf86c5cc325587d89e17da0560518244d3d8e9) )
+	ROM_LOAD_NIB_HIGH( "34883.h2", 0x7800, 0x0400, CRC(8a912448) SHA1(1756874964eedb75e066a4d6dccecf16a652f6bb) )
+	ROM_LOAD_NIB_LOW ( "34882.j1", 0x7c00, 0x0400, CRC(060c9cdb) SHA1(3c6d04c535195dfa8f8405ff8e80f4693844d1a1) )
 	ROM_RELOAD(                    0xfc00, 0x0400 ) /* for 6502 vectors */
-	ROM_LOAD_NIB_HIGH( "34884.j2", 0x7c00, 0x0400, 0xaa699a3a )
+	ROM_LOAD_NIB_HIGH( "34884.j2", 0x7c00, 0x0400, CRC(aa699a3a) SHA1(2c13eb9cda3fe9cfd348ef5cf309625f77c75056) )
 	ROM_RELOAD(                    0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
+	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, CRC(eac9ef90) SHA1(0e6284392852695ab7323be82105d32f57ad00f1) )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, CRC(89d619b8) SHA1(0af5d1f4e6f9a377dc2d49a8039866b1857af01f) )
 ROM_END
 
 
 ROM_START( abaseb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
-	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, 0x7250863f )
-	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, 0x54854d7c )
-	ROM_LOAD( "34736-01.n1", 0x7800, 0x0800, 0xaf444eb0 )
+	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, CRC(edcfffe8) SHA1(a445668352da5039ed1a090bcdf2ce092215f165) )
+	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, CRC(7250863f) SHA1(83ec735a60d74ca9c3e3f5d4b248071f3e3330af) )
+	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, CRC(54854d7c) SHA1(536d57b00929bf9d1cd1b209b41004cb78e2cd93) )
+	ROM_LOAD( "34736-01.n1", 0x7800, 0x0800, CRC(af444eb0) SHA1(783293426cec6938a2cd9c66c491f073cfb2683f) )
 	ROM_RELOAD( 			 0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
+	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, CRC(31275d86) SHA1(465ff2032e62bcd5a7bb5c947212da4ea4d59353) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
-	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
+	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, CRC(8a0f971b) SHA1(f7de50eeb15c8291f1560e299e3b1b29bba58422) )
+	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, CRC(021d1067) SHA1(da0fa8e4f6c0240a4feb41312fa057c65d809e62) )
 ROM_END
 
 
 ROM_START( abaseb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
-	ROM_LOAD_NIB_LOW ( "034725.c0", 0x6000, 0x0400, 0x95912c58 )
-	ROM_LOAD_NIB_HIGH( "034723.m0", 0x6000, 0x0400, 0x5eb1597f )
-	ROM_LOAD_NIB_LOW ( "034726.b0", 0x6400, 0x0400, 0x1f8d506c )
-	ROM_LOAD_NIB_HIGH( "034724.l0", 0x6400, 0x0400, 0xecd18ed2 )
-	ROM_LOAD_NIB_LOW ( "034721.d1", 0x6800, 0x0400, 0x1a0541f2 )
-	ROM_LOAD_NIB_HIGH( "034715.j1", 0x6800, 0x0400, 0xaccb96f5 ) /* created from 8-bit set */
-	ROM_LOAD_NIB_LOW ( "034722.d0", 0x6c00, 0x0400, 0xf9c1174e ) /* The code in these 2 differs */
-	ROM_LOAD_NIB_HIGH( "034716.j0", 0x6c00, 0x0400, 0xd5622749 ) /* from the 8-bit set */
-	ROM_LOAD_NIB_LOW ( "034717.e1", 0x7000, 0x0400, 0xc941f64b )
-	ROM_LOAD_NIB_HIGH( "034711.k1", 0x7000, 0x0400, 0xfab61782 )
-	ROM_LOAD_NIB_LOW ( "034718.e0", 0x7400, 0x0400, 0x3fe7dc1c )
-	ROM_LOAD_NIB_HIGH( "034712.k0", 0x7400, 0x0400, 0x0e368e1a )
-	ROM_LOAD_NIB_LOW ( "034719.h1", 0x7800, 0x0400, 0x85046ee5 )
-	ROM_LOAD_NIB_HIGH( "034713.f1", 0x7800, 0x0400, 0x0c67c48d )
-	ROM_LOAD_NIB_LOW ( "034720.h0", 0x7c00, 0x0400, 0x37c5f149 )
+	ROM_LOAD_NIB_LOW ( "034725.c0", 0x6000, 0x0400, CRC(95912c58) SHA1(cb15b60e31ee212e30a81c170611be1e36d2a6dd) )
+	ROM_LOAD_NIB_HIGH( "034723.m0", 0x6000, 0x0400, CRC(5eb1597f) SHA1(78f83d4e79de13d3723732d68738660c3f8d4787) )
+	ROM_LOAD_NIB_LOW ( "034726.b0", 0x6400, 0x0400, CRC(1f8d506c) SHA1(875464ca2ee50b36ceb5989cd40a28c69953c641) )
+	ROM_LOAD_NIB_HIGH( "034724.l0", 0x6400, 0x0400, CRC(ecd18ed2) SHA1(6ffbc9a4108ebf190455fad3725b72dda4125ac7) )
+	ROM_LOAD_NIB_LOW ( "034721.d1", 0x6800, 0x0400, CRC(1a0541f2) SHA1(ba74f024deb173678166262c4c6b1c328248aa9a) )
+	ROM_LOAD_NIB_HIGH( "034715.j1", 0x6800, 0x0400, CRC(accb96f5) SHA1(1cd6603c818dacf4f71fc350ebd3adf3369056b2) ) /* created from 8-bit set */
+	ROM_LOAD_NIB_LOW ( "034722.d0", 0x6c00, 0x0400, CRC(f9c1174e) SHA1(9d1be9ce4985edd19e0969d8998946d05fbbdf1f) ) /* The code in these 2 differs */
+	ROM_LOAD_NIB_HIGH( "034716.j0", 0x6c00, 0x0400, CRC(d5622749) SHA1(6a48d428751939857be6869b44a61b8f054d4206) ) /* from the 8-bit set */
+	ROM_LOAD_NIB_LOW ( "034717.e1", 0x7000, 0x0400, CRC(c941f64b) SHA1(e4d309c8ae71adc42dab0ffeea8f58da310c52f3) )
+	ROM_LOAD_NIB_HIGH( "034711.k1", 0x7000, 0x0400, CRC(fab61782) SHA1(01b6de2822d09ebe0725307eeeaeb667f53ca8f1) )
+	ROM_LOAD_NIB_LOW ( "034718.e0", 0x7400, 0x0400, CRC(3fe7dc1c) SHA1(91c3af7d8acdb5c4275f5fa57c19dc589f4a63aa) )
+	ROM_LOAD_NIB_HIGH( "034712.k0", 0x7400, 0x0400, CRC(0e368e1a) SHA1(29bbe4be07d8d441a4251ed6fbfa9e225487c2d8) )
+	ROM_LOAD_NIB_LOW ( "034719.h1", 0x7800, 0x0400, CRC(85046ee5) SHA1(2e8559349460a44734c95a1440a84713c5344495) )
+	ROM_LOAD_NIB_HIGH( "034713.f1", 0x7800, 0x0400, CRC(0c67c48d) SHA1(eec24da32632c1ba00aee22f1b9abb144b38cc8a) )
+	ROM_LOAD_NIB_LOW ( "034720.h0", 0x7c00, 0x0400, CRC(37c5f149) SHA1(89ad4471b949f8318abbdb38c4f373f711130198) )
 	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
-	ROM_LOAD_NIB_HIGH( "034714.f0", 0x7c00, 0x0400, 0x920979ea )
+	ROM_LOAD_NIB_HIGH( "034714.f0", 0x7c00, 0x0400, CRC(920979ea) SHA1(aba499376c084b8ceb6f0cc6599bd51cec133cc7) )
 	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
+	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, CRC(31275d86) SHA1(465ff2032e62bcd5a7bb5c947212da4ea4d59353) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
-	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
+	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, CRC(8a0f971b) SHA1(f7de50eeb15c8291f1560e299e3b1b29bba58422) )
+	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, CRC(021d1067) SHA1(da0fa8e4f6c0240a4feb41312fa057c65d809e62) )
 ROM_END
 
 
 ROM_START( soccer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
-	ROM_LOAD_NIB_LOW ( "035222.e1", 0x2000, 0x0400, 0x03ec6bce )
-	ROM_LOAD_NIB_HIGH( "035224.e2", 0x2000, 0x0400, 0xa1aeaa70 )
-	ROM_LOAD_NIB_LOW ( "035223.f1", 0x2400, 0x0400, 0x9c600726 )
-	ROM_LOAD_NIB_HIGH( "035225.f2", 0x2400, 0x0400, 0x2aa06521 )
-	ROM_LOAD_NIB_LOW ( "035226.h1", 0x2800, 0x0400, 0xd57c0cfb )
-	ROM_LOAD_NIB_HIGH( "035228.h2", 0x2800, 0x0400, 0x594574cb )
-	ROM_LOAD_NIB_LOW ( "035227.j1", 0x2c00, 0x0400, 0x4112b257 )
-	ROM_LOAD_NIB_HIGH( "035229.j2", 0x2c00, 0x0400, 0x412d129c )
+	ROM_LOAD_NIB_LOW ( "035222.e1", 0x2000, 0x0400, CRC(03ec6bce) SHA1(f81f2ac3bab5f1ae687543427e0187ca51d3be7e) )
+	ROM_LOAD_NIB_HIGH( "035224.e2", 0x2000, 0x0400, CRC(a1aeaa70) SHA1(2018318a0e652b1dbea7696ef3dc2b7f12ebd632) )
+	ROM_LOAD_NIB_LOW ( "035223.f1", 0x2400, 0x0400, CRC(9c600726) SHA1(f652b42b93e43124b0363b52f0f13cb9154987e3) )
+	ROM_LOAD_NIB_HIGH( "035225.f2", 0x2400, 0x0400, CRC(2aa06521) SHA1(c03b02f62346a8e395f8c4b15f6f89fd96b790a4) )
+	ROM_LOAD_NIB_LOW ( "035226.h1", 0x2800, 0x0400, CRC(d57c0cfb) SHA1(9ce05d9b30e8014137e20e4b0bbe414a3b9fa600) )
+	ROM_LOAD_NIB_HIGH( "035228.h2", 0x2800, 0x0400, CRC(594574cb) SHA1(c8b42a44520e6a2a3e8831e9f9002c3c532f5fca) )
+	ROM_LOAD_NIB_LOW ( "035227.j1", 0x2c00, 0x0400, CRC(4112b257) SHA1(997f4681a5cd4ca12977c52133e847afe61c58e1) )
+	ROM_LOAD_NIB_HIGH( "035229.j2", 0x2c00, 0x0400, CRC(412d129c) SHA1(2680af645aa6935114e59c657e49b131e48661fc) )
 
-	ROM_LOAD_NIB_LOW ( "035230.k1", 0x3000, 0x0400, 0x747f6e4a )
-	ROM_LOAD_NIB_HIGH( "035232.k2", 0x3000, 0x0400, 0x55f43e7f )
-	ROM_LOAD_NIB_LOW ( "035231.l1", 0x3400, 0x0400, 0xd584c199 )
-	ROM_LOAD_NIB_HIGH( "035233.l2", 0x3400, 0x0400, 0xb343f500 )
-	ROM_LOAD_NIB_LOW ( "035234.m1", 0x3800, 0x0400, 0x83524bb7 )
-	ROM_LOAD_NIB_HIGH( "035236.m2", 0x3800, 0x0400, 0xc53f4d13 )
-	ROM_LOAD_NIB_LOW ( "035235.n1", 0x3c00, 0x0400, 0xd6855b0e )
+	ROM_LOAD_NIB_LOW ( "035230.k1", 0x3000, 0x0400, CRC(747f6e4a) SHA1(b0cd8097e064ba6b0e22e97a7907bc287006aa8c) )
+	ROM_LOAD_NIB_HIGH( "035232.k2", 0x3000, 0x0400, CRC(55f43e7f) SHA1(db44f658a521f859f11f9a638ba19e84bbb75d2d) )
+	ROM_LOAD_NIB_LOW ( "035231.l1", 0x3400, 0x0400, CRC(d584c199) SHA1(55e86e4f1737bf02d5706f1e757d9c97007549ac) )
+	ROM_LOAD_NIB_HIGH( "035233.l2", 0x3400, 0x0400, CRC(b343f500) SHA1(d15413759563bec2bc8f3fa28ae84e4ae902910b) )
+	ROM_LOAD_NIB_LOW ( "035234.m1", 0x3800, 0x0400, CRC(83524bb7) SHA1(d45233b666463f789257c7366c3dfb4d9b55f87e) )
+	ROM_LOAD_NIB_HIGH( "035236.m2", 0x3800, 0x0400, CRC(c53f4d13) SHA1(ebba48e50c98e7f74d19826cf559cf6633e24f3b) )
+	ROM_LOAD_NIB_LOW ( "035235.n1", 0x3c00, 0x0400, CRC(d6855b0e) SHA1(379d010ebebde6f1b5fec5519a3c0aa4380be28b) )
 	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
-	ROM_LOAD_NIB_HIGH( "035237.n2", 0x3c00, 0x0400, 0x1d01b054 )
+	ROM_LOAD_NIB_HIGH( "035237.n2", 0x3c00, 0x0400, CRC(1d01b054) SHA1(7f3dc1130b2aadb13813e223420672c5baf25ad8) )
 	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "035250.r2", 0x0000, 0x0400, 0x12f43dca ) /* characters */
+	ROM_LOAD_NIB_LOW ( "035250.r2", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) ) /* characters */
 
 	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD_NIB_LOW ( "035247.n7", 0x0000, 0x0400, 0x3adb5f4e ) /* sprites */
-	ROM_LOAD_NIB_HIGH( "035248.m7", 0x0000, 0x0400, 0xa890cd48 )
+	ROM_LOAD_NIB_LOW ( "035247.n7", 0x0000, 0x0400, CRC(3adb5f4e) SHA1(859df5dc97b06e0c06e4f71a511313aef1f08d87) ) /* sprites */
+	ROM_LOAD_NIB_HIGH( "035248.m7", 0x0000, 0x0400, CRC(a890cd48) SHA1(34f52bc4b610491d3b81caae25ec3cafbc429373) )
 
 	ROM_REGION( 0x0800, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "035246.r6", 0x0000, 0x0800, 0x4a996136 ) /* spritemask - playfield */
+	ROM_LOAD( "035246.r6", 0x0000, 0x0800, CRC(4a996136) SHA1(535b6d5f70ab5bc2a47263a1c16877ba4c82b3ff) ) /* spritemask - playfield */
 ROM_END
 
 
@@ -952,6 +967,7 @@ static DRIVER_INIT( soccer )
  *
  *************************************/
 
+/*    YEAR  NAME      PARENT   MACHINE   INPUT     INIT      MONITOR  */
 GAME( 1978, atarifb,  0,       atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)" )
 GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)" )
 GAME( 1979, atarifb4, atarifb, atarifb4, atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)" )

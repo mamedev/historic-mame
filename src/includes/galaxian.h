@@ -38,6 +38,8 @@ extern data8_t *galaxian_spriteram;
 extern data8_t *galaxian_spriteram2;
 extern data8_t *galaxian_attributesram;
 extern data8_t *galaxian_bulletsram;
+extern data8_t *rockclim_videoram;
+
 extern size_t galaxian_spriteram_size;
 extern size_t galaxian_spriteram2_size;
 extern size_t galaxian_bulletsram_size;
@@ -52,9 +54,15 @@ PALETTE_INIT( minefld );
 PALETTE_INIT( stratgyx );
 PALETTE_INIT( mariner );
 PALETTE_INIT( frogger );
+PALETTE_INIT( rockclim );
 
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER( galaxian_videoram_r );
+
+WRITE_HANDLER( rockclim_videoram_w );
+WRITE_HANDLER( rockclim_scroll_w );
+READ_HANDLER( rockclim_videoram_r );
+
 
 WRITE_HANDLER( galaxian_attributesram_w );
 
@@ -94,6 +102,7 @@ VIDEO_START( ckongs );
 VIDEO_START( froggers );
 VIDEO_START( newsin7 );
 VIDEO_START( sfx );
+VIDEO_START( rockclim );
 
 VIDEO_UPDATE( galaxian );
 

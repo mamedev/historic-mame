@@ -129,24 +129,58 @@ static void namconb1_install_palette( void )
 	}
 }
 
-static void handle_mcu( void )
+/**
+ * MCU simulation.  It manages coinage, input ports, and presumably
+ * communication with the sound CPU.
+ */
+static void
+handle_mcu( void )
 {
+	static int toggle;
 	static data16_t credits;
 	static int old_coin_state;
-	int new_coin_state = readinputport(3)&0x3; /* coin1,2 */
+	static int old_p1;
+	static int old_p2;
+	static int old_p3;
+	static int old_p4;
+	int new_coin_state = readinputport(0)&0x3; /* coin1,2 */
+	unsigned dsw = readinputport(1)<<16;
+	unsigned p1 = readinputport(2);
+	unsigned p2 = readinputport(3);
+	unsigned p3;
+	unsigned p4;
+	toggle = !toggle;
+	if( toggle ) dsw &= ~(0x80<<16);
+	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
+	{
+		p3 = readinputport(4);
+		p4 = readinputport(5);
+	}
+	else
+	{
+		p3 = 0;
+		p4 = 0;
+	}
 
-	/* MCU simulation.  It manages coinage, input ports, and presumably
-	 * communication with the sound CPU.
-	 */
-	namconb1_workram32[0x6000/4] = ((0x80|readinputport(0))<<16)|(readinputport(1)<<8);
-	namconb1_workram32[0x6004/4] = readinputport(2)<<24;
+	p1 = (p1&(~old_p1))|(p1<<8);
+	p2 = (p2&(~old_p2))|(p2<<8);
+	p3 = (p3&(~old_p3))|(p3<<8);
+	p4 = (p4&(~old_p4))|(p4<<8);
+
+	old_p1 = p1;
+	old_p2 = p2;
+	old_p3 = p3;
+	old_p4 = p4;
+
+	namconb1_workram32[0x6000/4] = dsw|p1;
+	namconb1_workram32[0x6004/4] = (p2<<16)|p3;
+	namconb1_workram32[0x6008/4] = p4<<16;
 
 	if( new_coin_state && !old_coin_state )
 	{
 		credits++;
 	}
 	old_coin_state = new_coin_state;
-
 	namconb1_workram32[0x601e/4] &= 0xffff0000;
 	namconb1_workram32[0x601e/4] |= credits;
 } /* handle_mcu */
@@ -207,12 +241,12 @@ VIDEO_UPDATE( namconb1 )
 
 	if( namcos2_gametype == NAMCONB1_GUNBULET )
 	{
-		beamx = ((readinputport(4)) * 320)/256;
-		beamy = readinputport(5);
+		beamx = ((readinputport(4))*288)/256;
+		beamy = ((readinputport(5))*224)/256;
 		draw_crosshair( bitmap, beamx, beamy, cliprect );
 
-		beamx = ((readinputport(6)) * 320)/256;
-		beamy = readinputport(7);
+		beamx = ((readinputport(6))*288)/256;
+		beamy = ((readinputport(7))*224)/256;
 		draw_crosshair( bitmap, beamx, beamy, cliprect );
 	}
 }

@@ -59,8 +59,8 @@ static MEMORY_READ_START( skychut_readmem )
 	{ 0x5000, 0x53ff, MRA_RAM }, /* BKgrnd colour ??? */
 	{ 0xa200, 0xa200, input_port_1_r },
 	{ 0xa300, 0xa300, input_port_0_r },
-/*	{ 0xa700, 0xa700, input_port_2_r }, */
-	{ 0xfC00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+/*	{ 0xa700, 0xa700, input_port_3_r },*/
+	{ 0xfc00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
 
@@ -84,7 +84,7 @@ static MEMORY_READ_START( greenberet_readmem )
 	{ 0xa000, 0xa000, input_port_3_r },
 	{ 0xa200, 0xa200, input_port_1_r },
 	{ 0xa300, 0xa300, input_port_0_r },
-	{ 0xfC00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ 0xfc00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
 static MEMORY_WRITE_START( greenberet_writemem )
@@ -143,9 +143,9 @@ INPUT_PORTS_START( spacebeam )
 	PORT_DIPSETTING (  0x02, "4" )
 	PORT_DIPSETTING (  0x03, "5" )
 	PORT_DIPNAME(0x08, 0x00, "?" )
-	PORT_DIPSETTING (  0x00, DEF_STR(Off) )
-	PORT_DIPSETTING (  0x08, DEF_STR(On) )
-	PORT_DIPNAME(0x30, 0x10, DEF_STR(Coinage))
+	PORT_DIPSETTING (  0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x08, DEF_STR( On ) )
+	PORT_DIPNAME(0x30, 0x10, DEF_STR( Coinage ) )
 	PORT_DIPSETTING (  0x00, "Testmode" )
 	PORT_DIPSETTING (  0x10, "1 Coin 1 Play" )
 	PORT_DIPSETTING (  0x20, "1 Coin 2 Plays" )
@@ -239,66 +239,81 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
-ROM_START( ipminvad )
+ROM_START( andromed )//Jumps to an unmapped sub-routine at $2fc9
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "b1r",  0x1000, 0x0400, 0xf9a7eb9b )
-	ROM_LOAD( "b2r",  0x1400, 0x0400, 0xaf11c1aa )
-	ROM_LOAD( "b3r",  0x1800, 0x0400, 0xed49e481 )
-	ROM_LOAD( "b4r",  0x1c00, 0x0400, 0x6d5db95b )
+	ROM_LOAD( "am1",  0x1000, 0x0400, CRC(53df0152) )
+	ROM_LOAD( "am2",  0x1400, 0x0400, CRC(dab64957) )
+	ROM_LOAD( "am3",  0x1800, 0x0400, CRC(f983f35c) )
+	ROM_LOAD( "am4",  0x1c00, 0x0400, CRC(09f20717) )
 	ROM_RELOAD(       0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "b5r",  0x2000, 0x0400, 0xeabba7aa )
-	ROM_LOAD( "b6r",  0x2400, 0x0400, 0x3d0e7fa6 )
-	ROM_LOAD( "b7r",  0x2800, 0x0400, 0xcf04864f )
+	ROM_LOAD( "am5",  0x2000, 0x0400, CRC(518a3b88) )
+	ROM_LOAD( "am6",  0x2400, 0x0400, CRC(ce3d5fff) )
+	ROM_LOAD( "am7",  0x2800, 0x0400, CRC(30d3366f) )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b9r",  0x0000, 0x0400, 0x56942cab )
-	ROM_LOAD( "b10r", 0x0400, 0x0400, 0xbe4b8585 )
+	ROM_LOAD( "am9",  0x0000, 0x0400, CRC(a1c8f4db) )
+	ROM_LOAD( "am10", 0x0400, 0x0400, CRC(be2de8f3) )
+ROM_END
+
+ROM_START( ipminvad )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "b1r",  0x1000, 0x0400, CRC(f9a7eb9b) SHA1(93ac65d3ac725d3e4c2fb769816ee808ab609911) )
+	ROM_LOAD( "b2r",  0x1400, 0x0400, CRC(af11c1aa) SHA1(6a74fcc7cb1627b1c427a77da89b69ccf3175800) )
+	ROM_LOAD( "b3r",  0x1800, 0x0400, CRC(ed49e481) SHA1(8771a34f432e6d88acc5f7529f16c980a77485db) )
+	ROM_LOAD( "b4r",  0x1c00, 0x0400, CRC(6d5db95b) SHA1(135500fc17524e8608c3bcfe26321144aa0afb91) )
+	ROM_RELOAD(       0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "b5r",  0x2000, 0x0400, CRC(eabba7aa) SHA1(75e47eacd429f48f0a3a4539e5ecb4b1ea7281b1) )
+	ROM_LOAD( "b6r",  0x2400, 0x0400, CRC(3d0e7fa6) SHA1(14903bfc9506cb8e37807fb397be79f5eab99e3b) )
+	ROM_LOAD( "b7r",  0x2800, 0x0400, CRC(cf04864f) SHA1(6fe3ce208334321b63ada779fed69ec7cf4051ad) )
+
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b9r",  0x0000, 0x0400, CRC(56942cab) SHA1(ba13a856477fc6cf7fd36996e47a3724f862f888) )
+	ROM_LOAD( "b10r", 0x0400, 0x0400, CRC(be4b8585) SHA1(0154eae62585e154cf20edcf4599bda8bd333aa9) )
 ROM_END
 
 ROM_START( skychut )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "sc1d",  0x1000, 0x0400, 0x30b5ded1 )
-	ROM_LOAD( "sc2d",  0x1400, 0x0400, 0xfd1f4b9e )
-	ROM_LOAD( "sc3d",  0x1800, 0x0400, 0x67ed201e )
-	ROM_LOAD( "sc4d",  0x1c00, 0x0400, 0x9b23a679 )
+	ROM_LOAD( "sc1d",  0x1000, 0x0400, CRC(30b5ded1) SHA1(3a8b4fa344522404661b062808a2ea1d5858fdd0) )
+	ROM_LOAD( "sc2d",  0x1400, 0x0400, CRC(fd1f4b9e) SHA1(e5606979abe1fa4cc9eae0c4f61516769db35c39) )
+	ROM_LOAD( "sc3d",  0x1800, 0x0400, CRC(67ed201e) SHA1(589b1efdc1bbccff296f6420e2b320cd54b4ac8e) )
+	ROM_LOAD( "sc4d",  0x1c00, 0x0400, CRC(9b23a679) SHA1(a101f9b0fdde927a43e53e9b7d0dffb9dcca9e16) )
 	ROM_RELOAD(        0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "sc5a",  0x2000, 0x0400, 0x51d975e6 )
-	ROM_LOAD( "sc6e",  0x2400, 0x0400, 0x617f302f )
-	ROM_LOAD( "sc7",   0x2800, 0x0400, 0xdd4c8e1a )
-	ROM_LOAD( "sc8d",  0x2c00, 0x0400, 0xaca8b798 )
+	ROM_LOAD( "sc5a",  0x2000, 0x0400, CRC(51d975e6) SHA1(7d345025ef28c8a81f599cde445eeb336c368fce) )
+	ROM_LOAD( "sc6e",  0x2400, 0x0400, CRC(617f302f) SHA1(4277ef97279eb63fc68b6c40f8545b31abaab474) )
+	ROM_LOAD( "sc7",   0x2800, 0x0400, CRC(dd4c8e1a) SHA1(b5a141d8ac256ba6522308e5f194bfaf5c75fa5b) )
+	ROM_LOAD( "sc8d",  0x2c00, 0x0400, CRC(aca8b798) SHA1(d9048d060314d8f20ab1967fee846d35c22ac693) )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sc9d",  0x0000, 0x0400, 0x2101029e )
-	ROM_LOAD( "sc10d", 0x0400, 0x0400, 0x2f81c70c )
+	ROM_LOAD( "sc9d",  0x0000, 0x0400, CRC(2101029e) SHA1(34cddf076d3d860aa03043db14837f42449aefe7) )
+	ROM_LOAD( "sc10d", 0x0400, 0x0400, CRC(2f81c70c) SHA1(504935c89a4158a067cbf1dcdb27f7421678915d) )
 ROM_END
 
 ROM_START( spacbeam )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "m1b", 0x1000, 0x0400, 0x5a1c3e0b )
-	ROM_LOAD( "m2b", 0x1400, 0x0400, 0xa02bd9d7 )
-	ROM_LOAD( "m3b", 0x1800, 0x0400, 0x78040843 )
-	ROM_LOAD( "m4b", 0x1c00, 0x0400, 0x74705a44 )
+	ROM_LOAD( "m1b", 0x1000, 0x0400, CRC(5a1c3e0b) SHA1(1c9c58359d74b14ce96934fcc6acefbdfaf1e1be) )
+	ROM_LOAD( "m2b", 0x1400, 0x0400, CRC(a02bd9d7) SHA1(d25dfa66b422bdbb29b1922007c84f1947fe9be1) )
+	ROM_LOAD( "m3b", 0x1800, 0x0400, CRC(78040843) SHA1(0b8a3ab09dff951aa527649f82b8877cf01126c1) )
+	ROM_LOAD( "m4b", 0x1c00, 0x0400, CRC(74705a44) SHA1(8fa9d22a58f08086bf2d89e3d92eca097cdd2cbf) )
 	ROM_RELOAD(      0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "m5b", 0x2000, 0x0400, 0xafdf1242 )
-	ROM_LOAD( "m6b", 0x2400, 0x0400, 0x12afb0c2 )
+	ROM_LOAD( "m5b", 0x2000, 0x0400, CRC(afdf1242) SHA1(e26a8e91edb3d8ba96b3d225813760f42238b003) )
+	ROM_LOAD( "m6b", 0x2400, 0x0400, CRC(12afb0c2) SHA1(bf6ed90cf4815f0fb41d435954d4c346a55098f5) )
 ROM_END
 
 ROM_START( greenber )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "gb1", 0x1000, 0x0400, 0x018ff672 ) // ok
-	ROM_LOAD( "gb2", 0x1400, 0x0400, 0xea8f2267 ) // ok
-	ROM_LOAD( "gb3", 0x1800, 0x0400, 0x8f337920 ) // ok
-	ROM_LOAD( "gb4", 0x1c00, 0x0400, 0x7eeac4eb ) // ok
+	ROM_LOAD( "gb1", 0x1000, 0x0400, CRC(018ff672) SHA1(54d082a332831afc28b47704a5656da0a8a902fa) ) // ok
+	ROM_LOAD( "gb2", 0x1400, 0x0400, CRC(ea8f2267) SHA1(ad5bb38a80fbc7c70c8fa6f41086a7ade81655bc) ) // ok
+	ROM_LOAD( "gb3", 0x1800, 0x0400, CRC(8f337920) SHA1(ac3d76eb368645ba23f5823b39c04fae49d481e1) ) // ok
+	ROM_LOAD( "gb4", 0x1c00, 0x0400, CRC(7eeac4eb) SHA1(c668ad45ebc4aca558371539031efc4ec3990e44) ) // ok
 	ROM_RELOAD(      0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "gb5", 0x2000, 0x0400, 0xb2f8e69a )
-	ROM_LOAD( "gb6", 0x2400, 0x0400, 0x50ea8bd3 )
-	ROM_LOAD( "gb7", 0x2800, 0x0400, 0x00000000 ) // 2be8 entry
-	ROM_LOAD( "gb8", 0x2c00, 0x0400, 0x34700b31 )
-	ROM_LOAD( "gb9", 0x3000, 0x0400, 0xc27b9ba3 ) // ok ?
+	ROM_LOAD( "gb5", 0x2000, 0x0400, CRC(b2f8e69a) SHA1(44295e58da890a8c4aba6fe90defe9c578c95592) )
+	ROM_LOAD( "gb6", 0x2400, 0x0400, CRC(50ea8bd3) SHA1(a816c5fcc603b28c2ae59f217871a7e85fb794e1) )
+	ROM_LOAD( "gb7", 0x2800, 0x0400, NO_DUMP ) // 2be8 entry
+	ROM_LOAD( "gb8", 0x2c00, 0x0400, CRC(34700b31) SHA1(c148e2475eaaa0e9d1e2412eea359a7ba744e563) )
+	ROM_LOAD( "gb9", 0x3000, 0x0400, CRC(c27b9ba3) SHA1(a2f4f0c4b61eb03bba13ae5d25dc01009a4f86ee) ) // ok ?
 ROM_END
 
-
-
+GAMEX( 1979, andromed, 0, skychut,    skychut,   0, ROT270, "Irem", "Andromeda (Japan?)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NOT_WORKING )
 GAMEX( 1979?,ipminvad, 0, skychut,    skychut,   0, ROT270, "Irem", "IPM Invader", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX( 1980, skychut,  0, skychut,    skychut,   0, ROT270, "Irem", "Sky Chuter", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX( 1979, spacbeam, 0, greenberet, spacebeam, 0, ROT270, "Irem", "Space Beam", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )

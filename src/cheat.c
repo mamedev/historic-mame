@@ -1,4 +1,4 @@
-/*****************************************************************************
+/***************************************************************************** 
  *
  *	cheat.c
  *	by Ian Patterson [ianpatt at pacbell dot net]
@@ -79,6 +79,7 @@ MSB						 	    LSB
 											11 =	prefill	with 0x01
 									[ link / options ]
 -------- -------- -x------ --------		don't add to list (used for commands)
+-------- -------- x------- --------		add as extend for previous cheat
 -------- -------x -------- --------		enable
 -------- ------x- -------- --------		copy previous value
 -------- -----x-- -------- --------		operation parameter
@@ -130,11 +131,9 @@ xxx----- -------- -------- --------		type
 											010	=	write handler mapped memory
 											011	=	custom
 											100	=	relative address (CPU)
-											101	=	unused
+											101	=	cheatscript
 											110	=	unused
 											111	=	unused
-
--------- -------- x------- --------	currently unused
 
 Conversion Table:
 
@@ -191,13 +190,16 @@ MSB								LSB
 000xxxxx 00000000 00001010 0000	0001	094
 000xxxxx 00000000 00001100 0000	0001	095
 001xxxxx 10000000 00000000 0000	0000	100
-001xxxxx 10000000 00000000 0000	0001	101
+001xxxxx 00000000 00000000 0000	0001	101
 001xxxxx 10000000 00000000 0000	0000	102
-001xxxxx 10000000 00000000 0000	0001	103
+001xxxxx 00000000 00000000 0000	0001	103
 010xxxxx 10000000 00000000 0000	0000	110
-010xxxxx 10000000 00000000 0000	0001	111
+010xxxxx 00000000 00000000 0000	0001	111
 010xxxxx 10000000 00000000 0000	0000	112
-010xxxxx 10000000 00000000 0000	0001	113
+010xxxxx 00000000 00000000 0000	0001	113
+01100011 00000000 00000000 0000 0001	120
+01100011 00000000 00000000 0000 0001	121 (mask used)
+01100011 00000000 00000000 0000 0001	122 (mask used)
 00000000 00000001 00000000 0000	0000	5xx
 000xxxxx 00000000 00000000 0000	0110	998
 01100000 00000000 00000000 0000	0000	999
@@ -273,22 +275,22 @@ pressed, add this cheat to the file.
 
 Key Index List:
 
-	A		00	Q		10	6		20	F3		30	[		40	[/]		50	CAPSLK		60
-	B		01	R		11	7		21	F4		31	]		41	[*]		51	LWIN		61
-	C		02	S		12	8		22	F5		32	ENTER	42	[-]		52	RWIN		62
-	D		03	T		13	9		23	F6		33	:		43	[+]		53	MENU		63
-	E		04	U		14	[0]		24	F7		34	'		44	[DEL]	54
-	F		05	V		15	[1]		25	F8		35	\		45	[ENT]	55
-	G		06	W		16	[2]		26	F9		36	\		46	PRTSCR	56
-	H		07	X		17	[3]		27	F10		37	,		47	PAUSE	57
-	I		08	Y		18	[4]		28	F11		38	HOME	48	LSHIFT	58
-	J		09	Z		19	[5]		29	F12		39	END		49	RSHIFT	59
-	K		0A	0		1A	[6]		2A	ESC		3A	PGUP	4A	LCTRL	5A
-	L		0B	1		1B	[7]		2B	~		3B	PGDN	4B	RCTRL	5B
-	M		0C	2		1C	[8]		2C	-		3C	LEFT	4C	LALT	5C
-	N		0D	3		1D	[9]		2D	=		3D	RIGHT	4D	RALT	5D
-	O		0E	4		1E	F1		2E	BACKSP	3E	UP		4E	SCRLLK	5E
-	P		0F	5		1F	F2		2F	TAB		3F	DOWN	4F	NUMLK	5F
+	A		00	Q		10	6		20	F3		30	[		40	PGDN	50	RCTRL	60
+	B		01	R		11	7		21	F4		31	]		41	LEFT	51	LALT	61
+	C		02	S		12	8		22	F5		32	ENTER	42	RIGHT	52	RALT	62
+	D		03	T		13	9		23	F6		33	:		43	UP		53	SCRLOCK	63
+	E		04	U		14	[0]		24	F7		34	'		44	DOWN	54	NUMLOCK	64
+	F		05	V		15	[1]		25	F8		35	\		45	[/]		55	CAPSLCK	65
+	G		06	W		16	[2]		26	F9		36	\		46	[*]		56	LWIN	66
+	H		07	X		17	[3]		27	F10		37	,		47	[-]		57	RWIN	67
+	I		08	Y		18	[4]		28	F11		38	.		48	[+]		58	MENU	68
+	J		09	Z		19	[5]		29	F12		39	/		49	[DEL]	59
+	K		0A	0		1A	[6]		2A	ESC		3A	SPACE	4A	[ENTER]	5A
+	L		0B	1		1B	[7]		2B	~		3B	INS		4B	PRTSCR	5B
+	M		0C	2		1C	[8]		2C	-		3C	DEL		4C	PAUSE	5C
+	N		0D	3		1D	[9]		2D	=		3D	HOME	4D	LSHIFT	5D
+	O		0E	4		1E	F1		2E	BACKSP	3E	END		4E	RSHIFT	5E
+	P		0F	5		1F	F2		2F	TAB		3F	PGUP	4F	LCTRL	5F
 
 Pre-Enable: (01100100 -------- -1------ --------) 0x64004000
 
@@ -356,6 +358,14 @@ showing two elements per line, you would do this:
 
 :gamename:00000006:0064407F:00020305:00000000:
 
+The extend data field is used to position the watch display.
+
+MSB							  LSB
+3322222222221111 1111110000000000
+1098765432109876 5432109876543210
+xxxxxxxxxxxxxxxx ----------------	x pixel offset
+---------------- xxxxxxxxxxxxxxxx	y pixel offset
+
 Notes:
 
 - if you want to have a	list of	many on/off	subcheats, include a "None"	option,
@@ -367,6 +377,7 @@ is selected
 
 #include "driver.h"
 #include "ui_text.h"
+#include "artwork.h"
 #include "machine/eeprom.h"
 #include <ctype.h>
 
@@ -499,7 +510,7 @@ enum
 									kActionFlag_PrefillWritten,
 	kActionFlag_InfoMask =			kActionFlag_WasModified |
 									kActionFlag_IgnoreMask,
-	kActionFlag_PersistantMask =	kActionFlag_LastValueGood
+	kActionFlag_PersistentMask =	kActionFlag_LastValueGood
 };
 
 enum
@@ -536,7 +547,7 @@ enum
 									kCheatFlag_Select |
 									kCheatFlag_ActivationKeyPressed |
 									kCheatFlag_HasActivationKey,
-	kCheatFlag_PersistantMask =		kCheatFlag_Active |
+	kCheatFlag_PersistentMask =		kCheatFlag_Active |
 									kCheatFlag_HasActivationKey |
 									kCheatFlag_ActivationKeyPressed |
 									kCheatFlag_Dirty
@@ -824,7 +835,7 @@ typedef struct MenuItemInfoStruct	MenuItemInfoStruct;
 /**** Exported Globals *******************************************************/
 
 int			he_did_cheat = 0;
-const char		* cheatfile = NULL;
+const char	* cheatfile = NULL;
 
 /**** Local Globals **********************************************************/
 
@@ -865,6 +876,8 @@ static INT32				deviceCRCListLength = 0;
 
 static UINT32				thisGameCRC = 0;
 #endif
+
+extern int					uirotcharwidth, uirotcharheight;
 
 static const char *	kCheatNameTemplates[] =
 {
@@ -1676,6 +1689,10 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 
 void InitCheat(void)
 {
+	int	screenWidth, screenHeight;
+
+	artwork_get_screensize(&screenWidth, &screenHeight);
+
 	he_did_cheat =			0;
 
 	cheatList =				NULL;
@@ -1704,7 +1721,7 @@ void InitCheat(void)
 	dontPrintNewLabels =	0;
 	autoSaveEnabled =		0;
 
-	fullMenuPageHeight =	Machine->uiheight / (3 * Machine->uifontheight / 2) - 1;
+	fullMenuPageHeight =	screenHeight / (3 * uirotcharheight / 2) - 1;
 
 	BuildCPUInfoList();
 
@@ -2767,11 +2784,6 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 		}
 	}
 
-	/*
-	if(code_pressed(KEYCODE_L))
-		usrintf_showmessage_secs(1, "idx %d %.8X", sel, sel);
-	*/
-
 	/* Cancel pops us up a menu level */
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
@@ -2784,7 +2796,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 	{
 		schedule_full_refresh();
 	}
-
+	
 	return sel + 1;
 }
 
@@ -2799,7 +2811,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Comment",
 		"Select"
 	};
-
+	
 	const char *	kNumbersTable[] =
 	{
 		"0",	"1",	"2",	"3",	"4",	"5",	"6",	"7",
@@ -2993,7 +3005,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				kType_LocationType,		//	select		LocationType		Normal - Region - Mapped Memory - EEPROM -
 										//									Relative Address
 										//	NOTE: also uses LocationParameter for EEPROM type
-				// if(LocationType == Normal)
+				// if((LocationType == Normal) || (LocationType == HandlerMemory))
 					kType_CPU,			//	value		LocationParameter	0 - 31
 				// if(LocationType == Region)
 					kType_Region,		//	select		LocationParameter	CPU1 - CPU2 - CPU3 - CPU4 - CPU5 - CPU6 - CPU7 -
@@ -3579,7 +3591,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 					total++;
 				}
 
-				if(locationType == kLocation_Standard)
+				if((locationType == kLocation_Standard) || (locationType == kLocation_HandlerMemory))
 				{
 					// do cpu field
 
@@ -7148,14 +7160,14 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 				case kWatchLabel_Address:
 					numChars = sprintf(buf, "%.8X: ", info->address);
 
-					ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+					ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 					xOffset += numChars;
 					break;
 
 				case kWatchLabel_String:
 					numChars = sprintf(buf, "%s: ", info->label);
 
-					ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+					ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 					xOffset += numChars;
 					break;
 			}
@@ -7182,7 +7194,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Hex:
 						numChars = sprintf(buf, "%.*X", kSearchByteDigitsTable[info->elementBytes], data);
 
-						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7190,7 +7202,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Decimal:
 						numChars = sprintf(buf, "%.*d", kSearchByteDecDigitsTable[info->elementBytes], data);
 
-						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7198,7 +7210,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Binary:
 						numChars = PrintBinary(buf, data, kSearchByteMaskTable[info->elementBytes]);
 
-						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7206,7 +7218,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_ASCII:
 						numChars = PrintASCII(buf, data, info->elementBytes);
 
-						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						break;
 				}
@@ -7464,7 +7476,7 @@ static void DisposeAction(CheatAction * action)
 static void InitWatch(WatchInfo * info, UINT32 idx)
 {
 	if(idx > 0)
-		info->y = watchList[idx - 1].y + Machine->uifontheight;
+		info->y = watchList[idx - 1].y + uirotcharheight;
 	else
 		info->y = 0;
 }
@@ -8281,13 +8293,16 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 		{	94,		0x00000B00,	kCustomField_None },
 		{	95,		0x00000D00,	kCustomField_SubtractOne },
 		{	100,	0x20800000,	kCustomField_None },
-		{	101,	0x20800001,	kCustomField_None },
+		{	101,	0x20000001,	kCustomField_None },
 		{	102,	0x20800000,	kCustomField_None },
-		{	103,	0x20800001,	kCustomField_None },
+		{	103,	0x20000001,	kCustomField_None },
 		{	110,	0x40800000,	kCustomField_None },
-		{	111,	0x40800001,	kCustomField_None },
+		{	111,	0x40000001,	kCustomField_None },
 		{	112,	0x40800000,	kCustomField_None },
-		{	113,	0x40800001,	kCustomField_None },
+		{	113,	0x40000001,	kCustomField_None },
+		{	120,	0x63000001,	kCustomField_None },
+		{	121,	0x63000001,	kCustomField_DontApplyCPUField | kCustomField_SetBit },
+		{	122,	0x63000001,	kCustomField_DontApplyCPUField | kCustomField_ClearBit },
 		{	998,	0x00000006,	kCustomField_None },
 		{	999,	0x60000000,	kCustomField_DontApplyCPUField },
 		{	-1,		0x00000000,	kCustomField_End }
@@ -9617,7 +9632,7 @@ static UINT32 ReadData(CheatAction * action)
 
 			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(parameter) ^ swapBytes);
 			if(info)
-				address >>= info->addressShift;
+				address = DoShift(address, info->addressShift);
 			address += offset;
 
 			return DoCPURead(cpu, address, bytes, CPUNeedsSwap(parameter) ^ swapBytes);
@@ -9712,7 +9727,7 @@ static void WriteData(CheatAction * action, UINT32 data)
 
 			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(cpu) ^ swapBytes);
 			if(info)
-				address >>= info->addressShift;
+				address = DoShift(address, info->addressShift);
 			address += offset;
 
 			DoCPUWrite(data, cpu, address, bytes, CPUNeedsSwap(cpu) ^ swapBytes);
@@ -10244,7 +10259,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 	int		flags =		0;
 	int		i;
 
-	flags = entry->flags & kCheatFlag_PersistantMask;
+	flags = entry->flags & kCheatFlag_PersistentMask;
 
 	if(	(EXTRACT_FIELD(entry->actionList[0].type, LocationType) == kLocation_Custom) &&
 		(EXTRACT_FIELD(entry->actionList[0].type, LocationParameter) == kCustomLocation_Select))
@@ -10256,7 +10271,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 		int			isActionNull =	0;
 		UINT32		size;
 		UINT32		operation;
-		UINT32		actionFlags = action->flags & kActionFlag_PersistantMask;
+		UINT32		actionFlags = action->flags & kActionFlag_PersistentMask;
 
 		size = EXTRACT_FIELD(action->type, BytesUsed);
 		operation = EXTRACT_FIELD(action->type, Operation) | EXTRACT_FIELD(action->type, OperationExtend) << 2;
@@ -10279,7 +10294,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 
 		if(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed)
 		{
-			action->flags |= kActionFlag_IgnoreMask;
+			actionFlags |= kActionFlag_IgnoreMask;
 		}
 		else
 		{
@@ -10294,9 +10309,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 			}
 		}
 
-		action->flags &= kActionFlag_InfoMask;
-		action->flags &= kActionFlag_PersistantMask;
-		action->flags |= actionFlags;
+		action->flags = actionFlags;
 	}
 
 	if(isOneShot)

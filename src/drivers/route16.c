@@ -445,102 +445,102 @@ MACHINE_DRIVER_END
 
 ROM_START( route16 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
-	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
-	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
-	ROM_LOAD( "route16.a2",   0x1000, 0x0800, 0x1065a468 )
-	ROM_LOAD( "route16.a3",   0x1800, 0x0800, 0x0b1987f3 )
-	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
-	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
+	ROM_LOAD( "route16.a0",   0x0000, 0x0800, CRC(8f9101bd) SHA1(b2c0156d41e295282387fb85fc272b031a6d1b64) )
+	ROM_LOAD( "route16.a1",   0x0800, 0x0800, CRC(389bc077) SHA1(b0606f6e647e81ceae7148bda96bd4673a51e823) )
+	ROM_LOAD( "route16.a2",   0x1000, 0x0800, CRC(1065a468) SHA1(4a707a42fb5a718043c173cb98ff3523eb274ccc) )
+	ROM_LOAD( "route16.a3",   0x1800, 0x0800, CRC(0b1987f3) SHA1(9b8abd6ec1ae15ca0d5e4de6b8a7ebf6c929d767) )
+	ROM_LOAD( "route16.a4",   0x2000, 0x0800, CRC(f67d853a) SHA1(7479e84082e78f8670cc50858ce6a006d3063413) )
+	ROM_LOAD( "route16.a5",   0x2800, 0x0800, CRC(d85cf758) SHA1(5af21250ee44ab1a43b844ede5a777a3d33b78b5) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
-	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
-	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
-	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
-	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
+	ROM_LOAD( "route16.b0",   0x0000, 0x0800, CRC(0f9588a7) SHA1(dfaffec4dbabd98cdc21a416bd2966d9d3ae6ad1) )
+	ROM_LOAD( "route16.b1",   0x0800, 0x0800, CRC(2b326cf9) SHA1(c6602a9440a982c39f5836c6ab72283b6f9241be) )
+	ROM_LOAD( "route16.b2",   0x1000, 0x0800, CRC(529cad13) SHA1(b533d20df1f2580e237c3d60bfe3483486ad9a48) )
+	ROM_LOAD( "route16.b3",   0x1800, 0x0800, CRC(3bd8b899) SHA1(bc0c7909dbf5ea85eba5a1bb815fdd98c3aa794e) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
 ROM_END
 
 ROM_START( route16b )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
-	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
-	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
-	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
-	ROM_LOAD( "rt16.3",       0x1800, 0x0800, 0xa0fc9fc5 )
-	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
-	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
+	ROM_LOAD( "rt16.0",       0x0000, 0x0800, CRC(b1f0f636) SHA1(f21915ed40ebdf64970fb7e3cd8071ebfc4aa0b5) )
+	ROM_LOAD( "rt16.1",       0x0800, 0x0800, CRC(3ec52fe5) SHA1(451969b5caedd665231ef78cf262679d6d4c8507) )
+	ROM_LOAD( "rt16.2",       0x1000, 0x0800, CRC(a8e92871) SHA1(68a709c14309d2b617997b76ae9d7b80fd326f39) )
+	ROM_LOAD( "rt16.3",       0x1800, 0x0800, CRC(a0fc9fc5) SHA1(7013750c1b3d403b12eac10282a930538ed9c73e) )
+	ROM_LOAD( "rt16.4",       0x2000, 0x0800, CRC(6dcaf8c4) SHA1(27d84cc29f2b75280678e9c77f270ee39af50228) )
+	ROM_LOAD( "rt16.5",       0x2800, 0x0800, CRC(63d7b05b) SHA1(d1e3473be283c92063674b9e69575081115bc456) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
-	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
-	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
-	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
-	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
+	ROM_LOAD( "rt16.6",       0x0000, 0x0800, CRC(fef605f3) SHA1(bfbffa0ded3e285c034f0ad832864021ef3f2256) )
+	ROM_LOAD( "rt16.7",       0x0800, 0x0800, CRC(d0d6c189) SHA1(75cec891e20cf05aae354c8950857aea83c6dadc) )
+	ROM_LOAD( "rt16.8",       0x1000, 0x0800, CRC(defc5797) SHA1(aec8179e647de70016e0e63b720f932752adacc1) )
+	ROM_LOAD( "rt16.9",       0x1800, 0x0800, CRC(88d94a66) SHA1(163e952ada7c05110d1f1c681bd57d3b9ea8866e) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
 ROM_END
 
 ROM_START( stratvox )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
-	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
-	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
-	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, 0xb0927e3b )
-	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
-	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
+	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, CRC(bf4d582e) SHA1(456f37e16d037a30dc4c1c460ebf9a248bf1a57c) )
+	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, CRC(16739dd4) SHA1(cd1f7d1b52ca1ab458d11b969f4f1f5af3ec7353) )
+	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, CRC(083c28de) SHA1(82e159f218f60e9c06ff78f2e52572f8f5a6c530) )
+	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, CRC(b0927e3b) SHA1(cc5f030dcbc93d5265dbf17a2425acdb921ab18b) )
+	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, CRC(ccd25c4e) SHA1(d6d5722d746dd22cecacfea407e798f4531eea99) )
+	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, CRC(07a907a7) SHA1(0c41eac01ac9fd67ef19752c47414c4bd90324b4) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
-	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
+	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, CRC(4d333985) SHA1(371405b92b2ee8040e48ec7ad715d1a960746aac) )
+	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, CRC(35b753fc) SHA1(179e21f531e8be507f1754159590c111be1b44ff) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
 ROM_END
 
 ROM_START( speakres )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
-	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )
-	ROM_LOAD( "speakres.3",   0x1000, 0x0800, 0xa3874304 )
-	ROM_LOAD( "speakres.4",   0x1800, 0x0800, 0xf484be3a )
-	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
-	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
+	ROM_LOAD( "speakres.1",   0x0000, 0x0800, CRC(6026e4ea) SHA1(77975620b489f10e5b5de834e812c2802315e889) )
+	ROM_LOAD( "speakres.2",   0x0800, 0x0800, CRC(93f0d4da) SHA1(bf3d2931d12a436bb4f0d0556806008ca722f070) )
+	ROM_LOAD( "speakres.3",   0x1000, 0x0800, CRC(a3874304) SHA1(ca243364d077fa70d6c46b950ba6666617a56cc2) )
+	ROM_LOAD( "speakres.4",   0x1800, 0x0800, CRC(f484be3a) SHA1(5befa61c5f3a3cde3d7d6cae2130021288ed8454) )
+	ROM_LOAD( "speakres.5",   0x2000, 0x0800, CRC(61b12a67) SHA1(a1a636ecde16ffdc9f0bb460bd12f945ec66d36f) )
+	ROM_LOAD( "speakres.6",   0x2800, 0x0800, CRC(220e0ab2) SHA1(9fb4abf50ff28995cb1f7ba807e15eb87127f520) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
-	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
+	ROM_LOAD( "speakres.7",   0x0000, 0x0800, CRC(d417be13) SHA1(6f1f76a911579b49bb0e1992296e7c3acf2bd517) )
+	ROM_LOAD( "speakres.8",   0x0800, 0x0800, CRC(52485d60) SHA1(28b708a71d16428d1cd58f3b7aa326ccda85533c) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
 ROM_END
 
 ROM_START( spacecho )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "rom.a0",       0x0000, 0x0800, 0x40d74dce )
-	ROM_LOAD( "rom.a1",       0x0800, 0x0800, 0xa5f0a34f )
-	ROM_LOAD( "rom.a2",       0x1000, 0x0800, 0xcbbb3acb )
-	ROM_LOAD( "rom.a3",       0x1800, 0x0800, 0x311050ca )
-	ROM_LOAD( "rom.a4",       0x2000, 0x0800, 0x28943803 )
-	ROM_LOAD( "rom.a5",       0x2800, 0x0800, 0x851c9f28 )
+	ROM_LOAD( "rom.a0",       0x0000, 0x0800, CRC(40d74dce) SHA1(891d7fde1d4b0b66c38fa7f8933480e201c68113) )
+	ROM_LOAD( "rom.a1",       0x0800, 0x0800, CRC(a5f0a34f) SHA1(359e7a9954dedb464f7456cd071db77b2219ab2c) )
+	ROM_LOAD( "rom.a2",       0x1000, 0x0800, CRC(cbbb3acb) SHA1(3dc71683f31da39a544382b463ece39cca8124b3) )
+	ROM_LOAD( "rom.a3",       0x1800, 0x0800, CRC(311050ca) SHA1(ed4a5cb7ec0306654178dae8f30b39b9c8db0ce3) )
+	ROM_LOAD( "rom.a4",       0x2000, 0x0800, CRC(28943803) SHA1(4904e6d092494bfca064d25d094ab9e9049fa9ca) )
+	ROM_LOAD( "rom.a5",       0x2800, 0x0800, CRC(851c9f28) SHA1(c7bb4e25b74eb71e8b394214f9cbd95f59a1fa58) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "rom.b0",       0x0000, 0x0800, 0xdb45689d )
-	ROM_LOAD( "rom.b2",       0x1000, 0x0800, 0x1e074157 )
-	ROM_LOAD( "rom.b3",       0x1800, 0x0800, 0xd50a8b20 )
+	ROM_LOAD( "rom.b0",       0x0000, 0x0800, CRC(db45689d) SHA1(057a8dc2629f57fdeebb6262de2bdd78b4e66dca) )
+	ROM_LOAD( "rom.b2",       0x1000, 0x0800, CRC(1e074157) SHA1(cb2073415aff7804ac85e2137bef2005bf6cf239) )
+	ROM_LOAD( "rom.b3",       0x1800, 0x0800, CRC(d50a8b20) SHA1(d733fa327d2e7dfe08c84015c6c326ed8ab39e3d) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, BADCRC( 0x08793ef7 ) ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, BADCRC( 0x08793ef7 ) ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, BAD_DUMP CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca)  ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, BAD_DUMP CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca)  ) /* bottom bitmap */
 ROM_END
 
 

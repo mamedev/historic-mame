@@ -7,10 +7,10 @@
 	Games supported:
 		* Area 51
 		* Maximum Force
+		* Area 51/Maximum Force Duo
 		* Vicious Circle
 
 	In the future:
-		* Area 51/Maximum Force Duo
 		* Fishin' Frenzy
 		* Freeze
 
@@ -101,6 +101,10 @@ static struct ide_interface ide_intf =
 
 static MACHINE_INIT( cojag )
 {
+	/* 68020 only: copy the interrupt vectors into RAM */
+	if (!cojag_is_r3000)
+		memcpy(jaguar_shared_ram, rom_base, 0x10);
+
 	/* set up main CPU RAM/ROM banks */
 	cpu_setbank(3, jaguar_gpu_ram);
 
@@ -437,7 +441,7 @@ static WRITE32_HANDLER( area51_main_speedup_w )
 	/* store the data */
 	COMBINE_DATA(main_speedup);
 
-	/* if it's been less than 50 cycles since the last time */
+	/* if it's been less than 400 cycles since the last time */
 	if (*main_speedup == 0 && curcycles - main_speedup_last_cycles < 400)
 	{
 		/* increment the count; if we hit 5, we can spin until an interrupt comes */
@@ -448,7 +452,41 @@ static WRITE32_HANDLER( area51_main_speedup_w )
 		}
 	}
 
-	/* if it's been more than 200 cycles, reset our count */
+	/* if it's been more than 400 cycles, reset our count */
+	else
+		main_speedup_hits = 0;
+
+	/* remember the last cycle count */
+	main_speedup_last_cycles = curcycles;
+}
+
+
+/*
+	Explanation:
+
+	The Area 51/Maximum Force duo writes to a non-aligned address, so our check
+	against 0 must handle that explicitly.
+*/
+
+static WRITE32_HANDLER( area51mx_main_speedup_w )
+{
+	UINT32 curcycles = activecpu_gettotalcycles();
+
+	/* store the data */
+	COMBINE_DATA(&main_speedup[offset]);
+
+	/* if it's been less than 450 cycles since the last time */
+	if (((main_speedup[0] << 16) | (main_speedup[1] >> 16)) == 0 && curcycles - main_speedup_last_cycles < 450)
+	{
+		/* increment the count; if we hit 5, we can spin until an interrupt comes */
+		if (main_speedup_hits++ > 10)
+		{
+			cpu_spinuntil_int();
+			main_speedup_hits = 0;
+		}
+	}
+
+	/* if it's been more than 450 cycles, reset our count */
 	else
 		main_speedup_hits = 0;
 
@@ -851,13 +889,13 @@ ROM_START( area51 )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
-	ROM_LOAD32_BYTE( "3h", 0x00000, 0x80000, 0x116d37e6 )
-	ROM_LOAD32_BYTE( "3p", 0x00001, 0x80000, 0xeb10f539 )
-	ROM_LOAD32_BYTE( "3m", 0x00002, 0x80000, 0xc6d8322b )
-	ROM_LOAD32_BYTE( "3k", 0x00003, 0x80000, 0x729eb1b7 )
+	ROM_LOAD32_BYTE( "3h", 0x00000, 0x80000, CRC(116d37e6) SHA1(5d36cae792dd349faa77cd2d8018722a28ee55c1) )
+	ROM_LOAD32_BYTE( "3p", 0x00001, 0x80000, CRC(eb10f539) SHA1(dadc4be5a442dd4bd17385033056555e528ed994) )
+	ROM_LOAD32_BYTE( "3m", 0x00002, 0x80000, CRC(c6d8322b) SHA1(90cf848a4195c51b505653cc2c74a3b9e3c851b8) )
+	ROM_LOAD32_BYTE( "3k", 0x00003, 0x80000, CRC(729eb1b7) SHA1(21864b4281b1ad17b2903e3aa294e4be74161e80) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51.chd", 0, 0x130b330eff59403f8fc3433ff501852b )
+	DISK_IMAGE( "area51.chd", 0, MD5(130b330eff59403f8fc3433ff501852b) )
 ROM_END
 
 
@@ -865,13 +903,27 @@ ROM_START( maxforce )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
-	ROM_LOAD32_BYTE( "hh.bin", 0x00000, 0x80000, 0x8ff7009d )
-	ROM_LOAD32_BYTE( "hl.bin", 0x00001, 0x80000, 0x96c2cc1d )
-	ROM_LOAD32_BYTE( "lh.bin", 0x00002, 0x80000, 0x459ffba5 )
-	ROM_LOAD32_BYTE( "ll.bin", 0x00003, 0x80000, 0xe491be7f )
+	ROM_LOAD32_BYTE( "hh.bin", 0x00000, 0x80000, CRC(8ff7009d) SHA1(da22eae298a6e0e36f503fa091ac3913423dcd0f) )
+	ROM_LOAD32_BYTE( "hl.bin", 0x00001, 0x80000, CRC(96c2cc1d) SHA1(b332b8c042b92c736131c478cefac1c3c2d2673b) )
+	ROM_LOAD32_BYTE( "lh.bin", 0x00002, 0x80000, CRC(459ffba5) SHA1(adb40db6904e84c17f32ac6518fd2e994da7883f) )
+	ROM_LOAD32_BYTE( "ll.bin", 0x00003, 0x80000, CRC(e491be7f) SHA1(cbe281c099a4aa87067752d68cf2bb0ab3900531) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "maxforce.chd", 0, 0xb0a214c7b3f8ba9d592396332fc974c9 )
+	DISK_IMAGE( "maxforce.chd", 0, MD5(b0a214c7b3f8ba9d592396332fc974c9) )
+ROM_END
+
+
+ROM_START( area51mx )
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )  /* 4MB for RAM at 0 */
+
+	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE ) /* 2MB for 68020 code */
+	ROM_LOAD32_BYTE( "area51mx.3h", 0x00000, 0x80000, CRC(47cbf30b) SHA1(23377bcc65c0fc330d5bc7e76e233bae043ac364) )
+	ROM_LOAD32_BYTE( "area51mx.3p", 0x00001, 0x80000, CRC(a3c93684) SHA1(f6b3357bb69900a176fd6bc6b819b2f57b7d0f59) )
+	ROM_LOAD32_BYTE( "area51mx.3m", 0x00002, 0x80000, CRC(d800ac17) SHA1(3d515c8608d8101ee9227116175b3c3f1fe22e0c) )
+	ROM_LOAD32_BYTE( "area51mx.3k", 0x00003, 0x80000, CRC(0e78f308) SHA1(adc4c8e441eb8fe525d0a6220eb3a2a8791a7289) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) )
 ROM_END
 
 
@@ -879,13 +931,13 @@ ROM_START( vcircle )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* dummy region for R3000 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for R3000 code */
-	ROM_LOAD32_BYTE( "hh", 0x00000, 0x80000, 0x7276f5f5 )
-	ROM_LOAD32_BYTE( "hl", 0x00001, 0x80000, 0x146060a1 )
-	ROM_LOAD32_BYTE( "lh", 0x00002, 0x80000, 0xbe4b2ef6 )
-	ROM_LOAD32_BYTE( "ll", 0x00003, 0x80000, 0xba8753eb )
+	ROM_LOAD32_BYTE( "hh", 0x00000, 0x80000, CRC(7276f5f5) SHA1(716287e370a4f300b1743103f8031afc82de38ca) )
+	ROM_LOAD32_BYTE( "hl", 0x00001, 0x80000, CRC(146060a1) SHA1(f291989f1f0ef228757f1990fb14da5ff8f3cf8d) )
+	ROM_LOAD32_BYTE( "lh", 0x00002, 0x80000, CRC(be4b2ef6) SHA1(4332b3036e9cb12685e914d085d9a63aa856f0be) )
+	ROM_LOAD32_BYTE( "ll", 0x00003, 0x80000, CRC(ba8753eb) SHA1(0322e0e37d814a38d08ba191b1a97fb1a55fe461) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "vcircle.chd", 0, 0xfc316bd92363573d60083514223c6816 )
+	DISK_IMAGE( "vcircle.chd", 0, MD5(fc316bd92363573d60083514223c6816) )
 ROM_END
 
 
@@ -924,9 +976,6 @@ static DRIVER_INIT( area51 )
 {
 	common_init(1, 0x5c4, 0x5a0);
 
-	/* copy the interrupt vectors into RAM */
-	memcpy(jaguar_shared_ram, rom_base, 0x10);
-
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
 	main_speedup = install_mem_write32_handler(0, 0xa02030, 0xa02033, area51_main_speedup_w);
@@ -945,6 +994,20 @@ static DRIVER_INIT( maxforce )
 	/* install speedup for main CPU */
 	main_speedup_max_cycles = 120;
 	main_speedup = install_mem_read32_handler(0, 0x1000865c, 0x1000865f, cojagr3k_main_speedup_r);
+#endif
+}
+
+
+static DRIVER_INIT( area51mx )
+{
+	common_init(1, 0x0c0, 0x09e);
+
+	/* patch the protection */
+	rom_base[0x418/4] = 0x4e754e75;
+
+#if ENABLE_SPEEDUP_HACKS
+	/* install speedup for main CPU */
+	main_speedup = install_mem_write32_handler(0, 0xa19550, 0xa19557, area51mx_main_speedup_w);
 #endif
 }
 
@@ -970,4 +1033,5 @@ static DRIVER_INIT( vcircle )
 
 GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51" )
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force" )
+GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo" )
 GAME( 1996, vcircle,  0,        cojagr3k,  vcircle,  vcircle,  ROT0, "Atari Games", "Vicious Circle (prototype)" )

@@ -195,13 +195,13 @@ ROM_START( avalnche )
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
 	/*		 orbit_rom_init()							   */
-	ROM_LOAD( "30612.d2",     	0x8800, 0x0800, 0x3f975171 )
-	ROM_LOAD( "30613.e2",     	0x9000, 0x0800, 0x47a224d3 )
-	ROM_LOAD( "30611.c2",     	0x9800, 0x0800, 0x0ad07f85 )
+	ROM_LOAD( "30612.d2",     	0x8800, 0x0800, CRC(3f975171) SHA1(afe680865da97824f1ebade4c7a2ba5d7ee2cbab) )
+	ROM_LOAD( "30613.e2",     	0x9000, 0x0800, CRC(47a224d3) SHA1(9feb7444a2e5a3d90a4fe78ae5d23c3a5039bfaa) )
+	ROM_LOAD( "30611.c2",     	0x9800, 0x0800, CRC(0ad07f85) SHA1(5a1a873b14e63dbb69ee3686ba53f7ca831fe9d0) )
 
-	ROM_LOAD( "30615.d3",     	0xa800, 0x0800, 0x3e1a86b4 )
-	ROM_LOAD( "30616.e3",     	0xb000, 0x0800, 0xf620f0f8 )
-	ROM_LOAD( "30614.c3",     	0xb800, 0x0800, 0xa12d5d64 )
+	ROM_LOAD( "30615.d3",     	0xa800, 0x0800, CRC(3e1a86b4) SHA1(3ff4cffea5b7a32231c0996473158f24c3bbe107) )
+	ROM_LOAD( "30616.e3",     	0xb000, 0x0800, CRC(f620f0f8) SHA1(7802b399b3469fc840796c3145b5f63781090956) )
+	ROM_LOAD( "30614.c3",     	0xb800, 0x0800, CRC(a12d5d64) SHA1(1647d7416bf9266d07f066d3797bda943e004d24) )
 ROM_END
 
 

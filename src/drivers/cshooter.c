@@ -420,24 +420,24 @@ data in the custom SIPs. I am not sure though.
 
 ROM_START( cshooter )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "r1",  0x00000, 0x08000, 0xfbe8c518 )
+	ROM_LOAD( "r1",  0x00000, 0x08000, CRC(fbe8c518) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "r4",  0x00000, 0x08000, 0x84fed017 )
+	ROM_LOAD( "r4",  0x00000, 0x08000, CRC(84fed017) )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD( "68705.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "r3",  0x00000, 0x02000, 0x67b50a47 )	// only 1 byte difference with 3.f11, bad dump?
+	ROM_LOAD( "r3",  0x00000, 0x02000, CRC(67b50a47) )	// only 1 byte difference with 3.f11, bad dump?
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "r2",  0x00000, 0x10000, 0x5ddf9f4e )
+	ROM_LOAD( "r2",  0x00000, 0x10000, CRC(5ddf9f4e) )
 
 	ROM_REGION( 0x220, REGION_PROMS, 0 )
-	ROM_LOAD( "0.bpr", 0x0000, 0x0020, 0x93e2d292 )	/* priority? (not used) */
-	ROM_LOAD( "1.bpr", 0x0020, 0x0100, 0xcf14ba30 )	/* timing? (not used) */
-	ROM_LOAD( "2.bpr", 0x0120, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
+	ROM_LOAD( "0.bpr", 0x0000, 0x0020, CRC(93e2d292) )	/* priority? (not used) */
+	ROM_LOAD( "1.bpr", 0x0020, 0x0100, CRC(cf14ba30) )	/* timing? (not used) */
+	ROM_LOAD( "2.bpr", 0x0120, 0x0100, CRC(0eaf5158) )	/* timing? (not used) */
 ROM_END
 
 /*
@@ -475,19 +475,19 @@ theguru@emuunlim.com
 
 ROM_START( cshootre )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "1.k19",  0x00000, 0x08000, 0x71418952 )
+	ROM_LOAD( "1.k19",  0x00000, 0x08000, CRC(71418952) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "5.6f",  0x00000, 0x02000, 0x30be398c )	// 5.g6
+	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) )	// 5.g6
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "3.f11",  0x00000, 0x02000, 0x704c26d7 )	// only 1 byte difference with R3, bad dump?
+	ROM_LOAD( "3.f11",  0x00000, 0x02000, CRC(704c26d7) )	// only 1 byte difference with R3, bad dump?
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "2.k20",  0x00000, 0x10000, 0x5812fe72 )
+	ROM_LOAD( "2.k20",  0x00000, 0x10000, CRC(5812fe72) )
 
 	ROM_REGION( 0x08000, REGION_GFX3, 0 )	// ?? sound ?? unknown rom
-	ROM_LOAD( "4.7f",  0x00000, 0x08000, 0x3cd715b4 )	// 4.g8
+	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) )	// 4.g8
 ROM_END
 
 /*
@@ -514,19 +514,19 @@ SEI0030BU          SEI0060BU                             sw1 xx xxxxx
 
 ROM_START( airraid )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "1.16j",  0x00000, 0x08000, 0x7ac2cedf )
+	ROM_LOAD( "1.16j",  0x00000, 0x08000, CRC(7ac2cedf) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "5.6f",  0x00000, 0x02000, 0x30be398c )
+	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "3.13e",  0x00000, 0x02000, 0x672ec0e8 )
+	ROM_LOAD( "3.13e",  0x00000, 0x02000, CRC(672ec0e8) )
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "2.19j",  0x00000, 0x10000, 0x842ae6c2 )
+	ROM_LOAD( "2.19j",  0x00000, 0x10000, CRC(842ae6c2) )
 
 	ROM_REGION( 0x08000, REGION_GFX3, 0 )	// ?? sound ?? unknown rom
-	ROM_LOAD( "4.7f",  0x00000, 0x08000, 0x3cd715b4 )
+	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) )
 ROM_END
 
 

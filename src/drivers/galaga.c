@@ -92,6 +92,7 @@ INTERRUPT_GEN( galaga_interrupt_1 );
 INTERRUPT_GEN( galaga_interrupt_2 );
 INTERRUPT_GEN( galaga_interrupt_3 );
 MACHINE_INIT( galaga );
+WRITE_HANDLER ( catsbee_bank_w );
 
 
 extern unsigned char *galaga_starcontrol;
@@ -334,7 +335,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,           /* 8*8 characters */
-	128,           /* 128 characters */
+	RGN_FRAC(1,1), /* 128 characters */
 	2,             /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
@@ -438,224 +439,311 @@ MACHINE_DRIVER_END
 
 ROM_START( galaga )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
-	ROM_LOAD( "04k_g02.bin",  0x1000, 0x1000, 0x43bb0d5c )
-	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
-	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
+	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, CRC(a3a0f743) SHA1(6907773db7c002ecde5e41853603d53387c5c7cd) )
+	ROM_LOAD( "04k_g02.bin",  0x1000, 0x1000, CRC(43bb0d5c) SHA1(666975aed5ce84f09794c54b550d64d95ab311f0) )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, CRC(753ce503) SHA1(481f443aea3ed3504ec2f3a6bfcf3cd47e2f8f81) )
+	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, CRC(83874442) SHA1(366cb0dbd31b787e64f88d182108b670d03b393e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, CRC(3102fccd) SHA1(d29b68d6aab3217fa2106b3507b9273ff3f927bf) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, CRC(58b2f47c) SHA1(62f1279a784ab2f8218c4137c7accda00e6a3490) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( galagamw )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
-	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
-	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
-	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
+	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, CRC(3ef0b053) SHA1(0c04a362b737998c0952a753fb3fd8c8a17e9b46) )
+	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, CRC(1b280831) SHA1(f7ea12e61929717ebe43a4198a97f109845a2c62) )
+	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, CRC(16233d33) SHA1(a7eb799be5e23058754a92b15e6527bfbb47a354) )
+	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, CRC(0aaf5c23) SHA1(3f4b0bb960bf002261e9c1278c88f594c6aa8ab6) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
+	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, CRC(bc556e76) SHA1(0d3d68243c4571d985b4d8f7e0ea9f6fcffa2116) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, CRC(b07f0aa4) SHA1(7528644a8480d0be2d0d37069515ed319e94778f) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, CRC(58b2f47c) SHA1(62f1279a784ab2f8218c4137c7accda00e6a3490) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( galagads )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
-	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
-	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
-	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
+	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, CRC(3ef0b053) SHA1(0c04a362b737998c0952a753fb3fd8c8a17e9b46) )
+	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, CRC(1b280831) SHA1(f7ea12e61929717ebe43a4198a97f109845a2c62) )
+	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, CRC(16233d33) SHA1(a7eb799be5e23058754a92b15e6527bfbb47a354) )
+	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, CRC(0aaf5c23) SHA1(3f4b0bb960bf002261e9c1278c88f594c6aa8ab6) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
+	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, CRC(23d586e5) SHA1(43346c69385e9091e64cff6c027ac2689cafcbb9) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, CRC(b07f0aa4) SHA1(7528644a8480d0be2d0d37069515ed319e94778f) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, CRC(58b2f47c) SHA1(62f1279a784ab2f8218c4137c7accda00e6a3490) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( gallag )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
-	ROM_LOAD( "gallag.2",     0x1000, 0x1000, 0x5eda60a7 )
-	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
-	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
+	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, CRC(a3a0f743) SHA1(6907773db7c002ecde5e41853603d53387c5c7cd) )
+	ROM_LOAD( "gallag.2",     0x1000, 0x1000, CRC(5eda60a7) SHA1(853d7b974dd04abd7af3a8ba2681dfabce4dce18) )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, CRC(753ce503) SHA1(481f443aea3ed3504ec2f3a6bfcf3cd47e2f8f81) )
+	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, CRC(83874442) SHA1(366cb0dbd31b787e64f88d182108b670d03b393e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, CRC(3102fccd) SHA1(d29b68d6aab3217fa2106b3507b9273ff3f927bf) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
+	ROM_LOAD( "gallag.6",     0x0000, 0x1000, CRC(001b70bc) SHA1(b465eee91e75257b7b049d49c0064ab5fd66c576) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
+	ROM_LOAD( "gallag.8",     0x0000, 0x1000, CRC(169a98a4) SHA1(edbeb11076061e744ea88d9899dbdfe0964c7e78) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( galagab2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
-	ROM_LOAD( "g2",           0x1000, 0x1000, 0xd9232240 )
-	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
-	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
+	ROM_LOAD( "g1",           0x0000, 0x1000, CRC(ab036c9f) SHA1(ca7f5da42d4e76fd89bb0b35198a23c01462fbfe) )
+	ROM_LOAD( "g2",           0x1000, 0x1000, CRC(d9232240) SHA1(ab202aa259c3d332ef13dfb8fc8580ce2a5a253d) )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, CRC(753ce503) SHA1(481f443aea3ed3504ec2f3a6bfcf3cd47e2f8f81) )
+	ROM_LOAD( "g4",           0x3000, 0x1000, CRC(499fcc76) SHA1(ddb8b121903646c320939c7d13f4aa4ebb130378) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, CRC(3102fccd) SHA1(d29b68d6aab3217fa2106b3507b9273ff3f927bf) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, CRC(035e300c) SHA1(cfda2467e71c27381b7150ff8fc7b69d61df123a) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
+	ROM_LOAD( "gallag.8",     0x0000, 0x1000, CRC(169a98a4) SHA1(edbeb11076061e744ea88d9899dbdfe0964c7e78) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( galaga84 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
-	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, 0x4d832a30 )
-	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
-	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
+	ROM_LOAD( "g1",           0x0000, 0x1000, CRC(ab036c9f) SHA1(ca7f5da42d4e76fd89bb0b35198a23c01462fbfe) )
+	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, CRC(4d832a30) SHA1(88ee11df88cf08005efccd6305f87fb3e2797db6) )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, CRC(753ce503) SHA1(481f443aea3ed3504ec2f3a6bfcf3cd47e2f8f81) )
+	ROM_LOAD( "g4",           0x3000, 0x1000, CRC(499fcc76) SHA1(ddb8b121903646c320939c7d13f4aa4ebb130378) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
+	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, CRC(bb5caae3) SHA1(e957a581463caac27bc37ca2e2a90f27e4f62b6f) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, CRC(035e300c) SHA1(cfda2467e71c27381b7150ff8fc7b69d61df123a) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, CRC(58b2f47c) SHA1(62f1279a784ab2f8218c4137c7accda00e6a3490) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gal84u4d",     0x0000, 0x1000, 0x22e339d5 )
-	ROM_LOAD( "gal84u4e",     0x1000, 0x1000, 0x60dcf940 )
+	ROM_LOAD( "gal84u4d",     0x0000, 0x1000, CRC(22e339d5) SHA1(9ac2887ede802d28daa4ad0a0a54bcf7b1155a2e) )
+	ROM_LOAD( "gal84u4e",     0x1000, 0x1000, CRC(60dcf940) SHA1(6530aa5b4afef4a8422ece76a93d0c5b1d93355e) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
 ROM_START( nebulbee )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, 0xf405f2c4 )
-	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, 0x31022b60 )
-	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
-	ROM_LOAD( "nebulbee.04",  0x3000, 0x1000, 0xd76788a5 )
+	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, CRC(f405f2c4) SHA1(9249afeffd8df0f24539ea9b4f88c23a6ad58d8c) )
+	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, CRC(31022b60) SHA1(90e64afb4128c6dfeeee89635ea9f97a34f70f5f) )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, CRC(753ce503) SHA1(481f443aea3ed3504ec2f3a6bfcf3cd47e2f8f81) )
+	ROM_LOAD( "nebulbee.04",  0x3000, 0x1000, CRC(d76788a5) SHA1(adcb83cf64951d86c701a99b410e9230912f8a48) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, CRC(3102fccd) SHA1(d29b68d6aab3217fa2106b3507b9273ff3f927bf) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, CRC(58b2f47c) SHA1(62f1279a784ab2f8218c4137c7accda00e6a3490) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, CRC(ad447c80) SHA1(e697c180178cabd1d32483c5d8889a40633f7857) )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, CRC(dd6f1afc) SHA1(c340ed8c25e0979629a9a1730edc762bd72d0cff) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
-	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
-	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
-	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
+/*
 
+Catsbee (Galaga mod/bootleg)
+
+This game runs on modified bootleg Galaga hardware (blue board with PCB numbers DG-09-02 and DG-07-02)
+
+ROM8: is a 2764. pins 1, 26, 27, 28 tied together.
+      pin2 out of socket, has wire that is tied to pin 4 of a LS259 that sits on top of the main Z80
+      CPU located at 5B/6B
+
+Z80: There are 2 logic chips sitting on top of it which are wired up to the Z80 and to each other.
+     Looks like this....
+     |-------------------|
+     |  LS32   LS259     <
+     |-------------------|
+
+
+Bend all the legs outwards.
+Line up the LS259 so pin 16 is in line with Z80 pin 11
+Line up the LS32 so pin 7 is in line with Z80 pin 29
+Atach the 2 chips to the top of the Z80 with some glue
+Connect like this....
+
+LS32 pin 1 tied to Z80 pin 22
+LS32 pin 2 tied to Z80 pin 19
+LS32 pin 3,4 tied together
+LS32 pin 5 tied to Z80 pin 4
+LS32 pin 6 tied to pin 10 LS32
+LS32 pin 7 tied to Z80 pin 29 (GND)
+LS32 pin 8 tied to LS259 pin 14
+LS32 pin 9 tied to Z80 pin 5
+LS32 pins 11, 12, 13 have NC
+LS32 pin 14 tied to Z80 pin 11 (+5V)
+
+LS259 pin 1 tied to Z80 pin 30
+LS259 pin 2 tied to Z80 pin 31
+LS259 pin 3 tied to Z80 pin 32
+LS259 pin 4 to ROM 8 (as above)
+LS259 pins 5, 6, 7 have NC
+LS259 pin 8 tied to Z80 pin 29 (GND)
+LS259 pins 9, 10, 11, 12 have NC
+LS259 pin 13 tied to Z80 pin 14
+LS259 pin 15 tied to Z80 pin 26
+LS259 pin 16 tied to Z80 pin 11
+
+Developers:
+           More info reqd? Email me...
+           theguru@emuunlim.com
+
+*/
+
+ROM_START( catsbee )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
+	ROM_LOAD( "1.4b",	0x0000, 0x1000, CRC(9fb8e28b) SHA1(7171e3fb37b0d6cc8f7a023c1775080d5986de99) )
+	ROM_LOAD( "2.4c",	0x1000, 0x1000, CRC(bf6cb840) SHA1(5763140d32d35a38cdcb49e6de1fd5b07a9e8cc2) )
+	ROM_LOAD( "3.4d",	0x2000, 0x1000, CRC(3604e2dd) SHA1(1736cf8497f7ac28e92ca94fa137c144353dc192) )
+	ROM_LOAD( "4.4e",	0x3000, 0x1000, CRC(bf9f613b) SHA1(41c852fc77f0f35bf48a5b81a19234ed99871c89) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, CRC(3102fccd) SHA1(d29b68d6aab3217fa2106b3507b9273ff3f927bf) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, CRC(8995088d) SHA1(d6cb439de0718826d1a0363c9d77de8740b18ecf) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "gallag.6",     0x0000, 0x1000, CRC(001b70bc) SHA1(b465eee91e75257b7b049d49c0064ab5fd66c576) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "8.5r",  0x0000, 0x2000, CRC(b324f650) SHA1(7bcb254f7cf03bd84291b9fdc27b8962b3e12aa4) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gal84u4d",     0x0000, 0x1000, CRC(22e339d5) SHA1(9ac2887ede802d28daa4ad0a0a54bcf7b1155a2e) )
+	ROM_LOAD( "gal84u4e",     0x1000, 0x1000, CRC(60dcf940) SHA1(6530aa5b4afef4a8422ece76a93d0c5b1d93355e) )
+
+	ROM_REGION( 0x0320, REGION_PROMS, 0 )
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, CRC(54603c6b) SHA1(1a6dea13b4af155d9cb5b999a75d4f1eb9c71346) )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, CRC(a547d33b) SHA1(7323084320bb61ae1530d916f5edd8835d4d2461) )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, CRC(b6f585fb) SHA1(dd10147c4f05fede7ae6e7a760681700a660e87e) )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, CRC(8bd565f6) SHA1(bedba65816abfc2ebeacac6ee335ca6f136e3e3d) )	/* unknown */
+
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
+ROM_END
+
+static DRIVER_INIT (catsbee)
+{
+	install_mem_write_handler(0, 0x1000, 0x1000, catsbee_bank_w);
+}
 
 GAMEX( 1981, galaga,   0,      galaga, galaganm, 0, ROT90, "Namco", "Galaga (Namco)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1981, galagamw, galaga, galaga, galaga,   0, ROT90, "[Namco] (Midway license)", "Galaga (Midway)", GAME_IMPERFECT_GRAPHICS )
@@ -664,3 +752,4 @@ GAMEX( 1982, gallag,   galaga, galaga, galaganm, 0, ROT90, "bootleg", "Gallag", 
 GAMEX( 1981, galagab2, galaga, galaga, galaganm, 0, ROT90, "bootleg", "Galaga (bootleg)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1984, galaga84, galaga, galaga, galaganm, 0, ROT90, "hack", "Galaga '84", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1984, nebulbee, galaga, galaga, galaganm, 0, ROT90, "hack", "Nebulous Bee", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, catsbee,  galaga, galaga, galaganm, catsbee, ROT90, "Uchida", "Catsbee", GAME_IMPERFECT_GRAPHICS )

@@ -1,6 +1,7 @@
 /***************************************************************************
 
-Sauro Memory Map (preliminary)
+Sauro
+-----
 
 driver by Zsolt Vasvari
 
@@ -65,6 +66,15 @@ TODO
 
 - What do the rest of the ports in the range c0-ce do?
 
+- Convert to tilemaps
+
+Tricky Doc
+----------
+
+Addition by Reip
+
+Proms need dumping
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -76,6 +86,12 @@ unsigned char *sauro_videoram2;
 unsigned char *sauro_colorram2;
 
 VIDEO_UPDATE( sauro );
+VIDEO_START ( trckydoc );
+VIDEO_UPDATE( trckydoc );
+WRITE_HANDLER( trckydoc_bg_scroll_w );
+WRITE_HANDLER( trckydoc_bg_videoram_w );
+WRITE_HANDLER( trckydoc_bg_colorram_w );
+WRITE_HANDLER( trckydoc_spriteram_mirror_w );
 
 WRITE_HANDLER( sauro_scroll1_w );
 WRITE_HANDLER( sauro_scroll2_w );
@@ -98,46 +114,61 @@ static WRITE_HANDLER( flip_screen_w )
 	flip_screen_set(data);
 }
 
+static WRITE_HANDLER( sauro_coin1_w )
+{
+	coin_counter_w(0, data);
+	coin_counter_w(0, 0); // to get the coin counter working in sauro, as it doesn't write 0
+}
 
-static MEMORY_READ_START( readmem )
-        { 0x0000, 0xdfff, MRA_ROM },
-		{ 0xe000, 0xebff, MRA_RAM },
-		{ 0xf000, 0xffff, MRA_RAM },
+static WRITE_HANDLER( sauro_coin2_w )
+{
+	coin_counter_w(1, data);
+	coin_counter_w(1, 0); // to get the coin counter working in sauro, as it doesn't write 0
+}
+
+static MEMORY_READ_START( sauro_readmem )
+	{ 0x0000, 0xdfff, MRA_ROM },
+	{ 0xe000, 0xebff, MRA_RAM },
+	{ 0xf000, 0xffff, MRA_RAM },
 MEMORY_END
 
-static MEMORY_WRITE_START( writemem )
-        { 0x0000, 0xdfff, MWA_ROM },
-		{ 0xe000, 0xe7ff, MWA_RAM },
-		{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
-		{ 0xf000, 0xf3ff, videoram_w, &videoram, &videoram_size },
-		{ 0xf400, 0xf7ff, colorram_w, &colorram },
-		{ 0xf800, 0xfbff, MWA_RAM, &sauro_videoram2 },
-		{ 0xfc00, 0xffff, MWA_RAM, &sauro_colorram2 },
+static MEMORY_WRITE_START( sauro_writemem )
+	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xf000, 0xf3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xf400, 0xf7ff, colorram_w, &colorram },
+	{ 0xf800, 0xfbff, MWA_RAM, &sauro_videoram2 },
+	{ 0xfc00, 0xffff, MWA_RAM, &sauro_colorram2 },
 MEMORY_END
 
-static PORT_READ_START( readport )
-		{ 0x00, 0x00, input_port_2_r },
-		{ 0x20, 0x20, input_port_3_r },
-		{ 0x40, 0x40, input_port_0_r },
-		{ 0x60, 0x60, input_port_1_r },
+static PORT_READ_START( sauro_readport )
+	{ 0x00, 0x00, input_port_2_r },
+	{ 0x20, 0x20, input_port_3_r },
+	{ 0x40, 0x40, input_port_0_r },
+	{ 0x60, 0x60, input_port_1_r },
 PORT_END
 
-static PORT_WRITE_START( writeport )
-		{ 0xa0, 0xa0, sauro_scroll1_w, },
-		{ 0xa1, 0xa1, sauro_scroll2_w, },
-		{ 0x80, 0x80, sauro_sound_command_w, },
-		{ 0xc0, 0xc0, flip_screen_w, },
-		{ 0xc1, 0xce, MWA_NOP, },
-		{ 0xe0, 0xe0, watchdog_reset_w },
+static PORT_WRITE_START( sauro_writeport )
+	{ 0xa0, 0xa0, sauro_scroll1_w, },
+	{ 0xa1, 0xa1, sauro_scroll2_w, },
+	{ 0x80, 0x80, sauro_sound_command_w, },
+	{ 0xc0, 0xc0, flip_screen_w, },
+	{ 0xc1, 0xc2, MWA_NOP },
+	{ 0xc3, 0xc3, sauro_coin1_w },
+	{ 0xc4, 0xc4, MWA_NOP },
+	{ 0xc5, 0xc5, sauro_coin2_w },
+	{ 0xc6, 0xce, MWA_NOP },
+	{ 0xe0, 0xe0, watchdog_reset_w },
 PORT_END
 
-static MEMORY_READ_START( sound_readmem )
-        { 0x0000, 0x7fff, MRA_ROM },
-		{ 0x8000, 0x87ff, MRA_RAM },
-		{ 0xe000, 0xe000, sauro_sound_command_r },
+static MEMORY_READ_START( sauro_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xe000, 0xe000, sauro_sound_command_r },
 MEMORY_END
 
-static MEMORY_WRITE_START( sound_writemem )
+static MEMORY_WRITE_START( sauro_sound_writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc000, 0xc000, YM3812_control_port_0_w },
 	{ 0xc001, 0xc001, YM3812_write_port_0_w },
@@ -146,6 +177,33 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe00e, 0xe00f, MWA_NOP },
 MEMORY_END
 
+static MEMORY_READ_START( trckydoc_readmem )
+	{ 0x0000, 0xdfff, MRA_ROM },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xf800, 0xf800, input_port_2_r },
+	{ 0xf808, 0xf808, input_port_3_r },
+	{ 0xf810, 0xf810, input_port_0_r },
+	{ 0xf818, 0xf818, input_port_1_r },
+	{ 0xf828, 0xf828, watchdog_reset_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( trckydoc_writemem )
+	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xec00, 0xefff, trckydoc_spriteram_mirror_w}, // it clears sprites from the screen by writing here to set some of the attributes
+	{ 0xf000, 0xf3ff, trckydoc_bg_videoram_w, &videoram },
+	{ 0xf400, 0xf7ff, trckydoc_bg_colorram_w, &colorram },
+	{ 0xf820, 0xf820, YM3812_control_port_0_w },
+	{ 0xf821, 0xf821, YM3812_write_port_0_w },
+	{ 0xf830, 0xf830, trckydoc_bg_scroll_w },
+	{ 0xf838, 0xf838, MWA_NOP },
+	{ 0xf839, 0xf839, flip_screen_w },
+	{ 0xf83a, 0xf83a, sauro_coin1_w },
+	{ 0xf83b, 0xf83b, sauro_coin2_w },
+	{ 0xf83c, 0xf83c, watchdog_reset_w },
+	{ 0xf83f, 0xf83f, MWA_NOP },
+MEMORY_END
 
 INPUT_PORTS_START( sauro )
 	PORT_START      /* IN0 */
@@ -230,18 +288,18 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-    1024,   /* 1024 sprites */
+    RGN_FRAC(1,1),
     4,      /* 4 bits per pixel */
     { 0,1,2,3 },  /* The 4 planes are packed together */
     { 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4, 9*4, 8*4, 11*4, 10*4, 13*4, 12*4, 15*4, 14*4},
-    { 3*0x8000*8+0*4*16, 2*0x8000*8+0*4*16, 1*0x8000*8+0*4*16, 0*0x8000*8+0*4*16,
-      3*0x8000*8+1*4*16, 2*0x8000*8+1*4*16, 1*0x8000*8+1*4*16, 0*0x8000*8+1*4*16,
-      3*0x8000*8+2*4*16, 2*0x8000*8+2*4*16, 1*0x8000*8+2*4*16, 0*0x8000*8+2*4*16,
-      3*0x8000*8+3*4*16, 2*0x8000*8+3*4*16, 1*0x8000*8+3*4*16, 0*0x8000*8+3*4*16, },
+    { RGN_FRAC(3,4)+0*4*16, RGN_FRAC(2,4)+0*4*16, RGN_FRAC(1,4)+0*4*16, RGN_FRAC(0,4)+0*4*16,
+      RGN_FRAC(3,4)+1*4*16, RGN_FRAC(2,4)+1*4*16, RGN_FRAC(1,4)+1*4*16, RGN_FRAC(0,4)+1*4*16,
+      RGN_FRAC(3,4)+2*4*16, RGN_FRAC(2,4)+2*4*16, RGN_FRAC(1,4)+2*4*16, RGN_FRAC(0,4)+2*4*16,
+      RGN_FRAC(3,4)+3*4*16, RGN_FRAC(2,4)+3*4*16, RGN_FRAC(1,4)+3*4*16, RGN_FRAC(0,4)+3*4*16, },
     16*16     /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo sauro_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout  , 0, 64 },
 	{ REGION_GFX2, 0, &charlayout  , 0, 64 },
@@ -249,6 +307,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo trckydoc_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,   0, 64 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 64 },
+	{ -1 } /* end of array */
+};
 
 static INTERRUPT_GEN( sauron_interrupt )
 {
@@ -268,13 +332,13 @@ static MACHINE_DRIVER_START( sauro )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_MEMORY(sauro_readmem,sauro_writemem)
+	MDRV_CPU_PORTS(sauro_readport,sauro_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_MEMORY(sauro_sound_readmem,sauro_sound_writemem)
 	MDRV_CPU_VBLANK_INT(sauron_interrupt,8) /* ?? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -284,7 +348,7 @@ static MACHINE_DRIVER_START( sauro )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(sauro_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
@@ -295,6 +359,30 @@ static MACHINE_DRIVER_START( sauro )
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( trckydoc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz??? */
+	MDRV_CPU_MEMORY(trckydoc_readmem,trckydoc_writemem )
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)  /* frames per second, vblank duration (otherwise sprites lag) */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(trckydoc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(trckydoc)
+	MDRV_VIDEO_UPDATE(trckydoc)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -304,33 +392,53 @@ MACHINE_DRIVER_END
 
 ROM_START( sauro )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )          /* 64k for code */
-	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
-	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )
+	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, CRC(19f8de25) SHA1(52eea7c0416ab0a8dbb3d1664b2f57ab7a405a67) )
+	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, CRC(0f8b876f) SHA1(6e61a8934a2cc3c80c1f47dd59aa43aaeec12f75) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )          /* 64k for sound CPU */
-	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
+	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, CRC(0d501e1b) SHA1(20a56ff30d4fa5d2f483a449703b49153839f6bc) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, 0x9b617cda )
-	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, 0xa6e2640d )
+	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, CRC(9b617cda) SHA1(ce26b84ad5ecd6185ae218520e9972645bbf09ad) )
+	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, CRC(a6e2640d) SHA1(346ffcf62e27ce8134f4e5e0dbcf11f110e19e04) )
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sauro-6.bin",     0x00000, 0x8000, 0x4b77cb0f )
-	ROM_LOAD( "sauro-7.bin",     0x08000, 0x8000, 0x187da060 )
+	ROM_LOAD( "sauro-6.bin",     0x00000, 0x8000, CRC(4b77cb0f) SHA1(7b9cb2dca561d81390106c1a5c0533dcecaf6f1a) )
+	ROM_LOAD( "sauro-7.bin",     0x08000, 0x8000, CRC(187da060) SHA1(1df156e58379bb39acade02aabab6ff1cb7cc288) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "sauro-8.bin",     0x00000, 0x8000, 0xe08b5d5e )
-	ROM_LOAD( "sauro-9.bin",     0x08000, 0x8000, 0x7c707195 )
-	ROM_LOAD( "sauro-10.bin",    0x10000, 0x8000, 0xc93380d1 )
-	ROM_LOAD( "sauro-11.bin",    0x18000, 0x8000, 0xf47982a8 )
+	ROM_LOAD( "sauro-8.bin",     0x00000, 0x8000, CRC(e08b5d5e) SHA1(eaaeaa08b19c034ab2a2140f887edffca5f441b9) )
+	ROM_LOAD( "sauro-9.bin",     0x08000, 0x8000, CRC(7c707195) SHA1(0529f6808b0cec3e12ca51bee189841d21577786) )
+	ROM_LOAD( "sauro-10.bin",    0x10000, 0x8000, CRC(c93380d1) SHA1(fc9655cc94c2d2058f83eb341be7e7856a08194f) )
+	ROM_LOAD( "sauro-11.bin",    0x18000, 0x8000, CRC(f47982a8) SHA1(cbaeac272c015d9439f151cfb3449082f11a57a1) )
 
 	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
-	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, 0xd52c4cd0 )  /* Red component */
-	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
-	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */
+	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, CRC(d52c4cd0) SHA1(27d6126b46616c06b55d8018c97f6c3d7805ae9e) )  /* Red component */
+	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, CRC(c3e96d5d) SHA1(3f6f21526a4357e4a9a9d56a6f4ef5911af2d120) )  /* Green component */
+	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, CRC(bdfcf00c) SHA1(9faf4d7f8959b64faa535c9945eec59c774a3760) )  /* Blue component */
 ROM_END
 
+ROM_START( trckydoc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )          /* 64k for code */
+	ROM_LOAD( "trckydoc.d9",  0x0000,  0x8000, CRC(c6242fc3) SHA1(c8a6f6abe8b51061a113ed75fead0479df68ec40) )
+	ROM_LOAD( "trckydoc.b9",  0x8000,  0x8000, CRC(8645c840) SHA1(79c2acfc1aeafbe94afd9d230200bd7cdd7bcd1b) )
 
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "trckydoc.e6",     0x00000, 0x8000, CRC(ec326392) SHA1(e6954fecc501a821caa21e67597914519fbbe58f) )
+	ROM_LOAD( "trckydoc.g6",     0x08000, 0x8000, CRC(6a65c088) SHA1(4a70c104809d86b4eef6cc0df9452966fe7c9859) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "trckydoc.h1",    0x00000, 0x4000, CRC(8b73cbf3) SHA1(d10f79a38c1596c90bac9cf4c64ba38ae6ecd8cb) )
+	ROM_LOAD( "trckydoc.e1",    0x04000, 0x4000, CRC(841be98e) SHA1(82da07490b73edcbffc3b9247205aab3a1f7d7ad) )
+	ROM_LOAD( "trckydoc.c1",    0x08000, 0x4000, CRC(1d25574b) SHA1(924e4376a7fe6cdfff0fa6045aaa3f7c0633d275) )
+	ROM_LOAD( "trckydoc.a1",    0x0c000, 0x4000, CRC(436c59ba) SHA1(2aa9c155c432a3c81420520c53bb944dcc613a94) )
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	/* proms were missing, 3 is a guess */
+	ROM_LOAD( "r",    0x0000, 0x0400, NO_DUMP )
+	ROM_LOAD( "g",    0x0400, 0x0400, NO_DUMP )
+	ROM_LOAD( "b",    0x0800, 0x0400, NO_DUMP )
+ROM_END
 
 static DRIVER_INIT( sauro )
 {
@@ -344,4 +452,5 @@ static DRIVER_INIT( sauro )
 }
 
 
-GAMEX( 1987, sauro, 0, sauro, sauro, sauro, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1987, sauro,    0,     sauro,    sauro, sauro, ROT0, "Tecfri",  "Sauro", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1987, trckydoc, 0,     trckydoc, sauro, sauro, ROT0, "Tecfri",  "Tricky Doc", GAME_WRONG_COLORS )

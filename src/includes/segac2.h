@@ -11,6 +11,8 @@ extern int			segac2_bg_palbase;
 extern int			segac2_sp_palbase;
 extern int			segac2_palbank;
 
+VIDEO_START( puckpkmn );
+
 VIDEO_START( segac2 );
 VIDEO_EOF( segac2 );
 VIDEO_UPDATE( segac2 );

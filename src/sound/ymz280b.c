@@ -105,12 +105,14 @@ INLINE void update_irq_state(struct YMZ280BChip *chip)
 		chip->irq_state = 1;
 		if (chip->irq_callback)
 			(*chip->irq_callback)(1);
+else logerror("ymz280 irq_callback = 0");
 	}
 	else if (!irq_bits && chip->irq_state)
 	{
 		chip->irq_state = 0;
 		if (chip->irq_callback)
 			(*chip->irq_callback)(0);
+else logerror("ymz280 irq_callback = 0");
 	}
 }
 
@@ -891,7 +893,25 @@ READ_HANDLER( YMZ280B_status_1_r )
 	return compute_status(&ymz280b[1]);
 }
 
+READ16_HANDLER( YMZ280B_status_0_lsb_r )
+{
+	return compute_status(&ymz280b[0]);
+}
 
+READ16_HANDLER( YMZ280B_status_0_msb_r )
+{
+	return compute_status(&ymz280b[0]) << 8;
+}
+
+READ16_HANDLER( YMZ280B_status_1_lsb_r )
+{
+	return compute_status(&ymz280b[1]);
+}
+
+READ16_HANDLER( YMZ280B_status_1_msb_r )
+{
+	return compute_status(&ymz280b[1]) << 8;
+}
 
 /**********************************************************************************************
 
@@ -909,7 +929,25 @@ WRITE_HANDLER( YMZ280B_register_1_w )
 	ymz280b[1].current_register = data;
 }
 
+WRITE16_HANDLER( YMZ280B_register_0_lsb_w )
+{
+	if (ACCESSING_LSB)	ymz280b[0].current_register = data & 0xff;
+}
 
+WRITE16_HANDLER( YMZ280B_register_0_msb_w )
+{
+	if (ACCESSING_MSB)	ymz280b[0].current_register = (data >> 8) & 0xff;
+}
+
+WRITE16_HANDLER( YMZ280B_register_1_lsb_w )
+{
+	if (ACCESSING_LSB)	ymz280b[1].current_register = data & 0xff;
+}
+
+WRITE16_HANDLER( YMZ280B_register_1_msb_w )
+{
+	if (ACCESSING_MSB)	ymz280b[1].current_register = (data >> 8) & 0xff;
+}
 
 /**********************************************************************************************
 
@@ -926,3 +964,24 @@ WRITE_HANDLER( YMZ280B_data_1_w )
 {
 	write_to_register(&ymz280b[1], data);
 }
+
+WRITE16_HANDLER( YMZ280B_data_0_lsb_w )
+{
+	if (ACCESSING_LSB)	write_to_register(&ymz280b[0], data & 0xff);
+}
+
+WRITE16_HANDLER( YMZ280B_data_0_msb_w )
+{
+	if (ACCESSING_MSB)	write_to_register(&ymz280b[0], (data >> 8) & 0xff);
+}
+
+WRITE16_HANDLER( YMZ280B_data_1_lsb_w )
+{
+	if (ACCESSING_LSB)	write_to_register(&ymz280b[1], data & 0xff);
+}
+
+WRITE16_HANDLER( YMZ280B_data_1_msb_w )
+{
+	if (ACCESSING_MSB)	write_to_register(&ymz280b[1], (data >> 8) & 0xff);
+}
+

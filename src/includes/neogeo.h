@@ -23,6 +23,8 @@ extern int memcard_number;
 extern int memcard_manager;
 extern UINT8 *neogeo_memcard;
 
+data8_t *neogeo_game_vectors;
+
 MACHINE_INIT( neogeo );
 DRIVER_INIT( neogeo );
 
@@ -65,6 +67,8 @@ WRITE16_HANDLER( neogeo_vidram16_modulo_w );
 READ16_HANDLER( neogeo_vidram16_modulo_r );
 WRITE16_HANDLER( neo_board_fix_16_w );
 WRITE16_HANDLER( neo_game_fix_16_w );
+WRITE16_HANDLER (neogeo_select_bios_vectors);
+WRITE16_HANDLER (neogeo_select_game_vectors);
 
 VIDEO_UPDATE( neogeo );
 VIDEO_UPDATE( neogeo_raster );

@@ -164,6 +164,9 @@ struct MachineSound
 #if (HAS_C6280)
 #include "sound/c6280.h"
 #endif
+#if (HAS_TIA)
+#include "sound/tiaintf.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -171,9 +174,6 @@ struct MachineSound
 #endif
 #if (HAS_SPEAKER)
 #include "sound/speaker.h"
-#endif
-#if (HAS_TIA)
-#include "sound/tiaintf.h"
 #endif
 #if (HAS_WAVE)
 #include "sound/wave.h"
@@ -358,6 +358,9 @@ enum
 #if (HAS_C6280)
  SOUND_C6280,
 #endif
+#if (HAS_TIA)
+	SOUND_TIA,
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -365,9 +368,6 @@ enum
 #endif
 #if (HAS_SPEAKER)
 	SOUND_SPEAKER,
-#endif
-#if (HAS_TIA)
-	SOUND_TIA,
 #endif
 #if (HAS_WAVE)
 	SOUND_WAVE,

@@ -1172,6 +1172,14 @@ else
 SOUNDDEFS += -DHAS_POKEY=0
 endif
 
+SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TIA=1
+SOUNDOBJS += $(OBJ)/sound/tiasound.o $(OBJ)/sound/tiaintf.o
+else
+SOUNDDEFS += -DHAS_TIA=0
+endif
+
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1

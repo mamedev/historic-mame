@@ -355,142 +355,142 @@ MACHINE_DRIVER_END
 
 ROM_START( exprraid )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
-	ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
+	ROM_LOAD( "cz01",    0x4000, 0x4000, CRC(dc8f9fba) SHA1(cae6af54fc0081d606b6884e8873aed356a37ba9) )
+	ROM_LOAD( "cz00",    0x8000, 0x8000, CRC(a81290bc) SHA1(ddb0acda6124427bee691f9926c41fda27ed816e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sub cpu */
-	ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+	ROM_LOAD( "cz02",    0x8000, 0x8000, CRC(552e6112) SHA1(f8412a63cab0aa47321d602f69bf534426c6aa5d) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
+	ROM_LOAD( "cz07",    0x00000, 0x4000, CRC(686bac23) SHA1(b6c96ed40e90a8ba32c2e78a65f9589d387b0254) )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, CRC(1ed250d1) SHA1(c98b0440e4319308e683e857bbfeb6a150c76ff3) )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, CRC(2293fc61) SHA1(bf81db375f5424396559dcf0e04d34a52f6a020a) )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, CRC(7c3bfd00) SHA1(87b48e09aaeacf78f3260df893b0922e25d10a5d) )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, CRC(ea2294c8) SHA1(bc996351921e68e6237cee2d29fee882931ce0ea) )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, CRC(b7418335) SHA1(e9d08ee651b9221c371e2629a757bceca7b6192b) )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, CRC(2f611978) SHA1(fb60be573184d2af1dfdd543e68eeec53f2788f2) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz04",    0x00000, 0x8000, 0x643a1bd3 )	/* tiles */
+	ROM_LOAD( "cz04",    0x00000, 0x8000, CRC(643a1bd3) SHA1(b23631d96cb413808f65f3ebe8fe6539b6140606) )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "cz06",    0x18000, 0x8000, 0xb9bb448b )	/* tiles */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, CRC(c44570bf) SHA1(3e9b8b6b36c7f5ae016dba3987ea19a29bd5ee5b) )	/* tiles */
+	ROM_LOAD( "cz06",    0x18000, 0x8000, CRC(b9bb448b) SHA1(84974b1f3a5b58cd427d874f805a6dd9244c1101) )	/* tiles */
 
 	ROM_REGION( 0x8000, REGION_GFX4, 0 )     /* background tilemaps */
-	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
+	ROM_LOAD( "cz03",    0x0000, 0x8000, CRC(6ce11971) SHA1(16bfa69b3ad02253e81c8110c9b840be03952790) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
-	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
-	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
-	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
+	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, CRC(da31dfbc) SHA1(ac476440864f538918f7bef2e1db82fd19195f89) ) /* red */
+	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, CRC(51f25b4c) SHA1(bfcca57613fbb22919e00db1f6a8c7ca50faa60b) ) /* green */
+	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, CRC(a6168d7f) SHA1(0c7b31adcd764ce2631c3fb5c1a968b01f65e741) ) /* blue */
+	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, CRC(52aad300) SHA1(ff09772b930afa87e28d0628ef85a589a3d149c9) ) /* ??? */
 ROM_END
 
 ROM_START( wexpress )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
-	ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
+	ROM_LOAD( "2",       0x4000, 0x4000, CRC(ea5e5a8f) SHA1(fa92bcb6b97c2966cd330b309eba73f9c059f14e) )
+	ROM_LOAD( "1",       0x8000, 0x8000, CRC(a7daae12) SHA1(a97f4bc05a3ec096d8c717bdf096f4b0e59dc2c2) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sub cpu */
-	ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+	ROM_LOAD( "cz02",    0x8000, 0x8000, CRC(552e6112) SHA1(f8412a63cab0aa47321d602f69bf534426c6aa5d) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
+	ROM_LOAD( "cz07",    0x00000, 0x4000, CRC(686bac23) SHA1(b6c96ed40e90a8ba32c2e78a65f9589d387b0254) )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, CRC(1ed250d1) SHA1(c98b0440e4319308e683e857bbfeb6a150c76ff3) )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, CRC(2293fc61) SHA1(bf81db375f5424396559dcf0e04d34a52f6a020a) )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, CRC(7c3bfd00) SHA1(87b48e09aaeacf78f3260df893b0922e25d10a5d) )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, CRC(ea2294c8) SHA1(bc996351921e68e6237cee2d29fee882931ce0ea) )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, CRC(b7418335) SHA1(e9d08ee651b9221c371e2629a757bceca7b6192b) )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, CRC(2f611978) SHA1(fb60be573184d2af1dfdd543e68eeec53f2788f2) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
+	ROM_LOAD( "4",       0x00000, 0x8000, CRC(f2e93ff0) SHA1(2e631966e1fa0b2699aa782b589d36801072ba03) )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, CRC(c44570bf) SHA1(3e9b8b6b36c7f5ae016dba3987ea19a29bd5ee5b) )	/* tiles */
+	ROM_LOAD( "6",       0x18000, 0x8000, CRC(c3a56de5) SHA1(aefc516c6c69b12291c0bda03729910181a91a17) )	/* tiles */
 
 	ROM_REGION( 0x8000, REGION_GFX4, 0 )     /* background tilemaps */
-	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
+	ROM_LOAD( "3",        0x0000, 0x8000, CRC(242e3e64) SHA1(4fa8e93ef055bfdbe3bd619c53bf2448e1b832f0) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
-	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
-	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
-	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
+	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, CRC(da31dfbc) SHA1(ac476440864f538918f7bef2e1db82fd19195f89) ) /* red */
+	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, CRC(51f25b4c) SHA1(bfcca57613fbb22919e00db1f6a8c7ca50faa60b) ) /* green */
+	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, CRC(a6168d7f) SHA1(0c7b31adcd764ce2631c3fb5c1a968b01f65e741) ) /* blue */
+	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, CRC(52aad300) SHA1(ff09772b930afa87e28d0628ef85a589a3d149c9) ) /* ??? */
 ROM_END
 
 ROM_START( wexpresb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
-	ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
+	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, CRC(b4dd0fa4) SHA1(8d17eb28ae92486c67859871ea2bef8f50f39dbd) )
+	ROM_LOAD( "wexpress.1", 0x8000, 0x8000, CRC(e8466596) SHA1(dbbd3b84d0f017292595fc19f7412b984851221a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sub cpu */
-	ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+	ROM_LOAD( "cz02",    0x8000, 0x8000, CRC(552e6112) SHA1(f8412a63cab0aa47321d602f69bf534426c6aa5d) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
+	ROM_LOAD( "cz07",    0x00000, 0x4000, CRC(686bac23) SHA1(b6c96ed40e90a8ba32c2e78a65f9589d387b0254) )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, CRC(1ed250d1) SHA1(c98b0440e4319308e683e857bbfeb6a150c76ff3) )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, CRC(2293fc61) SHA1(bf81db375f5424396559dcf0e04d34a52f6a020a) )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, CRC(7c3bfd00) SHA1(87b48e09aaeacf78f3260df893b0922e25d10a5d) )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, CRC(ea2294c8) SHA1(bc996351921e68e6237cee2d29fee882931ce0ea) )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, CRC(b7418335) SHA1(e9d08ee651b9221c371e2629a757bceca7b6192b) )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, CRC(2f611978) SHA1(fb60be573184d2af1dfdd543e68eeec53f2788f2) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
+	ROM_LOAD( "4",       0x00000, 0x8000, CRC(f2e93ff0) SHA1(2e631966e1fa0b2699aa782b589d36801072ba03) )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, CRC(c44570bf) SHA1(3e9b8b6b36c7f5ae016dba3987ea19a29bd5ee5b) )	/* tiles */
+	ROM_LOAD( "6",       0x18000, 0x8000, CRC(c3a56de5) SHA1(aefc516c6c69b12291c0bda03729910181a91a17) )	/* tiles */
 
 	ROM_REGION( 0x8000, REGION_GFX4, 0 )     /* background tilemaps */
-	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
+	ROM_LOAD( "3",        0x0000, 0x8000, CRC(242e3e64) SHA1(4fa8e93ef055bfdbe3bd619c53bf2448e1b832f0) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
-	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
-	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
-	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
+	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, CRC(da31dfbc) SHA1(ac476440864f538918f7bef2e1db82fd19195f89) ) /* red */
+	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, CRC(51f25b4c) SHA1(bfcca57613fbb22919e00db1f6a8c7ca50faa60b) ) /* green */
+	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, CRC(a6168d7f) SHA1(0c7b31adcd764ce2631c3fb5c1a968b01f65e741) ) /* blue */
+	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, CRC(52aad300) SHA1(ff09772b930afa87e28d0628ef85a589a3d149c9) ) /* ??? */
 ROM_END
 
 ROM_START( wexpresc )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "s2",      0x4000, 0x4000, 0x40d70fcb )
-	ROM_LOAD( "s1",      0x8000, 0x8000, 0x7c573824 )
+	ROM_LOAD( "s2",      0x4000, 0x4000, CRC(40d70fcb) SHA1(1327d39f872a39e020972952e5756ca59c55f9d0) )
+	ROM_LOAD( "s1",      0x8000, 0x8000, CRC(7c573824) SHA1(f5e4d4f0866c08c88d012a77e8aa2e74a779f986) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sub cpu */
-	ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+	ROM_LOAD( "cz02",    0x8000, 0x8000, CRC(552e6112) SHA1(f8412a63cab0aa47321d602f69bf534426c6aa5d) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
+	ROM_LOAD( "cz07",    0x00000, 0x4000, CRC(686bac23) SHA1(b6c96ed40e90a8ba32c2e78a65f9589d387b0254) )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, CRC(1ed250d1) SHA1(c98b0440e4319308e683e857bbfeb6a150c76ff3) )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, CRC(2293fc61) SHA1(bf81db375f5424396559dcf0e04d34a52f6a020a) )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, CRC(7c3bfd00) SHA1(87b48e09aaeacf78f3260df893b0922e25d10a5d) )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, CRC(ea2294c8) SHA1(bc996351921e68e6237cee2d29fee882931ce0ea) )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, CRC(b7418335) SHA1(e9d08ee651b9221c371e2629a757bceca7b6192b) )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, CRC(2f611978) SHA1(fb60be573184d2af1dfdd543e68eeec53f2788f2) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
+	ROM_LOAD( "4",       0x00000, 0x8000, CRC(f2e93ff0) SHA1(2e631966e1fa0b2699aa782b589d36801072ba03) )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, CRC(c44570bf) SHA1(3e9b8b6b36c7f5ae016dba3987ea19a29bd5ee5b) )	/* tiles */
+	ROM_LOAD( "6",       0x18000, 0x8000, CRC(c3a56de5) SHA1(aefc516c6c69b12291c0bda03729910181a91a17) )	/* tiles */
 
 	ROM_REGION( 0x8000, REGION_GFX4, 0 )     /* background tilemaps */
-	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
+	ROM_LOAD( "3",        0x0000, 0x8000, CRC(242e3e64) SHA1(4fa8e93ef055bfdbe3bd619c53bf2448e1b832f0) )
 	/* Proms Weren't Present In This Set, Using the One from the Other */
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
-	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
-	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
-	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
+	ROM_LOAD( "cz17.prm", 0x0000, 0x0100, CRC(da31dfbc) SHA1(ac476440864f538918f7bef2e1db82fd19195f89) ) /* red */
+	ROM_LOAD( "cz16.prm", 0x0100, 0x0100, CRC(51f25b4c) SHA1(bfcca57613fbb22919e00db1f6a8c7ca50faa60b) ) /* green */
+	ROM_LOAD( "cz15.prm", 0x0200, 0x0100, CRC(a6168d7f) SHA1(0c7b31adcd764ce2631c3fb5c1a968b01f65e741) ) /* blue */
+	ROM_LOAD( "cz14.prm", 0x0300, 0x0100, CRC(52aad300) SHA1(ff09772b930afa87e28d0628ef85a589a3d149c9) ) /* ??? */
 ROM_END
 
 

@@ -63,6 +63,65 @@ param is 60ffbc0, pr is at 60ffbcc, but 40249e0 writes more than 12 bytes
 
 should sengekis be rot90 with the sprites flipped?  scrolling is in the wrong direction at the moment
 
+Motherboard Layout
+------------------
+
+SUPER-KANEKO-NOVA-SYSTEM
+MAIN-BOARD-A
+NEP-16
+
+
+   BATT                                      HM514260
+   CR2032                       SKNSA1       HM514260       SH2
+            W24257                          LH5168
+YMZ280B-F   W24257   BABY004  LATTICE  SW1  M62X42
+                              pLSI1016
+  HITACHI          28.636MHz 33.3333MHz
+  DF1                        21.504MHz
+J D49307     ALTAIR                   DENEB
+             BY006-224                BY007-32F
+A            (QFP208)                 (QFP208)
+
+M                  W24257  W24257           HM514260
+            /-     W24257  W24257                                 /-
+M VEGA      ||             W24257  SPCII-B  HM514260              ||
+  BY005-197 ||             W24257  JH-6186                        ||
+A (QFP144)  ||                     (QFP208)                       ||
+            ||                               W24257               ||
+  DSW1(8)   ||      VIEWIII-A      SPCII-A   W24257 LH540202      ||
+            ||      BL-001         JH-4181   W24257               ||
+            \-      (QFP240)       (QFP208)  W24257               \-
+  OKIM6253
+
+
+Notes:
+      SKNSA1 is BIOS (Asia)
+      HM514260, W24257, LH5168, M62X42 all smt SRAM
+      LH540202 is DIP SRAM
+
+
+Cart Layout
+-----------
+
+SUPER-KANEKO-NOVA-SYSTEM
+ROM-BOARD
+NEP-16
+
+
+ /-                                                    /-
+ ||SK300-00  *  PAL PAL D431000 D431000  *       *     ||
+ ||                                                    ||
+ ||                                                    ||
+ ||                        *   SK-200-00               ||
+ ||          SK01A  SK01A                              ||
+ ||          U8     U10    *      *    SK-101 SK-100-00||
+ \-                                                    \-
+
+ Notes:
+       *: unpopulated position for surface mounted 16MBit SOP44 MASK ROM
+       U8 and U10 are socketed 27C040 EPROM
+       All other ROMs are surface mounted SOP44 MASK ROM
+
 */
 
 #include "driver.h"
@@ -522,7 +581,7 @@ static WRITE32_HANDLER( skns_io_w )
 				cpu_set_irq_line(0,0xf,CLEAR_LINE);*/
 
 			/* idle skip for sarukani, i can't find a better place to put it :-( but i think it works ok unless its making the game too fast */
-			if (!strcmp(Machine->gamedrv->name,"sarukani")) if (activecpu_get_pc()==0x04013B44) cpu_spinuntil_int();
+			if ((!strcmp(Machine->gamedrv->name,"sarukani")) || (!strcmp(Machine->gamedrv->name,"vblokbrk"))) if (activecpu_get_pc()==0x04013B44) cpu_spinuntil_int();
 
 
 		}
@@ -985,376 +1044,399 @@ static DRIVER_INIT( sengekis ) { skns_sprite_kludge(-192,-272); init_skns(); ins
 
 ROM_START( skns )
 	ROM_REGION( 0x0100000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* Japan BIOS */
-	ROM_LOAD       ( "ksns-bio.eur", 0x080000, 0x080000, 0xe2b9d7d1 ) /* Europ BIOS */
+	ROM_LOAD       ( "sknsj1.u10", 0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
+	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europ BIOS */
+	ROM_LOAD       ( "sknsa1.u10", 0x000000, 0x080000, CRC(745e5212) SHA1(caba649ab2d83b2d7e007eecee0fc582c019df38) ) /* Asia  BIOS */
 ROM_END
 
 ROM_START( cyvern )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-	ROM_LOAD16_BYTE( "cvj-even.u10", 0x000000, 0x100000, 0x802fadb4 )
-	ROM_LOAD16_BYTE( "cvj-odd.u8",   0x000001, 0x100000, 0xf8a0fbdd )
+	ROM_LOAD16_BYTE( "cvj-even.u10", 0x000000, 0x100000, CRC(802fadb4) SHA1(cbfac3a87a4863466117c61f2ecaf63d506352f6) )
+	ROM_LOAD16_BYTE( "cvj-odd.u8",   0x000001, 0x100000, CRC(f8a0fbdd) SHA1(5cc8c12c13b5eb3456083e70100450ba041de76e) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "cv100-00.u24", 0x000000, 0x400000, 0xcd4ae88a )
-	ROM_LOAD( "cv101-00.u20", 0x400000, 0x400000, 0xa6cb3f0b )
+	ROM_LOAD( "cv100-00.u24", 0x000000, 0x400000, CRC(cd4ae88a) SHA1(925f4ae01a6ad3633be2a61be69e163f05401cf6) )
+	ROM_LOAD( "cv101-00.u20", 0x400000, 0x400000, CRC(a6cb3f0b) SHA1(8d83f44a096ca0a70962ca4c602c4331874c8560) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles Plane A */
-	ROM_LOAD( "cv200-00.u16", 0x000000, 0x400000, 0xddc8c67e )
-	ROM_LOAD( "cv201-00.u13", 0x400000, 0x400000, 0x65863321 )
+	ROM_LOAD( "cv200-00.u16", 0x000000, 0x400000, CRC(ddc8c67e) SHA1(9b99e87e69e88011e6d693d19ac5e115b4fa50b0) )
+	ROM_LOAD( "cv201-00.u13", 0x400000, 0x400000, CRC(65863321) SHA1(b8b75f50406068ffc3fca3887d2f0a653ca491c9) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-	ROM_LOAD( "cv210-00.u18", 0x400000, 0x400000, 0x7486bf3a )
+	ROM_LOAD( "cv210-00.u18", 0x400000, 0x400000, CRC(7486bf3a) SHA1(3b4285ca570e9c5ad396c615bfc054372d1b0162) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "cv300-00.u4", 0x000000, 0x400000, 0xfbeda465 )
+	ROM_LOAD( "cv300-00.u4", 0x000000, 0x400000, CRC(fbeda465) SHA1(4d5066a22f4589b6b7f85b3e77c348d900ac4bdd) )
 ROM_END
 
 ROM_START( galpani4 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "gp4j1.u10",    0x000000, 0x080000, 0x919a3893 )
-    ROM_LOAD16_BYTE( "gp4j1.u08",    0x000001, 0x080000, 0x94cb1fb7 )
+    ROM_LOAD16_BYTE( "gp4j1.u10",    0x000000, 0x080000, CRC(919a3893) SHA1(83b89a9e628a1f46f8a56ea512fc8ad641d5e239) )
+    ROM_LOAD16_BYTE( "gp4j1.u08",    0x000001, 0x080000, CRC(94cb1fb7) SHA1(ac90103dd43cdce6a287ffc13631c1de477a9a71) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 )
-    ROM_LOAD( "gp410000.u24", 0x000000, 0x200000, 0x1df61f01 )
-    ROM_LOAD( "gp410100.u20", 0x200000, 0x100000, 0x8e2c9349 )
+    ROM_LOAD( "gp410000.u24", 0x000000, 0x200000, CRC(1df61f01) SHA1(a9e95bbb3013e8f2fd01243b1b392ff07b4f7d02) )
+    ROM_LOAD( "gp410100.u20", 0x200000, 0x100000, CRC(8e2c9349) SHA1(a58fa9bcc9684ed4558e3395d592b64a1978a902) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "gp420000.u16", 0x000000, 0x200000, 0xf0781376 )
-    ROM_LOAD( "gp420100.u18", 0x200000, 0x200000, 0x10c4b183 )
+    ROM_LOAD( "gp420000.u16", 0x000000, 0x200000, CRC(f0781376) SHA1(aeab9553a9af922524e528eb2d019cf36b6e2094) )
+    ROM_LOAD( "gp420100.u18", 0x200000, 0x200000, CRC(10c4b183) SHA1(80e05f3932495ad4fc9bf928fa66e6d2931bbb06) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "gp430000.u4", 0x000000, 0x200000, 0x8374663a )
+    ROM_LOAD( "gp430000.u4", 0x000000, 0x200000, CRC(8374663a) SHA1(095512564f4de25dc3752d9fbd254b9dabd16d1b) )
 ROM_END
 
 ROM_START( galpanis )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "gps-e.u10",    0x000000, 0x100000, 0xc6938c3f )
-    ROM_LOAD16_BYTE( "gps-o.u8",     0x000001, 0x100000, 0xe764177a )
+    ROM_LOAD16_BYTE( "gps-e.u10",    0x000000, 0x100000, CRC(c6938c3f) SHA1(05853ee6a44a55702788a75580b04a4be45e9bcb) )
+    ROM_LOAD16_BYTE( "gps-o.u8",     0x000001, 0x100000, CRC(e764177a) SHA1(3a1333eb1022ed1a275b9c3d44b5f4ab81618fb6) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "gps10000.u24", 0x000000, 0x400000, 0xa1a7acf2 )
-    ROM_LOAD( "gps10100.u20", 0x400000, 0x400000, 0x49f764b6 )
-    ROM_LOAD( "gps10200.u17", 0x800000, 0x400000, 0x51980272 )
+    ROM_LOAD( "gps10000.u24", 0x000000, 0x400000, CRC(a1a7acf2) SHA1(52c86ae907f0c0236808c19f652955b09e90ec5a) )
+    ROM_LOAD( "gps10100.u20", 0x400000, 0x400000, CRC(49f764b6) SHA1(9f4289858c3dac625ef623cc381a47b45aa5d8e2) )
+    ROM_LOAD( "gps10200.u17", 0x800000, 0x400000, CRC(51980272) SHA1(6c0706d913b33995579aaf0688c4bf26d6d35a78) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "gps20000.u16", 0x000000, 0x400000, 0xc146a09e )
-    ROM_LOAD( "gps20100.u13", 0x400000, 0x400000, 0x9dfa2dc6 )
+    ROM_LOAD( "gps20000.u16", 0x000000, 0x400000, CRC(c146a09e) SHA1(5af5a7b9d9a55ec7aba3fd85a3a0211b92b1b84f) )
+    ROM_LOAD( "gps20100.u13", 0x400000, 0x400000, CRC(9dfa2dc6) SHA1(a058c42fd76c23c0e5c8c11f5617fd29e056be7d) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "gps30000.u4", 0x000000, 0x400000, 0x9e4da8e3 )
+    ROM_LOAD( "gps30000.u4", 0x000000, 0x400000, CRC(9e4da8e3) SHA1(6506d9300a442883357003a05fd2c78d364c35bb) )
 ROM_END
 
 ROM_START( galpans2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "gps2j.u6",     0x000000, 0x100000, 0x6e74005b )
-    ROM_LOAD16_BYTE( "gps2j.u4",     0x000001, 0x100000, 0x9b4b2304 )
+    ROM_LOAD16_BYTE( "gps2j.u6",     0x000000, 0x100000, CRC(6e74005b) SHA1(a57e8307062e262c2e7a84e2c58f7dfe03fc0f78) )
+    ROM_LOAD16_BYTE( "gps2j.u4",     0x000001, 0x100000, CRC(9b4b2304) SHA1(0b481f4d71d92bf23f38ed22979efd4409004857) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "gs210000.u21", 0x000000, 0x400000, 0x294b2f14 )
-    ROM_LOAD( "gs210100.u20", 0x400000, 0x400000, 0xf75c5a9a )
-    ROM_LOAD( "gs210200.u8",  0x800000, 0x400000, 0x25b4f56b )
-    ROM_LOAD( "gs210300.u32", 0xc00000, 0x400000, 0xdb6d4424 )
+    ROM_LOAD( "gs210000.u21", 0x000000, 0x400000, CRC(294b2f14) SHA1(90cbd0acdaa2d89d208c28aae33ab57c03624089) )
+    ROM_LOAD( "gs210100.u20", 0x400000, 0x400000, CRC(f75c5a9a) SHA1(3919643cee6c88185a1aa3c58c5bc80599bf734e) )
+    ROM_LOAD( "gs210200.u8",  0x800000, 0x400000, CRC(25b4f56b) SHA1(f9a33d5ed54a04ecece3035e75508d191bbe74b1) )
+    ROM_LOAD( "gs210300.u32", 0xc00000, 0x400000, CRC(db6d4424) SHA1(0a88dafd0ee2490ff2ef39ce8eb1931c41bdda42) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "gs220000.u17", 0x000000, 0x400000, 0x5caae1c0 )
-    ROM_LOAD( "gs220100.u9",  0x400000, 0x400000, 0x8d51f197 )
+    ROM_LOAD( "gs220000.u17", 0x000000, 0x400000, CRC(5caae1c0) SHA1(8f77e4cf018d7290b2d804cbff9fccf0bf4d2404) )
+    ROM_LOAD( "gs220100.u9",  0x400000, 0x400000, CRC(8d51f197) SHA1(19d2afab823ea179918e7bcbf4df2283e77570f0) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-    ROM_LOAD( "gs221000.u3",  0x400000, 0x400000, 0x58800a18 )
+    ROM_LOAD( "gs221000.u3",  0x400000, 0x400000, CRC(58800a18) SHA1(5e6d55ecd12275662d6f59559e137b759f23fff6) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-      ROM_LOAD( "gs230000.u1",  0x000000, 0x400000, 0x0348e8e1 )
+      ROM_LOAD( "gs230000.u1",  0x000000, 0x400000, CRC(0348e8e1) SHA1(8a21c7e5cea0bc08a2595213d689c58c0251fdb5) )
 ROM_END
 
 ROM_START( gutsn )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "gts000j0.u6"  ,0x000000, 0x080000, 0x8ee91310 )
-    ROM_LOAD16_BYTE( "gts001j0.u4",  0x000001, 0x080000, 0x80b8ee66 )
+    ROM_LOAD16_BYTE( "gts000j0.u6"  ,0x000000, 0x080000, CRC(8ee91310) )
+    ROM_LOAD16_BYTE( "gts001j0.u4",  0x000001, 0x080000, CRC(80b8ee66) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 )
-    ROM_LOAD( "gts10000.u24", 0x000000, 0x400000, 0x1959979e )
+    ROM_LOAD( "gts10000.u24", 0x000000, 0x400000, CRC(1959979e) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "gts20000.u16", 0x000000, 0x400000, 0xc443aac3 )
+    ROM_LOAD( "gts20000.u16", 0x000000, 0x400000, CRC(c443aac3) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "gts30000.u4", 0x000000, 0x400000, 0x8c169141 )
+	ROM_LOAD( "gts30000.u4", 0x000000, 0x400000, CRC(8c169141) )
 ROM_END
 
 ROM_START( panicstr )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "ps1000j0.u10", 0x000000, 0x100000, 0x59645f89 )
-    ROM_LOAD16_BYTE( "ps1001j0.u8",  0x000001, 0x100000, 0xc4722be9 )
+    ROM_LOAD16_BYTE( "ps1000j0.u10", 0x000000, 0x100000, CRC(59645f89) SHA1(8da205c6e38899d6c637941700dd7eea56011c10) )
+    ROM_LOAD16_BYTE( "ps1001j0.u8",  0x000001, 0x100000, CRC(c4722be9) SHA1(7009d320a80cfa7d80efc5fc915081914bc3c827) )
 
   	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-    ROM_LOAD( "ps-10000.u24", 0x000000, 0x400000, 0x294b2f14 )
-    ROM_LOAD( "ps110100.u20", 0x400000, 0x400000, 0xe292f393 )
+    ROM_LOAD( "ps-10000.u24", 0x000000, 0x400000, CRC(294b2f14) SHA1(90cbd0acdaa2d89d208c28aae33ab57c03624089) )
+    ROM_LOAD( "ps110100.u20", 0x400000, 0x400000, CRC(e292f393) SHA1(b0914f7f0abf9f821f2592c289ea4e3b3e7f819a) )
 
   	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "ps120000.u16", 0x000000, 0x400000, 0xd772ac15 )
+    ROM_LOAD( "ps120000.u16", 0x000000, 0x400000, CRC(d772ac15) SHA1(6bf7b9bfccdcb7481b21fa2ab9b683d79033a192) )
 
   	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
   	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "ps-30000.u4",  0x000000, 0x400000, 0x2262e263 )
+    ROM_LOAD( "ps-30000.u4",  0x000000, 0x400000, CRC(2262e263) SHA1(73443e5f40f5c5c9bd41c6207fa6376072f0f65e) )
 ROM_END
 
 ROM_START( puzzloop )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "ksns-bio.eur", 0x000000, 0x080000, 0xe2b9d7d1 ) /* BIOS */
+	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europ BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-	ROM_LOAD16_BYTE( "puzloope.u6",  0x000000, 0x080000, 0x273adc38 )
-	ROM_LOAD16_BYTE( "puzloope.u4",  0x000001, 0x080000, 0x14ac2870 )
+	ROM_LOAD16_BYTE( "puzloope.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
+	ROM_LOAD16_BYTE( "puzloope.u4",  0x000001, 0x080000, CRC(14ac2870) SHA1(d1abcfd64d7c0ead67e879c40e1010453fd4da13) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, 0x35bf6897 )
+	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, 0xff558e68 )
+	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, 0xc8b3be64 )
+	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "pzl30000.u4", 0x000000, 0x400000, 0x38604b8d )
+    ROM_LOAD( "pzl30000.u4", 0x000000, 0x400000, CRC(38604b8d) SHA1(1191cf48a6a7baa58e51509442b40ea67f5252d2) )
 ROM_END
 
 ROM_START( puzloopj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-	ROM_LOAD16_BYTE( "pl0j2u6.u10",  0x000000, 0x080000, 0x23c3bf97 )
-	ROM_LOAD16_BYTE( "pl0j2u4.u8",   0x000001, 0x080000, 0x55b2a3cb )
+	ROM_LOAD16_BYTE( "pl0j2u6.u10",  0x000000, 0x080000, CRC(23c3bf97) SHA1(77ea1f32bed5709a6ad5b250370f08cfe8036867) )
+	ROM_LOAD16_BYTE( "pl0j2u4.u8",   0x000001, 0x080000, CRC(55b2a3cb) SHA1(d4cbe143fe2ad622af808cbd9eedffeff3b77e0d) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, 0x35bf6897 )
+	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, 0xff558e68 )
+	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, 0xc8b3be64 )
+	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "pzl30000.u4", 0x000000, 0x400000, 0x38604b8d )
+    ROM_LOAD( "pzl30000.u4", 0x000000, 0x400000, CRC(38604b8d) SHA1(1191cf48a6a7baa58e51509442b40ea67f5252d2) )
 ROM_END
 
 /* haven't even tried to run the ones below yet */
 
 ROM_START( jjparads )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "jp1j1.u10",    0x000000, 0x080000, 0xde2fb669 )
-    ROM_LOAD16_BYTE( "jp1j1.u8",     0x000001, 0x080000, 0x7276efb1 )
+    ROM_LOAD16_BYTE( "jp1j1.u10",    0x000000, 0x080000, CRC(de2fb669) SHA1(229ff1ae0ec5bc77fc17642964e0bb0146594e86) )
+    ROM_LOAD16_BYTE( "jp1j1.u8",     0x000001, 0x080000, CRC(7276efb1) SHA1(3edc265b5c02da7d21a2494a6dc2878fbad93f87) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "jp100-00.u24", 0x000000, 0x400000, 0xf31b2e95 )
-    ROM_LOAD( "jp101-00.u20", 0x400000, 0x400000, 0x70cc8c24 )
-    ROM_LOAD( "jp102-00.u17", 0x800000, 0x400000, 0x35401c1e )
+    ROM_LOAD( "jp100-00.u24", 0x000000, 0x400000, CRC(f31b2e95) SHA1(7e5bb518d4f6423785d3f9f2752a624a66b42469) )
+    ROM_LOAD( "jp101-00.u20", 0x400000, 0x400000, CRC(70cc8c24) SHA1(a4805ce19f512b047829548b635e68690d714175) )
+    ROM_LOAD( "jp102-00.u17", 0x800000, 0x400000, CRC(35401c1e) SHA1(38fe86a08555bb823b8d64ac043330aaaa6b8892) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "jp200-00.u16", 0x000000, 0x200000, 0x493d63db )
+    ROM_LOAD( "jp200-00.u16", 0x000000, 0x200000, CRC(493d63db) SHA1(4b8fe7ff1ae14a914a675ce4072a4d9e5cfc08b0) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "jp300-00.u4", 0x000000, 0x200000, 0x7023fe46 )
+    ROM_LOAD( "jp300-00.u4", 0x000000, 0x200000, CRC(7023fe46) SHA1(24a92133bc664d63b3be67c2ef11cd7b605ee7e8) )
 ROM_END
 
 ROM_START( jjparad2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "jp2000j1.u6",  0x000000, 0x080000, 0x5d75e765 )
-    ROM_LOAD16_BYTE( "jp2001j1.u4",  0x000001, 0x080000, 0x1771910a )
+    ROM_LOAD16_BYTE( "jp2000j1.u6",  0x000000, 0x080000, CRC(5d75e765) SHA1(33bcd8f929f6025b00df2ea783b13a391a28a5c3) )
+    ROM_LOAD16_BYTE( "jp2001j1.u4",  0x000001, 0x080000, CRC(1771910a) SHA1(7ca9584d379d7b41f303a3ba861f943c570ad97c) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "jp210000.u21", 0x000000, 0x400000, 0x79a7e3d7 )
-    ROM_LOAD( "jp210100.u20", 0x400000, 0x400000, 0x42415e0c )
-    ROM_LOAD( "jp210200.u8",  0x800000, 0x400000, 0x26731745 )
+    ROM_LOAD( "jp210000.u21", 0x000000, 0x400000, CRC(79a7e3d7) SHA1(bd0f8d01971e5895395f97f2520bcd03ab19d229) )
+    ROM_LOAD( "jp210100.u20", 0x400000, 0x400000, CRC(42415e0c) SHA1(f7bff86d55fa9002fbd14e4c62f9d3df8faaf7d0) )
+    ROM_LOAD( "jp210200.u8",  0x800000, 0x400000, CRC(26731745) SHA1(8939d36b82b10b1010e4b924e6b9fdd4742efe48) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "jp220000.u17", 0x000000, 0x400000, 0xd0e71873 )
-    ROM_LOAD( "jp220100.u9",  0x400000, 0x400000, 0x4c7d964d )
+    ROM_LOAD( "jp220000.u17", 0x000000, 0x400000, CRC(d0e71873) SHA1(c6ffba3624e6d4c2d4e12ef7d88a02cbc3867b18) )
+    ROM_LOAD( "jp220100.u9",  0x400000, 0x400000, CRC(4c7d964d) SHA1(3352cd866a64466f4f5a990c2c5e3e28e7028a99) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "jp230000.u1", 0x000000, 0x400000, 0x73e30d7f )
+    ROM_LOAD( "jp230000.u1", 0x000000, 0x400000, CRC(73e30d7f) SHA1(af5b16cec722dbbf0e03d73edfa133dbf10ac4f3) )
 ROM_END
 
 ROM_START( sengekis )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "ss01j.u6",     0x000000, 0x080000, 0x9efdcd5a )
-    ROM_LOAD16_BYTE( "ss01j.u4",     0x000001, 0x080000, 0x92c3f45e )
+    ROM_LOAD16_BYTE( "ss01j.u6",     0x000000, 0x080000, CRC(9efdcd5a) SHA1(66cca04d07999dc8ca0bcf19db925996b34d0390) )
+    ROM_LOAD16_BYTE( "ss01j.u4",     0x000001, 0x080000, CRC(92c3f45e) SHA1(60c647e66b0126fb7749874be39938972481b957) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "ss100-00.u21", 0x000000, 0x400000, 0xbc7b3dfa )
-    ROM_LOAD( "ss101-00.u20", 0x400000, 0x400000, 0xab2df280 )
-    ROM_LOAD( "ss102-00.u8",  0x800000, 0x400000, 0x0845eafe )
-    ROM_LOAD( "ss103-00.u32", 0xc00000, 0x400000, 0xee451ac9 )
+    ROM_LOAD( "ss100-00.u21", 0x000000, 0x400000, CRC(bc7b3dfa) SHA1(dff10a7aef548abda48470293382057a2ca9557e) )
+    ROM_LOAD( "ss101-00.u20", 0x400000, 0x400000, CRC(ab2df280) SHA1(e456c578a36f585b24379d74def1bcab276c2b1b) )
+    ROM_LOAD( "ss102-00.u8",  0x800000, 0x400000, CRC(0845eafe) SHA1(663b163bf4e87c7df0030e791f95b1a5827de315) )
+    ROM_LOAD( "ss103-00.u32", 0xc00000, 0x400000, CRC(ee451ac9) SHA1(01cc6b6f371c0090a6a7f4c33d05f4b9a6c59fee) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "ss200-00.u17", 0x000000, 0x400000, 0xcd773976 )
-    ROM_LOAD( "ss201-00.u9",  0x400000, 0x400000, 0x301fad4c )
+    ROM_LOAD( "ss200-00.u17", 0x000000, 0x400000, CRC(cd773976) SHA1(38b8df5e685be65c3fde09f9e585591f678632d4) )
+    ROM_LOAD( "ss201-00.u9",  0x400000, 0x400000, CRC(301fad4c) SHA1(15faf37eeec5cc46afcb4bd236345b5c3dd647ac) )
 
 	ROM_REGION( 0x600000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-    ROM_LOAD( "ss210-00.u3",  0x400000, 0x200000, 0xc3697805 )
+    ROM_LOAD( "ss210-00.u3",  0x400000, 0x200000, CRC(c3697805) SHA1(bd41064e3527cdc4b9a4ab9c423c916309b3f057) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "ss300-00.u1", 0x000000, 0x400000, 0x35b04b18 )
+    ROM_LOAD( "ss300-00.u1", 0x000000, 0x400000, CRC(35b04b18) SHA1(b69f33fc6a50ec20382329317d20b3c1e7f01b87) )
 ROM_END
 
 ROM_START( senknow )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "snw000j1.u6",  0x000000, 0x080000, 0x0d6136f6 )
-    ROM_LOAD16_BYTE( "snw001j1.u4",  0x000001, 0x080000, 0x4a10ec3d )
+    ROM_LOAD16_BYTE( "snw000j1.u6",  0x000000, 0x080000, CRC(0d6136f6) SHA1(eedd011cfe03577bfaf386723502d03f6e5dbd8c) )
+    ROM_LOAD16_BYTE( "snw001j1.u4",  0x000001, 0x080000, CRC(4a10ec3d) SHA1(bbec4fc53bd61d06ffe5a53debada5785b124fdd) )
 
 	ROM_REGION( 0x0800000, REGION_GFX1, 0 )
-    ROM_LOAD( "snw10000.u21", 0x000000, 0x400000, 0x5133c69c )
-    ROM_LOAD( "snw10100.u20", 0x400000, 0x400000, 0x9dafe03f )
+    ROM_LOAD( "snw10000.u21", 0x000000, 0x400000, CRC(5133c69c) SHA1(d279df3ffd005dbf0930a8e40eaf2467f8653284) )
+    ROM_LOAD( "snw10100.u20", 0x400000, 0x400000, CRC(9dafe03f) SHA1(978b4597ff2a54ac5049fd64798e8173b29dd363) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "snw20000.u17", 0x000000, 0x400000, 0xd5fe5f8c )
-    ROM_LOAD( "snw20100.u9",  0x400000, 0x400000, 0xc0037846 )
+    ROM_LOAD( "snw20000.u17", 0x000000, 0x400000, CRC(d5fe5f8c) SHA1(817d8d0a5fbc0c50dc3c592f938150f82df97cec) )
+    ROM_LOAD( "snw20100.u9",  0x400000, 0x400000, CRC(c0037846) SHA1(3267b142ebce47e1717250239d98fdb4af7964f8) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
-    ROM_LOAD( "snw21000.u3",  0x400000, 0x400000, 0xf5c23e79 )
+    ROM_LOAD( "snw21000.u3",  0x400000, 0x400000, CRC(f5c23e79) SHA1(b509680001c3205b289f43d4f44aaaa7f896419b) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "snw30000.u1",  0x000000, 0x400000, 0xec9eef40 )
+    ROM_LOAD( "snw30000.u1",  0x000000, 0x400000, CRC(ec9eef40) SHA1(8f74ec9cb6054a77227c0505094f0ef8bc371429) )
 ROM_END
 
 ROM_START( teljan )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "tel1j.u10",    0x000000, 0x080000, 0x09b552fe )
-    ROM_LOAD16_BYTE( "tel1j.u8",     0x000001, 0x080000, 0x070b4345 )
+    ROM_LOAD16_BYTE( "tel1j.u10",    0x000000, 0x080000, CRC(09b552fe) SHA1(2f315fd09eb22fa8c81faa1e926038f20daa845f) )
+    ROM_LOAD16_BYTE( "tel1j.u8",     0x000001, 0x080000, CRC(070b4345) SHA1(5743f12a351b89593c6adfaeb8a5a2ab7bc8b424) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "tj100-00.u24", 0x000000, 0x400000, 0x810144f1 )
-    ROM_LOAD( "tj101-00.u20", 0x400000, 0x400000, 0x82f570e1 )
-    ROM_LOAD( "tj102-00.u17", 0x800000, 0x400000, 0xace875dc )
+    ROM_LOAD( "tj100-00.u24", 0x000000, 0x400000, CRC(810144f1) SHA1(1c90e71e5f34ee05771ab4a673329f78f17791df) )
+    ROM_LOAD( "tj101-00.u20", 0x400000, 0x400000, CRC(82f570e1) SHA1(3ba9d1775f897052aca5cff2edbf575399101c5c) )
+    ROM_LOAD( "tj102-00.u17", 0x800000, 0x400000, CRC(ace875dc) SHA1(be97c895beeac979c5704986e818d4f3cfa00e49) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "tj200-00.u16", 0x000000, 0x400000, 0xbe0f90b2 )
+    ROM_LOAD( "tj200-00.u16", 0x000000, 0x400000, CRC(be0f90b2) SHA1(1848a65f244e1e8a3ff7ab38e76f86cabca8b47e) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "tj300-00.u4", 0x000000, 0x400000, 0x685495c4 )
+    ROM_LOAD( "tj300-00.u4", 0x000000, 0x400000, CRC(685495c4) SHA1(3853c0583b84ed3163370ae48e4b3912cbeb986e) )
 ROM_END
 
 ROM_START( ryouran )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "or000j1.u10",  0x000000, 0x080000, 0xd93aa491 )
-    ROM_LOAD16_BYTE( "or001j1.u8",   0x000001, 0x080000, 0xf466e5e9 )
+    ROM_LOAD16_BYTE( "or000j1.u10",  0x000000, 0x080000, CRC(d93aa491) SHA1(dc01707f1e80d81f28d6b685d08fc6c0d2bf7330) )
+    ROM_LOAD16_BYTE( "or001j1.u8",   0x000001, 0x080000, CRC(f466e5e9) SHA1(65d699f6f9e299333e51a6a52cb13a0f1a902fe1) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-    ROM_LOAD( "or100-00.u24", 0x000000, 0x400000, 0xe9c7695b )
-    ROM_LOAD( "or101-00.u20", 0x400000, 0x400000, 0xfe06bf12 )
-    ROM_LOAD( "or102-00.u17", 0x800000, 0x400000, 0xf2a5237b )
+    ROM_LOAD( "or100-00.u24", 0x000000, 0x400000, CRC(e9c7695b) SHA1(0a104d4e4e0c933d2eaaf410a8c243db6673786a) )
+    ROM_LOAD( "or101-00.u20", 0x400000, 0x400000, CRC(fe06bf12) SHA1(f3a2f88aed65bcc1c16f37fd4c0011e3538128f7) )
+    ROM_LOAD( "or102-00.u17", 0x800000, 0x400000, CRC(f2a5237b) SHA1(b8871f9c0f3864c334ec9a8146cf7dd1961ecb94) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "or200-00.u16", 0x000000, 0x400000, 0x4c4701a8 )
-    ROM_LOAD( "or201-00.u13", 0x400000, 0x400000, 0xa94064aa )
+    ROM_LOAD( "or200-00.u16", 0x000000, 0x400000, CRC(4c4701a8) SHA1(7b397b553ba86bba2ee82228cabdf2179e878d69) )
+    ROM_LOAD( "or201-00.u13", 0x400000, 0x400000, CRC(a94064aa) SHA1(5d736f810ffdbb6ada5c5efcb5fb29eedafc3e2f) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "or300-00.u4", 0x000000, 0x400000, 0xa3f64b79 )
+    ROM_LOAD( "or300-00.u4", 0x000000, 0x400000, CRC(a3f64b79) SHA1(6ecb2b4c0d213fe5384b19d6bfdb86871f21fd9f) )
 ROM_END
 
-
-ROM_START( sarukani )
+ROM_START( vblokbrk )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, 0x7e2b836c ) /* BIOS */
+	ROM_LOAD       ( "sknsa1.u10", 0x000000, 0x080000, CRC(745e5212) SHA1(caba649ab2d83b2d7e007eecee0fc582c019df38) ) /* BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "sk1j1.u10",    0x000000, 0x080000, 0xfcc131b6 )
-    ROM_LOAD16_BYTE( "sk1j1.u8",     0x000001, 0x080000, 0x3b6aa343 )
+    ROM_LOAD16_BYTE( "sk01a.u10",    0x000000, 0x080000, CRC(4d1be53e) SHA1(3d28b73a67530147962b8df6244af8bea2ab080f) )
+    ROM_LOAD16_BYTE( "sk01a.u8",     0x000001, 0x080000, CRC(461e0197) SHA1(003573a4abdbecc6dd234a13c61ef07a25d980e2) )
 
 	ROM_REGION( 0x0400000, REGION_GFX1, 0 )
-    ROM_LOAD( "sk100-00.u24", 0x000000, 0x200000, 0x151dd88a )
-    ROM_LOAD( "sk-101.u20",   0x200000, 0x100000, 0x779cce23 )
+    ROM_LOAD( "sk100-00.u24", 0x000000, 0x200000, CRC(151dd88a) SHA1(87bb1039a9883f721a315760eb2c4abe4a94046f) )
+    ROM_LOAD( "sk-101.u20",   0x200000, 0x100000, CRC(779cce23) SHA1(70147b36d982524ba9921823e481ce8fbb5daa26) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "sk200-00.u16", 0x000000, 0x200000, 0x2e297c61 )
+    ROM_LOAD( "sk200-00.u16", 0x000000, 0x200000, CRC(2e297c61) SHA1(4071b945a1294fbc3d18fab1f144bf09af4349e8) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) /* Samples */
-    ROM_LOAD( "sk300-00.u4", 0x000000, 0x200000, 0xe6535c05 )
+    ROM_LOAD( "sk300-00.u4", 0x000000, 0x200000, CRC(e6535c05) SHA1(8895b7c326e0261691cb184887ac1ca637302460) )
+ROM_END
+
+ROM_START( sarukani )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
+    ROM_LOAD16_BYTE( "sk1j1.u10",    0x000000, 0x080000, CRC(fcc131b6) SHA1(5e3e71ee1f736b6098e671e6f57b1fb313c81adb) )
+    ROM_LOAD16_BYTE( "sk1j1.u8",     0x000001, 0x080000, CRC(3b6aa343) SHA1(a969b20b1170d82351024cab9e37f2fbfd01ddeb) )
+
+	ROM_REGION( 0x0400000, REGION_GFX1, 0 )
+    ROM_LOAD( "sk100-00.u24", 0x000000, 0x200000, CRC(151dd88a) SHA1(87bb1039a9883f721a315760eb2c4abe4a94046f) )
+    ROM_LOAD( "sk-101.u20",   0x200000, 0x100000, CRC(779cce23) SHA1(70147b36d982524ba9921823e481ce8fbb5daa26) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+    ROM_LOAD( "sk200-00.u16", 0x000000, 0x200000, CRC(2e297c61) SHA1(4071b945a1294fbc3d18fab1f144bf09af4349e8) )
+
+	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
+	/* 0x040000 - 0x3fffff empty? */
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) /* Samples */
+    ROM_LOAD( "sk300-00.u4", 0x000000, 0x200000, CRC(e6535c05) SHA1(8895b7c326e0261691cb184887ac1ca637302460) )
 ROM_END
 
 
@@ -1376,7 +1458,8 @@ GAMEX( 1997, jjparad2, skns,    skns, skns, jjparad2, ROT0,  "Electro Design", "
 GAMEX( 1998, ryouran , skns,    skns, skns, ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1999, teljan  , skns,    skns, skns, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sengekis, skns,    skns, skns, sengekis, ROT270,"Kaneko / Warashi", "Sengeki Striker", GAME_IMPERFECT_GRAPHICS ) // should be rot90 + flipped sprites?
-GAMEX( 1997, sarukani, skns,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, vblokbrk, skns,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, sarukani, vblokbrk,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )
 
 /* not playable */
 GAMEX( 2000, gutsn,    skns,    skns, skns, gutsn,    ROT0,  "Kaneko", "Guts'n (Japan)", GAME_NOT_WORKING ) // doesn't display anything (sh2?)

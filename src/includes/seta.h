@@ -72,5 +72,5 @@ WRITE16_HANDLER( ssv_scroll_w );
 WRITE16_HANDLER( paletteram16_xrgb_swap_word_w );
 void ssv_enable_video(int enable);
 
-PALETTE_INIT( ssv );
+VIDEO_START( ssv );
 VIDEO_UPDATE( ssv );

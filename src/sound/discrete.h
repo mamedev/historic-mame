@@ -11,8 +11,7 @@
 /*                                                                      */
 /*  Coding started in November 2000                                     */
 /*                                                                      */
-/*  Additions/bugfix February 2003 - Sawtooth, Switch, Adjusters        */
-/*                                   LFSR noise source                  */
+/*  Additions/bugfix February 2003 - D.Renaud, F.Palazzolo, K.Wilkins   */
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
@@ -59,14 +58,14 @@
 /* discrete_sound_w(NODE_06,0) will disable the sound.                  */
 /*                                                                      */
 /*  DISCRETE_SOUND_START(test_interface)                                */
-/*      DISCRETE_SQUAREWAVE(NODE_01,1,0.5,1,50,0)                       */
-/*      DISCRETE_SINEWAVE(NODE_02,NODE_01,2000,10000,0)                 */
+/*      DISCRETE_SQUAREWAVE(NODE_01,1,0.5,1,50,0,0)                     */
+/*      DISCRETE_SINEWAVE(NODE_02,NODE_01,2000,10000,0,0)               */
 /*      DISCRETE_INVERT(NODE_03,NODE_01)                                */
 /*      DISCRETE_ADDER2(NODE_04,1,NODE_03,1)                            */
-/*      DISCRETE_SINEWAVE(NODE_05,NODE_04,4000,10000,0)                 */
+/*      DISCRETE_SINEWAVE(NODE_05,NODE_04,4000,10000,0,0)               */
 /*      DISCRETE_ADDER2(NODE_06,NODE_07,NODE_02,NODE_05)                */
 /*      DISCRETE_INPUT(NODE_07,1)                                       */
-/*      DISCRETE_OUTPUT(NODE_06)                                        */
+/*      DISCRETE_OUTPUT(NODE_06,100)                                    */
 /*  DISCRETE_SOUND_END                                                  */
 /*                                                                      */
 /* To aid simulation speed it is preferable to use the enable/disable   */
@@ -92,7 +91,7 @@
 /* to understand the system ,map the inputs and outputs and to work     */
 /* out your node numbering scheme.                                      */
 /*                                                                      */
-/* Node numbers NODE_01 to NODE_99 are defined at present.              */
+/* Node numbers NODE_01 to NODE_299 are defined at present.             */
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
@@ -105,15 +104,25 @@
 /* DISCRETE_CONSTANT(NODE,CONST0)                                       */
 /* DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,DEFAULT,NAME)                  */
 /* DISCRETE_INPUT(NODE,INIT0,ADDR,MASK)                                 */
-/* DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMP,DUTY,PHASE)                   */
-/* DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMP,PHASE)                          */
-/* DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMP,PHASE)                      */
-/* DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMP,GRADIENT,PHASE)             */
-/* DISCRETE_NOISE(NODE,ENAB,FREQ,AMP)                                   */
-/* DISCRETE_LFSR_NOISE(NODE,ENAB,FREQ,AMP,LFSRDESC)                     */
+/* DISCRETE_INPUTX(NODE,INIT0,ADDR,MASK,GAIN,OFFSET)                    */
+/* DISCRETE_INPUT_PULSE(NODE,INIT0,ADDR,MASK)                           */
+/* DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMP,DUTY,BIAS,PHASE)              */
+/* DISCRETE_SQUAREWFIX(NODE,ENAB,FREQ,AMP,DUTY,BIAS,PHASE)              */
+/* DISCRETE_SQUAREWAVE2(NODE,ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT)          */
+/* DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMP,BIAS,PHASE)                     */
+/* DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMP,BIAS,PHASE)                 */
+/* DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMP,BIAS,GRADIENT,PHASE)        */
+/* DISCRETE_NOISE(NODE,ENAB,FREQ,AMP,BIAS)                              */
+/* DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB)      */
+/* DISCRETE_ADSR_ENV(NODE,ENAB,TRIG,GAIN,ADSRDESC)                      */
 /*                                                                      */
 /* DISCRETE_INVERT(NODE,IN0)                                            */
 /* DISCRETE_MULTIPLY(NODE,ENAB,IN0,IN1)                                 */
+/* DISCRETE_MULTADD(NODE,ENAB,INP0,INP1,INP2)                           */
+/* DISCRETE_TRANSFORM2(NODE,ENAB,INP0,INP1,FUNCT)                       */
+/* DISCRETE_TRANSFORM3(NODE,ENAB,INP0,INP1,INP2,FUNCT)                  */
+/* DISCRETE_TRANSFORM4(NODE,ENAB,INP0,INP1,INP2,INP3,FUNCT)             */
+/* DISCRETE_TRANSFORM5(NODE,ENAB,INP0,INP1,INP2,INP3,INP4,FUNCT)        */
 /* DISCRETE_DIVIDE(NODE,ENAB,IN0,IN1)                                   */
 /* DISCRETE_GAIN(NODE,IN0,GAIN)                                         */
 /* DISCRETE_ONOFF(NODE,IN0,IN1)                                         */
@@ -126,6 +135,11 @@
 /* DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)                           */
 /* DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)                             */
 /* DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)                      */
+/* DISCRETE_RCFILTERN(NODE,ENAB,INP0,RVAL,CVAL)                         */
+/* DISCRETE_RCDISCN(NODE,ENAB,INP0,RVAL,CVAL)                           */
+/* DISCRETE_RCDISC2N(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)            */
+/* DISCRETE_FILTER1(NODE,ENAB,INP0,FREQ,TYPE)                           */
+/* DISCRETE_FILTER2(NODE,ENAB,INP0,FREQ,DAMP,TYPE)                      */
 /* DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,MIN,MAX,CLAMP)                     */
 /* DISCRETE_CLAMP(NODE,ENAB,IN0,MIN,MAX,CLAMP)                          */
 /* DISCRETE_LADDER(NODE,ENAB,IN0,GAIN,LADDER)                           */
@@ -148,6 +162,7 @@
 /* DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                             */
 /*                                                                      */
 /* DISCRETE_NE555(NODE,RESET,TRIGR,THRSH,CTRLV,VCC)                     */
+/* DISCRETE_555_ASTABLE(NODE,RESET,AMPL,R1,R2,C,CTRLV,TYPE)             */
 /*                                                                      */
 /* DISCRETE_OUTPUT(OPNODE)                                              */
 /* DISCRETE_OUTPUT_STEREO(OPNODEL,OPNODER)                              */
@@ -203,6 +218,12 @@
 /* DISCRETE INPUT - Single output node, initialised at compile time and */
 /*                variable via memory based interface                   */
 /*                                                                      */
+/* DISCRETE_INPUT_PULSE - Same as normal input node but the netlist     */
+/*                        node output returns to INIT after a single    */
+/*                        cycle of sound output. To allow for scenarios */
+/*                        whereby the register write pulse is used as   */
+/*                        a reset to a system.                          */
+/*                                                                      */
 /*                             ----------                               */
 /*                      -----\|          |                              */
 /*        Memory Mapped ===== | INPUT(A) |----}   Netlist node          */
@@ -233,10 +254,9 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
-/* DISCRETE_SQUAREWAVE - Squarewave waveform generator node, has four   */
-/*                       input nodes FREQUENCY, AMPLITUDE, ENABLE and   */
-/*                       DUTY if node is not connected it will default  */
-/*                       to the initialised value.                      */
+/* DISCRETE_SQUAREWAVE - Squarewave waveform generator node.            */
+/* DISCRETE_SQUAREWFIX   Waveform is defined by frequency and duty      */
+/*                       cycle.                                         */
 /*                                                                      */
 /*                         ------------                                 */
 /*                        |            |                                */
@@ -266,7 +286,50 @@
 /*                                                                      */
 /*  Example config line                                                 */
 /*                                                                      */
-/*     DISCRETE_SQUAREWAVE(NODE_03,NODE_01,NODE_02,0,100,50,90)         */
+/*     DISCRETE_SQUAREWAVE(NODE_03,NODE_01,NODE_02,100,50,0,90)         */
+/*                                                                      */
+/* NOTE: DISCRETE_SQUAREWFIX is used the same as DISCRETE_SQUAREWAVE.   */
+/*       BUT... It does not stay in sync when you change the freq or    */
+/*              duty values while enabled.  This should be used only    */
+/*              when these values are stable while the wave is enabled. */
+/*              It takes up less CPU time then DISCRETE_SQUAREWAVE and  */
+/*              should be used whenever possible.                       */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
+/* DISCRETE_SQUAREWAVE2 - Squarewave waveform generator node.           */
+/*                        Waveform is defined by it's off/on time       */
+/*                        periods.                                      */
+/*                                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENABLE     -0------}|            |                                */
+/*                        |            |                                */
+/*    AMPLITUDE  -1------}|            |                                */
+/*                        |            |                                */
+/*    OFF TIME   -2------}| SQUAREWAVE |----}   Netlist node            */
+/*                        |            |                                */
+/*    ON TIME    -3------}|            |                                */
+/*                        |            |                                */
+/*    BIAS       -4------}|            |                                */
+/*                        |            |                                */
+/*    TIME SHIFT -5------}|            |                                */
+/*                        |            |                                */
+/*                         ------------                                 */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*     DISCRETE_SQUAREWAVE2(name of node,                               */
+/*                          enable node or static value                 */
+/*                          frequency node or static value              */
+/*                          amplitude node or static value              */
+/*                          duty cycle node or static value             */
+/*                          dc bias value for waveform                  */
+/*                          starting phase value in degrees)            */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*   DISCRETE_SQUAREWAVE2(NODE_03,NODE_01,NODE_02,0.01,0.001,100,50,0)  */
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
@@ -459,6 +522,31 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
+/* DISCRETE_ADSR_ENV  - Attack Decay Sustain Release envelope generator */
+/*                                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENABLE     -0------}|            |                                */
+/*                        |    /\__    |                                */
+/*    TRIGGER    -1------}|   /    \   |----}   Netlist node            */
+/*                        |    ADSR    |                                */
+/*    GAIN       -2------}|    Env     |                                */
+/*                        |            |                                */
+/*                         ------------                                 */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*     DISCRETE_ADSR_ENV  (name of node,                                */
+/*                         enable node or static value                  */
+/*                         envelope gain node or static value           */
+/*                         envelope descriptor struct)                  */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*     DISCRETE_ADSR_ENV(NODE_3,1,NODE_21,1.0,&adsrdesc)                */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
 /* DISCRETE_ADDER      - Node addition function, available in three     */
 /*                       lovelly flavours, ADDER2,ADDER3,ADDER4         */
 /*                       that perform a summation of incoming nodes     */
@@ -494,14 +582,17 @@
 /*                                                                      */
 /* DISCRETE_GAIN       - Node multiplication function output is equal   */
 /* DISCRETE_MULTIPLY     to INPUT0 * INPUT1                             */
+/* DISCRETE_MULTADD      to (INPUT0 * INPUT1) + INPUT 2                 */
 /*                                                                      */
 /*                         ------------                                 */
 /*                        |            |                                */
 /*    ENAB       -0------}|            |                                */
-/*                        |    \|/     |                                */
-/*    INPUT1     -1------}|    -+-     |----}   Netlist node            */
-/*                        |    /|\     |                                */
-/*    INPUT2     -2------}|            |                                */
+/*                        |            |                                */
+/*    INPUT0     -1------}|     \|/    |                                */
+/*                        |     -+-    |----}   Netlist node            */
+/*    INPUT1     -2------}|     /|\    |                                */
+/*                        |            |                                */
+/*    INPUT2     -3------}|            |                                */
 /*                        |            |                                */
 /*                         ------------                                 */
 /*                                                                      */
@@ -511,6 +602,12 @@
 /*                         enable node or static value                  */
 /*                         input0 node or static value                  */
 /*                         input1 node or static value)                 */
+/*                                                                      */
+/*     DISCRETE_MULTADD   (name of node,                                */
+/*                         enable node or static value                  */
+/*                         input0 node or static value                  */
+/*                         input1 node or static value                  */
+/*                         input2 node or static value)                 */
 /*                                                                      */
 /*     DISCRETE_GAIN      (name of node,                                */
 /*                         input0 node or static value                  */
@@ -523,7 +620,57 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
-/* DISCRETE_DIVIDE     - Node dividion function                         */
+/* DISCRETE_TRANSFORMn - Node arithmatic logic (postfix arithmatic)     */
+/*     (n=2,3,4,5)                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENAB       -0------}|            |                                */
+/*                        |            |                                */
+/*    INPUT0     -1------}|            |                                */
+/*                        |            |                                */
+/*    INPUT1     -2------}|  Postfix   |                                */
+/*                        |   stack    |----} Netlist node              */
+/*    INPUT2     -3------}|   maths    |                                */
+/*                        |            |                                */
+/*    INPUT3     -4------}|            |                                */
+/*                        |            |                                */
+/*    INPUT4     -5------}|            |                                */
+/*                        |            |                                */
+/*                         ------------                                 */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*     DISCRETE_TRANSFORMn(name of node,                                */
+/*                         enable node or static value,                 */
+/*                         input0 node or static value,                 */
+/*                         input1 node or static value,                 */
+/*                         input2 node or static value,                 */
+/*                         input3 node or static value,  [optional]     */
+/*                         input4 node or static value,  [optional]     */
+/*                         maths string)                                */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*  DISCRETE_TRANSFORM4(NODE_12,1,NODE_22,50.0,120.0,33.33,"01*2+3/")   */
+/*                                                                      */
+/*  Arithmetic uses stack based arithmetic similar to Forth, the maths  */
+/*  has 5 registers 0-4 and various arithmatic operations. The math     */
+/*  string is processed from left to right in the following manner:     */
+/*   0 - Push input 0 to stack                                          */
+/*   1 - Push input 1 to stack                                          */
+/*   2 - Push input 2 to stack                                          */
+/*   3 - Push input 3 to stack                                          */
+/*   4 - Push input 4 to stack                                          */
+/*   - - Pop two values from stack, substract and push result to stack  */
+/*   + - Pop two values from stack, add and push result to stack        */
+/*   / - Pop two values from stack, divide and push result to stack     */
+/*   * - Pop two values from stack, multiply and push result to stack   */
+/*   ! - Pop one value from stack, logical invert, push result to stack */
+/*   i - Pop one value from stack, multiply -1 and push result to stack */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
+/* DISCRETE_DIVIDE     - Node division function                         */
 /*                                                                      */
 /*                         ------------                                 */
 /*                        |            |                                */
@@ -570,7 +717,7 @@
 /*  Declaration syntax                                                  */
 /*                                                                      */
 /*     DISCRETE_SWITCH    (name of node,                                */
-/*        (x=2/3/4)        enable node or static value                  */
+/*                         enable node or static value                  */
 /*                         switch node or static value                  */
 /*                         input0 node or static value                  */
 /*                         input1 node or static value)                 */
@@ -702,9 +849,9 @@
 /*                        |            |                                */
 /*    GRAD       -2------}| Grad/sec   |                                */
 /*                        |            |----}   Netlist node            */
-/*    MIN        -3------}| Start clamp|                                */
+/*    START      -3------}| Start clamp|                                */
 /*                        |            |                                */
-/*    MAX        -4------}| End clamp  |                                */
+/*    END        -4------}| End clamp  |                                */
 /*                        |            |                                */
 /*    CLAMP      -5------}| off clamp  |                                */
 /*                        |            |                                */
@@ -844,6 +991,40 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
+/* DISCRETE_LADDER - Resistor ladder D/A with smoothing R/C             */
+/*                                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENAB       -0------}|            |                                */
+/*                        |            |                                */
+/*    INP0       -1------}|            |                                */
+/*                        |            |                                */
+/*    SELECT     -2------}|   LADDER   |---ZZZZZ-----} Netlist node     */
+/*                        |            |     R   |                      */
+/*    GAIN       -3------}|            |        ---                     */
+/*                        |            |        ---C                    */
+/*    OFFSET     -4------}|            |         |                      */
+/*                        |            |         |                      */
+/*                         ------------         GND                     */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*       DISCRETE_LADDER(name of node,                                  */
+/*                       enable                                         */
+/*                       high voltage rail                              */
+/*                       resistor select (Int value to binary 8bit)     */
+/*                       gain multiplyer for output value               */
+/*                       dc offset for output value                     */
+/*                       pointer to resistor ladder struture)           */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*     DISCRETE_LADDER(NODE_9,1,5,VOLUME_NODE,1.0,0.0,*volume_ladder)   */
+/*                                                                      */
+/*  Set the smoothing resistor to 0.0 to disable RC filtering.          */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
 /* DISCRETE_NE555 - NE555 Chip simulation                               */
 /*                                                                      */
 /*                         ------------                                 */
@@ -920,6 +1101,7 @@
 
 #define DISCRETE_MAX_NODES		300
 #define DISCRETE_MAX_ADJUSTERS	20
+#define DISCRETE_MAX_INPUTS		10
 
 #define DISC_LOGADJ 1.0
 #define DISC_LINADJ 0.0
@@ -938,53 +1120,55 @@
 #define DISC_LFSR_NOT_IN1	9
 #define DISC_LFSR_REPLACE	10
 
+/* LFSR Flag Bits */
+#define DISC_LFSR_FLAG_OUT_INVERT	0x01
+#define DISC_LFSR_FLAG_RESET_TYPE_L	0x00
+#define DISC_LFSR_FLAG_RESET_TYPE_H	0x02
+
 /* Sample & Hold supported clock types */
-#define DISC_SAMPHOLD_REDGE		0
-#define DISC_SAMPHOLD_FEDGE		1
+#define DISC_SAMPHOLD_REDGE	0
+#define DISC_SAMPHOLD_FEDGE	1
 #define DISC_SAMPHOLD_HLATCH	2
 #define DISC_SAMPHOLD_LLATCH	3
 
+/* Maximum number of resistors in ladder chain */
+#define DISC_LADDER_MAXRES	8
+
+/* Filter types */
+#define DISC_FILTER_LOWPASS	0
+#define DISC_FILTER_HIGHPASS	1
+#define DISC_FILTER_BANDPASS	2
+
+/* 555_AST output flags */
+#define DISC_555_ASTBL_DC	0x00
+#define DISC_555_ASTBL_AC	0x01
+#define DISC_555_ASTBL_SQW	0x00	/* Squarewave */
+#define DISC_555_ASTBL_CAP	0x02	/* Cap charge waveform */
 
 struct discrete_sound_block
 {
 	int node;                                   /* Output node number */
 	int type;                                   /* see defines below */
-	int input_node0;                            /* input/control nodes */
-	int input_node1;                            /* input/control nodes */
-	int input_node2;                            /* input/control nodes */
-	int input_node3;                            /* input/control nodes */
-	int input_node4;                            /* input/control nodes */
-	int input_node5;                            /* input/control nodes */
-	double initial0;                            /* Initial values */
-	double initial1;                            /* Initial values */
-	double initial2;                            /* Initial values */
-	double initial3;                            /* Initial values */
-	double initial4;                            /* Initial values */
-	double initial5;                            /* Initial values */
+	int active_inputs;							/* Number of active inputs on this node type */
+	int input_node[DISCRETE_MAX_INPUTS];       /* input/control nodes */
+	double initial[DISCRETE_MAX_INPUTS];  /* Initial values */
 	const void *custom;                         /* Custom function specific initialisation data */
 	const char *name;                           /* Node Name */
 };
 
 struct node_description
 {
-	int 	node;								/* The nodes index number in the node list      */
-	int		module;								/* The nodes module number from the module list */
-	double	output;								/* The nodes last output value                  */
-	struct node_description *input_node0;		/* Either pointer to input node OR NULL in which case use the input value */
-	struct node_description *input_node1;
-	struct node_description *input_node2;
-	struct node_description *input_node3;
-	struct node_description *input_node4;
-	struct node_description *input_node5;
-	double	input0;
-	double	input1;
-	double	input2;
-	double	input3;
-	double	input4;
-	double	input5;
-	void	*context;                           /* Contextual information specific to this node type */
-	const char	*name;
-	const void *custom;                         /* Custom function specific initialisation data */
+	int 	node;                                      /* The nodes index number in the node list      */
+	int		module;                                    /* The nodes module number from the module list */
+	double	output;                                    /* The nodes last output value                  */
+
+	int		active_inputs;                             /* Number of active inputs on this node type */
+	struct	node_description* input_node[DISCRETE_MAX_INPUTS];	   /* Either pointer to input node OR NULL in which case use the input value */
+	double	input[DISCRETE_MAX_INPUTS];               /* Input values for this node */
+
+	void	*context;                                  /* Contextual information specific to this node type */
+	const char	*name;                                 /* Text name string for identification/debug */
+	const void *custom;                                /* Custom function specific initialisation data */
 };
 
 struct discrete_module
@@ -1021,7 +1205,7 @@ struct discrete_lfsr_desc
 	int feedback_function2;         /* Combines funct1 & shifted register */
 	int feedback_function2_mask;    /* Which bits are affected by function 2 */
 
-	int output_invert;              /* Invert the output */
+	int flags;
 
 	int output_bit;
 };
@@ -1030,10 +1214,23 @@ struct discrete_lfsr_desc
 struct discrete_ladder
 {
 	int ladderlength;
-	double resistors[8];	/* Limit of 8 bit resistor ladder */
-	double capacitor;
+	double resistors[DISC_LADDER_MAXRES];	/* Limit of 8 bit resistor ladder */
+	double smoothing_res;
+	double smoothing_cap;
 };
 
+
+struct discrete_adsr
+{
+	double attack_time;  /* All times are in seconds */
+	double attack_value;
+	double decay_time;
+	double decay_value;
+	double sustain_time;
+	double sustain_value;
+	double release_time;
+	double release_value;
+};
 
 enum { NODE_00=0x40000000
               , NODE_01, NODE_02, NODE_03, NODE_04, NODE_05, NODE_06, NODE_07, NODE_08, NODE_09,
@@ -1091,21 +1288,32 @@ enum {
 		DSS_CONSTANT,                            /* Constant node */
 		DSS_ADJUSTMENT,                          /* Adjustment node */
 		DSS_INPUT,                               /* Memory mapped input node */
+		DSS_INPUT_PULSE,                         /* Memory mapped input node, single pulsed version */
 		DSS_NOISE,                               /* Random Noise generator */
 		DSS_LFSR_NOISE,                          /* Cyclic/Resetable LFSR based Noise generator */
-		DSS_SQUAREWAVE,                          /* Square Wave generator */
+		DSS_SQUAREWAVE,                          /* Square Wave generator, adjustable frequency based */
+		DSS_SQUAREWFIX,                          /* Square Wave generator, fixed frequency based (faster) */
+		DSS_SQUAREWAVE2,                         /* Square Wave generator, time based */
 		DSS_SINEWAVE,                            /* Sine Wave generator */
-		DSS_TRIANGLEWAVE,                        /* Triangle wave generator */
+		DSS_TRIANGLEWAVE,                        /* Triangle wave generator, frequency based */
 		DSS_SAWTOOTHWAVE,                        /* Sawtooth wave generator */
+		DSS_ADSR,                                /* ADSR Envelope generator */
+
 	/* Transforms */
-		DST_RCFILTER,							 /* Simple RC Filter network */
+		DST_RCFILTER,				 /* Simple RC Filter network */
 		DST_RCDISC,                              /* Simple RC discharge */
 		DST_RCDISC2,                             /* Switched 2 Input RC discharge */
+
+		DST_RCFILTERN,				 /* Simple RC Filter network */
+		DST_RCDISCN,                             /* Simple RC discharge */
+		DST_RCDISC2N,                            /* Switched 2 Input RC discharge */
+
 		DST_RAMP,                                /* Ramp up/down simulation */
 		DST_CLAMP,                               /* Signal Clamp */
-//		DST_LPF,                                 /* Low Pass Filter */
-//		DST_HPF,                                 /* High Pass Filter */
-		DST_GAIN,                                /* Gain Block, C = A*B */
+		DST_FILTER1,                             /* 1st Order Filter, Low or High Pass */
+		DST_FILTER2,                             /* 2nd Order Filter, Low, High, or Band Pass */
+		DST_TRANSFORM,                           /* Muliply math functions based on string */
+		DST_GAIN,                                /* Gain Block, D = (A*B) + C*/
 		DST_DIVIDE,                              /* Gain Block, C = A/B */
 		DST_ADDER,                               /* C = A+B */
 		DST_SWITCH,                              /* C = A or B */
@@ -1122,11 +1330,14 @@ enum {
 		DST_LOGIC_XOR,
 		DST_LOGIC_NXOR,
 	/* Devices */
-		DSD_NE555,                               /* NE555 Emulation */
+		DSD_555_ASTBL,                           /* NE555 Emulation */
+		DSD_SQUAREW555,                          /* Square Wave generator, NE555 based */
+		DSD_SQUAREW566,                          /* Square Wave generator, NE566 based */
+		DSD_TRIANGLEW566,                        /* Triangle wave generator, NE566 based */
 	/* Custom */
 //		DST_CUSTOM,                              /* whatever you want someday */
     /* Output Node */
-		DSO_OUTPUT                              /* The final output node */
+		DSO_OUTPUT                               /* The final output node */
 };
 
 
@@ -1136,59 +1347,77 @@ enum {
 /*                                                                      */
 /************************************************************************/
 #define DISCRETE_SOUND_START(STRUCTURENAME) struct discrete_sound_block STRUCTURENAME[] = {
-#define DISCRETE_SOUND_END                                             { NODE_00, DSS_NULL       ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,0     ,0     ,0     ,0     ,0     ,0     ,NULL  ,"End Marker" }  };
+#define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL        , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
 
-#define DISCRETE_CONSTANT(NODE,CONST)                                  { NODE   , DSS_CONSTANT   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,CONST ,0     ,0     ,0     ,0     ,0     ,NULL  ,"Constant"           },
-#define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,DEFAULT,LOGLIN,NAME)     { NODE   , DSS_ADJUSTMENT ,ENAB   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,MIN   ,MAX   ,DEFAULT,LOGLIN,0    ,NULL  ,NAME                 },
-#define DISCRETE_INPUT(NODE,ADDR,MASK,INIT0)                           { NODE   , DSS_INPUT      ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,INIT0 ,ADDR  ,MASK  ,1     ,0     ,INIT0 ,NULL  ,"Input"              },
-#define DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)              { NODE   , DSS_INPUT      ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,INIT0 ,ADDR  ,MASK  ,GAIN  ,OFFSET,INIT0 ,NULL  ,"InputX"             },
+#define DISCRETE_CONSTANT(NODE,CONST)                                   { NODE, DSS_CONSTANT    , 1, { NODE_NC }, { CONST } ,NULL  ,"Constant" },
+#define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,DEFAULT,LOGLIN,NAME)      { NODE, DSS_ADJUSTMENT  , 5, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,DEFAULT,LOGLIN }, NULL  , NAME  },
+#define DISCRETE_INPUT(NODE,ADDR,MASK,INIT0)                            { NODE, DSS_INPUT       , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,1   ,0     ,INIT0 }, NULL, "Input" },
+#define DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)               { NODE, DSS_INPUT       , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,GAIN,OFFSET,INIT0 }, NULL, "InputX" },
+#define DISCRETE_INPUT_PULSE(NODE,ADDR,MASK,INIT0)                      { NODE, DSS_INPUT_PULSE , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,1   ,0     ,INIT0 }, NULL, "Input Pulse" },
 
-#define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)       { NODE   , DSS_SQUAREWAVE ,ENAB   ,FREQ   ,AMPL   ,DUTY   ,BIAS   ,NODE_NC,ENAB  ,FREQ  ,AMPL  ,DUTY  ,BIAS  ,PHASE ,NULL  ,"Square Wave"        },
-#define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)              { NODE   , DSS_SINEWAVE   ,ENAB   ,FREQ   ,AMPL   ,BIAS   ,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,BIAS  ,PHASE ,0     ,NULL  ,"Sine Wave"          },
-#define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                       { NODE   , DSS_NOISE      ,ENAB   ,FREQ   ,AMPL   ,BIAS   ,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,BIAS  ,0     ,0     ,NULL  ,"Noise Source"       },
-#define DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)          { NODE   , DSS_TRIANGLEWAVE,ENAB  ,FREQ   ,AMPL   ,BIAS   ,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,BIAS  ,PHASE ,0     ,NULL  ,"Triangle Wave"      },
-#define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)     { NODE   , DSS_SAWTOOTHWAVE,ENAB  ,FREQ   ,AMPL   ,BIAS   ,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,BIAS  ,GRAD  ,PHASE ,NULL  ,"Saw Tooth Wave"     },
-#define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB){ NODE   , DSS_LFSR_NOISE ,ENAB   ,RESET  ,FREQ   ,AMPL   ,FEED   ,BIAS   ,ENAB  ,RESET ,FREQ  ,AMPL  ,FEED  ,BIAS  ,LFSRTB,"LFSR Noise Source"  },
+#define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)        { NODE, DSS_SQUAREWAVE  , 6, { ENAB,FREQ,AMPL,DUTY,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,DUTY,BIAS,PHASE }, NULL, "Square Wave" },
+#define DISCRETE_SQUAREWFIX(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)        { NODE, DSS_SQUAREWFIX  , 6, { ENAB,FREQ,AMPL,DUTY,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,DUTY,BIAS,PHASE }, NULL, "Square Wave Fixed" },
+#define DISCRETE_SQUAREWAVE2(NODE,ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT)     { NODE, DSS_SQUAREWAVE2 , 6, { ENAB,AMPL,T_OFF,T_ON,BIAS,NODE_NC }, { ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT }, NULL, "Square Wave 2" },
+#define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)               { NODE, DSS_SINEWAVE    , 5, { ENAB,FREQ,AMPL,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,PHASE }, NULL, "Sine Wave" },
+#define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        { NODE, DSS_NOISE       , 4, { ENAB,FREQ,AMPL,BIAS }, { ENAB,FREQ,AMPL,BIAS }, NULL, "Noise Source" },
+#define DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)           { NODE, DSS_TRIANGLEWAVE, 5, { ENAB,FREQ,AMPL,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,PHASE }, NULL, "Triangle Wave" },
+#define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)      { NODE, DSS_SAWTOOTHWAVE, 6, { ENAB,FREQ,AMPL,BIAS,NODE_NC,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,GRAD,PHASE }, NULL, "Saw Tooth Wave" },
+#define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB) { NODE, DSS_LFSR_NOISE  , 6, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, LFSRTB, "LFSR Noise Source" },
+#define DISCRETE_ADSR_ENV(NODE,ENAB,TRIGGER,GAIN,ADSRTB)                { NODE, DSS_ADSR        , 3, { ENAB,TRIGGER,GAIN }, { ENAB,TRIGGER,GAIN }, ADSRTB, "ADSR Env Generator" },
 
-#define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)                    { NODE   , DST_RCFILTER   ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,RVAL  ,CVAL  ,0     ,0     ,NULL  ,"RC Filter"          },
-#define DISCRETE_RCDISC(NODE,ENAB,INP0,RVAL,CVAL)                      { NODE   , DST_RCDISC     ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,RVAL  ,CVAL  ,0     ,0     ,NULL  ,"RC Discharge"       },
-#define DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)       { NODE   , DST_RCDISC2    ,SWITCH ,INP0   ,NODE_NC,INP1   ,NODE_NC,NODE_NC,SWITCH,INP0  ,RVAL0 ,INP1  ,RVAL1 ,CVAL  ,NULL  ,"RC Discharge 2"     },
-#define DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,START,END,CLAMP)             { NODE   , DST_RAMP       ,ENAB   ,RAMP   ,GRAD   ,START  ,END    ,CLAMP  ,ENAB  ,RAMP  ,GRAD  ,START ,END   ,CLAMP ,NULL  ,"Ramp Up/Down"       },
-#define DISCRETE_ONOFF(NODE,ENAB,INP0)                                 { NODE   , DST_GAIN       ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,0     ,1     ,0     ,0     ,0     ,NULL  ,"OnOff Switch"       },
-#define DISCRETE_INVERT(NODE,INP0)                                     { NODE   , DST_GAIN       ,NODE_NC,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,1     ,0     ,-1    ,0     ,0     ,0     ,NULL  ,"Inverter"           },
-#define DISCRETE_GAIN(NODE,INP0,GAIN)                                  { NODE   , DST_GAIN       ,NODE_NC,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,1     ,INP0  ,GAIN  ,0     ,0     ,0     ,NULL  ,"Gain"               },
-#define DISCRETE_MULTIPLY(NODE,ENAB,INP0,INP1)                         { NODE   , DST_GAIN       ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Multiplier"         },
-#define DISCRETE_DIVIDE(NODE,ENAB,INP0,INP1)                           { NODE   , DST_DIVIDE     ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Divider"            },
-#define DISCRETE_CLAMP(NODE,ENAB,INP0,MIN,MAX,CLAMP)                   { NODE   , DST_CLAMP      ,ENAB   ,INP0   ,MIN    ,MAX    ,CLAMP  ,NODE_NC,ENAB  ,INP0  ,MIN   ,MAX   ,CLAMP ,0     ,NULL  ,"Signal Clamp"       },
-#define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                    { NODE   , DST_SWITCH     ,ENAB   ,SWITCH ,INP0   ,INP1   ,NODE_NC,NODE_NC,ENAB  ,SWITCH,INP0  ,INP1  ,0     ,0     ,NULL  ,"2 Pole Switch"      },
-#define DISCRETE_ADDER2(NODE,ENAB,INP0,INP1)                           { NODE   , DST_ADDER      ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Adder 2 Node"       },
-#define DISCRETE_ADDER3(NODE,ENAB,INP0,INP1,INP2)                      { NODE   , DST_ADDER      ,ENAB   ,INP0   ,INP1   ,INP2   ,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,0     ,0     ,NULL  ,"Adder 3 Node"       },
-#define DISCRETE_ADDER4(NODE,ENAB,INP0,INP1,INP2,INP3)                 { NODE   , DST_ADDER      ,ENAB   ,INP0   ,INP1   ,INP2   ,INP3   ,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,INP3  ,0     ,NULL  ,"Adder 4 Node"       },
-#define DISCRETE_ONESHOTR(NODE,ENAB,TRIG,AMPL,WIDTH)                   { NODE   , DST_ONESHOT    ,ENAB   ,TRIG   ,NODE_NC,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,1     ,AMPL  ,WIDTH ,0     ,NULL  ,"One Shot Resetable" },
-#define DISCRETE_ONESHOT(NODE,ENAB,TRIG,RESET,AMPL,WIDTH)              { NODE   , DST_ONESHOT    ,ENAB   ,TRIG   ,RESET  ,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,RESET ,AMPL  ,WIDTH ,0     ,NULL  ,"One Shot"           },
-#define DISCRETE_LADDER(NODE,ENAB,INP0,GAIN,LADDER)                    { NODE   , DST_LADDER     ,ENAB   ,INP0   ,GAIN   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,GAIN  ,0     ,0     ,0     ,LADDER,"Resistor Ladder"    },
-#define DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)               { NODE   , DST_SAMPHOLD   ,ENAB   ,INP0   ,CLOCK  ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,CLOCK ,CLKTYPE,0    ,0     ,NULL  ,"Sample & Hold"      },
+#define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)                     { NODE, DST_RCFILTER    , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter" },
+#define DISCRETE_RCDISC(NODE,ENAB,INP0,RVAL,CVAL)                       { NODE, DST_RCDISC      , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Discharge" },
+#define DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)        { NODE, DST_RCDISC2     , 6, { SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC }, { SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL }, NULL, "RC Discharge 2" },
+#define DISCRETE_RCFILTERN(NODE,ENAB,INP0,RVAL,CVAL)                    { NODE, DST_RCFILTERN   , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter (New Type)" },
+#define DISCRETE_RCDISCN(NODE,ENAB,INP0,RVAL,CVAL)                      { NODE, DST_RCDISCN     , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Discharge (New Type)" },
+#define DISCRETE_RCDISC2N(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)       { NODE, DST_RCDISC2N    , 6, { SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC }, { SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL }, NULL, "RC Discharge 2 (New Type)" },
+#define DISCRETE_FILTER1(NODE,ENAB,INP0,FREQ,TYPE)                      { NODE, DST_FILTER1     , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,FREQ,TYPE }, NULL, "1st Order Filter" },
+#define DISCRETE_FILTER2(NODE,ENAB,INP0,FREQ,DAMP,TYPE)                 { NODE, DST_FILTER2     , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,FREQ,DAMP,TYPE }, NULL, "2nd Order Filter" },
 
-#define	DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                          { NODE   , DST_LOGIC_INV  ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,0     ,0     ,0     ,0     ,NULL  ,"Logic Invertor"     },
-#define	DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)                        { NODE   , DST_LOGIC_AND  ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,1     ,1     ,0     ,NULL  ,"Logic AND (2inp)"   },
-#define	DISCRETE_LOGIC_AND3(NODE,ENAB,INP0,INP1,INP2)                  { NODE   , DST_LOGIC_AND  ,ENAB   ,INP0   ,INP1   ,INP2   ,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,1     ,0     ,NULL  ,"Logic AND (3inp)"   },
-#define	DISCRETE_LOGIC_AND4(NODE,ENAB,INP0,INP1,INP2,INP3)             { NODE   , DST_LOGIC_AND  ,ENAB   ,INP0   ,INP1   ,INP2   ,INP3   ,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,INP3  ,0     ,NULL  ,"Logic AND (4inp)"   },
-#define	DISCRETE_LOGIC_NAND(NODE,ENAB,INP0,INP1)                       { NODE   , DST_LOGIC_NAND ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,1     ,1     ,0     ,NULL  ,"Logic NAND (2inp)"  },
-#define	DISCRETE_LOGIC_NAND3(NODE,ENAB,INP0,INP1,INP2)                 { NODE   , DST_LOGIC_NAND ,ENAB   ,INP0   ,INP1   ,INP2   ,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,1     ,0     ,NULL  ,"Logic NAND (3inp)"  },
-#define	DISCRETE_LOGIC_NAND4(NODE,ENAB,INP0,INP1,INP2,INP3)            { NODE   , DST_LOGIC_NAND ,ENAB   ,INP0   ,INP1   ,INP2   ,INP3   ,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,INP3  ,0     ,NULL  ,"Logic NAND (4inp)"  },
-#define	DISCRETE_LOGIC_OR(NODE,ENAB,INP0,INP1)                         { NODE   , DST_LOGIC_OR   ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Logic OR (2inp)"    },
-#define	DISCRETE_LOGIC_OR3(NODE,ENAB,INP0,INP1,INP2)                   { NODE   , DST_LOGIC_OR   ,ENAB   ,INP0   ,INP1   ,INP2   ,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,0     ,0     ,NULL  ,"Logic OR (3inp)"    },
-#define	DISCRETE_LOGIC_OR4(NODE,ENAB,INP0,INP1,INP2,INP3)              { NODE   , DST_LOGIC_OR   ,ENAB   ,INP0   ,INP1   ,INP2   ,INP3   ,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,INP3  ,0     ,NULL  ,"Logic OR (4inp)"    },
-#define	DISCRETE_LOGIC_NOR(NODE,ENAB,INP0,INP1)                        { NODE   , DST_LOGIC_NOR  ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Logic NOR (2inp)"   },
-#define	DISCRETE_LOGIC_NOR3(NODE,ENAB,INP0,INP1,INP2)                  { NODE   , DST_LOGIC_NOR  ,ENAB   ,INP0   ,INP1   ,INP2   ,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,0     ,0     ,NULL  ,"Logic NOR (3inp)"   },
-#define	DISCRETE_LOGIC_NOR4(NODE,ENAB,INP0,INP1,INP2,INP3)             { NODE   , DST_LOGIC_NOR  ,ENAB   ,INP0   ,INP1   ,INP2   ,INP3   ,NODE_NC,ENAB  ,INP0  ,INP1  ,INP2  ,INP3  ,0     ,NULL  ,"Logic NOR (4inp)"   },
-#define	DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)                        { NODE   , DST_LOGIC_XOR  ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Logic XOR (2inp)"   },
-#define	DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                       { NODE   , DST_LOGIC_NXOR ,ENAB   ,INP0   ,INP1   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,INP1  ,0     ,0     ,0     ,NULL  ,"Logic NXOR (2inp)"  },
+#define DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,START,END,CLAMP)              { NODE, DST_RAMP        , 6, { ENAB,RAMP,GRAD,START,END,CLAMP }, { ENAB,RAMP,GRAD,START,END,CLAMP }, NULL, "Ramp Up/Down" },
+#define DISCRETE_ONOFF(NODE,ENAB,INP0)                                  { NODE, DST_GAIN        , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,0,1,0 }, NULL, "OnOff Switch" },
+#define DISCRETE_INVERT(NODE,INP0)                                      { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,0,-1,0 }, NULL, "Inverter" },
+#define DISCRETE_GAIN(NODE,INP0,GAIN)                                   { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,INP0,GAIN,0 }, NULL, "Gain" },
+#define DISCRETE_MULTIPLY(NODE,ENAB,INP0,INP1)                          { NODE, DST_GAIN        , 4, { ENAB,INP0,INP1,NODE_NC }, { ENAB,INP0,INP1,0 }, NULL, "Multiplier" },
+#define DISCRETE_MULTADD(NODE,ENAB,INP0,INP1,INP2)                      { NODE, DST_GAIN        , 4, { ENAB,INP0,INP1,INP2 }, { ENAB,INP0,INP1,INP2 }, NULL, "Multiply/Add" },
+#define DISCRETE_TRANSFORM2(NODE,ENAB,INP0,INP1,FUNCT)                  { NODE, DST_TRANSFORM   , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, FUNCT, "Transform 2 Nodes" },
+#define DISCRETE_TRANSFORM3(NODE,ENAB,INP0,INP1,INP2,FUNCT)             { NODE, DST_TRANSFORM   , 4, { ENAB,INP0,INP1,INP2 }, { ENAB,INP0,INP1,INP2 }, FUNCT, "Transform 3 Nodes" },
+#define DISCRETE_TRANSFORM4(NODE,ENAB,INP0,INP1,INP2,INP3,FUNCT)        { NODE, DST_TRANSFORM   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, FUNCT, "Transform 4 Nodes" },
+#define DISCRETE_TRANSFORM5(NODE,ENAB,INP0,INP1,INP2,INP3,INP4,FUNCT)   { NODE, DST_TRANSFORM   , 6, { ENAB,INP0,INP1,INP2,INP3,INP4 }, { ENAB,INP0,INP1,INP2,INP3,INP4 }, FUNCT, "Transform 5 Nodes" },
+#define DISCRETE_DIVIDE(NODE,ENAB,INP0,INP1)                            { NODE, DST_DIVIDE      , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Divider" },
+#define DISCRETE_CLAMP(NODE,ENAB,INP0,MIN,MAX,CLAMP)                    { NODE, DST_CLAMP       , 5, { ENAB,INP0,MIN,MAX,CLAMP }, { ENAB,INP0,MIN,MAX,CLAMP }, NULL, "Signal Clamp" },
+#define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                     { NODE, DST_SWITCH      , 4, { ENAB,SWITCH,INP0,INP1 }, { ENAB,SWITCH,INP0,INP1 }, NULL, "2 Pole Switch" },
+#define DISCRETE_ADDER2(NODE,ENAB,INP0,INP1)                            { NODE, DST_ADDER       , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Adder 2 Node" },
+#define DISCRETE_ADDER3(NODE,ENAB,INP0,INP1,INP2)                       { NODE, DST_ADDER       , 4, { ENAB,INP0,INP1,INP2 }, { ENAB,INP0,INP1,INP2 }, NULL, "Adder 3 Node" },
+#define DISCRETE_ADDER4(NODE,ENAB,INP0,INP1,INP2,INP3)                  { NODE, DST_ADDER       , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, NULL, "Adder 4 Node" },
+#define DISCRETE_ONESHOTR(NODE,ENAB,TRIG,AMPL,WIDTH)                    { NODE, DST_ONESHOT     , 5, { ENAB,TRIG,NODE_NC,AMPL,WIDTH }, { ENAB,TRIG,1,AMPL,WIDTH }, NULL, "One Shot Resetable" },
+#define DISCRETE_ONESHOT(NODE,ENAB,TRIG,RESET,AMPL,WIDTH)               { NODE, DST_ONESHOT     , 5, { ENAB,TRIG,RESET,AMPL,WIDTH }, { ENAB,TRIG,RESET,AMPL,WIDTH }, NULL, "One Shot" },
+#define DISCRETE_LADDER(NODE,ENAB,INP0,SELECT,GAIN,OFFSET,LADDER)       { NODE, DST_LADDER      , 5, { ENAB,INP0,SELECT,GAIN,OFFSET }, { ENAB,INP0,SELECT,GAIN,OFFSET }, LADDER, "Resistor Ladder" },
+#define DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)                { NODE, DST_SAMPHOLD    , 4, { ENAB,INP0,CLOCK,NODE_NC }, { ENAB,INP0,CLOCK,CLKTYPE }, NULL, "Sample & Hold" },
 
-#define DISCRETE_NE555(NODE,RESET,TRIGR,THRSH,CTRLV,VCC)               { NODE   , DSD_NE555      ,RESET  ,TRIGR  ,THRSH  ,CTRLV  ,VCC    ,NODE_NC,RESET ,TRIGR ,THRSH ,CTRLV ,VCC   ,0     ,NULL  ,"NE555 (Broken"      },
+#define	DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                          { NODE, DST_LOGIC_INV   , 1, { ENAB,INP0 }, { ENAB,INP0 }, NULL, "Logic Invertor" },
+#define	DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,1.0,1.0 }, NULL, "Logic AND (2inp)" },
+#define	DISCRETE_LOGIC_AND3(NODE,ENAB,INP0,INP1,INP2)                  { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,1.0 }, NULL, "Logic AND (3inp)" },
+#define	DISCRETE_LOGIC_AND4(NODE,ENAB,INP0,INP1,INP2,INP3)             { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 } ,NULL, "Logic AND (4inp)" },
+#define	DISCRETE_LOGIC_NAND(NODE,ENAB,INP0,INP1)                       { NODE, DST_LOGIC_NAND  , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,1.0,1.0 }, NULL, "Logic NAND (2inp)" },
+#define	DISCRETE_LOGIC_NAND3(NODE,ENAB,INP0,INP1,INP2)                 { NODE, DST_LOGIC_NAND  , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,1.0 }, NULL, "Logic NAND (3inp)" },
+#define	DISCRETE_LOGIC_NAND4(NODE,ENAB,INP0,INP1,INP2,INP3)            { NODE, DST_LOGIC_NAND  , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, NULL, "Logic NAND (4inp)" },
+#define	DISCRETE_LOGIC_OR(NODE,ENAB,INP0,INP1)                         { NODE, DST_LOGIC_OR    , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,0.0,0.0 }, NULL, "Logic OR (2inp)" },
+#define	DISCRETE_LOGIC_OR3(NODE,ENAB,INP0,INP1,INP2)                   { NODE, DST_LOGIC_OR    , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,0.0 }, NULL, "Logic OR (3inp)" },
+#define	DISCRETE_LOGIC_OR4(NODE,ENAB,INP0,INP1,INP2,INP3)              { NODE, DST_LOGIC_OR    , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, NULL, "Logic OR (4inp)" },
+#define	DISCRETE_LOGIC_NOR(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_NOR   , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,0.0,0.0 }, NULL, "Logic NOR (2inp)" },
+#define	DISCRETE_LOGIC_NOR3(NODE,ENAB,INP0,INP1,INP2)                  { NODE, DST_LOGIC_NOR   , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,0.0 }, NULL, "Logic NOR (3inp)" },
+#define	DISCRETE_LOGIC_NOR4(NODE,ENAB,INP0,INP1,INP2,INP3)             { NODE, DST_LOGIC_NOR   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, NULL, "Logic NOR (4inp)" },
+#define	DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_XOR   , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic XOR (2inp)" },
+#define	DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                       { NODE, DST_LOGIC_NXOR  , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic NXOR (2inp)" },
 
-#define DISCRETE_OUTPUT(OPNODE,VOL)                                    { NODE_OP, DSO_OUTPUT     ,OPNODE ,OPNODE ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,0     ,0     ,VOL   ,0     ,0     ,0     ,NULL  ,"Output Node"        },
-#define DISCRETE_OUTPUT_STEREO(OPNODEL,OPNODER,VOL)                    { NODE_OP, DSO_OUTPUT     ,OPNODEL,OPNODER,NODE_NC,NODE_NC,NODE_NC,NODE_NC,0     ,0     ,VOL   ,0     ,0     ,0     ,NULL  ,"Stereo Output Node" },
+#define DISCRETE_555_ASTABLE(NODE,RESET,AMPL,R1,R2,C,CTRLV,TYPE)       { NODE, DSD_555_ASTBL   , 6, { RESET,AMPL,R1,R2,C,CTRLV }, { RESET,AMPL,R1,R2,C,CTRLV }, TYPE, "555 Astable" },
+#define DISCRETE_SQUAREW555(NODE,RESET,AMPL,R1,R2,C,BIAS)              { NODE, DSD_SQUAREW555  , 6, { RESET,AMPL,R1,R2,C,BIAS }, { RESET,AMPL,R1,R2,C,BIAS }, NULL, "Square Wave 555" },
+#define DISCRETE_SQUAREW566(NODE,ENAB,AMPL,V_IN,R,C,BIAS,SETUP)        { NODE, DSD_SQUAREW566  , 6, { ENAB,AMPL,V_IN,R,C,BIAS }, { ENAB,AMPL,V_IN,R,C,BIAS }, SETUP," Square Wave 566" },
+#define DISCRETE_TRIANGLEW566(NODE,ENAB,AMPL,V_IN,R,C,BIAS,SETUP)      { NODE, DSD_TRIANGLEW566, 6, { ENAB,AMPL,V_IN,R,C,BIAS }, { ENAB,AMPL,V_IN,R,C,BIAS }, SETUP," Triangle Wave 566" },
+
+#define DISCRETE_OUTPUT(OPNODE,VOL)                                    { NODE_OP, DSO_OUTPUT   , 3, { OPNODE,OPNODE,NODE_NC }, {0,0,VOL }, NULL, "Output Node" },
+#define DISCRETE_OUTPUT_STEREO(OPNODEL,OPNODER,VOL)                    { NODE_OP, DSO_OUTPUT   , 3, { OPNODEL,OPNODER,NODE_NC }, { 0,0,VOL }, NULL, "Stereo Output Node" },
 
 
 /************************************************************************/

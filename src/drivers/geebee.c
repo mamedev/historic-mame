@@ -579,47 +579,47 @@ MACHINE_DRIVER_END
 
 ROM_START( geebee )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, 0x8a5577e0 )
-	ROM_LOAD( "geebee.3a",      0x3000, 0x0400, 0xf257b21b )
+	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, CRC(8a5577e0) SHA1(356d33e19c6b4f519816ee4b65ff9b59d6c1b565) )
+	ROM_LOAD( "geebee.3a",      0x3000, 0x0400, CRC(f257b21b) SHA1(c788fd923438f1bffbff9ff3cd4c5c8b547c0c14) )
 ROM_END
 
 ROM_START( geebeeg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, 0x8a5577e0 )
-	ROM_LOAD( "geebeeg.3a",     0x3000, 0x0400, 0xa45932ba )
+	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, CRC(8a5577e0) SHA1(356d33e19c6b4f519816ee4b65ff9b59d6c1b565) )
+	ROM_LOAD( "geebeeg.3a",     0x3000, 0x0400, CRC(a45932ba) SHA1(48f70742c42a9377f31fac3a1e43123751e57656) )
 ROM_END
 
 ROM_START( navalone )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "navalone.p1",    0x0000, 0x0800, 0x5a32016b )
-	ROM_LOAD( "navalone.p2",    0x0800, 0x0800, 0xb1c86fe3 )
-	ROM_LOAD( "navalone.chr",   0x3000, 0x0800, 0xb26c6170 )
+	ROM_LOAD( "navalone.p1",    0x0000, 0x0800, CRC(5a32016b) SHA1(d856d069eba470a81341de0bf47eca2a629a69a6) )
+	ROM_LOAD( "navalone.p2",    0x0800, 0x0800, CRC(b1c86fe3) SHA1(0293b742806c1517cb126443701115a3427fc60a) )
+	ROM_LOAD( "navalone.chr",   0x3000, 0x0800, CRC(b26c6170) SHA1(ae0aec2b60e1fd3b212e311afb1c588b2b286433) )
 ROM_END
 
 ROM_START( kaitei )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "kaitei_7.1k",    0x0000, 0x0800, 0x32f70d48 )
+	ROM_LOAD( "kaitei_7.1k",    0x0000, 0x0800, CRC(32f70d48) SHA1(c5ae606df1d0e513daea909f5474309a176096c1) )
 	ROM_RELOAD( 				0x0800, 0x0800 )
-    ROM_LOAD( "kaitei_1.1m",    0x1000, 0x0400, 0x9a7ab3b9 )
-	ROM_LOAD( "kaitei_2.1p",    0x1400, 0x0400, 0x5eeb0fff )
-	ROM_LOAD( "kaitei_3.1s",    0x1800, 0x0400, 0x5dff4df7 )
-	ROM_LOAD( "kaitei_4.1t",    0x1c00, 0x0400, 0xe5f303d6 )
-	ROM_LOAD( "kaitei_5.bin",   0x3000, 0x0400, 0x60fdb795 )
-	ROM_LOAD( "kaitei_6.bin",   0x3400, 0x0400, 0x21399ace )
+    ROM_LOAD( "kaitei_1.1m",    0x1000, 0x0400, CRC(9a7ab3b9) SHA1(94a82ba66e51c8203ec61c9320edbddbb6462d33) )
+	ROM_LOAD( "kaitei_2.1p",    0x1400, 0x0400, CRC(5eeb0fff) SHA1(91cb84a9af8e4df4e6c896e7655199328b7da30b) )
+	ROM_LOAD( "kaitei_3.1s",    0x1800, 0x0400, CRC(5dff4df7) SHA1(c179c93a559a0d18db3092c842634de02f3f03ea) )
+	ROM_LOAD( "kaitei_4.1t",    0x1c00, 0x0400, CRC(e5f303d6) SHA1(6dd57e0b17f51d101c6c5dbfeadb7418098cc440) )
+	ROM_LOAD( "kaitei_5.bin",   0x3000, 0x0400, CRC(60fdb795) SHA1(723e635eed9937a28bee0b7978413984651ee87f) )
+	ROM_LOAD( "kaitei_6.bin",   0x3400, 0x0400, CRC(21399ace) SHA1(0ad49be2c9bdab2f9dc41c7348d1d4b4b769e3c4) )
 ROM_END
 
 ROM_START( kaitein )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "kaitein.p1",     0x0000, 0x0800, 0xd88e10ae )
-	ROM_LOAD( "kaitein.p2",     0x0800, 0x0800, 0xaa9b5763 )
-	ROM_LOAD( "kaitein.chr",    0x3000, 0x0800, 0x3125af4d )
+	ROM_LOAD( "kaitein.p1",     0x0000, 0x0800, CRC(d88e10ae) SHA1(76d6cd46b6e59e528e7a8fff9965375a1446a91d) )
+	ROM_LOAD( "kaitein.p2",     0x0800, 0x0800, CRC(aa9b5763) SHA1(64a6c8f25b0510841dcce0b57505731aa0deeda7) )
+	ROM_LOAD( "kaitein.chr",    0x3000, 0x0800, CRC(3125af4d) SHA1(9e6b161636665ee48d6bde2d5fc412fde382c687) )
 ROM_END
 
 ROM_START( sos )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "sos.p1",         0x0000, 0x0800, 0xf70bdafb )
-	ROM_LOAD( "sos.p2",         0x0800, 0x0800, 0x58e9c480 )
-	ROM_LOAD( "sos.chr",        0x3000, 0x0800, 0x66f983e4 )
+	ROM_LOAD( "sos.p1",         0x0000, 0x0800, CRC(f70bdafb) SHA1(e71d552ccc9adad48225bdb4d62c31c5741a3e95) )
+	ROM_LOAD( "sos.p2",         0x0800, 0x0800, CRC(58e9c480) SHA1(0eeb5982183d0e9f9dbae04839b604a0c22b420e) )
+	ROM_LOAD( "sos.chr",        0x3000, 0x0800, CRC(66f983e4) SHA1(b3cf8bff4ac6b554d3fc06eeb8227b3b2a0dd554) )
 ROM_END
 
 

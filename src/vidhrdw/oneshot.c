@@ -89,33 +89,38 @@ VIDEO_START( oneshot )
 
 static void oneshot_drawcrosshairs( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int xpos,ypos;
+    int xpos,ypos;
+    /* get gun raw coordonates (player 1) */
+    gun_x_p1 = (readinputport(5) & 0xff) * 320 / 256;
+    gun_y_p1 = (readinputport(6) & 0xff) * 240 / 256;
 
-	/* get gun raw coordonates (player 1) */
-	gun_x_p1 = (readinputport(5) & 0xff) * 2;
-	gun_y_p1 = (readinputport(6) & 0xff) * 1;
-	/* compute the coordonates for drawing (from routine at 0x009ab0) */
-	xpos = gun_x_p1;
-	ypos = gun_y_p1;
-	xpos -= gun_x_shift;
-	if (xpos < 0)
-		xpos = 0;
-	ypos += 0x0a;
-	/* draw crosshair */
-	draw_crosshair( bitmap, xpos, ypos, cliprect );
+    /* compute the coordonates for drawing (from routine at 0x009ab0) */
+    xpos = gun_x_p1;
+    ypos = gun_y_p1;
 
-	/* get gun raw coordonates (player 2) */
-	gun_x_p2 = (readinputport(7) & 0xff) * 2;
-	gun_y_p2 = (readinputport(8) & 0xff) * 1;
-	/* compute the coordonates for drawing (from routine at 0x009b6e) */
-	xpos = gun_x_p2;
-	ypos = gun_y_p2;
-	xpos -= gun_x_shift;
-	if (xpos < 0)
-		xpos = 0;
-	xpos += 0x0a;
-	/* draw crosshair */
-	draw_crosshair( bitmap, xpos, ypos, cliprect );
+    gun_x_p1+=gun_x_shift;
+
+    gun_y_p1 -= 0x0a;
+    if (gun_y_p1 < 0)
+        gun_y_p1=0;
+
+    /* draw crosshair */
+    draw_crosshair( bitmap, xpos, ypos, cliprect );
+
+
+    /* get gun raw coordonates (player 2) */
+    gun_x_p2 = (readinputport(7) & 0xff) * 320 / 256;
+    gun_y_p2 = (readinputport(8) & 0xff) * 240 / 256;
+    /* compute the coordonates for drawing (from routine at 0x009b6e) */
+    xpos = gun_x_p2;
+    ypos = gun_y_p2;
+
+    gun_x_p2 += gun_x_shift-0x0a;
+    if (gun_x_p2 < 0)
+        gun_x_p2=0;
+
+    /* draw crosshair */
+    draw_crosshair( bitmap, xpos, ypos, cliprect );
 }
 
 static void oneshot_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )

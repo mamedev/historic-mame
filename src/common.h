@@ -9,10 +9,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "hash.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 
 /***************************************************************************
@@ -45,8 +46,7 @@ struct RomModule
 	UINT32 _offset;		/* offset to load it to */
 	UINT32 _length;		/* length of the file */
 	UINT32 _flags;		/* flags */
-	UINT32 _crc;		/* standard CRC-32 checksum */
-	const char *_verify;/* alternate verification, MD5 or SHA */
+	const char *_hashdata; /* hashing informations (checksums) */
 };
 
 
@@ -213,7 +213,7 @@ enum
 #define		ROMREGION_DATATYPEDISK	0x00010000
 
 /* ----- per-region macros ----- */
-#define ROMREGION_GETTYPE(r)		((r)->_crc)
+#define ROMREGION_GETTYPE(r)		((UINT32)(r)->_hashdata)
 #define ROMREGION_GETLENGTH(r)		((r)->_length)
 #define ROMREGION_GETFLAGS(r)		((r)->_flags)
 #define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
@@ -269,11 +269,9 @@ enum
 #define ROM_GETNAME(r)				((r)->_name)
 #define ROM_SAFEGETNAME(r)			(ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
 #define ROM_GETOFFSET(r)			((r)->_offset)
-#define ROM_GETCRC(r)				((r)->_crc)
 #define ROM_GETLENGTH(r)			((r)->_length)
 #define ROM_GETFLAGS(r)				((r)->_flags)
-#define ROM_HASMD5(r)				((r)->_verify && !strncmp((r)->_verify, "MD5", 3))
-#define ROM_GETMD5(r,m)				(rom_extract_md5(r,m))
+#define ROM_GETHASHDATA(r)          ((r)->_hashdata)
 #define ROM_ISOPTIONAL(r)			((ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL)
 #define ROM_GETGROUPSIZE(r)			(((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 12) + 1)
 #define ROM_GETSKIPCOUNT(r)			((ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 16)
@@ -281,7 +279,7 @@ enum
 #define ROM_GETBITWIDTH(r)			(((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) >> 21) + 8 * ((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) == 0))
 #define ROM_GETBITSHIFT(r)			((ROM_GETFLAGS(r) & ROM_BITSHIFTMASK) >> 24)
 #define ROM_INHERITSFLAGS(r)		((ROM_GETFLAGS(r) & ROM_INHERITFLAGSMASK) == ROM_INHERITFLAGS)
-#define ROM_NOGOODDUMP(r)			(ROM_GETCRC(r) == 0)
+#define ROM_NOGOODDUMP(r)			(hash_data_has_info((r)->_hashdata, HASH_INFO_NO_DUMP))
 
 /* ----- per-disk macros ----- */
 #define DISK_GETINDEX(r)			((r)->_offset)
@@ -296,43 +294,53 @@ enum
 
 /* ----- start/stop macros ----- */
 #define ROM_START(name)								static const struct RomModule rom_##name[] = {
-#define ROM_END										{ ROMENTRY_END, 0, 0, 0, 0, NULL } };
+#define ROM_END                                      { ROMENTRY_END, 0, 0, 0, NULL } };
 
 /* ----- ROM region macros ----- */
-#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, type, NULL },
+#define ROM_REGION(length,type,flags)                { ROMENTRY_REGION, 0, length, flags, (const char*)type },
 #define ROM_REGION16_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_LE)
 #define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
 #define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
 
 /* ----- core ROM loading macros ----- */
-#define ROMMD5_LOAD(name,offset,length,crc,md5,flags) { name, offset, length, flags, crc, ROMMD5(md5) },
-#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, length, flags, crc, NULL },
-#define ROM_LOAD(name,offset,length,crc)			ROMX_LOAD(name, offset, length, crc, 0)
-#define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
+#define ROMMD5_LOAD(name,offset,length,hash,flags)   { name, offset, length, flags, hash },
+#define ROMX_LOAD(name,offset,length,hash,flags)     { name, offset, length, flags, hash },
+#define ROM_LOAD(name,offset,length,hash)            ROMX_LOAD(name, offset, length, hash, 0)
+#define ROM_LOAD_OPTIONAL(name,offset,length,hash)   ROMX_LOAD(name, offset, length, hash, ROM_OPTIONAL)
 #define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)
 #define ROM_RELOAD(offset,length)					ROMX_LOAD(ROMENTRY_RELOAD, offset, length, 0, ROM_INHERITFLAGS)
-#define ROM_FILL(offset,length,value)				ROM_LOAD(ROMENTRY_FILL, offset, length, value)
-#define ROM_COPY(rgn,srcoffset,offset,length)		ROMX_LOAD(ROMENTRY_COPY, offset, length, srcoffset, (rgn) << 24)
+#define ROM_FILL(offset,length,value)                ROM_LOAD(ROMENTRY_FILL, offset, length, (const char*)value)
+#define ROM_COPY(rgn,srcoffset,offset,length)        ROMX_LOAD(ROMENTRY_COPY, offset, length, (const char*)srcoffset, (rgn) << 24)
 
 /* ----- nibble loading macros ----- */
-#define ROM_LOAD_NIB_HIGH(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
-#define ROM_LOAD_NIB_LOW(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
+#define ROM_LOAD_NIB_HIGH(name,offset,length,hash)   ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
+#define ROM_LOAD_NIB_LOW(name,offset,length,hash)    ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
 
 /* ----- new-style 16-bit loading macros ----- */
-#define ROM_LOAD16_BYTE(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_SKIP(1))
-#define ROM_LOAD16_WORD(name,offset,length,crc)		ROM_LOAD(name, offset, length, crc)
-#define ROM_LOAD16_WORD_SWAP(name,offset,length,crc)ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_REVERSE)
+#define ROM_LOAD16_BYTE(name,offset,length,hash)     ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1))
+#define ROM_LOAD16_WORD(name,offset,length,hash)     ROM_LOAD(name, offset, length, hash)
+#define ROM_LOAD16_WORD_SWAP(name,offset,length,hash)ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE)
 
 /* ----- new-style 32-bit loading macros ----- */
-#define ROM_LOAD32_BYTE(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_SKIP(3))
-#define ROM_LOAD32_WORD(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(2))
-#define ROM_LOAD32_WORD_SWAP(name,offset,length,crc)ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_REVERSE | ROM_SKIP(2))
+#define ROM_LOAD32_BYTE(name,offset,length,hash)     ROMX_LOAD(name, offset, length, hash, ROM_SKIP(3))
+#define ROM_LOAD32_WORD(name,offset,length,hash)     ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(2))
+#define ROM_LOAD32_WORD_SWAP(name,offset,length,hash)ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE | ROM_SKIP(2))
 
 /* ----- disk loading macros ----- */
 #define DISK_REGION(type)							ROM_REGION(1, type, ROMREGION_DATATYPEDISK)
-#define DISK_IMAGE(name,idx,md5)					ROMMD5_LOAD(name, idx, 0, 0, md5, 0)
+#define DISK_IMAGE(name,idx,hash)                    ROMMD5_LOAD(name, idx, 0, hash, 0)
 
+/* ----- hash macros ----- */
+#define CRC(x)                                       "c:" #x "#"
+#define SHA1(x)                                      "s:" #x "#"
+#define MD5(x)                                       "m:" #x "#"
+#define NO_DUMP                                      "$ND$"
+#define BAD_DUMP                                     "$BD$"
+
+// @@@ FF: Remove this when we use the final SHA1Merger
+#define NOT_DUMPED NO_DUMP
+#define BADROM BAD_DUMP
 
 
 /***************************************************************************
@@ -404,7 +412,6 @@ const struct RomModule *rom_first_file(const struct RomModule *romp);
 const struct RomModule *rom_next_file(const struct RomModule *romp);
 const struct RomModule *rom_first_chunk(const struct RomModule *romp);
 const struct RomModule *rom_next_chunk(const struct RomModule *romp);
-int rom_extract_md5(const struct RomModule *romp, UINT8 md5[16]);
 
 void printromlist(const struct RomModule *romp,const char *name);
 

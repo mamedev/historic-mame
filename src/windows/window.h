@@ -33,9 +33,12 @@ struct win_effect_data
 // command line config
 extern int			win_window_mode;
 extern int			win_wait_vsync;
-extern int			win_use_ddraw;
 extern int			win_triple_buffer;
-extern int			win_hw_stretch;
+extern int			win_use_ddraw;
+extern int			win_use_d3d;
+extern int			win_dd_hw_stretch;
+extern int			win_d3d_filter;
+extern int          win_d3d_tex_manage;
 extern int			win_gfx_width;
 extern int			win_gfx_height;
 extern int			win_gfx_depth;

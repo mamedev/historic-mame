@@ -531,9 +531,11 @@ void ui_text(struct mame_bitmap *bitmap, const char *buf, int x, int y)
 
 void displaytext(struct mame_bitmap *bitmap, const struct DisplayText *dt)
 {
-	/* loop until we run out of descriptors */
-	for ( ; dt->text; dt++)
-		ui_text(bitmap, dt->text, dt->x, dt->y);
+   /* loop until we run out of descriptors */
+   for ( ; dt->text; dt++)
+   {
+      ui_text_ex(bitmap, dt->text, dt->text + strlen(dt->text), dt->x, dt->y, dt->color);
+   }
 }
 
 

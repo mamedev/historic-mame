@@ -283,16 +283,16 @@ MACHINE_DRIVER_END
 
 ROM_START( findout )
 	ROM_REGION( 0x38000, REGION_CPU1, 0 )
-	ROM_LOAD( "12.bin",       0x00000, 0x4000, 0x21132d4c )
-	ROM_LOAD( "11.bin",       0x08000, 0x2000, 0x0014282c )	/* banked */
-	ROM_LOAD( "13.bin",       0x10000, 0x8000, 0xcea91a13 )	/* banked ROMs for solution data */
-	ROM_LOAD( "14.bin",       0x18000, 0x8000, 0x2a433a40 )
-	ROM_LOAD( "15.bin",       0x20000, 0x8000, 0xd817b31e )
-	ROM_LOAD( "16.bin",       0x28000, 0x8000, 0x143f9ac8 )
-	ROM_LOAD( "17.bin",       0x30000, 0x8000, 0xdd743bc7 )
+	ROM_LOAD( "12.bin",       0x00000, 0x4000, CRC(21132d4c) SHA1(e3562ee2f46b3f022a852a0e0b1c8fb8164f64a3) )
+	ROM_LOAD( "11.bin",       0x08000, 0x2000, CRC(0014282c) SHA1(c6792f2ff712ba3759ff009950d78750df844d01) )	/* banked */
+	ROM_LOAD( "13.bin",       0x10000, 0x8000, CRC(cea91a13) SHA1(ad3b395ab0362f3decf178824b1feb10b6335bb3) )	/* banked ROMs for solution data */
+	ROM_LOAD( "14.bin",       0x18000, 0x8000, CRC(2a433a40) SHA1(4132d81256db940789a40aa1162bf1b3997cb23f) )
+	ROM_LOAD( "15.bin",       0x20000, 0x8000, CRC(d817b31e) SHA1(11e6e1042ee548ce2080127611ce3516a0528ae0) )
+	ROM_LOAD( "16.bin",       0x28000, 0x8000, CRC(143f9ac8) SHA1(4411e8ba853d7d5c032115ce23453362ab82e9bb) )
+	ROM_LOAD( "17.bin",       0x30000, 0x8000, CRC(dd743bc7) SHA1(63f7e01ac5cda76a1d3390b6b83f4429b7d3b781) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, 0xf3b663bb )	/* unknown */
+	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(f3b663bb) SHA1(5a683951c8d3a2baac4b49e379d6e10e35465c8a) )	/* unknown */
 ROM_END
 
 

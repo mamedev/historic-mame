@@ -10,96 +10,80 @@
 #include "vidhrdw/generic.h"
 
 
-static int (*map_color)(int x, int y);
+static pen_t (*map_color)(UINT8 x, UINT8 y);
 
 static int color_registers[3];
-static int color_base = 0;
-static int nomnlnd_background_on=0;
+static int background_enable;
+static int magspot_pen_mask;
 
 
-/* No Mans Land - I don't know if there are more screen layouts than this */
-/* this one seems to be OK for the start of the game       */
 
-static const signed short nomnlnd_tree_positions[2][2] =
+WRITE_HANDLER( cosmic_color_register_w )
 {
-	{66,63},{66,159}
-};
-
-static const signed short nomnlnd_water_positions[4][2] =
-{
-	{160,32},{160,96},{160,128},{160,192}
-};
-
-
-WRITE_HANDLER( panic_color_register_w )
-{
-	/* 7c0c & 7c0e = Rom Address Offset
- 	   7c0d        = high / low nibble */
-
-	set_vh_global_attribute(&color_registers[offset], data & 0x80);
-
-   	color_base = (color_registers[0] << 2) + (color_registers[2] << 3);
-}
-
-WRITE_HANDLER( cosmicg_color_register_w )
-{
-	set_vh_global_attribute(&color_registers[offset], data);
-
-   	color_base = (color_registers[0] << 8) + (color_registers[1] << 9);
+	color_registers[offset] = data ? 1 : 0;
 }
 
 
-static int panic_map_color(int x, int y)
+static pen_t panic_map_color(UINT8 x, UINT8 y)
 {
-	/* 8 x 16 coloring */
-	unsigned char byte = memory_region(REGION_USER1)[color_base + (x / 16) * 32 + (y / 8)];
+	offs_t offs;
+	pen_t pen;
+
+
+	offs = (color_registers[0] << 9) | (color_registers[2] << 10) | ((x >> 4) << 5) | (y >> 3);
+	pen = memory_region(REGION_USER1)[offs];
 
 	if (color_registers[1])
-		return byte >> 4;
-	else
-		return byte & 0x0f;
+		pen >>= 4;
+
+	return pen & 0x0f;
 }
 
-static int cosmicg_map_color(int x, int y)
+static pen_t cosmica_map_color(UINT8 x, UINT8 y)
 {
-	unsigned char byte;
+	offs_t offs;
+	pen_t pen;
 
-	/* 16 x 16 coloring */
-	byte = memory_region(REGION_USER1)[color_base + (y / 16) * 16 + (x / 16)];
+
+	offs = (color_registers[0] << 9) | ((x >> 4) << 5) | (y >> 3);
+	pen = memory_region(REGION_USER1)[offs];
+
+	if (color_registers[0])		/* yes, 0 again according to the schematics */
+		pen >>= 4;
+
+	return pen & 0x07;
+}
+
+static pen_t cosmicg_map_color(UINT8 x, UINT8 y)
+{
+	offs_t offs;
+	pen_t pen;
+
+
+	offs = (color_registers[0] << 8) | (color_registers[1] << 9) | ((y >> 4) << 4) | (x >> 4);
+	pen = memory_region(REGION_USER1)[offs];
 
 	/* the upper 4 bits are for cocktail mode support */
 
-	return byte & 0x0f;
+	return pen & 0x0f;
 }
 
-static int magspot2_map_color(int x, int y)
+static pen_t magspot2_map_color(UINT8 x, UINT8 y)
 {
-	unsigned char byte;
+	offs_t offs;
+	pen_t pen;
 
-	/* 16 x 8 coloring */
 
-	// Should the top line of the logo be red or white???
-
-	byte = memory_region(REGION_USER1)[(x / 8) * 16 + (y / 16)];
+	offs = (color_registers[0] << 9) | ((x >> 3) << 4) | (y >> 4);
+	pen = memory_region(REGION_USER1)[offs];
 
 	if (color_registers[1])
-		return byte >> 4;
-	else
-		return byte & 0x0f;
+		pen >>= 4;
+
+	return pen & magspot_pen_mask;
 }
 
 
-static const unsigned char panic_remap_sprite_code[64][2] =
-{
-{0x00,0},{0x26,0},{0x25,0},{0x24,0},{0x23,0},{0x22,0},{0x21,0},{0x20,0}, /* 00 */
-{0x00,0},{0x26,0},{0x25,0},{0x24,0},{0x23,0},{0x22,0},{0x21,0},{0x20,0}, /* 08 */
-{0x00,0},{0x16,0},{0x15,0},{0x14,0},{0x13,0},{0x12,0},{0x11,0},{0x10,0}, /* 10 */
-{0x00,0},{0x16,0},{0x15,0},{0x14,0},{0x13,0},{0x12,0},{0x11,0},{0x10,0}, /* 18 */
-{0x00,0},{0x06,0},{0x05,0},{0x04,0},{0x03,0},{0x02,0},{0x01,0},{0x00,0}, /* 20 */
-{0x00,0},{0x06,0},{0x05,0},{0x04,0},{0x03,0},{0x02,0},{0x01,0},{0x00,0}, /* 28 */
-{0x07,2},{0x06,2},{0x05,2},{0x04,2},{0x03,2},{0x02,2},{0x01,2},{0x00,2}, /* 30 */
-{0x07,2},{0x06,2},{0x05,2},{0x04,2},{0x03,2},{0x02,2},{0x01,2},{0x00,2}, /* 38 */
-};
 
 /*
  * Panic Color table setup
@@ -110,7 +94,6 @@ static const unsigned char panic_remap_sprite_code[64][2] =
  *
  * But, bit 3 can be used to pull Blue via a 2k resistor to 5v
  * (1k to ground) so second version of table has blue set to 2/3
- *
  */
 
 PALETTE_INIT( panic )
@@ -133,7 +116,7 @@ PALETTE_INIT( panic )
 
 
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++) & 0x0f;
+		COLOR(0,i) = *(color_prom++) & 0x07;
 
 
     map_color = panic_map_color;
@@ -172,7 +155,7 @@ PALETTE_INIT( cosmica )
 	}
 
 
-    map_color = panic_map_color;
+    map_color = cosmica_map_color;
 }
 
 
@@ -184,20 +167,16 @@ PALETTE_INIT( cosmica )
  *
  * It's possible that the background is dark gray and not black, as the
  * resistor chain would never drop to zero, Anybody know ?
- *
  */
 
 PALETTE_INIT( cosmicg )
 {
 	int i;
 
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int r,g,b;
-		
+
     	if (i > 8) r = 0xff;
         else r = 0xaa * ((i >> 0) & 1);
 
@@ -210,12 +189,6 @@ PALETTE_INIT( cosmicg )
     map_color = cosmicg_map_color;
 }
 
-/**************************************************/
-/* Magical Spot 2/Devil Zone specific routines    */
-/*												  */
-/* 16 colors, 8 sprite color codes				  */
-/**************************************************/
-
 PALETTE_INIT( magspot2 )
 {
 	int i;
@@ -226,7 +199,7 @@ PALETTE_INIT( magspot2 )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int r,g,b;
-		
+
 		if ((i & 0x09) == 0x08)
 			r = 0xaa;
 	 	else
@@ -245,255 +218,457 @@ PALETTE_INIT( magspot2 )
 
 
     map_color = magspot2_map_color;
+    magspot_pen_mask = 0x0f;
 }
 
 
-WRITE_HANDLER( nomnlnd_background_w )
+PALETTE_INIT( nomnlnd )
 {
-	nomnlnd_background_on = data;
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int r,g,b;
+
+		r = 0xff * ((i >> 0) & 1);
+		g = 0xff * ((i >> 1) & 1);
+		b = 0xff * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
+	}
+
+
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+	{
+		COLOR(0,i) = *(color_prom++) & 0x07;
+	}
+
+
+    map_color = magspot2_map_color;
+    magspot_pen_mask = 0x07;
 }
 
 
-WRITE_HANDLER( cosmica_videoram_w )
+WRITE_HANDLER( cosmic_background_enable_w )
 {
-    int i,x,y,col;
+	background_enable = data;
+}
 
-    videoram[offset] = data;
 
-	y = offset / 32;
-	x = 8 * (offset % 32);
+static void draw_bitmap(struct mame_bitmap *bitmap)
+{
+	offs_t offs;
 
-    col = Machine->pens[map_color(x, y)];
 
-    for (i = 0; i < 8; i++)
-    {
-		if (flip_screen)
-			plot_pixel(tmpbitmap, 255-x, 255-y, (data & 0x80) ? col : Machine->pens[0]);
-		else
-			plot_pixel(tmpbitmap,     x,     y, (data & 0x80) ? col : Machine->pens[0]);
+	for (offs = 0; offs < videoram_size; offs++)
+	{
+		data8_t data = videoram[offs];
 
-	    x++;
-	    data <<= 1;
-    }
+		if (data != 0)	/* optimization, not absolutely neccessary */
+		{
+			int i;
+			UINT8 x = offs << 3;
+			UINT8 y = offs >> 5;
+
+			pen_t pen = Machine->pens[map_color(x, y)];
+
+
+			for (i = 0; i < 8; i++)
+			{
+				if (data & 0x80)
+				{
+					if (flip_screen)
+						plot_pixel(bitmap, 255-x, 255-y, pen);
+					else
+						plot_pixel(bitmap,     x,     y, pen);
+				}
+
+				x++;
+				data <<= 1;
+			}
+		}
+	}
+}
+
+
+static void draw_sprites(struct mame_bitmap *bitmap, int color_mask, int extra_sprites)
+{
+	int offs;
+
+
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (spriteram[offs] != 0)
+        {
+			int code, color;
+
+			code  = ~spriteram[offs  ] & 0x3f;
+			color = ~spriteram[offs+3] & color_mask;
+
+			if (extra_sprites)
+			{
+				code |= (spriteram[offs+3] & 0x08) << 3;
+			}
+
+            if (spriteram[offs] & 0x80)
+            {
+                /* 16x16 sprite */
+
+			    drawgfx(bitmap,Machine->gfx[0],
+					    code, color,
+					    0, ~spriteram[offs] & 0x40,
+				    	256-spriteram[offs+2],spriteram[offs+1],
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
+            }
+            else
+            {
+                /* 32x32 sprite */
+
+			    drawgfx(bitmap,Machine->gfx[1],
+					    code >> 2, color,
+					    0, ~spriteram[offs] & 0x40,
+				    	256-spriteram[offs+2],spriteram[offs+1],
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
+            }
+        }
+	}
+}
+
+
+static void cosmica_draw_starfield(struct mame_bitmap *bitmap)
+{
+	UINT8 y = 0;
+	UINT8 map = 0;
+	data8_t *PROM = memory_region(REGION_USER2);
+
+
+	while (1)
+	{
+		int va  =  y       & 0x01;
+		int vb  = (y >> 1) & 0x01;
+
+
+		UINT8 x = 0;
+
+		while (1)
+		{
+			UINT8 x1;
+			int hc, hb_;
+
+
+			if (flip_screen)
+				x1 = x - cpu_getcurrentframe();
+			else
+				x1 = x + cpu_getcurrentframe();
+
+
+			hc  = (x1 >> 2) & 0x01;
+			hb_ = (x  >> 5) & 0x01;  /* not a bug, this one is the real x */
+
+
+			if ((x1 & 0x1f) == 0)
+			{
+				// flip-flop at IC11 is clocked
+				map = PROM[(x1 >> 5) | (y >> 1 << 3)];
+			}
+
+
+			if ((!(hc & va) & (vb ^ hb_)) &&			/* right network */
+			    (((x1 ^ map) & (hc | 0x1e)) == 0x1e))	/* left network */
+			{
+				/* RGB order is reversed -- bit 7=R, 6=G, 5=B */
+				int col = (map >> 7) | ((map >> 5) & 0x02) | ((map >> 3) & 0x04);
+
+				plot_pixel(bitmap, x, y, Machine->pens[col]);
+			}
+
+
+			x++;
+			if (x == 0)  break;
+		}
+
+
+		y++;
+		if (y == 0)  break;
+	}
+}
+
+
+static void devzone_draw_grid(struct mame_bitmap *bitmap)
+{
+	UINT8 y;
+	data8_t *horz_PROM = memory_region(REGION_USER2);
+	data8_t *vert_PROM = memory_region(REGION_USER3);
+	offs_t horz_addr = 0;
+
+	UINT8 count = 0;
+	UINT8 horz_data = 0;
+	UINT8 vert_data;
+
+
+	for (y = 32; y < 224; y++)
+	{
+		UINT8 x = 0;
+
+
+		while (1)
+		{
+			int x1;
+
+
+			/* for the vertical lines, each bit indicates
+			   if there should be a line at the x position */
+			vert_data = vert_PROM[x >> 3];
+
+
+			/* the horizontal (perspective) lines are RLE encoded.
+			   When the screen is flipped, the address should be
+			   decrementing.  But since it's just a mirrored image,
+			   this is easier. */
+			if (count == 0)
+			{
+				count = horz_PROM[horz_addr++];
+			}
+
+			count++;
+
+			if (count == 0)
+			{
+				horz_data = horz_PROM[horz_addr++];
+			}
+
+
+			for (x1 = 0; x1 < 8; x1++)
+			{
+				if (!(vert_data & horz_data & 0x80))	/* NAND gate */
+				{
+					pen_t pen = Machine->pens[4];	/* blue */
+
+					if (flip_screen)
+						plot_pixel(bitmap, 255-x, 255-y, pen);
+					else
+						plot_pixel(bitmap,     x,     y, pen);
+				}
+
+				horz_data = (horz_data << 1) | 0x01;
+				vert_data = (vert_data << 1) | 0x01;
+
+				x++;
+			}
+
+
+			if (x == 0)  break;
+		}
+	}
+}
+
+
+static void nomnlnd_draw_background(struct mame_bitmap *bitmap)
+{
+	UINT8 y = 0;
+	UINT8 water = cpu_getcurrentframe();
+	data8_t *PROM = memory_region(REGION_USER2);
+
+
+	/* all positioning is via logic gates:
+
+	   tree is displayed where
+
+	   __          __
+	   HD' ^ HC' ^ HB'
+
+	   and
+		__		    __			    __
+	   (VB' ^ VC' ^ VD')  X  (VB' ^ VC' ^ VD')
+
+
+	   water is displayed where
+			 __			__
+	   HD' ^ HC' ^ HB ^ HA'
+
+	   and vertically the same equation as the trees,
+	   but final result inverted.
+
+
+	   The colors are coded in logic gates:
+
+	   trees:
+	   							P1 P2  BGR
+	     R = Plane1 ^ Plane2	 0  0  000
+	     G = Plane2				 0  1  010
+	     B = Plane1 ^ ~Plane2	 1  0  100
+	   							 1  1  011
+
+	   water:
+	   							P1 P2  BGR or
+	     R = Plane1 ^ Plane2	 0  0  100 000
+	     G = Plane2 v Plane2	 0  1  110 010
+	     B = ~Plane1 or			 1  0  010 010
+	   	     0 based oh HD		 1  1  011 011
+
+	   	 Not sure about B, the logic seems convulated for such
+	   	 a simple result.
+
+	*/
+
+	while (1)
+	{
+		int vb_ = (y >> 5) & 0x01;
+		int vc_ = (y >> 6) & 0x01;
+		int vd_ =  y >> 7;
+
+		UINT8 x = 0;
+
+
+		while (1)
+		{
+			int color = 0;
+
+			int hd  = (x >> 3) & 0x01;
+			int ha_ = (x >> 4) & 0x01;
+			int hb_ = (x >> 5) & 0x01;
+			int hc_ = (x >> 6) & 0x01;
+			int hd_ =  x >> 7;
+
+
+			if ((!vb_ & vc_ & !vd_) ^ (vb_ & !vc_ & vd_))
+			{
+				/* tree */
+				if (!hd_ & hc_ & !hb_)
+				{
+					offs_t offs = ((x >> 3) & 0x03) | ((y & 0x1f) << 2) |
+					              (flip_screen ? 0x80 : 0);
+
+					data8_t plane1 = PROM[offs         ] << (x & 0x07);
+					data8_t plane2 = PROM[offs | 0x0400] << (x & 0x07);
+
+					plane1 >>= 7;
+					plane2 >>= 7;
+
+					color = (plane1 & plane2)       |	// R
+					        (plane2 		)  << 1 |	// G
+					        (plane1 & !plane2) << 2; 	// B
+				}
+			}
+			else
+			{
+				/* water */
+				if (hd_ & !hc_ & hb_ & !ha_)
+				{
+					offs_t offs = hd | (water << 1) | 0x0200;
+
+					data8_t plane1 = PROM[offs         ] << (x & 0x07);
+					data8_t plane2 = PROM[offs | 0x0400] << (x & 0x07);
+
+					plane1 >>= 7;
+					plane2 >>= 7;
+
+					color = ( plane1 & plane2)      |	// R
+					        ( plane1 | plane2) << 1 |	// G
+					        (!plane1 & hd)     << 2; 	// B - see above
+				}
+			}
+
+
+			if (color != 0)
+			{
+				pen_t pen = Machine->pens[color];
+
+				if (flip_screen)
+					plot_pixel(bitmap, 255-x, 255-y, pen);
+				else
+					plot_pixel(bitmap,     x,     y, pen);
+			}
+
+
+			x++;
+			if (x == 0)  break;
+		}
+
+
+		// this is obviously wrong
+		if (vb_)
+		{
+			water++;
+		}
+
+
+		y++;
+		if (y == 0)  break;
+	}
 }
 
 
 VIDEO_UPDATE( cosmicg )
 {
-	if (get_vh_global_attribute_changed())
-	{
-		int offs;
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-		for (offs = 0; offs < videoram_size; offs++)
-		{
-			cosmica_videoram_w(offs, videoram[offs]);
-		}
-	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	draw_bitmap(bitmap);
 }
 
 
 VIDEO_UPDATE( panic )
 {
-	int offs;
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
+	draw_bitmap(bitmap);
 
-	video_update_cosmicg(bitmap, 0);
-
-
-    /* draw the sprites */
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (spriteram[offs] != 0)
-		{
-			int code,bank,flipy;
-
-			/* panic_remap_sprite_code sprite number to my layout */
-
-			code = panic_remap_sprite_code[(spriteram[offs] & 0x3F)][0];
-			bank = panic_remap_sprite_code[(spriteram[offs] & 0x3F)][1];
-			flipy = spriteram[offs] & 0x40;
-
-			if((code==0) && (bank==0))
-				logerror("remap failure %2x\n",(spriteram[offs] & 0x3F));
-
-			/* Switch Bank */
-
-			if(spriteram[offs+3] & 0x08) bank=1;
-
-			if (flip_screen)
-			{
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[bank],
-					code,
-					7 - (spriteram[offs+3] & 0x07),
-					flip_screen,flipy,
-					256-spriteram[offs+2],spriteram[offs+1],
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
+	draw_sprites(bitmap, 0x07, 1);
 }
 
 
 VIDEO_UPDATE( cosmica )
 {
-	int offs;
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
+	cosmica_draw_starfield(bitmap);
 
-	video_update_cosmicg(bitmap, 0);
+	draw_bitmap(bitmap);
 
-
-    /* draw the sprites */
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (spriteram[offs] != 0)
-        {
-			int code, color;
-
-			code  = ~spriteram[offs  ] & 0x3f;
-			color = ~spriteram[offs+3] & 0x0f;
-
-            if (spriteram[offs] & 0x80)
-            {
-                /* 16x16 sprite */
-
-			    drawgfx(bitmap,Machine->gfx[0],
-					    code,
-					    color,
-					    0,0,
-				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->visible_area,TRANSPARENCY_PEN,0);
-            }
-            else
-            {
-                /* 32x32 sprite */
-
-			    drawgfx(bitmap,Machine->gfx[1],
-					    code >> 2,
-					    color,
-					    0,0,
-				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->visible_area,TRANSPARENCY_PEN,0);
-            }
-        }
-	}
+	draw_sprites(bitmap, 0x0f, 0);
 }
 
 
 VIDEO_UPDATE( magspot2 )
 {
-	int offs;
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
+
+	draw_bitmap(bitmap);
+
+	draw_sprites(bitmap, 0x07, 0);
+}
 
 
-	video_update_cosmicg(bitmap, 0);
+VIDEO_UPDATE( devzone )
+{
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-
-    /* draw the sprites */
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (spriteram[offs] != 0)
-        {
-			int code, color;
-
-			code  = ~spriteram[offs  ] & 0x3f;
-			color = ~spriteram[offs+3] & 0x07;
-
-            if (spriteram[offs] & 0x80)
-            {
-                /* 16x16 sprite */
-
-			    drawgfx(bitmap,Machine->gfx[0],
-					    code,
-					    color,
-					    0,0,
-				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->visible_area,TRANSPARENCY_PEN,0);
-            }
-            else
-            {
-                /* 32x32 sprite */
-
-			    drawgfx(bitmap,Machine->gfx[1],
-					    code >> 2,
-					    color,
-					    0,0,
-				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->visible_area,TRANSPARENCY_PEN,0);
-            }
-        }
+    if (background_enable)
+    {
+    	devzone_draw_grid(bitmap);
 	}
+
+	draw_bitmap(bitmap);
+
+	draw_sprites(bitmap, 0x07, 0);
 }
 
 
 VIDEO_UPDATE( nomnlnd )
 {
-	int offs;
+	/* according to the video summation logic on pg4, the trees and river
+	   have the highest priority */
 
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	video_update_magspot2(bitmap, 0);
+	draw_bitmap(bitmap);
 
+	draw_sprites(bitmap, 0x07, 0);
 
-    if (nomnlnd_background_on)
+    if (background_enable)
     {
-		// draw trees
-
-        static UINT8 water_animate=0;
-
-        water_animate++;
-
-    	for(offs=0;offs<2;offs++)
-        {
-			int code,x,y;
-
-			x = nomnlnd_tree_positions[offs][0];
-			y = nomnlnd_tree_positions[offs][1];
-
-			if (flip_screen)
-			{
-				x = 223 - x;
-				y = 223 - y;
-				code = 2 + offs;
-			}
-			else
-			{
-				code = offs;
-			}
-
-    		drawgfx(bitmap,Machine->gfx[2],
-					code,
-					8,
-					0,0,
-					x,y,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-        }
-
-		// draw water
-
-    	for(offs=0;offs<4;offs++)
-        {
-			int x,y;
-
-			x = nomnlnd_water_positions[offs][0];
-			y = nomnlnd_water_positions[offs][1];
-
-			if (flip_screen)
-			{
-				x = 239 - x;
-				y = 223 - y;
-			}
-
-    		drawgfx(bitmap,Machine->gfx[3],
-					water_animate >> 3,
-					9,
-					0,0,
-					x,y,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-        }
-    }
+    	nomnlnd_draw_background(bitmap);
+	}
 }

@@ -427,111 +427,138 @@ MACHINE_DRIVER_END
 
 ROM_START( lkage )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 ) /* Z80 code (main CPU) */
-	ROM_LOAD( "a54-01-1.37", 0x0000, 0x8000, 0x973da9c5 )
-	ROM_LOAD( "a54-02-1.38", 0x8000, 0x8000, 0x27b509da )
+	ROM_LOAD( "a54-01-1.37", 0x0000, 0x8000, CRC(973da9c5) SHA1(ad3b5d6a329b784e47be563c6f8dc628f32ba0a5) )
+	ROM_LOAD( "a54-02-1.38", 0x8000, 0x8000, CRC(27b509da) SHA1(c623950bd7dd2b5699ca948e3731455964106b89) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, 0x541faf9a )
+	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, CRC(541faf9a) SHA1(b142ff3bd198f700697ec06ea92db3109ab5818e) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 68705 MCU code */
-	ROM_LOAD( "a54-09.53",   0x0000, 0x0800, 0x0e8b8846 )
+	ROM_LOAD( "a54-09.53",   0x0000, 0x0800, CRC(0e8b8846) SHA1(a4a105462b0127229bb7edfadd2e581c7e40f1cc) )
 
 	ROM_REGION( 0x4000, REGION_USER1, 0 ) /* data */
-	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, 0x493e76d8 )
+	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, CRC(493e76d8) SHA1(13c6160edd94ba2801fd89bb33bcae3a1e3454ff) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a54-05-1.84", 0x0000, 0x4000, 0x0033c06a )
-	ROM_LOAD( "a54-06-1.85", 0x4000, 0x4000, 0x9f04d9ad )
-	ROM_LOAD( "a54-07-1.86", 0x8000, 0x4000, 0xb20561a4 )
-	ROM_LOAD( "a54-08-1.87", 0xc000, 0x4000, 0x3ff3b230 )
+	ROM_LOAD( "a54-05-1.84", 0x0000, 0x4000, CRC(0033c06a) SHA1(89964503fc338817c6511fd15942741996b7037a) )
+	ROM_LOAD( "a54-06-1.85", 0x4000, 0x4000, CRC(9f04d9ad) SHA1(3b9a4d30348fd02e5c8ae94655548bd4a02dd65d) )
+	ROM_LOAD( "a54-07-1.86", 0x8000, 0x4000, CRC(b20561a4) SHA1(0d6d83dfae79ea133e37704ca47426b4c978fb36) )
+	ROM_LOAD( "a54-08-1.87", 0xc000, 0x4000, CRC(3ff3b230) SHA1(ffcd964efb0af32b5d7a70305dfda615ea95acbe) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, 0x17dfbd14 )	/* unknown */
+	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, CRC(17dfbd14) SHA1(f8f0b6dfedd4ba108dad43ccc7697ef4ab9cbf86) )	/* unknown */
 ROM_END
 
 ROM_START( lkageb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (main CPU) */
-	ROM_LOAD( "ic37_1",      0x0000, 0x8000, 0x05694f7b )
-	ROM_LOAD( "ic38_2",      0x8000, 0x8000, 0x22efe29e )
+	ROM_LOAD( "ic37_1",      0x0000, 0x8000, CRC(05694f7b) SHA1(08a3796d6cf04d64db52ed8208a51084c420e10a) )
+	ROM_LOAD( "ic38_2",      0x8000, 0x8000, CRC(22efe29e) SHA1(f7a29d54081ca7509e822ad8823ec977bccc4a40) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, 0x541faf9a )
+	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, CRC(541faf9a) SHA1(b142ff3bd198f700697ec06ea92db3109ab5818e) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 68705 MCU code */
+	ROM_LOAD( "mcu",   0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x4000, REGION_USER1, 0 ) /* data */
-	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, 0x493e76d8 )
+	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, CRC(493e76d8) SHA1(13c6160edd94ba2801fd89bb33bcae3a1e3454ff) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic93_5",      0x0000, 0x4000, 0x76753e52 )
-	ROM_LOAD( "ic94_6",      0x4000, 0x4000, 0xf33c015c )
-	ROM_LOAD( "ic95_7",      0x8000, 0x4000, 0x0e02c2e8 )
-	ROM_LOAD( "ic96_8",      0xc000, 0x4000, 0x4ef5f073 )
+	ROM_LOAD( "ic93_5",      0x0000, 0x4000, CRC(76753e52) SHA1(13f61969d59b055a5ab40237148e091d7cabe190) )
+	ROM_LOAD( "ic94_6",      0x4000, 0x4000, CRC(f33c015c) SHA1(756326daab255d3a36d97e51ee141b9f7157f12e) )
+	ROM_LOAD( "ic95_7",      0x8000, 0x4000, CRC(0e02c2e8) SHA1(1d8a817ba66cf26a4fe51ae00874c0fe6e7cebe3) )
+	ROM_LOAD( "ic96_8",      0xc000, 0x4000, CRC(4ef5f073) SHA1(dfd234542b28cff74692a1c381772da01e8bb4a7) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, 0x17dfbd14 )	/* unknown */
+	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, CRC(17dfbd14) SHA1(f8f0b6dfedd4ba108dad43ccc7697ef4ab9cbf86) )	/* unknown */
 ROM_END
 
 ROM_START( lkageb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (main CPU) */
-	ROM_LOAD( "lok.a",       0x0000, 0x8000, 0x866df793 )
-	ROM_LOAD( "lok.b",       0x8000, 0x8000, 0xfba9400f )
+	ROM_LOAD( "lok.a",       0x0000, 0x8000, CRC(866df793) SHA1(44a9a773d7bbfc5f9d53f56682438ef8b23ecbd6) )
+	ROM_LOAD( "lok.b",       0x8000, 0x8000, CRC(fba9400f) SHA1(fedcb9b717feaeec31afda098f0ac2744df6c7be) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, 0x541faf9a )
+	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, CRC(541faf9a) SHA1(b142ff3bd198f700697ec06ea92db3109ab5818e) )
 
 	ROM_REGION( 0x4000, REGION_USER1, 0 ) /* data */
-	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, 0x493e76d8 )
+	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, CRC(493e76d8) SHA1(13c6160edd94ba2801fd89bb33bcae3a1e3454ff) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic93_5",      0x0000, 0x4000, 0x76753e52 )
-	ROM_LOAD( "ic94_6",      0x4000, 0x4000, 0xf33c015c )
-	ROM_LOAD( "ic95_7",      0x8000, 0x4000, 0x0e02c2e8 )
-	ROM_LOAD( "ic96_8",      0xc000, 0x4000, 0x4ef5f073 )
+	ROM_LOAD( "ic93_5",      0x0000, 0x4000, CRC(76753e52) SHA1(13f61969d59b055a5ab40237148e091d7cabe190) )
+	ROM_LOAD( "ic94_6",      0x4000, 0x4000, CRC(f33c015c) SHA1(756326daab255d3a36d97e51ee141b9f7157f12e) )
+	ROM_LOAD( "ic95_7",      0x8000, 0x4000, CRC(0e02c2e8) SHA1(1d8a817ba66cf26a4fe51ae00874c0fe6e7cebe3) )
+	ROM_LOAD( "ic96_8",      0xc000, 0x4000, CRC(4ef5f073) SHA1(dfd234542b28cff74692a1c381772da01e8bb4a7) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, 0x17dfbd14 )	/* unknown */
+	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, CRC(17dfbd14) SHA1(f8f0b6dfedd4ba108dad43ccc7697ef4ab9cbf86) )	/* unknown */
 ROM_END
 
 ROM_START( lkageb3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (main CPU) */
-	ROM_LOAD( "z1.bin",      0x0000, 0x8000, 0x60cac488 )
-	ROM_LOAD( "z2.bin",      0x8000, 0x8000, 0x22c95f17 )
+	ROM_LOAD( "z1.bin",      0x0000, 0x8000, CRC(60cac488) SHA1(b61df14159f37143b1faed22d77fc7be31602022) )
+	ROM_LOAD( "z2.bin",      0x8000, 0x8000, CRC(22c95f17) SHA1(8ca438d508a36918778651adf599cf45a7c4a5d7) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, 0x541faf9a )
+	ROM_LOAD( "a54-04.54",   0x0000, 0x8000, CRC(541faf9a) SHA1(b142ff3bd198f700697ec06ea92db3109ab5818e) )
 
 	ROM_REGION( 0x4000, REGION_USER1, 0 ) /* data */
-	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, 0x493e76d8 )
+	ROM_LOAD( "a54-03.51",   0x0000, 0x4000, CRC(493e76d8) SHA1(13c6160edd94ba2801fd89bb33bcae3a1e3454ff) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic93_5",      0x0000, 0x4000, 0x76753e52 )
-	ROM_LOAD( "ic94_6",      0x4000, 0x4000, 0xf33c015c )
-	ROM_LOAD( "ic95_7",      0x8000, 0x4000, 0x0e02c2e8 )
-	ROM_LOAD( "ic96_8",      0xc000, 0x4000, 0x4ef5f073 )
+	ROM_LOAD( "ic93_5",      0x0000, 0x4000, CRC(76753e52) SHA1(13f61969d59b055a5ab40237148e091d7cabe190) )
+	ROM_LOAD( "ic94_6",      0x4000, 0x4000, CRC(f33c015c) SHA1(756326daab255d3a36d97e51ee141b9f7157f12e) )
+	ROM_LOAD( "ic95_7",      0x8000, 0x4000, CRC(0e02c2e8) SHA1(1d8a817ba66cf26a4fe51ae00874c0fe6e7cebe3) )
+	ROM_LOAD( "ic96_8",      0xc000, 0x4000, CRC(4ef5f073) SHA1(dfd234542b28cff74692a1c381772da01e8bb4a7) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, 0x17dfbd14 )	/* unknown */
+	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, CRC(17dfbd14) SHA1(f8f0b6dfedd4ba108dad43ccc7697ef4ab9cbf86) )	/* unknown */
 ROM_END
 
+unsigned char mcu_val;
 
+/*Note:This probably uses another MCU dump,which is undumped.*/
 
 static READ_HANDLER( fake_mcu_r )
 {
-	return 0;
+	switch(mcu_val)
+	{
+		/*These are for the attract mode*/
+		case 0x01: return (mcu_val-1);
+		case 0x90: return (mcu_val+0x43);
+		/*Gameplay Protection,checked in this order at a start of a play*/
+		case 0xa6: return (mcu_val+0x27);
+		case 0x34: return (mcu_val+0x7f);
+		case 0x48: return (mcu_val+0xb7);
+
+		default:   return (mcu_val);
+	}
+}
+
+static WRITE_HANDLER( fake_mcu_w )
+{
+	//if(data != 1 && data != 0xa6 && data != 0x34 && data != 0x48)
+	//	usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
+
+	mcu_val = data;
 }
 
 static READ_HANDLER( fake_status_r )
 {
-	return 3;
+	static int res = 3;// cpu data/mcu ready status
+
+	return res;
 }
 
 DRIVER_INIT( lkageb )
 {
-	install_mem_read_handler(0,0xf062,0xf062,fake_mcu_r);
-	install_mem_read_handler(0,0xf087,0xf087,fake_status_r);
+	install_mem_read_handler (0,0xf062,0xf062,fake_mcu_r);
+	install_mem_read_handler (0,0xf087,0xf087,fake_status_r);
+	install_mem_write_handler(0,0xf062,0xf062,fake_mcu_w );
 }
 
 
 GAME( 1984, lkage,   0,     lkage,  lkage, 0,       ROT0, "Taito Corporation", "The Legend of Kage" )
-GAMEX(1984, lkageb,  lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 1)", GAME_NOT_WORKING )
+GAME( 1984, lkageb,  lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 1)" )
 GAME( 1984, lkageb2, lkage, lkageb, lkage, 0,       ROT0, "bootleg", "The Legend of Kage (bootleg set 2)" )
 GAME( 1984, lkageb3, lkage, lkageb, lkage, 0,       ROT0, "bootleg", "The Legend of Kage (bootleg set 3)" )

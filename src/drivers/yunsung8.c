@@ -504,24 +504,24 @@ OSC : 16.000
 ROM_START( magix )
 
 	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "yunsung8.07", 0x00000, 0x0c000, 0xd4d0b68b )
+	ROM_LOAD( "yunsung8.07", 0x00000, 0x0c000, CRC(d4d0b68b) SHA1(d7e1fb57a14f8b822791b98cecc6d5a053a89e0f) )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 	/* $2000 bytes for bank 0 of video ram (text) */
 	/* $2000 bytes for bank 1 of video ram (background) */
 
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
-	ROM_LOAD( "yunsung8.08", 0x00000, 0x0c000, 0x6fd60be9 )
+	ROM_LOAD( "yunsung8.08", 0x00000, 0x0c000, CRC(6fd60be9) SHA1(87622dc2967842629e90a02b415bec86cc26cbc7) )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
-	ROM_LOAD( "yunsung8.04",  0x000000, 0x80000, 0x0a100d2b )
-	ROM_LOAD( "yunsung8.03",  0x080000, 0x80000, 0xc8cb0373 )
-	ROM_LOAD( "yunsung8.02",  0x100000, 0x80000, 0x09efb8e5 )
-	ROM_LOAD( "yunsung8.01",  0x180000, 0x80000, 0x4590d782 )
+	ROM_LOAD( "yunsung8.04",  0x000000, 0x80000, CRC(0a100d2b) SHA1(c36a2489748c8ac7b6d7457ad09d8153707c85be) )
+	ROM_LOAD( "yunsung8.03",  0x080000, 0x80000, CRC(c8cb0373) SHA1(339c4e0fef44da3cab615e07dc8739bd925ebf28) )
+	ROM_LOAD( "yunsung8.02",  0x100000, 0x80000, CRC(09efb8e5) SHA1(684bb5c4b579f8c77e79aab4decbefea495d9474) )
+	ROM_LOAD( "yunsung8.01",  0x180000, 0x80000, CRC(4590d782) SHA1(af875166207793572b9ecf01bb6a24feba562a96) )
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
-	ROM_LOAD( "yunsung8.05", 0x00000, 0x20000, 0x862d378c )	// only first $8000 bytes != 0
-	ROM_LOAD( "yunsung8.06", 0x20000, 0x20000, 0x8b2ab901 )	// only first $8000 bytes != 0
+	ROM_LOAD( "yunsung8.05", 0x00000, 0x20000, CRC(862d378c) SHA1(a4e2cf14b5b25c6b8725dd285ddea65ce9ee257a) )	// only first $8000 bytes != 0
+	ROM_LOAD( "yunsung8.06", 0x20000, 0x20000, CRC(8b2ab901) SHA1(1a5c05dd0cf830b645357a62d8e6e876b44c6b7f) )	// only first $8000 bytes != 0
 
 ROM_END
 
@@ -544,24 +544,24 @@ Cy7c384A
 ROM_START( cannball )
 
 	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "cannball.07", 0x00000, 0x0c000, 0x17db56b4 )
+	ROM_LOAD( "cannball.07", 0x00000, 0x0c000, CRC(17db56b4) SHA1(032e3dbde0b0e315dcb5f2b31f57e75e78818f2d) )
 	ROM_CONTINUE(            0x10000, 0x14000             )
 	/* $2000 bytes for bank 0 of video ram (text) */
 	/* $2000 bytes for bank 1 of video ram (background) */
 
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
-	ROM_LOAD( "cannball.08", 0x00000, 0x0c000, 0x11403875 )
+	ROM_LOAD( "cannball.08", 0x00000, 0x0c000, CRC(11403875) SHA1(9f583bc4f08e7aef3fd0f3fe3f31cce1d226641a) )
 	ROM_CONTINUE(            0x10000, 0x14000             )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
-	ROM_LOAD( "cannball.01",  0x000000, 0x40000, 0x2d7785e4 )
-	ROM_LOAD( "cannball.02",  0x040000, 0x40000, 0x24df387e )
-	ROM_LOAD( "cannball.03",  0x080000, 0x40000, 0x4d62f192 )
-	ROM_LOAD( "cannball.04",  0x0c0000, 0x40000, 0x37cf8b12 )
+	ROM_LOAD( "cannball.01",  0x000000, 0x40000, CRC(2d7785e4) SHA1(9911354c0be192506f8bfca3e85ede0bbc4828d5) )
+	ROM_LOAD( "cannball.02",  0x040000, 0x40000, CRC(24df387e) SHA1(5f4afe11feb367ca3b3c4f5eb37a6b6c4edb83bb) )
+	ROM_LOAD( "cannball.03",  0x080000, 0x40000, CRC(4d62f192) SHA1(8c60b9b4b36c13c2d145c49413580a10e71eb283) )
+	ROM_LOAD( "cannball.04",  0x0c0000, 0x40000, CRC(37cf8b12) SHA1(f93df8e0babe2c4ec996aa3c2a48bf40a5a02e62) )
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
-	ROM_LOAD( "cannball.05", 0x00000, 0x20000, 0x87c1f1fa )
-	ROM_LOAD( "cannball.06", 0x20000, 0x20000, 0xe722bee8 )
+	ROM_LOAD( "cannball.05", 0x00000, 0x20000, CRC(87c1f1fa) SHA1(dbc568d2133734e41b69fd8d18b76531648b32ef) )
+	ROM_LOAD( "cannball.06", 0x20000, 0x20000, CRC(e722bee8) SHA1(3aed7df9df81a6776b6bf2f5b167965b0d689216) )
 
 ROM_END
 

@@ -301,76 +301,76 @@ MACHINE_DRIVER_END
 
 ROM_START( usg32 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "usg32-0.bin", 0x08000, 0x08000, 0xbc313387 )
+	ROM_LOAD( "usg32-0.bin", 0x08000, 0x08000, CRC(bc313387) SHA1(8df2e2736f14e965303993ae4105176bdd59f49d) )
 	/* for the banked region */
-	ROM_LOAD( "usg32-1.bin", 0x18000, 0x08000, 0xbaaea800 )
-	ROM_LOAD( "usg32-2.bin", 0x28000, 0x08000, 0xd73d7f48 )
-	ROM_LOAD( "usg32-3.bin", 0x38000, 0x08000, 0x22747804 )
+	ROM_LOAD( "usg32-1.bin", 0x18000, 0x08000, CRC(baaea800) SHA1(1f35b8c0d40a923488c591497a3c3806d6d104e1) )
+	ROM_LOAD( "usg32-2.bin", 0x28000, 0x08000, CRC(d73d7f48) SHA1(a76582b80acd38abbb6f0f61d27b2920a3128516) )
+	ROM_LOAD( "usg32-3.bin", 0x38000, 0x08000, CRC(22747804) SHA1(b86af1db1733ddd0629843e44da9bc8d6b102eb6) )
 ROM_END
 
 
 /* You can't change the status of "Sexy Triv I" and "Sexy Triv II" */
 ROM_START( usg83 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "grom08-3.rom", 0x08000, 0x08000, 0xaae84186 )
+	ROM_LOAD( "grom08-3.rom", 0x08000, 0x08000, CRC(aae84186) SHA1(8385b5c1dded1ea6f90c277b045778c7110a45db) )
 	/* for the banked region */
-	ROM_LOAD( "usg83-1.bin", 0x18000, 0x08000, 0x7b520b6f )
-	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, 0x29fbb23b )
-	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, 0x4e110844 )
-	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
+	ROM_LOAD( "usg83-1.bin", 0x18000, 0x08000, CRC(7b520b6f) SHA1(2231e63fecc6e9026dd4b6ee3e21a74cc0e0ae44) )
+	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, CRC(29fbb23b) SHA1(6c2c17897e60ec8d4cdeaf9b382ef00ab71f6e0a) )
+	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, CRC(4e110844) SHA1(b51c596a41760f1f0f70f49ae81f03d98a17fb6f) )
+	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, CRC(437697c4) SHA1(d14ae6f0b7adfb921c69ae3fdcd2cb525cb731fa) )
 ROM_END
 
 /* Similar to 'usg83', but you can change the status of "Sexy Triv I" */
 ROM_START( usg83x )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "usg83-0.bin", 0x08000, 0x08000, 0x4ad9b6e0 )
+	ROM_LOAD( "usg83-0.bin", 0x08000, 0x08000, CRC(4ad9b6e0) SHA1(54940619511b37577bbcd9d05b941079ba793c72) )
 	/* for the banked region */
-	ROM_LOAD( "usg83-1.bin", 0x18000, 0x08000, 0x7b520b6f )
-	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, 0x29fbb23b )
-	ROM_LOAD( "usg83-3.bin", 0x38000, 0x08000, 0x41c475ac )
-	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
+	ROM_LOAD( "usg83-1.bin", 0x18000, 0x08000, CRC(7b520b6f) SHA1(2231e63fecc6e9026dd4b6ee3e21a74cc0e0ae44) )
+	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, CRC(29fbb23b) SHA1(6c2c17897e60ec8d4cdeaf9b382ef00ab71f6e0a) )
+	ROM_LOAD( "usg83-3.bin", 0x38000, 0x08000, CRC(41c475ac) SHA1(48019843e2f57bf4c2fca5136e3d0a64de3dfc04) )
+	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, CRC(437697c4) SHA1(d14ae6f0b7adfb921c69ae3fdcd2cb525cb731fa) )
 ROM_END
 
 /* Similar to 'usg83', but "Sport Triv" and "Rush Hour" aren't available by default */
 ROM_START( usg82 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom0.rom",   0x08000, 0x08000, 0x09c20b78 )
+	ROM_LOAD( "rom0.rom",   0x08000, 0x08000, CRC(09c20b78) SHA1(8b622fef536e98e22866a15c6a5b5da583169e8c) )
 	/* for the banked region */
-	ROM_LOAD( "grom1.rom",   0x18000, 0x08000, 0x915a9ff4 )
-	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, 0x29fbb23b )
-	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, 0x4e110844 )
-	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
+	ROM_LOAD( "grom1.rom",   0x18000, 0x08000, CRC(915a9ff4) SHA1(5007210ed46a9cea530c18a8c4a67b07b87cb781) )
+	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, CRC(29fbb23b) SHA1(6c2c17897e60ec8d4cdeaf9b382ef00ab71f6e0a) )
+	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, CRC(4e110844) SHA1(b51c596a41760f1f0f70f49ae81f03d98a17fb6f) )
+	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, CRC(437697c4) SHA1(d14ae6f0b7adfb921c69ae3fdcd2cb525cb731fa) )
 ROM_END
 
 
 ROM_START( usg185 ) // an upgraded 182?
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "usg182.u12",   0x08000, 0x08000, 0x2f4ed125 )
+	ROM_LOAD( "usg182.u12",   0x08000, 0x08000, CRC(2f4ed125) SHA1(6ea2ce263b8abe8d283d1c85d403ec908a422448) )
 	/* for the banked region */
-	ROM_LOAD( "usg185.u36",   0x10000, 0x10000, 0xb104744d ) // ROM 4
-	ROM_LOAD( "usg185.u35",   0x20000, 0x10000, 0x795e71c8 ) // ROM 3
-	ROM_LOAD( "usg185.u28",   0x30000, 0x10000, 0xc6ba8a81 ) // ROM 2
-	ROM_LOAD( "usg185.u18",   0x40000, 0x10000, 0x1cfd934d ) // ROM 1
+	ROM_LOAD( "usg185.u36",   0x10000, 0x10000, CRC(b104744d) SHA1(fa2128c39a135b119ef625eed447afa523f912c0) ) // ROM 4
+	ROM_LOAD( "usg185.u35",   0x20000, 0x10000, CRC(795e71c8) SHA1(852dceab906f79d05da67a81f855c71738662430) ) // ROM 3
+	ROM_LOAD( "usg185.u28",   0x30000, 0x10000, CRC(c6ba8a81) SHA1(e826492626707e30782d4d2f42419357970d67b3) ) // ROM 2
+	ROM_LOAD( "usg185.u18",   0x40000, 0x10000, CRC(1cfd934d) SHA1(544c41c5fcc2e576f5a8c88996f9257956f6c580) ) // ROM 1
 ROM_END
 
 
 ROM_START( usg252 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "usg252.u12",   0x08000, 0x08000, 0x766a855a )
+	ROM_LOAD( "usg252.u12",   0x08000, 0x08000, CRC(766a855a) SHA1(e67ca9944d92192de423de6aa8a60f2e28b17db1) )
 	/* for the banked region */
-	ROM_LOAD( "usg252.u28",   0x1c000, 0x04000, 0xd44d2ffa )	// ROM 2
+	ROM_LOAD( "usg252.u28",   0x1c000, 0x04000, CRC(d44d2ffa) SHA1(8bd756418b4f8ad11cb0f2044fb91c63d7771497) )	// ROM 2
 	ROM_CONTINUE(             0x18000, 0x04000 )
 	ROM_CONTINUE(             0x14000, 0x04000 )
 	ROM_CONTINUE(             0x10000, 0x04000 )
-	ROM_LOAD( "usg252.u18",   0x2c000, 0x04000, 0x2fff1da2 )	// ROM 1
+	ROM_LOAD( "usg252.u18",   0x2c000, 0x04000, CRC(2fff1da2) SHA1(c44718f7aab82f45379f21b68e8ee2668fe3a378) )	// ROM 1
 	ROM_CONTINUE(             0x28000, 0x04000 )
 	ROM_CONTINUE(             0x24000, 0x04000 )
 	ROM_CONTINUE(             0x20000, 0x04000 )
-	ROM_LOAD( "usg252.u36",   0x3c000, 0x04000, 0xb6d007be )	// ROM 4
+	ROM_LOAD( "usg252.u36",   0x3c000, 0x04000, CRC(b6d007be) SHA1(ec2afe983fd925d9f4602f47ddadd117bcc74972) )	// ROM 4
 	ROM_CONTINUE(             0x38000, 0x04000 )
 	ROM_CONTINUE(             0x34000, 0x04000 )
 	ROM_CONTINUE(             0x30000, 0x04000 )
-	ROM_LOAD( "usg252.u35",   0x4c000, 0x04000, 0x9542295b )	// ROM 3
+	ROM_LOAD( "usg252.u35",   0x4c000, 0x04000, CRC(9542295b) SHA1(56dd7b8fd581779656cb71cc42dbb9f77fb303f4) )	// ROM 3
 	ROM_CONTINUE(             0x48000, 0x04000 )
 	ROM_CONTINUE(             0x44000, 0x04000 )
 	ROM_CONTINUE(             0x40000, 0x04000 )

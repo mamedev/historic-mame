@@ -545,94 +545,94 @@ MACHINE_DRIVER_END
 
 ROM_START( sharkatt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "sharkatt.0",   0x0000, 0x800, 0xc71505e9 )
-	ROM_LOAD( "sharkatt.1",   0x0800, 0x800, 0x3e3abf70 )
-	ROM_LOAD( "sharkatt.2",   0x1000, 0x800, 0x96ded944 )
-	ROM_LOAD( "sharkatt.3",   0x1800, 0x800, 0x007283ae )
-	ROM_LOAD( "sharkatt.4a",  0x2000, 0x800, 0x5cb114a7 )
-	ROM_LOAD( "sharkatt.5",   0x2800, 0x800, 0x1d88aaad )
-	ROM_LOAD( "sharkatt.6",   0x3000, 0x800, 0xc164bad4 )
-	ROM_LOAD( "sharkatt.7",   0x3800, 0x800, 0xd78c4b8b )
-	ROM_LOAD( "sharkatt.8",   0x4000, 0x800, 0x5958476a )
-	ROM_LOAD( "sharkatt.9",   0x4800, 0x800, 0x4915eb37 )
-	ROM_LOAD( "sharkatt.10",  0x5000, 0x800, 0x9d07cb68 )
-	ROM_LOAD( "sharkatt.11",  0x5800, 0x800, 0x21edc962 )
-	ROM_LOAD( "sharkatt.12a", 0x6000, 0x800, 0x5dd8785a )
+	ROM_LOAD( "sharkatt.0",   0x0000, 0x800, CRC(c71505e9) SHA1(068c92e9d797918f281fa509f3c86578b3f0de3a) )
+	ROM_LOAD( "sharkatt.1",   0x0800, 0x800, CRC(3e3abf70) SHA1(ef69e72db583a22093a3c32ba437a6eaef4b132a) )
+	ROM_LOAD( "sharkatt.2",   0x1000, 0x800, CRC(96ded944) SHA1(e60db225111423b0a481e85fe38a85c3ea844351) )
+	ROM_LOAD( "sharkatt.3",   0x1800, 0x800, CRC(007283ae) SHA1(1c311c03729573a4aa6656972e193024364a2f2a) )
+	ROM_LOAD( "sharkatt.4a",  0x2000, 0x800, CRC(5cb114a7) SHA1(4240fe1bcc1501b22da133dfb42746b6752b3aea) )
+	ROM_LOAD( "sharkatt.5",   0x2800, 0x800, CRC(1d88aaad) SHA1(c81f6d75d88af067f33ff84c417908c450e9e280) )
+	ROM_LOAD( "sharkatt.6",   0x3000, 0x800, CRC(c164bad4) SHA1(d72e896bd4b5b0863f2ef8e621e78dd324f9d2c8) )
+	ROM_LOAD( "sharkatt.7",   0x3800, 0x800, CRC(d78c4b8b) SHA1(c0371dccfb997331b31893b54fe3c749632dc171) )
+	ROM_LOAD( "sharkatt.8",   0x4000, 0x800, CRC(5958476a) SHA1(2063a9721a6eec5049191c69089c3d8cc3064b69) )
+	ROM_LOAD( "sharkatt.9",   0x4800, 0x800, CRC(4915eb37) SHA1(56ec2745241afd76aeaa30fb0010cedfd55f307b) )
+	ROM_LOAD( "sharkatt.10",  0x5000, 0x800, CRC(9d07cb68) SHA1(528a42e8e7696452bb9d376222f3cbfcb238c01d) )
+	ROM_LOAD( "sharkatt.11",  0x5800, 0x800, CRC(21edc962) SHA1(8af23e471b6eb11fc55f331ec97a94e2e6c8be80) )
+	ROM_LOAD( "sharkatt.12a", 0x6000, 0x800, CRC(5dd8785a) SHA1(4eaceb781271757c4f4f6f9a4647d394d1912d72) )
 ROM_END
 
 ROM_START( thief )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code */
-	ROM_LOAD( "t8a0ah0a",	0x0000, 0x1000, 0xedbbf71c )
-	ROM_LOAD( "t2662h2",	0x1000, 0x1000, 0x85b4f6ff )
-	ROM_LOAD( "tc162h4",	0x2000, 0x1000, 0x70478a82 )
-	ROM_LOAD( "t0cb4h6",	0x3000, 0x1000, 0x29de0425 )
-	ROM_LOAD( "tc707h8",	0x4000, 0x1000, 0xea8dd847 )
-	ROM_LOAD( "t857bh10",	0x5000, 0x1000, 0x403c33b7 )
-	ROM_LOAD( "t606bh12",	0x6000, 0x1000, 0x4ca2748b )
-	ROM_LOAD( "tae4bh14",	0x7000, 0x1000, 0x22e7dcc3 ) /* diagnostics ROM */
+	ROM_LOAD( "t8a0ah0a",	0x0000, 0x1000, CRC(edbbf71c) SHA1(9f13841c54fbe5449280c24954a45517014a834e) )
+	ROM_LOAD( "t2662h2",	0x1000, 0x1000, CRC(85b4f6ff) SHA1(8e007bfff2f27809e7a9881bc3b2587bf35cff6d) )
+	ROM_LOAD( "tc162h4",	0x2000, 0x1000, CRC(70478a82) SHA1(547bad88a44c63657bf8f65f2877ab1323515521) )
+	ROM_LOAD( "t0cb4h6",	0x3000, 0x1000, CRC(29de0425) SHA1(6614f3ee314ebf2a6469481e8c69c32a93fa8eb5) )
+	ROM_LOAD( "tc707h8",	0x4000, 0x1000, CRC(ea8dd847) SHA1(eab24621abe3735902f03463ee536a0cbfeb7407) )
+	ROM_LOAD( "t857bh10",	0x5000, 0x1000, CRC(403c33b7) SHA1(d1422e74c9ecdadbc238b155f853294f6bb83992) )
+	ROM_LOAD( "t606bh12",	0x6000, 0x1000, CRC(4ca2748b) SHA1(07df2fac63471d716923f859105421e22e5e970e) )
+	ROM_LOAD( "tae4bh14",	0x7000, 0x1000, CRC(22e7dcc3) SHA1(fd4302688905bbd47dfdc1d7cdb55212a5e99f81) ) /* diagnostics ROM */
 
 	ROM_REGION( 0x400, REGION_CPU2, 0 ) /* coprocessor */
-	ROM_LOAD( "b8",			0x000, 0x0200, 0xfe865b2a )
+	ROM_LOAD( "b8",			0x000, 0x0200, CRC(fe865b2a) SHA1(b29144b05cb2846ea9c868ebf843d74d94c7bcc6) )
 	/* B8 is a function dispatch table for the coprocessor (unused) */
-	ROM_LOAD( "c8", 		0x200, 0x0200, 0x7ed5c923 )
+	ROM_LOAD( "c8", 		0x200, 0x0200, CRC(7ed5c923) SHA1(35757d50bfa9ea3cf916576a148064a0f9be8732) )
 	/* C8 is mapped (banked) in CPU1's address space; it contains Z80 code */
 
 	ROM_REGION( 0x6000, REGION_GFX1, 0 ) /* image ROMs for coprocessor */
-	ROM_LOAD16_BYTE( "t079ahd4" ,  0x0001, 0x1000, 0x928bd8ef )
-	ROM_LOAD16_BYTE( "tdda7hh4" ,  0x0000, 0x1000, 0xb48f0862 )
+	ROM_LOAD16_BYTE( "t079ahd4" ,  0x0001, 0x1000, CRC(928bd8ef) SHA1(3a2de005176ef012c0411d7752a69c03fb165b28) )
+	ROM_LOAD16_BYTE( "tdda7hh4" ,  0x0000, 0x1000, CRC(b48f0862) SHA1(c62ccf407e819fe7fa94a4353a17da47b91f0606) )
 	/* next 0x4000 bytes are unmapped (used by Nato Defense) */
 ROM_END
 
 ROM_START( natodef )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code */
-	ROM_LOAD( "natodef.cp0",	0x0000, 0x1000, 0x8397c787 )
-	ROM_LOAD( "natodef.cp2",	0x1000, 0x1000, 0x8cfbf26f )
-	ROM_LOAD( "natodef.cp4",	0x2000, 0x1000, 0xb4c90fb2 )
-	ROM_LOAD( "natodef.cp6",	0x3000, 0x1000, 0xc6d0d35e )
-	ROM_LOAD( "natodef.cp8",	0x4000, 0x1000, 0xe4b6c21e )
-	ROM_LOAD( "natodef.cpa",	0x5000, 0x1000, 0x888ecd42 )
-	ROM_LOAD( "natodef.cpc",	0x6000, 0x1000, 0xcf713bc9 )
-	ROM_LOAD( "natodef.cpe",	0x7000, 0x1000, 0x4eef6bf4 )
-	ROM_LOAD( "natodef.cp5",	0xa000, 0x1000, 0x65c3601b )	/* diagnostics ROM */
+	ROM_LOAD( "natodef.cp0",	0x0000, 0x1000, CRC(8397c787) SHA1(5957613f1ace7dc4612f28f6fba3a7374be905ac) )
+	ROM_LOAD( "natodef.cp2",	0x1000, 0x1000, CRC(8cfbf26f) SHA1(a15f0d5d82cd96b80ee91dc91858b660c5895f34) )
+	ROM_LOAD( "natodef.cp4",	0x2000, 0x1000, CRC(b4c90fb2) SHA1(3ff4691415433863bfe74d51b9f3aa428f3bf88f) )
+	ROM_LOAD( "natodef.cp6",	0x3000, 0x1000, CRC(c6d0d35e) SHA1(d4f34b4930be6dc67d77af691d14ee3b797ec29d) )
+	ROM_LOAD( "natodef.cp8",	0x4000, 0x1000, CRC(e4b6c21e) SHA1(cfdae66494bc2cc9ee414b9adcf8257b7c69bb40) )
+	ROM_LOAD( "natodef.cpa",	0x5000, 0x1000, CRC(888ecd42) SHA1(5af638d7e299046d5803d2764bf42ea44a80374c) )
+	ROM_LOAD( "natodef.cpc",	0x6000, 0x1000, CRC(cf713bc9) SHA1(0687755a6cfd76a920c210bf11530ef4c59d92b0) )
+	ROM_LOAD( "natodef.cpe",	0x7000, 0x1000, CRC(4eef6bf4) SHA1(ab094198ea4d2267194ace5d382abb78d568983a) )
+	ROM_LOAD( "natodef.cp5",	0xa000, 0x1000, CRC(65c3601b) SHA1(c7bf31e6cb781405b3665b3aa93644ed57616256) )	/* diagnostics ROM */
 
 	ROM_REGION( 0x400, REGION_CPU2, 0 ) /* coprocessor */
-	ROM_LOAD( "b8",			0x000, 0x0200, 0xfe865b2a )
-	ROM_LOAD( "c8", 		0x200, 0x0200, 0x7ed5c923 )
+	ROM_LOAD( "b8",			0x000, 0x0200, CRC(fe865b2a) SHA1(b29144b05cb2846ea9c868ebf843d74d94c7bcc6) )
+	ROM_LOAD( "c8", 		0x200, 0x0200, CRC(7ed5c923) SHA1(35757d50bfa9ea3cf916576a148064a0f9be8732) )
 	/* C8 is mapped (banked) in CPU1's address space; it contains Z80 code */
 
 	ROM_REGION( 0x6000, REGION_GFX1, 0 ) /* image ROMs for coprocessor */
-	ROM_LOAD16_BYTE( "natodef.o4",	0x0001, 0x1000, 0x39a868f8 )
-	ROM_LOAD16_BYTE( "natodef.e1",	0x0000, 0x1000, 0xb6d1623d )
-	ROM_LOAD16_BYTE( "natodef.o2",	0x2001, 0x1000, 0x77cc9cfd )
-	ROM_LOAD16_BYTE( "natodef.e3",	0x2000, 0x1000, 0x5302410d )
-	ROM_LOAD16_BYTE( "natodef.o3",	0x4001, 0x1000, 0xb217909a )
-	ROM_LOAD16_BYTE( "natodef.e2",	0x4000, 0x1000, 0x886c3f05 )
+	ROM_LOAD16_BYTE( "natodef.o4",	0x0001, 0x1000, CRC(39a868f8) SHA1(870795f18cd8f831b714b809a380e30b5d323a5f) )
+	ROM_LOAD16_BYTE( "natodef.e1",	0x0000, 0x1000, CRC(b6d1623d) SHA1(0aa15db0e1459a6cc7d2a5bc8e588fd514b71d85) )
+	ROM_LOAD16_BYTE( "natodef.o2",	0x2001, 0x1000, CRC(77cc9cfd) SHA1(1bbed3cb834b844fb2d9d48a3a142edaeb33ccc6) )
+	ROM_LOAD16_BYTE( "natodef.e3",	0x2000, 0x1000, CRC(5302410d) SHA1(e166c151d948f474c134802e3f891982bf370596) )
+	ROM_LOAD16_BYTE( "natodef.o3",	0x4001, 0x1000, CRC(b217909a) SHA1(a26eb5bf2c92d79a75376deb6278710426b34cc5) )
+	ROM_LOAD16_BYTE( "natodef.e2",	0x4000, 0x1000, CRC(886c3f05) SHA1(306c8621455d2d6b7b2f545500b27e56a7159a1b) )
 ROM_END
 
 ROM_START( natodefa )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code */
-	ROM_LOAD( "natodef.cp0",	0x0000, 0x1000, 0x8397c787 )
-	ROM_LOAD( "natodef.cp2",	0x1000, 0x1000, 0x8cfbf26f )
-	ROM_LOAD( "natodef.cp4",	0x2000, 0x1000, 0xb4c90fb2 )
-	ROM_LOAD( "natodef.cp6",	0x3000, 0x1000, 0xc6d0d35e )
-	ROM_LOAD( "natodef.cp8",	0x4000, 0x1000, 0xe4b6c21e )
-	ROM_LOAD( "natodef.cpa",	0x5000, 0x1000, 0x888ecd42 )
-	ROM_LOAD( "natodef.cpc",	0x6000, 0x1000, 0xcf713bc9 )
-	ROM_LOAD( "natodef.cpe",	0x7000, 0x1000, 0x4eef6bf4 )
-	ROM_LOAD( "natodef.cp5",	0xa000, 0x1000, 0x65c3601b )	/* diagnostics ROM */
+	ROM_LOAD( "natodef.cp0",	0x0000, 0x1000, CRC(8397c787) SHA1(5957613f1ace7dc4612f28f6fba3a7374be905ac) )
+	ROM_LOAD( "natodef.cp2",	0x1000, 0x1000, CRC(8cfbf26f) SHA1(a15f0d5d82cd96b80ee91dc91858b660c5895f34) )
+	ROM_LOAD( "natodef.cp4",	0x2000, 0x1000, CRC(b4c90fb2) SHA1(3ff4691415433863bfe74d51b9f3aa428f3bf88f) )
+	ROM_LOAD( "natodef.cp6",	0x3000, 0x1000, CRC(c6d0d35e) SHA1(d4f34b4930be6dc67d77af691d14ee3b797ec29d) )
+	ROM_LOAD( "natodef.cp8",	0x4000, 0x1000, CRC(e4b6c21e) SHA1(cfdae66494bc2cc9ee414b9adcf8257b7c69bb40) )
+	ROM_LOAD( "natodef.cpa",	0x5000, 0x1000, CRC(888ecd42) SHA1(5af638d7e299046d5803d2764bf42ea44a80374c) )
+	ROM_LOAD( "natodef.cpc",	0x6000, 0x1000, CRC(cf713bc9) SHA1(0687755a6cfd76a920c210bf11530ef4c59d92b0) )
+	ROM_LOAD( "natodef.cpe",	0x7000, 0x1000, CRC(4eef6bf4) SHA1(ab094198ea4d2267194ace5d382abb78d568983a) )
+	ROM_LOAD( "natodef.cp5",	0xa000, 0x1000, CRC(65c3601b) SHA1(c7bf31e6cb781405b3665b3aa93644ed57616256) )	/* diagnostics ROM */
 
 	ROM_REGION( 0x400, REGION_CPU2, 0 ) /* coprocessor */
-	ROM_LOAD( "b8",			0x000, 0x0200, 0xfe865b2a )
-	ROM_LOAD( "c8", 		0x200, 0x0200, 0x7ed5c923 )
+	ROM_LOAD( "b8",			0x000, 0x0200, CRC(fe865b2a) SHA1(b29144b05cb2846ea9c868ebf843d74d94c7bcc6) )
+	ROM_LOAD( "c8", 		0x200, 0x0200, CRC(7ed5c923) SHA1(35757d50bfa9ea3cf916576a148064a0f9be8732) )
 	/* C8 is mapped (banked) in CPU1's address space; it contains Z80 code */
 
 	ROM_REGION( 0x6000, REGION_GFX1, 0 ) /* image ROMs for coprocessor */
-	ROM_LOAD16_BYTE( "natodef.o4",	0x0001, 0x1000, 0x39a868f8 )
-	ROM_LOAD16_BYTE( "natodef.e1",	0x0000, 0x1000, 0xb6d1623d )
-	ROM_LOAD16_BYTE( "natodef.o3",	0x2001, 0x1000, 0xb217909a ) /* same ROMs as natodef, */
-	ROM_LOAD16_BYTE( "natodef.e2",	0x2000, 0x1000, 0x886c3f05 ) /* but in a different */
-	ROM_LOAD16_BYTE( "natodef.o2",	0x4001, 0x1000, 0x77cc9cfd ) /* order to give */
-	ROM_LOAD16_BYTE( "natodef.e3",	0x4000, 0x1000, 0x5302410d ) /* different mazes */
+	ROM_LOAD16_BYTE( "natodef.o4",	0x0001, 0x1000, CRC(39a868f8) SHA1(870795f18cd8f831b714b809a380e30b5d323a5f) )
+	ROM_LOAD16_BYTE( "natodef.e1",	0x0000, 0x1000, CRC(b6d1623d) SHA1(0aa15db0e1459a6cc7d2a5bc8e588fd514b71d85) )
+	ROM_LOAD16_BYTE( "natodef.o3",	0x2001, 0x1000, CRC(b217909a) SHA1(a26eb5bf2c92d79a75376deb6278710426b34cc5) ) /* same ROMs as natodef, */
+	ROM_LOAD16_BYTE( "natodef.e2",	0x2000, 0x1000, CRC(886c3f05) SHA1(306c8621455d2d6b7b2f545500b27e56a7159a1b) ) /* but in a different */
+	ROM_LOAD16_BYTE( "natodef.o2",	0x4001, 0x1000, CRC(77cc9cfd) SHA1(1bbed3cb834b844fb2d9d48a3a142edaeb33ccc6) ) /* order to give */
+	ROM_LOAD16_BYTE( "natodef.e3",	0x4000, 0x1000, CRC(5302410d) SHA1(e166c151d948f474c134802e3f891982bf370596) ) /* different mazes */
 ROM_END
 
 

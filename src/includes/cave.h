@@ -6,6 +6,7 @@
 /* Variables defined in vidhrdw */
 
 extern int cave_spritetype;
+extern int cave_row_effect_offs_y;
 
 extern data16_t *cave_videoregs;
 

@@ -924,47 +924,6 @@ const struct RomModule *rom_next_chunk(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	rom_extract_md5 - extract MD5 data from a
-	ROM entry that contains it
--------------------------------------------------*/
-
-int rom_extract_md5(const struct RomModule *romp, UINT8 md5[16])
-{
-	const char *p;
-	int i;
-
-	/* return all 0's if there's no MD5 */
-	memset(md5, 0, 16);
-	if (!ROM_HASMD5(romp))
-		return 0;
-
-	/* the length of the string must be exactly 32+5 characters */
-	if (strlen(romp->_verify) != 32+5)
-		return 0;
-
-	/* extract the raw data */
-	p = romp->_verify + 5;
-	for (i = 0; i < 32; i++)
-	{
-		int digit = tolower(*p++);
-
-		if (digit >= '0' && digit <= '9')
-			digit -= '0';
-		else if (digit >= 'a' && digit <= 'f')
-			digit -= 'a' - 10;
-		else
-			return 0;
-
-		if (i % 2 == 0)
-			md5[i / 2] = digit << 4;
-		else
-			md5[i / 2] |= digit;
-	}
-	return 1;
-}
-
-
-/*-------------------------------------------------
 	debugload - log data to a file
 -------------------------------------------------*/
 
@@ -1048,15 +1007,64 @@ static void handle_missing_file(struct rom_load_data *romdata, const struct RomM
 	}
 }
 
-
 /*-------------------------------------------------
-	verify_length_and_crc - verify the length
-	and CRC of a file
+	dump_wrong_and_correct_checksums - dump an 
+	error message containing the wrong and the
+	correct checksums for a given ROM
 -------------------------------------------------*/
 
-static void verify_length_and_crc(struct rom_load_data *romdata, const char *name, UINT32 explength, UINT32 expcrc)
+static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, const char* hash, const char* acthash)
 {
-	UINT32 actlength, actcrc;
+	unsigned i;
+	char chksum[256];
+	unsigned found_functions;
+	unsigned wrong_functions;
+	
+	found_functions = hash_data_used_functions(hash) & hash_data_used_functions(acthash);
+
+	hash_data_print(hash, found_functions, chksum);
+	sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "    EXPECTED: %s\n", chksum);
+
+	/* We dump informations only of the functions for which MAME provided
+		a correct checksum. Other functions we might have calculated are
+		useless here */
+	hash_data_print(acthash, found_functions, chksum);
+	sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "       FOUND: %s\n", chksum);
+
+	/* For debugging purposes, we check if the checksums available in the
+	   driver are correctly specified or not. This can be done by checking
+	   the return value of one of the extract functions. Maybe we want to
+	   activate this only in debug buils, but many developers only use
+	   release builds, so I keep it as is for now. */
+	wrong_functions = 0;
+	for (i=0;i<HASH_NUM_FUNCTIONS;i++)
+		if (hash_data_extract_printable_checksum(hash, 1<<i, chksum) == 2)
+			wrong_functions |= 1<<i;
+
+	if (wrong_functions)
+	{
+		for (i=0;i<HASH_NUM_FUNCTIONS;i++)
+			if (wrong_functions & (1<<i))
+			{
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], 
+					"\tInvalid %s checksum treated as 0 (check leading zeros)\n",
+					hash_function_name(1<<i));
+
+				romdata->warnings++;
+			}
+	}
+}
+
+
+/*-------------------------------------------------
+	verify_length_and_hash - verify the length
+	and hash signatures of a file
+-------------------------------------------------*/
+
+static void verify_length_and_hash(struct rom_load_data *romdata, const char *name, UINT32 explength, const char* hash)
+{
+	UINT32 actlength;
+	const char* acthash;
 
 	/* we've already complained if there is no file */
 	if (!romdata->file)
@@ -1064,7 +1072,7 @@ static void verify_length_and_crc(struct rom_load_data *romdata, const char *nam
 
 	/* get the length and CRC from the file */
 	actlength = mame_fsize(romdata->file);
-	actcrc = mame_fcrc(romdata->file);
+	acthash = mame_fhash(romdata->file);
 
 	/* verify length */
 	if (explength != actlength)
@@ -1073,20 +1081,26 @@ static void verify_length_and_crc(struct rom_load_data *romdata, const char *nam
 		romdata->warnings++;
 	}
 
-	/* verify CRC */
-	if (expcrc != actcrc)
+	/* If there is no good dump known, write it */
+	if (hash_data_has_info(hash, HASH_INFO_NO_DUMP))
 	{
-		/* expected CRC == 0 means no good dump known */
-		if (expcrc == 0)
 			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NO GOOD DUMP KNOWN\n", name);
-
-		/* inverted CRC means needs redump */
-		else if (expcrc == BADCRC(actcrc))
-			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s ROM NEEDS REDUMP\n",name);
-
+		romdata->warnings++;
+	}
+	/* verify checksums */
+	else if (!hash_data_is_equal(hash, acthash, 0))
+	{
 		/* otherwise, it's just bad */
-		else
-			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n", name, expcrc, actcrc);
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CHECKSUMS:\n", name);
+
+		dump_wrong_and_correct_checksums(romdata, hash, acthash);
+
+		romdata->warnings++;
+	}
+	/* If it matches, but it is actually a bad dump, write it */
+	else if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
+	{
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s ROM NEEDS REDUMP\n",name);
 		romdata->warnings++;
 	}
 }
@@ -1206,13 +1220,12 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 
 /*-------------------------------------------------
 	open_rom_file - open a ROM file, searching
-	up the parent and loading via CRC
+	up the parent and loading by checksum
 -------------------------------------------------*/
 
 static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *romp)
 {
 	const struct GameDriver *drv;
-	char crc[9];
 
 	++romdata->romsloaded;
 
@@ -1220,17 +1233,12 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
 	if (osd_display_loading_rom_message(ROM_GETNAME(romp), romdata))
        return 0;
 
-	/* first attempt reading up the chain through the parents */
+	/* Attempt reading up the chain through the parents. It automatically also 
+	   attempts any kind of load by checksum supported by the archives. */
 	romdata->file = NULL;
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
 		if (drv->name && *drv->name)
-			romdata->file = mame_fopen(drv->name, ROM_GETNAME(romp), FILETYPE_ROM, 0);
-
-	/* if that failed, attempt to open via CRC */
-	sprintf(crc, "%08x", ROM_GETCRC(romp));
-	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
-		if (drv->name && *drv->name)
-			romdata->file = mame_fopen(drv->name, crc, FILETYPE_ROM, 0);
+			romdata->file = mame_fopen_rom(drv->name, ROM_GETNAME(romp), ROM_GETHASHDATA(romp));
 
 	/* return the result */
 	return (romdata->file != NULL);
@@ -1398,8 +1406,8 @@ static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *
 		return 0;
 	}
 
-	/* fill the data */
-	memset(base, ROM_GETCRC(romp) & 0xff, numbytes);
+	/* fill the data (filling value is stored in place of the hashdata) */
+	memset(base, (UINT32)ROM_GETHASHDATA(romp) & 0xff, numbytes);
 	return 1;
 }
 
@@ -1413,7 +1421,7 @@ static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *
 	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
 	int srcregion = ROM_GETFLAGS(romp) >> 24;
 	UINT32 numbytes = ROM_GETLENGTH(romp);
-	UINT32 srcoffs = ROM_GETCRC(romp);
+	UINT32 srcoffs = (UINT32)ROM_GETHASHDATA(romp);  /* srcoffset in place of hashdata */
 	UINT8 *srcbase;
 
 	/* make sure we copy within the region space */
@@ -1529,9 +1537,9 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 				/* if this was the first use of this file, verify the length and CRC */
 				if (baserom)
 				{
-					debugload("Verifying length (%X) and CRC (%08X)\n", explength, ROM_GETCRC(baserom));
-					verify_length_and_crc(romdata, ROM_GETNAME(baserom), explength, ROM_GETCRC(baserom));
-					debugload("Verify succeeded\n");
+					debugload("Verifying length (%X) and checksums\n", explength);
+					verify_length_and_hash(romdata, ROM_GETNAME(baserom), explength, ROM_GETHASHDATA(baserom));
+					debugload("Verify finished\n");
 				}
 
 				/* reseek to the start and clear the baserom so we don't reverify */
@@ -1603,7 +1611,7 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 
 			/* get the header and extract the MD5 */
 			header = *hard_disk_get_header(source);
-			if (!ROM_GETMD5(romp, md5))
+			if (!hash_data_extract_binary_checksum(ROM_GETHASHDATA(romp), HASH_MD5, md5))
 			{
 				printf("%-12s INVALID MD5 IN SOURCE\n", filename);
 				goto fatalerror;
@@ -1612,16 +1620,24 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 			/* verify the MD5 */
 			if (memcmp(md5, header.md5, sizeof(md5)))
 			{
-				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG MD5 (expected: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x found: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x)\n",
-					filename,
-					md5[0], md5[1], md5[2], md5[3], md5[4], md5[5], md5[6], md5[7],
-					md5[8], md5[9], md5[10], md5[11], md5[12], md5[13], md5[14], md5[15],
-					header.md5[0], header.md5[1], header.md5[2], header.md5[3],
-					header.md5[4], header.md5[5], header.md5[6], header.md5[7],
-					header.md5[8], header.md5[9], header.md5[10], header.md5[11],
-					header.md5[12], header.md5[13], header.md5[14], header.md5[15]);
+				char acthash[HASH_BUF_SIZE];
+
+				/* Prepare a hashdata to be able to call dump_wrong_and_correct_checksums() */
+				hash_data_clear(acthash);
+				hash_data_insert_binary_checksum(acthash, HASH_MD5, header.md5);
+
+				/* Emit the warning to the screen */
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CHECKSUMS:\n", filename);
+				dump_wrong_and_correct_checksums(romdata, ROM_GETHASHDATA(romp), acthash);
 				romdata->warnings++;
 			}
+
+			if (hash_data_used_functions(ROM_GETHASHDATA(romp)) != HASH_MD5)
+			{
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s IGNORED ADDITIONAL CHECKSUM INFORMATIONS (ONLY MD5 SUPPORTED)\n",
+					filename);
+			}
+			
 
 			/* make the filename of the diff */
 			strcpy(filename, ROM_GETNAME(romp));
@@ -1787,6 +1803,7 @@ int rom_load(const struct RomModule *romp)
 void printromlist(const struct RomModule *romp,const char *basename)
 {
 	const struct RomModule *region, *rom, *chunk;
+	char buf[512];
 
 	if (!romp) return;
 
@@ -1802,29 +1819,34 @@ void printromlist(const struct RomModule *romp,const char *basename)
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
 			const char *name = ROM_GETNAME(rom);
+			const char* hash = ROM_GETHASHDATA(rom);
+			int length = -1; /* default is for disks! */
+			
 			if (ROMREGION_ISROMDATA(region))
 			{
-				int expchecksum = ROM_GETCRC(rom);
-				int length = 0;
-
+				length = 0;
 				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
 					length += ROM_GETLENGTH(chunk);
+			}
 
-				if (expchecksum)
-					printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
+			printf("%-12s ", name);
+			if (length >= 0)
+				printf("%7d",length);
 				else
-					printf("%-12s  %7d bytes  NO GOOD DUMP KNOWN\n",name,length);
-			}
-			else if (ROMREGION_ISDISKDATA(region))
+				printf("       ");
+
+			if (!hash_data_has_info(hash, HASH_INFO_NO_DUMP))
 			{
-				UINT8 md5[16];
-				rom_extract_md5(rom,md5);
-				printf("%-12s  %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",name,
-					md5[0], md5[1], md5[2], md5[3],
-					md5[4], md5[5], md5[6], md5[7],
-					md5[8], md5[9], md5[10], md5[11],
-					md5[12], md5[13], md5[14], md5[15]);
+				if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
+					printf(" BAD");
+				
+				hash_data_print(hash, 0, buf);
+				printf(" %s", buf);
 			}
+			else
+				printf(" NO GOOD DUMP KNOWN");
+
+			printf("\n");
 		}
 	}
 }

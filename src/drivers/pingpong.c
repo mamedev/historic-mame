@@ -228,19 +228,19 @@ MACHINE_DRIVER_END
 
 ROM_START( pingpong )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
-	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )
+	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, CRC(18552f8f) SHA1(cb03659b5e8a68003e72182a20979384d829280f) )
+	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, CRC(ae5f01e8) SHA1(f0d6a2c64822f2662fed3f601e279db18246f894) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, 0xd1d6f090 )
+	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, CRC(d1d6f090) SHA1(7b7d7cb90bed746dda871227463145263e4b0c5a) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pp_e02.rom",   0x0000, 0x2000, 0x33c687e0 )
+	ROM_LOAD( "pp_e02.rom",   0x0000, 0x2000, CRC(33c687e0) SHA1(7c90de4d163d2ffad00c8cb6a194fa6125a4f4c1) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, 0x3e04f06e ) /* palette (this might be bad) */
-	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, 0x09d96b08 ) /* sprites */
-	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, 0x8456046a ) /* characters */
+	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, CRC(3e04f06e) SHA1(a642c350f148e062d56eb2a2fc53c470603000e3) ) /* palette (this might be bad) */
+	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, CRC(09d96b08) SHA1(81405e33eacc47f91ea4c7221d122f7e6f5b1e5d) ) /* sprites */
+	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, CRC(8456046a) SHA1(8226f1325c14eb8aed5cd3c3d6bad9f9fd88c5fa) ) /* characters */
 ROM_END
 
 

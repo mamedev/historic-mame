@@ -116,7 +116,7 @@ WRITE_HANDLER( commando_c804_w )
 	cpu_set_reset_line(1,(data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 7 flips screen */
-	flip_screen_set(~data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 

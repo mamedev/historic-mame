@@ -56,8 +56,8 @@ static READ_HANDLER( sprint1_read_ports_r )
 	{
 	        /* IN1 */
 	        case 0x28:      if (sprint2_gear1==1) return 0x00; else return 0x80;
-	        case 0x29:      if (sprint2_gear2==1) return 0x00; else return 0x80;
-	        case 0x2A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
+	        case 0x29:      if (sprint2_gear1==2) return 0x00; else return 0x80;
+	        case 0x2A:      if (sprint2_gear1==3) return 0x00; else return 0x80;
 	        case 0x2B:      return ((input_port_2_r(0) & 0x01) << 7);
 	        case 0x2C:      return ((input_port_2_r(0) & 0x02) << 6);
 	        case 0x2D:      return ((input_port_2_r(0) & 0x04) << 5);

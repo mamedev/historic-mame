@@ -46,6 +46,8 @@ extern int frontend_help(char *gamename);
 static int config_handle_arg(char *arg);
 
 static FILE *logfile;
+static int maxlogsize;
+static int curlogsize;
 static int errorlog;
 static int erroroslog;
 static int showconfig;
@@ -85,7 +87,6 @@ static int video_ror = 0;
 static int video_rol = 0;
 static int video_autoror = 0;
 static int video_autorol = 0;
-
 
 static char *win_basename(char *filename);
 static char *win_dirname(char *filename);
@@ -143,6 +144,7 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	if (errorlog && !logfile)
 	{
 		logfile = fopen("error.log","wa");
+		curlogsize = 0;
 		if (!logfile)
 		{
 			perror("unable to open log file\n");
@@ -210,9 +212,11 @@ static struct rc_option opts[] = {
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
+	{ "maxlogsize", NULL, rc_int, &maxlogsize, "10000", 1, 2000000, NULL, "maximum error.log size (in KB)" },
 	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
+	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -781,13 +785,21 @@ void CLIB_DECL logerror(const char *text,...)
 	va_start(arg, text);
 
 	if (errorlog && logfile)
-		vfprintf(logfile, text, arg);
+	{
+		curlogsize += vfprintf(logfile, text, arg);
+		if (curlogsize > maxlogsize * 1024)
+		{
+			fclose(logfile);
+			logfile = NULL;
+			exit(1);
+		}
+	}
 
 	if (erroroslog)
 	{
-		extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
+		//extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
 		char buffer[256];
-		vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
+		_vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
 		OutputDebugString(buffer);
 	}
 	va_end(arg);

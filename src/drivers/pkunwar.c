@@ -201,42 +201,42 @@ MACHINE_DRIVER_END
 
 ROM_START( pkunwar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pkwar.01r",    0x0000, 0x4000, 0xce2d2c7b )
-	ROM_LOAD( "pkwar.02r",    0x4000, 0x4000, 0xabc1f661 )
-	ROM_LOAD( "pkwar.03r",    0xe000, 0x2000, 0x56faebea )
+	ROM_LOAD( "pkwar.01r",    0x0000, 0x4000, CRC(ce2d2c7b) SHA1(2ffe2eb339fd668ec4fe90eff66124a334db0693) )
+	ROM_LOAD( "pkwar.02r",    0x4000, 0x4000, CRC(abc1f661) SHA1(c4bf4a345efd4271617de9f334303d81c6885aa5) )
+	ROM_LOAD( "pkwar.03r",    0xe000, 0x2000, CRC(56faebea) SHA1(dd0406c723a08f5d1120655857a115ab8c2d2a11) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pkwar.01y",    0x0000, 0x2000, 0x428d3b92 )
+	ROM_LOAD( "pkwar.01y",    0x0000, 0x2000, CRC(428d3b92) SHA1(7fe11e8d785fe829d34e512f233bb9ccc70cd431) )
 	ROM_CONTINUE(             0x8000, 0x2000 )
-	ROM_LOAD( "pkwar.02y",    0x2000, 0x2000, 0xce1da7bc )
+	ROM_LOAD( "pkwar.02y",    0x2000, 0x2000, CRC(ce1da7bc) SHA1(a2357b61703a689ce63aec7dd44702b119894f8e) )
 	ROM_CONTINUE(             0xa000, 0x2000 )
-	ROM_LOAD( "pkwar.03y",    0x4000, 0x2000, 0x63204400 )
+	ROM_LOAD( "pkwar.03y",    0x4000, 0x2000, CRC(63204400) SHA1(1ba87ad3425c51150cb65408f04ee0147ef332d3) )
 	ROM_CONTINUE(             0xc000, 0x2000 )
-	ROM_LOAD( "pkwar.04y",    0x6000, 0x2000, 0x061dfca8 )
+	ROM_LOAD( "pkwar.04y",    0x6000, 0x2000, CRC(061dfca8) SHA1(0a2dd8fc790d607195ca18dfc55575c2b9ddc58a) )
 	ROM_CONTINUE(             0xe000, 0x2000 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
+	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, CRC(af0fc5e2) SHA1(480908bf893211b580ae19cfb40dc35ad1bbc343) )
 ROM_END
 
 ROM_START( pkunwarj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pgunwar.6",    0x0000, 0x4000, 0x357f3ef3 )
-	ROM_LOAD( "pgunwar.5",    0x4000, 0x4000, 0x0092e49e )
-	ROM_LOAD( "pkwar.03r",    0xe000, 0x2000, 0x56faebea )
+	ROM_LOAD( "pgunwar.6",    0x0000, 0x4000, CRC(357f3ef3) SHA1(bc651fb7701b395ae8cda1888814af5c5aa325a6) )
+	ROM_LOAD( "pgunwar.5",    0x4000, 0x4000, CRC(0092e49e) SHA1(7945361036f7679e4f4bb6b94f60f3ca09c077dc) )
+	ROM_LOAD( "pkwar.03r",    0xe000, 0x2000, CRC(56faebea) SHA1(dd0406c723a08f5d1120655857a115ab8c2d2a11) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pkwar.01y",    0x0000, 0x2000, 0x428d3b92 )
+	ROM_LOAD( "pkwar.01y",    0x0000, 0x2000, CRC(428d3b92) SHA1(7fe11e8d785fe829d34e512f233bb9ccc70cd431) )
 	ROM_CONTINUE(             0x8000, 0x2000 )
-	ROM_LOAD( "pkwar.02y",    0x2000, 0x2000, 0xce1da7bc )
+	ROM_LOAD( "pkwar.02y",    0x2000, 0x2000, CRC(ce1da7bc) SHA1(a2357b61703a689ce63aec7dd44702b119894f8e) )
 	ROM_CONTINUE(             0xa000, 0x2000 )
-	ROM_LOAD( "pgunwar.2",    0x4000, 0x2000, 0xa2a43443 )
+	ROM_LOAD( "pgunwar.2",    0x4000, 0x2000, CRC(a2a43443) SHA1(4e10569886d364eb2539928ea81dc1565b60b590) )
 	ROM_CONTINUE(             0xc000, 0x2000 )
-	ROM_LOAD( "pkwar.04y",    0x6000, 0x2000, 0x061dfca8 )
+	ROM_LOAD( "pkwar.04y",    0x6000, 0x2000, CRC(061dfca8) SHA1(0a2dd8fc790d607195ca18dfc55575c2b9ddc58a) )
 	ROM_CONTINUE(             0xe000, 0x2000 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
+	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, CRC(af0fc5e2) SHA1(480908bf893211b580ae19cfb40dc35ad1bbc343) )
 ROM_END
 
 

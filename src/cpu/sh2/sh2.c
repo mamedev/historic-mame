@@ -139,10 +139,36 @@ typedef struct
 	int     dma_timer_active[2];
 
 	int cpunb;
+
+	UINT32 total_cycles;
 } SH2;
 
 int sh2_icount;
 static SH2 sh2;
+
+static int sh2_active = 0;
+static int sh2_cycles;
+
+#if BUSY_LOOP_HACKS
+static UINT32 busy_loop_cycles;
+#endif
+
+INLINE UINT32 sh2_gettotalcycles(void)
+{
+	UINT32 retval;
+
+	if(sh2_active)
+	{
+		retval = sh2.total_cycles + sh2_cycles - sh2_icount;
+#if BUSY_LOOP_HACKS
+		retval -= busy_loop_cycles;
+#endif
+	}
+	else
+		retval = sh2.total_cycles;
+
+	return retval;
+}
 
 static const int div_tab[4] = { 3, 5, 7, 0 };
 
@@ -516,7 +542,10 @@ INLINE void BRA(UINT32 d)
 		 * NOP
 		 */
 		if (next_opcode == 0x0009)
+		{
+			busy_loop_cycles += sh2_icount - sh2_icount % 3;
 			sh2_icount %= 3;	/* cycles for BRA $ and NOP taken (3) */
+		}
 	}
 #endif
 	sh2.delay = sh2.pc;
@@ -700,20 +729,20 @@ INLINE void CMPPZ(UINT32 n)
  * CMP_STR	Rm,Rn
  */
 INLINE void CMPSTR(UINT32 m, UINT32 n)
-{
-	UINT32 temp;
-	INT32 HH, HL, LH, LL;
+ {
+  UINT32 temp;
+  INT32 HH, HL, LH, LL;
+  temp = sh2.r[n] ^ sh2.r[m];
+  HH = (temp >> 24) & 0xff;
+  HL = (temp >> 16) & 0xff;
+  LH = (temp >> 8) & 0xff;
+  LL = temp & 0xff;
+  if (HH && HL && LH && LL)
+   sh2.sr &= ~T;
+  else
+   sh2.sr |= T;
+ }
 
-	temp = sh2.r[n] ^ sh2.r[m];
-	HH = (temp >> 12) & 0xff;
-	HL = (temp >> 8) & 0xff;
-	LH = (temp >> 4) & 0xff;
-	LL = temp & 0xff;
-	if (HH && HL && LH && LL)
-		sh2.sr &= ~T;
-	else
-		sh2.sr |= T;
-}
 
 /*	code				 cycles  t-bit
  *	1000 1000 iiii iiii  1		 comparison result
@@ -950,6 +979,7 @@ INLINE void DT(UINT32 n)
 			{
 				sh2.r[n]--;
 				sh2_icount -= 4;	/* cycles for DT (1) and BF taken (3) */
+				busy_loop_cycles += 4;
 			}
 		}
 	}
@@ -2319,6 +2349,9 @@ int sh2_execute(int cycles)
 	if (sh2.cpu_off)
 		return 0;
 
+	sh2_cycles = cycles;
+	sh2_active = 1;
+
 	do
 	{
 		UINT32 opcode;
@@ -2366,6 +2399,15 @@ int sh2_execute(int cycles)
 		sh2_icount--;
 	} while( sh2_icount > 0 );
 
+	sh2.total_cycles += cycles - sh2_icount;
+
+#if BUSY_LOOP_HACKS
+	sh2.total_cycles -= busy_loop_cycles;
+	busy_loop_cycles = 0;
+#endif
+
+	sh2_active = 0;
+
 	return cycles - sh2_icount;
 }
 
@@ -2387,7 +2429,7 @@ void sh2_set_context(void *src)
 static void sh2_timer_resync(void)
 {
 	int divider = div_tab[(sh2.m[5] >> 8) & 3];
-	UINT32 cur_time = cpu_gettotalcycles(sh2.cpunb);
+	UINT32 cur_time = sh2_gettotalcycles();
 	if(divider)
 		sh2.frc += (cur_time - sh2.frc_base) >> divider;
 	sh2.frc_base = cur_time;
@@ -2423,7 +2465,7 @@ static void sh2_timer_activate(void)
 		int divider = div_tab[(sh2.m[5] >> 8) & 3];
 		if(divider) {
 			max_delta <<= divider;
-			sh2.frc_base = cpu_gettotalcycles(sh2.cpunb);
+			sh2.frc_base = sh2_gettotalcycles();
 			timer_adjust(sh2.timer, TIME_IN_CYCLES(max_delta,sh2.cpunb), 0, 0);
 		} else {
 			logerror("SH2: Timer event in %d cycles of external clock", max_delta);

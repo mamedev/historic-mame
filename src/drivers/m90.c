@@ -29,7 +29,9 @@ Notes:
 #include "m92.h"
 #include "machine/irem_cpu.h"
 #include "sndhrdw/m72.h"
+#include "state.h"
 
+static int bankaddress;
 
 extern unsigned char *m90_video_data;
 
@@ -38,6 +40,18 @@ VIDEO_UPDATE( m90_bootleg );
 WRITE_HANDLER( m90_video_control_w );
 WRITE_HANDLER( m90_video_w );
 VIDEO_START( m90 );
+
+/***************************************************************************/
+
+static void set_m90_bank(void)
+{
+	data8_t *rom = memory_region(REGION_USER1);
+
+	if (!rom)
+		usrintf_showmessage("bankswitch with no banked ROM!");
+	else
+		cpu_setbank(1,rom + bankaddress);
+}
 
 /***************************************************************************/
 
@@ -56,12 +70,8 @@ static WRITE_HANDLER( quizf1_bankswitch_w )
 {
 	if (offset == 0)
 	{
-		data8_t *rom = memory_region(REGION_USER1);
-
-		if (!rom)
-			usrintf_showmessage("bankswitch with no banked ROM!");
-		else
-			cpu_setbank(1,rom + 0x10000 * (data & 0x0f));
+		bankaddress = 0x10000 * (data & 0x0f);
+		set_m90_bank();
 	}
 }
 
@@ -625,18 +635,18 @@ MACHINE_DRIVER_END
 
 ROM_START( hasamu )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "hasc-p1.bin",  0x00001, 0x20000, 0x53df9834 )
-	ROM_LOAD16_BYTE( "hasc-p0.bin",  0x00000, 0x20000, 0xdff0ba6e )
+	ROM_LOAD16_BYTE( "hasc-p1.bin",  0x00001, 0x20000, CRC(53df9834) SHA1(2e7e38157a497e3def69c4abcae5803f71a098da) )
+	ROM_LOAD16_BYTE( "hasc-p0.bin",  0x00000, 0x20000, CRC(dff0ba6e) SHA1(83e20b3ae10b57c1e58d3d44bfca2ffd5f142056) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hasc-sp.bin",    0x0000, 0x10000, 0x259b1687 )
+	ROM_LOAD( "hasc-sp.bin",    0x0000, 0x10000, CRC(259b1687) SHA1(39c3a89b1d0f5fec2a94a3048cc4639fe96820e2) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hasc-c0.bin",    0x000000, 0x20000, 0xdd5a2174 )
-	ROM_LOAD( "hasc-c1.bin",    0x020000, 0x20000, 0x76b8217c )
-	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, 0xd90f9a68 )
-	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, 0x6cfe0d39 )
+	ROM_LOAD( "hasc-c0.bin",    0x000000, 0x20000, CRC(dd5a2174) SHA1(c28499419f961d126a838dd1390db74c1475ee02) )
+	ROM_LOAD( "hasc-c1.bin",    0x020000, 0x20000, CRC(76b8217c) SHA1(8b21562875d856a1ce4863f325d049090f5716ae) )
+	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, CRC(d90f9a68) SHA1(c9eab3e87dd5d3eb88461be493d88f5482c9e257) )
+	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, CRC(6cfe0d39) SHA1(104feeacbbc86b168c41cd37fc5797781d9b5a0f) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
 	/* No samples */
@@ -644,37 +654,37 @@ ROM_END
 
 ROM_START( bombrman )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "bbm-p1.bin",   0x00001, 0x20000, 0x982bd166 )
-	ROM_LOAD16_BYTE( "bbm-p0.bin",   0x00000, 0x20000, 0x0a20afcc )
+	ROM_LOAD16_BYTE( "bbm-p1.bin",   0x00001, 0x20000, CRC(982bd166) SHA1(ed67393ec319127616bff5fa3b7f84e8ac8e1d93) )
+	ROM_LOAD16_BYTE( "bbm-p0.bin",   0x00000, 0x20000, CRC(0a20afcc) SHA1(a42b7458938300b0c84c820c1ea627aed9080f1b) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bbm-sp.bin",    0x0000, 0x10000, 0x251090cd )
+	ROM_LOAD( "bbm-sp.bin",    0x0000, 0x10000, CRC(251090cd) SHA1(9245072c1afbfa3e4a1d1549942765d58bd78ed3) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbm-c0.bin",    0x000000, 0x40000, 0x695d2019 )
-	ROM_LOAD( "bbm-c1.bin",    0x040000, 0x40000, 0x4c7c8bbc )
-	ROM_LOAD( "bbm-c2.bin",    0x080000, 0x40000, 0x0700d406 )
-	ROM_LOAD( "bbm-c3.bin",    0x0c0000, 0x40000, 0x3c3613af )
+	ROM_LOAD( "bbm-c0.bin",    0x000000, 0x40000, CRC(695d2019) SHA1(3537e9fb0e7dc13d6113b4af71cba3c73392335a) )
+	ROM_LOAD( "bbm-c1.bin",    0x040000, 0x40000, CRC(4c7c8bbc) SHA1(31ab5557d96c4184a9c02ed1c309f3070d148e25) )
+	ROM_LOAD( "bbm-c2.bin",    0x080000, 0x40000, CRC(0700d406) SHA1(0d43a31a726b0de0004beef41307de2508106b69) )
+	ROM_LOAD( "bbm-c3.bin",    0x0c0000, 0x40000, CRC(3c3613af) SHA1(f9554a73e95102333e449f6e81f2bb817ec00881) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, 0x0fa803fe )
+	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, CRC(0fa803fe) SHA1(d2ac1e624de38bed385442ceae09a76f203fa084) )
 ROM_END
 
 ROM_START( dynablsb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "db2-26.bin",   0x00001, 0x20000, 0xa78c72f8 )
-	ROM_LOAD16_BYTE( "db3-25.bin",   0x00000, 0x20000, 0xbf3137c3 )
+	ROM_LOAD16_BYTE( "db2-26.bin",   0x00001, 0x20000, CRC(a78c72f8) )
+	ROM_LOAD16_BYTE( "db3-25.bin",   0x00000, 0x20000, CRC(bf3137c3) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "db1-17.bin",    0x0000, 0x10000, 0xe693c32f )
+	ROM_LOAD( "db1-17.bin",    0x0000, 0x10000, CRC(e693c32f) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbm-c0.bin",    0x000000, 0x40000, 0x695d2019 )
-	ROM_LOAD( "bbm-c1.bin",    0x040000, 0x40000, 0x4c7c8bbc )
-	ROM_LOAD( "bbm-c2.bin",    0x080000, 0x40000, 0x0700d406 )
-	ROM_LOAD( "bbm-c3.bin",    0x0c0000, 0x40000, 0x3c3613af )
+	ROM_LOAD( "bbm-c0.bin",    0x000000, 0x40000, CRC(695d2019) SHA1(3537e9fb0e7dc13d6113b4af71cba3c73392335a) )
+	ROM_LOAD( "bbm-c1.bin",    0x040000, 0x40000, CRC(4c7c8bbc) SHA1(31ab5557d96c4184a9c02ed1c309f3070d148e25) )
+	ROM_LOAD( "bbm-c2.bin",    0x080000, 0x40000, CRC(0700d406) SHA1(0d43a31a726b0de0004beef41307de2508106b69) )
+	ROM_LOAD( "bbm-c3.bin",    0x0c0000, 0x40000, CRC(3c3613af) SHA1(f9554a73e95102333e449f6e81f2bb817ec00881) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
 	/* Does this have a sample rom? */
@@ -682,136 +692,136 @@ ROM_END
 
 ROM_START( bbmanw )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "db_h0-b.rom",  0x00001, 0x40000, 0x567d3709 )
-	ROM_LOAD16_BYTE( "db_l0-b.rom",  0x00000, 0x40000, 0xe762c22b )
+	ROM_LOAD16_BYTE( "db_h0-b.rom",  0x00001, 0x40000, CRC(567d3709) SHA1(1447fc68798589a8757ee2d133d053b80f052113) )
+	ROM_LOAD16_BYTE( "db_l0-b.rom",  0x00000, 0x40000, CRC(e762c22b) SHA1(b389a65adf1348e6529a992d9b68178d7503238e) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "db_sp.rom",    0x0000, 0x10000, 0x6bc1689e )
+	ROM_LOAD( "db_sp.rom",    0x0000, 0x10000, CRC(6bc1689e) SHA1(099c275632965e19eb6131863f69d2afa9916e90) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, CRC(e7ce058a) SHA1(f2336718ecbce4771f27abcdc4d28fe91c702a9e) )
+	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, CRC(636a78a9) SHA1(98562ea056e5bd36c1a094ae6f267367236d166f) )
+	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, CRC(9ac2142f) SHA1(744fe1acae2fcba0051c303b644081546b4aed9e) )
+	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, CRC(47af1750) SHA1(dce176a6ca95852208b6eba7fb88a0d96467c34b) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "db_w04m.rom",    0x0000, 0x20000, 0x4ad889ed )
+	ROM_LOAD( "db_w04m.rom",    0x0000, 0x20000, CRC(4ad889ed) SHA1(b685892a2348f17f89c6d6ce91216f6cf1e33751) )
 ROM_END
 
 ROM_START( bbmanwj )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "bbm2_h0.bin",  0x00001, 0x40000, 0xe1407b91 )
-	ROM_LOAD16_BYTE( "bbm2_l0.bin",  0x00000, 0x40000, 0x20873b49 )
+	ROM_LOAD16_BYTE( "bbm2_h0.bin",  0x00001, 0x40000, CRC(e1407b91) SHA1(6c94afc6b1d2a469295890ee5dd9d9d5a02ae5c4) )
+	ROM_LOAD16_BYTE( "bbm2_l0.bin",  0x00000, 0x40000, CRC(20873b49) SHA1(30ae595f7961cd56f2506608ae76973b2d0e73ca) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
+	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, CRC(b8d8108c) SHA1(ef4fb46d843819c273db2083754eb312f5abd44e) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, CRC(e7ce058a) SHA1(f2336718ecbce4771f27abcdc4d28fe91c702a9e) )
+	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, CRC(636a78a9) SHA1(98562ea056e5bd36c1a094ae6f267367236d166f) )
+	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, CRC(9ac2142f) SHA1(744fe1acae2fcba0051c303b644081546b4aed9e) )
+	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, CRC(47af1750) SHA1(dce176a6ca95852208b6eba7fb88a0d96467c34b) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
+	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, CRC(0ae655ff) SHA1(78752182662fd8f5b55bbbc2787c9f2b04096ea1) )
 ROM_END
 
 ROM_START( atompunk )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "bm2-ho-a.9f",  0x00001, 0x40000, 0x7d858682 )
-	ROM_LOAD16_BYTE( "bm2-lo-a.9k",  0x00000, 0x40000, 0xc7568031 )
+	ROM_LOAD16_BYTE( "bm2-ho-a.9f",  0x00001, 0x40000, CRC(7d858682) SHA1(03580e2903becb69766023585c6ecffbb8e0b9c5) )
+	ROM_LOAD16_BYTE( "bm2-lo-a.9k",  0x00000, 0x40000, CRC(c7568031) SHA1(ff4d0809260a088f530098a0173eec16fa6396f1) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "db_sp.rom",             0x0000, 0x10000, 0x6bc1689e )
+	ROM_LOAD( "db_sp.rom",             0x0000, 0x10000, CRC(6bc1689e) SHA1(099c275632965e19eb6131863f69d2afa9916e90) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, CRC(e7ce058a) SHA1(f2336718ecbce4771f27abcdc4d28fe91c702a9e) )
+	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, CRC(636a78a9) SHA1(98562ea056e5bd36c1a094ae6f267367236d166f) )
+	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, CRC(9ac2142f) SHA1(744fe1acae2fcba0051c303b644081546b4aed9e) )
+	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, CRC(47af1750) SHA1(dce176a6ca95852208b6eba7fb88a0d96467c34b) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "db_w04m.rom",           0x0000, 0x20000, 0x4ad889ed )
+	ROM_LOAD( "db_w04m.rom",           0x0000, 0x20000, CRC(4ad889ed) SHA1(b685892a2348f17f89c6d6ce91216f6cf1e33751) )
 ROM_END
 
 ROM_START( quizf1 )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "qf1-h0-.77",   0x000001, 0x40000, 0x280e3049 )
-	ROM_LOAD16_BYTE( "qf1-l0-.79",   0x000000, 0x40000, 0x94588a6f )
+	ROM_LOAD16_BYTE( "qf1-h0-.77",   0x000001, 0x40000, CRC(280e3049) SHA1(3b1f303d803f844fd260ed93e4d12a72876e4dbe) )
+	ROM_LOAD16_BYTE( "qf1-l0-.79",   0x000000, 0x40000, CRC(94588a6f) SHA1(ee912739c7719fc2b099da0c63f7473eedcfc718) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x100000, REGION_USER1, 0 )
-	ROM_LOAD16_BYTE( "qf1-h1-.78",   0x000001, 0x80000, 0xc6c2eb2b )	/* banked at 80000-8FFFF */
-	ROM_LOAD16_BYTE( "qf1-l1-.80",   0x000000, 0x80000, 0x3132c144 )
+	ROM_LOAD16_BYTE( "qf1-h1-.78",   0x000001, 0x80000, CRC(c6c2eb2b) SHA1(83de08b0c72da8c3e4786063802d83cb1015032a) )	/* banked at 80000-8FFFF */
+	ROM_LOAD16_BYTE( "qf1-l1-.80",   0x000000, 0x80000, CRC(3132c144) SHA1(de3ae35cdfbb1231cab343142ac700df00f9b77a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, 0x0664fa9f )
+	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, CRC(0664fa9f) SHA1(db003beb4f8461bf4411efa8df9f700770fb153b) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qf1-c0-.81",   0x000000, 0x80000, 0xc26b521e )
-	ROM_LOAD( "qf1-c1-.82",   0x080000, 0x80000, 0xdb9d7394 )
-	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
-	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
+	ROM_LOAD( "qf1-c0-.81",   0x000000, 0x80000, CRC(c26b521e) SHA1(eb5d33a21d1f82e361e0c0945abcf42562c32f03) )
+	ROM_LOAD( "qf1-c1-.82",   0x080000, 0x80000, CRC(db9d7394) SHA1(06b41288c41df8ae0cafb53e77b519d0419cf1d9) )
+	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, CRC(0b1460ae) SHA1(c6394e6bb2a4e3722c20d9f291cb6ba7aad5766d) )
+	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, CRC(2d32ff37) SHA1(f414f6bad1ffc4396fd757155e602bdefdc99408) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, 0xb8d16e7c )
+	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, CRC(b8d16e7c) SHA1(28a20afb171dc68848f9fe793f53571d4c7502dd) )
 ROM_END
 
 ROM_START( riskchal )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "rc_h0.rom",    0x00001, 0x40000, 0x4c9b5344 )
-	ROM_LOAD16_BYTE( "rc_l0.rom",    0x00000, 0x40000, 0x0455895a )
+	ROM_LOAD16_BYTE( "rc_h0.rom",    0x00001, 0x40000, CRC(4c9b5344) )
+	ROM_LOAD16_BYTE( "rc_l0.rom",    0x00000, 0x40000, CRC(0455895a) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, 0xbb80094e )
+	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, CRC(bb80094e) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rc_c0.rom",    0x000000, 0x80000, 0x84d0b907 )
-	ROM_LOAD( "rc_c1.rom",    0x080000, 0x80000, 0xcb3784ef )
-	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
-	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
+	ROM_LOAD( "rc_c0.rom",    0x000000, 0x80000, CRC(84d0b907) )
+	ROM_LOAD( "rc_c1.rom",    0x080000, 0x80000, CRC(cb3784ef) )
+	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, CRC(687164d7) )
+	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, CRC(c86be6af) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, 0xcddac360 )
+	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, CRC(cddac360) )
 ROM_END
 
 ROM_START( gussun )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "l4_h0.rom",    0x00001, 0x40000, 0x9d585e61 )
-	ROM_LOAD16_BYTE( "l4_l0.rom",    0x00000, 0x40000, 0xc7b4c519 )
+	ROM_LOAD16_BYTE( "l4_h0.rom",    0x00001, 0x40000, CRC(9d585e61) )
+	ROM_LOAD16_BYTE( "l4_l0.rom",    0x00000, 0x40000, CRC(c7b4c519) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, 0xbb80094e )
+	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, CRC(bb80094e) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rc_c0.rom",    0x000000, 0x80000, 0x84d0b907 )
-	ROM_LOAD( "rc_c1.rom",    0x080000, 0x80000, 0xcb3784ef )
-	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
-	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
+	ROM_LOAD( "rc_c0.rom",    0x000000, 0x80000, CRC(84d0b907) )
+	ROM_LOAD( "rc_c1.rom",    0x080000, 0x80000, CRC(cb3784ef) )
+	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, CRC(687164d7) )
+	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, CRC(c86be6af) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, 0xcddac360 )
+	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, CRC(cddac360) )
 ROM_END
 
 ROM_START( shisen2 )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "sis2-ho-.rom", 0x00001, 0x40000, 0x6fae0aea )
-	ROM_LOAD16_BYTE( "sis2-lo-.rom", 0x00000, 0x40000, 0x2af25182 )
+	ROM_LOAD16_BYTE( "sis2-ho-.rom", 0x00001, 0x40000, CRC(6fae0aea) )
+	ROM_LOAD16_BYTE( "sis2-lo-.rom", 0x00000, 0x40000, CRC(2af25182) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "sis2-sp-.rom", 0x0000, 0x10000, 0x6fc0ff3a )
+	ROM_LOAD( "sis2-sp-.rom", 0x0000, 0x10000, CRC(6fc0ff3a) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic81.rom",     0x000000, 0x80000, 0x5a7cb88f )
-	ROM_LOAD( "ic82.rom",     0x080000, 0x80000, 0x54a7852c )
-	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, 0x2bd65dc6 )
-	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, 0x876d5fdb )
+	ROM_LOAD( "ic81.rom",     0x000000, 0x80000, CRC(5a7cb88f) )
+	ROM_LOAD( "ic82.rom",     0x080000, 0x80000, CRC(54a7852c) )
+	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, CRC(2bd65dc6) )
+	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, CRC(876d5fdb) )
 ROM_END
 
 
@@ -844,6 +854,12 @@ static DRIVER_INIT( bbmanw )
 static DRIVER_INIT( quizf1 )
 {
 	irem_cpu_decrypt(0,lethalth_decryption_table);
+
+	bankaddress = 0;
+	set_m90_bank();
+
+	state_save_register_int("main", 0, "bankaddress", &bankaddress);
+	state_save_register_func_postload(set_m90_bank);
 }
 
 static DRIVER_INIT( riskchal )

@@ -222,23 +222,23 @@ MACHINE_DRIVER_END
 
 ROM_START( stlforce )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "stlforce.105", 0x00000, 0x20000, 0x3ec804ca )
-	ROM_LOAD16_BYTE( "stlforce.104", 0x00001, 0x20000, 0x69b5f429 )
+	ROM_LOAD16_BYTE( "stlforce.105", 0x00000, 0x20000, CRC(3ec804ca) SHA1(4efcf3321b7111644ac3ee0a83ad95d0571a4021) )
+	ROM_LOAD16_BYTE( "stlforce.104", 0x00001, 0x20000, CRC(69b5f429) SHA1(5bd20fad91a22f4d62f85a5190d72dd824ee26a5) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "stlforce.u1", 0x00000, 0x80000, 0x0a55edf1 ) // 1xxxxxxxxxxxxxxxxxx = 0xFF (can probably be cut)
+	ROM_LOAD( "stlforce.u1", 0x00000, 0x80000, CRC(0a55edf1) SHA1(091f12e8110c62df22b370a2e710c930ba06e8ca) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF (can probably be cut)
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* 16x16 bg tiles & 8x8 tx tiles merged */
-	ROM_LOAD16_BYTE( "stlforce.u27", 0x000001, 0x080000, 0xc42ef365 )
-	ROM_LOAD16_BYTE( "stlforce.u28", 0x000000, 0x080000, 0x6a4b7c98 )
-	ROM_LOAD16_BYTE( "stlforce.u29", 0x100001, 0x080000, 0x30488f44 )
-	ROM_LOAD16_BYTE( "stlforce.u30", 0x100000, 0x080000, 0xcf19d43a )
+	ROM_LOAD16_BYTE( "stlforce.u27", 0x000001, 0x080000, CRC(c42ef365) SHA1(40e9ee29ea14b3bc2fbfa4e6acb7d680cf72f01a) )
+	ROM_LOAD16_BYTE( "stlforce.u28", 0x000000, 0x080000, CRC(6a4b7c98) SHA1(004d7f3c703c6abc79286fa58a4c6793d66fca39) )
+	ROM_LOAD16_BYTE( "stlforce.u29", 0x100001, 0x080000, CRC(30488f44) SHA1(af0d92d8952ce3cd893ab9569afdda12e17795e7) )
+	ROM_LOAD16_BYTE( "stlforce.u30", 0x100000, 0x080000, CRC(cf19d43a) SHA1(dc04930548ac5b7e2b74c6041325eac06e773ed5) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* 16x16 sprites */
-	ROM_LOAD( "stlforce.u31", 0x40000, 0x40000, 0x305a8eb5 )
-	ROM_LOAD( "stlforce.u32", 0x80000, 0x40000, 0x760e8601 )
-	ROM_LOAD( "stlforce.u33", 0xc0000, 0x40000, 0x19415cf3 )
-	ROM_LOAD( "stlforce.u36", 0x00000, 0x40000, 0x037dfa9f )
+	ROM_LOAD( "stlforce.u31", 0x40000, 0x40000, CRC(305a8eb5) SHA1(3a8d26f8bc4ec2e8246d1c59115e21cad876630d) )
+	ROM_LOAD( "stlforce.u32", 0x80000, 0x40000, CRC(760e8601) SHA1(a61f1d8566e09ce811382c6e23f3881e6c438f15) )
+	ROM_LOAD( "stlforce.u33", 0xc0000, 0x40000, CRC(19415cf3) SHA1(31490a1f3321558f82667b63f3963b2ec3fa0c59) )
+	ROM_LOAD( "stlforce.u36", 0x00000, 0x40000, CRC(037dfa9f) SHA1(224f5cd1a95d55b065aef5c0bd03b50cabcb619b) )
 ROM_END
 
 GAMEX(1994, stlforce, 0, stlforce, stlforce, 0, ROT0, "Electronic Devices (Italy) / Ecogames S.L. (Spain)", "Steel Force", GAME_IMPERFECT_SOUND )

@@ -127,9 +127,12 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 #define K055673_LAYOUT_RNG 1
 #define K055673_LAYOUT_LE2 2
 #define K055673_LAYOUT_GX6 3
+
 int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, 
 		void (*callback)(int *code,int *color,int *priority));
 READ16_HANDLER( K055673_rom_word_r );
+READ16_HANDLER( K055673_GX6bpp_rom_word_r );
+
 int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 READ_HANDLER( K053247_r );
@@ -138,10 +141,13 @@ READ16_HANDLER( K053247_word_r );
 WRITE16_HANDLER( K053247_word_w );
 READ32_HANDLER( K053247_long_r );
 WRITE32_HANDLER( K053247_long_w );
-WRITE16_HANDLER( K053247_reg_word_w ); //* OBJSET2 registers
+WRITE16_HANDLER( K053247_reg_word_w ); // "OBJSET2" registers
 WRITE32_HANDLER( K053247_reg_long_w );
 void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
-void K053247GP_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+int K053247_read_register(int regnum);
+void K053247_set_SpriteOffset(int offsx, int offsy);
+void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
+
 READ_HANDLER( K053246_r );
 WRITE_HANDLER( K053246_w );
 READ16_HANDLER( K053246_word_r );
@@ -150,6 +156,7 @@ READ32_HANDLER( K053246_long_r );
 WRITE32_HANDLER( K053246_long_w );
 void K053246_set_OBJCHA_line(int state);
 int K053246_is_IRQ_enabled(void);
+int K053246_read_register(int regnum);
 
 
 /*
@@ -245,20 +252,25 @@ READ16_HANDLER( K056832_ram_word_r );
 WRITE16_HANDLER( K056832_ram_word_w );
 READ16_HANDLER( K056832_ram_half_word_r );
 WRITE16_HANDLER( K056832_ram_half_word_w );
+READ16_HANDLER( K056832_5bpp_rom_word_r );
+READ32_HANDLER( K056832_5bpp_rom_long_r );
+READ32_HANDLER( K056832_6bpp_rom_long_r );
 READ16_HANDLER( K056832_rom_word_r );
-READ16_HANDLER( K056832_word_r );
-WRITE16_HANDLER( K056832_word_w );
+WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
-void K056832_tilemap_update(void);
 void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
 void K056832_tilemap_draw_alpha(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, int alpha);
 void K056832_mark_plane_dirty(int num);
 void K056832_MarkAllTilemapsDirty(void);
-int K056832_is_IRQ_enabled(void);
-int K056832_get_lookup(int bits);
+int  K056832_is_IRQ_enabled(void);
+int  K056832_get_lookup(int bits);
 void K056832_set_tile_bank(int bank);	/* Asterix */
 void K056832_set_LayerAssociation(int status);
+int  K056832_get_LayerAssociation(void);
 void K056832_set_LayerOffset(int layer, int offsx, int offsy);
+void K056832_set_LSRAMPage(int logical_page, int physical_page, int physical_offset);
+void K056832_set_UpdateMode(int mode);
+
 READ32_HANDLER( K056832_ram_long_r );
 READ32_HANDLER( K056832_rom_long_r );
 WRITE32_HANDLER( K056832_ram_long_w );
@@ -270,19 +282,18 @@ WRITE32_HANDLER( K056832_b_long_w );
 #define K056832_BPP_5	1
 #define K056832_BPP_6	2
 #define K056832_BPP_8	3
-READ16_HANDLER( K055550_word_r );
-WRITE16_HANDLER( K055550_word_w );
 
-void K055555_vh_start(void);
+void K055555_vh_start(void); // "PCU2"
+void K055555_write_reg(data8_t regnum, data8_t regdat);
 WRITE16_HANDLER( K055555_word_w );
 WRITE32_HANDLER( K055555_long_w );
-int K055555_read_register(data8_t regnum);
+int K055555_read_register(int regnum);
 int K055555_get_palette_index(int idx);
 
 /* K055555 registers */
 /* priority inputs */
 #define K55_PALBASE_BG		0	// background palette
-#define K55_CONTROL		1	// control register
+#define K55_CONTROL			1	// control register
 #define K55_COLSEL_0		2	// layer A, B color depth
 #define K55_COLSEL_1		3	// layer C, D color depth
 #define K55_COLSEL_2		4	// object, S1 color depth
@@ -297,9 +308,10 @@ int K055555_get_palette_index(int idx);
 #define K55_PRIINP_6		13	// layer C pri
 #define K55_PRIINP_7		14	// layer D pri
 #define K55_PRIINP_8		15	// OBJ pri
-#define K55_PRIINP_9		16	// sub 1 pri
-#define K55_PRIINP_10		17	// sub 2 (PSAC) pri
+#define K55_PRIINP_9		16	// sub 1 (GP:PSAC) pri
+#define K55_PRIINP_10		17	// sub 2 (GX:PSAC) pri
 #define K55_PRIINP_11		18	// sub 3 pri
+
 #define K55_OINPRI_ON 		19	// object priority bits selector
 
 #define K55_PALBASE_A 		23	// layer A palette
@@ -319,6 +331,8 @@ int K055555_get_palette_index(int idx);
 #define K55_SHAD1_PRI		37	// shadow/highlight 1 priority
 #define K55_SHAD2_PRI		38	// shadow/highlight 2 priority
 #define K55_SHAD3_PRI		39	// shadow/highlight 3 priority
+#define K55_SHD_ON			40	// shadow/highlight 
+#define K55_SHD_PRI_SEL		41	// shadow/highlight 
 
 #define K55_VBRI			42	// VRAM layer brightness enable
 #define K55_OSBRI			43	// obj/sub brightness enable, part 1
@@ -343,16 +357,14 @@ int K055555_get_palette_index(int idx);
 
 /* K054338 mixer/alpha blender */
 int K054338_vh_start(void);
-WRITE16_HANDLER( K054338_word_w );
+WRITE16_HANDLER( K054338_word_w ); // "CLCT" registers
 WRITE32_HANDLER( K054338_long_w );
 int K054338_read_register(int reg);
-int K054338_set_alpha_level(int pblend);
-void K054338_fill_solid_bg(struct mame_bitmap *bitmap);
-void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode); //* unified solid/gradient fill
-void K054338_update_all_shadows(void); //*
+void K054338_fill_solid_bg(struct mame_bitmap *bitmap); // solid backcolor fill
 
 #define K338_REG_BGC_R		0
 #define K338_REG_BGC_GB		1
+#define K338_REG_SHAD1R		2
 #define K338_REG_BRI3		12
 #define K338_REG_PBLEND		13
 #define K338_REG_CONTROL	15
@@ -376,15 +388,19 @@ WRITE16_HANDLER( K053250_1_ram_w );
 READ16_HANDLER( K053250_1_ram_r );
 READ16_HANDLER( K053250_1_rom_r );
 void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int chip, int colorbase, int pri);
-WRITE16_HANDLER( K053252_word_w ); //* CCU
+
+// K053252 CRT and interrupt control unit
+WRITE16_HANDLER( K053252_word_w ); // "CCU" registers
 WRITE32_HANDLER( K053252_long_w );
 
-//* GX WIP and debug handlers
-void K053247GX_set_wrport2(data8_t data);
-int K053247GX_combine_col18(int attrib);
-int K055555GX_decode_objcolor(int col18);
-int K055555GX_decode_inpri(int col18);
 
-READ16_HANDLER( K053247_reg_word_r );
-READ16_HANDLER( K055555_word_r );
+// debug handlers
+READ16_HANDLER( K053252_word_r ); 		// CCU
+READ16_HANDLER( K056832_word_r );		// VREG
+READ32_HANDLER( K056832_long_r );
+READ16_HANDLER( K056832_b_word_r );		// 832 ports?
+READ16_HANDLER( K053247_reg_word_r );	// OBJSET2
+READ32_HANDLER( K053247_reg_long_r );
+READ16_HANDLER( K055555_word_r );		// PCU2
 READ32_HANDLER( K055555_long_r );
+READ16_HANDLER( K054338_word_r );		// CLTC

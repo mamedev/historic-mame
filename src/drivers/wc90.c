@@ -385,101 +385,101 @@ MACHINE_DRIVER_END
 
 ROM_START( wc90 )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
-	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, 0x4a1affbc )	/* c000-ffff is not used */
-	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
+	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, CRC(4a1affbc) SHA1(bc531e97ca31c66fdac194e2d79d5c6ba1300556) )	/* c000-ffff is not used */
+	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, CRC(847d439c) SHA1(eade31050da9e84feb4406e327d050a7496871b7) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 96k for code */  /* Second CPU */
-	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
-	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, CRC(dc6eaf00) SHA1(d53924070a59eee35dc0e6465702e4f04e61a073) )	/* c000-ffff is not used */
+	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, CRC(1ac02b3b) SHA1(4f8dc049d404072150342f3c2df04789a73ce244) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, CRC(27c348b3) SHA1(cf19ff4ae4f323ae3e5a905249b7af8ae342202a) )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, CRC(c5219426) SHA1(95e21fcd7de7d418ec287ae7087f6244c6bce5a8) )	/* characters */
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
-	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, CRC(8fa1a1ff) SHA1(ce624617ac8c8b54e41294cf5dca7a09c91f53ba) )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, CRC(99f8841c) SHA1(1969b4d78ca00924a7550826e1c4f4fa0588ef02) )	/* tiles #2 */
 
 	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
-	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, CRC(8232093d) SHA1(59bf9c9a858b47326cf0c64b1ee6ac727a15a20b) )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, CRC(188d3789) SHA1(35654a99a20735bae09b32f74255f8132dee9af2) )	/* tiles #4 */
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
-	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
-	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
-	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, CRC(da1fe922) SHA1(5184053c2b7dd2bf1cd2e9f783686f2c0db7e47b) )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, CRC(9ad03c2c) SHA1(1c1947f9b51a58002e9992fc7c0c1a1c59b4d740) )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, CRC(499dfb1b) SHA1(ac67985d36fea18c82a4ea00019d9e6e4bcb5d0d) )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, CRC(d8ea5c81) SHA1(ccb3f7d565b1c1b8e874a2df91cda40dde2962ed) )	/* sprites  */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 64k for ADPCM samples */
-	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, CRC(2fd692ed) SHA1(0273dc39181504320bec0187d074b2f86c821508) )
 ROM_END
 
 ROM_START( wc90a )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
-	ROM_LOAD( "wc90-1.bin",   0x00000, 0x08000, 0xd1804e1a )	/* c000-ffff is not used */
-	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
+	ROM_LOAD( "wc90-1.bin",   0x00000, 0x08000, CRC(d1804e1a) SHA1(eec7374f4d23c89843f38fffff436635adb43b63) )	/* c000-ffff is not used */
+	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, CRC(847d439c) SHA1(eade31050da9e84feb4406e327d050a7496871b7) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 96k for code */  /* Second CPU */
-	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
-	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, CRC(dc6eaf00) SHA1(d53924070a59eee35dc0e6465702e4f04e61a073) )	/* c000-ffff is not used */
+	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, CRC(1ac02b3b) SHA1(4f8dc049d404072150342f3c2df04789a73ce244) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, CRC(27c348b3) SHA1(cf19ff4ae4f323ae3e5a905249b7af8ae342202a) )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, CRC(c5219426) SHA1(95e21fcd7de7d418ec287ae7087f6244c6bce5a8) )	/* characters */
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
-	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, CRC(8fa1a1ff) SHA1(ce624617ac8c8b54e41294cf5dca7a09c91f53ba) )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, CRC(99f8841c) SHA1(1969b4d78ca00924a7550826e1c4f4fa0588ef02) )	/* tiles #2 */
 
 	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
-	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, CRC(8232093d) SHA1(59bf9c9a858b47326cf0c64b1ee6ac727a15a20b) )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, CRC(188d3789) SHA1(35654a99a20735bae09b32f74255f8132dee9af2) )	/* tiles #4 */
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
-	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
-	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
-	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, CRC(da1fe922) SHA1(5184053c2b7dd2bf1cd2e9f783686f2c0db7e47b) )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, CRC(9ad03c2c) SHA1(1c1947f9b51a58002e9992fc7c0c1a1c59b4d740) )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, CRC(499dfb1b) SHA1(ac67985d36fea18c82a4ea00019d9e6e4bcb5d0d) )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, CRC(d8ea5c81) SHA1(ccb3f7d565b1c1b8e874a2df91cda40dde2962ed) )	/* sprites  */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 64k for ADPCM samples */
-	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, CRC(2fd692ed) SHA1(0273dc39181504320bec0187d074b2f86c821508) )
 ROM_END
 
 ROM_START( wc90t )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
-	ROM_LOAD( "wc90a-1.bin",  0x00000, 0x08000, 0xb6f51a68 )	/* c000-ffff is not used */
-	ROM_LOAD( "wc90a-2.bin",  0x10000, 0x10000, 0xc50f2a98 )	/* banked at f000-f7ff */
+	ROM_LOAD( "wc90a-1.bin",  0x00000, 0x08000, CRC(b6f51a68) )	/* c000-ffff is not used */
+	ROM_LOAD( "wc90a-2.bin",  0x10000, 0x10000, CRC(c50f2a98) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 96k for code */  /* Second CPU */
-	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
-	ROM_LOAD( "wc90a-3.bin",  0x10000, 0x10000, 0x8c7a9542 )	/* banked at f000-f7ff */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, CRC(dc6eaf00) SHA1(d53924070a59eee35dc0e6465702e4f04e61a073) )	/* c000-ffff is not used */
+	ROM_LOAD( "wc90a-3.bin",  0x10000, 0x10000, CRC(8c7a9542) )	/* banked at f000-f7ff */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, CRC(27c348b3) SHA1(cf19ff4ae4f323ae3e5a905249b7af8ae342202a) )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, CRC(c5219426) SHA1(95e21fcd7de7d418ec287ae7087f6244c6bce5a8) )	/* characters */
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
-	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, CRC(8fa1a1ff) SHA1(ce624617ac8c8b54e41294cf5dca7a09c91f53ba) )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, CRC(99f8841c) SHA1(1969b4d78ca00924a7550826e1c4f4fa0588ef02) )	/* tiles #2 */
 
 	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
-	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, CRC(8232093d) SHA1(59bf9c9a858b47326cf0c64b1ee6ac727a15a20b) )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, CRC(188d3789) SHA1(35654a99a20735bae09b32f74255f8132dee9af2) )	/* tiles #4 */
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
-	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
-	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
-	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, CRC(da1fe922) SHA1(5184053c2b7dd2bf1cd2e9f783686f2c0db7e47b) )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, CRC(9ad03c2c) SHA1(1c1947f9b51a58002e9992fc7c0c1a1c59b4d740) )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, CRC(499dfb1b) SHA1(ac67985d36fea18c82a4ea00019d9e6e4bcb5d0d) )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, CRC(d8ea5c81) SHA1(ccb3f7d565b1c1b8e874a2df91cda40dde2962ed) )	/* sprites  */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 64k for ADPCM samples */
-	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, CRC(2fd692ed) SHA1(0273dc39181504320bec0187d074b2f86c821508) )
 ROM_END
 
 

@@ -236,112 +236,112 @@ MACHINE_DRIVER_END
 
 ROM_START( blstroid )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
-	ROM_LOAD16_BYTE( "057-4123",  0x00000, 0x10000, 0xd14badc4 )
-	ROM_LOAD16_BYTE( "057-4121",  0x00001, 0x10000, 0xae3e93e8 )
-	ROM_LOAD16_BYTE( "057-4124",  0x20000, 0x10000, 0xfd2365df )
-	ROM_LOAD16_BYTE( "057-4122",  0x20001, 0x10000, 0xc364706e )
+	ROM_LOAD16_BYTE( "057-4123",  0x00000, 0x10000, CRC(d14badc4) SHA1(ccba30e1eb6b3351cbc7ea18951debb7f7aa4520) )
+	ROM_LOAD16_BYTE( "057-4121",  0x00001, 0x10000, CRC(ae3e93e8) SHA1(66ccff68e9b0f7e97abf126f977775e29ce4eee5) )
+	ROM_LOAD16_BYTE( "057-4124",  0x20000, 0x10000, CRC(fd2365df) SHA1(63ed3f9a92fed985f9ddb93687f11a24c8309f56) )
+	ROM_LOAD16_BYTE( "057-4122",  0x20001, 0x10000, CRC(c364706e) SHA1(e03cd60d139000607d83240b0b48865eafb1188b) )
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
-	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, CRC(baa8b5fe) SHA1(4af1f9bec3ffa856016a89bc20041d572305ba3a) )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
-	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
-	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
-	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, CRC(3c2daa5b) SHA1(2710a05e95afd8452104c4f4a9250a3b7d728a42) ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, CRC(f84f0b97) SHA1(00cb5f1e0f92742683ee71854085b1e4db4bd6bb) ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, CRC(ae5274f0) SHA1(87070e6e51d557c1b10ef32ac0ed670856d5aaf1) ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, CRC(4bb72060) SHA1(94cd1a6900f47a5178cec041fa6dc9cfee1f9c3f) ) /* playfield */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
-	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, 0x4be1d504 ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
-	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, 0x33690379 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
-	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, 0xf10e59ed ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
-	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, 0xa70fc6e6 ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
-	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, 0xf257f738 ) /* mo */
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, CRC(50e0823f) SHA1(f638becad83307ed43d138d452199e4c6725512f) ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, CRC(729de7a9) SHA1(526b08e6d54cd0b991c4207c23119d2940a34009) ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, CRC(090e42ab) SHA1(903aa99e6e39407319f6e90102b24604884ee047) ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, CRC(1ff79e67) SHA1(12d408184f814bab411f567e8b29914a289e3fb8) ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, CRC(4be1d504) SHA1(f41ff2d31e2e0e5b6d89fbbf014ba767c7b9f299) ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, CRC(e4409310) SHA1(09180f1ab2ac8465b6641e94271c72bf566b2597) ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, CRC(7aaca15e) SHA1(4014d60f2b6590c96796dbb2a538f1976194f3e7) ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, CRC(33690379) SHA1(09ddfd18ccab1c639837171a763a981c867af0b1) ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, CRC(2720ee71) SHA1(ebfd58effebadab361dfb4bd77d626911da4409a) ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, CRC(2faecd15) SHA1(7fe9535b9bc72fd5527dbd1079f559ac16f2a31e) ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, CRC(f10e59ed) SHA1(ae8eb11f21036ff536a76da49795712953f31bfc) ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, CRC(4d5fc284) SHA1(c66f95af700828225a62f46437ca83453900f7fc) ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, CRC(a70fc6e6) SHA1(fbf469b8f5c6e69540743748ad994a6490ad7745) ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, CRC(f423b4f8) SHA1(a431686233b104074728a81cf41604deea0fbb56) ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, CRC(56fa3d16) SHA1(9d9c1fb7912774954224d8f0220047324122ab23) ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, CRC(f257f738) SHA1(a5904ec25d2190f11708c2e1e41832fd66332428) ) /* mo */
 ROM_END
 
 
 ROM_START( blstroi2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
-	ROM_LOAD16_BYTE( "blstroid.6c",  0x00000, 0x10000, 0x5a092513 )
-	ROM_LOAD16_BYTE( "blstroid.6b",  0x00001, 0x10000, 0x486aac51 )
-	ROM_LOAD16_BYTE( "blstroid.4c",  0x20000, 0x10000, 0xd0fa38fe )
-	ROM_LOAD16_BYTE( "blstroid.4b",  0x20001, 0x10000, 0x744bf921 )
+	ROM_LOAD16_BYTE( "blstroid.6c",  0x00000, 0x10000, CRC(5a092513) SHA1(11396125842ea3a43d61b4ce266bb8053fdefd73) )
+	ROM_LOAD16_BYTE( "blstroid.6b",  0x00001, 0x10000, CRC(486aac51) SHA1(5e7fe7eb225d1c2701c21658ba2bad14ef7b64b1) )
+	ROM_LOAD16_BYTE( "blstroid.4c",  0x20000, 0x10000, CRC(d0fa38fe) SHA1(8aeae50dff6bcd14ac5faf10f15724b7f7430f5c) )
+	ROM_LOAD16_BYTE( "blstroid.4b",  0x20001, 0x10000, CRC(744bf921) SHA1(bb9118bfc04745df2eb78e1d1e70f7fc2e0509d4) )
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
-	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, CRC(baa8b5fe) SHA1(4af1f9bec3ffa856016a89bc20041d572305ba3a) )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
-	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
-	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
-	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, CRC(3c2daa5b) SHA1(2710a05e95afd8452104c4f4a9250a3b7d728a42) ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, CRC(f84f0b97) SHA1(00cb5f1e0f92742683ee71854085b1e4db4bd6bb) ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, CRC(ae5274f0) SHA1(87070e6e51d557c1b10ef32ac0ed670856d5aaf1) ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, CRC(4bb72060) SHA1(94cd1a6900f47a5178cec041fa6dc9cfee1f9c3f) ) /* playfield */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
-	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, 0x4be1d504 ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
-	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, 0x33690379 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
-	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, 0xf10e59ed ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
-	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, 0xa70fc6e6 ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
-	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, 0xf257f738 ) /* mo */
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, CRC(50e0823f) SHA1(f638becad83307ed43d138d452199e4c6725512f) ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, CRC(729de7a9) SHA1(526b08e6d54cd0b991c4207c23119d2940a34009) ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, CRC(090e42ab) SHA1(903aa99e6e39407319f6e90102b24604884ee047) ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, CRC(1ff79e67) SHA1(12d408184f814bab411f567e8b29914a289e3fb8) ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, CRC(4be1d504) SHA1(f41ff2d31e2e0e5b6d89fbbf014ba767c7b9f299) ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, CRC(e4409310) SHA1(09180f1ab2ac8465b6641e94271c72bf566b2597) ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, CRC(7aaca15e) SHA1(4014d60f2b6590c96796dbb2a538f1976194f3e7) ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, CRC(33690379) SHA1(09ddfd18ccab1c639837171a763a981c867af0b1) ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, CRC(2720ee71) SHA1(ebfd58effebadab361dfb4bd77d626911da4409a) ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, CRC(2faecd15) SHA1(7fe9535b9bc72fd5527dbd1079f559ac16f2a31e) ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, CRC(f10e59ed) SHA1(ae8eb11f21036ff536a76da49795712953f31bfc) ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, CRC(4d5fc284) SHA1(c66f95af700828225a62f46437ca83453900f7fc) ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, CRC(a70fc6e6) SHA1(fbf469b8f5c6e69540743748ad994a6490ad7745) ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, CRC(f423b4f8) SHA1(a431686233b104074728a81cf41604deea0fbb56) ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, CRC(56fa3d16) SHA1(9d9c1fb7912774954224d8f0220047324122ab23) ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, CRC(f257f738) SHA1(a5904ec25d2190f11708c2e1e41832fd66332428) ) /* mo */
 ROM_END
 
 
 ROM_START( blsthead )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
-	ROM_LOAD16_BYTE( "eheadh0.c6",  0x00000, 0x10000, 0x061f0898 )
-	ROM_LOAD16_BYTE( "eheadl0.b6",  0x00001, 0x10000, 0xae8df7cb )
-	ROM_LOAD16_BYTE( "eheadh1.c5",  0x20000, 0x10000, 0x0b7a3cb6 )
-	ROM_LOAD16_BYTE( "eheadl1.b5",  0x20001, 0x10000, 0x43971694 )
+	ROM_LOAD16_BYTE( "eheadh0.c6",  0x00000, 0x10000, CRC(061f0898) SHA1(a277399aa8af665b1fb40c2bb4cf5d36d333db8d) )
+	ROM_LOAD16_BYTE( "eheadl0.b6",  0x00001, 0x10000, CRC(ae8df7cb) SHA1(9eaf377bbfa09e2d3ae77764dbf09ff79b65b34f) )
+	ROM_LOAD16_BYTE( "eheadh1.c5",  0x20000, 0x10000, CRC(0b7a3cb6) SHA1(7dc585ff536055e85b0849aa075f2fdab34a8e1c) )
+	ROM_LOAD16_BYTE( "eheadl1.b5",  0x20001, 0x10000, CRC(43971694) SHA1(a39a8da244645bb56081fd71609a33d8b7d78478) )
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
-	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, CRC(baa8b5fe) SHA1(4af1f9bec3ffa856016a89bc20041d572305ba3a) )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
-	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
-	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
-	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, CRC(3c2daa5b) SHA1(2710a05e95afd8452104c4f4a9250a3b7d728a42) ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, CRC(f84f0b97) SHA1(00cb5f1e0f92742683ee71854085b1e4db4bd6bb) ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, CRC(ae5274f0) SHA1(87070e6e51d557c1b10ef32ac0ed670856d5aaf1) ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, CRC(4bb72060) SHA1(94cd1a6900f47a5178cec041fa6dc9cfee1f9c3f) ) /* playfield */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
-	ROM_LOAD( "mol4.m12",     0x040000, 0x10000, 0x571139ea ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
-	ROM_LOAD( "mol7.m16",     0x070000, 0x10000, 0xd27b2d91 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
-	ROM_LOAD( "moh2.n8",      0x0a0000, 0x10000, 0xa15e79e1 ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
-	ROM_LOAD( "moh4.n12",     0x0c0000, 0x10000, 0x1a74e960 ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
-	ROM_LOAD( "moh7.n16",     0x0f0000, 0x10000, 0xa93cbbe7 ) /* mo */
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, CRC(50e0823f) SHA1(f638becad83307ed43d138d452199e4c6725512f) ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, CRC(729de7a9) SHA1(526b08e6d54cd0b991c4207c23119d2940a34009) ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, CRC(090e42ab) SHA1(903aa99e6e39407319f6e90102b24604884ee047) ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, CRC(1ff79e67) SHA1(12d408184f814bab411f567e8b29914a289e3fb8) ) /* mo */
+	ROM_LOAD( "mol4.m12",     0x040000, 0x10000, CRC(571139ea) SHA1(646ad4d98f2125aa14ff5e39493cbbbd2f7bf3f8) ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, CRC(e4409310) SHA1(09180f1ab2ac8465b6641e94271c72bf566b2597) ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, CRC(7aaca15e) SHA1(4014d60f2b6590c96796dbb2a538f1976194f3e7) ) /* mo */
+	ROM_LOAD( "mol7.m16",     0x070000, 0x10000, CRC(d27b2d91) SHA1(5268936a99927c5d31a5f23129e2169abe29d23c) ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, CRC(2720ee71) SHA1(ebfd58effebadab361dfb4bd77d626911da4409a) ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, CRC(2faecd15) SHA1(7fe9535b9bc72fd5527dbd1079f559ac16f2a31e) ) /* mo */
+	ROM_LOAD( "moh2.n8",      0x0a0000, 0x10000, CRC(a15e79e1) SHA1(3fc8c33f438fd304b566a62bbe0f6e17a696edbc) ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, CRC(4d5fc284) SHA1(c66f95af700828225a62f46437ca83453900f7fc) ) /* mo */
+	ROM_LOAD( "moh4.n12",     0x0c0000, 0x10000, CRC(1a74e960) SHA1(fb5a631254fd770fa9542ca4419d4d16bae9591b) ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, CRC(f423b4f8) SHA1(a431686233b104074728a81cf41604deea0fbb56) ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, CRC(56fa3d16) SHA1(9d9c1fb7912774954224d8f0220047324122ab23) ) /* mo */
+	ROM_LOAD( "moh7.n16",     0x0f0000, 0x10000, CRC(a93cbbe7) SHA1(5583e2421ae25181039c6145319453fb73e7bbf5) ) /* mo */
 ROM_END
 
 

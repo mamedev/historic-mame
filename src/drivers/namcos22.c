@@ -604,77 +604,77 @@ MACHINE_DRIVER_END
 
 ROM_START( alpinerd )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "ar2ver-d.1", 0x00003, 0x100000, 0xfa3380b9 )
-	ROM_LOAD32_BYTE( "ar2ver-d.2", 0x00002, 0x100000, 0x76141352 )
-	ROM_LOAD32_BYTE( "ar2ver-d.3", 0x00001, 0x100000, 0x9beffe6a )
-	ROM_LOAD32_BYTE( "ar2ver-d.4", 0x00000, 0x100000, 0x1f3f1134 )
+	ROM_LOAD32_BYTE( "ar2ver-d.1", 0x00003, 0x100000, CRC(fa3380b9) )
+	ROM_LOAD32_BYTE( "ar2ver-d.2", 0x00002, 0x100000, CRC(76141352) )
+	ROM_LOAD32_BYTE( "ar2ver-d.3", 0x00001, 0x100000, CRC(9beffe6a) )
+	ROM_LOAD32_BYTE( "ar2ver-d.4", 0x00000, 0x100000, CRC(1f3f1134) )
 
 	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
-	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,0xe7be830a ) /* identical to "ar1scg0.12l" */
-	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,0x8f15a686 ) /* identical to "ar1scg1.10l" */
+	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,CRC(e7be830a) ) /* identical to "ar1scg0.12l" */
+	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,CRC(8f15a686) ) /* identical to "ar1scg1.10l" */
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "ar1cg0.12b",  0x200000*0x0, 0x200000,0x93f3a9d9 ) /* identical to "ar1cg0.8d" */
-	ROM_LOAD( "ar1cg1.10d",  0x200000*0x1, 0x200000,0x39828c8b ) /* identical to "ar1cg1.13b" */
-	ROM_LOAD( "ar1cg2.12d",  0x200000*0x2, 0x200000,0xf7b058d1 ) /* identical to "ar1cg2.14b" */
-	ROM_LOAD( "ar1cg3.13d",  0x200000*0x3, 0x200000,0xc28a3d2a ) /* identical to "ar1cg3.16b" */
-	ROM_LOAD( "ar1cg4.14d",  0x200000*0x4, 0x200000,0xabdb161f ) /* identical to "ar1cg4.18b" */
-	ROM_LOAD( "ar1cg5.16d",  0x200000*0x5, 0x200000,0x2381cfea ) /* identical to "ar1cg5.19b" */
-	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,0xca0b6d23 ) /* identical to "ar1cg6.18d" */
-	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,0xffb9f9f9 ) /* identical to "ar1cg7.19d" */
+	ROM_LOAD( "ar1cg0.12b",  0x200000*0x0, 0x200000,CRC(93f3a9d9) ) /* identical to "ar1cg0.8d" */
+	ROM_LOAD( "ar1cg1.10d",  0x200000*0x1, 0x200000,CRC(39828c8b) ) /* identical to "ar1cg1.13b" */
+	ROM_LOAD( "ar1cg2.12d",  0x200000*0x2, 0x200000,CRC(f7b058d1) ) /* identical to "ar1cg2.14b" */
+	ROM_LOAD( "ar1cg3.13d",  0x200000*0x3, 0x200000,CRC(c28a3d2a) ) /* identical to "ar1cg3.16b" */
+	ROM_LOAD( "ar1cg4.14d",  0x200000*0x4, 0x200000,CRC(abdb161f) ) /* identical to "ar1cg4.18b" */
+	ROM_LOAD( "ar1cg5.16d",  0x200000*0x5, 0x200000,CRC(2381cfea) ) /* identical to "ar1cg5.19b" */
+	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) ) /* identical to "ar1cg6.18d" */
+	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) ) /* identical to "ar1cg7.19d" */
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,0x17387b2c ) /* identical to "ar1ccrl.7b" */
-	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,0xee7a4803 ) /* identical to "pr1ccrh.5b" */
+	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) ) /* identical to "ar1ccrl.7b" */
+	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) ) /* identical to "pr1ccrh.5b" */
 
 	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "ar1ptrl0.18k", 0x80000*0x0, 0x80000,0x82405108 )
-	ROM_LOAD( "ar1ptrl1.16k", 0x80000*0x1, 0x80000,0x8739b09c )
-	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,0xbda693a9 )
-	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,0x82797405 )
+	ROM_LOAD( "ar1ptrl0.18k", 0x80000*0x0, 0x80000,CRC(82405108) )
+	ROM_LOAD( "ar1ptrl1.16k", 0x80000*0x1, 0x80000,CRC(8739b09c) )
+	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,CRC(bda693a9) )
+	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,CRC(82797405) )
 
-	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,0x29d92097 )
-	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,0x2232f0a5 )
-	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,0x8ee14e6f )
-	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,0x1094a970 )
+	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(29d92097) )
+	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,CRC(2232f0a5) )
+	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,CRC(8ee14e6f) )
+	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,CRC(1094a970) )
 
-	ROM_LOAD( "ar1ptru0.18f", 0x80000*0x8, 0x80000,0x26d88467 )
-	ROM_LOAD( "ar1ptru1.16f", 0x80000*0x9, 0x80000,0xc5e2c208 )
-	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,0x1321ec59 )
-	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,0x139d7dc1 )
+	ROM_LOAD( "ar1ptru0.18f", 0x80000*0x8, 0x80000,CRC(26d88467) )
+	ROM_LOAD( "ar1ptru1.16f", 0x80000*0x9, 0x80000,CRC(c5e2c208) )
+	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,CRC(1321ec59) )
+	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,CRC(139d7dc1) )
 
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "ar1datab.8k", 0, 0x080000, 0xc26306f8 )
+	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) )
 	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, 0xdbf64562 )
+	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) )
 #endif
 ROM_END
 
 ROM_START( propcycl )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "pr2ver-a.1", 0x00003, 0x100000, 0x3f58594c )
-	ROM_LOAD32_BYTE( "pr2ver-a.2", 0x00002, 0x100000, 0xc0da354a )
-	ROM_LOAD32_BYTE( "pr2ver-a.3", 0x00001, 0x100000, 0x74bf4b74 )
-	ROM_LOAD32_BYTE( "pr2ver-a.4", 0x00000, 0x100000, 0xcf4d5638 )
+	ROM_LOAD32_BYTE( "pr2ver-a.1", 0x00003, 0x100000, CRC(3f58594c) SHA1(5fdd8c61b47b51088a201799ce0c2f08c32ef852) )
+	ROM_LOAD32_BYTE( "pr2ver-a.2", 0x00002, 0x100000, CRC(c0da354a) SHA1(f27a71a62385b842404fcd8ed6513158e3639b8f) )
+	ROM_LOAD32_BYTE( "pr2ver-a.3", 0x00001, 0x100000, CRC(74bf4b74) SHA1(02713aa07238cc9e30163ae24d12c034aa972ff3) )
+	ROM_LOAD32_BYTE( "pr2ver-a.4", 0x00000, 0x100000, CRC(cf4d5638) SHA1(2ddd00d6ec3b85c234820507650d201e176c94a2) )
 
 	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
-	ROM_LOAD( "pr1scg0.12f", 0x200000*0, 0x200000,0x2d09a869 ) /* identical to "pr1scg0.12l" */
-	ROM_LOAD( "pr1scg1.10f", 0x200000*1, 0x200000,0x7433c5bd ) /* identical to "pr1scg1.10l" */
+	ROM_LOAD( "pr1scg0.12f", 0x200000*0, 0x200000,CRC(2d09a869) SHA1(ce8beabaac255e1de29d944c9866022bad713519) ) /* identical to "pr1scg0.12l" */
+	ROM_LOAD( "pr1scg1.10f", 0x200000*1, 0x200000,CRC(7433c5bd) SHA1(a8fd4e73de66e3d443c0cb5b5beef8f467014815) ) /* identical to "pr1scg1.10l" */
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "pr1cg0.12b",  0x200000*0x0, 0x200000,0x0a041238 ) /* identical to "pr1cg0.8d" */
-	ROM_LOAD( "pr1cg1.10d",  0x200000*0x1, 0x200000,0x7d09e6a7 ) /* identical to "pr1cg1.13b" */
-	ROM_LOAD( "pr1cg2.12d",  0x200000*0x2, 0x200000,0x659f006e ) /* identical to "pr1cg2.14b" */
-	ROM_LOAD( "pr1cg3.13d",  0x200000*0x3, 0x200000,0xd30bffa3 ) /* identical to "pr1cg3.16b" */
-	ROM_LOAD( "pr1cg4.14d",  0x200000*0x4, 0x200000,0xf4636cc9 ) /* identical to "pr1cg4.18b" */
-	ROM_LOAD( "pr1cg5.16d",  0x200000*0x5, 0x200000,0x97d333de ) /* identical to "pr1cg5.19b" */
-	ROM_LOAD( "pr1cg6.18a",  0x200000*0x6, 0x200000,0x3e081c03 ) /* identical to "pr1cg6.18d" */
-	ROM_LOAD( "pr1cg7.15a",	 0x200000*0x7, 0x200000,0xec9fc5c8 ) /* identical to "pr1cg7.19d" */
+	ROM_LOAD( "pr1cg0.12b",  0x200000*0x0, 0x200000,CRC(0a041238) SHA1(da5688970432f7fe39337ee9fb46ca25a53fdb11) ) /* identical to "pr1cg0.8d" */
+	ROM_LOAD( "pr1cg1.10d",  0x200000*0x1, 0x200000,CRC(7d09e6a7) SHA1(892317ee0bd796fa5c70d64912ef2e696792a2d4) ) /* identical to "pr1cg1.13b" */
+	ROM_LOAD( "pr1cg2.12d",  0x200000*0x2, 0x200000,CRC(659f006e) SHA1(23362a922cb1100950181fac4858b953d8fc0794) ) /* identical to "pr1cg2.14b" */
+	ROM_LOAD( "pr1cg3.13d",  0x200000*0x3, 0x200000,CRC(d30bffa3) SHA1(2f05227d91d257db9fa8cae114974de602d98729) ) /* identical to "pr1cg3.16b" */
+	ROM_LOAD( "pr1cg4.14d",  0x200000*0x4, 0x200000,CRC(f4636cc9) SHA1(4e01a476e418e5790878572e83a8a11536ce30ae) ) /* identical to "pr1cg4.18b" */
+	ROM_LOAD( "pr1cg5.16d",  0x200000*0x5, 0x200000,CRC(97d333de) SHA1(e8f8383f49aae834dd8b57231b25899703cef966) ) /* identical to "pr1cg5.19b" */
+	ROM_LOAD( "pr1cg6.18a",  0x200000*0x6, 0x200000,CRC(3e081c03) SHA1(6ccb162952f6076359b2785b5d800b39a9a3c5ce) ) /* identical to "pr1cg6.18d" */
+	ROM_LOAD( "pr1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ec9fc5c8) SHA1(16de614b26f06bbddae3ab56cebba45efd6fe81b) ) /* identical to "pr1cg7.19d" */
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "pr1ccrl.3d",	 0x000000, 0x200000,0xe01321fd ) /* identical to "pr1ccrl.7b" */
-	ROM_LOAD( "pr1ccrh.1d",	 0x200000, 0x080000,0x1d68bc31 ) /* identical to "pr1ccrh.5b" */
+	ROM_LOAD( "pr1ccrl.3d",	 0x000000, 0x200000,CRC(e01321fd) SHA1(5938c6eff8e1b3642728c3be733f567a97cb5aad) ) /* identical to "pr1ccrl.7b" */
+	ROM_LOAD( "pr1ccrh.1d",	 0x200000, 0x080000,CRC(1d68bc31) SHA1(d534d0daebe7018e83b57cc7919c294ab89bddc8) ) /* identical to "pr1ccrh.5b" */
 	/* These two ROMs define a huge texture tilemap using the tiles from REGION_GFX2.
 	 * The tilemap has 0x100 columns.
 	 *
@@ -687,19 +687,19 @@ ROM_START( propcycl )
 	 */
 
 	ROM_REGION( 0x80000*9, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "pr1ptrl0.18k", 0x80000*0, 0x80000,0xfddb27a2 )
-	ROM_LOAD( "pr1ptrl1.16k", 0x80000*1, 0x80000,0x6964dd06 )
-	ROM_LOAD( "pr1ptrl2.15k", 0x80000*2, 0x80000,0x4d7ed1d4 )
-	ROM_LOAD( "pr1ptrm0.18j", 0x80000*3, 0x80000,0xb6f204b7 )
-	ROM_LOAD( "pr1ptrm1.16j", 0x80000*4, 0x80000,0x949588b7 )
-	ROM_LOAD( "pr1ptrm2.15j", 0x80000*5, 0x80000,0xdc1cef0a )
-	ROM_LOAD( "pr1ptru0.18f", 0x80000*6, 0x80000,0x5d66a7c4 )
-	ROM_LOAD( "pr1ptru1.16f", 0x80000*7, 0x80000,0xe9a3f72b )
-	ROM_LOAD( "pr1ptru2.15f", 0x80000*8, 0x80000,0xc346a842 )
+	ROM_LOAD( "pr1ptrl0.18k", 0x80000*0, 0x80000,CRC(fddb27a2) SHA1(6e837b45e3f9ed7ca3d1a457d0f0124de5618d1f) )
+	ROM_LOAD( "pr1ptrl1.16k", 0x80000*1, 0x80000,CRC(6964dd06) SHA1(f38a550165504693d20892a7dcfaf01db19b04ef) )
+	ROM_LOAD( "pr1ptrl2.15k", 0x80000*2, 0x80000,CRC(4d7ed1d4) SHA1(8f72864a06ff8962e640cb36d062bddf5d110308) )
+	ROM_LOAD( "pr1ptrm0.18j", 0x80000*3, 0x80000,CRC(b6f204b7) SHA1(3b34f240b399b6406faaf338ae0ab536247e64a6) )
+	ROM_LOAD( "pr1ptrm1.16j", 0x80000*4, 0x80000,CRC(949588b7) SHA1(fdaf50ff2496200b9c981efc18b035f3c0a96ace) )
+	ROM_LOAD( "pr1ptrm2.15j", 0x80000*5, 0x80000,CRC(dc1cef0a) SHA1(8cbc02cf73fac3cc110b676d77602ae628385eae) )
+	ROM_LOAD( "pr1ptru0.18f", 0x80000*6, 0x80000,CRC(5d66a7c4) SHA1(c9ed1c18724192d45c1f6b40096f15d02baf2401) )
+	ROM_LOAD( "pr1ptru1.16f", 0x80000*7, 0x80000,CRC(e9a3f72b) SHA1(f967e1adf8eee4fffdf4288d36a93c5bb4f9a126) )
+	ROM_LOAD( "pr1ptru2.15f", 0x80000*8, 0x80000,CRC(c346a842) SHA1(299bc0a30d0e74d8adfa3dc605aebf6439f5bc18) )
 
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SS22-BIOS ver1.41 */
-	ROM_LOAD( "pr1data.8k", 0, 0x080000, 0x2e5767a4 )
+	ROM_LOAD( "pr1data.8k", 0, 0x080000, CRC(2e5767a4) )
 	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
 	/* not yet dumped */
 #endif
@@ -707,181 +707,181 @@ ROM_END
 
 ROM_START( victlap )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "advprgll.4d", 0x00003, 0x80000, 0x4dc1b0ab )
-	ROM_LOAD32_BYTE( "advprglm.2d", 0x00002, 0x80000, 0x7b658bef )
-	ROM_LOAD32_BYTE( "advprgum.8d", 0x00001, 0x80000, 0xaf67f2fb )
-	ROM_LOAD32_BYTE( "advprguu.6d", 0x00000, 0x80000, 0xb60e5d2b )
+	ROM_LOAD32_BYTE( "advprgll.4d", 0x00003, 0x80000, CRC(4dc1b0ab) )
+	ROM_LOAD32_BYTE( "advprglm.2d", 0x00002, 0x80000, CRC(7b658bef) )
+	ROM_LOAD32_BYTE( "advprgum.8d", 0x00001, 0x80000, CRC(af67f2fb) )
+	ROM_LOAD32_BYTE( "advprguu.6d", 0x00000, 0x80000, CRC(b60e5d2b) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "adv1cg0.2a",  0x200000*0x0, 0x200000,0x13353848 )
-	ROM_LOAD( "adv1cg1.1c",  0x200000*0x1, 0x200000,0x1542066c )
-	ROM_LOAD( "adv1cg2.2d",  0x200000*0x2, 0x200000,0x111f371c )
-	ROM_LOAD( "adv1cg3.1e",  0x200000*0x3, 0x200000,0xa077831f )
-	ROM_LOAD( "adv1cg4.2f",  0x200000*0x4, 0x200000,0x71abdacf )
-	ROM_LOAD( "adv1cg5.1j",  0x200000*0x5, 0x200000,0xcd6cd798 )
-	ROM_LOAD( "adv1cg6.2k",  0x200000*0x6, 0x200000,0x94bdafba )
-	ROM_LOAD( "adv1cg7.1n",	 0x200000*0x7, 0x200000,0x18823475 )
+	ROM_LOAD( "adv1cg0.2a",  0x200000*0x0, 0x200000,CRC(13353848) )
+	ROM_LOAD( "adv1cg1.1c",  0x200000*0x1, 0x200000,CRC(1542066c) )
+	ROM_LOAD( "adv1cg2.2d",  0x200000*0x2, 0x200000,CRC(111f371c) )
+	ROM_LOAD( "adv1cg3.1e",  0x200000*0x3, 0x200000,CRC(a077831f) )
+	ROM_LOAD( "adv1cg4.2f",  0x200000*0x4, 0x200000,CRC(71abdacf) )
+	ROM_LOAD( "adv1cg5.1j",  0x200000*0x5, 0x200000,CRC(cd6cd798) )
+	ROM_LOAD( "adv1cg6.2k",  0x200000*0x6, 0x200000,CRC(94bdafba) )
+	ROM_LOAD( "adv1cg7.1n",	 0x200000*0x7, 0x200000,CRC(18823475) )
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "adv1ccrl.5a",	 0x000000, 0x200000,0xdd2b96ae ) /* ident to adv1ccrl.5l */
-	ROM_LOAD( "adv1ccrh.5c",	 0x200000, 0x080000,0x5719844a ) /* ident to adv1ccrh.5j */
+	ROM_LOAD( "adv1ccrl.5a",	 0x000000, 0x200000,CRC(dd2b96ae) ) /* ident to adv1ccrl.5l */
+	ROM_LOAD( "adv1ccrh.5c",	 0x200000, 0x080000,CRC(5719844a) ) /* ident to adv1ccrh.5j */
 
 	ROM_REGION( 0x80000*9, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "adv1pot.l0", 0x80000*0, 0x80000,0x3b85b2a4 )
-	ROM_LOAD( "adv1pot.l1", 0x80000*1, 0x80000,0x601d6488 )
-	ROM_LOAD( "adv1pot.l2", 0x80000*2, 0x80000,0xa0323a84 )
-	ROM_LOAD( "adv1pot.m0", 0x80000*3, 0x80000,0x20951aa2 )
-	ROM_LOAD( "adv1pot.m1", 0x80000*4, 0x80000,0x5aed6fbf )
-	ROM_LOAD( "adv1pot.m2", 0x80000*5, 0x80000,0x00cbff92 )
-	ROM_LOAD( "adv1pot.u0", 0x80000*6, 0x80000,0x6b73dd2a )
-	ROM_LOAD( "adv1pot.u1", 0x80000*7, 0x80000,0xc8788f74 )
-	ROM_LOAD( "adv1pot.u2", 0x80000*8, 0x80000,0xe67f29c5 )
+	ROM_LOAD( "adv1pot.l0", 0x80000*0, 0x80000,CRC(3b85b2a4) )
+	ROM_LOAD( "adv1pot.l1", 0x80000*1, 0x80000,CRC(601d6488) )
+	ROM_LOAD( "adv1pot.l2", 0x80000*2, 0x80000,CRC(a0323a84) )
+	ROM_LOAD( "adv1pot.m0", 0x80000*3, 0x80000,CRC(20951aa2) )
+	ROM_LOAD( "adv1pot.m1", 0x80000*4, 0x80000,CRC(5aed6fbf) )
+	ROM_LOAD( "adv1pot.m2", 0x80000*5, 0x80000,CRC(00cbff92) )
+	ROM_LOAD( "adv1pot.u0", 0x80000*6, 0x80000,CRC(6b73dd2a) )
+	ROM_LOAD( "adv1pot.u1", 0x80000*7, 0x80000,CRC(c8788f74) )
+	ROM_LOAD( "adv1pot.u2", 0x80000*8, 0x80000,CRC(e67f29c5) )
 
 	ROM_REGION( 8*1024, REGION_USER1, 0 ) /* EPROM */
-	ROM_LOAD( "eeprom.9e", 0, 8*1024, 0x35fd9f7a )
+	ROM_LOAD( "eeprom.9e", 0, 8*1024, CRC(35fd9f7a) )
 
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* MCU */
-	ROM_LOAD( "adv1data.6r", 0, 0x080000, 0x10eecdb4 )
+	ROM_LOAD( "adv1data.6r", 0, 0x080000, CRC(10eecdb4) )
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "adv1wav0.10r", 0x000000, 0x100000, 0xf07b2d9d )
-	ROM_LOAD( "adv1wav1.10p", 0x100000, 0x100000, 0x737f3c7a )
-	ROM_LOAD( "adv1wav2.10n", 0x200000, 0x100000, 0xc1a5ca5e )
-	ROM_LOAD( "adv1wav3.10l", 0x300000, 0x100000, 0xfc6b8004 )
+	ROM_LOAD( "adv1wav0.10r", 0x000000, 0x100000, CRC(f07b2d9d) )
+	ROM_LOAD( "adv1wav1.10p", 0x100000, 0x100000, CRC(737f3c7a) )
+	ROM_LOAD( "adv1wav2.10n", 0x200000, 0x100000, CRC(c1a5ca5e) )
+	ROM_LOAD( "adv1wav3.10l", 0x300000, 0x100000, CRC(fc6b8004) )
 #endif
 ROM_END
 
 ROM_START( raveracw )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "rv2prllb.4d", 0x00003, 0x80000, 0x3017cd1e )
-	ROM_LOAD32_BYTE( "rv2prlmb.2d", 0x00002, 0x80000, 0x894be0c3 )
-	ROM_LOAD32_BYTE( "rv2prumb.8d", 0x00001, 0x80000, 0x6414a800 )
-	ROM_LOAD32_BYTE( "rv2pruub.6d", 0x00000, 0x80000, 0xa9f18714 )
+	ROM_LOAD32_BYTE( "rv2prllb.4d", 0x00003, 0x80000, CRC(3017cd1e) )
+	ROM_LOAD32_BYTE( "rv2prlmb.2d", 0x00002, 0x80000, CRC(894be0c3) )
+	ROM_LOAD32_BYTE( "rv2prumb.8d", 0x00001, 0x80000, CRC(6414a800) )
+	ROM_LOAD32_BYTE( "rv2pruub.6d", 0x00000, 0x80000, CRC(a9f18714) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rv1cg0.1a", 0x200000*0x0, 0x200000,0xc518f06b ) /* rv1cg0.2a */
-	ROM_LOAD( "rv1cg1.1c", 0x200000*0x1, 0x200000,0x6628f792 ) /* rv1cg1.2c */
-	ROM_LOAD( "rv1cg2.1d", 0x200000*0x2, 0x200000,0x0b707cc5 ) /* rv1cg2.2d */
-	ROM_LOAD( "rv1cg3.1e", 0x200000*0x3, 0x200000,0x39b62921 ) /* rv1cg3.2e */
-	ROM_LOAD( "rv1cg4.1f", 0x200000*0x4, 0x200000,0xa9791ea2 ) /* rv1cg4.2f */
-	ROM_LOAD( "rv1cg5.1j", 0x200000*0x5, 0x200000,0xb2c79ec1 ) /* rv1cg5.2j */
-	ROM_LOAD( "rv1cg6.1k", 0x200000*0x6, 0x200000,0x8cddedc2 ) /* rv1cg6.2k */
-	ROM_LOAD( "rv1cg7.1n", 0x200000*0x7, 0x200000,0xb39147ca ) /* rv1cg7.2n */
+	ROM_LOAD( "rv1cg0.1a", 0x200000*0x0, 0x200000,CRC(c518f06b) ) /* rv1cg0.2a */
+	ROM_LOAD( "rv1cg1.1c", 0x200000*0x1, 0x200000,CRC(6628f792) ) /* rv1cg1.2c */
+	ROM_LOAD( "rv1cg2.1d", 0x200000*0x2, 0x200000,CRC(0b707cc5) ) /* rv1cg2.2d */
+	ROM_LOAD( "rv1cg3.1e", 0x200000*0x3, 0x200000,CRC(39b62921) ) /* rv1cg3.2e */
+	ROM_LOAD( "rv1cg4.1f", 0x200000*0x4, 0x200000,CRC(a9791ea2) ) /* rv1cg4.2f */
+	ROM_LOAD( "rv1cg5.1j", 0x200000*0x5, 0x200000,CRC(b2c79ec1) ) /* rv1cg5.2j */
+	ROM_LOAD( "rv1cg6.1k", 0x200000*0x6, 0x200000,CRC(8cddedc2) ) /* rv1cg6.2k */
+	ROM_LOAD( "rv1cg7.1n", 0x200000*0x7, 0x200000,CRC(b39147ca) ) /* rv1cg7.2n */
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rv1ccrl.5a",	 0x000000, 0x200000,0xbc634f72 ) /* rv1ccrl.5l */
-	ROM_LOAD( "rv1ccrh.5c",	 0x200000, 0x080000,0xa741b262 ) /* rv1ccrh.5j */
+	ROM_LOAD( "rv1ccrl.5a",	 0x000000, 0x200000,CRC(bc634f72) ) /* rv1ccrl.5l */
+	ROM_LOAD( "rv1ccrh.5c",	 0x200000, 0x080000,CRC(a741b262) ) /* rv1ccrh.5j */
 
 	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "rv1potl0.5b", 0x80000*0x0, 0x80000,0xde2ce519 )
-	ROM_LOAD( "rv1potl1.4b", 0x80000*0x1, 0x80000,0x2215cb5a )
-	ROM_LOAD( "rv1potl2.3b", 0x80000*0x2, 0x80000,0xddb15bf7 )
-	ROM_LOAD( "rv1potl3.2b", 0x80000*0x3, 0x80000,0xfa9361ca )
-	ROM_LOAD( "rv1potm0.5c", 0x80000*0x4, 0x80000,0x3c024f3a )
-	ROM_LOAD( "rv1potm1.4c", 0x80000*0x5, 0x80000,0xb1a32a68 )
-	ROM_LOAD( "rv1potm2.3c", 0x80000*0x6, 0x80000,0xa414fe15 )
-	ROM_LOAD( "rv1potm3.2c", 0x80000*0x7, 0x80000,0x2953bbb4 )
-	ROM_LOAD( "rv1potu0.5d", 0x80000*0x8, 0x80000,0xb9eaf3cc )
-	ROM_LOAD( "rv1potu1.4d", 0x80000*0x9, 0x80000,0xa5c55258 )
-	ROM_LOAD( "rv1potu2.3d", 0x80000*0xa, 0x80000,0xc18fcb74 )
-	ROM_LOAD( "rv1potu3.2d", 0x80000*0xb, 0x80000,0x79735aaa )
+	ROM_LOAD( "rv1potl0.5b", 0x80000*0x0, 0x80000,CRC(de2ce519) )
+	ROM_LOAD( "rv1potl1.4b", 0x80000*0x1, 0x80000,CRC(2215cb5a) )
+	ROM_LOAD( "rv1potl2.3b", 0x80000*0x2, 0x80000,CRC(ddb15bf7) )
+	ROM_LOAD( "rv1potl3.2b", 0x80000*0x3, 0x80000,CRC(fa9361ca) )
+	ROM_LOAD( "rv1potm0.5c", 0x80000*0x4, 0x80000,CRC(3c024f3a) )
+	ROM_LOAD( "rv1potm1.4c", 0x80000*0x5, 0x80000,CRC(b1a32a68) )
+	ROM_LOAD( "rv1potm2.3c", 0x80000*0x6, 0x80000,CRC(a414fe15) )
+	ROM_LOAD( "rv1potm3.2c", 0x80000*0x7, 0x80000,CRC(2953bbb4) )
+	ROM_LOAD( "rv1potu0.5d", 0x80000*0x8, 0x80000,CRC(b9eaf3cc) )
+	ROM_LOAD( "rv1potu1.4d", 0x80000*0x9, 0x80000,CRC(a5c55258) )
+	ROM_LOAD( "rv1potu2.3d", 0x80000*0xa, 0x80000,CRC(c18fcb74) )
+	ROM_LOAD( "rv1potu3.2d", 0x80000*0xb, 0x80000,CRC(79735aaa) )
 
 	ROM_REGION( 0x2100, REGION_USER1, 0 )
-	ROM_LOAD( "rv1eeprm.9e", 0x0000, 0x2000, 0x801222e6 ) /* EPROM */
-	ROM_LOAD( "rr1gam.2d",   0x2000, 0x0100, 0xb2161bce ) /* identical to rr1gam.3d,rr1gam.4d */
+	ROM_LOAD( "rv1eeprm.9e", 0x0000, 0x2000, CRC(801222e6) ) /* EPROM */
+	ROM_LOAD( "rr1gam.2d",   0x2000, 0x0100, CRC(b2161bce) ) /* identical to rr1gam.3d,rr1gam.4d */
 
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* MCU */
-	ROM_LOAD( "rv1data.6r", 0, 0x080000, 0xd358ec20 )
+	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) )
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "rv1wav0.10r", 0x000000, 0x100000, 0x5aef8143 )
-	ROM_LOAD( "rv1wav1.10p", 0x100000, 0x100000, 0x9ed9e6b3 )
-	ROM_LOAD( "rv1wav2.10n", 0x200000, 0x100000, 0x5af9dc83 )
-	ROM_LOAD( "rv1wav3.10l", 0x300000, 0x100000, 0xffb9ad75 )
+	ROM_LOAD( "rv1wav0.10r", 0x000000, 0x100000, CRC(5aef8143) )
+	ROM_LOAD( "rv1wav1.10p", 0x100000, 0x100000, CRC(9ed9e6b3) )
+	ROM_LOAD( "rv1wav2.10n", 0x200000, 0x100000, CRC(5af9dc83) )
+	ROM_LOAD( "rv1wav3.10l", 0x300000, 0x100000, CRC(ffb9ad75) )
 #endif
 ROM_END
 
 ROM_START( rrs1 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "rrs1prg.ll", 0x00003, 0x80000, 0xfbf785a2 )
-	ROM_LOAD32_BYTE( "rrs1prg.lm", 0x00002, 0x80000, 0x562f747a )
-	ROM_LOAD32_BYTE( "rrs1prg.um", 0x00001, 0x80000, 0x93259fb0 )
-	ROM_LOAD32_BYTE( "rrs1prg.uu", 0x00000, 0x80000, 0x31cdefe8 )
+	ROM_LOAD32_BYTE( "rrs1prg.ll", 0x00003, 0x80000, CRC(fbf785a2) )
+	ROM_LOAD32_BYTE( "rrs1prg.lm", 0x00002, 0x80000, CRC(562f747a) )
+	ROM_LOAD32_BYTE( "rrs1prg.um", 0x00001, 0x80000, CRC(93259fb0) )
+	ROM_LOAD32_BYTE( "rrs1prg.uu", 0x00000, 0x80000, CRC(31cdefe8) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*4, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rrs1-cg0.1a", 0x200000*0x0, 0x200000,0x714c0091 )
-	ROM_LOAD( "rrs1-cg1.2a", 0x200000*0x1, 0x200000,0x836545c1 )
-	ROM_LOAD( "rrs1-cg2.3a", 0x200000*0x2, 0x200000,0x00e9799d )
-	ROM_LOAD( "rrs1-cg3.5a", 0x200000*0x3, 0x200000,0x3858983f )
+	ROM_LOAD( "rrs1-cg0.1a", 0x200000*0x0, 0x200000,CRC(714c0091) )
+	ROM_LOAD( "rrs1-cg1.2a", 0x200000*0x1, 0x200000,CRC(836545c1) )
+	ROM_LOAD( "rrs1-cg2.3a", 0x200000*0x2, 0x200000,CRC(00e9799d) )
+	ROM_LOAD( "rrs1-cg3.5a", 0x200000*0x3, 0x200000,CRC(3858983f) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rrs1ccrh.bin", 0x000000, 0x080000,0xbd3c86ab )
-	ROM_LOAD( "rrs1ccrl.bin", 0x200000, 0x200000,0x304a8b57 )
+	ROM_LOAD( "rrs1ccrh.bin", 0x000000, 0x080000,CRC(bd3c86ab) )
+	ROM_LOAD( "rrs1ccrl.bin", 0x200000, 0x200000,CRC(304a8b57) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "rrs1-pot.l0", 0x80000*0, 0x80000,0x9376c384 )
-	ROM_LOAD( "rrs1-pot.l1", 0x80000*1, 0x80000,0x094fa832 )
-	ROM_LOAD( "rrs1-pot.m0", 0x80000*2, 0x80000,0xb47a7f8b )
-	ROM_LOAD( "rrs1-pot.m1", 0x80000*3, 0x80000,0x27260361 )
-	ROM_LOAD( "rrs1-pot.u0", 0x80000*4, 0x80000,0x74d6ec84 )
-	ROM_LOAD( "rrs1-pot.u1", 0x80000*5, 0x80000,0xf527caaa )
+	ROM_LOAD( "rrs1-pot.l0", 0x80000*0, 0x80000,CRC(9376c384) )
+	ROM_LOAD( "rrs1-pot.l1", 0x80000*1, 0x80000,CRC(094fa832) )
+	ROM_LOAD( "rrs1-pot.m0", 0x80000*2, 0x80000,CRC(b47a7f8b) )
+	ROM_LOAD( "rrs1-pot.m1", 0x80000*3, 0x80000,CRC(27260361) )
+	ROM_LOAD( "rrs1-pot.u0", 0x80000*4, 0x80000,CRC(74d6ec84) )
+	ROM_LOAD( "rrs1-pot.u1", 0x80000*5, 0x80000,CRC(f527caaa) )
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS/music data? */
-	ROM_LOAD( "rrs1data.bin", 0, 0x080000, 0xb7063aa8 )
+	ROM_LOAD( "rrs1data.bin", 0, 0x080000, CRC(b7063aa8) )
 	/* 0x00000..0x001ff: data
 	 * 0x10000..0x1fc7f: music data?
 	 * 0x20000..0x2f57f: music data?
 	 * 0x30000..0x334ff: code? contains english text
 	 */
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "rrs1wav0.bin", 0x100000*0, 0x100000,0x99d11a2d )
-	ROM_LOAD( "rrs1wav1.bin", 0x100000*1, 0x100000,0xad28444a )
-	ROM_LOAD( "rrs1wav2.bin", 0x100000*2, 0x100000,0x6f0d4619 )
-	ROM_LOAD( "rrs1wav3.bin", 0x100000*3, 0x100000,0x106e761f )
+	ROM_LOAD( "rrs1wav0.bin", 0x100000*0, 0x100000,CRC(99d11a2d) )
+	ROM_LOAD( "rrs1wav1.bin", 0x100000*1, 0x100000,CRC(ad28444a) )
+	ROM_LOAD( "rrs1wav2.bin", 0x100000*2, 0x100000,CRC(6f0d4619) )
+	ROM_LOAD( "rrs1wav3.bin", 0x100000*3, 0x100000,CRC(106e761f) )
 #endif
 ROM_END
 
 ROM_START( rr1 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "rr1-prg.ll", 0x00003, 0x80000, 0x4bb7fc86 )
-	ROM_LOAD32_BYTE( "rr1-prg.lm", 0x00002, 0x80000, 0x68e13830 )
-	ROM_LOAD32_BYTE( "rr1-prg.um", 0x00001, 0x80000, 0x705ef78a )
-	ROM_LOAD32_BYTE( "rr1-prg.uu", 0x00000, 0x80000, 0xc1371f96 )
+	ROM_LOAD32_BYTE( "rr1-prg.ll", 0x00003, 0x80000, CRC(4bb7fc86) )
+	ROM_LOAD32_BYTE( "rr1-prg.lm", 0x00002, 0x80000, CRC(68e13830) )
+	ROM_LOAD32_BYTE( "rr1-prg.um", 0x00001, 0x80000, CRC(705ef78a) )
+	ROM_LOAD32_BYTE( "rr1-prg.uu", 0x00000, 0x80000, CRC(c1371f96) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rr1-cg0.1a", 0x200000*0x0, 0x200000,0xd1b0eec6 )
-	ROM_LOAD( "rr1-cg1.2a", 0x200000*0x1, 0x200000,0xbb695d89 )
-	ROM_LOAD( "rr1-cg2.3a", 0x200000*0x2, 0x200000,0x8f374c0a )
-	ROM_LOAD( "rr1-cg3.5a", 0x200000*0x3, 0x200000,0x072a5c47 )
+	ROM_LOAD( "rr1-cg0.1a", 0x200000*0x0, 0x200000,CRC(d1b0eec6) )
+	ROM_LOAD( "rr1-cg1.2a", 0x200000*0x1, 0x200000,CRC(bb695d89) )
+	ROM_LOAD( "rr1-cg2.3a", 0x200000*0x2, 0x200000,CRC(8f374c0a) )
+	ROM_LOAD( "rr1-cg3.5a", 0x200000*0x3, 0x200000,CRC(072a5c47) )
 
 	ROM_REGION( 0x300000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rr1-ccrh.7c", 0x000000, 0x100000,0x346a1c95 )
-	ROM_LOAD( "rr1-ccrl.8c", 0x100000, 0x200000,0xc15cb257 )
+	ROM_LOAD( "rr1-ccrh.7c", 0x000000, 0x100000,CRC(346a1c95) )
+	ROM_LOAD( "rr1-ccrl.8c", 0x100000, 0x200000,CRC(c15cb257) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "rr1-pot.l0", 0x80000*0, 0x80000,0x3ac193e3 )
-	ROM_LOAD( "rr1-pot.l1", 0x80000*1, 0x80000,0xac3ffba5 )
-	ROM_LOAD( "rr1-pot.m0", 0x80000*2, 0x80000,0x42a3fa08 )
-	ROM_LOAD( "rr1-pot.m1", 0x80000*3, 0x80000,0x1bc1ea7b )
-	ROM_LOAD( "rr1-pot.u0", 0x80000*4, 0x80000,0x5e367f72 )
-	ROM_LOAD( "rr1-pot.u1", 0x80000*5, 0x80000,0x31d92475 )
+	ROM_LOAD( "rr1-pot.l0", 0x80000*0, 0x80000,CRC(3ac193e3) )
+	ROM_LOAD( "rr1-pot.l1", 0x80000*1, 0x80000,CRC(ac3ffba5) )
+	ROM_LOAD( "rr1-pot.m0", 0x80000*2, 0x80000,CRC(42a3fa08) )
+	ROM_LOAD( "rr1-pot.m1", 0x80000*3, 0x80000,CRC(1bc1ea7b) )
+	ROM_LOAD( "rr1-pot.u0", 0x80000*4, 0x80000,CRC(5e367f72) )
+	ROM_LOAD( "rr1-pot.u1", 0x80000*5, 0x80000,CRC(31d92475) )
 #ifdef NAMCOS22_LOAD_SOUND
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "rr1-data.bin", 0, 0x080000, 0x18f5f748 )
+	ROM_LOAD( "rr1-data.bin", 0, 0x080000, CRC(18f5f748) )
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "rr1-wav.0", 0x100000*0, 0x100000,0xa8e85bde )
-	ROM_LOAD( "rr1-wav.1", 0x100000*1, 0x100000,0x35f47c8e )
-	ROM_LOAD( "rr1-wav.2", 0x100000*2, 0x100000,0x3244cb59 )
-	ROM_LOAD( "rr1-wav.3", 0x100000*3, 0x100000,0xc4cda1a7 )
+	ROM_LOAD( "rr1-wav.0", 0x100000*0, 0x100000,CRC(a8e85bde) )
+	ROM_LOAD( "rr1-wav.1", 0x100000*1, 0x100000,CRC(35f47c8e) )
+	ROM_LOAD( "rr1-wav.2", 0x100000*2, 0x100000,CRC(3244cb59) )
+	ROM_LOAD( "rr1-wav.3", 0x100000*3, 0x100000,CRC(c4cda1a7) )
 #endif
 ROM_END
 

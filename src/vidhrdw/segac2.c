@@ -201,6 +201,18 @@ VIDEO_START( segac2 )
 
 }
 
+VIDEO_START( puckpkmn )
+{
+	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+
+	if (video_start_segac2())
+		return 1;
+
+	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
+	display_enable = 1;
+
+	return 0;
+}
 
 
 /******************************************************************************
@@ -261,6 +273,7 @@ VIDEO_UPDATE( segac2 )
 	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
 
+#ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
 if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
 if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
@@ -268,6 +281,7 @@ if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
 if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
 if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
 if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+#endif
 
 	/* generate the final screen */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
@@ -446,6 +460,12 @@ static void vdp_data_w(int data)
 			VDP_VRAM_BYTE(vdp_address & ~1) = data >> 8;
 			VDP_VRAM_BYTE(vdp_address |  1) = data;
 			break;
+
+
+		case 0x03:		/* Palette write - puckpkmn */
+			paletteram16_xxxxBBBBGGGGRRRR_word_w(vdp_address/2, data, 0);
+			break;
+
 
 		case 0x05:		/* VSRAM write */
 

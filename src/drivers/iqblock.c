@@ -348,38 +348,55 @@ MACHINE_DRIVER_END
 
 ROM_START( iqblock )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
-	ROM_LOAD( "u7.v5",        0x0000, 0x10000, 0x811f306e )
+	ROM_LOAD( "u7.v5",        0x0000, 0x10000, CRC(811f306e) SHA1(d0aef80f1624002d05721276358f26a3ef69a3f6) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	ROM_LOAD( "u8.6",         0x0000, 0x8000, 0x2651bc27 )	/* background maps, read by the CPU */
+	ROM_LOAD( "u8.6",         0x0000, 0x8000, CRC(2651bc27) SHA1(53e1d6ffd78c8a612863b29b0f8734e740d563c7) )	/* background maps, read by the CPU */
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "u28.1",        0x00000, 0x20000, 0xec4b64b4 )
-	ROM_LOAD( "u27.2",        0x20000, 0x20000, 0x74aa3de3 )
-	ROM_LOAD( "u26.3",        0x40000, 0x20000, 0x2896331b )
+	ROM_LOAD( "u28.1",        0x00000, 0x20000, CRC(ec4b64b4) SHA1(000e9df0c0b5fcde5ead218dfcdc156bc4be909d) )
+	ROM_LOAD( "u27.2",        0x20000, 0x20000, CRC(74aa3de3) SHA1(16757c24765d22026793a0c53d3f24c106951a18) )
+	ROM_LOAD( "u26.3",        0x40000, 0x20000, CRC(2896331b) SHA1(51eba9f9f653a11cb96c461ab495d943d34cedc6) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "u25.4",        0x0000, 0x4000, 0x8fc222af )
-	ROM_LOAD( "u24.5",        0x4000, 0x4000, 0x61050e1e )
+	ROM_LOAD( "u25.4",        0x0000, 0x4000, CRC(8fc222af) SHA1(ac1fb5e6caec391a76e3af51e133aecc65cd5aed) )
+	ROM_LOAD( "u24.5",        0x4000, 0x4000, CRC(61050e1e) SHA1(1f7185b2a5a2e237120276c95344744b146b4bf6) )
+ROM_END
+
+ROM_START( grndtour )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
+	ROM_LOAD( "grand7.u7",        0x0000, 0x10000, CRC(95cac31e) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	ROM_LOAD( "grand6.u8",         0x0000, 0x8000, CRC(4c634b86) )	/* background maps, read by the CPU */
+
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "grand1.u28",        0x00000, 0x40000, CRC(de85c664) )
+	ROM_LOAD( "grand2.u27",        0x40000, 0x40000, CRC(8456204e) )
+	ROM_LOAD( "grand3.u26",        0x80000, 0x40000, CRC(77632917) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "grand4.u25",        0x0000, 0x4000, CRC(48d09746) )
+	ROM_LOAD( "grand5.u24",        0x4000, 0x4000, CRC(f896efb2) )
 ROM_END
 
 ROM_START( cabaret )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
 	/* 0000-7fff missing??? */
-	ROM_LOAD( "cabaret.008",  0x8000, 0x8000, 0x8ed8066c )
+	ROM_LOAD( "cabaret.008",  0x8000, 0x8000, CRC(8ed8066c) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	ROM_LOAD( "cabaret.007",  0x0000, 0x8000, 0xb93ae6f8 )	/* background maps, read by the CPU */
+	ROM_LOAD( "cabaret.007",  0x0000, 0x8000, CRC(b93ae6f8) )	/* background maps, read by the CPU */
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.004",  0x00000, 0x20000, 0xe509f50a )
-	ROM_LOAD( "cabaret.005",  0x20000, 0x20000, 0xe2cbf489 )
-	ROM_LOAD( "cabaret.006",  0x40000, 0x20000, 0x4f2fced7 )
+	ROM_LOAD( "cabaret.004",  0x00000, 0x20000, CRC(e509f50a) )
+	ROM_LOAD( "cabaret.005",  0x20000, 0x20000, CRC(e2cbf489) )
+	ROM_LOAD( "cabaret.006",  0x40000, 0x20000, CRC(4f2fced7) )
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.001",  0x0000, 0x4000, 0x7dee8b1f )
-	ROM_LOAD( "cabaret.002",  0x4000, 0x4000, 0xce8dea39 )
-	ROM_LOAD( "cabaret.003",  0x8000, 0x4000, 0x7e1f821f )
+	ROM_LOAD( "cabaret.001",  0x0000, 0x4000, CRC(7dee8b1f) )
+	ROM_LOAD( "cabaret.002",  0x4000, 0x4000, CRC(ce8dea39) )
+	ROM_LOAD( "cabaret.003",  0x8000, 0x4000, CRC(7e1f821f) )
 ROM_END
 
 
@@ -425,5 +442,6 @@ static DRIVER_INIT( cabaret )
 
 
 GAME( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block" )
+GAMEX(1993, grndtour, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "Grand Tour", GAME_NOT_WORKING )
 
 GAMEX( 19??, cabaret, 0, cabaret, iqblock, cabaret, ROT0, "IGS", "Cabaret", GAME_NOT_WORKING | GAME_NO_SOUND )

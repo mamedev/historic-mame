@@ -20,7 +20,7 @@
 	Nitro Ball						146
 	Super Shanghai Dragon's Eye		146
 	Dragon Gun						146
-	Fighter's History				146? (ID scratched off, but sound ports match)
+	Fighter's History				? (ID scratched off)
 	Tattoo Assassins				?
 
 	This series of chips is used for I/O and copy protection.  They are all
@@ -57,14 +57,19 @@
 #include "driver.h"
 #include "machine/eeprom.h"
 
+#define DECO_PORT(p) (deco16_prot_ram[p/2])
+
 data16_t *deco16_prot_ram;
 data32_t *deco32_prot_ram;
+
+/***************************************************************************/
 
 WRITE16_HANDLER( deco16_104_prot_w ) /* Wizard Fire */
 {
 	if (offset==(0x150/2)) {
 		soundlatch_w(0,data&0xff);
 		cpu_set_irq_line(1,0,HOLD_LINE);
+		return;
 	}
 
 	if (offset!=(0x150>>1) && offset!=(0x0>>1) && offset!=(0x110>>1) && offset!=(0x280>>1)
@@ -557,17 +562,25 @@ WRITE32_HANDLER( deco32_fghthist_prot_w )
 	if ((offset<<1)==0x10a) {
 		soundlatch_w(0,(data>>16)&0xff);
 		cpu_set_irq_line(1,0,HOLD_LINE);
+		return;
 	}
 
 	COMBINE_DATA(&deco32_prot_ram[offset]);
 
-	if ((offset<<1)!=0 && (offset<<1)!=0x302 && (offset<<1)!=0x506)
+
+	if ((offset<<1)!=0 && (offset<<1)!=0x302 && (offset<<1)!=0x506 && (offset<<1)!=0x386 
+		&& (offset<<1)!=0x6 && (offset<<1)!=0x186 && (offset<<1)!=0x70c)
 		logerror("%08x:  Protection write %04x %08x\n",activecpu_get_pc(),offset<<1,data);
 }
 
 READ32_HANDLER( deco32_fghthist_prot_r )
 {
 	data16_t val;
+
+
+	if (activecpu_get_pc()==0x163dc || activecpu_get_pc()==0x16390)
+		logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+
 
 	/* The 16 bit protection device is attached to the top 16 bits of the 32 bit bus */
 	switch (offset<<1) {
@@ -578,12 +591,12 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 	/* A hardware XOR with various bitshifting patterns on the input data */
 	case 0x518:
 		val=deco32_prot_ram[0x788>>1]>>16;
-		val=((val&0x000f)<<4) | ((val&0x00f0)<<4) | ((val&0x0f00)<<4) | ((val&0xf000)>>12);
+		val=((val&0x0003)<<6) | ((val&0x000c)<<2) | ((val&0x00f0)<<4) | ((val&0x0f00)<<4) | ((val&0xf000)>>12);
 		return ((val<<16) ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
 
 	case 0x33c:
 		val=deco32_prot_ram[0x788>>1]>>16;
-		val=((val&0x000f)<<8) | ((val&0x00f0)<<8) | ((val&0x0f00)>>8) | ((val&0xf000)>>8);
+		val=((val&0x0003)<<10) | ((val&0x000c)<<6) | ((val&0x00f0)<<8) | ((val&0x0f00)>>8) | ((val&0xf000)>>8);
 		return (val<<16) ^ deco32_prot_ram[0x302>>1];
 
 	case 0x6ee:
@@ -778,29 +791,183 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 		val=((val&0x000f)<<8) | ((val&0x00f0)>>4) | ((val&0xf000)>>0) | ((val&0x0f00)>>4);
 		return (val<<16);
 
-//	case 0x10e:  // WRONG!  Some kind of mask applies...
-//		val=((deco32_prot_ram[0x10e>>1]>>16)&0xffff);
-		//val=((val&0x000f)<<8) | ((val&0x00f0)>>4) | ((val&0xf000)>>0) | ((val&0x0f00)>>4);
-//		return (val<<16);
+	case 0x12c:
+		val=((deco32_prot_ram[0x506>>1]>>16)&0xffff);
+		return (val<<16) ^ deco32_prot_ram[0x302>>1];
 
+	case 0x5c:
+		val=((deco32_prot_ram[0x382>>1]>>16)&0xffff);
+		val=((val&0x000f)<<4) | ((val&0x00f0)<<4) | ((val&0xf000)>>0) | ((val&0x0f00)>>8);
+		return ((val<<16) ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
+
+	case 0x10e:
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//		val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
+//		return (val<<16) & (~deco32_prot_ram[0x506>>1]);
+		val=(deco32_prot_ram[0x10e>>1]>>16);
+		return (val<<16);
+	case 0x382:
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//		val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
+//		return (val<<16) & (~deco32_prot_ram[0x506>>1]);
+		val=(deco32_prot_ram[0x382>>1]>>16);
+		return (val<<16);
+
+	// above also affected by writes to 0x80???
+
+//  above twoveryinconsistent	
+	
+	case 0x1fc: //todo - check if mask is used
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+		val=((deco32_prot_ram[0x500>>1]>>16)&0xffff);
+		val=(val<<4);
+		return (val<<16); // & (~deco32_prot_ram[0x506>>1]);
+
+
+
+	case 0x126:
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//		val=((deco32_prot_ram[0xc>>1]>>16)&0xffff);
+		val=((deco32_prot_ram[0x10e>>1]>>16)&0xffff);
+		val=((val&0xf000)<<0) | ((val&0x0ff0)>>4) | ((val&0x000f)<<8);
+		return (val<<16);
+
+// CHECK ABOVE - affected by writes to both 0xc and 0x10e????
+
+
+
+	case 0x142: /* Hmm */ // not affected by writes to 10e 480 382 18e
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+		val=((deco32_prot_ram[0x10e>>1]>>16)&0xffff);
+		return (0x01000000 ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
+
+	case 0x580:
+		val=((deco32_prot_ram[0x10c>>1]>>16)&0xffff);
+		val=((val&0xff00)>>8) | ((val&0x00f0)<<4) | ((val&0x000f)<<12);
+		return (val<<16);// ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
+
+	case 0x640:
+		val=((deco32_prot_ram[0x10c>>1]>>16)&0xffff);
+		val=((val&0xf000)>>8) | ((val&0x0ff0)<<4);
+		return (val<<16) ^ deco32_prot_ram[0x302>>1]; //) & (~deco32_prot_ram[0x506>>1]);
+
+	case 0xa:
+		return 0x10000000;
+	case 0x80:
+		return 0x00100000;
+	case 0x538:
+		return 0x00100000;
 
 	}
 
+/*
+Read 126
 
-	if ((offset<<1)==0x506)
+	  00007c38:  Protection write 000c 0f830000
+	cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 0000F0FF & FFFFFFFF
+	00016378:  Protection write 010e 0a800000
+	000163ac:  Protection write 0480 00700000
+
+Read 80
+	0000d990:  Protection write 0006 ffedffee
+	cpu #0 (PC=0000A1C8): unmapped memory dword write to 0016C008 = 00000000 & FFFFFFFF
+	cpu #0 (PC=0000A230): unmapped memory dword write to 00140000 = 0017C020 & FFFFFFFF
+	0000cae8:  Protection write 070c 00010000
+	cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000000A0 & FFFFFFFF
+	00016378:  Protection write 0080 00088027
+	00016390:Read prot 00000080 (00000000)
+
+
+
+  routine at:
+
+  1637c
+		Write 0e00 into $382
+		Reads back 382
+
+
+  18e1c:
+	
+
+
+
+
+
+  18e0c is collision routine...
+
+
+
+
+Single Knockdown for player 1
+
+cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000000A0 & FFFFFFFF
+00016378:  Protection write 0080 00088027
+00016380: Read 0000000a
+00016390:Read prot 00000080 (00000000)
+00016390:Read prot 00000080 (00000000)
+000163ac:  Protection write 0480 00700000
+000163b4:Read prot 00000142 (00000000)
+000163dc:Read prot 00000538 (00000000)
+000163dc:Read prot 00000538 (00000000)
+00001c58:  Protection write 0082 3e0aed6f
+00001c7c:  Protection write 0082 ed6f0000
+00001c58:  Protection write 0082 58e000c2
+	
+Strike against player 1 (jump error)
+
+0013940:  Protection write 018e 02000002
+0000f4a4:  Protection write 010c 00480000
+Warning: sound latch written before being read. Previous: 08, new: 30
+00007c38:  Protection write 000c 0f830000
+cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 0000F0FF & FFFFFFFF
+00016378:  Protection write 010e 0a800000
+00016390:Read prot 0000010e (00000000)
+00016390:Read prot 0000010e (00000000)
+000163ac:  Protection write 0480 00700000
+000163b4:Read prot 00000142 (00000000)
+000163dc:Read prot 00000126 (00000000)
+000163dc:Read prot 00000126 (00000000)
+cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 0000F0FF & FFFFFFFF
+00016378:  Protection write 010e 09000000
+00016390:Read prot 0000010e (00000000)
+00016390:Read prot 0000010e (00000000)
+000163ac:  Protection write 0480 00700000
+000163b4:Read prot 00000142 (00000000)
+000163dc:Read prot 000004e0 (00000000)
+cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000007A0 & FFFFFFFF
+00016378:  Protection write 0382 0e000390
+00016380: Read 0000007a
+00016390:Read prot 00000382 (00000000)
+00016390:Read prot 00000382 (00000000)
+000163ac:  Protection write 0480 00700000
+000163b4:Read prot 00000142 (00000000)
+000163dc:Read prot 0000005c (00000000)
+
+
+  */
+
+
+	if ((offset<<1)==0x506) //except soon after writes to.. 506/302??
 		return 0x02000000;
 
-	if ((offset<<1)==0x12c)
+	if ((offset<<1)==0x304) // not affected by writes to 10e 480 382 18e 302
 		return 0;
 
-	if ((offset<<1)==0x304)
-		return 0;
-
-
+	if (activecpu_get_pc()!=0x163c8 && activecpu_get_pc()!=0x16448)
 	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+	if ((offset<<1)==0x80)
+		return 0; //strobe between 0 and 0x00100000
 
+//	if (! ((offset<<1)>0x500 && (offset<<1)<0x540))
+//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 
-	return 0xffffffff;
+	if ((offset<<1)==0x40a)
+		return 0x10000000;
+
+	if ((offset<<1)==0x382) // not affected by writes to 10e 480 382 18e 302
+		return 0;
+
+	return 0; //xffffffff;
 }
 
 /***************************************************************************/
@@ -810,6 +977,7 @@ WRITE16_HANDLER( deco16_104_cninja_prot_w )
 	if (offset==(0xa8/2)) {
 		soundlatch_w(0,data&0xff);
 		cpu_set_irq_line(1,0,HOLD_LINE);
+		return;
 	}
 
 	COMBINE_DATA(&deco16_prot_ram[offset]);
@@ -871,6 +1039,7 @@ WRITE16_HANDLER( deco16_146_funkyjet_prot_w )
 	if (offset == (0x10a >> 1)) {
 		soundlatch_w(0,data&0xff);
 		cpu_set_irq_line(1,0,HOLD_LINE);
+		return;
 	}
 }
 
@@ -1142,38 +1311,143 @@ Page2:
 
 WRITE16_HANDLER( deco16_146_nitroball_prot_w )
 {
-/*	if (offset!=(0x150>>1) && offset!=(0x0>>1) && offset!=(0x110>>1) && offset!=(0x280>>1)
-		&& offset!=(0x290>>1) && offset!=(0x2b0>>1) && offset!=(0x370>>1) && offset!=(0x3c0>>1)
-		&& offset!=(0x370>>1) && offset!=(0x3c0>>1) && offset!=(0x430>>1) && offset!=(0x460>>1)
-		&& offset!=(0x5a0>>1) && offset!=(0x5b0>>1) && offset!=(0x6e0>>1) && offset!=(0x7d0>>1)
-		)*/
-logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
+	const int writeport=offset*2;
 
+	if (writeport==0x260) {
+		soundlatch_w(0,data&0xff);
+		cpu_set_irq_line(1,0,HOLD_LINE);
+		return;
+	}
 
-//260 is sound port??
-
+/*		20 30 130 150 170 190 1b0 1c0 1d0 1f0 240 260 290 2b0 2f0 310 340 370
+ used	20	  130 150 170     1b0     1d0     240 SND 290 2b0 2f0         370
+*/
+	if (writeport!=0x20 && writeport!=0x130 && writeport!=0x150 && writeport!=0x170 && writeport!=0x1b0 
+		&& writeport!=0x1d0 && writeport!=0x240 && writeport!=0x290 && writeport!=0x2b0
+		&& writeport!=0x2f0 && writeport!=0x370)
+		logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
 
 	COMBINE_DATA(&deco16_prot_ram[offset]);
-//	if (offset==0xa8/2) rohga_sound_w(0,0,data);
-//	if (errorlog && offset!=0x6a ) fprintf(errorlog,"Protection PC %06x: warning - write unmapped memory address %04x %04x\n",cpu_get_pc(),offset,data);
 }
 
 READ16_HANDLER( deco16_146_nitroball_prot_r )
 {
+	const int readport=offset*2;
 	static int a;
 	a++;
 
-	switch (offset*2) {
-	case 0: return a;
+	/* Nitroball's use of the protection device is quite weak - a range of values are
+	written to the chip at boot-time and there are many checks throughout the game
+	for certain values at certain locations.  Most checks are quite obvious - a
+	jump to an illegal address if the data isn't correct.  This, coupled with the 
+	fact there are no extra data writes at game-time, means it is quite easy to
+	spot the relationship between read & write addresses.  Even in the 'hard' cases
+	it is easy to guess the corret values.
+	*/
+
+// 0 a 4c 6a 6c ea 12e 13a 1de 316 3c6 452 4d0 53a 552 54c 582 5da 672 6be 70a 7e0
+
+/*
+
+Protection PC 05abc4: warning - read unmapped memory address 00ea
+Warning: sound latch written before being read. Previous: 3f, new: 3c
+Protection PC 05ac1a: warning - read unmapped memory address 006c
+Protection PC 05abfe: warning - read unmapped memory address 053c
+Protection PC 02251c: warning - read unmapped memory address 012e
+Protection PC 022680: warning - read unmapped memory address 00ea
+Protection PC 02251c: warning - read unmapped memory address 012e
+Protection PC 0597c4: warning - read unmapped memory address 053c
+Protection PC 04a7e8: warning - read unmapped memory address 006c
+
+  */
+
+	switch (readport) {
+	case 0: return a; //Todo
+
+	case 0x582: /* Player 1 & Player 2 */
+		return readinputport(0);
 	case 0x4c: /* Coins/VBL */
 		return readinputport(1);
+	case 0x672: /* Dip switches */
+		return readinputport(2);
 
-	case 0x582: //likely controls
-		return readinputport(0);
+/*
+CONTROL PC 078176: warning - write protection memory address 01f0 1ffc
+CONTROL PC 078186: warning - write protection memory address 0310 0024
+CONTROL PC 07819e: warning - write protection memory address 01c0 0061
 
+  QPRINT	#4, #2, #$0
+	QPRINT	#14,#2, #$a
+	QPRINT	#24,#2, #$ea
+	QPRINT	#34,#2, #$6a
+	QPRINT	#44,#2, #$6c
+	QPRINT	#54,#2, #$12e
+	QPRINT	#64,#2, #$13a
+	
+		*/
+
+	case 0xa:
+//		logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+//may strobe??
+		return ((DECO_PORT(0x310)&0x0fff)<<4);
+
+	case 0xea:
+		//logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+		return ((DECO_PORT(0x1c0)&0xf000)<<0) | ((DECO_PORT(0x1c0)&0x00ff)<<4);
+
+	case 0x12e:
+		//logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+		return ((DECO_PORT(0x1f0)&0xf000)>>4) | ((DECO_PORT(0x1f0)&0x0f00)<<4) | ((DECO_PORT(0x1f0)&0x00f0)>>4) | ((DECO_PORT(0x1f0)&0x000f)<<4);
+
+//untested
+
+	case 0x13a:
+// Correct FOR Protection PC 06b694: warning - read unmapped memory address 013a
+//		Protection PC 00846a: warning - read unmapped memory address 013a
+// Correct FOR Protection PC 0083b4: warning - read unmapped memory address 013a
+
+		//logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+		return 0x2600; //hmm
+
+	case 0x4f6: //todo
+		return 0x3800;
+
+	case 0x452: //todo
+		return 0x0044;
+
+
+	case 0x316:
+		return ((DECO_PORT(0x290)&0xf000)>>4) | ((DECO_PORT(0x290)&0x0f00)<<4) | ((DECO_PORT(0x290)&0x00ff)<<0);
+
+	case 0x3c6:
+		return ((DECO_PORT(0x170)&0xfff0)<<0) | ((DECO_PORT(0x170)&0x000e)>>1) | ((DECO_PORT(0x170)&0x0001)<<3);
+
+	case 0x4d0:
+		return ((DECO_PORT(0x20)&0x00f0)<<8) | ((DECO_PORT(0x20)&0x0007)<<9) | ((DECO_PORT(0x20)&0x0008)<<5);
+
+	case 0x53a:
+		return ((DECO_PORT(0x370)&0xffff)<<0);
+
+	case 0x552:
+		return ((DECO_PORT(0x240)&0xfff0)<<0) | ((DECO_PORT(0x240)&0x0007)<<1) | ((DECO_PORT(0x240)&0x0008)>>3);
+
+	case 0x54c:
+		return ((DECO_PORT(0x2f0)&0x00ff)<<8);
 
 	case 0x5da:
-		return 0x5400;
+		return ((DECO_PORT(0x130)&0x00f0)<<8) | ((DECO_PORT(0x130)&0x000e)<<7) | ((DECO_PORT(0x130)&0x0001)<<11);
+
+	case 0x6be:
+		return ((DECO_PORT(0x150)&0xf000)>>12) | ((DECO_PORT(0x150)&0x0ff0)<<0) | ((DECO_PORT(0x150)&0x000f)<<12);
+
+	case 0x70a:
+		return ((DECO_PORT(0x1d0)&0x0ff0)<<4) | ((DECO_PORT(0x1d0)&0x0003)<<6) | ((DECO_PORT(0x1d0)&0x000c)<<2);
+
+	case 0x7e0:
+		return ((DECO_PORT(0x2b0)&0xfff0)<<0) | ((DECO_PORT(0x2b0)&0x0003)<<2) | ((DECO_PORT(0x2b0)&0x000c)>>2);
+
+	case 0x1de:
+		return ((DECO_PORT(0x1b0)&0x0ff0)<<4) | ((DECO_PORT(0x1b0)&0x000e)<<3) | ((DECO_PORT(0x1b0)&0x0001)<<7);
 	}
 
 	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);

@@ -11,14 +11,16 @@
 /* Lunar Lander Sound System Analog emulation by K.Wilkins Nov 2000     */
 /* Questions/Suggestions to mame@dysfunction.demon.co.uk                */
 /************************************************************************/
+#define LLANDER_TONE3K_EN	NODE_01
+#define LLANDER_TONE6K_EN	NODE_02
+#define LLANDER_THRUST_DATA	NODE_03
+#define LLANDER_EXPLOD_EN	NODE_04
+#define LLANDER_NOISE_RESET	NODE_05
 
-#define LLANDER_TONE3K_NODE	NODE_50
-#define LLANDER_TONE6K_NODE	NODE_51
-#define LLANDER_THRUST_NODE	NODE_52
-#define LLANDER_EXPLOD_NODE	NODE_53
-#define LLANDER_NRESET_NODE	NODE_54
-
-#define LLANDER_NOISE_NODE	NODE_60
+#define LLANDER_NOISE			NODE_10
+#define LLANDER_TONE_3K_SND		NODE_11
+#define LLANDER_TONE_6K_SND		NODE_12
+#define LLANDER_THRUST_EXPLOD_SND	NODE_13
 
 const struct discrete_lfsr_desc llander_lfsr={
 	16,			/* Bit Length */
@@ -29,61 +31,55 @@ const struct discrete_lfsr_desc llander_lfsr={
 	DISC_LFSR_IN0,		/* Feedback stage2 is just stage 1 output external feed not used */
 	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
 	0x000001,		/* Everything is shifted into the first bit only */
-	0,			/* Output has the required inversion from stage 1 */
+	0,			/* Output not inverted */
 	14			/* Output bit */
 };
 
-/***************************************************************************
-  Lander has 4 sound sources: 3kHz, 6kHz, thrust, explosion
-
-  As the filtering removes a lot of the signal amplitute on thrust and
-  explosion paths the gain is partitioned unequally:
-
-  3kHz (tone)             Gain 1
-  6kHz (tone)             Gain 1
-  thrust (12kHz noise)    Gain 2
-  explosion (12kHz noise) Gain 4
-
-This is very simply implemented at 2 sinewave sources of fixed amplitude
-and two white noise sources one of fixed amplitude and one of variable
-amplitude. These are combined at the output stage with an adder
-
-***************************************************************************/
-
 DISCRETE_SOUND_START(llander_sound_interface)
-	DISCRETE_INPUT(LLANDER_THRUST_NODE,0,0x0007,0)									// Input handlers, mostly for enable
-	DISCRETE_INPUT(LLANDER_TONE3K_NODE,1,0x0007,0)
-	DISCRETE_INPUT(LLANDER_TONE6K_NODE,2,0x0007,0)
-	DISCRETE_INPUT(LLANDER_EXPLOD_NODE,3,0x0007,0)
-	DISCRETE_INPUT(LLANDER_NRESET_NODE,4,0x0007,0)
+	/************************************************/
+	/* llander Effects Relataive Gain Table         */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Tone3k        4        10/390          9.2   */
+	/* Tone6k        4        10/390          9.2   */
+	/* Explode       3.8      10/6.8*2     1000.0   */
+	/* Thrust        3.8      10/6.8*2      600.0   */
+	/*  NOTE: Thrust gain has to be tweaked, due to */
+	/*        the filter stage.                     */
+	/************************************************/
 
-	DISCRETE_LFSR_NOISE(NODE_11,1,LLANDER_NRESET_NODE,12000,1,0,0,&llander_lfsr)		// 12KHz Noise source for thrust
-	DISCRETE_RCFILTER(LLANDER_NOISE_NODE, 1, NODE_11, 2247, 1e-6)
+	/*                        NODE            ADDR  MASK    GAIN      OFFSET  INIT */
+	DISCRETE_INPUTX     (LLANDER_THRUST_DATA,  0,  0x0007,  600.0/7,   0,      0)
+	DISCRETE_INPUT      (LLANDER_TONE3K_EN,    1,  0x0007,                     0)
+	DISCRETE_INPUT      (LLANDER_TONE6K_EN,    2,  0x0007,                     0)
+	DISCRETE_INPUT      (LLANDER_EXPLOD_EN,    3,  0x0007,                     0)
+	DISCRETE_INPUT_PULSE(LLANDER_NOISE_RESET,  4,  0x0007,                     1)
 
-	DISCRETE_SQUAREWAVE(NODE_10,LLANDER_TONE3K_NODE,3000,(((1.0/8.0)*65535.0)),50,0,0)		// 3KHz Sine wave amplitude 1/12 * 16384
+	DISCRETE_LFSR_NOISE(NODE_20, 1, LLANDER_NOISE_RESET, 12000, 1, 0, 0, &llander_lfsr)	// 12KHz Noise source for thrust
+	DISCRETE_RCFILTER(LLANDER_NOISE, 1, NODE_20, 2247, 1e-6)
 
-	DISCRETE_SQUAREWAVE(NODE_20,LLANDER_TONE6K_NODE,6000,(((1.0/8.0)*65536.0)),50,0,0)		// 6KHz Sine wave amplitude 1/12 * 16384
+	DISCRETE_SQUAREWFIX(LLANDER_TONE_3K_SND, LLANDER_TONE3K_EN, 3000, 9.2, 50, 0, 0)	// 3KHz
 
-	DISCRETE_GAIN(NODE_32,LLANDER_THRUST_NODE,((((2.0+2.0)/8.0)*65535.0)/8.0))				// Convert gain to amplitude for noise (Volume tweaked by +2.0)
-	DISCRETE_MULTIPLY(NODE_31,1,LLANDER_NOISE_NODE,NODE_32)		 						// Mix in 12KHz Noise source for thrust
-	DISCRETE_RCFILTER(NODE_30,1,NODE_31,47000,0.1e-6) 						  			// Remove high freq noise
+	DISCRETE_SQUAREWFIX(LLANDER_TONE_6K_SND, LLANDER_TONE6K_EN, 6000, 9.2, 50, 0, 0)	// 6KHz
 
-	DISCRETE_GAIN(NODE_41,LLANDER_THRUST_NODE,(((4.0/8.0)*65535.0)/8.0))				// Docs say that explosion also takes volume of thrust
-	DISCRETE_MULTIPLY(NODE_40,LLANDER_EXPLOD_NODE,LLANDER_NOISE_NODE,NODE_41)			// Mix in Noise source for explosion
+	DISCRETE_MULTIPLY(NODE_30, 1, LLANDER_NOISE, LLANDER_THRUST_DATA)	// Mix in 12KHz Noise source for thrust
+	/* TBD - replace this line with a Sallen-Key Bandpass macro */
+	DISCRETE_FILTER2(NODE_31, 1, NODE_30, 89.5, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+	DISCRETE_MULTIPLY(NODE_32, LLANDER_EXPLOD_EN, NODE_30, 1000.0/600.0)	// Explode adds original noise source onto filtered source
+	DISCRETE_ADDER2(NODE_33, 1, NODE_31, NODE_32)
+	/* TBD - replace this line with a Active Lowpass macro */
+	DISCRETE_FILTER1(LLANDER_THRUST_EXPLOD_SND, 1, NODE_33, 560, DISC_FILTER_LOWPASS)
 
-	DISCRETE_ADDER4(NODE_90,1,NODE_10,NODE_20,NODE_30,NODE_40)							// Mix all four sound sources
+	DISCRETE_ADDER3(NODE_90, 1, LLANDER_TONE_3K_SND, LLANDER_TONE_6K_SND, LLANDER_THRUST_EXPLOD_SND)	// Mix all four sound sources
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(9.2+9.2+600+1000))
 
-	DISCRETE_OUTPUT(NODE_90,100)															// Take the output from the mixer
+	DISCRETE_OUTPUT(NODE_91, 100)															// Take the output from the mixer
 DISCRETE_SOUND_END
 
 WRITE_HANDLER( llander_snd_reset_w )
 {
 	/* Resets the LFSR that is used for the white noise generator       */
-	/* The reset pulse is the width of the address decode, just the     */
-	/* write to the register is used to do the reset, no data is used   */
-	discrete_sound_w(4,1);				/* Reset */
-/*	Spin for at least one cycle */
-	discrete_sound_w(4,0);				/* Clear reset */
+	discrete_sound_w(4, 0);				/* Reset */
 }
 
 WRITE_HANDLER( llander_sounds_w )

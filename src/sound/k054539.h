@@ -25,4 +25,7 @@ READ_HANDLER( K054539_0_r );
 WRITE_HANDLER( K054539_1_w );
 READ_HANDLER( K054539_1_r );
 
+//* mode: 0=normal, 1=reversed (to be called from DRIVER_INIT())
+int K054539_init_stereo(int mode);
+
 #endif /* __K054539_H__ */

@@ -20,6 +20,7 @@ Revisions:
 #include <math.h>
 #include "driver.h"
 #include "iremga20.h"
+#include "state.h"
 
 //AT
 #define MAX_VOL 256
@@ -255,6 +256,9 @@ int IremGA20_sh_start(const struct MachineSound *msound)
 	IremGA20_chip.channel = stream_init_multi( 2, names,
 			IremGA20_chip.intf->mixing_level, Machine->sample_rate,
 			0, IremGA20_update );
+
+	state_save_register_UINT8("sound", 0, "IremGA20_channel", (UINT8*) IremGA20_channel, sizeof(IremGA20_channel));
+	state_save_register_UINT8("sound", 0, "IremGA20_chip",    (UINT8*) &IremGA20_chip,   sizeof(IremGA20_chip));
 
 	return 0;
 }

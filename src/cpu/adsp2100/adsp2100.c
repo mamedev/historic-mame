@@ -1987,9 +1987,9 @@ void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
 	/* see how many words we need to copy */
 #ifdef LSB_FIRST
-	UINT32 size = 8 * (srcdata[2] + 1), i;
-#else
 	UINT32 size = 8 * (srcdata[3] + 1), i;
+#else
+	UINT32 size = 8 * (srcdata[2] + 1), i;
 #endif
 	for (i = 0; i < size; i++)
 	{

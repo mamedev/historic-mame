@@ -27,6 +27,9 @@ data32_t *ms32_spram;
 data32_t *ms32_txram;
 data32_t *ms32_mainram;
 
+// kirarast, tp2m32, and 47pie2 require the sprites in a different order
+int ms32_reverse_sprite_order;
+
 /********** Tilemaps **********/
 
 static struct tilemap *ms32_tx_tilemap, *ms32_roz_tilemap, *ms32_bg_tilemap;
@@ -63,6 +66,8 @@ static void get_ms32_bg_tile_info(int tile_index)
 	SET_TILE_INFO(2,tileno,colour,0)
 }
 
+static data32_t brt[4];
+static int brt_r,brt_g,brt_b;
 
 VIDEO_START( ms32 )
 {
@@ -77,15 +82,22 @@ VIDEO_START( ms32 )
 	tilemap_set_transparent_pen(ms32_bg_tilemap,0);
 	tilemap_set_transparent_pen(ms32_roz_tilemap,0);
 
+	ms32_reverse_sprite_order = 1;
+
+	/* i hate per game patches...how should priority really work? tetrisp2.c ? i can't follow it */
+	if (!strcmp(Machine->gamedrv->name,"kirarast"))	ms32_reverse_sprite_order = 0;
+	if (!strcmp(Machine->gamedrv->name,"tp2m32"))	ms32_reverse_sprite_order = 0;
+	if (!strcmp(Machine->gamedrv->name,"47pie2"))	ms32_reverse_sprite_order = 0;
+	if (!strcmp(Machine->gamedrv->name,"47pie2o"))	ms32_reverse_sprite_order = 0;
+
+	// tp2m32 doesn't set the brightness registers so we need sensible defaults
+	brt[0] = brt[1] = 0xffff;
+
 	return 0;
 }
 
-
-
 /********** PALETTE WRITES **********/
 
-static data32_t brt[4];
-static int brt_r,brt_g,brt_b;
 
 static void update_color(int color)
 {
@@ -131,6 +143,7 @@ WRITE32_HANDLER( ms32_brightness_w )
 				update_color(i);
 		}
 	}
+
 //usrintf_showmessage("%04x %04x %04x %04x",brt[0],brt[1],brt[2],brt[3]);
 }
 
@@ -269,7 +282,6 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 	int tx, ty, sx, sy, flipx, flipy;
 	int xsize, ysize, xzoom, yzoom;
 	int code, attr, color, size, pri, pri_mask, trans;
-	int reverse = 1;
 	struct GfxElement *gfx = Machine->gfx[0];
 	struct GfxElement mygfx = *gfx;
 
@@ -277,17 +289,14 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 	const data32_t	*finish	= sprram_top + (sprram_size - 0x10) / 4;
 
 
-	/* i hate per game patches...how should priority really work? tetrisp2.c ? i can't follow it */
-	if (!strcmp(Machine->gamedrv->name,"kirarast")) reverse ^= 1;
-
-	if (reverse == 1)
+	if (ms32_reverse_sprite_order == 1)
 	{
 		source	= sprram_top + (sprram_size - 0x10) / 4;
 		finish	= sprram_top;
 	}
 
 
-	for (;reverse ? (source>=finish) : (source<finish); reverse ? (source-=4) : (source+=4))
+	for (;ms32_reverse_sprite_order ? (source>=finish) : (source<finish); ms32_reverse_sprite_order ? (source-=4) : (source+=4))
 	{
 		attr	=	source[ 0 ];
 

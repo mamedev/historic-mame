@@ -29,7 +29,7 @@ typedef struct deltat_adpcm_state {     /* AT: rearranged and tigntened structur
 
 	/* external flag control (for YM2610) */
 	UINT8 reg[16];			/* adpcm registers		*/
-	UINT8 flagMask;			/* arrived flag mask	*/
+	UINT8 statusflag;		/* EOS flag bit value	*/
 	UINT8 now_data;			/* current rom data		*/
 	UINT8 portstate;		/* port status: stop==0	*/
 	UINT8 eos;      		/* AT: added EOS flag	*/

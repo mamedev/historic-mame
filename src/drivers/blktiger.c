@@ -308,134 +308,134 @@ MACHINE_DRIVER_END
 
 ROM_START( blktiger )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xa8f98f22 )	/* CODE */
-	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
-	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x4089e157 )	/* 2+3 */
-	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xed6af6ec )	/* 4+5 */
-	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0xae59b72e )	/* 6+7 */
+	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, CRC(a8f98f22) SHA1(f77c0d0ebf3e52a21d2c0c5004350a408b8e6d24) )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, CRC(7bef96e8) SHA1(6d05a73d8400dead78c561b904bf6ef8311e7b91) )	/* 0+1 */
+	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, CRC(4089e157) SHA1(7972b1c745057802d4fd66d88b0101eb3c03e701) )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, CRC(ed6af6ec) SHA1(bed303c51bcddf233ad0701306d557a60ce9f5a5) )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, CRC(ae59b72e) SHA1(6e72214b71f2f337af236c8be891a18570cb6fbb) )	/* 6+7 */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, CRC(2cf54274) SHA1(87df100c65999ba1e9d358ffd0fe4bba23ae0efb) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, 0x70175d78 )	/* characters */
+	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, CRC(70175d78) SHA1(2f02be2785d1824002145ea20db79821d0393929) )	/* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5b",  0x00000, 0x10000, 0xc4524993 )	/* tiles */
-	ROM_LOAD( "blktiger.4b",  0x10000, 0x10000, 0x7932c86f )
-	ROM_LOAD( "blktiger.9b",  0x20000, 0x10000, 0xdc49593a )
-	ROM_LOAD( "blktiger.8b",  0x30000, 0x10000, 0x7ed7a122 )
+	ROM_LOAD( "blktiger.5b",  0x00000, 0x10000, CRC(c4524993) SHA1(9aa6c58004ca1117e5ac44ba8fc51e9128b921b8) )	/* tiles */
+	ROM_LOAD( "blktiger.4b",  0x10000, 0x10000, CRC(7932c86f) SHA1(b3b1bc1e2b0db5c2eb8772f8a2c35129cc80d511) )
+	ROM_LOAD( "blktiger.9b",  0x20000, 0x10000, CRC(dc49593a) SHA1(e4ef42ba9f238fd43c8217657c92896f31d3912c) )
+	ROM_LOAD( "blktiger.8b",  0x30000, 0x10000, CRC(7ed7a122) SHA1(3acc6d4c9731db0609c2e26e3bd255847149ca33) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, 0xe2f17438 )	/* sprites */
-	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, 0x5fccbd27 )
-	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, 0xfc33ccc6 )
-	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, 0xf449de01 )
+	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, CRC(e2f17438) SHA1(3e5fdae07d40febedc59c7c7c4d9c6f0d72b58b5) )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, CRC(5fccbd27) SHA1(33c55aa9c12b3121ca5c3b4c39a9b152b6946461) )
+	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, CRC(fc33ccc6) SHA1(d492626a88565c2626f98ecb1d74535f1ad68e4c) )
+	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, CRC(f449de01) SHA1(f6b40e9eb2471b89c42ab84f4214295d284db0c3) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )	/* PROMs (function unknown) */
-	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
-	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
-	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
-	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, CRC(29b459e5) SHA1(0034734a533df3dea16b7b48e072485d7f26f850) )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, CRC(8b741e66) SHA1(6c1fda59936a7217b05949f5c54b1f91f4b49dbe) )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, CRC(27201c75) SHA1(c54d87f06bfe0b0908389c005014d97156e272c2) )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, CRC(e5490b68) SHA1(40f9f92efe7dd97b49144aec02eb509834056915) )
 ROM_END
 
 ROM_START( bktigerb )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, 0x9d8464e8 )	/* CODE */
-	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
-	ROM_LOAD( "btiger3.j6",   0x20000, 0x10000, 0x52c56ed1 )	/* 2+3 */
-	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xed6af6ec )	/* 4+5 */
-	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0xae59b72e )	/* 6+7 */
+	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, CRC(9d8464e8) SHA1(c847ee9a22b8b636e85427214747e6bd779023e8) )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, CRC(7bef96e8) SHA1(6d05a73d8400dead78c561b904bf6ef8311e7b91) )	/* 0+1 */
+	ROM_LOAD( "btiger3.j6",   0x20000, 0x10000, CRC(52c56ed1) SHA1(b6ea61869dcfcedb8cfc14c613440e3f4649866f) )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, CRC(ed6af6ec) SHA1(bed303c51bcddf233ad0701306d557a60ce9f5a5) )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, CRC(ae59b72e) SHA1(6e72214b71f2f337af236c8be891a18570cb6fbb) )	/* 6+7 */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, CRC(2cf54274) SHA1(87df100c65999ba1e9d358ffd0fe4bba23ae0efb) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, 0x70175d78 )	/* characters */
+	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, CRC(70175d78) SHA1(2f02be2785d1824002145ea20db79821d0393929) )	/* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5b",  0x00000, 0x10000, 0xc4524993 )	/* tiles */
-	ROM_LOAD( "blktiger.4b",  0x10000, 0x10000, 0x7932c86f )
-	ROM_LOAD( "blktiger.9b",  0x20000, 0x10000, 0xdc49593a )
-	ROM_LOAD( "blktiger.8b",  0x30000, 0x10000, 0x7ed7a122 )
+	ROM_LOAD( "blktiger.5b",  0x00000, 0x10000, CRC(c4524993) SHA1(9aa6c58004ca1117e5ac44ba8fc51e9128b921b8) )	/* tiles */
+	ROM_LOAD( "blktiger.4b",  0x10000, 0x10000, CRC(7932c86f) SHA1(b3b1bc1e2b0db5c2eb8772f8a2c35129cc80d511) )
+	ROM_LOAD( "blktiger.9b",  0x20000, 0x10000, CRC(dc49593a) SHA1(e4ef42ba9f238fd43c8217657c92896f31d3912c) )
+	ROM_LOAD( "blktiger.8b",  0x30000, 0x10000, CRC(7ed7a122) SHA1(3acc6d4c9731db0609c2e26e3bd255847149ca33) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, 0xe2f17438 )	/* sprites */
-	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, 0x5fccbd27 )
-	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, 0xfc33ccc6 )
-	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, 0xf449de01 )
+	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, CRC(e2f17438) SHA1(3e5fdae07d40febedc59c7c7c4d9c6f0d72b58b5) )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, CRC(5fccbd27) SHA1(33c55aa9c12b3121ca5c3b4c39a9b152b6946461) )
+	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, CRC(fc33ccc6) SHA1(d492626a88565c2626f98ecb1d74535f1ad68e4c) )
+	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, CRC(f449de01) SHA1(f6b40e9eb2471b89c42ab84f4214295d284db0c3) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )	/* PROMs (function unknown) */
-	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
-	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
-	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
-	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, CRC(29b459e5) SHA1(0034734a533df3dea16b7b48e072485d7f26f850) )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, CRC(8b741e66) SHA1(6c1fda59936a7217b05949f5c54b1f91f4b49dbe) )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, CRC(27201c75) SHA1(c54d87f06bfe0b0908389c005014d97156e272c2) )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, CRC(e5490b68) SHA1(40f9f92efe7dd97b49144aec02eb509834056915) )
 ROM_END
 
 ROM_START( blkdrgon )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x27ccdfbc )	/* CODE */
-	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
-	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0xd1bf3757 )	/* 2+3 */
-	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0x4d1d6680 )	/* 4+5 */
-	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0xc8d0c45e )	/* 6+7 */
+	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, CRC(27ccdfbc) SHA1(3caafe00735ba9b24d870ee61ad2cae541551024) )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, CRC(7d39c26f) SHA1(562a3f578e109ae020f65e341c876ad7e510a311) )	/* 0+1 */
+	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, CRC(d1bf3757) SHA1(b19f8b986406bde65ac7f0d55d54f87b37f5e42f) )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, CRC(4d1d6680) SHA1(e137624c59392de6aaffeded99b024938360bd25) )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, CRC(c8d0c45e) SHA1(66c2e5a74c5875a2c8e28740fe944bd943246ce5) )	/* 6+7 */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, CRC(2cf54274) SHA1(87df100c65999ba1e9d358ffd0fe4bba23ae0efb) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "blkdrgon.2n",  0x00000, 0x08000, 0x3821ab29 )	/* characters */
+	ROM_LOAD( "blkdrgon.2n",  0x00000, 0x08000, CRC(3821ab29) SHA1(576f1839f63b0cad6b851d6e6a3e9dec21ac811d) )	/* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blkdrgon.5b",  0x00000, 0x10000, 0x22d0a4b0 )	/* tiles */
-	ROM_LOAD( "blkdrgon.4b",  0x10000, 0x10000, 0xc8b5fc52 )
-	ROM_LOAD( "blkdrgon.9b",  0x20000, 0x10000, 0x9498c378 )
-	ROM_LOAD( "blkdrgon.8b",  0x30000, 0x10000, 0x5b0df8ce )
+	ROM_LOAD( "blkdrgon.5b",  0x00000, 0x10000, CRC(22d0a4b0) SHA1(f9402ea9ffedcb280497a63c5eb352de9d4ca3fd) )	/* tiles */
+	ROM_LOAD( "blkdrgon.4b",  0x10000, 0x10000, CRC(c8b5fc52) SHA1(621e899285ce6302e5b25d133d9cd52c09b7b202) )
+	ROM_LOAD( "blkdrgon.9b",  0x20000, 0x10000, CRC(9498c378) SHA1(841934ddef724faf04162c4be4aea1684d8d8e0f) )
+	ROM_LOAD( "blkdrgon.8b",  0x30000, 0x10000, CRC(5b0df8ce) SHA1(57d10b48bd61b0224ce21b36bde8d2479e8e5df4) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, 0xe2f17438 )	/* sprites */
-	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, 0x5fccbd27 )
-	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, 0xfc33ccc6 )
-	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, 0xf449de01 )
+	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, CRC(e2f17438) SHA1(3e5fdae07d40febedc59c7c7c4d9c6f0d72b58b5) )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, CRC(5fccbd27) SHA1(33c55aa9c12b3121ca5c3b4c39a9b152b6946461) )
+	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, CRC(fc33ccc6) SHA1(d492626a88565c2626f98ecb1d74535f1ad68e4c) )
+	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, CRC(f449de01) SHA1(f6b40e9eb2471b89c42ab84f4214295d284db0c3) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )	/* PROMs (function unknown) */
-	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
-	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
-	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
-	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, CRC(29b459e5) SHA1(0034734a533df3dea16b7b48e072485d7f26f850) )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, CRC(8b741e66) SHA1(6c1fda59936a7217b05949f5c54b1f91f4b49dbe) )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, CRC(27201c75) SHA1(c54d87f06bfe0b0908389c005014d97156e272c2) )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, CRC(e5490b68) SHA1(40f9f92efe7dd97b49144aec02eb509834056915) )
 ROM_END
 
 ROM_START( blkdrgnb )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "j1-5e",        0x00000, 0x08000, 0x97e84412 )	/* CODE */
-	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
-	ROM_LOAD( "j3-8e",        0x20000, 0x10000, 0xf4cd0f39 )	/* 2+3 */
-	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0x4d1d6680 )	/* 4+5 */
-	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0xc8d0c45e )	/* 6+7 */
+	ROM_LOAD( "j1-5e",        0x00000, 0x08000, CRC(97e84412) SHA1(70a1add634750257d8f41a834d930919ce29c9fa) )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, CRC(7d39c26f) SHA1(562a3f578e109ae020f65e341c876ad7e510a311) )	/* 0+1 */
+	ROM_LOAD( "j3-8e",        0x20000, 0x10000, CRC(f4cd0f39) SHA1(9efc5161c861c7ec8ae72509e71c6d7b71b22fc6) )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, CRC(4d1d6680) SHA1(e137624c59392de6aaffeded99b024938360bd25) )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, CRC(c8d0c45e) SHA1(66c2e5a74c5875a2c8e28740fe944bd943246ce5) )	/* 6+7 */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, CRC(2cf54274) SHA1(87df100c65999ba1e9d358ffd0fe4bba23ae0efb) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "j15-2n",       0x00000, 0x08000, 0x852ad2b7 )	/* characters */
+	ROM_LOAD( "j15-2n",       0x00000, 0x08000, CRC(852ad2b7) SHA1(9f30c0d7e1127589b03d8f45ea50e0f907181a4b) )	/* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "blkdrgon.5b",  0x00000, 0x10000, 0x22d0a4b0 )	/* tiles */
-	ROM_LOAD( "j11-4b",       0x10000, 0x10000, 0x053ab15c )
-	ROM_LOAD( "blkdrgon.9b",  0x20000, 0x10000, 0x9498c378 )
-	ROM_LOAD( "j13-8b",       0x30000, 0x10000, 0x663d5afa )
+	ROM_LOAD( "blkdrgon.5b",  0x00000, 0x10000, CRC(22d0a4b0) SHA1(f9402ea9ffedcb280497a63c5eb352de9d4ca3fd) )	/* tiles */
+	ROM_LOAD( "j11-4b",       0x10000, 0x10000, CRC(053ab15c) SHA1(f0ddc71009ab5dd69ae463c3636ec2332c0556f8) )
+	ROM_LOAD( "blkdrgon.9b",  0x20000, 0x10000, CRC(9498c378) SHA1(841934ddef724faf04162c4be4aea1684d8d8e0f) )
+	ROM_LOAD( "j13-8b",       0x30000, 0x10000, CRC(663d5afa) SHA1(e03c09c07cf92b7fdd2582824cf698f30e89f72d) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, 0xe2f17438 )	/* sprites */
-	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, 0x5fccbd27 )
-	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, 0xfc33ccc6 )
-	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, 0xf449de01 )
+	ROM_LOAD( "blktiger.5a",  0x00000, 0x10000, CRC(e2f17438) SHA1(3e5fdae07d40febedc59c7c7c4d9c6f0d72b58b5) )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x10000, 0x10000, CRC(5fccbd27) SHA1(33c55aa9c12b3121ca5c3b4c39a9b152b6946461) )
+	ROM_LOAD( "blktiger.9a",  0x20000, 0x10000, CRC(fc33ccc6) SHA1(d492626a88565c2626f98ecb1d74535f1ad68e4c) )
+	ROM_LOAD( "blktiger.8a",  0x30000, 0x10000, CRC(f449de01) SHA1(f6b40e9eb2471b89c42ab84f4214295d284db0c3) )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )	/* PROMs (function unknown) */
-	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
-	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
-	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
-	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, CRC(29b459e5) SHA1(0034734a533df3dea16b7b48e072485d7f26f850) )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, CRC(8b741e66) SHA1(6c1fda59936a7217b05949f5c54b1f91f4b49dbe) )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, CRC(27201c75) SHA1(c54d87f06bfe0b0908389c005014d97156e272c2) )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, CRC(e5490b68) SHA1(40f9f92efe7dd97b49144aec02eb509834056915) )
 ROM_END
 
 

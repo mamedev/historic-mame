@@ -393,52 +393,52 @@ MACHINE_DRIVER_END
 
 ROM_START( junofrst )
 	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
-	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, 0xf5a7ab9d ) /* program ROMs */
-	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, 0xf20626e0 )
-	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, 0x1e7744a7 )
+	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, CRC(f5a7ab9d) SHA1(9603e797839290f8e1f93ccff9cc820604cc49ab) ) /* program ROMs */
+	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, CRC(f20626e0) SHA1(46f58bdc1a613124e2c148b61f774fcc6c232868) )
+	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, CRC(1e7744a7) SHA1(bee69833af886436016560295cddf0c8b4c5e771) )
 
-	ROM_LOAD( "jfc1_a4.bin",  0x10000, 0x2000, 0x03ccbf1d ) /* graphic and code ROMs (banked) */
-	ROM_LOAD( "jfc2_a5.bin",  0x12000, 0x2000, 0xcb372372 )
-	ROM_LOAD( "jfc3_a6.bin",  0x14000, 0x2000, 0x879d194b )
-	ROM_LOAD( "jfc4_a7.bin",  0x16000, 0x2000, 0xf28af80b )
-	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
-	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
+	ROM_LOAD( "jfc1_a4.bin",  0x10000, 0x2000, CRC(03ccbf1d) SHA1(02b45fe3c51bdc940919aac68136a121ed9bee18) ) /* graphic and code ROMs (banked) */
+	ROM_LOAD( "jfc2_a5.bin",  0x12000, 0x2000, CRC(cb372372) SHA1(a48e7de08647cbece7787c287217eac7e7a7510b) )
+	ROM_LOAD( "jfc3_a6.bin",  0x14000, 0x2000, CRC(879d194b) SHA1(3c7af8767c9ce908fa1761180c6e585823216d8a) )
+	ROM_LOAD( "jfc4_a7.bin",  0x16000, 0x2000, CRC(f28af80b) SHA1(4d0e247e729365476dd3996c7d1f2a19fc83d773) )
+	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, CRC(0539f328) SHA1(c532aaed7f9e6f564e3df0dc6d8fdbee6ed721a2) )
+	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, CRC(1da2ad6e) SHA1(de997d1b2ff6671088b57192bc9f1279359fad5d) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
+	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, CRC(235a2893) SHA1(b90251c4971f7ba12e407f86c32723d513d6b4a0) )
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
-	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
+	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, CRC(d0fa5d5f) SHA1(9d0730d1d037bf96b0c933a32355602bf2d735dd) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, 0 )	/* BLTROM, used at runtime */
-	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
-	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
-	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
+	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, CRC(aeacf6db) SHA1(f99ef9f9153d7a83e1881d9181faac99cb8c8a57) )
+	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, CRC(206d954c) SHA1(65494766676f18d8b5ae9a54cee00790e7b1e67e) )
+	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, CRC(1eb87a6e) SHA1(f5471b9f6f1fa6d6e5d76300d89f71da3129516a) )
 ROM_END
 
 ROM_START( junofstg )
 	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
-	ROM_LOAD( "jfg_a.9b",     0x0a000, 0x2000, 0x8f77d1c5 ) /* program ROMs */
-	ROM_LOAD( "jfg_b.10b",    0x0c000, 0x2000, 0xcd645673 )
-	ROM_LOAD( "jfg_c.10a",    0x0e000, 0x2000, 0x47852761 )
+	ROM_LOAD( "jfg_a.9b",     0x0a000, 0x2000, CRC(8f77d1c5) SHA1(d47fcdbc47673c228661a3528fff0c691c76df9e) ) /* program ROMs */
+	ROM_LOAD( "jfg_b.10b",    0x0c000, 0x2000, CRC(cd645673) SHA1(25994210a8a424bdf2eca3efa19e7eeffc097cec) )
+	ROM_LOAD( "jfg_c.10a",    0x0e000, 0x2000, CRC(47852761) SHA1(eeef814b6ad681d4c2274f0a69d1ed9c5c1b9118) )
 
-	ROM_LOAD( "jfgc1.4a",     0x10000, 0x2000, 0x90a05ae6 ) /* graphic and code ROMs (banked) */
-	ROM_LOAD( "jfc2_a5.bin",  0x12000, 0x2000, 0xcb372372 )
-	ROM_LOAD( "jfc3_a6.bin",  0x14000, 0x2000, 0x879d194b )
-	ROM_LOAD( "jfgc4.7a",     0x16000, 0x2000, 0xe8864a43 )
-	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
-	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
+	ROM_LOAD( "jfgc1.4a",     0x10000, 0x2000, CRC(90a05ae6) SHA1(0aa835e1d33ab0433189b329b791c952e69103c1) ) /* graphic and code ROMs (banked) */
+	ROM_LOAD( "jfc2_a5.bin",  0x12000, 0x2000, CRC(cb372372) SHA1(a48e7de08647cbece7787c287217eac7e7a7510b) )
+	ROM_LOAD( "jfc3_a6.bin",  0x14000, 0x2000, CRC(879d194b) SHA1(3c7af8767c9ce908fa1761180c6e585823216d8a) )
+	ROM_LOAD( "jfgc4.7a",     0x16000, 0x2000, CRC(e8864a43) SHA1(52b04e69036622abeb6ec99ac3daeda6a2572994) )
+	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, CRC(0539f328) SHA1(c532aaed7f9e6f564e3df0dc6d8fdbee6ed721a2) )
+	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, CRC(1da2ad6e) SHA1(de997d1b2ff6671088b57192bc9f1279359fad5d) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
+	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, CRC(235a2893) SHA1(b90251c4971f7ba12e407f86c32723d513d6b4a0) )
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
-	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
+	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, CRC(d0fa5d5f) SHA1(9d0730d1d037bf96b0c933a32355602bf2d735dd) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, 0 )	/* BLTROM, used at runtime */
-	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
-	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
-	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
+	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, CRC(aeacf6db) SHA1(f99ef9f9153d7a83e1881d9181faac99cb8c8a57) )
+	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, CRC(206d954c) SHA1(65494766676f18d8b5ae9a54cee00790e7b1e67e) )
+	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, CRC(1eb87a6e) SHA1(f5471b9f6f1fa6d6e5d76300d89f71da3129516a) )
 ROM_END
 
 

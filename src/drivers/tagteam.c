@@ -338,64 +338,64 @@ MACHINE_DRIVER_END
 
 ROM_START( bigprowr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "bf00-1.20",    0x08000, 0x2000, 0x8aba32c9 )
-	ROM_LOAD( "bf01.33",      0x0a000, 0x2000, 0x0a41f3ae )
-	ROM_LOAD( "bf02.34",      0x0c000, 0x2000, 0xa28b0a0e )
-	ROM_LOAD( "bf03.46",      0x0e000, 0x2000, 0xd4cf7ec7 )
+	ROM_LOAD( "bf00-1.20",    0x08000, 0x2000, CRC(8aba32c9) SHA1(9228082a8251feaf25849311c3de63ca42cf659e) )
+	ROM_LOAD( "bf01.33",      0x0a000, 0x2000, CRC(0a41f3ae) SHA1(1b82cd864f0bd7f16f961fec0b88307996abb166) )
+	ROM_LOAD( "bf02.34",      0x0c000, 0x2000, CRC(a28b0a0e) SHA1(50b40048a3e2efb2afb7acfb4efde6dbc25fc009) )
+	ROM_LOAD( "bf03.46",      0x0e000, 0x2000, CRC(d4cf7ec7) SHA1(cfabe40adb05f6239c3e2f002a78efb50150d27d) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio code */
-	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
-	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
-	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
-	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, 0x34a033dc )
-	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
-	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
+	ROM_LOAD( "bf4.8",        0x04000, 0x2000, CRC(0558e1d8) SHA1(317011c0e3a9d5f73c67d044c1fab315ff8049fb) )
+	ROM_LOAD( "bf5.7",        0x06000, 0x2000, CRC(c1073f24) SHA1(0337c259c10fae3067e5e0e0acf54e6d0891b29f) )
+	ROM_LOAD( "bf6.6",        0x08000, 0x2000, CRC(208cd081) SHA1(e5f6379e7f7bc80cdea12de7e0a2bb232bb16b5a) )
+	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, CRC(34a033dc) SHA1(01e4c331233a2337c7c53edd221bb87859278b04) )
+	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, CRC(eafe8056) SHA1(4a2d1c903e4acee962aeb0f0f18333252790f686) )
+	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, CRC(d589ce1b) SHA1(c2aca1cc6867d4d6d6e02ac29a4c53c667bf6d89) )
 
 	ROM_REGION( 0x12000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bf10.89",      0x00000, 0x2000, 0xb1868746 )
-	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
-	ROM_LOAD( "bf12.103",     0x04000, 0x2000, 0xc8717a46 )
-	ROM_LOAD( "bf13.91",      0x06000, 0x2000, 0x23ee34d3 )
-	ROM_LOAD( "bf14.95",      0x08000, 0x2000, 0xa6721142 )
-	ROM_LOAD( "bf15.105",     0x0a000, 0x2000, 0x60ae1078 )
-	ROM_LOAD( "bf16.93",      0x0c000, 0x2000, 0xd33dc245 )
-	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
-	ROM_LOAD( "bf18.107",     0x10000, 0x2000, 0xfd6f006d )
+	ROM_LOAD( "bf10.89",      0x00000, 0x2000, CRC(b1868746) SHA1(a3eff1b00f9ac2512d6ca81f9223723642d4f06a) )
+	ROM_LOAD( "bf11.94",      0x02000, 0x2000, CRC(c3fe99c1) SHA1(beb3056b37f26a52f3c0907868054b3cc3c4e3ea) )
+	ROM_LOAD( "bf12.103",     0x04000, 0x2000, CRC(c8717a46) SHA1(6de0238071aacb443234d9a7ef250ddfaa9dd1a8) )
+	ROM_LOAD( "bf13.91",      0x06000, 0x2000, CRC(23ee34d3) SHA1(2af79845c2d4f06eb85db14d67ec4a499fc272b1) )
+	ROM_LOAD( "bf14.95",      0x08000, 0x2000, CRC(a6721142) SHA1(200058d7b688dccda0ab0f568ab6c6c215a23e0a) )
+	ROM_LOAD( "bf15.105",     0x0a000, 0x2000, CRC(60ae1078) SHA1(f9c162ff0830aff26d121f04c107dadb060d4bd5) )
+	ROM_LOAD( "bf16.93",      0x0c000, 0x2000, CRC(d33dc245) SHA1(3a40ca7f7e17eaaea6e3f90fcf4cb9a72fc4ba8f) )
+	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, CRC(ccf42380) SHA1(6a8958201125c1b13b1354c98adc573dbea64d56) )
+	ROM_LOAD( "bf18.107",     0x10000, 0x2000, CRC(fd6f006d) SHA1(ad100ac8c0fed24f922a2cc908c88b4fced07eb0) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
-	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
+	ROM_LOAD( "fko.8",        0x0000, 0x0020, CRC(b6ee1483) SHA1(b2ea7be533e29da6cd7302532da2eb0410490e6a) )
+	ROM_LOAD( "fjo.25",       0x0020, 0x0020, CRC(24da2b63) SHA1(4db7e1ff1b9fd5ae4098cd7ca66cf1fa2574501a) ) /* What is this prom for? */
 ROM_END
 
 ROM_START( tagteam )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
-	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )
-	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, 0x3d33a923 )
-	ROM_LOAD( "prowbf3.bin",  0x0e000, 0x2000, 0x518475d2 )
+	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, CRC(6ec3afae) SHA1(8ae11cb41a72bda053ce8b79c383503da5324cd1) )
+	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, CRC(b8fdd176) SHA1(afa8e890ac54101eef0274c8aabe25d188085a18) )
+	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, CRC(3d33a923) SHA1(e6402290fca72f4fa3a76e37957b9d4f5b4aeddb) )
+	ROM_LOAD( "prowbf3.bin",  0x0e000, 0x2000, CRC(518475d2) SHA1(b26bb0bb658bfd5ac24ee8ebb7fc11a79917aeda) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio code */
-	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
-	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
-	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
-	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, 0x34a033dc )
-	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
-	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
+	ROM_LOAD( "bf4.8",        0x04000, 0x2000, CRC(0558e1d8) SHA1(317011c0e3a9d5f73c67d044c1fab315ff8049fb) )
+	ROM_LOAD( "bf5.7",        0x06000, 0x2000, CRC(c1073f24) SHA1(0337c259c10fae3067e5e0e0acf54e6d0891b29f) )
+	ROM_LOAD( "bf6.6",        0x08000, 0x2000, CRC(208cd081) SHA1(e5f6379e7f7bc80cdea12de7e0a2bb232bb16b5a) )
+	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, CRC(34a033dc) SHA1(01e4c331233a2337c7c53edd221bb87859278b04) )
+	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, CRC(eafe8056) SHA1(4a2d1c903e4acee962aeb0f0f18333252790f686) )
+	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, CRC(d589ce1b) SHA1(c2aca1cc6867d4d6d6e02ac29a4c53c667bf6d89) )
 
 	ROM_REGION( 0x12000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, 0x48165902 )
-	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
-	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, 0x69de1ea2 )
-	ROM_LOAD( "prowbf13.bin", 0x06000, 0x2000, 0xecfa581d )
-	ROM_LOAD( "bf14.95",      0x08000, 0x2000, 0xa6721142 )
-	ROM_LOAD( "prowbf15.bin", 0x0a000, 0x2000, 0xd0de7e03 )
-	ROM_LOAD( "prowbf16.bin", 0x0c000, 0x2000, 0x75ee5705 )
-	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
-	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0xe73a4bba )
+	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, CRC(48165902) SHA1(3145fc83f17712b460a08b882677cfcac08fc272) )
+	ROM_LOAD( "bf11.94",      0x02000, 0x2000, CRC(c3fe99c1) SHA1(beb3056b37f26a52f3c0907868054b3cc3c4e3ea) )
+	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, CRC(69de1ea2) SHA1(7b696c74e29c0bae33b386da463365e7e796c6a0) )
+	ROM_LOAD( "prowbf13.bin", 0x06000, 0x2000, CRC(ecfa581d) SHA1(1352c6a5f8e6f2d3fbe9f9e74c542ea2467f1438) )
+	ROM_LOAD( "bf14.95",      0x08000, 0x2000, CRC(a6721142) SHA1(200058d7b688dccda0ab0f568ab6c6c215a23e0a) )
+	ROM_LOAD( "prowbf15.bin", 0x0a000, 0x2000, CRC(d0de7e03) SHA1(79267c09621f8f5255c82a69790d5b52b1c5dd6e) )
+	ROM_LOAD( "prowbf16.bin", 0x0c000, 0x2000, CRC(75ee5705) SHA1(95fdea3768f2d5b81ba5dafd3b13a061cd96689a) )
+	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, CRC(ccf42380) SHA1(6a8958201125c1b13b1354c98adc573dbea64d56) )
+	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, CRC(e73a4bba) SHA1(6dbc2d741ebf8fcce9144cfe6fe6f35acd25ceef) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
-	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
+	ROM_LOAD( "fko.8",        0x0000, 0x0020, CRC(b6ee1483) SHA1(b2ea7be533e29da6cd7302532da2eb0410490e6a) )
+	ROM_LOAD( "fjo.25",       0x0020, 0x0020, CRC(24da2b63) SHA1(4db7e1ff1b9fd5ae4098cd7ca66cf1fa2574501a) ) /* What is this prom for? */
 ROM_END
 
 

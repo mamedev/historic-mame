@@ -404,6 +404,7 @@ int kaneko16_parse_sprite_type012(int i, struct tempsprite *s)
 	s->priority		=		(attr & 0x00c0) >> 6;
 	s->flipy		=		(attr & 0x0100);
 	s->flipx		=		(attr & 0x0200);
+	s->code			+=		(s->y & 1) << 16;	// bloodwar
 	}
 	else
 	{

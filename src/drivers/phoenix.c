@@ -664,242 +664,266 @@ MACHINE_DRIVER_END
 
 ROM_START( phoenix )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic45",         0x0000, 0x0800, 0x9f68086b )
-	ROM_LOAD( "ic46",         0x0800, 0x0800, 0x273a4a82 )
-	ROM_LOAD( "ic47",         0x1000, 0x0800, 0x3d4284b9 )
-	ROM_LOAD( "ic48",         0x1800, 0x0800, 0xcb5d9915 )
-	ROM_LOAD( "ic49",         0x2000, 0x0800, 0xa105e4e7 )
-	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
-	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
-	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
+	ROM_LOAD( "ic45",         0x0000, 0x0800, CRC(9f68086b) SHA1(fc3cef299bf03bf0586c4047c6b96ca666846220) )
+	ROM_LOAD( "ic46",         0x0800, 0x0800, CRC(273a4a82) SHA1(6f3019a074e73ff50ceb92f655fcf15659f34919) )
+	ROM_LOAD( "ic47",         0x1000, 0x0800, CRC(3d4284b9) SHA1(6e69f8f0d537fe89140cd95d2398531d7e93d102) )
+	ROM_LOAD( "ic48",         0x1800, 0x0800, CRC(cb5d9915) SHA1(49bcf55a5721cfcc02c3b811a4b601e35ea576db) )
+	ROM_LOAD( "ic49",         0x2000, 0x0800, CRC(a105e4e7) SHA1(b35142a91b6b7fdf7535202671793393c9f4685f) )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, CRC(ac5e9ec1) SHA1(0402e5241d99759d804291998efd43f37ce99917) )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, CRC(2eab35b4) SHA1(849bf8273317cc869bdd67e50c68399ee8ece81d) )
+	ROM_LOAD( "ic52",         0x3800, 0x0800, CRC(aff8e9c5) SHA1(e4164f85ec12d4d9bcbffba27ab1f51b3599f6d0) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, CRC(53413e8f) SHA1(d772358505b973b10da840d204afb210c0c746ec) )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, CRC(0be2ba91) SHA1(af9243ee23377b632b9b7d0b84d341d06bf22480) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixa )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic45.k1",      0x0000, 0x0800, 0xc7a9b499 )
-	ROM_LOAD( "ic46.k2",      0x0800, 0x0800, 0xd0e6ae1b )
-	ROM_LOAD( "ic47.k3",      0x1000, 0x0800, 0x64bf463a )
-	ROM_LOAD( "ic48.k4",      0x1800, 0x0800, 0x1b20fe62 )
-	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, 0x1a1ce0d0 )
-	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
-	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
-	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
+	ROM_LOAD( "ic45.k1",      0x0000, 0x0800, CRC(c7a9b499) SHA1(cda61de47956b3603ff6e48556ce528b5f45deab) )
+	ROM_LOAD( "ic46.k2",      0x0800, 0x0800, CRC(d0e6ae1b) SHA1(63c6df8365dcb8befa338e8479482e34a4259abf) )
+	ROM_LOAD( "ic47.k3",      0x1000, 0x0800, CRC(64bf463a) SHA1(6cd876e80b85fbac6374ea1f26620c026ba9e99a) )
+	ROM_LOAD( "ic48.k4",      0x1800, 0x0800, CRC(1b20fe62) SHA1(87d2da6b9bde9049825245ca4b994fc84543e8b9) )
+	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, CRC(1a1ce0d0) SHA1(c2825eef5d461e16ca2172daff94b3751be2f4dc) )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, CRC(ac5e9ec1) SHA1(0402e5241d99759d804291998efd43f37ce99917) )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, CRC(2eab35b4) SHA1(849bf8273317cc869bdd67e50c68399ee8ece81d) )
+	ROM_LOAD( "ic52",         0x3800, 0x0800, CRC(aff8e9c5) SHA1(e4164f85ec12d4d9bcbffba27ab1f51b3599f6d0) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
-	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
+	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, CRC(bb0525ed) SHA1(86db1c7584fb3846bfd47535e1585eeb7fbbb1fe) )
+	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, CRC(4178aa4f) SHA1(5350f8f62cc7c223c38008bc83140b7a19147d81) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
-	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
-	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
-	ROM_LOAD( "phoenix.48",   0x1800, 0x0800, 0xcb65eff8 )
-	ROM_LOAD( "phoenix.49",   0x2000, 0x0800, 0xc8a5d6d6 )
-	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
-	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
-	ROM_LOAD( "phoenix.52",   0x3800, 0x0800, 0xb9915263 )
+	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, CRC(5b8c55a8) SHA1(839c1ca9766f730ec3accd48db70f6429a9c3362) )
+	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, CRC(dbc942fa) SHA1(9fe224e6ced407289dfa571468259a021d942b7d) )
+	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, CRC(cbbb8839) SHA1(b7f449374cac111081559e39646f973e7e99fd64) )
+	ROM_LOAD( "phoenix.48",   0x1800, 0x0800, CRC(cb65eff8) SHA1(63e674d680972d3744d66b943e8546f3b77ee6d4) )
+	ROM_LOAD( "phoenix.49",   0x2000, 0x0800, CRC(c8a5d6d6) SHA1(ef6ade323544e3edd4101609138ecf35e8cb9577) )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, CRC(ac5e9ec1) SHA1(0402e5241d99759d804291998efd43f37ce99917) )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, CRC(2eab35b4) SHA1(849bf8273317cc869bdd67e50c68399ee8ece81d) )
+	ROM_LOAD( "phoenix.52",   0x3800, 0x0800, CRC(b9915263) SHA1(f61396077b23364b5b26f62c6923394d23a37eb3) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, CRC(53413e8f) SHA1(d772358505b973b10da840d204afb210c0c746ec) )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, CRC(0be2ba91) SHA1(af9243ee23377b632b9b7d0b84d341d06bf22480) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenix3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
-	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
-	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
-	ROM_LOAD( "phoenix3.48",  0x1800, 0x0800, 0xb5d97a4d )
-	ROM_LOAD( "ic49",         0x2000, 0x0800, 0xa105e4e7 )
-	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
-	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
-	ROM_LOAD( "phoenix3.52",  0x3800, 0x0800, 0xd2c5c984 )
+	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, CRC(a362cda0) SHA1(5ab38afaf92179c965533326574c773f6a63dbbb) )
+	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, CRC(5748f486) SHA1(49e6fd836d26ec24105e95227b24cf668e8a470a) )
+	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, CRC(cbbb8839) SHA1(b7f449374cac111081559e39646f973e7e99fd64) )
+	ROM_LOAD( "phoenix3.48",  0x1800, 0x0800, CRC(b5d97a4d) SHA1(d5d92c5e34431b2ded47e58608c459cc8cdd7937) )
+	ROM_LOAD( "ic49",         0x2000, 0x0800, CRC(a105e4e7) SHA1(b35142a91b6b7fdf7535202671793393c9f4685f) )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, CRC(ac5e9ec1) SHA1(0402e5241d99759d804291998efd43f37ce99917) )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, CRC(2eab35b4) SHA1(849bf8273317cc869bdd67e50c68399ee8ece81d) )
+	ROM_LOAD( "phoenix3.52",  0x3800, 0x0800, CRC(d2c5c984) SHA1(a9432f9aff8a2f5ca1d347443efc008a177d8ae0) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, CRC(53413e8f) SHA1(d772358505b973b10da840d204afb210c0c746ec) )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, CRC(0be2ba91) SHA1(af9243ee23377b632b9b7d0b84d341d06bf22480) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixc )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
-	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
-	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
-	ROM_LOAD( "phoenixc.48",  0x1800, 0x0800, 0x5ae0b215 )
-	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, 0x1a1ce0d0 )
-	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
-	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
-	ROM_LOAD( "phoenixc.52",  0x3800, 0x0800, 0x8424d7c4 )
+	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, CRC(5b8c55a8) SHA1(839c1ca9766f730ec3accd48db70f6429a9c3362) )
+	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, CRC(dbc942fa) SHA1(9fe224e6ced407289dfa571468259a021d942b7d) )
+	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, CRC(cbbb8839) SHA1(b7f449374cac111081559e39646f973e7e99fd64) )
+	ROM_LOAD( "phoenixc.48",  0x1800, 0x0800, CRC(5ae0b215) SHA1(f6dd86806fb9c467aaa63edf0cb4dbed9645e7c0) )
+	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, CRC(1a1ce0d0) SHA1(c2825eef5d461e16ca2172daff94b3751be2f4dc) )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, CRC(ac5e9ec1) SHA1(0402e5241d99759d804291998efd43f37ce99917) )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, CRC(2eab35b4) SHA1(849bf8273317cc869bdd67e50c68399ee8ece81d) )
+	ROM_LOAD( "phoenixc.52",  0x3800, 0x0800, CRC(8424d7c4) SHA1(1b5fa7d8be9e8750a4148dfefc17e96c86ed084d) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
-	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
+	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, CRC(bb0525ed) SHA1(86db1c7584fb3846bfd47535e1585eeb7fbbb1fe) )
+	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, CRC(4178aa4f) SHA1(5350f8f62cc7c223c38008bc83140b7a19147d81) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( condor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "cond01c.bin",  0x0000, 0x0800, 0xc0f73929 )
-	ROM_LOAD( "cond02c.bin",  0x0800, 0x0800, 0x440d56e8 )
-	ROM_LOAD( "cond03c.bin",  0x1000, 0x0800, 0x750b059b )
-	ROM_LOAD( "cond04c.bin",  0x1800, 0x0800, 0xca55e1dd )
-	ROM_LOAD( "cond05c.bin",  0x2000, 0x0800, 0x1ff3a982 )
-	ROM_LOAD( "cond06c.bin",  0x2800, 0x0800, 0x8c83bff7 )
-	ROM_LOAD( "cond07c.bin",  0x3000, 0x0800, 0x805ec2e8 )
-	ROM_LOAD( "cond08c.bin",  0x3800, 0x0800, 0x1edebb45 )
+	ROM_LOAD( "cond01c.bin",  0x0000, 0x0800, CRC(c0f73929) SHA1(3cecf8341a5674165d2cae9b22ea5db26a9597de) )
+	ROM_LOAD( "cond02c.bin",  0x0800, 0x0800, CRC(440d56e8) SHA1(b3147d5416cec8c00c7df40b878b826434121737) )
+	ROM_LOAD( "cond03c.bin",  0x1000, 0x0800, CRC(750b059b) SHA1(6fbaa2ef4c7eef6f731a73b2d33a02fff21b318a) )
+	ROM_LOAD( "cond04c.bin",  0x1800, 0x0800, CRC(ca55e1dd) SHA1(f3d8de56e54ec8651ab95af90ed122096c076c65) )
+	ROM_LOAD( "cond05c.bin",  0x2000, 0x0800, CRC(1ff3a982) SHA1(66fb39e7abdf7a9c6e2eb01d41cfe9429781d6aa) )
+	ROM_LOAD( "cond06c.bin",  0x2800, 0x0800, CRC(8c83bff7) SHA1(3dfb090d7e3a9ae8da882b06e166c48555eaf77c) )
+	ROM_LOAD( "cond07c.bin",  0x3000, 0x0800, CRC(805ec2e8) SHA1(7e56fc9990eb99512078e2b1e2874fb33b0aa05c) )
+	ROM_LOAD( "cond08c.bin",  0x3800, 0x0800, CRC(1edebb45) SHA1(2fdf061ee600e27a6ed512ea61a8d78307a7fb8a) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
-	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cond11c.bin",  0x0000, 0x0800, 0x53c52eb0 )
-	ROM_LOAD( "cond12c.bin",  0x0800, 0x0800, 0xeba42f0f )
+	ROM_LOAD( "cond11c.bin",  0x0000, 0x0800, CRC(53c52eb0) SHA1(19624ca359996b77d3c65ef78a7af90eeb092377) )
+	ROM_LOAD( "cond12c.bin",  0x0800, 0x0800, CRC(eba42f0f) SHA1(378282cb2c4e10c23179ae3c605ae7bf691150f6) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
-	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
+ROM_END
+
+ROM_START( vautour )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "vautor01.1e",  0x0000, 0x0800, CRC(cd2807ee) SHA1(79b9769f212d25b9ccb5124e2aa632c964c14a0b) )
+	ROM_LOAD( "vautor02.1f",  0x0800, 0x0800, CRC(dbc942fa) SHA1(9fe224e6ced407289dfa571468259a021d942b7d) )
+	ROM_LOAD( "vautor03.1h",  0x1000, 0x0800, CRC(cbbb8839) SHA1(b7f449374cac111081559e39646f973e7e99fd64) )
+	ROM_LOAD( "vautor04.1j",  0x1800, 0x0800, CRC(106262eb) SHA1(1e52ca66ea3542d86f2604f5aadc854ffe22fd89) )
+	ROM_LOAD( "vautor05.1k",  0x2000, 0x0800, CRC(1a1ce0d0) SHA1(c2825eef5d461e16ca2172daff94b3751be2f4dc) )
+	ROM_LOAD( "vautor06.1h",  0x2800, 0x0800, CRC(c90e3287) SHA1(696014738d3b87acb10175b021d9fd4885904a9f) )
+	ROM_LOAD( "vautor07.1m",  0x3000, 0x0800, CRC(079ac364) SHA1(55b17c069b191cd1752e78068ef683b33c094e56) )
+	ROM_LOAD( "vautor08.1n",  0x3800, 0x0800, CRC(1dbd937a) SHA1(efed9adad3d639c893b33071fd86c64800a7a32f) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vautor12.2h",  0x0000, 0x0800, CRC(8eff75c9) SHA1(d38a0e0c02ba680984dd8748a3c45ac55f81f127) )
+	ROM_LOAD( "vautor11.2j",  0x0800, 0x0800, CRC(369e7476) SHA1(599d2fc3b298060d746e95c20a089ad37f685d5b) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
 ROM_START( pleiads )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
-	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
-	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb ) /* IC 49 on real board */
-	ROM_LOAD( "ic48.bin",     0x1800, 0x0800, 0x2d5198d0 ) /* IC 50 on real board */
-	ROM_LOAD( "ic51.r5",      0x2000, 0x0800, 0x49c629bc )
-	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, 0xf1a8a00d ) /* IC 52 on real board */
-	ROM_LOAD( "ic53.r7",      0x3000, 0x0800, 0xb5f07fbc )
-	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 ) /* IC 54 on real board */
+	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, CRC(960212c8) SHA1(52a3232e99920805ce9e195b8a6338ae7044dd18) )
+	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, CRC(b254217c) SHA1(312a33cca09d5d2d18992f28eb051230a90db6e3) )
+	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, CRC(87e700bb) SHA1(0f352b5461da957c564920fd1da83bc81f41ffb9) ) /* IC 49 on real board */
+	ROM_LOAD( "ic48.bin",     0x1800, 0x0800, CRC(2d5198d0) SHA1(6bfdc6c965199c5d4d687fe35dda057ec38cd8e0) ) /* IC 50 on real board */
+	ROM_LOAD( "ic51.r5",      0x2000, 0x0800, CRC(49c629bc) SHA1(fd7937d0c114c8d9c1efaa9918ae3df2af41f032) )
+	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, CRC(f1a8a00d) SHA1(5c183e3a73fa882ffec3cb9219fb5619e625591a) ) /* IC 52 on real board */
+	ROM_LOAD( "ic53.r7",      0x3000, 0x0800, CRC(b5f07fbc) SHA1(2ae687c84732942e69ad4dfb7a4ac1b97b77487a) )
+	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, CRC(b1b5a8a6) SHA1(7e4ef298c8ddefc7dc0cbf94a9c9f36a4b807ba0) ) /* IC 54 on real board */
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 ) /* IC 45 on real board */
-	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 ) /* IC 44 on real board */
+	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, CRC(4e30f9e7) SHA1(da023a94725dc40107cd97e4decfd4dc0f9f00ee) ) /* IC 45 on real board */
+	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, CRC(5188fc29) SHA1(421dedc674c6dde7abf01412df035a8eb8e6db9b) ) /* IC 44 on real board */
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 ) /* IC 27 on real board */
-	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, CRC(85866607) SHA1(cd240bd056f761b2f9e2142049434f02cae3e315) ) /* IC 27 on real board */
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, CRC(a841d511) SHA1(8349008ab1d8ef08775b54170c37deb1d391fffc) ) /* IC 26 on real board */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, CRC(7a1bcb1e) SHA1(bdfab316ea26e2063879e7aa78b6ae2b55eb95c8) )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, CRC(e38eeb83) SHA1(252880d80425b2e697146e76efdc6cb9f3ba0378) )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadbl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
-	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
-	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
-	ROM_LOAD( "ic48.bin",     0x1800, 0x0800, 0x2d5198d0 )
-	ROM_LOAD( "ic49.bin",     0x2000, 0x0800, 0x9dc73e63 )
-	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, 0xf1a8a00d )
-	ROM_LOAD( "ic51.bin",     0x3000, 0x0800, 0x6f56f317 )
-	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 )
+	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, CRC(93fc2958) SHA1(d8723c4f4376e035e655f69352c1765fdbf4a602) )
+	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, CRC(e2b5b8cd) SHA1(514ab2b24fc1d6d1fd64e74470b601ba9a11f36f) )
+	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, CRC(87e700bb) SHA1(0f352b5461da957c564920fd1da83bc81f41ffb9) )
+	ROM_LOAD( "ic48.bin",     0x1800, 0x0800, CRC(2d5198d0) SHA1(6bfdc6c965199c5d4d687fe35dda057ec38cd8e0) )
+	ROM_LOAD( "ic49.bin",     0x2000, 0x0800, CRC(9dc73e63) SHA1(8a2de6666fecead7071285125b16641b50249adc) )
+	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, CRC(f1a8a00d) SHA1(5c183e3a73fa882ffec3cb9219fb5619e625591a) )
+	ROM_LOAD( "ic51.bin",     0x3000, 0x0800, CRC(6f56f317) SHA1(d7e6b0b1c58b741de3504640bcc23e86d1a134a0) )
+	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, CRC(b1b5a8a6) SHA1(7e4ef298c8ddefc7dc0cbf94a9c9f36a4b807ba0) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 )
-	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 )
+	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, CRC(4e30f9e7) SHA1(da023a94725dc40107cd97e4decfd4dc0f9f00ee) )
+	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, CRC(5188fc29) SHA1(421dedc674c6dde7abf01412df035a8eb8e6db9b) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
-	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, CRC(85866607) SHA1(cd240bd056f761b2f9e2142049434f02cae3e315) )
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, CRC(a841d511) SHA1(8349008ab1d8ef08775b54170c37deb1d391fffc) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, CRC(7a1bcb1e) SHA1(bdfab316ea26e2063879e7aa78b6ae2b55eb95c8) )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, CRC(e38eeb83) SHA1(252880d80425b2e697146e76efdc6cb9f3ba0378) )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadce )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, 0x711e2ba0 )
-	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, 0x93a36943 )
-	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
-	ROM_LOAD( "pleiades.50",  0x1800, 0x0800, 0x5a9beba0 )
-	ROM_LOAD( "pleiades.51",  0x2000, 0x0800, 0x1d828719 )
-	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, 0xf1a8a00d )
-	ROM_LOAD( "pleiades.53",  0x3000, 0x0800, 0x037b319c )
-	ROM_LOAD( "pleiades.54",  0x3800, 0x0800, 0xca264c7c )
+	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, CRC(711e2ba0) SHA1(62d9108b9066d3e2b99c712daf2b9412704970cc) )
+	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, CRC(93a36943) SHA1(7cb4a9e8b60e28415df8401373ff4e595eaab7f5) )
+	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, CRC(87e700bb) SHA1(0f352b5461da957c564920fd1da83bc81f41ffb9) )
+	ROM_LOAD( "pleiades.50",  0x1800, 0x0800, CRC(5a9beba0) SHA1(e9cf03c88d8db2a7cf97877a103cfdd1fe3f459e) )
+	ROM_LOAD( "pleiades.51",  0x2000, 0x0800, CRC(1d828719) SHA1(54857a3de9f4c9c5f18b0d46cf428b4171f839e9) )
+	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, CRC(f1a8a00d) SHA1(5c183e3a73fa882ffec3cb9219fb5619e625591a) )
+	ROM_LOAD( "pleiades.53",  0x3000, 0x0800, CRC(037b319c) SHA1(2ff7a7777a63326e2abca2d1881df33a8e3f8561) )
+	ROM_LOAD( "pleiades.54",  0x3800, 0x0800, CRC(ca264c7c) SHA1(3a6adfaa935a1a11cb62e73b9f43b228b711c2da) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pleiades.45",  0x0000, 0x0800, 0x8dbd3785 )
-	ROM_LOAD( "pleiades.44",  0x0800, 0x0800, 0x0db3e436 )
+	ROM_LOAD( "pleiades.45",  0x0000, 0x0800, CRC(8dbd3785) SHA1(700cb9eb8ea64be99d843910cebcd29d601ab2e9) )
+	ROM_LOAD( "pleiades.44",  0x0800, 0x0800, CRC(0db3e436) SHA1(cd1825775b0a10df66d2ccc01cb4b6a9a3d2141a) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
-	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, CRC(85866607) SHA1(cd240bd056f761b2f9e2142049434f02cae3e315) )
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, CRC(a841d511) SHA1(8349008ab1d8ef08775b54170c37deb1d391fffc) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, CRC(7a1bcb1e) SHA1(bdfab316ea26e2063879e7aa78b6ae2b55eb95c8) )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, CRC(e38eeb83) SHA1(252880d80425b2e697146e76efdc6cb9f3ba0378) )   /* palette high bits */
 ROM_END
 
 ROM_START( survival )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "g959-32a.u45", 0x0000, 0x0800, 0x0bc53541 )
-	ROM_LOAD( "g959-33a.u46", 0x0800, 0x0800, 0x726e9428 )
-	ROM_LOAD( "g959-34a.u47", 0x1000, 0x0800, 0x78f166ff )
-	ROM_LOAD( "g959-35a.u48", 0x1800, 0x0800, 0x59dbe099 )
-	ROM_LOAD( "g959-36a.u49", 0x2000, 0x0800, 0xbd5e586e )
-	ROM_LOAD( "g959-37a.u50", 0x2800, 0x0800, 0xb2de1094 )
-	ROM_LOAD( "g959-38a.u51", 0x3000, 0x0800, 0x131c4440 )
-	ROM_LOAD( "g959-39a.u52", 0x3800, 0x0800, 0x213bc910 )
+	ROM_LOAD( "g959-32a.u45", 0x0000, 0x0800, CRC(0bc53541) )
+	ROM_LOAD( "g959-33a.u46", 0x0800, 0x0800, CRC(726e9428) )
+	ROM_LOAD( "g959-34a.u47", 0x1000, 0x0800, CRC(78f166ff) )
+	ROM_LOAD( "g959-35a.u48", 0x1800, 0x0800, CRC(59dbe099) )
+	ROM_LOAD( "g959-36a.u49", 0x2000, 0x0800, CRC(bd5e586e) )
+	ROM_LOAD( "g959-37a.u50", 0x2800, 0x0800, CRC(b2de1094) )
+	ROM_LOAD( "g959-38a.u51", 0x3000, 0x0800, CRC(131c4440) )
+	ROM_LOAD( "g959-39a.u52", 0x3800, 0x0800, CRC(213bc910) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "g959-42.u23",  0x0000, 0x0800, 0x3d1ce38d )
-	ROM_LOAD( "g959-43.u24",  0x0800, 0x0800, 0xcd150da9 )
+	ROM_LOAD( "g959-42.u23",  0x0000, 0x0800, CRC(3d1ce38d) )
+	ROM_LOAD( "g959-43.u24",  0x0800, 0x0800, CRC(cd150da9) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "g959-40.u39",  0x0000, 0x0800, 0x41dee996 )
-	ROM_LOAD( "g959-41.u40",  0x0800, 0x0800, 0xa255d6dc )
+	ROM_LOAD( "g959-40.u39",  0x0000, 0x0800, CRC(41dee996) )
+	ROM_LOAD( "g959-41.u40",  0x0800, 0x0800, CRC(a255d6dc) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "clr.u40",      0x0000, 0x0100, 0xb3e20669 )   /* palette low bits */
-	ROM_LOAD( "clr.u41",      0x0100, 0x0100, 0xabddf69a )   /* palette high bits */
+	ROM_LOAD( "clr.u40",      0x0000, 0x0100, CRC(b3e20669) )   /* palette low bits */
+	ROM_LOAD( "clr.u41",      0x0100, 0x0100, CRC(abddf69a) )   /* palette high bits */
 ROM_END
 
 
@@ -919,6 +943,7 @@ GAME ( 1980, phoenixt, phoenix, phoenix,  phoenixt, 0,        ROT90, "Taito", "P
 GAME ( 1980, phoenix3, phoenix, phoenix,  phoenix3, 0,        ROT90, "bootleg", "Phoenix (T.P.N.)" )
 GAME ( 1981, phoenixc, phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)" )
 GAME ( 1981, condor,   phoenix, condor,   condor,   0,        ROT90, "Sidam", "Condor" )
+GAME ( 1980, vautour,  phoenix, phoenix,  phoenixt, 0,        ROT90, "Jeutel", "Vautour (Jeutel France)" )
 GAMEX( 1981, pleiads,  0,       pleiads,  pleiads,  0,        ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_IMPERFECT_COLORS )
 GAMEX( 1981, pleiadbl, pleiads, pleiads,  pleiads,  0,        ROT90, "bootleg", "Pleiads (bootleg)", GAME_IMPERFECT_COLORS )
 GAMEX( 1981, pleiadce, pleiads, pleiads,  pleiadce, 0,        ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)", GAME_IMPERFECT_COLORS )

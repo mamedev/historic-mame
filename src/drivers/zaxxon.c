@@ -986,234 +986,234 @@ MACHINE_DRIVER_END
 
 ROM_START( zaxxon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "zaxxon.3",     0x0000, 0x2000, 0x6e2b4a30 )
-	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
-	ROM_LOAD( "zaxxon.1",     0x4000, 0x1000, 0x1c123ef9 )
+	ROM_LOAD( "zaxxon.3",     0x0000, 0x2000, CRC(6e2b4a30) SHA1(80ac53c554c84226b119cbe3cf3470bcdbcd5762) )
+	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, CRC(1c9ea398) SHA1(0cd259be3fa80f3d53dfa76d5ca06773cdfe5945) )
+	ROM_LOAD( "zaxxon.1",     0x4000, 0x1000, CRC(1c123ef9) SHA1(2588be06ea7baca6112d58c78a1eeb98aad8a02e) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )  /* characters */
-	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
+	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, CRC(07bf8c52) SHA1(425157a1625b1bd5169c3218b958010bf6af12bb) )  /* characters */
+	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, CRC(c215edcb) SHA1(f1ded2173eb139f48d2ca86c5ef00acbe6c11cd3) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )  /* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, CRC(6e07bb68) SHA1(a002f3441b0f0044615ce71ecbd14edadba16270) )  /* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, CRC(0a5bce6a) SHA1(a86543727389931244ba8a576b543d7ac05a2585) )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, CRC(a5bf1465) SHA1(a8cd27dfb4a606bae8bfddcf936e69e980fb1977) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )  /* sprites */
-	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, CRC(eaf0dd4b) SHA1(194e2ca0a806e0cb6bb7cc8341d1fc6f2ea911f6) )  /* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, CRC(1c5369c7) SHA1(af6a5984c3cedfa8c9efcd669f4f205b51a433b2) )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, CRC(ab4e8a9a) SHA1(4ac79cccc30e4adfa878b36101e97e20ac010438) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
-	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
-	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
-	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
+	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, CRC(28d65063) SHA1(e1f90716236c61df61bdc6915a8e390cb4dcbf15) )
+	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, CRC(6284c200) SHA1(d26a9049541479b8b19f5aa0690cf4aaa787c9b5) )
+	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, CRC(a95e61fd) SHA1(a0f8c15ff75affa3532abf8f340811cf415421fd) )
+	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, CRC(7e42691f) SHA1(2124363be8f590b74e2b15dd3f90d77dd9ca9528) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
-	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
+	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, CRC(6cc6695b) SHA1(01ae8450ccc302e1a5ae74230d44f6f531a962e2) ) /* palette */
+	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, CRC(deaa21f7) SHA1(0cf08fb62f77d93ff7cb883c633e0db35906e11d) ) /* char lookup table */
 ROM_END
 
 ROM_START( zaxxon2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "3a",           0x0000, 0x2000, 0xb18e428a )
-	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
-	ROM_LOAD( "1a",           0x4000, 0x1000, 0x1977d933 )
+	ROM_LOAD( "3a",           0x0000, 0x2000, CRC(b18e428a) SHA1(d3ff077e37a3ed8a9cc32cba19e1694b79df6b30) )
+	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, CRC(1c9ea398) SHA1(0cd259be3fa80f3d53dfa76d5ca06773cdfe5945) )
+	ROM_LOAD( "1a",           0x4000, 0x1000, CRC(1977d933) SHA1(b0100a51a85928b8df3b07b27c9e7e4f929d7893) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )  /* characters */
-	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
+	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, CRC(07bf8c52) SHA1(425157a1625b1bd5169c3218b958010bf6af12bb) )  /* characters */
+	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, CRC(c215edcb) SHA1(f1ded2173eb139f48d2ca86c5ef00acbe6c11cd3) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )  /* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, CRC(6e07bb68) SHA1(a002f3441b0f0044615ce71ecbd14edadba16270) )  /* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, CRC(0a5bce6a) SHA1(a86543727389931244ba8a576b543d7ac05a2585) )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, CRC(a5bf1465) SHA1(a8cd27dfb4a606bae8bfddcf936e69e980fb1977) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )  /* sprites */
-	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, CRC(eaf0dd4b) SHA1(194e2ca0a806e0cb6bb7cc8341d1fc6f2ea911f6) )  /* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, CRC(1c5369c7) SHA1(af6a5984c3cedfa8c9efcd669f4f205b51a433b2) )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, CRC(ab4e8a9a) SHA1(4ac79cccc30e4adfa878b36101e97e20ac010438) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
-	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
-	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
-	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
+	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, CRC(28d65063) SHA1(e1f90716236c61df61bdc6915a8e390cb4dcbf15) )
+	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, CRC(6284c200) SHA1(d26a9049541479b8b19f5aa0690cf4aaa787c9b5) )
+	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, CRC(a95e61fd) SHA1(a0f8c15ff75affa3532abf8f340811cf415421fd) )
+	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, CRC(7e42691f) SHA1(2124363be8f590b74e2b15dd3f90d77dd9ca9528) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
-	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, 0xa9e1fb43 ) /* char lookup table */
+	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, CRC(6cc6695b) SHA1(01ae8450ccc302e1a5ae74230d44f6f531a962e2) ) /* palette */
+	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, CRC(a9e1fb43) SHA1(57dbcfe2438fd090c08594818549aeea6339eab2) ) /* char lookup table */
 ROM_END
 
 ROM_START( zaxxonb )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, 0x125bca1c )
-	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, 0xc088df92 )
-	ROM_LOAD( "zaxxonb.1",    0x4000, 0x1000, 0xe7bdc417 )
+	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, CRC(125bca1c) SHA1(f4160966d42e5282736cde8a276204ba8910ca61) )
+	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, CRC(c088df92) SHA1(c0c6cd8dcf6db65129980331fa9ecc3800b63436) )
+	ROM_LOAD( "zaxxonb.1",    0x4000, 0x1000, CRC(e7bdc417) SHA1(209f0d259f60b984c84229bb31af1ef939adc73e) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )  /* characters */
-	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
+	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, CRC(07bf8c52) SHA1(425157a1625b1bd5169c3218b958010bf6af12bb) )  /* characters */
+	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, CRC(c215edcb) SHA1(f1ded2173eb139f48d2ca86c5ef00acbe6c11cd3) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )  /* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, CRC(6e07bb68) SHA1(a002f3441b0f0044615ce71ecbd14edadba16270) )  /* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, CRC(0a5bce6a) SHA1(a86543727389931244ba8a576b543d7ac05a2585) )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, CRC(a5bf1465) SHA1(a8cd27dfb4a606bae8bfddcf936e69e980fb1977) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )  /* sprites */
-	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, CRC(eaf0dd4b) SHA1(194e2ca0a806e0cb6bb7cc8341d1fc6f2ea911f6) )  /* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, CRC(1c5369c7) SHA1(af6a5984c3cedfa8c9efcd669f4f205b51a433b2) )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, CRC(ab4e8a9a) SHA1(4ac79cccc30e4adfa878b36101e97e20ac010438) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
-	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
-	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
-	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
+	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, CRC(28d65063) SHA1(e1f90716236c61df61bdc6915a8e390cb4dcbf15) )
+	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, CRC(6284c200) SHA1(d26a9049541479b8b19f5aa0690cf4aaa787c9b5) )
+	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, CRC(a95e61fd) SHA1(a0f8c15ff75affa3532abf8f340811cf415421fd) )
+	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, CRC(7e42691f) SHA1(2124363be8f590b74e2b15dd3f90d77dd9ca9528) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
-	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
+	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, CRC(6cc6695b) SHA1(01ae8450ccc302e1a5ae74230d44f6f531a962e2) ) /* palette */
+	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, CRC(deaa21f7) SHA1(0cf08fb62f77d93ff7cb883c633e0db35906e11d) ) /* char lookup table */
 ROM_END
 
 ROM_START( szaxxon )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, 0xaf7221da )
-	ROM_LOAD( "suzaxxon.2",   0x2000, 0x2000, 0x1b90fb2a )
-	ROM_LOAD( "suzaxxon.1",   0x4000, 0x1000, 0x07258b4a )
+	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, CRC(af7221da) SHA1(b5d3beb296d52ed69b4ceacf329c20a72e3a1dce) )
+	ROM_LOAD( "suzaxxon.2",   0x2000, 0x2000, CRC(1b90fb2a) SHA1(afb2bd2ffee3f5e589064f59b6ac21ed915094df) )
+	ROM_LOAD( "suzaxxon.1",   0x4000, 0x1000, CRC(07258b4a) SHA1(91e3a0c0df6c9cf66980d1ffcc3830ffdbef8c2f) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "suzaxxon.14",  0x0000, 0x0800, 0xbccf560c )  /* characters */
-	ROM_LOAD( "suzaxxon.15",  0x0800, 0x0800, 0xd28c628b )
+	ROM_LOAD( "suzaxxon.14",  0x0000, 0x0800, CRC(bccf560c) SHA1(9f92bd15466048a5665bfc2ebc8c6504af9353eb) )  /* characters */
+	ROM_LOAD( "suzaxxon.15",  0x0800, 0x0800, CRC(d28c628b) SHA1(42ab7dc0e4e0d09213054597373383cdb6a55699) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "suzaxxon.6",   0x0000, 0x2000, 0xf51af375 )  /* background tiles */
-	ROM_LOAD( "suzaxxon.5",   0x2000, 0x2000, 0xa7de021d )
-	ROM_LOAD( "suzaxxon.4",   0x4000, 0x2000, 0x5bfb3b04 )
+	ROM_LOAD( "suzaxxon.6",   0x0000, 0x2000, CRC(f51af375) SHA1(8682217dc800f43b73cd5e8501dbf3b7cd136dc1) )  /* background tiles */
+	ROM_LOAD( "suzaxxon.5",   0x2000, 0x2000, CRC(a7de021d) SHA1(a1bee07aa906366aa69866d1bdff38e2d90fafdd) )
+	ROM_LOAD( "suzaxxon.4",   0x4000, 0x2000, CRC(5bfb3b04) SHA1(f898e42d6bc1fd3629c9caee3c2af27805969ac6) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "suzaxxon.11",  0x0000, 0x2000, 0x1503ae41 )  /* sprites */
-	ROM_LOAD( "suzaxxon.12",  0x2000, 0x2000, 0x3b53d83f )
-	ROM_LOAD( "suzaxxon.13",  0x4000, 0x2000, 0x581e8793 )
+	ROM_LOAD( "suzaxxon.11",  0x0000, 0x2000, CRC(1503ae41) SHA1(d4085f15fcbfb9547a7f9e2cb7ce9276c4d6c08d) )  /* sprites */
+	ROM_LOAD( "suzaxxon.12",  0x2000, 0x2000, CRC(3b53d83f) SHA1(118e9d2b4f5daf96f5a38ccd92d0b046a470b0b2) )
+	ROM_LOAD( "suzaxxon.13",  0x4000, 0x2000, CRC(581e8793) SHA1(2b3305dd55dc09d7394ed8ae691773972dba28b9) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "suzaxxon.8",   0x0000, 0x2000, 0xdd1b52df )
-	ROM_LOAD( "suzaxxon.7",   0x2000, 0x2000, 0xb5bc07f0 )
-	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, 0x68e84174 )
-	ROM_LOAD( "suzaxxon.9",   0x6000, 0x2000, 0xa509994b )
+	ROM_LOAD( "suzaxxon.8",   0x0000, 0x2000, CRC(dd1b52df) SHA1(8170dd9f81c41104694951a2c74405d0c6d8b9b6) )
+	ROM_LOAD( "suzaxxon.7",   0x2000, 0x2000, CRC(b5bc07f0) SHA1(1e4d460ce8cca66b081ee8ec1a9adb6ef98274ec) )
+	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, CRC(68e84174) SHA1(b78c44d92078552835a20bcb7125fc9ca8af5048) )
+	ROM_LOAD( "suzaxxon.9",   0x6000, 0x2000, CRC(a509994b) SHA1(51541ec78ab3f8241a5ddf7f99a46f5e44292992) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, 0x15727a9f ) /* palette */
-	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
+	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, CRC(15727a9f) SHA1(42840e9ab303fb64102a1dbae03d66c9cf743a9f) ) /* palette */
+	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, CRC(deaa21f7) SHA1(0cf08fb62f77d93ff7cb883c633e0db35906e11d) ) /* char lookup table */
 ROM_END
 
 ROM_START( futspy )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "fs_snd.u27",   0x0000, 0x2000, 0x7578fe7f )
-	ROM_LOAD( "fs_snd.u28",   0x2000, 0x2000, 0x8ade203c )
-	ROM_LOAD( "fs_snd.u29",   0x4000, 0x1000, 0x734299c3 )
+	ROM_LOAD( "fs_snd.u27",   0x0000, 0x2000, CRC(7578fe7f) SHA1(ab42bdf74b07c1ba5337c3d34647d3ee16f9db05) )
+	ROM_LOAD( "fs_snd.u28",   0x2000, 0x2000, CRC(8ade203c) SHA1(f095f4019befff7af4203c886ef42357f79592a1) )
+	ROM_LOAD( "fs_snd.u29",   0x4000, 0x1000, CRC(734299c3) SHA1(12acf71d9d00e0e0df29c4d8c397ad407266b364) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs_snd.u68",   0x0000, 0x0800, 0x305fae2d )  /* characters */
-	ROM_LOAD( "fs_snd.u69",   0x0800, 0x0800, 0x3c5658c0 )
+	ROM_LOAD( "fs_snd.u68",   0x0000, 0x0800, CRC(305fae2d) SHA1(fbe89feff0fb2d4515000d1b73b7c91aac4e0b67) )  /* characters */
+	ROM_LOAD( "fs_snd.u69",   0x0800, 0x0800, CRC(3c5658c0) SHA1(70ac44b9334b086cdecd73f5f7820a0bf8ae2629) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs_vid.113",   0x0000, 0x2000, 0x36d2bdf6 )  /* background tiles */
-	ROM_LOAD( "fs_vid.112",   0x2000, 0x2000, 0x3740946a )
-	ROM_LOAD( "fs_vid.111",   0x4000, 0x2000, 0x4cd4df98 )
+	ROM_LOAD( "fs_vid.113",   0x0000, 0x2000, CRC(36d2bdf6) SHA1(c27835055beedf61ba644070f8920b6008d99040) )  /* background tiles */
+	ROM_LOAD( "fs_vid.112",   0x2000, 0x2000, CRC(3740946a) SHA1(e7579dd91628a811a60a8d8a5b407728b74aa17e) )
+	ROM_LOAD( "fs_vid.111",   0x4000, 0x2000, CRC(4cd4df98) SHA1(3ae4b2d0a79069e0de81596805bcf1a9ae7912cf) )
 
 	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs_vid.u77",   0x0000, 0x4000, 0x1b93c9ec )  /* sprites */
-	ROM_LOAD( "fs_vid.u78",   0x4000, 0x4000, 0x50e55262 )
-	ROM_LOAD( "fs_vid.u79",   0x8000, 0x4000, 0xbfb02e3e )
+	ROM_LOAD( "fs_vid.u77",   0x0000, 0x4000, CRC(1b93c9ec) SHA1(4b1d3b7e35d65cc3b96eb4f2e98c59e779bcb1c1) )  /* sprites */
+	ROM_LOAD( "fs_vid.u78",   0x4000, 0x4000, CRC(50e55262) SHA1(363acbde7b37a2358b3e53cfc08c9bd5dee73d55) )
+	ROM_LOAD( "fs_vid.u79",   0x8000, 0x4000, CRC(bfb02e3e) SHA1(f53bcec46b8c7d26e9ab01c821a8d1578b85f786) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "fs_vid.u91",   0x0000, 0x2000, 0x86da01f4 )
-	ROM_LOAD( "fs_vid.u90",   0x2000, 0x2000, 0x2bd41d2d )
-	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, 0xb82b4997 )
-	ROM_LOAD( "fs_vid.u92",   0x6000, 0x2000, 0xaf4015af )
+	ROM_LOAD( "fs_vid.u91",   0x0000, 0x2000, CRC(86da01f4) SHA1(954e4be1b0e24c8bc88c2b328e3a0e32005bb7b2) )
+	ROM_LOAD( "fs_vid.u90",   0x2000, 0x2000, CRC(2bd41d2d) SHA1(efb74b4bce31c7868ab6438e07b02b0539d35120) )
+	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, CRC(b82b4997) SHA1(263f74aab47fc4e516b2111eaa94beea61c5fbe5) )
+	ROM_LOAD( "fs_vid.u92",   0x6000, 0x2000, CRC(af4015af) SHA1(6ed01a42d395ada6f2442b68f901fe61b04c8e44) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x9ba2acaa ) /* palette */
-	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0xf9e26790 ) /* char lookup table */
+	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, CRC(9ba2acaa) SHA1(20e0257ca531ddc398b3aab861c7b5c41b659d40) ) /* palette */
+	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, CRC(f9e26790) SHA1(339f27e0126312d35211b5ce533f293b58851c1d) ) /* char lookup table */
 ROM_END
 
 ROM_START( razmataz )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "u27",           0x0000, 0x2000, 0x254f350f )
-	ROM_LOAD( "u28",           0x2000, 0x2000, 0x3a1eaa99 )
-	ROM_LOAD( "u29",           0x4000, 0x2000, 0x0ee67e78 )
+	ROM_LOAD( "u27",           0x0000, 0x2000, CRC(254f350f) SHA1(f8e84778b7ffc4da76e97992f01c742c212480cf) )
+	ROM_LOAD( "u28",           0x2000, 0x2000, CRC(3a1eaa99) SHA1(d1f2a61a8548135c9754097aa468672616244710) )
+	ROM_LOAD( "u29",           0x4000, 0x2000, CRC(0ee67e78) SHA1(c6c703000a4e0da8af65be53b2a6b2ef67860c30) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1921.u68",      0x0000, 0x0800, 0x77f8ff5a )  /* characters */
-	ROM_LOAD( "1922.u69",      0x0800, 0x0800, 0xcf63621e )
+	ROM_LOAD( "1921.u68",      0x0000, 0x0800, CRC(77f8ff5a) SHA1(d535109387559dd5b58dc6432a1eae6535442079) )  /* characters */
+	ROM_LOAD( "1922.u69",      0x0800, 0x0800, CRC(cf63621e) SHA1(60452ad34f2b0e0afa0f09455d9aa84058c54fd5) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "1934.113",      0x0000, 0x2000, 0x39bb679c )  /* background tiles */
-	ROM_LOAD( "1933.112",      0x2000, 0x2000, 0x1022185e )
-	ROM_LOAD( "1932.111",      0x4000, 0x2000, 0xc7a715eb )
+	ROM_LOAD( "1934.113",      0x0000, 0x2000, CRC(39bb679c) SHA1(0a384286dbfc8b35e4779119f62769b6cfc93a52) )  /* background tiles */
+	ROM_LOAD( "1933.112",      0x2000, 0x2000, CRC(1022185e) SHA1(874d796baea8ade2c642f3640ec7875a9f509a68) )
+	ROM_LOAD( "1932.111",      0x4000, 0x2000, CRC(c7a715eb) SHA1(8b04558c87c5a5f94a5bab9fbe198a0b8a84ebf4) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "1925.u77",      0x0000, 0x2000, 0xa7965437 )  /* sprites */
-	ROM_LOAD( "1926.u78",      0x2000, 0x2000, 0x9a3af434 )
-	ROM_LOAD( "1927.u79",      0x4000, 0x2000, 0x0323de2b )
+	ROM_LOAD( "1925.u77",      0x0000, 0x2000, CRC(a7965437) SHA1(24ab3cc9b6d70e8cab4f0a20f84fb98682b321f5) )  /* sprites */
+	ROM_LOAD( "1926.u78",      0x2000, 0x2000, CRC(9a3af434) SHA1(0b5b1ac9cf8bee1c3830ef3baffcd7d3a05bf765) )
+	ROM_LOAD( "1927.u79",      0x4000, 0x2000, CRC(0323de2b) SHA1(6f6ceafe6472d59bd0ffecb9dd2d401659157b50) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "1929.u91",      0x0000, 0x2000, 0x55c7c757 )
-	ROM_LOAD( "1928.u90",      0x2000, 0x2000, 0xe58b155b )
-	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
-	ROM_LOAD( "1930.u92",      0x6000, 0x2000, 0xf355f105 )
+	ROM_LOAD( "1929.u91",      0x0000, 0x2000, CRC(55c7c757) SHA1(ad8d548eb965f343e88bad4b4ad1b5b226f21d71) )
+	ROM_LOAD( "1928.u90",      0x2000, 0x2000, CRC(e58b155b) SHA1(dd6abeae66de69734b7aa5e133dbfb8f8a35578e) )
+	ROM_LOAD( "1931.u93",      0x4000, 0x2000, CRC(55fe0f82) SHA1(391434b41b6235199a4f19a8873a523cbb417f70) )
+	ROM_LOAD( "1930.u92",      0x6000, 0x2000, CRC(f355f105) SHA1(93067b7390c05b71020e77abdd9577b39e486d9f) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "clr.u98",       0x0000, 0x0100, 0x0fd671af ) /* palette */
-	ROM_LOAD( "clr.u72",       0x0100, 0x0100, 0x03233bc5 ) /* char lookup table */
+	ROM_LOAD( "clr.u98",       0x0000, 0x0100, CRC(0fd671af) SHA1(7f26139398754dae7383c9375fca95b7970fcefb) ) /* palette */
+	ROM_LOAD( "clr.u72",       0x0100, 0x0100, CRC(03233bc5) SHA1(30bd690da7eda4e13df90d7ee59dbf744b3541a4) ) /* char lookup table */
 
 	ROM_REGION( 0x1000, REGION_SOUND1, 0 ) /* sound? */
-	ROM_LOAD( "1923.u50",      0x0000, 0x0800, 0x59994a51 )
-	ROM_LOAD( "1924.u51",      0x0800, 0x0800, 0xa75e0011 )
+	ROM_LOAD( "1923.u50",      0x0000, 0x0800, CRC(59994a51) SHA1(57ccee24a989efe39f8ffc08aab7d72a1cdef3d1) )
+	ROM_LOAD( "1924.u51",      0x0800, 0x0800, CRC(a75e0011) SHA1(7d67ce2e8a2de471221b3b565a937ae1a35e1560) )
 ROM_END
 
 ROM_START( ixion )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "1937d.u27",           0x0000, 0x2000, 0xf447aac5 )
-	ROM_LOAD( "1938b.u28",           0x2000, 0x2000, 0x17f48640 )
-	ROM_LOAD( "1955b.u29",           0x4000, 0x1000, 0x78636ec6 )
+	ROM_LOAD( "1937d.u27",           0x0000, 0x2000, CRC(f447aac5) SHA1(f6ec02f20482649ba1765254e0e67a8593075092) )
+	ROM_LOAD( "1938b.u28",           0x2000, 0x2000, CRC(17f48640) SHA1(d661e8ae0747c2c526360cb72e403deba7a98e71) )
+	ROM_LOAD( "1955b.u29",           0x4000, 0x1000, CRC(78636ec6) SHA1(afca6418221e700749031cb3fa738907d77c1566) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1939a.u68",      0x0000, 0x0800, 0xc717ddc7 )  /* characters */
-	ROM_LOAD( "1940a.u69",      0x0800, 0x0800, 0xec4bb3ad )
+	ROM_LOAD( "1939a.u68",      0x0000, 0x0800, CRC(c717ddc7) SHA1(86fdef368f097a27aac6e05bf3208fcdaf7d9da7) )  /* characters */
+	ROM_LOAD( "1940a.u69",      0x0800, 0x0800, CRC(ec4bb3ad) SHA1(8a38bc48cda59b5e76a5153d459bb2d01d6a56f3) )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "1952a.113",      0x0000, 0x2000, 0xffb9b03d )  /* background tiles */
-	ROM_LOAD( "1951a.112",      0x2000, 0x2000, 0xdb743f1b )
-	ROM_LOAD( "1950a.111",      0x4000, 0x2000, 0xc2de178a )
+	ROM_LOAD( "1952a.113",      0x0000, 0x2000, CRC(ffb9b03d) SHA1(b7a900166a880ca4a71fec6ad02f5c0ecfc92df8) )  /* background tiles */
+	ROM_LOAD( "1951a.112",      0x2000, 0x2000, CRC(db743f1b) SHA1(a5d13d597fe999757137d96fb4bf7c7efc7a3245) )
+	ROM_LOAD( "1950a.111",      0x4000, 0x2000, CRC(c2de178a) SHA1(0347a751accb02576b9cd8b123b79018cc05268c) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "1945a.u77",      0x0000, 0x2000, 0x3a3fbfe7 )  /* sprites */
-	ROM_LOAD( "1946a.u78",      0x2000, 0x2000, 0xf2cb1b53 )
-	ROM_LOAD( "1947a.u79",      0x4000, 0x2000, 0xd2421e92 )
+	ROM_LOAD( "1945a.u77",      0x0000, 0x2000, CRC(3a3fbfe7) SHA1(f3a503f476524f9de5b55de49009972124e58601) )  /* sprites */
+	ROM_LOAD( "1946a.u78",      0x2000, 0x2000, CRC(f2cb1b53) SHA1(8c2fb58ce7de7876c4d2f1a3d13c6a5efd06d354) )
+	ROM_LOAD( "1947a.u79",      0x4000, 0x2000, CRC(d2421e92) SHA1(07000055ace2c6983c7add180904d6bc20e1bb3b) )
 
 	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
-	ROM_LOAD( "1948a.u91",      0x0000, 0x2000, 0x7a7fcbbe )
-	ROM_LOAD( "1953a.u90",      0x2000, 0x2000, 0x6b626ea7 )
-	ROM_LOAD( "1949a.u93",      0x4000, 0x2000, 0xe7722d09 )
-	ROM_LOAD( "1954a.u92",      0x6000, 0x2000, 0xa970f5ff )
+	ROM_LOAD( "1948a.u91",      0x0000, 0x2000, CRC(7a7fcbbe) SHA1(76dffffcadbe446091ee98958873aa76f7b17213) )
+	ROM_LOAD( "1953a.u90",      0x2000, 0x2000, CRC(6b626ea7) SHA1(7e02da0b031a42b077c173d85f15f75242e61e98) )
+	ROM_LOAD( "1949a.u93",      0x4000, 0x2000, CRC(e7722d09) SHA1(c9a0fb4fac798454facd3d5dd02d2c05cfe8e3a6) )
+	ROM_LOAD( "1954a.u92",      0x6000, 0x2000, CRC(a970f5ff) SHA1(0f1f8f329ceefcbd0725f8eeff1b01348f5c9374) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "1942a.u98",       0x0000, 0x0100, 0x3a8e6f74 ) /* palette */
-	ROM_LOAD( "1941a.u72",       0x0100, 0x0100, 0xa5d0d97e ) /* char lookup */
+	ROM_LOAD( "1942a.u98",       0x0000, 0x0100, CRC(3a8e6f74) SHA1(c2d480f8c8a111c1e23cbf819dea807f8128208d) ) /* palette */
+	ROM_LOAD( "1941a.u72",       0x0100, 0x0100, CRC(a5d0d97e) SHA1(2677508b44f9b7a6c6ee56e49a7b88073e80debe) ) /* char lookup */
 
 	ROM_REGION( 0x1000, REGION_SOUND1, 0 ) /* sound? */
-	ROM_LOAD( "1943a.u50",      0x0000, 0x0800, 0x77e5a1f0 )
-	ROM_LOAD( "1944a.u51",      0x0800, 0x0800, 0x88215098 )
+	ROM_LOAD( "1943a.u50",      0x0000, 0x0800, CRC(77e5a1f0) SHA1(00152ffb59ebac718b300fdf24314b456748ffbe) )
+	ROM_LOAD( "1944a.u51",      0x0800, 0x0800, CRC(88215098) SHA1(54bd1c71e7f10f20623e47f4e791f54ce698bc08) )
 ROM_END
 
 static DRIVER_INIT( zaxxonb )

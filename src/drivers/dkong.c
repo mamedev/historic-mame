@@ -1198,543 +1198,543 @@ MACHINE_DRIVER_END
 
 ROM_START( radarscp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "trs2c5fc",     0x0000, 0x1000, 0x40949e0d )
-	ROM_LOAD( "trs2c5gc",     0x1000, 0x1000, 0xafa8c49f )
-	ROM_LOAD( "trs2c5hc",     0x2000, 0x1000, 0x51b8263d )
-	ROM_LOAD( "trs2c5kc",     0x3000, 0x1000, 0x1f0101f7 )
+	ROM_LOAD( "trs2c5fc",     0x0000, 0x1000, CRC(40949e0d) SHA1(94717b9d027600e25b863e89900df41325875961) )
+	ROM_LOAD( "trs2c5gc",     0x1000, 0x1000, CRC(afa8c49f) SHA1(25880e9dcf2dc8862f7f3c38687f01dfe2424293) )
+	ROM_LOAD( "trs2c5hc",     0x2000, 0x1000, CRC(51b8263d) SHA1(09687f2c40cf09ffc2aeddde4a4fa32800847f01) )
+	ROM_LOAD( "trs2c5kc",     0x3000, 0x1000, CRC(1f0101f7) SHA1(b9f988847fdefa64dfeae06c2244215cb0d64dbe) )
 	/* space for diagnostic ROM */
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "trs2s3i",      0x0000, 0x0800, 0x78034f14 )
+	ROM_LOAD( "trs2s3i",      0x0000, 0x0800, CRC(78034f14) SHA1(548b44ac69f39df6687da1c0f60968009b1e0767) )
 	/* socket 3J is empty */
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "trs2v3gc",     0x0000, 0x0800, 0xf095330e )
-	ROM_LOAD( "trs2v3hc",     0x0800, 0x0800, 0x15a316f0 )
+	ROM_LOAD( "trs2v3gc",     0x0000, 0x0800, CRC(f095330e) SHA1(dd3de744f28ff108630d3336bd246d3323fa34af) )
+	ROM_LOAD( "trs2v3hc",     0x0800, 0x0800, CRC(15a316f0) SHA1(8785a996c6433882a0a7150693c329a4247bb77e) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "trs2v3dc",     0x0000, 0x0800, 0xe0bb0db9 )
-	ROM_LOAD( "trs2v3cc",     0x0800, 0x0800, 0x6c4e7dad )
-	ROM_LOAD( "trs2v3bc",     0x1000, 0x0800, 0x6fdd63f1 )
-	ROM_LOAD( "trs2v3ac",     0x1800, 0x0800, 0xbbf62755 )
+	ROM_LOAD( "trs2v3dc",     0x0000, 0x0800, CRC(e0bb0db9) SHA1(b570439ea1b5d34d0ac938ac9157f22f319b786d) )
+	ROM_LOAD( "trs2v3cc",     0x0800, 0x0800, CRC(6c4e7dad) SHA1(54e6a5005c44261dc4ba845dcd5ff62ea1402d26) )
+	ROM_LOAD( "trs2v3bc",     0x1000, 0x0800, CRC(6fdd63f1) SHA1(2eb09ab0759e4c8df9188fb833440d8fc94f6172) )
+	ROM_LOAD( "trs2v3ac",     0x1800, 0x0800, CRC(bbf62755) SHA1(cb4ca8d4fe689ca0011a4b6c0a2dbd4c764ac70a) )
 
 	ROM_REGION( 0x0800, REGION_GFX3, 0 )	/* radar/star timing table */
-	ROM_LOAD( "trs2v3ec",     0x0000, 0x0800, 0x0eca8d6b )
+	ROM_LOAD( "trs2v3ec",     0x0000, 0x0800, CRC(0eca8d6b) SHA1(8358b5131d082b2fb8dd793d2e5382daeef6f75c) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "rs2-x.xxx",    0x0000, 0x0100, 0x54609d61 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "rs2-c.xxx",    0x0100, 0x0100, 0x79a7d831 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "rs2-v.1hc",    0x0200, 0x0100, 0x1b828315 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "rs2-x.xxx",    0x0000, 0x0100, CRC(54609d61) SHA1(586620ecc61f3e55258fe6360bcacad5f570f29c) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "rs2-c.xxx",    0x0100, 0x0100, CRC(79a7d831) SHA1(475ec991929d43b2bcd4b5aee144249f487d0b5b) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "rs2-v.1hc",    0x0200, 0x0100, CRC(1b828315) SHA1(00c9f8c5ae86b68d38c66f9071b5f1ef421c1005) ) /* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkong )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5et_g.bin",  0x0000, 0x1000, 0xba70b88b )
-	ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, 0x5ec461ec )
-	ROM_LOAD( "c_5bt_g.bin",  0x2000, 0x1000, 0x1c97d324 )
-	ROM_LOAD( "c_5at_g.bin",  0x3000, 0x1000, 0xb9005ac0 )
+	ROM_LOAD( "c_5et_g.bin",  0x0000, 0x1000, CRC(ba70b88b) SHA1(d76ebecfea1af098d843ee7e578e480cd658ac1a) )
+	ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, CRC(5ec461ec) SHA1(acb11a8fbdbb3ab46068385fe465f681e3c824bd) )
+	ROM_LOAD( "c_5bt_g.bin",  0x2000, 0x1000, CRC(1c97d324) SHA1(c7966261f3a1d3296927e0b6ee1c58039fc53c1f) )
+	ROM_LOAD( "c_5at_g.bin",  0x3000, 0x1000, CRC(b9005ac0) SHA1(3fe3599f6fa7c496f782053ddf7bacb453d197c4) )
 	/* space for diagnostic ROM */
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
-	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC(45a4ed06) SHA1(144d24464c1f9f01894eb12f846952290e6e32ef) )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, CRC(4743fe92) SHA1(6c82b57637c0212a580591397e6a5a1718f19fd2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
-	ROM_LOAD( "v_3pt.bin",    0x0800, 0x0800, 0x15e9c5e9 )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, CRC(12c8c95d) SHA1(a57ff5a231c45252a63b354137c920a1379b70a3) )
+	ROM_LOAD( "v_3pt.bin",    0x0800, 0x0800, CRC(15e9c5e9) SHA1(976eb1e18c74018193a35aa86cff482ebfc5cc4e) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
-	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
-	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
-	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, CRC(59f8054d) SHA1(793dba9bf5a5fe76328acdfb90815c243d2a65f1) )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, CRC(672e4714) SHA1(92e5d379f4838ac1fa44d448ce7d142dae42102f) )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, CRC(feaa59ee) SHA1(ecf95db5a20098804fc8bd59232c66e2e0ed3db4) )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, CRC(20f2ef7e) SHA1(3bc482a38bf579033f50082748ee95205b0f673d) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, CRC(e273ede5) SHA1(b50ec9e1837c00c20fb2a4369ec7dd0358321127) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC(d6412358) SHA1(f9c872da2fe8e800574ae3bf483fb3ccacc92eb3) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC(b869b8f5) SHA1(c2bdccbf2654b64ea55cd589fd21323a9178a660) ) /* character color codes on a per-column basis */
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
 ROM_START( dkongo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )	// tkg3c.5f
-	ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, 0x5ec461ec )	// tkg3c.5g
-	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, 0x1d28895d )	// tkg3c.5h
-	ROM_LOAD( "tkg3c.5k",     0x3000, 0x1000, 0x553b89bb )
+	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, CRC(424f2b11) SHA1(e4f096f2bbd37281f42a5f8e083738f55c07f3dd) )	// tkg3c.5f
+	ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, CRC(5ec461ec) SHA1(acb11a8fbdbb3ab46068385fe465f681e3c824bd) )	// tkg3c.5g
+	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, CRC(1d28895d) SHA1(63792cab215fc2a7b0e8ee61d8115045571e9d42) )	// tkg3c.5h
+	ROM_LOAD( "tkg3c.5k",     0x3000, 0x1000, CRC(553b89bb) SHA1(61611df9e2748fdcd31821038dcc0e16dc933873) )
 	/* space for diagnostic ROM */
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
-	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC(45a4ed06) SHA1(144d24464c1f9f01894eb12f846952290e6e32ef) )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, CRC(4743fe92) SHA1(6c82b57637c0212a580591397e6a5a1718f19fd2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
-	ROM_LOAD( "v_3pt.bin",    0x0800, 0x0800, 0x15e9c5e9 )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, CRC(12c8c95d) SHA1(a57ff5a231c45252a63b354137c920a1379b70a3) )
+	ROM_LOAD( "v_3pt.bin",    0x0800, 0x0800, CRC(15e9c5e9) SHA1(976eb1e18c74018193a35aa86cff482ebfc5cc4e) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
-	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
-	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
-	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, CRC(59f8054d) SHA1(793dba9bf5a5fe76328acdfb90815c243d2a65f1) )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, CRC(672e4714) SHA1(92e5d379f4838ac1fa44d448ce7d142dae42102f) )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, CRC(feaa59ee) SHA1(ecf95db5a20098804fc8bd59232c66e2e0ed3db4) )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, CRC(20f2ef7e) SHA1(3bc482a38bf579033f50082748ee95205b0f673d) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, CRC(e273ede5) SHA1(b50ec9e1837c00c20fb2a4369ec7dd0358321127) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC(d6412358) SHA1(f9c872da2fe8e800574ae3bf483fb3ccacc92eb3) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC(b869b8f5) SHA1(c2bdccbf2654b64ea55cd589fd21323a9178a660) ) /* character color codes on a per-column basis */
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
 ROM_START( dkongjp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )
-	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, 0xd326599b )
-	ROM_LOAD( "5h.cpu",       0x2000, 0x1000, 0xff31ac89 )
-	ROM_LOAD( "c_5k_b.bin",   0x3000, 0x1000, 0x394d6007 )
+	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, CRC(424f2b11) SHA1(e4f096f2bbd37281f42a5f8e083738f55c07f3dd) )
+	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, CRC(d326599b) SHA1(94c7382604d0a123a442d53f9641f366dfbb7631) )
+	ROM_LOAD( "5h.cpu",       0x2000, 0x1000, CRC(ff31ac89) SHA1(9626a9e6df0d1b0ff273dbbe986f670200f91f75) )
+	ROM_LOAD( "c_5k_b.bin",   0x3000, 0x1000, CRC(394d6007) SHA1(57e5ae76ef5d4a2fa9cd860b6c6be03b6d5ed5ba) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
-	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC(45a4ed06) SHA1(144d24464c1f9f01894eb12f846952290e6e32ef) )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, CRC(4743fe92) SHA1(6c82b57637c0212a580591397e6a5a1718f19fd2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
-	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, 0x3684f914 )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, CRC(12c8c95d) SHA1(a57ff5a231c45252a63b354137c920a1379b70a3) )
+	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, CRC(3684f914) SHA1(882ae48ec1eabf5d350438dfec37ab20f7ee155d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
-	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
-	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
-	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, CRC(59f8054d) SHA1(793dba9bf5a5fe76328acdfb90815c243d2a65f1) )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, CRC(672e4714) SHA1(92e5d379f4838ac1fa44d448ce7d142dae42102f) )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, CRC(feaa59ee) SHA1(ecf95db5a20098804fc8bd59232c66e2e0ed3db4) )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, CRC(20f2ef7e) SHA1(3bc482a38bf579033f50082748ee95205b0f673d) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, CRC(e273ede5) SHA1(b50ec9e1837c00c20fb2a4369ec7dd0358321127) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC(d6412358) SHA1(f9c872da2fe8e800574ae3bf483fb3ccacc92eb3) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC(b869b8f5) SHA1(c2bdccbf2654b64ea55cd589fd21323a9178a660) ) /* character color codes on a per-column basis */
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
 ROM_START( dkongjo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )
-	ROM_LOAD( "c_5g_b.bin",   0x1000, 0x1000, 0x3b2a6635 )
-	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, 0x1d28895d )
-	ROM_LOAD( "c_5k_b.bin",   0x3000, 0x1000, 0x394d6007 )
+	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, CRC(424f2b11) SHA1(e4f096f2bbd37281f42a5f8e083738f55c07f3dd) )
+	ROM_LOAD( "c_5g_b.bin",   0x1000, 0x1000, CRC(3b2a6635) SHA1(32c62e00863ab99c6f263587d9d5bb775a68f3de) )
+	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, CRC(1d28895d) SHA1(63792cab215fc2a7b0e8ee61d8115045571e9d42) )
+	ROM_LOAD( "c_5k_b.bin",   0x3000, 0x1000, CRC(394d6007) SHA1(57e5ae76ef5d4a2fa9cd860b6c6be03b6d5ed5ba) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
-	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC(45a4ed06) SHA1(144d24464c1f9f01894eb12f846952290e6e32ef) )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, CRC(4743fe92) SHA1(6c82b57637c0212a580591397e6a5a1718f19fd2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
-	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, 0x3684f914 )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, CRC(12c8c95d) SHA1(a57ff5a231c45252a63b354137c920a1379b70a3) )
+	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, CRC(3684f914) SHA1(882ae48ec1eabf5d350438dfec37ab20f7ee155d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
-	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
-	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
-	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, CRC(59f8054d) SHA1(793dba9bf5a5fe76328acdfb90815c243d2a65f1) )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, CRC(672e4714) SHA1(92e5d379f4838ac1fa44d448ce7d142dae42102f) )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, CRC(feaa59ee) SHA1(ecf95db5a20098804fc8bd59232c66e2e0ed3db4) )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, CRC(20f2ef7e) SHA1(3bc482a38bf579033f50082748ee95205b0f673d) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, CRC(e273ede5) SHA1(b50ec9e1837c00c20fb2a4369ec7dd0358321127) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC(d6412358) SHA1(f9c872da2fe8e800574ae3bf483fb3ccacc92eb3) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC(b869b8f5) SHA1(c2bdccbf2654b64ea55cd589fd21323a9178a660) ) /* character color codes on a per-column basis */
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
 ROM_START( dkongjo1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )
-	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, 0xd326599b )
-	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, 0x1d28895d )
-	ROM_LOAD( "5k.bin",       0x3000, 0x1000, 0x7961599c )
+	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, CRC(424f2b11) SHA1(e4f096f2bbd37281f42a5f8e083738f55c07f3dd) )
+	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, CRC(d326599b) SHA1(94c7382604d0a123a442d53f9641f366dfbb7631) )
+	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, CRC(1d28895d) SHA1(63792cab215fc2a7b0e8ee61d8115045571e9d42) )
+	ROM_LOAD( "5k.bin",       0x3000, 0x1000, CRC(7961599c) SHA1(698a4c2b8d67840dca7526efb1ac0d3370a86925) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
-	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC(45a4ed06) SHA1(144d24464c1f9f01894eb12f846952290e6e32ef) )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, CRC(4743fe92) SHA1(6c82b57637c0212a580591397e6a5a1718f19fd2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
-	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, 0x3684f914 )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, CRC(12c8c95d) SHA1(a57ff5a231c45252a63b354137c920a1379b70a3) )
+	ROM_LOAD( "v_5k_b.bin",   0x0800, 0x0800, CRC(3684f914) SHA1(882ae48ec1eabf5d350438dfec37ab20f7ee155d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
-	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
-	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
-	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, CRC(59f8054d) SHA1(793dba9bf5a5fe76328acdfb90815c243d2a65f1) )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, CRC(672e4714) SHA1(92e5d379f4838ac1fa44d448ce7d142dae42102f) )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, CRC(feaa59ee) SHA1(ecf95db5a20098804fc8bd59232c66e2e0ed3db4) )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, CRC(20f2ef7e) SHA1(3bc482a38bf579033f50082748ee95205b0f673d) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, CRC(e273ede5) SHA1(b50ec9e1837c00c20fb2a4369ec7dd0358321127) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC(d6412358) SHA1(f9c872da2fe8e800574ae3bf483fb3ccacc92eb3) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC(b869b8f5) SHA1(c2bdccbf2654b64ea55cd589fd21323a9178a660) ) /* character color codes on a per-column basis */
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
 ROM_START( dkongjr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dkj.5b",       0x0000, 0x1000, 0xdea28158 )
+	ROM_LOAD( "dkj.5b",       0x0000, 0x1000, CRC(dea28158) SHA1(08baf84ae6f9b40a2c743fe1d8c158c74a40e95a) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
-	ROM_LOAD( "dkj.5c",       0x2000, 0x0800, 0x6fb5faf6 )
+	ROM_LOAD( "dkj.5c",       0x2000, 0x0800, CRC(6fb5faf6) SHA1(ce1cfde71a9e2a8b5896a6301d386f72869a1d2e) )
 	ROM_CONTINUE(             0x4800, 0x0800 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_CONTINUE(             0x5800, 0x0800 )
-	ROM_LOAD( "dkj.5e",       0x4000, 0x0800, 0xd042b6a8 )
+	ROM_LOAD( "dkj.5e",       0x4000, 0x0800, CRC(d042b6a8) SHA1(57ac237d273496b44220b4437118115ef11dbd9f) )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, 0x715da5f8 )
+	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, 0x8d51aca9 )
-	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, 0x4ef64ba5 )
+	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, CRC(8d51aca9) SHA1(64887564b079d98e98aafa53835e398f34fe4e3f) )
+	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, CRC(4ef64ba5) SHA1(41a7a4005087951f57f62c9751d62a8c495e6bb3) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, 0xdc7f4164 )
-	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, 0x0ce7dcf6 )
-	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, 0x24d1ff17 )
-	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, 0x0f8c083f )
+	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, CRC(dc7f4164) SHA1(07a6242e95b5c3b8dfdcd4b4950f463dba16dd77) )
+	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, CRC(0ce7dcf6) SHA1(0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64) )
+	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, CRC(24d1ff17) SHA1(696854bf3dc5447d33b4815db357e6ce3834d867) )
+	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, CRC(0f8c083f) SHA1(0b688ae9da296b2447fffa5e135fd6a56ec3e790) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
+	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkongjrj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "c_5ba.bin",    0x0000, 0x1000, 0x50a015ce )
+	ROM_LOAD( "c_5ba.bin",    0x0000, 0x1000, CRC(50a015ce) SHA1(edcafdf8f989dd25bb142817084d270a6942577a) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
-	ROM_LOAD( "c_5ca.bin",    0x2000, 0x0800, 0xc0a18f0d )
+	ROM_LOAD( "c_5ca.bin",    0x2000, 0x0800, CRC(c0a18f0d) SHA1(6d7396b98c0a7fa508dc233f90e5a8359439c97b) )
 	ROM_CONTINUE(             0x4800, 0x0800 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_CONTINUE(             0x5800, 0x0800 )
-	ROM_LOAD( "c_5ea.bin",    0x4000, 0x0800, 0xa81dd00c )
+	ROM_LOAD( "c_5ea.bin",    0x4000, 0x0800, CRC(a81dd00c) SHA1(ec507d963151bb8fcee13a47d7f93aa4cd089b7e) )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "c_3h.bin",     0x0000, 0x1000, 0x715da5f8 )
+	ROM_LOAD( "c_3h.bin",     0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_3na.bin",    0x0000, 0x1000, 0xa95c4c63 )
-	ROM_LOAD( "v_3pa.bin",    0x1000, 0x1000, 0x4974ffef )
+	ROM_LOAD( "v_3na.bin",    0x0000, 0x1000, CRC(a95c4c63) SHA1(75e312b6872958f3bfc7bafd0743efdf7a74e8f0) )
+	ROM_LOAD( "v_3pa.bin",    0x1000, 0x1000, CRC(4974ffef) SHA1(7bb1e207dd3c5214e405bf32c57ec1b048061050) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, 0xdc7f4164 )
-	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, 0x0ce7dcf6 )
-	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, 0x24d1ff17 )
-	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, 0x0f8c083f )
+	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, CRC(dc7f4164) SHA1(07a6242e95b5c3b8dfdcd4b4950f463dba16dd77) )
+	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, CRC(0ce7dcf6) SHA1(0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64) )
+	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, CRC(24d1ff17) SHA1(696854bf3dc5447d33b4815db357e6ce3834d867) )
+	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, CRC(0f8c083f) SHA1(0b688ae9da296b2447fffa5e135fd6a56ec3e790) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
+	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkngjnrj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dkjp.5b",      0x0000, 0x1000, 0x7b48870b )
+	ROM_LOAD( "dkjp.5b",      0x0000, 0x1000, CRC(7b48870b) SHA1(4f737559e2bf5cc28824220417d7a2827361221f) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
-	ROM_LOAD( "dkjp.5c",      0x2000, 0x0800, 0x12391665 )
+	ROM_LOAD( "dkjp.5c",      0x2000, 0x0800, CRC(12391665) SHA1(3141ed5096097c48ac128636330ab6837a665d40) )
 	ROM_CONTINUE(             0x4800, 0x0800 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_CONTINUE(             0x5800, 0x0800 )
-	ROM_LOAD( "dkjp.5e",      0x4000, 0x0800, 0x6c9f9103 )
+	ROM_LOAD( "dkjp.5e",      0x4000, 0x0800, CRC(6c9f9103) SHA1(2d595e13c4ecb74b18e92b00efcc90c1e841b478) )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, 0x715da5f8 )
+	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, 0x8d51aca9 )
-	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, 0x4ef64ba5 )
+	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, CRC(8d51aca9) SHA1(64887564b079d98e98aafa53835e398f34fe4e3f) )
+	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, CRC(4ef64ba5) SHA1(41a7a4005087951f57f62c9751d62a8c495e6bb3) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, 0xdc7f4164 )
-	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, 0x0ce7dcf6 )
-	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, 0x24d1ff17 )
-	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, 0x0f8c083f )
+	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, CRC(dc7f4164) SHA1(07a6242e95b5c3b8dfdcd4b4950f463dba16dd77) )
+	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, CRC(0ce7dcf6) SHA1(0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64) )
+	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, CRC(24d1ff17) SHA1(696854bf3dc5447d33b4815db357e6ce3834d867) )
+	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, CRC(0f8c083f) SHA1(0b688ae9da296b2447fffa5e135fd6a56ec3e790) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
+	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkongjrb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dkjr1",        0x0000, 0x1000, 0xec7e097f )
+	ROM_LOAD( "dkjr1",        0x0000, 0x1000, CRC(ec7e097f) SHA1(c10885d8724434030094a106c5b6de7fa6976d0f) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
-	ROM_LOAD( "c_5ca.bin",    0x2000, 0x0800, 0xc0a18f0d )
+	ROM_LOAD( "c_5ca.bin",    0x2000, 0x0800, CRC(c0a18f0d) SHA1(6d7396b98c0a7fa508dc233f90e5a8359439c97b) )
 	ROM_CONTINUE(             0x4800, 0x0800 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_CONTINUE(             0x5800, 0x0800 )
-	ROM_LOAD( "c_5ea.bin",    0x4000, 0x0800, 0xa81dd00c )
+	ROM_LOAD( "c_5ea.bin",    0x4000, 0x0800, CRC(a81dd00c) SHA1(ec507d963151bb8fcee13a47d7f93aa4cd089b7e) )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, 0x715da5f8 )
+	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_3na.bin",    0x0000, 0x1000, 0xa95c4c63 )
-	ROM_LOAD( "dkjr10",       0x1000, 0x1000, 0xadc11322 )
+	ROM_LOAD( "v_3na.bin",    0x0000, 0x1000, CRC(a95c4c63) SHA1(75e312b6872958f3bfc7bafd0743efdf7a74e8f0) )
+	ROM_LOAD( "dkjr10",       0x1000, 0x1000, CRC(adc11322) SHA1(01c13213e413c269cf8d9e391209b32b18747c8d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, 0xdc7f4164 )
-	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, 0x0ce7dcf6 )
-	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, 0x24d1ff17 )
-	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, 0x0f8c083f )
+	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, CRC(dc7f4164) SHA1(07a6242e95b5c3b8dfdcd4b4950f463dba16dd77) )
+	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, CRC(0ce7dcf6) SHA1(0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64) )
+	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, CRC(24d1ff17) SHA1(696854bf3dc5447d33b4815db357e6ce3834d867) )
+	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, CRC(0f8c083f) SHA1(0b688ae9da296b2447fffa5e135fd6a56ec3e790) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
+	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkngjnrb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "djr1-c.5b",    0x0000, 0x1000, 0xffe9e1a5 )
+	ROM_LOAD( "djr1-c.5b",    0x0000, 0x1000, CRC(ffe9e1a5) SHA1(715dc79d85169b4c1faf43458592e69b434afefd) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
-	ROM_LOAD( "djr1-c.5c",    0x2000, 0x0800, 0x982e30e8 )
+	ROM_LOAD( "djr1-c.5c",    0x2000, 0x0800, CRC(982e30e8) SHA1(4d93d79e6ab1cad678af509cb3be4166b239bfa6) )
 	ROM_CONTINUE(             0x4800, 0x0800 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_CONTINUE(             0x5800, 0x0800 )
-	ROM_LOAD( "djr1-c.5e",    0x4000, 0x0800, 0x24c3d325 )
+	ROM_LOAD( "djr1-c.5e",    0x4000, 0x0800, CRC(24c3d325) SHA1(98b0354cddf2cb5e21a3aa8387b86e8606e51d55) )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
-	ROM_LOAD( "djr1-c.5a",    0x8000, 0x1000, 0xbb5f5180 )
+	ROM_LOAD( "djr1-c.5a",    0x8000, 0x1000, CRC(bb5f5180) SHA1(1ef6236b7204432cfd17c689760943ab603c6fb7) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, 0x715da5f8 )
+	ROM_LOAD( "c_3h.bin",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, 0x8d51aca9 )
-	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, 0x4ef64ba5 )
+	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, CRC(8d51aca9) SHA1(64887564b079d98e98aafa53835e398f34fe4e3f) )
+	ROM_LOAD( "dkj.3p",       0x1000, 0x1000, CRC(4ef64ba5) SHA1(41a7a4005087951f57f62c9751d62a8c495e6bb3) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, 0xdc7f4164 )
-	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, 0x0ce7dcf6 )
-	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, 0x24d1ff17 )
-	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, 0x0f8c083f )
+	ROM_LOAD( "v_7c.bin",     0x0000, 0x0800, CRC(dc7f4164) SHA1(07a6242e95b5c3b8dfdcd4b4950f463dba16dd77) )
+	ROM_LOAD( "v_7d.bin",     0x0800, 0x0800, CRC(0ce7dcf6) SHA1(0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64) )
+	ROM_LOAD( "v_7e.bin",     0x1000, 0x0800, CRC(24d1ff17) SHA1(696854bf3dc5447d33b4815db357e6ce3834d867) )
+	ROM_LOAD( "v_7f.bin",     0x1800, 0x0800, CRC(0f8c083f) SHA1(0b688ae9da296b2447fffa5e135fd6a56ec3e790) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
+	ROM_LOAD( "c-2e.bpr",  0x0000, 0x0100, CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2f.bpr",  0x0100, 0x0100, CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkong3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
-	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
-	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, 0xd22e2921 )
-	ROM_LOAD( "dk3c.7e",      0x8000, 0x2000, 0x615f14b7 )
+	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, CRC(38d5f38e) SHA1(5a6bb0e5070211515e3d56bd7d4c2d1655ac1621) )
+	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, CRC(c9134379) SHA1(ecddb3694b93cb3dc98c3b1aeeee928e27529aba) )
+	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, CRC(d22e2921) SHA1(59a4a1a36aaca19ee0a7255d832df9d042ba34fb) )
+	ROM_LOAD( "dk3c.7e",      0x8000, 0x2000, CRC(615f14b7) SHA1(145674073e95d97c9131b6f2b03303eadb57ca78) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound #1 */
-	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, 0x7ff88885 )
+	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, CRC(7ff88885) SHA1(d530581778aab260e21f04c38e57ba34edea7c64) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* sound #2 */
-	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
+	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, CRC(36d7200c) SHA1(7965fcb9bc1c0fdcae8a8e79df9c7b7439c506d8) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, 0x415a99c7 )
-	ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, 0x25744ea0 )
+	ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, CRC(415a99c7) SHA1(e0855b03bb1dc0d8ae46da9fe33ca30ecf6a2e96) )
+	ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, CRC(25744ea0) SHA1(4866e43e80b010ccf2c8cc94c232786521f9e26e) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "dk3v.7c",      0x0000, 0x1000, 0x8ffa1737 )
-	ROM_LOAD( "dk3v.7d",      0x1000, 0x1000, 0x9ac84686 )
-	ROM_LOAD( "dk3v.7e",      0x2000, 0x1000, 0x0c0af3fb )
-	ROM_LOAD( "dk3v.7f",      0x3000, 0x1000, 0x55c58662 )
+	ROM_LOAD( "dk3v.7c",      0x0000, 0x1000, CRC(8ffa1737) SHA1(fa5896124227d412fbdf83f129ddffa32cf2053b) )
+	ROM_LOAD( "dk3v.7d",      0x1000, 0x1000, CRC(9ac84686) SHA1(a089376b9c23094490703152ad98ed27f519402d) )
+	ROM_LOAD( "dk3v.7e",      0x2000, 0x1000, CRC(0c0af3fb) SHA1(03e0c3f51bc3c20f95cb02f76f2d80188d5dbe36) )
+	ROM_LOAD( "dk3v.7f",      0x3000, 0x1000, CRC(55c58662) SHA1(7f3d5a1b386cc37d466e42392ffefc928666a8dc) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, 0xdf54befc ) /* palette red & green component */
-	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
-	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
+	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, CRC(df54befc) SHA1(7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1) ) /* palette red & green component */
+	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, CRC(66a77f40) SHA1(c408d65990f0edd78c4590c447426f383fcd2d88) ) /* palette blue component */
+	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( dkong3j )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
-	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
-	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, 0xd22e2921 )
-	ROM_LOAD( "dk3cj.7e",     0x8000, 0x2000, 0x25b5be23 )
+	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, CRC(38d5f38e) SHA1(5a6bb0e5070211515e3d56bd7d4c2d1655ac1621) )
+	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, CRC(c9134379) SHA1(ecddb3694b93cb3dc98c3b1aeeee928e27529aba) )
+	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, CRC(d22e2921) SHA1(59a4a1a36aaca19ee0a7255d832df9d042ba34fb) )
+	ROM_LOAD( "dk3cj.7e",     0x8000, 0x2000, CRC(25b5be23) SHA1(43cf2a676922e60d9d637777a7721ab7582129fc) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound #1 */
-	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, 0x7ff88885 )
+	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, CRC(7ff88885) SHA1(d530581778aab260e21f04c38e57ba34edea7c64) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* sound #2 */
-	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
+	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, CRC(36d7200c) SHA1(7965fcb9bc1c0fdcae8a8e79df9c7b7439c506d8) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, 0x415a99c7 )
-	ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, 0x25744ea0 )
+	ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, CRC(415a99c7) SHA1(e0855b03bb1dc0d8ae46da9fe33ca30ecf6a2e96) )
+	ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, CRC(25744ea0) SHA1(4866e43e80b010ccf2c8cc94c232786521f9e26e) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "dk3v.7c",      0x0000, 0x1000, 0x8ffa1737 )
-	ROM_LOAD( "dk3v.7d",      0x1000, 0x1000, 0x9ac84686 )
-	ROM_LOAD( "dk3v.7e",      0x2000, 0x1000, 0x0c0af3fb )
-	ROM_LOAD( "dk3v.7f",      0x3000, 0x1000, 0x55c58662 )
+	ROM_LOAD( "dk3v.7c",      0x0000, 0x1000, CRC(8ffa1737) SHA1(fa5896124227d412fbdf83f129ddffa32cf2053b) )
+	ROM_LOAD( "dk3v.7d",      0x1000, 0x1000, CRC(9ac84686) SHA1(a089376b9c23094490703152ad98ed27f519402d) )
+	ROM_LOAD( "dk3v.7e",      0x2000, 0x1000, CRC(0c0af3fb) SHA1(03e0c3f51bc3c20f95cb02f76f2d80188d5dbe36) )
+	ROM_LOAD( "dk3v.7f",      0x3000, 0x1000, CRC(55c58662) SHA1(7f3d5a1b386cc37d466e42392ffefc928666a8dc) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, 0xdf54befc ) /* palette red & green component */
-	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
-	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
+	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, CRC(df54befc) SHA1(7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1) ) /* palette red & green component */
+	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, CRC(66a77f40) SHA1(c408d65990f0edd78c4590c447426f383fcd2d88) ) /* palette blue component */
+	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( hunchbkd )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
-	ROM_LOAD( "hb.5e",        0x0000, 0x1000, 0x4c3ac070 )
-	ROM_LOAD( "hbsc-1.5c",    0x2000, 0x1000, 0x9b0e6234 )
-	ROM_LOAD( "hb.5b",        0x4000, 0x1000, 0x4cde80f3 )
-	ROM_LOAD( "hb.5a",        0x6000, 0x1000, 0xd60ef5b2 )
+	ROM_LOAD( "hb.5e",        0x0000, 0x1000, CRC(4c3ac070) SHA1(636843b33f1b7e994b112fa29e65038098528b8c) )
+	ROM_LOAD( "hbsc-1.5c",    0x2000, 0x1000, CRC(9b0e6234) SHA1(a7405451e5cd42bc276c659ec5a2136dbb7b6aba) )
+	ROM_LOAD( "hb.5b",        0x4000, 0x1000, CRC(4cde80f3) SHA1(3d93d8e454b2c517971a99c5700b6e943f975a11) )
+	ROM_LOAD( "hb.5a",        0x6000, 0x1000, CRC(d60ef5b2) SHA1(b2b5528cb837d58ef632d7670820ad8b07e5af1b) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "hb.3h",        0x0000, 0x0800, 0xa3c240d4 )
+	ROM_LOAD( "hb.3h",        0x0000, 0x0800, CRC(a3c240d4) SHA1(8cb6057ca617909c73b09988ba65a1176696cb5d) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hb.3n",        0x0000, 0x0800, 0x443ed5ac )
-	ROM_LOAD( "hb.3p",        0x0800, 0x0800, 0x073e7b0c )
+	ROM_LOAD( "hb.3n",        0x0000, 0x0800, CRC(443ed5ac) SHA1(febed689e03abf25452aab6eff85ea01883e929c) )
+	ROM_LOAD( "hb.3p",        0x0800, 0x0800, CRC(073e7b0c) SHA1(659cd3b1827bf6b7f0c9bef3cd83e69c2b2193ff) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "hb.7c",        0x0000, 0x0800, 0x3ba71686 )
-	ROM_LOAD( "hb.7d",        0x0800, 0x0800, 0x5786948d )
-	ROM_LOAD( "hb.7e",        0x1000, 0x0800, 0xf845e8ca )
-	ROM_LOAD( "hb.7f",        0x1800, 0x0800, 0x52d20fea )
+	ROM_LOAD( "hb.7c",        0x0000, 0x0800, CRC(3ba71686) SHA1(34c2ceadea1026de6157df1e7a1c2f6b86fd3c82) )
+	ROM_LOAD( "hb.7d",        0x0800, 0x0800, CRC(5786948d) SHA1(7e8bc953195cc9a07a8429b547e1fab6cd487b51) )
+	ROM_LOAD( "hb.7e",        0x1000, 0x0800, CRC(f845e8ca) SHA1(4bedbbc74a637f6d60b3b2dbf41efc7390ee9091) )
+	ROM_LOAD( "hb.7f",        0x1800, 0x0800, CRC(52d20fea) SHA1(e3825f75f312d1e256f78a89098e328e8f307577) )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
-	ROM_LOAD( "hbprom.2e",    0x0000, 0x0100, 0x37aab98f )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "hbprom.2f",    0x0100, 0x0100, 0x845b8dcc )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "hbprom.2n",    0x0200, 0x0100, 0xdff9070a )	/* character color codes on a per-column basis */
-	ROM_LOAD( "82s147.prm",   0x0300, 0x0200, 0x46e5bc92 )	/* unknown */
+	ROM_LOAD( "hbprom.2e",    0x0000, 0x0100, CRC(37aab98f) SHA1(0b002ab82158854bdd4a9db05eee037711017313) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "hbprom.2f",    0x0100, 0x0100, CRC(845b8dcc) SHA1(eebd0c024172e54b509f1f99d9159438d5f3a905) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "hbprom.2n",    0x0200, 0x0100, CRC(dff9070a) SHA1(307b95749343b5106247d842f773b2b445faa156) )	/* character color codes on a per-column basis */
+	ROM_LOAD( "82s147.prm",   0x0300, 0x0200, CRC(46e5bc92) SHA1(f4171f8650818c017d58ad7131a7aff100b1b99c) )	/* unknown */
 ROM_END
 
 ROM_START( herbiedk )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
-	ROM_LOAD( "5f.cpu",        0x0000, 0x1000, 0xc7ab3ac6 )
-	ROM_LOAD( "5g.cpu",        0x2000, 0x1000, 0xd1031aa6 )
-	ROM_LOAD( "5h.cpu",        0x4000, 0x1000, 0xc0daf551 )
-	ROM_LOAD( "5k.cpu",        0x6000, 0x1000, 0x67442242 )
+	ROM_LOAD( "5f.cpu",        0x0000, 0x1000, CRC(c7ab3ac6) SHA1(5ef8c0ac1acd09a0f6c1536d0525cc27bb87b167) )
+	ROM_LOAD( "5g.cpu",        0x2000, 0x1000, CRC(d1031aa6) SHA1(6f5eadf43f1a59333833b3ee72d8d3043ac8c899) )
+	ROM_LOAD( "5h.cpu",        0x4000, 0x1000, CRC(c0daf551) SHA1(f39058fa05ad69e839e7c0281cb1fad80cfa3134) )
+	ROM_LOAD( "5k.cpu",        0x6000, 0x1000, CRC(67442242) SHA1(0241281e8cc721f7fe22822f2cf168c2eed7983d) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "3i.snd",        0x0000, 0x0800, 0x20e30406 )
+	ROM_LOAD( "3i.snd",        0x0000, 0x0800, CRC(20e30406) SHA1(e2b9c6b731e53651d26455c2753a6dc3d5e9d066) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "5h.vid",        0x0000, 0x0800, 0xea2a2547 )
-	ROM_LOAD( "5k.vid",        0x0800, 0x0800, 0xa8d421c9 )
+	ROM_LOAD( "5h.vid",        0x0000, 0x0800, CRC(ea2a2547) SHA1(ec714abe43ab86ef615e1105688bf3df209c8f5f) )
+	ROM_LOAD( "5k.vid",        0x0800, 0x0800, CRC(a8d421c9) SHA1(b733246d8674450ef00ed81b7d5e2ca09b3731d8) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "7c.clk",        0x0000, 0x0800, 0xaf646166 )
-	ROM_LOAD( "7d.clk",        0x0800, 0x0800, 0xd8e15832 )
-	ROM_LOAD( "7e.clk",        0x1000, 0x0800, 0x2f7e65fa )
-	ROM_LOAD( "7f.clk",        0x1800, 0x0800, 0xad32d5ae )
+	ROM_LOAD( "7c.clk",        0x0000, 0x0800, CRC(af646166) SHA1(c935051697f559fa8dea647e976d35b607c931d5) )
+	ROM_LOAD( "7d.clk",        0x0800, 0x0800, CRC(d8e15832) SHA1(d11983d7a3ff71c6bc75607453080d554ae15df2) )
+	ROM_LOAD( "7e.clk",        0x1000, 0x0800, CRC(2f7e65fa) SHA1(ff4d03020f9ad423fcebca28395964cb01b19b31) )
+	ROM_LOAD( "7f.clk",        0x1800, 0x0800, CRC(ad32d5ae) SHA1(578e703ca07b9a0284d1c9c7f260a52e4f4dac0e) )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
-	ROM_LOAD( "74s287.2k",     0x0000, 0x0100, 0x7dc0a381 ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, 0x0a440c00 ) /* palette low 4 bits (inverted) */
-	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, 0x5a3446cc ) /* character color codes on a per-column basis */
-	ROM_LOAD( "82s147.hh",     0x0300, 0x0200, 0x46e5bc92 )	/* unknown */
+	ROM_LOAD( "74s287.2k",     0x0000, 0x0100, CRC(7dc0a381) SHA1(7d974b2249392160e3b800e7113d4899c3600b7f) ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, CRC(0a440c00) SHA1(e3249a646cd8aa50739e09ae101e796ea3aac37a) ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, CRC(5a3446cc) SHA1(158de015006e6c400cb7ee758fda7ff760eb5835) ) /* character color codes on a per-column basis */
+	ROM_LOAD( "82s147.hh",     0x0300, 0x0200, CRC(46e5bc92) SHA1(f4171f8650818c017d58ad7131a7aff100b1b99c) )	/* unknown */
 ROM_END
 
 ROM_START( herodk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "red-dot.rgt",  0x0c00, 0x0400, 0x9c4af229 )	/* encrypted */
+	ROM_LOAD( "red-dot.rgt",  0x0c00, 0x0400, CRC(9c4af229) SHA1(8b7330457acdd8d92f2853f3e5f8c18f8991c5c9) )	/* encrypted */
 	ROM_CONTINUE(             0x0800, 0x0400 )
 	ROM_CONTINUE(             0x0400, 0x0400 )
 	ROM_CONTINUE(             0x0000, 0x0400 )
 	ROM_CONTINUE(             0x2000, 0x0e00 )
 	ROM_CONTINUE(             0x6e00, 0x0200 )
-	ROM_LOAD( "wht-dot.lft",  0x4000, 0x1000, 0xc10f9235 )	/* encrypted */
+	ROM_LOAD( "wht-dot.lft",  0x4000, 0x1000, CRC(c10f9235) SHA1(42dbf01e5da80cd8bdd18a27c3fbdf4cb5110d9a) )	/* encrypted */
 	ROM_CONTINUE(             0x6000, 0x0e00 )
 	ROM_CONTINUE(             0x2e00, 0x0200 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "silver.3h",    0x0000, 0x0800, 0x67863ce9 )
+	ROM_LOAD( "silver.3h",    0x0000, 0x0800, CRC(67863ce9) SHA1(2b78e3d32a64cdef34afc476fed7ff0ab6a0277c) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, 0x574dfd7a )
-	ROM_LOAD( "blk.3p",       0x0800, 0x0800, 0x16f7c040 )
+	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, CRC(574dfd7a) SHA1(78bbe4ea83fdaec14ca92ceae03e8a3d0877d14b) )
+	ROM_LOAD( "blk.3p",       0x0800, 0x0800, CRC(16f7c040) SHA1(d1bd1b5f3c66ac6e71637ef42962adabacd79340) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gold.7c",      0x0000, 0x0800, 0x5f5282ed )
-	ROM_LOAD( "orange.7d",    0x0800, 0x0800, 0x075d99f5 )
-	ROM_LOAD( "yellow.7e",    0x1000, 0x0800, 0xf6272e96 )
-	ROM_LOAD( "violet.7f",    0x1800, 0x0800, 0xca020685 )
+	ROM_LOAD( "gold.7c",      0x0000, 0x0800, CRC(5f5282ed) SHA1(fcd467e404fab89addd55bd7c5c07d28551a4c8e) )
+	ROM_LOAD( "orange.7d",    0x0800, 0x0800, CRC(075d99f5) SHA1(ff6f85a50179e0599b39871be1739080768fc475) )
+	ROM_LOAD( "yellow.7e",    0x1000, 0x0800, CRC(f6272e96) SHA1(a9608966613aedb36cfb04f85730efed9a44d17c) )
+	ROM_LOAD( "violet.7f",    0x1800, 0x0800, CRC(ca020685) SHA1(fe0d8d85c3bf244384e9c94f6a7f17db31083245) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, 0xda4b47e6 )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, 0x96e213a4 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
+	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, CRC(da4b47e6) SHA1(2cfc7d489002113eb91048cc29d24831dadbfabb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, CRC(96e213a4) SHA1(38f21e7bce96fd2159aa61e64d66aa574d85873c) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, CRC(37aece4b) SHA1(08dbb470644278132b8126649fe41d70e7750bee) )	/* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( herodku )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2764.8h",      0x0c00, 0x0400, 0x989ce053 )
+	ROM_LOAD( "2764.8h",      0x0c00, 0x0400, CRC(989ce053) SHA1(852401856a2d91118d1bd0b3db892b57d0ac949c) )
 	ROM_CONTINUE(             0x0800, 0x0400 )
 	ROM_CONTINUE(             0x0400, 0x0400 )
 	ROM_CONTINUE(             0x0000, 0x0400 )
 	ROM_CONTINUE(             0x2000, 0x1000 )
-	ROM_LOAD( "2764.8f",      0x4000, 0x1000, 0x835e0074 )
+	ROM_LOAD( "2764.8f",      0x4000, 0x1000, CRC(835e0074) SHA1(187358973f595033a4745759f554a3dfd398889b) )
 	ROM_CONTINUE(             0x6000, 0x1000 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "2716.3h",      0x0000, 0x0800, 0xcaf57bef )
+	ROM_LOAD( "2716.3h",      0x0000, 0x0800, CRC(caf57bef) SHA1(60c19c65bf312b36c68631ccea5434ad8cf0f3df) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, 0x574dfd7a )
-	ROM_LOAD( "blk.3p",       0x0800, 0x0800, 0x16f7c040 )
+	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, CRC(574dfd7a) SHA1(78bbe4ea83fdaec14ca92ceae03e8a3d0877d14b) )
+	ROM_LOAD( "blk.3p",       0x0800, 0x0800, CRC(16f7c040) SHA1(d1bd1b5f3c66ac6e71637ef42962adabacd79340) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gold.7c",      0x0000, 0x0800, 0x5f5282ed )
-	ROM_LOAD( "orange.7d",    0x0800, 0x0800, 0x075d99f5 )
-	ROM_LOAD( "yellow.7e",    0x1000, 0x0800, 0xf6272e96 )
-	ROM_LOAD( "violet.7f",    0x1800, 0x0800, 0xca020685 )
+	ROM_LOAD( "gold.7c",      0x0000, 0x0800, CRC(5f5282ed) SHA1(fcd467e404fab89addd55bd7c5c07d28551a4c8e) )
+	ROM_LOAD( "orange.7d",    0x0800, 0x0800, CRC(075d99f5) SHA1(ff6f85a50179e0599b39871be1739080768fc475) )
+	ROM_LOAD( "yellow.7e",    0x1000, 0x0800, CRC(f6272e96) SHA1(a9608966613aedb36cfb04f85730efed9a44d17c) )
+	ROM_LOAD( "violet.7f",    0x1800, 0x0800, CRC(ca020685) SHA1(fe0d8d85c3bf244384e9c94f6a7f17db31083245) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, 0xda4b47e6 )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, 0x96e213a4 )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
+	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, CRC(da4b47e6) SHA1(2cfc7d489002113eb91048cc29d24831dadbfabb) )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, CRC(96e213a4) SHA1(38f21e7bce96fd2159aa61e64d66aa574d85873c) )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, CRC(37aece4b) SHA1(08dbb470644278132b8126649fe41d70e7750bee) )	/* character color codes on a per-column basis */
 ROM_END
 
 

@@ -410,140 +410,140 @@ MACHINE_DRIVER_END
 
 ROM_START( amidar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
-	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
-	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, 0x3656be6f )
-	ROM_LOAD( "amidar.2h",    0x3000, 0x1000, 0x1be170bd )
+	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, CRC(c294bf27) SHA1(399325bf1559e8cdbddf7cfbf0dc739f9ed72ef0) )
+	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, CRC(e6e96826) SHA1(e9c4f8c594640424b456505e676352a98b758c03) )
+	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, CRC(3656be6f) SHA1(9d652f66bedcf17a6453c0e0ead30bfd7ea0bd0a) )
+	ROM_LOAD( "amidar.2h",    0x3000, 0x1000, CRC(1be170bd) SHA1(c047bc393b297c0d47668a5f6f4870e3fac937ef) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
-	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
+	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, CRC(c4b66ae4) SHA1(9d09dbde4019f7be3abe0815b0e06d542c01c255) )
+	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, CRC(806785af) SHA1(c8c85e3a6a204feccd7859b4527bd649e96134b4) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "amidar.5f",    0x0000, 0x0800, 0x5e51e84d )
-	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, 0x2f7f1c30 )
+	ROM_LOAD( "amidar.5f",    0x0000, 0x0800, CRC(5e51e84d) SHA1(dfe84db7e2b1a45a1d484fcf37291f536bc5324c) )
+	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, CRC(2f7f1c30) SHA1(83c330eca20dfcc6a4099001943b9ed7a7c3db5b) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, CRC(f940dcc3) SHA1(1015e56f37c244a850a8f4bf0e36668f047fd46d) )
 ROM_END
 
 ROM_START( amidaru )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, 0x951e0792 )
-	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, 0xa1a3a136 )
-	ROM_LOAD( "amidarus.2f",  0x2000, 0x1000, 0xa5121bf5 )
-	ROM_LOAD( "amidarus.2h",  0x3000, 0x1000, 0x051d1c7f )
-	ROM_LOAD( "amidarus.2j",  0x4000, 0x1000, 0x351f00d5 )
+	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, CRC(951e0792) SHA1(3a68b829c9ffb465bd6582c9ea566e0e947c6c19) )
+	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, CRC(a1a3a136) SHA1(330ec857fdf4c1b28e2560a5f63a2432f87f9b2f) )
+	ROM_LOAD( "amidarus.2f",  0x2000, 0x1000, CRC(a5121bf5) SHA1(fe15b91724758ede43dd332327919f164772c592) )
+	ROM_LOAD( "amidarus.2h",  0x3000, 0x1000, CRC(051d1c7f) SHA1(3cfa0f728a5c27da0a3fe2579ad226129ccde232) )
+	ROM_LOAD( "amidarus.2j",  0x4000, 0x1000, CRC(351f00d5) SHA1(6659357f40f888b21be00826246200fd3a8a88ce) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, CRC(8ca7b750) SHA1(4f4c2915503b85abe141d717fd254ee10c9da99e) )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, CRC(9b5bdc0a) SHA1(84d953618c8bf510d23b42232a856ac55f1baff5) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
-	ROM_LOAD( "amidarus.5h",  0x0800, 0x0800, 0x57c4fd0d )
+	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, CRC(2cfe5ede) SHA1(0d86a78008ac8653c17fff5be5ebdf1f0a9d31eb) )
+	ROM_LOAD( "amidarus.5h",  0x0800, 0x0800, CRC(57c4fd0d) SHA1(8764deec9fbff4220d61df621b12fc36c3702601) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, CRC(f940dcc3) SHA1(1015e56f37c244a850a8f4bf0e36668f047fd46d) )
 ROM_END
 
 ROM_START( amidaro )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "107.2cd",      0x0000, 0x1000, 0xc52536be )
-	ROM_LOAD( "108.2fg",      0x1000, 0x1000, 0x38538b98 )
-	ROM_LOAD( "109.2fg",      0x2000, 0x1000, 0x69907f0f )
-	ROM_LOAD( "110.2h",       0x3000, 0x1000, 0xba149a93 )
-	ROM_LOAD( "111.2j",       0x4000, 0x1000, 0x20d01c2e )
+	ROM_LOAD( "107.2cd",      0x0000, 0x1000, CRC(c52536be) SHA1(3f64578214d2d9f0e4e7ee87e09b0aac33a73098) )
+	ROM_LOAD( "108.2fg",      0x1000, 0x1000, CRC(38538b98) SHA1(12b2a0c09926d006781bee5d450bc0c391cc1fb5) )
+	ROM_LOAD( "109.2fg",      0x2000, 0x1000, CRC(69907f0f) SHA1(f1d19a76ffc41ee8c5c574f10108cfdfe525b732) )
+	ROM_LOAD( "110.2h",       0x3000, 0x1000, CRC(ba149a93) SHA1(9ef1d27f0780612be0ea2be94c3a2c781a4924c8) )
+	ROM_LOAD( "111.2j",       0x4000, 0x1000, CRC(20d01c2e) SHA1(e09437ff440f04036d5ec74b355e97bbbbfefb95) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, CRC(8ca7b750) SHA1(4f4c2915503b85abe141d717fd254ee10c9da99e) )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, CRC(9b5bdc0a) SHA1(84d953618c8bf510d23b42232a856ac55f1baff5) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
-	ROM_LOAD( "113.5h",       0x0800, 0x0800, 0xbcdce168 )  /* The letter 'S' is slightly different */
+	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, CRC(2cfe5ede) SHA1(0d86a78008ac8653c17fff5be5ebdf1f0a9d31eb) )
+	ROM_LOAD( "113.5h",       0x0800, 0x0800, CRC(bcdce168) SHA1(e593d03c460ef4607e3ba25019d9f01d4a717dd9) )  /* The letter 'S' is slightly different */
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, CRC(f940dcc3) SHA1(1015e56f37c244a850a8f4bf0e36668f047fd46d) )
 ROM_END
 
 ROM_START( amigo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2732.a1",      0x0000, 0x1000, 0x930dc856 )
-	ROM_LOAD( "2732.a2",      0x1000, 0x1000, 0x66282ff5 )
-	ROM_LOAD( "2732.a3",      0x2000, 0x1000, 0xe9d3dc76 )
-	ROM_LOAD( "2732.a4",      0x3000, 0x1000, 0x4a4086c9 )
+	ROM_LOAD( "2732.a1",      0x0000, 0x1000, CRC(930dc856) SHA1(7022f1f26830baccdc8b8f0b10fb1d1ccb080f22) )
+	ROM_LOAD( "2732.a2",      0x1000, 0x1000, CRC(66282ff5) SHA1(986778278eb339768d190460680e7aa698812488) )
+	ROM_LOAD( "2732.a3",      0x2000, 0x1000, CRC(e9d3dc76) SHA1(627c6068c65985175388aec43ac2a4248b004c97) )
+	ROM_LOAD( "2732.a4",      0x3000, 0x1000, CRC(4a4086c9) SHA1(6f309b67dc68e06e6eb1d3ee2ae75afe253a4ce3) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, CRC(8ca7b750) SHA1(4f4c2915503b85abe141d717fd254ee10c9da99e) )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, CRC(9b5bdc0a) SHA1(84d953618c8bf510d23b42232a856ac55f1baff5) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2716.a6",      0x0000, 0x0800, 0x2082ad0a )
-	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
+	ROM_LOAD( "2716.a6",      0x0000, 0x0800, CRC(2082ad0a) SHA1(c6014d9575e92adf09b0961c2158a779ebe940c4) )
+	ROM_LOAD( "2716.a5",      0x0800, 0x0800, CRC(3029f94f) SHA1(3b432b42e79f8b0a7d65e197f373a04e3c92ff20) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, CRC(f940dcc3) SHA1(1015e56f37c244a850a8f4bf0e36668f047fd46d) )
 ROM_END
 
 ROM_START( turtles )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "turt_vid.2c",  0x0000, 0x1000, 0xec5e61fb )
-	ROM_LOAD( "turt_vid.2e",  0x1000, 0x1000, 0xfd10821e )
-	ROM_LOAD( "turt_vid.2f",  0x2000, 0x1000, 0xddcfc5fa )
-	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
-	ROM_LOAD( "turt_vid.2j",  0x4000, 0x1000, 0xfcd49fef )
+	ROM_LOAD( "turt_vid.2c",  0x0000, 0x1000, CRC(ec5e61fb) SHA1(3ca89800fda7a7e61f54d71d5302908be2706def) )
+	ROM_LOAD( "turt_vid.2e",  0x1000, 0x1000, CRC(fd10821e) SHA1(af74602bf2454eb8f3b9bb5c425e2476feeecd69) )
+	ROM_LOAD( "turt_vid.2f",  0x2000, 0x1000, CRC(ddcfc5fa) SHA1(2af9383e5a289c2d7fbe6cf5e5b1519c352afbab) )
+	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, CRC(9e71696c) SHA1(3dcdf5dc601c875fc9d8b9a46e3ef588e7478e0d) )
+	ROM_LOAD( "turt_vid.2j",  0x4000, 0x1000, CRC(fcd49fef) SHA1(bb1e91b2e6d4b5a861bf37907ef6b198328d8d83) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
-	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, CRC(f0c30f9a) SHA1(5621f336e9be8acf986a34bbb8855ed5d45c28ef) )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, CRC(af5fc43c) SHA1(8a49c55feba094b07380615cf0b6f0878c25a260) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
-	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
+	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, CRC(e5999d52) SHA1(bc3f52cf6c6e19dfd2dacd1e8c9128f437e995fc) )
+	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, CRC(c3ffd655) SHA1(dee51d77be262a2944488e381541c10a2b6e5d83) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, CRC(f3ef02dd) SHA1(09fd795170d7d30f101d579f57553da5ff3800ab) )
 ROM_END
 
 ROM_START( turpin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "m1",           0x0000, 0x1000, 0x89177473 )
-	ROM_LOAD( "m2",           0x1000, 0x1000, 0x4c6ca5c6 )
-	ROM_LOAD( "m3",           0x2000, 0x1000, 0x62291652 )
-	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
-	ROM_LOAD( "m5",           0x4000, 0x1000, 0x7d2600f2 )
+	ROM_LOAD( "m1",           0x0000, 0x1000, CRC(89177473) SHA1(0717b1e7308ffe527edfc578ec4353809e7d9eea) )
+	ROM_LOAD( "m2",           0x1000, 0x1000, CRC(4c6ca5c6) SHA1(dd4ca7adaa523a8e775cdfaa99bb3cc25da32c08) )
+	ROM_LOAD( "m3",           0x2000, 0x1000, CRC(62291652) SHA1(82965d3e9608afde4ff06cba1d7a4b11cd904c11) )
+	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, CRC(9e71696c) SHA1(3dcdf5dc601c875fc9d8b9a46e3ef588e7478e0d) )
+	ROM_LOAD( "m5",           0x4000, 0x1000, CRC(7d2600f2) SHA1(1a9bdf63b50419c6e0d9c401c3dcf29d5b459fa6) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
-	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, CRC(f0c30f9a) SHA1(5621f336e9be8acf986a34bbb8855ed5d45c28ef) )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, CRC(af5fc43c) SHA1(8a49c55feba094b07380615cf0b6f0878c25a260) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
-	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
+	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, CRC(e5999d52) SHA1(bc3f52cf6c6e19dfd2dacd1e8c9128f437e995fc) )
+	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, CRC(c3ffd655) SHA1(dee51d77be262a2944488e381541c10a2b6e5d83) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, CRC(f3ef02dd) SHA1(09fd795170d7d30f101d579f57553da5ff3800ab) )
 ROM_END
 
 ROM_START( 600 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "600_vid.2c",   0x0000, 0x1000, 0x8ee090ae )
-	ROM_LOAD( "600_vid.2e",   0x1000, 0x1000, 0x45bfaff2 )
-	ROM_LOAD( "600_vid.2f",   0x2000, 0x1000, 0x9f4c8ed7 )
-	ROM_LOAD( "600_vid.2h",   0x3000, 0x1000, 0xa92ef056 )
-	ROM_LOAD( "600_vid.2j",   0x4000, 0x1000, 0x6dadd72d )
+	ROM_LOAD( "600_vid.2c",   0x0000, 0x1000, CRC(8ee090ae) SHA1(3d491313da6cccd6dbc15774569be0555fe2f73a) )
+	ROM_LOAD( "600_vid.2e",   0x1000, 0x1000, CRC(45bfaff2) SHA1(ba4f7aa499f4993ec2191b8832b5604fd41964bc) )
+	ROM_LOAD( "600_vid.2f",   0x2000, 0x1000, CRC(9f4c8ed7) SHA1(2564dae82019097227351a7ddc9c5156ca00297a) )
+	ROM_LOAD( "600_vid.2h",   0x3000, 0x1000, CRC(a92ef056) SHA1(c319d41a3345b84670fe9110f78332c1cfe1e163) )
+	ROM_LOAD( "600_vid.2j",   0x4000, 0x1000, CRC(6dadd72d) SHA1(5602b5ebb2c287f72a5ce873b4e3dfd19b8412a0) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )
-	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, 0xa311b998 )
+	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, CRC(1773c68e) SHA1(cc4aa3a98e85bc6300f8c1ee1a0448071d7c6dfa) )
+	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, CRC(a311b998) SHA1(39af321b8c3f211ed6d083a2aba4fbc8af11c9e8) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "600_vid.5h",   0x0000, 0x0800, 0x006c3d56 )
-	ROM_LOAD( "600_vid.5f",   0x0800, 0x0800, 0x7dbc0426 )
+	ROM_LOAD( "600_vid.5h",   0x0000, 0x0800, CRC(006c3d56) SHA1(0c773e0e84d0bf45be5a5a7cfff960c1ca2f0320) )
+	ROM_LOAD( "600_vid.5f",   0x0800, 0x0800, CRC(7dbc0426) SHA1(29eeb3cdb5a3bcf7115d8099e4d04cf76216b003) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, CRC(f3ef02dd) SHA1(09fd795170d7d30f101d579f57553da5ff3800ab) )
 ROM_END
 
 

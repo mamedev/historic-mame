@@ -307,58 +307,58 @@ MACHINE_DRIVER_END
 
 ROM_START( pbaction )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
-	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
-	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
+	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, CRC(8d6dcaae) SHA1(c9e605f9d291cb8c7163655ea96c605b7d30365f) )
+	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, CRC(d54d5402) SHA1(a4c3205bfe5fba8bb1ff3ad15941a77c35b44a27) )
+	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, CRC(e7412d68) SHA1(e75731d9bea80e0dc09798dd46e3b947fdb54aaa) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound board */
-	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
+	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, CRC(0e53a91f) SHA1(df2827197cd55c3685e5ac8b26c20800623cb932) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
-	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
-	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, CRC(9a74a8e1) SHA1(bd27439b91f41db3fd7eedb44e828d61b793bda0) )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, CRC(5ca6ad3c) SHA1(7c8eff087f18cc2ff0572ea45e681a3a1ec94fad) )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, CRC(9f00b757) SHA1(74b6d926b8f456c8d0101f0232c5d3662423b396) )
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
-	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
-	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
-	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
+	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, CRC(21efe866) SHA1(0c0a05a26d793ba98b0f421d464ff4b1d301ff9e) )
+	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, CRC(7f984c80) SHA1(18795ecbcd2da94f1cfcce5559d652388d1b8bc0) )
+	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, CRC(df69e51b) SHA1(52ab15c63332f0fa98884fa9adc8d35b93c939c4) )
+	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, CRC(0094cb8b) SHA1(58f48d24903b797e8451bf231f9e8df621685d9f) )
 
 	ROM_REGION( 0x06000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
-	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
-	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )
+	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, CRC(d1795ef5) SHA1(69ad8e419e340d2f548468ed7838102789b978da) )
+	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, CRC(f28df203) SHA1(060f70ed6386c808303a488c97691257681bd8f3) )
+	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, CRC(af6e9817) SHA1(56f47d25761b3850c49a3a81b5ea35f12bd77b14) )
 ROM_END
 
 
 ROM_START( pbactio2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
-	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
-	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
+	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, CRC(4a239ebd) SHA1(74e6da0485ac78093b4f09953fa3accb14bc3e43) )
+	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, CRC(3afef03a) SHA1(dec714415d2fd00c9021171a48f6c94b40888ae8) )
+	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, CRC(c0a98c8a) SHA1(442f37af31db13fd98602dd7f9eeae5529da0f44) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound board */
-	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
+	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, CRC(8b69b933) SHA1(eb0762579d52ed9f5b1a002ffe7e517c59650e22) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for a third Z80 (not emulated) */
-	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, 0x2734ae60 )
+	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, CRC(2734ae60) SHA1(4edcdfac1611c49c4f890609efbe8352b8161f8e) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
-	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
-	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, CRC(9a74a8e1) SHA1(bd27439b91f41db3fd7eedb44e828d61b793bda0) )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, CRC(5ca6ad3c) SHA1(7c8eff087f18cc2ff0572ea45e681a3a1ec94fad) )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, CRC(9f00b757) SHA1(74b6d926b8f456c8d0101f0232c5d3662423b396) )
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
-	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
-	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
-	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
+	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, CRC(21efe866) SHA1(0c0a05a26d793ba98b0f421d464ff4b1d301ff9e) )
+	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, CRC(7f984c80) SHA1(18795ecbcd2da94f1cfcce5559d652388d1b8bc0) )
+	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, CRC(df69e51b) SHA1(52ab15c63332f0fa98884fa9adc8d35b93c939c4) )
+	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, CRC(0094cb8b) SHA1(58f48d24903b797e8451bf231f9e8df621685d9f) )
 
 	ROM_REGION( 0x06000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
-	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
-	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )
+	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, CRC(d1795ef5) SHA1(69ad8e419e340d2f548468ed7838102789b978da) )
+	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, CRC(f28df203) SHA1(060f70ed6386c808303a488c97691257681bd8f3) )
+	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, CRC(af6e9817) SHA1(56f47d25761b3850c49a3a81b5ea35f12bd77b14) )
 ROM_END
 
 

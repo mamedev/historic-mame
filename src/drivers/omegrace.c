@@ -571,15 +571,15 @@ MACHINE_DRIVER_END
 
 ROM_START( omegrace )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
-	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
-	ROM_LOAD( "omega.k7",     0x2000, 0x1000, 0x6d10f197 )
-	ROM_LOAD( "omega.j7",     0x3000, 0x1000, 0x8e8d4b54 )
-	ROM_LOAD( "omega.e1",     0x9000, 0x0800, 0x1d0fdf3a )
-	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
+	ROM_LOAD( "omega.m7",     0x0000, 0x1000, CRC(0424d46e) SHA1(cc1ac6c06ba6f6e8466fa08286a0c70b5335af33) )
+	ROM_LOAD( "omega.l7",     0x1000, 0x1000, CRC(edcd7a7d) SHA1(5d142de2f48b01d563578a54fd5540e5d0ac8f4c) )
+	ROM_LOAD( "omega.k7",     0x2000, 0x1000, CRC(6d10f197) SHA1(9609a0cbeeef2efa10d49cde9f0afdca96e9c2f8) )
+	ROM_LOAD( "omega.j7",     0x3000, 0x1000, CRC(8e8d4b54) SHA1(944192c0f6f0cdb25d492ee9f33959d38a1062f2) )
+	ROM_LOAD( "omega.e1",     0x9000, 0x0800, CRC(1d0fdf3a) SHA1(3333397a9745874cea1dd6a1bda783cc59393b55) )
+	ROM_LOAD( "omega.f1",     0x9800, 0x0800, CRC(d44c0814) SHA1(2f216ee6de88bbe09775619003aee2d5aa8c554d) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio cpu */
-	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
+	ROM_LOAD( "sound.k5",     0x0000, 0x0800, CRC(7d426017) SHA1(370f0fb5608819de873c845f6010cbde75a9818e) )
 ROM_END
 
 

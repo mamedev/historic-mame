@@ -39,7 +39,7 @@
 
 #define FILEFLAG_OPENREAD		0x01
 #define FILEFLAG_OPENWRITE		0x02
-#define FILEFLAG_CRC			0x04
+#define FILEFLAG_HASH			0x04
 #define FILEFLAG_REVERSE_SEARCH	0x08
 #define FILEFLAG_VERIFY_ONLY	0x10
 #define FILEFLAG_NOZIP			0x20
@@ -58,7 +58,7 @@ struct _mame_file
 	UINT64 length;
 	UINT8 eof;
 	UINT8 type;
-	UINT32 crc;
+	char hash[HASH_BUF_SIZE];
 };
 
 
@@ -69,10 +69,9 @@ struct _mame_file
 
 extern unsigned int crc32(unsigned int crc, const UINT8 *buf, unsigned int len);
 
-static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, UINT32 crc, UINT32 flags);
+static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags);
 static const char *get_extension_for_filetype(int filetype);
-static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, UINT32 *crc);
-
+static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, char* hash);
 
 
 /***************************************************************************
@@ -86,7 +85,6 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 	{
 		/* read-only cases */
 		case FILETYPE_ROM:
-		case FILETYPE_ROM_NOCRC:
 #ifndef MESS
 		case FILETYPE_IMAGE:
 #endif
@@ -118,11 +116,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 	{
 		/* ROM files */
 		case FILETYPE_ROM:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_CRC);
-
-		/* ROM files with no CRC */
-		case FILETYPE_ROM_NOCRC:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD);
+			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_HASH);
 
 		/* read-only disk images */
 		case FILETYPE_IMAGE:
@@ -202,6 +196,17 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 	return NULL;
 }
 
+
+/***************************************************************************
+	mame_fopen_rom
+***************************************************************************/
+
+/* Similar to mame_fopen(,,FILETYPE_ROM), but lets you specify an expected checksum 
+   (better encapsulation of the load by CRC used for ZIP files) */
+mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char* exphash)
+{
+	return generic_fopen(FILETYPE_ROM, gamename, filename, exphash, FILEFLAG_OPENREAD | FILEFLAG_HASH);
+}
 
 
 /***************************************************************************
@@ -377,19 +382,20 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 	mame_fchecksum
 ***************************************************************************/
 
-int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum)
+int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char* hash)
 {
 	mame_file *file;
 
-	/* first open the file; we get the CRC for free */
-	file = generic_fopen(FILETYPE_ROM, gamename, filename, *sum, FILEFLAG_OPENREAD | FILEFLAG_CRC | FILEFLAG_VERIFY_ONLY);
+	/* first open the file; we pass the source hash because it contains
+	   the expected checksum for the file (used to load by checksum) */
+	file = generic_fopen(FILETYPE_ROM, gamename, filename, hash, FILEFLAG_OPENREAD | FILEFLAG_HASH | FILEFLAG_VERIFY_ONLY);
 
 	/* if we didn't succeed return -1 */
 	if (!file)
 		return -1;
 
-	/* close the file and save the length & sum */
-	*sum = file->crc;
+	/* close the file and save the length & checksum */
+	hash_data_copy(hash, file->hash);
 	*length = file->length;
 	mame_fclose(file);
 	return 0;
@@ -427,12 +433,12 @@ UINT64 mame_fsize(mame_file *file)
 
 
 /***************************************************************************
-	mame_fcrc
+	mame_fhash
 ***************************************************************************/
 
-UINT32 mame_fcrc(mame_file *file)
+const char* mame_fhash(mame_file *file)
 {
-	return file->crc;
+	return file->hash;
 }
 
 
@@ -708,7 +714,6 @@ static const char *get_extension_for_filetype(int filetype)
 	{
 		case FILETYPE_RAW:			/* raw data files */
 		case FILETYPE_ROM:			/* ROM files */
-		case FILETYPE_ROM_NOCRC:
 		case FILETYPE_HIGHSCORE_DB:	/* highscore database/history files */
 		case FILETYPE_HISTORY:		/* game history files */
 		case FILETYPE_CHEAT:		/* cheat file */
@@ -777,7 +782,7 @@ static const char *get_extension_for_filetype(int filetype)
 	generic_fopen
 ***************************************************************************/
 
-static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, UINT32 crc, UINT32 flags)
+static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags)
 {
 	static const char *access_modes[] = { "rb", "rb", "wb", "r+b" };
 	const char *extension = get_extension_for_filetype(pathtype);
@@ -792,8 +797,8 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 	memset(&file, 0, sizeof(file));
 
 	/* check for incompatible flags */
-	if ((flags & FILEFLAG_OPENWRITE) && (flags & FILEFLAG_CRC))
-		fprintf(stderr, "Can't use CRC option with WRITE option in generic_fopen!\n");
+	if ((flags & FILEFLAG_OPENWRITE) && (flags & FILEFLAG_HASH))
+		fprintf(stderr, "Can't use HASH option with WRITE option in generic_fopen!\n");
 
 	/* determine start/stop based on reverse search flag */
 	if (!(flags & FILEFLAG_REVERSE_SEARCH))
@@ -826,10 +831,10 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 			/* now look for path/gamename/filename.ext */
 			compose_path(name, gamename, filename, extension);
 
-			/* if we need a CRC, load it into RAM and compute it along the way */
-			if (flags & FILEFLAG_CRC)
+			/* if we need checksums, load it into RAM and compute it along the way */
+			if (flags & FILEFLAG_HASH)
 			{
-				if (checksum_file(pathtype, pathindex, name, &file.data, &file.length, &file.crc) == 0)
+				if (checksum_file(pathtype, pathindex, name, &file.data, &file.length, file.hash) == 0)
 				{
 					file.type = RAM_FILE;
 					break;
@@ -868,11 +873,34 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				/* verify-only case */
 				if (flags & FILEFLAG_VERIFY_ONLY)
 				{
-					file.crc = crc;
-					if (checksum_zipped_file(pathtype, pathindex, name, tempname, &ziplength, &file.crc) == 0)
+					UINT8 crcs[4];
+					UINT32 crc = 0;
+
+					/* Since this is a .ZIP file, we extract the CRC from the expected hash
+					   (if any), so that we can load by CRC if needed. */
+					if (hash)
+					{
+						hash_data_extract_binary_checksum(hash, HASH_CRC, crcs);
+
+						/* Store the CRC in a single DWORD */
+						crc = ((unsigned long)crcs[0] << 24) |
+							  ((unsigned long)crcs[1] << 16) |
+							  ((unsigned long)crcs[2] <<  8) |
+							  ((unsigned long)crcs[3] <<  0);
+					}
+
+					hash_data_clear(file.hash);
+						
+					if (checksum_zipped_file(pathtype, pathindex, name, tempname, &ziplength, &crc) == 0)
 					{
 						file.length = ziplength;
 						file.type = UNLOADED_ZIPPED_FILE;
+
+						crcs[0] = (UINT8)(crc >> 24);
+						crcs[1] = (UINT8)(crc >> 16);
+						crcs[2] = (UINT8)(crc >> 8);
+						crcs[3] = (UINT8)(crc >> 0);
+						hash_data_insert_binary_checksum(file.hash, HASH_CRC, crcs);
 						break;
 					}
 				}
@@ -880,12 +908,42 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				/* full load case */
 				else
 				{
-					if (load_zipped_file(pathtype, pathindex, name, tempname, &file.data, &ziplength) == 0)
+					int err;
+
+					/* Try loading the file */
+					err = load_zipped_file(pathtype, pathindex, name, tempname, &file.data, &ziplength);
+
+					/* If it failed, since this is a ZIP file, we can try to load by CRC 
+					   if an expected hash has been provided. unzip.c uses this ugly hack 
+					   of specifying the CRC as filename. */
+					if (err && hash)
 					{
+						char crcn[9];
+
+						hash_data_extract_printable_checksum(hash, HASH_CRC, crcn);
+
+						err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
+					}
+
+					if (err == 0)
+					{
+						unsigned functions;
+
 						LOG(("Using (mame_fopen) zip file for %s\n", filename));
 						file.length = ziplength;
 						file.type = ZIPPED_FILE;
-						file.crc = crc32(0L, file.data, file.length);
+
+						/* Since we already loaded the file, we can easily calculate the
+						   checksum of all the functions. In practice, we use only the
+						   functions for which we have an expected checksum to compare with. */
+						functions = hash_data_used_functions(hash);
+
+						/* If user asked for CRC only, and there is an expected checksum
+						   for CRC in the driver, compute only CRC. */
+						if (options.crc_only && (functions & HASH_CRC))
+							functions = HASH_CRC;
+
+						hash_compute(file.hash, file.data, file.length, functions);
 						break;
 					}
 				}
@@ -911,11 +969,12 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 	checksum_file
 ***************************************************************************/
 
-static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, UINT32 *crc)
+static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, char* hash)
 {
 	UINT64 length;
 	UINT8 *data;
 	osd_file *f;
+	unsigned int functions;
 
 	/* open the file */
 	f = osd_fopen(pathtype, pathindex, file, "rb");
@@ -959,9 +1018,16 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 		return -1;
 	}
 
-	/* compute the CRC */
 	*size = length;
-	*crc = crc32(0L, data, length);
+
+	
+	/* compute the checksums (only the functions for which we have an expected
+	   checksum). Take also care of crconly: if the user asked, we will calculate
+	   only the CRC, but only if there is an expected CRC for this file. */
+	functions = hash_data_used_functions(hash);
+	if (options.crc_only && (functions & HASH_CRC))
+		functions = HASH_CRC;
+	hash_compute(hash, data, length, functions);
 
 	/* if the caller wants the data, give it away, otherwise free it */
 	if (p)

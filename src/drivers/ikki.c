@@ -254,35 +254,35 @@ MACHINE_DRIVER_END
 
 ROM_START( ikki )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main CPU */
-	ROM_LOAD( "tvg17_1",  0x0000,  0x2000, 0xcb28167c )
+	ROM_LOAD( "tvg17_1",  0x0000,  0x2000, CRC(cb28167c) SHA1(6843553faee0d3bbe432689fdf5f5454470e2b09) )
 	ROM_CONTINUE(         0x8000,  0x2000 )
-	ROM_LOAD( "tvg17_2",  0x2000,  0x2000, 0x756c7450 )
-	ROM_LOAD( "tvg17_3",  0x4000,  0x2000, 0x91f0a8b6 )
-	ROM_LOAD( "tvg17_4",  0x6000,  0x2000, 0x696fcf7d )
+	ROM_LOAD( "tvg17_2",  0x2000,  0x2000, CRC(756c7450) SHA1(043e4f3085d1800b569ee397a968229d547ffbe1) )
+	ROM_LOAD( "tvg17_3",  0x4000,  0x2000, CRC(91f0a8b6) SHA1(529fee561c26aa9da75ee58488070329c459540c) )
+	ROM_LOAD( "tvg17_4",  0x6000,  0x2000, CRC(696fcf7d) SHA1(6affec60490012fdc762e7a104c0031d44f95bbd) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sub CPU */
-	ROM_LOAD( "tvg17_5",  0x0000,  0x2000, 0x22bdb40e )
+	ROM_LOAD( "tvg17_5",  0x0000,  0x2000, CRC(22bdb40e) SHA1(265801ad660a5a3fc5bb187fa92dbe6098b390f5) )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprite */
-	ROM_LOAD( "tvg17_6",  0x0000,  0x4000, 0xdc8aa269 )
-	ROM_LOAD( "tvg17_7",  0x4000,  0x4000, 0x0e9efeba )
-	ROM_LOAD( "tvg17_8",  0x8000,  0x4000, 0x45c9087a )
+	ROM_LOAD( "tvg17_6",  0x0000,  0x4000, CRC(dc8aa269) SHA1(fd8b5c2bead52e1e136d4df4c26f136d8992d9be) )
+	ROM_LOAD( "tvg17_7",  0x4000,  0x4000, CRC(0e9efeba) SHA1(d922c4276a988b78b9a2a3ca632136e64a80d995) )
+	ROM_LOAD( "tvg17_8",  0x8000,  0x4000, CRC(45c9087a) SHA1(9db82fc194096588fde5048e922a654e2ad12c23) )
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* bg */
-	ROM_LOAD( "tvg17_9",  0x8000,  0x4000, 0xc594f3c5 )
-	ROM_LOAD( "tvg17_10", 0x4000,  0x4000, 0x2e510b4e )
-	ROM_LOAD( "tvg17_11", 0x0000,  0x4000, 0x35012775 )
+	ROM_LOAD( "tvg17_9",  0x8000,  0x4000, CRC(c594f3c5) SHA1(6fe19d9ccbe6934a210eb2cab441cd0ba83cbcf4) )
+	ROM_LOAD( "tvg17_10", 0x4000,  0x4000, CRC(2e510b4e) SHA1(c0ff4515e66ab4959b597a4d930cbbcc31c53cda) )
+	ROM_LOAD( "tvg17_11", 0x0000,  0x4000, CRC(35012775) SHA1(c90386660755c85fb9f020f8161805dd02a16271) )
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 ) /* color PROMs */
-	ROM_LOAD( "prom17_3", 0x0000,  0x0100, 0xdbcd3bec ) /* R */
-	ROM_LOAD( "prom17_4", 0x0100,  0x0100, 0x9eb7b6cf ) /* G */
-	ROM_LOAD( "prom17_5", 0x0200,  0x0100, 0x9b30a7f3 ) /* B */
-	ROM_LOAD( "prom17_6", 0x0300,  0x0200, 0x962e619d ) /* sprite */
-	ROM_LOAD( "prom17_7", 0x0500,  0x0200, 0xb1f5148c ) /* bg */
+	ROM_LOAD( "prom17_3", 0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R */
+	ROM_LOAD( "prom17_4", 0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G */
+	ROM_LOAD( "prom17_5", 0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B */
+	ROM_LOAD( "prom17_6", 0x0300,  0x0200, CRC(962e619d) SHA1(d2cbcd7b2f1438d1d3759cc1ef6b76b42d9952fe) ) /* sprite */
+	ROM_LOAD( "prom17_7", 0x0500,  0x0200, CRC(b1f5148c) SHA1(251ddaabf65a87306970b79918849da95beb8ee7) ) /* bg */
 
 	ROM_REGION( 0x0200, REGION_USER1, 0 )
-	ROM_LOAD( "prom17_1", 0x0000,  0x0100, 0xca0af30c ) /* video attribute */
-	ROM_LOAD( "prom17_2", 0x0100,  0x0100, 0xf3c55174 ) /* unknown */
+	ROM_LOAD( "prom17_1", 0x0000,  0x0100, CRC(ca0af30c) SHA1(6d7cfeb16daf61c6e7f93172809b0983bf13cd6c) ) /* video attribute */
+	ROM_LOAD( "prom17_2", 0x0100,  0x0100, CRC(f3c55174) SHA1(936c5432c4fccfcb2601c1e08b98d5509202fe5b) ) /* unknown */
 ROM_END
 
 GAME( 1985, ikki, 0, ikki, ikki, 0, ROT0, "Sun Electronics", "Ikki (Japan)" )

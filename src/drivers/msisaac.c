@@ -108,18 +108,46 @@ static WRITE_HANDLER( ms_unknown_w )
 
 
 /* If good MCU dump will be available, it should be fully working game */
-
 /* To test the game without the MCU simply comment out #define USE_MCU */
 
-#define USE_MCU
+/* Disabled because the mcu dump is currently unavailable. -AS */
+//#define USE_MCU
+
+#ifndef USE_MCU
+unsigned char mcu_val;
+#endif
+
 
 static READ_HANDLER( msisaac_mcu_r )
 {
 #ifdef USE_MCU
 	return buggychl_mcu_r(offset);
 #else
+/*
+MCU simulation TODO:
+\-Find the command which allows player-2 to play.
+\-Fix some graphics imperfections(*not* confirmed if they are caused by unhandled
+  commands or imperfect video emulation).
+*/
+
+	switch(mcu_val)
+	{
+		/*Start-up check*/
+		case 0x5f:  return (mcu_val+0x6b);
+		/*These interferes with RAM operations(setting them to non-zero you  *
+		 * will have unexpected results,such as infinite lives or score not  *
+		 * incremented properly).*/
+		case 0x40:
+		case 0x41:
+		case 0x42:	return 0;
+		/*With this command the MCU controls a dial input,only the first    *
+		 *three bits are used.                                              */
+		case 0x02:  return (readinputport(6));
+		/*This controls the arms when they return to the player.            */
+		case 0x07:  return 0x45;
+		default:   	return mcu_val;
+	}
 	//logerror("CPU#0 read from MCU pc=%4x\n", activecpu_get_pc() );
-	return 0xca; //a hack to make the game boot
 #endif
 }
 
@@ -136,6 +164,10 @@ static WRITE_HANDLER( msisaac_mcu_w )
 {
 #ifdef USE_MCU
 	buggychl_mcu_w(offset,data);
+#else
+	//if(data != 0x0a && data != 0x42 && data != 0x02)
+	//	usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
+	mcu_val = data;
 #endif
 }
 
@@ -401,6 +433,9 @@ INPUT_PORTS_START( msisaac )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_ANALOGX( 0x07, 0x00, IPT_DIAL , 10, 5, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -499,36 +534,35 @@ MACHINE_DRIVER_END
 
 ROM_START( msisaac )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 main CPU */
-	ROM_LOAD( "a34_11.bin", 0x0000, 0x4000, 0x40819334 )
-	ROM_LOAD( "a34_12.bin", 0x4000, 0x4000, 0x4c50b298 )
-	ROM_LOAD( "a34_13.bin", 0x8000, 0x4000, 0x2e2b09b3 )
-	ROM_LOAD( "a34_10.bin", 0xc000, 0x2000, 0xa2c53dc1 )
+	ROM_LOAD( "a34_11.bin", 0x0000, 0x4000, CRC(40819334) SHA1(65352607165043909a09e96c07f7060f6ce087e6) )
+	ROM_LOAD( "a34_12.bin", 0x4000, 0x4000, CRC(4c50b298) SHA1(5962882ad37ba6990ba2a6312b570f214cd4c103) )
+	ROM_LOAD( "a34_13.bin", 0x8000, 0x4000, CRC(2e2b09b3) SHA1(daa715282ed9ef2e519e252a684ef28085becabd) )
+	ROM_LOAD( "a34_10.bin", 0xc000, 0x2000, CRC(a2c53dc1) SHA1(14f23511f92bcfc94447dabe2826555d68bc1caa) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 sound CPU */
-	ROM_LOAD( "a34_01.bin", 0x0000, 0x4000, 0x545e45e7 )
+	ROM_LOAD( "a34_01.bin", 0x0000, 0x4000, CRC(545e45e7) SHA1(18ddb1ec8809bb62ae1c1068cd16cd3c933bf6ba) )
 
-#ifdef USE_MCU
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "mcu"       , 0x0000, 0x0800, 0 )
-#endif
+	ROM_REGION( 0x0800,  REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	ROM_LOAD( "a34.mcu"       , 0x0000, 0x0800, NO_DUMP )
+
 // I tried following MCUs; none of them work with this game:
-//	ROM_LOAD( "a30-14"    , 0x0000, 0x0800, 0xc4690279 )	//40love
-//	ROM_LOAD( "a22-19.31",  0x0000, 0x0800, 0x06a71df0 )  	//buggy challenge
-//	ROM_LOAD( "a45-19",     0x0000, 0x0800, 0x5378253c )  	//flstory
-//	ROM_LOAD( "a54-19",     0x0000, 0x0800, 0xe08b8846 )  	//lkage
+//	ROM_LOAD( "a30-14"    , 0x0000, 0x0800, CRC(c4690279) )	//40love
+//	ROM_LOAD( "a22-19.31",  0x0000, 0x0800, CRC(06a71df0) )  	//buggy challenge
+//	ROM_LOAD( "a45-19",     0x0000, 0x0800, CRC(5378253c) )  	//flstory
+//	ROM_LOAD( "a54-19",     0x0000, 0x0800, CRC(e08b8846) )  	//lkage
 
 	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a34_02.bin", 0x0000, 0x2000, 0x50da1a81 )
-	ROM_LOAD( "a34_03.bin", 0x2000, 0x2000, 0x728a549e )
-	ROM_LOAD( "a34_04.bin", 0x4000, 0x2000, 0xe7d19f1c )
-	ROM_LOAD( "a34_05.bin", 0x6000, 0x2000, 0xbed2107d )
+	ROM_LOAD( "a34_02.bin", 0x0000, 0x2000, CRC(50da1a81) SHA1(8aa5a896f3e1173155d4574f5e1c2703e334cf44) )
+	ROM_LOAD( "a34_03.bin", 0x2000, 0x2000, CRC(728a549e) SHA1(8969569d4b7a3ba7b740dbd236c047a46b723617) )
+	ROM_LOAD( "a34_04.bin", 0x4000, 0x2000, CRC(e7d19f1c) SHA1(d55ee8085256c1f6a254d3249997326eebba7d88) )
+	ROM_LOAD( "a34_05.bin", 0x6000, 0x2000, CRC(bed2107d) SHA1(83b16ca8a1b131aa6a2976cdbe907109750eaf71) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a34_06.bin", 0x0000, 0x2000, 0x4ec71687 )
-	ROM_LOAD( "a34_07.bin", 0x2000, 0x2000, 0x24922abf )
-	ROM_LOAD( "a34_08.bin", 0x4000, 0x2000, 0x3ddbf4c0 )
-	ROM_LOAD( "a34_09.bin", 0x6000, 0x2000, 0x23eb089d )
+	ROM_LOAD( "a34_06.bin", 0x0000, 0x2000, CRC(4ec71687) SHA1(e88f0c61a172fbca1784c95246776bf64c071bf7) )
+	ROM_LOAD( "a34_07.bin", 0x2000, 0x2000, CRC(24922abf) SHA1(e42b4947b8c84bdf62990205308b8c187352d001) )
+	ROM_LOAD( "a34_08.bin", 0x4000, 0x2000, CRC(3ddbf4c0) SHA1(7dd82aba661addd0a905bc185c1a6d7f2e21e0c6) )
+	ROM_LOAD( "a34_09.bin", 0x6000, 0x2000, CRC(23eb089d) SHA1(fcf48862825bf09ba3718cbade0e163a660e1a68) )
 
 ROM_END
 
-GAMEX( 1985, msisaac, 0,        msisaac, msisaac, 0, ROT270, "Taito Corporation", "Metal Soldier Isaac II", GAME_NOT_WORKING | GAME_NO_COCKTAIL)
+GAMEX( 1985, msisaac, 0,        msisaac, msisaac, 0, ROT270, "Taito Corporation", "Metal Soldier Isaac II", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL)

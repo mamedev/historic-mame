@@ -213,27 +213,27 @@ MACHINE_DRIVER_END
 
 ROM_START( bankp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr6175.bin",  0x0000, 0x4000, 0x044552b8 )
-	ROM_LOAD( "epr6174.bin",  0x4000, 0x4000, 0xd29b1598 )
-	ROM_LOAD( "epr6173.bin",  0x8000, 0x4000, 0xb8405d38 )
-	ROM_LOAD( "epr6176.bin",  0xc000, 0x2000, 0xc98ac200 )
+	ROM_LOAD( "epr6175.bin",  0x0000, 0x4000, CRC(044552b8) SHA1(8d50ba062483d4789cfd3ed86cea53dff0ff6968) )
+	ROM_LOAD( "epr6174.bin",  0x4000, 0x4000, CRC(d29b1598) SHA1(8c1ee4d23d8d6f93af3e22f2cba189b0055994fb) )
+	ROM_LOAD( "epr6173.bin",  0x8000, 0x4000, CRC(b8405d38) SHA1(0f62a972f38b4ddcea77eb0e1d76c70ddbcb7b11) )
+	ROM_LOAD( "epr6176.bin",  0xc000, 0x2000, CRC(c98ac200) SHA1(1bdb87868deebe03da18280e617530c24118da1c) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr6165.bin",  0x0000, 0x2000, 0xaef34a93 )	/* playfield #1 chars */
-	ROM_LOAD( "epr6166.bin",  0x2000, 0x2000, 0xca13cb11 )
+	ROM_LOAD( "epr6165.bin",  0x0000, 0x2000, CRC(aef34a93) SHA1(513895cd3144977b3d9b5ac7f2bf40384d69e157) )	/* playfield #1 chars */
+	ROM_LOAD( "epr6166.bin",  0x2000, 0x2000, CRC(ca13cb11) SHA1(3aca0b0d3f052a742e1cd0b96bfad834e78fcd7d) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr6172.bin",  0x0000, 0x2000, 0xc4c4878b )	/* playfield #2 chars */
-	ROM_LOAD( "epr6171.bin",  0x2000, 0x2000, 0xa18165a1 )
-	ROM_LOAD( "epr6170.bin",  0x4000, 0x2000, 0xb58aa8fa )
-	ROM_LOAD( "epr6169.bin",  0x6000, 0x2000, 0x1aa37fce )
-	ROM_LOAD( "epr6168.bin",  0x8000, 0x2000, 0x05f3a867 )
-	ROM_LOAD( "epr6167.bin",  0xa000, 0x2000, 0x3fa337e1 )
+	ROM_LOAD( "epr6172.bin",  0x0000, 0x2000, CRC(c4c4878b) SHA1(423143d81408eda96f87bdc3a306517c473cbe00) )	/* playfield #2 chars */
+	ROM_LOAD( "epr6171.bin",  0x2000, 0x2000, CRC(a18165a1) SHA1(9a7513ea84f9231edba4e637df28a1705c8cdeb0) )
+	ROM_LOAD( "epr6170.bin",  0x4000, 0x2000, CRC(b58aa8fa) SHA1(432b43cd9af4e3dab579cfd191b731aa11ceb121) )
+	ROM_LOAD( "epr6169.bin",  0x6000, 0x2000, CRC(1aa37fce) SHA1(6e2402683145de8972a53c9ec01da9a422392bed) )
+	ROM_LOAD( "epr6168.bin",  0x8000, 0x2000, CRC(05f3a867) SHA1(9da11c3cea967c5f0d7397c0ff4f87b4b1446c4c) )
+	ROM_LOAD( "epr6167.bin",  0xa000, 0x2000, CRC(3fa337e1) SHA1(5fdc45436be27cceb5157bd6201c30e3de28fd7b) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, 0xeb70c5ae ) 	/* palette */
-	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, 0x0acca001 ) 	/* charset #1 lookup table */
-	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, 0xe53bafdb ) 	/* charset #2 lookup table */
+	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, CRC(eb70c5ae) SHA1(13613dad6c14004278f777d6f3f62712a2a85773) ) 	/* palette */
+	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, CRC(0acca001) SHA1(54c354d825a24a9085867b114a2cd6835baebe55) ) 	/* charset #1 lookup table */
+	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, CRC(e53bafdb) SHA1(7a414f6db5476dd7d0217e5b846ed931381eda02) ) 	/* charset #2 lookup table */
 ROM_END
 
 

@@ -688,138 +688,138 @@ MACHINE_DRIVER_END
 
 ROM_START( marineb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "marineb.1",     0x0000, 0x1000, 0x661d6540 )
-	ROM_LOAD( "marineb.2",     0x1000, 0x1000, 0x922da17f )
-	ROM_LOAD( "marineb.3",     0x2000, 0x1000, 0x820a235b )
-	ROM_LOAD( "marineb.4",     0x3000, 0x1000, 0xa157a283 )
-	ROM_LOAD( "marineb.5",     0x4000, 0x1000, 0x9ffff9c0 )
+	ROM_LOAD( "marineb.1",     0x0000, 0x1000, CRC(661d6540) SHA1(9ef6b58952be7ca245092916782311ee466fe3e1) )
+	ROM_LOAD( "marineb.2",     0x1000, 0x1000, CRC(922da17f) SHA1(e4925ae5afe937a0306af0a4fbbc6edcd13f1926) )
+	ROM_LOAD( "marineb.3",     0x2000, 0x1000, CRC(820a235b) SHA1(00bd8d9af1c88201100811518d3d795a80604711) )
+	ROM_LOAD( "marineb.4",     0x3000, 0x1000, CRC(a157a283) SHA1(741e44c75636e5349ad43308076e1a8533255711) )
+	ROM_LOAD( "marineb.5",     0x4000, 0x1000, CRC(9ffff9c0) SHA1(55fa22f28e56c69cee50d4054206cb7f63e24590) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "marineb.6",     0x0000, 0x2000, 0xee53ec2e )
+	ROM_LOAD( "marineb.6",     0x0000, 0x2000, CRC(ee53ec2e) SHA1(a8aab0ad70a20884e30420a6956b503cf7fdfbb8) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "marineb.8",     0x0000, 0x2000, 0xdc8bc46c )
-	ROM_LOAD( "marineb.7",     0x2000, 0x2000, 0x9d2e19ab )
+	ROM_LOAD( "marineb.8",     0x0000, 0x2000, CRC(dc8bc46c) SHA1(5ac945d7632dbc24a47d4dd8816b931b5615e2cd) )
+	ROM_LOAD( "marineb.7",     0x2000, 0x2000, CRC(9d2e19ab) SHA1(a64460c9222447cc63094350f910a9f73c423edd) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, 0xf32d9472 ) /* palette low 4 bits */
-	ROM_LOAD( "marineb.1c",    0x0100, 0x0100, 0x93c69d3e ) /* palette high 4 bits */
+	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, CRC(f32d9472) SHA1(b965eabb313cdfa0d10f8f25f659e20b0abe9a97) ) /* palette low 4 bits */
+	ROM_LOAD( "marineb.1c",    0x0100, 0x0100, CRC(93c69d3e) SHA1(d13720fa4947e5058d4d699990b9a731e25e5595) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( changes )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
-	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
-	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
-	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
-	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
+	ROM_LOAD( "changes.1",     0x0000, 0x1000, CRC(56f83813) SHA1(8b97e877b1819402703a9e9e641efc0e89b84cca) )
+	ROM_LOAD( "changes.2",     0x1000, 0x1000, CRC(0e627f0b) SHA1(59012c8f65b921387b381dbc5157a7a22b3d50dc) )
+	ROM_LOAD( "changes.3",     0x2000, 0x1000, CRC(ff8291e9) SHA1(c07394cb384259287a6820ce0e513e32c69d768b) )
+	ROM_LOAD( "changes.4",     0x3000, 0x1000, CRC(a8e9aa22) SHA1(fbccf017851eb099960ad51ef3060a16bc0107a5) )
+	ROM_LOAD( "changes.5",     0x4000, 0x1000, CRC(f4198e9e) SHA1(4a9aea2b38d3bf093d9e97c884a7a9d16c203a46) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "changes.7",     0x0000, 0x2000, 0x2204194e )
+	ROM_LOAD( "changes.7",     0x0000, 0x2000, CRC(2204194e) SHA1(97ee40dd804158e92a2a1034f8e910f1057a7b54) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "changes.6",     0x0000, 0x2000, 0x985c9db4 )
+	ROM_LOAD( "changes.6",     0x0000, 0x2000, CRC(985c9db4) SHA1(d95a8794b96aec9133fd49b7d5724c161c5478bf) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
-	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
+	ROM_LOAD( "changes.1b",    0x0000, 0x0100, CRC(f693c153) SHA1(463426b580fa02f00baf2fff9f42d34b52bd6be4) ) /* palette low 4 bits */
+	ROM_LOAD( "changes.1c",    0x0100, 0x0100, CRC(f8331705) SHA1(cbead7ed85f96219af14b6552301906f32260b69) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( looper )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
-	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
-	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
-	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
-	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
+	ROM_LOAD( "changes.1",     0x0000, 0x1000, CRC(56f83813) SHA1(8b97e877b1819402703a9e9e641efc0e89b84cca) )
+	ROM_LOAD( "changes.2",     0x1000, 0x1000, CRC(0e627f0b) SHA1(59012c8f65b921387b381dbc5157a7a22b3d50dc) )
+	ROM_LOAD( "changes.3",     0x2000, 0x1000, CRC(ff8291e9) SHA1(c07394cb384259287a6820ce0e513e32c69d768b) )
+	ROM_LOAD( "changes.4",     0x3000, 0x1000, CRC(a8e9aa22) SHA1(fbccf017851eb099960ad51ef3060a16bc0107a5) )
+	ROM_LOAD( "changes.5",     0x4000, 0x1000, CRC(f4198e9e) SHA1(4a9aea2b38d3bf093d9e97c884a7a9d16c203a46) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "looper_7.bin",  0x0000, 0x2000, 0x71a89975 )
+	ROM_LOAD( "looper_7.bin",  0x0000, 0x2000, CRC(71a89975) SHA1(798b50af7348b20487c1c37a3e1b9b26585d50f6) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "looper_6.bin",  0x0000, 0x2000, 0x1f3f70c2 )
+	ROM_LOAD( "looper_6.bin",  0x0000, 0x2000, CRC(1f3f70c2) SHA1(c3c04892961e83e3be7773fca8304651b98046cf) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
-	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
+	ROM_LOAD( "changes.1b",    0x0000, 0x0100, CRC(f693c153) SHA1(463426b580fa02f00baf2fff9f42d34b52bd6be4) ) /* palette low 4 bits */
+	ROM_LOAD( "changes.1c",    0x0100, 0x0100, CRC(f8331705) SHA1(cbead7ed85f96219af14b6552301906f32260b69) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( springer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "springer.1",    0x0000, 0x1000, 0x0794103a )
-	ROM_LOAD( "springer.2",    0x1000, 0x1000, 0xf4aecd9a )
-	ROM_LOAD( "springer.3",    0x2000, 0x1000, 0x2f452371 )
-	ROM_LOAD( "springer.4",    0x3000, 0x1000, 0x859d1bf5 )
-	ROM_LOAD( "springer.5",    0x4000, 0x1000, 0x72adbbe3 )
+	ROM_LOAD( "springer.1",    0x0000, 0x1000, CRC(0794103a) SHA1(71bb7f6bf4f41f50a39a552cc98ea111e4064acd) )
+	ROM_LOAD( "springer.2",    0x1000, 0x1000, CRC(f4aecd9a) SHA1(414d5385286d899f883bd70ee7fbb5f23e424ef9) )
+	ROM_LOAD( "springer.3",    0x2000, 0x1000, CRC(2f452371) SHA1(973839714322f517b51c224adf0792a3fe0a091b) )
+	ROM_LOAD( "springer.4",    0x3000, 0x1000, CRC(859d1bf5) SHA1(0f90e0c22d1a0fdf61b87738cd2c4113e1e9178f) )
+	ROM_LOAD( "springer.5",    0x4000, 0x1000, CRC(72adbbe3) SHA1(5e9d65eb524f7e0e8ea84eeebc698d8bdae6606c) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "springer.6",    0x0000, 0x1000, 0x6a961833 )
-	ROM_LOAD( "springer.7",    0x1000, 0x1000, 0x95ab8fc0 )
+	ROM_LOAD( "springer.6",    0x0000, 0x1000, CRC(6a961833) SHA1(38f4b0ec73e404b3ec750a2f0c1e502dd75e3ee3) )
+	ROM_LOAD( "springer.7",    0x1000, 0x1000, CRC(95ab8fc0) SHA1(74dad6fe1edd38b22656cf6cd9e4a57012bf0d60) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "springer.8",    0x0000, 0x1000, 0xa54bafdc )
+	ROM_LOAD( "springer.8",    0x0000, 0x1000, CRC(a54bafdc) SHA1(70f1a9ab116dc2a195aa9026ed1004101897d274) )
 							/* 0x1000-0x1fff empty for my convinience */
-	ROM_LOAD( "springer.9",    0x2000, 0x1000, 0xfa302775 )
+	ROM_LOAD( "springer.9",    0x2000, 0x1000, CRC(fa302775) SHA1(412afdc620be95e70b3b782d1a08e4a46777e710) )
 							/* 0x3000-0x3fff empty for my convinience */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "1b.vid",        0x0000, 0x0100, 0xa2f935aa ) /* palette low 4 bits */
-	ROM_LOAD( "1c.vid",        0x0100, 0x0100, 0xb95421f4 ) /* palette high 4 bits */
+	ROM_LOAD( "1b.vid",        0x0000, 0x0100, CRC(a2f935aa) SHA1(575b0b0e67aeff664bdf00f1bfd9dc68fdf88074) ) /* palette low 4 bits */
+	ROM_LOAD( "1c.vid",        0x0100, 0x0100, CRC(b95421f4) SHA1(48ddf33d1094eb4343b7c54a2a221050f83b749b) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( hoccer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "hr1.cpu",       0x0000, 0x2000, 0x12e96635 )
-	ROM_LOAD( "hr2.cpu",       0x2000, 0x2000, 0xcf1fc328 )
-	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, 0x048a0659 )
-	ROM_LOAD( "hr4.cpu",       0x6000, 0x2000, 0x9a788a2c )
+	ROM_LOAD( "hr1.cpu",       0x0000, 0x2000, CRC(12e96635) SHA1(5d330687dc117a319be355a541c9f634c6711889) )
+	ROM_LOAD( "hr2.cpu",       0x2000, 0x2000, CRC(cf1fc328) SHA1(c8669330d47fe3c8f855990ff9f27549bf94c5bd) )
+	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, CRC(048a0659) SHA1(7dc0ba2046f8985d4e3bfbba5284090dd4382aa1) )
+	ROM_LOAD( "hr4.cpu",       0x6000, 0x2000, CRC(9a788a2c) SHA1(a49efa5bbebcb9f7cbe22a85494f24af9965b4dc) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
+	ROM_LOAD( "hr.d",          0x0000, 0x2000, CRC(d33aa980) SHA1(ba6cc0eed87a1561a584058bdcaac2c0a375e235) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
+	ROM_LOAD( "hr.c",          0x0000, 0x2000, CRC(02808294) SHA1(c4f5c6a8e3fbb156917821b4e7b1b25d23418ca3) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
-	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
+	ROM_LOAD( "hr.1b",         0x0000, 0x0100, CRC(896521d7) SHA1(54b295b4bb7357ffdb8916ff9618570867a950b2) ) /* palette low 4 bits */
+	ROM_LOAD( "hr.1c",         0x0100, 0x0100, CRC(2efdd70b) SHA1(1b4fc9e52aaa4600c535b04d40aac1e0dd85fd7b) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( hoccer2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "hr.1",          0x0000, 0x2000, 0x122d159f )
-	ROM_LOAD( "hr.2",          0x2000, 0x2000, 0x48e1efc0 )
-	ROM_LOAD( "hr.3",          0x4000, 0x2000, 0x4e67b0be )
-	ROM_LOAD( "hr.4",          0x6000, 0x2000, 0xd2b44f58 )
+	ROM_LOAD( "hr.1",          0x0000, 0x2000, CRC(122d159f) SHA1(cc58fc746d6afebc39f8840c1ea6a68b5d033fbb) )
+	ROM_LOAD( "hr.2",          0x2000, 0x2000, CRC(48e1efc0) SHA1(6472423b129e0fc40e4f12855d70207a360ee378) )
+	ROM_LOAD( "hr.3",          0x4000, 0x2000, CRC(4e67b0be) SHA1(2c2e6a7798325621d1b67ee90fc2f198731b4ab1) )
+	ROM_LOAD( "hr.4",          0x6000, 0x2000, CRC(d2b44f58) SHA1(6a3666b1b5f4da5a72f6712db8d242281ea634fa) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
+	ROM_LOAD( "hr.d",          0x0000, 0x2000, CRC(d33aa980) SHA1(ba6cc0eed87a1561a584058bdcaac2c0a375e235) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
+	ROM_LOAD( "hr.c",          0x0000, 0x2000, CRC(02808294) SHA1(c4f5c6a8e3fbb156917821b4e7b1b25d23418ca3) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
-	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
+	ROM_LOAD( "hr.1b",         0x0000, 0x0100, CRC(896521d7) SHA1(54b295b4bb7357ffdb8916ff9618570867a950b2) ) /* palette low 4 bits */
+	ROM_LOAD( "hr.1c",         0x0100, 0x0100, CRC(2efdd70b) SHA1(1b4fc9e52aaa4600c535b04d40aac1e0dd85fd7b) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( wanted )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
-	ROM_LOAD( "prg-1",		   0x0000, 0x2000, 0x2dd90aed )
-	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
-	ROM_LOAD( "prg-3",		   0x4000, 0x2000, 0x373c7d82 )
+	ROM_LOAD( "prg-1",		   0x0000, 0x2000, CRC(2dd90aed) SHA1(3982d47a66f653a046a95e38648a7c5a2bfe1470) )
+	ROM_LOAD( "prg-2",		   0x2000, 0x2000, CRC(67ac0210) SHA1(29fd01289c9ba5a3a992ac6740badbf2e37f05ac) )
+	ROM_LOAD( "prg-3",		   0x4000, 0x2000, CRC(373c7d82) SHA1(e68e1fd1d5e48c709280a714d7df330fc29df03a) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "vram-1",		   0x0000, 0x2000, 0xc4226e54 )
-	ROM_LOAD( "vram-2",		   0x2000, 0x2000, 0x2a9b1e36 )
+	ROM_LOAD( "vram-1",		   0x0000, 0x2000, CRC(c4226e54) SHA1(4eb59db4d9688f62ecbaee7dde4cf3117e8f942d) )
+	ROM_LOAD( "vram-2",		   0x2000, 0x2000, CRC(2a9b1e36) SHA1(daaf90753477f22dba8f9a9d28799c63622351a5) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "obj-a",		   0x0000, 0x2000, 0x90b60771 )
-	ROM_LOAD( "obj-b",		   0x2000, 0x2000, 0xe14ee689 )
+	ROM_LOAD( "obj-a",		   0x0000, 0x2000, CRC(90b60771) SHA1(67cf20fa47439a16f9ebe07aa128cb267b256704) )
+	ROM_LOAD( "obj-b",		   0x2000, 0x2000, CRC(e14ee689) SHA1(797985c9b5b9a2c39c98defae56d119ce41714d6) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, 0x2ba90a00 )	/* palette low 4 bits */
-	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
+	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, CRC(2ba90a00) SHA1(ec545b4682be2875f4e6440a28306a36c6f1771d) )	/* palette low 4 bits */
+	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, CRC(a93d87cc) SHA1(73920a2a2842efc8678f280e3b30177f4ca6ea9c) )	/* palette high 4 bits */
 ROM_END
 
 /*
@@ -854,43 +854,43 @@ AY-3-8912    AY-3-8912                                             BCM12COL.K7
 
 ROM_START( bcruzm12 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
-	ROM_LOAD( "d-84_3.bin",		   0x0000, 0x2000, 0x132baa3d )
-	ROM_LOAD( "d-84_2.bin",		   0x2000, 0x2000, 0x1a788d1f )
-	ROM_LOAD( "d-84_1.bin",		   0x4000, 0x2000, 0x9d5b3017 )
+	ROM_LOAD( "d-84_3.bin",		   0x0000, 0x2000, CRC(132baa3d) SHA1(79f7a1dc49b6e45e68f4008f3ee4e383846f75d5) )
+	ROM_LOAD( "d-84_2.bin",		   0x2000, 0x2000, CRC(1a788d1f) SHA1(5029f93f45d328a282d56e010eee68287b6b9306) )
+	ROM_LOAD( "d-84_1.bin",		   0x4000, 0x2000, CRC(9d5b3017) SHA1(bced3f39faf94ce25cba382010f2c2ed322e9d7b) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d-84_5.bin",		   0x0000, 0x2000, 0x2e963f6a )
-	ROM_LOAD( "d-84_4.bin",		   0x2000, 0x2000, 0xfe186459 )
+	ROM_LOAD( "d-84_5.bin",		   0x0000, 0x2000, CRC(2e963f6a) SHA1(dcc32ab4a4fa241b6f4a211642d00f6e0438f466) )
+	ROM_LOAD( "d-84_4.bin",		   0x2000, 0x2000, CRC(fe186459) SHA1(3b0ee1fe98c835271f5b67de5ca0507827e25d71) )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d-84_7.bin",		   0x0000, 0x2000, 0xa5be90ef )
-	ROM_LOAD( "d-84_6.bin",		   0x2000, 0x2000, 0x1337dc01 )
+	ROM_LOAD( "d-84_7.bin",		   0x0000, 0x2000, CRC(a5be90ef) SHA1(6037d924296ba62999aafe665396fef142d73df2) )
+	ROM_LOAD( "d-84_6.bin",		   0x2000, 0x2000, CRC(1337dc01) SHA1(c55bfc6dd15a499dd71da0acc5016035a7c51f16) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "bcm12col.k7",	   0x0000, 0x0100, 0xbf4f2671 )	/* palette low 4 bits */
-	ROM_LOAD( "bcm12col.k6",	   0x0100, 0x0100, 0x59f955f6 )	/* palette high 4 bits */
+	ROM_LOAD( "bcm12col.k7",	   0x0000, 0x0100, CRC(bf4f2671) SHA1(dde6da568ecf0121910f4b507c83fe6230b07c8d) )	/* palette low 4 bits */
+	ROM_LOAD( "bcm12col.k6",	   0x0100, 0x0100, CRC(59f955f6) SHA1(6d6d784971569e0af7cec8bd36659f24a652cd6a) )	/* palette high 4 bits */
 ROM_END
 
 ROM_START( hopprobo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
-	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, 0xdf1a479a )
-	ROM_LOAD( "hopper03.3n",   0x2000, 0x1000, 0x097ac2a7 )
-	ROM_LOAD( "hopper04.3p",   0x3000, 0x1000, 0x0f4f3ca8 )
-	ROM_LOAD( "hopper05.3r",   0x4000, 0x1000, 0x9d77a37b )
+	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, CRC(fd7935c0) SHA1(08f1b1589203d0f5967cc780a15412ca599c5d2f) )
+	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, CRC(df1a479a) SHA1(27b56498887041692536f5f71abfa3d6b9098a7d) )
+	ROM_LOAD( "hopper03.3n",   0x2000, 0x1000, CRC(097ac2a7) SHA1(d7e571a1f44239cbe6080efdbe2feeff8a8653bb) )
+	ROM_LOAD( "hopper04.3p",   0x3000, 0x1000, CRC(0f4f3ca8) SHA1(22976fb63a8931c7db000ccf9de51417c0d512fe) )
+	ROM_LOAD( "hopper05.3r",   0x4000, 0x1000, CRC(9d77a37b) SHA1(a63419382cb86e3f762637692c646bbd6b1b664d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hopper06.5c",   0x0000, 0x2000, 0x68f79bc8 )
-	ROM_LOAD( "hopper07.5d",   0x2000, 0x1000, 0x33d82411 )
+	ROM_LOAD( "hopper06.5c",   0x0000, 0x2000, CRC(68f79bc8) SHA1(17a9891c98c34935831493e27bd0cf3239644de0) )
+	ROM_LOAD( "hopper07.5d",   0x2000, 0x1000, CRC(33d82411) SHA1(b112d76c9d35a2dbd051825e7818e894e8d9259f) )
 	ROM_RELOAD(				   0x3000, 0x1000 )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "hopper08.6f",   0x0000, 0x2000, 0x06d37e64 )
-	ROM_LOAD( "hopper09.6k",   0x2000, 0x2000, 0x047921c7 )
+	ROM_LOAD( "hopper08.6f",   0x0000, 0x2000, CRC(06d37e64) SHA1(c0923a1a40dca43b66e14d755dacf7767d62ab8b) )
+	ROM_LOAD( "hopper09.6k",   0x2000, 0x2000, CRC(047921c7) SHA1(8ef4722a98be540e4b5c67965599c400511b4a52) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, 0x94450775 ) /* palette low 4 bits */
-	ROM_LOAD( "7052hop.1c",    0x0100, 0x0100, 0xa76bbd51 ) /* palette high 4 bits */
+	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, CRC(94450775) SHA1(e15fcf6d1cd7cfc0d98e82bd0559b6d342aac9ed) ) /* palette low 4 bits */
+	ROM_LOAD( "7052hop.1c",    0x0100, 0x0100, CRC(a76bbd51) SHA1(5c61d93ab1e9c80b30cfbc2cbd13ede32f0f4f61) ) /* palette high 4 bits */
 ROM_END
 
 

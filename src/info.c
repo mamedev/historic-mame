@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "sound/samples.h"
 #include "info.h"
+#include "hash.h"
 #include "datafile.h"
 
 /* Output format indentation */
@@ -367,28 +368,24 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 	for (region = rom_first_region(game); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			int offset, length, crc, in_parent, is_disk, has_md5;
+			int offset, length, in_parent, is_disk, i;
 			char name[100];
-			UINT8 md5[16];
 
 			strcpy(name,ROM_GETNAME(rom));
 			offset = ROM_GETOFFSET(rom);
-			crc = ROM_GETCRC(rom);
 			is_disk = ROMREGION_ISDISKDATA(region);
-
-			has_md5 = ROM_GETMD5(rom, md5);
 
 			in_parent = 0;
 			length = 0;
 			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
 				length += ROM_GETLENGTH(chunk);
 
-			if (crc && game->clone_of)
+			if (ROM_NOGOODDUMP(rom) && game->clone_of)
 			{
 				fprom=NULL;
 				for (pregion = rom_first_region(game->clone_of); pregion; pregion = rom_next_region(pregion))
 					for (prom = rom_first_file(pregion); prom; prom = rom_next_file(prom))
-						if (ROM_GETCRC(prom) == crc)
+						if (hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(prom), 0))
 						{
 							if (!fprom || !strcmp(ROM_GETNAME(prom), name))
 								fprom=prom;
@@ -403,6 +400,10 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 
 			if (OUTPUT_XML && !is_disk)
 			{
+				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+					fprintf(out, " nodump=\"yes\"");	
+				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
+					fprintf(out, " baddump=\"yes\"");
 				if (ROMREGION_GETFLAGS(region) & ROMREGION_DISPOSE)
 					fprintf(out, " dispose=\"yes\"");
 				if (ROMREGION_GETFLAGS(region) & ROMREGION_SOUNDONLY)
@@ -418,16 +419,36 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				fprintf(out, SELECT(L2P "merge %s" L2N, "\t\t\t<merge>%s</merge>\n"), ROM_GETNAME(fprom));
 			if (!is_disk)
 				fprintf(out, SELECT(L2P "size %d" L2N, "\t\t\t<size>%d</size>\n"), length);
-			if (!is_disk)
-				fprintf(out, SELECT(L2P "crc %08x" L2N, "\t\t\t<crc>%08x</crc>\n"), crc);
-			if (has_md5)
+			
+			if (!OUTPUT_XML)
 			{
-				int i;
-				fprintf(out, SELECT(L2P "md5 ", "\t\t\t<md5>"));
-				for (i = 0; i < 16; i++)
-					fprintf(out, "%02x", md5[i]);
-				fprintf(out, "%s", SELECT(L2N, "</md5>\n"));
+				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+					fprintf(out, L2P "nodump" L2N);
+				
+				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
+					fprintf(out, L2P "baddump" L2N);
 			}
+
+			// Dump checksum informatoins only if there is a known dump
+			if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+				for (i=0;i<HASH_NUM_FUNCTIONS;i++)
+				{
+					int func = 1<<i;
+					const char* func_name = hash_function_name(func);
+					char checksum[1000];
+
+					if (hash_data_extract_printable_checksum(ROM_GETHASHDATA(rom), func, checksum))
+					{
+						/* I can't use the SELECT() macro here because the number of parameters
+						   are different, and GCC whines about it. */
+						if (OUTPUT_XML)
+							fprintf(out, "\t\t\t<%s>%s</%s>\n", func_name, checksum, func_name);
+						else
+							fprintf(out, L2P "%s %s" L2N, func_name, checksum);
+					}
+
+				}
+
 			switch (ROMREGION_GETTYPE(region))
 			{
 				case REGION_CPU1: fprintf(out, SELECT(L2P "region cpu1" L2N, "\t\t\t<region>cpu1</region>\n")); break;
@@ -466,6 +487,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				case REGION_DISKS: fprintf(out, SELECT(L2P "region disks" L2N, "\t\t\t<region>disks</region>\n")); break;
 				default: fprintf(out, SELECT(L2P "region 0x%x" L2N, "\t\t\t<region>0x%x</region>\n"), ROMREGION_GETTYPE(region));
 		}
+
 		if (!is_disk && !OUTPUT_XML)
 		{
 			switch (ROMREGION_GETFLAGS(region))
@@ -892,7 +914,9 @@ void print_mame_info(FILE* out, const struct GameDriver* games[])
 			"\t\t\t\t<!ATTLIST dipvalue default (yes|no) \"no\">\n"
 			"\t\t\t\t<!ELEMENT name (#PCDATA)>\n"
 			"\t\t<!ELEMENT romof (#PCDATA)>\n"
-			"\t\t<!ELEMENT rom (name?, merge?, size, crc, md5?, region, offset)>\n"
+			"\t\t<!ELEMENT rom (name?, merge?, size, crc?, md5?, sha1?, region, offset)>\n"
+			"\t\t\t<!ATTLIST rom baddump (yes|no) \"no\">\n"
+			"\t\t\t<!ATTLIST rom nodump (yes|no) \"no\">\n"
 			"\t\t\t<!ATTLIST rom dispose (yes|no) \"no\">\n"
 			"\t\t\t<!ATTLIST rom soundonly (yes|no) \"no\">\n"
 			"\t\t\t<!ATTLIST rom flags CDATA #IMPLIED>\n"
@@ -901,11 +925,13 @@ void print_mame_info(FILE* out, const struct GameDriver* games[])
 			"\t\t\t<!ELEMENT size (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT crc (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT md5 (#PCDATA)>\n"
+			"\t\t\t<!ELEMENT sha1 (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT region (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT offset (#PCDATA)>\n"
-			"\t\t<!ELEMENT disk (name?, md5, region, index)>\n"
+			"\t\t<!ELEMENT disk (name?, md5?, sha1?, region, index)>\n"
 			"\t\t\t<!ELEMENT name (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT md5 (#PCDATA)>\n"
+			"\t\t\t<!ELEMENT sha1 (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT region (#PCDATA)>\n"
 			"\t\t\t<!ELEMENT index (#PCDATA)>\n"
 			"]>\n\n"
@@ -931,6 +957,7 @@ void print_mame_info(FILE* out, const struct GameDriver* games[])
 	PRINT_RESOURCE(pgm);
 	PRINT_RESOURCE(skns);
 	PRINT_RESOURCE(stvbios);
+	PRINT_RESOURCE(konamigx);
 #endif
 #endif
 

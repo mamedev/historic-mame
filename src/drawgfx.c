@@ -720,22 +720,10 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef alpha_blend
 
 /* 32-bit version */
-//* AAT 032503: added limited 32-bit shadow and highlight support
-INLINE int SHADOW32(int c)
-{
-	#define RGB825(x) (((x)>>3&0x001f)|((x)>>6&0x03e0)|((x)>>9&0x7c00))
-	#define RGB528(x) (((x)<<3&0x00f8)|((x)<<6&0xf800)|((x)<<9&0xf80000))
-
-	// DEPENDENCY CHAIN!!!
-	c = RGB825(c);
-	c = palette_shadow_table[c];
-	c = RGB528(c);
-
-	return(c);
-
-	#undef RGB825
-	#undef RGB528
-}
+//* AAT032503: added limited 32-bit shadow and highlight support
+INLINE UINT32 SHADOW32(UINT32 c) {
+	c = (c>>9&0x7c00) | (c>>6&0x03e0) | (c>>3&0x001f);
+	return(((UINT32*)palette_shadow_table)[c]); }
 
 #define DATA_TYPE UINT32
 #define DEPTH 32
@@ -755,7 +743,6 @@ INLINE int SHADOW32(int c)
 #define COLOR_ARG unsigned int colorbase,UINT8 *pridata,UINT32 pmask
 #define INCREMENT_DST(n) {dstdata+=(n);pridata += (n);}
 #define LOOKUP(n) (colorbase + (n))
-//* 032903 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = SHADOW32(n);} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_raw_pri32 args body
 #include "drawgfx.c"
@@ -766,7 +753,6 @@ INLINE int SHADOW32(int c)
 
 #define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
-//* 032903 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = SHADOW32(n);} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri32 args body
 #include "drawgfx.c"
@@ -1366,7 +1352,6 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 	struct rectangle myclip;
 	int alphapen = 0;
 
-	//* AAT 032503: added limited 32-bit shadow and highlight support
 	UINT8 ah, al;
 
 	al = (pdrawgfx_shadow_lowpri) ? 0 : 0x80;
@@ -3133,7 +3118,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 					}
 
 					/* case 4: TRANSPARENCY_PEN_TABLE */
-					if (transparency == TRANSPARENCY_PEN_TABLE) //* 032903 shadow interference fix
+					if (transparency == TRANSPARENCY_PEN_TABLE)
 					{
 						UINT8 *source, *pri;
 						UINT32 *dest;
@@ -3206,7 +3191,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 					}
 
 					/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
-					if (transparency == TRANSPARENCY_PEN_TABLE_RAW) //* 032903 shadow interference fix
+					if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
 					{
 						UINT8 *source, *pri;
 						UINT32 *dest;
@@ -4300,7 +4285,6 @@ DECLARE_SWAP_RAW_PRI(blockmove_4toN_transcolor,(COMMON_ARGS,
 })
 
 #if DEPTH == 32
-//* 032903 shadow interference fix
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 		COLOR_ARG,int transcolor),
 {

@@ -90,6 +90,8 @@ When reading from SYNC:
    D6 = VBLANK*
    D7 = some alternating signal!?!
 
+NOTE: D7 is a 60Hz AC line reference pulse.  This code should be fixed. DR. May 7/03
+
 The only one of these I really understand is the VBLANK...
 ***************************************************************************/
 READ_HANDLER( dominos_sync_r )
@@ -110,7 +112,8 @@ Attract
 ***************************************************************************/
 WRITE_HANDLER( dominos_attract_w )
 {
-	dominos_attract = (data & 0x01) << 6;
+	dominos_attract = (offset & 0x01) << 6;
+	discrete_sound_w(3, !(offset & 0x01));
 }
 
 /***************************************************************************
@@ -133,7 +136,7 @@ Sound function
 ***************************************************************************/
 WRITE_HANDLER( dominos_tumble_w )
 {
-	/* ??? */
+	discrete_sound_w(2, offset & 0x01);
 }
 
 

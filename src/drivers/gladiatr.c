@@ -592,66 +592,66 @@ MACHINE_DRIVER_END
 
 ROM_START( gladiatr )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
-	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
-	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
-	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
-	ROM_LOAD( "qc0-3",          0x14000, 0x8000, 0x8d182326 )
+	ROM_LOAD( "qb0-5",          0x00000, 0x4000, CRC(25b19efb) SHA1(c41344278f6c7f3d6527aced3e459ed1ba86dea5) )
+	ROM_LOAD( "qb0-4",          0x04000, 0x2000, CRC(347ec794) SHA1(51100f9fef2e96f00e94fce709eed6583b01a2eb) )
+	ROM_LOAD( "qb0-1",          0x10000, 0x4000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
+	ROM_LOAD( "qc0-3",          0x14000, 0x8000, CRC(8d182326) SHA1(f0af3757c2cf9e1e8035272567adee6efc733319) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
+	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
-	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
-	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
+	ROM_LOAD( "qb0-20",         0x10000, 0x8000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
+	ROM_LOAD( "qb0-19",         0x18000, 0x8000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
+	ROM_LOAD( "qb0-18",         0x20000, 0x8000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qc0-15",       	0x00000, 0x2000, 0xa7efa340 ) /* (monochrome) */
+	ROM_LOAD( "qc0-15",       	0x00000, 0x2000, CRC(a7efa340) SHA1(f87e061b8e4d8cd0834fab301779a8493549419b) ) /* (monochrome) */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
+	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
 
 	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "qc1-6",        	0x00000, 0x4000, 0x651e6e44 ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
-	ROM_LOAD( "qc1-9",        	0x10000, 0x4000, 0x01043e03 ) /* planes 1,2 */
-	ROM_LOAD( "qc2-7",        	0x18000, 0x8000, 0xc992c4f7 ) /* plane 3 */
-	ROM_LOAD( "qc1-10",       	0x20000, 0x8000, 0x364cdb58 ) /* planes 1,2 */
-	ROM_LOAD( "qc2-11",       	0x28000, 0x8000, 0xc9fecfff ) /* planes 1,2 */
+	ROM_LOAD( "qc1-6",        	0x00000, 0x4000, CRC(651e6e44) SHA1(78ce576e6c29e43d590c42f0d4926cff82fd0268) ) /* plane 3 */
+	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
+	ROM_LOAD( "qc1-9",        	0x10000, 0x4000, CRC(01043e03) SHA1(6a6dddc0a036873135dceaa989e757bdd2455ae7) ) /* planes 1,2 */
+	ROM_LOAD( "qc2-7",        	0x18000, 0x8000, CRC(c992c4f7) SHA1(3263973474af07c8b93c4ec97924568848cb7201) ) /* plane 3 */
+	ROM_LOAD( "qc1-10",       	0x20000, 0x8000, CRC(364cdb58) SHA1(4d8548f9dfa9d105dd277c61cf3d56583a5ebbcb) ) /* planes 1,2 */
+	ROM_LOAD( "qc2-11",       	0x28000, 0x8000, CRC(c9fecfff) SHA1(7c13ace4293fbfab7fe924b7b24c498d8cefc7ac) ) /* planes 1,2 */
 ROM_END
 
 ROM_START( ogonsiro )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
-	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
-	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
-	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
-	ROM_LOAD( "qb0_3",          0x14000, 0x8000, 0xd6a342e7 )
+	ROM_LOAD( "qb0-5",          0x00000, 0x4000, CRC(25b19efb) SHA1(c41344278f6c7f3d6527aced3e459ed1ba86dea5) )
+	ROM_LOAD( "qb0-4",          0x04000, 0x2000, CRC(347ec794) SHA1(51100f9fef2e96f00e94fce709eed6583b01a2eb) )
+	ROM_LOAD( "qb0-1",          0x10000, 0x4000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
+	ROM_LOAD( "qb0_3",          0x14000, 0x8000, CRC(d6a342e7) SHA1(96274ae3bda4679108a25fcc514b625552abda30) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
+	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
-	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
-	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
+	ROM_LOAD( "qb0-20",         0x10000, 0x8000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
+	ROM_LOAD( "qb0-19",         0x18000, 0x8000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
+	ROM_LOAD( "qb0-18",         0x20000, 0x8000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qb0_15",       	0x00000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
+	ROM_LOAD( "qb0_15",       	0x00000, 0x2000, CRC(5e1332b8) SHA1(fab6e2c7ea9bc94c1245bf759b4004a70c57d666) ) /* (monochrome) */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
+	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
 
 	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "qb0_6",        	0x00000, 0x4000, 0x1a2bc769 ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
-	ROM_LOAD( "qb0_9",        	0x10000, 0x4000, 0x38f5152d ) /* planes 1,2 */
-	ROM_LOAD( "qb0_7",        	0x18000, 0x8000, 0x4b677bd9 ) /* plane 3 */
-	ROM_LOAD( "qb0_10",       	0x20000, 0x8000, 0x87ab6cc4 ) /* planes 1,2 */
-	ROM_LOAD( "qb0_11",       	0x28000, 0x8000, 0x25eaa4ff ) /* planes 1,2 */
+	ROM_LOAD( "qb0_6",        	0x00000, 0x4000, CRC(1a2bc769) SHA1(498861f4d0cffeaff90609c8000c921a114756b6) ) /* plane 3 */
+	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
+	ROM_LOAD( "qb0_9",        	0x10000, 0x4000, CRC(38f5152d) SHA1(fbb7b13a625999807d180a3212e6e12870629438) ) /* planes 1,2 */
+	ROM_LOAD( "qb0_7",        	0x18000, 0x8000, CRC(4b677bd9) SHA1(3314ef58ff5307faf0ecd8f99950d43d571c91a6) ) /* plane 3 */
+	ROM_LOAD( "qb0_10",       	0x20000, 0x8000, CRC(87ab6cc4) SHA1(50bc1108ff5609c0e7dad615e92e16eb72b7bc03) ) /* planes 1,2 */
+	ROM_LOAD( "qb0_11",       	0x28000, 0x8000, CRC(25eaa4ff) SHA1(3547fc600a617ba7fe5240a7830edb90230b6c51) ) /* planes 1,2 */
 ROM_END
 
 

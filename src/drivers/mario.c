@@ -469,80 +469,80 @@ MACHINE_DRIVER_END
 
 ROM_START( mario )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "mario.7f",     0x0000, 0x2000, 0xc0c6e014 )
-	ROM_LOAD( "mario.7e",     0x2000, 0x2000, 0x116b3856 )
-	ROM_LOAD( "mario.7d",     0x4000, 0x2000, 0xdcceb6c1 )
-	ROM_LOAD( "mario.7c",     0xf000, 0x1000, 0x4a63d96b )
+	ROM_LOAD( "mario.7f",     0x0000, 0x2000, CRC(c0c6e014) SHA1(36a04f9ca1c2a583477cb8a6f2ef94e044e08296) )
+	ROM_LOAD( "mario.7e",     0x2000, 0x2000, CRC(116b3856) SHA1(e372f846d0e5a2b9b47ebd0330293fcc8a12363f) )
+	ROM_LOAD( "mario.7d",     0x4000, 0x2000, CRC(dcceb6c1) SHA1(b19804e69ce2c98cf276c6055c3a250316b96b45) )
+	ROM_LOAD( "mario.7c",     0xf000, 0x1000, CRC(4a63d96b) SHA1(b09060b2c84ab77cc540a27b8f932cb60ec8d442) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, CRC(06b9ff85) SHA1(111a29bcb9cda0d935675fa26eca6b099a88427f) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mario.3f",     0x0000, 0x1000, 0x28b0c42c )
-	ROM_LOAD( "mario.3j",     0x1000, 0x1000, 0x0c8cc04d )
+	ROM_LOAD( "mario.3f",     0x0000, 0x1000, CRC(28b0c42c) SHA1(46749568aff88a28c3b6a1ac423abd1b90742a4d) )
+	ROM_LOAD( "mario.3j",     0x1000, 0x1000, CRC(0c8cc04d) SHA1(15fae47d701dc1ef15c943cee6aa991776ecffdf) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mario.7m",     0x0000, 0x1000, 0x22b7372e )
-	ROM_LOAD( "mario.7n",     0x1000, 0x1000, 0x4f3a1f47 )
-	ROM_LOAD( "mario.7p",     0x2000, 0x1000, 0x56be6ccd )
-	ROM_LOAD( "mario.7s",     0x3000, 0x1000, 0x56f1d613 )
-	ROM_LOAD( "mario.7t",     0x4000, 0x1000, 0x641f0008 )
-	ROM_LOAD( "mario.7u",     0x5000, 0x1000, 0x7baf5309 )
+	ROM_LOAD( "mario.7m",     0x0000, 0x1000, CRC(22b7372e) SHA1(4a1c1e239cb6d483e76f50d7a3b941025963c6a3) )
+	ROM_LOAD( "mario.7n",     0x1000, 0x1000, CRC(4f3a1f47) SHA1(0747d693b9482f6dd28b0bc484fd1d3e29d35654) )
+	ROM_LOAD( "mario.7p",     0x2000, 0x1000, CRC(56be6ccd) SHA1(15a6e16c189d45f72761ebcbe9db5001bdecd659) )
+	ROM_LOAD( "mario.7s",     0x3000, 0x1000, CRC(56f1d613) SHA1(9af6844dbaa3615433d0595e9e85e72493e31a54) )
+	ROM_LOAD( "mario.7t",     0x4000, 0x1000, CRC(641f0008) SHA1(589fe108c7c11278fd897f2ded8f0498bc149cfd) )
+	ROM_LOAD( "mario.7u",     0x5000, 0x1000, CRC(7baf5309) SHA1(d9194ff7b89a18273d37b47228fc7fb7e2a0ed1f) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
+	ROM_LOAD( "mario.4p",     0x0000, 0x0200, CRC(afc9bd41) SHA1(90b739c4c7f24a88b6ac5ca29b06c032906a2801) )
 ROM_END
 
 ROM_START( mariojp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, 0xb64b6330 )
-	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, 0x290c4977 )
-	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, 0xf8575f31 )
-	ROM_LOAD( "tma1c-a2.7c",  0xf000, 0x1000, 0xa3c11e9e )
+	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, CRC(b64b6330) SHA1(f7084251ac325bbfa3fb804da16a50622e1fd213) )
+	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, CRC(290c4977) SHA1(5af266be0ddc883c6548c90e4a9084024a1e91a0) )
+	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, CRC(f8575f31) SHA1(710d0e72fcfce700ed2a22fb9c7c392cc76b250b) )
+	ROM_LOAD( "tma1c-a2.7c",  0xf000, 0x1000, CRC(a3c11e9e) SHA1(d0612b0f8c2ea4e798f551922a04a324f4ed5f3d) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, CRC(06b9ff85) SHA1(111a29bcb9cda0d935675fa26eca6b099a88427f) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tma1v-a.3f",   0x0000, 0x1000, 0xadf49ee0 )
-	ROM_LOAD( "tma1v-a.3j",   0x1000, 0x1000, 0xa5318f2d )
+	ROM_LOAD( "tma1v-a.3f",   0x0000, 0x1000, CRC(adf49ee0) SHA1(11fc2cd197bfe3ecb6af55c3c7a326c94988d2bd) )
+	ROM_LOAD( "tma1v-a.3j",   0x1000, 0x1000, CRC(a5318f2d) SHA1(e42f5e51804195c64a56addb18b7ad12c57bb09a) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, 0x186762f8 )
-	ROM_LOAD( "tma1v-a.7n",   0x1000, 0x1000, 0xe0e08bba )
-	ROM_LOAD( "tma1v-a.7p",   0x2000, 0x1000, 0x7b27c8c1 )
-	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, 0x912ba80a )
-	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, 0x5cbb92a5 )
-	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, 0x13afb9ed )
+	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, CRC(186762f8) SHA1(711fdd37392656bdd5027e020d51d083ccd7c407) )
+	ROM_LOAD( "tma1v-a.7n",   0x1000, 0x1000, CRC(e0e08bba) SHA1(315eba2c10d426c9c0bb4e36987bf8ebed7df9a0) )
+	ROM_LOAD( "tma1v-a.7p",   0x2000, 0x1000, CRC(7b27c8c1) SHA1(3fb2613ce19e353fbcc77b6817927794fb35810f) )
+	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, CRC(912ba80a) SHA1(351fb5b160216eb10e281815d05a7165ca0e5909) )
+	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, CRC(5cbb92a5) SHA1(a78a378e6d3060143dc456e9c33a5068da648331) )
+	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, CRC(13afb9ed) SHA1(b29dcd91cf5e639ee50b734afc7a3afce79634df) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
+	ROM_LOAD( "mario.4p",     0x0000, 0x0200, CRC(afc9bd41) SHA1(90b739c4c7f24a88b6ac5ca29b06c032906a2801) )
 ROM_END
 
 ROM_START( masao )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "masao-4.rom",  0x0000, 0x2000, 0x07a75745 )
-	ROM_LOAD( "masao-3.rom",  0x2000, 0x2000, 0x55c629b6 )
-	ROM_LOAD( "masao-2.rom",  0x4000, 0x2000, 0x42e85240 )
-	ROM_LOAD( "masao-1.rom",  0xf000, 0x1000, 0xb2817af9 )
+	ROM_LOAD( "masao-4.rom",  0x0000, 0x2000, CRC(07a75745) SHA1(acc760242a8862d177e3cff90aa32c4f3dac4e65) )
+	ROM_LOAD( "masao-3.rom",  0x2000, 0x2000, CRC(55c629b6) SHA1(1f5b5699821871aadacc511663cb4bd4e357e215) )
+	ROM_LOAD( "masao-2.rom",  0x4000, 0x2000, CRC(42e85240) SHA1(bc8cdf867b743c5ee58fcacb63a44f826c8f8c1a) )
+	ROM_LOAD( "masao-1.rom",  0xf000, 0x1000, CRC(b2817af9) SHA1(95e83752e544671a68df2107fae1010b187f04a6) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound */
-	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
+	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, CRC(bd437198) SHA1(ebae88461984afc97bbc103fc6d95bc3c1865eec) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "masao-6.rom",  0x0000, 0x1000, 0x1c9e0be2 )
-	ROM_LOAD( "masao-7.rom",  0x1000, 0x1000, 0x747c1349 )
+	ROM_LOAD( "masao-6.rom",  0x0000, 0x1000, CRC(1c9e0be2) SHA1(b4a650412dad90c6f6d79e93cde49055703b7f3e) )
+	ROM_LOAD( "masao-7.rom",  0x1000, 0x1000, CRC(747c1349) SHA1(54674f78edf86953b7d500b66393483d1a5ce8ab) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, 0x186762f8 )
-	ROM_LOAD( "masao-9.rom",  0x1000, 0x1000, 0x50be3918 )
-	ROM_LOAD( "mario.7p",     0x2000, 0x1000, 0x56be6ccd )
-	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, 0x912ba80a )
-	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, 0x5cbb92a5 )
-	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, 0x13afb9ed )
+	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, CRC(186762f8) SHA1(711fdd37392656bdd5027e020d51d083ccd7c407) )
+	ROM_LOAD( "masao-9.rom",  0x1000, 0x1000, CRC(50be3918) SHA1(73e22eee67a03732ff57e523f900f20c6aee0491) )
+	ROM_LOAD( "mario.7p",     0x2000, 0x1000, CRC(56be6ccd) SHA1(15a6e16c189d45f72761ebcbe9db5001bdecd659) )
+	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, CRC(912ba80a) SHA1(351fb5b160216eb10e281815d05a7165ca0e5909) )
+	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, CRC(5cbb92a5) SHA1(a78a378e6d3060143dc456e9c33a5068da648331) )
+	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, CRC(13afb9ed) SHA1(b29dcd91cf5e639ee50b734afc7a3afce79634df) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
+	ROM_LOAD( "mario.4p",     0x0000, 0x0200, CRC(afc9bd41) SHA1(90b739c4c7f24a88b6ac5ca29b06c032906a2801) )
 ROM_END
 
 

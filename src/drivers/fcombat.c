@@ -378,31 +378,31 @@ static DRIVER_INIT( fcombat )
 
 ROM_START( fcombat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "fcombat2.t9",  0x0000, 0x4000, 0x30cb0c14 )
-	ROM_LOAD( "fcombat3.10t", 0x4000, 0x4000, 0xe8511da0 )
+	ROM_LOAD( "fcombat2.t9",  0x0000, 0x4000, CRC(30cb0c14) )
+	ROM_LOAD( "fcombat3.10t", 0x4000, 0x4000, CRC(e8511da0) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "fcombat1.t5",  0x0000, 0x4000, 0xa0cc1216 )
+	ROM_LOAD( "fcombat1.t5",  0x0000, 0x4000, CRC(a0cc1216) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fcombat7.l11", 0x00000, 0x2000, BADCRC( 0x54e978ef ) ) /* fg chars */
+	ROM_LOAD( "fcombat7.l11", 0x00000, 0x2000, BAD_DUMP CRC(54e978ef)  ) /* fg chars */
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "fcombat8.d10", 0x00000, 0x4000, 0xe810941e ) /* sprites */
-	ROM_LOAD( "fcombat9.d11", 0x04000, 0x4000, 0xf95988e6 )
-	ROM_LOAD( "fcomba10.d12", 0x08000, 0x4000, 0x908f154c )
+	ROM_LOAD( "fcombat8.d10", 0x00000, 0x4000, CRC(e810941e) ) /* sprites */
+	ROM_LOAD( "fcombat9.d11", 0x04000, 0x4000, CRC(f95988e6) )
+	ROM_LOAD( "fcomba10.d12", 0x08000, 0x4000, CRC(908f154c) )
 
 	ROM_REGION( 0x0c000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "fcombat4.p3",  0x00000, 0x4000, 0xefe098ab ) /* bg data */
-	ROM_LOAD( "fcombat5.l3",  0x04000, 0x4000, 0x96194ca7 )
-	ROM_LOAD( "fcombat6.f3",  0x08000, 0x4000, 0x97282729 )
+	ROM_LOAD( "fcombat4.p3",  0x00000, 0x4000, CRC(efe098ab) ) /* bg data */
+	ROM_LOAD( "fcombat5.l3",  0x04000, 0x4000, CRC(96194ca7) )
+	ROM_LOAD( "fcombat6.f3",  0x08000, 0x4000, CRC(97282729) )
 
 	ROM_REGION( 0x0420, REGION_PROMS, 0 )
-	ROM_LOAD( "fcprom_a.c2",  0x0000, 0x0020, 0x7ac480f0 ) /* palette */
-	ROM_LOAD( "fcprom_d.k12", 0x0020, 0x0100, 0x9a348250 ) /* fg char lookup table */
-	ROM_LOAD( "fcprom_b.c4",  0x0120, 0x0100, 0xac9049f6 ) /* sprite lookup table */
-//	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, 0xfe72ab79 ) /* bg char lookup table */
-	ROM_LOAD( "fcprom_c.a9",  0x0320, 0x0100, 0x768ac120 ) /* bg char mixer */
+	ROM_LOAD( "fcprom_a.c2",  0x0000, 0x0020, CRC(7ac480f0) ) /* palette */
+	ROM_LOAD( "fcprom_d.k12", 0x0020, 0x0100, CRC(9a348250) ) /* fg char lookup table */
+	ROM_LOAD( "fcprom_b.c4",  0x0120, 0x0100, CRC(ac9049f6) ) /* sprite lookup table */
+//	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, CRC(fe72ab79) ) /* bg char lookup table */
+	ROM_LOAD( "fcprom_c.a9",  0x0320, 0x0100, CRC(768ac120) ) /* bg char mixer */
 ROM_END
 
 GAMEX( 1985, fcombat,  0,       fcombat, fcombat, fcombat,  ROT90, "Jaleco", "Field Combat", GAME_NOT_WORKING )

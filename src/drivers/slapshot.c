@@ -1,6 +1,7 @@
 /***************************************************************************
 
 Slapshot (c) Taito 1994
+Operation Wolf 3 (c) Taito 1994
 --------
 
 David Graves
@@ -67,6 +68,67 @@ Code
 ----
 $854 marks start of service mode
 
+-----------------
+
+Operation Wolf 3 is on almost identical hardware to Slapshot. It uses
+far more graphics data and samples than Slapshot.
+
+Compared to Taito's gun game Under Fire (1993), the hardware here is
+obviously underpowered. Large data roms help the 68000 throw around the
+gfx (a method used in Dino Rex) but can't disguise that it should have
+been done using enhanced Z system or F3 system hardware.
+
+***************************************************************************
+
+Operation Wolf 3 (US Version) - (c) 1994 Taito America Corp.
+
+Main Board K11E0801A - Not to Scale:-)
+
+       D74 17                       Sub Board Connector
+  D74 20      MC68000P12F                                    D74-05     SW2
+       D74 18                                                D74-06
+  D74 16         MK48T08B-10        TCO480SCP                84256A-70L
+                                                             84256A-70L
+MB8421-90LP  D74-02  84256A-70L             26.6860MHz  TCO640FIO
+             D74-03  84256A-70L
+             D74-04
+                     TCO540OBN    TCO360PRI              TCO650FDA
+                 TCO520TBC
+                                    32.0000MHz    Y3016-F
+               D74-01     TCO530SYC     D74 19    YM2610B
+                                                  Z0840004PSC
+
+
+
+Sub Board K91X0488A
+ Basicly a few connectors, Caps, resistors & ADC0809CNN
+
+Chips:
+ Main: MC68000P12F
+Sound: Z084004PSC, YM2610B, Y3016-F
+  OSC: 32.000MHz, 26.6860MHz
+
+Taito Custom:
+  TCO480SCP
+  TCO640FIO
+  TCO650FDA
+  TCO530SYC
+  TCO520TBC
+  TCO540OBN
+  TCO360PRI
+
+ST TimeKeeper Ram MK48T08B-10 - Lithuim Batery backed RAM chip
+MB8421-90LP - Dual Port SRAM
+ADC0809CNN - 8-bit Microprocessor Compatible A/D Converter
+             With 8-Channel Multiplexer
+ DataSheet:  http://www.national.com/ds/AD/ADC0808.pdf
+
+Region byte at offset 0x031:
+	d74_21.1  0x02	World Version
+	d74_20.1  0x01	US Version
+	d74_??.1  0x00	Will Produce a Japanese Version, but it's unknown if the
+					actual sound CPU code is the same as the World version,
+					US versions or different then both.
 ***************************************************************************/
 
 #include "driver.h"
@@ -76,6 +138,8 @@ $854 marks start of service mode
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
+
+VIDEO_EOF( opwolf3_full_buffer_delayed );
 VIDEO_EOF( taito_no_buffer );
 VIDEO_START( slapshot );
 VIDEO_UPDATE( slapshot );
@@ -143,6 +207,30 @@ static READ16_HANDLER( slapshot_service_input_r )
 		default:
 			return TC0640FIO_r(offset) << 8;
 	}
+}
+
+static READ16_HANDLER( opwolf3_service_input_r )
+{
+	switch (offset)
+	{
+		case 0x03:
+			return ((input_port_3_word_r(0,0) & 0xef) |
+				  (input_port_5_word_r(0,0) & 0x10))  << 8;	/* IN3 + service switch */
+
+		default:
+			return TC0640FIO_r(offset) << 8;
+	}
+}
+
+static READ16_HANDLER( opwolf3_adc_r )
+{
+	return readinputport(6 + offset)<<8;
+}
+
+static WRITE16_HANDLER( opwolf3_adc_req_w )
+{
+	/* 4 writes a frame - one for each analogue port */
+	cpu_set_irq_line(0,3,HOLD_LINE);
 }
 
 /*****************************************************
@@ -215,6 +303,35 @@ static MEMORY_WRITE16_START( slapshot_writemem )
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_w },
 MEMORY_END
 
+static MEMORY_READ16_START( opwolf3_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM },
+	{ 0x500000, 0x50ffff, MRA16_RAM },	/* main RAM */
+	{ 0x600000, 0x60ffff, MRA16_RAM },	/* sprite ram */
+	{ 0x700000, 0x701fff, MRA16_RAM },	/* debugging */
+	{ 0x800000, 0x80ffff, TC0480SCP_word_r },	/* tilemaps */
+	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_r },
+	{ 0x900000, 0x907fff, color_ram_word_r },	/* 8bpg palette */
+	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* nvram (only low bytes used) */
+	{ 0xc00000, 0xc0000f, TC0640FIO_halfword_byteswap_r },
+	{ 0xc00020, 0xc0002f, slapshot_service_input_r },	/* service mirror */
+	{ 0xd00000, 0xd00003, slapshot_msb_sound_r },
+	{ 0xe00000, 0xe00007, opwolf3_adc_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( opwolf3_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM },
+	{ 0x500000, 0x50ffff, MWA16_RAM },
+	{ 0x600000, 0x60ffff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x700000, 0x701fff, MWA16_RAM, &taito_sprite_ext, &taito_spriteext_size },
+	{ 0x800000, 0x80ffff, TC0480SCP_word_w },	  /* tilemaps */
+	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_w },
+	{ 0x900000, 0x907fff, color_ram_word_w, &color_ram },
+	{ 0xa00000, 0xa03fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
+	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_swap_w },	/* priority chip */
+	{ 0xc00000, 0xc0000f, TC0640FIO_halfword_byteswap_w },
+	{ 0xd00000, 0xd00003, slapshot_msb_sound_w },
+	{ 0xe00000, 0xe00007, opwolf3_adc_req_w },
+MEMORY_END
 
 /***************************************************************************/
 
@@ -305,6 +422,72 @@ INPUT_PORTS_START( slapshot )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( opwolf3 )
+	PORT_START      /* IN0, all bogus */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )	// also button 3
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )	// also button 3
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* bit is service switch at c0002x */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN5, so we can OR in service switch */
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START	/* IN 6, P1X */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_REVERSE | IPF_PLAYER1, 30, 20, 0, 0xff)
+
+	PORT_START	/* IN 7, P1Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER1, 30, 20, 0, 0xff)
+
+	PORT_START	/* IN 8, P2X */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_REVERSE | IPF_PLAYER2, 30, 20, 0, 0xff)
+
+	PORT_START	/* IN 9, P2Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 30, 20, 0, 0xff)
+INPUT_PORTS_END
 
 /***********************************************************
 				GFX DECODING
@@ -384,8 +567,8 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_CPU_MEMORY(slapshot_readmem,slapshot_writemem)
 	MDRV_CPU_VBLANK_INT(slapshot_interrupt,1)
 
-	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_ADD(Z80,32000000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
 	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -410,6 +593,38 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( opwolf3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14346000)	/* 28.6860 MHz / 2 ??? */
+	MDRV_CPU_MEMORY(opwolf3_readmem,opwolf3_writemem)
+	MDRV_CPU_VBLANK_INT(slapshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,32000000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_NVRAM_HANDLER(generic_1fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(slapshot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(slapshot)
+	MDRV_VIDEO_EOF(taito_no_buffer)
+	MDRV_VIDEO_UPDATE(slapshot)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 					DRIVERS
@@ -417,36 +632,91 @@ MACHINE_DRIVER_END
 
 ROM_START( slapshot )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 1024K for 68000 code */
-	ROM_LOAD16_BYTE( "d71-15.3",  0x00000, 0x80000, 0x1470153f )
-	ROM_LOAD16_BYTE( "d71-16.1",  0x00001, 0x80000, 0xf13666e0 )
+	ROM_LOAD16_BYTE( "d71-15.3",  0x00000, 0x80000, CRC(1470153f) SHA1(63fd5314fcaafba7326fd9481e3c686901dde65c) )
+	ROM_LOAD16_BYTE( "d71-16.1",  0x00001, 0x80000, CRC(f13666e0) SHA1(e8b475163ea7da5ee3f2b900004cc67c684bab75) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
-	ROM_LOAD    ( "d71-07.77",    0x00000, 0x4000, 0xdd5f670c )
+	ROM_LOAD    ( "d71-07.77",    0x00000, 0x4000, CRC(dd5f670c) SHA1(743a9563c40fe40178c9ec8eece71a08380c2239) )
 	ROM_CONTINUE(                 0x10000, 0xc000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d71-04.79", 0x00000, 0x80000, 0xb727b81c )	/* SCR */
-	ROM_LOAD16_BYTE( "d71-05.80", 0x00001, 0x80000, 0x7b0f5d6d )
+	ROM_LOAD16_BYTE( "d71-04.79", 0x00000, 0x80000, CRC(b727b81c) SHA1(9f56160e2b3e4d59cfa96b5c013f4e368781666e) )	/* SCR */
+	ROM_LOAD16_BYTE( "d71-05.80", 0x00001, 0x80000, CRC(7b0f5d6d) SHA1(a54e4a651dc7cdc160286afb3d38531c7b9396b1) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d71-01.23", 0x000000, 0x100000, 0x0b1e8c27 )	/* OBJ 6bpp */
-	ROM_LOAD16_BYTE( "d71-02.24", 0x000001, 0x100000, 0xccaaea2d )
-	ROM_LOAD       ( "d71-03.25", 0x300000, 0x100000, 0xdccef9ec )
+	ROM_LOAD16_BYTE( "d71-01.23", 0x000000, 0x100000, CRC(0b1e8c27) SHA1(ffa452f7414f3d61edb69bb61b29a0cc8d9176d0) )	/* OBJ 6bpp */
+	ROM_LOAD16_BYTE( "d71-02.24", 0x000001, 0x100000, CRC(ccaaea2d) SHA1(71b507f215f37e991abae5523642417a6b23a70d) )
+	ROM_LOAD       ( "d71-03.25", 0x300000, 0x100000, CRC(dccef9ec) SHA1(ee7a49727b822cf4c1d7acff994b77ea6191c423) )
 	ROM_FILL       (              0x200000, 0x100000, 0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "d71-06.37", 0x00000, 0x80000, 0xf3324188 )
+	ROM_LOAD( "d71-06.37", 0x00000, 0x80000, CRC(f3324188) SHA1(70dd724441eae8614218bc7f0f51860bd2462f0c) )
 
 	/* no Delta-T samples */
 
 //	Pals (not dumped)
-//	ROM_LOAD( "d71-08.40",  0x00000, 0x00???, 0x00000000 )
-//	ROM_LOAD( "d71-09.57",  0x00000, 0x00???, 0x00000000 )
-//	ROM_LOAD( "d71-10.60",  0x00000, 0x00???, 0x00000000 )
-//	ROM_LOAD( "d71-11.42",  0x00000, 0x00???, 0x00000000 )
-//	ROM_LOAD( "d71-12.59",  0x00000, 0x00???, 0x00000000 )
-//	ROM_LOAD( "d71-13.8",   0x00000, 0x00???, 0x00000000 )
+//	ROM_LOAD( "d71-08.40",  0x00000, 0x00???, NO_DUMP )
+//	ROM_LOAD( "d71-09.57",  0x00000, 0x00???, NO_DUMP )
+//	ROM_LOAD( "d71-10.60",  0x00000, 0x00???, NO_DUMP )
+//	ROM_LOAD( "d71-11.42",  0x00000, 0x00???, NO_DUMP )
+//	ROM_LOAD( "d71-12.59",  0x00000, 0x00???, NO_DUMP )
+//	ROM_LOAD( "d71-13.8",   0x00000, 0x00???, NO_DUMP )
 ROM_END
+
+ROM_START( opwolf3 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 1024K for 68000 code */
+	ROM_LOAD16_BYTE( "d74_16.3",  0x000000, 0x80000, CRC(198ff1f6) SHA1(f5b51e39cd73ea56cbf53731d3c885bfcecbd696) )
+	ROM_LOAD16_BYTE( "d74_21.1",  0x000001, 0x80000, CRC(c61c558b) SHA1(6340eb83ba4cd8d7c63b22ea738c8367c87c1de1) )
+	ROM_LOAD16_BYTE( "d74_18.18", 0x100000, 0x80000, CRC(bd5d7cdb) SHA1(29f1cd7b86bc05f873e93f088194113da87a3b86) )	// data ???
+	ROM_LOAD16_BYTE( "d74_17.17", 0x100001, 0x80000, CRC(ac35a672) SHA1(8136bd076443bfaeb3d339971d88951e8b2b59b4) )	// data ???
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD    ( "d74_22.77",    0x00000, 0x4000, CRC(118374a6) SHA1(cc1d0d28efdf1df3e648e7d932405811854ba4ee) )
+	ROM_CONTINUE(                 0x10000, 0xc000 )	/* banked stuff */
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "d74_05.80", 0x000000, 0x200000, CRC(85ea64cc) SHA1(1960a934191c451df1554323d47f6fc64939b0ce) )	/* SCR */
+	ROM_LOAD16_BYTE( "d74_06.81", 0x000001, 0x200000, CRC(2fa1e08d) SHA1(f1f34b308202fe08e73535424b5b4e3d91295224) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "d74_02.23", 0x000000, 0x200000, CRC(aab86332) SHA1(b9133407504e9ef4fd5ae7d284cdb0c7f78f9a99) )	/* OBJ 6bpp */
+	ROM_LOAD16_BYTE( "d74_03.24", 0x000001, 0x200000, CRC(3f398916) SHA1(4b6a3ee0baf5f32e24e5040f233300f1ca347fe7) )
+	ROM_LOAD       ( "d74_04.25", 0x600000, 0x200000, CRC(2f385638) SHA1(1ba2ec7d9b1c491e1cc6d7e646e09ef2bc063f25) )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "d74_01.37",  0x000000, 0x200000, CRC(115313e0) SHA1(51a69e7a26960b1328ccefeaec0fb26bdccc39f2) )
+
+	/* no Delta-T samples */
+ROM_END
+
+ROM_START( opwolf3u )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 1024K for 68000 code */
+	ROM_LOAD16_BYTE( "d74_16.3",  0x000000, 0x80000, CRC(198ff1f6) SHA1(f5b51e39cd73ea56cbf53731d3c885bfcecbd696) )
+	ROM_LOAD16_BYTE( "d74_20.1",  0x000001, 0x80000, CRC(960fd892) SHA1(2584a048d29a96b69428fba2b71269ea6ccf9010) )
+	ROM_LOAD16_BYTE( "d74_18.18", 0x100000, 0x80000, CRC(bd5d7cdb) SHA1(29f1cd7b86bc05f873e93f088194113da87a3b86) )	// data ???
+	ROM_LOAD16_BYTE( "d74_17.17", 0x100001, 0x80000, CRC(ac35a672) SHA1(8136bd076443bfaeb3d339971d88951e8b2b59b4) )	// data ???
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD    ( "d74_19.77",    0x00000, 0x4000, CRC(05d53f06) SHA1(48b0cd68ad3758f424552a4e3833c5a1c2f1825b) )
+	ROM_CONTINUE(                 0x10000, 0xc000 )	/* banked stuff */
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "d74_05.80", 0x000000, 0x200000, CRC(85ea64cc) SHA1(1960a934191c451df1554323d47f6fc64939b0ce) )	/* SCR */
+	ROM_LOAD16_BYTE( "d74_06.81", 0x000001, 0x200000, CRC(2fa1e08d) SHA1(f1f34b308202fe08e73535424b5b4e3d91295224) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "d74_02.23", 0x000000, 0x200000, CRC(aab86332) SHA1(b9133407504e9ef4fd5ae7d284cdb0c7f78f9a99) )	/* OBJ 6bpp */
+	ROM_LOAD16_BYTE( "d74_03.24", 0x000001, 0x200000, CRC(3f398916) SHA1(4b6a3ee0baf5f32e24e5040f233300f1ca347fe7) )
+	ROM_LOAD       ( "d74_04.25", 0x600000, 0x200000, CRC(2f385638) SHA1(1ba2ec7d9b1c491e1cc6d7e646e09ef2bc063f25) )
+	ROM_FILL       (              0x400000, 0x200000, 0 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "d74_01.37",  0x000000, 0x200000, CRC(115313e0) SHA1(51a69e7a26960b1328ccefeaec0fb26bdccc39f2) )
+
+	/* no Delta-T samples */
+ROM_END
+
 
 static DRIVER_INIT( slapshot )
 {
@@ -478,4 +748,6 @@ static DRIVER_INIT( slapshot )
 	state_save_register_func_postload(reset_sound_region);
 }
 
-GAME( 1994, slapshot, 0, slapshot, slapshot, slapshot, ROT0, "Taito Corporation", "Slap Shot (Japan)" )
+GAME( 1994, slapshot, 0,       slapshot, slapshot, slapshot, ROT0, "Taito Corporation",         "Slap Shot (Japan)" )
+GAME( 1994, opwolf3,  0,       opwolf3,  opwolf3,  slapshot, ROT0, "Taito Corporation Japan",   "Operation Wolf 3 (World)" )
+GAME( 1994, opwolf3u, opwolf3, opwolf3,  opwolf3,  slapshot, ROT0, "Taito America Corporation", "Operation Wolf 3 (US)" )

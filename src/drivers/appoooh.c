@@ -265,37 +265,37 @@ MACHINE_DRIVER_END
 
 ROM_START( appoooh )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code + 16k bank */
-	ROM_LOAD( "epr-5906.bin", 0x00000, 0x2000, 0xfffae7fe )
-	ROM_LOAD( "epr-5907.bin", 0x02000, 0x2000, 0x57696cd6 )
-	ROM_LOAD( "epr-5908.bin", 0x04000, 0x2000, 0x4537cddc )
-	ROM_LOAD( "epr-5909.bin", 0x06000, 0x2000, 0xcf82718d )
-	ROM_LOAD( "epr-5910.bin", 0x08000, 0x2000, 0x312636da )
-	ROM_LOAD( "epr-5911.bin", 0x0a000, 0x2000, 0x0bc2acaa ) /* bank0      */
-	ROM_LOAD( "epr-5913.bin", 0x0c000, 0x2000, 0xf5a0e6a7 ) /* a000-dfff  */
-	ROM_LOAD( "epr-5912.bin", 0x10000, 0x2000, 0x3c3915ab ) /* bank1     */
-	ROM_LOAD( "epr-5914.bin", 0x12000, 0x2000, 0x58792d4a ) /* a000-dfff */
+	ROM_LOAD( "epr-5906.bin", 0x00000, 0x2000, CRC(fffae7fe) SHA1(b4bb60eb6331e503759bd963eafefa69331d6b86) )
+	ROM_LOAD( "epr-5907.bin", 0x02000, 0x2000, CRC(57696cd6) SHA1(74a005d18d55fed9ece9b579d2e7e6619a47538b) )
+	ROM_LOAD( "epr-5908.bin", 0x04000, 0x2000, CRC(4537cddc) SHA1(ecb71cab7b9269d713399987cbc45ff54735019f) )
+	ROM_LOAD( "epr-5909.bin", 0x06000, 0x2000, CRC(cf82718d) SHA1(4408c468a422735ae8f69c03003157782f1a0210) )
+	ROM_LOAD( "epr-5910.bin", 0x08000, 0x2000, CRC(312636da) SHA1(18817df6f2e480810726f7b11f289c59e712ee45) )
+	ROM_LOAD( "epr-5911.bin", 0x0a000, 0x2000, CRC(0bc2acaa) SHA1(1ae904658ce9e44cdb79f0a13202aaff5c9f9480) ) /* bank0      */
+	ROM_LOAD( "epr-5913.bin", 0x0c000, 0x2000, CRC(f5a0e6a7) SHA1(7fad534d1fba52078c4ea580ca7601fdd23cbfa6) ) /* a000-dfff  */
+	ROM_LOAD( "epr-5912.bin", 0x10000, 0x2000, CRC(3c3915ab) SHA1(28b501bda992ac06b10dbb5f1f7d6009f2f5f48c) ) /* bank1     */
+	ROM_LOAD( "epr-5914.bin", 0x12000, 0x2000, CRC(58792d4a) SHA1(8acdb0ebee5faadadd64bd64db1fdf881ee70333) ) /* a000-dfff */
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr-5895.bin", 0x00000, 0x4000, 0x4b0d4294 )	/* playfield #1 chars */
-	ROM_LOAD( "epr-5896.bin", 0x04000, 0x4000, 0x7bc84d75 )
-	ROM_LOAD( "epr-5897.bin", 0x08000, 0x4000, 0x745f3ffa )
+	ROM_LOAD( "epr-5895.bin", 0x00000, 0x4000, CRC(4b0d4294) SHA1(f9f4d928c76b32cbcbaf7bfd0ebec2d4dfc37566) )	/* playfield #1 chars */
+	ROM_LOAD( "epr-5896.bin", 0x04000, 0x4000, CRC(7bc84d75) SHA1(36e98eaac1ba23ab842080205bdb5b76b888ddc2) )
+	ROM_LOAD( "epr-5897.bin", 0x08000, 0x4000, CRC(745f3ffa) SHA1(03f5d1d567e786e7835defc6995d1b39aee2c28d) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr-5898.bin", 0x00000, 0x4000, 0xcf01644d )	/* playfield #2 chars */
-	ROM_LOAD( "epr-5899.bin", 0x04000, 0x4000, 0x885ad636 )
-	ROM_LOAD( "epr-5900.bin", 0x08000, 0x4000, 0xa8ed13f3 )
+	ROM_LOAD( "epr-5898.bin", 0x00000, 0x4000, CRC(cf01644d) SHA1(0cc1b7f7a3b33b0edf4e277e320467b19dfc5bc8) )	/* playfield #2 chars */
+	ROM_LOAD( "epr-5899.bin", 0x04000, 0x4000, CRC(885ad636) SHA1(d040948f7cf030e4ab0f0509df23cb855e9c920c) )
+	ROM_LOAD( "epr-5900.bin", 0x08000, 0x4000, CRC(a8ed13f3) SHA1(31c4a52fea8f26b4a79564c7e8443a88d43aee12) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "pr5921.prm",   0x0000, 0x020, 0xf2437229 ) 	/* palette */
-	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, 0x85c542bf ) 	/* charset #1 lookup table */
-	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, 0x16acbd53 ) 	/* charset #2 lookup table */
+	ROM_LOAD( "pr5921.prm",   0x0000, 0x020, CRC(f2437229) SHA1(8fb4240142f4c77f820d7c153c22ff82f66aa7b1) ) 	/* palette */
+	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, CRC(85c542bf) SHA1(371d92fca2ae609a47d3a2ea349f14f30b846da8) ) 	/* charset #1 lookup table */
+	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, CRC(16acbd53) SHA1(e5791646730c6232efa2c0327b484472c47baf21) ) 	/* charset #2 lookup table */
 
 	ROM_REGION( 0xa000, REGION_SOUND1, 0 )	/* adpcm voice data */
-	ROM_LOAD( "epr-5901.bin", 0x0000, 0x2000, 0x170a10a4 )
-	ROM_LOAD( "epr-5902.bin", 0x2000, 0x2000, 0xf6981640 )
-	ROM_LOAD( "epr-5903.bin", 0x4000, 0x2000, 0x0439df50 )
-	ROM_LOAD( "epr-5904.bin", 0x6000, 0x2000, 0x9988f2ae )
-	ROM_LOAD( "epr-5905.bin", 0x8000, 0x2000, 0xfb5cd70e )
+	ROM_LOAD( "epr-5901.bin", 0x0000, 0x2000, CRC(170a10a4) SHA1(7b0c8427c69525cbcbe9f88b22b12aafb6949bfd) )
+	ROM_LOAD( "epr-5902.bin", 0x2000, 0x2000, CRC(f6981640) SHA1(1a93913ecb64d1c459e5bbcc28c4ca3ea90f21e1) )
+	ROM_LOAD( "epr-5903.bin", 0x4000, 0x2000, CRC(0439df50) SHA1(1f981c1867366fa57de25ff8f421c121d82d7321) )
+	ROM_LOAD( "epr-5904.bin", 0x6000, 0x2000, CRC(9988f2ae) SHA1(f70786a46515feb92fe168fc6c4334ab105c05b2) )
+	ROM_LOAD( "epr-5905.bin", 0x8000, 0x2000, CRC(fb5cd70e) SHA1(c2b069ca29b78b845d0c35c7f7452b70c93cb867) )
 ROM_END
 
 

@@ -339,7 +339,6 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 	// handle aliasing of some paths
 	switch (filetype)
 	{
-		case FILETYPE_ROM_NOCRC:
 #ifndef MESS
 		case FILETYPE_IMAGE:
 #endif

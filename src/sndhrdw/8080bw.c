@@ -534,14 +534,14 @@ DISCRETE_SOUND_START(polaris_sound_interface)
  * compensate for the computer being too accurate.
  *
  ******************************************************************************/
-	DISCRETE_SQUAREWAVE(NODE_30, 1, (60.0/512.0), 1, 0.01, 1.0/2, 359.0)	/* feed frequency to keep the noise going */
+	DISCRETE_SQUAREWFIX(NODE_30, 1, (60.0/512.0), 1, 0.01, 1.0/2, 359.0)	/* feed frequency to keep the noise going */
 
-	DISCRETE_LFSR_NOISE(POLARIS_NOISE_LO, 1, 0, 830.0, 1.0, NODE_30, 0, &polaris_lfsr)  /* Unfiltered Lo noise */
+	DISCRETE_LFSR_NOISE(POLARIS_NOISE_LO, 1, 1, 830.0, 1.0, NODE_30, 0, &polaris_lfsr)  /* Unfiltered Lo noise */
 
 	DISCRETE_RCFILTER(NODE_31, 1, POLARIS_NOISE_LO, 560.0, 2.2e-7)
 	DISCRETE_RCFILTER(POLARIS_NOISE_LO_FILT, 1, NODE_31, 6800.0, 2.2e-7)	/* Filtered Lo noise */
 
-	DISCRETE_LFSR_NOISE(NODE_32, 1, 0, 44140.0/2, 0.8, NODE_30, 0, &polaris_lfsr)
+	DISCRETE_LFSR_NOISE(NODE_32, 1, 1, 44140.0/2, 0.8, NODE_30, 0, &polaris_lfsr)
 	DISCRETE_RCFILTER(NODE_33, 1, NODE_32, 560.0, 1.e-8)
 	DISCRETE_RCFILTER(POLARIS_NOISE_HI_FILT, 1, NODE_33, 6800.0, 1.e-8)	/* Filtered Hi noise */
 

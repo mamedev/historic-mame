@@ -828,106 +828,106 @@ MACHINE_DRIVER_END
 
 ROM_START( hal21 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )   /* 64k for CPUA code */
-	ROM_LOAD( "hal21p1.bin",    0x0000, 0x2000, 0x9d193830 )
-	ROM_LOAD( "hal21p2.bin",    0x2000, 0x2000, 0xc1f00350 )
-	ROM_LOAD( "hal21p3.bin",    0x4000, 0x2000, 0x881d22a6 )
-	ROM_LOAD( "hal21p4.bin",    0x6000, 0x2000, 0xce692534 )
+	ROM_LOAD( "hal21p1.bin",    0x0000, 0x2000, CRC(9d193830) SHA1(8e4e9c8bc774d7c7c0b68a5fa5cabdc6b5cfa41b) )
+	ROM_LOAD( "hal21p2.bin",    0x2000, 0x2000, CRC(c1f00350) SHA1(8709455a980931565ccca60162a04c6c3133099b) )
+	ROM_LOAD( "hal21p3.bin",    0x4000, 0x2000, CRC(881d22a6) SHA1(4b2a65dc18620f7f77532f791212fccfe1f0b245) )
+	ROM_LOAD( "hal21p4.bin",    0x6000, 0x2000, CRC(ce692534) SHA1(e1d8e6948578ec9d0b6dc2aff17ad23b8ce46d6a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for CPUB code */
-	ROM_LOAD( "hal21p5.bin",    0x0000, 0x2000, 0x3ce0684a )
-	ROM_LOAD( "hal21p6.bin",    0x2000, 0x2000, 0x878ef798 )
-	ROM_LOAD( "hal21p7.bin",    0x4000, 0x2000, 0x72ebbe95 )
-	ROM_LOAD( "hal21p8.bin",    0x6000, 0x2000, 0x17e22ad3 )
-	ROM_LOAD( "hal21p9.bin",    0x8000, 0x2000, 0xb146f891 )
+	ROM_LOAD( "hal21p5.bin",    0x0000, 0x2000, CRC(3ce0684a) SHA1(5e76770a3252d5565a8f11a79ac3a9a6c31a43e2) )
+	ROM_LOAD( "hal21p6.bin",    0x2000, 0x2000, CRC(878ef798) SHA1(0aae152947c9c6733b77dd1ac14f2f6d6bfabeaa) )
+	ROM_LOAD( "hal21p7.bin",    0x4000, 0x2000, CRC(72ebbe95) SHA1(b1f7dc535e7670647500391d21dfa971d5e342a2) )
+	ROM_LOAD( "hal21p8.bin",    0x6000, 0x2000, CRC(17e22ad3) SHA1(0e10a3c0f2e2ec284f4e0f1055397a8ccd1ff0f7) )
+	ROM_LOAD( "hal21p9.bin",    0x8000, 0x2000, CRC(b146f891) SHA1(0b2db3e14b0401a7914002c6f7c26933a1cba162) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )   /* 64k for sound code */
-	ROM_LOAD( "hal21p10.bin",   0x0000, 0x4000, 0x916f7ba0 )
+	ROM_LOAD( "hal21p10.bin",   0x0000, 0x4000, CRC(916f7ba0) SHA1(7b8bcd59d768c4cd226de96895d3b9755bb3ba79) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hal21p12.bin", 0x0000, 0x2000, 0x9839a7cd ) /* char */
+	ROM_LOAD( "hal21p12.bin", 0x0000, 0x2000, CRC(9839a7cd) SHA1(d3f9d964263a64aa3648faf5eb2e4fa532ae7852) ) /* char */
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* background tiles */
-	ROM_LOAD( "hal21p11.bin", 0x0000, 0x4000, 0x24abc57e )
+	ROM_LOAD( "hal21p11.bin", 0x0000, 0x4000, CRC(24abc57e) SHA1(1d7557a62adc059fb3fe20a09be18c2f40441581) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
-	ROM_LOAD( "hal21p13.bin", 0x00000, 0x4000, 0x052b4f4f )
+	ROM_LOAD( "hal21p13.bin", 0x00000, 0x4000, CRC(052b4f4f) SHA1(032eb5771d33defce86e222f3e7aa22bc37db6db) )
 	ROM_RELOAD(               0x04000, 0x4000 )
-	ROM_LOAD( "hal21p14.bin", 0x08000, 0x4000, 0xda0cb670 )
+	ROM_LOAD( "hal21p14.bin", 0x08000, 0x4000, CRC(da0cb670) SHA1(1083bdd3488dfaa5094a2ef52cfc4206f35c9612) )
 	ROM_RELOAD(               0x0c000, 0x4000 )
-	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, 0x5c5ea945 )
+	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, CRC(5c5ea945) SHA1(f9ce206cab4fad1f6478d731d4b096ec33e7b99f) )
 	ROM_RELOAD(               0x14000, 0x4000 )
 
 	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) //AT: corrected PROM order
-	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, 0x605afff8 )
-	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, 0xc5d84225 )
-	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, 0x195768fc )
+	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, CRC(605afff8) SHA1(94e80ebd574b1580dac4a2aebd57e3e767890c0d) )
+	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, CRC(c5d84225) SHA1(cc2cd32f81ed7c1bcdd68e91d00f8081cb706ce7) )
+	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, CRC(195768fc) SHA1(c88bc9552d57d52fb4b030d118f48fedccf563f4) )
 ROM_END
 
 ROM_START( hal21j )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )   /* 64k for CPUA code */
-	ROM_LOAD( "hal21p1.bin",    0x0000, 0x2000, 0x9d193830 )
-	ROM_LOAD( "hal21p2.bin",    0x2000, 0x2000, 0xc1f00350 )
-	ROM_LOAD( "hal21p3.bin",    0x4000, 0x2000, 0x881d22a6 )
-	ROM_LOAD( "hal21p4.bin",    0x6000, 0x2000, 0xce692534 )
+	ROM_LOAD( "hal21p1.bin",    0x0000, 0x2000, CRC(9d193830) SHA1(8e4e9c8bc774d7c7c0b68a5fa5cabdc6b5cfa41b) )
+	ROM_LOAD( "hal21p2.bin",    0x2000, 0x2000, CRC(c1f00350) SHA1(8709455a980931565ccca60162a04c6c3133099b) )
+	ROM_LOAD( "hal21p3.bin",    0x4000, 0x2000, CRC(881d22a6) SHA1(4b2a65dc18620f7f77532f791212fccfe1f0b245) )
+	ROM_LOAD( "hal21p4.bin",    0x6000, 0x2000, CRC(ce692534) SHA1(e1d8e6948578ec9d0b6dc2aff17ad23b8ce46d6a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for CPUB code */
-	ROM_LOAD( "hal21p5.bin",    0x0000, 0x2000, 0x3ce0684a )
-	ROM_LOAD( "hal21p6.bin",    0x2000, 0x2000, 0x878ef798 )
-	ROM_LOAD( "hal21p7.bin",    0x4000, 0x2000, 0x72ebbe95 )
-	ROM_LOAD( "hal21p8.bin",    0x6000, 0x2000, 0x17e22ad3 )
-	ROM_LOAD( "hal21p9.bin",    0x8000, 0x2000, 0xb146f891 )
+	ROM_LOAD( "hal21p5.bin",    0x0000, 0x2000, CRC(3ce0684a) SHA1(5e76770a3252d5565a8f11a79ac3a9a6c31a43e2) )
+	ROM_LOAD( "hal21p6.bin",    0x2000, 0x2000, CRC(878ef798) SHA1(0aae152947c9c6733b77dd1ac14f2f6d6bfabeaa) )
+	ROM_LOAD( "hal21p7.bin",    0x4000, 0x2000, CRC(72ebbe95) SHA1(b1f7dc535e7670647500391d21dfa971d5e342a2) )
+	ROM_LOAD( "hal21p8.bin",    0x6000, 0x2000, CRC(17e22ad3) SHA1(0e10a3c0f2e2ec284f4e0f1055397a8ccd1ff0f7) )
+	ROM_LOAD( "hal21p9.bin",    0x8000, 0x2000, CRC(b146f891) SHA1(0b2db3e14b0401a7914002c6f7c26933a1cba162) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )   /* 64k for sound code */
-	ROM_LOAD( "hal21-10.bin",   0x0000, 0x4000, 0xa182b3f0 )
+	ROM_LOAD( "hal21-10.bin",   0x0000, 0x4000, CRC(a182b3f0) SHA1(b76eff97a58a96467e9f3a74125a0a770e7678f8) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "hal21p12.bin", 0x0000, 0x2000, 0x9839a7cd ) /* char */
+	ROM_LOAD( "hal21p12.bin", 0x0000, 0x2000, CRC(9839a7cd) SHA1(d3f9d964263a64aa3648faf5eb2e4fa532ae7852) ) /* char */
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* background tiles */
-	ROM_LOAD( "hal21p11.bin", 0x0000, 0x4000, 0x24abc57e )
+	ROM_LOAD( "hal21p11.bin", 0x0000, 0x4000, CRC(24abc57e) SHA1(1d7557a62adc059fb3fe20a09be18c2f40441581) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
-	ROM_LOAD( "hal21p13.bin", 0x00000, 0x4000, 0x052b4f4f )
+	ROM_LOAD( "hal21p13.bin", 0x00000, 0x4000, CRC(052b4f4f) SHA1(032eb5771d33defce86e222f3e7aa22bc37db6db) )
 	ROM_RELOAD(               0x04000, 0x4000 )
-	ROM_LOAD( "hal21p14.bin", 0x08000, 0x4000, 0xda0cb670 )
+	ROM_LOAD( "hal21p14.bin", 0x08000, 0x4000, CRC(da0cb670) SHA1(1083bdd3488dfaa5094a2ef52cfc4206f35c9612) )
 	ROM_RELOAD(               0x0c000, 0x4000 )
-	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, 0x5c5ea945 )
+	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, CRC(5c5ea945) SHA1(f9ce206cab4fad1f6478d731d4b096ec33e7b99f) )
 	ROM_RELOAD(               0x14000, 0x4000 )
 
 	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) //AT: corrected PROM order
-	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, 0x605afff8 )
-	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, 0xc5d84225 )
-	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, 0x195768fc )
+	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, CRC(605afff8) SHA1(94e80ebd574b1580dac4a2aebd57e3e767890c0d) )
+	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, CRC(c5d84225) SHA1(cc2cd32f81ed7c1bcdd68e91d00f8081cb706ce7) )
+	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, CRC(195768fc) SHA1(c88bc9552d57d52fb4b030d118f48fedccf563f4) )
 ROM_END
 
 ROM_START( aso )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )   /* 64k for cpuA code */
-	ROM_LOAD( "aso.1",    0x0000, 0x8000, 0x3fc9d5e4 )
-	ROM_LOAD( "aso.3",    0x8000, 0x4000, 0x39a666d2 )
+	ROM_LOAD( "aso.1",    0x0000, 0x8000, CRC(3fc9d5e4) SHA1(1318904d3d896affd5affd8e475ac9ee6929b955) )
+	ROM_LOAD( "aso.3",    0x8000, 0x4000, CRC(39a666d2) SHA1(b5426520eb600d44bc5566d742d7b88194076494) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for cpuB code */
-	ROM_LOAD( "aso.4",    0x0000, 0x8000, 0x2429792b )
-	ROM_LOAD( "aso.6",    0x8000, 0x4000, 0xc0bfdf1f )
+	ROM_LOAD( "aso.4",    0x0000, 0x8000, CRC(2429792b) SHA1(674e81880f359f7e8d34d0ad9074267360afadbf) )
+	ROM_LOAD( "aso.6",    0x8000, 0x4000, CRC(c0bfdf1f) SHA1(65b15ce9c2e78df79cb603c58639421d29701633) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )   /* 64k for sound code */
-	ROM_LOAD( "aso.7",    0x0000, 0x8000, 0x49258162 )  /* YM3526 */
-	ROM_LOAD( "aso.9",    0x8000, 0x4000, 0xaef5a4f4 )
+	ROM_LOAD( "aso.7",    0x0000, 0x8000, CRC(49258162) SHA1(c265b79d012be1e065389f910f7b4ce61f5b27ce) )  /* YM3526 */
+	ROM_LOAD( "aso.9",    0x8000, 0x4000, CRC(aef5a4f4) SHA1(e908e79e27ff892fe75d1ba5cb0bc9dc6b7b4268) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
-	ROM_LOAD( "aso.14",   0x0000, 0x2000, 0x8baa2253 )
+	ROM_LOAD( "aso.14",   0x0000, 0x2000, CRC(8baa2253) SHA1(e6e4a5aa005e89744c4e2a19a080cf322edc6b52) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* background tiles */
-	ROM_LOAD( "aso.10",   0x0000, 0x8000, 0x00dff996 )
+	ROM_LOAD( "aso.10",   0x0000, 0x8000, CRC(00dff996) SHA1(4f6ce4c0f2da0d2a711bcbf9aa998b4e31d0d9bf) )
 
 	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
-	ROM_LOAD( "aso.11",   0x00000, 0x8000, 0x7feac86c )
-	ROM_LOAD( "aso.12",   0x08000, 0x8000, 0x6895990b )
-	ROM_LOAD( "aso.13",   0x10000, 0x8000, 0x87a81ce1 )
+	ROM_LOAD( "aso.11",   0x00000, 0x8000, CRC(7feac86c) SHA1(13b81f006ec587583416c1e7432da4c3f0375924) )
+	ROM_LOAD( "aso.12",   0x08000, 0x8000, CRC(6895990b) SHA1(e84554cae9a768021c3dc7183bc3d28e2dd768ee) )
+	ROM_LOAD( "aso.13",   0x10000, 0x8000, CRC(87a81ce1) SHA1(28c1069e6c08ecd579f99620c1cb6df01ad1aa74) )
 
 	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
-	ROM_LOAD( "up02_f12.rom",  0x000, 0x00400, 0x5b0a0059 )
-	ROM_LOAD( "up02_f13.rom",  0x400, 0x00400, 0x37e28dd8 )
-	ROM_LOAD( "up02_f14.rom",  0x800, 0x00400, 0xc3fd1dd3 )
+	ROM_LOAD( "up02_f12.rom",  0x000, 0x00400, CRC(5b0a0059) SHA1(f61e17c8959f1cd6cc12b38f2fb7c6190ebd0e0c) )
+	ROM_LOAD( "up02_f13.rom",  0x400, 0x00400, CRC(37e28dd8) SHA1(681726e490872a574dd0295823a44d64ef3a7b45) )
+	ROM_LOAD( "up02_f14.rom",  0x800, 0x00400, CRC(c3fd1dd3) SHA1(c48030cc458f0bebea0ffccf3d3c43260da6a7fb) )
 ROM_END
 
 

@@ -7,88 +7,8 @@ Cosmic Alien    - 7910
 Magical Spot II - 8013
 Devil Zone      - 8022
 
-
-Space Panic memory map
-
-driver by Mike Coates
-
-0000-3FFF ROM
-4000-5BFF Video RAM (Bitmap)
-5C00-5FFF RAM
-6000-601F Sprite Controller
-          4 bytes per sprite
-
-          byte 1 - 80 = ?
-                   40 = Rotate sprite left/right
-                   3F = Sprite Number (Conversion to my layout via table)
-
-          byte 2 - X co-ordinate
-          byte 3 - Y co-ordinate
-
-          byte 4 - 08 = Switch sprite bank
-                   07 = Colour
-
-6800      IN1 - Player controls. See input port setup for mappings
-6801      IN2 - Player 2 controls for cocktail mode. See input port setup for mappings.
-6802      DSW - Dip switches
-6803      IN0 - Coinage and player start
-700C-700E Colour Map Selector
-
-(Not Implemented)
-
-7000-700B Various triggers, Sound etc
-700F      Ditto
-7800      80 = Flash Screen?
-
 ***************************************************************************/
 
-/***************************************************************************
-
-Magical Spot 2 memory map (preliminary)
-
-0000-2fff ROM
-6000-63ff RAM
-6400-7fff Video RAM
-
-read:
-
-write:
-
-***************************************************************************/
-
-/*************************************************************************/
-/* Cosmic Guerilla memory map	                                         */
-/*************************************************************************/
-/* 0000-03FF   ROM                          COSMICG.1                    */
-/* 0400-07FF   ROM                          COSMICG.2                    */
-/* 0800-0BFF   ROM                          COSMICG.3                    */
-/* 0C00-0FFF   ROM                          COSMICG.4                    */
-/* 1000-13FF   ROM                          COSMICG.5                    */
-/* 1400-17FF   ROM                          COSMICG.6                    */
-/* 1800-1BFF   ROM                          COSMICG.7                    */
-/* 1C00-1FFF   ROM                          COSMICG.8 - Graphics         */
-/*                                                                       */
-/* 2000-23FF   RAM                                                       */
-/* 2400-3FEF   Screen RAM                                                */
-/* 3FF0-3FFF   CRT Controller registers (3FF0, register, 3FF4 Data)      */
-/*                                                                       */
-/* CRTC data                                                             */
-/*             ROM                          COSMICG.9 - Color Prom       */
-/*                                                                       */
-/* CR Bits (Inputs)                                                      */
-/* 0000-0003   A9-A13 from CRTC Pixel Clock                              */
-/* 0004-000B   Controls                                                  */
-/* 000C-000F   Dip Switches                                              */
-/*                                                                       */
-/* CR Bits (Outputs)                                                     */
-/* 0016-0017   Colourmap Selector                                        */
-/*************************************************************************/
-
-/* R Nabet : One weird thing is that the memory map allows the use of a cheaper tms9980.
-Did the original hardware really use the high-end tms9900 ? */
-/* Set the flag below to compile with a tms9980. */
-
-#define COSMICG_USES_TMS9980 1
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -99,18 +19,19 @@ PALETTE_INIT( panic );
 PALETTE_INIT( cosmica );
 PALETTE_INIT( cosmicg );
 PALETTE_INIT( magspot2 );
+PALETTE_INIT( nomnlnd );
 VIDEO_UPDATE( panic );
 VIDEO_UPDATE( magspot2 );
+VIDEO_UPDATE( devzone );
 VIDEO_UPDATE( cosmica );
 VIDEO_UPDATE( cosmicg );
 VIDEO_UPDATE( nomnlnd );
-WRITE_HANDLER( cosmica_videoram_w );
-WRITE_HANDLER( panic_color_register_w );
-WRITE_HANDLER( cosmicg_color_register_w );
-WRITE_HANDLER( nomnlnd_background_w );
+WRITE_HANDLER( cosmic_color_register_w );
+WRITE_HANDLER( cosmic_background_enable_w );
 
 
 static unsigned int pixel_clock = 0;
+
 
 
 /* Schematics show 12 triggers for discrete sound circuits */
@@ -278,7 +199,7 @@ static INTERRUPT_GEN( panic_interrupt )
 
 static INTERRUPT_GEN( cosmica_interrupt )
 {
-    pixel_clock = (pixel_clock + 2) & 63;
+    pixel_clock = (pixel_clock + 2) & 0x3f;
 
     if (pixel_clock == 0)
     {
@@ -289,10 +210,6 @@ static INTERRUPT_GEN( cosmica_interrupt )
 
 static INTERRUPT_GEN( cosmicg_interrupt )
 {
-	/* Increment Pixel Clock */
-
-    pixel_clock = (pixel_clock + 1) & 15;
-
     /* Insert Coin */
 
 	/* R Nabet : fixed to make this piece of code sensible.
@@ -300,22 +217,14 @@ static INTERRUPT_GEN( cosmicg_interrupt )
 	It makes sense and works fine, but I cannot be 100% sure this is correct,
 	as I have no Cosmic Guerilla console :-) . */
 
-	if (pixel_clock == 0)
+	if ((readinputport(2) & 1)) /* Coin */
 	{
-		if ((readinputport(2) & 1)) /* Coin */
-		{
-#if COSMICG_USES_TMS9980
-			/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
-			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 6);
-#else
-			/* tms9900 is more straightforward */
-			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 4);
-#endif
-		}
-		else
-		{
-			cpu_set_irq_line(0, 0, CLEAR_LINE);
-		}
+		/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
+		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 6);
+	}
+	else
+	{
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
 	}
 }
 
@@ -332,17 +241,27 @@ static INTERRUPT_GEN( magspot2_interrupt )
 	}
 }
 
+static INTERRUPT_GEN( nomnlnd_interrupt )
+{
+	/* Coin causes an NMI */
+	if (input_port_4_r(0) & 0x01)
+	{
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+}
 
-READ_HANDLER( cosmica_pixel_clock_r )
+
+
+static READ_HANDLER( cosmica_pixel_clock_r )
 {
 	return pixel_clock;
 }
 
-READ_HANDLER( cosmicg_pixel_clock_r )
+static READ_HANDLER( cosmicg_port_0_r )
 {
 	/* The top four address lines from the CRTC are bits 0-3 */
 
-	return (input_port_0_r(0) & 0xf0) | pixel_clock;
+	return (input_port_0_r(0) & 0xf0) | ((cpu_getscanline() & 0xf0) >> 4);
 }
 
 static READ_HANDLER( magspot2_coinage_dip_r )
@@ -353,7 +272,7 @@ static READ_HANDLER( magspot2_coinage_dip_r )
 
 /* Has 8 way joystick, remap combinations to missing directions */
 
-static READ_HANDLER( nomnlnd_port_r )
+static READ_HANDLER( nomnlnd_port_0_1_r )
 {
 	int control;
     int fire = input_port_3_r(0);
@@ -378,33 +297,6 @@ static READ_HANDLER( nomnlnd_port_r )
 }
 
 
-#if COSMICG_USES_TMS9980
-
-/* 8-bit handler */
-#define cosmicg_videoram_w cosmica_videoram_w
-#define cosmicg_videoram_r MRA_RAM
-#define COSMICG_ROM_LOAD ROM_LOAD
-
-#else
-
-static WRITE_HANDLER( cosmicg_videoram_w )
-{
-  /* 16-bit handler */
-  if (! (data & 0xff000000))
-    cosmica_videoram_w(offset, (data >> 8) & 0xff);
-  if (! (data & 0x00ff0000))
-    cosmica_videoram_w(offset + 1, data & 0xff);
-}
-
-static READ_HANDLER( cosmicg_videoram_r )
-{
-	return (videoram[offset] << 8) | videoram[offset+1];
-}
-
-
-#define COSMICG_ROM_LOAD ROM_LOAD16_WORD
-
-#endif
 
 static WRITE_HANDLER( flip_screen_w )
 {
@@ -423,13 +315,14 @@ MEMORY_END
 
 static MEMORY_WRITE_START( panic_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, cosmica_videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x5fff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7000, 0x700b, panic_sound_output_w },
-	{ 0x700c, 0x700e, panic_color_register_w },
+	{ 0x700c, 0x700e, cosmic_color_register_w },
 	{ 0x700f, 0x700f, flip_screen_w },
 	{ 0x7800, 0x7801, panic_sound_output2_w },
 MEMORY_END
+
 
 static MEMORY_READ_START( cosmica_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -442,32 +335,33 @@ MEMORY_END
 
 static MEMORY_WRITE_START( cosmica_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, cosmica_videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x5fff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x6000, 0x601f, MWA_RAM ,&spriteram, &spriteram_size },
-	{ 0x7000, 0x700b, MWA_RAM },   			/* Sound Triggers */
-	{ 0x700c, 0x700e, panic_color_register_w },
+	{ 0x700c, 0x700d, cosmic_color_register_w },
 	{ 0x700f, 0x700f, flip_screen_w },
 MEMORY_END
 
+
 static MEMORY_READ_START( cosmicg_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, cosmicg_videoram_r },
+	{ 0x2000, 0x3fff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( cosmicg_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, cosmicg_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3fff, MWA_RAM, &videoram, &videoram_size },
 MEMORY_END
 
 static PORT_READ_START( cosmicg_readport )
-	{ 0x00, 0x00, cosmicg_pixel_clock_r },
+	{ 0x00, 0x00, cosmicg_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 PORT_END
 
 static PORT_WRITE_START( cosmicg_writeport )
 	{ 0x00, 0x15, cosmicg_output_w },
-	{ 0x16, 0x17, cosmicg_color_register_w },
+	{ 0x16, 0x17, cosmic_color_register_w },
 PORT_END
+
 
 static MEMORY_READ_START( magspot2_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
@@ -483,28 +377,9 @@ static MEMORY_WRITE_START( magspot2_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_0_data_w },
-	{ 0x480c, 0x480e, panic_color_register_w },
+	{ 0x480c, 0x480d, cosmic_color_register_w },
 	{ 0x480f, 0x480f, flip_screen_w },
-	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
-MEMORY_END
-
-static MEMORY_READ_START( nomnlnd_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
-	{ 0x5000, 0x5001, nomnlnd_port_r },
-	{ 0x5002, 0x5002, input_port_2_r },
-	{ 0x5003, 0x5003, input_port_3_r },
-	{ 0x6000, 0x7fff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( nomnlnd_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
-	{ 0x4807, 0x4807, nomnlnd_background_w },
-	{ 0x480a, 0x480a, DAC_0_data_w },
-	{ 0x480c, 0x480e, panic_color_register_w },
-	{ 0x480f, 0x480f, flip_screen_w },
-	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
+	{ 0x6000, 0x7fff, MWA_RAM, &videoram, &videoram_size},
 MEMORY_END
 
 
@@ -597,7 +472,7 @@ INPUT_PORTS_START( cosmica )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
-/* 0c gives 1C_1C */
+  //PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x30, "5000" )
 	PORT_DIPSETTING(    0x20, "10000" )
@@ -606,7 +481,7 @@ INPUT_PORTS_START( cosmica )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	/* The coin slots are not memory mapped. Coin  causes a NMI, */
+	/* The coin slots are not memory mapped.  Coin causes a NMI, */
 	/* This fake input port is used by the interrupt */
 	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
@@ -624,6 +499,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( cosmicg )
 	PORT_START /* 4-7 */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_SPECIAL )	/* pixel clock */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -712,7 +588,8 @@ INPUT_PORTS_START( magspot2 )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x1e, IP_ACTIVE_LOW, IPT_UNUSED )		/* always HI */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	/* reads what was written to 4808.  Probably not used?? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -843,20 +720,104 @@ INPUT_PORTS_START( devzone )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( devzone2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "2000" )
+	PORT_DIPSETTING(    0x02, "3000" )
+	PORT_DIPSETTING(    0x03, "5000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x0c, "Use Coin A & B" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	/* Fake port to handle coins */
+	PORT_START	/* IN4 */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+
+	PORT_START	/* IN5 */
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_4C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_4C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( nomnlnd )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_SPECIAL )	/* diagonals */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_SPECIAL )	/* diagonals */
 
 	PORT_START	/* IN2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
@@ -879,35 +840,15 @@ INPUT_PORTS_START( nomnlnd )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x1e, IP_ACTIVE_LOW, IPT_UNUSED )		/* always HI */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	/* reads what was written to 4808.  Probably not used?? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	/* Fake port to handle coin */
 	PORT_START	/* IN4 */
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-
-/* Why is this here for this game? */
-//	PORT_START	/* IN5 */
-/* 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 4C_2C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_4C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) ) */
-
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 
@@ -947,137 +888,60 @@ INPUT_PORTS_START( nomnlndg )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x1e, IP_ACTIVE_LOW, IPT_UNUSED )		/* always HI */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	/* reads what was written to 4808.  Probably not used?? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	/* Fake port to handle coin */
 	PORT_START	/* IN4 */
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-
-/* Why is this here for this gane? */
-// 	PORT_START	/* IN5 */
-/* 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 4C_2C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_4C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) ) */
-
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 
-static struct GfxLayout panic_spritelayout0 =
+static struct GfxLayout cosmic_spritelayout16 =
 {
-	16,16,	/* 16*16 sprites */
-	48 ,	/* 64 sprites */
-	2,	    /* 2 bits per pixel */
-	{ 4096*8, 0 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7 },
-   	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{  0*8+0,  0*8+1,  0*8+2,  0*8+3,  0*8+4,  0*8+5,  0*8+6,  0*8+7,
+	  16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
+	{ 0*8, 1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
 };
 
-static struct GfxLayout panic_spritelayout1 =
+static struct GfxLayout cosmic_spritelayout32 =
 {
-	16,16,	/* 16*16 sprites */
-	16 ,	/* 16 sprites */
-	2,	    /* 2 bits per pixel */
-	{ 4096*8, 0 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7 },
-  	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32,32,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0*32*8+0, 0*32*8+1, 0*32*8+2, 0*32*8+3, 0*32*8+4, 0*32*8+5, 0*32*8+6, 0*32*8+7,
+	  1*32*8+0, 1*32*8+1, 1*32*8+2, 1*32*8+3, 1*32*8+4, 1*32*8+5, 1*32*8+6, 1*32*8+7,
+	  2*32*8+0, 2*32*8+1, 2*32*8+2, 2*32*8+3, 2*32*8+4, 2*32*8+5, 2*32*8+6, 2*32*8+7,
+  	  3*32*8+0, 3*32*8+1, 3*32*8+2, 3*32*8+3, 3*32*8+4, 3*32*8+5, 3*32*8+6, 3*32*8+7 },
+	{  0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8,
+	   8*8,  9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
+	  16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8,
+	  24*8, 25*8, 26*8, 27*8, 28*8, 29*8, 30*8, 31*8 },
+	128*8
 };
 
-static struct GfxLayout cosmica_spritelayout16 =
-{
-	16,16,				/* 16*16 sprites */
-	64,					/* 64 sprites */
-	2,					/* 2 bits per pixel */
-	{ 64*16*16, 0 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8				/* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxLayout cosmica_spritelayout32 =
-{
-	32,32,				/* 32*32 sprites */
-	16,					/* 16 sprites */
-	2,					/* 2 bits per pixel */
-	{ 64*16*16, 0 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,
-	  32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-	  64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
-  	  96*8+0, 96*8+1, 96*8+2, 96*8+3, 96*8+4, 96*8+5, 96*8+6, 96*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8, 16*8, 17*8,18*8,19*8,20*8,21*8,22*8,23*8,24*8,25*8,26*8,27*8,28*8,29*8,30*8,31*8 },
-	128*8				/* every sprite takes 128 consecutive bytes */
-};
-
-static struct GfxLayout nomnlnd_treelayout =
-{
-	32,32,				/* 32*32 sprites */
-	4,					/* 4 sprites */
-	2,					/* 2 bits per pixel */
-	{ 0, 8*128*8 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
-	 16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, 24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
-	128*8				/* every sprite takes 128 consecutive bytes */
-};
-
-static struct GfxLayout nomnlnd_waterlayout =
-{
-	16,32,				/* 16*32 sprites */
-	32,					/* 32 sprites */
-	2,					/* 2 bits per pixel */
-	{ 0, 8*128*8 },	/* the two bitplanes are separated */
-	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
-	 16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, 24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
-	32 				/* To create a set of sprites 1 pixel displaced */
-};
 
 static struct GfxDecodeInfo panic_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0a00, &panic_spritelayout0, 0, 8 },	/* Monsters              0a00-0fff */
-	{ REGION_GFX1, 0x0200, &panic_spritelayout0, 0, 8 },	/* Monsters eating Man   0200-07ff */
-	{ REGION_GFX1, 0x0800, &panic_spritelayout1, 0, 8 },	/* Man                   0800-09ff */
+	{ REGION_GFX1, 0, &cosmic_spritelayout16,  0, 8 },
+	{ REGION_GFX1, 0, &cosmic_spritelayout32,  0, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo cosmica_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &cosmica_spritelayout16,  0, 16 },
-	{ REGION_GFX1, 0, &cosmica_spritelayout32,  0, 16 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo magspot2_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &cosmica_spritelayout16,  0, 8 },
-	{ REGION_GFX1, 0, &cosmica_spritelayout32,  0, 8 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo nomnlnd_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &cosmica_spritelayout16,  0,  8 },
-	{ REGION_GFX1, 0x0000, &cosmica_spritelayout32,  0,  8 },
-	{ REGION_GFX2, 0x0000, &nomnlnd_treelayout,      0,  9 },
-	{ REGION_GFX2, 0x0200, &nomnlnd_waterlayout,     0,  10 },
+	{ REGION_GFX1, 0, &cosmic_spritelayout16,  0, 16 },
+	{ REGION_GFX1, 0, &cosmic_spritelayout32,  0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -1141,26 +1005,36 @@ static struct Samplesinterface cosmicg_samples_interface =
 };
 
 
-static MACHINE_DRIVER_START( panic )
+static MACHINE_DRIVER_START( cosmic )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 2000000)	/* 2 MHz? */
-	MDRV_CPU_MEMORY(panic_readmem,panic_writemem)
-	MDRV_CPU_VBLANK_INT(panic_interrupt,2)
+	MDRV_CPU_ADD_TAG("main", Z80,10816000/6)	/* 1.802 MHz*/
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( panic )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cosmic)
+	MDRV_CPU_MODIFY("main")
+
+	MDRV_CPU_MEMORY(panic_readmem,panic_writemem)
+	MDRV_CPU_VBLANK_INT(panic_interrupt,2)
+
+	/* video hardware */
 	MDRV_GFXDECODE(panic_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(panic)
-	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(panic)
 
 	/* sound hardware */
@@ -1168,46 +1042,37 @@ static MACHINE_DRIVER_START( panic )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( cosmica )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 1081600)
+	MDRV_IMPORT_FROM(cosmic)
+	MDRV_CPU_MODIFY("main")
+
 	MDRV_CPU_MEMORY(cosmica_readmem,cosmica_writemem)
 	MDRV_CPU_VBLANK_INT(cosmica_interrupt,32)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(2500)
-
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
 	MDRV_GFXDECODE(cosmica_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_COLORTABLE_LENGTH(16*4)
 
 	MDRV_PALETTE_INIT(cosmica)
-	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(cosmica)
-
-	/* sound hardware */
 MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( cosmicg )
 
 	/* basic machine hardware */
-#if COSMICG_USES_TMS9980
 	MDRV_CPU_ADD(TMS9980, 1228500)
-#else
-	MDRV_CPU_ADD(TMS9900, 1228500)
-#endif
 			/* 9.828 MHz Crystal */
 			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
 			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
 			1.5MHz.  So, if someone can check this... */
 	MDRV_CPU_MEMORY(cosmicg_readmem,cosmicg_writemem)
 	MDRV_CPU_PORTS(cosmicg_readport,cosmicg_writeport)
-	MDRV_CPU_VBLANK_INT(cosmicg_interrupt,16)
+	MDRV_CPU_VBLANK_INT(cosmicg_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -1219,7 +1084,6 @@ static MACHINE_DRIVER_START( cosmicg )
     MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(cosmicg)
-	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(cosmicg)
 
 	/* sound hardware */
@@ -1227,52 +1091,54 @@ static MACHINE_DRIVER_START( cosmicg )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( magspot2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ???? */
+	MDRV_IMPORT_FROM(cosmic)
+	MDRV_CPU_MODIFY("main")
+
 	MDRV_CPU_MEMORY(magspot2_readmem,magspot2_writemem)
 	MDRV_CPU_VBLANK_INT(magspot2_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
-	MDRV_GFXDECODE(magspot2_gfxdecodeinfo)
+	MDRV_GFXDECODE(panic_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(magspot2)
-	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(magspot2)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( devzone )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(magspot2)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(devzone)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( nomnlnd )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ???? */
-	MDRV_CPU_MEMORY(nomnlnd_readmem,nomnlnd_writemem)
-	MDRV_CPU_VBLANK_INT(magspot2_interrupt,1)
+	MDRV_IMPORT_FROM(cosmic)
+	MDRV_CPU_MODIFY("main")
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_CPU_MEMORY(magspot2_readmem,magspot2_writemem)
+	MDRV_CPU_VBLANK_INT(nomnlnd_interrupt,1)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
-	MDRV_GFXDECODE(nomnlnd_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(16*4)
+	MDRV_GFXDECODE(panic_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	MDRV_PALETTE_INIT(magspot2)
-	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_PALETTE_INIT(nomnlnd)
 	MDRV_VIDEO_UPDATE(nomnlnd)
 
 	/* sound hardware */
@@ -1280,265 +1146,354 @@ static MACHINE_DRIVER_START( nomnlnd )
 MACHINE_DRIVER_END
 
 
-static DRIVER_INIT( cosmicg )
-{
-	/* Roms have data pins connected different from normal */
-
-	int count;
-	unsigned char scrambled,normal;
-
-    for(count=0x1fff;count>=0;count--)
-	{
-        scrambled = memory_region(REGION_CPU1)[count];
-
-        normal = (scrambled >> 3 & 0x11)
-               | (scrambled >> 1 & 0x22)
-               | (scrambled << 1 & 0x44)
-               | (scrambled << 3 & 0x88);
-
-        memory_region(REGION_CPU1)[count] = normal;
-    }
-
-    /* Patch to avoid crash - Seems like duff romcheck routine */
-    /* I would expect it to be bitrot, but have two romsets    */
-    /* from different sources with the same problem!           */
-
-#if COSMICG_USES_TMS9980
-    memory_region(REGION_CPU1)[0x1e9e] = 0x04;
-    memory_region(REGION_CPU1)[0x1e9f] = 0xc0;
-#else
-	((data16_t *)memory_region(REGION_CPU1))[0x1e9e/2] = 0x04c0;
-#endif
-}
-
-
 ROM_START( panic )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )
-	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
-	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, 0xfc27f4e5 )
+	ROM_LOAD( "spe1",         0x0000, 0x0800, CRC(70ac0888) SHA1(bdc6dfb74b4643df36cae60923f9759751340c86) )
+	ROM_LOAD( "spe2",         0x0800, 0x0800, CRC(2b910c48) SHA1(9ebb15694e068a4d8769ec5d312af1148818d472) )
+	ROM_LOAD( "spe3",         0x1000, 0x0800, CRC(03810148) SHA1(768418bc0a3a5bc9f7ec07b8edd4099da69efac6) )
+	ROM_LOAD( "spe4",         0x1800, 0x0800, CRC(119bbbfd) SHA1(2b3722300b1eebe1bffa4a4e39fceb45aefde24f) )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, CRC(5b80f277) SHA1(b060e57c88679f547153aed041a5554dc26a83aa) )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, CRC(b73babf0) SHA1(229944a6b3653601bc20afea5a9aec787fd95ce0) )
+	ROM_LOAD( "spe7",         0x3000, 0x0800, CRC(2894106e) SHA1(625896225b0ec03ac12f3e8b97e801cb743f37e7) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+	ROM_LOAD( "spcpanic.11",  0x0000, 0x0800, CRC(acea9df4) SHA1(7de2a82da8160ad1a01c32a516d10c19dc306051) )
+	ROM_LOAD( "spcpanic.12",  0x0800, 0x0800, CRC(e83423d0) SHA1(eba1129537869f1ecb5afeeae19db19b134865f6) )
+	ROM_LOAD( "spcpanic.10",  0x1000, 0x0800, CRC(c9631c2d) SHA1(e5ab95e19c1b22a798a70a1a6599bc1f5e853c60) )
+	ROM_LOAD( "spcpanic.9",   0x1800, 0x0800, CRC(eec78b4c) SHA1(efd21d0a26b988a490c45315a7a121607f74d147) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, CRC(35d43d2f) SHA1(2ce164c92ed7ba3ee26a907f0c5969ec3decca01) )
 
 	ROM_REGION( 0x0800, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, 0x7da0b321 )
+	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, CRC(7da0b321) SHA1(b450cc02de9cc27e3f336c626221c90c6961b51e) )
 ROM_END
 
-ROM_START( panica )
+ROM_START( panic2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )
-	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
-	ROM_LOAD( "panica.7",     0x3000, 0x0800, 0x3641cb7f )
+	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, CRC(405ae6f9) SHA1(92000f5f9bc1384ebae36dd30e715764747504d8) )
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, CRC(b6a286c5) SHA1(b33beb1fbe622e9c90888d25d018fd5bef6cb65b) )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, CRC(85ae8b2e) SHA1(a5676d38e3c0ea0aeedc29bea0c04086e51da67f) )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, CRC(b6d4f52f) SHA1(431e5ef00768a633d17449a888ac9ce46975272d) )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, CRC(5b80f277) SHA1(b060e57c88679f547153aed041a5554dc26a83aa) )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, CRC(b73babf0) SHA1(229944a6b3653601bc20afea5a9aec787fd95ce0) )
+	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, CRC(fc27f4e5) SHA1(80064ccfb810d11f6d7d79bfd991adb2eb2f1c16) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+	ROM_LOAD( "spcpanic.11",  0x0000, 0x0800, CRC(acea9df4) SHA1(7de2a82da8160ad1a01c32a516d10c19dc306051) )
+	ROM_LOAD( "spcpanic.12",  0x0800, 0x0800, CRC(e83423d0) SHA1(eba1129537869f1ecb5afeeae19db19b134865f6) )
+	ROM_LOAD( "spcpanic.10",  0x1000, 0x0800, CRC(c9631c2d) SHA1(e5ab95e19c1b22a798a70a1a6599bc1f5e853c60) )
+	ROM_LOAD( "spcpanic.9",   0x1800, 0x0800, CRC(eec78b4c) SHA1(efd21d0a26b988a490c45315a7a121607f74d147) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, CRC(35d43d2f) SHA1(2ce164c92ed7ba3ee26a907f0c5969ec3decca01) )
 
 	ROM_REGION( 0x0800, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, 0x7da0b321 )
+	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, CRC(7da0b321) SHA1(b450cc02de9cc27e3f336c626221c90c6961b51e) )
+ROM_END
+
+ROM_START( panic3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "panica.1",     0x0000, 0x0800, CRC(289720ce) SHA1(8601bda95ac32a55f17fe9c723796bfe8b2b2fa7) )
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, CRC(b6a286c5) SHA1(b33beb1fbe622e9c90888d25d018fd5bef6cb65b) )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, CRC(85ae8b2e) SHA1(a5676d38e3c0ea0aeedc29bea0c04086e51da67f) )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, CRC(b6d4f52f) SHA1(431e5ef00768a633d17449a888ac9ce46975272d) )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, CRC(5b80f277) SHA1(b060e57c88679f547153aed041a5554dc26a83aa) )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, CRC(b73babf0) SHA1(229944a6b3653601bc20afea5a9aec787fd95ce0) )
+	ROM_LOAD( "panica.7",     0x3000, 0x0800, CRC(3641cb7f) SHA1(94a5108233cf9517f782759bb396e4eab58b8551) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "spcpanic.11",  0x0000, 0x0800, CRC(acea9df4) SHA1(7de2a82da8160ad1a01c32a516d10c19dc306051) )
+	ROM_LOAD( "spcpanic.12",  0x0800, 0x0800, CRC(e83423d0) SHA1(eba1129537869f1ecb5afeeae19db19b134865f6) )
+	ROM_LOAD( "spcpanic.10",  0x1000, 0x0800, CRC(c9631c2d) SHA1(e5ab95e19c1b22a798a70a1a6599bc1f5e853c60) )
+	ROM_LOAD( "spcpanic.9",   0x1800, 0x0800, CRC(eec78b4c) SHA1(efd21d0a26b988a490c45315a7a121607f74d147) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, CRC(35d43d2f) SHA1(2ce164c92ed7ba3ee26a907f0c5969ec3decca01) )
+
+	ROM_REGION( 0x0800, REGION_USER1, 0 ) /* color map */
+	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, CRC(7da0b321) SHA1(b450cc02de9cc27e3f336c626221c90c6961b51e) )
+ROM_END
+
+ROM_START( panich )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sph1",         0x0000, 0x0800, CRC(f6e9c6ef) SHA1(90b5bba0fd726e4c6618793467eba8c18c63fd43) )
+	ROM_LOAD( "sph2",         0x0800, 0x0800, CRC(58dbc49b) SHA1(f716e8cdbb7eb456bd7f2996241b5ebd03086de3) )
+	ROM_LOAD( "sph3",         0x1000, 0x0800, CRC(c4f275ad) SHA1(446be24dc99e46f3c69cf2cfb657958053857b7d) )
+	ROM_LOAD( "sph4",         0x1800, 0x0800, CRC(6e7785de) SHA1(d12326791cbcae37980e240e2bfc20d7618f3ef5) )
+	ROM_LOAD( "sph5",         0x2000, 0x0800, CRC(1916c9b8) SHA1(ab4a353340f152d6ba181555ee211afeb7877509) )
+	ROM_LOAD( "sph6",         0x2800, 0x0800, CRC(54b92314) SHA1(970ebae831ea0a1958b8d711ebc5956ef4f932fe) )
+	ROM_LOAD( "sph7",         0x3000, 0x0800, CRC(8600b881) SHA1(2eed176de531f44d10b7755141621050d72ad7ac) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "spcpanic.11",  0x0000, 0x0800, CRC(acea9df4) SHA1(7de2a82da8160ad1a01c32a516d10c19dc306051) )
+	ROM_LOAD( "spcpanic.12",  0x0800, 0x0800, CRC(e83423d0) SHA1(eba1129537869f1ecb5afeeae19db19b134865f6) )
+	ROM_LOAD( "spcpanic.10",  0x1000, 0x0800, CRC(c9631c2d) SHA1(e5ab95e19c1b22a798a70a1a6599bc1f5e853c60) )
+	ROM_LOAD( "spcpanic.9",   0x1800, 0x0800, CRC(eec78b4c) SHA1(efd21d0a26b988a490c45315a7a121607f74d147) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, CRC(35d43d2f) SHA1(2ce164c92ed7ba3ee26a907f0c5969ec3decca01) )
+
+	ROM_REGION( 0x0800, REGION_USER1, 0 ) /* color map */
+	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, CRC(7da0b321) SHA1(b450cc02de9cc27e3f336c626221c90c6961b51e) )
 ROM_END
 
 ROM_START( panicger )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )
-	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
-	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, 0xe1f36893 )
-	ROM_LOAD( "spacepan.004", 0x1800, 0x0800, 0x01be297c )
-	ROM_LOAD( "spacepan.005", 0x2000, 0x0800, 0xe0d54805 )
-	ROM_LOAD( "spacepan.006", 0x2800, 0x0800, 0xaae1458e )
-	ROM_LOAD( "spacepan.007", 0x3000, 0x0800, 0x14e46e70 )
+	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, CRC(a6d9515a) SHA1(20fe6fa4cb10e83f97b77e19d9d4f883aba73d1a) )
+	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, CRC(cfc22663) SHA1(44036a69ca3463759c56637c3435a3305b102879) )
+	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, CRC(e1f36893) SHA1(689b77b4df15dc980d35cf245aca1affe46d6b21) )
+	ROM_LOAD( "spacepan.004", 0x1800, 0x0800, CRC(01be297c) SHA1(d22856ef192d8239a3520f16bbe5a6f7f4c3adc8) )
+	ROM_LOAD( "spacepan.005", 0x2000, 0x0800, CRC(e0d54805) SHA1(5852f69cee9a8f9984b175268bcfafe4f3f124ba) )
+	ROM_LOAD( "spacepan.006", 0x2800, 0x0800, CRC(aae1458e) SHA1(79dd5992b81f316cf86efdb2809b7002e824e0e7) )
+	ROM_LOAD( "spacepan.007", 0x3000, 0x0800, CRC(14e46e70) SHA1(f49f09a12b796f7a7713d872ecd12e246c56c261) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+	ROM_LOAD( "spcpanic.11",  0x0000, 0x0800, CRC(acea9df4) SHA1(7de2a82da8160ad1a01c32a516d10c19dc306051) )
+	ROM_LOAD( "spcpanic.12",  0x0800, 0x0800, CRC(e83423d0) SHA1(eba1129537869f1ecb5afeeae19db19b134865f6) )
+	ROM_LOAD( "spcpanic.10",  0x1000, 0x0800, CRC(c9631c2d) SHA1(e5ab95e19c1b22a798a70a1a6599bc1f5e853c60) )
+	ROM_LOAD( "spcpanic.9",   0x1800, 0x0800, CRC(eec78b4c) SHA1(efd21d0a26b988a490c45315a7a121607f74d147) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, CRC(35d43d2f) SHA1(2ce164c92ed7ba3ee26a907f0c5969ec3decca01) )
 
 	ROM_REGION( 0x0800, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, 0x7da0b321 )
+	ROM_LOAD( "spcpanic.8",   0x0000, 0x0800, CRC(7da0b321) SHA1(b450cc02de9cc27e3f336c626221c90c6961b51e) )
 ROM_END
 
 ROM_START( cosmica )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ca.e3",        0x0000, 0x0800, 0x535ee0c5 )
-	ROM_LOAD( "ca.e4",        0x0800, 0x0800, 0xed3cf8f7 )
-	ROM_LOAD( "ca.e5",        0x1000, 0x0800, 0x6a111e5e )
-	ROM_LOAD( "ca.e6",        0x1800, 0x0800, 0xc9b5ca2a )
-	ROM_LOAD( "ca.e7",        0x2000, 0x0800, 0x43666d68 )
+	ROM_LOAD( "ca.e3",        0x0000, 0x0800, CRC(535ee0c5) SHA1(3ec3056b7fabe07ef49a9179114aa74be44a943e) )
+	ROM_LOAD( "ca.e4",        0x0800, 0x0800, CRC(ed3cf8f7) SHA1(6ba1d98d82400519e844b950cb2fb1274c06d89a) )
+	ROM_LOAD( "ca.e5",        0x1000, 0x0800, CRC(6a111e5e) SHA1(593be409bc969cece2ff88623e53c166b4dc43cd) )
+	ROM_LOAD( "ca.e6",        0x1800, 0x0800, CRC(c9b5ca2a) SHA1(3384b98954b6bc9a64e753b95757f61ce1d3c52e) )
+	ROM_LOAD( "ca.e7",        0x2000, 0x0800, CRC(43666d68) SHA1(e44492360a77d93aeaaaa0f38f4ac19732998559) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "ca.n1",        0x0000, 0x0800, 0x431e866c )
-	ROM_LOAD( "ca.n2",        0x0800, 0x0800, 0xaa6c6079 )
+	ROM_LOAD( "ca.n2",        0x0000, 0x0800, CRC(aa6c6079) SHA1(af4ab73e9e1c189290b26bf42adb511d5a347df9) )
+	ROM_LOAD( "ca.n1",        0x0800, 0x0800, CRC(431e866c) SHA1(b007cd3cc856360a0247bd78bb49d173f5cef321) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ca.d9",        0x0000, 0x0020, 0xdfb60f19 )
+	ROM_LOAD( "ca.d9",        0x0000, 0x0020, CRC(dfb60f19) SHA1(d510327ff3492f098659c551f7245835f61a2959) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "ca.e2",        0x0000, 0x0400, 0xea4ee931 )
+	ROM_LOAD( "ca.e2",        0x0000, 0x0400, CRC(ea4ee931) SHA1(d0a4afda4b493efb40286c2d67bf56a2a8b8da9d) )
 
 	ROM_REGION( 0x0400, REGION_USER2, 0 ) /* starfield generator */
-	ROM_LOAD( "ca.sub",       0x0000, 0x0400, 0xacbd4e98 )
+	ROM_LOAD( "ca.sub",       0x0000, 0x0400, CRC(acbd4e98) SHA1(d33fe8bdc77bb18a3ffb369ea692210d1b890771) )
 ROM_END
 
 ROM_START( cosmica2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ca.e3",        0x0000, 0x0800, 0x535ee0c5 )
-	ROM_LOAD( "c3.bin",       0x0800, 0x0400, 0x699c849e )
-	ROM_LOAD( "d4.bin",       0x0c00, 0x0400, 0x168e38da )
-	ROM_LOAD( "ca.e5",        0x1000, 0x0800, 0x6a111e5e )
-	ROM_LOAD( "ca.e6",        0x1800, 0x0800, 0xc9b5ca2a )
-	ROM_LOAD( "i9.bin",       0x2000, 0x0400, 0x3bb57720 )
-	ROM_LOAD( "j0.bin",       0x2400, 0x0400, 0x4ff70f45 )
+	ROM_LOAD( "ca.e3",        0x0000, 0x0800, CRC(535ee0c5) SHA1(3ec3056b7fabe07ef49a9179114aa74be44a943e) )
+	ROM_LOAD( "c3.bin",       0x0800, 0x0400, CRC(699c849e) SHA1(90a58ab8ede9c31eec3df1f8f251b59858f85eb6) )
+	ROM_LOAD( "d4.bin",       0x0c00, 0x0400, CRC(168e38da) SHA1(63c5f8346861aa7c70ad58a05977c7af413cbfaf) )
+	ROM_LOAD( "ca.e5",        0x1000, 0x0800, CRC(6a111e5e) SHA1(593be409bc969cece2ff88623e53c166b4dc43cd) )
+	ROM_LOAD( "ca.e6",        0x1800, 0x0800, CRC(c9b5ca2a) SHA1(3384b98954b6bc9a64e753b95757f61ce1d3c52e) )
+	ROM_LOAD( "i9.bin",       0x2000, 0x0400, CRC(3bb57720) SHA1(2d1edcad57767a4fa2c7713726ed0cb1203f6fbc) )
+	ROM_LOAD( "j0.bin",       0x2400, 0x0400, CRC(4ff70f45) SHA1(791499be62a7b91bde75e7a7ab6c546f5fb63027) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "ca.n1",        0x0000, 0x0800, 0x431e866c )
-	ROM_LOAD( "ca.n2",        0x0800, 0x0800, 0xaa6c6079 )
+	ROM_LOAD( "ca.n2",        0x0000, 0x0800, CRC(aa6c6079) SHA1(af4ab73e9e1c189290b26bf42adb511d5a347df9) )
+	ROM_LOAD( "ca.n1",        0x0800, 0x0800, CRC(431e866c) SHA1(b007cd3cc856360a0247bd78bb49d173f5cef321) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ca.d9",        0x0000, 0x0020, 0xdfb60f19 )
+	ROM_LOAD( "ca.d9",        0x0000, 0x0020, CRC(dfb60f19) SHA1(d510327ff3492f098659c551f7245835f61a2959) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "ca.e2",        0x0000, 0x0400, 0xea4ee931 )
+	ROM_LOAD( "ca.e2",        0x0000, 0x0400, CRC(ea4ee931) SHA1(d0a4afda4b493efb40286c2d67bf56a2a8b8da9d) )
 
 	ROM_REGION( 0x0400, REGION_USER2, 0 ) /* starfield generator */
-	ROM_LOAD( "ca.sub",       0x0000, 0x0400, 0xacbd4e98 )
+	ROM_LOAD( "ca.sub",       0x0000, 0x0400, CRC(acbd4e98) SHA1(d33fe8bdc77bb18a3ffb369ea692210d1b890771) )
 ROM_END
 
 ROM_START( cosmicg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 8k for code */
-	COSMICG_ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
-	COSMICG_ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
-	COSMICG_ROM_LOAD( "cosmicg3.bin",  0x0800, 0x0400, 0x82a49b48 )
-	COSMICG_ROM_LOAD( "cosmicg4.bin",  0x0C00, 0x0400, 0x1c1c934c )
-	COSMICG_ROM_LOAD( "cosmicg5.bin",  0x1000, 0x0400, 0xb1c00fbf )
-	COSMICG_ROM_LOAD( "cosmicg6.bin",  0x1400, 0x0400, 0xf03454ce )
-	COSMICG_ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
-	COSMICG_ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
+	ROM_LOAD( "cosmicg1.bin", 0x0000, 0x0400, CRC(e1b9f894) SHA1(bab7fd9b3db145a889542653191905b6efc5ce75) )
+	ROM_LOAD( "cosmicg2.bin", 0x0400, 0x0400, CRC(35c75346) SHA1(4e50eaa0b50ab04802dc63992ad2600c227301ad) )
+	ROM_LOAD( "cosmicg3.bin", 0x0800, 0x0400, CRC(82a49b48) SHA1(4cf9f684f3eb18b99a88ca879bb7083b1334f0cc) )
+	ROM_LOAD( "cosmicg4.bin", 0x0c00, 0x0400, CRC(1c1c934c) SHA1(011b2b3ec4d31869fda13a3654c7bc51f3ce4dc2) )
+	ROM_LOAD( "cosmicg5.bin", 0x1000, 0x0400, CRC(b1c00fbf) SHA1(136267f75e2d5b445695cabef4538f986e6f1b10) )
+	ROM_LOAD( "cosmicg6.bin", 0x1400, 0x0400, CRC(f03454ce) SHA1(32c87f369475c7154fe3243d2c7be4a25444e530) )
+	ROM_LOAD( "cosmicg7.bin", 0x1800, 0x0400, CRC(f33ebae7) SHA1(915bca53d5356e12c94ec765103ceced7306d1dd) )
+	ROM_LOAD( "cosmicg8.bin", 0x1c00, 0x0400, CRC(472e4990) SHA1(d5797b9d89446aa6533f7515e6a5fc8368d82f91) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
+	ROM_LOAD( "cosmicg9.bin", 0x0000, 0x0400, CRC(689c2c96) SHA1(ddfdc3fd29c56fdebd3b1c3443a7c39f567d5355) )
 ROM_END
 
 ROM_START( magspot2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ms.e3",   0x0000, 0x0800, 0xc0085ade )
-	ROM_LOAD( "ms.e4",   0x0800, 0x0800, 0xd534a68b )
-	ROM_LOAD( "ms.e5",   0x1000, 0x0800, 0x25513b2a )
-	ROM_LOAD( "ms.e7",   0x1800, 0x0800, 0x8836bbc4 )
-	ROM_LOAD( "ms.e6",   0x2000, 0x0800, 0x6a08ab94 )
-	ROM_LOAD( "ms.e8",   0x2800, 0x0800, 0x77c6d109 )
+	ROM_LOAD( "ms.e3",        0x0000, 0x0800, CRC(c0085ade) SHA1(ab60ba7c0e45ea2576d935135e930e2fdf165867) )
+	ROM_LOAD( "ms.e4",        0x0800, 0x0800, CRC(d534a68b) SHA1(fd3b5e619b22a8c53e3c6f5f5351068a3f26eb61) )
+	ROM_LOAD( "ms.e5",        0x1000, 0x0800, CRC(25513b2a) SHA1(c7f3d9a53cb7e7cf523ff710c333dbc744088e31) )
+	ROM_LOAD( "ms.e7",        0x1800, 0x0800, CRC(8836bbc4) SHA1(9da6c1b4e9a446108bc324e7fc280bfaeaf50504) )
+	ROM_LOAD( "ms.e6",        0x2000, 0x0800, CRC(6a08ab94) SHA1(5d9272a5304546cef6668c975e815f6750bcfa15) )
+	ROM_LOAD( "ms.e8",        0x2800, 0x0800, CRC(77c6d109) SHA1(bb265bd56d4d597d2ef75d169d5d30db1499e3be) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "ms.n1",   0x0000, 0x0800, 0x1ab338d3 )
-	ROM_LOAD( "ms.n2",   0x0800, 0x0800, 0x9e1d63a2 )
+	ROM_LOAD( "ms.n2",        0x0000, 0x0800, CRC(9e1d63a2) SHA1(d8642e515871da44880e105e6891c4b25222744f) )
+	ROM_LOAD( "ms.n1",        0x0800, 0x0800, CRC(1ab338d3) SHA1(4e3bf93f94119fd10c40953245cec735db8417fb) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ms.d9",   0x0000, 0x0020, 0x36e2aa2a )
+	ROM_LOAD( "ms.d9",        0x0000, 0x0020, CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "ms.e2",   0x0000, 0x0400, 0x89f23ebd )
+	ROM_LOAD( "ms.e2",        0x0000, 0x0400, CRC(89f23ebd) SHA1(a56bda82f8be8e541a50d2a411ada89a6d9c0373) )
 ROM_END
 
 ROM_START( devzone )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "dv1.e3",  0x0000, 0x0800, 0xc70faf00 )
-	ROM_LOAD( "dv2.e4",  0x0800, 0x0800, 0xeacfed61 )
-	ROM_LOAD( "dv3.e5",  0x1000, 0x0800, 0x7973317e )
-	ROM_LOAD( "dv5.e7",  0x1800, 0x0800, 0xb71a3989 )
-	ROM_LOAD( "dv4.e6",  0x2000, 0x0800, 0xa58c5b8c )
-	ROM_LOAD( "dv6.e8",  0x2800, 0x0800, 0x3930fb67 )
+	ROM_LOAD( "dv1.e3",       0x0000, 0x0800, CRC(c70faf00) SHA1(d3f0f071e6c7552724eba64a7182637dae4438c7) )
+	ROM_LOAD( "dv2.e4",       0x0800, 0x0800, CRC(eacfed61) SHA1(493c0d21fd1574b12978dd1f52e8735df6c1732c) )
+	ROM_LOAD( "dv3.e5",       0x1000, 0x0800, CRC(7973317e) SHA1(d236e3dad8c991c32a2550e561518b522a4580bc) )
+	ROM_LOAD( "dv5.e7",       0x1800, 0x0800, CRC(b71a3989) SHA1(aad14021ee569e221ea632416d6a006e60dd94e5) )
+	ROM_LOAD( "dv4.e6",       0x2000, 0x0800, CRC(a58c5b8c) SHA1(7ff08007aedd2ff1d7ef64263da92a5b77ae2dc4) )
+	ROM_LOAD( "dv6.e8",       0x2800, 0x0800, CRC(3930fb67) SHA1(919883e833d6caa8fe7c3ceaa184575a3b4932b6) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "dv7.n1",  0x0000, 0x0800, 0xe7562fcf )
-	ROM_LOAD( "dv8.n2",  0x0800, 0x0800, 0xda1cbec1 )
+	ROM_LOAD( "dv8.n2",       0x0000, 0x0800, CRC(da1cbec1) SHA1(08a668f19c68335f4fc9f98cd53b44047dd8aad9) )
+	ROM_LOAD( "dv7.n1",       0x0800, 0x0800, CRC(e7562fcf) SHA1(0a0833dbb8d4be69fbf8897aa3e045a87ae42024) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ms.d9",   0x0000, 0x0020, 0x36e2aa2a )
+	ROM_LOAD( "ms.d9",        0x0000, 0x0020, CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "dz9.e2",  0x0000, 0x0400, 0x693855b6 )
+	ROM_LOAD( "dz9.e2",       0x0000, 0x0400, CRC(693855b6) SHA1(1c29d72be511c1d38b30b9534d647d0813b2ef57) )
+
+	ROM_REGION( 0x0800, REGION_USER2, 0 ) /* grid horizontal line positions */
+	ROM_LOAD( "ic12.sub",     0x0000, 0x0800, CRC(f61c1c45) SHA1(9016710409ae2bccfc60f8e3d1131c125333c034) )
+
+	ROM_REGION( 0x0020, REGION_USER3, 0 ) /* grid vertical line positions */
+	ROM_LOAD( "ic1.sub",      0x0000, 0x0020, CRC(df974878) SHA1(2ef2e1b771923f9a0bfe1841444de61200298605) )
+ROM_END
+
+ROM_START( devzone2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "p10_1.e3",     0x0000, 0x0800, BAD_DUMP CRC(38bd45a4) SHA1(192eee64ff53c20fb5b369703b52a5bb3976ba1d)  )
+	ROM_LOAD( "my4_2.e4",     0x0800, 0x0800, BAD_DUMP CRC(e1637800) SHA1(3705ce1f02f3fefec0285f5db6a7606e6cec1bac)  )
+	ROM_LOAD( "ms6_3.e5",     0x1000, 0x0800, BAD_DUMP CRC(c1952e2f) SHA1(d42f0f547e989a71254957e5e634ac359e72bb14)  )
+	ROM_LOAD( "mx6_5.e7",     0x1800, 0x0800, BAD_DUMP CRC(c5394215) SHA1(8c970f6a8d34963bc4848f2bef90cee850c9c28d)  )
+	ROM_LOAD( "my1_4.e6",     0x2000, 0x0800, BAD_DUMP CRC(5d965d93) SHA1(49fe79e4b5cec1c7aa2f8e1eb750b39bb7dda16c)  )
+	ROM_LOAD( "mz7_6.e8",     0x2800, 0x0800, BAD_DUMP CRC(8504e8c9) SHA1(40e08ff38673544c734a9fc19b38edaa8cc74f23)  )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "my8_8.n2",     0x0000, 0x0800, CRC(18abce02) SHA1(5cac11f4e6f1a4801bd02007399a906cdff66b85) )
+	ROM_LOAD( "mx3_7.n1",     0x0800, 0x0800, CRC(c089c9e3) SHA1(2fb725338a19d5d4f9e445e7d46d105b8db9733c) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "ms.d9",        0x0000, 0x0020, CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
+	ROM_LOAD( "dz9.e2",       0x0000, 0x0400, CRC(693855b6) SHA1(1c29d72be511c1d38b30b9534d647d0813b2ef57) )
+
+	ROM_REGION( 0x0800, REGION_USER2, 0 ) /* grid horizontal line positions */
+	ROM_LOAD( "ic12.sub",     0x0000, 0x0800, CRC(f61c1c45) SHA1(9016710409ae2bccfc60f8e3d1131c125333c034) )
+
+	ROM_REGION( 0x0020, REGION_USER3, 0 ) /* grid vertical line positions */
+	ROM_LOAD( "ic1.sub",      0x0000, 0x0020, CRC(df974878) SHA1(2ef2e1b771923f9a0bfe1841444de61200298605) )
 ROM_END
 
 ROM_START( nomnlnd )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
-	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
-	ROM_LOAD( "3.bin",  0x1000, 0x0800, 0x7fc42724 )
-	ROM_LOAD( "5.bin",  0x1800, 0x0800, 0x9cc2f1d9 )
-	ROM_LOAD( "4.bin",  0x2000, 0x0800, 0x0e8cd46a )
-	ROM_LOAD( "6.bin",  0x2800, 0x0800, 0xba472ba5 )
+	ROM_LOAD( "1.bin",        0x0000, 0x0800, CRC(ba117ba6) SHA1(7399e7ac8a585ed6502ea0d740850b1ed2dc5bcd) )
+	ROM_LOAD( "2.bin",        0x0800, 0x0800, CRC(e5ed654f) SHA1(c26dc12ade6dc63392945ec0caca229d936f7f89) )
+	ROM_LOAD( "3.bin",        0x1000, 0x0800, CRC(7fc42724) SHA1(0f8fdfad0a2557b9dd99ae3890c37bbc5c59bc89) )
+	ROM_LOAD( "5.bin",        0x1800, 0x0800, CRC(9cc2f1d9) SHA1(453c67b613550c84364f445705019188bb580d64) )
+	ROM_LOAD( "4.bin",        0x2000, 0x0800, CRC(0e8cd46a) SHA1(14cf9017e408b862a4ed63bb8acd37064b3919a8) )
+	ROM_LOAD( "6.bin",        0x2800, 0x0800, CRC(ba472ba5) SHA1(49be1500b3805a19c7210e53ad5c2c4a5876bf4e) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "nml7.n1",  0x0000, 0x0800, 0xd08ed22f )
-	ROM_LOAD( "nml8.n2",  0x0800, 0x0800, 0x739009b4 )
-
-	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )	/* tree + river */
-	ROM_LOAD( "nl11.ic7", 0x0000, 0x0400, 0xe717b241 )
-	ROM_LOAD( "nl10.ic4", 0x0400, 0x0400, 0x5b13f64e )
+	ROM_LOAD( "nml8.n2",      0x0000, 0x0800, CRC(739009b4) SHA1(bbabd6ce7b1ded025f20120adaebdb97fb755ef0) )
+	ROM_LOAD( "nml7.n1",      0x0800, 0x0800, CRC(d08ed22f) SHA1(33f450b6f63110bf804105280dc679f1591422f6) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nml.d9",       0x0000, 0x0020, CRC(65e911f9) SHA1(6420a03195f63edeed17cc3a235e46e3f88d2037) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "nl9.e2",   0x0000, 0x0400, 0x9e05f14e )
+	ROM_LOAD( "nl9.e2",       0x0000, 0x0400, CRC(9e05f14e) SHA1(76fc0b2b12cc9a0a64b539d2e75edefdb4a2ae61) )
+
+	ROM_REGION( 0x0800, REGION_USER2, 0 ) /* tree + river */
+	ROM_LOAD( "nl10.ic4",     0x0000, 0x0400, CRC(5b13f64e) SHA1(b04d2423fb443d46fff69c031b0312d956a5b789) )
+	ROM_LOAD( "nl11.ic7",     0x0400, 0x0400, CRC(e717b241) SHA1(6d234a75514e22d484dc027db5bb85cf8b58f4f2) )
 ROM_END
 
 ROM_START( nomnlndg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
-	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )
-	ROM_LOAD( "nml3.e5",  0x1000, 0x0800, 0xd422fc8a )
-	ROM_LOAD( "nml5.e7",  0x1800, 0x0800, 0xd58952ac )
-	ROM_LOAD( "nml4.e6",  0x2000, 0x0800, 0x994c9afb )
-	ROM_LOAD( "nml6.e8",  0x2800, 0x0800, 0x01ed2d8c )
+	ROM_LOAD( "nml1.e3",      0x0000, 0x0800, CRC(e212ed91) SHA1(135c20fc97790769d5e1619d7ac844a1d3f6aace) )
+	ROM_LOAD( "nml2.e4",      0x0800, 0x0800, CRC(f66ef3d8) SHA1(c42a325dd952cda074ef2857e7fa5154f0b7c7ce) )
+	ROM_LOAD( "nml3.e5",      0x1000, 0x0800, CRC(d422fc8a) SHA1(18cafc462ce0800fea2af277439827dc1f4fc91b) )
+	ROM_LOAD( "nml5.e7",      0x1800, 0x0800, CRC(d58952ac) SHA1(1c82a49cc1f0203e6436c5292ebd6e9004bd6a84) )
+	ROM_LOAD( "nml4.e6",      0x2000, 0x0800, CRC(994c9afb) SHA1(c8e6af30d9b2cb5ca52fa325c6ac9a41413d067c) )
+	ROM_LOAD( "nml6.e8",      0x2800, 0x0800, CRC(01ed2d8c) SHA1(bfa31e9100a1f9276c521ed8699e1cb0d067e0fa) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "nml7.n1",  0x0000, 0x0800, 0xd08ed22f )
-	ROM_LOAD( "nml8.n2",  0x0800, 0x0800, 0x739009b4 )
-
-	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )	/* tree + river */
-	ROM_LOAD( "nl11.ic7", 0x0000, 0x0400, 0xe717b241 )
-	ROM_LOAD( "nl10.ic4", 0x0400, 0x0400, 0x5b13f64e )
+	ROM_LOAD( "nml8.n2",      0x0000, 0x0800, CRC(739009b4) SHA1(bbabd6ce7b1ded025f20120adaebdb97fb755ef0) )
+	ROM_LOAD( "nml7.n1",      0x0800, 0x0800, CRC(d08ed22f) SHA1(33f450b6f63110bf804105280dc679f1591422f6) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nml.d9",       0x0000, 0x0020, CRC(65e911f9) SHA1(6420a03195f63edeed17cc3a235e46e3f88d2037) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "nl9.e2",   0x0000, 0x0400, 0x9e05f14e )
+	ROM_LOAD( "nl9.e2",       0x0000, 0x0400, CRC(9e05f14e) SHA1(76fc0b2b12cc9a0a64b539d2e75edefdb4a2ae61) )
+
+	ROM_REGION( 0x0800, REGION_USER2, 0 ) /* tree + river */
+	ROM_LOAD( "nl10.ic4",     0x0000, 0x0400, CRC(5b13f64e) SHA1(b04d2423fb443d46fff69c031b0312d956a5b789) )
+	ROM_LOAD( "nl11.ic7",     0x0400, 0x0400, CRC(e717b241) SHA1(6d234a75514e22d484dc027db5bb85cf8b58f4f2) )
 ROM_END
 
+
+static DRIVER_INIT( cosmicg )
+{
+	/* Program ROMs have data pins connected different from normal */
+
+	offs_t offs;
+
+    for (offs =0; offs < memory_region_length(REGION_CPU1); offs++)
+	{
+        data8_t scrambled = memory_region(REGION_CPU1)[offs];
+
+        data8_t normal = (scrambled >> 3 & 0x11)
+                       | (scrambled >> 1 & 0x22)
+                       | (scrambled << 1 & 0x44)
+                       | (scrambled << 3 & 0x88);
+
+        memory_region(REGION_CPU1)[offs] = normal;
+    }
+
+
+    /* Patch to avoid crash - Seems like duff romcheck routine */
+    /* I would expect it to be bitrot, but have two romsets    */
+    /* from different sources with the same problem!           */
+    memory_region(REGION_CPU1)[0x1e9e] = 0x04;
+    memory_region(REGION_CPU1)[0x1e9f] = 0xc0;
+}
+
+
+static DRIVER_INIT( devzone )
+{
+	install_mem_write_handler(0, 0x4807, 0x4807, cosmic_background_enable_w);
+}
+
+
+static DRIVER_INIT( nomnlnd )
+{
+	install_mem_read_handler(0, 0x5000, 0x5001, nomnlnd_port_0_1_r);
+
+	install_mem_write_handler(0, 0x4807, 0x4807, cosmic_background_enable_w);
+}
 
 
 GAMEX(1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla", GAME_NO_COCKTAIL )
 GAMEX(1979, cosmica,  0,       cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien", GAME_NO_SOUND )
 GAMEX(1979, cosmica2, cosmica, cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien (older)", GAME_NO_SOUND )
-GAME( 1980, panic,    0,       panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 1)" )
-GAME( 1980, panica,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 2)" )
+GAME( 1980, panic,    0,       panic,    panic,    0,       ROT270, "Universal", "Space Panic (version E)" )
+GAME( 1980, panic2,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 2)" )
+GAME( 1980, panic3,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 3)" )
+GAME( 1980, panich,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (harder)" )
 GAME( 1980, panicger, panic,   panic,    panic,    0,       ROT270, "Universal (ADP Automaten license)", "Space Panic (German)" )
 GAMEX(1980, magspot2, 0,       magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot II", GAME_IMPERFECT_SOUND )
-GAMEX(1980, devzone,  0,       magspot2, devzone,  0,       ROT270, "Universal", "Devil Zone", GAME_IMPERFECT_SOUND )
-GAMEX(1980?,nomnlnd,  0,       nomnlnd,  nomnlnd,  0,       ROT270, "Universal", "No Man's Land", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX(1980?,nomnlndg, nomnlnd, nomnlnd,  nomnlndg, 0,       ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX(1980, devzone,  0,       devzone,  devzone,  devzone, ROT270, "Universal", "Devil Zone", GAME_IMPERFECT_SOUND )
+GAMEX(1980, devzone2, devzone, devzone,  devzone2, devzone, ROT270, "Universal", "Devil Zone (easier)", GAME_IMPERFECT_SOUND )
+GAMEX(1980, nomnlnd,  0,       nomnlnd,  nomnlnd,  nomnlnd, ROT270, "Universal", "No Man's Land", GAME_IMPERFECT_SOUND )
+GAMEX(1980, nomnlndg, nomnlnd, nomnlnd,  nomnlndg, nomnlnd, ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_IMPERFECT_SOUND )

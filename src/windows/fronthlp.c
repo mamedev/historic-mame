@@ -14,8 +14,8 @@
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
-		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, 
+		LIST_WRONGMERGE, LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
 		LIST_CPU, LIST_CPUCLASS, LIST_NOSOUND, LIST_SOUND, LIST_NVRAM, LIST_SOURCEFILE,
 		LIST_GAMESPERSOURCEFILE };
 #else
@@ -71,7 +71,9 @@ struct rc_option frontend_opts[] = {
 	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "all available info on driver" },
 	{ "listclones", "lc", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "show clones" },
 	{ "listsamdir", NULL, rc_set_int, &list, NULL, LIST_SAMDIR, 0, NULL, "shared sample directory" },
-	{ "listcrc", NULL, rc_set_int, &list, NULL, LIST_CRC, 0, NULL, "checksums" },
+	{ "listcrc", NULL, rc_set_int, &list, NULL, LIST_CRC, 0, NULL, "CRC-32s" },
+	{ "listsha1", NULL, rc_set_int, &list, NULL, LIST_SHA1, 0, NULL, "SHA-1s" },
+	{ "listmd5", NULL, rc_set_int, &list, NULL, LIST_MD5, 0, NULL, "MD5s" },
 	{ "listdupcrc", NULL, rc_set_int, &list, NULL, LIST_DUPCRC, 0, NULL, "duplicate crc's" },
 	{ "listwrongmerge", "lwm", rc_set_int, &list, NULL, LIST_WRONGMERGE, 0, NULL, "wrong merge attempts" },
 	{ "listromsize", NULL, rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
@@ -109,7 +111,7 @@ struct rc_option frontend_opts[] = {
 };
 
 
-int silentident,knownstatus;
+static int silentident,knownstatus;
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -189,7 +191,7 @@ static void namecopy(char *name_ref,const char *desc)
 
 
 /* Identifies a rom from from this checksum */
-static void match_roms(const struct GameDriver *driver,int checksum,int *found)
+static void match_roms(const struct GameDriver *driver,const char* hash,int *found)
 {
 	const struct RomModule *region, *rom;
 
@@ -197,23 +199,15 @@ static void match_roms(const struct GameDriver *driver,int checksum,int *found)
 	{
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			if (checksum == ROM_GETCRC(rom))
+			if (hash_data_is_equal(hash, ROM_GETHASHDATA(rom), 0))
 			{
+				char baddump = hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP);
+
 				if (!silentident)
 				{
 					if (*found != 0)
 						printf("             ");
-					printf("= %-12s  %s\n",ROM_GETNAME(rom),driver->description);
-				}
-				(*found)++;
-			}
-			if (BADCRC(checksum) == ROM_GETCRC(rom))
-			{
-				if (!silentident)
-				{
-					if (*found != 0)
-						printf("             ");
-					printf("= (BAD) %-12s  %s\n",ROM_GETNAME(rom),driver->description);
+					printf("= %s%-12s  %s\n",baddump ? "(BAD) " : "",ROM_GETNAME(rom),driver->description);
 				}
 				(*found)++;
 			}
@@ -222,7 +216,7 @@ static void match_roms(const struct GameDriver *driver,int checksum,int *found)
 }
 
 
-void identify_rom(const char* name, int checksum, int length)
+void identify_rom(const char* name, const char* hash, int length)
 {
 	int found = 0;
 
@@ -240,10 +234,10 @@ void identify_rom(const char* name, int checksum, int length)
 		printf("%s ",&name[0]);
 
 	for (i = 0; drivers[i]; i++)
-		match_roms(drivers[i],checksum,&found);
+		match_roms(drivers[i],hash,&found);
 
 	for (i = 0; test_drivers[i]; i++)
-		match_roms(test_drivers[i],checksum,&found);
+		match_roms(test_drivers[i],hash,&found);
 
 	if (found == 0)
 	{
@@ -279,6 +273,7 @@ void identify_file(const char* name)
 	FILE *f;
 	int length;
 	char* data;
+	char hash[HASH_BUF_SIZE];
 
 	f = fopen(name,"rb");
 	if (!f) {
@@ -324,7 +319,16 @@ void identify_file(const char* name)
 
 	fclose(f);
 
-	identify_rom(name, crc32(0L,(const unsigned char*)data,length),length);
+	/* Compute checksum of all the available functions. Since MAME for
+	   now carries inforamtions only for CRC and SHA1, we compute only
+	   these */
+	if (options.crc_only)
+		hash_compute(hash, data, length, HASH_CRC);
+	else
+		hash_compute(hash, data, length, HASH_CRC|HASH_SHA1);
+	
+	/* Try to identify the ROM */
+	identify_rom(name, hash, length);
 
 	free(data);
 }
@@ -341,9 +345,35 @@ void identify_zip(const char* zipname)
 		/* Skip empty file and directory */
 		if (ent->uncompressed_size!=0) {
 			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
+			char hash[HASH_BUF_SIZE];
+			UINT8 crcs[4];
+
 //			sprintf(buf,"%s/%s",zipname,ent->name);
 			sprintf(buf,"%-12s",ent->name);
-			identify_rom(buf,ent->crc32,ent->uncompressed_size);
+
+			/* Decompress the ROM from the ZIP, and compute all the needed 
+			   checksums. Since MAME for now carries informations only for CRC and
+			   SHA1, we compute only these (actually, CRC is extracted from the
+			   ZIP header) */
+			hash_data_clear(hash);
+
+			if (!options.crc_only)
+			{
+				UINT8* data =  (UINT8*)malloc(ent->uncompressed_size);
+				readuncompresszip(zip, ent, data);
+				hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
+				free(data);
+			}
+			
+			crcs[0] = (UINT8)(ent->crc32 >> 24);
+			crcs[1] = (UINT8)(ent->crc32 >> 16);
+			crcs[2] = (UINT8)(ent->crc32 >> 8);
+			crcs[3] = (UINT8)(ent->crc32 >> 0);
+			hash_data_insert_binary_checksum(hash, HASH_CRC, crcs);
+
+			/* Try to identify the ROM */
+			identify_rom(buf, hash, ent->uncompressed_size);
+
 			free(buf);
 		}
 	}
@@ -1076,13 +1106,28 @@ int frontend_help (const char *gamename)
 			break;
 
 		case LIST_CRC: /* list all crc-32 */
+		case LIST_SHA1: /* list all sha-1 */
+		case LIST_MD5:  /* list all md5 */
+
+			if (list == LIST_SHA1)
+				j = HASH_SHA1;
+			else if (list == LIST_MD5)
+				j = HASH_MD5;
+			else
+				j = HASH_CRC;
+
 			for (i = 0; drivers[i]; i++)
 			{
 				const struct RomModule *region, *rom;
 
 				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
 					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-						printf("%08x %-12s %s\n",ROM_GETCRC(rom),ROM_GETNAME(rom),drivers[i]->description);
+					{
+						char chksum[256];
+
+						if (hash_data_extract_printable_checksum(ROM_GETHASHDATA(rom), j, chksum))
+							printf("%s %-12s %s\n",chksum,ROM_GETNAME(rom),drivers[i]->description);
+					}
 			}
 			return 0;
 			break;
@@ -1094,18 +1139,36 @@ int frontend_help (const char *gamename)
 
 				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
 					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-						if (ROM_GETCRC(rom))
+						/* compare all the ROMS that we have a dump for */
+						if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+						{
+							char first_match = 1;
+
 							for (j = i + 1; drivers[j]; j++)
 							{
 								const struct RomModule *region1, *rom1;
 
 								for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
 									for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
-										if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+										if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(rom1), 0))
 										{
-											printf("%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom),
-													ROM_GETNAME(rom),drivers[i]->name,
-													ROM_GETNAME(rom1),drivers[j]->name);
+											/* Dump checksum infos only on the first match for a given
+											   ROM. This reduces the output size and makes it more
+											   readable. */
+											if (first_match)
+										{
+												char buf[512];
+
+												first_match = 0;
+				
+												hash_data_print(ROM_GETHASHDATA(rom), 0, buf);
+												printf("%s\n", buf);
+												printf("    %-12s %-8s\n", ROM_GETNAME(rom),drivers[i]->name);
+
+											}
+
+											printf("    %-12s %-8s\n", ROM_GETNAME(rom1),drivers[j]->name);
+										}
 										}
 							}
 			}
@@ -1124,7 +1187,7 @@ int frontend_help (const char *gamename)
 				{
 					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 					{
-						if (ROM_GETCRC(rom))
+						if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
 						{
 							for (j = 0; drivers[j]; j++)
 							{
@@ -1143,13 +1206,23 @@ int frontend_help (const char *gamename)
 										{
 											if (!strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)))
 											{
-												if (ROM_GETCRC(rom1) &&
-														ROM_GETCRC(rom) != ROM_GETCRC(rom1) &&
-														ROM_GETCRC(rom) != BADCRC(ROM_GETCRC(rom1)))
+												if (!hash_data_has_info(ROM_GETHASHDATA(rom1), HASH_INFO_NO_DUMP) &&
+													!hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(rom1), 0))
 												{
-													printf("%-12s %08x %-8s <-> %08x %-8s\n",ROM_GETNAME(rom),
-															ROM_GETCRC(rom),drivers[i]->name,
-															ROM_GETCRC(rom1),drivers[j]->name);
+													char temp[512];
+
+													/* Print only the checksums available for both the roms */
+													unsigned int functions = 
+														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
+														hash_data_used_functions(ROM_GETHASHDATA(rom1));
+
+													printf("%s:\n", ROM_GETNAME(rom));
+													
+													hash_data_print(ROM_GETHASHDATA(rom), functions, temp);
+													printf("  %-8s: %s\n", drivers[i]->name, temp);
+
+													hash_data_print(ROM_GETHASHDATA(rom1), functions, temp);
+													printf("  %-8s: %s\n", drivers[j]->name, temp);
 												}
 												else
 													match = 1;
@@ -1163,11 +1236,20 @@ int frontend_help (const char *gamename)
 										{
 											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
 											{
-												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && 
+													hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(rom1), 0))
 												{
-													printf("%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom),
-															ROM_GETNAME(rom),drivers[i]->name,
-															ROM_GETNAME(rom1),drivers[j]->name);
+													char temp[512];
+
+													/* Print only the checksums available for both the roms */
+													unsigned int functions = 
+														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
+														hash_data_used_functions(ROM_GETHASHDATA(rom1));
+
+													hash_data_print(ROM_GETHASHDATA(rom), functions, temp);
+													printf("%s\n", temp);
+													printf("  %-12s %-8s\n", ROM_GETNAME(rom), drivers[i]->name);
+													printf("  %-12s %-8s\n", ROM_GETNAME(rom1),drivers[j]->name);
 												}
 											}
 										}

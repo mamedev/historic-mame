@@ -67,13 +67,14 @@ static struct hard_disk_interface audit_hard_disk_interface =
 
 
 /* returns 1 if rom is defined in this set */
-int RomInSet (const struct GameDriver *gamedrv, unsigned int crc)
+int RomInSet (const struct GameDriver *gamedrv, const char* hash)
 {
 	const struct RomModule *region, *rom;
 
 	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			if (ROM_GETCRC(rom) == crc)
+			/* Compare all the available checksums */
+			if (hash_data_is_equal(ROM_GETHASHDATA(rom), hash, 0))
 				return 1;
 
 	return 0;
@@ -102,7 +103,7 @@ int RomsetMissing (int game)
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+			if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -119,7 +120,7 @@ int RomsetMissing (int game)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+				if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
 					cloneRomsFound++;
 #endif
 
@@ -143,13 +144,18 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	int	err;
 
 	if (!gAudits)
+	{
 		gAudits = (tAuditRecord *)malloc (AUD_MAX_ROMS * sizeof (tAuditRecord));
+
+		// Make sure the memory is cleared - it's needed by the hashing
+		//  engine
+		memset(gAudits, 0, AUD_MAX_ROMS * sizeof(tAuditRecord));
+	}
 
 	if (gAudits)
 		*audit = aud = gAudits;
 	else
 		return 0;
-
 
 	gamedrv = drivers[game];
 
@@ -175,18 +181,19 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				strcpy (aud->rom, name);
 				aud->explength = 0;
 				aud->length = 0;
-				aud->expchecksum = ROM_GETCRC(rom);
-				/* NS981003: support for "load by CRC" */
-				aud->checksum = ROM_GETCRC(rom);
-				memset(aud->expmd5,0,sizeof(aud->md5));
-				memset(aud->md5,0,sizeof(aud->md5));
+				aud->exphash = ROM_GETHASHDATA(rom);
+
+				/* Copy into the variable we pass to the functions
+				   to support load-by-checksum */
+				hash_data_copy(aud->hash, aud->exphash);
+
 				count++;
 
-				/* obtain CRC-32 and length of ROM file */
+				/* obtain hash checksums and length of ROM file */
 				drv = gamedrv;
 				do
 				{
-					err = mame_fchecksum (drv->name, name, &aud->length, &aud->checksum);
+					err = mame_fchecksum(drv->name, name, &aud->length, aud->hash);
 					drv = drv->clone_of;
 				} while (err && drv);
 
@@ -196,7 +203,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 				if (err)
 				{
-					if (!aud->expchecksum)
+					if (hash_data_has_info(aud->exphash, HASH_INFO_NO_DUMP))
 						/* not found but it's not good anyway */
 						aud->status = AUD_NOT_AVAILABLE;
 					else
@@ -206,17 +213,21 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				/* all cases below assume the ROM was at least found */
 				else if (aud->explength != aud->length)
 					aud->status = AUD_LENGTH_MISMATCH;
-				else if (aud->checksum != aud->expchecksum)
-				{
-					if (!aud->expchecksum)
+				else if (hash_data_has_info(aud->exphash, HASH_INFO_NO_DUMP))
 						aud->status = AUD_ROM_NEED_DUMP; /* new case - found but not known to be dumped */
-					else if (aud->checksum == BADCRC (aud->expchecksum))
-						aud->status = AUD_ROM_NEED_REDUMP;
-					else
+				else if (!hash_data_is_equal(aud->exphash, aud->hash, 0))
+				{
+					/* non-matching hash */
 						aud->status = AUD_BAD_CHECKSUM;
 				}
 				else
+				{
+					/* matching hash */
+					if (hash_data_has_info(aud->exphash, HASH_INFO_BAD_DUMP))
+						aud->status = AUD_ROM_NEED_REDUMP;
+					else
 					aud->status = AUD_ROM_GOOD;
+				}
 
 				aud++;
 			}
@@ -229,10 +240,8 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				strcpy (aud->rom, name);
 				aud->explength = 0;
 				aud->length = 0;
-				aud->expchecksum = 0;
-				aud->checksum = 0;
-				rom_extract_md5(rom,aud->expmd5);
-				memset(aud->md5,0,sizeof(aud->md5));
+				aud->exphash = ROM_GETHASHDATA(rom);
+				hash_data_clear(aud->hash);
 				count++;
 
 				hard_disk_gamedrv = gamedrv;
@@ -253,8 +262,10 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				else
 				{
 					header = *hard_disk_get_header(source);
-					memcpy( aud->md5, header.md5, sizeof( header.md5 ) );
-					if (!memcmp(aud->md5, aud->expmd5,sizeof(aud->md5)))
+
+					hash_data_insert_binary_checksum(aud->hash, HASH_MD5, header.md5);
+					
+					if (hash_data_is_equal(aud->exphash, aud->hash, 0))
 					{
 						aud->status = AUD_DISK_GOOD;
 					}
@@ -262,6 +273,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 					{
 						aud->status = AUD_DISK_BAD_MD5;
 					}
+
 					hard_disk_close( source );
 				}
 
@@ -275,6 +287,15 @@ int AuditRomSet (int game, tAuditRecord **audit)
         else
         #endif
 	return count;
+}
+
+static void VerifyDumpHashData(const char* hash, const char* head, verify_printf_proc verify_printf)
+{
+	char buf[512];
+
+	verify_printf("\t%s", head ? head : "");
+	hash_data_print(hash, 0, buf);
+	verify_printf("%s\n", buf);
 }
 
 
@@ -301,7 +322,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+			if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -322,7 +343,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+				if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
 					cloneRomsFound++;
 
                 #ifndef MESS
@@ -340,20 +361,23 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		switch (aud->status)
 		{
 			case AUD_ROM_NOT_FOUND:
-				verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
+				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_NOT_AVAILABLE:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND - NO GOOD DUMP KNOWN\n",
 					drivers[game]->name, aud->rom, aud->explength);
 				break;
 			case AUD_ROM_NEED_DUMP:
-				verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
+				verify_printf ("%-8s: %-12s %7d bytes FOUND BUT NO GOOD DUMP KNOWN\n",
 					drivers[game]->name, aud->rom, aud->explength);
 				break;
 			case AUD_BAD_CHECKSUM:
-				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum,aud->checksum);
+				verify_printf ("%-8s: %-12s %7d bytes INCORRECT CHECKSUM:\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				VerifyDumpHashData(aud->exphash, "EXPECTED: ", verify_printf);
+				VerifyDumpHashData(aud->hash,    "   FOUND: ", verify_printf);
 				break;
 			case AUD_ROM_NEED_REDUMP:
 				verify_printf ("%-8s: %-12s %7d bytes ROM NEEDS REDUMP\n",
@@ -363,44 +387,34 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				verify_printf ("Out of memory reading ROM %s\n", aud->rom);
 				break;
 			case AUD_LENGTH_MISMATCH:
-				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum,aud->length);
+				verify_printf ("%-8s: %-12s %7d bytes INCORRECT LENGTH: %8d\n",
+					drivers[game]->name, aud->rom, aud->explength, aud->length);
+				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_ROM_GOOD:
 #if 0    /* if you want a full accounting of roms */
-				verify_printf ("%-8s: %-12s %7d bytes %08x ROM GOOD\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
+				verify_printf ("%-8s: %-12s %7d bytes ROM GOOD\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				VerifyDumpHashData(aud->hash, NULL, verify_printf);
 #endif
 				break;
 			case AUD_DISK_GOOD:
 #if 0    /* if you want a full accounting of roms */
-				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x GOOD\n",
-					drivers[game]->name, aud->rom,
-					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
-					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
-					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
-					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15]);
+				verify_printf ("%-8s: %-12s GOOD\n",
+					drivers[game]->name, aud->rom);
+				VerifyDumpHashData(aud->hash, NULL, verify_printf);				
 #endif
 				break;
 			case AUD_DISK_NOT_FOUND:
-				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x NOT FOUND\n",
-					drivers[game]->name, aud->rom,
-					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
-					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
-					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
-					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15]);
+				verify_printf ("%-8s: %-12s NOT FOUND\n",
+					drivers[game]->name, aud->rom);
+				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_DISK_BAD_MD5:
-				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x INCORRECT MD5: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					drivers[game]->name, aud->rom,
-					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
-					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
-					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
-					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15],
-					aud->md5[0], aud->md5[1], aud->md5[2], aud->md5[3],
-					aud->md5[4], aud->md5[5], aud->md5[6], aud->md5[7],
-					aud->md5[8], aud->md5[9], aud->md5[10], aud->md5[11],
-					aud->md5[12], aud->md5[13], aud->md5[14], aud->md5[15]);
+				verify_printf ("%-8s: %-12s INCORRECT CHECKSUM:\n",
+					drivers[game]->name, aud->rom);
+				VerifyDumpHashData(aud->exphash, "EXPECTED: ", verify_printf);
+				VerifyDumpHashData(aud->hash,    "   FOUND: ", verify_printf);
 				break;
 		}
 		aud++;

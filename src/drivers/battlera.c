@@ -326,20 +326,20 @@ MACHINE_DRIVER_END
 
 ROM_START( bldwolf )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Main cpu code */
-	ROM_LOAD( "es00-1.rom", 0x00000, 0x10000, 0xff4aa252 )
-	ROM_LOAD( "es01.rom",   0x10000, 0x10000, 0x9fea3189 )
-	ROM_LOAD( "es02-1.rom", 0x20000, 0x10000, 0x49792753 )
+	ROM_LOAD( "es00-1.rom", 0x00000, 0x10000, CRC(ff4aa252) SHA1(3c190e49020bb6923abb3f3c2632d3c86443c292) )
+	ROM_LOAD( "es01.rom",   0x10000, 0x10000, CRC(9fea3189) SHA1(0692df6df533dfe55f61df8aa0c5c11944ba3ae3) )
+	ROM_LOAD( "es02-1.rom", 0x20000, 0x10000, CRC(49792753) SHA1(4f3fb6912607d373fc0c1096ac0a8cc939e33617) )
 	/* Rom sockets 0x30000 - 0x70000 are unused */
-	ROM_LOAD( "es05.rom",   0x80000, 0x10000, 0x551fa331 )
-	ROM_LOAD( "es06.rom",   0x90000, 0x10000, 0xab91aac8 )
-	ROM_LOAD( "es07.rom",   0xa0000, 0x10000, 0x8d15a3d0 )
-	ROM_LOAD( "es08.rom",   0xb0000, 0x10000, 0x38f06039 )
-	ROM_LOAD( "es09.rom",   0xc0000, 0x10000, 0xb718c47d )
-	ROM_LOAD( "es10-1.rom", 0xd0000, 0x10000, 0xd3cddc02 )
+	ROM_LOAD( "es05.rom",   0x80000, 0x10000, CRC(551fa331) SHA1(a70c627c572ba1b8029f61eae6eaad9825c56339) )
+	ROM_LOAD( "es06.rom",   0x90000, 0x10000, CRC(ab91aac8) SHA1(81d820c8b70281a4a52f7ec75a3c54377011d9d9) )
+	ROM_LOAD( "es07.rom",   0xa0000, 0x10000, CRC(8d15a3d0) SHA1(afae081ee5e0de359cae6a7ea8401237c5ab7095) )
+	ROM_LOAD( "es08.rom",   0xb0000, 0x10000, CRC(38f06039) SHA1(cc394f161b2c4423cd2da763701ceaad7d27f741) )
+	ROM_LOAD( "es09.rom",   0xc0000, 0x10000, CRC(b718c47d) SHA1(1d5b2ec819b0848e5b883373887445a63ebddb06) )
+	ROM_LOAD( "es10-1.rom", 0xd0000, 0x10000, CRC(d3cddc02) SHA1(d212127a9d7aff384171d79c563f1516c0bd46ae) )
 	/* Rom sockets 0xe0000 - 0x100000 are unused */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "es11.rom",   0x00000, 0x10000, 0xf5b29c9c )
+	ROM_LOAD( "es11.rom",   0x00000, 0x10000, CRC(f5b29c9c) SHA1(44dcdf96f8deb9a29aa9d94a8b9cf91a0ed808d4) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, 0 )
 	/* Nothing */
@@ -347,20 +347,20 @@ ROM_END
 
 ROM_START( battlera )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Main cpu code */
-	ROM_LOAD( "00_e1.bin", 0x00000, 0x10000, 0xaa1cbe69 ) /* ET00 */
-	ROM_LOAD( "es01.rom",  0x10000, 0x10000, 0x9fea3189 ) /* ET01 */
-	ROM_LOAD( "02_e4.bin", 0x20000, 0x10000, 0xcd72f580 ) /* ET02, etc */
+	ROM_LOAD( "00_e1.bin", 0x00000, 0x10000, CRC(aa1cbe69) SHA1(982530f3202bc7b8d94d2b818873b71f02c0e8de) ) /* ET00 */
+	ROM_LOAD( "es01.rom",  0x10000, 0x10000, CRC(9fea3189) SHA1(0692df6df533dfe55f61df8aa0c5c11944ba3ae3) ) /* ET01 */
+	ROM_LOAD( "02_e4.bin", 0x20000, 0x10000, CRC(cd72f580) SHA1(43b476c8f554348b02aa9558c0773f47cdb47fe0) ) /* ET02, etc */
 	/* Rom sockets 0x30000 - 0x70000 are unused */
-	ROM_LOAD( "es05.rom",  0x80000, 0x10000, 0x551fa331 )
-	ROM_LOAD( "es06.rom",  0x90000, 0x10000, 0xab91aac8 )
-	ROM_LOAD( "es07.rom",  0xa0000, 0x10000, 0x8d15a3d0 )
-	ROM_LOAD( "es08.rom",  0xb0000, 0x10000, 0x38f06039 )
-	ROM_LOAD( "es09.rom",  0xc0000, 0x10000, 0xb718c47d )
-	ROM_LOAD( "es10-1.rom",0xd0000, 0x10000, 0xd3cddc02 )
+	ROM_LOAD( "es05.rom",  0x80000, 0x10000, CRC(551fa331) SHA1(a70c627c572ba1b8029f61eae6eaad9825c56339) )
+	ROM_LOAD( "es06.rom",  0x90000, 0x10000, CRC(ab91aac8) SHA1(81d820c8b70281a4a52f7ec75a3c54377011d9d9) )
+	ROM_LOAD( "es07.rom",  0xa0000, 0x10000, CRC(8d15a3d0) SHA1(afae081ee5e0de359cae6a7ea8401237c5ab7095) )
+	ROM_LOAD( "es08.rom",  0xb0000, 0x10000, CRC(38f06039) SHA1(cc394f161b2c4423cd2da763701ceaad7d27f741) )
+	ROM_LOAD( "es09.rom",  0xc0000, 0x10000, CRC(b718c47d) SHA1(1d5b2ec819b0848e5b883373887445a63ebddb06) )
+	ROM_LOAD( "es10-1.rom",0xd0000, 0x10000, CRC(d3cddc02) SHA1(d212127a9d7aff384171d79c563f1516c0bd46ae) )
 	/* Rom sockets 0xe0000 - 0x100000 are unused */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "es11.rom",  0x00000, 0x10000, 0xf5b29c9c )
+	ROM_LOAD( "es11.rom",  0x00000, 0x10000, CRC(f5b29c9c) SHA1(44dcdf96f8deb9a29aa9d94a8b9cf91a0ed808d4) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, 0 )
 	/* Nothing */

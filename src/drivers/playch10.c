@@ -111,6 +111,8 @@ Working games:
 	- Volley Ball						(VB) - Standard board
 	- Wild Gunman						(WG) - Standard board
 	- Yo Noid							(YC) - F board
+	- Nintendo World Cup				(XZ) - G board
+	- Pinbot							(IO) - H board
 
 Non working games due to mapper/nes emulation issues:
 -----------------------------------------------------
@@ -119,10 +121,6 @@ Non working games due to mapper/nes emulation issues:
 Non working games due to missing roms:
 --------------------------------------
 	- ShatterHand						(??) - ? board
-
-Non working games due to missing RP5H01 data:
----------------------------------------------
-	- Pinbot							(io) - H board
 
 ****************************************************************************
 
@@ -291,6 +289,7 @@ Notes & Todo:
 - Better control layout?. This thing has odd buttons.
 - Find dumps of the rest of the RP5H01's and add the remaining games.
 - Any PPU optimizations that retain accuracy are certainly welcome.
+- Add correct Pinbot mapper.
 
 ***************************************************************************/
 
@@ -700,836 +699,852 @@ MACHINE_DRIVER_END
 
 #define BIOS_CPU											\
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )						\
-    ROM_LOAD( "pch1-c.8t",    0x00000, 0x4000, 0xd52fa07a )
+    ROM_LOAD( "pch1-c.8t",    0x00000, 0x4000, CRC(d52fa07a) SHA1(55cabf52ae10c050c2229081a80b9fe5454ab8c5) )
 
 #define BIOS_GFX											\
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )	\
-	ROM_LOAD( "pch1-c.8p",    0x00000, 0x2000, 0x30c15e23 )	\
-    ROM_LOAD( "pch1-c.8m",    0x02000, 0x2000, 0xc1232eee )	\
-    ROM_LOAD( "pch1-c.8k",    0x04000, 0x2000, 0x9acffb30 )	\
+	ROM_LOAD( "pch1-c.8p",    0x00000, 0x2000, CRC(30c15e23) SHA1(69166afdb2fe827c7f1919cdf4197caccbd961fa) )	\
+    ROM_LOAD( "pch1-c.8m",    0x02000, 0x2000, CRC(c1232eee) SHA1(beaf9fa2d091a3c7f70c51e966d885b1f9f0935f) )	\
+    ROM_LOAD( "pch1-c.8k",    0x04000, 0x2000, CRC(9acffb30) SHA1(b814f10ef23f2ca445fabafcbf7f25e2d454ba8c) )	\
     ROM_REGION( 0x0300, REGION_PROMS, 0 )						\
-    ROM_LOAD( "82s129.6f",    0x0000, 0x0100, 0xe5414ca3 )	\
-    ROM_LOAD( "82s129.6e",    0x0100, 0x0100, 0xa2625c6e )	\
-    ROM_LOAD( "82s129.6d",    0x0200, 0x0100, 0x1213ebd4 )
+    ROM_LOAD( "82s129.6f",    0x0000, 0x0100, CRC(e5414ca3) SHA1(d2878411cda84ffe0afb2e538a67457f51bebffb) )	\
+    ROM_LOAD( "82s129.6e",    0x0100, 0x0100, CRC(a2625c6e) SHA1(a448b47c9289902e26a3d3c4c7d5a7968c385e81) )	\
+    ROM_LOAD( "82s129.6d",    0x0200, 0x0100, CRC(1213ebd4) SHA1(0ad386fc3eab5e53c0288ad1de33639a9e461b7c) )
 
 /******************************************************************************/
 
 /* Standard Games */
 ROM_START( pc_smb )		/* Super Mario Bros. */
 	BIOS_CPU
-	ROM_LOAD( "u3sm",    0x0c000, 0x2000, 0x4b5f717d ) /* extra bios code for this game */
+	ROM_LOAD( "u3sm",    0x0c000, 0x2000, CRC(4b5f717d) SHA1(c39c90f9503c4692af4a8fdb3e18ef7cf04e897f) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1sm",    0x08000, 0x8000, 0x5cf548d3 )
+    ROM_LOAD( "u1sm",    0x08000, 0x8000, CRC(5cf548d3) SHA1(fefa1097449a3a11ebf8c6199e905996c5dc8fbd) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u2sm",    0x00000, 0x2000, 0x867b51ad )
+    ROM_LOAD( "u2sm",    0x00000, 0x2000, CRC(867b51ad) SHA1(394badaf0b0bdd0ea279a1bca89a9d9ddc00b1b5) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbd82d775 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(bd82d775) SHA1(e15c369d638156eeb0cd141aeeec877c62810b64) )
 ROM_END
 
 ROM_START( pc_ebike )	/* Excite Bike */
 	BIOS_CPU
-	ROM_LOAD( "u3eb",    0x0c000, 0x2000, 0x8ff0e787 ) /* extra bios code for this game */
+	ROM_LOAD( "u3eb",    0x0c000, 0x2000, CRC(8ff0e787) SHA1(35a6d7186dee4fd4ba015ec0db5181768411aa3c) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1eb",    0x0c000, 0x4000, 0x3a94fa0b )
+    ROM_LOAD( "u1eb",    0x0c000, 0x4000, CRC(3a94fa0b) SHA1(6239e91ccefdc017d233cbae388c6568a17ed04b) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u2eb",    0x00000, 0x2000, 0xe5f72401 )
+    ROM_LOAD( "u2eb",    0x00000, 0x2000, CRC(e5f72401) SHA1(a8bf028e1a62677e48e88cf421bb2a8051eb800c) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xa0263750 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(a0263750) SHA1(2ab6e43c2bc4c07fc7887defc4fc81502167ef60) )
 ROM_END
 
 ROM_START( pc_1942 )	/* 1942 */
 	BIOS_CPU
-	ROM_LOAD( "u3",      0x0c000, 0x2000, 0x415b8807 ) /* extra bios code for this game */
+	ROM_LOAD( "u3",      0x0c000, 0x2000, CRC(415b8807) SHA1(9d6161bbc6dec5873cc6d8a570141d4af42fa232) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1",    	 0x08000, 0x8000, 0xc4e8c04a )
+    ROM_LOAD( "u1",    	 0x08000, 0x8000, CRC(c4e8c04a) SHA1(d608f769333b13da9c67f07599e405944893a950) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u2",		 0x00000, 0x2000, 0x03379b76 )
+    ROM_LOAD( "u2",		 0x00000, 0x2000, CRC(03379b76) SHA1(d2a6ca1cdd8935525f59f1d38806b2296cb12a12) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x29893c7f )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(29893c7f) SHA1(58478b7de2177c8dc1d6885bd34eeeeb5e46d7a3) )
 ROM_END
 
 ROM_START( pc_bfght )	/* Balloon Fight */
 	BIOS_CPU
-	ROM_LOAD( "bf-u3",   0x0c000, 0x2000, 0xa9949544 ) /* extra bios code for this game */
+	ROM_LOAD( "bf-u3",   0x0c000, 0x2000, CRC(a9949544) SHA1(0bb9fab67769a4eaa1b903a3217dbb5ca6feddb8) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "bf-u1",   0x0c000, 0x4000, 0x575ed2fe )
+    ROM_LOAD( "bf-u1",   0x0c000, 0x4000, CRC(575ed2fe) SHA1(63527ea590aa79a6b09896c35021de785fd40851) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "bf-u2",	 0x00000, 0x2000, 0xc642a1df )
+    ROM_LOAD( "bf-u2",	 0x00000, 0x2000, CRC(c642a1df) SHA1(e73cd3d4c0bad8e6f7a1aa6a580f3817a83756a9) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbe3c42fb )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(be3c42fb) SHA1(da40c57bda36d1dbacdf246e0d2579b6be616480) )
 ROM_END
 
 ROM_START( pc_bball )	/* Baseball */
 	BIOS_CPU
-	ROM_LOAD( "ba-u3",   0x0c000, 0x2000, 0x06861a0d ) /* extra bios code for this game */
+	ROM_LOAD( "ba-u3",   0x0c000, 0x2000, CRC(06861a0d) SHA1(b7263280a39f544ca4ab1b4d3e8c5fe17ea95e57) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ba-u1",   0x0c000, 0x4000, 0x39d1fa03 )
+    ROM_LOAD( "ba-u1",   0x0c000, 0x4000, CRC(39d1fa03) SHA1(28d84cfefa81bbfd3d26e0f70f1b9f53383e54ad) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "ba-u2",	 0x00000, 0x2000, 0xcde71b82 )
+    ROM_LOAD( "ba-u2",	 0x00000, 0x2000, CRC(cde71b82) SHA1(296ccef8a1fd9209f414ce0c788ab0dc95058242) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x7940cfc4 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(7940cfc4) SHA1(9e36ceb5aac023472f48f2f06cf171bffa49a664) )
 ROM_END
 
 ROM_START( pc_golf )	/* Golf */
 	BIOS_CPU
-	ROM_LOAD( "gf-u3",   0x0c000, 0x2000, 0x882dea87 ) /* extra bios code for this game */
+	ROM_LOAD( "gf-u3",   0x0c000, 0x2000, CRC(882dea87) SHA1(e3bbca36efa66231b933713dec032bbb926b36e5) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "gf-u1",   0x0c000, 0x4000, 0xf9622bfa )
+    ROM_LOAD( "gf-u1",   0x0c000, 0x4000, CRC(f9622bfa) SHA1(b4e341a91f614bb19c67cc0205b2443591567aea) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "gf-u2",	 0x00000, 0x2000, 0xff6fc790 )
+    ROM_LOAD( "gf-u2",	 0x00000, 0x2000, CRC(ff6fc790) SHA1(40177839b61f375f2ad03b203328683264845b5b) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x2cd98ef6 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(2cd98ef6) SHA1(bd5142c6a29df674ab835c8beafff7e93712d88f) )
 ROM_END
 
 ROM_START( pc_kngfu )	/* Kung Fu */
 	BIOS_CPU
-	ROM_LOAD( "sx-u3",   0x0c000, 0x2000, 0xead71b7e ) /* extra bios code for this game */
+	ROM_LOAD( "sx-u3",   0x0c000, 0x2000, CRC(ead71b7e) SHA1(e255c08f92d6188dad6b27446b0117cd7cee4364) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "sx-u1",   0x08000, 0x8000, 0x0516375e )
+    ROM_LOAD( "sx-u1",   0x08000, 0x8000, CRC(0516375e) SHA1(55dc3550c6133f8624eb6cf3d2f145e4313c2ff6) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "sx-u2",	 0x00000, 0x2000, 0x430b49a4 )
+    ROM_LOAD( "sx-u2",	 0x00000, 0x2000, CRC(430b49a4) SHA1(7e618dbff521c3d5ee0f3d8bb01d2e770395a6bc) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xa1687f01 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(a1687f01) SHA1(ff4c3e925ece14acfa6f51c87af310ebbe3af638) )
 ROM_END
 
 ROM_START( pc_tenis )	/* Tennis */
 	BIOS_CPU
-	ROM_LOAD( "te-u3",   0x0c000, 0x2000, 0x6928e920 ) /* extra bios code for this game */
+	ROM_LOAD( "te-u3",   0x0c000, 0x2000, CRC(6928e920) SHA1(0bdc64a6f37d8cf5e8efacc5004a6ae43a28cd60) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "te-u1",   0x0c000, 0x4000, 0x8b2e3e81 )
+    ROM_LOAD( "te-u1",   0x0c000, 0x4000, CRC(8b2e3e81) SHA1(e54274c0b0d651458c5459d41872b1f99904d0fb) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "te-u2",	 0x00000, 0x2000, 0x3a34c45b )
+    ROM_LOAD( "te-u2",	 0x00000, 0x2000, CRC(3a34c45b) SHA1(2cc26a01c38ead50503dccb3ee929ba7a2b6772c) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbcc9a48e )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(bcc9a48e) SHA1(a293898f17b627cdf8e7a1074ef30ad8c2392977) )
 ROM_END
 
 ROM_START( pc_vball )	/* Volley Ball */
 	BIOS_CPU
-	ROM_LOAD( "vb-u3",   0x0c000, 0x2000, 0x9104354e ) /* extra bios code for this game */
+	ROM_LOAD( "vb-u3",   0x0c000, 0x2000, CRC(9104354e) SHA1(84374b1df747800f7e70b5fb6a16fd3607b724c9) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "vb-u1",   0x08000, 0x8000, 0x35226b99 )
+    ROM_LOAD( "vb-u1",   0x08000, 0x8000, CRC(35226b99) SHA1(548787ba5ca00290da4efc9af40054dc1889014c) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "vb-u2",	 0x00000, 0x2000, 0x2415dce2 )
+    ROM_LOAD( "vb-u2",	 0x00000, 0x2000, CRC(2415dce2) SHA1(fd89b4a542989a89c2d0467257dca57518bfa96b) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf701863f )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(f701863f) SHA1(78614e6b8a78384d9aeab439eb8d53a3691dd0a1) )
 ROM_END
 
 ROM_START( pc_mario )	/* Mario Bros. */
 	BIOS_CPU
-	ROM_LOAD( "ma-u3",   0x0c000, 0x2000, 0xa426c5c0 ) /* extra bios code for this game */
+	ROM_LOAD( "ma-u3",   0x0c000, 0x2000, CRC(a426c5c0) SHA1(0cf31de3eb18f17830dd9aa3a33fe4a6947f6ceb) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ma-u1",   0x0c000, 0x4000, 0x75f6a9f3 )
+    ROM_LOAD( "ma-u1",   0x0c000, 0x4000, CRC(75f6a9f3) SHA1(b6f88f7a2f9a49cc9182a244571730198f1edc4b) )
 
     ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "ma-u2",	 0x00000, 0x2000, 0x10f77435 )
+    ROM_LOAD( "ma-u2",	 0x00000, 0x2000, CRC(10f77435) SHA1(a646c3443832ada84d31a3a8a4b34aebc17cecd5) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x79006635 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(79006635) SHA1(10dcb24fb7717b993110512115ab04310dc637d0) )
 ROM_END
 
 /* Gun Games */
 ROM_START( pc_duckh )	/* Duck Hunt */
 	BIOS_CPU
-	ROM_LOAD( "u3",      0x0c000, 0x2000, 0x2f9ec5c6 ) /* extra bios code for this game */
+	ROM_LOAD( "u3",      0x0c000, 0x2000, CRC(2f9ec5c6) SHA1(1e1b835339b030605841a032f066ccb5ca1fef20) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1",      0x0c000, 0x4000, 0x90ca616d )
+    ROM_LOAD( "u1",      0x0c000, 0x4000, CRC(90ca616d) SHA1(b742576317cd6a04caac25252d5593844c9a0bb6) )
 
     ROM_REGION( 0x04000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u2",      0x00000, 0x2000, 0x4e049e03 )
+    ROM_LOAD( "u2",      0x00000, 0x2000, CRC(4e049e03) SHA1(ffad32a3bab2fb3826bc554b1b9838e837513576) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8cd6aad6 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(8cd6aad6) SHA1(4543cdb55c3521e1b5d61f82d4800c414658fd6d) )
 ROM_END
 
 ROM_START( pc_hgaly )	/* Hogan's Alley */
 	BIOS_CPU
-	ROM_LOAD( "ha-u3",   0x0c000, 0x2000, 0xa2525180 ) /* extra bios code for this game */
+	ROM_LOAD( "ha-u3",   0x0c000, 0x2000, CRC(a2525180) SHA1(9c981c1679c59c7b7c069f7d1cb86cb8aa280f22) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ha-u1",   0x0c000, 0x4000, 0x8963ae6e )
+    ROM_LOAD( "ha-u1",   0x0c000, 0x4000, CRC(8963ae6e) SHA1(bca489ed0fb58e1e99f36c427bc0d7d805b6c61a) )
 
     ROM_REGION( 0x04000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "ha-u2",   0x00000, 0x2000, 0x5df42fc4 )
+    ROM_LOAD( "ha-u2",   0x00000, 0x2000, CRC(5df42fc4) SHA1(4fcf23151d9f11c1ef1b1007dd8058f5d5fe9ab8) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x5ac61521 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(5ac61521) SHA1(75d2ad958336061e70049272ce4c88bff182f96d) )
 ROM_END
 
 ROM_START( pc_wgnmn )	/* Wild Gunman */
 	BIOS_CPU
-	ROM_LOAD( "wg-u3",   0x0c000, 0x2000, 0xda08afe5 ) /* extra bios code for this game */
+	ROM_LOAD( "wg-u3",   0x0c000, 0x2000, CRC(da08afe5) SHA1(0f505ccee372a37971bad7bbbb7341336ee70f97) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "wg-u1",   0x0c000, 0x4000, 0x389960db )
+    ROM_LOAD( "wg-u1",   0x0c000, 0x4000, CRC(389960db) SHA1(6b38f2c86ef27f653a2bdb9c682ac0bc981c7db6) )
 
     ROM_REGION( 0x04000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "wg-u2",   0x00000, 0x2000, 0xa5e04856 )
+    ROM_LOAD( "wg-u2",   0x00000, 0x2000, CRC(a5e04856) SHA1(9194d89a34f687742216889cbb3e717a9ae81c92) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xdef015a3 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(def015a3) SHA1(b542828a74744d87331821635777d7715e22a15b) )
 ROM_END
 
 /* A-Board Games */
 ROM_START( pc_tkfld )	/* Track & Field */
 	BIOS_CPU
-	ROM_LOAD( "u4tr",    0x0c000, 0x2000, 0x70184fd7 ) /* extra bios code for this game */
+	ROM_LOAD( "u4tr",    0x0c000, 0x2000, CRC(70184fd7) SHA1(bc6f6f942948ddf5a7130d9688f12ef5511a7a30) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u2tr",    0x08000, 0x8000, 0xd7961e01 )
+    ROM_LOAD( "u2tr",    0x08000, 0x8000, CRC(d7961e01) SHA1(064cb6e3e5525682a1805b01ba64f2fd75462496) )
 
     ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u3tr",    0x00000, 0x8000, 0x03bfbc4b )
+    ROM_LOAD( "u3tr",    0x00000, 0x8000, CRC(03bfbc4b) SHA1(ffc4e0e1d858fb4472423ae1c1fdc1e8197c30f0) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1e2e7f1e )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(1e2e7f1e) SHA1(4b65f5b217586653a1d0da96539cc9bc50d989e2) )
 ROM_END
 
 ROM_START( pc_grdus )	/* Gradius */
 	BIOS_CPU
-	ROM_LOAD( "gr-u4",   0x0c000, 0x2000, 0x27d76160 ) /* extra bios code for this game */
+	ROM_LOAD( "gr-u4",   0x0c000, 0x2000, CRC(27d76160) SHA1(605d58c57969c831778b95356fcf103a1d5f98a3) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "gr-u2",   0x08000, 0x8000, 0xaa96889c )
+    ROM_LOAD( "gr-u2",   0x08000, 0x8000, CRC(aa96889c) SHA1(e4380a7c0778541af8216e3ac1e14ff23fb074a9) )
 
     ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "gr-u3",   0x00000, 0x8000, 0xde963bec )
+    ROM_LOAD( "gr-u3",   0x00000, 0x8000, CRC(de963bec) SHA1(ecb76b5897658ebac31a07516bb2a5820279474f) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xb8d5bf8a )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(b8d5bf8a) SHA1(1c208fa5409b6e21aa576e1b9e086e830dc26a1a) )
 ROM_END
+
+ROM_START( pc_grdue )	/* Gradius (Early version) */
+    BIOS_CPU
+    ROM_LOAD( "gr-u4",   0x0c000, 0x2000, CRC(27d76160) ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_LOAD( "gr-u1e",  0x08000, 0x8000, CRC(9204a65d) )
+
+    ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* cart gfx */
+    ROM_LOAD( "gr-u3",   0x00000, 0x8000, CRC(de963bec) )
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(b8d5bf8a) )
+ROM_END
+
 
 /* B-Board Games */
 ROM_START( pc_rnatk )	/* Rush N' Attack */
 	BIOS_CPU
-	ROM_LOAD( "ra-u4",   0x0c000, 0x2000, 0xebab7f8c ) /* extra bios code for this game */
+	ROM_LOAD( "ra-u4",   0x0c000, 0x2000, CRC(ebab7f8c) SHA1(ae46e46d878cdbc28cd42b40dae1fd1a6c1b31ed) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ra-u1",   0x10000, 0x10000, 0x5660b3a6 ) /* banked */
-    ROM_LOAD( "ra-u2",   0x20000, 0x10000, 0x2a1bca39 ) /* banked */
+    ROM_LOAD( "ra-u1",   0x10000, 0x10000, CRC(5660b3a6) SHA1(4e7ad9be59990e4a560d87a1bac9b708074e9db1) ) /* banked */
+    ROM_LOAD( "ra-u2",   0x20000, 0x10000, CRC(2a1bca39) SHA1(ca1eebf85bea85ce7bcdf38933ae495856e17ae1) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1f6596b2 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(1f6596b2) SHA1(e50780241ae3a16811bd92eb366f642a4b5eadf3) )
 ROM_END
 
 ROM_START( pc_cntra )	/* Contra */
 	BIOS_CPU
-	ROM_LOAD( "u4ct",    0x0c000, 0x2000, 0x431486cf ) /* extra bios code for this game */
+	ROM_LOAD( "u4ct",    0x0c000, 0x2000, CRC(431486cf) SHA1(8b8a2bcddb1dfa027c249b62659dcc7bb8ec2778) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1ct",    0x10000, 0x10000, 0x9fcc91d4 ) /* banked */
-    ROM_LOAD( "u2ct",    0x20000, 0x10000, 0x612ad51d ) /* banked */
+    ROM_LOAD( "u1ct",    0x10000, 0x10000, CRC(9fcc91d4) SHA1(ad1742a0da87cf7f26f81a99f185f0c28b9e7e6e) ) /* banked */
+    ROM_LOAD( "u2ct",    0x20000, 0x10000, CRC(612ad51d) SHA1(4428e136b55778299bb269520b459c7112c0d6b2) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8ab3977a )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(8ab3977a) SHA1(61d3a7981fbe8a76ab7eee032059d42b50892e97) )
 ROM_END
 
 ROM_START( pc_pwrst )	/* Pro Wrestling */
 	BIOS_CPU
-	ROM_LOAD( "pw-u4",   0x0c000, 0x2000, 0x0f03d71b ) /* extra bios code for this game */
+	ROM_LOAD( "pw-u4",   0x0c000, 0x2000, CRC(0f03d71b) SHA1(82b94c2e4568d6de4d8cff49f3e416005a2e22ec) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "pw-u1",   0x10000, 0x08000, 0x6242c2ce ) /* banked */
+    ROM_LOAD( "pw-u1",   0x10000, 0x08000, CRC(6242c2ce) SHA1(ea7d1cf9dece021c9a40772af7c6dcaf58b10585) ) /* banked */
     ROM_RELOAD(			 0x18000, 0x08000 )
-    ROM_LOAD( "pw-u2",   0x20000, 0x10000, 0xef6aa17c ) /* banked */
+    ROM_LOAD( "pw-u2",   0x20000, 0x10000, CRC(ef6aa17c) SHA1(52171699eaee0b811952c5706584cff4e7cfb39a) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x4c6b7983 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(4c6b7983) SHA1(377bd6267ae1d3ab13389a8adf894e116b3c9daa) )
 ROM_END
 
 ROM_START( pc_cvnia )	/* Castlevania */
 	BIOS_CPU
-	ROM_LOAD( "u4cv",    0x0c000, 0x2000, 0xa2d4245d ) /* extra bios code for this game */
+	ROM_LOAD( "u4cv",    0x0c000, 0x2000, CRC(a2d4245d) SHA1(3703171d526e6de99e475afe0d942d69b89950a9) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1cv",    0x10000, 0x10000, 0xadd4fc52 ) /* banked */
-    ROM_LOAD( "u2cv",    0x20000, 0x10000, 0x7885e567 ) /* banked */
+    ROM_LOAD( "u1cv",    0x10000, 0x10000, CRC(add4fc52) SHA1(bbb4638a8e7660911896393d61580610a6535c62) ) /* banked */
+    ROM_LOAD( "u2cv",    0x20000, 0x10000, CRC(7885e567) SHA1(de1e5a5b4bbd0116c91564edc3d552239074e8ae) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x7da2f045 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(7da2f045) SHA1(e6048a1f94103c2896eeb33dd7f6bc639831dd7d) )
 ROM_END
 
 ROM_START( pc_dbldr )	/* Double Dribble */
 	BIOS_CPU
-	ROM_LOAD( "dw-u4",    0x0c000, 0x2000, 0x5006eef8 ) /* extra bios code for this game */
+	ROM_LOAD( "dw-u4",    0x0c000, 0x2000, CRC(5006eef8) SHA1(6051d4750d95cdc0a71ecec40b5be4477921ca54) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "dw-u1",    0x10000, 0x10000, 0x78e08e61 ) /* banked */
-    ROM_LOAD( "dw-u2",    0x20000, 0x10000, 0xab554cde ) /* banked */
+    ROM_LOAD( "dw-u1",    0x10000, 0x10000, CRC(78e08e61) SHA1(a278e012ac89b8ae56d4a186c99f5ea2591f87b5) ) /* banked */
+    ROM_LOAD( "dw-u2",    0x20000, 0x10000, CRC(ab554cde) SHA1(86f5788f856dd9336eaaadf8d5295435b0421486) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x9b5f4bd2 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(9b5f4bd2) SHA1(998d2766763eb66f4052f9f16fbfb93d5b41a582) )
 ROM_END
 
 ROM_START( pc_rygar )	/* Rygar */
 	BIOS_CPU
-	ROM_LOAD( "ry-u4",    0x0c000, 0x2000, 0x7149071b ) /* extra bios code for this game */
+	ROM_LOAD( "ry-u4",    0x0c000, 0x2000, CRC(7149071b) SHA1(fbc7157eb16eedfc8808ab6224406037e41c44ef) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ry-u1",    0x10000, 0x10000, 0xaa2e54bc ) /* banked */
-    ROM_LOAD( "ry-u2",    0x20000, 0x10000, 0x80cb158b ) /* banked */
+    ROM_LOAD( "ry-u1",    0x10000, 0x10000, CRC(aa2e54bc) SHA1(b44cd385d4019a535a4924a093ee9b097b850db4) ) /* banked */
+    ROM_LOAD( "ry-u2",    0x20000, 0x10000, CRC(80cb158b) SHA1(012f378e0b5a5bbd32ad837cdfa096df6843d274) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xb69309ab )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(b69309ab) SHA1(a11ae46ed4c6ae5c22bab36593a53535a257fd4f) )
 ROM_END
 
 ROM_START( pc_trjan )	/* Trojan */
 	BIOS_CPU
-	ROM_LOAD( "tj-u4",    0x0c000, 0x2000, 0x10835e1d ) /* extra bios code for this game */
+	ROM_LOAD( "tj-u4",    0x0c000, 0x2000, CRC(10835e1d) SHA1(ae0f3ec8d52707088af79d00bca0871af105da36) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "tj-u1",    0x10000, 0x10000, 0x335c0e62 ) /* banked */
-    ROM_LOAD( "tj-u2",    0x20000, 0x10000, 0xc0ddc79e ) /* banked */
+    ROM_LOAD( "tj-u1",    0x10000, 0x10000, CRC(335c0e62) SHA1(62164235dc8e2a4419cb38f4cacf7ba2f3eb536b) ) /* banked */
+    ROM_LOAD( "tj-u2",    0x20000, 0x10000, CRC(c0ddc79e) SHA1(5c23bb54eda6a55357e97d7322db453170e27598) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x14df772f )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(14df772f) SHA1(bb1c58d53ee8c059b3a06d43ee4faf849d4f005f) )
 ROM_END
 
 /* C-Board Games */
 ROM_START( pc_goons )	/* The Goonies */
 	BIOS_CPU
-	ROM_LOAD( "gn-u3",   0x0c000, 0x2000, 0x33adedd2 ) /* extra bios code for this game */
+	ROM_LOAD( "gn-u3",   0x0c000, 0x2000, CRC(33adedd2) SHA1(c85151819e2550e60cbe8f7d247a8da88cb805a4) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "gn-u1",   0x08000, 0x8000, 0xefeb0c34 )
+    ROM_LOAD( "gn-u1",   0x08000, 0x8000, CRC(efeb0c34) SHA1(8e0374858dce0a10ffcfc5109f8287ebdea388e8) )
 
     ROM_REGION( 0x04000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "gn-u2",   0x00000, 0x4000, 0x0f9c7f49 )
+    ROM_LOAD( "gn-u2",   0x00000, 0x4000, CRC(0f9c7f49) SHA1(f2fcf55d22a38a01df45393c90c73ff14b3b647c) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xcdd62d08 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(cdd62d08) SHA1(e2752127ac0b1217f0216854b68a5e5957a565b3) )
 ROM_END
 
 /* D-Board Games */
 ROM_START( pc_radrc )	/* Rad Racer */
 	BIOS_CPU
-	ROM_LOAD( "rc-u5",   0x0c000, 0x2000, 0xae60fd08 ) /* extra bios code for this game */
+	ROM_LOAD( "rc-u5",   0x0c000, 0x2000, CRC(ae60fd08) SHA1(fa7c201499cd702d8eef545bb05b0df833d2b406) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "rc-u1",   0x10000, 0x10000, 0xdce369a7 )
-    ROM_LOAD( "rc-u2",   0x20000, 0x10000, 0x389a79b5 ) /* banked */
+    ROM_LOAD( "rc-u1",   0x10000, 0x10000, CRC(dce369a7) SHA1(d7f293956d605af7cb6b81dbb80eaa4ad482ac0e) )
+    ROM_LOAD( "rc-u2",   0x20000, 0x10000, CRC(389a79b5) SHA1(58de166d757e58c515272efc9d0bc03d1eb1086d) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x17c880f9 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(17c880f9) SHA1(41be451fcc46a746d5d31dba09f524c0af0cd214) )
 ROM_END
 
 ROM_START( pc_mtoid )	/* Metroid */
 	BIOS_CPU
-	ROM_LOAD( "mt-u5",   0x0c000, 0x2000, 0x3dc25049 ) /* extra bios code for this game */
+	ROM_LOAD( "mt-u5",   0x0c000, 0x2000, CRC(3dc25049) SHA1(bf0f72db9e6904f065801e490014405a734eb04e) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "mt-u1",   0x10000, 0x10000, 0x4006ff10 )
-    ROM_LOAD( "mt-u2",   0x20000, 0x10000, 0xace6bbd8 ) /* banked */
+    ROM_LOAD( "mt-u1",   0x10000, 0x10000, CRC(4006ff10) SHA1(9563a6b4ff91c78ab9cbf97ea47a3f62524844d2) )
+    ROM_LOAD( "mt-u2",   0x20000, 0x10000, CRC(ace6bbd8) SHA1(ac9c22bcc33aeee18b4f42a5a628bc5e147b4c29) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xefab54c9 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(efab54c9) SHA1(1d0122b7c90a364d54bf6eaa37ce439d706a4357) )
 ROM_END
 
 /* E-Board Games */
 ROM_START( pc_miket )	/* Mike Tyson's Punchout */
 	BIOS_CPU
-	ROM_LOAD( "u5pt",    0x0c000, 0x2000, 0xb434e567 ) /* extra bios code for this game */
+	ROM_LOAD( "u5pt",    0x0c000, 0x2000, CRC(b434e567) SHA1(8e23c580b5556aacbeeb36fe36e778137c780903) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "u1pt",    0x10000, 0x20000, 0xdfd9a2ee ) /* banked */
+    ROM_LOAD( "u1pt",    0x10000, 0x20000, CRC(dfd9a2ee) SHA1(484a6793949b8cbbc65e3bcc9188bc63bb17b575) ) /* banked */
 
     ROM_REGION( 0x20000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u3pt",    0x00000, 0x20000, 0x570b48ea )
+    ROM_LOAD( "u3pt",    0x00000, 0x20000, CRC(570b48ea) SHA1(33de517b16b61625909d2eb5307c08b337b542c4) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x60f7ea1d )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(60f7ea1d) SHA1(fcc04cbd8ed233bb1358fc55800f9bb6c75b195b) )
 ROM_END
 
 /* F-Board Games */
 ROM_START( pc_ngaid )	/* Ninja Gaiden */
 	BIOS_CPU
-	ROM_LOAD( "u2ng",    0x0c000, 0x2000, 0x7505de96 ) /* extra bios code for this game */
+	ROM_LOAD( "u2ng",    0x0c000, 0x2000, CRC(7505de96) SHA1(a9cbe6d4d2d33aeecb3e041315fbb266c886ebf1) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "u4ng",    0x10000, 0x20000, 0x5f1e7b19 )	/* banked */
+	ROM_LOAD( "u4ng",    0x10000, 0x20000, CRC(5f1e7b19) SHA1(ead83487d9be2f1d16c1d0b438a361a06508cd85) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u1ng",   0x00000, 0x20000, 0xeccd2dcb )	/* banked */
+    ROM_LOAD( "u1ng",   0x00000, 0x20000, CRC(eccd2dcb) SHA1(2a319086f7c22b8fe7ca8ab72436a7c8d07b915e) )	/* banked */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xec5641d6 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(ec5641d6) SHA1(05f546aec5a9db167688a9abbac922f5ced7f7c5) )
 ROM_END
 
 ROM_START( pc_ddrgn )	/* Double Dragon */
 	BIOS_CPU
-	ROM_LOAD( "wd-u2",   0x0c000, 0x2000, 0xdfca1578 ) /* extra bios code for this game */
+	ROM_LOAD( "wd-u2",   0x0c000, 0x2000, CRC(dfca1578) SHA1(6bc00bb2913edeaecd885fee449b8a9955c509bf) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "wd-u4",  0x10000, 0x20000, 0x05c97f64 )	/* banked */
+	ROM_LOAD( "wd-u4",  0x10000, 0x20000, CRC(05c97f64) SHA1(36913e92943c6bb40521ab13c843691a8db4cbc9) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "wd-u1",  0x00000, 0x20000, 0x5ebe0fd0 )
+	ROM_LOAD( "wd-u1",  0x00000, 0x20000, CRC(5ebe0fd0) SHA1(4a948c9784433e051f1015a6b6e985a98b81b80d) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf9739d62 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(f9739d62) SHA1(c9574ed8f24ffb7ab5a6bb1b79805fb6dc6e991a) )
 ROM_END
 
 ROM_START( pc_drmro )	/* Dr Mario */
 	BIOS_CPU
-	ROM_LOAD( "vu-u2",   0x0c000, 0x2000, 0x4b7869ac ) /* extra bios code for this game */
+	ROM_LOAD( "vu-u2",   0x0c000, 0x2000, CRC(4b7869ac) SHA1(37afb84d963233ad92cc424fcf992aa76ea0599f) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "vu-u4",  0x10000, 0x08000, 0xcb02a930 )	/* banked */
+	ROM_LOAD( "vu-u4",  0x10000, 0x08000, CRC(cb02a930) SHA1(6622564abc5ce28f523b0da95054d1ea825f7bd5) )	/* banked */
 	ROM_RELOAD(			0x18000, 0x08000 )
 	ROM_RELOAD(			0x20000, 0x08000 )
 	ROM_RELOAD(			0x28000, 0x08000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "vu-u1",  0x00000, 0x08000, 0x064d4ab3 )
+	ROM_LOAD( "vu-u1",  0x00000, 0x08000, CRC(064d4ab3) SHA1(bcdc34435bf631422ea2701f00744a3606c6dce8) )
 	ROM_RELOAD(			0x08000, 0x08000 )
 	ROM_RELOAD(			0x10000, 0x08000 )
 	ROM_RELOAD(			0x18000, 0x08000 )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1b26e58c )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(1b26e58c) SHA1(bd2d81d3cc54966ef154b3487d43ecbc316d6d22) )
 ROM_END
 
 ROM_START( pc_ftqst )	/* Fester's Quest */
 	BIOS_CPU
-	ROM_LOAD( "eq-u2",   0x0c000, 0x2000, 0x85326040 ) /* extra bios code for this game */
+	ROM_LOAD( "eq-u2",   0x0c000, 0x2000, CRC(85326040) SHA1(866bd15e77d911147b191c13d062cef7ae4dcf62) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "eq-u4",  0x10000, 0x20000, 0x953a3eaf )	/* banked */
+	ROM_LOAD( "eq-u4",  0x10000, 0x20000, CRC(953a3eaf) SHA1(a22c0a64d63036b6b8d147994a3055e1040a5282) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "eq-u1",  0x00000, 0x20000, 0x0ca17ab5 )
+	ROM_LOAD( "eq-u1",  0x00000, 0x20000, CRC(0ca17ab5) SHA1(a8765d6245f64b2d94c454662a24f8d8e277aa5a) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1c601cd7 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(1c601cd7) SHA1(bc13067475aac4a7b8bf5f0df96bdd5ba33f1cd7) )
 ROM_END
 
 ROM_START( pc_rcpam )	/* RC Pro Am */
 	BIOS_CPU
-	ROM_LOAD( "pm-u2",   0x0c000, 0x2000, 0x358c2de7 ) /* extra bios code for this game */
+	ROM_LOAD( "pm-u2",   0x0c000, 0x2000, CRC(358c2de7) SHA1(0f37d7e8303a7b87ad0584c6e0a79f3029c529f8) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "pm-u4",  0x10000, 0x08000, 0x82cfde25 )	/* banked */
+	ROM_LOAD( "pm-u4",  0x10000, 0x08000, CRC(82cfde25) SHA1(4eb9abe896e597f8ecabb4f044d8c4b545a51b11) )	/* banked */
 	ROM_RELOAD(			0x18000, 0x08000 )
 	ROM_RELOAD(			0x20000, 0x08000 )
 	ROM_RELOAD(			0x28000, 0x08000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "pm-u1",  0x00000, 0x08000, 0x83c90d47 )
+	ROM_LOAD( "pm-u1",  0x00000, 0x08000, CRC(83c90d47) SHA1(26917e1e016d2be0fa48d766d332779aae12b053) )
 	ROM_RELOAD(			0x08000, 0x08000 )
 	ROM_RELOAD(			0x10000, 0x08000 )
 	ROM_RELOAD(			0x18000, 0x08000 )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xd71d8085 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(d71d8085) SHA1(67e30ff0c31c6600890408c4dc4d0d2f19856363) )
 ROM_END
 
 ROM_START( pc_rrngr )	/* Rescue Rangers */
 	BIOS_CPU
-	ROM_LOAD( "ru-u2",   0x0c000, 0x2000, 0x2a4bfc4b ) /* extra bios code for this game */
+	ROM_LOAD( "ru-u2",   0x0c000, 0x2000, CRC(2a4bfc4b) SHA1(87f58659d43a236af22682df4bd01593b69c9975) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "ru-u4",  0x10000, 0x20000, 0x02931525 )	/* banked */
+	ROM_LOAD( "ru-u4",  0x10000, 0x20000, CRC(02931525) SHA1(28ddca5d299e7894e3c3aa0a193684ca3e384ee9) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "ru-u1",  0x00000, 0x20000, 0x218d4224 )
+	ROM_LOAD( "ru-u1",  0x00000, 0x20000, CRC(218d4224) SHA1(37a729021173bec08a8497ad03fd58379b0fce39) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1c2e1865 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(1c2e1865) SHA1(ab2aa76d74c9e76c7ee3f9a211b1aefe5708a23f) )
 ROM_END
 
 ROM_START( pc_ynoid )	/* Yo! Noid */
 	BIOS_CPU
-	ROM_LOAD( "yc-u2",   0x0c000, 0x2000, 0x0449805c ) /* extra bios code for this game */
+	ROM_LOAD( "yc-u2",   0x0c000, 0x2000, CRC(0449805c) SHA1(3f96687eae047d1f8095fbb55c0659c9b0e10166) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "yc-u4",  0x10000, 0x20000, 0x4affeee7 )	/* banked */
+	ROM_LOAD( "yc-u4",  0x10000, 0x20000, CRC(4affeee7) SHA1(54da2aa7ca56d9b593c8bcabf0bb1d701439013d) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "yc-u1",  0x00000, 0x20000, 0x868f7343 )
+	ROM_LOAD( "yc-u1",  0x00000, 0x20000, CRC(868f7343) SHA1(acb6f6eb9e8beb0636c59a999c8f5920ef7786a3) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8c376465 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(8c376465) SHA1(39b06fd2ecd5f06b90b2fe06406c9155f5601bd8) )
 ROM_END
 
 ROM_START( pc_tmnt )	/* Teenage Mutant Ninja Turtles */
 	BIOS_CPU
-	ROM_LOAD( "u2u2",   0x0c000, 0x2000, 0xbdce58c0 ) /* extra bios code for this game */
+	ROM_LOAD( "u2u2",   0x0c000, 0x2000, CRC(bdce58c0) SHA1(abaf89c0ac55cce816a7c6542a868ab47e02d550) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "u4u2",   0x10000, 0x20000, 0x0ccd28d5 )	/* banked */
+	ROM_LOAD( "u4u2",   0x10000, 0x20000, CRC(0ccd28d5) SHA1(05606cafba838eeb36198b5e5e9d11c3729971b3) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "u1u2",   0x00000, 0x20000, 0x91f01f53 )
+	ROM_LOAD( "u1u2",   0x00000, 0x20000, CRC(91f01f53) SHA1(171ed0792f3ca3f195145000d96b91aa57898773) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf5a38e98 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(f5a38e98) SHA1(26ef27294fc14d84920132023fbcf406d89ce2ee) )
 ROM_END
 
 ROM_START( pc_bstar )	/* Baseball Stars */
 	BIOS_CPU
-	ROM_LOAD( "b9-u2",   0x0c000, 0x2000, 0x69f3fd7c ) /* extra bios code for this game */
+	ROM_LOAD( "b9-u2",   0x0c000, 0x2000, CRC(69f3fd7c) SHA1(1cfaa40f18b1455bb41ec0e57d6a227ed3e582eb) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "b9-u4",   0x10000, 0x20000, 0xd007231a )	/* banked */
+	ROM_LOAD( "b9-u4",   0x10000, 0x20000, CRC(d007231a) SHA1(60690eaeacb79dbcab7dfe1c1e40da1aac235793) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "b9-u1",   0x00000, 0x20000, 0xce149864 )
+	ROM_LOAD( "b9-u1",   0x00000, 0x20000, CRC(ce149864) SHA1(00c88525756a360f42b27f0e2afaa0a19c2645a6) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x3e871350 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(3e871350) SHA1(b338f9ef4e18d14843c6a1e8ecb974bca1df73d4) )
 ROM_END
 
 ROM_START( pc_tbowl )	/* Tecmo Bowl */
 	BIOS_CPU
-	ROM_LOAD( "tw-u2",   0x0c000, 0x2000, 0x162aa313 ) /* extra bios code for this game */
+	ROM_LOAD( "tw-u2",   0x0c000, 0x2000, CRC(162aa313) SHA1(d0849ce87969c077fc14790ce5658e9857035413) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "tw-u4",   0x10000, 0x20000, 0x4f0c69be )	/* banked */
+	ROM_LOAD( "tw-u4",   0x10000, 0x20000, CRC(4f0c69be) SHA1(c0b09dc81070b935b3c621b07deb62dfa521a396) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-	ROM_LOAD( "tw-u1",   0x00000, 0x20000, 0x44b078ef )
+	ROM_LOAD( "tw-u1",   0x00000, 0x20000, CRC(44b078ef) SHA1(ae0c24f4ddd822b19c60e31257279b33b5f3fcad) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x18b2d1d3 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(18b2d1d3) SHA1(f4d023531b3d69cad4c9c511878e5aa6afb0ac59) )
 ROM_END
 
 /* G-Board Games */
 ROM_START( pc_smb3 )	/* Super Mario Bros 3 */
 	BIOS_CPU
-	ROM_LOAD( "u3um",    0x0c000, 0x2000, 0x45e92f7f ) /* extra bios code for this game */
+	ROM_LOAD( "u3um",    0x0c000, 0x2000, CRC(45e92f7f) SHA1(9071d5f18639ac58d6d4d72674856f9ecab911f0) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "u4um",    0x10000, 0x20000, 0x590b4d7c )	/* banked */
-	ROM_LOAD( "u5um",    0x30000, 0x20000, 0xbce25425 )	/* banked */
+	ROM_LOAD( "u4um",    0x10000, 0x20000, CRC(590b4d7c) SHA1(ac45940b71215a3a48983e22e1c7e71a71642b91) )	/* banked */
+	ROM_LOAD( "u5um",    0x30000, 0x20000, CRC(bce25425) SHA1(69468643a3a8b9220d675e2cdc4245ada81a492c) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u1um",    0x00000, 0x20000, 0xc2928c49 )
+    ROM_LOAD( "u1um",    0x00000, 0x20000, CRC(c2928c49) SHA1(2697d1f21b72a6d8e7d2a2d2c51c9c5550f68b56) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xe48f4945 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(e48f4945) SHA1(66fe537cfe540317d6194847321ce4a9bdf0bba4) )
 ROM_END
 
 ROM_START( pc_gntlt )	/* Gauntlet */
 	BIOS_CPU
-	ROM_LOAD( "u3gl",    0x0c000, 0x2000, 0x57575b92 ) /* extra bios code for this game */
+	ROM_LOAD( "u3gl",    0x0c000, 0x2000, CRC(57575b92) SHA1(7ac633f253496f353d388bef30e6ec74a3d18814) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "gl-0.prg",0x10000, 0x20000, 0xb19c48a5 )	/* banked */
+	ROM_LOAD( "gl-0.prg",0x10000, 0x20000, CRC(b19c48a5) SHA1(4ba8674cec6fa8b0b4d96a7b00d4883a9e58a0a9) )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x010000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "gl-0.chr", 0x00000, 0x10000, 0x22af8849 )
+    ROM_LOAD( "gl-0.chr", 0x00000, 0x10000, CRC(22af8849) SHA1(01054943c1d069f5f535e93f969a5b6bfb958e0b) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xba7f2e13 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(ba7f2e13) SHA1(8b9ee3b18bcb4b258a46d1c900b18a9cb2594046) )
 ROM_END
 
 ROM_START( pc_pwbld )	/* Power Blade */
 	BIOS_CPU
-	ROM_LOAD( "7t-u3",    0x0c000, 0x2000, 0xedcc21c6 ) /* extra bios code for this game */
+	ROM_LOAD( "7t-u3",    0x0c000, 0x2000, CRC(edcc21c6) SHA1(5d73c6a747cfe951dc7c6ddfbb29859e9548aded) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "7t-u5",   0x10000, 0x20000, 0xfaa957b1 )	/* banked */
+	ROM_LOAD( "7t-u5",   0x10000, 0x20000, CRC(faa957b1) SHA1(612c4823ed588652a78017096a6d76dd8064807a) )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "7t-u1",    0x00000, 0x20000, 0x344be4a6 )
+    ROM_LOAD( "7t-u1",    0x00000, 0x20000, CRC(344be4a6) SHA1(2894292544f4315df44cda1bdc96047453da03e8) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x31a05a48 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(31a05a48) SHA1(8b340600feae03bb5cdab852a9879ecffcc8a2b9) )
 ROM_END
 
 ROM_START( pc_ngai3 )	/* Ninja Gaiden 3 */
 	BIOS_CPU
-	ROM_LOAD( "u33n",    0x0c000, 0x2000, 0xc7ba0f59 ) /* extra bios code for this game */
+	ROM_LOAD( "u33n",    0x0c000, 0x2000, CRC(c7ba0f59) SHA1(a4822035a10a2b5de3517b461dd357b2fa5da917) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "u53n",    0x10000, 0x20000, 0xf0c77dcb )	/* banked */
+	ROM_LOAD( "u53n",    0x10000, 0x20000, CRC(f0c77dcb) SHA1(bda1184e27f3c3e92e58519508dd281b06c70d9b) )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "u13n",    0x00000, 0x20000, 0x584bcf5d )
+    ROM_LOAD( "u13n",    0x00000, 0x20000, CRC(584bcf5d) SHA1(f4582e2a382c8424f839e848e95e88a7f46307dc) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x13755943 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(13755943) SHA1(b7d809b0f60ef489777ccb35868f5c1e777356e0) )
 ROM_END
 
 ROM_START( pc_radr2 )	/* Rad Racer II */
 	BIOS_CPU
-	ROM_LOAD( "qr-u3",    0x0c000, 0x2000, 0x0c8fea63 ) /* extra bios code for this game */
+	ROM_LOAD( "qr-u3",    0x0c000, 0x2000, CRC(0c8fea63) SHA1(7ac04b151df732bd16708655352b7f13926f004f) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "qr-u5",    0x10000, 0x10000, 0xab90e397 )	/* banked */
+	ROM_LOAD( "qr-u5",    0x10000, 0x10000, CRC(ab90e397) SHA1(0956f7d9a216549dbd80b1dbf2653b36a320d0ab) )	/* banked */
 	ROM_RELOAD(			  0x20000, 0x10000 )
 	ROM_RELOAD(			  0x30000, 0x10000 )
 	ROM_RELOAD(			  0x40000, 0x10000 )
 
     ROM_REGION( 0x010000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "qr-u1",    0x00000, 0x10000, 0x07df55d8 )
+    ROM_LOAD( "qr-u1",    0x00000, 0x10000, CRC(07df55d8) SHA1(dd0fa0a79d30eb04917d7309a62adfb037ef9ca5) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x40c4f294 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(40c4f294) SHA1(3fcac63fe6f147b662d59d25f905f797a1f5d0db) )
 ROM_END
 
 ROM_START( pc_rkats )	/* Rockin' Kats */
 	BIOS_CPU
-	ROM_LOAD( "7a-u3",    0x0c000, 0x2000, 0x352b1e3c ) /* extra bios code for this game */
+	ROM_LOAD( "7a-u3",    0x0c000, 0x2000, CRC(352b1e3c) SHA1(bb72b586ec4b482aef462b017de5662d83631df1) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "7a-u5",    0x10000, 0x20000, 0x319ccfcc )	/* banked */
+	ROM_LOAD( "7a-u5",    0x10000, 0x20000, CRC(319ccfcc) SHA1(06e1c34af917b84a990db895c7b44df1b3393c96) )	/* banked */
 	ROM_RELOAD(			  0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "7a-u1",    0x00000, 0x20000, 0x487aa440 )
+    ROM_LOAD( "7a-u1",    0x00000, 0x20000, CRC(487aa440) SHA1(ee7ebbcf89c81ba59beda1bd27289dae21bb8071) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x56ab5bf9 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(56ab5bf9) SHA1(9546f6e20fdb13146c5db5353a1cb2a95931d909) )
 ROM_END
 
 ROM_START( pc_suprc )	/* Super C */
 	BIOS_CPU
-	ROM_LOAD( "ue-u3",    0x0c000, 0x2000, 0xa30ca248 ) /* extra bios code for this game */
+	ROM_LOAD( "ue-u3",    0x0c000, 0x2000, CRC(a30ca248) SHA1(19feb1b4f749768773e0d24777d7e60b2b6260e2) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "ue-u5",    0x10000, 0x20000, 0xc7fbecc3 )	/* banked */
+	ROM_LOAD( "ue-u5",    0x10000, 0x20000, CRC(c7fbecc3) SHA1(2653456c91031dfa73a50cab3835068a7bface8d) )	/* banked */
 	ROM_RELOAD(			  0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "ue-u1",    0x00000, 0x20000, 0x153295c1 )
+    ROM_LOAD( "ue-u1",    0x00000, 0x20000, CRC(153295c1) SHA1(4ff1caaedca52fb9bb0ca6c8fac24edda77308d7) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xd477095e )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(d477095e) SHA1(a179dffe529889f8e17e9f04958fea28611df0d3) )
 ROM_END
 
 ROM_START( pc_tmnt2 )	/* Teenage Mutant Ninja Turtles II */
 	BIOS_CPU
-	ROM_LOAD( "2n-u3",    0x0c000, 0x2000, 0x65298370 ) /* extra bios code for this game */
+	ROM_LOAD( "2n-u3",    0x0c000, 0x2000, CRC(65298370) SHA1(fd120f43e465a2622f2e2679ace2fb0fe7e709b1) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "2n-u5",    0x10000, 0x40000, 0x717e1c46 )	/* banked */
+	ROM_LOAD( "2n-u5",    0x10000, 0x40000, CRC(717e1c46) SHA1(b49cc88e026dac7f5ba96f5c16bcb897addbe259) )	/* banked */
 
     ROM_REGION( 0x040000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "2n-u1",    0x00000, 0x40000, 0x0dbc575f )
+    ROM_LOAD( "2n-u1",    0x00000, 0x40000, CRC(0dbc575f) SHA1(8094278cf3267757953ab761dbccf38589142376) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x237e8519 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(237e8519) SHA1(81b368d0784e4172c5cf9f4f4b92e29e05d34ae7) )
 ROM_END
 
 ROM_START( pc_wcup )	/* Nintendo World Cup */
 	BIOS_CPU
-	ROM_LOAD( "xz-u3",    0x0c000, 0x2000, 0xc26cb22f ) /* extra bios code for this game */
+	ROM_LOAD( "xz-u3",    0x0c000, 0x2000, CRC(c26cb22f) SHA1(18fea97b498812915bbd53a20b4f0a2130de6faf) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "xz-u5",    0x10000, 0x20000, 0x314ee295 )	/* banked */
+	ROM_LOAD( "xz-u5",    0x10000, 0x20000, CRC(314ee295) SHA1(0a5963feb5a6b47f0e7bea5bdd3d5835300af7b6) )	/* banked */
 	ROM_RELOAD(			  0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "xz-u1",    0x00000, 0x20000, 0x92477d53 )
+    ROM_LOAD( "xz-u1",    0x00000, 0x20000, CRC(92477d53) SHA1(33225bd5ee72f92761fdce931c93dd54e6885bd4) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xe17e1d76 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(e17e1d76) SHA1(3e4e1ddcc8524bf451cb568b1357ec1f0a8be44c) )
 ROM_END
 
 ROM_START( pc_mman3 )	/* Mega Man 3 */
 	BIOS_CPU
-	ROM_LOAD( "xu-u3",   0x0c000, 0x2000, 0xc3984e09 ) /* extra bios code for this game */
+	ROM_LOAD( "xu-u3",   0x0c000, 0x2000, CRC(c3984e09) SHA1(70d7e5d9cf9b1f358e1be84a0e8c5997b1aae2d9) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "xu-u4",   0x10000, 0x20000, 0x98a3263c )	/* banked */
-	ROM_LOAD( "xu-u5",   0x30000, 0x20000, 0xd365647a )	/* banked */
+	ROM_LOAD( "xu-u4",   0x10000, 0x20000, CRC(98a3263c) SHA1(02c8d8301fb220c3f4fd82bdc8cd2388b975fd05) )	/* banked */
+	ROM_LOAD( "xu-u5",   0x30000, 0x20000, CRC(d365647a) SHA1(4f39de6249c5f8b7cfa34bc955fd7ea6251569b5) )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "xu-u1",    0x00000, 0x20000, 0x4028916e )
+    ROM_LOAD( "xu-u1",    0x00000, 0x20000, CRC(4028916e) SHA1(f986f72ba5284129620d31c0779ac6d50638e6f1) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x0fe6e900 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(0fe6e900) SHA1(544d8af1aa9186bf76d0a35e78b20e94d3afbcb5) )
 ROM_END
 
 ROM_START( pc_smb2 )	/* Super Mario Bros 2 */
 	BIOS_CPU
-	ROM_LOAD( "mw-u3",   0x0c000, 0x2000, 0xbeaeb43a ) /* extra bios code for this game */
+	ROM_LOAD( "mw-u3",   0x0c000, 0x2000, CRC(beaeb43a) SHA1(c7dd186d6167e39924a000eb80bd33beedb2b8c8) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "mw-u5",   0x10000, 0x20000, 0x07854b3f )	/* banked */
+	ROM_LOAD( "mw-u5",   0x10000, 0x20000, CRC(07854b3f) SHA1(9bea58ba97730c84232a4acbb23c3ea7bce14ec5) )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "mw-u1",    0x00000, 0x20000, 0xf2ba1170 )
+    ROM_LOAD( "mw-u1",    0x00000, 0x20000, CRC(f2ba1170) SHA1(d9976b677ad222b76fbdaf31713374e2f283d44e) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x372f4e84 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(372f4e84) SHA1(cdf221d49f3b454997d696f213d60b5dce0ce9fb) )
 ROM_END
 
 ROM_START( pc_ngai2 )	/* Ninja Gaiden 2 */
 	BIOS_CPU
-	ROM_LOAD( "nw-u3",   0x0c000, 0x2000, 0xbc178cde ) /* extra bios code for this game */
+	ROM_LOAD( "nw-u3",   0x0c000, 0x2000, CRC(bc178cde) SHA1(2613f501f92d358f0085aa7002c752cb9a8521ca) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "nw-u5",   0x10000, 0x20000, 0xc43da8e2 )	/* banked */
+	ROM_LOAD( "nw-u5",   0x10000, 0x20000, CRC(c43da8e2) SHA1(702a4cf2f57fff7183f2d3c18b8997a38cadc6cd) )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "nw-u1",    0x00000, 0x20000, 0x8e0c8bb0 )
+    ROM_LOAD( "nw-u1",    0x00000, 0x20000, CRC(8e0c8bb0) SHA1(6afe24b8e57f5a2174000a706b66209d7e310ed6) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x682dffd1 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(682dffd1) SHA1(87ea54b3d725a552b397ccb2af0ccf8bd6452a7c) )
 ROM_END
 
 /* H-Board Games */
 ROM_START( pc_pinbt )	/* PinBot */
-	BIOS_CPU
-	ROM_LOAD( "io-u3",   0x0c000, 0x2000, 0x15ba8a2e ) /* extra bios code for this game */
+    BIOS_CPU
+    ROM_LOAD( "io-u3",   0x0c000, 0x2000, CRC(15ba8a2e) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-	ROM_LOAD( "io-u5",   0x10000, 0x20000, 0x9f75b83b )	/* banked */
-	ROM_RELOAD(			 0x30000, 0x20000 )	/* banked */
+    ROM_LOAD( "io-u5",   0x10000, 0x20000, CRC(9f75b83b) )	/* banked */
+    ROM_RELOAD(			  0x30000, 0x20000 )	/* banked */
 
     ROM_REGION( 0x010000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "io-u1",    0x00000, 0x10000, 0x9089fc24 )
+    ROM_LOAD( "io-u1",    0x00000, 0x10000, CRC(9089fc24) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x0 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(ac75f323) )
 ROM_END
 
 /* i-Board Games */
 ROM_START( pc_cshwk )	/* Captain Sky Hawk */
 	BIOS_CPU
-	ROM_LOAD( "yw-u3",   0x0c000, 0x2000, 0x9d988209 ) /* extra bios code for this game */
+	ROM_LOAD( "yw-u3",   0x0c000, 0x2000, CRC(9d988209) SHA1(b355911d31dfc611b9e90cca82fc10035483b89c) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "yw-u1",   0x10000, 0x20000, 0xa5e0208a ) /* banked */
+    ROM_LOAD( "yw-u1",   0x10000, 0x20000, CRC(a5e0208a) SHA1(e12086a3f1a3b5e9ec035cb778505e43f501416a) ) /* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xeb1c794f )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(eb1c794f) SHA1(d32f841fd4306389d716229da9bffea909186689) )
 ROM_END
 
 ROM_START( pc_sjetm )	/* Solar Jetman */
 	BIOS_CPU
-	ROM_LOAD( "lj-u3",   0x0c000, 0x2000, 0x273d8e75 ) /* extra bios code for this game */
+	ROM_LOAD( "lj-u3",   0x0c000, 0x2000, CRC(273d8e75) SHA1(b13b97545b39f6b0459440fb6594ebe03366dfc9) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "lj-u1",   0x10000, 0x40000, 0x8111ba08 ) /* banked */
+    ROM_LOAD( "lj-u1",   0x10000, 0x40000, CRC(8111ba08) SHA1(caa4d1ab710bd766f8505ef24f5702dac6e988af) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf3ae712a )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(f3ae712a) SHA1(51f443c65e64f1a9eb565ce017b50ec9bd4a5520) )
 ROM_END
 
 
 /* K-Board Games */
 ROM_START( pc_moglf )	/* Mario Open Golf */
 	BIOS_CPU
-	ROM_LOAD( "ug-u2",   0x0c000, 0x2000, 0xe932fe2b ) /* extra bios code for this game */
+	ROM_LOAD( "ug-u2",   0x0c000, 0x2000, CRC(e932fe2b) SHA1(563380482525fdadd05fced2af61d5198d1654a5) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "ug-u4",   0x10000, 0x40000, 0x091a6a4c ) /* banked */
+    ROM_LOAD( "ug-u4",   0x10000, 0x40000, CRC(091a6a4c) SHA1(2d5ac7c65ce63d409b6e0b2e2185d81bc7c57c69) ) /* banked */
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x633766d5 )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(633766d5) SHA1(3a2564f3a2daf3a789e4c4056822f12243c89619) )
 ROM_END
 
 /***************************************************************************
@@ -1573,7 +1588,8 @@ GAME( 1984, pc_hgaly,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "
 GAME( 1984, pc_wgnmn,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Wild Gunman" )
 
 /* A-Board Games */
-GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" )
+GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" ) // date: 860917
+GAME( 1986, pc_grdue,pc_grdus, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius (Early version)" ) // date: 860219
 GAME( 1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Track & Field" )
 
 /* B-Board Games */
@@ -1593,7 +1609,7 @@ GAME( 1986, pc_mtoid,playch10, playch10, playch10, pcdboard, ROT0, "Nintendo", "
 GAME( 1987, pc_radrc,playch10, playch10, playch10, pcdboard, ROT0, "Square", "PlayChoice-10: Rad Racer" )
 
 /* E-Board Games */
-GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_NOT_WORKING )
+GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_IMPERFECT_GRAPHICS )
 
 /* F-Board Games */
 GAME( 1987, pc_rcpam,playch10, playch10, playch10, pcfboard, ROT0, "Rare", "PlayChoice-10: RC Pro Am" )
@@ -1623,7 +1639,7 @@ GAME( 1990, pc_radr2,playch10, playch10, playch10, pcgboard_type2, ROT0, "Square
 GAME( 1985, pc_gntlt,playch10, playch10, playch10, pcgboard_type2, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet" )
 
 /* H-Board Games */
-GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_NOT_WORKING )
+GAMEX( 1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS )
 
 /* i-Board Games */
 GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )

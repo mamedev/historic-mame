@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "atarifb.h"
+#include "artwork.h"
 
 
 static int CTRLD;
@@ -15,33 +16,83 @@ static int sign_x_2, sign_y_2;
 static int sign_x_3, sign_y_3;
 static int sign_x_4, sign_y_4;
 
+
 WRITE_HANDLER( atarifb_out1_w )
 {
 	CTRLD = data;
-	/* we also need to handle the whistle, hit, and kicker sound lines */
-//	logerror("out1_w: %02x\n", data);
+
+	discrete_sound_w(0,  data & 0x01);		// Whistle
+	discrete_sound_w(2,  data & 0x02);		// Hit
+	discrete_sound_w(3, (data & 0x10) ? 0 : 1);	// Attract
+	discrete_sound_w(4,  data & 0x04);		// Noise Enable / Kicker
+
+	if (GAME_IS_SOCCER)
+	{
+		/* bit 0 = whistle */
+		/* bit 1 = hit */
+		/* bit 2 = kicker */
+		/* bit 3 = unused */
+		/* bit 4 = 2/4 Player LED */	// Say what?
+		/* bit 5-6 = trackball CTRL bits */
+		/* bit 7 = Rule LED */
+//		set_led_status(0,data & 0x10);	// !!!!!!!!!! Is this correct????
+		set_led_status(1,data & 0x80);
+	}
+
+	if (GAME_IS_FOOTBALL4)
+		coin_counter_w (1, data & 0x80);
+	
 }
 
-WRITE_HANDLER( atarifb4_out1_w )
+
+WRITE_HANDLER( atarifb_out2_w )
 {
-	CTRLD = data;
-	coin_counter_w (0, data & 0x80);
-	/* we also need to handle the whistle, hit, and kicker sound lines */
-//	logerror("out1_w: %02x\n", data);
+	discrete_sound_w(1, data & 0x0f);	// Crowd
+
+	coin_counter_w (0, data & 0x10);
+
+	if (GAME_IS_SOCCER)
+	{
+		coin_counter_w (1, data & 0x20);
+		coin_counter_w (2, data & 0x40);
+	}
 }
 
-WRITE_HANDLER( soccer_out1_w )
+
+/*************************************
+ *
+ *	LED control
+ *
+ *************************************/
+
+WRITE_HANDLER( atarifb_out3_w )
 {
-	/* bit 0 = whistle */
-	/* bit 1 = hit */
-	/* bit 2 = kicker */
-	/* bit 3 = unused */
-	/* bit 4 = 2/4 Player LED */
-	/* bit 5-6 = trackball CTRL bits */
-	/* bit 7 = Rule LED */
-	CTRLD = data;
-	set_led_status(0,data & 0x10);
-	set_led_status(1,data & 0x80);
+	int loop = cpu_getiloops();
+
+	switch (loop)
+	{
+		case 0x00:
+			/* Player 1 play select lamp */
+			atarifb_lamp1 = data;
+			artwork_show("ledleft0", (atarifb_lamp1 >> 0) & 1);
+			artwork_show("ledleft1", (atarifb_lamp1 >> 1) & 1);
+			artwork_show("ledleft2", (atarifb_lamp1 >> 2) & 1);
+			artwork_show("ledleft3", (atarifb_lamp1 >> 3) & 1);
+			break;
+		case 0x01:
+			break;
+		case 0x02:
+			/* Player 2 play select lamp */
+			atarifb_lamp2 = data;
+			artwork_show("ledright0", (atarifb_lamp2 >> 0) & 1);
+			artwork_show("ledright1", (atarifb_lamp2 >> 1) & 1);
+			artwork_show("ledright2", (atarifb_lamp2 >> 2) & 1);
+			artwork_show("ledright3", (atarifb_lamp2 >> 3) & 1);
+			break;
+		case 0x03:
+			break;
+	}
+//	logerror("out3_w, %02x:%02x\n", loop, data);
 }
 
 

@@ -19,6 +19,8 @@ data16_t *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
 data16_t *nemesis_yscroll1,*nemesis_yscroll2;
 
 static int spriteram_words;
+static int tilemap_flip;
+static int flipscreen;
 
 static struct tilemap *background, *foreground;
 
@@ -69,10 +71,34 @@ static void get_fg_tile_info( int offs )
 	} else {
 		SET_TILE_INFO( 0, 0x800, 0x00, 0 );
 	}
-	if (((nemesis_videoram1f[offs] & 0x5000) == 0x4000) && (code & 0x2000))
-		tile_info.priority = 0;
-	else
-		tile_info.priority = (code & 0x1000)>>12;
+	tile_info.priority = (code & 0x1000)>>12;
+}
+
+WRITE16_HANDLER( nemesis_gfx_flipx_w )
+{
+	if (ACCESSING_LSB)
+	{
+		flipscreen = data & 0x01;
+		if (flipscreen)
+			tilemap_flip |= TILEMAP_FLIPX;
+		else
+			tilemap_flip &= ~TILEMAP_FLIPX;
+
+		tilemap_set_flip(ALL_TILEMAPS, tilemap_flip);
+	}
+}
+
+WRITE16_HANDLER( nemesis_gfx_flipy_w )
+{
+	if (ACCESSING_LSB)
+	{
+		if (data & 0x01)
+			tilemap_flip |= TILEMAP_FLIPY;
+		else
+			tilemap_flip &= ~TILEMAP_FLIPY;
+
+		tilemap_set_flip(ALL_TILEMAPS, tilemap_flip);
+	}
 }
 
 WRITE16_HANDLER( nemesis_palette_word_w )
@@ -302,6 +328,9 @@ VIDEO_START( nemesis )
 	decodechar(Machine->gfx[0],0x800,(unsigned char *)blank_characterdata,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
+	flipscreen = 0;
+	tilemap_flip = 0;
+
 	return 0;
 }
 
@@ -332,10 +361,11 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int char_type;
 	int priority;
 	int size;
+	int w,h;
 
-	for (priority=0;priority<256;priority++)
+	for (priority=256-1; priority>=0; priority--)
 	{
-		for (adress = 0;adress < spriteram_words;adress += 8)
+		for (adress = spriteram_words-8; adress >= 0; adress -= 8)
 		{
 			if((spriteram16[adress] & 0xff)!=priority) continue;
 
@@ -363,46 +393,70 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					case 0x00:	/* sprite 32x32*/
 						char_type=4;
 						code/=8;
+						w=32;
+						h=32;
 						break;
 					case 0x08:	/* sprite 16x32 */
 						char_type=5;
 						code/=4;
+						w=16;
+						h=32;
 						break;
 					case 0x10:	/* sprite 32x16 */
 						char_type=2;
 						code/=4;
+						w=32;
+						h=16;
 						break;
 					case 0x18:		/* sprite 64x64 */
 						char_type=7;
 						code/=32;
+						w=64;
+						h=64;
 						break;
 					case 0x20:	/* char 8x8 */
 						char_type=0;
 						code*=2;
+						w=8;
+						h=8;
 						break;
 					case 0x28:		/* sprite 16x8 */
 						char_type=6;
+						w=16;
+						h=8;
 						break;
 					case 0x30:	/* sprite 8x16 */
 						char_type=3;
+						w=8;
+						h=16;
 						break;
 					case 0x38:
 					default:	/* sprite 16x16 */
 						char_type=1;
 						code/=2;
+						w=16;
+						h=16;
 						break;
 				}
 
 				if( zoom )
 				{
-					zoom = (1<<16)*0x80/zoom;
-					drawgfxzoom(bitmap,Machine->gfx[char_type],
+					zoom = ((1<<16)*0x80/zoom) + 0x0200;
+					if (flipscreen)
+					{
+						sx = 256 - ((zoom * w) >> 16) - sx;
+						sy = 256 - ((zoom * h) >> 16) - sy;
+						flipx = !flipx;
+						flipy = !flipy;
+					}
+					pdrawgfxzoom(bitmap,Machine->gfx[char_type],
 						code,
 						color,
 						flipx,flipy,
 						sx,sy,
 						cliprect,TRANSPARENCY_PEN,0,
-						zoom,zoom);
+						zoom,zoom,
+						0xfff0 );
 				}
 			} /* if sprite */
 		} /* for loop */
@@ -552,64 +606,25 @@ VIDEO_UPDATE( nemesis )
 
 	update_gfx();
 
+	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
+
 	for (offs = 0;offs < 256;offs++)
 	{
 		tilemap_set_scrollx( background, offs,
-			((nemesis_xscroll2[offs] & 0xff) +
-			((nemesis_xscroll2[0x100 + offs] & 1) << 8)) );
-
+			(nemesis_xscroll2[offs] & 0xff) + ((nemesis_xscroll2[0x100 + offs] & 0x01) << 8) - (flipscreen ? 0x107 : 0) );
 		tilemap_set_scrollx( foreground, offs,
-			((nemesis_xscroll1[offs] & 0xff) +
-			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
+			(nemesis_xscroll1[offs] & 0xff) + ((nemesis_xscroll1[0x100 + offs] & 0x01) << 8) - (flipscreen ? 0x107 : 0) );
 	}
 
-	tilemap_draw(bitmap,cliprect,background,0,0);
-	tilemap_draw(bitmap,cliprect,foreground,0,0);
-	draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,background,1,0);
-	tilemap_draw(bitmap,cliprect,foreground,1,0);
-}
-
-VIDEO_UPDATE( twinbee )
-{
-	int offs;
-
-	update_gfx();
-
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
-
-	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
-	for (offs = 0;offs < 256;offs++)
-	{
-		tilemap_set_scrollx( background, offs,
-			((nemesis_xscroll2[offs] & 0xff) +
-			((nemesis_xscroll2[0x100 + offs] & 1) << 8)) );
-
-		tilemap_set_scrollx( foreground, offs,
-			((nemesis_xscroll1[offs] & 0xff) +
-			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
-	}
-
-	tilemap_draw(bitmap,cliprect,background,0,0);
-	tilemap_draw(bitmap,cliprect,foreground,0,0);
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		Machine->orientation ^= ORIENTATION_FLIP_X;
-	else
-		Machine->orientation ^= ORIENTATION_FLIP_Y;
+	tilemap_draw(bitmap,cliprect,background,0,1);
+	tilemap_draw(bitmap,cliprect,foreground,0,2);
+	tilemap_draw(bitmap,cliprect,background,1,4);
+	tilemap_draw(bitmap,cliprect,foreground,1,8);
 
 	draw_sprites(bitmap,cliprect);
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		Machine->orientation ^= ORIENTATION_FLIP_X;
-	else
-		Machine->orientation ^= ORIENTATION_FLIP_Y;
-
-	tilemap_draw(bitmap,cliprect,background,1,0);
-	tilemap_draw(bitmap,cliprect,foreground,1,0);
 }
 
 VIDEO_UPDATE( salamand )
@@ -619,6 +634,7 @@ VIDEO_UPDATE( salamand )
 
 	update_gfx();
 
+	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	clip.min_x = 0;
@@ -628,46 +644,28 @@ VIDEO_UPDATE( salamand )
 	tilemap_set_scroll_cols( foreground, 64 );
 	tilemap_set_scroll_rows( background, 1 );
 	tilemap_set_scroll_rows( foreground, 1 );
+
 	for (offs = 0; offs < 64; offs++)
 	{
 		tilemap_set_scrolly( background, offs, nemesis_yscroll1[offs] );
 		tilemap_set_scrolly( foreground, offs, nemesis_yscroll2[offs] );
 	}
 
-	/* hack: we use clipping to do rowscroll and colscroll at the same time. */
 	for (offs = cliprect->min_y; offs <= cliprect->max_y; offs++)
 	{
 		clip.min_y = offs;
 		clip.max_y = offs;
 
 		tilemap_set_scrollx( background, 0,
-			((nemesis_xscroll2[offs] & 0xff) +
-			((nemesis_xscroll2[0x100 + offs] & 1) << 8)) );
-
+			((nemesis_xscroll2[offs] & 0xff) + ((nemesis_xscroll2[0x100 + offs] & 1) << 8)) );
 		tilemap_set_scrollx( foreground, 0,
-			((nemesis_xscroll1[offs] & 0xff) +
-			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
+			((nemesis_xscroll1[offs] & 0xff) + ((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 
-		tilemap_draw(bitmap,&clip,foreground,0,0);
-		tilemap_draw(bitmap,&clip,background,0,0);
+		tilemap_draw(bitmap,&clip,foreground,0,1);
+		tilemap_draw(bitmap,&clip,background,0,2);
+		tilemap_draw(bitmap,&clip,foreground,1,4);
+		tilemap_draw(bitmap,&clip,background,1,8);
 	}
 
 	draw_sprites(bitmap,cliprect);
-
-	for (offs = cliprect->min_y; offs <= cliprect->max_y; offs++)
-	{
-		clip.min_y = offs;
-		clip.max_y = offs;
-
-		tilemap_set_scrollx( background, 0,
-			((nemesis_xscroll2[offs] & 0xff) +
-			((nemesis_xscroll2[0x100 + offs] & 1) << 8)) );
-
-		tilemap_set_scrollx( foreground, 0,
-			((nemesis_xscroll1[offs] & 0xff) +
-			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
-
-		tilemap_draw(bitmap,&clip,foreground,1,0);
-		tilemap_draw(bitmap,&clip,background,1,0);
-	}
 }

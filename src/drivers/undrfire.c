@@ -57,19 +57,11 @@
 	Solved by upping sprite priority while TC0480SCP row zoom is
 	enabled - kludge.
 
-	(ii) Wrong colour palettes are used in some background scenes?!
-
-	(iii) End sequence hangs reading an unknown input bit - fixed via a patch just now.
-	In normal game, this bit acts as input freeze.
 
 	Todo
 	----
 
 	This game needs a fake aim target!
-
-	Occasional bad colors on the male torso shooting (attract)
-	and tendency for correct background colors to be "delayed" by 1
-	second or so. Blending-related?
 
 	What does the 0xb00000 area do... alpha blending ??
 
@@ -150,6 +142,7 @@ extern data32_t *f3_shared_ram;
 static UINT16 coin_word;
 static UINT16 port_sel = 0;
 extern UINT16 undrfire_rotate_ctrl[8];
+static int frame_counter=0;
 
 data32_t *undrfire_ram;	/* will be read in vidhrdw for gun target calcs */
 
@@ -239,7 +232,7 @@ static READ32_HANDLER( undrfire_input_r )
 		case 0x00:
 		{
 			return (input_port_0_word_r(0,0) << 16) | input_port_1_word_r(0,0) |
-				  (EEPROM_read_bit() << 7);
+				  (EEPROM_read_bit() << 7) | frame_counter;
 		}
 
 		case 0x01:
@@ -474,14 +467,14 @@ INPUT_PORTS_START( undrfire )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_UNKNOWN ) /* ?!  Needs to toggle in end sequence */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* Frame counter */
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )	/* reserved for EEROM */
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* reserved for EEROM */
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -591,25 +584,30 @@ static MACHINE_INIT( undrfire )
 static struct ES5505interface es5505_interface =
 {
 	1,					/* total number of chips */
-	{ 16000000 },		/* freq */
+	{ 30476000 / 2 },	/* freq */
 	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
 	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
 };
 
+static INTERRUPT_GEN( undrfire_interrupt )
+{
+	frame_counter^=1;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
+}
 
 static MACHINE_DRIVER_START( undrfire )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
 	MDRV_CPU_MEMORY(undrfire_readmem,undrfire_writemem)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_VBLANK_INT(undrfire_interrupt,1)
 
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
-	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(undrfire)
@@ -638,38 +636,38 @@ MACHINE_DRIVER_END
 
 ROM_START( undrfire )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 2048K for 68020 code (CPU A) */
-	ROM_LOAD32_BYTE( "d67-19", 0x00000, 0x80000, 0x1d88fa5a )
-	ROM_LOAD32_BYTE( "d67-18", 0x00001, 0x80000, 0xf41ae7fd )
-	ROM_LOAD32_BYTE( "d67-17", 0x00002, 0x80000, 0x34e030b7 )
-	ROM_LOAD32_BYTE( "d67-23", 0x00003, 0x80000, 0x28e84e0a )
+	ROM_LOAD32_BYTE( "d67-19", 0x00000, 0x80000, CRC(1d88fa5a) SHA1(5e498efb9535a8f4e82b5525390b8bde7c45c07e) )
+	ROM_LOAD32_BYTE( "d67-18", 0x00001, 0x80000, CRC(f41ae7fd) SHA1(bdd0df01b11205c263d2fa280746826b831d58bc) )
+	ROM_LOAD32_BYTE( "d67-17", 0x00002, 0x80000, CRC(34e030b7) SHA1(62c270c817199a56e647ea74849fe5c07717ac18) )
+	ROM_LOAD32_BYTE( "d67-23", 0x00003, 0x80000, CRC(28e84e0a) SHA1(74c73c6df07d33ef4c0a29f8c1ee1a33eee922da) )
 
 	ROM_REGION( 0x140000, REGION_CPU2, 0 )
-	ROM_LOAD16_BYTE( "d67-20", 0x100000, 0x20000,  0x974ebf69 )
-	ROM_LOAD16_BYTE( "d67-21", 0x100001, 0x20000,  0x8fc6046f )
+	ROM_LOAD16_BYTE( "d67-20", 0x100000, 0x20000,  CRC(974ebf69) SHA1(8a5de503c514bf0da0c956e2dfdf0cfb83ea1f72) )
+	ROM_LOAD16_BYTE( "d67-21", 0x100001, 0x20000,  CRC(8fc6046f) SHA1(28522ce5c5900f74d3faa86710256a7201b32500) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d67-08", 0x000000, 0x200000, 0x56730d44 )	/* SCR 16x16 tiles */
-	ROM_LOAD16_BYTE( "d67-09", 0x000001, 0x200000, 0x3c19f9e3 )
+	ROM_LOAD16_BYTE( "d67-08", 0x000000, 0x200000, CRC(56730d44) SHA1(110872714b3c26a82473c7b80c120918b91b1b4b) )	/* SCR 16x16 tiles */
+	ROM_LOAD16_BYTE( "d67-09", 0x000001, 0x200000, CRC(3c19f9e3) SHA1(7ba8475d37cbf8bf38029124afdf62c915c8668d) )
 
 	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "d67-03", 0x000003, 0x200000, 0x3b6e99a9 )	/* OBJ 16x16 tiles */
-	ROM_LOAD32_BYTE( "d67-04", 0x000002, 0x200000, 0x8f2934c9 )
-	ROM_LOAD32_BYTE( "d67-05", 0x000001, 0x200000, 0xe2e7dcf3 )
-	ROM_LOAD32_BYTE( "d67-06", 0x000000, 0x200000, 0xa2a63488 )
-	ROM_LOAD32_BYTE( "d67-07", 0x800000, 0x200000, 0x189c0ee5 )
+	ROM_LOAD32_BYTE( "d67-03", 0x000003, 0x200000, CRC(3b6e99a9) SHA1(1e0e66763ddfa18a2d291626b245633555092959) )	/* OBJ 16x16 tiles */
+	ROM_LOAD32_BYTE( "d67-04", 0x000002, 0x200000, CRC(8f2934c9) SHA1(ead95b34eec3a6df27199edcbdd5595bc6555a50) )
+	ROM_LOAD32_BYTE( "d67-05", 0x000001, 0x200000, CRC(e2e7dcf3) SHA1(185dbd0489931123a295139dc0a045ad239018fb) )
+	ROM_LOAD32_BYTE( "d67-06", 0x000000, 0x200000, CRC(a2a63488) SHA1(a1ed140cc3757c3c05a0a822089c6efc83bf4805) )
+	ROM_LOAD32_BYTE( "d67-07", 0x800000, 0x200000, CRC(189c0ee5) SHA1(de85b39dc67f31ef80800ff6ec9a391652eb12e4) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d67-10", 0x000000, 0x100000, 0xd79e6ce9 )	/* PIV 8x8 tiles, 6bpp */
-	ROM_LOAD16_BYTE( "d67-11", 0x000001, 0x100000, 0x7a401bb3 )
-	ROM_LOAD       ( "d67-12", 0x300000, 0x100000, 0x67b16fec )
+	ROM_LOAD16_BYTE( "d67-10", 0x000000, 0x100000, CRC(d79e6ce9) SHA1(8b38302971816d599cdaa3279cb6395441373c6f) )	/* PIV 8x8 tiles, 6bpp */
+	ROM_LOAD16_BYTE( "d67-11", 0x000001, 0x100000, CRC(7a401bb3) SHA1(47257a6a4b37ec1ceb4e974b776ee3ea30db06fa) )
+	ROM_LOAD       ( "d67-12", 0x300000, 0x100000, CRC(67b16fec) SHA1(af0f9f50516331780ef6cfab1e12a23edf87daa7) )
 	ROM_FILL       (           0x200000, 0x100000, 0 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "d67-13", 0x00000,  0x80000,  0x42e7690d )	/* STY, spritemap */
+	ROM_LOAD16_WORD( "d67-13", 0x00000,  0x80000,  CRC(42e7690d) SHA1(5f00f3f814653733bf9a5cb010675799de02fa76) )	/* STY, spritemap */
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "d67-01", 0x000000, 0x200000, 0xa2f18122 )	/* Ensoniq samples */
-	ROM_LOAD16_BYTE( "d67-02", 0xc00000, 0x200000, 0xfceb715e )
+	ROM_LOAD16_BYTE( "d67-01", 0x000000, 0x200000, CRC(a2f18122) SHA1(640014c6e6d66c59fe0accf370ad3bab9f40429a) )	/* Ensoniq samples */
+	ROM_LOAD16_BYTE( "d67-02", 0xc00000, 0x200000, CRC(fceb715e) SHA1(9326513acb0696669d4f2345649ab37c8c6ed171) )
 ROM_END
 
 
@@ -690,7 +688,6 @@ DRIVER_INIT( undrfire )
 {
 	unsigned int offset,i;
 	UINT8 *gfx = memory_region(REGION_GFX3);
-	UINT32 *rom = (UINT32*)memory_region(REGION_CPU1);
 	int size=memory_region_length(REGION_GFX3);
 	int data;
 
@@ -716,10 +713,7 @@ DRIVER_INIT( undrfire )
 		gfx[offset] = (d3<<2) | (d4<<6);
 		offset++;
 	}
-
-	/* Game hangs in the end sequence polling an unknown input (that usually freezes the game?!) */
-	rom[0x4a5d8/4]=(rom[0x4a5d8/4]&0xffff0000)|0x4e71;
 }
 
 
-GAMEX( 1993, undrfire, 0, undrfire, undrfire, undrfire, ROT0, "Taito Corporation Japan", "Under Fire (World)", GAME_IMPERFECT_COLORS )
+GAME( 1993, undrfire, 0, undrfire, undrfire, undrfire, ROT0, "Taito Corporation Japan", "Under Fire (World)" )

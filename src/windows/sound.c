@@ -38,7 +38,6 @@ extern int verbose;
 
 #define LOG_SOUND				0
 #define DISPLAY_UNDEROVERFLOW	0
-#define AMPLIFY_UNDERFLOWS		1
 
 
 
@@ -102,6 +101,7 @@ static UINT32				samples_this_frame;
 
 // sample rate adjustments
 static int					current_adjustment = 0;
+static int					audio_latency;
 static int					lower_thresh;
 static int					upper_thresh;
 
@@ -117,6 +117,8 @@ static FILE *				sound_log;
 struct rc_option sound_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
+	{ "Windows sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "audio_latency", NULL, rc_int, &audio_latency, "1", 1, 4, NULL, "set audio latency (increase to reduce glitches)" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -492,8 +494,8 @@ static int dsound_init(void)
 	stream_buffer_size = (stream_buffer_size / 1024) * 1024;
 
 	// compute the upper/lower thresholds
-	lower_thresh = 1 * stream_buffer_size / 5;
-	upper_thresh = 2 * stream_buffer_size / 5;
+	lower_thresh = audio_latency * stream_buffer_size / 5;
+	upper_thresh = (audio_latency + 1) * stream_buffer_size / 5;
 #if LOG_SOUND
 	fprintf(sound_log, "stream_buffer_size = %d (max %d)\n", stream_buffer_size, MAX_BUFFER_SIZE);
 	fprintf(sound_log, "lower_thresh = %d\n", lower_thresh);

@@ -493,116 +493,116 @@ MACHINE_DRIVER_END
 
 ROM_START( baraduke )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
-	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, 0xea2ea790 )
-	ROM_LOAD( "prg2.9a",	0x8000, 0x04000, 0x9a0a9a87 )
-	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, 0x383e5458 )
+	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, CRC(ea2ea790) SHA1(ab6f523803b2b0ea04b78f2f252de6c2d344a26c) )
+	ROM_LOAD( "prg2.9a",	0x8000, 0x04000, CRC(9a0a9a87) SHA1(6d88fb5b443c822ede4884d4452e333834b16aca) )
+	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, CRC(383e5458) SHA1(091f25e287f0a81649c9a4fa196ebe4112a82295) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, 0xabda0fe7 )	/* subprogram for the MCU */
-	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, CRC(abda0fe7) SHA1(f7edcb5f9fa47bb38a8207af5678cf4ccc243547) )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
+	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, CRC(706b7fee) SHA1(e5694289bd4346c1a3a004feaa940710cea755c6) )	/* characters */
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, 0xb0bb0710 )	/* tiles */
-	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, 0x0d7ebec9 )
-	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, 0xe5da0896 )
+	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, CRC(b0bb0710) SHA1(797832aea59bf80342fd2a3505645f2766bde65b) )	/* tiles */
+	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, CRC(0d7ebec9) SHA1(6b86b476db61f5760bc8610b51adc1115cfdad96) )
+	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, CRC(e5da0896) SHA1(abb8bf7e9dc1c60bc0a20a691109fb145bb1d8e0) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, 0x87a29acc )	/* sprites */
-	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, 0x72b6d20c )
-	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, 0x3076af9c )
-	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, 0x8b4c09a3 )
+	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, CRC(87a29acc) SHA1(3aa00efc95d1da50f6e4637d101640328287dea1) )	/* sprites */
+	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, CRC(72b6d20c) SHA1(e40b48dacefce4fd62ab28d3e6ff3932d4ff005b) )
+	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, CRC(3076af9c) SHA1(57ce09b298fd0bae94e4d8c817a34ce812c3ddfc) )
+	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, CRC(8b4c09a3) SHA1(46e0ef39cb313c6780f6137769153dc4a054c77f) )
 
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )
-	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
-	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
+	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, CRC(0d78ebc6) SHA1(0a0c1e23eb4d1748c4e6c448284d785286c77911) )	/* Blue + Green palette */
+	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, CRC(03f7241f) SHA1(16ae059f084ba0ac4ddaa95dbeed113295f106ea) )	/* Red palette */
 ROM_END
 
 ROM_START( baraduka )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
-	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, 0xea2ea790 )
-	ROM_LOAD( "bd1_1.9a",	0x8000, 0x04000, 0x4e9f2bdc )
-	ROM_LOAD( "bd1_2.9b",	0xc000, 0x04000, 0x40617fcd )
+	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, CRC(ea2ea790) SHA1(ab6f523803b2b0ea04b78f2f252de6c2d344a26c) )
+	ROM_LOAD( "bd1_1.9a",	0x8000, 0x04000, CRC(4e9f2bdc) SHA1(bc6e71d4d3b2064e662a105c1a77d2731070d58e) )
+	ROM_LOAD( "bd1_2.9b",	0xc000, 0x04000, CRC(40617fcd) SHA1(51d17f3a2fc96e13c8ef5952efece526e0fb33f4) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "bd1_4b.3b",	0x8000,  0x4000, 0xa47ecd32 )	/* subprogram for the MCU */
-	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+	ROM_LOAD( "bd1_4b.3b",	0x8000,  0x4000, CRC(a47ecd32) SHA1(a2a75e65deb28224a5729ed134ee4d5ea8c50706) )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
+	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, CRC(706b7fee) SHA1(e5694289bd4346c1a3a004feaa940710cea755c6) )	/* characters */
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, 0xb0bb0710 )	/* tiles */
-	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, 0x0d7ebec9 )
-	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, 0xe5da0896 )
+	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, CRC(b0bb0710) SHA1(797832aea59bf80342fd2a3505645f2766bde65b) )	/* tiles */
+	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, CRC(0d7ebec9) SHA1(6b86b476db61f5760bc8610b51adc1115cfdad96) )
+	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, CRC(e5da0896) SHA1(abb8bf7e9dc1c60bc0a20a691109fb145bb1d8e0) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, 0x87a29acc )	/* sprites */
-	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, 0x72b6d20c )
-	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, 0x3076af9c )
-	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, 0x8b4c09a3 )
+	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, CRC(87a29acc) SHA1(3aa00efc95d1da50f6e4637d101640328287dea1) )	/* sprites */
+	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, CRC(72b6d20c) SHA1(e40b48dacefce4fd62ab28d3e6ff3932d4ff005b) )
+	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, CRC(3076af9c) SHA1(57ce09b298fd0bae94e4d8c817a34ce812c3ddfc) )
+	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, CRC(8b4c09a3) SHA1(46e0ef39cb313c6780f6137769153dc4a054c77f) )
 
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )
-	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
-	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
+	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, CRC(0d78ebc6) SHA1(0a0c1e23eb4d1748c4e6c448284d785286c77911) )	/* Blue + Green palette */
+	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, CRC(03f7241f) SHA1(16ae059f084ba0ac4ddaa95dbeed113295f106ea) )	/* Red palette */
 ROM_END
 
 ROM_START( metrocrs )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
-	ROM_LOAD( "mc1-3.9c",	0x6000, 0x02000, 0x3390b33c )
-	ROM_LOAD( "mc1-1.9a",	0x8000, 0x04000, 0x10b0977e )
-	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, 0x5c846f35 )
+	ROM_LOAD( "mc1-3.9c",	0x6000, 0x02000, CRC(3390b33c) SHA1(0733aece368acc913e2ff32e8817194cb4b630fb) )
+	ROM_LOAD( "mc1-1.9a",	0x8000, 0x04000, CRC(10b0977e) SHA1(6266d173b55075da1f252092bf38185880bc4969) )
+	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, CRC(5c846f35) SHA1(3c98a0f1131f2e2477fc75a588123c57ff5350ad) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
-	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
+	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, CRC(9b5ea33a) SHA1(a8108e71e3440b645ebdb5cdbd87712151299789) )	/* characters */
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, 0xc9dfa003 )	/* tiles */
-	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, 0x9686dc3c )
+	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, CRC(c9dfa003) SHA1(86e8f9fc25de67691ce5385d93b723e7eb836b2b) )	/* tiles */
+	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, CRC(9686dc3c) SHA1(1caf712eedb1f70559169685e5421e11866e518c) )
 	/* empty space to decode the roms as 3bpp */
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, 0x265b31fa )	/* sprites */
-	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, 0x541ec029 )
+	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, CRC(265b31fa) SHA1(d46e6db5d6f325954d2b6159157b11e10fe5838d) )	/* sprites */
+	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, CRC(541ec029) SHA1(a3096d8405b6bbc862b03773889f6cbd43739f5b) )
 	/* 8000-ffff empty */
 
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )
-	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
-	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
+	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, CRC(32a78a8b) SHA1(545a59bc3c5868ac1749d2947210110205fb3da2) )	/* Blue + Green palette */
+	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, CRC(6f4dca7b) SHA1(781134c02853aded2cba63719c0e4c78b227da1c) )	/* Red palette */
 ROM_END
 
 ROM_START( metrocra )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
-	ROM_LOAD( "mc2-3.9b",	0x6000, 0x02000, 0xffe08075 )
-	ROM_LOAD( "mc2-1.9a",	0x8000, 0x04000, 0x05a239ea )
-	ROM_LOAD( "mc2-2.9a",	0xc000, 0x04000, 0xdb9b0e6d )
+	ROM_LOAD( "mc2-3.9b",	0x6000, 0x02000, CRC(ffe08075) SHA1(4e1341d5a9a58f171e1e6f9aa18092d5557a6947) )
+	ROM_LOAD( "mc2-1.9a",	0x8000, 0x04000, CRC(05a239ea) SHA1(3e7c7d305d0f48e2431d60b176a0cb451ddc4637) )
+	ROM_LOAD( "mc2-2.9a",	0xc000, 0x04000, CRC(db9b0e6d) SHA1(2772b59fe7dc0e78ee29dd001a6bba75b94e0334) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
-	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
+	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, CRC(9b5ea33a) SHA1(a8108e71e3440b645ebdb5cdbd87712151299789) )	/* characters */
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, 0xc9dfa003 )	/* tiles */
-	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, 0x9686dc3c )
+	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, CRC(c9dfa003) SHA1(86e8f9fc25de67691ce5385d93b723e7eb836b2b) )	/* tiles */
+	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, CRC(9686dc3c) SHA1(1caf712eedb1f70559169685e5421e11866e518c) )
 	/* empty space to decode the roms as 3bpp */
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, 0x265b31fa )	/* sprites */
-	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, 0x541ec029 )
+	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, CRC(265b31fa) SHA1(d46e6db5d6f325954d2b6159157b11e10fe5838d) )	/* sprites */
+	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, CRC(541ec029) SHA1(a3096d8405b6bbc862b03773889f6cbd43739f5b) )
 	/* 8000-ffff empty */
 
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )
-	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
-	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
+	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, CRC(32a78a8b) SHA1(545a59bc3c5868ac1749d2947210110205fb3da2) )	/* Blue + Green palette */
+	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, CRC(6f4dca7b) SHA1(781134c02853aded2cba63719c0e4c78b227da1c) )	/* Red palette */
 ROM_END
 
 static DRIVER_INIT( metrocrs )

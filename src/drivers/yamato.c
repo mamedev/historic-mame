@@ -370,76 +370,76 @@ MACHINE_DRIVER_END
 
 ROM_START( yamato )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "2.5de",        0x0000, 0x2000, 0x20895096 )
-	ROM_LOAD( "3.5f",         0x2000, 0x2000, 0x57a696f9 )
-	ROM_LOAD( "4.5jh",        0x4000, 0x2000, 0x59a468e8 )
+	ROM_LOAD( "2.5de",        0x0000, 0x2000, CRC(20895096) SHA1(af76786e3c519e710899f143d46c53087e9817c7) )
+	ROM_LOAD( "3.5f",         0x2000, 0x2000, CRC(57a696f9) SHA1(28ea80fb100ac92295fc3eb318617d7cb014408d) )
+	ROM_LOAD( "4.5jh",        0x4000, 0x2000, CRC(59a468e8) SHA1(a79cdee6efefd87a356cc8d710f8050bc12e07c3) )
 	/* hole at 6000-6fff */
-	ROM_LOAD( "11.5a",        0x7000, 0x1000, 0x35987485 )
+	ROM_LOAD( "11.5a",        0x7000, 0x1000, CRC(35987485) SHA1(1f0cb545bbd52982cbf801bc1dd2c4087af2f5f7) )
 
 	/* I don't know what the following ROMs are! */
-	ROM_LOAD( "5.5lm",        0xf000, 0x1000, 0x7761ad24 )	/* ?? */
-	ROM_LOAD( "6.5n",         0xf000, 0x1000, 0xda48444c )	/* ?? */
+	ROM_LOAD( "5.5lm",        0xf000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
+	ROM_LOAD( "6.5n",         0xf000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )	/* ?? */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
+	ROM_LOAD( "1.5v",         0x0000, 0x0800, CRC(3aad9e3c) SHA1(37b0414b265397881bb45b166ecab85880d1358d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "10.11k",       0x0000, 0x1000, 0x161121f5 )
+	ROM_LOAD( "10.11k",       0x0000, 0x1000, CRC(161121f5) SHA1(017c5c6b773b0ae1d0be52e4bac90b699ea196dd) )
 	ROM_CONTINUE(             0x2000, 0x1000 )
-	ROM_LOAD( "9.11h",        0x1000, 0x1000, 0x56e84cc4 )
+	ROM_LOAD( "9.11h",        0x1000, 0x1000, CRC(56e84cc4) SHA1(c48e0e5460376d6b34173c42a27907ef12218182) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* TODO: I'm swapping the two halves of the ROMs to use only the bottom */
 	/* 256 chars. There must be a way for the game to address both halves */
-	ROM_LOAD( "8.11c",        0x0800, 0x0800, 0x28024d9a )
+	ROM_LOAD( "8.11c",        0x0800, 0x0800, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
 	ROM_CONTINUE(             0x0000, 0x0800 )
-	ROM_LOAD( "7.11a",        0x1800, 0x0800, 0x4a179790 )
+	ROM_LOAD( "7.11a",        0x1800, 0x0800, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
-	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
-	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
-	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
-	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
-	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
+	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )
+	ROM_LOAD( "2.bpr",        0x0020, 0x0020, CRC(2281d39f) SHA1(e9b568bdacf7ab611801cf42ea5c7624f5440ef6) )
+	ROM_LOAD( "3.bpr",        0x0040, 0x0020, CRC(9e6341e3) SHA1(2e7a4d3c1f40d6089735734b9d9de2ca57fb73c7) )
+	ROM_LOAD( "4.bpr",        0x0060, 0x0020, CRC(1c97dc0b) SHA1(fe8e0a91172abdd2d14b199da144306a9b944372) )
+	ROM_LOAD( "5.bpr",        0x0080, 0x0020, CRC(edd6c05f) SHA1(b95db8aaf74fe175d1179f0d85f79242b16f5fb4) )
 ROM_END
 
 ROM_START( yamato2 )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "2-2.5de",      0x0000, 0x2000, 0x93da1d52 )
-	ROM_LOAD( "3-2.5f",       0x2000, 0x2000, 0x31e73821 )
-	ROM_LOAD( "4-2.5jh",      0x4000, 0x2000, 0xfd7bcfc3 )
+	ROM_LOAD( "2-2.5de",      0x0000, 0x2000, CRC(93da1d52) SHA1(21b72856ebbd969e4e075b52719e6acdbd1bc4c5) )
+	ROM_LOAD( "3-2.5f",       0x2000, 0x2000, CRC(31e73821) SHA1(e582c9fcea1b29d43f65b6aa67e1895c38d2736c) )
+	ROM_LOAD( "4-2.5jh",      0x4000, 0x2000, CRC(fd7bcfc3) SHA1(5037170cb3a9824794e90d74def92b0b25d45caa) )
 	/* hole at 6000-6fff */
 	/* 7000-7fff not present here */
 
 	/* I don't know what the following ROMs are! */
-	ROM_LOAD( "5.5lm",        0xf000, 0x1000, 0x7761ad24 )	/* ?? */
-	ROM_LOAD( "6.5n",         0xf000, 0x1000, 0xda48444c )	/* ?? */
+	ROM_LOAD( "5.5lm",        0xf000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
+	ROM_LOAD( "6.5n",         0xf000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )	/* ?? */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
+	ROM_LOAD( "1.5v",         0x0000, 0x0800, CRC(3aad9e3c) SHA1(37b0414b265397881bb45b166ecab85880d1358d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "10.11k",       0x0000, 0x1000, 0x161121f5 )
+	ROM_LOAD( "10.11k",       0x0000, 0x1000, CRC(161121f5) SHA1(017c5c6b773b0ae1d0be52e4bac90b699ea196dd) )
 	ROM_CONTINUE(             0x2000, 0x1000 )
-	ROM_LOAD( "9.11h",        0x1000, 0x1000, 0x56e84cc4 )
+	ROM_LOAD( "9.11h",        0x1000, 0x1000, CRC(56e84cc4) SHA1(c48e0e5460376d6b34173c42a27907ef12218182) )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* TODO: I'm swapping the two halves of the ROMs to use only the bottom */
 	/* 256 chars. There must be a way for the game to address both halves */
-	ROM_LOAD( "8.11c",        0x0800, 0x0800, 0x28024d9a )
+	ROM_LOAD( "8.11c",        0x0800, 0x0800, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
 	ROM_CONTINUE(             0x0000, 0x0800 )
-	ROM_LOAD( "7.11a",        0x1800, 0x0800, 0x4a179790 )
+	ROM_LOAD( "7.11a",        0x1800, 0x0800, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
-	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
-	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
-	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
-	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
-	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
+	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )
+	ROM_LOAD( "2.bpr",        0x0020, 0x0020, CRC(2281d39f) SHA1(e9b568bdacf7ab611801cf42ea5c7624f5440ef6) )
+	ROM_LOAD( "3.bpr",        0x0040, 0x0020, CRC(9e6341e3) SHA1(2e7a4d3c1f40d6089735734b9d9de2ca57fb73c7) )
+	ROM_LOAD( "4.bpr",        0x0060, 0x0020, CRC(1c97dc0b) SHA1(fe8e0a91172abdd2d14b199da144306a9b944372) )
+	ROM_LOAD( "5.bpr",        0x0080, 0x0020, CRC(edd6c05f) SHA1(b95db8aaf74fe175d1179f0d85f79242b16f5fb4) )
 ROM_END
 
 

@@ -285,6 +285,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* canyon Sound System Analog emulation                               */
 /************************************************************************/
 
+int canyonWhistl555 = DISC_555_ASTBL_CAP | DISC_555_ASTBL_AC;
+
 const struct discrete_lfsr_desc canyon_lfsr={
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -294,7 +296,7 @@ const struct discrete_lfsr_desc canyon_lfsr={
 	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
 	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
 	0x000001,		/* Everything is shifted into the first bit only */
-	0,			/* Output is not inverted */
+	0,			/* Output is not inverted, Active Low Reset */
 	15			/* Output bit */
 };
 
@@ -320,11 +322,16 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	/************************************************/
 	/* Canyon sound system: 5 Sound Sources         */
 	/*                     Relative Volume          */
-	/*    1/2) Motor           14.86%               */
+	/*    1/2) Motor           14.29%               */
 	/*      3) Explode        100.00%               */
-	/*    4/5) Whistle         42.36%               */
+	/*    4/5) Whistle         51.94%               */
 	/* Relative volumes calculated from resitor     */
-	/* network in combiner circuit                  */
+	/* network in combiner circuit taking voltages  */
+	/* into account                                 */
+	/*                                              */
+	/* Motor   3.8V * 5/(5+100) = 0.1810            */
+	/* Explode 3.8V * 5/(5+10)  = 1.2667            */
+	/* Whistle 5.0V * 5/(5+33)  = 0.6579            */
 	/*                                              */
 	/*  Discrete sound mapping via:                 */
 	/*     discrete_sound_w($register,value)        */
@@ -348,7 +355,7 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	DISCRETE_INPUT (CANYON_WHISTLESND2_EN    , 0x03, 0x000f,                  0.0)
 	DISCRETE_INPUT (CANYON_ATTRACT1_EN       , 0x04, 0x000f,                  0.0)
 	DISCRETE_INPUT (CANYON_ATTRACT2_EN       , 0x05, 0x000f,                  0.0)
-	DISCRETE_INPUT (CANYON_EXPLODESND_DATA   , 0x06, 0x000f,                  0.0)
+	DISCRETE_INPUTX(CANYON_EXPLODESND_DATA   , 0x06, 0x000f, 1000.0/15.0, 0,  0.0)
 
 	/************************************************/
 	/* Motor sound circuit is based on a 556 VCO    */
@@ -372,52 +379,46 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	/* This adjusts the high end.                   */
 	/* 0k = 214Hz.   250k = 4416Hz                  */
 	/************************************************/
-	DISCRETE_RCFILTER(NODE_70, 1, CANYON_MOTORSND1_DATA, 123000, 1e-6)
-	DISCRETE_ADJUSTMENT(NODE_71, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (382.0-27.0)/12/15, DISC_LOGADJ, "Motor 1 RPM")
-	DISCRETE_MULTIPLY(NODE_72, 1, NODE_70, NODE_71)
+	DISCRETE_RCFILTER(NODE_20, 1, CANYON_MOTORSND1_DATA, 123000, 1e-6)
+	DISCRETE_ADJUSTMENT(NODE_21, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (382.0-27.0)/12/15, DISC_LOGADJ, "Motor 1 RPM")
+	DISCRETE_MULTIPLY(NODE_22, 1, NODE_20, NODE_21)
 
-	DISCRETE_MULTIPLY(NODE_20, 1, NODE_72, 2)		/* F1 = /12*2 = /6 */
-	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 27.0/6)
-	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_21, (148.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_67, 1, NODE_27, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_23, 1, NODE_22, 2, 27.0/6)	/* F1 = /12*2 = /6 */
+	DISCRETE_SQUAREWAVE(NODE_24, 1, NODE_23, (142.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_25, 1, NODE_24, 10000, 1e-7)
 
-	DISCRETE_GAIN(NODE_22, NODE_72, 3)		/* F2 = /12*3 = /4 */
-	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 27.0/4)
-	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_23, (148.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_68, 1, NODE_28, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_26, 1, NODE_22, 3, 27.0/4)	/* F2 = /12*3 = /4 */
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_26, (142.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_28, 1, NODE_27, 10000, 1e-7)
 
-	DISCRETE_GAIN(NODE_24, NODE_72, 4)		/* F3 = /12*4 = /3 */
-	DISCRETE_ADDER2(NODE_25, 1, NODE_24, 27.0/3)
-	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_25, (148.6/3), 100.0/3, 0, 360.0/3)
-	DISCRETE_RCFILTER(NODE_69, 1, NODE_29, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_29, 1, NODE_22, 4, 27.0/3)	/* F3 = /12*4 = /3 */
+	DISCRETE_SQUAREWAVE(NODE_30, 1, NODE_29, (142.9/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_31, 1, NODE_30, 10000, 1e-7)
 
-	DISCRETE_ADDER3(CANYON_MOTORSND1, CANYON_ATTRACT1_EN, NODE_67, NODE_68, NODE_69)
+	DISCRETE_ADDER3(CANYON_MOTORSND1, CANYON_ATTRACT1_EN, NODE_25, NODE_28, NODE_31)
 
 	/************************************************/
 	/* The motor2 sound is basically the same as    */
 	/* for 1.  But I shifted the frequencies up for */
 	/* it to sound different from motor 1.          */
 	/************************************************/
-	DISCRETE_RCFILTER(NODE_73, 1, CANYON_MOTORSND2_DATA, 123000, 1e-6)
-	DISCRETE_ADJUSTMENT(NODE_74, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (522.0-27.0)/12/15, DISC_LOGADJ, "Motor 2 RPM")
-	DISCRETE_MULTIPLY(NODE_75, 1, NODE_73, NODE_74)
+	DISCRETE_RCFILTER(NODE_40, 1, CANYON_MOTORSND2_DATA, 123000, 1e-6)
+	DISCRETE_ADJUSTMENT(NODE_41, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (522.0-27.0)/12/15, DISC_LOGADJ, "Motor 2 RPM")
+	DISCRETE_MULTIPLY(NODE_42, 1, NODE_40, NODE_41)
 
-	DISCRETE_GAIN(NODE_50, NODE_75, 2)		/* F1 = /12*2 = /6 */
-	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 27.0/6)
-	DISCRETE_SQUAREWAVE(NODE_57, 1, NODE_51, (148.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_77, 1, NODE_57, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_43, 1, NODE_42, 2, 27.0/6)	/* F1 = /12*2 = /6 */
+	DISCRETE_SQUAREWAVE(NODE_44, 1, NODE_43, (142.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_45, 1, NODE_44, 10000, 1e-7)
 
-	DISCRETE_GAIN(NODE_52, NODE_75, 3)		/* F2 = /12*3 = /4 */
-	DISCRETE_ADDER2(NODE_53, 1, NODE_52, 27.0/4)
-	DISCRETE_SQUAREWAVE(NODE_58, 1, NODE_53, (148.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_78, 1, NODE_58, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_46, 1, NODE_42, 3, 27.0/4)	/* F2 = /12*3 = /4 */
+	DISCRETE_SQUAREWAVE(NODE_47, 1, NODE_46, (142.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_48, 1, NODE_47, 10000, 1e-7)
 
-	DISCRETE_GAIN(NODE_54, NODE_75, 4)		/* F3 = /12*4 = /3 */
-	DISCRETE_ADDER2(NODE_55, 1, NODE_54, 27.0/3)
-	DISCRETE_SQUAREWAVE(NODE_59, 1, NODE_55, (148.6/3), 100.0/3, 0, 360.0/3)
-	DISCRETE_RCFILTER(NODE_79, 1, NODE_59, 10000, 1e-7)
+	DISCRETE_MULTADD(NODE_49, 1, NODE_42, 4, 27.0/3)	/* F3 = /12*4 = /3 */
+	DISCRETE_SQUAREWAVE(NODE_50, 1, NODE_49, (142.9/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_51, 1, NODE_50, 10000, 1e-7)
 
-	DISCRETE_ADDER3(CANYON_MOTORSND2, CANYON_ATTRACT2_EN, NODE_77, NODE_78, NODE_79)
+	DISCRETE_ADDER3(CANYON_MOTORSND2, CANYON_ATTRACT2_EN, NODE_45, NODE_48, NODE_51)
 
 	/************************************************/
 	/* Explode circuit is built around a noise      */
@@ -428,45 +429,30 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	/* Output is binary weighted with 4 bits of     */
 	/* crash volume.                                */
 	/************************************************/
-	DISCRETE_LOGIC_OR(NODE_30, 1, CANYON_ATTRACT1_EN, CANYON_ATTRACT2_EN)
-	DISCRETE_LOGIC_INVERT(NODE_31, 1, NODE_30)
-	DISCRETE_LFSR_NOISE(CANYON_NOISE, NODE_30, NODE_31, 15750.0/4, 1.0, 0, 0, &canyon_lfsr)
+	DISCRETE_LOGIC_OR(NODE_60, 1, CANYON_ATTRACT1_EN, CANYON_ATTRACT2_EN)
+	DISCRETE_LFSR_NOISE(CANYON_NOISE, NODE_60, NODE_60, 15750.0/4, 1.0, 0, 0, &canyon_lfsr)
 
-	DISCRETE_MULTIPLY(NODE_32, 1, CANYON_NOISE, CANYON_EXPLODESND_DATA)
-	DISCRETE_GAIN(NODE_33, NODE_32, 1000.0/15)
-	DISCRETE_RCFILTER(CANYON_EXPLODESND, 1, NODE_33, 545, 5e-6)
+	DISCRETE_MULTIPLY(NODE_61, 1, CANYON_NOISE, CANYON_EXPLODESND_DATA)
+	DISCRETE_RCFILTER(CANYON_EXPLODESND, 1, NODE_61, 545, 5e-6)
 
 	/************************************************/
-	/* Whistle circuit is a VCO sawtooth, that      */
-	/* varies its rise time.  But a triangle wave   */
-	/* is close enough for our needs.               */
+	/* Whistle circuit is a 555 capacitor charge    */
+	/* waveform.  The original game pot varies from */
+	/* 0-100k, but we are going to limit it because */
+	/* below 50k the frequency is too high.         */
 	/* When triggered it starts at it's highest     */
 	/* frequency, then decays at the rate set by    */
 	/* a 68k resistor and 22uf capacitor.           */
-	/* Breadboarded frequencies/rise time are:      */
-	/* VR  =   0k            50k          100k      */
-	/* HI  -  5165Hz/100%   1514Hz/44%   837Hz/40%  */
-	/* Lo  -  2922Hz/100%   1054Hz/72%   602Hz/56%  */
 	/************************************************/
-	DISCRETE_ADJUSTMENT(NODE_80, 1, 1, 10, 3, DISC_LOGADJ, "Whistle 1 Freq")
-	DISCRETE_MULTIPLY(NODE_81, 1, NODE_80, 230.0)	/* Hi/Low Diff */
-	DISCRETE_ADDER2(NODE_82, 1, NODE_80, -1)
-	DISCRETE_MULTIPLY(NODE_83, 1, NODE_82, 10/9*225)
-	DISCRETE_ADDER2(NODE_84, 1, NODE_83, 602.0)	/* Low freq */
-	DISCRETE_MULTIPLY(NODE_40, 1, CANYON_WHISTLESND1_EN, NODE_81)
-	DISCRETE_RCDISC(NODE_41, CANYON_WHISTLESND1_EN, NODE_40, 68000, 2.2e-5)
-	DISCRETE_ADDER2(NODE_42, 1, NODE_41, NODE_84)
-	DISCRETE_TRIANGLEWAVE(CANYON_WHISTLESND1, CANYON_WHISTLESND1_EN, NODE_42, 423.6, 0, 0)
+	DISCRETE_ADJUSTMENT(NODE_70, 1, 50000, 100000, 85000, DISC_LINADJ, "Whistle 1 Freq")	/* R59 */
+	DISCRETE_MULTADD(NODE_71, 1, CANYON_WHISTLESND1_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4) 
+	DISCRETE_RCDISC2(NODE_72, CANYON_WHISTLESND1_EN, NODE_71, 1.0, NODE_71, 68000.0, 2.2e-5)	/* CV */
+	DISCRETE_555_ASTABLE(CANYON_WHISTLESND1, CANYON_WHISTLESND1_EN, 519.4, 33000, NODE_70, 1e-8, NODE_72, &canyonWhistl555)
 
-	DISCRETE_ADJUSTMENT(NODE_85, 1, 1, 10, 3.5, DISC_LOGADJ, "Whistle 2 Freq")
-	DISCRETE_MULTIPLY(NODE_86, 1, NODE_85, 230.0)	/* Hi/Low Diff */
-	DISCRETE_ADDER2(NODE_87, 1, NODE_85, -1)
-	DISCRETE_MULTIPLY(NODE_88, 1, NODE_87, 10/9*225)
-	DISCRETE_ADDER2(NODE_89, 1, NODE_88, 602.0)	/* Low freq */
-	DISCRETE_MULTIPLY(NODE_45, 1, CANYON_WHISTLESND2_EN, NODE_86)
-	DISCRETE_RCDISC(NODE_46, CANYON_WHISTLESND2_EN, NODE_45, 68000, 2.2e-5)
-	DISCRETE_ADDER2(NODE_47, 1, NODE_46, NODE_89)
-	DISCRETE_TRIANGLEWAVE(CANYON_WHISTLESND2, CANYON_WHISTLESND2_EN, NODE_47, 423.6, 0, 0)
+	DISCRETE_ADJUSTMENT(NODE_75, 1, 50000, 100000, 90000, DISC_LINADJ, "Whistle 2 Freq")	/* R69 */
+	DISCRETE_MULTADD(NODE_76, 1, CANYON_WHISTLESND2_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4) 
+	DISCRETE_RCDISC2(NODE_77, CANYON_WHISTLESND2_EN, NODE_76, 1.0, NODE_76, 68000.0, 2.2e-5)	/* CV */
+	DISCRETE_555_ASTABLE(CANYON_WHISTLESND2, CANYON_WHISTLESND2_EN, 519.4, 33000, NODE_75, 1e-8, NODE_77, &canyonWhistl555)
 
 	/************************************************/
 	/* Combine all 5 sound sources.                 */
@@ -475,8 +461,8 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	/************************************************/
 	DISCRETE_ADDER3(NODE_90, 1, CANYON_MOTORSND1, CANYON_EXPLODESND, CANYON_WHISTLESND1)
 	DISCRETE_ADDER3(NODE_91, 1, CANYON_MOTORSND2, CANYON_EXPLODESND, CANYON_WHISTLESND2)
-	DISCRETE_GAIN(CANYON_FINAL_MIX1, NODE_90, 65534.0/(148.6+1000.0+423.6))
-	DISCRETE_GAIN(CANYON_FINAL_MIX2, NODE_91, 65534.0/(148.6+1000.0+423.6))
+	DISCRETE_GAIN(CANYON_FINAL_MIX1, NODE_90, 77)
+	DISCRETE_GAIN(CANYON_FINAL_MIX2, NODE_91, 77)
 
 	DISCRETE_OUTPUT_STEREO(CANYON_FINAL_MIX1, CANYON_FINAL_MIX2, 100)
 DISCRETE_SOUND_END
@@ -526,39 +512,39 @@ MACHINE_DRIVER_END
 
 ROM_START( canyon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
+	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, CRC(8be15080) SHA1(095c15e9ac91623b2d514858dca2e4c261d36fd0) )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
+	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, 0xb8094b4c )	/* sync (not used) */
+	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, CRC(b8094b4c) SHA1(82dc6799a19984f3b204ee3aeeb007e55afc8be3) )	/* sync (not used) */
 ROM_END
 
 
 ROM_START( canbprot )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, 0x49cf29a0 )
-	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, 0xb4385c23 )
-	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, 0xc7ee4431 )
+	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, CRC(49cf29a0) SHA1(b58f024f45f85e5c2a48a95c60e80fd1be60eaac) )
+	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, CRC(b4385c23) SHA1(b550dfe9182f2b29aedba160a0917ca78b82f0e7) )
+	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, CRC(c7ee4431) SHA1(7a0f4454a981c4e9ee27e273e9a8379458e660e5) )
 	ROM_RELOAD(                       0xf800, 0x0800 ) /* for 6502 vectors */
-	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, 0x94246a9a )
+	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, CRC(94246a9a) SHA1(5ff8b69fb744a5f62d4cf291e8f25e3620b479e7) )
 	ROM_RELOAD(                       0xf800, 0x0800 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
+	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, 0xb8094b4c )	/* sync (not used) */
+	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, CRC(b8094b4c) SHA1(82dc6799a19984f3b204ee3aeeb007e55afc8be3) )	/* sync (not used) */
 ROM_END
 
 

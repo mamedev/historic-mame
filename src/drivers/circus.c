@@ -400,89 +400,89 @@ MACHINE_DRIVER_END
 
 ROM_START( circus )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "circus.1a",    0x1000, 0x0200, 0x7654ea75 ) /* Code */
-	ROM_LOAD( "circus.2a",    0x1200, 0x0200, 0xb8acdbc5 )
-	ROM_LOAD( "circus.3a",    0x1400, 0x0200, 0x901dfff6 )
-	ROM_LOAD( "circus.5a",    0x1600, 0x0200, 0x9dfdae38 )
-	ROM_LOAD( "circus.6a",    0x1800, 0x0200, 0xc8681cf6 )
-	ROM_LOAD( "circus.7a",    0x1a00, 0x0200, 0x585f633e )
-	ROM_LOAD( "circus.8a",    0x1c00, 0x0200, 0x69cc409f )
-	ROM_LOAD( "circus.9a",    0x1e00, 0x0200, 0xaff835eb )
+	ROM_LOAD( "circus.1a",    0x1000, 0x0200, CRC(7654ea75) SHA1(fa29417618157002b8ecb21f4c15104c8145a742) ) /* Code */
+	ROM_LOAD( "circus.2a",    0x1200, 0x0200, CRC(b8acdbc5) SHA1(634bb11089f7a57a316b6829954cc4da4523f267) )
+	ROM_LOAD( "circus.3a",    0x1400, 0x0200, CRC(901dfff6) SHA1(c1f48845456e88d54981608afd00ddb92d97da99) )
+	ROM_LOAD( "circus.5a",    0x1600, 0x0200, CRC(9dfdae38) SHA1(dc59a5f90a5a49fa071aada67eda768d3ecef010) )
+	ROM_LOAD( "circus.6a",    0x1800, 0x0200, CRC(c8681cf6) SHA1(681cfea75bee8a86f9f4645e6c6b94b44762dae9) )
+	ROM_LOAD( "circus.7a",    0x1a00, 0x0200, CRC(585f633e) SHA1(46133409f42e8cbc095dde576ce07d97b235972d) )
+	ROM_LOAD( "circus.8a",    0x1c00, 0x0200, CRC(69cc409f) SHA1(b77289e62313e8535ce40686df7238aa9c0035bc) )
+	ROM_LOAD( "circus.9a",    0x1e00, 0x0200, CRC(aff835eb) SHA1(d6d95510d4a046f48358fef01103bcc760eb71ed) )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "circus.4c",    0x0000, 0x0200, 0x6efc315a )  /* Character Set */
-	ROM_LOAD( "circus.3c",    0x0200, 0x0200, 0x30d72ef5 )
-	ROM_LOAD( "circus.2c",    0x0400, 0x0200, 0x361da7ee )
-	ROM_LOAD( "circus.1c",    0x0600, 0x0200, 0x1f954bb3 )
+	ROM_LOAD( "circus.4c",    0x0000, 0x0200, CRC(6efc315a) SHA1(d5a4a64a901853fff56df3c65512afea8336aad2) )  /* Character Set */
+	ROM_LOAD( "circus.3c",    0x0200, 0x0200, CRC(30d72ef5) SHA1(45fc8285e213bf3906a26205a8c0b22f311fd6c3) )
+	ROM_LOAD( "circus.2c",    0x0400, 0x0200, CRC(361da7ee) SHA1(6e6fe5b37ccb4c11aa4abbd9b7df772953abfe7e) )
+	ROM_LOAD( "circus.1c",    0x0600, 0x0200, CRC(1f954bb3) SHA1(62a958b48078caa639b96f62a690583a1c8e83f5) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "circus.14d",   0x0000, 0x0200, 0x2fde3930 )  /* Clown */
+	ROM_LOAD( "circus.14d",   0x0000, 0x0200, CRC(2fde3930) SHA1(a21e2d342f16a39a07edf4bea8d698a52216ecba) )  /* Clown */
 ROM_END
 
 ROM_START( robotbwl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "robotbwl.1a",  0xf000, 0x0200, 0xdf387a0b ) /* Code */
-	ROM_LOAD( "robotbwl.2a",  0xf200, 0x0200, 0xc948274d )
-	ROM_LOAD( "robotbwl.3a",  0xf400, 0x0200, 0x8fdb3ec5 )
-	ROM_LOAD( "robotbwl.5a",  0xf600, 0x0200, 0xba9a6929 )
-	ROM_LOAD( "robotbwl.6a",  0xf800, 0x0200, 0x16fd8480 )
-	ROM_LOAD( "robotbwl.7a",  0xfa00, 0x0200, 0x4cadbf06 )
-	ROM_LOAD( "robotbwl.8a",  0xfc00, 0x0200, 0xbc809ed3 )
-	ROM_LOAD( "robotbwl.9a",  0xfe00, 0x0200, 0x07487e27 )
+	ROM_LOAD( "robotbwl.1a",  0xf000, 0x0200, CRC(df387a0b) SHA1(97291f1a93cbbff987b0fbc16c2e87ad0db96e12) ) /* Code */
+	ROM_LOAD( "robotbwl.2a",  0xf200, 0x0200, CRC(c948274d) SHA1(1bf8c6e994d601d4e6d30ca2a9da97e140ff5eee) )
+	ROM_LOAD( "robotbwl.3a",  0xf400, 0x0200, CRC(8fdb3ec5) SHA1(a9290edccb8f75e7ec91416d46617516260d5944) )
+	ROM_LOAD( "robotbwl.5a",  0xf600, 0x0200, CRC(ba9a6929) SHA1(9cc6e85431b5d82bf3a624f7b35ddec399ad6c80) )
+	ROM_LOAD( "robotbwl.6a",  0xf800, 0x0200, CRC(16fd8480) SHA1(935bb0c87d25086f326571c83f94f831b1a8b036) )
+	ROM_LOAD( "robotbwl.7a",  0xfa00, 0x0200, CRC(4cadbf06) SHA1(380c10aa83929bfbfd89facb252e68c307545755) )
+	ROM_LOAD( "robotbwl.8a",  0xfc00, 0x0200, CRC(bc809ed3) SHA1(2bb4cdae8c9619eebea30cc323960a46a509bb58) )
+	ROM_LOAD( "robotbwl.9a",  0xfe00, 0x0200, CRC(07487e27) SHA1(b5528fb3fec474df2b66f36e28df13a7e81f9ce3) )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, 0xa5f7acb9 )  /* Character Set */
-	ROM_LOAD( "robotbwl.3c",  0x0200, 0x0200, 0xd5380c9b )
-	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, 0x47b3e39c )
-	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, 0xb2991e7e )
+	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, CRC(a5f7acb9) SHA1(556dd34d0fa50415b128477e208e96bf0c050c2c) )  /* Character Set */
+	ROM_LOAD( "robotbwl.3c",  0x0200, 0x0200, CRC(d5380c9b) SHA1(b9670e87011a1b3aebd1d386f1fe6a74f8c77be9) )
+	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, CRC(47b3e39c) SHA1(393c680fba3bd384e2c773150c3bae4d735a91bf) )
+	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, CRC(b2991e7e) SHA1(32b6d42bb9312d6cbe5b4113fcf2262bfeef3777) )
 
 	ROM_REGION( 0x0020, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, 0xa402ac06 )  /* Ball */
+	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, CRC(a402ac06) SHA1(3bd75630786bcc86d9e9fbc826adc909eef9b41f) )  /* Ball */
 ROM_END
 
 ROM_START( crash )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "crash.a1",     0x1000, 0x0200, 0xb9571203 ) /* Code */
-	ROM_LOAD( "crash.a2",     0x1200, 0x0200, 0xb4581a95 )
-	ROM_LOAD( "crash.a3",     0x1400, 0x0200, 0x597555ae )
-	ROM_LOAD( "crash.a4",     0x1600, 0x0200, 0x0a15d69f )
-	ROM_LOAD( "crash.a5",     0x1800, 0x0200, 0xa9c7a328 )
-	ROM_LOAD( "crash.a6",     0x1a00, 0x0200, 0xc7d62d27 )
-	ROM_LOAD( "crash.a7",     0x1c00, 0x0200, 0x5e5af244 )
-	ROM_LOAD( "crash.a8",     0x1e00, 0x0200, 0x3dc50839 )
+	ROM_LOAD( "crash.a1",     0x1000, 0x0200, CRC(b9571203) SHA1(1299e476598d07a67aa1640f3320de1198280296) ) /* Code */
+	ROM_LOAD( "crash.a2",     0x1200, 0x0200, CRC(b4581a95) SHA1(b3662bda5013443a56eabbe21fefa91e255e18e7) )
+	ROM_LOAD( "crash.a3",     0x1400, 0x0200, CRC(597555ae) SHA1(39a6d10e229be0e0d52b1061f2aa2f678b351f0b) )
+	ROM_LOAD( "crash.a4",     0x1600, 0x0200, CRC(0a15d69f) SHA1(c3a7b5ce4406cce511108e5c015b1dd5587b75ed) )
+	ROM_LOAD( "crash.a5",     0x1800, 0x0200, CRC(a9c7a328) SHA1(2f21ee58ba117bf4fe9101373c55449217a08da6) )
+	ROM_LOAD( "crash.a6",     0x1a00, 0x0200, CRC(c7d62d27) SHA1(974800cbeba2f2d0d796200d235371e2ce3a1d28) )
+	ROM_LOAD( "crash.a7",     0x1c00, 0x0200, CRC(5e5af244) SHA1(9ea27241a5ac97b260599d56f60bf9ec3ffcac7f) )
+	ROM_LOAD( "crash.a8",     0x1e00, 0x0200, CRC(3dc50839) SHA1(5782ea7d70e5cbe8b8245ed1075ce92b57cc6ddf) )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "crash.c4",     0x0000, 0x0200, 0xba16f9e8 )  /* Character Set */
-	ROM_LOAD( "crash.c3",     0x0200, 0x0200, 0x3c8f7560 )
-	ROM_LOAD( "crash.c2",     0x0400, 0x0200, 0x38f3e4ed )
-	ROM_LOAD( "crash.c1",     0x0600, 0x0200, 0xe9adf1e1 )
+	ROM_LOAD( "crash.c4",     0x0000, 0x0200, CRC(ba16f9e8) SHA1(fdbf8d36993196552ddb7729750420f8e31eee70) )  /* Character Set */
+	ROM_LOAD( "crash.c3",     0x0200, 0x0200, CRC(3c8f7560) SHA1(ce4023167a0b4b912bbbc70b00fd3b462990a04c) )
+	ROM_LOAD( "crash.c2",     0x0400, 0x0200, CRC(38f3e4ed) SHA1(4e537402c09b58997bc45498fd721d83a0eac3a7) )
+	ROM_LOAD( "crash.c1",     0x0600, 0x0200, CRC(e9adf1e1) SHA1(c1f6d2a3be1e9b35c8675d1e3f57e6a85ddd99fd) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "crash.d14",    0x0000, 0x0200, 0x833f81e4 )  /* Cars */
+	ROM_LOAD( "crash.d14",    0x0000, 0x0200, CRC(833f81e4) SHA1(78a0ace3510546691ecaf6f6275cb3269495edc9) )  /* Cars */
 ROM_END
 
 ROM_START( ripcord )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "9027.1a",      0x1000, 0x0200, 0x56b8dc06 ) /* Code */
-	ROM_LOAD( "9028.2a",      0x1200, 0x0200, 0xa8a78a30 )
-	ROM_LOAD( "9029.4a",      0x1400, 0x0200, 0xfc5c8e07 )
-	ROM_LOAD( "9030.5a",      0x1600, 0x0200, 0xb496263c )
-	ROM_LOAD( "9031.6a",      0x1800, 0x0200, 0xcdc7d46e )
-	ROM_LOAD( "9032.7a",      0x1a00, 0x0200, 0xa6588bec )
-	ROM_LOAD( "9033.8a",      0x1c00, 0x0200, 0xfd49b806 )
-	ROM_LOAD( "9034.9a",      0x1e00, 0x0200, 0x7caf926d )
+	ROM_LOAD( "9027.1a",      0x1000, 0x0200, CRC(56b8dc06) SHA1(5432e4f2e321805a8dc9cfce20b8372793a9a4dd) ) /* Code */
+	ROM_LOAD( "9028.2a",      0x1200, 0x0200, CRC(a8a78a30) SHA1(e6ddcba608f9b34e07a5402872793dafe5054156) )
+	ROM_LOAD( "9029.4a",      0x1400, 0x0200, CRC(fc5c8e07) SHA1(4784a868491393f42520f6609266ffab21661ec3) )
+	ROM_LOAD( "9030.5a",      0x1600, 0x0200, CRC(b496263c) SHA1(36321aa6d18e7c35461c1d445d2682d61279a8c7) )
+	ROM_LOAD( "9031.6a",      0x1800, 0x0200, CRC(cdc7d46e) SHA1(369bb119320cd737641a5bf64d51c9b552578f8a) )
+	ROM_LOAD( "9032.7a",      0x1a00, 0x0200, CRC(a6588bec) SHA1(76321ab29329b6291e4d4731bb445a6ac4ce2d86) )
+	ROM_LOAD( "9033.8a",      0x1c00, 0x0200, CRC(fd49b806) SHA1(5205ee8e9cec53be6e79e0183bc1e9d96c8c2e55) )
+	ROM_LOAD( "9034.9a",      0x1e00, 0x0200, CRC(7caf926d) SHA1(f51d010ce1909e21e04313e4262c70ab948c14e0) )
 	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "9026.5c",      0x0000, 0x0200, 0x06e7adbb )  /* Character Set */
-	ROM_LOAD( "9025.4c",      0x0200, 0x0200, 0x3129527e )
-	ROM_LOAD( "9024.2c",      0x0400, 0x0200, 0xbcb88396 )
-	ROM_LOAD( "9023.1c",      0x0600, 0x0200, 0x9f86ed5b )
+	ROM_LOAD( "9026.5c",      0x0000, 0x0200, CRC(06e7adbb) SHA1(0c119743eacc30d6d9eb50dfee0746b69bb17377) )  /* Character Set */
+	ROM_LOAD( "9025.4c",      0x0200, 0x0200, CRC(3129527e) SHA1(3d0519811c9e4a5645f5c54ed8f0b411cdc5d54b) )
+	ROM_LOAD( "9024.2c",      0x0400, 0x0200, CRC(bcb88396) SHA1(d92dff2436f58d977f9196a88fa7701c3032ef7d) )
+	ROM_LOAD( "9023.1c",      0x0600, 0x0200, CRC(9f86ed5b) SHA1(fbe38c6d63887e603d919b0ab2216cd44b8955e4) )
 
 	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "9035.14d",     0x0000, 0x0200, 0xc9979802 )
+	ROM_LOAD( "9035.14d",     0x0000, 0x0200, CRC(c9979802) SHA1(cf6dfad0821fa736c8fcf8735792054858232806) )
 ROM_END
 
 

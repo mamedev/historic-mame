@@ -24,7 +24,7 @@ Note:	if MAME_DEBUG is defined, pressing:
 		A bit decides which one gets displayed.
 		The tiles depth varies with games, from 16 to 256 colors.
 
-		A per layer row / "column" scroll effect can be enabled:
+		A per layer row-scroll / row-select effect can be enabled:
 
 		a different scroll value is fetched (from tile RAM) for each
 		scan line, and a different tilemap line for each scan line
@@ -50,6 +50,7 @@ Note:	if MAME_DEBUG is defined, pressing:
 /* Variables that driver has access to: */
 
 int cave_spritetype;
+int	cave_row_effect_offs_y = 0;
 
 data16_t *cave_videoregs;
 
@@ -205,7 +206,7 @@ PALETTE_INIT( sailormn )
 	2.w									Code
 
 
-	When a row / "column" scroll effect is enabled, the scroll values are
+	When a row-scroll / row-select effect is enabled, the scroll values are
 	fetched starting from tile RAM + $1000, 4 bytes per scan line:
 
 	Offset:		Value:
@@ -1357,13 +1358,13 @@ static void sprite_draw_donpachi_zbuf( int priority )
 		Offset:		Bits:					Value:
 
 		0.w			f--- ---- ---- ----		0 = Layer Flip X
-					-e-- ---- ---- ----		Activate Row Scroll
+					-e-- ---- ---- ----		Activate Row-scroll
 					--d- ---- ---- ----
 					---c ba9- ---- ----
 					---- ---8 7654 3210		Scroll X
 
 		2.w			f--- ---- ---- ----		0 = Layer Flip Y
-					-e-- ---- ---- ----		Activate "Column" Scroll
+					-e-- ---- ---- ----		Activate Row-select
 					--d- ---- ---- ----		0 = 8x8 tiles, 1 = 16x16 tiles
 					---c ba9- ---- ----
 					---- ---8 7654 3210		Scroll Y
@@ -1376,10 +1377,10 @@ static void sprite_draw_donpachi_zbuf( int priority )
 											same tile priority)
 
 
-		Row / "Column" Scroll data is fetched from tile RAM + $1000.
+		Row-scroll / row-select data is fetched from tile RAM + $1000.
 
-		"Column" Scroll:	a tilemap line is specified for each scan line.
-		Row Scroll:			a different scroll value is specified for each scan line.
+		Row-select:		a tilemap line is specified for each scan line.
+		Row-scroll:		a different scroll value is specified for each scan line.
 
 
 					Sprites Registers (cave_videoregs)
@@ -1407,7 +1408,7 @@ INLINE void cave_tilemap_draw(
 	struct tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
 	UINT32 flags, UINT32 priority, UINT32 priority2 )
 {
-	int sx, sy, flipx, flipy, offs_x, offs_y;
+	int sx, sy, flipx, flipy, offs_x, offs_y, offs_row;
 
 	/* Bail out if ... */
 
@@ -1422,6 +1423,8 @@ INLINE void cave_tilemap_draw(
 
 	offs_x	=	cave_layers_offs_x;
 	offs_y	=	cave_layers_offs_y;
+	
+	offs_row =  flipy ? -cave_row_effect_offs_y : cave_row_effect_offs_y;
 
 	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus
 	   Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
@@ -1434,13 +1437,13 @@ INLINE void cave_tilemap_draw(
 	sx = VCTRL[0] - cave_videoregs[0] + (flipx ? (offs_x +2) : -offs_x);
 	sy = VCTRL[1] - cave_videoregs[1] + (flipy ? (offs_y +2) : -offs_y);
 
-	if (VCTRL[1] & 0x4000)	// "column" scroll
+	if (VCTRL[1] & 0x4000)	// row-select
 	{
 		struct rectangle clip;
 		int startline, endline, vramdata0, vramdata1;
 
 		/*
-			"Column" Scroll:
+			Row-select:
 
 			A tilemap line is specified for each scan line. This is handled
 			using many horizontal clipping regions (slices) and calling
@@ -1458,18 +1461,18 @@ INLINE void cave_tilemap_draw(
 		for(startline = cliprect->min_y; startline <= cliprect->max_y;)
 		{
 			/* Find the largest slice */
-			vramdata0 = (vramdata1 = VRAM[(0x1000+((2+startline*4)&0x7ff))/2]);
+			vramdata0 = (vramdata1 = VRAM[(0x1002+(((offs_row+startline)*4)&0x7ff))/2]);
 			for(endline = startline + 1; endline <= cliprect->max_y + 1; endline++)
-				if((++vramdata1) != VRAM[(0x1000+((2+endline*4)&0x7ff))/2]) break;
+				if((++vramdata1) != VRAM[(0x1002+(((offs_row+endline)*4)&0x7ff))/2]) break;
 
 			tilemap_set_scrolly(TILEMAP, 0, sy + vramdata0 - startline);
 
-			if (VCTRL[0] & 0x4000)	// row scroll, column scroll
+			if (VCTRL[0] & 0x4000)	// row-scroll, row-select
 			{
 				int line;
 
 				/*
-					Row Scroll:
+					Row-scroll:
 
 					A different scroll value is specified for each scan line.
 					This is handled using tilemap_set_scroll_rows and calling
@@ -1480,9 +1483,9 @@ INLINE void cave_tilemap_draw(
 				for(line = startline; line < endline; line++)
 					tilemap_set_scrollx(	TILEMAP,
 											(sy+vramdata0-startline+line) & 511,
-											sx + VRAM[(0x1000+((line*4)&0x7ff))/2] );
+											sx + VRAM[(0x1000+(((offs_row+line)*4)&0x7ff))/2] );
 			}
-			else					// no row scroll, column scroll
+			else					// no row-scroll, row-select
 			{
 				tilemap_set_scroll_rows(TILEMAP, 1);
 				tilemap_set_scrollx(TILEMAP, 0, sx );
@@ -1496,14 +1499,14 @@ INLINE void cave_tilemap_draw(
 			startline = endline;
 		}
 	}
-	else if (VCTRL[0] & 0x4000)	// row scroll, no column scroll
+	else if (VCTRL[0] & 0x4000)	// row-scroll, no row-select
 	{
 		int line;
 		tilemap_set_scroll_rows(TILEMAP,512);
 		for(line = cliprect->min_y; line <= cliprect->max_y; line++)
 			tilemap_set_scrollx(	TILEMAP,
 									(line + sy) & 511,
-									sx + VRAM[(0x1000+((line*4)&0x7ff))/2] );
+									sx + VRAM[(0x1000+(((offs_row+line)*4)&0x7ff))/2] );
 		tilemap_set_scrolly(TILEMAP, 0, sy );
 		tilemap_draw(bitmap, cliprect, TILEMAP, flags, priority);
 	}

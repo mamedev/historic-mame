@@ -520,70 +520,70 @@ MACHINE_DRIVER_END
 
 ROM_START( vball )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* Main CPU: 64k for code */
-	ROM_LOAD( "vball.124",  0x10000, 0x08000, 0xbe04c2b5 )/* Bankswitched */
+	ROM_LOAD( "vball.124",  0x10000, 0x08000, CRC(be04c2b5) SHA1(40fed4ae272719e940f1796ef35420ab451ab7b6) )/* Bankswitched */
 	ROM_CONTINUE(		0x08000, 0x08000 )		 /* Static code  */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
-	ROM_LOAD( "vball.47",  0x00000, 0x8000,  0x10ca79ad )
+	ROM_LOAD( "vball.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
 
 	/* These are from the bootleg; the original has the image data stored in a special dip rom which has not been dumped */
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
-	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, 0xf26df8e1 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, 0xc9798d0e ) /* 0,1,2,3 */
-	ROM_LOAD( "vball15.bin",  0x20000, 0x10000, 0x68e69c4b ) /* 0,1,2,3 */
-	ROM_LOAD( "vball16.bin",  0x30000, 0x10000, 0x936457ba ) /* 0,1,2,3 */
-	ROM_LOAD( "vball09.bin",  0x40000, 0x10000, 0x42874924 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, 0x6cc676ee ) /* 0,1,2,3 */
-	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, 0x4754b303 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, 0x21294a84 ) /* 0,1,2,3 */
+	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, CRC(f26df8e1) SHA1(72186c1430d07c7fd9211245b539f05a0660bebe) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, CRC(c9798d0e) SHA1(ec156f6c7ecccaa216ce8076f75ad7627ee90945) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball15.bin",  0x20000, 0x10000, CRC(68e69c4b) SHA1(9870674c91cab7215ad8ed40eb82facdee478fde) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball16.bin",  0x30000, 0x10000, CRC(936457ba) SHA1(1662bbd777fcd33a298d192a3f06681809b9d049) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball09.bin",  0x40000, 0x10000, CRC(42874924) SHA1(a75eed7934e089f035000b7f35f6ba8dd96f1e98) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, CRC(6cc676ee) SHA1(6e8c590946211baa9266b19b871f252829057696) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, CRC(4754b303) SHA1(8630f077b542590ef1340a2f0a6b94086ff91c40) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, CRC(21294a84) SHA1(b36ea9ddf6879443d3104241997fa0f916856528) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x40000, REGION_GFX2, ROMREGION_DISPOSE )	 /* sprites */
-	ROM_LOAD( "vball.35",  0x00000, 0x20000, 0x877826d8 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball.5",   0x20000, 0x20000, 0xc6afb4fa ) /* 0,1,2,3 */
+	ROM_LOAD( "vball.35",  0x00000, 0x20000, CRC(877826d8) SHA1(fd77298f9343051f66259dad9127f40afb95f385) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball.5",   0x20000, 0x20000, CRC(c6afb4fa) SHA1(6d7c966300ce5fb2094476b393434486965d62b4) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x20000, REGION_SOUND1, 0 ) /* Sound region#1: adpcm */
-	ROM_LOAD( "vball.78a",  0x00000, 0x10000, 0xf3e63b76 )
-	ROM_LOAD( "vball.78b",  0x10000, 0x10000, 0x7ad9d338 )
+	ROM_LOAD( "vball.78a",  0x00000, 0x10000, CRC(f3e63b76) SHA1(da54d1d7d7d55b73e49991e4363bc6f46e0f70eb) )
+	ROM_LOAD( "vball.78b",  0x10000, 0x10000, CRC(7ad9d338) SHA1(3e3c270fa69bda93b03f07a54145eb5e211ec8ba) )
 
 	ROM_REGION(0x1000, REGION_PROMS, 0 )	/* color PROMs */
-	ROM_LOAD_NIB_LOW ( "vball.44",   0x0000, 0x00800, 0xa317240f )
-	ROM_LOAD_NIB_HIGH( "vball.43",   0x0000, 0x00800, 0x1ff70b4f )
-	ROM_LOAD( "vball.160",  0x0800, 0x00800, 0x2ffb68b3 )
+	ROM_LOAD_NIB_LOW ( "vball.44",   0x0000, 0x00800, CRC(a317240f) SHA1(bd57ad516f7a8ff774276fd26b02dd34659d41ad) )
+	ROM_LOAD_NIB_HIGH( "vball.43",   0x0000, 0x00800, CRC(1ff70b4f) SHA1(a469baa0dda844ba307c09ddefb23f239cfe7b5f) )
+	ROM_LOAD( "vball.160",  0x0800, 0x00800, CRC(2ffb68b3) SHA1(d560fdcd5e5c79d37e5b5bde22fbaf662fe89252) )
 ROM_END
 
 ROM_START( vball2pj )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* Main CPU */
-	ROM_LOAD( "vball01.bin",  0x10000, 0x08000,  0x432509c4 )/* Bankswitched */
+	ROM_LOAD( "vball01.bin",  0x10000, 0x08000,  CRC(432509c4) SHA1(6de50e21d279f4ac9674bc91990ba9535e80908c) )/* Bankswitched */
 	ROM_CONTINUE(		  0x08000, 0x08000 )		 /* Static code  */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
-	ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  0x534dfbd9 )
-//	ROM_LOAD( "vball.47",  0x00000, 0x8000,  0x10ca79ad )
+	ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  CRC(534dfbd9) SHA1(d0cb37caf94fa85da4ebdfe15e7a78109084bf91) )
+//	ROM_LOAD( "vball.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
 
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
-	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, 0xf26df8e1 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, 0xc9798d0e ) /* 0,1,2,3 */
-	ROM_LOAD( "vball15.bin",  0x20000, 0x10000, 0x68e69c4b ) /* 0,1,2,3 */
-	ROM_LOAD( "vball16.bin",  0x30000, 0x10000, 0x936457ba ) /* 0,1,2,3 */
-	ROM_LOAD( "vball09.bin",  0x40000, 0x10000, 0x42874924 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, 0x6cc676ee ) /* 0,1,2,3 */
-	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, 0x4754b303 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, 0x21294a84 ) /* 0,1,2,3 */
+	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, CRC(f26df8e1) SHA1(72186c1430d07c7fd9211245b539f05a0660bebe) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, CRC(c9798d0e) SHA1(ec156f6c7ecccaa216ce8076f75ad7627ee90945) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball15.bin",  0x20000, 0x10000, CRC(68e69c4b) SHA1(9870674c91cab7215ad8ed40eb82facdee478fde) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball16.bin",  0x30000, 0x10000, CRC(936457ba) SHA1(1662bbd777fcd33a298d192a3f06681809b9d049) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball09.bin",  0x40000, 0x10000, CRC(42874924) SHA1(a75eed7934e089f035000b7f35f6ba8dd96f1e98) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, CRC(6cc676ee) SHA1(6e8c590946211baa9266b19b871f252829057696) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, CRC(4754b303) SHA1(8630f077b542590ef1340a2f0a6b94086ff91c40) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, CRC(21294a84) SHA1(b36ea9ddf6879443d3104241997fa0f916856528) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x40000, REGION_GFX2, ROMREGION_DISPOSE )	 /* sprites */
-	ROM_LOAD( "vball08.bin",  0x00000, 0x10000, 0xb18d083c ) /* 0,1,2,3 */
-	ROM_LOAD( "vball07.bin",  0x10000, 0x10000, 0x79a35321 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball06.bin",  0x20000, 0x10000, 0x49c6aad7 ) /* 0,1,2,3 */
-	ROM_LOAD( "vball05.bin",  0x30000, 0x10000, 0x9bb95651 ) /* 0,1,2,3 */
+	ROM_LOAD( "vball08.bin",  0x00000, 0x10000, CRC(b18d083c) SHA1(8c7a39b8a9c79a13682a4f283470801c3cbb748c) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball07.bin",  0x10000, 0x10000, CRC(79a35321) SHA1(0953730b1baa9bda4b2eb703258476423e5448f5) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball06.bin",  0x20000, 0x10000, CRC(49c6aad7) SHA1(6c026ddd97a5dfd138fb65781504f192c11ee6aa) ) /* 0,1,2,3 */
+	ROM_LOAD( "vball05.bin",  0x30000, 0x10000, CRC(9bb95651) SHA1(ec8a481cc7f0d6e469489db7c51103446910ae80) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x20000, REGION_SOUND1, 0 ) /* Sound region#1: adpcm */
-	ROM_LOAD( "vball.78a",  0x00000, 0x10000, 0xf3e63b76 )
-	ROM_LOAD( "vball.78b",  0x10000, 0x10000, 0x7ad9d338 )
+	ROM_LOAD( "vball.78a",  0x00000, 0x10000, CRC(f3e63b76) SHA1(da54d1d7d7d55b73e49991e4363bc6f46e0f70eb) )
+	ROM_LOAD( "vball.78b",  0x10000, 0x10000, CRC(7ad9d338) SHA1(3e3c270fa69bda93b03f07a54145eb5e211ec8ba) )
 
 	ROM_REGION(0x1000, REGION_PROMS, 0 )	/* color PROMs */
-	ROM_LOAD_NIB_LOW ( "vball.44",   0x0000, 0x00800, 0xa317240f )
-	ROM_LOAD_NIB_HIGH( "vball.43",   0x0000, 0x00800, 0x1ff70b4f )
-	ROM_LOAD( "vball.160",  0x0800, 0x00800, 0x2ffb68b3 )
+	ROM_LOAD_NIB_LOW ( "vball.44",   0x0000, 0x00800, CRC(a317240f) SHA1(bd57ad516f7a8ff774276fd26b02dd34659d41ad) )
+	ROM_LOAD_NIB_HIGH( "vball.43",   0x0000, 0x00800, CRC(1ff70b4f) SHA1(a469baa0dda844ba307c09ddefb23f239cfe7b5f) )
+	ROM_LOAD( "vball.160",  0x0800, 0x00800, CRC(2ffb68b3) SHA1(d560fdcd5e5c79d37e5b5bde22fbaf662fe89252) )
 ROM_END
 
 

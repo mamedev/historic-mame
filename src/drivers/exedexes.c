@@ -274,86 +274,86 @@ MACHINE_DRIVER_END
 
 ROM_START( exedexes )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
-	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
-	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
+	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, CRC(44140dbd) SHA1(7b56f614f7cd7655ffa3e1f4adba5a20fa25822d) )
+	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, CRC(bf72cfba) SHA1(9f0b9472890db95e16a71f26da954780d5ec7c16) )
+	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, CRC(7ad95e2f) SHA1(53fd8d6985d08106bab45e83827a509486d640b7) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
+	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, CRC(73cdf3b2) SHA1(c9f2c91011bdeecec8fa76a42d95f3a5ec77cec9) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0xcadb75bd ) /* Characters */
+	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, CRC(cadb75bd) SHA1(2086be5e295e5d870bcb35f116cc925f811b7583) ) /* Characters */
 
 	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, CRC(96a65c1d) SHA1(3b49c64b32f01ec72cf2d943bfe3aa575d62a765) ) /* 32x32 tiles planes 0-1 */
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, CRC(6039bdd1) SHA1(01156e02ed59e6c1e55204729e515cd4419568fb) ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, CRC(b32d8252) SHA1(738225146ba38f2a9216fda278838e7ebb29a0bb) ) /* 16x16 tiles planes 2-3 */
 
 	ROM_REGION( 0x08000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, CRC(bc83e265) SHA1(ac9b4cce9e539c560414abf2fc239910f2bfbb2d) ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, CRC(0e0f300d) SHA1(2f973748e459b16673115abf7de8615219e39fa4) ) /* Sprites planes 2-3 */
 
 	ROM_REGION( 0x6000, REGION_GFX5, 0 )	/* background tilemaps */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, CRC(3625a68d) SHA1(83010ca356385b713bafe03a502c566f6a9a8365) )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, CRC(6057c907) SHA1(886790641b84b8cd659d2eb5fd1adbabdd7dad3d) )	/* Back Tile map */
 
 	ROM_REGION( 0x0b20, REGION_PROMS, 0 )
-	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
-	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
-	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
-	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
-	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
-	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
-	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
-	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
-	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, 0x0d968558 )	/* unknown (all 0) */
-	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, 0x1acee376 )	/* unknown (priority?) */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, CRC(8d0d5935) SHA1(a0ab827ff3b641965ef851893c399e3988fde55e) )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, CRC(d3c17efc) SHA1(af88340287bd732c91bc5c75970f9de0431b4304) )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, CRC(58ba964c) SHA1(1f98f8e484a0462f1a9fadef9e57612a32652599) )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, CRC(35a03579) SHA1(1f1b8c777622a1f5564409c5f3ce69cc68199dae) )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, CRC(1dfad87a) SHA1(684844c24e630f46525df97ed67e2e63f7e66d0f) )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, CRC(850064e0) SHA1(3884485e91bd82539d0d33f46b7abac60f4c3b1c) )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, CRC(2bb68710) SHA1(cfb375316245cb8751e765f163e6acf071dda9ca) )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, CRC(173184ef) SHA1(f91ecbdc67af1eed6757f660cac8a0e6866c1822) )	/* sprite palette bank */
+	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
+	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, CRC(0d968558) SHA1(b376885ac8452b6cbf9ced81b1080bfd570d9b91) )	/* unknown (all 0) */
+	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, CRC(1acee376) SHA1(367094d924f8e0ec36d8310fada4d8143358f697) )	/* unknown (priority?) */
 ROM_END
 
 ROM_START( savgbees )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
-	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
-	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
+	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, CRC(c0caf442) SHA1(f6e137c1707db620db4f79a1e038101bb3acf812) )
+	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, CRC(9cd70ae1) SHA1(ad2c5de469cdc04a8e877e334a93d68d722cec9a) )
+	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, CRC(a04e6368) SHA1(ed350fb490f8f84dcd9e4a9f5fb3b23079d6b996) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
+	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, CRC(93d3f952) SHA1(5c86d1ddf03083ac2787efb7a29c09b2f46ec3fa) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, 0x5972f95f ) /* Characters */
+	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, CRC(5972f95f) SHA1(7b90ceca37dba773f72a80da6272b00061526348) ) /* Characters */
 
 	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, CRC(96a65c1d) SHA1(3b49c64b32f01ec72cf2d943bfe3aa575d62a765) ) /* 32x32 tiles planes 0-1 */
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, CRC(6039bdd1) SHA1(01156e02ed59e6c1e55204729e515cd4419568fb) ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, CRC(b32d8252) SHA1(738225146ba38f2a9216fda278838e7ebb29a0bb) ) /* 16x16 tiles planes 2-3 */
 
 	ROM_REGION( 0x08000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, CRC(bc83e265) SHA1(ac9b4cce9e539c560414abf2fc239910f2bfbb2d) ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, CRC(0e0f300d) SHA1(2f973748e459b16673115abf7de8615219e39fa4) ) /* Sprites planes 2-3 */
 
 	ROM_REGION( 0x6000, REGION_GFX5, 0 )	/* background tilemaps */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, CRC(3625a68d) SHA1(83010ca356385b713bafe03a502c566f6a9a8365) )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, CRC(6057c907) SHA1(886790641b84b8cd659d2eb5fd1adbabdd7dad3d) )	/* Back Tile map */
 
 	ROM_REGION( 0x0b20, REGION_PROMS, 0 )
-	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
-	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
-	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
-	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
-	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
-	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
-	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
-	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
-	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, 0x0d968558 )	/* unknown (all 0) */
-	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, 0x1acee376 )	/* unknown (priority?) */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, CRC(8d0d5935) SHA1(a0ab827ff3b641965ef851893c399e3988fde55e) )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, CRC(d3c17efc) SHA1(af88340287bd732c91bc5c75970f9de0431b4304) )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, CRC(58ba964c) SHA1(1f98f8e484a0462f1a9fadef9e57612a32652599) )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, CRC(35a03579) SHA1(1f1b8c777622a1f5564409c5f3ce69cc68199dae) )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, CRC(1dfad87a) SHA1(684844c24e630f46525df97ed67e2e63f7e66d0f) )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, CRC(850064e0) SHA1(3884485e91bd82539d0d33f46b7abac60f4c3b1c) )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, CRC(2bb68710) SHA1(cfb375316245cb8751e765f163e6acf071dda9ca) )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, CRC(173184ef) SHA1(f91ecbdc67af1eed6757f660cac8a0e6866c1822) )	/* sprite palette bank */
+	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
+	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, CRC(0d968558) SHA1(b376885ac8452b6cbf9ced81b1080bfd570d9b91) )	/* unknown (all 0) */
+	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, CRC(1acee376) SHA1(367094d924f8e0ec36d8310fada4d8143358f697) )	/* unknown (priority?) */
 ROM_END
 
 

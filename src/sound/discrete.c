@@ -74,9 +74,9 @@ static int discrete_stream=0;
 static int discrete_stereo=0;
 
 /* Uncomment this line to log discrete sound output to a file */
-/* #define DISCRETE_WAVELOG */
+//#define DISCRETE_WAVELOG
 /* Uncomment this line to log discrete sound debug log information to a file */
-/* #define DISCRETE_DEBUGLOG */
+//#define DISCRETE_DEBUGLOG
 
 #ifdef DISCRETE_WAVELOG
 #include "wavwrite.h"
@@ -91,8 +91,6 @@ void CLIB_DECL discrete_log(const char *text, ...)
 {
     va_list arg;
     va_start(arg,text);
-
-	if(!disclogfile) disclogfile=fopen("discrete.log", "wb");
 
     if(disclogfile)
 	{
@@ -116,6 +114,13 @@ void CLIB_DECL discrete_log(const char *text, ...)
 #include "disc_dev.c"		/* Popular Devices - NE555/etc */
 #include "disc_out.c"		/* Output devices */
 
+int dss_default_kill(struct node_description *node)
+{
+	if(node->context) free(node->context);
+	node->context=NULL;
+	return 0;
+}
+
 /************************************************************************/
 /*                                                                      */
 /*        Define the call tables for running the simulation,            */
@@ -126,27 +131,38 @@ void CLIB_DECL discrete_log(const char *text, ...)
 struct discrete_module module_list[]=
 {
 	{ DSS_INPUT       ,"DSS_INPUT"       ,dss_input_init       ,dss_input_kill       ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,dss_input_init       ,dss_input_kill       ,dss_input_reset       ,dss_input_pulse_step },
 	{ DSS_CONSTANT    ,"DSS_CONSTANT"    ,NULL                 ,NULL                 ,NULL                  ,dss_constant_step    },
-	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,dss_adjustment_init  ,dss_adjustment_kill  ,dss_adjustment_reset  ,dss_adjustment_step  },
-	{ DSS_SQUAREWAVE  ,"DSS_SQUAREWAVE"  ,dss_squarewave_init  ,dss_squarewave_kill  ,dss_squarewave_reset  ,dss_squarewave_step  },
-	{ DSS_SINEWAVE    ,"DSS_SINEWAVE"    ,dss_sinewave_init    ,dss_sinewave_kill    ,dss_sinewave_reset    ,dss_sinewave_step    },
-	{ DSS_NOISE       ,"DSS_NOISE"       ,dss_noise_init       ,dss_noise_kill       ,dss_noise_reset       ,dss_noise_step       },
-	{ DSS_LFSR_NOISE  ,"DSS_LFSR_NOISE"  ,dss_lfsr_init        ,dss_lfsr_kill        ,dss_lfsr_reset        ,dss_lfsr_step        },
-	{ DSS_TRIANGLEWAVE,"DSS_TRIANGLEWAVE",dss_trianglewave_init,dss_trianglewave_kill,dss_trianglewave_reset,dss_trianglewave_step},
-	{ DSS_SAWTOOTHWAVE,"DSS_SAWTOOTHWAVE",dss_sawtoothwave_init,dss_sawtoothwave_kill,dss_sawtoothwave_reset,dss_sawtoothwave_step},
+	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,dss_adjustment_init  ,dss_default_kill     ,dss_adjustment_reset  ,dss_adjustment_step  },
+	{ DSS_SQUAREWAVE  ,"DSS_SQUAREWAVE"  ,dss_squarewave_init  ,dss_default_kill     ,dss_squarewave_reset  ,dss_squarewave_step  },
+	{ DSS_SQUAREWFIX  ,"DSS_SQUAREWFIX"  ,dss_squarewfix_init  ,dss_default_kill     ,dss_squarewfix_reset  ,dss_squarewfix_step  },
+	{ DSS_SQUAREWAVE2 ,"DSS_SQUAREWAVE2" ,dss_squarewave2_init ,dss_default_kill     ,dss_squarewave2_reset ,dss_squarewave2_step  },
+	{ DSS_SINEWAVE    ,"DSS_SINEWAVE"    ,dss_sinewave_init    ,dss_default_kill     ,dss_sinewave_reset    ,dss_sinewave_step    },
+	{ DSS_NOISE       ,"DSS_NOISE"       ,dss_noise_init       ,dss_default_kill     ,dss_noise_reset       ,dss_noise_step       },
+	{ DSS_LFSR_NOISE  ,"DSS_LFSR_NOISE"  ,dss_lfsr_init        ,dss_default_kill     ,dss_lfsr_reset        ,dss_lfsr_step        },
+	{ DSS_TRIANGLEWAVE,"DSS_TRIANGLEWAVE",dss_trianglewave_init,dss_default_kill     ,dss_trianglewave_reset,dss_trianglewave_step},
+	{ DSS_SAWTOOTHWAVE,"DSS_SAWTOOTHWAVE",dss_sawtoothwave_init,dss_default_kill     ,dss_sawtoothwave_reset,dss_sawtoothwave_step},
+	{ DSS_ADSR        ,"DSS_ADSR"        ,dss_adsrenv_init     ,dss_default_kill     ,dss_adsrenv_reset     ,dss_adsrenv_step     },
 
+	{ DST_TRANSFORM   ,"DST_TRANSFORM"   ,NULL                 ,NULL                 ,NULL                  ,dst_transform_step   },
 	{ DST_GAIN        ,"DST_GAIN"        ,NULL                 ,NULL                 ,NULL                  ,dst_gain_step        },
 	{ DST_DIVIDE      ,"DST_DIVIDE"      ,NULL                 ,NULL                 ,NULL                  ,dst_divide_step      },
 	{ DST_ADDER       ,"DST_ADDER"       ,NULL                 ,NULL                 ,NULL                  ,dst_adder_step       },
 	{ DST_SWITCH      ,"DST_SWITCH"      ,NULL                 ,NULL                 ,NULL                  ,dst_switch_step      },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,dst_rcfilter_init    ,NULL                 ,dst_rcfilter_reset    ,dst_rcfilter_step    },
-	{ DST_RCDISC      ,"DST_RCDISC"      ,dst_rcdisc_init      ,dst_rcdisc_kill      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
-	{ DST_RCDISC2     ,"DST_RCDISC2"     ,dst_rcdisc2_init     ,dst_rcdisc2_kill     ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
-	{ DST_RAMP        ,"DST_RAMP"        ,dst_ramp_init        ,dst_ramp_kill        ,dst_ramp_reset        ,dst_ramp_step        },
+	{ DST_RCDISC      ,"DST_RCDISC"      ,dst_rcdisc_init      ,dss_default_kill     ,dst_rcdisc_reset      ,dst_rcdisc_step      },
+	{ DST_RCDISC2     ,"DST_RCDISC2"     ,dst_rcdisc2_init     ,dss_default_kill     ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
+	{ DST_RCFILTERN   ,"DST_RCFILTERN"   ,dst_rcfilterN_init   ,dss_default_kill     ,dst_filter1_reset     ,dst_filter1_step     },
+	{ DST_RCDISCN     ,"DST_RCDISCN"     ,dst_rcdiscN_init     ,dss_default_kill     ,dst_filter1_reset     ,dst_rcdiscN_step      },
+	{ DST_RCDISC2N    ,"DST_RCDISC2N"    ,dst_rcdisc2N_init    ,dss_default_kill     ,dst_rcdisc2N_reset    ,dst_rcdisc2N_step     },
+	{ DST_FILTER1     ,"DST_FILTER1"     ,dst_filter1_init     ,dss_default_kill     ,dst_filter1_reset     ,dst_filter1_step     },
+	{ DST_FILTER2     ,"DST_FILTER2"     ,dst_filter2_init     ,dss_default_kill     ,dst_filter2_reset     ,dst_filter2_step     },
+
+	{ DST_RAMP        ,"DST_RAMP"        ,dst_ramp_init        ,dss_default_kill     ,dst_ramp_reset        ,dst_ramp_step        },
 	{ DST_CLAMP       ,"DST_CLAMP"       ,NULL                 ,NULL                 ,NULL                  ,dst_clamp_step       },
-	{ DST_LADDER      ,"DST_LADDER"      ,dst_ladder_init      ,dst_ladder_kill      ,dst_ladder_reset      ,dst_ladder_step      },
-	{ DST_ONESHOT     ,"DST_ONESHOT"     ,dst_oneshot_init     ,dst_oneshot_kill     ,dst_oneshot_reset     ,dst_oneshot_step     },
-	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,dst_samphold_init    ,dst_samphold_kill    ,dst_samphold_reset    ,dst_samphold_step    },
+	{ DST_LADDER      ,"DST_LADDER"      ,dst_ladder_init      ,dss_default_kill     ,dst_ladder_reset      ,dst_ladder_step      },
+	{ DST_ONESHOT     ,"DST_ONESHOT"     ,dst_oneshot_init     ,dss_default_kill     ,dst_oneshot_reset     ,dst_oneshot_step     },
+	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,dst_samphold_init    ,dss_default_kill     ,dst_samphold_reset    ,dst_samphold_step    },
 
 	{ DST_LOGIC_INV   ,"DST_LOGIC_INV"   ,NULL                 ,NULL                 ,NULL                  ,dst_logic_inv_step   },
 	{ DST_LOGIC_AND   ,"DST_LOGIC_AND"   ,NULL                 ,NULL                 ,NULL                  ,dst_logic_and_step   },
@@ -156,7 +172,10 @@ struct discrete_module module_list[]=
 	{ DST_LOGIC_XOR   ,"DST_LOGIC_XOR"   ,NULL                 ,NULL                 ,NULL                  ,dst_logic_xor_step   },
 	{ DST_LOGIC_NXOR  ,"DST_LOGIC_NXOR"  ,NULL                 ,NULL                 ,NULL                  ,dst_logic_nxor_step  },
 
-/*	{ DSD_NE555       ,"DSD_NE555"       ,dsd_ne555_init       ,dsd_ne555_kill       ,dsd_ne555_reset       ,dsd_ne555_step       }, */
+	{ DSD_555_ASTBL   ,"DSD_555_ASTBL"   ,dsd_555_astbl_init   ,dss_default_kill     ,dsd_555_astbl_reset   ,dsd_555_astbl_step   },
+	{ DSD_SQUAREW555  ,"DSD_SQUAREW555"  ,dsd_squarew555_init  ,dss_default_kill     ,dsd_squarew555_reset  ,dsd_squarew555_step  },
+	{ DSD_SQUAREW566  ,"DSD_SQUAREW566"  ,dsd_squarew566_init  ,dss_default_kill     ,dsd_squarew566_reset  ,dsd_squarew566_step  },
+	{ DSD_TRIANGLEW566,"DSD_TRIANGLEW566",dsd_trianglew566_init,dss_default_kill     ,dsd_trianglew566_reset,dsd_trianglew566_step},
 
 	{ DSO_OUTPUT      ,"DSO_OUTPUT"      ,dso_output_init      ,NULL                 ,NULL                  ,dso_output_step      },
 	{ DSS_NULL        ,"DSS_NULL"        ,NULL                 ,NULL                 ,NULL                  ,NULL                 }
@@ -176,7 +195,7 @@ static struct node_description* find_node(int node)
 static void discrete_stream_update_stereo(int ch, INT16 **buffer, int length)
 {
 	/* Now we must do length iterations of the node list, one output for each step */
-	int loop,loop2;
+	int loop,loop2,loop3;
 	struct node_description *node;
 
 	for(loop=0;loop<length;loop++)
@@ -188,13 +207,10 @@ static void discrete_stream_update_stereo(int ch, INT16 **buffer, int length)
 
 			/* Work out what nodes/inputs are required, dont process NO CONNECT nodes */
 			/* these are ones that are connected to NODE_LIST[0]                      */
-			if(node->input_node0 && (node->input_node0)->node!=NODE_NC) node->input0=(node->input_node0)->output;
-			if(node->input_node1 && (node->input_node1)->node!=NODE_NC) node->input1=(node->input_node1)->output;
-			if(node->input_node2 && (node->input_node2)->node!=NODE_NC) node->input2=(node->input_node2)->output;
-			if(node->input_node3 && (node->input_node3)->node!=NODE_NC) node->input3=(node->input_node3)->output;
-			if(node->input_node4 && (node->input_node4)->node!=NODE_NC) node->input4=(node->input_node4)->output;
-			if(node->input_node5 && (node->input_node5)->node!=NODE_NC) node->input5=(node->input_node5)->output;
-
+			for(loop3=0;loop3<node->active_inputs;loop3++)
+			{
+				if(node->input_node[loop3] && (node->input_node[loop3])->node!=NODE_NC) node->input[loop3]=(node->input_node[loop3])->output;
+			}
 			/* Now step the node */
 			if(module_list[node->module].step) (*module_list[node->module].step)(node);
 		}
@@ -211,7 +227,7 @@ static void discrete_stream_update_stereo(int ch, INT16 **buffer, int length)
 static void discrete_stream_update_mono(int ch,INT16 *buffer, int length)
 {
 	/* Now we must do length iterations of the node list, one output for each step */
-	int loop,loop2;
+	int loop,loop2,loop3;
 	struct node_description *node;
 
 	for(loop=0;loop<length;loop++)
@@ -223,12 +239,10 @@ static void discrete_stream_update_mono(int ch,INT16 *buffer, int length)
 
 			/* Work out what nodes/inputs are required, dont process NO CONNECT nodes */
 			/* these are ones that are connected to NODE_LIST[0]                      */
-			if(node->input_node0 && (node->input_node0)->node!=NODE_NC) node->input0=(node->input_node0)->output;
-			if(node->input_node1 && (node->input_node1)->node!=NODE_NC) node->input1=(node->input_node1)->output;
-			if(node->input_node2 && (node->input_node2)->node!=NODE_NC) node->input2=(node->input_node2)->output;
-			if(node->input_node3 && (node->input_node3)->node!=NODE_NC) node->input3=(node->input_node3)->output;
-			if(node->input_node4 && (node->input_node4)->node!=NODE_NC) node->input4=(node->input_node4)->output;
-			if(node->input_node5 && (node->input_node5)->node!=NODE_NC) node->input5=(node->input_node5)->output;
+			for(loop3=0;loop3<node->active_inputs;loop3++)
+			{
+				if(node->input_node[loop3] && (node->input_node[loop3])->node!=NODE_NC) node->input[loop3]=(node->input_node[loop3])->output;
+			}
 
 			/* Now step the node */
 			if(module_list[node->module].step) (*module_list[node->module].step)(node);
@@ -242,6 +256,43 @@ static void discrete_stream_update_mono(int ch,INT16 *buffer, int length)
 #endif
 }
 
+void discrete_sh_reset(void)
+{
+	struct node_description *node;
+
+	/* Reset all of the objects */
+	int loop=0,loop2=0;
+
+	if(!init_ok) return;
+
+	for(loop=0;loop<node_count;loop++)
+	{
+		/* Pick the first node to process */
+		node=running_order[loop];
+
+		/* Work out what nodes/inputs are required, dont process NO CONNECT nodes */
+		/* these are ones that are connected to NODE_LIST[0]                      */
+		for(loop2=0;loop2<node->active_inputs;loop2++)
+		{
+			if(node->input_node[loop2] && (node->input_node[loop2])->node!=NODE_NC) node->input[loop2]=(node->input_node[loop2])->output;
+		}
+
+		/* Now that the inputs have been setup then we should call the reset function */
+		/* if a node is stateless then it may have no reset function in which case we */
+		/* will call its _step function to setup the output.                          */
+		if(module_list[node_list[loop].module].reset)
+		{
+			discrete_log("discrete_sh_reset() - Calling reset for %s node %d.",module_list[node_list[loop].module].name,node_list[loop].node-NODE_00);
+			(*module_list[node_list[loop].module].reset)(&node_list[loop]);
+		}
+		else if (module_list[node_list[loop].module].step)
+		{
+			discrete_log("discrete_sh_reset() - Node has no reset, calling step for %s node %d.",module_list[node_list[loop].module].name,node_list[loop].node-NODE_00);
+			(*module_list[node_list[loop].module].step)(&node_list[loop]);
+		}	
+	}
+}
+
 int discrete_sh_start (const struct MachineSound *msound)
 {
 	struct discrete_sound_block *intf;
@@ -249,6 +300,9 @@ int discrete_sh_start (const struct MachineSound *msound)
 
 #ifdef DISCRETE_WAVELOG
 	wav_file = wav_open("discrete.wav", Machine->sample_rate, ((Machine->drv->sound_attributes&SOUND_SUPPORTS_STEREO) == SOUND_SUPPORTS_STEREO) ? 2: 1);
+#endif
+#ifdef DISCRETE_DEBUGLOG
+	if(!disclogfile) disclogfile=fopen("discrete.log", "w");
 #endif
 
 	/* Initialise */
@@ -283,7 +337,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 		/* Sanity check */
 		if(node_count>DISCRETE_MAX_NODES)
 		{
-			logerror("discrete_sh_start() - Upper limit of 255 nodes exceeded, have you terminated the interface block.");
+			logerror("discrete_sh_start() - Upper limit of %d nodes exceeded, have you terminated the interface block.",DISCRETE_MAX_NODES);
 			return 1;
 		}
 	}
@@ -310,6 +364,18 @@ int discrete_sh_start (const struct MachineSound *msound)
 	{
 		/* Initialise memory */
 		memset(node_list,0,node_count*sizeof(struct node_description));
+
+		/* Initialise structs */
+		for(loop=0;loop<node_count;loop++)
+		{
+			for(loop2=0;loop2<DISCRETE_MAX_INPUTS;loop2++)
+			{
+				node_list[loop].input[loop2]=0.0;
+				node_list[loop].input_node[loop2]=NULL;
+			}
+		}
+
+
 	}
 	discrete_log("discrete_sh_start() - Malloc completed", node_count);
 
@@ -344,51 +410,23 @@ int discrete_sh_start (const struct MachineSound *msound)
 		/* Configure the input node pointers */
 		node_list[loop].node=intf[loop].node;
 		node_list[loop].output=0;
-		node_list[loop].input0=intf[loop].initial0;
-		node_list[loop].input1=intf[loop].initial1;
-		node_list[loop].input2=intf[loop].initial2;
-		node_list[loop].input3=intf[loop].initial3;
-		node_list[loop].input4=intf[loop].initial4;
-		node_list[loop].input5=intf[loop].initial5;
-		node_list[loop].input_node0=find_node(intf[loop].input_node0);
-		node_list[loop].input_node1=find_node(intf[loop].input_node1);
-		node_list[loop].input_node2=find_node(intf[loop].input_node2);
-		node_list[loop].input_node3=find_node(intf[loop].input_node3);
-		node_list[loop].input_node4=find_node(intf[loop].input_node4);
-		node_list[loop].input_node5=find_node(intf[loop].input_node5);
+		node_list[loop].active_inputs=intf[loop].active_inputs;
+		for(loop2=0;loop2<intf[loop].active_inputs;loop2++)
+		{
+			node_list[loop].input[loop2]=intf[loop].initial[loop2];
+			node_list[loop].input_node[loop2]=find_node(intf[loop].input_node[loop2]);
+		}
 		node_list[loop].name=intf[loop].name;
 		node_list[loop].custom=intf[loop].custom;
 
 		/* Check that all referenced nodes have actually been found */
-		if(node_list[loop].input_node0==NULL && intf[loop].input_node0>=NODE_START && intf[loop].input_node0<=NODE_END)
+		for(loop2=0;loop2<intf[loop].active_inputs;loop2++)
 		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node0-NODE_00);
-			failed=1;
-		}
-		if(node_list[loop].input_node1==NULL && intf[loop].input_node1>=NODE_START && intf[loop].input_node1<=NODE_END)
-		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node1-NODE_00);
-			failed=1;
-		}
-		if(node_list[loop].input_node2==NULL && intf[loop].input_node2>=NODE_START && intf[loop].input_node2<=NODE_END)
-		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node2-NODE_00);
-			failed=1;
-		}
-		if(node_list[loop].input_node3==NULL && intf[loop].input_node3>=NODE_START && intf[loop].input_node3<=NODE_END)
-		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node3-NODE_00);
-			failed=1;
-		}
-		if(node_list[loop].input_node4==NULL && intf[loop].input_node4>=NODE_START && intf[loop].input_node4<=NODE_END)
-		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node4-NODE_00);
-			failed=1;
-		}
-		if(node_list[loop].input_node5==NULL && intf[loop].input_node5>=NODE_START && intf[loop].input_node5<=NODE_END)
-		{
-			logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node5-NODE_00);
-			failed=1;
+			if(node_list[loop].input_node[loop2]==NULL && intf[loop].input_node[loop2]>=NODE_START && intf[loop].input_node[loop2]<=NODE_END)
+			{
+				logerror("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n",node_list[loop].node-NODE_00,intf[loop].input_node[loop2]-NODE_00);
+				failed=1;
+			}
 		}
 
 		/* Try to find the simulation module in the module list table */
@@ -419,7 +457,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 	/* Setup the output node */
 	if((output_node=find_node(NODE_OP))==NULL)
 	{
-		logerror("discrete_sh_start() - Counldnt find an output node");
+		logerror("discrete_sh_start() - Couldn't find an output node");
 		failed=1;
 	}
 
@@ -430,8 +468,8 @@ int discrete_sh_start (const struct MachineSound *msound)
 	{
 		int vol[2];
 		const char *stereo_names[2] = { "Discrete Left", "Discrete Right" };
-		vol[0] = output_node->input2;
-		vol[1] = output_node->input2;
+		vol[0] = output_node->input[2];
+		vol[1] = output_node->input[2];
 		/* Initialise a stereo, stream, we always use stereo even if only a mono system */
 		discrete_stream=stream_init_multi(2,stereo_names,vol,Machine->sample_rate,0,discrete_stream_update_stereo);
 		discrete_log("discrete_sh_start() - Stereo Audio Stream Initialised", node_count);
@@ -440,7 +478,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 	else
 	{
 		int vol;
-		vol = output_node->input2;
+		vol = output_node->input[2];
 		/* Initialise a stereo, stream, we always use stereo even if only a mono system */
 		discrete_stream=stream_init("Discrete Sound",vol,Machine->sample_rate,0,discrete_stream_update_mono);
 		discrete_log("discrete_sh_start() - Mono Audio Stream Initialised", node_count);
@@ -454,6 +492,11 @@ int discrete_sh_start (const struct MachineSound *msound)
 
 	/* Report success or fail */
 	if(!failed) init_ok=1;
+
+	/* Now reset the system to a sensible state */
+	discrete_sh_reset();
+	discrete_log("discrete_sh_start() - Nodes reset", node_count);
+
 	return failed;
 }
 
@@ -464,11 +507,6 @@ void discrete_sh_stop (void)
 
 #ifdef DISCRETE_WAVELOG
 	wav_close(wav_file);
-#endif
-
-#ifdef DISCRETE_DEBUGLOG
-    if(disclogfile) fclose(disclogfile);
-	disclogfile=NULL;
 #endif
 
 	for(loop=0;loop<node_count;loop++)
@@ -482,20 +520,11 @@ void discrete_sh_stop (void)
 	node_count=0;
 	node_list=NULL;
 	running_order=NULL;
-}
 
-void discrete_sh_reset (void)
-{
-	/* Reset all of the objects */
-	int loop=0;
-
-	if(!init_ok) return;
-
-	for(loop=0;loop<node_count;loop++)
-	{
-		discrete_log("discrete_sh_reset() - Calling reset for %s",module_list[node_list[loop].module].name);
-		if(module_list[node_list[loop].module].reset) (*module_list[node_list[loop].module].reset)(&node_list[loop]);
-	}
+#ifdef DISCRETE_DEBUGLOG
+    if(disclogfile) fclose(disclogfile);
+	disclogfile=NULL;
+#endif
 }
 
 void discrete_sh_update(void)

@@ -93,23 +93,26 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 	data16_t linkno;
 	data16_t offset;
 	data16_t format;
-
 	int tile_index;
 	int num_cols,num_rows;
 	int dx,dy;
-
 	int row,col;
 	int sx,sy,tile;
 	int flipx,flipy;
 	UINT32 zoomx, zoomy;
 	int tile_screen_width;
 	int tile_screen_height;
-
 	const data16_t *spriteformat16 = &spriteram16[0x4000/2];
 	const data16_t *spritetile16 = &spriteram16[0x8000/2];
-
 	int color;
+	int bOpaque;
 
+	/**
+	 * xxxx------------ unused?
+	 * ----xxxx-------- affects whole sprite, including transparent parts
+	 * --------xxxx---- sprite-tilemap priority for opaque parts of sprite
+	 * ------------xxxx palette select
+	 */
 	palette = pSource[6];
 	switch( namcos2_gametype )
 	{
@@ -118,10 +121,6 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 	case NAMCOS2_SUZUKA_8_HOURS_2:
 	case NAMCOS2_SUZUKA_8_HOURS:
 	case NAMCOS2_LUCKY_AND_WILD:
-		/* I don't know how priority works on these games.
-		 * The following "works" but it's probably more complex;
-		 * There are other bits involved.
-		 */
 		if( pri != ((palette>>5)&7) ) return;
 		break;
 
@@ -130,40 +129,41 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 		break;
 	}
 
+	bOpaque = (palette>>8);
+
 	linkno		= pSource[0]; /* LINKNO */
 	offset		= pSource[1]; /* OFFSET */
-	hpos		= pSource[2]; /* HPOS */
-	vpos		= pSource[3]; /* VPOS */
+	hpos		= pSource[2]; /* HPOS		0x000..0x7ff (signed) */
+	vpos		= pSource[3]; /* VPOS		0x000..0x7ff (signed) */
 	hsize		= pSource[4]; /* HSIZE		max 0x3ff pixels */
 	vsize		= pSource[5]; /* VSIZE		max 0x3ff pixels */
-	//palette	= pSource[6];
-	/* pSource[7] is used in Lucky & Wild for unknown purpose */
+	/* pSource[6] contains priority/palette */
+	/* pSource[7] is used in Lucky & Wild, probably for sprite-road priority */
 
 	if( linkno*4>=0x4000/2 ) return; /* avoid garbage memory read */
 
 	switch( namcos2_gametype )
 	{
 	case NAMCOS21_SOLVALOU: /* hack */
-		hpos -= 128;
-		vpos -= 64;
+		hpos -= 0x80;
+		vpos -= 0x40;
 		break;
 
 	case NAMCOS21_CYBERSLED: /* hack */
-		hpos -= 256+8+8;
+		hpos -= 0x110;
 		vpos -= 2+32;
 		break;
 
 	case NAMCOS21_AIRCOMBAT: /* hack */
-		vpos -= 34;
-		hpos -= 2;
+		vpos -= 0x22;
+		hpos -= 0x02;
 		break;
 
 	case NAMCOS21_STARBLADE: /* hack */
 		if( page )
 		{
-			hpos -= 128;
-			vpos -= 64;
-			vpos += 32;
+			hpos -= 0x80;
+			vpos -= 0x20;
 		}
 		break;
 
@@ -173,30 +173,25 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 	case NAMCONB1_SWS95:
 	case NAMCONB1_SWS96:
 	case NAMCONB1_SWS97:
-	case NAMCONB1_VSHOOT:
 	case NAMCONB2_OUTFOXIES:
 	case NAMCONB2_MACH_BREAKERS:
-		hpos -= mSpritePos[1] + 0x26;
-		vpos -= mSpritePos[0] + 0x19;
-		hpos &= 0x1ff; if( hpos>=288 ) hpos -= 512;
-		vpos &= 0x1ff; if( vpos>=224 ) vpos -= 512;
-		break;
-
+	case NAMCONB1_VSHOOT:
 	case NAMCOS2_SUZUKA_8_HOURS_2:
 	case NAMCOS2_SUZUKA_8_HOURS:
 	case NAMCOS2_LUCKY_AND_WILD:
 	case NAMCOS2_STEEL_GUNNER_2:
-		/* For now, we discard the top bit and sign extend.
-		 * It isn't known what the top bit means, but if we don't ignore the top
-		 * bit, many sprites get placed (incorrectly) offscreen.
-		 */
-		vpos&=0x7fff; if( vpos&0x4000 ) vpos |= ~0x7fff;
-		hpos&=0x7fff; if( hpos&0x4000 ) hpos |= ~0x7fff;
-		hpos -= mSpritePos[1] + 0x26;
-		vpos -= mSpritePos[0] + 0x19;
-		break;
-
 	default:
+		{
+			int dh = mSpritePos[1];
+			int dv = mSpritePos[0];
+
+			dh &= 0x1ff; if( dh&0x100 ) dh |= ~0x1ff;
+			dv &= 0x1ff; if( dv&0x100 ) dv |= ~0x1ff;
+			vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff;
+			hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff;
+			hpos += -0x26 - dh;
+			vpos += -0x19 - dv;
+		}
 		break;
 	}
 	tile_index		= spriteformat16[linkno*4+0];
@@ -239,6 +234,25 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const data16_t *pSource, 
 	}
 
 	color = (palette&0xf)^mPalXOR;
+
+	if( 0 && bOpaque )
+	{
+		int pen = get_black_pen();
+		sy = vpos;
+		if( sy<0 ) sy = 0;
+		while( sy<vpos+vsize && sy<bitmap->height )
+		{
+			UINT16 *pDest = (UINT16 *)bitmap->line[sy];
+			sx = hpos;
+			if( sx<0 ) sx = 0;
+			while( sx<hpos+hsize && sx<bitmap->width )
+			{
+				pDest[sx] = pen;
+				sx++;
+			}
+			sy++;
+		}
+	}
 
 	source_height_remaining = num_rows*16;
 	screen_height_remaining = vsize;

@@ -20,6 +20,7 @@ unsigned char *taitosj_scroll;
 unsigned char *taitosj_colscrolly;
 unsigned char *taitosj_gfxpointer;
 unsigned char *taitosj_colorbank,*taitosj_video_priority;
+unsigned char *kikstart_scrollram;
 static unsigned char taitosj_collision_reg[4];
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct mame_bitmap *taitosj_tmpbitmap[3];
@@ -695,6 +696,45 @@ static void drawplayfield(int n, struct mame_bitmap *bitmap)
 	}
 }
 
+static void kikstart_drawplayfield(int n, struct mame_bitmap *bitmap)
+{
+	if (taitosj_video_enable & playfield_enable_mask[n])
+	{
+		int i,scrolly,scrollx[32*8];
+
+		for (i = 1;i < 32*8;i++)// 1-255 !
+		{
+			if(flipscreen[1])
+			{
+				switch(n)
+				{
+					case 0:	scrollx[32*8-i] = 0 ;break;
+					case 1:	scrollx[32*8-i] = kikstart_scrollram[i]+((taitosj_scroll[2*n]+0xa)&0xff);break;
+					case 2:	scrollx[32*8-i] = kikstart_scrollram[0x100+i]+((taitosj_scroll[2*n]+0xc)&0xff);break;
+				}
+			}
+			else
+			{
+				switch(n)
+				{
+					case 0:	scrollx[i] = 0 ;break;
+					case 1:	scrollx[i] = 0xff-kikstart_scrollram[i-1]-((taitosj_scroll[2*n]-0x10)&0xff);break;
+					case 2:	scrollx[i] = 0xff-kikstart_scrollram[0x100+i-1]-((taitosj_scroll[2*n]-0x12)&0xff);break;
+				}
+			}
+		}
+		scrolly=taitosj_scroll[2*n+1];//always 0 ?
+		copyscrollbitmap(bitmap,taitosj_tmpbitmap[n],32*8,scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,0);
+		/* store parts covered with sprites for sprites/playfields collision detection */
+		for (i=0x00; i<0x20; i++)
+		{
+			if ((i >= 0x10) && (i <= 0x17)) continue; /* no sprites here */
+			if (spriteon[i])
+				copyscrollbitmap( sprite_plane_collbitmap2[n],taitosj_tmpbitmap[n],32*8,scrollx,1,&scrolly,&spritearea[i],TRANSPARENCY_NONE,0);
+		}
+	}
+}
+
 
 static void drawplane(int n,struct mame_bitmap *bitmap)
 {
@@ -706,7 +746,10 @@ static void drawplane(int n,struct mame_bitmap *bitmap)
 	case 1:
 	case 2:
 	case 3:
-		drawplayfield(n-1,bitmap);
+		if(!strcmp(Machine->gamedrv->name,"kikstart"))
+			kikstart_drawplayfield(n-1,bitmap);//line scroll
+		else
+			drawplayfield(n-1,bitmap);//tile scroll
 		break;
 	}
 }

@@ -5,8 +5,7 @@
 	driver by Mike Balfour
 
 	Games supported:
-		* Sprint 1
-		* Sprint 2
+		* Dominos
 
 	Known issues:
 		* none at this time
@@ -85,6 +84,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
+// Not quite sure where the sound ram variables are.
+// The schematics seem the same as sprint2, but those locations do not sound right.
+	{ 0x0014, 0x0016, MWA_RAM, &dominos_sound_ram }, /* WRAM */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x0c00, 0x0c0f, dominos_attract_w }, /* ATTRACT */
 	{ 0x0c10, 0x0c1f, dominos_tumble_w }, /* TUMBLE */
@@ -171,6 +173,64 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+
+/************************************************************************/
+/* dominos Sound System Analog emulation                               */
+/************************************************************************/
+
+/* Nodes - Inputs */
+#define DOMINOS_FREQ_DATA		NODE_01
+#define DOMINOS_AMP_DATA		NODE_02
+#define DOMINOS_TOPPLE_EN		NODE_03
+#define DOMINOS_ATTRACT_EN		NODE_04
+/* Nodes - Sounds */
+#define DOMINOS_TONE_SND		NODE_10
+#define DOMINOS_TOPPLE_SND		NODE_11
+
+static DISCRETE_SOUND_START(dominos_sound_interface)
+	/************************************************/
+	/* Dominos Effects Relataive Gain Table         */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Tone          3.8      5/(5+10)     1000.0   */
+	/* Topple        3.8      5/(33+5)      394.7   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for dominos           */
+	/************************************************/
+	/*              NODE                  ADDR  MASK    GAIN      OFFSET  INIT */
+	DISCRETE_INPUT (DOMINOS_FREQ_DATA,    0x00, 0x000f,                   0.0)
+	DISCRETE_INPUTX(DOMINOS_AMP_DATA,     0x01, 0x000f, 1000.0/15, 0,     0.0)
+	DISCRETE_INPUT (DOMINOS_TOPPLE_EN,    0x02, 0x000f,                   0.0)
+	DISCRETE_INPUT (DOMINOS_ATTRACT_EN,   0x03, 0x000f,                   0.0)
+
+	/************************************************/
+	/* Tone Sound                                   */
+	/* Note: True freq range has not been tested    */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_20, 1, DOMINOS_FREQ_DATA, 123000, 1e-7)
+	DISCRETE_ADJUSTMENT(NODE_21, 1, (289.0-95.0)/3/15, (4500.0-95.0)/3/15, (458.0-95.0)/3/15, DISC_LOGADJ, "Tone Freq")
+	DISCRETE_MULTIPLY(NODE_22, 1, NODE_20, NODE_21)
+
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 95.0/3)
+	DISCRETE_SQUAREWAVE(NODE_24, DOMINOS_ATTRACT_EN, NODE_23, DOMINOS_AMP_DATA, 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(DOMINOS_TONE_SND, 1, NODE_24, 546, 1e-7)
+
+	/************************************************/
+	/* Topple sound is just the 4V source           */
+	/* 4V = HSYNC/8                                 */
+	/*    = 15750/8                                 */
+	/************************************************/
+	DISCRETE_SQUAREWFIX(DOMINOS_TOPPLE_SND, DOMINOS_TOPPLE_EN, 15750.0/8, 394.7, 50.0, 0, 0)
+
+	DISCRETE_ADDER2(NODE_90, 1, 0, DOMINOS_TOPPLE_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0+394.7))
+	DISCRETE_OUTPUT(NODE_91, 100)
+DISCRETE_SOUND_END
+
+
+
 /*************************************
  *
  *	Machine driver
@@ -198,6 +258,9 @@ static MACHINE_DRIVER_START( dominos )
 	MDRV_PALETTE_INIT(dominos)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(dominos)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, dominos_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -210,13 +273,13 @@ MACHINE_DRIVER_END
 
 ROM_START( dominos )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, 0x738b4413 )
-	ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, 0xc84e54e2 )
+	ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, CRC(738b4413) SHA1(3a90ab25bb5f65504692f97da43f03e21392dcd8) )
+	ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, CRC(c84e54e2) SHA1(383b388a1448a195f28352fc5e4ff1a2af80cc95) )
 	ROM_RELOAD( 			  0xf800, 0x0800 )
 
 	ROM_REGION( 0x800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "7439-01.p4",   0x0000, 0x0200, 0x4f42fdd6 )
-	ROM_LOAD( "7440-01.r4",   0x0200, 0x0200, 0x957dd8df )
+	ROM_LOAD( "7439-01.p4",   0x0000, 0x0200, CRC(4f42fdd6) SHA1(f8ea4b582e26cad37b746174cdc9f1c7ae0819c3) )
+	ROM_LOAD( "7440-01.r4",   0x0200, 0x0200, CRC(957dd8df) SHA1(280457392f40cd66eae34d2fcdbd4d2142793402) )
 ROM_END
 
 
@@ -227,4 +290,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1977, dominos, 0, dominos, dominos, 0, ROT0, "Atari", "Dominos", GAME_NO_SOUND )
+GAMEX( 1977, dominos, 0, dominos, dominos, 0, ROT0, "Atari", "Dominos", GAME_IMPERFECT_SOUND )

@@ -216,24 +216,24 @@ MACHINE_DRIVER_END
 
 ROM_START( starcrus )
     ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* code */
-	ROM_LOAD( "starcrus.j1",   0x0000, 0x0200, 0x0ee60a50 )
-	ROM_LOAD( "starcrus.k1",   0x0200, 0x0200, 0xa7bc3bc4 )
-	ROM_LOAD( "starcrus.l1",   0x0400, 0x0200, 0x10d233ec )
-	ROM_LOAD( "starcrus.m1",   0x0600, 0x0200, 0x2facbfee )
-	ROM_LOAD( "starcrus.n1",   0x0800, 0x0200, 0x42083247 )
-	ROM_LOAD( "starcrus.p1",   0x0a00, 0x0200, 0x61dfe581 )
-	ROM_LOAD( "starcrus.r1",   0x0c00, 0x0200, 0x010cdcfe )
-	ROM_LOAD( "starcrus.s1",   0x0e00, 0x0200, 0xda4e276b )
+	ROM_LOAD( "starcrus.j1",   0x0000, 0x0200, CRC(0ee60a50) SHA1(7419e7cb4c589da53d4a10ad129373502682464e) )
+	ROM_LOAD( "starcrus.k1",   0x0200, 0x0200, CRC(a7bc3bc4) SHA1(0e38076e921856608b1dd712687bef1c2522b4b8) )
+	ROM_LOAD( "starcrus.l1",   0x0400, 0x0200, CRC(10d233ec) SHA1(8933cf9fc51716a9e8f75a4444e7d7070cf5834d) )
+	ROM_LOAD( "starcrus.m1",   0x0600, 0x0200, CRC(2facbfee) SHA1(d78fb38de49da938fce2b55c8decc244efee6f94) )
+	ROM_LOAD( "starcrus.n1",   0x0800, 0x0200, CRC(42083247) SHA1(b32d67c914833f18e9955cd1c3cb1d948be0a7d5) )
+	ROM_LOAD( "starcrus.p1",   0x0a00, 0x0200, CRC(61dfe581) SHA1(e1802fedf94541e9ccd9786b60e90890485f422f) )
+	ROM_LOAD( "starcrus.r1",   0x0c00, 0x0200, CRC(010cdcfe) SHA1(ae76f1739b468e2987ce949470b36f1a873e061d) )
+	ROM_LOAD( "starcrus.s1",   0x0e00, 0x0200, CRC(da4e276b) SHA1(3298f7cb259803f118a47292cbb413df253ef74d) )
 
     ROM_REGION( 0x0200, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "starcrus.e6",   0x0000, 0x0200, 0x54887a25 )
+	ROM_LOAD( "starcrus.e6",   0x0000, 0x0200, CRC(54887a25) SHA1(562bf85cd063c2cc0a2f803095aaa6138dfb5bff) )
 
     ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "starcrus.l2",   0x0000, 0x0200, 0x54887a25 )
+	ROM_LOAD( "starcrus.l2",   0x0000, 0x0200, CRC(54887a25) SHA1(562bf85cd063c2cc0a2f803095aaa6138dfb5bff) )
 
     ROM_REGION( 0x0400, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "starcrus.j4",   0x0000, 0x0200, 0x25f15ae1 )
-	ROM_LOAD( "starcrus.g5",   0x0200, 0x0200, 0x73b27f6e )
+	ROM_LOAD( "starcrus.j4",   0x0000, 0x0200, CRC(25f15ae1) SHA1(7528edaa01ad5a167191c7e72394cb6009db1b27) )
+	ROM_LOAD( "starcrus.g5",   0x0200, 0x0200, CRC(73b27f6e) SHA1(4a6cf9244556a2c2647d594c7a19fe1a374a57e6) )
 ROM_END
 
 

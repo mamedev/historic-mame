@@ -91,7 +91,7 @@ static const UINT8 swizzle_address[4] = { 0, 2, 1, 3 };
 /******************* stave state *******************/
 
 static void update_6821_interrupts(struct pia6821 *p);
-/*
+
 static void pia_postload(int which)
 {
 	struct pia6821 *p = pia + which;
@@ -153,7 +153,34 @@ static void (*pia_postload_funcs[MAX_PIA])(void) =
 	pia_postload_6,
 	pia_postload_7
 };
-*/
+
+void pia_init(int count)
+{
+	int i;
+	for (i = 0; i < count; i++)
+	{
+		state_save_register_UINT8("6821pia", i, "in_a",		&pia[i].in_a, 1);
+		state_save_register_UINT8("6821pia", i, "in_ca1",	&pia[i].in_ca1, 1);
+		state_save_register_UINT8("6821pia", i, "in_ca2",	&pia[i].in_ca2, 1);
+		state_save_register_UINT8("6821pia", i, "out_a",	&pia[i].out_a, 1);
+		state_save_register_UINT8("6821pia", i, "out_ca2",	&pia[i].out_ca2, 1);
+		state_save_register_UINT8("6821pia", i, "ddr_a",	&pia[i].ddr_a, 1);
+		state_save_register_UINT8("6821pia", i, "ctl_a",	&pia[i].ctl_a, 1);
+		state_save_register_UINT8("6821pia", i, "irq_a1",	&pia[i].irq_a1, 1);
+		state_save_register_UINT8("6821pia", i, "irq_a2",	&pia[i].irq_a2, 1);
+		state_save_register_UINT8("6821pia", i, "in_b",		&pia[i].in_b, 1);
+		state_save_register_UINT8("6821pia", i, "in_cb1",	&pia[i].in_cb1, 1);
+		state_save_register_UINT8("6821pia", i, "in_cb2",	&pia[i].in_cb2, 1);
+		state_save_register_UINT8("6821pia", i, "out_b",	&pia[i].out_b, 1);
+		state_save_register_UINT8("6821pia", i, "out_cb2",	&pia[i].out_cb2, 1);
+		state_save_register_UINT8("6821pia", i, "ddr_b",	&pia[i].ddr_b, 1);
+		state_save_register_UINT8("6821pia", i, "ctl_b",	&pia[i].ctl_b, 1);
+		state_save_register_UINT8("6821pia", i, "irq_b1",	&pia[i].irq_b1, 1);
+		state_save_register_UINT8("6821pia", i, "irq_b2",	&pia[i].irq_b2, 1);
+		state_save_register_func_postload(pia_postload_funcs[i]);
+	}
+}
+
 /******************* un-configuration *******************/
 
 void pia_unconfig(void)
@@ -169,26 +196,6 @@ void pia_config(int which, int addressing, const struct pia6821_interface *intf)
 	if (which >= MAX_PIA) return;
 	pia[which].intf = intf;
 	pia[which].addr = addressing;
-/*
-	state_save_register_UINT8("6821pia", which, "in_a",		&pia[which].in_a, 1);
-	state_save_register_UINT8("6821pia", which, "in_ca1",	&pia[which].in_ca1, 1);
-	state_save_register_UINT8("6821pia", which, "in_ca2",	&pia[which].in_ca2, 1);
-	state_save_register_UINT8("6821pia", which, "out_a",	&pia[which].out_a, 1);
-	state_save_register_UINT8("6821pia", which, "out_ca2",	&pia[which].out_ca2, 1);
-	state_save_register_UINT8("6821pia", which, "ddr_a",	&pia[which].ddr_a, 1);
-	state_save_register_UINT8("6821pia", which, "ctl_a",	&pia[which].ctl_a, 1);
-	state_save_register_UINT8("6821pia", which, "irq_a1",	&pia[which].irq_a1, 1);
-	state_save_register_UINT8("6821pia", which, "irq_a2",	&pia[which].irq_a2, 1);
-	state_save_register_UINT8("6821pia", which, "in_b",		&pia[which].in_b, 1);
-	state_save_register_UINT8("6821pia", which, "in_cb1",	&pia[which].in_cb1, 1);
-	state_save_register_UINT8("6821pia", which, "in_cb2",	&pia[which].in_cb2, 1);
-	state_save_register_UINT8("6821pia", which, "out_b",	&pia[which].out_b, 1);
-	state_save_register_UINT8("6821pia", which, "out_cb2",	&pia[which].out_cb2, 1);
-	state_save_register_UINT8("6821pia", which, "ddr_b",	&pia[which].ddr_b, 1);
-	state_save_register_UINT8("6821pia", which, "ctl_b",	&pia[which].ctl_b, 1);
-	state_save_register_UINT8("6821pia", which, "irq_b1",	&pia[which].irq_b1, 1);
-	state_save_register_UINT8("6821pia", which, "irq_b2",	&pia[which].irq_b2, 1);
-	state_save_register_func_postload(pia_postload_funcs[which]);*/
 }
 
 

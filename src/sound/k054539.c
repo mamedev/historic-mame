@@ -333,6 +333,20 @@ static void K054539_irq(int chip)
 		K054539_chips.intf->irq[chip] ();
 }
 
+int K054539_init_stereo(int mode) //*
+{
+	static int panleft  = MIXER_PAN_LEFT;
+	static int panright = MIXER_PAN_RIGHT;
+
+	switch (mode)
+	{
+		case  1: panleft = MIXER_PAN_RIGHT; panright = MIXER_PAN_LEFT; break;
+		case -1: return(panleft);
+		case -2: return(panright);
+	}
+	return(0);
+}
+
 static void K054539_init_chip(int chip, const struct MachineSound *msound)
 {
 	char buf[2][50];
@@ -365,8 +379,8 @@ static void K054539_init_chip(int chip, const struct MachineSound *msound)
 	sprintf(buf[1], "%s.%d R", sound_name(msound), chip);
 	bufp[0] = buf[0];
 	bufp[1] = buf[1];
-	vol[0] = MIXER(K054539_chips.intf->mixing_level[chip][0], MIXER_PAN_LEFT);
-	vol[1] = MIXER(K054539_chips.intf->mixing_level[chip][1], MIXER_PAN_RIGHT);
+	vol[0] = MIXER(K054539_chips.intf->mixing_level[chip][0], K054539_init_stereo(-1)); //*
+	vol[1] = MIXER(K054539_chips.intf->mixing_level[chip][1], K054539_init_stereo(-2));
 	K054539_chips.chip[chip].stream = stream_init_multi(2, bufp, vol, Machine->sample_rate, chip, K054539_update);
 
 	state_save_register_UINT8("K054539", chip, "registers", K054539_chips.chip[chip].regs, 0x230);
@@ -462,7 +476,7 @@ static data8_t K054539_r(int chip, offs_t offset)
 	case 0x22c:
 		break;
 	default:
-		logerror("K054539 read %03x\n", offset);
+//		logerror("K054539 read %03x\n", offset);
 		break;
 	}
 	return K054539_chips.chip[chip].regs[offset];

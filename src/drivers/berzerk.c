@@ -355,31 +355,31 @@ MACHINE_DRIVER_END
 
 ROM_START( berzerk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
-	ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
-	ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
-	ROM_LOAD( "5d-3",         0x2000, 0x0800, 0xfcaefa95 )
-	ROM_LOAD( "6d-4",         0x2800, 0x0800, 0x1e35b9a0 )
-	ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
+	ROM_LOAD( "1c-0",         0x0000, 0x0800, CRC(ca566dbc) SHA1(fae2647f12f1cd82826db61b53b116a5e0c9f995) )
+	ROM_LOAD( "1d-1",         0x1000, 0x0800, CRC(7ba69fde) SHA1(69af170c4a39a3494dcd180737e5c87b455f9203) )
+	ROM_LOAD( "3d-2",         0x1800, 0x0800, CRC(a1d5248b) SHA1(a0b7842f6a5f86c16d80d78e7012c78b3ea11d1d) )
+	ROM_LOAD( "5d-3",         0x2000, 0x0800, CRC(fcaefa95) SHA1(07f849aa39f1e3db938187ffde4a46a588156ddc) )
+	ROM_LOAD( "6d-4",         0x2800, 0x0800, CRC(1e35b9a0) SHA1(5a5e549ec0e4803ab2d1eac6b3e7171aedf28244) )
+	ROM_LOAD( "5c-5",         0x3000, 0x0800, CRC(c8c665e5) SHA1(e9eca4b119549e0061384abf52327c14b0d56624) )
 ROM_END
 
 ROM_START( berzerk1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
-	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
-	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
-	ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
-	ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
-	ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
+	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, CRC(5b7eb77d) SHA1(8de488e279036fe40d6fb4c0dde16075309342fd) )
+	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, CRC(e58c8678) SHA1(a11f08448b457d690b270512c9f02fcf1e41d9e0) )
+	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, CRC(705bb339) SHA1(845191df90cd7d80f8fed3d2b69305301d921549) )
+	ROM_LOAD( "rom3.5d",      0x2000, 0x0800, CRC(6a1936b4) SHA1(f1635e9d2f25514c35559d2a247c3bc4b4034c19) )
+	ROM_LOAD( "rom4.6d",      0x2800, 0x0800, CRC(fa5dce40) SHA1(b3a3ee52bf65bbb3a20f905d3e4ebdf6871dcb5d) )
+	ROM_LOAD( "rom5.5c",      0x3000, 0x0800, CRC(2579b9f4) SHA1(890f0237afbb194166eae88c98de81989f408548) )
 ROM_END
 
 ROM_START( frenzy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
-	ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
-	ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
-	ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
-	ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
+	ROM_LOAD( "1c-0",         0x0000, 0x1000, CRC(abdd25b8) SHA1(e6a3ab826b51b2c6ddd63d55681848fccad800dd) )
+	ROM_LOAD( "1d-1",         0x1000, 0x1000, CRC(536e4ae8) SHA1(913385c43b8902d3d3ad2194a3137e19e61c6573) )
+	ROM_LOAD( "3d-2",         0x2000, 0x1000, CRC(3eb9bc9b) SHA1(1e43e76ae0606a6d41d9006005d6001bdee48694) )
+	ROM_LOAD( "5d-3",         0x3000, 0x1000, CRC(e1d3133c) SHA1(2af4a9bc2b29735a548ae770f872127bc009cc42) )
+	ROM_LOAD( "6d-4",         0xc000, 0x1000, CRC(5581a7b1) SHA1(1f633c1c29d3b64f701c601feba26da66a6c6f23) )
 	/* 1c & 2c are the voice ROMs */
 ROM_END
 

@@ -416,84 +416,84 @@ MACHINE_DRIVER_END
 
 ROM_START( wilytowr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "wt4e.bin",     0x0000, 0x2000, 0xa38e4b8a )
-	ROM_LOAD( "wt4h.bin",     0x2000, 0x2000, 0xc1405ceb )
-	ROM_LOAD( "wt4j.bin",     0x4000, 0x2000, 0x379fb1c3 )
-	ROM_LOAD( "wt4k.bin",     0x6000, 0x2000, 0x2dd6f9c7 )
-	ROM_LOAD( "wt_a-4m.bin",  0x8000, 0x2000, 0xc1f8a7d5 )
-	ROM_LOAD( "wt_a-4n.bin",  0xa000, 0x2000, 0xb212f7d2 )
+	ROM_LOAD( "wt4e.bin",     0x0000, 0x2000, CRC(a38e4b8a) SHA1(e296ba1764d3e8e2a5cc43bdde7f30a522b437ff) )
+	ROM_LOAD( "wt4h.bin",     0x2000, 0x2000, CRC(c1405ceb) SHA1(c11dd4cd180bc9576e8042e1f56074620ea00f53) )
+	ROM_LOAD( "wt4j.bin",     0x4000, 0x2000, CRC(379fb1c3) SHA1(677e4077f6d2140e4fb5c3d86bc7081d3b6cc028) )
+	ROM_LOAD( "wt4k.bin",     0x6000, 0x2000, CRC(2dd6f9c7) SHA1(88ba58a1ddd25403211b7f920ba7006ed80c13eb) )
+	ROM_LOAD( "wt_a-4m.bin",  0x8000, 0x2000, CRC(c1f8a7d5) SHA1(4307e7604aec728a1f5b0e6a0d6c9f4d37084da3) )
+	ROM_LOAD( "wt_a-4n.bin",  0xa000, 0x2000, CRC(b212f7d2) SHA1(dd1c35559982e8bbcb0e778c733a3afb5b6611df) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* 8039 */
-	ROM_LOAD( "wt4d.bin",     0x0000, 0x1000, 0x25a171bf )
+	ROM_LOAD( "wt4d.bin",     0x0000, 0x1000, CRC(25a171bf) SHA1(7465dbfa8858d0f5822eb748b96d99753d58d243) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* '3' character is bad, but ROMs have been verified on four boards */
-	ROM_LOAD( "wt_b-5e.bin",  0x0000, 0x1000, 0xfe45df43 )
-	ROM_LOAD( "wt_b-5f.bin",  0x1000, 0x1000, 0x87a17eff )
+	ROM_LOAD( "wt_b-5e.bin",  0x0000, 0x1000, CRC(fe45df43) SHA1(9586a5728069e0c293bd17d4663305ce5758ca01) )
+	ROM_LOAD( "wt_b-5f.bin",  0x1000, 0x1000, CRC(87a17eff) SHA1(cee2ba2889baf08dc6ee1c8e9150bd277f343be9) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "wtb5a.bin",    0x0000, 0x2000, 0xefc1cbfa )
-	ROM_LOAD( "wtb5b.bin",    0x2000, 0x2000, 0xab4bfd07 )
-	ROM_LOAD( "wtb5d.bin",    0x4000, 0x2000, 0x40f23e1d )
+	ROM_LOAD( "wtb5a.bin",    0x0000, 0x2000, CRC(efc1cbfa) SHA1(9a2ea29e64360ef7b143ac1b6a1ba3e672be4a42) )
+	ROM_LOAD( "wtb5b.bin",    0x2000, 0x2000, CRC(ab4bfd07) SHA1(1d5010413989895c09d8e5ee903d665506836f94) )
+	ROM_LOAD( "wtb5d.bin",    0x4000, 0x2000, CRC(40f23e1d) SHA1(abff583021e2cf2d2ec83adbbd4f2e96bfa3e04f) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* there are horizontal lines in some tiles, but ROMs have been verified on four boards */
-	ROM_LOAD( "wt2j.bin",     0x0000, 0x1000, 0xd1bf0670 )
-	ROM_LOAD( "wt3k.bin",     0x1000, 0x1000, 0x83c39a0e )
-	ROM_LOAD( "wt_a-3m.bin",  0x2000, 0x1000, 0xe7e468ae )
-	ROM_LOAD( "wt_a-3n.bin",  0x3000, 0x1000, 0x0741d1a9 )
-	ROM_LOAD( "wt_a-3p.bin",  0x4000, 0x1000, 0x7299f362 )
-	ROM_LOAD( "wt_a-3s.bin",  0x5000, 0x1000, 0x9b37d50d )
+	ROM_LOAD( "wt2j.bin",     0x0000, 0x1000, CRC(d1bf0670) SHA1(8d07bce354bb4538948c358fd696304a8e0640b8) )
+	ROM_LOAD( "wt3k.bin",     0x1000, 0x1000, CRC(83c39a0e) SHA1(da98f887ac5c3d52281eece3d760c41fb9ecfd5c) )
+	ROM_LOAD( "wt_a-3m.bin",  0x2000, 0x1000, CRC(e7e468ae) SHA1(17448191b440b668714d83730075938aaaf34b5a) )
+	ROM_LOAD( "wt_a-3n.bin",  0x3000, 0x1000, CRC(0741d1a9) SHA1(51f5ee03db8a3f7afbf944b9e3e4ae12b2520269) )
+	ROM_LOAD( "wt_a-3p.bin",  0x4000, 0x1000, CRC(7299f362) SHA1(5ba309d789df8432c08d67e4f9e8bf6c447fc425) )
+	ROM_LOAD( "wt_a-3s.bin",  0x5000, 0x1000, CRC(9b37d50d) SHA1(a08d4a7654b815cb652be66dbaa097011327f5d5) )
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* unknown; sound? */
-	ROM_LOAD( "wt_a-6d.bin",  0x0000, 0x1000, 0xa5dde29b )
+	ROM_LOAD( "wt_a-6d.bin",  0x0000, 0x1000, CRC(a5dde29b) SHA1(8f7545d2022da7c98d47112179dce717f6c3c5e2) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "wt_a-5s-.bpr", 0x0000, 0x0100, 0x041950e7 )	/* red */
-	ROM_LOAD( "wt_a-5r-.bpr", 0x0100, 0x0100, 0xbc04bf25 )	/* green */
-	ROM_LOAD( "wt_a-5p-.bpr", 0x0200, 0x0100, 0xed819a19 )	/* blue */
-	ROM_LOAD( "wt_b-9l-.bpr", 0x0300, 0x0020, 0xd2728744 )	/* char palette */
+	ROM_LOAD( "wt_a-5s-.bpr", 0x0000, 0x0100, CRC(041950e7) SHA1(8276068bec3f4c5013c773033fca3cd3ed9e82ef) )	/* red */
+	ROM_LOAD( "wt_a-5r-.bpr", 0x0100, 0x0100, CRC(bc04bf25) SHA1(37d0e89296760f51df5a0d434dca390fb60bb052) )	/* green */
+	ROM_LOAD( "wt_a-5p-.bpr", 0x0200, 0x0100, CRC(ed819a19) SHA1(76f13dcf1674f136375738756e175ceec469d545) )	/* blue */
+	ROM_LOAD( "wt_b-9l-.bpr", 0x0300, 0x0020, CRC(d2728744) SHA1(e6b1a570854ca90326414874432ab03ec85b9c8e) )	/* char palette */
 ROM_END
 
 ROM_START( atomboy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "wt_a-4e.bin",  0x0000, 0x2000, 0xf7978185 )
-	ROM_LOAD( "wt_a-4h.bin",  0x2000, 0x2000, 0x0ca9950b )
-	ROM_LOAD( "wt_a-4j.bin",  0x4000, 0x2000, 0x1badbc65 )
-	ROM_LOAD( "wt_a-4k.bin",  0x6000, 0x2000, 0x5a341f75 )
-	ROM_LOAD( "wt_a-4m.bin",  0x8000, 0x2000, 0xc1f8a7d5 )
-	ROM_LOAD( "wt_a-4n.bin",  0xa000, 0x2000, 0xb212f7d2 )
+	ROM_LOAD( "wt_a-4e.bin",  0x0000, 0x2000, CRC(f7978185) SHA1(6a108d1e9b1a81cedf865aba3998748dcf1d55ef) )
+	ROM_LOAD( "wt_a-4h.bin",  0x2000, 0x2000, CRC(0ca9950b) SHA1(d6583fcdf17d16a8884932695caa9c5587a20795) )
+	ROM_LOAD( "wt_a-4j.bin",  0x4000, 0x2000, CRC(1badbc65) SHA1(e0768f2cd7bbe8908fd68ff6d54dbef84cc7de4c) )
+	ROM_LOAD( "wt_a-4k.bin",  0x6000, 0x2000, CRC(5a341f75) SHA1(9e1a180e37aaa0afbf8ff45219be40d3f75fe60a) )
+	ROM_LOAD( "wt_a-4m.bin",  0x8000, 0x2000, CRC(c1f8a7d5) SHA1(4307e7604aec728a1f5b0e6a0d6c9f4d37084da3) )
+	ROM_LOAD( "wt_a-4n.bin",  0xa000, 0x2000, CRC(b212f7d2) SHA1(dd1c35559982e8bbcb0e778c733a3afb5b6611df) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* 8039 */
-	ROM_LOAD( "wt_a-4d.bin",  0x0000, 0x1000, 0x3d43361e )
+	ROM_LOAD( "wt_a-4d.bin",  0x0000, 0x1000, CRC(3d43361e) SHA1(2977df9f90d9d214909c56ab44c40ab45fd90675) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* '3' character is bad, but ROMs have been verified on four boards */
-	ROM_LOAD( "wt_b-5e.bin",  0x0000, 0x1000, 0xfe45df43 )
-	ROM_LOAD( "wt_b-5f.bin",  0x1000, 0x1000, 0x87a17eff )
+	ROM_LOAD( "wt_b-5e.bin",  0x0000, 0x1000, CRC(fe45df43) SHA1(9586a5728069e0c293bd17d4663305ce5758ca01) )
+	ROM_LOAD( "wt_b-5f.bin",  0x1000, 0x1000, CRC(87a17eff) SHA1(cee2ba2889baf08dc6ee1c8e9150bd277f343be9) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "wt_b-5a.bin",  0x0000, 0x2000, 0xda22c452 )
-	ROM_LOAD( "wt_b-5b.bin",  0x2000, 0x2000, 0x4fb25a1f )
-	ROM_LOAD( "wt_b-5d.bin",  0x4000, 0x2000, 0x75be2604 )
+	ROM_LOAD( "wt_b-5a.bin",  0x0000, 0x2000, CRC(da22c452) SHA1(bd921baa12087e996d07625e05eda00981608655) )
+	ROM_LOAD( "wt_b-5b.bin",  0x2000, 0x2000, CRC(4fb25a1f) SHA1(0f90fb3b373760c33ba9be3b56b917eca92c9700) )
+	ROM_LOAD( "wt_b-5d.bin",  0x4000, 0x2000, CRC(75be2604) SHA1(fe1f110e188aa34a04a9f43412a8308240391fcf) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* there are horizontal lines in some tiles, but ROMs have been verified on four boards */
-	ROM_LOAD( "wt_a-3j.bin",  0x0000, 0x1000, 0xb30ca38f )
-	ROM_LOAD( "wt_a-3k.bin",  0x1000, 0x1000, 0x9a77eb73 )
-	ROM_LOAD( "wt_a-3m.bin",  0x2000, 0x1000, 0xe7e468ae )
-	ROM_LOAD( "wt_a-3n.bin",  0x3000, 0x1000, 0x0741d1a9 )
-	ROM_LOAD( "wt_a-3p.bin",  0x4000, 0x1000, 0x7299f362 )
-	ROM_LOAD( "wt_a-3s.bin",  0x5000, 0x1000, 0x9b37d50d )
+	ROM_LOAD( "wt_a-3j.bin",  0x0000, 0x1000, CRC(b30ca38f) SHA1(885743893461b8617180a9723f6fcef160a2f05d) )
+	ROM_LOAD( "wt_a-3k.bin",  0x1000, 0x1000, CRC(9a77eb73) SHA1(2564a3b3744b0be147b41c521fc7efde53bdfea7) )
+	ROM_LOAD( "wt_a-3m.bin",  0x2000, 0x1000, CRC(e7e468ae) SHA1(17448191b440b668714d83730075938aaaf34b5a) )
+	ROM_LOAD( "wt_a-3n.bin",  0x3000, 0x1000, CRC(0741d1a9) SHA1(51f5ee03db8a3f7afbf944b9e3e4ae12b2520269) )
+	ROM_LOAD( "wt_a-3p.bin",  0x4000, 0x1000, CRC(7299f362) SHA1(5ba309d789df8432c08d67e4f9e8bf6c447fc425) )
+	ROM_LOAD( "wt_a-3s.bin",  0x5000, 0x1000, CRC(9b37d50d) SHA1(a08d4a7654b815cb652be66dbaa097011327f5d5) )
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* unknown; sound? */
-	ROM_LOAD( "wt_a-6d.bin",  0x0000, 0x1000, 0xa5dde29b )
+	ROM_LOAD( "wt_a-6d.bin",  0x0000, 0x1000, CRC(a5dde29b) SHA1(8f7545d2022da7c98d47112179dce717f6c3c5e2) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "wt_a-5s-.bpr", 0x0000, 0x0100, 0x041950e7 )	/* red */
-	ROM_LOAD( "wt_a-5r-.bpr", 0x0100, 0x0100, 0xbc04bf25 )	/* green */
-	ROM_LOAD( "wt_a-5p-.bpr", 0x0200, 0x0100, 0xed819a19 )	/* blue */
-	ROM_LOAD( "wt_b-9l-.bpr", 0x0300, 0x0020, 0xd2728744 )	/* char palette */
+	ROM_LOAD( "wt_a-5s-.bpr", 0x0000, 0x0100, CRC(041950e7) SHA1(8276068bec3f4c5013c773033fca3cd3ed9e82ef) )	/* red */
+	ROM_LOAD( "wt_a-5r-.bpr", 0x0100, 0x0100, CRC(bc04bf25) SHA1(37d0e89296760f51df5a0d434dca390fb60bb052) )	/* green */
+	ROM_LOAD( "wt_a-5p-.bpr", 0x0200, 0x0100, CRC(ed819a19) SHA1(76f13dcf1674f136375738756e175ceec469d545) )	/* blue */
+	ROM_LOAD( "wt_b-9l-.bpr", 0x0300, 0x0020, CRC(d2728744) SHA1(e6b1a570854ca90326414874432ab03ec85b9c8e) )	/* char palette */
 ROM_END
 
 

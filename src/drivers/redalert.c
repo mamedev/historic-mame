@@ -314,24 +314,24 @@ MACHINE_DRIVER_END
 
 ROM_START( redalert )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "rag5",         	0x5000, 0x1000, 0xd7c9cdd6 )
-	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
-	ROM_LOAD( "rag7n",        	0x7000, 0x1000, 0x82ab2dae )
-	ROM_LOAD( "rag8n",        	0x8000, 0x1000, 0xb80eece9 )
+	ROM_LOAD( "rag5",         	0x5000, 0x1000, CRC(d7c9cdd6) SHA1(5ff5cdceaa00083b745cf5c74b096f7edfadf737) )
+	ROM_LOAD( "rag6",         	0x6000, 0x1000, CRC(cb2a308c) SHA1(9f3bc22bad31165e080e81d4a3fb0ec2aad235fe) )
+	ROM_LOAD( "rag7n",        	0x7000, 0x1000, CRC(82ab2dae) SHA1(f8328b048384afac245f1c16a2d0864ffe0b4741) )
+	ROM_LOAD( "rag8n",        	0x8000, 0x1000, CRC(b80eece9) SHA1(d986449bdb1d94832187c7f953f01330391ef4c9) )
 	ROM_RELOAD(                 0xf000, 0x1000 )
-	ROM_LOAD( "rag9",         	0x9000, 0x1000, 0x2b7d1295 )
-	ROM_LOAD( "ragab",        	0xa000, 0x1000, 0xab99f5ed )
-	ROM_LOAD( "ragb",         	0xb000, 0x1000, 0x8e0d1661 )
+	ROM_LOAD( "rag9",         	0x9000, 0x1000, CRC(2b7d1295) SHA1(1498af0c55bd38fe79b91afc38921085102ebbc3) )
+	ROM_LOAD( "ragab",        	0xa000, 0x1000, CRC(ab99f5ed) SHA1(a93713bb03d61cce64adc89b874b67adea7c53cd) )
+	ROM_LOAD( "ragb",         	0xb000, 0x1000, CRC(8e0d1661) SHA1(bff4ddca761ddd70113490f50777e62c66813685) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for code */
-	ROM_LOAD( "w3s1",         	0x7800, 0x0800, 0x4af956a5 )
+	ROM_LOAD( "w3s1",         	0x7800, 0x0800, CRC(4af956a5) SHA1(25368a40d7ebc60316fd2d78ec4c686e701b96dc) )
 	ROM_RELOAD(                0xf800, 0x0800 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for code */
-	ROM_LOAD( "ras1b",        	0x0000, 0x1000, 0xec690845 )
-	ROM_LOAD( "ras2",         	0x1000, 0x1000, 0xfae94cfc )
-	ROM_LOAD( "ras3",         	0x2000, 0x1000, 0x20d56f3e )
-	ROM_LOAD( "ras4",         	0x3000, 0x1000, 0x130e66db )
+	ROM_LOAD( "ras1b",        	0x0000, 0x1000, CRC(ec690845) SHA1(26a84738bd45ed21dac6c8383ebd9c3b9831024a) )
+	ROM_LOAD( "ras2",         	0x1000, 0x1000, CRC(fae94cfc) SHA1(2fd798706bb3afda3fb55bc877e597cc4e5d0c15) )
+	ROM_LOAD( "ras3",         	0x2000, 0x1000, CRC(20d56f3e) SHA1(5c32ee3365407e6d3f7ab5662e9ecbac437ed4cb) )
+	ROM_LOAD( "ras4",         	0x3000, 0x1000, CRC(130e66db) SHA1(385b8f889fee08fddbb2f75a691af569109eacd1) )
 ROM_END
 
 

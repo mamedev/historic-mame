@@ -135,14 +135,14 @@ MACHINE_DRIVER_END
 
 ROM_START( news )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "virus.4", 0x00000, 0x08000, BADCRC( 0xaa005dfb ) ) /* The Original was too short, I padded it with 0xFF */
+	ROM_LOAD( "virus.4", 0x00000, 0x08000, BAD_DUMP CRC(aa005dfb) SHA1(52f4dd399a30568851d43d052b83cfaa6682665d)  ) /* The Original was too short, I padded it with 0xFF */
 
 	ROM_REGION( 0x80000, REGION_GFX1, 0 )
-	ROM_LOAD16_BYTE( "virus.2", 0x00000, 0x40000, 0xb5af58d8 )
-	ROM_LOAD16_BYTE( "virus.3", 0x00001, 0x40000, 0xa4b1c175 )
+	ROM_LOAD16_BYTE( "virus.2", 0x00000, 0x40000, CRC(b5af58d8) SHA1(5dd8c6ab8b53df695463bd0c3620adf8c08daaec) )
+	ROM_LOAD16_BYTE( "virus.3", 0x00001, 0x40000, CRC(a4b1c175) SHA1(b1ac0da4d91bc3a3454ea80aa4cdbbc68bbdf7f1) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
-	ROM_LOAD( "virus.1", 0x00000, 0x40000, 0x41f5935a )
+	ROM_LOAD( "virus.1", 0x00000, 0x40000, CRC(41f5935a) SHA1(1566d243f165019660cd4dd69df9f049e0130f15) )
 ROM_END
 
 

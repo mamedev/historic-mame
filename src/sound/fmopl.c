@@ -6,10 +6,14 @@
 ** Copyright (C) 1999,2000 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 ** Copyright (C) 2002 Jarek Burczynski
 **
-** Version 0.60
+** Version 0.66
 **
 
 Revision History:
+
+08-10-2002 Jarek Burczynski (thanks to Dox for the YM3526 chip)
+ - corrected YM3526Read() to always set bit 2 and bit 1
+   to HIGH state - identical to YM3812Read (verified on real YM3526)
 
 04-28-2002 Jarek Burczynski:
  - binary exact Envelope Generator (verified on real YM3812);
@@ -51,9 +55,8 @@ Revision History:
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
 #include <math.h>
+
 #include "driver.h"		/* use M.A.M.E. */
 #include "fmopl.h"
 
@@ -117,10 +120,45 @@ Revision History:
 /*#define SAVE_SAMPLE*/
 
 #ifdef SAVE_SAMPLE
+INLINE signed int acc_calc(signed int value)
+{
+	if (value>=0)
+	{
+		if (value < 0x0200)
+			return (value & ~0);
+		if (value < 0x0400)
+			return (value & ~1);
+		if (value < 0x0800)
+			return (value & ~3);
+		if (value < 0x1000)
+			return (value & ~7);
+		if (value < 0x2000)
+			return (value & ~15);
+		if (value < 0x4000)
+			return (value & ~31);
+		return (value & ~63);
+	}
+	/*else value < 0*/
+	if (value > -0x0200)
+		return (~abs(value) & ~0);
+	if (value > -0x0400)
+		return (~abs(value) & ~1);
+	if (value > -0x0800)
+		return (~abs(value) & ~3);
+	if (value > -0x1000)
+		return (~abs(value) & ~7);
+	if (value > -0x2000)
+		return (~abs(value) & ~15);
+	if (value > -0x4000)
+		return (~abs(value) & ~31);
+	return (~abs(value) & ~63);
+}
+
+
 static FILE *sample[1];
 	#if 1	/*save to MONO file */
 		#define SAVE_ALL_CHANNELS \
-		{	signed int pom = lt; \
+		{	signed int pom = acc_calc(lt); \
 			fputc((unsigned short)pom&0xff,sample[0]); \
 			fputc(((unsigned short)pom>>8)&0xff,sample[0]); \
 		}
@@ -375,7 +413,7 @@ static const unsigned char eg_inc[15*RATE_STEPS]={
 
 /*note that there is no O(13) in this table - it's directly in the code */
 static const unsigned char eg_rate_select[16+64+16]={	/* Envelope Generator rates (16 + 64 rates + 16 RKS) */
-/* 16 dummy (infinite time) rates */
+/* 16 infinite time rates */
 O(14),O(14),O(14),O(14),O(14),O(14),O(14),O(14),
 O(14),O(14),O(14),O(14),O(14),O(14),O(14),O(14),
 
@@ -410,9 +448,9 @@ O(12),O(12),O(12),O(12),O(12),O(12),O(12),O(12),
 };
 #undef O
 
-//rate  0,    1,    2,    3,   4,   5,   6,  7,  8,  9,  10, 11, 12, 13, 14, 15
-//shift 12,   11,   10,   9,   8,   7,   6,  5,  4,  3,  2,  1,  0,  0,  0,  0
-//mask  4095, 2047, 1023, 511, 255, 127, 63, 31, 15, 7,  3,  1,  0,  0,  0,  0
+/*rate  0,    1,    2,    3,   4,   5,   6,  7,  8,  9,  10, 11, 12, 13, 14, 15 */
+/*shift 12,   11,   10,   9,   8,   7,   6,  5,  4,  3,  2,  1,  0,  0,  0,  0  */
+/*mask  4095, 2047, 1023, 511, 255, 127, 63, 31, 15, 7,  3,  1,  0,  0,  0,  0  */
 
 #define O(a) (a*1)
 static const unsigned char eg_rate_shift[16+64+16]={	/* Envelope Generator counter shifts (16 + 64 rates + 16 RKS) */
@@ -588,7 +626,7 @@ static int num_lock = 0;
 
 /* work table */
 static void *cur_chip = NULL;	/* current chip point */
-static OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
+OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
 
 static signed int phase_modulation;		/* phase modulation input (SLOT 2) */
 static signed int output[1];
@@ -699,8 +737,6 @@ INLINE void advance(FM_OPL *OPL)
 			switch(op->state)
 			{
 			case EG_ATT:		/* attack phase */
-			{
-
 				if ( !(OPL->eg_cnt & ((1<<op->eg_sh_ar)-1) ) )
 				{
 					op->volume += (~op->volume *
@@ -714,8 +750,6 @@ INLINE void advance(FM_OPL *OPL)
 					}
 
 				}
-
-			}
 			break;
 
 			case EG_DEC:	/* decay phase */
@@ -1229,12 +1263,13 @@ static void OPL_initalize(FM_OPL *OPL)
 	int i;
 
 	/* frequency base */
-#if 1
 	OPL->freqbase  = (OPL->rate) ? ((double)OPL->clock / 72.0) / OPL->rate  : 0;
-#else
+#if 0
 	OPL->rate = (double)OPL->clock / 72.0;
 	OPL->freqbase  = 1.0;
 #endif
+
+	/*logerror("freqbase=%f\n", OPL->freqbase);*/
 
 	/* Timer base time */
 	OPL->TimerBase = 1.0 / ((double)OPL->clock / 72.0 );
@@ -1484,7 +1519,7 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				if(OPL->keyboardhandler_w)
 					OPL->keyboardhandler_w(OPL->keyboard_param,v);
 				else
-					logerror("OPL:write unmapped KEYBOARD port\n");
+					logerror("Y8950: write unmapped KEYBOARD port\n");
 			}
 			break;
 		case 0x07:	/* DELTA-T controll : START,REC,MEMDATA,REPT,SPOFF,x,x,RST */
@@ -1494,12 +1529,13 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 #endif
 		case 0x08:	/* MODE,DELTA-T : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom */
 			OPL->mode = v;
-#if !(BUILD_Y8950)
-			break;
+#if BUILD_Y8950
+			if(OPL->type&OPL_TYPE_ADPCM)
+				YM_DELTAT_ADPCM_Write(OPL->deltat,r-0x07,v&0x0f); /* mask 4 LSBs in register 08 for DELTA-T unit */
 #endif
+			break;
 
 #if BUILD_Y8950
-			v&=0x1f;	/* for DELTA-T unit */
 		case 0x09:		/* START ADD */
 		case 0x0a:
 		case 0x0b:		/* STOP ADD  */
@@ -1886,7 +1922,7 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 			if(OPL->keyboardhandler_r)
 				return OPL->keyboardhandler_r(OPL->keyboard_param);
 			else
-				logerror("OPL:read unmapped KEYBOARD port\n");
+				logerror("Y8950:read unmapped KEYBOARD port\n");
 		}
 		return 0;
 #if 0
@@ -1899,7 +1935,7 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 			if(OPL->porthandler_r)
 				return OPL->porthandler_r(OPL->port_param);
 			else
-				logerror("OPL:read unmapped I/O port\n");
+				logerror("Y8950:read unmapped I/O port\n");
 		}
 		return 0;
 	case 0x1a: /* PCM-DATA    */
@@ -2082,7 +2118,10 @@ void YM3812UpdateOne(int which, INT16 *buffer, int length)
 		lt = limit( lt , MAXOUT, MINOUT );
 
 		#ifdef SAVE_SAMPLE
+		if (which==0)
+		{
 			SAVE_ALL_CHANNELS
+		}
 		#endif
 
 		/* store to sound buffer */
@@ -2149,7 +2188,8 @@ int YM3526Write(int which, int a, int v)
 
 unsigned char YM3526Read(int which, int a)
 {
-	return OPLRead(OPL_YM3526[which], a);
+	/* YM3526 always returns bit2 and bit1 in HIGH state */
+	return OPLRead(OPL_YM3526[which], a) | 0x06 ;
 }
 int YM3526TimerOver(int which, int c)
 {
@@ -2227,7 +2267,10 @@ void YM3526UpdateOne(int which, INT16 *buffer, int length)
 		lt = limit( lt , MAXOUT, MINOUT );
 
 		#ifdef SAVE_SAMPLE
+		if (which==0)
+		{
 			SAVE_ALL_CHANNELS
+		}
 		#endif
 
 		/* store to sound buffer */
@@ -2389,7 +2432,10 @@ void Y8950UpdateOne(int which, INT16 *buffer, int length)
 		lt = limit( lt , MAXOUT, MINOUT );
 
 		#ifdef SAVE_SAMPLE
+		if (which==0)
+		{
 			SAVE_ALL_CHANNELS
+		}
 		#endif
 
 		/* store to sound buffer */

@@ -301,52 +301,52 @@ MACHINE_DRIVER_END
 
 ROM_START( rockrage )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "rr-q01.rom", 0x08000, 0x08000, 0x0ddb5ef5 )	/* fixed ROM */
-	ROM_LOAD( "rr-q02.rom", 0x10000, 0x10000, 0xb4f6e346 )	/* banked ROM */
+	ROM_LOAD( "rr-q01.rom", 0x08000, 0x08000, CRC(0ddb5ef5) SHA1(71b38c9f957858371f0ac95720d3c6d07339e5c5) )	/* fixed ROM */
+	ROM_LOAD( "rr-q02.rom", 0x10000, 0x10000, CRC(b4f6e346) SHA1(43fded4484836ff315dd6e40991f909dad73f1ed) )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for the sound CPU */
-	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, 0x9fbefe82 )
+	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, CRC(9fbefe82) SHA1(ab42b7e519a0dd08f2249dad0819edea0976f39a) )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "620k06.15g",	0x000000, 0x20000, BADCRC( 0xc0e2b35c ) )	/* tiles */
-	ROM_LOAD( "620k05.16g",	0x020000, 0x20000, BADCRC( 0xca9d9346 ) )
+	ROM_LOAD( "620k06.15g",	0x000000, 0x20000, BAD_DUMP CRC(c0e2b35c) SHA1(fb37a151188f27f883fed5fdfb0094c3efa9470d)  )	/* tiles */
+	ROM_LOAD( "620k05.16g",	0x020000, 0x20000, BAD_DUMP CRC(ca9d9346) SHA1(fee8d98def802f312c6cd0ec751c67aa18acfacd)  )
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rr-k11.rom",	0x000000, 0x20000, 0x70449239 )	/* sprites */
-	ROM_LOAD( "rr-l10.rom",	0x020000, 0x20000, 0x06d108e0 )
+	ROM_LOAD( "rr-k11.rom",	0x000000, 0x20000, CRC(70449239) SHA1(07653ea3bfe0063c9d2b2102ac52a1b50fc2971e) )	/* sprites */
+	ROM_LOAD( "rr-l10.rom",	0x020000, 0x20000, CRC(06d108e0) SHA1(cae8c5f2fc4e84bc7adbf27f71a18a74968c4296) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, 0x9f0e0608 )	/* layer 0 lookup table */
-	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, 0xb499800c )	/* layer 1 lookup table */
-	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )	/* sprite lookup table, but its not used */
+	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, CRC(9f0e0608) SHA1(c95bdb370e4a91f27afbd5ff3b39b2e0ad87da73) )	/* layer 0 lookup table */
+	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, CRC(b499800c) SHA1(46fa4e071ebceed12027de109be1e16dde5e846e) )	/* layer 1 lookup table */
+	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, CRC(b6135ee0) SHA1(248a978987cff86c2bbad10ef332f63a6abd5bee) )	/* sprite lookup table, but its not used */
 															/* because it's always 0 1 2 ... f */
 	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* VLM3050 data */
-	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
+	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, CRC(8be969f3) SHA1(9856b4c13fac77b645aed67a08cb4965b4966492) )
 ROM_END
 
 ROM_START( rockragj )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "620k01.16c", 0x08000, 0x08000, 0x4f5171f7 )	/* fixed ROM */
-	ROM_LOAD( "620k02.15c", 0x10000, 0x10000, 0x04c4d8f7 )	/* banked ROM */
+	ROM_LOAD( "620k01.16c", 0x08000, 0x08000, CRC(4f5171f7) SHA1(5bce9e3f9d01c113c697853763cd891b91297eb2) )	/* fixed ROM */
+	ROM_LOAD( "620k02.15c", 0x10000, 0x10000, CRC(04c4d8f7) SHA1(2a1a024fc38bb934c454092b0aed74d0f1d1c4af) )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for the sound CPU */
-	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, 0x9fbefe82 )
+	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, CRC(9fbefe82) SHA1(ab42b7e519a0dd08f2249dad0819edea0976f39a) )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "620k06.15g",	0x000000, 0x20000, 0xc0e2b35c )	/* tiles */
-	ROM_LOAD( "620k05.16g",	0x020000, 0x20000, 0xca9d9346 )
+	ROM_LOAD( "620k06.15g",	0x000000, 0x20000, CRC(c0e2b35c) SHA1(fb37a151188f27f883fed5fdfb0094c3efa9470d) )	/* tiles */
+	ROM_LOAD( "620k05.16g",	0x020000, 0x20000, CRC(ca9d9346) SHA1(fee8d98def802f312c6cd0ec751c67aa18acfacd) )
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "620k11.7g",	0x000000, 0x20000, 0x7430f6e9 )	/* sprites */
-	ROM_LOAD( "620k10.8g",	0x020000, 0x20000, 0x0d1a95ab )
+	ROM_LOAD( "620k11.7g",	0x000000, 0x20000, CRC(7430f6e9) SHA1(5d488c7b7b0eb4e502b3e566ac102cd3267e8568) )	/* sprites */
+	ROM_LOAD( "620k10.8g",	0x020000, 0x20000, CRC(0d1a95ab) SHA1(be565424f17af31dcd07004c6be03bbb00aef514) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, 0x9f0e0608 )	/* layer 0 lookup table */
-	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, 0xb499800c )	/* layer 1 lookup table */
-	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )	/* sprite lookup table, but its not used */
+	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, CRC(9f0e0608) SHA1(c95bdb370e4a91f27afbd5ff3b39b2e0ad87da73) )	/* layer 0 lookup table */
+	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, CRC(b499800c) SHA1(46fa4e071ebceed12027de109be1e16dde5e846e) )	/* layer 1 lookup table */
+	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, CRC(b6135ee0) SHA1(248a978987cff86c2bbad10ef332f63a6abd5bee) )	/* sprite lookup table, but its not used */
 															/* because it's always 0 1 2 ... f */
 	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* VLM3050 data */
-	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
+	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, CRC(8be969f3) SHA1(9856b4c13fac77b645aed67a08cb4965b4966492) )
 ROM_END
 
 /***************************************************************************

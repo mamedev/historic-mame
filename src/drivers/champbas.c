@@ -253,69 +253,69 @@ MACHINE_DRIVER_END
 
 ROM_START( champbas )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "champbb.1",    0x0000, 0x2000, 0x218de21e )
-	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
-	ROM_LOAD( "champbb.3",    0x4000, 0x2000, 0xf39a7046 )
+	ROM_LOAD( "champbb.1",    0x0000, 0x2000, CRC(218de21e) SHA1(7577fd04bdda4666c017f3b36e81ec23bcddd845) )
+	ROM_LOAD( "champbb.2",    0x2000, 0x2000, CRC(5ddd872e) SHA1(68e21572e27707c991180b1bd0a6b31f7b64abf6) )
+	ROM_LOAD( "champbb.3",    0x4000, 0x2000, CRC(f39a7046) SHA1(3097bffe84ac74ce9e6481028a0ebbe8b1d6eaf9) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the speech CPU */
-	ROM_LOAD( "champbb.6",    0x0000, 0x2000, 0x26ab3e16 )
-	ROM_LOAD( "champbb.7",    0x2000, 0x2000, 0x7c01715f )
-	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
+	ROM_LOAD( "champbb.6",    0x0000, 0x2000, CRC(26ab3e16) SHA1(019b9d34233a6b7a53e204154b782ceb42915d2b) )
+	ROM_LOAD( "champbb.7",    0x2000, 0x2000, CRC(7c01715f) SHA1(b15b2001b8c110f2599eee3aeed79f67686ebd7e) )
+	ROM_LOAD( "champbb.8",    0x4000, 0x2000, CRC(3c911786) SHA1(eea0c467e213d237b5bb9d04b19a418d6090c2dc) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
+	ROM_LOAD( "champbb.4",    0x0000, 0x2000, CRC(1930fb52) SHA1(cae0b2701c2b53b79e9df3a7496442ba3472e996) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "champbb.5",    0x0000, 0x2000, 0xa4cef5a1 )
+	ROM_LOAD( "champbb.5",    0x0000, 0x2000, CRC(a4cef5a1) SHA1(fa00ed0d075e00992a1ddce3c1327ed74770a735) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
-	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
+	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, CRC(2585ffb0) SHA1(ce7f62f37955c2bbb4f82b139cc716978b084767) ) /* palette */
+	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, CRC(872dd450) SHA1(6c1e2c4a2fc072f4bf4996c731adb0b01b347506) ) /* look-up table */
 ROM_END
 
 ROM_START( champbbj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "11.2e",      0x0000, 0x2000, 0xe2dfc166 )
-	ROM_LOAD( "12.2g",      0x2000, 0x2000, 0x7b4e5faa )
-	ROM_LOAD( "13.2h",      0x4000, 0x2000, 0xb201e31f )
+	ROM_LOAD( "11.2e",      0x0000, 0x2000, CRC(e2dfc166) SHA1(482e084d7d21b1cf2d17431699e6bab4c4b6ac15) )
+	ROM_LOAD( "12.2g",      0x2000, 0x2000, CRC(7b4e5faa) SHA1(b7201816a819ef313ddc81f312d26982b83ef1c7) )
+	ROM_LOAD( "13.2h",      0x4000, 0x2000, CRC(b201e31f) SHA1(bba3b611ff60ad8d5dd8484df4cfc2026f4fd344) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the speech CPU */
-	ROM_LOAD( "16.2k",      0x0000, 0x2000, 0x24c482ee )
-	ROM_LOAD( "17.2l",      0x2000, 0x2000, 0xf10b148b )
-	ROM_LOAD( "18.2n",      0x4000, 0x2000, 0x2dc484dd )
+	ROM_LOAD( "16.2k",      0x0000, 0x2000, CRC(24c482ee) SHA1(c25bdf77014e095fc11a9a6b17f16858f19db451) )
+	ROM_LOAD( "17.2l",      0x2000, 0x2000, CRC(f10b148b) SHA1(d66516d509f6f16e51ee59d27c4867e276064c3f) )
+	ROM_LOAD( "18.2n",      0x4000, 0x2000, CRC(2dc484dd) SHA1(28bd68c787d7e6989849ca52009948dbd5cdcc79) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "14.5e",      0x0000, 0x2000, 0x1b8202b3 )
+	ROM_LOAD( "14.5e",      0x0000, 0x2000, CRC(1b8202b3) SHA1(889b77fc3d0cb029baf8c47be260f513f3ed59bd) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "15.5g",      0x0000, 0x2000, 0xa67c0c40 )
+	ROM_LOAD( "15.5g",      0x0000, 0x2000, CRC(a67c0c40) SHA1(3845839eff8c1624d26937f28ffde67a5fcb4805) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "1e.bpr",    0x0000, 0x0020, 0xf5ce825e ) /* palette */
-	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, 0x2e481ffa ) /* look-up table */
+	ROM_LOAD( "1e.bpr",    0x0000, 0x0020, CRC(f5ce825e) SHA1(956f580840f1a7d24bfbd72b2929d14e9ee1b660) ) /* palette */
+	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, CRC(2e481ffa) SHA1(bc8979efd43bee8be0ce96ebdacc873a5821e06e) ) /* look-up table */
 ROM_END
 
 ROM_START( champbb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x528e3c78 )
-	ROM_LOAD( "epr5929",      0x2000, 0x2000, 0x17b6057e )
-	ROM_LOAD( "epr5930",      0x4000, 0x2000, 0xb6570a90 )
-	ROM_LOAD( "epr5931",      0x7800, 0x0800, 0x0592434d )
+	ROM_LOAD( "epr5932",      0x0000, 0x2000, CRC(528e3c78) )
+	ROM_LOAD( "epr5929",      0x2000, 0x2000, CRC(17b6057e) )
+	ROM_LOAD( "epr5930",      0x4000, 0x2000, CRC(b6570a90) )
+	ROM_LOAD( "epr5931",      0x7800, 0x0800, CRC(0592434d) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the speech CPU */
-	ROM_LOAD( "epr5933",      0x0000, 0x2000, 0x26ab3e16 )
-	ROM_LOAD( "epr5934",      0x2000, 0x2000, 0x7c01715f )
-	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x3c911786 )
+	ROM_LOAD( "epr5933",      0x0000, 0x2000, CRC(26ab3e16) SHA1(019b9d34233a6b7a53e204154b782ceb42915d2b) )
+	ROM_LOAD( "epr5934",      0x2000, 0x2000, CRC(7c01715f) SHA1(b15b2001b8c110f2599eee3aeed79f67686ebd7e) )
+	ROM_LOAD( "epr5935",      0x4000, 0x2000, CRC(3c911786) SHA1(eea0c467e213d237b5bb9d04b19a418d6090c2dc) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0xc4a4df75 )
+	ROM_LOAD( "epr5936",      0x0000, 0x2000, CRC(c4a4df75) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr5937",      0x0000, 0x2000, 0x5c80ec42 )
+	ROM_LOAD( "epr5937",      0x0000, 0x2000, CRC(5c80ec42) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
-	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
+	ROM_LOAD( "pr5957",       0x0000, 0x020, CRC(f5ce825e) SHA1(956f580840f1a7d24bfbd72b2929d14e9ee1b660) ) /* palette */
+	ROM_LOAD( "pr5956",       0x0020, 0x100, CRC(872dd450) SHA1(6c1e2c4a2fc072f4bf4996c731adb0b01b347506) ) /* look-up table */
 ROM_END
 
 

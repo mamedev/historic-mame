@@ -312,10 +312,10 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 				int sizex = use_global_size ? global_sizex : sx;
 				int sizey = use_global_size ? global_sizey : sy;
+				int x,y;
 				sizex = (1 << ((sizex & 0x0c00)>> 10))-1;
 				sizey = (1 << ((sizey & 0x0c00)>> 10))-1;
 
-				int x,y;
 
 				sx += xoffs;
 				sy += yoffs;

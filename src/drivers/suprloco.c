@@ -226,31 +226,31 @@ MACHINE_DRIVER_END
 
 ROM_START( suprloco )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
-	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
-	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
+	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, CRC(57f514dd) SHA1(707800b90a22547a56b01d1e11775e9ee5555d23) )	/* encrypted */
+	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, CRC(5a1d2fb0) SHA1(fdb9416e5530718245fd597073a63feddb233c3c) )	/* encrypted */
+	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, CRC(a597828a) SHA1(61004d112591fd2d752c39df71c1304d9308daae) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
+	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, CRC(0aa57207) SHA1(b29b533505cb5b47c90534f2f610baeb7265d030) )
 
 	ROM_REGION( 0xe000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic63.bin",     0x0000, 0x2000, 0xe571fe81 )
-	ROM_LOAD( "ic62.bin",     0x2000, 0x2000, 0x6130f93c )
-	ROM_LOAD( "ic61.bin",     0x4000, 0x2000, 0x3b03004e )
+	ROM_LOAD( "ic63.bin",     0x0000, 0x2000, CRC(e571fe81) SHA1(ac2b5914a445b89b7456b2c4290e4630b525f05d) )
+	ROM_LOAD( "ic62.bin",     0x2000, 0x2000, CRC(6130f93c) SHA1(ae0657f46c10e75eec994e75359a89b5d61baf68) )
+	ROM_LOAD( "ic61.bin",     0x4000, 0x2000, CRC(3b03004e) SHA1(805b51cb14d3ace97f2e0f306db28921b2f5e322) )
 							/*0x6000- 0xe000 will be created by init_suprloco */
 
 	ROM_REGION( 0x8000, REGION_GFX2, 0 )	/* 32k for sprites data used at runtime */
-	ROM_LOAD( "ic55.bin",     0x0000, 0x4000, 0xee2d3ed3 )
-	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
+	ROM_LOAD( "ic55.bin",     0x0000, 0x4000, CRC(ee2d3ed3) SHA1(593f3cd5c4e7f20b5e31e6bac8864774442e4b75) )
+	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, CRC(f04a4b50) SHA1(80363f0c508fb2a755bf684f9a6862c1e7285495) )
 							/*0x6000 empty */
 
 	ROM_REGION( 0x0620, REGION_PROMS, 0 )
-	ROM_LOAD( "ic100.bin",    0x0100, 0x0080, 0x7b0c8ce5 )  /* color PROM */
+	ROM_LOAD( "ic100.bin",    0x0100, 0x0080, CRC(7b0c8ce5) SHA1(4e1ea5ce38198a3965dfeb609ba0c7e8211531c3) )  /* color PROM */
 	ROM_CONTINUE(             0x0000, 0x0080 )
 	ROM_CONTINUE(             0x0180, 0x0080 )
 	ROM_CONTINUE(             0x0080, 0x0080 )
-	ROM_LOAD( "ic89.bin",     0x0200, 0x0400, 0x1d4b02cb )  /* 3bpp to 4bpp table */
-	ROM_LOAD( "ic7.bin",      0x0600, 0x0020, 0x89ba674f )	/* unknown */
+	ROM_LOAD( "ic89.bin",     0x0200, 0x0400, CRC(1d4b02cb) SHA1(00d822f1bc4f57f2f5d5a0615241f8136246a842) )  /* 3bpp to 4bpp table */
+	ROM_LOAD( "ic7.bin",      0x0600, 0x0020, CRC(89ba674f) SHA1(17c87840c8011968675a5a6f55966467df02364b) )	/* unknown */
 ROM_END
 
 

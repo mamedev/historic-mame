@@ -9,6 +9,9 @@
 ** Written by Tatsuyuki Satoh
 **
 ** History:
+** 05-04-2003 Jarek Burczynski:
+**  - implemented partial support for external/processor memory on sample replay
+**
 ** 01-12-2002 Jarek Burczynski:
 **  - fixed first missing sound in gigandes thanks to previous fix (interpolator) by ElSemi
 **  - renamed/removed some YM_DELTAT struct fields
@@ -82,7 +85,22 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 		case 0x20:	/* read  buffer MEMORY to   PCM data port */
 #endif
 		if( v&0x80 ){
-			DELTAT->portstate = v&0x90; /* start req,memory mode,repeat flag copy */
+/*
+START:
+	Accessing *external* memory is started when this bit is set to "1", so
+	you must set all conditions needed fro recording/playback before starting.
+    If you access to *CPU-managed* memory, recording/playback starts when you
+	read/write ADPCM data register of $08.
+
+    *RESET and REPEAT only works when you access to external memory.
+
+MEMDATA:
+	0 = processor memory
+	1 = external memory
+
+*/
+
+			DELTAT->portstate = v & (0x80|0x20|0x10); /* start req, memory mode, repeat flag copy */
 			DELTAT->eos      = 0; /* AT */
 			/* start ADPCM */
 			DELTAT->now_addr = (DELTAT->start)<<1;
@@ -165,7 +183,6 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	/* F2610->adpcm[i].delta     = 21866; */
 	DELTAT->volume    = 0;
 	DELTAT->pan       = &DELTAT->output_pointer[pan];
-	/* DELTAT->flagMask  = 0; */
 	DELTAT->acc       = 0;
 	DELTAT->prev_acc  = 0;
 	DELTAT->adpcmd    = 127;
@@ -228,6 +245,9 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 	UINT32 step;
 	int data;
 
+	/* return if if we use CPU-managed memory */
+	if ( !(DELTAT->portstate & 0x20) )
+		return;
 
 	DELTAT->now_step += DELTAT->step;
 	if ( DELTAT->now_step >= (1<<YM_DELTAT_SHIFT) )
@@ -244,11 +264,11 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 					DELTAT->prev_acc = 0;
 				}else{
 					if(DELTAT->arrivedFlagPtr)
-						(*DELTAT->arrivedFlagPtr) |= DELTAT->flagMask;
+						(*DELTAT->arrivedFlagPtr) |= DELTAT->statusflag;
 					DELTAT->portstate = 0;
 					DELTAT->eos = 1;	/* AT: raise EOS flag at the end of sample playback */
 					DELTAT->adpcml = 0;
-                    DELTAT->prev_acc = 0;
+					DELTAT->prev_acc = 0;
 					return;
 				}
 			}

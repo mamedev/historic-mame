@@ -423,71 +423,71 @@ MACHINE_DRIVER_END
 
 ROM_START( crimfght )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, 0x588e7da6 )
+	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, CRC(588e7da6) SHA1(285febb3bcca31f82b34af3695a59eafae01cd30) )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
-	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, CRC(0faca89e) SHA1(21c9c6d736b398a29e8709e1187c5bf3cacdc99d) )
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
-	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, CRC(a1eadb24) SHA1(ca305b904b34e03918ad07281fda86ad63caa44f) )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, CRC(060019fa) SHA1(c3bca007aaa5f1c534d2a75fe4f96d01a740dd58) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
-	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, CRC(00e0291b) SHA1(39d5db6cf36826e47cdf5308eff9bfa8afc82050) )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, CRC(e09ea05d) SHA1(50ac9a2117ce63fe774c48d769ec445a83f1269e) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, CRC(7da55800) SHA1(3826f73569c8ae0431510a355bdfa082152b74a5) )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* data for the 007232 */
-	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, CRC(fef8505a) SHA1(5c5121609f69001838963e961cb227d6b64e4f5f) )
 ROM_END
 
 ROM_START( crimfgtj )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "821p02.bin", 0x10000, 0x18000, 0xf33fa2e1 )
+	ROM_LOAD( "821p02.bin", 0x10000, 0x18000, CRC(f33fa2e1) SHA1(00fc9e8250fa51386f3af2fca0f137bec9e1c220) )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
-	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, CRC(0faca89e) SHA1(21c9c6d736b398a29e8709e1187c5bf3cacdc99d) )
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
-	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, CRC(a1eadb24) SHA1(ca305b904b34e03918ad07281fda86ad63caa44f) )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, CRC(060019fa) SHA1(c3bca007aaa5f1c534d2a75fe4f96d01a740dd58) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
-	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, CRC(00e0291b) SHA1(39d5db6cf36826e47cdf5308eff9bfa8afc82050) )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, CRC(e09ea05d) SHA1(50ac9a2117ce63fe774c48d769ec445a83f1269e) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, CRC(7da55800) SHA1(3826f73569c8ae0431510a355bdfa082152b74a5) )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* data for the 007232 */
-	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, CRC(fef8505a) SHA1(5c5121609f69001838963e961cb227d6b64e4f5f) )
 ROM_END
 
 ROM_START( crimfgt2 )
 ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "crimefb.r02", 0x10000, 0x18000, 0x4ecdd923 )
+	ROM_LOAD( "crimefb.r02", 0x10000, 0x18000, CRC(4ecdd923) SHA1(78e5260c4bb9b18d7818fb6300d7e1d3a577fb63) )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
-	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, CRC(0faca89e) SHA1(21c9c6d736b398a29e8709e1187c5bf3cacdc99d) )
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
-	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, CRC(a1eadb24) SHA1(ca305b904b34e03918ad07281fda86ad63caa44f) )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, CRC(060019fa) SHA1(c3bca007aaa5f1c534d2a75fe4f96d01a740dd58) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
-	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
-	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, CRC(00e0291b) SHA1(39d5db6cf36826e47cdf5308eff9bfa8afc82050) )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, CRC(e09ea05d) SHA1(50ac9a2117ce63fe774c48d769ec445a83f1269e) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, CRC(7da55800) SHA1(3826f73569c8ae0431510a355bdfa082152b74a5) )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* data for the 007232 */
-	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, CRC(fef8505a) SHA1(5c5121609f69001838963e961cb227d6b64e4f5f) )
 ROM_END
 
 /***************************************************************************

@@ -902,86 +902,86 @@ static DRIVER_INIT( teedoff )
 
 ROM_START( tehkanwc )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "twc-1.bin",    0x0000, 0x4000, 0x34d6d5ff )
-	ROM_LOAD( "twc-2.bin",    0x4000, 0x4000, 0x7017a221 )
-	ROM_LOAD( "twc-3.bin",    0x8000, 0x4000, 0x8b662902 )
+	ROM_LOAD( "twc-1.bin",    0x0000, 0x4000, CRC(34d6d5ff) SHA1(72f4d408b8a7766d348f6a229d395e0c98215c40) )
+	ROM_LOAD( "twc-2.bin",    0x4000, 0x4000, CRC(7017a221) SHA1(4b4700af0a6ff64f976db369ba4b9d97cee1fd5f) )
+	ROM_LOAD( "twc-3.bin",    0x8000, 0x4000, CRC(8b662902) SHA1(13bcd4bf23e34dd7193545561e05bb2cb2c95f9b) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "twc-4.bin",    0x0000, 0x8000, 0x70a9f883 )
+	ROM_LOAD( "twc-4.bin",    0x0000, 0x8000, CRC(70a9f883) SHA1(ace04359265271eb37512a89eb0217eb013aecb7) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
-	ROM_LOAD( "twc-6.bin",    0x0000, 0x4000, 0xe3112be2 )
+	ROM_LOAD( "twc-6.bin",    0x0000, 0x4000, CRC(e3112be2) SHA1(7859e51b4312dc5df01c88e1d97cf608abc7ca72) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "twc-12.bin",   0x00000, 0x4000, 0xa9e274f8 )	/* fg tiles */
+	ROM_LOAD( "twc-12.bin",   0x00000, 0x4000, CRC(a9e274f8) SHA1(02b46e1b149a856f0be74a23faaeb792935b66c7) )	/* fg tiles */
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "twc-8.bin",    0x00000, 0x8000, 0x055a5264 )	/* sprites */
-	ROM_LOAD( "twc-7.bin",    0x08000, 0x8000, 0x59faebe7 )
+	ROM_LOAD( "twc-8.bin",    0x00000, 0x8000, CRC(055a5264) SHA1(fe294ba57c2c858952e2fab0be1b8859730846cb) )	/* sprites */
+	ROM_LOAD( "twc-7.bin",    0x08000, 0x8000, CRC(59faebe7) SHA1(85dad90928369601e039467d575750539410fcf6) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "twc-11.bin",   0x00000, 0x8000, 0x669389fc )	/* bg tiles */
-	ROM_LOAD( "twc-9.bin",    0x08000, 0x8000, 0x347ef108 )
+	ROM_LOAD( "twc-11.bin",   0x00000, 0x8000, CRC(669389fc) SHA1(a93e8455060ce5242cb65f78e47b4840aa13ab13) )	/* bg tiles */
+	ROM_LOAD( "twc-9.bin",    0x08000, 0x8000, CRC(347ef108) SHA1(bb9c2f51d65f28655404e10c3be44d7ade98711b) )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "twc-5.bin",    0x0000, 0x4000, 0x444b5544 )
+	ROM_LOAD( "twc-5.bin",    0x0000, 0x4000, CRC(444b5544) SHA1(0786d6d9ada7fe49c8ab9751b049095474d2e598) )
 ROM_END
 
 ROM_START( gridiron )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "gfight1.bin",  0x0000, 0x4000, 0x51612741 )
-	ROM_LOAD( "gfight2.bin",  0x4000, 0x4000, 0xa678db48 )
-	ROM_LOAD( "gfight3.bin",  0x8000, 0x4000, 0x8c227c33 )
+	ROM_LOAD( "gfight1.bin",  0x0000, 0x4000, CRC(51612741) SHA1(a0417a35f0ce51ba7fc81f27b356852a97f52a58) )
+	ROM_LOAD( "gfight2.bin",  0x4000, 0x4000, CRC(a678db48) SHA1(5ddcb93b3ed52cec6ba04bb19832ae239b7d2287) )
+	ROM_LOAD( "gfight3.bin",  0x8000, 0x4000, CRC(8c227c33) SHA1(c0b58dbebc159ee681aed33c858f5e0172edd75a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "gfight4.bin",  0x0000, 0x4000, 0x8821415f )
+	ROM_LOAD( "gfight4.bin",  0x0000, 0x4000, CRC(8821415f) SHA1(772ce0770ed869ebf625d210bc2b9c381b14b7ea) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
-	ROM_LOAD( "gfight5.bin",  0x0000, 0x4000, 0x92ca3c07 )
+	ROM_LOAD( "gfight5.bin",  0x0000, 0x4000, CRC(92ca3c07) SHA1(580077ca8cf01996b29497187e41a54242de7f50) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfight7.bin",  0x00000, 0x4000, 0x04390cca )	/* fg tiles */
+	ROM_LOAD( "gfight7.bin",  0x00000, 0x4000, CRC(04390cca) SHA1(ff010c0c18ddd1f793b581f0a70bc1b98ef7d21d) )	/* fg tiles */
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfight8.bin",  0x00000, 0x4000, 0x5de6a70f )	/* sprites */
-	ROM_LOAD( "gfight9.bin",  0x04000, 0x4000, 0xeac9dc16 )
-	ROM_LOAD( "gfight10.bin", 0x08000, 0x4000, 0x61d0690f )
+	ROM_LOAD( "gfight8.bin",  0x00000, 0x4000, CRC(5de6a70f) SHA1(416aba9de59d46861671c49f8ca33489db1b8634) )	/* sprites */
+	ROM_LOAD( "gfight9.bin",  0x04000, 0x4000, CRC(eac9dc16) SHA1(8b3cf87ede8aba45752cc2651a471a5942570037) )
+	ROM_LOAD( "gfight10.bin", 0x08000, 0x4000, CRC(61d0690f) SHA1(cd7c81b0e5356bc865380cae5582d6c6b017dfa1) )
 	/* 0c000-0ffff empty */
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfight11.bin", 0x00000, 0x4000, 0x80b09c03 )	/* bg tiles */
-	ROM_LOAD( "gfight12.bin", 0x04000, 0x4000, 0x1b615eae )
+	ROM_LOAD( "gfight11.bin", 0x00000, 0x4000, CRC(80b09c03) SHA1(41627bb6d0f163430c1709a449a42f0f216da852) )	/* bg tiles */
+	ROM_LOAD( "gfight12.bin", 0x04000, 0x4000, CRC(1b615eae) SHA1(edfdb4311c5cc314806c8f017f190f7b94f8cd98) )
 	/* 08000-0ffff empty */
 
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "gfight6.bin",  0x0000, 0x4000, 0xd05d463d )
+	ROM_LOAD( "gfight6.bin",  0x0000, 0x4000, CRC(d05d463d) SHA1(30f2bce0ad75c4a7d8344cff16bce27f5e3a3f5d) )
 ROM_END
 
 ROM_START( teedoff )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "to-1.bin",     0x0000, 0x4000, 0xcc2aebc5 )
-	ROM_LOAD( "to-2.bin",     0x4000, 0x4000, 0xf7c9f138 )
-	ROM_LOAD( "to-3.bin",     0x8000, 0x4000, 0xa0f0a6da )
+	ROM_LOAD( "to-1.bin",     0x0000, 0x4000, CRC(cc2aebc5) SHA1(358e77e53b35dd89fcfdb3b2484b8c4fbc34c1be) )
+	ROM_LOAD( "to-2.bin",     0x4000, 0x4000, CRC(f7c9f138) SHA1(2fe56059ef67387b5938bb4751aa2f74a58b04fb) )
+	ROM_LOAD( "to-3.bin",     0x8000, 0x4000, CRC(a0f0a6da) SHA1(72390c8dc5519d90e39a660e6ec18861fdbadcc8) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "to-4.bin",     0x0000, 0x8000, 0xe922cbd2 )
+	ROM_LOAD( "to-4.bin",     0x0000, 0x8000, CRC(e922cbd2) SHA1(922c030be70150efb760fa81bda0bc54f2ec681a) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
-	ROM_LOAD( "to-6.bin",     0x0000, 0x4000, 0xd8dfe1c8 )
+	ROM_LOAD( "to-6.bin",     0x0000, 0x4000, CRC(d8dfe1c8) SHA1(d00a71ad89b530339990780334588f5738c60f25) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "to-12.bin",    0x00000, 0x4000, 0x4f44622c )	/* fg tiles */
+	ROM_LOAD( "to-12.bin",    0x00000, 0x4000, CRC(4f44622c) SHA1(161c3646a3ec2274bffc957240d47d55a35a8416) )	/* fg tiles */
 
 	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "to-8.bin",     0x00000, 0x8000, 0x363bd1ba )	/* sprites */
-	ROM_LOAD( "to-7.bin",     0x08000, 0x8000, 0x6583fa5b )
+	ROM_LOAD( "to-8.bin",     0x00000, 0x8000, CRC(363bd1ba) SHA1(c5b7d56b0595712b18351403a9e3325a03de1676) )	/* sprites */
+	ROM_LOAD( "to-7.bin",     0x08000, 0x8000, CRC(6583fa5b) SHA1(1041181887350d860c517c0a031ab064a20f5cee) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "to-11.bin",    0x00000, 0x8000, 0x1ec00cb5 )	/* bg tiles */
-	ROM_LOAD( "to-9.bin",     0x08000, 0x8000, 0xa14347f0 )
+	ROM_LOAD( "to-11.bin",    0x00000, 0x8000, CRC(1ec00cb5) SHA1(0e61eed3d6fc44ff89d8b9e4f558f0989eb8094f) )	/* bg tiles */
+	ROM_LOAD( "to-9.bin",     0x08000, 0x8000, CRC(a14347f0) SHA1(00a34ed56ec32336bb524424fcb007d8160163ec) )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "to-5.bin",     0x0000, 0x8000, 0xe5e4246b )
+	ROM_LOAD( "to-5.bin",     0x0000, 0x8000, CRC(e5e4246b) SHA1(b2fe2e68fa86163ebe1ef00ecce73fb62cef6b19) )
 ROM_END
 
 

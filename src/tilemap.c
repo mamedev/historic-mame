@@ -404,6 +404,7 @@ static void pdo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	}
 }
 
+#ifndef pdo32
 static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
@@ -414,6 +415,38 @@ static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 		pri[i] |= pcode;
 	}
 }
+#endif
+
+#ifndef npdo32
+static void npdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int oddcount = count & 3;
+	int unrcount = count & ~3;
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+	for( i=0; i<oddcount; i++ )
+	{
+		dest[i] = clut[source[i]];
+	}
+	source += count; dest += count;
+	for( i=-unrcount; i; i+=4 )
+	{
+		UINT32 eax, ebx;
+		eax = source[i  ];
+		ebx = source[i+1];
+		eax = clut[eax];
+		ebx = clut[ebx];
+		dest[i  ] = eax;
+		eax = source[i+2];
+		dest[i+1] = ebx;
+		ebx = source[i+3];
+		eax = clut[eax];
+		ebx = clut[ebx];
+		dest[i+2] = eax;
+		dest[i+3] = ebx;
+	}
+}
+#endif
 
 /***********************************************************************************/
 
@@ -477,6 +510,7 @@ static void pdt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 	}
 }
 
+#ifndef pdt32
 static void pdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
@@ -490,6 +524,30 @@ static void pdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		}
 	}
 }
+#endif
+
+#ifndef npdt32
+static void npdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+{
+	int oddcount = count & 3;
+	int unrcount = count & ~3;
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+
+	for( i=0; i<oddcount; i++ )
+	{
+		if( (pMask[i]&mask)==value ) dest[i] = clut[source[i]];
+	}
+	pMask += count, source += count; dest += count;
+	for( i=-unrcount; i; i+=4 )
+	{
+		if( (pMask[i  ]&mask)==value ) dest[i  ] = clut[source[i  ]];
+		if( (pMask[i+1]&mask)==value ) dest[i+1] = clut[source[i+1]];
+		if( (pMask[i+2]&mask)==value ) dest[i+2] = clut[source[i+2]];
+		if( (pMask[i+3]&mask)==value ) dest[i+3] = clut[source[i+3]];
+	}
+}
+#endif
 
 /***********************************************************************************/
 
@@ -504,6 +562,7 @@ static void pbo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	}
 }
 
+#ifndef pbo32
 static void pbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
@@ -514,6 +573,29 @@ static void pbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 		pri[i] |= pcode;
 	}
 }
+#endif
+
+#ifndef npbo32
+static void npbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int oddcount = count & 3;
+	int unrcount = count & ~3;
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+	for( i=0; i<oddcount; i++ )
+	{
+		dest[i] = alpha_blend32(dest[i], clut[source[i]]);
+	}
+	source += count; dest += count;
+	for( i=-unrcount; i; i+=4 )
+	{
+		dest[i  ] = alpha_blend32(dest[i  ], clut[source[i  ]]);
+		dest[i+1] = alpha_blend32(dest[i+1], clut[source[i+1]]);
+		dest[i+2] = alpha_blend32(dest[i+2], clut[source[i+2]]);
+		dest[i+3] = alpha_blend32(dest[i+3], clut[source[i+3]]);
+	}
+}
+#endif
 
 /***********************************************************************************/
 
@@ -531,6 +613,7 @@ static void pbt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 	}
 }
 
+#ifndef pbt32
 static void pbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
@@ -544,6 +627,30 @@ static void pbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		}
 	}
 }
+#endif
+
+#ifndef npbt32
+static void npbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+{
+	int oddcount = count & 3;
+	int unrcount = count & ~3;
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+
+	for( i=0; i<oddcount; i++ )
+	{
+		if( (pMask[i]&mask)==value ) dest[i] = alpha_blend32(dest[i], clut[source[i]]);
+	}
+	pMask += count, source += count; dest += count;
+	for( i=-unrcount; i; i+=4 )
+	{
+		if( (pMask[i  ]&mask)==value ) dest[i  ] = alpha_blend32(dest[i  ], clut[source[i  ]]);
+		if( (pMask[i+1]&mask)==value ) dest[i+1] = alpha_blend32(dest[i+1], clut[source[i+1]]);
+		if( (pMask[i+2]&mask)==value ) dest[i+2] = alpha_blend32(dest[i+2], clut[source[i+2]]);
+		if( (pMask[i+3]&mask)==value ) dest[i+3] = alpha_blend32(dest[i+3], clut[source[i+3]]);
+	}
+}
+#endif
 
 /***********************************************************************************/
 
@@ -760,8 +867,8 @@ void tilemap_dispose( struct tilemap *tilemap )
 	else
 	{
 		prev = first_tilemap;
-		while( prev->next != tilemap ) prev = prev->next;
-		prev->next =tilemap->next;
+		while( prev && prev->next != tilemap ) prev = prev->next;
+		if( prev ) prev->next =tilemap->next;
 	}
 	PenToPixel_Term( tilemap );
 	free( tilemap->logical_rowscroll );
@@ -1142,19 +1249,35 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 			switch( dest->depth )
 			{
 			case 32:
-				if( flags&TILEMAP_ALPHA )
+				if (priority)
 				{
-					blit.draw_masked = (blitmask_t)pbt32;
-					blit.draw_opaque = (blitopaque_t)pbo32;
+					if( flags&TILEMAP_ALPHA )
+					{
+						blit.draw_masked = (blitmask_t)pbt32;
+						blit.draw_opaque = (blitopaque_t)pbo32;
+					}
+					else
+					{
+						blit.draw_masked = (blitmask_t)pdt32;
+						blit.draw_opaque = (blitopaque_t)pdo32;
+					}
 				}
 				else
 				{
-					blit.draw_masked = (blitmask_t)pdt32;
-					blit.draw_opaque = (blitopaque_t)pdo32;
+					//* AAT APR2003: added 32-bit no-priority counterpart
+					if( flags&TILEMAP_ALPHA )
+					{
+						blit.draw_masked = (blitmask_t)npbt32;
+						blit.draw_opaque = (blitopaque_t)npbo32;
+					}
+					else
+					{
+						blit.draw_masked = (blitmask_t)npdt32;
+						blit.draw_opaque = (blitopaque_t)npdo32;
+					}
 				}
 				blit.screen_bitmap_pitch_line /= 4;
 				break;
-
 			case 15:
 				if( flags&TILEMAP_ALPHA )
 				{
@@ -1384,7 +1507,7 @@ profiler_mark(PROFILER_END);
    - startx and starty MUST be UINT32 for calculations to work correctly
    - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
    */
-void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
+void tilemap_draw_roz( struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
@@ -1443,8 +1566,6 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 profiler_mark(PROFILER_END);
 	}
 }
-
-
 
 UINT32 tilemap_count( void )
 {

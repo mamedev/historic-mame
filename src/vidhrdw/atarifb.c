@@ -255,16 +255,16 @@ if (atarifb_game != 4)
 					sprintf (buf2, "                    ");
 					break;
 				case 0x01:
-					sprintf (buf2, "SWEEP               ");
+					sprintf (buf2, "               SWEEP");
 					break;
 				case 0x02:
-					sprintf (buf2, "KEEPER              ");
+					sprintf (buf2, "              KEEPER");
 					break;
 				case 0x04:
-					sprintf (buf2, "BOMB                ");
+					sprintf (buf2, "                BOMB");
 					break;
 				case 0x08:
-					sprintf (buf2, "DOWN & OUT          ");
+					sprintf (buf2, "          DOWN & OUT");
 					break;
 			}
 			break;
@@ -293,19 +293,19 @@ if (atarifb_game != 4)
 			switch (atarifb_lamp2 & 0x1f)
 			{
 				case 0x01:
-					sprintf (buf2, "SLANT OUT           ");
+					sprintf (buf2, "           SLANT OUT");
 					break;
 				case 0x02:
-					sprintf (buf2, "SLANT IN            ");
+					sprintf (buf2, "            SLANT IN");
 					break;
 				case 0x04:
-					sprintf (buf2, "BOMB                ");
+					sprintf (buf2, "                BOMB");
 					break;
 				case 0x08:
-					sprintf (buf2, "DOWN & OUT          ");
+					sprintf (buf2, "          DOWN & OUT");
 					break;
 				case 0x10:
-					sprintf (buf2, "KICK                ");
+					sprintf (buf2, "                KICK");
 					break;
 				default:
 					sprintf (buf2, "                    ");
@@ -334,13 +334,13 @@ if (atarifb_game != 4)
 			switch (atarifb_lamp2 & 0x0f)
 			{
 				case 0x01:
-					sprintf (buf2, "RT SWING/FASTBALL   ");
+					sprintf (buf2, "   RT SWING/FASTBALL");
 					break;
 				case 0x02:
-					sprintf (buf2, "LT SWING/CHANGE-UP  ");
+					sprintf (buf2, "  LT SWING/CHANGE-UP");
 					break;
 				case 0x04:
-					sprintf (buf2, "RT BUNT/CURVE BALL  ");
+					sprintf (buf2, "  RT BUNT/CURVE BALL");
 					break;
 				case 0x08:
 					sprintf (buf2, "LT BUNT/KNUCKLE BALL");

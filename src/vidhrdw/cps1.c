@@ -271,6 +271,7 @@ static struct CPS1config cps1_config_table[]=
 	{"ghoulsu", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 1 },
 	{"daimakai",CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 1 },
 	{"strider", CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
+	{"stridrua",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"striderj",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"stridrja",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"dw",      CPS_B_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
@@ -287,6 +288,7 @@ static struct CPS1config cps1_config_table[]=
 	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },	/* CPSB ID not checked, but it's the same as sf2eg */
 	{"mercs",   CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsu",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
+	{"mercsua", CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsj",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"msword",  CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mswordr1",CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
@@ -370,6 +372,7 @@ static struct CPS1config cps1_config_table[]=
     /* CPS2 games */
 	{"cps2",    NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2",    NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2u",   NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2a",   NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2ar1", NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2j",   NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },

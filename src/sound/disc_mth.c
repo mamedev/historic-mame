@@ -8,6 +8,7 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
+/* DST_TRANSFORM         - Multiple math functions                      */
 /* DST_ADDDER            - Multichannel adder                           */
 /* DST_GAIN              - Gain Factor                                  */
 /* DST_SWITCH            - Switch implementation                        */
@@ -46,8 +47,8 @@ struct dst_ladder_context
         int state;
         double t;           // time
         double step;
-		double exponent0;
-		double exponent1;
+		double exponent;
+		double total_resistance;
 };
 
 struct dst_samphold_context
@@ -60,19 +61,133 @@ struct dst_samphold_context
 /*                                                                      */
 /* DST_ADDER - This is a 4 channel input adder with enable function     */
 /*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Channel0 input value                                     */
-/* input2    - Channel1 input value                                     */
-/* input3    - Channel2 input value                                     */
-/* input4    - Channel3 input value                                     */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - Channel0 input value                                   */
+/* input[2]    - Channel1 input value                                   */
+/* input[3]    - Channel2 input value                                   */
+/* input[4]    - Channel3 input value                                   */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_adder_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=node->input1 + node->input2 + node->input3 + node->input4;
+		node->output=node->input[1] + node->input[2] + node->input[3] + node->input[4];
+	}
+	else
+	{
+		node->output=0;
+	}
+	return 0;
+}
+
+
+/************************************************************************/
+/*                                                                      */
+/* DST_TRANSFORM - Programmable math module with enable function        */
+/*                                                                      */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - Channel0 input value                                   */
+/* input[2]    - Channel1 input value                                   */
+/* input[3]    - Channel2 input value                                   */
+/* input[4]    - Channel3 input value                                   */
+/* input[5]    - Channel4 input value                                   */
+/*                                                                      */
+/************************************************************************/
+
+#define MAX_TRANS_STACK	10
+
+double dst_transform_pop(double *stack,int *pointer)
+{
+	double value;
+	//decrement THEN read
+	if(*pointer>0) (*pointer)--;
+	value=stack[*pointer];
+	return value;
+}
+
+double dst_transform_push(double *stack,int *pointer,double value)
+{
+	//Strore THEN increment
+	if(*pointer<MAX_TRANS_STACK) stack[(*pointer)++]=value;
+	return value;
+}
+
+int dst_transform_step(struct node_description *node)
+{
+
+	if(node->input[0])
+	{
+		double trans_stack[MAX_TRANS_STACK];
+		double result,number1,number2;
+		int	trans_stack_ptr=0;
+
+		char *fPTR;
+		node->output=0;
+
+		fPTR = (char*)(node->custom);
+
+		while(*fPTR!=0)
+		{
+			switch (*fPTR++)
+			{
+				case '*':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					number2=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=number1*number2;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case '/':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					number2=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=number1/number2;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case '+':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					number2=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=number1+number2;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case '-':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					number2=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=number1-number2;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case '!':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=!number1;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case 'i':
+					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					result=-number1;
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
+				case '0':
+					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[1]);
+					break;
+				case '1':
+					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[2]);
+					break;
+				case '2':
+					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[3]);
+					break;
+				case '3':
+					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[4]);
+					break;
+				case '4':
+					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[5]);
+					break;
+				default:
+					discrete_log("dst_transform_step - Invalid function type/variable passed");
+					node->output = 0;
+					break;
+			}
+		}
+		node->output=dst_transform_pop(trans_stack,&trans_stack_ptr);
 	}
 	else
 	{
@@ -86,19 +201,20 @@ int dst_adder_step(struct node_description *node)
 /*                                                                      */
 /* DST_GAIN - This is a programmable gain module with enable function   */
 /*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Channel0 input value                                     */
-/* input2    - Gain value                                               */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - Channel0 input value                                   */
+/* input[2]    - Gain value                                             */
+/* input[3]    - Final addition offset                                  */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_gain_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=node->input1 * node->input2;
+		node->output=node->input[1] * node->input[2];
+		node->output+=node->input[3];
 	}
 	else
 	{
@@ -111,26 +227,26 @@ int dst_gain_step(struct node_description *node)
 /*                                                                      */
 /* DST_DIVIDE  - Programmable divider with enable                       */
 /*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Channel0 input value                                     */
-/* input2    - Divisor                                                  */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - Channel0 input value                                   */
+/* input[2]    - Divisor                                                */
+/* input[3]    - NOT USED                                               */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_divide_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		if(node->input2==0)
+		if(node->input[2]==0)
 		{
-			node->output=HUGE_VAL;	/* Max out but dont break */
+			node->output=_HUGE;	/* Max out but dont break */
 			discrete_log("dst_divider_step() - Divide by Zero attempted.");
 		}
 		else
 		{
-			node->output=node->input1 / node->input2;
+			node->output=node->input[1] / node->input[2];
 		}
 	}
 	else
@@ -144,20 +260,20 @@ int dst_divide_step(struct node_description *node)
 /*                                                                      */
 /* DSS_SWITCH - Programmable 2 pole switchmodule with enable function   */
 /*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - switch position                                          */
-/* input2    - input0                                                   */
-/* input3    - input1                                                   */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - switch position                                        */
+/* input[2]    - input[0]                                               */
+/* input[3]    - input[1]                                               */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_switch_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		/* Input 1 switches between input0/input2 */
-		node->output=(node->input1)?node->input3:node->input2;
+		/* Input 1 switches between input[0]/input[2] */
+		node->output=(node->input[1])?node->input[3]:node->input[2];
 	}
 	else
 	{
@@ -171,12 +287,12 @@ int dst_switch_step(struct node_description *node)
 /*                                                                      */
 /* DST_RAMP - Ramp up/down model usage                                  */
 /*                                                                      */
-/* input0    - Enable ramp                                              */
-/* input1    - Ramp Reverse/Forward switch                              */
-/* input2    - Gradient, change/sec                                     */
-/* input3    - Start value                                              */
-/* input4    - End value                                                */
-/* input5    - Clamp value when disabled                                */
+/* input[0]    - Enable ramp                                            */
+/* input[1]    - Ramp Reverse/Forward switch                            */
+/* input[2]    - Gradient, change/sec                                   */
+/* input[3]    - Start value                                            */
+/* input[4]    - End value                                              */
+/* input[5]    - Clamp value when disabled                              */
 /*                                                                      */
 /************************************************************************/
 
@@ -185,26 +301,26 @@ int dst_ramp_step(struct node_description *node)
 	struct dss_ramp_context *context;
 	context=(struct dss_ramp_context*)node->context;
 
-	if(node->input0)
+	if(node->input[0])
 	{
 		if (!context->last_en)
 		{
 			context->last_en = 1;
-			node->output = node->input3;
+			node->output = node->input[3];
 		}
-		if(context->dir ? node->input1 : !node->input1) node->output+=context->step;
+		if(context->dir ? node->input[1] : !node->input[1]) node->output+=context->step;
 		else node->output-=context->step;
 		/* Clamp to min/max */
-		if(context->dir ? (node->output < node->input3)
-				: (node->output > node->input3)) node->output=node->input3;
-		if(context->dir ? (node->output > node->input4)
-				: (node->output < node->input4)) node->output=node->input4;
+		if(context->dir ? (node->output < node->input[3])
+				: (node->output > node->input[3])) node->output=node->input[3];
+		if(context->dir ? (node->output > node->input[4])
+				: (node->output < node->input[4])) node->output=node->input[4];
 	}
 	else
 	{
 		context->last_en = 0;
 		// Disabled so clamp to output
-		node->output=node->input5;
+		node->output=node->input[5];
 	}
 	return 0;
 }
@@ -214,9 +330,9 @@ int dst_ramp_reset(struct node_description *node)
 	struct dss_ramp_context *context;
 	context=(struct dss_ramp_context*)node->context;
 
-	node->output=node->input5;
-	context->step = node->input2 / Machine->sample_rate;
-	context->dir = ((node->input4 - node->input3) == abs(node->input4 - node->input3));
+	node->output=node->input[5];
+	context->step = node->input[2] / Machine->sample_rate;
+	context->dir = ((node->input[4] - node->input[3]) == abs(node->input[4] - node->input[3]));
 	context->last_en = 0;
 	return 0;
 }
@@ -240,24 +356,18 @@ int dst_ramp_init(struct node_description *node)
 	return 0;
 }
 
-int dst_ramp_kill(struct node_description *node)
-{
-	free(node->context);
-	node->context=NULL;
-	return 0;
-}
 
 
 /************************************************************************/
 /*                                                                      */
 /* dst_oneshot - Usage of node_description values for one shot pulse    */
 /*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Trigger value                                            */
-/* input2    - Reset value                                              */
-/* input3    - Amplitude value                                          */
-/* input4    - Width of oneshot pulse                                   */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable input value                                     */
+/* input[1]    - Trigger value                                          */
+/* input[2]    - Reset value                                            */
+/* input[3]    - Amplitude value                                        */
+/* input[4]    - Width of oneshot pulse                                 */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_oneshot_step(struct node_description *node)
@@ -269,18 +379,18 @@ int dst_oneshot_step(struct node_description *node)
 	switch(context->state)
 	{
 		case 0:		/* Waiting for trigger */
-			if(node->input1)
+			if(node->input[1])
 			{
 				context->state=1;
-				context->countdown=node->input4;
-				node->output=node->input3;
+				context->countdown=node->input[4];
+				node->output=node->input[3];
 			}
 		 	node->output=0;
 			break;
 
 		case 1:		/* Triggered */
-			node->output=node->input3;
-			if(node->input1 && node->input2)
+			node->output=node->input[3];
+			if(node->input[1] && node->input[2])
 			{
 				// Dont start the countdown if we're still triggering
 				// and we've got a reset signal as well
@@ -299,7 +409,7 @@ int dst_oneshot_step(struct node_description *node)
 
 		case 2:		/* Waiting for reset */
 		default:
-			if(node->input2) context->state=0;
+			if(node->input[2]) context->state=0;
 		 	node->output=0;
 			break;
 	}
@@ -339,23 +449,16 @@ int dst_oneshot_init(struct node_description *node)
 	return 0;
 }
 
-int dst_oneshot_kill(struct node_description *node)
-{
-	free(node->context);
-	node->context=NULL;
-	return 0;
-}
-
 
 /************************************************************************/
 /*                                                                      */
 /* DST_CLAMP - Simple signal clamping circuit                           */
 /*                                                                      */
-/* input0    - Enable ramp                                              */
-/* input1    - Input value                                              */
-/* input2    - Minimum value                                            */
-/* input3    - Maximum value                                            */
-/* input4    - Clamp when disabled                                      */
+/* input[0]    - Enable ramp                                            */
+/* input[1]    - Input value                                            */
+/* input[2]    - Minimum value                                          */
+/* input[3]    - Maximum value                                          */
+/* input[4]    - Clamp when disabled                                    */
 /*                                                                      */
 /************************************************************************/
 int dst_clamp_step(struct node_description *node)
@@ -363,15 +466,15 @@ int dst_clamp_step(struct node_description *node)
 	struct dss_ramp_context *context;
 	context=(struct dss_ramp_context*)node->context;
 
-	if(node->input0)
+	if(node->input[0])
 	{
-		if(node->input1 < node->input2) node->output=node->input2;
-		else if(node->input1 > node->input3) node->output=node->input3;
-		else node->output=node->input1;
+		if(node->input[1] < node->input[2]) node->output=node->input[2];
+		else if(node->input[1] > node->input[3]) node->output=node->input[3];
+		else node->output=node->input[1];
 	}
 	else
 	{
-		node->output=node->input4;
+		node->output=node->input[4];
 	}
 	return 0;
 }
@@ -381,27 +484,76 @@ int dst_clamp_step(struct node_description *node)
 /*                                                                      */
 /* DST_LADDER - Resistor ladder emulation complete with capacitor       */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - NOT USED                                                 */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - voltage high rail                                      */
+/* input[2]    - binary bit selector                                    */
+/* input[3]    - gain                                                   */
+/* input[4]    - offset                                                 */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_ladder_step(struct node_description *node)
 {
 	struct dst_ladder_context *context;
+	int select,loop;
+	double onres,demand,diff;
 	context=(struct dst_ladder_context*)node->context;
-	node->output=0;
+
+	/* Work out which resistors are "ON" and then use this sum as a ratio to total resistance */
+	/* and the output is that proportion of "voltage high rail" */
+	select=(int)node->input[2];
+	
+	/* Clamp at max poss value */
+	if(select>((1<<DISC_LADDER_MAXRES)-1)) select=(1<<DISC_LADDER_MAXRES)-1;
+	if(select<0) select=0;
+
+	/* Sum the overall resistance for later use */
+	onres=0;
+	for(loop=0;loop<DISC_LADDER_MAXRES;loop++)
+	{
+		if(select&0x01) onres+=((struct discrete_ladder*)node->custom)->resistors[loop];
+		select=select>>1;
+	}
+
+	/* Work out demanded value */
+	demand=node->input[1]*(onres/context->total_resistance);
+	/* Add gain & offset */
+	demand*=node->input[3];
+	demand+=node->input[4];
+
+	/* Now discrete RC filter it if required */
+	if(((struct discrete_ladder*)node->custom)->smoothing_res != 0.0)
+	{
+		diff = demand-node->output;
+		diff = diff -(diff * exp(context->step/context->exponent));
+		node->output+=diff;
+	}
+	else
+	{
+		node->output=demand;
+	}
+
 	return 0;
 }
 
 int dst_ladder_reset(struct node_description *node)
 {
 	struct dst_ladder_context *context;
+	int loop;
 	context=(struct dst_ladder_context*)node->context;
-	node->output=0;
+	/* Sum the overall resistance for later use */
+	for(loop=0;loop<DISC_LADDER_MAXRES;loop++)
+	{
+		context->total_resistance+=((struct discrete_ladder*)node->custom)->resistors[loop];
+	}
+	node->output=node->input[4];
+
+	/* Setup filter constants */
+	context->state = 0;
+	context->t = 0;
+	context->step = 1.0 / Machine->sample_rate;
+	context->exponent=-1.0 * ((struct discrete_ladder*)node->custom)->smoothing_cap * ((struct discrete_ladder*)node->custom)->smoothing_res;
+
 	return 0;
 }
 
@@ -424,24 +576,16 @@ int dst_ladder_init(struct node_description *node)
 	return 0;
 }
 
-int dst_ladder_kill(struct node_description *node)
-{
-	free(node->context);
-	node->context=NULL;
-	return 0;
-}
-
-
 /************************************************************************/
 /*                                                                      */
 /* DST_SAMPHOLD - Sample & Hold Implementation                          */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - clock node                                               */
-/* input3    - clock type                                               */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - clock node                                             */
+/* input[3]    - clock type                                             */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_samphold_step(struct node_description *node)
@@ -449,25 +593,25 @@ int dst_samphold_step(struct node_description *node)
 	struct dst_samphold_context *context;
 	context=(struct dst_samphold_context*)node->context;
 
-	if(node->input0)
+	if(node->input[0])
 	{
 		switch(context->clocktype)
 		{
 			case DISC_SAMPHOLD_REDGE:
 				/* Clock the whole time the input is rising */
-				if(node->input2 > context->lastinput) node->output=node->input1;
+				if(node->input[2] > context->lastinput) node->output=node->input[1];
 				break;
 			case DISC_SAMPHOLD_FEDGE:
 				/* Clock the whole time the input is falling */
-				if(node->input2 < context->lastinput) node->output=node->input1;
+				if(node->input[2] < context->lastinput) node->output=node->input[1];
 				break;
 			case DISC_SAMPHOLD_HLATCH:
 				/* Output follows input if clock != 0 */
-				if(node->input2) node->output=node->input1;
+				if(node->input[2]) node->output=node->input[1];
 				break;
 			case DISC_SAMPHOLD_LLATCH:
 				/* Output follows input if clock == 0 */
-				if(node->input2==0) node->output=node->input1;
+				if(node->input[2]==0) node->output=node->input[1];
 				break;
 			default:
 				discrete_log("dst_samphold_step - Invalid clocktype passed");
@@ -479,7 +623,7 @@ int dst_samphold_step(struct node_description *node)
 		node->output=0;
 	}
 	/* Save the last value */
-	context->lastinput=node->input2;
+	context->lastinput=node->input[2];
 	return 0;
 }
 
@@ -491,8 +635,8 @@ int dst_samphold_reset(struct node_description *node)
 	node->output=0;
 	context->lastinput=-1;
 	/* Only stored in here to speed up and save casting in the step function */
-	context->clocktype=(int)node->input3;
-
+	context->clocktype=(int)node->input[3];
+	dst_samphold_step(node);
 	return 0;
 }
 
@@ -515,31 +659,23 @@ int dst_samphold_init(struct node_description *node)
 	return 0;
 }
 
-int dst_samphold_kill(struct node_description *node)
-{
-	free(node->context);
-	node->context=NULL;
-	return 0;
-}
-
-
 /************************************************************************/
 /*                                                                      */
 /* DST_LOGIC_INV - Logic invertor gate implementation                   */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - NOT USED                                                 */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - NOT USED                                               */
+/* input[3]    - NOT USED                                               */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_inv_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=(node->input1)?0.0:1.0;
+		node->output=(node->input[1])?0.0:1.0;
 	}
 	else
 	{
@@ -552,19 +688,19 @@ int dst_logic_inv_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_AND - Logic AND gate implementation                        */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - input2 value                                             */
-/* input4    - input3 value                                             */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - input[2] value                                         */
+/* input[4]    - input[3] value                                         */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_and_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=(node->input1 && node->input2 && node->input3 && node->input4)?1.0:0.0;
+		node->output=(node->input[1] && node->input[2] && node->input[3] && node->input[4])?1.0:0.0;
 	}
 	else
 	{
@@ -577,19 +713,19 @@ int dst_logic_and_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_NAND - Logic NAND gate implementation                      */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - input2 value                                             */
-/* input4    - input3 value                                             */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - input[2] value                                         */
+/* input[4]    - input[3] value                                         */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_nand_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=(node->input1 && node->input2 && node->input3 && node->input4)?0.0:1.0;
+		node->output=(node->input[1] && node->input[2] && node->input[3] && node->input[4])?0.0:1.0;
 	}
 	else
 	{
@@ -602,19 +738,19 @@ int dst_logic_nand_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_OR  - Logic OR  gate implementation                        */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - input2 value                                             */
-/* input4    - input3 value                                             */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - input[2] value                                         */
+/* input[4]    - input[3] value                                         */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_or_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=(node->input1 || node->input2 || node->input3 || node->input4)?1.0:0.0;
+		node->output=(node->input[1] || node->input[2] || node->input[3] || node->input[4])?1.0:0.0;
 	}
 	else
 	{
@@ -627,19 +763,19 @@ int dst_logic_or_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_NOR - Logic NOR gate implementation                        */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - input2 value                                             */
-/* input4    - input3 value                                             */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - input[2] value                                         */
+/* input[4]    - input[3] value                                         */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_nor_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=(node->input1 || node->input2 || node->input3 || node->input4)?0.0:1.0;
+		node->output=(node->input[1] || node->input[2] || node->input[3] || node->input[4])?0.0:1.0;
 	}
 	else
 	{
@@ -652,19 +788,19 @@ int dst_logic_nor_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_XOR - Logic XOR gate implementation                        */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - NOT USED                                               */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_xor_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=((node->input1 && !node->input2) || (!node->input1 && node->input2))?1.0:0.0;
+		node->output=((node->input[1] && !node->input[2]) || (!node->input[1] && node->input[2]))?1.0:0.0;
 	}
 	else
 	{
@@ -677,19 +813,19 @@ int dst_logic_xor_step(struct node_description *node)
 /*                                                                      */
 /* DST_LOGIC_NXOR - Logic NXOR gate implementation                      */
 /*                                                                      */
-/* input0    - Enable                                                   */
-/* input1    - input0 value                                             */
-/* input2    - input1 value                                             */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
+/* input[0]    - Enable                                                 */
+/* input[1]    - input[0] value                                         */
+/* input[2]    - input[1] value                                         */
+/* input[3]    - NOT USED                                               */
+/* input[4]    - NOT USED                                               */
+/* input[5]    - NOT USED                                               */
 /*                                                                      */
 /************************************************************************/
 int dst_logic_nxor_step(struct node_description *node)
 {
-	if(node->input0)
+	if(node->input[0])
 	{
-		node->output=((node->input1 && !node->input2) || (!node->input1 && node->input2))?0.0:1.0;
+		node->output=((node->input[1] && !node->input[2]) || (!node->input[1] && node->input[2]))?0.0:1.0;
 	}
 	else
 	{

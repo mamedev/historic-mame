@@ -582,169 +582,169 @@ MACHINE_DRIVER_END
 
 ROM_START( ninjakd2 )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
-	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
+	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, CRC(3cdbb906) SHA1(f48f82528b5fc581ee3b1ccd0ef9cdecc7249bb3) )
+	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, CRC(b5ce9a1a) SHA1(295a7e1d41e1a8ee45f1250086a0c9314837eded) )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, CRC(ad275654) SHA1(7d29a17132adb19aeee9b98be5b76bd6e91f308e) )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, CRC(5dac9426) SHA1(0916cddbbe1e93c32b96fe28e145d34b2a892e80) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, 0xd3a18a79 )  // sound z80 code encrypted
+	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, CRC(d3a18a79) SHA1(e4df713f89d8a8b43ef831b14864c50ec9b53f0b) )  // sound z80 code encrypted
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
+	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, CRC(41a714b3) SHA1(b05f48d71a9837914c12c13e0b479c8a6dc8c25e) )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, 0xc913c4ab )
+	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, CRC(c913c4ab) SHA1(f822c5621b3e32c1a284f6367bdcace81c1c74b3) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, CRC(1b79c50a) SHA1(8954bc51cb9fbbe16b09381f35c84ccc56a803f3) )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, CRC(0be5cd13) SHA1(8f94a8fef6668aaf13329715fee81302dbd6c685) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
+	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, CRC(db5657a9) SHA1(abbb033edb9a5a0c66ee5981d1e4df1ab334a82d) )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, CRC(c1d2d170) SHA1(0f325815086fde90fd85360d3660042b0b68ba96) )	/* raw pcm samples */
 ROM_END
 
 ROM_START( ninjak2a )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
-	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
+	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, CRC(e6adca65) SHA1(33d483dde0853f37455cde32b461f4e919601b4b) )
+	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, CRC(d9284bd1) SHA1(e790fb1a718a1f7997931f2f390fe053655f231d) )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, CRC(ad275654) SHA1(7d29a17132adb19aeee9b98be5b76bd6e91f308e) )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, CRC(960725fb) SHA1(160c8bfaf089cbeeef2023f12379793079bff93b) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, CRC(7bfe6c9e) SHA1(aef8cbeb0024939bf65f77113a5cf777f6613722) )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
+	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, CRC(41a714b3) SHA1(b05f48d71a9837914c12c13e0b479c8a6dc8c25e) )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, 0xc913c4ab )
+	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, CRC(c913c4ab) SHA1(f822c5621b3e32c1a284f6367bdcace81c1c74b3) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, CRC(1b79c50a) SHA1(8954bc51cb9fbbe16b09381f35c84ccc56a803f3) )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, CRC(0be5cd13) SHA1(8f94a8fef6668aaf13329715fee81302dbd6c685) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
+	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, CRC(db5657a9) SHA1(abbb033edb9a5a0c66ee5981d1e4df1ab334a82d) )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, CRC(c1d2d170) SHA1(0f325815086fde90fd85360d3660042b0b68ba96) )	/* raw pcm samples */
 ROM_END
 
 ROM_START( ninjak2b )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
-	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
+	ROM_LOAD( "1.3s",         0x00000, 0x8000, CRC(cb4f4624) SHA1(4fc66641adc0a2c0eca332f27c5777df62fa507b) )
+	ROM_LOAD( "2.3q",         0x10000, 0x8000, CRC(0ad0c100) SHA1(c5bbc107ba07bd6950bb4d7377e827c084b8229b) )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, CRC(ad275654) SHA1(7d29a17132adb19aeee9b98be5b76bd6e91f308e) )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, CRC(5dac9426) SHA1(0916cddbbe1e93c32b96fe28e145d34b2a892e80) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, CRC(7bfe6c9e) SHA1(aef8cbeb0024939bf65f77113a5cf777f6613722) )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
+	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, CRC(41a714b3) SHA1(b05f48d71a9837914c12c13e0b479c8a6dc8c25e) )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, 0xc913c4ab )
+	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, CRC(c913c4ab) SHA1(f822c5621b3e32c1a284f6367bdcace81c1c74b3) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, CRC(1b79c50a) SHA1(8954bc51cb9fbbe16b09381f35c84ccc56a803f3) )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, CRC(0be5cd13) SHA1(8f94a8fef6668aaf13329715fee81302dbd6c685) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
+	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, CRC(db5657a9) SHA1(abbb033edb9a5a0c66ee5981d1e4df1ab334a82d) )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, CRC(c1d2d170) SHA1(0f325815086fde90fd85360d3660042b0b68ba96) )	/* raw pcm samples */
 ROM_END
 
 ROM_START( rdaction )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "1.3u",  	      0x00000, 0x8000, 0x5c475611 )
-	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
+	ROM_LOAD( "1.3u",  	      0x00000, 0x8000, CRC(5c475611) SHA1(2da88a95b5d68b259c8ae48af1438a82a1d601c1) )
+	ROM_LOAD( "2.3s",         0x10000, 0x8000, CRC(a1e23bd2) SHA1(c3b6574dc9fa66b4f41c37754a0d20a865f8bc28) )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, CRC(ad275654) SHA1(7d29a17132adb19aeee9b98be5b76bd6e91f308e) )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, CRC(960725fb) SHA1(160c8bfaf089cbeeef2023f12379793079bff93b) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, CRC(7bfe6c9e) SHA1(aef8cbeb0024939bf65f77113a5cf777f6613722) )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
+	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, CRC(41a714b3) SHA1(b05f48d71a9837914c12c13e0b479c8a6dc8c25e) )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, 0xc913c4ab )
+	ROM_LOAD( "nk2_10.rom",   0x08000, 0x4000, CRC(c913c4ab) SHA1(f822c5621b3e32c1a284f6367bdcace81c1c74b3) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, CRC(1b79c50a) SHA1(8954bc51cb9fbbe16b09381f35c84ccc56a803f3) )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
 	ROM_CONTINUE(             0x14000, 0x4000)
-	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, CRC(0be5cd13) SHA1(8f94a8fef6668aaf13329715fee81302dbd6c685) )
 	ROM_CONTINUE(             0x18000, 0x4000)
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
 	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "12.5n",        0x00000, 0x02000, 0x0936b365 )	/* foreground tiles */
+	ROM_LOAD( "12.5n",        0x00000, 0x02000, CRC(0936b365) SHA1(3705f42b76ab474357e77c1a9b8e3755c7ab2c0c) )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, CRC(c1d2d170) SHA1(0f325815086fde90fd85360d3660042b0b68ba96) )	/* raw pcm samples */
 ROM_END
 
 

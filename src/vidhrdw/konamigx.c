@@ -1,3 +1,5 @@
+#define VERBOSE 0
+
 /*
  * vidhrdw/konamigx.c - Konami GX video hardware (here there be dragons)
  *
@@ -7,6 +9,7 @@
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+#include "machine/konamigx.h"
 
 /*
 > the color DAC has a 8 bits r/g/b and a 8bits brightness
@@ -43,19 +46,41 @@ static int scrolld[2][4][2] = {
  	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
 };
 
-static int layer_colorbase[4], layers[4], layerpri[4];
-static int sprite_colorbase;
+static int layer_colorbase[4];//, layers[4], layerpri[4];
+static int spr_palshift, sprite_colorbase;
 static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
+static int gx_tilemode;
 
-extern data8_t gx_control1;
 
-static void konamigx_tile_callback(int layer, int *code, int *color)
+static void (*game_tile_callback)(int, int *, int *);
+
+static void konamigx_type2_tile_callback(int layer, int *code, int *color)
 {
-	tile_info.flags = TILE_FLIPYX((*color) & 3);
+	int d = *code;
 
-	*color = layer_colorbase[layer] | ((*color & 0xfc) >> 2);
-	*code = (gx_tilebanks[(*code & 0xe000)>>13]*0x2000)+(*code&0x1fff);
+	*code = (gx_tilebanks[(d & 0xe000)>>13]<<13) + (d & 0x1fff);
+	K055555GX_decode_vmixcolor(layer, color);
+}
+
+static void konamigx_alpha_tile_callback(int layer, int *code, int *color)
+{
+	int mixcode;
+	int d = *code;
+
+	mixcode = K055555GX_decode_vmixcolor(layer, color);
+
+	if (mixcode < 0)
+		*code = (gx_tilebanks[(d & 0xe000)>>13]<<13) + (d & 0x1fff);
+	else
+	{
+		/* save mixcode and mark tile alpha (unimplemented) */
+		*code = 0;
+
+		#if VERBOSE
+			usrintf_showmessage("skipped alpha tile(layer=%d mix=%d)", layer, mixcode);
+		#endif
+	}
 }
 
 /*
@@ -88,19 +113,6 @@ static void konamigx_tile_callback(int layer, int *code, int *color)
 > so, well, the top bits of the code are suspicious
 */
 
-static void konamigx_sprite_callback(int *code, int *color, int *priority_mask)
-{
-	int pri = (*color & 0x03e0) >> 3;
-
-	if (pri <= layerpri[3])					*priority_mask = 0;
-	else if (pri > layerpri[3] && pri <= layerpri[2])	*priority_mask = 0xff00;
-	else if (pri > layerpri[2] && pri <= layerpri[1])	*priority_mask = 0xff00|0xf0f0;
-	else if (pri > layerpri[1] && pri <= layerpri[0])	*priority_mask = 0xff00|0xf0f0|0xcccc;
-	else 							*priority_mask = 0xff00|0xf0f0|0xcccc|0xaaaa;
-
-	*color = sprite_colorbase | (*color & 0x001f);
-}
-
 static int _gxcommoninitnosprites(void)
 {
 	int i;
@@ -115,324 +127,300 @@ static int _gxcommoninitnosprites(void)
 
 	state_save_register_INT32("KGXVideo", 0, "tilebanks", gx_tilebanks, 8);
 
+	gx_invertlayersBC = 0;
+	gx_tilemode = 0;
+
+	// Documented relative offsets of non-flipped games are (-2, 0, 2, 3),(0, 0, 0, 0).
+	// (+ve values move layers to the right and -ve values move layers to the left)
+	// In most cases only a constant is needed to add to the X offsets to yield correct
+	// displacement. This should be done by the CCU but the CRT timings have not been
+	// figured out.
+	K056832_set_LayerOffset(0, -2, 0);
+	K056832_set_LayerOffset(1,  0, 0);
+	K056832_set_LayerOffset(2,  2, 0);
+	K056832_set_LayerOffset(3,  3, 0);
+
 	return 0;
 }
 
 static int _gxcommoninit(void)
 {
-	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX, -48, 24, konamigx_sprite_callback))
+	// (+ve values move objects to the right and -ve values move objects to the left)
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX, -26, -23, konamigx_type2_sprite_callback))
 	{
 		return 1;
 	}
-
-	gx_invertlayersBC = 0;
 
 	return _gxcommoninitnosprites();
 }
 
+
 VIDEO_START(konamigx_5bpp)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, scrolld, konamigx_tile_callback))
+	if (!strcmp(Machine->gamedrv->name,"sexyparo"))
+		game_tile_callback = konamigx_alpha_tile_callback;
+	else
+		game_tile_callback = konamigx_type2_tile_callback;
+
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, scrolld, game_tile_callback))
 	{
 		return 1;
 	}
+
+	if (_gxcommoninit()) return 1;
+
+	spr_palshift = 5;
 
 	/* here are some hand tuned per game scroll offsets to go with the per game visible areas,
 	   i see no better way of doing this for now... */
 
 	if (!strcmp(Machine->gamedrv->name,"tbyahhoo"))
 	{
-		K056832_set_LayerOffset(0, 0x18, 1);
-		K056832_set_LayerOffset(1, 0x16, 1); // tv screen
-		K056832_set_LayerOffset(2, 0x14, 1); // background on title screen
-		K056832_set_LayerOffset(3, 0x13, 1);
-	}
+		K056832_set_UpdateMode(1);
+		gx_tilemode = 1;
+	} else
 
 	if (!strcmp(Machine->gamedrv->name,"puzldama"))
 	{
-		K056832_set_LayerOffset(0, 5, 1);
-		K056832_set_LayerOffset(1, 3, 1);
-		K056832_set_LayerOffset(2, 1, 1);
-		K056832_set_LayerOffset(3, 0, 1);
-	}
+		K053247_set_SpriteOffset(-46, -23);
+		konamigx_mixer_primode(4);
+	} else
 
 	if (!strcmp(Machine->gamedrv->name,"daiskiss"))
 	{
-		K056832_set_LayerOffset(0, 23, 0);
-		K056832_set_LayerOffset(1, 22, 0);
-		K056832_set_LayerOffset(2, 20, 0);
-		K056832_set_LayerOffset(3, 19, 0);
-	}
+		konamigx_mixer_primode(3);
+	} else
 
-	if ((!strcmp(Machine->gamedrv->name,"gokuparo")) || (!strcmp(Machine->gamedrv->name,"sexyparo")) || (!strcmp(Machine->gamedrv->name,"fantjour")) )
+	if (!strcmp(Machine->gamedrv->name,"gokuparo") || !strcmp(Machine->gamedrv->name,"fantjour"))
+ 	{
+		K053247_set_SpriteOffset(-46, -23);
+	} else
+
+	if (!strcmp(Machine->gamedrv->name,"sexyparo"))
 	{
-		// references = intro, select screens etc.
-		K056832_set_LayerOffset(0, 8, 1);
-		K056832_set_LayerOffset(1, 6, 1);
-		K056832_set_LayerOffset(2, 4, 1);
-		K056832_set_LayerOffset(3, 2, 1);
+		K053247_set_SpriteOffset(-42, -23);
 	}
 
+	if (konamigx_mixer_init(0)) return 1;
 
-	return _gxcommoninit();
+	return 0;
+}
+
+VIDEO_START(dragoonj)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, scrolld, konamigx_type2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (_gxcommoninitnosprites()) return 1;
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_RNG, -53, -23, konamigx_dragoonj_sprite_callback))
+	{
+		return 1;
+	}
+
+	spr_palshift = 4;
+
+	K056832_set_LayerOffset(0, -2+1, 0);
+	K056832_set_LayerOffset(1,  0+1, 0);
+	K056832_set_LayerOffset(2,  2+1, 0);
+	K056832_set_LayerOffset(3,  3+1, 0);
+
+	if (konamigx_mixer_init(0)) return 1;
+
+	return 0;
+}
+
+static void le2_sprite_callback(int *code, int *color, int *priority)
+{
+	int c = *color;
+
+	konamigx_type2_sprite_callback(code, color, priority);
+	*color = sprite_colorbase | (c & 0x001f);
 }
 
 VIDEO_START(le2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, scrolld, konamigx_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, scrolld, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
 
-	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -48, 24, konamigx_sprite_callback))
+	if (_gxcommoninitnosprites()) return 1;
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -46, -23, le2_sprite_callback))
 	{
 		return 1;
 	}
+
+	spr_palshift = 8;
 
 	gx_invertlayersBC = 1;
+	konamigx_mixer_primode(-1); // swapped priority of layer B and C?
 
-	return _gxcommoninitnosprites();
+	if (konamigx_mixer_init(0)) return 1;
+
+	return 0;
 }
 
 VIDEO_START(konamigx_6bpp)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, scrolld, konamigx_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, scrolld, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
 
-	_gxcommoninit();
+	if (_gxcommoninit()) return 1;
 
-	if (!strcmp(Machine->gamedrv->name,"tokkae"))
+	spr_palshift = 5;
+
+	if (!strcmp(Machine->gamedrv->name,"tokkae") || !strcmp(Machine->gamedrv->name,"tkmmpzdm"))
 	{
-		K056832_set_LayerOffset(0, 4, 0);
-		K056832_set_LayerOffset(1, 2, 0);
-		K056832_set_LayerOffset(2, 0, 0);
-		K056832_set_LayerOffset(3, -1, 0);
+		K053247_set_SpriteOffset(-46, -23);
+		konamigx_mixer_primode(4);
 	}
+
+	if (konamigx_mixer_init(0)) return 1;
+
 	return 0;
 }
 
 VIDEO_START(konamigx_6bpp_2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, scrolld, konamigx_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, scrolld, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
 
-	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX6, -48, 24, konamigx_sprite_callback))
+	if (!strcmp(Machine->gamedrv->name,"salmndr2"))
 	{
-		return 1;
-	}
+		if (_gxcommoninitnosprites()) return 1;
 
-	return _gxcommoninitnosprites();
-}
-
-/* useful function to sort the four tile layers by priority order */
-/* suboptimal, but for such a size who cares ? */
-static void sortlayers(int *layer, int *pri)
-{
-#define SWAP(a,b) \
-	if (pri[a] <= pri[b]) \
-	{ \
-		int t; \
-		t = pri[a]; pri[a] = pri[b]; pri[b] = t; \
-		t = layer[a]; layer[a] = layer[b]; layer[b] = t; \
-	}
-
-	SWAP(0, 1)
-	SWAP(0, 2)
-	SWAP(0, 3)
-	SWAP(1, 2)
-	SWAP(1, 3)
-	SWAP(2, 3)
-}
-
-VIDEO_UPDATE(konamigx)
-{
-	int i, old, banking_recalc = 0;
-#if 0
-	int x, y;
-	UINT32 *pLine;
-#endif
-	static UINT8 enablemasks[4] = { K55_INP_VRAM_A, K55_INP_VRAM_B, K55_INP_VRAM_C, K55_INP_VRAM_D };
-	static UINT8 blendmasks[4] = { 3, 0xc, 0x30, 0xc0 };
-
-	#ifdef MAME_DEBUG
-	if (K055555_read_register(K55_CONTROL) & K55_CTL_FLIPPRI)
-	{
-		logerror("WARNING: inverted priority semantics enabled!\n");
-	}
-	#endif
-
-	K054338_update_all_shadows();
-
-
-	K056832_tilemap_update();
-
-	fillbitmap(priority_bitmap, 0, NULL);
-
-	/* control register selects gradient vs. solid BG color */
-	K054338_fill_backcolor(bitmap, (gx_control1 & 0x20));
-#if 0
-	if (!(gx_control1 & 0x20))
-	{
-		K054338_fill_solid_bg(bitmap);
-	}
-	else	/* Use the K055555's background */
-	{
-		int pbase = K055555_read_register(K55_PALBASE_BG) << 9;
-		int ctl = K055555_read_register(K55_CONTROL);
-
-		if (ctl & K55_CTL_GRADENABLE)
+		if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX6, -48, -23, konamigx_salmndr2_sprite_callback))
 		{
-			/* it's a gradient, check which direction */
-			if (ctl & K55_CTL_GRADDIR)
-			{	/* horizontal gradient */
-				for (y = 0; y < bitmap->height; y++)
-				{
-					pLine = (UINT32 *)bitmap->base;
-					pLine += ((bitmap->rowbytes / 4)*y);
-					for (x = 0; x < bitmap->width; x++)
-						*pLine++ = paletteram32[pbase+x];
-				}
-			}
-			else	/* vertical gradient */
-			{
-				for (y = 0; y < bitmap->height; y++)
-				{
-					pLine = (UINT32 *)bitmap->base;
-					pLine += ((bitmap->rowbytes / 4)*y);
-					for (x = 0; x < bitmap->width; x++)
-						*pLine++ = paletteram32[pbase+y];
-				}
-			}
+			return 1;
 		}
-		else	/* not a gradient */
-		{
-			for (y = 0; y < bitmap->height; y++)
-			{
-				pLine = (UINT32 *)bitmap->base;
-				pLine += ((bitmap->rowbytes / 4)*y);
-				for (x = 0; x < bitmap->width; x++)
-					*pLine++ = paletteram32[pbase];
-			}
-		}
-	}
-#endif
-	layers[0] = 0;
-	layers[1] = 1;
-	layers[2] = 2;
-	layers[3] = 3;
-	layerpri[0] = K055555_read_register(K55_PRIINP_0);
-
-	/* LE2 works better with this, no idea why, as it contradicts the documentation */
-	if (gx_invertlayersBC)
-	{
-		layerpri[1] = K055555_read_register(K55_PRIINP_6);
-		layerpri[2] = K055555_read_register(K55_PRIINP_3);
 	}
 	else
 	{
-		layerpri[1] = K055555_read_register(K55_PRIINP_3);
-		layerpri[2] = K055555_read_register(K55_PRIINP_6);
+		if (_gxcommoninit()) return 1;
 	}
-	layerpri[3] = K055555_read_register(K55_PRIINP_7);
 
-	sortlayers(layers, layerpri);
+	spr_palshift = 5;
 
-#ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_D))
+	if (konamigx_mixer_init(0)) return 1;
+
+	return 0;
+}
+
+VIDEO_START(konamigx_type1)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, scrolld, konamigx_type2_tile_callback))
 	{
-		logerror("DEBUG DUMP\n");
-		logerror("Plane enables = %x\n", K055555_read_register(K55_INPUT_ENABLES));
-		logerror("Blend enables = %x\n", K055555_read_register(K55_BLEND_ENABLES));
-		logerror("blend factor = %x\n", K054338_read_register(K338_REG_PBLEND)&0x1f);
-		logerror("mixer pri: %d %d %d %d %d %d %d %d\n", K055555_read_register(K55_PRIINP_0), K055555_read_register(K55_PRIINP_1), K055555_read_register(K55_PRIINP_2),
-			K055555_read_register(K55_PRIINP_3), K055555_read_register(K55_PRIINP_4), K055555_read_register(K55_PRIINP_5), K055555_read_register(K55_PRIINP_6),
-			K055555_read_register(K55_PRIINP_7));
-		logerror("priorities: %d %d %d %d\n", layerpri[0], layerpri[1], layerpri[2], layerpri[3]);
-		logerror("layers in pri order: %d %d %d %d\n", layers[0], layers[1], layers[2], layers[3]);
-		logerror("palettes: %x %x %x %x %x %x\n",
-			K055555_get_palette_index(0),
-			K055555_get_palette_index(1),
-			K055555_get_palette_index(2),
-			K055555_get_palette_index(3),
-			K055555_get_palette_index(4),
-			K055555_get_palette_index(5));
+		return 1;
 	}
-#endif
+
+	if (_gxcommoninitnosprites()) return 1;
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX6, -53, -23, konamigx_type2_sprite_callback))
+	{
+		return 1;
+	}
+
+	spr_palshift = 4;
+
+	if (!strcmp(Machine->gamedrv->name,"opengolf"))
+	{
+		K056832_set_LayerOffset(0, -2+1, 0);
+		K056832_set_LayerOffset(1,  0+1, 0);
+		K056832_set_LayerOffset(2,  2+1, 0);
+		K056832_set_LayerOffset(3,  3+1, 0);
+	}
+
+	if (konamigx_mixer_init(0)) return 1;
+
+	return 0;
+}
+
+
+VIDEO_UPDATE(konamigx)
+{
+	int i, newbank, newbase, dirty, unchained, blendmode;
 
 	/* if any banks are different from last render, we need to flush the planes */
-	for (i = 0; i < 8; i++)
+	for (dirty = 0, i = 0; i < 8; i++)
 	{
-		if (gx_oldbanks[i] != gx_tilebanks[i])
-		{
-			gx_oldbanks[i] = gx_tilebanks[i];
-			banking_recalc = 1;
-		}
+		newbank = gx_tilebanks[i];
+		if (gx_oldbanks[i] != newbank) { gx_oldbanks[i] = newbank; dirty = 1; }
 	}
 
-	for (i = 0; i < 4; i++)
+	if (gx_tilemode == 0)
 	{
-		old = layer_colorbase[i];
-		layer_colorbase[i] = K055555_get_palette_index(i)<<6;
-		if ((old != layer_colorbase[i]) || (banking_recalc)) K056832_mark_plane_dirty(i);
-	}
-
-	sprite_colorbase = K055555_get_palette_index(4)<<5;
-
-	for(i=0; i<4; i++)
-	{
-		if (K055555_read_register(K55_INPUT_ENABLES) & enablemasks[layers[i]])
+		// driver approximates tile update in mode 0 for speed
+		unchained = K056832_get_LayerAssociation();
+		for (i=0; i<4; i++)
 		{
-			if ((K055555_read_register(K55_BLEND_ENABLES) &	blendmasks[layers[i]]) &&
-				(K055555_read_register(K55_BLEND_ENABLES) != 0xff))
+			newbase = K055555_get_palette_index(i)<<6;
+			if (layer_colorbase[i] != newbase)
 			{
-			    	if (K054338_set_alpha_level((K055555_read_register(K55_BLEND_ENABLES)>>(2*layers[i]))&0x3))
-	 				K056832_tilemap_draw(bitmap, cliprect, layers[i], TILEMAP_ALPHA, 1<<i);
-			}
-			else
-			{
-				K056832_tilemap_draw(bitmap, cliprect, layers[i], 0, 1<<i);
+				layer_colorbase[i] = newbase;
+
+				if (unchained)
+					K056832_mark_plane_dirty(i);
+				else
+					dirty = 1;
 			}
 		}
 	}
-
-	if (K055555_read_register(K55_INPUT_ENABLES) & 0x10)
+	else
 	{
-		K053247GP_sprites_draw(bitmap, cliprect);
+		// K056832 does all the tracking in mode 1 for accuracy (Twinbee needs this)
 	}
+
+	if (dirty) K056832_MarkAllTilemapsDirty();
+
+	sprite_colorbase = K055555_get_palette_index(4)<<spr_palshift;
+
+	if (konamigx_cfgport >= 0)
+	{
+		// background detail tuning
+		switch (readinputport(konamigx_cfgport))
+		{
+			// Low : disable linescroll and all blend effects
+			case 0 : blendmode = 0x0000f555; break;
+
+			// Med : only disable linescroll which is the most costly
+			case 1 : blendmode = 0x0000f000; break;
+
+			// High: enable all effects
+			default: blendmode = 0;
+		}
+
+		// character detail tuning
+		switch (readinputport(konamigx_cfgport+1))
+		{
+			// Low : disable shadows and turn off depth buffers
+			case 0 : blendmode |= GXMIX_NOSHADOW + GXMIX_NOZBUF; break;
+
+			// Med : only disable shadows
+			case 1 : blendmode |= GXMIX_NOSHADOW; break;
+
+			// High: enable all shadows and depth buffers
+			default: blendmode |= 0;
+		}
+	}
+	else blendmode = 0;
+
+	konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
 
 	if( gx_invertlayersBC )
 	{
-		draw_crosshair( bitmap, readinputport( 9)*287/0xff+24, readinputport(10)*223/0xff+16, cliprect );
-		draw_crosshair( bitmap, readinputport(11)*287/0xff+24, readinputport(12)*223/0xff+16, cliprect );
+		draw_crosshair( bitmap, readinputport( 9)*287/0xff+26, readinputport(10)*223/0xff+16, cliprect );
+		draw_crosshair( bitmap, readinputport(11)*287/0xff+26, readinputport(12)*223/0xff+16, cliprect );
 	}
-
-// debug code for adjusting layer offsets
-#if 0
-	{
-		static int lay0_offset,lay1_offset,lay2_offset,lay3_offset;
-
-		if ( keyboard_pressed_memory(KEYCODE_Q) ) lay0_offset++;
-		if ( keyboard_pressed_memory(KEYCODE_A) ) lay0_offset--;
-		if ( keyboard_pressed_memory(KEYCODE_W) ) lay1_offset++;
-		if ( keyboard_pressed_memory(KEYCODE_S) ) lay1_offset--;
-		if ( keyboard_pressed_memory(KEYCODE_E) ) lay2_offset++;
-		if ( keyboard_pressed_memory(KEYCODE_D) ) lay2_offset--;
-		if ( keyboard_pressed_memory(KEYCODE_R) ) lay3_offset++;
-		if ( keyboard_pressed_memory(KEYCODE_F) ) lay3_offset--;
-
-		K056832_set_LayerOffset(0, lay0_offset, 1);
-		K056832_set_LayerOffset(1, lay1_offset, 1);
-		K056832_set_LayerOffset(2, lay2_offset, 1);
-		K056832_set_LayerOffset(3, lay3_offset, 1);
-
-		usrintf_showmessage	( "%02d %02d %02d %02d",lay0_offset,lay1_offset,lay2_offset,lay3_offset);
-	}
-#endif
 }
+
 
 WRITE32_HANDLER( konamigx_palette_w )
 {
@@ -457,9 +445,4 @@ WRITE32_HANDLER( konamigx_tilebank_w )
 		gx_tilebanks[offset*4+2] = (data>>8)&0xff;
 	if (!(mem_mask & 0xff))
 		gx_tilebanks[offset*4+3] = data&0xff;
-}
-
-WRITE32_HANDLER( konamigx_sprbank_w )
-{
-	logerror("Write %x (mask %x) to spritebank at %x\n", data, mem_mask, offset);
 }

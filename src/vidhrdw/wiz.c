@@ -271,6 +271,16 @@ static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sprite_ram,
   the main emulation engine.
 
 ***************************************************************************/
+
+VIDEO_UPDATE( kungfut )
+{
+	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
+	draw_background(bitmap, 2 + char_bank[0] , 0);
+	draw_foreground(bitmap, 0);
+	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area);
+	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area);
+}
+
 VIDEO_UPDATE( wiz )
 {
 	int bank;

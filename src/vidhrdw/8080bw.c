@@ -745,6 +745,24 @@ PALETTE_INIT( invadpt2 )
 	}
 }
 
+
+PALETTE_INIT( sflush )
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		/* this bit arrangment is a little unusual but are confirmed by screen shots */
+		int r = 0xff * ((i >> 0) & 1);
+		int g = 0xff * ((i >> 2) & 1);
+		int b = 0xff * ((i >> 1) & 1);
+		palette_set_color(i,r,g,b);
+	}
+	palette_set_color(0,0x80,0x80,0xff);
+}
+
+
 PALETTE_INIT( helifire )
 {
 	int i;

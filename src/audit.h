@@ -31,11 +31,9 @@ typedef struct
 	char rom[20];				/* name of rom file */
 	unsigned int explength;		/* expected length of rom file */
 	unsigned int length;		/* actual length of rom file */
-	unsigned int expchecksum;	/* expected checksum of rom file */
-	unsigned int checksum;		/* actual checksum of rom file */
+	const char* exphash;        /* expected hash data */
+	char hash[256];             /* computed hash informations */
 	int status;					/* status of rom file */
-	UINT8 expmd5[16];			/* expected md5 of disk file */
-	UINT8 md5[16];				/* md5 of disk file */
 } tAuditRecord;
 
 typedef struct
@@ -49,7 +47,7 @@ int AuditRomSet (int game, tAuditRecord **audit);
 int VerifyRomSet(int game,verify_printf_proc verify_printf);
 int AuditSampleSet (int game, tMissingSample **audit);
 int VerifySampleSet(int game,verify_printf_proc verify_printf);
-int RomInSet (const struct GameDriver *gamedrv, unsigned int crc);
+int RomInSet (const struct GameDriver *gamedrv, const char* hash);
 int RomsetMissing (int game);
 
 

@@ -5,7 +5,7 @@
 **
 ** Copyright (C) 2003 Jarek Burczynski
 **
-** Version 0.1
+** Version 0.2
 **
 
 Revision History:
@@ -1545,6 +1545,7 @@ INLINE void set_ksl_tl(OPL3 *chip,int slot,int v)
 		break;
 		}
 	}
+	else
 	{
 		/* in OPL2 mode */
 		SLOT->TLL = SLOT->TL + (CH->ksl_base>>SLOT->ksl);

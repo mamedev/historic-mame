@@ -105,5 +105,6 @@ VIDEO_UPDATE( 8080bw );
 
 PALETTE_INIT( invadpt2 );
 PALETTE_INIT( helifire );
+PALETTE_INIT( sflush );
 
 WRITE_HANDLER( bowler_bonus_display_w );

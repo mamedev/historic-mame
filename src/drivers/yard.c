@@ -330,104 +330,104 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 ROM_START( yard )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "yf-a-3p",      0x0000, 0x2000, 0x4586114f )
-	ROM_LOAD( "yf-a-3n",      0x2000, 0x2000, 0x947fa760 )
-	ROM_LOAD( "yf-a-3m",      0x4000, 0x2000, 0xd4975633 )
+	ROM_LOAD( "yf-a-3p",      0x0000, 0x2000, CRC(4586114f) SHA1(a31c68770e7a7eed805c5ba46af302c2895e3cee) )
+	ROM_LOAD( "yf-a-3n",      0x2000, 0x2000, CRC(947fa760) SHA1(bd6c2ee6e6800b063b81dbdd9fc929120019439d) )
+	ROM_LOAD( "yf-a-3m",      0x4000, 0x2000, CRC(d4975633) SHA1(84a506ae680a9dd26ef6f33880400e965ccf8260) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )
-	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )
-	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )
-	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
+	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, CRC(0392a60c) SHA1(68030504eafc58db250099edd3c3323bdb9eff6b) )
+	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, CRC(6588f41a) SHA1(209305efc68171886427216b9a0b37333f40daa8) )
+	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, CRC(bd054e44) SHA1(f10c32c70d60680229fc0891d0e1308015fa69d6) )
+	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, CRC(2490d4c3) SHA1(e4da7b01e8ad075b7e3c8beb6668faff72db9aa2) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "yf-a-3e",      0x00000, 0x2000, 0x77e9e9cc )	/* chars */
-	ROM_LOAD( "yf-a-3d",      0x02000, 0x2000, 0x854d5ff4 )
-	ROM_LOAD( "yf-a-3c",      0x04000, 0x2000, 0x0cd8ffad )
+	ROM_LOAD( "yf-a-3e",      0x00000, 0x2000, CRC(77e9e9cc) SHA1(90b0226fc125713dbee2804aeceeb5aa2c8e275e) )	/* chars */
+	ROM_LOAD( "yf-a-3d",      0x02000, 0x2000, CRC(854d5ff4) SHA1(9ba09bfabf159facb57faecfe73a6258fa48d152) )
+	ROM_LOAD( "yf-a-3c",      0x04000, 0x2000, CRC(0cd8ffad) SHA1(bd1262de3823c34f7394b718477fb5bc58a6e293) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, 0x1299ae30 )	/* sprites */
-	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, 0x8708b888 )
-	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, 0xd9bb8ab8 )
-	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, 0x47077e8d )
-	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, 0x713ef31f )
-	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, 0xf49651cc )
+	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, CRC(1299ae30) SHA1(07d47f827d8bc78a41011ec02ab64036fb8a7a18) )	/* sprites */
+	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, CRC(8708b888) SHA1(8c4f305a339f23ec8ed40dfd72fac0f62ee65378) )
+	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, CRC(d9bb8ab8) SHA1(1325308b4c85355298fec4aa3e5fec1b4b13ad86) )
+	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, CRC(47077e8d) SHA1(5f78b15fb360e9926ef11841d5d86f2bd9af04d1) )
+	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, CRC(713ef31f) SHA1(b48df9ed4f26fded3c7eaac3a52b580b2dd60477) )
+	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, CRC(f49651cc) SHA1(5b87d7360bcd5883ec265b2a01a3e02e10a85345) )
 
 	ROM_REGION( 0x0520, REGION_PROMS, 0 )
-	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
-	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
-	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
-	ROM_LOAD( "yard.2h",      0x0220, 0x0100, 0xe1cdfb06 ) /* sprites lookup table */
-	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
-	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
+	ROM_LOAD( "yard.1c",      0x0000, 0x0100, CRC(08fa5103) SHA1(98af48dafbbaa42f58232bf74ccbf5da41723e71) ) /* chars palette low 4 bits */
+	ROM_LOAD( "yard.1d",      0x0100, 0x0100, CRC(7c04994c) SHA1(790bf1616335b9df4943cffcafa48d8e8aee009e) ) /* chars palette high 4 bits */
+	ROM_LOAD( "yard.1f",      0x0200, 0x0020, CRC(b8554da5) SHA1(963ca815b5f791b8a7b0937a5d392d5203049eb3) ) /* sprites palette */
+	ROM_LOAD( "yard.2h",      0x0220, 0x0100, CRC(e1cdfb06) SHA1(a8cc3456cfc272e3faac80370b2298d8e1f8c2fe) ) /* sprites lookup table */
+	ROM_LOAD( "yard.2n",      0x0320, 0x0100, CRC(cd85b646) SHA1(5268db705006058eec308afe474f4df3c15465bb) ) /* radar palette low 4 bits */
+	ROM_LOAD( "yard.2m",      0x0420, 0x0100, CRC(45384397) SHA1(e4c662ee81aef63efd8b4a45f85c4a78dc2d419e) ) /* radar palette high 4 bits */
 ROM_END
 
 ROM_START( vsyard )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "a-3p",         0x0000, 0x2000, 0x1edac08f )
-	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
-	ROM_LOAD( "a-3m",         0x4000, 0x2000, 0xcf783dad )
+	ROM_LOAD( "a-3p",         0x0000, 0x2000, CRC(1edac08f) SHA1(c6a3290e9dba663dccf0613853abfab8e912477d) )
+	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, CRC(3b9330f8) SHA1(b35fe72cf724cfb887906060bbcf40b0c896ccf0) )
+	ROM_LOAD( "a-3m",         0x4000, 0x2000, CRC(cf783dad) SHA1(0b1b875ac65ba90c92ca06d0aa01c477b7427322) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )
-	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )
-	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )
-	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
+	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, CRC(0392a60c) SHA1(68030504eafc58db250099edd3c3323bdb9eff6b) )
+	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, CRC(6588f41a) SHA1(209305efc68171886427216b9a0b37333f40daa8) )
+	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, CRC(bd054e44) SHA1(f10c32c70d60680229fc0891d0e1308015fa69d6) )
+	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, CRC(2490d4c3) SHA1(e4da7b01e8ad075b7e3c8beb6668faff72db9aa2) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "vyf-a-3a",     0x00000, 0x2000, 0x354d7330 )	/* chars */
-	ROM_LOAD( "vyf-a-3c",     0x02000, 0x2000, 0xf48eedca )
-	ROM_LOAD( "vyf-a-3d",     0x04000, 0x2000, 0x7d1b4d93 )
+	ROM_LOAD( "vyf-a-3a",     0x00000, 0x2000, CRC(354d7330) SHA1(0dac87e502d5e9089c4e5ca87c7626940a17e9b2) )	/* chars */
+	ROM_LOAD( "vyf-a-3c",     0x02000, 0x2000, CRC(f48eedca) SHA1(6aef3208de8b1dd4078de20c0b5ce96219c79d40) )
+	ROM_LOAD( "vyf-a-3d",     0x04000, 0x2000, CRC(7d1b4d93) SHA1(9389de1230b93f529c492af6fb911c00280cae8a) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, 0x1299ae30 )	/* sprites */
-	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, 0x8708b888 )
-	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, 0xd9bb8ab8 )
-	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, 0x47077e8d )
-	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, 0x713ef31f )
-	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, 0xf49651cc )
+	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, CRC(1299ae30) SHA1(07d47f827d8bc78a41011ec02ab64036fb8a7a18) )	/* sprites */
+	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, CRC(8708b888) SHA1(8c4f305a339f23ec8ed40dfd72fac0f62ee65378) )
+	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, CRC(d9bb8ab8) SHA1(1325308b4c85355298fec4aa3e5fec1b4b13ad86) )
+	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, CRC(47077e8d) SHA1(5f78b15fb360e9926ef11841d5d86f2bd9af04d1) )
+	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, CRC(713ef31f) SHA1(b48df9ed4f26fded3c7eaac3a52b580b2dd60477) )
+	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, CRC(f49651cc) SHA1(5b87d7360bcd5883ec265b2a01a3e02e10a85345) )
 
 	ROM_REGION( 0x0520, REGION_PROMS, 0 )
-	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
-	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
-	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
-	ROM_LOAD( "yard.2h",      0x0220, 0x0100, 0xe1cdfb06 ) /* sprites lookup table */
-	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
-	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
+	ROM_LOAD( "yard.1c",      0x0000, 0x0100, CRC(08fa5103) SHA1(98af48dafbbaa42f58232bf74ccbf5da41723e71) ) /* chars palette low 4 bits */
+	ROM_LOAD( "yard.1d",      0x0100, 0x0100, CRC(7c04994c) SHA1(790bf1616335b9df4943cffcafa48d8e8aee009e) ) /* chars palette high 4 bits */
+	ROM_LOAD( "yard.1f",      0x0200, 0x0020, CRC(b8554da5) SHA1(963ca815b5f791b8a7b0937a5d392d5203049eb3) ) /* sprites palette */
+	ROM_LOAD( "yard.2h",      0x0220, 0x0100, CRC(e1cdfb06) SHA1(a8cc3456cfc272e3faac80370b2298d8e1f8c2fe) ) /* sprites lookup table */
+	ROM_LOAD( "yard.2n",      0x0320, 0x0100, CRC(cd85b646) SHA1(5268db705006058eec308afe474f4df3c15465bb) ) /* radar palette low 4 bits */
+	ROM_LOAD( "yard.2m",      0x0420, 0x0100, CRC(45384397) SHA1(e4c662ee81aef63efd8b4a45f85c4a78dc2d419e) ) /* radar palette high 4 bits */
 ROM_END
 
 ROM_START( vsyard2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "vyf-a-3n",     0x0000, 0x2000, 0x418e01fc )
-	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
-	ROM_LOAD( "vyf-a-3k",     0x4000, 0x2000, 0xa0ec15bb )
+	ROM_LOAD( "vyf-a-3n",     0x0000, 0x2000, CRC(418e01fc) SHA1(56a6515735cd88ec803e24574a28aef823a5d36b) )
+	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, CRC(3b9330f8) SHA1(b35fe72cf724cfb887906060bbcf40b0c896ccf0) )
+	ROM_LOAD( "vyf-a-3k",     0x4000, 0x2000, CRC(a0ec15bb) SHA1(a5ce9341e9d05e33c025ac62a27faf738c88326e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )
-	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )
-	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )
-	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
+	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, CRC(0392a60c) SHA1(68030504eafc58db250099edd3c3323bdb9eff6b) )
+	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, CRC(6588f41a) SHA1(209305efc68171886427216b9a0b37333f40daa8) )
+	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, CRC(bd054e44) SHA1(f10c32c70d60680229fc0891d0e1308015fa69d6) )
+	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, CRC(2490d4c3) SHA1(e4da7b01e8ad075b7e3c8beb6668faff72db9aa2) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "vyf-a-3a",     0x00000, 0x2000, 0x354d7330 )	/* chars */
-	ROM_LOAD( "vyf-a-3c",     0x02000, 0x2000, 0xf48eedca )
-	ROM_LOAD( "vyf-a-3d",     0x04000, 0x2000, 0x7d1b4d93 )
+	ROM_LOAD( "vyf-a-3a",     0x00000, 0x2000, CRC(354d7330) SHA1(0dac87e502d5e9089c4e5ca87c7626940a17e9b2) )	/* chars */
+	ROM_LOAD( "vyf-a-3c",     0x02000, 0x2000, CRC(f48eedca) SHA1(6aef3208de8b1dd4078de20c0b5ce96219c79d40) )
+	ROM_LOAD( "vyf-a-3d",     0x04000, 0x2000, CRC(7d1b4d93) SHA1(9389de1230b93f529c492af6fb911c00280cae8a) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, 0x1299ae30 )	/* sprites */
-	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, 0x8708b888 )
-	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, 0xd9bb8ab8 )
-	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, 0x47077e8d )
-	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, 0x713ef31f )
-	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, 0xf49651cc )
+	ROM_LOAD( "yf-b-5b",      0x00000, 0x2000, CRC(1299ae30) SHA1(07d47f827d8bc78a41011ec02ab64036fb8a7a18) )	/* sprites */
+	ROM_LOAD( "yf-b-5c",      0x02000, 0x2000, CRC(8708b888) SHA1(8c4f305a339f23ec8ed40dfd72fac0f62ee65378) )
+	ROM_LOAD( "yf-b-5f",      0x04000, 0x2000, CRC(d9bb8ab8) SHA1(1325308b4c85355298fec4aa3e5fec1b4b13ad86) )
+	ROM_LOAD( "yf-b-5e",      0x06000, 0x2000, CRC(47077e8d) SHA1(5f78b15fb360e9926ef11841d5d86f2bd9af04d1) )
+	ROM_LOAD( "yf-b-5j",      0x08000, 0x2000, CRC(713ef31f) SHA1(b48df9ed4f26fded3c7eaac3a52b580b2dd60477) )
+	ROM_LOAD( "yf-b-5k",      0x0a000, 0x2000, CRC(f49651cc) SHA1(5b87d7360bcd5883ec265b2a01a3e02e10a85345) )
 
 	ROM_REGION( 0x0520, REGION_PROMS, 0 )
-	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
-	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
-	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
-	ROM_LOAD( "yard.2h",      0x0220, 0x0100, 0xe1cdfb06 ) /* sprites lookup table */
-	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
-	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
+	ROM_LOAD( "yard.1c",      0x0000, 0x0100, CRC(08fa5103) SHA1(98af48dafbbaa42f58232bf74ccbf5da41723e71) ) /* chars palette low 4 bits */
+	ROM_LOAD( "yard.1d",      0x0100, 0x0100, CRC(7c04994c) SHA1(790bf1616335b9df4943cffcafa48d8e8aee009e) ) /* chars palette high 4 bits */
+	ROM_LOAD( "yard.1f",      0x0200, 0x0020, CRC(b8554da5) SHA1(963ca815b5f791b8a7b0937a5d392d5203049eb3) ) /* sprites palette */
+	ROM_LOAD( "yard.2h",      0x0220, 0x0100, CRC(e1cdfb06) SHA1(a8cc3456cfc272e3faac80370b2298d8e1f8c2fe) ) /* sprites lookup table */
+	ROM_LOAD( "yard.2n",      0x0320, 0x0100, CRC(cd85b646) SHA1(5268db705006058eec308afe474f4df3c15465bb) ) /* radar palette low 4 bits */
+	ROM_LOAD( "yard.2m",      0x0420, 0x0100, CRC(45384397) SHA1(e4c662ee81aef63efd8b4a45f85c4a78dc2d419e) ) /* radar palette high 4 bits */
 ROM_END
 
 

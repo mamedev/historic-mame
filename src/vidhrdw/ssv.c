@@ -20,9 +20,8 @@
 
 		0.w		f--- ---- ---- ----		Shadow (Highlight?)
 				-edc ---- ---- ----		Each bit enables 2 bitplanes*
-				---- ba9- ---- ----		?
-				---- ---8 ---- ----		Use shadow, depth etc. specified here, instead
-										of those specified by the single-sprite(s)
+				---- ba-- ---- ----		X Size (1,2,4,8 tiles)
+				---- --98 ---- ----		Y Size (1,2,4,8 tiles)
 				---- ---- 765- ----		Index of a scroll to apply to the single-sprite(s)
 				---- ---- ---4 3210		Number of single-sprites, minus 1
 
@@ -134,6 +133,15 @@ Note: press Z to show some info on each sprite (debug builds only)
 #include "vidhrdw/generic.h"
 #include "seta.h"
 
+VIDEO_START( ssv )
+{
+	Machine->gfx[0]->color_granularity = 64; /* 256 colour sprites with palette selectable on 64 colour boundaries */
+
+	alpha_set_level(0x80);	// until proper shadows are implemented
+
+	return 0;
+}
+
 /* Scroll values + CRT controller registers */
 data16_t *ssv_scroll;
 
@@ -144,42 +152,12 @@ int ssv_tile_code[16];
 int ssv_sprites_offsx, ssv_sprites_offsy;
 int ssv_tilemap_offsx, ssv_tilemap_offsy;
 
-
-/***************************************************************************
-
-								Palette Init
-
-	The color code granularity is of 64 colors. Sprites are 256 color, so
-	we have to populate the colortable. Additionally, the hardware can
-	be made to ignore the top bits and render 64 color tiles, so we
-	arrange 2 sets of colors: the 2nd set maps 256 colors to the only 64
-	colors of the palettes. This is a dirty trick to avoid decoding
-	the tiles twice, but only works if whenever the low order bitplanes
-	are 0 (transparent pixel) so are the high order bitplanes!
-
-***************************************************************************/
-
-PALETTE_INIT( ssv )
-{
-	int color, pen;
-
-	// 6 bits / pixel
-	for( color = 0; color < (0x8000/64); color++ )
-		for( pen = 0; pen < 256; pen++ )
-			*(colortable++) = (color * 64 + (pen%64)) % 0x8000;
-
-	// 8 bits / pixel
-	for( color = 0; color < (0x8000/64); color++ )
-		for( pen = 0; pen < 256; pen++ )
-			*(colortable++) = (color * 64 + pen) % 0x8000;
-}
-
 /***************************************************************************
 
 	CRT controller, registers that are read
 	(vblank etc.?)
 
-				1c0000:
+				1c0000 (wait for bit .. to become ..)
 
 	keithlcy:	bit D, 0 -> 1
 
@@ -188,7 +166,8 @@ PALETTE_INIT( ssv )
 	hypreact:
 	meosism:
 	srmp7:
-	sxyreact:	bit F, 0
+	sxyreact:
+	ultrax:		bit F, 0
 
 	twineag2:
 	hypreac2:	bit C, 1 -> 0
@@ -247,6 +226,10 @@ PALETTE_INIT( ssv )
 	srmp7:		002b 002c 00d4 01c6 - 0001 000e 00fd 0106
 				0000 0000 e500 0000 - 0015 7140 0000 0000
 				02f2      b558	(flip)
+
+	stmblade:	0021 0026 00d6 01c6 - 0001 000e 00fe 0106
+				03f1 0711 5550 c080 - 0015 5940 0000 0000 <- 711 becomes 0 during gameplay
+				0301      0500	(flip)
 
 	sxyreact:	0021 0022 00cb 01c6 - 0001 000e 00fe 0106
 				0301 0000 0500 c000 - 0015 5140 0000 0000
@@ -395,6 +378,10 @@ cityscape				100030: 7304 1600 0000 007c (yoffs should not be used)
 						1c0008:	0800 00f2 05ff 5729
 
 
+[meosism]
+shadows					100100: 701f 051b 0041 0020 (16x16 shadow)
+						1028d8: 05aa 0030 f000 0470
+
 [srmp4]
 logo					100000: 6303 1680 0180 0078 (yoffs?)
 						10b400: 0001 0000 0000 0060
@@ -430,12 +417,43 @@ car shadow				100010: 8137 0640 0080 0030
 
 writings on finish		100130: 6109 4840 004e 0058 "good work"
 						124200: ee6e 0135 0024 0000 (16x16)
-						100130: 611e 4860 0058 0020 "you have proven"..
+						100158: 611e 4860 0058 0020 "you have proved yOur"..
 						124300: ee92 0137 0024 0014 (16x16)
 								..
-								ee7e 0137 fff4 0000 (16x16!!)
+								ee7e 0137 fff4 0000 (16x16!!)	; 'O'
+								..
 
-***************************************************************************/
+[ultrax]
+sprite begin of lev1	100010:	6b60 4280 0016 00a0
+						121400:	51a0 0042 6800 0c00 (64x64)
+
+From the above some noteworthy cases are:
+
+			101f60: 0006 0825 00b0 000c
+			104128: 1a3a 0000 63d4 0400		consider y size & depth
+
+			101030:	717f 40c0 0010 0000
+			120600:	0000 0000 0000 ffff		ignore y size & depth
+
+			100158: 611e 4860 0058 0020
+			124300	ee7e 0137 fff4 0000		ignore x size & depth
+
+			100f60: 6106 3893 0068 00c8
+			11c498: 00e0 00b2 6c00 0800		consider x size & y size
+
+			100100: 701f 051b 0041 0020
+			1028d8: 05aa 0030 f000 0470		consider depth
+
+			100010:	6b60 4280 0016 00a0
+			121400:	51a0 0042 6800 0c00
+
+			100140: 6003 04ca 0000 0000		tilemap
+			102650: 0003 0000 0000 0c00
+
+			100080: 000f 0410 0000 0000		tilemap
+			102080: 0002 0000 6200 0c00
+
+**************************************************************************/
 
 /* Draw a tilemap sprite */
 
@@ -510,14 +528,11 @@ static void ssv_draw_row(struct mame_bitmap *bitmap, int sx, int sy, int scroll)
 	sx1	=	sx - (x & 0xf);
 	sy1	=	sy - (y & 0xf);
 
-/* Flickering shadows for now */
-if (! (shadow && (cpu_getcurrentframe()&1)) )
-{
 	for (sx=sx1,x=x1; sx <= clip.max_x; sx+=0x10,x+=0x10)
 	{
 		for (sy=sy1,y=y1; sy <= clip.max_y; sy+=0x10,y+=0x10)
 		{
-			int tx, ty;
+			int tx, ty, gfx, transparency;
 
 			s3	=	&spriteram16[	page * (size * ((0x1000/0x200)/2))	+
 									((x & ((size -1) & ~0xf)) << 2)	+
@@ -533,7 +548,7 @@ if (! (shadow && (cpu_getcurrentframe()&1)) )
 			color	=	attr;
 
 			/* Select 256 or 64 color tiles */
-			color	+=	((mode & 0x0100) ? (0x8000/64) : 0);
+			gfx	=	((mode & 0x0100) ? 0 : 1);
 
 			/* Force 16x16 tiles ? */
 			if (flipx)	{ xstart = 1-1;  xend = -1; xinc = -1; }
@@ -542,24 +557,25 @@ if (! (shadow && (cpu_getcurrentframe()&1)) )
 			if (flipy)	{ ystart = 2-1;  yend = -1; yinc = -1; }
 			else		{ ystart = 0;    yend = 2;  yinc = +1; }
 
+			transparency = shadow ? TRANSPARENCY_ALPHA : TRANSPARENCY_PEN;
+
 			/* Draw a tile (16x16) */
 			for (tx = xstart; tx != xend; tx += xinc)
 			{
 				for (ty = ystart; ty != yend; ty += yinc)
 				{
-					drawgfx( bitmap,	Machine->gfx[0],
+					drawgfx( bitmap,	Machine->gfx[gfx],
 										code++,
 										color,
 										flipx, flipy,
 										sx + tx * 16, sy + ty * 8,
 										&clip,
-										TRANSPARENCY_PEN,0 );
-				}
-			}
-		}
-	}
-}
+										transparency ,0 );
+				} /* ty */
+			} /* tx */
 
+		} /* sy */
+	} /* sx */
 
 }
 
@@ -588,7 +604,7 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 		int attr, code, color, num, sprite;
 		int sx, x, xoffs, flipx, xnum, xstart, xend, xinc;
 		int sy, y, yoffs, flipy, ynum, ystart, yend, yinc;
-		int mode;
+		int mode,global_depth,global_xnum,global_ynum;
 
 		mode	=		s1[ 0 ];
 		sprite	=		s1[ 1 ];
@@ -608,19 +624,40 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 		yoffs	+=		ssv_scroll[((mode & 0x00e0) >> 4) + 0x42/2];
 
 		/* Number of single-sprites (1-32) */
-
-		num		=		(mode & 0x001f) + 1;
+		num				=	(mode & 0x001f) + 1;
+		global_ynum		=	(mode & 0x0300) << 2;
+		global_xnum		=	(mode & 0x0c00);
+		global_depth	=	(mode & 0xf000);
 
 		for( ; num > 0; num--,s2+=4 )
 		{
+			int depth, local_depth, local_xnum, local_ynum;
+
 			if (s2 >= end2)	break;
 
 			sx		=		s2[ 2 ];
 			sy		=		s2[ 3 ];
 
-// "tilemap" sprite
-			if ( 	(  (mode & 0x0100) && (mode & 0x0200) ) ||
-					( !(mode & 0x0100) && ((sy & 0x0c00) == 0x0c00) )	)
+			local_depth		=	sx & 0xf000;
+			local_xnum		=	sx & 0x0c00;
+			local_ynum		=	sy & 0x0c00;
+
+			depth = global_depth ? global_depth : local_depth;
+			xnum = local_xnum;
+			ynum = local_ynum;
+
+			if (global_depth && global_depth != local_depth)
+			{
+				if (global_xnum || global_ynum)
+				{
+					xnum = global_xnum;
+					ynum = global_ynum;
+				}
+				else
+					depth = local_depth;
+			}
+
+			if ( xnum == 0 && ynum == 0x0c00 )
 			{
 				int scroll;
 
@@ -634,10 +671,17 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 
 				ssv_draw_row(bitmap, sx, sy, scroll);
 			}
-// 	"normal" sprite
+/* 	"normal" sprite
+	hot spots:
+	"warning" in hypreac2 has mode & 0x0100 and is not 16x16
+	keithlcy high scores has mode & 0x0100 and y & 0x0c00 can be 0x0c00
+	drifto94 "you have proved yOur".. has mode & 0x0100 and x & 0x0c00 can be 0x0c00
+	ultrax (begin of lev1):	100010:	6b60 4280 0016 00a0
+							121400:	51a0 0042 6800 0c00	needs to be a normal sprite
+*/
 			else
 			{
-				int shadow;
+				int shadow, gfx, transparency;
 				if (s2 >= end2)	break;
 
 				code	=	s2[0];	// code high bits
@@ -650,32 +694,12 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 				color	=	attr;
 
 				/* Select 256 or 64 color tiles */
-				color	+=	((mode & 0x0100) ? (0x8000/64) : 0);
-				color	=	attr;
+				gfx		=	(depth & 0x1000) ? 0 : 1;
+				shadow	=	(depth & 0x8000);
 
 				/* Single-sprite tile size */
-
-				xnum = 1 << ((sx & 0x0c00) >> 10);	// 1, 2, 4 or 8 tiles
-				ynum = 1 << ((sy & 0x0c00) >> 10);	// 1, 2, 4 tiles (8 means tilemap sprite?)
-
-				if (	(mode & 0x0100)
-						&& !ssv_special		)	// kludge for hypreac2
-				{
-/*	hot spots:
-	"warning" in hypreac2 has mode & 0x0100 and is not 16x16
-	keithlcy high scores has mode & 0x0100 and y & 0x0c00 can be 0x0c00
-	drifto94 "you have proven" has mode & 0x0100 and x & 0x0c00 can be 0x0c00
-*/
-					color	+=	((mode & 0x1000) ? (0x8000/64) : 0);
-					shadow	=	((mode & 0x8000));
-					xnum = 1;
-					ynum = 2;
-				}
-				else
-				{
-					color	+=	((sx & 0x1000) ? (0x8000/64) : 0);
-					shadow	=	((sx & 0x8000));
-				}
+				xnum = 1 << (xnum >> 10);	// 1, 2, 4 or 8 tiles
+				ynum = 1 << (ynum >> 10);	// 1, 2, 4 tiles (8 means tilemap sprite?)
 
 				if (flipx)	{ xstart = xnum-1;  xend = -1;    xinc = -1; }
 				else		{ xstart = 0;       xend = xnum;  xinc = +1; }
@@ -692,32 +716,32 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 				sy	=	(sy & 0x1ff) - (sy & 0x200);
 
 				/* Tweak it (game specific) */
+				if (ssv_special == 2) sy = 232 - sy; // vasara2, wheres the register for this?
+
 				sx	=	ssv_sprites_offsx + sx;
-if (ssv_scroll[0x74/2] & 0x8000)	// srmp7
+if (ssv_scroll[0x74/2] & 0x8000)	// srmp7, twineag2, ultrax
 				sy	=	ssv_sprites_offsy + sy;	// ?
 else
 				sy	=	ssv_sprites_offsy - sy - (ynum-1) * 8;
 
 				/* Draw the tiles */
 
+				transparency = shadow ? TRANSPARENCY_ALPHA : TRANSPARENCY_PEN;
 
-/* Flickering shadows for now */
-if (! (shadow && (cpu_getcurrentframe()&1)) )
-{
 				for (x = xstart; x != xend; x += xinc)
 				{
 					for (y = ystart; y != yend; y += yinc)
 					{
-						drawgfx( bitmap,	Machine->gfx[0],
+						drawgfx( bitmap,	Machine->gfx[gfx],
 											code++,
 											color,
 											flipx, flipy,
-											sx + x * 16, sy  + y * 8,
+											sx + x * 16, sy + y * 8,
 											&Machine->visible_area,
-											TRANSPARENCY_PEN,0 );
+											transparency, 0 );
 					}
 				}
-}
+
 				#ifdef MAME_DEBUG
 				if (keyboard_pressed(KEYCODE_Z))	/* Display some info on each sprite */
 				{	struct DisplayText dt[2];	char buf[10];

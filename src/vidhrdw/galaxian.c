@@ -6,7 +6,6 @@
 
 #include "driver.h"
 
-
 static struct rectangle _spritevisiblearea =
 {
 	2*8+1, 32*8-1,
@@ -32,13 +31,16 @@ data8_t *galaxian_spriteram;
 data8_t *galaxian_spriteram2;
 data8_t *galaxian_attributesram;
 data8_t *galaxian_bulletsram;
+data8_t *rockclim_videoram;
 size_t galaxian_spriteram_size;
 size_t galaxian_spriteram2_size;
 size_t galaxian_bulletsram_size;
 
 
 static void get_tile_info(int tile_index);
+static void rockclim_get_tile_info(int tile_index);
 static struct tilemap *tilemap;
+static struct tilemap *rockclim_tilemap;
 static int mooncrst_gfxextend;
 static int gfxbank[5];
 static int spriteram2_present;
@@ -276,7 +278,36 @@ PALETTE_INIT( frogger )
 	palette_set_color(BACKGROUND_COLOR_BASE,0,0,0x47);
 }
 
+PALETTE_INIT( rockclim )
+{
+	int i;
 
+
+	/* first, the character/sprite palette */
+
+	for (i = 0;i < memory_region_length(REGION_PROMS);i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+		/* red component */
+		bit0 = BIT(*color_prom,0);
+		bit1 = BIT(*color_prom,1);
+		bit2 = BIT(*color_prom,2);
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = BIT(*color_prom,3);
+		bit1 = BIT(*color_prom,4);
+		bit2 = BIT(*color_prom,5);
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = BIT(*color_prom,6);
+		bit1 = BIT(*color_prom,7);
+		b = 0x4f * bit0 + 0xa8 * bit1;
+
+		palette_set_color(i,r,g,b);
+		color_prom++;
+	}
+}
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -755,6 +786,29 @@ VIDEO_START( newsin7 )
 }
 
 
+static void rockclim_draw_background(struct mame_bitmap *bitmap)
+{
+	tilemap_draw(bitmap,0,rockclim_tilemap, 0,0);
+}
+
+static void rockclim_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+{
+	if (gfxbank[2])	*code|=0x40;
+}
+
+VIDEO_START( rockclim )
+{
+	int ret = video_start_galaxian();
+	rockclim_tilemap = tilemap_create(rockclim_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	draw_background = rockclim_draw_background;
+	modify_charcode = mooncrst_modify_charcode;
+	modify_spritecode = rockclim_modify_spritecode;
+	return ret;
+}
+
+
+
+
 WRITE_HANDLER( galaxian_videoram_w )
 {
 	if (galaxian_videoram[offset] != data)
@@ -884,6 +938,39 @@ WRITE_HANDLER( galaxian_gfxbank_w )
 		tilemap_mark_all_tiles_dirty(tilemap);
 	}
 }
+
+WRITE_HANDLER( rockclim_videoram_w )
+{
+	if (rockclim_videoram[offset] != data)
+	{
+		rockclim_videoram[offset] = data;
+		tilemap_mark_tile_dirty(rockclim_tilemap, offset);
+	}
+}
+
+static int rockclim_v=0;
+static int rockclim_h=0;
+
+WRITE_HANDLER( rockclim_scroll_w )
+{
+	
+	
+	switch(offset&3)
+	{
+		case 0: rockclim_h=(rockclim_h&0xff00)|data;tilemap_set_scrollx(rockclim_tilemap , 0, rockclim_h );break;
+		case 1:	rockclim_h=(rockclim_h&0xff)|(data<<8);tilemap_set_scrollx(rockclim_tilemap , 0, rockclim_h );break;
+		case 2:	rockclim_v=(rockclim_v&0xff00)|data;tilemap_set_scrolly(rockclim_tilemap , 0, rockclim_v );break;
+		case 3:	rockclim_v=(rockclim_v&0xff)|(data<<8);tilemap_set_scrolly(rockclim_tilemap , 0, rockclim_v );break;
+	}
+	
+}
+
+
+READ_HANDLER( rockclim_videoram_r )
+{
+	return rockclim_videoram[offset];
+}
+
 
 
 /* character banking functions */
@@ -1675,6 +1762,11 @@ static void get_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
+static void rockclim_get_tile_info(int tile_index)
+{
+	UINT16 code = rockclim_videoram[tile_index];
+	SET_TILE_INFO(2, code, 0, 0)
+}
 
 static void draw_bullets_common(struct mame_bitmap *bitmap)
 {

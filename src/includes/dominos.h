@@ -17,3 +17,5 @@ WRITE_HANDLER( dominos_lamp1_w );
 /*----------- defined in vidhrdw/dominos.c -----------*/
 
 VIDEO_UPDATE( dominos );
+
+extern unsigned char *dominos_sound_ram;

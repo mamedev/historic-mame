@@ -302,47 +302,47 @@ MACHINE_DRIVER_END
 
 ROM_START( blockout )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
-	ROM_LOAD16_BYTE( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
-	ROM_LOAD16_BYTE( "bo29a1-2.bin", 0x00001, 0x20000, 0x5984d5a2 )
+	ROM_LOAD16_BYTE( "bo29a0-2.bin", 0x00000, 0x20000, CRC(b0103427) SHA1(53cac2adc04783abbde21e9f3c0e655f22f68f69) )
+	ROM_LOAD16_BYTE( "bo29a1-2.bin", 0x00001, 0x20000, CRC(5984d5a2) SHA1(4b350856d0313d40eaa3d8a8d9e310f74bc20398) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
+	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, CRC(3ea01f78) SHA1(5fc4ad4d9f03d7c26d2afc3e7ede75589e40b0d8) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
+	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, CRC(15c5a99d) SHA1(89091eda454a028fd1f17501584bd589baf6d523) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
+	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, CRC(b25bbda7) SHA1(840f1470886bd0019db3cd29e3d1d80205a65f48) )	/* unknown */
 ROM_END
 
 ROM_START( blckout2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
-	ROM_LOAD16_BYTE( "29a0",         0x00000, 0x20000, 0x605f931e )
-	ROM_LOAD16_BYTE( "29a1",         0x00001, 0x20000, 0x38f07000 )
+	ROM_LOAD16_BYTE( "29a0",         0x00000, 0x20000, CRC(605f931e) SHA1(65fa7227dafde1fc8564e09fa949fe575b394d8a) )
+	ROM_LOAD16_BYTE( "29a1",         0x00001, 0x20000, CRC(38f07000) SHA1(e4070e3067d77cc1b0d8d0c63786f2729c5c703a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
+	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, CRC(3ea01f78) SHA1(5fc4ad4d9f03d7c26d2afc3e7ede75589e40b0d8) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
+	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, CRC(15c5a99d) SHA1(89091eda454a028fd1f17501584bd589baf6d523) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
+	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, CRC(b25bbda7) SHA1(840f1470886bd0019db3cd29e3d1d80205a65f48) )	/* unknown */
 ROM_END
 
 ROM_START( blckoutj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
-	ROM_LOAD16_BYTE( "2.bin",         0x00000, 0x20000, 0xe16cf065 )
-	ROM_LOAD16_BYTE( "1.bin",         0x00001, 0x20000, 0x950b28a3 )
+	ROM_LOAD16_BYTE( "2.bin",         0x00000, 0x20000, CRC(e16cf065) SHA1(541b30b054cf08f10d6ca4746423759f4326c005) )
+	ROM_LOAD16_BYTE( "1.bin",         0x00001, 0x20000, CRC(950b28a3) SHA1(7d1635ac2a3fc1efdd2f78cd6038bd7b4c907b1b) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
+	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, CRC(3ea01f78) SHA1(5fc4ad4d9f03d7c26d2afc3e7ede75589e40b0d8) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
+	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, CRC(15c5a99d) SHA1(89091eda454a028fd1f17501584bd589baf6d523) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
+	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, CRC(b25bbda7) SHA1(840f1470886bd0019db3cd29e3d1d80205a65f48) )	/* unknown */
 ROM_END
 
 GAME( 1989, blockout, 0,        blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 1)" )

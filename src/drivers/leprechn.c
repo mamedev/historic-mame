@@ -201,32 +201,32 @@ MACHINE_DRIVER_END
 
 ROM_START( leprechn )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for the main CPU */
-	ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
-	ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
-	ROM_LOAD( "lep3",         0xa000, 0x1000, 0xa2eaa016 )
-	ROM_LOAD( "lep4",         0xb000, 0x1000, 0x6c12a065 )
-	ROM_LOAD( "lep5",         0xc000, 0x1000, 0x21ddb539 )
-	ROM_LOAD( "lep6",         0xd000, 0x1000, 0x03c34dce )
-	ROM_LOAD( "lep7",         0xe000, 0x1000, 0x7e06d56d )
-	ROM_LOAD( "lep8",         0xf000, 0x1000, 0x097ede60 )
+	ROM_LOAD( "lep1",         0x8000, 0x1000, CRC(2c4a46ca) SHA1(28a157c1514bc9f27cc27baddb83cf1a1887f3d1) )
+	ROM_LOAD( "lep2",         0x9000, 0x1000, CRC(6ed26b3e) SHA1(4ee5d09200d9e8f94ae29751c8ee838faa268f15) )
+	ROM_LOAD( "lep3",         0xa000, 0x1000, CRC(a2eaa016) SHA1(be992ee787766137fd800ec59529c98ef2e6991e) )
+	ROM_LOAD( "lep4",         0xb000, 0x1000, CRC(6c12a065) SHA1(2acae6a5b94cbdcc550cee88a7be9254fdae908c) )
+	ROM_LOAD( "lep5",         0xc000, 0x1000, CRC(21ddb539) SHA1(b4dd0a1916adc076fa6084c315459fcb2522161e) )
+	ROM_LOAD( "lep6",         0xd000, 0x1000, CRC(03c34dce) SHA1(6dff202e1a3d0643050f3287f6b5906613d56511) )
+	ROM_LOAD( "lep7",         0xe000, 0x1000, CRC(7e06d56d) SHA1(5f68f2047969d803b752a4cd02e0e0af916c8358) )
+	ROM_LOAD( "lep8",         0xf000, 0x1000, CRC(097ede60) SHA1(5509c41167c066fa4e7f4f4bd1ce9cd00773a82c) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the audio CPU */
-	ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
+	ROM_LOAD( "lepsound",     0xf000, 0x1000, CRC(6651e294) SHA1(ce2875fc4df61a30d51d3bf2153864b562601151) )
 ROM_END
 
 ROM_START( potogold )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for the main CPU */
-	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
-	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
-	ROM_LOAD( "pog.pg3",      0xa000, 0x1000, 0x81cfb516 )
-	ROM_LOAD( "pog.pg4",      0xb000, 0x1000, 0xd61b1f33 )
-	ROM_LOAD( "pog.pg5",      0xc000, 0x1000, 0xeee7597e )
-	ROM_LOAD( "pog.pg6",      0xd000, 0x1000, 0x25e682bc )
-	ROM_LOAD( "pog.pg7",      0xe000, 0x1000, 0x84399f54 )
-	ROM_LOAD( "pog.pg8",      0xf000, 0x1000, 0x9e995a1a )
+	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, CRC(9f1dbda6) SHA1(baf20e9a0793c0f1529396f95a820bd1f9431465) )
+	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, CRC(a70e3811) SHA1(7ee306dc7d75a7d3fd497870ec92bef9d86535e9) )
+	ROM_LOAD( "pog.pg3",      0xa000, 0x1000, CRC(81cfb516) SHA1(12732707e2a51ec39563f2d1e898cc567ab688f0) )
+	ROM_LOAD( "pog.pg4",      0xb000, 0x1000, CRC(d61b1f33) SHA1(da024c0776214b8b5a3e49401c4110e86a1bead1) )
+	ROM_LOAD( "pog.pg5",      0xc000, 0x1000, CRC(eee7597e) SHA1(9b5cd293580c5d212f8bf39286070280d55e4cb3) )
+	ROM_LOAD( "pog.pg6",      0xd000, 0x1000, CRC(25e682bc) SHA1(085d2d553ec10f2f830918df3a7fb8e8c1e5d18c) )
+	ROM_LOAD( "pog.pg7",      0xe000, 0x1000, CRC(84399f54) SHA1(c90ba3e3120adda2785ab5abd309e0a703d39f8b) )
+	ROM_LOAD( "pog.pg8",      0xf000, 0x1000, CRC(9e995a1a) SHA1(5c525e6c161d9d7d646857b27cecfbf8e0943480) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the audio CPU */
-	ROM_LOAD( "pog.snd",      0xf000, 0x1000, 0xec61f0a4 )
+	ROM_LOAD( "pog.snd",      0xf000, 0x1000, CRC(ec61f0a4) SHA1(26944ecc3e7413259928c8b0a74b2260e67d2c4e) )
 ROM_END
 
 

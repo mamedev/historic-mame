@@ -8,6 +8,8 @@
 #include "vidhrdw/generic.h"
 #include "dominos.h"
 
+unsigned char *dominos_sound_ram;
+
 
 VIDEO_UPDATE( dominos )
 {
@@ -37,4 +39,8 @@ VIDEO_UPDATE( dominos )
 
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+	/* The video circuitry updates our sound registers. */
+	discrete_sound_w(0, dominos_sound_ram[0] % 16);	// Freq
+	discrete_sound_w(1, dominos_sound_ram[2] % 16);	// Amp
 }

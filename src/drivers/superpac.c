@@ -412,124 +412,124 @@ MACHINE_DRIVER_END
 
 ROM_START( superpac )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
-	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
+	ROM_LOAD( "sp1.2",        0xc000, 0x2000, CRC(4bb33d9c) SHA1(dd87f71b4db090a32a6b791079eedd17580cc741) )
+	ROM_LOAD( "sp1.1",        0xe000, 0x2000, CRC(846fbb4a) SHA1(f6bf90281986b9b7a3ef1dbbeddb722182e84d7c) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
+	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, CRC(04445ddb) SHA1(ce7d14963d5ddaefdeaf433a6f82c43cd1611d9b) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sp1.6",        0x0000, 0x1000, 0x91c5935c )
+	ROM_LOAD( "sp1.6",        0x0000, 0x1000, CRC(91c5935c) SHA1(10579edabc26a0910253fab7d41b4c19ecdaaa09) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, 0x670a42f2 )
+	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, CRC(670a42f2) SHA1(9171922df07e31fd1dc415766f7d2cc50a9d10dc) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
-	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
-	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
+	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, CRC(9ce22c46) SHA1(d97f53ef4c5ef26659a22ed0de4ce7ef3758c924) ) /* palette */
+	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, CRC(1253c5c1) SHA1(df46a90170e9761d45c90fbd04ef2aa1e8c9944b) ) /* chars */
+	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, CRC(d4d7026f) SHA1(a486573437c54bfb503424574ad82655491e85e1) ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
+	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, CRC(ad43688f) SHA1(072f427453efb1dda8147da61804fff06e1bc4d5) )
 ROM_END
 
 
 ROM_START( superpcm )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
-	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
+	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, CRC(1a38c30e) SHA1(ae0ee9f3df0991a80698fe745a7a853a4bb60710) )
+	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, CRC(730e95a9) SHA1(ca73c8bcb03c2f5c05968c707a5d3f7f9956b886) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
+	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, CRC(04445ddb) SHA1(ce7d14963d5ddaefdeaf433a6f82c43cd1611d9b) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, 0x78337e74 )
+	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, CRC(78337e74) SHA1(11222adb55e6bce508896ccb1f6dbab0c1d44e5b) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, 0x670a42f2 )
+	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, CRC(670a42f2) SHA1(9171922df07e31fd1dc415766f7d2cc50a9d10dc) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
-	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
-	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
+	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, CRC(9ce22c46) SHA1(d97f53ef4c5ef26659a22ed0de4ce7ef3758c924) ) /* palette */
+	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, CRC(1253c5c1) SHA1(df46a90170e9761d45c90fbd04ef2aa1e8c9944b) ) /* chars */
+	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, CRC(d4d7026f) SHA1(a486573437c54bfb503424574ad82655491e85e1) ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
+	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, CRC(ad43688f) SHA1(072f427453efb1dda8147da61804fff06e1bc4d5) )
 ROM_END
 
 
 ROM_START( pacnpal )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pap13b.cpu",   0xa000, 0x2000, 0xed64a565 )
-	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, 0x15308bcf )
-	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
+	ROM_LOAD( "pap13b.cpu",   0xa000, 0x2000, CRC(ed64a565) SHA1(b16930981490d97486d4df96acbb3d1cddbd3a80) )
+	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, CRC(15308bcf) SHA1(334603f8904f8968d05edc420b5f9e3b483ee86d) )
+	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, CRC(3cac401c) SHA1(38a14228469fa4a20cbc5d862198dc901842682e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, CRC(330e20de) SHA1(5b23e5dcc38dc644a36efc8b03eba34cea540bea) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, 0xa36b96cb )
+	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, CRC(a36b96cb) SHA1(e0a11b5a43cbf756ddb045c743973d0a55dbb979) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, 0xfb6f56e3 )
+	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, CRC(fb6f56e3) SHA1(fd10d2ee49b4e059e9ef6046bc86d97e3185164d) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, 0x52634b41 ) /* palette */
-	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
-	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, CRC(52634b41) SHA1(dfb109c8e2c62ae1612ba0e3272468d152123842) ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, CRC(ac46203c) SHA1(3f47f1991aab9640c0d5f70fad85d20d6cf2ea3d) ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, CRC(686bde84) SHA1(541d08b43dbfb789c2867955635d2c9e051fedd9) ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, CRC(83c31a98) SHA1(8f1219a6c2b565ae9d8f72a9c277dc4bd38ec40f) )
 ROM_END
 
 
 ROM_START( pacnpal2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pap1_3.1d",    0xa000, 0x2000, 0xd7ec2719 )
-	ROM_LOAD( "pap1_2.1c",    0xc000, 0x2000, 0x0245396e )
-	ROM_LOAD( "pap1_1.1b",    0xe000, 0x2000, 0x7f046b58 )
+	ROM_LOAD( "pap1_3.1d",    0xa000, 0x2000, CRC(d7ec2719) SHA1(b633a5360a199d528bcef209c06a21f266525769) )
+	ROM_LOAD( "pap1_2.1c",    0xc000, 0x2000, CRC(0245396e) SHA1(7e8467e317879621a7b31bc922b5187f20fcea78) )
+	ROM_LOAD( "pap1_1.1b",    0xe000, 0x2000, CRC(7f046b58) SHA1(2024019e5fafb698bb5775075c9b88c5ed35f7ba) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, CRC(330e20de) SHA1(5b23e5dcc38dc644a36efc8b03eba34cea540bea) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, 0xa36b96cb )
+	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, CRC(a36b96cb) SHA1(e0a11b5a43cbf756ddb045c743973d0a55dbb979) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, 0xfb6f56e3 )
+	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, CRC(fb6f56e3) SHA1(fd10d2ee49b4e059e9ef6046bc86d97e3185164d) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, 0x52634b41 ) /* palette */
-	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
-	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, CRC(52634b41) SHA1(dfb109c8e2c62ae1612ba0e3272468d152123842) ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, CRC(ac46203c) SHA1(3f47f1991aab9640c0d5f70fad85d20d6cf2ea3d) ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, CRC(686bde84) SHA1(541d08b43dbfb789c2867955635d2c9e051fedd9) ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, CRC(83c31a98) SHA1(8f1219a6c2b565ae9d8f72a9c277dc4bd38ec40f) )
 ROM_END
 
 
 ROM_START( pacnchmp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pap3.1d",      0xa000, 0x2000, 0x20a07d3d )
-	ROM_LOAD( "pap3.1c",      0xc000, 0x2000, 0x505bae56 )
-	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
+	ROM_LOAD( "pap3.1d",      0xa000, 0x2000, CRC(20a07d3d) SHA1(2135ad154b575a73cfb1b0f0f282dfc013672aec) )
+	ROM_LOAD( "pap3.1c",      0xc000, 0x2000, CRC(505bae56) SHA1(590ce9f0e92115a71eb76b71ab4eac16ffa2a28e) )
+	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, CRC(3cac401c) SHA1(38a14228469fa4a20cbc5d862198dc901842682e) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, CRC(330e20de) SHA1(5b23e5dcc38dc644a36efc8b03eba34cea540bea) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap2.3c",      0x0000, 0x1000, 0x93d15c30 )
+	ROM_LOAD( "pap2.3c",      0x0000, 0x1000, CRC(93d15c30) SHA1(5da4120b680726c83a651b445254604cbf7cc883) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pap2.3f",      0x0000, 0x2000, 0x39f44aa4 )
+	ROM_LOAD( "pap2.3f",      0x0000, 0x2000, CRC(39f44aa4) SHA1(0696539cb2c7fcda2f6c295c7d65678dac18950b) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, BADCRC( 0x52634b41 ) ) /* palette */
-	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, BADCRC( 0xac46203c ) ) /* chars */
-	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, BADCRC( 0x686bde84 ) ) /* sprites */
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, BAD_DUMP CRC(52634b41) SHA1(dfb109c8e2c62ae1612ba0e3272468d152123842)  ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, BAD_DUMP CRC(ac46203c) SHA1(3f47f1991aab9640c0d5f70fad85d20d6cf2ea3d)  ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, BAD_DUMP CRC(686bde84) SHA1(541d08b43dbfb789c2867955635d2c9e051fedd9)  ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, CRC(83c31a98) SHA1(8f1219a6c2b565ae9d8f72a9c277dc4bd38ec40f) )
 ROM_END
 
 

@@ -32,7 +32,9 @@ static void neogeo_custom_memory(void);
 /* This function is called on every reset */
 MACHINE_INIT( neogeo )
 {
+#if 0
 	data16_t src, res, *mem16= (data16_t *)memory_region(REGION_USER1);
+#endif
 	time_t ltime;
 	struct tm *today;
 
@@ -40,6 +42,8 @@ MACHINE_INIT( neogeo )
 	/* Reset variables & RAM */
 	memset (neogeo_ram16, 0, 0x10000);
 
+
+#if 0
 	/* Set up machine country */
 	src = readinputport(5);
 	res = src & 0x3;
@@ -61,6 +65,7 @@ MACHINE_INIT( neogeo )
 	{
 		mem16[0x11b1a/2] = 0x1b6a;
 	}
+#endif
 
 	time(&ltime);
 	today = localtime(&ltime);
@@ -196,11 +201,11 @@ DRIVER_INIT( neogeo )
 
 	mem16 = (data16_t *)memory_region(REGION_USER1);
 
+#if 0
 	if (mem16[0x11b00/2] == 0x4eba)
 	{
 		/* standard bios */
 		neogeo_has_trackball = 0;
-
 		/* Remove memory check for now */
 		mem16[0x11b00/2] = 0x4e71;
 		mem16[0x11b02/2] = 0x4e71;
@@ -216,7 +221,6 @@ DRIVER_INIT( neogeo )
 
 		/* Rom internal checksum fails for now.. */
 		mem16[0x11c62/2] = 0x4e71;
-		mem16[0x11c64/2] = 0x4e71;
 	}
 	else
 	{
@@ -225,7 +229,6 @@ DRIVER_INIT( neogeo )
 
 		/* TODO: check the memcard manager patch in neogeo_init_machine(), */
 		/* it probably has to be moved as well */
-
 		/* Remove memory check for now */
 		mem16[0x10c2a/2] = 0x4e71;
 		mem16[0x10c2c/2] = 0x4e71;
@@ -243,9 +246,40 @@ DRIVER_INIT( neogeo )
 		mem16[0x10d8c/2] = 0x4e71;
 		mem16[0x10d8e/2] = 0x4e71;
 	}
+#endif
+
+	/* irritating maze uses a trackball */
+	if (!strcmp(Machine->gamedrv->name,"irrmaze"))
+		neogeo_has_trackball = 1;
+	else
+		neogeo_has_trackball = 0;
+
+
+	{ /* info from elsemi, this is how nebula works, is there a better way in mame? */
+		data8_t* gamerom = memory_region(REGION_CPU1);
+		neogeo_game_vectors = auto_malloc (0x80);
+		memcpy( neogeo_game_vectors, gamerom, 0x80 );
+	}
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
+}
+
+/******************************************************************************/
+
+WRITE16_HANDLER (neogeo_select_bios_vectors)
+{
+	data8_t* gamerom = memory_region(REGION_CPU1);
+	int ng_bios = readinputport(8);
+	data8_t* biosrom = memory_region(REGION_USER1)+ng_bios*0x20000;
+
+	memcpy( gamerom, biosrom, 0x80 );
+}
+
+WRITE16_HANDLER (neogeo_select_game_vectors)
+{
+	data8_t* gamerom = memory_region(REGION_CPU1);
+	memcpy( gamerom, neogeo_game_vectors, 0x80 );
 }
 
 /******************************************************************************/
@@ -569,6 +603,7 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof95") ||
 			!strcmp(Machine->gamedrv->name,"kof96") ||
 			!strcmp(Machine->gamedrv->name,"kof97") ||
+			!strcmp(Machine->gamedrv->name,"kof97a") ||
 			!strcmp(Machine->gamedrv->name,"kof98") ||
 			!strcmp(Machine->gamedrv->name,"kof99") ||
 			!strcmp(Machine->gamedrv->name,"kof99e") ||
@@ -578,8 +613,10 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof2000n") ||
 			!strcmp(Machine->gamedrv->name,"kizuna") ||
 			!strcmp(Machine->gamedrv->name,"lastblad") ||
+			!strcmp(Machine->gamedrv->name,"lastblda") ||
 			!strcmp(Machine->gamedrv->name,"lastbld2") ||
 			!strcmp(Machine->gamedrv->name,"rbff2") ||
+			!strcmp(Machine->gamedrv->name,"rbff2a") ||
 			!strcmp(Machine->gamedrv->name,"mslug2") ||
 			!strcmp(Machine->gamedrv->name,"mslug3") ||
 			!strcmp(Machine->gamedrv->name,"garou") ||

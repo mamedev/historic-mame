@@ -414,42 +414,42 @@ MACHINE_DRIVER_END
 
 ROM_START( tankbust )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
-	ROM_LOAD( "a-s4-6.bin",		0x00000, 0x4000, 0x8ebe7317 )
-	ROM_LOAD( "a-s7-9.bin",		0x04000, 0x2000, 0x047aee33 )
+	ROM_LOAD( "a-s4-6.bin",		0x00000, 0x4000, CRC(8ebe7317) SHA1(bc45d530ad6335312c9c3efdcedf7acd2cdeeb55) )
+	ROM_LOAD( "a-s7-9.bin",		0x04000, 0x2000, CRC(047aee33) SHA1(62ee776c403b228e065baa9218f32597951ca935) )
 
-	ROM_LOAD( "a-s5_7.bin",		0x12000, 0x2000, 0xdd4800ca )	/* banked at 0x6000-0x9fff */
+	ROM_LOAD( "a-s5_7.bin",		0x12000, 0x2000, CRC(dd4800ca) SHA1(73a6caa029c27fb45217f9372d9541c6fe206f08) )	/* banked at 0x6000-0x9fff */
 	ROM_CONTINUE(                   0x10000, 0x2000)
 
-	ROM_LOAD( "a-s6-8.bin",		0x16000, 0x2000, 0xf8801238 )	/* banked at 0x6000-0x9fff */
+	ROM_LOAD( "a-s6-8.bin",		0x16000, 0x2000, CRC(f8801238) SHA1(fd3abe18542660a8c31dc316012a99d48c9bb5aa) )	/* banked at 0x6000-0x9fff */
 	ROM_CONTINUE(                   0x14000, 0x2000)
 
-//	ROM_LOAD( "a-s5_7.bin",		0x10000, 0x4000, 0xdd4800ca )	/* banked at 0x6000-0x9fff */
-//	ROM_LOAD( "a-s6-8.bin",		0x14000, 0x4000, 0xf8801238 )	/* banked at 0x6000-0x9fff */
+//	ROM_LOAD( "a-s5_7.bin",		0x10000, 0x4000, CRC(dd4800ca) SHA1(73a6caa029c27fb45217f9372d9541c6fe206f08) )	/* banked at 0x6000-0x9fff */
+//	ROM_LOAD( "a-s6-8.bin",		0x14000, 0x4000, CRC(f8801238) SHA1(fd3abe18542660a8c31dc316012a99d48c9bb5aa) )	/* banked at 0x6000-0x9fff */
 
-	ROM_LOAD( "a-s8-10.bin",	0x18000, 0x4000, 0x9e826faa )	/* banked at 0xa000-0xbfff */
+	ROM_LOAD( "a-s8-10.bin",	0x18000, 0x4000, CRC(9e826faa) SHA1(6a252428c69133d3e9d7a9938140d5ae37fb0c7d) )	/* banked at 0xa000-0xbfff */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "a-b3-1.bin",		0x0000, 0x2000, 0xb0f56102 )
+	ROM_LOAD( "a-b3-1.bin",		0x0000, 0x2000, CRC(b0f56102) SHA1(4f427c3bd6131b7cba42a0e24a69bd1b6a1b0a3c) )
 
 	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a-d5-2.bin",		0x0000, 0x2000, 0x0bbf3fdb )	/* sprites 32x32 */
-	ROM_LOAD( "a-d6-3.bin",		0x2000, 0x2000, 0x4398dc21 )
-	ROM_LOAD( "a-d7-4.bin",		0x4000, 0x2000, 0xaca197fc )
-	ROM_LOAD( "a-d8-5.bin",		0x6000, 0x2000, 0x1e6edc17 )
+	ROM_LOAD( "a-d5-2.bin",		0x0000, 0x2000, CRC(0bbf3fdb) SHA1(035c2db6eca701be690042e006c0d07c90d752f1) )	/* sprites 32x32 */
+	ROM_LOAD( "a-d6-3.bin",		0x2000, 0x2000, CRC(4398dc21) SHA1(3b23433d0c9daa554ad6615af2fdec715e4e3794) )
+	ROM_LOAD( "a-d7-4.bin",		0x4000, 0x2000, CRC(aca197fc) SHA1(03ecd94b84a31389539074079ed7f2a500e588ab) )
+	ROM_LOAD( "a-d8-5.bin",		0x6000, 0x2000, CRC(1e6edc17) SHA1(4dbc91938c999348bcbd5f960fc3bb49f3174059) )
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "b-m4-11.bin",	0x0000, 0x4000, 0xeb88ee1f )	/* background tilemap characters 8x8 */
-	ROM_LOAD( "b-m5-12.bin",	0x4000, 0x4000, 0x4c65f399 )
-	ROM_LOAD( "b-m6-13.bin",	0x8000, 0x4000, 0xa5baa413 )
+	ROM_LOAD( "b-m4-11.bin",	0x0000, 0x4000, CRC(eb88ee1f) SHA1(60ec2d77186c196a27278b0639cbfa838986e2e2) )	/* background tilemap characters 8x8 */
+	ROM_LOAD( "b-m5-12.bin",	0x4000, 0x4000, CRC(4c65f399) SHA1(72db15884f346c001d3b86cb33e3f6d339eedb56) )
+	ROM_LOAD( "b-m6-13.bin",	0x8000, 0x4000, CRC(a5baa413) SHA1(dc772042706c3a92594ee8422aafed77375c0632) )
 
 	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "b-r3-14.bin",	0x0000, 0x2000, 0x4310a815 )	/* text tilemap characters 8x8 */
+	ROM_LOAD( "b-r3-14.bin",	0x0000, 0x2000, CRC(4310a815) SHA1(bf58a7a8d3f82fcaa0c46d9ebb13cac1231b80ad) )	/* text tilemap characters 8x8 */
 
 	ROM_REGION( 0x0080, REGION_PROMS, 0 )
-	ROM_LOAD( "tb-prom.1s8",	0x0000, 0x0020, 0xdfaa086c ) //sprites
-	ROM_LOAD( "tb-prom.2r8",	0x0020, 0x0020, 0xec50d674 ) //background
-	ROM_LOAD( "tb-prom.3p8",	0x0040, 0x0020, 0x3e70eafd ) //background palette 2 ??
-	ROM_LOAD( "tb-prom.4k8",	0x0060, 0x0020, 0x624f40d2 ) //text
+	ROM_LOAD( "tb-prom.1s8",	0x0000, 0x0020, CRC(dfaa086c) SHA1(f534aedddd18addd0833a3a28a4297689c4a46ac) ) //sprites
+	ROM_LOAD( "tb-prom.2r8",	0x0020, 0x0020, CRC(ec50d674) SHA1(64c8961eca33b23e14b7383eb7e64fcac8772ee7) ) //background
+	ROM_LOAD( "tb-prom.3p8",	0x0040, 0x0020, CRC(3e70eafd) SHA1(b200350a3f6c166228706734419dd3ef1207eeef) ) //background palette 2 ??
+	ROM_LOAD( "tb-prom.4k8",	0x0060, 0x0020, CRC(624f40d2) SHA1(8421f1d774afc72e0817d41edae74a2837021a5f) ) //text
 ROM_END
 
 

@@ -357,48 +357,48 @@ MACHINE_DRIVER_END
 
 ROM_START( holeland )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "holeland.0",  0x0000, 0x2000, 0xb640e12b )
-	ROM_LOAD( "holeland.1",  0x2000, 0x2000, 0x2f180851 )
-	ROM_LOAD( "holeland.2",  0x4000, 0x2000, 0x35cfde75 )
-	ROM_LOAD( "holeland.3",  0x6000, 0x2000, 0x5537c22e )
-	ROM_LOAD( "holeland.4",  0xa000, 0x2000, 0xc95c355d )
+	ROM_LOAD( "holeland.0",  0x0000, 0x2000, CRC(b640e12b) SHA1(68d091a92747d2f4534386aff3ddb07c0d79384c) )
+	ROM_LOAD( "holeland.1",  0x2000, 0x2000, CRC(2f180851) SHA1(c21bcd3e9ff31a5cc415eb53d77a9cc9ebdd862d) )
+	ROM_LOAD( "holeland.2",  0x4000, 0x2000, CRC(35cfde75) SHA1(0a03c0464c771d049ae8706793ec43da5372fa58) )
+	ROM_LOAD( "holeland.3",  0x6000, 0x2000, CRC(5537c22e) SHA1(030f34d3cbc5eea30a3ede77008eba394ef37e8f) )
+	ROM_LOAD( "holeland.4",  0xa000, 0x2000, CRC(c95c355d) SHA1(44984108b6a3dab05855da4c4a3ff58d849559b8) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "holeland.5",  0x0000, 0x2000, 0x7f19e1f9 )
-	ROM_LOAD( "holeland.6",  0x2000, 0x2000, 0x844400e3 )
+	ROM_LOAD( "holeland.5",  0x0000, 0x2000, CRC(7f19e1f9) SHA1(75026da91e0cff262e5f6e32f836907a786aef42) )
+	ROM_LOAD( "holeland.6",  0x2000, 0x2000, CRC(844400e3) SHA1(d306b26f838b043b71c5f9d2d240228986b695fa) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "holeland.7",  0x0000, 0x2000, 0xd7feb25b )
-	ROM_LOAD( "holeland.8",  0x2000, 0x2000, 0x4b6eec16 )
-	ROM_LOAD( "holeland.9",  0x4000, 0x2000, 0x6fe7fcc0 )
-	ROM_LOAD( "holeland.10", 0x6000, 0x2000, 0xe1e11e8f )
+	ROM_LOAD( "holeland.7",  0x0000, 0x2000, CRC(d7feb25b) SHA1(581e20b07d33ba350601fc56074c43aaf13078b4) )
+	ROM_LOAD( "holeland.8",  0x2000, 0x2000, CRC(4b6eec16) SHA1(4c5da89c2babeb33951d101703e6699fbcb886b4) )
+	ROM_LOAD( "holeland.9",  0x4000, 0x2000, CRC(6fe7fcc0) SHA1(fa982551285f728cee0055a0c473f6c74d802d2e) )
+	ROM_LOAD( "holeland.10", 0x6000, 0x2000, CRC(e1e11e8f) SHA1(56082fe497d8ee8ecfe1b89c0c5ada4ddfa4740f) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "3m",          0x0000, 0x0100, 0x9d6fef5a )  /* Red component */
-	ROM_LOAD( "3l",          0x0100, 0x0100, 0xf6682705 )  /* Green component */
-	ROM_LOAD( "3n",          0x0200, 0x0100, 0x3d7b3af6 )  /* Blue component */
+	ROM_LOAD( "3m",          0x0000, 0x0100, CRC(9d6fef5a) SHA1(e2b62909fecadfc9e0eb1ad72c8b7712a26d184e) )  /* Red component */
+	ROM_LOAD( "3l",          0x0100, 0x0100, CRC(f6682705) SHA1(1ab952c1e2a45e9b0dc9144f50711f99f6b1ebc4) )  /* Green component */
+	ROM_LOAD( "3n",          0x0200, 0x0100, CRC(3d7b3af6) SHA1(0c4f95b26e9fe25a5d8c79f06e7ceab78a07d35c) )  /* Blue component */
 ROM_END
 
 ROM_START( crzrally )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "1.7g",        0x0000, 0x4000, 0x8fe01f86 )
-	ROM_LOAD( "2.7f",        0x4000, 0x4000, 0x67110f1d )
-	ROM_LOAD( "3.7d",        0x8000, 0x4000, 0x25c861c3 )
+	ROM_LOAD( "1.7g",        0x0000, 0x4000, CRC(8fe01f86) SHA1(3e08f2cdcd08b25f2bb32d1c4d4caf4ac60c94d6) )
+	ROM_LOAD( "2.7f",        0x4000, 0x4000, CRC(67110f1d) SHA1(cc500017057e39cc8a6cb4e4ccae3c3cbab6c2ba) )
+	ROM_LOAD( "3.7d",        0x8000, 0x4000, CRC(25c861c3) SHA1(cc9f5f33833279b4430a4b8497cc16a222d31805) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "4.5g",        0x0000, 0x2000, 0x29dece8b )
-	ROM_LOAD( "5.5f",        0x2000, 0x2000, 0xb34aa904 )
+	ROM_LOAD( "4.5g",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
+	ROM_LOAD( "5.5f",        0x2000, 0x2000, CRC(b34aa904) SHA1(fb4301fd06efc33df9d9f611c3e67a9f7198531d) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "6.1f",        0x0000, 0x2000, 0xa909ff0f )
-	ROM_LOAD( "7.1l",        0x2000, 0x2000, 0x38fb0a16 )
-	ROM_LOAD( "8.1k",        0x4000, 0x2000, 0x660aa0f0 )
-	ROM_LOAD( "9.1i",        0x6000, 0x2000, 0x37d0790e )
+	ROM_LOAD( "6.1f",        0x0000, 0x2000, CRC(a909ff0f) SHA1(9ce37a6bbb09c936551082dea62a791d10d7d346) )
+	ROM_LOAD( "7.1l",        0x2000, 0x2000, CRC(38fb0a16) SHA1(a17ec5c9acc5c244ffc715ee2376fbf8209e72fd) )
+	ROM_LOAD( "8.1k",        0x4000, 0x2000, CRC(660aa0f0) SHA1(1bb85851349f772f21db9629b0086b2460614b9d) )
+	ROM_LOAD( "9.1i",        0x6000, 0x2000, CRC(37d0790e) SHA1(877335a06d1842264daff9eb46d6ea1ce8249c29) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, 0x98ff725a )  /* Red component */
-	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, 0xd41f5800 )  /* Green component */
-	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, 0x9ed49cb4 )  /* Blue component */
+	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, CRC(98ff725a) SHA1(553f033212a7c4785c0beb8156400cabcd53cf25) )  /* Red component */
+	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, CRC(d41f5800) SHA1(446046f5694357da876e1307f49584d79c8d9a1a) )  /* Green component */
+	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
 ROM_END
 
 

@@ -131,190 +131,8 @@ Notes:	pzlbowl PCB with extra parts:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/tmp68301.h"
 #include "seta.h"
-
-/***************************************************************************
-
-
-				TMP68301 basic emulation + Interrupt Handling
-
-
-***************************************************************************/
-
-static UINT8 tmp68301_IE[3];		// 3 External Interrupt Lines
-static void *tmp68301_timer[3];		// 3 Timers
-static data16_t *tmp68301_regs;		// Hardware Registers
-
-static int irq_vector[8];
-
-void tmp68301_update_timer( int i );
-
-int seta2_irq_callback(int int_level)
-{
-	int vector = irq_vector[int_level];
-//	logerror("CPU #0 PC %06X: irq callback returns %04X for level %x\n",activecpu_get_pc(),vector,int_level);
-	return vector;
-}
-
-void tmp68301_timer_callback(int i)
-{
-	data16_t TCR	=	tmp68301_regs[(0x200 + i * 0x20)/2];
-	data16_t IMR	=	tmp68301_regs[0x94/2];		// Interrupt Mask Register (IMR)
-	data16_t ICR	=	tmp68301_regs[0x8e/2+i];	// Interrupt Controller Register (ICR7..9)
-	data16_t IVNR	=	tmp68301_regs[0x9a/2];		// Interrupt Vector Number Register (IVNR)
-
-//	logerror("CPU #0 PC %06X: callback timer %04X, j = %d\n",activecpu_get_pc(),i,tcount);
-
-	if	(	(TCR & 0x0004) &&	// INT
-			!(IMR & (0x100<<i))
-		)
-	{
-		int level = ICR & 0x0007;
-
-		// Interrupt Vector Number Register (IVNR)
-		irq_vector[level]	=	IVNR & 0x00e0;
-		irq_vector[level]	+=	4+i;
-
-		cpu_set_irq_line(0,level,HOLD_LINE);
-	}
-
-	if (TCR & 0x0080)	// N/1
-	{
-		// Repeat
-		tmp68301_update_timer(i);
-	}
-	else
-	{
-		// One Shot
-	}
-}
-
-void tmp68301_update_timer( int i )
-{
-	data16_t TCR	=	tmp68301_regs[(0x200 + i * 0x20)/2];
-	data16_t MAX1	=	tmp68301_regs[(0x204 + i * 0x20)/2];
-	data16_t MAX2	=	tmp68301_regs[(0x206 + i * 0x20)/2];
-
-	int max = 0;
-	double duration = 0;
-
-	timer_adjust(tmp68301_timer[i],TIME_NEVER,i,0);
-
-	// timers 1&2 only
-	switch( (TCR & 0x0030)>>4 )						// MR2..1
-	{
-	case 1:
-		max = MAX1;
-		break;
-	case 2:
-		max = MAX2;
-		break;
-	}
-
-	switch ( (TCR & 0xc000)>>14 )					// CK2..1
-	{
-	case 0:	// System clock (CLK)
-		if (max)
-		{
-			int scale = (TCR & 0x3c00)>>10;			// P4..1
-			if (scale > 8) scale = 8;
-			duration = Machine->drv->cpu[0].cpu_clock;
-			duration /= 1 << scale;
-			duration /= max;
-		}
-		break;
-	}
-
-//	logerror("CPU #0 PC %06X: TMP68301 Timer %d, duration %lf, max %04X\n",activecpu_get_pc(),i,duration,max);
-
-	if (!(TCR & 0x0002))				// CS
-	{
-		if (duration)
-			timer_adjust(tmp68301_timer[i],TIME_IN_HZ(duration),i,0);
-		else
-			logerror("CPU #0 PC %06X: TMP68301 error, timer %d duration is 0\n",activecpu_get_pc(),i);
-	}
-}
-
-void tmp68301_init(void)
-{
-	int i;
-	for (i = 0; i < 3; i++)
-		tmp68301_timer[i] = timer_alloc(tmp68301_timer_callback);
-}
-
-MACHINE_INIT( seta2 )
-{
-	cpu_set_irq_callback(0, seta2_irq_callback);
-	tmp68301_init();
-}
-
-/* Update the IRQ state based on all possible causes */
-static void update_irq_state(void)
-{
-	int i;
-
-	/* Take care of external interrupts */
-
-	data16_t IMR	=	tmp68301_regs[0x94/2];		// Interrupt Mask Register (IMR)
-	data16_t IVNR	=	tmp68301_regs[0x9a/2];		// Interrupt Vector Number Register (IVNR)
-
-	for (i = 0; i < 3; i++)
-	{
-		if	(	(tmp68301_IE[i]) &&
-				!(IMR & (1<<i))
-			)
-		{
-			data16_t ICR	=	tmp68301_regs[0x80/2+i];	// Interrupt Controller Register (ICR0..2)
-
-			// Interrupt Controller Register (ICR0..2)
-			int level = ICR & 0x0007;
-
-			// Interrupt Vector Number Register (IVNR)
-			irq_vector[level]	=	IVNR & 0x00e0;
-			irq_vector[level]	+=	i;
-
-			tmp68301_IE[i] = 0;		// Interrupts are edge triggerred
-
-			cpu_set_irq_line(0,level,HOLD_LINE);
-		}
-	}
-}
-
-WRITE16_HANDLER( tmp68301_regs_w )
-{
-	COMBINE_DATA(&tmp68301_regs[offset]);
-
-	if (!ACCESSING_LSB)	return;
-
-//	logerror("CPU #0 PC %06X: TMP68301 Reg %04X<-%04X & %04X\n",activecpu_get_pc(),offset*2,data,mem_mask^0xffff);
-
-	switch( offset * 2 )
-	{
-		// Timers
-		case 0x200:
-		case 0x220:
-		case 0x240:
-		{
-			int i = ((offset*2) >> 5) & 3;
-
-			tmp68301_update_timer( i );
-		}
-		break;
-	}
-}
-
-INTERRUPT_GEN( seta2_interrupt )
-{
-	switch ( cpu_getiloops() )
-	{
-		case 0:
-			/* VBlank is connected to INT0 (external interrupts pin 0) */
-			tmp68301_IE[0] = 1;
-			update_irq_state();
-			break;
-	}
-}
 
 /***************************************************************************
 
@@ -1320,6 +1138,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 ***************************************************************************/
 
+static INTERRUPT_GEN( seta2_interrupt )
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:
+			/* VBlank is connected to INT0 (external interrupts pin 0) */
+			tmp68301_external_interrupt_0();
+			break;
+	}
+}
+
 static struct x1_010_interface x1_010_sound_intf_16MHz =
 {
 	50000000/3,	/* clock */
@@ -1338,7 +1167,7 @@ static MACHINE_DRIVER_START( mj4simai )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(seta2)
+	MDRV_MACHINE_INIT( tmp68301 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1427,133 +1256,128 @@ MACHINE_DRIVER_END
 
 ROM_START( grdians )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "u2.bin", 0x000000, 0x080000, 0x36adc6f2 )
-	ROM_LOAD16_BYTE( "u3.bin", 0x000001, 0x080000, 0x2704f416 )
-	ROM_LOAD16_BYTE( "u4.bin", 0x100000, 0x080000, 0xbb52447b )
-	ROM_LOAD16_BYTE( "u5.bin", 0x100001, 0x080000, 0x9c164a3b )
+	ROM_LOAD16_BYTE( "u2.bin", 0x000000, 0x080000, CRC(36adc6f2) SHA1(544e87f88179fe1342e7a06a8948ac1828e85108) )
+	ROM_LOAD16_BYTE( "u3.bin", 0x000001, 0x080000, CRC(2704f416) SHA1(9081a12cbb9927d36e1c50b52aa2c6003810ee42) )
+	ROM_LOAD16_BYTE( "u4.bin", 0x100000, 0x080000, CRC(bb52447b) SHA1(61433f683210ab2bc2cf1cc4b5b7a39cc5b6493d) )
+	ROM_LOAD16_BYTE( "u5.bin", 0x100001, 0x080000, CRC(9c164a3b) SHA1(6d688c7af9e7e8e8d54b2e4dfbf41f59c79242eb) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_ERASE)	/* Sprites */
-	ROM_LOAD( "u16.bin",  0x0000000, 0x400000, 0x6a65f265 )
-	ROM_LOAD( "u20.bin",  0x0600000, 0x200000, 0xa7226ab7 )
+	ROM_LOAD( "u16.bin",  0x0000000, 0x400000, CRC(6a65f265) SHA1(6cad11f718f8bbcff464d41eb4717460769237ed) )
+	ROM_LOAD( "u20.bin",  0x0600000, 0x200000, CRC(a7226ab7) SHA1(408580dd35c568ffef1ebbd87359e3ec1f867020) )
 	ROM_CONTINUE(         0x0400000, 0x200000 )
 
-	ROM_LOAD( "u15.bin",  0x0800000, 0x400000, 0x01672dcd )
-	ROM_LOAD( "u19.bin",  0x0e00000, 0x200000, 0xc0c998a0 )
+	ROM_LOAD( "u15.bin",  0x0800000, 0x400000, CRC(01672dcd) SHA1(f61f60e3343cc5b6ccee391ee529966a141566db) )
+	ROM_LOAD( "u19.bin",  0x0e00000, 0x200000, CRC(c0c998a0) SHA1(498fb1877527ed37412537f06a2c39ff0c60f146) )
 	ROM_CONTINUE(         0x0c00000, 0x200000 )
 
-	ROM_LOAD( "u18.bin",  0x1000000, 0x400000, 0x967babf4 )
-	ROM_LOAD( "u22.bin",  0x1600000, 0x200000, 0x6239997a )
+	ROM_LOAD( "u18.bin",  0x1000000, 0x400000, CRC(967babf4) SHA1(42a6311576417c44aeaceb8ba6bb3cd7794e4882) )
+	ROM_LOAD( "u22.bin",  0x1600000, 0x200000, CRC(6239997a) SHA1(87b6d6f30f152f625f82fd858c1290176c7e156e) )
 	ROM_CONTINUE(         0x1400000, 0x200000 )
 
-	ROM_LOAD( "u17.bin",  0x1800000, 0x400000, 0x0fad0629 )
-	ROM_LOAD( "u21.bin",  0x1e00000, 0x200000, 0x6f95e466 )
+	ROM_LOAD( "u17.bin",  0x1800000, 0x400000, CRC(0fad0629) SHA1(1bdc8e7c5e39e83d327f14a672ec81b049112da6) )
+	ROM_LOAD( "u21.bin",  0x1e00000, 0x200000, CRC(6f95e466) SHA1(28482fad16a3ac9302f152d81552e6f84a44f3e4) )
 	ROM_CONTINUE(         0x1c00000, 0x200000 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	// u32: 3rd quarter = 4th quarter; 1st quarter = 2nd quarter = 3rd quarter with every other byte = 0
-	// but all in all the data needed by the game is there (3rd or 4th quarter)
-	ROM_LOAD( "u32.bin", 0x100000, 0x100000, 0x277ef458 )	// BADADDR  x-xxxxxxxxxxxxxxxxxxxx
-	ROM_CONTINUE(        0x100000, 0x100000 )
-	ROM_CONTINUE(        0x100000, 0x100000 )
-	ROM_CONTINUE(        0x100000, 0x100000 )
+	ROM_LOAD( "u32.bin", 0x100000, 0x100000, CRC(cf0f3017) SHA1(8376d3a674f71aec72f52c72758fbc53d9feb1a1) )
 ROM_END
 
 ROM_START( mj4simai )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "ll.u2",       0x000000, 0x080000, 0x7be9c781 )
-	ROM_LOAD16_BYTE( "lh1.u3",      0x000001, 0x080000, 0x82aa3f72 )
-	ROM_LOAD16_BYTE( "hl.u4",       0x100000, 0x080000, 0x226063b7 )
-	ROM_LOAD16_BYTE( "hh.u5",       0x100001, 0x080000, 0x23aaf8df )
+	ROM_LOAD16_BYTE( "ll.u2",       0x000000, 0x080000, CRC(7be9c781) SHA1(d29e579706d98909933f6bed2ee292c88ed10d2c) )
+	ROM_LOAD16_BYTE( "lh1.u3",      0x000001, 0x080000, CRC(82aa3f72) SHA1(a93d5dc7cdf12f852a692759d91f6f2951b6b5b5) )
+	ROM_LOAD16_BYTE( "hl.u4",       0x100000, 0x080000, CRC(226063b7) SHA1(1737baffc16ff7261f887911187ece96925fa6ff) )
+	ROM_LOAD16_BYTE( "hh.u5",       0x100001, 0x080000, CRC(23aaf8df) SHA1(b3d678afce4ddef32e48d690c6d07b723dd0c28f) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "cha-03.u16",  0x0000000, 0x400000, 0xd367429a )
-	ROM_LOAD( "cha-04.u18",  0x0400000, 0x400000, 0x7f2008c3 )
-	ROM_LOAD( "cha-05.u15",  0x0800000, 0x400000, 0xe94ec40a )
-	ROM_LOAD( "cha-06.u17",  0x0c00000, 0x400000, 0x5cb0b3a9 )
-	ROM_LOAD( "cha-01.u21",  0x1000000, 0x400000, 0x35f47b37 )
-	ROM_LOAD( "cha-02.u22",  0x1400000, 0x400000, 0xf6346860 )
+	ROM_LOAD( "cha-03.u16",  0x0000000, 0x400000, CRC(d367429a) SHA1(b32c215ef85c3d0a4c5550cef4f5c4c0e7030b7c) )
+	ROM_LOAD( "cha-04.u18",  0x0400000, 0x400000, CRC(7f2008c3) SHA1(e45d863540eb2381f5d7660d64cdfef87c890768) )
+	ROM_LOAD( "cha-05.u15",  0x0800000, 0x400000, CRC(e94ec40a) SHA1(2685dbc5680b5f76688c6b4fbe40ae682c525bfe) )
+	ROM_LOAD( "cha-06.u17",  0x0c00000, 0x400000, CRC(5cb0b3a9) SHA1(92fb82d45b4c46326d5796981f812e20a8ddb4f2) )
+	ROM_LOAD( "cha-01.u21",  0x1000000, 0x400000, CRC(35f47b37) SHA1(4a8eb088890272f2a069e2c3f00fadf6421f7b0e) )
+	ROM_LOAD( "cha-02.u22",  0x1400000, 0x400000, CRC(f6346860) SHA1(4eebd3fa315b97964fa39b88224f9de7622ba881) )
 	ROM_FILL(                0x1800000, 0x800000, 0 )	/* 6bpp instead of 8bpp */
 
 	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	ROM_LOAD( "cha-07.u32",  0x100000, 0x400000, 0x817519ee )
+	ROM_LOAD( "cha-07.u32",  0x100000, 0x400000, CRC(817519ee) SHA1(ed09740cdbf61a328f7b50eb569cf498fb749416) )
 ROM_END
 
 ROM_START( myangel )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "kq1-prge.u2", 0x000000, 0x080000, 0x6137d4c0 )
-	ROM_LOAD16_BYTE( "kq1-prgo.u3", 0x000001, 0x080000, 0x4aad10d8 )
-	ROM_LOAD16_BYTE( "kq1-tble.u4", 0x100000, 0x080000, 0xe332a514 )
-	ROM_LOAD16_BYTE( "kq1-tblo.u5", 0x100001, 0x080000, 0x760cab15 )
+	ROM_LOAD16_BYTE( "kq1-prge.u2", 0x000000, 0x080000, CRC(6137d4c0) SHA1(762341e11b56e4a7787a0662833b702b78aee0a9) )
+	ROM_LOAD16_BYTE( "kq1-prgo.u3", 0x000001, 0x080000, CRC(4aad10d8) SHA1(a08e1c4f57c64be829e0807ae2791da947fd60aa) )
+	ROM_LOAD16_BYTE( "kq1-tble.u4", 0x100000, 0x080000, CRC(e332a514) SHA1(dfd255239c80c48c9865e70681b9ddd175b8bf55) )
+	ROM_LOAD16_BYTE( "kq1-tblo.u5", 0x100001, 0x080000, CRC(760cab15) SHA1(fa7ea85ec2ebfaab3111b8631ea6ea3d794d449c) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "kq1-cg2.u20", 0x000000, 0x200000, 0x80b4e8de )
-	ROM_LOAD( "kq1-cg0.u16", 0x200000, 0x200000, 0xf8ae9a05 )
-	ROM_LOAD( "kq1-cg3.u19", 0x400000, 0x200000, 0x9bdc35c9 )
-	ROM_LOAD( "kq1-cg1.u15", 0x600000, 0x200000, 0x23bd7ea4 )
-	ROM_LOAD( "kq1-cg6.u22", 0x800000, 0x200000, 0xb25acf12 )
-	ROM_LOAD( "kq1-cg4.u18", 0xa00000, 0x200000, 0xdca7f8f2 )
-	ROM_LOAD( "kq1-cg7.u21", 0xc00000, 0x200000, 0x9f48382c )
-	ROM_LOAD( "kq1-cg5.u17", 0xe00000, 0x200000, 0xa4bc4516 )
+	ROM_LOAD( "kq1-cg2.u20", 0x000000, 0x200000, CRC(80b4e8de) SHA1(c8685c4f4e3c0415ce0ec88e0288835e504cab00) )
+	ROM_LOAD( "kq1-cg0.u16", 0x200000, 0x200000, CRC(f8ae9a05) SHA1(4f3b41386a48a1608aa96b911e6b74ca775260fb) )
+	ROM_LOAD( "kq1-cg3.u19", 0x400000, 0x200000, CRC(9bdc35c9) SHA1(fd0a1eb3dd10705bce5462263667353632558b58) )
+	ROM_LOAD( "kq1-cg1.u15", 0x600000, 0x200000, CRC(23bd7ea4) SHA1(e925bbadc33fc2586bb18283cf989ab35f28c1e9) )
+	ROM_LOAD( "kq1-cg6.u22", 0x800000, 0x200000, CRC(b25acf12) SHA1(5cca35921f3b376c3cc36f5b009eb845db2e1897) )
+	ROM_LOAD( "kq1-cg4.u18", 0xa00000, 0x200000, CRC(dca7f8f2) SHA1(20595c7940a28d01bdc6610b67aaaeac61ba92e2) )
+	ROM_LOAD( "kq1-cg7.u21", 0xc00000, 0x200000, CRC(9f48382c) SHA1(80dfc33a55123b5d3cdb3ed97b43a527f0254d61) )
+	ROM_LOAD( "kq1-cg5.u17", 0xe00000, 0x200000, CRC(a4bc4516) SHA1(0eb11fa54d16bba1b96f9dd943a68949a3bb9a2f) )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	ROM_LOAD( "kq1-snd.u32", 0x100000, 0x200000, 0x8ca1b449 )
+	ROM_LOAD( "kq1-snd.u32", 0x100000, 0x200000, CRC(8ca1b449) SHA1(f54096fb5400843af4879135c96760485b6cb319) )
 ROM_END
 
 ROM_START( myangel2 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "kqs1ezpr.u2", 0x000000, 0x080000, 0x2469aac2 )
-	ROM_LOAD16_BYTE( "kqs1ozpr.u3", 0x000001, 0x080000, 0x6336375c )
-	ROM_LOAD16_BYTE( "kqs1e-tb.u4", 0x100000, 0x080000, 0xe759b4cc )
-	ROM_LOAD16_BYTE( "kqs1o-tb.u5", 0x100001, 0x080000, 0xb6168737 )
+	ROM_LOAD16_BYTE( "kqs1ezpr.u2", 0x000000, 0x080000, CRC(2469aac2) SHA1(7dade2de31252e305d24c659c4801dd4687ad1f6) )
+	ROM_LOAD16_BYTE( "kqs1ozpr.u3", 0x000001, 0x080000, CRC(6336375c) SHA1(72089f77e94832e74e0512944acadeccd0dec8b0) )
+	ROM_LOAD16_BYTE( "kqs1e-tb.u4", 0x100000, 0x080000, CRC(e759b4cc) SHA1(4f806a144a47935b2710f8af800ec0d771f12a18) )
+	ROM_LOAD16_BYTE( "kqs1o-tb.u5", 0x100001, 0x080000, CRC(b6168737) SHA1(4c3de877c0c1dca1c43ac737a0bf231335237d3a) )
 
 	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "kqs1-cg4.u20", 0x0000000, 0x200000, 0xd1802241 )
-	ROM_LOAD( "kqs1-cg0.u16", 0x0200000, 0x400000, 0xc21a33a7 )
-	ROM_LOAD( "kqs1-cg5.u19", 0x0600000, 0x200000, 0xd86cf19c )
-	ROM_LOAD( "kqs1-cg1.u15", 0x0800000, 0x400000, 0xdca799ba )
-	ROM_LOAD( "kqs1-cg6.u22", 0x0c00000, 0x200000, 0x3f08886b )
-	ROM_LOAD( "kqs1-cg2.u18", 0x0e00000, 0x400000, 0xf7f92c7e )
-	ROM_LOAD( "kqs1-cg7.u21", 0x1200000, 0x200000, 0x2c977904 )
-	ROM_LOAD( "kqs1-cg3.u17", 0x1400000, 0x400000, 0xde3b2191 )
+	ROM_LOAD( "kqs1-cg4.u20", 0x0000000, 0x200000, CRC(d1802241) SHA1(52c45a13d46f7ee8043e85b99d07b1765ca93dcc) )
+	ROM_LOAD( "kqs1-cg0.u16", 0x0200000, 0x400000, CRC(c21a33a7) SHA1(bc6f479a8f4c716ba79a725f160ddeb95fdedbcb) )
+	ROM_LOAD( "kqs1-cg5.u19", 0x0600000, 0x200000, CRC(d86cf19c) SHA1(da5a5b576ce107433605b24d8b9dcd0abd46bcde) )
+	ROM_LOAD( "kqs1-cg1.u15", 0x0800000, 0x400000, CRC(dca799ba) SHA1(8379b11472c27b1945fe7fc274c7fedf756accba) )
+	ROM_LOAD( "kqs1-cg6.u22", 0x0c00000, 0x200000, CRC(3f08886b) SHA1(054546ae44ffa5d0973f4ead080fe720a340e144) )
+	ROM_LOAD( "kqs1-cg2.u18", 0x0e00000, 0x400000, CRC(f7f92c7e) SHA1(24a525a15fded0de6e382b346da6bd5e7b9eced5) )
+	ROM_LOAD( "kqs1-cg7.u21", 0x1200000, 0x200000, CRC(2c977904) SHA1(2589447f2471cdc414266b34aff552044c680d93) )
+	ROM_LOAD( "kqs1-cg3.u17", 0x1400000, 0x400000, CRC(de3b2191) SHA1(d7d6ea07b665cfd834747d3c0776b968ce03bc6a) )
 
 	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	ROM_LOAD( "kqs1-snd.u32", 0x100000, 0x400000, 0x792a6b49 )
+	ROM_LOAD( "kqs1-snd.u32", 0x100000, 0x400000, CRC(792a6b49) SHA1(341b4e8f248b5032217733bada32e353c67e3888) )
 ROM_END
 
 ROM_START( pzlbowl )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "kup-u06.i03", 0x000000, 0x080000, 0x314e03ac )
-	ROM_LOAD16_BYTE( "kup-u07.i03", 0x000001, 0x080000, 0xa0423a04 )
+	ROM_LOAD16_BYTE( "kup-u06.i03", 0x000000, 0x080000, CRC(314e03ac) SHA1(999398e55161dd75570d418f4c9899e3bf311cc8) )
+	ROM_LOAD16_BYTE( "kup-u07.i03", 0x000001, 0x080000, CRC(a0423a04) SHA1(9539023c5c2f2bf72ee3fb6105443ffd3d61e2f8) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "kuc-u38.i00", 0x000000, 0x400000, 0x3db24172 )
-	ROM_LOAD( "kuc-u39.i00", 0x400000, 0x400000, 0x9b26619b )
-	ROM_LOAD( "kuc-u40.i00", 0x800000, 0x400000, 0x7e49a2cf )
-	ROM_LOAD( "kuc-u41.i00", 0xc00000, 0x400000, 0x2febf19b )
+	ROM_LOAD( "kuc-u38.i00", 0x000000, 0x400000, CRC(3db24172) SHA1(89c39963e15c53b799994185d0c8b2e795478939) )
+	ROM_LOAD( "kuc-u39.i00", 0x400000, 0x400000, CRC(9b26619b) SHA1(ea7a0bf46641d15353217b01e761d1a148bee4e7) )
+	ROM_LOAD( "kuc-u40.i00", 0x800000, 0x400000, CRC(7e49a2cf) SHA1(d24683addbc54515c33fb620ac500e6702bd9e17) )
+	ROM_LOAD( "kuc-u41.i00", 0xc00000, 0x400000, CRC(2febf19b) SHA1(8081ac590c0463529777b5e4817305a1a6f6ea41) )
 
 	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	ROM_LOAD( "kus-u18.i00", 0x100000, 0x400000, 0xe2b1dfcf )
+	ROM_LOAD( "kus-u18.i00", 0x100000, 0x400000, CRC(e2b1dfcf) SHA1(fb0b8be119531a1a27efa46ed7b86b05a37ed585) )
 ROM_END
 
 ROM_START( penbros )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
-	ROM_LOAD16_BYTE( "u06.bin", 0x000000, 0x080000, 0x7bbdffac )
-	ROM_LOAD16_BYTE( "u07.bin", 0x000001, 0x080000, 0xd50cda5f )
+	ROM_LOAD16_BYTE( "u06.bin", 0x000000, 0x080000, CRC(7bbdffac) SHA1(d5766cb171b8d2e4c04a6bae37181fa5ada9d797) )
+	ROM_LOAD16_BYTE( "u07.bin", 0x000001, 0x080000, CRC(d50cda5f) SHA1(fc66f55f2070b447c5db85c948ce40adc37512f7) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "u38.bin", 0x000000, 0x400000, 0x4247b39e )
-	ROM_LOAD( "u39.bin", 0x400000, 0x400000, 0xf9f07faf )
-	ROM_LOAD( "u40.bin", 0x800000, 0x400000, 0xdc9e0a96 )
+	ROM_LOAD( "u38.bin", 0x000000, 0x400000, CRC(4247b39e) SHA1(f273931293beced312e02c870bf35e9cf0c91a8b) )
+	ROM_LOAD( "u39.bin", 0x400000, 0x400000, CRC(f9f07faf) SHA1(66fc4a9ad422fb384d2c775e43619137226898fc) )
+	ROM_LOAD( "u40.bin", 0x800000, 0x400000, CRC(dc9e0a96) SHA1(c2c8ccf9039ee0e179b08fdd2d37f29899349cda) )
 	ROM_FILL(            0xc00000, 0x400000, 0 )	/* 6bpp instead of 8bpp */
 
 	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
-	ROM_LOAD( "u18.bin", 0x100000, 0x200000, 0xde4e65e2 )
+	ROM_LOAD( "u18.bin", 0x100000, 0x200000, CRC(de4e65e2) SHA1(82d4e590c714b3e9bf0ffaf1500deb24fd315595) )
 ROM_END
 
 

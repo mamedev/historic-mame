@@ -254,11 +254,11 @@ MACHINE_DRIVER_END
 
 ROM_START( toratora )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "tora.u1",      0x1000, 0x0800, 0x413c743a )
-	ROM_LOAD( "tora.u10",     0x1800, 0x0800, 0xdc771b1c )
-	ROM_LOAD( "tora.u2",      0x2000, 0x0800, 0xc574c664 )
-	ROM_LOAD( "tora.u9",      0x2800, 0x0800, 0xb67aa11f )
-	ROM_LOAD( "tora.u11",     0xf800, 0x0800, 0x55135d6f )
+	ROM_LOAD( "tora.u1",      0x1000, 0x0800, CRC(413c743a) )
+	ROM_LOAD( "tora.u10",     0x1800, 0x0800, CRC(dc771b1c) )
+	ROM_LOAD( "tora.u2",      0x2000, 0x0800, CRC(c574c664) )
+	ROM_LOAD( "tora.u9",      0x2800, 0x0800, CRC(b67aa11f) )
+	ROM_LOAD( "tora.u11",     0xf800, 0x0800, CRC(55135d6f) )
 ROM_END
 
 

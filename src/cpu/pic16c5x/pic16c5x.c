@@ -520,7 +520,7 @@ static void rrf(void)
 	STORE_RESULT(ADDR, R.ALU);
 }
 
-static void sleep(void)
+static void pic_sleep(void)
 {
 	R.WDT = 0;
 	if (PSA) R.OPTION &= (~PS_REG);
@@ -643,7 +643,7 @@ static unsigned cycles_000_other[16]=
 
 static opcode_fn opcode_000_other[16]=
 {
-/*00*/  nop,	illegal,option,	sleep,	clrwdt,	tris,	tris,	tris,
+/*00*/  nop,	illegal,option,	pic_sleep,	clrwdt,	tris,	tris,	tris,
 /*08*/  illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal
 };
 
@@ -774,7 +774,7 @@ int pic16C5x_execute(int cycles)
 
 	do
 	{
-		if (PD == 0)						/* Sleep Mode */
+		if (PD == 0)						/* pic_sleep Mode */
 		{
 			inst_cycles = (1*CLK);
 			CALL_MAME_DEBUG;

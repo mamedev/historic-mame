@@ -28,6 +28,13 @@ static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 	return (row & 0x0f) + ((col & 0xff) << 4) + ((row & 0x70) << 8);
 }
 
+static UINT32 bg_scan_td2(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (row & 0x0f) + ((col & 0x3ff) << 4) + ((row & 0x70) << 10);
+}
+
+
 static void macross_get_bg_tile_info(int tile_index)
 {
 	int code = nmk_bgvideoram[tile_index];
@@ -188,6 +195,27 @@ VIDEO_START( macross2 )
 	return 0;
 }
 
+VIDEO_START( tdragon2 )
+{
+	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan_td2,TILEMAP_OPAQUE,16,16,1024,32);
+	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
+
+	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
+		return 1;
+
+	tilemap_set_transparent_pen(tx_tilemap,15);
+
+	memset(spriteram_old,0,spriteram_size);
+	memset(spriteram_old2,0,spriteram_size);
+
+	videoshift = 64;	/* 384x224 screen, leftmost 64 pixels have to be retrieved */
+						/* from the other side of the tilemap (!) */
+	background_bitmap = NULL;
+	return 0;
+}
+
 VIDEO_START( bjtwin )
 {
 	bg_tilemap = tilemap_create(bjtwin_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,32);
@@ -312,6 +340,18 @@ WRITE16_HANDLER( nmk_scroll_2_w )
 			tilemap_set_scrollx(fg_tilemap,0,scroll[0] * 256 + scroll[1] - videoshift);
 	}
 }
+
+WRITE16_HANDLER( nmk_scroll_3_w )
+{
+
+	COMBINE_DATA(&gunnail_scrollram[offset]);
+
+//	usrintf_showmessage( "scroll %04x, %04x", gunnail_scrollram[0], gunnail_scrollram[0x100]);
+
+	tilemap_set_scrollx(bg_tilemap,0,gunnail_scrollram[0]-videoshift);
+	tilemap_set_scrolly(bg_tilemap,0,gunnail_scrollram[0x100]);
+}
+
 
 WRITE16_HANDLER( vandyke_scroll_w )
 {

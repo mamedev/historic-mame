@@ -255,63 +255,63 @@ MACHINE_DRIVER_END
 
 ROM_START( dommy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "dommy.e01",  0xa000, 0x2000, 0x9ae064ed )
-	ROM_LOAD( "dommy.e11",  0xc000, 0x2000, 0x7c4fad5c )
-	ROM_LOAD( "dommy.e21",  0xe000, 0x2000, 0xcd1a4d55 )
+	ROM_LOAD( "dommy.e01",  0xa000, 0x2000, CRC(9ae064ed) SHA1(73082e5254d54d8386f580cc82a74242a6debd84) )
+	ROM_LOAD( "dommy.e11",  0xc000, 0x2000, CRC(7c4fad5c) SHA1(fb733ac979092a6fc278836b82d8ed3fae7a20d9) )
+	ROM_LOAD( "dommy.e21",  0xe000, 0x2000, CRC(cd1a4d55) SHA1(f7f4f5ef2e89519652e8401e75dc4e2b8edf4bae) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dommy.e50",  0x0000, 0x2000, 0x5e9db0a4 )
-	ROM_LOAD( "dommy.e40",  0x2000, 0x2000, 0x4d1c36fb )
-	ROM_LOAD( "dommy.e30",  0x4000, 0x2000, 0x4e68bb12 )
+	ROM_LOAD( "dommy.e50",  0x0000, 0x2000, CRC(5e9db0a4) SHA1(82e60d6b65a4d901102d7e195e66b278f18586f7) )
+	ROM_LOAD( "dommy.e40",  0x2000, 0x2000, CRC(4d1c36fb) SHA1(5904421e8e2f727dd6292045871429a1373085e9) )
+	ROM_LOAD( "dommy.e30",  0x4000, 0x2000, CRC(4e68bb12) SHA1(de26d278e43882deffad4d5b19d785f8824cf05a) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 ) /* palette decoding is probably wrong */
-	ROM_LOAD( "dommy.e70",  0x0018, 0x0008, 0x50c1d86e )	/* palette */
+	ROM_LOAD( "dommy.e70",  0x0018, 0x0008, CRC(50c1d86e) SHA1(990a87a7f7e6a2af67dc6890e2326c7403e46520) )	/* palette */
 	ROM_CONTINUE(			  0x0000, 0x0018 )
-	ROM_LOAD( "dommy.e60",  0x0020, 0x0020, 0x24da2b63 )	/* unknown */
+	ROM_LOAD( "dommy.e60",  0x0020, 0x0020, CRC(24da2b63) SHA1(4db7e1ff1b9fd5ae4098cd7ca66cf1fa2574501a) )	/* unknown */
 ROM_END
 
 ROM_START( scregg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
-	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
-	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
-	ROM_LOAD( "scregg.b14",   0x6000, 0x1000, 0x044ac5d2 )
-	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, 0xb5a0814a )
+	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, CRC(29226d77) SHA1(e1a329a4452eeb90801d001140ce865bf1ea7716) )
+	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, CRC(eb143880) SHA1(73b3ca6e0d72cd0db951ae9ed1552cf8b7d91e68) )
+	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, CRC(4455f262) SHA1(fc7b2d9094fa5e25c1bf4b68386f640f4502e0c0) )
+	ROM_LOAD( "scregg.b14",   0x6000, 0x1000, CRC(044ac5d2) SHA1(f2d2fe2236de1b3b2614cc95f61a90571638cd69) )
+	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, CRC(b5a0814a) SHA1(192cdc506fb0bbfed8ae687f2699397ace3bef30) )
 	ROM_RELOAD(               0xf000, 0x1000 )        /* for reset/interrupt vectors */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "scregg.j12",   0x0000, 0x1000, 0xa485c10c )
-	ROM_LOAD( "scregg.j10",   0x1000, 0x1000, 0x1fd4e539 )
-	ROM_LOAD( "scregg.h12",   0x2000, 0x1000, 0x8454f4b2 )
-	ROM_LOAD( "scregg.h10",   0x3000, 0x1000, 0x72bd89ee )
-	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
-	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
+	ROM_LOAD( "scregg.j12",   0x0000, 0x1000, CRC(a485c10c) SHA1(88edd35479ceb58244f644a7e0520d225df3bf65) )
+	ROM_LOAD( "scregg.j10",   0x1000, 0x1000, CRC(1fd4e539) SHA1(3067bbd9493614e80d8d3982fe80ef25688d256c) )
+	ROM_LOAD( "scregg.h12",   0x2000, 0x1000, CRC(8454f4b2) SHA1(6a8d257a3fec901453c7216ad894badf96188ebf) )
+	ROM_LOAD( "scregg.h10",   0x3000, 0x1000, CRC(72bd89ee) SHA1(2e38c27b546eeef0fe42340777c8687f4c65ee97) )
+	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, CRC(ff3c2894) SHA1(0da866db6a79f658de3efc609b9ca8520b4d22d0) )
+	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, CRC(9c20214a) SHA1(e01b72501a01ffc0370cf19c9a379a54800cccc6) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
-	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
+	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, CRC(ff23bdd6) SHA1(d09738915da456449bb4e8d9eefb8e6378f0edea) )	/* palette */
+	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, CRC(7cc4824b) SHA1(2a283fc17fac32e63385948bfe180d05f1fb8727) )	/* unknown */
 ROM_END
 
 ROM_START( eggs )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
-	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
-	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
-	ROM_LOAD( "b14.bin",      0x6000, 0x1000, 0x5c11c00e )
-	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
+	ROM_LOAD( "e14.bin",      0x3000, 0x1000, CRC(4e216f9d) SHA1(7b9d984481c8227e417dae4a1adbb5dec5f959b7) )
+	ROM_LOAD( "d14.bin",      0x4000, 0x1000, CRC(4edb267f) SHA1(f5d1a79b13d6fbb92561b4e4cfb78465114497d1) )
+	ROM_LOAD( "c14.bin",      0x5000, 0x1000, CRC(15a5c48c) SHA1(70141c739a8c019554a6c5257ad12606a1542b1f) )
+	ROM_LOAD( "b14.bin",      0x6000, 0x1000, CRC(5c11c00e) SHA1(4a9295086bf935a1c9b1b01f83d1ff6242d74907) )
+	ROM_LOAD( "a14.bin",      0x7000, 0x1000, CRC(953faf07) SHA1(ee3181e9ee664053d6e6899fe38e136a9ea6abe1) )
 	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
-	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
-	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
-	ROM_LOAD( "h10.bin",      0x3000, 0x1000, 0x3cfb3a8e )
-	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
-	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
+	ROM_LOAD( "j12.bin",      0x0000, 0x1000, CRC(ce4a2e46) SHA1(6b31c481ca038834ae295d015054f852baa6330f) )
+	ROM_LOAD( "j10.bin",      0x1000, 0x1000, CRC(a1bcaffc) SHA1(74f6df3136826822bbc22b027700fb3ddfceaa97) )
+	ROM_LOAD( "h12.bin",      0x2000, 0x1000, CRC(9562836d) SHA1(c5d5d6ceede6105975c87ff8e1f7e5312b992b92) )
+	ROM_LOAD( "h10.bin",      0x3000, 0x1000, CRC(3cfb3a8e) SHA1(e60c9da1a7841c3bb5351a109d99c8df34747212) )
+	ROM_LOAD( "g12.bin",      0x4000, 0x1000, CRC(679f8af7) SHA1(f69302ff0125d96fbfdd914d7ecefd7130a24616) )
+	ROM_LOAD( "g10.bin",      0x5000, 0x1000, CRC(5b58d3b5) SHA1(f138b7294dd20d050bb8a2191e87b0c3815f6148) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
-	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
+	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, CRC(e8408c81) SHA1(549b9948a4a73e7a704731b942565183cef05d52) )	/* palette */
+	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, CRC(7cc4824b) SHA1(2a283fc17fac32e63385948bfe180d05f1fb8727) )	/* unknown */
 ROM_END
 
 

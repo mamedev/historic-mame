@@ -514,24 +514,25 @@ VIDEO_UPDATE( gaelco2 )
 
 VIDEO_UPDATE( bang )
 {
-	/* standard rendering on this hardware */
-	video_update_gaelco2(bitmap, cliprect);
+    /* standard rendering on this hardware */
+    video_update_gaelco2(bitmap, cliprect);
 
-	/* draw crosshairs */
-	{
-		int posx, posy;
+    /* draw crosshairs */
+    {
+        int posx, posy;
 
-		/* 1P Gun */
-		posx = readinputport(3) & 0x1ff;
-		posy = readinputport(5) & 0x0ff;
-		draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
+        /* 1P Gun */
+        posx = readinputport(3)*320/256;
+        posy = readinputport(5)*240/256;
+        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
 
-		/* 2P Gun */
-		posx = readinputport(4) & 0x1ff;
-		posy = readinputport(6) & 0x0ff;
-		draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
-	}
+        /* 2P Gun */
+        posx = readinputport(4)*320/256;
+        posy = readinputport(6)*240/256;
+        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
+    }
 }
+
 
 #ifdef ONE_MONITOR
 

@@ -875,111 +875,111 @@ MACHINE_DRIVER_END
 
 ROM_START( tubep )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (master) cpu code */
-	ROM_LOAD( "tp-p.5", 0x0000, 0x2000, 0xd5e0cc2f )
-	ROM_LOAD( "tp-p.6", 0x2000, 0x2000, 0x97b791a0 )
-	ROM_LOAD( "tp-p.7", 0x4000, 0x2000, 0xadd9983e )
-	ROM_LOAD( "tp-p.8", 0x6000, 0x2000, 0xb3793cb5 )
+	ROM_LOAD( "tp-p.5", 0x0000, 0x2000, CRC(d5e0cc2f) SHA1(db9b062b14af52bb5458fe71996da295a69148ac) )
+	ROM_LOAD( "tp-p.6", 0x2000, 0x2000, CRC(97b791a0) SHA1(20ef87b3d3bdfc8b983bcb8231252f81d98ad452) )
+	ROM_LOAD( "tp-p.7", 0x4000, 0x2000, CRC(add9983e) SHA1(70a517451553a8c0e74a1995d9afddb779efc92c) )
+	ROM_LOAD( "tp-p.8", 0x6000, 0x2000, CRC(b3793cb5) SHA1(0ed622b6bb97b9877acb6dc174edcd9977fa784e) )
 
 	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (slave) cpu code */
-	ROM_LOAD( "tp-p.1", 0x0000, 0x2000, 0xb4020fcc )
-	ROM_LOAD( "tp-p.2", 0x2000, 0x2000, 0xa69862d6 )
-	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, 0xf1d86e00 )
-	ROM_LOAD( "tp-p.4", 0x6000, 0x2000, 0x0a1027bc )
+	ROM_LOAD( "tp-p.1", 0x0000, 0x2000, CRC(b4020fcc) SHA1(437a037adedd596d295a0b6e400d64dee6c4488e) )
+	ROM_LOAD( "tp-p.2", 0x2000, 0x2000, CRC(a69862d6) SHA1(7180cc26cd11d2daf453fcda8e6cc90851068bc4) )
+	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, CRC(f1d86e00) SHA1(5c26f20f49e09a736cede4f276f5bdf76f932400) )
+	ROM_LOAD( "tp-p.4", 0x6000, 0x2000, CRC(0a1027bc) SHA1(2ebb53a1da53a9c3f0b99da084030c4d2b62a7b3) )
 
 	ROM_REGION( 0x10000,REGION_CPU3, 0 ) /* Z80 (sound) cpu code */
-	ROM_LOAD( "tp-s.1", 0x0000, 0x2000, 0x78964fcc )
-	ROM_LOAD( "tp-s.2", 0x2000, 0x2000, 0x61232e29 )
+	ROM_LOAD( "tp-s.1", 0x0000, 0x2000, CRC(78964fcc) SHA1(a2c6119275d6291d82ac11dcffdaf2e8726e935a) )
+	ROM_LOAD( "tp-s.2", 0x2000, 0x2000, CRC(61232e29) SHA1(a9ef0fefb7250392ef51173b69a69c903ff91ee8) )
 
 	ROM_REGION( 0x10000,REGION_CPU4, 0 ) /* 64k for the custom CPU */
-	ROM_LOAD( "tp-g5.e1", 0xc000, 0x2000, 0x9f375b27 )
-	ROM_LOAD( "tp-g6.d1", 0xe000, 0x2000, 0x3ea127b8 )
+	ROM_LOAD( "tp-g5.e1", 0xc000, 0x2000, CRC(9f375b27) SHA1(9666d1b20169d899176fbdf5954df41df06b4b82) )
+	ROM_LOAD( "tp-g6.d1", 0xe000, 0x2000, CRC(3ea127b8) SHA1(a5f83ee0eb871da81eeaf839499baf14b986c69e) )
 
 	ROM_REGION( 0xc000, REGION_USER1, 0 ) /* background data */
-	ROM_LOAD( "tp-b.1", 0x0000, 0x2000, 0xfda355e0 )
-	ROM_LOAD( "tp-b.2", 0x2000, 0x2000, 0xcbe30149 )
-	ROM_LOAD( "tp-b.3", 0x4000, 0x2000, 0xf5d118e7 )
-	ROM_LOAD( "tp-b.4", 0x6000, 0x2000, 0x01952144 )
-	ROM_LOAD( "tp-b.5", 0x8000, 0x2000, 0x4dabea43 )
-	ROM_LOAD( "tp-b.6", 0xa000, 0x2000, 0x01952144 )
+	ROM_LOAD( "tp-b.1", 0x0000, 0x2000, CRC(fda355e0) SHA1(3270c65a4ee5d01388727f38691f7fe38f541031) )
+	ROM_LOAD( "tp-b.2", 0x2000, 0x2000, CRC(cbe30149) SHA1(e66057286bea3026743f6de27a7e8dc8a709f8f7) )
+	ROM_LOAD( "tp-b.3", 0x4000, 0x2000, CRC(f5d118e7) SHA1(a899bef3accef8995c457e8142a0001eed033fae) )
+	ROM_LOAD( "tp-b.4", 0x6000, 0x2000, CRC(01952144) SHA1(d1074c79b51d3e2c152c9f3df6892027fe3a0e00) )
+	ROM_LOAD( "tp-b.5", 0x8000, 0x2000, CRC(4dabea43) SHA1(72b9df9a3665baf34fb1f7301c5b9dd2619ed206) )
+	ROM_LOAD( "tp-b.6", 0xa000, 0x2000, CRC(01952144) SHA1(d1074c79b51d3e2c152c9f3df6892027fe3a0e00) )
 
 	ROM_REGION( 0x18000,REGION_USER2, 0 )
-	ROM_LOAD( "tp-c.1", 0x0000, 0x2000, 0xec002af2 )
-	ROM_LOAD( "tp-c.2", 0x2000, 0x2000, 0xc44f7128 )
-	ROM_LOAD( "tp-c.3", 0x4000, 0x2000, 0x4146b0c9 )
-	ROM_LOAD( "tp-c.4", 0x6000, 0x2000, 0x552b58cf )
-	ROM_LOAD( "tp-c.5", 0x8000, 0x2000, 0x2bb481d7 )
-	ROM_LOAD( "tp-c.6", 0xa000, 0x2000, 0xc07a4338 )
-	ROM_LOAD( "tp-c.7", 0xc000, 0x2000, 0x87b8700a )
-	ROM_LOAD( "tp-c.8", 0xe000, 0x2000, 0xa6497a03 )
-	ROM_LOAD( "tp-g4.d10", 0x10000, 0x1000, 0x40a1fe00 ) /* 2732 eprom is used, but the PCB is prepared for 2764 eproms */
+	ROM_LOAD( "tp-c.1", 0x0000, 0x2000, CRC(ec002af2) SHA1(f9643c2ff01412d3da42b050bce4cf7f7d2e6f6a) )
+	ROM_LOAD( "tp-c.2", 0x2000, 0x2000, CRC(c44f7128) SHA1(e05c00a7094b3fbf7ac6ed6ed38e1b227d462b27) )
+	ROM_LOAD( "tp-c.3", 0x4000, 0x2000, CRC(4146b0c9) SHA1(cd3d620531660834530c64cdf1ef0659f9f6f437) )
+	ROM_LOAD( "tp-c.4", 0x6000, 0x2000, CRC(552b58cf) SHA1(4ffd50bd55a9f88275c96a180dafe5e04b7ffb40) )
+	ROM_LOAD( "tp-c.5", 0x8000, 0x2000, CRC(2bb481d7) SHA1(c07a11b938952be36c27fbfaefd0707a704acdf6) )
+	ROM_LOAD( "tp-c.6", 0xa000, 0x2000, CRC(c07a4338) SHA1(3a40bacc2a98dc54612352a80f9b9ebf769de339) )
+	ROM_LOAD( "tp-c.7", 0xc000, 0x2000, CRC(87b8700a) SHA1(4ddb032de9d6e124fb2661da77e6ba078360ec75) )
+	ROM_LOAD( "tp-c.8", 0xe000, 0x2000, CRC(a6497a03) SHA1(68b42a5fd55b7c08f140dc1e3bb2eaa563545ef6) )
+	ROM_LOAD( "tp-g4.d10", 0x10000, 0x1000, CRC(40a1fe00) SHA1(2e1e12efe8083bf96233016a7712e6e486d968e4) ) /* 2732 eprom is used, but the PCB is prepared for 2764 eproms */
 	ROM_RELOAD(            0x11000, 0x1000 )
-	ROM_LOAD( "tp-g1.e13", 0x12000, 0x1000, 0x4a7407a2 )
-	ROM_LOAD( "tp-g2.f13", 0x13000, 0x1000, 0xf0b26c2e )
+	ROM_LOAD( "tp-g1.e13", 0x12000, 0x1000, CRC(4a7407a2) SHA1(7ca4e03c637a6f1c338ca438a7ab9e4ba537fee0) )
+	ROM_LOAD( "tp-g2.f13", 0x13000, 0x1000, CRC(f0b26c2e) SHA1(54057c619675bb384035547becd2019974bf23fa) )
 
-	ROM_LOAD( "tp-g7.h2",  0x14000, 0x2000, 0x105cb9e4 )
-	ROM_LOAD( "tp-g8.i2",  0x16000, 0x2000, 0x27e5e6c1 )
+	ROM_LOAD( "tp-g7.h2",  0x14000, 0x2000, CRC(105cb9e4) SHA1(b9d8ffe35c1f66aa401e5d8e415bf7c016ff53bb) )
+	ROM_LOAD( "tp-g8.i2",  0x16000, 0x2000, CRC(27e5e6c1) SHA1(f3896d0006351d165e36bafa4340175077b3d6ba) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, 0 )
-	ROM_LOAD( "tp-g3.c10", 0x0000, 0x1000, 0x657a465d )	/* text characters */
+	ROM_LOAD( "tp-g3.c10", 0x0000, 0x1000, CRC(657a465d) SHA1(848217c3b736550586e8e9ba7a6e99e884094066) )	/* text characters */
 
 	ROM_REGION( 0x40,   REGION_PROMS, 0 ) /* color proms */
-	ROM_LOAD( "tp-2.c12", 0x0000, 0x0020, 0xac7e582f ) /* text and sprites palette */
-	ROM_LOAD( "tp-1.c13", 0x0020, 0x0020, 0xcd0910d6 ) /* color control prom */
+	ROM_LOAD( "tp-2.c12", 0x0000, 0x0020, CRC(ac7e582f) SHA1(9d8f9eda7130b49b91d9c63bafa119b2a91eeda0) ) /* text and sprites palette */
+	ROM_LOAD( "tp-1.c13", 0x0020, 0x0020, CRC(cd0910d6) SHA1(1e6dae16115d5a03bbaf76c695327a06eb6da602) ) /* color control prom */
 ROM_END
 
 
 ROM_START( rjammer )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (master) cpu code */
-	ROM_LOAD( "tp-p.1", 0x0000, 0x2000, 0x93eeed67 )
-	ROM_LOAD( "tp-p.2", 0x2000, 0x2000, 0xed2830c4 )
-	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, 0xe29f25e3 )
-	ROM_LOAD( "tp-p.4", 0x8000, 0x2000, 0x6ed71fbc )
+	ROM_LOAD( "tp-p.1", 0x0000, 0x2000, CRC(93eeed67) SHA1(9ccfc49f42c6b451ff1c541d6487276f4bf9338e) )
+	ROM_LOAD( "tp-p.2", 0x2000, 0x2000, CRC(ed2830c4) SHA1(078046e88604617342d29f0f4a0473fe6d484b19) )
+	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, CRC(e29f25e3) SHA1(21abf0e7c315fac15dd39355c16f9401c2cf4593) )
+	ROM_LOAD( "tp-p.4", 0x8000, 0x2000, CRC(6ed71fbc) SHA1(821506943b980077a9b4f309db095be7e952b13d) )
 	ROM_CONTINUE(       0x6000, 0x2000 )
 
 	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (slave) cpu code */
-	ROM_LOAD( "tp-p.8", 0x0000, 0x2000, 0x388b9c66 )
-	ROM_LOAD( "tp-p.7", 0x2000, 0x2000, 0x595030bb )
-	ROM_LOAD( "tp-p.6", 0x4000, 0x2000, 0xb5aa0f89 )
-	ROM_LOAD( "tp-p.5", 0x6000, 0x2000, 0x56eae9ac )
+	ROM_LOAD( "tp-p.8", 0x0000, 0x2000, CRC(388b9c66) SHA1(6d3e614736a7f06c26191699e8a8a13b239b259f) )
+	ROM_LOAD( "tp-p.7", 0x2000, 0x2000, CRC(595030bb) SHA1(00dd0b3af965a2768c71297ba2a358050bdb8ef7) )
+	ROM_LOAD( "tp-p.6", 0x4000, 0x2000, CRC(b5aa0f89) SHA1(d7e8b7e76fe6e5ef1d9bcad8469d56b81c9509ac) )
+	ROM_LOAD( "tp-p.5", 0x6000, 0x2000, CRC(56eae9ac) SHA1(e5cd75df0c38021b81de2abf049b12c10db4f3cb) )
 
 	ROM_REGION( 0x10000,REGION_CPU3, 0 ) /* Z80 (sound) cpu code */
-	ROM_LOAD( "tp-b1.6d", 0x0000, 0x2000, 0xb1c2525c )
-	ROM_LOAD( "tp-s3.4d", 0x2000, 0x2000, 0x90c9d0b9 )
-	ROM_LOAD( "tp-s2.2d", 0x4000, 0x2000, 0x444b6a1d )
-	ROM_LOAD( "tp-s1.1d", 0x6000, 0x2000, 0x391097cd )
+	ROM_LOAD( "tp-b1.6d", 0x0000, 0x2000, CRC(b1c2525c) SHA1(7a184142e83982e33bc41cabae6fe804cec78748) )
+	ROM_LOAD( "tp-s3.4d", 0x2000, 0x2000, CRC(90c9d0b9) SHA1(8657ee93d7b67ba89848bf94e03b5c3bcace92c4) )
+	ROM_LOAD( "tp-s2.2d", 0x4000, 0x2000, CRC(444b6a1d) SHA1(1252b14d473d764a5326401aac782a1fa3419784) )
+	ROM_LOAD( "tp-s1.1d", 0x6000, 0x2000, CRC(391097cd) SHA1(d4b48a3f26044b131e65f74479bf1671ad677eb4) )
 
 	ROM_REGION( 0x10000,REGION_CPU4, 0 ) /* 64k for the custom CPU */
-	ROM_LOAD( "tp-g7.e1",  0xc000, 0x2000, 0x9f375b27 )
-	ROM_LOAD( "tp-g8.d1",  0xe000, 0x2000, 0x2e619fec )
+	ROM_LOAD( "tp-g7.e1",  0xc000, 0x2000, CRC(9f375b27) SHA1(9666d1b20169d899176fbdf5954df41df06b4b82) )
+	ROM_LOAD( "tp-g8.d1",  0xe000, 0x2000, CRC(2e619fec) SHA1(d3d5fa708ca0097abf12d59ae41cb852278fe45d) )
 
 	ROM_REGION( 0x7000, REGION_USER1, 0 ) /* background data */
-	ROM_LOAD( "tp-b3.13d", 0x0000, 0x1000, 0xb80ef399 )
-	ROM_LOAD( "tp-b5.11b", 0x1000, 0x2000, 0x0f260bfe )
-	ROM_LOAD( "tp-b2.11d", 0x3000, 0x2000, 0x8cd2c917 )
-	ROM_LOAD( "tp-b4.19c", 0x5000, 0x2000, 0x6600f306 )
+	ROM_LOAD( "tp-b3.13d", 0x0000, 0x1000, CRC(b80ef399) SHA1(75fa17e1bb39363e194737a32db2d92e0cae5e79) )
+	ROM_LOAD( "tp-b5.11b", 0x1000, 0x2000, CRC(0f260bfe) SHA1(975b7837f6c3c9d743903910fbdc3111c18a5955) )
+	ROM_LOAD( "tp-b2.11d", 0x3000, 0x2000, CRC(8cd2c917) SHA1(472aceaf4a1050b2513d56b2703e556ac1e2a61a) )
+	ROM_LOAD( "tp-b4.19c", 0x5000, 0x2000, CRC(6600f306) SHA1(2e25790839a465f5f8729964cfe27a587eb663f5) )
 
 	ROM_REGION( 0x18000,REGION_USER2, 0 )
-	ROM_LOAD( "tp-c.8", 0x0000, 0x2000, 0x9f31ecb5 )
-	ROM_LOAD( "tp-c.7", 0x2000, 0x2000, 0xcbf093f1 )
-	ROM_LOAD( "tp-c.6", 0x4000, 0x2000, 0x11f9752b )
-	ROM_LOAD( "tp-c.5", 0x6000, 0x2000, 0x513f8777 )
-	ROM_LOAD( "tp-c.1", 0x8000, 0x2000, 0xef573117 )
-	ROM_LOAD( "tp-c.2", 0xa000, 0x2000, 0x1d29f1e6 )
-	ROM_LOAD( "tp-c.3", 0xc000, 0x2000, 0x086511a7 )
-	ROM_LOAD( "tp-c.4", 0xe000, 0x2000, 0x49f372ea )
-	ROM_LOAD( "tp-g3.d10", 0x10000, 0x1000, 0x1f2abec5 )	/* 2732 eprom is used, but the PCB is prepared for 2764 eproms */
+	ROM_LOAD( "tp-c.8", 0x0000, 0x2000, CRC(9f31ecb5) SHA1(c4b979c7da096648d0c58b2c8a205e1622ee28e9) )
+	ROM_LOAD( "tp-c.7", 0x2000, 0x2000, CRC(cbf093f1) SHA1(128e01249165a87304eaf8003a9adf6f38d35d5e) )
+	ROM_LOAD( "tp-c.6", 0x4000, 0x2000, CRC(11f9752b) SHA1(11dcbbfe4e673e379afd67874b64b48cdafa00f5) )
+	ROM_LOAD( "tp-c.5", 0x6000, 0x2000, CRC(513f8777) SHA1(ebdbf164c20bbb8a52e32beb148917023e30c72b) )
+	ROM_LOAD( "tp-c.1", 0x8000, 0x2000, CRC(ef573117) SHA1(e2cf1e7b7c4f64bf3f9723eca2061a6cf8d2eddb) )
+	ROM_LOAD( "tp-c.2", 0xa000, 0x2000, CRC(1d29f1e6) SHA1(278556f89c8aed9b16bdbef7ba2847736473e63d) )
+	ROM_LOAD( "tp-c.3", 0xc000, 0x2000, CRC(086511a7) SHA1(92691aec024312e7c8593a35303df15cb6e9c9f2) )
+	ROM_LOAD( "tp-c.4", 0xe000, 0x2000, CRC(49f372ea) SHA1(16b500157b95437ea27a097010e798f3e82b2b6a) )
+	ROM_LOAD( "tp-g3.d10", 0x10000, 0x1000, CRC(1f2abec5) SHA1(3e7d2849d517cc4941ac86df507743782ed9c694) )	/* 2732 eprom is used, but the PCB is prepared for 2764 eproms */
 	ROM_RELOAD(            0x11000, 0x1000 )
-	ROM_LOAD( "tp-g2.e13", 0x12000, 0x1000, 0x4a7407a2 )
-	ROM_LOAD( "tp-g1.f13", 0x13000, 0x1000, 0xf0b26c2e )
-	ROM_LOAD( "tp-g6.h2",  0x14000, 0x2000, 0x105cb9e4 )
-	ROM_LOAD( "tp-g5.i2",  0x16000, 0x2000, 0x27e5e6c1 )
+	ROM_LOAD( "tp-g2.e13", 0x12000, 0x1000, CRC(4a7407a2) SHA1(7ca4e03c637a6f1c338ca438a7ab9e4ba537fee0) )
+	ROM_LOAD( "tp-g1.f13", 0x13000, 0x1000, CRC(f0b26c2e) SHA1(54057c619675bb384035547becd2019974bf23fa) )
+	ROM_LOAD( "tp-g6.h2",  0x14000, 0x2000, CRC(105cb9e4) SHA1(b9d8ffe35c1f66aa401e5d8e415bf7c016ff53bb) )
+	ROM_LOAD( "tp-g5.i2",  0x16000, 0x2000, CRC(27e5e6c1) SHA1(f3896d0006351d165e36bafa4340175077b3d6ba) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, 0 )
-	ROM_LOAD( "tp-g4.c10", 0x0000, 0x1000, 0x99e72549 )	/* text characters */
+	ROM_LOAD( "tp-g4.c10", 0x0000, 0x1000, CRC(99e72549) SHA1(2509265c2d84ac6144aecd77f1b3f0d16bdcb572) )	/* text characters */
 
 	ROM_REGION( 0x40,   REGION_PROMS, 0 ) /* color proms */
-	ROM_LOAD( "16b", 0x0000, 0x0020, 0x9a12873a ) /* text palette, sprites palette */
-	ROM_LOAD( "16a", 0x0020, 0x0020, 0x90222a71 ) /* background palette */
+	ROM_LOAD( "16b", 0x0000, 0x0020, CRC(9a12873a) SHA1(70f088b6eb5431e2ac6afcf15531eeb02a169442) ) /* text palette, sprites palette */
+	ROM_LOAD( "16a", 0x0020, 0x0020, CRC(90222a71) SHA1(c3fd49c8075b0af451f6d2a142a4c4a2e397ac08) ) /* background palette */
 ROM_END
 
 /*     year  rom      parent  machine  inp   init */

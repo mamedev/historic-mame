@@ -134,95 +134,6 @@ static PALETTE_INIT( bsktball )
 
 /*************************************
  *
- *	Temporary sound hardware
- *
- *************************************/
-
-static int note_timer=255;
-static int note_count=256;
-static int crowd_mask=0;
-
-#define TIME_32H 10582*2
-#define TIME_256H TIME_32H*4
-
-static WRITE_HANDLER( bsktball_note_w )
-{
-	note_timer=data;
-	note_count=256;
-}
-
-static int noise_b10=0;
-static int noise_a10=0;
-static int noise=0;
-
-static WRITE_HANDLER( bsktball_noise_reset_w )
-{
-	noise_a10=0;
-	noise_b10=0;
-	DAC_data_w(2,0);
-}
-
-static void bsktball_noise_256H(int foo)
-{
-	int b10_input;
-	int a10_input;
-
-	b10_input = (noise_b10 & 0x01) ^ (((~noise_a10) & 0x40) >> 6);
-	a10_input = (noise_b10 & 0x80) >> 7;
-
-	noise_b10 = ((noise_b10 << 1) | b10_input) & 0xFF;
-	noise_a10 = ((noise_a10 << 1) | a10_input) & 0xFF;
-
-	noise = (noise_a10 & 0x80) >> 7;
-
-	if (noise)
-		DAC_data_w(2,crowd_mask);
-	else
-		DAC_data_w(2,0);
-}
-
-static void bsktball_note_32H(int foo)
-{
-	if (note_timer==255)
-		return;
-
-	note_count--;
-
-	if (note_count==note_timer)
-		note_count=256;
-
-	if (note_count > ((256-note_timer)>>1)+note_timer)
-		DAC_data_w(0,63);			/* MB: Generate a square, 50% duty cycle _|-|_| */
-	else
-		DAC_data_w(0,0);
-}
-
-static WRITE_HANDLER( bsktball_bounce_w )
-{
-	/* D0-D3 = crowd */
-	crowd_mask = (data & 0x0F) << 2;
-	if (noise)
-		DAC_data_w(2,crowd_mask);
-	else
-		DAC_data_w(2,0);
-
-	/* D4 = bounce */
-	if (data & 0x10)
-		DAC_data_w(1,63);
-	else
-		DAC_data_w(1,0);
-}
-
-static MACHINE_INIT( bsktball )
-{
-	timer_pulse(TIME_IN_NSEC(TIME_256H), 0, bsktball_noise_256H);
-	timer_pulse(TIME_IN_NSEC(TIME_32H), 0, bsktball_note_32H);
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -364,19 +275,89 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+/************************************************************************/
+/* bsktball Sound System Analog emulation                               */
+/************************************************************************/
 
-/*************************************
- *
- *	Sound interfaces
- *
- *************************************/
+int bsktballWhistl555 = DISC_555_ASTBL_CAP | DISC_555_ASTBL_AC;
 
-static struct DACinterface dac_interface =
-{
-	3,
-	{ 100, 100, 100 }
+const struct discrete_lfsr_desc bsktball_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	0,			/* Use Bit 0 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is already inverted by XNOR */
+	15			/* Output bit */
 };
 
+/* Nodes - Inputs */
+#define BSKTBALL_NOTE_DATA		NODE_01
+#define BSKTBALL_CROWD_DATA		NODE_02
+#define BSKTBALL_NOISE_EN		NODE_03
+#define BSKTBALL_BOUNCE_EN		NODE_04
+/* Nodes - Sounds */
+#define BSKTBALL_NOISE			NODE_10
+#define BSKTBALL_BOUNCE_SND		NODE_11
+#define BSKTBALL_NOTE_SND		NODE_12
+#define BSKTBALL_CROWD_SND		NODE_13
+
+static DISCRETE_SOUND_START(bsktball_sound_interface)
+	/************************************************/
+	/* bsktball  Effects Relataive Gain Table       */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Note          3.8      47/47        1000.0   */
+	/* Bounce        3.8      47/47        1000.0   */
+	/* Crowd         3.8      47/220        213.6   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for bsktball          */
+	/************************************************/
+	/*              NODE                 ADDR  MASK    GAIN     OFFSET  INIT */
+	DISCRETE_INPUT (BSKTBALL_NOTE_DATA,  0x00, 0x000f,                  0.0)
+	DISCRETE_INPUTX(BSKTBALL_CROWD_DATA, 0x01, 0x000f, 213.6/15, 0,     0.0)
+	DISCRETE_INPUTX(BSKTBALL_BOUNCE_EN,  0x02, 0x000f, 1000.0/2, 0,     0.0)
+	DISCRETE_INPUT (BSKTBALL_NOISE_EN,   0x03, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Bounce is a trigger fed directly to the amp  */
+	/************************************************/
+	DISCRETE_FILTER2(BSKTBALL_BOUNCE_SND, 1, BSKTBALL_BOUNCE_EN, 10.0, 5, DISC_FILTER_HIGHPASS)	// remove DC
+
+	/************************************************/
+	/* Crowd effect is variable amplitude, filtered */
+	/* random noise.                                */
+	/* LFSR clk = 256H = 15750.0Hz                  */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(BSKTBALL_NOISE, BSKTBALL_NOISE_EN, BSKTBALL_NOISE_EN, 15750.0, BSKTBALL_CROWD_DATA, 0, 0, &bsktball_lfsr)
+	DISCRETE_FILTER2(BSKTBALL_CROWD_SND, 1, BSKTBALL_NOISE, 330.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+
+	/************************************************/
+	/* Note sound is created by a divider circuit.  */
+	/* The master clock is the 32H signal, which is */
+	/* 12.096MHz/128.  This is then sent to a       */
+	/* preloadable 8 bit counter, which loads the   */
+	/* value from OUT30 when overflowing from 0xFF  */
+	/* to 0x00.  Therefore it divides by 2 (OUT30   */
+	/* = FE) to 256 (OUT30 = 00).                   */
+	/* There is also a final /2 stage.              */
+	/* Note that there is no music disable line.    */
+	/* When there is no music, the game sets the    */
+	/* oscillator to 0Hz.  (OUT30 = FF)             */
+	/************************************************/
+	DISCRETE_ADDER2(NODE_20, 1, BSKTBALL_NOTE_DATA, 1)	/* To get values of 1 - 256 */
+	DISCRETE_DIVIDE(NODE_21, 1, 12096000.0/128/2, NODE_20)
+	DISCRETE_SQUAREWAVE(BSKTBALL_NOTE_SND, BSKTBALL_NOTE_DATA, NODE_21, 1000, 50.0, 0, 0.0)	/* NOTE=FF Disables audio */
+
+	DISCRETE_ADDER3(NODE_90, 1, BSKTBALL_BOUNCE_SND, BSKTBALL_NOTE_SND, BSKTBALL_CROWD_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0+1000.0+213.6))
+	DISCRETE_OUTPUT(NODE_91, 100)
+DISCRETE_SOUND_END
 
 
 /*************************************
@@ -394,8 +375,6 @@ static MACHINE_DRIVER_START( bsktball )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
-	MDRV_MACHINE_INIT(bsktball)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -410,7 +389,7 @@ static MACHINE_DRIVER_START( bsktball )
 	MDRV_VIDEO_UPDATE(bsktball)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, bsktball_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -423,15 +402,15 @@ MACHINE_DRIVER_END
 
 ROM_START( bsktball )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
-	ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
-	ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
-	ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
+	ROM_LOAD( "034765.d1",    0x2000, 0x0800, CRC(798cea39) SHA1(b1b709a74258b01b21d7c2038a3b6abe879944c5) )
+	ROM_LOAD( "034764.c1",    0x2800, 0x0800, CRC(a087109e) SHA1(f5d6dcccc4a54db35be3d8997bc51e73892747fb) )
+	ROM_LOAD( "034766.f1",    0x3000, 0x0800, CRC(a82e9a9f) SHA1(9aca236c5145c04a8aaebb316179482bbdc9ddfc) )
+	ROM_LOAD( "034763.b1",    0x3800, 0x0800, CRC(1fc69359) SHA1(a215ba3bb18ea2c57c443dfc4c4a0a3846bbedfe) )
 	ROM_RELOAD(               0xf800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
-	ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
+	ROM_LOAD( "034757.a6",    0x0000, 0x0800, CRC(010e8ad3) SHA1(43ce2c2089ec3011e2d28e8257a35efeed0e71c5) )
+	ROM_LOAD( "034758.b6",    0x0800, 0x0800, CRC(f7bea344) SHA1(df544bff67bb0334f77cef11792199d9c3f5fdf4) )
 ROM_END
 
 

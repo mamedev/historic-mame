@@ -12,6 +12,8 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/sound/streams.o $(OBJ)/sound/mixer.o $(OBJ)/sound/filter.o \
 	$(sort $(SOUNDOBJS)) \
 	$(OBJ)/sound/votrax.o \
+	$(OBJ)/machine/tmp68301.o \
+	$(OBJ)/machine/6532riot.o \
 	$(OBJ)/machine/z80fmly.o $(OBJ)/machine/6821pia.o \
 	$(OBJ)/machine/8255ppi.o $(OBJ)/machine/7474.o \
 	$(OBJ)/machine/74123.o $(OBJ)/machine/74153.o \
@@ -25,6 +27,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/machine/random.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \
+	$(OBJ)/hash.o $(OBJ)/sha1.o \
 	$(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
 	$(OBJ)/sound/wavwrite.o \
 	$(OBJ)/x86drc.o \

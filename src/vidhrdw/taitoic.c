@@ -583,27 +583,33 @@ Newer version of the I/O chip ?
 		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
 	}
 
-INLINE void bryan_drawscanline(
-		struct mame_bitmap *bitmap,int x,int y,int length,
-		const UINT16 *src,int transparent,UINT32 orient,int pri)
+INLINE void taitoic_drawscanline(
+		struct mame_bitmap *bitmap,int x,int y,
+		const UINT16 *src,int transparent,UINT32 orient,int pri, const struct rectangle *cliprect)
 {
 	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
-	if (transparent) {
-		while (length--) {
-			UINT32 spixel = *src++;
-			if (spixel<0x7fff) {
-				*dsti = spixel;
-				*dstp = pri;
+	{
+		int length=cliprect->max_x - cliprect->min_x + 1;
+		src+=cliprect->min_x;
+		dsti+=xadv * cliprect->min_x;
+		dstp+=xadv * cliprect->min_x;
+		if (transparent) {
+			while (length--) {
+				UINT32 spixel = *src++;
+				if (spixel<0x7fff) {
+					*dsti = spixel;
+					*dstp = pri;
+				}
+				dsti += xadv;
+				dstp += xadv;
 			}
-			dsti += xadv;
-			dstp += xadv;
-		}
-	} else { /* Not transparent case */
-		while (length--) {
-			*dsti = *src++;
-			*dstp = pri;
-			dsti += xadv;
-			dstp += xadv;
+		} else { /* Not transparent case */
+			while (length--) {
+				*dsti = *src++;
+				*dstp = pri;
+				dsti += xadv;
+				dstp += xadv;
+			}
 		}
 	}
 }
@@ -1419,9 +1425,9 @@ static void topspeed_custom_draw(struct mame_bitmap *bitmap,const struct rectang
 		}
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-			bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
 		else
-			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
 
 		y_index++;
 		if (!machine_flip) y++; else y--;
@@ -2188,9 +2194,9 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 
 /*** NEW ***/
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+				taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
 			else
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+				taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
 /***********/
 
 			y_index += zoomy;
@@ -4009,8 +4015,7 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 		int rot=Machine->orientation;
 		int machine_flip = 0;	/* for  ROT 180 ? */
 
-		UINT16 screen_width = cliprect->max_x -
-							cliprect->min_x + 1;
+		UINT16 screen_width = 512; //cliprect->max_x - cliprect->min_x + 1;
 		UINT16 min_y = cliprect->min_y;
 		UINT16 max_y = cliprect->max_y;
 
@@ -4094,9 +4099,9 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 			}
 
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+				taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
 			else
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+				taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
 
 			y_index += zoomy;
 			if (!machine_flip) y++; else y--;
@@ -4162,8 +4167,7 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 	int flipscreen = TC0480SCP_pri_reg & 0x40;
 	int machine_flip = 0;	/* for  ROT 180 ? */
 
-	UINT16 screen_width = cliprect->max_x -
-							cliprect->min_x + 1;
+	UINT16 screen_width = 512; //cliprect->max_x - cliprect->min_x + 1;
 	UINT16 min_y = cliprect->min_y;
 	UINT16 max_y = cliprect->max_y;
 
@@ -4284,9 +4288,9 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 		}
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-			bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
 		else
-			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
 
 		y_index += zoomy;
 		if (!machine_flip) y++; else y--;
@@ -5130,7 +5134,7 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 				}
 			}
 
-			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
 		}
 
 		y++;

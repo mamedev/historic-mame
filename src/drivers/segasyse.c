@@ -817,66 +817,66 @@ static DRIVER_INIT( astrofl )
 
 ROM_START( hangonjr )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom5.ic7",	0x00000, 0x08000, 0xd63925a7 ) /* Fixed Code */
+	ROM_LOAD( "rom5.ic7",	0x00000, 0x08000, CRC(d63925a7) SHA1(699f222d9712fa42651c753fe75d7b60e016d3ad) ) /* Fixed Code */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
-	ROM_LOAD( "rom4.ic5",	0x10000, 0x08000, 0xee3caab3 )
-	ROM_LOAD( "rom3.ic4",	0x18000, 0x08000, 0xd2ba9bc9 )
-	ROM_LOAD( "rom2.ic3",	0x20000, 0x08000, 0xe14da070 )
-	ROM_LOAD( "rom1.ic2",	0x28000, 0x08000, 0x3810cbf5 )
+	ROM_LOAD( "rom4.ic5",	0x10000, 0x08000, CRC(ee3caab3) SHA1(f583cf92c579d1ca235e8b300e256ba58a04dc90) )
+	ROM_LOAD( "rom3.ic4",	0x18000, 0x08000, CRC(d2ba9bc9) SHA1(85cf2a801883bf69f78134fc4d5075134f47dc03) )
+	ROM_LOAD( "rom2.ic3",	0x20000, 0x08000, CRC(e14da070) SHA1(f8781f65be5246a23c1f492905409775bbf82ea8) )
+	ROM_LOAD( "rom1.ic2",	0x28000, 0x08000, CRC(3810cbf5) SHA1(c8d5032522c0c903ab3d138f62406a66e14a5c69) )
 ROM_END
 
 ROM_START( ridleofp )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "epr10426.bin",	0x00000, 0x08000, 0x4404c7e7 ) /* Fixed Code */
+	ROM_LOAD( "epr10426.bin",	0x00000, 0x08000, CRC(4404c7e7) SHA1(555f44786976a009d96a6395c9173929ad6138a7) ) /* Fixed Code */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
-	ROM_LOAD( "epr10425.bin",	0x10000, 0x08000, 0x35964109 )
-	ROM_LOAD( "epr10424.bin",	0x18000, 0x08000, 0xfcda1dfa )
-	ROM_LOAD( "epr10423.bin",	0x20000, 0x08000, 0x0b87244f )
-	ROM_LOAD( "epr10422.bin",	0x28000, 0x08000, 0x14781e56 )
+	ROM_LOAD( "epr10425.bin",	0x10000, 0x08000, CRC(35964109) SHA1(a7bc64a87b23139b0edb9c3512f47dcf73feb854) )
+	ROM_LOAD( "epr10424.bin",	0x18000, 0x08000, CRC(fcda1dfa) SHA1(b8497b04de28fc0d6b7cb0206ad50948cff07840) )
+	ROM_LOAD( "epr10423.bin",	0x20000, 0x08000, CRC(0b87244f) SHA1(c88041614735a9b6cba1edde0a11ed413e115361) )
+	ROM_LOAD( "epr10422.bin",	0x28000, 0x08000, CRC(14781e56) SHA1(f15d9d89e1ebff36c3867cfc8f0bdf7f6b3c96bc) )
 ROM_END
 
 ROM_START( transfrm )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "ic7.top",	0x00000, 0x08000, 0xccf1d123 ) /* Fixed Code */
+	ROM_LOAD( "ic7.top",	0x00000, 0x08000, CRC(ccf1d123) SHA1(5ade9b00e2a36d034fafdf1902d47a9a00e96fc4) ) /* Fixed Code */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
-	ROM_LOAD( "epr-7347.ic5",	0x10000, 0x08000, 0xdf0f639f )
-	ROM_LOAD( "epr-7348.ic4",	0x18000, 0x08000, 0x0f38ea96 )
-	ROM_LOAD( "ic3.top",		0x20000, 0x08000, 0x9d485df6 )
-	ROM_LOAD( "epr-7350.ic2",	0x28000, 0x08000, 0x0052165d )
+	ROM_LOAD( "epr-7347.ic5",	0x10000, 0x08000, CRC(df0f639f) SHA1(a09a9841b66de246a585be63d911b9a42a323503) )
+	ROM_LOAD( "epr-7348.ic4",	0x18000, 0x08000, CRC(0f38ea96) SHA1(d4d421c5d93832e2bc1f22f39dffb6b80f2750bd) )
+	ROM_LOAD( "ic3.top",		0x20000, 0x08000, CRC(9d485df6) SHA1(b25f04803c8f7188021f3039aa13aac80d480823) )
+	ROM_LOAD( "epr-7350.ic2",	0x28000, 0x08000, CRC(0052165d) SHA1(cf4b5dffa54238e513515b3fc90faa7ce0b65d34) )
 ROM_END
 
 ROM_START( astrofl )
 	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "epr-7723.ic7",	0x00000, 0x08000, 0x66061137 ) /* encrypted */
+	ROM_LOAD( "epr-7723.ic7",	0x00000, 0x08000, CRC(66061137) SHA1(cb6a2c7864f9f87bbedfd4b1448ad6c2de65d6ca) ) /* encrypted */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
-	ROM_LOAD( "epr-7347.ic5",	0x10000, 0x08000, 0xdf0f639f )
-	ROM_LOAD( "epr-7348.ic4",	0x18000, 0x08000, 0x0f38ea96 )
-	ROM_LOAD( "epr-7349.ic3",	0x20000, 0x08000, 0xf8c352d5 )
-	ROM_LOAD( "epr-7350.ic2",	0x28000, 0x08000, 0x0052165d )
+	ROM_LOAD( "epr-7347.ic5",	0x10000, 0x08000, CRC(df0f639f) SHA1(a09a9841b66de246a585be63d911b9a42a323503) )
+	ROM_LOAD( "epr-7348.ic4",	0x18000, 0x08000, CRC(0f38ea96) SHA1(d4d421c5d93832e2bc1f22f39dffb6b80f2750bd) )
+	ROM_LOAD( "epr-7349.ic3",	0x20000, 0x08000, CRC(f8c352d5) SHA1(e59565ab6928c67706c6f82f6ea9a64cdfc65a21) )
+	ROM_LOAD( "epr-7350.ic2",	0x28000, 0x08000, CRC(0052165d) SHA1(cf4b5dffa54238e513515b3fc90faa7ce0b65d34) )
 ROM_END
 
 ROM_START( fantzn2 )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
-	ROM_LOAD( "fz2_ic7.rom",	0x00000, 0x08000, 0x76db7b7b )
-	ROM_LOAD( "fz2_ic5.rom",	0x10000, 0x10000, 0x57b45681 )
-	ROM_LOAD( "fz2_ic4.rom",	0x20000, 0x10000, 0x6f7a9f5f )
-	ROM_LOAD( "fz2_ic3.rom",	0x30000, 0x10000, 0xa231dc85 )
-	ROM_LOAD( "fz2_ic2.rom",	0x40000, 0x10000, 0xb14db5af )
+	ROM_LOAD( "fz2_ic7.rom",	0x00000, 0x08000, CRC(76db7b7b) )
+	ROM_LOAD( "fz2_ic5.rom",	0x10000, 0x10000, CRC(57b45681) )
+	ROM_LOAD( "fz2_ic4.rom",	0x20000, 0x10000, CRC(6f7a9f5f) )
+	ROM_LOAD( "fz2_ic3.rom",	0x30000, 0x10000, CRC(a231dc85) )
+	ROM_LOAD( "fz2_ic2.rom",	0x40000, 0x10000, CRC(b14db5af) )
 ROM_END
 
 ROM_START( opaopa )
 	ROM_REGION( 0x30000, REGION_USER1, 0 )
-	ROM_LOAD( "epr11224.ic7",	0x00000, 0x08000, 0x024b1244 ) /* Fixed Code */
+	ROM_LOAD( "epr11224.ic7",	0x00000, 0x08000, CRC(024b1244) ) /* Fixed Code */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
-	ROM_LOAD( "epr11223.ic5",	0x10000, 0x08000, 0x6bc41d6e )
-	ROM_LOAD( "epr11222.ic4",	0x18000, 0x08000, 0x395c1d0a )
-	ROM_LOAD( "epr11221.ic3",	0x20000, 0x08000, 0x4ca132a2 )
-	ROM_LOAD( "epr11220.ic2",	0x28000, 0x08000, 0xa165e2ef )
+	ROM_LOAD( "epr11223.ic5",	0x10000, 0x08000, CRC(6bc41d6e) )
+	ROM_LOAD( "epr11222.ic4",	0x18000, 0x08000, CRC(395c1d0a) )
+	ROM_LOAD( "epr11221.ic3",	0x20000, 0x08000, CRC(4ca132a2) )
+	ROM_LOAD( "epr11220.ic2",	0x28000, 0x08000, CRC(a165e2ef) )
 ROM_END
 
 /*-- Game Drivers --*/

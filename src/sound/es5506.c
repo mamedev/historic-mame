@@ -160,32 +160,29 @@ static FILE *eslog;
 
 ***********************************************************************************************/
 
-INLINE void update_irq_state(struct ES5506Chip *chip)
+static void update_irq_state(struct ES5506Chip *chip)
 {
-#if 0
-	int irq_bits = chip->status_register & chip->irq_mask;
-
-	/* always off if the enable is off */
-	if (!chip->irq_enable)
-		irq_bits = 0;
-
-	/* update the state if changed */
-	if (irq_bits && !chip->irq_state)
-	{
-		chip->irq_state = 1;
-		if (chip->irq_callback)
-			(*chip->irq_callback)(1);
-	}
-	else if (!irq_bits && chip->irq_state)
-	{
-		chip->irq_state = 0;
-		if (chip->irq_callback)
-			(*chip->irq_callback)(0);
-	}
-#endif
+	/* ES5505/6 irq line has been set high - inform the host */
+	if (chip->irq_callback)
+		(*chip->irq_callback)(1); /* IRQB set high */
 }
 
+static void update_internal_irq_state(struct ES5506Chip *chip)
+{
+	/*	Host (cpu) has just read the voice interrupt vector (voice IRQ ack).
+	
+		Reset the voice vector to show the IRQB line is low (top bit set).
+		If we have any stacked interrupts (other voices waiting to be
+		processed - with their IRQ bit set) then they will be moved into
+		the vector next time the voice is processed.  In emulation
+		terms they get updated next time generate_samples() is called.	
+	*/
 
+	chip->irqv=0x80;
+
+	if (chip->irq_callback)
+		(*chip->irq_callback)(0); /* IRQB set low */
+}
 
 /**********************************************************************************************
 
@@ -395,8 +392,9 @@ do																					\
 	/* are we past the end? */														\
 	if (accum > voice->end && !(voice->control & CONTROL_LEI))						\
 	{																				\
-		/* generate interrupt */													\
-		voice->control |= CONTROL_IRQ;												\
+		/* generate interrupt if required */										\
+		if (voice->control&CONTROL_IRQE)											\
+			voice->control |= CONTROL_IRQ;											\
 																					\
 		/* handle the different types of looping */									\
 		switch (voice->control & CONTROL_LOOPMASK)									\
@@ -433,8 +431,9 @@ do																					\
 	/* are we past the end? */														\
 	if (accum < voice->start && !(voice->control & CONTROL_LEI))					\
 	{																				\
-		/* generate interrupt */													\
-		voice->control |= CONTROL_IRQ;												\
+		/* generate interrupt if required */										\
+		if (voice->control&CONTROL_IRQE)											\
+			voice->control |= CONTROL_IRQ;											\
 																					\
 		/* handle the different types of looping */									\
 		switch (voice->control & CONTROL_LOOPMASK)									\
@@ -762,13 +761,31 @@ static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right,
 		/* generate from the appropriate source */
 		if (!base)
 		{
-logerror("NULL region base %d\n",voice->control >> 14);
+			logerror("NULL region base %d\n",voice->control >> 14);
 			generate_dummy(voice, base, left, right, samples);
 		}
 		else if (voice->control & 0x2000)
 			generate_ulaw(voice, base, left, right, samples);
 		else
 			generate_pcm(voice, base, left, right, samples);
+
+		/* does this voice have it's IRQ bit raised? */
+		if (voice->control&CONTROL_IRQ) 
+		{
+logerror("IRQ raised on voice %d!!\n",v);
+			/* only update voice vector if existing IRQ is acked by host */
+			if (chip->irqv&0x80)
+			{
+				/* latch voice number into vector, and set high bit low */
+				chip->irqv=v&0x7f;
+
+				/* take down IRQ bit on voice */
+				voice->control&=~CONTROL_IRQ;
+
+				/* inform host of irq */
+				update_irq_state(chip);
+			}
+		}
 	}
 }
 
@@ -928,6 +945,7 @@ int ES5506_sh_start(const struct MachineSound *msound)
 		/* initialize the rest of the structure */
 		es5506[i].master_clock = (double)intf->baseclock[i];
 		es5506[i].irq_callback = intf->irq_callback[i];
+		es5506[i].irqv = 0x80;
 
 		/* init the voices */
 		for (j = 0; j < 32; j++)
@@ -970,6 +988,14 @@ void ES5506_sh_stop(void)
 		free(scratch);
 	scratch = NULL;
 
+	if (ulaw_lookup)
+		free(ulaw_lookup);
+	ulaw_lookup = NULL;
+
+	if (volume_lookup)
+		free(volume_lookup);
+	volume_lookup = NULL;
+
 	/* debugging */
 	if (LOG_COMMANDS && eslog)
 	{
@@ -1006,7 +1032,6 @@ INLINE void es5506_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 	{
 		case 0x00/8:	/* CR */
 			voice->control = data & 0xffff;
-			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "voice %d, control=%04x\n", chip->current_page & 0x1f, voice->control);
 			break;
@@ -1105,7 +1130,6 @@ INLINE void es5506_reg_write_high(struct ES5506Chip *chip, struct ES5506Voice *v
 	{
 		case 0x00/8:	/* CR */
 			voice->control = data & 0xffff;
-			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "voice %d, control=%04x\n", chip->current_page & 0x1f, voice->control);
 			break;
@@ -1186,6 +1210,84 @@ INLINE void es5506_reg_write_high(struct ES5506Chip *chip, struct ES5506Voice *v
 	}
 }
 
+INLINE void es5506_reg_write_test(struct ES5506Chip *chip, struct ES5506Voice *voice, offs_t offset, UINT32 data)
+{
+	switch (offset)
+	{
+		case 0x00/8:	/* CHANNEL 0 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 0 left test write %08x\n", data);
+			break;
+
+		case 0x08/8:	/* CHANNEL 0 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 0 right test write %08x\n", data);
+			break;
+
+		case 0x10/8:	/* CHANNEL 1 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 1 left test write %08x\n", data);
+			break;
+
+		case 0x18/8:	/* CHANNEL 1 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 1 right test write %08x\n", data);
+			break;
+
+		case 0x20/8:	/* CHANNEL 2 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 2 left test write %08x\n", data);
+			break;
+
+		case 0x28/8:	/* CHANNEL 2 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 2 right test write %08x\n", data);
+			break;
+
+		case 0x30/8:	/* CHANNEL 3 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 3 left test write %08x\n", data);
+			break;
+
+		case 0x38/8:	/* CHANNEL 3 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 3 right test write %08x\n", data);
+			break;
+
+		case 0x40/8:	/* CHANNEL 4 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 4 left test write %08x\n", data);
+			break;
+
+		case 0x48/8:	/* CHANNEL 4 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 4 right test write %08x\n", data);
+			break;
+
+		case 0x50/8:	/* CHANNEL 5 LEFT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 5 left test write %08x\n", data);
+			break;
+
+		case 0x58/8:	/* CHANNEL 6 RIGHT */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Channel 5 right test write %08x\n", data);
+			break;
+
+		case 0x60/8:	/* EMPTY */
+			if (LOG_COMMANDS && eslog)
+				fprintf(eslog, "Test write EMPTY %08x\n", data);
+			break;
+
+		case 0x68/8:	/* PAR - read only */
+		case 0x70/8:	/* IRQV - read only */
+			break;
+
+		case 0x78/8:	/* PAGE */
+			chip->current_page = data & 0x7f;
+			break;
+	}
+}
 
 static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, data8_t data)
 {
@@ -1199,8 +1301,6 @@ static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, data8_t dat
 	if (shift != 24)
 		return;
 
-/*	logerror("%04x:ES5506 write %02x/%02x = %08x\n", activecpu_get_previouspc(), chip->current_page, offset / 4 * 8, chip->write_latch);*/
-
 	/* force an update */
 	stream_update(chip->stream, 0);
 
@@ -1209,6 +1309,8 @@ static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, data8_t dat
 		es5506_reg_write_low(chip, voice, offset / 4, chip->write_latch);
 	else if (chip->current_page < 0x40)
 		es5506_reg_write_high(chip, voice, offset / 4, chip->write_latch);
+	else
+		es5506_reg_write_test(chip, voice, offset / 4, chip->write_latch);
 
 	/* clear the write latch when done */
 	chip->write_latch = 0;
@@ -1230,8 +1332,6 @@ INLINE UINT32 es5506_reg_read_low(struct ES5506Chip *chip, struct ES5506Voice *v
 	{
 		case 0x00/8:	/* CR */
 			result = voice->control;
-			voice->control &= ~CONTROL_IRQ;
-			update_irq_state(chip);
 			break;
 
 		case 0x08/8:	/* FC */
@@ -1289,6 +1389,7 @@ INLINE UINT32 es5506_reg_read_low(struct ES5506Chip *chip, struct ES5506Voice *v
 
 		case 0x70/8:	/* IRQV */
 			result = chip->irqv;
+			update_internal_irq_state(chip);
 			break;
 
 		case 0x78/8:	/* PAGE */
@@ -1307,8 +1408,6 @@ INLINE UINT32 es5506_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 	{
 		case 0x00/8:	/* CR */
 			result = voice->control;
-			voice->control &= ~CONTROL_IRQ;
-			update_irq_state(chip);
 			break;
 
 		case 0x08/8:	/* START */
@@ -1366,6 +1465,7 @@ INLINE UINT32 es5506_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 
 		case 0x70/8:	/* IRQV */
 			result = chip->irqv;
+			update_internal_irq_state(chip);
 			break;
 
 		case 0x78/8:	/* PAGE */
@@ -1375,6 +1475,27 @@ INLINE UINT32 es5506_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 	return result;
 }
 
+INLINE UINT32 es5506_reg_read_test(struct ES5506Chip *chip, struct ES5506Voice *voice, offs_t offset)
+{
+	UINT32 result = 0;
+
+	switch (offset)
+	{
+		case 0x68/8:	/* PAR */
+			if (chip->port_read)
+				result = (*chip->port_read)();
+			break;
+
+		case 0x70/8:	/* IRQV */
+			result = chip->irqv;
+			break;
+
+		case 0x78/8:	/* PAGE */
+			result = chip->current_page;
+			break;
+	}
+	return result;
+}
 
 static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 {
@@ -1396,6 +1517,8 @@ static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 		chip->read_latch = es5506_reg_read_low(chip, voice, offset / 4);
 	else if (chip->current_page < 0x40)
 		chip->read_latch = es5506_reg_read_high(chip, voice, offset / 4);
+	else
+		chip->read_latch = es5506_reg_read_test(chip, voice, offset / 4);
 
 	if (LOG_COMMANDS && eslog)
 		fprintf(eslog, "%08x\n", chip->read_latch);
@@ -1403,8 +1526,6 @@ static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 	/* return the high byte */
 	return chip->read_latch >> 24;
 }
-
-
 
 /**********************************************************************************************
 
@@ -1539,12 +1660,6 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 								  ((data << 2) & (CONTROL_CA0 | CONTROL_CA1));
 			}
 
-			if (voice->control & CONTROL_IRQE)
-				logerror("IRQE enabled on voice %d\n",chip->current_page & 0x1f);
-			if (voice->control & CONTROL_IRQ)
-				logerror("IRQ enabled on voice %d\n",chip->current_page & 0x1f);
-
-			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, control=%04x (raw=%04x & %04x)\n", activecpu_get_previouspc(), chip->current_page & 0x1f, voice->control, data, mem_mask ^ 0xffff);
 			break;
@@ -1556,7 +1671,6 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 				voice->freqcount = (voice->freqcount & ~0x1fe00) | ((data & 0xff00) << 1);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, freq count=%08x\n", activecpu_get_previouspc(), chip->current_page & 0x1f, voice->freqcount);
-logerror("voice %d, freq is %08x\n",chip->current_page & 0x1f,data);
 			break;
 
 		case 0x02:	/* STRT (hi) */
@@ -1695,7 +1809,6 @@ INLINE void es5505_reg_write_high(struct ES5506Chip *chip, struct ES5506Voice *v
 				voice->control |= ((data >> 2) & CONTROL_LPMASK) |
 								  ((data << 2) & (CONTROL_CA0 | CONTROL_CA1));
 			}
-			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, control=%04x (raw=%04x & %04x)\n", activecpu_get_previouspc(), chip->current_page & 0x1f, voice->control, data, mem_mask ^ 0xffff);
 			break;
@@ -1869,8 +1982,6 @@ INLINE UINT16 es5505_reg_read_low(struct ES5506Chip *chip, struct ES5506Voice *v
 					 ((voice->control & CONTROL_LPMASK) << 2) |
 					 ((voice->control & (CONTROL_CA0 | CONTROL_CA1)) >> 2) |
 					 0xf000;
-			voice->control &= ~CONTROL_IRQ;
-			update_irq_state(chip);
 			break;
 
 		case 0x01:	/* FC */
@@ -1926,6 +2037,7 @@ INLINE UINT16 es5505_reg_read_low(struct ES5506Chip *chip, struct ES5506Voice *v
 
 		case 0x0e:	/* IRQV */
 			result = chip->irqv;
+			update_internal_irq_state(chip);
 			break;
 
 		case 0x0f:	/* PAGE */
@@ -1948,8 +2060,6 @@ INLINE UINT16 es5505_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 					 ((voice->control & CONTROL_LPMASK) << 2) |
 					 ((voice->control & (CONTROL_CA0 | CONTROL_CA1)) >> 2) |
 					 0xf000;
-			voice->control &= ~CONTROL_IRQ;
-			update_irq_state(chip);
 			break;
 
 		case 0x01:	/* O4(n-1) */
@@ -1979,9 +2089,11 @@ INLINE UINT16 es5505_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 			/* want to waste time filtering stopped channels, we just look for a read from */
 			/* this register on a stopped voice, and return the raw sample data at the */
 			/* accumulator */
-			if ((voice->control & CONTROL_STOPMASK) && chip->region_base[voice->control >> 14])
+			if ((voice->control & CONTROL_STOPMASK) && chip->region_base[voice->control >> 14]) {
 				voice->o1n1 = chip->region_base[voice->control >> 14][voice->exbank + (voice->accum >> 11)];
-			result = voice->o1n1;
+				logerror("%02x %08x ==> %08x\n",voice->o1n1,voice->control >> 14,voice->exbank + (voice->accum >> 11));
+			}
+				result = voice->o1n1;
 			break;
 
 		case 0x07:
@@ -1998,6 +2110,7 @@ INLINE UINT16 es5505_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 
 		case 0x0e:	/* IRQV */
 			result = chip->irqv;
+			update_internal_irq_state(chip);
 			break;
 
 		case 0x0f:	/* PAGE */

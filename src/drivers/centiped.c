@@ -1566,131 +1566,145 @@ MACHINE_DRIVER_END
 
 ROM_START( centiped )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x5ab0d9de )
-	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x4c07fd3e )
-	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0xff69b424 )
-	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0x44e40fa4 )
+	ROM_LOAD( "centiped.307", 0x2000, 0x0800, CRC(5ab0d9de) SHA1(8ea6e3304202831aabaf31dbd0f970a7b3bfe421) )
+	ROM_LOAD( "centiped.308", 0x2800, 0x0800, CRC(4c07fd3e) SHA1(af4fdbf32c23b1864819d620a874e7f205da3cdb) )
+	ROM_LOAD( "centiped.309", 0x3000, 0x0800, CRC(ff69b424) SHA1(689fa560d40a384dcbcad7c8095bc12e91875580) )
+	ROM_LOAD( "centiped.310", 0x3800, 0x0800, CRC(44e40fa4) SHA1(c557db83876afc8ab52047ab1a3c3bfef34d6351) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, CRC(880acfb9) SHA1(6c862352c329776f2f9974a0df9dbe41f9dbc361) )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, CRC(b1397029) SHA1(974c03d29aeca672fffa4dfc00a06be6a851aacb) )
 ROM_END
 
 
 ROM_START( centipd2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0xb2909e2f )
-	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0x110e04ff )
-	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xcc2edb26 )
-	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0x93999153 )
+	ROM_LOAD( "centiped.207", 0x2000, 0x0800, CRC(b2909e2f) SHA1(90ec90bd1e262861730afd5b113ec8dddd958ed8) )
+	ROM_LOAD( "centiped.208", 0x2800, 0x0800, CRC(110e04ff) SHA1(4cb481792411b6aefac561744cfbe107aba8bab3) )
+	ROM_LOAD( "centiped.209", 0x3000, 0x0800, CRC(cc2edb26) SHA1(b3ea580afa6a1ac44662051fae19c1efc320fcd3) )
+	ROM_LOAD( "centiped.210", 0x3800, 0x0800, CRC(93999153) SHA1(8788c2b39fc5bfbb147a5e7c26ad360bba8d1063) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, CRC(880acfb9) SHA1(6c862352c329776f2f9974a0df9dbe41f9dbc361) )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, CRC(b1397029) SHA1(974c03d29aeca672fffa4dfc00a06be6a851aacb) )
 ROM_END
 
 
 ROM_START( centtime )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "cent_d1.bin",  0x2000, 0x0800, 0xc4d995eb )
-	ROM_LOAD( "cent_e1.bin",  0x2800, 0x0800, 0xbcdebe1b )
-	ROM_LOAD( "cent_fh1.bin", 0x3000, 0x0800, 0x66d7b04a )
-	ROM_LOAD( "cent_j1.bin",  0x3800, 0x0800, 0x33ce4640 )
+	ROM_LOAD( "cent_d1.bin",  0x2000, 0x0800, CRC(c4d995eb) SHA1(d0b2f0461cfa35842045d40ffb65e777703b773e) )
+	ROM_LOAD( "cent_e1.bin",  0x2800, 0x0800, CRC(bcdebe1b) SHA1(53f3bf88a79ce40661c0a9381928e55d8c61777a) )
+	ROM_LOAD( "cent_fh1.bin", 0x3000, 0x0800, CRC(66d7b04a) SHA1(8fa758095b618085090491dfb5ea114cdc87f9df) )
+	ROM_LOAD( "cent_j1.bin",  0x3800, 0x0800, CRC(33ce4640) SHA1(780c2eb320f64fad6b265c0dada961646ed30174) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, CRC(880acfb9) SHA1(6c862352c329776f2f9974a0df9dbe41f9dbc361) )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, CRC(b1397029) SHA1(974c03d29aeca672fffa4dfc00a06be6a851aacb) )
 ROM_END
 
 
 ROM_START( centipdb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, 0x8a744e57 )
-	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, 0xbb897b10 )
-	ROM_LOAD( "olympia.c30",  0x3000, 0x0800, 0x2297c2ac )
-	ROM_LOAD( "olympia.c31",  0x3800, 0x0800, 0xcc529d6b )
+	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, CRC(8a744e57) SHA1(0bc83fe01d929af4e5c7f2a8d1236560df41f9ce) )
+	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, CRC(bb897b10) SHA1(bb1039fe64774277870f675eb72dd9f3f596f865) )
+	ROM_LOAD( "olympia.c30",  0x3000, 0x0800, CRC(2297c2ac) SHA1(129d111f80b837f7b44852162f4abfba31fc0d75) )
+	ROM_LOAD( "olympia.c31",  0x3800, 0x0800, CRC(cc529d6b) SHA1(80d86371b0f969b434af6ffb3834adaf11d05ac2) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, 0xd91b9724 )
-	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
+	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, CRC(d91b9724) SHA1(5ff9ccb2769c853b44764bfe829ad1df08686dc6) )
+	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, CRC(1a6acd02) SHA1(9c5daa8195705669d59b018a89ff8d03bc18999e) )
 ROM_END
 
 
 ROM_START( centipb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "d1",  		  0x2000, 0x0800, 0xb17b8e0b )
-	ROM_LOAD( "e1",  		  0x2800, 0x0800, 0x7684398e )
-	ROM_LOAD( "h1",  		  0x3000, 0x0800, 0x74580fe4 )
-	ROM_LOAD( "j1",  		  0x3800, 0x0800, 0x84600161 )
+	ROM_LOAD( "d1",  		  0x2000, 0x0800, CRC(b17b8e0b) SHA1(01944cf040cf23aeb4c50d4f2e63181e08a07310) )
+	ROM_LOAD( "e1",  		  0x2800, 0x0800, CRC(7684398e) SHA1(eea8e05506a7af2fec55c2689e3caafc62ea524f) )
+	ROM_LOAD( "h1",  		  0x3000, 0x0800, CRC(74580fe4) SHA1(35b8a8675e4e020e234e51c3e4bd4ee5c24b79d2) )
+	ROM_LOAD( "j1",  		  0x3800, 0x0800, CRC(84600161) SHA1(e9a6801c6f59e2b34e692e9aa71845d2e64a2379) )
 	ROM_RELOAD( 	  		  0x7800, 0x0800 )
-	ROM_LOAD( "k1",  		  0x6000, 0x0800, 0xf1aa329b )
+	ROM_LOAD( "k1",  		  0x6000, 0x0800, CRC(f1aa329b) SHA1(e4689de0f94d11f125ee7548a3f8128ff8e8da51) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, CRC(880acfb9) SHA1(6c862352c329776f2f9974a0df9dbe41f9dbc361) )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, CRC(b1397029) SHA1(974c03d29aeca672fffa4dfc00a06be6a851aacb) )
+ROM_END
+
+ROM_START( millpac )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "millpac1.1d",  0x2000, 0x0800, CRC(4dd6913d) SHA1(9eca634e1a827f9bbcf3c532d44e175ac4751755) )
+	ROM_LOAD( "millpac2.1e",  0x2800, 0x0800, CRC(411c81f1) SHA1(15184642522f0b7eab81301295d435c10ce2d78d) )
+	ROM_LOAD( "millpac3.1h",  0x3000, 0x0800, CRC(577076cc) SHA1(3124fcfb56f33ebd17d2c0da1098023474187066) )
+	ROM_LOAD( "millpac4.1j",  0x3800, 0x0800, CRC(89aedd75) SHA1(74635079e7103bf6fa9577f5980e1adaa34d9be0) )
+	ROM_RELOAD(    0x7800, 0x0800 )
+	ROM_LOAD( "millpac5.1k",  0x6000, 0x0800, CRC(67ac481b) SHA1(cef839d1c9dd207fdf41ae47d5f279b783f2f4cf) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "millpac6.7f",  0x0000, 0x0800, CRC(79f05520) SHA1(25c9f3b4826f48830f5c42d41d4f030b49e58d6a) )
+	ROM_LOAD( "millpac7.7j",  0x0800, 0x0800, CRC(4880b2bd) SHA1(1909b8fb275f38f1b57bf53ba348b866cc48a599) )
 ROM_END
 
 
 ROM_START( magworm )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "magworm.0",	  0x2000, 0x0800, 0xa88e970a )
-	ROM_LOAD( "magworm.1",	  0x2800, 0x0800, 0x7a04047e )
-	ROM_LOAD( "magworm.2",	  0x3000, 0x0800, 0xf127f1c3 )
-	ROM_LOAD( "magworm.3",	  0x3800, 0x0800, 0x478d92b4 )
+	ROM_LOAD( "magworm.0",	  0x2000, 0x0800, CRC(a88e970a) SHA1(f0cc6fdcdecf05f11cef7ebae4e11783a8bbc5ba) )
+	ROM_LOAD( "magworm.1",	  0x2800, 0x0800, CRC(7a04047e) SHA1(3c00756c8ffbc5e78d4a7409802cc2ed8f668264) )
+	ROM_LOAD( "magworm.2",	  0x3000, 0x0800, CRC(f127f1c3) SHA1(3fddcd6f458ac60eaebacef921b522dd2c7b8141) )
+	ROM_LOAD( "magworm.3",	  0x3800, 0x0800, CRC(478d92b4) SHA1(99cce957c50ca80ddde408d9188fc2ed04d8da68) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "magworm.4",    0x0000, 0x0800, 0xcea64e1a )
-	ROM_LOAD( "magworm.5",    0x0800, 0x0800, 0x24558ea5 )
+	ROM_LOAD( "magworm.4",    0x0000, 0x0800, CRC(cea64e1a) SHA1(9022102124e1ad93f912ce8bdf85f8a886b0879b) )
+	ROM_LOAD( "magworm.5",    0x0800, 0x0800, CRC(24558ea5) SHA1(8cd7131e19afd7a96191b1b3c3fba7ae9a140f4b) )
 ROM_END
 
 
 ROM_START( milliped )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0x40711675 )
-	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )
-	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x62e137e0 )
-	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x46752c7d )
+	ROM_LOAD( "milliped.104", 0x4000, 0x1000, CRC(40711675) SHA1(b595d6a0f5d3c611ade1b83a94c3b909d2124dc4) )
+	ROM_LOAD( "milliped.103", 0x5000, 0x1000, CRC(fb01baf2) SHA1(9c1d0bbc20bf25dd21761a311fd1ed80aa029241) )
+	ROM_LOAD( "milliped.102", 0x6000, 0x1000, CRC(62e137e0) SHA1(9fe40db55ba1d20d4f11704f7f5df9ff75b87f30) )
+	ROM_LOAD( "milliped.101", 0x7000, 0x1000, CRC(46752c7d) SHA1(ab06b1fd80271849946f90757b3837b617394929) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "milliped.107", 0x0000, 0x0800, 0x68c3437a )
-	ROM_LOAD( "milliped.106", 0x0800, 0x0800, 0xf4468045 )
+	ROM_LOAD( "milliped.107", 0x0000, 0x0800, CRC(68c3437a) SHA1(4c7ea33d9501456ee8f5a642da7d6c972f2bb90d) )
+	ROM_LOAD( "milliped.106", 0x0800, 0x0800, CRC(f4468045) SHA1(602fcc7290f9f4eacb841c76665961ebf4307f80) )
 ROM_END
 
 
 ROM_START( warlords )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
-	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )
-	ROM_LOAD( "037158.1j",    0x6000, 0x0800, 0x1f043a86 )
-	ROM_LOAD( "037157.1h",    0x6800, 0x0800, 0x1a639100 )
-	ROM_LOAD( "037156.1e",    0x7000, 0x0800, 0x534f34b4 )
-	ROM_LOAD( "037155.1d",    0x7800, 0x0800, 0x23b94210 )
+	ROM_LOAD( "037154.1m",    0x5000, 0x0800, CRC(18006c87) SHA1(6b4aab1b1710819d29f4bbc29269eb9c915626c0) )
+	ROM_LOAD( "037153.1k",    0x5800, 0x0800, CRC(67758f4c) SHA1(b65ca677b54de7a8202838207d9a7bb0aed3e0f2) )
+	ROM_LOAD( "037158.1j",    0x6000, 0x0800, CRC(1f043a86) SHA1(b1e271c0979d62202ae86c4b6860fb67bbef6400) )
+	ROM_LOAD( "037157.1h",    0x6800, 0x0800, CRC(1a639100) SHA1(41ec333aee7192f8aeef49e5257f201f4db01cff) )
+	ROM_LOAD( "037156.1e",    0x7000, 0x0800, CRC(534f34b4) SHA1(1680982ded17350c2ae10bb47f7eb8908bb10db2) )
+	ROM_LOAD( "037155.1d",    0x7800, 0x0800, CRC(23b94210) SHA1(d74c1ca90caf15942805043b4ebe4ee077799da0) )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
+	ROM_LOAD( "037159.6e",    0x0000, 0x0800, CRC(ff979a08) SHA1(422053473e41e3e1f71eb28e40eedc78f22326b3) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
 	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
 	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
 	/* mirror and painted background. */
-	ROM_LOAD( "warlord.clr",  0x0000, 0x0100, 0xa2c5c277 )
+	ROM_LOAD( "warlord.clr",  0x0000, 0x0100, CRC(a2c5c277) SHA1(f04de9fb6ee9619b4a4aae10c92b16b3123046cf) )
 ROM_END
 
 
 ROM_START( qwakprot )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, 0x4d002d8a )
-	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, 0xe0c78fd7 )
-	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, 0xe5770fc9 )
-	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, 0x90771cc0 )
+	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, CRC(4d002d8a) SHA1(8621e7ec1ab3cb8d003858227e858354cd79dbf1) )
+	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, CRC(e0c78fd7) SHA1(f5f397950971d12a7ae47fc64aa8f5751463b8a5) )
+	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, CRC(e5770fc9) SHA1(c9556e9c2f7b6c37755ac9f10d95027118317b4a) )
+	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, CRC(90771cc0) SHA1(5715e5bfccb05c51d871b443e42b0950ec23e330) )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, 0xbed2c067 )
-	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, 0x73a31d28 )
-	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, 0x07fd9e80 )
-	ROM_LOAD( "qwakgfx3.bin", 0x3000, 0x1000, 0xe8416f2b )
+	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, CRC(bed2c067) SHA1(53d909b414042d54fe2e86ae0d6c7a4ded16b87e) )
+	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, CRC(73a31d28) SHA1(bbe076432866398bcd02962dd90eb178e3a38fb1) )
+	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, CRC(07fd9e80) SHA1(83d5f22b8316ac7e88d8ecdb238182a35a6f6362) )
+	ROM_LOAD( "qwakgfx3.bin", 0x3000, 0x1000, CRC(e8416f2b) SHA1(171f6539575f2c06b431ab5118e5cbaf740f557d) )
 ROM_END
 
 
@@ -1729,6 +1743,7 @@ GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari", "
 GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari", "Centipede (1 player, timed)" )
 GAME( 1980, centipdb, centiped, centipdb, centipdb, centipdb, ROT270, "bootleg", "Centipede (bootleg set 1)" )
 GAME( 1980, centipb2, centiped, centipb2, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg set 2)" )
+GAME( 1980, millpac,  centiped, centipb2, centiped,  0, 	  ROT270, "Valadon", "Millpac" )
 GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)" )
 GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari", "Millipede" )
 

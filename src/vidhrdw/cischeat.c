@@ -68,19 +68,20 @@ static int debugsprites;	// For debug purposes
 /* Variables that driver has access to: */
 
 data16_t *cischeat_roadram[2];
+data16_t *f1gpstr2_ioready;
 
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
 	usrintf_showmessage(_format_,_offset_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
-	logerror(_format_,_offset_);\
+	logerror(_format_ "\n",_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	usrintf_showmessage(_format_,_offset_,_data_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
-	logerror(_format_,_offset_,_data_); \
+	logerror(_format_ "\n",_offset_,_data_); \
 }
 
 #else
@@ -88,12 +89,12 @@ data16_t *cischeat_roadram[2];
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
-	logerror(_format_,_offset_);\
+	logerror(_format_ "\n",_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
-	logerror(_format_,_offset_,_data_); \
+	logerror(_format_ "\n",_offset_,_data_); \
 }
 
 #endif
@@ -441,6 +442,22 @@ READ16_HANDLER( f1gpstar_vregs_r )
 	}
 }
 
+READ16_HANDLER( f1gpstr2_vregs_r )
+{
+	if ((offset >= 0x1000/2) && (offset < 0x2000/2))
+		return megasys1_vregs[offset];
+
+	switch (offset)
+	{
+		case 0x0018/2 :
+			return (f1gpstr2_ioready[0]&1) ? 0xff : 0xf0;
+
+		default:
+			return f1gpstar_vregs_r(offset,mem_mask);
+	}
+}
+
+
 WRITE16_HANDLER( f1gpstar_vregs_w )
 {
 //	data16_t old_data = megasys1_vregs[offset];
@@ -498,6 +515,28 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 	}
 }
 
+WRITE16_HANDLER( f1gpstr2_vregs_w )
+{
+//	data16_t old_data = megasys1_vregs[offset];
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+
+	if ((offset >= 0x1000/2) && (offset < 0x2000/2))
+		return;
+
+	switch (offset)
+	{
+		case 0x0000/2   :
+			if (ACCESSING_LSB)
+			{
+				cpu_set_irq_line(4,4,(new_data & 4)?ASSERT_LINE:CLEAR_LINE);
+				cpu_set_irq_line(4,2,(new_data & 2)?ASSERT_LINE:CLEAR_LINE);
+			}
+			break;
+
+		default:
+			f1gpstar_vregs_w(offset,data,mem_mask);
+	}
+}
 
 /**************************************************************************
 								Scud Hammer
@@ -1315,3 +1354,4 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 
 	megasys1_active_layers = megasys1_active_layers1;
 }
+

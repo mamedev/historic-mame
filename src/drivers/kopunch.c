@@ -300,26 +300,26 @@ MACHINE_DRIVER_END
 
 ROM_START( kopunch )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, 0x34ef5e79 )
-	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, 0x25a5c68b )
+	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, CRC(34ef5e79) )
+	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, CRC(25a5c68b) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr1102",      0x0000, 0x0800, 0x8a52de96 )
-	ROM_LOAD( "epr1103",      0x0800, 0x0800, 0xbae5e054 )
-	ROM_LOAD( "epr1104",      0x1000, 0x0800, 0x7b119a0e )
+	ROM_LOAD( "epr1102",      0x0000, 0x0800, CRC(8a52de96) )
+	ROM_LOAD( "epr1103",      0x0800, 0x0800, CRC(bae5e054) )
+	ROM_LOAD( "epr1104",      0x1000, 0x0800, CRC(7b119a0e) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr1107",      0x0000, 0x1000, 0xca00244d )
-	ROM_LOAD( "epr1108",      0x1000, 0x1000, 0xcc17c5ed )
-	ROM_LOAD( "epr1110",      0x2000, 0x1000, 0xae0aff15 )
-	ROM_LOAD( "epr1109",      0x3000, 0x1000, 0x625446ba )
-	ROM_LOAD( "epr1112",      0x4000, 0x1000, 0xef6994df )
-	ROM_LOAD( "epr1111",      0x5000, 0x1000, 0x28530ec9 )
+	ROM_LOAD( "epr1107",      0x0000, 0x1000, CRC(ca00244d) )
+	ROM_LOAD( "epr1108",      0x1000, 0x1000, CRC(cc17c5ed) )
+	ROM_LOAD( "epr1110",      0x2000, 0x1000, CRC(ae0aff15) )
+	ROM_LOAD( "epr1109",      0x3000, 0x1000, CRC(625446ba) )
+	ROM_LOAD( "epr1112",      0x4000, 0x1000, CRC(ef6994df) )
+	ROM_LOAD( "epr1111",      0x5000, 0x1000, CRC(28530ec9) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "epr1101",      0x0000, 0x0020, 0x15600f5d )	/* palette */
-	ROM_LOAD( "epr1099",      0x0020, 0x0020, 0xfc58c456 )	/* unknown */
-	ROM_LOAD( "epr1100",      0x0040, 0x0020, 0xbedb66b1 )	/* unknown */
+	ROM_LOAD( "epr1101",      0x0000, 0x0020, CRC(15600f5d) )	/* palette */
+	ROM_LOAD( "epr1099",      0x0020, 0x0020, CRC(fc58c456) )	/* unknown */
+	ROM_LOAD( "epr1100",      0x0040, 0x0020, CRC(bedb66b1) )	/* unknown */
 ROM_END
 
 

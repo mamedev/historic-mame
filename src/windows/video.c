@@ -8,11 +8,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-// undef WINNT for ddraw.h to prevent duplicate definition
-#undef WINNT
-#define DIRECTDRAW_VERSION 0x0300
-#include <ddraw.h>
-
 // standard C headers
 #include <math.h>
 
@@ -176,7 +171,10 @@ struct rc_option video_opts[] =
 	{ "triplebuffer", "tb", rc_bool, &win_triple_buffer, "0", 0, 0, NULL, "triple buffering (only if fullscreen)" },
 	{ "window", "w", rc_bool, &win_window_mode, "0", 0, 0, NULL, "run in a window/run on full screen" },
 	{ "ddraw", "dd", rc_bool, &win_use_ddraw, "1", 0, 0, NULL, "use DirectDraw for rendering" },
-	{ "hwstretch", "hws", rc_bool, &win_hw_stretch, "1", 0, 0, NULL, "stretch video using the hardware" },
+	{ "direct3d", "d3d", rc_bool, &win_use_d3d, "0", 0, 0, NULL, "use Direct3D for rendering" },
+	{ "hwstretch", "hws", rc_bool, &win_dd_hw_stretch, "1", 0, 0, NULL, "(dd) stretch video using the hardware" },
+	{ "filter", "flt", rc_bool, &win_d3d_filter, "1", 0, 0, NULL, "(d3d) Use bi-linear interpolation" },
+	{ "texture_management", NULL, rc_bool, &win_d3d_tex_manage, "0", 0, 0, NULL, "(d3d) Use DirectX texture management" },
 	{ "resolution", "r", rc_string, &resolution, "auto", 0, 0, video_set_resolution, "set resolution" },
 	{ "refresh", NULL, rc_int, &win_gfx_refresh, "0", 0, 0, NULL, "set specific monitor refresh rate" },
 	{ "scanlines", "sl", rc_bool, &win_old_scanlines, "0", 0, 0, NULL, "emulate win_old_scanlines" },

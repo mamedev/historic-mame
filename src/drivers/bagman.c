@@ -582,204 +582,204 @@ MACHINE_DRIVER_END
 
 ROM_START( bagman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
-	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
-	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
-	ROM_LOAD( "k9_b08.bin",   0x3000, 0x1000, 0xf04293cb )
-	ROM_LOAD( "m9_b09s.bin",  0x4000, 0x1000, 0x68e83e4f )
-	ROM_LOAD( "n9_b10.bin",   0x5000, 0x1000, 0x1d6579f7 )
+	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, CRC(e0156191) SHA1(bb5f16d49fbe48f3bac118acd1fea51ec4bc5355) )
+	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, CRC(7b758982) SHA1(c8460023b43fed4aca9c6b987faea334832c5e30) )
+	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, CRC(302a077b) SHA1(916c4a6ea1e631cc72bdb91ff9d263dcbaf08bb2) )
+	ROM_LOAD( "k9_b08.bin",   0x3000, 0x1000, CRC(f04293cb) SHA1(ce6b0ae4088ce28c75d414f506fad2cf2b6920c2) )
+	ROM_LOAD( "m9_b09s.bin",  0x4000, 0x1000, CRC(68e83e4f) SHA1(9454564885a1003cee7107db18bedb387b85e9ab) )
+	ROM_LOAD( "n9_b10.bin",   0x5000, 0x1000, CRC(1d6579f7) SHA1(3ab54329f516156b1c9f68efbe59c95d5240bc8c) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
-	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, CRC(4a0a6b55) SHA1(955f8bd4bd9b0fc3c6c359c25ba543ba26c04cbd) )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, CRC(c680ef04) SHA1(79406bc786374abfcd9f548268c445b5c8d8858d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c1_b01.bin",   0x0000, 0x1000, 0x705193b2 )
-	ROM_LOAD( "f1_b03s.bin",  0x1000, 0x1000, 0xdba1eda7 )
+	ROM_LOAD( "c1_b01.bin",   0x0000, 0x1000, CRC(705193b2) SHA1(ca9cfd05f9195c2a38e8854012de51b6ee6bb403) )
+	ROM_LOAD( "f1_b03s.bin",  0x1000, 0x1000, CRC(dba1eda7) SHA1(26d877028b3a31dd671f9e667316c8a14780ca73) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( bagnard )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
-	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
-	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
-	ROM_LOAD( "k9_b08.bin",   0x3000, 0x1000, 0xf04293cb )
-	ROM_LOAD( "bagnard.009",  0x4000, 0x1000, 0x4f0088ab )
-	ROM_LOAD( "bagnard.010",  0x5000, 0x1000, 0xcd2cac01 )
+	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, CRC(e0156191) SHA1(bb5f16d49fbe48f3bac118acd1fea51ec4bc5355) )
+	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, CRC(7b758982) SHA1(c8460023b43fed4aca9c6b987faea334832c5e30) )
+	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, CRC(302a077b) SHA1(916c4a6ea1e631cc72bdb91ff9d263dcbaf08bb2) )
+	ROM_LOAD( "k9_b08.bin",   0x3000, 0x1000, CRC(f04293cb) SHA1(ce6b0ae4088ce28c75d414f506fad2cf2b6920c2) )
+	ROM_LOAD( "bagnard.009",  0x4000, 0x1000, CRC(4f0088ab) SHA1(a8009f5b8517ba4d84fbc483b199f2514f24eae8) )
+	ROM_LOAD( "bagnard.010",  0x5000, 0x1000, CRC(cd2cac01) SHA1(76749161feb9af2b3e928408a21b93d143915b57) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
-	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, CRC(4a0a6b55) SHA1(955f8bd4bd9b0fc3c6c359c25ba543ba26c04cbd) )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, CRC(c680ef04) SHA1(79406bc786374abfcd9f548268c445b5c8d8858d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "bagnard.001",  0x0000, 0x1000, 0x060b044c )
-	ROM_LOAD( "bagnard.003",  0x1000, 0x1000, 0x8043bc1a )
+	ROM_LOAD( "bagnard.001",  0x0000, 0x1000, CRC(060b044c) SHA1(3121f07adb661663a2303085eea1b662968f8f98) )
+	ROM_LOAD( "bagnard.003",  0x1000, 0x1000, CRC(8043bc1a) SHA1(bd2f3dfe26cf8d987d9ecaa41eac4bdc4e16a692) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( bagmans )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
-	ROM_LOAD( "a5-9f",        0x1000, 0x1000, 0x2ddf6bb9 )
-	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
-	ROM_LOAD( "a5-9k",        0x3000, 0x1000, 0xf91d617b )
-	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
-	ROM_LOAD( "a5-9n",        0x5000, 0x1000, 0x68e4b64d )
+	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, CRC(5fb0a1a3) SHA1(849cd60b58de9585a78a1c4c1747f666a4a4fcc3) )
+	ROM_LOAD( "a5-9f",        0x1000, 0x1000, CRC(2ddf6bb9) SHA1(151068dddc55163bb6f925f68e5d04e347ded6a5) )
+	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, CRC(b2da8b77) SHA1(ea36cd6be42c5548a9a91054aeebb4b985ba15c9) )
+	ROM_LOAD( "a5-9k",        0x3000, 0x1000, CRC(f91d617b) SHA1(a3323b51277e08747701cc4e2d3a9c466e96d4c1) )
+	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, CRC(b8e75eb6) SHA1(433fd736512f10bc0879b15821eb55cc41d58d33) )
+	ROM_LOAD( "a5-9n",        0x5000, 0x1000, CRC(68e4b64d) SHA1(55950d7c07c621cafa001d5d3bfec6bbc02712e2) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
-	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, CRC(f217ac09) SHA1(a9716674401dff27344a01df8121b6b648688680) )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, CRC(c680ef04) SHA1(79406bc786374abfcd9f548268c445b5c8d8858d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
-	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
+	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, CRC(f3e11bd7) SHA1(43ee00ff777008c89f619eb183e7c5e63f6c7694) )
+	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, CRC(d0f7105b) SHA1(fb382703850a4ded567706e02ebb7f3e22531b7c) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( bagmans2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
-	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, 0x7871206e )
-	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
-	ROM_LOAD( "a4_9k.bin",    0x3000, 0x1000, 0x36b6a944 )
-	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
-	ROM_LOAD( "a4_9n.bin",    0x5000, 0x1000, 0x83fccb1c )
+	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, CRC(5fb0a1a3) SHA1(849cd60b58de9585a78a1c4c1747f666a4a4fcc3) )
+	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, CRC(7871206e) SHA1(14d9b7a0779d59a870e0d4b911797dff5435a16c) )
+	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, CRC(b2da8b77) SHA1(ea36cd6be42c5548a9a91054aeebb4b985ba15c9) )
+	ROM_LOAD( "a4_9k.bin",    0x3000, 0x1000, CRC(36b6a944) SHA1(270dd2566b36129366adcbdd5a8db396bec7631f) )
+	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, CRC(b8e75eb6) SHA1(433fd736512f10bc0879b15821eb55cc41d58d33) )
+	ROM_LOAD( "a4_9n.bin",    0x5000, 0x1000, CRC(83fccb1c) SHA1(7225d738b64a2cdaaec8860017de4229f2852ed2) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
-	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, CRC(f217ac09) SHA1(a9716674401dff27344a01df8121b6b648688680) )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, CRC(c680ef04) SHA1(79406bc786374abfcd9f548268c445b5c8d8858d) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
-	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
+	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, CRC(f3e11bd7) SHA1(43ee00ff777008c89f619eb183e7c5e63f6c7694) )
+	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, CRC(d0f7105b) SHA1(fb382703850a4ded567706e02ebb7f3e22531b7c) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( sbagman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "5.9e",         0x0000, 0x1000, 0x1b1d6b0a )
-	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
-	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
-	ROM_LOAD( "8.9k",         0x3000, 0x1000, 0xb94fbb73 )
-	ROM_LOAD( "9.9m",         0x4000, 0x1000, 0x601f34ba )
-	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
-	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
+	ROM_LOAD( "5.9e",         0x0000, 0x1000, CRC(1b1d6b0a) SHA1(549161f6adc88fa16339815e05af33ca57815660) )
+	ROM_LOAD( "6.9f",         0x1000, 0x1000, CRC(ac49cb82) SHA1(5affa0c03bedf2c9d5368c7f075818e1760c12ae) )
+	ROM_LOAD( "7.9j",         0x2000, 0x1000, CRC(9a1c778d) SHA1(a655e25dc9efdf60cc5b34e42c93c4acaa4a7922) )
+	ROM_LOAD( "8.9k",         0x3000, 0x1000, CRC(b94fbb73) SHA1(5d676c5d1d864d70d98f0137c4072062a781b3a0) )
+	ROM_LOAD( "9.9m",         0x4000, 0x1000, CRC(601f34ba) SHA1(1b7ee61a341b9a87abe4fe10b0c647a9b0b97d38) )
+	ROM_LOAD( "10.9n",        0x5000, 0x1000, CRC(5f750918) SHA1(3dc44f259e88999dbb95b4d4376281cc81c1ab87) )
+	ROM_LOAD( "13.8d",        0xc000, 0x0e00, CRC(944a4453) SHA1(cd64d9267d2c5cea39464ba9308752c690e7fd24) )
 	ROM_CONTINUE(			  0xfe00, 0x0200 )
-	ROM_LOAD( "14.8f",        0xd000, 0x0400, 0x83b10139 )
+	ROM_LOAD( "14.8f",        0xd000, 0x0400, CRC(83b10139) SHA1(8a1880c6ab8a345676fe30465351d69cc1b416b2) )
 	ROM_CONTINUE(			  0xe400, 0x0200 )
 	ROM_CONTINUE(			  0xd600, 0x0a00 )
-	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
+	ROM_LOAD( "15.8j",        0xe000, 0x0400, CRC(fe924879) SHA1(b80cbf9cba91e553f7685aef348854c02f0619c7) )
 	ROM_CONTINUE(			  0xd400, 0x0200 )
 	ROM_CONTINUE(			  0xe600, 0x0a00 )
-	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
+	ROM_LOAD( "16.8k",        0xf000, 0x0e00, CRC(b77eb1f5) SHA1(ef94c1b449e3fa230491052fc3bd4db3f1239263) )
 	ROM_CONTINUE(			  0xce00, 0x0200 )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
-	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
+	ROM_LOAD( "2.1e",         0x0000, 0x1000, CRC(f4d3d4e6) SHA1(167ad0259578966fe86384df844e69cf2cc77443) )
+	ROM_LOAD( "4.1j",         0x1000, 0x1000, CRC(2c6a510d) SHA1(304064f11e80f4ec471174823b8aaf59844061ac) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "1.1c",         0x0000, 0x1000, 0xa046ff44 )
-	ROM_LOAD( "3.1f",         0x1000, 0x1000, 0xa4422da4 )
+	ROM_LOAD( "1.1c",         0x0000, 0x1000, CRC(a046ff44) SHA1(af319cfb74e5efe435c26e971de13bd390f4b378) )
+	ROM_LOAD( "3.1f",         0x1000, 0x1000, CRC(a4422da4) SHA1(3aa55ca8c99566c1c9eb097b6d645c4216e09dfb) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "11.9r",        0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "12.9t",        0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( sbagmans )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
-	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
-	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
-	ROM_LOAD( "8.9k",         0x3000, 0x1000, 0xb94fbb73 )
-	ROM_LOAD( "sbag_9m.bin",  0x4000, 0x1000, 0xb21e246e )
-	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
-	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
+	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, CRC(c19696f2) SHA1(3a40202a97201a123033358f7afcb06f8ac15063) )
+	ROM_LOAD( "6.9f",         0x1000, 0x1000, CRC(ac49cb82) SHA1(5affa0c03bedf2c9d5368c7f075818e1760c12ae) )
+	ROM_LOAD( "7.9j",         0x2000, 0x1000, CRC(9a1c778d) SHA1(a655e25dc9efdf60cc5b34e42c93c4acaa4a7922) )
+	ROM_LOAD( "8.9k",         0x3000, 0x1000, CRC(b94fbb73) SHA1(5d676c5d1d864d70d98f0137c4072062a781b3a0) )
+	ROM_LOAD( "sbag_9m.bin",  0x4000, 0x1000, CRC(b21e246e) SHA1(39d2e93ac5240bb45e76c30c535d12e302690dde) )
+	ROM_LOAD( "10.9n",        0x5000, 0x1000, CRC(5f750918) SHA1(3dc44f259e88999dbb95b4d4376281cc81c1ab87) )
+	ROM_LOAD( "13.8d",        0xc000, 0x0e00, CRC(944a4453) SHA1(cd64d9267d2c5cea39464ba9308752c690e7fd24) )
 	ROM_CONTINUE(			  0xfe00, 0x0200 )
-	ROM_LOAD( "sbag_f8.bin",  0xd000, 0x0400, 0x0f3e6de4 )
+	ROM_LOAD( "sbag_f8.bin",  0xd000, 0x0400, CRC(0f3e6de4) SHA1(a7e50d210630b500e534d626d76110dee4aeb18d) )
 	ROM_CONTINUE(			  0xe400, 0x0200 )
 	ROM_CONTINUE(			  0xd600, 0x0a00 )
-	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
+	ROM_LOAD( "15.8j",        0xe000, 0x0400, CRC(fe924879) SHA1(b80cbf9cba91e553f7685aef348854c02f0619c7) )
 	ROM_CONTINUE(			  0xd400, 0x0200 )
 	ROM_CONTINUE(			  0xe600, 0x0a00 )
-	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
+	ROM_LOAD( "16.8k",        0xf000, 0x0e00, CRC(b77eb1f5) SHA1(ef94c1b449e3fa230491052fc3bd4db3f1239263) )
 	ROM_CONTINUE(			  0xce00, 0x0200 )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
-	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
+	ROM_LOAD( "2.1e",         0x0000, 0x1000, CRC(f4d3d4e6) SHA1(167ad0259578966fe86384df844e69cf2cc77443) )
+	ROM_LOAD( "4.1j",         0x1000, 0x1000, CRC(2c6a510d) SHA1(304064f11e80f4ec471174823b8aaf59844061ac) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sbag_1c.bin",  0x0000, 0x1000, 0x262f870a )
-	ROM_LOAD( "sbag_1f.bin",  0x1000, 0x1000, 0x350ed0fb )
+	ROM_LOAD( "sbag_1c.bin",  0x0000, 0x1000, CRC(262f870a) SHA1(90877b869a7e927cfa4f9729ec3d6eac3a95dc8f) )
+	ROM_LOAD( "sbag_1f.bin",  0x1000, 0x1000, CRC(350ed0fb) SHA1(c7804e9618ebc88a1e3684a92a98d9a181441a1f) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
-	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
-	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
-	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "11.9r",        0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "12.9t",        0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
 ROM_START( pickin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "9e",           0x0000, 0x1000, 0xefd0bd43 )
-	ROM_LOAD( "9f",           0x1000, 0x1000, 0xb5785a23 )
-	ROM_LOAD( "9j",           0x2000, 0x1000, 0x65ee9fd4 )
-	ROM_LOAD( "9k",           0x3000, 0x1000, 0x7b23350e )
-	ROM_LOAD( "9m",           0x4000, 0x1000, 0x935a7248 )
-	ROM_LOAD( "9n",           0x5000, 0x1000, 0x52485d1d )
+	ROM_LOAD( "9e",           0x0000, 0x1000, CRC(efd0bd43) SHA1(b70a471a809c08286a82934046357fb46556f641) )
+	ROM_LOAD( "9f",           0x1000, 0x1000, CRC(b5785a23) SHA1(9eddda5695981cb0470dfea68d5e2e8e220382b1) )
+	ROM_LOAD( "9j",           0x2000, 0x1000, CRC(65ee9fd4) SHA1(2efa40c19a7b0644ef4f4b2ce6a025b2b880239d) )
+	ROM_LOAD( "9k",           0x3000, 0x1000, CRC(7b23350e) SHA1(dff19602a0e46ca0bcdbdf2a1d61fd2c80ac70e7) )
+	ROM_LOAD( "9m",           0x4000, 0x1000, CRC(935a7248) SHA1(d9af4405d51ce1ff6c4b84709dc85c0db88b1d54) )
+	ROM_LOAD( "9n",           0x5000, 0x1000, CRC(52485d1d) SHA1(c309eec506f978388463f20d56d958e6639c31e8) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1f",           0x0000, 0x1000, 0xc5e96ac6 )
-	ROM_LOAD( "1j",           0x1000, 0x1000, 0x41c4ac1c )
+	ROM_LOAD( "1f",           0x0000, 0x1000, CRC(c5e96ac6) SHA1(b2d740b6d07c765e8eb2dce31fe285a15a9fe597) )
+	ROM_LOAD( "1j",           0x1000, 0x1000, CRC(41c4ac1c) SHA1(aac58a9d675a9b70140d82341231bcf6c77c7b41) )
 
 	/* no gfx2 */
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, 0xfac81668 )
-	ROM_LOAD( "6331-1.3r",    0x0020, 0x0020, 0x14ee1603 )
+	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, CRC(fac81668) SHA1(5fa369a5c0ad3a2fc068305336e24772b8e84b62) )
+	ROM_LOAD( "6331-1.3r",    0x0020, 0x0020, CRC(14ee1603) SHA1(f3c071399606b727ae7dd0bfc21e1c6ca2d43c7c) )
 ROM_END
 
 
