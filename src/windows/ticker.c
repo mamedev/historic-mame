@@ -19,8 +19,10 @@
 //============================================================
 
 static cycles_t init_cycle_counter(void);
+static cycles_t performance_cycle_counter(void);
 static cycles_t rdtsc_cycle_counter(void);
 static cycles_t time_cycle_counter(void);
+static cycles_t nop_cycle_counter(void);
 
 
 
@@ -30,8 +32,18 @@ static cycles_t time_cycle_counter(void);
 
 // global cycle_counter function and divider
 cycles_t		(*cycle_counter)(void) = init_cycle_counter;
+cycles_t		(*ticks_counter)(void) = init_cycle_counter;
 cycles_t		cycles_per_sec;
+int				win_force_rdtsc;
 
+
+
+//============================================================
+//	STATIC VARIABLES
+//============================================================
+
+static cycles_t suspend_adjustment;
+static cycles_t suspend_time;
 
 
 //============================================================
@@ -89,54 +101,92 @@ static cycles_t init_cycle_counter(void)
 	cycles_t start, end;
 	DWORD a, b;
 	int priority;
+	LARGE_INTEGER frequency;
 
-	// if the RDTSC instruction is available use it because
-	// it is more precise and has less overhead than timeGetTime()
-	if (has_rdtsc())
+	suspend_adjustment = 0;
+	suspend_time = 0;
+
+	if (!win_force_rdtsc && QueryPerformanceFrequency( &frequency ))
 	{
-		cycle_counter = rdtsc_cycle_counter;
-		logerror("using RDTSC for timing ... ");
+		// use performance counter if available as it is constant
+		cycle_counter = performance_cycle_counter;
+		logerror("using performance counter for timing ... ");
+		cycles_per_sec = frequency.QuadPart;
+
+		if (has_rdtsc())
+		{
+			ticks_counter = rdtsc_cycle_counter;
+		}
+		else
+		{
+			ticks_counter = nop_cycle_counter;
+		}
 	}
 	else
 	{
-		cycle_counter = time_cycle_counter;
-		logerror("using timeGetTime for timing ... ");
-	}
+		if (has_rdtsc())
+		{
+			// if the RDTSC instruction is available use it because
+			// it is more precise and has less overhead than timeGetTime()
+			cycle_counter = rdtsc_cycle_counter;
+			ticks_counter = rdtsc_cycle_counter;
+			logerror("using RDTSC for timing ... ");
+		}
+		else
+		{
+			cycle_counter = time_cycle_counter;
+			ticks_counter = nop_cycle_counter;
+			logerror("using timeGetTime for timing ... ");
+		}
 
-	// temporarily set our priority higher
-	priority = GetThreadPriority(GetCurrentThread());
-	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+		// temporarily set our priority higher
+		priority = GetThreadPriority(GetCurrentThread());
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
-	// wait for an edge on the timeGetTime call
-	a = timeGetTime();
-	do
-	{
-		b = timeGetTime();
-	} while (a == b);
-
-	// get the starting cycle count
-	start = (*cycle_counter)();
-
-	// now wait for 1/4 second total
-	do
-	{
+		// wait for an edge on the timeGetTime call
 		a = timeGetTime();
-	} while (a - b < 250);
+		do
+		{
+			b = timeGetTime();
+		} while (a == b);
 
-	// get the ending cycle count
-	end = (*cycle_counter)();
+		// get the starting cycle count
+		start = (*cycle_counter)();
 
-	// compute ticks_per_sec
-	cycles_per_sec = (end - start) * 4;
+		// now wait for 1/4 second total
+		do
+		{
+			a = timeGetTime();
+		} while (a - b < 250);
 
-	// reduce our priority
-	SetThreadPriority(GetCurrentThread(), priority);
+		// get the ending cycle count
+		end = (*cycle_counter)();
+
+		// compute ticks_per_sec
+		cycles_per_sec = (end - start) * 4;
+
+		// reduce our priority
+		SetThreadPriority(GetCurrentThread(), priority);
+	}
 
 	// log the results
 	logerror("cycles/second = %d\n", (int)cycles_per_sec);
 
 	// return the current cycle count
 	return (*cycle_counter)();
+}
+
+
+
+//============================================================
+//	performance_cycle_counter
+//============================================================
+
+static cycles_t performance_cycle_counter(void)
+{
+	LARGE_INTEGER performance_count;
+	QueryPerformanceCounter( &performance_count );
+	return (cycles_t)performance_count.QuadPart;
 }
 
 
@@ -195,12 +245,23 @@ static cycles_t time_cycle_counter(void)
 
 
 //============================================================
+//	nop_cycle_counter
+//============================================================
+
+static cycles_t nop_cycle_counter(void)
+{
+	return 0;
+}
+
+
+
+//============================================================
 //	osd_cycles
 //============================================================
 
 cycles_t osd_cycles(void)
 {
-	return (*cycle_counter)();
+	return suspend_time ? suspend_time : (*cycle_counter)() - suspend_adjustment;
 }
 
 
@@ -213,3 +274,37 @@ cycles_t osd_cycles_per_second(void)
 {
 	return cycles_per_sec;
 }
+
+
+
+//============================================================
+//	osd_profiling_ticks
+//============================================================
+
+cycles_t osd_profiling_ticks(void)
+{
+	return (*ticks_counter)();
+}
+
+
+
+//============================================================
+//	win_timer_enable
+//============================================================
+
+void win_timer_enable(int enabled)
+{
+	cycles_t actual_cycles;
+
+	actual_cycles = (*cycle_counter)();
+	if (!enabled)
+	{
+		suspend_time = actual_cycles;
+	}
+	else if (suspend_time > 0)
+	{
+		suspend_adjustment += actual_cycles - suspend_time;
+		suspend_time = 0;
+	}
+}
+

@@ -449,7 +449,7 @@ WRITE_HANDLER( pleiads_sound_control_c_w )
 	sound_latch_c = data;
 }
 
-static int common_sh_start(const struct MachineSound *msound, char *name)
+static int common_sh_start(const struct MachineSound *msound, const char *name)
 {
 	int i, j;
 	UINT32 shiftreg;

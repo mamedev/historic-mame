@@ -11,7 +11,6 @@
 
 /* constants */
 #define SRCBITMAP_WIDTH		4096
-#define SRCBITMAP_HEIGHT	1024
 
 #define DSTBITMAP_WIDTH		512
 #define DSTBITMAP_HEIGHT	256
@@ -30,6 +29,8 @@ static UINT16 src_xoffs, src_yoffs;
 static UINT16 dst_xoffs, dst_yoffs;
 static UINT8 video_latch;
 
+static UINT32 srcbitmap_height_mask;
+
 
 
 /*************************************
@@ -42,6 +43,9 @@ VIDEO_START( policetr )
 {
 	/* the source bitmap is in ROM */
 	srcbitmap = memory_region(REGION_GFX1);
+
+	/* compute the height */
+	srcbitmap_height_mask = (memory_region_length(REGION_GFX1) / SRCBITMAP_WIDTH) - 1;
 
 	/* the destination bitmap is not directly accessible to the CPU */
 	dstbitmap = auto_malloc(DSTBITMAP_WIDTH * DSTBITMAP_HEIGHT);
@@ -69,7 +73,7 @@ static void render_display_list(offs_t offset)
 	{
 		UINT32 *entry = &policetr_rambase[offset / 4];
 		UINT32 srcx = entry[0] & 0xfffffff;
-		UINT32 srcy = entry[1] & 0x3ffffff;
+		UINT32 srcy = entry[1] & ((srcbitmap_height_mask << 16) | 0xffff);
 		UINT32 srcxstep = entry[2];
 		UINT32 srcystep = entry[3];
 		int dstw = (entry[4] & 0x1ff) + 1;
@@ -105,7 +109,7 @@ static void render_display_list(offs_t offset)
 		if (srcxstep == 0 && srcystep == 0)
 		{
 			/* prefetch the pixel */
-			UINT8 pixel = srcbitmap[((srcy >> 16) % SRCBITMAP_HEIGHT) * SRCBITMAP_WIDTH + (srcx >> 16) % SRCBITMAP_WIDTH];
+			UINT8 pixel = srcbitmap[((srcy >> 16) * srcbitmap_height_mask) * SRCBITMAP_WIDTH + (srcx >> 16) % SRCBITMAP_WIDTH];
 			pixel = color | (pixel & mask);
 
 			/* loop over rows and columns */
@@ -122,7 +126,7 @@ static void render_display_list(offs_t offset)
 			/* loop over rows */
 			for (y = 0, cury = srcy; y < dsth; y++, cury += srcystep)
 			{
-				UINT8 *src = &srcbitmap[((cury >> 16) % SRCBITMAP_HEIGHT) * SRCBITMAP_WIDTH];
+				UINT8 *src = &srcbitmap[((cury >> 16) & srcbitmap_height_mask) * SRCBITMAP_WIDTH];
 				UINT8 *dst = &dstbitmap[(dsty + y) * DSTBITMAP_WIDTH + dstx];
 
 				/* loop over columns */
@@ -298,7 +302,7 @@ READ32_HANDLER( policetr_video_r )
 
 		/* latch 0x04 is the pixel value in the ROM at the specified address */
 		case 0x04:
-			return srcbitmap[(src_yoffs % SRCBITMAP_HEIGHT) * SRCBITMAP_WIDTH + src_xoffs % SRCBITMAP_WIDTH] << 24;
+			return srcbitmap[(src_yoffs & srcbitmap_height_mask) * SRCBITMAP_WIDTH + src_xoffs % SRCBITMAP_WIDTH] << 24;
 
 		/* latch 0x50 is read at IRQ 4; the top 2 bits are checked. If they're not 0,
 			they skip the rest of the interrupt processing */

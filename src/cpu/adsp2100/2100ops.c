@@ -280,8 +280,9 @@ INLINE void stat_stack_pop(void)
 			adsp2100.sstat |= STATUS_EMPTY;
 	}
 	set_mstat(adsp2100.stat_stack[adsp2100.stat_sp][0]);
-	adsp2100.imask = adsp2100.stat_stack[adsp2100.stat_sp][1]; check_irqs();
+	adsp2100.imask = adsp2100.stat_stack[adsp2100.stat_sp][1];
 	adsp2100.astat = adsp2100.stat_stack[adsp2100.stat_sp][2];
+ 	check_irqs();
 }
 
 
@@ -358,7 +359,21 @@ static void wr_icntl(INT32 val) { adsp2100.icntl = val & 0x001f; check_irqs(); }
 static void wr_cntr(INT32 val)  { cntr_stack_push(); adsp2100.cntr = val & 0x3fff; }
 static void wr_sb(INT32 val)    { adsp2100.core.sb.s = (INT32)(val << 27) >> 27; }
 static void wr_px(INT32 val)    { adsp2100.px = val; }
-static void wr_ifc(INT32 val)	{ adsp2100.ifc = val; }
+static void wr_ifc(INT32 val)
+{
+	adsp2100.ifc = val;
+	if (val & 0x002) adsp2100.irq_latch[ADSP2101_IRQ0] = 0;
+	if (val & 0x004) adsp2100.irq_latch[ADSP2101_IRQ1] = 0;
+	if (val & 0x008) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 0;
+	if (val & 0x010) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 0;
+	if (val & 0x020) adsp2100.irq_latch[ADSP2101_IRQ2] = 0;
+	if (val & 0x080) adsp2100.irq_latch[ADSP2101_IRQ0] = 1;
+	if (val & 0x100) adsp2100.irq_latch[ADSP2101_IRQ1] = 1;
+	if (val & 0x200) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 1;
+	if (val & 0x400) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 1;
+	if (val & 0x800) adsp2100.irq_latch[ADSP2101_IRQ2] = 1;
+	check_irqs();
+}
 static void wr_tx0(INT32 val)	{ if (sport_tx_callback) (*sport_tx_callback)(0, val); }
 static void wr_tx1(INT32 val)	{ if (sport_tx_callback) (*sport_tx_callback)(1, val); }
 static void wr_owrctr(INT32 val) { adsp2100.cntr = val & 0x3fff; }

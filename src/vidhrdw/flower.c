@@ -68,17 +68,19 @@ static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 		code |= ((source[2] & 0x08) << 4);
 
 
-		for (xblock = 0; xblock<xsize; xblock++) {
-			for (yblock = 0; yblock<ysize; yblock++) {
-
-				drawgfx(bitmap,gfx,
+		for (xblock = 0; xblock<xsize; xblock++)
+		{
+			for (yblock = 0; yblock<ysize; yblock++)
+			{
+				drawgfxzoom(bitmap,gfx,
 						code+yblock+(8*xblock),
 						0,
 						flipx,flipy,
 						sx+16*xblock,sy+16*yblock,
-						cliprect,TRANSPARENCY_PEN,0);
-				}
+						cliprect,TRANSPARENCY_PEN,0,
+						((size&7)+1)<<13,((size&0x70)+0x10)<<9);
 			}
+		}
 		source -= 8;
 	}
 

@@ -6,6 +6,7 @@
 
 	Games supported:
 		* Police Trainer
+		* Sharpshooter
 
 	Known bugs:
 		* perspective on the floor in some levels is not drawn correctly
@@ -38,6 +39,8 @@ static data32_t bsmt_data_offset;
 static data32_t *speedup_data;
 static UINT32 last_cycles;
 static UINT32 loop_count;
+
+static offs_t speedup_pc;
 
 
 
@@ -160,7 +163,7 @@ static WRITE32_HANDLER( speedup_w )
 	COMBINE_DATA(speedup_data);
 
 	/* see if the PC matches */
-	if ((activecpu_get_previouspc() & 0x1fffffff) == 0x1fc028ac)
+	if ((activecpu_get_previouspc() & 0x1fffffff) == speedup_pc)
 	{
 		UINT32 curr_cycles = activecpu_gettotalcycles();
 
@@ -212,13 +215,14 @@ static NVRAM_HANDLER( policetr )
 }
 
 
+
 /*************************************
  *
  *	Main CPU memory handlers
  *
  *************************************/
 
-static MEMORY_READ32_START( main_readmem )
+static MEMORY_READ32_START( policetr_readmem )
 	{ 0x00000000, 0x0001ffff, MRA32_RAM },
 	{ 0x00400000, 0x00400003, policetr_video_r },
 	{ 0x00600000, 0x00600003, bsmt2000_data_r },
@@ -229,7 +233,7 @@ static MEMORY_READ32_START( main_readmem )
 MEMORY_END
 
 
-static MEMORY_WRITE32_START( main_writemem )
+static MEMORY_WRITE32_START( policetr_writemem )
 	{ 0x00000000, 0x0001ffff, MWA32_RAM, &policetr_rambase },
 	{ 0x00200000, 0x0020000f, policetr_video_w },
 	{ 0x00500000, 0x00500003, MWA32_NOP },		// copies ROM here at startup, plus checksum
@@ -237,6 +241,20 @@ static MEMORY_WRITE32_START( main_writemem )
 	{ 0x00800000, 0x00800003, bsmt2000_data_w },
 	{ 0x00900000, 0x00900003, policetr_palette_offset_w },
 	{ 0x00920000, 0x00920003, policetr_palette_data_w },
+	{ 0x00a00000, 0x00a00003, control_w },
+	{ 0x00e00000, 0x00e00003, MWA32_NOP },		// watchdog???
+	{ 0x1fc00000, 0x1fdfffff, MWA32_ROM, &rom_base },
+MEMORY_END
+
+
+static MEMORY_WRITE32_START( sshooter_writemem )
+	{ 0x00000000, 0x0001ffff, MWA32_RAM, &policetr_rambase },
+	{ 0x00200000, 0x00200003, bsmt2000_data_w },
+	{ 0x00300000, 0x00300003, policetr_palette_offset_w },
+	{ 0x00320000, 0x00320003, policetr_palette_data_w },
+	{ 0x00500000, 0x00500003, MWA32_NOP },		// copies ROM here at startup, plus checksum
+	{ 0x00700000, 0x00700003, bsmt2000_reg_w },
+	{ 0x00800000, 0x0080000f, policetr_video_w },
 	{ 0x00a00000, 0x00a00003, control_w },
 	{ 0x00e00000, 0x00e00003, MWA32_NOP },		// watchdog???
 	{ 0x1fc00000, 0x1fdfffff, MWA32_ROM, &rom_base },
@@ -364,9 +382,9 @@ static struct r3000_config config =
 MACHINE_DRIVER_START( policetr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(R3000BE, MASTER_CLOCK/2)
+	MDRV_CPU_ADD_TAG("main", R3000BE, MASTER_CLOCK/2)
 	MDRV_CPU_CONFIG(config)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_MEMORY(policetr_readmem,policetr_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -386,6 +404,15 @@ MACHINE_DRIVER_START( policetr )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START( sshooter )
+	MDRV_IMPORT_FROM(policetr)
+
+	/* basic machine hardware */
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(policetr_readmem,sshooter_writemem)
 MACHINE_DRIVER_END
 
 
@@ -419,6 +446,56 @@ ROM_START( policetr )
 ROM_END
 
 
+ROM_START( policeto )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, 0x56b0b00a )
+	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, 0xca664142 )
+	ROM_LOAD16_BYTE( "pt-u125.bin", 0x200000, 0x100000, 0xe9ccf3a0 )
+	ROM_LOAD16_BYTE( "pt-u124.bin", 0x200001, 0x100000, 0xf4acf921 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "pt-u113.v11", 0x00000, 0x20000, 0x3d62f6d6 )
+	ROM_LOAD32_BYTE( "pt-u112.v11", 0x00001, 0x20000, 0x942b280b )
+	ROM_LOAD32_BYTE( "pt-u111.v11", 0x00002, 0x20000, 0xda6c45a7 )
+	ROM_LOAD32_BYTE( "pt-u110.v11", 0x00003, 0x20000, 0x1360ac2b ) // Fails Checksum, Bug in the program/checksum code???
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
+	ROM_LOAD( "pt-u160.bin", 0x000000, 0x100000, 0xf267f813 )
+	ROM_RELOAD(              0x3f8000, 0x100000 )
+	ROM_LOAD( "pt-u162.bin", 0x100000, 0x100000, 0x75fe850e )
+	ROM_RELOAD(              0x4f8000, 0x100000 )
+ROM_END
+
+
+ROM_START( sshooter )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, 0x22e27dd6 ) // 1:1
+	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, 0x30173b1b ) // 1:2
+	ROM_LOAD16_BYTE( "ss-u125.bin", 0x200000, 0x100000, 0x79e8520a ) // 2:1
+	ROM_LOAD16_BYTE( "ss-u124.bin", 0x200001, 0x100000, 0x8e805970 ) // 2:2
+	ROM_LOAD16_BYTE( "ss-u123.bin", 0x400000, 0x100000, 0xd045bb62 ) // 3:1
+	ROM_LOAD16_BYTE( "ss-u122.bin", 0x400001, 0x100000, 0x163cc133 ) // 3:2
+	ROM_LOAD16_BYTE( "ss-u127.bin", 0x600000, 0x100000, 0x76a7a591 ) // 4:1
+	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, 0xab1b9d60 ) // 4:2
+
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "ss-u113.v17", 0x00000, 0x40000, 0xa8c96af5 )
+	ROM_LOAD32_BYTE( "ss-u112.v17", 0x00001, 0x40000, 0xc732d5fa )
+	ROM_LOAD32_BYTE( "ss-u111.v17", 0x00002, 0x40000, 0x4240fa2f )
+	ROM_LOAD32_BYTE( "ss-u110.v17", 0x00003, 0x40000, 0x8ae744ce )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
+	ROM_LOAD( "ss-u160.bin", 0x000000, 0x100000, 0x1c603d42 ) // 1:1
+	ROM_RELOAD(              0x3f8000, 0x100000 )
+	ROM_LOAD( "ss-u162.bin", 0x100000, 0x100000, 0x40ef448a ) // 2:1
+	ROM_RELOAD(              0x4f8000, 0x100000 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -429,6 +506,17 @@ ROM_END
 static DRIVER_INIT( policetr )
 {
 	speedup_data = install_mem_write32_handler(0, 0x00000fc8, 0x00000fcb, speedup_w);
+	speedup_pc = 0x1fc028ac;
+
+	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
+}
+
+
+static DRIVER_INIT( sshooter )
+{
+	speedup_data = install_mem_write32_handler(0, 0x00018fd8, 0x00018fdb, speedup_w);
+	speedup_pc = 0x1fc03470;
+
 	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 }
 
@@ -440,4 +528,6 @@ static DRIVER_INIT( policetr )
  *
  *************************************/
 
-GAME( 1996, policetr, 0, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer" )
+GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer" )
+GAME( 1996, policeto, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)" )
+GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)" )

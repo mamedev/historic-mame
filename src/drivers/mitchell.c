@@ -105,7 +105,7 @@ static NVRAM_HANDLER( mitchell )
 	{
 		EEPROM_save(file);					/* EEPROM */
 		if (nvram_size)	/* Super Pang, Block Block */
-			osd_fwrite(file,nvram,nvram_size);	/* NVRAM */
+			mame_fwrite(file,nvram,nvram_size);	/* NVRAM */
 	}
 	else
 	{
@@ -116,7 +116,7 @@ static NVRAM_HANDLER( mitchell )
 			init_eeprom_count = 0;
 			EEPROM_load(file);					/* EEPROM */
 			if (nvram_size)	/* Super Pang, Block Block */
-				osd_fread(file,nvram,nvram_size);	/* NVRAM */
+				mame_fread(file,nvram,nvram_size);	/* NVRAM */
 		}
 		else
 			init_eeprom_count = 1000;	/* for Super Pang */

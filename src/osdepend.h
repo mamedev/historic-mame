@@ -36,6 +36,7 @@ struct mame_bitmap;
 struct mame_display;
 struct performance_info;
 struct rectangle;
+struct rom_load_data;
 
 
 /* these are the parameters passed into osd_create_display */
@@ -280,69 +281,44 @@ typedef struct
 } INP_HEADER;
 
 
-/* file handling routines */
+typedef struct _osd_file osd_file;
+
+
+/* These values are returned by osd_get_path_info */
 enum
 {
-	OSD_FILETYPE_ROM = 1,
-	OSD_FILETYPE_ROM_NOCRC,
-	OSD_FILETYPE_IMAGE_R,
-	OSD_FILETYPE_IMAGE_RW,
-	OSD_FILETYPE_IMAGE_DIFF,
-	OSD_FILETYPE_SAMPLE,
-	OSD_FILETYPE_ARTWORK,
-	OSD_FILETYPE_NVRAM,
-	OSD_FILETYPE_HIGHSCORE,
-	OSD_FILETYPE_HIGHSCORE_DB,
-	OSD_FILETYPE_CONFIG,
-	OSD_FILETYPE_INPUTLOG,
-	OSD_FILETYPE_STATE,
-	OSD_FILETYPE_MEMCARD,
-	OSD_FILETYPE_SCREENSHOT,
-	OSD_FILETYPE_HISTORY,
-	OSD_FILETYPE_CHEAT,
-	OSD_FILETYPE_LANGUAGE,
-	OSD_FILETYPE_CTRLR,
-	OSD_FILETYPE_INI,
-	OSD_FILETYPE_end /* dummy last entry */
+	PATH_NOT_FOUND,
+	PATH_IS_FILE,
+	PATH_IS_DIRECTORY
 };
 
-/* gamename holds the driver name, filename is only used for ROMs and    */
-/* samples. If 'write' is not 0, the file is opened for write. Otherwise */
-/* it is opened for read. */
 
-int osd_faccess(const char *filename, int filetype);
-void *osd_fopen(const char *gamename, const char *filename, int filetype, int read_or_write);
-int osd_fread(void *file, void *buffer, int length);
-int osd_fwrite(void *file, const void *buffer, int length);
-int osd_fread_swap(void *file, void *buffer, int length);
-int osd_fwrite_swap(void *file, const void *buffer, int length);
-#ifdef LSB_FIRST
-#define osd_fread_msbfirst osd_fread_swap
-#define osd_fwrite_msbfirst osd_fwrite_swap
-#define osd_fread_lsbfirst osd_fread
-#define osd_fwrite_lsbfirst osd_fwrite
-#else
-#define osd_fread_msbfirst osd_fread
-#define osd_fwrite_msbfirst osd_fwrite
-#define osd_fread_lsbfirst osd_fread_swap
-#define osd_fwrite_lsbfirst osd_fwrite_swap
-#endif
-int osd_fseek(void *file, int offset, int whence);
-void osd_fclose(void *file);
-int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
-int osd_fsize(void *file);
-unsigned int osd_fcrc(void *file);
-int osd_fgetc(void *file);
-int osd_ungetc(int c, void *file);
-char *osd_fgets(char *s, int n, void *file);
-int osd_feof(void *file);
-int osd_ftell(void *file);
-/* strip directory part from a filename, does _not_ malloc */
-char *osd_basename(char *filename);
-/* get directory part of a filename in malloced buffer */
-char *osd_dirname(char *filename);
-/* strip extension from a filename, copy to malloced buffer */
-char *osd_strip_extension(char *filename);
+/* Return the number of paths for a given type */
+int osd_get_path_count(int pathtype);
+
+/* Get information on the existence of a file */
+int osd_get_path_info(int pathtype, int pathindex, const char *filename);
+
+/* Attempt to open a file with the given name and mode using the specified path type */
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode);
+
+/* Seek within a file */
+int osd_fseek(osd_file *file, INT64 offset, int whence);
+
+/* Return current file position */
+UINT64 osd_ftell(osd_file *file);
+
+/* Return 1 if we're at the end of file */
+int osd_feof(osd_file *file);
+
+/* Read bytes from a file */
+UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length);
+
+/* Write bytes to a file */
+UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length);
+
+/* Close an open file */
+void osd_fclose(osd_file *file);
 
 
 
@@ -360,6 +336,11 @@ cycles_t osd_cycles(void);
 /* return the number of cycles per second */
 cycles_t osd_cycles_per_second(void);
 
+/* return the current number of cycles, or some other high-resolution timer.
+   This call must be the fastest possible because it is called by the profiler;
+   it isn't necessary to know the number of ticks per seconds. */
+cycles_t osd_profiling_ticks(void);
+
 
 
 /******************************************************************************
@@ -371,7 +352,7 @@ cycles_t osd_cycles_per_second(void);
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
-int osd_display_loading_rom_message(const char *name,int current,int total);
+int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata);
 
 /* called when the game is paused/unpaused, so the OS dependant code can do special */
 /* things like changing the title bar or darkening the display. */
@@ -396,11 +377,16 @@ int osd_net_game_exit(void);
 #endif /* MAME_NET */
 
 #ifdef MESS
-/* this is here to follow the current mame file hierachi style */
-#include "osd_dir.h"
+/* this is here to follow the current mame file hierarchy style */
+#include "osd_mess.h"
 #endif
 
+#ifdef __GNUC__
+void CLIB_DECL logerror(const char *text,...)
+      __attribute__ ((format (printf, 1, 2)));
+#else
 void CLIB_DECL logerror(const char *text,...);
+#endif
 
 #ifdef __cplusplus
 }

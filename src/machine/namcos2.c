@@ -63,12 +63,12 @@ size_t namcos2_eeprom_size;
 
 NVRAM_HANDLER( namcos2 ){
 	if( read_or_write ){
-		osd_fwrite (file, namcos2_eeprom, namcos2_eeprom_size);
+		mame_fwrite (file, namcos2_eeprom, namcos2_eeprom_size);
 	}
 	else {
 		if (file)
 		{
-			osd_fread (file, namcos2_eeprom, namcos2_eeprom_size);
+			mame_fread (file, namcos2_eeprom, namcos2_eeprom_size);
 		}
 		else
 		{

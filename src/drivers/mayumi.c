@@ -264,7 +264,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,	 /* 1 chip */
-	MCLK/8, /* 1.25 MHz ? */
+	MCLK/4, /* 2.5 MHz */
 	{ YM2203_VOL(40,15) },
 	{ input_port_0_r },
 	{ input_port_1_r },
@@ -321,4 +321,4 @@ ROM_START( mayumi )
 	ROM_LOAD( "my-9k.bin", 0x0200,  0x0100, 0x3e7a8012 ) // B
 ROM_END
 
-GAME ( 1988, mayumi, 0, mayumi, mayumi, 0, ROT0, "Victory L.L.C.",  "Kikiippatsu Mayumi-chan (Japan)" )
+GAME ( 1988, mayumi, 0, mayumi, mayumi, 0, ROT0, "[Sanritsu] Victory L.L.C.",  "Kikiippatsu Mayumi-chan (Japan)" )

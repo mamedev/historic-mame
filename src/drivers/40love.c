@@ -302,10 +302,12 @@ static WRITE_HANDLER( pix2_w )
 	pix2[1] = data;
 }
 
+#if 0
 static READ_HANDLER( pix1_r )
 {
 	return pix1;
 }
+#endif
 
 static READ_HANDLER( pix2_r )
 {

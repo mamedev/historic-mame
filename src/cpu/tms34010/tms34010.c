@@ -15,6 +15,7 @@
 #include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
+#include "state.h"
 
 #ifdef MAME_DEBUG
 extern int debug_key_pressed;
@@ -114,8 +115,9 @@ typedef struct tms34010_regs
 	UINT32 convmp;
 	UINT32 pixelshift;
 	data16_t *shiftreg;
-	UINT8  is_34020;
 	int gfxcycles;
+	UINT8  is_34020;
+	UINT8  ext_irq_lines;
 	int (*irq_callback)(int irqline);
 	int last_update_vcount;
 	struct tms34010_config *config;
@@ -157,7 +159,7 @@ int	tms34010_ICount;
 
 /* internal state */
 static tms34010_regs 	state;
-static int				cpu_executing;
+static UINT8			external_host_access;
 static void *			dpyint_timer[MAX_CPU];		  /* Display interrupt timer */
 static void *			vsblnk_timer[MAX_CPU];		  /* VBLANK start timer */
 
@@ -173,6 +175,8 @@ static struct tms34010_config default_config =
 static void check_interrupt(void);
 static void vsblnk_callback(int cpunum);
 static void dpyint_callback(int cpunum);
+static void tms34010_state_presave(void);
+static void tms34010_state_postload(void);
 
 
 
@@ -838,15 +842,47 @@ static void check_interrupt(void)
 
 void tms34010_init(void)
 {
+	int cpunum;
 	int i;
 
-	cpu_executing = -1;
+	external_host_access = 0;
 
 	for (i = 0; i < MAX_CPU; i++)
 	{
 		dpyint_timer[i] = timer_alloc(dpyint_callback);
 		vsblnk_timer[i] = timer_alloc(vsblnk_callback);
 	}
+
+	cpunum = cpu_getactivecpu();
+	state_save_register_UINT32("tms34010", cpunum, "OP",        &state.op, 1);
+	state_save_register_UINT32("tms34010", cpunum, "PC",        &state.pc, 1);
+	state_save_register_UINT32("tms34010", cpunum, "ST",        &state.st, 1);
+	state_save_register_UINT32("tms34010", cpunum, "AREGS",     state.flat_aregs, 16);
+	state_save_register_UINT32("tms34010", cpunum, "BREGS",     state.flat_bregs, 15);
+	state_save_register_UINT32("tms34010", cpunum, "NFLAG",     &state.nflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "CFLAG",     &state.cflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "NOTZFLAG",  &state.notzflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "VFLAG",     &state.vflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "PFLAG",     &state.pflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "IEFLAG",    &state.ieflag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "FE0FLAG",   &state.fe0flag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "FE1FLAG",   &state.fe1flag, 1);
+	state_save_register_UINT32("tms34010", cpunum, "FW",        state.fw, sizeof(state.fw) / sizeof(state.fw[0]));
+	state_save_register_UINT32("tms34010", cpunum, "FW_INC",    state.fw_inc, sizeof(state.fw_inc) / sizeof(state.fw_inc[0]));
+	state_save_register_UINT32("tms34010", cpunum, "RESET_DEF", &state.reset_deferred, 1);
+	state_save_register_UINT16("tms34010", cpunum, "SHIFTREG",  state.shiftreg, SHIFTREG_SIZE / sizeof(UINT16));
+	state_save_register_UINT16("tms34010", cpunum, "IORegs",    state.IOregs, 16);
+	state_save_register_UINT32("tms34010", cpunum, "TRANSPAR",  &state.transparency, 1);
+	state_save_register_UINT32("tms34010", cpunum, "WINCHK",    &state.window_checking, 1);
+	state_save_register_UINT32("tms34010", cpunum, "CONVSP",    &state.convsp, 1);
+	state_save_register_UINT32("tms34010", cpunum, "CONVDP",    &state.convdp, 1);
+	state_save_register_UINT32("tms34010", cpunum, "CONVMP",    &state.convmp, 1);
+	state_save_register_UINT32("tms34010", cpunum, "PIXELSHFT", &state.pixelshift, 1);
+	state_save_register_int("tms34010", cpunum, "gfxcycles",        &state.gfxcycles);
+	state_save_register_int("tms34010", cpunum, "luvcount",     &state.last_update_vcount);
+	state_save_register_int("tms34010", cpunum, "ICount",       &tms34010_ICount);
+	state_save_register_func_presave(tms34010_state_presave);
+	state_save_register_func_postload(tms34010_state_postload);
 }
 
 void tms34010_reset(void *param)
@@ -1118,16 +1154,28 @@ void tms34010_set_irq_line(int irqline, int linestate)
 	{
 		case 0:
 			if (linestate != CLEAR_LINE)
+			{
+				state.ext_irq_lines |= 1;
 				IOREG(REG_INTPEND) |= TMS34010_INT1;
+			}
 			else
+			{
+				state.ext_irq_lines &= ~1;
 				IOREG(REG_INTPEND) &= ~TMS34010_INT1;
+			}
 			break;
 
 		case 1:
 			if (linestate != CLEAR_LINE)
+			{
+				state.ext_irq_lines |= 2;
 				IOREG(REG_INTPEND) |= TMS34010_INT2;
+			}
 			else
+			{
+				state.ext_irq_lines &= ~2;
 				IOREG(REG_INTPEND) &= ~TMS34010_INT2;
+			}
 			break;
 	}
 	check_interrupt();
@@ -1197,7 +1245,6 @@ int tms34010_execute(int cycles)
 
 	/* execute starting now */
 	tms34010_ICount = cycles;
-	cpu_executing = cpu_getactivecpu();
 	change_pc29lew(TOBYTE(PC));
 	do
 	{
@@ -1226,7 +1273,6 @@ int tms34010_execute(int cycles)
 		(*opcode_table[state.op >> 4])();
 
 	} while (tms34010_ICount > 0);
-	cpu_executing = -1;
 
 	return cycles - tms34010_ICount;
 }
@@ -1468,8 +1514,6 @@ INLINE int vcount_to_scanline(int vcount)
 		vcount -= SMART_IOREG(VEBLNK);
 	if (vcount < 0)
 		vcount += SMART_IOREG(VTOTAL);
-	if (vcount > Machine->visible_area.max_y)
-		vcount = 0;
 	return vcount;
 }
 
@@ -1528,6 +1572,8 @@ static void dpyint_callback(int cpunum)
 {
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 	cpuintrf_push_context(cpunum);
+
+logerror("-- dpyint @ %d --\n", cpu_getscanline());
 
 	/* reset timer for next frame */
 	timer_adjust(dpyint_timer[cpunum], interval, cpunum, 0);
@@ -1648,7 +1694,7 @@ WRITE16_HANDLER( tms34010_io_register_w )
 
 		case REG_HSTCTLH:
 			/* if the CPU is halting itself, stop execution right away */
-			if ((data & 0x8000) && cpunum == cpu_executing)
+			if ((data & 0x8000) && !external_host_access)
 				tms34010_ICount = 0;
 			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -1659,7 +1705,7 @@ WRITE16_HANDLER( tms34010_io_register_w )
 
 		case REG_HSTCTLL:
 			/* the TMS34010 can change MSGOUT, can set INTOUT, and can clear INTIN */
-			if (cpunum == cpu_executing)
+			if (!external_host_access)
 			{
 				newreg = (oldreg & 0xff8f) | (data & 0x0070);
 				newreg |= data & 0x0080;
@@ -1674,7 +1720,7 @@ WRITE16_HANDLER( tms34010_io_register_w )
 				newreg |= data & 0x0008;
 			}
 			IOREG(offset) = newreg;
-
+logerror("oldreg=%04X newreg=%04X\n", oldreg, newreg);
 			/* the TMS34010 can set output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
@@ -1706,10 +1752,21 @@ WRITE16_HANDLER( tms34010_io_register_w )
 			if (IOREG(REG_INTENB) & IOREG(REG_INTPEND))
 				check_interrupt();
 			break;
+
+		case REG_INTPEND:
+			/* X1P, X2P and HIP are read-only */
+			/* WVP and DIP can only have 0's written to them */
+			IOREG(REG_INTPEND) = oldreg;
+			if (!(data & TMS34010_WV))
+				IOREG(REG_INTPEND) &= ~TMS34010_WV;
+			if (!(data & TMS34010_DI))
+				IOREG(REG_INTPEND) &= ~TMS34010_DI;
+			check_interrupt();
+			break;
 	}
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[offset], IOREG(offset), cpu_getscanline());
+		logerror("CPU#%d@%08X: %s = %04X (%d)\n", cpunum, activecpu_get_pc(), ioreg_name[offset], IOREG(offset), cpu_getscanline());
 }
 
 
@@ -1746,7 +1803,7 @@ WRITE16_HANDLER( tms34020_io_register_w )
 	IOREG(offset) = data;
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg020_name[offset], IOREG(offset), cpu_getscanline());
+		logerror("CPU#%d@%08X: %s = %04X (%d)\n", cpunum, activecpu_get_pc(), ioreg020_name[offset], IOREG(offset), cpu_getscanline());
 
 	switch (offset)
 	{
@@ -1802,7 +1859,7 @@ WRITE16_HANDLER( tms34020_io_register_w )
 
 		case REG020_HSTCTLH:
 			/* if the CPU is halting itself, stop execution right away */
-			if ((data & 0x8000) && cpunum == cpu_executing)
+			if ((data & 0x8000) && !external_host_access)
 				tms34010_ICount = 0;
 			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -1813,7 +1870,7 @@ WRITE16_HANDLER( tms34020_io_register_w )
 
 		case REG020_HSTCTLL:
 			/* the TMS34010 can change MSGOUT, can set INTOUT, and can clear INTIN */
-			if (cpunum == cpu_executing)
+			if (!external_host_access)
 			{
 				newreg = (oldreg & 0xff8f) | (data & 0x0070);
 				newreg |= data & 0x0080;
@@ -1851,6 +1908,17 @@ WRITE16_HANDLER( tms34020_io_register_w )
 		case REG020_INTENB:
 			if (IOREG(REG020_INTENB) & IOREG(REG020_INTPEND))
 				check_interrupt();
+			break;
+
+		case REG020_INTPEND:
+			/* X1P, X2P and HIP are read-only */
+			/* WVP and DIP can only have 0's written to them */
+			IOREG(REG020_INTPEND) = oldreg;
+			if (!(data & TMS34010_WV))
+				IOREG(REG020_INTPEND) &= ~TMS34010_WV;
+			if (!(data & TMS34010_DI))
+				IOREG(REG020_INTPEND) &= ~TMS34010_DI;
+			check_interrupt();
 			break;
 
 		case REG020_CONVSP:
@@ -1917,7 +1985,7 @@ READ16_HANDLER( tms34010_io_register_r )
 	int result, total;
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[offset]);
+		logerror("CPU#%d@%08X: read %s\n", cpunum, activecpu_get_pc(), ioreg_name[offset]);
 
 	switch (offset)
 	{
@@ -1953,7 +2021,7 @@ READ16_HANDLER( tms34020_io_register_r )
 	int result, total;
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[offset]);
+		logerror("CPU#%d@%08X: read %s\n", cpunum, activecpu_get_pc(), ioreg_name[offset]);
 
 	switch (offset)
 	{
@@ -1990,29 +2058,41 @@ READ16_HANDLER( tms34020_io_register_r )
 
 int tms34010_io_display_blanked(int cpu)
 {
-	tms34010_regs *context = FINDCONTEXT(cpu);
-	return (!(context->IOregs[REG_DPYCTL] & 0x8000));
+	int result;
+	cpuintrf_push_context(cpu);
+	result = !(IOREG(REG_DPYCTL) & 0x8000);
+	cpuintrf_pop_context();
+	return result;
 }
 
 
 int tms34020_io_display_blanked(int cpu)
 {
-	tms34010_regs *context = FINDCONTEXT(cpu);
-	return (!(context->IOregs[REG020_DPYCTL] & 0x8000));
+	int result;
+	cpuintrf_push_context(cpu);
+	result = !(IOREG(REG020_DPYCTL) & 0x8000);
+	cpuintrf_pop_context();
+	return result;
 }
 
 
 int tms34010_get_DPYSTRT(int cpu)
 {
-	tms34010_regs *context = FINDCONTEXT(cpu);
-	return context->IOregs[REG_DPYSTRT];
+	int result;
+	cpuintrf_push_context(cpu);
+	result = IOREG(REG_DPYSTRT);
+	cpuintrf_pop_context();
+	return result;
 }
 
 
 int tms34020_get_DPYSTRT(int cpu)
 {
-	tms34010_regs *context = FINDCONTEXT(cpu);
-	return (context->IOregs[REG020_DPYSTH] << 16) | (context->IOregs[REG020_DPYSTL] & ~0x1f);
+	int result;
+	cpuintrf_push_context(cpu);
+	result = (IOREG(REG020_DPYSTH) << 16) | (IOREG(REG020_DPYSTL) & ~0x1f);
+	cpuintrf_pop_context();
+	return result;
 }
 
 
@@ -2021,23 +2101,23 @@ int tms34020_get_DPYSTRT(int cpu)
 **	SAVE STATE
 **#################################################################################################*/
 
-void tms34010_state_save(int cpunum, void *f)
+void tms34010_state_save(int cpunum, mame_file *f)
 {
 	tms34010_regs *context = FINDCONTEXT(cpunum);
-	osd_fwrite(f,context,sizeof(state));
-	osd_fwrite(f,&tms34010_ICount,sizeof(tms34010_ICount));
-	osd_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
+	mame_fwrite(f,context,sizeof(state));
+	mame_fwrite(f,&tms34010_ICount,sizeof(tms34010_ICount));
+	mame_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
 
-void tms34010_state_load(int cpunum, void *f)
+void tms34010_state_load(int cpunum, mame_file *f)
 {
 	/* Don't reload the following */
 	UINT16 *shiftreg_save = state.shiftreg;
 	tms34010_regs *context = FINDCONTEXT(cpunum);
 
-	osd_fread(f,context,sizeof(state));
-	osd_fread(f,&tms34010_ICount,sizeof(tms34010_ICount));
+	mame_fread(f,context,sizeof(state));
+	mame_fread(f,&tms34010_ICount,sizeof(tms34010_ICount));
 	change_pc29lew(TOBYTE(PC));
 	SET_FW();
 	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
@@ -2046,9 +2126,32 @@ void tms34010_state_load(int cpunum, void *f)
 
 	state.shiftreg      = shiftreg_save;
 
-	osd_fread(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
+	mame_fread(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
+static void tms34010_state_presave(void)
+{
+	int i;
+	for (i = 0; i < 16; i++)
+		state.flat_aregs[i] = AREG(i);
+	for (i = 0; i < 15; i++)
+		state.flat_bregs[i] = BREG(BINDEX(i));
+}
+
+static void tms34010_state_postload(void)
+{
+	int i;
+	for (i = 0; i < 16; i++)
+		AREG(i) = state.flat_aregs[i];
+	for (i = 0; i < 15; i++)
+		BREG(BINDEX(i)) = state.flat_bregs[i];
+
+	change_pc29lew(TOBYTE(PC));
+	SET_FW();
+	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
+	set_raster_op();
+	set_pixel_function();
+}
 
 
 /*###################################################################################################
@@ -2057,30 +2160,29 @@ void tms34010_state_load(int cpunum, void *f)
 
 void tms34010_host_w(int cpunum, int reg, int data)
 {
-	tms34010_regs *context = FINDCONTEXT(cpunum);
 	unsigned int addr;
+
+	/* swap to the target cpu */
+	cpuintrf_push_context(cpunum);
 
 	switch (reg)
 	{
 		/* upper 16 bits of the address */
 		case TMS34010_HOST_ADDRESS_H:
-			CONTEXT_IOREG(context, REG_HSTADRH) = data;
+			IOREG(REG_HSTADRH) = data;
 			break;
 
 		/* lower 16 bits of the address */
 		case TMS34010_HOST_ADDRESS_L:
-			CONTEXT_IOREG(context, REG_HSTADRL) = data & 0xfff0;
+			IOREG(REG_HSTADRL) = data;
 			break;
 
 		/* actual data */
 		case TMS34010_HOST_DATA:
 
-			/* swap to the target cpu */
-			cpuintrf_push_context(cpunum);
-
 			/* write to the address */
 			addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
-			TMS34010_WRMEM_WORD(TOBYTE(addr), data);
+			TMS34010_WRMEM_WORD(TOBYTE(addr & 0xfffffff0), data);
 
 			/* optional postincrement */
 			if (IOREG(REG_HSTCTLH) & 0x0800)
@@ -2089,18 +2191,14 @@ void tms34010_host_w(int cpunum, int reg, int data)
 				IOREG(REG_HSTADRH) = addr >> 16;
 				IOREG(REG_HSTADRL) = (UINT16)addr;
 			}
-
-			/* swap back */
-			cpuintrf_pop_context();
-			activecpu_reset_banking();
 			break;
 
 		/* control register */
 		case TMS34010_HOST_CONTROL:
-			cpuintrf_push_context(cpunum);
+			external_host_access = 1;
 			tms34010_io_register_w(REG_HSTCTLH, data & 0xff00, 0);
 			tms34010_io_register_w(REG_HSTCTLL, data & 0x00ff, 0);
-			cpuintrf_pop_context();
+			external_host_access = 0;
 			break;
 
 		/* error case */
@@ -2108,6 +2206,10 @@ void tms34010_host_w(int cpunum, int reg, int data)
 			logerror("tms34010_host_control_w called on invalid register %d\n", reg);
 			break;
 	}
+
+	/* swap back */
+	cpuintrf_pop_context();
+	activecpu_reset_banking();
 }
 
 
@@ -2118,29 +2220,30 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 int tms34010_host_r(int cpunum, int reg)
 {
-	tms34010_regs *context = FINDCONTEXT(cpunum);
 	unsigned int addr;
-	int result;
+	int result = 0;
+
+	/* swap to the target cpu */
+	cpuintrf_push_context(cpunum);
 
 	switch (reg)
 	{
 		/* upper 16 bits of the address */
 		case TMS34010_HOST_ADDRESS_H:
-			return CONTEXT_IOREG(context, REG_HSTADRH);
+			result = IOREG(REG_HSTADRH);
+			break;
 
 		/* lower 16 bits of the address */
 		case TMS34010_HOST_ADDRESS_L:
-			return CONTEXT_IOREG(context, REG_HSTADRL);
+			result = IOREG(REG_HSTADRL);
+			break;
 
 		/* actual data */
 		case TMS34010_HOST_DATA:
 
-			/* swap to the target cpu */
-			cpuintrf_push_context(cpunum);
-
 			/* read from the address */
 			addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
-			result = TMS34010_RDMEM_WORD(TOBYTE(addr));
+			result = TMS34010_RDMEM_WORD(TOBYTE(addr & 0xfffffff0));
 
 			/* optional postincrement (it says preincrement, but data is preloaded, so it
 			   is effectively a postincrement */
@@ -2150,18 +2253,22 @@ int tms34010_host_r(int cpunum, int reg)
 				IOREG(REG_HSTADRH) = addr >> 16;
 				IOREG(REG_HSTADRL) = (UINT16)addr;
 			}
-
-			/* swap back */
-			cpuintrf_pop_context();
-			activecpu_reset_banking();
-			return result;
+			break;
 
 		/* control register */
 		case TMS34010_HOST_CONTROL:
-			return (CONTEXT_IOREG(context, REG_HSTCTLH) & 0xff00) | (CONTEXT_IOREG(context, REG_HSTCTLL) & 0x00ff);
+			result = (IOREG(REG_HSTCTLH) & 0xff00) | (IOREG(REG_HSTCTLL) & 0x00ff);
+			break;
+
+		/* error case */
+		default:
+			logerror("tms34010_host_control_r called on invalid register %d\n", reg);
+			break;
 	}
 
-	/* error case */
-	logerror("tms34010_host_control_r called on invalid register %d\n", reg);
-	return 0;
+	/* swap back */
+	cpuintrf_pop_context();
+	activecpu_reset_banking();
+
+	return result;
 }

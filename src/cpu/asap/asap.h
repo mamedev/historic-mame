@@ -62,9 +62,4 @@ extern unsigned asap_dasm(char *buffer, unsigned pc);
 
 extern void asap_set_cpi(int cpi);
 
-#ifdef MAME_DEBUG
-extern unsigned asap_dasm(char *buffer, unsigned pc);
-#endif
-
-
 #endif /* _ASAP_H */

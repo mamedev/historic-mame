@@ -9,6 +9,8 @@ extern data32_t skns_v3t_dirty[0x4000]; // allocate this elsewhere?
 extern data32_t skns_v3t_4bppdirty[0x8000]; // allocate this elsewhere?
 extern int skns_v3t_somedirty,skns_v3t_4bpp_somedirty;
 
+void skns_palette_update(void);
+
 static data8_t decodebuffer[64*128];
 static int old_depthA=0, depthA=0;
 static int old_depthB=0, depthB=0;
@@ -545,6 +547,9 @@ VIDEO_UPDATE(skns)
 	int i, offset;
 
 	data8_t *btiles;
+
+
+	skns_palette_update();
 
 	btiles = memory_region (REGION_GFX3);
 

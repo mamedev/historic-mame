@@ -36,8 +36,6 @@
 #define strcasecmp stricmp
 #endif
 
-int index;	/* avoid a common "shadows global declaration" warning in the DOS build */
-
 
 typedef unsigned char						UINT8;
 typedef signed char 						INT8;

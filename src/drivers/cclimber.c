@@ -139,12 +139,12 @@ WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 PALETTE_INIT( cclimber );
 VIDEO_UPDATE( cclimber );
 
-WRITE_HANDLER( cclimber_sample_select_w );
+extern struct AY8910interface cclimber_ay8910_interface;
+extern struct AY8910interface swimmer_ay8910_interface;
+extern struct CustomSound_interface cclimber_custom_interface;
 WRITE_HANDLER( cclimber_sample_trigger_w );
 WRITE_HANDLER( cclimber_sample_rate_w );
 WRITE_HANDLER( cclimber_sample_volume_w );
-int cclimber_sh_start(const struct MachineSound *msound);
-void cclimber_sh_stop(void);
 
 
 static WRITE_HANDLER( flip_screen_x_w )
@@ -471,26 +471,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,      /* 1 chip */
-	1536000,	/* 1.536 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ cclimber_sample_select_w },
-	{ 0 }
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	cclimber_sh_start,
-	cclimber_sh_stop,
-	0
-};
-
-
-
 static MACHINE_DRIVER_START( cclimber )
 
 	/* basic machine hardware */
@@ -516,8 +496,8 @@ static MACHINE_DRIVER_START( cclimber )
 	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(AY8910, cclimber_ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, cclimber_custom_interface)
 MACHINE_DRIVER_END
 
 
@@ -1202,18 +1182,6 @@ static struct GfxDecodeInfo swimmer_gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface swimmer_ay8910_interface =
-{
-	2,      /* 2 chips */
-	4000000/2,	/* 2 MHz */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( swimmer )
 
@@ -1377,7 +1345,7 @@ ROM_END
 
 
 
-static void cc_decode(const unsigned char xortable[8][16])
+void cclimber_decode(const unsigned char xortable[8][16])
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -1421,10 +1389,10 @@ static DRIVER_INIT( cclimber )
 		{   -1,  -1,0x50,0x04,0x05,0x51,0x51,0x54,0x11,0x45,0x14,0x40,0x41,0x15,0x44,0x41 }
 	};
 
-	cc_decode(xortable);
+	cclimber_decode(xortable);
 }
 
-static DRIVER_INIT( cclimbrj )
+DRIVER_INIT( cclimbrj )
 {
 	static const unsigned char xortable[8][16] =
 	{
@@ -1438,7 +1406,7 @@ static DRIVER_INIT( cclimbrj )
 		{ 0x55,0x51,0x11,0x15,0x11,0x15,0x55,0x51,0x05,0x01,0x41,0x45,0x41,0x45,0x05,0x01 }
 	};
 
-	cc_decode(xortable);
+	cclimber_decode(xortable);
 }
 
 

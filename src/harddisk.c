@@ -184,9 +184,9 @@ void hard_disk_set_interface(struct hard_disk_interface *_interface)
 int hard_disk_create(const char *filename, const struct hard_disk_header *_header)
 {
 	static const UINT8 nullmd5[16] = { 0 };
-	struct hard_disk_header header = *_header;
 	mapentry_t blank_entries[STACK_ENTRIES];
 	int fullchunks, remainder, count;
+	struct hard_disk_header header;
 	UINT64 fileoffset;
 	void *file = NULL;
 	int i, err;
@@ -198,11 +198,12 @@ int hard_disk_create(const char *filename, const struct hard_disk_header *_heade
 		SET_ERROR_AND_CLEANUP(HDERR_NO_INTERFACE);
 
 	/* verify parameters */
-	if (!filename)
+	if (!filename || !_header)
 		SET_ERROR_AND_CLEANUP(HDERR_FILE_NOT_FOUND);
 
 	/* sanity check the header, filling in missing info */
-	header.length = HARD_DISK_HEADER_SIZE;
+ 	header = *_header;
+ 	header.length = HARD_DISK_HEADER_SIZE;
 	header.version = HARD_DISK_HEADER_VERSION;
 
 	/* require a valid MD5 if we're using a parent */
@@ -610,6 +611,47 @@ cleanup:
 
 /*************************************
  *
+ *	Set the header
+ *
+ *************************************/
+
+int hard_disk_set_header(const char *filename, const struct hard_disk_header *header)
+{
+	void *file = NULL;
+	int err;
+
+	/* punt if no interface */
+	if (!interface.open)
+		SET_ERROR_AND_CLEANUP(HDERR_NO_INTERFACE);
+
+	/* punt if NULL or invalid */
+	if (!filename || !header)
+		SET_ERROR_AND_CLEANUP(HDERR_INVALID_PARAMETER);
+
+	/* first attempt to open the file */
+	file = (*interface.open)(filename, "rb+");
+	if (!file)
+		SET_ERROR_AND_CLEANUP(HDERR_FILE_NOT_FOUND);
+
+	/* write the header */
+	err = write_header(file, header);
+	if (err != HDERR_NONE)
+		SET_ERROR_AND_CLEANUP(err);
+
+	/* close the file and return */
+	(*interface.close)(file);
+	return HDERR_NONE;
+
+cleanup:
+	if (file)
+		(*interface.close)(file);
+	return last_error;
+}
+
+
+
+/*************************************
+ *
  *	All-in-one disk compressor
  *
  *************************************/
@@ -624,6 +666,7 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 	void *sourcefile = NULL;
 	struct MD5Context md5;
 	UINT32 blocksizebytes;
+	int totalsectors;
 	int err, block = 0;
 	clock_t lastupdate;
 
@@ -665,25 +708,39 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 	MD5Init(&md5);
 
 	/* loop over source blocks until we run out */
+	totalsectors = destfile->header.cylinders * destfile->header.heads * destfile->header.sectors;
 	blocksizebytes = destfile->header.blocksize * HARD_DISK_SECTOR_SIZE;
 	memset(destfile->cache, 0, blocksizebytes);
 	lastupdate = 0;
-	while (block < readbackheader->totalblocks && (*interface.read)(sourcefile, sourceoffset, blocksizebytes, destfile->cache) != 0)
+	while (block < readbackheader->totalblocks)
 	{
 		int write_this_block = 1;
 		clock_t curtime = clock();
+		int bytestomd5;
+
+		/* read the data */
+		(*interface.read)(sourcefile, sourceoffset, blocksizebytes, destfile->cache);
 
 		/* progress */
 		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
 		{
 			UINT64 sourcepos = (UINT64)block * blocksizebytes;
 			if (progress && sourcepos)
-				(*progress)("Compressing block %d... (ratio=%d%%)  \r", block, 100 - destfile->eof * 100 / sourcepos);
+				(*progress)("Compressing sector %d/%d... (ratio=%d%%)  \r", block * destfile->header.blocksize, totalsectors, 100 - destfile->eof * 100 / sourcepos);
 			lastupdate = curtime;
 		}
 
+		/* determine how much to MD5 */
+		bytestomd5 = blocksizebytes;
+		if ((block + 1) * destfile->header.blocksize > totalsectors)
+		{
+			bytestomd5 = (totalsectors - block * destfile->header.blocksize) * HARD_DISK_SECTOR_SIZE;
+			if (bytestomd5 < 0)
+				bytestomd5 = 0;
+		}
+
 		/* update the MD5 */
-		MD5Update(&md5, destfile->cache, blocksizebytes);
+		MD5Update(&md5, destfile->cache, bytestomd5);
 
 		/* see if we have an exact match */
 		if (comparefile)
@@ -715,6 +772,14 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 	if (err != HDERR_NONE)
 		SET_ERROR_AND_CLEANUP(err);
 
+	/* final progress update */
+	if (progress)
+	{
+		UINT64 sourcepos = (UINT64)block * blocksizebytes;
+		if (sourcepos)
+			(*progress)("Compression complete ... final ratio = %d%%            \n", 100 - destfile->eof * 100 / sourcepos);
+	}
+
 	/* close the drives */
 	hard_disk_close(destfile);
 	if (comparefile)
@@ -730,6 +795,101 @@ cleanup:
 		hard_disk_close(comparefile);
 	if (sourcefile)
 		(*interface.close)(sourcefile);
+	return last_error;
+}
+
+
+
+/*************************************
+ *
+ *	All-in-one disk verifier
+ *
+ *************************************/
+
+int hard_disk_verify(const char *hdfile, void (*progress)(const char *, ...), UINT8 headermd5[16], UINT8 actualmd5[16])
+{
+	struct hard_disk_info *sourcefile = NULL;
+	struct MD5Context md5;
+	UINT32 blocksizebytes;
+	int totalsectors;
+	int err, block = 0;
+	clock_t lastupdate;
+
+	/* punt if no interface */
+	if (!interface.open)
+		SET_ERROR_AND_CLEANUP(HDERR_NO_INTERFACE);
+
+	/* verify parameters */
+	if (!hdfile)
+		SET_ERROR_AND_CLEANUP(HDERR_INVALID_PARAMETER);
+
+	/* open the disk file */
+	sourcefile = hard_disk_open(hdfile, 0, NULL);
+	if (!sourcefile)
+		SET_ERROR_AND_CLEANUP(HDERR_FILE_NOT_FOUND);
+
+	/* if this is a writeable disk image, we can't verify */
+	if (sourcefile->header.flags & HDFLAGS_IS_WRITEABLE)
+		SET_ERROR_AND_CLEANUP(HDERR_CANT_VERIFY);
+
+	/* set the MD5 from the header */
+	memcpy(headermd5, sourcefile->header.md5, sizeof(sourcefile->header.md5));
+
+	/* init the MD5 computation */
+	MD5Init(&md5);
+
+	/* loop over source blocks until we run out */
+	totalsectors = sourcefile->header.cylinders * sourcefile->header.heads * sourcefile->header.sectors;
+	blocksizebytes = sourcefile->header.blocksize * HARD_DISK_SECTOR_SIZE;
+	lastupdate = 0;
+	while (block < sourcefile->header.totalblocks)
+	{
+		clock_t curtime = clock();
+		int bytestomd5;
+
+		/* progress */
+		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
+		{
+			if (progress)
+				(*progress)("Verifying sector %d/%d...\r", block * sourcefile->header.blocksize, totalsectors);
+			lastupdate = curtime;
+		}
+
+		/* read the block into the cache */
+		err = read_block_into_cache(sourcefile, block);
+		if (err != HDERR_NONE)
+			SET_ERROR_AND_CLEANUP(err);
+
+		/* determine how much to MD5 */
+		bytestomd5 = blocksizebytes;
+		if ((block + 1) * sourcefile->header.blocksize > totalsectors)
+		{
+			bytestomd5 = (totalsectors - block * sourcefile->header.blocksize) * HARD_DISK_SECTOR_SIZE;
+			if (bytestomd5 < 0)
+				bytestomd5 = 0;
+		}
+
+		/* update the MD5 */
+		MD5Update(&md5, sourcefile->cache, bytestomd5);
+
+		/* prepare for the next block */
+		block++;
+	}
+
+	/* compute the final MD5 */
+	MD5Final(actualmd5, &md5);
+
+	/* final progress update */
+	if (progress)
+		(*progress)("Verification complete                                  \n");
+
+	/* close the drive */
+	hard_disk_close(sourcefile);
+	return HDERR_NONE;
+
+cleanup:
+	if (sourcefile)
+		hard_disk_close(sourcefile);
 	return last_error;
 }
 

@@ -1,10 +1,69 @@
 #include "driver.h"
+#include <stdarg.h>
 #include <string.h>
 #include "audit.h"
-
+#include "harddisk.h"
 
 static tAuditRecord *gAudits = NULL;
 
+static const struct GameDriver *hard_disk_gamedrv;
+
+/*-------------------------------------------------
+	audit_hard_disk_open - interface for opening
+	a hard disk image
+-------------------------------------------------*/
+
+void *audit_hard_disk_open(const char *filename, const char *mode)
+{
+	return mame_fopen(hard_disk_gamedrv->name, filename, FILETYPE_IMAGE, 0);
+}
+
+
+
+/*-------------------------------------------------
+	audit_hard_disk_close - interface for closing
+	a hard disk image
+-------------------------------------------------*/
+
+void audit_hard_disk_close(void *file)
+{
+	mame_fclose((mame_file *)file);
+}
+
+
+
+/*-------------------------------------------------
+	audit_hard_disk_read - interface for reading
+	from a hard disk image
+-------------------------------------------------*/
+
+UINT32 audit_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
+{
+	mame_fseek((mame_file *)file, offset, SEEK_SET);
+	return mame_fread((mame_file *)file, buffer, count);
+}
+
+
+
+/*-------------------------------------------------
+	audit_hard_disk_write - interface for writing
+	to a hard disk image
+-------------------------------------------------*/
+
+UINT32 audit_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
+{
+	return 0;
+}
+
+
+
+static struct hard_disk_interface audit_hard_disk_interface =
+{
+	audit_hard_disk_open,
+	audit_hard_disk_close,
+	audit_hard_disk_read,
+	audit_hard_disk_write
+};
 
 
 /* returns 1 if rom is defined in this set */
@@ -67,9 +126,8 @@ int RomsetMissing (int game)
 		return !cloneRomsFound;
 	}
 	else
-		return !osd_faccess (gamedrv->name, OSD_FILETYPE_ROM);
+		return !mame_faccess (gamedrv->name, FILETYPE_ROM);
 }
-
 
 /* Fills in an audit record for each rom in the romset. Sets 'audit' to
    point to the list of audit records. Returns total number of roms
@@ -98,65 +156,117 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	if (!gamedrv->rom) return -1;
 
 	/* check for existence of romset */
-	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
+	if (!mame_faccess (gamedrv->name, FILETYPE_ROM))
 	{
 		/* if the game is a clone, check for parent */
 		if (gamedrv->clone_of == 0 || (gamedrv->clone_of->flags & NOT_A_DRIVER) ||
-				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
+				!mame_faccess(gamedrv->clone_of->name,FILETYPE_ROM))
 			return 0;
 	}
 
 	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			const struct GameDriver *drv;
-
-			name = ROM_GETNAME(rom);
-			strcpy (aud->rom, name);
-			aud->explength = 0;
-			aud->length = 0;
-			aud->expchecksum = ROM_GETCRC(rom);
-			/* NS981003: support for "load by CRC" */
-			aud->checksum = ROM_GETCRC(rom);
-			count++;
-
-			/* obtain CRC-32 and length of ROM file */
-			drv = gamedrv;
-			do
+			if (ROMREGION_ISROMDATA(region))
 			{
-				err = osd_fchecksum (drv->name, name, &aud->length, &aud->checksum);
-				drv = drv->clone_of;
-			} while (err && drv);
+				const struct GameDriver *drv;
 
-			/* spin through ROM_CONTINUEs, totaling length */
-			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
-				aud->explength += ROM_GETLENGTH(chunk);
+				name = ROM_GETNAME(rom);
+				strcpy (aud->rom, name);
+				aud->explength = 0;
+				aud->length = 0;
+				aud->expchecksum = ROM_GETCRC(rom);
+				/* NS981003: support for "load by CRC" */
+				aud->checksum = ROM_GETCRC(rom);
+				memset(aud->expmd5,0,sizeof(aud->md5));
+				memset(aud->md5,0,sizeof(aud->md5));
+				count++;
 
-			if (err)
-			{
-				if (!aud->expchecksum)
-					/* not found but it's not good anyway */
-					aud->status = AUD_NOT_AVAILABLE;
+				/* obtain CRC-32 and length of ROM file */
+				drv = gamedrv;
+				do
+				{
+					err = mame_fchecksum (drv->name, name, &aud->length, &aud->checksum);
+					drv = drv->clone_of;
+				} while (err && drv);
+
+				/* spin through ROM_CONTINUEs, totaling length */
+				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+					aud->explength += ROM_GETLENGTH(chunk);
+
+				if (err)
+				{
+					if (!aud->expchecksum)
+						/* not found but it's not good anyway */
+						aud->status = AUD_NOT_AVAILABLE;
+					else
+						/* not found */
+						aud->status = AUD_ROM_NOT_FOUND;
+				}
+				/* all cases below assume the ROM was at least found */
+				else if (aud->explength != aud->length)
+					aud->status = AUD_LENGTH_MISMATCH;
+				else if (aud->checksum != aud->expchecksum)
+				{
+					if (!aud->expchecksum)
+						aud->status = AUD_ROM_NEED_DUMP; /* new case - found but not known to be dumped */
+					else if (aud->checksum == BADCRC (aud->expchecksum))
+						aud->status = AUD_ROM_NEED_REDUMP;
+					else
+						aud->status = AUD_BAD_CHECKSUM;
+				}
 				else
-					/* not found */
-					aud->status = AUD_ROM_NOT_FOUND;
-			}
-			/* all cases below assume the ROM was at least found */
-			else if (aud->explength != aud->length)
-				aud->status = AUD_LENGTH_MISMATCH;
-			else if (aud->checksum != aud->expchecksum)
-			{
-				if (!aud->expchecksum)
-					aud->status = AUD_ROM_NEED_DUMP; /* new case - found but not known to be dumped */
-				else if (aud->checksum == BADCRC (aud->expchecksum))
-					aud->status = AUD_ROM_NEED_REDUMP;
-				else
-					aud->status = AUD_BAD_CHECKSUM;
-			}
-			else
-				aud->status = AUD_ROM_GOOD;
+					aud->status = AUD_ROM_GOOD;
 
-			aud++;
+				aud++;
+			}
+			else if (ROMREGION_ISDISKDATA(region))
+			{
+				void *source;
+				struct hard_disk_header header;
+
+				name = ROM_GETNAME(rom);
+				strcpy (aud->rom, name);
+				aud->explength = 0;
+				aud->length = 0;
+				aud->expchecksum = 0;
+				aud->checksum = 0;
+				rom_extract_md5(rom,aud->expmd5);
+				memset(aud->md5,0,sizeof(aud->md5));
+				count++;
+
+				hard_disk_gamedrv = gamedrv;
+				hard_disk_set_interface(&audit_hard_disk_interface);
+				source = hard_disk_open( name, 0, NULL );
+				if( source == NULL )
+				{
+					err = hard_disk_get_last_error();
+					if( err == HDERR_OUT_OF_MEMORY )
+					{
+						aud->status = AUD_MEM_ERROR;
+					}
+					else
+					{
+						aud->status = AUD_DISK_NOT_FOUND;
+					}
+				}
+				else
+				{
+					header = *hard_disk_get_header(source);
+					memcpy( aud->md5, header.md5, sizeof( header.md5 ) );
+					if (!memcmp(aud->md5, aud->expmd5,sizeof(aud->md5)))
+					{
+						aud->status = AUD_DISK_GOOD;
+					}
+					else
+					{
+						aud->status = AUD_DISK_BAD_MD5;
+					}
+					hard_disk_close( source );
+				}
+
+				aud++;
+			}
 		}
 
         #ifdef MESS
@@ -197,7 +307,6 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
 					cloneRomsFound++;
 			}
-
         #ifndef MESS
         /* Different MESS systems can use the same ROMs */
         if (uniqueRomsFound && !cloneRomsFound)
@@ -263,11 +372,41 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 #endif
 				break;
+			case AUD_DISK_GOOD:
+#if 0    /* if you want a full accounting of roms */
+				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x GOOD\n",
+					drivers[game]->name, aud->rom,
+					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
+					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
+					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
+					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15]);
+#endif
+				break;
+			case AUD_DISK_NOT_FOUND:
+				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x NOT FOUND\n",
+					drivers[game]->name, aud->rom,
+					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
+					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
+					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
+					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15]);
+				break;
+			case AUD_DISK_BAD_MD5:
+				verify_printf ("%-8s: %-12s %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x INCORRECT MD5: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+					drivers[game]->name, aud->rom,
+					aud->expmd5[0], aud->expmd5[1], aud->expmd5[2], aud->expmd5[3],
+					aud->expmd5[4], aud->expmd5[5], aud->expmd5[6], aud->expmd5[7],
+					aud->expmd5[8], aud->expmd5[9], aud->expmd5[10], aud->expmd5[11],
+					aud->expmd5[12], aud->expmd5[13], aud->expmd5[14], aud->expmd5[15],
+					aud->md5[0], aud->md5[1], aud->md5[2], aud->md5[3],
+					aud->md5[4], aud->md5[5], aud->md5[6], aud->md5[7],
+					aud->md5[8], aud->md5[9], aud->md5[10], aud->md5[11],
+					aud->md5[12], aud->md5[13], aud->md5[14], aud->md5[15]);
+				break;
 		}
 		aud++;
 	}
 
-	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH))
+	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH|AUD_DISK_NOT_FOUND|AUD_DISK_BAD_MD5))
 		return INCORRECT;
 	if (archive_status & (AUD_ROM_NEED_DUMP|AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE))
 		return BEST_AVAILABLE;
@@ -286,7 +425,7 @@ int AuditSampleSet (int game, tMissingSample **audit)
 {
 	struct InternalMachineDriver drv;
 	int skipfirst;
-	void *f;
+	mame_file *f;
 	const char **samplenames, *sharedname;
 	int exist;
 	static const struct GameDriver *gamedrv;
@@ -324,11 +463,11 @@ int AuditSampleSet (int game, tMissingSample **audit)
 	}
 
 	/* do we have samples for this game? */
-	exist = osd_faccess (gamedrv->name, OSD_FILETYPE_SAMPLE);
+	exist = mame_faccess (gamedrv->name, FILETYPE_SAMPLE);
 
 	/* try shared samples */
 	if (!exist && skipfirst)
-		exist = osd_faccess (sharedname, OSD_FILETYPE_SAMPLE);
+		exist = mame_faccess (sharedname, FILETYPE_SAMPLE);
 
 	/* if still not found, we're done */
 	if (!exist)
@@ -348,12 +487,12 @@ int AuditSampleSet (int game, tMissingSample **audit)
 		/* skip empty definitions */
 		if (strlen (samplenames[j]) == 0)
 			continue;
-		f = osd_fopen (gamedrv->name, samplenames[j], OSD_FILETYPE_SAMPLE, 0);
+		f = mame_fopen (gamedrv->name, samplenames[j], FILETYPE_SAMPLE, 0);
 		if (f == NULL && skipfirst)
-			f = osd_fopen (sharedname, samplenames[j], OSD_FILETYPE_SAMPLE, 0);
+			f = mame_fopen (sharedname, samplenames[j], FILETYPE_SAMPLE, 0);
 
 		if (f)
-			osd_fclose(f);
+			mame_fclose(f);
 		else
 		{
 			strcpy (aud->name, samplenames[j]);

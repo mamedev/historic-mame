@@ -531,7 +531,7 @@ static struct YM2151interface cabalbl_ym2151_interface =
 	{ irqhandler },
 };
 
-struct ADPCMinterface adpcm_interface =
+static struct ADPCMinterface adpcm_interface =
 {
 	2,			/* total number of ADPCM decoders in the machine */
 	8000,		/* playback frequency */

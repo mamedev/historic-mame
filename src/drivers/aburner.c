@@ -289,6 +289,7 @@ ROM_END
 
 /*****************************************************************************/
 
+#if 0
 static READ16_HANDLER( aburner_shareram_r ){
 	return sys16_extraram[offset];
 }
@@ -302,6 +303,7 @@ static READ16_HANDLER( aburner_road_r ){
 static WRITE16_HANDLER( aburner_road_w ){
 	COMBINE_DATA( &sys16_extraram2[offset] );
 }
+#endif
 
 INPUT_PORTS_START( aburner )
 	PORT_START /* player 1 */

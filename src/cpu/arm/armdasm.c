@@ -135,7 +135,7 @@ void arm_disasm( char *pBuf, data32_t pc, data32_t opcode )
 		{
 			pBuf += sprintf( pBuf, "MUL" );
 		}
-		pBuf += sprintf( pBuf, pConditionCode );
+		pBuf += sprintf( pBuf, "%s", pConditionCode );
 		if( opcode&0x00100000 )
 		{
 			*pBuf++ = 'S';
@@ -212,7 +212,7 @@ void arm_disasm( char *pBuf, data32_t pc, data32_t opcode )
 		{
 			pBuf += sprintf( pBuf, "STR" );
 		}
-		pBuf += sprintf( pBuf, pConditionCode );
+		pBuf += sprintf( pBuf, "%s", pConditionCode );
 
 		if( opcode&0x00400000 )
 		{
@@ -271,7 +271,7 @@ void arm_disasm( char *pBuf, data32_t pc, data32_t opcode )
 		{
 			pBuf += sprintf( pBuf, "STM" );
 		}
-		pBuf += sprintf( pBuf, pConditionCode );
+		pBuf += sprintf( pBuf, "%s", pConditionCode );
 
 		if( opcode&0x01000000 )
 		{
@@ -330,7 +330,7 @@ void arm_disasm( char *pBuf, data32_t pc, data32_t opcode )
 			pBuf += sprintf( pBuf, "B" );
 		}
 
-		pBuf += sprintf( pBuf, pConditionCode );
+		pBuf += sprintf( pBuf, "%s", pConditionCode );
 
 		pBuf = WritePadding( pBuf, pBuf0 );
 

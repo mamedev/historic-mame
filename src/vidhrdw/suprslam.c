@@ -13,6 +13,8 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 {
 	/* SPRITE INFO
 
+	Video System hardware, like aerofgt etc.
+
 	the sprites use 2 areas of ram, one containing a spritelist + sprite attributes, the other
 	contains the sprite tile #'s to use
 
@@ -31,7 +33,6 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 	*/
 
-	UINT8 zoomtable[16] = { 0,0,0x08,0x08,0x10,0x10,0x18,0x18,0x20,0x20,0x28,0x28,0x30,0x30,0x38,0x38 };
 
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *source = suprslam_spriteram;
@@ -58,15 +59,15 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 			int col = (source2[sprnum+2] & 0x3f00) >> 8;
 			int flipx = (source2[sprnum+2] & 0x4000) >> 14;
-	//		int flipy = (source2[sprnum+2] & 0x8000) >> 15;
+//			int flipy = (source2[sprnum+2] & 0x8000) >> 15;
 
 			int word_offset = source2[sprnum+3] & 0x7fff;
 			int xcnt, ycnt;
 
 			int loopno = 0;
 
-			xzoom = 16 - zoomtable[xzoom] / 8;
-			yzoom = 16 - zoomtable[yzoom] / 8;
+			xzoom = 32 - xzoom;
+			yzoom = 32 - yzoom;
 
 			if (ypos > 0xff) ypos -=0x200;
 
@@ -74,15 +75,15 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 				if (!flipx) {
 					for (xcnt = 0; xcnt < wide+1; xcnt ++)	{
 						int tileno = suprslam_sp_videoram[word_offset+loopno];
-						drawgfxzoom(bitmap, gfx, tileno, col, 0, 0,xpos + xcnt * xzoom, ypos + ycnt * yzoom, cliprect, TRANSPARENCY_PEN, 15,0x1000 * xzoom, 0x1000 * yzoom);
-						drawgfxzoom(bitmap, gfx, tileno, col, 0, 0,-0x200+xpos + xcnt * xzoom, ypos + ycnt * yzoom, cliprect, TRANSPARENCY_PEN, 15,0x1000 * xzoom, 0x1000 * yzoom);
+						drawgfxzoom(bitmap, gfx, tileno, col, 0, 0,xpos + xcnt * xzoom/2, ypos + ycnt * yzoom/2, cliprect, TRANSPARENCY_PEN, 15,xzoom << 11, yzoom << 11);
+						drawgfxzoom(bitmap, gfx, tileno, col, 0, 0,-0x200+xpos + xcnt * xzoom/2, ypos + ycnt * yzoom/2, cliprect, TRANSPARENCY_PEN, 15,xzoom << 11, yzoom << 11);
 						loopno ++;
 					}
 				} else {
 					for (xcnt = wide; xcnt >= 0; xcnt --)	{
 						int tileno = suprslam_sp_videoram[word_offset+loopno];
-						drawgfxzoom(bitmap, gfx, tileno, col, 1, 0,xpos + xcnt * xzoom, ypos + ycnt * yzoom, cliprect, TRANSPARENCY_PEN, 15,0x1000 * xzoom, 0x1000 * yzoom);
-						drawgfxzoom(bitmap, gfx, tileno, col, 1, 0,-0x200+xpos + xcnt * xzoom, ypos + ycnt * yzoom, cliprect, TRANSPARENCY_PEN, 15,0x1000 * xzoom, 0x1000 * yzoom);
+						drawgfxzoom(bitmap, gfx, tileno, col, 1, 0,xpos + xcnt * xzoom/2, ypos + ycnt * yzoom/2, cliprect, TRANSPARENCY_PEN, 15,xzoom << 11, yzoom << 11);
+						drawgfxzoom(bitmap, gfx, tileno, col, 1, 0,-0x200+xpos + xcnt * xzoom/2, ypos + ycnt * yzoom/2, cliprect, TRANSPARENCY_PEN, 15,xzoom << 11, yzoom << 11);
 						loopno ++;
 					}
 				}

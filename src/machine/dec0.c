@@ -389,38 +389,72 @@ static void baddudes_i8751_write(int data)
 
 static void birdtry_i8751_write(int data)
 {
+	static int 	pwr,
+				hgt;
+
 	i8751_return=0;
 
-	logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
+	switch(data&0xffff) {
+		/*"Sprite control"*/
+		case 0x22a:	i8751_return = 0x200;	  break;
 
-if ((data&0xff00)==0x200) i8751_return=0x300;
-if ((data&0xff00)==0x300) i8751_return=0x200;
+		/* Gives an O.B. otherwise (it must be > 0xb0 )*/
+		case 0x3c7:	i8751_return = 0x7ff;	  break;
 
+		/*Enables shot checks*/
+		case 0x33c: i8751_return = 0x200;     break;
 
-//i8751_return=0x200;
-	return;
-/*
-	switch (data&0xffff) {
-		case 0x714: i8751_return=0x700; break;
-		case 0x73b: i8751_return=0x701; break;
-		case 0x72c: i8751_return=0x702; break;
-		case 0x73f: i8751_return=0x703; break;
-		case 0x755: i8751_return=0x704; break;
-		case 0x722: i8751_return=0x705; break;
-		case 0x72b: i8751_return=0x706; break;
-		case 0x724: i8751_return=0x707; break;
-		case 0x728: i8751_return=0x708; break;
-		case 0x735: i8751_return=0x709; break;
-		case 0x71d: i8751_return=0x70a; break;
-		case 0x721: i8751_return=0x70b; break;
-		case 0x73e: i8751_return=0x70c; break;
-		case 0x761: i8751_return=0x70d; break;
-		case 0x753: i8751_return=0x70e; break;
-		case 0x75b: i8751_return=0x70f; break;
+		/*Used on the title screen only(???)*/
+		case 0x31e: i8751_return = 0x200;     break;
+
+/*  0x100-0x10d values are for club power meters(1W=0x100<<-->>PT=0x10d).    *
+ *  Returned value to i8751 doesn't matter,but send the result to 0x481.     *
+ *  Lower the value,stronger is the power.                                   */
+		case 0x100: pwr = 0x30; 			break; /*1W*/
+		case 0x101: pwr = 0x34; 			break; /*3W*/
+		case 0x102: pwr = 0x38; 			break; /*4W*/
+		case 0x103: pwr = 0x3c; 			break; /*1I*/
+		case 0x104: pwr = 0x40; 			break; /*3I*/
+		case 0x105: pwr = 0x44; 			break; /*4I*/
+		case 0x106: pwr = 0x48; 			break; /*5I*/
+		case 0x107: pwr = 0x4c; 			break; /*6I*/
+		case 0x108: pwr = 0x50; 			break; /*7I*/
+		case 0x109: pwr = 0x54; 			break; /*8I*/
+		case 0x10a: pwr = 0x58; 			break; /*9I*/
+		case 0x10b: pwr = 0x5c; 			break; /*PW*/
+		case 0x10c: pwr = 0x60; 			break; /*SW*/
+		case 0x10d: pwr = 0x80; 			break; /*PT*/
+		case 0x481: i8751_return = pwr;     break; /*Power meter*/
+
+/*  0x200-0x20f values are for shot height(STRONG=0x200<<-->>WEAK=0x20f).    *
+ *  Returned value to i8751 doesn't matter,but send the result to 0x534.     *
+ *  Higher the value,stronger is the height.                                 */
+		case 0x200: hgt = 0x5c0;  			break; /*H*/
+		case 0x201: hgt = 0x580; 			break; /*|*/
+		case 0x202: hgt = 0x540; 			break; /*|*/
+		case 0x203: hgt = 0x500; 			break; /*|*/
+		case 0x204: hgt = 0x4c0; 			break; /*|*/
+		case 0x205: hgt = 0x480; 			break; /*|*/
+		case 0x206: hgt = 0x440; 			break; /*|*/
+		case 0x207: hgt = 0x400; 			break; /*M*/
+		case 0x208: hgt = 0x3c0; 			break; /*|*/
+		case 0x209: hgt = 0x380; 			break; /*|*/
+		case 0x20a: hgt = 0x340; 			break; /*|*/
+		case 0x20b: hgt = 0x300; 			break; /*|*/
+		case 0x20c: hgt = 0x2c0; 			break; /*|*/
+		case 0x20d: hgt = 0x280; 			break; /*|*/
+		case 0x20e: hgt = 0x240; 			break; /*|*/
+		case 0x20f: hgt = 0x200; 			break; /*L*/
+		case 0x534: i8751_return = hgt; 	break; /*Shot height*/
+
+		/*At the ending screen(???)*/
+		//case 0x3b4: i8751_return = 0;		  break;
+
+		/*These are activated after a shot (???)*/
+		case 0x6ca: i8751_return = 0xff;      break;
+		case 0x7ff: i8751_return = 0x200;     break;
+		default: logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
 	}
-
-	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
-*/
 }
 
 static void *i8751_timer;
@@ -431,9 +465,7 @@ static void i8751_callback(int param)
 	cpu_set_irq_line(0,5,HOLD_LINE);
 	i8751_timer=NULL;
 
-
-logerror("i8751:  Timer called!!!\n");
-
+	logerror("i8751:  Timer called!!!\n");
 }
 
 void dec0_i8751_write(int data)
@@ -446,9 +478,8 @@ void dec0_i8751_write(int data)
 	cpu_set_irq_line(0,5,HOLD_LINE);
 
 	/* Simulate the processing time of the i8751, time value is guessed
-	if (i8751_timer) {
+	if (i8751_timer)
 		logerror("i8751:  Missed a timer!!!\n");
-	}
 	else
 		i8751_timer = timer_set(TIME_NOW, 0, i8751_callback);*/
 
@@ -462,7 +493,6 @@ See the code about 0xb60 (USA version)
 */
 
 logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",activecpu_get_pc(),data);
-
 
 }
 

@@ -18,6 +18,8 @@
 
 #ifdef BUILD_YM2612
 
+#define YM2612_NUMBUF 2
+
 /* use FM.C with stream system */
 
 static int stream[MAX_2612];

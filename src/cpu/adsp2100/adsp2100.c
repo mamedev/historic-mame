@@ -33,6 +33,7 @@
 #define CHIP_TYPE_ADSP2100	0
 #define CHIP_TYPE_ADSP2101	1
 #define CHIP_TYPE_ADSP2105	2
+#define CHIP_TYPE_ADSP2115	3
 
 
 /*###################################################################################################
@@ -148,8 +149,8 @@ typedef struct
 	UINT8		imask;
 	UINT8		icntl;
 	UINT16		ifc;
-    UINT8    	irq_state[4];
-    UINT8    	irq_latch[4];
+    UINT8    	irq_state[5];
+    UINT8    	irq_latch[5];
     INT32		interrupt_cycles;
     int			(*irq_callback)(int irqline);
 } adsp2100_Regs;
@@ -253,6 +254,15 @@ INLINE void set_core_2105(void)
 }
 #endif
 
+#if (HAS_ADSP2115)
+INLINE void set_core_2115(void)
+{
+	chip_type = CHIP_TYPE_ADSP2115;
+	mstat_mask = 0x7f;
+	imask_mask = 0x3f;
+}
+#endif
+
 
 /*###################################################################################################
 **	IMPORT CORE UTILITIES
@@ -266,6 +276,56 @@ INLINE void set_core_2105(void)
 **	IRQ HANDLING
 **#################################################################################################*/
 
+INLINE int adsp2100_generate_irq(int which)
+{
+	/* skip if masked */
+	if (!(adsp2100.imask & (1 << which)))
+		return 0;
+
+	/* clear the latch */
+	adsp2100.irq_latch[which] = 0;
+
+	/* push the PC and the status */
+	pc_stack_push();
+	stat_stack_push();
+
+	/* vector to location & stop idling */
+	adsp2100.pc = which;
+	adsp2100.idle = 0;
+
+	/* mask other interrupts based on the nesting bit */
+	if (adsp2100.icntl & 0x10) adsp2100.imask &= ~((2 << which) - 1);
+	else adsp2100.imask &= ~0xf;
+
+	return 1;
+}
+
+
+INLINE int adsp2101_generate_irq(int which, int indx)
+{
+	/* skip if masked */
+	if (!(adsp2100.imask & (0x20 >> indx)))
+		return 0;
+
+	/* clear the latch */
+	adsp2100.irq_latch[which] = 0;
+
+	/* push the PC and the status */
+	pc_stack_push();
+	stat_stack_push();
+
+	/* vector to location & stop idling */
+	adsp2100.pc = 0x04 + indx * 4;
+	adsp2100.idle = 0;
+
+	/* mask other interrupts based on the nesting bit */
+	if (adsp2100.icntl & 0x10) adsp2100.imask &= ~(0x3f >> indx);
+	else adsp2100.imask &= ~0x3f;
+
+	return 1;
+}
+
+
 static void check_irqs(void)
 {
 	UINT8 check;
@@ -273,158 +333,58 @@ static void check_irqs(void)
 	if (chip_type >= CHIP_TYPE_ADSP2101)
 	{
 		/* check IRQ2 */
-		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[2] : adsp2100.irq_state[2];
-		if (check && (adsp2100.imask & 0x20))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[2] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling */
-			adsp2100.pc = 4;
-			adsp2100.idle = 0;
-
-			/* mask all other interrupts */
-			adsp2100.imask &= ~0x3f;
+		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[ADSP2101_IRQ2] : adsp2100.irq_state[ADSP2101_IRQ2];
+		if (check && adsp2101_generate_irq(ADSP2101_IRQ2, 0))
 			return;
-		}
 
-		/* check IRQ1 */
-		check = (adsp2100.icntl & 2) ? adsp2100.irq_latch[1] : adsp2100.irq_state[1];
-		if (check && (adsp2100.imask & 4))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[1] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling */
-			adsp2100.pc = 0x10;
-			adsp2100.idle = 0;
-
-			/* mask other interrupts based on the nesting bit */
-			if (adsp2100.icntl & 0x10) adsp2100.imask &= ~0x7;
-			else adsp2100.imask &= ~0x3f;
+		/* check SPORT0 transmit */
+		check = adsp2100.irq_latch[ADSP2101_SPORT0_TX];
+		if (check && adsp2101_generate_irq(ADSP2101_SPORT0_TX, 1))
 			return;
-		}
 
-		/* check IRQ0 */
-		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[0] : adsp2100.irq_state[0];
-		if (check && (adsp2100.imask & 2))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[0] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling */
-			adsp2100.pc = 0x14;
-			adsp2100.idle = 0;
-
-			/* mask other interrupts based on the nesting bit */
-			if (adsp2100.icntl & 0x10) adsp2100.imask &= ~0x3;
-			else adsp2100.imask &= ~0x3f;
+		/* check SPORT0 receive */
+		check = adsp2100.irq_latch[ADSP2101_SPORT0_RX];
+		if (check && adsp2101_generate_irq(ADSP2101_SPORT0_RX, 2))
 			return;
-		}
+
+		/* check IRQ1/SPORT1 transmit */
+		check = (adsp2100.icntl & 2) ? adsp2100.irq_latch[ADSP2101_IRQ1] : adsp2100.irq_state[ADSP2101_IRQ1];
+		if (check && adsp2101_generate_irq(ADSP2101_IRQ1, 3))
+			return;
+
+		/* check IRQ0/SPORT1 receive */
+		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[ADSP2101_IRQ0] : adsp2100.irq_state[ADSP2101_IRQ0];
+		if (check && adsp2101_generate_irq(ADSP2101_IRQ0, 4))
+			return;
 	}
 	else
 	{
 		/* check IRQ3 */
-		check = (adsp2100.icntl & 8) ? adsp2100.irq_latch[3] : adsp2100.irq_state[3];
-		if (check && (adsp2100.imask & 8))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[3] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location 3 & stop idling */
-			adsp2100.pc = 3;
-			adsp2100.idle = 0;
-
-			/* mask all other interrupts */
-			adsp2100.imask &= ~0xf;
+		check = (adsp2100.icntl & 8) ? adsp2100.irq_latch[ADSP2100_IRQ3] : adsp2100.irq_state[ADSP2100_IRQ3];
+		if (check && adsp2100_generate_irq(ADSP2100_IRQ3))
 			return;
-		}
 
 		/* check IRQ2 */
-		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[2] : adsp2100.irq_state[2];
-		if (check && (adsp2100.imask & 4))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[2] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling */
-			adsp2100.pc = 2;
-			adsp2100.idle = 0;
-
-			/* mask other interrupts based on the nesting bit */
-			if (adsp2100.icntl & 0x10) adsp2100.imask &= ~0x7;
-			else adsp2100.imask &= ~0xf;
+		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[ADSP2100_IRQ2] : adsp2100.irq_state[ADSP2100_IRQ2];
+		if (check && adsp2100_generate_irq(ADSP2100_IRQ2))
 			return;
-		}
 
 		/* check IRQ1 */
-		check = (adsp2100.icntl & 2) ? adsp2100.irq_latch[1] : adsp2100.irq_state[1];
-		if (check && (adsp2100.imask & 2))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[1] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling */
-			adsp2100.pc = 1;
-			adsp2100.idle = 0;
-
-			/* mask other interrupts based on the nesting bit */
-			if (adsp2100.icntl & 0x10) adsp2100.imask &= ~0x3;
-			else adsp2100.imask &= ~0xf;
+		check = (adsp2100.icntl & 2) ? adsp2100.irq_latch[ADSP2100_IRQ1] : adsp2100.irq_state[ADSP2100_IRQ1];
+		if (check && adsp2100_generate_irq(ADSP2100_IRQ1))
 			return;
-		}
 
 		/* check IRQ0 */
-		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[0] : adsp2100.irq_state[0];
-		if (check && (adsp2100.imask & 1))
-		{
-			/* clear the latch */
-			adsp2100.irq_latch[0] = 0;
-
-			/* push the PC and the status */
-			pc_stack_push();
-			stat_stack_push();
-
-			/* vector to location & stop idling*/
-			adsp2100.pc = 0;
-			adsp2100.idle = 0;
-
-			/* mask other interrupts based on the nesting bit */
-			if (adsp2100.icntl & 0x10) adsp2100.imask &= ~0x1;
-			else adsp2100.imask &= ~0xf;
+		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[ADSP2100_IRQ0] : adsp2100.irq_state[ADSP2100_IRQ0];
+		if (check && adsp2100_generate_irq(ADSP2100_IRQ0))
 			return;
-		}
 	}
 }
 
 
 void adsp2100_set_irq_line(int irqline, int state)
 {
-	if (irqline < 4)
+	if (irqline < 5)
 	{
 		/* update the latched state */
 		if (state != CLEAR_LINE && adsp2100.irq_state[irqline] == CLEAR_LINE)
@@ -468,11 +428,11 @@ void adsp2100_set_context(void *src)
 	if (src)
 		adsp2100 = *(adsp2100_Regs *)src;
 
-	/* check for IRQs */
-	check_irqs();
-
 	/* reset the chip type */
 	set_core_2100();
+
+	/* check for IRQs */
+	check_irqs();
 }
 
 
@@ -512,6 +472,7 @@ void adsp2100_reset(void *param)
 
 		case CHIP_TYPE_ADSP2101:
 		case CHIP_TYPE_ADSP2105:
+		case CHIP_TYPE_ADSP2115:
 			adsp2100.pc = 0;
 			break;
 
@@ -1888,7 +1849,7 @@ void adsp2101_exit(void)
 }
 int adsp2101_execute(int cycles) { return adsp2100_execute(cycles); }
 unsigned adsp2101_get_context(void *dst) { return adsp2100_get_context(dst); }
-void adsp2101_set_context(void *src)  { adsp2100_set_context(src); set_core_2101(); }
+void adsp2101_set_context(void *src)  { set_core_2101(); adsp2100_set_context(src); }
 unsigned adsp2101_get_reg(int regnum) { return adsp2100_get_reg(regnum); }
 void adsp2101_set_reg(int regnum, unsigned val) { adsp2100_set_reg(regnum,val); }
 void adsp2101_set_irq_line(int irqline, int state) { adsp2100_set_irq_line(irqline,state); }
@@ -1984,7 +1945,7 @@ void adsp2105_exit(void)
 }
 int adsp2105_execute(int cycles) { return adsp2100_execute(cycles); }
 unsigned adsp2105_get_context(void *dst) { return adsp2100_get_context(dst); }
-void adsp2105_set_context(void *src)  { adsp2100_set_context(src); set_core_2105(); }
+void adsp2105_set_context(void *src)  { set_core_2105(); adsp2100_set_context(src); }
 unsigned adsp2105_get_reg(int regnum) { return adsp2100_get_reg(regnum); }
 void adsp2105_set_reg(int regnum, unsigned val) { adsp2100_set_reg(regnum,val); }
 void adsp2105_set_irq_line(int irqline, int state) { adsp2100_set_irq_line(irqline,state); }
@@ -2023,6 +1984,114 @@ void adsp2105_set_tx_callback(TX_CALLBACK cb)
 }
 
 void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+{
+	/* see how many words we need to copy */
+	UINT32 size = 8 * (srcdata[3] + 1), i;
+	for (i = 0; i < size; i++)
+	{
+		UINT32 opcode = (srcdata[i*4+0] << 16) | (srcdata[i*4+1] << 8) | srcdata[i*4+2];
+		ADSP2100_WRPGM(&dstdata[i], opcode);
+	}
+}
+
+#endif
+
+
+#if (HAS_ADSP2115)
+/**************************************************************************
+ * ADSP2115 section
+ **************************************************************************/
+
+static UINT8 adsp2115_reg_layout[] =
+{
+	ADSP2100_PC,		ADSP2100_AX0,	ADSP2100_MX0,	-1,
+	ADSP2100_CNTR, 		ADSP2100_AX1,	ADSP2100_MX1,	-1,
+	ADSP2100_MSTAT, 	ADSP2100_AY0,	ADSP2100_MY0,	-1,
+	ADSP2100_SSTAT, 	ADSP2100_AY1,	ADSP2100_MY1,	-1,
+	ADSP2100_PX, 		ADSP2100_AR,	ADSP2100_MR0,	-1,
+	ADSP2100_PCSP, 		ADSP2100_AF,	ADSP2100_MR1,	-1,
+	ADSP2100_CNTRSP, 	ADSP2100_SI,	ADSP2100_MR2,	-1,
+	ADSP2100_STATSP, 	ADSP2100_SE,	ADSP2100_MF,	-1,
+	ADSP2100_LOOPSP, 	ADSP2100_SB,	100,			-1,
+	ADSP2100_IMASK,		ADSP2100_SR0,	100,			-1,
+	ADSP2100_ICNTL,		ADSP2100_SR1,	100,			-1,
+	ADSP2100_I0,		ADSP2100_L0,	ADSP2100_M0,	-1,
+	ADSP2100_I1,		ADSP2100_L1,	ADSP2100_M1,	-1,
+	ADSP2100_I2,		ADSP2100_L2,	ADSP2100_M2,	-1,
+	ADSP2100_I3,		ADSP2100_L3,	ADSP2100_M3,	-1,
+	ADSP2100_I4,		ADSP2100_L4,	ADSP2100_M4,	-1,
+	ADSP2100_I5,		ADSP2100_L5,	ADSP2100_M5,	-1,
+	ADSP2100_I6,		ADSP2100_L6,	ADSP2100_M6,	-1,
+	ADSP2100_I7,		ADSP2100_L7,	ADSP2100_M7,	0
+};
+
+static UINT8 adsp2115_win_layout[] =
+{
+	 0, 0,30,20,	/* register window (top rows) */
+	31, 0,48,14,	/* disassembler window (left colums) */
+	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
+	31,15,48, 7,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void adsp2115_init(void)
+{
+	adsp2100_init();
+}
+
+void adsp2115_reset(void *param)
+{
+	set_core_2115();
+	adsp2100_reset(param);
+}
+
+void adsp2115_exit(void)
+{
+	adsp2100_exit();
+	sport_rx_callback = 0;
+	sport_tx_callback = 0;
+}
+int adsp2115_execute(int cycles) { return adsp2100_execute(cycles); }
+unsigned adsp2115_get_context(void *dst) { return adsp2100_get_context(dst); }
+void adsp2115_set_context(void *src)  { set_core_2115(); adsp2100_set_context(src); }
+unsigned adsp2115_get_reg(int regnum) { return adsp2100_get_reg(regnum); }
+void adsp2115_set_reg(int regnum, unsigned val) { adsp2100_set_reg(regnum,val); }
+void adsp2115_set_irq_line(int irqline, int state) { adsp2100_set_irq_line(irqline,state); }
+void adsp2115_set_irq_callback(int (*callback)(int irqline)) { adsp2100_set_irq_callback(callback); }
+const char *adsp2115_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "ADSP2115";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)adsp2115_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)adsp2115_win_layout;
+	}
+	return adsp2100_info(context,regnum);
+}
+
+unsigned adsp2115_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	extern unsigned dasm2100(char *, unsigned);
+    return dasm2100(buffer, pc);
+#else
+	sprintf(buffer, "$%06X", RWORD_PGM(pc));
+	return 1;
+#endif
+}
+
+void adsp2115_set_rx_callback(RX_CALLBACK cb)
+{
+	sport_rx_callback = cb;
+}
+
+void adsp2115_set_tx_callback(TX_CALLBACK cb)
+{
+	sport_tx_callback = cb;
+}
+
+void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
 	/* see how many words we need to copy */
 	UINT32 size = 8 * (srcdata[3] + 1), i;

@@ -98,7 +98,7 @@ static MEMORY_WRITE_START( bootleg_writemem )
 	{ 0x00000, 0x3ffff, MWA_ROM },
 	{ 0x6000e, 0x60fff, MWA_RAM, &spriteram },
 	{ 0xa0000, 0xa3fff, MWA_RAM },
-	//{ 0xd0000, 0xdffff, m90_bootleg_video_w, &m90_video_data },
+//	{ 0xd0000, 0xdffff, m90_bootleg_video_w, &m90_video_data },
 	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xffff0, 0xfffff, MWA_ROM },
 MEMORY_END
@@ -310,8 +310,24 @@ INPUT_PORTS_START( bbmanw )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( quizf1 )
-	IREM_JOYSTICK_1_2(1)
-	IREM_JOYSTICK_1_2(2)
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	IREM_COINS
 
 	PORT_START	/* Dip switch bank 1 */
@@ -329,9 +345,9 @@ INPUT_PORTS_START( quizf1 )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )	/* input related (joystick/buttons select?) */
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Input Device" )	/* input related (joystick/buttons select?) */
+	PORT_DIPSETTING(    0x20, "Joystick" )
+	PORT_DIPSETTING(    0x00, "Buttons" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -492,6 +508,13 @@ static MACHINE_DRIVER_START( m90 )
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( quizf1 )
+
+	MDRV_IMPORT_FROM( m90 )
+	MDRV_VISIBLE_AREA(6*8, 54*8-1, 17*8-8, 47*8-1+8)
+
 MACHINE_DRIVER_END
 
 
@@ -841,7 +864,7 @@ GAMEX(1992, dynablsb, bombrman, bootleg,  bombrman, 0,        ROT0, "bootleg", "
 GAMEX(1992, bbmanw,   0,        bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1992, bbmanwj,  bbmanw,   bombrman, bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1992, atompunk, bbmanw,   bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1992, quizf1,   0,        m90,      quizf1,   quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1992, quizf1,   0,        quizf1,   quizf1,   quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX(1993, riskchal, 0,        m90,      m97,      riskchal, ROT0, "Irem", "Risky Challenge", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1993, gussun,   riskchal, m90,      m97,      riskchal, ROT0, "Irem", "Gussun Oyoyo (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1993, shisen2,  0,        m90,      m97,      shisen2,  ROT0, "Tamtex", "Shisensho II", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

@@ -926,11 +926,28 @@ static const char *xevious_sample_names[] =
 	0	/* end of array */
 };
 
+static const char *xevios_sample_names[] =
+{
+	"*xevios",
+	"explo1.wav",	/* explosion */
+	"explo1.wav",	/* explosion */
+	"explo1.wav",	/* explosion */
+	"explo1.wav",	/* explosion */
+	0	/* end of array */
+};
+
 struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
 	80,	/* volume */
 	xevious_sample_names
+};
+
+struct Samplesinterface xevios_samples_interface =
+{
+	1,	/* one channel */
+	80,	/* volume */
+	xevios_sample_names
 };
 
 
@@ -987,6 +1004,49 @@ static MACHINE_DRIVER_START( xevious )
 	/* sound hardware */
 	MDRV_SOUND_ADD(NAMCO, namco_interface)
 	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( xevios )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
+
+/*	MDRV_CPU_ADD(Z80, 3072000)										*/
+/*	MDRV_CPU_MEMORY(xevios_readmem_cpu4,xevios_writemem_cpu4)		*/
+/*	MDRV_CPU_VBLANK_INT(battles_interrupt_4,1)						*/
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(xevious)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+1)
+	MDRV_COLORTABLE_LENGTH(128*4+64*8+64*2)
+
+	MDRV_PALETTE_INIT(xevious)
+	MDRV_VIDEO_START(xevious)
+	MDRV_VIDEO_UPDATE(xevious)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, xevios_samples_interface)
 MACHINE_DRIVER_END
 
 
@@ -1180,7 +1240,7 @@ ROM_START( xevios )
 	ROM_LOAD( "4.7h",         0x0000, 0x1000, 0x1f8ca4c0 )
 	ROM_LOAD( "5.6h",         0x1000, 0x1000, 0x2e47ce8f )
 	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
-	ROM_LOAD( "7.4h",         0x3000, 0x1000, 0x7033f2e3 )
+	ROM_LOAD( "w7.4h",        0x3000, 0x1000, 0x17f48277 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
@@ -1326,49 +1386,23 @@ ROM_END
 
 static DRIVER_INIT( xevios )
 {
-	int A,i;
+	int A;
 
 
 	/* convert one of the sprite ROMs to the format used by Xevious */
 	for (A = 0x2000;A < 0x4000;A++)
 	{
-		int bit[8];
-		unsigned char *RAM = memory_region(REGION_GFX3);
+		UINT8 *rom = memory_region(REGION_GFX3);
 
-		/* 76543210 -> 13570246 bit rotation */
-		for (i = 0;i < 8;i++)
-			bit[i] = (RAM[A] >> i) & 1;
-
-		RAM[A] =
-			(bit[6] << 0) +
-			(bit[4] << 1) +
-			(bit[2] << 2) +
-			(bit[0] << 3) +
-			(bit[7] << 4) +
-			(bit[5] << 5) +
-			(bit[3] << 6) +
-			(bit[1] << 7);
+		rom[A] = BITSWAP8(rom[A],1,3,5,7,0,2,4,6);
 	}
 
 	/* convert one of tile map ROMs to the format used by Xevious */
 	for (A = 0x0000;A < 0x1000;A++)
 	{
-		int bit[8];
-		unsigned char *RAM = memory_region(REGION_GFX4);
+		UINT8 *rom = memory_region(REGION_GFX4);
 
-		/* 76543210 -> 37512640 bit rotation */
-		for (i = 0;i < 8;i++)
-			bit[i] = (RAM[A] >> i) & 1;
-
-		RAM[A] =
-			(bit[0] << 0) +
-			(bit[4] << 1) +
-			(bit[6] << 2) +
-			(bit[2] << 3) +
-			(bit[1] << 4) +
-			(bit[5] << 5) +
-			(bit[7] << 6) +
-			(bit[3] << 7);
+		rom[A] = BITSWAP8(rom[A],3,7,5,1,2,6,4,0);
 	}
 }
 
@@ -1377,7 +1411,7 @@ static DRIVER_INIT( xevios )
 GAME( 1982, xevious,  0,       xevious, xevious,  0,      ROT90, "Namco", "Xevious (Namco)" )
 GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 1)" )
 GAME( 1982, xeviousb, xevious, xevious, xeviousb, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 2)" )
-GAME( 1982, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
+GAME( 1982, xevios,   xevious, xevios,  xevious,  xevios, ROT90, "bootleg", "Xevios" )
 GAME( 1982, battles,  xevious, battles, battles,  0,      ROT90, "bootleg", "Battles" )
 GAME( 1984, sxevious, xevious, xevious, sxevious, 0,      ROT90, "Namco", "Super Xevious" )
 

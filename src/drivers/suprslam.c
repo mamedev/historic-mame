@@ -6,10 +6,8 @@ Super Slams - Driver by David Haywood
 
 TODO :
 
-improve zooming of sprites
 sprite offset control?
 priorities (see hi-score table during attract mode)
-ground rowscroll (related to the KONAMI KS10011-PF 053936 PSAC2 9522 Z02?)
 unknown reads / writes (also KONAMI chip ..?)
 
 WORKING NOTES :
@@ -111,10 +109,12 @@ static WRITE16_HANDLER( sound_command_w )
 	}
 }
 
+#if 0
 static READ16_HANDLER( pending_command_r )
 {
 	return pending_command;
 }
+#endif
 
 static WRITE_HANDLER( pending_command_clear_w )
 {

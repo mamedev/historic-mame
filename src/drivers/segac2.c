@@ -705,14 +705,14 @@ static WRITE16_HANDLER( counter_timer_w )
 ******************************************************************************/
 
 /*
-static void nvram_handler(void *file, int read_or_write)
+static void nvram_handler(mame_file *file, int read_or_write)
 {
 	int i;
 
 	if (read_or_write)
-		osd_fwrite(file, main_ram, 0x10000);
+		mame_fwrite(file, main_ram, 0x10000);
 	else if (file)
-		osd_fread(file, main_ram, 0x10000);
+		mame_fread(file, main_ram, 0x10000);
 	else
 		for (i = 0; i < 0x10000/2; i++)
 			main_ram[i] = rand();
@@ -1624,8 +1624,7 @@ ROM_START( tfrceacb ) /* ThunderForce AC (Bootleg)  (c)1990 Technosoft / Sega */
 	ROM_LOAD16_BYTE( "ic33.bin", 0x100001, 0x040000, 0x9e23734f )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
-	ROM_LOAD( "2.bin", 0x000000, 0x020000, 0x00000000 )
-	ROM_LOAD( "1.bin", 0x020000, 0x020000, 0x4e2ca65a )
+	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, 0xe09961f6 )
 ROM_END
 
 

@@ -75,9 +75,9 @@ unsigned char *screen_baseaddr;
 int screen_line_offset;
 
 static struct sprite_list *first_sprite_list = NULL; /* used for resource tracking */
-
+#if 0
 static UINT32 *shade_table;
-
+#endif
 //AT
 #define BMP_PAD 8
 
@@ -123,11 +123,13 @@ static void sortsprite(int *idx_array, int *key_array, int size)
 }
 //ZT
 
+#if 0
 static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int *last, int *delta ){
 	*delta = 1;
 	*first = 0;
 	*last = sprite_list->num_sprites-1;
 }
+#endif
 
 #define BLIT \
 if( sprite->flags&SPRITE_FLIPX ){ \
@@ -782,11 +784,12 @@ static void sprite_draw( struct sprite_list *sprite_list, int priority ){
 }
 
 
+#if 0
 static void sprite_set_shade_table(UINT32 *table)
 {
 	shade_table=table;
 }
-
+#endif
 
 /***************************************************************************
 						WEC Le Mans 24  &   Hot Chase
@@ -1836,7 +1839,6 @@ static void browser(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 	const struct sprite *finish             =       sprite + NUM_SPRITES;
 
 	static int w = 32, gfx;
-	char buf[80];
 
 	for ( ; sprite < finish ; sprite++)     sprite->flags = 0;
 
@@ -1877,8 +1879,7 @@ static void browser(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 
 	sprite_draw( sprite_list, 0 );
 
-	sprintf(buf,"W:%02X GFX/8: %X",w,gfx / 8);
-	usrintf_showmessage(buf);
+	usrintf_showmessage("W:%02X GFX/8: %X",w,gfx / 8);
 }
 #endif
 

@@ -129,7 +129,9 @@ WRITE_HANDLER( IremGA20_w )
 
 	//logerror("GA20:  Offset %02x, data %04x\n",offset,data);
 
-	if (Machine->sample_rate)
+	if (!Machine->sample_rate)
+		return;
+
 	stream_update(IremGA20_chip.channel, 0);
 
 	channel = offset >> 4;

@@ -1,17 +1,17 @@
-/* descriptor table format in memory 
+/* descriptor table format in memory
    UINT16 limit
    UINT24 addr
    0..3 type
     system segment
-     3 execute: 
-	  0 data segment: readable, 
+     3 execute:
+	  0 data segment: readable,
        1: write
        2: expand down
 	  1 code segment
        1: readable
        2: conforming (can be used with higher privilege level)
      0: access (set when processor accesses segment)
-    
+
    4 dt 0 system segment, 1 application segment (code, data)
    5,6 dpl descriptor privileg level
    7 p present 0 gives trap when accessed
@@ -50,7 +50,7 @@ static void i286_data_descriptor(int reg, UINT16 selector)
 		/* selector format
 		   15..3 number/address in descriptor table
 		   2: 0 global, 1 local descriptor table
-		   1,0: requested privileg level 
+		   1,0: requested privileg level
 		   must be higher or same as current privileg level in code selector */
 		if (selector&4) { /* local descriptor table */
 			if (selector>I.ldtr.limit) i286_trap2(GENERAL_PROTECTION_FAULT);
@@ -82,7 +82,7 @@ static void i286_code_descriptor(UINT16 selector, UINT16 offset)
 		/* selector format
 		   15..3 number/address in descriptor table
 		   2: 0 global, 1 local descriptor table
-		   1,0: requested privileg level 
+		   1,0: requested privileg level
 		   must be higher or same as current privileg level in code selector */
 		if (selector&4) { /* local descriptor table */
 			if (selector>I.ldtr.limit) i286_trap2(GENERAL_PROTECTION_FAULT);
@@ -162,7 +162,7 @@ static void i286_interrupt_descriptor(UINT16 number)
 
 static void PREFIX286(_0fpre)(void)
 {
-	unsigned next = FETCHOP; 
+	unsigned next = FETCHOP;
 	UINT16 ModRM;
 	UINT16 tmp;
 	offs_t addr;
@@ -297,7 +297,7 @@ static void PREFIX286(_arpl)(void) /* 0x63 */
 {
 	if (PM) {
 		UINT16 ModRM=FETCHOP, tmp=GetRMWord(ModRM);
-		
+
 		I.ZeroVal=i286_selector_okay(RegWord(ModRM))
 			  &&i286_selector_okay(RegWord(ModRM))
 			  &&((tmp&3)<(RegWord(ModRM)&3));

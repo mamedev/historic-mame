@@ -1,62 +1,6 @@
 /***************************************************************************
 
-Super Cobra and Co. memory map (preliminary)
-
-Main CPU:
---------
-
-There seems to be 2 main board types:
-
-Type 1      Type 2
-
-0000-7fff   0000-7fff	ROM (not all games use the entire range)
-8000-87ff   8000-87ff	RAM
-8800-8bff   9000-93ff	video RAM
-9000-903f   8800-883f	screen attributes
-9040-905f   8840-885f	sprites
-9060-907f   8860-887f	bullets
-
-
-read:
-b000      	9800		watchdog reset
-
-9800-9803	a000-a00f	PPI8255-0
-      					Port A - IN0
-	      				Port B - IN1
-						Port C - IN2
-
-a000-a003	a800-a80f	PPI8255-1
-
-
-write:
-
-9800-9803	a000-a00f	PPI8255-0
-
-a000-a003	a800-a80f	PPI8255-1
-						Port A - To AY-3-8910 port A (commands for the audio CPU)
-						Port B - bit 3 = trigger interrupt on audio CPU
-
-a801      	b004		interrupt enable
-a802      	b006		coin counter
-a803      	b002		? (POUT1)
-a804      	b000		stars on
-a805      	b00a		? (POUT2)
-a806      	b00e		screen vertical flip
-a807      	b00c		screen horizontal flip
-
-
-Sound CPU:
-
-0000-1fff   ROM
-8000-83ff   RAM
-9000-9fff   R/C Filter (2 bits for each of the 6 channels)
-
-I/O:
-
-10  		AY8910 #0 control
-20			AY8910 #0 data port
-40			AY8910 #1 control port
-80			AY8910 #1 data port
+ Super Cobra hardware
 
 
 TODO:
@@ -103,86 +47,9 @@ Notes/Tidbits:
 
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "galaxian.h"
 
 
-extern unsigned char *galaxian_videoram;
-extern unsigned char *galaxian_spriteram;
-extern unsigned char *galaxian_attributesram;
-extern unsigned char *galaxian_bulletsram;
-extern size_t galaxian_spriteram_size;
-extern size_t galaxian_bulletsram_size;
-
-PALETTE_INIT( galaxian );
-PALETTE_INIT( scramble );
-PALETTE_INIT( moonwar );
-PALETTE_INIT( darkplnt );
-PALETTE_INIT( rescue );
-PALETTE_INIT( minefld );
-PALETTE_INIT( stratgyx );
-
-DRIVER_INIT( scramble_ppi );
-DRIVER_INIT( scobra );
-DRIVER_INIT( stratgyx );
-DRIVER_INIT( moonwar );
-DRIVER_INIT( darkplnt );
-DRIVER_INIT( tazmani2 );
-DRIVER_INIT( anteater );
-DRIVER_INIT( rescue );
-DRIVER_INIT( minefld );
-DRIVER_INIT( losttomb );
-DRIVER_INIT( superbon );
-DRIVER_INIT( hustler );
-DRIVER_INIT( billiard );
-
-MACHINE_INIT( scramble );
-
-VIDEO_START( scramble );
-VIDEO_START( theend );
-VIDEO_START( darkplnt );
-VIDEO_START( rescue );
-VIDEO_START( minefld );
-VIDEO_START( calipso );
-VIDEO_START( stratgyx );
-
-VIDEO_UPDATE( galaxian );
-WRITE_HANDLER( galaxian_videoram_w );
-READ_HANDLER ( galaxian_videoram_r );
-WRITE_HANDLER( galaxian_stars_enable_w );
-WRITE_HANDLER( galaxian_flip_screen_x_w );
-WRITE_HANDLER( galaxian_flip_screen_y_w );
-WRITE_HANDLER( scramble_filter_w );
-WRITE_HANDLER( frogger_filter_w );
-
-extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
-
-extern struct AY8910interface frogger_ay8910_interface;
-extern const struct Memory_ReadAddress frogger_sound_readmem[];
-extern const struct Memory_WriteAddress frogger_sound_writemem[];
-extern const struct IO_ReadPort frogger_sound_readport[];
-extern const struct IO_WritePort frogger_sound_writeport[];
-
-READ_HANDLER( scramble_portB_r );
-
-READ_HANDLER(scobra_type2_ppi8255_0_r);
-READ_HANDLER(scobra_type2_ppi8255_1_r);
-WRITE_HANDLER(scobra_type2_ppi8255_0_w);
-WRITE_HANDLER(scobra_type2_ppi8255_1_w);
-READ_HANDLER(hustler_ppi8255_0_r);
-READ_HANDLER(hustler_ppi8255_1_r);
-WRITE_HANDLER(hustler_ppi8255_0_w);
-WRITE_HANDLER(hustler_ppi8255_1_w);
-
-
-static WRITE_HANDLER( type1_coin_counter_w )
-{
-	coin_counter_w(offset,data);
-}
-
-static WRITE_HANDLER( type2_coin_counter_w )
-{
-	/* bit 1 selects coin counter */
-	coin_counter_w(offset >> 1, data);
-}
 
 
 static MEMORY_READ_START( type1_readmem )
@@ -198,16 +65,16 @@ MEMORY_END
 static MEMORY_WRITE_START( type1_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, MWA_RAM, &galaxian_videoram },
+	{ 0x8800, 0x8bff, galaxian_videoram_w, &galaxian_videoram },
 	{ 0x8c00, 0x8fff, galaxian_videoram_w },	/* mirror */
-	{ 0x9000, 0x903f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9000, 0x903f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x9080, 0x90ff, MWA_RAM },
 	{ 0x9800, 0x9803, ppi8255_0_w },
 	{ 0xa000, 0xa003, ppi8255_1_w },
-	{ 0xa801, 0xa801, interrupt_enable_w },
-	{ 0xa802, 0xa802, type1_coin_counter_w },
+	{ 0xa801, 0xa801, galaxian_nmi_enable_w },
+	{ 0xa802, 0xa802, galaxian_coin_counter_w },
 	{ 0xa804, 0xa804, galaxian_stars_enable_w },
 	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
 	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
@@ -227,17 +94,18 @@ MEMORY_END
 static MEMORY_WRITE_START( type2_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x883f, MWA_RAM, &galaxian_attributesram },
+	{ 0x8800, 0x883f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x8840, 0x885f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x8860, 0x887f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x8880, 0x88ff, MWA_RAM },
-	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
+	{ 0x9000, 0x93ff, galaxian_videoram_w, &galaxian_videoram },
 	{ 0x9400, 0x97ff, galaxian_videoram_w },	/* mirror */
 	{ 0xa000, 0xa00f, scobra_type2_ppi8255_0_w },
 	{ 0xa800, 0xa80f, scobra_type2_ppi8255_1_w },
 	{ 0xb000, 0xb000, galaxian_stars_enable_w },
-	{ 0xb004, 0xb004, interrupt_enable_w },
-	{ 0xb006, 0xb008, type2_coin_counter_w },
+	{ 0xb004, 0xb004, galaxian_nmi_enable_w },
+	{ 0xb006, 0xb006, galaxian_coin_counter_0_w },
+	{ 0xb008, 0xb008, galaxian_coin_counter_1_w },
 	{ 0xb00c, 0xb00c, galaxian_flip_screen_y_w },
 	{ 0xb00e, 0xb00e, galaxian_flip_screen_x_w },
 MEMORY_END
@@ -255,13 +123,13 @@ MEMORY_END
 static MEMORY_WRITE_START( hustler_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, MWA_RAM, &galaxian_videoram },
-	{ 0x9000, 0x903f, MWA_RAM, &galaxian_attributesram },
+	{ 0x8800, 0x8bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x9000, 0x903f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x9080, 0x90ff, MWA_RAM },
 	{ 0xa802, 0xa802, galaxian_flip_screen_x_w },
-	{ 0xa804, 0xa804, interrupt_enable_w },
+	{ 0xa804, 0xa804, galaxian_nmi_enable_w },
 	{ 0xa806, 0xa806, galaxian_flip_screen_y_w },
 	{ 0xa80e, 0xa80e, MWA_NOP },	/* coin counters */
 	{ 0xd000, 0xd01f, hustler_ppi8255_0_w },
@@ -281,17 +149,47 @@ MEMORY_END
 static MEMORY_WRITE_START( hustlerb_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, MWA_RAM, &galaxian_videoram },
-	{ 0x9000, 0x903f, MWA_RAM, &galaxian_attributesram },
+	{ 0x8800, 0x8bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x9000, 0x903f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x9080, 0x90ff, MWA_RAM },
-	{ 0xa801, 0xa801, interrupt_enable_w },
+	{ 0xa801, 0xa801, galaxian_nmi_enable_w },
 	{ 0xa802, 0xa802, MWA_NOP },	/* coin counters */
 	{ 0xa806, 0xa806, galaxian_flip_screen_y_w },
 	{ 0xa807, 0xa807, galaxian_flip_screen_x_w },
 	{ 0xc100, 0xc103, ppi8255_0_w },
 	{ 0xc200, 0xc203, ppi8255_1_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( mimonksc_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x8bff, MRA_RAM },
+	{ 0x8c00, 0x8fff, galaxian_videoram_r },	/* mirror */
+	{ 0x9000, 0x90ff, MRA_RAM },
+	{ 0x9800, 0x9803, ppi8255_0_r },
+	{ 0xa000, 0xa003, ppi8255_1_r },
+	{ 0xb000, 0xb000, watchdog_reset_r },
+	{ 0xc000, 0xffff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( mimonksc_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x8bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x8c00, 0x8fff, galaxian_videoram_w },	/* mirror */
+	{ 0x9000, 0x903f, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x9040, 0x905f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x9080, 0x90ff, MWA_RAM },
+	{ 0x9800, 0x9803, ppi8255_0_w },
+	{ 0xa000, 0xa003, ppi8255_1_w },
+	{ 0xa801, 0xa801, galaxian_nmi_enable_w },
+	{ 0xa800, 0xa802, galaxian_gfxbank_w },
+	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
+	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
+	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
 
@@ -1107,6 +1005,51 @@ INPUT_PORTS_START( hustler )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/* Same as 'mimonkey' (scramble.c driver), but different "Lives" Dip Switch */
+INPUT_PORTS_START( mimonksc )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "4" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )   /* used, something to do with the bullets */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 struct AY8910interface scobra_ay8910_interface =
@@ -1125,31 +1068,22 @@ struct AY8910interface scobra_ay8910_interface =
 static MACHINE_DRIVER_START( type1 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
 	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
 	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(scramble)
 	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
@@ -1160,34 +1094,13 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( armorcar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(theend)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -1195,34 +1108,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( moonwar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(moonwar)
-	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -1231,201 +1122,108 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( rescue )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)	/* needs fine color resolution for the gradient background */
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+128)	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(rescue)
 	MDRV_VIDEO_START(rescue)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( minefld )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)	/* needs fine color resolution for the gradient background */
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+256)	/* 32 for characters, 64 for stars, 2 for bullets, 256 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(minefld)
 	MDRV_VIDEO_START(minefld)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( stratgyx )
+/* same as the others, but no sprite flipping, but instead the bits are used
+   as extra sprite code bits, giving 256 sprite images */
+static MACHINE_DRIVER_START( calipso )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
+	MDRV_VIDEO_START(calipso)
+MACHINE_DRIVER_END
 
-	MDRV_PALETTE_INIT(stratgyx)
-	MDRV_VIDEO_START(stratgyx)
-	MDRV_VIDEO_UPDATE(galaxian)
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+static MACHINE_DRIVER_START( mimonksc )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(type1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mimonksc_readmem,mimonksc_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(mimonkey)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( type2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(type1)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+MACHINE_DRIVER_END
 
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
+static MACHINE_DRIVER_START( stratgyx )
 
-	MDRV_MACHINE_INIT(scramble)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(type2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
+	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 
-	MDRV_PALETTE_INIT(scramble)
-	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+	MDRV_PALETTE_INIT(stratgyx)
+	MDRV_VIDEO_START(stratgyx)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( darkplnt )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(type2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+2) /* 32 for characters, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4+128*1)
 
 	MDRV_PALETTE_INIT(darkplnt)
 	MDRV_VIDEO_START(darkplnt)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( hustler )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(hustler_readmem,hustler_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
 	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
 	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
 	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
-	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
@@ -1435,71 +1233,26 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hustlerb )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(hustlerb_readmem,hustlerb_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
 	MDRV_CPU_MEMORY(scobra_sound_readmem,hustlerb_sound_writemem)
 	MDRV_CPU_PORTS(hustlerb_sound_readport,hustlerb_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
 	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
-	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
 MACHINE_DRIVER_END
 
-
-/* same as the others, but no sprite flipping, but instead, the bits are used
-   as extra sprite code bits, giving 256 sprite images */
-static MACHINE_DRIVER_START( calipso )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
-
-	MDRV_PALETTE_INIT(scramble)
-	MDRV_VIDEO_START(calipso)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
-MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -2006,6 +1759,29 @@ ROM_START( hustlerb )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
 ROM_END
 
+ROM_START( mimonksc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "fra_1a",       0x0000, 0x1000, 0x8e7a7379 )		// not checked
+	ROM_LOAD( "fra_1b",       0x1000, 0x1000, 0xab08cbfe )		// not checked
+	ROM_LOAD( "fra_2a",       0x2000, 0x1000, 0x2d4da24d )		// not checked
+	ROM_LOAD( "fra_2b",       0x3000, 0x1000, 0x00000000 )		// not checked but filled with 0xff
+	ROM_LOAD( "fra_3a",       0xc000, 0x1000, 0xb4e5c32d )		// checksum OK
+//	ROM_LOAD( "fra_3b",       0xd000, 0x1000, BADCRC( 0x03684e21 ) )	// fails the checksum
+	ROM_LOAD( "mm6",          0xd000, 0x1000, 0xe492a40c )		// checksum OK (from 'mimonkey')
+	ROM_LOAD( "fra_4a",       0xe000, 0x1000, 0x119c08fa )		// checksum OK
+	ROM_LOAD( "fra_4b",       0xf000, 0x1000, BADCRC( 0x9f4c9a18 ) )	// fails the checksum
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "mmsound1",	  0x0000, 0x1000, 0x2d14c527 )
+	ROM_LOAD( "mmsnd2a",	  0x1000, 0x1000, 0x35ed0f96 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mmgfx1",		  0x0000, 0x2000, 0x4af47337 )
+	ROM_LOAD( "mmgfx2",		  0x2000, 0x2000, 0xdef47da8 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+ROM_END
 
 
 GAME( 1981, scobra,   0,        type1,    scobra,   scobra,       ROT90,  "Konami", "Super Cobra" )
@@ -2032,3 +1808,4 @@ GAMEX(198?, superbon, 0,        type1,    superbon, superbon,     ROT90,  "bootl
 GAME( 1981, hustler,  0,        hustler,  hustler,  hustler,      ROT90,  "Konami", "Video Hustler" )
 GAME( 1981, billiard, hustler,  hustler,  hustler,  billiard,     ROT90,  "bootleg", "The Billiards" )
 GAME( 1981, hustlerb, hustler,  hustlerb, hustler,  scramble_ppi, ROT90,  "bootleg", "Video Hustler (bootleg)" )
+GAMEX(198?, mimonksc, mimonkey, mimonksc, mimonksc, mimonksc,     ROT90,  "bootleg", "Mighty Monkey (bootleg on Super Cobra hardware)", GAME_NOT_WORKING )

@@ -3,20 +3,20 @@
   driver by David Haywood & Farfetch'd
 
 Notes:
+- To enter "easy" service mode, keep some input pressed during boot,
+  e.g. BUTTON 1.
 
-Banking is a bit hackish at the moment.
-Colours
-Tile Attributes (needs flipping on the championship table)
-Unknown Port Writes:
-cpu #0 (PC=00000D88): unmapped port byte write to 00000001 = 02
-cpu #0 (PC=00006974): unmapped port byte write to 00000010 = 10
-cpu #0 (PC=00006902): unmapped port byte write to 00000010 = 20
-etc.
-Writes to ROM regions
-cpu #0 (PC=00001119): byte write to ROM 0000C8B9 = 01
-cpu #0 (PC=00001119): byte write to ROM 0000C899 = 01
-etc.
-
+TODO:
+- A couple of garbage sprites on the player selection screen
+- Unknown Port Writes:
+  cpu #0 (PC=00000D88): unmapped port byte write to 00000001 = 02
+  cpu #0 (PC=00006974): unmapped port byte write to 00000010 = 10
+  cpu #0 (PC=00006902): unmapped port byte write to 00000010 = 20
+  etc.
+- Writes to ROM regions
+  cpu #0 (PC=00001119): byte write to ROM 0000C8B9 = 01
+  cpu #0 (PC=00001119): byte write to ROM 0000C899 = 01
+  etc.
 
 ******************************************************************************/
 
@@ -56,7 +56,10 @@ theguru@emuunlim.com
 ******************************************************************************/
 
 /* in vidhrdw */
+extern data8_t *speedspn_attram;
+
 WRITE_HANDLER( speedspn_vidram_w );
+WRITE_HANDLER( speedspn_attram_w );
 READ_HANDLER( speedspn_vidram_r );
 VIDEO_START(speedspn);
 VIDEO_UPDATE(speedspn);
@@ -72,26 +75,26 @@ static READ_HANDLER(speedspn_irq_ack_r)
 
 static WRITE_HANDLER(speedspn_banked_rom_change)
 {
-	/* this is currently a hack I guess (or is it some odd protection?) :-/
-	*/
+	/* is this weird banking some form of protection? */
 
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int addr;
 
-	addr = -1;
-
-	if (data == 0x00) addr = 0x28000; // mmk
-	if (data == 0x01) addr = 0x14000;
-	if (data == 0x02) addr = 0x1c000;
-	if (data == 0x03) addr = 0x54000;
-	if (data == 0x04) addr = 0x48000;
-	if (data == 0x05) addr = 0x3c000;
-	if (data == 0x08) addr = 0x50000;
-
-	if (addr == -1)
+	switch (data)
 	{
-		usrintf_showmessage ("Unmapped Bank Write %02x", data);
-		addr = 0;
+		case 0: addr = 0x28000; break;
+		case 1: addr = 0x14000; break;
+		case 2: addr = 0x1c000; break;
+		case 3: addr = 0x54000; break;
+		case 4: addr = 0x48000; break;
+		case 5: addr = 0x3c000; break;
+		case 6: addr = 0x18000; break;
+		case 7: addr = 0x4c000; break;
+		case 8: addr = 0x50000; break;
+		default:
+			usrintf_showmessage ("Unmapped Bank Write %02x", data);
+			addr = 0;
+			break;
 	}
 
 	cpu_setbank(1,&rom[addr + 0x8000]);
@@ -105,14 +108,6 @@ static WRITE_HANDLER(speedspn_sound_w)
 	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 47 }
-};
-
 /*** MEMORY MAPS *************************************************************/
 
 /* main cpu */
@@ -125,18 +120,18 @@ static MEMORY_READ_START( readmem )
 	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xa800, 0xafff, MRA_RAM },
 	{ 0xb000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xffff, MRA_BANK1 }, /* banked rom? */
+	{ 0xc000, 0xffff, MRA_BANK1 }, /* banked ROM */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },	/* RAM COLOUR */
-	{ 0x8800, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9fff, speedspn_vidram_w },	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 07?)*/
+	{ 0x8000, 0x87ff, paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },	/* RAM COLOUR */
+	{ 0x8800, 0x8fff, speedspn_attram_w, &speedspn_attram },
+	{ 0x9000, 0x9fff, speedspn_vidram_w },	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17)*/
 	{ 0xa000, 0xa7ff, MWA_RAM },
 	{ 0xa800, 0xafff, MWA_RAM },
 	{ 0xb000, 0xbfff, MWA_RAM },	/* RAM PROGRAM */
-	{ 0xc000, 0xffff, MWA_ROM },	/* banked rom? */
+	{ 0xc000, 0xffff, MWA_ROM },	/* banked ROM */
 MEMORY_END
 
 static PORT_WRITE_START( writeport )
@@ -281,7 +276,7 @@ static struct GfxLayout speedspn_spritelayout =
 	16,16,
 	RGN_FRAC(1,2),
 	4,
-	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0 },
 	{ 16*16+11, 16*16+10, 16*16+9, 16*16+8, 16*16+3, 16*16+2, 16*16+1, 16*16+0,
 	        11,       10,       9,       8,       3,       2,       1,       0  },
 	{ 8*16+7*16, 8*16+6*16, 8*16+5*16, 8*16+4*16, 8*16+3*16, 8*16+2*16, 8*16+1*16, 8*16+0*16,
@@ -298,6 +293,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /*** MACHINE DRIVER **********************************************************/
+
+static struct OKIM6295interface okim6295_interface =
+{
+	1,				/* 1 chip */
+	{ 8500 },		/* frequency (Hz) */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 100 }
+};
+
+
 
 static MACHINE_DRIVER_START( speedspn )
 
@@ -342,17 +347,17 @@ ROM_START( speedspn )
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "tch-ss3.u95", 0x00000, 0x080000, 0x1c9deb5e )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
 	ROM_LOAD( "tch-ss4.u70", 0x00000, 0x020000, 0x41517859 )
 	ROM_LOAD( "tch-ss5.u69", 0x20000, 0x020000, 0x832b2f34 )
 	ROM_LOAD( "tch-ss6.u60", 0x40000, 0x020000, 0xf1fd7289 )
 	ROM_LOAD( "tch-ss7.u59", 0x60000, 0x020000, 0xc4958543 )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* GFX */
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
 	ROM_LOAD( "tch-ss8.u39", 0x00000, 0x020000, 0x2f27b16d )
 	ROM_LOAD( "tch-ss9.u34", 0x20000, 0x020000, 0xc372f8ec )
 ROM_END
 
 /*** GAME DRIVERS ************************************************************/
 
-GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_IMPERFECT_GRAPHICS )

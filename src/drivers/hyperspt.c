@@ -67,7 +67,7 @@ static NVRAM_HANDLER( hyperspt )
 {
 	if (read_or_write)
 	{
-		osd_fwrite(file,nvram,nvram_size);
+		mame_fwrite(file,nvram,nvram_size);
 
 		if (we_flipped_the_switch)
 		{
@@ -98,7 +98,7 @@ static NVRAM_HANDLER( hyperspt )
 	{
 		if (file)
 		{
-			osd_fread(file,nvram,nvram_size);
+			mame_fread(file,nvram,nvram_size);
 			we_flipped_the_switch = 0;
 		}
 		else

@@ -49,10 +49,6 @@ static VIDEO_START( znqs )
 	return 0;
 }
 
-static VIDEO_STOP( znqs )
-{
-}
-
 static VIDEO_UPDATE( znqs )
 {
 	int refresh = 0;
@@ -134,7 +130,7 @@ static WRITE_HANDLER( qsound_banksw_w )
 	unsigned char *RAM = memory_region( REGION_CPU2 );
 	if( ( data & 0xf0 ) != 0 )
 	{
-		logerror( "%08lx: qsound_banksw_w( %02x )\n", activecpu_get_pc(), data & 0xff );
+		logerror( "%08x: qsound_banksw_w( %02x )\n", activecpu_get_pc(), data & 0xff );
 	}
 	cpu_setbank( 1, &RAM[ 0x10000 + ( ( data & 0x0f ) * 0x4000 ) ] );
 }
@@ -586,7 +582,7 @@ PALETTE_INIT( zn )
 		n_r = ( n_r * 0xff ) / 0x1f;
 		n_g = ( n_g * 0xff ) / 0x1f;
 		n_b = ( n_b * 0xff ) / 0x1f;
-		
+
 		palette_set_color(n_colour, n_r, n_g, n_b);
 	}
 }
@@ -761,7 +757,7 @@ void bridge_w( void ( *p_bridge32_w )( UINT32 offset, UINT32 data ), UINT32 offs
 	{
 		m_n_bridge_data = ( m_n_bridge_data & 0xffff0000 ) | ( data & 0xffff );
 	}
-	
+
 	timer_adjust(m_p_bridge_timer_w, TIME_NOW, offset & ~3, 0 );
 }
 
@@ -914,6 +910,6 @@ GAME( 1998, kikaioh,  0,		znqs, zn, 0, ROT0, "Capcom", "Kikaioh (JAPAN 980914)" 
 GAME( 1999, sfex2p,   0,		znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
 GAME( 1999, shiryu2,  0,		znqs, zn, 0, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)" )
 
-GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
-GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)" )
-GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)" )
+GAMEX( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0, "Video System Co.", "Sonic Wings Limited (JAPAN)", GAME_NO_SOUND )
+GAMEX( 1997, glpracr2,	0,	  zn, zn, 0, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_NO_SOUND )
+GAMEX( 1998, doapp,		0,	  zn, zn, 0, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_NO_SOUND )

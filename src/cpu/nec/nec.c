@@ -37,6 +37,7 @@ typedef UINT32 DWORD;
 #include "nec.h"
 #include "necintrf.h"
 #include "driver.h"
+#include "state.h"
 
 static UINT8 nec_reg_layout[] = {
 	NEC_IP,NEC_SP,NEC_FLAGS,NEC_AW,NEC_CW,NEC_DW,NEC_BW,NEC_BP,NEC_IX,NEC_IY, -1,
@@ -1019,8 +1020,40 @@ unsigned nec_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+static void nec_init(int type)
+{
+	const char *names[]={"V20","V30","V33"};
+	int cpu = cpu_getactivecpu(),i;
+	char buf[16];
+
+	for (i=0; i<8; i++) {
+		sprintf(buf,"R%d",i);
+		state_save_register_UINT16(names[type], cpu, buf, &I.regs.w[i], 2);
+	}
+	for (i=0; i<4; i++) {
+		sprintf(buf,"SR%d",i);
+		state_save_register_UINT16(names[type], cpu, buf, &I.sregs[i], 2);
+	}
+
+	state_save_register_UINT16(names[type], cpu, "IP", &I.ip, 2);
+	state_save_register_UINT8(names[type], cpu, "TF", &I.TF, 1);
+	state_save_register_UINT8(names[type], cpu, "IF", &I.IF, 1);
+	state_save_register_UINT8(names[type], cpu, "DF", &I.DF, 1);
+	state_save_register_UINT8(names[type], cpu, "MF", &I.MF, 1);
+	state_save_register_INT32(names[type], cpu, "SV", &I.SignVal, 4);
+	state_save_register_UINT32(names[type], cpu, "IV", &I.int_vector, 4);
+	state_save_register_UINT32(names[type], cpu, "PI", &I.pending_irq, 4);
+	state_save_register_UINT32(names[type], cpu, "NS", &I.nmi_state, 4);
+	state_save_register_UINT32(names[type], cpu, "IS", &I.irq_state, 4);
+	state_save_register_UINT32(names[type], cpu, "AV", &I.AuxVal, 4);
+	state_save_register_UINT32(names[type], cpu, "OV", &I.OverVal, 4);
+	state_save_register_UINT32(names[type], cpu, "ZV", &I.ZeroVal, 4);
+	state_save_register_UINT32(names[type], cpu, "CV", &I.CarryVal, 4);
+	state_save_register_UINT32(names[type], cpu, "PV", &I.ParityVal, 4);
+}
+
 /* Wrappers for the different CPU types */
-void v20_init(void) { }
+void v20_init(void) { nec_init(0); }
 void v20_reset(void *param) { nec_reset(param); }
 void v20_exit(void) { nec_exit(); }
 int v20_execute(int cycles)
@@ -1115,7 +1148,7 @@ const char *v20_info(void *context, int regnum)
 }
 unsigned v20_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
 
-void v30_init(void) { }
+void v30_init(void) { nec_init(1); }
 void v30_reset(void *param) { nec_reset(param); }
 void v30_exit(void) { nec_exit(); }
 int v30_execute(int cycles) {
@@ -1165,7 +1198,7 @@ const char *v30_info(void *context, int regnum)
 }
 unsigned v30_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
 
-void v33_init(void) { }
+void v33_init(void) { nec_init(2); }
 void v33_reset(void *param) { nec_reset(param); }
 void v33_exit(void) { nec_exit(); }
 int v33_execute(int cycles)

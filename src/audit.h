@@ -18,6 +18,9 @@
 #define AUD_MEM_ERROR		0x00000020
 #define AUD_LENGTH_MISMATCH	0x00000040
 #define AUD_ROM_NEED_DUMP	0x00000080
+#define AUD_DISK_GOOD		0x00000100
+#define AUD_DISK_NOT_FOUND	0x00000200
+#define AUD_DISK_BAD_MD5	0x00000400
 
 #define AUD_MAX_ROMS		100	/* maximum roms per driver */
 #define AUD_MAX_SAMPLES		200	/* maximum samples per driver */
@@ -31,6 +34,8 @@ typedef struct
 	unsigned int expchecksum;	/* expected checksum of rom file */
 	unsigned int checksum;		/* actual checksum of rom file */
 	int status;					/* status of rom file */
+	UINT8 expmd5[16];			/* expected md5 of disk file */
+	UINT8 md5[16];				/* md5 of disk file */
 } tAuditRecord;
 
 typedef struct
@@ -38,7 +43,7 @@ typedef struct
 	char	name[20];		/* name of missing sample file */
 } tMissingSample;
 
-typedef void (CLIB_DECL *verify_printf_proc)(char *fmt,...);
+typedef void (CLIB_DECL *verify_printf_proc)(const char *fmt,...);
 
 int AuditRomSet (int game, tAuditRecord **audit);
 int VerifyRomSet(int game,verify_printf_proc verify_printf);

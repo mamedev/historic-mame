@@ -11,7 +11,7 @@
         flip the DIP and check it out!
 
   TODO:
-	- Gfx priorities
+	- Gfx priorities (note that it has two 053251)
 	- Self Test Fails
 
 */
@@ -52,10 +52,12 @@ static INTERRUPT_GEN(dbz2_interrupt)
 	}
 }
 
+#if 0
 static READ16_HANDLER(dbzcontrol_r)
 {
 	return dbz2_control;
 }
+#endif
 
 static WRITE16_HANDLER(dbzcontrol_w)
 {

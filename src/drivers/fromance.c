@@ -1037,7 +1037,7 @@ static struct YM2413interface ym2413_interface=
 {
 	1,						/* 1 chip */
 	3579545,				/* 3.579545 MHz ? */
-	{ 100 },				/* Volume */
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 

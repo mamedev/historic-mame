@@ -238,6 +238,7 @@ WRITE_HANDLER( wiping_sound_w )
 			{
 				voice->wave = &sound_rom[16 * (wiping_soundregs[0x3 + base] & 0x0f)];
 				voice->oneshot = 0;
+				voice->oneshotplaying = 0;
 			}
 		}
 	}

@@ -51,10 +51,12 @@ extern unsigned char *retofinv_bg_char_bank;
 
 static unsigned char cpu2_m6000=0;
 
+#if 0
 static MACHINE_INIT( retofinv )
 {
 	cpu2_m6000 = 0;
 }
+#endif
 
 static unsigned char *sharedram;
 

@@ -561,9 +561,9 @@ static NVRAM_HANDLER( itech32 )
 	int i;
 
 	if (read_or_write)
-		osd_fwrite(file, main_ram, main_ram_size);
+		mame_fwrite(file, main_ram, main_ram_size);
 	else if (file)
-		osd_fread(file, main_ram, main_ram_size);
+		mame_fread(file, main_ram, main_ram_size);
 	else
 		for (i = 0x80; i < main_ram_size; i++)
 			((UINT8 *)main_ram)[i] = rand();
@@ -575,9 +575,9 @@ static NVRAM_HANDLER( itech020 )
 	int i;
 
 	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
+		mame_fwrite(file, nvram, nvram_size);
 	else if (file)
-		osd_fread(file, nvram, nvram_size);
+		mame_fread(file, nvram, nvram_size);
 	else
 		for (i = 0; i < nvram_size; i++)
 			((UINT8 *)nvram)[i] = rand();

@@ -175,8 +175,8 @@ void copyscrollbitmap_remap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void draw_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen);
 void draw_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen);
-void pdraw_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri);
-void pdraw_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri);
+void pdraw_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen,int pri);
+void pdraw_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen,int pri);
 void extract_scanline8(struct mame_bitmap *bitmap,int x,int y,int length,UINT8 *dst);
 void extract_scanline16(struct mame_bitmap *bitmap,int x,int y,int length,UINT16 *dst);
 

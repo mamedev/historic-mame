@@ -52,11 +52,11 @@ static size_t nvram_size;
 static NVRAM_HANDLER( seicross )
 {
 	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
+		mame_fwrite(file,nvram,nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file,nvram,nvram_size);
+			mame_fread(file,nvram,nvram_size);
 		else
 		{
 			/* fill in the default values */

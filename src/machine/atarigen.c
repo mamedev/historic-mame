@@ -362,9 +362,9 @@ READ32_HANDLER( atarigen_eeprom_upper32_r )
 NVRAM_HANDLER( atarigen )
 {
 	if (read_or_write)
-		osd_fwrite(file, atarigen_eeprom, atarigen_eeprom_size);
+		mame_fwrite(file, atarigen_eeprom, atarigen_eeprom_size);
 	else if (file)
-		osd_fread(file, atarigen_eeprom, atarigen_eeprom_size);
+		mame_fread(file, atarigen_eeprom, atarigen_eeprom_size);
 	else
 	{
 		/* all 0xff's work for most games */

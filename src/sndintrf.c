@@ -378,6 +378,7 @@ int BSMT2000_clock(const struct MachineSound *msound) { return ((struct BSMT2000
 int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YMF278B)
+int YMF278B_clock(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->clock[0]; }
 int YMF278B_num(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->num; }
 #endif
 
@@ -683,6 +684,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_NAMCONA)
+    {
+		SOUND_NAMCONA,
+		"Namco NA",
+		0,
+		0,
+		NAMCONA_sh_start,
+		NAMCONA_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_TMS36XX)
     {
 		SOUND_TMS36XX,
@@ -746,7 +759,7 @@ struct snd_interface sndintf[] =
 #if (HAS_OKIM6295)
     {
 		SOUND_OKIM6295,
-		"OKI6295",
+		"MSM6295",
 		OKIM6295_num,
 		OKIM6295_clock,
 		OKIM6295_sh_start,
@@ -988,11 +1001,35 @@ struct snd_interface sndintf[] =
 		 SOUND_YMF278B,
 		 "YMF278B",
 		 YMF278B_num,
-		 0,
+		 YMF278B_clock,
 		 YMF278B_sh_start,
 		 YMF278B_sh_stop,
 		 0,
 		 0
+	},
+#endif
+#if (HAS_GAELCO_CG1V)
+	{
+		SOUND_GAELCO_CG1V,
+		"GAELCO CG-1V",
+		0,
+		0,
+		gaelco_cg1v_sh_start,
+		gaelcosnd_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_GAELCO_GAE1)
+	{
+		SOUND_GAELCO_GAE1,
+		"GAELCO GAE1",
+		0,
+		0,
+		gaelco_gae1_sh_start,
+		gaelcosnd_sh_stop,
+		0,
+		0
 	},
 #endif
 

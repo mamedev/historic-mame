@@ -5,9 +5,7 @@ Dynamic Ski
 Dynamic Ski runs on a single Z80.  It has the same graphics format as the
 newer Taiyo games.
 
-The game is playable, but lacks correct colors and has some minor priority
-glitches.  Two of the proms contain garbage.  One is likely a missing color
-component, and the other is probably priority-related.
+The game has some minor priority glitches.
 
 ---------------------------------------------------------------------------
 
@@ -99,21 +97,6 @@ static DRIVER_INIT( chinhero )
 static DRIVER_INIT( shangkid )
 {
 	shangkid_gfx_type = 1;
-}
-
-static DRIVER_INIT( dynamski )
-{
-/*
-	unsigned char *pMem;
-	int i;
-
-	pMem = memory_region( REGION_PROMS );
-	for( i=0; i<0xa80; i++ )
-	{
-		if( (i&0x1f)==0 ) logerror( "\n %04x: ",i );
-		logerror( "%02x ", pMem[i] );
-	}
-*/
 }
 
 /***************************************************************************************/
@@ -502,10 +485,10 @@ INPUT_PORTS_START( dynamski )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Unknown ) )
+	/* what's 00 ? */
 	PORT_DIPSETTING(	0x01, "A" )
 	PORT_DIPSETTING(	0x02, "B" )
 	PORT_DIPSETTING(	0x03, "C" )
-	PORT_BITX( 0,0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Play Forever",0,0 )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
@@ -586,9 +569,9 @@ INPUT_PORTS_START( shangkid )
 	**	RV1 - Music
 	**	RV2 - Sound Effects
 	*/
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
@@ -756,6 +739,70 @@ ROM_START( shangkid )
 	ROM_LOAD( "cr24ic42.bin", 0xa60, 0x020, 0x823878aa )	/* 82S123 - sample player banking */
 ROM_END
 
+ROM_START( hiryuken )
+	/* Main CPU - handles game logic */
+	ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* Z80 (NEC D780C-1) code */
+	ROM_LOAD( "1.2", 0x00000, 0x4000, 0xc7af7f2e )
+	ROM_LOAD( "2.3", 0x04000, 0x4000, 0x639afdb3 )
+	ROM_LOAD( "3.4", 0x08000, 0x2000, 0xad210482 ) /* banked at 0x8000 */
+	ROM_LOAD( "4.5", 0x10000, 0x2000, 0x6518943a ) /* banked at 0x8000 */
+
+	/* The BBX coprocessor is burried in an epoxy block.  It contains:
+	** - a surface-mounted Z80 (TMPZ84C00P)
+	** - LS245 logic IC
+	** - battery backed ram chip Fujitsu MB8464
+	**
+	** The BBX coprocessor receives graphics and sound-related commands from
+	** the main CPU via shared RAM.  It directly manages an AY8910, is
+	** responsible for populating spriteram, and forwards appropriate sound
+	** commands to the sample-playing CPU.
+	*/
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80: bbx module */
+	ROM_LOAD( "bbxj.bin",     0x0000, 0x2000, 0x8def4aaf ) /* battery-backed RAM */
+	ROM_LOAD( "5.31",         0x2000, 0x2000, 0x8ae37ce7 )
+	ROM_LOAD( "6.32",         0x4000, 0x4000, 0xe835bb7f )
+	ROM_LOAD( "7.33",         0x8000, 0x2000, 0x3745ed36 )
+
+	/* The Sound CPU is a dedicated Sample Player */
+	ROM_REGION( 0x1e000, REGION_CPU3, 0 ) /* Z80 (NEC D780C-1) */
+	ROM_LOAD( "cr11ic51.bin", 0x00000, 0x4000, 0x2e2d6afe )	// 12.51
+//	ROM_LOAD( "cr12ic43.bin", 0x04000, 0x4000, 0xdd29a0c8 )	// not present in this set
+//	ROM_LOAD( "cr13ic44.bin", 0x08000, 0x4000, 0x879d0de0 )	// not present in this set
+	ROM_LOAD( "cr07ic47.bin", 0x10000, 0x4000, 0x20540f7c )	// 8.47
+	ROM_LOAD( "9.48",         0x14000, 0x4000, 0x8da23cad )
+	ROM_LOAD( "10.49",        0x18000, 0x4000, 0x52b82fee )
+	ROM_LOAD( "cr10ic50.bin", 0x1c000, 0x2000, 0x873a5f2d )	// 11.50
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_INVERT ) /* 8x8 tiles */
+	ROM_LOAD( "21.21",        0x0000, 0x2000, 0xce20a1d4 )
+	ROM_LOAD( "22.22",        0x2000, 0x2000, 0x26fc88bf )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE|ROMREGION_INVERT ) /* 16x16 sprites */
+	ROM_LOAD( "15.114",       0x00000, 0x4000, 0xed07854e )
+	ROM_LOAD( "16.113",       0x04000, 0x4000, 0x85cf1939 )
+	ROM_LOAD( "cr16i112.bin", 0x08000, 0x4000, 0xcbed446c )	// 17.112
+	ROM_LOAD( "cr17i111.bin", 0x0c000, 0x4000, 0xb0a44330 )	// 18.111
+	ROM_LOAD( "cr18ic99.bin", 0x10000, 0x4000, 0xff7efd7c )	// 19.99
+	ROM_LOAD( "20.100",       0x14000, 0x4000, 0x4bc77ca0 )
+
+	ROM_REGION( 0xa80, REGION_PROMS, 0 )
+	ROM_LOAD( "r.36",         0x000, 0x100, 0x65dec63d ) /* 82S129 - red */
+	ROM_LOAD( "g.35",         0x100, 0x100, 0xe79de8cf ) /* 82S129 - green */
+	ROM_LOAD( "b.27",         0x200, 0x100, 0xd6ab3448 ) /* 82S129 - blue */
+
+	ROM_LOAD( "cr29ic28.bin", 0x300, 0x100, 0x7ca273c1 ) /* 82S129 - unknown */					// m.28
+	ROM_LOAD( "cr32ic69.bin", 0x400, 0x200, 0x410d6f86 ) /* 82S147 - sprite-related (zoom?) */	// ic69
+	ROM_LOAD( "cr33-108.bin", 0x600, 0x200, 0xd33c02ae ) /* 82S147 - sprite-related (zoom?) */	// ic108
+
+	ROM_LOAD( "cr26ic12.bin", 0x800, 0x100, 0x85b5e958 ) /* 82S129 - tile pen priority? */		// sc.12
+	ROM_LOAD( "cr27ic15.bin", 0x900, 0x100, 0xf7a19fe2 ) /* 82S129 - sprite pen transparency */	// sp.15
+
+	ROM_LOAD( "cr25ic8.bin",  0xa00, 0x020, 0xc85e09ad ) /* 82S123 */							// a.8
+	ROM_LOAD( "cr22ic8.bin",  0xa20, 0x020, 0x1a7e0b06 ) /* 82S123 - main CPU banking */		// 1.8
+	ROM_LOAD( "cr23ic22.bin", 0xa40, 0x020, 0xefb5f265 ) /* 82S123 - coprocessor banking */		// 2.22
+	ROM_LOAD( "cr24ic42.bin", 0xa60, 0x020, 0x823878aa ) /* 82S123 - sample player banking */	// 3.42
+ROM_END
+
 ROM_START( dynamski )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* Z80 code */
 	ROM_LOAD( "dynski.1",     0x00000, 0x1000, 0x30191160 ) /* code */
@@ -777,13 +824,14 @@ ROM_START( dynamski )
 	ROM_LOAD( "dynski7.14d",  0x4000, 0x2000, 0xa153dfa9 )
 
 	ROM_REGION( 0x240, REGION_PROMS, 0 )
-	ROM_LOAD( "dynskic.15f",  0x000, 0x020, 0x3869514b )	/* palette */
-	ROM_LOAD( "dynskic.15g",  0x020, 0x020, 0x9333a5e4 )	/* palette */
+	ROM_LOAD( "dynskic.15g",  0x000, 0x020, 0x9333a5e4 )	/* palette */
+	ROM_LOAD( "dynskic.15f",  0x020, 0x020, 0x3869514b )	/* palette */
 	ROM_LOAD( "dynski.11e",   0x040, 0x100, 0xe625aa09 )	/* lookup table */
 	ROM_LOAD( "dynski.4g",    0x140, 0x100, 0x761fe465 )	/* lookup table */
 ROM_END
 
 
-GAMEX( 1984, dynamski, 0, dynamski, dynamski, dynamski,	ROT90, "Taiyo", "Dynamic Ski", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAME(  1984, chinhero, 0, chinhero, chinhero, chinhero,	ROT90, "Taiyo", "Chinese Hero" )
-GAMEX( 1985, shangkid, 0, shangkid, shangkid, shangkid,	ROT0,  "Taiyo (Data East license)", "Shanghai Kid", GAME_NO_COCKTAIL )
+GAMEX( 1984, dynamski, 0,        dynamski, dynamski, 0,        ROT90, "Taiyo", "Dynamic Ski", GAME_NO_COCKTAIL )
+GAME ( 1984, chinhero, 0,        chinhero, chinhero, chinhero, ROT90, "Taiyo", "Chinese Hero" )
+GAMEX( 1985, shangkid, 0,        shangkid, shangkid, shangkid, ROT0,  "Taiyo (Data East license)", "Shanghai Kid", GAME_NO_COCKTAIL )
+GAMEX( 1985, hiryuken, shangkid, shangkid, shangkid, shangkid, ROT0,  "[Nihon Game] (Taito license)", "Hokuha Syourin Hiryu no Ken", GAME_NO_COCKTAIL )

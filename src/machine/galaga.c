@@ -66,7 +66,7 @@ READ_HANDLER( galaga_dsw_r )
 
 ***************************************************************************/
 static int customio_command;
-static int mode,credits;
+static int mode,credits,start_enable;
 static int coinpercred,credpercoin;
 static unsigned char customio[16];
 
@@ -77,18 +77,56 @@ WRITE_HANDLER( galaga_customio_data_w )
 
 logerror("%04x: custom IO offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 
-	switch (customio_command)
+	switch (customio_command & 0x0f)
 	{
-		case 0xa8:
-			if (offset == 3 && data == 0x20)	/* total hack */
-		        sample_start(0,0,0);
-			break;
-
-		case 0xe1:
-			if (offset == 7)
+		case 0x01:
+			if (offset == 0)
 			{
+				switch ( data & 0x0f )
+				{
+					case 0x00:
+						/* nop */
+						break;
+					case 0x01:
+						/* credit info set */
+						credits = 0;		/* this is a good time to reset the credits counter */
+						mode = 0;			/* go into credit mode */
+						start_enable = 1;
+						break;
+					case 0x02:
+						start_enable = 1;
+						break;
+					case 0x03:
+						mode = 1;	/* go into switch mode */
+						break;
+					case 0x04:
+						mode = 0;	/* go into credit mode */
+						break;
+					case 0x05:
+						start_enable = 0;	/* Initialize */
+						mode = 1;			/* Initialize */
+						break;
+				}
+			}
+			else if (offset == 7)
+			{
+				/* 0x01 */
 				coinpercred = customio[1];
 				credpercoin = customio[2];
+			}
+			break;
+
+		case 0x04:
+			/* ??? */
+			break;
+
+		case 0x08:
+			if (offset == 3 && data == 0x20)	/* total hack */
+			{
+				sample_start(0,0,0);
+			}
+			else{
+				sample_start(0,1,0);
 			}
 			break;
 	}
@@ -100,10 +138,9 @@ READ_HANDLER( galaga_customio_data_r )
 	if (customio_command != 0x71)
 		logerror("%04x: custom IO read offset %02x\n",activecpu_get_pc(),offset);
 
-	switch (customio_command)
+	switch (customio_command & 0x0f)
 	{
-		case 0x71:	/* read input */
-		case 0xb1:	/* only issued after 0xe1 (go into credit mode) */
+		case 0x01:	/* read input */
 			if (offset == 0)
 			{
 				if (mode)	/* switch mode */
@@ -115,7 +152,6 @@ READ_HANDLER( galaga_customio_data_r )
 				{
 					int in;
 					static int coininserted;
-
 
 					in = readinputport(4);
 
@@ -135,14 +171,26 @@ READ_HANDLER( galaga_customio_data_r )
 					else credits = 100;	/* free play */
 
 
-					/* check for 1 player start button */
-					if ((in & 0x04) == 0)
-						if (credits >= 1) credits--;
+					if (start_enable == 1)
+					{
+						/* check for 1 player start button */
+						if ((in & 0x04) == 0)
+						{
+							if (credits >= 1){
+								credits--;
+								start_enable = 0;
+							}
+						}
 
-					/* check for 2 players start button */
-					if ((in & 0x08) == 0)
-						if (credits >= 2) credits -= 2;
-
+						/* check for 2 players start button */
+						if ((in & 0x08) == 0)
+						{
+							if (credits >= 2){
+								credits -= 2;
+								start_enable = 0;
+							}
+						}
+					}
 					return (credits / 10) * 16 + credits % 10;
 				}
 			}
@@ -182,15 +230,6 @@ WRITE_HANDLER( galaga_customio_w )
 		case 0x10:
 			timer_adjust(nmi_timer, TIME_NEVER, 0, 0);
 			return;
-
-		case 0xa1:	/* go into switch mode */
-			mode = 1;
-			break;
-
-		case 0xe1:	/* go into credit mode */
-			credits = 0;	/* this is a good time to reset the credits counter */
-			mode = 0;
-			break;
 	}
 
 	timer_adjust(nmi_timer, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));

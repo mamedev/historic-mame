@@ -59,11 +59,7 @@ static WRITE_HANDLER( k88games_5f84_w )
 	zoomreadroms = data & 0x04;
 
 	if (data & 0xf8)
-	{
-		char buf[40];
-		sprintf(buf,"5f84 = %02x",data);
-		usrintf_showmessage(buf);
-	}
+		usrintf_showmessage("5f84 = %02x",data);
 }
 
 static WRITE_HANDLER( k88games_sh_irqtrigger_w )

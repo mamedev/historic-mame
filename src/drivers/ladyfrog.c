@@ -127,4 +127,4 @@ ROM_END
 
 
 
-GAME( 19??, ladyfrog, 0, ladyfrog, ladyfrog, 0, ROT0, "Dynax? Comad?", "Dragon Punch? Lady Frog?" )
+GAMEX( 19??, ladyfrog, 0, ladyfrog, ladyfrog, 0, ROT0, "Dynax? Comad?", "Dragon Punch? Lady Frog?", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -21,6 +21,7 @@
 #define __RC_H
 
 #include <stdio.h>
+#include "fileio.h"
 
 struct rc_struct;
 struct rc_option;
@@ -65,7 +66,7 @@ int rc_unregister(struct rc_struct *rc, struct rc_option *option);
 int rc_load(struct rc_struct *rc, const char *name, int priority,
    int continue_on_errors);
 int rc_save(struct rc_struct *rc, const char *name, int append);
-int osd_rc_read(struct rc_struct *rc, void *f, const char *description,
+int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
    int priority, int continue_on_errors);
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors);

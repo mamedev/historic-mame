@@ -534,43 +534,37 @@ VIDEO_UPDATE( slapshot )
 
 #ifdef MAME_DEBUG
 	static int dislayer[5];	/* Layer toggles to help get the layers correct */
-	char buf[80];
 #endif
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed_memory (KEYCODE_Z))
 	{
 		dislayer[0] ^= 1;
-		sprintf(buf,"bg0: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg0: %01x",dislayer[0]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_X))
 	{
 		dislayer[1] ^= 1;
-		sprintf(buf,"bg1: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg1: %01x",dislayer[1]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_C))
 	{
 		dislayer[2] ^= 1;
-			sprintf(buf,"bg2: %01x",dislayer[2]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg2: %01x",dislayer[2]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_V))
 	{
 		dislayer[3] ^= 1;
-		sprintf(buf,"bg3: %01x",dislayer[3]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg3: %01x",dislayer[3]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_B))
 	{
 		dislayer[4] ^= 1;
-		sprintf(buf,"text: %01x",dislayer[4]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("text: %01x",dislayer[4]);
 	}
 #endif
 

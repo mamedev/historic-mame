@@ -52,6 +52,7 @@ WRITE_HANDLER( balsente_register_addr_w );
 READ_HANDLER( nstocker_port2_r );
 WRITE_HANDLER( spiker_expand_w );
 READ_HANDLER( spiker_expand_r );
+READ_HANDLER( grudge_steering_r );
 
 READ16_HANDLER( shrike_shared_68k_r );
 WRITE16_HANDLER( shrike_shared_68k_w );

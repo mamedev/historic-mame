@@ -609,20 +609,24 @@ static void taitoz_interrupt6(int x)
 
 /* 68000 B */
 
+#if 0
 static void taitoz_cpub_interrupt5(int x)
 {
 	cpu_set_irq_line(2,5,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
+#endif
 
 static void taitoz_sg_cpub_interrupt5(int x)
 {
 	cpu_set_irq_line(1,5,HOLD_LINE);	/* assumes no Z80 */
 }
 
+#if 0
 static void taitoz_cpub_interrupt6(int x)
 {
 	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
+#endif
 
 
 /***** Routines for particular games *****/
@@ -711,10 +715,12 @@ static int eeprom_r(void)
 	return (EEPROM_read_bit() & 0x01)<<7;
 }
 
+#if 0
 static READ16_HANDLER( eep_latch_r )
 {
 	return eep_latch;
 }
+#endif
 
 static WRITE16_HANDLER( spacegun_output_bypass_w )
 {
@@ -1093,6 +1099,7 @@ static READ16_HANDLER( taitoz_sound_r )
 	else return 0;
 }
 
+#if 0
 static WRITE16_HANDLER( taitoz_msb_sound_w )
 {
 	if (offset == 0)
@@ -1117,7 +1124,7 @@ static READ16_HANDLER( taitoz_msb_sound_r )
 		return ((taitosound_comm_r (0) & 0xff) << 8);
 	else return 0;
 }
-
+#endif
 
 /***********************************************************
                    MEMORY STRUCTURES

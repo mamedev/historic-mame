@@ -32,7 +32,7 @@ I. Purpose
    It is not our intention to infringe on any copyrights or patents on the
    original games. All of MAME's source code is either our own or freely
    available. To operate, the emulator requires images of the original ROMs
-   from the arcade machines, which must be provided by the user. No portion of
+   from the arcade machines, which must be provided by the user. No portions of
    the original ROM codes are included in the executable.
 
 II. Cost

@@ -364,17 +364,16 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 	for (region = rom_first_region(game); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			char name[100];
-			const char *md5;
 			int offset, length, crc, in_parent, is_disk, has_md5;
+			char name[100];
+			UINT8 md5[16];
 
-			sprintf(name,ROM_GETNAME(rom));
+			strcpy(name,ROM_GETNAME(rom));
 			offset = ROM_GETOFFSET(rom);
 			crc = ROM_GETCRC(rom);
 			is_disk = ROMREGION_ISDISKDATA(region);
 
-			md5 = ROM_GETNAME(rom) + strlen(ROM_GETNAME(rom)) + 3;
-			has_md5 = (md5[-2] == '0' && md5[-1] == 'x');
+			has_md5 = ROM_GETMD5(rom, md5);
 
 			in_parent = 0;
 			length = 0;
@@ -422,8 +421,8 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 			{
 				int i;
 				fprintf(out, SELECT(L2P "md5 ", "\t\t\t<md5>"));
-				for (i = 0; i < 32; i++)
-					fprintf(out, "%c", tolower(md5[i]));
+				for (i = 0; i < 16; i++)
+					fprintf(out, "%02x", md5[i]);
 				fprintf(out, "%s", SELECT(L2N, "</md5>\n"));
 			}
 			switch (ROMREGION_GETTYPE(region))
@@ -550,7 +549,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 		if (cpu[j].cpu_type!=0)
 		{
 			fprintf(out, SELECT(L1P "chip" L2B, "\t\t<chip "));
-			if (cpu[j].cpu_type & CPU_AUDIO_CPU)
+			if (cpu[j].cpu_flags & CPU_AUDIO_CPU)
 				fprintf(out, SELECT(L2P "type cpu flags audio" L2N, "type=\"cpu\" audio=\"yes\">\n"));
 			else
 				fprintf(out, SELECT(L2P "type cpu" L2N, "type=\"cpu\">\n"));
@@ -615,8 +614,8 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 
 	if (game->flags & ORIENTATION_SWAP_XY)
 	{
-		ax = VIDEO_ASPECT_RATIO_DEN(driver.video_attributes);
-		ay = VIDEO_ASPECT_RATIO_NUM(driver.video_attributes);
+		ax = driver.aspect_y;
+		ay = driver.aspect_x;
 		if (ax == 0 && ay == 0) {
 			ax = 3;
 			ay = 4;
@@ -627,8 +626,8 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 	}
 	else
 	{
-		ax = VIDEO_ASPECT_RATIO_NUM(driver.video_attributes);
-		ay = VIDEO_ASPECT_RATIO_DEN(driver.video_attributes);
+		ax = driver.aspect_x;
+		ay = driver.aspect_y;
 		if (ax == 0 && ay == 0) {
 			ax = 4;
 			ay = 3;
@@ -676,7 +675,7 @@ static void print_game_sound(FILE* out, const struct GameDriver* game)
 	i = 0;
 	while (i < MAX_CPU && !has_sound)
 	{
-		if  ((cpu[i].cpu_type & CPU_AUDIO_CPU)!=0)
+		if  ((cpu[i].cpu_flags & CPU_AUDIO_CPU)!=0)
 			has_sound = 1;
 		++i;
 	}
@@ -928,6 +927,7 @@ void print_mame_info(FILE* out, const struct GameDriver* games[])
 	PRINT_RESOURCE(playch10);
 	PRINT_RESOURCE(pgm);
 	PRINT_RESOURCE(skns);
+	PRINT_RESOURCE(stvbios);
 #endif
 #endif
 

@@ -543,12 +543,13 @@ static struct YM2413interface ym2413_intf_8MHz =
 {
 	1,
 	8000000,
-	{ 100 },
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 static struct YMF278B_interface ymf278b_interface =
 {
 	1,
+	{ YMF278B_STD_CLOCK },
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) },
 	{ ymf278b_interrupt }

@@ -37,7 +37,7 @@ static WRITE_HANDLER( mermaid_AY8910_control_port_w )
 	if (mermaid_AY8910_enable[1])  AY8910_control_port_1_w(offset, data);
 }
 
-
+#if 0
 static READ_HANDLER( mermaid_f800_r )
 {
 	// collision register active LO
@@ -52,7 +52,7 @@ static READ_HANDLER( mermaid_f800_r )
 	//return rand() & 0xff;
 	return 0x00;
 }
-
+#endif
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x9fff, MRA_ROM },
@@ -281,4 +281,4 @@ ROM_START( mermaid )
 ROM_END
 
 
-GAMEX( 1982, mermaid, 0, mermaid, mermaid, 0, ROT0, "Rock-ola", "Mermaid", GAME_NOT_WORKING )
+GAMEX( 1982, mermaid, 0, mermaid, mermaid, 0, ROT0, "[Sanritsu] Rock-ola", "Mermaid", GAME_NOT_WORKING )

@@ -9,7 +9,7 @@
 
 #ifndef RECURSIVE_INCLUDE
 
-#if 0
+#if LOG_GRAPHICS_OPS
 #define LOGGFX(x) do { if (keyboard_pressed(KEYCODE_L)) logerror x ; } while (0)
 #else
 #define LOGGFX(x)
@@ -72,7 +72,7 @@ cases:
 * directions (left->right/right->left, top->bottom/bottom->top)
 */
 
-static int apply_window(int srcbpp, UINT32 *srcaddr, XY *dst, int *dx, int *dy)
+static int apply_window(const char *inst_name,int srcbpp, UINT32 *srcaddr, XY *dst, int *dx, int *dy)
 {
 	/* apply the window */
 	if (state.window_checking == 0)
@@ -86,10 +86,12 @@ static int apply_window(int srcbpp, UINT32 *srcaddr, XY *dst, int *dx, int *dy)
 		int diff, cycles = 3;
 
 		if (state.window_checking == 1 || state.window_checking == 2)
-			logerror("Window mode %d not supported!\n", state.window_checking);
+			logerror("%08x: %s apply_window window mode %d not supported!\n", activecpu_get_pc(), inst_name, state.window_checking);
 
-		/* clear the V flag by default */
-		CLR_V;
+		if (state.window_checking == 1)
+			V_FLAG = 1;
+		else
+			CLR_V;	/* clear the V flag by default */
 
 		/* clip X */
 		diff = WSTART_X - sx;
@@ -1059,7 +1061,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 		if (!dst_is_linear)
 		{
 			XY temp = DADDR_XY;
-			state.gfxcycles += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, &saddr, &temp, &dx, &dy);
+			state.gfxcycles += 2 + (!src_is_linear) + apply_window("PIXBLT", BITS_PER_PIXEL, &saddr, &temp, &dx, &dy);
 			daddr = DXYTOL(temp);
 		}
 		else
@@ -1304,7 +1306,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 		if (!dst_is_linear)
 		{
 			XY temp = DADDR_XY;
-			state.gfxcycles += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, &saddr, &temp, &dx, &dy);
+			state.gfxcycles += 2 + (!src_is_linear) + apply_window("PIXBLT R", BITS_PER_PIXEL, &saddr, &temp, &dx, &dy);
 			daddr = DXYTOL(temp);
 		}
 		else
@@ -1551,7 +1553,7 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 		if (!dst_is_linear)
 		{
 			XY temp = DADDR_XY;
-			state.gfxcycles += 2 + apply_window(1, &saddr, &temp, &dx, &dy);
+			state.gfxcycles += 2 + apply_window("PIXBLT B", 1, &saddr, &temp, &dx, &dy);
 			daddr = DXYTOL(temp);
 		}
 		else
@@ -1749,7 +1751,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		if (!dst_is_linear)
 		{
 			XY temp = DADDR_XY;
-			state.gfxcycles += 2 + apply_window(0, NULL, &temp, &dx, &dy);
+			state.gfxcycles += 2 + apply_window("FILL", 0, NULL, &temp, &dx, &dy);
 			daddr = DXYTOL(temp);
 		}
 		else
@@ -1771,6 +1773,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 			full_words /= PIXELS_PER_WORD;
 
 		/* compute cycles */
+		/* TODO: when state.window_checking == 1, we should count only the time to the first pixel hit */
 		state.gfxcycles += compute_fill_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
@@ -1797,7 +1800,15 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 					pixel = COLOR1 & dstmask;
 					PIXEL_OP(dstword, dstmask, pixel);
 					if (!TRANSPARENCY || pixel != 0)
-						dstword = (dstword & ~dstmask) | pixel;
+					{
+						if (state.window_checking == 1 && !dst_is_linear)
+						{
+							CLR_V;
+							goto bailout;
+						}
+						else
+							dstword = (dstword & ~dstmask) | pixel;
+					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1824,7 +1835,15 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 					pixel = COLOR1 & dstmask;
 					PIXEL_OP(dstword, dstmask, pixel);
 					if (!TRANSPARENCY || pixel != 0)
-						dstword = (dstword & ~dstmask) | pixel;
+					{
+						if (state.window_checking == 1 && !dst_is_linear)
+						{
+							CLR_V;
+							goto bailout;
+						}
+						else
+							dstword = (dstword & ~dstmask) | pixel;
+					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1848,7 +1867,15 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 					pixel = COLOR1 & dstmask;
 					PIXEL_OP(dstword, dstmask, pixel);
 					if (!TRANSPARENCY || pixel != 0)
+					{
+						if (state.window_checking == 1 && !dst_is_linear)
+						{
+							CLR_V;
+							goto bailout;
+						}
+						else
 						dstword = (dstword & ~dstmask) | pixel;
+					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1861,6 +1888,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 			/* update for next row */
 			daddr += DPTCH;
 		}
+bailout:
 		LOGGFX(("  (%d cycles)\n", state.gfxcycles));
 	}
 
@@ -1878,7 +1906,28 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		if (dst_is_linear)
 			DADDR += DYDX_Y * DPTCH;
 		else
-			DADDR_Y += DYDX_Y;
+		{
+			if (state.window_checking == 1)
+			{
+				int dx = (INT16)DYDX_X;
+				int dy = (INT16)DYDX_Y;
+				int v = V_FLAG;
+
+				apply_window("FILL clip", 0, NULL, &DADDR_XY, &dx, &dy);
+				DYDX_X = dx;
+				DYDX_Y = dy;
+
+				V_FLAG = v;	/* thrashed by apply_window */
+
+				if (v == 0)
+				{
+					IOREG(REG_INTPEND) |= TMS34010_WV;
+					check_interrupt();
+				}
+			}
+			else
+				DADDR_Y += DYDX_Y;
+		}
 	}
 }
 

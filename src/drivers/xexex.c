@@ -99,10 +99,12 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 	}
 }
 
+#if 0
 static READ16_HANDLER( control0_r )
 {
 	return input_port_0_r(0);
 }
+#endif
 
 static READ16_HANDLER( control1_r )
 {

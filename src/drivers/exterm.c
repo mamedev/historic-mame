@@ -480,16 +480,15 @@ static MACHINE_DRIVER_START( exterm )
 	MDRV_CPU_MEMORY(sound_ym2151_readmem,sound_ym2151_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION((1000000 * (263 - 240)) / (60 * 263))
 
 	MDRV_MACHINE_INIT(exterm)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
-	/* video hardware, the reason for 263 is that the VCOUNT register is
-	   supposed to go from 0 to the value in VEND-1, which is 263 */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 263)
-	MDRV_VISIBLE_AREA(0, 255, 0, 238)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_PALETTE_LENGTH(4096+32768)
 
 	MDRV_PALETTE_INIT(exterm)

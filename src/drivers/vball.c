@@ -70,6 +70,7 @@ WRITE_HANDLER( cpu_sound_command_w ) {
 	logerror("Sound_command_w\n");
 }
 
+#if 0
 static WRITE_HANDLER( dd_adpcm_w )
 {
 	int chip = 0;
@@ -92,6 +93,7 @@ static WRITE_HANDLER( dd_adpcm_w )
 			break;
 	}
 }
+#endif
 
 static void dd_adpcm_int(int chip)
 {
@@ -115,12 +117,13 @@ static void dd_adpcm_int(int chip)
 	}
 }
 
+#if 0
 static READ_HANDLER( dd_adpcm_status_r )
 {
 //	logerror("dd_adpcm_status_r\n");
 	return adpcm_idle[0] + (adpcm_idle[1] << 1);
 }
-
+#endif
 
 WRITE_HANDLER( vb_scrollx_hi_w )
 {

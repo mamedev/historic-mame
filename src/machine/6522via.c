@@ -308,7 +308,7 @@ int via_read(int which, int offset)
 			if (v->intf->in_b_func)
 				v->in_b = v->intf->in_b_func(0);
 			else
-				logerror("6522VIA chip %d: Port B is being read but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc());
+				logerror("6522VIA chip %d: Port B is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 		}
 
 		CLR_PB_INT(v, which);
@@ -327,7 +327,7 @@ int via_read(int which, int offset)
 			if (v->intf->in_a_func)
 				v->in_a = v->intf->in_a_func(0);
 			else
-				logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc());
+				logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 		}
 
 		/* combine input and output values */
@@ -361,7 +361,7 @@ int via_read(int which, int offset)
 			if (v->intf->in_a_func)
 				v->in_a = v->intf->in_a_func(0);
 			else
-				logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc());
+				logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 		}
 
 		/* combine input and output values */
@@ -826,7 +826,7 @@ logerror("6522VIA chip %d: CA1 = %02X.  PC: %08X\n", which, data, activecpu_get_
 				if (v->intf->in_a_func)
 					v->in_a = v->intf->in_a_func(0);
 				else
-					logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc());
+					logerror("6522VIA chip %d: Port A is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 			}
 
 			via_set_int (which, INT_CA1);
@@ -915,7 +915,7 @@ void via_set_input_cb1(int which, int data)
 				if (v->intf->in_b_func)
 					v->in_b = v->intf->in_b_func(0);
 				else
-					logerror("6522VIA chip %d: Port B is being read but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc());
+					logerror("6522VIA chip %d: Port B is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 			}
 
 			via_set_int (which, INT_CB1);

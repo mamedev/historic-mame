@@ -45,7 +45,7 @@ uint m68ki_tracing = 0;
 uint m68ki_address_space;
 
 #ifdef M68K_LOG_ENABLE
-char* m68ki_cpu_names[9] =
+const char* m68ki_cpu_names[9] =
 {
 	"Invalid CPU",
 	"M68000",

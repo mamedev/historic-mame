@@ -195,8 +195,6 @@ actual code sent to the hardware.
 #include "megasys1.h"
 #include "vidhrdw/generic.h"
 
-static char buf[80];
-
 /* Variables defined here, that have to be shared: */
 struct tilemap *megasys1_tmap[3];
 
@@ -220,17 +218,17 @@ static int hardware_type_z;
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 { \
-	sprintf(buf,_format_,_offset_,_data_);\
-	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
+	usrintf_showmessage(_format_,_offset_,_data_);\
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_,_data_);\
 }
 
 #else
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	sprintf(buf,_format_,_offset_,_data_); \
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_,_data_); \
 }
 
 #endif

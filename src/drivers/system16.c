@@ -240,10 +240,16 @@ static WRITE_HANDLER( UPD7759_bank_w )
 {
 	int size = (memory_region_length(REGION_CPU2)-0x10000);
 	int mask = size <= 0x20000 ? 0x1ffff : size < 0x40000 ? 0x3ffff : 0x7ffff;
-	cpu_setbank(1, memory_region(REGION_CPU2) + 0x10000 + ((0x4000*data) & mask));
+	int offs = 0x10000 + ((0x4000*data) & mask);
+
+	if (offs>size)
+		offs%=size;
+
+	cpu_setbank(1, memory_region(REGION_CPU2) + offs);
 
 	UPD7759_reset_w(0, data & 0x40);
 }
+
 
 static PORT_WRITE_START( sound_writeport_7759 )
 	{ 0x00, 0x00, YM2151_register_port_0_w },
@@ -358,10 +364,12 @@ static void set_tile_bank( int data ){
 	sys16_tile_bank0 = (data>>4)&0xf;
 }
 
+#if 0
 static void set_tile_bank18( int data ){
 	sys16_tile_bank0 = data&0xf;
 	sys16_tile_bank1 = (data>>4)&0xf;
 }
+#endif
 
 static void set_fg_page( int data ){
 	sys16_fg_page[0] = data>>12;
@@ -391,6 +399,7 @@ static void set_bg_page1( int data ){
 	sys16_bg_page[2] = data&0xf;
 }
 
+#if 0
 static void set_fg2_page( int data ){
 	sys16_fg2_page[0] = data>>12;
 	sys16_fg2_page[1] = (data>>8)&0xf;
@@ -404,6 +413,7 @@ static void set_bg2_page( int data ){
 	sys16_bg2_page[2] = (data>>4)&0xf;
 	sys16_bg2_page[3] = data&0xf;
 }
+#endif
 
 /***************************************************************************/
 // sys16A
@@ -1042,11 +1052,12 @@ ROM_END
 
 /***************************************************************************/
 
+#if 0
 static READ16_HANDLER( atomicp_skip_r ){
 	if (activecpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0902/2];
 }
-
+#endif
 
 static MEMORY_READ16_START( atomicp_readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
@@ -4025,10 +4036,12 @@ ROM_END
 
 /***************************************************************************/
 
+#if 0
 static READ16_HANDLER( quartet_skip_r ){
 	if (activecpu_get_pc()==0x89b2) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0800/2];
 }
+#endif
 
 static MEMORY_READ16_START( quartet_readmem )
 	{ 0x000000, 0x02ffff, MRA16_ROM },
@@ -4214,10 +4227,12 @@ ROM_END
 
 /***************************************************************************/
 
+#if 0
 static READ16_HANDLER( quartet2_skip_r ){
 	if (activecpu_get_pc()==0x8f6c) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0800/2];
 }
+#endif
 
 static MEMORY_READ16_START( quartet2_readmem )
 	{ 0x000000, 0x02ffff, MRA16_ROM },

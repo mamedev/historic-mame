@@ -7,10 +7,13 @@ together.
 
 driver by Nicola Salmoria
 
+Notes:
+- Golfing Greats has a peculiar way to know where the ball is laying: the
+  hardware latches the color of roz pixel at the center (more or less) of the
+  screen, and uses that to determine if it's water, fairway etc.
+
 TODO:
 
-- glfgreat always thinks you are on the green after the first shot. This could
-  be protection related, see ball_r().
 - glfgretj is in worse shape than glfgreat, the latter is at least playable,
   the former hangs.
 - glfgretj uses a special controller.
@@ -52,6 +55,7 @@ WRITE16_HANDLER( glfgreat_122000_w );
 WRITE16_HANDLER( ssriders_1c0300_w );
 WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
+READ16_HANDLER( glfgreat_ball_r );
 VIDEO_START( mia );
 VIDEO_START( tmnt );
 VIDEO_START( punkshot );
@@ -317,7 +321,7 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 	return 0;
 }
 
-
+#if 0
 static int sound_nmi_enabled;
 
 static void sound_nmi_callback( int param )
@@ -326,6 +330,7 @@ static void sound_nmi_callback( int param )
 
 	sound_nmi_enabled = 0;
 }
+#endif
 
 static void nmi_callback(int param)
 {
@@ -803,12 +808,6 @@ static MEMORY_WRITE16_START( detatwin_writemem )
 	{ 0x780700, 0x78071f, K053251_lsb_w },
 MEMORY_END
 
-
-static READ16_HANDLER( ball_r )
-{
-	return 0x11;
-}
-
 static MEMORY_READ16_START( glfgreat_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x103fff, MRA16_RAM },	/* main RAM */
@@ -820,7 +819,7 @@ static MEMORY_READ16_START( glfgreat_readmem )
 	{ 0x120002, 0x120003, input_port_1_word_r },
 	{ 0x120004, 0x120005, input_port_3_word_r },
 	{ 0x120006, 0x120007, input_port_2_word_r },
-	{ 0x121000, 0x121001, ball_r },	/* protection? returning 0, every shot is a "water" */
+	{ 0x121000, 0x121001, glfgreat_ball_r },	/* returns the color of the center pixel of the roz layer */
 	{ 0x125000, 0x125003, glfgreat_sound_r },	/* K053260 */
 	{ 0x200000, 0x207fff, K052109_word_noA12_r },
 	{ 0x300000, 0x3fffff, glfgreat_rom_r },

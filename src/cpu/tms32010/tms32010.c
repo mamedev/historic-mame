@@ -272,7 +272,7 @@ static void abst(void)
 }
 
 /*** The manual does not mention overflow with the ADD? instructions *****
- *** however i implelemted overflow, coz it doesnt make sense otherwise **
+ *** however I implemented overflow, coz it doesnt make sense otherwise **
  *** and newer generations of this type of chip supported it. I think ****
  *** the manual is wrong (apart from other errors the manual has). *******
 

@@ -620,7 +620,6 @@ WRITE_HANDLER( williams2_7segment_w )
 {
 	int n;
 	char dot;
-	char buffer[5];
 
 	switch (data & 0x7F)
 	{
@@ -645,11 +644,9 @@ WRITE_HANDLER( williams2_7segment_w )
 		dot = ' ';
 
 	if (n == -1)
-		sprintf(buffer, "[ %c]\n", dot);
+		logerror("[ %c]\n", dot);
 	else
-		sprintf(buffer, "[%d%c]\n", n, dot);
-
-	logerror(buffer);
+		logerror("[%d%c]\n", n, dot);
 }
 
 

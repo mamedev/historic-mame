@@ -378,6 +378,7 @@ static const char *galaga_sample_names[] =
 {
 	"*galaga",
 	"bang.wav",
+	"init.wav",
 	0       /* end of array */
 };
 
@@ -656,10 +657,10 @@ ROM_END
 
 
 
-GAME( 1981, galaga,   0,      galaga, galaganm, 0, ROT90, "Namco", "Galaga (Namco)" )
-GAME( 1981, galagamw, galaga, galaga, galaga,   0, ROT90, "[Namco] (Midway license)", "Galaga (Midway)" )
-GAME( 1981, galagads, galaga, galaga, galaga,   0, ROT90, "hack", "Galaga (fast shoot)" )
-GAME( 1982, gallag,   galaga, galaga, galaganm, 0, ROT90, "bootleg", "Gallag" )
-GAME( 1981, galagab2, galaga, galaga, galaganm, 0, ROT90, "bootleg", "Galaga (bootleg)" )
-GAME( 1984, galaga84, galaga, galaga, galaganm, 0, ROT90, "hack", "Galaga '84" )
-GAME( 1984, nebulbee, galaga, galaga, galaganm, 0, ROT90, "hack", "Nebulous Bee" )
+GAMEX( 1981, galaga,   0,      galaga, galaganm, 0, ROT90, "Namco", "Galaga (Namco)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, galagamw, galaga, galaga, galaga,   0, ROT90, "[Namco] (Midway license)", "Galaga (Midway)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, galagads, galaga, galaga, galaga,   0, ROT90, "hack", "Galaga (fast shoot)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1982, gallag,   galaga, galaga, galaganm, 0, ROT90, "bootleg", "Gallag", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, galagab2, galaga, galaga, galaganm, 0, ROT90, "bootleg", "Galaga (bootleg)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, galaga84, galaga, galaga, galaganm, 0, ROT90, "hack", "Galaga '84", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, nebulbee, galaga, galaga, galaganm, 0, ROT90, "hack", "Nebulous Bee", GAME_IMPERFECT_GRAPHICS )

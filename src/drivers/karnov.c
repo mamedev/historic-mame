@@ -1,44 +1,44 @@
 /***************************************************************************
 
-  Karnov (USA version)                   (c) 1987 Data East USA
-  Karnov (Japanese version)              (c) 1987 Data East Corporation
-  Wonder Planet (Japanese version)       (c) 1987 Data East Corporation
-  Chelnov (USA version)                  (c) 1988 Data East USA
-  Chelnov (Japanese version)             (c) 1987 Data East Corporation
+	Karnov (USA version)                   (c) 1987 Data East USA
+	Karnov (Japanese version)              (c) 1987 Data East Corporation
+	Wonder Planet (Japanese version)       (c) 1987 Data East Corporation
+	Chelnov (World version)                (c) 1987 Data East Corporation
+	Chelnov (USA version)                  (c) 1988 Data East USA
+	Chelnov (Japanese version)             (c) 1987 Data East Corporation
 
 
-  Emulation by Bryan McPhail, mish@tendril.co.uk
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
-NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
-  and Chelnov USA & Chelnov Japan sets have different gameplay!
+	NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
+	  and Chelnov USA & Chelnov Japan sets have different gameplay!
 
-These games use a 68000 main processor with a 6502, YM2203C and YM3526 for
-sound.  Karnov was a major pain to get going because of the
-'protection' on the main player sprite, probably connected to the Intel
-microcontroller on the board.  The game is very sensitive to the wrong values
-at the input ports...
+	These games use a 68000 main processor with a 6502, YM2203C and YM3526 for
+	sound.  Karnov was a major pain to get going because of the
+	'protection' on the main player sprite, probably connected to the Intel
+	microcontroller on the board.  The game is very sensitive to the wrong values
+	at the input ports...
 
-There is another Karnov rom set - a bootleg version of the Japanese roms with
-the Data East copyright removed - not supported because the original Japanese
-roms work fine.
+	There is another Karnov rom set - a bootleg version of the Japanese roms with
+	the Data East copyright removed - not supported because the original Japanese
+	roms work fine.
 
-One of the two color PROMs for chelnov and chelnoj is different; one is most
-likely a bad read, but I don't know which one.
+	One of the two color PROMs for chelnov and chelnoj is different; one is most
+	likely a bad read, but I don't know which one.
 
-Thanks to Oliver Stabel <stabel@rhein-neckar.netsurf.de> for confirming some
-of the sprite & control information :)
+	Thanks to Oliver Stabel <stabel@rhein-neckar.netsurf.de> for confirming some
+	of the sprite & control information :)
 
-Cheats:
+	Cheats:
 
-Karnov - put 0x30 at 0x60201 to skip a level
-Chelnov - level number at 0x60189 - enter a value at cartoon intro
+	Karnov - put 0x30 at 0x60201 to skip a level
+	Chelnov - level number at 0x60189 - enter a value at cartoon intro
 
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m6502/m6502.h"
 
 PALETTE_INIT( karnov );
 VIDEO_UPDATE( karnov );
@@ -51,7 +51,7 @@ VIDEO_START( wndrplnt );
 
 enum { KARNOV=0, KARNOVJ, CHELNOV, CHELNOVJ, CHELNOVW, WNDRPLNT };
 
-static data16_t i8751_return;
+static data16_t i8751_return,i8751_needs_ack,i8751_coin_pending,i8751_command_queue;
 static data16_t *karnov_ram;
 extern data16_t karnov_scroll[2], *karnov_pf_data;
 static int microcontroller_id,coin_mask;
@@ -61,6 +61,12 @@ static int microcontroller_id,coin_mask;
 /* Emulation of the protected microcontroller - for coins & general protection */
 static void karnov_i8751_w(int data)
 {
+	/* Pending coin operations may cause protection commands to be queued */
+	if (i8751_needs_ack) {
+		i8751_command_queue=data;
+		return;
+	}
+
 	i8751_return=0;
 	if (data==0x100 && microcontroller_id==KARNOVJ) i8751_return=0x56a; /* Japan version */
 	if (data==0x100 && microcontroller_id==KARNOV) i8751_return=0x56b; /* USA version */
@@ -80,10 +86,17 @@ static void karnov_i8751_w(int data)
 //	if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
+	i8751_needs_ack=1;
 }
 
 static void wndrplnt_i8751_w(int data)
 {
+	/* The last command hasn't been ACK'd (probably a conflict with coin command) */
+	if (i8751_needs_ack) {
+		i8751_command_queue=data;
+		return;
+	}
+
 	i8751_return=0;
 	if (data==0x100) i8751_return=0x67a;
 	if (data==0x200) i8751_return=0x214;
@@ -127,11 +140,18 @@ static void wndrplnt_i8751_w(int data)
 	if (data==0x500) i8751_return=0x4e75;
 
 	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
+	i8751_needs_ack=1;
 }
 
 static void chelnov_i8751_w(int data)
 {
 	static int level;
+
+	/* Pending coin operations may cause protection commands to be queued */
+	if (i8751_needs_ack) {
+		i8751_command_queue=data;
+		return;
+	}
 
 	i8751_return=0;
 	if (data==0x200 && microcontroller_id==CHELNOVJ) i8751_return=0x7734; /* Japan version */
@@ -230,6 +250,7 @@ static void chelnov_i8751_w(int data)
 //	logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
+	i8751_needs_ack=1;
 }
 
 /******************************************************************************/
@@ -239,6 +260,24 @@ static WRITE16_HANDLER( karnov_control_w )
 	/* Mnemonics filled in from the schematics, brackets are my comments */
 	switch (offset<<1) {
 		case 0: /* SECLR (Interrupt ack for Level 6 i8751 interrupt) */
+			cpu_set_irq_line(0,6,CLEAR_LINE);
+
+			if (i8751_needs_ack) {
+				/* If a command and coin insert happen at once, then the i8751 will queue the
+					coin command until the previous command is ACK'd */
+				if (i8751_coin_pending) {
+					i8751_return=i8751_coin_pending;
+					cpu_set_irq_line(0,6,HOLD_LINE);
+					i8751_coin_pending=0;
+				} else if (i8751_command_queue) {
+					/* Pending control command - just write it back as SECREQ */
+					i8751_needs_ack=0;
+					karnov_control_w(3,i8751_command_queue,0xffff);
+					i8751_command_queue=0;
+				} else {
+					i8751_needs_ack=0;
+				}
+			}
 			return;
 
 		case 2: /* SONREQ (Sound CPU byte) */
@@ -267,10 +306,14 @@ static WRITE16_HANDLER( karnov_control_w )
 
 		case 0xc: /* SECR (Reset i8751) */
 			logerror("Reset i8751\n");
+			i8751_needs_ack=0;
+			i8751_coin_pending=0;
+			i8751_command_queue=0;
 			i8751_return=0;
 			break;
 
 		case 0xe: /* INTCLR (Interrupt ack for Level 7 vbl interrupt) */
+			cpu_set_irq_line(0,7,CLEAR_LINE);
 			break;
 	}
 }
@@ -645,8 +688,14 @@ static INTERRUPT_GEN( karnov_interrupt )
 	/* Coin input to the i8751 generates an interrupt to the main cpu */
 	if (readinputport(3) == coin_mask) latch=1;
 	if (readinputport(3) != coin_mask && latch) {
-		i8751_return=readinputport(3) | 0x8000;
-		cpu_set_irq_line(0,6,HOLD_LINE);
+		if (i8751_needs_ack) {
+			/* i8751 is busy - queue the command */
+			i8751_coin_pending=readinputport(3) | 0x8000;
+		} else {
+			i8751_return=readinputport(3) | 0x8000;
+			cpu_set_irq_line(0,6,HOLD_LINE);
+			i8751_needs_ack=1;
+		}
 		latch=0;
 	}
 
@@ -896,8 +945,8 @@ ROM_START( chelnov )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
 	ROM_LOAD16_BYTE( "ee08-e.j16",   0x00000, 0x10000, 0x8275cc3a )
 	ROM_LOAD16_BYTE( "ee11-e.j19",   0x00001, 0x10000, 0x889e40a0 )
-	ROM_LOAD16_BYTE( "ee07-a.j14",   0x20000, 0x10000, 0x9c69ed56 )
-	ROM_LOAD16_BYTE( "ee10-a.j18",   0x20001, 0x10000, 0xd5c5fe4b )
+	ROM_LOAD16_BYTE( "a-j14.bin",    0x20000, 0x10000, 0x51465486 )
+	ROM_LOAD16_BYTE( "a-j18.bin",    0x20001, 0x10000, 0xd09dda33 )
 	ROM_LOAD16_BYTE( "ee06-e.j13",   0x40000, 0x10000, 0x55acafdb )
 	ROM_LOAD16_BYTE( "ee09-e.j17",   0x40001, 0x10000, 0x303e252c )
 
@@ -1013,6 +1062,6 @@ static DRIVER_INIT( chelnovj )
 GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA",         "Karnov (US)" )
 GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnovj,  ROT0,   "Data East Corporation", "Karnov (Japan)" )
 GAME( 1987, wndrplnt, 0,       wndrplnt, wndrplnt,wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)" )
-GAMEX(1988, chelnov,  0,       karnov,   chelnov, chelnovw, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (World)", GAME_UNEMULATED_PROTECTION )
+GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnovw, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (World)" )
 GAME( 1988, chelnovu, chelnov, karnov,   chelnov, chelnov,  ROT0,   "Data East USA",         "Chelnov - Atomic Runner (US)" )
 GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)" )

@@ -1837,7 +1837,7 @@ static struct YM2413interface ym2413_interface=
 {
 	1,
 	8000000,    /* ??? */
-	{ 100 },
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 static struct YM2203interface ym2203_interface =

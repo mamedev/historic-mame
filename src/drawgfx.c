@@ -5721,7 +5721,7 @@ DECLAREG(draw_scanline, (
 
 DECLAREG(pdraw_scanline, (
 		struct mame_bitmap *bitmap,int x,int y,int length,
-		const DATA_TYPE *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri),
+		const DATA_TYPE *src,pen_t *pens,int transparent_pen,int pri),
 {
 	/* 8bpp destination */
 	if (bitmap->depth == 8)

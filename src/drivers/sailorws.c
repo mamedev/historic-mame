@@ -154,11 +154,11 @@ static size_t sailorws_nvram_size;
 static NVRAM_HANDLER( sailorws )
 {
 	if (read_or_write)
-		osd_fwrite(file, sailorws_nvram, sailorws_nvram_size);
+		mame_fwrite(file, sailorws_nvram, sailorws_nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file, sailorws_nvram, sailorws_nvram_size);
+			mame_fread(file, sailorws_nvram, sailorws_nvram_size);
 		else
 			memset(sailorws_nvram, 0, sailorws_nvram_size);
 	}
@@ -3807,13 +3807,13 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	4000000,			/* 4.00 MHz */
-	{ 100 }
+	{ 70 }
 };
 
 static struct DACinterface dac_interface =
 {
 	2,				/* 2 channels */
-	{ 35, 55 },
+	{ 70, 100 },
 };
 
 

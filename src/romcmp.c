@@ -3,11 +3,12 @@
 #include <string.h>
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
+#include "fileio.h"
 #include <stdarg.h>
 #ifdef macintosh
 #	include "macromcmp.h"
 #else
-#ifndef WIN32
+#ifndef _WIN32
 #   include <dirent.h>
 #   ifdef __sgi
 #      include <errno.h>
@@ -15,7 +16,7 @@
 #      include <sys/errno.h>
 #   endif
 #else
-#    include "dirent.h"
+#	include "dirent.h"
 #endif
 #include <sys/stat.h>
 #endif
@@ -37,6 +38,42 @@ void CLIB_DECL logerror(const char *text,...)
 {
 }
 
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
+{
+	return (osd_file *)fopen(filename, mode);
+}
+
+int osd_fseek(osd_file *file, INT64 offset, int whence)
+{
+	return fseek((FILE *)file, (INT32)offset, whence);
+}
+
+UINT64 osd_ftell(osd_file *file)
+{
+	return ftell((FILE *)file);
+}
+
+int osd_feof(osd_file *file)
+{
+	return feof((FILE *)file);
+}
+
+UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
+{
+	return fread(buffer, 1, length, (FILE *)file);
+}
+
+UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
+{
+	return fwrite(buffer, 1, length, (FILE *)file);
+}
+
+void osd_fclose(osd_file *file)
+{
+	fclose((FILE *)file);
+}
+
+
 
 /* compare modes when one file is twice as long as the other */
 /* A = All file */
@@ -55,7 +92,7 @@ enum {	MODE_A,
 		MODE_E, MODE_O,
 		MODE_E12, MODE_O12, MODE_E22, MODE_O22,
 		TOTAL_MODES };
-char *modenames[] =
+const char *modenames[] =
 {
 	"          ",
 	"[bits 0-3]",
@@ -496,7 +533,7 @@ static int load_files(int i, int *found, const char *path)
 		struct zipent* zipent;
 
 		/* wasn't a directory, so try to open it as a zip file */
-		if ((zip = openzip(path)) == 0)
+		if ((zip = openzip(0, 0, path)) == 0)
 		{
 			printf("Error, cannot open zip file '%s' !\n", path);
 			return 1;

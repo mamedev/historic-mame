@@ -102,6 +102,7 @@ static WRITE_HANDLER( m92_soundlatch_w )
 
 static int sound_status;
 
+#if 0
 static READ_HANDLER( m92_sound_status_r )
 {
 	if (offset == 0)
@@ -128,6 +129,7 @@ static READ_HANDLER( m92_sound_status_r )
 	}
 	else return 0xff;
 }
+#endif
 
 static READ_HANDLER( m92_soundlatch_r )
 {

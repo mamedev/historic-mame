@@ -2210,15 +2210,21 @@ static DRIVER_INIT( defndjeu )
 	ROME.BIN    IC05-5.BIN            DFNDR-E.ROM           20
 	ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
 */
-
+	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x14000 };
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int x;
+	int i;
 
-	for (x = 0xd000; x < 0x15000; x++)
-	{
-		UINT8 src = rom[x];
-		rom[x] = (src & 0x7e) | (src >> 7) | (src << 7);
-	}
+	defender_bank_list = bank;
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xc400, 0x100);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+
+	for (i = 0xd000; i < 0x15000; i++)
+		rom[i] = BITSWAP8(rom[i],0,6,5,4,3,2,1,7);
+
 }
 
 #if 0

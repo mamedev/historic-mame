@@ -231,22 +231,22 @@ void gtmr_mcu_run(void)
 
 		case 0x02:	// Read from NVRAM
 		{
-			void *f;
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,0)) != 0)
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
 			{
-				osd_fread(f,&mcu_ram[mcu_offset], 128);
-				osd_fclose(f);
+				mame_fread(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
 			}
 		}
 		break;
 
 		case 0x42:	// Write to NVRAM
 		{
-			void *f;
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,1)) != 0)
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,1)) != 0)
 			{
-				osd_fwrite(f,&mcu_ram[mcu_offset], 128);
-				osd_fclose(f);
+				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
 			}
 		}
 		break;
@@ -1289,12 +1289,14 @@ MEMORY_END
 									Blaze On
 ***************************************************************************/
 
+#if 0
 static WRITE_HANDLER( blazeon_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 7;
 	cpu_setbank(15, &RAM[bank * 0x10000 + 0x1000]);
 }
+#endif
 
 static MEMORY_READ_START( blazeon_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM					},	// ROM

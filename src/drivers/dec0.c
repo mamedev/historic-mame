@@ -8,7 +8,7 @@
     * Heavy Barrel                            (World set)
 	* Bad Dudes vs. Dragonninja               (USA set)
     * Dragonninja                             (Japanese version of above)
-	* Birdy Try                               (Japanese set)
+	* Birdie Try                              (Japanese set)
     * Robocop                                 (World bootleg rom set)
     * Robocop                                 (World rev 3)
     * Robocop                                 (USA rev 1)
@@ -23,7 +23,7 @@
     * Midnight Resistance                     (Japanese set)
 	* Boulderdash                             (World set)
 
-	Heavy Barrel, Bad Dudes, Robocop, Birdy Try & Hippodrome use the 'MEC-M1'
+	Heavy Barrel, Bad Dudes, Robocop, Birdie Try & Hippodrome use the 'MEC-M1'
 motherboard and varying game boards.  Sly Spy, Midnight Resistance and
 Boulderdash use the same graphics chips but are different pcbs.
 
@@ -2071,7 +2071,7 @@ GAME( 1987, hbarrel,  0,        hbarrel,  hbarrel,  hbarrel,  ROT270, "Data East
 GAME( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  hbarrelw, ROT270, "Data East Corporation", "Heavy Barrel (World)" )
 GAME( 1988, baddudes, 0,        baddudes, baddudes, baddudes, ROT0,   "Data East USA",         "Bad Dudes vs. Dragonninja (US)" )
 GAME( 1988, drgninja, baddudes, baddudes, baddudes, baddudes, ROT0,   "Data East Corporation", "Dragonninja (Japan)" )
-GAMEX(1988, birdtry,  0,        birdtry,  hbarrel,  birdtry,  ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING )
+GAMEX(1988, birdtry,  0,        birdtry,  hbarrel,  birdtry,  ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS )
 GAME( 1988, robocop,  0,        robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (World revision 4)" )
 GAME( 1988, robocopw, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (World revision 3)" )
 GAME( 1988, robocopj, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (Japan)" )

@@ -8,7 +8,11 @@
 
    Changelog:
    Sep. 8, 2002 - fixed ymf278b_compute_rate when OCT is negative (RB)
-
+   Dec. 11, 2002 - added ability to set non-standard clock rates (RB)
+                   fixed envelope target for release (fixes missing
+		   instruments in hotdebut).
+                   Thanks to Team Japump! for MP3s from a real PCB.
+		   fixed crash if MAME is run with no sound.
 */
 
 #include <math.h>
@@ -72,6 +76,7 @@ typedef struct
 	void (*irq_callback)(int);
 
 	const UINT8 *rom;
+	float clock_ratio;
 } YMF278BChip;
 
 static YMF278BChip YMF278B[MAX_YMF278B];
@@ -123,7 +128,7 @@ static UINT32 ymf278_compute_decay_rate(int num)
 	return ((UINT64)samples * Machine->sample_rate) / 44100;
 }
 
-static void ymf278b_envelope_next(YMF278BSlot *slot)
+static void ymf278b_envelope_next(YMF278BSlot *slot, float clock_ratio)
 {
 	if(slot->env_step == 0)
 	{
@@ -144,12 +149,12 @@ static void ymf278b_envelope_next(YMF278BSlot *slot)
 		{
 			int rate = ymf278b_compute_rate(slot, slot->D1R);
 #ifdef VERBOSE
-			logerror("YMF278B: Decay step 1, dl=%d, val = %d rate = %d, delay = %g\n", slot->DL, slot->D1R, rate, ymf278_compute_decay_rate(rate)*1000.0/Machine->sample_rate);
+			logerror("YMF278B: Decay step 1, dl=%d, val = %d rate = %d, delay = %g\n", slot->DL, slot->D1R, rate, ymf278_compute_decay_rate(rate)*1000.0*clock_ratio/Machine->sample_rate);
 #endif
 			if(rate<4)
 				slot->env_vol_step = 0;
 			else
-				slot->env_vol_step = ((slot->DL*8)<<23) / ymf278_compute_decay_rate(rate);
+				slot->env_vol_step = ((slot->DL*8)<<23) / (ymf278_compute_decay_rate(rate) * clock_ratio);
 			slot->env_vol_lim = (slot->DL*8)<<23;
 			return;
 		}
@@ -159,12 +164,12 @@ static void ymf278b_envelope_next(YMF278BSlot *slot)
 		// Decay 2
 		int rate = ymf278b_compute_rate(slot, slot->D2R);
 #ifdef VERBOSE
-		logerror("YMF278B: Decay step 2, val = %d, rate = %d, delay = %g, current vol = %d\n", slot->D2R, rate, ymf278_compute_decay_rate(rate)*1000.0/Machine->sample_rate, slot->env_vol >> 23);
+		logerror("YMF278B: Decay step 2, val = %d, rate = %d, delay = %g, current vol = %d\n", slot->D2R, rate, ymf278_compute_decay_rate(rate)*1000.0*clock_ratio/Machine->sample_rate, slot->env_vol >> 23);
 #endif
 		if(rate<4)
 			slot->env_vol_step = 0;
 		else
-			slot->env_vol_step = ((256U-slot->DL*8)<<23) / ymf278_compute_decay_rate(rate);
+			slot->env_vol_step = ((256U-slot->DL*8)<<23) / (ymf278_compute_decay_rate(rate) * clock_ratio);
 		slot->env_vol_lim = 256U<<23;
 		slot->env_step++;
 		return;
@@ -186,13 +191,13 @@ static void ymf278b_envelope_next(YMF278BSlot *slot)
 		// Release
 		int rate = ymf278b_compute_rate(slot, slot->RR);
 #ifdef VERBOSE
-		logerror("YMF278B: Release, val = %d, rate = %d, delay = %g\n", slot->RR, rate, ymf278_compute_decay_rate(rate)*1000.0/Machine->sample_rate);
+		logerror("YMF278B: Release, val = %d, rate = %d, delay = %g\n", slot->RR, rate, ymf278_compute_decay_rate(rate)*1000.0*clock_ratio/Machine->sample_rate);
 #endif
 		if(rate<4)
 			slot->env_vol_step = 0;
 		else
-			slot->env_vol_step = ((256U<<23)-slot->env_vol) / ymf278_compute_decay_rate(rate);
-		slot->env_vol_lim = 0;
+			slot->env_vol_step = ((256U<<23)-slot->env_vol) / (ymf278_compute_decay_rate(rate) * clock_ratio);
+		slot->env_vol_lim = 256U<<23;
 		slot->env_step++;
 		return;
 	}
@@ -220,7 +225,12 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 	INT32 *mixp;
 	INT32 vl, vr;
 
-	memset(mix, 0, sizeof(mix[0])*length*2);
+//	GCC 3.2 bug? This line causes an abrupt exit without any error message.
+//	memset(mix, 0, sizeof(mix[0])*length*2);
+	for (i = 0; i < length*2; i++)
+	{
+		mix[i] = 0;
+	}
 
 	rombase = YMF278B[num].rom;
 
@@ -231,6 +241,7 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 		if (slot->active)
 		{
 			mixp = mix;
+
 			for (j = 0; j < length; j++)
 			{
 				switch (slot->bits)
@@ -275,7 +286,7 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 				// update envelope
 				slot->env_vol += slot->env_vol_step;
 				if(((INT32)(slot->env_vol - slot->env_vol_lim)) >= 0)
-					ymf278b_envelope_next(slot);
+			 		ymf278b_envelope_next(slot, YMF278B[num].clock_ratio);
 			}
 		}
 	}
@@ -324,7 +335,7 @@ static void ymf278b_timer_a_reset(int num)
 	YMF278BChip *chip = &YMF278B[num];
 	if(chip->enable & 1)
 	{
-		double period = (256-chip->timer_a_count) * 80.8;
+		double period = (256-chip->timer_a_count) * 80.8 * chip->clock_ratio;
 		timer_adjust(chip->timer_a, TIME_IN_USEC(period), num, TIME_IN_USEC(period));
 	}
 	else
@@ -336,7 +347,7 @@ static void ymf278b_timer_b_reset(int num)
 	YMF278BChip *chip = &YMF278B[num];
 	if(chip->enable & 2)
 	{
-		double period = (256-chip->timer_b_count) * 323.1;
+		double period = (256-chip->timer_b_count) * 323.1 * chip->clock_ratio;
 		timer_adjust(chip->timer_b, TIME_IN_USEC(period), num, TIME_IN_USEC(period));
 	}
 	else
@@ -346,6 +357,8 @@ static void ymf278b_timer_b_reset(int num)
 static void ymf278b_A_w(int num, UINT8 reg, UINT8 data)
 {
 	YMF278BChip *chip = &YMF278B[num];
+
+	if (!Machine->sample_rate) return;
 
 	switch(reg)
 	{
@@ -379,12 +392,16 @@ static void ymf278b_A_w(int num, UINT8 reg, UINT8 data)
 
 static void ymf278b_B_w(int num, UINT8 reg, UINT8 data)
 {
+	if (!Machine->sample_rate) return;
+
 	logerror("YMF278B:  Port B write %02x, %02x\n", reg, data);
 }
 
 static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 {
 	YMF278BChip *chip = &YMF278B[num];
+
+	if (!Machine->sample_rate) return;
 
 	// Handle slot registers specifically
 	if (reg >= 0x08 && reg <= 0xf7)
@@ -467,23 +484,32 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 					if(oct & 8)
 						oct |= -8;
 
-					step = (slot->FN | 1024) << (oct + 7);
-					slot->step = (((UINT64)step)*(44100/4)) / Machine->sample_rate;
-					slot->stepptr = 0;
 					slot->env_step = 0;
-					ymf278b_envelope_next(slot);
+					slot->env_vol = 256U<<23;
+					slot->env_vol_step = 0;
+					slot->env_vol_lim = 256U<<23;
+					slot->stepptr = 0;
+					slot->step = 0;
+
+					step = (slot->FN | 1024) << (oct + 7);
+					slot->step = (UINT32) (((UINT64)step)*(44100/4)) / Machine->sample_rate * chip->clock_ratio;
+					ymf278b_envelope_next(slot, chip->clock_ratio);
+
 #ifdef VERBOSE
-					logerror("YMF278B: slot %2d wave %3d lfo=%d vib=%d ar=%d d1r=%d dl=%d d2r=%d rc=%d rr=%d am=%d, rd=%d\n", snum, slot->wave,
+					logerror("YMF278B: slot %2d wave %3d lfo=%d vib=%d ar=%d d1r=%d dl=%d d2r=%d rc=%d rr=%d am=%d\n", snum, slot->wave,
 							 slot->lfo, slot->vib, slot->AR, slot->D1R, slot->DL, slot->D2R, slot->RC, slot->RR, slot->AM);
 					logerror("                  b=%d, start=%x, loop=%x, end=%x, oct=%d, fn=%d, step=%x\n", slot->bits, slot->startaddr, slot->loopaddr>>16, slot->endaddr>>16, oct, slot->FN, slot->step);
 #endif
 				}
 				else
 				{
+#ifdef VERBOSE
+					logerror("YMF278B: slot %2d off\n", snum);
+#endif
 					if(slot->active)
 					{
 						slot->env_step = 4;
-						ymf278b_envelope_next(slot);
+						ymf278b_envelope_next(slot, chip->clock_ratio);
 					}
 				}
 				break;
@@ -595,7 +621,7 @@ static void ymf278b_data_port_C_w(int num, UINT8 data)
 	ymf278b_C_w(num, YMF278B[num].port_C, data);
 }
 
-static void ymf278b_init(INT8 num, UINT8 *rom, void (*cb)(int))
+static void ymf278b_init(INT8 num, UINT8 *rom, void (*cb)(int), int clock)
 {
 	memset(&YMF278B[num], 0, sizeof(YMF278BChip));
 	YMF278B[num].rom = rom;
@@ -603,6 +629,7 @@ static void ymf278b_init(INT8 num, UINT8 *rom, void (*cb)(int))
 	YMF278B[num].timer_a = timer_alloc(ymf278b_timer_a_tick);
 	YMF278B[num].timer_b = timer_alloc(ymf278b_timer_b_tick);
 	YMF278B[num].irq_line = CLEAR_LINE;
+	YMF278B[num].clock_ratio = (float)clock / (float)YMF278B_STD_CLOCK;
 }
 
 int YMF278B_sh_start( const struct MachineSound *msound )
@@ -623,7 +650,7 @@ int YMF278B_sh_start( const struct MachineSound *msound )
 		name[1] = buf[1];
 		vol[0]=intf->mixing_level[i] >> 16;
 		vol[1]=intf->mixing_level[i] & 0xffff;
-		ymf278b_init(i, memory_region(intf->region[0]), intf->irq_callback[i]);
+		ymf278b_init(i, memory_region(intf->region[0]), intf->irq_callback[i], intf->clock[i]);
 		stream_init_multi(2, name, vol, Machine->sample_rate, i, ymf278b_pcm_update);
 	}
 

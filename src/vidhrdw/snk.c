@@ -32,6 +32,7 @@ int snk_bg_tilemap_baseaddr, gwar_sprite_placement;
 
 // static int shadows_visible = 0; /* toggles rapidly to fake translucency in ikari warriors */
 
+#if 0
 static void print( struct mame_bitmap *bitmap, int num, int row ){
 	char *digit = "0123456789abcdef";
 
@@ -48,6 +49,7 @@ static void print( struct mame_bitmap *bitmap, int num, int row ){
 		32,row*8+8,
 		0,TRANSPARENCY_NONE,0);
 }
+#endif
 
 PALETTE_INIT( snk_3bpp_shadow ){
 	int i;

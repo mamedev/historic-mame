@@ -26,7 +26,8 @@ extern "C" {
 
 struct MachineCPU
 {
-	int			cpu_type;					/* see #defines below. */
+	int			cpu_type;					/* index for the CPU type */
+	int			cpu_flags;					/* flags; see #defines below */
 	int			cpu_clock;					/* in Hertz */
 	const void *memory_read;				/* struct Memory_ReadAddress */
 	const void *memory_write;				/* struct Memory_WriteAddress */
@@ -50,15 +51,12 @@ struct MachineCPU
 
 enum
 {
-	/* flags for CPU go into upper byte */
-	CPU_FLAGS_MASK = 0xff00,
-
 	/* set this if the CPU is used as a slave for audio. It will not be emulated if */
 	/* sound is disabled, therefore speeding up a lot the emulation. */
-	CPU_AUDIO_CPU = 0x8000,
+	CPU_AUDIO_CPU = 0x0002,
 
 	/* the Z80 can be wired to use 16 bit addressing for I/O ports */
-	CPU_16BIT_PORT = 0x4000
+	CPU_16BIT_PORT = 0x0001
 };
 
 
@@ -150,11 +148,13 @@ int cycles_currently_ran(void);
 /* Returns the number of cycles left to run in this timeslice */
 int cycles_left_to_run(void);
 
-/* Returns the number of CPU cycles which take place in one video frame */
-int activecpu_gettotalcycles(void);
+/* Returns the total number of CPU cycles */
+UINT32 activecpu_gettotalcycles(void);
+UINT64 activecpu_gettotalcycles64(void);
 
-/* Returns the number of CPU cycles which take place in one video frame for a given cpu */
-int cpu_gettotalcycles(int cpu);
+/* Returns the total number of CPU cycles for a given cpu */
+UINT32 cpu_gettotalcycles(int cpu);
+UINT64 cpu_gettotalcycles64(int cpu);
 
 /* Returns the number of CPU cycles before the next interrupt handler call */
 int activecpu_geticount(void);
@@ -172,6 +172,12 @@ int cpu_scalebyfcount(int value);
 
 /* Initialize the refresh timer */
 void cpu_init_refresh_timer(void);
+
+/* Recomputes the scanling timing after, e.g., a visible area change */
+void cpu_compute_scanline_timing(void);
+
+/* Returns the number of the video frame we are currently playing */
+int cpu_getcurrentframe(void);
 
 /* Returns the current scanline number */
 int cpu_getscanline(void);

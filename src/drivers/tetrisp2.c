@@ -225,11 +225,11 @@ static size_t tetrisp2_nvram_size;
 NVRAM_HANDLER( tetrisp2 )
 {
 	if (read_or_write)
-		osd_fwrite(file,tetrisp2_nvram,tetrisp2_nvram_size);
+		mame_fwrite(file,tetrisp2_nvram,tetrisp2_nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file,tetrisp2_nvram,tetrisp2_nvram_size);
+			mame_fread(file,tetrisp2_nvram,tetrisp2_nvram_size);
 		else
 		{
 			/* fill in the default values */

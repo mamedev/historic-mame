@@ -38,6 +38,7 @@ void ui_displaymessagewindow(struct mame_bitmap *bitmap,const char *text);
 void ui_displaymenu(struct mame_bitmap *bitmap,const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem);
 int showcopyright(struct mame_bitmap *bitmap);
 int showgamewarnings(struct mame_bitmap *bitmap);
+int showgameinfo(struct mame_bitmap *bitmap);
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);
 
 void init_user_interface(void);
@@ -52,7 +53,15 @@ void switch_ui_orientation(struct mame_bitmap *bitmap);
 void switch_debugger_orientation(struct mame_bitmap *bitmap);
 void switch_true_orientation(struct mame_bitmap *bitmap);
 
+#ifdef __GNUC__
+void CLIB_DECL usrintf_showmessage(const char *text,...)
+      __attribute__ ((format (printf, 1, 2)));
+
+void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
+      __attribute__ ((format (printf, 2, 3)));
+#else
 void CLIB_DECL usrintf_showmessage(const char *text,...);
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...);
+#endif
 
 #endif

@@ -346,7 +346,7 @@ static struct YM2608interface ym2608_interface =
 	{ 0 },
 	{ irqhandler },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static MACHINE_DRIVER_START( wc90 )

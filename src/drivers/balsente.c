@@ -8,6 +8,7 @@
 		* Chicken Shift
 		* Gimme a Break
 		* Goalie Ghost
+		* Grudge Match
 		* Hat Trick
 		* Mini Golf
 		* Name that Tune
@@ -1374,6 +1375,55 @@ INPUT_PORTS_START( stompin )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( grudge )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x80, "1" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x00, "Players" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	/* analog ports */
+	PORT_START
+    PORT_ANALOG( 0xff, 0, IPT_DIAL | IPF_PLAYER1, 50, 20, 0, 0 )
+	PORT_START
+    PORT_ANALOG( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 50, 20, 0, 0 )
+	PORT_START
+    PORT_ANALOG( 0xff, 0, IPT_DIAL | IPF_PLAYER3, 50, 20, 0, 0 )
+	UNUSED_ANALOG
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( rescraid )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -2051,6 +2101,21 @@ ROM_START( rescrdsa )
 ROM_END
 
 
+ROM_START( grudge )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "grudge.ab0", 0x10000, 0x8000, 0x260965ca )
+	ROM_LOAD( "grudge.ab4", 0x18000, 0x8000, 0xc6cd734d )
+	ROM_LOAD( "grudge.cd0", 0x20000, 0x8000, 0xe51db1f2 )
+	ROM_LOAD( "grudge.cd4", 0x28000, 0x8000, 0x6b60e47e )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, 0 )		/* up to 64k of sprites */
+	ROM_LOAD( "grudge.gr0", 0x00000, 0x8000, 0xb9681f53 )
+ROM_END
+
+
 ROM_START( shrike )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "savgu35.bin", 0x10000, 0x2000, 0xdd2230a0 )
@@ -2215,6 +2280,11 @@ static DRIVER_INIT( stompin )
 	expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 32;
 }
 static DRIVER_INIT( rescraid ) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( grudge )
+{
+	install_mem_read_handler(0, 0x9400, 0x9400, grudge_steering_r);
+	expand_roms(EXPAND_NONE); balsente_shooter = 0;
+}
 static DRIVER_INIT( shrike )
 {
 	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA_RAM);
@@ -2256,4 +2326,5 @@ GAME( 1986, spiker,   0,        balsente, spiker,   spiker,   ROT0, "Bally/Sente
 GAME( 1986, stompin,  0,        balsente, stompin,  stompin,  ROT0, "Bally/Sente", "Stompin'" )
 GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider" )
 GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider (Stand-Alone)" )
-GAMEX(1987, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)", GAME_NOT_WORKING )
+GAME( 198?, grudge,   0,        balsente, grudge,   grudge,   ROT0, "Bally/Midway", "Grudge Match (prototype)" )
+GAMEX(198?, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)", GAME_NOT_WORKING )

@@ -219,7 +219,7 @@ void itech8_update_interrupts(int periodic, int tms34061, int blitter)
 	if (blitter != -1) blitter_int = blitter;
 
 	/* handle the 6809 case */
-	if ((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_M6809)
+	if (Machine->drv->cpu[0].cpu_type == CPU_M6809)
 	{
 		/* just modify lines that have changed */
 		if (periodic != -1) cpu_set_nmi_line(0, periodic ? ASSERT_LINE : CLEAR_LINE);
@@ -287,7 +287,7 @@ static void via6522_timer_callback(int which);
 static MACHINE_INIT( itech8 )
 {
 	/* make sure bank 0 is selected */
-	if ((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_M6809)
+	if (Machine->drv->cpu[0].cpu_type == CPU_M6809)
 		cpu_setbank(1, &memory_region(REGION_CPU1)[0x4000]);
 
 	/* reset the PIA (if used) */
@@ -608,9 +608,9 @@ static NVRAM_HANDLER( itech8 )
 	int i;
 
 	if (read_or_write)
-		osd_fwrite(file, main_ram, main_ram_size);
+		mame_fwrite(file, main_ram, main_ram_size);
 	else if (file)
-		osd_fread(file, main_ram, main_ram_size);
+		mame_fread(file, main_ram, main_ram_size);
 	else
 		for (i = 0; i < main_ram_size; i++)
 			main_ram[i] = rand();

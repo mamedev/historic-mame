@@ -54,11 +54,11 @@ typedef unsigned short int word;
 #define FMT(a,b) a, b
 #define PTRS_PER_FORMAT 2
 
-static char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
-static char *nextar[4] = { ",AR0" , ",AR1" , "" , "" } ;
+static const char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
+static const char *nextar[4] = { ",AR0" , ",AR1" , "" , "" } ;
 
 
-static char *TMS32010Formats[] = {
+static const char *TMS32010Formats[] = {
 	FMT("0000ssss0aaaaaaa", "add  %A%S"),
 	FMT("0000ssss10mmn00n", "add  %M%S%N"),
 	FMT("0001ssss0aaaaaaa", "sub  %A%S"),
@@ -176,8 +176,8 @@ typedef struct opcode {
 	word mask;			/* instruction mask */
 	word bits;			/* constant bits */
 	word extcode;		/* value that gets extension code */
-	char *parse;		/* how to parse bits */
-	char *fmt;			/* instruction format */
+	const char *parse;		/* how to parse bits */
+	const char *fmt;			/* instruction format */
 } TMS32010Opcode;
 
 static TMS32010Opcode Op[MAX_OPS+1];
@@ -185,7 +185,7 @@ static int OpInizialized = 0;
 
 static void InitDasm32010(void)
 {
-	char *p, **ops;
+	const char *p, **ops;
 	word mask, bits;
 	int bit;
 	int i;
@@ -248,7 +248,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 	int code;
 	int bit;
 	char *strtmp;
-	char *cp;				/* character pointer in OpFormats */
+	const char *cp;				/* character pointer in OpFormats */
 
 	if (!OpInizialized) InitDasm32010();
 

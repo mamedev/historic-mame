@@ -6,6 +6,7 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 #include "mamedbg.h"
+#include "state.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -499,12 +500,12 @@ static struct cpu_info v70_i = {
 #define PortRead32  v60.info->pr32
 #define PortWrite32 v60.info->pw32
 
-static void messagebox(char *msg)
+static void messagebox(const char *msg)
 {
 	logerror("%s", msg);
 }
 
-static void logWrite(int channel, char *format, ...)
+static void logWrite(int channel, const char *format, ...)
 {
 	char msg[1024];
 	va_list arg;
@@ -576,8 +577,9 @@ static int v60_default_irq_cb(int irqline)
 	return 0;
 }
 
-void v60_init(void)
+static void base_init(const char *type)
 {
+	int cpu = cpu_getactivecpu();
 	static int opt_init = 0;
 	if(!opt_init) {
 		InitTables();	// set up opcode tables
@@ -589,16 +591,31 @@ void v60_init(void)
 
 	// Set PIR (Processor ID) for NEC v60. LSB is reserved to NEC,
 	// so I don't know what it contains.
-	PIR = 0x00006000;
 	v60.irq_cb = v60_default_irq_cb;
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
+
+	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 58);
+	state_save_register_int   (type, cpu, "irq_line", &v60.irq_line);
+	state_save_register_int   (type, cpu, "nmi_line", &v60.nmi_line);
+	state_save_register_UINT32(type, cpu, "ppc",      &PPC, 1);
+	state_save_register_UINT8 (type, cpu, "f.cy",     &_CY, 1);
+	state_save_register_UINT8 (type, cpu, "f.ov",     &_OV, 1);
+	state_save_register_UINT8 (type, cpu, "f.f",      &_S, 1);
+	state_save_register_UINT8 (type, cpu, "f.z",      &_Z, 1);
+}
+
+void v60_init(void)
+{
+	base_init("v60");
+	PIR = 0x00006000;
 	v60.info = &v60_i;
 }
 
 void v70_init(void)
 {
-	v60_init();
+	base_init("v70");
+	PIR = 0x00007000;
 	v60.info = &v70_i;
 }
 

@@ -13,10 +13,11 @@
 #include "vidhrdw/konamiic.h"
 
 static int ttl_gfx_index;
-static struct tilemap *ttl_tilemap;
+static struct tilemap *ttl_tilemap, *rng_936_tilemap;
 static unsigned short ttl_vram[0x1000];
 
 static int sprite_colorbase;
+extern data16_t* rng_936_videoram;
 
 /* TTL text plane stuff */
 
@@ -65,6 +66,26 @@ WRITE16_HANDLER( ttl_ram_w )
 	COMBINE_DATA(&ttl_vram[offset]);
 }
 
+/* 53936 (PSAC2) rotation/zoom plane */
+
+WRITE16_HANDLER(rng_936_videoram_w)
+{
+	COMBINE_DATA(&rng_936_videoram[offset]);
+	tilemap_mark_tile_dirty(rng_936_tilemap, offset/2);
+}
+
+static void get_rng_936_tile_info(int tile_index)
+{
+	int tileno, colour, flipx;
+
+	tileno = rng_936_videoram[tile_index*2+1] & 0x3fff;
+	flipx =  (rng_936_videoram[tile_index*2+1] & 0xc000) >> 14;
+
+	colour = 0x10 + (rng_936_videoram[tile_index*2] & 0x000f);
+
+	SET_TILE_INFO(0, tileno, colour, TILE_FLIPYX(flipx))
+}
+
 
 VIDEO_START(rng)
 {
@@ -85,6 +106,12 @@ VIDEO_START(rng)
 	{
 		return 1;
 	}
+
+	K053936_wraparound_enable(0, 1);
+	K053936_set_offset(0, 33, 0);
+
+	rng_936_tilemap = tilemap_create(get_rng_936_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	tilemap_set_transparent_pen(rng_936_tilemap, 0);
 
 	/* find first empty slot to decode gfx */
 	for (ttl_gfx_index = 0; ttl_gfx_index < MAX_GFX_ELEMENTS; ttl_gfx_index++)
@@ -124,6 +151,8 @@ VIDEO_UPDATE(rng)
 {
 	fillbitmap(priority_bitmap, 0, NULL);
 	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
+
+	K053936_0_zoom_draw(bitmap, cliprect, rng_936_tilemap, 0, 0);
 
 	tilemap_mark_all_tiles_dirty(ttl_tilemap);
 	K053247_sprites_draw(bitmap, cliprect);

@@ -150,9 +150,10 @@
   secure than the previous ones, which has not been broken yet. It might be
   similar to the one used in System 16 games.
 
+  317-5012      Ganbare Chinsan Ooshoubu  MC-8123A
   317-0014      DakkoChan Jansoh
   317-0029      Block Gal              NEC MC8123B 651 packaged like System16's 68000
-  317-0030      Perfect Billiards
+  317-0030      Perfect Billiard
   317-0042      Opa Opa
   317-0043      Wonder Boy Monster Land
   317-0054      Shinobi (sound CPU)    NEC MC8123B 651

@@ -16,7 +16,7 @@ static int VDC_register,vram_ptr;
 static unsigned char *HuC6270_vram,*tile_dirty,*sprite_dirty,*vram_dirty;
 static struct mame_bitmap *tile_bitmap,*front_bitmap;
 
-static int current_scanline,next_update_first_line,inc_value;
+static int current_scanline,inc_value;
 static int irq_enable,rcr_enable,sb_enable,bb_enable,bldwolf_vblank;
 
 
@@ -390,6 +390,7 @@ VIDEO_UPDATE( battlera )
 	/* Nothing */
 }
 
+#if 0
 static void partial_refresh(struct mame_bitmap *bitmap,int current_line)
 {
 	struct rectangle clip;
@@ -410,6 +411,7 @@ static void partial_refresh(struct mame_bitmap *bitmap,int current_line)
 
 	next_update_first_line = current_line + 1;
 }
+#endif
 
 void battlera_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
 {

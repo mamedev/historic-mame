@@ -35,7 +35,9 @@ added together (=873b), subtracted [f840] (=87d9)
 ***************************************************************************/
 #include "driver.h"
 
+#if 0
 static data8_t *sharedram;
+#endif
 
 /* Variables defined in vidhrdw */
 unsigned char *spdbuggy_bgram, *spdbuggy_fgram;
@@ -59,9 +61,10 @@ VIDEO_UPDATE( spdbuggy );
 
 
 ***************************************************************************/
-
+#if 0
 static READ_HANDLER ( sharedram_r )	{ return sharedram[offset]; }
 static WRITE_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
+#endif
 
 /*
 	a9e.b	accel (00-70?)
@@ -503,7 +506,7 @@ ROM_START( spdbuggy )
 
 ROM_END
 
-GAME( 1986, spdbuggy, 0, spdbuggy, spdbuggy, 0, ROT0, "Tatsumi", "Speed Buggy" )
+GAMEX( 1986, spdbuggy, 0, spdbuggy, spdbuggy, 0, ROT0, "Tatsumi", "Speed Buggy", GAME_NO_SOUND )
 
 
 

@@ -61,18 +61,18 @@ void profiler__mark(int type)
 	if (type >= PROFILER_CPU1 && type <= PROFILER_CPU8)
 		profile.cpu_context_switches[memory]++;
 
-	curr_cycles = osd_cycles();
+	curr_cycles = osd_profiling_ticks();
 
 	if (type != PROFILER_END)
 	{
-		if (FILO_length >= 10)
-		{
-logerror("Profiler error: FILO buffer overflow\n");
-			return;
-		}
-
 		if (FILO_length > 0)
 		{
+			if (FILO_length >= 10)
+			{
+logerror("Profiler error: FILO buffer overflow\n");
+				return;
+			}
+
 			/* handle nested calls */
 			profile.count[memory][FILO_type[FILO_length-1]] += curr_cycles - FILO_start[FILO_length-1];
 		}
@@ -88,8 +88,8 @@ logerror("Profiler error: FILO buffer underflow\n");
 			return;
 		}
 
-		profile.count[memory][FILO_type[FILO_length-1]] += curr_cycles - FILO_start[FILO_length-1];
 		FILO_length--;
+		profile.count[memory][FILO_type[FILO_length]] += curr_cycles - FILO_start[FILO_length];
 		if (FILO_length > 0)
 		{
 			/* handle nested calls */
@@ -105,7 +105,7 @@ void profiler_show(struct mame_bitmap *bitmap)
 	UINT64 computed;
 	int line;
 	char buf[30];
-	static char *names[PROFILER_TOTAL] =
+	static const char *names[PROFILER_TOTAL] =
 	{
 		"CPU 1  ",
 		"CPU 2  ",

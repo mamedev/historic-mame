@@ -93,6 +93,7 @@ static UINT8 lastshoot;
  *
  *************************************/
 
+#if 0
 static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 sens3,
 							UINT16 *word1, UINT16 *word2, UINT16 *word3, UINT8 *beams)
 {
@@ -116,7 +117,7 @@ static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 se
 	if (sens3 > sens2)
 		*beams |= 2;
 }
-
+#endif
 
 
 /*************************************
@@ -130,6 +131,7 @@ static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 se
  *
  *************************************/
 
+#if 0
 static void words_to_inters(UINT16 word1, UINT16 word2, UINT16 word3, UINT8 beams,
 							UINT16 *inter1, UINT16 *inter2, UINT16 *inter3)
 {
@@ -163,7 +165,7 @@ static void words_to_inters(UINT16 word1, UINT16 word2, UINT16 word3, UINT8 beam
 	/* intermediate value 3 is always equal to the third word */
 	*inter3 = word3;
 }
-
+#endif
 
 
 /*************************************

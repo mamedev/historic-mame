@@ -761,7 +761,10 @@ static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right,
 
 		/* generate from the appropriate source */
 		if (!base)
+		{
+logerror("NULL region base %d\n",voice->control >> 14);
 			generate_dummy(voice, base, left, right, samples);
+		}
 		else if (voice->control & 0x2000)
 			generate_ulaw(voice, base, left, right, samples);
 		else

@@ -100,6 +100,7 @@ static void generate_gr_screen(
 	}
 }
 
+#if 0
 static void set_tile_bank( int data ){
 	sys16_tile_bank1 = data&0xf;
 	sys16_tile_bank0 = (data>>4)&0xf;
@@ -109,6 +110,7 @@ static void set_tile_bank18( int data ){
 	sys16_tile_bank0 = data&0xf;
 	sys16_tile_bank1 = (data>>4)&0xf;
 }
+#endif
 
 static void set_page( int page[4], data16_t data ){
 	page[1] = data>>12;
@@ -151,6 +153,7 @@ static READ16_HANDLER( sys16_coinctrl_r ){
 	return coinctrl;
 }
 
+#if 0
 static WRITE16_HANDLER( sys16_coinctrl_w )
 {
 	if( ACCESSING_LSB ){
@@ -164,7 +167,7 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 		/* eswat sets bit 4 */
 	}
 }
-
+#endif
 
 
 static READ16_HANDLER( ho_io_x_r ){ return input_port_0_r( offset ); }

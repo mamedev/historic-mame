@@ -389,7 +389,7 @@ struct ipd
 
 struct ik
 {
-	char *name;
+	const char *name;
 	UINT32 type;
 	UINT32 val;
 };

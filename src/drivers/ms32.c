@@ -46,9 +46,11 @@ The Custom chip is probably related to the encryption?
 
 Desert War     - Custom chip: JALECO SS91022-10 (144 pin PQFP) (located on small plug-in board with) (ID: SE93139 EB91022-30056)
 Game Paradise  - Custom chip: JALECO SS91022-10 9515EV 420201 06441
-kirarast       - Custom chip: JALECO SS92047-01 9425EV 367821 06441
-Tetris Plus    - Custom chip: JALECO SS92046-01 9412EV 450891 06441
 Tetris Plus 2  - Custom chip: JALECO SS91022-10 9513EV 370121 06441
+Tetris Plus    - Custom chip: JALECO SS92046-01 9412EV 450891 06441
+kirarast       - Custom chip: JALECO SS92047-01 9425EV 367821 06441
+Gratia         - Custom chip: JALECO SS92047-01 9423EV 450891 06441
+P47-Aces       - Custom chip: JALECO SS92048-01 9410EV 436091 06441
 others are unknown
 
 Notes
@@ -63,9 +65,9 @@ Some of the roms for each game are encrypted.
 ToDo / Notes
 ------------
 
-Decrypt BG Graphics
+Hook up BG layer
 
-Hook Up Other Layers (Doing Point 1. will help) *hooked up roz layer pjp / dh, isn't 100% right, can be split into two tilemaps? *
+Hook Up Other Layers *hooked up roz layer pjp / dh, isn't 100% right, can be split into two tilemaps? *
  -- There is a hack which shows most of the bg's in gratia, bbbxing still has problems with the bg's as does gametngk etc.
 
 Z80 + Sound Bits
@@ -94,13 +96,12 @@ kirarast - locks up after a few seconds of attract mode, you can choose to start
 hayaosi1 - sets a palette and seemingly little else, not investigated
 f1superb - f1superb doesn't display the sprites correctly unless you leave it for 2 attract demos, from then on its ok....
          - the road is straight despite the road signs saying otherwise? :-p
-p47aces - the dump is bad, 2 of the program roms seem to be half the correct size, the zip was also corrupt.
 
 
-Jalceo Megasystem 32 Game List - thanks to Yasuhiro
+Jaleco Megasystem 32 Game List - thanks to Yasuhiro
 ---------------------------------------------------
 
-*P-47 Aces (p47aces)
+P-47 Aces (p47aces)
 Game Tengoku / Game Paradise (gametngk)
 Tetris Plus (tetrisp)
 Tetris Plus 2 (tp2m32)
@@ -132,6 +133,7 @@ data32_t* ms32_fc000000;
 data32_t* ms32_fce00000;
 data32_t* ms32_fd180000;
 data32_t* ms32_palram;
+data32_t* ms32_bg2ram;
 data32_t* ms32_bgram;
 data32_t* ms32_spram;
 data32_t* ms32_txram;
@@ -139,6 +141,7 @@ data32_t* ms32_mainram;
 
 WRITE32_HANDLER( ms32_txram_w );
 WRITE32_HANDLER( ms32_bgram_w );
+WRITE32_HANDLER( ms32_bg2ram_w );
 VIDEO_START( ms32 );
 VIDEO_UPDATE( ms32 );
 
@@ -318,7 +321,8 @@ static MEMORY_WRITE32_START( ms32_writemem )
 	{ 0xfe800000, 0xfe83ffff, MWA32_RAM, &ms32_spram }, /* sprites - not all? */
 /**/{ 0xfe100000, 0xfe1fffff, MWA32_RAM }, /* gratia writes here ?! */
 /**/{ 0xfe840000, 0xfe87ffff, MWA32_RAM }, /* unused? but gratia tests */
-	{ 0xfec00000, 0xfec0ffff, ms32_txram_w, &ms32_txram }, /* fg layer */
+	{ 0xfec00000, 0xfec07fff, ms32_txram_w, &ms32_txram }, /* fg layer */
+	{ 0xfec08000, 0xfec0ffff, ms32_bg2ram_w, &ms32_bg2ram }, /* bg2 layer */
 /**/{ 0xfec10000, 0xfec1ffff, MWA32_RAM }, /* unused? but gratia tests */
 	{ 0xfee00000, 0xfee1ffff, MWA32_RAM, &ms32_mainram },
 	{ 0xffe00000, 0xffffffff, MWA32_ROM },
@@ -742,10 +746,10 @@ static struct GfxLayout layout_8x8x8 =
 
 static struct GfxDecodeInfo ms32_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spritelayout_8x8x8,   0x0000, 0x100 },
-	{ REGION_GFX2, 0, &bglayout_16x16x8, 0x2000, 0x200 },
-	{ REGION_GFX3, 0, &bglayout_16x16x8, 0x1000, 0x200 },
-	{ REGION_GFX4, 0, &layout_8x8x8, 0x6000, 0x10 },
+	{ REGION_GFX1, 0, &spritelayout_8x8x8, 0x0000, 0x10 },
+	{ REGION_GFX2, 0, &bglayout_16x16x8,   0x2000, 0x10 },
+	{ REGION_GFX3, 0, &bglayout_16x16x8,   0x1000, 0x10 },
+	{ REGION_GFX4, 0, &layout_8x8x8,       0x6000, 0x10 },
 	{ -1 }
 };
 
@@ -831,708 +835,538 @@ static MACHINE_DRIVER_START( ms32 )
 	/* Sound is unemulated YMF271 */
 MACHINE_DRIVER_END
 
-/********** DECRYPT **********/
-
-/* bg's aren't done at all yet */
-
-/* 3 known types */
-
-/* SS91022-10: desertwr, gratia, tp2m32, gametngk */
-/* p47aces might be SS91022-10 if the alpha numerics are in a different location */
-
-/* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
-
-/* SS92047-01: kirarast */
-
-static int bt(int v, int b)
-{
-  return (v & (1<<b)) != 0;
-}
-
-/* SS91022-10: desertwr, gratia, tp2m32, gametngk, p47aces? */
-
-int decrypt_ms32_tx_ss91022_10(void)
-{
-	int i;
-	unsigned char *source_data;
-	int source_size;
-
-	unsigned char *result_data;
-
-	source_data = memory_region       ( REGION_GFX4 );
-	source_size = memory_region_length( REGION_GFX4 );
-
-	result_data = malloc(source_size);
-
-  for(i=0; i<source_size; i++) {
-    unsigned char x;
-    int j;
-
-    j = 0x00000;
-
-    if(  bt(i, 5))
-      j ^= 0x00001;
-    if(  bt(i, 5)^bt(i, 1))
-      j ^= 0x00002;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2))
-      j ^= 0x00004;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15))
-      j ^= 0x00008;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4))
-      j ^= 0x00010;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12))
-      j ^= 0x00020;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6))
-      j ^= 0x00040;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16))
-      j ^= 0x00080;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8))
-      j ^= 0x00100;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8)^bt(i, 9))
-      j ^= 0x00200;
-
-    if(  bt(i, 10))
-      j ^= 0x00400;
-    if(  bt(i, 10)^bt(i, 11))
-      j ^= 0x00800;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0))
-      j ^= 0x01000;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13))
-      j ^= 0x02000;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14))
-      j ^= 0x04000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3))
-      j ^= 0x08000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7))
-      j ^= 0x10000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17))
-      j ^= 0x20000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17)^bt(i, 18))
-      j ^= 0x40000;
-
-    x = source_data[j];
-
-    if(bt(j, 11)^bt(j, 12))
-      x ^= 0x01;
-
-    if(bt(j, 0)^bt(j, 1))
-      x ^= 0x02;
-
-    if(bt(j, 1)^bt(j, 2))
-      x ^= 0x04;
-
-    if(1^bt(j, 14)^bt(j, 15))
-      x ^= 0x08;
-
-    if(bt(j, 3)^bt(j, 4))
-      x ^= 0x10;
-
-    if(1^bt(j, 0))
-      x ^= 0x20;
-
-    if(1^bt(j, 5)^bt(j, 6))
-      x ^= 0x40;
-
-    if(bt(j, 15)^bt(j, 16))
-      x ^= 0x80;
-
-    result_data[i] = x;
-  }
-
-	memcpy (source_data, result_data, source_size);
-	free (result_data);
-
-	return 0;
-
-}
-
-/* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
-
-int decrypt_ms32_tx_ss92046_01(void)
-{
-	int i;
-	unsigned char *source_data;
-	int source_size;
-
-	unsigned char *result_data;
-
-	source_data = memory_region       ( REGION_GFX4 );
-	source_size = memory_region_length( REGION_GFX4 );
-
-	result_data = malloc(source_size);
-
-   for(i=0; i<source_size; i++) {
-     unsigned char x;
-     int j;
-
-     j = 0x00000;
-
-     if(1^bt(i, 5))
-       j ^= 0x00001;
-     if(1^bt(i, 5)^bt(i, 1))
-       j ^= 0x00002;
-     if(  bt(i, 5)^bt(i, 1)^bt(i, 2))
-       j ^= 0x00004;
-     if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15))
-       j ^= 0x00008;
-     if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4))
-       j ^= 0x00010;
-     if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12))
-       j ^= 0x00020;
-     if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6))
-       j ^= 0x00040;
-     if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16))
-       j ^= 0x00080;
-     if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8))
-       j ^= 0x00100;
-     if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8)^bt(i, 9))
-       j ^= 0x00200;
-
-     if(  bt(i, 10))
-       j ^= 0x00400;
-     if(  bt(i, 10)^bt(i, 11))
-       j ^= 0x00800;
-     if(1^bt(i, 10)^bt(i, 11)^bt(i, 0))
-       j ^= 0x01000;
-     if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13))
-       j ^= 0x02000;
-     if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14))
-       j ^= 0x04000;
-     if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3))
-       j ^= 0x08000;
-     if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7))
-       j ^= 0x10000;
-     if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17))
-       j ^= 0x20000;
-     if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17)^bt(i, 18))
-       j ^= 0x40000;
-
-     x = source_data[j];
-
-     if(1^bt(j, 11)^bt(j, 12))
-       x ^= 0x01;
-
-     if(1^bt(j, 0)^bt(j, 1))
-       x ^= 0x02;
-
-     if(bt(j, 1)^bt(j, 2))
-       x ^= 0x04;
-
-     if(bt(j, 14)^bt(j, 15))
-       x ^= 0x08;
-
-     if(bt(j, 3)^bt(j, 4))
-       x ^= 0x10;
-
-     if(bt(j, 0))
-       x ^= 0x20;
-
-     if(bt(j, 5)^bt(j, 6))
-       x ^= 0x40;
-
-     if(bt(j, 15)^bt(j, 16))
-       x ^= 0x80;
-
-     result_data[i] = x;
-  }
-
-	memcpy (source_data, result_data, source_size);
-	free (result_data);
-
-	return 0;
-
-}
-
-/* SS92047-01: kirarast */
-
-int decrypt_ms32_tx_ss92047_01(void)
-{
-	int i;
-	unsigned char *source_data;
-	int source_size;
-
-	unsigned char *result_data;
-
-	source_data = memory_region       ( REGION_GFX4 );
-	source_size = memory_region_length( REGION_GFX4 );
-
-	result_data = malloc(source_size);
-
-  for(i=0; i<source_size; i++) {
-    unsigned char x;
-    int j;
-
-    j = 0x00000;
-
-    if(  bt(i, 5))
-      j ^= 0x00001;
-    if(  bt(i, 5)^bt(i, 1))
-      j ^= 0x00002;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2))
-      j ^= 0x00004;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15))
-      j ^= 0x00008;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4))
-      j ^= 0x00010;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12))
-      j ^= 0x00020;
-    if(1^bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6))
-      j ^= 0x00040;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16))
-      j ^= 0x00080;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8))
-      j ^= 0x00100;
-    if(  bt(i, 5)^bt(i, 1)^bt(i, 2)^bt(i, 15)^bt(i, 4)^bt(i, 12)^bt(i, 6)^bt(i, 16)^bt(i, 8)^bt(i, 9))
-      j ^= 0x00200;
-
-    if(  bt(i, 10))
-      j ^= 0x00400;
-    if(  bt(i, 10)^bt(i, 11))
-      j ^= 0x00800;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0))
-      j ^= 0x01000;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13))
-      j ^= 0x02000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14))
-      j ^= 0x04000;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3))
-      j ^= 0x08000;
-    if(1^bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7))
-      j ^= 0x10000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17))
-      j ^= 0x20000;
-    if(  bt(i, 10)^bt(i, 11)^bt(i, 0)^bt(i, 13)^bt(i, 14)^bt(i, 3)^bt(i, 7)^bt(i, 17)^bt(i, 18))
-      j ^= 0x40000;
-
-    x = source_data[j];
-
-    if(1^bt(j, 11)^bt(j, 12))
-      x ^= 0x01;
-
-    if(bt(j, 0)^bt(j, 1))
-      x ^= 0x02;
-
-    if(1^bt(j, 1)^bt(j, 2))
-      x ^= 0x04;
-
-    if(bt(j, 14)^bt(j, 15))
-      x ^= 0x08;
-
-    if(bt(j, 3)^bt(j, 4))
-      x ^= 0x10;
-
-    if(bt(j, 0))
-      x ^= 0x20;
-
-    if(1^bt(j, 5)^bt(j, 6))
-      x ^= 0x40;
-
-    if(bt(j, 15)^bt(j, 16))
-      x ^= 0x80;
-
-    result_data[i] = x;
-  }
-
-	memcpy (source_data, result_data, source_size);
-	free (result_data);
-
-	return 0;
-
-}
-
-
-static DRIVER_INIT (ss91022_10)
-{
-	decrypt_ms32_tx_ss91022_10();
-}
-
-static DRIVER_INIT (ss92046_01)
-{
-	decrypt_ms32_tx_ss92046_01();
-}
-
-static DRIVER_INIT (ss92047_01)
-{
-	decrypt_ms32_tx_ss92047_01();
-}
 
 /********** ROM LOADING **********/
 
 ROM_START( bbbxing )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("bbbx25.bin", 0x000003, 0x80000, 0xb526b41e )
-	ROM_LOAD32_BYTE("bbbx27.bin", 0x000002, 0x80000, 0x45b27ad8 )
-	ROM_LOAD32_BYTE("bbbx29.bin", 0x000001, 0x80000, 0x85bbbe79 )
-	ROM_LOAD32_BYTE("bbbx31.bin", 0x000000, 0x80000, 0xe0c865ed )
+ 	ROM_LOAD32_BYTE( "bbbx25.bin", 0x000003, 0x80000, 0xb526b41e )
+	ROM_LOAD32_BYTE( "bbbx27.bin", 0x000002, 0x80000, 0x45b27ad8 )
+	ROM_LOAD32_BYTE( "bbbx29.bin", 0x000001, 0x80000, 0x85bbbe79 )
+	ROM_LOAD32_BYTE( "bbbx31.bin", 0x000000, 0x80000, 0xe0c865ed )
 
 	ROM_REGION( 0x1100000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles? */
-	ROM_LOAD16_BYTE ("bbbx1.bin",   0x0000001, 0x200000, 0xc1c10c3b )
-	ROM_LOAD16_BYTE ("bbbx13.bin",  0x0000000, 0x200000, 0x4b8c1574 )
-	ROM_LOAD16_BYTE ("bbbx2.bin",   0x0400001, 0x200000, 0x03b77c1e )
-	ROM_LOAD16_BYTE ("bbbx14.bin",  0x0400000, 0x200000, 0xe9cfd83b )
-	ROM_LOAD16_BYTE ("bbbx3.bin",   0x0800001, 0x200000, 0xbba0d1a4 )
-	ROM_LOAD16_BYTE ("bbbx15.bin",  0x0800000, 0x200000, 0x6ab64a10 )
-	ROM_LOAD16_BYTE ("bbbx4.bin",   0x0c00001, 0x200000, 0x97f97e3a )
-	ROM_LOAD16_BYTE ("bbbx16.bin",  0x0c00000, 0x200000, 0xe001d6cb )
-	ROM_LOAD16_BYTE ("bbbx5.bin",   0x1000001, 0x080000, 0x64989edf )
-	ROM_LOAD16_BYTE ("bbbx17.bin",  0x1000000, 0x080000, 0x1d7ebaf0 )
+	ROM_LOAD16_BYTE( "bbbx1.bin",   0x0000001, 0x200000, 0xc1c10c3b )
+	ROM_LOAD16_BYTE( "bbbx13.bin",  0x0000000, 0x200000, 0x4b8c1574 )
+	ROM_LOAD16_BYTE( "bbbx2.bin",   0x0400001, 0x200000, 0x03b77c1e )
+	ROM_LOAD16_BYTE( "bbbx14.bin",  0x0400000, 0x200000, 0xe9cfd83b )
+	ROM_LOAD16_BYTE( "bbbx3.bin",   0x0800001, 0x200000, 0xbba0d1a4 )
+	ROM_LOAD16_BYTE( "bbbx15.bin",  0x0800000, 0x200000, 0x6ab64a10 )
+	ROM_LOAD16_BYTE( "bbbx4.bin",   0x0c00001, 0x200000, 0x97f97e3a )
+	ROM_LOAD16_BYTE( "bbbx16.bin",  0x0c00000, 0x200000, 0xe001d6cb )
+	ROM_LOAD16_BYTE( "bbbx5.bin",   0x1000001, 0x080000, 0x64989edf )
+	ROM_LOAD16_BYTE( "bbbx17.bin",  0x1000000, 0x080000, 0x1d7ebaf0 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 ? */
-	ROM_LOAD ("bbbx9.bin",   0x000000, 0x200000, 0xa41cb650 )
+	ROM_LOAD( "bbbx9.bin",   0x000000, 0x200000, 0xa41cb650 )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("bbbx11.bin",  0x000000, 0x200000, 0x85238ca9 )
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "bbbx11.bin",  0x000000, 0x200000, 0x85238ca9 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("bbbx32-2.bin",0x000000, 0x080000, 0x3ffdae75 )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )	// just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "bbbx32-2.bin",0x000000, 0x080000, 0x3ffdae75 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("bbbx21.bin",  0x000000, 0x040000, 0x5f3ea01f )
+	ROM_LOAD( "bbbx21.bin",  0x000000, 0x040000, 0x5f3ea01f )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("bbbx22.bin",  0x000000, 0x200000, 0x0fa26f65 ) // common samples
-	ROM_LOAD ("bbbx23.bin",  0x200000, 0x200000, 0xb7875a23 )
+	ROM_LOAD( "bbbx22.bin",  0x000000, 0x200000, 0x0fa26f65 ) // common samples
+	ROM_LOAD( "bbbx23.bin",  0x200000, 0x200000, 0xb7875a23 )
 ROM_END
 
 ROM_START( desertwr )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("93166-26.37", 0x000003, 0x80000, 0x582b9584 )
-	ROM_LOAD32_BYTE("93166-27.38", 0x000002, 0x80000, 0xcb60dda3 )
-	ROM_LOAD32_BYTE("93166-28.39", 0x000001, 0x80000, 0x0de40efb )
-	ROM_LOAD32_BYTE("93166-29.40", 0x000000, 0x80000, 0xfc25eae2 )
+ 	ROM_LOAD32_BYTE( "93166-26.37", 0x000003, 0x80000, 0x582b9584 )
+	ROM_LOAD32_BYTE( "93166-27.38", 0x000002, 0x80000, 0xcb60dda3 )
+	ROM_LOAD32_BYTE( "93166-28.39", 0x000001, 0x80000, 0x0de40efb )
+	ROM_LOAD32_BYTE( "93166-29.40", 0x000000, 0x80000, 0xfc25eae2 )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 sprite roms */
-	ROM_LOAD16_BYTE ("94038-01.20", 0x000000, 0x200000, 0xf11f83e2 )
-	ROM_LOAD16_BYTE ("94038-02.3",  0x000001, 0x200000, 0x3d1fa710 )
-	ROM_LOAD16_BYTE ("94038-03.21", 0x400000, 0x200000, 0x84fd5790 )
-	ROM_LOAD16_BYTE ("94038-04.4",  0x400001, 0x200000, 0xb9ef5b78 )
-	ROM_LOAD16_BYTE ("94038-05.22", 0x800000, 0x200000, 0xfeee1b8d )
-	ROM_LOAD16_BYTE ("94038-06.5",  0x800001, 0x200000, 0xd417f289 )
-	ROM_LOAD16_BYTE ("94038-07.23", 0xc00000, 0x200000, 0x426f4193 )
-	ROM_LOAD16_BYTE ("94038-08.6",  0xc00001, 0x200000, 0xf4088399 )
+	ROM_LOAD16_BYTE( "94038-01.20", 0x000000, 0x200000, 0xf11f83e2 )
+	ROM_LOAD16_BYTE( "94038-02.3",  0x000001, 0x200000, 0x3d1fa710 )
+	ROM_LOAD16_BYTE( "94038-03.21", 0x400000, 0x200000, 0x84fd5790 )
+	ROM_LOAD16_BYTE( "94038-04.4",  0x400001, 0x200000, 0xb9ef5b78 )
+	ROM_LOAD16_BYTE( "94038-05.22", 0x800000, 0x200000, 0xfeee1b8d )
+	ROM_LOAD16_BYTE( "94038-06.5",  0x800001, 0x200000, 0xd417f289 )
+	ROM_LOAD16_BYTE( "94038-07.23", 0xc00000, 0x200000, 0x426f4193 )
+	ROM_LOAD16_BYTE( "94038-08.6",  0xc00001, 0x200000, 0xf4088399 )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 bg roms */
-	ROM_LOAD ("94038-11.13", 0x000000, 0x200000, 0xbf2ec3a3 )
-	ROM_LOAD ("94038-12.14", 0x200000, 0x200000, 0xd0e113da )
+	ROM_LOAD( "94038-11.13", 0x000000, 0x200000, 0xbf2ec3a3 )
+	ROM_LOAD( "94038-12.14", 0x200000, 0x200000, 0xd0e113da )
 
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("94038-10.11", 0x000000, 0x200000, 0x1e17f2a9 )
-	ROM_LOAD ("94038-09.12", 0x200000, 0x200000, 0x72ec1ce7 )
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "94038-09.12", 0x000000, 0x200000, 0x72ec1ce7 )
+	ROM_LOAD( "94038-10.11", 0x200000, 0x200000, 0x1e17f2a9 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("93166-30.41", 0x000000, 0x080000, 0x980ab89c )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad ) //	just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "93166-30.41", 0x000000, 0x080000, 0x980ab89c )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("93166-21.30", 0x000000, 0x040000, 0x9300be4c )
+	ROM_LOAD( "93166-21.30", 0x000000, 0x040000, 0x9300be4c )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("94038-13.34", 0x000000, 0x200000, 0xb0cac8f2 )
-	ROM_LOAD ("92042-01.33", 0x200000, 0x200000, 0x0fa26f65 ) // common samples
+	ROM_LOAD( "94038-13.34", 0x000000, 0x200000, 0xb0cac8f2 )
+	ROM_LOAD( "92042-01.33", 0x200000, 0x200000, 0x0fa26f65 ) // common samples
 ROM_END
 
 ROM_START( f1superb )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("f1sb26.bin", 0x000003, 0x80000, 0x042fccd5 )
-	ROM_LOAD32_BYTE("f1sb27.bin", 0x000002, 0x80000, 0x5f96cf32 )
-	ROM_LOAD32_BYTE("f1sb28.bin", 0x000001, 0x80000, 0xcfda8003 )
-	ROM_LOAD32_BYTE("f1sb29.bin", 0x000000, 0x80000, 0xf21f1481 )
+ 	ROM_LOAD32_BYTE( "f1sb26.bin", 0x000003, 0x80000, 0x042fccd5 )
+	ROM_LOAD32_BYTE( "f1sb27.bin", 0x000002, 0x80000, 0x5f96cf32 )
+	ROM_LOAD32_BYTE( "f1sb28.bin", 0x000001, 0x80000, 0xcfda8003 )
+	ROM_LOAD32_BYTE( "f1sb29.bin", 0x000000, 0x80000, 0xf21f1481 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* 8x8 not all? */
-	ROM_LOAD16_BYTE ("f1sb1.bin",  0x0000001, 0x200000, 0x53a3a97b )
-	ROM_LOAD16_BYTE ("f1sb13.bin", 0x0000000, 0x200000, 0x36565a99 )
-	ROM_LOAD16_BYTE ("f1sb2.bin",  0x0400001, 0x200000, 0xa452f50a )
-	ROM_LOAD16_BYTE ("f1sb14.bin", 0x0400000, 0x200000, 0xc0c20490 )
-	ROM_LOAD16_BYTE ("f1sb3.bin",  0x0800001, 0x200000, 0x265d068c )
-	ROM_LOAD16_BYTE ("f1sb15.bin", 0x0800000, 0x200000, 0x575a146e )
-	ROM_LOAD16_BYTE ("f1sb4.bin",  0x0c00001, 0x200000, 0x0ccc66fd )
-	ROM_LOAD16_BYTE ("f1sb16.bin", 0x0c00000, 0x200000, 0xa2d017a1 )
-	ROM_LOAD16_BYTE ("f1sb5.bin",  0x1000001, 0x200000, 0xbff4271b )
-	ROM_LOAD16_BYTE ("f1sb17.bin", 0x1000000, 0x200000, 0x2b9739d5 )
-	ROM_LOAD16_BYTE ("f1sb6.bin",  0x1400001, 0x200000, 0x6caf48ec )
-	ROM_LOAD16_BYTE ("f1sb18.bin", 0x1400000, 0x200000, 0xc49055ff )
-	ROM_LOAD16_BYTE ("f1sb7.bin",  0x1800001, 0x200000, 0xa5458947 )
-	ROM_LOAD16_BYTE ("f1sb19.bin", 0x1800000, 0x200000, 0xb7cacf0d )
-	ROM_LOAD16_BYTE ("f1sb8.bin",  0x1c00001, 0x200000, 0xba3f1533 )
-	ROM_LOAD16_BYTE ("f1sb20.bin", 0x1c00000, 0x200000, 0xfa349897 )
+	ROM_LOAD16_BYTE( "f1sb1.bin",  0x0000001, 0x200000, 0x53a3a97b )
+	ROM_LOAD16_BYTE( "f1sb13.bin", 0x0000000, 0x200000, 0x36565a99 )
+	ROM_LOAD16_BYTE( "f1sb2.bin",  0x0400001, 0x200000, 0xa452f50a )
+	ROM_LOAD16_BYTE( "f1sb14.bin", 0x0400000, 0x200000, 0xc0c20490 )
+	ROM_LOAD16_BYTE( "f1sb3.bin",  0x0800001, 0x200000, 0x265d068c )
+	ROM_LOAD16_BYTE( "f1sb15.bin", 0x0800000, 0x200000, 0x575a146e )
+	ROM_LOAD16_BYTE( "f1sb4.bin",  0x0c00001, 0x200000, 0x0ccc66fd )
+	ROM_LOAD16_BYTE( "f1sb16.bin", 0x0c00000, 0x200000, 0xa2d017a1 )
+	ROM_LOAD16_BYTE( "f1sb5.bin",  0x1000001, 0x200000, 0xbff4271b )
+	ROM_LOAD16_BYTE( "f1sb17.bin", 0x1000000, 0x200000, 0x2b9739d5 )
+	ROM_LOAD16_BYTE( "f1sb6.bin",  0x1400001, 0x200000, 0x6caf48ec )
+	ROM_LOAD16_BYTE( "f1sb18.bin", 0x1400000, 0x200000, 0xc49055ff )
+	ROM_LOAD16_BYTE( "f1sb7.bin",  0x1800001, 0x200000, 0xa5458947 )
+	ROM_LOAD16_BYTE( "f1sb19.bin", 0x1800000, 0x200000, 0xb7cacf0d )
+	ROM_LOAD16_BYTE( "f1sb8.bin",  0x1c00001, 0x200000, 0xba3f1533 )
+	ROM_LOAD16_BYTE( "f1sb20.bin", 0x1c00000, 0x200000, 0xfa349897 )
 
 	ROM_REGION( 0x1200000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 ? */
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("f1sb32.bin", 0x000000, 0x080000, 0x1b31fcce )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )//	just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "f1sb32.bin", 0x000000, 0x080000, 0x1b31fcce )
 
 	ROM_REGION( 0x200000, REGION_USER1, ROMREGION_DISPOSE ) /* other roms */
-	ROM_LOAD ("f1sb9.bin",  0x000000, 0x200000, 0x66b12e1f )
-	ROM_LOAD ("f1sb10.bin", 0x000000, 0x200000, 0x893d7f4b )
-	ROM_LOAD ("f1sb11.bin", 0x000000, 0x200000, 0x0b848bb5 )
-	ROM_LOAD ("f1sb12.bin", 0x000000, 0x200000, 0xedecd5f4 )
-	ROM_LOAD ("f1sb2b.bin", 0x000000, 0x200000, 0x18d73b16 )
-	ROM_LOAD ("f1sb31.bin", 0x000000, 0x200000, 0x1d0d2efd )
-	ROM_LOAD ("f1sb3b.bin", 0x000000, 0x200000, 0xce728fe0 )
-	ROM_LOAD ("f1sb4b.bin", 0x000000, 0x200000, 0x077180c5 )
-	ROM_LOAD ("f1sb5b.bin", 0x000000, 0x200000, 0xefabc47d )
+	ROM_LOAD( "f1sb9.bin",  0x000000, 0x200000, 0x66b12e1f )
+	ROM_LOAD( "f1sb10.bin", 0x000000, 0x200000, 0x893d7f4b )
+	ROM_LOAD( "f1sb11.bin", 0x000000, 0x200000, 0x0b848bb5 )
+	ROM_LOAD( "f1sb12.bin", 0x000000, 0x200000, 0xedecd5f4 )
+	ROM_LOAD( "f1sb2b.bin", 0x000000, 0x200000, 0x18d73b16 )
+	ROM_LOAD( "f1sb31.bin", 0x000000, 0x200000, 0x1d0d2efd )
+	ROM_LOAD( "f1sb3b.bin", 0x000000, 0x200000, 0xce728fe0 )
+	ROM_LOAD( "f1sb4b.bin", 0x000000, 0x200000, 0x077180c5 )
+	ROM_LOAD( "f1sb5b.bin", 0x000000, 0x200000, 0xefabc47d )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("f1sb21.bin", 0x000000, 0x040000, 0xe131e1c7 )
+	ROM_LOAD( "f1sb21.bin", 0x000000, 0x040000, 0xe131e1c7 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("f1sb23.bin", 0x000000, 0x200000, 0xbfefa3ab )
-	ROM_LOAD ("f1sb24.bin", 0x200000, 0x200000, 0x0fa26f65 ) // common samples
+	ROM_LOAD( "f1sb23.bin", 0x000000, 0x200000, 0xbfefa3ab )
+	ROM_LOAD( "f1sb24.bin", 0x200000, 0x200000, 0x0fa26f65 ) // common samples
 ROM_END
 
 ROM_START( gratia )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("94019.026", 0x000003, 0x80000, 0xf398cba5 )
-	ROM_LOAD32_BYTE("94019.027", 0x000002, 0x80000, 0xba3318c5 )
-	ROM_LOAD32_BYTE("94019.028", 0x000001, 0x80000, 0xe0762e89 )
-	ROM_LOAD32_BYTE("94019.029", 0x000000, 0x80000, 0x8059800b )
+ 	ROM_LOAD32_BYTE( "94019.026", 0x000003, 0x80000, 0xf398cba5 )
+	ROM_LOAD32_BYTE( "94019.027", 0x000002, 0x80000, 0xba3318c5 )
+	ROM_LOAD32_BYTE( "94019.028", 0x000001, 0x80000, 0xe0762e89 )
+	ROM_LOAD32_BYTE( "94019.029", 0x000000, 0x80000, 0x8059800b )
 
 	ROM_REGION( 0x0c00000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 */
-	ROM_LOAD16_BYTE ("94019.01", 0x000000, 0x200000, 0x92d8ae9b )
-	ROM_LOAD16_BYTE ("94019.02", 0x000001, 0x200000, 0xf7bd9cc4 )
-	ROM_LOAD16_BYTE ("94019.03", 0x400000, 0x200000, 0x62a69590 )
-	ROM_LOAD16_BYTE ("94019.04", 0x400001, 0x200000, 0x5a76a39b )
-	ROM_LOAD16_BYTE ("94019.05", 0x800000, 0x200000, 0xa16994df )
-	ROM_LOAD16_BYTE ("94019.06", 0x800001, 0x200000, 0x01d52ef1 )
+	ROM_LOAD16_BYTE( "94019.01", 0x000000, 0x200000, 0x92d8ae9b )
+	ROM_LOAD16_BYTE( "94019.02", 0x000001, 0x200000, 0xf7bd9cc4 )
+	ROM_LOAD16_BYTE( "94019.03", 0x400000, 0x200000, 0x62a69590 )
+	ROM_LOAD16_BYTE( "94019.04", 0x400001, 0x200000, 0x5a76a39b )
+	ROM_LOAD16_BYTE( "94019.05", 0x800000, 0x200000, 0xa16994df )
+	ROM_LOAD16_BYTE( "94019.06", 0x800001, 0x200000, 0x01d52ef1 )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 */
-	ROM_LOAD ("94019.08", 0x000000, 0x200000, 0xabd124e0 )
-	ROM_LOAD ("94019.09", 0x200000, 0x200000, 0x711ab08b )
+	ROM_LOAD( "94019.08", 0x000000, 0x200000, 0xabd124e0 )
+	ROM_LOAD( "94019.09", 0x200000, 0x200000, 0x711ab08b )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("94019.07", 0x000000, 0x200000, 0xacb75824 )
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "94019.07", 0x000000, 0x200000, BADCRC( 0xacb75824 ) )	// FIXED BITS (xxxxxxxx11111111)
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("94019.030",0x000000, 0x080000, 0x026b5379 )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )//	just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "94019.030",0x000000, 0x080000, 0x026b5379 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("94019.021",0x000000, 0x040000, 0x6e8dd039 )
+	ROM_LOAD( "94019.021",0x000000, 0x040000, 0x6e8dd039 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("92042.01", 0x000000, 0x200000, 0x0fa26f65 ) // common rom?
-	ROM_LOAD ("94019.10", 0x200000, 0x200000, 0xa751e316 )
+	ROM_LOAD( "92042.01", 0x000000, 0x200000, 0x0fa26f65 ) // common rom?
+	ROM_LOAD( "94019.10", 0x200000, 0x200000, 0xa751e316 )
 ROM_END
 
 ROM_START( gametngk )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("mr94041.26", 0x000003, 0x80000, 0xe622e774 )
-	ROM_LOAD32_BYTE("mr94041.27", 0x000002, 0x80000, 0xda862b9c )
-	ROM_LOAD32_BYTE("mr94041.28", 0x000001, 0x80000, 0xb3738934 )
-	ROM_LOAD32_BYTE("mr94041.29", 0x000000, 0x80000, 0x45154a45 )
+ 	ROM_LOAD32_BYTE( "mr94041.26", 0x000003, 0x80000, 0xe622e774 )
+	ROM_LOAD32_BYTE( "mr94041.27", 0x000002, 0x80000, 0xda862b9c )
+	ROM_LOAD32_BYTE( "mr94041.28", 0x000001, 0x80000, 0xb3738934 )
+	ROM_LOAD32_BYTE( "mr94041.29", 0x000000, 0x80000, 0x45154a45 )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 */
-	ROM_LOAD16_BYTE ("mr94041.01", 0x0000000, 0x200000, 0x3f99adf7 )
-	ROM_LOAD16_BYTE ("mr94041.02", 0x0000001, 0x200000, 0xc3c5ae69 )
-	ROM_LOAD16_BYTE ("mr94041.03", 0x0400000, 0x200000, 0xd858b6de )
-	ROM_LOAD16_BYTE ("mr94041.04", 0x0400001, 0x200000, 0x8c96ca20 )
-	ROM_LOAD16_BYTE ("mr94041.05", 0x0800000, 0x200000, 0xac664a0b )
-	ROM_LOAD16_BYTE ("mr94041.06", 0x0800001, 0x200000, 0x70dd0dd4 )
-	ROM_LOAD16_BYTE ("mr94041.07", 0x0c00000, 0x200000, 0xa6966af5 )
-	ROM_LOAD16_BYTE ("mr94041.08", 0x0c00001, 0x200000, 0xd7d2f73a )
+	ROM_LOAD16_BYTE( "mr94041.01", 0x0000000, 0x200000, 0x3f99adf7 )
+	ROM_LOAD16_BYTE( "mr94041.02", 0x0000001, 0x200000, 0xc3c5ae69 )
+	ROM_LOAD16_BYTE( "mr94041.03", 0x0400000, 0x200000, 0xd858b6de )
+	ROM_LOAD16_BYTE( "mr94041.04", 0x0400001, 0x200000, 0x8c96ca20 )
+	ROM_LOAD16_BYTE( "mr94041.05", 0x0800000, 0x200000, 0xac664a0b )
+	ROM_LOAD16_BYTE( "mr94041.06", 0x0800001, 0x200000, 0x70dd0dd4 )
+	ROM_LOAD16_BYTE( "mr94041.07", 0x0c00000, 0x200000, 0xa6966af5 )
+	ROM_LOAD16_BYTE( "mr94041.08", 0x0c00001, 0x200000, 0xd7d2f73a )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 ? */
-	ROM_LOAD ("mr94041.11", 0x000000, 0x200000, 0x00dcdbc3 )
-	ROM_LOAD ("mr94041.12", 0x200000, 0x200000, 0x0ce48329 )
+	ROM_LOAD( "mr94041.11", 0x000000, 0x200000, 0x00dcdbc3 )
+	ROM_LOAD( "mr94041.12", 0x200000, 0x200000, 0x0ce48329 )
 
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("mr94041.09", 0x000000, 0x200000, 0xa33e6051 )
-	ROM_LOAD ("mr94041.10", 0x200000, 0x200000, 0xb3497147 )
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "mr94041.09", 0x000000, 0x200000, 0xa33e6051 )
+	ROM_LOAD( "mr94041.10", 0x200000, 0x200000, 0xb3497147 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("mr94041.30", 0x000000, 0x080000, 0xc0f27b7f )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )//	just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "mr94041.30", 0x000000, 0x080000, 0xc0f27b7f )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("mr94041.21", 0x000000, 0x040000, 0x38dcb837 )
+	ROM_LOAD( "mr94041.21", 0x000000, 0x040000, 0x38dcb837 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("mr94041.13", 0x000000, 0x200000, 0xfba84caf )
-	ROM_LOAD ("mr94041.14", 0x200000, 0x200000, 0x2d6308bd )
+	ROM_LOAD( "mr94041.13", 0x000000, 0x200000, 0xfba84caf )
+	ROM_LOAD( "mr94041.14", 0x200000, 0x200000, 0x2d6308bd )
 ROM_END
 
 ROM_START( hayaosi1 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("mb93138a.25", 0x000003, 0x80000, 0x563c6f2f )
-	ROM_LOAD32_BYTE("mb93138a.27", 0x000002, 0x80000, 0xfe8e283a )
-	ROM_LOAD32_BYTE("mb93138a.29", 0x000001, 0x80000, 0xe6fe3d0d )
-	ROM_LOAD32_BYTE("mb93138a.31", 0x000000, 0x80000, 0xd944bf8c )
+ 	ROM_LOAD32_BYTE( "mb93138a.25", 0x000003, 0x80000, 0x563c6f2f )
+	ROM_LOAD32_BYTE( "mb93138a.27", 0x000002, 0x80000, 0xfe8e283a )
+	ROM_LOAD32_BYTE( "mb93138a.29", 0x000001, 0x80000, 0xe6fe3d0d )
+	ROM_LOAD32_BYTE( "mb93138a.31", 0x000000, 0x80000, 0xd944bf8c )
 
-	ROM_REGION( 0x900000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles? */
-	ROM_LOAD16_BYTE ("mr93038.04",  0x000000, 0x200000, 0xab5edb11 )
-	ROM_LOAD16_BYTE ("mr93038.05",  0x000001, 0x200000, 0x274522f1 )
-	ROM_LOAD16_BYTE ("mr93038.06",  0x400000, 0x200000, 0xf9961ebf )
-	ROM_LOAD16_BYTE ("mr93038.07",  0x400001, 0x200000, 0x1abef1c5 )
-	ROM_LOAD16_BYTE ("mb93138a.15", 0x800000, 0x080000, 0xa5f64d87 )
-	ROM_LOAD16_BYTE ("mb93138a.3",  0x800001, 0x080000, 0xa2ae2b21 )
+	ROM_REGION( 0x900000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles */
+	ROM_LOAD16_BYTE( "mr93038.04",  0x000000, 0x200000, 0xab5edb11 )
+	ROM_LOAD16_BYTE( "mr93038.05",  0x000001, 0x200000, 0x274522f1 )
+	ROM_LOAD16_BYTE( "mr93038.06",  0x400000, 0x200000, 0xf9961ebf )
+	ROM_LOAD16_BYTE( "mr93038.07",  0x400001, 0x200000, 0x1abef1c5 )
+	ROM_LOAD16_BYTE( "mb93138a.15", 0x800000, 0x080000, 0xa5f64d87 )
+	ROM_LOAD16_BYTE( "mb93138a.3",  0x800001, 0x080000, 0xa2ae2b21 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles? */
-	ROM_LOAD ("mr93038.03",  0x200000, 0x200000, 0x6999dec9 )
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles */
+	ROM_LOAD( "mr93038.03",  0x200000, 0x200000, 0x6999dec9 )
 
-	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("mr93038.08",  0x000000, 0x100000, 0x21282cb0 )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "mr93038.08",  0x000000, 0x100000, 0x21282cb0 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("mb93138a.32", 0x000000, 0x080000, 0xf563a144 )
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "mb93138a.32", 0x000000, 0x080000, 0xf563a144 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("mb93138a.21", 0x000000, 0x040000, 0x8e8048b0 )
+	ROM_LOAD( "mb93138a.21", 0x000000, 0x040000, 0x8e8048b0 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
-	ROM_LOAD ("mr93038.01",  0x000000, 0x200000, 0xb8a38bfc )
-	ROM_LOAD ("mr92042.01",  0x000000, 0x200000, 0x0fa26f65 ) // common samples
+	ROM_LOAD( "mr93038.01",  0x000000, 0x200000, 0xb8a38bfc )
+	ROM_LOAD( "mr92042.01",  0x000000, 0x200000, 0x0fa26f65 ) // common samples
 ROM_END
 
 ROM_START( kirarast )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("mr95025.26", 0x000003, 0x80000, 0xeb7faf5f )
-	ROM_LOAD32_BYTE("mr95025.27", 0x000002, 0x80000, 0x80644d05 )
-	ROM_LOAD32_BYTE("mr95025.28", 0x000001, 0x80000, 0x6df8c384 )
-	ROM_LOAD32_BYTE("mr95025.29", 0x000000, 0x80000, 0x3b6e681b )
+ 	ROM_LOAD32_BYTE( "mr95025.26", 0x000003, 0x80000, 0xeb7faf5f )
+	ROM_LOAD32_BYTE( "mr95025.27", 0x000002, 0x80000, 0x80644d05 )
+	ROM_LOAD32_BYTE( "mr95025.28", 0x000001, 0x80000, 0x6df8c384 )
+	ROM_LOAD32_BYTE( "mr95025.29", 0x000000, 0x80000, 0x3b6e681b )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles? */
-	ROM_LOAD16_BYTE ("mr95025.01",  0x000000, 0x200000, 0x02279069 )
-	ROM_LOAD16_BYTE ("mr95025.02",  0x000001, 0x200000, 0x885161d4 )
-	ROM_LOAD16_BYTE ("mr95025.03",  0x400000, 0x200000, 0x1ae06df9 )
-	ROM_LOAD16_BYTE ("mr95025.04",  0x400001, 0x200000, 0x91ab7006 )
-	ROM_LOAD16_BYTE ("mr95025.05",  0x800000, 0x200000, 0xe61af029 )
-	ROM_LOAD16_BYTE ("mr95025.06",  0x800001, 0x200000, 0x63f64ffc )
-	ROM_LOAD16_BYTE ("mr95025.07",  0xc00000, 0x200000, 0x0263a010 )
-	ROM_LOAD16_BYTE ("mr95025.08",  0xc00001, 0x200000, 0x8efc00d6 )
+	ROM_LOAD16_BYTE( "mr95025.01",  0x000000, 0x200000, 0x02279069 )
+	ROM_LOAD16_BYTE( "mr95025.02",  0x000001, 0x200000, 0x885161d4 )
+	ROM_LOAD16_BYTE( "mr95025.03",  0x400000, 0x200000, 0x1ae06df9 )
+	ROM_LOAD16_BYTE( "mr95025.04",  0x400001, 0x200000, 0x91ab7006 )
+	ROM_LOAD16_BYTE( "mr95025.05",  0x800000, 0x200000, 0xe61af029 )
+	ROM_LOAD16_BYTE( "mr95025.06",  0x800001, 0x200000, 0x63f64ffc )
+	ROM_LOAD16_BYTE( "mr95025.07",  0xc00000, 0x200000, 0x0263a010 )
+	ROM_LOAD16_BYTE( "mr95025.08",  0xc00001, 0x200000, 0x8efc00d6 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles? */
-	ROM_LOAD ("mr95025.10",  0x000000, 0x200000, 0xba7ad413 )
-	ROM_LOAD ("mr95025.11",  0x200000, 0x200000, 0x11557299 )
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles */
+	ROM_LOAD( "mr95025.10",  0x000000, 0x200000, 0xba7ad413 )
+	ROM_LOAD( "mr95025.11",  0x200000, 0x200000, 0x11557299 )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("mr95025.09",  0x000000, 0x200000, 0xca6cbd17 )
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "mr95025.09",  0x000000, 0x200000, 0xca6cbd17 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("mr95025.30",  0x000000, 0x080000, 0xaee6e0c2 )
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "mr95025.30",  0x000000, 0x080000, 0xaee6e0c2 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("mr95025.21",  0x000000, 0x040000, 0xa6c70c7f )
+	ROM_LOAD( "mr95025.21",  0x000000, 0x040000, 0xa6c70c7f )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
-	ROM_LOAD ("mr95025.12",  0x000000, 0x200000, 0x1dd4f766 )
-	ROM_LOAD ("mr95025.13",  0x000000, 0x200000, 0x0adfe5b8 )
+	ROM_LOAD( "mr95025.12",  0x000000, 0x200000, 0x1dd4f766 )
+	ROM_LOAD( "mr95025.13",  0x000000, 0x200000, 0x0adfe5b8 )
 ROM_END
 
 ROM_START( p47aces )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("p47-26.bin", 0x100003, 0x40000, BADCRC(0xed06768d) ) // half size?
-	ROM_LOAD32_BYTE("p47-27.bin", 0x100002, 0x40000, BADCRC(0xb4cf5e44) ) // half size?
- 	ROM_LOAD32_BYTE("p47-28.bin", 0x000001, 0x80000, 0x4742a5f7 )
-	ROM_LOAD32_BYTE("p47-29.bin", 0x000000, 0x80000, 0x86e17d8b )
+ 	ROM_LOAD32_BYTE( "p47-26.bin", 0x000003, 0x80000, 0xe017b819 )
+	ROM_LOAD32_BYTE( "p47-27.bin", 0x000002, 0x80000, 0xbd1b81e0 )
+ 	ROM_LOAD32_BYTE( "p47-28.bin", 0x000001, 0x80000, 0x4742a5f7 )
+	ROM_LOAD32_BYTE( "p47-29.bin", 0x000000, 0x80000, 0x86e17d8b )
 
-	ROM_REGION( 0xe00000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles? */
-	ROM_LOAD16_BYTE ("p47-01.bin",  0x000001, 0x200000, 0x28732d3c )
-	ROM_LOAD16_BYTE ("p47-13.bin",  0x000000, 0x200000, 0xa6ccf999 )
-	ROM_LOAD16_BYTE ("p47-02.bin",  0x400001, 0x200000, 0x128db576 )
-	ROM_LOAD16_BYTE ("p47-14.bin",  0x400000, 0x200000, 0xefc52b38 )
-	ROM_LOAD16_BYTE ("p47-03.bin",  0x800001, 0x200000, 0x324cd504 )
-	ROM_LOAD16_BYTE ("p47-15.bin",  0x800000, 0x200000, 0xca164b17 )
-	ROM_LOAD16_BYTE ("p47-04.bin",  0xc00001, 0x100000, 0x4b3372be )
-	ROM_LOAD16_BYTE ("p47-16.bin",  0xc00000, 0x100000, 0xc23c5467 )
+	ROM_REGION( 0xe00000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles */
+	ROM_LOAD16_BYTE( "p47-01.bin",  0x000001, 0x200000, 0x28732d3c )
+	ROM_LOAD16_BYTE( "p47-13.bin",  0x000000, 0x200000, 0xa6ccf999 )
+	ROM_LOAD16_BYTE( "p47-02.bin",  0x400001, 0x200000, 0x128db576 )
+	ROM_LOAD16_BYTE( "p47-14.bin",  0x400000, 0x200000, 0xefc52b38 )
+	ROM_LOAD16_BYTE( "p47-03.bin",  0x800001, 0x200000, 0x324cd504 )
+	ROM_LOAD16_BYTE( "p47-15.bin",  0x800000, 0x200000, 0xca164b17 )
+	ROM_LOAD16_BYTE( "p47-04.bin",  0xc00001, 0x100000, 0x4b3372be )
+	ROM_LOAD16_BYTE( "p47-16.bin",  0xc00000, 0x100000, 0xc23c5467 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles? */
-	ROM_LOAD ("p47-11.bin",  0x000000, 0x200000, 0xc1fe16b3 )
-	ROM_LOAD ("p47-12.bin",  0x200000, 0x200000, 0x75871325 )
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 tiles */
+	ROM_LOAD( "p47-11.bin",  0x000000, 0x200000, 0xc1fe16b3 )
+	ROM_LOAD( "p47-12.bin",  0x200000, 0x200000, 0x75871325 )
 
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-//	ROM_LOAD ("p47-09.bin",  0x000000, 0x200000, 0x226014a6 ) // bad zip
-	ROM_LOAD ("p47-09.bin",  0x000000, 0x200000, BADCRC(0x3fb1595b) ) // this is what i get if i pkzipfix and extract.. wrong but ..
-	ROM_LOAD ("p47-10.bin",  0x200000, 0x200000, 0xa44e9e06 )
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "p47-10.bin",  0x000000, 0x200000, 0xa44e9e06 )
+	ROM_LOAD( "p47-09.bin",  0x200000, 0x200000, 0x226014a6 )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("p47-30.bin",  0x000000, 0x080000, 0x7ba90fad )
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "p47-30.bin",  0x000000, 0x080000, 0x7ba90fad )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("p47-21.bin",  0x000000, 0x040000, 0xf2d43927 )
+	ROM_LOAD( "p47-21.bin",  0x000000, 0x040000, 0xf2d43927 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
-	ROM_LOAD ("p47-22.bin",  0x000000, 0x200000, 0x0fa26f65 )
-	ROM_LOAD ("p47-23.bin",  0x000000, 0x200000, 0x547fa4d4 )
+	ROM_LOAD( "p47-22.bin",  0x000000, 0x200000, 0x0fa26f65 )
+	ROM_LOAD( "p47-23.bin",  0x000000, 0x200000, 0x547fa4d4 )
 ROM_END
 
 ROM_START( tetrisp )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("mr95024.26", 0x000003, 0x80000, 0xd318a9ba )
-	ROM_LOAD32_BYTE("mr95024.27", 0x000002, 0x80000, 0x2d69b6d3 )
-	ROM_LOAD32_BYTE("mr95024.28", 0x000001, 0x80000, 0x87522e16 )
-	ROM_LOAD32_BYTE("mr95024.29", 0x000000, 0x80000, 0x43a61941 )
+ 	ROM_LOAD32_BYTE( "mr95024.26", 0x000003, 0x80000, 0xd318a9ba )
+	ROM_LOAD32_BYTE( "mr95024.27", 0x000002, 0x80000, 0x2d69b6d3 )
+	ROM_LOAD32_BYTE( "mr95024.28", 0x000001, 0x80000, 0x87522e16 )
+	ROM_LOAD32_BYTE( "mr95024.29", 0x000000, 0x80000, 0x43a61941 )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 */
-	ROM_LOAD16_BYTE ("mr95024.01", 0x000001, 0x200000, 0xcb0e92b9 )
-	ROM_LOAD16_BYTE ("mr95024.13", 0x000000, 0x200000, 0x4a825990 )
+	ROM_LOAD16_BYTE( "mr95024.01", 0x000001, 0x200000, 0xcb0e92b9 )
+	ROM_LOAD16_BYTE( "mr95024.13", 0x000000, 0x200000, 0x4a825990 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 ? */
-	ROM_LOAD ("mr95024.11", 0x000000, 0x200000, 0xc0d5246f )
+	ROM_LOAD( "mr95024.11", 0x000000, 0x200000, 0xc0d5246f )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("mr95024.10", 0x000000, 0x200000, 0xa03e4a8d )
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "mr95024.10", 0x000000, 0x200000, 0xa03e4a8d )
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("mr95024.30", 0x000000, 0x080000, 0xcea7002d )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )	//just a hack so we can read characters until its decrypted
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "mr95024.30", 0x000000, 0x080000, 0xcea7002d )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("mr95024.21", 0x000000, 0x040000, 0x5c565e3b )
+	ROM_LOAD( "mr95024.21", 0x000000, 0x040000, 0x5c565e3b )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("mr95024.22", 0x000000, 0x200000, 0x0fa26f65 ) // common samples
-	ROM_LOAD ("mr95024.23", 0x200000, 0x200000, 0x57502a17 )
+	ROM_LOAD( "mr95024.22", 0x000000, 0x200000, 0x0fa26f65 ) // common samples
+	ROM_LOAD( "mr95024.23", 0x200000, 0x200000, 0x57502a17 )
 ROM_END
 
 ROM_START( tp2m32 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
- 	ROM_LOAD32_BYTE("tp2m3226.26", 0x000003, 0x80000, 0x152f0ccf )
-	ROM_LOAD32_BYTE("tp2m3227.27", 0x000002, 0x80000, 0xd89468d0 )
-	ROM_LOAD32_BYTE("tp2m3228.28", 0x000001, 0x80000, 0x041aac23 )
-	ROM_LOAD32_BYTE("tp2m3229.29", 0x000000, 0x80000, 0x4e83b2ca )
+ 	ROM_LOAD32_BYTE( "tp2m3226.26", 0x000003, 0x80000, 0x152f0ccf )
+	ROM_LOAD32_BYTE( "tp2m3227.27", 0x000002, 0x80000, 0xd89468d0 )
+	ROM_LOAD32_BYTE( "tp2m3228.28", 0x000001, 0x80000, 0x041aac23 )
+	ROM_LOAD32_BYTE( "tp2m3229.29", 0x000000, 0x80000, 0x4e83b2ca )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* 8x8 tiles? */
-	ROM_LOAD16_BYTE ("tp2m3202.1",  0x000001, 0x200000, 0x0771a979 )
-	ROM_LOAD16_BYTE ("tp2m3201.13", 0x000000, 0x200000, 0xf128137b )
+	ROM_LOAD16_BYTE( "tp2m3202.1",  0x000001, 0x200000, 0x0771a979 )
+	ROM_LOAD16_BYTE( "tp2m3201.13", 0x000000, 0x200000, 0xf128137b )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 ? */
-	ROM_LOAD ("tp2m3204.11", 0x000000, 0x200000, 0xb5a03129 )
+	ROM_LOAD( "tp2m3204.11", 0x000000, 0x200000, 0xb5a03129 )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms? (encrypted) */
-	ROM_LOAD ("tp2m3203.10", 0x000000, 0x200000, 0xf95aacf9 )
-//  ROM_LOAD( "96019-06.13", 0x000000, 0x400000, 0x16f7093c ) ? should be the same as this from tetrisp2 ?
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 bg roms (encrypted) */
+	ROM_LOAD( "tp2m3203.10", 0x000000, 0x200000, BADCRC( 0xf95aacf9 ) )	// odd bytes don't contain data
 
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms? (encrypted) */
-	ROM_LOAD ("tp2m3230.30", 0x000000, 0x080000, 0x6845e476 )
-//	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )	just a hack so we can read characters until its decrypted, should be the same?
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* 8x8 fg roms (encrypted) */
+	ROM_LOAD( "tp2m3230.30", 0x000000, 0x080000, 0x6845e476 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
-	ROM_LOAD ("tp2m3221.21", 0x000000, 0x040000, 0x2bcc4176 )
+	ROM_LOAD( "tp2m3221.21", 0x000000, 0x040000, 0x2bcc4176 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD ("tp2m3205.22", 0x000000, 0x200000, 0x74aa5c31 )
+	ROM_LOAD( "tp2m3205.22", 0x000000, 0x200000, 0x74aa5c31 )
 ROM_END
+
+
+/********** DECRYPT **********/
+
+/* bg's aren't done at all yet */
+
+/* 4 known types */
+
+/* SS91022-10: desertwr, gratia, tp2m32, gametngk */
+
+/* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
+
+/* SS92047-01: kirarast */
+
+/* SS92048-01: p47aces */
+
+int decrypt_ms32_tx(int addr_xor,int data_xor)
+{
+	int i;
+	unsigned char *source_data;
+	int source_size;
+
+	unsigned char *result_data;
+
+	source_data = memory_region       ( REGION_GFX4 );
+	source_size = memory_region_length( REGION_GFX4 );
+
+	result_data = malloc(source_size);
+
+	addr_xor ^= 0x1005d;
+
+	for(i=0; i<source_size; i++)
+	{
+		unsigned char x;
+		int j;
+
+		/* two groups of cascading XORs for the address */
+		j = 0;
+		i ^= addr_xor;
+
+		if (BIT(i,18)) j ^= 0x40000;	// 18
+		if (BIT(i,17)) j ^= 0x60000;	// 17
+		if (BIT(i, 7)) j ^= 0x70000;	// 16
+		if (BIT(i, 3)) j ^= 0x78000;	// 15
+		if (BIT(i,14)) j ^= 0x7c000;	// 14
+		if (BIT(i,13)) j ^= 0x7e000;	// 13
+		if (BIT(i, 0)) j ^= 0x7f000;	// 12
+		if (BIT(i,11)) j ^= 0x7f800;	// 11
+		if (BIT(i,10)) j ^= 0x7fc00;	// 10
+
+		if (BIT(i, 9)) j ^= 0x00200;	//  9
+		if (BIT(i, 8)) j ^= 0x00300;	//  8
+		if (BIT(i,16)) j ^= 0x00380;	//  7
+		if (BIT(i, 6)) j ^= 0x003c0;	//  6
+		if (BIT(i,12)) j ^= 0x003e0;	//  5
+		if (BIT(i, 4)) j ^= 0x003f0;	//  4
+		if (BIT(i,15)) j ^= 0x003f8;	//  3
+		if (BIT(i, 2)) j ^= 0x003fc;	//  2
+		if (BIT(i, 1)) j ^= 0x003fe;	//  1
+		if (BIT(i, 5)) j ^= 0x003ff;	//  0
+
+		i ^= addr_xor;
+
+		/* simple XOR for the data */
+		x = source_data[j] ^ (i & 0xff) ^ data_xor;
+
+		result_data[i] = x;
+	}
+
+	memcpy (source_data, result_data, source_size);
+	free (result_data);
+
+	return 0;
+}
+
+int decrypt_ms32_bg(int addr_xor,int data_xor)
+{
+	int i;
+	unsigned char *source_data;
+	int source_size;
+
+	unsigned char *result_data;
+
+	source_data = memory_region       ( REGION_GFX3 );
+	source_size = memory_region_length( REGION_GFX3 );
+
+	result_data = malloc(source_size);
+
+	addr_xor ^= 0xc1c5b;
+
+	for(i=0; i<source_size; i++)
+	{
+		unsigned char x;
+		int j;
+
+		/* two groups of cascading XORs for the address */
+		j = (i & ~0xfffff);	/* top bits are not affected */
+		i ^= addr_xor;
+
+		if (BIT(i,19)) j ^= 0x80000;	// 19
+		if (BIT(i, 8)) j ^= 0xc0000;	// 18
+		if (BIT(i,17)) j ^= 0xe0000;	// 17
+		if (BIT(i, 2)) j ^= 0xf0000;	// 16
+		if (BIT(i,15)) j ^= 0xf8000;	// 15
+		if (BIT(i,14)) j ^= 0xfc000;	// 14
+		if (BIT(i,13)) j ^= 0xfe000;	// 13
+		if (BIT(i,12)) j ^= 0xff000;	// 12
+		if (BIT(i, 1)) j ^= 0xff800;	// 11
+		if (BIT(i,10)) j ^= 0xffc00;	// 10
+
+		if (BIT(i, 9)) j ^= 0x00200;	//  9
+		if (BIT(i, 3)) j ^= 0x00300;	//  8
+		if (BIT(i, 7)) j ^= 0x00380;	//  7
+		if (BIT(i, 6)) j ^= 0x003c0;	//  6
+		if (BIT(i, 5)) j ^= 0x003e0;	//  5
+		if (BIT(i, 4)) j ^= 0x003f0;	//  4
+		if (BIT(i,18)) j ^= 0x003f8;	//  3
+		if (BIT(i,16)) j ^= 0x003fc;	//  2
+		if (BIT(i,11)) j ^= 0x003fe;	//  1
+		if (BIT(i, 0)) j ^= 0x003ff;	//  0
+
+		i ^= addr_xor;
+
+		/* simple XOR for the data */
+		x = source_data[j] ^ (i & 0xff) ^ data_xor;
+
+		result_data[i] = x;
+	}
+
+	memcpy (source_data, result_data, source_size);
+	free (result_data);
+
+	return 0;
+}
+
+
+
+/* SS91022-10: desertwr, gratia, tp2m32, gametngk */
+static DRIVER_INIT (ss91022_10)
+{
+	decrypt_ms32_tx(0x00000,0x35);
+	decrypt_ms32_bg(0x00000,0xa3);
+}
+
+/* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
+static DRIVER_INIT (ss92046_01)
+{
+	decrypt_ms32_tx(0x00020,0x7e);
+	decrypt_ms32_bg(0x00001,0x9b);
+}
+
+/* SS92047-01: kirarast */
+static DRIVER_INIT (ss92047_01)
+{
+	decrypt_ms32_tx(0x24000,0x18);
+	decrypt_ms32_bg(0x24000,0x55);
+}
+
+/* SS92048-01: p47aces */
+static DRIVER_INIT (ss92048_01)
+{
+	decrypt_ms32_tx(0x20400,0xd6);
+	decrypt_ms32_bg(0x20400,0xd4);
+}
+
 
 /********** GAME DRIVERS **********/
 
 /* these are 'playable' */
+GAMEX( 1994, bbbxing,  0,        ms32, ms32,     ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1996, gratia  , 0,        ms32, ms32,     ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tetrisp,  0,        ms32, ms32,     ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, bbbxing,  0,        ms32, ms32,     ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, p47aces,  0,        ms32, ms32,     ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1996, gratia,   0,        ms32, ms32,     ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* these boot and show something */
-GAMEX( 199?, f1superb, 0,        ms32, f1superb, ss92046_01, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1994, f1superb, 0,        ms32, f1superb, ss92046_01, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND )
 
 /* these don't boot */
-GAMEX( 199?, tp2m32,   tetrisp2, ms32, ms32, ss91022_10, ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 199?, kirarast, 0,        ms32, ms32, ss92047_01, ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, hayaosi1, 0,        ms32, ms32, ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_NOT_WORKING | GAME_NO_SOUND )
-
-/* these are bad dumps */
-GAMEX( 199?, p47aces,  0,        ms32, ms32, ss91022_10, ROT0,   "Jaleco", "P47-Aces", GAME_NOT_WORKING | GAME_NO_SOUND ) // bad dump
+GAMEX( 199?, tp2m32,   tetrisp2, ms32, ms32,     ss91022_10, ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 199?, kirarast, 0,        ms32, ms32,     ss92047_01, ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1993, hayaosi1, 0,        ms32, ms32,     ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_NOT_WORKING | GAME_NO_SOUND )

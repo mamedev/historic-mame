@@ -1,5 +1,16 @@
 /* Magical Cat Adventure / Nostradamus Video Hardware */
 
+/*
+Notes:
+Tilemap drawing is a killer on the first level of Nost due to the whole tilemap being dirty every frame.
+Sprite drawing is quite fast (See USER1 in the profiler), but requires blit-time rotation support
+
+Nost final boss, the priority of the arms is under the tilemaps, everything else is above. Should it be blended? i.e. Shadow.
+There is an area of vid ram for linescroll, nost tests it but doesn't appear to use it.
+
+ToDo: Fix Sprites for Cocktail
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -10,7 +21,7 @@ extern data16_t *mcatadv_vidregs;
 
 static struct tilemap *mcatadv_tilemap1,  *mcatadv_tilemap2;
 static data16_t *spriteram_old, *vidregs_old;
-static int nostfix;
+static int palette_bank1, palette_bank2;
 
 
 static void get_mcatadv_tile_info1(int tile_index)
@@ -21,7 +32,7 @@ static void get_mcatadv_tile_info1(int tile_index)
 	colour = (mcatadv_videoram1[tile_index*2] & 0x3f00)>>8;
 	pri = (mcatadv_videoram1[tile_index*2] & 0xc000)>>14;
 
-	SET_TILE_INFO(0,tileno,colour+0x40,0)
+	SET_TILE_INFO(0,tileno,colour + palette_bank1*0x40,0)
 	tile_info.priority = pri;
 }
 
@@ -42,9 +53,7 @@ static void get_mcatadv_tile_info2(int tile_index)
 	colour = (mcatadv_videoram2[tile_index*2] & 0x3f00)>>8;
 	pri = (mcatadv_videoram2[tile_index*2] & 0xc000)>>14;
 
-	if (nostfix==1) colour+=0x40;
-
-	SET_TILE_INFO(1,tileno,colour+0x80,0)
+	SET_TILE_INFO(1,tileno,colour + palette_bank2*0x40,0)
 	tile_info.priority = pri;
 }
 
@@ -58,10 +67,10 @@ WRITE16_HANDLER( mcatadv_videoram2_w )
 }
 
 
-void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	data16_t *source = spriteram_old;
-	data16_t *finish = spriteram_old + (spriteram_size/2)/2;
+	data16_t *finish = source + (spriteram_size/2)/2;
 	int global_x = mcatadv_vidregs[0]-0x184;
 	int global_y = mcatadv_vidregs[1]-0x1f1;
 
@@ -104,12 +113,23 @@ void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *c
 		if (x & 0x200) x-=0x400;
 		if (y & 0x200) y-=0x400;
 
+#if 0 // For Flipscreen/Cocktail
+		if(mcatadv_vidregs[0]&0x8000)
+		{
+			flipx = !flipx;
+		}
+		if(mcatadv_vidregs[1]&0x8000)
+		{
+			flipy = !flipy;
+		}
+#endif
+
 		if (source[3] != source[0]) // 'hack' don't draw sprites while its testing the ram!
 		{
-			if(!flipx) { xstart = 0; xend = width; xinc = 1; }
-			else { xstart = width-1; xend = -1; xinc = -1; }
-			if(!flipy) { ystart = 0; yend = height; yinc = 1; }
-			else { ystart = height-1; yend = -1; yinc = -1; }
+			if(!flipx) { xstart = 0;        xend = width;  xinc = 1; }
+			else       { xstart = width-1;  xend = -1;     xinc = -1; }
+			if(!flipy) { ystart = 0;        yend = height; yinc = 1; }
+			else       { ystart = height-1; yend = -1;     yinc = -1; }
 
 			for (ycnt = ystart; ycnt != yend; ycnt += yinc) {
 				drawypos = y+ycnt-global_y;
@@ -126,8 +146,9 @@ void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *c
 						if (offset & 1)  pix = pix >> 4;
 						pix &= 0x0f;
 
-						if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && pix && (priline[drawxpos] < pri))
-							destline[drawxpos] = (pix + (pen<<4));
+						if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && pix)
+							if((priline[drawxpos] < pri))
+								destline[drawxpos] = (pix + (pen<<4));
 
 						offset++;
 					}
@@ -141,71 +162,66 @@ void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *c
 	}
 }
 
-VIDEO_UPDATE( nost )
-{
-	int i;
-
-	fillbitmap(bitmap, get_black_pen(), cliprect);
-	fillbitmap(priority_bitmap, 0, cliprect);
-
-	tilemap_set_scrollx(mcatadv_tilemap1, 0, (mcatadv_scroll[0]&0x1ff)-0x195);
-	tilemap_set_scrolly(mcatadv_tilemap1, 0, (mcatadv_scroll[1]&0x1ff)-0x1df);
-
-	tilemap_set_scrollx(mcatadv_tilemap2, 0, (mcatadv_scroll2[0]&0x1ff)-0x195);
-	tilemap_set_scrolly(mcatadv_tilemap2, 0, (mcatadv_scroll2[1]&0x1ff)-0x1df);
-
-	for (i=0; i<=3; i++)
-	{
-		tilemap_draw(bitmap, cliprect, mcatadv_tilemap1, i, i);
-		tilemap_draw(bitmap, cliprect, mcatadv_tilemap2, i, i);
-	}
-
-	mcatadv_drawsprites (bitmap,cliprect);
-}
-
 VIDEO_UPDATE( mcatadv )
 {
-	int i;
+	int i, scrollx, scrolly, flip;
 
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
-	tilemap_set_scrollx(mcatadv_tilemap1, 0, (mcatadv_scroll[0]&0x1ff)-0x194);
-	tilemap_set_scrolly(mcatadv_tilemap1, 0, (mcatadv_scroll[1]&0x1ff)-0x1de);
+	if(mcatadv_scroll[2] != palette_bank1) {
+		palette_bank1 = mcatadv_scroll[2];
+		tilemap_mark_all_tiles_dirty(mcatadv_tilemap1);
+	}
 
-	tilemap_set_scrollx(mcatadv_tilemap2, 0, (mcatadv_scroll2[0]&0x1ff)-0x194);
-	tilemap_set_scrolly(mcatadv_tilemap2, 0, (mcatadv_scroll2[1]&0x1ff)-0x1df);
+	if(mcatadv_scroll2[2] != palette_bank2) {
+		palette_bank2 = mcatadv_scroll2[2];
+		tilemap_mark_all_tiles_dirty(mcatadv_tilemap2);
+	}
+
+	scrollx = (mcatadv_scroll[0]&0x1ff)-0x194;
+	scrolly = (mcatadv_scroll[1]&0x1ff)-0x1df;
+
+	/* Global Flip */
+	if(!(mcatadv_scroll[0]&0x8000)) scrollx -= 0x19;
+	if(!(mcatadv_scroll[1]&0x8000)) scrolly -= 0x141;
+	flip = ((mcatadv_scroll[0]&0x8000)?0:TILEMAP_FLIPX) | ((mcatadv_scroll[1]&0x8000)?0:TILEMAP_FLIPY);
+
+	tilemap_set_scrollx(mcatadv_tilemap1, 0, scrollx);
+	tilemap_set_scrolly(mcatadv_tilemap1, 0, scrolly);
+	tilemap_set_flip(mcatadv_tilemap1, flip);
+
+	scrollx = (mcatadv_scroll2[0]&0x1ff)-0x194;
+	scrolly = (mcatadv_scroll2[1]&0x1ff)-0x1df;
+
+	/* Global Flip */
+	if(!(mcatadv_scroll2[0]&0x8000)) scrollx -= 0x19;
+	if(!(mcatadv_scroll2[1]&0x8000)) scrolly -= 0x141;
+	flip = ((mcatadv_scroll2[0]&0x8000)?0:TILEMAP_FLIPX) | ((mcatadv_scroll2[1]&0x8000)?0:TILEMAP_FLIPY);
+
+	tilemap_set_scrollx(mcatadv_tilemap2, 0, scrollx);
+	tilemap_set_scrolly(mcatadv_tilemap2, 0, scrolly);
+	tilemap_set_flip(mcatadv_tilemap2, flip);
 
 	for (i=0; i<=3; i++)
 	{
-		tilemap_draw(bitmap, cliprect, mcatadv_tilemap1, i, i);
-		tilemap_draw(bitmap, cliprect, mcatadv_tilemap2, i, i);
+#ifdef MAME_DEBUG
+		if (!keyboard_pressed(KEYCODE_Q))
+#endif
+			tilemap_draw(bitmap, cliprect, mcatadv_tilemap1, i, i);
+#ifdef MAME_DEBUG
+		if (!keyboard_pressed(KEYCODE_W))
+#endif
+			tilemap_draw(bitmap, cliprect, mcatadv_tilemap2, i, i);
 	}
 
-	mcatadv_drawsprites (bitmap,cliprect);
+	profiler_mark(PROFILER_USER1);
+#ifdef MAME_DEBUG
+	if (!keyboard_pressed(KEYCODE_E))
+#endif
+		mcatadv_drawsprites (bitmap, cliprect);
+	profiler_mark(PROFILER_END);
 }
-
-VIDEO_START( nost )
-{
-	mcatadv_tilemap1 = tilemap_create(get_mcatadv_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
-	tilemap_set_transparent_pen(mcatadv_tilemap1,0);
-
-	mcatadv_tilemap2 = tilemap_create(get_mcatadv_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
-	tilemap_set_transparent_pen(mcatadv_tilemap2,0);
-
-	spriteram_old = auto_malloc(spriteram_size);
-	vidregs_old = auto_malloc(0xf);
-
-	if(!mcatadv_tilemap1 || !mcatadv_tilemap2 || !spriteram_old || !vidregs_old)
-		return 1;
-
-	memset(spriteram_old,0,spriteram_size);
-
-	nostfix = 1;
-
-	return 0;
-}
-
 
 VIDEO_START( mcatadv )
 {
@@ -223,7 +239,8 @@ VIDEO_START( mcatadv )
 
 	memset(spriteram_old,0,spriteram_size);
 
-	nostfix = 0;
+	palette_bank1 = 0;
+	palette_bank2 = 0;
 
 	return 0;
 }

@@ -110,11 +110,13 @@ static READ_HANDLER( firetrap_8751_r )
 	else return 0;
 }
 
+#if 0
 static WRITE_HANDLER( firetrap_8751_w )
 {
 logerror("PC:%04x write %02x to 8751\n",activecpu_get_pc(),data);
 	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xff);
 }
+#endif
 
 static WRITE_HANDLER( firetrap_sound_command_w )
 {

@@ -152,11 +152,7 @@ static void warriorb_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 #ifdef MAME_DEBUG
 	if (unknown)
-	{
-		char buf[80];
-		sprintf(buf,"unknown sprite bits: %04x",unknown);
-		usrintf_showmessage(buf);
-	}
+		usrintf_showmessage("unknown sprite bits: %04x",unknown);
 #endif
 }
 

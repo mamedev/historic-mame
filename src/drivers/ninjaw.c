@@ -219,12 +219,7 @@ static WRITE16_HANDLER( ninjaw_sound_w )
 
 #ifdef MAME_DEBUG
 	if (data & 0xff00)
-	{
-		char buf[80];
-
-		sprintf(buf,"ninjaw_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
+		usrintf_showmessage("ninjaw_sound_w to high byte: %04x",data);
 #endif
 }
 

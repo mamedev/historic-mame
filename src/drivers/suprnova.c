@@ -531,15 +531,20 @@ static WRITE32_HANDLER( skns_io_w )
 	}
 }
 
+extern void *record;
+extern void *playback;
+
 static READ32_HANDLER( msm6242_r )
 {
 	struct tm *tm;
 	time_t tms;
 	long value;
 
+	if(record != 0 || playback != 0)
+		return 0;
+
 	time(&tms);
 	tm = localtime(&tms);
-
 	// The clock is not y2k-compatible, wrap back 10 years, screw the leap years
 	//  tm->tm_year -= 10;
 
@@ -605,10 +610,10 @@ static void palette_set_rgb_brightness (int offset, UINT8 brightness_r, UINT8 br
 }
 
 // This ignores the alpha values atm.
+static int spc_changed=0, v3_changed=0;
+
 static WRITE32_HANDLER ( skns_pal_regs_w )
 {
-	int spc_changed=0, v3_changed=0, i;
-
 	COMBINE_DATA(&skns_pal_regs[offset]);
 
 	switch ( offset )
@@ -663,6 +668,11 @@ static WRITE32_HANDLER ( skns_pal_regs_w )
 		}
 		break;
 	}
+}
+
+void skns_palette_update(void)
+{
+	int i;
 
 	if(spc_changed)
 		for(i=0; i<=((0x40*256)-1); i++)
@@ -818,10 +828,10 @@ static struct GfxLayout skns_4bpptilemap_layout =
 static struct GfxDecodeInfo skns_bg_decode[] =
 {
    /* REGION_GFX1 is sprites, RLE encoded */
-	{ REGION_GFX2, 0, &skns_tilemap_layout, 0x000, 256 },
-	{ REGION_GFX3, 0, &skns_tilemap_layout, 0x000, 256 },
-	{ REGION_GFX2, 0, &skns_4bpptilemap_layout, 0x000, 256 },
-	{ REGION_GFX3, 0, &skns_4bpptilemap_layout, 0x000, 256 },
+	{ REGION_GFX2, 0, &skns_tilemap_layout, 0x000, 128 },
+	{ REGION_GFX3, 0, &skns_tilemap_layout, 0x000, 128 },
+	{ REGION_GFX2, 0, &skns_4bpptilemap_layout, 0x000, 128 },
+	{ REGION_GFX3, 0, &skns_4bpptilemap_layout, 0x000, 128 },
 	{ -1 }
 };
 

@@ -16,8 +16,15 @@
 
 
 /*###################################################################################################
-**	COMPILE-TIME DEFINITIONS
+**	TYPE DEFINITIONS
 **#################################################################################################*/
+
+struct tms32031_config
+{
+	UINT32		bootoffset;
+	void		(*xf0_w)(UINT8 val);
+	void		(*xf1_w)(UINT8 val);
+};
 
 
 /*###################################################################################################
@@ -47,6 +54,13 @@ enum
 #define TMS32031_IRQ1		1		/* IRQ1 */
 #define TMS32031_IRQ2		2		/* IRQ2 */
 #define TMS32031_IRQ3		3		/* IRQ3 */
+#define TMS32031_XINT0		4		/* serial 0 transmit interrupt */
+#define TMS32031_RINT0		5		/* serial 0 receive interrupt */
+#define TMS32031_XINT1		6		/* serial 1 transmit interrupt */
+#define TMS32031_RINT1		7		/* serial 1 receive interrupt */
+#define TMS32031_TINT0		8		/* timer 0 interrupt */
+#define TMS32031_TINT1		9		/* timer 1 interrupt */
+#define TMS32031_DINT		10		/* DMA interrupt */
 
 
 /*###################################################################################################
@@ -74,5 +88,4 @@ extern const char *tms32031_info(void *context, int regnum);
 
 extern unsigned tms32031_dasm(char *buffer, unsigned pc);
 
-
-#endif /* _JAGUAR_H */
+#endif /* _TMS32031_H */

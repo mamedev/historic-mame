@@ -156,11 +156,13 @@ PORT_END
 							Don Den Lover Vol.1
 ***************************************************************************/
 
+#if 0
 static WRITE16_HANDLER( ddenlovr_oki_bank_w )
 {
 	if (ACCESSING_LSB)
 		OKIM6295_set_bank_base(0, (data & 3) * 0x40000);
 }
+#endif
 
 static READ16_HANDLER( ddenlovr_gfxrom_r )
 {
@@ -659,7 +661,7 @@ static struct YM2413interface ym2413_intf =
 {
 	1,
 	3579545,	/* ???? */
-	{ 100 },
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 static struct OKIM6295interface okim6295_intf =
@@ -888,7 +890,7 @@ ROM_END
 
 ***************************************************************************/
 
-GAME ( 1989, sprtmtch,        0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
+GAME ( 1989, sprtmtch, 0,        sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
 GAME ( 1989, drgpunch, sprtmtch, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax", "Dragon Punch (Japan)" )
 
 /* TESTDRIVERS */

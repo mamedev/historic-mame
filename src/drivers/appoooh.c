@@ -300,4 +300,4 @@ ROM_END
 
 
 
-GAME( 1984, appoooh, 0, appoooh, appoooh, 0, ROT0, "Sega", "Appoooh" )
+GAME( 1984, appoooh, 0, appoooh, appoooh, 0, ROT0, "[Sanritsu] Sega", "Appoooh" )

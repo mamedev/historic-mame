@@ -973,7 +973,7 @@ unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
 	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
-	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
 #else
 	sprintf( buffer, "$%04X", m68k_read_immediate_16(pc) );
 	return 2;

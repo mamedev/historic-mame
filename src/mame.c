@@ -213,9 +213,9 @@ static int validitychecks(void);
 static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
-static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y);
 static int init_game_options(void);
 static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo);
+static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *aspect_x, int *aspect_y);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 
@@ -265,6 +265,9 @@ int run_game(int game)
 	/* validity checks -- debug build only */
 	if (validitychecks())
 		return 1;
+	#ifdef MESS
+	if (messvaliditychecks()) return 1;
+	#endif
 #endif
 
 	/* first give the machine a good cleaning */
@@ -371,6 +374,14 @@ static int init_machine(void)
 		goto cant_load_roms;
 	}
 
+	/* first init the timers; some CPUs have built-in timers and will need */
+	/* to allocate them up front */
+	timer_init();
+	cpu_init_refresh_timer();
+
+	/* now set up all the CPUs */
+	cpu_init();
+
 #ifdef MESS
 	/* initialize the devices */
 	if (init_devices(gamedrv))
@@ -379,14 +390,6 @@ static int init_machine(void)
 		goto cant_load_roms;
 	}
 #endif
-
-	/* first init the timers; some CPUs have built-in timers and will need */
-	/* to allocate them up front */
-	timer_init();
-	cpu_init_refresh_timer();
-
-	/* now set up all the CPUs */
-	cpu_init();
 
 	/* load input ports settings (keys, dip switches, and so on) */
 	settingsloaded = load_input_port_settings();
@@ -498,53 +501,57 @@ void run_machine_core(void)
 	artwork_enable(0);
 
 	/* if we didn't find a settings file, show the disclaimer */
-	if (settingsloaded || showcopyright(artwork_get_ui_bitmap()) == 0)
+	if (settingsloaded || options.skip_disclaimer || showcopyright(artwork_get_ui_bitmap()) == 0)
 	{
 		/* show info about incorrect behaviour (wrong colors etc.) */
 		if (showgamewarnings(artwork_get_ui_bitmap()) == 0)
 		{
-			init_user_interface();
-
-			/* enable artwork now */
-			artwork_enable(1);
-
-			/* disable cheat if no roms */
-			if (!gamedrv->rom)
-				options.cheat = 0;
-
-			/* start the cheat engine */
-			if (options.cheat)
-				InitCheat();
-
-			/* load the NVRAM now */
-			if (Machine->drv->nvram_handler)
+			/* show info about the game */
+			if (options.skip_gameinfo || showgameinfo(artwork_get_ui_bitmap()) == 0)
 			{
-				void *nvram_file = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 0);
-				(*Machine->drv->nvram_handler)(nvram_file, 0);
-				if (nvram_file)
-					osd_fclose(nvram_file);
-			}
+				init_user_interface();
 
-			/* run the emulation! */
-			cpu_run();
+				/* enable artwork now */
+				artwork_enable(1);
 
-			/* save the NVRAM */
-			if (Machine->drv->nvram_handler)
-			{
-				void *nvram_file = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 1);
-				if (nvram_file != NULL)
+				/* disable cheat if no roms */
+				if (!gamedrv->rom)
+					options.cheat = 0;
+
+				/* start the cheat engine */
+				if (options.cheat)
+					InitCheat();
+
+				/* load the NVRAM now */
+				if (Machine->drv->nvram_handler)
 				{
-					(*Machine->drv->nvram_handler)(nvram_file, 1);
-					osd_fclose(nvram_file);
+					mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
+					(*Machine->drv->nvram_handler)(nvram_file, 0);
+					if (nvram_file)
+						mame_fclose(nvram_file);
 				}
+
+				/* run the emulation! */
+				cpu_run();
+
+				/* save the NVRAM */
+				if (Machine->drv->nvram_handler)
+				{
+					mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1);
+					if (nvram_file != NULL)
+					{
+						(*Machine->drv->nvram_handler)(nvram_file, 1);
+						mame_fclose(nvram_file);
+					}
+				}
+
+				/* stop the cheat engine */
+				if (options.cheat)
+					StopCheat();
+
+				/* save input ports settings */
+				save_input_port_settings();
 			}
-
-			/* stop the cheat engine */
-			if (options.cheat)
-				StopCheat();
-
-			/* save input ports settings */
-			save_input_port_settings();
 		}
 	}
 }
@@ -602,7 +609,7 @@ void mame_pause(int pause)
 {
 	osd_pause(pause);
 	osd_sound_enable(!pause);
-	palette_set_global_brightness_adjust(pause ? 0.65 : 1.00);
+	palette_set_global_brightness_adjust(pause ? options.pause_bright : 1.00);
 	schedule_full_refresh();
 }
 
@@ -659,11 +666,11 @@ static int vh_open(void)
 	}
 
 	/* fill in the rest of the display parameters */
-	compute_aspect_ratio(Machine->drv->video_attributes, &params.aspect_x, &params.aspect_y);
+	compute_aspect_ratio(Machine->drv, &params.aspect_x, &params.aspect_y);
 	params.depth = Machine->color_depth;
 	params.colors = palette_get_total_colors_with_ui();
 	params.fps = Machine->drv->frames_per_second;
-	params.video_attributes = Machine->drv->video_attributes & ~VIDEO_ASPECT_RATIO_MASK;
+	params.video_attributes = Machine->drv->video_attributes;
 	params.orientation = Machine->orientation;
 
 	/* initialize the display through the artwork (and eventually the OSD) layer */
@@ -680,6 +687,7 @@ static int vh_open(void)
 		goto cant_create_scrbitmap;
 
 	/* set the default visible area */
+	set_visible_area(0,1,0,1);	// make sure everything is recalculated on multiple runs
 	set_visible_area(
 			Machine->drv->default_visible_area.min_x,
 			Machine->drv->default_visible_area.max_x,
@@ -795,20 +803,20 @@ static void vh_close(void)
 	ratio encoded in the video attributes
 -------------------------------------------------*/
 
-static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y)
+static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *aspect_x, int *aspect_y)
 {
 	/* if it's explicitly specified, use it */
-	if (attributes & VIDEO_ASPECT_RATIO_MASK)
+	if (drv->aspect_x && drv->aspect_y)
 	{
-		*aspect_x = VIDEO_ASPECT_RATIO_NUM(attributes);
-		*aspect_y = VIDEO_ASPECT_RATIO_DEN(attributes);
+		*aspect_x = drv->aspect_x;
+		*aspect_y = drv->aspect_y;
 	}
 
 	/* otherwise, attempt to deduce the result */
-	else if (!(attributes & VIDEO_DUAL_MONITOR))
+	else if (!(drv->video_attributes & VIDEO_DUAL_MONITOR))
 	{
 		*aspect_x = 4;
-		*aspect_y = (attributes & VIDEO_DUAL_MONITOR) ? 6 : 3;
+		*aspect_y = (drv->video_attributes & VIDEO_DUAL_MONITOR) ? 6 : 3;
 	}
 }
 
@@ -857,11 +865,6 @@ static int init_game_options(void)
 	Machine->orientation = ROT0;
 	Machine->ui_orientation = options.ui_orientation;
 
-#ifdef MESS
-	/* process some MESSy stuff */
-	if (get_filenames())
-		return 1;
-#endif
 	return 0;
 }
 
@@ -1029,6 +1032,12 @@ static int init_buffered_spriteram(void)
 
 void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 {
+	if (       Machine->visible_area.min_x == min_x
+			&& Machine->visible_area.max_x == max_x
+			&& Machine->visible_area.min_y == min_y
+			&& Machine->visible_area.max_y == max_y)
+		return;
+
 	/* "dirty" the area for the next display update */
 	visible_area_changed = 1;
 
@@ -1050,6 +1059,9 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 	/* raster games need to use the visible area */
 	else
 		Machine->absolute_visible_area = Machine->visible_area;
+
+	/* recompute scanline timing */
+	cpu_compute_scanline_timing();
 }
 
 
@@ -1423,7 +1435,7 @@ void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
 	int cpunum;
 
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
-		if (machine->cpu[cpunum].tag == tag)
+		if (machine->cpu[cpunum].tag && strcmp(machine->cpu[cpunum].tag, tag) == 0)
 		{
 			memmove(&machine->cpu[cpunum], &machine->cpu[cpunum + 1], sizeof(machine->cpu[0]) * (MAX_CPU - cpunum - 1));
 			memset(&machine->cpu[MAX_CPU - 1], 0, sizeof(machine->cpu[0]));
@@ -1489,7 +1501,7 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 	int soundnum;
 
 	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
-		if (machine->sound[soundnum].tag == tag)
+		if (machine->sound[soundnum].tag && strcmp(machine->sound[soundnum].tag, tag) == 0)
 		{
 			memmove(&machine->sound[soundnum], &machine->sound[soundnum + 1], sizeof(machine->sound[0]) * (MAX_SOUND - soundnum - 1));
 			memset(&machine->sound[MAX_SOUND - 1], 0, sizeof(machine->sound[0]));
@@ -1511,13 +1523,12 @@ void *mame_hard_disk_open(const char *filename, const char *mode)
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
 	{
-		void *file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
-		if (file)
-			return file;
+		mame_file *file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, 0);
+		return (void *)file;
 	}
 
 	/* look for read/write drives in the diff area */
-	return osd_fopen(NULL, filename, OSD_FILETYPE_IMAGE_DIFF, 1);
+	return (void *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
 }
 
 
@@ -1529,7 +1540,7 @@ void *mame_hard_disk_open(const char *filename, const char *mode)
 
 void mame_hard_disk_close(void *file)
 {
-	osd_fclose(file);
+	mame_fclose((mame_file *)file);
 }
 
 
@@ -1541,8 +1552,8 @@ void mame_hard_disk_close(void *file)
 
 UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	osd_fseek(file, offset, SEEK_SET);
-	return osd_fread(file, buffer, count);
+	mame_fseek((mame_file *)file, offset, SEEK_SET);
+	return mame_fread((mame_file *)file, buffer, count);
 }
 
 
@@ -1554,8 +1565,8 @@ UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer
 
 UINT32 mame_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	osd_fseek(file, offset, SEEK_SET);
-	return osd_fwrite(file, buffer, count);
+	mame_fseek((mame_file *)file, offset, SEEK_SET);
+	return mame_fwrite((mame_file *)file, buffer, count);
 }
 
 
@@ -1760,8 +1771,8 @@ static int validitychecks(void)
 					int alignunit,databus_width;
 
 
-					alignunit = cputype_align_unit(drv.cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
-					databus_width = cputype_databus_width(drv.cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
+					alignunit = cputype_align_unit(drv.cpu[cpu].cpu_type);
+					databus_width = cputype_databus_width(drv.cpu[cpu].cpu_type);
 
 					if (drv.cpu[cpu].memory_read)
 					{
@@ -1986,6 +1997,11 @@ static int validitychecks(void)
 						error = 1;
 					}
 
+					if (inp->name == DEF_STR( Demo_Sounds ) && (inp+1)->name == DEF_STR( No ))
+					{
+						printf("%s: %s has wrong Demo Sounds option No instead of Off\n",drivers[i]->source_file,drivers[i]->name);
+						error = 1;
+					}
 				}
 
 				inp++;

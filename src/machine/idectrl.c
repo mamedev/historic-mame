@@ -15,7 +15,7 @@
 
 #define PRINTF_IDE_COMMANDS			0
 
-#define VERBOSE
+//#define VERBOSE
 #ifdef VERBOSE
 #define LOG(x)	logerror x
 #else
@@ -31,8 +31,10 @@
  *************************************/
 
 #define TIME_PER_SECTOR				(TIME_IN_USEC(100))
+#define TIME_PER_ROTATION			(TIME_IN_HZ(5400/60))
 
 #define IDE_STATUS_ERROR			0x01
+#define IDE_STATUS_HIT_INDEX		0x02
 #define IDE_STATUS_BUFFER_READY		0x08
 #define IDE_STATUS_SEEK_COMPLETE	0x10
 #define IDE_STATUS_DRIVE_READY		0x40
@@ -61,6 +63,7 @@
 #define IDE_COMMAND_GET_INFO		0xec
 
 #define IDE_ERROR_NONE				0x00
+#define IDE_ERROR_DEFAULT			0x01
 #define IDE_ERROR_UNKNOWN_COMMAND	0x04
 #define IDE_ERROR_BAD_LOCATION		0x10
 #define IDE_ERROR_BAD_SECTOR		0x80
@@ -81,6 +84,7 @@ struct ide_state
 	UINT8	interrupt_pending;
 
 	UINT8	buffer[HARD_DISK_SECTOR_SIZE];
+	UINT8	features[HARD_DISK_SECTOR_SIZE];
 	UINT16	buffer_offset;
 	UINT16	sector_count;
 
@@ -99,6 +103,7 @@ struct ide_state
 
 	struct ide_interface *intf;
 	void *	disk;
+	void *	last_status_timer;
 };
 
 
@@ -110,6 +115,16 @@ struct ide_state
  *************************************/
 
 static struct ide_state idestate[MAX_IDE_CONTROLLERS];
+
+
+
+/*************************************
+ *
+ *	Prototypes
+ *
+ *************************************/
+
+static void ide_build_features(struct ide_state *ide);
 
 
 
@@ -167,7 +182,16 @@ int ide_controller_init(int which, struct ide_interface *intf)
 		ide->num_cylinders = header->cylinders;
 		ide->num_sectors = header->sectors;
 		ide->num_heads = header->heads;
+#if PRINTF_IDE_COMMANDS
+		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_sectors, ide->num_heads);
+#endif
 	}
+
+	/* build the features page */
+	ide_build_features(ide);
+
+	/* create a timer for timing status */
+	ide->last_status_timer = timer_alloc(NULL);
 	return 0;
 }
 
@@ -178,11 +202,17 @@ void ide_controller_reset(int which)
 
 	/* reset the drive state */
 	ide->status = IDE_STATUS_DRIVE_READY | IDE_STATUS_SEEK_COMPLETE;
-	ide->error = IDE_ERROR_NONE;
+	ide->error = IDE_ERROR_DEFAULT;
 	ide->buffer_offset = 0;
 	clear_interrupt(ide);
 }
 
+
+UINT8 *ide_get_features(int which)
+{
+	struct ide_state *ide = &idestate[which];
+	return ide->features;
+}
 
 
 static void reset_callback(int param)
@@ -238,17 +268,33 @@ INLINE int convert_to_offset_and_size(offs_t *offset, data32_t mem_mask)
 
 INLINE void next_sector(struct ide_state *ide)
 {
-	/* sectors are 1-based */
-	ide->cur_sector++;
-	if (ide->cur_sector > ide->num_sectors)
+	/* LBA direct? */
+	if (ide->cur_head_reg & 0x40)
 	{
-		/* heads are 0 based */
-		ide->cur_sector = 1;
-		ide->cur_head++;
-		if (ide->cur_head >= ide->num_heads)
+		ide->cur_sector++;
+		if (ide->cur_sector == 0)
 		{
-			ide->cur_head = 0;
 			ide->cur_cylinder++;
+			if (ide->cur_cylinder == 0)
+				ide->cur_head++;
+		}
+	}
+
+	/* standard CHS */
+	else
+	{
+		/* sectors are 1-based */
+		ide->cur_sector++;
+		if (ide->cur_sector > ide->num_sectors)
+		{
+			/* heads are 0 based */
+			ide->cur_sector = 1;
+			ide->cur_head++;
+			if (ide->cur_head >= ide->num_heads)
+			{
+				ide->cur_head = 0;
+				ide->cur_cylinder++;
+			}
 		}
 	}
 }
@@ -263,7 +309,13 @@ INLINE void next_sector(struct ide_state *ide)
 
 INLINE UINT32 lba_address(struct ide_state *ide)
 {
-	return (ide->cur_cylinder * ide->num_heads + ide->cur_head) * ide->num_sectors + ide->cur_sector - 1;
+	/* LBA direct? */
+	if (ide->cur_head_reg & 0x40)
+		return ide->cur_sector + ide->cur_cylinder * 256 + ide->cur_head * 16777216;
+
+	/* standard CHS */
+	else
+		return (ide->cur_cylinder * ide->num_heads + ide->cur_head) * ide->num_sectors + ide->cur_sector - 1;
 }
 
 
@@ -274,32 +326,100 @@ INLINE UINT32 lba_address(struct ide_state *ide)
  *
  *************************************/
 
+static void swap_strncpy(UINT8 *dst, const char *src, int field_size_in_words)
+{
+	int i;
+
+	for (i = 0; i < field_size_in_words * 2 && src[i]; i++)
+		dst[i ^ 1] = src[i];
+	for ( ; i < field_size_in_words; i++)
+		dst[i ^ 1] = ' ';
+}
+
+
 static void ide_build_features(struct ide_state *ide)
 {
-	int bytes_per_track = ide->num_sectors * HARD_DISK_SECTOR_SIZE;
+	int total_sectors = ide->num_cylinders * ide->num_heads * ide->num_sectors;
 
 	memset(ide->buffer, 0, HARD_DISK_SECTOR_SIZE);
 
 	/* basic geometry */
-	ide->buffer[ 0] = 0x5a;							/* configuration bits */
-	ide->buffer[ 1] = 0x04;
-	ide->buffer[ 2] = ide->num_cylinders & 0xff;	/* cylinders */
-	ide->buffer[ 3] = ide->num_cylinders >> 8;
-	ide->buffer[ 4] = 0;							/* unused */
-	ide->buffer[ 5] = 0;
-	ide->buffer[ 6] = ide->num_heads & 0xff;		/* heads */
-	ide->buffer[ 7] = ide->num_heads >> 8;
-	ide->buffer[ 8] = bytes_per_track & 0xff;		/* bytes per track (obsolete) */
-	ide->buffer[ 9] = bytes_per_track >> 8;
-	ide->buffer[10] = HARD_DISK_SECTOR_SIZE & 0xff;	/* bytes per sector (obsolete) */
-	ide->buffer[11] = HARD_DISK_SECTOR_SIZE >> 8;
-	ide->buffer[12] = ide->num_sectors & 0xff;		/* sectors */
-	ide->buffer[13] = ide->num_sectors >> 8;
-	ide->buffer[14] = 0;							/* vendor-specific */
-	ide->buffer[15] = 0;
-
-	/* serial number */
-	memset(&ide->buffer[20], ' ', 20);
+	ide->features[ 0*2+0] = 0x5a;						/*  0: configuration bits */
+	ide->features[ 0*2+1] = 0x04;
+	ide->features[ 1*2+0] = ide->num_cylinders & 0xff;	/*  1: logical cylinders */
+	ide->features[ 1*2+1] = ide->num_cylinders >> 8;
+	ide->features[ 2*2+0] = 0;							/*  2: reserved */
+	ide->features[ 2*2+1] = 0;
+	ide->features[ 3*2+0] = ide->num_heads & 0xff;		/*  3: logical heads */
+	ide->features[ 3*2+1] = ide->num_heads >> 8;
+	ide->features[ 4*2+0] = 0;							/*  4: vendor specific (obsolete) */
+	ide->features[ 4*2+1] = 0;
+	ide->features[ 5*2+0] = 0;							/*  5: vendor specific (obsolete) */
+	ide->features[ 5*2+1] = 0;
+	ide->features[ 6*2+0] = ide->num_sectors & 0xff;	/*  6: logical sectors per logical track */
+	ide->features[ 6*2+1] = ide->num_sectors >> 8;
+	ide->features[ 7*2+0] = 0;							/*  7: vendor-specific */
+	ide->features[ 7*2+1] = 0;
+	ide->features[ 8*2+0] = 0;							/*  8: vendor-specific */
+	ide->features[ 8*2+1] = 0;
+	ide->features[ 9*2+0] = 0;							/*  9: vendor-specific */
+	ide->features[ 9*2+1] = 0;
+	swap_strncpy(&ide->features[10*2+0], 				/* 10-19: serial number */
+			"00000000000000000000", 10);
+	ide->features[20*2+0] = 0;							/* 20: vendor-specific */
+	ide->features[20*2+1] = 0;
+	ide->features[21*2+0] = 0;							/* 21: vendor-specific */
+	ide->features[21*2+1] = 0;
+	ide->features[22*2+0] = 4;							/* 22: # of vendor-specific bytes on read/write long commands */
+	ide->features[22*2+1] = 0;
+	swap_strncpy(&ide->features[23*2+0], 				/* 23-26: firmware revision */
+			"1.0", 4);
+	swap_strncpy(&ide->features[27*2+0], 				/* 27-46: model number */
+			"MAME Compressed Hard Disk", 20);
+	ide->features[47*2+0] = 0;							/* 47: read/write multiple support */
+	ide->features[47*2+1] = 0;
+	ide->features[48*2+0] = 0;							/* 48: reserved */
+	ide->features[48*2+1] = 0;
+	ide->features[49*2+0] = 0x00;						/* 49: capabilities */
+	ide->features[49*2+1] = 0x0f;
+	ide->features[50*2+0] = 0;							/* 50: reserved */
+	ide->features[50*2+1] = 0;
+	ide->features[51*2+0] = 2;							/* 51: PIO data transfer cycle timing mode */
+	ide->features[51*2+1] = 0;
+	ide->features[52*2+0] = 2;							/* 52: single word DMA transfer cycle timing mode */
+	ide->features[52*2+1] = 0;
+	ide->features[53*2+0] = 3;							/* 53: field validity */
+	ide->features[53*2+1] = 0;
+	ide->features[54*2+0] = ide->num_cylinders & 0xff;	/* 54: number of current logical cylinders */
+	ide->features[54*2+1] = ide->num_cylinders >> 8;
+	ide->features[55*2+0] = ide->num_heads & 0xff;		/* 55: number of current logical heads */
+	ide->features[55*2+1] = ide->num_heads >> 8;
+	ide->features[56*2+0] = ide->num_sectors & 0xff;	/* 56: number of current logical sectors per track */
+	ide->features[56*2+1] = ide->num_sectors >> 8;
+	ide->features[57*2+0] = total_sectors & 0xff;		/* 57-58: number of current logical sectors per track */
+	ide->features[57*2+1] = total_sectors >> 8;
+	ide->features[58*2+0] = total_sectors >> 16;
+	ide->features[58*2+1] = total_sectors >> 24;
+	ide->features[59*2+0] = 0;							/* 59: multiple sector timing */
+	ide->features[59*2+1] = 0;
+	ide->features[60*2+0] = total_sectors & 0xff;		/* 60-61: total user addressable sectors */
+	ide->features[60*2+1] = total_sectors >> 8;
+	ide->features[61*2+0] = total_sectors >> 16;
+	ide->features[61*2+1] = total_sectors >> 24;
+	ide->features[62*2+0] = 0x07;						/* 62: single word dma transfer */
+	ide->features[62*2+1] = 0x00;
+	ide->features[63*2+0] = 0x07;						/* 63: multiword DMA transfer */
+	ide->features[63*2+1] = 0x04;
+	ide->features[64*2+0] = 0x03;						/* 64: flow control PIO transfer modes supported */
+	ide->features[64*2+1] = 0x00;
+	ide->features[65*2+0] = 0x78;						/* 65: minimum multiword DMA transfer cycle time per word */
+	ide->features[65*2+1] = 0x00;
+	ide->features[66*2+0] = 0x78;						/* 66: mfr's recommended multiword DMA transfer cycle time */
+	ide->features[66*2+1] = 0x00;
+	ide->features[67*2+0] = 0x4d;						/* 67: minimum PIO transfer cycle time without flow control */
+	ide->features[67*2+1] = 0x01;
+	ide->features[68*2+0] = 0x78;						/* 68: minimum PIO transfer cycle time with IORDY */
+	ide->features[68*2+1] = 0x00;
 }
 
 
@@ -475,7 +595,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			ide->sector_count = 1;
 
 			/* build the features page */
-			ide_build_features(ide);
+			memcpy(ide->buffer, ide->features, sizeof(ide->buffer));
 
 			/* indicate everything is ready */
 			ide->status |= IDE_STATUS_BUFFER_READY;
@@ -526,7 +646,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 	UINT32 result = 0;
 
 	/* logit */
-	if (offset != IDE_ADDR_DATA)
+//	if (offset != IDE_ADDR_DATA)
 		LOG(("%08X:IDE read at %03X, size=%d\n", activecpu_get_previouspc(), offset, size));
 
 	switch (offset)
@@ -603,14 +723,21 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 
 		/* return the current status and clear any pending interrupts */
 		case IDE_ADDR_STATUS_COMMAND:
-			result = ide->status;
-			if (ide->interrupt_pending)
-				clear_interrupt(ide);
-			break;
-
 		/* return the current status but don't clear interrupts */
 		case IDE_ADDR_STATUS_CONTROL:
 			result = ide->status;
+			if (timer_timeelapsed(ide->last_status_timer) > TIME_PER_ROTATION)
+			{
+				result |= IDE_STATUS_HIT_INDEX;
+				timer_adjust(ide->last_status_timer, TIME_NEVER, 0, 0);
+			}
+
+			/* clear interrutps only when reading the real status */
+			if (offset == IDE_ADDR_STATUS_COMMAND)
+			{
+				if (ide->interrupt_pending)
+					clear_interrupt(ide);
+			}
 			break;
 
 		/* log anything else */

@@ -309,7 +309,7 @@ void timer_init(void)
 	lastcpu = cpudata;
 	for (cpu = cpudata, i = 0; i < MAX_CPU; cpu++, i++)
 	{
-		int cputype = Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK;
+		int cputype = Machine->drv->cpu[i].cpu_type;
 
 		/* stop when we hit a dummy */
 		if (cputype == CPU_DUMMY)

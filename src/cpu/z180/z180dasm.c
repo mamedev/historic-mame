@@ -108,7 +108,7 @@ enum e_mnemonics {
 	zXOR
 };
 
-static char *s_mnemonic[] = {
+static const char *s_mnemonic[] = {
 	"adc",
 	"add",
 	"and",
@@ -558,7 +558,8 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 {
 	z80dasm *d;
 	const char *symbol, *src;
-	char *ixy, *dst;
+	const char *ixy;
+	char *dst;
 	unsigned PC = pc;
 	INT8 offset = 0;
 	UINT8 op, op1;

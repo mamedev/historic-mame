@@ -12,8 +12,9 @@ CPUS+=M6510@
 #CPUS+=M6510T@
 #CPUS+=M7501@
 #CPUS+=M8502@
-#CPUS+=M4510@
 CPUS+=N2A03@
+CPUS+=DECO16@
+#CPUS+=M4510@
 CPUS+=H6280@
 CPUS+=I86@
 #CPUS+=I88@
@@ -61,17 +62,22 @@ CPUS+=TMS9995@
 #CPUS+=TMS99110A@
 CPUS+=Z8000@
 CPUS+=TMS32010@
+CPUS+=TMS32025@
+CPUS+=TMS32031@
 CPUS+=CCPU@
 CPUS+=ADSP2100@
 CPUS+=ADSP2101@
 CPUS+=ADSP2105@
+CPUS+=ADSP2115@
 CPUS+=PSXCPU@
 CPUS+=ASAP@
 CPUS+=UPD7810@
+CPUS+=UPD7807@
 CPUS+=ARM@
 CPUS+=JAGUAR@
 CPUS+=R3000@
-CPUS+=TMS32031@
+CPUS+=R4600@
+CPUS+=R5000@
 CPUS+=SH2@
 CPUS+=DSP32C@
 
@@ -101,6 +107,7 @@ SOUNDS+=POKEY@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=NAMCO@
+SOUNDS+=NAMCONA@
 SOUNDS+=TMS36XX@
 SOUNDS+=TMS5110@
 SOUNDS+=TMS5220@
@@ -127,6 +134,8 @@ SOUNDS+=ES5505@
 SOUNDS+=ES5506@
 SOUNDS+=BSMT2000@
 SOUNDS+=YMF278B@
+SOUNDS+=GAELCO_CG1V@
+SOUNDS+=GAELCO_GAE1@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -147,7 +156,9 @@ DRVLIBS = \
 	$(OBJ)/metro.a $(OBJ)/venture.a $(OBJ)/yunsung.a $(OBJ)/zilec.a \
 	$(OBJ)/fuuki.a $(OBJ)/unico.a $(OBJ)/afega.a $(OBJ)/esd.a $(OBJ)/dynax.a \
 	$(OBJ)/sigma.a $(OBJ)/igs.a $(OBJ)/ramtek.a $(OBJ)/omori.a $(OBJ)/tch.a \
-	$(OBJ)/usgames.a $(OBJ)/semicom.a $(OBJ)/other.a $(OBJ)/neogeo.a \
+	$(OBJ)/usgames.a $(OBJ)/semicom.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
+	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
+	$(OBJ)/taiyo.a $(OBJ)/other.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
@@ -330,7 +341,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/undrfire.o $(OBJ)/drivers/undrfire.o \
 	$(OBJ)/vidhrdw/taito_f2.o $(OBJ)/drivers/taito_f2.o \
 	$(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_f3.o $(OBJ)/drivers/taito_f3.o \
-	$(OBJ)/drivers/taitoair.o \
+	$(OBJ)/vidhrdw/taitoair.o $(OBJ)/drivers/taitoair.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
@@ -396,8 +407,6 @@ $(OBJ)/sega.a: \
 	$(OBJ)/machine/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/drivers/turbo.o \
 	$(OBJ)/drivers/kopunch.o \
 	$(OBJ)/vidhrdw/suprloco.o $(OBJ)/drivers/suprloco.o \
-	$(OBJ)/vidhrdw/appoooh.o $(OBJ)/drivers/appoooh.o \
-	$(OBJ)/vidhrdw/bankp.o $(OBJ)/drivers/bankp.o \
 	$(OBJ)/vidhrdw/dotrikun.o $(OBJ)/drivers/dotrikun.o \
 	$(OBJ)/vidhrdw/angelkds.o $(OBJ)/drivers/angelkds.o \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
@@ -406,8 +415,9 @@ $(OBJ)/sega.a: \
 	$(OBJ)/sndhrdw/system16.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
-	$(OBJ)/drivers/system32.o \
+	$(OBJ)/drivers/system32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
+	$(OBJ)/drivers/stv.o \
 
 $(OBJ)/deniam.a: \
 	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
@@ -416,6 +426,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/machine/btime.o $(OBJ)/vidhrdw/btime.o $(OBJ)/drivers/btime.o \
 	$(OBJ)/machine/decocass.o $(OBJ)/vidhrdw/decocass.o $(OBJ)/drivers/decocass.o \
 	$(OBJ)/vidhrdw/astrof.o $(OBJ)/sndhrdw/astrof.o $(OBJ)/drivers/astrof.o \
+	$(OBJ)/vidhrdw/liberate.o $(OBJ)/drivers/liberate.o \
 	$(OBJ)/vidhrdw/kchamp.o $(OBJ)/drivers/kchamp.o \
 	$(OBJ)/vidhrdw/firetrap.o $(OBJ)/drivers/firetrap.o \
 	$(OBJ)/vidhrdw/brkthru.o $(OBJ)/drivers/brkthru.o \
@@ -657,6 +668,7 @@ $(OBJ)/berzerk.a: \
 	$(OBJ)/machine/berzerk.o $(OBJ)/vidhrdw/berzerk.o $(OBJ)/sndhrdw/berzerk.o $(OBJ)/drivers/berzerk.o \
 
 $(OBJ)/gameplan.a: \
+	$(OBJ)/drivers/toratora.o \
 	$(OBJ)/vidhrdw/gameplan.o $(OBJ)/drivers/gameplan.o \
 
 $(OBJ)/zaccaria.a: \
@@ -680,11 +692,12 @@ $(OBJ)/nmk.a: \
 
 $(OBJ)/tms.a: \
 	$(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
-	$(OBJ)/machine/wmsyunit.o $(OBJ)/vidhrdw/wmsyunit.o $(OBJ)/drivers/wmsyunit.o \
-	$(OBJ)/machine/wmstunit.o $(OBJ)/vidhrdw/wmstunit.o $(OBJ)/drivers/wmstunit.o \
-	$(OBJ)/machine/wmswolfu.o $(OBJ)/drivers/wmswolfu.o \
-	$(OBJ)/vidhrdw/wmsvunit.o $(OBJ)/drivers/wmsvunit.o \
-	$(OBJ)/drivers/revx.o \
+	$(OBJ)/machine/midwayic.o $(OBJ)/sndhrdw/dcs.o \
+	$(OBJ)/machine/midyunit.o $(OBJ)/vidhrdw/midyunit.o $(OBJ)/drivers/midyunit.o \
+	$(OBJ)/drivers/midxunit.o \
+	$(OBJ)/machine/midwunit.o $(OBJ)/drivers/midwunit.o \
+	$(OBJ)/vidhrdw/midvunit.o $(OBJ)/drivers/midvunit.o \
+	$(OBJ)/machine/midtunit.o $(OBJ)/vidhrdw/midtunit.o $(OBJ)/drivers/midtunit.o \
 
 $(OBJ)/cinemar.a: \
 	$(OBJ)/vidhrdw/jack.o $(OBJ)/drivers/jack.o \
@@ -749,6 +762,7 @@ $(OBJ)/vsystem.a: \
 $(OBJ)/psikyo.a: \
 	$(OBJ)/vidhrdw/psikyo.o $(OBJ)/drivers/psikyo.o \
 	$(OBJ)/vidhrdw/psikyosh.o $(OBJ)/drivers/psikyosh.o \
+	$(OBJ)/vidhrdw/psikyo4.o $(OBJ)/drivers/psikyo4.o \
 
 $(OBJ)/leland.a: \
 	$(OBJ)/machine/8254pit.o $(OBJ)/drivers/leland.o $(OBJ)/vidhrdw/leland.o $(OBJ)/machine/leland.o $(OBJ)/sndhrdw/leland.o \
@@ -765,6 +779,9 @@ $(OBJ)/gaelco.a: \
 	$(OBJ)/vidhrdw/splash.o $(OBJ)/drivers/splash.o \
 	$(OBJ)/vidhrdw/thoop2.o $(OBJ)/drivers/thoop2.o \
 	$(OBJ)/vidhrdw/gaelco.o $(OBJ)/drivers/gaelco.o \
+	$(OBJ)/machine/wrally.o $(OBJ)/vidhrdw/wrally.o $(OBJ)/drivers/wrally.o \
+	$(OBJ)/vidhrdw/targeth.o $(OBJ)/drivers/targeth.o \
+	$(OBJ)/machine/gaelco2.o $(OBJ)/vidhrdw/gaelco2.o $(OBJ)/drivers/gaelco2.o \
 
 $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/airbustr.o $(OBJ)/drivers/airbustr.o \
@@ -892,6 +909,34 @@ $(OBJ)/usgames.a: \
 $(OBJ)/semicom.a: \
 	$(OBJ)/vidhrdw/hyperpac.o $(OBJ)/drivers/hyperpac.o \
 
+$(OBJ)/sanritsu.a: \
+	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
+	$(OBJ)/vidhrdw/drmicro.o $(OBJ)/drivers/drmicro.o \
+	$(OBJ)/vidhrdw/appoooh.o $(OBJ)/drivers/appoooh.o \
+	$(OBJ)/vidhrdw/bankp.o $(OBJ)/drivers/bankp.o \
+	$(OBJ)/vidhrdw/mjkjidai.o $(OBJ)/drivers/mjkjidai.o \
+	$(OBJ)/vidhrdw/mayumi.o $(OBJ)/drivers/mayumi.o \
+
+$(OBJ)/rare.a: \
+	$(OBJ)/vidhrdw/btoads.o $(OBJ)/drivers/btoads.o \
+	$(OBJ)/vidhrdw/kinst.o $(OBJ)/drivers/kinst.o \
+
+$(OBJ)/nihonsys.a: \
+	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
+
+$(OBJ)/alba.a: \
+	$(OBJ)/drivers/rmhaihai.o \
+	$(OBJ)/drivers/hanaroku.o \
+
+$(OBJ)/homedata.a: \
+	$(OBJ)/vidhrdw/homedata.o $(OBJ)/drivers/homedata.o \
+
+$(OBJ)/artmagic.a: \
+	$(OBJ)/vidhrdw/artmagic.o $(OBJ)/drivers/artmagic.o \
+
+$(OBJ)/taiyo.a: \
+	$(OBJ)/vidhrdw/shangkid.o $(OBJ)/drivers/shangkid.o \
+
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
 	$(OBJ)/drivers/omegrace.o \
@@ -907,14 +952,10 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/gotya.o $(OBJ)/sndhrdw/gotya.o $(OBJ)/drivers/gotya.o \
 	$(OBJ)/vidhrdw/mrjong.o $(OBJ)/drivers/mrjong.o \
 	$(OBJ)/vidhrdw/polyplay.o $(OBJ)/sndhrdw/polyplay.o $(OBJ)/drivers/polyplay.o \
-	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/amspdwy.o $(OBJ)/drivers/amspdwy.o \
-	$(OBJ)/vidhrdw/shangkid.o $(OBJ)/drivers/shangkid.o \
 	$(OBJ)/vidhrdw/othldrby.o $(OBJ)/drivers/othldrby.o \
-	$(OBJ)/vidhrdw/btoads.o $(OBJ)/drivers/btoads.o \
 	$(OBJ)/vidhrdw/mosaic.o $(OBJ)/drivers/mosaic.o \
 	$(OBJ)/drivers/spdbuggy.o \
-	$(OBJ)/drivers/homedata.o \
 	$(OBJ)/vidhrdw/sprcros2.o $(OBJ)/drivers/sprcros2.o \
 	$(OBJ)/vidhrdw/mugsmash.o $(OBJ)/drivers/mugsmash.o \
 	$(OBJ)/vidhrdw/stlforce.o $(OBJ)/drivers/stlforce.o \
@@ -929,8 +970,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/dribling.o $(OBJ)/drivers/dribling.o \
 	$(OBJ)/drivers/ace.o \
 	$(OBJ)/vidhrdw/clayshoo.o $(OBJ)/machine/clayshoo.o $(OBJ)/drivers/clayshoo.o \
-	$(OBJ)/vidhrdw/mayumi.o $(OBJ)/drivers/mayumi.o \
-	$(OBJ)/drivers/pirates.o \
+	$(OBJ)/vidhrdw/pirates.o $(OBJ)/drivers/pirates.o \
 	$(OBJ)/vidhrdw/fitfight.o $(OBJ)/drivers/fitfight.o \
 	$(OBJ)/vidhrdw/flower.o $(OBJ)/sndhrdw/flower.o $(OBJ)/drivers/flower.o \
 	$(OBJ)/vidhrdw/diverboy.o $(OBJ)/drivers/diverboy.o \
@@ -938,7 +978,11 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/mcatadv.o $(OBJ)/drivers/mcatadv.o \
 	$(OBJ)/vidhrdw/4enraya.o $(OBJ)/drivers/4enraya.o \
 	$(OBJ)/vidhrdw/oneshot.o $(OBJ)/drivers/oneshot.o \
-	$(OBJ)/drivers/hanaroku.o \
+	$(OBJ)/drivers/tugboat.o \
+	$(OBJ)/vidhrdw/gotcha.o $(OBJ)/drivers/gotcha.o \
+	$(OBJ)/drivers/coolpool.o \
+	$(OBJ)/vidhrdw/gumbo.o $(OBJ)/drivers/gumbo.o \
+	$(OBJ)/drivers/statriv2.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

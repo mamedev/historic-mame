@@ -21,6 +21,8 @@ void state_save_register_INT32 (const char *module, int instance,
 								const char *name, INT32 *val, unsigned size);
 void state_save_register_double(const char *module, int instance,
 								const char *name, double *val, unsigned size);
+void state_save_register_float (const char *module, int instance,
+								const char *name, float *val, unsigned size);
 void state_save_register_int   (const char *module, int instance,
 								const char *name, int *val);
 

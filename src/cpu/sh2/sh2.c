@@ -271,7 +271,7 @@ INLINE void WL(offs_t A, data32_t V)
 	cpu_writemem32bedw_dword(A & AM,V);
 }
 
-INLINE void sh2_exception(char *message, int irqline)
+INLINE void sh2_exception(const char *message, int irqline)
 {
 	int vector;
 

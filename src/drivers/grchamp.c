@@ -241,6 +241,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /***************************************************************************/
+#if 0
 static UINT8 *shareram;
 static WRITE_HANDLER( shareram_w )
 {
@@ -250,6 +251,7 @@ static READ_HANDLER( shareram_r )
 {
 	return shareram[offset];
 }
+#endif
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },

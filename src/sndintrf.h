@@ -74,6 +74,9 @@ struct MachineSound
 #if (HAS_NAMCO)
 #include "sound/namco.h"
 #endif
+#if (HAS_NAMCONA)
+#include "sound/namcona.h"
+#endif
 #if (HAS_TMS36XX)
 #include "sound/tms36xx.h"
 #endif
@@ -145,6 +148,9 @@ struct MachineSound
 #endif
 #if (HAS_YMF278B)
 #include "sound/ymf278b.h"
+#endif
+#if (HAS_GAELCO_CG1V || HAS_GAELCO_GAE1)
+#include "sound/gaelco.h"
 #endif
 
 #ifdef MESS
@@ -241,6 +247,9 @@ enum
 #if (HAS_NAMCO)
 	SOUND_NAMCO,
 #endif
+#if (HAS_NAMCONA)
+	SOUND_NAMCONA,
+#endif
 #if (HAS_TMS36XX)
 	SOUND_TMS36XX,
 #endif
@@ -318,6 +327,12 @@ enum
 #endif
 #if (HAS_YMF278B)
 	SOUND_YMF278B,
+#endif
+#if (HAS_GAELCO_CG1V)
+ SOUND_GAELCO_CG1V,
+#endif
+#if (HAS_GAELCO_GAE1)
+ SOUND_GAELCO_GAE1,
 #endif
 
 #ifdef MESS

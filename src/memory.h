@@ -696,9 +696,11 @@ DECLARE_MEM_HANDLERS_8BIT(24)
 
 /* ----- declare 16-bit bigendian handlers ----- */
 DECLARE_MEM_HANDLERS_16BIT_BE(16)
+DECLARE_MEM_HANDLERS_16BIT_BE(18)
 DECLARE_MEM_HANDLERS_16BIT_BE(24)
 DECLARE_MEM_HANDLERS_16BIT_BE(32)
 #define change_pc16bew(pc)		change_pc_generic(pc, 16, 1, cpu_setopbase16bew)
+#define change_pc18bew(pc)      change_pc_generic(pc, 18, 1, cpu_setopbase18bew)
 #define change_pc24bew(pc)		change_pc_generic(pc, 24, 1, cpu_setopbase24bew)
 #define change_pc32bew(pc)		change_pc_generic(pc, 32, 1, cpu_setopbase32bew)
 

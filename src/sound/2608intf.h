@@ -9,7 +9,6 @@
 #define   MAX_2608    (2)
 
 #ifndef VOL_YM3012
-/* #define YM3014_VOL(Vol,Pan) VOL_YM3012((Vol)/2,Pan,(Vol)/2,Pan) */
 #define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))
 #endif
 
@@ -26,20 +25,12 @@ struct YM2608interface{
 	int volumeFM[MAX_2608];		/* use YM3012_VOL macro */
 };
 
-/************************************************/
-/* Sound Hardware Start							*/
-/************************************************/
 int YM2608_sh_start(const struct MachineSound *msound);
-
-/************************************************/
-/* Sound Hardware Stop							*/
-/************************************************/
 void YM2608_sh_stop(void);
-
 void YM2608_sh_reset(void);
 
 /************************************************/
-/* Chip 0 functions								*/
+/* Chip 0 functions				*/
 /************************************************/
 READ_HANDLER( YM2608_status_port_0_A_r );
 READ_HANDLER( YM2608_status_port_0_B_r );
@@ -50,7 +41,7 @@ WRITE_HANDLER( YM2608_data_port_0_A_w );
 WRITE_HANDLER( YM2608_data_port_0_B_w );
 
 /************************************************/
-/* Chip 1 functions								*/
+/* Chip 1 functions				*/
 /************************************************/
 READ_HANDLER( YM2608_status_port_1_A_r );
 READ_HANDLER( YM2608_status_port_1_B_r );
@@ -60,5 +51,4 @@ WRITE_HANDLER( YM2608_control_port_1_B_w );
 WRITE_HANDLER( YM2608_data_port_1_A_w );
 WRITE_HANDLER( YM2608_data_port_1_B_w );
 
-#endif
-/**************** end of file ****************/
+#endif /* __2608INTF_H__ */

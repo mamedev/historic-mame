@@ -171,12 +171,7 @@ static WRITE16_HANDLER( slapshot_msb_sound_w )
 
 #ifdef MAME_DEBUG
 	if (data & 0xff)
-	{
-		char buf[80];
-
-		sprintf(buf,"taito_msb_sound_w to low byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
+		usrintf_showmessage("taito_msb_sound_w to low byte: %04x",data);
 #endif
 }
 
@@ -396,7 +391,7 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
-	
+
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

@@ -3,16 +3,22 @@
 ** File: ymdeltat.c
 **
 ** YAMAHA DELTA-T adpcm sound emulation subroutine
-** used by fmopl.c(v0.37c-) and fm.c(v0.37a-)
+** used by fmopl.c and fm.c
 **
 ** Base program is YM2610 emulator by Hiromitsu Shioya.
 ** Written by Tatsuyuki Satoh
 **
 ** History:
-** 12-28-2001 Acho A. Tang
+** 01-12-2002 Jarek Burczynski:
+**  - fixed first missing sound in gigandes thanks to previous fix (interpolator) by ElSemi
+**  - renamed/removed some YM_DELTAT struct fields
+**
+** 28-12-2001 Acho A. Tang
 **  - added EOS status report on ADPCM playback.
+**
 ** 05-08-2001 Jarek Burczynski:
 **  - now_step is initialized with 0 at the start of play.
+**
 ** 12-06-2001 Jarek Burczynski:
 **  - corrected end of sample bug in YM_DELTAT_ADPCM_CALC.
 **    Checked on real YM2610 chip - address register is 24 bits wide.
@@ -21,14 +27,13 @@
 ** TO DO:
 **		Check size of the address register on the other chips....
 **
-** Version 0.37e
+** Version 0.63
 **
 ** sound chips that have this unit
 **
 ** YM2608   OPNA
 ** YM2610/B OPNB
 ** Y8950    MSX AUDIO
-**
 **
 */
 
@@ -78,20 +83,15 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 #endif
 		if( v&0x80 ){
 			DELTAT->portstate = v&0x90; /* start req,memory mode,repeat flag copy */
-			DELTAT->eos      = 0; //AT
-			/**** start ADPCM ****/
-			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
+			DELTAT->eos      = 0; /* AT */
+			/* start ADPCM */
 			DELTAT->now_addr = (DELTAT->start)<<1;
 			DELTAT->now_step = 0;
 			DELTAT->acc      = 0;
+			DELTAT->prev_acc = 0;
 			DELTAT->adpcml   = 0;
 			DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
-			DELTAT->next_leveling=0;
 
-			if( !DELTAT->step )
-			{
-				DELTAT->portstate = 0x00;
-			}
 			/**** PCM memory check & limit check ****/
 			if(DELTAT->memory == 0){			/* Check memory Mapped */
 				LOG(LOG_ERR,("YM Delta-T ADPCM rom not mapped\n"));
@@ -133,9 +133,8 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 	case 0x09:	/* DELTA-N L (ADPCM Playback Prescaler) */
 	case 0x0a:	/* DELTA-N H */
 		DELTAT->delta  = (DELTAT->reg[0xa]*0x0100 | DELTAT->reg[0x9]);
-			/*logerror("DELTAT deltan:09=%2x 0a=%2x\n",DELTAT->reg[0x9], DELTAT->reg[0xa]);*/
 		DELTAT->step     = (UINT32)( (double)(DELTAT->delta /* *(1<<(YM_DELTAT_SHIFT-16)) */ ) * (DELTAT->freqbase) );
-		DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
+			/*logerror("DELTAT deltan:09=%2x 0a=%2x\n",DELTAT->reg[0x9], DELTAT->reg[0xa]);*/
 		break;
 	case 0x0b:	/* Level control (volume , voltage flat) */
 		{
@@ -149,10 +148,8 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 			/*logerror("DELTAT vol = %2x\n",v&0xff);*/
 			if( oldvol != 0 )
 			{
-				DELTAT->adpcml        = (int)((double)DELTAT->adpcml        / (double)oldvol * (double)DELTAT->volume);
-				DELTAT->resample_step = (int)((double)DELTAT->resample_step / (double)oldvol * (double)DELTAT->volume);
+				DELTAT->adpcml = (int)((double)DELTAT->adpcml / (double)oldvol * (double)DELTAT->volume);
 			}
-			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 		}
 		break;
 	}
@@ -170,10 +167,9 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	DELTAT->pan       = &DELTAT->output_pointer[pan];
 	/* DELTAT->flagMask  = 0; */
 	DELTAT->acc       = 0;
+	DELTAT->prev_acc  = 0;
 	DELTAT->adpcmd    = 127;
 	DELTAT->adpcml    = 0;
-	DELTAT->volume_w_step = 0;
-	DELTAT->next_leveling = 0;
 	DELTAT->portstate = 0;
 	DELTAT->eos = 0; //AT
 	/* DELTAT->portshift = 8; */
@@ -183,7 +179,7 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 {
 	int r;
 
-	/* to keep adpcml and resample_step */
+	/* to keep adpcml */
 	DELTAT->volume = 0;
 	/* update */
 	for(r=1;r<16;r++)
@@ -195,15 +191,14 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 }
 void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 {
-	state_save_register_UINT8 (statename, num, "DeltaT.portstate" , &DELTAT->portstate , 1);
-	state_save_register_UINT8 (statename, num, "DeltaT.eos"       , &DELTAT->eos       , 1); //AT
-	state_save_register_UINT32(statename, num, "DeltaT.address"   , &DELTAT->now_addr  , 1);
-	state_save_register_UINT32(statename, num, "DeltaT.step"      , &DELTAT->now_step  , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.acc"       , &DELTAT->acc    , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.adpcmd"    , &DELTAT->adpcmd    , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.adpcml"    , &DELTAT->adpcml    , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.next_leveling", &DELTAT->next_leveling , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.resample_step", &DELTAT->resample_step , 1);
+	state_save_register_UINT8 (statename, num, "DeltaT.portstate", &DELTAT->portstate, 1);
+	state_save_register_UINT8 (statename, num, "DeltaT.eos"      , &DELTAT->eos      , 1); /* AT */
+	state_save_register_UINT32(statename, num, "DeltaT.address"  , &DELTAT->now_addr , 1);
+	state_save_register_UINT32(statename, num, "DeltaT.step"     , &DELTAT->now_step , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.acc"      , &DELTAT->acc      , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.prev_acc" , &DELTAT->prev_acc , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.adpcmd"   , &DELTAT->adpcmd   , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.adpcml"   , &DELTAT->adpcml   , 1);
 }
 #else /* YM_INLINE_BLOCK */
 
@@ -232,8 +227,7 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
-	INT32 prev_acc;
-	INT32 now_leveling;
+
 
 	DELTAT->now_step += DELTAT->step;
 	if ( DELTAT->now_step >= (1<<YM_DELTAT_SHIFT) )
@@ -243,19 +237,18 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 		do{
 			if ( DELTAT->now_addr == (DELTAT->end<<1) ) {	/* 12-06-2001 JB: corrected comparison. Was > instead of == */
 				if( DELTAT->portstate&0x10 ){
-					/**** repeat start ****/
+					/* repeat start */
 					DELTAT->now_addr = DELTAT->start<<1;
 					DELTAT->acc      = 0;
 					DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
-					DELTAT->next_leveling = 0;
+					DELTAT->prev_acc = 0;
 				}else{
 					if(DELTAT->arrivedFlagPtr)
 						(*DELTAT->arrivedFlagPtr) |= DELTAT->flagMask;
 					DELTAT->portstate = 0;
-					DELTAT->eos = 1; //AT: raise EOS flag at the end of sample playback
+					DELTAT->eos = 1;	/* AT: raise EOS flag at the end of sample playback */
 					DELTAT->adpcml = 0;
-					now_leveling = 0;
-                    DELTAT->next_leveling = 0;
+                    DELTAT->prev_acc = 0;
 					return;
 				}
 			}
@@ -275,35 +268,27 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 			DELTAT->now_addr &= ( (1<<(24+1))-1);
 
 			/* store accumulator value */
-			prev_acc     = DELTAT->acc;
+			DELTAT->prev_acc = DELTAT->acc;
+
 			/* Forecast to next Forecast */
 			DELTAT->acc += (ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8);
 			YM_DELTAT_Limit(DELTAT->acc,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
+
 			/* delta to next delta */
 			DELTAT->adpcmd = (DELTAT->adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
 			YM_DELTAT_Limit(DELTAT->adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
-			/* calulate new leveling value */
-			now_leveling      = DELTAT->next_leveling;
 
-//            DELTAT->next_leveling = prev_acc + ((DELTAT->acc - prev_acc) / 2 );
-//ElSemi: Fix interpolator. I'll keep the names, although next_leveling should
-//be last_acc
-            DELTAT->next_leveling = prev_acc;
+			/* ElSemi: Fix interpolator. */
+			/*DELTAT->prev_acc = prev_acc + ((DELTAT->acc - prev_acc) / 2 );*/
 
 		}while(--step);
 
-/*
-		DELTAT->resample_step = (DELTAT->next_leveling - now_leveling) * DELTAT->volume_w_step;
-		DELTAT->adpcml  = now_leveling * DELTAT->volume;
-		DELTAT->adpcml += (int)((double)DELTAT->resample_step * ((double)DELTAT->now_step/(double)DELTAT->step));
-*/
-
 	}
-    //DELTAT->adpcml += DELTAT->resample_step;
 
-    DELTAT->adpcml  = (DELTAT->next_leveling*(int) ((1<<YM_DELTAT_SHIFT)-DELTAT->now_step));
-    DELTAT->adpcml  += (DELTAT->acc *(int) DELTAT->now_step);
-    DELTAT->adpcml = (DELTAT->adpcml>>YM_DELTAT_SHIFT)*(int) DELTAT->volume;
+	/* ElSemi: Fix interpolator. */
+	DELTAT->adpcml = DELTAT->prev_acc * (int)((1<<YM_DELTAT_SHIFT)-DELTAT->now_step);
+	DELTAT->adpcml += (DELTAT->acc * (int)DELTAT->now_step);
+	DELTAT->adpcml = (DELTAT->adpcml>>YM_DELTAT_SHIFT) * (int)DELTAT->volume;
 
 
 	/* output for work of output channels (outd[OPNxxxx])*/
@@ -311,3 +296,4 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 }
 
 #endif /* YM_INLINE_BLOCK */
+

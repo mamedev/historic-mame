@@ -657,13 +657,16 @@ static void neogeo_custom_memory(void)
 		//AT: Patches a common bug in the sound codes of early ADK games where DEC's
 		//    should have been INC's. Magician Lord is unaffected and ADK appeared to
 		//    to have fixed it in World Heroes and later games.
-		data8_t *mem8 = memory_region(REGION_CPU2);
 
-		if (!strcmp(Machine->gamedrv->name,"ncombat")) mem8[0xeb99] = 0x0c;
-		if (!strcmp(Machine->gamedrv->name,"bjourney")) mem8[0xec7a] = 0x0c;
-		if (!strcmp(Machine->gamedrv->name,"crsword")) mem8[0x23db] = 0x0c;
-		if (!strcmp(Machine->gamedrv->name,"trally")) mem8[0x23e4] = 0x0c;
-		if (!strcmp(Machine->gamedrv->name,"ncommand")) mem8[0x2456]= mem8[0x2485] = 0x0c;
+// patches no longer needed, the YM2610 emulator handles the wrong calls correctly.
+
+//		data8_t *mem8 = memory_region(REGION_CPU2);
+
+//		if (!strcmp(Machine->gamedrv->name,"ncombat")) mem8[0xeb99] = 0x0c;
+//		if (!strcmp(Machine->gamedrv->name,"bjourney")) mem8[0xec7a] = 0x0c;
+//		if (!strcmp(Machine->gamedrv->name,"crsword")) mem8[0x23db] = 0x0c;
+//		if (!strcmp(Machine->gamedrv->name,"trally")) mem8[0x23e4] = 0x0c;
+//		if (!strcmp(Machine->gamedrv->name,"ncommand")) mem8[0x2456]= mem8[0x2485] = 0x0c;
 	}
 }
 
@@ -707,7 +710,7 @@ NVRAM_HANDLER( neogeo )
 	if (read_or_write)
 	{
 		/* Save the SRAM settings */
-		osd_fwrite_msbfirst(file,neogeo_sram16,0x2000);
+		mame_fwrite_msbfirst(file,neogeo_sram16,0x2000);
 
 		/* save the memory card */
 		neogeo_memcard_save();
@@ -716,7 +719,7 @@ NVRAM_HANDLER( neogeo )
 	{
 		/* Load the SRAM settings for this game */
 		if (file)
-			osd_fread_msbfirst(file,neogeo_sram16,0x2000);
+			mame_fread_msbfirst(file,neogeo_sram16,0x2000);
 		else
 			memset(neogeo_sram16,0,0x10000);
 
@@ -771,13 +774,13 @@ WRITE16_HANDLER( neogeo_memcard16_w )
 int neogeo_memcard_load(int number)
 {
 	char name[16];
-	void *f;
+	mame_file *f;
 
 	sprintf(name, "MEMCARD.%03d", number);
-	if ((f=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,0))!=0)
+	if ((f=mame_fopen(0, name, FILETYPE_MEMCARD,0))!=0)
 	{
-		osd_fread(f,neogeo_memcard,0x800);
-		osd_fclose(f);
+		mame_fread(f,neogeo_memcard,0x800);
+		mame_fclose(f);
 		return 1;
 	}
 	return 0;
@@ -786,15 +789,15 @@ int neogeo_memcard_load(int number)
 void neogeo_memcard_save(void)
 {
 	char name[16];
-	void *f;
+	mame_file *f;
 
 	if (memcard_number!=-1)
 	{
 		sprintf(name, "MEMCARD.%03d", memcard_number);
-		if ((f=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,1))!=0)
+		if ((f=mame_fopen(0, name, FILETYPE_MEMCARD,1))!=0)
 		{
-			osd_fwrite(f,neogeo_memcard,0x800);
-			osd_fclose(f);
+			mame_fwrite(f,neogeo_memcard,0x800);
+			mame_fclose(f);
 		}
 	}
 }
@@ -814,20 +817,20 @@ int neogeo_memcard_create(int number)
 {
 	char buf[0x800];
 	char name[16];
-	void *f1, *f2;
+	mame_file *f1, *f2;
 
 	sprintf(name, "MEMCARD.%03d", number);
-	if ((f1=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,0))==0)
+	if ((f1=mame_fopen(0, name, FILETYPE_MEMCARD,0))==0)
 	{
-		if ((f2=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,1))!=0)
+		if ((f2=mame_fopen(0, name, FILETYPE_MEMCARD,1))!=0)
 		{
-			osd_fwrite(f2,buf,0x800);
-			osd_fclose(f2);
+			mame_fwrite(f2,buf,0x800);
+			mame_fclose(f2);
 			return 1;
 		}
 	}
 	else
-		osd_fclose(f1);
+		mame_fclose(f1);
 
 	return 0;
 }

@@ -104,25 +104,32 @@ READ_HANDLER( frogger_portB_r )
 WRITE_HANDLER( scramble_sh_irqtrigger_w )
 {
 	/* the complement of bit 3 is connected to the flip-flop's clock */
-	TTL7474_clock_w(0, ~data & 0x08);
-	TTL7474_update(0);
+	TTL7474_clock_w(2, ~data & 0x08);
+	TTL7474_update(2);
 
 	/* bit 4 is sound disable */
 	mixer_sound_enable_global_w(~data & 0x10);
 }
 
+WRITE_HANDLER( sfx_sh_irqtrigger_w )
+{
+	/* bit 1 is connected to the flip-flop's clock */
+	TTL7474_clock_w(3, data & 0x01);
+	TTL7474_update(3);
+}
+
 WRITE_HANDLER( mrkougar_sh_irqtrigger_w )
 {
 	/* the complement of bit 3 is connected to the flip-flop's clock */
-	TTL7474_clock_w(0, ~data & 0x08);
-	TTL7474_update(0);
+	TTL7474_clock_w(2, ~data & 0x08);
+	TTL7474_update(2);
 }
 
 WRITE_HANDLER( froggrmc_sh_irqtrigger_w )
 {
 	/* the complement of bit 0 is connected to the flip-flop's clock */
-	TTL7474_clock_w(0, ~data & 0x01);
-	TTL7474_update(0);
+	TTL7474_clock_w(2, ~data & 0x01);
+	TTL7474_update(2);
 }
 
 
@@ -131,20 +138,42 @@ static int scramble_sh_irq_callback(int irqline)
 	/* interrupt acknowledge clears the flip-flop --
 	   we need to pulse the CLR line because MAME's core never clears this
 	   line, only asserts it */
-	TTL7474_clear_w(0, 0);
-	TTL7474_update(0);
+	TTL7474_clear_w(2, 0);
+	TTL7474_update(2);
 
-	TTL7474_clear_w(0, 1);
-	TTL7474_update(0);
+	TTL7474_clear_w(2, 1);
+	TTL7474_update(2);
 
 	return 0xff;
 }
+
+static int sfx_sh_irq_callback(int irqline)
+{
+	/* interrupt acknowledge clears the flip-flop --
+	   we need to pulse the CLR line because MAME's core never clears this
+	   line, only asserts it */
+	TTL7474_clear_w(3, 0);
+	TTL7474_update(3);
+
+	TTL7474_clear_w(3, 1);
+	TTL7474_update(3);
+
+	return 0xff;
+}
+
 
 static void scramble_sh_7474_callback(void)
 {
 	/* the Q bar is connected to the Z80's INT line.  But since INT is complemented, */
 	/* we need to complement Q bar */
-	cpu_set_irq_line(1, 0, !TTL7474_output_comp_r(0) ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 0, !TTL7474_output_comp_r(2) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static void sfx_sh_7474_callback(void)
+{
+	/* the Q bar is connected to the Z80's INT line.  But since INT is complemented, */
+	/* we need to complement Q bar */
+	cpu_set_irq_line(2, 0, !TTL7474_output_comp_r(3) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 WRITE_HANDLER( hotshock_sh_irqtrigger_w )
@@ -187,12 +216,49 @@ static const struct TTL7474_interface scramble_sh_7474_intf =
 	scramble_sh_7474_callback
 };
 
+static const struct TTL7474_interface sfx_sh_7474_intf =
+{
+	sfx_sh_7474_callback
+};
+
+
 void scramble_sh_init(void)
 {
 	cpu_set_irq_callback(1, scramble_sh_irq_callback);
 
-	TTL7474_config(0, &scramble_sh_7474_intf);
+	TTL7474_config(2, &scramble_sh_7474_intf);
 
 	/* PR is always 0, D is always 1 */
-	TTL7474_d_w(0, 1);
+	TTL7474_d_w(2, 1);
 }
+
+void sfx_sh_init(void)
+{
+	scramble_sh_init();
+
+	cpu_set_irq_callback(2, sfx_sh_irq_callback);
+
+	TTL7474_config(3, &sfx_sh_7474_intf);
+
+	/* PR is always 0, D is always 1 */
+	TTL7474_d_w(3, 1);
+}
+
+
+static int latch;
+
+WRITE_HANDLER( zigzag_8910_latch_w )
+{
+	latch = offset;
+}
+
+WRITE_HANDLER( zigzag_8910_data_trigger_w )
+{
+	AY8910_write_port_0_w(0,latch);
+}
+
+WRITE_HANDLER( zigzag_8910_control_trigger_w )
+{
+	AY8910_control_port_0_w(0,latch);
+}
+

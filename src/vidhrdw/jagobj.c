@@ -861,7 +861,7 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
 
 		/* 4: branch on second half of display line */
 		case 4:
-			if (logit) logerror("        branch if second half of line to %06X\n", ypos, link << 3);
+			if (logit) logerror("        branch if second half of line to %06X\n", link << 3);
 			taken = (vc & 1);
 			break;
 

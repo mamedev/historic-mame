@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "appoooh.h"
 
 unsigned char *appoooh_fg_videoram,*appoooh_fg_colorram;
@@ -18,7 +19,6 @@ unsigned char *appoooh_bg_videoram,*appoooh_bg_colorram;
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
 static int scroll_x;
-static int flipscreen;
 static int priority;
 
 /***************************************************************************
@@ -174,11 +174,7 @@ WRITE_HANDLER( appoooh_out_w )
 	interrupt_enable_w(0,data & 0x01);
 
 	/* bit 1 flip screen */
-	if ((data & 0x02) != flipscreen)
-	{
-		flipscreen = data & 0x02;
-		tilemap_set_flip(ALL_TILEMAPS, flipscreen ? TILEMAP_FLIPX+TILEMAP_FLIPY : 0);
-	}
+	flip_screen_set(data & 0x02);
 
 	/* bits 2-3 unknown */
 
@@ -215,7 +211,7 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 
 		if(sx>=248) sx -= 256;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 239 - sx;
 			sy = 239 - sy;
@@ -224,7 +220,7 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 		drawgfx( dest_bmp, gfx,
 				code,
 				color,
-				flipx,flipscreen,
+				flipx,flip_screen,
 				sx, sy,
 				cliprect,
 				TRANSPARENCY_PEN , 0);

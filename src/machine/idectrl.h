@@ -16,6 +16,7 @@ struct ide_interface
 
 int ide_controller_init(int which, struct ide_interface *intf);
 void ide_controller_reset(int which);
+UINT8 *ide_get_features(int which);
 
 READ32_HANDLER( ide_controller32_0_r );
 WRITE32_HANDLER( ide_controller32_0_w );

@@ -150,11 +150,12 @@ int byte = 0;
 	return (byte>>(bit_no^0x7)) & 1;
 }
 
-
+#if 0
 static READ_HANDLER( bagman_ls259_r )
 {
 	return ls259_buf[offset];
 }
+#endif
 
 static WRITE_HANDLER( bagman_ls259_w )
 {

@@ -226,6 +226,7 @@ WRITE_HANDLER( flower_sound1_w )
 		if (flower_soundregs1[4 + base] & 0x10)
 		{
 			voice->oneshot = 0;
+			voice->oneshotplaying = 0;
 		}
 		else
 		{
@@ -285,5 +286,6 @@ usrintf_showmessage("%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%
 
 		voice->wave = &sound_rom1[(start << 9) & 0x7fff];	// ???
 		voice->oneshot = 0;
+		voice->oneshotplaying = 0;
 	}
 }

@@ -209,10 +209,12 @@ static WRITE16_HANDLER( sound_command_w )
 	}
 }
 
+#if 0
 static READ16_HANDLER( pending_command_r )
 {
 	return pending_command;
 }
+#endif
 
 static WRITE_HANDLER( gs_sh_pending_command_clear_w )
 {

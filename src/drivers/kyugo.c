@@ -1071,10 +1071,10 @@ ROM_START( legend )
 	ROM_LOAD( "b_a11.rom",  0x14000, 0x4000, 0x8c09243d )
 
 	ROM_REGION( 0x0340, REGION_PROMS, 0 )
-	ROM_LOAD( "legend.red",  0x0000, 0x0100, 0x00000000 ) /* red */
-	ROM_LOAD( "legend.grn",  0x0100, 0x0100, 0x00000000 ) /* green */
-	ROM_LOAD( "legend.blu",  0x0200, 0x0100, 0x00000000 ) /* blue */
-	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "82s129.1j",   0x0000, 0x0100, 0x40590ac0 ) /* red */
+	ROM_LOAD( "82s129.1h",   0x0100, 0x0100, 0xe542b363 ) /* green */
+	ROM_LOAD( "82s129.1f",   0x0200, 0x0100, 0x75536fc8 ) /* blue */
+	ROM_LOAD( "82s123.5j",   0x0300, 0x0020, 0xc98f0651 ) /* char lookup table */
 	ROM_LOAD( "m1.2c",       0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
 ROM_END
 
@@ -1116,7 +1116,7 @@ GAME( 1985, 99lstwar, sonofphx, sonofphx, sonofphx, 0,        ROT90, "Proma", "'
 GAME( 1985, 99lstwra, sonofphx, sonofphx, sonofphx, 0,        ROT90, "Proma", "'99 The Last War (alternate)" )
 GAME( 1985, flashgal, 0,        flashgal, flashgal, 0,        ROT0,  "Sega", "Flash Gal" )
 GAME( 1986, srdmissn, 0,        srdmissn, srdmissn, srdmissn, ROT90, "Taito Corporation", "S.R.D. Mission" )
-GAMEX(1986?,legend,   0,        legend,   legend,   srdmissn, ROT0,  "Sega/Coreland (?)", "Legend", GAME_WRONG_COLORS )
+GAME( 1986?,legend,   0,        legend,   legend,   srdmissn, ROT0,  "Sega/Coreland (?)", "Legend" )
 GAME( 1987, airwolf,  0,        srdmissn, airwolf,  srdmissn, ROT0,  "Kyugo", "Air Wolf" )
 GAME( 1987, skywolf,  airwolf,  srdmissn, skywolf,  srdmissn, ROT0,  "bootleg", "Sky Wolf (set 1)" )
 GAME( 1987, skywolf2, airwolf,  srdmissn, airwolf,  srdmissn, ROT0,  "bootleg", "Sky Wolf (set 2)" )

@@ -129,6 +129,7 @@ Polygonet Commander GX305+1993   68020 (TTL tilemap)                            
 System GX           GX300*1993   68020 056832 054156 055673 053246 055555        054338 (alpha) 054539(x2) (sound) 053252(*) 053936 (optional on ROM board, roz+)
 Tail to Nose             *1989   68000          V-System                         051316 (roz)
 F-1 Grand Prix           *1991 2x68000          V-System                         053936 (roz+)
+F-1 Grand Prix Part II   *1992 2x68000          V-System                         053936 (roz+)
 Lethal Crash Race        *1993   68000          V-System                         053936 (roz+)
 Super Slams              *1995   68000          V-System                         053936 (roz+)
 Blazing Tornado          *1991   68000            Metro                          053936 (roz+)
@@ -185,6 +186,8 @@ GiJoe				pass
 Vendetta            pass
 Premier Soccer		fails 16D 18D 18F (053936)
 Hexion              pass
+Run and Gun         fails 36M (053936) 2U 2Y 5U 5Y (sprites)
+Quiz Gakumon no Susume  pass
 Dragonball Z 2      fails
 
 
@@ -811,8 +814,8 @@ control registers
 Evolution of the 051316. The data bus is 16-bit instead of 8-bit.
 When used in "simple" mode it can generate the same effects of the 051316, but it
 doesn't have internal tilemap RAM, so it just generates a couple of X/Y coordinates
-indicating the pixel to display at each moment. Therefore, the tilemap (and tile)
-size are not fixed.
+indicating the pixel to display at each moment. Therefore, the tilemap and tile
+sizes are not fixed.
 The important addition over the 051316 is 512x4 words of internal RAM used to control
 rotation and zoom scanline by scanline instead that on the whole screen, allowing for
 effects like linescroll (Super Slams) or 3D rotation of the tilemap (Golfing Greats,
@@ -1050,7 +1053,7 @@ reads from 0x0006, and only uses bit 1.
 K055555
 -------
 
-Priority encoder.  Always found in conjunction with K054338, but the reverse 
+Priority encoder.  Always found in conjunction with K054338, but the reverse
 isn't true.
 
 Lots of byte-wise registers.  Few are yet known.  Those are:
@@ -1070,7 +1073,7 @@ well as the Sexy Parodius title screen.
 
 K054338
 -------
-Color combiner engine.  Designed for use with the 55555, but also found in games 
+Color combiner engine.  Designed for use with the 55555, but also found in games
 without one.
 
 Registers (word-wise):
@@ -1078,9 +1081,9 @@ Registers (word-wise):
 0: first 8 bits unknown, second 8 bits are the R component of the background color
 1: G and B components (8 bits each) of the background color
 2+3: both shadow/highlight related
-4+5: both shadow/highlight related 
-6+7: both shadow/highlight related 
-8+9: both shadow/highlight related 
+4+5: both shadow/highlight related
+6+7: both shadow/highlight related
+8+9: both shadow/highlight related
 A: shadow/highlight related
 B: second 8 bits R component of tilemap brightness
 C: G and B components of tilemap brightness
@@ -3354,7 +3357,7 @@ int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, void
 		5,
 		{ 32, 24, 16, 8, 0 },
 		{ 0, 1, 2, 3, 4, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47 },
-		{ 0, 10*8, 10*8*2, 10*8*3, 10*8*4, 10*8*5, 10*8*6, 10*8*7, 10*8*8, 
+		{ 0, 10*8, 10*8*2, 10*8*3, 10*8*4, 10*8*5, 10*8*6, 10*8*7, 10*8*8,
 		  10*8*9, 10*8*10, 10*8*11, 10*8*12, 10*8*13, 10*8*14, 10*8*15 },
 		16*16*5
 	};
@@ -3363,7 +3366,7 @@ int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, void
 		16,16,
 		32768,				/* filled in later */
 		4,
-		{ 24, 8, 16, 0 },
+		{ 24, 16, 8, 0 },
 		{ 0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39 },
 		{ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960 },
 		16*16*4
@@ -4479,9 +4482,11 @@ int K053251_get_palette_index(int ci)
 
 static unsigned char K054000_ram[0x20];
 
+#if 0
 static WRITE_HANDLER( collision_w )
 {
 }
+#endif
 
 WRITE_HANDLER( K054000_w )
 {

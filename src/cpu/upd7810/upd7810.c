@@ -20,6 +20,8 @@
  *	This work is based on the
  *	"NEC Electronics User's Manual, April 1987"
  *
+ * TODO: add 7807, differences are listed below
+ *
  *****************************************************************************/
 /* PeT around 19 February 2002
   type selection/gamemaster support added
@@ -35,6 +37,170 @@
   l0, l1 skipping fixed
   calt fixed
 */
+
+/*
+
+DIFFERENCES BETWEEN 7810 and 7807
+
+--------------------------
+8bit transfer instructions
+--------------------------
+
+7810
+inst.     1st byte 2nd byte state   action
+EXX       00001001            4     Swap BC DE HL
+EXA       00001000            4     Swap VA EA
+EXH       01010000            4     Swap HL
+BLOCK     00110001          13(C+1)  (DE)+ <- (HL)+, C <- C - 1, until CY
+
+7807
+inst.     1st byte  2nd byte state   action
+EXR       01001000  10101101   8     Swap VA BC DE HL EA
+EXX       01001000  10101111   8     Swap BC DE HL
+EXA       01001000  10101100   8     Swap VA EA
+EXH       01001000  10101110   8     Swap HL
+BLOCK  D+ 00010000           13(C+1) (DE)+ <- (HL)+, C <- C - 1, until CY
+BLOCK  D- 00010001           13(C+1) (DE)- <- (HL)-, C <- C - 1, until CY
+
+
+---------------------------
+16bit transfer instructions
+---------------------------
+All instructions are same except operand sr4 of DMOV instruction.
+7810
+V0-sr4 -function
+ 0-ECNT-timer/event counter upcounter
+ 1-ECPT-timer/event counter capture
+
+7807
+V1-V0- sr4 -function
+ 0- 0-ECNT -timer/event counter upcounter
+ 0- 1-ECPT0-timer/event counter capture 0
+ 1- 0-ECPT1-timer/event counter capture 1
+
+
+-----------------------------------------
+8bit operation instructions for registers
+-----------------------------------------
+All instructions are same.
+
+
+--------------------------------------
+8bit operation instructions for memory
+--------------------------------------
+All instructions are same.
+
+
+-----------------------------------------
+Operation instructions for immediate data
+-----------------------------------------
+uPD7807 has read-only PT port and special register group sr5 for it.
+ins.               1st byte  2nd byte 3rd 4th state func
+GTI    sr5, byte   01100100  s0101sss  dd      14   !CY  sr5 - byte - 1
+LTI    sr5, byte   01100100  s0111sss  dd      14    CY  sr5 - byte
+NEI    sr5, byte   01100100  s1101sss  dd      14   !Z   sr5 - byte
+EQI    sr5, byte   01100100  s1111sss  dd      14    Z   sr5 - byte
+ONI    sr5, byte   01100100  s1001sss  dd      14   !Z   sr5 & byte
+OFFI   sr5, byte   01100100  s1011sss  dd      14    Z   sr5 & byte
+
+S5-S4-S3-S2-S1-S0-sr -sr1-sr2-sr5-register function
+ 0  0  1  1  1  0 --- PT  --- PT  comparator input port T data
+ 1  0  0  1  0  0 WDM WDM --- --- watchdog timer mode register
+ 1  0  0  1  0  1 MT  --- --- --- port T mode
+
+7807 doesn't have registers below
+ 0  0  1  0  0  0 ANM ANM ANM     A/D channel mode
+ 1  0  0  0  0  0 --- CR0 ---     A/D conversion result 0
+ 1  0  0  0  0  1 --- CR1 ---     A/D conversion result 1
+ 1  0  0  0  1  0 --- CR2 ---     A/D conversion result 2
+ 1  0  0  0  1  1 --- CR3 ---     A/D conversion result 3
+ 1  0  1  0  0  0 ZCM --- ---     zero cross mode
+
+
+--------------------------------------------
+Operation instructions for working registers
+--------------------------------------------
+All instructions are same.
+
+
+--------------------------------------------------------------------------
+16bit operation instructions and divider/multiplier operation instructions
+--------------------------------------------------------------------------
+All instructions are same.
+
+
+------------------------------------------
+Increment/decrement operation instructions
+------------------------------------------
+All instructions are same.
+
+
+----------------------------
+Other operation instructions
+----------------------------
+7807 has CMC instruction (inverts CY flag).
+ins. 1st byte 2nd byte 3rd 4th state func
+CMC  01001000 10101010           8   CY <- !CY
+
+
+---------------------------
+Rotation/shift instructions
+---------------------------
+All instructions are same.
+
+
+-----------------------------
+Jump/call/return instructions
+-----------------------------
+All instructions are same.
+
+
+-----------------
+Skip instructions
+-----------------
+7807 doesn't have this
+ins.            1st byte 2nd byte 3rd 4th state func
+BIT bit, wa     01011bbb  wwwwwwww          10*  bit skip if (V.wa).bit = 1
+
+Instead, 7807 has these bit manipulation instructions.
+ins.            1st byte 2nd byte 3rd 4th state func
+MOV    CY, bit  01011111  bbbbbbbb          10* CY <- (bit)
+MOV    bit, CY  01011010  bbbbbbbb          13* (bit) <- CY
+AND    CY, bit  01010001  bbbbbbbb          10* CY <- CY & (bit)
+OR     CY, bit  01011100  bbbbbbbb          10* CY <- CY | (bit)
+XOR    CY, bit  01011110  bbbbbbbb          10* CY <- CY ^ (bit)
+SETB   bit      01011000  bbbbbbbb          13* (bit) <- 1
+CLR    bit      01011011  bbbbbbbb          13* (bit) <- 0
+NOT    bit      01011001  bbbbbbbb          13* (bit) <- !(bit)
+SK     bit      01011101  bbbbbbbb          10*  (b) skip if (bit) = 1
+SKN    bit      01010000  bbbbbbbb          10* !(b) skip if (bit) = 0
+
+reg bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
+PA  087H 086H 085H 084H 083H 082H 081H 080H
+PB  08FH 08EH 08DH 08CH 08BH 08AH 089H 088H
+PC  097H 096H 095H 094H 093H 092H 091H 090H
+PD  09FH 09EH 09DH 09CH 09BH 09AH 099H 098H
+PF  0AFH 0AEH 0ADH 0ACH 0ABH 0AAH 0A9H 0A8H
+MKH 0B7H 0B6H 0B5H 0B4H 0B3H 0B2H 0B1H 0B0H
+MKL 0BFH 0BEH 0BDH 0BCH 0BBH 0BAH 0B9H 0B8H
+SMH 0CFH 0CEH 0CDH 0CCH 0CBH 0CAH 0C9H 0C8H
+EOM 0DFH 0DEH 0DDH 0DCH 0DBH 0DAH 0D9H 0D8H
+TMM 0EFH 0EEH 0EDH 0ECH 0EBH 0EAH 0E9H 0E8H
+PT  0F7H 0F6H 0F5H 0F4H 0F3H 0F2H 0F1H 0F0H
+
+
+------------------------
+CPU control instructions
+------------------------
+ins.            1st byte 2nd byte 3rd 4th state func
+HLT             01001000  00111011        11/12 halt
+11 state in uPD7807 and uPD7810, 12 state in uPD78C10.
+
+STOP            01001000  10111011          12  stop
+7807 doesn't have STOP instruction.
+
+*/
+
 
 #include <stdio.h>
 #include "driver.h"
@@ -399,12 +565,12 @@ static void upd7810_take_irq(void)
 	if ((IRR & INTFT0)	&& 0 == (MKL & 0x02))
 	{
 	    switch (upd7810.config.type) {
-	    case TYPE_7810_GAMEMASTER:
-		vector = 0xff2a;
-		break;
-	    default:
-		vector = 0x0008;
-	}
+			case TYPE_7810_GAMEMASTER:
+			vector = 0xff2a;
+			break;
+			default:
+			vector = 0x0008;
+		}
 	    if (!((IRR & INTFT1)	&& 0 == (MKL & 0x04)))
 		IRR&=~INTFT0;
 	}
@@ -412,12 +578,12 @@ static void upd7810_take_irq(void)
 	if ((IRR & INTFT1)	&& 0 == (MKL & 0x04))
 	{
 	    switch (upd7810.config.type) {
-	    case TYPE_7810_GAMEMASTER:
-		vector = 0xff2a;
-		break;
-	    default:
-		vector = 0x0008;
-	}
+			case TYPE_7810_GAMEMASTER:
+			vector = 0xff2a;
+			break;
+			default:
+			vector = 0x0008;
+		}
 	    IRR&=~INTFT1;
 	}
 	else
@@ -1626,3 +1792,14 @@ unsigned upd7810_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+
+unsigned upd7807_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return Dasm7807( buffer, pc );
+#else
+	UINT8 op = cpu_readop(pc);
+	sprintf( buffer, "$%02X", op );
+	return 1;
+#endif
+}

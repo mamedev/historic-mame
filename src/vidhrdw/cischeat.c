@@ -59,8 +59,6 @@ Note:	if MAME_DEBUG is defined, pressing Z or X with:
 
 /* Variables only used here: */
 
-static char buf[80];
-
 static int cischeat_ip_select;
 
 #ifdef MAME_DEBUG
@@ -74,28 +72,28 @@ data16_t *cischeat_roadram[2];
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	sprintf(buf,_format_,_offset_);\
-	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
+	usrintf_showmessage(_format_,_offset_);\
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	sprintf(buf,_format_,_offset_,_data_);\
-	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
+	usrintf_showmessage(_format_,_offset_,_data_);\
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_,_data_); \
 }
 
 #else
 
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	sprintf(buf,_format_,_offset_);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf);\
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	sprintf(buf,_format_,_offset_,_data_); \
-	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
+	logerror(_format_,_offset_,_data_); \
 }
 
 #endif
@@ -886,7 +884,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 			}
 		}
 #ifdef MAME_DEBUG
-#if 1
+#if 0
 if (keyboard_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];
@@ -1043,7 +1041,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 			}
 		}
 #ifdef MAME_DEBUG
-#if 1
+#if 0
 if (keyboard_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];

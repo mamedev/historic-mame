@@ -91,7 +91,6 @@ VIDEO_UPDATE( pstadium );
 VIDEO_UPDATE( galkoku );
 VIDEO_START( pstadium );
 
-READ_HANDLER( pstadium_palette_r );
 WRITE_HANDLER( pstadium_palette_w );
 WRITE_HANDLER( galkoku_palette_w );
 WRITE_HANDLER( galkaika_palette_w );
@@ -244,55 +243,55 @@ static DRIVER_INIT( av2mj2rg )
 static MEMORY_READ_START( readmem_pstadium )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
-	{ 0xf200, 0xf3ff, pstadium_palette_r },
+	{ 0xf200, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_pstadium )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
-	{ 0xf200, 0xf3ff, pstadium_palette_w },
+	{ 0xf200, 0xf3ff, pstadium_palette_w, &paletteram },
 	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },	// finalbny
 MEMORY_END
 
 static MEMORY_READ_START( readmem_triplew1 )
 	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_r },
+	{ 0xf000, 0xf1ff, MRA_RAM },
 	{ 0xf200, 0xf20f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_triplew1 )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_w },
+	{ 0xf000, 0xf1ff, pstadium_palette_w, &paletteram },
 	{ 0xf200, 0xf20f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
 static MEMORY_READ_START( readmem_triplew2 )
 	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_r },
+	{ 0xf000, 0xf1ff, MRA_RAM },
 	{ 0xf400, 0xf40f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_triplew2 )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_w },
+	{ 0xf000, 0xf1ff, pstadium_palette_w, &paletteram },
 	{ 0xf400, 0xf40f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
 static MEMORY_READ_START( readmem_mjlstory )
 	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf200, 0xf3ff, pstadium_palette_r },
+	{ 0xf200, 0xf3ff, MRA_RAM },
 	{ 0xf700, 0xf70f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_mjlstory )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf200, 0xf3ff, pstadium_palette_w },
+	{ 0xf200, 0xf3ff, pstadium_palette_w, &paletteram },
 	{ 0xf700, 0xf70f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
@@ -300,55 +299,55 @@ MEMORY_END
 static MEMORY_READ_START( readmem_galkoku )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
-	{ 0xf400, 0xf5ff, pstadium_palette_r },
+	{ 0xf400, 0xf5ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_galkoku )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
-	{ 0xf400, 0xf5ff, galkoku_palette_w },
+	{ 0xf400, 0xf5ff, galkoku_palette_w, &paletteram },
 	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },	// hyouban
 MEMORY_END
 
 static MEMORY_READ_START( readmem_galkaika )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
-	{ 0xf400, 0xf5ff, pstadium_palette_r },
+	{ 0xf400, 0xf5ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_galkaika )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
-	{ 0xf400, 0xf5ff, galkaika_palette_w },
+	{ 0xf400, 0xf5ff, galkaika_palette_w, &paletteram },
 	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },	// tokimbsj
 MEMORY_END
 
 static MEMORY_READ_START( readmem_tokyogal )
 	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_r },
+	{ 0xf000, 0xf1ff, MRA_RAM },
 	{ 0xf400, 0xf40f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_tokyogal )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, galkaika_palette_w },
+	{ 0xf000, 0xf1ff, galkaika_palette_w, &paletteram },
 	{ 0xf400, 0xf40f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
 static MEMORY_READ_START( readmem_av2mj1bb )
 	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_r },
+	{ 0xf000, 0xf1ff, MRA_RAM },
 	{ 0xf500, 0xf50f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_av2mj1bb )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, pstadium_palette_w },
+	{ 0xf000, 0xf1ff, pstadium_palette_w, &paletteram },
 	{ 0xf500, 0xf50f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
@@ -356,14 +355,14 @@ MEMORY_END
 static MEMORY_READ_START( readmem_av2mj2rg )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
-	{ 0xf200, 0xf3ff, pstadium_palette_r },
+	{ 0xf200, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_av2mj2rg )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
-	{ 0xf200, 0xf3ff, pstadium_palette_w },
+	{ 0xf200, 0xf3ff, pstadium_palette_w, &paletteram },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -1597,7 +1596,8 @@ static MACHINE_DRIVER_START( nbmjdrv1 )
 	MDRV_CPU_PORTS(readport_pstadium, writeport_pstadium)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,1)
 
-	MDRV_CPU_ADD(Z80 | CPU_AUDIO_CPU, 3900000)		/* 4.00 MHz */
+	MDRV_CPU_ADD(Z80, 3900000)		/* 4.00 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem_pstadium,sound_writemem_pstadium)
 	MDRV_CPU_PORTS(sound_readport_pstadium,sound_writeport_pstadium)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -2266,20 +2266,20 @@ ROM_START( av2mj2rg )
 ROM_END
 
 
-GAME( 1990, pstadium,        0, pstadium, pstadium, pstadium, ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
-GAME( 1989, triplew1,        0, triplew1, triplew1, triplew1, ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
-GAME( 1990, triplew2,        0, triplew2, triplew1, triplew2, ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
-GAME( 1990, ntopstar,        0, ntopstar, ntopstar, ntopstar, ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
-GAME( 1991, mjlstory,        0, mjlstory, mjlstory, mjlstory, ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
-GAME( 1991,  vanilla,        0,  vanilla,  vanilla,  vanilla, ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
+GAME( 1990, pstadium, 0,        pstadium, pstadium, pstadium, ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
+GAME( 1989, triplew1, 0,        triplew1, triplew1, triplew1, ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
+GAME( 1990, triplew2, 0,        triplew2, triplew1, triplew2, ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
+GAME( 1990, ntopstar, 0,        ntopstar, ntopstar, ntopstar, ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
+GAME( 1991, mjlstory, 0,        mjlstory, mjlstory, mjlstory, ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
+GAME( 1991, vanilla,  0,        vanilla,  vanilla,  vanilla,  ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
 GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny, ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
-GAME( 1991, qmhayaku,        0, qmhayaku, qmhayaku, qmhayaku, ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
-GAME( 1989,  galkoku,        0,  galkoku,  galkoku,  galkoku, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
-GAME( 1989,  hyouban,  galkoku,  hyouban,  hyouban,  hyouban, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
-GAME( 1989, galkaika,        0, galkaika, galkaika, galkaika, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
-GAME( 1989, tokyogal,        0, tokyogal, tokyogal, tokyogal, ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
+GAME( 1991, qmhayaku, 0,        qmhayaku, qmhayaku, qmhayaku, ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
+GAME( 1989, galkoku,  0,        galkoku,  galkoku,  galkoku,  ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
+GAME( 1989, hyouban,  galkoku,  hyouban,  hyouban,  hyouban,  ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
+GAME( 1989, galkaika, 0,        galkaika, galkaika, galkaika, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
+GAME( 1989, tokyogal, 0,        tokyogal, tokyogal, tokyogal, ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
 GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj, ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
-GAME( 1989, mcontest,        0, mcontest, mcontest, mcontest, ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
-GAME( 1989,  uchuuai,        0,  uchuuai,  uchuuai,  uchuuai, ROT0, "Nichibutsu", "Mahjong Uchuu yori Ai wo komete (Japan)" )
-GAMEX(1991, av2mj1bb,        0, av2mj1bb, av2mj1bb, av2mj1bb, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo (Japan)", GAME_NOT_WORKING )
-GAMEX(1991, av2mj2rg,        0, av2mj2rg, av2mj2rg, av2mj2rg, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.2 Rouge no Kaori (Japan)", GAME_NOT_WORKING )
+GAME( 1989, mcontest, 0,        mcontest, mcontest, mcontest, ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
+GAME( 1989, uchuuai,  0,        uchuuai,  uchuuai,  uchuuai,  ROT0, "Nichibutsu", "Mahjong Uchuu yori Ai wo komete (Japan)" )
+GAMEX(1991, av2mj1bb, 0,        av2mj1bb, av2mj1bb, av2mj1bb, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo (Japan)", GAME_NOT_WORKING )
+GAMEX(1991, av2mj2rg, 0,        av2mj2rg, av2mj2rg, av2mj2rg, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.2 Rouge no Kaori (Japan)", GAME_NOT_WORKING )

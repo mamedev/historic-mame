@@ -157,7 +157,7 @@ static int addrsize;
 
 /* watch out for aad && aam with odd operands */
 
-/*static*/ char *opmap1[256] = {
+/*static*/ const char *opmap1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
   "add al,%Ib",       "add aw,%Iv",      "push es",        "pop es",
@@ -244,7 +244,7 @@ static int addrsize;
 };
 
 
-static char *second[] = {
+static const char *second[] = {
 /* 0 */
   "%g5",              "%g6",             "lar %Gv,%Ew",    "lsl %Gv,%Ew",
   0,                  "loadall",         "clts",           "loadall",
@@ -312,7 +312,7 @@ static char *second[] = {
   0, 0, 0, 0, 0, 0, 0, "brkem %Ib",
 };
 
-static char *groups[][8] = {   /* group 0 is group 3 for %Ev set */
+static const char *groups[][8] = {   /* group 0 is group 3 for %Ev set */
 /* 0 */
   { "add",            "or",              "adc",            "sbb",
     "and",            "sub",             "xor",            "cmp"           },
@@ -396,7 +396,7 @@ static int modrm(void)
 
 /*------------------------------------------------------------------------*/
 
-static void uprintf(char *s, ...)
+static void uprintf(const char *s, ...)
 {
         va_list	arg_ptr;
 	va_start (arg_ptr, s);
@@ -582,7 +582,7 @@ static void reg_name(int regnum, char size)
 
 /*------------------------------------------------------------------------*/
 
-static void ua_str(char *str);
+static void ua_str(const char *str);
 
 /*------------------------------------------------------------------------*/
 static void do_modrm(char subtype)
@@ -821,7 +821,7 @@ static void percent(char type, char subtype)
 }
 
 
-static void ua_str(char *str)
+static void ua_str(const char *str)
 {
   char c;
 
@@ -881,7 +881,7 @@ unsigned Dasmnec(char* buffer, unsigned pc)
 		/* restart output buffer */
 		ubufp = buffer;
 		/* invalid instruction, use db xx */
-    		uprintf("db %02Xh", (unsigned)c);
+		uprintf("db %02Xh", (unsigned)c);
 		return 1;
 	}
 

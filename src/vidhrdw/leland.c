@@ -337,7 +337,7 @@ static void leland_vram_port_w(int offset, int data, int num)
             break;
 
         default:
-            logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
+            logerror("CPU #%d %04x Warning: Unknown video port write (address=%04x value=%02x)\n",
                         cpu_getactivecpu(),activecpu_get_pc(), offset, addr);
             break;
     }

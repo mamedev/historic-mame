@@ -117,9 +117,6 @@ static WRITE_HANDLER( MC6840_control_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
-#ifdef MAME_DEBUG
-	char	mess[80];
-#endif
 
 	MC6840_index0 = data;
 
@@ -129,8 +126,7 @@ static WRITE_HANDLER( MC6840_control_port_0_w )
 		{
 			S_TEMPO = MC6840_register0;
 #ifdef MAME_DEBUG
-			sprintf(mess, "I0:0x%02X R0:0x%02X I1:0x%02X R1:0x%02X", MC6840_index0, MC6840_register0, MC6840_index1, MC6840_register1);
-			usrintf_showmessage(mess);
+			usrintf_showmessage("I0:0x%02X R0:0x%02X I1:0x%02X R1:0x%02X", MC6840_index0, MC6840_register0, MC6840_index1, MC6840_register1);
 #endif
 		}
 		MC6809_FLAG = 1;

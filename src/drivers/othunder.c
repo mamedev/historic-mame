@@ -126,10 +126,12 @@ static int eeprom_r(void)
 	return (EEPROM_read_bit() & 0x01)<<7;
 }
 
+#if 0
 static READ16_HANDLER( eep_latch_r )
 {
 	return eep_latch;
 }
+#endif
 
 static WRITE16_HANDLER( othunder_output_bypass_w )
 {

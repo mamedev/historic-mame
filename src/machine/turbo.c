@@ -7,13 +7,12 @@
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "turbo.h"
+#include "artwork.h"
 
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;
 UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
 UINT8 turbo_fbpla, turbo_fbcol;
-UINT8 turbo_segment_data[32];
-UINT8 turbo_speed;
 
 UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
 
@@ -21,13 +20,24 @@ UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 
 /* local data */
 static UINT8 segment_address, segment_increment;
-static UINT8 osel, bsel, turbo_accel;
+static UINT8 osel, bsel;
 static UINT8 port_8279;
+
+static UINT8 turbo_accel;
+static UINT8 turbo_speed;
 
 static UINT8 buckrog_status;
 static UINT8 buckrog_command;
 static UINT8 buckrog_hit;
 static UINT8 buckrog_myship;
+
+static UINT8 subroc3d_volume;
+static UINT8 subroc3d_select;
+
+static UINT8 old_segment_data[32];
+static UINT8 new_segment_data[32];
+
+static int segment_init;
 
 
 /*******************************************
@@ -180,6 +190,7 @@ static WRITE_HANDLER( turbo_sound_C_w )
 	bsel = (data >> 2) & 3;
 	osel = (osel & 1) | ((data & 3) << 1);
 	turbo_update_samples();
+	turbo_update_tachometer();
 }
 
 
@@ -235,19 +246,50 @@ static WRITE_HANDLER( subroc3d_palette_w )
 
 static WRITE_HANDLER( subroc3d_sound_A_w )
 {
-	/* sound controls */
+	/* bits 4 to 6 control balance */
+
+	subroc3d_volume = (data & 0x0f);
+	subroc3d_select = (data & 0x80);
 }
 
 
 static WRITE_HANDLER( subroc3d_sound_B_w )
 {
-	/* sound controls */
+	static UINT8 last = 0;
+
+	int volume = 16 * (15 - subroc3d_volume);
+
+	if ((data & 1) && !(last & 1))
+		sample_set_volume(0, volume);
+	if ((data & 2) && !(last & 2))
+		sample_set_volume(1, volume);
+	if ((data & 4) && !(last & 4))
+		sample_set_volume(2, volume);
+	if ((data & 8) && !(last & 8))
+		sample_set_volume(3, volume);
+
+	last = data;
 }
 
 
 static WRITE_HANDLER( subroc3d_sound_C_w )
 {
-	/* sound controls */
+	static UINT8 last = 0;
+
+	if ((data & 0x01) && !(last & 0x01))
+		sample_start(4, (data & 0x02) ? 6 : 5, 0);
+	if ((data & 0x04) && !(last & 0x04))
+		sample_start(6, 7, 0);
+	if ((data & 0x08) && !(last & 0x08))
+		sample_start(3, subroc3d_select ? 4 : 3, 0);
+	if ((data & 0x10) && !(last & 0x10))
+		sample_start(5, (data & 0x20) ? 10 : 9, 0);
+
+	sample_set_volume(7, (data & 0x40) ? 0 : 255);
+
+	last = data;
+
+	mixer_sound_enable_global_w(!(data & 0x80));
 }
 
 
@@ -379,6 +421,7 @@ MACHINE_INIT( turbo )
 {
 	ppi8255_init(&turbo_8255_intf);
 	segment_address = segment_increment = 0;
+	segment_init = 1;
 	port_8279 = 1;
 }
 
@@ -387,6 +430,11 @@ MACHINE_INIT( subroc3d )
 {
 	ppi8255_init(&subroc3d_8255_intf);
 	segment_address = segment_increment = 0;
+	segment_init = 1;
+	sample_start(0, 0, 1);
+	sample_start(1, 1, 1);
+	sample_start(2, 2, 1);
+	sample_start(7, 8, 1);
 }
 
 
@@ -394,6 +442,7 @@ MACHINE_INIT( buckrog )
 {
 	ppi8255_init(&buckrog_8255_intf);
 	segment_address = segment_increment = 0;
+	segment_init = 1;
 	buckrog_status = 0x80;
 	buckrog_command = 0x00;
 	port_8279 = 1;
@@ -424,8 +473,8 @@ WRITE_HANDLER( turbo_8279_w )
 	switch (offset & 1)
 	{
 		case 0x00:
-			turbo_segment_data[segment_address * 2] = data & 15;
-			turbo_segment_data[segment_address * 2 + 1] = (data >> 4) & 15;
+			new_segment_data[segment_address * 2] = data & 15;
+			new_segment_data[segment_address * 2 + 1] = (data >> 4) & 15;
 			segment_address = (segment_address + segment_increment) & 15;
 			break;
 
@@ -441,13 +490,40 @@ WRITE_HANDLER( turbo_8279_w )
 					segment_increment = 1;
 					break;
 				case 0xc0:
-					memset(turbo_segment_data, 0, 32);
+					memset(new_segment_data, 0, 32);
 					break;
 			}
 			break;
 	}
 }
 
+
+void turbo_update_segments(void)
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+	{
+		char buf_old[8];
+		char buf_new[8];
+
+		int v_old = old_segment_data[i];
+		int v_new = new_segment_data[i];
+
+		if (segment_init || v_old != v_new)
+		{
+			sprintf(buf_old, "LED%02d-%c", i, v_old >= 10 ? 'X' : '0' + v_old);
+			sprintf(buf_new, "LED%02d-%c", i, v_new >= 10 ? 'X' : '0' + v_new);
+
+			artwork_show(buf_old, 0);
+			artwork_show(buf_new, 1);
+		}
+	}
+
+	memcpy(old_segment_data, new_segment_data, sizeof old_segment_data);
+
+	segment_init = 0;
+}
 
 
 /*******************************************
@@ -470,24 +546,35 @@ WRITE_HANDLER( turbo_collision_clear_w )
 
 WRITE_HANDLER( turbo_coin_and_lamp_w )
 {
-	data &= 1;
 	switch (offset & 7)
 	{
-		case 0:		/* Coin Meter 1 */
-		case 1:		/* Coin Meter 2 */
-		case 2:		/* n/c */
+		case 0:
+			coin_counter_w(0, data & 1);
 			break;
-
-		case 3:		/* Start Lamp */
+		case 1:
+			coin_counter_w(1, data & 1);
+			break;
+		case 3:
 			set_led_status(0, data & 1);
-			break;
-
-		case 4:		/* n/c */
-		default:
 			break;
 	}
 }
 
+
+void turbo_update_tachometer(void)
+{
+	int i;
+
+	char buf[8] = "Speed00";
+
+	for (i = 0; i < 16; i++)
+	{
+		buf[5] = '0' + i / 10;
+		buf[6] = '0' + i % 10;
+
+		artwork_show(buf, i == turbo_speed);
+	}
+}
 
 
 /*******************************************
@@ -598,6 +685,12 @@ void turbo_rom_decode(void)
 }
 
 
+
+/*******************************************
+
+	Subroc-3D misc handling
+
+*******************************************/
 
 /*******************************************
 

@@ -137,10 +137,12 @@ static WRITE16_HANDLER( sound_command_nmi_w ){
 
 /***************************************************************************/
 
+#if 0
 static READ16_HANDLER( shdancer_skip_r ){
 	if (activecpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0];
 }
+#endif
 
 static MEMORY_READ16_START( shdancer_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -321,10 +323,12 @@ static DRIVER_INIT( shdancbl ){
 }
 
 /***************************************************************************/
+#if 0
 static READ16_HANDLER( shdancrj_skip_r ){
 	if (activecpu_get_pc()==0x2f70) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0xc000/2];
 }
+#endif
 
 static MACHINE_INIT( shdancrj ){
 	sys16_spritelist_end=0x8000;

@@ -1,15 +1,3 @@
-/*
-
-To do list:
-	* clean up/finish off DSP32C
-	* optimize DSP32C
-	* hdrivair floaters
-	* missing ASIC65 opcodes
-	* dashboard scrolling
-
-*/
-
-
 /***************************************************************************
 
 	Driver for Atari polygon racer games
@@ -1013,6 +1001,19 @@ static struct DACinterface dac2_interface =
  *
  *************************************/
 
+/*
+	Video timing:
+
+				VERTICAL					HORIZONTAL
+	Harddriv:	001D-019D / 01A0 (384)		001A-0099 / 009F (508)
+	Harddrvc:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
+	Racedriv:	001D-019D / 01A0 (384)		001A-0099 / 009F (508)
+	Racedrvc:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
+	Stunrun:	0013-00F8 / 0105 (229)		0037-0137 / 013C (512)
+	Steeltal:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
+	Hdrivair:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
+*/
+
 /* Driver board without MSP (used by Race Drivin' cockpit) */
 static MACHINE_DRIVER_START( driver_nomsp )
 
@@ -1027,7 +1028,7 @@ static MACHINE_DRIVER_START( driver_nomsp )
 	MDRV_CPU_CONFIG(gsp_config)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION((1000000 * (416 - 384)) / (60 * 416))
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(harddriv)
@@ -1069,6 +1070,8 @@ static MACHINE_DRIVER_START( multisync_nomsp )
 
 	MDRV_CPU_MODIFY("gsp")
 	MDRV_CPU_MEMORY(multisync_readmem_gsp,multisync_writemem_gsp)
+
+	MDRV_VBLANK_DURATION((1000000 * (307 - 288)) / (60 * 307))
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(640, 288)
@@ -1132,13 +1135,13 @@ static MACHINE_DRIVER_START( ds4 )
 	MDRV_CPU_ADD_TAG("adsp", ADSP2101, 12000000)
 	MDRV_CPU_MEMORY(ds3_readmem,ds3_writemem)
 
-	MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(ds3snd_readmem,ds3snd_writemem)
+//	MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	MDRV_CPU_MEMORY(ds3snd_readmem,ds3snd_writemem)
 
-	MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(ds3snd_readmem,ds3snd_writemem)
+//	MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	MDRV_CPU_MEMORY(ds3snd_readmem,ds3snd_writemem)
 
 	MDRV_SOUND_ADD(DAC, dac2_interface)
 MACHINE_DRIVER_END
@@ -1246,6 +1249,8 @@ static MACHINE_DRIVER_START( stunrun )
 	MDRV_IMPORT_FROM( multisync_nomsp )	/* multisync board without MSP */
 	MDRV_IMPORT_FROM( adsp )			/* ADSP board */
 	MDRV_IMPORT_FROM( jsa_ii_mono )		/* JSA II sound board */
+
+	MDRV_VBLANK_DURATION((1000000 * (261 - 240)) / (60 * 261))
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(640, 240)
@@ -1865,10 +1870,10 @@ static void init_ds3(void)
 	install_mem_write16_handler(hdcpu_main, 0x823800, 0x823fff, hd68k_ds3_control_w);
 
 	/* if we have a sound DSP, boot it */
-	if (hdcpu_sound != -1 && (Machine->drv->cpu[hdcpu_sound].cpu_type & ~CPU_FLAGS_MASK) == CPU_ADSP2105)
+	if (hdcpu_sound != -1 && Machine->drv->cpu[hdcpu_sound].cpu_type == CPU_ADSP2105)
 		adsp2105_load_boot_data((data8_t *)(memory_region(REGION_CPU1 + hdcpu_sound) + ADSP2100_SIZE),
 								(data32_t *)(memory_region(REGION_CPU1 + hdcpu_sound) + ADSP2100_PGM_OFFSET));
-	if (hdcpu_sounddsp != -1 && (Machine->drv->cpu[hdcpu_sounddsp].cpu_type & ~CPU_FLAGS_MASK) == CPU_ADSP2105)
+	if (hdcpu_sounddsp != -1 && Machine->drv->cpu[hdcpu_sounddsp].cpu_type == CPU_ADSP2105)
 		adsp2105_load_boot_data((data8_t *)(memory_region(REGION_CPU1 + hdcpu_sounddsp) + ADSP2100_SIZE),
 								(data32_t *)(memory_region(REGION_CPU1 + hdcpu_sounddsp) + ADSP2100_PGM_OFFSET));
 

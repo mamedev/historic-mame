@@ -104,11 +104,11 @@
 static NVRAM_HANDLER( capbowl )
 {
 	if (read_or_write)
-		osd_fwrite(file,generic_nvram,generic_nvram_size);
+		mame_fwrite(file,generic_nvram,generic_nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file,generic_nvram,generic_nvram_size);
+			mame_fread(file,generic_nvram,generic_nvram_size);
 		else
 		{
 			/* invalidate nvram to make the game initialize it.

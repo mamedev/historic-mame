@@ -208,10 +208,12 @@ static struct YM2203interface butasan_ym2203_interface =
 
 ***************************************************************************/
 
+#if 0
 static READ_HANDLER( argus_bankselect_r )
 {
 	return argus_bank_latch;
 }
+#endif
 
 static WRITE_HANDLER( argus_bankselect_w )
 {

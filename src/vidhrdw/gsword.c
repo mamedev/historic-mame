@@ -144,9 +144,7 @@ WRITE_HANDLER( gs_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
-		char baf[40];
-		sprintf(baf,"videoctrl %02x",data);
-		usrintf_showmessage(baf);
+		usrintf_showmessage("videoctrl %02x",data);
 	}
 	/* bits 5-6 are char palette bank */
 	if (charpalbank != ((data & 0x60) >> 5))

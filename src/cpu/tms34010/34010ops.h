@@ -167,8 +167,6 @@ enum
 /* IO registers accessor */
 #define IOREG(reg)					(state.IOregs[reg])
 #define SMART_IOREG(reg)			(state.IOregs[state.is_34020 ? REG020_##reg : REG_##reg])
-#define CONTEXT_IOREG(c,reg)		((c)->IOregs[reg])
-#define CONTEXT_SMART_IOREG(c,reg)	((c)->IOregs[(c)->is_34020 ? REG020_##reg : REG_##reg])
 #define PBH 						(IOREG(REG_CONTROL) & 0x0100)
 #define PBV 						(IOREG(REG_CONTROL) & 0x0200)
 

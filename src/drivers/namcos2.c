@@ -14,13 +14,8 @@ TODO:
 	Game-Specific:
 	- valkyrie gives ADSMISS error on startup
 	- dsaber has garbage ROZ layer spinning in the background of lava level (see attract mode)
-	- suzuka8h has bogus palette (missing data ROM?)
-	- Final Lap (1,2,3): tilemap scroll, I/O, missing gfxdata
-	- gollygho: video is projected on top of a mechanical dollhouse
-	- gollygho: missing tile gfx
-	- gollygho: HLE'd MCU (preliminary)
-	- metlhawk sprite tile unpacking isn't quite right
-	- metlhawk sprite xflip/yflip wrong
+	- suzuka8h has bogus palette (missing data ROM)
+	- Final Lap (1,2,3): tilemap scroll, I/O, road/sprite handling glitches
 
 The Namco System II board is a 5 ( only 4 are emulated ) CPU system. The
 complete system consists of two boards: CPU + GRAPHICS. It contains a large
@@ -425,6 +420,7 @@ $a00000 checks have been seen on the Final Lap boards.
 #include "namcos2.h"
 #include "cpu/m6809/m6809.h"
 #include "namcoic.h"
+#include "artwork.h"
 
 
 /*************************************************************/
@@ -433,40 +429,106 @@ $a00000 checks have been seen on the Final Lap boards.
 
 static data8_t *namcos2_dpram;	/* 2Kx8 */
 
+static void
+GollyGhostUpdateLED_c4( int data )
+{
+	static char zip100[32];
+	static char zip10[32];
+	int i = 0;
+	for(;;)
+	{
+		artwork_show(zip100,i);
+		artwork_show(zip10,i);
+		if( i ) return;
+		sprintf( zip100, "zip100_%d",data>>4);
+		sprintf( zip10,  "zip10_%d", data&0xf);
+		i=1;
+	}
+}
+
+static void
+GollyGhostUpdateLED_c6( int data )
+{
+	static char zip1[32];
+	static char time10[32];
+	int i = 0;
+	for(;;)
+	{
+		artwork_show(zip1,i);
+		artwork_show(time10,i);
+		if( i ) return;
+		sprintf( zip1,   "zip1_%d",  data>>4);
+		sprintf( time10, "time10_%d",data&0xf);
+		i=1;
+	}
+}
+
+static void
+GollyGhostUpdateLED_c8( int data )
+{
+	static char time1[32];
+	static char zap100[32];
+	int i = 0;
+	for(;;)
+	{
+		artwork_show(time1,i);
+		artwork_show(zap100,i);
+		if( i ) return;
+		sprintf( time1,  "time1_%d", data>>4);
+		sprintf( zap100, "zap100_%d",data&0xf);
+		i=1;
+	}
+}
+
+static void
+GollyGhostUpdateLED_ca( int data )
+{
+	static char zap10[32];
+	static char zap1[32];
+	int i = 0;
+	for(;;)
+	{
+		artwork_show(zap10,i);
+		artwork_show(zap1,i);
+		if( i ) return;
+		sprintf( zap10,  "zap10_%d", data>>4);
+		sprintf( zap1,   "zap1_%d",  data&0xf);
+		i=1;
+	}
+}
+
+static void
+GollyGhostUpdateDiorama_c0( int data )
+{
+	if( data&0x80 )
+	{
+		artwork_show("fulldark",0 );
+		artwork_show("dollhouse",1); /* diorama is lit up */
+
+		/* dollhouse controller; solenoids control physical components */
+		artwork_show("toybox",      data&0x01 );
+		artwork_show("bathroom",    data&0x02 );
+		artwork_show("bureau",      data&0x04 );
+		artwork_show("refrigerator",data&0x08 );
+		artwork_show("porch",       data&0x10 );
+		/* data&0x20 : player#1 (ZIP) force feedback
+		 * data&0x40 : player#2 (ZAP) force feedback
+		 */
+	}
+	else
+	{
+		artwork_show("fulldark",1 );
+		artwork_show("dollhouse",0);
+		artwork_show("toybox",0);
+		artwork_show("bathroom",0);
+		artwork_show("bureau",0);
+		artwork_show("refrigerator",0);
+		artwork_show("porch",0);
+	}
+}
+
 static READ16_HANDLER( namcos2_68k_dpram_word_r )
 {
-	if( namcos2_gametype==NAMCOS2_GOLLY_GHOST )
-	{
-		data8_t data = 0x00;
-		switch( offset )
-		{
-		case 0x0000/2:
-			if( keyboard_pressed(KEYCODE_D) ) data |= 0x40;
-			return data;
-		case 0x0002/2:
-			if( keyboard_pressed(KEYCODE_A) ) data |= 0x80;
-			return data;
-		case 0x0004/2: /* coin? */
-			return data;
-
-		case 0x0006/2:
-			if( keyboard_pressed(KEYCODE_1) ) data |= 1<<7;
-			return data;
-
-		case 0x0026/2:
-			if( keyboard_pressed(KEYCODE_S) ) data |= 0x40;
-			if( keyboard_pressed(KEYCODE_F) ) data |= 0x01;
-			return data;
-
-		case 0x0074/2:
-			return 0xa6;
-
-		case 0x0091/2:
-			return 0x00;
-		}
-		if( offset<0x80/2 ) return 0x00;
-//	logerror( "cpu#%d pc=0x%08x\n", cpu_getactivecpu(), activecpu_get_pc() );
-	}
 	return namcos2_dpram[offset];
 }
 
@@ -475,6 +537,21 @@ static WRITE16_HANDLER( namcos2_68k_dpram_word_w )
 	if( ACCESSING_LSB )
 	{
 		namcos2_dpram[offset] = data&0xff;
+
+		if( namcos2_gametype==NAMCOS2_GOLLY_GHOST )
+		{
+			switch( offset )
+			{
+			case 0xc0/2: GollyGhostUpdateDiorama_c0(data); break;
+			case 0xc2/2: break; /* unknown; 0x00 or 0x01 - probably lights up guns */
+			case 0xc4/2: GollyGhostUpdateLED_c4(data); break;
+			case 0xc6/2: GollyGhostUpdateLED_c6(data); break;
+			case 0xc8/2: GollyGhostUpdateLED_c8(data); break;
+			case 0xca/2: GollyGhostUpdateLED_ca(data); break;
+			default:
+				break;
+			}
+		}
 	}
 }
 
@@ -616,8 +693,6 @@ static READ16_HANDLER( flap_prot_r )
 	default:
 		data = 0;
 	}
-
-	//logerror( "flap_prot(%08x) = %08x\n", offset,data );
 	return data;
 }
 
@@ -667,32 +742,6 @@ static MEMORY_WRITE16_START( writemem_slave_finallap )
 MEMORY_END
 /*************************************************************/
 
-static READ16_HANDLER( sgunner_hack_r )
-{
-	unsigned pc = activecpu_get_pc();
-	if( pc>=0x1634 && pc <0x1756 )
-	{
-		switch( offset )
-		{
-		/* 108d08 */case 0x08/2: return 0x80;	/* p1 gun x offset */
-		/* 108d10 */case 0x10/2: return 0x260;	/* p1 gun x scale */
-
-		/* 108d0c */case 0x0c/2: return 0x80;	/* p2 gun x offset */
-		/* 108d14 */case 0x14/2: return 0x260;	/* p2 gun x scale */
-
-		/* 108d0a */case 0x0a/2: return 0x60;	/* p1 gun y offset */
-		/* 108d12 */case 0x12/2: return 0x1e0;	/* p1 gun y scale */
-
-		/* 108d0e */case 0x0e/2: return 0x60;	/* p2 gun y offset */
-		/* 108d16 */case 0x16/2: return 0x1e0;	/* p2 gun y scale */
-
-			default:
-				break;
-		}
-	}
-	return namcos2_68k_master_ram[offset+0x8d00/2];
-}
-
 #define NAMCOS2_68K_SGUNNER_GFX_BOARD_READ \
 	{ 0x800000, 0x8141ff, namco_obj16_r }, \
 	{ 0xa00000, 0xa0000f, namcos2_68k_key_r },
@@ -702,7 +751,6 @@ static READ16_HANDLER( sgunner_hack_r )
 	{ 0xa00000, 0xa0000f, namcos2_68k_key_w },
 
 static MEMORY_READ16_START( readmem_master_sgunner )
-	{ 0x108d00, 0x108d17, sgunner_hack_r },
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
@@ -796,12 +844,6 @@ MEMORY_END
 
 /*************************************************************/
 
-static READ16_HANDLER( gunscale_r )
-{
-	if( offset&1 ) return 1<<12;
-	return 1<<8;
-}
-
 #define NAMCOS2_68K_LUCKYWLD_GFX_BOARD_READ \
 	{ 0x800000, 0x8141ff, namco_obj16_r }, \
 	{ 0x818000, 0x818001, MRA16_RAM }, \
@@ -822,7 +864,6 @@ static READ16_HANDLER( gunscale_r )
 	{ 0xf00000, 0xf00007, namcos2_68k_key_w },
 
 static MEMORY_READ16_START( readmem_master_luckywld )
-	{ 0x4090b0, 0x4090b7, gunscale_r }, /* HACK */
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
@@ -841,7 +882,6 @@ static MEMORY_WRITE16_START( writemem_master_luckywld )
 MEMORY_END
 
 static MEMORY_READ16_START( readmem_slave_luckywld )
-	{ 0x4090b0, 0x4090b7, gunscale_r }, /* HACK */
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
@@ -953,8 +993,8 @@ MEMORY_END
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 ) \
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE ) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_NONE, IP_JOY_NONE ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 #define NAMCOS2_MCU_ANALOG_PORT_DEFAULT \
 	PORT_START		/* 63B05Z0 - 8 CHANNEL ANALOG - CHANNEL 0 */ \
@@ -1048,10 +1088,38 @@ INPUT_PORTS_START( default )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gollygho )
-	NAMCOS2_MCU_PORT_B_DEFAULT
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
 	NAMCOS2_MCU_PORT_C_DEFAULT
-	NAMCOS2_MCU_ANALOG_PORT_DEFAULT
-	NAMCOS2_MCU_PORT_H_DEFAULT
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPF_REVERSE|IPT_LIGHTGUN_X, 50, 8, 0, 0xff )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPF_REVERSE|IPT_LIGHTGUN_Y, 50, 8, 0, 0xff )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPF_REVERSE|IPT_LIGHTGUN_X|IPF_PLAYER2, 50, 8, 0, 0xff )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPF_REVERSE|IPT_LIGHTGUN_Y|IPF_PLAYER2, 50, 8, 0, 0xff )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* 63B05Z0 - PORT H */ \
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 	NAMCOS2_MCU_DIPSW_DEFAULT
 	NAMCOS2_MCU_DIAL_DEFAULT
 INPUT_PORTS_END
@@ -1177,13 +1245,13 @@ INPUT_PORTS_START( luckywld )
 	PORT_START		/* 63B05Z0 - 8 CHANNEL ANALOG - CHANNEL 0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y | IPF_PLAYER2, 50, 8, 0, 0x7f )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y | IPF_PLAYER2, 50, 8, 0, 0xff )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y, 50, 8, 0, 0x7f )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y, 50, 8, 0, 0xff )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_X | IPF_PLAYER2, 50, 4, 0, 0x62 )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_X | IPF_PLAYER2, 50, 8, 0, 0xff )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_X, 50, 4, 0, 0x62 )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_X, 50, 8, 0, 0xff )
 	PORT_START		/* Steering Wheel */
 	PORT_ANALOG( 0xff, 0x7f, IPT_DIAL|IPF_CENTER|IPF_PLAYER1, 70, 50, 0x00, 0xff )
 	PORT_START		/* Brake pedal */
@@ -1201,7 +1269,7 @@ INPUT_PORTS_START( luckywld )
 	NAMCOS2_MCU_DIAL_DEFAULT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sgunner )
+INPUT_PORTS_START( sgunner  )
 	PORT_START		/* 63B05Z0 - PORT B */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1222,9 +1290,9 @@ INPUT_PORTS_START( sgunner )
 	PORT_START
 	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_X|IPF_PLAYER2, 50, 8, 0, 0xff )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y|IPF_REVERSE, 50, 8, 0, 0xdf )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y, 50, 8, 0, 0xff )
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y|IPF_REVERSE|IPF_PLAYER2, 50, 8, 0, 0xdf )
+	PORT_ANALOG( 0xff, 0x00, IPT_LIGHTGUN_Y|IPF_PLAYER2, 50, 8, 0, 0xff )
 
 	PORT_START		/* 63B05Z0 - PORT H */
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1349,7 +1417,6 @@ static struct GfxLayout roz_layout = {
 	8*64
 };
 
-
 static struct GfxLayout luckywld_sprite_layout = /* same as Namco System21 */
 {
 	16,16,
@@ -1386,7 +1453,7 @@ static struct GfxLayout luckywld_roz_layout =
 
 static struct GfxLayout metlhawk_sprite_layout = {
 	32,32,
-	0x800,	/* number of sprites */
+	0x1000,	/* number of sprites */
 	8, /* bits per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248 },
@@ -1558,10 +1625,9 @@ static MACHINE_DRIVER_START( gollygho )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
-/* don't emulate the MCU; we don't have the correct code for it. */
-//	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
-//	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1571,10 +1637,8 @@ static MACHINE_DRIVER_START( gollygho )
 	MDRV_NVRAM_HANDLER(namcos2)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-	MDRV_SCREEN_SIZE(32*8, 33*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 33*8-1)
-//	MDRV_SCREEN_SIZE(36*8, 28*8)
-//	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(VIRTUAL_PALETTE_BANKS*256)	/* virtual palette (physical palette has 8192 colors) */
 
@@ -1674,12 +1738,12 @@ static MACHINE_DRIVER_START( luckywld )
 	MDRV_CPU_MEMORY(readmem_slave_luckywld,writemem_slave_luckywld)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
-	MDRV_CPU_ADD(M6809,3072000) // Sound handling
+	MDRV_CPU_ADD(M6809,3072000) /* Sound handling */
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
-	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_ADD(HD63705,2048000) /* I/O handling */
 	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1713,12 +1777,12 @@ static MACHINE_DRIVER_START( metlhawk )
 	MDRV_CPU_MEMORY(readmem_slave_metlhawk,writemem_slave_metlhawk)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
-	MDRV_CPU_ADD(M6809,3072000) // Sound handling
+	MDRV_CPU_ADD(M6809,3072000) /* Sound handling */
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
-	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_ADD(HD63705,2048000) /* I/O handling */
 	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -2534,18 +2598,18 @@ ROM_START( finalap2 )
 	ROM_LOAD( "fl3obj5",  0x300000, 0x80000, 0x6a53e603 )
 	ROM_LOAD( "fl3obj7",  0x380000, 0x80000, 0xb52a85e2 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "fls2chr0",  0x00000, 0x20000, 0xb3541a31 )
-	ROM_LOAD( "fls2chr1",  0x20000, 0x20000, 0xb92fb6f9 )
-	ROM_LOAD( "fls2chr2",  0x40000, 0x20000, 0x2e386ec8 )
-	ROM_LOAD( "fls2chr3",  0x60000, 0x20000, 0x970255d3 )
-	ROM_LOAD( "fls2chr4",  0x80000, 0x20000, 0x1328d87d )
-	ROM_LOAD( "fls2chr5",  0xa0000, 0x20000, 0x67f535fd )
-	ROM_LOAD( "fls2chr6",  0xc0000, 0x20000, 0x6aded8ce )
-	ROM_LOAD( "fls2chr7",  0xe0000, 0x20000, 0x742bae28 )
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* Tiles */
+	ROM_LOAD( "fls2chr0",  0x000000, 0x40000, 0x7bbda499 )
+	ROM_LOAD( "fls2chr1",  0x040000, 0x40000, 0xac8940e5 )
+	ROM_LOAD( "fls2chr2",  0x080000, 0x40000, 0x1756173d )
+	ROM_LOAD( "fls2chr3",  0x0c0000, 0x40000, 0x69032785 )
+	ROM_LOAD( "fls2chr4",  0x100000, 0x40000, 0x8216cf42 )
+	ROM_LOAD( "fls2chr5",  0x140000, 0x40000, 0xdc3e8e1c )
+	ROM_LOAD( "fls2chr6",  0x180000, 0x40000, 0x1ef4bdde )
+	ROM_LOAD( "fls2chr7",  0x1c0000, 0x40000, 0x53dafcde )
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
-	NAMCOS2_GFXROM_LOAD_128K( "fls2sha",  0x000000, 0x95a63037 )
+	NAMCOS2_GFXROM_LOAD_256K( "fls2sha",  0x000000, 0xf7b40a85 )
 
 	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_256K( "fls2dat0",  0x000000, 0xf1af432c )
@@ -2585,15 +2649,15 @@ ROM_START( finalp2j )
 	ROM_LOAD( "fl3obj5",  0x300000, 0x80000, 0x6a53e603 )
 	ROM_LOAD( "fl3obj7",  0x380000, 0x80000, 0xb52a85e2 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "fls2chr0",  0x00000, 0x20000, 0xb3541a31 )
-	ROM_LOAD( "fls2chr1",  0x20000, 0x20000, 0xb92fb6f9 )
-	ROM_LOAD( "fls2chr2",  0x40000, 0x20000, 0x2e386ec8 )
-	ROM_LOAD( "fls2chr3",  0x60000, 0x20000, 0x970255d3 )
-	ROM_LOAD( "fls2chr4",  0x80000, 0x20000, 0x1328d87d )
-	ROM_LOAD( "fls2chr5",  0xa0000, 0x20000, 0x67f535fd )
-	ROM_LOAD( "fls2chr6",  0xc0000, 0x20000, 0x6aded8ce )
-	ROM_LOAD( "fls2chr7",  0xe0000, 0x20000, 0x742bae28 )
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* Tiles */
+	ROM_LOAD( "fls2chr0",  0x000000, 0x40000, 0x7bbda499 )
+	ROM_LOAD( "fls2chr1",  0x040000, 0x40000, 0xac8940e5 )
+	ROM_LOAD( "fls2chr2",  0x080000, 0x40000, 0x1756173d )
+	ROM_LOAD( "fls2chr3",  0x0c0000, 0x40000, 0x69032785 )
+	ROM_LOAD( "fls2chr4",  0x100000, 0x40000, 0x8216cf42 )
+	ROM_LOAD( "fls2chr5",  0x140000, 0x40000, 0xdc3e8e1c )
+	ROM_LOAD( "fls2chr6",  0x180000, 0x40000, 0x1ef4bdde )
+	ROM_LOAD( "fls2chr7",  0x1c0000, 0x40000, 0x53dafcde )
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fls2sha",  0x000000, 0x95a63037 )
@@ -2637,14 +2701,14 @@ ROM_START( finalap3 )
 	ROM_LOAD( "fltobj7",  0x380000, 0x80000, 0xb52a85e2 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "fltchr0",  0x00000, 0x20000, 0x93d58fbb )
-	ROM_LOAD( "fltchr1",  0x20000, 0x20000, 0xabbc411b )
-	ROM_LOAD( "fltchr2",  0x40000, 0x20000, 0x7de05a4a )
-	ROM_LOAD( "fltchr3",  0x60000, 0x20000, 0xac4e9b8a )
-	ROM_LOAD( "fltchr4",  0x80000, 0x20000, 0x55c3434d )
-	ROM_LOAD( "fltchr5",  0xa0000, 0x20000, 0xfbaa5c89 )
-	ROM_LOAD( "fltchr6",  0xc0000, 0x20000, 0xe90279ce )
-	ROM_LOAD( "fltchr7",  0xe0000, 0x20000, 0xb9c1ea47 )
+	ROM_LOAD( "fltchr0",  0x00000, 0x20000, 0x93d58fbb ) /* incomplete! */
+	ROM_LOAD( "fltchr1",  0x20000, 0x20000, 0xabbc411b ) /* incomplete! */
+	ROM_LOAD( "fltchr2",  0x40000, 0x20000, 0x7de05a4a ) /* incomplete! */
+	ROM_LOAD( "fltchr3",  0x60000, 0x20000, 0xac4e9b8a ) /* incomplete! */
+	ROM_LOAD( "fltchr4",  0x80000, 0x20000, 0x55c3434d ) /* incomplete! */
+	ROM_LOAD( "fltchr5",  0xa0000, 0x20000, 0xfbaa5c89 ) /* incomplete! */
+	ROM_LOAD( "fltchr6",  0xc0000, 0x20000, 0xe90279ce ) /* incomplete! */
+	ROM_LOAD( "fltchr7",  0xe0000, 0x20000, 0xb9c1ea47 ) /* incomplete! */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fltsha",  0x000000, 0x089dc194 )
@@ -2895,7 +2959,7 @@ ROM_START( metlhawk )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, 0xa342a97e )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, 0xa5b2a4ff )
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
 	ROM_LOAD32_BYTE( "mhobj-4.5c", 0x000000, 0x40000, 0xe3590e1a )
 	ROM_LOAD32_BYTE( "mhobj-5.5a", 0x000001, 0x40000, 0xb85c0d07 )
 	ROM_LOAD32_BYTE( "mhobj-6.6c", 0x000002, 0x40000, 0x90c4523d )
@@ -3206,7 +3270,7 @@ ROM_START( sgunner2)
 	ROM_LOAD16_BYTE( "sns_mpr0.bin",	0x000000, 0x020000, 0xf1a44039 )
 	ROM_LOAD16_BYTE( "sns_mpr1.bin",	0x000001, 0x020000, 0x9184c4db )
 
-	/* for alternate set (not tested): */
+	/* for alternate set (not yet hooked up/tested): */
 //	ROM_LOAD16_BYTE( "sns_mpr0.bin",	0x000000, 0x020000, 0xe7216ad7 )
 //	ROM_LOAD16_BYTE( "sns_mpr1.bin",	0x000001, 0x020000, 0x6caef2ee )
 
@@ -3678,7 +3742,8 @@ ROM_START( gollygho )
 	ROM_RELOAD(   0x010000, 0x020000 )
 
 	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
-	/* HLE'd */
+	ROM_LOAD( "sys2mcpu.bin", 0x0000, 0x2000, 0xa342a97e )
+	ROM_LOAD( "gl1edr0c.ic7", 0x8000, 0x8000, 0xdb60886f )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
 	ROM_LOAD( "gl1obj0.5b",  0x000000, 0x40000, 0x6809d267 )
@@ -3686,10 +3751,10 @@ ROM_START( gollygho )
 	ROM_LOAD( "gl1obj2.5d",  0x100000, 0x40000, 0x9f2e9eb0 )
 	ROM_LOAD( "gl1obj3.4d",  0x180000, 0x40000, 0x3a85f3c2 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
-	NAMCOS2_GFXROM_LOAD_128K( "gl1chr0.11n",  0x000000, 0xaa7367de )
-	NAMCOS2_GFXROM_LOAD_128K( "gl1chr1.11p",  0x080000, 0x1719ba01 )
-	NAMCOS2_GFXROM_LOAD_128K( "gl1chr2.11r",  0x100000, 0x0014e67d )
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "gl1chr0.11n",  0x00000, 0x20000, 0x1a7c8abd )
+	ROM_LOAD( "gl1chr1.11p",  0x20000, 0x20000, 0x36aa0fbc )
+	ROM_LOAD( "gl1chr2.11r",  0x40000, 0x10000, 0x6c1964ba )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
 	/* All ROZ ROM sockets unpopulated on PCB */
@@ -3700,7 +3765,7 @@ ROM_START( gollygho )
 	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
 	/* All DAT ROM sockets unpopulated on PCB */
 
-	ROM_REGION16_BE( 0x2000, REGION_USER2, 0 ) /* No idea what this is, if removed on PCB, all sprites turn into square blocks */
+	ROM_REGION16_BE( 0x2000, REGION_USER2, 0 ) /* sprite zoom */
 	ROM_LOAD( "04544191.6n",  0x000000, 0x002000, 0x90db1bf6 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Sound voices */
@@ -3804,6 +3869,8 @@ DRIVER_INIT( finallap ){
 	data16_t *rom = (void *)memory_region(REGION_CPU2);
 	/* HACK: patch bypasses a nasty race condition that casues the road-drawing routine to
 	 * be skipped.
+	 *
+	 * Similar problems exist in finallap2, finallap3
 	 */
 	rom[0x1F6E/2] = 0x4e71;
 	rom[0x1F70/2] = 0x4e71;
@@ -3849,13 +3916,14 @@ DRIVER_INIT( marvland ){
 }
 
 DRIVER_INIT( metlhawk ){
-	// Slight sprites encryption
+	/* unscramble sprites */
 	int i, j, k, l;
 	unsigned char *data = memory_region(REGION_GFX1);
-	for(i=0; i<0x200000; i+=32*32) {
-		data[i] = 0;
+	for(i=0; i<0x200000; i+=32*32)
+	{
 		for(j=0; j<32*32; j+=32*4)
-			for(k=0; k<32; k+=4) {
+			for(k=0; k<32; k+=4)
+			{
 				unsigned char v;
 				int a;
 
@@ -3888,9 +3956,20 @@ DRIVER_INIT( metlhawk ){
 				}
 			}
 	}
-
+	// 90 degrees prepare a turned character.
+	for(i=0; i<0x200000; i+=32*32)
+	{
+		for(j=0; j<32; j++)
+		{
+			for(k=0; k<32; k++)
+			{
+				data[0x200000+i+j*32+k] = data[i+j+k*32];
+			}
+		}
+	}
 	namcos2_gametype=NAMCOS2_METAL_HAWK;
 }
+
 
 DRIVER_INIT( mirninja ){
 	namcos2_gametype=NAMCOS2_MIRAI_NINJA;
@@ -3953,7 +4032,7 @@ DRIVER_INIT( luckywld ){
 	UINT8 *pData = (UINT8 *)memory_region( REGION_GFX5 );
 	int i;
 	for( i=0; i<32*0x4000; i++ )
-	{
+	{ /* unscramble gfx mask */
 		int code = pData[i];
 		int out = 0;
 		if( code&0x01 ) out |= 0x80;
@@ -4005,7 +4084,7 @@ GAME( 1990, dsaber,   0,        default,  default,  dsaber,   ROT90,  "Namco", "
 GAME( 1990, dsaberj,  dsaber,   default,  default,  dsaberj,  ROT90,  "Namco", "Dragon Saber (Japan)" )
 GAMEX(1990, finalap2, 0,        finallap, finallap, finalap2, ROT0,   "Namco", "Final Lap 2", GAME_NOT_WORKING )
 GAMEX(1990, finalp2j, finalap2, finallap, finallap, finalp2j, ROT0,   "Namco", "Final Lap 2 (Japan)", GAME_NOT_WORKING )
-GAMEX(1990, gollygho, 0,        gollygho, gollygho, gollygho, ROT180, "Namco", "Golly Ghost", GAME_NOT_WORKING )
+GAME( 1990, gollygho, 0,        gollygho, gollygho, gollygho, ROT180, "Namco", "Golly! Ghost!" )
 GAME( 1990, rthun2,   0,        default,  default,  rthun2,   ROT0,   "Namco", "Rolling Thunder 2" )
 GAME( 1990, rthun2j,  rthun2,   default,  default,  rthun2j,  ROT0,   "Namco", "Rolling Thunder 2 (Japan)" )
 GAME( 1991, sgunner2, 0,        sgunner,  sgunner,  sgunner2, ROT0,   "Namco", "Steel Gunner 2 (Japan)" )

@@ -30,7 +30,7 @@ typedef unsigned char byte;
 #define FMT(a,b) a, b
 #define PTRS_PER_FORMAT 2
 
-char *Formats[] = {
+const char *Formats[] = {
 	FMT("00000011dddddddd", "add  a,#$%X"),
 	FMT("01101rrr", "add  a,%R"),
 	FMT("0110000r", "add  a,@%R"),
@@ -139,8 +139,8 @@ typedef struct opcode {
 	byte mask;	/* instruction mask */
 	byte bits;	/* constant bits */
 	char extcode;	/* value that gets extension code */
-	char *parse;	/* how to parse bits */
-	char *fmt;		/* instruction format */
+	const char *parse;	/* how to parse bits */
+	const char *fmt;	/* instruction format */
 } M48Opcode;
 
 static M48Opcode Op[MAX_OPS+1];
@@ -148,7 +148,7 @@ static int OpInizialized = 0;
 
 static void InitDasm8039(void)
 {
-	char *p, **ops;
+	const char *p, **ops;
 	byte mask, bits;
 	int bit;
 	int i;
@@ -196,7 +196,7 @@ int Dasm8039(char *buffer, unsigned pc)
 	int op;
 	int cnt = 1;
 	int code, bit;
-	char *cp;
+	const char *cp;
 
 	if (!OpInizialized) InitDasm8039();
 

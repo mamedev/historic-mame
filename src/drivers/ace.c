@@ -52,10 +52,12 @@ static WRITE_HANDLER( ace_objpos_w )
 	objpos[offset]=data;
 }
 
+#if 0
 static READ_HANDLER( ace_objpos_r )
 {
 	return objpos[offset];
 }
+#endif
 
 VIDEO_UPDATE( ace )
 {

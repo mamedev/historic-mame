@@ -396,7 +396,7 @@ MACHINE_INIT( leland )
 		cpu_setbank(3, &slave_base[0x10000]);
 
 	/* if we have an I86 CPU, reset it */
-	if ((Machine->drv->cpu[2].cpu_type & ~CPU_FLAGS_MASK) == CPU_I186)
+	if (Machine->drv->cpu[2].cpu_type == CPU_I186)
 		leland_i186_sound_init();
 }
 
@@ -864,7 +864,7 @@ WRITE_HANDLER( leland_battery_ram_w )
 		battery_ram[offset] = data;
 	}
 	else
-		logerror("%04X:BatteryW@%04X (invalid!)\n", activecpu_get_previouspc(), offset, data);
+		logerror("%04X:BatteryW@%04X (invalid!)\n", activecpu_get_previouspc(), offset);
 }
 
 
@@ -878,7 +878,7 @@ WRITE_HANDLER( ataxx_battery_ram_w )
 	else if ((master_bank & 0x30) == 0x20)
 		ataxx_qram[((master_bank & 0xc0) << 8) + offset] = data;
 	else
-		logerror("%04X:BatteryW@%04X (invalid!)\n", activecpu_get_previouspc(), offset, data);
+		logerror("%04X:BatteryW@%04X (invalid!)\n", activecpu_get_previouspc(), offset);
 }
 
 
@@ -887,12 +887,12 @@ NVRAM_HANDLER( leland )
 	if (read_or_write)
 	{
 		EEPROM_save(file);
-		osd_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
 	}
 	else if (file)
 	{
 		EEPROM_load(file);
-		osd_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
 	}
 	else
 	{
@@ -907,12 +907,12 @@ NVRAM_HANDLER( ataxx )
 	if (read_or_write)
 	{
 		EEPROM_save(file);
-		osd_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
 	}
 	else if (file)
 	{
 		EEPROM_load(file);
-		osd_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
 	}
 	else
 	{

@@ -1,17 +1,17 @@
 /***************************************************************************
 
-      Poly-Play
+	  Poly-Play
 	  (c) 1985 by VEB Polytechnik Karl-Marx-Stadt
 
-      driver by Martin Buchholz (buchholz@mail.uni-greifswald.de)
+	  driver by Martin Buchholz (buchholz@mail.uni-greifswald.de)
 
-      Very special thanks to the following people, each one of them spent
+	  Very special thanks to the following people, each one of them spent
 	  some of their spare time to make this driver working:
 	  - Juergen Oppermann and Volker Hann for electronical assistance,
 	    repair work and ROM dumping.
 	  - Jan-Ole Christian from the Videogamemuseum in Berlin, which houses
 	    one of the last existing Poly-Play arcade automatons. He also
-		provided me with schematics and service manuals.
+	    provided me with schematics and service manuals.
 
 
 memory map:
@@ -22,14 +22,14 @@ memory map:
 
 0d00 - 0fff work RAM
 
-1000 - 4fff GAME ROM (pcb 2 - Abfahrtslauf          (1000 - 1bff),
-                              Hirschjagd            (1c00 - 27ff),
-							  Hase und Wolf         (2800 - 3fff),
+1000 - 4fff GAME ROM (pcb 2 - Abfahrtslauf          (1000 - 1bff)
+                              Hirschjagd            (1c00 - 27ff)
+                              Hase und Wolf         (2800 - 3fff)
                               Schmetterlingsfang    (4000 - 4fff)
 5000 - 8fff GAME ROM (pcb 1 - Schiessbude           (5000 - 5fff)
                               Autorennen            (6000 - 73ff)
-							  opto-akust. Merkspiel (7400 - 7fff)
-							  Wasserrohrbruch       (8000 - 8fff)
+                              opto-akust. Merkspiel (7400 - 7fff)
+                              Wasserrohrbruch       (8000 - 8fff)
 
 e800 - ebff character ROM (chr 00..7f) 1 bit per pixel
 ec00 - f7ff character RAM (chr 80..ff) 3 bit per pixel
@@ -54,7 +54,7 @@ read:
 
 85        bit 0-4 = light organ (unemulated :)) )
           bit 5-7 = sound parameter (unemulated, it's very difficult to
-		            figure out how those work)
+                    figure out how those work)
 
 86        ???
 
@@ -82,10 +82,6 @@ emulated now. ;)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-static unsigned char *polyplay_ram;
-
-void polyplay_reset(void);
-
 /* video hardware access */
 extern unsigned char *polyplay_characterram;
 PALETTE_INIT( polyplay );
@@ -94,19 +90,17 @@ READ_HANDLER( polyplay_characterram_r );
 WRITE_HANDLER( polyplay_characterram_w );
 
 /* I/O Port handling */
-READ_HANDLER( polyplay_input_read );
-READ_HANDLER( polyplay_random_read );
+static READ_HANDLER( polyplay_random_read );
 
 /* sound handling */
-void poly_sound(void);
 void set_channel1(int active);
 void set_channel2(int active);
-int prescale1, prescale2;
+static int prescale1;
+static int prescale2;
 static int channel1_active;
 static int channel1_const;
 static int channel2_active;
 static int channel2_const;
-static DRIVER_INIT( polyplay_sound );
 void play_channel1(int data);
 void play_channel2(int data);
 int  polyplay_sh_start(const struct MachineSound *msound);
@@ -114,10 +108,10 @@ void polyplay_sh_stop(void);
 void polyplay_sh_update(void);
 
 /* timer handling */
-static void polyplay_timer(int param);
-int timer2_active;
-WRITE_HANDLER( polyplay_start_timer2 );
-WRITE_HANDLER( polyplay_sound_channel );
+static void timer_callback(int param);
+static void* polyplay_timer;
+static WRITE_HANDLER( polyplay_start_timer2 );
+static WRITE_HANDLER( polyplay_sound_channel );
 
 
 /* Polyplay Sound Interface */
@@ -129,46 +123,62 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-MACHINE_INIT( polyplay )
+static MACHINE_INIT( polyplay )
 {
 	channel1_active = 0;
 	channel1_const = 0;
 	channel2_active = 0;
 	channel2_const = 0;
+
 	set_channel1(0);
 	play_channel1(0);
 	set_channel2(0);
 	play_channel2(0);
+
+	polyplay_timer = timer_alloc(timer_callback);
 }
 
 
-/* work RAM access */
-WRITE_HANDLER( polyplay_ram_w )
+static INTERRUPT_GEN( periodic_interrupt )
 {
-	polyplay_ram[offset] = data;
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4e);
 }
 
-READ_HANDLER( polyplay_ram_r )
+
+static INTERRUPT_GEN( coin_interrupt )
 {
-	return polyplay_ram[offset];
+	static int last = 0;
+
+	if (readinputport(0) & 0x80)
+	{
+		last = 0;
+	}
+	else
+	{
+		if (last == 0)    /* coin inserted */
+		{
+			cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x50);
+		}
+
+		last = 1;
+	}
 }
+
 
 /* memory mapping */
 static MEMORY_READ_START( polyplay_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0fff, polyplay_ram_r },
+	{ 0x0c00, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x8fff, MRA_ROM },
-
-	{ 0xe800, 0xebff, MRA_ROM},
+	{ 0xe800, 0xebff, MRA_ROM },
 	{ 0xec00, 0xf7ff, polyplay_characterram_r },
 	{ 0xf800, 0xffff, videoram_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( polyplay_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0fff, polyplay_ram_w, &polyplay_ram },
+	{ 0x0c00, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x8fff, MWA_ROM },
-
 	{ 0xe800, 0xebff, MWA_ROM },
 	{ 0xec00, 0xf7ff, polyplay_characterram_w, &polyplay_characterram },
 	{ 0xf800, 0xffff, videoram_w, &videoram, &videoram_size },
@@ -177,7 +187,7 @@ MEMORY_END
 
 /* port mapping */
 static PORT_READ_START( readport_polyplay )
-	{ 0x84, 0x84, polyplay_input_read },
+	{ 0x84, 0x84, input_port_0_r },
 	{ 0x83, 0x83, polyplay_random_read },
 PORT_END
 
@@ -195,11 +205,11 @@ INPUT_PORTS_START( polyplay )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "Bookkeeping Info", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 10)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
 
-WRITE_HANDLER( polyplay_sound_channel )
+static WRITE_HANDLER( polyplay_sound_channel )
 {
 	switch(offset) {
 	case 0x00:
@@ -247,33 +257,28 @@ WRITE_HANDLER( polyplay_sound_channel )
 	}
 }
 
-WRITE_HANDLER( polyplay_start_timer2 )
+static WRITE_HANDLER( polyplay_start_timer2 )
 {
-	if (data == 0x03) {
-		timer2_active = 0;
-	}
-	else {
-		if (data == 0xb5) {
-			timer_set(TIME_IN_HZ(40), 1, polyplay_timer);
-			timer2_active = 1;
-		}
-	}
+	if (data == 0x03)
+		timer_adjust(polyplay_timer, TIME_NEVER, 0, 0);
+
+	if (data == 0xb5)
+		timer_adjust(polyplay_timer, TIME_IN_HZ(40), 0, TIME_IN_HZ(40));
 }
 
-/* random number generator */
-READ_HANDLER( polyplay_random_read )
+static READ_HANDLER( polyplay_random_read )
 {
-	return rand() % 0xff;
+	return rand() & 0xff;
 }
 
-/* graphic sturctures */
+/* graphic structures */
 static struct GfxLayout charlayout_1_bit =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
-	1,	    /* 1 bit per pixel */
+	1,  	/* 1 bit per pixel */
 	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
@@ -282,17 +287,17 @@ static struct GfxLayout charlayout_3_bit =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
-	3,	    /* 3 bit per pixel */
+	3,  	/* 3 bit per pixel */
 	{ 0, 128*8*8, 128*8*8 + 128*8*8 },    /* offset for each bitplane */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xe800, &charlayout_1_bit, 0, 1 },
-	{ 0, 0xec00, &charlayout_3_bit, 2, 1 },
+	{ REGION_CPU1, 0xe800, &charlayout_1_bit, 0, 1 },
+	{ REGION_CPU1, 0xec00, &charlayout_3_bit, 2, 1 },
 	{ -1 }	/* end of array */
 };
 
@@ -305,9 +310,10 @@ static MACHINE_DRIVER_START( polyplay )
 	MDRV_CPU_ADD(Z80, 9830400/4)
 	MDRV_CPU_MEMORY(polyplay_readmem,polyplay_writemem)
 	MDRV_CPU_PORTS(readport_polyplay,writeport_polyplay)
+	MDRV_CPU_PERIODIC_INT(periodic_interrupt,75)
+	MDRV_CPU_VBLANK_INT(coin_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_VBLANK_DURATION(0)	/* frames per second, vblank duration */
 
 	MDRV_MACHINE_INIT(polyplay)
 
@@ -325,7 +331,6 @@ static MACHINE_DRIVER_START( polyplay )
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
-
 
 
 /* ROM loading and mapping */
@@ -370,44 +375,10 @@ ROM_START( polyplay )
 ROM_END
 
 
-/* interrupt handling, the game runs in IM 2 */
-READ_HANDLER( polyplay_input_read )
+static void timer_callback(int param)
 {
-	int inp = input_port_0_r(offset);
-
-	if ((inp & 0x80) == 0) {    /* Coin inserted */
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x50);
-		coin_counter_w(0, 1);
-		timer_set(TIME_IN_SEC(1), 2, polyplay_timer);
-	}
-
-	return inp;
-}
-
-static void polyplay_timer(int param)
-{
-	switch(param) {
-	case 0:
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4e);
-		break;
-	case 1:
-		if (timer2_active) {
-			timer_set(TIME_IN_HZ(40), 1, polyplay_timer);
-			cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4c);
-		}
-		break;
-	case 2:
-		coin_counter_w(0, 0);
-		break;
-	}
-}
-
-/* initialization */
-static DRIVER_INIT( polyplay_sound )
-{
-	timer_pulse(TIME_IN_HZ(75), 0, polyplay_timer);
-	timer2_active = 0;
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4c);
 }
 
 /* game driver */
-GAME( 1985, polyplay, 0, polyplay, polyplay, polyplay_sound, ROT0, "VEB Polytechnik Karl-Marx-Stadt", "Poly-Play" )
+GAME( 1985, polyplay, 0, polyplay, polyplay, 0, ROT0, "VEB Polytechnik Karl-Marx-Stadt", "Poly-Play" )

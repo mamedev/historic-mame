@@ -355,6 +355,33 @@ ROM_START( oneshot )
 	ROM_LOAD( "1shot.mb", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
 ROM_END
 
+ROM_START( maddonna )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "maddonna.a24", 0x00000, 0x20000, 0 ) // not dumped
+	ROM_LOAD16_BYTE( "maddonna.a22", 0x00001, 0x20000, 0 ) // not dumped
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "x13.ua2", 0x00000, 0x010000, 0xf2080071 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "x5.16a",  0x000000, 0x080000, 0x1aae0ad3 )
+	ROM_LOAD( "x7.13a",  0x080000, 0x080000, 0x39d13e25 )
+	ROM_LOAD( "x9.11a",  0x100000, 0x080000, 0x2027faeb )
+	ROM_LOAD( "x11.08a", 0x180000, 0x080000, 0x4afcfba6 )
+	ROM_LOAD( "x6.16",   0x200000, 0x080000, 0x7b893e78 )
+	ROM_LOAD( "x8.13",   0x280000, 0x080000, 0xfed90a1f )
+	ROM_LOAD( "x10.11",  0x300000, 0x080000, 0x479d718c )
+	ROM_LOAD( "x12.08",  0x380000, 0x080000, 0xd56ca9f8 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "maddonna.u15", 0x000000, 0x080000, 0 ) // not dumped
+	ROM_LOAD( "maddonna.u14", 0x080000, 0x080000, 0 ) // not dumped
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )
+	// BAD ADDRESS LINES (mask=00f000)
+	ROM_LOAD( "x1", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
+ROM_END
 
 
-GAMEX(199?, oneshot, 0, oneshot, oneshot, 0, ROT0, "unknown", "One Shot One Kill", GAME_IMPERFECT_GRAPHICS )
+GAMEX(199?, oneshot,  0, oneshot, oneshot, 0, ROT0, "unknown", "One Shot One Kill", GAME_IMPERFECT_GRAPHICS )
+GAMEX(199?, maddonna, oneshot, oneshot, oneshot, 0, ROT0, "Tuning", "Maddonna", GAME_NOT_WORKING )

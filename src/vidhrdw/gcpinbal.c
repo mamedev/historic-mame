@@ -56,13 +56,14 @@ static void get_fg_tile_info(int tile_index)
 			0)
 }
 
+#if 0
 static void dirty_tilemaps(void)	// will be used for save states
 {
 	tilemap_mark_all_tiles_dirty(gcpinbal_tilemap[0]);
 	tilemap_mark_all_tiles_dirty(gcpinbal_tilemap[1]);
 	tilemap_mark_all_tiles_dirty(gcpinbal_tilemap[2]);
 }
-
+#endif
 
 int gcpinbal_core_vh_start (void)
 {
@@ -291,29 +292,25 @@ VIDEO_UPDATE( gcpinbal )
 
 #ifdef MAME_DEBUG
 	static UINT8 dislayer[4];
-	char buf[80];
 #endif
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed_memory (KEYCODE_V))
 	{
 		dislayer[0] ^= 1;
-		sprintf(buf,"bg0: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg0: %01x",dislayer[0]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_B))
 	{
 		dislayer[1] ^= 1;
-		sprintf(buf,"bg1: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg1: %01x",dislayer[1]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_N))
 	{
 		dislayer[2] ^= 1;
-		sprintf(buf,"fg: %01x",dislayer[2]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("fg: %01x",dislayer[2]);
 	}
 #endif
 

@@ -129,7 +129,7 @@ VIDEO_UPDATE( warpwarp )
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	if (warpwarp_bulletsram[0] > 1)
@@ -158,3 +158,10 @@ VIDEO_UPDATE( warpwarp )
 		}
 	}
 }
+
+
+WRITE_HANDLER( warpwarp_flip_screen_w )
+{
+	flip_screen_set(data & 1);
+}
+

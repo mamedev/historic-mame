@@ -403,9 +403,9 @@ static NVRAM_HANDLER( playch10 )
 	UINT8 *mem = memory_region( REGION_CPU2 ) + 0x6000;
 
 	if ( read_or_write )
-		osd_fwrite( file, mem, 0x1000 );
+		mame_fwrite( file, mem, 0x1000 );
 	else if (file)
-		osd_fread( file, mem, 0x1000 );
+		mame_fread( file, mem, 0x1000 );
 	else
 		memset(mem, 0, 0x1000);
 }

@@ -485,10 +485,12 @@ static READ_HANDLER( mcu_control_r )
 	return 0x1;
 }
 
+#if 0
 static WRITE_HANDLER( sound_w )
 {
 	logerror("Sound_w %02x (%04x)\n", data, activecpu_get_pc());
 }
+#endif
 
 static READ_HANDLER( shared_r )
 {

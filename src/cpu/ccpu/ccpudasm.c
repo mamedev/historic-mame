@@ -18,7 +18,7 @@ typedef enum {
 
 typedef struct {
   opcode_mnemonics od_opcode;
-  char *od_name;
+  const char *od_name;
 } opcode_detail;
 
 opcode_detail opcodes[] = {
@@ -87,7 +87,7 @@ typedef enum {
 
 typedef struct {
   amode_mnemonics ad_amode;
-  char *ad_name;
+  const char *ad_name;
 } amode_detail;
 
 amode_detail amodes[] = {

@@ -75,11 +75,11 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 NVRAM_HANDLER( nb1413m3 )
 {
 	if (read_or_write)
-		osd_fwrite(file, nb1413m3_nvram, nb1413m3_nvram_size);
+		mame_fwrite(file, nb1413m3_nvram, nb1413m3_nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file, nb1413m3_nvram, nb1413m3_nvram_size);
+			mame_fread(file, nb1413m3_nvram, nb1413m3_nvram_size);
 		else
 			memset(nb1413m3_nvram, 0, nb1413m3_nvram_size);
 	}

@@ -17,6 +17,7 @@
 
 #if BUILD_YM2610
 
+#define YM2610_NUMBUF 2
 /* use FM.C with stream system */
 
 static int stream[MAX_2610];

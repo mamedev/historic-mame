@@ -181,18 +181,22 @@ static void movy_b(void) { MOVY(B); }
 static void pixt_ri_a(void) { PIXT_RI(A); }
 static void pixt_ri_b(void) { PIXT_RI(B); }
 
-#define PIXT_RIXY(R)		                        \
-{													\
-	if (state.window_checking != 0 && state.window_checking != 3)			\
-	{												\
-		logerror("PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
-	}												\
-													\
-	if (state.window_checking != 3 ||						\
-		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
-		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
-		WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
-  	COUNT_UNKNOWN_CYCLES(4);						\
+#define PIXT_RIXY(R)		                       									\
+{																					\
+	if (state.window_checking != 0)													\
+	{																				\
+		if (R##REG_X(R##DSTREG) < WSTART_X || R##REG_X(R##DSTREG) > WEND_X ||		\
+			R##REG_Y(R##DSTREG) < WSTART_Y || R##REG_Y(R##DSTREG) > WEND_Y)			\
+		{																			\
+			V_FLAG = 1;																\
+			goto skip;																\
+		}																			\
+		V_FLAG = 0;																	\
+		if (state.window_checking == 1) goto skip;									\
+	}																				\
+	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));							\
+skip: 																				\
+  	COUNT_UNKNOWN_CYCLES(4);														\
 }
 static void pixt_rixy_a(void) { PIXT_RIXY(A); }
 static void pixt_rixy_b(void) { PIXT_RIXY(B); }
@@ -221,29 +225,44 @@ static void pixt_ii_b(void) { PIXT_II(B); }
 static void pixt_ixyr_a(void) { PIXT_IXYR(A); }
 static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
 
-#define PIXT_IXYIXY(R)			              			      		\
-{																	\
-	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),RPIXEL(SXYTOL(R##REG_XY(R##SRCREG))));	\
-  	COUNT_UNKNOWN_CYCLES(7);										\
+#define PIXT_IXYIXY(R)			              			      						\
+{																					\
+	if (state.window_checking != 0)													\
+	{																				\
+		if (R##REG_X(R##DSTREG) < WSTART_X || R##REG_X(R##DSTREG) > WEND_X ||		\
+			R##REG_Y(R##DSTREG) < WSTART_Y || R##REG_Y(R##DSTREG) > WEND_Y)			\
+		{																			\
+			V_FLAG = 1;																\
+			goto skip;																\
+		}																			\
+		V_FLAG = 0;																	\
+		if (state.window_checking == 1) goto skip;									\
+	}																				\
+	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),RPIXEL(SXYTOL(R##REG_XY(R##SRCREG))));		\
+skip: 																				\
+  	COUNT_UNKNOWN_CYCLES(7);														\
 }
 static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
 static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
-#define DRAV(R)			              			      		\
-{															\
-	if (state.window_checking != 0 && state.window_checking != 3) \
-	{														\
-		logerror("DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
-	}														\
-															\
-	if (state.window_checking != 3 ||						\
-		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
-		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
-		WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),COLOR1);		\
-															\
-	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
-	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
-  	COUNT_UNKNOWN_CYCLES(4);								\
+#define DRAV(R)			              			      								\
+{																					\
+	if (state.window_checking != 0)													\
+	{																				\
+		if (R##REG_X(R##DSTREG) < WSTART_X || R##REG_X(R##DSTREG) > WEND_X ||		\
+			R##REG_Y(R##DSTREG) < WSTART_Y || R##REG_Y(R##DSTREG) > WEND_Y)			\
+		{																			\
+			V_FLAG = 1;																\
+			goto skip;																\
+		}																			\
+		V_FLAG = 0;																	\
+		if (state.window_checking == 1) goto skip;									\
+	}																				\
+	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),COLOR1);									\
+skip: 																				\
+	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);										\
+	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);										\
+  	COUNT_UNKNOWN_CYCLES(4);														\
 }
 static void drav_a(void) { DRAV(A); }
 static void drav_b(void) { DRAV(B); }

@@ -52,7 +52,7 @@ static int instruction_length[64] =
 	 5, 5, 5, 5 	/* Fx */
 };
 
-static char *instruction_name[64] =
+static const char *instruction_name[64] =
 {
 	"undef","ORG  ","WPR  ","RPR  ",	/* 0x */
 	"undef","undef","WPTN ","RPTN ",	/* 1x */

@@ -127,43 +127,37 @@ VIDEO_UPDATE( topspeed )
 
 #ifdef MAME_DEBUG
 	static UINT8 dislayer[5];
-	char buf[80];
 #endif
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed_memory (KEYCODE_V))
 	{
 		dislayer[0] ^= 1;
-		sprintf(buf,"bg: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg: %01x",dislayer[0]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_B))
 	{
 		dislayer[1] ^= 1;
-		sprintf(buf,"fg: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("fg: %01x",dislayer[1]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_N))
 	{
 		dislayer[2] ^= 1;
-		sprintf(buf,"bg2: %01x",dislayer[2]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("bg2: %01x",dislayer[2]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_M))
 	{
 		dislayer[3] ^= 1;
-		sprintf(buf,"fg2: %01x",dislayer[3]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("fg2: %01x",dislayer[3]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_C))
 	{
 		dislayer[4] ^= 1;
-		sprintf(buf,"sprites: %01x",dislayer[4]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("sprites: %01x",dislayer[4]);
 	}
 #endif
 

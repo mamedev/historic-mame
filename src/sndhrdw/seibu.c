@@ -61,7 +61,6 @@
 	00002CA2: 17 37
 */
 
-#define BIT(data,bit) (((data)>>(bit))&1)
 
 static UINT8 decrypt_data(int a,int src)
 {

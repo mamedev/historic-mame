@@ -141,7 +141,7 @@ static void mcu_handle_coins(int coin)
 
 static READ_HANDLER( mcu_arknoid2_r )
 {
-	char *mcu_startup = "\x55\xaa\x5a";
+	const char *mcu_startup = "\x55\xaa\x5a";
 
 //	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
@@ -244,7 +244,7 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 
 static READ_HANDLER( mcu_chukatai_r )
 {
-	char *mcu_startup = "\xa5\x5a\xaa";
+	const char *mcu_startup = "\xa5\x5a\xaa";
 
 	logerror("PC %04x (re %04x): read mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 
@@ -360,7 +360,7 @@ static WRITE_HANDLER( mcu_chukatai_w )
 
 static READ_HANDLER( mcu_tnzs_r )
 {
-	char *mcu_startup = "\x5a\xa5\x55";
+	const char *mcu_startup = "\x5a\xa5\x55";
 
 	logerror("PC %04x (re %04x): read mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 

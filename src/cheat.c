@@ -824,7 +824,7 @@ typedef struct MenuItemInfoStruct	MenuItemInfoStruct;
 /**** Exported Globals *******************************************************/
 
 int			he_did_cheat = 0;
-char		* cheatfile = NULL;
+const char		* cheatfile = NULL;
 
 /**** Local Globals **********************************************************/
 
@@ -2023,12 +2023,12 @@ static void RebuildStringTables(void)
 					menuStrings.mainStringLength,
 					menuStrings.subStringLength,
 
-					menuStrings.mainList,
-					menuStrings.subList,
-					menuStrings.flagList,
-					menuStrings.mainStrings,
-					menuStrings.subStrings,
-					menuStrings.buf);
+					(int)menuStrings.mainList,
+					(int)menuStrings.subList,
+					(int)menuStrings.flagList,
+					(int)menuStrings.mainStrings,
+					(int)menuStrings.subStrings,
+					(int)menuStrings.buf);
 
 		exit(1);
 	}
@@ -2295,7 +2295,7 @@ static INT32 CommentMenu(struct mame_bitmap * bitmap, int selection, CheatEntry 
 {
 	char	buf[2048];
 	int		sel;
-	char	* comment;
+	const char	* comment;
 
 	if(!entry)
 		return 0;
@@ -4576,7 +4576,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 
 static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int startNew)
 {
-	char * energyStrings[] =
+	const char * energyStrings[] =
 	{
 		"Equal",
 		"Less",
@@ -4586,7 +4586,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 		"Not Equal"
 	};
 
-	char * bitStrings[] =
+	const char * bitStrings[] =
 	{
 		"Equal",
 		"Not Equal"
@@ -6520,7 +6520,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, SearchInfo * search)
 {
-	char	* kSearchSpeedList[] =
+	const char	* kSearchSpeedList[] =
 	{
 		"Fast",
 		"Medium",
@@ -7907,7 +7907,7 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 		case kSearchSpeed_Fast:
 
 #if HAS_SH2
-			if((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_SH2)
+			if(Machine->drv->cpu[0].cpu_type == CPU_SH2)
 			{
 				if(	(info->targetType == kRegionType_CPU) &&
 					(info->targetIdx == 0) &&
@@ -7946,14 +7946,14 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 #if HAS_TMS34010
 
 			// for exterminator, search bank one
-			if(	((Machine->drv->cpu[1].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) &&
+			if(	(Machine->drv->cpu[1].cpu_type == CPU_TMS34010) &&
 				(info->targetType == kRegionType_CPU) &&
 				(info->targetIdx == 1) &&
 				(handler == MWA_BANK1))
 				return 1;
 
 			// for smashtv, search bank two
-			if(	((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) &&
+			if(	(Machine->drv->cpu[0].cpu_type == CPU_TMS34010) &&
 				(info->targetType == kRegionType_CPU) &&
 				(info->targetIdx == 0) &&
 				(handler == MWA_BANK2))
@@ -8364,7 +8364,7 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 static int MatchCommandCheatLine(char * buf)
 {
 	int	argumentsMatched;
-	int	data;
+	unsigned int	data;
 
 	argumentsMatched = sscanf(buf, ":_command:%X", &data);
 
@@ -8447,13 +8447,13 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 static void LoadCheatFile(char * fileName)
 {
-	void		* theFile;
+	mame_file	* theFile;
 	char		formatString[256];
 	char		oldFormatString[256];
 	char		buf[2048];
 	int			recordNames = 0;
 
-	theFile = osd_fopen(NULL, fileName, OSD_FILETYPE_CHEAT, 0);
+	theFile = mame_fopen(NULL, fileName, FILETYPE_CHEAT, 0);
 
 	if(!theFile)
 		return;
@@ -8469,7 +8469,7 @@ static void LoadCheatFile(char * fileName)
 	sprintf(oldFormatString, "%s:%s", Machine->gamedrv->name, "%d:%x:%x:%d:%[^:\n\r]:%[^:\n\r]");
 #endif
 
-	while(osd_fgets(buf, 2048, theFile))
+	while(mame_fgets(buf, 2048, theFile))
 	{
 		int			type;
 		int			address;
@@ -8618,13 +8618,13 @@ static void LoadCheatFile(char * fileName)
 
 	bail:
 
-	osd_fclose(theFile);
+	mame_fclose(theFile);
 }
 
 static void LoadCheatDatabase(void)
 {
 	char	buf[4096];
-	char	* inTraverse;
+	const char	* inTraverse;
 	char	* outTraverse;
 	char	* mainTraverse;
 	int		first = 1;
@@ -8693,19 +8693,19 @@ static void DisposeCheatDatabase(void)
 
 static void SaveCheat(CheatEntry * entry)
 {
-	void	* theFile;
+	mame_file * theFile;
 	UINT32	i;
 	char	buf[4096];
 
 	if(!entry || !entry->actionList)
 		return;
 
-	theFile = osd_fopen(NULL, mainDatabaseName, OSD_FILETYPE_CHEAT, 1);
+	theFile = mame_fopen(NULL, mainDatabaseName, FILETYPE_CHEAT, 1);
 
 	if(!theFile)
 		return;
 
-	osd_fseek(theFile, 0, SEEK_END);
+	mame_fseek(theFile, 0, SEEK_END);
 
 	for(i = 0; i < entry->actionListLength; i++)
 	{
@@ -8767,10 +8767,10 @@ static void SaveCheat(CheatEntry * entry)
 
 		bufTraverse += sprintf(bufTraverse, "\n");
 
-		osd_fwrite(theFile, buf, strlen(buf));
+		mame_fwrite(theFile, buf, strlen(buf));
 	}
 
-	osd_fclose(theFile);
+	mame_fclose(theFile);
 
 	entry->flags &= ~kCheatFlag_Dirty;
 }
@@ -10389,7 +10389,7 @@ static void BuildCPUInfoList(void)
 			CPUInfo	* info = &cpuInfoList[i];
 			CPUInfo	* regionInfo = &regionInfoList[REGION_CPU1 + i - REGION_INVALID];
 
-			int		type = Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK;
+			int		type = Machine->drv->cpu[i].cpu_type;
 
 			info->type = type;
 			info->dataBits = cputype_databus_width(type);

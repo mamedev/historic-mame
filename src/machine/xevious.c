@@ -127,7 +127,7 @@ READ_HANDLER( xevious_dsw_r )
 
 ***************************************************************************/
 static int customio_command;
-static int mode,credits;
+static int mode,credits,start_enable;
 static int auxcoinpercred,auxcredpercoin;
 static int leftcoinpercred,leftcredpercoin;
 static int rightcoinpercred,rightcredpercoin;
@@ -140,21 +140,40 @@ WRITE_HANDLER( xevious_customio_data_w )
 
 logerror("%04x: custom IO offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 
-	switch (customio_command)
+	switch (customio_command & 0x0f)
 	{
-		case 0xa1:
+		case 0x01:
 			if (offset == 0)
 			{
-				if (data == 0x05)
-					mode = 1;	/* go into switch mode */
-				else	/* go into credit mode */
+				switch ( data & 0x0f )
 				{
-					credits = 0;	/* this is a good time to reset the credits counter */
-					mode = 0;
+					case 0x00:
+						/* nop */
+						break;
+					case 0x01:
+						/* credit info set */
+						credits = 0;		/* this is a good time to reset the credits counter */
+						mode = 0;			/* go into credit mode */
+						start_enable = 1;
+						break;
+					case 0x02:
+						start_enable = 1;
+						break;
+					case 0x03:
+						mode = 1;			/* go into switch mode */
+						break;
+					case 0x04:
+						mode = 0;			/* go into credit mode */
+						break;
+					case 0x05:
+						start_enable = 0;	/* Initialize */
+						mode = 1;			/* Initialize */
+						break;
 				}
 			}
 			else if (offset == 7)
 			{
+				/* 0x01 */
 				auxcoinpercred = customio[1];
 				auxcredpercoin = customio[2];
 				leftcoinpercred = customio[3];
@@ -164,7 +183,11 @@ logerror("%04x: custom IO offset %02x data %02x\n",activecpu_get_pc(),offset,dat
 			}
 			break;
 
-		case 0x68:
+		case 0x04:
+			/* ??? */
+			break;
+
+		case 0x08:
 			if (offset == 6)
 			{
 				/* it is not known how the parameters control the explosion. */
@@ -207,10 +230,9 @@ READ_HANDLER( xevious_customio_data_r )
 	if (customio_command != 0x71)
 		logerror("%04x: custom IO read offset %02x\n",activecpu_get_pc(),offset);
 
-	switch (customio_command)
+	switch (customio_command & 0x0f)
 	{
-		case 0x71:	/* read input */
-		case 0xb1:	/* only issued after 0xe1 (go into credit mode) */
+		case 0x01:	/* read input */
 			if (offset == 0)
 			{
 				if (mode)	/* switch mode */
@@ -224,7 +246,6 @@ READ_HANDLER( xevious_customio_data_r )
 					static int leftcoininserted;
 					static int rightcoininserted;
 					static int auxcoininserted;
-
 
 					in = readinputport(4);
 
@@ -261,22 +282,34 @@ READ_HANDLER( xevious_customio_data_r )
 					}
 					else credits = 2;
 
+					if (start_enable == 1)
+					{
+						/* check for 1 player start button */
+						if ((in & 0x04) == 0)
+						{
+							if (credits >= 1)
+							{
+								credits--;
+								start_enable = 0;
+							}
+						}
 
-					/* check for 1 player start button */
-					if ((in & 0x04) == 0)
-						if (credits >= 1) credits--;
-
-					/* check for 2 players start button */
-					if ((in & 0x08) == 0)
-						if (credits >= 2) credits -= 2;
-
+						/* check for 2 players start button */
+						if ((in & 0x08) == 0)
+						{
+							if (credits >= 2)
+							{
+								credits -= 2;
+								start_enable = 0;
+							}
+						}
+					}
 					return (credits / 10) * 16 + credits % 10;
 				}
 			}
 			else if (offset == 1)
 			{
 				int in;
-
 
 				in = readinputport(2);	/* player 1 input */
 				if (mode == 0)	/* convert joystick input only when in credits mode */
@@ -287,7 +320,6 @@ READ_HANDLER( xevious_customio_data_r )
 			{
 				int in;
 
-
 				in = readinputport(3);	/* player 2 input */
 				if (mode == 0)	/* convert joystick input only when in credits mode */
 					in = namco_key[in & 0x0f] | (in & 0xf0);
@@ -296,7 +328,7 @@ READ_HANDLER( xevious_customio_data_r )
 
 			break;
 
-		case 0x74:		/* protect data read ? */
+		case 0x04:		/* protect data read ? */
 			if (offset == 3)
 			{
 				if (customio[0] == 0x80 || customio[0] == 0x10)
@@ -551,6 +583,10 @@ WRITE_HANDLER( battles_customio_data3_w )
 WRITE_HANDLER( battles_CPU4_4000_w )
 {
 	logerror("CPU3 %04x: 40%02x Write = %02x\n",activecpu_get_pc(),offset,data);
+
+	set_led_status(0,data & 0x02);	// Start 1
+	set_led_status(1,data & 0x01);	// Start 2
+
 }
 
 
@@ -571,7 +607,7 @@ WRITE_HANDLER( battles_noise_sound_w )
 
 READ_HANDLER( battles_input_port_r )
 {
-	logerror("battles_input_port_r %04x: Read offset %02x data %02x\n",activecpu_get_pc(),offset);
+	logerror("battles_input_port_r %04x: Read offset %02x\n",activecpu_get_pc(),offset);
 	return 0xff;
 }
 

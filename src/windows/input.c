@@ -1032,7 +1032,7 @@ static void init_keylist(void)
 					osd_input_keywords[num_osd_ik].name = malloc (strlen(instance.tszName) + 4 + 1);
 
 					src = instance.tszName;
-					dst = osd_input_keywords[num_osd_ik].name;
+					dst = (char *)osd_input_keywords[num_osd_ik].name;
 
 					strcpy (dst, "Key_");
 					dst += strlen(dst);
@@ -1118,7 +1118,7 @@ static void add_joylist_entry(const char *name, int code, int *joycount)
 			osd_input_keywords[num_osd_ik].name = malloc (strlen(name) + 1);
 
 			src = name;
-			dst = osd_input_keywords[num_osd_ik].name;
+			dst = (char *)osd_input_keywords[num_osd_ik].name;
 
 			// copy name converting all spaces to underscores
 			while (*src != 0)
@@ -1520,10 +1520,10 @@ extern struct rc_struct *rc;
 
 void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
 {
-	void *f;
+	mame_file *f;
 
 	// open the specified controller type/filename
-	f = osd_fopen (ctype, filename, OSD_FILETYPE_CTRLR, 0);
+	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
 
 	if (f)
 	{
@@ -1550,7 +1550,7 @@ void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *
 
 	// close the file
 	if (f)
-		osd_fclose (f);
+		mame_fclose (f);
 }
 
 void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)

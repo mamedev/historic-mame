@@ -5,6 +5,15 @@ Formation Z / Aeroboto
 Driver by Carlos A. Lozano
 
 
+TODO:
+- star field
+  Uki's report:
+  - The color of stars:
+    at 1st title screen = neutral tints of blue and aqua (1 color only)
+    at 2nd title screen and attract mode (purple surface) = light & dark aqua
+    This color will not be affected by scroll. Leftmost 8pixels are light, next
+    16 pixels are dark, the next 16 pixels are light, and so on.
+
 Revision:
 
 4-18-2002 Acho A. Tang
@@ -13,8 +22,6 @@ Revision:
 - emulated remaining video registers
 - rewrote vidhrdw module to fix color, sprite positions, priority,
   vertical scrolling, split screen, starmap...etc.
-- hand crafted substitue PROMs based on the NES version (their dump request
-  has been on MAME Target for years but no one bothers)
 
 *note: Holding any key at boot puts the game in MCU test. Press F3 to quit.
 
@@ -23,25 +30,22 @@ Revision:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-//AT
+
+extern data8_t *aeroboto_videoram;
 extern data8_t *aeroboto_hscroll, *aeroboto_vscroll, *aeroboto_tilecolor;
 extern data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_starcolor;
-extern int aeroboto_fgfill;
-//ZT
-extern int aeroboto_charbank;
 
-//AT
-extern VIDEO_UPDATE( aeroboto );
+VIDEO_START( aeroboto );
+VIDEO_UPDATE( aeroboto );
+
+READ_HANDLER( aeroboto_in0_r );
+WRITE_HANDLER( aeroboto_3000_w );
+WRITE_HANDLER( aeroboto_videoram_w );
+WRITE_HANDLER( aeroboto_tilecolor_w );
 
 static data8_t *aeroboto_mainram;
 static int disable_irq = 0;
-//ZT
-static int player;
 
-static READ_HANDLER( aeroboto_in0_r )
-{
-	return readinputport(player);
-}
 
 static READ_HANDLER( aeroboto_201_r )
 {
@@ -51,19 +55,6 @@ static READ_HANDLER( aeroboto_201_r )
 	static int count;
 	logerror("PC %04x: read 3004\n",activecpu_get_pc());
 	return res[(count++)&3];
-}
-
-static WRITE_HANDLER( aeroboto_3000_w )
-{
-	/* bit 0 selects player1/player2 controls */
-	player = data & 1;
-
-	/* not sure about this, could be bit 2 */
-	aeroboto_charbank = (data & 0x02) >> 1;
-
-	/* there's probably a flip screen here as well */
-
-	aeroboto_fgfill = data & 0x4; //AT
 }
 
 //AT
@@ -108,9 +99,9 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM, &aeroboto_mainram },
 	{ 0x0800, 0x08ff, MWA_RAM },
 	{ 0x0900, 0x09ff, MWA_RAM }, // a backup of default tile colors
-	{ 0x1000, 0x17ff, videoram_w, &videoram, &videoram_size },
+	{ 0x1000, 0x17ff, aeroboto_videoram_w, &aeroboto_videoram },
 	{ 0x1800, 0x183f, MWA_RAM, &aeroboto_hscroll },
-	{ 0x2000, 0x20ff, MWA_RAM, &aeroboto_tilecolor },
+	{ 0x2000, 0x20ff, aeroboto_tilecolor_w, &aeroboto_tilecolor },
 	{ 0x1840, 0x27ff, MWA_NOP }, // cleared during custom LSI test
 	{ 0x2800, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2900, 0x2fff, MWA_NOP }, // cleared along with sprite RAM
@@ -123,7 +114,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x3006, 0x3006, MWA_RAM, &aeroboto_starcolor },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
-//ZT
+
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x9002, 0x9002, AY8910_read_port_0_r },
@@ -183,7 +174,9 @@ INPUT_PORTS_START( formatz )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	/* the coin input must stay low for exactly 2 frames to be consistently recognized. */
+	/* The last dip switch is directly connected to the video hardware and
+	   flips the screen. The program instead sees the coin input, which must
+	   stay low for exactly 2 frames to be consistently recognized. */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 
 	PORT_START
@@ -207,10 +200,9 @@ INPUT_PORTS_START( formatz )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	/* the manual lists the flip screen in the previous bank (replacing Coin A) */
-	PORT_DIPNAME( 0x80, 0x00, "Flip Screen?" )
-	PORT_DIPSETTING(    0x00, "Off?" )
-	PORT_DIPSETTING(    0x80, "On?" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -222,6 +214,18 @@ static struct GfxLayout charlayout =
 	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+1, RGN_FRAC(1,2)+2, RGN_FRAC(1,2)+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+/* exact star layout unknown... could be anything */
+static struct GfxLayout starlayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
@@ -240,9 +244,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,     0, 64 },     /* chars */
-	{ REGION_GFX2, 0, &charlayout,     0, 64 },     /* sky */
-	{ REGION_GFX3, 0, &spritelayout,   0,  8 },
+	{ REGION_GFX1, 0, &charlayout,     0,  64 },     /* chars */
+	{ REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */
+	{ REGION_GFX3, 0, &spritelayout,   0,   8 },
 	{ -1 } /* end of array */
 };
 
@@ -272,23 +276,25 @@ static MACHINE_DRIVER_START( formatz )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 3*8, 30*8-1)
+	MDRV_VISIBLE_AREA(0*8, 30*8-1, 3*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(aeroboto)
 	MDRV_VIDEO_UPDATE(aeroboto)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -317,9 +323,9 @@ ROM_START( formatz )
 	ROM_LOAD( "format_z.3",   0x2000, 0x1000, 0x7d1aec79 )  /* sprites */
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "10a",          0x0000, 0x0100, BADCRC(0xc1e2cb94) )
-	ROM_LOAD( "10b",          0x0100, 0x0100, BADCRC(0xb8ce3046) )
-	ROM_LOAD( "10c",          0x0200, 0x0100, BADCRC(0xcee22209) )
+	ROM_LOAD( "10c",          0x0000, 0x0100, 0xb756dd6d )
+	ROM_LOAD( "10b",          0x0100, 0x0100, 0x00df8809 )
+	ROM_LOAD( "10a",          0x0200, 0x0100, 0xe8733c8f )
 ROM_END
 
 ROM_START( aeroboto )
@@ -343,12 +349,12 @@ ROM_START( aeroboto )
 	ROM_LOAD( "aeroboto.3",   0x2000, 0x1000, 0x5203ad04 )  /* sprites */
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "10a",          0x0000, 0x0100, BADCRC(0xc1e2cb94) )
-	ROM_LOAD( "10b",          0x0100, 0x0100, BADCRC(0xb8ce3046) )
-	ROM_LOAD( "10c",          0x0200, 0x0100, BADCRC(0xcee22209) )
+	ROM_LOAD( "10c",          0x0000, 0x0100, 0xb756dd6d )
+	ROM_LOAD( "10b",          0x0100, 0x0100, 0x00df8809 )
+	ROM_LOAD( "10a",          0x0200, 0x0100, 0xe8733c8f )
 ROM_END
 
 
 
-GAMEX( 1984, formatz,  0,       formatz, formatz, 0, ROT0, "Jaleco", "Formation Z", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1984, aeroboto, formatz, formatz, formatz, 0, ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1984, formatz,  0,       formatz, formatz, 0, ROT0, "Jaleco", "Formation Z", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, aeroboto, formatz, formatz, formatz, 0, ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_IMPERFECT_GRAPHICS )

@@ -137,21 +137,18 @@ VIDEO_UPDATE( superman )
 
 #ifdef MAME_DEBUG
 	static UINT8 dislayer[2];	/* Layer toggles for investigating Gigandes rd.5 */
-	char buf[80];
 #endif
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed_memory (KEYCODE_X))
 	{
 		dislayer[0] ^= 1;
-		sprintf(buf,"tilemap: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("tilemap: %01x",dislayer[0]);
 	}
 	if (keyboard_pressed_memory (KEYCODE_C))
 	{
 		dislayer[1] ^= 1;
-		sprintf(buf,"sprites: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("sprites: %01x",dislayer[1]);
 	}
 #endif
 

@@ -505,7 +505,7 @@ static MACHINE_DRIVER_START( maniacsq )
 MACHINE_DRIVER_END
 
 
-ROM_START( maniacsq )
+ROM_START( maniacsp )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE(	"d18",	0x000000, 0x020000, 0x740ecab2 )
 	ROM_LOAD16_BYTE(	"d16",	0x000001, 0x020000, 0xc6c42729 )
@@ -565,6 +565,6 @@ ROM_END
 
 
 
-GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak" )
-GAME( 1995, biomtoy,  0, maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)" )
-GAME( 1996, maniacsq, 0, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)" )
+GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak" )
+GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)" )
+GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)" )

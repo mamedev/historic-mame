@@ -20,7 +20,8 @@
 static void poly17_init(void);
 static void counter_set_out(int which, int gate);
 static void counter_callback(int param);
-
+static void clock_counter_0_ff(int param);
+static void update_grudge_steering(void);
 
 /* global data */
 UINT8 balsente_shooter;
@@ -86,6 +87,8 @@ static UINT8 nstocker_bits;
 static UINT8 spiker_expand_color;
 static UINT8 spiker_expand_bgcolor;
 static UINT8 spiker_expand_bits;
+static UINT8 grudge_steering_result;
+static UINT8 grudge_last_steering[3];
 
 
 
@@ -115,6 +118,10 @@ static void interrupt_timer(int param)
 	/* it will turn off on the next HBLANK */
 	timer_set(cpu_getscanlineperiod() * 0.9, 0, irq_off);
 
+	/* if this is Grudge Match, update the steering */
+	if (grudge_steering_result & 0x80)
+		update_grudge_steering();
+
 	/* if we're a shooter, we do a little more work */
 	if (balsente_shooter)
 	{
@@ -135,9 +142,6 @@ static void interrupt_timer(int param)
 	}
 }
 
-
-static void counter_callback(int param);
-static void clock_counter_0_ff(int param);
 
 MACHINE_INIT( balsente )
 {
@@ -163,6 +167,9 @@ MACHINE_INIT( balsente )
 	dac_value = 0;
 	dac_register = 0;
 	chip_select = 0x3f;
+
+	/* reset game-specific states */
+	grudge_steering_result = 0;
 
 	/* reset the 6850 chips */
 	balsente_m6850_w(0, 3);
@@ -616,6 +623,7 @@ WRITE_HANDLER( balsente_adc_select_w )
 {
 	/* set a timer to go off and read the value after 50us */
 	/* it's important that we do this for Mini Golf */
+logerror("adc_select %d\n", offset & 7);
 	timer_set(TIME_IN_USEC(50), offset & 7, adc_finished);
 }
 
@@ -1117,6 +1125,55 @@ READ_HANDLER( spiker_expand_r )
 
 	/* return the combined result */
 	return (left & 0xf0) | (right & 0x0f);
+}
+
+
+static void update_grudge_steering(void)
+{
+	UINT8 wheel[3];
+	INT8 diff[3];
+
+	/* read the current steering values */
+	wheel[0] = readinputport(4);
+	wheel[1] = readinputport(5);
+	wheel[2] = readinputport(6);
+
+	/* diff the values */
+	diff[0] = wheel[0] - grudge_last_steering[0];
+	diff[1] = wheel[1] - grudge_last_steering[1];
+	diff[2] = wheel[2] - grudge_last_steering[2];
+
+	/* update the last values */
+	grudge_last_steering[0] += diff[0];
+	grudge_last_steering[1] += diff[1];
+	grudge_last_steering[2] += diff[2];
+
+	/* compute the result */
+	grudge_steering_result = 0xff;
+	if (diff[0])
+	{
+		grudge_steering_result ^= 0x01;
+		if (diff[0] > 0) grudge_steering_result ^= 0x02;
+	}
+	if (diff[1])
+	{
+		grudge_steering_result ^= 0x04;
+		if (diff[1] > 0) grudge_steering_result ^= 0x08;
+	}
+	if (diff[2])
+	{
+		grudge_steering_result ^= 0x10;
+		if (diff[2] > 0) grudge_steering_result ^= 0x20;
+	}
+	logerror("Recomputed steering\n");
+}
+
+
+READ_HANDLER( grudge_steering_r )
+{
+	logerror("%04X:grudge_steering_r(@%d)\n", activecpu_get_pc(), cpu_getscanline());
+	grudge_steering_result |= 0x80;
+	return grudge_steering_result;
 }
 
 

@@ -17,7 +17,7 @@ static int gameplan_this_is_kaos;
 static int gameplan_this_is_megatack;
 static int clear_to_colour = 0;
 static int fix_clear_to_colour = -1;
-static char *colour_names[] = {"WHITE", "CYAN", "MAGENTA", "BLUE",
+static const char *colour_names[] = {"WHITE", "CYAN", "MAGENTA", "BLUE",
 							   "YELLOW", "GREEN", "RED", ".BLACK"};
 
 

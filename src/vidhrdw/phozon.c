@@ -200,11 +200,7 @@ VIDEO_UPDATE( phozon )
 
 				default:
 #ifdef MAME_DEBUG
-{
-char buf[40];
-sprintf(buf,"%02x",spriteram_3[offs] & 0x3c);
-usrintf_showmessage(buf);
-}
+usrintf_showmessage("%02x",spriteram_3[offs] & 0x3c);
 #endif
 					phozon_draw_sprite(bitmap,rand(),color,flipx,flipy,x,y);
 					break;

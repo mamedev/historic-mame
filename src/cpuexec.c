@@ -83,7 +83,7 @@ enum
 struct cpuinfo
 {
 	int 	iloops; 				/* number of interrupts remaining this frame */
-	int 	totalcycles;			/* total CPU cycles executed */
+	UINT64 	totalcycles;			/* total CPU cycles executed */
 	int 	vblankint_countdown;	/* number of vblank callbacks left until we interrupt */
 	int 	vblankint_multiplier;	/* number of vblank callbacks per interrupt */
 	void *	vblankint_timer;		/* reference to elapsed time counter */
@@ -183,7 +183,7 @@ int cpu_init(void)
 	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		int cputype = Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK;
+		int cputype = Machine->drv->cpu[cpunum].cpu_type;
 
 		/* if this is a dummy, stop looking */
 		if (cputype == CPU_DUMMY)
@@ -239,7 +239,7 @@ static void cpu_pre_run(void)
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
 		/* enable all CPUs (except for audio CPUs if the sound is off) */
-		if (!(Machine->drv->cpu[cpunum].cpu_type & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+		if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
 			timer_suspendcpu(cpunum, 0, SUSPEND_ANY_REASON);
 		else
 			timer_suspendcpu(cpunum, 1, SUSPEND_REASON_DISABLE);
@@ -402,12 +402,12 @@ void machine_reset(void)
 static void handle_save(void)
 {
 	char name[2] = { 0 };
-	void *file;
+	mame_file *file;
 	int cpunum;
 
 	/* open the file */
 	name[0] = loadsave_schedule_id;
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_STATE, 1);
+	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_STATE, 1);
 
 	if (file)
 	{
@@ -435,7 +435,7 @@ static void handle_save(void)
 
 		/* finish and close */
 		state_save_save_finish();
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 	else
 	{
@@ -457,12 +457,12 @@ static void handle_save(void)
 static void handle_load(void)
 {
 	char name[2] = { 0 };
-	void *file;
+	mame_file *file;
 	int cpunum;
 
 	/* open the file */
 	name[0] = loadsave_schedule_id;
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_STATE, 0);
+	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_STATE, 0);
 
 	/* if successful, load it */
 	if (file)
@@ -492,7 +492,7 @@ static void handle_load(void)
 			/* finish and close */
 			state_save_load_finish();
 		}
-		osd_fclose(file);
+		mame_fclose(file);
 	}
 	else
 	{
@@ -753,19 +753,37 @@ int cycles_left_to_run(void)
 	IMPORTANT: this value wraps around in a relatively short
 	time. For example, for a 6MHz CPU, it will wrap around in
 	2^32/6000000 = 716 seconds = 12 minutes.
+
 	Make sure you don't do comparisons between values returned
 	by this function, but only use the difference (which will
 	be correct regardless of wraparound).
 
+	Alternatively, use the new 64-bit variants instead.
+
 --------------------------------------------------------------*/
 
-int activecpu_gettotalcycles(void)
+UINT32 activecpu_gettotalcycles(void)
 {
 	VERIFY_ACTIVECPU(0, cpu_gettotalcycles);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
 }
 
-int cpu_gettotalcycles(int _cpu)
+UINT32 cpu_gettotalcycles(int _cpu)
+{
+	if(_cpu == cpu_getactivecpu())
+		return cpu[_cpu].totalcycles + cycles_currently_ran();
+	else
+		return cpu[_cpu].totalcycles;
+}
+
+
+UINT64 activecpu_gettotalcycles64(void)
+{
+	VERIFY_ACTIVECPU(0, cpu_gettotalcycles);
+	return cpu[activecpu].totalcycles + cycles_currently_ran();
+}
+
+UINT64 cpu_gettotalcycles64(int _cpu)
 {
 	if(_cpu == cpu_getactivecpu())
 		return cpu[_cpu].totalcycles + cycles_currently_ran();
@@ -831,6 +849,19 @@ void cpu_init_refresh_timer(void)
 	refresh_timer = timer_alloc(NULL);
 
 	/* while we're at it, compute the scanline times */
+	cpu_compute_scanline_timing();
+}
+
+
+
+/*************************************
+ *
+ *	Computes the scanline timing
+ *
+ *************************************/
+
+void cpu_compute_scanline_timing(void)
+{
 	if (Machine->drv->vblank_duration)
 		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
 				(double)(Machine->drv->default_visible_area.max_y - Machine->drv->default_visible_area.min_y + 1);

@@ -256,14 +256,45 @@ static WRITE32_HANDLER( paletteram32_macrossp_w )
 	palette_set_color(offset,r,g,b);
 }
 
-static READ32_HANDLER ( macrossp_dummy_r )
+
+static int sndpending;
+
+static READ32_HANDLER ( macrossp_soundstatus_r )
 {
-	static int i = 0x00000000;
+	static int toggle;
 
-	i ^= 0xffffffff;
+//	logerror("%08x read soundstatus\n",activecpu_get_pc());
 
-	return i;
+	/* bit 1 is sound status */
+	/* bit 0 unknown - it is expected to toggle, vblank? */
+
+	toggle ^= 1;
+
+	if (Machine->sample_rate == 0) return (rand()&2) | toggle;
+
+	return (sndpending << 1) | toggle;
 }
+
+static WRITE32_HANDLER( macrossp_soundcmd_w )
+{
+	if (ACCESSING_MSW32)
+	{
+		logerror("%08x write soundcmd\n",activecpu_get_pc());
+		soundlatch_word_w(0,data >> 16,0);
+		sndpending = 1;
+		cpu_set_irq_line(1,2,HOLD_LINE);
+		/* spin for a while to let the sound CPU read the command */
+		cpu_spinuntil_time(TIME_IN_USEC(50));
+	}
+}
+
+static READ16_HANDLER( macrossp_soundcmd_r )
+{
+	logerror("%06x read soundcmd\n",activecpu_get_pc());
+	sndpending = 0;
+	return soundlatch_word_r(offset,mem_mask);
+}
+
 
 /*** MEMORY MAPS *************************************************************/
 
@@ -280,7 +311,7 @@ static MEMORY_READ32_START( readmem )
 	{ 0xa00000, 0xa03fff, MRA32_RAM },
 
 	{ 0xb00000, 0xb00003, macrossp_ports1_r },
-	{ 0xb00004, 0xb00007, macrossp_dummy_r },
+	{ 0xb00004, 0xb00007, macrossp_soundstatus_r },
 	{ 0xb0000c, 0xb0000f, macrossp_ports2_r },
 
 	{ 0xf00000, 0xf1ffff, MRA32_RAM },
@@ -311,17 +342,31 @@ static MEMORY_WRITE32_START( writemem )
 
 	{ 0xa00000, 0xa03fff, paletteram32_macrossp_w, &paletteram32 },
 
-//	{ 0xb00004, 0xb00007, MWA32_NOP },
-//	{ 0xb00008, 0xb0000b, MWA32_NOP },
+	{ 0xb00004, 0xb00007, MWA32_NOP },	// ????
+	{ 0xb00008, 0xb0000b, MWA32_NOP },	// ????
 //	{ 0xb0000c, 0xb0000f, MWA32_NOP },
 	{ 0xb00010, 0xb00013, MWA32_RAM },	// macrossp palette fade
 //	{ 0xb00020, 0xb00023, MWA32_NOP },
 
-//	{ 0xc00000, 0xc00003, MWA32_NOP },
+	{ 0xc00000, 0xc00003, macrossp_soundcmd_w },
 
 	{ 0xf00000, 0xf1ffff, MWA32_RAM, &macrossp_mainram }, /* Main Ram */
 
 //	{ 0xfe0000, 0xfe0003, MWA32_NOP },
+MEMORY_END
+
+
+static MEMORY_READ16_START( sound_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x200000, 0x207fff, MRA16_RAM },
+	{ 0x400000, 0x40007f, ES5506_data_0_word_r },
+	{ 0x600000, 0x600001, macrossp_soundcmd_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( sound_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x200000, 0x207fff, MWA16_RAM },
+	{ 0x400000, 0x40007f, ES5506_data_0_word_w },
 MEMORY_END
 
 /*** INPUT PORTS *************************************************************/
@@ -522,13 +567,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*** MACHINE DRIVER **********************************************************/
 
+static void irqhandler(int irq)
+{
+	logerror("ES5506 irq %d\n",irq);
+//	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static struct ES5506interface es5506_interface =
+{
+	1,
+	{ 16000000 },
+	{ REGION_SOUND1 },
+	{ REGION_SOUND2 },
+	{ REGION_SOUND3 },
+	{ REGION_SOUND4 },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ irqhandler },
+	{ 0 }
+};
+
+
 static MACHINE_DRIVER_START( macrossp )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68EC020, 25000000) // 50 / 2 ?
+	MDRV_CPU_ADD(M68EC020, 50000000/2)	/* 25 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1) // there are others ...
 
-	/* there is a 68k for sound */
+	MDRV_CPU_ADD(M68000, 32000000/2)	/* 16 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -546,7 +613,8 @@ static MACHINE_DRIVER_START( macrossp )
 	MDRV_VIDEO_UPDATE(macrossp)
 
 	/* sound hardware */
-//	ENSONIQ OTTO R2 (ES5506)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5506, es5506_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( quizmoon )
@@ -566,9 +634,11 @@ ROM_START( macrossp )
 	ROM_LOAD32_BYTE( "bp964a-c.u3", 0x000001, 0x080000, 0xfb895a7b )
 	ROM_LOAD32_BYTE( "bp964a-c.u4", 0x000000, 0x080000, 0x8c8b966c )
 
-	ROM_REGION( 0x200000, REGION_CPU2, 0 )
-	ROM_LOAD( "bp964a.u20", 0x000000, 0x080000, 0x12960cbb )
-	ROM_LOAD( "bp964a.u21", 0x000000, 0x080000, 0x87bdd2fc )
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "bp964a.u20", 0x000001, 0x080000, 0x12960cbb )
+	ROM_LOAD16_BYTE( "bp964a.u21", 0x000000, 0x080000, 0x87bdd2fc )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )
 	ROM_LOAD( "bp964a.u49", 0x000000, 0x020000, 0xad203f76 )  // 'BIOS'
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 ) /* sprites - 16x16x8 */
@@ -607,9 +677,11 @@ ROM_START( quizmoon )
 	ROM_LOAD32_BYTE( "u7.bin",  0x200001, 0x080000, 0x656b2125 )
 	ROM_LOAD32_BYTE( "u8.bin",  0x200000, 0x080000, 0x944df309 )
 
-	ROM_REGION( 0x200000, REGION_CPU2, 0 )
-	ROM_LOAD( "u20.bin", 0x000000, 0x020000, 0xd7ad1ffb )
-	ROM_LOAD( "u21.bin", 0x000000, 0x020000, 0x6fc625c6 )
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "u20.bin", 0x000001, 0x020000, 0xd7ad1ffb )
+	ROM_LOAD16_BYTE( "u21.bin", 0x000000, 0x020000, 0x6fc625c6 )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )
 	ROM_LOAD( "u49.bin", 0x000000, 0x020000, 0x1590ad81 )  // 'BIOS'
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -630,11 +702,17 @@ ROM_START( quizmoon )
 	ROM_REGION( 0x400000, REGION_GFX5, 0 )
 	/* nothing on this game? */
 
-	ROM_REGION( 0x1000000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
 	ROM_LOAD( "u24.bin", 0x0000000, 0x0400000, 0x5b12d0b1 )
-	ROM_LOAD( "u25.bin", 0x0400000, 0x0400000, 0x3b9689bc )
-	ROM_LOAD( "u26.bin", 0x0800000, 0x0400000, 0x6c8f30d4 )
-	ROM_LOAD( "u27.bin", 0x0c00000, 0x0400000, 0xbd75d165 )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 )
+	ROM_LOAD( "u25.bin", 0x0000000, 0x0400000, 0x3b9689bc )
+
+	ROM_REGION( 0x400000, REGION_SOUND3, 0 )
+	ROM_LOAD( "u26.bin", 0x0000000, 0x0400000, 0x6c8f30d4 )
+
+	ROM_REGION( 0x400000, REGION_SOUND4, 0 )
+	ROM_LOAD( "u27.bin", 0x0000000, 0x0400000, 0xbd75d165 )
 ROM_END
 
 
@@ -659,4 +737,3 @@ static DRIVER_INIT( macrossp )
 
 GAMEX( 1996, macrossp, 0, macrossp, macrossp, macrossp, ROT270, "Banpresto", "Macross Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, quizmoon, 0, quizmoon, macrossp, 0,        ROT0,   "Banpresto", "Quiz Bisyoujo Senshi Sailor Moon - Chiryoku Tairyoku Toki no Un", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-

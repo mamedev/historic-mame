@@ -150,11 +150,13 @@ WRITE16_HANDLER( sshangha_control_0_w )
 
 /******************************************************************************/
 
+#if 0
 static UINT32 sshangha_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
 	/* logical (col,row) -> memory offset */
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
 }
+#endif
 
 static void get_pf2_tile_info(int tile_index)
 {

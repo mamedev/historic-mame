@@ -818,14 +818,14 @@ static void HandleMemSingle( data32_t insn )
 		if (insn & INSN_SDT_B)
 		{
 			if (ARM_DEBUG_CORE && rd==eR15)
-				logerror("%08x: Wrote R15 in byte mode\n");
+				logerror("Wrote R15 in byte mode\n");
 
 			WRITE8(rnv, (data8_t) GetRegister(rd) & 0xffu);
 		}
 		else
 		{
 			if (ARM_DEBUG_CORE && rd==eR15)
-				logerror("%08x: Wrote R15 in 32bit mode\n");
+				logerror("Wrote R15 in 32bit mode\n");
 
 			WRITE32(rnv, rd == eR15 ? R15 + 8 : GetRegister(rd));
 		}

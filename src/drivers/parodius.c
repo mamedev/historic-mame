@@ -104,6 +104,7 @@ static WRITE_HANDLER( parodius_sh_irqtrigger_w )
 	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
+#if 0
 static int nmi_enabled;
 
 static void sound_nmi_callback( int param )
@@ -112,6 +113,7 @@ static void sound_nmi_callback( int param )
 
 	nmi_enabled = 0;
 }
+#endif
 
 static void nmi_callback(int param)
 {

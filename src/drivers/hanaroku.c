@@ -6,6 +6,8 @@ TODO:
 - Background color should be green, but current handling might be wrong.
 - some unknown sprite attributes, sprite flipping in flip screen needed
 - don't know what to do when the jackpot is displayed (missing controls ?)
+- according to the board pic, there should be one more 4-switches dip
+  switch bank, and probably some NVRAM because there's a battery.
 */
 
 #include "driver.h"

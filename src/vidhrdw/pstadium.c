@@ -26,7 +26,6 @@ static int pstadium_screen_refresh;
 
 static struct mame_bitmap *pstadium_tmpbitmap;
 static unsigned char *pstadium_videoram;
-static unsigned char *pstadium_palette;
 static unsigned char *pstadium_paltbl;
 
 
@@ -38,24 +37,20 @@ static void pstadium_gfxdraw(void);
 
 
 ******************************************************************************/
-READ_HANDLER( pstadium_palette_r )
-{
-	return pstadium_palette[offset];
-}
 
 WRITE_HANDLER( pstadium_palette_w )
 {
 	int r, g, b;
 
-	pstadium_palette[offset] = data;
+	paletteram[offset] = data;
 
 	if (!(offset & 1)) return;
 
 	offset &= 0x1fe;
 
-	r = ((pstadium_palette[offset + 1] & 0x0f) << 4);
-	g = ((pstadium_palette[offset + 0] & 0xf0) << 0);
-	b = ((pstadium_palette[offset + 0] & 0x0f) << 4);
+	r = ((paletteram[offset + 1] & 0x0f) << 4);
+	g = ((paletteram[offset + 0] & 0xf0) << 0);
+	b = ((paletteram[offset + 0] & 0x0f) << 4);
 
 	r = (r | (r >> 4));
 	g = (g | (g >> 4));
@@ -68,15 +63,15 @@ WRITE_HANDLER( galkoku_palette_w )
 {
 	int r, g, b;
 
-	pstadium_palette[offset] = data;
+	paletteram[offset] = data;
 
 	if (!(offset & 1)) return;
 
 	offset &= 0x1fe;
 
-	r = ((pstadium_palette[offset + 0] & 0x0f) << 4);
-	g = ((pstadium_palette[offset + 1] & 0xf0) << 0);
-	b = ((pstadium_palette[offset + 1] & 0x0f) << 4);
+	r = ((paletteram[offset + 0] & 0x0f) << 4);
+	g = ((paletteram[offset + 1] & 0xf0) << 0);
+	b = ((paletteram[offset + 1] & 0x0f) << 4);
 
 	r = (r | (r >> 4));
 	g = (g | (g >> 4));
@@ -89,15 +84,15 @@ WRITE_HANDLER( galkaika_palette_w )
 {
 	int r, g, b;
 
-	pstadium_palette[offset] = data;
+	paletteram[offset] = data;
 
 	if (!(offset & 1)) return;
 
 	offset &= 0x1fe;
 
-	r = ((pstadium_palette[offset + 0] & 0x7c) >> 2);
-	g = (((pstadium_palette[offset + 0] & 0x03) << 3) | ((pstadium_palette[offset + 1] & 0xe0) >> 5));
-	b = ((pstadium_palette[offset + 1] & 0x1f) >> 0);
+	r = ((paletteram[offset + 0] & 0x7c) >> 2);
+	g = (((paletteram[offset + 0] & 0x03) << 3) | ((paletteram[offset + 1] & 0xe0) >> 5));
+	b = ((paletteram[offset + 1] & 0x1f) >> 0);
 
 	r = ((r << 3) | (r >> 2));
 	g = ((g << 3) | (g >> 2));
@@ -371,7 +366,6 @@ VIDEO_START( pstadium )
 {
 	if ((pstadium_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((pstadium_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((pstadium_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
 	if ((pstadium_paltbl = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
 	memset(pstadium_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	return 0;

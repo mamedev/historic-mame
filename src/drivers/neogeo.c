@@ -44,9 +44,9 @@
 
 	AUDIO ISSUES :
 
-	- Sound (Music) cuts out in ncommand and ncombat due to a bug in the original
-	  code, which should obviously have no ill effect on the real YM2610 but
-	  confuses the emulated one. This is fixed by patching the bugged code.
+	- Sound (Music) was cutting out in ncommand and ncombat due to a bug in the
+	  original code, which should obviously have no ill effect on the real YM2610 but
+	  confused the emulated one. This is fixed in the YM2610 emulator.
 
 	- Some rather bad sounding parts in a couple of Games
 		(shocktro End of Intro)
@@ -416,7 +416,7 @@ static READ16_HANDLER( timer16_r )
 
 //	logerror("CPU %04x - Read timer\n",activecpu_get_pc());
 
-	res = readinputport(4) ^ (coinflip << 6) ^ (databit << 7);
+	res = (readinputport(4) & ~(readinputport(5) & 0x20)) ^ (coinflip << 6) ^ (databit << 7);
 
 	if (Machine->sample_rate)
 	{
@@ -479,7 +479,7 @@ static READ16_HANDLER( controller3_16_r )
 }
 static READ16_HANDLER( controller4_16_r )
 {
-	return readinputport(6);
+	return (readinputport(6) & ~(readinputport(5) & 0x40));
 }
 
 static WRITE16_HANDLER( neo_bankswitch_w )
@@ -832,9 +832,9 @@ INPUT_PORTS_START( neogeo )
 
 	PORT_START		/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",KEYCODE_6, IP_JOY_NONE ) /* Player 1 Select */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "Next Game",KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "SELECT 2",KEYCODE_7, IP_JOY_NONE ) /* Player 2 Select */
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "Previous Game",KEYCODE_8, IP_JOY_NONE )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card inserted */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -866,7 +866,7 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* used, affects the values stored at location 0x47 of nvram */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
 
 	/* Fake  IN 5 */
 	PORT_START
@@ -877,6 +877,11 @@ INPUT_PORTS_START( neogeo )
 //	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 //	PORT_DIPSETTING(	0x00,"Home" )
 //	PORT_DIPSETTING(	0x04,"Arcade" )
+	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
+	PORT_DIPSETTING(	0x60,"2" )
+//	PORT_DIPSETTING(	0x40,"2" )
+	PORT_DIPSETTING(	0x20,"4" )
+	PORT_DIPSETTING(	0x00,"6" )
 
 	PORT_START		/* Test switch */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -885,7 +890,7 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* used, affects the values stored at location 0x47 of nvram */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
@@ -905,9 +910,9 @@ INPUT_PORTS_START( irrmaze )
 
 	PORT_START		/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",KEYCODE_6, IP_JOY_NONE ) /* Player 1 Select */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "SELECT 2",KEYCODE_7, IP_JOY_NONE ) /* Player 2 Select */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card inserted */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -4939,6 +4944,75 @@ ROM_START( mslug4 ) /* Original Version - Encrypted GFX */
 	ROM_LOAD16_BYTE( "263-c6.bin",   0x2000001, 0x800000, 0xf85eae54 ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( rotd )
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "264-p1.bin", 0x000000, 0x800000, 0xb8cc969d )
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(				  0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	ROM_REGION( 0x40000, REGION_USER4, 0 )
+	ROM_LOAD( "264-m1.bin", 0x00000, 0x10000, 0x9abd048c ) /* encrypted, we load it here for reference and replace with decrypted ROM */
+	NEO_BIOS_SOUND_64K( "264-m1d.bin", 0xe5f42e7d ) /* decrypted */
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	/* encrypted */
+	ROM_LOAD( "264-v1.bin", 0x000000, 0x800000, 0xfa005812 )
+	ROM_LOAD( "264-v2.bin", 0x800000, 0x800000, 0xc3dc8bf0 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "264-c1.bin", 0x0000000, 0x800000, 0x4f148fee )
+	ROM_LOAD16_BYTE( "264-c2.bin", 0x0000001, 0x800000, 0x7cf5ff72 )
+	ROM_LOAD16_BYTE( "264-c3.bin", 0x1000000, 0x800000, 0x64d84c98 )
+	ROM_LOAD16_BYTE( "264-c4.bin", 0x1000001, 0x800000, 0x2f394a95 )
+	ROM_LOAD16_BYTE( "264-c5.bin", 0x2000000, 0x800000, 0x6b99b978 )
+	ROM_LOAD16_BYTE( "264-c6.bin", 0x2000001, 0x800000, 0x847d5c7d )
+	ROM_LOAD16_BYTE( "264-c7.bin", 0x3000000, 0x800000, 0x231d681e )
+	ROM_LOAD16_BYTE( "264-c8.bin", 0x3000001, 0x800000, 0xc5edb5c4 )
+ROM_END
+
+ROM_START( kof2002 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "265-p1.bin", 0x000000, 0x100000, 0x9ede7323 )
+	ROM_LOAD16_WORD_SWAP( "265-p2.bin", 0x100000, 0x400000, 0x327266b8 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(				  0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	ROM_REGION( 0x40000, REGION_USER4, 0 )
+	ROM_LOAD( "265-m1.bin", 0x00000, 0x40000, 0x7dbab719 ) /* encrypted, we load it here for reference and replace with decrypted ROM */
+	NEO_BIOS_SOUND_128K( "265-m1d.bin", 0xab9d360e ) /* decrypted */
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	/* encrypted, we load these here for reference and replace with decrypted ROMs */
+	ROM_LOAD( "265-v1.bin", 0x000000, 0x800000, 0x15e8f3f5 )
+	ROM_LOAD( "265-v2.bin", 0x800000, 0x800000, 0xda41d6f9 )
+	/* decrypted */
+	ROM_LOAD( "265-v1d.bin", 0x000000, 0x400000, 0x13d98607 )
+	ROM_LOAD( "265-v2d.bin", 0x400000, 0x400000, 0x9cf74677 )
+	ROM_LOAD( "265-v3d.bin", 0x800000, 0x400000, 0x8e9448b5 )
+	ROM_LOAD( "265-v4d.bin", 0xc00000, 0x400000, 0x067271b5 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "265-c1.bin", 0x0000000, 0x800000, 0x2b65a656 )
+	ROM_LOAD16_BYTE( "265-c2.bin", 0x0000001, 0x800000, 0xadf18983 )
+	ROM_LOAD16_BYTE( "265-c3.bin", 0x1000000, 0x800000, 0x875e9fd7 )
+	ROM_LOAD16_BYTE( "265-c4.bin", 0x1000001, 0x800000, 0x2da13947 )
+	ROM_LOAD16_BYTE( "265-c5.bin", 0x2000000, 0x800000, 0x61bd165d )
+	ROM_LOAD16_BYTE( "265-c6.bin", 0x2000001, 0x800000, 0x03fdd1eb )
+	ROM_LOAD16_BYTE( "265-c7.bin", 0x3000000, 0x800000, 0x1a2749d8 )
+	ROM_LOAD16_BYTE( "265-c8.bin", 0x3000001, 0x800000, 0xab0bb549 )
+ROM_END
+
+
 /******************************************************************************/
 
 /* dummy entry for the dummy bios driver */
@@ -5247,6 +5321,56 @@ DRIVER_INIT( mslug4 )
 	}
 }
 
+DRIVER_INIT( rotd )
+{
+	data16_t *rom;
+	int i,j;
+
+	neogeo_fix_bank_type = 1;
+	kof2000_neogeo_gfx_decrypt(0x3f);
+	init_neogeo();
+
+	/* thanks to Elsemi for the NEO-PCM2 info */
+	rom = (data16_t *)(memory_region(REGION_SOUND1));
+	if( rom != NULL )
+	{
+		/* swap address lines on the whole ROMs */
+		for( i = 0; i < 0x1000000 / 2; i += 16 / 2 )
+		{
+			data16_t buffer[ 16 / 2 ];
+			memcpy( buffer, &rom[ i ], 16 );
+			for( j = 0; j < 16 / 2; j++ )
+			{
+				rom[ i + j ] = buffer[ j ^ 4 ];
+			}
+		}
+	}
+}
+
+DRIVER_INIT( kof2002 )
+{
+	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
+	UINT8 *dst = malloc(0x400000);
+	int i;
+	unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
+
+	if (dst)
+	{
+		memcpy(dst,src,0x400000);
+
+		for(i=0;i<8;++i)
+		{
+			memcpy(src+i*0x80000,dst+sec[i],0x80000);
+		}
+		free(dst);
+	}
+
+	neogeo_fix_bank_type = 0;
+	kof2000_neogeo_gfx_decrypt(0xec);
+
+	init_neogeo();
+}
+
 
 /******************************************************************************/
 
@@ -5455,6 +5579,10 @@ GAME( 2000, bangbead, neogeo,   raster, neogeo,  neogeo,   ROT0, "Visco", "Bang 
 
 /* Eolith */
 GAME( 2001, kof2001,  neogeo,   neogeo, neogeo,  kof2001,  ROT0, "Eolith / SNK", "The King of Fighters 2001" )
+GAME( 2002, kof2002,  neogeo,	neogeo, neogeo,  kof2002,  ROT0, "Eolith / Playmore Corporation", "The King of Fighters 2002" )
 
-/* Mega Enterprise / Playmore */
+/* Mega Enterprise */
 GAME( 2002, mslug4,   neogeo,   neogeo, neogeo,  mslug4,   ROT0, "Mega Enterprise / Playmore Corporation", "Metal Slug 4" )
+
+/* Evoga */
+GAME( 2002, rotd,	  neogeo,	neogeo, neogeo,  rotd,	   ROT0, "Evoga / Playmore Corporation", "Rage of the Dragons" )

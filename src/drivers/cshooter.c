@@ -546,7 +546,6 @@ DRIVER_INIT( cshootre )
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
-	#define BIT(x,n) (((x)>>(n))&1)
 
 	memory_set_opcode_base(0,rom+diff);
 

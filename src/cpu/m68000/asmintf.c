@@ -44,7 +44,7 @@ void m68k_illegal_opcode(void)
 
 unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_type);
 
-#ifdef WIN32
+#ifdef _WIN32
 #define CONVENTION __cdecl
 #else
 #define CONVENTION

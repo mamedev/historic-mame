@@ -2614,8 +2614,8 @@ INPUT_PORTS_START( extdwnhl )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0008, "Easy" )
 	PORT_DIPSETTING(      0x000c, "Normal" )
@@ -3552,8 +3552,8 @@ INPUT_PORTS_START( sokonuke )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0008, "Easy" )
 	PORT_DIPSETTING(      0x000c, "Normal" )
@@ -4806,7 +4806,7 @@ static MACHINE_DRIVER_START( daioh )
 	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_START(seta_2_layers_y_offset_0x10)
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
@@ -5411,11 +5411,12 @@ MACHINE_DRIVER_END
 /***************************************************************************
 								Thundercade
 ***************************************************************************/
-
+#if 0
 static void irq_handler(int irq)
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
+#endif
 
 static struct YM2203interface tndrcade_ym2203_interface =
 {

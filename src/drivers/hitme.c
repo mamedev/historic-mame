@@ -232,10 +232,12 @@ static WRITE_HANDLER ( output_port_0_w )
 	timeout_time = timer_get_time();
 }
 
+#if 0
 static READ_HANDLER ( hitme_unknown_r )
 {
 	return 0x00;
 }
+#endif
 
 static MEMORY_READ_START( hitme_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },

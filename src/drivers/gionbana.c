@@ -1711,7 +1711,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	2500000,			/* 4 MHz */
-	{ 70 }
+	{ 50 }
 };
 
 static struct AY8910interface ay8910_interface =
@@ -1728,7 +1728,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,				/* 1 channels */
-	{ 50 }
+	{ 100 }
 };
 
 
@@ -2446,22 +2446,22 @@ ROM_START( hanaoji )
 ROM_END
 
 
-GAME( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,   ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
-GAME( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken, ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
-GAME( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn, ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
-GAME( 1989, gionbana,        0, gionbana, gionbana, gionbana,   ROT0, "Nichibutsu", "Gionbana (Japan)" )
-GAME( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,   ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
-GAME( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,   ROT0, "Nichibutsu", "Mahjong Focus (Japan)" )
-GAME( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,   ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
-GAME( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,   ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
-GAME( 1989,  scandal,        0,  scandal,  scandal,  scandal,   ROT0, "Nichibutsu", "Scandal Mahjong (Japan)" )
-GAME( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,   ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
-GAME( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)" )
-GAME( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
-GAME( 1989, bananadr,        0, bananadr, bananadr, bananadr,   ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
-GAME( 1990,  club90s,        0,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 1)" )
-GAME( 1990, club90sa,  club90s,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 2)" )
-GAME( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,   ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
-GAME( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,   ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
-GAME( 1990,    maiko,        0,    maiko,    maiko,    maiko,   ROT0, "Nichibutsu", "Maikobana (Japan)" )
-GAME( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,   ROT0, "Nichibutsu", "Hana to Ojisan [BET]" )
+GAME( 1988, hanamomo,  0,        hanamomo, hanamomo, hanamomo, ROT0,   "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
+GAME( 1988, msjiken,   0,        msjiken,  msjiken,  msjiken,  ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
+GAME( 1988, telmahjn,  0,        telmahjn, telmahjn, telmahjn, ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
+GAME( 1989, gionbana,  0,        gionbana, gionbana, gionbana, ROT0,   "Nichibutsu", "Gionbana (Japan)" )
+GAME( 1989, mgmen89,   0,        mgmen89,  mgmen89,  mgmen89,  ROT0,   "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
+GAME( 1989, mjfocus,   0,        mjfocus,  mjfocus,  mjfocus,  ROT0,   "Nichibutsu", "Mahjong Focus (Japan)" )
+GAME( 1989, mjfocusm,  mjfocus,  mjfocusm, mjfocusm, mjfocusm, ROT0,   "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
+GAME( 1989, peepshow,  mjfocus,  peepshow, peepshow, peepshow, ROT0,   "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
+GAME( 1989, scandal,   0,        scandal,  scandal,  scandal,  ROT0,   "Nichibutsu", "Scandal Mahjong (Japan)" )
+GAME( 1989, scandalm,  scandal,  scandalm, scandalm, scandalm, ROT0,   "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
+GAME( 1989, mjnanpas,  0,        mjnanpas, mjnanpas, mjnanpas, ROT0,   "BROOKS", "Mahjong Nanpa Story (Japan)" )
+GAME( 1989, mjnanpaa,  mjnanpas, mjnanpas, mjnanpaa, mjnanpas, ROT0,   "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
+GAME( 1989, bananadr,  0,        bananadr, bananadr, bananadr, ROT0,   "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
+GAME( 1990, club90s,   0,        club90s,  club90s,  club90s,  ROT0,   "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 1)" )
+GAME( 1990, club90sa,  club90s,  club90s,  club90s,  club90s,  ROT0,   "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 2)" )
+GAME( 1990, mladyhtr,  0,        mladyhtr, mladyhtr, mladyhtr, ROT0,   "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
+GAME( 1990, chinmoku,  0,        chinmoku, chinmoku, chinmoku, ROT0,   "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
+GAME( 1990, maiko,     0,        maiko,    maiko,    maiko,    ROT0,   "Nichibutsu", "Maikobana (Japan)" )
+GAME( 1991, hanaoji,   0,        hanaoji,  hanaoji,  hanaoji,  ROT0,   "Nichibutsu", "Hana to Ojisan [BET]" )

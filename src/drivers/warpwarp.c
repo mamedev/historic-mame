@@ -15,13 +15,13 @@ read:
 
 All Read ports only use bit 0
 
-C000	  Coin slot 2
-C001	  ???
+C000	  Coin slot 1
+C001	  Fire (for player 2 in "cocktail mode")
 C002	  Start P1
 C003	  Start P2
 C004	  Fire
 C005	  Test Mode
-C006	  ???
+C006	  Cabinet type
 C007	  Coin Slot 2
 C010	  Joystick (read like an analog one, but it's digital)
 		  0->23 = DOWN
@@ -32,16 +32,28 @@ C010	  Joystick (read like an analog one, but it's digital)
 C020-C027 Dipswitch 1->8 in bit 0
 
 write:
-c000-c001 bullet x/y pos
+C000-C001 bullet x/y pos
 C002	  Sound
 C003	  WatchDog reset
 C010	  Music 1
 C020	  Music 2
-c030-c032 lamps
-c034	  coin lock out
-c035	  coin counter
-c036	  IRQ enable _and_ bullet enable (both on bit 0) (currently ignored)
-C037	  flip screen (currently ignored)
+C030-C032 lamps
+C034	  coin lock out
+C035	  coin counter
+C036	  IRQ enable _and_ bullet enable (both on bit 0) (currently ignored)
+C037	  flip screen
+
+
+Stephh's notes :
+
+  - The only difference between 'warpwarr' and 'warpwar2' is the copyright
+    string on the first screen (when the scores are displayed) :
+
+      * 'warpwarr' : "(c) 1981 ROCK-OLA MFG.CORP."  (text stored at 0x33ff to 0x3417)
+      * 'warpwar2' : "(c) 1981 ROCK-OLA MFG.CO."    (text stored at 0x33ff to 0x3415)
+
+    Note that the checksum at 0x37ff (used for checking ROM at 0x3000 to 0x37ff)
+    is different of course.
 
 ***************************************************************************/
 
@@ -52,6 +64,7 @@ C037	  flip screen (currently ignored)
 extern unsigned char *warpwarp_bulletsram;
 PALETTE_INIT( warpwarp );
 VIDEO_UPDATE( warpwarp );
+WRITE_HANDLER( warpwarp_flip_screen_w );
 
 /* from sndhrdw/warpwarp.c */
 WRITE_HANDLER( warpwarp_sound_w );
@@ -61,22 +74,39 @@ extern int warpwarp_sh_start(const struct MachineSound *msound);
 extern void warpwarp_sh_stop(void);
 extern void warpwarp_sh_update(void);
 
-static READ_HANDLER( warpwarp_input_c000_7_r )
+/* Read System Inputs */
+static READ_HANDLER( bombbee_sys_r )
+{
+	if (offset == 4)	// to return BUTTON1 status
+	{
+		return (readinputport(4) >> (flip_screen & 1)) & 1;
+	}
+	else
+		return (readinputport(0) >> offset) & 1;
+}
+
+static READ_HANDLER( warpwarp_sys_r )
 {
 	return (readinputport(0) >> offset) & 1;
 }
 
-/* Read the Dipswitches */
-static READ_HANDLER( warpwarp_input_c020_27_r )
+/* Read Dipswitches */
+static READ_HANDLER( warpwarp_dsw_r )
 {
 	return (readinputport(1) >> offset) & 1;
 }
 
-static READ_HANDLER( warpwarp_input_controller_r )
+/* Read mux Controller Inputs */
+static READ_HANDLER( bombbee_mux_r )
+{
+	return readinputport(2 + (flip_screen & 1));
+}
+
+static READ_HANDLER( warpwarp_mux_r )
 {
 	int res;
 
-	res = readinputport(2);
+	res = readinputport(2 + (flip_screen & 1));
 	if (res & 1) return 23;
 	if (res & 2) return 63;
 	if (res & 4) return 111;
@@ -101,9 +131,9 @@ static MEMORY_READ_START( bombbee_readmem )
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x4800, 0x4fff, MRA_ROM },
-	{ 0x6000, 0x6007, warpwarp_input_c000_7_r },
-	{ 0x6010, 0x6010, input_port_2_r },
-	{ 0x6020, 0x6027, warpwarp_input_c020_27_r },
+	{ 0x6000, 0x6007, bombbee_sys_r },
+	{ 0x6010, 0x6010, bombbee_mux_r },
+	{ 0x6020, 0x6027, warpwarp_dsw_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( bombbee_writemem )
@@ -119,6 +149,7 @@ static MEMORY_WRITE_START( bombbee_writemem )
 	{ 0x6020, 0x6020, warpwarp_music2_w },
 	{ 0x6030, 0x6032, warpwarp_leds_w },
 	{ 0x6035, 0x6035, warpwarp_coin_counter_w },
+	{ 0x6037, 0x6037, warpwarp_flip_screen_w },
 MEMORY_END
 
 static MEMORY_READ_START( warpwarp_readmem )
@@ -126,9 +157,9 @@ static MEMORY_READ_START( warpwarp_readmem )
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x4800, 0x4fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xc000, 0xc007, warpwarp_input_c000_7_r },
-	{ 0xc010, 0xc010, warpwarp_input_controller_r },
-	{ 0xc020, 0xc027, warpwarp_input_c020_27_r },
+	{ 0xc000, 0xc007, warpwarp_sys_r },
+	{ 0xc010, 0xc010, warpwarp_mux_r },
+	{ 0xc020, 0xc027, warpwarp_dsw_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( warpwarp_writemem )
@@ -144,24 +175,25 @@ static MEMORY_WRITE_START( warpwarp_writemem )
 	{ 0xc020, 0xc020, warpwarp_music2_w },
 	{ 0xc030, 0xc032, warpwarp_leds_w },
 	{ 0xc035, 0xc035, warpwarp_coin_counter_w },
+	{ 0xc037, 0xc037, warpwarp_flip_screen_w },
 MEMORY_END
 
 
 
 INPUT_PORTS_START( bombbee )
-	PORT_START		/* IN0 */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	// mux BUTTON1 - see Fake Input Port
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )	// acts as COINn, but doesn't affect coin counter
 
-	PORT_START		/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
@@ -170,12 +202,12 @@ INPUT_PORTS_START( bombbee )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-//	PORT_DIPSETTING(	0x08, "4" )
+//	PORT_DIPSETTING(	0x08, "4" )				// duplicated setting
 	PORT_DIPSETTING(	0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0xe0, 0x00, "Replay" )		// awards 1 credit
 	PORT_DIPSETTING(	0x00, "50000" )
 	PORT_DIPSETTING(	0x20, "60000" )
 	PORT_DIPSETTING(	0x40, "70000" )
@@ -185,24 +217,31 @@ INPUT_PORTS_START( bombbee )
 	PORT_DIPSETTING(	0xc0, "150000" )
 	PORT_DIPSETTING(	0xe0, "None" )
 
-	PORT_START
+	PORT_START	/* Mux input - player 1 controller - handled by bombbee_mux_r */
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE, 30, 10, 0x14, 0xac )
+
+	PORT_START	/* Mux input - player 2 controller - handled by bombbee_mux_r */
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE | IPF_COCKTAIL , 30, 10, 0x14, 0xac )
+
+	PORT_START	/* Fake input port to support mux buttons - handled by bombbee_sys_r */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cutieq )
-	PORT_START		/* IN0 */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	// mux BUTTON1 - see Fake Input Port
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )	// acts as COINn, but doesn't affect coin counter
 
-	PORT_START		/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
@@ -211,9 +250,9 @@ INPUT_PORTS_START( cutieq )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-//	PORT_DIPSETTING(	0x08, "4" )
+//	PORT_DIPSETTING(	0x08, "4" )				// duplicated setting
 	PORT_DIPSETTING(	0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
@@ -226,12 +265,19 @@ INPUT_PORTS_START( cutieq )
 	PORT_DIPSETTING(	0xc0, "200000" )
 	PORT_DIPSETTING(	0xe0, "None" )
 
-	PORT_START
+	PORT_START	/* Mux input - player 1 controller - handled by bombbee_mux_r */
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE, 30, 10, 0x14, 0xac )
+
+	PORT_START	/* Mux input - player 2 controller - handled by bombbee_mux_r */
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE | IPF_COCKTAIL , 30, 10, 0x14, 0xac )
+
+	PORT_START	/* Fake input port to support mux buttons - handled by bombbee_sys_r */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( warpwarp )
-	PORT_START		/* IN0 */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
@@ -243,7 +289,7 @@ INPUT_PORTS_START( warpwarp )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START		/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( 1C_1C ) )
@@ -254,25 +300,38 @@ INPUT_PORTS_START( warpwarp )
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
-	/* TODO: The bonus setting changes for 5 lives */
+	/* Bonus Lives when "Lives" Dip Switch is set to "2", "3" or "4" */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x00, "8000 30000" )
 	PORT_DIPSETTING(	0x10, "10000 40000" )
 	PORT_DIPSETTING(	0x20, "15000 60000" )
 	PORT_DIPSETTING(	0x30, "None" )
+	/* Bonus Lives when "Lives" Dip Switch is set to "5"
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "30000" )
+	PORT_DIPSETTING(	0x10, "40000" )
+	PORT_DIPSETTING(	0x20, "60000" )
+	PORT_DIPSETTING(	0x30, "None" )
+	*/
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	/*when level selection is On, press 1 to increase level */
+	/* when level selection is On, press 1 to increase level */
 	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START		/* FAKE - used by input_controller_r to simulate an analog stick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_START	/* FAKE - input port to simulate an analog stick - handled by warpwarp_mux_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+
+	PORT_START	/* FAKE - input port to simulate an analog stick - handled by warpwarp_mux_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 /* has High Score Initials dip switch instead of rack test */
@@ -300,12 +359,19 @@ INPUT_PORTS_START( warpwarr )
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
-	/* TODO: The bonus setting changes for 5 lives */
+	/* Bonus Lives when "Lives" Dip Switch is set to "2", "3" or "4" */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x00, "8000 30000" )
 	PORT_DIPSETTING(	0x10, "10000 40000" )
 	PORT_DIPSETTING(	0x20, "15000 60000" )
 	PORT_DIPSETTING(	0x30, "None" )
+	/* Bonus Lives when "Lives" Dip Switch is set to "5"
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "30000" )
+	PORT_DIPSETTING(	0x10, "40000" )
+	PORT_DIPSETTING(	0x20, "60000" )
+	PORT_DIPSETTING(	0x30, "None" )
+	*/
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -313,11 +379,17 @@ INPUT_PORTS_START( warpwarr )
 	PORT_DIPSETTING(	0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
 
-	PORT_START		/* FAKE - used by input_controller_r to simulate an analog stick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_START	/* FAKE - input port to simulate an analog stick - handled by warpwarp_mux_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+
+	PORT_START	/* FAKE - input port to simulate an analog stick - handled by warpwarp_mux_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 
@@ -447,9 +519,8 @@ ROM_END
 
 
 
-GAMEX( 1979, bombbee,  0,		 bombbee,  bombbee,  0, ROT90, "Namco", "Bomb Bee", GAME_NO_COCKTAIL )
-GAMEX( 1979, cutieq,   0,		 bombbee,  cutieq,	 0, ROT90, "Namco", "Cutie Q", GAME_NO_COCKTAIL )
-GAMEX( 1981, warpwarp, 0,		 warpwarp, warpwarp, 0, ROT90, "Namco", "Warp & Warp", GAME_NO_COCKTAIL )
-GAMEX( 1981, warpwarr, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1981, warpwar2, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 2)", GAME_NO_COCKTAIL )
-
+GAME( 1979, bombbee,  0,        bombbee,  bombbee,  0, ROT90, "Namco", "Bomb Bee" )
+GAME( 1979, cutieq,   0,        bombbee,  cutieq,   0, ROT90, "Namco", "Cutie Q" )
+GAME( 1981, warpwarp, 0,        warpwarp, warpwarp, 0, ROT90, "Namco", "Warp & Warp" )
+GAME( 1981, warpwarr, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 1)" )
+GAME( 1981, warpwar2, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 2)" )

@@ -42,6 +42,7 @@ static void set_bg_page1( int data ){
 	sys16_bg_page[2] = data&0xf;
 }
 
+#if 0
 static void set_fg2_page( int data ){
 	sys16_fg2_page[0] = data>>12;
 	sys16_fg2_page[1] = (data>>8)&0xf;
@@ -55,6 +56,7 @@ static void set_bg2_page( int data ){
 	sys16_bg2_page[2] = (data>>4)&0xf;
 	sys16_bg2_page[3] = data&0xf;
 }
+#endif
 
 /* hang-on's accel/brake are really both analog controls, but I've added them
 as digital as well to see what works better */
@@ -168,17 +170,20 @@ static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 	}
 }
 
+#if 0
 static WRITE16_HANDLER( sound_command_nmi_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
 		cpu_set_nmi_line(1, PULSE_LINE);
 	}
 }
+#endif
 
 static READ16_HANDLER( sys16_coinctrl_r ){
 	return coinctrl;
 }
 
+#if 0
 static WRITE16_HANDLER( sys16_coinctrl_w )
 {
 	if( ACCESSING_LSB ){
@@ -192,6 +197,7 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 		/* eswat sets bit 4 */
 	}
 }
+#endif
 
 static INTERRUPT_GEN( sys16_interrupt ){
 	if(sys16_custom_irq) sys16_custom_irq();
@@ -602,9 +608,11 @@ ROM_END
 
 /***************************************************************************/
 
+#if 0
 static READ16_HANDLER( or_io_joy_r ){
 	return (input_port_5_r( offset ) << 8) + input_port_6_r( offset );
 }
+#endif
 
 #ifdef HANGON_DIGITAL_CONTROLS
 static READ16_HANDLER( or_io_brake_r ){

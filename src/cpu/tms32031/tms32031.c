@@ -93,13 +93,18 @@ typedef struct
 	/* core registers */
 	UINT32			pc;
 	union genreg	r[32];
+	UINT32			bkmask;
 
 	/* internal stuff */
 	UINT32			ppc;
 	UINT32			op;
 	UINT8			delayed;
 	UINT8			irq_pending;
+	UINT8			mcu_mode;
 	int				interrupt_cycles;
+
+	void			(*xf0_w)(UINT8 val);
+	void			(*xf1_w)(UINT8 val);
 } tms32031_regs;
 
 
@@ -109,6 +114,7 @@ typedef struct
 **#################################################################################################*/
 
 static void trap(int trapnum);
+static UINT32 boot_loader(UINT32 boot_rom_addr);
 
 
 
@@ -158,6 +164,7 @@ typedef union int_double
 } int_double;
 
 
+#if 0
 static float dsp_to_float(union genreg *fp)
 {
 	int_double id;
@@ -177,6 +184,7 @@ static float dsp_to_float(union genreg *fp)
 	}
 	return id.f[0];
 }
+#endif
 
 
 static double dsp_to_double(union genreg *fp)
@@ -263,23 +271,29 @@ INLINE void invalid_instruction(UINT32 op)
 
 static void check_irqs(void)
 {
-	int validints = tms32031.r[TMR_IF].i32[0] & tms32031.r[TMR_IE].i32[0] & 15;
+	int validints = tms32031.r[TMR_IF].i32[0] & tms32031.r[TMR_IE].i32[0] & 0x07ff;
 	if (validints && (tms32031.r[TMR_ST].i32[0] & GIEFLAG))
 	{
 		int whichtrap = 0;
-		if (validints & 1)
-			whichtrap = 1;
-		else if (validints & 2)
-			whichtrap = 2;
-		else if (validints & 4)
-			whichtrap = 3;
-		else if (validints & 8)
-			whichtrap = 4;
+		int i;
+
+		for (i = 0; i < 11; i++)
+			if (validints & (1 << i))
+			{
+				whichtrap = i + 1;
+				break;
+			}
 
 		if (whichtrap)
 		{
 			if (!tms32031.delayed)
+			{
 				trap(whichtrap);
+
+				/* for internal sources, clear the interrupt when taken */
+				if (whichtrap > 4)
+					tms32031.r[TMR_IF].i32[0] &= ~(1 << (whichtrap - 1));
+			}
 			else
 				tms32031.irq_pending = 1;
 		}
@@ -289,7 +303,7 @@ static void check_irqs(void)
 
 void tms32031_set_irq_line(int irqline, int state)
 {
-	if (irqline < 4)
+	if (irqline < 11)
 	{
 	    /* update the state */
 	    if (state == ASSERT_LINE)
@@ -349,8 +363,26 @@ void tms32031_init(void)
 
 void tms32031_reset(void *param)
 {
-	/* initialize the state */
-	tms32031.pc = RMEM(0);
+	struct tms32031_config *config = param;
+
+	/* if we have a config struct, get the boot ROM address */
+	if (config && config->bootoffset)
+	{
+		tms32031.mcu_mode = 1;
+		tms32031.pc = boot_loader(config->bootoffset);
+	}
+	else
+	{
+		tms32031.mcu_mode = 0;
+		tms32031.pc = RMEM(0);
+	}
+
+	/* copy in the xf write routines */
+	if (config)
+	{
+		tms32031.xf0_w = config->xf0_w;
+		tms32031.xf1_w = config->xf1_w;
+	}
 
 	/* reset some registers */
 	tms32031.r[TMR_IE].i32[0] = 0;
@@ -387,6 +419,9 @@ int tms32031_execute(int cycles)
 	tms32031_icount = cycles;
 	tms32031_icount -= tms32031.interrupt_cycles;
 	tms32031.interrupt_cycles = 0;
+
+	/* check IRQs up front */
+	check_irqs();
 
 	while (tms32031_icount > 0)
 	{
@@ -570,7 +605,7 @@ static UINT8 tms32031_reg_layout[] =
 	TMS32031_AR6,		TMS32031_ST,		-1,
 	TMS32031_AR7,		TMS32031_IE,		-1,
 	TMS32031_DP,		TMS32031_IF,		-1,
-	TMS32031_ST,		0, 0
+	TMS32031_ST,		TMS32031_IOF, 		0
 };
 
 static UINT8 tms32031_win_layout[] =
@@ -683,4 +718,73 @@ unsigned tms32031_dasm(char *buffer, unsigned pc)
 	sprintf(buffer, "$%04X", ROPCODE(pc));
 	return 4;
 #endif
+}
+
+
+
+/*###################################################################################################
+**	BOOT LOADER
+**#################################################################################################*/
+
+static UINT32 boot_loader(UINT32 boot_rom_addr)
+{
+	UINT32 bits, control, advance;
+	UINT32 start_offset = 0;
+	int first = 1, i;
+
+	/* read the size of the data */
+	bits = RMEM(boot_rom_addr);
+	if (bits != 8 && bits != 16 && bits != 32)
+		return 0;
+	advance = 32 / bits;
+	boot_rom_addr += advance;
+
+	/* read the control register */
+	control = RMEM(boot_rom_addr++);
+	for (i = 1; i < advance; i++)
+		control |= RMEM(boot_rom_addr++) << (bits * i);
+
+	/* now parse the data */
+	while (1)
+	{
+		UINT32 offs, len;
+
+		/* read the length of this section */
+		len = RMEM(boot_rom_addr++);
+		for (i = 1; i < advance; i++)
+			len |= RMEM(boot_rom_addr++) << (bits * i);
+
+		/* stop at 0 */
+		if (len == 0)
+			return start_offset;
+
+		/* read the destination offset of this section */
+		offs = RMEM(boot_rom_addr++);
+		for (i = 1; i < advance; i++)
+			offs |= RMEM(boot_rom_addr++) << (bits * i);
+
+		/* if this is the first block, that's where we boot to */
+		if (first)
+		{
+			start_offset = offs;
+			first = 0;
+		}
+
+		/* now copy the data */
+		while (len--)
+		{
+			UINT32 data;
+
+			/* extract the 32-bit word */
+			data = RMEM(boot_rom_addr++);
+			for (i = 1; i < advance; i++)
+				data |= RMEM(boot_rom_addr++) << (bits * i);
+
+			/* write it out */
+			WMEM(offs++, data);
+		}
+	}
+
+	/* keep the compiler happy */
+	return 0;
 }

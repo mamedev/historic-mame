@@ -187,7 +187,7 @@ struct lang_struct
 
 extern struct lang_struct lang;
 
-int uistring_init (void *language_file);
+int uistring_init (mame_file *language_file);
 void uistring_shutdown (void);
 
 const char * ui_getstring (int string_num);

@@ -482,7 +482,7 @@ struct node_description
 struct discrete_module
 {
 	int type;
-	char *name;
+	const char *name;
 	int (*init) (struct node_description *node);
 	int (*kill) (struct node_description *node);
 	int (*reset) (struct node_description *node);

@@ -331,6 +331,7 @@ static void background_get_info3(int tile_index) { background_get_info(tile_inde
 static void foreground_get_info4(int tile_index) { foreground_get_info(tile_index,4,&namcos1_videoram[FG_OFFSET+0x010]); }
 static void foreground_get_info5(int tile_index) { foreground_get_info(tile_index,5,&namcos1_videoram[FG_OFFSET+0x810]); }
 
+#if 0
 static void update_playfield( int layer )
 {
 	/* for background , set scroll position */
@@ -348,6 +349,7 @@ static void update_playfield( int layer )
 		tilemap_set_scrolly(tilemap[layer],0,scrolly);
 	}
 }
+#endif
 
 #ifdef TRY_PDRAWGFX
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, data8_t *namcos1_spriteram)

@@ -1762,6 +1762,7 @@ static DRIVER_INIT( pulsar )
 	vicdual_decode();
 }
 
+#if 0
 static DRIVER_INIT( alphaho )
 {
 	/* install sample trigger */
@@ -1770,6 +1771,7 @@ static DRIVER_INIT( alphaho )
 
 	vicdual_decode();
 }
+#endif
 
 
 GAME( 1977, depthch,  0,        depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )

@@ -29,11 +29,13 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
+#if 0
 static void eeprom_init(void)
 {
 	EEPROM_init(&eeprom_interface);
 	init_eeprom_count = 0;
 }
+#endif
 
 static NVRAM_HANDLER( gijoe )
 {

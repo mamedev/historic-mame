@@ -23,7 +23,7 @@
 #define MACHINE_INIT(name)		void machine_init_##name(void)
 #define MACHINE_STOP(name)		void machine_stop_##name(void)
 
-#define NVRAM_HANDLER(name)		void nvram_handler_##name(void *file,int read_or_write)
+#define NVRAM_HANDLER(name)		void nvram_handler_##name(mame_file *file, int read_or_write)
 
 #define PALETTE_INIT(name)		void palette_init_##name(UINT16 *colortable, const UINT8 *color_prom)
 
@@ -68,6 +68,10 @@
 #include "cheat.h"
 #include "tilemap.h"
 #include "profiler.h"
+
+#ifdef MESS
+#include "messdrv.h"
+#endif
 
 #ifdef MAME_NET
 #include "network.h"
@@ -123,7 +127,7 @@
 	cpu = machine_find_cpu(machine, tag);								\
 	if (cpu)															\
 	{																	\
-		cpu->cpu_type = (CPU_##type) | (cpu->cpu_type & CPU_FLAGS_MASK);\
+		cpu->cpu_type = (CPU_##type);									\
 		cpu->cpu_clock = (clock);										\
 	}																	\
 
@@ -131,7 +135,7 @@
 /* CPU parameters */
 #define MDRV_CPU_FLAGS(flags)											\
 	if (cpu)															\
-		cpu->cpu_type = (flags) | (cpu->cpu_type & ~CPU_FLAGS_MASK);	\
+		cpu->cpu_flags = (flags);										\
 
 #define MDRV_CPU_CONFIG(config)											\
 	if (cpu)															\
@@ -190,10 +194,11 @@
 
 /* core video parameters */
 #define MDRV_VIDEO_ATTRIBUTES(flags)									\
-	machine->video_attributes = (flags) | (machine->video_attributes & VIDEO_ASPECT_RATIO_MASK);\
+	machine->video_attributes = (flags);								\
 
 #define MDRV_ASPECT_RATIO(num, den)										\
-	machine->video_attributes = VIDEO_ASPECT_RATIO(num,den) | (machine->video_attributes & ~VIDEO_ASPECT_RATIO_MASK);\
+	machine->aspect_x = (num);											\
+	machine->aspect_y = (den);											\
 
 #define MDRV_SCREEN_SIZE(width, height)									\
 	machine->screen_width = (width);									\
@@ -289,9 +294,10 @@ struct InternalMachineDriver
 
 	void (*machine_init)(void);
 	void (*machine_stop)(void);
-	void (*nvram_handler)(void *file,int read_or_write);
+	void (*nvram_handler)(mame_file *file, int read_or_write);
 
 	UINT32 video_attributes;
+	UINT32 aspect_x, aspect_y;
 	int screen_width,screen_height;
 	struct rectangle default_visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;
@@ -361,10 +367,10 @@ struct InternalMachineDriver
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
 #define VIDEO_PIXEL_ASPECT_RATIO_2_1 0x0040
 
-#define VIDEO_DUAL_MONITOR 0x0080
+#define VIDEO_DUAL_MONITOR			0x0080
 
 /* Mish 181099:  See comments in vidhrdw/generic.c for details */
-#define VIDEO_BUFFERS_SPRITERAM 0x0100
+#define VIDEO_BUFFERS_SPRITERAM		0x0100
 
 /* game wants to use a hicolor or truecolor bitmap (e.g. for alpha blending) */
 #define VIDEO_RGB_DIRECT 			0x0200
@@ -374,12 +380,6 @@ struct InternalMachineDriver
 
 /* automatically extend the palette creating a brighter copy for highlights */
 #define VIDEO_HAS_HIGHLIGHTS		0x0800
-
-/* generic aspect ratios */
-#define VIDEO_ASPECT_RATIO_MASK		0xffff0000
-#define VIDEO_ASPECT_RATIO_NUM(a)	(((a) >> 24) & 0xff)
-#define VIDEO_ASPECT_RATIO_DEN(a)	(((a) >> 16) & 0xff)
-#define VIDEO_ASPECT_RATIO(n,d)		((((n) & 0xff) << 24) | (((d) & 0xff) << 16))
 
 
 /* ----- flags for sound_attributes ----- */
@@ -410,7 +410,7 @@ struct GameDriver
 
 	const struct RomModule *rom;
 #ifdef MESS
-	const struct IODevice *dev;
+	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
 #endif
 
 	UINT32 flags;	/* orientation and other flags; see defines below */

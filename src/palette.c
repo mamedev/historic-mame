@@ -185,7 +185,6 @@ int palette_start(void)
 
 	/* set up save/restore of the palette */
 	state_save_register_UINT32("palette", 0, "colors", game_palette, total_colors);
-	state_save_register_UINT32("palette", 0, "actual_colors", adjusted_palette, total_colors);
 	state_save_register_UINT16("palette", 0, "brightness", pen_brightness, Machine->drv->total_colors);
 	state_save_register_func_postload(palette_reset);
 
@@ -406,7 +405,7 @@ int palette_get_total_colors_with_ui(void)
 		result += Machine->drv->total_colors;
 	if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
 		result += Machine->drv->total_colors;
-	if (result < 65534)
+	if (result <= 65534)
 		result += 2;
 	return result;
 }
@@ -565,7 +564,7 @@ static void recompute_adjusted_palette(int brightness_or_gamma_changed)
 static void palette_reset(void)
 {
 	/* recompute everything */
-	recompute_adjusted_palette(1);
+	recompute_adjusted_palette(0);
 }
 
 
@@ -1008,6 +1007,12 @@ WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xxxxBBBBRRRRGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+WRITE16_HANDLER( paletteram16_xxxxBBBBRRRRGGGG_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xxxxBBBBRRRRGGGG(offset,paletteram16[offset]);
 }
 
 

@@ -1050,7 +1050,7 @@ int mixer_get_default_mixing_level(int ch)
 	mixer_read_config
 ***************************************************************************/
 
-void mixer_read_config(void *f)
+void mixer_read_config(mame_file *f)
 {
 	UINT8 default_levels[MIXER_MAX_CHANNELS];
 	UINT8 mixing_levels[MIXER_MAX_CHANNELS];
@@ -1058,8 +1058,8 @@ void mixer_read_config(void *f)
 
 	memset(default_levels, 0xff, sizeof(default_levels));
 	memset(mixing_levels, 0xff, sizeof(mixing_levels));
-	osd_fread(f, default_levels, MIXER_MAX_CHANNELS);
-	osd_fread(f, mixing_levels, MIXER_MAX_CHANNELS);
+	mame_fread(f, default_levels, MIXER_MAX_CHANNELS);
+	mame_fread(f, mixing_levels, MIXER_MAX_CHANNELS);
 	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
 	{
 		config_default_mixing_level[i] = default_levels[i];
@@ -1073,7 +1073,7 @@ void mixer_read_config(void *f)
 	mixer_write_config
 ***************************************************************************/
 
-void mixer_write_config(void *f)
+void mixer_write_config(mame_file *f)
 {
 	UINT8 default_levels[MIXER_MAX_CHANNELS];
 	UINT8 mixing_levels[MIXER_MAX_CHANNELS];
@@ -1084,8 +1084,8 @@ void mixer_write_config(void *f)
 		default_levels[i] = mixer_channel[i].default_mixing_level;
 		mixing_levels[i] = mixer_channel[i].mixing_level;
 	}
-	osd_fwrite(f, default_levels, MIXER_MAX_CHANNELS);
-	osd_fwrite(f, mixing_levels, MIXER_MAX_CHANNELS);
+	mame_fwrite(f, default_levels, MIXER_MAX_CHANNELS);
+	mame_fwrite(f, mixing_levels, MIXER_MAX_CHANNELS);
 }
 
 

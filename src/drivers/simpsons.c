@@ -81,6 +81,7 @@ static WRITE_HANDLER( z80_bankswitch_w )
 	cpu_setbank( 2, &RAM[ offset ] );
 }
 
+#if 0
 static int nmi_enabled;
 
 static void sound_nmi_callback( int param )
@@ -89,6 +90,7 @@ static void sound_nmi_callback( int param )
 
 	nmi_enabled = 0;
 }
+#endif
 
 static void nmi_callback(int param)
 {

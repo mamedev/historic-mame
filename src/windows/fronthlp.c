@@ -324,7 +324,7 @@ void identify_zip(const char* zipname)
 {
 	struct zipent* ent;
 
-	ZIP* zip = openzip( zipname );
+	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
 	if (!zip)
 		return;
 
@@ -391,7 +391,7 @@ void romident(const char* name,int enter_dirs) {
 }
 
 
-void CLIB_DECL terse_printf(char *fmt,...)
+void CLIB_DECL terse_printf(const char *fmt,...)
 {
 	/* no-op */
 }
@@ -416,11 +416,11 @@ int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
 }
 
 
-int frontend_help (char *gamename)
+int frontend_help (const char *gamename)
 {
 	struct InternalMachineDriver drv;
 	int i, j;
-	char *all_games = "*";
+	const char *all_games = "*";
 
 	/* display help unless a game or an utility are specified */
 	if (!gamename && !help && !list && !ident && !verify)
@@ -686,7 +686,7 @@ int frontend_help (char *gamename)
 
 					for(j=0;j<MAX_CPU;j++)
 					{
-						if (x_cpu[j].cpu_type & CPU_AUDIO_CPU)
+						if (x_cpu[j].cpu_flags & CPU_AUDIO_CPU)
 							printf("[%-6s] ",cputype_name(x_cpu[j].cpu_type));
 						else
 							printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
@@ -1042,11 +1042,10 @@ int frontend_help (char *gamename)
 							if (total == 1)							{ numcount[0]++; gamescount[0] += total; }
 							else if (total >= 2 && total <= 3)		{ numcount[1]++; gamescount[1] += total; }
 							else if (total >= 4 && total <= 7)		{ numcount[2]++; gamescount[2] += total; }
-							else if (total >= 8 && total <= 12)		{ numcount[3]++; gamescount[3] += total; }
-							else if (total >= 13 && total <= 17)	{ numcount[4]++; gamescount[4] += total; }
-							else if (total >= 18 && total <= 25)	{ numcount[5]++; gamescount[5] += total; }
-							else if (total >= 26 && total <= 39)	{ numcount[6]++; gamescount[6] += total; }
-							else if (total >= 40)					{ numcount[7]++; gamescount[7] += total; }
+							else if (total >= 8 && total <= 15)		{ numcount[3]++; gamescount[3] += total; }
+							else if (total >= 16 && total <= 31)	{ numcount[4]++; gamescount[4] += total; }
+							else if (total >= 32 && total <= 63)	{ numcount[5]++; gamescount[5] += total; }
+							else if (total >= 64)					{ numcount[6]++; gamescount[6] += total; }
 						}
 					}
 				}
@@ -1054,11 +1053,10 @@ int frontend_help (char *gamename)
 				printf("1\t%d\t%d\n",		numcount[0],gamescount[0]);
 				printf("2-3\t%d\t%d\n",		numcount[1],gamescount[1]);
 				printf("4-7\t%d\t%d\n",		numcount[2],gamescount[2]);
-				printf("8-12\t%d\t%d\n",	numcount[3],gamescount[3]);
-				printf("13-17\t%d\t%d\n",	numcount[4],gamescount[4]);
-				printf("18-25\t%d\t%d\n",	numcount[5],gamescount[5]);
-				printf("26-39\t%d\t%d\n",	numcount[6],gamescount[6]);
-				printf("40+\t%d\t%d\n",		numcount[7],gamescount[7]);
+				printf("8-15\t%d\t%d\n",	numcount[3],gamescount[3]);
+				printf("16-31\t%d\t%d\n",	numcount[4],gamescount[4]);
+				printf("32-63\t%d\t%d\n",	numcount[5],gamescount[5]);
+				printf("64+\t%d\t%d\n",		numcount[6],gamescount[6]);
 
 				#undef MAXCOUNT
 			}
@@ -1314,7 +1312,7 @@ int frontend_help (char *gamename)
 
 							for (j = 0;j < MAX_CPU;j++)
 							{
-								if ((x_cpu[j].cpu_type & ~CPU_FLAGS_MASK) == type)
+								if (x_cpu[j].cpu_type == type)
 								{
 									if (j == 0) count_main++;
 									else count_slave++;
@@ -1371,8 +1369,8 @@ int frontend_help (char *gamename)
 //								for (j = 0;j < MAX_CPU;j++)
 j = 0;	// count only the main cpu
 								{
-									count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
-									switch(cputype_databus_width(x_cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+									count[x_cpu[j].cpu_type]++;
+									switch(cputype_databus_width(x_cpu[j].cpu_type))
 									{
 										case  8: count_buswidth[0]++; break;
 										case 16: count_buswidth[1]++; break;

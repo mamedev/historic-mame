@@ -5,6 +5,7 @@
 
 data16_t *f1gp_spr1vram,*f1gp_spr2vram,*f1gp_spr1cgram,*f1gp_spr2cgram;
 data16_t *f1gp_fgvideoram,*f1gp_rozvideoram;
+data16_t *f1gp2_sprcgram,*f1gp2_spritelist;
 size_t f1gp_spr1cgram_size,f1gp_spr2cgram_size;
 
 static data16_t *zoomdata;
@@ -14,6 +15,7 @@ static unsigned char *dirtychar;
 #define TOTAL_CHARS 0x800
 
 static struct tilemap *fg_tilemap,*roz_tilemap;
+static int f1gp2_roz_bank;
 
 
 /***************************************************************************
@@ -22,11 +24,18 @@ static struct tilemap *fg_tilemap,*roz_tilemap;
 
 ***************************************************************************/
 
-static void get_roz_tile_info(int tile_index)
+static void f1gp_get_roz_tile_info(int tile_index)
 {
 	int code = f1gp_rozvideoram[tile_index];
 
 	SET_TILE_INFO(3,code & 0x7ff,code >> 12,0)
+}
+
+static void f1gp2_get_roz_tile_info(int tile_index)
+{
+	int code = f1gp_rozvideoram[tile_index];
+
+	SET_TILE_INFO(2,(code & 0x7ff) + (f1gp2_roz_bank << 11),code >> 12,0)
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -45,8 +54,8 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( f1gp )
 {
-	roz_tilemap = tilemap_create(get_roz_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,64);
-	fg_tilemap =  tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	roz_tilemap = tilemap_create(f1gp_get_roz_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,64);
+	fg_tilemap =  tilemap_create(get_fg_tile_info,      tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
 	if (!fg_tilemap || !roz_tilemap)
 		return 1;
@@ -55,6 +64,32 @@ VIDEO_START( f1gp )
 	K053936_set_offset(0, -58, -2);
 
 	tilemap_set_transparent_pen(fg_tilemap,0xff);
+
+	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
+		return 1;
+	memset(dirtychar,1,TOTAL_CHARS);
+
+	zoomdata = (data16_t *)memory_region(REGION_GFX4);
+
+	return 0;
+}
+
+VIDEO_START( f1gp2 )
+{
+	roz_tilemap = tilemap_create(f1gp2_get_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
+	fg_tilemap =  tilemap_create(get_fg_tile_info,       tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+
+	if (!fg_tilemap || !roz_tilemap)
+		return 1;
+
+	K053936_wraparound_enable(0, 1);
+	K053936_set_offset(0, -48, -21);
+
+	tilemap_set_transparent_pen(fg_tilemap,0xff);
+	tilemap_set_transparent_pen(roz_tilemap,0x0f);
+
+	tilemap_set_scrolldx(fg_tilemap,-80,0);
+	tilemap_set_scrolldy(fg_tilemap,-26,0);
 
 	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
 		return 1;
@@ -128,6 +163,28 @@ WRITE16_HANDLER( f1gp_gfxctrl_w )
 	}
 }
 
+WRITE16_HANDLER( f1gp2_gfxctrl_w )
+{
+	if (ACCESSING_LSB)
+	{
+		flipscreen = data & 0x20;
+
+		/* bit 0/1 = fg/sprite/roz priority */
+		/* bit 2 = blank screen */
+
+		gfxctrl = data & 0xdf;
+	}
+
+	if (ACCESSING_MSB)
+	{
+		if (f1gp2_roz_bank != (data >> 8))
+		{
+			f1gp2_roz_bank = (data >> 8);
+			tilemap_mark_all_tiles_dirty(roz_tilemap);
+		}
+	}
+}
+
 
 /***************************************************************************
 
@@ -135,7 +192,7 @@ WRITE16_HANDLER( f1gp_gfxctrl_w )
 
 ***************************************************************************/
 
-static void drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int primask)
+static void f1gp_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int primask)
 {
 	int attr_start,first;
 	data16_t *spram = chip ? f1gp_spr2vram : f1gp_spr1vram;
@@ -224,7 +281,7 @@ VIDEO_UPDATE( f1gp )
 #endif
 		{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 				8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-		128*8
+		64*16,
 	};
 
 
@@ -257,12 +314,120 @@ VIDEO_UPDATE( f1gp )
 	/* quick kludge for "continue" screen priority */
 	if (gfxctrl == 0x00)
 	{
-		drawsprites(bitmap,cliprect,0,0x02);
-		drawsprites(bitmap,cliprect,1,0x02);
+		f1gp_drawsprites(bitmap,cliprect,0,0x02);
+		f1gp_drawsprites(bitmap,cliprect,1,0x02);
 	}
 	else
 	{
-		drawsprites(bitmap,cliprect,0,0x00);
-		drawsprites(bitmap,cliprect,1,0x02);
+		f1gp_drawsprites(bitmap,cliprect,0,0x00);
+		f1gp_drawsprites(bitmap,cliprect,1,0x02);
+	}
+}
+
+
+
+static void f1gp2_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+{
+	int offs;
+
+
+	offs = 0;
+	while (offs < 0x0400 && (f1gp2_spritelist[offs] & 0x4000) == 0)
+	{
+		int attr_start;
+		int map_start;
+		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color;
+
+		attr_start = 4 * (f1gp2_spritelist[offs++] & 0x01ff);
+
+		ox = f1gp2_spritelist[attr_start + 1] & 0x01ff;
+		xsize = (f1gp2_spritelist[attr_start + 1] & 0x0e00) >> 9;
+		zoomx = (f1gp2_spritelist[attr_start + 1] & 0xf000) >> 12;
+		oy = f1gp2_spritelist[attr_start + 0] & 0x01ff;
+		ysize = (f1gp2_spritelist[attr_start + 0] & 0x0e00) >> 9;
+		zoomy = (f1gp2_spritelist[attr_start + 0] & 0xf000) >> 12;
+		flipx = f1gp2_spritelist[attr_start + 2] & 0x4000;
+		flipy = f1gp2_spritelist[attr_start + 2] & 0x8000;
+		color = (f1gp2_spritelist[attr_start + 2] & 0x1f00) >> 8;
+		map_start = f1gp2_spritelist[attr_start + 3] & 0x7fff;
+
+// aerofgt has the following adjustment, but doing it here would break the title screen
+//		ox += (xsize*zoomx+2)/4;
+//		oy += (ysize*zoomy+2)/4;
+
+		zoomx = 32 - zoomx;
+		zoomy = 32 - zoomy;
+
+		if (f1gp2_spritelist[attr_start + 2] & 0x20ff) color = rand();
+
+		for (y = 0;y <= ysize;y++)
+		{
+			int sx,sy;
+
+			if (flipy) sy = ((oy + zoomy * (ysize - y)/2 + 16) & 0x1ff) - 16;
+			else sy = ((oy + zoomy * y / 2 + 16) & 0x1ff) - 16;
+
+			for (x = 0;x <= xsize;x++)
+			{
+				int code;
+
+				if (flipx) sx = ((ox + zoomx * (xsize - x) / 2 + 16) & 0x1ff) - 16;
+				else sx = ((ox + zoomx * x / 2 + 16) & 0x1ff) - 16;
+
+				code = f1gp2_sprcgram[map_start & 0x3fff];
+				map_start++;
+
+				if (flipscreen)
+					drawgfxzoom(bitmap,Machine->gfx[1],
+							code,
+							color,
+							!flipx,!flipy,
+							304-sx,208-sy,
+							cliprect,TRANSPARENCY_PEN,15,
+							zoomx << 11,zoomy << 11);
+				else
+					drawgfxzoom(bitmap,Machine->gfx[1],
+							code,
+							color,
+							flipx,flipy,
+							sx,sy,
+							cliprect,TRANSPARENCY_PEN,15,
+							zoomx << 11,zoomy << 11);
+			}
+		}
+	}
+}
+
+
+VIDEO_UPDATE( f1gp2 )
+{
+	if (gfxctrl & 4)	/* blank screen */
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+	}
+	else
+	{
+		switch (gfxctrl & 3)
+		{
+			case 0:
+				K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+				f1gp2_drawsprites(bitmap,cliprect);
+				tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+				break;
+			case 1:
+				K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+				tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+				f1gp2_drawsprites(bitmap,cliprect);
+				break;
+			case 2:
+				tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+				K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,0,0);
+				f1gp2_drawsprites(bitmap,cliprect);
+				break;
+#ifdef MAME_DEBUG
+			case 3:
+				usrintf_showmessage("unsupported priority 3\n");
+#endif
+		}
 	}
 }

@@ -21,9 +21,9 @@ static int FMMode;
 #define CHIP_YM2151_ALT 5	/* use Jarek's YM2151.C */
 
 
-#if (HAS_YM2151)
-
 #define YM2151_NUMBUF 2
+
+#if (HAS_YM2151)
 
 static void *Timer[MAX_2151][2];
 

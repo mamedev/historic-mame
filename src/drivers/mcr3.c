@@ -381,9 +381,9 @@ static WRITE_HANDLER( spyhunt_port_4_w )
 	/* lamp driver command triggered by bit 5, data is in low four bits */
 	if (((lastport4 ^ data) & 0x20) && !(data & 0x20))
 	{
-		static const char *lampname[8] = 
+		static const char *lampname[8] =
 		{
-			"lamp0", "lamp1", "lamp2", "lamp3", 
+			"lamp0", "lamp1", "lamp2", "lamp3",
 			"lamp4", "lamp5", "lamp6", "lamp7"
 		};
 		artwork_show(lampname[data & 7], (data >> 3) & 1);
@@ -428,9 +428,9 @@ static READ_HANDLER( turbotag_kludge_r )
 static NVRAM_HANDLER( mcr3 )
 {
 	if (read_or_write)
-		osd_fwrite(file, videoram, videoram_size);
+		mame_fwrite(file, videoram, videoram_size);
 	else if (file)
-		osd_fread(file, videoram, videoram_size);
+		mame_fread(file, videoram, videoram_size);
 	else
 		memset(videoram, 0, videoram_size);
 }
@@ -1256,7 +1256,7 @@ static MACHINE_DRIVER_START( mcr3 )
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	
+
 	MDRV_VIDEO_START(mcr3)
 	MDRV_VIDEO_UPDATE(mcr3)
 MACHINE_DRIVER_END
@@ -1301,7 +1301,7 @@ static MACHINE_DRIVER_START( mcrmono )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem,mcrmono_writemem)
 	MDRV_CPU_PORTS(readport,mcrmono_writeport)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_START(mcrmono)
 MACHINE_DRIVER_END
@@ -1546,10 +1546,10 @@ ROM_END
 
 ROM_START( dotron )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "loc-pg0.1c",   0x0000, 0x4000, 0xba0da15f )
-	ROM_LOAD( "loc-pg1.2c",   0x4000, 0x4000, 0xdc300191 )
-	ROM_LOAD( "loc-pg2.3c",   0x8000, 0x4000, 0xab0b3800 )
-	ROM_LOAD( "loc-pg1.4c",   0xc000, 0x2000, 0xf98c9f8e )
+	ROM_LOAD( "loc-pg0.1c",   0x00000, 0x4000, 0xba0da15f )
+	ROM_LOAD( "loc-pg1.2c",   0x04000, 0x4000, 0xdc300191 )
+	ROM_LOAD( "loc-pg2.3c",   0x08000, 0x4000, 0xab0b3800 )
+	ROM_LOAD( "loc-pg1.4c",   0x0c000, 0x2000, 0xf98c9f8e )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sound0.a7",    0x00000, 0x1000, 0x6d39bf19 )
@@ -1583,10 +1583,10 @@ ROM_END
 
 ROM_START( dotrona )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "aloc-pg0.1c",  0x0000, 0x4000, 0x40d00195 )
-	ROM_LOAD( "aloc-pg1.2c",  0x4000, 0x4000, 0x5a7d1300 )
-	ROM_LOAD( "aloc-pg2.3c",  0x8000, 0x4000, 0xcb89c9be )
-	ROM_LOAD( "aloc-pg1.4c",  0xc000, 0x2000, 0x5098faf4 )
+	ROM_LOAD( "aloc-pg0.1c",  0x00000, 0x4000, 0x40d00195 )
+	ROM_LOAD( "aloc-pg1.2c",  0x04000, 0x4000, 0x5a7d1300 )
+	ROM_LOAD( "aloc-pg2.3c",  0x08000, 0x4000, 0xcb89c9be )
+	ROM_LOAD( "aloc-pg1.4c",  0x0c000, 0x2000, 0x5098faf4 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "asound0.a7",   0x00000, 0x1000, 0x7fb54293 )

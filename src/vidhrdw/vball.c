@@ -125,6 +125,7 @@ WRITE_HANDLER( vb_attrib_w )
 	}
 }
 
+#if 0
 static void vb_draw_foreground( struct mame_bitmap *bitmap )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -151,6 +152,7 @@ static void vb_draw_foreground( struct mame_bitmap *bitmap )
 		}
 	}
 }
+#endif
 
 #define DRAW_SPRITE( order, sx, sy ) drawgfx( bitmap, gfx, \
 					(which+order),color,flipx,flipy,sx,sy, \

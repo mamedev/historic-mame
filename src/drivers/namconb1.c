@@ -307,13 +307,13 @@ data32_t *namconb1_scrollram32;
 static NVRAM_HANDLER( namconb1 ){
 	if( read_or_write )
 	{
-		osd_fwrite( file, nvmem32, NB1_NVMEM_SIZE );
+		mame_fwrite( file, nvmem32, NB1_NVMEM_SIZE );
 	}
 	else
 	{
 		if (file)
 		{
-			osd_fread( file, nvmem32, NB1_NVMEM_SIZE );
+			mame_fread( file, nvmem32, NB1_NVMEM_SIZE );
 		}
 		else
 		{
@@ -874,26 +874,24 @@ ROM_START( sws95 )
 	ROM_LOAD32_WORD( "ss51mprl.bin", 0x00002, 0x80000, 0xc9e0107d )
 	ROM_LOAD32_WORD( "ss51mpru.bin", 0x00000, 0x80000, 0x0d93d261 )
 
-// Dump did _NOT_ include a sound program ROM or voice ROM, so SWS96's
-// for now:
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
-	ROM_LOAD( "ss61spr0.bin", 0, 0x80000, BADCRC(0x71cb12f5) )
+	ROM_LOAD( "ss51spr0.bin", 0, 0x80000, 0x71cb12f5 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
-	ROM_LOAD( "ss61voi0.bin", 0, 0x200000, BADCRC(0x2740ec72) )
+	ROM_LOAD( "ss51voi0.bin", 0, 0x200000, 0x2740ec72 )
 
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x400000, NAMCONB1_SPRITEGFXREGION, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "ss51ob0l.bin", 0x000001, 0x200000, 0xe0395694 )
 	ROM_LOAD16_BYTE( "ss51ob0u.bin", 0x000000, 0x200000, 0xb0745ca0 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x400000, NAMCONB1_TILEGFXREGION, ROMREGION_DISPOSE )
 	ROM_LOAD( "ss51chr0.bin", 0x000000, 0x100000, 0x86dd3280 )
 	ROM_LOAD( "ss51chr1.bin", 0x100000, 0x100000, 0x2ba0fb9e )
 	ROM_LOAD( "ss51chr2.bin", 0x200000, 0x100000, 0xca0e6c1a )
 	ROM_LOAD( "ss51chr3.bin", 0x300000, 0x100000, 0x73ca58f6 )
 
-	ROM_REGION( 0x80000, REGION_GFX3, 0 )
+	ROM_REGION( 0x80000, NAMCONB1_TILEMASKREGION, 0 )
 	ROM_LOAD( "ss51sha0.bin", 0, 0x80000, 0x3bf4d081 )
 ROM_END
 
@@ -1198,7 +1196,7 @@ GAMEX( 1994, gslgr94u, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "
 GAMEX( 1995, sws95,    0,        namconb1, namconb1, sws95,    ROT0,  "Namco", "Super World Stadium '95 (Japan)", GAME_NO_SOUND )
 GAMEX( 1996, sws96,    0,        namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
 GAMEX( 1997, sws97,    0,        namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )
-GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "VShoot", GAME_NOT_WORKING )
+GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "VShoot", GAME_NOT_WORKING|GAME_NO_SOUND )
 
 //     YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,   FLAGS)
 GAMEX( 1994, outfxies, 0,		 namconb2, namconb1, outfxies, ROT0, "Namco", "Outfoxies", GAME_NO_SOUND )

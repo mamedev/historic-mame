@@ -86,6 +86,17 @@ static WRITE16_HANDLER( mcat_soundlatch_w )
 	cpu_set_nmi_line(1,PULSE_LINE);
 }
 
+static WRITE16_HANDLER( mcat_coin_w )
+{
+	if(ACCESSING_MSB16)
+	{
+		coin_counter_w(0, data & 0x1000);
+		coin_counter_w(1, data & 0x2000);
+		coin_lockout_w(0, ~data & 0x4000);
+		coin_lockout_w(1, ~data & 0x8000);
+	}
+}
+
 static READ16_HANDLER( mcat_wd_r )
 {
 	watchdog_reset_r(0);
@@ -100,7 +111,7 @@ static MEMORY_READ16_START( mcatadv_readmem )
 	{ 0x200000, 0x200005, MRA16_RAM },
 	{ 0x300000, 0x300005, MRA16_RAM },
 
-	{ 0x180018, 0x18001f, MRA16_NOP }, // ?
+//	{ 0x180018, 0x18001f, MRA16_NOP }, // ?
 
 	{ 0x400000, 0x401fff, MRA16_RAM }, // Tilemap 0
 	{ 0x500000, 0x501fff, MRA16_RAM }, // Tilemap 1
@@ -136,7 +147,7 @@ static MEMORY_WRITE16_START( mcatadv_writemem )
 	{ 0x700000, 0x707fff, MWA16_RAM, &spriteram16, &spriteram_size }, // Sprites, two halves for double buffering
 	{ 0x708000, 0x70ffff, MWA16_RAM }, // Tests more than is needed?
 
-	{ 0x900000, 0x900001, MWA16_RAM }, //?
+//	{ 0x900000, 0x900001, mcat_coin_w }, // Lockout / Counter MCAT Only
 	{ 0xb00000, 0xb0000f, MWA16_RAM, &mcatadv_vidregs },
 	{ 0xb00018, 0xb00019, watchdog_reset16_w }, // NOST Only
 	{ 0xc00000, 0xc00001, mcat_soundlatch_w },
@@ -375,11 +386,9 @@ static struct GfxLayout mcatadv_tiles16x16x4_layout =
 	16,16,
 	RGN_FRAC(1,1),
 	4,
-	{ 0,1,2,3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28,
-	  32*8+0,32*8+4,32*8+8,32*8+12,32*8+16,32*8+20,32*8+24,32*8+28 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-	 64*8+0*32, 64*8+1*32, 64*8+2*32, 64*8+3*32, 64*8+4*32, 64*8+5*32, 64*8+6*32, 64*8+7*32 },
+	{ STEP4(0,1) },
+	{ STEP8(0,4), STEP8(32*8,4) },
+	{ STEP8(0,32), STEP8(64*8,32) },
 	128*8
 };
 
@@ -455,10 +464,6 @@ static MACHINE_DRIVER_START( nost )
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(nost_sound_readmem,nost_sound_writemem)
 	MDRV_CPU_PORTS(nost_sound_readport,nost_sound_writeport)
-
-	MDRV_VIDEO_START(nost)
-	MDRV_VIDEO_EOF(mcatadv) // Buffer Spriteram
-	MDRV_VIDEO_UPDATE(nost)
 MACHINE_DRIVER_END
 
 
@@ -586,7 +591,37 @@ ROM_START( nostj )
 	ROM_LOAD( "nossn-00.u53", 0x00000, 0x100000, 0x3bd1bcbc )
 ROM_END
 
+ROM_START( nostk )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* M68000 */
+	ROM_LOAD16_BYTE( "nos-pe-t.u30", 0x00000, 0x80000, 0xbee5fbc8 )
+	ROM_LOAD16_BYTE( "nos-po-t.u29", 0x00001, 0x80000, 0xf4736331 )
+
+	ROM_REGION( 0x050000, REGION_CPU2, 0 ) /* Z80-A */
+	ROM_LOAD( "nos-ps.u9", 0x00000, 0x40000, 0x832551e9 )
+	ROM_RELOAD( 0x10000, 0x40000 )
+
+	ROM_REGION( 0x500000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD16_BYTE( "nos-se-0.u82", 0x000000, 0x100000, 0x9d99108d )
+	ROM_LOAD16_BYTE( "nos-so-0.u83", 0x000001, 0x100000, 0x7df0fc7e )
+	ROM_LOAD16_BYTE( "nos-se-1.u84", 0x200000, 0x100000, 0xaad07607 )
+	ROM_LOAD16_BYTE( "nos-so-1.u85", 0x200001, 0x100000, 0x83d0012c )
+	ROM_LOAD16_BYTE( "nos-se-2.u86", 0x400000, 0x080000, 0xd99e6005 )
+	ROM_LOAD16_BYTE( "nos-so-2.u87", 0x400001, 0x080000, 0xf60e8ef3 )
+
+	ROM_REGION( 0x180000, REGION_GFX2, 0 ) /* BG0 */
+	ROM_LOAD( "nos-b0-0.u58", 0x000000, 0x100000, 0x0214b0f2 )
+	ROM_LOAD( "nos-b0-1.u59", 0x100000, 0x080000, 0x3f8b6b34 )
+
+	ROM_REGION( 0x180000, REGION_GFX3, 0 ) /* BG1 */
+	ROM_LOAD( "nos-b1-0.u60", 0x000000, 0x100000, 0xba6fd0c7 )
+	ROM_LOAD( "nos-b1-1.u61", 0x100000, 0x080000, 0xdabd8009 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "nossn-00.u53", 0x00000, 0x100000, 0x3bd1bcbc )
+ROM_END
+
 GAMEX( 1993, mcatadv,  0,       mcatadv, mcatadv, mcatadv, ROT0,   "Wintechno", "Magical Cat Adventure", GAME_NO_COCKTAIL )
 GAMEX( 1993, mcatadvj, mcatadv, mcatadv, mcatadv, mcatadv, ROT0,   "Wintechno", "Magical Cat Adventure (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, nost,     0,       nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus", GAME_NO_COCKTAIL )
 GAMEX( 1993, nostj,    nost,    nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1993, nostk,    nost,    nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus (Korea)", GAME_NO_COCKTAIL )

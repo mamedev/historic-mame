@@ -3,7 +3,7 @@
 	Taito F3 Package System (aka F3 Cybercore System)
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk/mish@mame.net
-	Thanks to Ian Schmidt and Stileto for sound information!
+	Thanks to Ian Schmidt and Stiletto for sound information!
 	Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
 	rom interface and ES5505 emulator!
 	Thanks to Acho A. Tang for Kirameki Star Road sound banking info!
@@ -1965,6 +1965,7 @@ ROM_START( elvactr )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
+	ROM_RELOAD(                  0x000000, 0x200000 ) //fix sound
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 
@@ -1993,6 +1994,7 @@ ROM_START( elvactrj )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
+	ROM_RELOAD(                  0x000000, 0x200000 ) //fix sound
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 
@@ -2021,6 +2023,7 @@ ROM_START( elvact2u )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("e02-04.38", 0x800000, 0x200000, 0xb74307af )
+	ROM_RELOAD(                  0x000000, 0x200000 ) //fix sound
 	ROM_LOAD16_BYTE("e02-05.39", 0xc00000, 0x200000, 0xeb729855 )
 ROM_END
 

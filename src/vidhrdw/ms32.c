@@ -7,6 +7,7 @@
 #include "driver.h"
 
 void ms32_dump_ram(void);
+extern data32_t* ms32_bg2ram;
 extern data32_t* ms32_bgram;
 extern data32_t* ms32_spram;
 extern data32_t* ms32_txram;
@@ -14,9 +15,8 @@ extern data32_t* ms32_fce00000;
 
 /********** Tilemaps **********/
 
-static struct tilemap *ms32_tx_tilemap, *ms32_bg_tilemap;
+static struct tilemap *ms32_tx_tilemap, *ms32_bg_tilemap, *ms32_bg2_tilemap;
 
-/* note for now we don't have any fg tiles because they're all encrypted */
 
 static void get_ms32_tx_tile_info(int tile_index)
 {
@@ -26,8 +26,6 @@ static void get_ms32_tx_tile_info(int tile_index)
 	colour = ms32_txram[tile_index *2+1] & 0x000000f;
 	tile_info.priority=0;
 
-	if ( (tileno == 0x20) || (tileno == 0x00) ) // HACK since the tiles are encrypted avoid drawing which should be spaces so we can see the screen
-		tile_info.priority=4;
 	SET_TILE_INFO(3,tileno,colour,0)
 }
 
@@ -51,6 +49,27 @@ WRITE32_HANDLER( ms32_bgram_w )
 {
 	COMBINE_DATA(&ms32_bgram[offset]);
 	tilemap_mark_tile_dirty(ms32_bg_tilemap,offset/2);
+}
+
+static void get_ms32_bg2_tile_info(int tile_index)
+{
+	int tileno,colour;
+
+	tileno = ms32_bg2ram[tile_index *2] & 0x0000ffff;
+	colour = ms32_bg2ram[tile_index *2+1] & 0x000000f;
+
+//if (keyboard_pressed(KEYCODE_Q)) tileno ^= 0x2000;
+//if (keyboard_pressed(KEYCODE_W)) tileno ^= 0x1000;
+//if (keyboard_pressed(KEYCODE_E)) tileno ^= 0x0800;
+//if (keyboard_pressed(KEYCODE_R)) tileno ^= 0x0400;
+
+	SET_TILE_INFO(2,tileno,colour,0)
+}
+
+WRITE32_HANDLER( ms32_bg2ram_w )
+{
+	COMBINE_DATA(&ms32_bg2ram[offset]);
+	tilemap_mark_tile_dirty(ms32_bg2_tilemap,offset/2);
 }
 
 /* SPRITES based on tetrisp2 for now, readd priority bits later */
@@ -223,9 +242,15 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 VIDEO_START( ms32 )
 {
 	ms32_tx_tilemap = tilemap_create(get_ms32_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
-	tilemap_set_transparent_pen(ms32_tx_tilemap,0);
+	ms32_bg_tilemap = tilemap_create(get_ms32_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,128,128); // or 4 tilemaps?
+	ms32_bg2_tilemap = tilemap_create(get_ms32_bg2_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,64,64);
 
-	ms32_bg_tilemap = tilemap_create(get_ms32_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,128,128); // or 4 tilemaps?
+	if (!ms32_tx_tilemap || !ms32_bg_tilemap || !ms32_bg2_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(ms32_tx_tilemap,0);
+	tilemap_set_transparent_pen(ms32_bg_tilemap,0);
+
 	return 0;
 }
 
@@ -236,6 +261,11 @@ VIDEO_UPDATE( ms32 )
 #ifdef MAME_DEBUG
 	if (keyboard_pressed(KEYCODE_O)) ms32_dump_ram();
 #endif
+
+tilemap_mark_all_tiles_dirty(ms32_bg2_tilemap);
+	tilemap_set_scrollx(ms32_bg2_tilemap, 0, ms32_fce00000[0xa28/4]);
+	tilemap_set_scrolly(ms32_bg2_tilemap, 0, ms32_fce00000[0xa2c/4]);
+	tilemap_draw(bitmap,cliprect,ms32_bg2_tilemap,0,0);
 
 	{
 		int xzoom = ms32_fce00000[0x610/4];

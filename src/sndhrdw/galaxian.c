@@ -201,7 +201,7 @@ static const char *galaxian_sample_names[] =
 };
 #endif
 
-int galaxian_sh_start(const struct MachineSound *msound)
+static int galaxian_sh_start(const struct MachineSound *msound)
 {
 	int i, j, sweep, charge, countdown, generator, bit1, bit2;
 	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
@@ -463,7 +463,7 @@ int galaxian_sh_start(const struct MachineSound *msound)
 		LOG(("tone[%2d]: $%02x $%02x $%02x $%02x\n", i, tonewave[0][i], tonewave[1][i], tonewave[2][i], tonewave[3][i]));
 	}
 
-	pitch = 0;
+	pitch = 0xff;
 	vol = 0;
 
 	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,0,tone_update);
@@ -489,7 +489,7 @@ int galaxian_sh_start(const struct MachineSound *msound)
 	mixer_play_sample_16(channellfo+1,backgroundwave,sizeof(backgroundwave),1000,1);
 	mixer_set_volume(channellfo+2,0);
 	mixer_play_sample_16(channellfo+2,backgroundwave,sizeof(backgroundwave),1000,1);
-	
+
 	noisetimer = timer_alloc(noise_timer_cb);
 	lfotimer = timer_alloc(lfo_timer_cb);
 
@@ -498,7 +498,7 @@ int galaxian_sh_start(const struct MachineSound *msound)
 
 
 
-void galaxian_sh_stop(void)
+static void galaxian_sh_stop(void)
 {
 	mixer_stop_sample(channelnoise);
 	mixer_stop_sample(channelshoot);
@@ -634,7 +634,7 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 #endif
 }
 
-void galaxian_sh_update(void)
+static void galaxian_sh_update(void)
 {
 	/*
 	 * NE555 8R, 8S and 8T are used as pulse position modulators
@@ -650,3 +650,11 @@ void galaxian_sh_update(void)
 	mixer_set_sample_frequency(channellfo+1, sizeof(backgroundwave)*freq*(100+2*330)/(100+2*470) );
 	mixer_set_sample_frequency(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
 }
+
+
+struct CustomSound_interface galaxian_custom_interface =
+{
+	galaxian_sh_start,
+	galaxian_sh_stop,
+	galaxian_sh_update
+};

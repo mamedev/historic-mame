@@ -1,6 +1,7 @@
 /***************************************************************************
 Namco NA-1 / NA-2 System
 
+
 NA-1 Games:
 -	Bakuretsu Quiz Ma-Q Dai Bouken
 -	F/A
@@ -14,6 +15,7 @@ NA-1 Games:
 NA-2 Games:
 -	Knuckle Heads
 -	Numan Athletics
+-	X-Day 2
 
 To Do:
 - Emeralda:
@@ -27,9 +29,6 @@ To Do:
 	What does each ROZ register do?
 
 - Is view area controlled by registers?
-
-- Add support for screen orientation to custom sprite drawing routine
-- Add support for auto-rotation of TILEMAP_BITMASK to tilemap.c
 
 - MCU
 	Find sample table
@@ -69,6 +68,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcona1.h"
+#include "sound/namcona.h"
 
 static data16_t *mpBank0, *mpBank1;
 static data8_t mCoinCount[4];
@@ -107,38 +107,19 @@ static const UINT8 ExbaniaInitData[] =
 	0x2d,0x01,0x1c,0xd7,0x28,0x43,0x30,0xe7,0xb0,0x08,0xed,0x79,0x00,0x00,0x00,0x00
 }; /* ExbaniaInitData */
 
-/* would it be safe to allocate namcona1_nvmem in namcona1_vh_start? */
 static data8_t namcona1_nvmem[NA1_NVRAM_SIZE];
 
 static NVRAM_HANDLER( namcosna1 )
 {
 	if( read_or_write )
 	{
-		osd_fwrite( file, namcona1_nvmem, NA1_NVRAM_SIZE );
-
-
-			if(1){
-				FILE *f;
-				const data16_t *pSource;
-				int i;
-				f = fopen("snd.bin","wb");
-				if( f )
-				{
-					pSource = (data16_t *)memory_region( REGION_CPU1 );
-					for( i=0; i<0x80000; i+=2 )
-					{
-						fputc( pSource[i/2]>>8, f );
-						fputc( pSource[i/2]&0xff, f );
-					}
-					fclose(f);
-				}
-			}
+		mame_fwrite( file, namcona1_nvmem, NA1_NVRAM_SIZE );
 	}
 	else
 	{
 		if (file)
 		{
-			osd_fread( file, namcona1_nvmem, NA1_NVRAM_SIZE );
+			mame_fread( file, namcona1_nvmem, NA1_NVRAM_SIZE );
 		}
 		else
 		{
@@ -374,7 +355,7 @@ static WRITE16_HANDLER( namcona1_mcu_w )
 		logerror( "0x%03x: 0x%04x\n", offset*2, mcu_ram[offset] );
 	}
 	/*
-		400..53d	code for MCU
+		400..53d  code for MCU?
 
 		820:					song select
 		822:					song control (volume? tempo?)
@@ -573,7 +554,7 @@ transfer_dword( UINT32 dest, UINT32 source )
 	}
 	else
 	{
-		logerror( "bad blt src\n", source );
+		logerror( "bad blt src %08x\n", source );
 		return -1;
 	}
 	if( dest>=0xf00000 && dest<=0xf02000 )
@@ -598,7 +579,7 @@ transfer_dword( UINT32 dest, UINT32 source )
 	}
 	else
 	{
-		logerror( "bad blt dst\n", dest );
+		logerror( "bad blt dst %08x\n", dest );
 		return -1;
 	}
 	return 0;
@@ -818,9 +799,7 @@ MEMORY_END
 
 INTERRUPT_GEN( namcona1_interrupt )
 {
-	int level;
-
-	level = cpu_getiloops(); /* 0,1,2,3,4 */
+	int level = cpu_getiloops(); /* 0,1,2,3,4 */
 	if( level==0 )
 	{
 		simulate_mcu();
@@ -833,6 +812,13 @@ INTERRUPT_GEN( namcona1_interrupt )
 		}
 	}
 }
+
+static struct NAMCONAinterface NAMCONA_interface =
+{
+	4*8000,
+	REGION_CPU1,
+	100
+};
 
 /* cropped at sides */
 static MACHINE_DRIVER_START( namcona1 )
@@ -857,8 +843,7 @@ static MACHINE_DRIVER_START( namcona1 )
 	MDRV_VIDEO_UPDATE(namcona1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	/* similar to C140?  managed by MCU */
+	MDRV_SOUND_ADD(NAMCONA, NAMCONA_interface)
 MACHINE_DRIVER_END
 
 
@@ -891,48 +876,12 @@ static void init_namcona1( size_t program_size )
 }
 
 DRIVER_INIT( bkrtmaq ){		init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_BKRTMAQ; }
-DRIVER_INIT( cgangpzl ){	init_namcona1( 0x100000 ); namcona1_gametype = NAMCO_CGANGPZL;
-	if(0){
-		FILE *f;
-		const data16_t *pSource;
-		int i;
-		f = fopen("cgngsnd.bin","wb");
-		if( f )
-		{
-			pSource = (data16_t *)memory_region( REGION_CPU1 );
-			pSource += 0x80000/2;
-			for( i=0; i<0x100000; i+=2 )
-			{
-				fputc( pSource[i/2]>>8, f );
-				fputc( pSource[i/2]&0xff, f );
-			}
-			fclose(f);
-		}
-	}
-}
+DRIVER_INIT( cgangpzl ){	init_namcona1( 0x100000 ); namcona1_gametype = NAMCO_CGANGPZL; }
 DRIVER_INIT( emeralda ){	init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_EMERALDA; }
 DRIVER_INIT( exbania ){		init_namcona1( 0x100000 ); namcona1_gametype = NAMCO_EXBANIA; }
 DRIVER_INIT( fa ){			init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_FA; }
 DRIVER_INIT( knckhead ){	init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_KNCKHEAD; }
-DRIVER_INIT( numanath ){	init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_NUMANATH;
-	if(0){
-		FILE *f;
-		const data16_t *pSource;
-		int i;
-		f = fopen("numsnd.bin","wb");
-		if( f )
-		{
-			pSource = (data16_t *)(0x280000 + (unsigned char *)memory_region( REGION_CPU1 ));
-			pSource += 0x700000/2;
-			for( i=0; i<0x100000; i+=2 )
-			{
-				fputc( pSource[i/2]>>8, f );
-				fputc( pSource[i/2]&0xff, f );
-			}
-			fclose(f);
-		}
-	}
-}
+DRIVER_INIT( numanath ){	init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_NUMANATH; }
 DRIVER_INIT( quiztou ){		init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_QUIZTOU; }
 DRIVER_INIT( swcourt ){		init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_SWCOURT; }
 DRIVER_INIT( tinklpit ){	init_namcona1( 0x200000 ); namcona1_gametype = NAMCO_TINKLPIT; }
@@ -1129,19 +1078,19 @@ ROM_START( fa )
 	ROM_LOAD16_BYTE( "fa1_ma1u.bin", 0x480000, 0x100000, 0x900297be )
 ROM_END
 
-GAMEX( 1992,bkrtmaq,  0,        namcona1w, namcona1_quiz,	bkrtmaq,  ROT0, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,cgangpzl, 0,        namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (US)", GAME_NO_SOUND )
-GAMEX( 1992,cgangpzj, cgangpzl, namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,exvania,  0,        namcona1,  namcona1_joy,	exbania,  ROT0, "Namco", "Exvania (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,fghtatck, 0,        namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "Fighter & Attacker (US)", GAME_NO_SOUND )
-GAMEX( 1992,fa,       fghtatck, namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "F/A (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,knckhead, 0,        namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (World)", GAME_NO_SOUND )
-GAMEX( 1992,knckhedj, knckhead, namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,swcourt,  0,        namcona1w, namcona1_joy,	swcourt,  ROT0, "Namco", "Super World Court (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,emeralda, 0,        namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan Version B)", GAME_NO_SOUND )
-GAMEX( 1993,emerldaa, emeralda, namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,numanath, 0,        namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (World)", GAME_NO_SOUND )
-GAMEX( 1993,numanatj, numanath, namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,quiztou,  0,        namcona1w, namcona1_quiz,	quiztou,  ROT0, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	tinklpit, ROT0, "Namco", "Tinkle Pit (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,bkrtmaq,  0,        namcona1w, namcona1_quiz,	bkrtmaq,  ROT0, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,cgangpzl, 0,        namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,cgangpzj, cgangpzl, namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,exvania,  0,        namcona1,  namcona1_joy,	exbania,  ROT0, "Namco", "Exvania (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,fghtatck, 0,        namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "Fighter & Attacker (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,fa,       fghtatck, namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "F/A (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,knckhead, 0,        namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (World)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,knckhedj, knckhead, namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992,swcourt,  0,        namcona1w, namcona1_joy,	swcourt,  ROT0, "Namco", "Super World Court (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,emeralda, 0,        namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan Version B)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,emerldaa, emeralda, namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,numanath, 0,        namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (World)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,numanatj, numanath, namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,quiztou,  0,        namcona1w, namcona1_quiz,	quiztou,  ROT0, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	tinklpit, ROT0, "Namco", "Tinkle Pit (Japan)", GAME_IMPERFECT_SOUND )
 

@@ -21,11 +21,11 @@
 				---- ---- 7654 3210		Number of sprites - 1
 
 		2.w		fedc b--- ---- ----		?
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
+				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1) (can also be changed per-sprite, see below)
 				---- --98 7654 3210		X displacement
 
 		4.w		fedc b--- ---- ----		?
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
+				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1) (can also be changed per-sprite, see below)
 				---- --98 7654 3210		Y displacement
 
 		6.w		f--- ---- ---- ----		Single-sprite(s) type: tile (0) or row of tiles (1)
@@ -36,10 +36,12 @@
 
 	Tile case:
 
-		0.w		fedc ba-- ---- ----
+		0.w		fedc b--- ---- ----
+				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
 				---- --98 7654 3210		X
 
-		2.w		fedc ba-- ---- ----
+		2.w		fedc b--- ---- ----
+				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
 				---- --98 7654 3210		Y
 
 		4.w		fedc ba98 765- ----		Color code (16 color steps)
@@ -58,15 +60,12 @@
 		2.w		fedc ba-- ---- ----		Number of rows - 1
 				---- --98 7654 3210		Y
 
-		4.w		f--- ---- ---- ----		? Tile size (pzlbowl's "ram check" is invisible!)
+		4.w		f--- ---- ---- ----		Tile size: 8x8 (0) or 16x16 (1)
 				-edc ba-- ---- ----		"Tilemap" page
 				---- --98 7654 3210		"Tilemap" Scroll X
 
-		6.w		fedc ba-- ---- ----
-				---- --98 7654 3210		"Tilemap" Scroll Y
-
-
-Note: press Z to show some info on each sprite (debug builds only)
+		6.w		fedc ba9- ---- ----
+				---- ---8 7654 3210		"Tilemap" Scroll Y
 
 ***************************************************************************/
 
@@ -105,6 +104,18 @@ PALETTE_INIT( seta2 )
 
 WRITE16_HANDLER( seta2_vregs_w )
 {
+	/* 02/04 = horizontal display start/end
+	           mj4simai = 0065/01E5 (0180 visible area)
+			   myangel =  005D/01D5 (0178 visible area)
+			   pzlbowl =  0058/01D8 (0180 visible area)
+			   penbros =  0065/01A5 (0140 visible area)
+	   06    = horizontal total?
+	           mj4simai = 0204
+			   myangel =  0200
+			   pzlbowl =  0204
+			   penbros =  01c0
+	*/
+
 	COMBINE_DATA(&seta2_vregs[offset]);
 	switch( offset*2 )
 	{
@@ -139,52 +150,45 @@ WRITE16_HANDLER( seta2_vregs_w )
 
 ***************************************************************************/
 
-extern const struct GameDriver driver_pzlbowl;
-
-static void seta2_draw_sprites(struct mame_bitmap *bitmap)
+static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-
 	/* Sprites list */
 
 	data16_t *s1  = spriteram16 + 0x3000/2;
 	data16_t *end = &spriteram16[spriteram_size/2];
-	data16_t *s2, *s3;
 
 	for ( ; s1 < end; s1+=4 )
 	{
-		int attr, code, color, num, sprite, gfx;
-
-		int sx, x, xoffs, flipx, xnum, xstart, xend, xinc;
-		int sy, y, yoffs, flipy, ynum, ystart, yend, yinc;
-
-		num		=		s1[ 0 ];
-		xoffs	=		s1[ 1 ];
-		yoffs	=		s1[ 2 ];
-		sprite	=		s1[ 3 ];
+		int gfx;
+		int num		= s1[0];
+		int xoffs	= s1[1];
+		int yoffs	= s1[2];
+		int sprite	= s1[3];
 
 		/* Single-sprite address */
-		s2		=		&spriteram16[ (sprite & 0x7fff) * 4 ];
+		data16_t *s2 = &spriteram16[(sprite & 0x7fff) * 4];
 
 		/* Single-sprite tile size */
-		xnum	=		((xoffs & 0x0400) ? 2 : 1);	// tile size (1x8, 2x8)
-		ynum	=		((yoffs & 0x0400) ? 2 : 1);
+		int global_sizex = xoffs & 0x0400;
+		int global_sizey = yoffs & 0x0400;
 
-/*
-	myangel2:					myangel:
-14	copyright	4lo			12	writing		4lo?!!
-15	japanese	4hi
-16	heart		8
-17	children	8
-*/
+		xoffs &= 0x3ff;
+		yoffs &= 0x3ff;
+
 		/* Color depth */
-		if ((num & 0x0600) == 0x0600)
-								gfx = 2;	// 8 bit tiles
-		else
-			if (num & 0x0100)	gfx = 1;	// 4 bit tiles (high order 4 bits)
-			else				gfx = 0;	// 4 bit tiles (low  order 4 bits)
+		switch (num & 0x0300)
+		{
+			case 0x0300: default:
+			case 0x0200:	// 8 bit tiles
+				gfx = 2; break;
+			case 0x0100:	// 4 bit tiles (high order 4 bits)
+				gfx = 1; break;
+			case 0x0000:	// 4 bit tiles (low  order 4 bits)
+				gfx = 0; break;
+		}
 
 		/* Number of single-sprites */
-		num		=		(num & 0x00ff) + 1;
+		num = (num & 0x00ff) + 1;
 
 		for( ; num > 0; num--,s2+=4 )
 		{
@@ -193,188 +197,121 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap)
 			if (sprite & 0x8000)		// "tilemap" sprite
 			{
 				struct rectangle clip;
-				int x1, page;
+				int dx,x,y;
+				int flipx;
+				int flipy;
+				int sx       = s2[0];
+				int sy       = s2[1];
+				int scrollx  = s2[2];
+				int scrolly  = s2[3];
+				int tilesize = (scrollx & 0x8000) >> 15;
+				int page     = (scrollx & 0x7c00) >> 10;
+				int height   = ((sy & 0xfc00) >> 10) + 1;
 
-/*
-[cross hatch myangel]				[after first error (green panel) myangel]
-c03000:	350f 6bf0 0404 8800			c03030:	160f 6000 0408 9f47
-c04000:	0000 0000 fbf4 0010			c0fa38:	0000 0000 fff0 0008
-		0000 0010 fbf4 0010					..
-		..									0000 0090 fff0 0008
-		0000 00f0 fbf4 0010					63ef 00a0 fc40 0008
-c3c000-c3cfff:	empty						..
-c3d000-c3dfff:	<empty_line>				63ef 00f0 fc40 0008
-				cross hatch			c3e000-c3efff:	empty
-									c3f000-c3ffff	panel
+				sx &= 0x3ff;
+				sy &= 0x1ff;
+				scrollx &= 0x3ff;
+				scrolly &= 0x1ff;
 
-[NS & Moss logo & crosshatch pzlbowl]
-803000:	2703 0010 0100 8800
-804000:	73f0 0c00 fc00 00f0
-		73f0 0c40 fc00 00f0
-		73f0 0c80 fc00 00f0
-		73f0 0cc0 fc00 00f0
-83e000-83eeff:	empty
-83ef00-83efff:	logo
-83f000-83ffff:	logo
-				<empty_line>
-*/
+				clip.min_y = (sy + yoffs) & 0x1ff;
+				clip.max_y = clip.min_y + height * 0x10 - 1;
 
-				sx		=		s2[ 0 ];
-				sy		=		s2[ 1 ];
-				x		=		s2[ 2 ];
-				y		=		s2[ 3 ];
+				if (clip.min_y > cliprect->max_y)	continue;
+				if (clip.max_y < cliprect->min_y)	continue;
 
-				xnum	=		0x20;
-				ynum	=		((sy & 0xfc00) >> 10) + 1;
+				clip.min_x = cliprect->min_x;
+				clip.max_x = cliprect->max_x;
 
-				page	=		((x & 0x7c00) >> 10);
-/* Hack */
-if (Machine->gamedrv == &driver_pzlbowl)
-{
-				x		+=		sx + xoffs;
-				y		-=		sy + yoffs;
-}
-else
-{
-				x		+=		sx + 0x10 + xoffs;
-				y		-=		sy + yoffs;
-				sx += xoffs;
-				sy += yoffs;
-}
+				if (clip.min_y < cliprect->min_y)	clip.min_y = cliprect->min_y;
+				if (clip.max_y > cliprect->max_y)	clip.max_y = cliprect->max_y;
 
-				sy = (sy & 0x0ff) - (sy & 0x100);
-				clip.min_x = 0;
-				clip.max_x = 0x200-1;
-				clip.min_y = sy;
-				clip.max_y = sy + ynum * 0x10 - 1;
-
-				if (clip.min_x > Machine->visible_area.max_x)	continue;
-				if (clip.min_y > Machine->visible_area.max_y)	continue;
-
-				if (clip.max_x < Machine->visible_area.min_x)	continue;
-				if (clip.max_y < Machine->visible_area.min_y)	continue;
-
-				if (clip.min_x < Machine->visible_area.min_x)	clip.min_x = Machine->visible_area.min_x;
-				if (clip.max_x > Machine->visible_area.max_x)	clip.max_x = Machine->visible_area.max_x;
-
-				if (clip.min_y < Machine->visible_area.min_y)	clip.min_y = Machine->visible_area.min_y;
-				if (clip.max_y > Machine->visible_area.max_y)	clip.max_y = Machine->visible_area.max_y;
-
-				x1 = -x;
-
-				if (y & 0xf)	y	=	0x10 - (y & 0xf) + (y & ~0xf);
-				else			y	-=	0x10;
-				y &= 0x1ff;
+				dx = sx + (scrollx & 0x3ff) + xoffs + 0x10;
 
 				/* Draw the rows */
-				sy	-=	(y & 0xf);
-				for (; sy <= clip.max_y; sy+=0x10,y-=0x10)
+				/* I don't think the following is entirely correct (when using 16x16
+				   tiles x should probably loop from 0 to 0x20) but it seems to work
+				   fine in all the games we have for now. */
+				for (y = 0; y < (0x40 >> tilesize); y++)
 				{
-					for (x=x1,sx = clip.min_x - (x & 0xf); sx <= clip.max_x; sx+=0x10,x+=0x10)
+					int py = ((scrolly - (y+1) * (8 << tilesize) + 16) & 0x1ff) - 16;
+
+					if (py < clip.min_y - 16) continue;
+					if (py > clip.max_y) continue;
+
+					for (x = 0; x < 0x40;x++)
 					{
+						int px = ((dx + x * (8 << tilesize) + 16) & 0x3ff) - 16;
 						int tx, ty;
-						s3	=	&spriteram16[	(page * (0x2000/2))	+
-												((y & 0x01f0) << 3)	+
-												((x & 0x03f0) >> 3)		];
+						int attr, code, color;
+						data16_t *s3;
 
-						attr	=	s3[0];
-						code	=	s3[1];
+						if (px < clip.min_x - 16) continue;
+						if (px > clip.max_x) continue;
 
-						code	+=		(attr & 0x0007) << 16;
-						flipy	=		(attr & 0x0008);
-						flipx	=		(attr & 0x0010);
-						color	=		(attr & 0xffe0) >> 5;
+						s3	=	&spriteram16[2 * ((page * 0x2000/4) + ((y & 0x1f) << 6) + (x & 0x03f))];
 
-						/* Force 16x16 tiles ? */
-						if (flipx)	{ xstart = 2-1;  xend = -1; xinc = -1; }
-						else		{ xstart = 0;    xend = 2;  xinc = +1; }
+						attr  = s3[0];
+						code  = s3[1] + ((attr & 0x0007) << 16);
+						flipx = (attr & 0x0010);
+						flipy = (attr & 0x0008);
+						color = (attr & 0xffe0) >> 5;
 
-						if (flipy)	{ ystart = 2-1;  yend = -1; yinc = -1; }
-						else		{ ystart = 0;    yend = 2;  yinc = +1; }
+						if (tilesize) code &= ~3;
 
-						/*	Not very accurate (the low bits change when
-						the tile is flipped) but it works	*/
-						code &= ~3;
-
-						/* Draw a tile (16x16) */
-						for (ty = ystart; ty != yend; ty += yinc)
+						for (ty = 0; ty <= tilesize; ty++)
 						{
-							for (tx = xstart; tx != xend; tx += xinc)
+							for (tx = 0; tx <= tilesize; tx++)
 							{
-								drawgfx( bitmap,	Machine->gfx[gfx],
-													code++,
-													color,
-													flipx, flipy,
-													sx + tx * 8, sy + ty * 8,
-													&clip,TRANSPARENCY_PEN,0 );
+								drawgfx(bitmap, Machine->gfx[gfx],
+										code ^ tx ^ (ty<<1),
+										color,
+										flipx, flipy,
+										px + (flipx ? tilesize-tx : tx) * 8, py + (flipy ? tilesize-ty : ty) * 8,
+										cliprect,TRANSPARENCY_PEN,0 );
 							}
 						}
+
 					}
 				}
 			}
 			else			// "normal" sprite
 			{
-				sx		=		s2[ 0 ];
-				sy		=		s2[ 1 ];
-				attr	=		s2[ 2 ];
-				code	=		s2[ 3 ];
+				int sx    = s2[0];
+				int sy    = s2[1];
+				int attr  = s2[2];
+				int code  = s2[3] + ((attr & 0x0007) << 16);
+				int flipx = (attr & 0x0010);
+				int flipy = (attr & 0x0008);
+				int color = (attr & 0xffe0) >> 5;
+				int sizex = (global_sizex | (sx & 0x0400)) >> 10;
+				int sizey = (global_sizey | (sy & 0x0400)) >> 10;
+				int x,y;
 
-				code	+=		(attr & 0x0007) << 16;
-				flipy	=		(attr & 0x0008);
-				flipx	=		(attr & 0x0010);
-				color	=		(attr & 0xffe0) >> 5;
-
-/* Hack */
-if (Machine->gamedrv == &driver_pzlbowl)
-;
-else
-{
 				sx += xoffs;
 				sy += yoffs;
-}
 
 				sx = (sx & 0x1ff) - (sx & 0x200);
-				sy = (sy & 0x0ff) - (sy & 0x100);
+				sy &= 0x1ff;
 
-				if (flipx)	{ xstart = xnum-1;  xend = -1;    xinc = -1; }
-				else		{ xstart = 0;       xend = xnum;  xinc = +1; }
+				if (sizex) code &= ~1;
+				if (sizey) code &= ~2;
 
-				if (flipy)	{ ystart = ynum-1;  yend = -1;    yinc = -1; }
-				else		{ ystart = 0;       yend = ynum;  yinc = +1; }
-
-				/*	Not very accurate (the low bits change when
-					the tile is flipped) but it works	*/
-				code &= ~3;
-
-				for (y = ystart; y != yend; y += yinc)
+				for (y = 0; y <= sizey; y++)
 				{
-					for (x = xstart; x != xend; x += xinc)
+					for (x = 0; x <= sizex; x++)
 					{
-						drawgfx( bitmap,	Machine->gfx[gfx],
-											code++,
-											color,
-											flipx, flipy,
-											sx + x * 8, sy + y * 8,
-											&Machine->visible_area,TRANSPARENCY_PEN,0 );
+						drawgfx(bitmap, Machine->gfx[gfx],
+								code ^ x ^ (y<<1),
+								color,
+								flipx, flipy,
+								sx + (flipx ? sizex-x : x) * 8, sy + (flipy ? sizey-y : y) * 8,
+								cliprect,TRANSPARENCY_PEN,0 );
 					}
 				}
-				#ifdef MAME_DEBUG
-				if (keyboard_pressed(KEYCODE_Z))	/* Display some info on each sprite */
-				{	struct DisplayText dt[2];	char buf[10];
-					sprintf(buf, "%02X",s1[0]>>8);
-					dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-					dt[0].x = sx;		dt[0].y = sy - Machine->visible_area.min_y;
-					dt[1].text = 0;	/* terminate array */
-					displaytext(Machine->scrbitmap,dt);		}
-				#endif
+			}
+		}
 
-			}		/* sprite type */
-
-		}	/* single-sprites */
-
-		/* Last sprite */
-		if (s1[0] & 0x8000) break;
-
+		if (s1[0] & 0x8000) break;	/* end of list marker */
 	}	/* sprite list */
 }
 
@@ -390,8 +327,8 @@ else
 VIDEO_UPDATE( seta2 )
 {
 	/* Black or pens[0]? */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	if (!(seta2_vregs[0x30/2] & 1))	// BLANK SCREEN
-		seta2_draw_sprites(bitmap);
+		seta2_draw_sprites(bitmap,cliprect);
 }

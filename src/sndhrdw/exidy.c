@@ -232,7 +232,7 @@ INLINE int sh6840_update_noise(int clocks)
 	int i;
 
 	/* loop over clocks */
-	for (i = 0; i < clocks; i++)
+	for (i = 0; i < clocks * 2; i++)
 	{
 		/* keep a history of the last few noise samples */
 		history = (history << 1) | (rand() & 1);

@@ -22,18 +22,15 @@
   * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
-
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
+#include <windows.h>
 #include "driver.h"
 #include "rc.h"
 #include "misc.h"
 #include "video.h"
-
-#ifdef _MSC_VER
-#define strcasecmp stricmp
-#endif
+#include "fileio.h"
 
 extern struct rc_option frontend_opts[];
 extern struct rc_option fileio_opts[];
@@ -50,6 +47,7 @@ static int config_handle_arg(char *arg);
 
 static FILE *logfile;
 static int errorlog;
+static int erroroslog;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -85,6 +83,11 @@ static int video_flipy = 0;
 static int video_flipx = 0;
 static int video_ror = 0;
 static int video_rol = 0;
+
+
+static char *osd_basename(char *filename);
+static char *osd_dirname(char *filename);
+static char *osd_strip_extension(char *filename);
 
 
 static int video_set_beam(struct rc_option *option, const char *arg, int priority)
@@ -132,22 +135,6 @@ static int video_set_debugres(struct rc_option *option, const char *arg, int pri
 	return 0;
 }
 
-static int video_verify_bpp(struct rc_option *option, const char *arg, int priority)
-{
-	if ((options.color_depth != 0) &&
-		(options.color_depth != 8) &&
-		(options.color_depth != 15) &&
-		(options.color_depth != 16) &&
-		(options.color_depth != 32))
-	{
-		options.color_depth = 0;
-		fprintf(stderr, "error: invalid value for bpp: %s\n", arg);
-		return -1;
-	}
-	option->priority = priority;
-	return 0;
-}
-
 static int init_errorlog(struct rc_option *option, const char *arg, int priority)
 {
 	/* provide errorlog from here on */
@@ -185,6 +172,7 @@ static struct rc_option opts[] = {
 	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
 	{ "gamma", NULL, rc_float, &options.gamma, "1.0", 0.5, 2.0, NULL, "gamma correction"},
 	{ "brightness", "bright", rc_float, &options.brightness, "1.0", 0.5, 2.0, NULL, "brightness correction"},
+	{ "pause_brightness", "pb", rc_float, &options.pause_bright, "0.65", 0.5, 2.0, NULL, "additional pause brightness"},
 
 	/* vector */
 	{ "Mame CORE vector game options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -215,6 +203,9 @@ static struct rc_option opts[] = {
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
+	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
+	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
+	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -323,7 +314,7 @@ void show_approx_matches(void)
  */
 int parse_config (const char* filename, const struct GameDriver *gamedrv)
 {
-	FILE *f;
+	mame_file *f;
 	char buffer[128];
 	int retval = 0;
 
@@ -347,7 +338,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	if (verbose)
 		fprintf(stderr, "parsing %s...", buffer);
 
-	f = osd_fopen (buffer, NULL, OSD_FILETYPE_INI, 0);
+	f = mame_fopen (buffer, NULL, FILETYPE_INI, 0);
 	if (f)
 	{
 		if(osd_rc_read(rc, f, buffer, 1, 1))
@@ -369,7 +360,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	}
 
 	if (f)
-		osd_fclose (f);
+		mame_fclose (f);
 
 	return retval;
 }
@@ -480,7 +471,7 @@ int cli_frontend_init (int argc, char **argv)
 	/* handle playback */
 	if (playbackname != NULL)
 	{
-        options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
+        options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
 		if (!options.playback)
 		{
 			fprintf(stderr, "failed to open %s for playback\n", playbackname);
@@ -494,10 +485,10 @@ int cli_frontend_init (int argc, char **argv)
 		INP_HEADER inp_header;
 
 		/* read playback header */
-		osd_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+		mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
 
 		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
-			osd_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
+			mame_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
 		else
 		{
 			for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
@@ -527,7 +518,7 @@ int cli_frontend_init (int argc, char **argv)
 	{
 		/* do we have a driver for this? */
 		for (i = 0; drivers[i]; i++)
-			if (strcasecmp(gamename,drivers[i]->name) == 0)
+			if (stricmp(gamename,drivers[i]->name) == 0)
 			{
 				game_index = i;
 				break;
@@ -602,7 +593,7 @@ int cli_frontend_init (int argc, char **argv)
 	/* handle record option */
 	if (recordname)
 	{
-		options.record = osd_fopen(recordname,0,OSD_FILETYPE_INPUTLOG,1);
+		options.record = mame_fopen(recordname,0,FILETYPE_INPUTLOG,1);
 		if (!options.record)
 		{
 			fprintf(stderr, "failed to open %s for recording\n", recordname);
@@ -625,7 +616,7 @@ int cli_frontend_init (int argc, char **argv)
 		   inp_header.version[1] = VERSION;
 		   inp_header.version[2] = BETA_VERSION;
 		 */
-		osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
 	}
 
 	/* need a decent default for debug width/height */
@@ -708,9 +699,9 @@ void cli_frontend_exit(void)
 	/* close open files */
 	if (logfile) fclose(logfile);
 
-	if (options.playback) osd_fclose(options.playback);
-	if (options.record)   osd_fclose(options.record);
-	if (options.language_file) osd_fclose(options.language_file);
+	if (options.playback) mame_fclose(options.playback);
+	if (options.record)   mame_fclose(options.record);
+	if (options.language_file) mame_fclose(options.language_file);
 }
 
 static int config_handle_arg(char *arg)
@@ -758,7 +749,119 @@ void CLIB_DECL logerror(const char *text,...)
 
 	if (errorlog && logfile)
 		vfprintf(logfile, text, arg);
+
+	if (erroroslog)
+	{
+		extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
+		char buffer[256];
+		vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
+		OutputDebugString(buffer);
+	}
 	va_end(arg);
 }
 
 
+//============================================================
+//	osd_basename
+//============================================================
+
+static char *osd_basename(char *filename)
+{
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// start at the end and return when we hit a slash or colon
+	for (c = filename + strlen(filename) - 1; c >= filename; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return c + 1;
+
+	// otherwise, return the whole thing
+	return filename;
+}
+
+
+
+//============================================================
+//	osd_dirname
+//============================================================
+
+static char *osd_dirname(char *filename)
+{
+	char *dirname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	dirname = malloc(strlen(filename) + 1);
+	if (!dirname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		return NULL;
+	}
+
+	// copy in the name
+	strcpy(dirname, filename);
+
+	// search backward for a slash or a colon
+	for (c = dirname + strlen(dirname) - 1; c >= dirname; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+		{
+			// found it: NULL terminate and return
+			*(c + 1) = 0;
+			return dirname;
+		}
+
+	// otherwise, return an empty string
+	dirname[0] = 0;
+	return dirname;
+}
+
+
+
+//============================================================
+//	osd_strip_extension
+//============================================================
+
+static char *osd_strip_extension(char *filename)
+{
+	char *newname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	newname = malloc(strlen(filename) + 1);
+	if (!newname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_newname\n");
+		return NULL;
+	}
+
+	// copy in the name
+	strcpy(newname, filename);
+
+	// search backward for a period, failing if we hit a slash or a colon
+	for (c = newname + strlen(newname) - 1; c >= newname; c--)
+	{
+		// if we hit a period, NULL terminate and break
+		if (*c == '.')
+		{
+			*c = 0;
+			break;
+		}
+
+		// if we hit a slash or colon just stop
+		if (*c == '\\' || *c == '/' || *c == ':')
+			break;
+	}
+
+	return newname;
+}

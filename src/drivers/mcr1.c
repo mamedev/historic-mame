@@ -140,9 +140,9 @@ static NVRAM_HANDLER( mcr1 )
 	unsigned char *ram = memory_region(REGION_CPU1);
 
 	if (read_or_write)
-		osd_fwrite(file, &ram[0x7000], 0x800);
+		mame_fwrite(file, &ram[0x7000], 0x800);
 	else if (file)
-		osd_fread(file, &ram[0x7000], 0x800);
+		mame_fread(file, &ram[0x7000], 0x800);
 	else if (nvram_init)
 		memcpy(&ram[0x7000], nvram_init, 16);
 }

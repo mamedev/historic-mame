@@ -64,7 +64,9 @@ enum
 **#################################################################################################*/
 
 #define ADSP2100_IRQ0		0		/* IRQ0 */
+#define ADSP2100_SPORT1_RX	0		/* SPORT1 receive IRQ */
 #define ADSP2100_IRQ1		1		/* IRQ1 */
+#define ADSP2100_SPORT1_TX	1		/* SPORT1 transmit IRQ */
 #define ADSP2100_IRQ2		2		/* IRQ2 */
 #define ADSP2100_IRQ3		3		/* IRQ3 */
 
@@ -128,8 +130,12 @@ extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 #define adsp2101_icount adsp2100_icount
 
 #define ADSP2101_IRQ0		0		/* IRQ0 */
+#define ADSP2101_SPORT1_RX	0		/* SPORT1 receive IRQ */
 #define ADSP2101_IRQ1		1		/* IRQ1 */
+#define ADSP2101_SPORT1_TX	1		/* SPORT1 transmit IRQ */
 #define ADSP2101_IRQ2		2		/* IRQ2 */
+#define ADSP2101_SPORT0_RX	3		/* SPORT0 receive IRQ */
+#define ADSP2101_SPORT0_TX	4		/* SPORT0 transmit IRQ */
 
 extern void adsp2101_init(void);
 extern void adsp2101_reset(void *param);
@@ -159,7 +165,9 @@ extern void adsp2101_set_tx_callback( TX_CALLBACK cb );
 #define adsp2105_icount adsp2100_icount
 
 #define ADSP2105_IRQ0		0		/* IRQ0 */
+#define ADSP2105_SPORT1_RX	0		/* SPORT1 receive IRQ */
 #define ADSP2105_IRQ1		1		/* IRQ1 */
+#define ADSP2105_SPORT1_TX	1		/* SPORT1 transmit IRQ */
 #define ADSP2105_IRQ2		2		/* IRQ2 */
 
 extern void adsp2105_init(void);
@@ -178,6 +186,44 @@ extern void adsp2105_set_rx_callback( RX_CALLBACK cb );
 extern void adsp2105_set_tx_callback( TX_CALLBACK cb );
 
 extern void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata);
+
+#endif
+
+#if (HAS_ADSP2115)
+/**************************************************************************
+ * ADSP2115 section
+ **************************************************************************/
+
+#define ADSP2115_DATA_OFFSET    ADSP2100_DATA_OFFSET
+#define ADSP2115_PGM_OFFSET     ADSP2100_PGM_OFFSET
+#define ADSP2115_SIZE           ADSP2100_SIZE
+
+#define adsp2115_icount adsp2100_icount
+
+#define ADSP2115_IRQ0		0		/* IRQ0 */
+#define ADSP2115_SPORT1_RX	0		/* SPORT1 receive IRQ */
+#define ADSP2115_IRQ1		1		/* IRQ1 */
+#define ADSP2115_SPORT1_TX	1		/* SPORT1 transmit IRQ */
+#define ADSP2115_IRQ2		2		/* IRQ2 */
+#define ADSP2115_SPORT0_RX	3		/* SPORT0 receive IRQ */
+#define ADSP2115_SPORT0_TX	4		/* SPORT0 transmit IRQ */
+
+extern void adsp2115_init(void);
+extern void adsp2115_reset(void *param);
+extern void adsp2115_exit(void);
+extern int adsp2115_execute(int cycles);    /* NS 970908 */
+extern unsigned adsp2115_get_context(void *dst);
+extern void adsp2115_set_context(void *src);
+extern unsigned adsp2115_get_reg(int regnum);
+extern void adsp2115_set_reg(int regnum, unsigned val);
+extern void adsp2115_set_irq_line(int irqline, int state);
+extern void adsp2115_set_irq_callback(int (*callback)(int irqline));
+extern const char *adsp2115_info(void *context, int regnum);
+extern unsigned adsp2115_dasm(char *buffer, unsigned pc);
+extern void adsp2115_set_rx_callback( RX_CALLBACK cb );
+extern void adsp2115_set_tx_callback( TX_CALLBACK cb );
+
+extern void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata);
 
 #endif
 

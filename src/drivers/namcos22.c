@@ -270,11 +270,13 @@ static READ32_HANDLER( namcos22_mcuram_r )
 static WRITE32_HANDLER( polyram_w)
 {
 	COMBINE_DATA( &namcos22_polygonram[offset] );
+#ifdef MAME_DEBUG
 	if( keyboard_pressed( KEYCODE_M ) )
 	{
 		logerror( "pc=%08x: polyram[%08x] = %08x\n",
 			activecpu_get_pc(), offset*4, namcos22_polygonram[offset] );
 	}
+#endif
 }
 
 static MEMORY_READ32_START( namcos22s_readmem )
@@ -360,16 +362,16 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 		namcos22_shareram[(0xa0bd00-0xa04000)/4] = readinputport(1)<<8;
 
 		data = 0;
-		if( keyboard_pressed(KEYCODE_1) ) data |= 0x0100;
+		if( readinputport( 2 ) & 0x20 ) data |= 0x0100;
 		namcos22_shareram[(0xa0bd04-0xa04000)/4] = data<<16; // start1
 
 		dx = 0; dy = 0;
-		if( keyboard_pressed(KEYCODE_LEFT) ) dx++;
-		if( keyboard_pressed(KEYCODE_RIGHT) ) dx--;
-		if( keyboard_pressed(KEYCODE_UP) ) dy--;
-		if( keyboard_pressed(KEYCODE_DOWN) ) dy++;
+		if( readinputport( 2 ) & 0x04 ) dx++;
+		if( readinputport( 2 ) & 0x08 ) dx--;
+		if( readinputport( 2 ) & 0x01 ) dy--;
+		if( readinputport( 2 ) & 0x02 ) dy++;
 
-		if( keyboard_pressed( KEYCODE_SPACE ) ) pedal+=0x10;
+		if( readinputport( 2 ) & 0x10 ) pedal+=0x10;
 
 		namcos22_shareram[(0xa0bd08-0xa04000)/4] = ((UINT16)dx*0x6666);
 		namcos22_shareram[(0xa0bd0c-0xa04000)/4] = ((UINT16)dy*0x6666)<<16;
@@ -964,6 +966,14 @@ INPUT_PORTS_START( propcycl )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+
 //	PORT_START
 //	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X|IPF_CENTER, 100, 4, 0x00, 0xffff )
 
@@ -1077,13 +1087,13 @@ DRIVER_INIT( raveracw )
 //     YEAR, NAME,    PARENT, MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,             FLAGS
 //GAMEX( 1994,"Ace Driver")
 //GAMEX( 1995,"Cyber Commando")
-GAMEX( 1995, raveracw, 0,     namcos22,  victlap,  raveracw, ROT0, "Namco", "Rave Racer (World)",  GAME_NOT_WORKING )
-GAMEX( 1993, rr1,      0,     namcos22,  victlap,  rr,		 ROT0, "Namco", "Ridge Racer",         GAME_NOT_WORKING )
-GAMEX( 1994, rrs1,     0,     namcos22,  victlap,  rr,		 ROT0, "Namco", "Ridge Racer 2",       GAME_NOT_WORKING )
-GAMEX( 1996, victlap,  0,     namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap", GAME_NOT_WORKING )
+GAMEX( 1995, raveracw, 0,     namcos22,  victlap,  raveracw, ROT0, "Namco", "Rave Racer (World)",  GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1993, rr1,      0,     namcos22,  victlap,  rr,		 ROT0, "Namco", "Ridge Racer",         GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1994, rrs1,     0,     namcos22,  victlap,  rr,		 ROT0, "Namco", "Ridge Racer 2",       GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, victlap,  0,     namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap", GAME_NOT_WORKING | GAME_NO_SOUND )
 
 //GAMEX( 1995,"Air Combat 22")
-GAMEX( 1994, alpinerd, 0,     namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer Ver. D", GAME_NOT_WORKING )
+GAMEX( 1994, alpinerd, 0,     namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer Ver. D", GAME_NOT_WORKING | GAME_NO_SOUND )
 //GAMEX( 1996,"Alpine Racer 2")
 //GAMEX( 1996,"Alpine Surfer")
 //GAMEX( 1997,"Armidillo Racing")

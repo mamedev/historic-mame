@@ -141,7 +141,7 @@ static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_
 			            1,
 		                0,0,
 		                fx1,fy1,
-		                0, TRANSPARENCY_PEN, 0,
+		                &Machine->visible_area, TRANSPARENCY_PEN, 0,
 				        expand1,expand1);
 
             /* Get fingerprint */
@@ -169,7 +169,7 @@ static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_
 			            0,
 		                0,0,
 				        fx2,fy2,
-		                0, TRANSPARENCY_PEN, 0,
+		                &Machine->visible_area, TRANSPARENCY_PEN, 0,
 				        expand2,expand2);
 
             /* Remove fingerprint */
@@ -197,7 +197,7 @@ static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_
 			            0,
 		                0,0,
 		                fx1,fy1,
-		                0, TRANSPARENCY_PEN, 0,
+		                &Machine->visible_area, TRANSPARENCY_PEN, 0,
 				        expand1,expand1);
             }
     }
@@ -243,7 +243,8 @@ void Update_Bitmap(struct mame_bitmap *bitmap,unsigned char *workram,unsigned ch
 				            colour,
 			                0,0,
 			                bx,by,
-			                0, TRANSPARENCY_BLEND_RAW, 0,
+			                &Machine->visible_area,
+							TRANSPARENCY_BLEND_RAW, 0,
 					        expand,expand);
 
                 /* Shadow Sprites */
@@ -263,7 +264,8 @@ void Update_Bitmap(struct mame_bitmap *bitmap,unsigned char *workram,unsigned ch
 						                colour,
 				    	                0,0,
 				        	            bx,by,
-				            	        0, TRANSPARENCY_BLEND_RAW, 0,
+				            	        &Machine->visible_area,
+										TRANSPARENCY_BLEND_RAW, 0,
 						        	    expand,expand);
 	                    }
                     }

@@ -1,19 +1,20 @@
 /*
 Halley's Comet, 1986 Taito
 
+	Halley's Comet was created by Fukio Mitsuji (MTJ),
+	who also created Bubble Bobble, Rainbow Islands, Syvalion, etc.
+
   Issues:
-	- many unknown registers
-	- the starfield isn't being drawn correctly
-	- there may be scroll registers for the background planes
-	- main CPU resets a few seconds after starting a game
-	- there don't appear to be any blitter commands for the player's ship or shots
+	- status reads from blitter RAM aren't well understood.
+	  They probably includes both completion and collision flags.
+	- The blitter is missing many features, in particular sprites aren't erased, and the
+	  player's ship isn't drawn at all.
+	- You can hold "space" down to auto-erase the screen at the begining of each new frame.
+	- It isn't known how many independent planes of graphics the blitter manages.  The
+	  starfield, for example, probably involves at least two additional background planes
+	  orthogonal to sprites/text layer.
+	- benberob isn't working at all.
 
-
-
-According to the KLOV, Halley's Comet was created by the
-Pacific Manufacturing Company, Ltd. and licensed to Taito.
-This isn't true: Halley's Comet was created by Fukio Mitsuji (MTJ),
-who also created Bubble Bobble, Rainbow Islands, Syvalion, etc.
 
 CPU:	MC68B09EP Z80A(SOUND)
 Sound:	YM2149F x 4
@@ -140,31 +141,34 @@ Video sync   6 F   Video sync                 Post   6 F   Post
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
-struct mame_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static int sndnmi_disable = 1;
 static data8_t *blitter_ram;
 
 PALETTE_INIT( halleys )
 {
-	/* note: the colors in this driver are totally wrong. */
+	/* note: the colors in this driver are totally wrong.
+		prom contains:
+			00 00 00 00 c5 0b f3 17 fd cf 1f ef df bf 7f ff
+			00 00 00 00 01 61 29 26 0b f5 e2 17 57 fb cf f7
+		the palette is actually in RAM? (ffc0-ffdf)
+
+	*/
 	int i;
 	for (i = 0; i < 32; i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
 
-		/* blue component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		/* green component */
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		/* red component */
 		bit0 = (color_prom[i] >> 6) & 0x01;
 		bit1 = (color_prom[i] >> 7) & 0x01;
 		b = 0x55 * bit0 + 0xaa * bit1;
@@ -184,11 +188,14 @@ VIDEO_START( halleys )
 	return -1; /* error */
 } /* halleys */
 
+static int mbAutoClear;
+static int mVectorType;
 
 VIDEO_UPDATE( halleys )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,cliprect,TRANSPARENCY_PEN,0);
+	if( keyboard_pressed( KEYCODE_SPACE ) ) mbAutoClear = 1;
 } /* halleys */
 
 static READ_HANDLER( vector_r )
@@ -218,10 +225,7 @@ static READ_HANDLER( vector_r )
 	the only vector that varies is the one for IRQ (and both routines do very
 	little).
 	*/
-	int vector_base;
-	vector_base = 0xffe0;
-//	vector_base = 0xfff0;
-	return memory_region(REGION_CPU1)[vector_base + offset];
+	return memory_region(REGION_CPU1)[0xffe0 + 0x10*mVectorType + offset];
 } /* vector_r */
 
 static int
@@ -233,7 +237,7 @@ nthbit( const data8_t *pMem, int offs )
 } /* nthbit */
 
 static void
-blit( const data8_t *pMem )
+blit( data8_t *pMem )
 {
 	struct mame_bitmap *pDest;
 	const data8_t *pGfx1 = memory_region( REGION_GFX1 );
@@ -245,9 +249,17 @@ blit( const data8_t *pMem )
 	int x		= pMem[0x9];
 	int h		= pMem[0xa];
 	int w		= pMem[0xb];
-	int bit0	= pMem[0xd]+pMem[0xc]*256;
-	int bit1	= pMem[0xf]+pMem[0xe]*256;
+	int source0	= pMem[0xd]+pMem[0xc]*256;
+	int source1	= pMem[0xf]+pMem[0xe]*256;
 	int xpos,ypos,pen;
+
+	if( mbAutoClear )
+	{
+		fillbitmap(tmpbitmap,0,NULL);
+		fillbitmap(tmpbitmap2,0,NULL);
+		mbAutoClear = 0;
+		logerror( "--clear--\n" );
+	}
 
 	if( code&0x80 )
 	{
@@ -258,21 +270,21 @@ blit( const data8_t *pMem )
 		pDest = tmpbitmap2;
 	}
 
-	bit0 &= 0x3fff;
-	bit1 &= 0x3fff;
+	source0 &= 0x3fff;
+	source1 &= 0x3fff;
 	if( color&0x80 )
 	{
-		bit0 |= 0x8000;
-		bit1 |= 0x8000;
+		source0 |= 0x8000;
+		source1 |= 0x8000;
 	}
 	if( code&0x40 )
 	{
-		bit0 |= 0x4000;
-		bit1 |= 0x4000;
+		source0 |= 0x4000;
+		source1 |= 0x4000;
 	}
 
-	bit1 = 8*(0x10000 - bit1);
-	bit0 = 8*(0x10000 - bit0);
+	source1 = 8*(0x10000 - source1);
+	source0 = 8*(0x10000 - source0);
 
 	for( ypos=0; ypos<h; ypos++ )
 	{
@@ -281,14 +293,20 @@ blit( const data8_t *pMem )
 			pen = 0;
 			if( mode!=0x80 )
 			{
-				if( nthbit( pGfx1, --bit1 ) ) pen|=1|4;
-				if( nthbit( pGfx2, --bit0 ) ) pen|=2|4;
+				if( nthbit( pGfx1, --source1 ) ) pen|=1|4;
+				if( nthbit( pGfx2, --source0 ) ) pen|=2|4;
 				if( mode==0x87 && pen==0 ) continue;
 			}
 			plot_pixel( pDest, (x+xpos)&0xff, (y+ypos)&0xff, pen );
 		}
 	}
 } /* blit */
+
+static READ_HANDLER( blitter_r )
+{
+	if( (offset&0xf)<5 ) return 1;
+	return blitter_ram[offset];
+}
 
 static WRITE_HANDLER( blitter_w )
 {
@@ -297,32 +315,30 @@ static WRITE_HANDLER( blitter_w )
 	blitter_ram[offset] = data;
 	if( pc==0x8025 ) return; /* HACK: return if this is part of the memory wipe on startup */
 
-	if( (offset&0xf)==0 )
+	if( (offset&0xf)==0x0 )
 	{
 		blit( &blitter_ram[offset] );
-		logerror( "%04x BLT[%04x]: "
-			"%02x %02x %02x %02x %02x %02x:%02x:%02x %02x %02x %02x %02x %02x%02x.%02x%02x\n",
-			activecpu_get_pc(),
-			offset,
-			blitter_ram[offset+0x0],
-			blitter_ram[offset+0x1],blitter_ram[offset+0x2], // unused?
-			blitter_ram[offset+0x3],blitter_ram[offset+0x4], // unused?
-			blitter_ram[offset+0x5],
-			blitter_ram[offset+0x6], // color
-			blitter_ram[offset+0x7],
-			blitter_ram[offset+0x8], // y
-			blitter_ram[offset+0x9], // x
-			blitter_ram[offset+0xa], // h
-			blitter_ram[offset+0xb], // w
-			blitter_ram[offset+0xc],blitter_ram[offset+0xd],
-			blitter_ram[offset+0xe],blitter_ram[offset+0xf] );
+		if(1)
+		{
+			logerror( "%04x BLT[%04x]: "
+				"%02x %02x %02x %02x %02x %02x:%02x:%02x %02x %02x %02x %02x %02x%02x.%02x%02x\n",
+				activecpu_get_pc(),
+				offset,
+				blitter_ram[offset+0x0],
+				blitter_ram[offset+0x1],blitter_ram[offset+0x2], // unused?
+				blitter_ram[offset+0x3],blitter_ram[offset+0x4], // unused?
+				blitter_ram[offset+0x5],
+				blitter_ram[offset+0x6], // color
+				blitter_ram[offset+0x7],
+				blitter_ram[offset+0x8], // y
+				blitter_ram[offset+0x9], // x
+				blitter_ram[offset+0xa], // h
+				blitter_ram[offset+0xb], // w
+				blitter_ram[offset+0xc],blitter_ram[offset+0xd],
+				blitter_ram[offset+0xe],blitter_ram[offset+0xf] );
+		}
 	}
 } /* blitter_w */
-
-static READ_HANDLER( blitter_status_r )
-{
-	return rand()&0xff; /* ??? see IRQ */
-}
 
 static READ_HANDLER( zero_r )
 {
@@ -347,13 +363,7 @@ static READ_HANDLER( coin_lockout_r )
 
 static READ_HANDLER( io_mirror_r )
 {
-	switch( offset )
-	{
-	case 0: return readinputport(3);
-	case 1: return readinputport(4);
-	case 2: return readinputport(5);
-	default: return 0x00;
-	}
+	return readinputport(offset+3);
 }
 
 static WRITE_HANDLER( halleys_sndnmi_msk_w )
@@ -396,7 +406,7 @@ static MEMORY_WRITE_START( sound_writemem )
 MEMORY_END
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_RAM }, /* blitter RAM */
+	{ 0x0000, 0x0fff, blitter_r },
 	{ 0x1000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xfeff, MRA_RAM }, /* work ram */
 	/* note that SRAM is tested from 0xf000 to 0xff7f,
@@ -408,21 +418,21 @@ static MEMORY_READ_START( readmem )
 	{ 0xff00, 0xff7f, MRA_RAM },
 
 	{ 0xff80, 0xff83, io_mirror_r },
-	{ 0xff8b, 0xff8b, blitter_status_r },
-	{ 0xff8c, 0xff8c, MRA_RAM }, /* unknown */
+//	{ 0xff8b, 0xff8b, MRA_RAM }, /* blit record index */
+	{ 0xff8c, 0xff8c, MRA_RAM }, /* coin-related */
 	{ 0xff8d, 0xff8d, MRA_RAM }, /* unknown */
 	{ 0xff8e, 0xff8e, MRA_RAM }, /* unknown */
 	{ 0xff90, 0xff90, input_port_3_r }, /* coin/start */
 	{ 0xff91, 0xff91, input_port_4_r }, /* player 1 */
 	{ 0xff92, 0xff92, input_port_5_r }, /* player 2 */
-	{ 0xff93, 0xff93, zero_r },
+	{ 0xff93, 0xff93, input_port_6_r }, /* unused? */
 	{ 0xff94, 0xff94, coin_lockout_r },
 	{ 0xff95, 0xff95, input_port_0_r }, /* dipswitch 4 */
 	{ 0xff96, 0xff96, input_port_1_r }, /* dipswitch 3 */
 	{ 0xff97, 0xff97, input_port_2_r }, /* dipswitch 2 */
 	{ 0xff9a, 0xff9a, MRA_RAM },
 	{ 0xff9d, 0xff9d, MRA_RAM },
-	{ 0xff9e, 0xff9e, MRA_RAM },
+	{ 0xff9e, 0xff9e, MRA_RAM }, /* dsw flipscreen cache */
 	{ 0xffa2, 0xffa2, MRA_RAM }, /* unknown; see pc = 9785 */
 	{ 0xffa3, 0xffa3, MRA_RAM }, /* unknown; see pc = 977F */
 	{ 0xfff0, 0xffff, vector_r },
@@ -432,6 +442,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, blitter_w, &blitter_ram },
 	{ 0x1000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xfeff, MWA_RAM }, /* work ram */
+		/* fbf4 palette#0 (16 bytes)
+		 * fc05 palette#1 (16 bytes)
+		 */
+
 	/* note that SRAM is tested from 0xf000 to 0xff7f,
 	 * but several of the addresses in 0xff00..0xff7f
 	 * behave as ports during normal game operation.
@@ -439,20 +453,21 @@ static MEMORY_WRITE_START( writemem )
 	//{ 0xff76, 0xff76, watchdog_w },
 	{ 0xff00, 0xff7f, MWA_RAM },
 	{ 0xff8a, 0xff8a, halleys_soundcommand_w },
-	{ 0xff8c, 0xff8c, MWA_RAM }, /* unknown; see pc = 83a4 */
-	{ 0xff8d, 0xff8d, MWA_RAM }, /* unknown */
-	{ 0xff8e, 0xff8e, MWA_RAM }, /* unknown; see pc = 97A0 */
-	{ 0xff98, 0xff98, MWA_RAM }, /* unknown; see IRQ ack */
-	{ 0xff9a, 0xff9a, MWA_RAM }, /* unknown; see pc = 979A */
-	{ 0xff9b, 0xff9b, MWA_RAM }, /* unknown; NMI-related */
-	{ 0xff9c, 0xff9c, MWA_RAM }, /* unknown; FIRQ-related */
-	{ 0xff9d, 0xff9d, MWA_RAM }, /* unknown */
-	{ 0xff9e, 0xff9e, MWA_RAM }, /* flipscreen? */
+	{ 0xff8c, 0xff8d, MWA_RAM }, /* unknown */
+	{ 0xff8e, 0xff8f, MWA_RAM }, /* unknown; see pc = 97A0 */
+	{ 0xff98, 0xff99, MWA_RAM }, /* unknown; see IRQ */
+	{ 0xff9a, 0xff9b, MWA_RAM }, /* unknown; NMI-related */
+	{ 0xff9c, 0xff9d, MWA_RAM }, /* unknown; FIRQ-related */
+	{ 0xff9e, 0xff9e, MWA_RAM }, /* 0x80: flipscreen */
 	{ 0xffa0, 0xffa0, MWA_RAM }, /* unknown */
 	{ 0xffa1, 0xffa1, MWA_RAM }, /* unknown */
 	{ 0xffa2, 0xffa2, MWA_RAM }, /* unknown */
 	{ 0xffa3, 0xffa3, MWA_RAM }, /* unknown */
-	{ 0xffc0, 0xffdf, MWA_RAM }, /* unknown; see pc = 8373 */
+	{ 0xffa4, 0xffa4, MWA_RAM }, /* unknown */
+	{ 0xffb0, 0xffb0, MWA_RAM }, /* unknown */
+	{ 0xffb1, 0xffb1, MWA_RAM }, /* unknown */
+	{ 0xffb4, 0xffb4, MWA_RAM }, /* unknown */
+	{ 0xffc0, 0xffdf, MWA_RAM, &paletteram },
 	{ 0xfff0, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -462,23 +477,22 @@ static INTERRUPT_GEN( halleys_interrupt )
 	switch( cpu_getiloops() )
 	{
 	case 0:
-		/* NMI is used exclusively to handle coin input */
+		/* In Halley's Comet, NMI is used exclusively to handle coin input */
 		cpu_set_nmi_line(0, PULSE_LINE);
 		break;
 
 	case 1:
-		/* IRQ is blitter related; I don't know what triggers it. */
-		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
-
 		/* There are several busy loops that poll 0xff0b, expecting it to increment.
-		 * I haven't found any interrupt code which writes to 0xff0b, so do change it
+		 * I haven't found any interrupt code which writes to 0xff0b, so change it
 		 * here as a side effect of each vblank.
 		 */
 		memory_region( REGION_CPU1 )[0xff0b]++;
 		break;
 
-	default:
-		/* FIRQ drives gameplay. */
+	case 2:
+	case 3:
+		/* FIRQ drives gameplay; we need both types of NMI each frame. */
+		mVectorType = 1-mVectorType;
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
 		break;
 	}
@@ -596,6 +610,8 @@ INPUT_PORTS_START( halleys )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 |IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 |IPF_PLAYER2 )
+
+	PORT_START /* 0xff93 */
 INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
@@ -612,7 +628,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( halleys )
 	MDRV_CPU_ADD(M6809,6000000)		/* 2 MHz ? */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(halleys_interrupt,3)
+	MDRV_CPU_VBLANK_INT(halleys_interrupt,4)
 
 	MDRV_CPU_ADD(Z80,6000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)      /* 3 MHz */
@@ -630,7 +646,7 @@ static MACHINE_DRIVER_START( halleys )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_PALETTE_INIT(halleys)

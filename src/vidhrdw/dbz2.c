@@ -97,10 +97,10 @@ VIDEO_START(dbz2)
 	}
 
 	K053936_wraparound_enable(0, 1);
-	K053936_set_offset(0, -39, -16);
+	K053936_set_offset(0, -46, -16);
 
 	K053936_wraparound_enable(1, 1);
-	K053936_set_offset(1, -39, -16);
+	K053936_set_offset(1, -46, -16);
 
 	dbz2_bg_tilemap = tilemap_create(get_dbz2_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,64,32);
 	if (!dbz2_bg_tilemap) return 1;
@@ -123,11 +123,9 @@ VIDEO_UPDATE(dbz2)
 
 	K054157_tilemap_update();
 
-
 	K053247_sprites_draw(bitmap, cliprect);
 
 	K054157_tilemap_draw(bitmap, cliprect, 3, 0, 1<<0);
-
 }
 
 

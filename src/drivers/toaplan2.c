@@ -1050,7 +1050,6 @@ static INTERRUPT_GEN( bbakraid_snd_interrupt )
 }
 
 
-
 static MEMORY_READ16_START( tekipaki_readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x020000, 0x03ffff, MRA16_ROM },				/* extra for Whoopee */

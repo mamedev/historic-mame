@@ -97,11 +97,11 @@ enum
 static NVRAM_HANDLER( cuebrick )
 {
 	if (read_or_write)
-		osd_fwrite(file,battery_backed_ram,0x4000);
+		mame_fwrite(file,battery_backed_ram,0x4000);
 	else
 	{
 		if (file)
-			osd_fread(file,battery_backed_ram,0x4000);
+			mame_fread(file,battery_backed_ram,0x4000);
 		else
 			memset(battery_backed_ram,0,0x4000);
 	}

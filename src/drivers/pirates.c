@@ -1,7 +1,15 @@
 /*---
 
-Pirates (c)1994 NIX
-preliminary driver
+Pirates (c)1994 NIX  (DEC 14 1994 17:32:29 is displayed in the Test Mode)
+driver by David Haywood and Nicola Salmoria
+
+TODO:
+- EEPROM doesn't work. I'm not sure what the program is trying to do.
+  The EEPROM handling might actually be related to the protection which
+  makes the game hang.
+  See pirates_in1_r() for code which would work around the protection,
+  but makes the game periodically hang for a couple of seconds; therefore,
+  for now I'm just patching out the protection check.
 
 -----
 
@@ -24,9 +32,9 @@ Tilemaps look a bit strange, looks like its 3 32x40 tilemaps in a 0x4000 region?
 might be more obvious once I have some valid tiles to play with.
 
 Program Roms are Scrambled (Data + Address Lines)
-P Graphic Roms are Scrambled (Address Lines Only?) Not Descrambled
-S Graphic Roms are Scrambled (Address Lines Only?) Not Descrambled
-OKI Samples Rom is Scrambled (Address Lines Only?) Not Descrambled
+P Graphic Roms (Tilemap Tiles) are Scrambled (Data + Address Lines)
+S Graphic Roms (Sprite Tiles) are Scrambled (Data + Address Lines)
+OKI Samples Rom is Scrambled (Data + Address Lines)
 
 68k interrupts
 lev 1 : 0x64 : 0000 bf84 - vbl?
@@ -40,111 +48,130 @@ lev 7 : 0x7c : 0000 3c32 -
 Game Crashes at Game Over or after a while of the attract mode, it simply hangs.
 Inputs mapped by Stephh
 
+The game hanging is an interesting issue, the board owner has 2 copies of this game, one a prototype,
+on the final released version.  The roms on both boards are the same, however the prototype locks up
+just as it does in Mame at the moment.  The final board does not.  Going on things that have been
+said its possible a hardware workaround for a game bug was introduced on the final version of the
+board.  (of course it could just be something completely different like protection)
+
+
 ---*/
 
 #include "driver.h"
+#include "machine/eeprom.h"
 
-data16_t *pirates_tileram, *pirates_spriteram;
-static struct tilemap *pirates_tilemap;
+extern data16_t *pirates_tx_tileram, *pirates_spriteram;
+extern data16_t *pirates_fg_tileram,  *pirates_bg_tileram;
 
-/* Video Hardware */
+VIDEO_START(pirates);
+WRITE16_HANDLER( pirates_tx_tileram_w );
+WRITE16_HANDLER( pirates_fg_tileram_w );
+WRITE16_HANDLER( pirates_bg_tileram_w );
+VIDEO_UPDATE(pirates);
 
-/* sprites */
 
-static void pirates_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+
+static struct EEPROM_interface eeprom_interface =
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
-	data16_t *source = pirates_spriteram;
-	data16_t *finish = source + 0x800/2;
+	6,				/* address bits */
+	16,				/* data bits */
+	"*110",			/*  read command */
+	"*101",			/* write command */
+	0,				/* erase command */
+	"*10000xxxx",	/* lock command */
+	"*10011xxxx"	/* unlock command */
+};
 
-	while( source<finish )
+static NVRAM_HANDLER( pirates )
+{
+	if (read_or_write) EEPROM_save(file);
+	else
 	{
-		int xpos, ypos, number;
-
-		ypos = source[1] & 0x1ff;
-		xpos = source[3] & 0x1ff;
-		number = source[0];
-
-		xpos = 0xff-xpos;
-
-		drawgfx(bitmap,gfx,number,0,0,0,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
-
-		source+=4;
+		EEPROM_init(&eeprom_interface);
+		if (file) EEPROM_load(file);
 	}
 }
 
-/* tilemaps */
-
-static void get_pirates_tile_info(int tile_index)
+static WRITE16_HANDLER( pirates_out_w )
 {
-	int code = pirates_tileram[tile_index*2];
-	int colr = pirates_tileram[tile_index*2+1];
+	if (ACCESSING_LSB)
+	{
+		/* bits 0-2 control EEPROM */
+		EEPROM_write_bit(data & 0x04);
+		EEPROM_set_cs_line((data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE);
 
-	SET_TILE_INFO(3,code,colr,0)
+		/* bit 6 selects oki bank */
+		OKIM6295_set_bank_base(0, (data & 0x40) ? 0x40000 : 0x00000);
+
+		/* bit 7 used (function unknown) */
+	}
+
+//	logerror("%06x: out_w %04x\n",activecpu_get_pc(),data);
 }
 
-WRITE16_HANDLER(  pirates_tileram_w )
+static READ16_HANDLER( pirates_in1_r )
 {
-	pirates_tileram[offset] = data;
-	tilemap_mark_tile_dirty(pirates_tilemap,offset/2);
+//	static int prot = 0xa3;
+	int bit;
+
+//	logerror("%06x: IN1_r\n",activecpu_get_pc());
+
+#if 0
+	/* protection workaround. It more complicated than this... see code at
+	   602e and 62a6 */
+	if (activecpu_get_pc() == 0x6134)
+	{
+		bit = prot & 1;
+		prot = (prot >> 1) | (bit << 7);
+	}
+	else if (activecpu_get_pc() == 0x6020)
+		bit = 0;
+	else if (activecpu_get_pc() == 0x6168)
+		bit = 0;
+	else if (activecpu_get_pc() == 0x61cc)
+		bit = 1;
+	else
+#endif
+		bit = 1;
+
+	/* bit 4 is EEPROM data, bit 7 is protection */
+	return input_port_1_word_r(0,0) | (EEPROM_read_bit() << 4) | (bit << 7);
 }
 
-/* video start / update */
 
-VIDEO_START(pirates)
-{
-	pirates_tilemap = tilemap_create(get_pirates_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32, 128);
 
-	if (!pirates_tilemap) return 1;
+/* Memory Maps */
 
-	return 0;
-}
+static MEMORY_READ16_START( pirates_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x300000, 0x300001, input_port_0_word_r },
+	{ 0x400000, 0x400001, pirates_in1_r },
+//	{ 0x500000, 0x5007ff, MRA16_RAM },
+	{ 0x800000, 0x803fff, MRA16_RAM },
+//	{ 0x900000, 0x903fff, MRA16_RAM },
+	{ 0xa00000, 0xa00001, OKIM6295_status_0_lsb_r },
+MEMORY_END
 
-VIDEO_UPDATE(pirates)
-{
-	tilemap_draw(bitmap,cliprect,pirates_tilemap,0,0);
-	pirates_drawsprites(bitmap,cliprect);
-}
+static MEMORY_WRITE16_START( pirates_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM }, // main ram
+	{ 0x500000, 0x5007ff, MWA16_RAM, &pirates_spriteram },
+//	{ 0x500800, 0x50080f, MWA16_RAM },
+	{ 0x600000, 0x600001, pirates_out_w },
+	{ 0x700000, 0x700001, MWA16_NOP },	// ??
+	{ 0x800000, 0x803fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x900000, 0x90017f, MWA16_RAM },  // more of tilemaps ?
+	{ 0x900180, 0x90137f, pirates_tx_tileram_w, &pirates_tx_tileram },
+	{ 0x901380, 0x90257f, pirates_fg_tileram_w, &pirates_fg_tileram },
+	{ 0x902580, 0x902a7f, MWA16_RAM },  // more of tilemaps ?
+	{ 0x902a80, 0x903c7f, pirates_bg_tileram_w, &pirates_bg_tileram },
+	{ 0x903c80, 0x904187, MWA16_RAM },  // more of tilemaps ?
+	{ 0xa00000, 0xa00001, OKIM6295_data_0_lsb_w },
+MEMORY_END
 
-/* graphic decodes */
 
-/* we don't know what they really are since the gfx roms are currently encrypted,
-   going on the content of spriteram sprite tiles are probably 16x16 tho, and
-   going on the front layer text tiles are probably 8x8 */
-
-static struct GfxLayout pirates1616_layout =
-{
-	16,16,
-	RGN_FRAC(1,4),
-	4,
-	{ 	0x080000*3*8, 	0x080000*2*8, 	0x080000*1*8,	0x080000*0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-	  8, 9,10,11,12,13,14,15 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	  8*16, 9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
-	16*16
-};
-
-static struct GfxLayout pirates88_layout =
-{
-	8,8,
-	RGN_FRAC(1,4),
-	4,
-	{ 	0x080000*3*8, 	0x080000*2*8, 	0x080000*1*8,	0x080000*0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-
-	{ REGION_GFX1, 0, &pirates1616_layout,  0, 256  },
-	{ REGION_GFX2, 0, &pirates1616_layout,  0, 256  },
-	{ REGION_GFX1, 0, &pirates88_layout,  0, 256  },
-	{ REGION_GFX2, 0, &pirates88_layout,  0, 256  },
-	{ -1 } /* end of array */
-};
 
 /* Input Ports */
 
@@ -172,10 +199,10 @@ INPUT_PORTS_START( pirates )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_HIGH,IPT_SPECIAL )		// EEPROM data
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )		// seems checked in "test mode"
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )		// seems checked in "test mode"
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_HIGH,IPT_SPECIAL )		// protection? (see pirates_in1_r)
 	/* What do these bits do ? */
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -185,86 +212,109 @@ INPUT_PORTS_START( pirates )
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	// IN2 - 0xa00000.w (only the LSB is read)
-	/* What do these bits do ? */
-	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
-/* Memory Maps */
 
-static MEMORY_READ16_START( pirates_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
-	{ 0x300000, 0x300001, input_port_0_word_r },
-	{ 0x400000, 0x400001, input_port_1_word_r },
-	{ 0x500000, 0x5007ff, MRA16_RAM },
-	{ 0x800000, 0x800fff, MRA16_RAM },
-	{ 0x800000, 0x803fff, MRA16_RAM },
-	{ 0x900000, 0x903fff, MRA16_RAM },
-	{ 0x904000, 0x907fff, MRA16_RAM },
-	{ 0xA00000, 0xA00001, input_port_2_word_r }, // To be confirmed
-MEMORY_END
+static struct GfxLayout charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 8*0, 8*1, 8*2, 8*3, 8*4, 8*5, 8*6, 8*7 },
+	8*8
+};
 
-static MEMORY_WRITE16_START( pirates_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM }, // main ram
-	{ 0x500000, 0x5007ff, MWA16_RAM, &pirates_spriteram },
-	{ 0x500800, 0x50080f, MWA16_RAM },
-	{ 0x600000, 0x600001, MWA16_NOP },
-	{ 0x700000, 0x700001, MWA16_RAM },
-	{ 0x800000, 0x803fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 }, // pal?
-	{ 0x900000, 0x903fff, pirates_tileram_w, &pirates_tileram }, // tilemaps ?
-	{ 0x904000, 0x907fff, MWA16_RAM },  // more of tilemaps ?
-MEMORY_END
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 7, 6, 5, 4, 3, 2, 1, 0,
+	 15,14,13,12,11,10, 9, 8 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+	  8*16, 9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
+	16*16
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+
+	{ REGION_GFX1, 0, &charlayout,   0x0000, 3*128 },
+	{ REGION_GFX2, 0, &spritelayout, 0x1800,   128 },
+	{ -1 } /* end of array */
+};
+
+
 
 /* Machine Driver + Related bits */
 
-static INTERRUPT_GEN( pirates_interrupt ) {
+static struct OKIM6295interface okim6295_interface =
+{
+	1,                  /* 1 chip */
+	{ 8000 },           /* 8000Hz frequency? */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 100 }
+};
 
-	if( cpu_getiloops() == 0 )
-	{
-		cpu_set_irq_line(0, 1, HOLD_LINE); // vbl?
-	}
-	else
-	{
-//		cpu_set_irq_line(0, 2, HOLD_LINE);
-	}
-}
+
 
 static MACHINE_DRIVER_START( pirates )
 	MDRV_CPU_ADD(M68000, 16000000) /* either 16mhz or 12mhz */
 	MDRV_CPU_MEMORY(pirates_readmem,pirates_writemem)
-//	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
-	MDRV_CPU_VBLANK_INT(pirates_interrupt,2)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_NVRAM_HANDLER(pirates)
+
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 40*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 40*8-1)
+	MDRV_SCREEN_SIZE(36*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(0x2000)
 
 	MDRV_VIDEO_START(pirates)
 	MDRV_VIDEO_UPDATE(pirates)
 
-//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
+
+
+
+
+/* Rom Loading */
+
+ROM_START( pirates )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code (encrypted) */
+	ROM_LOAD16_BYTE( "r_449b.bin",  0x00000, 0x80000, 0x224aeeda )
+	ROM_LOAD16_BYTE( "l_5c1e.bin",  0x00001, 0x80000, 0x46740204 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "p4_4d48.bin", 0x000000, 0x080000, 0x89fda216 )
+	ROM_LOAD( "p2_5d74.bin", 0x080000, 0x080000, 0x40e069b4 )
+	ROM_LOAD( "p1_7b30.bin", 0x100000, 0x080000, 0x26d78518 )
+	ROM_LOAD( "p8_9f4f.bin", 0x180000, 0x080000, 0xf31696ea )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "s1_6e89.bin", 0x000000, 0x080000, 0xc78a276f )
+	ROM_LOAD( "s2_6df3.bin", 0x080000, 0x080000, 0x9f0bad96 )
+	ROM_LOAD( "s4_fdcc.bin", 0x100000, 0x080000, 0x8916ddb5 )
+	ROM_LOAD( "s8_4b7c.bin", 0x180000, 0x080000, 0x1c41bd2c )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0) /* OKI samples (encrypted) */
+	ROM_LOAD( "s89_49d4.bin", 0x000000, 0x080000, 0x63a739ec )
+ROM_END
+
 
 /* Init */
 
-void pirates_decrypt_68k(void)
+static void pirates_decrypt_68k(void)
 {
     int rom_size;
     UINT16 *buf, *rom;
@@ -293,53 +343,99 @@ void pirates_decrypt_68k(void)
         rom[i] = (vr<<8) | vl;
     }
     free (buf);
-
-/* save to a file */
-#if 0
-	{
-		FILE *fp;
-		fp=fopen("pirates.dmp", "w+b");
-		if (fp)
-		{
-			fwrite(rom, rom_size, 1, fp);
-			fclose(fp);
-		}
-	}
-#endif
-
 }
+
+static void pirates_decrypt_p(void)
+{
+    int rom_size;
+    UINT8 *buf, *rom;
+    int i;
+
+    rom_size = memory_region_length(REGION_GFX1);
+
+    buf = malloc(rom_size);
+
+    if (!buf) return;
+
+    rom = memory_region(REGION_GFX1);
+    memcpy (buf, rom, rom_size);
+
+    for (i=0; i<rom_size/4; i++)
+    {
+		int adr = BITSWAP24(i,23,22,21,20,19,18,10,2,5,9,7,13,16,14,11,4,1,6,12,17,3,0,15,8);
+		rom[adr+0*(rom_size/4)] = BITSWAP8(buf[i+0*(rom_size/4)], 2,3,4,0,7,5,1,6);
+		rom[adr+1*(rom_size/4)] = BITSWAP8(buf[i+1*(rom_size/4)], 4,2,7,1,6,5,0,3);
+		rom[adr+2*(rom_size/4)] = BITSWAP8(buf[i+2*(rom_size/4)], 1,4,7,0,3,5,6,2);
+		rom[adr+3*(rom_size/4)] = BITSWAP8(buf[i+3*(rom_size/4)], 2,3,4,0,7,5,1,6);
+    }
+    free (buf);
+}
+
+static void pirates_decrypt_s(void)
+{
+    int rom_size;
+    UINT8 *buf, *rom;
+    int i;
+
+    rom_size = memory_region_length(REGION_GFX2);
+
+    buf = malloc(rom_size);
+
+    if (!buf) return;
+
+    rom = memory_region(REGION_GFX2);
+    memcpy (buf, rom, rom_size);
+
+    for (i=0; i<rom_size/4; i++)
+    {
+		int adr = BITSWAP24(i,23,22,21,20,19,18,17,5,12,14,8,3,0,7,9,16,4,2,6,11,13,1,10,15);
+		rom[adr+0*(rom_size/4)] = BITSWAP8(buf[i+0*(rom_size/4)], 4,2,7,1,6,5,0,3);
+		rom[adr+1*(rom_size/4)] = BITSWAP8(buf[i+1*(rom_size/4)], 1,4,7,0,3,5,6,2);
+		rom[adr+2*(rom_size/4)] = BITSWAP8(buf[i+2*(rom_size/4)], 2,3,4,0,7,5,1,6);
+		rom[adr+3*(rom_size/4)] = BITSWAP8(buf[i+3*(rom_size/4)], 4,2,7,1,6,5,0,3);
+    }
+    free (buf);
+}
+
+
+static void pirates_decrypt_oki(void)
+{
+    int rom_size;
+    UINT8 *buf, *rom;
+    int i;
+
+    rom_size = memory_region_length(REGION_SOUND1);
+
+    buf = malloc(rom_size);
+
+    if (!buf) return;
+
+    rom = memory_region(REGION_SOUND1);
+    memcpy (buf, rom, rom_size);
+
+    for (i=0; i<rom_size; i++)
+    {
+		int adr = BITSWAP24(i,23,22,21,20,19,10,16,13,8,4,7,11,14,17,12,6,2,0,5,18,15,3,1,9);
+		rom[adr] = BITSWAP8(buf[i], 2,3,4,0,7,5,1,6);
+    }
+    free (buf);
+}
+
 
 static DRIVER_INIT( pirates )
 {
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+
 	pirates_decrypt_68k();
-//	pirates_decrypt_p();
-//	pirates_decrypt_s();
-//	pirates_decrypt_oki();
+	pirates_decrypt_p();
+	pirates_decrypt_s();
+	pirates_decrypt_oki();
+
+	/* patch out protection check */
+	rom[0x62c0/2] = 0x6006; // beq -> bra
 }
 
-/* Rom Loading */
-
-ROM_START( pirates )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "r_449b.bin",  0x00000, 0x80000, 0x224aeeda )
-	ROM_LOAD16_BYTE( "l_5c1e.bin",  0x00001, 0x80000, 0x46740204 )
-
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* GFX */
-	ROM_LOAD( "p1_7b30.bin", 0x000000, 0x080000, 0x26d78518 )
-	ROM_LOAD( "p2_5d74.bin", 0x080000, 0x080000, 0x40e069b4 )
-	ROM_LOAD( "p4_4d48.bin", 0x100000, 0x080000, 0x89fda216 )
-	ROM_LOAD( "p8_9f4f.bin", 0x180000, 0x080000, 0xf31696ea )
-
-	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* GFX */
-	ROM_LOAD( "s1_6e89.bin", 0x000000, 0x080000, 0xc78a276f )
-	ROM_LOAD( "s2_6df3.bin", 0x080000, 0x080000, 0x9f0bad96 )
-	ROM_LOAD( "s4_fdcc.bin", 0x100000, 0x080000, 0x8916ddb5 )
-	ROM_LOAD( "s8_4b7c.bin", 0x180000, 0x080000, 0x1c41bd2c )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0) /* sound? */
-	ROM_LOAD( "s89_49d4.bin", 0x000000, 0x080000, 0x63a739ec )
-ROM_END
 
 /* GAME */
 
-GAMEX(1994, pirates, 0, pirates, pirates, pirates, ROT90, "NIX", "Pirates", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME(1994, pirates, 0, pirates, pirates, pirates, 0, "NIX", "Pirates" )

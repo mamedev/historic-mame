@@ -177,11 +177,12 @@ PALETTE_INIT( tankbust )
 	}
 }
 
-
+#if 0
 static READ_HANDLER( read_from_unmapped_memory )
 {
 	return 0xff;
 }
+#endif
 
 static int variable_data=0x11;
 static READ_HANDLER( some_changing_input )

@@ -9,8 +9,6 @@
 extern UINT8 turbo_opa, turbo_opb, turbo_opc;
 extern UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
 extern UINT8 turbo_fbpla, turbo_fbcol;
-extern UINT8 turbo_segment_data[32];
-extern UINT8 turbo_speed;
 
 extern UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
 
@@ -26,7 +24,11 @@ WRITE_HANDLER( turbo_8279_w );
 READ_HANDLER( turbo_collision_r );
 WRITE_HANDLER( turbo_collision_clear_w );
 WRITE_HANDLER( turbo_coin_and_lamp_w );
+
 void turbo_rom_decode(void);
+
+void turbo_update_tachometer(void);
+void turbo_update_segments(void);
 
 READ_HANDLER( buckrog_cpu2_command_r );
 READ_HANDLER( buckrog_port_2_r );

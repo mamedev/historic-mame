@@ -52,20 +52,22 @@ OUTPUT PORTS
 Some registers move from game to game.. following example strider
 0x66-0x67	Layer control register
 			bits 14-15 seem to be unused
+				ghouls sets bits 15 in service mode when you press button 2 in
+				the input test
 			bits 6-13 (4 groups of 2 bits) select layer draw order
 			bits 1-5 enable the three tilemap layers and the two starfield
 				layers (the bit order changes from game to game).
 				Only Forgotten Worlds and Strider use the starfield.
 			bit 0 could be rowscroll related. It is set by bionic commando,
-			varth, mtwins, mssword, cawing while rowscroll is active. However
-			kodj and sf2 do NOT set this bit while they are using rowscroll.
-			Games known to use row scrolling:
-			SF2
-			Mega Twins (underwater, cave)
-			Carrier Air Wing (hazy background at beginning of mission 8, put 07 at ff8501 to jump there)
-			Magic Sword (fire on floor 3; screen distort after continue)
-			Varth (title screen)
-			Bionic Commando (end game sequence)
+				varth, mtwins, mssword, cawing while rowscroll is active. However
+				kodj and sf2 do NOT set this bit while they are using rowscroll.
+				Games known to use row scrolling:
+				SF2
+				Mega Twins (underwater, cave)
+				Carrier Air Wing (hazy background at beginning of mission 8, put 07 at ff8501 to jump there)
+				Magic Sword (fire on floor 3; screen distort after continue)
+				Varth (title screen)
+				Bionic Commando (end game sequence)
 0x68-0x69	Priority mask \   Tiles in the layer just below sprites can have
 0x6a-0x6b	Priority mask |   four priority levels, each one associated with one
 0x6c-0x6d	Priority mask |   of these masks. The masks indicate pens in the tile
@@ -166,7 +168,7 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 /* Game specific data */
 struct CPS1config
 {
-	char *name;             /* game driver name */
+	const char *name;             /* game driver name */
 
 	/* Some games interrogate a couple of registers on bootup. */
 	/* These are CPS1 board B self test checks. They wander from game to */
@@ -225,10 +227,9 @@ struct CPS1config *cps1_game_config;
 #define BATTRY_2 0x00,0x0000, 0x5e,0x5c,0x5a,0x58, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x30,0x08,0x30,0x00,0x00}
 #define BATTRY_3 0x00,0x0000, 0x46,0x44,0x42,0x40, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x20,0x12,0x12,0x00,0x00}
 #define BATTRY_4 0x00,0x0000, 0x46,0x44,0x42,0x40, 0x68,{0x66,0x64,0x62,0x60},0x70, {0x20,0x10,0x02,0x00,0x00}
-#define BATTRY_5 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x6e,{0x66,0x70,0x68,0x72},0x6a, {0x02,0x0c,0x0c,0x00,0x00}
-#define BATTRY_6 0x00,0x0000, 0x4e,0x4c,0x4a,0x48, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x20,0x06,0x06,0x00,0x00}
-#define BATTRY_7 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x20,0x14,0x14,0x00,0x00}
-#define BATTRY_8 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x6c,{0x00,0x00,0x00,0x00},0x52, {0x14,0x02,0x14,0x00,0x00}
+#define BATTRY_5 0x00,0x0000, 0x4e,0x4c,0x4a,0x48, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x20,0x06,0x06,0x00,0x00}
+#define BATTRY_6 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x60,{0x6e,0x6c,0x6a,0x68},0x70, {0x20,0x14,0x14,0x00,0x00}
+#define BATTRY_7 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x6c,{0x00,0x00,0x00,0x00},0x52, {0x14,0x02,0x14,0x00,0x00}
 #define QSOUND_1 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,{0x64,0x66,0x68,0x6a},0x6c, {0x10,0x08,0x04,0x00,0x00}
 #define QSOUND_2 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,{0x4c,0x4e,0x40,0x42},0x44, {0x16,0x16,0x16,0x00,0x00}
 #define QSOUND_3 0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,{0x54,0x56,0x48,0x4a},0x4c, {0x04,0x02,0x20,0x00,0x00}
@@ -251,17 +252,18 @@ static struct CPS1config cps1_config_table[]=
 	{"dwj",     UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
 	{"willow",  UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
 	{"willowj", UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
-	{"unsquad", CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
-	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
 	{"ffight",  CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"ffightu", CPS_B_01, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"ffightj", CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"1941",    CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
 	{"1941j",   CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
+	{"unsquad", CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
+	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
 	{"mercs",   CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsu",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsj",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"msword",  CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mswordr1",CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mswordu", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mswordj", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mtwins",  CPS_B_14, 0,0,0, 0x0000,0x3fff,0x0e00,0xffff },
@@ -274,6 +276,7 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2ua",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ub",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ue",   CPS_B_18, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2uf",   CPS_B_15, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ui",   CPS_B_14, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2j",    CPS_B_13, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ja",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
@@ -301,15 +304,16 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2red",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2v004", NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2accp2",NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"varth",   BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
-	{"varthu",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
-	{"varthj",  BATTRY_6, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (72=0001) */
-	{"cworld2j",BATTRY_7, 0,0,0, 0x0000,0xffff,0x0000,0xffff },  /* The 0x76 priority values are incorrect values */
+	{"varth",   CPS_B_04, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
+	{"varthu",  CPS_B_04, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
+	{"varthj",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (72=0001) */
+	{"cworld2j",BATTRY_6, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* The 0x76 priority values are incorrect values */
 	{"wof",     CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
 	{"wofa",    CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
 	{"wofu",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"wofj",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"dino",    QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
+	{"dinou",   QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"dinoj",   QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"punisher",QSOUND_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"punishru",QSOUND_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
@@ -321,7 +325,7 @@ static struct CPS1config cps1_config_table[]=
 	{"mbombrdj",QSOUND_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2t",    NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2tj",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"qad",     BATTRY_8, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* TODO: layer enable */
+	{"qad",     BATTRY_7, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* TODO: layer enable */
 	{"qadj",    NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"qtono2",  NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"megaman", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
@@ -966,8 +970,9 @@ static void get_tile0_info(int tile_index)
 			TILE_FLIPYX((attr & 0x60) >> 5) | TILE_SPLIT((attr & 0x0180) >> 7))
 	tile_info.skip = 8;
 
-	/* 0x0020 appears to never be drawn */
-	if (code == 0x0020)
+	/* 0x0020 appears to never be drawn for CPS1 games (it is drawn for CPS2 games though, see gigawing '0' in score for example) */
+
+	if (cps_version == 1 && code == 0x0020)
 	{
 		tile_info.pen_data = empty_tile;
 		tile_info.pen_usage = 0x8000;
@@ -1831,13 +1836,28 @@ if (0 && keyboard_pressed(KEYCODE_Z))
 		if (l1 == 0) { l1 = l2; l2 = 0; l1pri = l2pri; }
 		if (l2 == 0) { l2 = l3; l3 = 0; l2pri = l3pri; }
 
-		for (i = 0;i < 8;i++)
 		{
-			primasks[i] = 0;
-			if (i <= l0pri) primasks[i] |= 0xaa;
-			if (i <= l1pri) primasks[i] |= 0xcc;
-			if (i <= l2pri) primasks[i] |= 0xf0;
+			int mask0 = 0xaa;
+			int mask1 = 0xcc;
+			if(l0pri>l1pri) mask0 &= ~0x88;
+			if(l0pri>l2pri) mask0 &= ~0xa0;
+			if(l1pri>l2pri) mask1 &= ~0xc0;
+
+			primasks[0] = 0xff;
+			for (i = 1;i < 8;i++)
+			{
+				if (i <= l0pri && i <= l1pri && i <= l2pri)
+				{
+					primasks[i] = 0xfe;
+					continue;
+				}
+				primasks[i] = 0;
+				if (i <= l0pri) primasks[i] |= mask0;
+				if (i <= l1pri) primasks[i] |= mask1;
+				if (i <= l2pri) primasks[i] |= 0xf0;
+			}
 		}
+
 		cps1_render_layer(bitmap,cliprect,l0,1);
 		cps1_render_layer(bitmap,cliprect,l1,2);
 		cps1_render_layer(bitmap,cliprect,l2,4);

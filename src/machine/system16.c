@@ -2211,7 +2211,7 @@ struct UPD7759_interface sys16_upd7759_interface =
 struct YM2413interface sys16_ym2413_interface= {
 	1,
 	3579545,	/* ??? */
-	{ 60 },
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 struct RF5C68interface sys18_rf5c68_interface = {

@@ -355,7 +355,7 @@ static struct YM2413interface ym2413_interface =
 {
 	1,
 	ATARI_CLOCK_14MHz/4,
-	{ 100 }
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 

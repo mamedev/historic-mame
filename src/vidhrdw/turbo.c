@@ -86,15 +86,6 @@ PALETTE_INIT( turbo )
 
 		palette_set_color(adjusted_index,r,g,b);
 	}
-
-	/* LED segments colors: black and red */
-	palette_set_color(512+0,0x00,0x00,0x00);
-	palette_set_color(512+1,0xff,0x00,0x00);
-	/* Tachometer colors: Led colors + yellow and green */
-	palette_set_color(512+2+0,0x00,0x00,0x00);
-	palette_set_color(512+2+1,0xff,0xff,0x00);
-	palette_set_color(512+2+2,0x00,0x00,0x00);
-	palette_set_color(512+2+3,0x00,0xff,0x00);
 }
 
 
@@ -127,10 +118,6 @@ PALETTE_INIT( subroc3d )
 
 		palette_set_color(i,r,g,b);
 	}
-
-	/* LED segments colors: black and red */
-	palette_set_color(512+0,0x00,0x00,0x00);
-	palette_set_color(512+1,0xff,0x00,0x00);
 }
 
 
@@ -170,13 +157,13 @@ PALETTE_INIT( buckrog )
 		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
-		bit0 = 
+		bit0 =
 		bit1 = (*color_prom >> 0) & 1;
 		bit2 = (*color_prom >> 1) & 1;
 		r = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* green component */
-		bit0 = 
+		bit0 =
 		bit1 = (*color_prom >> 2) & 1;
 		bit2 = (*color_prom >> 3) & 1;
 		g = 34 * bit0 + 68 * bit1 + 137 * bit2;
@@ -216,10 +203,6 @@ PALETTE_INIT( buckrog )
 
 		palette_set_color(i+1024+512,r,g,b);
 	}
-
-	/* LED segments colors: black and red */
-	palette_set_color(1024+512+256+0,0x00,0x00,0x00);
-	palette_set_color(1024+512+256+1,0xff,0x00,0x00);
 }
 
 
@@ -243,7 +226,7 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 	sprite_expanded_data = auto_malloc(sprite_length * 2 * sizeof(UINT32));
 	if (!sprite_expanded_data)
 		return 1;
-	
+
 	/* allocate the expanded sprite enable array */
 	sprite_expanded_enable = auto_malloc(sprite_length * 2 * sizeof(UINT8));
 	if (!sprite_expanded_enable)
@@ -273,7 +256,7 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 			sprite_enable[j] <<= 1;
 		}
 	}
-	
+
 	/* success */
 	return 0;
 }
@@ -293,7 +276,7 @@ static int init_fore(void)
 	UINT16 *dst;
 	UINT8 *src;
 	int i, j;
-	
+
 	/* allocate the expanded foreground data */
 	fore_expanded_data = auto_malloc(fore_length);
 	if (!fore_expanded_data)
@@ -315,7 +298,7 @@ static int init_fore(void)
 		}
 		*dst++ = newbits;
 	}
-	
+
 	return 0;
 }
 
@@ -395,7 +378,7 @@ VIDEO_START( subroc3d )
 	UINT32 sprite_expand[16];
 	UINT8 sprite_enable[16];
 	int i;
-	
+
 	/* determine ROM/PROM addresses */
 	sprite_priority = memory_region(REGION_PROMS) + 0x0500;
 	fore_palette = memory_region(REGION_PROMS) + 0x0200;
@@ -443,7 +426,7 @@ VIDEO_START( buckrog )
 	UINT32 sprite_expand[16];
 	UINT8 sprite_enable[16];
 	int i;
-	
+
 	/* determine ROM/PROM addresses */
 	fore_priority = memory_region(REGION_PROMS) + 0x400;
 	back_data = memory_region(REGION_GFX3);
@@ -482,7 +465,7 @@ VIDEO_START( buckrog )
 		else sprite_expanded_priority[i] = 0;
 		sprite_expanded_priority[i] *= 4;
 	}
-	
+
 	/* allocate the bitmap RAM */
 	buckrog_bitmap_ram = auto_malloc(0xe000);
 	if (!buckrog_bitmap_ram)
@@ -546,7 +529,7 @@ static void subroc3d_update_sprite_info(void)
 {
 	struct sprite_params_data *data = sprite_params;
 	int i;
-	
+
 	/* first loop over all sprites and update those whose scanlines intersect ours */
 	for (i = 0; i < 16; i++, data++)
 	{
@@ -696,154 +679,11 @@ static void draw_sprites(UINT32 *dest, UINT8 *edest, int scanline, UINT8 mask, i
 
 /***************************************************************************
 
-	Extra rendering
-
-***************************************************************************/
-
-static void turbo_draw_scores(struct mame_bitmap *bitmap, int yoffs)
-{
-	struct rectangle clip;
-	int offs, x, y;
-
-	/* erase the previous area */
-	clip = Machine->visible_area;
-	clip.max_y = yoffs;
-	fillbitmap(bitmap, Machine->pens[0], &clip);
-
-	/* current score */
-	offs = 31;
-	for (y = 0; y < 5; y++, offs--)
-		drawgfx(bitmap, Machine->gfx[0],
-				turbo_segment_data[offs],
-				0,
-				0, 0,
-				14*8, (2 + y) * 8,
-				&Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-	/* high scores */
-	for (x = 0; x < 5; x++)
-	{
-		offs = 6 + x * 5;
-		for (y = 0; y < 5; y++, offs--)
-			drawgfx(bitmap, Machine->gfx[0],
-					turbo_segment_data[offs],
-					0,
-					0, 0,
-					(20 + 2 * x) * 8, (2 + y) * 8,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-
-	/* tachometer */
-	clip = Machine->visible_area;
-	clip.min_x = 5*8;
-	clip.max_x = clip.min_x + 1;
-	for (y = 0; y < 22; y++)
-	{
-		static UINT8 led_color[] = { 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0 };
-		int code = ((y / 2) <= turbo_speed) ? 0 : 1;
-
-		drawgfx(bitmap, Machine->gfx[1],
-				code,
-				led_color[y / 2],
-				0,0,
-				5*8, y*2+8,
-				&clip, TRANSPARENCY_NONE, 0);
-		if (y % 3 == 2)
-			clip.max_x++;
-	}
-
-	/* shifter status */
-	if (readinputport(0) & 0x04)
-	{
-		drawgfx(bitmap, Machine->gfx[2], 'H', 0, 0,0, 2*8,3*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->gfx[2], 'I', 0, 0,0, 2*8,4*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-	else
-	{
-		drawgfx(bitmap, Machine->gfx[2], 'L', 0, 0,0, 2*8,3*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->gfx[2], 'O', 0, 0,0, 2*8,4*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-}
-
-
-static void subroc3d_draw_scores(struct mame_bitmap *bitmap, int yoffs)
-{
-	struct rectangle clip;
-	int offs, x, y;
-
-	/* erase the previous area */
-	clip = Machine->visible_area;
-	clip.max_y = yoffs;
-	fillbitmap(bitmap, Machine->pens[0], &clip);
-
-	/* current score */
-	offs = 5;
-	for (x = 0; x < 6; x++, offs--)
-		drawgfx(bitmap, Machine->gfx[0],
-				turbo_segment_data[offs ^ 1],
-				0,
-				1, 0,
-				30*8 - (1 + x) * 8, 4,
-				&Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-	/* high scores */
-	for (y = 0; y < 3; y++)
-	{
-		offs = 6 * y + 11;
-		for (x = 0; x < 6; x++, offs--)
-			drawgfx(bitmap, Machine->gfx[0],
-					turbo_segment_data[offs ^ 1],
-					0,
-					1, 0,
-					30*8 - (11 + y * 7 + x) * 8, 4,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-}
-
-
-static void buckrog_draw_scores(struct mame_bitmap *bitmap, int xoffs)
-{
-	struct rectangle clip;
-	int offs, x, y;
-
-	/* erase the previous area */
-	clip = Machine->visible_area;
-	clip.max_x = xoffs;
-	fillbitmap(bitmap, Machine->pens[0], &clip);
-
-	/* high scores */
-	for (y = 0; y < 5; y++)
-	{
-		offs = 9 + y * 5;
-		for (x = 0; x < 5; x++, offs--)
-			drawgfx(bitmap, Machine->gfx[0],
-					turbo_segment_data[offs],
-					0,
-					0, 0,
-					(1 + x) * 8, 4*8 + 2*8 * y,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-
-	/* current score */
-	offs = 4;
-	for (x = 0; x < 5; x++, offs--)
-		drawgfx(bitmap, Machine->gfx[0],
-				turbo_segment_data[offs],
-				0,
-				0, 0,
-				(1 + x) * 8, 20*8,
-				&Machine->visible_area, TRANSPARENCY_NONE, 0);
-}
-
-
-
-/***************************************************************************
-
 	Core drawing routines
 
 ***************************************************************************/
 
-static void turbo_render(struct mame_bitmap *bitmap, int yoffs)
+static void turbo_render(struct mame_bitmap *bitmap)
 {
 	UINT8 *overall_priority_base = &overall_priority[(turbo_fbpla & 8) << 6];
 	UINT8 *sprite_priority_base = &sprite_priority[(turbo_fbpla & 7) << 7];
@@ -971,12 +811,12 @@ static void turbo_render(struct mame_bitmap *bitmap, int yoffs)
 
 		/* render the scanline */
 		if (bitmap)
-			draw_scanline8(bitmap, 8, y + yoffs, VIEW_WIDTH - 8, &scanline[8], colortable, -1);
+			draw_scanline8(bitmap, 8, y, VIEW_WIDTH - 8, &scanline[8], colortable, -1);
 	}
 }
 
 
-static void subroc3d_render(struct mame_bitmap *bitmap, int yoffs)
+static void subroc3d_render(struct mame_bitmap *bitmap)
 {
 	UINT8 *sprite_priority_base = &sprite_expanded_priority[(subroc3d_ply & 15) << 8];
 	pen_t *colortable;
@@ -1035,12 +875,12 @@ static void subroc3d_render(struct mame_bitmap *bitmap, int yoffs)
 		}
 
 		/* render the scanline */
-		draw_scanline8(bitmap, 0, y + yoffs, VIEW_WIDTH, scanline, colortable, -1);
+		draw_scanline8(bitmap, 0, y, VIEW_WIDTH, scanline, colortable, -1);
 	}
 }
 
 
-static void buckrog_render(struct mame_bitmap *bitmap, int xoffs)
+static void buckrog_render(struct mame_bitmap *bitmap)
 {
 	int y;
 
@@ -1105,7 +945,7 @@ static void buckrog_render(struct mame_bitmap *bitmap, int xoffs)
 		}
 
 		/* render the scanline */
-		draw_scanline16(bitmap, xoffs, y, VIEW_WIDTH, scanline, Machine->pens, -1);
+		draw_scanline16(bitmap, 0, y, VIEW_WIDTH, scanline, Machine->pens, -1);
 	}
 }
 
@@ -1121,7 +961,7 @@ VIDEO_EOF( turbo )
 {
 	/* only do collision checking if we didn't draw */
 	if (!drew_frame)
-		turbo_render(NULL, 0);
+		turbo_render(NULL);
 	drew_frame = 0;
 }
 
@@ -1129,10 +969,10 @@ VIDEO_EOF( turbo )
 VIDEO_UPDATE( turbo )
 {
 	/* perform the actual drawing */
-	turbo_render(bitmap, 64);
+	turbo_render(bitmap);
 
 	/* draw the LEDs for the scores */
-	turbo_draw_scores(bitmap, 64+4);
+	turbo_update_segments();
 
 	/* indicate that we drew this frame, so that the eof callback doesn't bother doing anything */
 	drew_frame = 1;
@@ -1142,20 +982,20 @@ VIDEO_UPDATE( turbo )
 VIDEO_UPDATE( subroc3d )
 {
 	/* perform the actual drawing */
-	subroc3d_render(bitmap, 16);
+	subroc3d_render(bitmap);
 
 	/* draw the LEDs for the scores */
-	subroc3d_draw_scores(bitmap, 16);
+	turbo_update_segments();
 }
 
 
 VIDEO_UPDATE( buckrog )
 {
 	/* perform the actual drawing */
-	buckrog_render(bitmap, 7*8);
+	buckrog_render(bitmap);
 
 	/* draw the LEDs for the scores */
-	buckrog_draw_scores(bitmap, 7*8);
+	turbo_update_segments();
 }
 
 

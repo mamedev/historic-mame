@@ -658,7 +658,7 @@ static struct YM2608interface ym2608_interface =
 	{ 0 },
 	{ sound_irq },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 struct YM2610interface ym2610_interface =
@@ -681,11 +681,11 @@ struct YM2610interface ym2610_interface =
 static NVRAM_HANDLER( bbusters )
 {
 	if( read_or_write ) {
-		osd_fwrite (file, eprom_data, 0x80);
+		mame_fwrite (file, eprom_data, 0x80);
 	}
 	else {
 		if (file)
-			osd_fread (file, eprom_data, 0x80);
+			mame_fread (file, eprom_data, 0x80);
 		else
 			memset (eprom_data, 0xff, 0x80);
 	}
@@ -862,7 +862,7 @@ ROM_START( mechatt )
 	/* ma9 is identical to ma8 */
 ROM_END
 
-
+#if 0
 static void bbusters_patch_code(UINT16 offset)
 {
 	/* To avoid checksum error */
@@ -876,7 +876,7 @@ static void bbusters_patch_code(UINT16 offset)
 	RAM[(offset + 30)/2] = 0x4e71;
 	RAM[(offset + 32)/2] = 0x4e71;
 }
-
+#endif
 
 DRIVER_INIT( bbusters )
 {

@@ -1,60 +1,12 @@
 /***************************************************************************
 
- Amidar driver
-
-
- Very similar to Scramble/Super Cobra
+ Amidar hardware
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "galaxian.h"
 
-
-extern unsigned char *galaxian_videoram;
-extern unsigned char *galaxian_spriteram;
-extern unsigned char *galaxian_attributesram;
-extern size_t galaxian_spriteram_size;
-
-PALETTE_INIT( turtles );
-WRITE_HANDLER( scramble_background_red_w );
-WRITE_HANDLER( scramble_background_green_w );
-WRITE_HANDLER( scramble_background_blue_w );
-WRITE_HANDLER( galaxian_flip_screen_x_w );
-WRITE_HANDLER( galaxian_flip_screen_y_w );
-VIDEO_UPDATE( galaxian );
-
-extern struct AY8910interface scobra_ay8910_interface;
-extern const struct Memory_ReadAddress scobra_sound_readmem[];
-extern const struct Memory_WriteAddress scobra_sound_writemem[];
-extern const struct IO_ReadPort scobra_sound_readport[];
-extern const struct IO_WritePort scobra_sound_writeport[];
-
-extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
-
-DRIVER_INIT( scramble_ppi );
-DRIVER_INIT( amidar );
-
-MACHINE_INIT( scramble );
-
-VIDEO_START( turtles );
-
-READ_HANDLER(amidar_ppi8255_0_r);
-READ_HANDLER(amidar_ppi8255_1_r);
-WRITE_HANDLER(amidar_ppi8255_0_w);
-WRITE_HANDLER(amidar_ppi8255_1_w);
-
-
-static WRITE_HANDLER( amidar_coina_w )
-{
-	coin_counter_w (0, data);
-	coin_counter_w (0, 0);
-}
-
-static WRITE_HANDLER( amidar_coinb_w )
-{
-	coin_counter_w (1, data);
-	coin_counter_w (1, 0);
-}
 
 
 static MEMORY_READ_START( readmem )
@@ -70,18 +22,18 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
-	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9000, 0x93ff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x9800, 0x983f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9860, 0x98ff, MWA_RAM },
 	{ 0xa000, 0xa000, scramble_background_red_w },
-	{ 0xa008, 0xa008, interrupt_enable_w },
+	{ 0xa008, 0xa008, galaxian_nmi_enable_w },
 	{ 0xa010, 0xa010, galaxian_flip_screen_x_w },
 	{ 0xa018, 0xa018, galaxian_flip_screen_y_w },
 	{ 0xa020, 0xa020, scramble_background_green_w },
 	{ 0xa028, 0xa028, scramble_background_blue_w },
-	{ 0xa030, 0xa030, amidar_coina_w },
-	{ 0xa038, 0xa038, amidar_coinb_w },
+	{ 0xa030, 0xa030, galaxian_coin_counter_0_w },
+	{ 0xa038, 0xa038, galaxian_coin_counter_1_w },
 	{ 0xb000, 0xb03f, amidar_ppi8255_0_w },
 	{ 0xb800, 0xb83f, amidar_ppi8255_1_w },
 MEMORY_END
@@ -427,31 +379,22 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( amidar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
 	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
 	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+8)
-	MDRV_COLORTABLE_LENGTH(8*4)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 
 	MDRV_PALETTE_INIT(turtles)
 	MDRV_VIDEO_START(turtles)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)

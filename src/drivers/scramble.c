@@ -1,53 +1,6 @@
 /***************************************************************************
 
-Scramble memory map (preliminary)
-
-MAIN BOARD:
-0000-3fff ROM
-4000-47ff RAM
-4800-4bff Video RAM
-5000-50ff Object RAM
-5000-503f  screen attributes
-5040-505f  sprites
-5060-507f  bullets
-5080-50ff  unused?
-
-read:
-7000      Watchdog Reset (Scramble)
-7800      Watchdog Reset (Battle of Atlantis)
-8100      IN0
-8101      IN1
-8102      IN2 (bits 5 and 7 used for protection check in Scramble)
-
-write:
-6801      interrupt enable
-6802      coin counter
-6803      ? (POUT1)
-6804      stars on
-6805      ? (POUT2)
-6806      screen vertical flip
-6807      screen horizontal flip
-8200      To AY-3-8910 port A (commands for the audio CPU)
-8201      bit 3 = interrupt trigger on audio CPU  bit 4 = AMPM (?)
-8202      protection check control?
-
-
-SOUND BOARD:
-0000-1fff ROM
-8000-83ff RAM
-
-I/0 ports:
-read:
-20      8910 #2  read
-80      8910 #1  read
-
-write
-10      8910 #2  control20      8910 #2  write
-40      8910 #1  control
-80      8910 #1  write
-
-interrupts:
-interrupt mode 1 triggered by the main CPU
+ Scramble hardware
 
 
 Interesting tidbit:
@@ -72,111 +25,8 @@ Notes:
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
 #include "machine/8255ppi.h"
-#include "vidhrdw/generic.h"
+#include "galaxian.h"
 
-
-extern unsigned char *galaxian_videoram;
-extern unsigned char *galaxian_spriteram;
-extern unsigned char *galaxian_attributesram;
-extern unsigned char *galaxian_bulletsram;
-extern size_t galaxian_spriteram_size;
-extern size_t galaxian_bulletsram_size;
-
-extern struct AY8910interface scobra_ay8910_interface;
-extern struct AY8910interface frogger_ay8910_interface;
-extern const struct Memory_ReadAddress scobra_sound_readmem[];
-extern const struct Memory_ReadAddress frogger_sound_readmem[];
-extern const struct Memory_WriteAddress scobra_sound_writemem[];
-extern const struct Memory_WriteAddress frogger_sound_writemem[];
-extern const struct IO_ReadPort scobra_sound_readport[];
-extern const struct IO_ReadPort frogger_sound_readport[];
-extern const struct IO_WritePort scobra_sound_writeport[];
-extern const struct IO_WritePort frogger_sound_writeport[];
-
-extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
-
-PALETTE_INIT( galaxian );
-PALETTE_INIT( scramble );
-PALETTE_INIT( mariner );
-PALETTE_INIT( frogger );
-WRITE_HANDLER( galaxian_videoram_w );
-READ_HANDLER( galaxian_videoram_r );
-WRITE_HANDLER( galaxian_stars_enable_w );
-
-DRIVER_INIT( scramble_ppi );
-DRIVER_INIT( atlantis );
-DRIVER_INIT( scramble );
-DRIVER_INIT( scrambls );
-DRIVER_INIT( theend );
-DRIVER_INIT( ckongs );
-DRIVER_INIT( mariner );
-DRIVER_INIT( froggers );
-DRIVER_INIT( mars );
-DRIVER_INIT( devilfsh );
-DRIVER_INIT( hotshock );
-DRIVER_INIT( cavelon );
-DRIVER_INIT( mrkougar );
-DRIVER_INIT( mrkougb );
-
-MACHINE_INIT( scramble );
-
-VIDEO_START( scramble );
-VIDEO_START( theend );
-VIDEO_START( mariner );
-VIDEO_START( ckongs );
-VIDEO_START( pisces );
-VIDEO_START( froggers );
-
-VIDEO_UPDATE( galaxian );
-
-WRITE_HANDLER( pisces_gfxbank_w );
-
-INTERRUPT_GEN( hunchbks_vh_interrupt );
-WRITE_HANDLER( galaxian_flip_screen_x_w );
-WRITE_HANDLER( galaxian_flip_screen_y_w );
-
-WRITE_HANDLER( hotshock_sh_irqtrigger_w );
-
-READ_HANDLER(mars_ppi8255_0_r);
-READ_HANDLER(mars_ppi8255_1_r);
-WRITE_HANDLER(mars_ppi8255_0_w);
-WRITE_HANDLER(mars_ppi8255_1_w);
-
-/* protection stuff. in machine\scramble.c */
-READ_HANDLER( triplep_pip_r );
-READ_HANDLER( triplep_pap_r );
-
-
-static WRITE_HANDLER( scramble_coin_counter_1_w )
-{
-	coin_counter_w(0, data);
-}
-
-static WRITE_HANDLER( scramble_coin_counter_2_w )
-{
-	coin_counter_w(1, data);
-}
-
-static WRITE_HANDLER( scramble_coin_counter_3_w )
-{
-	coin_counter_w(2, data);
-}
-
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
-}
-
-
-READ_HANDLER( hunchbks_mirror_r )
-{
-	return cpu_readmem16(0x1000+offset);
-}
-
-WRITE_HANDLER( hunchbks_mirror_w )
-{
-	cpu_writemem16(0x1000+offset,data);
-}
 
 
 static MEMORY_READ_START( scramble_readmem )
@@ -194,14 +44,14 @@ MEMORY_END
 static MEMORY_WRITE_START( scramble_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
 	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6801, 0x6801, interrupt_enable_w },
-	{ 0x6802, 0x6802, scramble_coin_counter_1_w },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
+	{ 0x6802, 0x6802, galaxian_coin_counter_w },
 	{ 0x6804, 0x6804, galaxian_stars_enable_w },
 	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
 	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
@@ -225,13 +75,13 @@ static MEMORY_WRITE_START( ckongs_writemem )
 	{ 0x6000, 0x6bff, MWA_RAM },
 	{ 0x7000, 0x7003, ppi8255_0_w },
 	{ 0x7800, 0x7803, ppi8255_1_w },
-	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
-	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9000, 0x93ff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x9800, 0x983f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x9880, 0x98ff, MWA_RAM },
-	{ 0xa801, 0xa801, interrupt_enable_w },
-	{ 0xa802, 0xa802, scramble_coin_counter_1_w },
+	{ 0xa801, 0xa801, galaxian_nmi_enable_w },
+	{ 0xa802, 0xa802, galaxian_coin_counter_w },
 	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
 	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
 MEMORY_END
@@ -251,15 +101,15 @@ MEMORY_END
 static MEMORY_WRITE_START( mars_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
-	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
+	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
 	{ 0x6801, 0x6801, galaxian_stars_enable_w },
-	{ 0x6802, 0x6802, interrupt_enable_w },
-	{ 0x6808, 0x6808, scramble_coin_counter_1_w },
+	{ 0x6802, 0x6802, galaxian_nmi_enable_w },
+	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
 	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
 	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
 	{ 0x8100, 0x810f, mars_ppi8255_0_w },
@@ -281,15 +131,15 @@ MEMORY_END
 static MEMORY_WRITE_START( newsin7_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
-	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
+	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
 	{ 0x6801, 0x6801, galaxian_stars_enable_w },
-	{ 0x6802, 0x6802, interrupt_enable_w },
-	{ 0x6808, 0x6808, scramble_coin_counter_1_w },
+	{ 0x6802, 0x6802, galaxian_nmi_enable_w },
+	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
 	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
 	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
 	{ 0x8200, 0x820f, mars_ppi8255_1_w },
@@ -301,15 +151,15 @@ MEMORY_END
 static MEMORY_WRITE_START( mrkougar_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
 	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
-	{ 0x6801, 0x6801, interrupt_enable_w },
-	{ 0x6808, 0x6808, scramble_coin_counter_1_w },
+	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
+	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
 	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
 	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
 	{ 0x8100, 0x810f, mars_ppi8255_0_w },
@@ -331,17 +181,17 @@ MEMORY_END
 static MEMORY_WRITE_START( hotshock_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
-	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6000, 0x6000, scramble_coin_counter_3_w },
-	{ 0x6002, 0x6002, scramble_coin_counter_2_w },
-	{ 0x6004, 0x6004, flip_screen_w },
-	{ 0x6005, 0x6005, scramble_coin_counter_1_w },
-	{ 0x6006, 0x6006, pisces_gfxbank_w },
-	{ 0x6801, 0x6801, interrupt_enable_w },
+	{ 0x6000, 0x6000, galaxian_coin_counter_2_w },
+	{ 0x6002, 0x6002, galaxian_coin_counter_1_w },
+	{ 0x6004, 0x6004, hotshock_flip_screen_w },
+	{ 0x6005, 0x6005, galaxian_coin_counter_0_w },
+	{ 0x6006, 0x6006, galaxian_gfxbank_w },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
 	{ 0x7000, 0x7000, watchdog_reset_w },
 	{ 0x8000, 0x8000, soundlatch_w },
 	{ 0x9000, 0x9000, hotshock_sh_irqtrigger_w },
@@ -366,14 +216,14 @@ MEMORY_END
 static MEMORY_WRITE_START( hunchbks_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x1210, 0x1213, ppi8255_1_w },
-	{ 0x1400, 0x143f, MWA_RAM, &galaxian_attributesram },
+	{ 0x1400, 0x143f, galaxian_attributesram_w, &galaxian_attributesram },
 	{ 0x1440, 0x145f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x1460, 0x147f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x1480, 0x14ff, MWA_RAM },
 	{ 0x1500, 0x1503, ppi8255_0_w },
 	{ 0x1606, 0x1606, galaxian_flip_screen_x_w },
 	{ 0x1607, 0x1607, galaxian_flip_screen_y_w },
-	{ 0x1800, 0x1bff, MWA_RAM, &galaxian_videoram },
+	{ 0x1800, 0x1bff, galaxian_videoram_w, &galaxian_videoram },
 	{ 0x1c00, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x3fff, hunchbks_mirror_w },
@@ -381,6 +231,90 @@ static MEMORY_WRITE_START( hunchbks_writemem )
 	{ 0x5000, 0x5fff, hunchbks_mirror_w },
 	{ 0x6000, 0x6fff, MWA_ROM },
 	{ 0x7000, 0x7fff, hunchbks_mirror_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( sfx_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
+	{ 0x5000, 0x50ff, MRA_RAM },
+	{ 0x7000, 0x7fff, MRA_ROM },
+	{ 0x8100, 0x8103, ppi8255_0_r },
+	{ 0x8200, 0x8203, ppi8255_1_r },
+	{ 0xc000, 0xefff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( sfx_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5080, 0x50ff, MWA_RAM },
+	{ 0x6800, 0x6800, scramble_background_red_w },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
+	{ 0x6802, 0x6802, galaxian_coin_counter_w },
+	{ 0x6803, 0x6803, scramble_background_blue_w },
+	{ 0x6804, 0x6804, galaxian_stars_enable_w },
+	{ 0x6805, 0x6805, scramble_background_green_w },
+	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
+	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
+	{ 0x7000, 0x7fff, MWA_ROM },
+	{ 0x8100, 0x8103, ppi8255_0_w },
+	{ 0x8200, 0x8203, ppi8255_1_w },
+	{ 0xc000, 0xefff, MWA_ROM },
+MEMORY_END
+
+static MEMORY_READ_START( sfx_sample_readmem )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( sfx_sample_writemem )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+MEMORY_END
+
+static PORT_READ_START( sfx_sample_readport )
+	{ 0x04, 0x07, ppi8255_2_r },
+MEMORY_END
+
+static PORT_WRITE_START( sfx_sample_writeport )
+	{ 0x04, 0x07, ppi8255_2_w },
+	{ 0x10, 0x10, DAC_0_signed_data_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( mimonkey_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x43ff, galaxian_videoram_r },	/* mirror address?, probably not */
+	{ 0x4400, 0x4bff, MRA_RAM },
+	{ 0x5000, 0x50ff, MRA_RAM },
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8100, 0x8103, ppi8255_0_r },
+	{ 0x8200, 0x8203, ppi8255_1_r },
+	{ 0xc000, 0xffff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( mimonkey_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, galaxian_videoram_w },	/* mirror address?, probably not */
+	{ 0x4400, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5080, 0x50ff, MWA_RAM },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
+	{ 0x6800, 0x6802, galaxian_gfxbank_w },
+	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
+	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
+	{ 0x8100, 0x8103, ppi8255_0_w },
+	{ 0x8200, 0x8203, ppi8255_1_w },
+	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
 
@@ -1040,6 +974,90 @@ INPUT_PORTS_START( cavelon )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sfx )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// "Fire" left
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// "Fire" right
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	// "Fire" left
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	// "Fire" right
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mimonkey )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )   /* used, something to do with the bullets */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 static struct GfxLayout devilfsh_charlayout =
 {
@@ -1085,6 +1103,7 @@ static struct GfxLayout newsin7_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+
 static struct GfxLayout mrkougar_charlayout =
 {
 	8,8,
@@ -1108,6 +1127,28 @@ static struct GfxLayout mrkougar_spritelayout =
 	64*8
 };
 
+static struct GfxLayout sfx_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	RGN_FRAC(1,4),
+	2,	/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout sfx_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	RGN_FRAC(1,4),
+	2,	/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
 
 static struct GfxDecodeInfo devilfsh_gfxdecodeinfo[] =
 {
@@ -1130,7 +1171,12 @@ static struct GfxDecodeInfo mrkougar_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+struct GfxDecodeInfo sfx_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0800, &sfx_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x0000, &sfx_spritelayout,  0, 8 },
+	{ -1 } /* end of array */
+};
 
 static struct AY8910interface triplep_ay8910_interface =
 {
@@ -1143,40 +1189,48 @@ static struct AY8910interface triplep_ay8910_interface =
 	{ 0 }
 };
 
+static struct AY8910interface sfx_ay8910_interface =
+{
+	2,	/* 2 chips */
+	14318000/8,	/* 1.78975 MHz */
+	/* Ant Eater clips if the volume is set higher than this */
+	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
+	{ 0, soundlatch_r },
+	{ 0, scramble_portB_r },
+	{ soundlatch2_w, 0 },
+	{ sfx_sh_irqtrigger_w, 0 }
+};
+
+static struct DACinterface sfx_dac_interface =
+{
+	1,	/* 1 channel */
+	{ 100 },
+};
+
 
 static MACHINE_DRIVER_START( scramble )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(scramble_readmem,scramble_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 14318000/8)	/* 1.78975 MHz */
+	MDRV_CPU_ADD_TAG("audio", Z80, 14318000/8)	/* 1.78975 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)	/* frames per second, vblank duration */
-
 	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(scramble)
 	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("8910", AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( theend )
 
@@ -1190,12 +1244,11 @@ static MACHINE_DRIVER_START( theend )
 	MDRV_VIDEO_START(theend)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( froggers )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
-	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
 	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
 
@@ -1206,7 +1259,6 @@ static MACHINE_DRIVER_START( froggers )
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("8910", AY8910, frogger_ay8910_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( mars )
 
@@ -1219,7 +1271,6 @@ static MACHINE_DRIVER_START( mars )
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
 	MDRV_PALETTE_INIT(galaxian)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( devilfsh )
 
@@ -1234,7 +1285,6 @@ static MACHINE_DRIVER_START( devilfsh )
 	MDRV_PALETTE_INIT(galaxian)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( newsin7 )
 
 	/* basic machine hardware */
@@ -1246,8 +1296,8 @@ static MACHINE_DRIVER_START( newsin7 )
 	MDRV_GFXDECODE(newsin7_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
 	MDRV_PALETTE_INIT(galaxian)
+	MDRV_VIDEO_START(newsin7)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( mrkougar )
 
@@ -1287,7 +1337,6 @@ static MACHINE_DRIVER_START( ckongs )
 	MDRV_VIDEO_START(ckongs)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( hotshock )
 
 	/* basic machine hardware */
@@ -1295,7 +1344,7 @@ static MACHINE_DRIVER_START( hotshock )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(hotshock_readmem,hotshock_writemem)
 
-	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_PORTS(hotshock_sound_readport,hotshock_sound_writeport)
 
 	/* video hardware */
@@ -1303,7 +1352,6 @@ static MACHINE_DRIVER_START( hotshock )
 	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(pisces)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( cavelon )
 
@@ -1316,106 +1364,92 @@ static MACHINE_DRIVER_START( cavelon )
 	MDRV_VIDEO_START(ckongs)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( sfx )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(sfx_readmem,sfx_writemem)
+
+	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sfx_sample_readmem,sfx_sample_writemem)
+	MDRV_CPU_PORTS(sfx_sample_readport,sfx_sample_writeport)
+
+	MDRV_MACHINE_INIT(sfx)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
+	MDRV_GFXDECODE(sfx_gfxdecodeinfo)
+	MDRV_PALETTE_INIT(turtles)
+	MDRV_VIDEO_START(sfx)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("8910", AY8910, sfx_ay8910_interface)
+	MDRV_SOUND_ADD(DAC, sfx_dac_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( mimonkey )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mimonkey_readmem,mimonkey_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(mimonkey)
+MACHINE_DRIVER_END
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
 static MACHINE_DRIVER_START( triplep )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(scramble_readmem,scramble_writemem)
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(triplep_readport,triplep_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_CPU_REMOVE("audio")
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
+	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets */
 
 	MDRV_PALETTE_INIT(galaxian)
-	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, triplep_ay8910_interface)
+	MDRV_SOUND_REPLACE("8910", AY8910, triplep_ay8910_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( mariner )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(scramble_readmem,scramble_writemem)
-	MDRV_CPU_PORTS(triplep_readport,triplep_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(2500)
-
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_IMPORT_FROM(triplep)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+16)	/* 32 for characters, 64 for stars, 2 for bullets, 16 for background */
-	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(mariner)
 	MDRV_VIDEO_START(mariner)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, triplep_ay8910_interface)
 MACHINE_DRIVER_END
 
-
-/**********************************************************/
-/* hunchbks is *very* different, as it uses an S2650 CPU */
-/*  epoxied in a plastic case labelled Century Playpack   */
-/**********************************************************/
-
+/* Hunchback replaces the Z80 with a S2650 CPU */
 static MACHINE_DRIVER_START( hunchbks )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,18432000/6)
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_REPLACE("main", S2650, 18432000/6)
 	MDRV_CPU_MEMORY(hunchbks_readmem,hunchbks_writemem)
 	MDRV_CPU_PORTS(hunchbks_readport,0)
 	MDRV_CPU_VBLANK_INT(hunchbks_vh_interrupt,1)
 
-	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
-
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 	MDRV_VBLANK_DURATION(2500)
 
-	MDRV_MACHINE_INIT(scramble)
-
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-	MDRV_COLORTABLE_LENGTH(8*4)
+	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets */
 
 	MDRV_PALETTE_INIT(galaxian)
-	MDRV_VIDEO_START(scramble)
-	MDRV_VIDEO_UPDATE(galaxian)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
 MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -1776,15 +1810,33 @@ ROM_START( mrkougar )
 	ROM_LOAD( "2732-5.bin",   0x2000, 0x1000, 0xcbc7c536 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "2732-2.bin",   0x0000, 0x1000, 0xaf42a371 )
-	ROM_LOAD( "2732-3.bin",   0x1000, 0x1000, 0x862b8902 )
-	ROM_LOAD( "2732-4.bin",   0x2000, 0x1000, 0xa0396cc8 )
+	ROM_LOAD( "atw-6w-2.bin", 0x0000, 0x1000, 0xaf42a371 )
+	ROM_LOAD( "atw-6y-3.bin", 0x1000, 0x1000, 0x862b8902 )
+	ROM_LOAD( "atw-6z-4.bin", 0x2000, 0x1000, 0xa0396cc8 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "2732-1.bin",   0x0000, 0x1000, 0x60ef1d43 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+ROM_END
+
+ROM_START( mrkougr2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "atw-7l-7.bin", 0x0000, 0x1000, 0x7b34b198 )
+	ROM_LOAD( "atw-7k-6.bin", 0x1000, 0x1000, 0xfbca23c7 )
+	ROM_LOAD( "atw-7h-5.bin", 0x2000, 0x1000, 0x05b257a2 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "atw-6w-2.bin", 0x0000, 0x1000, 0xaf42a371 )
+	ROM_LOAD( "atw-6y-3.bin", 0x1000, 0x1000, 0x862b8902 )
+	ROM_LOAD( "atw-6z-4.bin", 0x2000, 0x1000, 0xa0396cc8 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "atw-1h-1.bin", 0x0000, 0x1000, 0x38fdfb63 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "atw-prom.bin", 0x0000, 0x0020, 0xc65db188 )
 ROM_END
 
 ROM_START( mrkougb )
@@ -1797,16 +1849,16 @@ ROM_START( mrkougb )
 	ROM_LOAD( "p06.bin",	  0x2800, 0x0800, 0xacc921ff )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "2732-2.bin",   0x0000, 0x1000, 0xaf42a371 )
-	ROM_LOAD( "2732-3.bin",   0x1000, 0x1000, 0x862b8902 )
-	ROM_LOAD( "2732-4.bin",   0x2000, 0x1000, 0xa0396cc8 )
+	ROM_LOAD( "atw-6w-2.bin", 0x0000, 0x1000, 0xaf42a371 )
+	ROM_LOAD( "atw-6y-3.bin", 0x1000, 0x1000, 0x862b8902 )
+	ROM_LOAD( "atw-6z-4.bin", 0x2000, 0x1000, 0xa0396cc8 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "g07.bin",      0x0000, 0x0800, 0x0ecfd116 )
 	ROM_LOAD( "g08.bin",      0x0800, 0x0800, 0x00bfa3c6 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+	ROM_LOAD( "atw-prom.bin", 0x0000, 0x0020, 0xc65db188 )
 ROM_END
 
 ROM_START( hotshock )
@@ -1868,6 +1920,60 @@ ROM_START( cavelon )
 	ROM_LOAD( "cavelon.clr",  0x0000, 0x0020, 0xd133356b )
 ROM_END
 
+ROM_START( sfx )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sfx_b-0.1j",   0x0000, 0x1000, 0xe5bc6952 )
+	ROM_CONTINUE(             0xe000, 0x1000             )
+	ROM_LOAD( "1.1c",         0x1000, 0x1000, 0x1b3c48e7 )
+	ROM_LOAD( "22.1d",        0x2000, 0x1000, 0xed44950d )
+	ROM_LOAD( "23.1e",        0x3000, 0x1000, 0xf44a3ca0 )
+	ROM_LOAD( "27.1a",        0x7000, 0x1000, 0xed86839f )
+	ROM_LOAD( "24.1g",        0xc000, 0x1000, 0xe6d7dc74 )
+	ROM_LOAD( "5.1h",         0xd000, 0x1000, 0xd1e8d390 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5.5j",         0x0000, 0x1000, 0x59028fb6 )
+	ROM_LOAD( "6.6j",         0x1000, 0x1000, 0x5427670f )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the sample CPU */
+	ROM_LOAD( "1.1j",         0x0000, 0x1000, 0x2f172c58 )
+	ROM_LOAD( "2.2j",         0x1000, 0x1000, 0xa6ad2f6b )
+	ROM_LOAD( "3.3j",         0x2000, 0x1000, 0xfa1274fa )
+	ROM_LOAD( "4.4j",         0x3000, 0x1000, 0x1cd33f3a )
+	ROM_LOAD( "10.3h",        0x4000, 0x1000, 0xb833a15b )
+	ROM_LOAD( "11.4h",        0x5000, 0x1000, 0xcbd76ec2 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "28.5a",        0x0000, 0x1000, 0xd73a8252 )
+	ROM_LOAD( "29.5c",        0x1000, 0x1000, 0x1401ccf2 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6331.9g",      0x0000, 0x0020, 0xca1d9ccd )
+ROM_END
+
+ROM_START( mimonkey )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "mm1",          0x0000, 0x1000, 0x0399a0c4 )
+	ROM_LOAD( "mm2",          0x1000, 0x1000, 0x2c5e971e )
+	ROM_LOAD( "mm3",          0x2000, 0x1000, 0x24ce1ce3 )
+	ROM_LOAD( "mm4",          0x3000, 0x1000, 0xc83fb639 )
+	ROM_LOAD( "mm5",          0xc000, 0x1000, 0xa9f12dfc )
+	ROM_LOAD( "mm6",          0xd000, 0x1000, 0xe492a40c )
+	ROM_LOAD( "mm7",          0xe000, 0x1000, 0x5339928d )
+	ROM_LOAD( "mm8",          0xf000, 0x1000, 0xeee7a12e )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "mmsound1",	  0x0000, 0x1000, 0x2d14c527 )
+	ROM_LOAD( "mmsnd2a",	  0x1000, 0x1000, 0x35ed0f96 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mmgfx1",		  0x0000, 0x2000, 0x4af47337 )
+	ROM_LOAD( "mmgfx2",		  0x2000, 0x2000, 0xdef47da8 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+ROM_END
+
 
 GAME( 1981, scramble, 0,        scramble, scramble, scramble,     ROT90, "Konami", "Scramble" )
 GAME( 1981, scrambls, scramble, scramble, scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
@@ -1886,7 +1992,10 @@ GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic"
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish" )
 GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
 GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar" )
-GAME( 1984, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )
+GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)" )
+GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker" )
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )
+GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )
+GAME( 198?, mimonkey, 0,        mimonkey, mimonkey, mimonkey,     ROT90, "bootleg", "Mighty Monkey" )

@@ -44,11 +44,13 @@ static struct EEPROM_interface eeprom_interface =
 	"1100110000000" /* unlock command */
 };
 
+#if 0
 static void eeprom_init(void)
 {
 	EEPROM_init(&eeprom_interface);
 	init_eeprom_count = 0;
 }
+#endif
 
 static NVRAM_HANDLER( asterix )
 {
@@ -88,10 +90,12 @@ static READ16_HANDLER( control1_r )
 
 
 
+#if 0
 static READ16_HANDLER( control2_r )
 {
 	return cur_control2;
 }
+#endif
 
 static WRITE16_HANDLER( control2_w )
 {

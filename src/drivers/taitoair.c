@@ -10,6 +10,13 @@ Air Inferno             (c) 1990 Taito
 
 (Thanks to Raine team for their preliminary drivers)
 
+Controls:
+
+	P2 y analogue = throttle
+	P1 analogue = pitch/yaw control
+
+Can someone with flight sim stick confirm this is sensible.
+I think we need OSD display for P1 l/r.
 
 
 System specs	(from TaitoH: incorrect!)
@@ -96,20 +103,21 @@ TODO
 
 Video section hung off TaitoH driver, it should be separate.
 
-TMS320C25 needs to be emulated. Are the short interleaved roms
-its program?
-
 3d graphics h/w: do the gradiation ram and line ram map to
-hardware which creates the 3d background scenes? If so,
-presumably the TMS320C25 is being used as a co-processor to
-relieve the 68000 of 3d calculations... and the results are
-shoved into gradiation/line ram to drive the graphics h/w.
+hardware which creates the 3d background scenes? It seems
+the TMS320C25 is being used as a co-processor to relieve the
+68000 of 3d calculations... it has direct access to line ram
+along with the 68000. Seems gradiation ram is responsibility
+of 68000. Unless - unlikely IMO - there is banking
+allowing the 32025 to select this area in its address map.
 
 "Power common ram" is presumably for communication with an MCU
 controlling the sit-in-cabinet (deluxe mechanized version only).
 
 [Offer dip-selectable kludge of the analogue stick inputs so that
-keyboard play is possible.]
+keyboard play is possible?]
+
+Unknown control bits remain in the 0x140000 write.
 
 DIPs
 
@@ -120,9 +128,10 @@ Topland
 Sprite/tile priority bad.
 
 After demo game in attract, palette seems too dark for a while.
-Palette corruption has occured with areas incorrectly cleared
-or faded. (Perhaps 68000 relies on feedback from co-processor
-in determining what parts of palette ram to write?)
+Palette corruption has occured with areas not restored after a fade.
+Don't know why. (Perhaps 68000 relies on feedback from co-processor
+in determining what parts of palette ram to write... but this would
+then be fixed by hookup of 32025 core, which it isn't.)
 
 Mechanized cabinet has a problem with test mode: there is
 code at $d72 calling a sub which tests a silly amount of "power
@@ -130,8 +139,10 @@ common ram"; $80000 words (only one byte per word used).
 Probably the address map wraps, and only $400 separate words
 are actually accessed ?
 
-Game hangs when you run out of time: code is looping and
-interrupts are taken but nothing seems to happen.
+TMS320C25 emulation: one unmapped read which appears to be
+discarded. But the cpu waits for a bit to be zero... some
+sort of frame flag or some "ready" message from the 3d h/w
+perhaps? The two writes seem to take only two values.
 
 
 Ainferno
@@ -139,27 +150,30 @@ Ainferno
 
 Sprite/tile priority bad.
 
+More unmapped 320C25 reads and writes. This could be some sort of
+I/O device?? The MCU program is longer than the Topland one.
 
-Log
----
-
-Topland
--------
-cpu #0 (PC=000016E6): unmapped word write to 00140000 = 0500 & FF00
-
-Ainferno
---------
-cpu #0 (PC=00019410): unmapped word write to 00980000 = 0000 & FFFF
-cpu #0 (PC=00019412): unmapped word write to 00980002 = 0000 & FFFF
-cpu #0 (PC=00019414): unmapped word write to 00980004 = 0000 & FFFF
-cpu #0 (PC=00019416): unmapped word write to 00980006 = 0000 & FFFF
-cpu #0 (PC=00019418): unmapped word write to 00980008 = 0000 & FFFF
-cpu #0 (PC=0001941A): unmapped word write to 0098000A = 0000 & FFFF
-cpu #0 (PC=0001941C): unmapped word write to 0098000C = 0000 & FFFF
-cpu #0 (PC=0001941E): unmapped word write to 0098000E = 0000 & FFFF
-cpu #0 (PC=00001EA4): unmapped word write to 00140000 = 0005 & 00FF
-cpu #0 (PC=00001EBC): unmapped word write to 00830000 = A6E7 & FFFF
-
+cpu #2 (PC=000000C3): unmapped memory word write to 00006808 = 00FD & FFFF
+cpu #2 (PC=000000C8): unmapped memory word write to 00006810 = FF38 & FFFF
+cpu #2 (PC=000005A0): unmapped memory word write to 00006836 = 804E & FFFF
+cpu #2 (PC=000005B2): unmapped memory word write to 00006830 = FFFF & FFFF
+cpu #2 (PC=000005B5): unmapped memory word write to 00006832 = FFFE & FFFF
+cpu #2 (PC=000005B8): unmapped memory word write to 00006834 = FBCA & FFFF
+cpu #2 (PC=000005B9): unmapped memory word read from 00006836 & FFFF
+cpu #2 (PC=000005CC): unmapped memory word write to 00006830 = FFFF & FFFF
+cpu #2 (PC=000005CF): unmapped memory word write to 00006832 = FFFE & FFFF
+cpu #2 (PC=000005D2): unmapped memory word write to 00006834 = FBCA & FFFF
+cpu #2 (PC=000005D3): unmapped memory word read from 00006836 & FFFF
+cpu #2 (PC=000005E6): unmapped memory word write to 00006830 = FFFF & FFFF
+cpu #2 (PC=000005E9): unmapped memory word write to 00006832 = FFFE & FFFF
+cpu #2 (PC=000005EC): unmapped memory word write to 00006834 = FC8F & FFFF
+cpu #2 (PC=000005ED): unmapped memory word read from 00006836 & FFFF
+cpu #2 (PC=00000600): unmapped memory word write to 00006830 = FFFF & FFFF
+cpu #2 (PC=00000603): unmapped memory word write to 00006832 = FFFE & FFFF
+cpu #2 (PC=00000606): unmapped memory word write to 00006834 = FC8F & FFFF
+cpu #2 (PC=00000607): unmapped memory word read from 00006836 & FFFF
+cpu #2 (PC=00000609): unmapped memory word read from 00006838 & FFFF
+cpu #2 (PC=0000060E): unmapped memory word read from 0000683A & FFFF
 
 ****************************************************************************/
 
@@ -168,11 +182,71 @@ cpu #0 (PC=00001EBC): unmapped word write to 00830000 = A6E7 & FFFF
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
+#include "cpu/tms32025/tms32025.h"
+
+static int dsp_HOLD_signal;
 
 static data16_t *taitoh_68000_mainram;
+data16_t *taitoair_line_ram;
+static data16_t *dsp_ram;	/* Shared 68000/TMS32025 RAM */
 
-VIDEO_START( recordbr );
-VIDEO_UPDATE( recordbr );
+VIDEO_START( taitoair );
+VIDEO_UPDATE( taitoair );
+
+
+/***********************************************************
+				MEMORY handlers
+***********************************************************/
+
+static WRITE16_HANDLER( system_control_w )
+{
+	if ((ACCESSING_LSB == 0) && ACCESSING_MSB)
+	{
+		data >>= 8;
+	}
+
+	dsp_HOLD_signal = (data & 4) ? CLEAR_LINE : ASSERT_LINE;
+
+	cpu_set_reset_line(2,(data & 1) ? CLEAR_LINE : ASSERT_LINE);
+
+	logerror("68K:%06x writing %04x to TMS32025.  %s HOLD , %s RESET\n",activecpu_get_previouspc(),data,((data & 4) ? "Clear" : "Assert"),((data & 1) ? "Clear" : "Assert"));
+}
+
+static READ16_HANDLER( lineram_r )
+{
+	return taitoair_line_ram[offset];
+}
+
+static WRITE16_HANDLER( lineram_w )
+{
+	if (ACCESSING_MSB && ACCESSING_LSB)
+		taitoair_line_ram[offset] = data;
+}
+
+static READ16_HANDLER( dspram_r )
+{
+	return dsp_ram[offset];
+}
+
+static WRITE16_HANDLER( dspram_w )
+{
+	if (ACCESSING_MSB && ACCESSING_LSB)
+		dsp_ram[offset] = data;
+}
+
+static READ16_HANDLER( dsp_HOLD_signal_r )
+{
+	/* HOLD signal is active low */
+	//	logerror("TMS32025:%04x Reading %01x level from HOLD signal\n",activecpu_get_previouspc(),dsp_HOLD_signal);
+
+	return dsp_HOLD_signal;
+}
+
+static WRITE16_HANDLER( dsp_HOLDA_signal_w )
+{
+	if (offset)
+		logerror("TMS32025:%04x Writing %01x level to HOLD-Acknowledge signal\n",activecpu_get_previouspc(),data);
+}
 
 
 static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
@@ -256,8 +330,8 @@ static MEMORY_READ16_START( airsys_readmem )
 	{ 0x0c0000, 0x0cffff, MRA16_RAM },			/* 68000 RAM */
 	{ 0x180000, 0x183fff, MRA16_RAM },			/* "gradiation ram (0)" */
 	{ 0x184000, 0x187fff, MRA16_RAM },			/* "gradiation ram (1)" */
-	{ 0x188000, 0x18bfff, paletteram16_word_r },	/* "color ram" */
-	{ 0x800000, 0x820fff, TC0080VCO_word_r },		/* tilemaps, sprites */
+	{ 0x188000, 0x18bfff, paletteram16_word_r },/* "color ram" */
+	{ 0x800000, 0x820fff, TC0080VCO_word_r },	/* tilemaps, sprites */
 	{ 0x908000, 0x90ffff, MRA16_RAM },			/* "line ram" */
 	{ 0x910000, 0x91ffff, MRA16_RAM },			/* "dsp common ram" (TMS320C25) */
 	{ 0xa00000, 0xa00007, stick_input_r },
@@ -271,20 +345,21 @@ MEMORY_END
 static MEMORY_WRITE16_START( airsys_writemem )
 	{ 0x000000, 0x0bffff, MWA16_ROM },
 	{ 0x0c0000, 0x0cffff, MWA16_RAM, &taitoh_68000_mainram },
-//	{ 0x140000, 0x140001, MWA16_NOP },	// ???
+	{ 0x140000, 0x140001, system_control_w },	/* Pause the TMS32025 */
 	{ 0x180000, 0x183fff, MWA16_RAM },			/* "gradiation ram (0)" */
 	{ 0x184000, 0x187fff, MWA16_RAM },			/* "gradiation ram (1)" */
 	{ 0x188000, 0x18bfff, airsys_paletteram16_w, &paletteram16 },
+//	{ 0x188000, 0x18bfff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x800000, 0x820fff, TC0080VCO_word_w },		/* tilemaps, sprites */
-	{ 0x908000, 0x90ffff, MWA16_RAM },			/* "line ram" */
-	{ 0x910000, 0x91ffff, MWA16_RAM },			/* "dsp common ram" (TMS320C25) */
+	{ 0x908000, 0x90ffff, MWA16_RAM, &taitoair_line_ram },	/* "line ram" */
+	{ 0x910000, 0x91ffff, MWA16_RAM, &dsp_ram },	/* "dsp common ram" (TMS320C25) */
 	{ 0xa00200, 0xa0020f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0xa80000, 0xa80001, taitosound_port16_lsb_w },
 	{ 0xa80002, 0xa80003, taitosound_comm16_lsb_w },
 	{ 0xb00000, 0xb007ff, MWA16_RAM },			/* "power common ram" (mecha drive) */
 MEMORY_END
 
-/***********************************************************/
+/************************** Z80 ****************************/
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -312,6 +387,32 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf000, 0xf000, MWA_NOP }, 		/* ? */
 	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
+
+/********************************** TMS32025 ********************************/
+static MEMORY_READ16_START( DSP_readmem )
+	{ TMS32025_INTERNAL_MEMORY_BLOCKS_READ },
+	{ TMS32025_DATA_ADDR_RANGE(0x4000, 0x7fff), lineram_r },
+	{ TMS32025_DATA_ADDR_RANGE(0x8000, 0xffff), dspram_r },
+
+	{ TMS32025_PRGM_ADDR_RANGE(0x0000, 0x1fff), MRA16_ROM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( DSP_writemem )
+	{ TMS32025_INTERNAL_MEMORY_BLOCKS_WRITE },
+	{ TMS32025_DATA_ADDR_RANGE(0x4000, 0x7fff), lineram_w },
+	{ TMS32025_DATA_ADDR_RANGE(0x8000, 0xffff), dspram_w },
+
+	{ TMS32025_PRGM_ADDR_RANGE(0x0000, 0x1fff), MWA16_ROM },
+MEMORY_END
+
+static PORT_READ16_START( DSP_readport )
+	{ TMS32025_HOLD, TMS32025_HOLD, dsp_HOLD_signal_r },
+PORT_END
+
+static PORT_WRITE16_START( DSP_writeport )
+	{ TMS32025_HOLDA, TMS32025_HOLDA, dsp_HOLDA_signal_w },
+PORT_END
+
 
 
 /************************************************************
@@ -463,8 +564,8 @@ INPUT_PORTS_START( ainferno )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* handle x */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* handle y */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON4 | IPF_PLAYER1 )	/* fire */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON5 | IPF_PLAYER1 )	/* pedal r */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON6 | IPF_PLAYER1 )	/* pedal l */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON6 | IPF_PLAYER1 )	/* pedal r */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON5 | IPF_PLAYER1 )	/* pedal l */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )	/* freeze (code at $7d6 hangs) */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
@@ -494,9 +595,10 @@ static struct GfxLayout tilelayout =
 	RGN_FRAC(1,4),
 	4,
 	{ 0, 1, 2, 3 },
-	{ 4, 0, 12, 8, 0x40000*8+4, 0x40000*8, 0x40000*8+12, 0x40000*8+8,
-	    0x80000*8+4, 0x80000*8, 0x80000*8+12, 0x80000*8+8,
-	    0xc0000*8+4, 0xc0000*8, 0xc0000*8+12, 0xc0000*8+8 },
+	{ 4, 0, 12, 8,
+	  RGN_FRAC(1,4)+4, RGN_FRAC(1,4), RGN_FRAC(1,4)+12, RGN_FRAC(1,4)+8,
+	  RGN_FRAC(2,4)+4, RGN_FRAC(2,4), RGN_FRAC(2,4)+12, RGN_FRAC(2,4)+8,
+	  RGN_FRAC(3,4)+4, RGN_FRAC(3,4), RGN_FRAC(3,4)+12, RGN_FRAC(3,4)+8 },
 	{ 0*16, 1*16, 2*16,  3*16,  4*16,  5*16,  6*16,  7*16,
 	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	16*16
@@ -523,7 +625,7 @@ static struct YM2610interface airsys_ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 4 MHz */
-	{ 25 },
+	{ 30 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -531,7 +633,7 @@ static struct YM2610interface airsys_ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
 
 
@@ -546,8 +648,12 @@ static MACHINE_DRIVER_START( airsys )
 	MDRV_CPU_MEMORY(airsys_readmem,airsys_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
+	MDRV_CPU_ADD(Z80,8000000 / 2)			/* 4 MHz ??? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_CPU_ADD(TMS32025,24000000)			/* 24 MHz ??? *///
+	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
+	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -560,8 +666,8 @@ static MACHINE_DRIVER_START( airsys )
 	MDRV_GFXDECODE(airsys_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512*16)
 
-	MDRV_VIDEO_START(recordbr)
-	MDRV_VIDEO_UPDATE(recordbr)
+	MDRV_VIDEO_START(taitoair)
+	MDRV_VIDEO_UPDATE(taitoair)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2610, airsys_ym2610_interface)
@@ -588,7 +694,9 @@ ROM_START( topland )
 	ROM_LOAD( "b62-42.34", 0x00000, 0x04000, 0x389230e0 )
 	ROM_CONTINUE(          0x10000, 0x0c000 )
 
-	/* Plus a TMS320C25 */
+	ROM_REGION( 0x24000, REGION_CPU3, 0 )	/* TMS320C25 */
+	ROM_LOAD16_BYTE( "b62-21.35", 0x20000, 0x02000, 0x5f38460d )	// cpu board
+	ROM_LOAD16_BYTE( "b62-20.6",  0x20001, 0x02000, 0xa4afe958 )	// cpu board
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
 	ROM_LOAD16_BYTE( "b62-33.39",  0x000000, 0x20000, 0x38786867 )
@@ -610,13 +718,8 @@ ROM_START( topland )
 	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b62-18.31", 0x00000, 0x20000, 0x3a4e687a )
 
-	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* unknown */
-	ROM_LOAD( "b62-28.22", 0x08000, 0x02000, 0xc4be68a6 )	// video board
-
-	/* TMS320C25 code ? */
-	/* Interleaved pair, $a34 words of code */
-	ROM_LOAD16_BYTE( "b62-20.6",  0x00000, 0x02000, 0xa4afe958 )	// cpu board
-	ROM_LOAD16_BYTE( "b62-21.35", 0x00001, 0x02000, 0x5f38460d )	// cpu board
+	ROM_REGION( 0x02000, REGION_USER1, 0 )	/* unknown */
+	ROM_LOAD( "b62-28.22", 0x00000, 0x02000, 0xc4be68a6 )	// video board
 ROM_END
 
 ROM_START( ainferno )
@@ -632,7 +735,9 @@ ROM_START( ainferno )
 	ROM_LOAD( "c45-23.34", 0x00000, 0x04000, 0xd0750c78 )
 	ROM_CONTINUE(          0x10000, 0x0c000 )
 
-	/* Plus a TMS320C25 */
+	ROM_REGION( 0x24000, REGION_CPU3, 0 )	/* TMS320C25 */
+	ROM_LOAD16_BYTE( "c45-25.35", 0x20000, 0x02000, 0xc0d39f95 )
+	ROM_LOAD16_BYTE( "c45-24.6",  0x20001, 0x02000, 0x1013d937 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
 	ROM_LOAD16_BYTE( "c45-11.28", 0x000000, 0x20000, 0xd9b4b77c )
@@ -654,57 +759,22 @@ ROM_START( ainferno )
 	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c45-06.31", 0x00000, 0x20000, 0x6a7976d4 )
 
-	ROM_REGION( 0x10000, REGION_USER1, 0 )
-
-	/* TMS320C25 code ? */
-	/* Interleaved pair, $e3f words of code */
-	ROM_LOAD16_BYTE( "c45-24.6",  0x00000, 0x02000, 0x1013d937 )
-	ROM_LOAD16_BYTE( "c45-25.35", 0x00001, 0x02000, 0xc0d39f95 )
-
+	ROM_REGION( 0x02000, REGION_USER1, 0 )
+	ROM_LOAD( "c45-xx.22", 0x00000, 0x02000, 0x00000000 )	// video board
 	/* Readme says 7 pals on video board and 6 on cpu board */
 ROM_END
 
 
-static DRIVER_INIT( ainferno )
+static DRIVER_INIT( taitoair )
 {
-#if 1
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
-
-/* code at $569a tests to see if co processor has zeroed a memory
-   word at $910000... if it doesn't fairly soon then TMS ERROR is
-   reported */
-
-	ROM[0x56a0/2] = 0x4e75;		/* rts */
-#endif
+	dsp_HOLD_signal = ASSERT_LINE;
 
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);
 }
 
 
-static DRIVER_INIT( topland )
-{
-#if 1
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
 
-/* code at $8a0? tests to see if co processor has zeroed a memory
-   word at $910000... if it doesn't fairly soon then TMS ERROR is
-   reported */
-	ROM[0x8ae/2] = 0x4e75;		/* rts */
-
-/* remove 0-0x3ffff rom checksum check */
-	ROM[0x4a0/2] = 0x4e71;		/* nop */
-	ROM[0x4a2/2] = 0x4e71;
-
-/* code here hangs while word at $910000 is 0xffff */
-	ROM[0xe1ce/2] = 0x4e71;
-#endif
-
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-/*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR  COMPANY  FULLNAME */
-GAMEX( 1988, topland,  0,        airsys,   topland,  topland,  ROT0,    "Taito Corporation Japan", "Top Landing (World)", GAME_NOT_WORKING )
-GAMEX( 1990, ainferno, 0,        airsys,   ainferno, ainferno, ROT0,    "Taito America Corporation", "Air Inferno (US)", GAME_NOT_WORKING )
+/*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR  COMPANY  FULLNAME */
+GAME( 1988, topland,  0,        airsys,   topland,  taitoair, ROT0,    "Taito Corporation Japan", "Top Landing (World)" )
+GAME( 1990, ainferno, 0,        airsys,   ainferno, taitoair, ROT0,    "Taito America Corporation", "Air Inferno (US)" )

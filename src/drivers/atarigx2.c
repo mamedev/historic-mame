@@ -33,7 +33,9 @@
  *
  *************************************/
 
+#if 0
 static UINT8 		which_input;
+#endif
 static data32_t *	protection_base;
 
 
@@ -92,7 +94,7 @@ static READ32_HANDLER( special_port3_r )
 	return (temp << 16) | temp;
 }
 
-
+#if 0
 static WRITE32_HANDLER( a2d_select_w )
 {
 	if (ACCESSING_MSW32)
@@ -100,7 +102,7 @@ static WRITE32_HANDLER( a2d_select_w )
 	if (ACCESSING_LSW32)
 		which_input = offset * 2 + 1;
 }
-
+#endif
 
 static READ32_HANDLER( a2d_data_r )
 {

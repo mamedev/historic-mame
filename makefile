@@ -46,8 +46,7 @@ VPATH=src $(wildcard src/cpu/*)
 AR = @ar
 CC = @gcc
 LD = @gcc
-#ASM = @nasm
-ASM = @nasmw
+ASM = @nasm
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
@@ -63,6 +62,10 @@ endif
 ifdef DEBUG
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
 else
+ifdef ATHLON
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
+ARCH = -march=athlon
+else
 ifdef K6
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
 ARCH = -march=k6
@@ -71,8 +74,14 @@ ifdef I686
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
 ARCH = -march=pentiumpro
 else
+ifdef P4
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
+ARCH = -march=pentium4
+else
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)
 ARCH = -march=pentium
+endif
+endif
 endif
 endif
 endif
@@ -85,17 +94,21 @@ EMULATOR = $(NAME)$(EXE)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
+CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
-	-O0 -Wall -Werror -Wno-unused -g
+CFLAGS += -O0 -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
-	-DNDEBUG \
+CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
 	-Wshadow -Wstrict-prototypes -Wundef \
-#	try with gcc 3.0 -Wpadded -Wunreachable-code -Wdisabled-optimization
+	-Wformat-security -Wwrite-strings \
+	-Wdisabled-optimization \
+#	-Wredundant-decls
+#	-Wfloat-equal
+#	-Wunreachable-code -Wpadded
 #	-W had to remove because of the "missing initializer" warning
 #	-Wlarger-than-262144  \
 #	-Wcast-qual \

@@ -46,6 +46,7 @@ struct RomModule
 	UINT32 _length;		/* length of the file */
 	UINT32 _flags;		/* flags */
 	UINT32 _crc;		/* standard CRC-32 checksum */
+	const char *_verify;/* alternate verification, MD5 or SHA */
 };
 
 
@@ -55,6 +56,24 @@ struct GameSample
 	int smpfreq;
 	int resolution;
 	signed char data[1];	/* extendable */
+};
+
+
+struct rom_load_data
+{
+	int warnings;				/* warning count during processing */
+	int errors;				/* error count during processing */
+
+	int romsloaded;				/* current ROMs loaded count */
+	int romstotal;				/* total number of ROMs to read */
+
+	void * file;				/* current file */
+
+	UINT8 *	regionbase;			/* base of current region */
+	UINT32 regionlength;			/* length of current region */
+
+	char errorbuf[4096];			/* accumulated errors */
+	UINT8 tempbuf[65536];			/* temporary buffer */
 };
 
 
@@ -113,6 +132,8 @@ enum
 };
 
 #define BADCRC( crc ) (~(crc))
+
+#define ROMMD5(md5) ("MD5" #md5)
 
 
 
@@ -251,6 +272,8 @@ enum
 #define ROM_GETCRC(r)				((r)->_crc)
 #define ROM_GETLENGTH(r)			((r)->_length)
 #define ROM_GETFLAGS(r)				((r)->_flags)
+#define ROM_HASMD5(r)				((r)->_verify && !strncmp((r)->_verify, "MD5", 3))
+#define ROM_GETMD5(r,m)				(rom_extract_md5(r,m))
 #define ROM_ISOPTIONAL(r)			((ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL)
 #define ROM_GETGROUPSIZE(r)			(((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 12) + 1)
 #define ROM_GETSKIPCOUNT(r)			((ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 16)
@@ -273,17 +296,18 @@ enum
 
 /* ----- start/stop macros ----- */
 #define ROM_START(name)								static const struct RomModule rom_##name[] = {
-#define ROM_END										{ ROMENTRY_END, 0, 0, 0, 0 } };
+#define ROM_END										{ ROMENTRY_END, 0, 0, 0, 0, NULL } };
 
 /* ----- ROM region macros ----- */
-#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, type },
+#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, type, NULL },
 #define ROM_REGION16_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_LE)
 #define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
 #define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
 
 /* ----- core ROM loading macros ----- */
-#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, length, flags, crc },
+#define ROMMD5_LOAD(name,offset,length,crc,md5,flags) { name, offset, length, flags, crc, ROMMD5(md5) },
+#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, length, flags, crc, NULL },
 #define ROM_LOAD(name,offset,length,crc)			ROMX_LOAD(name, offset, length, crc, 0)
 #define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
 #define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)
@@ -307,7 +331,7 @@ enum
 
 /* ----- disk loading macros ----- */
 #define DISK_REGION(type)							ROM_REGION(1, type, ROMREGION_DATATYPEDISK)
-#define DISK_IMAGE(name,idx,md5)					ROMX_LOAD(name "\0" #md5, idx, 0, 0, 0)
+#define DISK_IMAGE(name,idx,md5)					ROMMD5_LOAD(name, idx, 0, 0, md5, 0)
 
 
 
@@ -343,8 +367,8 @@ void coin_lockout_global_w(int on);  /* Locks out all coin inputs */
 /* generic NVRAM handler */
 extern size_t generic_nvram_size;
 extern data8_t *generic_nvram;
-extern void nvram_handler_generic_0fill(void *file, int read_or_write);
-extern void nvram_handler_generic_1fill(void *file, int read_or_write);
+extern void nvram_handler_generic_0fill(mame_file *file, int read_or_write);
+extern void nvram_handler_generic_1fill(mame_file *file, int read_or_write);
 
 /* bitmap allocation */
 struct mame_bitmap *bitmap_alloc(int width,int height);
@@ -380,6 +404,7 @@ const struct RomModule *rom_first_file(const struct RomModule *romp);
 const struct RomModule *rom_next_file(const struct RomModule *romp);
 const struct RomModule *rom_first_chunk(const struct RomModule *romp);
 const struct RomModule *rom_next_chunk(const struct RomModule *romp);
+int rom_extract_md5(const struct RomModule *romp, UINT8 md5[16]);
 
 void printromlist(const struct RomModule *romp,const char *name);
 
@@ -391,59 +416,61 @@ void printromlist(const struct RomModule *romp,const char *name);
 
 ***************************************************************************/
 
+#define BIT(x,n) (((x)>>(n))&1)
+
 #define BITSWAP8(val,B7,B6,B5,B4,B3,B2,B1,B0) \
-		(((((val) >> (B7)) & 1) << 7) | \
-		 ((((val) >> (B6)) & 1) << 6) | \
-		 ((((val) >> (B5)) & 1) << 5) | \
-		 ((((val) >> (B4)) & 1) << 4) | \
-		 ((((val) >> (B3)) & 1) << 3) | \
-		 ((((val) >> (B2)) & 1) << 2) | \
-		 ((((val) >> (B1)) & 1) << 1) | \
-		 ((((val) >> (B0)) & 1) << 0))
+		((BIT(val,B7) << 7) | \
+		 (BIT(val,B6) << 6) | \
+		 (BIT(val,B5) << 5) | \
+		 (BIT(val,B4) << 4) | \
+		 (BIT(val,B3) << 3) | \
+		 (BIT(val,B2) << 2) | \
+		 (BIT(val,B1) << 1) | \
+		 (BIT(val,B0) << 0))
 
 #define BITSWAP16(val,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
-		(((((val) >> (B15)) & 1) << 15) | \
-		 ((((val) >> (B14)) & 1) << 14) | \
-		 ((((val) >> (B13)) & 1) << 13) | \
-		 ((((val) >> (B12)) & 1) << 12) | \
-		 ((((val) >> (B11)) & 1) << 11) | \
-		 ((((val) >> (B10)) & 1) << 10) | \
-		 ((((val) >> ( B9)) & 1) <<  9) | \
-		 ((((val) >> ( B8)) & 1) <<  8) | \
-		 ((((val) >> ( B7)) & 1) <<  7) | \
-		 ((((val) >> ( B6)) & 1) <<  6) | \
-		 ((((val) >> ( B5)) & 1) <<  5) | \
-		 ((((val) >> ( B4)) & 1) <<  4) | \
-		 ((((val) >> ( B3)) & 1) <<  3) | \
-		 ((((val) >> ( B2)) & 1) <<  2) | \
-		 ((((val) >> ( B1)) & 1) <<  1) | \
-		 ((((val) >> ( B0)) & 1) <<  0))
+		((BIT(val,B15) << 15) | \
+		 (BIT(val,B14) << 14) | \
+		 (BIT(val,B13) << 13) | \
+		 (BIT(val,B12) << 12) | \
+		 (BIT(val,B11) << 11) | \
+		 (BIT(val,B10) << 10) | \
+		 (BIT(val, B9) <<  9) | \
+		 (BIT(val, B8) <<  8) | \
+		 (BIT(val, B7) <<  7) | \
+		 (BIT(val, B6) <<  6) | \
+		 (BIT(val, B5) <<  5) | \
+		 (BIT(val, B4) <<  4) | \
+		 (BIT(val, B3) <<  3) | \
+		 (BIT(val, B2) <<  2) | \
+		 (BIT(val, B1) <<  1) | \
+		 (BIT(val, B0) <<  0))
 
 #define BITSWAP24(val,B23,B22,B21,B20,B19,B18,B17,B16,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
-		(((((val) >> (B23)) & 1) << 23) | \
-		 ((((val) >> (B22)) & 1) << 22) | \
-		 ((((val) >> (B21)) & 1) << 21) | \
-		 ((((val) >> (B20)) & 1) << 20) | \
-		 ((((val) >> (B19)) & 1) << 19) | \
-		 ((((val) >> (B18)) & 1) << 18) | \
-		 ((((val) >> (B17)) & 1) << 17) | \
-		 ((((val) >> (B16)) & 1) << 16) | \
-		 ((((val) >> (B15)) & 1) << 15) | \
-		 ((((val) >> (B14)) & 1) << 14) | \
-		 ((((val) >> (B13)) & 1) << 13) | \
-		 ((((val) >> (B12)) & 1) << 12) | \
-		 ((((val) >> (B11)) & 1) << 11) | \
-		 ((((val) >> (B10)) & 1) << 10) | \
-		 ((((val) >> ( B9)) & 1) <<  9) | \
-		 ((((val) >> ( B8)) & 1) <<  8) | \
-		 ((((val) >> ( B7)) & 1) <<  7) | \
-		 ((((val) >> ( B6)) & 1) <<  6) | \
-		 ((((val) >> ( B5)) & 1) <<  5) | \
-		 ((((val) >> ( B4)) & 1) <<  4) | \
-		 ((((val) >> ( B3)) & 1) <<  3) | \
-		 ((((val) >> ( B2)) & 1) <<  2) | \
-		 ((((val) >> ( B1)) & 1) <<  1) | \
-		 ((((val) >> ( B0)) & 1) <<  0))
+		((BIT(val,B23) << 23) | \
+		 (BIT(val,B22) << 22) | \
+		 (BIT(val,B21) << 21) | \
+		 (BIT(val,B20) << 20) | \
+		 (BIT(val,B19) << 19) | \
+		 (BIT(val,B18) << 18) | \
+		 (BIT(val,B17) << 17) | \
+		 (BIT(val,B16) << 16) | \
+		 (BIT(val,B15) << 15) | \
+		 (BIT(val,B14) << 14) | \
+		 (BIT(val,B13) << 13) | \
+		 (BIT(val,B12) << 12) | \
+		 (BIT(val,B11) << 11) | \
+		 (BIT(val,B10) << 10) | \
+		 (BIT(val, B9) <<  9) | \
+		 (BIT(val, B8) <<  8) | \
+		 (BIT(val, B7) <<  7) | \
+		 (BIT(val, B6) <<  6) | \
+		 (BIT(val, B5) <<  5) | \
+		 (BIT(val, B4) <<  4) | \
+		 (BIT(val, B3) <<  3) | \
+		 (BIT(val, B2) <<  2) | \
+		 (BIT(val, B1) <<  1) | \
+		 (BIT(val, B0) <<  0))
 
 
 #ifdef __cplusplus

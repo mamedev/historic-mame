@@ -32,7 +32,7 @@
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03 || HAS_DECO16)
 #include "cpu/m6502/m6502.h"
 #endif
 #if (HAS_M4510)
@@ -110,10 +110,16 @@
 #if (HAS_TMS32010)
 #include "cpu/tms32010/tms32010.h"
 #endif
+#if (HAS_TMS32025)
+#include "cpu/tms32025/tms32025.h"
+#endif
+#if (HAS_TMS32031)
+#include "cpu/tms32031/tms32031.h"
+#endif
 #if (HAS_CCPU)
 #include "cpu/ccpu/ccpu.h"
 #endif
-#if (HAS_ADSP2100 || HAS_ADSP2101 || HAS_ADSP2105)
+#if (HAS_ADSP2100 || HAS_ADSP2101 || HAS_ADSP2105 || HAS_ADSP2115)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_PSXCPU)
@@ -122,7 +128,7 @@
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"
 #endif
-#if (HAS_UPD7810)
+#if (HAS_UPD7810 || HAS_UPD7807)
 #include "cpu/upd7810/upd7810.h"
 #endif
 #if (HAS_JAGUAR)
@@ -131,8 +137,8 @@
 #if (HAS_R3000)
 #include "cpu/mips/r3000.h"
 #endif
-#if (HAS_TMS32031)
-#include "cpu/tms32031/tms32031.h"
+#if (HAS_R4600 || HAS_R5000)
+#include "cpu/mips/mips3.h"
 #endif
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
@@ -411,6 +417,9 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_N2A03)
 	CPU0(N2A03,    n2a03,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
+#if (HAS_DECO16)
+	CPU0(DECO16,   deco16,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+#endif
 #if (HAS_M4510)
 	CPU0(M4510,    m4510,	 1,  0,1.00, 8, 20,	  0,20,LE,1, 3	),
 #endif
@@ -555,6 +564,13 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_TMS32010)
 	CPU3(TMS32010,tms32010,  1,  0,1.00,16,16bew, -1,16,BE,2, 4 ),
 #endif
+#if (HAS_TMS32025)
+	CPU3(TMS32025,tms32025,  3,  0,1.00,16,18bew, -1,18,BE,2, 4	),
+#endif
+#if (HAS_TMS32031)
+	#define tms32031_ICount tms32031_icount
+	CPU0(TMS32031,tms32031,  4,  0,1.00,32,26ledw,-2,26,LE,4, 4 ),
+#endif
 #if (HAS_CCPU)
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,16,16bew,  0,15,BE,2, 3	),
 #endif
@@ -567,6 +583,9 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_ADSP2105)
 	CPU3(ADSP2105, adsp2105, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
 #endif
+#if (HAS_ADSP2115)
+	CPU3(ADSP2115, adsp2115, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
+#endif
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,16,32lew,  0,32,LE,4, 4	),
 #endif
@@ -577,6 +596,10 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_UPD7810)
 #define upd7810_ICount upd7810_icount
 	CPU0(UPD7810,  upd7810,  2,  0,1.00, 8, 16,	  0,16,LE,1, 4	),
+#endif
+#if (HAS_UPD7807)
+#define upd7807_ICount upd7810_icount
+	CPU0(UPD7807,  upd7807,  2,  0,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #if (HAS_JAGUAR)
 	#define jaguargpu_ICount jaguar_icount
@@ -590,9 +613,17 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(R3000BE,  r3000be,  1,  0,1.00,32,29bedw, 0,29,BE,4, 4 ),
 	CPU0(R3000LE,  r3000le,  1,  0,1.00,32,29ledw, 0,29,LE,4, 4 ),
 #endif
-#if (HAS_TMS32031)
-	#define tms32031_ICount tms32031_icount
-	CPU0(TMS32031,tms32031,  4,  0,1.00,32,26ledw,-2,26,LE,4, 4 ),
+#if (HAS_R4600)
+	#define r4600be_ICount mips3_icount
+	#define r4600le_ICount mips3_icount
+	CPU0(R4600BE,  r4600be,  1,  0,1.00,32,32bedw, 0,32,BE,4, 4 ),
+	CPU0(R4600LE,  r4600le,  1,  0,1.00,32,32ledw, 0,32,LE,4, 4 ),
+#endif
+#if (HAS_R5000)
+	#define r5000be_ICount mips3_icount
+	#define r5000le_ICount mips3_icount
+	CPU0(R5000BE,  r5000be,  1,  0,1.00,32,32bedw, 0,32,BE,4, 4 ),
+	CPU0(R5000LE,  r5000le,  1,  0,1.00,32,32ledw, 0,32,LE,4, 4 ),
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,32,26ledw, 0,26,LE,4, 4	),
@@ -1335,7 +1366,6 @@ CPUNUM_FUNC(const char *, cpunum_win_layout,         "", (*cpu[cpunum].intf.cpu_
 #define CPUTYPE_FUNC(rettype, name, defresult, result)		\
 rettype name(int cputype)									\
 { 															\
-	cputype &= ~CPU_FLAGS_MASK;								\
 	if (cputype >= 0 && cputype < CPU_COUNT)				\
 		return result;										\
 	else													\

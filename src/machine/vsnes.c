@@ -937,7 +937,7 @@ DRIVER_INIT( rbibb )
 	remapped_colortable = rp2c04003_colortable;
 }
 
-
+#if 0
 static READ_HANDLER( xevious_hack_r)
 {
 
@@ -974,7 +974,7 @@ static READ_HANDLER( xevious_hack_r3)
 return 0x37;
 
 }
-
+#endif
 
 DRIVER_INIT( xevious )
 {

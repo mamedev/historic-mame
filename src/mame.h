@@ -13,13 +13,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "fileio.h"
 #include "osdepend.h"
 #include "drawgfx.h"
 #include "palette.h"
-
-#ifdef MESS
-#include "mess.h"
-#endif
 
 extern char build_version[];
 
@@ -168,19 +165,22 @@ struct ImageFile
 /* or on the commandline. */
 struct GameOptions
 {
-	void *	record;			/* handle to file to record input to */
-	void *	playback;		/* handle to file to playback input from */
-	void *	language_file;	/* handle to file for localization */
+	mame_file *	record;			/* handle to file to record input to */
+	mame_file *	playback;		/* handle to file to playback input from */
+	mame_file *	language_file;	/* handle to file for localization */
 
 	int		mame_debug;		/* 1 to enable debugging */
 	int		cheat;			/* 1 to enable cheating */
 	int 	gui_host;		/* 1 to tweak some UI-related things for better GUI integration */
+	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
+	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
 	int		use_filter;		/* 1 to enable FIR filter on final mixer output */
 
 	float	brightness;		/* brightness of the display */
+	float	pause_bright;		/* additional brightness when in pause */
 	float	gamma;			/* gamma correction of the display */
 	int		color_depth;	/* 15, 16, or 32, any other value means auto */
 	int		vector_width;	/* requested width for vector games; 0 means default (640) */
@@ -204,9 +204,11 @@ struct GameOptions
 	int		debug_depth;	/* requested depth of debugger bitmap */
 
 	#ifdef MESS
-	int		append_no_file_extension;
-	int		image_count;
+	UINT32 ram;
 	struct ImageFile image_files[MAX_IMAGES];
+	int		image_count;
+	int (*mess_printf_output)(char *fmt, va_list arg);
+	int disable_normal_ui;
 	#endif
 };
 
@@ -334,7 +336,7 @@ int updatescreen(void);
 
 /* ----- miscellaneous bits & pieces ----- */
 
-/* osd_fopen() must use this to know if high score files can be used */
+/* mame_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
 
 /* set the state of a given LED */
@@ -346,5 +348,8 @@ const struct performance_info *mame_get_performance_info(void);
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);
 
+#ifdef MESS
+#include "mess.h"
+#endif /* MESS */
 
 #endif

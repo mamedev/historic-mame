@@ -4543,7 +4543,6 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 {
 #ifdef MAME_DEBUG
 	static int dislayer[6];	/* Road Layer toggles to help get road correct */
-	char buf[80];
 #endif
 
 	int x_offs = 0xa7;	/* Increasing this shifts road to right */
@@ -4583,42 +4582,36 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	if (keyboard_pressed_memory (KEYCODE_X))
 	{
 		dislayer[0] ^= 1;
-		sprintf(buf,"RoadA body: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadA body: %01x",dislayer[0]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_C))
 	{
 		dislayer[1] ^= 1;
-		sprintf(buf,"RoadA l-edge: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadA l-edge: %01x",dislayer[1]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_V))
 	{
 		dislayer[2] ^= 1;
-		sprintf(buf,"RoadA r-edge: %01x",dislayer[2]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadA r-edge: %01x",dislayer[2]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_B))
 	{
 		dislayer[3] ^= 1;
-		sprintf(buf,"RoadB body: %01x",dislayer[3]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadB body: %01x",dislayer[3]);
 	}
 
 	if (keyboard_pressed_memory (KEYCODE_N))
 	{
 		dislayer[4] ^= 1;
-		sprintf(buf,"RoadB l-edge: %01x",dislayer[4]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadB l-edge: %01x",dislayer[4]);
 	}
 	if (keyboard_pressed_memory (KEYCODE_M))
 	{
 		dislayer[5] ^= 1;
-		sprintf(buf,"RoadB r-edge: %01x",dislayer[5]);
-		usrintf_showmessage(buf);
+		usrintf_showmessage("RoadB r-edge: %01x",dislayer[5]);
 	}
 #endif
 

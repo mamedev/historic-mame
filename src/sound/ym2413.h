@@ -1,75 +1,40 @@
+#ifndef _H_YM2413_
+#define _H_YM2413_
 
-#ifndef _YM2413_H_
-#define _YM2413_H_
+/* select output bits size of output : 8 or 16 */
+#define SAMPLE_BITS 16
 
-#include "2413intf.h"
+/* compiler dependence */
+#ifndef OSD_CPU_H
+#define OSD_CPU_H
+typedef unsigned char	UINT8;   /* unsigned  8bit */
+typedef unsigned short	UINT16;  /* unsigned 16bit */
+typedef unsigned int	UINT32;  /* unsigned 32bit */
+typedef signed char		INT8;    /* signed  8bit   */
+typedef signed short	INT16;   /* signed 16bit   */
+typedef signed int		INT32;   /* signed 32bit   */
+#endif
 
-/* Total # of YM2413's that can be used at once - change as needed */
-#define MAX_YM2413 MAX_2413
-
-
-/* YM2413 ROM file. If you want it to be loaded, define this. */
-/*#define YM2413_ROM_FILE "./ym2413.rom"*/
-
-/* Choose *one* of this banks (in order: best->worse) */
-#define PATCH_OKAZAKI
-// #define PATCH_ALLEGRO
-// #define PATCH_MAME
-// #define PATCH_GUIJT
-
-#define PATCH_RHYTHM_FRS
-// #define PATCH_RHYTHM_OKAZAKI
-// #define PATCH_RHYTHM_MAME
-
-/* YM2413 context */
-typedef struct
-{
-	unsigned char reg[0x40];            /* 64 registers */
-	unsigned char latch;                /* Register latch */
-	unsigned char rhythm;               /* Rhythm instruments loaded flag */
-	unsigned char user[0x10];           /* User instrument settings */
-	struct
-	{
-		unsigned short int frequency;   /* Channel frequency */
-		unsigned char volume;           /* Channel volume */
-		unsigned char instrument;       /* Channel instrument */
-	unsigned char oldSUSKEY;	/* Previous SUS state */
-	}channel[9];
-	int DAC_stream;
-}t_ym2413;
-
-/* YM3812 context */
-/* This values must be cached */
-typedef struct
-{
-	struct
-	{
-		unsigned char KSLm;	/* We must write this whem the ym2413 volume  */
-							/* is changed */
-		unsigned char KSLc;
-		unsigned char TLc;	/* Is the YM2413 volume and internal TLc */
-							/* combined */
-						/* YM3812 :  YM2413  */
-						/* TLc    =  VOL+((63-VOL)*(63/(TLc+1))) */
-						/* *** But before this VOL must be adjusted *** */
-						/* VOL = VOL*4+3*(VOL&1) */
-		unsigned char TLm;	/* The same idea, but for rhythm mode */
-		unsigned char SLRRc;	/* Release Rate is modified when SUS=1 */
-	}channel[9];
-}t_ym3812;
+#if (SAMPLE_BITS==16)
+typedef INT16 SAMP;
+#endif
+#if (SAMPLE_BITS==8)
+typedef INT8 SAMP;
+#endif
 
 
-/* Global data */
-extern t_ym2413 ym2413[MAX_YM2413];
-
-/* Function prototypes */
-
-/* Reset a given chip in the chip context */
-void ym2413_reset(int chip);
-
-/* Write to a chip in the chip context */
-void ym2413_write(int chip, int address, int data);
 
 
-#endif /* _YM2413_H_ */
+int  YM2413Init(int num, int clock, int rate);
+void YM2413Shutdown(void);
+void YM2413ResetChip(int which);
+void YM2413Write(int which, int a, int v);
+unsigned char YM2413Read(int which, int a);
+void YM2413UpdateOne(int which, INT16 **buffers, int length);
 
+typedef void (*OPLL_UPDATEHANDLER)(int param,int min_interval_us);
+
+void YM2413SetUpdateHandler(int which, OPLL_UPDATEHANDLER UpdateHandler, int param);
+
+
+#endif /*_H_YM2413_*/

@@ -751,15 +751,22 @@ static void OKIM6295_data_w(int num, int data)
 				/* set up the voice to play this sample */
 				if (start < 0x40000 && stop < 0x40000)
 				{
-					voice->playing = 1;
-					voice->base = &voice->region_base[okim6295_base[num][i] + start];
-					voice->sample = 0;
-					voice->count = 2 * (stop - start + 1);
+					if (!voice->playing)	/* fixes Got-cha and Steel Force */
+					{
+						voice->playing = 1;
+						voice->base = &voice->region_base[okim6295_base[num][i] + start];
+						voice->sample = 0;
+						voice->count = 2 * (stop - start + 1);
 
-					/* also reset the ADPCM parameters */
-					voice->signal = -2;
-					voice->step = 0;
-					voice->volume = volume_table[data & 0x0f];
+						/* also reset the ADPCM parameters */
+						voice->signal = -2;
+						voice->step = 0;
+						voice->volume = volume_table[data & 0x0f];
+					}
+					else
+					{
+						logerror("OKIM6295: requested to play sample %02x on non-stopped voice\n",okim6295_command[num]);
+					}
 				}
 
 				/* invalid samples go here */

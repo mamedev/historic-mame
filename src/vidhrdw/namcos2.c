@@ -35,15 +35,19 @@ INLINE void get_tile_info(int tile_index,data16_t *vram,int color)
 {
 	int tile;
 	tile = vram[tile_index];
-
 	switch( namcos2_gametype )
 	{
 	case NAMCOS2_FINAL_LAP_2:
+		tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
+		tile = (tile&0x07ff)|((tile&0x4000)>>3)|((tile&0x3800)<<1);
+		break;
+
+	case NAMCOS2_FINAL_LAP_3:
 		tile &= 0x3fff;
 		tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 		break;
 
-	case NAMCOS2_FINAL_LAP_3:
+	case NAMCOS2_GOLLY_GHOST:
 		tile &= 0x3fff;
 		tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 		break;
@@ -52,7 +56,7 @@ INLINE void get_tile_info(int tile_index,data16_t *vram,int color)
 		/* The tile mask DOESNT use the mangled tile number */
 		tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 		/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
-		tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
+		tile = (tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 		break;
 	}
 	SET_TILE_INFO(2,tile,color,0)
@@ -540,7 +544,7 @@ DrawSpritesMetalHawk( struct mame_bitmap *bitmap, const struct rectangle *clipre
 	 *	--x------------- bank
 	 *	----xxxxxxxxxxxx tile
 	 *
-	 * word#2
+	 * word#3				2->3 by N
 	 *	xxxxxx---------- xsize
 	 *	------xxxxxxxxxx screenx
 	 *
@@ -568,17 +572,39 @@ DrawSpritesMetalHawk( struct mame_bitmap *bitmap, const struct rectangle *clipre
 		int sizey=((ypos>>10)&0x3f)+1;
 		int sizex=(xpos>>10)&0x3f;
 		int sprn=(tile>>2)&0x7ff;
+
 		if( tile&0x2000 ) sprn&=0x3ff; else sprn|=0x400;
-		if((sizey-1) && sizex && /*(attrs&7)*/2==pri )
+		if((sizey-1) && sizex && ((attrs>>1)&7)==pri )
 		{
-			int bSmallSprite = ((ypos&0x1000)==0);
+			int bSmallSprite =
+				(sprn>=0x208 && sprn<=0x20F)||
+				(sprn>=0x3BC && sprn<=0x3BF)||
+				(sprn>=0x688 && sprn<=0x68B)||
+				(sprn>=0x6D8 && sprn<=0x6D9)||
+				(sprn>=0x6EA && sprn<=0x6EB); // very stupid...
+
 			int color = (attrs>>4)&0xf;
 			int sx = (xpos&0x03ff)-0x50+0x07;
 			int sy = (0x1ff-(ypos&0x01ff))-0x50+0x02;
-			int flipx = flags&1;
+			int flipx = flags&2;
 			int flipy = flags&4;
 			int scalex = (sizex<<16)/(bSmallSprite?0x10:0x20);
 			int scaley = (sizey<<16)/(bSmallSprite?0x10:0x20);
+
+			// 90 degrees use a turned character
+			if( (flags&0x01) ) {
+				sprn |= 0x800;
+			}
+
+			// little zoom fix...
+			if( !bSmallSprite ) {
+				if( sizex < 0x20 ) {
+					sx -= (0x20-sizex)/0x8;
+				}
+				if( sizey < 0x20 ) {
+					sy += (0x20-sizey)/0xC;
+				}
+			}
 
 			/* Set the clipping rect to mask off the other portion of the sprite */
 			rect.min_x=sx;
@@ -593,8 +619,22 @@ DrawSpritesMetalHawk( struct mame_bitmap *bitmap, const struct rectangle *clipre
 
 			if( bSmallSprite )
 			{
-				if(((tile&0x0001) && !flipx) || (!(tile&0x0001) && flipx)) sx-=sizex;
-				if(((tile&0x0002) && !flipy) || (!(tile&0x0002) && flipy)) sy-=sizey;
+				sizex = 16;
+				sizey = 16;
+				scalex = 1<<16;
+				scaley = 1<<16;
+
+				sx -= (tile&1)?16:0;
+				sy -= (tile&2)?16:0;
+
+				rect.min_x=sx;
+				rect.max_x=sx+(sizex-1);
+				rect.min_y=sy;
+				rect.max_y=sy+(sizey-1);
+				rect.min_x += (tile&1)?16:0;
+				rect.max_x += (tile&1)?16:0;
+				rect.min_y += (tile&2)?16:0;
+				rect.max_y += (tile&2)?16:0;
 			}
 			drawgfxzoom(
 				bitmap,Machine->gfx[0],
@@ -710,12 +750,52 @@ VIDEO_START( namcos2 )
 	return -1;
 }
 
+static void
+DrawCrossshair( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int x1port, y1port, x2port, y2port;
+	switch( namcos2_gametype )
+	{
+	case NAMCOS2_GOLLY_GHOST:
+		x1port = 0;
+		y1port = 1;
+		x2port = 2;
+		y2port = 3;
+		break;
+	case NAMCOS2_LUCKY_AND_WILD:
+		x1port = 4;
+		y1port = 2;
+		x2port = 3;
+		y2port = 1;
+		break;
+	case NAMCOS2_STEEL_GUNNER_2:
+		x1port = 4;
+		x2port = 5;
+		y1port = 6;
+		y2port = 7;
+		break;
+	default:
+		return;
+	}
+
+	{
+		int beamx, beamy;
+		beamx = readinputport(2+x1port)*bitmap->width/256;
+		beamy = readinputport(2+y1port)*bitmap->height/256;
+		draw_crosshair( bitmap, beamx, beamy, cliprect );
+
+		beamx = readinputport(2+x2port)*bitmap->width/256;
+		beamy = readinputport(2+y2port)*bitmap->height/256;
+		draw_crosshair( bitmap, beamx, beamy, cliprect );
+	}
+}
+
 VIDEO_UPDATE( namcos2_default )
 {
 	int pri;
 
 	FillPalettes(SPRITE_PAL|TILEMAP_PAL|ROZ_PAL);
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap(bitmap,get_black_pen(),cliprect);
 
 	/* enable ROZ layer only if it has priority > 0 */
 	tilemap_set_enable(tilemap_roz,(namcos2_gfx_ctrl & 0x7000) ? 1 : 0);
@@ -726,6 +806,7 @@ VIDEO_UPDATE( namcos2_default )
 		if(pri>=1 && ((namcos2_gfx_ctrl & 0x7000) >> 12)==pri) DrawROZ(bitmap,cliprect);
 		DrawSpritesDefault( bitmap,cliprect,pri );
 	}
+	DrawCrossshair( bitmap,cliprect );
 }
 
 VIDEO_START( finallap )
@@ -798,6 +879,7 @@ VIDEO_UPDATE( luckywld )
 		}
 		namco_obj_draw( bitmap, pri );
 	}
+	DrawCrossshair( bitmap,cliprect );
 }
 
 VIDEO_START( sgunner )
@@ -822,6 +904,7 @@ VIDEO_UPDATE( sgunner )
 		DrawTilemaps( bitmap, cliprect, pri );
 		namco_obj_draw( bitmap, pri );
 	}
+	DrawCrossshair( bitmap,cliprect );
 }
 
 VIDEO_START( metlhawk )

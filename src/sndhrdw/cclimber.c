@@ -12,7 +12,7 @@ static int channel;
 
 
 
-int cclimber_sh_start(const struct MachineSound *msound)
+static int cclimber_sh_start(const struct MachineSound *msound)
 {
 	channel = mixer_allocate_channel(50);
 	mixer_set_name(channel,"Samples");
@@ -27,11 +27,6 @@ int cclimber_sh_start(const struct MachineSound *msound)
 
 	return 0;
 }
-
-void cclimber_sh_stop(void)
-{
-}
-
 
 
 static void cclimber_play_sample(int start,int freq,int volume)
@@ -63,7 +58,7 @@ static void cclimber_play_sample(int start,int freq,int volume)
 
 static int sample_num,sample_freq,sample_volume;
 
-WRITE_HANDLER( cclimber_sample_select_w )
+static WRITE_HANDLER( cclimber_sample_select_w )
 {
 	sample_num = data;
 }
@@ -86,3 +81,33 @@ WRITE_HANDLER( cclimber_sample_trigger_w )
 
 	cclimber_play_sample(32 * sample_num,sample_freq,sample_volume);
 }
+
+
+struct AY8910interface cclimber_ay8910_interface =
+{
+	1,      /* 1 chip */
+	1536000,	/* 1.536 MHz */
+	{ 50 },
+	{ 0 },
+	{ 0 },
+	{ cclimber_sample_select_w },
+	{ 0 }
+};
+
+struct AY8910interface swimmer_ay8910_interface =
+{
+	2,      /* 2 chips */
+	4000000/2,	/* 2 MHz */
+	{ 25, 25 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+struct CustomSound_interface cclimber_custom_interface =
+{
+	cclimber_sh_start,
+	0,
+	0
+};

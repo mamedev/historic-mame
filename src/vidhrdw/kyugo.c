@@ -149,11 +149,7 @@ WRITE_HANDLER( kyugo_gfxctrl_w )
 	}
 
 	if (data & 0x9e)
-	{
-		char baf[40];
-		sprintf(baf,"%02x",data);
-		usrintf_showmessage(baf);
-	}
+		usrintf_showmessage("%02x",data);
 }
 
 

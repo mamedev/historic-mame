@@ -217,13 +217,13 @@ int rc_save(struct rc_struct *rc, const char *name, int append)
    return rc_write(rc, f, name);
 }
 
-int osd_rc_read(struct rc_struct *rc, void *f, const char *description,
+int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
    int priority, int continue_on_errors)
 {
    char buf[BUF_SIZE];
    int line = 0;
 
-   while(osd_fgets(buf, BUF_SIZE, f))
+   while(mame_fgets(buf, BUF_SIZE, f))
    {
       struct rc_option *option;
       char *name, *tmp, *arg = NULL;
@@ -412,7 +412,7 @@ int rc_parse_commandline(struct rc_struct *rc, int argc, char *argv[],
       {
          int start = 1;
          struct rc_option *option;
-         char *arg = NULL;
+         const char *arg = NULL;
 
          if(argv[i][1] == '-')
             start = 2;

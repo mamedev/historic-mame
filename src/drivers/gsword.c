@@ -162,6 +162,7 @@ static int fake8910_0,fake8910_1;
 static int gsword_nmi_step,gsword_nmi_count;
 
 
+#if 0
 static int gsword_coins_in(void)
 {
 	/* emulate 8741 coin slot */
@@ -173,6 +174,7 @@ static int gsword_coins_in(void)
 	logerror("NO Coin\n");
 	return 0x00;
 }
+#endif
 
 static READ_HANDLER( gsword_8741_2_r )
 {

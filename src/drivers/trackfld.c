@@ -96,7 +96,7 @@ static NVRAM_HANDLER( trackfld )
 {
 	if (read_or_write)
 	{
-		osd_fwrite(file,nvram,nvram_size);
+		mame_fwrite(file,nvram,nvram_size);
 
 		if (we_flipped_the_switch)
 		{
@@ -127,7 +127,7 @@ static NVRAM_HANDLER( trackfld )
 	{
 		if (file)
 		{
-			osd_fread(file,nvram,nvram_size);
+			mame_fread(file,nvram,nvram_size);
 			we_flipped_the_switch = 0;
 		}
 		else
@@ -160,11 +160,11 @@ static NVRAM_HANDLER( trackfld )
 static NVRAM_HANDLER( mastkin )
 {
 	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
+		mame_fwrite(file,nvram,nvram_size);
 	else
 	{
 		if (file)
-			osd_fread(file,nvram,nvram_size);
+			mame_fread(file,nvram,nvram_size);
 	}
 }
 

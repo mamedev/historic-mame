@@ -41,6 +41,7 @@ extern VIDEO_UPDATE( robotbowl );
 extern VIDEO_UPDATE( ripcord ); //AT
 extern VIDEO_EOF( ripcord ); //AT
 extern INTERRUPT_GEN( crash_interrupt );
+#if 0
 static int circus_interrupt;
 
 static READ_HANDLER( ripcord_IN2_r )
@@ -49,7 +50,7 @@ static READ_HANDLER( ripcord_IN2_r )
 	logerror("circus_int: %02x\n", circus_interrupt);
 	return readinputport (2);
 }
-
+#endif
 
 
 OVERLAY_START( circus_overlay )
@@ -277,11 +278,12 @@ static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
 /***************************************************************************
   Machine drivers
 ***************************************************************************/
-
+#if 0
 static INTERRUPT_GEN( ripcord_interrupt )
 {
 	circus_interrupt = 0;
 }
+#endif
 
 static struct DACinterface dac_interface =
 {

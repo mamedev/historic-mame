@@ -181,28 +181,23 @@ VIDEO_UPDATE( shangkid )
 }
 
 
-
-
 PALETTE_INIT( dynamski )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r,g,b;
+		int data = color_prom[i] + 256 * color_prom[i+32];
+		int r = (data >>  1) & 0x1f;
+		int g = (data >>  6) & 0x1f;
+		int b = (data >> 11) & 0x1f;
 
-		r = (color_prom[32 + i] >> 1) & 0x1f;
-		g = ((color_prom[32 + i] >> 6) & 0x03) | ((color_prom[i] << 2) & 0x1c);
-		b = (color_prom[i] >> 3) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(i,
+			(r << 3) | (r >> 2),
+			(g << 3) | (g >> 2),
+			(b << 3) | (b >> 2));
 	}
 
 	color_prom += 2*Machine->drv->total_colors;
@@ -210,12 +205,12 @@ PALETTE_INIT( dynamski )
 
 	/* sprites */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = color_prom[i] & 0x0f;
+		COLOR(1,i) = (color_prom[i] & 0x0f) + 0x10;
 	color_prom += 0x100;
 
 	/* characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = (color_prom[i] & 0x0f) + 0x10;
+		COLOR(0,i) = (color_prom[i] & 0x0f);
 }
 
 

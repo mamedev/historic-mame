@@ -47,7 +47,7 @@ INLINE char *signed_16bit(INT16 val)
 
 static const char *regname[32] =
 {
-	"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", 
+	"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7",
 	"AR0", "AR1", "AR2", "AR3", "AR4", "AR5", "AR6", "AR7",
 	"DP", "IR0", "IR1", "BK", "SP", "ST", "IE", "IF",
 	"IOF", "RS", "RE", "RC", "??", "??", "??", "??"
@@ -148,7 +148,7 @@ void append_indirect(UINT8 ma, INT8 disp, char *buffer)
 		case 5:		sprintf(dst, "*AR%d--%s", ar, dispstr);	break;
 		case 6:		sprintf(dst, "*AR%d++%s%%", ar, dispstr);	break;
 		case 7:		sprintf(dst, "*AR%d--%s%%", ar, dispstr);	break;
-		
+
 		case 8:		sprintf(dst, "*+AR%d(IR0)", ar);	break;
 		case 9:		sprintf(dst, "*-AR%d(IR0)", ar);	break;
 		case 10:	sprintf(dst, "*++AR%d(IR0)", ar);	break;
@@ -157,7 +157,7 @@ void append_indirect(UINT8 ma, INT8 disp, char *buffer)
 		case 13:	sprintf(dst, "*AR%d--(IR0)", ar);	break;
 		case 14:	sprintf(dst, "*AR%d++(IR0)%%", ar);	break;
 		case 15:	sprintf(dst, "*AR%d--(IR0)%%", ar);	break;
-		
+
 		case 16:	sprintf(dst, "*+AR%d(IR1)", ar);	break;
 		case 17:	sprintf(dst, "*-AR%d(IR1)", ar);	break;
 		case 18:	sprintf(dst, "*++AR%d(IR1)", ar);	break;
@@ -166,7 +166,7 @@ void append_indirect(UINT8 ma, INT8 disp, char *buffer)
 		case 21:	sprintf(dst, "*AR%d--(IR1)", ar);	break;
 		case 22:	sprintf(dst, "*AR%d++(IR1)%%", ar);	break;
 		case 23:	sprintf(dst, "*AR%d--(IR1)%%", ar);	break;
-		
+
 		case 24:	sprintf(dst, "*AR%d", ar);			break;
 		case 25:	sprintf(dst, "*AR%d++(IR0)B", ar);	break;
 		case 28:
@@ -206,13 +206,13 @@ static void append_immediate(UINT16 data, int is_float, int is_unsigned, char *b
 static void disasm_general(const char *opstring, UINT32 op, int flags, char *buffer)
 {
 	sprintf(buffer, "%-6s", opstring);
-	
+
 	if (flags & SWAPSRCDST)
 	{
 		strcat(buffer, regname[(op >> 16) & 31]);
 		strcat(buffer, ",");
 	}
-	
+
 	/* switch off of G */
 	if (!(flags & NOSOURCE))
 	{
@@ -221,15 +221,15 @@ static void disasm_general(const char *opstring, UINT32 op, int flags, char *buf
 			case 0:
 				strcat(buffer, regname[op & 31]);
 				break;
-			
+
 			case 1:
 				sprintf(&buffer[strlen(buffer)], "($%04X)", op & 0xffff);
 				break;
-			
+
 			case 2:
 				append_indirect((op >> 8) & 0xff, op, buffer);
 				break;
-			
+
 			case 3:
 				append_immediate(op & 0xffff, (flags & FLOAT), (flags & UNSIGNED), buffer);
 				break;
@@ -248,7 +248,7 @@ static void disasm_general(const char *opstring, UINT32 op, int flags, char *buf
 static void disasm_3op(const char *opstring, UINT32 op, int flags, char *buffer)
 {
 	sprintf(buffer, "%-6s", opstring);
-	
+
 	/* switch off of T */
 	if (!(flags & NOSOURCE1))
 	{
@@ -257,7 +257,7 @@ static void disasm_3op(const char *opstring, UINT32 op, int flags, char *buffer)
 			case 0:
 				strcat(buffer, regname[(op >> 8) & 31]);
 				break;
-			
+
 			case 1:
 				append_indirect(op >> 8, 1, buffer);
 				break;
@@ -274,7 +274,7 @@ static void disasm_3op(const char *opstring, UINT32 op, int flags, char *buffer)
 			case 0:
 				strcat(buffer, regname[op & 31]);
 				break;
-			
+
 			case 1:
 				append_indirect(op, 1, buffer);
 				break;
@@ -304,7 +304,7 @@ static void disasm_parallel_3op3op(const char *opstring1, const char *opstring2,
 	int d1 = (op >> 23) & 1;
 	int d2 = 2 + ((op >> 22) & 1);
 	char src[5][20];
-	
+
 	strcpy(src[1], regname[(op >> 19) & 7]);
 	strcpy(src[2], regname[(op >> 16) & 7]);
 
@@ -313,78 +313,78 @@ static void disasm_parallel_3op3op(const char *opstring1, const char *opstring2,
 
 	src[4][0] = 0;
 	append_indirect(op, 1, src[4]);
-	
-	sprintf(buffer, "%s %s,%s,R%d || %s %s,%s,R%d", 
+
+	sprintf(buffer, "%s %s,%s,R%d || %s %s,%s,R%d",
 			opstring1, src[s[0]], src[s[1]], d1,
 			opstring2, src[s[2]], src[s[3]], d2);
 }
 
- 
+
 static void disasm_parallel_3opstore(const char *opstring1, const char *opstring2, UINT32 op, int flags, char *buffer)
 {
 	int d1 = (op >> 22) & 7;
 	int s1 = (op >> 19) & 7;
 	int s3 = (op >> 16) & 7;
 	char dst2[20], src2[20];
-	
+
 	dst2[0] = 0;
 	append_indirect(op >> 8, 1, dst2);
 
 	src2[0] = 0;
 	append_indirect(op, 1, src2);
-	
+
 	if (!(flags & NOSOURCE1))
-		sprintf(buffer, "%s R%d,%s,R%d || %s R%d,%s", 
+		sprintf(buffer, "%s R%d,%s,R%d || %s R%d,%s",
 				opstring1, s1, src2, d1,
 				opstring2, s3, dst2);
 	else
-		sprintf(buffer, "%s %s,R%d || %s R%d,%s", 
+		sprintf(buffer, "%s %s,R%d || %s R%d,%s",
 				opstring1, src2, d1,
 				opstring2, s3, dst2);
 }
 
- 
+
 static void disasm_parallel_loadload(const char *opstring1, const char *opstring2, UINT32 op, int flags, char *buffer)
 {
 	int d2 = (op >> 22) & 7;
 	int d1 = (op >> 19) & 7;
 	char src1[20], src2[20];
-	
+
 	src1[0] = 0;
 	append_indirect(op >> 8, 1, src1);
 
 	src2[0] = 0;
 	append_indirect(op, 1, src2);
-	
-	sprintf(buffer, "%s %s,R%d || %s %s,R%d", 
+
+	sprintf(buffer, "%s %s,R%d || %s %s,R%d",
 			opstring1, src2, d2,
 			opstring2, src1, d1);
 }
 
- 
+
 static void disasm_parallel_storestore(const char *opstring1, const char *opstring2, UINT32 op, int flags, char *buffer)
 {
 	int s2 = (op >> 22) & 7;
 	int s1 = (op >> 16) & 7;
 	char dst1[20], dst2[20];
-	
+
 	dst1[0] = 0;
 	append_indirect(op >> 8, 1, dst1);
 
 	dst2[0] = 0;
 	append_indirect(op, 1, dst2);
-	
-	sprintf(buffer, "%s R%d,%s || %s R%d,%s", 
+
+	sprintf(buffer, "%s R%d,%s || %s R%d,%s",
 			opstring1, s2, dst2,
 			opstring2, s1, dst1);
 }
 
- 
+
 
 unsigned dasm_tms32031(char *buffer, unsigned pc)
 {
 	UINT32 op = ROPCODE(pc);
-	
+
 	switch (op >> 23)
 	{
 		case 0x000:	disasm_general("ABSF", op, FLOAT, buffer);			break;
@@ -440,7 +440,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 		case 0x02d:	disasm_general("SUBB", op, INTEGER, buffer);		break;
 		case 0x02e:	disasm_general("SUBC", op, INTEGER, buffer);		break;
 		case 0x02f:	disasm_general("SUBF", op, FLOAT, buffer);			break;
-		
+
 		case 0x030:	disasm_general("SUBI", op, INTEGER, buffer);		break;
 		case 0x031:	disasm_general("SUBRB", op, INTEGER, buffer);		break;
 		case 0x032:	disasm_general("SUBRF", op, FLOAT, buffer);			break;
@@ -466,52 +466,54 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 		case 0x04d:	disasm_3op("SUBF3", op, FLOAT, buffer);				break;
 		case 0x04e:	disasm_3op("SUBI3", op, INTEGER, buffer);			break;
 		case 0x04f:	disasm_3op("TSTB3", op, INTEGER, buffer);			break;
-		
-		case 0x080: case 0x081: case 0x082: case 0x083: 
-		case 0x084: case 0x085: case 0x086: case 0x087: 
-		case 0x088: case 0x089: case 0x08a: case 0x08b: 
-		case 0x08c: case 0x08d: case 0x08e: case 0x08f: 
-		case 0x090: case 0x091: case 0x092: case 0x093: 
-		case 0x094: case 0x095: case 0x096: case 0x097: 
-		case 0x098: case 0x099: case 0x09a: case 0x09b: 
+
+		case 0x050:	disasm_3op("XOR3", op, INTEGER, buffer);			break;
+
+		case 0x080: case 0x081: case 0x082: case 0x083:
+		case 0x084: case 0x085: case 0x086: case 0x087:
+		case 0x088: case 0x089: case 0x08a: case 0x08b:
+		case 0x08c: case 0x08d: case 0x08e: case 0x08f:
+		case 0x090: case 0x091: case 0x092: case 0x093:
+		case 0x094: case 0x095: case 0x096: case 0x097:
+		case 0x098: case 0x099: case 0x09a: case 0x09b:
 		case 0x09c: case 0x09d: case 0x09e: case 0x09f:
 			disasm_conditional("LDF", op, FLOAT, buffer);
 			break;
-		
-		case 0x0a0: case 0x0a1: case 0x0a2: case 0x0a3: 
-		case 0x0a4: case 0x0a5: case 0x0a6: case 0x0a7: 
-		case 0x0a8: case 0x0a9: case 0x0aa: case 0x0ab: 
-		case 0x0ac: case 0x0ad: case 0x0ae: case 0x0af: 
-		case 0x0b0: case 0x0b1: case 0x0b2: case 0x0b3: 
-		case 0x0b4: case 0x0b5: case 0x0b6: case 0x0b7: 
-		case 0x0b8: case 0x0b9: case 0x0ba: case 0x0bb: 
+
+		case 0x0a0: case 0x0a1: case 0x0a2: case 0x0a3:
+		case 0x0a4: case 0x0a5: case 0x0a6: case 0x0a7:
+		case 0x0a8: case 0x0a9: case 0x0aa: case 0x0ab:
+		case 0x0ac: case 0x0ad: case 0x0ae: case 0x0af:
+		case 0x0b0: case 0x0b1: case 0x0b2: case 0x0b3:
+		case 0x0b4: case 0x0b5: case 0x0b6: case 0x0b7:
+		case 0x0b8: case 0x0b9: case 0x0ba: case 0x0bb:
 		case 0x0bc: case 0x0bd: case 0x0be: case 0x0bf:
 			disasm_conditional("LDI", op, INTEGER, buffer);
 			break;
-		
-		
+
+
 		case 0x0c0: case 0x0c1:
 			sprintf(buffer, "BR    $%06X", op & 0xffffff);
 			break;
-		
+
 		case 0x0c2: case 0x0c3:
 			sprintf(buffer, "BRD   $%06X", op & 0xffffff);
 			break;
-		
+
 		case 0x0c4: case 0x0c5:
 			sprintf(buffer, "CALL  $%06X", op & 0xffffff);
 			break;
-		
-		
+
+
 		case 0x0c8: case 0x0c9:
 			sprintf(buffer, "RPTB  $%06X", op & 0xffffff);
 			break;
-		
+
 		case 0x0cc: case 0x0cd: case 0x0ce: case 0x0cf:
 			sprintf(buffer, "SWI");
 			break;
-		
-		
+
+
 		case 0x0d0:
 		{
 			char temp[10];
@@ -519,7 +521,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			sprintf(buffer, "%-6s%s", temp, regname[op & 31]);
 			break;
 		}
-		
+
 		case 0x0d4:
 		{
 			char temp[10];
@@ -527,8 +529,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			sprintf(buffer, "%-6s$%06X", temp, (pc + (((op >> 21) & 1) ? 3 : 1) + (INT16)op) & 0xffffff);
 			break;
 		}
-		
-		
+
+
 		case 0x0d8: case 0x0d9: case 0x0da: case 0x0db:
 		{
 			char temp[10];
@@ -544,8 +546,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			sprintf(buffer, "%-6sAR%d,$%06X", temp, (op >> 22) & 7, (pc + (((op >> 21) & 1) ? 3 : 1) + (INT16)op) & 0xffffff);
 			break;
 		}
-		
-		
+
+
 		case 0x0e0:
 		{
 			char temp[10];
@@ -553,7 +555,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			sprintf(buffer, "%-6s%s", temp, regname[op & 31]);
 			break;
 		}
-		
+
 		case 0x0e4:
 		{
 			char temp[10];
@@ -570,17 +572,17 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			sprintf(buffer, "%-6s$%02X", temp, op & 31);
 			break;
 		}
-		
-		
+
+
 		case 0x0f0:
 			sprintf(buffer, "RETI%s", condition[(op >> 16) & 31]);
 			break;
-		
+
 		case 0x0f1:
 			sprintf(buffer, "RETS%s", condition[(op >> 16) & 31]);
 			break;
-		
-		
+
+
 		case 0x100: case 0x101:	case 0x102: case 0x103:
 		case 0x104: case 0x105:	case 0x106: case 0x107:	// MPYF3||ADDF3
 		{
@@ -588,8 +590,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			disasm_parallel_3op3op("MPYF3", "ADDF3", op, FLOAT, srctable, buffer);
 			break;
 		}
-		
-		
+
+
 		case 0x108: case 0x109:	case 0x10a: case 0x10b:
 		case 0x10c: case 0x10d:	case 0x10e: case 0x10f:	// MPYF3||SUBF3
 		{
@@ -597,8 +599,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			disasm_parallel_3op3op("MPYF3", "SUBF3", op, FLOAT, srctable, buffer);
 			break;
 		}
-		
-		
+
+
 		case 0x110: case 0x111:	case 0x112: case 0x113:
 		case 0x114: case 0x115:	case 0x116: case 0x117:	// MPYI3||ADDI3
 		{
@@ -606,8 +608,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			disasm_parallel_3op3op("MPYI3", "ADDI3", op, INTEGER, srctable, buffer);
 			break;
 		}
-		
-		
+
+
 		case 0x118: case 0x119:	case 0x11a: case 0x11b:
 		case 0x11c: case 0x11d:	case 0x11e: case 0x11f:	// MPYI3||SUBI3
 		{
@@ -723,8 +725,8 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 		case 0x1dc: case 0x1dd:	case 0x1de: case 0x1df:	// XOR3||STI
 			disasm_parallel_3opstore("XOR3", "STI", op, INTEGER, buffer);
 			break;
-		
-		
+
+
 		default:
 			break;
 	}

@@ -154,7 +154,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface = {
 	2,		/* 2 chips */
-	3072000/2, // lax 11/03/1999  (1250000 -> 1536000 ???)
+	12000000/8,	/* 1.5 MHz */
 	{ 25, 25 },
 	{ input_port_0_r, input_port_2_r },
 	{ input_port_1_r, input_port_3_r },
@@ -167,7 +167,7 @@ static struct AY8910interface ay8910_interface = {
 static MACHINE_DRIVER_START( pkunwar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_ADD(Z80, 12000000/4)	/* 3 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(0,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

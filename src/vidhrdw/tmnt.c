@@ -640,6 +640,17 @@ VIDEO_UPDATE( lgtnfght )
 	K053245_sprites_draw(bitmap,cliprect);
 }
 
+static int glfgreat_pixel;
+
+READ16_HANDLER( glfgreat_ball_r )
+{
+usrintf_showmessage("%04x",glfgreat_pixel);
+
+	/* if out of the ROZ layer palette range, it's in the water - return 0 */
+	if (glfgreat_pixel < 0x400 || glfgreat_pixel >= 0x500) return 0;
+	else return glfgreat_pixel & 0xff;
+}
+
 VIDEO_UPDATE( glfgreat )
 {
 	K053251_set_tilemaps(NULL,NULL,K052109_tilemap[0],K052109_tilemap[1],K052109_tilemap[2]);
@@ -667,13 +678,22 @@ VIDEO_UPDATE( glfgreat )
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],cliprect);
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[0]],0,1);
 	if (layerpri[0] >= 0x30 && layerpri[1] < 0x30)
+	{
 		K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,0,1);
+		glfgreat_pixel = read_pixel(bitmap,0x105,0x80);
+	}
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[1]],0,2);
 	if (layerpri[1] >= 0x30 && layerpri[2] < 0x30)
+	{
 		K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,0,1);
+		glfgreat_pixel = read_pixel(bitmap,0x105,0x80);
+	}
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[2]],0,4);
 	if (layerpri[2] >= 0x30)
+	{
 		K053936_0_zoom_draw(bitmap,cliprect,roz_tilemap,0,1);
+		glfgreat_pixel = read_pixel(bitmap,0x105,0x80);
+	}
 
 	K053245_sprites_draw(bitmap,cliprect);
 }

@@ -53,9 +53,9 @@ WRITE_HANDLER( atari_vg_earom_ctrl_w )
 NVRAM_HANDLER( atari_vg )
 {
 	if (read_or_write)
-		osd_fwrite(file,earom,EAROM_SIZE);
+		mame_fwrite(file,earom,EAROM_SIZE);
 	else if (file)
-		osd_fread(file,earom,EAROM_SIZE);
+		mame_fread(file,earom,EAROM_SIZE);
 	else
 		memset(earom,0,EAROM_SIZE);
 }

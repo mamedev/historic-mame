@@ -281,7 +281,8 @@ WRITE_HANDLER( decocass_reset_w )
 	cpu_set_reset_line( 2, (data & 0x08) ^ 0x08 );
 }
 
-static char *dirnm(int speed)
+#ifdef MAME_DEBUG
+static const char *dirnm(int speed)
 {
 	if (speed <  -1) return "fast rewind";
 	if (speed == -1) return "rewind";
@@ -289,6 +290,7 @@ static char *dirnm(int speed)
 	if (speed ==  1) return "forward";
 	return "fast forward";
 }
+#endif
 
 static void tape_crc16(UINT8 data)
 {
@@ -922,7 +924,7 @@ WRITE_HANDLER( decocass_type2_w )
 	{
 		if (1 == (offset & 1))
 		{
-			LOG(4,("%9.7f 6502-PC: %04x decocass_e5xx_w(%02x): $%02x -> set PROM+D2 latch $%02x", timer_get_time(), activecpu_get_previouspc(), offset, data));
+			LOG(4,("%9.7f 6502-PC: %04x decocass_e5xx_w(%02x): $%02x -> set PROM+D2 latch", timer_get_time(), activecpu_get_previouspc(), offset, data));
 		}
 		else
 		{

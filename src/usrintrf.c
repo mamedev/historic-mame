@@ -2079,9 +2079,9 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 				case 1:
 					strcat (label[i], ui_getstring (UI_reverse));
 					if (reverse)
-						sprintf(setting[i],ui_getstring (UI_on));
+						strcpy(setting[i],ui_getstring (UI_on));
 					else
-						sprintf(setting[i],ui_getstring (UI_off));
+						strcpy(setting[i],ui_getstring (UI_off));
 					if (i == sel) arrowize = 3;
 					break;
 				case 2:
@@ -2343,7 +2343,7 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 					Machine->drv->cpu[i].cpu_clock / 1000,
 					Machine->drv->cpu[i].cpu_clock % 1000);
 
-		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
+		if (Machine->drv->cpu[i].cpu_flags & CPU_AUDIO_CPU)
 		{
 			sprintf (buf2, " (%s)", ui_getstring (UI_sound_lc));
 			strcat(buf, buf2);
@@ -2604,9 +2604,15 @@ int showgamewarnings(struct mame_bitmap *bitmap)
 		} while (done < 2);
 	}
 
-
 	erase_screen(bitmap);
+	update_video_and_audio();
 
+	return 0;
+}
+
+
+int showgameinfo(struct mame_bitmap *bitmap)
+{
 	/* clear the input memory */
 	while (code_read_async() != CODE_NONE) {};
 
@@ -3403,13 +3409,13 @@ static void onscrd_brightness(struct mame_bitmap *bitmap,int increment,int arg)
 		brightness = palette_get_global_brightness();
 		brightness += 0.05 * increment;
 		if (brightness < 0.1) brightness = 0.1;
-		if (brightness > 2.0) brightness = 2.0;
+		if (brightness > 1.0) brightness = 1.0;
 		palette_set_global_brightness(brightness);
 	}
 	brightness = palette_get_global_brightness();
 
 	sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), (int)(brightness * 100));
-	displayosd(bitmap,buf,brightness*50,100);
+	displayosd(bitmap,buf,brightness*100,100);
 }
 
 static void onscrd_gamma(struct mame_bitmap *bitmap,int increment,int arg)

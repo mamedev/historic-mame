@@ -37,7 +37,7 @@ CHIP #  POSITION   TYPE
 14       19E         "       "
 */
 
-#include "vidhrdw\generic.h"
+#include "vidhrdw/generic.h"
 
 data8_t *flower_sharedram;
 

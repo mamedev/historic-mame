@@ -42,24 +42,25 @@ void GET_OP(int i, unsigned pc)
 	n[i*4+3] = opcode & 0x0f;
 }
 
-static char *cc[16] = {
+static const char *cc[16] = {
 	"n",   "lt",  "le",  "ule",  "pe/ov",   "mi",  "eq/z",   "c/ult",
 	"a",   "ge",  "gt",  "ugt",  "po/nov",  "pl",  "ne/nz",  "nc/uge"
 };
 
-static char *flg[16] = {
+static const char *flg[16] = {
 	"",    "p/v",  "s",   "p/v,s",   "z",   "p/v,z",  "s,z",  "p/v,s,z",
 	"c",   "p/v,c","s,c", "p/v,s,c", "z,c", "p/v,z,c","s,z,c","p/v,s,z,c"
 };
 
-static char *ints[4] = {
+static const char *ints[4] = {
 	"",    "vi",  "nvi",   "vi,nvi"
 };
 
 int DasmZ8000(char *buff, int pc)
 {
 	int new_pc = pc, i, tmp;
-	char *dst = buff, *src;
+	char *dst = buff;
+	const char *src;
 	Z8000_exec *o;
 
     GET_OP(0, new_pc);

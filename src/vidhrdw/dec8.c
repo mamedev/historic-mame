@@ -414,6 +414,7 @@ static void srdarwin_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 }
 
 /* Draw character tiles, each game has different colour masks */
+#if 0
 static void draw_characters(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int mask, int shift)
 {
 	int mx,my,tile,color,offs;
@@ -432,6 +433,7 @@ static void draw_characters(struct mame_bitmap *bitmap, const struct rectangle *
 				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
+#endif
 
 /******************************************************************************/
 

@@ -7,6 +7,7 @@ various early SNK games (1983-1985)
 driver by Phil Stroffolino
 
 Known Issues:
+	Mad Crasher fails the ROM test, but ROMs are verified to be good
 	Mad Crasher sound effects aren't being played
 	Vanguard II crashes under dos with sound enabled
 	Marvin's maze crashes under dos with sound enabled, hangs with sound
@@ -716,9 +717,9 @@ ROM_END
 
 ROM_START( madcrash )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for CPUA code */
-	ROM_LOAD( "p8",    0x0000, 0x2000, BADCRC( 0xecb2fdc9 ) )
-	ROM_LOAD( "p9",    0x2000, 0x2000, BADCRC( 0x0a87df26 ) )
-	ROM_LOAD( "p10",   0x4000, 0x2000, BADCRC( 0x6eb8a87c ) )
+	ROM_LOAD( "p8",    0x0000, 0x2000, 0xecb2fdc9 )
+	ROM_LOAD( "p9",    0x2000, 0x2000, 0x0a87df26 )
+	ROM_LOAD( "p10",   0x4000, 0x2000, 0x6eb8a87c )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for CPUB code */
 	ROM_LOAD( "p4",   0x0000, 0x2000, 0x5664d699 )

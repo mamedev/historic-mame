@@ -64,11 +64,13 @@ static WRITE32_HANDLER( deco32_sound_w )
 	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
+#if 0
 static WRITE32_HANDLER(tattass_sound_w)
 {
 	locals.soundCmd = data;
 	locals.bufFull = TRUE;
 }
+#endif
 
 static READ32_HANDLER( deco32_71_r )
 {
@@ -186,6 +188,7 @@ static READ32_HANDLER( dragngun_prot_r )
 	return 0xffffffff;
 }
 
+#if 0
 static READ32_HANDLER( lockload_lightgun_r )
 {
 	logerror("%08x:Read lightgun %08x (%08x)\n",activecpu_get_pc(),offset,mem_mask);
@@ -195,6 +198,7 @@ static READ32_HANDLER( lockload_lightgun_r )
 	}
 	return 0;
 }
+#endif
 
 static READ32_HANDLER( dragngun_control_r )
 {
@@ -526,15 +530,21 @@ static WRITE_HANDLER(des_bsmt1_w)
 	// BSMT is ready directly
 	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
+#if 0
 static READ_HANDLER(des_2000_r) { return 0; }
+#endif
 static READ_HANDLER(des_2002_r) { locals.bufFull = FALSE; return locals.soundCmd; }
+#if 0
 static READ_HANDLER(des_2004_r) { return 0; }
+#endif
 static READ_HANDLER(des_2006_r) { return 0x80; } // BSMT is always ready
 // Writing 0x80 here resets BSMT ?
 static WRITE_HANDLER(des_2000_w) {/*DBGLOG(("2000w=%2x\n",data));*/}
+#if 0
 static WRITE_HANDLER(des_2002_w) {/*DBGLOG(("2002w=%2x\n",data));*/}
 static WRITE_HANDLER(des_2004_w) {/*DBGLOG(("2004w=%2x\n",data));*/}
 static WRITE_HANDLER(des_2006_w) {/*DBGLOG(("2006w=%2x\n",data));*/}
+#endif
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },

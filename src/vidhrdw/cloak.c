@@ -186,6 +186,7 @@ VIDEO_START( cloak )
   the main emulation engine.
 
 ***************************************************************************/
+#if 0
 static void refresh_bitmaps(void)
 {
 	int lx,ly;
@@ -199,7 +200,7 @@ static void refresh_bitmaps(void)
 		}
 	}
 }
-
+#endif
 
 VIDEO_UPDATE( cloak )
 {

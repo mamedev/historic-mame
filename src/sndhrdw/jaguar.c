@@ -457,7 +457,7 @@ WRITE32_HANDLER( jaguar_serial_w )
 		/* control register -- only very specific modes supported */
 		case 5:
 			if ((data & 0x3f) != 0x15)
-				logerror("%08X:Unexpected write to SMODE = %X\n", data);
+				logerror("Unexpected write to SMODE = %X\n", data);
 			if ((data & 0x3f) == 0x15)
 			{
 				double rate = TIME_IN_HZ(26000000 / (32 * 2 * (serial_frequency + 1)));

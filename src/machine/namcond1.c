@@ -184,11 +184,11 @@ NVRAM_HANDLER( namcond1 )
 
   if( read_or_write == 0 ) {
     /* read eeprom contents */
-    osd_fread( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
+    mame_fread( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
   else {
     /* write eeprom contents */
-    osd_fwrite( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
+    mame_fwrite( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
 }
 

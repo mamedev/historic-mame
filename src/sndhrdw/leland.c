@@ -548,7 +548,7 @@ int leland_i186_sh_start(const struct MachineSound *msound)
 	i186.timer[2].time_timer = timer_alloc(NULL);
 	i186.dma[0].finish_timer = timer_alloc(dma_timer_callback);
 	i186.dma[1].finish_timer = timer_alloc(dma_timer_callback);
-	
+
 	for (i = 0; i < 9; i++)
 		counter[i].timer = timer_alloc(NULL);
 
@@ -948,7 +948,7 @@ static void internal_timer_update(int which, int new_count, int new_maxA, int ne
 		/* check for control bits we don't handle */
 		diff = new_control ^ t->control;
 		if (diff & 0x001c)
-			logerror("%05X:ERROR! - unsupported timer mode %04X\n", new_control);
+			logerror("ERROR! - unsupported timer mode %04X\n", new_control);
 
 		/* if we have real changes, update things */
 		if (diff != 0)
@@ -1049,7 +1049,7 @@ static void update_dma_control(int which, int new_control)
 	/* check for control bits we don't handle */
 	diff = new_control ^ d->control;
 	if (diff & 0x6811)
-		logerror("%05X:ERROR! - unsupported DMA mode %04X\n", new_control);
+		logerror("ERROR! - unsupported DMA mode %04X\n", new_control);
 
 	/* if we're going live, set a timer */
 	if ((diff & 0x0002) && (new_control & 0x0002))
