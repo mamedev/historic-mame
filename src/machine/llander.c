@@ -10,10 +10,10 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 
-#define IN0_VBLANK	(1 << 6)
+#define IN0_3KHZ	(1 << 6)
 #define IN0_SLAM	(1 << 2)
 #define IN0_TEST	(1 << 1)
-#define IN0_VG		(1 << 0)
+#define IN0_VG_HALT	(1 << 0)
 
 #define IN1_P1		(1 << 0)
 #define IN1_COIN	(1 << 1)
@@ -27,7 +27,6 @@
 #define IN3_THRUST		(1 << 0)
 #define IN3_MAXTHRUST	(1 << 1)
 
-static int vblank;
 
 int llander_IN0_r (int offset) {
 
@@ -35,10 +34,17 @@ int llander_IN0_r (int offset) {
 
 	res = readinputport(0);
 
-	if (vblank) res &= ~IN0_VBLANK;
-	else vblank = 0;
+	if (cpu_geticount() & 0x100)
+		res|=IN0_3KHZ;
+	else
+		res&=~IN0_3KHZ;
 	
-//	res &= (vg_done (cpu_geticount()));
+/*	res &= (vg_done (cpu_geticount())); */
+
+	if (vg_done(cpu_gettotalcycles()))
+		res|=IN0_VG_HALT;
+	else
+		res&=~IN0_VG_HALT;
 
 	return res;
 	}
@@ -108,19 +114,10 @@ int llander_IN3_r (int offset) {
 int llander_DSW1_r (int offset) {
 
 	int res;
-	int res1;
 
-	res1 = readinputport(2);
+	res = readinputport(2);
 
-	res = 0xfc | ((res1 >> (2 * (3 - (offset & 0x3)))) & 0x3);
+/*	res = 0xfc | ((res1 >> (2 * (3 - (offset & 0x3)))) & 0x3);
+*/
 	return res;
 	}
-
-int llander_interrupt (void) {
-
-	vblank = 1;
-
-	return nmi_interrupt();
-	}
-
-

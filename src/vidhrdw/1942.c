@@ -24,7 +24,7 @@ static struct osd_bitmap *tmpbitmap2;
 
   Convert the color PROMs into a more useable format.
 
-  1942 has a three 256x4 palette PROMs (one per gun) and three 256x4 lookup
+  1942 has three 256x4 palette PROMs (one per gun) and three 256x4 lookup
   table PROMs (one for characters, one for sprites, one for background tiles).
   The palette PROMs are connected to the RGB output this way:
 
@@ -96,7 +96,7 @@ int c1942_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,c1942_backgroundram_size);
+	memset(dirtybuffer2,1,c1942_backgroundram_size);
 
 	/* the background area is twice as tall as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)

@@ -37,18 +37,18 @@ Millipede memory map (preliminary)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/pokyintf.h"
 
 
 
-extern int centiped_rand_r(int offset);
+void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-extern void milliped_pokey1_w(int offset,int data);
-extern void milliped_pokey2_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
+/* Added 11-JUL-97 JB */
+int milliped_IN_r(int offset);
+int centiped_trakball_x(int data);
+int centiped_trakball_y(int data);
+int milliped_interrupt(void);
+/* End 11-JUL-97 */
 
 
 
@@ -58,14 +58,15 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1000, 0x13ff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ 0x2000, 0x2000, input_port_0_r },
-	{ 0x2001, 0x2001, input_port_1_r },
+/*	{ 0x2000, 0x2000, input_port_0_r },
+	{ 0x2001, 0x2001, input_port_1_r }, */ /* Replaced 11-JUL-97 JB */
+		{ 0x2000, 0x2001, milliped_IN_r }, /* Added 11-JUL-97 JB */
 	{ 0x2010, 0x2010, input_port_2_r },
         { 0x2011, 0x2011, input_port_3_r },
         { 0x0408, 0x0408, input_port_4_r },
         { 0x0808, 0x0808, input_port_5_r },
-	{ 0x40a, 0x40a, centiped_rand_r },
-	{ 0x80a, 0x80a, centiped_rand_r },
+	{ 0x400, 0x40f, pokey1_r },
+	{ 0x800, 0x80f, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
@@ -76,8 +77,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x0200, MWA_RAM },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
-	{ 0x0400, 0x0408, milliped_pokey1_w },
-	{ 0x0800, 0x0808, milliped_pokey2_w },
+	{ 0x0400, 0x040f, pokey1_w },
+	{ 0x0800, 0x080f, pokey2_w },
 	{ 0x4000, 0x73ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -123,11 +124,30 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+/* Added 11-JUL-97 JB */
+static struct TrakPort trak_ports[] = {
+  {
+    X_AXIS,
+    1,
+    1.0,
+    centiped_trakball_x
+  },
+  {
+    Y_AXIS,
+    1,
+    1.0,
+    centiped_trakball_y
+  },
+  { -1 }
+};
+/* End 11-JUL-97 JB */
+
+/* Removed 22-JUL-97 JB
 static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
-
+*/
 
 static struct KEYSet keys[] =
 {
@@ -242,7 +262,7 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt,1
+			milliped_interrupt,2		/* ASG -- 2 per frame, once for VBLANK and once not? */
 		}
 	},
 	60,
@@ -262,9 +282,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey2_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -277,15 +297,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( milliped_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.104", 0x4000, 0x1000 )
-	ROM_LOAD( "%s.103", 0x5000, 0x1000 )
-	ROM_LOAD( "%s.102", 0x6000, 0x1000 )
-	ROM_LOAD( "%s.101", 0x7000, 0x1000 )
-	ROM_LOAD( "%s.101", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0xd13b2ed1 )
+	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0x8d016c93 )
+	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x0a7b24db )
+	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x35374cb3 )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.106", 0x0000, 0x0800 )
-	ROM_LOAD( "%s.107", 0x0800, 0x0800 )
+	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0x006170b5 )
+	ROM_LOAD( "milliped.107", 0x0800, 0x0800, 0x7bd67d9e )
 ROM_END
 
 
@@ -330,7 +350,7 @@ struct GameDriver milliped_driver =
 {
 	"Millipede",
 	"milliped",
-	"IVAN MACKINTOSH\nNICOLA SALMORIA",
+	"IVAN MACKINTOSH\nNICOLA SALMORIA\nJOHN BUTLER\nAARON GILES\nBERND WIEBELT",
 	&machine_driver,
 
 	milliped_rom,

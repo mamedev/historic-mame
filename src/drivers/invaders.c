@@ -94,19 +94,21 @@ I don't know why.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int invaders_shift_data_r(int offset);
-extern void invaders_shift_amount_w(int offset,int data);
-extern void invaders_shift_data_w(int offset,int data);
-extern int invaders_interrupt(void);
+int invaders_shift_data_r(int offset);
+void invaders_shift_amount_w(int offset,int data);
+void invaders_shift_data_w(int offset,int data);
+int invaders_interrupt(void);
 
 extern unsigned char *invaders_videoram;
-extern void invaders_videoram_w(int offset,int data);
-extern void lrescue_videoram_w(int offset,int data);    /* V.V */
-extern void invrvnge_videoram_w(int offset,int data);   /* V.V */
-extern void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void invaders_sh_port3_w(int offset,int data);
-extern void invaders_sh_port5_w(int offset,int data);
-extern void invaders_sh_update(void);
+void invaders_videoram_w(int offset,int data);
+void lrescue_videoram_w(int offset,int data);    /* V.V */
+void invrvnge_videoram_w(int offset,int data);   /* V.V */
+int invaders_vh_start(void);
+void invaders_vh_stop(void);
+void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
+void invaders_sh_port3_w(int offset,int data);
+void invaders_sh_port5_w(int offset,int data);
+void invaders_sh_update(void);
 
 
 
@@ -338,8 +340,8 @@ static struct MachineDriver machine_driver =
 	0,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	invaders_vh_start,
+	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
@@ -373,8 +375,8 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 	0,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	invaders_vh_start,
+	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
@@ -408,8 +410,8 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 	0,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	invaders_vh_start,
+	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
@@ -444,8 +446,8 @@ static struct MachineDriver invdelux_machine_driver =
 	0,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	invaders_vh_start,
+	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
@@ -466,66 +468,66 @@ static struct MachineDriver invdelux_machine_driver =
 
 ROM_START( invaders_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invaders.h", 0x0000, 0x0800)
-	ROM_LOAD( "invaders.g", 0x0800, 0x0800)
-	ROM_LOAD( "invaders.f", 0x1000, 0x0800)
-	ROM_LOAD( "invaders.e", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "invaders.h", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "invaders.g", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "invaders.f", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "invaders.e", 0x1800, 0x0800)
 ROM_END
 
 ROM_START( spaceatt_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800)
-	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800)
-	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800)
-	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "spaceatt.h", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "spaceatt.g", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "spaceatt.f", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "spaceatt.e", 0x1800, 0x0800)
 ROM_END
 
 ROM_START( invrvnge_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invrvnge.h", 0x0000, 0x0800)
-	ROM_LOAD( "invrvnge.g", 0x0800, 0x0800)
-	ROM_LOAD( "invrvnge.f", 0x1000, 0x0800)
-	ROM_LOAD( "invrvnge.e", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "invrvnge.h", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "invrvnge.g", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "invrvnge.f", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "invrvnge.e", 0x1800, 0x0800)
 ROM_END
 
 ROM_START( invdelux_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invdelux.h", 0x0000, 0x0800)
-	ROM_LOAD( "invdelux.g", 0x0800, 0x0800)
-	ROM_LOAD( "invdelux.f", 0x1000, 0x0800)
-	ROM_LOAD( "invdelux.e", 0x1800, 0x0800)
-	ROM_LOAD( "invdelux.d", 0x4000, 0x0800)
+	ROM_OBSOLETELOAD( "invdelux.h", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "invdelux.g", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "invdelux.f", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "invdelux.e", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "invdelux.d", 0x4000, 0x0800)
 ROM_END
 
 ROM_START( galxwars_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "galxwars.0", 0x0000, 0x0400)
-	ROM_LOAD( "galxwars.1", 0x0400, 0x0400)
-	ROM_LOAD( "galxwars.2", 0x0800, 0x0400)
-	ROM_LOAD( "galxwars.3", 0x0c00, 0x0400)
-	ROM_LOAD( "galxwars.4", 0x4000, 0x0400)
-	ROM_LOAD( "galxwars.5", 0x4400, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.0", 0x0000, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.1", 0x0400, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.2", 0x0800, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.3", 0x0c00, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.4", 0x4000, 0x0400)
+	ROM_OBSOLETELOAD( "galxwars.5", 0x4400, 0x0400)
 ROM_END
 
 ROM_START( lrescue_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "lrescue.1", 0x0000, 0x0800)
-	ROM_LOAD( "lrescue.2", 0x0800, 0x0800)
-	ROM_LOAD( "lrescue.3", 0x1000, 0x0800)
-	ROM_LOAD( "lrescue.4", 0x1800, 0x0800)
-	ROM_LOAD( "lrescue.5", 0x4000, 0x0800)
-	ROM_LOAD( "lrescue.6", 0x4800, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.1", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.2", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.3", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.4", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.5", 0x4000, 0x0800)
+	ROM_OBSOLETELOAD( "lrescue.6", 0x4800, 0x0800)
 ROM_END
 
 ROM_START( desterth_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "36_h.bin", 0x0000, 0x0800)
-	ROM_LOAD( "35_g.bin", 0x0800, 0x0800)
-	ROM_LOAD( "34_f.bin", 0x1000, 0x0800)
-	ROM_LOAD( "33_e.bin", 0x1800, 0x0800)
-	ROM_LOAD( "32_d.bin", 0x4000, 0x0800)
-	ROM_LOAD( "31_c.bin", 0x4800, 0x0800)
-	ROM_LOAD( "42_b.bin", 0x5000, 0x0800)
+	ROM_OBSOLETELOAD( "36_h.bin", 0x0000, 0x0800)
+	ROM_OBSOLETELOAD( "35_g.bin", 0x0800, 0x0800)
+	ROM_OBSOLETELOAD( "34_f.bin", 0x1000, 0x0800)
+	ROM_OBSOLETELOAD( "33_e.bin", 0x1800, 0x0800)
+	ROM_OBSOLETELOAD( "32_d.bin", 0x4000, 0x0800)
+	ROM_OBSOLETELOAD( "31_c.bin", 0x4800, 0x0800)
+	ROM_OBSOLETELOAD( "42_b.bin", 0x5000, 0x0800)
 ROM_END
 
 

@@ -229,7 +229,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		copybitmap(bitmap,bsbitmap,
 				cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
 				136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 

@@ -32,14 +32,14 @@ I/O ports:
 
 
 
-extern int seicross_protection_r(int offset);
+int seicross_protection_r(int offset);
 
 extern unsigned char *seicross_row_scroll;
-extern void seicross_colorram_w(int offset,int data);
-extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void seicross_vh_screenrefresh(struct osd_bitmap *bitmap);
+void seicross_colorram_w(int offset,int data);
+void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void seicross_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int seicross_sh_start(void);
+int seicross_sh_start(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -231,32 +231,32 @@ static struct MachineDriver machine_driver =
 
 ROM_START( seicross_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "smc1", 0x0000, 0x1000 )
-	ROM_LOAD( "smc2", 0x1000, 0x1000 )
-	ROM_LOAD( "smc3", 0x2000, 0x1000 )
-	ROM_LOAD( "smc4", 0x3000, 0x1000 )
-	ROM_LOAD( "smc5", 0x4000, 0x1000 )
-	ROM_LOAD( "smc6", 0x5000, 0x1000 )	/* ?? */
-	ROM_LOAD( "smc7", 0x6000, 0x1000 )	/* ?? */
+	ROM_LOAD( "smc1", 0x0000, 0x1000, 0x05933acb )
+	ROM_LOAD( "smc2", 0x1000, 0x1000, 0xc2e976d5 )
+	ROM_LOAD( "smc3", 0x2000, 0x1000, 0x2a0a1a9a )
+	ROM_LOAD( "smc4", 0x3000, 0x1000, 0xed8b26a7 )
+	ROM_LOAD( "smc5", 0x4000, 0x1000, 0x17996809 )
+	ROM_LOAD( "smc6", 0x5000, 0x1000, 0x4ef8da3e )	/* ?? */
+	ROM_LOAD( "smc7", 0x6000, 0x1000, 0xd30a5b96 )	/* ?? */
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "smcc", 0x0000, 0x1000 )
-	ROM_LOAD( "smcd", 0x1000, 0x1000 )
-	ROM_LOAD( "smca", 0x2000, 0x1000 )
-	ROM_LOAD( "smcb", 0x3000, 0x1000 )
+	ROM_LOAD( "smcc", 0x0000, 0x1000, 0x7c5e0864 )
+	ROM_LOAD( "smcd", 0x1000, 0x1000, 0x7e8ee1ca )
+	ROM_LOAD( "smca", 0x2000, 0x1000, 0x006b5bd9 )
+	ROM_LOAD( "smcb", 0x3000, 0x1000, 0x44a1bb81 )
 
-	ROM_REGION(0x2000)	/* samples */
-	ROM_LOAD( "smc8", 0x0000, 0x0800 )	/* ????? */
-	ROM_LOAD( "smc9", 0x0800, 0x0800 )	/* ????? */
+	ROM_REGION(0x2000)	/* samples???? */
+	ROM_LOAD( "smc8", 0x0000, 0x0800, 0xd8629306 )
+	ROM_LOAD( "smc9", 0x0800, 0x0800, 0xe4000000 )
 ROM_END
 
 
 
 struct GameDriver seicross_driver =
 {
+	"Seicross",
 	"seicross",
-        "seicross",
-        "MIRKO BUFFONI\nNICOLA SALMORIA",
+	"MIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	seicross_rom,

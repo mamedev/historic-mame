@@ -13,8 +13,8 @@
 int defender_bank;
 int bank_address;
 
-extern void williams_sh_w(int offset,int data);
-extern void Williams_Palette_w(int offset,int data);
+void williams_sh_w(int offset,int data);
+void Williams_Palette_w(int offset,int data);
 
 int  video_counter;
 int  Index;
@@ -157,6 +157,17 @@ int input_port_0_1(int offset)
            return input_port_1_r(0);
         else
            return input_port_0_r(0);
+}
+
+/*
+ *  For Splat
+ */
+int input_port_2_3(int offset)
+{
+	if((RAM[0xc807] & 0x1C) == 0x1c)
+	   return input_port_3_r(0);
+	else
+	   return input_port_2_r(0);
 }
 
 /*

@@ -265,12 +265,12 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 			spriteram[offs + 2] & 0x1f,
 			spriteram[offs + 2] & 0x80,spriteram[offs + 2] & 0x40,
 			spriteram[offs],240 - spriteram[offs + 1],
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
 	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 }
 
 
@@ -327,10 +327,10 @@ void dowild_vh_screenrefresh(struct osd_bitmap *bitmap)
 			spriteram[offs + 2] & 0x1f,
 			spriteram[offs + 2] & 0x40,spriteram[offs + 2] & 0x80,
 			spriteram[offs + 1],spriteram[offs],
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
 	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 }

@@ -71,9 +71,9 @@ write:
 
 
 extern unsigned char *mario_sprite_palette;
-extern void mario_gfxbank_w(int offset,int data);
-extern int  mario_vh_start(void);
-extern void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mario_gfxbank_w(int offset,int data);
+int  mario_vh_start(void);
+void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -108,10 +108,8 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F1 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 },
+		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0, OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F1 },
+		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0, OSD_JOY_FIRE, 0, 0, 0 },
 	},
 	{	/* IN1 */
 		0x00,
@@ -134,12 +132,13 @@ static struct TrakPort trak_ports[] =
 
 static struct KEYSet keys[] =
 {
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "JUMP" },
-        { -1 }
+	{ 0, 1, "PL1 MOVE LEFT"  },
+	{ 0, 0, "PL1 MOVE RIGHT" },
+	{ 0, 4, "PL1 JUMP" },
+	{ 1, 1, "PL2 MOVE LEFT"  },
+	{ 1, 0, "PL2 MOVE RIGHT" },
+	{ 1, 4, "PL2 JUMP" },
+	{ -1 }
 };
 
 
@@ -331,23 +330,23 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mario_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.7f", 0x0000, 0x2000 )
-	ROM_LOAD( "%s.7e", 0x2000, 0x2000 )
-	ROM_LOAD( "%s.7d", 0x4000, 0x2000 )
-	ROM_LOAD( "%s.7c", 0xf000, 0x1000 )
+	ROM_LOAD( "mario.7f", 0x0000, 0x2000, 0x978dfc01 )
+	ROM_LOAD( "mario.7e", 0x2000, 0x2000, 0x587539fd )
+	ROM_LOAD( "mario.7d", 0x4000, 0x2000, 0x33b5e2c5 )
+	ROM_LOAD( "mario.7c", 0xf000, 0x1000, 0x7d313723 )
 
 	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.3f", 0x0000, 0x1000 )
-	ROM_LOAD( "%s.3j", 0x1000, 0x1000 )
-	ROM_LOAD( "%s.7m", 0x2000, 0x1000 )
-	ROM_LOAD( "%s.7n", 0x3000, 0x1000 )
-	ROM_LOAD( "%s.7p", 0x4000, 0x1000 )
-	ROM_LOAD( "%s.7s", 0x5000, 0x1000 )
-	ROM_LOAD( "%s.7t", 0x6000, 0x1000 )
-	ROM_LOAD( "%s.7u", 0x7000, 0x1000 )
+	ROM_LOAD( "mario.3f", 0x0000, 0x1000, 0xfd014e45 )
+	ROM_LOAD( "mario.3j", 0x1000, 0x1000, 0xfb393def )
+	ROM_LOAD( "mario.7m", 0x2000, 0x1000, 0x8b6216de )
+	ROM_LOAD( "mario.7n", 0x3000, 0x1000, 0xb5b1ef57 )
+	ROM_LOAD( "mario.7p", 0x4000, 0x1000, 0x97149ed8 )
+	ROM_LOAD( "mario.7s", 0x5000, 0x1000, 0x28de7ec8 )
+	ROM_LOAD( "mario.7t", 0x6000, 0x1000, 0x13f5f925 )
+	ROM_LOAD( "mario.7u", 0x7000, 0x1000, 0x43e11755 )
 
 	ROM_REGION(0x1000)	/* sound? */
-	ROM_LOAD( "%s.6k", 0x0000, 0x1000 )
+	ROM_LOAD( "mario.6k", 0x0000, 0x1000, 0x0c278aa3 )
 ROM_END
 
 

@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "Z80.h"
 
 
@@ -47,6 +48,9 @@ int galaga_sharedram_r(int offset)
 
 void galaga_sharedram_w(int offset,int data)
 {
+        if (offset < 0x800)                   /* Speed up video hack */
+          dirtybuffer[offset & 0x3ff] = 1;
+
 	galaga_sharedram[offset] = data;
         if (offset == 0x1ab9 && Machine->samples) {
           if (data && testdone && Machine->samples->sample[0]) {
@@ -83,7 +87,7 @@ int galaga_dsw_r(int offset)
  emulate the behaviour of the NMI interrupt.
 
 ***************************************************************************/
-extern void galaga_customio_w(int offset,int data)
+void galaga_customio_w(int offset,int data)
 {
 	static int mode,credits;
 	Z80_Regs regs;
@@ -184,7 +188,7 @@ if (errorlog) fprintf(errorlog,"%04x: warning: unknown custom IO command %02x\n"
 
 
 
-extern int galaga_customio_r(int offset)
+int galaga_customio_r(int offset)
 {
 	return 0x10;	/* everything is handled by customio_w() */
 }

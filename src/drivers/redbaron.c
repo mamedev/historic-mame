@@ -111,24 +111,14 @@ All different denominations                         |Off |Off |    |    |
 #include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/atari_vg.h"
+#include "machine/atari_vg.h"
+#include "sndhrdw/pokyintf.h"
 
+int bzone_IN0_r(int offset);
 
-extern int bzone_vh_start(void);
-extern void bzone_vh_stop(void);
-extern void bzone_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void bzone_vh_init_colors(unsigned char *palette, unsigned char *colortabel, const unsigned char *color_prom);
-
-extern int bzone_interrupt(void);
-extern int bzone_IN0_r(int offset);
-extern int bzone_rand_r(int offset);
-/*
-extern void redbaron_joyselect (int offset, int data);
-extern int redbaron_joy_r (int offset);
-*/
-extern void milliped_pokey1_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
+void redbaron_joyselect (int offset, int data);
+int redbaron_joy_r (int offset);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -141,13 +131,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
 	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-/*      { 0x1818, 0x1818, redbaron_joy_r },	*//* IN3 */
-	{ 0x1818, 0x1818, input_port_3_r },	/* IN1 */
-	{ 0x1802, 0x1802, input_port_4_r },	/* IN2 */
+	{ 0x1818, 0x1818, redbaron_joy_r },	/* IN3 */
+	{ 0x1802, 0x1802, input_port_4_r },	/* IN4 */
 	{ 0x1800, 0x1800, mb_status_r },
 	{ 0x1804, 0x1804, mb_lo_r },
 	{ 0x1806, 0x1806, mb_hi_r },
-	{ 0x181a, 0x181a, bzone_rand_r },
+	{ 0x1810, 0x181f, pokey1_r },
+	{ 0x1820, 0x185f, atari_vg_earom_r },
 	{ -1 }	/* end of table */
 };
 
@@ -155,11 +145,15 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram },
-/*	{ 0x1808, 0x1808, redbaron_joyselect },*/
-	{ 0x1810, 0x181f, milliped_pokey1_w },
+	{ 0x1808, 0x1808, redbaron_joyselect }, /* used for sound, too */
+	{ 0x1000, 0x1000, MWA_NOP }, /* coin out */
+	{ 0x180a, 0x180a, MWA_NOP }, /* sound reset, yet todo */
+	{ 0x180c, 0x180c, atari_vg_earom_ctrl },
+	{ 0x1810, 0x181f, pokey1_w },
+	{ 0x1820, 0x185f, atari_vg_earom_w },
 	{ 0x1860, 0x187f, mb_go },
-	{ 0x1200, 0x1200, vg_go },
-/*	{ 0x1400, 0x1400, wdclr }, */
+	{ 0x1200, 0x1200, atari_vg_go },
+	{ 0x1400, 0x1400, MWA_NOP }, /* watchdog clear */
 	{ 0x1600, 0x1600, vg_reset },
 	{ 0x5000, 0x7fff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
@@ -185,7 +179,8 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* IN3 */
+	{       /* IN3 - RedBaron uses an analog joystick, so this is
+                 *       partially a fake. */
 		0x00,
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, 0, 0, 0, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, 0, 0, 0, 0 }
@@ -193,24 +188,36 @@ static struct InputPort input_ports[] =
 	{       /* IN4 */
 		0x00,
 		{ 0, 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_CONTROL },
-		{ 0, 0, 0, 0, 0, 0, 0, OSD_JOY_FIRE1 }
+		{ 0, 0, 0, 0, 0, 0, 0, OSD_JOY_FIRE }
 	},
 	{ -1 }
 };
 
 static struct TrakPort trak_ports[] =
 {
-        { -1 }
+        {
+		X_AXIS,
+	  	1,
+	  	1.0,
+		0
+	},
+	{
+		Y_AXIS,
+		1,
+		1.0,
+		0
+	},
+	{ -1 }
 };
 
 
 static struct KEYSet keys[] =
 {
-        { 3, 0, "TURN LEFT" },
-	{ 3, 1, "TURN RIGHT" },
-        { 3, 2, "ASCEND" },
+        { 3, 0, "BANK LEFT" },
+	{ 3, 1, "BANK RIGHT" },
+        { 3, 2, "CLIMB" },
 	{ 3, 3, "DIVE" },
-        { 4, 7, "FIRE" },
+	{ 4, 7, "FIRE" },
         { -1 }
 };
 
@@ -225,20 +232,40 @@ static struct DSW dsw[] =
 };
 
 
+static struct GfxLayout fakelayout =
+{
+        1,1,
+        0,
+        1,
+        { 0 },
+        { 0 },
+        { 0 },
+        0
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
+        { 0, 0,      &fakelayout,     0, 256 },
+        { -1 } /* end of array */
 };
 
 static unsigned char color_prom[] =
 {
-	0x00,0x02,0x02, /* CYAN */
-	0x00,0x00,0x02, /* BLUE */
-	0x00,0x02,0x00, /* GREEN */
-	0x02,0x00,0x00, /* RED */
-	0x02,0x00,0x02, /* MAGENTA */
-	0x02,0x02,0x00, /* YELLOW */
-	0x02,0x02,0x02,	/* WHITE */
+	0x00,0x01,0x01, /* CYAN */
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01,	/* WHITE */
+	0x00,0x00,0x00,	/* BLACK */
+	0x00,0x01,0x01, /* CYAN */
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01,	/* WHITE */
 	0x00,0x00,0x00	/* BLACK */
 };
 
@@ -251,29 +278,29 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			bzone_interrupt,4 /* 1 interrupt per frame? */
+			nmi_interrupt,4 /* 1 interrupt per frame? */
 		}
 	},
 	60, /* frames per second */
 	0,
 
 	/* video hardware */
-	512, 480, { 0, 512, 0, 480 },
+	288, 224, { 0, 520, 0, 400 },
 	gfxdecodeinfo,
-	128,128,
-	bzone_vh_init_colors,
+	256, 256,
+	atari_vg_init_colors,
 
 	0,
-	bzone_vh_start,
-	bzone_vh_stop,
-	bzone_vh_screenrefresh,
+	atari_vg_avg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey1_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -286,27 +313,25 @@ static struct MachineDriver machine_driver =
 
 ROM_START( redbaron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "037587.01",  0x4800, 0x0800 )
+	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x8e42eeee )
 	ROM_CONTINUE(           0x5800, 0x0800 )
-	ROM_LOAD( "037000.01E", 0x5000, 0x0800 )
-	ROM_LOAD( "036998.01E", 0x6000, 0x0800 )
-	ROM_LOAD( "036997.01E", 0x6800, 0x0800 )
-	ROM_LOAD( "036996.01E", 0x7000, 0x0800 )
-	ROM_LOAD( "036995.01E", 0x7800, 0x0800 )
-	ROM_LOAD( "036995.01E", 0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "037000.01E", 0x5000, 0x0800, 0x6dea3bc4 )
+	ROM_LOAD( "036998.01E", 0x6000, 0x0800, 0x0c59f20d )
+	ROM_LOAD( "036997.01E", 0x6800, 0x0800, 0x31e948b7 )
+	ROM_LOAD( "036996.01E", 0x7000, 0x0800, 0xd2c126d9 )
+	ROM_LOAD( "036995.01E", 0x7800, 0x0800, 0x2d259e61 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "037006.01E", 0x3000, 0x0800 )
-	ROM_LOAD( "037007.01E", 0x3800, 0x0800 )
+	ROM_LOAD( "037006.01E", 0x3000, 0x0800, 0xbd8f807f )
+	ROM_LOAD( "037007.01E", 0x3800, 0x0800, 0xd59dec13 )
 ROM_END
-
-
 
 struct GameDriver redbaron_driver =
 {
 	"Red Baron",
 	"redbaron",
 	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	"ALLARD VAN DER BAS\nBERND WIEBELT\nBALOO",
 	&machine_driver,
 
 	redbaron_rom,
@@ -318,5 +343,6 @@ struct GameDriver redbaron_driver =
 	color_prom, 0, 0,
 	140, 110,     /* paused_x, paused_y */
 
-	0, 0
+	atari_vg_earom_load, atari_vg_earom_save
 };
+

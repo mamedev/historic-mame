@@ -18,7 +18,7 @@ unsigned char *starforc_tilebackground2;
 unsigned char *starforc_tilebackground3;
 unsigned char *starforc_tilebackground4;
 int starforc_bgvideoram_size;
-unsigned char *dirtybuffer2,*dirtybuffer3;
+static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static unsigned char dirtycolor[48];	/* keep track of modified colors */
 
@@ -28,6 +28,16 @@ static unsigned char dirtycolor[48];	/* keep track of modified colors */
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
+
+  Star Force doesn't have colors PROMs, it uses RAM. The meaning of the bits are
+  bit 7 -- Intensity
+        -- Intensity
+        -- Blue
+        -- Blue
+        -- Green
+        -- Green
+        -- Red
+  bit 0 -- Red
 
 ***************************************************************************/
 void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -67,7 +77,7 @@ int starforc_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,starforc_bgvideoram_size);
+	memset(dirtybuffer2,1,starforc_bgvideoram_size);
 
 	if ((dirtybuffer3 = malloc(starforc_bgvideoram_size)) == 0)
 	{
@@ -75,7 +85,7 @@ int starforc_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer3,0,starforc_bgvideoram_size);
+	memset(dirtybuffer3,1,starforc_bgvideoram_size);
 
 	/* the background area is twice as large as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -176,10 +186,10 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int col;
 
 
-		col = Machine->pens[starforc_paletteram[i]];
+		col = starforc_paletteram[i];
 		/* avoid undesired transparency using dark gray instead of black */
 		if (col == 0x00 && i % 8 != 0) col = 0x40;
-		Machine->gfx[0]->colortable[i] = col;
+		Machine->gfx[0]->colortable[i] = Machine->pens[col];
 	}
 
 	for (offs = starforc_bgvideoram_size - 1;offs >= 0;offs--)

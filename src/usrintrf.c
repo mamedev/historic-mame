@@ -191,17 +191,17 @@ struct GfxElement *builduifont(int totalcolors,const unsigned char *palette,cons
 	if ((font = decodegfx(fontdata,&fontlayout)) != 0)
 	{
 		colortable[0] = pens[0];
-		colortable[1] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0xff)];	/* white */
+		colortable[1] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0xff)];	/* blue */
 		colortable[2] = pens[findbestcolor(totalcolors,palette,0xff,0xff,0xff)];	/* white */
-		colortable[3] = pens[findbestcolor(totalcolors,palette,0x00,0xff,0x00)];	/* white */
+		colortable[3] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
 		colortable[4] = pens[0];
-		colortable[5] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* yellow */
-		colortable[6] = pens[findbestcolor(totalcolors,palette,0xff,0xff,0x00)];	/* white */
-		colortable[7] = pens[findbestcolor(totalcolors,palette,0x00,0xff,0x00)];	/* white */
+		colortable[5] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* red */
+		colortable[6] = pens[findbestcolor(totalcolors,palette,0xff,0xff,0x00)];	/* yellow */
+		colortable[7] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
 		colortable[8] = pens[0];
-		colortable[9] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* red */
-		colortable[10] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* white */
-		colortable[11] = pens[findbestcolor(totalcolors,palette,0x00,0xff,0x00)];	/* white */
+		colortable[9] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* black */
+		colortable[10] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* red */
+		colortable[11] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
 		font->colortable = colortable;
 		font->total_colors = 3;
 	}
@@ -283,38 +283,70 @@ void displaytext(const struct DisplayText *dt,int erase)
 }
 
 
+void displayset (const struct DisplayText *dt,int total,int s)
+{
+	struct DisplayText ds[80];
+	int i,ofs;
+
+	if (((3*Machine->uifont->height * (total+1))/2) > (Machine->drv->screen_height-Machine->uifont->height))
+		    {  /* MENU SCROLL */
+		     ofs=(Machine->drv->screen_height)/2-dt[2*s].y;
+		     for (i = 0;i < total*2+2;i++)
+			{
+			 ds[i].color = dt[i].color;
+			 ds[i].text = dt[i].text;
+			 ds[i].x = dt[i].x;
+			 ds[i].y = dt[i].y + ofs;
+			 if ((ds[i].y<0) || (ds[i].y>(Machine->drv->screen_height-Machine->uifont->height)))
+			 {
+			  ds[i].x=0;
+			  ds[i].y=0;
+			  ds[i].text="  ";
+			 }
+			}
+		    ds[total*2+1].text=0;
+		    displaytext (ds,1);
+		    }
+		else displaytext(dt,1);
+}
+
 
 int showcharset(void)
 {
-	int i,key,cpl;
+	int i,key,cpx,cpy;
 	struct DisplayText dt[2];
 	char buf[80];
-	int bank,color;
+	int bank,color,line, maxline;
 
 
-	if (Machine->drv->gfxdecodeinfo == 0) return 0;	/* no gfx sets, return */
-
+	if ((Machine->drv->gfxdecodeinfo == 0) ||
+			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
+		return 0;	/* no gfx sets, return */
 
 	bank = 0;
 	color = 0;
+	line = 0;
 
 	do
 	{
 		clearbitmap(Machine->scrbitmap);
 
-		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
+		cpx = Machine->scrbitmap->width / Machine->gfx[bank]->width;
+		cpy = Machine->scrbitmap->height / Machine->gfx[bank]->height;
 
-		for (i = 0;i < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total;i++)
+		maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
+
+		for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total ; i++)
 		{
 			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-					i,color,
-					0,0,
-					(i % cpl) * Machine->gfx[bank]->width,
-					Machine->uifont->height+1 + (i / cpl) * Machine->gfx[bank]->height,
-					0,TRANSPARENCY_NONE,0);
+				i+(line*cpx),color,  /*sprite num, color*/
+				0,0,
+				(i % cpx) * Machine->gfx[bank]->width,
+				Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height,
+				0,TRANSPARENCY_NONE,0);
 		}
 
-		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
+		sprintf(buf,"GFXSET %d  COLOR %d  LINE %d ",bank,color,line);
 		dt[0].text = buf;
 		dt[0].color = DT_COLOR_RED;
 		dt[0].x = 0;
@@ -322,17 +354,32 @@ int showcharset(void)
 		dt[1].text = 0;
 		displaytext(dt,0);
 
-
 		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
 			case OSD_KEY_RIGHT:
-				if (Machine->gfx[bank + 1]) bank++;
+				if (Machine->gfx[bank + 1])
+				{
+					bank++;
+					line = 0;
+				}
 				break;
 
 			case OSD_KEY_LEFT:
-				if (bank > 0) bank--;
+				if (bank > 0)
+				{
+					bank--;
+					line = 0;
+				}
+				break;
+
+			case OSD_KEY_PGDN:
+				if (line < maxline-1) line++;
+				break;
+
+			case OSD_KEY_PGUP:
+				if (line > 0) line--;
 				break;
 
 			case OSD_KEY_UP:
@@ -351,10 +398,8 @@ int showcharset(void)
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
-	if (key == OSD_KEY_ESC) return 1;
-	else return 0;
+	return 0;
 }
-
 
 
 
@@ -467,7 +512,8 @@ static int setdipswitches(void)
 				break;
 
 			case OSD_KEY_ESC:
-				done = 2;
+			case OSD_KEY_TAB:
+				done = 1;
 				break;
 		}
 	} while (done == 0);
@@ -504,7 +550,7 @@ static int setdipswitches(void)
 
 static int setkeysettings(void)
 {
-	struct DisplayText dt[40];
+	struct DisplayText dt[80];
 	int i,s,key,done;
 	int total;
 	const struct KEYSet *keysettings;
@@ -546,7 +592,7 @@ static int setkeysettings(void)
 			}
 		}
 
-		displaytext(dt,1);
+		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
 
@@ -571,15 +617,23 @@ static int setkeysettings(void)
 
 					dt[2 * s + 1].text = "            ";
 					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-					displaytext(dt,1);
+					displayset(dt,total,s);
 					newkey = osd_read_key();
 					if (newkey != OSD_KEY_ESC)
 						Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = newkey;
+
+					switch (Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ])
+
+					case OSD_KEY_P:case OSD_KEY_F3:case  OSD_KEY_F4:case OSD_KEY_TAB:
+					case OSD_KEY_F8:case OSD_KEY_F9:case  OSD_KEY_F10:case OSD_KEY_F11:case OSD_KEY_F12:
+					    Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = 0;
+					    break;
 				}
 				break;
 
 			case OSD_KEY_ESC:
-				done = 2;
+			case OSD_KEY_TAB:
+				done = 1;
 				break;
 		}
 	} while (done == 0);
@@ -597,7 +651,7 @@ static int setkeysettings(void)
 
 static int setjoysettings(void)
 {
-	struct DisplayText dt[40];
+	struct DisplayText dt[80];
 	int i,s,key,done;
 	int total;
 	const struct KEYSet *keysettings;
@@ -640,7 +694,7 @@ static int setjoysettings(void)
 			}
 		}
 
-		displaytext(dt,1);
+		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
 
@@ -666,7 +720,7 @@ static int setjoysettings(void)
                                                   joy_b1,joy_b2,joy_b3,joy_b4;
 					dt[2 * s + 1].text = "            ";
 					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-					displaytext(dt,1);
+					displayset(dt,total,s);
 
 					/* Check all possible joystick values for switch or button press */
                               		joypressed = 0;
@@ -700,7 +754,8 @@ static int setjoysettings(void)
 				break;
 
 			case OSD_KEY_ESC:
-				done = 2;
+			case OSD_KEY_TAB:
+				done = 1;
 				break;
 		}
 	} while (done == 0);
@@ -809,12 +864,9 @@ static int settraksettings(void)
 				if (s == total - 1) done = 1;
 				break;
 
+			case OSD_KEY_ESC:
 			case OSD_KEY_TAB:
 				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-				done = 2;
 				break;
 		}
 	} while (done == 0);
@@ -847,7 +899,6 @@ static int showcredits(void)
 
 	key = osd_read_key();
 	while (osd_key_pressed(key));	/* wait for key release */
-	if (key == OSD_KEY_ESC) return 1;
 
 	return 0;
 }
@@ -936,7 +987,7 @@ int setup_menu(void)
 				break;
 
 			case OSD_KEY_ESC:
-                        case OSD_KEY_TAB:
+			case OSD_KEY_TAB:
 				done = 1;
 				break;
 		}

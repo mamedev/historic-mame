@@ -79,6 +79,34 @@ unsigned char *panic_videoram;
 
 static int ColourMap;
 
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+int panic_vh_start(void)
+{
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Stop the video hardware emulation.
+
+***************************************************************************/
+void panic_vh_stop(void)
+{
+	osd_free_bitmap(tmpbitmap);
+}
+
+
+
 void panic_videoram_w(int offset,int data)
 {
 	if ((panic_videoram[offset] != data))

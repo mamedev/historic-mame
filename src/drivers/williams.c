@@ -318,43 +318,44 @@ d000 Select bank (c000-cfff)
 #include "vidhrdw/generic.h"
 #include "M6809.h"
 
-extern void williams_sh_w(int offset,int data);
-extern void williams_sh_update(void);
-extern void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void williams_sh_w(int offset,int data);
+void williams_sh_update(void);
+void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 int williams_init_machine(const char *gamename);
 
 extern unsigned char *robotron_videoram;
-extern void williams_videoram_w(int offset,int data);
-extern void blaster_videoram_w(int offset,int data);
-extern int williams_videoram_r(int offset);
-extern int blaster_videoram_r(int offset);
-extern void williams_StartBlitter(int offset,int data);
-extern void williams_StartBlitter2(int offset,int data);
-extern void williams_BlasterStartBlitter(int offset,int data);
+void williams_videoram_w(int offset,int data);
+void blaster_videoram_w(int offset,int data);
+int williams_videoram_r(int offset);
+int blaster_videoram_r(int offset);
+void williams_StartBlitter(int offset,int data);
+void williams_StartBlitter2(int offset,int data);
+void williams_BlasterStartBlitter(int offset,int data);
 
-extern int williams_vh_start(void);
-extern void williams_vh_stop(void);
-extern void williams_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void defender_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void Williams_Palette_w(int offset,int data);
+int williams_vh_start(void);
+void williams_vh_stop(void);
+void williams_vh_screenrefresh(struct osd_bitmap *bitmap);
+void defender_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
+void Williams_Palette_w(int offset,int data);
 
-extern int defender_bank_r(int offset);
-extern void defender_bank_w(int offset,int data);
-extern void defender_bank_select_w(int offset,int data);
-extern void defender_videoram_w(int offset,int data);
+int defender_bank_r(int offset);
+void defender_bank_w(int offset,int data);
+void defender_bank_select_w(int offset,int data);
+void defender_videoram_w(int offset,int data);
 
-extern void blaster_bank_select_w(int offset,int data);
-extern int Williams_Interrupt(void);
-extern int Stargate_Interrupt(void);
-extern int Defender_Interrupt(void);
+void blaster_bank_select_w(int offset,int data);
+int Williams_Interrupt(void);
+int Stargate_Interrupt(void);
+int Defender_Interrupt(void);
 
-extern int video_counter_r(int offset);
-extern int test_r(int offset);
-extern void test_w(int offset,int data);
-extern int input_port_0_1(int offset);
-extern int blaster_input_port_0(int offset);
+int video_counter_r(int offset);
+int test_r(int offset);
+void test_w(int offset,int data);
+int input_port_0_1(int offset);
+int input_port_2_3(int offset);
+int blaster_input_port_0(int offset);
 
 
 
@@ -409,6 +410,25 @@ static struct MemoryReadAddress joust_readmem[] =
 	{ 0xc804, 0xc804, input_port_0_1 },          /* IN0-1 */
 	{ 0xc806, 0xc806, input_port_2_r },          /* IN2 */
 	{ 0xc80c, 0xc80c, input_port_3_r },          /* IN3 */
+	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
+	{ 0xcb00, 0xcb00, video_counter_r },
+	{ 0xCC00, 0xCFFF, MRA_RAM },                 /* CMOS */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/*
+ *   Read mem for Splat
+ */
+
+static struct MemoryReadAddress splat_readmem[] =
+{
+	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x9800, 0xbfff, MRA_RAM },
+	{ 0xc804, 0xc804, input_port_0_1 },          /* IN0-1 */
+	{ 0xc806, 0xc806, input_port_2_3 },          /* IN2-3*/
+	{ 0xc80c, 0xc80c, input_port_4_r },          /* IN4 */
 	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
 	{ 0xcb00, 0xcb00, video_counter_r },
 	{ 0xCC00, 0xCFFF, MRA_RAM },                 /* CMOS */
@@ -820,14 +840,24 @@ static struct InputPort bubbles_input_ports[] =
 
 static struct InputPort splat_input_ports[] =
 {
-	{       /* IN0 */
+	{       /* IN0 player 2*/
 		0x00,   /* default_value */
-		{ OSD_KEY_W, OSD_KEY_S, OSD_KEY_A, OSD_KEY_D, OSD_KEY_1, OSD_KEY_2, OSD_KEY_UP, OSD_KEY_DOWN },
-		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE3 }      /* V.V */
+		{ OSD_KEY_I, OSD_KEY_K, OSD_KEY_J, OSD_KEY_L, OSD_KEY_1, OSD_KEY_2, OSD_KEY_UP, OSD_KEY_DOWN },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }      /* V.V */
 	},
-	{       /* IN1 */
+	{       /* IN0 player 1*/
+		0x00,   /* default_value */
+		{ OSD_KEY_W, OSD_KEY_S, OSD_KEY_A, OSD_KEY_D, 0, 0, OSD_KEY_T, OSD_KEY_G },
+		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE3 }
+	},
+	{       /* IN1 player 2*/
 		0x00,   /* default_value */
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, 0,0,0,0,0,0 },
+		 { 0, 0, 0, 0, 0, 0, 0, 0 }      /* V.V */
+	},
+	{       /*  IN1 player1*/
+		0x00,  /*  default_value */
+		{ OSD_KEY_F, OSD_KEY_H, 0 ,0, 0, 0, 0, 0 },
 		{ OSD_JOY_FIRE1, OSD_JOY_FIRE4, 0, 0, 0, 0, 0, 0 }      /* V.V */
 	},
 	{       /* IN2 */
@@ -841,22 +871,30 @@ static struct InputPort splat_input_ports[] =
 
 static struct KEYSet splat_keys[] =
 {
-  { 0, 0, "WALK UP" },
-  { 0, 1, "WALK DOWN" },
-  { 0, 2, "WALK LEFT" },
-  { 0, 3, "WALK RIGHT" },
-  { 0, 6, "THROW UP" },
-  { 0, 7, "THROW DOWN" },
-  { 1, 0, "THROW LEFT" },
-  { 1, 1, "THROW RIGHT" },
+  { 1, 0, "PL1 WALK UP" },
+  { 1, 1, "PL1 WALK DOWN" },
+  { 1, 2, "PL1 WALK LEFT" },
+  { 1, 3, "PL1 WALK RIGHT" },
+  { 1, 6, "PL1 THROW UP" },
+  { 1, 7, "PL1 THROW DOWN" },
+  { 3, 0, "PL1 THROW LEFT" },
+  { 3, 1, "PL1 THROW RIGHT" },
+  { 0, 0, "PL2 WALK UP" },
+  { 0, 1, "PL2 WALK DOWN" },
+  { 0, 2, "PL2 WALK LEFT" },
+  { 0, 3, "PL2 WALK RIGHT" },
+  { 0, 6, "PL2 THROW UP" },
+  { 0, 7, "PL2 THROW DOWN" },
+  { 2, 0, "PL2 THROW LEFT" },
+  { 2, 1, "PL2 THROW RIGHT" },
 /*
-  { 0, 4, "1 PLAYER" },
-  { 0, 5, "2 PLAYERS" },
-  { 2, 2, "COIN IN" },
+  { 1, 4, "1 PLAYER" },
+  { 1, 5, "2 PLAYERS" },
+  { 4, 2, "COIN IN" },
 */
-  { 2, 0, "AUTO UP" },
-  { 2, 1, "ADVANCE" },
-  { 2, 3, "HIGHSCORE RESET" },
+  { 4, 0, "AUTO UP" },
+  { 4, 1, "ADVANCE" },
+  { 4, 3, "HIGHSCORE RESET" },
   { -1 }
 };
 
@@ -1164,7 +1202,7 @@ static struct MachineDriver splat_machine_driver =
 			CPU_M6809,
 			1000000,                /* ? Mhz */
 			0,                      /* memory region */
-			readmem,                /* MemoryReadAddress */
+			splat_readmem,          /* MemoryReadAddress */
 			splat_writemem,         /* MemoryWriteAddress */
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
@@ -1486,19 +1524,18 @@ static const char *williams_sample_names[] =
 
 ROM_START( robotron_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROBOTRON.SB1", 0x0000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB2", 0x1000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB3", 0x2000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB4", 0x3000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB5", 0x4000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB6", 0x5000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB7", 0x6000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB8", 0x7000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SB9", 0x8000, 0x1000 )
-
-	ROM_LOAD( "ROBOTRON.SBa", 0xd000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SBb", 0xe000, 0x1000 )
-	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000 )
+	ROM_LOAD( "ROBOTRON.SB1", 0x0000, 0x1000, 0xd5778c45 )
+	ROM_LOAD( "ROBOTRON.SB2", 0x1000, 0x1000, 0x51fb054b )
+	ROM_LOAD( "ROBOTRON.SB3", 0x2000, 0x1000, 0x293ce6c2 )
+	ROM_LOAD( "ROBOTRON.SB4", 0x3000, 0x1000, 0x7c9557c1 )
+	ROM_LOAD( "ROBOTRON.SB5", 0x4000, 0x1000, 0x3dd77e9b )
+	ROM_LOAD( "ROBOTRON.SB6", 0x5000, 0x1000, 0x8c53f6cd )
+	ROM_LOAD( "ROBOTRON.SB7", 0x6000, 0x1000, 0x746ecd96 )
+	ROM_LOAD( "ROBOTRON.SB8", 0x7000, 0x1000, 0x5e442b24 )
+	ROM_LOAD( "ROBOTRON.SB9", 0x8000, 0x1000, 0x294d9c17 )
+	ROM_LOAD( "ROBOTRON.SBa", 0xd000, 0x1000, 0x17b8fc1e )
+	ROM_LOAD( "ROBOTRON.SBb", 0xe000, 0x1000, 0xe816f8e6 )
+	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000, 0xcfc2d9aa )
 ROM_END
 
 
@@ -1528,36 +1565,18 @@ struct GameDriver robotron_driver =
 
 ROM_START( joust_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-
-	ROM_LOAD( "JOUST.SR1", 0x0000, 0x1000 )
-	ROM_LOAD( "JOUST.SR2", 0x1000, 0x1000 )
-	ROM_LOAD( "JOUST.SR3", 0x2000, 0x1000 )
-	ROM_LOAD( "JOUST.SR4", 0x3000, 0x1000 )
-	ROM_LOAD( "JOUST.SR5", 0x4000, 0x1000 )
-	ROM_LOAD( "JOUST.SR6", 0x5000, 0x1000 )
-	ROM_LOAD( "JOUST.SR7", 0x6000, 0x1000 )
-	ROM_LOAD( "JOUST.SR8", 0x7000, 0x1000 )
-	ROM_LOAD( "JOUST.SR9", 0x8000, 0x1000 )
-
-	ROM_LOAD( "JOUST.SRa", 0xd000, 0x1000 )
-	ROM_LOAD( "JOUST.SRb", 0xe000, 0x1000 )
-	ROM_LOAD( "JOUST.SRc", 0xf000, 0x1000 )
-
-/*
-	ROM_LOAD( "JOUST.SG1", 0x0000, 0x1000 )
-	ROM_LOAD( "JOUST.SG2", 0x1000, 0x1000 )
-	ROM_LOAD( "JOUST.SG3", 0x2000, 0x1000 )
-	ROM_LOAD( "JOUST.SG4", 0x3000, 0x1000 )
-	ROM_LOAD( "JOUST.SG5", 0x4000, 0x1000 )
-	ROM_LOAD( "JOUST.SG6", 0x5000, 0x1000 )
-	ROM_LOAD( "JOUST.SG7", 0x6000, 0x1000 )
-	ROM_LOAD( "JOUST.SG8", 0x7000, 0x1000 )
-	ROM_LOAD( "JOUST.SG9", 0x8000, 0x1000 )
-
-	ROM_LOAD( "JOUST.SGa", 0xd000, 0x1000 )
-	ROM_LOAD( "JOUST.SGb", 0xe000, 0x1000 )
-	ROM_LOAD( "JOUST.SGc", 0xf000, 0x1000 )
-*/
+	ROM_LOAD( "JOUST.SR1", 0x0000, 0x1000, 0x56ea72c8 )
+	ROM_LOAD( "JOUST.SR2", 0x1000, 0x1000, 0xe32af9c4 )
+	ROM_LOAD( "JOUST.SR3", 0x2000, 0x1000, 0x21ec9c8e )
+	ROM_LOAD( "JOUST.SR4", 0x3000, 0x1000, 0xbd041382 )
+	ROM_LOAD( "JOUST.SR5", 0x4000, 0x1000, 0xd37f04e9 )
+	ROM_LOAD( "JOUST.SR6", 0x5000, 0x1000, 0x4e2153d3 )
+	ROM_LOAD( "JOUST.SR7", 0x6000, 0x1000, 0x8e102052 )
+	ROM_LOAD( "JOUST.SR8", 0x7000, 0x1000, 0xd092c808 )
+	ROM_LOAD( "JOUST.SR9", 0x8000, 0x1000, 0x341a43c8 )
+	ROM_LOAD( "JOUST.SRa", 0xd000, 0x1000, 0xc7d5d145 )
+	ROM_LOAD( "JOUST.SRb", 0xe000, 0x1000, 0x54b23102 )
+	ROM_LOAD( "JOUST.SRc", 0xf000, 0x1000, 0x0cd46bd8 )
 ROM_END
 
 struct GameDriver joust_driver =
@@ -1586,32 +1605,17 @@ struct GameDriver joust_driver =
 
 ROM_START( sinistar_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-/*
-	ROM_LOAD( "SIN1", 0x0000, 0x1000 )
-	ROM_LOAD( "SIN2", 0x1000, 0x1000 )
-	ROM_LOAD( "SIN3", 0x2000, 0x1000 )
-	ROM_LOAD( "SIN4", 0x3000, 0x1000 )
-	ROM_LOAD( "SIN5", 0x4000, 0x1000 )
-	ROM_LOAD( "SIN6", 0x5000, 0x1000 )
-	ROM_LOAD( "SIN7", 0x6000, 0x1000 )
-	ROM_LOAD( "SIN8", 0x7000, 0x1000 )
-	ROM_LOAD( "SIN9", 0x8000, 0x1000 )
-
-	ROM_LOAD( "SIN10", 0xe000, 0x1000 )
-	ROM_LOAD( "SIN11", 0xf000, 0x1000 )
-*/
-	ROM_LOAD( "SINISTAR.01", 0x0000, 0x1000 )
-	ROM_LOAD( "SINISTAR.02", 0x1000, 0x1000 )
-	ROM_LOAD( "SINISTAR.03", 0x2000, 0x1000 )
-	ROM_LOAD( "SINISTAR.04", 0x3000, 0x1000 )
-	ROM_LOAD( "SINISTAR.05", 0x4000, 0x1000 )
-	ROM_LOAD( "SINISTAR.06", 0x5000, 0x1000 )
-	ROM_LOAD( "SINISTAR.07", 0x6000, 0x1000 )
-	ROM_LOAD( "SINISTAR.08", 0x7000, 0x1000 )
-	ROM_LOAD( "SINISTAR.09", 0x8000, 0x1000 )
-
-	ROM_LOAD( "SINISTAR.10", 0xe000, 0x1000 )
-	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000 )
+	ROM_LOAD( "SINISTAR.01", 0x0000, 0x1000, 0xea8b43ef )
+	ROM_LOAD( "SINISTAR.02", 0x1000, 0x1000, 0x4be17573 )
+	ROM_LOAD( "SINISTAR.03", 0x2000, 0x1000, 0xcd47871d )
+	ROM_LOAD( "SINISTAR.04", 0x3000, 0x1000, 0xe7ceefca )
+	ROM_LOAD( "SINISTAR.05", 0x4000, 0x1000, 0xe708bd4c )
+	ROM_LOAD( "SINISTAR.06", 0x5000, 0x1000, 0x115f07eb )
+	ROM_LOAD( "SINISTAR.07", 0x6000, 0x1000, 0x97ba8096 )
+	ROM_LOAD( "SINISTAR.08", 0x7000, 0x1000, 0x3c5c3dc4 )
+	ROM_LOAD( "SINISTAR.09", 0x8000, 0x1000, 0x4a7953bf )
+	ROM_LOAD( "SINISTAR.10", 0xe000, 0x1000, 0xaf1de107 )
+	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000, 0x81481d1a )
 ROM_END
 
 struct GameDriver sinistar_driver =
@@ -1640,19 +1644,18 @@ struct GameDriver sinistar_driver =
 
 ROM_START( bubbles_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "BUBBLES.1B", 0x0000, 0x1000 )
-	ROM_LOAD( "BUBBLES.2B", 0x1000, 0x1000 )
-	ROM_LOAD( "BUBBLES.3B", 0x2000, 0x1000 )
-	ROM_LOAD( "BUBBLES.4B", 0x3000, 0x1000 )
-	ROM_LOAD( "BUBBLES.5B", 0x4000, 0x1000 )
-	ROM_LOAD( "BUBBLES.6B", 0x5000, 0x1000 )
-	ROM_LOAD( "BUBBLES.7B", 0x6000, 0x1000 )
-	ROM_LOAD( "BUBBLES.8B", 0x7000, 0x1000 )
-	ROM_LOAD( "BUBBLES.9B", 0x8000, 0x1000 )
-
-	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000 )
-	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000 )
-	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000 )
+	ROM_LOAD( "BUBBLES.1B",  0x0000, 0x1000, 0xc6383a74 )
+	ROM_LOAD( "BUBBLES.2B",  0x1000, 0x1000, 0xdb996db3 )
+	ROM_LOAD( "BUBBLES.3B",  0x2000, 0x1000, 0x40f5f815 )
+	ROM_LOAD( "BUBBLES.4B",  0x3000, 0x1000, 0xd0f4b4f0 )
+	ROM_LOAD( "BUBBLES.5B",  0x4000, 0x1000, 0x620a3f98 )
+	ROM_LOAD( "BUBBLES.6B",  0x5000, 0x1000, 0x4617e675 )
+	ROM_LOAD( "BUBBLES.7B",  0x6000, 0x1000, 0x16d20c98 )
+	ROM_LOAD( "BUBBLES.8B",  0x7000, 0x1000, 0xfb83ad41 )
+	ROM_LOAD( "BUBBLES.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
+	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000, 0x5eb0c568 )
+	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000, 0x31598c5d )
+	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfdb24d56 )
 ROM_END
 
 struct GameDriver bubbles_driver =
@@ -1681,19 +1684,18 @@ struct GameDriver bubbles_driver =
 
 ROM_START( stargate_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "01", 0x0000, 0x1000 )
-	ROM_LOAD( "02", 0x1000, 0x1000 )
-	ROM_LOAD( "03", 0x2000, 0x1000 )
-	ROM_LOAD( "04", 0x3000, 0x1000 )
-	ROM_LOAD( "05", 0x4000, 0x1000 )
-	ROM_LOAD( "06", 0x5000, 0x1000 )
-	ROM_LOAD( "07", 0x6000, 0x1000 )
-	ROM_LOAD( "08", 0x7000, 0x1000 )
-	ROM_LOAD( "09", 0x8000, 0x1000 )
-
-	ROM_LOAD( "10", 0xd000, 0x1000 )
-	ROM_LOAD( "11", 0xe000, 0x1000 )
-	ROM_LOAD( "12", 0xf000, 0x1000 )
+	ROM_LOAD( "stargate.01", 0x0000, 0x1000, 0xe5fecedc )
+	ROM_LOAD( "stargate.02", 0x1000, 0x1000, 0xbd525dec )
+	ROM_LOAD( "stargate.03", 0x2000, 0x1000, 0xb5fed8d8 )
+	ROM_LOAD( "stargate.04", 0x3000, 0x1000, 0x41ba0bc0 )
+	ROM_LOAD( "stargate.05", 0x4000, 0x1000, 0xdde98c57 )
+	ROM_LOAD( "stargate.06", 0x5000, 0x1000, 0x1b795abd )
+	ROM_LOAD( "stargate.07", 0x6000, 0x1000, 0xe45af9ca )
+	ROM_LOAD( "stargate.08", 0x7000, 0x1000, 0xa1026964 )
+	ROM_LOAD( "stargate.09", 0x8000, 0x1000, 0xad03f4f1 )
+	ROM_LOAD( "stargate.10", 0xd000, 0x1000, 0x001c6dec )
+	ROM_LOAD( "stargate.11", 0xe000, 0x1000, 0xd33c4d64 )
+	ROM_LOAD( "stargate.12", 0xf000, 0x1000, 0x94afba0b )
 ROM_END
 
 struct GameDriver stargate_driver =
@@ -1722,20 +1724,19 @@ struct GameDriver stargate_driver =
 
 ROM_START( defender_rom )
 	ROM_REGION(0x15000)     /* 64k for code + 5 banks of 4K */
-	ROM_LOAD( "defend.1", 0xd000, 0x0800 )
-	ROM_LOAD( "defend.4", 0xd800, 0x0800 )
-	ROM_LOAD( "defend.2", 0xe000, 0x1000 )
-	ROM_LOAD( "defend.3", 0xf000, 0x1000 )
-
+	ROM_LOAD( "defend.1", 0xd000, 0x0800, 0x4aa8c614 )
+	ROM_LOAD( "defend.4", 0xd800, 0x0800, 0x99e9bb31 )
+	ROM_LOAD( "defend.2", 0xe000, 0x1000, 0x8991dceb )
+	ROM_LOAD( "defend.3", 0xf000, 0x1000, 0x3f6e9fe2 )
   /* 10000 to 10fff is the place for CMOS ram (BANK 0) */
-	ROM_LOAD( "defend.9", 0x11000, 0x0800 )
-	ROM_LOAD( "defend.12",0x11800, 0x0800 )
-	ROM_LOAD( "defend.8", 0x12000, 0x0800 )
-	ROM_LOAD( "defend.11",0x12800, 0x0800 )
-	ROM_LOAD( "defend.7", 0x13000, 0x0800 )
-	ROM_LOAD( "defend.10",0x13800, 0x0800 )
-	ROM_LOAD( "defend.6", 0x14000, 0x0800 )
-	ROM_LOAD( "defend.10",0x14800, 0x0800 )
+	ROM_LOAD( "defend.9", 0x11000, 0x0800, 0x3e2646ae )
+	ROM_LOAD( "defend.12",0x11800, 0x0800, 0xd13eeb4a )
+	ROM_LOAD( "defend.8", 0x12000, 0x0800, 0x67afa299 )
+	ROM_LOAD( "defend.11",0x12800, 0x0800, 0x287572ed )
+	ROM_LOAD( "defend.7", 0x13000, 0x0800, 0x344c9bd0 )
+	ROM_LOAD( "defend.10",0x13800, 0x0800, 0xee30b06e )
+	ROM_LOAD( "defend.6", 0x14000, 0x0800, 0x8c7b2da3 )
+	ROM_LOAD( "defend.10",0x14800, 0x0800, 0xee30b06e )
 ROM_END
 
 struct GameDriver defender_driver =
@@ -1766,19 +1767,18 @@ struct GameDriver defender_driver =
 
 ROM_START( splat_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "SPLAT.01", 0x0000, 0x1000 )
-	ROM_LOAD( "SPLAT.02", 0x1000, 0x1000 )
-	ROM_LOAD( "SPLAT.03", 0x2000, 0x1000 )
-	ROM_LOAD( "SPLAT.04", 0x3000, 0x1000 )
-	ROM_LOAD( "SPLAT.05", 0x4000, 0x1000 )
-	ROM_LOAD( "SPLAT.06", 0x5000, 0x1000 )
-	ROM_LOAD( "SPLAT.07", 0x6000, 0x1000 )
-	ROM_LOAD( "SPLAT.08", 0x7000, 0x1000 )
-	ROM_LOAD( "SPLAT.09", 0x8000, 0x1000 )
-
-	ROM_LOAD( "SPLAT.10", 0xd000, 0x1000 )
-	ROM_LOAD( "SPLAT.11", 0xe000, 0x1000 )
-	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000 )
+	ROM_LOAD( "SPLAT.01", 0x0000, 0x1000, 0x43a37fff )
+	ROM_LOAD( "SPLAT.02", 0x1000, 0x1000, 0x6cfb15f1 )
+	ROM_LOAD( "SPLAT.03", 0x2000, 0x1000, 0xf55c6b64 )
+	ROM_LOAD( "SPLAT.04", 0x3000, 0x1000, 0x1130f8ba )
+	ROM_LOAD( "SPLAT.05", 0x4000, 0x1000, 0xb5e71503 )
+	ROM_LOAD( "SPLAT.06", 0x5000, 0x1000, 0x8ceda6f7 )
+	ROM_LOAD( "SPLAT.07", 0x6000, 0x1000, 0x1150f5f0 )
+	ROM_LOAD( "SPLAT.08", 0x7000, 0x1000, 0x91cd6cd5 )
+	ROM_LOAD( "SPLAT.09", 0x8000, 0x1000, 0xb78db4bf )
+	ROM_LOAD( "SPLAT.10", 0xd000, 0x1000, 0x148a9cbc )
+	ROM_LOAD( "SPLAT.11", 0xe000, 0x1000, 0x77ca0200 )
+	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000, 0x9f4667ba )
 ROM_END
 
 
@@ -1811,32 +1811,24 @@ struct GameDriver splat_driver =
 
 ROM_START( blaster_rom )
 	ROM_REGION(0x49000)     /* 256k for code */
-/*
-	ROM_LOAD( "blaster.1",  0x0000, 0x4000 )
-	ROM_LOAD( "blaster.11", 0x4000, 0x2000 )
-	ROM_LOAD( "blaster.12", 0x6000, 0x2000 )
-	ROM_LOAD( "blaster.17", 0x8000, 0x1000 )
-*/
-	ROM_LOAD( "blaster.16", 0xd000, 0x1000 )
-	ROM_LOAD( "blaster.13", 0xe000, 0x2000 )
-
-	ROM_LOAD( "blaster.15",0x10000, 0x4000 )
-	ROM_LOAD( "blaster.8", 0x14000, 0x4000 )
-	ROM_LOAD( "blaster.9", 0x18000, 0x4000 )
-	ROM_LOAD( "blaster.10",0x1c000, 0x4000 )
-	ROM_LOAD( "blaster.6", 0x20000, 0x4000 )
-	ROM_LOAD( "blaster.5", 0x24000, 0x4000 )
-	ROM_LOAD( "blaster.14",0x28000, 0x4000 )
-	ROM_LOAD( "blaster.7", 0x2c000, 0x4000 )
-	ROM_LOAD( "blaster.1", 0x30000, 0x4000 )
-	ROM_LOAD( "blaster.2", 0x34000, 0x4000 )
-	ROM_LOAD( "blaster.4", 0x38000, 0x4000 )
-	ROM_LOAD( "blaster.3", 0x3c000, 0x4000 )
-
-	ROM_LOAD( "blaster.1", 0x40000, 0x4000 )
-	ROM_LOAD( "blaster.11", 0x44000, 0x2000 )
-	ROM_LOAD( "blaster.12", 0x46000, 0x2000 )
-	ROM_LOAD( "blaster.17", 0x48000, 0x1000 )
+	ROM_LOAD( "blaster.16", 0x0d000, 0x1000, 0xd6e04ee2 )
+	ROM_LOAD( "blaster.13", 0x0e000, 0x2000, 0x376fc541 )
+	ROM_LOAD( "blaster.15", 0x10000, 0x4000, 0x1c345c06 )
+	ROM_LOAD( "blaster.8",  0x14000, 0x4000, 0xc297d5ab )
+	ROM_LOAD( "blaster.9",  0x18000, 0x4000, 0xe88478a0 )
+	ROM_LOAD( "blaster.10", 0x1c000, 0x4000, 0xc68a1386 )
+	ROM_LOAD( "blaster.6",  0x20000, 0x4000, 0x3142941e )
+	ROM_LOAD( "blaster.5",  0x24000, 0x4000, 0x2ebd56e5 )
+	ROM_LOAD( "blaster.14", 0x28000, 0x4000, 0xe0267262 )
+	ROM_LOAD( "blaster.7",  0x2c000, 0x4000, 0x17bff9a5 )
+	ROM_LOAD( "blaster.1",  0x30000, 0x4000, 0x37d9abe5 )
+	ROM_LOAD( "blaster.2",  0x34000, 0x4000, 0xd99ff133 )
+	ROM_LOAD( "blaster.4",  0x38000, 0x4000, 0x8d86011c )
+	ROM_LOAD( "blaster.3",  0x3c000, 0x4000, 0x86ddd013 )
+	ROM_LOAD( "blaster.1",  0x40000, 0x4000, 0x37d9abe5 )
+	ROM_LOAD( "blaster.11", 0x44000, 0x2000, 0xdc7831b2 )
+	ROM_LOAD( "blaster.12", 0x46000, 0x2000, 0x68244eb6 )
+	ROM_LOAD( "blaster.17", 0x48000, 0x1000, 0xecbf6a51 )
 ROM_END
 
 

@@ -147,8 +147,8 @@ int osd_trak_read(int axis);
 void osd_trak_center_x(void);
 void osd_trak_center_y(void);
 
-void open_page(int *x_res, int *y_res, int *portrait, int step);
+void open_page(int *x_res, int *y_res, int step);
 void close_page(void);
-void draw_to(int x, int y, int z, int col);
+void draw_to(int x, int y, int col);
 
 #endif

@@ -1,13 +1,20 @@
 /***************************************************************************
- 
+
   vidhrdw.c
- 
+
   Functions to emulate the video hardware of the machine.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+
+
+
+static struct osd_bitmap *tmpbitmap2;
+static unsigned char inverse_palette[256]; /* JB 970727 */
+
+
 
 /***************************************************************************
 
@@ -17,28 +24,30 @@
 
 ***************************************************************************/
 
-
-static struct osd_bitmap *tmpbitmap2;
-
 int arabian_vh_start(void)
 {
 int p1,p2,p3,p4,v1,v2,offs;
+	int i;	/* JB 970727 */
 
-	if (generic_vh_start() != 0)
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		generic_vh_stop();
+		osd_free_bitmap(tmpbitmap2);
 		return 1;
 	}
 
+	/* JB 970727 */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		inverse_palette[ Machine->pens[i] ] = i;
+
 /*transform graphics data into more usable format*/
-/*which is coded like this: 
+/*which is coded like this:
 
   byte adr+0x4000  byte adr
   DCBA DCBA        DCBA DCBA
-  
+
 D-bits of pixel 4
 C-bits of pixel 3
 B-bits of pixel 2
@@ -82,7 +91,7 @@ after conversion :
 void arabian_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
-	generic_vh_stop();
+	osd_free_bitmap(tmpbitmap);
 }
 
 
@@ -93,7 +102,7 @@ void arabian_blit_byte(int offset, int val, int val2, int plane)
   int plane1,plane2,plane3,plane4;
   int p1,p2,p3,p4;
   unsigned char *bm;
-  
+
   int	sy;
   int	sx;
 
@@ -109,10 +118,19 @@ void arabian_blit_byte(int offset, int val, int val2, int plane)
 
 	sx = offset % 256;
 	sy = (0x3f - (offset / 256)) * 4;
-	
+
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = inverse_palette[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = inverse_palette[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = inverse_palette[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = inverse_palette[ tmpbitmap2->line[sy+3][sx] ];
 
      if (plane1)
-     {	
+     {
 	bm = tmpbitmap->line[sy] + sx;
         if (p1!=8)
 		*bm = p1;
@@ -132,7 +150,7 @@ void arabian_blit_byte(int offset, int val, int val2, int plane)
 
 
      if (plane3)
-     {	
+     {
 	bm = tmpbitmap2->line[sy] + sx;
         if (p1!=8)
 		*bm = (16+p1);
@@ -151,6 +169,15 @@ void arabian_blit_byte(int offset, int val, int val2, int plane)
 
      }
 
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = Machine->pens[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = Machine->pens[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = Machine->pens[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = Machine->pens[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = Machine->pens[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
 }
 
 
@@ -205,7 +232,7 @@ void arabian_videoramw(int offset, int val)
 
   int sx;
   int sy;
-	
+
   plane1 = Machine->memory_region[0][0xe000] & 0x01;
   plane2 = Machine->memory_region[0][0xe000] & 0x02;
   plane3 = Machine->memory_region[0][0xe000] & 0x04;
@@ -214,17 +241,27 @@ void arabian_videoramw(int offset, int val)
 
   sx = offset % 256;
   sy = (0x3f - (offset / 256)) * 4;
-	
+
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = inverse_palette[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = inverse_palette[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = inverse_palette[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = inverse_palette[ tmpbitmap2->line[sy+3][sx] ];
+
 	pom = tmpbitmap->line[sy] + sx;
 	bm = pom;
 
      if (plane1)
-     {	
+     {
 
 	*bm &= 0xf3;
 	if (val & 0x80) *bm |= 8;
 	if (val & 0x08) *bm |= 4;
-	
+
 	bm = tmpbitmap->line[sy+1] + sx;
 	*bm &= 0xf3;
 	if (val & 0x40) *bm |= 8;
@@ -244,7 +281,7 @@ void arabian_videoramw(int offset, int val)
 
      bm=pom;
      if (plane2)
-     {	
+     {
 	*bm &= 0xfc;
 	if (val & 0x80) *bm |= 2;
 	if (val & 0x08) *bm |= 1;
@@ -271,7 +308,7 @@ void arabian_videoramw(int offset, int val)
     bm = pom;
 
      if (plane3)
-     {	
+     {
 
 	*bm &= 0xf3;
 	if (val & 0x80) *bm |= (16+8);
@@ -296,7 +333,7 @@ void arabian_videoramw(int offset, int val)
 
      bm=pom;
      if (plane4)
-     {	
+     {
 
 	*bm &= 0xfc;
 	if (val & 0x80) *bm |= (16+2);
@@ -319,6 +356,15 @@ void arabian_videoramw(int offset, int val)
 
      }
 
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = Machine->pens[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = Machine->pens[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = Machine->pens[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = Machine->pens[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = Machine->pens[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
 }
 
 
@@ -326,6 +372,5 @@ void arabian_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
- 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+ 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 }
-

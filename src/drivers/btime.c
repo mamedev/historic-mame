@@ -108,22 +108,22 @@ IRQ triggered by commands sent by the main CPU.
 
 
 
-extern int btime_DSW1_r(int offset);
-extern int btime_interrupt(void);
+int btime_DSW1_r(int offset);
+int btime_interrupt(void);
 
-extern void btime_background_w(int offset,int data);
-extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
+void btime_background_w(int offset,int data);
+void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void btime_sh_interrupt_enable_w(int offset,int data);
-extern int btime_sh_interrupt(void);
-extern int btime_sh_start(void);
+void btime_sh_interrupt_enable_w(int offset,int data);
+int btime_sh_interrupt(void);
+int btime_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4003, 0x4003, btime_DSW1_r },	/* DSW1 */
+	{ 0x4003, 0x4003, input_port_3_r },	/* DSW1 */
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x181f, MRA_RAM },
 	{ 0xb000, 0xffff, MRA_ROM },
@@ -192,7 +192,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* DSW1 */
 		0x3f,
-		{ 0, 0, 0, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0 },
+		{ 0, 0, 0, 0, OSD_KEY_F1, OSD_KEY_F2, 0, IPB_VBLANK },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW2 */
@@ -299,7 +299,7 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			btime_interrupt,12	/* 12 interrupts per frame */
+			interrupt,12	/* IRQs are only used to check coin insertion and diagnostic commands */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -341,53 +341,53 @@ static struct MachineDriver machine_driver =
 
 ROM_START( btime_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ab05a1.12b", 0xb000, 0x1000 )
-	ROM_LOAD( "ab04.9b",    0xc000, 0x1000 )
-	ROM_LOAD( "ab06.13b",   0xd000, 0x1000 )
-	ROM_LOAD( "ab05.10b",   0xe000, 0x1000 )
-	ROM_LOAD( "ab07.15b",   0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ab05a1.12b", 0xb000, 0x1000, 0x1d9da777 )
+	ROM_LOAD( "ab04.9b",    0xc000, 0x1000, 0x9dcc9634 )
+	ROM_LOAD( "ab06.13b",   0xd000, 0x1000, 0x8fe2de1c )
+	ROM_LOAD( "ab05.10b",   0xe000, 0x1000, 0x24560b1c )
+	ROM_LOAD( "ab07.15b",   0xf000, 0x1000, 0x7e750c89 )
 
 	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ab8.13k",    0x0000, 0x1000 )	/* charset #1 */
-	ROM_LOAD( "ab10.10k",   0x1000, 0x1000 )
-	ROM_LOAD( "ab12.7k",    0x2000, 0x1000 )
-	ROM_LOAD( "ab9.15k",    0x3000, 0x1000 )	/* charset #2 */
-	ROM_LOAD( "ab11.12k",   0x4000, 0x1000 )
-	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000 )
-	ROM_LOAD( "ab02.4b",    0x6000, 0x0800 )	/* charset #3 */
-	ROM_LOAD( "ab01.3b",    0x6800, 0x0800 )
-	ROM_LOAD( "ab00.1b",    0x7000, 0x0800 )
+	ROM_LOAD( "ab8.13k",    0x0000, 0x1000, 0xccc1f7cf )	/* charset #1 */
+	ROM_LOAD( "ab10.10k",   0x1000, 0x1000, 0x9f7eaf02 )
+	ROM_LOAD( "ab12.7k",    0x2000, 0x1000, 0x85b738a9 )
+	ROM_LOAD( "ab9.15k",    0x3000, 0x1000, 0xfcee0000 )	/* charset #2 */
+	ROM_LOAD( "ab11.12k",   0x4000, 0x1000, 0xf491ffff )
+	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
+	ROM_LOAD( "ab02.4b",    0x6000, 0x0800, 0x644f1331 )	/* charset #3 */
+	ROM_LOAD( "ab01.3b",    0x6800, 0x0800, 0x18000000 )
+	ROM_LOAD( "ab00.1b",    0x7000, 0x0800, 0xea53eb39 )
 
 	ROM_REGION(0x0800)	/* background graphics */
-	ROM_LOAD( "ab03.6b",    0x0000, 0x0800 )
+	ROM_LOAD( "ab03.6b",    0x0000, 0x0800, 0x8d200806 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ab14.12h",   0xf000, 0x1000 )
+	ROM_LOAD( "ab14.12h",   0xf000, 0x1000, 0x06b5888d )
 ROM_END
 
 ROM_START( btimea_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "aa04.9b",    0xc000, 0x1000 )
-	ROM_LOAD( "aa06.13b",   0xd000, 0x1000 )
-	ROM_LOAD( "aa05.10b",   0xe000, 0x1000 )
-	ROM_LOAD( "aa07.15b",   0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "aa04.9b",    0xc000, 0x1000, 0x3d080936 )
+	ROM_LOAD( "aa06.13b",   0xd000, 0x1000, 0xe2db880f )
+	ROM_LOAD( "aa05.10b",   0xe000, 0x1000, 0x34bec090 )
+	ROM_LOAD( "aa07.15b",   0xf000, 0x1000, 0xd993a235 )
 
 	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "aa8.13k",    0x0000, 0x1000 )	/* charset #1 */
-	ROM_LOAD( "aa10.10k",   0x1000, 0x1000 )
-	ROM_LOAD( "aa12.7k",    0x2000, 0x1000 )
-	ROM_LOAD( "aa9.15k",    0x3000, 0x1000 )	/* charset #2 */
-	ROM_LOAD( "aa11.12k",   0x4000, 0x1000 )
-	ROM_LOAD( "aa13.9k" ,   0x5000, 0x1000 )
-	ROM_LOAD( "aa02.4b",    0x6000, 0x0800 )	/* charset #3 */
-	ROM_LOAD( "aa01.3b",    0x6800, 0x0800 )
-	ROM_LOAD( "aa00.1b",    0x7000, 0x0800 )
+	ROM_LOAD( "aa8.13k",    0x0000, 0x1000, 0xf994fcc4 )	/* charset #1 */
+	ROM_LOAD( "aa10.10k",   0x1000, 0x1000, 0x9f7eaf02 )
+	ROM_LOAD( "aa12.7k",    0x2000, 0x1000, 0x7f8438a2 )
+	ROM_LOAD( "aa9.15k",    0x3000, 0x1000, 0xfcee0000 )	/* charset #2 */
+	ROM_LOAD( "aa11.12k",   0x4000, 0x1000, 0xf491ffff )
+	ROM_LOAD( "aa13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
+	ROM_LOAD( "aa02.4b",    0x6000, 0x0800, 0x644f1331 )	/* charset #3 */
+	ROM_LOAD( "aa01.3b",    0x6800, 0x0800, 0x18000000 )
+	ROM_LOAD( "aa00.1b",    0x7000, 0x0800, 0xea53eb39 )
 
 	ROM_REGION(0x0800)	/* background graphics */
-	ROM_LOAD( "aa03.6b",    0x0000, 0x0800 )
+	ROM_LOAD( "aa03.6b",    0x0000, 0x0800, 0x8d200806 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "aa14.12h",   0xf000, 0x1000 )
+	ROM_LOAD( "aa14.12h",   0xf000, 0x1000, 0x06b5888d )
 ROM_END
 
 

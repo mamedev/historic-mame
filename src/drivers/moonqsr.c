@@ -34,21 +34,24 @@
 extern unsigned char *moonqsr_attributesram;
 extern unsigned char *moonqsr_bulletsram;
 extern int moonqsr_bulletsram_size;
-extern void moonqsr_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void moonqsr_videoram_w(int offset,int data);
-extern void moonqsr_attributes_w(int offset,int data);
-extern void moonqsr_stars_w(int offset,int data);
-extern void moonqsr_gfxextend_w(int offset,int data);
-extern int moonqsr_vh_start(void);
-extern void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap);
+void moonqsr_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void moonqsr_videoram_w(int offset,int data);
+void moonqsr_attributes_w(int offset,int data);
+void moonqsr_stars_w(int offset,int data);
+void moonqsr_gfxextend_w(int offset,int data);
+int moonqsr_vh_start(void);
+void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void mooncrst_sound_freq_w(int offset,int data);
-extern void mooncrst_noise_w(int offset,int data);
-extern void mooncrst_shoot_w(int offset,int data);
-extern int mooncrst_sh_init(const char *gamename);
-extern int mooncrst_sh_start(void);
-extern void mooncrst_sh_stop(void);
-extern void mooncrst_sh_update(void);
+void mooncrst_sound_freq_w(int offset,int data);
+void mooncrst_noise_w(int offset,int data);
+void mooncrst_background_w(int offset,int data);
+void mooncrst_shoot_w(int offset,int data);
+void mooncrst_lfo_freq_w(int offset,int data);
+void mooncrst_sound_freq_sel_w(int offset,int data);
+int mooncrst_sh_init(const char *gamename);
+int mooncrst_sh_start(void);
+void mooncrst_sh_stop(void);
+void mooncrst_sh_update(void);
 
 
 
@@ -73,8 +76,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x9880, MWA_RAM, &moonqsr_bulletsram, &moonqsr_bulletsram_size },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
+	{ 0xa800, 0xa800, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
+        { 0xa806, 0xa807, mooncrst_sound_freq_sel_w },
+        { 0xa004, 0xa007, mooncrst_lfo_freq_w },
 	{ 0xb004, 0xb004, moonqsr_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -168,6 +174,17 @@ static unsigned char color_prom[] =
 	0x00,0x7f,0xcf,0xf9,0x00,0x57,0xb7,0xc3,0x00,0xff,0x7f,0x87,0x00,0x79,0x4f,0xff
 };
 
+static unsigned char samples[32*2] =
+{
+   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
+   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
+   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
+};
 
 
 static struct MachineDriver machine_driver =
@@ -197,7 +214,7 @@ static struct MachineDriver machine_driver =
 	moonqsr_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
+	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -214,20 +231,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( moonqsr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mq1", 0x0000, 0x0800 )
-	ROM_LOAD( "mq2", 0x0800, 0x0800 )
-	ROM_LOAD( "mq3", 0x1000, 0x0800 )
-	ROM_LOAD( "mq4", 0x1800, 0x0800 )
-	ROM_LOAD( "mq5", 0x2000, 0x0800 )
-	ROM_LOAD( "mq6", 0x2800, 0x0800 )
-	ROM_LOAD( "mq7", 0x3000, 0x0800 )
-	ROM_LOAD( "mq8", 0x3800, 0x0800 )
+	ROM_LOAD( "mq1", 0x0000, 0x0800, 0x158eb218 )
+	ROM_LOAD( "mq2", 0x0800, 0x0800, 0x59362b9c )
+	ROM_LOAD( "mq3", 0x1000, 0x0800, 0xa9e7a5e7 )
+	ROM_LOAD( "mq4", 0x1800, 0x0800, 0x8cac8d0e )
+	ROM_LOAD( "mq5", 0x2000, 0x0800, 0xd436f3fa )
+	ROM_LOAD( "mq6", 0x2800, 0x0800, 0xd9f90a93 )
+	ROM_LOAD( "mq7", 0x3000, 0x0800, 0x8ebe83a0 )
+	ROM_LOAD( "mq8", 0x3800, 0x0800, 0x5faa5ffe )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mqb", 0x0000, 0x0800 )
-	ROM_LOAD( "mqd", 0x0800, 0x0800 )
-	ROM_LOAD( "mqa", 0x1000, 0x0800 )
-	ROM_LOAD( "mqc", 0x1800, 0x0800 )
+	ROM_LOAD( "mqb", 0x0000, 0x0800, 0x7603cc0b )
+	ROM_LOAD( "mqd", 0x0800, 0x0800, 0x6552d98e )
+	ROM_LOAD( "mqa", 0x1000, 0x0800, 0x9a9e81d6 )
+	ROM_LOAD( "mqc", 0x1800, 0x0800, 0x3cf1ef43 )
 ROM_END
 
 
@@ -323,6 +340,8 @@ static void hisave(const char *name)
 static const char *mooncrst_sample_names[] =
 {
 	"shot.sam",
+        "death.sam",
+        "backgrnd.sam",
 	0	/* end of array */
 };
 
@@ -331,7 +350,7 @@ struct GameDriver moonqsr_driver =
 {
 	"Moon Quasar",
 	"moonqsr",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
 	&machine_driver,
 
 	moonqsr_rom,
@@ -345,3 +364,4 @@ struct GameDriver moonqsr_driver =
 
 	hiload, hisave
 };
+

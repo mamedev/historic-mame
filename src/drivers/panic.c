@@ -41,12 +41,14 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void panic_videoram_w(int offset,int data);
-extern int panic_interrupt(void);
+void panic_videoram_w(int offset,int data);
+int panic_interrupt(void);
 
 extern unsigned char *panic_videoram;
 
-extern void panic_vh_screenrefresh(struct osd_bitmap *bitmap);
+int panic_vh_start(void);
+void panic_vh_stop(void);
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -218,8 +220,8 @@ static struct MachineDriver machine_driver =
 	0,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	panic_vh_start,
+	panic_vh_stop,
 	panic_vh_screenrefresh,
 
 	/* sound hardware */
@@ -276,22 +278,40 @@ static void panic_hisave(const char *name)
 
 ROM_START( panic_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800)         /* Code */
-	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800)
-	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800)
-	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800)
-	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800)
-	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800)
-	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800)
-        ROM_LOAD( "spcpanic.8", 0x3800, 0x0800)         /* Colour Table */
+	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800, 0x3ba9160d )         /* Code */
+	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 )
+	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 )
+	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e )
+	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 )
+	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 )
+	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800, 0x5e6a5212 )
+	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 )         /* Colour Table */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-
-	ROM_LOAD( "spcpanic.9", 0x0000, 0x0800 )
-	ROM_LOAD( "spcpanic.10", 0x0800, 0x0800 )
-	ROM_LOAD( "spcpanic.12", 0x1000, 0x0800 )
-	ROM_LOAD( "spcpanic.11", 0x1800, 0x0800 )
+	ROM_LOAD( "spcpanic.9",  0x0000, 0x0800, 0x0fcc7c26 )
+	ROM_LOAD( "spcpanic.10", 0x0800, 0x0800, 0xed78581a )
+	ROM_LOAD( "spcpanic.12", 0x1000, 0x0800, 0x983751ab )
+	ROM_LOAD( "spcpanic.11", 0x1800, 0x0800, 0x7d28fa66 )
 ROM_END
+
+ROM_START( panica_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800, 0x49cd1801 )         /* Code */
+	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 )
+	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 )
+	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e )
+	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 )
+	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 )
+	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800, 0x04fe6428 )
+	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 )         /* Colour Table */
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spcpanic.9",  0x0000, 0x0800, 0x0fcc7c26 )
+	ROM_LOAD( "spcpanic.10", 0x0800, 0x0800, 0xed78581a )
+	ROM_LOAD( "spcpanic.12", 0x1000, 0x0800, 0x983751ab )
+	ROM_LOAD( "spcpanic.11", 0x1800, 0x0800, 0x7d28fa66 )
+ROM_END
+
 
 
 struct GameDriver panic_driver =
@@ -303,7 +323,7 @@ struct GameDriver panic_driver =
 
 	panic_rom,
 	0, 0,
-        0,
+	0,
 
 	input_ports, trak_ports, dsw, keys,
 
@@ -313,3 +333,21 @@ struct GameDriver panic_driver =
 	panic_hiload, panic_hisave
 };
 
+struct GameDriver panica_driver =
+{
+	"Space Panic (alternate version)",
+	"panica",
+	"MIKE COATES",
+	&machine_driver,
+
+	panica_rom,
+	0, 0,
+	0,
+
+	input_ports, trak_ports, dsw, keys,
+
+	0, palette, colortable,
+	8*13, 8*16,
+
+	panic_hiload, panic_hisave
+};

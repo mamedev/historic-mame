@@ -87,16 +87,16 @@ void naughtyb_vh_stop(void);
 void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 // Let's skip the sound for now.. ;)
-// extern void naughtyb_sound_control_a_w(int offset, int data);
-// extern void naughtyb_sound_control_b_w(int offset, int data);
-// extern int naughtyb_sh_init(const char *gamename);
-// extern int naughtyb_sh_start(void);
-// extern void naughtyb_sh_update(void);
+// void naughtyb_sound_control_a_w(int offset, int data);
+// void naughtyb_sound_control_b_w(int offset, int data);
+// int naughtyb_sh_init(const char *gamename);
+// int naughtyb_sh_start(void);
+// void naughtyb_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xb800, 0xbfff, naughtyb_DSW_r },     /* DSW */
+	{ 0xb800, 0xbfff, input_port_1_r },     /* DSW */
 	{ 0x4000, 0x7fff, MRA_RAM },    /* work RAM */
 	{ 0x8000, 0x87ff, MRA_RAM },    /* Scrollable video RAM */
 	{ 0x8800, 0x8fff, MRA_RAM },    /* Scores RAM and so on */
@@ -131,7 +131,7 @@ static struct InputPort input_ports[] =
 	},
 	{       /* DSW */
 		0x15,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }  /* end of table */
@@ -284,24 +284,24 @@ static struct MachineDriver machine_driver =
 
 ROM_START( naughtyb_rom )
         ROM_REGION(0x10000)      /* 64k for code */
-        ROM_LOAD( "nb1ic30", 0x0000, 0x0800 )
-        ROM_LOAD( "nb2ic29", 0x0800, 0x0800 )
-        ROM_LOAD( "nb3ic28", 0x1000, 0x0800 )
-        ROM_LOAD( "nb4ic27", 0x1800, 0x0800 )
-        ROM_LOAD( "nb5ic26", 0x2000, 0x0800 )
-        ROM_LOAD( "nb6ic25", 0x2800, 0x0800 )
-        ROM_LOAD( "nb7ic24", 0x3000, 0x0800 )
-        ROM_LOAD( "nb8ic23", 0x3800, 0x0800 )
+        ROM_LOAD( "nb1ic30", 0x0000, 0x0800, 0xe786dfc2 )
+        ROM_LOAD( "nb2ic29", 0x0800, 0x0800, 0x3529d2bd )
+        ROM_LOAD( "nb3ic28", 0x1000, 0x0800, 0xc2f542bd )
+        ROM_LOAD( "nb4ic27", 0x1800, 0x0800, 0xcfbf8b5b )
+        ROM_LOAD( "nb5ic26", 0x2000, 0x0800, 0x9974a746 )
+        ROM_LOAD( "nb6ic25", 0x2800, 0x0800, 0x3f95af23 )
+        ROM_LOAD( "nb7ic24", 0x3000, 0x0800, 0xc0994fa1 )
+        ROM_LOAD( "nb8ic23", 0x3800, 0x0800, 0x22d97209 )
 
         ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "nb9ic50",  0x0000, 0x0800 )
-        ROM_LOAD( "nb10ic49", 0x0800, 0x0800 )
-        ROM_LOAD( "nb11ic48", 0x1000, 0x0800 )
-        ROM_LOAD( "nb12ic47", 0x1800, 0x0800 )
-        ROM_LOAD( "nb13ic46", 0x2000, 0x0800 )
-        ROM_LOAD( "nb14ic45", 0x2800, 0x0800 )
-        ROM_LOAD( "nb15ic44", 0x3000, 0x0800 )
-        ROM_LOAD( "nb16ic43", 0x3800, 0x0800 )
+        ROM_LOAD( "nb9ic50",  0x0000, 0x0800, 0x56e6b6e8 )
+        ROM_LOAD( "nb10ic49", 0x0800, 0x0800, 0x874eec76 )
+        ROM_LOAD( "nb11ic48", 0x1000, 0x0800, 0xc7130b4d )
+        ROM_LOAD( "nb12ic47", 0x1800, 0x0800, 0x5e0eaa60 )
+        ROM_LOAD( "nb13ic46", 0x2000, 0x0800, 0xa7e78c51 )
+        ROM_LOAD( "nb14ic45", 0x2800, 0x0800, 0xc07b7ad3 )
+        ROM_LOAD( "nb15ic44", 0x3000, 0x0800, 0x57092643 )
+        ROM_LOAD( "nb16ic43", 0x3800, 0x0800, 0x88e94dcf )
 ROM_END
 
 

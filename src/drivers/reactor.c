@@ -63,22 +63,22 @@ to 22kHz)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int reactor_vh_start(void);
-extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
-extern void gottlieb_characterram_w(int offset, int data);
-extern int gottlieb_sh_init(const char *gamename);
-extern void gottlieb_sh_update(void);
+int reactor_vh_start(void);
+void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh_w(int offset, int data);
+void gottlieb_characterram_w(int offset, int data);
+int gottlieb_sh_init(const char *gamename);
+void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
-extern void gottlieb_output(int offset, int data);
-extern int reactor_IN1_r(int offset);
-extern int reactor_tb_H_r(int offset);
-extern int reactor_tb_V_r(int offset);
-extern int gottlieb_trakball(int data);
+void gottlieb_output(int offset, int data);
+int reactor_IN1_r(int offset);
+int reactor_tb_H_r(int offset);
+int reactor_tb_V_r(int offset);
+int gottlieb_trakball(int data);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -252,28 +252,52 @@ static const struct MachineDriver machine_driver =
 
 ROM_START( reactor_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM0",  0xf000, 0x1000 )
-	ROM_LOAD( "ROM1",  0xe000, 0x1000 )
-	ROM_LOAD( "ROM2",  0xd000, 0x1000 )
-	ROM_LOAD( "ROM3",  0xc000, 0x1000 )
-	ROM_LOAD( "ROM4",  0xb000, 0x1000 )
-	ROM_LOAD( "ROM5",  0xa000, 0x1000 )
-	ROM_LOAD( "ROM6",  0x9000, 0x1000 )
-	ROM_LOAD( "ROM7",  0x8000, 0x1000 )
+	ROM_LOAD( "ROM7", 0x8000, 0x1000, 0xd8f16275 )
+	ROM_LOAD( "ROM6", 0x9000, 0x1000, 0x7aadbabf )
+	ROM_LOAD( "ROM5", 0xa000, 0x1000, 0x9e2453f0 )
+	ROM_LOAD( "ROM4", 0xb000, 0x1000, 0x2f1839e2 )
+	ROM_LOAD( "ROM3", 0xc000, 0x1000, 0x70123534 )
+	ROM_LOAD( "ROM2", 0xd000, 0x1000, 0xb50b26f3 )
+	ROM_LOAD( "ROM1", 0xe000, 0x1000, 0xeaf1c223 )
+	ROM_LOAD( "ROM0", 0xf000, 0x1000, 0xe126beca )
 
 	ROM_REGION(0x8000)      /* temporary space for graphics */
-	ROM_LOAD( "FG0",  0x0000, 0x1000 )       /* sprites */
-	ROM_LOAD( "FG1",  0x1000, 0x1000 )       /* sprites */
-	ROM_LOAD( "FG2",  0x2000, 0x1000 )       /* sprites */
-	ROM_LOAD( "FG3",  0x3000, 0x1000 )       /* sprites */
+	ROM_LOAD( "FG0", 0x0000, 0x1000, 0x80076d89 )       /* sprites */
+	ROM_LOAD( "FG1", 0x1000, 0x1000, 0x0577a58b )       /* sprites */
+	ROM_LOAD( "FG2", 0x2000, 0x1000, 0xe1ecaede )       /* sprites */
+	ROM_LOAD( "FG3", 0x3000, 0x1000, 0x50087b04 )       /* sprites */
 ROM_END
 
+static int hiload(const char *name)
+{
+	FILE *f;
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (RAM[0x4D8]!=0x0A) return 0;
+	f=fopen(name,"rb");
+	if (f) {
+		fread(RAM+0x4D8,0x557-0x4D8,1,f);
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fwrite(RAM+0x4D8,0x557-0x4D8,1,f);
+		fclose(f);
+	}
+}
 
 struct GameDriver reactor_driver =
 {
-        "Reactor",
+	"Reactor",
 	"reactor",
-        "FABRICE FRANCES",
+	"FABRICE FRANCES",
 	&machine_driver,
 
 	reactor_rom,
@@ -287,5 +311,5 @@ struct GameDriver reactor_driver =
 
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+	hiload,hisave     /* hi-score load and save */
 };

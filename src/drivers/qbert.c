@@ -68,16 +68,16 @@ as precomputed samples)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int qbert_vh_start(void);
-extern void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void qbert_sh_w(int offset, int data);
-extern void gottlieb_sh_update(void);
-extern void gottlieb_output(int offset, int data);
-extern int qbert_IN1_r(int offset);
+int qbert_vh_start(void);
+void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void qbert_sh_w(int offset, int data);
+void gottlieb_sh_update(void);
+void gottlieb_output(int offset, int data);
+int qbert_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -240,19 +240,36 @@ static const struct MachineDriver machine_driver =
 	gottlieb_sh_update
 };
 
+
+
 ROM_START( qbert_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000 )
-	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000 )
-	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000 )
+	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xd1c1dad7 )
+	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xdc2bbad9 )
+	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xc23a8cfe )
 
 	ROM_REGION(0xA000)      /* temporary space for graphics */
-	ROM_LOAD( "qb-bg0.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "qb-bg1.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "qb-fg3.bin",  0x2000, 0x2000 )       /* sprites */
-	ROM_LOAD( "qb-fg2.bin",  0x4000, 0x2000 )       /* sprites */
-	ROM_LOAD( "qb-fg1.bin",  0x6000, 0x2000 )       /* sprites */
-	ROM_LOAD( "qb-fg0.bin",  0x8000, 0x2000 )       /* sprites */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )       /* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )       /* sprites */
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )       /* sprites */
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )       /* sprites */
+ROM_END
+
+ROM_START( qbertjp_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0x22b59259 )
+	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 )
+	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xf20e301e )
+
+	ROM_REGION(0xA000)      /* temporary space for graphics */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )       /* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )       /* sprites */
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )       /* sprites */
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )       /* sprites */
 ROM_END
 
 
@@ -341,11 +358,69 @@ static unsigned short qbert_colors[256]={
 	0xf70, 0xf72, 0xf86
 };
 
+
+static int hiload(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	/* no need to wait for anything: Q*bert doesn't touch the tables
+	if the checksum is correct */
+	if (f) {
+		fread(RAM+0xA00,1,2,f); /* hiscore table checksum */
+		fread(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		fread(RAM+0xBB0,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+	/* not saving distributions tables : does anyone really want them ? */
+		fwrite(RAM+0xA00,1,2,f); /* hiscore table checksum */
+		fwrite(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		fwrite(RAM+0xBB0,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
+		fclose(f);
+	}
+}
+
+static int hiload_jp(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fread(RAM+0xA00,1,2,f); /* hiscore table checksum */
+		fread(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		fread(RAM+0xC0C,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave_jp(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fwrite(RAM+0xA00,1,2,f); /* hiscore table checksum */
+		fwrite(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		fwrite(RAM+0xC0C,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
+		fclose(f);
+	}
+}
+
 struct GameDriver qbert_driver =
 {
-        "Q*Bert",
+	"Q*Bert (US version)",
 	"qbert",
-        "FABRICE FRANCES",
+	"FABRICE FRANCES",
 	&machine_driver,
 
 	qbert_rom,
@@ -359,17 +434,17 @@ struct GameDriver qbert_driver =
 
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+	hiload,hisave     /* hi-score load and save */
 };
 
 struct GameDriver qbertjp_driver =
 {
-        "Q*Bert Japanese",
+	"Q*Bert (Japanese version)",
 	"qbertjp",
-        "FABRICE FRANCES",
+	"FABRICE FRANCES",
 	&machine_driver,
 
-	qbert_rom,
+	qbertjp_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
@@ -379,5 +454,5 @@ struct GameDriver qbertjp_driver =
 	0,0,    /* palette, colortable */
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+	hiload_jp,hisave_jp     /* hi-score load and save */
 };

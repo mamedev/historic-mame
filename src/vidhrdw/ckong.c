@@ -189,6 +189,6 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 		copybitmap(bitmap,bsbitmap,
 				ckong_bigspriteram[1] & 0x20,!(ckong_bigspriteram[1] & 0x10),
 				ckong_bigspriteram[2],ckong_bigspriteram[3] - 8,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }

@@ -50,24 +50,24 @@ write
 
 
 
-extern int mystston_DSW2_r(int offset);
-extern int mystston_interrupt(void);
+int mystston_DSW2_r(int offset);
+int mystston_interrupt(void);
 
 extern unsigned char *mystston_videoram2,*mystston_colorram2;
 extern int mystston_videoram2_size;
 extern unsigned char *mystston_scroll;
 extern unsigned char *mystston_paletteram;
-extern void mystston_paletteram_w(int offset,int data);
-extern void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mystston_paletteram_w(int offset,int data);
+void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
-extern void mystston_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mystston_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x2030, 0x2030, mystston_DSW2_r },
+	{ 0x2030, 0x2030, input_port_3_r },
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ 0x2000, 0x2000, input_port_0_r },
@@ -115,7 +115,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* DSW2 */
 		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -248,26 +248,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mystston_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ms0", 0x4000, 0x2000 )
-	ROM_LOAD( "ms1", 0x6000, 0x2000 )
-	ROM_LOAD( "ms2", 0x8000, 0x2000 )
-	ROM_LOAD( "ms3", 0xa000, 0x2000 )
-	ROM_LOAD( "ms4", 0xc000, 0x2000 )
-	ROM_LOAD( "ms5", 0xe000, 0x2000 )
+	ROM_LOAD( "ms0", 0x4000, 0x2000, 0xdc153dbd )
+	ROM_LOAD( "ms1", 0x6000, 0x2000, 0xfee91da9 )
+	ROM_LOAD( "ms2", 0x8000, 0x2000, 0x6a8e9056 )
+	ROM_LOAD( "ms3", 0xa000, 0x2000, 0x01236275 )
+	ROM_LOAD( "ms4", 0xc000, 0x2000, 0x4b454e47 )
+	ROM_LOAD( "ms5", 0xe000, 0x2000, 0x3d2ed112 )
 
 	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ms6",  0x00000, 0x2000 )
-	ROM_LOAD( "ms7",  0x02000, 0x2000 )
-	ROM_LOAD( "ms8",  0x04000, 0x2000 )
-	ROM_LOAD( "ms9",  0x06000, 0x2000 )
-	ROM_LOAD( "ms10", 0x08000, 0x2000 )
-	ROM_LOAD( "ms11", 0x0a000, 0x2000 )
-	ROM_LOAD( "ms12", 0x0c000, 0x2000 )
-	ROM_LOAD( "ms13", 0x0e000, 0x2000 )
-	ROM_LOAD( "ms14", 0x10000, 0x2000 )
-	ROM_LOAD( "ms15", 0x12000, 0x2000 )
-	ROM_LOAD( "ms16", 0x14000, 0x2000 )
-	ROM_LOAD( "ms17", 0x16000, 0x2000 )
+	ROM_LOAD( "ms6",  0x00000, 0x2000, 0x36d91451 )
+	ROM_LOAD( "ms7",  0x02000, 0x2000, 0x1c50b31a )
+	ROM_LOAD( "ms8",  0x04000, 0x2000, 0x8fa87372 )
+	ROM_LOAD( "ms9",  0x06000, 0x2000, 0xdb1e1106 )
+	ROM_LOAD( "ms10", 0x08000, 0x2000, 0xf58ef682 )
+	ROM_LOAD( "ms11", 0x0a000, 0x2000, 0xb435a9c1 )
+	ROM_LOAD( "ms12", 0x0c000, 0x2000, 0x86001ec2 )
+	ROM_LOAD( "ms13", 0x0e000, 0x2000, 0x9db56e87 )
+	ROM_LOAD( "ms14", 0x10000, 0x2000, 0x1406c3f8 )
+	ROM_LOAD( "ms15", 0x12000, 0x2000, 0x511f13b1 )
+	ROM_LOAD( "ms16", 0x14000, 0x2000, 0x382355d5 )
+	ROM_LOAD( "ms17", 0x16000, 0x2000, 0xf2d7eb01 )
 ROM_END
 
 

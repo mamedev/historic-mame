@@ -1,7 +1,7 @@
-/* sound driver now does correct sounds for both small and large 
-   phoenixes.  force field sound still needs work. 
-   also all sounds need to be fine-tuned. 
-   music not implemented yet, but maybe next version... 
+/* sound driver now does correct sounds for both small and large
+   phoenixes.  force field sound still needs work.
+   also all sounds need to be fine-tuned.
+   music not implemented yet either.
    Andrew Scott (ascott@utkux.utcc.utk.edu) */
 
 #include "driver.h"
@@ -29,7 +29,7 @@ static int sound_a_sw = 0;
 static int sound_a_adjust=1;
 static int hifreq = 0;
 static double t=0;
-static double x=PI/2;
+static double x;
 
 static int sound_b_play = 0;
 static int sound_b_vol = 0;
@@ -45,6 +45,8 @@ int noisemulate = 0;
 
 int phoenix_sh_init(const char *gamename)
 {
+	x = PI/2;
+
         if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
           noisemulate = 0;
         else
@@ -154,7 +156,7 @@ int phoenix_sh_start(void)
         osd_play_sample(1,Machine->drv->samples,32,1000,0,1);
         osd_play_sample(2,&Machine->drv->samples[32],128,1000,0,1);
 	return 0;
-}               
+}
 
 
 
@@ -167,11 +169,11 @@ void phoenix_sh_update(void)
    /* do special effects of voice A */
         if (hifreq)
             pitch_a=pitch_a*5/4;
-     
-        pitch_a+=((double)pitch_a*MOD_DEPTH*sin(t)); 
 
-        if (sound_a_adjust)
-            sound_a_sw=0;
+        pitch_a+=((double)pitch_a*MOD_DEPTH*sin(t));
+
+/*        if (sound_a_adjust)
+            sound_a_sw=0;        */
 
         sound_a_sw++;
 
@@ -181,14 +183,14 @@ void phoenix_sh_update(void)
             sound_a_sw=0;
         }
 
-        if (sound_a_adjust)
-            t=0;
+/*        if (sound_a_adjust)
+            t=0;                 */
 
         t+=MOD_RATE;
 
         if (t>2*PI)
             t=0;
-        
+
    /* do special effects of voice B */
         pitch_b+=((double)pitch_b*SWEEP_DEPTH*sin(x));
 
@@ -206,7 +208,7 @@ void phoenix_sh_update(void)
                 osd_adjust_sample(0,pitch_a,85*(3-sound_a_vol));
         if (sound_b_play)
                 osd_adjust_sample(1,pitch_b,85*(3-sound_b_vol));
-  
+
         if ((noise_vol) && (noisemulate))
         {
                 osd_adjust_sample(2,noise_freq,noise_vol);

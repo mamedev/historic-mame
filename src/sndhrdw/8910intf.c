@@ -13,11 +13,14 @@
 #include "sndhrdw/8910intf.h"
 
 
-#define UPDATES_PER_SECOND 60
-#define emulation_rate (350*UPDATES_PER_SECOND)
-#define buffer_len (emulation_rate/UPDATES_PER_SECOND)
+#define TARGET_EMULATION_RATE 44100	/* will be adapted to be a multiple of buffer_len */
+static int emulation_rate;
+static int buffer_len;
+
+
 
 static struct AY8910interface *intf;
+static unsigned char *buffer[MAX_8910];
 
 
 
@@ -82,7 +85,24 @@ static unsigned char porthandler4(AY8910 *chip, int port, int iswrite, unsigned 
 
 int AY8910_sh_start(struct AY8910interface *interface)
 {
+	int i;
+
+
 	intf = interface;
+
+	buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second / intf->updates_per_frame;
+	emulation_rate = buffer_len * Machine->drv->frames_per_second * intf->updates_per_frame;
+
+	for (i = 0;i < MAX_8910;i++) buffer[i] = 0;
+	for (i = 0;i < intf->num;i++)
+	{
+		if ((buffer[i] = malloc(buffer_len * intf->updates_per_frame)) == 0)
+		{
+			while (--i >= 0) free(buffer[i]);
+			return 1;
+		}
+		memset(buffer[i],0x80,buffer_len * intf->updates_per_frame);
+	}
 
 	if (AYInit(intf->num,intf->clock,emulation_rate,buffer_len,0) == 0)
 	{
@@ -118,7 +138,11 @@ int AY8910_sh_start(struct AY8910interface *interface)
 
 void AY8910_sh_stop(void)
 {
+	int i;
+
+
 	AYShutdown();
+	for (i = 0;i < intf->num;i++) free(buffer[i]);
 }
 
 
@@ -195,6 +219,25 @@ void AY8910_write_port_4_w(int offset,int data)
 
 
 
+static int updatecount;
+
+
+void AY8910_update(void)
+{
+	int i;
+
+
+	if (updatecount >= intf->updates_per_frame) return;
+
+	for (i = 0;i < intf->num;i++)
+		AYSetBuffer(i,&buffer[i][updatecount * buffer_len]);
+	AYUpdate();
+
+	updatecount++;
+}
+
+
+
 void AY8910_sh_update(void)
 {
 	int i;
@@ -202,7 +245,19 @@ void AY8910_sh_update(void)
 
 	if (play_sound == 0) return;
 
-	AYUpdate();
+	if (intf->updates_per_frame == 1) AY8910_update();
+
+if (errorlog && updatecount != intf->updates_per_frame)
+	fprintf(errorlog,"Error: AY8910_update() has not been called %d times in a frame\n",intf->updates_per_frame);
+
+	updatecount = 0;	/* must be zeroed here to keep in sync in case of a reset */
+
 	for (i = 0;i < intf->num;i++)
-		osd_play_streamed_sample(i,AYBuffer(i),buffer_len,emulation_rate,intf->volume[i]);
+		AYSetBuffer(i,&buffer[i][0]);
+
+	/* update FM music */
+    osd_ym2203_update();
+
+	for (i = 0;i < intf->num;i++)
+		osd_play_streamed_sample(i,buffer[i],buffer_len * intf->updates_per_frame,emulation_rate,intf->volume[i]);
 }

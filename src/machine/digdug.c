@@ -46,15 +46,15 @@ void digdug_sharedram_w(int offset,int data)
 	/* a video ram write */
 	if (offset < 0x400)
 		dirtybuffer[offset] = 1;
-	
+
 	/* location 9b3d is set to zero just before CPU 2 spins */
 	if (offset == 0x1b3d && data == 0 && cpu_getpc () == 0x1df1 && Z80_ICount > 50)
 		Z80_ICount = 50;
-	
+
 	/* location 9b3c is set to zero just before CPU 3 spins */
 	if (offset == 0x1b3c && data == 0 && cpu_getpc () == 0x0316 && Z80_ICount > 50)
 		Z80_ICount = 50;
-	
+
 	digdug_sharedram[offset] = data;
 }
 
@@ -69,7 +69,7 @@ void digdug_sharedram_w(int offset,int data)
  emulate the behaviour of the NMI interrupt.
 
 ***************************************************************************/
-extern void digdug_customio_w(int offset,int data)
+void digdug_customio_w(int offset,int data)
 {
 	static int mode,credits;
 	Z80_Regs regs;
@@ -109,31 +109,20 @@ extern void digdug_customio_w(int offset,int data)
 				else start2 = 0;
 
 				in = readinputport(2);
-				
-				/* check fire */
-/*
-if (osd_key_pressed(OSD_KEY_Q)) in &= ~0x20;
-if (osd_key_pressed(OSD_KEY_W)) in &= ~0x40;
-if (osd_key_pressed(OSD_KEY_E)) in &= ~0x80;
-if (osd_key_pressed(OSD_KEY_R)) in |= 0x01;
-*/
 
+				/* check fire */
 				if ((in & 0x20) == 0)
 				{
 					if (!fire) in &= ~0x10, fire = 1;
 				}
 				else fire = 0;
-				
-#if 0
-				if ((in & 0x10) == 0)
-				{
-					if (fire) in |= 0x10;
-					else fire = 1;
-				}
-				else fire = 0;
-#endif
 
-				/* check directions -- this is highly funky */
+				/* check directions, according to the following 8-position rule */
+				/*         0          */
+				/*        7 1         */
+				/*       6 8 2        */
+				/*        5 3         */
+				/*         4          */
 				if ((in & 0x01) == 0)		/* up */
 					in = (in & ~0x0f) | 0x00;
 				else if ((in & 0x02) == 0)	/* right */
@@ -181,7 +170,7 @@ if (osd_key_pressed(OSD_KEY_R)) in |= 0x01;
 			if (errorlog) fprintf(errorlog,"%04x: warning: unknown custom IO command %02x\n",cpu_getpc(),data);
 			break;
 	}
-	
+
 	/* copy all but the last byte of the data into the destination, just like the NMI */
 	Z80_GetRegs(&regs);
 	while (regs.BC2.D > 1)
@@ -191,18 +180,18 @@ if (osd_key_pressed(OSD_KEY_R)) in |= 0x01;
 		++regs.HL2.W.l;
 		--regs.BC2.W.l;
 	}
-	
+
 	/* actually generate an NMI for the final byte, to handle special processing */
 	regs.SP.W.l-=2;
-	RAM[regs.SP.D]=regs.PC.D;
-   RAM[(regs.SP.D+1)&65535]=regs.PC.D>>8;
+	cpu_writemem(regs.SP.D,regs.PC.D);
+        cpu_writemem((regs.SP.D+1)&65535,regs.PC.D>>8);
 	regs.PC.D=0x0066;
 	Z80_SetRegs(&regs);
 }
 
 
 
-extern int digdug_customio_r(int offset)
+int digdug_customio_r(int offset)
 {
 	return 0x10;	/* everything is handled by customio_w() */
 }

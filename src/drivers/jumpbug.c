@@ -75,14 +75,14 @@ write:
 extern unsigned char *jumpbug_attributesram;
 extern unsigned char *jumpbug_gfxbank;
 extern unsigned char *jumpbug_stars;
-extern void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void jumpbug_attributes_w(int offset,int data);
-extern void jumpbug_gfxbank_w(int offset,int data);
-extern void jumpbug_stars_w(int offset,int data);
-extern int jumpbug_vh_start(void);
-extern void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void jumpbug_attributes_w(int offset,int data);
+void jumpbug_gfxbank_w(int offset,int data);
+void jumpbug_stars_w(int offset,int data);
+int jumpbug_vh_start(void);
+void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int jumpbug_sh_start(void);
+int jumpbug_sh_start(void);
 
 
 
@@ -256,30 +256,30 @@ static struct MachineDriver machine_driver =
 
 ROM_START( jumpbug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jb1", 0x0000, 0x1000 )
-	ROM_LOAD( "jb2", 0x1000, 0x1000 )
-	ROM_LOAD( "jb3", 0x2000, 0x1000 )
-	ROM_LOAD( "jb4", 0x3000, 0x1000 )
-	ROM_LOAD( "jb5", 0x8000, 0x1000 )
-	ROM_LOAD( "jb6", 0x9000, 0x1000 )
-	ROM_LOAD( "jb7", 0xa000, 0x1000 )
+	ROM_LOAD( "jb1", 0x0000, 0x1000, 0x79963f12 )
+	ROM_LOAD( "jb2", 0x1000, 0x1000, 0xa43443aa )
+	ROM_LOAD( "jb3", 0x2000, 0x1000, 0xbaf5db29 )
+	ROM_LOAD( "jb4", 0x3000, 0x1000, 0x48f5b817 )
+	ROM_LOAD( "jb5", 0x8000, 0x1000, 0x817144dd )
+	ROM_LOAD( "jb6", 0x9000, 0x1000, 0x58440d82 )
+	ROM_LOAD( "jb7", 0xa000, 0x1000, 0xef8ff5ab )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "jbi", 0x0000, 0x0800 )
-        ROM_LOAD( "jbj", 0x0800, 0x0800 )
-        ROM_LOAD( "jbk", 0x1000, 0x0800 )
-        ROM_LOAD( "jbl", 0x1800, 0x0800 )
-        ROM_LOAD( "jbm", 0x2000, 0x0800 )
-        ROM_LOAD( "jbn", 0x2800, 0x0800 )
+	ROM_LOAD( "jbi", 0x0000, 0x0800, 0x5857c05d )
+	ROM_LOAD( "jbj", 0x0800, 0x0800, 0xdd2b5d5b )
+	ROM_LOAD( "jbk", 0x1000, 0x0800, 0x53ddcbb5 )
+	ROM_LOAD( "jbl", 0x1800, 0x0800, 0x66b19093 )
+	ROM_LOAD( "jbm", 0x2000, 0x0800, 0x7bac88f8 )
+	ROM_LOAD( "jbn", 0x2800, 0x0800, 0x3bdc2b52 )
 ROM_END
 
 ROM_START( jbugsega_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jb1.prg", 0x0000, 0x4000 )
-	ROM_LOAD( "jb2.prg", 0x8000, 0x2800 )
+	ROM_LOAD( "jb1.prg", 0x0000, 0x4000, 0xecb42886 )
+	ROM_LOAD( "jb2.prg", 0x8000, 0x2800, 0x14302ed6 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jb3.gfx",      0x0000, 0x3000 )
+	ROM_LOAD( "jb3.gfx", 0x0000, 0x3000, 0xa798658a )
 ROM_END
 
 

@@ -309,22 +309,23 @@ WWW.SPIES.COM contains DIP switch settings.
 
 
 
-extern void c1942_bankswitch_w(int offset,int data);
-extern int c1942_bankedrom_r(int offset);
-extern int c1942_interrupt(void);
+void c1942_bankswitch_w(int offset,int data);
+int c1942_bankedrom_r(int offset);
+int c1942_interrupt(void);
 
 extern unsigned char *c1942_backgroundram;
 extern int c1942_backgroundram_size;
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
-extern void c1942_background_w(int offset,int data);
-extern void c1942_palette_bank_w(int offset,int data);
+void c1942_background_w(int offset,int data);
+void c1942_palette_bank_w(int offset,int data);
 int c1942_vh_start(void);
 void c1942_vh_stop(void);
-extern void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void c1942_vh_screenrefresh(struct osd_bitmap *bitmap);
+void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void c1942_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int c1942_sh_start(void);
+int c1942_sh_start(void);
+int c1942_sh_interrupt(void);
 
 
 
@@ -616,7 +617,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,4
+			c1942_sh_interrupt,12
 		}
 	},
 	60,
@@ -651,28 +652,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START( c1942_rom )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "1-n3.bin", 0x0000, 0x4000 )
-	ROM_LOAD( "1-n4.bin", 0x4000, 0x4000 )
-	ROM_LOAD( "1-n7.bin", 0x8000, 0x4000 )	/* this is the only one of the banked ROMs containing code */
-	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000 )
-	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000 )
-	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000 )
+	ROM_LOAD( "1-n3.bin",  0x0000, 0x4000, 0x33ff9663 )
+	ROM_LOAD( "1-n4.bin",  0x4000, 0x4000, 0xd492925e )
+	ROM_LOAD( "1-n7.bin",  0x8000, 0x4000, 0xc9728db2 )	/* this is the only one of the banked ROMs containing code */
+	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000, 0xf2525fe2 )
+	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000, 0x659736b3 )
+	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000, 0xc9728db2 )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000 )	/* characters */
-	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a3.bin", 0x04000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a5.bin", 0x06000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a2.bin", 0x08000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a4.bin", 0x0a000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000 )	/* sprites */
-	ROM_LOAD( "2-n1.bin", 0x12000, 0x4000 )	/* sprites */
-	ROM_LOAD( "2-l2.bin", 0x16000, 0x4000 )	/* sprites */
-	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000 )	/* sprites */
+	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000, 0x90e7df87 )	/* characters */
+	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000, 0x144b5325 )	/* tiles */
+	ROM_LOAD( "2-a3.bin", 0x04000, 0x2000, 0x6649e7e3 )	/* tiles */
+	ROM_LOAD( "2-a5.bin", 0x06000, 0x2000, 0x606bfaa1 )	/* tiles */
+	ROM_LOAD( "2-a2.bin", 0x08000, 0x2000, 0xbeecefb2 )	/* tiles */
+	ROM_LOAD( "2-a4.bin", 0x0a000, 0x2000, 0x33e7a52d )	/* tiles */
+	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000, 0xcb9343fd )	/* tiles */
+	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000, 0x3de5e617 )	/* sprites */
+	ROM_LOAD( "2-n1.bin", 0x12000, 0x4000, 0x8b02cefe )	/* sprites */
+	ROM_LOAD( "2-l2.bin", 0x16000, 0x4000, 0x900c4178 )	/* sprites */
+	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000, 0x0fb73451 )	/* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000 )
+	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000, 0xb16cd20e )
 ROM_END
 
 

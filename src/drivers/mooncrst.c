@@ -11,20 +11,23 @@
 extern unsigned char *mooncrst_attributesram;
 extern unsigned char *mooncrst_bulletsram;
 extern int mooncrst_bulletsram_size;
-extern void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void mooncrst_attributes_w(int offset,int data);
-extern void mooncrst_stars_w(int offset,int data);
-extern void mooncrst_gfxextend_w(int offset,int data);
-extern int mooncrst_vh_start(void);
-extern void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mooncrst_attributes_w(int offset,int data);
+void mooncrst_stars_w(int offset,int data);
+void mooncrst_gfxextend_w(int offset,int data);
+int mooncrst_vh_start(void);
+void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void mooncrst_sound_freq_w(int offset,int data);
-extern void mooncrst_noise_w(int offset,int data);
-extern void mooncrst_shoot_w(int offset,int data);
-extern int mooncrst_sh_init(const char *gamename);
-extern int mooncrst_sh_start(void);
-extern void mooncrst_sh_stop(void);
-extern void mooncrst_sh_update(void);
+void mooncrst_sound_freq_w(int offset,int data);
+void mooncrst_noise_w(int offset,int data);
+void mooncrst_background_w(int offset,int data);
+void mooncrst_shoot_w(int offset,int data);
+void mooncrst_lfo_freq_w(int offset,int data);
+void mooncrst_sound_freq_sel_w(int offset,int data);
+int mooncrst_sh_init(const char *gamename);
+int mooncrst_sh_start(void);
+void mooncrst_sh_stop(void);
+void mooncrst_sh_update(void);
 
 
 
@@ -49,9 +52,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x9880, MWA_RAM, &mooncrst_bulletsram, &mooncrst_bulletsram_size },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
+	{ 0xa800, 0xa800, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },
+	{ 0xa806, 0xa807, mooncrst_sound_freq_sel_w },
+	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
 	{ 0xb004, 0xb004, mooncrst_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -153,6 +159,17 @@ static unsigned char fantazia_color_prom[] =
 	0x08,0xC8,0xB8,0x1F,0x08,0x1E,0x79,0x0F,0x08,0xFE,0x0F,0xF8,0x08,0x7E,0x0F,0xCE
 };
 
+static unsigned char samples[32*2] =
+{
+   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
+   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
+   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
+};
 
 
 static struct MachineDriver machine_driver =
@@ -182,7 +199,7 @@ static struct MachineDriver machine_driver =
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
+	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -199,56 +216,62 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mooncrst_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mc1", 0x0000, 0x0800 )
-	ROM_LOAD( "mc2", 0x0800, 0x0800 )
-	ROM_LOAD( "mc3", 0x1000, 0x0800 )
-	ROM_LOAD( "mc4", 0x1800, 0x0800 )
-	ROM_LOAD( "mc5", 0x2000, 0x0800 )
-	ROM_LOAD( "mc6", 0x2800, 0x0800 )
-	ROM_LOAD( "mc7", 0x3000, 0x0800 )
-	ROM_LOAD( "mc8", 0x3800, 0x0800 )
+	ROM_LOAD( "mc1", 0x0000, 0x0800, 0x09517d4d )
+	ROM_LOAD( "mc2", 0x0800, 0x0800, 0xc38036ea )
+	ROM_LOAD( "mc3", 0x1000, 0x0800, 0x55850d07 )
+	ROM_LOAD( "mc4", 0x1800, 0x0800, 0xce9fa607 )
+	ROM_LOAD( "mc5", 0x2000, 0x0800, 0xbe597a3b )
+	ROM_LOAD( "mc6", 0x2800, 0x0800, 0xccf35bef )
+	ROM_LOAD( "mc7", 0x3000, 0x0800, 0x589bfa8f )
+	ROM_LOAD( "mc8", 0x3800, 0x0800, 0xc2ca7a86 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mcb", 0x0000, 0x0800 )
-	ROM_LOAD( "mcd", 0x0800, 0x0800 )
-	ROM_LOAD( "mca", 0x1000, 0x0800 )
-	ROM_LOAD( "mcc", 0x1800, 0x0800 )
+	ROM_LOAD( "mcb", 0x0000, 0x0800, 0x22bd9067 )
+	ROM_LOAD( "mcd", 0x0800, 0x0200, 0xdfbc68ba )
+	ROM_CONTINUE(    0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(    0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(    0x0e00, 0x0200 )
+	ROM_LOAD( "mca", 0x1000, 0x0800, 0xf93f9153 )
+	ROM_LOAD( "mcc", 0x1800, 0x0200, 0xc1dc1cde )
+	ROM_CONTINUE(    0x1c00, 0x0200 )
+	ROM_CONTINUE(    0x1a00, 0x0200 )
+	ROM_CONTINUE(    0x1e00, 0x0200 )
 ROM_END
 
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "EPR194", 0x0000, 0x0800 )
-	ROM_LOAD( "EPR195", 0x0800, 0x0800 )
-	ROM_LOAD( "EPR196", 0x1000, 0x0800 )
-	ROM_LOAD( "EPR197", 0x1800, 0x0800 )
-	ROM_LOAD( "EPR198", 0x2000, 0x0800 )
-	ROM_LOAD( "EPR199", 0x2800, 0x0800 )
-	ROM_LOAD( "EPR200", 0x3000, 0x0800 )
-	ROM_LOAD( "EPR201", 0x3800, 0x0800 )
+	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x1c6e3b4a )
+	ROM_LOAD( "EPR195", 0x0800, 0x0800, 0xa8901964 )
+	ROM_LOAD( "EPR196", 0x1000, 0x0800, 0x3247a543 )
+	ROM_LOAD( "EPR197", 0x1800, 0x0800, 0x8e22a4b2 )
+	ROM_LOAD( "EPR198", 0x2000, 0x0800, 0x981d7a7f )
+	ROM_LOAD( "EPR199", 0x2800, 0x0800, 0x3def1bab )
+	ROM_LOAD( "EPR200", 0x3000, 0x0800, 0xb31bfacf )
+	ROM_LOAD( "EPR201", 0x3800, 0x0800, 0xe0a15117 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "EPR203", 0x0000, 0x0800 )
-	ROM_LOAD( "EPR172", 0x0800, 0x0800 )
-	ROM_LOAD( "EPR202", 0x1000, 0x0800 )
-	ROM_LOAD( "EPR171", 0x1800, 0x0800 )
+	ROM_LOAD( "EPR203", 0x0000, 0x0800, 0xa27f5447 )
+	ROM_LOAD( "EPR172", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "EPR202", 0x1000, 0x0800, 0xec79cbdb )
+	ROM_LOAD( "EPR171", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
 
 ROM_START( fantazia_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "F01.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "F02.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "F03.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "F04.bin", 0x1800, 0x0800 )
-	ROM_LOAD( "F09.bin", 0x2000, 0x0800 )
-	ROM_LOAD( "F10.bin", 0x2800, 0x0800 )
-	ROM_LOAD( "F11.bin", 0x3000, 0x0800 )
-	ROM_LOAD( "F12.bin", 0x3800, 0x0800 )
+	ROM_LOAD( "F01.bin", 0x0000, 0x0800, 0x22693d4d )
+	ROM_LOAD( "F02.bin", 0x0800, 0x0800, 0xe65a30ae )
+	ROM_LOAD( "F03.bin", 0x1000, 0x0800, 0x3247a543 )
+	ROM_LOAD( "F04.bin", 0x1800, 0x0800, 0x8e22a4b2 )
+	ROM_LOAD( "F09.bin", 0x2000, 0x0800, 0x730c6f5a )
+	ROM_LOAD( "F10.bin", 0x2800, 0x0800, 0x50694b53 )
+	ROM_LOAD( "F11.bin", 0x3000, 0x0800, 0x932f1ab9 )
+	ROM_LOAD( "F12.bin", 0x3800, 0x0800, 0xdc786302 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1h_1_10.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "1k_2_12.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "1h_1_10.bin", 0x0000, 0x0800, 0x22bd9067 )
+	ROM_LOAD( "1k_2_12.bin", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800, 0xf93f9153 )
+	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
 
 
@@ -344,6 +367,8 @@ static void hisave(const char *name)
 static const char *mooncrst_sample_names[] =
 {
 	"shot.sam",
+        "death.sam",
+        "backgrnd.sam",
 	0	/* end of array */
 };
 
@@ -351,7 +376,7 @@ struct GameDriver mooncrst_driver =
 {
 	"Moon Cresta (Nichibutsu)",
 	"mooncrst",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
 	&machine_driver,
 
 	mooncrst_rom,
@@ -370,7 +395,7 @@ struct GameDriver mooncrsb_driver =
 {
 	"Moon Cresta (Gremlin)",
 	"mooncrsb",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
 	&machine_driver,
 
 	mooncrsb_rom,
@@ -389,7 +414,7 @@ struct GameDriver fantazia_driver =
 {
 	"Fantazia",
 	"fantazia",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
 	&machine_driver,
 
 	fantazia_rom,

@@ -164,6 +164,6 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] >> 2,spriteram[offs + 1],
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
-				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
 }

@@ -67,15 +67,15 @@ and 1 SFX channel controlled by an 8039:
 
 
 extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
-extern void gyruss_queuereg_w(int offset, int data);
-extern void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int  gyruss_vh_start(void);
+void gyruss_queuereg_w(int offset, int data);
+void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap);
+int  gyruss_vh_start(void);
 
-extern int gyruss_sh_interrupt(void);
-extern int gyruss_sh_start(void);
-extern void gyruss_sh_soundfx_on_w(int offset,int data);
-extern void gyruss_sh_soundfx_data_w(int offset,int data);
+int gyruss_sh_interrupt(void);
+int gyruss_sh_start(void);
+void gyruss_sh_soundfx_on_w(int offset,int data);
+void gyruss_sh_soundfx_data_w(int offset,int data);
 
 
 
@@ -325,7 +325,7 @@ static struct MachineDriver machine_driver =
 			3579500,	/* 3.5795 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			gyruss_sh_interrupt,1
+			gyruss_sh_interrupt,10
 		}
 	},
 	60,
@@ -360,26 +360,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gyruss_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gya-1.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "gya-2.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "gya-3.bin", 0x4000, 0x2000 )
+	ROM_LOAD( "gya-1.bin", 0x0000, 0x2000, 0x9fef8629 )
+	ROM_LOAD( "gya-2.bin", 0x2000, 0x2000, 0xe7243234 )
+	ROM_LOAD( "gya-3.bin", 0x4000, 0x2000, 0x8c1eeeec )
 	/* the diagnostics ROM would go here */
 
 	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gy-6.bin",  0x0000, 0x2000 )
-	ROM_LOAD( "gy-9.bin",  0x2000, 0x2000 )
-	ROM_LOAD( "gy-7.bin",  0x4000, 0x2000 )
-	ROM_LOAD( "gy-10.bin", 0x6000, 0x2000 )
-	ROM_LOAD( "gy-8.bin",  0x8000, 0x2000 )
+	ROM_LOAD( "gy-6.bin",  0x0000, 0x2000, 0x98f88b6e )
+	ROM_LOAD( "gy-9.bin",  0x2000, 0x2000, 0x2fb43a10 )
+	ROM_LOAD( "gy-7.bin",  0x4000, 0x2000, 0xff46ed2e )
+	ROM_LOAD( "gy-10.bin", 0x6000, 0x2000, 0x90c095a2 )
+	ROM_LOAD( "gy-8.bin",  0x8000, 0x2000, 0xe7297079 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gy-11.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "gy-12.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "gy-13.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "gy-11.bin", 0x0000, 0x2000, 0x4fa107c1 )
+	ROM_LOAD( "gy-12.bin", 0x2000, 0x2000, 0xd20aa58c )
+	ROM_LOAD( "gy-13.bin", 0x4000, 0x1000, 0x18d6bc42 )
 
 	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
 						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gy-5.bin",  0x0000, 0x2000 )
+	ROM_LOAD( "gy-5.bin",  0x0000, 0x2000, 0xef92fcd8 )
 ROM_END
 
 

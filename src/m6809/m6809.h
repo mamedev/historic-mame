@@ -48,11 +48,11 @@ typedef struct
 #define INT_FIRQ  2				/* Fast IRQ */
 
 /* PUBLIC FUNCTIONS */
-extern void m6809_SetRegs(m6809_Regs *Regs);
-extern void m6809_GetRegs(m6809_Regs *Regs);
-extern unsigned m6809_GetPC(void);
-extern void m6809_reset(void);
-extern void m6809_execute(void);
+void m6809_SetRegs(m6809_Regs *Regs);
+void m6809_GetRegs(m6809_Regs *Regs);
+unsigned m6809_GetPC(void);
+void m6809_reset(void);
+void m6809_execute(void);
 
 /* PUBLIC GLOBALS */
 extern int	m6809_IPeriod;
@@ -63,13 +63,13 @@ extern int	m6809_IRequest;
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-extern int cpu_readmem(int address);
+int cpu_readmem(int address);
 #define M6809_RDMEM(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-extern void cpu_writemem(int address, int data);
+void cpu_writemem(int address, int data);
 #define M6809_WRMEM(A,V) (cpu_writemem(A,V))
 
 /****************************************************************************/

@@ -19,30 +19,33 @@
 
 extern unsigned char *wow_videoram;
 
-extern int  wow_intercept_r(int offset);
-extern void wow_videoram_w(int offset,int data);
-extern void wow_magic_expand_color_w(int offset,int data);
-extern void wow_magic_control_w(int offset,int data);
-extern void wow_magicram_w(int offset,int data);
-extern void wow_pattern_board_w(int offset,int data);
-extern void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int  wow_video_retrace_r(int offset);
+int  wow_intercept_r(int offset);
+void wow_videoram_w(int offset,int data);
+void wow_magic_expand_color_w(int offset,int data);
+void wow_magic_control_w(int offset,int data);
+void wow_magicram_w(int offset,int data);
+void wow_pattern_board_w(int offset,int data);
+void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
+int  wow_video_retrace_r(int offset);
 
-extern void wow_interrupt_enable_w(int offset, int data);
-extern void wow_interrupt_w(int offset, int data);
-extern int  wow_interrupt(void);
+void wow_interrupt_enable_w(int offset, int data);
+void wow_interrupt_w(int offset, int data);
+int  wow_interrupt(void);
 
-extern int  seawolf2_controller1_r(int offset);
-extern void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap);
+int  seawolf2_controller1_r(int offset);
+int  seawolf2_controller2_r(int offset);
+void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int  gorf_interrupt(void);
+int  gorf_interrupt(void);
+void gorf_videoram_w(int offset,int data); 	/* ASG */
+void gorf_magicram_w(int offset,int data);	/* ASG */
 
 /* These calls don't do anything but they stop unwanted lines appearing
  * in the logfile! (and I may get them to do something later!)
  */
 
-extern void colour_register_w(int offset, int data);
-extern void paging_register_w(int offset, int data);
+void colour_register_w(int offset, int data);
+void paging_register_w(int offset, int data);
 
 /*
  * For Testing ports
@@ -89,12 +92,12 @@ static struct DSW test_dsw[] =
 	{ -1 }
 };
 
-#endif
-
 static struct KEYSet test_keys[] =
 {
         { -1 }
 };
+
+#endif
 
 
 /*
@@ -103,7 +106,7 @@ static struct KEYSet test_keys[] =
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0xD000, 0xDfff, MRA_RAM },
+    { 0xD000, 0xDfff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0xcfff, MRA_ROM },
@@ -112,8 +115,8 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0xD000, 0xDfff, MWA_RAM },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
+    { 0xD000, 0xDfff, MWA_RAM },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },	/* ASG */
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x8000, 0xcfff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -122,7 +125,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
-        { 0x0E, 0x0E, wow_video_retrace_r },
+    { 0x0E, 0x0E, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -136,10 +139,10 @@ static struct IOWritePort writeport[] =
 	{ 0x19, 0x19, wow_magic_expand_color_w },
 	{ 0x0c, 0x0c, wow_magic_control_w },
 	{ 0x78, 0x7e, wow_pattern_board_w },
-        { 0x0F, 0x0F, wow_interrupt_w },
-        { 0x0E, 0x0E, wow_interrupt_enable_w },
-        { 0x00, 0x08, colour_register_w },
-        { 0x5B, 0x5B, paging_register_w },
+    { 0x0F, 0x0F, wow_interrupt_w },
+    { 0x0E, 0x0E, wow_interrupt_enable_w },
+    { 0x00, 0x08, colour_register_w },
+    { 0x5B, 0x5B, paging_register_w },
 	{ -1 }	/* end of table */
 };
 
@@ -189,20 +192,9 @@ static struct DSW dsw[] =
 {
 	{ 3, 0x10, "LIVES", { "3 7", "2 5" }, 1 },
 	{ 3, 0x20, "BONUS", { "4TH LEVEL", "3RD LEVEL" }, 1 },
-        { 3, 0x40, "PAYMENT", { "FREE", "COIN" }, 1 },
+    { 3, 0x40, "PAYMENT", { "FREE", "COIN" }, 1 },
 	{ 3, 0x80, "DEMO SOUNDS", { "OFF", "ON" }, 1 },
 	{ -1 }
-};
-
-static struct GfxLayout charlayout =
-{
-	8,10,	/* 8*10 characters */
-	44,	/* 44 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	10*8	/* every char takes 10 consecutive bytes */
 };
 
 static unsigned char palette[] =
@@ -229,21 +221,15 @@ static unsigned char colortable[] =
 
 ROM_START( wow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "wow.x1", 0x0000, 0x1000 )
-	ROM_LOAD( "wow.x2", 0x1000, 0x1000 )
-	ROM_LOAD( "wow.x3", 0x2000, 0x1000 )
-	ROM_LOAD( "wow.x4", 0x3000, 0x1000 )
-	ROM_LOAD( "wow.x5", 0x8000, 0x1000 )
-	ROM_LOAD( "wow.x6", 0x9000, 0x1000 )
-	ROM_LOAD( "wow.x7", 0xa000, 0x1000 )
-/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000 )	here would go the foreign language ROM */
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0x222baf9b )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0xccb3fafb )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0xe4a6665e )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xf3659d69 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0xda26e8d8 )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x550a3720 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0x0ef6502c )
+/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
 ROM_END
-
-static struct GfxDecodeInfo wow_gfxdecodeinfo[] =
-{
-	{ 0, 0x04ce, &charlayout,      0, 4 },
-	{ -1 } /* end of array */
-};
 
 static struct InputPort wow_input_ports[] =
 {
@@ -275,9 +261,9 @@ static struct DSW wow_dsw[] =
 {
 	{ 3, 0x10, "LIVES", { "3 7", "2 5" }, 1 },
 	{ 3, 0x20, "BONUS", { "4TH LEVEL", "3RD LEVEL" }, 1 },
-        { 3, 0x40, "PAYMENT", { "FREE", "COIN" }, 1 },
+    { 3, 0x40, "PAYMENT", { "FREE", "COIN" }, 1 },
 	{ 3, 0x80, "DEMO SOUNDS", { "OFF", "ON" }, 1 },
-        { 0, 0x80, "FLIP SCREEN", { "YES", "NO" }, 1 },
+    { 0, 0x80, "FLIP SCREEN", { "YES", "NO" }, 1 },
 /* 	{ 3, 0x08, "LANGUAGE", { "FOREIGN", "ENGLISH" }, 1 }, */
 	{ -1 }
 };
@@ -299,7 +285,7 @@ static struct MachineDriver wow_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	wow_gfxdecodeinfo,
+	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -341,16 +327,16 @@ struct GameDriver wow_driver =
 
 ROM_START( robby_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rotox1.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "rotox2.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "rotox3.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "rotox4.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "rotox5.bin", 0x8000, 0x1000 )
-	ROM_LOAD( "rotox6.bin", 0x9000, 0x1000 )
-	ROM_LOAD( "rotox7.bin", 0xa000, 0x1000 )
-	ROM_LOAD( "rotox8.bin", 0xb000, 0x1000 )
-  	ROM_LOAD( "rotox9.bin", 0xc000, 0x1000 )
-	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000 )
+	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0x90debdc2 )
+	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0xfa125fb2 )
+	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0x88e6e5bc )
+	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0x111241ea )
+	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x3b7e01f0 )
+	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x478421ee )
+	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0xf9ac77a0 )
+	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x799f8a3d )
+  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0xaa9f62f5 )
+	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0x55a239fa )
 ROM_END
 
 static struct MemoryReadAddress robby_readmem[] =
@@ -365,66 +351,12 @@ static struct MemoryReadAddress robby_readmem[] =
 static struct MemoryWriteAddress robby_writemem[] =
 {
 	{ 0xe000, 0xffff, MWA_RAM },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x8000, 0xdfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-static struct GfxLayout robby_charlayout1 =
-{
-	7,10,					/* 7*10 characters */
-	25,						/* 25 characters */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout2 =
-{
-	7,10,					/* 7*10 characters */
-	6,						/* 6 characters */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5 , 6},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout3 =
-{
-	11,10,					/* 10*10 characters */
-	1,						/* 1 character */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8, 16*8, 18*8 },
-	25*8					/* every char takes 25 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout4 =
-{
-	4,10,					/* 4*10 characters */
-	1,						/* 1 character */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 2, 0, 1, 2 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-static struct GfxDecodeInfo robby_gfxdecodeinfo[] =
-{
-	{ 0, 0x0EAC, &robby_charlayout1, 0, 4 },		/* B - A */
-	{ 0, 0x1023, &robby_charlayout3, 0, 4 },		/* M */
-	{ 0, 0x103C, &robby_charlayout2, 0, 4 },		/* S - V */
-	{ 0, 0x1096, &robby_charlayout3, 0, 4 },		/* W */
-	{ 0, 0x10AF, &robby_charlayout2, 0, 4 },		/* X - Z */
-	{ 0, 0x0F15, &robby_charlayout4, 0, 4 },		/* I */
-	{ -1 } /* end of array */
-};
 
 static struct MachineDriver robby_machine_driver =
 {
@@ -443,7 +375,7 @@ static struct MachineDriver robby_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	robby_gfxdecodeinfo,
+	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -485,31 +417,61 @@ struct GameDriver robby_driver =
 
 ROM_START( gorf_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000 )
-	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000 )
-	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000 )
-	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000 )
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x4dbb1c41 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0xed7b0427 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0xe101f49b )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0xd12d3e47 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x07ab966d )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7d14e9b )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x0ddd505f )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0x5e488f10 )
 ROM_END
 
-static struct GfxLayout gorf_charlayout =
+/* ASG begin */
+static struct MemoryWriteAddress gorf_writemem[] =
 {
-	6,16,	/* 6*16 characters */
-	44,	/* 44 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0*8, 1*16, 2*16, 3*16, 4*16, 5*16 },
-	{ 15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 },	/* pretty straightforward layout */
-	6*16	/* every char takes 12 consecutive bytes */
+    { 0xD000, 0xDfff, MWA_RAM },
+	{ 0x4000, 0x7fff, gorf_videoram_w, &wow_videoram, &videoram_size },
+	{ 0x0000, 0x3fff, gorf_magicram_w },
+	{ 0x8000, 0xcfff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+/* ASG end */
+
+static struct InputPort Gorf_input_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_F1, OSD_KEY_F2,
+				OSD_KEY_1, OSD_KEY_2, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0xff,
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 }
+	},
+	{	/* DSW */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
 };
 
-static struct GfxDecodeInfo gorf_gfxdecodeinfo[] =
+static struct KEYSet Gorf_keys[] =
 {
-	{ 0, 0x076A, &gorf_charlayout,0, 4 },
-	{ -1 } /* end of array */
+        { 2, 0, "MOVE UP" },
+        { 2, 2, "MOVE LEFT"  },
+        { 2, 3, "MOVE RIGHT" },
+        { 2, 1, "MOVE DOWN" },
+        { 2, 4, "FIRE" },
+        { -1 }
 };
 
 static struct MachineDriver gorf_machine_driver =
@@ -520,7 +482,7 @@ static struct MachineDriver gorf_machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,readport,writeport,
+			readmem,gorf_writemem,readport,writeport,		/* ASG */
 			gorf_interrupt,256
 		}
 	},
@@ -528,8 +490,8 @@ static struct MachineDriver gorf_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	gorf_gfxdecodeinfo,
+	204, 320, { 0, 204-1, 0, 320-1 },	/* ASG */
+	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -548,19 +510,19 @@ static struct MachineDriver gorf_machine_driver =
 
 struct GameDriver gorf_driver =
 {
-        "Gorf",
+    "Gorf",
 	"gorf",
-        "NICOLA SALMORIA\nSTEVE SCAVONE\nMIKE COATES",
+    "NICOLA SALMORIA\nSTEVE SCAVONE\nMIKE COATES",
 	&gorf_machine_driver,
 
 	gorf_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	Gorf_input_ports, trak_ports, dsw, Gorf_keys,
 
 	0, palette, colortable,
-	(320-8*6)/2, (204-10)/2,
+	(204-10)/2, (320-8*6)/2, 	/* ASG */
 
 	0, 0
 };
@@ -571,16 +533,46 @@ struct GameDriver gorf_driver =
 
 ROM_START( spacezap_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "0662.01", 0x0000, 0x1000 )
-	ROM_LOAD( "0663.xx", 0x1000, 0x1000 )
-	ROM_LOAD( "0664.xx", 0x2000, 0x1000 )
-	ROM_LOAD( "0665.xx", 0x3000, 0x1000 )
+	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xaf642ac8 )
+	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x0cb6228e )
+	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0x2986a6d6 )
+	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0xb3037b39 )
 ROM_END
 
-static struct GfxDecodeInfo spacezap_gfxdecodeinfo[] =
+static struct InputPort spacezap_input_ports[] =
 {
-	{ 0, 0x13BA, &charlayout,      0, 4 },
-	{ -1 } /* end of array */
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_F1, OSD_KEY_F2,
+				0, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0xff,
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 }
+	},
+	{	/* DSW */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+static struct KEYSet spacezap_keys[] =
+{
+        { 2, 0, "MOVE UP" },
+        { 2, 2, "MOVE LEFT"  },
+        { 2, 3, "MOVE RIGHT" },
+        { 2, 1, "MOVE DOWN" },
+        { 2, 4, "FIRE" },
+        { -1 }
 };
 
 static struct DSW spacezap_dsw[] =
@@ -607,7 +599,7 @@ static struct MachineDriver spacezap_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	spacezap_gfxdecodeinfo,
+	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -635,7 +627,7 @@ struct GameDriver spacezap_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, spacezap_dsw, keys,
+	spacezap_input_ports, trak_ports, spacezap_dsw, spacezap_keys,
 
 	0, palette, colortable,
 	(320-8*6)/2, (204-10)/2,
@@ -649,10 +641,10 @@ struct GameDriver spacezap_driver =
 
 ROM_START( seawolf2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0x8a11d667 )
+	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0x1d7d50a1 )
+	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x60364550 )
+	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0xd28a15b2 )
 ROM_END
 
 static struct MemoryReadAddress seawolf2_readmem[] =
@@ -666,15 +658,9 @@ static struct MemoryReadAddress seawolf2_readmem[] =
 static struct MemoryWriteAddress seawolf2_writemem[] =
 {
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ -1 }	/* end of table */
-};
-
-static struct GfxDecodeInfo seawolf2_gfxdecodeinfo[] =
-{
-	{ 0, 0x119F, &charlayout,      0, 4 },
-	{ -1 } /* end of array */
 };
 
 static struct InputPort seawolf2_input_ports[] =
@@ -715,12 +701,24 @@ static struct IOReadPort seawolf2_readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
         { 0x0E, 0x0E, wow_video_retrace_r },
-	{ 0x10, 0x10, input_port_1_r },
+	{ 0x10, 0x10, seawolf2_controller2_r },
 	{ 0x11, 0x11, seawolf2_controller1_r },
 	{ 0x12, 0x12, input_port_2_r },
 	{ 0x13, 0x13, input_port_3_r },
 	{ -1 }	/* end of table */
 };
+
+static struct KEYSet seawolf2_keys[] =
+{
+        { 0, 0, "PLAYER 1 LEFT"  },
+        { 0, 1, "PLAYER 1 RIGHT" },
+        { 0, 7, "PLAYER 1 FIRE" },
+        { 1, 0, "PLAYER 2 LEFT"  },
+        { 1, 1, "PLAYER 2 RIGHT" },
+        { 1, 7, "PLAYER 2 FIRE" },
+        { -1 }
+};
+
 
 static struct MachineDriver seawolf_machine_driver =
 {
@@ -739,7 +737,7 @@ static struct MachineDriver seawolf_machine_driver =
 
 	/* video hardware */
 	320, 204, { 1, 320-1, 0, 204-1 },
-	seawolf2_gfxdecodeinfo,
+	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -767,7 +765,7 @@ struct GameDriver seawolf_driver =
 	0, 0,
 	0,
 
-	seawolf2_input_ports, trak_ports, seawolf2_dsw, test_keys,
+	seawolf2_input_ports, trak_ports, seawolf2_dsw, seawolf2_keys,
 
 	0, palette, colortable,
 	(320-8*6)/2, (204-10)/2,

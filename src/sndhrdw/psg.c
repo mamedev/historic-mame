@@ -12,6 +12,9 @@
 ** Modifications (C) 1996 Michael Cuddy, Fen's Ende Software.
 ** http://www.fensende.com/Users/mcuddy
 **
+** Modifications (C) 1997 Tatsuyuki Satoh
+**		Modify 1.Calculation speed tuneup.
+**		       2.When all channel silent, just clear the buffer.
 */
 
 #include <stdio.h>
@@ -52,7 +55,6 @@ int AYInit(int num, int clock, int rate, int bufsiz, ... )
     va_start(ap,bufsiz);
 
     if (AYPSG) return (-1);	/* duplicate init. */
-
 
     AYNumChips = num;
     AYClockFreq = clock;
@@ -108,7 +110,6 @@ void AYResetChip(int num)
     PSG->Regs[AY_CVOL] = 0;
     PSG->NoiseGen = 1;
     PSG->Envelope = 15;
-    PSG->StateNoise = 0;
     PSG->Incr0= PSG->Incr1 = PSG->Incr2 = PSG->Increnv = PSG->Incrnoise = 0;
 }
 
@@ -128,6 +129,7 @@ static int _AYInitChip(int num, SAMPLE *buf)
 	if ((PSG->Buf=(SAMPLE *)malloc(AYBufSize))==NULL)
 	    return -1;
     }
+    memset(PSG->Buf,AUDIO_CONV(0),AYBufSize);
 
     PSG->Port[0] = PSG->Port[1] = NULL;
 
@@ -198,13 +200,16 @@ void AYWriteReg(int n, int r, int v)
 	case AY_CVOL:
 	    PSG->Regs[r] &= 0x1F;	/* mask volume */
 	    break;
+	case AY_ESHAPE:
+	    PSG->Regs[AY_ESHAPE] &= 0xF;
+	    /* fall through */
 	case AY_EFINE:
 	case AY_ECOARSE:
 	    PSG->Countenv=0;
-	    /* fall through */
-	case AY_ESHAPE:
-	    PSG->Regs[AY_ESHAPE] &= 0xF;
 	    break;
+	case AY_NOISEPER:
+	    PSG->Regs[AY_NOISEPER] &= 0x1F;
+		break;
 	case AY_PORTA:
 	    if (PSG->Port[0]) {
 		(PSG->Port[0])(PSG,AY_PORTA,1,v);
@@ -237,14 +242,13 @@ unsigned char AYReadReg(int n, int r)
     return PSG->Regs[r];
 }
 
-
 static void _AYUpdateChip(int num)
 {
     AY8910 *PSG = &(AYPSG[num]);
     int i, x;
     int c0, c1, l0, l1, l2;
+	int vb0 , vb1 , vb2 , vbn;
 
-    osd_ym2203_update();
 
     x = (PSG->Regs[AY_AFINE]+((unsigned)(PSG->Regs[AY_ACOARSE]&0xF)<<8));
     PSG->Incr0 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
@@ -255,7 +259,7 @@ static void _AYUpdateChip(int num)
     x = (PSG->Regs[AY_CFINE]+((unsigned)(PSG->Regs[AY_CCOARSE]&0xF)<<8));
     PSG->Incr2 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
-    x = PSG->Regs[AY_NOISEPER]&0x1F;
+    x = PSG->Regs[AY_NOISEPER];
     PSG->Incrnoise = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = (PSG->Regs[AY_EFINE]+((unsigned)PSG->Regs[AY_ECOARSE]<<8));
@@ -282,13 +286,13 @@ static void _AYUpdateChip(int num)
     PSG->Vol2 = ( PSG->Regs[AY_CVOL] < 16 ) ? PSG->Regs[AY_CVOL] : PSG->Envelope;
 
     PSG->Volnoise = (
-	( ( PSG->Regs[AY_ENABLE] & 010 ) ? 0 : PSG->Vol0 ) +
-	( ( PSG->Regs[AY_ENABLE] & 020 ) ? 0 : PSG->Vol1 ) +
-	( ( PSG->Regs[AY_ENABLE] & 040 ) ? 0 : PSG->Vol2 ) );
+		( ( PSG->Regs[AY_ENABLE] & 0x08 ) ? 0 : PSG->Vol0 ) +
+		( ( PSG->Regs[AY_ENABLE] & 0x10 ) ? 0 : PSG->Vol1 ) +
+		( ( PSG->Regs[AY_ENABLE] & 0x20 ) ? 0 : PSG->Vol2 ) );
 
-    PSG->Vol0 = ( PSG->Regs[AY_ENABLE] & 001 ) ? 0 : PSG->Vol0;
-    PSG->Vol1 = ( PSG->Regs[AY_ENABLE] & 002 ) ? 0 : PSG->Vol1;
-    PSG->Vol2 = ( PSG->Regs[AY_ENABLE] & 004 ) ? 0 : PSG->Vol2;
+    PSG->Vol0 = ( PSG->Regs[AY_ENABLE] & 0x01 ) ? 0 : PSG->Vol0;
+    PSG->Vol1 = ( PSG->Regs[AY_ENABLE] & 0x02 ) ? 0 : PSG->Vol1;
+    PSG->Vol2 = ( PSG->Regs[AY_ENABLE] & 0x04 ) ? 0 : PSG->Vol2;
 
 	/* if the frequency is 0, shut down the voice */
     if (PSG->Incr0 == 0) PSG->Vol0 = 0;
@@ -296,52 +300,78 @@ static void _AYUpdateChip(int num)
     if (PSG->Incr2 == 0) PSG->Vol2 = 0;
     if (PSG->Incrnoise == 0) PSG->Volnoise = 0;
 
+	/* set voltage base of output */
+	if( !(vb0 = PSG->Vol0*((PSG->Counter0&0x8000)?-16:16))){
+		PSG->Counter0 = (PSG->Counter0 + PSG->Incr0*AYBufSize)&0xffff;
+	}
+	if( !(vb1 = PSG->Vol1*((PSG->Counter1&0x8000)?-16:16))){
+		PSG->Counter1 = (PSG->Counter1 + PSG->Incr1*AYBufSize)&0xffff;
+	}
+	if( !(vb2 = PSG->Vol2*((PSG->Counter2&0x8000)?-16:16))){
+		PSG->Counter2 = (PSG->Counter2 + PSG->Incr2*AYBufSize)&0xffff;
+	}
+	vbn = PSG->Volnoise*((PSG->NoiseGen&1)?12:-12);
+
+	if( !PSG->Vol0 && !PSG->Vol1 && !PSG->Vol2 && !PSG->Volnoise ){
+		/* all silent */
+	    memset(PSG->Buf,AUDIO_CONV(0),AYBufSize);
+		return;
+	}
+
     for( i=0; i<AYBufSize; ++i ) {
 
-    	/*
+   	/*
 	** These strange tricks are needed for getting rid
 	** of nasty interferences between sampling frequency
 	** and "rectangular sound" (which is also the output
 	** of real AY-3-8910) we produce.
 	*/
 
-	c0 = PSG->Counter0;
-	c1 = PSG->Counter0 + PSG->Incr0;
-	l0 = ((c0&0x8000)?-16:16);
-	if( (c0^c1)&0x8000 ) {
-	    l0=l0*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr0;
-	}
-	PSG->Counter0 = c1 & 0xFFFF;
-
-	c0 = PSG->Counter1;
-	c1 = PSG->Counter1 + PSG->Incr1;
-	l1 = ((c0&0x8000)?-16:16);
-	if( (c0^c1)&0x8000 ) {
-	  l1=l1*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr1;
-	}
-	PSG->Counter1 = c1 & 0xFFFF;
-
-	c0 = PSG->Counter2;
-	c1 = PSG->Counter2 + PSG->Incr2;
-	l2 = ((c0&0x8000)?-16:16);
-	if( (c0^c1)&0x8000 ) {
-	  l2=l2*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr2;
-	}
-	PSG->Counter2 = c1 & 0xFFFF;
-
-	PSG->Countnoise &= 0xFFFF;
-	if( ( PSG->Countnoise += PSG->Incrnoise ) & 0xFFFF0000 ) {
-	    /*
-	    ** The following code is a random bit generator :)
-	    */
-	    PSG->StateNoise =
-	        ( ( PSG->NoiseGen <<= 1 ) & 0x80000000
-	        ? PSG->NoiseGen ^= 0x00040001 : PSG->NoiseGen ) & 1;
+	if( (l0=vb0) ){
+		c0 = PSG->Counter0;
+		c1 = PSG->Counter0 + PSG->Incr0;
+		if( (c0^c1)&0x8000 ) {
+		    l0=l0*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr0;
+			vb0 = -vb0;
+		}
+		PSG->Counter0 = c1 & 0xFFFF;
 	}
 
-	PSG->Buf[i] = AUDIO_CONV (
-            ( l0 * PSG->Vol0 + l1 * PSG->Vol1 + l2 * PSG->Vol2 ) +
-	    ( PSG->StateNoise ? 12*PSG->Volnoise : -12*PSG->Volnoise ) ) / 8;
+	if( (l1=vb1) ){
+		c0 = PSG->Counter1;
+		c1 = PSG->Counter1 + PSG->Incr1;
+		if( (c0^c1)&0x8000 ) {
+		  l1=l1*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr1;
+		  vb1 = -vb1;
+		}
+		PSG->Counter1 = c1 & 0xFFFF;
+	}
+
+	if( (l2=vb2) ){
+		c0 = PSG->Counter2;
+		c1 = PSG->Counter2 + PSG->Incr2;
+		if( (c0^c1)&0x8000 ) {
+		  l2=l2*(0x8000-(c0&0x7FFF)-(c1&0x7FFF))/PSG->Incr2;
+		  vb2 = -vb2;
+		}
+		PSG->Counter2 = c1 & 0xFFFF;
+	}
+
+	if( vbn ){
+		PSG->Countnoise &= 0xFFFF;
+		if( ( PSG->Countnoise += PSG->Incrnoise ) & 0xFFFF0000 ) {
+		    /*
+		    ** The following code is a random bit generator :)
+		    */
+			if( ( PSG->NoiseGen <<= 1 ) & 0x80000000 ){
+				PSG->NoiseGen ^= 0x00040001;
+				vbn = PSG->Volnoise*12;
+			}else{
+				vbn = PSG->Volnoise*-12;
+			}
+		}
+	}
+	PSG->Buf[i] = AUDIO_CONV ( l0 + l1 + l2 + vbn ) / 8;
     }
 }
 

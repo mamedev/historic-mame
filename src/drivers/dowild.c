@@ -43,25 +43,25 @@ ac00      sound port 4
 
 
 
-extern int docastle_shared0_r(int offset);
-extern int docastle_shared1_r(int offset);
-extern void docastle_shared0_w(int offset,int data);
-extern void docastle_shared1_w(int offset,int data);
-extern void docastle_nmitrigger(int offset,int data);
-extern int docastle_interrupt2(void);
+int docastle_shared0_r(int offset);
+int docastle_shared1_r(int offset);
+void docastle_shared0_w(int offset,int data);
+void docastle_shared1_w(int offset,int data);
+void docastle_nmitrigger(int offset,int data);
+int docastle_interrupt2(void);
 
-extern void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int docastle_vh_start(void);
-extern void docastle_vh_stop(void);
-extern void dowild_vh_screenrefresh(struct osd_bitmap *bitmap);
+void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int docastle_vh_start(void);
+void docastle_vh_stop(void);
+void dowild_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void docastle_sound1_w(int offset,int data);
-extern void docastle_sound2_w(int offset,int data);
-extern void docastle_sound3_w(int offset,int data);
-extern void docastle_sound4_w(int offset,int data);
-extern int docastle_sh_start(void);
-extern void docastle_sh_stop(void);
-extern void docastle_sh_update(void);
+void docastle_sound1_w(int offset,int data);
+void docastle_sound2_w(int offset,int data);
+void docastle_sound3_w(int offset,int data);
+void docastle_sound4_w(int offset,int data);
+int docastle_sh_start(void);
+void docastle_sh_stop(void);
+void docastle_sh_update(void);
 
 
 
@@ -360,57 +360,57 @@ static struct MachineDriver machine_driver =
 
 ROM_START( dowild_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "W1",  0x0000, 0x2000 )
-	ROM_LOAD( "W3",  0x4000, 0x2000 )
-	ROM_LOAD( "W4",  0x6000, 0x2000 )
-	ROM_LOAD( "W2",  0x8000, 0x2000 )
+	ROM_LOAD( "W1",  0x0000, 0x2000, 0xaeac2454 )
+	ROM_LOAD( "W3",  0x4000, 0x2000, 0x54fca40a )
+	ROM_LOAD( "W4",  0x6000, 0x2000, 0xb549e115 )
+	ROM_LOAD( "W2",  0x8000, 0x2000, 0x443cb69e )
 
 	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "W5",  0x0000, 0x4000 )
-	ROM_LOAD( "W6",  0x4000, 0x2000 )
-	ROM_LOAD( "W7",  0x6000, 0x2000 )
-	ROM_LOAD( "W8",  0x8000, 0x2000 )
-	ROM_LOAD( "W9",  0xa000, 0x2000 )
+	ROM_LOAD( "W5",  0x0000, 0x4000, 0x2df6441e )
+	ROM_LOAD( "W6",  0x4000, 0x2000, 0x2b17a47b )
+	ROM_LOAD( "W7",  0x6000, 0x2000, 0xa68f1277 )
+	ROM_LOAD( "W8",  0x8000, 0x2000, 0xff188768 )
+	ROM_LOAD( "W9",  0xa000, 0x2000, 0xfec01f0c )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "W10", 0x0000, 0x4000 )
+	ROM_LOAD( "W10", 0x0000, 0x4000, 0x431c3ca4 )
 ROM_END
 
 
 ROM_START( dorunrun_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2764.P1",  0x0000, 0x2000 )
-	ROM_LOAD( "2764.L1",  0x4000, 0x2000 )
-	ROM_LOAD( "2764.K1",  0x6000, 0x2000 )
-	ROM_LOAD( "2764.N1",  0x8000, 0x2000 )
+	ROM_LOAD( "2764.P1",  0x0000, 0x2000, 0x8ce02038 )
+	ROM_LOAD( "2764.L1",  0x4000, 0x2000, 0x8a8056e4 )
+	ROM_LOAD( "2764.K1",  0x6000, 0x2000, 0xafdb2121 )
+	ROM_LOAD( "2764.N1",  0x8000, 0x2000, 0xffaac0aa )
 
 	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "27128.A3", 0x0000, 0x4000 )
-	ROM_LOAD( "2764.M4",  0x4000, 0x2000 )
-	ROM_LOAD( "2764.L4",  0x6000, 0x2000 )
-	ROM_LOAD( "2764.J4",  0x8000, 0x2000 )
-	ROM_LOAD( "2764.H4",  0xa000, 0x2000 )
+	ROM_LOAD( "27128.A3", 0x0000, 0x4000, 0x62269746 )
+	ROM_LOAD( "2764.M4",  0x4000, 0x2000, 0xd51d97c3 )
+	ROM_LOAD( "2764.L4",  0x6000, 0x2000, 0x423b4513 )
+	ROM_LOAD( "2764.J4",  0x8000, 0x2000, 0xe53d66a5 )
+	ROM_LOAD( "2764.H4",  0xa000, 0x2000, 0xf652c7f0 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "27128.P7", 0x0000, 0x4000 )
+	ROM_LOAD( "27128.P7", 0x0000, 0x4000, 0x0f9be91f )
 ROM_END
 
 ROM_START( kickridr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "K1",  0x0000, 0x2000 )
-	ROM_LOAD( "K3",  0x4000, 0x2000 )
-	ROM_LOAD( "K4",  0x6000, 0x2000 )
-	ROM_LOAD( "K2",  0x8000, 0x2000 )
+	ROM_LOAD( "K1",  0x0000, 0x2000, 0xbc77e7f3 )
+	ROM_LOAD( "K3",  0x4000, 0x2000, 0x299a68c4 )
+	ROM_LOAD( "K4",  0x6000, 0x2000, 0xe4e2c6a0 )
+	ROM_LOAD( "K2",  0x8000, 0x2000, 0x1325e773 )
 
 	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "K5",  0x0000, 0x4000 )
-	ROM_LOAD( "K6",  0x4000, 0x2000 )
-	ROM_LOAD( "K7",  0x6000, 0x2000 )
-	ROM_LOAD( "K8",  0x8000, 0x2000 )
-	ROM_LOAD( "K9",  0xa000, 0x2000 )
+	ROM_LOAD( "K5",  0x0000, 0x4000, 0x197f8237 )
+	ROM_LOAD( "K6",  0x4000, 0x2000, 0xdc19cfbf )
+	ROM_LOAD( "K7",  0x6000, 0x2000, 0x2f8ac3fe )
+	ROM_LOAD( "K8",  0x8000, 0x2000, 0x88eecb70 )
+	ROM_LOAD( "K9",  0xa000, 0x2000, 0x50dc5584 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "K10", 0x0000, 0x4000 )
+	ROM_LOAD( "K10", 0x0000, 0x4000, 0xd77bd167 )
 ROM_END
 
 
@@ -507,7 +507,7 @@ struct GameDriver dowild_driver =
 {
 	"Mr. Do! Wild Ride",
 	"dowild",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
 	&machine_driver,
 
 	dowild_rom,
@@ -526,7 +526,7 @@ struct GameDriver dorunrun_driver =
 {
 	"Mr. Do! Run Run",
 	"dorunrun",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
 	&machine_driver,
 
 	dorunrun_rom,
@@ -545,7 +545,7 @@ struct GameDriver kickridr_driver =
 {
 	"Kick Rider",
 	"kickridr",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
 	&machine_driver,
 
 	kickridr_rom,

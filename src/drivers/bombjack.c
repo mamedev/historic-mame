@@ -67,13 +67,14 @@ NMI interrupts for music timing
 
 
 extern unsigned char *bombjack_paletteram;
-extern void bombjack_paletteram_w(int offset,int data);
-extern void bombjack_background_w(int offset,int data);
-extern void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bombjack_paletteram_w(int offset,int data);
+void bombjack_background_w(int offset,int data);
+void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int bombjack_sh_intflag_r(int offset);
-extern int bombjack_sh_start(void);
+int bombjack_sh_intflag_r(int offset);
+int bombjack_sh_start(void);
+int bombjack_sh_interrupt(void);
 
 
 
@@ -109,7 +110,9 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
+#if 0
 	{ 0x4390, 0x4390, bombjack_sh_intflag_r },	/* kludge to speed up the emulation */
+#endif
 	{ 0x2000, 0x5fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command_r },
@@ -315,7 +318,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz????? */
 			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
-			nmi_interrupt,1
+			bombjack_sh_interrupt,10
 		}
 	},
 	60,
@@ -350,28 +353,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bombjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000 )
-	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000 )
-	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000 )
-	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000 )
-	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000 )
+	ROM_LOAD( "09_j01b.bin", 0x0000, 0x2000, 0xb263429f )
+	ROM_LOAD( "10_l01b.bin", 0x2000, 0x2000, 0x8dd024fa )
+	ROM_LOAD( "11_m01b.bin", 0x4000, 0x2000, 0x4464856c )
+	ROM_LOAD( "12_n01b.bin", 0x6000, 0x2000, 0x0018672a )
+	ROM_LOAD( "13_r01b.bin", 0xc000, 0x2000, 0x3500e950 )
 
 	ROM_REGION(0xf000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000 )	/* chars */
-	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000 )
-	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000 )	/* background tiles */
-	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000 )
-	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000 )
-	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000 )	/* sprites */
-	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000 )
-	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000 )
+	ROM_LOAD( "03_e08t.bin", 0x0000, 0x1000, 0xd79cfb42 )	/* chars */
+	ROM_LOAD( "04_h08t.bin", 0x1000, 0x1000, 0x16a78377 )
+	ROM_LOAD( "05_k08t.bin", 0x2000, 0x1000, 0x8aa5777d )
+	ROM_LOAD( "06_l08t.bin", 0x3000, 0x2000, 0x4d9c13d2 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin", 0x5000, 0x2000, 0x98f83bce )
+	ROM_LOAD( "08_r08t.bin", 0x7000, 0x2000, 0x428b73d9 )
+	ROM_LOAD( "16_m07b.bin", 0x9000, 0x2000, 0x5fea2266 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin", 0xb000, 0x2000, 0x2f490ac1 )
+	ROM_LOAD( "14_j07b.bin", 0xd000, 0x2000, 0x9674c1bc )
 
 	ROM_REGION(0x1000)	/* background graphics */
-	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "02_p04t.bin", 0x0000, 0x1000, 0x1af71029 )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000 )
+	ROM_LOAD( "01_h03t.bin", 0x0000, 0x2000, 0xe89c2656 )
 ROM_END
 
 
@@ -384,8 +387,12 @@ static int hiload(const char *name)
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 &&
-			memcmp(&RAM[0x8124],"\x00\x00\x01\x00",4) == 0)
+	if (memcmp(&RAM[0x8100],&RAM[0x8124],4) == 0 &&
+			memcmp(&RAM[0x8100],&RAM[0x80e2],4) == 0 &&	/* high score */
+			(memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 ||
+			memcmp(&RAM[0x8100],"\x00\x00\x03\x00",4) == 0 ||
+			memcmp(&RAM[0x8100],"\x00\x00\x05\x00",4) == 0 ||
+			memcmp(&RAM[0x8100],"\x00\x00\x10\x00",4) == 0))
 	{
 		FILE *f;
 

@@ -41,10 +41,9 @@ void wow_videoram_w(int offset,int data)
                 const unsigned char *paldata;
 		unsigned char *bm;
 
+		if (offset >= 2*40*204) return;
 
 		wow_videoram[offset] = data;
-
-		if (offset >= 2*40*204) return;
 
 		if ((offset & 1) == 0)
 		{
@@ -57,19 +56,14 @@ void wow_videoram_w(int offset,int data)
 			bm = tmpbitmap->line[offset / 40] + 8 * (offset % 40) + 4;
 		}
 
-                paldata = &Machine->gfx[0]->colortable[0];
+        paldata = &Machine->pens[0];
 		for (i = 0;i < 4;i++)
 		{
-/* Previous version
-			*bm = 0;
+            color = 0x00;
+            if (data & 0x80) color |= 0x01;
+            if (data & 0x40) color |= 0x02;
+            *bm = paldata[color];
 
-			if (data & 0x80) *bm |= 1;
-			if (data & 0x40) *bm |= 2;
-*/
-                        color = 0x00;
-                        if (data & 0x80) color |= 0x01;
-                        if (data & 0x40) color |= 0x02;
-                        *bm = paldata[color];
 			bm++;
 			data <<= 2;
 
@@ -78,13 +72,55 @@ void wow_videoram_w(int offset,int data)
 }
 
 
+/* ASG begin */
+void gorf_videoram_w(int offset,int data)
+{
+	if (wow_videoram[offset] != data)
+	{
+		int i;
+        int color;
+		int x, y;
+        const unsigned char *paldata;
+
+		if (offset >= 2*40*204) return;
+
+		wow_videoram[offset] = data;
+
+		if ((offset & 1) == 0)
+		{
+			offset /= 2;
+			x = offset / 40;
+			y = 319 - 8 * (offset % 40);
+		}
+		else
+		{
+			offset /= 2;
+			x = offset / 40;
+			y = 319 - (8 * (offset % 40) + 4);
+		}
+
+        paldata = &Machine->pens[0];
+		for (i = 0;i < 4;i++)
+		{
+            color = 0x00;
+            if (data & 0x80) color |= 0x01;
+            if (data & 0x40) color |= 0x02;
+            tmpbitmap->line[y][x] = paldata[color];
+
+			y--;
+			data <<= 2;
+
+		}
+	}
+}
+/* ASG end */
+
 
 void wow_magic_expand_color_w(int offset,int data)
 {
 if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
 	magic_expand_color = data;
 }
-
 
 
 void wow_magic_control_w(int offset,int data)
@@ -220,6 +256,132 @@ void wow_magicram_w(int offset,int data)
 }
 
 
+/* ASG begin */
+static void gorf_copywithflip(int offset,int data)
+{
+	if (magic_control & 0x40)	/* copy backwards */
+	{
+		int bits,stib,k;
+
+		bits = data;
+		stib = 0;
+		for (k = 0;k < 4;k++)
+		{
+			stib >>= 2;
+			stib |= (bits & 0xc0);
+			bits <<= 2;
+		}
+
+		data = stib;
+	}
+
+	if (magic_control & 0x40)	/* copy backwards */
+	{
+		int shift,data1,mask;
+
+
+		shift = magic_control & 3;
+		data1 = 0;
+		mask = 0xff;
+		while (shift > 0)
+		{
+			data1 <<= 2;
+			data1 |= (data & 0xc0) >> 6;
+			data <<= 2;
+			mask <<= 2;
+			shift--;
+		}
+
+		if (magic_control & 0x30)
+		{
+			/* TODO: the collision detection should be made independently for */
+			/* each of the four pixels */
+			if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset-1]))
+				collision |= 0xff;
+			else collision &= 0x0f;
+		}
+
+		if (magic_control & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
+		else if (magic_control & 0x10) data |= wow_videoram[offset];	/* draw in OR mode */
+		else data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
+		gorf_videoram_w(offset,data);
+		if (magic_control & 0x20) data1 ^= wow_videoram[offset-1];	/* draw in XOR mode */
+		else if (magic_control & 0x10) data1 |= wow_videoram[offset-1];	/* draw in OR mode */
+		else data1 |= mask & wow_videoram[offset-1];	/* draw in copy mode */
+		gorf_videoram_w(offset-1,data1);
+	}
+	else
+	{
+		int shift,data1,mask;
+
+
+		shift = magic_control & 3;
+		data1 = 0;
+		mask = 0xff;
+		while (shift > 0)
+		{
+			data1 >>= 2;
+			data1 |= (data & 0x03) << 6;
+			data >>= 2;
+			mask >>= 2;
+			shift--;
+		}
+
+		if (magic_control & 0x30)
+		{
+			/* TODO: the collision detection should be made independently for */
+			/* each of the four pixels */
+			if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset+1]))
+				collision |= 0xff;
+			else collision &= 0x0f;
+		}
+
+		if (magic_control & 0x20)
+			data ^= wow_videoram[offset];	/* draw in XOR mode */
+		else if (magic_control & 0x10)
+			data |= wow_videoram[offset];	/* draw in OR mode */
+		else
+			data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
+		gorf_videoram_w(offset,data);
+		if (magic_control & 0x20)
+			data1 ^= wow_videoram[offset+1];	/* draw in XOR mode */
+		else if (magic_control & 0x10)
+			data1 |= wow_videoram[offset+1];	/* draw in OR mode */
+		else
+			data1 |= mask & wow_videoram[offset+1];	/* draw in copy mode */
+		gorf_videoram_w(offset+1,data1);
+	}
+}
+
+
+
+void gorf_magicram_w(int offset,int data)
+{
+	if (magic_control & 0x08)	/* expand mode */
+	{
+		int bits,bibits,k;
+		static int count;
+
+
+		bits = data;
+		if (count) bits <<= 4;
+		bibits = 0;
+		for (k = 0;k < 4;k++)
+		{
+			bibits <<= 2;
+			if (bits & 0x80) bibits |= (magic_expand_color >> 2) & 0x03;
+			else bibits |= magic_expand_color & 0x03;
+			bits <<= 1;
+		}
+
+		gorf_copywithflip(offset,bibits);
+
+		count ^= 1;
+	}
+	else gorf_copywithflip(offset,data);
+}
+/* ASG end */
+
 
 void wow_pattern_board_w(int offset,int data)
 {
@@ -283,7 +445,10 @@ void wow_pattern_board_w(int offset,int data)
 			    for (j = 0;j <= length;j++)
 			    {
 				    if (!(mode & 0x08) || j < length)
-                        if(dest >= 0) cpu_writemem(dest,RAM[src]);
+                        if (mode & 0x01)			/* Direction */
+						    RAM[src]=RAM[dest];
+                        else
+						    if (dest >= 0) cpu_writemem(dest,RAM[src]);
 
 				    if ((j & 1) || !(mode & 0x02))  /* Expand Mode - don't increment source on odd loops */
 					    if (mode & 0x04) src++;		/* Constant mode - don't increment at all! */
@@ -348,27 +513,43 @@ void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
 void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	extern int Controller1;
-    int x,y,centre;
+	extern int Controller2;
+        int x,y,centre;
 
 	/* copy the character mapped graphics */
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
-    /* Draw a sight */
+        /* Draw a sight */
 
-    if(RAM[0xc1fb] != 0)	/* Number of Players */
-    {
-    	/* Blue sight for Player 1 */
+        if(RAM[0xc1fb] != 0)	/* Number of Players */
+        {
+    	    /* Blue sight for Player 1 */
 
-        centre = 317 - (Controller1-18) * 10;
+            centre = 317 - (Controller1-18) * 10;
 
-        if (centre<2)   centre=2;
-        if (centre>317) centre=317;
+            if (centre<2)   centre=2;
+            if (centre>317) centre=317;
 
-        for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->gfx[0]->colortable[2];
+            for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->pens[2];
 
-        for(x=centre-20;x<centre+21;x++)
-            if((x>0) && (x<=319)) bitmap->line[35][x] = Machine->gfx[0]->colortable[2];
-    };
+            for(x=centre-20;x<centre+21;x++)
+                if((x>0) && (x<=319)) bitmap->line[35][x] = Machine->pens[2];
+
+            /* Yellow sight for Player 2 */
+
+            if(RAM[0xc1fb] == 2)
+		    {
+                centre = 316 - (Controller2-18) * 10;
+
+                if (centre<1)   centre=1;
+                if (centre>316) centre=316;
+
+                for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->pens[1];
+
+                for(x=centre-20;x<centre+21;x++)
+                    if((x>0) && (x<=319)) bitmap->line[33][x] = Machine->pens[1];
+            }
+        }
 }

@@ -55,12 +55,13 @@ int amidar_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
+	1,	/* 1 update per video frame (low quality) */
 	1789750000,	/* 1.78975 MHZ ?? */
 	{ 255, 255 },
 	{ sound_command_r },
 	{ amidar_portB_r },
-	{ },
-	{ }
+	{ 0 },
+	{ 0 }
 };
 
 

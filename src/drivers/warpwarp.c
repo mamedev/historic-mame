@@ -45,12 +45,12 @@ C020			Sound Port 2 (??)
 
 
 extern unsigned char *warpwarp_bulletsram;
-extern void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
+void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int warpwarp_input_c000_7_r(int offset);
-extern int warpwarp_input_c020_27_r(int offset);
-extern int warpwarp_input_controller_r(int offset);
-extern int warpwarp_interrupt();
+int warpwarp_input_c000_7_r(int offset);
+int warpwarp_input_c020_27_r(int offset);
+int warpwarp_input_controller_r(int offset);
+int warpwarp_interrupt();
 
 
 static struct MemoryReadAddress readmem[] =
@@ -247,18 +247,18 @@ static struct MachineDriver machine_driver =
 
 
 
-
 ROM_START( warpwarp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "warp_2r.bin", 0x0000, 0x1000)         /* Code */
-	ROM_LOAD( "warp_2m.bin", 0x1000, 0x1000)
-	ROM_LOAD( "warp_1p.bin", 0x2000, 0x1000)
-	ROM_LOAD( "warp_1t.bin", 0x3000, 0x0800)
-	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800 )
+	ROM_LOAD( "warp_2r.bin",  0x0000, 0x1000, 0x9a51d92b )
+	ROM_LOAD( "warp_2m.bin",  0x1000, 0x1000, 0xdeb96ecf )
+	ROM_LOAD( "warp_1p.bin",  0x2000, 0x1000, 0x30ad0f77 )
+	ROM_LOAD( "warp_1t.bin",  0x3000, 0x0800, 0x3426c0b0 )
+	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0xb0468bf8 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "warp_s12.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "warp_s12.bin", 0x0000, 0x0800, 0xb0468bf8 )
 ROM_END
+
 
 
 struct GameDriver warpwarp_driver =

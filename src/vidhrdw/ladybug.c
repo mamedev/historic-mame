@@ -113,13 +113,26 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 					videoram[offs] + 32 * (colorram[offs] & 8),
 					colorram[offs],
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the temporary bitmap to the screen */
+	{
+		int scroll[32];
+		int sx,sy;
+
+
+		for (offs = 0;offs < 32;offs++)
+		{
+			sx = offs % 4;
+			sy = offs / 4;
+			scroll[offs] = videoram[32 * sx + sy];
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */

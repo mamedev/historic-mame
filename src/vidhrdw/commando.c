@@ -24,7 +24,7 @@ static struct osd_bitmap *tmpbitmap2;
 
   Convert the color PROMs into a more useable format.
 
-  Commando has a three 256x4 palette PROMs (one per gun), connected to the
+  Commando has three 256x4 palette PROMs (one per gun), connected to the
   RGB output this way:
 
   bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
@@ -90,7 +90,7 @@ int commando_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,commando_bgvideoram_size);
+	memset(dirtybuffer2,1,commando_bgvideoram_size);
 
 	if ((spritebuffer1 = malloc(spriteram_size)) == 0)
 	{
@@ -167,12 +167,7 @@ void commando_bgcolorram_w(int offset,int data)
 
 int commando_interrupt(void)
 {
-	static int count;
-
-
-	count = (count + 1) % 2;
-
-	if (count) return 0x00cf;	/* RST 08h */
+	if (cpu_getiloops() == 1) return 0x00cf;	/* RST 08h */
 	else
 	{
 		/* we must store previous sprite data in a buffer and draw that instead of */
@@ -181,7 +176,7 @@ int commando_interrupt(void)
 		memcpy(spritebuffer2,spritebuffer1,spriteram_size);
 		memcpy(spritebuffer1,spriteram,spriteram_size);
 
-		return 0x00d7;	/* RST 10h */
+		return 0x00d7;	/* RST 10h - VBLANK */
 	}
 }
 
@@ -211,8 +206,8 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = 31 - offs / 32;
 
-			drawgfx(tmpbitmap2,Machine->gfx[1 + ((commando_bgcolorram[offs] >> 6) & 0x03)],
-					commando_bgvideoram[offs],
+			drawgfx(tmpbitmap2,Machine->gfx[1],
+					commando_bgvideoram[offs] + 4*(commando_bgcolorram[offs] & 0xc0),
 					commando_bgcolorram[offs] & 0x0f,
 					commando_bgcolorram[offs] & 0x20,commando_bgcolorram[offs] & 0x10,
 					16 * sx,16 * sy,
@@ -245,8 +240,9 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 		bank = ((spritebuffer2[offs + 1] >> 6) & 3);
 
 		if (bank < 3)
-			drawgfx(bitmap,Machine->gfx[5 + bank],
-					spritebuffer2[offs],(spritebuffer2[offs + 1] >> 4) & 3,
+			drawgfx(bitmap,Machine->gfx[2],
+					spritebuffer2[offs] + 256* bank,
+					(spritebuffer2[offs + 1] >> 4) & 3,
 					spritebuffer2[offs + 1] & 0x08,spritebuffer2[offs + 1] & 0x04,
 					spritebuffer2[offs + 2],240 - spritebuffer2[offs + 3] + 0x100 * (spritebuffer2[offs + 1] & 0x01),
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);

@@ -3,11 +3,6 @@
 
 
 
-#define UPDATES_PER_SECOND 60
-#define emulation_rate 11025
-
-
-
 void dkong_sh1_w(int offset,int data)
 {
 	static state[8];

@@ -75,8 +75,8 @@ int congo_vh_start(void)
 		{
 			if (offs + sx < 0 || offs + sx >= 4096)
 			{
-				backgroundbitmap->line[sy][sx] = Machine->background_pen;
-				backgroundbitmap->line[sy][sx+1] = Machine->background_pen;
+				backgroundbitmap->line[sy][sx] = Machine->pens[0];
+				backgroundbitmap->line[sy][sx+1] = Machine->pens[0];
 			}
 			else
 			{

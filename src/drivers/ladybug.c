@@ -5,6 +5,8 @@ Lady Bug memory map (preliminary)
 0000-5fff ROM
 6000-6fff RAM
 d000-d3ff video RAM
+          d000-d007/d020-d027/d040-d047/d060-d067 contain the column scroll
+          registers (not used by Lady Bug)
 d400-d7ff color RAM (4 bits wide)
 
 memory mapped ports:
@@ -14,6 +16,7 @@ read:
 9001      IN1
 9002      DSW1
 9003      DSW2
+e000      IN2
 8000      interrupt enable? (toggle)?
 
 *
@@ -37,6 +40,17 @@ read:
  * bit 2 : RIGHT player 2 (TABLE only)
  * bit 1 : DOWN player 2 (TABLE only)
  * bit 0 : LEFT player 2 (TABLE only)
+ *
+*
+ * IN2 (all bits are inverted)
+ * bit 7 :
+ * bit 6 :
+ * bit 5 :
+ * bit 4 : BOMB player 2 (TABLE only)
+ * bit 3 :
+ * bit 2 :
+ * bit 1 :
+ * bit 0 : BOMB player 1
  *
 *
  * DSW1 (all bits are inverted)
@@ -89,30 +103,32 @@ Coin insertion in left slot generates an interrupt, in right slot a NMI.
 
 
 
-extern int ladybug_IN0_r(int offset);
-extern int ladybug_IN1_r(int offset);
-extern int ladybug_interrupt(void);
+int ladybug_IN0_r(int offset);
+int ladybug_IN1_r(int offset);
+int ladybug_interrupt(void);
 
-extern void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void ladybug_sound1_w(int offset,int data);
-extern void ladybug_sound2_w(int offset,int data);
-extern int ladybug_sh_start(void);
-extern void ladybug_sh_stop(void);
-extern void ladybug_sh_update(void);
+void ladybug_sound1_w(int offset,int data);
+void ladybug_sound2_w(int offset,int data);
+int ladybug_sh_start(void);
+void ladybug_sh_stop(void);
+void ladybug_sh_update(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x9001, 0x9001, ladybug_IN1_r },	/* IN1 */
+	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
-	{ 0x9000, 0x9000, ladybug_IN0_r },	/* IN0 */
+//	{ 0x9000, 0x9000, ladybug_IN0_r },	/* IN0 */
+	{ 0x9000, 0x9000, input_port_0_r },	/* IN0 */
 	{ 0x9002, 0x9002, input_port_2_r },	/* DSW1 */
 	{ 0x9003, 0x9003, input_port_3_r },	/* DSW2 */
+	{ 0xe000, 0xe000, input_port_4_r },	/* IN2 */
 	{ 0x8000, 0x8fff, MRA_NOP },
 	{ -1 }	/* end of table */
 };
@@ -137,13 +153,13 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_UP,
-				0, OSD_KEY_1, OSD_KEY_2, 0 },
+				OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_UP,
-				0, 0, 0, 0 }
+				OSD_JOY_FIRE1, 0, 0, 0 }
 	},
 	{	/* IN1 */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		0x7f,
+		{ 0, 0, 0, 0, 0, 0, IPB_VBLANK, IPB_VBLANK },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW1 */
@@ -155,6 +171,11 @@ static struct InputPort input_ports[] =
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0xff,
+		{ OSD_KEY_ALT, 0, 0, 0, 0, 0, 0, 0 },
+		{ OSD_JOY_FIRE2, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
 };
@@ -219,7 +240,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
+static unsigned char ladybug_color_prom[] =
 {
 	/* palette */
 	0xF5,0x90,0x41,0x54,0x94,0x11,0x80,0x65,0x05,0xD4,0x01,0x00,0xB1,0xA0,0x00,0xF5,
@@ -227,6 +248,26 @@ static unsigned char color_prom[] =
 	/* sprite color lookup table */
 	0x00,0x59,0x33,0xB8,0x00,0xD4,0xA3,0x8D,0x00,0x2C,0x63,0xDD,0x00,0x22,0x38,0x1D,
 	0x00,0x93,0x3A,0xDD,0x00,0xE2,0x38,0xDD,0x00,0x82,0x3A,0xD8,0x00,0x22,0x68,0x1D
+};
+
+static unsigned char snapjack_color_prom[] =
+{
+	/* palette */
+	0xF5,0x05,0x54,0xC1,0xC4,0x94,0x84,0x24,0xD0,0x90,0xA1,0x00,0x31,0x50,0x25,0xF5,
+	0x90,0x31,0x05,0x25,0x05,0x94,0x30,0x41,0x05,0x94,0x61,0x30,0x94,0x50,0x05,0xA5,
+	/* sprite color lookup table */
+	0x00,0x9D,0x11,0xB8,0x00,0x79,0x62,0x18,0x00,0x9E,0x25,0xDA,0x00,0xD7,0xA3,0x79,
+	0x00,0xDE,0x29,0x74,0x00,0xD4,0x75,0x9D,0x00,0xAD,0x86,0x97,0x00,0x5A,0x4C,0x17
+};
+
+static unsigned char cavenger_color_prom[] =
+{
+	/* palette */
+	0xF5,0xC4,0xD0,0xB1,0xD4,0x90,0x45,0x44,0x00,0x54,0x91,0x94,0x25,0x21,0x65,0xF5,
+	0x21,0x00,0x25,0xD0,0xB1,0x90,0xD4,0xD4,0x25,0xB1,0xC4,0x90,0x65,0xD4,0x00,0x00,
+	/* sprite color lookup table */
+	0x00,0x78,0xA3,0xB5,0x00,0x8C,0x79,0x64,0x00,0xC3,0xEE,0xDD,0x00,0x3C,0xA2,0x4A,
+	0x00,0x87,0xBA,0xDE,0x00,0x2A,0xAE,0xBB,0x00,0x8C,0xC2,0xB7,0x00,0xAC,0xE2,0x1D
 };
 
 
@@ -275,18 +316,50 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ladybug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "lb1.cpu",  0x0000, 0x1000 )
-	ROM_LOAD( "lb2.cpu",  0x1000, 0x1000 )
-	ROM_LOAD( "lb3.cpu",  0x2000, 0x1000 )
-	ROM_LOAD( "lb4.cpu",  0x3000, 0x1000 )
-	ROM_LOAD( "lb5.cpu",  0x4000, 0x1000 )
-	ROM_LOAD( "lb6.cpu",  0x5000, 0x1000 )
+	ROM_LOAD( "lb1.cpu", 0x0000, 0x1000, 0x00e5eaaf )
+	ROM_LOAD( "lb2.cpu", 0x1000, 0x1000, 0x758e9c98 )
+	ROM_LOAD( "lb3.cpu", 0x2000, 0x1000, 0x4295ccd7 )
+	ROM_LOAD( "lb4.cpu", 0x3000, 0x1000, 0xad30c2b6 )
+	ROM_LOAD( "lb5.cpu", 0x4000, 0x1000, 0xc4da41d6 )
+	ROM_LOAD( "lb6.cpu", 0x5000, 0x1000, 0x18aaf1ec )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lb9.vid",  0x0000, 0x1000 )
-	ROM_LOAD( "lb10.vid", 0x1000, 0x1000 )
-	ROM_LOAD( "lb8.cpu",  0x2000, 0x1000 )
-	ROM_LOAD( "lb7.cpu",  0x3000, 0x1000 )
+	ROM_LOAD( "lb9.vid",  0x0000, 0x1000, 0x80bd96ef )
+	ROM_LOAD( "lb10.vid", 0x1000, 0x1000, 0xec7c93c8 )
+	ROM_LOAD( "lb8.cpu",  0x2000, 0x1000, 0x2d4d4821 )
+	ROM_LOAD( "lb7.cpu",  0x3000, 0x1000, 0xf685434d )
+ROM_END
+
+ROM_START( snapjack_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sj2a.bin", 0x0000, 0x1000, 0x37ef057b )
+	ROM_LOAD( "sj2b.bin", 0x1000, 0x1000, 0x5f6a17c6 )
+	ROM_LOAD( "sj2c.bin", 0x2000, 0x1000, 0x3cf098fc )
+	ROM_LOAD( "sj2d.bin", 0x3000, 0x1000, 0x06fa91f2 )
+	ROM_LOAD( "sj2e.bin", 0x4000, 0x1000, 0x135d2527 )
+	ROM_LOAD( "sj2f.bin", 0x5000, 0x1000, 0x734f0213 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sj2i.bin", 0x0000, 0x1000, 0xffa6a2ec )
+	ROM_LOAD( "sj2j.bin", 0x1000, 0x1000, 0x2506c6f0 )
+	ROM_LOAD( "sj2h.bin", 0x2000, 0x1000, 0xdd2fa07f )
+	ROM_LOAD( "sj2g.bin", 0x3000, 0x1000, 0x888dec19 )
+ROM_END
+
+ROM_START( cavenger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1", 0x0000, 0x1000, 0x8851691b )
+	ROM_LOAD( "2", 0x1000, 0x1000, 0xfc637e8b )
+	ROM_LOAD( "3", 0x2000, 0x1000, 0x46fcdaba )
+	ROM_LOAD( "4", 0x3000, 0x1000, 0xbc747536 )
+	ROM_LOAD( "5", 0x4000, 0x1000, 0x25f39d9f )
+	ROM_LOAD( "6", 0x5000, 0x1000, 0x38961b88 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9", 0x0000, 0x1000, 0x6522fd1a )
+	ROM_LOAD( "0", 0x1000, 0x1000, 0x6132e3d8 )
+	ROM_LOAD( "8", 0x2000, 0x1000, 0x366d7ec1 )
+/*	ROM_LOAD( "7", 0x3000, 0x1000, 0x )	empty socket */
 ROM_END
 
 
@@ -342,8 +415,46 @@ struct GameDriver ladybug_driver =
 
 	input_ports, trak_ports, dsw, keys,
 
-	color_prom, 0, 0,
+	ladybug_color_prom, 0, 0,
 	8*13, 8*30,
 
 	hiload, hisave
+};
+
+struct GameDriver snapjack_driver =
+{
+	"Snap Jack",
+	"snapjack",
+	"NICOLA SALMORIA",
+	&machine_driver,
+
+	snapjack_rom,
+	0, 0,
+	0,
+
+	input_ports, trak_ports, dsw, keys,
+
+	snapjack_color_prom, 0, 0,
+	8*13, 8*30,
+
+	0, 0
+};
+
+struct GameDriver cavenger_driver =
+{
+	"Cosmic Avenger",
+	"cavenger",
+	"NICOLA SALMORIA",
+	&machine_driver,
+
+	cavenger_rom,
+	0, 0,
+	0,
+
+	input_ports, trak_ports, dsw, keys,
+
+	cavenger_color_prom, 0, 0,
+	8*13, 8*30,
+
+	0, 0
 };

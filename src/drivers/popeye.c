@@ -54,18 +54,20 @@ I/O 2  ;bit 0 Coin in 1
 
 
 
-extern unsigned char *popeye_videoram,*popeye_colorram,*popeye_backgroundram;
+extern unsigned char *popeye_videoram;
+extern int popeye_videoram_size;
 extern unsigned char *popeye_background_pos,*popeye_palette_bank;
-extern void popeye_backgroundram_w(int offset,int data);
-extern void popeye_videoram_w(int offset,int data);
-extern void popeye_colorram_w(int offset,int data);
-extern void popeye_palettebank_w(int offset,int data);
-extern void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int  popeye_vh_start(void);
-extern void popeye_vh_stop(void);
+void popeye_backgroundram_w(int offset,int data);
+void popeye_videoram_w(int offset,int data);
+void popeye_colorram_w(int offset,int data);
+void popeye_palettebank_w(int offset,int data);
+void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
+int  popeye_vh_start(void);
+void popeye_vh_stop(void);
 
-extern int popeye_sh_start(void);
+int popeye_sh_start(void);
+int popeye_sh_interrupt(void);
 
 
 
@@ -81,11 +83,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram },
+	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8f00, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa3ff, popeye_videoram_w, &popeye_videoram },
-	{ 0xa400, 0xa7ff, popeye_colorram_w, &popeye_colorram },
-	{ 0xc000, 0xcfff, popeye_backgroundram_w, &popeye_backgroundram },
+	{ 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa400, 0xa7ff, colorram_w, &colorram },
+	{ 0xc000, 0xcfff, popeye_videoram_w, &popeye_videoram, &popeye_videoram_size },
 	{ 0x8c00, 0x8c01, MWA_RAM, &popeye_background_pos },
 	{ 0x8c03, 0x8c03, popeye_palettebank_w, &popeye_palette_bank },
 	{ 0x0000, 0x7fff, MWA_ROM },
@@ -284,10 +286,10 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
+			popeye_sh_interrupt,20
 		}
 	},
-	60,
+	30,
 	0,
 
 	/* video hardware */
@@ -319,18 +321,18 @@ static struct MachineDriver machine_driver =
 
 ROM_START( popeyebl_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "po1",          0x0000, 0x2000 )
-	ROM_LOAD( "po2",          0x2000, 0x2000 )
-	ROM_LOAD( "po3",          0x4000, 0x2000 )
-	ROM_LOAD( "po4",          0x6000, 0x2000 )
-	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020 )	/* protection PROM */
+	ROM_LOAD( "po1",          0x0000, 0x2000, 0x85dcf3d2 )
+	ROM_LOAD( "po2",          0x2000, 0x2000, 0xdbef4a97 )
+	ROM_LOAD( "po3",          0x4000, 0x2000, 0x912ec99c )
+	ROM_LOAD( "po4",          0x6000, 0x2000, 0x76663258 )
+	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x64007604 )	/* protection PROM */
 
 	ROM_REGION(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "po5", 0x0000, 0x1000 )
-	ROM_LOAD( "po6", 0x1000, 0x2000 )
-	ROM_LOAD( "po7", 0x3000, 0x2000 )
-	ROM_LOAD( "po8", 0x5000, 0x2000 )
-	ROM_LOAD( "po9", 0x7000, 0x2000 )
+	ROM_LOAD( "po5", 0x0000, 0x1000, 0x4e800000 )
+	ROM_LOAD( "po6", 0x1000, 0x2000, 0x034f71a7 )
+	ROM_LOAD( "po7", 0x3000, 0x2000, 0x0d9053e2 )
+	ROM_LOAD( "po8", 0x5000, 0x2000, 0x8568d90c )
+	ROM_LOAD( "po9", 0x7000, 0x2000, 0xe2b9685f )
 ROM_END
 
 

@@ -25,7 +25,6 @@ struct RunningMachine
 								/* use this array to get the pen number. For example, */
 								/* if you want to use color #6 in the palette, use */
 								/* pens[6] instead of just 6. */
-	unsigned char background_pen;	/* pen to use to clear the bitmap (DON'T use 0) */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	struct GameSamples *samples;	/* samples loaded from disk */
@@ -36,6 +35,7 @@ extern struct RunningMachine *Machine;
 extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 extern unsigned char *ROM;
 extern int frameskip;	/* as specified by the -frameskip command line parameter */
+extern int throttle;	/* toggled by F10 */
 
 
 int updatescreen(void);

@@ -1,10 +1,8 @@
 #include "driver.h"
-#include "Z80.h"
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
 
-#define emulation_rate 22050
 
 static unsigned char samplenumber = 0;
 
@@ -41,13 +39,12 @@ void gyruss_sh_soundfx_data_w(int offset, int data)
 
 static int gyruss_portA_r(int offset)
 {
-	int clockticks,clock;
+	#define TIMER_RATE (570)
 
-#define TIMER_RATE (570)
+	return cpu_gettotalcycles() / TIMER_RATE;
 
-	clockticks = (Z80_IPeriod - cpu_geticount());
-	clock = clockticks / TIMER_RATE;
 
+#if 0	/* temporarily removed */
 	/* to speed up the emulation, detect when the program is looping waiting */
 	/* for the timer, and skip the necessary CPU cycles in that case */
 	if (cpu_getreturnpc() == 0x0101)
@@ -55,9 +52,11 @@ static int gyruss_portA_r(int offset)
 		/* wait until clock & 0x04 == 0 */
 		if ((clock & 0x04) != 0)
 		{
-			clock = clock + 0x04;
+//			clock = clock + 0x04;
+clock = (clock - 0x04) | 0x03;
 			clockticks = clock * TIMER_RATE;
-			cpu_seticount(Z80_IPeriod - clockticks);
+//			cpu_seticount(Z80_IPeriod - clockticks);
+cpu_seticount(clockticks);
 		}
 	}
 	else if (cpu_getreturnpc() == 0x0108)
@@ -65,21 +64,24 @@ static int gyruss_portA_r(int offset)
 		/* wait until clock & 0x04 != 0 */
 		if ((clock & 0x04) == 0)
 		{
-			clock = (clock + 0x04) & ~0x03;
+//			clock = (clock + 0x04) & ~0x03;
+clock = (clock - 0x04) | 0x03;
 			clockticks = clock * TIMER_RATE;
-			cpu_seticount(Z80_IPeriod - clockticks);
+//			cpu_seticount(Z80_IPeriod - clockticks);
+cpu_seticount(clockticks);
 		}
 	}
-
-	return clock;
+#endif
 }
 
 
 
 int gyruss_sh_interrupt(void)
 {
-	if (pending_commands) return 0xff;
-	else return Z80_IGNORE_INT;
+	AY8910_update();
+
+	if (pending_commands) return interrupt();
+	else return ignore_interrupt();
 }
 
 
@@ -87,12 +89,13 @@ int gyruss_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	5,	/* 5 chips */
+	10,	/* 10 updates per video frame (good quality) */
 	1789772727,	/* 1.789772727 MHZ */
 	{ 255, 255, 255, 255, 255 },
 	{ 0, 0, gyruss_portA_r },
-	{ },
-	{ },
-	{ }
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
 

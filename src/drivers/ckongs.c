@@ -93,14 +93,14 @@ interrupt mode 1 triggered by the main CPU
 extern unsigned char *scramble_attributesram;
 extern unsigned char *scramble_bulletsram;
 extern int scramble_bulletsram_size;
-extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void scramble_attributes_w(int offset,int data);
-extern void scramble_stars_w(int offset,int data);
-extern int scramble_vh_start(void);
-extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
+void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void scramble_attributes_w(int offset,int data);
+void scramble_stars_w(int offset,int data);
+int scramble_vh_start(void);
+void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int scramble_sh_interrupt(void);
-extern int scramble_sh_start(void);
+int scramble_sh_interrupt(void);
+int scramble_sh_start(void);
 
 
 
@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver =
 			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,1
+			scramble_sh_interrupt,10
 		}
 	},
 	60,
@@ -333,20 +333,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ckongs_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vid_2c.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "vid_2e.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "vid_2f.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "vid_2h.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "vid_2j.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "vid_2l.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "vid_2c.bin", 0x0000, 0x1000, 0x53b934a3 )
+	ROM_LOAD( "vid_2e.bin", 0x1000, 0x1000, 0xf563372f )
+	ROM_LOAD( "vid_2f.bin", 0x2000, 0x1000, 0xddf25a2e )
+	ROM_LOAD( "vid_2h.bin", 0x3000, 0x1000, 0x2fd70adf )
+	ROM_LOAD( "vid_2j.bin", 0x4000, 0x1000, 0xd42ea076 )
+	ROM_LOAD( "vid_2l.bin", 0x5000, 0x1000, 0x4e8eb49a )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_5f.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "vid_5h.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "vid_5f.bin", 0x0000, 0x1000, 0x53668c92 )
+	ROM_LOAD( "vid_5h.bin", 0x1000, 0x1000, 0xad49dd9b )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "snd_5d.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "snd_5c.bin", 0x0000, 0x1000, 0x90ecc748 )
+	ROM_LOAD( "snd_5d.bin", 0x1000, 0x1000, 0x657118a1 )
 ROM_END
 
 

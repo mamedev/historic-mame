@@ -115,17 +115,17 @@ extern unsigned char *cclimber_bsvideoram;
 extern int cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-extern void cclimber_colorram_w(int offset,int data);
-extern void cclimber_bigsprite_videoram_w(int offset,int data);
-extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int cclimber_vh_start(void);
-extern void cclimber_vh_stop(void);
-extern void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
+void cclimber_colorram_w(int offset,int data);
+void cclimber_bigsprite_videoram_w(int offset,int data);
+void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int cclimber_vh_start(void);
+void cclimber_vh_stop(void);
+void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void cclimber_sample_trigger_w(int offset,int data);
-extern void cclimber_sample_rate_w(int offset,int data);
-extern void cclimber_sample_volume_w(int offset,int data);
-extern int cclimber_sh_start(void);
+void cclimber_sample_trigger_w(int offset,int data);
+void cclimber_sample_rate_w(int offset,int data);
+void cclimber_sample_volume_w(int offset,int data);
+int cclimber_sh_start(void);
 
 
 
@@ -330,65 +330,65 @@ static struct MachineDriver machine_driver =
 
 ROM_START( cclimber_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cc11", 0x0000, 0x1000 )
-	ROM_LOAD( "cc10", 0x1000, 0x1000 )
-	ROM_LOAD( "cc09", 0x2000, 0x1000 )
-	ROM_LOAD( "cc08", 0x3000, 0x1000 )
-	ROM_LOAD( "cc07", 0x4000, 0x1000 )
+	ROM_LOAD( "cc11", 0x0000, 0x1000, 0xda9892bc )
+	ROM_LOAD( "cc10", 0x1000, 0x1000, 0x154b349b )
+	ROM_LOAD( "cc09", 0x2000, 0x1000, 0x6b5227fc )
+	ROM_LOAD( "cc08", 0x3000, 0x1000, 0x4a92862c )
+	ROM_LOAD( "cc07", 0x4000, 0x1000, 0xc6a5d53b )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cc06", 0x0000, 0x0800 )
-	ROM_LOAD( "cc04", 0x0800, 0x0800 )
-	ROM_LOAD( "cc05", 0x1000, 0x0800 )
-	ROM_LOAD( "cc03", 0x1800, 0x0800 )
-	ROM_LOAD( "cc02", 0x2000, 0x0800 )
-	ROM_LOAD( "cc01", 0x2800, 0x0800 )
+	ROM_LOAD( "cc06", 0x0000, 0x0800, 0x8ceda6c7 )
+	ROM_LOAD( "cc04", 0x0800, 0x0800, 0xda323f5a )
+	ROM_LOAD( "cc05", 0x1000, 0x0800, 0xa26db1cf )
+	ROM_LOAD( "cc03", 0x1800, 0x0800, 0x8eb7e34d )
+	ROM_LOAD( "cc02", 0x2000, 0x0800, 0x25f097b6 )
+	ROM_LOAD( "cc01", 0x2800, 0x0800, 0xb90b75dd )
 
 	ROM_REGION(0x2000)	/* samples */
-	ROM_LOAD( "cc13", 0x0000, 0x1000 )
-	ROM_LOAD( "cc12", 0x1000, 0x1000 )
+	ROM_LOAD( "cc13", 0x0000, 0x1000, 0xf33cfa4a )
+	ROM_LOAD( "cc12", 0x1000, 0x1000, 0xe3e5f257 )
 ROM_END
 
 ROM_START( ccjap_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cc11j.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "cc10j.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "cc09j.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "cc08j.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "cc07j.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "cc11j.bin", 0x0000, 0x1000, 0x9ac39aa9 )
+	ROM_LOAD( "cc10j.bin", 0x1000, 0x1000, 0x878c61ca )
+	ROM_LOAD( "cc09j.bin", 0x2000, 0x1000, 0x32fdd4f5 )
+	ROM_LOAD( "cc08j.bin", 0x3000, 0x1000, 0x398cbfc0 )
+	ROM_LOAD( "cc07j.bin", 0x4000, 0x1000, 0xbe3cc484 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cc06j.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "cc04j.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "cc05j.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "cc03j.bin", 0x1800, 0x0800 )
-	ROM_LOAD( "cc02j.bin", 0x2000, 0x0800 )
-	ROM_LOAD( "cc01j.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "cc06j.bin", 0x0000, 0x0800, 0x8ceda6c7 )
+	ROM_LOAD( "cc04j.bin", 0x0800, 0x0800, 0xda323f5a )
+	ROM_LOAD( "cc05j.bin", 0x1000, 0x0800, 0xa26db1cf )
+	ROM_LOAD( "cc03j.bin", 0x1800, 0x0800, 0x8eb7e34d )
+	ROM_LOAD( "cc02j.bin", 0x2000, 0x0800, 0x25f097b6 )
+	ROM_LOAD( "cc01j.bin", 0x2800, 0x0800, 0xb90b75dd )
 
 	ROM_REGION(0x2000)	/* samples */
-	ROM_LOAD( "cc13j.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "cc12j.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "cc13j.bin", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "cc12j.bin", 0x1000, 0x1000, 0xe921f6f5 )
 ROM_END
 
 ROM_START( ccboot_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "m11.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "m10.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "m09.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "m08.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "m07.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "m11.bin", 0x0000, 0x1000, 0xdd73b251 )
+	ROM_LOAD( "m10.bin", 0x1000, 0x1000, 0x890ef772 )
+	ROM_LOAD( "m09.bin", 0x2000, 0x1000, 0x32fdd4f5 )
+	ROM_LOAD( "m08.bin", 0x3000, 0x1000, 0x068011fe )
+	ROM_LOAD( "m07.bin", 0x4000, 0x1000, 0xbe3cc484 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "m06.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "m04.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "m05.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "m03.bin", 0x1800, 0x0800 )
-	ROM_LOAD( "m02.bin", 0x2000, 0x0800 )
-	ROM_LOAD( "m01.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "m06.bin", 0x0000, 0x0800, 0x8ceda6c7 )
+	ROM_LOAD( "m04.bin", 0x0800, 0x0800, 0x91305aa8 )
+	ROM_LOAD( "m05.bin", 0x1000, 0x0800, 0xe883dff7 )
+	ROM_LOAD( "m03.bin", 0x1800, 0x0800, 0xd4cd8d75 )
+	ROM_LOAD( "m02.bin", 0x2000, 0x0800, 0x2bed2d1d )
+	ROM_LOAD( "m01.bin", 0x2800, 0x0800, 0x82637d0f )
 
 	ROM_REGION(0x2000)	/* samples */
-	ROM_LOAD( "m13.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "m12.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "m13.bin", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "m12.bin", 0x1000, 0x1000, 0xe921f6f5 )
 ROM_END
 
 

@@ -14,6 +14,8 @@
 /**     changes to this file.                               **/
 /*************************************************************/
 
+/* Changed ADC/SBC to handle Flags in BCD mode correctly  BW 260797 */
+
 #include "M6502.h"
 #include "Tables.h"
 #include <stdio.h>
@@ -106,12 +108,17 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 #define M_ADC(Rg) \
   if(R->P&D_FLAG) \
   { \
+    K.W=R->A+Rg+(R->P&C_FLAG); \
+    R->P=(R->P&~Z_FLAG)|((K.W&0xff)? 0:Z_FLAG); \
     K.B.l=(R->A&0x0F)+(Rg&0x0F)+(R->P&C_FLAG); \
     if(K.B.l>9) K.B.l+=6; \
-    K.B.h=(R->A>>4)+(Rg>>4)+(K.B.l>15? 1:0); \
+    K.B.h=(R->A>>4)+(Rg>>4)+((K.B.l&0x10)>>4); \
+    R->P&=~(N_FLAG|V_FLAG|C_FLAG); \
+    R->P|=((K.B.h&0x08)? N_FLAG:0); \
+    R->P|=(~(R->A^Rg)&(R->A^(K.B.h<<4))&0x80? V_FLAG:0); \
     if(K.B.h>9) K.B.h+=6; \
     R->A=(K.B.l&0x0F)|(K.B.h<<4); \
-    R->P=(R->P&~C_FLAG)|(K.B.h>15? C_FLAG:0); \
+    R->P=(R->P&~C_FLAG)|(K.B.h&0x10? C_FLAG:0); \
   } \
   else \
   { \
@@ -126,16 +133,21 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 #define M_SBC(Rg) \
   if(R->P&D_FLAG) \
   { \
-    K.B.l=(R->A&0x0F)-(Rg&0x0F)-(~R->P&C_FLAG); \
+    short tmp; \
+    tmp=R->A-Rg-((R->P&C_FLAG)? 0:1); \
+    R->P&=~(N_FLAG|V_FLAG|Z_FLAG); \
+    R->P|=((R->A^Rg)&(R->A^tmp)&0x80? V_FLAG:0)|ZNTable[tmp&0xff]; \
+    K.B.l=(R->A&0x0F)-(Rg&0x0F)-((R->P&C_FLAG)? 0:1); \
     if(K.B.l&0x10) K.B.l-=6; \
     K.B.h=(R->A>>4)-(Rg>>4)-((K.B.l&0x10)>>4); \
     if(K.B.h&0x10) K.B.h-=6; \
-    R->A=(K.B.l&0x0F)|(K.B.h<<4); \
-    R->P=(R->P&~C_FLAG)|((K.B.h&0x10)? 0:C_FLAG); \
+    R->P&=~(C_FLAG); \
+    R->P|=(tmp&0x100)? 0:C_FLAG; \
+    R->A=((K.B.l&0x0F)|(K.B.h<<4))&0xFF; \
   } \
   else \
   { \
-    K.W=R->A-Rg-(~R->P&C_FLAG); \
+    K.W=R->A-Rg-((R->P&C_FLAG)? 0:1); \
     R->P&=~(N_FLAG|V_FLAG|Z_FLAG|C_FLAG); \
     R->P|=((R->A^Rg)&(R->A^K.B.l)&0x80? V_FLAG:0)| \
           (K.B.h? 0:C_FLAG)|ZNTable[K.B.l]; \

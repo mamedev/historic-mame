@@ -73,17 +73,17 @@ standart IM 1 interrupt mode (rst #38 every vblank)
 #include "Z80.h"
 #include "sndhrdw/8910intf.h"
 
-extern int arabian_vh_start(void);
-extern void arabian_vh_stop(void);
-extern void arabian_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void arabian_spriteramw(int offset, int val);
-extern void arabian_videoramw(int offset, int val);
+int arabian_vh_start(void);
+void arabian_vh_stop(void);
+void arabian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void arabian_spriteramw(int offset, int val);
+void arabian_videoramw(int offset, int val);
 
-extern void moja(int port, int val);
-extern int arabian_interrupt(void);
-extern int arabian_input_port(int offset);
+void moja(int port, int val);
+int arabian_interrupt(void);
+int arabian_input_port(int offset);
 
-extern int arabian_sh_start(void);
+int arabian_sh_start(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -296,28 +296,29 @@ static struct MachineDriver machine_driver =
 
 ROM_START( arabian_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic1.87",  0x0000, 0x2000 )  /* fonts are messed up with */
-	ROM_LOAD( "ic2.88",  0x2000, 0x2000 )  /* program code */
-	ROM_LOAD( "ic3.89",  0x4000, 0x2000 )
-	ROM_LOAD( "ic4.90",  0x6000, 0x2000 )
+	ROM_LOAD( "ic1.87", 0x0000, 0x2000, 0x71cadc52 )
+	ROM_LOAD( "ic2.88", 0x2000, 0x2000, 0xc24b12f9 )
+	ROM_LOAD( "ic3.89", 0x4000, 0x2000, 0x7aac9abe )
+	ROM_LOAD( "ic4.90", 0x6000, 0x2000, 0xcd8565b1 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic84.91",  0x0000, 0x2000 )	/*this is not used at all*/
+	ROM_OBSOLETELOAD( "ic84.91", 0x0000, 0x2000 )	/*this is not used at all*/
                                                 /* might be removed */
 	ROM_REGION(0x10000) /* space for graphics roms */
-	ROM_LOAD( "ic84.91",  0x0000, 0x2000 )	/* because of very rare way */
-	ROM_LOAD( "ic85.92",  0x2000, 0x2000 )  /* CRT controller uses these roms */
-	ROM_LOAD( "ic86.93",  0x4000, 0x2000 )  /* there's no way, but to decode */
-	ROM_LOAD( "ic87.94",  0x6000, 0x2000 )	/* it at runtime - which is SLOW */
+	ROM_LOAD( "ic84.91", 0x0000, 0x2000, 0xb8edb68d )	/* because of very rare way */
+	ROM_LOAD( "ic85.92", 0x2000, 0x2000, 0x3e0048d8 )  /* CRT controller uses these roms */
+	ROM_LOAD( "ic86.93", 0x4000, 0x2000, 0xc871f425 )  /* there's no way, but to decode */
+	ROM_LOAD( "ic87.94", 0x6000, 0x2000, 0x46faa604 )	/* it at runtime - which is SLOW */
 
 ROM_END
+
 
 
 static int arabian_hiload(const char *name)
 {
   unsigned char *RAM = Machine->memory_region[0];
   FILE *f;
-  
+
   /* Wait for hiscore table initialization to be done. */
   if (memcmp(&RAM[0xd384], "\x00\x00\x00\x01\x00\x00", 6) != 0)
     return 0;
@@ -332,6 +333,8 @@ static int arabian_hiload(const char *name)
   return 1;
 }
 
+
+
 static void arabian_hisave(const char *name)
 {
   unsigned char *RAM = Machine->memory_region[0];
@@ -344,6 +347,8 @@ static void arabian_hisave(const char *name)
       fclose(f);
     }
 }
+
+
 
 struct GameDriver arabian_driver =
 {

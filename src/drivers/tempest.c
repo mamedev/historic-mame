@@ -20,11 +20,11 @@
      2000-2FFF  R/W   D  D  D  D  D  D  D  D   Vector Ram (4K)
      3000-3FFF   R    D  D  D  D  D  D  D  D   Vector Rom (4K)
 
-     4000        W                         D   Right coin counter 
-     4000        W                      D      left  coin counter 
-     4000        W                D            Video invert - x 
-     4000        W             D               Video invert - y 
-     4800        W                             Vector generator GO 
+     4000        W                         D   Right coin counter
+     4000        W                      D      left  coin counter
+     4000        W                D            Video invert - x
+     4000        W             D               Video invert - y
+     4800        W                             Vector generator GO
 
      5000        W                             WD clear
      5800        W                             Vect gen reset
@@ -43,19 +43,19 @@
 
      60E0        R                         D   one player start LED
      60E0        R                      D      two player start LED
-     60E0        R                   D         FLIP 
+     60E0        R                   D         FLIP
 
      9000-DFFF  R     D  D  D  D  D  D  D  D   Program ROM (20K)
 
-     notes: program ram decode may be incorrect, but it appears like 
+     notes: program ram decode may be incorrect, but it appears like
      this on the schematics, and the troubleshooting guide.
-     
+
      ZAP1,FIRE1,FIRE2,ZAP2 go to pokey2 , bits 3,and 4
      (depending on state of FLIP)
      player1 start, player2 start are pokey2 , bits 5 and 6
-     
+
      encoder wheel goes to pokey1 bits 0-3
-     pokey1, bit4 is cocktail detect 
+     pokey1, bit4 is cocktail detect
 
 
 TEMPEST SWITCH SETTINGS (Atari, 1980)
@@ -159,39 +159,28 @@ High Scores:
 - You should also wait 8-10 seconds after a game has been played
   before entering self-test mode or powering down; otherwise, you
   might erase or corrupt the high score table.
-  
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/atari_vg.h"
+#include "machine/atari_vg.h"
+#include "sndhrdw/pokyintf.h"
 
 
-extern int tempest_IN0_r(int offset);
-extern int tempest_IN3_r(int offset);
-extern int tempest_interrupt(void);
-extern int tempest_spinner(int);
-
-extern int bzone_vh_start(void);
-extern void bzone_vh_stop(void);
-extern void bzone_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void bzone_vh_init_colors(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
-extern int bzone_rand_r(int offset);
-
-extern void milliped_pokey1_w(int offset,int data);
-extern void milliped_pokey2_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
-
+int tempest_IN0_r(int offset);
+int tempest_IN3_r(int offset);
+int tempest_spinner(int offset);
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ 0x2000, 0x2fff, MRA_RAM, &vectorram },
 	{ 0x0c00, 0x0c00, tempest_IN0_r },	/* IN0 */
 	{ 0x0d00, 0x0d00, input_port_1_r },	/* DSW1 */
@@ -199,26 +188,31 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x60c8, 0x60c8, tempest_IN3_r },	/* IN3 */
 	{ 0x60d8, 0x60d8, input_port_4_r },	/* IN4 */
 	{ 0x6040, 0x6040, mb_status_r },
+	{ 0x6050, 0x6050, atari_vg_earom_r },
 	{ 0x6060, 0x6060, mb_lo_r },
 	{ 0x6070, 0x6070, mb_hi_r },
-	{ 0x60ca, 0x60ca, bzone_rand_r },
-	{ 0x60da, 0x60da, bzone_rand_r },
+	{ 0x60c0, 0x60cf, pokey1_r },
+	{ 0x60d0, 0x60df, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x080f, MWA_RAM, &colorram },
+	{ 0x0800, 0x080f, atari_vg_colorram_w },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram },
-	{ 0x60c0, 0x60cf, milliped_pokey1_w },
-	{ 0x60d0, 0x60df, milliped_pokey2_w },
+	{ 0x6000, 0x603f, atari_vg_earom_w },
+	{ 0x6040, 0x6040, atari_vg_earom_ctrl },
+	{ 0x60c0, 0x60cf, pokey1_w },
+	{ 0x60d0, 0x60df, pokey2_w },
 	{ 0x6080, 0x609f, mb_go },
-	{ 0x4800, 0x4800, vg_go },
+	{ 0x4800, 0x4800, atari_vg_go },
 	{ 0x5000, 0x5000, MWA_RAM },
 	{ 0x5800, 0x5800, vg_reset },
 	{ 0x9000, 0xdfff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x60e0, 0x60e0, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -228,10 +222,11 @@ static struct InputPort input_ports[] =
 {
 	{       /* IN0 */
 		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
+		{ OSD_KEY_3, 0, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* DSW1 */
+		/*	0x42,*/
 		0x00,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -247,7 +242,7 @@ static struct InputPort input_ports[] =
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* IN4 */
-		0x03,
+		0x00,
 		{ 0, 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
 		{ 0, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0, 0 }
 	},
@@ -261,7 +256,7 @@ static struct TrakPort trak_ports[] =
 		1,
 		1.0,
 		tempest_spinner
-	},			
+	},
         { -1 }
 };
 
@@ -278,29 +273,64 @@ static struct KEYSet keys[] =
 
 static struct DSW dsw[] =
 {
+	{ 1, 0x03, "MODE", { "1 COIN 1 PLAY", "2 COINS 1 PLAY",
+			      "FREEPLAY", "1 COIN 2 PLAYS" } },
+	{ 2, 0xc0, "LIVES", { "3", "4", "5", "2" } },
 	{ 2, 0x38, "BONUS EVERY", { "20000", "10000", "30000", "40000",
 				    "50000", "60000", "70000", "NONE" } },
 	{ 2, 0x06, "LANGUAGE", { "ENGLISH", "FRENCH", "GERMAN", "SPANISH" } },
-	{ 4, 0x01, "MINIUM RATING", { "1/3/5/7/9", "TIED TO HIGHSCORE" } },
-	{ 4, 0x06, "DIFFICULTY", { "MEDIUM", "EASY", "HARD", "MEDIUM" } },
+	{ 4, 0x04, "MINIMUM RATING", { "1-9", "HIGHSCORE" } },
+	{ 4, 0x03, "DIFFICULTY", { "MEDIUM", "EASY", "HARD", "MEDIUM" } },
+	{ 1, 0x80, "N13/SW1", { "ON", "OFF" } },
+	{ 1, 0x40, "N13/SW2", { "ON", "OFF" } },
+	{ 1, 0x20, "N13/SW3", { "ON", "OFF" } },
 	{ -1 }
+};
+
+/*
+ * Tempest does not really have a colorprom, nor any graphics to
+ * decode. It has a 16 byte long colorram, but only the lower nibble
+ * of each byte is important.
+ * The (inverted) meaning of the bits is:
+ * 3-green 2-blue 1-red 0-intensity.
+ * To dynamically alter the colors, we need access to the colortable.
+ * This is what this fakelayout is for.
+ */
+static struct GfxLayout fakelayout =
+{
+        1,1,
+        0,
+        1,
+        { 0 },
+        { 0 },
+        { 0 },
+        0
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
+        { 0, 0,      &fakelayout,     0, 256 },
+        { -1 } /* end of array */
 };
 
 static unsigned char color_prom[] =
 {
 	0x02,0x02,0x02,	/* WHITE */
-	0x02,0x02,0x00, /* YELLOW */
-	0x02,0x00,0x02, /* MAGENTA */
-	0x02,0x00,0x00, /* RED */
+	0x01,0x01,0x01,	/* WHITE */
 	0x00,0x02,0x02, /* CYAN */
+	0x00,0x01,0x01, /* CYAN */
+	0x02,0x02,0x00, /* YELLOW */
+	0x01,0x01,0x00, /* YELLOW */
 	0x00,0x02,0x00, /* GREEN */
-	0x00,0x00,0x02, /* BLUE */
-	0x00,0x00,0x00,	/* BLACK */
+	0x00,0x01,0x00, /* GREEN */
+	0x02,0x00,0x02, /* MAGENTA */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x00,0x00,0x02,	/* BLUE */
+	0x00,0x00,0x01,	/* BLUE */
+	0x02,0x00,0x00, /* RED */
+	0x01,0x00,0x00, /* RED */
+	0x00,0x00,0x00, /* BLACK */
+	0x00,0x00,0x00  /* BLACK */
 };
 
 static struct MachineDriver machine_driver =
@@ -312,29 +342,29 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			tempest_interrupt,4 /* 4 interrupts per frame? */
+			interrupt,4 /* 4 interrupts per frame? */
 		}
 	},
 	60, /* frames per second */
 	0,
 
 	/* video hardware */
-	404, 600, { 0, 404, 0, 600 },
+	224, 288, { 0, 580, 0, 540 },
 	gfxdecodeinfo,
-	128,128,
-	bzone_vh_init_colors,
+	256,256,
+	atari_vg_init_colors,
 
 	0,
-	bzone_vh_start,
-	bzone_vh_stop,
-	bzone_vh_screenrefresh,
+	atari_vg_avg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey2_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -345,31 +375,78 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	/* I think the whole block of 0x200 needs saving but I'm not positive - LBO */
+	if (memcmp(&RAM[0x0606],"\x07\x04\x01",3))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0600],1,0x200,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+/* This is no longer valid. We save the earom instead */
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0600],1,0x200,f);
+		fclose(f);
+	}
+}
+
 ROM_START( tempest_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "136002.113", 0x9000, 0x0800 )
-	ROM_LOAD( "136002.114", 0x9800, 0x0800 )
-	ROM_LOAD( "136002.115", 0xa000, 0x0800 )
-	ROM_LOAD( "136002.116", 0xa800, 0x0800 )
-	ROM_LOAD( "136002.117", 0xb000, 0x0800 )
-	ROM_LOAD( "136002.118", 0xb800, 0x0800 )
-	ROM_LOAD( "136002.119", 0xc000, 0x0800 )
-	ROM_LOAD( "136002.120", 0xc800, 0x0800 )
-	ROM_LOAD( "136002.121", 0xd000, 0x0800 )
-	ROM_LOAD( "136002.122", 0xd800, 0x0800 )
-	ROM_LOAD( "136002.122", 0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
+	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
+	ROM_LOAD( "136002.115", 0xa000, 0x0800, 0x22bb1713 )
+	ROM_LOAD( "136002.116", 0xa800, 0x0800, 0xee2a0306 )
+	ROM_LOAD( "136002.117", 0xb000, 0x0800, 0x85788680 )
+	ROM_LOAD( "136002.118", 0xb800, 0x0800, 0x461ca3a4 )
+	ROM_LOAD( "136002.119", 0xc000, 0x0800, 0x02e4a6ae )
+	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
+	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
+	ROM_LOAD( "136002.122", 0xd800, 0x0800, 0x292ebfb4 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "136002.123", 0x3000, 0x0800 )
-	ROM_LOAD( "136002.124", 0x3800, 0x0800 )
+	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
+	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
 ROM_END
 
-
+#if 0
+ROM_START( tempest_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tempest.x", 0x9000, 0x1000, -1 )
+	ROM_LOAD( "tempest.1", 0xa000, 0x1000, -1 )
+	ROM_LOAD( "tempest.3", 0xb000, 0x1000, -1 )
+	ROM_LOAD( "tempest.5", 0xc000, 0x1000, -1 )
+	ROM_LOAD( "tempest.7", 0xd000, 0x1000, -1 )
+	ROM_RELOAD(            0xf000, 0x1000 )	/* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "tempest.np3", 0x3000, 0x1000, -1 )
+ROM_END
+#endif
 
 struct GameDriver tempest_driver =
 {
 	"Tempest",
 	"tempest",
-	"BRAD OLIVER\nBERND WIEBELT\nALLARD VAN DER BAS\nNEIL BRADLEY\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH",
+	"BRAD OLIVER\nBERND WIEBELT\nALLARD VAN DER BAS\n"
+	"NEIL BRADLEY\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH",
 	&machine_driver,
 
 	tempest_rom,
@@ -381,5 +458,5 @@ struct GameDriver tempest_driver =
 	color_prom, 0, 0,
 	140, 110,      /* paused_x, paused_y */
 
-	0, 0
+	atari_vg_earom_load, atari_vg_earom_save
 };

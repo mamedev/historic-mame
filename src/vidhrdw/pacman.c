@@ -137,7 +137,15 @@ void pacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] >> 2,spriteram[offs + 1],
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
-				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+
+		/* also plot the sprite 256 pixels higher for vertical wraparound (tunnel in */
+		/* Crush Roller) */
+		drawgfx(bitmap,Machine->gfx[1],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - spriteram_2[offs],272-256 - spriteram_2[offs + 1],
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
 	/* the first two sprites must be offset one pixel to the left */
 	for (offs = 2*2;offs >= 0;offs -= 2)
@@ -146,6 +154,14 @@ void pacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] >> 2,spriteram[offs + 1],
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				238 - spriteram_2[offs],272 - spriteram_2[offs + 1],
-				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+
+		/* also plot the sprite 256 pixels higher for vertical wraparound (tunnel in */
+		/* Crush Roller) */
+		drawgfx(bitmap,Machine->gfx[1],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				238 - spriteram_2[offs],272-256 - spriteram_2[offs + 1],
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
 }

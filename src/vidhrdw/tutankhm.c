@@ -10,17 +10,12 @@
 /*  Stuff that work only in MS DOS (Color cycling)
  */
 
-#define MS_DOS_ONLY
-
-#define VIDEO_RAM_SIZE 0x8000
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char *tut_videoram;
-static unsigned char tut_paletteram[16];
-
+unsigned char tut_paletteram[16];
 unsigned char *tut_scrollx;
+
 
 
 /***************************************************************************
@@ -53,62 +48,30 @@ void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 }
 
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int tut_vh_start(void)
-{
-	if( ( tut_videoram = malloc( VIDEO_RAM_SIZE ) ) == 0 )
-		return 1;
-
-	return generic_vh_start();
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void tut_vh_stop(void)
-{
-	free(tut_videoram);
-
-	generic_vh_stop();
-}
-
-
-int tut_videoram_r(int offset)
-{
-	return tut_videoram[offset];
-}
-
-
 void tut_videoram_w(int offset,int data)
 {
-        if (tut_videoram[offset] != data) {
-	    unsigned char x, y;
+	if (videoram[offset] != data)
+	{
+		unsigned char x, y;
 
-	    /* bitmap is rotated -90 deg. */
-	    x = ( offset >> 7 );
-	    y = ( ( ~offset ) & 0x7f ) << 1;
-	    /*y = ~y;*/
+		/* bitmap is rotated -90 deg. */
+		x = ( offset >> 7 );
+		y = ( ( ~offset ) & 0x7f ) << 1;
 
-#ifndef MS_DOS_ONLY
-            tmpbitmap->line[ y ][ x ] = tut_paletteram[ data >> 4 ];
-            tmpbitmap->line[ y + 1 ][ x ] = tut_paletteram[ data & 0x0f ];
+#if defined(MSDOS_ONLY) || defined(WIN32)
+		tmpbitmap->line[ y ][ x ] = data >> 4;
+		tmpbitmap->line[ y + 1 ][ x ] = data & 0x0f;
 #else
-	    tmpbitmap->line[ y ][ x ] = data >> 4;
-	    tmpbitmap->line[ y + 1 ][ x ] = data & 0x0f;
+		tmpbitmap->line[ y ][ x ] = tut_paletteram[ data >> 4 ];
+		tmpbitmap->line[ y + 1 ][ x ] = tut_paletteram[ data & 0x0f ];
 #endif
-            tut_videoram[offset] = data;
-        }
+		videoram[offset] = data;
+	}
 }
 
 
-#ifdef MS_DOS_ONLY
+
+#ifdef MSDOS_ONLY
 #include <allegro.h>       /*  for RGB  */
 
 /*
@@ -135,10 +98,18 @@ void tut_palette_w(int offset,int data)
 	set_color(offset,&rgb);
 }
 #else
+#ifdef WIN32
+void tut_palette_w(int offset,int data)
+{
+   tut_paletteram[offset] = data;
+   osd_win32_set_color(offset,data);
+}
+#else
 void tut_palette_w(int offset,int data)
 {
         tut_paletteram[offset] = data;
 }
+#endif
 #endif
 
 /***************************************************************************

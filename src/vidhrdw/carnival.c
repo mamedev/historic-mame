@@ -16,6 +16,57 @@ static unsigned char dirtycharacter[256];
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Carnival has one 32x8 palette PROM. The color code is taken from the three
+  most significant bits of the character code, plus two additional palette
+  bank bits which however are not used by Carnival.
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 22 ohm resistor  -- RED   \
+        -- 22 ohm resistor  -- BLUE  |  foreground
+        -- 22 ohm resistor  -- GREEN /
+        --
+        -- 22 ohm resistor  -- RED   \
+        -- 22 ohm resistor  -- BLUE  |  background
+        -- 22 ohm resistor  -- GREEN /
+  bit 0 --
+
+***************************************************************************/
+void carnival_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < 32;i++)
+	{
+		int bit;
+
+
+		bit = (color_prom[i] >> 3) & 0x01;
+		palette[3*2*i] = 0xff * bit;
+		bit = (color_prom[i] >> 1) & 0x01;
+		palette[3*2*i + 1] = 0xff * bit;
+		bit = (color_prom[i] >> 2) & 0x01;
+		palette[3*2*i + 2] = 0xff * bit;
+
+		bit = (color_prom[i] >> 7) & 0x01;
+		palette[3*(2*i+1)] = 0xff * bit;
+		bit = (color_prom[i] >> 5) & 0x01;
+		palette[3*(2*i+1) + 1] = 0xff * bit;
+		bit = (color_prom[i] >> 6) & 0x01;
+		palette[3*(2*i+1) + 2] = 0xff * bit;
+	}
+
+	/* characters use colors 128-143 */
+	for (i = 0;i < 32*2;i++)
+		colortable[i] = i;
+}
+
+
+
 void carnival_characterram_w(int offset,int data)
 {
 	if (carnival_characterram[offset] != data)
@@ -68,8 +119,10 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (31 - offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,charcode >> 5,
-					0,0,sx + 16,sy,
+					charcode,
+					charcode >> 5,
+					0,0,
+					sx + 16,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 		}

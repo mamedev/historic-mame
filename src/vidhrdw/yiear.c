@@ -25,7 +25,7 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw background */
 	{
 		unsigned char *vr = videoram;
-		for (i = 0;i < 1024;i++) if ( dirtybuffer[i] )
+		for (i = 0;i < videoram_size;i++) if ( dirtybuffer[i] )
 		{
 			unsigned char byte1 = vr[i*2];
 			unsigned char byte2 = vr[i*2+1];
@@ -51,18 +51,19 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		unsigned char *sr  = spriteram;
 		
-		//for (i = 0;i < 24*16;i += 16)// if( sr[i+3] ) ?? sprite active flag?
 		for (i = 23*16; i>=0; i -= 16)
 		{
-			int code = 256*(sr[i+0x0f] & 1) + sr[i+0x0e];
-			int flipx = (sr[i+0x0f]&0x40)?0:1;
-			int flipy = (sr[i+0x0f]&0x80)?1:0;
-			int sx = sr[i+0x04];
 			int sy = 239-sr[i+0x06];
-			
-			drawgfx(bitmap,Machine->gfx[1],
-				code,0,flipx,flipy,sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			if( sy<239 ){
+				int code = 256*(sr[i+0x0f] & 1) + sr[i+0x0e];
+				int flipx = (sr[i+0x0f]&0x40)?0:1;
+				int flipy = (sr[i+0x0f]&0x80)?1:0;
+				int sx = sr[i+0x04];
+				
+				drawgfx(bitmap,Machine->gfx[1],
+					code,0,flipx,flipy,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
 		}
 	}
 }

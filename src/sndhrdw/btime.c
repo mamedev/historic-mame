@@ -8,12 +8,13 @@
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
+	1,	/* 1 update per video frame (low quality) */
 	1536000000,	/* 1 MHZ ? */
 	{ 255, 255 },
-	{ },
-	{ },
-	{ },
-	{ }
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
 

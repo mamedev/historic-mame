@@ -77,16 +77,11 @@ void gberet_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 ***************************************************************************/
 int gberet_vh_start(void)
 {
-	int len;
-
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
+		return 1;
+	memset(dirtybuffer,1,videoram_size);
 
 	/* Green Beret has a virtual screen twice as large as the visible screen */
-	len = 2 * (Machine->drv->screen_width/8) * (Machine->drv->screen_height/8);
-
-	if ((dirtybuffer = malloc(len)) == 0)
-		return 1;
-	memset(dirtybuffer,0,len);
-
 	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
@@ -176,7 +171,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 						sr[offs],sr[offs+1] & 0x0f,
 						sr[offs+1] & 0x10,sr[offs+1] & 0x20,
 						sr[offs+2] - 2*(sr[offs+1] & 0x80),sr[offs+3]-8,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 			}
 		}
 	}

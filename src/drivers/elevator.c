@@ -14,8 +14,11 @@ d100-d17f Sprites
 d200-d27f Palette (64 pairs: xxxxxxxR RRGGGBBB. bits are inverted, i.e. 0x01ff = black)
 
 read:
-8800      ?
-8801      ? the code stops until bit 0 and 1 are = 1
+
+8800      Protection data read
+8801      Protection port Timming port
+			bit 0 protection port read ready
+			bit 1 protection port write ready
 d404      returns contents of graphic ROM, pointed by d509-d50a
 d408      IN0
           bit 5 = jump player 1
@@ -44,26 +47,26 @@ d40b      IN2
 d40c      COIN
           bit 5 = tilt
           bit 4 = coin
-d40f      DSW2 (when d40e == 0x0e) and DSW3 (when d40e == 0x0f)
-          DSW2
-		  coins per play
-          DSW3
-          bit 7 = coinage (1 way/2 ways)
-          bit 6 = no hit
-          bit 5 = year display yes/no
-          bit 4 = coin display yes/no
-		  bit 2-3 ?
-		  bit 0-1 difficulty
-
+d40f      8910 #0 read
+            port A DSW2
+              coins per play
+            port B DSW3
+              bit 7 = coinage (1 way/2 ways)
+              bit 6 = no hit
+              bit 5 = year display yes/no
+              bit 4 = coin display yes/no
+              bit 2-3 ?
+              bit 0-1 difficulty
 write
+8800      Protection data write
 d000-d01f front playfield column scroll
 d020-d03f middle playfield column scroll
 d040-d05f back playfield column scroll
 d300      playfield priority control ??
           bit 0-2 ?
 		  bit 3 = 1 middle playfield has priority over sprites ??
-d40e      0e/0f = control which of DSW2 and DSW3 is read from d40f; other values = ?
-d40f      ?
+d40e      8910 #0 control
+d40f      8910 #0 write
 d500      front playfield horizontal scroll
 d501      front playfield vertical scroll
 d502      middle playfield horizontal scroll
@@ -90,6 +93,12 @@ SOUND CPU:
 0000-1fff ROM
 4000-43ff RAM
 e000-     additional ROM?
+ e000 0c3h
+ e009 jp ????
+ e00c jp ????
+ e00f ????
+ e02d ????
+   calcrate protection port ??
 
 read:
 5000      command from CPU board
@@ -97,10 +106,11 @@ read:
 write:
 4800      8910 #1  control
 4801      8910 #1  write
-4802      8910 #1  control
-4803      8910 #1  write
-4804      8910 #1  control
-4805      8910 #1  write
+4802      8910 #2  control
+4803      8910 #2  write
+4804      8910 #3  control
+4805      8910 #3  write
+            port B bit 0 SOUND CPU NMI disable
 
 ***************************************************************************/
 
@@ -109,34 +119,32 @@ write:
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
+extern unsigned char *elevator_protection;
+int elevator_protection_r(int offset);
+int elevator_protection_t_r(int offset);
+int elevator_init_machine(const char *gamename);
+void elevatob_bankswitch_w(int offset,int data);
 
+extern unsigned char *taito_videoram2,*taito_videoram3;
+extern unsigned char *taito_characterram;
+extern unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
+extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
+extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
+extern unsigned char *taito_gfxpointer,*taito_paletteram;
+extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
+void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int taito_gfxrom_r(int offset);
+void taito_videoram2_w(int offset,int data);
+void taito_videoram3_w(int offset,int data);
+void taito_paletteram_w(int offset,int data);
+void taito_colorbank_w(int offset,int data);
+void taito_characterram_w(int offset,int data);
+int elevator_vh_start(void);
+void taito_vh_stop(void);
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern unsigned char *taito_dsw23_select;
-extern int taito_dsw23_r(int offset);
-extern int elevator_init_machine(const char *gamename);
-extern int elevator_protection_r(int offset);
-extern int elevator_unknown_r(int offset);
-extern void elevatob_bankswitch_w(int offset,int data);
-
-extern unsigned char *elevator_videoram2,*elevator_videoram3;
-extern unsigned char *elevator_characterram;
-extern unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
-extern unsigned char *elevator_gfxpointer,*elevator_paletteram;
-extern unsigned char *elevator_colorbank,*elevator_video_priority;
-extern unsigned char *elevator_colorbank,*elevator_video_enable;
-extern void elevator_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int elevator_gfxrom_r(int offset);
-extern void elevator_videoram2_w(int offset,int data);
-extern void elevator_videoram3_w(int offset,int data);
-extern void elevator_paletteram_w(int offset,int data);
-extern void elevator_colorbank_w(int offset,int data);
-extern void elevator_characterram_w(int offset,int data);
-extern int elevator_vh_start(void);
-extern void elevator_vh_stop(void);
-extern void elevator_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-extern int elevator_sh_interrupt(void);
-extern int elevator_sh_start(void);
+int elevator_sh_interrupt(void);
+int elevator_sh_start(void);
 
 
 
@@ -150,9 +158,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
-	{ 0xd40f, 0xd40f, taito_dsw23_r },	/* DSW2 and DSW3 */
-	{ 0xd404, 0xd404, elevator_gfxrom_r },
-	{ 0x8801, 0x8801, elevator_unknown_r },
+	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
+	{ 0xd404, 0xd404, taito_gfxrom_r },
+	{ 0x8801, 0x8801, elevator_protection_t_r },
 	{ 0x8800, 0x8800, elevator_protection_r },
 	{ -1 }	/* end of table */
 };
@@ -161,23 +169,30 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xc800, 0xcbff, elevator_videoram2_w, &elevator_videoram2 },
-	{ 0xcc00, 0xcfff, elevator_videoram3_w, &elevator_videoram3 },
+	{ 0xc800, 0xcbff, taito_videoram2_w, &taito_videoram2 },
+	{ 0xcc00, 0xcfff, taito_videoram3_w, &taito_videoram3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd01f, MWA_RAM, &elevator_scroll1 },
-	{ 0xd020, 0xd03f, MWA_RAM, &elevator_scroll2 },
-	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll3 },
-	{ 0xd506, 0xd507, elevator_colorbank_w, &elevator_colorbank },
-	{ 0xd509, 0xd50a, MWA_RAM, &elevator_gfxpointer },
+	{ 0xd000, 0xd01f, MWA_RAM, &taito_colscrolly1 },
+	{ 0xd020, 0xd03f, MWA_RAM, &taito_colscrolly2 },
+	{ 0xd040, 0xd05f, MWA_RAM, &taito_colscrolly3 },
+	{ 0xd500, 0xd500, MWA_RAM, &taito_scrollx1 },
+	{ 0xd501, 0xd501, MWA_RAM, &taito_scrolly1 },
+	{ 0xd502, 0xd502, MWA_RAM, &taito_scrollx2 },
+	{ 0xd503, 0xd503, MWA_RAM, &taito_scrolly2 },
+	{ 0xd504, 0xd504, MWA_RAM, &taito_scrollx3 },
+	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
+	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
+	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
 	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd50d, 0xd50d, MWA_NOP },
-	{ 0xd200, 0xd27f, elevator_paletteram_w, &elevator_paletteram },
-	{ 0x9000, 0xbfff, elevator_characterram_w, &elevator_characterram },
+	{ 0xd200, 0xd27f, taito_paletteram_w, &taito_paletteram },
+	{ 0x9000, 0xbfff, taito_characterram_w, &taito_characterram },
 	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
-	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
-	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_priority },
-	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_enable },
-        { 0x8800, 0x8800, MWA_NOP },
+	{ 0xd40e, 0xd40e, AY8910_control_port_0_w },
+	{ 0xd40f, 0xd40f, AY8910_write_port_0_w },
+	{ 0xd300, 0xd300, MWA_RAM, &taito_video_priority },
+	{ 0xd600, 0xd600, MWA_RAM, &taito_video_enable },
+	{ 0x8800, 0x8800, MWA_RAM, &elevator_protection },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -196,12 +211,12 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4800, AY8910_control_port_0_w },
-	{ 0x4801, 0x4801, AY8910_write_port_0_w },
-	{ 0x4802, 0x4802, AY8910_control_port_1_w },
-	{ 0x4803, 0x4803, AY8910_write_port_1_w },
-	{ 0x4804, 0x4804, AY8910_control_port_2_w },
-	{ 0x4805, 0x4805, AY8910_write_port_2_w },
+	{ 0x4800, 0x4800, AY8910_control_port_1_w },
+	{ 0x4801, 0x4801, AY8910_write_port_1_w },
+	{ 0x4802, 0x4802, AY8910_control_port_2_w },
+	{ 0x4803, 0x4803, AY8910_write_port_2_w },
+	{ 0x4804, 0x4804, AY8910_control_port_3_w },
+	{ 0x4805, 0x4805, AY8910_write_port_3_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -361,12 +376,12 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	37, 16*8,
-	elevator_vh_convert_color_prom,
+	taito_vh_convert_color_prom,
 
 	0,
 	elevator_vh_start,
-	elevator_vh_stop,
-	elevator_vh_screenrefresh,
+	taito_vh_stop,
+	taito_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -386,65 +401,63 @@ static struct MachineDriver machine_driver =
 
 ROM_START( elevator_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ea-ic69.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea-ic68.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "ea-ic67.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "ea-ic66.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "ea-ic65.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "ea-ic64.bin", 0x5000, 0x1000 )
-	ROM_LOAD( "ea-ic55.bin", 0x6000, 0x1000 )
-	ROM_LOAD( "ea-ic54.bin", 0x7000, 0x1000 )
+	ROM_LOAD( "ea-ic69.bin", 0x0000, 0x1000, 0x4fca047c )
+	ROM_LOAD( "ea-ic68.bin", 0x1000, 0x1000, 0x885e9cac )
+	ROM_LOAD( "ea-ic67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
+	ROM_LOAD( "ea-ic66.bin", 0x3000, 0x1000, 0x791314b7 )
+	ROM_LOAD( "ea-ic65.bin", 0x4000, 0x1000, 0xe15c6fcc )
+	ROM_LOAD( "ea-ic64.bin", 0x5000, 0x1000, 0x23ed29b1 )
+	ROM_LOAD( "ea-ic55.bin", 0x6000, 0x1000, 0x03dbd955 )
+	ROM_LOAD( "ea-ic54.bin", 0x7000, 0x1000, 0x8c0e6f24 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ea-ic4.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea-ic5.bin",  0x1000, 0x1000 )
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_OBSOLETELOAD( "ea-ic4.bin",  0x0000, 0x1000 )	/* not needed - could be removed */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea-ic1.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea-ic2.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "ea-ic3.bin",  0x2000, 0x1000 )
-	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000 )
-	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000 )
-	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000 )
-	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000 )
-	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000 )
+	ROM_LOAD( "ea-ic1.bin",  0x0000, 0x1000, 0xec7c455a )
+	ROM_LOAD( "ea-ic2.bin",  0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea-ic3.bin",  0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000, 0x19108d2c )
+	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000, 0x5d924ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
+	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
 /*	ROM_LOAD( "ee_ea10.bin", , 0x1000 ) ??? */
 ROM_END
 
 ROM_START( elevatob_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ea69.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea68.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "ea67.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "ea66.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "ea65.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "ea64.bin", 0x5000, 0x1000 )
-	ROM_LOAD( "ea55.bin", 0x6000, 0x1000 )
-	ROM_LOAD( "ea54.bin", 0x7000, 0x1000 )
-	ROM_LOAD( "ea54.bin", 0xe000, 0x1000 )	/* copy for my convenience */
-	ROM_LOAD( "ea52.bin", 0xf000, 0x1000 )	/* protection crack, bank switched at 7000 */
+	ROM_LOAD( "ea69.bin", 0x0000, 0x1000, 0x9575392d )
+	ROM_LOAD( "ea68.bin", 0x1000, 0x1000, 0x885e9cac )
+	ROM_LOAD( "ea67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
+	ROM_LOAD( "ea66.bin", 0x3000, 0x1000, 0x2ac3f1f9 )
+	ROM_LOAD( "ea65.bin", 0x4000, 0x1000, 0xe15c6fcc )
+	ROM_LOAD( "ea64.bin", 0x5000, 0x1000, 0x23ed29b1 )
+	ROM_LOAD( "ea55.bin", 0x6000, 0x1000, 0x04dbd855 )
+	ROM_LOAD( "ea54.bin", 0x7000, 0x1000, 0x4d791e41 )
+	ROM_RELOAD(           0xe000, 0x1000 )	/* copy for my convenience */
+	ROM_LOAD( "ea52.bin", 0xf000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ea04.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea05.bin", 0x1000, 0x1000 )
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_OBSOLETELOAD( "ea04.bin",  0x0000, 0x1000 )	/* not needed - could be removed */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea01.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea02.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "ea03.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "ea04.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "ea05.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "ea06.bin", 0x5000, 0x1000 )
-	ROM_LOAD( "ea07.bin", 0x6000, 0x1000 )
-	ROM_LOAD( "ea08.bin", 0x7000, 0x1000 )
+	ROM_LOAD( "ea01.bin", 0x0000, 0x1000, 0xe97f45a5 )
+	ROM_LOAD( "ea02.bin", 0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea03.bin", 0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea04.bin", 0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea05.bin", 0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea06.bin", 0x5000, 0x1000, 0x30ddb2e3 )
+	ROM_LOAD( "ea07.bin", 0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea08.bin", 0x7000, 0x1000, 0xd6d24ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ea70.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "ea71.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "ea70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
+	ROM_LOAD( "ea71.bin", 0x1000, 0x1000, 0x34e16eb3 )
 ROM_END
 
 
@@ -453,7 +466,7 @@ struct GameDriver elevator_driver =
 {
 	"Elevator Action",
 	"elevator",
-	"NICOLA SALMORIA",
+	"NICOLA SALMORIA\nTATSUYUKI SATOH",
 	&machine_driver,
 
 	elevator_rom,
@@ -472,7 +485,7 @@ struct GameDriver elevatob_driver =
 {
 	"Elevator Action (bootleg)",
 	"elevatob",
-	"NICOLA SALMORIA",
+	"NICOLA SALMORIA\nTATSUYUKI SATOH",
 	&machine_driver,
 
 	elevatob_rom,

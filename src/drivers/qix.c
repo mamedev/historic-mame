@@ -119,34 +119,39 @@ NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 #include "driver.h"
 
 extern unsigned char *qix_sharedram;
-extern int qix_addresslatch_r(int offset);
-extern void qix_addresslatch_w(int offset, int data);
-extern int qix_scanline_r(int offset);
-extern void qix_colorram_w(int offset, int data);
-extern void qix_data_firq_w(int offset, int data);
-extern int qix_videoram_r(int offset);
-extern void qix_videoram_w(int offset, int data);
-extern void qix_video_firq_w(int offset, int data);
-/* extern int m6821_r(int offset); */
-
-extern int qix_sharedram_r(int offset);
-extern void qix_sharedram_w(int offset, int data);
-extern int qix_interrupt_video(void);
-extern void qix_vh_screenrefresh(struct osd_bitmap *bitmap); /* JB 970524 */
-extern int qix_vh_start(void);
-extern void qix_vh_stop(void);
-extern int qix_init_machine(const char *gamename); /* JB 970526 */
+int qix_scanline_r(int offset);
+void qix_data_firq_w(int offset, int data);
+void qix_video_firq_w(int offset, int data);
+/* int m6821_r(int offset); */
 
 
-/* Since MAME goes through this list for each memory access, it is more
- * efficient to use fewer entries here.
- * Unspecified address ranges default to MRA_RAM.
- */
+extern unsigned char *qix_paletteram,*qix_palettebank;
+extern unsigned char *qix_videoaddress;
+
+int qix_videoram_r(int offset);
+void qix_videoram_w(int offset, int data);
+int qix_addresslatch_r(int offset);
+void qix_addresslatch_w(int offset, int data);
+void qix_paletteram_w(int offset,int data);
+void qix_palettebank_w(int offset,int data);
+
+int qix_sharedram_r_1(int offset);
+int qix_sharedram_r_2(int offset);
+void qix_sharedram_w(int offset, int data);
+int qix_interrupt_video(void);
+void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void qix_vh_screenrefresh(struct osd_bitmap *bitmap);
+int qix_vh_start(void);
+void qix_vh_stop(void);
+int qix_init_machine(const char *gamename);
+
+
+
 static struct MemoryReadAddress readmem_cpu_data[] =
 {
 	/*{ 0x2000, 0x2001, m6821_r },*/
 	/*{ 0x4000, 0x4003, m6821_r },*/
-	{ 0x8000, 0x83ff, qix_sharedram_r, &qix_sharedram },
+	{ 0x8000, 0x83ff, qix_sharedram_r_1, &qix_sharedram },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	/*{ 0x9000, 0x9003, m6821_r },*/
 	{ 0x9400, 0x9400, input_port_0_r }, /* PIA 1 PORT A -- Player controls */
@@ -160,7 +165,8 @@ static struct MemoryReadAddress readmem_cpu_data[] =
 static struct MemoryReadAddress readmem_cpu_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_r },
-	{ 0x8000, 0x83ff, qix_sharedram_r },
+	{ 0x8000, 0x83ff, qix_sharedram_r_2 },
+	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9400, 0x9400, qix_addresslatch_r },
 	{ 0x9800, 0x9800, qix_scanline_r },
 	{ 0xc800, 0xffff, MRA_ROM },
@@ -171,6 +177,8 @@ static struct MemoryWriteAddress writemem_cpu_data[] =
 {
 	/*{ 0x2000, 0x2001, m6821_w },*/
 	/*{ 0x4000, 0x4003, m6821_w },*/
+	{ 0x8000, 0x83ff, qix_sharedram_w },
+	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, qix_video_firq_w },
 	/*{ 0x9000, 0x9003, m6821_w },*/
 	/*{ 0x9400, 0x9403, m6821_w },*/
@@ -184,10 +192,13 @@ static struct MemoryWriteAddress writemem_cpu_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8800, 0x8800, qix_colorram_w },
+	{ 0x8400, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
+	{ 0x9000, 0x93ff, qix_paletteram_w, &qix_paletteram },
 	{ 0x9400, 0x9400, qix_addresslatch_w },
-	/*{ 0x9402, 0x9402, qix_addresslatch_w },*/
+	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
+	{ 0xc800, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -253,25 +264,6 @@ static struct DSW qix_dsw[] =
 
 
 
-/* This is not accurate for Qix but is just a placeholder for now. */
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0xff,0x00,	/* YELLOW */
-	0x00,0x00,0xff,	/* BLUE */
-	0xff,0x00,0x00,	/* RED */
-	0xff,0xff,0xff	/* WHITE */
-};
-
-/* This is not accurate for Qix but is just a placeholder for now. */
-enum { BLACK,YELLOW,BLUE,RED,WHITE };
-
-/* This is not accurate for Qix but is just a placeholder for now. */
-static unsigned char colortable[] =
-{
-	BLACK,YELLOW,BLUE,RED
-};
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -292,8 +284,8 @@ static struct MachineDriver machine_driver =
 			1250000,		/* 1.25 Mhz */
 			2,			/* memory region #2 */
 			readmem_cpu_video, writemem_cpu_video, 0, 0,
-			qix_interrupt_video,
-                        1
+			ignore_interrupt,
+			1
 		}
 	},
 	60,					/* frames per second */
@@ -303,9 +295,9 @@ static struct MachineDriver machine_driver =
 	256, 256,				/* screen_width, screen_height */
 	{ 0, 256-1, 0, 256-1 },		        /* struct rectangle visible_area */
 	0,				/* GfxDecodeInfo * */
-	sizeof(palette)/3,			/* total colors */
-	sizeof(colortable),			/* color table length */
-	0,					/* convert color prom routine */
+	256,			/* total colors */
+	0,			/* color table length */
+	qix_vh_convert_color_prom,					/* convert color prom routine */
 
 	0,					/* vh_init routine */
 	qix_vh_start,				/* vh_start routine */ /* JB 970524 */
@@ -330,74 +322,73 @@ static struct MachineDriver machine_driver =
 
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12", 0xC000, 0x800 )
-	ROM_LOAD( "u13", 0xC800, 0x800 )
-	ROM_LOAD( "u14", 0xD000, 0x800 )
-	ROM_LOAD( "u15", 0xD800, 0x800 )
-	ROM_LOAD( "u16", 0xE000, 0x800 )
-	ROM_LOAD( "u17", 0xE800, 0x800 )
-	ROM_LOAD( "u18", 0xF000, 0x800 )
-	ROM_LOAD( "u19", 0xF800, 0x800 )
+	ROM_LOAD( "u12", 0xC000, 0x800, 0x87bd3a11 )
+	ROM_LOAD( "u13", 0xC800, 0x800, 0x85586b74 )
+	ROM_LOAD( "u14", 0xD000, 0x800, 0x541d5c6f )
+	ROM_LOAD( "u15", 0xD800, 0x800, 0xcbd010de )
+	ROM_LOAD( "u16", 0xE000, 0x800, 0xf9da5efe )
+	ROM_LOAD( "u17", 0xE800, 0x800, 0x14c09e2a )
+	ROM_LOAD( "u18", 0xF000, 0x800, 0x22ae35fa )
+	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff )
 
 	/* This is temporary space not really used but necessary because MAME
 	 * always throws away memory region 1.
 	 */
 	ROM_REGION(0x800)
-	ROM_LOAD( "u10", 0x0000, 0x800 )
+	ROM_OBSOLETELOAD( "u10",  0x0000, 0x0800 )	/* not needed - could be removed */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD(  "u4", 0xC800, 0x800 )
-	ROM_LOAD(  "u5", 0xD000, 0x800 )
-	ROM_LOAD(  "u6", 0xD800, 0x800 )
-	ROM_LOAD(  "u7", 0xE000, 0x800 )
-	ROM_LOAD(  "u8", 0xE800, 0x800 )
-	ROM_LOAD(  "u9", 0xF000, 0x800 )
-	ROM_LOAD( "u10", 0xF800, 0x800 )
+	ROM_LOAD(  "u4", 0xC800, 0x800, 0x08bbfc51 )
+	ROM_LOAD(  "u5", 0xD000, 0x800, 0xdd0f67b3 )
+	ROM_LOAD(  "u6", 0xD800, 0x800, 0x37f8ce3c )
+	ROM_LOAD(  "u7", 0xE000, 0x800, 0x733acfe0 )
+	ROM_LOAD(  "u8", 0xE800, 0x800, 0xe1c7b84b )
+	ROM_LOAD(  "u9", 0xF000, 0x800, 0xb662095a )
+	ROM_LOAD( "u10", 0xF800, 0x800, 0x559ebf32 )
 ROM_END
 
-/* JB 970525 */
+
+
 /* Loads high scores and all other CMOS settings */
 static int hiload(const char *name)
 {
+	/* get RAM pointer (data is in second CPU's memory region) */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	FILE *f;
-	unsigned char *ram;
 
-	/* data is in second CPU's memory region */
-	ram = Machine->memory_region[2];
-
-	/* check if already loaded */
-	if( ram[0x86a9]==0x55 ) return 0;
 
 	if ((f = fopen(name,"rb")) != 0)
 	{
-		ram = Machine->memory_region[2];
-		fread(&ram[0x8400],1,0x400,f);
+		fread(&RAM[0x8400],1,0x400,f);
 		fclose(f);
 	}
 
 	return 1;
 }
 
-/* JB 970525 */
+
+
 static void hisave(const char *name)
 {
+	/* get RAM pointer (data is in second CPU's memory region) */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	FILE *f;
-	unsigned char *ram;
+
 
 	if ((f = fopen(name,"wb")) != 0)
 	{
-		ram = Machine->memory_region[2];
-		fwrite(&ram[0x8400],1,0x400,f);
+		fwrite(&RAM[0x8400],1,0x400,f);
 		fclose(f);
 	}
 }
+
 
 
 struct GameDriver qix_driver =
 {
 	"Qix",
 	"qix",
-	"JOHN BUTLER\nED MUELLER",
+	"JOHN BUTLER\nED MUELLER\nAARON GILES",
 	&machine_driver,
 
 	qix_rom,
@@ -406,8 +397,7 @@ struct GameDriver qix_driver =
 
 	input_ports, trak_ports, qix_dsw, keys,
 
-	0, palette, colortable,   /* colors, palette, colortable */
+	0, 0, 0,   /* colors, palette, colortable */
 	128-(8*3), 128-4,   /* Paused message displayed at X,Y  */
-	hiload, hisave	       /* High score load and save */ /* JB 970525 */
+	hiload, hisave	       /* High score load and save */
 };
-

@@ -11,6 +11,7 @@ MAIN BOARD:
 a000-a1ff Background Video RAM #1
 a800-a9ff Background Video RAM #2
 b000-b1ff Background Video RAM #3
+b800-bbff RAM ? ( initialize only )
 
 read:
 d000      IN0
@@ -22,12 +23,37 @@ d005      DSW2
 
 write:
 9e20-9e21 background #1 x position
-9e28-9e29 ?
 9e25      background #1 y position
+9e28-9e29 background #? x position ??
 9e30-9e31 background #2 & #3 x position
 9e35      background #2 & #3 y position
+d000      ?? (before access paletteram data 0x00 )
 d002      watchdog reset?
-d004      ?
+          IN0/IN1 latch ? ( write before read IN0/IN1 )
+d004      sound command ( pio-a )
+
+SOUND BOARD
+memory read/write
+0000-3fff ROM
+4000-43ff RAM
+
+write
+8000 sound chip channel 1 1st 9f,bf,df,ff
+9000 sound chip channel 2 1st 9f,bf,df,ff
+a000 sound chip channel 3 1st 9f,bf,df,ff
+d000 bit 0-3 single sound volume ( freq = ctc2 )
+e000 ? ( initialize only )
+f000 ? ( initialize only )
+
+I/O read/write
+00   z80pio-A data     ( from sound command )
+01   z80pio-A controll ( mode 1 input )
+02   z80pio-B data     ( no use )
+03   z80pio-B controll ( mode 3 bit i/o )
+08   z80ctc-ch1        ( timer mode cysclk/16, bas clock 15.625KHz )
+09   z80ctc-ch2        ( cascade from ctc-1  , tempo interrupt 88.778Hz )
+0a   z80ctc-ch3        ( timer mode , single sound freq. )
+0b   z80ctc-ch4        ( no use )
 
 ***************************************************************************/
 
@@ -36,7 +62,6 @@ d004      ?
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
-
 extern unsigned char *starforc_scrollx2,*starforc_scrolly2;
 extern unsigned char *starforc_scrollx3,*starforc_scrolly3;
 extern unsigned char *starforc_paletteram;
@@ -44,17 +69,37 @@ extern unsigned char *starforc_tilebackground2;
 extern unsigned char *starforc_tilebackground3;
 extern unsigned char *starforc_tilebackground4;
 extern int starforc_bgvideoram_size;
-extern void starforc_tiles2_w(int offset,int data);
-extern void starforc_tiles3_w(int offset,int data);
-extern void starforc_tiles4_w(int offset,int data);
-extern void starforc_paletteram_w(int offset,int data);
+void starforc_tiles2_w(int offset,int data);
+void starforc_tiles3_w(int offset,int data);
+void starforc_tiles4_w(int offset,int data);
+void starforc_paletteram_w(int offset,int data);
 
-extern int starforc_vh_start(void);
-extern void starforc_vh_stop(void);
+int starforc_vh_start(void);
+void starforc_vh_stop(void);
 
-extern void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
+void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+int starforce_sh_interrupt(void);
+int starforce_sh_start(void);
+void starforce_sh_stop(void);
+void starforce_sh_update(void);
+
+void starforce_sh_0_w( int offset , int data );
+void starforce_sh_1_w( int offset , int data );
+void starforce_sh_2_w( int offset , int data );
+
+void starforce_pio_w( int offset , int data );
+int  starforce_pio_r( int offset );
+void starforce_ctc_w( int offset , int data );
+int  starforce_ctc_r( int offset );
+
+extern unsigned char *starforce_sound_command;
+void starforce_sound_latch( int offset , int data );
+
+#if 1
+void starforce_volume_w( int offset , int data );
+#endif
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -79,7 +124,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa1ff, starforc_tiles2_w, &starforc_tilebackground2, &starforc_bgvideoram_size },
 	{ 0xa800, 0xa9ff, starforc_tiles3_w, &starforc_tilebackground3 },
 	{ 0xb000, 0xb1ff, starforc_tiles4_w, &starforc_tilebackground4 },
+	{ 0xd004, 0xd004, sound_command_w },
 	{ 0x9e20, 0x9e21, MWA_RAM, &starforc_scrollx2 },
+#if 0
+	{ 0x9e28, 0x9e29, MWA_RAM, &starforc_scrollx? },
+	{ 0xb800, 0xbbff, MWA_RAM },
+#endif
 	{ 0x9e30, 0x9e31, MWA_RAM, &starforc_scrollx3 },
 	{ 0x9e25, 0x9e25, MWA_RAM, &starforc_scrolly2 },
 	{ 0x9e35, 0x9e35, MWA_RAM, &starforc_scrolly3 },
@@ -101,10 +151,30 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
         { 0x4000, 0x43ff, MWA_RAM },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x8000, starforce_sh_0_w },
+	{ 0x9000, 0x9000, starforce_sh_1_w },
+	{ 0xa000, 0xa000, starforce_sh_2_w },
+	{ 0xd000, 0xd000, starforce_volume_w },
+#if 0
+	{ 0xe000, 0xe000, unknown },
+	{ 0xf000, 0xf000, unknown },
+#endif
 	{ -1 }  /* end of table */
 };
 
+static struct IOReadPort sound_readport[] =
+{
+	{ 0x00, 0x03, starforce_pio_r },
+	{ 0x08, 0x0b, starforce_ctc_r },
+	{ -1 }	/* end of table */
+};
 
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x00, 0x03, starforce_pio_w },
+	{ 0x08, 0x0b, starforce_ctc_w },
+	{ -1 }	/* end of table */
+};
 
 static struct InputPort input_ports[] =
 {
@@ -253,10 +323,11 @@ static struct MachineDriver machine_driver =
 		},
                 {
                         CPU_Z80 | CPU_AUDIO_CPU,
-                        4000000,        /* 4 Mhz */
+                        2000000,        /* 2 Mhz */
                         2,
-                        sound_readmem,sound_writemem,0,0,
-                        nmi_interrupt,1
+                        sound_readmem,sound_writemem,
+                        sound_readport,sound_writeport,
+                        starforce_sh_interrupt,3
                 }
 	},
 	60,
@@ -276,9 +347,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-        0,
-        0
+	starforce_sh_start,
+	starforce_sh_stop,
+	starforce_sh_update,
 };
 
 
@@ -291,17 +362,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( starforc_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "starforc.dt1",  0x0000, 0x8000 )
+	ROM_LOAD( "starforc.dt1", 0x0000, 0x8000, 0xdc0f8d29 )
 
 	ROM_REGION(0x1f000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "starforc.dt7",  0x00000, 0x0f000 )
-	ROM_LOAD( "starforc.dt2",  0x0f000, 0x04000 )
-	ROM_LOAD( "starforc.dt3",  0x13000, 0x04000 )
-	ROM_LOAD( "starforc.dt4",  0x17000, 0x04000 )
-	ROM_LOAD( "starforc.dt5",  0x1b000, 0x04000 )
+	ROM_LOAD( "starforc.dt7", 0x00000, 0xf000, 0x06a64604 )
+	ROM_LOAD( "starforc.dt2", 0x0f000, 0x4000, 0x29360104 )
+	ROM_LOAD( "starforc.dt3", 0x13000, 0x4000, 0x7cc5d967 )
+	ROM_LOAD( "starforc.dt4", 0x17000, 0x4000, 0xb5d415ee )
+	ROM_LOAD( "starforc.dt5", 0x1b000, 0x4000, 0x9f9054de )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "starforc.dt6",  0x0000, 0x04000 )
+	ROM_LOAD( "starforc.dt6", 0x0000, 0x4000, 0xfb4a6b5a )
 ROM_END
 
 
@@ -358,7 +429,7 @@ struct GameDriver starforc_driver =
 {
 	"Star Force",
 	"starforc",
-	"MIRKO BUFFONI\nNICOLA SALMORIA",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nTATSUYUKI SATOH",
 	&machine_driver,
 
 	starforc_rom,

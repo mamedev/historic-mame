@@ -81,7 +81,7 @@ int jrpacman_vh_start(void)
 {
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,videoram_size);
+	memset(dirtybuffer,1,videoram_size);
 
 	/* Jr. Pac Man has a virtual screen twice as large as the visible screen */
 	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -263,7 +263,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&Machine->drv->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,Machine->background_pen);
+				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,0);
 	}
 	/* the first two sprites must be offset one pixel to the left */
 	for (offs = 2*2;offs > 0;offs -= 2)
@@ -275,6 +275,6 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				238 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&Machine->drv->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,Machine->background_pen);
+				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,0);
 	}
 }

@@ -23,7 +23,7 @@
    This version of the program is distributed under the terms and conditions
    of the GNU General Public License version 2. See the file COPYING.
    THERE IS NO WARRANTY ON THIS PROGRAM!!!
-   
+
    This program simulates a 6809 processor.
 
    System dependencies: short must be 16 bits.
@@ -33,18 +33,18 @@
                         machine must be twos complement.
    Most Unix machines will work. For MSODS you need long pointers
    and you may have to malloc() the mem array of 65536 bytes.
-                 
-   Special instructions:                     
+
+   Special instructions:
    SWI2 writes char to stdout from register B.
    SWI3 reads char from stdout to register B, sets carry at EOF.
                (or when no key available when using term control).
-   SWI retains its normal function. 
-   CWAI and SYNC stop simulator. 
+   SWI retains its normal function.
+   CWAI and SYNC stop simulator.
    Note: special instructions are gone for now.
 
    ACIA emulation at port $E000
-   
-   Note: BIG_ENDIAN option is no longer needed.   
+
+   Note: BIG_ENDIAN option is no longer needed.
 */
 
 /*	Changes since MAME 0.21:
@@ -57,8 +57,8 @@
 					  fetch_effective_address(), use postbyte=M_RDOP instead of M_RDMEM;
 					  in codes_3X(), adjust ICount;
 */
-					
-  
+
+
 #include <stdio.h>
 #include <stdlib.h> /* DS */
 
@@ -97,7 +97,7 @@ static Word eaddr; /* effective address */	/* DS */
 static Byte ireg; /* instruction register */ /* DS */
 static Byte iflag; /* flag to indicate $10 or $11 prebyte */	/* DS */
 
-extern int cpu_interrupt(void);
+int cpu_interrupt(void);
 
 /* DS -- PUBLIC GLOBALS -- */
 int	m6809_IPeriod=50000;
@@ -130,7 +130,7 @@ static void (*wr_s_handler_wd)();
 #define SETBYTE(a,n) M_WRMEM(a,n);
 /* Two bytes of a word are fetched separately because of
    the possible wrap-around at address $ffff and alignment
-*/   
+*/
 #define SETWORD(a,n) M_WRMEM_WORD(a,n);
 
 /* JB 970526 */
@@ -175,7 +175,7 @@ static void (*wr_s_handler_wd)();
 
 #define SETSTATUS(a,b,res) if((a^b^res)&0x10) SEH else CLH \
                            if((a^b^res^(res>>1))&0x80)SEV else CLV \
-                           if(res&0x100)SEC else CLC SETNZ8((Byte)res) 
+                           if(res&0x100)SEC else CLC SETNZ8((Byte)res)
 
 #define SETSTATUSD(a,b,res) {if(res&0x10000) SEC else CLC \
                             if(((res>>1)^a^b^res)&0x8000) SEV else CLV \
@@ -198,7 +198,7 @@ static void (*wr_s_handler_wd)();
                     	 case 9: val=ibreg;break;\
                     	 case 10: val=iccreg;break;\
                     	 case 11: val=idpreg;break;}
-                    	 
+
 #define SETREG(val,reg) switch(reg) {\
 			 case 0: SETDREG(val) break;\
 			 case 1: ixreg=val;break;\
@@ -214,13 +214,13 @@ static void (*wr_s_handler_wd)();
 /* Macros for load and store of accumulators. Can be modified to check
    for port addresses */
 #define LOADAC(reg) reg=M_RDMEM(eaddr);		/* DS */
-#define STOREAC(reg) M_WRMEM(eaddr,reg);	/* DS */                   	                                                  
+#define STOREAC(reg) M_WRMEM(eaddr,reg);	/* DS */
 
 #define LOADREGS	/* DS */
 #define SAVEREGS	/* DS */
 
 
-static unsigned char haspostbyte[] = {		/* DS */ 
+static unsigned char haspostbyte[] = {		/* DS */
   /*0*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   /*1*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   /*2*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -343,7 +343,7 @@ void m6809_SetRegs(m6809_Regs *Regs)
 	idpreg = Regs->dp;
 	iareg = Regs->a;
 	ibreg = Regs->b;
-	iccreg = Regs->cc;	
+	iccreg = Regs->cc;
 }
 
 /* DS */
@@ -360,7 +360,7 @@ void m6809_GetRegs(m6809_Regs *Regs)
 	Regs->dp = idpreg;
 	Regs->a = iareg;
 	Regs->b = ibreg;
-	Regs->cc = iccreg;	
+	Regs->cc = iccreg;
 }
 
 /* DS */
@@ -540,34 +540,34 @@ flaginstr:  /* $10 and $11 instructions return here */
 		m6809_IRequest = INT_NONE;
 		m6809_FIRQ();
 	}
-	
+
 	/* DS ... */
 	m6809_ICount -= cycles[ireg&0xFF];
 	/* If cycle counter expired... */
     if(m6809_ICount<=0)
     {
 		byte I;
-		
+
 		m6809_IRequest = INT_NONE;
         I=cpu_interrupt();        /* Call the periodic handler */
         m6809_ICount = m6809_IPeriod;
-        
+
 		if(I==INT_IRQ) m6809_Interrupt(); /* Interrupt if needed  */
 		return;
     }
     /* ...DS */
 
-	} 
+	}
 }
 
 /* DS */
 INLINE void fetch_effective_address( void )
 {
 		Byte postbyte;
-		
+
 		if( fastopcodes ) postbyte=M_RDOP(ipcreg++); /* JB 970526 */
 		else postbyte = M_RDMEM(ipcreg++);
-		
+
 		switch(postbyte)
 		{
 		    case 0x00: eaddr=ixreg;break;
@@ -708,7 +708,7 @@ INLINE void fetch_effective_address( void )
 		    case 0x87: eaddr=0;break; /*ILELGAL*/
 		    case 0x88: IMMBYTE(eaddr);eaddr=ixreg+SIGNED(eaddr);break;
 		    case 0x89: IMMWORD(eaddr);eaddr+=ixreg;break;
-		    case 0x8A: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0x8A: eaddr=0;break; /*ILLEGAL*/
 		    case 0x8B: eaddr=ixreg+GETDREG;break;
 		    case 0x8C: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);break;
 		    case 0x8D: IMMWORD(eaddr);eaddr+=ipcreg;break;
@@ -725,7 +725,7 @@ INLINE void fetch_effective_address( void )
 		    case 0x98: IMMBYTE(eaddr);eaddr=ixreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0x99: IMMWORD(eaddr);eaddr+=ixreg;eaddr=GETWORD(eaddr);break;
-		    case 0x9A: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0x9A: eaddr=0;break; /*ILLEGAL*/
 		    case 0x9B: eaddr=ixreg+GETDREG;eaddr=GETWORD(eaddr);break;
 		    case 0x9C: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
@@ -742,11 +742,11 @@ INLINE void fetch_effective_address( void )
 		    case 0xA7: eaddr=0;break; /*ILELGAL*/
 		    case 0xA8: IMMBYTE(eaddr);eaddr=iyreg+SIGNED(eaddr);break;
 		    case 0xA9: IMMWORD(eaddr);eaddr+=iyreg;break;
-		    case 0xAA: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0xAA: eaddr=0;break; /*ILLEGAL*/
 		    case 0xAB: eaddr=iyreg+GETDREG;break;
 		    case 0xAC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);break;
 		    case 0xAD: IMMWORD(eaddr);eaddr+=ipcreg;break;
-		    case 0xAE: eaddr=0;break; /*ILLEGAL*/   
+		    case 0xAE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xAF: IMMWORD(eaddr);break;
 		    case 0xB0: eaddr=iyreg;iyreg++;eaddr=GETWORD(eaddr);break;
 		    case 0xB1: eaddr=iyreg;iyreg+=2;eaddr=GETWORD(eaddr);break;
@@ -759,12 +759,12 @@ INLINE void fetch_effective_address( void )
 		    case 0xB8: IMMBYTE(eaddr);eaddr=iyreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xB9: IMMWORD(eaddr);eaddr+=iyreg;eaddr=GETWORD(eaddr);break;
-		    case 0xBA: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0xBA: eaddr=0;break; /*ILLEGAL*/
 		    case 0xBB: eaddr=iyreg+GETDREG;eaddr=GETWORD(eaddr);break;
 		    case 0xBC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xBD: IMMWORD(eaddr);eaddr+=ipcreg;eaddr=GETWORD(eaddr);break;
-		    case 0xBE: eaddr=0;break; /*ILLEGAL*/   
+		    case 0xBE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xBF: IMMWORD(eaddr);eaddr=GETWORD(eaddr);break;
 		    case 0xC0: eaddr=iureg;iureg++;break;
 		    case 0xC1: eaddr=iureg;iureg+=2;break;
@@ -776,11 +776,11 @@ INLINE void fetch_effective_address( void )
 		    case 0xC7: eaddr=0;break; /*ILELGAL*/
 		    case 0xC8: IMMBYTE(eaddr);eaddr=iureg+SIGNED(eaddr);break;
 		    case 0xC9: IMMWORD(eaddr);eaddr+=iureg;break;
-		    case 0xCA: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0xCA: eaddr=0;break; /*ILLEGAL*/
 		    case 0xCB: eaddr=iureg+GETDREG;break;
 		    case 0xCC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);break;
 		    case 0xCD: IMMWORD(eaddr);eaddr+=ipcreg;break;
-		    case 0xCE: eaddr=0;break; /*ILLEGAL*/   
+		    case 0xCE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xCF: IMMWORD(eaddr);break;
 		    case 0xD0: eaddr=iureg;iureg++;eaddr=GETWORD(eaddr);break;
 		    case 0xD1: eaddr=iureg;iureg+=2;eaddr=GETWORD(eaddr);break;
@@ -793,12 +793,12 @@ INLINE void fetch_effective_address( void )
 		    case 0xD8: IMMBYTE(eaddr);eaddr=iureg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xD9: IMMWORD(eaddr);eaddr+=iureg;eaddr=GETWORD(eaddr);break;
-		    case 0xDA: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0xDA: eaddr=0;break; /*ILLEGAL*/
 		    case 0xDB: eaddr=iureg+GETDREG;eaddr=GETWORD(eaddr);break;
 		    case 0xDC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xDD: IMMWORD(eaddr);eaddr+=ipcreg;eaddr=GETWORD(eaddr);break;
-		    case 0xDE: eaddr=0;break; /*ILLEGAL*/   
+		    case 0xDE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xDF: IMMWORD(eaddr);eaddr=GETWORD(eaddr);break;
 		    case 0xE0: eaddr=isreg;isreg++;break;
 		    case 0xE1: eaddr=isreg;isreg+=2;break;
@@ -814,7 +814,7 @@ INLINE void fetch_effective_address( void )
 		    case 0xEB: eaddr=isreg+GETDREG;break;
 		    case 0xEC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);break;
 		    case 0xED: IMMWORD(eaddr);eaddr+=ipcreg;break;
-		    case 0xEE: eaddr=0;break; /*ILLEGAL*/   
+		    case 0xEE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xEF: IMMWORD(eaddr);break;
 		    case 0xF0: eaddr=isreg;isreg++;eaddr=GETWORD(eaddr);break;
 		    case 0xF1: eaddr=isreg;isreg+=2;eaddr=GETWORD(eaddr);break;
@@ -827,21 +827,21 @@ INLINE void fetch_effective_address( void )
 		    case 0xF8: IMMBYTE(eaddr);eaddr=isreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xF9: IMMWORD(eaddr);eaddr+=isreg;eaddr=GETWORD(eaddr);break;
-		    case 0xFA: eaddr=0;break; /*ILLEGAL*/ 
+		    case 0xFA: eaddr=0;break; /*ILLEGAL*/
 		    case 0xFB: eaddr=isreg+GETDREG;eaddr=GETWORD(eaddr);break;
 		    case 0xFC: IMMBYTE(eaddr);eaddr=ipcreg+SIGNED(eaddr);
 		               eaddr=GETWORD(eaddr);break;
 		    case 0xFD: IMMWORD(eaddr);eaddr+=ipcreg;eaddr=GETWORD(eaddr);break;
 		    case 0xFE: eaddr=0;break; /*ILLEGAL*/
 		    case 0xFF: IMMWORD(eaddr);eaddr=GETWORD(eaddr);break;
- 		} 
+ 		}
 }
 
 INLINE void codes_0X( void )
 {
 	word tw, sw;
 	byte tb, sb;
-	
+
 	switch( ireg )
 	{
 		case 0x00: /*NEG direct*/ DIRECT sw = M_RDMEM(eaddr); tw=-sw;
@@ -874,7 +874,7 @@ INLINE void codes_0X( void )
 				     SETNZ8(tb) SETBYTE(eaddr,tb)break;
 		case 0x0B: break; /*ILLEGAL*/
 		case 0x0C: /*INC direct*/ DIRECT tb=M_RDMEM(eaddr)+1;if(tb==0x80)SEV else CLV
-				     SETNZ8(tb) SETBYTE(eaddr,tb)break;   			                                  
+				     SETNZ8(tb) SETBYTE(eaddr,tb)break;
 		case 0x0D: /*TST direct*/ DIRECT tb=M_RDMEM(eaddr);SETNZ8(tb) break;
 		case 0x0E: /*JMP direct*/ DIRECT ipcreg=eaddr;break;
 		case 0x0F: /*CLR direct*/ DIRECT SETBYTE(eaddr,0);CLN CLV SEZ CLC break;
@@ -884,9 +884,9 @@ INLINE void codes_0X( void )
 
 INLINE void codes_1X( void )
 {
-	word tw;
+	word tw=0;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x10: /* flag10 */ iflag=1;break; /* DS goto flaginstr;*/
@@ -897,7 +897,7 @@ INLINE void codes_1X( void )
 			/* DS - disabled */
 			//while(!irq)
 			//	; /* Wait for IRQ */
-			//	if(iccreg&0x40)tracetrick=1; 
+			//	if(iccreg&0x40)tracetrick=1;
 			#endif
 			break;
 		case 0x14: break; /*ILLEGAL*/
@@ -916,9 +916,9 @@ INLINE void codes_1X( void )
 		case 0x1B: break; /*ILLEGAL*/
 		case 0x1C: /* ANDCC*/ IMMBYTE(tb) iccreg&=tb;break;
 		case 0x1D: /* SEX */ tw=SIGNED(ibreg); SETNZ16(tw) SETDREG(tw) break;
-		case 0x1E: /* EXG */ IMMBYTE(tb) {Word t2;GETREG(tw,tb>>4) GETREG(t2,tb&15)
-		                    SETREG(t2,tb>>4) SETREG(tw,tb&15) } break;                        
-		case 0x1F: /* TFR */ IMMBYTE(tb) GETREG(tw,tb>>4) SETREG(tw,tb&15) break;   
+		case 0x1E: /* EXG */ IMMBYTE(tb) {Word t2=0;GETREG(tw,tb>>4) GETREG(t2,tb&15)
+		                    SETREG(t2,tb>>4) SETREG(tw,tb&15) } break;
+		case 0x1F: /* TFR */ IMMBYTE(tb) GETREG(tw,tb>>4) SETREG(tw,tb&15) break;
 	}
 }
 
@@ -927,7 +927,7 @@ INLINE void codes_2X( void )
 {
 	word tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x20: /* (L)BRA*/  BRANCH(1) break;
@@ -953,7 +953,7 @@ INLINE void codes_3X( void )
 {
 	word tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x30: /* LEAX*/ ixreg=eaddr; if(ixreg) CLZ else SEZ break;
@@ -977,7 +977,7 @@ INLINE void codes_3X( void )
 		 		if(tb&0x10)PULLWORD(ixreg)
 			if(tb&0x20)PULLWORD(iyreg)
 			if(tb&0x40)PULLWORD(iureg)
-			if(tb&0x80)PULLWORD(ipcreg) 
+			if(tb&0x80)PULLWORD(ipcreg)
 			#if 0
 			/* DS - disabled */
 //			if(tracetrick&&tb==0xff) { /* Arrange fake FIRQ after next insn
@@ -985,7 +985,7 @@ INLINE void codes_3X( void )
 //			  tracetrick=0;
 //			  irq=2;
 //			  attention=1;
-//			  goto flaginstr;	 		                              
+//			  goto flaginstr;
 //			}
 			#endif
 			break;
@@ -1007,7 +1007,7 @@ INLINE void codes_3X( void )
 			if(tb&0x20)PULUWORD(iyreg)
 			if(tb&0x40)PULUWORD(isreg)
 			if(tb&0x80)PULUWORD(ipcreg) break;
-		case 0x39: /* RTS*/ PULLWORD(ipcreg) break; 		
+		case 0x39: /* RTS*/ PULLWORD(ipcreg) break;
 		case 0x3A: /* ABX*/ ixreg+=ibreg; break;
 		case 0x3B: /* RTI*/  tb=iccreg&0x80;
 				PULLBYTE(iccreg)
@@ -1020,13 +1020,13 @@ INLINE void codes_3X( void )
 				 PULLWORD(ixreg)
 		  		 PULLWORD(iyreg)
 				 PULLWORD(iureg)
-				} 
+				}
 				PULLWORD(ipcreg) break;
 		case 0x3C: /* CWAI*/
 				m6809_ICount = 0;	/* DS - force IRQ */
 				#if 0
 				/* DS - disabled */
-//				 IMMBYTE(tb)			 
+//				 IMMBYTE(tb)
 //				 PUSHWORD(ipcreg)
 //				 PUSHWORD(iureg)
 //		               	 PUSHWORD(iyreg)
@@ -1041,14 +1041,14 @@ INLINE void codes_3X( void )
 //		                       ;/* Wait for irq */
 //		                     if(irq==1)ipcreg=GETWORD(0xfff8);
 //		                     	else ipcreg=GETWORD(0xfff6);
-//		                     irq=0; 
+//		                     irq=0;
 //		                     if(!tracing)attention=0;
 				#endif
 				break;
-		case 0x3D: /* MUL*/ tw=iareg*ibreg; if(tw)CLZ else SEZ 
+		case 0x3D: /* MUL*/ tw=iareg*ibreg; if(tw)CLZ else SEZ
 		                   if(tw&0x80) SEC else CLC SETDREG(tw) break;
-		case 0x3E: break; /*ILLEGAL*/                    
-		case 0x3F: /* SWI (SWI2 SWI3)*/ { 
+		case 0x3E: break; /*ILLEGAL*/
+		case 0x3F: /* SWI (SWI2 SWI3)*/ {
 				 PUSHWORD(ipcreg)
 				 PUSHWORD(iureg)
 		               	 PUSHWORD(iyreg)
@@ -1072,7 +1072,7 @@ INLINE void codes_4X( void )
 {
 	word tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x40: /*NEGA*/  tw=-iareg;SETSTATUS(0,iareg,tw)
@@ -1104,7 +1104,7 @@ INLINE void codes_4X( void )
 				     SETNZ8(tb) iareg=tb;break;
 		case 0x4B: break; /*ILLEGAL*/
 		case 0x4C: /*INCA*/  tb=iareg+1;if(tb==0x80)SEV else CLV
-				     SETNZ8(tb) iareg=tb;break;   			                                  
+				     SETNZ8(tb) iareg=tb;break;
 		case 0x4D: /*TSTA*/  SETNZ8(iareg) break;
 		case 0x4E: break; /*ILLEGAL*/
 		case 0x4F: /*CLRA*/  iareg=0;CLN CLV SEZ CLC break;
@@ -1115,7 +1115,7 @@ INLINE void codes_5X( void )
 {
 	word tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x50: /*NEGB*/  tw=-ibreg;SETSTATUS(0,ibreg,tw)
@@ -1147,7 +1147,7 @@ INLINE void codes_5X( void )
 				     SETNZ8(tb) ibreg=tb;break;
 		case 0x5B: break; /*ILLEGAL*/
 		case 0x5C: /*INCB*/  tb=ibreg+1;if(tb==0x80)SEV else CLV
-				     SETNZ8(tb) ibreg=tb;break;   			                                  
+				     SETNZ8(tb) ibreg=tb;break;
 		case 0x5D: /*TSTB*/  SETNZ8(ibreg) break;
 		case 0x5E: break; /*ILLEGAL*/
 		case 0x5F: /*CLRB*/  ibreg=0;CLN CLV SEZ CLC break;
@@ -1158,7 +1158,7 @@ INLINE void codes_6X( void )
 {
 	word sw, tw;
 	byte sb, tb;
-	
+
 	switch( ireg )
 	{
 		case 0x60: /*NEG indexed*/  sw=M_RDMEM(eaddr); tw=-sw;SETSTATUS(0,sw,tw)
@@ -1202,7 +1202,7 @@ INLINE void codes_7X( void )
 {
 	word sw, tw;
 	byte sb, tb;
-	
+
 	switch( ireg )
 	{
 		case 0x70: /*NEG ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=-sw;SETSTATUS(0,sw,tw)
@@ -1235,7 +1235,7 @@ INLINE void codes_7X( void )
 				     SETNZ8(tb) SETBYTE(eaddr,tb)break;
 		case 0x7B: break; /*ILLEGAL*/
 		case 0x7C: /*INC ext*/ EXTENDED tb=M_RDMEM(eaddr)+1;if(tb==0x80)SEV else CLV
-				     SETNZ8(tb) SETBYTE(eaddr,tb)break;   			                                  
+				     SETNZ8(tb) SETBYTE(eaddr,tb)break;
 		case 0x7D: /*TST ext*/ EXTENDED tb=M_RDMEM(eaddr);SETNZ8(tb) break;
 		case 0x7E: /*JMP ext*/ EXTENDED ipcreg=eaddr;break;
 		case 0x7F: /*CLR ext*/ EXTENDED SETBYTE(eaddr,0)CLN CLV SEZ CLC break;
@@ -1246,7 +1246,7 @@ INLINE void codes_8X( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x80: /*SUBA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg-sw;
@@ -1277,18 +1277,18 @@ INLINE void codes_8X( void )
 					 CLV break;
 		case 0x89: /*ADCA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
 		                             SETSTATUS(iareg,sw,tw)
-		                             iareg=tw;break;   				 
+		                             iareg=tw;break;
 		case 0x8A: /*ORA immediate*/  IMM8 iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
 		case 0x8B: /*ADDA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg+sw;
 					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
-		case 0x8C: /*CMPX (CMPY CMPS) immediate */ IMM16 
+		case 0x8C: /*CMPX (CMPY CMPS) immediate */ IMM16
 		                             {unsigned long dreg,breg,res;
 					 if(iflag==0)dreg=ixreg;else if(iflag==1)
 					 dreg=iyreg;else dreg=isreg;breg=GETWORD(eaddr);
 					 res=dreg-breg;
-					 SETSTATUSD(dreg,breg,res) 
+					 SETSTATUSD(dreg,breg,res)
 					 }break;
 		case 0x8D: /*BSR */   IMMBYTE(tb) PUSHWORD(ipcreg) ipcreg+=SIGNED(tb);
 		                     break;
@@ -1305,7 +1305,7 @@ INLINE void codes_9X( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0x90: /*SUBA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg-sw;
@@ -1336,18 +1336,18 @@ INLINE void codes_9X( void )
 					 CLV break;
 		case 0x99: /*ADCA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
 		                             SETSTATUS(iareg,sw,tw)
-		                             iareg=tw;break;   				 
+		                             iareg=tw;break;
 		case 0x9A: /*ORA direct*/  DIRECT iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
 		case 0x9B: /*ADDA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg+sw;
 					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
-		case 0x9C: /*CMPX (CMPY CMPS) direct */ DIRECT 
+		case 0x9C: /*CMPX (CMPY CMPS) direct */ DIRECT
 		                             {unsigned long dreg,breg,res;
 					 if(iflag==0)dreg=ixreg;else if(iflag==1)
 					 dreg=iyreg;else dreg=isreg;breg=GETWORD(eaddr);
 					 res=dreg-breg;
-					 SETSTATUSD(dreg,breg,res) 
+					 SETSTATUSD(dreg,breg,res)
 					 }break;
 		case 0x9D: /*JSR direct */  DIRECT  PUSHWORD(ipcreg) ipcreg=eaddr;
 		                     break;
@@ -1364,7 +1364,7 @@ INLINE void codes_AX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xA0: /*SUBA indexed*/  sw=M_RDMEM(eaddr);tw=iareg-sw;
@@ -1375,7 +1375,7 @@ INLINE void codes_AX( void )
 		case 0xA2: /*SBCA indexed*/  sw=M_RDMEM(eaddr);tw=iareg-sw-(iccreg&0x01);
 					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
-		case 0xA3: /*SUBD (CMPD CMPU) indexed*/ 
+		case 0xA3: /*SUBD (CMPD CMPU) indexed*/
 		                             {unsigned long res,dreg,breg;
 		                             if(iflag==2)dreg=iureg;else dreg=GETDREG;
 		                             breg=GETWORD(eaddr);
@@ -1389,24 +1389,24 @@ INLINE void codes_AX( void )
 					 CLV break;
 		case 0xA6: /*LDA indexed*/  LOADAC(iareg) CLV SETNZ8(iareg)
 		                             break;
-		case 0xA7: /*STA indexed */ 
+		case 0xA7: /*STA indexed */
 		                             SETNZ8(iareg) CLV STOREAC(iareg) break;
 		case 0xA8: /*EORA indexed*/  iareg=iareg^M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
 		case 0xA9: /*ADCA indexed*/  sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
 		                             SETSTATUS(iareg,sw,tw)
-		                             iareg=tw;break;   				 
+		                             iareg=tw;break;
 		case 0xAA: /*ORA indexed*/   iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
 		case 0xAB: /*ADDA indexed*/  sw=M_RDMEM(eaddr);tw=iareg+sw;
 					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
-		case 0xAC: /*CMPX (CMPY CMPS) indexed */  
+		case 0xAC: /*CMPX (CMPY CMPS) indexed */
 		                             {unsigned long dreg,breg,res;
 					 if(iflag==0)dreg=ixreg;else if(iflag==1)
 					 dreg=iyreg;else dreg=isreg;breg=GETWORD(eaddr);
 					 res=dreg-breg;
-					 SETSTATUSD(dreg,breg,res) 
+					 SETSTATUSD(dreg,breg,res)
 					 }break;
 		case 0xAD: /*JSR indexed */    PUSHWORD(ipcreg) ipcreg=eaddr;
 		                     break;
@@ -1423,7 +1423,7 @@ INLINE void codes_BX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xB0: /*SUBA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg-sw;
@@ -1454,18 +1454,18 @@ INLINE void codes_BX( void )
 					 CLV break;
 		case 0xB9: /*ADCA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
 		                             SETSTATUS(iareg,sw,tw)
-		                             iareg=tw;break;   				 
+		                             iareg=tw;break;
 		case 0xBA: /*ORA ext*/  EXTENDED iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
 		case 0xBB: /*ADDA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg+sw;
 					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
-		case 0xBC: /*CMPX (CMPY CMPS) ext */ EXTENDED 
+		case 0xBC: /*CMPX (CMPY CMPS) ext */ EXTENDED
 		                             {unsigned long dreg,breg,res;
 					 if(iflag==0)dreg=ixreg;else if(iflag==1)
 					 dreg=iyreg;else dreg=isreg;breg=GETWORD(eaddr);
 					 res=dreg-breg;
-					 SETSTATUSD(dreg,breg,res) 
+					 SETSTATUSD(dreg,breg,res)
 					 }break;
 		case 0xBD: /*JSR ext */  EXTENDED  PUSHWORD(ipcreg) ipcreg=eaddr;
 		                     break;
@@ -1482,7 +1482,7 @@ INLINE void codes_CX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xC0: /*SUBB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg-sw;
@@ -1520,7 +1520,7 @@ INLINE void codes_CX( void )
 					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xCC: /*LDD immediate */ IMM16 tw=GETWORD(eaddr);SETNZ16(tw)
-				         CLV SETDREG(tw) break;   				 		                  
+				         CLV SETDREG(tw) break;
 		case 0xCD: /*STD immediate (orthogonality) */ IMM16
 					 tw=GETDREG; SETNZ16(tw) CLV
 					 SETWORD(eaddr,tw) break;
@@ -1537,7 +1537,7 @@ INLINE void codes_DX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xD0: /*SUBB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg-sw;
@@ -1568,14 +1568,14 @@ INLINE void codes_DX( void )
 					 CLV break;
 		case 0xD9: /*ADCB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
 		                             SETSTATUS(ibreg,sw,tw)
-		                             ibreg=tw;break;   				 
+		                             ibreg=tw;break;
 		case 0xDA: /*ORB direct*/  DIRECT ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
 		case 0xDB: /*ADDB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg+sw;
 					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xDC: /*LDD direct */ DIRECT tw=GETWORD(eaddr);SETNZ16(tw)
-				         CLV SETDREG(tw) break;   				 		                  
+				         CLV SETDREG(tw) break;
 		case 0xDD: /*STD direct  */ DIRECT
 					 tw=GETDREG; SETNZ16(tw) CLV
 					 SETWORD(eaddr,tw) break;
@@ -1592,7 +1592,7 @@ INLINE void codes_EX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xE0: /*SUBB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg-sw;
@@ -1603,7 +1603,7 @@ INLINE void codes_EX( void )
 		case 0xE2: /*SBCB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg-sw-(iccreg&0x01);
 					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
-		case 0xE3: /*ADDD indexed*/ 
+		case 0xE3: /*ADDD indexed*/
 		                             {unsigned long res,dreg,breg;
 		                             dreg=GETDREG;
 		                             breg=GETWORD(eaddr);
@@ -1617,27 +1617,27 @@ INLINE void codes_EX( void )
 					 CLV break;
 		case 0xE6: /*LDB indexed*/  LOADAC(ibreg) CLV SETNZ8(ibreg)
 		                             break;
-		case 0xE7: /*STB indexed  */ 
+		case 0xE7: /*STB indexed  */
 		                             SETNZ8(ibreg) CLV STOREAC(ibreg) break;
 		case 0xE8: /*EORB indexed*/  ibreg=ibreg^M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
 		case 0xE9: /*ADCB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
 		                             SETSTATUS(ibreg,sw,tw)
-		                             ibreg=tw;break;   				 
+		                             ibreg=tw;break;
 		case 0xEA: /*ORB indexed*/   ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
 		case 0xEB: /*ADDB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg+sw;
 					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xEC: /*LDD indexed */  tw=GETWORD(eaddr);SETNZ16(tw)
-				         CLV SETDREG(tw) break;   				 		                  
+				         CLV SETDREG(tw) break;
 		case 0xED: /*STD indexed  */
 					 tw=GETDREG; SETNZ16(tw) CLV
 					 SETWORD(eaddr,tw) break;
 		case 0xEE: /* LDU (LDS) indexed */  tw=GETWORD(eaddr);
 		                              CLV SETNZ16(tw) if(!iflag)iureg=tw; else
 		                              isreg=tw;break;
-		case 0xEF:  /* STU (STS) indexed  */ 
+		case 0xEF:  /* STU (STS) indexed  */
 		                              if(!iflag) tw=iureg; else tw=isreg;
 		                              CLV SETNZ16(tw) SETWORD(eaddr,tw) break;
 	}
@@ -1647,7 +1647,7 @@ INLINE void codes_FX( void )
 {
 	word sw,tw;
 	byte tb;
-	
+
 	switch( ireg )
 	{
 		case 0xF0: /*SUBB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg-sw;

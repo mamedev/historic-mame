@@ -74,7 +74,7 @@ write:
 
 
 extern unsigned char *dkong3_gfxbank;
-extern void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap);
+void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -454,22 +454,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( dkong3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "dk3c.7b",  0x0000, 0x2000 )
-	ROM_LOAD( "dk3c.7c",  0x2000, 0x2000 )
-	ROM_LOAD( "dk3c.7d",  0x4000, 0x2000 )
-	ROM_LOAD( "dk3c.7e",  0x8000, 0x2000 )
+	ROM_LOAD( "dk3c.7b", 0x0000, 0x2000, 0x1f48b2d8 )
+	ROM_LOAD( "dk3c.7c", 0x2000, 0x2000, 0x02129a26 )
+	ROM_LOAD( "dk3c.7d", 0x4000, 0x2000, 0xf6ac38f8 )
+	ROM_LOAD( "dk3c.7e", 0x8000, 0x2000, 0x9aa51d95 )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dk3v.3n",  0x0000, 0x1000 )
-	ROM_LOAD( "dk3v.3p",  0x1000, 0x1000 )
-	ROM_LOAD( "dk3v.7c",  0x2000, 0x1000 )
-	ROM_LOAD( "dk3v.7d",  0x3000, 0x1000 )
-	ROM_LOAD( "dk3v.7e",  0x4000, 0x1000 )
-	ROM_LOAD( "dk3v.7f",  0x5000, 0x1000 )
+	ROM_LOAD( "dk3v.3n", 0x0000, 0x1000, 0xce64f6d0 )
+	ROM_LOAD( "dk3v.3p", 0x1000, 0x1000, 0x06537143 )
+	ROM_LOAD( "dk3v.7c", 0x2000, 0x1000, 0xfdc2c044 )
+	ROM_LOAD( "dk3v.7d", 0x3000, 0x1000, 0x79ed16db )
+	ROM_LOAD( "dk3v.7e", 0x4000, 0x1000, 0x233a64e8 )
+	ROM_LOAD( "dk3v.7f", 0x5000, 0x1000, 0x4381b33d )
 
-	ROM_REGION(0x4000)	/* sound? */
-	ROM_LOAD( "dk3c.5l",  0x0000, 0x2000 )
-	ROM_LOAD( "dk3c.6h",  0x2000, 0x2000 )
+	ROM_REGION(0x4000)	/* sound */
+	ROM_LOAD( "dk3c.5l", 0x0000, 0x2000, 0x34813d8d )
+	ROM_LOAD( "dk3c.6h", 0x2000, 0x2000, 0xe2c9caa7 )
 ROM_END
 
 

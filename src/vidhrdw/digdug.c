@@ -9,21 +9,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define LOG_IT 0
-
-#define VIDEO_RAM_SIZE 0x400
-
 
 unsigned char *digdug_vlatches;
 static int playfield, alphacolor, playenable, playcolor;
 
 static int pflastindex = -1, pflastcolor = -1;
-
-#if LOG_IT
-#include <stdio.h>
-static FILE *pCharFile;
-static FILE *pSpriteFile;
-#endif
 
 
 /***************************************************************************
@@ -49,11 +39,9 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 {
 	int i;
 
-
 	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2;
-
 
 		bit0 = (color_prom[31-i] >> 0) & 0x01;
 		bit1 = (color_prom[31-i] >> 1) & 0x01;
@@ -70,11 +58,17 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 	}
 
 	/* characters */
-	for (i = 0;i < 32*4;i++)
-		colortable[i] = 15 - (color_prom[i + 32] & 0x0f);
+	for (i = 0; i < 8; i++)
+	{
+		colortable[i*2 + 0] = 0;
+		colortable[i*2 + 1] = 31 - i*2;
+	}
 	/* sprites */
-	for (i = 32*4;i < 64*4;i++)
-		colortable[i] = (15 - (color_prom[i + 32] & 0x0f)) + 0x10;
+	for (i = 0*4;i < 64*4;i++)
+		colortable[8*2 + i] = 31 - ((color_prom[i + 32] & 0x0f) + 0x10);
+	/* playfield */
+	for (i = 64*4;i < 128*4;i++)
+		colortable[8*2 + i] = 31 - (color_prom[i + 32] & 0x0f);
 }
 
 
@@ -92,21 +86,6 @@ int digdug_vh_start(void)
 	pflastindex = -1;
 	pflastcolor = -1;
 
-#if LOG_IT
-	pCharFile = fopen ("dd-ch.log", "w");
-	if (pCharFile)
-	{
-		fprintf (pCharFile, "SXx SYy CHh A CLc\n");
-		fprintf (pCharFile, "=== === === = ===\n");
-	}
-	pSpriteFile = fopen ("dd-sp.log", "w");
-	if (pSpriteFile)
-	{
-		fprintf (pSpriteFile, " Xx   Yy  SPs CLc FX FY DX DY IXi\n");
-		fprintf (pSpriteFile, "==== ==== === === == == == == ===\n");
-	}
-#endif
-
 	return 0;
 }
 
@@ -119,13 +98,6 @@ int digdug_vh_start(void)
 void digdug_vh_stop(void)
 {
 	generic_vh_stop();
-	
-#if LOG_IT
-	if (pCharFile)
-		fclose (pCharFile);
-	if (pSpriteFile)
-		fclose (pSpriteFile);
-#endif
 }
 
 
@@ -136,23 +108,23 @@ void digdug_vh_latch_w(int offset, int data)
 		case 0:
 			playfield = (playfield & ~1) | (data & 1);
 			break;
-		
+
 		case 1:
 			playfield = (playfield & ~2) | ((data << 1) & 2);
 			break;
-		
+
 		case 2:
 			alphacolor = data & 1;
 			break;
-		
+
 		case 3:
 			playenable = data & 1;
 			break;
-		
+
 		case 4:
 			playcolor = (playcolor & ~1) | (data & 1);
 			break;
-		
+
 		case 5:
 			playcolor = (playcolor & ~2) | ((data << 1) & 2);
 			break;
@@ -177,7 +149,7 @@ void digdug_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
 ***************************************************************************/
 void digdug_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,i,pfindex,pfcolor;
+	int offs,pfindex,pfcolor;
 	unsigned char *pf;
 
 	/* determine the playfield */
@@ -196,16 +168,16 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* force a full update if the playfield has changed */
 	if (pfindex != pflastindex || pfcolor != pflastcolor)
 	{
-		memset (dirtybuffer, 1, VIDEO_RAM_SIZE * sizeof(dirtybuffer[0]));
+		memset(dirtybuffer,1,videoram_size);
 	}
 	pflastindex = pfindex;
 	pflastcolor = pfcolor;
-	
+
 	pfcolor <<= 4;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -219,7 +191,7 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap)
 			/* Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM */
 			/* don't map to a screen position. We don't check that here, however: range */
 			/* checking is performed by drawgfx(). */
-	
+
 			mx = offs / 32;
 			my = offs % 32;
 
@@ -271,74 +243,59 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	/* copy the temporary bitmap to the screen */
-	{
-		static int scroll[32];
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. */
-	for (i = 0;i < 64;i++)
+	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		/* is it on? */
-		if ((spriteram_3[2*i+1] & 2) == 0)
+		if ((spriteram_3[offs+1] & 2) == 0)
 		{
-			int sprite = spriteram[2*i];
-			int color = spriteram[2*i+1];
-			int x = spriteram_2[2*i]-16;
-			int y = spriteram_2[2*i+1]-40;
-			int flipx = spriteram_3[2*i] & 2;
-			int flipy = spriteram_3[2*i] & 1;
-			
+			int sprite = spriteram[offs];
+			int color = spriteram[offs+1];
+			int x = spriteram_2[offs]-16;
+			int y = spriteram_2[offs+1]-40;
+			int flipx = spriteram_3[offs] & 2;
+			int flipy = spriteram_3[offs] & 1;
+
 			if (y < 8) y += 256;
-			
-			/* is it on-screen? */
-			if (x > -16)
+
+			/* normal size? */
+			if (sprite < 0x80)
+				digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+
+			/* double size? */
+			else
 			{
-				/* normal size? */
-				if (sprite < 0x80)
-					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-				
-				/* double size? */
-				else
+				sprite = (sprite & 0xc0) | ((sprite & ~0xc0) << 2);
+				if (!flipy && !flipx)
 				{
-					sprite = (sprite & 0xc0) | ((sprite & ~0xc0) << 2);
-					if (!flipy && !flipx)
-					{
-						digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
-						digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-						digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
-					}
-					else if (flipy && flipx)
-					{
-						digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-						digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
-						digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
-					}
-					else if (flipx)
-					{
-						digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-						digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-						digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
-					}
-					else /* flipy */
-					{
-						digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-						digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
-						digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
-						digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
-					}
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
 				}
-				
-				#if LOG_IT
-				if (pSpriteFile && sprite >= 0x50 && sprite <= 0x5c)
-					fprintf (pSpriteFile, "%3dx %3dy %02Xs %02Xc %s %s %s %s %02Xi\n",
-						x,y,sprite,color,flipx?"FX":"  ",flipy?"FY":"  ",
-						spriteram_3[2*i]&8?"DX":"  ",
-						spriteram_3[2*i]&4?"DY":"  ",i);
-				#endif
+				else if (flipy && flipx)
+				{
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+				}
+				else if (flipx)
+				{
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+				}
+				else /* flipy */
+				{
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+				}
 			}
 		}
 	}

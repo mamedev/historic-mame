@@ -5,7 +5,7 @@ Pepper II memory map (preliminary)
 0000-03ff RAM
 4000-43ff Video ram
 6000-6fff Character generator RAM (512)
-8000-ffff ROM
+9000-ffff ROM
 
 read:
 5100      DSW (inverted)
@@ -61,8 +61,8 @@ write:
 
 
 extern unsigned char *venture_characterram;
-extern void venture_characterram_w(int offset,int data);
-extern void venture_vh_screenrefresh(struct osd_bitmap *bitmap);
+void venture_characterram_w(int offset,int data);
+void venture_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *venture_sprite_no;
 extern unsigned char *venture_sprite_enable;
@@ -76,7 +76,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5101, 0x5101, input_port_1_r },	/* IN0 */
 	{ 0x5103, 0x5103, input_port_2_r },	/* IN1 */
 	{ 0x6000, 0x6fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x9000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -87,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5100, 0x5100, MWA_RAM, &venture_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &venture_sprite_enable },
 	{ 0x6000, 0x6fff, venture_characterram_w, &venture_characterram },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x9000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -131,6 +131,7 @@ static struct DSW dsw[] =
 {
 	{ 0, 0x60, "LIVES", { "2", "3", "4", "5" } },
 	{ 0, 0x06, "BONUS", { "20000", "30000", "40000", "50000" } },
+	{ 0, 0x18, "COIN SELECT", { "1 COIN 4 CREDITS", "1 COIN 2 CREDITS", "2 COINS 1 CREDIT", "1 COIN 1 CREDIT" } },
 	{ -1 }
 };
 
@@ -205,6 +206,15 @@ static unsigned char colortable[] =
 
 };
 
+int pepper2_init_machine(const char *gamename)
+{
+	/* Disable ROM Check for quicker startup */
+	RAM[0xF52D]=0xEA;
+	RAM[0xF52E]=0xEA;
+	RAM[0xF52F]=0xEA;
+
+	return 0;
+}
 
 
 static struct MachineDriver machine_driver =
@@ -220,7 +230,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
-	0,
+	pepper2_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
@@ -251,18 +261,51 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pepper2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "main_12a", 0x9000, 0x1000 )
-	ROM_LOAD( "main_11a", 0xA000, 0x1000 )
-	ROM_LOAD( "main_10a", 0xB000, 0x1000 )
-	ROM_LOAD( "main_9a",  0xC000, 0x1000 )
-	ROM_LOAD( "main_8a",  0xD000, 0x1000 )
-	ROM_LOAD( "main_7a",  0xE000, 0x1000 )
-	ROM_LOAD( "main_6a",  0xF000, 0x1000 )
+	ROM_LOAD( "main_12a", 0x9000, 0x1000, 0x0a47e1e3 )
+	ROM_LOAD( "main_11a", 0xA000, 0x1000, 0x120e0da0 )
+	ROM_LOAD( "main_10a", 0xB000, 0x1000, 0x4ab11dc7 )
+	ROM_LOAD( "main_9a",  0xC000, 0x1000, 0xa6f0e57e )
+	ROM_LOAD( "main_8a",  0xD000, 0x1000, 0x04b6fd2a )
+	ROM_LOAD( "main_7a",  0xE000, 0x1000, 0x9e350147 )
+	ROM_LOAD( "main_6a",  0xF000, 0x1000, 0xda172fe9 )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "main_11d", 0x0000, 0x0800 )
+	ROM_LOAD( "main_11d", 0x0000, 0x0800, 0x8ae4f8ba )
 ROM_END
 
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x0365],"\x00\x07\x65",3) == 0 &&
+                        memcmp(&RAM[0x0380],"\x15\x20\x11",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x0360],1,5+6*5,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x0360],1,5+6*5,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -271,8 +314,8 @@ struct GameDriver pepper2_driver =
 {
 	"Pepper II",
 	"pepper2",
-	"MARC LAFONTAINE",
-	&machine_driver,
+	"MARC LAFONTAINE\nMIKE BALFOUR",
+        &machine_driver,
 
 	pepper2_rom,
 	0, 0,
@@ -283,5 +326,5 @@ struct GameDriver pepper2_driver =
 	0, palette, colortable,
 	8*13, 8*16,
 
-	0,0
+	hiload,hisave
 };

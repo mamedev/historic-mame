@@ -9,9 +9,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VIDEO_RAM_SIZE 0x400
 
-int spacefb_vref=0;
+
+unsigned char spacefb_vref=0;
+
+
 
 /***************************************************************************
 
@@ -76,8 +78,10 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 	int spriteno;
 
+
+
 	/* Clear the bitmap */
-	memset(bitmap->_private,0,bitmap->width*bitmap->height);
+	clearbitmap(bitmap);
 
 	/* Draw the sprite/chars */
 	for (offs = 0,spriteno = spacefb_vref;offs < 128;offs++,spriteno++)
@@ -112,7 +116,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 						0,0,v,h,
 						0,TRANSPARENCY_NONE,0);
 			}
-		}				
+		}
 	}
 
 }

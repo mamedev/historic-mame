@@ -43,19 +43,20 @@ c001      YM2203 #2 write
 
 
 
-extern int c1942_interrupt(void);
+int c1942_interrupt(void);
 
 extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
 extern int vulgus_bgvideoram_size;
 extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
-extern void vulgus_bgvideoram_w(int offset,int data);
-extern void vulgus_bgcolorram_w(int offset,int data);
+void vulgus_bgvideoram_w(int offset,int data);
+void vulgus_bgcolorram_w(int offset,int data);
 int vulgus_vh_start(void);
 void vulgus_vh_stop(void);
-extern void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap);
+void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int c1942_sh_start(void);
+int vulgus_sh_start(void);
+int vulgus_sh_interrupt(void);
 
 
 
@@ -344,7 +345,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,8
+			vulgus_sh_interrupt,8
 		}
 	},
 	60,
@@ -364,7 +365,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	c1942_sh_start,
+	vulgus_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -378,28 +379,28 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vulgus_rom )
-	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "1-4n.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "1-5n.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "1-6n.bin", 0x4000, 0x2000 )
-	ROM_LOAD( "1-7n.bin", 0x6000, 0x2000 )
-	ROM_LOAD( "1-8n.bin", 0x8000, 0x2000 )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "1-4n.bin", 0x0000, 0x2000, 0xcf6bd29f )
+	ROM_LOAD( "1-5n.bin", 0x2000, 0x2000, 0x9013468d )
+	ROM_LOAD( "1-6n.bin", 0x4000, 0x2000, 0x85bdcab7 )
+	ROM_LOAD( "1-7n.bin", 0x6000, 0x2000, 0x453dd763 )
+	ROM_LOAD( "1-8n.bin", 0x8000, 0x2000, 0x0064819a )
 
 	ROM_REGION(0x16000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-3d.bin", 0x00000, 0x2000 )	/* characters */
-	ROM_LOAD( "2-2a.bin", 0x02000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-4a.bin", 0x04000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-6a.bin", 0x06000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-3a.bin", 0x08000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-5a.bin", 0x0a000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-7a.bin", 0x0c000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-2n.bin", 0x0e000, 0x2000 )	/* sprites */
-	ROM_LOAD( "2-4n.bin", 0x10000, 0x2000 )	/* sprites */
-	ROM_LOAD( "2-3n.bin", 0x12000, 0x2000 )	/* sprites */
-	ROM_LOAD( "2-5n.bin", 0x14000, 0x2000 )	/* sprites */
+	ROM_LOAD( "1-3d.bin", 0x00000, 0x2000, 0x59855ce9 )	/* characters */
+	ROM_LOAD( "2-2a.bin", 0x02000, 0x2000, 0xd2b3db63 )	/* tiles */
+	ROM_LOAD( "2-4a.bin", 0x04000, 0x2000, 0x87b39e71 )	/* tiles */
+	ROM_LOAD( "2-6a.bin", 0x06000, 0x2000, 0x8634d056 )	/* tiles */
+	ROM_LOAD( "2-3a.bin", 0x08000, 0x2000, 0x3f9b35fd )	/* tiles */
+	ROM_LOAD( "2-5a.bin", 0x0a000, 0x2000, 0x5a2aca94 )	/* tiles */
+	ROM_LOAD( "2-7a.bin", 0x0c000, 0x2000, 0x9b4c25fc )	/* tiles */
+	ROM_LOAD( "2-2n.bin", 0x0e000, 0x2000, 0x550197fd )	/* sprites */
+	ROM_LOAD( "2-4n.bin", 0x10000, 0x2000, 0x588e8088 )	/* sprites */
+	ROM_LOAD( "2-3n.bin", 0x12000, 0x2000, 0x09ff7dd9 )	/* sprites */
+	ROM_LOAD( "2-5n.bin", 0x14000, 0x2000, 0x62e1457f )	/* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-11c.bin", 0x0000, 0x2000 )
+	ROM_LOAD( "1-11c.bin", 0x0000, 0x2000, 0x208ab38a )
 ROM_END
 
 

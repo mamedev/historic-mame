@@ -117,15 +117,15 @@ red flash effect when you die.
 #include "vidhrdw/generic.h"
 
 
-extern void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
-extern void spacefb_port_0_w(int offset,int data);
-extern void spacefb_port_1_w(int offset,int data);
-extern void spacefb_port_2_w(int offset,int data);
-extern void spacefb_port_3_w(int offset,int data);
+void spacefb_port_0_w(int offset,int data);
+void spacefb_port_1_w(int offset,int data);
+void spacefb_port_2_w(int offset,int data);
+void spacefb_port_3_w(int offset,int data);
 
-extern int spacefb_interrupt();
+int spacefb_interrupt();
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -232,7 +232,7 @@ static struct GfxLayout bulletlayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,   0, 8 },
-	{ 2, 0x0000, &bulletlayout, 0, 8 },
+	{ 1, 0x1000, &bulletlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -280,24 +280,24 @@ static struct MachineDriver machine_driver =
 
 
 
-
 ROM_START( spacefb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cpu/5e", 0x0000, 0x0800)         /* Code */
-	ROM_LOAD( "cpu/5f", 0x0800, 0x0800)
-	ROM_LOAD( "cpu/5h", 0x1000, 0x0800)
-	ROM_LOAD( "cpu/5i", 0x1800, 0x0800)
-	ROM_LOAD( "cpu/5j", 0x2000, 0x0800)
-	ROM_LOAD( "cpu/5k", 0x2800, 0x0800)
-	ROM_LOAD( "cpu/5m", 0x3000, 0x0800)
-	ROM_LOAD( "cpu/5n", 0x3800, 0x0800)
+	ROM_LOAD( "5e.cpu", 0x0000, 0x0800, 0xc1d7a67b )         /* Code */
+	ROM_LOAD( "5f.cpu", 0x0800, 0x0800, 0x5f06218a )
+	ROM_LOAD( "5h.cpu", 0x1000, 0x0800, 0x78ffa2af )
+	ROM_LOAD( "5i.cpu", 0x1800, 0x0800, 0xf95a50b8 )
+	ROM_LOAD( "5j.cpu", 0x2000, 0x0800, 0x30672a65 )
+	ROM_LOAD( "5k.cpu", 0x2800, 0x0800, 0xeb8086de )
+	ROM_LOAD( "5m.cpu", 0x3000, 0x0800, 0x2c696757 )
+	ROM_LOAD( "5n.cpu", 0x3800, 0x0800, 0x79e64f86 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid/6K", 0x0000, 0x0800 )
-	ROM_LOAD( "vid/5K", 0x0800, 0x0800 )
-	ROM_REGION(0x0100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid/4I", 0x0000, 0x0100 )
+	ROM_REGION(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6k.vid", 0x0000, 0x0800, 0x5076d18e )
+	ROM_LOAD( "5k.vid", 0x0800, 0x0800, 0xe945e879 )
+	ROM_LOAD( "4i.vid", 0x1000, 0x0100, 0x75c90c07 )
 ROM_END
+
+
 
 struct GameDriver spacefb_driver =
 {

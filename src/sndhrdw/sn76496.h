@@ -11,6 +11,9 @@ struct SN76496
 	/* private */
 	int Register[8];
 	int LastRegister;
+	/* buffer mode */
+	int Counter[4];
+	int NoiseGen;
 };
 
 
@@ -18,3 +21,4 @@ struct SN76496
 void SN76496Reset(struct SN76496 *R);
 void SN76496Write(struct SN76496 *R,int data);
 void SN76496Update(struct SN76496 *R);
+void SN76496UpdateB(struct SN76496 *R , int rate , char *buffer , int size);

@@ -8,8 +8,8 @@
       HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
       ---------+-----+------------------------+------------------------
       0000-01FF  R/W   D  D  D  D  D  D  D  D   512 bytes working ram
-      
-      0200-05FF  R/W   D  D  D  D  D  D  D  D   3rd color bit region 
+
+      0200-05FF  R/W   D  D  D  D  D  D  D  D   3rd color bit region
 						                                    of screen ram.
       																          Each bit of every odd byte is the low color
       																          bit for the bottom scanlines
@@ -17,47 +17,47 @@
       																          32 scanlines, although the code only accesses
       																          $401-$5FF for the bottom 8 scanlines...
       																          Pretty wild, huh?
-      																          
+
       0600-063F  R/W   D  D  D  D  D  D  D  D   More working ram.
-      
-      0640-3FFF  R/W   D  D  D  D  D  D  D  D   2-color bit region of 
-																								screen ram. 
-																								Writes to 4 bytes each 
+
+      0640-3FFF  R/W   D  D  D  D  D  D  D  D   2-color bit region of
+																								screen ram.
+																								Writes to 4 bytes each
 																								and mapped to $1900-$FFFF
-																								
-			1900-FFFF  R/W   D  D                     2-color bit region of 
+
+			1900-FFFF  R/W   D  D                     2-color bit region of
 																						    screen ram
-			                                          Only accessed with 
+			                                          Only accessed with
 			                                           LDA ($ZZ,X) and
-			                                           STA ($ZZ,X)  
+			                                           STA ($ZZ,X)
 			                                          Those instructions take longer
 			                                          than 5 cycles.
-			                                          
+
       ---------+-----+------------------------+------------------------
-      4000-400F  R/W   D  D  D  D  D  D  D  D   POKEY ports. 
+      4000-400F  R/W   D  D  D  D  D  D  D  D   POKEY ports.
       -----------------------------------------------------------------
       4008       R     D  D  D  D  D  D  D  D   Game Option switches
       -----------------------------------------------------------------
-      4800       R     D                        Right coin 
-      4800       R        D                     Center coin   
-      4800       R           D                  Left coin      
-      4800       R              D               1 player start         
-      4800       R                 D            2 player start             
+      4800       R     D                        Right coin
+      4800       R        D                     Center coin
+      4800       R           D                  Left coin
+      4800       R              D               1 player start
+      4800       R                 D            2 player start
       4800       R                    D         2nd player left fire(cocktail)
       4800       R                       D      2nd player center fire  "
-      4800       R                          D   2nd player right fire   " 
+      4800       R                          D   2nd player right fire   "
       ---------+-----+------------------------+------------------------
       4800       R                 D  D  D  D   Horiz trackball displacement
-						                                    if ctrld=high. 
+						                                    if ctrld=high.
       4800       R     D  D  D  D               Vert trackball displacement
-						                                    if ctrld=high. 
+						                                    if ctrld=high.
       ---------+-----+------------------------+------------------------
-      4800       W     D                        Unused ?? 
+      4800       W     D                        Unused ??
       4800       W        D                     screen flip
       4800       W           D                  left coin counter
       4800       W              D               center coin counter
       4800       W                 D            right coin counter
-      4800       W                    D         2 player start LED. 
+      4800       W                    D         2 player start LED.
       4800       W                       D      1 player start LED.
       4800       W                          D   CTRLD, 0=read switches,
 						                                    1= read trackball.
@@ -67,21 +67,21 @@
       4900       R           D                  SLAM switch input.
       4900       R              D               Horiz trackball direction input.
       4900       R                 D            Vert trackball direction input.
-      4900       R                    D         1st player left fire. 
+      4900       R                    D         1st player left fire.
       4900       R                       D      1st player center fire.
       4900       R                          D   1st player right fire.
       ---------+-----+------------------------+------------------------
       4A00       R     D  D  D  D  D  D  D  D   Pricing Option switches.
-      4B00-4B07  W                 D  D  D  D   Color RAM.      
-      4C00       W                              Watchdog.       
+      4B00-4B07  W                 D  D  D  D   Color RAM.
+      4C00       W                              Watchdog.
       4D00       W                              Interrupt acknowledge.
       ---------+-----+------------------------+------------------------
-      5000-7FFF  R     D  D  D  D  D  D  D  D   Program. 
+      5000-7FFF  R     D  D  D  D  D  D  D  D   Program.
       ---------+-----+------------------------+------------------------
-      
 
 
-      
+
+
       MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
 ---------------------------------------------
 
@@ -140,20 +140,17 @@ Off Off                         1 coin 2 plays
 
 
 #include "driver.h"
+#include "sndhrdw/pokyintf.h"
 
+int missile_init_machine(const char *gamename);
+int  missile_r(int offset);
+void missile_w(int offset, int data);
 
-extern int missile_init_machine(const char *gamename);
-extern int missile_interrupt(void);
-extern int  missile_r(int offset);
-extern void missile_w(int offset, int data);
+int missile_trakball_r(int data);
 
-extern int  milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
-
-extern int  missile_vh_start(void);
-extern void missile_vh_stop(void);
-extern void missile_vh_update(struct osd_bitmap *bitmap);
+int  missile_vh_start(void);
+void missile_vh_stop(void);
+void missile_vh_update(struct osd_bitmap *bitmap);
 
 
 
@@ -168,7 +165,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xFFFF, missile_w }, 
+	{ 0x0000, 0xFFFF, missile_w },
 	{ -1 }	/* end of table */
 };
 
@@ -180,19 +177,19 @@ static struct InputPort input_ports[] =
 	/*
 	 80 = right coin
 	 40 = center coin
-	 20 = left coin 
+	 20 = left coin
 	 10 = 1 player start
 	 08 = 2 player start
 	 04 = 2nd player left fire (cocktail)
 	 02 = 2nd player center fire (cocktail)
 	 01 = 2nd player right fire (cocktail)
-	 */             
+	 */
 		0xFF,
 		{OSD_KEY_D, OSD_KEY_S, OSD_KEY_A, OSD_KEY_2, OSD_KEY_1, OSD_KEY_3, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	
-		
+
+
 	{ /* IN1 - 4900, all inverted */
 	/*
 	 80 = vbl read
@@ -204,13 +201,13 @@ static struct InputPort input_ports[] =
 	 02 = 1st player center fire
 	 01 = 1st player right fire
 	*/
-		
+
 		0x67,
-		{ OSD_KEY_D, OSD_KEY_S, OSD_KEY_A, 0, 0, OSD_KEY_F6, OSD_KEY_F5, 0},
+		{ OSD_KEY_D, OSD_KEY_S, OSD_KEY_A, 0, 0, OSD_KEY_F6, OSD_KEY_F5, IPB_VBLANK},
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	
-	
+
+
 	{	/* IN2  - 4A00 - Pricing Option switches, all inverted */
 			0x02,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -230,20 +227,18 @@ static struct InputPort input_ports[] =
 
 static struct TrakPort trak_ports[] =
 {
-#if 0
         {
           X_AXIS,
           1,
           1.0,
-          missile_trakball_x
+          missile_trakball_r
         },
         {
           Y_AXIS,
           1,
           1.0,
-          missile_trakball_y
+          missile_trakball_r
         },
-#endif
         { -1 }
 };
 
@@ -265,7 +260,7 @@ static struct DSW dsw[] =
 	{ 2, 0x60, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
 	{ 3, 0x03, "NUMBER OF CITIES", { "6", "4", "5", "7" } },
 /* 	{ 3, 0x08, "TRACKBALL", { "LARGE", "MINI" } }, not very useful */
-	{ 3, 0x70, "BONUS AT", { "10000", "12000", "14000", "15000", "18000", "20000", "8000", "0" } }, 
+	{ 3, 0x70, "BONUS AT", { "10000", "12000", "14000", "15000", "18000", "20000", "8000", "0" } },
 /* 	{ 3, 0x80, "MODEL", { "UPRIGHT", "COCKTAIL" } }, */
 	{ -1 }
 };
@@ -309,7 +304,7 @@ static unsigned char palette[] =
 	0xFF,0x00,0x00,   /* red    */
 	0x00,0xFF,0xFF,   /* cyan    */
 	0x00,0xFF,0x00,   /* green   */
-	0x00,0x00,0xFF,   /* blue  */ 
+	0x00,0x00,0xFF,   /* blue  */
 	0x00,0x00,0x00    /* black */
 };
 
@@ -327,7 +322,7 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			missile_interrupt, 12
+			interrupt, 1
 		}
 	},
 	60,
@@ -346,9 +341,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey1_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -362,31 +357,30 @@ static struct MachineDriver machine_driver =
 
 ROM_START( missile_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035820.02", 0x5000, 0x0800 )
-	ROM_LOAD( "035821.02", 0x5800, 0x0800 )
-	ROM_LOAD( "035822.02", 0x6000, 0x0800 )
-	ROM_LOAD( "035823.02", 0x6800, 0x0800 )
-	ROM_LOAD( "035824.02", 0x7000, 0x0800 )
-	ROM_LOAD( "035825.02", 0x7800, 0x0800 )
-	ROM_LOAD( "035825.02", 0xF800, 0x0800 )		/* for interrupt vectors  */
+	ROM_LOAD( "035820.02", 0x5000, 0x0800, 0x899d091b )
+	ROM_LOAD( "035821.02", 0x5800, 0x0800, 0x25543e0a )
+	ROM_LOAD( "035822.02", 0x6000, 0x0800, 0x8067194f )
+	ROM_LOAD( "035823.02", 0x6800, 0x0800, 0xfc0f6b13 )
+	ROM_LOAD( "035824.02", 0x7000, 0x0800, 0xa3e9d74d )
+	ROM_LOAD( "035825.02", 0x7800, 0x0800, 0x6050ea56 )
+	ROM_RELOAD(            0xF800, 0x0800 )		/* for interrupt vectors  */
 ROM_END
 
 
 
-
 static int hiload(const char *name)
-{	
+{
 	FILE *f;
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x002C],"\x47\x4A\x4C", 3) == 0 &&
 			memcmp(&RAM[0x0044],"\x50\x69\x00", 3) == 0){
-		
+
 		if ((f = fopen(name,"rb")) != 0){
 			fread(&RAM[0x002C],1,6*8,f);
 			fclose(f);
 		}
 		return 1;
-	}else 
+	}else
 		return 0;	/* we can't load the hi scores yet */
 }
 
@@ -395,7 +389,7 @@ static int hiload(const char *name)
 static void hisave(const char *name)
 {
 	FILE *f;
-	
+
 	if ((f = fopen(name,"wb")) != 0){
 		fwrite(&RAM[0x002C],1,6*8,f);
 		fclose(f);
@@ -418,7 +412,7 @@ struct GameDriver missile_driver =
 	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	
+
 	8*13, 8*12,
 
 	hiload, hisave

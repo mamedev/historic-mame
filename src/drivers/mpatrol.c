@@ -37,17 +37,17 @@ c0        background control?
 
 
 
-extern int mpatrol_protection_r(int offset);
+int mpatrol_protection_r(int offset);
 
-extern void mpatrol_scroll_w(int offset,int data);
-extern void mpatrol_bg1xpos_w(int offset,int data);
-extern void mpatrol_bg1ypos_w(int offset,int data);
-extern void mpatrol_bg2xpos_w(int offset,int data);
-extern void mpatrol_bg2ypos_w(int offset,int data);
-extern void mpatrol_bgcontrol_w(int offset,int data);
+void mpatrol_scroll_w(int offset,int data);
+void mpatrol_bg1xpos_w(int offset,int data);
+void mpatrol_bg1ypos_w(int offset,int data);
+void mpatrol_bg2xpos_w(int offset,int data);
+void mpatrol_bg2ypos_w(int offset,int data);
+void mpatrol_bgcontrol_w(int offset,int data);
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
-extern void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -341,36 +341,36 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mpatrol_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000 )
-	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000 )
-	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000 )
-	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000 )
+	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x138439c6 )
+	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x0c1bc43b )
+	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000, 0x56b4c738 )
+	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000, 0x9e598a75 )
 
 	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000 )	/* chars */
-	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000 )
-	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000 )	/* sprites */
-	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000 )
-	ROM_LOAD( "mp-e.3h", 0x4000, 0x1000 )	/* background graphics */
-	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000 )
-	ROM_LOAD( "mp-e.3l", 0x6000, 0x1000 )
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xc8e818a2 )	/* chars */
+	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x080d9163 )
+	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 )	/* sprites */
+	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 )
+	ROM_LOAD( "mp-e.3h", 0x4000, 0x1000, 0x89ce19a8 )	/* background graphics */
+	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace )
+	ROM_LOAD( "mp-e.3l", 0x6000, 0x1000, 0x48b86bb0 )
 ROM_END
 
 ROM_START( mranger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000 )
-	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000 )
-	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000 )
-	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000 )
+	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000, 0x0440639c )
+	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000, 0xf25e07f8 )
+	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000, 0x6e686d92 )
+	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000, 0x39412cd3 )
 
 	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000 )	/* chars */
-	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000 )
-	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000 )	/* sprites */
-	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000 )
-	ROM_LOAD( "mr-e.3h", 0x4000, 0x1000 )	/* background graphics */
-	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000 )
-	ROM_LOAD( "mr-e.3l", 0x6000, 0x1000 )
+	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000, 0xefe9bb1d )	/* chars */
+	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000, 0x796d8525 )
+	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000, 0xfe518a23 )	/* sprites */
+	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000, 0x974b35c3 )
+	ROM_LOAD( "mr-e.3h", 0x4000, 0x1000, 0x89ce19a8 )	/* background graphics */
+	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000, 0x48d8cace )
+	ROM_LOAD( "mr-e.3l", 0x6000, 0x1000, 0x48b86bb0 )
 ROM_END
 
 
@@ -396,7 +396,7 @@ struct GameDriver mpatrol_driver =
 
 struct GameDriver mranger_driver =
 {
-	"Moon Ranger",
+	"Moon Ranger (bootleg Moon Patrol)",
 	"mranger",
 	"NICOLA SALMORIA\nCHRIS HARDY",
 	&machine_driver,

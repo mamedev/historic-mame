@@ -53,7 +53,7 @@ int phoenix_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,videoram_size);
+	memset(dirtybuffer2,1,videoram_size);
 
 	/* small temp bitmap for the score display */
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,3*8)) == 0)

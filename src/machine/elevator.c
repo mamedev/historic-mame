@@ -10,23 +10,7 @@
 #include "driver.h"
 
 
-
-unsigned char *taito_dsw23_select;
-
 static int bank;
-
-
-
-int taito_dsw23_r(int offset)
-{
-	if (*taito_dsw23_select == 0x0e) return readinputport(5);
-	else if (*taito_dsw23_select == 0x0f) return readinputport(6);
-	else if (errorlog) fprintf(errorlog,"d40e = %02x\n",*taito_dsw23_select);
-
-	return 0;
-}
-
-
 
 int elevator_init_machine(const char *gamename)
 {
@@ -49,16 +33,24 @@ int elevator_init_machine(const char *gamename)
 	return 0;
 }
 
-
+unsigned char *elevator_protection;
 
 int elevator_protection_r(int offset)
 {
-	return 0;
+	int data;
+
+	data = (int)(*elevator_protection);
+	/*********************************************************************/
+	/*  elevator action , fast entry 52h , must be return 17h            */
+	/*  (preliminary version)                                            */
+	data = data - 0x3b;
+	/*********************************************************************/
+	if (errorlog) fprintf(errorlog,"Protection entry:%02x , return:%02x\n" , *elevator_protection , data );
+	return data;
 }
 
 
-
-int elevator_unknown_r(int offset)
+int elevator_protection_t_r(int offset)
 {
 	return 0xff;
 }

@@ -46,19 +46,19 @@ NMI connected to vertical blank
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int stooges_vh_start(void);
-extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
-extern void gottlieb_sh_update(void);
+int stooges_vh_start(void);
+void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh_w(int offset, int data);
+void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
-extern void gottlieb_output(int offset, int data);
-extern int stooges_IN1_r(int offset);
-extern int stooges_joysticks(int offset);
+void gottlieb_output(int offset, int data);
+int stooges_IN1_r(int offset);
+int stooges_joysticks(int offset);
 extern unsigned char *gottlieb_characterram;
 extern unsigned char *gottlieb_paletteram;
-extern void gottlieb_characterram_w(int offset,int data);
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_characterram_w(int offset,int data);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -247,19 +247,43 @@ static const struct MachineDriver machine_driver =
 
 ROM_START( stooges_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "GV113ROM.0",  0xe000, 0x2000 )
-	ROM_LOAD( "GV113ROM.1",  0xc000, 0x2000 )
-	ROM_LOAD( "GV113ROM.2",  0xa000, 0x2000 )
-	ROM_LOAD( "GV113ROM.3",  0x8000, 0x2000 )
-	ROM_LOAD( "GV113ROM.4",  0x6000, 0x2000 )
-	ROM_LOAD( "GV113RAM.4",  0x2000, 0x1000 )
+	ROM_LOAD( "GV113RAM.4", 0x2000, 0x1000, 0x64249570 )
+	ROM_LOAD( "GV113ROM.4", 0x6000, 0x2000, 0x8fdb5ff5 )
+	ROM_LOAD( "GV113ROM.3", 0x8000, 0x2000, 0x8d135dd7 )
+	ROM_LOAD( "GV113ROM.2", 0xa000, 0x2000, 0x093ee71e )
+	ROM_LOAD( "GV113ROM.1", 0xc000, 0x2000, 0x65319da1 )
+	ROM_LOAD( "GV113ROM.0", 0xe000, 0x2000, 0x20f3727b )
 
 	ROM_REGION(0x8000)      /* temporary space for graphics */
-	ROM_LOAD( "GV113FG3",  0x0000, 0x2000 )       /* sprites */
-	ROM_LOAD( "GV113FG2",  0x2000, 0x2000 )       /* sprites */
-	ROM_LOAD( "GV113FG1",  0x4000, 0x2000 )       /* sprites */
-	ROM_LOAD( "GV113FG0",  0x6000, 0x2000 )       /* sprites */
+	ROM_LOAD( "GV113FG3", 0x0000, 0x2000, 0xf3e09a2a )       /* sprites */
+	ROM_LOAD( "GV113FG2", 0x2000, 0x2000, 0x5bde03f8 )       /* sprites */
+	ROM_LOAD( "GV113FG1", 0x4000, 0x2000, 0x3904746a )       /* sprites */
+	ROM_LOAD( "GV113FG0", 0x6000, 0x2000, 0xa2b57805 )       /* sprites */
 ROM_END
+
+static int hiload(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fread(RAM+0x485,22,7,f); /* 21 hiscore entries + 1 (?) */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fwrite(RAM+0x485,22,7,f); /* hiscore entries */
+		fclose(f);
+	}
+}
+
 
 struct GameDriver stooges_driver =
 {
@@ -279,5 +303,5 @@ struct GameDriver stooges_driver =
 
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+        hiload, hisave
 };

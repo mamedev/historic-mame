@@ -51,11 +51,11 @@ same as Pooyan
 
 
 
-extern void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int timeplt_sh_interrupt(void);
-extern int timeplt_sh_start(void);
+int timeplt_sh_interrupt(void);
+int timeplt_sh_start(void);
 
 
 
@@ -273,7 +273,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			timeplt_sh_interrupt,1
+			timeplt_sh_interrupt,10
 		}
 	},
 	60,
@@ -308,17 +308,32 @@ static struct MachineDriver machine_driver =
 
 ROM_START( timeplt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tm1", 0x0000, 0x2000 )
-	ROM_LOAD( "tm2", 0x2000, 0x2000 )
-	ROM_LOAD( "tm3", 0x4000, 0x2000 )
+	ROM_LOAD( "tm1", 0x0000, 0x2000, 0x3eb31db9 )
+	ROM_LOAD( "tm2", 0x2000, 0x2000, 0x776f0771 )
+	ROM_LOAD( "tm3", 0x4000, 0x2000, 0x5dac80dc )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm6", 0x0000, 0x2000 )
-	ROM_LOAD( "tm4", 0x2000, 0x2000 )
-	ROM_LOAD( "tm5", 0x4000, 0x2000 )
+	ROM_LOAD( "tm6", 0x0000, 0x2000, 0xfb1dbeb5 )
+	ROM_LOAD( "tm4", 0x2000, 0x2000, 0x985d9d73 )
+	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7", 0x0000, 0x1000 )
+	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d )
+ROM_END
+
+ROM_START( spaceplt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tm1", 0x0000, 0x2000, 0xfe1e8a6c )
+	ROM_LOAD( "tm2", 0x2000, 0x2000, 0xa4bcaa6c )
+	ROM_LOAD( "tm3", 0x4000, 0x2000, 0xf83edd76 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm6", 0x0000, 0x2000, 0x539af2ba )
+	ROM_LOAD( "tm4", 0x2000, 0x2000, 0x67f96215 )
+	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d )
 ROM_END
 
 
@@ -391,12 +406,12 @@ struct GameDriver timeplt_driver =
 
 struct GameDriver spaceplt_driver =
 {
-	"Space Pilot",
+	"Space Pilot (bootleg Time Pilot)",
 	"spaceplt",
 	"NICOLA SALMORIA\nALAN J MCCORMICK\nMIKE CUDDY",
 	&machine_driver,
 
-	timeplt_rom,
+	spaceplt_rom,
 	0, 0,
 	0,
 

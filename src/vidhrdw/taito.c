@@ -11,19 +11,20 @@
 
 
 
-unsigned char *junglek_videoram2,*junglek_videoram3;
-unsigned char *junglek_characterram;
-unsigned char *junglek_scrollx1,*junglek_scrollx2,*junglek_scrollx3;
-unsigned char *junglek_scrolly1,*junglek_scrolly2,*junglek_scrolly3;
-unsigned char *junglek_colscrolly1,*junglek_colscrolly2,*junglek_colscrolly3;
-unsigned char *junglek_gfxpointer,*junglek_paletteram;
-unsigned char *junglek_colorbank,*junglek_video_priority;
-unsigned char *junglek_colorbank,*junglek_video_enable;
+unsigned char *taito_videoram2,*taito_videoram3;
+unsigned char *taito_characterram;
+unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
+unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
+unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
+unsigned char *taito_gfxpointer,*taito_paletteram;
+unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
+static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static const unsigned char *colors;
-static int dirtypalette,dirtycolor;
+static int dirtypalette;
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
+static int frontcharset,spacechar;
 
 
 
@@ -32,7 +33,7 @@ static unsigned char dirtysprite1[64],dirtysprite2[64];
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void junglek_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -66,13 +67,30 @@ void junglek_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
   Start the video hardware emulation.
 
 ***************************************************************************/
-int junglek_vh_start(void)
+static int taito_vh_start(void)
 {
 	if (generic_vh_start() != 0)
 		return 1;
 
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer2,1,videoram_size);
+
+	if ((dirtybuffer3 = malloc(videoram_size)) == 0)
+	{
+		free(dirtybuffer2);
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer3,1,videoram_size);
+
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
+		free(dirtybuffer3);
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -80,11 +98,34 @@ int junglek_vh_start(void)
 	if ((tmpbitmap3 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		osd_free_bitmap(tmpbitmap2);
+		free(dirtybuffer3);
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
 	return 0;
+}
+
+int elevator_vh_start(void)
+{
+	frontcharset = 0;
+	spacechar = 0;
+	return taito_vh_start();
+}
+
+int junglek_vh_start(void)
+{
+	frontcharset = 2;
+	spacechar = 0xff;
+	return taito_vh_start();
+}
+
+int wwestern_vh_start(void)
+{
+	frontcharset = 0;
+	spacechar = 0xbb;
+	return taito_vh_start();
 }
 
 
@@ -94,24 +135,26 @@ int junglek_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
-void junglek_vh_stop(void)
+void taito_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap3);
 	osd_free_bitmap(tmpbitmap2);
+	free(dirtybuffer3);
+	free(dirtybuffer2);
 	generic_vh_stop();
 }
 
 
 
-int junglek_gfxrom_r(int offset)
+int taito_gfxrom_r(int offset)
 {
 	int offs;
 
 
-	offs = junglek_gfxpointer[0]+junglek_gfxpointer[1]*256;
+	offs = taito_gfxpointer[0]+taito_gfxpointer[1]*256;
 
-	junglek_gfxpointer[0]++;
-	if (junglek_gfxpointer[0] == 0) junglek_gfxpointer[1]++;
+	taito_gfxpointer[0]++;
+	if (taito_gfxpointer[0] == 0) taito_gfxpointer[1]++;
 
 	if (offs < 0x8000)
 		return Machine->memory_region[2][offs];
@@ -120,57 +163,59 @@ int junglek_gfxrom_r(int offset)
 
 
 
-void junglek_videoram2_w(int offset,int data)
+void taito_videoram2_w(int offset,int data)
 {
-	if (junglek_videoram2[offset] != data)
+	if (taito_videoram2[offset] != data)
 	{
-		dirtybuffer[offset] = 1;
+		dirtybuffer2[offset] = 1;
 
-		junglek_videoram2[offset] = data;
+		taito_videoram2[offset] = data;
 	}
 }
 
 
 
-void junglek_videoram3_w(int offset,int data)
+void taito_videoram3_w(int offset,int data)
 {
-	if (junglek_videoram3[offset] != data)
+	if (taito_videoram3[offset] != data)
 	{
-		dirtybuffer[offset] = 1;
+		dirtybuffer3[offset] = 1;
 
-		junglek_videoram3[offset] = data;
+		taito_videoram3[offset] = data;
 	}
 }
 
 
 
-void junglek_paletteram_w(int offset,int data)
+void taito_paletteram_w(int offset,int data)
 {
-	if (junglek_paletteram[offset] != data)
+	if (taito_paletteram[offset] != data)
 	{
 		dirtypalette = 1;
 
-		junglek_paletteram[offset] = data;
+		taito_paletteram[offset] = data;
 	}
 }
 
 
 
-extern void junglek_colorbank_w(int offset,int data)
+void taito_colorbank_w(int offset,int data)
 {
-	if (junglek_colorbank[offset] != data)
+	if (taito_colorbank[offset] != data)
 	{
-		dirtycolor = 1;
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer3,1,videoram_size);
 
-		junglek_colorbank[offset] = data;
+		taito_colorbank[offset] = data;
 	}
 }
 
 
 
-void junglek_characterram_w(int offset,int data)
+void taito_characterram_w(int offset,int data)
 {
-	if (junglek_characterram[offset] != data)
+	if (taito_characterram[offset] != data)
 	{
 		if (offset < 0x1800)
 		{
@@ -183,7 +228,7 @@ void junglek_characterram_w(int offset,int data)
 			dirtysprite2[(offset / 32) & 0x3f] = 1;
 		}
 
-		junglek_characterram[offset] = data;
+		taito_characterram[offset] = data;
 	}
 }
 
@@ -196,7 +241,7 @@ void junglek_characterram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
 
@@ -206,12 +251,12 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtycharacter1[offs] == 1)
 		{
-			decodechar(Machine->gfx[0],offs,junglek_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
+			decodechar(Machine->gfx[0],offs,taito_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter1[offs] = 0;
 		}
 		if (dirtycharacter2[offs] == 1)
 		{
-			decodechar(Machine->gfx[2],offs,junglek_characterram + 0x1800,Machine->drv->gfxdecodeinfo[2].gfxlayout);
+			decodechar(Machine->gfx[2],offs,taito_characterram + 0x1800,Machine->drv->gfxdecodeinfo[2].gfxlayout);
 			dirtycharacter2[offs] = 0;
 		}
 	}
@@ -220,12 +265,12 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtysprite1[offs] == 1)
 		{
-			decodechar(Machine->gfx[1],offs,junglek_characterram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
+			decodechar(Machine->gfx[1],offs,taito_characterram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
 			dirtysprite1[offs] = 0;
 		}
 		if (dirtysprite2[offs] == 1)
 		{
-			decodechar(Machine->gfx[3],offs,junglek_characterram + 0x1800,Machine->drv->gfxdecodeinfo[3].gfxlayout);
+			decodechar(Machine->gfx[3],offs,taito_characterram + 0x1800,Machine->drv->gfxdecodeinfo[3].gfxlayout);
 			dirtysprite2[offs] = 0;
 		}
 	}
@@ -244,23 +289,25 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 			offs = 0;
 			while (offs < Machine->drv->total_colors)
 			{
-				if ((junglek_paletteram[2*i] & 1) == colors[2*offs] &&
-						junglek_paletteram[2*i+1] == colors[2*offs+1])
+				if ((taito_paletteram[2*i] & 1) == colors[2*offs] &&
+						taito_paletteram[2*i+1] == colors[2*offs+1])
 					break;
 
 				offs++;
 			}
 
-			col = Machine->pens[offs];
 			/* avoid undesired transparency */
-			if (col == 0 && i % 8 != 0) col = 1;
+			if (offs == 0 && i % 8 != 0) offs = 1;
+			col = Machine->pens[offs];
 			Machine->gfx[0]->colortable[i] = col;
-			if (i % 8 == 0) col = 0;	/* create also an alternate color code with transparent pen 0 */
+			if (i % 8 == 0) col = Machine->pens[0];	/* create also an alternate color code with transparent pen 0 */
 			Machine->gfx[0]->colortable[i+8*8] = col;
 		}
 
 		/* redraw everything */
 		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer3,1,videoram_size);
 	}
 
 
@@ -268,31 +315,57 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtycolor || dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			int sx,sy;
 
 
 			dirtybuffer[offs] = 0;
 
+			sx = offs % 32;
+			sy = offs / 32;
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs],
+					taito_colorbank[0] & 0x0f,
+					0,0,8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+
+		if (dirtybuffer2[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer2[offs] = 0;
+
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
+
+			drawgfx(tmpbitmap2,Machine->gfx[0],
+					taito_videoram2[offs],
+					((taito_colorbank[0] >> 4) & 0x0f) + 8,	/* use transparent pen 0 */
+					0,0,sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+
+		if (dirtybuffer3[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer3[offs] = 0;
+
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap3,Machine->gfx[0],
-					junglek_videoram3[offs],
-					junglek_colorbank[1] & 0x0f,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
-			drawgfx(tmpbitmap2,Machine->gfx[0],
-					junglek_videoram2[offs],
-					((junglek_colorbank[0] >> 4) & 0x0f) + 8,	/* use transparent pen 0 */
+					taito_videoram3[offs],
+					taito_colorbank[1] & 0x0f,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
-
-	dirtycolor = 0;
 
 
 	/* copy the first playfield */
@@ -300,41 +373,41 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scrollx,scrolly[32];
 
 
-		scrollx = *junglek_scrollx3;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 16;
+		scrollx = *taito_scrollx3;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
 		for (i = 0;i < 32;i++)
-			scrolly[i] = -junglek_colscrolly3[i] - *junglek_scrolly3;
+			scrolly[i] = -taito_colscrolly3[i] - *taito_scrolly3;
 
-		if (*junglek_video_enable & 0x40)
+		if (*taito_video_enable & 0x40)
 			copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		else
 			clearbitmap(bitmap);
 	}
 
 	/* copy the second playfield if it has not priority over sprites */
-	if ((*junglek_video_enable & 0x20) && (*junglek_video_priority & 0x08) == 0)
+	if ((*taito_video_enable & 0x20) && (*taito_video_priority & 0x08) == 0)
 	{
 		int scrollx,scrolly[32];
 
 
-		scrollx = *junglek_scrollx2;
+		scrollx = *taito_scrollx2;
 		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
 		for (i = 0;i < 32;i++)
-			scrolly[i] = -junglek_colscrolly2[i] - *junglek_scrolly2;
+			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	if (*junglek_video_enable & 0x80)
+	if (*taito_video_enable & 0x80)
 	{
 		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		{
 			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
 					spriteram[offs + 3] & 0x3f,
-					2 * ((junglek_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
+					2 * ((taito_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
 					spriteram[offs + 2] & 1,0,
 					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -343,38 +416,38 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the second playfield if it has priority over sprites */
-	if ((*junglek_video_enable & 0x20) && (*junglek_video_priority & 0x08) != 0)
+	if ((*taito_video_enable & 0x20) && (*taito_video_priority & 0x08) != 0)
 	{
 		int scrollx,scrolly[32];
 
 
-		scrollx = *junglek_scrollx2;
+		scrollx = *taito_scrollx2;
 		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
 		for (i = 0;i < 32;i++)
-			scrolly[i] = -junglek_colscrolly2[i] - *junglek_scrolly2;
+			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	if (*junglek_video_enable & 0x10)
+	if (*taito_video_enable & 0x10)
 	{
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			if (videoram[offs] < 160)	/* don't draw spaces */
+			if (videoram[offs] != spacechar)	/* don't draw spaces */
 			{
 				int sx,sy;
 
 
 				sx = offs % 32;
-				sy = (8*(offs / 32) - junglek_colscrolly1[sx] - *junglek_scrolly1) & 0xff;
+				sy = (8*(offs / 32) - taito_colscrolly1[sx] - *taito_scrolly1) & 0xff;
 				/* horizontal scrolling of the frontmost playfield is not implemented */
 				sx = 8*sx;
 
-				drawgfx(bitmap,Machine->gfx[2],
+				drawgfx(bitmap,Machine->gfx[frontcharset],
 						videoram[offs],
-						junglek_colorbank[0] & 0x0f,
+						taito_colorbank[0] & 0x0f,
 						0,0,sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}

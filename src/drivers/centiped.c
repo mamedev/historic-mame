@@ -125,27 +125,18 @@ $ = Manufacturer's suggested settings
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/pokyintf.h"
 
 
+int centiped_IN0_r(int offset);
 
-extern int centiped_init_machine(const char *gamename);
-extern int centiped_IN0_r(int offset);
-extern int centiped_rand_r(int offset);
-extern int centiped_interrupt(void);
-
-extern int centiped_trakball_x(int data);
-extern int centiped_trakball_y(int data);
+int centiped_trakball_x(int data);
+int centiped_trakball_y(int data);
 
 extern unsigned char *centiped_charpalette,*centiped_spritepalette;
-extern void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void centiped_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void centiped_vh_charpalette_w(int offset, int data);
-
-extern void milliped_pokey1_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
-
+void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void centiped_vh_screenrefresh(struct osd_bitmap *bitmap);
+void centiped_vh_charpalette_w(int offset, int data);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -160,7 +151,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
 	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
-	{ 0x100a, 0x100a, centiped_rand_r },
+	{ 0x1000, 0x100f, pokey1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -169,7 +160,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x1000, 0x100f, milliped_pokey1_w },
+	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1404, 0x1407, centiped_vh_charpalette_w, &centiped_charpalette },
 	{ 0x140c, 0x140f, MWA_RAM, &centiped_spritepalette },
 	{ 0x1800, 0x1800, MWA_NOP },
@@ -186,7 +177,7 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0x20,
-		{ 0, 0, 0, 0, 0, OSD_KEY_F2, 0, 0 },
+		{ 0, 0, 0, 0, 0, OSD_KEY_F2, IPB_VBLANK, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN1 */
@@ -301,11 +292,11 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			centiped_interrupt,1
+			interrupt,1
 		}
 	},
 	60,
-	centiped_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
@@ -321,9 +312,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey1_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -336,15 +327,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( centiped_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.307", 0x2000, 0x0800 )
-	ROM_LOAD( "%s.308", 0x2800, 0x0800 )
-	ROM_LOAD( "%s.309", 0x3000, 0x0800 )
-	ROM_LOAD( "%s.310", 0x3800, 0x0800 )
-	ROM_LOAD( "%s.310", 0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x2409fc03 )
+	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x209922dd )
+	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0x57cee11e )
+	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0xb959c639 )
+	ROM_RELOAD(         0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.211", 0x0000, 0x0800 )
-	ROM_LOAD( "%s.212", 0x0800, 0x0800 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f )
 ROM_END
 
 

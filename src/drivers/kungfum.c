@@ -93,14 +93,14 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
 
 extern unsigned char *kungfum_scroll_low;
 extern unsigned char *kungfum_scroll_high;
-extern void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int kungfum_vh_start(void);
-extern void kungfum_vh_stop(void);
-extern void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap);
+void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int kungfum_vh_start(void);
+void kungfum_vh_stop(void);
+void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void kungfum_sh_port0_w(int offset, int data);
-extern int  kungfum_sh_init(const char *gamename);
-extern void kungfum_sh_update(void);
+void kungfum_sh_port0_w(int offset, int data);
+int  kungfum_sh_init(const char *gamename);
+void kungfum_sh_update(void);
 
 
 
@@ -393,56 +393,56 @@ static struct MachineDriver machine_driver =
 
 ROM_START( kungfum_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a-4e-c.bin", 0x0000, 0x4000 )
-	ROM_LOAD( "a-4d-c.bin", 0x4000, 0x4000 )
+	ROM_LOAD( "a-4e-c.bin", 0x0000, 0x4000, 0x2f0e3ee2 )
+	ROM_LOAD( "a-4d-c.bin", 0x4000, 0x4000, 0x8cba3ca0 )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g-4e-a.bin", 0x00000, 0x2000 )	/* characters */
-	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000 )
-	ROM_LOAD( "g-4c-a.bin", 0x04000, 0x2000 )
-	ROM_LOAD( "b-3n-.bin",  0x06000, 0x2000 )	/* sprites */
-	ROM_LOAD( "b-4n-.bin",  0x08000, 0x2000 )
-	ROM_LOAD( "b-4m-.bin",  0x0a000, 0x2000 )
-	ROM_LOAD( "b-3m-.bin",  0x0c000, 0x2000 )
-	ROM_LOAD( "b-4k-.bin",  0x0e000, 0x2000 )
-	ROM_LOAD( "b-4f-.bin",  0x10000, 0x2000 )
-	ROM_LOAD( "b-4l-.bin",  0x12000, 0x2000 )
-	ROM_LOAD( "b-4h-.bin",  0x14000, 0x2000 )
-	ROM_LOAD( "b-4c-.bin",  0x16000, 0x2000 )
-	ROM_LOAD( "b-4e-.bin",  0x18000, 0x2000 )
-	ROM_LOAD( "b-4d-.bin",  0x1a000, 0x2000 )
-	ROM_LOAD( "b-4a-.bin",  0x1c000, 0x2000 )
+	ROM_LOAD( "g-4e-a.bin", 0x00000, 0x2000, 0x8844653c )	/* characters */
+	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 )
+	ROM_LOAD( "g-4c-a.bin", 0x04000, 0x2000, 0x039d270f )
+	ROM_LOAD( "b-3n-.bin",  0x06000, 0x2000, 0x914a85c8 )	/* sprites */
+	ROM_LOAD( "b-4n-.bin",  0x08000, 0x2000, 0xc75445d4 )
+	ROM_LOAD( "b-4m-.bin",  0x0a000, 0x2000, 0x7397e287 )
+	ROM_LOAD( "b-3m-.bin",  0x0c000, 0x2000, 0x97089d1e )
+	ROM_LOAD( "b-4k-.bin",  0x0e000, 0x2000, 0x8d7ed674 )
+	ROM_LOAD( "b-4f-.bin",  0x10000, 0x2000, 0x5b150b93 )
+	ROM_LOAD( "b-4l-.bin",  0x12000, 0x2000, 0xec6d1b3f )
+	ROM_LOAD( "b-4h-.bin",  0x14000, 0x2000, 0x1a4951cf )
+	ROM_LOAD( "b-4c-.bin",  0x16000, 0x2000, 0x21d4b868 )
+	ROM_LOAD( "b-4e-.bin",  0x18000, 0x2000, 0x01e029aa )
+	ROM_LOAD( "b-4d-.bin",  0x1a000, 0x2000, 0x1ae251dc )
+	ROM_LOAD( "b-4a-.bin",  0x1c000, 0x2000, 0x64f6568c )
 
 	ROM_REGION(0x4000)	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3e-.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "a-3f-.bin", 0x2000, 0x2000 )
+	ROM_LOAD( "a-3e-.bin", 0x0000, 0x2000, 0x5d39e85b )
+	ROM_LOAD( "a-3f-.bin", 0x2000, 0x2000, 0x52c61b44 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000 )
+	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e )
 ROM_END
 
 ROM_START( kungfub_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kf4", 0x0000, 0x4000 )
-	ROM_LOAD( "kf5", 0x4000, 0x4000 )
+	ROM_LOAD( "kf4", 0x0000, 0x4000, 0xe189358b )
+	ROM_LOAD( "kf5", 0x4000, 0x4000, 0x3f93ee29 )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kf6",  0x00000, 0x2000 )	/* characters */
-	ROM_LOAD( "kf7",  0x02000, 0x2000 )
-	ROM_LOAD( "kf8",  0x04000, 0x2000 )
-	ROM_LOAD( "kf9",  0x06000, 0x4000 )	/* sprites */
-	ROM_LOAD( "kf10", 0x0a000, 0x4000 )
-	ROM_LOAD( "kf11", 0x0e000, 0x4000 )
-	ROM_LOAD( "kf12", 0x12000, 0x4000 )
-	ROM_LOAD( "kf14", 0x16000, 0x4000 )
-	ROM_LOAD( "kf13", 0x1a000, 0x4000 )
+	ROM_LOAD( "kf6",  0x00000, 0x2000, 0x8844653c )	/* characters */
+	ROM_LOAD( "kf7",  0x02000, 0x2000, 0x63ea9db4 )
+	ROM_LOAD( "kf8",  0x04000, 0x2000, 0x039d270f )
+	ROM_LOAD( "kf9",  0x06000, 0x4000, 0x589ec01c )	/* sprites */
+	ROM_LOAD( "kf10", 0x0a000, 0x4000, 0x0a9f7f99 )
+	ROM_LOAD( "kf11", 0x0e000, 0x4000, 0xe893dde7 )
+	ROM_LOAD( "kf12", 0x12000, 0x4000, 0x06b64af0 )
+	ROM_LOAD( "kf14", 0x16000, 0x4000, 0x23b491c2 )
+	ROM_LOAD( "kf13", 0x1a000, 0x4000, 0x7fd80750 )
 
 	ROM_REGION(0x4000)	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "kf3", 0x0000, 0x2000 )
-	ROM_LOAD( "kf2", 0x2000, 0x2000 )
+	ROM_LOAD( "kf3", 0x0000, 0x2000, 0x5d39e85b )
+	ROM_LOAD( "kf2", 0x2000, 0x2000, 0x52c61b44 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "kf1", 0xe000, 0x2000 )
+	ROM_LOAD( "kf1", 0xe000, 0x2000, 0x9d1c669e )
 ROM_END
 
 

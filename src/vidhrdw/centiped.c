@@ -58,7 +58,7 @@ void centiped_vh_charpalette_w(int offset, int data)
 	centiped_charpalette[offset] = data;
 	Machine->gfx[0]->colortable[offset] = Machine->pens[15 - data];
 
-	memset(dirtybuffer,1,0x400);
+	memset(dirtybuffer,1,videoram_size);
 }
 
 

@@ -3,7 +3,6 @@
 #include "driver.h"
 #include "z80.h"
 
-extern int interrupt(void);
 extern int Z80_IRQ;
 
 /* Standard machine stuff */
@@ -23,11 +22,14 @@ void paging_register_w(int offset, int data)
  * Scanline Interrupt System **
  */
 
-int NextScanInt=0;
+int NextScanInt=0;			/* Normal */
 int CurrentScan=0;
 int InterruptFlag=0;
-int Controller1=32;
-int GorfDelay;
+
+int Controller1=32;			/* Seawolf II */
+int Controller2=32;
+
+int GorfDelay;				/* Gorf */
 
 void wow_interrupt_enable_w(int offset, int data)
 {
@@ -41,14 +43,14 @@ void wow_interrupt_enable_w(int offset, int data)
     else interrupt_enable_w(0,1);
 
     if (data & 0x10)
- {
-  GorfDelay =(CurrentScan + 10) & 0xFF;
+ 	{
+  		GorfDelay =(CurrentScan + 10) & 0xFF;
 
         /* Gorf Special *MUST* occur before next scanline interrupt */
 
         if ((NextScanInt > CurrentScan) && (NextScanInt < GorfDelay))
         {
-         GorfDelay = NextScanInt - 1;
+        	GorfDelay = NextScanInt - 1;
         }
 
      if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
@@ -70,6 +72,7 @@ void wow_interrupt_w(int offset, int data)
 int wow_interrupt(void)
 {
 	int res=Z80_IGNORE_INT;
+    int Direction;
 
     CurrentScan++;
 
@@ -83,11 +86,21 @@ int wow_interrupt(void)
          * Checked each flyback, takes 1 second to traverse screen
          */
 
-        if ((osd_key_pressed(OSD_KEY_RIGHT)) && (Controller1 > 0))
+        Direction = input_port_0_r(0);
+
+        if ((Direction & 2) && (Controller1 > 0))
 			Controller1--;
 
-		if ((osd_key_pressed(OSD_KEY_LEFT)) && (Controller1 < 63))
+		if ((Direction & 1) && (Controller1 < 63))
 			Controller1++;
+
+        Direction = input_port_1_r(0);
+
+        if ((Direction & 2) && (Controller2 > 0))
+			Controller2--;
+
+		if ((Direction & 1) && (Controller2 < 63))
+			Controller2++;
     }
 
     /* Scanline interrupt enabled ? */
@@ -134,9 +147,7 @@ int gorf_interrupt(void)
  * fire button. Controller values are calculated in the
  * interrupt routine, and just formatted & returned here.
  *
- * I only emulate one controller at the moment!
- *
- * The controller looks like it returns Grays binary,
+ * The controllers look like they returns Grays binary,
  * so I use a table to translate my simple counter into it!
  */
 
@@ -153,5 +164,10 @@ static const int ControllerTable[64] = {
 
 int seawolf2_controller1_r(int offset)
 {
-    return input_port_0_r(0) + ControllerTable[Controller1];
+    return (input_port_0_r(0) & 0x80) + ControllerTable[Controller1];
+}
+
+int seawolf2_controller2_r(int offset)
+{
+    return (input_port_1_r(0) & 0x80) + ControllerTable[Controller2];
 }

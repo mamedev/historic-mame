@@ -90,23 +90,23 @@ f800      playfield 0 X scroll position
 
 
 
-extern int mrdo_SECRE_r(int offset);
+int mrdo_SECRE_r(int offset);
 
 extern unsigned char *mrdo_videoram2;
 extern unsigned char *mrdo_colorram2;
 extern unsigned char *mrdo_scroll_x;
-extern void mrdo_videoram2_w(int offset,int data);
-extern void mrdo_colorram2_w(int offset,int data);
-extern void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int mrdo_vh_start(void);
-extern void mrdo_vh_stop(void);
-extern void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mrdo_videoram2_w(int offset,int data);
+void mrdo_colorram2_w(int offset,int data);
+void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int mrdo_vh_start(void);
+void mrdo_vh_stop(void);
+void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void ladybug_sound1_w(int offset,int data);
-extern void ladybug_sound2_w(int offset,int data);
-extern int ladybug_sh_start(void);
-extern void ladybug_sh_stop(void);
-extern void ladybug_sh_update(void);
+void ladybug_sound1_w(int offset,int data);
+void ladybug_sound2_w(int offset,int data);
+int ladybug_sh_start(void);
+void ladybug_sh_stop(void);
+void ladybug_sh_update(void);
 
 
 
@@ -291,50 +291,50 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mrdo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000 )
-	ROM_LOAD( "f4-04.bin", 0x6000, 0x2000 )
+	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000, 0x30cf97ed )
+	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000, 0x06b5fea1 )
+	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000, 0xa56b5f71 )
+	ROM_LOAD( "f4-04.bin", 0x6000, 0x2000, 0x4b09fc6d )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000, 0xdf8ac406 )
+	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000, 0x78c4a89a )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
 ROM_END
 
 ROM_START( mrdot_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D1",  0x0000, 0x2000 )
-	ROM_LOAD( "D2",  0x2000, 0x2000 )
-	ROM_LOAD( "D3",  0x4000, 0x2000 )
-	ROM_LOAD( "D4",  0x6000, 0x2000 )
+	ROM_LOAD( "D1",  0x0000, 0x2000, 0xb738fe88 )
+	ROM_LOAD( "D2",  0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "D3",  0x4000, 0x2000, 0xa36ea250 )
+	ROM_LOAD( "D4",  0x6000, 0x2000, 0xe25d6e3d )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "D9",  0x0000, 0x1000 )
-	ROM_LOAD( "D10", 0x1000, 0x1000 )
-	ROM_LOAD( "D8",  0x2000, 0x1000 )
-	ROM_LOAD( "D7",  0x3000, 0x1000 )
-	ROM_LOAD( "D5",  0x4000, 0x1000 )
-	ROM_LOAD( "D6",  0x5000, 0x1000 )
+	ROM_LOAD( "D9",  0x0000, 0x1000, 0x0360f41e )
+	ROM_LOAD( "D10", 0x1000, 0x1000, 0x9c9a9882 )
+	ROM_LOAD( "D8",  0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "D7",  0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "D5",  0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "D6",  0x5000, 0x1000, 0xb456cce4 )
 ROM_END
 
 ROM_START( mrlo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000 )
-	ROM_LOAD( "g4-04.bin", 0x6000, 0x2000 )
+	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000, 0xaca06df6 )
+	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000, 0xf21e4688 )
+	ROM_LOAD( "g4-04.bin", 0x6000, 0x2000, 0xc031b3e9 )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000, 0xe96e0ef6 )
+	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000, 0xaa29cb17 )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
 ROM_END
 
 

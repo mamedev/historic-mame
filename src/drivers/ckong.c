@@ -62,17 +62,17 @@ extern unsigned char *ckong_bsvideoram;
 extern int ckong_bsvideoram_size;
 extern unsigned char *ckong_bigspriteram;
 extern unsigned char *ckong_row_scroll;
-extern void ckong_colorram_w(int offset,int data);
-extern void ckong_bigsprite_videoram_w(int offset,int data);
-extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int ckong_vh_start(void);
-extern void ckong_vh_stop(void);
-extern void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ckong_colorram_w(int offset,int data);
+void ckong_bigsprite_videoram_w(int offset,int data);
+void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int ckong_vh_start(void);
+void ckong_vh_stop(void);
+void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void cclimber_sample_trigger_w(int offset,int data);
-extern void cclimber_sample_rate_w(int offset,int data);
-extern void cclimber_sample_volume_w(int offset,int data);
-extern int cclimber_sh_start(void);
+void cclimber_sample_trigger_w(int offset,int data);
+void cclimber_sample_rate_w(int offset,int data);
+void cclimber_sample_volume_w(int offset,int data);
+int cclimber_sh_start(void);
 
 
 
@@ -284,24 +284,68 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ckong_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "7.dat",  0x0000, 0x1000 )
-	ROM_LOAD( "8.dat",  0x1000, 0x1000 )
-	ROM_LOAD( "9.dat",  0x2000, 0x1000 )
-	ROM_LOAD( "10.dat", 0x3000, 0x1000 )
-	ROM_LOAD( "11.dat", 0x4000, 0x1000 )
-	ROM_LOAD( "12.dat", 0x5000, 0x1000 )
+	ROM_LOAD( "7.dat",  0x0000, 0x1000, 0xc6efa047 )
+	ROM_LOAD( "8.dat",  0x1000, 0x1000, 0xb6c21834 )
+	ROM_LOAD( "9.dat",  0x2000, 0x1000, 0xa71d0d79 )
+	ROM_LOAD( "10.dat", 0x3000, 0x1000, 0x68fee770 )
+	ROM_LOAD( "11.dat", 0x4000, 0x1000, 0x18a93c23 )
+	ROM_LOAD( "12.dat", 0x5000, 0x1000, 0xe72c50f6 )
 
 	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6.dat",  0x0000, 0x1000 )
-	ROM_LOAD( "4.dat",  0x1000, 0x1000 )
-	ROM_LOAD( "5.dat",  0x2000, 0x1000 )
-	ROM_LOAD( "3.dat",  0x3000, 0x1000 )
-	ROM_LOAD( "2.dat",  0x4000, 0x0800 )
-	ROM_LOAD( "1.dat",  0x4800, 0x0800 )
+	ROM_LOAD( "6.dat",  0x0000, 0x1000, 0x29097247 )
+	ROM_LOAD( "4.dat",  0x1000, 0x1000, 0xd8e27c6e )
+	ROM_LOAD( "5.dat",  0x2000, 0x1000, 0xbb5521c9 )
+	ROM_LOAD( "3.dat",  0x3000, 0x1000, 0x8aef534f )
+	ROM_LOAD( "2.dat",  0x4000, 0x0800, 0x9c1f9d15 )
+	ROM_LOAD( "1.dat",  0x4800, 0x0800, 0x9cbf41cb )
 
 	ROM_REGION(0x2000)	/* samples */
-	ROM_LOAD( "14.dat", 0x0000, 0x1000 )
-	ROM_LOAD( "13.dat", 0x1000, 0x1000 )
+	ROM_LOAD( "14.dat", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "13.dat", 0x1000, 0x1000, 0xe921f6f5 )
+ROM_END
+
+ROM_START( ckonga_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "D05-07.bin", 0x0000, 0x1000, 0xc6efa047 )
+	ROM_LOAD( "F05-08.bin", 0x1000, 0x1000, 0xb6c21834 )
+	ROM_LOAD( "H05-09.bin", 0x2000, 0x1000, 0xa71d0d79 )
+	ROM_LOAD( "K05-10.bin", 0x3000, 0x1000, 0x1cfee570 )
+	ROM_LOAD( "L05-11.bin", 0x4000, 0x1000, 0x18a93c23 )
+	ROM_LOAD( "N05-12.bin", 0x5000, 0x1000, 0xe72c50f6 )
+
+	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "N11-06.bin", 0x0000, 0x1000, 0x29097247 )
+	ROM_LOAD( "K11-04.bin", 0x1000, 0x1000, 0xd8e27c6e )
+	ROM_LOAD( "L11-05.bin", 0x2000, 0x1000, 0xbb5521c9 )
+	ROM_LOAD( "H11-03.bin", 0x3000, 0x1000, 0x8aef534f )
+	ROM_LOAD( "C11-02.bin", 0x4000, 0x0800, 0x9c1f9d15 )
+	ROM_LOAD( "A11-01.bin", 0x4800, 0x0800, 0x9cbf41cb )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "S05-14.bin", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "R05-13.bin", 0x1000, 0x1000, 0xe921f6f5 )
+ROM_END
+
+ROM_START( ckongjeu_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "7.dat",  0x0000, 0x1000, 0xc6efa047 )
+	ROM_LOAD( "8.dat",  0x1000, 0x1000, 0xb6c21834 )
+	ROM_LOAD( "9.dat",  0x2000, 0x1000, 0xa71d0d79 )
+	ROM_LOAD( "10.dat", 0x3000, 0x1000, 0x5beeee78 )
+	ROM_LOAD( "11.dat", 0x4000, 0x1000, 0x18a93c23 )
+	ROM_LOAD( "12.dat", 0x5000, 0x1000, 0x10bfbb61 )
+
+	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6.dat",  0x0000, 0x1000, 0x29097247 )
+	ROM_LOAD( "4.dat",  0x1000, 0x1000, 0xd8e27c6e )
+	ROM_LOAD( "5.dat",  0x2000, 0x1000, 0xbb5521c9 )
+	ROM_LOAD( "3.dat",  0x3000, 0x1000, 0x8aef534f )
+	ROM_LOAD( "2.dat",  0x4000, 0x0800, 0x9c1f9d15 )
+	ROM_LOAD( "1.dat",  0x4800, 0x0800, 0x9cbf41cb )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "14.dat", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "13.dat", 0x1000, 0x1000, 0xe921f6f5 )
 ROM_END
 
 
@@ -364,15 +408,33 @@ struct GameDriver ckong_driver =
 	hiload, hisave
 };
 
+struct GameDriver ckonga_driver =
+{
+	"Crazy Kong (alternate version)",
+	"ckonga",
+	"VILLE LAITINEN\nNICOLA SALMORIA\nDOUG JEFFERYS",
+	&machine_driver,
+
+	ckonga_rom,
+	0, 0,
+	0,
+
+	input_ports, trak_ports, dsw, keys,
+
+	color_prom, 0, 0,
+	8*13, 8*16,
+
+	hiload, hisave
+};
 
 struct GameDriver ckongjeu_driver =
 {
-	"Crazy Kong (Copyright Jeutel)",
+	"Crazy Kong (Jeutel bootleg)",
 	"ckongjeu",
 	"VILLE LAITINEN\nNICOLA SALMORIA\nDOUG JEFFERYS",
 	&machine_driver,
 
-	ckong_rom,
+	ckongjeu_rom,
 	0, 0,
 	0,
 

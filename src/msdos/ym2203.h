@@ -1,7 +1,7 @@
-extern void YM2203(void);
-extern void InitYM(void);
-extern void InitOpl(void);
-extern void SlotCh(void);
+void YM2203(void);
+void InitYM(void);
+void InitOpl(void);
+void SlotCh(void);
 extern unsigned int  BaseSb;
 extern unsigned int  DelayReg;
 extern unsigned int  DelayData;

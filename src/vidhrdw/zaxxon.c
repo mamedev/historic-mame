@@ -233,7 +233,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 #if 0
 	/* copy the frontmost playfield */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 #endif
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */

@@ -20,11 +20,11 @@ unsigned char *missile_videoram;
 ***************************************************************************/
 int missile_vh_start(void)
 {
-	
+
 /* 	force video ram to be $0000-$FFFF even though only $1900-$FFFF is used */
 	if ((missile_videoram = malloc(256 * 256)) == 0)
 		return 1;
-		
+
 	memset(missile_videoram, 0, 256 * 256);
 
 	return 0;
@@ -54,12 +54,12 @@ int missile_video_r(int address)
 
 
 /********************************************************************************************/
-void 
+void
 missile_video_w(int address,int data)
 {
 	int wbyte, wbit;
-	
-	
+
+
   if(address < 0xF800)
 		missile_videoram[address] = data;
 	else{
@@ -79,13 +79,13 @@ missile_video_w(int address,int data)
 
 
 /********************************************************************************************/
-void 
+void
 missile_video_mult_w(int address, int data)
 {
 	data = (data & 0x80) + ((data & 8) << 3);
 	address = address << 2;
 	if(address >= 0xF800)
-		data |= 0x20;	
+		data |= 0x20;
   missile_videoram[address]     = data;
   missile_videoram[address + 1] = data;
   missile_videoram[address + 2] = data;
@@ -99,9 +99,9 @@ void
 missile_video_3rd_bit_w(int address, int data)
 {
 	int i;
-	
+
 	RAM[address] = data;
-	
+
 	address = ((address - 0x401) << 2) + 0xF800;
 	for(i=0;i<8;i++){
 		if(data & (1 << i))
@@ -119,16 +119,13 @@ void missile_vh_update(struct osd_bitmap *bitmap)
 {
 	int x, y;
 	int address;
-	
+
 	for(address = 0x1900;address <= 0xFFFF;address++){
 		y = (address >> 8) - 25;
 		x = address & 0xFF;
 		if(y < 231 - 32)
-			bitmap->line[y][x] = RAM[0x4B00 + ((missile_videoram[address] >> 5) & 6)] + 1;
+			bitmap->line[y][x] = Machine->pens[RAM[0x4B00 + ((missile_videoram[address] >> 5) & 6)] + 1];
 		else
-			bitmap->line[y][x] = RAM[0x4B00 + (missile_videoram[address] >> 5)] + 1;
+			bitmap->line[y][x] = Machine->pens[RAM[0x4B00 + (missile_videoram[address] >> 5)] + 1];
 	}
 }
-
-
-

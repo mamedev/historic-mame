@@ -1,9 +1,9 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Simulator Includes, V2.2                              */
+/* Module:  POKEY Chip Simulator Includes, V2.3                              */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
-/* Date:    January 1, 1997                                                  */
+/* Date:    August 8, 1997                                                   */
 /*                                                                           */
 /*****************************************************************************/
 /*                                                                           */
@@ -58,7 +58,7 @@
 /* CONSTANT DEFINITIONS */
 
 /* POKEY WRITE LOGICALS */
-/* Note: only 0x00 - 0x09 are emulated by POKEYSND */
+/* Note: only 0x00 - 0x09, part of 0x0f are emulated by POKEYSND */
 #define AUDF1_C     0x00
 #define AUDC1_C     0x01
 #define AUDF2_C     0x02
@@ -122,6 +122,7 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq,
 void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
 void Pokey_process_2 (register unsigned char *buffer, register uint16 n);
 void Pokey_process (register unsigned char *buffer, register uint16 n);
+int Read_pokey_regs (uint16 addr, uint8 chip);
 
 #ifdef __cplusplus
 }

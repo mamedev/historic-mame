@@ -171,30 +171,27 @@ and please let me know about your emulator if you release it.
 #include "sndhrdw/8910intf.h"
 
 
-unsigned char *tut_videoram;
-unsigned char *tut_paletteram;
-unsigned char *tut_scrollx;
+extern unsigned char *tut_paletteram;
+extern unsigned char *tut_scrollx;
 
-extern int timeplt_sh_start(void);
+int tutankhm_sh_start(void);
 
-extern int tut_bankedrom_r( int offset );
-extern void tut_bankselect_w( int offset,int data );
-extern int tut_rnd_r( int offset );
-extern int tutankhm_init_machine( const char *gamename );
-extern int tutankhm_interrupt(void);
+int tutankhm_sh_interrupt(void);
+int tut_bankedrom_r( int offset );
+void tut_bankselect_w( int offset,int data );
+int tut_rnd_r( int offset );
+int tutankhm_init_machine( const char *gamename );
+int tutankhm_interrupt(void);
 
-extern int  tut_vh_start( void );
-extern void tut_vh_stop( void );
-extern int  tut_videoram_r( int offset );
-extern void tut_videoram_w( int offset, int data );
-extern void tut_palette_w( int offset, int data );
-extern void tut_vh_convert_color_prom( unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom );
-extern void tut_vh_screenrefresh( struct osd_bitmap *bitmap );
+void tut_videoram_w( int offset, int data );
+void tut_palette_w( int offset, int data );
+void tut_vh_convert_color_prom( unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom );
+void tut_vh_screenrefresh( struct osd_bitmap *bitmap );
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x7fff, tut_videoram_r, &tut_videoram },
+	{ 0x0000, 0x7fff, MRA_RAM },
 	{ 0x8800, 0x8fff, MRA_RAM },		/* Game RAM */
 	{ 0xa000, 0xffff, MRA_ROM },		/* Game ROM */
 	{ 0x9000, 0x9fff, tut_bankedrom_r },	/* Graphics ROMs ra1_1i.cpu - ra1_9i.cpu (See address $8300 for usage) */
@@ -212,7 +209,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x7fff, tut_videoram_w },
+	{ 0x0000, 0x7fff, tut_videoram_w, &videoram, &videoram_size },
 	{ 0x8800, 0x8fff, MWA_RAM },		                /* Game RAM */
 	{ 0x8000, 0x800f, tut_palette_w, &tut_paletteram },	/* Palette RAM */
 	{ 0x8100, 0x8100, MWA_RAM, &tut_scrollx },              /* video x pan hardware reg */
@@ -340,7 +337,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			2500000,			/* 2.5 Mhz ??? */
+			1500000,			/* 2.5 Mhz ??? */
 			0,				/* memory region # 0 */
 			readmem,			/* MemoryReadAddress */
 			writemem,			/* MemoryWriteAddress */
@@ -351,13 +348,13 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1000000,			/* 1.000 Mhz ??? */
+			2100000,			/* 2.000 Mhz ??? */
 			2,				/* memory region # 2 */
 			sound_readmem,			/* MemoryReadAddress */
 			sound_writemem,			/* MemoryWriteAddress */
 			0,				/* IOReadPort */
 			0,				/* IOWritePort */
-			interrupt,        		/* interrupt routine */
+			tutankhm_sh_interrupt, 		/* interrupt routine */
 			1			        /* interrupts per frame */
 		}
 	},
@@ -372,14 +369,14 @@ static struct MachineDriver machine_driver =
 	tut_vh_convert_color_prom,			/* convert color prom routine */
 
 	0,						/* vh_init routine */
-	tut_vh_start,					/* vh_start routine */
-	tut_vh_stop,					/* vh_stop routine */
+	generic_vh_start,					/* vh_start routine */
+	generic_vh_stop,					/* vh_stop routine */
 	tut_vh_screenrefresh,				/* vh_update routine */
 
 	/* sound hardware */
 	0,						/* pointer to samples */
 	0,						/* sh_init routine */
-	timeplt_sh_start,				/* sh_start routine */
+	tutankhm_sh_start,				/* sh_start routine */
 	AY8910_sh_stop,					/* sh_stop routine */
 	AY8910_sh_update				/* sh_update routine */
 };
@@ -387,28 +384,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tutankhm_rom )
 	ROM_REGION( 0x10000 + 0x1000 * 12 )      /* 64k for M6809 CPU code + ( 4k * 12 ) for ROM banks */
-	ROM_LOAD( "ra1_1h.cpu", 0xa000, 0x1000 ) /* program ROMs */
-	ROM_LOAD( "ra1_2h.cpu", 0xb000, 0x1000 )
-	ROM_LOAD( "ra1_3h.cpu", 0xc000, 0x1000 )
-	ROM_LOAD( "ra1_4h.cpu", 0xd000, 0x1000 )
-	ROM_LOAD( "ra1_5h.cpu", 0xe000, 0x1000 )
-	ROM_LOAD( "ra1_6h.cpu", 0xf000, 0x1000 )
-	ROM_LOAD( "ra1_1i.cpu", 0x10000, 0x1000 ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "ra1_2i.cpu", 0x11000, 0x1000 )
-	ROM_LOAD( "ra1_3i.cpu", 0x12000, 0x1000 )
-	ROM_LOAD( "ra1_4i.cpu", 0x13000, 0x1000 )
-	ROM_LOAD( "ra1_5i.cpu", 0x14000, 0x1000 )
-	ROM_LOAD( "ra1_6i.cpu", 0x15000, 0x1000 )
-	ROM_LOAD( "ra1_7i.cpu", 0x16000, 0x1000 )
-	ROM_LOAD( "ra1_8i.cpu", 0x17000, 0x1000 )
-	ROM_LOAD( "ra1_9i.cpu", 0x18000, 0x1000 )
+	ROM_LOAD( "ra1_1h.cpu", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
+	ROM_LOAD( "ra1_2h.cpu", 0x0b000, 0x1000, 0x4cff2ad5 )
+	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 )
+	ROM_LOAD( "ra1_4h.cpu", 0x0d000, 0x1000, 0x0c36af12 )
+	ROM_LOAD( "ra1_5h.cpu", 0x0e000, 0x1000, 0xf6bc4352 )
+	ROM_LOAD( "ra1_6h.cpu", 0x0f000, 0x1000, 0x7397e4d1 )
+	ROM_LOAD( "ra1_1i.cpu", 0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "ra1_2i.cpu", 0x11000, 0x1000, 0x7c5691fa )
+	ROM_LOAD( "ra1_3i.cpu", 0x12000, 0x1000, 0xda9a4984 )
+	ROM_LOAD( "ra1_4i.cpu", 0x13000, 0x1000, 0x8938bdc0 )
+	ROM_LOAD( "ra1_5i.cpu", 0x14000, 0x1000, 0x6643cec3 )
+	ROM_LOAD( "ra1_6i.cpu", 0x15000, 0x1000, 0x2721bb0b )
+	ROM_LOAD( "ra1_7i.cpu", 0x16000, 0x1000, 0xe48c0550 )
+	ROM_LOAD( "ra1_8i.cpu", 0x17000, 0x1000, 0x7a2c6b34 )
+	ROM_LOAD( "ra1_9i.cpu", 0x18000, 0x1000, 0x8e1e46ce )
 
 	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
-	ROM_LOAD( "ra1_6h.cpu", 0x0000, 0x1000 )
+	ROM_OBSOLETELOAD( "ra1_6h.cpu", 0x0000, 0x1000 )	/* not needed - could be removed */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "ra1_7a.snd", 0x0000, 0x1000 )
-	ROM_LOAD( "ra1_8a.snd", 0x1000, 0x1000 )
+	ROM_LOAD( "ra1_7a.snd", 0x0000, 0x1000, 0x00122ac0 )
+	ROM_LOAD( "ra1_8a.snd", 0x1000, 0x1000, 0xc5102f10 )
 ROM_END
 
 

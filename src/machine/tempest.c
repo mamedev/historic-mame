@@ -9,33 +9,31 @@
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/atari_vg.h"
 
-#define IN0_VBLANK (1<<7)
-
-
-static int vblank;
-
-
+#define IN0_3KHZ (1<<7)
+#define IN0_VG_HALT (1<<6)
 
 int tempest_IN0_r(int offset)
 {
 	int res;
 
-
 	res = readinputport(0);
 
-#ifdef 0
-	if (cpu_geticount() > (Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second) / 12) 
-#endif
+	/* Emulate the 3Khz source on bit 7 (divide 1.5Mhz by 512) */
+	if (cpu_geticount() & 0x100) {
+		res &=~IN0_3KHZ;
+	} else {
+		res|=IN0_3KHZ;
+	}
 
-	if (vblank)
-		res &= ~IN0_VBLANK;
-	else vblank = 0;
-	
-	return res;
+	if (vg_done(cpu_gettotalcycles()))
+		res |=IN0_VG_HALT;
+	else
+		res &=~IN0_VG_HALT;
+	return (res);
 }
 	
-
 int tempest_IN3_r(int offset)
 {
 	static int spinner = 0;
@@ -47,7 +45,8 @@ int tempest_IN3_r(int offset)
 	if (res & 2)
 		spinner++;
 	trak_in = readtrakport(0);
-	spinner += trak_in;
+	if (trak_in != NO_TRAK)
+		spinner += trak_in;
 	spinner &= 0x0f;	
 	return ((res & 0xf0) | spinner);
 }
@@ -62,9 +61,3 @@ int tempest_spinner(int data)
 }	
 
 
-int tempest_interrupt(void)
-{
-	vblank = 1;
-
-	return interrupt();
-}

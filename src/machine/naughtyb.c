@@ -11,38 +11,11 @@
 #include "Z80.h"
 
 
-static int vblank;
-
-#define DSW_VBLANK (1<<7)
-
-
-
-int naughtyb_DSW_r(int offset)
-{
-	int res;
-
-
-	res = readinputport(1);
-
-	if (vblank)
-	{
-		vblank = 0;
-		res |= DSW_VBLANK;
-	}
-
-	return res;
-}
-
-
-
 int naughtyb_interrupt (void)
 {
 	int res;
 	static int coin;
 
-
-	/* let naughtyb_DSW_r() know that it is time to report a vblank */
-	vblank = 1;
 
 	res = Z80_IGNORE_INT;
 	if (osd_key_pressed(OSD_KEY_3))

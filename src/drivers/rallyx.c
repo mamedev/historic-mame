@@ -86,22 +86,19 @@ IM 2 and IM 0)
 #include "vidhrdw/generic.h"
 
 
-extern void pengo_sound_w(int offset,int data);
-extern int rallyx_sh_start(void);
-extern void pengo_sh_update(void);
+void pengo_sound_w(int offset,int data);
+int rallyx_sh_start(void);
+void pengo_sh_update(void);
 extern unsigned char *pengo_soundregs;
 
-extern unsigned char *rallyx_videoram1,*rallyx_colorram1;
 extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
 extern unsigned char *rallyx_radarcarx,*rallyx_radarcary,*rallyx_radarcarcolor;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
-extern void rallyx_videoram1_w(int offset,int data);
-extern void rallyx_colorram1_w(int offset,int data);
-extern void rallyx_videoram2_w(int offset,int data);
-extern void rallyx_colorram2_w(int offset,int data);
-extern int rallyx_vh_start(void);
-extern void rallyx_vh_stop(void);
-extern void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rallyx_videoram2_w(int offset,int data);
+void rallyx_colorram2_w(int offset,int data);
+int rallyx_vh_start(void);
+void rallyx_vh_stop(void);
+void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -117,9 +114,9 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x8000, 0x83ff, rallyx_videoram1_w, &rallyx_videoram1 },
+	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
-	{ 0x8800, 0x8bff, rallyx_colorram1_w, &rallyx_colorram1 },
+	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
 	{ 0x9800, 0x9fff, MWA_RAM },
 	{ 0xa080, 0xa080, MWA_NOP },
@@ -357,13 +354,13 @@ static struct MachineDriver machine_driver =
 
 ROM_START( rallyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.1b", 0x0000, 0x1000 )
-	ROM_LOAD( "%s.1e", 0x1000, 0x1000 )
-	ROM_LOAD( "%s.1h", 0x2000, 0x1000 )
-	ROM_LOAD( "%s.1k", 0x3000, 0x1000 )
+	ROM_LOAD( "rallyx.1b", 0x0000, 0x1000, 0xbea90675 )
+	ROM_LOAD( "rallyx.1e", 0x1000, 0x1000, 0xe4021276 )
+	ROM_LOAD( "rallyx.1h", 0x2000, 0x1000, 0x429161ad )
+	ROM_LOAD( "rallyx.1k", 0x3000, 0x1000, 0x8551812b )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.8e", 0x0000, 0x1000 )
+	ROM_LOAD( "rallyx.8e", 0x0000, 0x1000, 0xd007b15b )
 ROM_END
 
 

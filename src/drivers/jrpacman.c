@@ -93,25 +93,25 @@ OUT on port $0 sets the interrupt vector
 #include "vidhrdw/generic.h"
 
 
-extern int jrpacman_init_machine(const char *gamename);
-extern int jrpacman_interrupt(void);
+int jrpacman_init_machine(const char *gamename);
+int jrpacman_interrupt(void);
 
 extern unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
 extern unsigned char *jrpacman_charbank,*jrpacman_spritebank;
 extern unsigned char *jrpacman_palettebank,*jrpacman_colortablebank;
-extern void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int jrpacman_vh_start(void);
-extern void jrpacman_vh_stop(void);
-extern void jrpacman_videoram_w(int offset,int data);
-extern void jrpacman_palettebank_w(int offset,int data);
-extern void jrpacman_colortablebank_w(int offset,int data);
-extern void jrpacman_charbank_w(int offset,int data);
-extern void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int jrpacman_vh_start(void);
+void jrpacman_vh_stop(void);
+void jrpacman_videoram_w(int offset,int data);
+void jrpacman_palettebank_w(int offset,int data);
+void jrpacman_colortablebank_w(int offset,int data);
+void jrpacman_charbank_w(int offset,int data);
+void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *pengo_soundregs;
-extern void pengo_sound_enable_w(int offset,int data);
-extern void pengo_sound_w(int offset,int data);
-extern void pengo_sh_update(void);
+void pengo_sound_enable_w(int offset,int data);
+void pengo_sound_w(int offset,int data);
+void pengo_sh_update(void);
 
 
 
@@ -345,24 +345,24 @@ static struct MachineDriver machine_driver =
 
 ROM_START( jrpacman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jrp8d.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "jrp8e.bin", 0x2000, 0x2000 )
-	ROM_LOAD( "jrp8h.bin", 0x8000, 0x2000 )
-	ROM_LOAD( "jrp8j.bin", 0xa000, 0x2000 )
-	ROM_LOAD( "jrp8k.bin", 0xc000, 0x2000 )
+	ROM_LOAD( "jrp8d.bin", 0x0000, 0x2000, 0xc55c5c2c )
+	ROM_LOAD( "jrp8e.bin", 0x2000, 0x2000, 0xc0c8f2b6 )
+	ROM_LOAD( "jrp8h.bin", 0x8000, 0x2000, 0x4ec948b1 )
+	ROM_LOAD( "jrp8j.bin", 0xa000, 0x2000, 0x2099a009 )
+	ROM_LOAD( "jrp8k.bin", 0xc000, 0x2000, 0x3744a458 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jrp2c.bin", 0x0000, 0x2000 )
-	ROM_LOAD( "jrp2e.bin", 0x2000, 0x2000 )
+	ROM_LOAD( "jrp2c.bin", 0x0000, 0x2000, 0xdf0ea63e )
+	ROM_LOAD( "jrp2e.bin", 0x2000, 0x2000, 0x15b224bc )
 ROM_END
 
 
 
 static void jrpacman_decode(void)
 {
-	/* The encryption PALs garble bots 0, 2 and 7 of the ROMs. The encryption */
+	/* The encryption PALs garble bits 0, 2 and 7 of the ROMs. The encryption */
 	/* scheme is complex (basically it's a state machine) and can only be */
-	/* faithfully emulated at run time. To avoid the performance it that would */
+	/* faithfully emulated at run time. To avoid the performance hit that would */
 	/* cause, here we have a table of the values which must be XORed with */
 	/* each memory region to obtain the decrypted bytes. */
 	/* Decryption table provided by David Caldwell (david@indigita.com) */

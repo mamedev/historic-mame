@@ -8,6 +8,7 @@ Bagman memory map (preliminary)
 9800-9bff Color RAM
 9800-981f Sprites (hidden portion of color RAM)
 9c00-9fff ? (filled with 3f, not used otherwise)
+c000-ffff ROM (Super Bagman only)
 
 memory mapped ports:
 
@@ -78,12 +79,12 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 
 
-extern int bagman_rand_r(int offset);
+int bagman_rand_r(int offset);
 
 extern unsigned char *bagman_video_enable;
-extern void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int bagman_sh_start(void);
+int bagman_sh_start(void);
 
 
 
@@ -91,6 +92,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_ROM },
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW1 */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x9bff, MRA_RAM },	/* color RAM + sprites */
@@ -109,6 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
 	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA_ROM },
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* ???? */
 	{ 0xa001, 0xa002, MWA_NOP },	/* ???? */
 	{ 0xa004, 0xa004, MWA_NOP },	/* ???? */
@@ -129,6 +132,7 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
+        { 0x56, 0x56, IOWP_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -156,6 +160,28 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct InputPort sbagman_input_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_3, 0, OSD_KEY_ALT, OSD_KEY_LEFT,
+				OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_CONTROL },
+		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_LEFT,
+				OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE1 },
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, OSD_KEY_2, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xb6,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
 static struct TrakPort trak_ports[] =
 {
         { -1 }
@@ -168,7 +194,18 @@ static struct KEYSet keys[] =
         { 0, 3, "MOVE LEFT"  },
         { 0, 4, "MOVE RIGHT" },
         { 0, 6, "MOVE DOWN" },
-        { 0, 7, "FIRE" },
+        { 0, 7, "ACTION" },
+        { -1 }
+};
+
+static struct KEYSet sbagman_keys[] =
+{
+        { 0, 5, "MOVE UP" },
+        { 0, 3, "MOVE LEFT"  },
+        { 0, 4, "MOVE RIGHT" },
+        { 0, 6, "MOVE DOWN" },
+        { 0, 7, "ACTION/JUMP" },
+        { 0, 2, "FIRE" },
         { -1 }
 };
 
@@ -272,22 +309,22 @@ enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
 static unsigned char colortable[] =
 {
 	/* characters and sprites */
-	BLACK,PINK1,RED,DKGRN3,               /* 1st level */
-	BLACK,LTORG1,WHITE1,LTRED1,             /* pauline with kong */
-	BLACK,RED,CREAM,BLUE,		/* Mario */
-	BLACK,PINK1,RED,DKGRN3,                  /* 3rd level */
-	BLACK,BLUE,LTBLU1,LTYEL,                /* 4th lvl */
-	BLACK,BLUE,LTYEL,LTBLU1,               /* 2nd level */
-	BLACK,RED,CREAM,BLUE,                  /* blue text */
-	BLACK,LTYEL,BROWN,WHITE1,	/* hammers */
-	BLACK,LTBRN,BROWN,CREAM,               /* kong */
-	BLACK,RED,LTRED1,YELLOW,             /* oil flame */
-	BLACK,LTBRN,CREAM,LTRED1,              /* pauline */
-	BLACK,LTYEL,BLUE,BROWN,		/* barrels */
-	BLACK,CREAM,LTBLU2,BLUE,	/* "oil" barrel */
-	BLACK,YELLOW,BLUE,RED,               /* small mario, spring */
-	BLACK,DKGRN3,LTBLU1,BROWN,            /* scared flame */
-	BLACK,LTRED1,YELLOW,BLUE,            /* flame */
+	BLACK,BLUE,LTYEL,LTBLU1,	/* an axe, picked bag */
+	BLACK,BLUE,LTYEL,LTBLU1,	/* a bag */
+	BLACK,WHITE1,DKGRN3,BLUE,	/* cactus */
+	BLACK,RED,BLUE,LTBLU1,		/*  */
+	BLACK,RED,BLUE,WHITE1,		/* a bomb, the train */
+	BLACK,BLUE,WHITE1,LTBLU1,	/* picked gun */
+	BLACK,BLUE,WHITE1,LTBLU1,	/* logo, gun */
+	BLACK,LTYEL,BROWN,WHITE1,	/*  */
+	BLACK,LTBRN,BROWN,CREAM,	/*  */
+	BLACK,RED,LTRED1,YELLOW,	/*  */
+	BLACK,LTBRN,CREAM,LTRED1,	/*  */
+	BLACK,LTYEL,BLUE,BROWN,		/*  */
+	BLACK,LTBRN,BLUE,CREAM,	/* policeman, big bagman (game front) */
+	BLACK,YELLOW,BLUE,RED,		/*  */
+	BLACK,DKGRN3,LTBLU1,BROWN,	/*  */
+	BLACK,BROWN,DKBRN1,LTBLU1,	/* ground, the stairs, the drabina */
 };
 
 
@@ -326,8 +363,6 @@ static struct MachineDriver machine_driver =
 	AY8910_sh_update
 };
 
-
-
 /***************************************************************************
 
   Game driver(s)
@@ -336,31 +371,59 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bagman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000, 0xe17dcfb9 )
+	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000, 0x48832bdf )
+	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000, 0x3362d9aa )
+	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000, 0xf5c9257b )
+	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000, 0xb21ec12e )
+	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000, 0xdf38fc70 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000, 0x1ec70dab )
+	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000, 0x8f29643f )
+	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000, 0xb0c20178 )
+	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000, 0x9a32388a )
 
 	ROM_REGION(0x2000)	/* ??? */
-	ROM_LOAD( "a1_9r.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "a1_9t.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "a1_9r.bin", 0x0000, 0x1000, 0x444e2070 )
+	ROM_LOAD( "a1_9t.bin", 0x1000, 0x1000, 0x7ee35909 )
 ROM_END
 
+ROM_START( sbagman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sbag_9e.bin", 0x0000, 0x1000, 0xe8698dcb )
+	ROM_LOAD( "sbag_9f.bin", 0x1000, 0x1000, 0xb0c4d060 )
+	ROM_LOAD( "sbag_9j.bin", 0x2000, 0x1000, 0xd2d6688e )
+	ROM_LOAD( "sbag_9k.bin", 0x3000, 0x1000, 0x1ce5b48d )
+	ROM_LOAD( "sbag_9m.bin", 0x4000, 0x1000, 0x5332ca3a )
+	ROM_LOAD( "sbag_9n.bin", 0x5000, 0x1000, 0x69de261e )
+	ROM_LOAD( "sbag_d8.bin", 0xc000, 0x0e00, 0x815748b3 )
+	ROM_CONTINUE(            0xfe00, 0x0200 )
+	ROM_LOAD( "sbag_f8.bin", 0xd000, 0x0400, 0x25a5ff17 )
+	ROM_CONTINUE(            0xe400, 0x0200 )
+	ROM_CONTINUE(            0xd600, 0x0a00 )
+	ROM_LOAD( "sbag_j8.bin", 0xe000, 0x0400, 0x11f4f334 )
+	ROM_CONTINUE(            0xd400, 0x0200 )
+	ROM_CONTINUE(            0xe600, 0x0a00 )
+	ROM_LOAD( "sbag_k8.bin", 0xf000, 0x0e00, 0xbffa9184 )
+	ROM_CONTINUE(            0xce00, 0x0200 )
 
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sbag_1e.bin", 0x0000, 0x1000, 0x350318fd )
+	ROM_LOAD( "sbag_1j.bin", 0x1000, 0x1000, 0x4d7cbb5e )
+	ROM_LOAD( "sbag_1c.bin", 0x2000, 0x1000, 0x66c93bff )
+	ROM_LOAD( "sbag_1f.bin", 0x3000, 0x1000, 0xfbedb41f )
+
+	ROM_REGION(0x2000)	/* ??? */
+	ROM_LOAD( "sbag_9r.bin", 0x0000, 0x1000, 0x444e2070 )
+	ROM_LOAD( "sbag_9t.bin", 0x1000, 0x1000, 0x7ee35909 )
+ROM_END
 
 struct GameDriver bagman_driver =
 {
 	"Bagman",
 	"bagman",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nJAREK BURCZYNSKI",
 	&machine_driver,
 
 	bagman_rom,
@@ -368,6 +431,25 @@ struct GameDriver bagman_driver =
 	0,
 
 	input_ports, trak_ports, dsw, keys,
+
+	0, palette, colortable,
+	8*13, 8*16,
+
+	0, 0
+};
+
+struct GameDriver sbagman_driver =
+{
+	"Super Bagman",
+	"sbagman",
+	"JAREK BURCZYNSKI\n",
+	&machine_driver,
+
+	sbagman_rom,
+	0, 0,
+	0,
+
+	sbagman_input_ports, trak_ports, dsw, sbagman_keys,
 
 	0, palette, colortable,
 	8*13, 8*16,

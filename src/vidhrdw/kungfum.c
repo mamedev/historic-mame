@@ -103,11 +103,11 @@ void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 ***************************************************************************/
 int kungfum_vh_start(void)
 {
-	/* Kung Fu Master has a virtual screen twice as large as the visible screen */
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,videoram_size);
+	memset(dirtybuffer,1,videoram_size);
 
+	/* Kung Fu Master has a virtual screen twice as large as the visible screen */
 	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);

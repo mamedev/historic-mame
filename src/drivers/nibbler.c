@@ -66,7 +66,7 @@ write:
 2200      ?
 2300      ?
 
-Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
+Interrupts: VBlank causes an IRQ (one every two frames?). Coin insertion causes a NMI.
 
 ***************************************************************************/
 
@@ -75,14 +75,14 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 
 
-extern int nibbler_interrupt(void);
+int vanguard_interrupt(void);
 
 extern unsigned char *nibbler_videoram2;
 extern unsigned char *nibbler_characterram;
-extern void nibbler_videoram2_w(int offset,int data);
-extern void nibbler_characterram_w(int offset,int data);
-extern void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void nibbler_videoram2_w(int offset,int data);
+void nibbler_characterram_w(int offset,int data);
+void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap);
+void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 
 
@@ -216,7 +216,7 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			nibbler_interrupt,1
+			vanguard_interrupt,2
 		}
 	},
 	60,
@@ -225,7 +225,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,16*4,
+	16*4,16*4,
 	vanguard_vh_convert_color_prom,
 
 	0,
@@ -251,42 +251,42 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nibbler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC12", 0x3000, 0x1000 )
-	ROM_LOAD( "IC07", 0x4000, 0x1000 )
-	ROM_LOAD( "IC08", 0x5000, 0x1000 )
-	ROM_LOAD( "IC09", 0x6000, 0x1000 )
-	ROM_LOAD( "IC10", 0x7000, 0x1000 )
-	ROM_LOAD( "IC14", 0x8000, 0x1000 )
-	ROM_LOAD( "IC15", 0x9000, 0x1000 )
-	ROM_LOAD( "IC16", 0xa000, 0x1000 )
-	ROM_LOAD( "IC17", 0xb000, 0x1000 )
-	ROM_LOAD( "IC14", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "IC12", 0x3000, 0x1000, 0x63b52ccf )
+	ROM_LOAD( "IC07", 0x4000, 0x1000, 0x5de3931d )
+	ROM_LOAD( "IC08", 0x5000, 0x1000, 0x4f2b5fc9 )
+	ROM_LOAD( "IC09", 0x6000, 0x1000, 0x157dbec5 )
+	ROM_LOAD( "IC10", 0x7000, 0x1000, 0xa04d2ef5 )
+	ROM_LOAD( "IC14", 0x8000, 0x1000, 0x4d9217c2 )
+	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "IC15", 0x9000, 0x1000, 0x88b3edc7 )
+	ROM_LOAD( "IC16", 0xa000, 0x1000, 0x7a1d25a9 )
+	ROM_LOAD( "IC17", 0xb000, 0x1000, 0xd000eafc )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC50", 0x0000, 0x1000 )
-	ROM_LOAD( "IC51", 0x1000, 0x1000 )
+	ROM_LOAD( "IC50", 0x0000, 0x1000, 0x2bc0b3f0 )
+	ROM_LOAD( "IC51", 0x1000, 0x1000, 0x27bd8de9 )
 
-	/* sound? */
+	/* sound */
 /*	ROM_LOAD( "IC52", 0x????, 0x0800 ) */
 /*	ROM_LOAD( "IC53", 0x????, 0x0800 ) */
 ROM_END
 
 ROM_START( fantasy_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic12.cpu", 0x3000, 0x1000 )
-	ROM_LOAD( "ic07.cpu", 0x4000, 0x1000 )
-	ROM_LOAD( "ic08.cpu", 0x5000, 0x1000 )
-	ROM_LOAD( "ic09.cpu", 0x6000, 0x1000 )
-	ROM_LOAD( "ic10.cpu", 0x7000, 0x1000 )
-	ROM_LOAD( "ic14.cpu", 0x8000, 0x1000 )
-	ROM_LOAD( "ic15.cpu", 0x9000, 0x1000 )
-	ROM_LOAD( "ic16.cpu", 0xa000, 0x1000 )
-	ROM_LOAD( "ic17.cpu", 0xb000, 0x1000 )
-	ROM_LOAD( "ic14.cpu", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ic12.cpu", 0x3000, 0x1000, 0xbe01e827 )
+	ROM_LOAD( "ic07.cpu", 0x4000, 0x1000, 0x66f038dc )
+	ROM_LOAD( "ic08.cpu", 0x5000, 0x1000, 0x89f3afb1 )
+	ROM_LOAD( "ic09.cpu", 0x6000, 0x1000, 0x3cc9498f )
+	ROM_LOAD( "ic10.cpu", 0x7000, 0x1000, 0x120a97b6 )
+	ROM_LOAD( "ic14.cpu", 0x8000, 0x1000, 0xf3845850 )
+	ROM_RELOAD(           0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ic15.cpu", 0x9000, 0x1000, 0xfa21e08f )
+	ROM_LOAD( "ic16.cpu", 0xa000, 0x1000, 0x757af434 )
+	ROM_LOAD( "ic17.cpu", 0xb000, 0x1000, 0xb5417a91 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic50.vid", 0x0000, 0x1000 )
-	ROM_LOAD( "ic51.vid", 0x1000, 0x1000 )
+	ROM_LOAD( "ic50.vid", 0x0000, 0x1000, 0xcfa87668 )
+	ROM_LOAD( "ic51.vid", 0x1000, 0x1000, 0xf9730c57 )
 
 	/* sound? */
 /*	ROM_LOAD( "ic51.cpu", 0x????, 0x0800 ) */

@@ -7,46 +7,113 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include <stdlib.h> /* JB 970524 */
-#ifdef __MWERKS__
-#include "vgeneric.h"
-#else
 #include "vidhrdw/generic.h"
-#endif
 
-extern int first_free_pen; /* JB 970520 */
 
+
+unsigned char *qix_paletteram,*qix_palettebank;
+unsigned char *qix_videoaddress;
 static unsigned char qixpal[256];
-static unsigned char *screen; /* JB 970524 */
+static unsigned char *screen;
+static int dirtypalette;
+
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Qix doesn't have colors PROMs, it uses RAM. The meaning of the bits are
+  bit 7 -- Red
+        -- Red
+        -- Green
+        -- Green
+        -- Blue
+        -- Blue
+        -- Intensity
+  bit 0 -- Intensity
+
+***************************************************************************/
+void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < 256;i++)
+	{
+		/* this conversion table is probably quite wrong, but at least it gives */
+		/* a reasonable gray scale in the test screen. However, in the very same */
+		/* test screen the red, green and blue squares are almost invisible since */
+		/* they are very dark (value = 1, intensity = 0) */
+		static unsigned char table[16] =
+		{
+			0x00,	/* value = 0, intensity = 0 */
+			0x12,	/* value = 0, intensity = 1 */
+			0x24,	/* value = 0, intensity = 2 */
+			0x49,	/* value = 0, intensity = 3 */
+			0x12,	/* value = 1, intensity = 0 */
+			0x24,	/* value = 1, intensity = 1 */
+			0x49,	/* value = 1, intensity = 2 */
+			0x92,	/* value = 1, intensity = 3 */
+			0x5b,	/* value = 2, intensity = 0 */
+			0x6d,	/* value = 2, intensity = 1 */
+			0x92,	/* value = 2, intensity = 2 */
+			0xdb,	/* value = 2, intensity = 3 */
+			0x7f,	/* value = 3, intensity = 0 */
+			0x91,	/* value = 3, intensity = 1 */
+			0xb6,	/* value = 3, intensity = 2 */
+			0xff	/* value = 3, intensity = 3 */
+		};
+		int bits,intensity;
+
+
+		intensity = (i >> 0) & 0x03;
+		bits = (i >> 6) & 0x03;
+		palette[3*i] = table[(bits << 2) | intensity];
+		bits = (i >> 4) & 0x03;
+		palette[3*i + 1] = table[(bits << 2) | intensity];
+		bits = (i >> 2) & 0x03;
+		palette[3*i + 2] = table[(bits << 2) | intensity];
+	}
+}
+
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
-/* JB 970524 */
 int qix_vh_start(void)
 {
-	if( screen==0 )
+	dirtypalette = 1;
+
+	if ((screen = malloc(256*256)) == 0)
+		return 1;
+
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		screen = malloc( 256*256 );
-		if( screen==0 ) return 1;
+		free(screen);
+		return 1;
 	}
-	return generic_vh_start();
+
+	return 0;
 }
+
+
 
 /***************************************************************************
 
   Stop the video hardware emulation.
 
 ***************************************************************************/
-/* JB 970524 */
 void qix_vh_stop(void)
 {
-	if( screen ) free( screen );
-	screen = 0;
-	generic_vh_stop();
+	osd_free_bitmap(tmpbitmap);
+	free(screen);
 }
+
+
 
 /* The screen is 256x256 with eight bit pixels (64K).  The screen is divided
 into two halves each half mapped by the video CPU at $0000-$7FFF.  The
@@ -60,50 +127,50 @@ that location is either returned or written. */
 
 int qix_videoram_r(int offset)
 {
-	if( RAM[0x9402] & 0x80 ) offset += 0x8000;
+	offset += (qix_videoaddress[0] & 0x80) * 0x100;
 	return screen[offset];
 }
 
 void qix_videoram_w(int offset,int data)
 {
-	unsigned char *bm;
-	unsigned char x, y;
-	
-	if( RAM[0x9402] & 0x80 ) offset += 0x8000;
-	
+	int x, y;
+
+
+	offset += (qix_videoaddress[0] & 0x80) * 0x100;
+
 	/* bitmap is rotated -90 deg. */
 	x = offset >> 8;
-	y = offset & 0xff; y = ~y;
-	
-	bm = tmpbitmap->line[y] + x;
-	*bm = qixpal[data];
+	y = ~offset & 0xff;
+	tmpbitmap->line[y][x] = qixpal[data];
 
 	screen[offset] = data;
 }
-	
+
+
 
 int qix_addresslatch_r(int offset)
 {
-	offset = RAM[0x9402] << 8 | RAM[0x9403];
+	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
 	return screen[offset];
 }
 
-void qix_addresslatch_w(int offset, int data)
-{
-	unsigned char *bm;
-	unsigned char x, y;
-	
-	offset = RAM[0x9402] << 8 | RAM[0x9403];
-	
-	/* bitmap is rotated -90 deg. */
-	x = RAM[0x9402];
-	y = ~ RAM[0x9403];
 
-	bm = tmpbitmap->line[y] + x;
-	*bm = qixpal[data];
+
+void qix_addresslatch_w(int offset,int data)
+{
+	int x, y;
+
+
+	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
+
+	/* bitmap is rotated -90 deg. */
+	x = offset >> 8;
+	y = ~offset & 0xff;
+	tmpbitmap->line[y][x] = qixpal[data];
 
 	screen[offset] = data;
 }
+
 
 
 /* The color RAM works as follows.  The color RAM contains palette values for
@@ -113,59 +180,55 @@ the color RAM pages as follows:
 
      colorRAMAddr = 0x9000 + ((data & 0x03) * 0x100);
 
-The palette values are then read from that address:
-     for (i = 0; i < 256; i++ )
-     {
-         data = RAM[colorRAMAddr++];
-         palette[i][0] = data & 0xC0;          / Red /
-         palette[i][1] = (data & 0x30) << 2;   / Green /
-         palette[i][2] = (dtat & 0x0C) << 4;   / Blue /
-     }
-     setpallete(palette);
-
 Qix uses a palette of 64 colors (2 each RGB) and four intensities (RRGGBBII).
 */
-
-void qix_colorram_w(int offset, int data)
+void qix_paletteram_w(int offset,int data)
 {
-	int colorRAMAddr;
-	int i,x;
-	int red, green, blue /*,intensity*/;
-	unsigned char *bm;
-
-        colorRAMAddr = 0x9000 + ((data & 0x03) * 0x100);
-
-	first_free_pen = 0; /* JB 970520 */
-
-	for (i = 0; i < 256; i++ )
+	if (qix_paletteram[offset] != data)
 	{
-		data = RAM[colorRAMAddr++];
-		red = data & 0xC0;				/* Red */
-		green = (data & 0x30) << 2;		/* Green */
-		blue = (data & 0x0C) << 4;		/* Blue */
-		/* intensity = data & 0x03; */
-
-#ifdef __MWERKS__
-		qixpal[i] = new_osd_obtain_pen( red, green, blue );
-#else
-		qixpal[i] = osd_obtain_pen( red, green, blue );
-#endif
-	}
-
-	/* refresh the bitmap with new colors */
-	for( i=0; i<256; i++ )
-	{
-		bm = tmpbitmap->line[i];
-		for( x=0; x<256; x++ )
-		{
-			*bm++ = qixpal[ screen[ (x<<8) + (255-i) ] ];
-		}
+		dirtypalette = 1;
+		qix_paletteram[offset] = data;
 	}
 }
 
-/* JB 970524 */
+
+
+void qix_palettebank_w(int offset,int data)
+{
+	if ((*qix_palettebank & 0x03) != (data & 0x03))
+		dirtypalette = 1;
+
+	*qix_palettebank = data;
+}
+
+
+
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
+	if (dirtypalette)
+	{
+		int i,x;
+		unsigned char *bm,*pram;
+
+
+		dirtypalette = 0;
+
+		pram = &qix_paletteram[256 * (*qix_palettebank & 0x03)];
+
+		for (i = 0;i < 256;i++)
+			qixpal[i] = Machine->pens[*pram++];
+
+
+		/* refresh the bitmap with new colors */
+		for (i = 0;i < 256;i++)
+		{
+			bm = tmpbitmap->line[i];
+			for (x = 0;x < 256;x++)
+				*bm++ = qixpal[screen[(x << 8) + (255 - i)]];
+		}
+	}
+
+
 	/* copy the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

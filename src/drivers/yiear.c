@@ -49,14 +49,14 @@ Memory map
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int yiear_init_machine(const char *gamename);
+void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
+int yiear_init_machine(const char *gamename);
 void yiear_videoram_w(int offset,int data);
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x5000, 0x57FF, MRA_RAM },
-	{ 0x5800, 0x5FFF, videoram_r, &videoram },
+	{ 0x5800, 0x5FFF, videoram_r, &videoram, &videoram_size },
 	{ 0x8000, 0xFFFF, MRA_ROM },
 
 	{ 0x4E00, 0x4E00, input_port_0_r },	/* coin,start */
@@ -86,9 +86,9 @@ static struct InputPort input_ports[] =
 	{	/* joy1 */
 		0xff,
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
+				OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_SPACE, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
+				OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_FIRE3, 0 }
 	},
 	{	/* joy2 */
 		0xff,
@@ -134,8 +134,9 @@ static struct DSW dsw[] =
 {
 	/* DIP SWITCH 1 */
 	/* input port, mask, name, values, reverse */
-	{ 3, 0x03, "LIVES", { "1", "2", "3", "5" }, 1},
-	{ 3, 0x08, "BONUS", { "30000 80000", "40000 90000" }, 1},
+	{ 3, 0x03, "LIVES", { "5", "3", "1", "1" }, 1},
+	{ 3, 0x08, "BONUS", { "40000 130000", "30000 110000" }, 1 },
+	{ 3, 0x60, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
 	{ 3, 0x80, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
 	{-1}
 };
@@ -166,46 +167,48 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0, &charlayout, 16, 16 },
-	{ 2, 0, &spritelayout, 0, 16 },
+	{ 1, 0x0000, &charlayout,    0, 1 },
+	{ 1, 0x4000, &spritelayout, 16, 1 },
 	{ -1 } /* end of array */
 };
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0xFF,	/* (transparent) */
-	0xFF,0xFF,0x00,	/* yellow */
-	0xFF,0x0F,0x0F,	/* bright red */
-	51,255,51,		/* light green */
-	0x5F,0x5F,0xFF,	/* blue */
-	255,255,153,	/* light flesh */
+	/* characters */
+	0,0,0,			/* black */
+	255,0,0,		/* red */
+	180,242,255,		/* bluegreen */
+	144,82,67,		/* reddish */
+	88,148,48,		/* green */
+	50,50,80,		/* dark blue */
+	41,93,80,		/* green */
+	20,20,20,		/* dark grey */
+	128,0,100,		/* temple trim */
+	224,255,214,		/* sky */
+	130,212,88,		/* lgreen */
+	165,159,64,		/* temple lawn */
+	100,100,100,		/* grey */
+	136,152,126,		/* brownish */
+	130,138,236,		/* lblue */
+	0xFF, 0xFF, 0xFF,	/* white */
+
+	/* sprites */
+	0x00,0x00,0x00, 	/* (transparent) */
+	0xFF,0xFF,0x00, 	/* yellow */
+	0xFF,0x0F,0x0F, 	/* bright red */
+	0,255,0,		/* lime */
+	0x5F,0x5F,0xFF, 	/* blue */
+	255,255,153,    	/* light flesh */
 	153,51,0,		/* brown */
-	0xBF,0xBF,0xBF,	/* dark grey */
+	0xBF,0xBF,0xBF, 	/* dark grey */
 	0,0,0,			/* black */
 	204,153,51,		/* dark flesh */
-	0x5F,0x00,0x00,	/* dark red */
-	0x1F,0x7F,0, 	/* green */
-	0xEF,0xEF,0xFF,	/* light grey */
-	255,204,153,	/* flesh */
-	153,102,51, 	/* wood */
-	0xFF,0xFF,0xFF,	/* white */
-	
-	0x00, 0x00, 0x00,
-	0xEE, 0xEE, 0xEE,
-	0xDD, 0xDD, 0xDD,
-	0xCC, 0xCC, 0xCC,
-	0xBB, 0xBB, 0xBB,
-	0xAA, 0xAA, 0xAA,
-	0x99, 0x99, 0x99,
-	0x88, 0x88, 0x88,
-	0x77, 0x77, 0x77,
-	0x66, 0x66, 0x66,
-	0x55, 0x55, 0x55,
-	0x44, 0x44, 0x44,
-	0x33, 0x33, 0x33,
-	0x22, 0x22, 0x22,
-	0x11, 0x11, 0x11,
-	0xFF, 0xFF, 0xFF
+	218,104,112,     	/* dark red */
+	0x1F,0x7F,0, 	        /* green */
+	185,255,253,     	/* light grey */
+	255,204,153,	        /* flesh */
+	153,102,51, 	        /* wood */
+	0xFF,0xFF,0xFF         /* white */
 };
 
 static unsigned char colortable[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
@@ -216,14 +219,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			500000, //1250000,	/* 1.25 Mhz */
+			1250000,	/* 1.25 Mhz */
 			0,			/* memory region */
 			readmem,	/* MemoryReadAddress */
 			writemem,	/* MemoryWriteAddress */
 			0,			/* IOReadPort */
 			0,			/* IOWritePort */
 			interrupt,	/* interrupt routine */
-			8			/* interrupts per frame */
+			1			/* interrupts per frame */
 		}
 	},
 	60,					/* frames per second */
@@ -233,7 +236,7 @@ static struct MachineDriver machine_driver =
 	256, 256,				/* screen_width, screen_height */
 	{ 0, 255, 0, 255 },	/* struct rectangle visible_area */
 	gfxdecodeinfo,			/* GfxDecodeInfo * */
-	
+
 	32,						/* total colors */
 	32,						/* color table length */
 	0,						/* convert color prom routine */
@@ -255,33 +258,24 @@ static struct MachineDriver machine_driver =
 /***************************************************************************
 
   Game driver(s)
-  
+
 ***************************************************************************/
 
 ROM_START( yiear_rom )
-	ROM_REGION(1024*64)
-	ROM_LOAD( "D12_8.BIN", 0x8000, 1024*16 ) /* 16K */
-	ROM_LOAD( "D14_7.BIN", 0xC000, 1024*16 ) /* 16K */
-	
-	ROM_REGION(1024*16) /* characters */
-	ROM_LOAD( "G16_1.BIN", 1024*0, 1024*8 ) /* 8K */
-	ROM_LOAD( "G15_2.BIN", 1024*8, 1024*8 ) /* 8K */
-	
-	
-	ROM_REGION(1024*64) /* sprites */
-	ROM_LOAD( "G06_3.BIN", 1024*0,  1024*16 ) /* 16K */
-	ROM_LOAD( "G05_4.BIN", 1024*16, 1024*16 ) /* 16K */
-	ROM_LOAD( "G04_5.BIN", 1024*32, 1024*16 ) /* 16K */
-	ROM_LOAD( "G03_6.BIN", 1024*48, 1024*16 ) /* 16K */
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "D12_8.BIN", 0x8000, 0x4000, 0x53e66644 )
+	ROM_LOAD( "D14_7.BIN", 0xC000, 0x4000, 0xd5f1fb77 )
+
+	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "G16_1.BIN", 0x00000, 0x2000, 0x12fd01fd )
+	ROM_LOAD( "G15_2.BIN", 0x02000, 0x2000, 0xf889b63f )
+	ROM_LOAD( "G06_3.BIN", 0x04000, 0x4000, 0x5c60737a )
+	ROM_LOAD( "G05_4.BIN", 0x08000, 0x4000, 0xe9a3d4d9 )
+	ROM_LOAD( "G04_5.BIN", 0x0c000, 0x4000, 0x35ca933a )
+	ROM_LOAD( "G03_6.BIN", 0x10000, 0x4000, 0x9e25b6cb )
 ROM_END
 
-static int hiload(const char *name)
-{ /* TBA */
-}
 
-static void hisave(const char *name)
-{ /* TBA */
-}
 
 struct GameDriver yiear_driver =
 {
@@ -301,4 +295,3 @@ struct GameDriver yiear_driver =
 	128-(8*3), 128-4,
 	0, 0			/* High score load and save */
 };
-

@@ -40,15 +40,15 @@ d40b      IN2
 d40c      COIN
           bit 5 = tilt
           bit 4 = coin
-d40f      DSW2 (when d40e == 0x0e) and DSW3 (when d40e == 0x0f)
-          DSW2
-		  coins per play
-          DSW3
-          bit 7 = coinage (1 way/2 ways)
-          bit 6 = infinite lives
-          bit 5 = year display yes/no
-		  bit 2-4 ?
-		  bit 0-1 bonus  none /10000 / 20000 /30000
+d40f      8910 #0 read
+            port A DSW2
+              coins per play
+            port B DSW3
+              bit 7 = coinage (1 way/2 ways)
+              bit 6 = infinite lives
+              bit 5 = year display yes/no
+              bit 2-4 ?
+              bit 0-1 bonus  none /10000 / 20000 /30000
 
 write
 d000-d01f front playfield column scroll
@@ -57,8 +57,8 @@ d040-d05f back playfield column scroll
 d300      playfield priority control ??
           bit 0-2 ?
 		  bit 3 = 1 middle playfield has priority over sprites ??
-d40e      0e/0f = control which of DSW2 and DSW3 is read from d40f; other values = ?
-d40f      ?
+d40e      8910 #0 control
+d40f      8910 #0 write
 d500      front playfield horizontal scroll
 d501      front playfield vertical scroll
 d502      middle playfield horizontal scroll
@@ -90,10 +90,11 @@ read:
 write:
 4800      8910 #1  control
 4801      8910 #1  write
-4802      8910 #1  control
-4803      8910 #1  write
-4804      8910 #1  control
-4805      8910 #1  write
+4802      8910 #2  control
+4803      8910 #2  write
+4804      8910 #3  control
+4805      8910 #3  write
+            port B bit 0 SOUND CPU NMI disable
 
 ***************************************************************************/
 
@@ -102,32 +103,26 @@ write:
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
+extern unsigned char *taito_videoram2,*taito_videoram3;
+extern unsigned char *taito_characterram;
+extern unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
+extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
+extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
+extern unsigned char *taito_gfxpointer,*taito_paletteram;
+extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
+void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int taito_gfxrom_r(int offset);
+void taito_videoram2_w(int offset,int data);
+void taito_videoram3_w(int offset,int data);
+void taito_paletteram_w(int offset,int data);
+void taito_colorbank_w(int offset,int data);
+void taito_characterram_w(int offset,int data);
+int junglek_vh_start(void);
+void taito_vh_stop(void);
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-
-extern unsigned char *taito_dsw23_select;
-extern int taito_dsw23_r(int offset);
-
-extern unsigned char *junglek_videoram2,*junglek_videoram3;
-extern unsigned char *junglek_characterram;
-extern unsigned char *junglek_scrollx1,*junglek_scrollx2,*junglek_scrollx3;
-extern unsigned char *junglek_scrolly1,*junglek_scrolly2,*junglek_scrolly3;
-extern unsigned char *junglek_colscrolly1,*junglek_colscrolly2,*junglek_colscrolly3;
-extern unsigned char *junglek_gfxpointer,*junglek_paletteram;
-extern unsigned char *junglek_colorbank,*junglek_video_priority;
-extern unsigned char *junglek_colorbank,*junglek_video_enable;
-extern void junglek_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int junglek_gfxrom_r(int offset);
-extern void junglek_videoram2_w(int offset,int data);
-extern void junglek_videoram3_w(int offset,int data);
-extern void junglek_paletteram_w(int offset,int data);
-extern void junglek_colorbank_w(int offset,int data);
-extern void junglek_characterram_w(int offset,int data);
-extern int junglek_vh_start(void);
-extern void junglek_vh_stop(void);
-extern void junglek_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-extern int junglek_sh_interrupt(void);
-extern int junglek_sh_start(void);
+int junglek_sh_interrupt(void);
+int junglek_sh_start(void);
 
 
 
@@ -141,8 +136,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
-	{ 0xd40f, 0xd40f, taito_dsw23_r },	/* DSW2 and DSW3 */
-	{ 0xd404, 0xd404, junglek_gfxrom_r },
+	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
+	{ 0xd404, 0xd404, taito_gfxrom_r },
 	{ -1 }	/* end of table */
 };
 
@@ -150,28 +145,29 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xc800, 0xcbff, junglek_videoram2_w, &junglek_videoram2 },
-	{ 0xcc00, 0xcfff, junglek_videoram3_w, &junglek_videoram3 },
+	{ 0xc800, 0xcbff, taito_videoram2_w, &taito_videoram2 },
+	{ 0xcc00, 0xcfff, taito_videoram3_w, &taito_videoram3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd01f, MWA_RAM, &junglek_colscrolly1 },
-	{ 0xd020, 0xd03f, MWA_RAM, &junglek_colscrolly2 },
-	{ 0xd040, 0xd05f, MWA_RAM, &junglek_colscrolly3 },
-	{ 0xd500, 0xd500, MWA_RAM, &junglek_scrollx1 },
-	{ 0xd501, 0xd501, MWA_RAM, &junglek_scrolly1 },
-	{ 0xd502, 0xd502, MWA_RAM, &junglek_scrollx2 },
-	{ 0xd503, 0xd503, MWA_RAM, &junglek_scrolly2 },
-	{ 0xd504, 0xd504, MWA_RAM, &junglek_scrollx3 },
-	{ 0xd505, 0xd505, MWA_RAM, &junglek_scrolly3 },
-	{ 0xd506, 0xd507, junglek_colorbank_w, &junglek_colorbank },
-	{ 0xd509, 0xd50a, MWA_RAM, &junglek_gfxpointer },
+	{ 0xd000, 0xd01f, MWA_RAM, &taito_colscrolly1 },
+	{ 0xd020, 0xd03f, MWA_RAM, &taito_colscrolly2 },
+	{ 0xd040, 0xd05f, MWA_RAM, &taito_colscrolly3 },
+	{ 0xd500, 0xd500, MWA_RAM, &taito_scrollx1 },
+	{ 0xd501, 0xd501, MWA_RAM, &taito_scrolly1 },
+	{ 0xd502, 0xd502, MWA_RAM, &taito_scrollx2 },
+	{ 0xd503, 0xd503, MWA_RAM, &taito_scrolly2 },
+	{ 0xd504, 0xd504, MWA_RAM, &taito_scrollx3 },
+	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
+	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
+	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
 	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd50d, 0xd50d, MWA_NOP },
-        { 0xd50e, 0xd50e, MWA_NOP },
-	{ 0xd200, 0xd27f, junglek_paletteram_w, &junglek_paletteram },
-	{ 0x9000, 0xbfff, junglek_characterram_w, &junglek_characterram },
-	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
-	{ 0xd300, 0xd300, MWA_RAM, &junglek_video_priority },
-	{ 0xd600, 0xd600, MWA_RAM, &junglek_video_enable },
+	{ 0xd200, 0xd27f, taito_paletteram_w, &taito_paletteram },
+	{ 0x9000, 0xbfff, taito_characterram_w, &taito_characterram },
+{ 0xd50e, 0xd50e, MWA_NOP },
+	{ 0xd40e, 0xd40e, AY8910_control_port_0_w },
+	{ 0xd40f, 0xd40f, AY8910_write_port_0_w },
+	{ 0xd300, 0xd300, MWA_RAM, &taito_video_priority },
+	{ 0xd600, 0xd600, MWA_RAM, &taito_video_enable },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -189,12 +185,12 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4800, AY8910_control_port_0_w },
-	{ 0x4801, 0x4801, AY8910_write_port_0_w },
-	{ 0x4802, 0x4802, AY8910_control_port_1_w },
-	{ 0x4803, 0x4803, AY8910_write_port_1_w },
-	{ 0x4804, 0x4804, AY8910_control_port_2_w },
-	{ 0x4805, 0x4805, AY8910_write_port_2_w },
+	{ 0x4800, 0x4800, AY8910_control_port_1_w },
+	{ 0x4801, 0x4801, AY8910_write_port_1_w },
+	{ 0x4802, 0x4802, AY8910_control_port_2_w },
+	{ 0x4803, 0x4803, AY8910_write_port_2_w },
+	{ 0x4804, 0x4804, AY8910_control_port_3_w },
+	{ 0x4805, 0x4805, AY8910_write_port_3_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -313,7 +309,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* jungle King doesn't have a color PROM, it uses a RAM to generate colors */
+/* Jungle King doesn't have a color PROM, it uses a RAM to generate colors */
 /* and change them during the game. Here is the list of all the colors is uses. */
 static unsigned char color_prom[] =
 {
@@ -360,7 +356,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			junglek_sh_interrupt,2
+			junglek_sh_interrupt,5
 		}
 	},
 	60,
@@ -370,12 +366,12 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	168, 16*8,
-	junglek_vh_convert_color_prom,
+	taito_vh_convert_color_prom,
 
 	0,
 	junglek_vh_start,
-	junglek_vh_stop,
-	junglek_vh_screenrefresh,
+	taito_vh_stop,
+	taito_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -395,64 +391,64 @@ static struct MachineDriver machine_driver =
 
 ROM_START( junglek_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kn41.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "kn42.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "kn43.bin",  0x2000, 0x1000 )
-	ROM_LOAD( "kn44.bin",  0x3000, 0x1000 )
-	ROM_LOAD( "kn45.bin",  0x4000, 0x1000 )
-	ROM_LOAD( "kn46.bin",  0x5000, 0x1000 )
-	ROM_LOAD( "kn47.bin",  0x6000, 0x1000 )
-	ROM_LOAD( "kn48.bin",  0x7000, 0x1000 )
+	ROM_LOAD( "kn41.bin", 0x0000, 0x1000, 0xac5442b8 )
+	ROM_LOAD( "kn42.bin", 0x1000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43.bin", 0x2000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44.bin", 0x3000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45.bin", 0x4000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46.bin", 0x5000, 0x1000, 0xc040e8ac )
+	ROM_LOAD( "kn47.bin", 0x6000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48.bin", 0x7000, 0x1000, 0x45072f4d )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kn55.bin",  0x0000, 0x1000 )
+	ROM_OBSOLETELOAD( "kn55.bin", 0x0000, 0x1000 )	/* not needed - could be removed */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "kn49.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "kn50.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "kn51.bin",  0x2000, 0x1000 )
-	ROM_LOAD( "kn52.bin",  0x3000, 0x1000 )
-	ROM_LOAD( "kn53.bin",  0x4000, 0x1000 )
-	ROM_LOAD( "kn54.bin",  0x5000, 0x1000 )
-	ROM_LOAD( "kn55.bin",  0x6000, 0x1000 )
-	ROM_LOAD( "kn56.bin",  0x7000, 0x1000 )
+	ROM_LOAD( "kn49.bin", 0x0000, 0x1000, 0xdfe09360 )
+	ROM_LOAD( "kn50.bin", 0x1000, 0x1000, 0x4ff4503c )
+	ROM_LOAD( "kn51.bin", 0x2000, 0x1000, 0x2a85326d )
+	ROM_LOAD( "kn52.bin", 0x3000, 0x1000, 0xf682e3e8 )
+	ROM_LOAD( "kn53.bin", 0x4000, 0x1000, 0xf3f16a95 )
+	ROM_LOAD( "kn54.bin", 0x5000, 0x1000, 0x9548d428 )
+	ROM_LOAD( "kn55.bin", 0x6000, 0x1000, 0x9ddcccc6 )
+	ROM_LOAD( "kn56.bin", 0x7000, 0x1000, 0x5910a990 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "kn58-1.bin", 0x1000, 0x1000 )	/* ??? */
-	ROM_LOAD( "kn59-1.bin", 0x2000, 0x1000 )	/* ??? */
-	ROM_LOAD( "kn60.bin",   0x3000, 0x1000 )	/* ??? */
+	ROM_LOAD( "kn57-1.bin", 0x0000, 0x1000, 0x66c38ff9 )
+	ROM_LOAD( "kn58-1.bin", 0x1000, 0x1000, 0xea9154bd )	/* ??? */
+	ROM_LOAD( "kn59-1.bin", 0x2000, 0x1000, 0xd3d4d7fe )	/* ??? */
+	ROM_LOAD( "kn60.bin",   0x3000, 0x1000, 0xc751bc93 )	/* ??? */
 ROM_END
 
-ROM_START( jungleh_rom )
+ROM_START( jhunt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kn41a",  0x0000, 0x1000 )
-	ROM_LOAD( "kn42",   0x1000, 0x1000 )
-	ROM_LOAD( "kn43",   0x2000, 0x1000 )
-	ROM_LOAD( "kn44",   0x3000, 0x1000 )
-	ROM_LOAD( "kn45",   0x4000, 0x1000 )
-	ROM_LOAD( "kn46a",  0x5000, 0x1000 )
-	ROM_LOAD( "kn47",   0x6000, 0x1000 )
-	ROM_LOAD( "kn48a",  0x7000, 0x1000 )
+	ROM_LOAD( "kn41a", 0x0000, 0x1000, 0x9174a276 )
+	ROM_LOAD( "kn42",  0x1000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43",  0x2000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44",  0x3000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45",  0x4000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46a", 0x5000, 0x1000, 0xe4bcd3ec )
+	ROM_LOAD( "kn47",  0x6000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48a", 0x7000, 0x1000, 0xed94461e )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kn55",   0x0000, 0x1000 )
+	ROM_OBSOLETELOAD( "kn55",   0x0000, 0x1000 )	/* not needed - could be removed */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "kn49a",  0x0000, 0x1000 )
-	ROM_LOAD( "kn50a",  0x1000, 0x1000 )
-	ROM_LOAD( "kn51a",  0x2000, 0x1000 )
-	ROM_LOAD( "kn52a",  0x3000, 0x1000 )
-	ROM_LOAD( "kn53a",  0x4000, 0x1000 )
-	ROM_LOAD( "kn54a",  0x5000, 0x1000 )
-	ROM_LOAD( "kn55",   0x6000, 0x1000 )
-	ROM_LOAD( "kn56a",  0x7000, 0x1000 )
+	ROM_LOAD( "kn49a", 0x0000, 0x1000, 0x1bf1ccb5 )
+	ROM_LOAD( "kn50a", 0x1000, 0x1000, 0xa02514d7 )
+	ROM_LOAD( "kn51a", 0x2000, 0x1000, 0xdfdc6430 )
+	ROM_LOAD( "kn52a", 0x3000, 0x1000, 0x07daf09a )
+	ROM_LOAD( "kn53a", 0x4000, 0x1000, 0xb8e50809 )
+	ROM_LOAD( "kn54a", 0x5000, 0x1000, 0x32dab8ac )
+	ROM_LOAD( "kn55",  0x6000, 0x1000, 0x9ddcccc6 )
+	ROM_LOAD( "kn56a", 0x7000, 0x1000, 0x5e1a9162 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1", 0x0000, 0x1000 )
-	ROM_LOAD( "kn58-1", 0x1000, 0x1000 )	/* ??? */
-	ROM_LOAD( "kn59-1", 0x2000, 0x1000 )	/* ??? */
-	ROM_LOAD( "kn60",   0x3000, 0x1000 )	/* ??? */
+	ROM_LOAD( "kn57-1", 0x0000, 0x1000, 0x66c38ff9 )
+	ROM_LOAD( "kn58-1", 0x1000, 0x1000, 0xea9154bd )	/* ??? */
+	ROM_LOAD( "kn59-1", 0x2000, 0x1000, 0xd3d4d7fe )	/* ??? */
+	ROM_LOAD( "kn60",   0x3000, 0x1000, 0xc751bc93 )	/* ??? */
 ROM_END
 
 
@@ -478,14 +474,14 @@ struct GameDriver junglek_driver =
 
 
 
-struct GameDriver jungleh_driver =
+struct GameDriver jhunt_driver =
 {
 	"Jungle Hunt",
 	"jhunt",
 	"NICOLA SALMORIA",
 	&machine_driver,
 
-	jungleh_rom,
+	jhunt_rom,
 	0, 0,
 	0,
 

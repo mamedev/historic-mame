@@ -137,7 +137,7 @@ byte Debug6502(register M6502 *R);
 /** emulation loop.                                         **/
 /************************************ TO BE WRITTEN BY USER **/
 /*byte Loop6502(register M6502 *R);*/
-extern int cpu_interrupt(void);
+int cpu_interrupt(void);
 #define Loop6502(R) ((byte)cpu_interrupt())
 
 #endif /* M6502_H */

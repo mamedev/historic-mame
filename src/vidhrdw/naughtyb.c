@@ -58,8 +58,9 @@ int naughtyb_vh_start(void)
 	videoctlreg = 0;
 
 	/* Naughty Boy has a virtual screen twice as large as the visible screen */
-	if ((dirtybuffer = malloc(videoram_size)) == 0) return 1;
-	memset(dirtybuffer,0,videoram_size);
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
+		return 1;
+	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(28*8,68*8)) == 0)
 	{

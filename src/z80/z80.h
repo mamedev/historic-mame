@@ -24,7 +24,11 @@
 /****************************************************************************/
 /* If your compiler doesn't know about inlined functions, uncomment this    */
 /****************************************************************************/
+#ifdef WIN32
+#define INLINE __inline
+#else
 /* #define INLINE static */
+#endif
 
 #ifndef EMU_TYPES
 #define EMU_TYPES
@@ -126,7 +130,7 @@ void Z80_Patch (Z80_Regs *Regs);   /* Called when ED FE occurs. Can be used */
                                    /* Z80_IGNORE_INT, Z80_NMI_INT or a byte */
                                    /* identifying the device (most often    */
                                    /* 0xFF)                                 */
-extern int cpu_interrupt(void);
+int cpu_interrupt(void);
 #define Z80_Interrupt() (cpu_interrupt())
 
 void Z80_Reti (void);              /* Called when RETI occurs               */

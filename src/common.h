@@ -15,8 +15,9 @@
 struct RomModule
 {
 	const char *name;	/* name of the file to load */
-	int offset;			/* offset to load it to */
-	int length;			/* length of the file */
+	unsigned int offset;			/* offset to load it to */
+	unsigned int length;			/* length of the file */
+	unsigned int checksum;		/* our custom checksum */
 };
 
 /* there are some special cases for the above. name, offset and size all set to 0 */
@@ -25,11 +26,20 @@ struct RomModule
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */
 
-#define ROM_START(name) static struct RomModule name[] = {	/* start of table */
-#define ROM_REGION(length) { 0, length, 0 },	/* start of memory region */
-#define ROM_LOAD(name,offset,length) { name, offset, length },	/* ROM to load */
-#define ROM_CONTINUE(offset,length) { 0, offset, length },	/* continue loading the previous ROM */
-#define ROM_END { 0, 0, 0 }	}; /* end of table */
+/* start of table */
+#define ROM_START(name) static struct RomModule name[] = {
+/* start of memory region */
+#define ROM_REGION(length) { 0, length, 0, 0 },
+/* OBSOLETE - don't use in new code, use ROM_LOAD() instead */
+#define ROM_OBSOLETELOAD(name,offset,length) { name, offset, length, -1 },
+/* ROM to load */
+#define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum },
+/* continue loading the previous ROM to a new address */
+#define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
+/* restart loading the previous ROM to a new address */
+#define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
+/* end of table */
+#define ROM_END { 0, 0, 0, 0 }	};
 
 
 
@@ -95,6 +105,7 @@ struct rectangle
 void showdisclaimer(void);
 
 int readroms(const struct RomModule *romp,const char *basename);
+void printromlist(const struct RomModule *romp,const char *basename);
 struct GameSamples *readsamples(const char **samplenames,const char *basename);
 void freesamples(struct GameSamples *samples);
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);

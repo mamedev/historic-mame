@@ -91,20 +91,22 @@ interrupt mode 1 triggered by the main CPU
 
 
 
-extern int scramble_IN2_r(int offset);
-extern int scramble_protection_r(int offset);
+int scramble_IN2_r(int offset);
+int scramble_protection_r(int offset);
 
 extern unsigned char *scramble_attributesram;
 extern unsigned char *scramble_bulletsram;
 extern int scramble_bulletsram_size;
-extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void scramble_attributes_w(int offset,int data);
-extern void scramble_stars_w(int offset,int data);
-extern int scramble_vh_start(void);
-extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
+void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void scramble_attributes_w(int offset,int data);
+void scramble_stars_w(int offset,int data);
+int scramble_vh_start(void);
+void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int scramble_sh_interrupt(void);
-extern int scramble_sh_start(void);
+int scramble_sh_interrupt(void);
+int scramble_sh_start(void);
+int frogger_sh_interrupt(void);
+int frogger_sh_start(void);
 
 
 
@@ -154,6 +156,21 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
+static struct MemoryReadAddress froggers_sound_readmem[] =
+{
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x0000, 0x17ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress froggers_sound_writemem[] =
+{
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x0000, 0x17ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
 
 static struct IOReadPort sound_readport[] =
 {
@@ -168,6 +185,19 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ 0x10, 0x10, AY8910_control_port_1_w },
 	{ 0x20, 0x20, AY8910_write_port_1_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort froggers_sound_readport[] =
+{
+	{ 0x40, 0x40, AY8910_read_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort froggers_sound_writeport[] =
+{
+	{ 0x80, 0x80, AY8910_control_port_0_w },
+	{ 0x40, 0x40, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -312,7 +342,7 @@ static struct MachineDriver scramble_machine_driver =
 			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,1
+			scramble_sh_interrupt,10
 		}
 	},
 	60,
@@ -339,7 +369,7 @@ static struct MachineDriver scramble_machine_driver =
 
 
 
-static struct MachineDriver scramble_nosound_machine_driver =
+static struct MachineDriver froggers_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -349,6 +379,13 @@ static struct MachineDriver scramble_nosound_machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2000000,	/* 2 Mhz?????? */
+			2,	/* memory region #2 */
+			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
+			frogger_sh_interrupt,10
 		}
 	},
 	60,
@@ -357,7 +394,7 @@ static struct MachineDriver scramble_nosound_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	32,64,
 	scramble_vh_convert_color_prom,
 
 	0,
@@ -368,9 +405,9 @@ static struct MachineDriver scramble_nosound_machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	frogger_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -383,82 +420,96 @@ static struct MachineDriver scramble_nosound_machine_driver =
 
 ROM_START( scramble_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2d", 0x0000, 0x0800 )
-	ROM_LOAD( "2e", 0x0800, 0x0800 )
-	ROM_LOAD( "2f", 0x1000, 0x0800 )
-	ROM_LOAD( "2h", 0x1800, 0x0800 )
-	ROM_LOAD( "2j", 0x2000, 0x0800 )
-	ROM_LOAD( "2l", 0x2800, 0x0800 )
-	ROM_LOAD( "2m", 0x3000, 0x0800 )
-	ROM_LOAD( "2p", 0x3800, 0x0800 )
+	ROM_LOAD( "2d", 0x0000, 0x0800, 0x9b48021e )
+	ROM_LOAD( "2e", 0x0800, 0x0800, 0x4d2d8657 )
+	ROM_LOAD( "2f", 0x1000, 0x0800, 0xcf9b5ad1 )
+	ROM_LOAD( "2h", 0x1800, 0x0800, 0x8e22964a )
+	ROM_LOAD( "2j", 0x2000, 0x0800, 0x14ce448c )
+	ROM_LOAD( "2l", 0x2800, 0x0800, 0x110075b0 )
+	ROM_LOAD( "2m", 0x3000, 0x0800, 0x746f8605 )
+	ROM_LOAD( "2p", 0x3800, 0x0800, 0xa3280a00 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f", 0x0000, 0x0800 )
-	ROM_LOAD( "5h", 0x0800, 0x0800 )
+	ROM_LOAD( "5f", 0x0000, 0x0800, 0x86bcba72 )
+	ROM_LOAD( "5h", 0x0800, 0x0800, 0x973cedc4 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c", 0x0000, 0x0800 )
-	ROM_LOAD( "5d", 0x0800, 0x0800 )
-	ROM_LOAD( "5e", 0x1000, 0x0800 )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0xbbc47658 )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0x7b9aac98 )
+	ROM_LOAD( "5e", 0x1000, 0x0800, 0x5b267ea0 )
 ROM_END
 
 ROM_START( atlantis_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c", 0x0000, 0x0800 )
-	ROM_LOAD( "2e", 0x0800, 0x0800 )
-	ROM_LOAD( "2f", 0x1000, 0x0800 )
-	ROM_LOAD( "2h", 0x1800, 0x0800 )
-	ROM_LOAD( "2j", 0x2000, 0x0800 )
-	ROM_LOAD( "2l", 0x2800, 0x0800 )
+	ROM_LOAD( "2c", 0x0000, 0x0800, 0x35c37f85 )
+	ROM_LOAD( "2e", 0x0800, 0x0800, 0x9a1cf98e )
+	ROM_LOAD( "2f", 0x1000, 0x0800, 0xc43738d5 )
+	ROM_LOAD( "2h", 0x1800, 0x0800, 0x6c2e5004 )
+	ROM_LOAD( "2j", 0x2000, 0x0800, 0x08db4581 )
+	ROM_LOAD( "2l", 0x2800, 0x0800, 0x88d349cb )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f", 0x0000, 0x0800 )
-	ROM_LOAD( "5h", 0x0800, 0x0800 )
+	ROM_LOAD( "5f", 0x0000, 0x0800, 0x7f47e177 )
+	ROM_LOAD( "5h", 0x0800, 0x0800, 0x30396a17 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c", 0x0000, 0x0800 )
-	ROM_LOAD( "5d", 0x0800, 0x0800 )
-	ROM_LOAD( "5e", 0x1000, 0x0800 )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0xbbc47658 )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0x7b9aac98 )
+	ROM_LOAD( "5e", 0x1000, 0x0800, 0x5b267ea0 )
 ROM_END
 
 ROM_START( theend_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC13", 0x0000, 0x0800 )
-	ROM_LOAD( "IC14", 0x0800, 0x0800 )
-	ROM_LOAD( "IC15", 0x1000, 0x0800 )
-	ROM_LOAD( "IC16", 0x1800, 0x0800 )
-	ROM_LOAD( "IC17", 0x2000, 0x0800 )
-	ROM_LOAD( "IC18", 0x2800, 0x0800 )
-	ROM_LOAD( "IC56", 0x3000, 0x0800 )
-	ROM_LOAD( "IC55", 0x3800, 0x0800 )
+	ROM_LOAD( "IC13", 0x0000, 0x0800, 0x34fd8a0f )
+	ROM_LOAD( "IC14", 0x0800, 0x0800, 0x19c26ade )
+	ROM_LOAD( "IC15", 0x1000, 0x0800, 0xe7177301 )
+	ROM_LOAD( "IC16", 0x1800, 0x0800, 0x9f72edda )
+	ROM_LOAD( "IC17", 0x2000, 0x0800, 0xb2a13167 )
+	ROM_LOAD( "IC18", 0x2800, 0x0800, 0x253049da )
+	ROM_LOAD( "IC56", 0x3000, 0x0800, 0xe8f380ab )
+	ROM_LOAD( "IC55", 0x3800, 0x0800, 0xe0c27de2 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC30", 0x0000, 0x0800 )
-	ROM_LOAD( "IC31", 0x0800, 0x0800 )
+	ROM_LOAD( "IC30", 0x0000, 0x0800, 0x83c615b6 )
+	ROM_LOAD( "IC31", 0x0800, 0x0800, 0xad579d45 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "IC56", 0x0000, 0x0800 )
-	ROM_LOAD( "IC55", 0x0800, 0x0800 )
+	ROM_LOAD( "IC56", 0x0000, 0x0800, 0xe8f380ab )
+	ROM_LOAD( "IC55", 0x0800, 0x0800, 0xe0c27de2 )
 ROM_END
 
 ROM_START( froggers_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vid_d2.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "vid_e2.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "vid_f2.bin", 0x1000, 0x0800 )
-	ROM_LOAD( "vid_h2.bin", 0x1800, 0x0800 )
-	ROM_LOAD( "vid_j2.bin", 0x2000, 0x0800 )
-	ROM_LOAD( "vid_l2.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "vid_d2.bin", 0x0000, 0x0800, 0xb457efef )
+	ROM_LOAD( "vid_e2.bin", 0x0800, 0x0800, 0x01dc34c8 )
+	ROM_LOAD( "vid_f2.bin", 0x1000, 0x0800, 0xa382c0ac )
+	ROM_LOAD( "vid_h2.bin", 0x1800, 0x0800, 0xcafbf75f )
+	ROM_LOAD( "vid_j2.bin", 0x2000, 0x0800, 0x0071b52f )
+	ROM_LOAD( "vid_l2.bin", 0x2800, 0x0800, 0x7a83468f )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800, 0x38a71739 )
+	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800, 0xb474d87c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_c5.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "snd_d5.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "snd_e5.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "snd_c5.bin", 0x0000, 0x0800, 0x57851ff5 )
+	ROM_LOAD( "snd_d5.bin", 0x0800, 0x0800, 0xd77b3859 )
+	ROM_LOAD( "snd_e5.bin", 0x1000, 0x0800, 0x7ec0f39e )
 ROM_END
+
+
+
+static void froggers_decode(void)
+{
+	int A;
+	unsigned char *RAM;
+
+
+	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
+	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	for (A = 0;A < 0x0800;A++)
+		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+}
 
 
 
@@ -524,10 +575,10 @@ struct GameDriver froggers_driver =
 	"Frog",
 	"froggers",
 	"NICOLA SALMORIA",
-	&scramble_nosound_machine_driver,
+	&froggers_machine_driver,
 
 	froggers_rom,
-	0, 0,
+	froggers_decode, 0,
 	0,
 
 	input_ports, trak_ports, scramble_dsw, keys,

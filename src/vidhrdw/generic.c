@@ -29,9 +29,15 @@ struct osd_bitmap *tmpbitmap;
 ***************************************************************************/
 int generic_vh_start(void)
 {
+	if (videoram_size == 0)
+	{
+if (errorlog) fprintf(errorlog,"Error: generic_vh_start() called but videoram_size not initialized\n");
+		return 1;
+	}
+
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,videoram_size);
+	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{

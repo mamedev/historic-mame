@@ -65,8 +65,8 @@ write:
 
 
 extern unsigned char *venture_characterram;
-extern void venture_characterram_w(int offset,int data);
-extern void venture_vh_screenrefresh(struct osd_bitmap *bitmap);
+void venture_characterram_w(int offset,int data);
+void venture_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *venture_sprite_no;
 extern unsigned char *venture_sprite_enable;
@@ -321,30 +321,30 @@ static struct MachineDriver mtrap_machine_driver =
 
 ROM_START( venture_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "13A-CPU", 0x8000, 0x1000 )
-	ROM_LOAD( "12A-CPU", 0x9000, 0x1000 )
-	ROM_LOAD( "11A-CPU", 0xA000, 0x1000 )
-	ROM_LOAD( "10A-CPU", 0xB000, 0x1000 )
-	ROM_LOAD( "9A-CPU",  0xC000, 0x1000 )
-	ROM_LOAD( "8A-CPU",  0xD000, 0x1000 )
-	ROM_LOAD( "7A-CPU",  0xE000, 0x1000 )
-	ROM_LOAD( "6A-CPU",  0xF000, 0x1000 )
+	ROM_LOAD( "13A-CPU", 0x8000, 0x1000, 0x891abe62 )
+	ROM_LOAD( "12A-CPU", 0x9000, 0x1000, 0xac004ea6 )
+	ROM_LOAD( "11A-CPU", 0xA000, 0x1000, 0x225ec9ee )
+	ROM_LOAD( "10A-CPU", 0xB000, 0x1000, 0x4c8a0c70 )
+	ROM_LOAD( "9A-CPU",  0xC000, 0x1000, 0x4ec5e145 )
+	ROM_LOAD( "8A-CPU",  0xD000, 0x1000, 0x25eac9e2 )
+	ROM_LOAD( "7A-CPU",  0xE000, 0x1000, 0x2173eca5 )
+	ROM_LOAD( "6A-CPU",  0xF000, 0x1000, 0x1714e61c )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11D-CPU", 0x0000, 0x0800 )
+	ROM_LOAD( "11D-CPU", 0x0000, 0x0800, 0xceb42d02 )
 ROM_END
 
 ROM_START( mtrap_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mtl11a.bin", 0xA000, 0x1000 )
-	ROM_LOAD( "mtl10a.bin", 0xB000, 0x1000 )
-	ROM_LOAD( "mtl9a.bin",  0xC000, 0x1000 )
-	ROM_LOAD( "mtl8a.bin",  0xD000, 0x1000 )
-	ROM_LOAD( "mtl7a.bin",  0xE000, 0x1000 )
-	ROM_LOAD( "mtl6a.bin",  0xF000, 0x1000 )
+	ROM_LOAD( "mtl11a.bin", 0xA000, 0x1000, 0xb4e109f7 )
+	ROM_LOAD( "mtl10a.bin", 0xB000, 0x1000, 0xe890bac6 )
+	ROM_LOAD( "mtl9a.bin",  0xC000, 0x1000, 0x06628e86 )
+	ROM_LOAD( "mtl8a.bin",  0xD000, 0x1000, 0xa12b0c55 )
+	ROM_LOAD( "mtl7a.bin",  0xE000, 0x1000, 0xb5c75a2f )
+	ROM_LOAD( "mtl6a.bin",  0xF000, 0x1000, 0x2e7f499b )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11D.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "mtl11D.bin", 0x0000, 0x0800, 0x389ef2ec )
 ROM_END
 
 

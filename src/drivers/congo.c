@@ -96,14 +96,14 @@ NMI causes a ROM/RAM test.
 
 
 
-extern int zaxxon_IN2_r(int offset);
+int zaxxon_IN2_r(int offset);
 
 extern unsigned char *congo_background_position;
 extern unsigned char *congo_background_enable;
-extern void congo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int  congo_vh_start(void);
-extern void congo_vh_stop(void);
-extern void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void congo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int  congo_vh_start(void);
+void congo_vh_stop(void);
+void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -405,22 +405,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( congo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "%s1.bin",  0x0000, 0x2000 )
-        ROM_LOAD( "%s2.bin",  0x2000, 0x2000 )
-        ROM_LOAD( "%s3.bin",  0x4000, 0x2000 )
-        ROM_LOAD( "%s4.bin",  0x6000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo1.bin",  0x0000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo2.bin",  0x2000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo3.bin",  0x4000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo4.bin",  0x6000, 0x2000 )
 
         ROM_REGION(0x13000)      /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "%s5.bin", 0x0000, 0x1000 )
-        ROM_LOAD( "%s16.bin", 0x1000, 0x2000 )
-        ROM_LOAD( "%s15.bin", 0x3000, 0x2000 )
-        ROM_LOAD( "%s12.bin", 0x5000, 0x2000 )
-        ROM_LOAD( "%s14.bin", 0x7000, 0x2000 )
-        ROM_LOAD( "%s11.bin", 0x9000, 0x2000 )
-        ROM_LOAD( "%s13.bin", 0xb000, 0x2000 )
-        ROM_LOAD( "%s10.bin", 0xd000, 0x2000 )
-        ROM_LOAD( "%s9.bin",  0xf000, 0x2000 )
-        ROM_LOAD( "%s8.bin",  0x11000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo5.bin", 0x0000, 0x1000 )
+        ROM_OBSOLETELOAD( "congo16.bin", 0x1000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo15.bin", 0x3000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo12.bin", 0x5000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo14.bin", 0x7000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo11.bin", 0x9000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo13.bin", 0xb000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo10.bin", 0xd000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo9.bin",  0xf000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo8.bin",  0x11000, 0x2000 )
 /*
 *        5 is characters, 3 bitplanes in one rom
 *        16 and 15 are 1 plane of the sprites
@@ -429,10 +429,10 @@ ROM_START( congo_rom )
 *        10 - 8 are the background graphics
 */
         ROM_REGION(0x8000)      /* background data */
-        ROM_LOAD( "%s6.bin",  0x0000, 0x2000 )
-        ROM_LOAD( "%s6.bin",  0x2000, 0x2000 )
-        ROM_LOAD( "%s7.bin",  0x4000, 0x2000 )
-        ROM_LOAD( "%s7.bin", 0x6000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo6.bin",  0x0000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo6.bin",  0x2000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo7.bin",  0x4000, 0x2000 )
+        ROM_OBSOLETELOAD( "congo7.bin", 0x6000, 0x2000 )
        /* I cheated a little with the background graphics - this
         * approach involved least writing ;)
         */

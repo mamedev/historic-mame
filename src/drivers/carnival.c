@@ -2,8 +2,8 @@
 
 Carnival memory map (preliminary)
 
-0000-3fff ROM
-4000-7fff ROM mirror image (this is the one actually used)
+0000-3fff ROM mirror image (not used, apart from startup and NMI)
+4000-7fff ROM
 e000-e3ff Video RAM + other
 e400-e7ff RAM
 e800-efff Character RAM
@@ -27,9 +27,24 @@ read:
           bit 5 = START 2
 
 write:
-01        sound?
-02        sound?
+01		  bit 0 = fire gun
+ 		  bit 1 = hit object     	* See Port 2
+          bit 2 = duck 1
+          bit 3 = duck 2
+          bit 4 = duck 3
+          bit 5 = hit pipe
+          bit 6 = bonus
+          bit 7 = hit background
+
+02        bit 2 = Switch effect for hit object - Bear
+          bit 3 = Music On/Off
+          bit 4 = ? (may be used as signal to sound processor)
+          bit 5 = Ranking (not implemented)
+
 08        ?
+
+40        This should be a port to select the palette bank, however it is
+          never accessed by Carnival.
 
 ***************************************************************************/
 
@@ -37,15 +52,17 @@ write:
 #include "vidhrdw/generic.h"
 
 
-
-extern int carnival_IN1_r(int offset);
-extern int carnival_interrupt(void);
+int carnival_IN1_r(int offset);
+int carnival_interrupt(void);
 
 extern unsigned char *carnival_characterram;
-extern void carnival_characterram_w(int offset,int data);
-extern void carnival_vh_screenrefresh(struct osd_bitmap *bitmap);
+void carnival_characterram_w(int offset,int data);
+void carnival_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void carnival_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-
+void carnival_sh_port1_w(int offset, int data);			/* MJC */
+void carnival_sh_port2_w(int offset, int data);			/* MJC */
+void carnival_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -68,7 +85,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, carnival_IN1_r },
+	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
 	{ -1 }	/* end of table */
@@ -76,9 +93,10 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
+	{ 0x01, 0x01, carnival_sh_port1_w },						/* MJC */
+  	{ 0x02, 0x02, carnival_sh_port2_w },						/* MJC */
 	{ -1 }	/* end of table */
 };
-
 
 
 static struct InputPort input_ports[] =
@@ -90,7 +108,7 @@ static struct InputPort input_ports[] =
 	},
 	{       /* IN1 */
 		0xff,
-		{ 0, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0 },
+		{ 0, 0, 0, IPB_VBLANK, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0 }
 	},
 	{       /* IN2 */
@@ -128,7 +146,6 @@ static struct DSW dsw[] =
 };
 
 
-
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -144,35 +161,17 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xe800, &charlayout, 0, 8 },	/* the game dynamically modifies this */
+	{ 0, 0xe800, &charlayout, 0, 32 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-    0xff,0x00,0x00, /* RED */
-    0x00,0xff,0x00, /* GREEN */
-    0xff,0xff,0x00, /* YELLOW */
-	0x00,0xff,0xff, /* CYAN */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0xff,0xff	/* WHITE */
-};
-
-enum { BLACK,RED,GREEN,YELLOW,CYAN,BLUE,WHITE };
-
-static unsigned char colortable[] =
-{
-	BLACK,WHITE,
-	BLACK,YELLOW,
-	BLACK,RED,
-	BLACK,YELLOW,
-	BLACK,BLUE,
-	BLACK,YELLOW,
-	BLACK,GREEN,
-	BLACK,CYAN
+	/* U49: palette */
+	0xE0,0xA0,0x80,0xA0,0x60,0xA0,0x20,0x60,0xE0,0xA0,0x80,0xA0,0x60,0xA0,0x20,0x60,
+	0xE0,0xA0,0x80,0xA0,0x60,0xA0,0x20,0x60,0xE0,0xA0,0x80,0xA0,0x60,0xA0,0x20,0x60
 };
 
 
@@ -195,8 +194,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	64,32*2,
+	carnival_vh_convert_color_prom,
 
 	0,
 	generic_vh_start,
@@ -208,9 +207,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	0
+	carnival_sh_update											/* MJC */
 };
-
 
 
 /***************************************************************************
@@ -221,39 +219,41 @@ static struct MachineDriver machine_driver =
 
 ROM_START( carnival_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "651u33.cpu", 0x0000, 0x0400 )
-	ROM_CONTINUE(           0x4000, 0x0400 )
-	ROM_LOAD( "652u32.cpu", 0x0400, 0x0400 )
-	ROM_CONTINUE(           0x4400, 0x0400 )
-	ROM_LOAD( "653u31.cpu", 0x0800, 0x0400 )
-	ROM_CONTINUE(           0x4800, 0x0400 )
-	ROM_LOAD( "654u30.cpu", 0x0c00, 0x0400 )
-	ROM_CONTINUE(           0x4c00, 0x0400 )
-	ROM_LOAD( "655u29.cpu", 0x1000, 0x0400 )
-	ROM_CONTINUE(           0x5000, 0x0400 )
-	ROM_LOAD( "656u28.cpu", 0x1400, 0x0400 )
-	ROM_CONTINUE(           0x5400, 0x0400 )
-	ROM_LOAD( "657u27.cpu", 0x1800, 0x0400 )
-	ROM_CONTINUE(           0x5800, 0x0400 )
-	ROM_LOAD( "658u26.cpu", 0x1c00, 0x0400 )
-	ROM_CONTINUE(           0x5c00, 0x0400 )
-	ROM_LOAD( "659u8.cpu",  0x2000, 0x0400 )
-	ROM_CONTINUE(           0x6000, 0x0400 )
-	ROM_LOAD( "660u7.cpu",  0x2400, 0x0400 )
-	ROM_CONTINUE(           0x6400, 0x0400 )
-	ROM_LOAD( "661u6.cpu",  0x2800, 0x0400 )
-	ROM_CONTINUE(           0x6800, 0x0400 )
-	ROM_LOAD( "662u5.cpu",  0x2c00, 0x0400 )
-	ROM_CONTINUE(           0x6c00, 0x0400 )
-	ROM_LOAD( "663u4.cpu",  0x3000, 0x0400 )
-	ROM_CONTINUE(           0x7000, 0x0400 )
-	ROM_LOAD( "664u3.cpu",  0x3400, 0x0400 )
-	ROM_CONTINUE(           0x7400, 0x0400 )
-	ROM_LOAD( "665u2.cpu",  0x3800, 0x0400 )
-	ROM_CONTINUE(           0x7800, 0x0400 )
-	ROM_LOAD( "666u1.cpu",  0x3c00, 0x0400 )
-	ROM_CONTINUE(           0x7c00, 0x0400 )
+	ROM_LOAD( "651u33.cpu", 0x0000, 0x0400, 0x661fa2ef )
+	ROM_RELOAD(             0x4000, 0x0400 )
+	ROM_LOAD( "652u32.cpu", 0x4400, 0x0400, 0x5172c958 )
+	ROM_LOAD( "653u31.cpu", 0x4800, 0x0400, 0x3771ff13 )
+	ROM_LOAD( "654u30.cpu", 0x4c00, 0x0400, 0x6b0caeb6 )
+	ROM_LOAD( "655u29.cpu", 0x5000, 0x0400, 0x15283224 )
+	ROM_LOAD( "656u28.cpu", 0x5400, 0x0400, 0xec2fd83b )
+	ROM_LOAD( "657u27.cpu", 0x5800, 0x0400, 0x9a30851e )
+	ROM_LOAD( "658u26.cpu", 0x5c00, 0x0400, 0x914e4bf2 )
+	ROM_LOAD( "659u8.cpu",  0x6000, 0x0400, 0x22c6547c )
+	ROM_LOAD( "660u7.cpu",  0x6400, 0x0400, 0xba76241e )
+	ROM_LOAD( "661u6.cpu",  0x6800, 0x0400, 0x3bab3df7 )
+	ROM_LOAD( "662u5.cpu",  0x6c00, 0x0400, 0xc315eb83 )
+	ROM_LOAD( "663u4.cpu",  0x7000, 0x0400, 0x434d30f7 )
+	ROM_LOAD( "664u3.cpu",  0x7400, 0x0400, 0x75f1b261 )
+	ROM_LOAD( "665u2.cpu",  0x7800, 0x0400, 0xecdd5165 )
+	ROM_LOAD( "666u1.cpu",  0x7c00, 0x0400, 0x24809182 )
 ROM_END
+
+
+
+static const char *carnival_sample_names[] =					/* MJC */
+{
+	"C1.SAM",	/* Fire Gun 1 */
+	"C2.SAM",	/* Hit Target */
+	"C3.SAM",	/* Duck 1 */
+	"C4.SAM",	/* Duck 2 */
+	"C5.SAM",	/* Duck 3 */
+	"C6.SAM",	/* Hit Pipe */
+	"C7.SAM",	/* BONUS */
+	"C8.SAM",	/* Hit bonus box */
+    "C9.SAM",	/* Fire Gun 2 */
+    "C10.SAM",	/* Hit Bear */
+	0       	/* end of array */
+};
 
 
 
@@ -266,11 +266,11 @@ struct GameDriver carnival_driver =
 
 	carnival_rom,
 	0, 0,
-	0,
+	carnival_sample_names,										/* MJC */
 
 	input_ports, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	8*13, 8*16,
 
 	0, 0

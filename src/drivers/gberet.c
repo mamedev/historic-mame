@@ -49,19 +49,19 @@ The game uses both IRQ (mode 1) and NMI.
 
 
 extern unsigned char *gberet_interrupt_enable;
-extern int gberet_interrupt(void);
+int gberet_interrupt(void);
 
 extern unsigned char *gberet_scroll;
 extern unsigned char *gberet_spritebank;
-extern void gberet_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int gberet_vh_start(void);
-extern void gberet_vh_stop(void);
-extern void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gberet_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int gberet_vh_start(void);
+void gberet_vh_stop(void);
+void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void gberet_sound1_w(int offset,int data);
-extern int gberet_sh_start(void);
-extern void gberet_sh_stop(void);
-extern void gberet_sh_update(void);
+void gberet_sound1_w(int offset,int data);
+int gberet_sh_start(void);
+void gberet_sh_stop(void);
+void gberet_sh_update(void);
 
 
 
@@ -287,30 +287,30 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gberet_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "c10_l03.bin", 0x0000, 0x4000 )
-	ROM_LOAD( "c08_l02.bin", 0x4000, 0x4000 )
-	ROM_LOAD( "c07_l01.bin", 0x8000, 0x4000 )
+	ROM_LOAD( "c10_l03.bin", 0x0000, 0x4000, 0xe77699e2 )
+	ROM_LOAD( "c08_l02.bin", 0x4000, 0x4000, 0x6c2df979 )
+	ROM_LOAD( "c07_l01.bin", 0x8000, 0x4000, 0x96c963ab )
 
 	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "f03_l07.bin", 0x00000, 0x4000 )
-	ROM_LOAD( "e05_l06.bin", 0x04000, 0x4000 )
-	ROM_LOAD( "e04_l05.bin", 0x08000, 0x4000 )
-	ROM_LOAD( "f04_l08.bin", 0x0c000, 0x4000 )
-	ROM_LOAD( "e03_l04.bin", 0x10000, 0x4000 )
+	ROM_LOAD( "f03_l07.bin", 0x00000, 0x4000, 0x7f70cdc4 )
+	ROM_LOAD( "e05_l06.bin", 0x04000, 0x4000, 0x023e4fbc )
+	ROM_LOAD( "e04_l05.bin", 0x08000, 0x4000, 0x9496cc60 )
+	ROM_LOAD( "f04_l08.bin", 0x0c000, 0x4000, 0x69b3d78b )
+	ROM_LOAD( "e03_l04.bin", 0x10000, 0x4000, 0x6f1e4796 )
 ROM_END
 
 ROM_START( rushatck_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rush_h03.10c", 0x0000, 0x4000 )
-	ROM_LOAD( "rush_h02.8c",  0x4000, 0x4000 )
-	ROM_LOAD( "rush_h01.7c",  0x8000, 0x4000 )
+	ROM_LOAD( "rush_h03.10c", 0x0000, 0x4000, 0xf32c1d1e )
+	ROM_LOAD( "rush_h02.8c",  0x4000, 0x4000, 0xea94b072 )
+	ROM_LOAD( "rush_h01.7c",  0x8000, 0x4000, 0x9579d71f )
 
 	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rush_h07.3f",  0x00000, 0x4000 )
-	ROM_LOAD( "rush_h06.5e",  0x04000, 0x4000 )
-	ROM_LOAD( "rush_h05.4e",  0x08000, 0x4000 )
-	ROM_LOAD( "rush_h08.4f",  0x0c000, 0x4000 )
-	ROM_LOAD( "rush_h04.3e",  0x10000, 0x4000 )
+	ROM_LOAD( "rush_h07.3f",  0x00000, 0x4000, 0x42cc0d1a )
+	ROM_LOAD( "rush_h06.5e",  0x04000, 0x4000, 0x023e4fbc )
+	ROM_LOAD( "rush_h05.4e",  0x08000, 0x4000, 0x4b711f89 )
+	ROM_LOAD( "rush_h08.4f",  0x0c000, 0x4000, 0x69b3d78b )
+	ROM_LOAD( "rush_h04.3e",  0x10000, 0x4000, 0x6f1e4796 )
 ROM_END
 
 

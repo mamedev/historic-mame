@@ -8,7 +8,7 @@ d000-d3ff Video RAM
 d400-d7ff Color RAM
 d800-dbff background video RAM
 dc00-dfff background color RAM
-e000-efff RAM
+e000-ffff RAM
 fe00-ff7f Sprites
 
 read:
@@ -41,25 +41,26 @@ write:
 
 
 
-extern int commando_interrupt(void);
+int commando_interrupt(void);
 
 extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
 extern int commando_bgvideoram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
-extern void commando_bgvideoram_w(int offset,int data);
-extern void commando_bgcolorram_w(int offset,int data);
+void commando_bgvideoram_w(int offset,int data);
+void commando_bgcolorram_w(int offset,int data);
 int commando_vh_start(void);
 void commando_vh_stop(void);
-extern void commando_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void commando_vh_screenrefresh(struct osd_bitmap *bitmap);
+void commando_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void commando_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int c1942_sh_start(void);
+int c1942_sh_start(void);
+int c1942_sh_interrupt(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xe000, 0xefff, MRA_RAM },
+	{ 0xe000, 0xfdff, MRA_RAM },
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
@@ -72,7 +73,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xe000, 0xfdff, MWA_RAM },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
@@ -161,7 +162,7 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 3, 0x0c, "LIVES", { "5", "2", "4", "3" }, 1 },
-	{ 4, 0x07, "BONUS", { "NONE", "20000 70000", "30000 80000", "10000 60000", "40000 100000", "20000 60000", "30000 70000", "10000 50000" }, 1 },
+	{ 4, 0x07, "BONUS", { "NONE", "20000 700000", "30000 800000", "10000 600000", "40000 1000000", "20000 600000", "30000 700000", "10000 500000" }, 1 },
 	{ 4, 0x10, "DIFFICULTY", { "DIFFICULT", "NORMAL" }, 1 },
 	{ 3, 0x03, "STARTING STAGE", { "7", "3", "5", "1" }, 1 },
 	{ 4, 0x08, "DEMO SOUNDS", { "OFF", "ON" } },
@@ -183,9 +184,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tilelayout =
 {
 	16,16,	/* 16*16 tiles */
-	256,	/* 256 tiles */
+	1024,	/* 1024 tiles */
 	3,	/* 3 bits per pixel */
-	{ 0, 0x4000*8, 0x8000*8 },	/* the bitplanes are separated */
+	{ 0, 1024*32*8, 2*1024*32*8 },	/* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
@@ -195,9 +196,9 @@ static struct GfxLayout tilelayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	768,	/* 768 sprites */
 	4,	/* 4 bits per pixel */
-	{ 0x4000*8+4, 0x4000*8+0, 4, 0 },
+	{ 768*64*8+4, 768*64*8+0, 4, 0 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	{ 33*8+3, 33*8+2, 33*8+1, 33*8+0, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
@@ -211,12 +212,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,           0, 16 },
 	{ 1, 0x04000, &tilelayout,   16*4+4*16, 16 },
-	{ 1, 0x06000, &tilelayout,   16*4+4*16, 16 },
-	{ 1, 0x10000, &tilelayout,   16*4+4*16, 16 },
-	{ 1, 0x12000, &tilelayout,   16*4+4*16, 16 },
 	{ 1, 0x1c000, &spritelayout,      16*4, 4 },
-	{ 1, 0x24000, &spritelayout,      16*4, 4 },
-	{ 1, 0x2c000, &spritelayout,      16*4, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -296,7 +292,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,4
+			c1942_sh_interrupt,12
 		}
 	},
 	60,
@@ -331,26 +327,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( commando_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000 )
-	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000 )
+	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0xf44b9f43 )
+	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x6e158a17 )
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000 )	/* characters */
-	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000 )	/* tiles */
-	ROM_LOAD( "a07_vt13.bin", 0x08000, 0x4000 )	/* tiles */
-	ROM_LOAD( "a09_vt15.bin", 0x0c000, 0x4000 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x10000, 0x4000 )	/* tiles */
-	ROM_LOAD( "a08_vt14.bin", 0x14000, 0x4000 )	/* tiles */
-	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000 )	/* tiles */
-	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000 )	/* sprites */
-	ROM_LOAD( "h07_vt08.bin", 0x20000, 0x4000 )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x24000, 0x4000 )	/* sprites */
-	ROM_LOAD( "h08_vt09.bin", 0x28000, 0x4000 )	/* sprites */
-	ROM_LOAD( "e09_vt07.bin", 0x2c000, 0x4000 )	/* sprites */
-	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000 )	/* sprites */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x9c3344b3 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x0babe1d9 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x0ef15ee7 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x8244ea38 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x91390ad1 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0x755876be )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x8c6d8225 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x4eda8b78 )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x280b34f9 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0x2ab5880f )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x48696aa7 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0xab521082 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0x998c53a6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000 )
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0x07fced60 )
 ROM_END
 
 

@@ -62,11 +62,11 @@ standard NMI at 0x66
 
 
 
-extern void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int pooyan_sh_interrupt(void);
-extern int pooyan_sh_start(void);
+int pooyan_sh_interrupt(void);
+int pooyan_sh_start(void);
 
 
 
@@ -102,7 +102,6 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-        { 0x8000, 0x8fff, MRA_RAM },
 	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x4000, 0x4000, AY8910_read_port_0_r },
 	{ 0x6000, 0x6000, AY8910_read_port_1_r },
@@ -112,7 +111,6 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-        { 0x8000, 0x8fff, MWA_RAM },
 	{ 0x3000, 0x33ff, MWA_RAM },
 	{ 0x5000, 0x5000, AY8910_control_port_0_w },
 	{ 0x4000, 0x4000, AY8910_write_port_0_w },
@@ -271,10 +269,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.0782 Mhz (?) */
+			3072000,	/* 3.072 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			pooyan_sh_interrupt,1
+			pooyan_sh_interrupt,10
 		}
 	},
 	60,
@@ -309,20 +307,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pooyan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000 )
-	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000 )
-	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000 )
-	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000 )
+	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x8906608a )
+	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x26eff7e3 )
+	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x4d5af9a8 )
+	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000, 0xe8a37e2f )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000 )
-	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000 )
-	ROM_LOAD( "ic16_a8.cpu",  0x2000, 0x1000 )
-	ROM_LOAD( "ic15_a9.cpu",  0x3000, 0x1000 )
+	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000, 0x70837e21 )
+	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000, 0x10588368 )
+	ROM_LOAD( "ic16_a8.cpu",  0x2000, 0x1000, 0x18d9a3fb )
+	ROM_LOAD( "ic15_a9.cpu",  0x3000, 0x1000, 0xf00ec45a )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sd01_a7.snd",  0x0000, 0x1000 )
-	ROM_LOAD( "sd02_a8.snd",  0x1000, 0x1000 )
+	ROM_LOAD( "sd01_a7.snd",  0x0000, 0x1000, 0x41dc452c )
+	ROM_LOAD( "sd02_a8.snd",  0x1000, 0x1000, 0xe108928c )
 ROM_END
 
 

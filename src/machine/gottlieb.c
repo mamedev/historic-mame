@@ -1,6 +1,6 @@
 #include "driver.h"
 
-extern void gottlieb_video_outputs(int data);
+void gottlieb_video_outputs(int data);
 static int test;
 static int test_switch;
 static int joystick2, joystick3;
@@ -77,7 +77,7 @@ int mplanets_dial_r(int offset)
 	if (countdown==0) {
 		countdown=4;
 		if (osd_key_pressed(OSD_KEY_Z) || osd_joy_pressed(OSD_JOY_FIRE3))
-			res = -speed;  
+			res = -speed;
 		else if (osd_key_pressed(OSD_KEY_X) || osd_joy_pressed(OSD_JOY_FIRE4))
 			res = speed;
 	}
@@ -155,7 +155,7 @@ int mplanets_dial_r(int offset)
 	if (countdown==0) {
 		countdown=4;
 		if (osd_key_pressed(OSD_KEY_Z) || osd_joy_pressed(OSD_JOY_FIRE3))
-			res = -speed;  
+			res = -speed;
 		else if (osd_key_pressed(OSD_KEY_X) || osd_joy_pressed(OSD_JOY_FIRE4))
 			res = speed;
 	}

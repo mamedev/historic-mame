@@ -66,7 +66,7 @@ struct ay8910_f {
     /* state variables */
     int Incr0, Incr1, Incr2;
     int Increnv, Incrnoise;
-    int StateNoise, NoiseGen;
+    int NoiseGen;
     int Counter0, Counter1, Counter2, Countenv, Countnoise;
     int Vol0, Vol1, Vol2, Volnoise, Envelope;
 };

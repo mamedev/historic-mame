@@ -11,15 +11,10 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-unsigned char *rallyx_videoram1,*rallyx_colorram1;
 unsigned char *rallyx_videoram2,*rallyx_colorram2;
 unsigned char *rallyx_radarcarx,*rallyx_radarcary,*rallyx_radarcarcolor;
 unsigned char *rallyx_scrollx,*rallyx_scrolly;
-static unsigned char dirtybuffer1[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
+static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static struct osd_bitmap *tmpbitmap1;
 
@@ -44,8 +39,13 @@ int rallyx_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+		return 1;
+	memset(dirtybuffer2,1,videoram_size);
+
 	if ((tmpbitmap1 = osd_create_bitmap(32*8,32*8)) == 0)
 	{
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -63,31 +63,8 @@ int rallyx_vh_start(void)
 void rallyx_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap1);
+	free(dirtybuffer2);
 	generic_vh_stop();
-}
-
-
-
-void rallyx_videoram1_w(int offset,int data)
-{
-	if (rallyx_videoram1[offset] != data)
-	{
-		dirtybuffer1[offset] = 1;
-
-		rallyx_videoram1[offset] = data;
-	}
-}
-
-
-
-void rallyx_colorram1_w(int offset,int data)
-{
-	if (rallyx_colorram1[offset] != data)
-	{
-		dirtybuffer1[offset] = 1;
-
-		rallyx_colorram1[offset] = data;
-	}
 }
 
 
@@ -130,7 +107,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer2[offs])
 		{
@@ -155,14 +132,14 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			offs = sy * 32 + sx;
 
-			if (dirtybuffer1[offs])
+			if (dirtybuffer[offs])
 			{
-				dirtybuffer1[offs] = 0;
+				dirtybuffer[offs] = 0;
 
 				drawgfx(tmpbitmap,Machine->gfx[0],
-						rallyx_videoram1[offs],
-						rallyx_colorram1[offs] & 0x1f,
-						!(rallyx_colorram1[offs] & 0x40),rallyx_colorram1[offs] & 0x80,
+						videoram[offs],
+						colorram[offs] & 0x1f,
+						!(colorram[offs] & 0x40),colorram[offs] & 0x80,
 						8 * ((sx ^ 4) + 28),8*(sy-2),
 						&radarvisiblearea,TRANSPARENCY_NONE,0);
 			}

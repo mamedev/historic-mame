@@ -50,8 +50,10 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 {
 	int region;
 	const struct RomModule *romp;
+	int checksumwarning;
 
 
+	checksumwarning = 0;
 	romp = rommodule;
 
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
@@ -61,7 +63,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 	while (romp->name || romp->offset || romp->length)
 	{
-		int region_size;
+		unsigned int region_size;
 
 
 		if (romp->name || romp->length)
@@ -89,11 +91,17 @@ int readroms(const struct RomModule *rommodule,const char *basename)
                         struct dirent *dp;
 			char buf[100];
 			char name[100];
+			int sum,xor,expchecksum;
 
 
 			if (romp->name == 0)
 			{
 				printf("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
+				goto getout;
+			}
+			else if (romp->name == (char *)-1)
+			{
+				printf("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
 				goto getout;
 			}
 
@@ -120,8 +128,25 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 				goto printromlist;
 			}
 
+			sum = 0;
+			xor = 0;
+			expchecksum = romp->checksum;
+
 			do
 			{
+				unsigned char *c;
+				unsigned int i;
+
+
+				/* ROM_RELOAD */
+				if (romp->name == (char *)-1)
+				{
+					fseek(f,0,SEEK_SET);
+					/* reinitialize checksum counters as well */
+					sum = 0;
+					xor = 0;
+				}
+
 				if (romp->offset + romp->length > region_size)
 				{
 					printf("Error in RomModule definition: %s out of memory region space\n",name);
@@ -136,8 +161,31 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 					goto printromlist;
 				}
 
+				/* calculate the checksum */
+				c = Machine->memory_region[region] + romp->offset;
+				for (i = 0;i < romp->length;i+=2)
+				{
+					int j;
+
+
+					j = 256 * c[i] + c[i+1];
+					sum += j;
+					xor ^= j;
+				}
+
 				romp++;
-			} while (romp->length && romp->name == 0);
+			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+
+			sum = ((sum & 0xffff) << 16) | (xor & 0xffff);
+			if (expchecksum != -1 && expchecksum != sum)
+			{
+				if (checksumwarning == 0)
+					printf("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
+							"WARNING: the game might not run correctly.\n"
+							"Name         Expected  Found\n");
+				checksumwarning++;
+				printf("%-12s %08x %08x\n",buf,expchecksum,sum);
+			}
 
 			fclose(f);
 		}
@@ -145,15 +193,37 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 		region++;
 	}
 
+	if (checksumwarning > 0)
+	{
+		printf("Press return to continue\n");
+		getchar();
+	}
+
 	return 0;
 
 
 printromlist:
-	romp = rommodule;
-        printf("\n");                         /* MAURY_BEGIN: dichiarazione */
-        showdisclaimer();
-        printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
+	printf("\n");                         /* MAURY_BEGIN: dichiarazione */
+	showdisclaimer();
+	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
+
+	printromlist(rommodule,basename);
+
+
+getout:
+	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
+	{
+		free(Machine->memory_region[region]);
+		Machine->memory_region[region] = 0;
+	}
+	return 1;
+}
+
+
+
+void printromlist(const struct RomModule *romp,const char *basename)
+{
 	printf("This is the list of the ROMs required.\n"
 			"All the ROMs must reside in a subdirectory called \"%s\".\n"
 			"Name             Size\n",basename);
@@ -173,22 +243,18 @@ printromlist:
 
 			do
 			{
+				/* ROM_RELOAD */
+				if (romp->name == (char *)-1)
+					length = 0;	/* restart */
+
 				length += romp->length;
 
 				romp++;
-			} while (romp->length && romp->name == 0);
+			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
 			printf("%-12s %5d bytes\n",name,length);
 		}
 	}
-
-getout:
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-	{
-		free(Machine->memory_region[region]);
-		Machine->memory_region[region] = 0;
-	}
-	return 1;
 }
 
 
@@ -432,9 +498,9 @@ void freegfx(struct GfxElement *gfx)
   transparency == TRANSPARENCY_PEN - bits whose _original_ value is == transparent_color
                                      are transparent. This is the most common kind of
 									 transparency.
-  transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == transparent_color
+  transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == Machine->pens[transparent_color]
                                      are transparent. This is used by e.g. Pac Man.
-  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == transparent_color,
+  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == Machine->pens[transparent_color],
                                      the source pixel is drawn over it. This is used by
 									 e.g. Jr. Pac Man to draw the sprites when the background
 									 has priority over them.
@@ -444,7 +510,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
-	int ox,oy,ex,ey,x,y,start;
+	int ox,oy,ex,ey,x,y,start,dy;
 	const unsigned char *sd;
 	unsigned char *bm;
 	int col;
@@ -468,280 +534,219 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	start = (code % gfx->total_elements) * gfx->height;
+	/* start = (code % gfx->total_elements) * gfx->height; */
+	if (flipy)	/* Y flop */
+	{
+		start = (code % gfx->total_elements) * gfx->height + gfx->height-1 - (sy-oy);
+		dy = -1;
+	}
+	else		/* normal */
+	{
+		start = (code % gfx->total_elements) * gfx->height + (sy-oy);
+		dy = 1;
+	}
+
+
+	/* if necessary, remap the transparent color */
+	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+		transparent_color = Machine->pens[transparent_color];
+
+
 	if (gfx->colortable)	/* remap colors */
 	{
 		const unsigned char *paldata;
-
 
 		paldata = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
 
 		switch (transparency)
 		{
 			case TRANSPARENCY_NONE:
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for( x = sx ; x <= ex-7 ; x+=8 )
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-								*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							*(bm++) = paldata[*(sd--)];
+							/* bm+=7; */
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-								*(bm++) = paldata[*(sd--)];
-						}
+						for( ; x <= ex ; x++)
+							*(bm++) = paldata[*(sd--)];
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						for( x = sx ; x <= ex-7 ; x+=8 )
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-								*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
+							*(bm++) = paldata[*(sd++)];
 						}
-					}
-					else		/* normal */
-					{
-						/* unrolled loop for the most common case */
-						if (ex-sx+1 == 8)
-						{
-							for (y = sy;y <= ey;y++)
-							{
-								bm = dest->line[y] + sx;
-								sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*(bm++) = paldata[*(sd++)];
-								*bm = paldata[*sd];
-							}
-						}
-						else
-						{
-							for (y = sy;y <= ey;y++)
-							{
-								bm = dest->line[y] + sx;
-								sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-								for (x = sx;x <= ex;x++)
-									*(bm++) = paldata[*(sd++)];
-							}
-						}
+						for( ; x <= ex ; x++)
+							*(bm++) = paldata[*(sd++)];
+						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_PEN:
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					int *sd4;
+					int trans4,col4;
+
+					trans4 = transparent_color * 0x01010101;
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) -3);
+						for (x = sx;x <= ex-3;x+=4)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = *(sd--);
-								if (col != transparent_color) *bm = paldata[col];
-								bm++;
+							if ((col4=*sd4) != trans4){
+								col4 = intelLong (col4); /* LBO */
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[0] = paldata[col];
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[1] = paldata[col];
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[2] = paldata[col];
+								col = col4&0xff;
+								if (col != transparent_color) bm[3] = paldata[col];
 							}
+							bm+=4;
+							sd4--;
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
+						sd = (unsigned char *)sd4+3;
+						for (;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = *(sd--);
-								if (col != transparent_color) *bm = paldata[col];
-								bm++;
-							}
+							col = *(sd--);
+							if (col != transparent_color) *bm = paldata[col];
+							bm++;
 						}
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					int *sd4;
+					int trans4,col4;
+
+					trans4 = transparent_color * 0x01010101;
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
+						for (x = sx;x <= ex-3;x+=4)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = *(sd++);
-								if (col != transparent_color) *bm = paldata[col];
-								bm++;
+							if ((col4=*sd4) != trans4){
+								col4 = intelLong (col4); /* LBO */
+								col = col4&0xff;
+								if (col != transparent_color) bm[0] = paldata[col];
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[1] = paldata[col];
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[2] = paldata[col];
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[3] = paldata[col];
 							}
+							bm+=4;
+							sd4++;
 						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
+						sd = (unsigned char *)sd4;
+						for (;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = *(sd++);
-								if (col != transparent_color) *bm = paldata[col];
-								bm++;
-							}
+							col = *(sd++);
+							if (col != transparent_color) *bm = paldata[col];
+							bm++;
 						}
+						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_COLOR:
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = paldata[*(sd--)];
-								if (col != transparent_color) *bm = col;
-								bm++;
-							}
+							col = paldata[*(sd--)];
+							if (col != transparent_color) *bm = col;
+							bm++;
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = paldata[*(sd--)];
-								if (col != transparent_color) *bm = col;
-								bm++;
-							}
-						}
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = paldata[*(sd++)];
-								if (col != transparent_color) *bm = col;
-								bm++;
-							}
+							col = paldata[*(sd++)];
+							if (col != transparent_color) *bm = col;
+							bm++;
 						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = paldata[*(sd++)];
-								if (col != transparent_color) *bm = col;
-								bm++;
-							}
-						}
+						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_THROUGH:
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = paldata[*sd];
-								bm++;
-								sd--;
-							}
+							if (*bm == transparent_color)
+								*bm = paldata[*sd];
+							bm++;
+							sd--;
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = paldata[*sd];
-								bm++;
-								sd--;
-							}
-						}
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = paldata[*sd];
-								bm++;
-								sd++;
-							}
+							if (*bm == transparent_color)
+								*bm = paldata[*sd];
+							bm++;
+							sd++;
 						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = paldata[*sd];
-								bm++;
-								sd++;
-							}
-						}
+						start+=dy;
 					}
 				}
 				break;
@@ -752,279 +757,157 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		switch (transparency)
 		{
 			case TRANSPARENCY_NONE:		/* do a verbatim copy (faster) */
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for( x = sx ; x <= ex-7 ; x+=8 )
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-								*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							*(bm++) = *(sd--);
+							/* bm+=7; */
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-								*(bm++) = *(sd--);
-						}
+						for( ; x <= ex ; x++)
+							*(bm++) = *(sd--);
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							memcpy(bm,sd,ex-sx+1);
-						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							memcpy(bm,sd,ex-sx+1);
-						}
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						memcpy(bm,sd,ex-sx+1);
+						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_PEN:
 			case TRANSPARENCY_COLOR:
+				if (flipx)	/* X flip */
 				{
 					int *sd4;
-					int trans4;
-
+					int trans4,col4;
 
 					trans4 = transparent_color * 0x01010101;
 
-					if (flipx)
+					for (y = sy;y <= ey;y++)
 					{
-						if (flipy)	/* XY flip */
+						bm = dest->line[y] + sx;
+						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox) - 3);
+						for (x = sx;x <= ex-3;x+=4)
 						{
-							for (y = sy;y <= ey;y++)
+							if( (col4=*sd4) != trans4 )
 							{
-								bm = dest->line[y] + sx;
-								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox) - 3);
-								for (x = sx;x <= ex-3;x+=4)
-								{
-									if (*sd4 == trans4){
-										bm += 4;
-									}else{
-										sd = (unsigned char *)sd4+3;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd);
-										if (col != transparent_color) *bm = col;
-										bm++;
-									}
-									sd4--;
-								}
-								sd = (unsigned char *)sd4+3;
-								for (;x <= ex;x++)
-								{
-									col = *(sd--);
-									if (col != transparent_color) *bm = col;
-									bm++;
-								}
+								col4 = intelLong (col4); /* LBO */
+								col = col4>>24;
+								if (col != transparent_color) bm[0] = col;
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[1] = col;
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[2] = col;
+								col = col4&0xff;
+								if (col != transparent_color) bm[3] = col;
 							}
+							bm+=4;
+							sd4--;
 						}
-						else 	/* X flip */
+						sd = (unsigned char *)sd4+3;
+						for (;x <= ex;x++)
 						{
-							for (y = sy;y <= ey;y++)
-							{
-								bm = dest->line[y] + sx;
-								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox) - 3);
-								for (x = sx;x <= ex-3;x+=4)
-								{
-									if (*sd4 == trans4){
-										bm += 4;
-									}else{
-										sd = (unsigned char *)sd4 + 3;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd--);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd);
-										if (col != transparent_color) *bm = col;
-										bm++;
-									}
-									sd4--;
-								}
-								sd = (unsigned char *)sd4+3;
-								for (;x <= ex;x++)
-								{
-									col = *(sd--);
-									if (col != transparent_color) *bm = col;
-									bm++;
-								}
-							}
+							col = *(sd--);
+							if (col != transparent_color) *bm = col;
+							bm++;
 						}
+						start+=dy;
 					}
-					else
+				}
+				else	/* normal */
+				{
+					int *sd4;
+					int trans4,col4;
+					int xod4;
+
+					trans4 = transparent_color * 0x01010101;
+
+					for (y = sy;y <= ey;y++)
 					{
-						if (flipy)	/* Y flip */
+						bm = dest->line[y] + sx;
+						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
+						for (x = sx;x <= ex-3;x+=4)
 						{
-							for (y = sy;y <= ey;y++)
+							if( (col4=*sd4) != trans4 )
 							{
-								bm = dest->line[y] + sx;
-								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox));
-								for (x = sx;x <= ex-3;x+=4)
+								xod4 = col4^trans4;
+								if( (xod4&0x000000ff) && (xod4&0x0000ff00) &&
+								    (xod4&0x00ff0000) && (xod4&0xff000000) )
+											*(int *)bm = col4;
+								else
 								{
-									if (*sd4 == trans4){
-										bm += 4;
-									}else{
-										sd = (unsigned char *)sd4;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd);
-										if (col != transparent_color) *bm = col;
-										bm++;
-									}
-									sd4++;
-								}
-								sd = (unsigned char *)sd4;
-								for (;x <= ex;x++)
-								{
-									col = *(sd++);
-									if (col != transparent_color) *bm = col;
-									bm++;
+									col4 = intelLong (col4); /* LBO */
+									xod4 = intelLong (xod4); /* LBO */
+									if(xod4&0x000000ff) bm[0] = col4&0xff;
+									if(xod4&0x0000ff00) bm[1] = (col4>>8)&0xff;
+									if(xod4&0x00ff0000) bm[2] = (col4>>16)&0xff;
+									if(xod4&0xff000000) bm[3] = (col4>>24);
 								}
 							}
+							bm+=4;
+							sd4++;
 						}
-						else		/* normal */
+						sd = (unsigned char *)sd4;
+						for (;x <= ex;x++)
 						{
-							for (y = sy;y <= ey;y++)
-							{
-								bm = dest->line[y] + sx;
-								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + (sx-ox));
-								for (x = sx;x <= ex-3;x+=4)
-								{
-									if (*sd4 == trans4){
-										bm += 4;
-									}else{
-										sd = (unsigned char *)sd4;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd++);
-										if (col != transparent_color) *bm = col;
-										bm++;
-										col = *(sd);
-										if (col != transparent_color) *bm = col;
-										bm++;
-									}
-									sd4++;
-								}
-								sd = (unsigned char *)sd4;
-								for (;x <= ex;x++)
-								{
-									col = *(sd++);
-									if (col != transparent_color) *bm = col;
-									bm++;
-								}
-							}
+							col = *(sd++);
+							if (col != transparent_color) *bm = col;
+							bm++;
 						}
+						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_THROUGH:
-				if (flipx)
+				if (flipx)	/* X flip */
 				{
-					if (flipy)	/* XY flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = *sd;
-								bm++;
-								sd--;
-							}
+							if (*bm == transparent_color)
+								*bm = *sd;
+							bm++;
+							sd--;
 						}
-					}
-					else 	/* X flip */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = *sd;
-								bm++;
-								sd--;
-							}
-						}
+						start+=dy;
 					}
 				}
-				else
+				else		/* normal */
 				{
-					if (flipy)	/* Y flip */
+					for (y = sy;y <= ey;y++)
 					{
-						for (y = sy;y <= ey;y++)
+						bm = dest->line[y] + sx;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						for (x = sx;x <= ex;x++)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = *sd;
-								bm++;
-								sd++;
-							}
+							if (*bm == transparent_color)
+								*bm = *sd;
+							bm++;
+							sd++;
 						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								if (*bm == transparent_color)
-									*bm = *sd;
-								bm++;
-								sd++;
-							}
-						}
+						start+=dy;
 					}
 				}
 				break;
@@ -1277,5 +1160,5 @@ void clearbitmap(struct osd_bitmap *bitmap)
 
 
 	for (i = 0;i < bitmap->height;i++)
-		memset(bitmap->line[i],Machine->background_pen,bitmap->width);
+		memset(bitmap->line[i],Machine->pens[0],bitmap->width);
 }

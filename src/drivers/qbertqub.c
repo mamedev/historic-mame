@@ -6,15 +6,15 @@ Q*bert Qubes: same as Q*bert with two banks of sprites
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int qbert_vh_start(void);
-extern void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
-extern void gottlieb_sh_update(void);
-extern void gottlieb_output(int offset, int data);
-extern int qbert_IN1_r(int offset);
+int qbert_vh_start(void);
+void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh_w(int offset, int data);
+void gottlieb_sh_update(void);
+void gottlieb_output(int offset, int data);
+int qbert_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern const char *gottlieb_sample_names[];
 
 
@@ -187,21 +187,25 @@ static const struct MachineDriver machine_driver =
 	gottlieb_sh_update
 };
 
+
+
 ROM_START( qbertqub_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qq-rom0.bin",  0xe000, 0x2000 )
-	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000 )
-	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000 )
-	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000 )
+	ROM_LOAD( "qq-rom3.bin", 0x8000, 0x2000, 0xac3cb8e2 )
+	ROM_LOAD( "qq-rom2.bin", 0xa000, 0x2000, 0x64167070 )
+	ROM_LOAD( "qq-rom1.bin", 0xc000, 0x2000, 0xdc7d6dc1 )
+	ROM_LOAD( "qq-rom0.bin", 0xe000, 0x2000, 0xf2bad75a )
 
 	ROM_REGION(0x12000)      /* temporary space for graphics */
-	ROM_LOAD( "qq-bg0.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "qq-bg1.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "qq-fg3.bin",  0x2000, 0x4000 )       /* sprites */
-	ROM_LOAD( "qq-fg2.bin",  0x6000, 0x4000 )       /* sprites */
-	ROM_LOAD( "qq-fg1.bin",  0xA000, 0x4000 )       /* sprites */
-	ROM_LOAD( "qq-fg0.bin",  0xE000, 0x4000 )       /* sprites */
+	ROM_LOAD( "qq-bg0.bin", 0x0000, 0x1000, 0x13c600e6 )
+	ROM_LOAD( "qq-bg1.bin", 0x1000, 0x1000, 0x542c9488 )
+	ROM_LOAD( "qq-fg3.bin", 0x2000, 0x4000, 0xacd201f8 )       /* sprites */
+	ROM_LOAD( "qq-fg2.bin", 0x6000, 0x4000, 0xa6a4660c )       /* sprites */
+	ROM_LOAD( "qq-fg1.bin", 0xA000, 0x4000, 0x038fc633 )       /* sprites */
+	ROM_LOAD( "qq-fg0.bin", 0xE000, 0x4000, 0x65b1f0f1 )       /* sprites */
 ROM_END
+
+
 
 static unsigned short qbertqub_colors[256]={
 	0x000, 0xff0, 0xfff,
@@ -238,6 +242,34 @@ static unsigned short qbertqub_colors[256]={
 };
 
 
+static int hiload(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	/* no need to wait for anything: Q*bert Qub doesn't touch the tables
+		if the checksum is correct */
+	if (f) {
+		fread(RAM+0x200,2*20,15,f); /* hi-score entries */
+		fread(RAM+0x458,8,1,f); /* checksum */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fwrite(RAM+0x200,2*20,15,f); /* hi-score entries */
+		fwrite(RAM+0x458,8,1,f); /* checksum */
+		fclose(f);
+	}
+}
+
+
 struct GameDriver qbertqub_driver =
 {
         "Q*Bert Qubes",
@@ -254,6 +286,6 @@ struct GameDriver qbertqub_driver =
 	(char *)qbertqub_colors, 0, 0,    /* palette, colortable */
 	8*11, 8*20,
 
-	0,0     /* hi-score load and save */
+	hiload,hisave     /* hi-score load and save */
 };
 

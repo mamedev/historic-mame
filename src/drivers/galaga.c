@@ -50,9 +50,8 @@ write:
 6830      Watchdog reset?
 7000-     custom IO chip parameters
 7100      custom IO chip command (see machine/galaga.c for more details)
-a000      starfield scroll direction (0 = backwards) (only bit 0 is significant)
-a001      ?
-a002      starfield scroll (1 = stop) (only bit 0 is significant)
+a000-a001 starfield scroll speed (only bit 0 is significant)
+a002      starfield scroll direction (0 = backwards) (only bit 0 is significant)
 a003-a005 starfield blink?
 a007      flip screen
 
@@ -69,30 +68,30 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaga_sharedram;
-extern int galaga_reset_r(int offset);
-extern int galaga_hiscore_print_r(int offset);
-extern int galaga_sharedram_r(int offset);
-extern void galaga_sharedram_w(int offset,int data);
-extern int galaga_dsw_r(int offset);
-extern void galaga_interrupt_enable_1_w(int offset,int data);
-extern void galaga_interrupt_enable_2_w(int offset,int data);
-extern void galaga_interrupt_enable_3_w(int offset,int data);
-extern void galaga_halt_w(int offset,int data);
-extern int galaga_customio_r(int offset);
-extern void galaga_customio_w(int offset,int data);
-extern int galaga_interrupt_1(void);
-extern int galaga_interrupt_2(void);
-extern int galaga_interrupt_3(void);
+int galaga_reset_r(int offset);
+int galaga_hiscore_print_r(int offset);
+int galaga_sharedram_r(int offset);
+void galaga_sharedram_w(int offset,int data);
+int galaga_dsw_r(int offset);
+void galaga_interrupt_enable_1_w(int offset,int data);
+void galaga_interrupt_enable_2_w(int offset,int data);
+void galaga_interrupt_enable_3_w(int offset,int data);
+void galaga_halt_w(int offset,int data);
+int galaga_customio_r(int offset);
+void galaga_customio_w(int offset,int data);
+int galaga_interrupt_1(void);
+int galaga_interrupt_2(void);
+int galaga_interrupt_3(void);
 
 extern unsigned char *galaga_starcontrol;
-extern void galaga_cpu_reset_w(int offset, int data);
-extern int galaga_vh_start(void);
-extern void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaga_cpu_reset_w(int offset, int data);
+int galaga_vh_start(void);
+void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
-extern void pengo_sound_w(int offset,int data);
-extern int rallyx_sh_start(void);
-extern void pengo_sh_update(void);
+void pengo_sound_w(int offset,int data);
+int rallyx_sh_start(void);
+void pengo_sh_update(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char galaga_hiscoreloaded;
 
@@ -371,41 +370,80 @@ static struct MachineDriver machine_driver =
 
 ROM_START( galaga_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
+	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
+	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
+	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "2600j_4l.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "2800l_4d.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "2700k.bin",    0x2000, 0x1000 )
+	ROM_LOAD( "2600j_4l.bin", 0x0000, 0x1000, 0x730600f0 )
+	ROM_LOAD( "2800l_4d.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "2700k.bin",    0x2000, 0x1000, 0xa83e9cae )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
 
 	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+ROM_END
+
+ROM_START( galaganm_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
+	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
 ROM_START( galagabl_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "galagabl.1_1", 0x0000, 0x1000 )
-	ROM_LOAD( "galagabl.1_2", 0x1000, 0x1000 )
-	ROM_LOAD( "galagabl.1_3", 0x2000, 0x1000 )
-	ROM_LOAD( "galagabl.1_4", 0x3000, 0x1000 )
+	ROM_LOAD( "galagabl.1_1", 0x0000, 0x1000, 0xdf86b6ec )
+	ROM_LOAD( "galagabl.1_2", 0x1000, 0x1000, 0x6bb57bbf )
+	ROM_LOAD( "galagabl.1_3", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "galagabl.1_4", 0x3000, 0x1000, 0xca530147 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galagabl.1_8", 0x0000, 0x1000 )
-	ROM_LOAD( "galagabl.1_a", 0x1000, 0x1000 )
-	ROM_LOAD( "galagabl.1_9", 0x2000, 0x1000 )
+	ROM_LOAD( "galagabl.1_8", 0x0000, 0x1000, 0x730600f0 )
+	ROM_LOAD( "galagabl.1_a", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "galagabl.1_9", 0x2000, 0x1000, 0xa83e9cae )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "galagabl.1_5", 0x0000, 0x1000 )
+	ROM_LOAD( "galagabl.1_5", 0x0000, 0x1000, 0x6079fa7d )
 
 	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "galagabl.1_7", 0x0000, 0x1000 )
+	ROM_LOAD( "galagabl.1_7", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
+
+ROM_START( gallag_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "gallag.1", 0x0000, 0x1000, 0xdf86b6ec )
+	ROM_LOAD( "gallag.2", 0x1000, 0x1000, 0x7ca470a4 )
+	ROM_LOAD( "gallag.3", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "gallag.4", 0x3000, 0x1000, 0xca530147 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gallag.8", 0x0000, 0x1000, 0x0c670ff9 )
+	ROM_LOAD( "gallag.a", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "gallag.9", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "gallag.5", 0x0000, 0x1000, 0x6079fa7d )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "gallag.7", 0x0000, 0x1000, 0x9dd8ebd8 )
+ROM_END
+
 
 
 static const char *galaga_sample_names[] =
@@ -458,7 +496,7 @@ static void hisave(const char *name)
 
 struct GameDriver galaga_driver =
 {
-	"Galaga",
+	"Galaga (Midway)",
 	"galaga",
 	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
@@ -476,6 +514,26 @@ struct GameDriver galaga_driver =
 	hiload, hisave
 };
 
+struct GameDriver galaganm_driver =
+{
+	"Galaga (Namco)",
+	"galaganm",
+	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	&machine_driver,
+
+	galaganm_rom,
+	0, 0,
+	galaga_sample_names,
+
+	input_ports, trak_ports, galagabl_dsw, keys,
+
+	color_prom, 0, 0,
+
+	8*11, 8*20,
+
+	hiload, hisave
+};
+
 struct GameDriver galagabl_driver =
 {
 	"Galaga (bootleg)",
@@ -484,6 +542,26 @@ struct GameDriver galagabl_driver =
 	&machine_driver,
 
 	galagabl_rom,
+	0, 0,
+	galaga_sample_names,
+
+	input_ports, trak_ports, galagabl_dsw, keys,
+
+	color_prom, 0, 0,
+
+	8*11, 8*20,
+
+	hiload, hisave
+};
+
+struct GameDriver gallag_driver =
+{
+	"Gallag (bootleg Galaga)",
+	"gallag",
+	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	&machine_driver,
+
+	gallag_rom,
 	0, 0,
 	galaga_sample_names,
 

@@ -84,13 +84,13 @@ interrupt mode 1 triggered by the main CPU
 
 
 extern unsigned char *frogger_attributesram;
-extern void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void frogger_attributes_w(int offset,int data);
-extern void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
+void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void frogger_attributes_w(int offset,int data);
+void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int frogger_sh_interrupt(void);
-extern int frogger_sh_init(const char *gamename);
-extern int frogger_sh_start(void);
+int frogger_sh_interrupt(void);
+int frogger_sh_init(const char *gamename);
+int frogger_sh_start(void);
 
 
 
@@ -275,7 +275,7 @@ static struct MachineDriver machine_driver =
 			2000000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			frogger_sh_interrupt,1
+			frogger_sh_interrupt,10
 		}
 	},
 	60,
@@ -310,35 +310,35 @@ static struct MachineDriver machine_driver =
 
 ROM_START( frogger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000 )
-	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000 )
-	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000 )
-	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000 )
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0xb77be5cb )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x02dc7158 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0x71e62ce0 )
+	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000, 0x568b11cd )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800 )
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
 ROM_END
 
 ROM_START( frogsega_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000 )
-	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000 )
-	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000 )
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0x65a3e115 )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x039a96c8 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0xb48737eb )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800 )
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
 ROM_END
 
 

@@ -96,20 +96,20 @@ interrupts:
 
 
 /* machine */
-extern int  kangaroo_sec_chip_r(int offset);
-extern void kangaroo_sec_chip_w(int offset,int val);
-extern int  kangaroo_interrupt(void);
+int  kangaroo_sec_chip_r(int offset);
+void kangaroo_sec_chip_w(int offset,int val);
+int  kangaroo_interrupt(void);
 
 /* vidhrdw */
-extern int  kangaroo_vh_start(void);
-extern void kangaroo_vh_stop(void);
-extern void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void kangaroo_spriteramw(int offset, int val);
-extern void kangaroo_videoramw(int offset, int val);
-extern void kangaroo_color_shadew(int offset, int val);
+int  kangaroo_vh_start(void);
+void kangaroo_vh_stop(void);
+void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void kangaroo_spriteramw(int offset, int val);
+void kangaroo_videoramw(int offset, int val);
+void kangaroo_color_shadew(int offset, int val);
 
 /*sndhrdw*/
-extern int kangaroo_sh_start(void);
+int kangaroo_sh_start(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -136,8 +136,8 @@ static struct MemoryWriteAddress writemem[] =
         { 0x8000, 0xbfff, kangaroo_videoramw, &videoram },
         { 0xe000, 0xe3ff, MWA_RAM },
         { 0xe800, 0xe80a, kangaroo_spriteramw, &spriteram },
-        { 0xef00, 0xefff, kangaroo_sec_chip_w, &videoram },
-        { 0xec00, 0xec00, sound_command_w, &videoram },
+        { 0xef00, 0xefff, kangaroo_sec_chip_w },
+        { 0xec00, 0xec00, sound_command_w },
         { 0xed00, 0xed00, MWA_NOP },
         { 0x0000, 0x5fff, MWA_ROM },
         { -1 }  /* end of table */
@@ -286,7 +286,7 @@ static struct GfxLayout sprlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 2, 0 , &sprlayout, 32, 1 },
+        { 2, 0 , &sprlayout, 0, 1 },
         { -1 } /* end of array */
 };
 
@@ -294,59 +294,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-        0x00,0x00,42*4, /* DKRED1 */
-        0x00,42*4,0x00, /* DKRED2 */
-        0x00,42*4,42*4, /* RED */
-        42*4,00,00, /* DKGRN1 */
-        42*4,00,42*4, /* DKBRN1 */
-        42*4,21*4,00, /* DKBRN2 */
-        42*4,42*4,42*4, /* LTRED1 */
-        21*4,21*4,21*4, /* BROWN */
-        21*4,21*4,63*4, /* DKGRN2 */
-        21*4,63*4,21*4, /* LTORG1 */
-        21*4,63*4,63*4, /* DKGRN3 */
-        63*4,21*4,21*4, /* DKYEL */
-        63*4,21*4,63*4, /* DKORG */
-        63*4,63*4,21*4, /* ORANGE */
-        63*4,63*4,63*4, /* GREEN1 */
-	0x00,0x00,0x00,	/* BLACK */
-        0x00,0x00,42*4, /* DKRED1 */
-        0x00,42*4,0x00, /* DKRED2 */
-        0x00,42*4,42*4, /* RED */
-        42*4,00,00, /* DKGRN1 */
-        42*4,00,42*4, /* DKBRN1 */
-        42*4,21*4,00, /* DKBRN2 */
-        42*4,42*4,42*4, /* LTRED1 */
-        21*4,21*4,21*4, /* BROWN */
-        21*4,21*4,63*4, /* DKGRN2 */
-        21*4,63*4,21*4, /* LTORG1 */
-        21*4,63*4,63*4, /* DKGRN3 */
-        63*4,21*4,21*4, /* DKYEL */
-        63*4,21*4,63*4, /* DKORG */
-        63*4,63*4,21*4, /* ORANGE */
-        63*4,63*4,63*4, /* GREEN1 */
-
+	0x00,0x00,0x00,
+	0x00,0x00,42*4,
+	0x00,42*4,0x00,
+	0x00,42*4,42*4,
+	42*4,00,00,
+	42*4,00,42*4,
+	42*4,21*4,00,
+	42*4,42*4,42*4,
+	21*4,21*4,21*4,
+	21*4,21*4,63*4,
+	21*4,63*4,21*4,
+	21*4,63*4,63*4,
+	63*4,21*4,21*4,
+	63*4,21*4,63*4,
+	63*4,63*4,21*4,
+	63*4,63*4,63*4
 };
 
-enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
-	LTORG1,DKGRN3,DKYEL,DKORG,ORANGE,GREEN1,LTGRN1,GREEN2,LTGRN2,YELLOW,
-	DKBLU1,DKPNK1,DKPNK2,LTRED2,LTBRN,LTORG2,LTGRN3,LTGRN4,LTYEL,DKBLU2,
-	PINK1,DKBLU3,PINK2,CREAM,LTORG3,BLUE,PURPLE,LTBLU1,LTBLU2,WHITE1,
-	WHITE2};
 
 static unsigned char colortable[] =
 {
-	/* characters and sprites */
-        BLACK,0,0,1,               /* 1st level */
-        0,2,0,3,             /* pauline with kong */
-        0,4,0,5,           /* Mario */
-        0,6,0,7,                  /* 3rd level */
-        BLACK,8,0,9,                /* 4th lvl */
-        BLACK,10,0,11,               /* 2nd level */
-        BLACK,12,0,13,                  /* blue text */
-        BLACK,14,0,15,       /* hammers */
-        0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 };
 
 /* 971706 -V- */
@@ -437,25 +406,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( kangaroo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "tvg75.bin",  0x0000, 0x1000 )  /* fonts are messed up with */
-        ROM_LOAD( "tvg76.bin",  0x1000, 0x1000 )  /* program code */
-        ROM_LOAD( "tvg77.bin",  0x2000, 0x1000 )
-        ROM_LOAD( "tvg78.bin",  0x3000, 0x1000 )
-        ROM_LOAD( "tvg79.bin",  0x4000, 0x1000 )
-        ROM_LOAD( "tvg80.bin",  0x5000, 0x1000 )
+	ROM_LOAD( "tvg75.bin", 0x0000, 0x1000, 0xc79eeb0a )  /* fonts are messed up with */
+	ROM_LOAD( "tvg76.bin", 0x1000, 0x1000, 0x1f254c59 )  /* program code */
+	ROM_LOAD( "tvg77.bin", 0x2000, 0x1000, 0x84cf6cd7 )
+	ROM_LOAD( "tvg78.bin", 0x3000, 0x1000, 0xfec4c312 )
+	ROM_LOAD( "tvg79.bin", 0x4000, 0x1000, 0x55d4a740 )
+	ROM_LOAD( "tvg80.bin", 0x5000, 0x1000, 0xf47576eb )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "tvg83.bin",  0x0000, 0x1000 )  /*this is not used at all*/
-                                                /* might be removed */
-	ROM_REGION(0x10000) /* space for graphics roms */
-        ROM_LOAD( "tvg84.bin",  0x0000, 0x1000 )  /* because of very rare way */
-        ROM_LOAD( "tvg86.bin",  0x1000, 0x1000 )  /* CRT controller uses these roms */
-        ROM_LOAD( "tvg83.bin",  0x2000, 0x1000 )  /* there's no way, but to decode */
-        ROM_LOAD( "tvg85.bin",  0x3000, 0x1000 )  /* it at runtime - which is SLOW */
+	ROM_OBSOLETELOAD( "tvg83.bin", 0x0000, 0x1000 )	/* not needed - could be removed */
 
-        ROM_REGION(0x10000) /*sound*/
-        ROM_LOAD( "tvg81.bin", 0x0000, 0x1000 )
+	ROM_REGION(0x10000) /* space for graphics roms */
+	ROM_LOAD( "tvg84.bin", 0x0000, 0x1000, 0x6d872ead )  /* because of very rare way */
+	ROM_LOAD( "tvg86.bin", 0x1000, 0x1000, 0x9048077c )  /* CRT controller uses these roms */
+	ROM_LOAD( "tvg83.bin", 0x2000, 0x1000, 0x5da33f11 )  /* there's no way, but to decode */
+	ROM_LOAD( "tvg85.bin", 0x3000, 0x1000, 0x6450024c )  /* it at runtime - which is SLOW */
+
+	ROM_REGION(0x10000) /* sound */
+	ROM_LOAD( "tvg81.bin", 0x0000, 0x1000, 0x03a6e98a )
 ROM_END
+
 
 
 struct GameDriver kangaroo_driver =

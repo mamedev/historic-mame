@@ -30,6 +30,7 @@ int video_sync;
 int play_sound;
 int use_joystick;
 int use_alternate;
+int vector_game;
 
 int rotation;
 int vesa_mode;
@@ -100,9 +101,8 @@ int osd_trak_pressed(int joycode);
 
 
 /* audio related stuff */
-#define NUMVOICES 8
+#define NUMVOICES 16
 #define SAMPLE_RATE 44100
-#define SAMPLE_BUFFER_LENGTH 50000
 HAC hVoice[NUMVOICES];
 LPAUDIOWAVE lpWave[NUMVOICES];
 int Volumi[NUMVOICES];
@@ -121,6 +121,7 @@ int osd_init(int argc,char **argv)
 
 	first_free_pen = 0;
 
+	vector_game = 0;
 	vesa_mode = 0;
 	vesa_width = 800;
 	vesa_height = 600;
@@ -173,6 +174,9 @@ int osd_init(int argc,char **argv)
 		if (stricmp(argv[i],"-vsync") == 0)
 			video_sync = 1;
 
+		if (stricmp(argv[i],"-vg") == 0)
+			vector_game = 1;
+
 		if (stricmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
@@ -217,15 +221,18 @@ int osd_init(int argc,char **argv)
 		{
 			if (soundcard == -1)
 			{
+				unsigned int k;
+
+
 				printf("\nSelect the audio device:\n(if you have an AWE 32, choose Sound Blaster for a more faithful emulation)\n");
-				for (i = 0;i < AGetAudioNumDevs();i++)
+				for (k = 0;k < AGetAudioNumDevs();k++)
 				{
-					if (AGetAudioDevCaps(i,&caps) == AUDIO_ERROR_NONE)
-						printf("  %2d. %s\n",i,caps.szProductName);
+					if (AGetAudioDevCaps(k,&caps) == AUDIO_ERROR_NONE)
+						printf("  %2d. %s\n",k,caps.szProductName);
 				}
 				printf("\n");
 
-                                if (i < 10)
+                                if (k < 10)
                                 {
                                    i = getch();
                                    soundcard = i - '0';
@@ -266,21 +273,7 @@ int osd_init(int argc,char **argv)
 
 					ASetVoicePanning(hVoice[i],128);
 
-					if ((lpWave[i] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
-/* have to handle this better...*/
-						return 1;
-
-					lpWave[i]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
-					lpWave[i]->nSampleRate = SAMPLE_RATE;
-					lpWave[i]->dwLength = SAMPLE_BUFFER_LENGTH;
-					lpWave[i]->dwLoopStart = lpWave[i]->dwLoopEnd = 0;
-					if (ACreateAudioData(lpWave[i]) != AUDIO_ERROR_NONE)
-					{
-/* have to handle this better...*/
-						free(lpWave[i]);
-
-						return 1;
-					}
+					lpWave[i] = 0;
 				}
 
         if (!No_FM) {
@@ -362,8 +355,12 @@ void osd_exit(void)
 		{
 			AStopVoice(hVoice[n]);
 			ADestroyAudioVoice(hVoice[n]);
-			ADestroyAudioData(lpWave[n]);
-			free(lpWave[n]);
+			if (lpWave[n])
+			{
+				ADestroyAudioData(lpWave[n]);
+				free(lpWave[n]);
+				lpWave[n] = 0;
+			}
 		}
 		ACloseVoices();
 		ACloseAudio();
@@ -584,9 +581,24 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	Register *reg = 0;
 	int reglen = 0;
 
- 	/* Check if there exists a tweaked mode to fit
-           the screen in, otherwise use VESA */
-
+	double x_scale, y_scale, scale;
+	if (vector_game) {
+		if (!rotation) {
+			x_scale=(double)vesa_width/(double)(width);
+			y_scale=(double)vesa_height/(double)(height);
+		} else {
+			x_scale=(double)vesa_height/(double)(width);
+			y_scale=(double)vesa_width/(double)(height);
+		}
+		if (x_scale<y_scale)
+			scale=x_scale;
+		else
+			scale=y_scale;
+		width=(int)((double)width*scale);
+		width-=width % 4;
+		height=(int)((double)height*scale);
+		height-=height % 4;
+	}
 	bitmap = osd_create_bitmap(width,height);
 
         if (rotation)
@@ -596,7 +608,8 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		t = width; width = height; height = t;
 	}
 
-
+ 	/* Check if there exists a tweaked mode to fit
+           the screen in, otherwise use VESA */
 	if (!vesa_mode &&
 	    !(width == 224 && height == 288) &&
             !(width == 256 && height == 256) &&
@@ -746,14 +759,24 @@ void osd_close_display(void)
 int osd_obtain_pen(unsigned char red, unsigned char green, unsigned char blue)
 {
 	RGB rgb;
+	int res;
 
+
+	res = first_free_pen;
 
 	rgb.r = red >> 2;
 	rgb.g = green >> 2;
 	rgb.b = blue >> 2;
-	set_color(first_free_pen,&rgb);
+	set_color(res,&rgb);
 
-	return first_free_pen++;
+	/* I could just increase first_free_pen. However, many driver writers */
+	/* assume that the palette is contiguous and forget to use Machine->pens[] */
+	/* to access it. This works on MS-DOS but not on the Mac. Mangling the */
+	/* palette this way ensures that DOS developers immediately notice that */
+	/* there's something wrong in the driver. */
+	first_free_pen = (first_free_pen + 3) % 256;
+
+	return res;
 }
 
 
@@ -787,7 +810,7 @@ inline void double_pixels(unsigned long *lb, short seg,
 	"c" (width4),
 	"S" (lb),
 	"D" (address):
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");	
+	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
 }
 
 inline void update_vesa(void)
@@ -823,9 +846,9 @@ inline void update_vesa(void)
 	}
 }
 
-inline void rotate(unsigned char *lb, short seg,				
+inline void rotate(unsigned char *lb, short seg,
 			  unsigned long address, int offset, int width4)
-{									
+{
 	__asm__ __volatile__ ("						\
 	pushw %%es		;					\
 	movw %%dx, %%es		;					\
@@ -856,9 +879,9 @@ inline void rotate(unsigned char *lb, short seg,
 	"D" (address):							\
 	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");		\
 }
-inline void rotate_double(unsigned char *lb, short seg,				
+inline void rotate_double(unsigned char *lb, short seg,
 			  unsigned long address, int offset, int width4)
-{									
+{
 	__asm__ __volatile__ ("						\
 	pushw %%es		;					\
 	movw %%dx, %%es		;					\
@@ -902,7 +925,7 @@ inline void update_rotate(void)
 	unsigned char *lb;
 	unsigned long address;
 
- 	src_seg	= _my_ds();	
+ 	src_seg	= _my_ds();
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->height/4;
@@ -912,12 +935,12 @@ inline void update_rotate(void)
 		lb = bitmap->_private + (bitmap->height-1)*bitmap->width+skiplines;
 		offset = -bitmap->width-1;
 	}
-	else 	
+	else
 	{
 		lb = bitmap->_private + bitmap->width -1 -skiplines;
 		offset = bitmap->width-1;
 	}
-	
+
 	for (y = vesa_display_lines;y !=0 ; y--)
 	{
 		address = bmp_write_line (screen, vesa_line)+vesa_xoffset;
@@ -1025,18 +1048,47 @@ void osd_play_sample(int channel,unsigned char *data,int len,int freq,int volume
 {
 	if (play_sound == 0 || channel >= NUMVOICES) return;
 
+	if (lpWave[channel] && lpWave[channel]->dwLength != len)
+	{
+		AStopVoice(hVoice[channel]);
+		ADestroyAudioData(lpWave[channel]);
+		free(lpWave[channel]);
+		lpWave[channel] = 0;
+	}
+
+	if (lpWave[channel] == 0)
+	{
+		if ((lpWave[channel] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
+			return;
+
+		if (loop) lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
+		else lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
+		lpWave[channel]->nSampleRate = SAMPLE_RATE;
+		lpWave[channel]->dwLength = len;
+		lpWave[channel]->dwLoopStart = 0;
+		lpWave[channel]->dwLoopEnd = len;
+		if (ACreateAudioData(lpWave[channel]) != AUDIO_ERROR_NONE)
+		{
+			free(lpWave[channel]);
+			lpWave[channel] = 0;
+
+			return;
+		}
+	}
+	else
+	{
+		if (loop) lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
+		else lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
+	}
+
 	memcpy(lpWave[channel]->lpData,data,len);
-	if (loop) lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
-	else lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
-	lpWave[channel]->dwLoopStart = 0;
-	lpWave[channel]->dwLoopEnd = len;
-	lpWave[channel]->dwLength = len;
-        Volumi[channel] = volume/4;
 	/* upload the data to the audio DRAM local memory */
 	AWriteAudioData(lpWave[channel],0,len);
 	APlayVoice(hVoice[channel],lpWave[channel]);
 	ASetVoiceFrequency(hVoice[channel],freq);
 	ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
+
+	Volumi[channel] = volume/4;
 }
 
 
@@ -1049,19 +1101,36 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 
 	if (play_sound == 0 || channel >= NUMVOICES) return;
 
-	/* check if the waveform is large enough for double buffering */
-/*	if (2*sizeof(aBuffer) > lpWave->dwLength) {*/
-
 	if (!playing[channel])
 	{
-		memcpy(lpWave[channel]->lpData,data,len);
+		if (lpWave[channel])
+		{
+			AStopVoice(hVoice[channel]);
+			ADestroyAudioData(lpWave[channel]);
+			free(lpWave[channel]);
+			lpWave[channel] = 0;
+		}
+
+		if ((lpWave[channel] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
+			return;
+
 		lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
+		lpWave[channel]->nSampleRate = SAMPLE_RATE;
+		lpWave[channel]->dwLength = 3*len;
 		lpWave[channel]->dwLoopStart = 0;
 		lpWave[channel]->dwLoopEnd = 3*len;
-		lpWave[channel]->dwLength = 3*len;
-                Volumi[channel] = volume/4;
+		if (ACreateAudioData(lpWave[channel]) != AUDIO_ERROR_NONE)
+		{
+			free(lpWave[channel]);
+			lpWave[channel] = 0;
+
+			return;
+		}
+
+		memset(lpWave[channel]->lpData,0,3*len);
+		memcpy(lpWave[channel]->lpData,data,len);
 		/* upload the data to the audio DRAM local memory */
-		AWriteAudioData(lpWave[channel],0,len);
+		AWriteAudioData(lpWave[channel],0,3*len);
 		APlayVoice(hVoice[channel],lpWave[channel]);
 		ASetVoiceFrequency(hVoice[channel],freq);
 		ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
@@ -1073,19 +1142,25 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 		DWORD pos;
 
 
-		for(;;)
+		if (throttle)	/* sync with audio only when speed throttling is not turned off */
 		{
-			AGetVoicePosition(hVoice[channel],&pos);
-			if (c[channel] == 0 && pos > len) break;
-			if (c[channel] == 1 && (pos < len || pos > 2*len)) break;
-			if (c[channel] == 2 && pos < 2*len) break;
-			osd_update_audio();
+			for(;;)
+			{
+				AGetVoicePosition(hVoice[channel],&pos);
+				if (c[channel] == 0 && pos >= len) break;
+				if (c[channel] == 1 && (pos < len || pos >= 2*len)) break;
+				if (c[channel] == 2 && pos < 2*len) break;
+				osd_update_audio();
+			}
 		}
+
 		memcpy(&lpWave[channel]->lpData[len * c[channel]],data,len);
 		AWriteAudioData(lpWave[channel],len*c[channel],len);
 		c[channel]++;
 		if (c[channel] == 3) c[channel] = 0;
 	}
+
+	Volumi[channel] = volume/4;
 }
 
 
@@ -1212,8 +1287,10 @@ const char *osd_key_name(int keycode)
                                "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD", "LEFT", "5 PAD", "RIGHT",
                                "PLUS PAD", "END", "DOWN", "PGDN", "INS", "DEL", "F11", "F12" };
 
+  static char *nonedefined = "None";
+
   if (keycode && keycode <= OSD_MAX_KEY) return (char*)keynames[keycode-1];
-  else return 0;
+  else return (char *)nonedefined;
 }
 
 
@@ -1341,7 +1418,7 @@ void osd_poll_mouse(void)
                 ++mouse_dy;
             }
 
-            /* Calculate the mouse delta tangent using fixed pt. */            
+            /* Calculate the mouse delta tangent using fixed pt. */
             mouse_tan = (mouse_dx * 256)/mouse_dy;
 
             /* Approximate the mouse direction to a joystick direction */
@@ -1506,7 +1583,7 @@ int osd_trak_read(int axis) {
     return((large_trak_y*TRAK_MAXY_RES*2/3)+mouse_y-TRAK_CENTER_Y);
     break;
   }
-  
+
   return(0);
 }
 
@@ -1529,25 +1606,27 @@ inline void draw_pixel (int x, int y, int col)
 {
 	char *address;
 
+
 	if (x<0 || x >= bitmap->width)
 		return;
 	if (y<0 || y >= bitmap->height)
 		return;
 	address=&(bitmap->line[y][x]);
 	*address=(char)col;
-	p_index++;
-	pixel[p_index]=address;
+	if (p_index<MAXPIXELS-1) {
+		p_index++;
+		pixel[p_index]=address;
+	}
 }
 
-void open_page (int *x_res, int *y_res, int *portrait, int step)
+void open_page (int *x_res, int *y_res, int step)
 {
 	int i;
 	unsigned char bg;
-	
+
 	*x_res=bitmap->width;
 	*y_res=bitmap->height;
-	*portrait=(bitmap->height > bitmap->width) ? 1 : 0;		
-	bg=Machine->background_pen;
+	bg=Machine->pens[0];
 	for (i=p_index; i>=0; i--)
 	{
 		*(pixel[i])=bg;
@@ -1559,37 +1638,32 @@ void close_page (void)
 {
 }
 
-void draw_to (int x2, int y2, int col, int z)
+void draw_to (int x2, int y2, int col)
 {
 	static int x1=0;
 	static int y1=0;
 
 	int temp_x, temp_y;
 	int dx,dy,cx,cy,sx,sy;
-	
-	if (!z)
+
+#if 0
+	if (errorlog)
+		fprintf(errorlog,
+		"line:%d,%d nach %d,%d color %d\n",
+		 x1,y1,x2,y2,col);
+#endif
+
+	if (col<0)
 	{
 		x1=x2;
 		y1=y2;
 		return;
-	}
+	} else
+		col=Machine->gfx[0]->colortable[col];
 
 	temp_x = x2; temp_y = y2;
-	col += (z << 3);
-	col &= 0x7f;
-	
-#ifdef 0
-	if (x1<0 || y1<0 || x2<0 || y2<0 ||
-		x1>=bitmap->width || y1>=bitmap->height ||
-		x2>=bitmap->width || y2>=bitmap->height)
-	{
-		if (errorlog)
-			fprintf(errorlog,
-			"line:%d,%d nach %d,%d color %d, intensity %d\n",
-			 x1,y1,x2,y2,col,z);
-		return;
-	}
-#endif
+
+
 	dx=abs(x1-x2);
 	dy=abs(y1-y2);
 
@@ -1604,16 +1678,7 @@ void draw_to (int x2, int y2, int col, int z)
 	cx=dx/2;
 	cy=dy/2;
 
-	if (dx == dy)
-	{
-		while (x1 <= x2)
-		{
-			draw_pixel(x1,y1,col);
-			x1+=sx;
-			y1+=sy;
-		}
-	}
-	else if (dx>dy)
+	if (dx>=dy)
 	{
 		while (x1 <= x2)
 		{
@@ -1640,7 +1705,8 @@ void draw_to (int x2, int y2, int col, int z)
 				cy+=dy;
 			}
 		}
-	}	
-	x1 = temp_x;
-	y1 = temp_y;
+	}
+
+	y1=temp_y;
+	x1=temp_x;
 }

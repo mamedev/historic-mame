@@ -40,8 +40,8 @@ XXXX00XX   5-7 ships
 XXX1XXXX   1-play minimum $
 XXX0XXXX   2-play minimum
 11XXXXXX   Bonus ship every 10,000 points $
-10XXXXXX   Bonus ship every 12,000 points 
-01XXXXXX   Bonus ship every 15,000 points 
+10XXXXXX   Bonus ship every 12,000 points
+01XXXXXX   Bonus ship every 15,000 points
 00XXXXXX   No bonus ships (adds one ship at game start)
 
 
@@ -68,27 +68,23 @@ XXX0XXXX   Center coin mech * 2
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/atari_vg.h"
+#include "machine/atari_vg.h"
+#include "sndhrdw/pokyintf.h"
 
 
-extern int asteroid_init_machine(const char *gamename);
-extern int asteroid_interrupt(void);
-extern int asteroid_vh_start(void);
-extern void asteroid_vh_stop(void);
-extern void asteroid_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void bzone_vh_init_colors(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
-extern int asteroid_IN0_r(int offset);
-extern int asteroid_IN1_r(int offset);
-extern int asteroid_DSW1_r(int offset);
+int asteroid_init_machine(const char *gamename);
+int asteroid_IN0_r(int offset);
+int asteroid_IN1_r(int offset);
+int asteroid_DSW1_r(int offset);
 
-extern void asteroid_bank_switch_w(int offset, int data);
-extern void astdelux_bank_switch_w(int offset, int data);
+void asteroid_bank_switch_w(int offset, int data);
+void astdelux_bank_switch_w(int offset, int data);
 
-extern int bzone_rand_r(int offset);
-
-extern void milliped_pokey1_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
+void asteroid_explode_w(int offset,int data);
+void asteroid_thump_w(int offset,int data);
+void asteroid_sounds_w(int offset,int data);
+void asteroid_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -108,9 +104,12 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x47ff, MWA_RAM, &vectorram },
-	{ 0x3000, 0x3000, vg_go },
+	{ 0x3000, 0x3000, atari_vg_go },
 	{ 0x3200, 0x3200, asteroid_bank_switch_w },
-/*	{ 0x3400, 0x3400, wdclr }, */
+	{ 0x3400, 0x3400, MWA_NOP }, /* watchdog clear */
+	{ 0x3600, 0x3600, asteroid_explode_w },
+	{ 0x3a00, 0x3a00, asteroid_thump_w },
+	{ 0x3c00, 0x3c05, asteroid_sounds_w },
 	{ 0x6800, 0x7fff, MWA_ROM },
 	{ 0x5000, 0x57ff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -127,7 +126,8 @@ static struct MemoryReadAddress astdelux_readmem[] =
 	{ 0x2400, 0x2407, asteroid_IN1_r },	/* IN1 */
 	{ 0x2800, 0x2803, asteroid_DSW1_r },	/* DSW1 */
 	{ 0x2c08, 0x2c08, input_port_3_r },		/* DSW2 */
-	{ 0x2c0a, 0x2c0a, bzone_rand_r },
+	{ 0x2c00, 0x2c0f, pokey1_r },
+	{ 0x2c40, 0x2c7f, atari_vg_earom_r },
 	{ -1 }	/* end of table */
 };
 
@@ -135,10 +135,13 @@ static struct MemoryWriteAddress astdelux_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x47ff, MWA_RAM, &vectorram },
-	{ 0x3000, 0x3000, vg_go },
-	{ 0x2c00, 0x2c0f, milliped_pokey1_w },
+	{ 0x3000, 0x3000, atari_vg_go },
+	{ 0x2c00, 0x2c0f, pokey1_w },
+	{ 0x3200, 0x323f, atari_vg_earom_w },
 /*	{ 0x3400, 0x3400, wdclr }, */
+	{ 0x3600, 0x3600, asteroid_explode_w },
 	{ 0x3800, 0x3800, vg_reset },
+	{ 0x3a00, 0x3a00, atari_vg_earom_ctrl },
 	{ 0x3c00, 0x3c07, astdelux_bank_switch_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x4800, 0x57ff, MWA_ROM },
@@ -225,22 +228,82 @@ static struct DSW astdelux_dsw[] =
 	{ -1 }
 };
 
+
+static struct GfxLayout fakelayout =
+{
+        1,1,
+        0,
+        1,
+        { 0 },
+        { 0 },
+        { 0 },
+        0
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
+        { 0, 0,      &fakelayout,     0, 256 },
+        { -1 } /* end of array */
 };
 
 static unsigned char color_prom[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
-	0x00,0x00,0x02, /* BLUE */
-	0x00,0x02,0x00, /* GREEN */
-	0x00,0x02,0x02, /* CYAN */
-	0x02,0x00,0x00, /* RED */
-	0x02,0x00,0x02, /* MAGENTA */
-	0x02,0x02,0x00, /* YELLOW */
-	0x02,0x02,0x02	/* WHITE */
-};
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x00,0x01,0x02, /* CYAN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01,	/* WHITE */
+	0x00,0x00,0x00,	/* BLACK */
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x00,0x01,0x02, /* CYAN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01	/* WHITE */};
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x001d],"\x00\x00",2) == 0 &&
+			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
+			memcmp(&RAM[0x0032],"\xff\xff",2) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x001d],1,2*10+3*11,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x001d],1,2*10+3*11,f);
+		fclose(f);
+	}
+}
+
+/* Asteroids Deluxe now uses the earom routines
+ * However, we keep the highscore location, just in case
+ *		fwrite(&RAM[0x0023],1,3*10+3*11,f);
+ */
 
 static struct MachineDriver machine_driver =
 {
@@ -251,29 +314,29 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			asteroid_interrupt,4 /* 4 interrupts per frame? */
+			nmi_interrupt,4 /* 4 interrupts per frame? */
 		}
 	},
 	60, /* frames per second */
 	asteroid_init_machine,
 
 	/* video hardware */
-	480, 480, { 0, 480, 0, 480 },
+	288, 224, { -30, 1030, 50, 900 },
 	gfxdecodeinfo,
-	128,128,
-	bzone_vh_init_colors,
+	256, 256,
+	atari_vg_init_colors,
 
 	0,
-	asteroid_vh_start,
-	asteroid_vh_stop,
-	asteroid_vh_screenrefresh,
+	atari_vg_dvg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
 	0,
 	0,
-	0
+	asteroid_sh_update
 };
 
 static struct MachineDriver astdelux_machine_driver =
@@ -285,32 +348,30 @@ static struct MachineDriver astdelux_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			astdelux_readmem,astdelux_writemem,0,0,
-			asteroid_interrupt,4 /* 4 interrupts per frame? */
+			nmi_interrupt,4 /* 4 interrupts per frame? */
 		}
 	},
 	60, /* frames per second */
 	asteroid_init_machine,
 
 	/* video hardware */
-	480, 480, { 0, 480, 0, 480 },
+	288, 224, { -30, 1030, 50,900 },
 	gfxdecodeinfo,
-	128,128,
-	bzone_vh_init_colors,
+	256, 256,
+	atari_vg_init_colors,
 
 	0,
-	asteroid_vh_start,
-	asteroid_vh_stop,
-	asteroid_vh_screenrefresh,
+	atari_vg_dvg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey1_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
-
-
 
 /***************************************************************************
 
@@ -318,14 +379,40 @@ static struct MachineDriver astdelux_machine_driver =
 
 ***************************************************************************/
 
+static const char *asteroid_sample_names[] =
+{
+	"thumphi.sam",
+	"thumplo.sam",
+	"fire.sam",
+	"lsaucer.sam",
+	"ssaucer.sam",
+	"thrust.sam",
+	"sfire.sam",
+	"life.sam",
+	"explode1.sam",
+	"explode2.sam",
+	"explode3.sam",
+    0	/* end of array */
+};
+
 ROM_START( asteroid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.02", 0x6800, 0x0800 )
-	ROM_LOAD( "035144.02", 0x7000, 0x0800 )
-	ROM_LOAD( "035143.02", 0x7800, 0x0800 )
-	ROM_LOAD( "035143.02", 0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0xd84a7878 )
+	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0x15f39999 )
+	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x93d25050 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.02", 0x5000, 0x0800 )
+	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xa144e0e0 )
+ROM_END
+
+ROM_START( asteroi2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d )
+	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 )
+	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x0454f0f0 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xed041c1c )
 ROM_END
 
 
@@ -340,32 +427,59 @@ struct GameDriver asteroid_driver =
 
 	asteroid_rom,
 	0, 0,
-	0,
+	asteroid_sample_names,
 
 	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	140, 110,      /* paused_x, paused_y */
 
-	0, 0
+	hiload, hisave
 };
 
-/***************************************************************************
+struct GameDriver asteroi2_driver =
+{
+	"Asteroids (alternate version)",
+	"asteroi2",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	&machine_driver,
 
-  Game driver(s)
+	asteroi2_rom,
+	0, 0,
+	asteroid_sample_names,
 
-***************************************************************************/
+	input_ports, trak_ports, dsw, keys,
+
+	color_prom, 0, 0,
+	140, 110,      /* paused_x, paused_y */
+
+	hiload, hisave
+};
+
 
 ROM_START( astdelux_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.02", 0x6000, 0x0800 )
-	ROM_LOAD( "036431.02", 0x6800, 0x0800 )
-	ROM_LOAD( "036432.02", 0x7000, 0x0800 )
-	ROM_LOAD( "036433.03", 0x7800, 0x0800 )
-	ROM_LOAD( "036433.03", 0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036430.02", 0x6000, 0x0800, 0x4eb73d37 )
+	ROM_LOAD( "036431.02", 0x6800, 0x0800, 0x859ee29c )
+	ROM_LOAD( "036432.02", 0x7000, 0x0800, 0x49c7b38d )
+	ROM_LOAD( "036433.03", 0x7800, 0x0800, 0x39b00100 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.02", 0x4800, 0x0800 )
-	ROM_LOAD( "036799.01", 0x5000, 0x0800 )
+	ROM_LOAD( "036800.02", 0x4800, 0x0800, 0x6ea4e6c6 )
+	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
+ROM_END
+
+ROM_START( astdelu1_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "036430.02", 0x6000, 0x0800, 0x4bca4e5e )
+	ROM_LOAD( "036431.02", 0x6800, 0x0800, 0x2d01a733 )
+	ROM_LOAD( "036432.02", 0x7000, 0x0800, 0xf432f48a )
+	ROM_LOAD( "036433.03", 0x7800, 0x0800, 0x8c188eea )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "036800.02", 0x4800, 0x0800, 0xc05aa9d8 )
+	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
 
 
@@ -380,12 +494,32 @@ struct GameDriver astdelux_driver =
 
 	astdelux_rom,
 	0, 0,
-	0,
+	asteroid_sample_names,
 
 	astdelux_input_ports, trak_ports, astdelux_dsw, keys,
 
 	color_prom, 0, 0,
 	140, 110,      /* paused_x, paused_y */
 
-	0, 0
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver astdelu1_driver =
+{
+	"Asteroids Deluxe (alternate version)",
+	"astdelu1",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	&astdelux_machine_driver,
+
+	astdelu1_rom,
+	0, 0,
+	asteroid_sample_names,
+
+	astdelux_input_ports, trak_ports, astdelux_dsw, keys,
+
+	color_prom, 0, 0,
+	140, 110,      /* paused_x, paused_y */
+
+	atari_vg_earom_load, atari_vg_earom_save
 };

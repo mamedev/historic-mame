@@ -287,7 +287,7 @@ void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int bpen;
 
 
-		bpen = Machine->background_pen;
+		bpen = Machine->pens[0];
 		for (offs = 0;offs < total_stars;offs++)
 		{
 			int x,y;

@@ -9,40 +9,73 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define LOG_IT 0
-#define DEBUG_IT 0
 
-#define VIDEO_RAM_SIZE 0x800
 
 unsigned char mappy_scroll;
 
-#if LOG_IT
-#include <stdio.h>
-static FILE *pCharFile;
-static FILE *pSpriteFile;
-#endif
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  mappy has one 32x8 palette PROM and two 256x4 color lookup table PROMs
+  (one for characters, one for sprites).
+
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void mappy_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	for (i = 0;i < 32;i++)
+	{
+		int bit0,bit1,bit2;
+
+		bit0 = (color_prom[31-i] >> 0) & 0x01;
+		bit1 = (color_prom[31-i] >> 1) & 0x01;
+		bit2 = (color_prom[31-i] >> 2) & 0x01;
+		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[31-i] >> 3) & 0x01;
+		bit1 = (color_prom[31-i] >> 4) & 0x01;
+		bit2 = (color_prom[31-i] >> 5) & 0x01;
+		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = 0;
+		bit1 = (color_prom[31-i] >> 6) & 0x01;
+		bit2 = (color_prom[31-i] >> 7) & 0x01;
+		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	}
+
+	/* characters */
+	for (i = 0*4;i < 64*4;i++)
+		colortable[i] = 31 - ((color_prom[(i^3) + 32] & 0x0f) + 0x10);
+
+	/* sprites */
+	for (i = 64*4;i < 128*4;i++)
+		colortable[i] = 31 - (color_prom[i + 32] & 0x0f);
+}
 
 
 int mappy_vh_start(void)
 {
-	if ((dirtybuffer = malloc(VIDEO_RAM_SIZE)) == 0)
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,VIDEO_RAM_SIZE);
+	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(60*8,36*8)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
 	}
-
-#if LOG_IT
-	pCharFile = fopen ("mappy-ch.log", "w");
-	fprintf (pCharFile, "SXx SYy CHh A CLc\n");
-	fprintf (pCharFile, "=== === === = ===\n");
-	pSpriteFile = fopen ("mappy-sp.log", "w");
-	fprintf (pSpriteFile, " Xx   Yy  SPs CLc FX FY DX DY IXi\n");
-	fprintf (pSpriteFile, "==== ==== === === == == == == ===\n");
-#endif
 
 	return 0;
 }
@@ -58,11 +91,6 @@ void mappy_vh_stop(void)
 {
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap);
-	
-#if LOG_IT
-	fclose (pCharFile);
-	fclose (pSpriteFile);
-#endif
 }
 
 
@@ -97,22 +125,8 @@ void mappy_scroll_w(int offset,int data)
 void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
-	int transparency, background;
-
-	/* this looks cheesy, but as far as I can tell, it's right */
-	if (sy < Machine->drv->visible_area.min_y + 8*8 || sy > Machine->drv->visible_area.max_y - 4*8)
-	{
-		transparency = TRANSPARENCY_THROUGH;
-		background = Machine->background_pen;
-	}
-	else
-	{
-		transparency = TRANSPARENCY_PEN;
-		background = 15;
-	}
-	
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-		transparency,background);
+		TRANSPARENCY_COLOR,16);
 }
 
 
@@ -125,235 +139,205 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
 ***************************************************************************/
 void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
-
-#if DEBUG_IT
-	static unsigned char realv[VIDEO_RAM_SIZE], realc[VIDEO_RAM_SIZE];
-	static int touched = false;
-	if (osd_key_pressed (OSD_KEY_PGUP))
-	{
-		memcpy (realv, videoram, VIDEO_RAM_SIZE);
-		memcpy (realc, colorram, VIDEO_RAM_SIZE);
-		touched = true;
-		for (i = 0; i < VIDEO_RAM_SIZE; i++)
-			videoram[i] = colorram[i] >> 4;
-		memset (colorram, 2, VIDEO_RAM_SIZE);
-		memset (dirtybuffer, 1, 60 * 36);
-	}
-	else if (osd_key_pressed (OSD_KEY_PGDN))
-	{
-		memcpy (realv, videoram, VIDEO_RAM_SIZE);
-		memcpy (realc, colorram, VIDEO_RAM_SIZE);
-		touched = true;
-		for (i = 0; i < VIDEO_RAM_SIZE; i++)
-			videoram[i] = colorram[i] & 0xf;
-		memset (colorram, 2, VIDEO_RAM_SIZE);
-		memset (dirtybuffer, 1, 60 * 36);
-	}
-	else if (touched)
-	{
-		memset (dirtybuffer, 1, 60 * 36);
-		touched = false;
-	}
-#endif
+	static unsigned short overoffset[2048];
+	unsigned short *save = overoffset;
+	int offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE - 128;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
+		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
+		if (colorram[offs] & 0x40)
+			*save++ = offs;
+		
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
 
+
 			dirtybuffer[offs] = 0;
 
-			mx = offs / 32;
-			my = offs % 32;
+			if (offs >= videoram_size - 64)
+			{
+				/* Draw the top 2 lines. */
+				mx = offs % 32;
+				my = (offs - (videoram_size - 64)) / 32;
 
-			sx = 59 - mx;
-			sy = my + 2;
+				sx = 29 - mx;
+				sy = my;
+			}
+			else if (offs >= videoram_size - 128)
+			{
+				/* Draw the bottom 2 lines. */
+				mx = offs % 32;
+				my = (offs - (videoram_size - 128)) / 32;
+
+				sx = 29 - mx;
+				sy = my + 34;
+			}
+			else
+			{
+				/* draw the rest of the screen */
+				mx = offs / 32;
+				my = offs % 32;
+
+				sx = 59 - mx;
+				sy = my + 2;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs],
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
-			
-			#if LOG_IT
-				if (videoram[offs] != 32)
-				fprintf (pCharFile, "%2dx %2dy %02Xh %c %02Xc\n", sx, sy, videoram[offs], 
-							videoram[offs] > 32 && videoram[offs] < 127 ? videoram[offs] : ' ', colorram[offs]);
-			#endif
 		}
 	}
 
-	/* Draw the bottom 2 lines. */
-	for ( ;offs < VIDEO_RAM_SIZE - 64;offs++)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,mx,my;
-
-			dirtybuffer[offs] = 0;
-
-			mx = offs % 32;
-			my = (offs - (VIDEO_RAM_SIZE - 128)) / 32;
-
-			sx = 29 - mx;
-			sy = my + 34;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs],
-					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-
-			#if LOG_IT
-				if (videoram[offs] != 32)
-				fprintf (pCharFile, "%2dx %2dy %02Xh %c %02Xc\n", sx, sy, videoram[offs], 
-							videoram[offs] > 32 && videoram[offs] < 127 ? videoram[offs] : ' ', colorram[offs]);
-			#endif
-		}
-	}
-
-	/* Draw the top 2 lines. */
-	for ( ;offs < VIDEO_RAM_SIZE;offs++)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,mx,my;
-
-			dirtybuffer[offs] = 0;
-
-			mx = offs % 32;
-			my = (offs - (VIDEO_RAM_SIZE - 64)) / 32;
-
-			sx = 29 - mx;
-			sy = my;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs],
-					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-
-			#if LOG_IT
-				if (videoram[offs] != 32)
-				fprintf (pCharFile, "%2dx %2dy %02Xh %c %02Xc\n", sx, sy, videoram[offs], 
-							videoram[offs] > 32 && videoram[offs] < 127 ? videoram[offs] : ' ', colorram[offs]);
-			#endif
-		}
-	}
 
 	/* copy the temporary bitmap to the screen */
 	{
 		int scroll[36];
 
-		for (i = 0;i < 2;i++)
-			scroll[i] = 0;
-		for (i = 2;i < 34;i++)
-			scroll[i] = mappy_scroll - 255;
-		for (i = 34;i < 36;i++)
-			scroll[i] = 0;
+
+		for (offs = 0;offs < 2;offs++)
+			scroll[offs] = 0;
+		for (offs = 2;offs < 34;offs++)
+			scroll[offs] = mappy_scroll - 255;
+		for (offs = 34;offs < 36;offs++)
+			scroll[offs] = 0;
 
 		copyscrollbitmap(bitmap,tmpbitmap,36,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
+
 	/* Draw the sprites. */
-	for (i = 0;i < 64;i++)
+	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		/* is it on? */
-		if ((spriteram_3[2*i+1] & 2) == 0)
+		if ((spriteram_3[offs+1] & 2) == 0)
 		{
-			int sprite = spriteram[2*i];
-			int color = spriteram[2*i+1];
-			int x = spriteram_2[2*i]-16;
-			int y = (spriteram_2[2*i+1]-40) + 0x100*(spriteram_3[2*i+1] & 1);
-			int flipx = spriteram_3[2*i] & 2;
-			int flipy = spriteram_3[2*i] & 1;
-			
-			/* is it on-screen? */
-			if (x > -16)
-			{
-				switch (spriteram_3[2*i] & 0x0c)
-				{
-					case 0:		/* normal size */
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						break;
+			int sprite = spriteram[offs];
+			int color = spriteram[offs+1];
+			int x = spriteram_2[offs]-16;
+			int y = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
+			int flipx = spriteram_3[offs] & 2;
+			int flipy = spriteram_3[offs] & 1;
 
-					case 4:		/* 2x vertical */
-						if (!flipy)
-						{
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-						}
-						else
-						{
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						}
-						break;
-					
-					case 8:		/* 2x horizontal */
-						if (!flipx)
-						{
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-						}
-						else
-						{
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-						}
-						break;
-					
-					case 12:		/* 2x both ways */
-						if (!flipy && !flipx)
-						{
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else if (flipy && flipx)
-						{
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-							mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else if (flipx)
-						{
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-							mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else /* flipy */
-						{
-							mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-							mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
-							mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
-							mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
-						}
-						break;
-				}
-				
-				#if LOG_IT
-					fprintf (pSpriteFile, "%3dx %3dy %02Xs %02Xc %s %s %s %s %02Xi\n",
-						x,y,sprite,color,flipx?"FX":"  ",flipy?"FY":"  ",
-						spriteram_3[2*i]&8?"DX":"  ",
-						spriteram_3[2*i]&4?"DY":"  ",i);
-				#endif
+			switch (spriteram_3[offs] & 0x0c)
+			{
+				case 0:		/* normal size */
+					mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+					break;
+
+				case 4:		/* 2x vertical */
+					sprite &= ~1;
+					if (!flipy)
+					{
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+					}
+					else
+					{
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+					}
+					break;
+
+				case 8:		/* 2x horizontal */
+					sprite &= ~2;
+					if (!flipx)
+					{
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+					}
+					else
+					{
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+					}
+					break;
+
+				case 12:		/* 2x both ways */
+					sprite &= ~3;
+					if (!flipy && !flipx)
+					{
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else if (flipy && flipx)
+					{
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else if (flipx)
+					{
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else /* flipy */
+					{
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+					}
+					break;
 			}
 		}
 	}
-
-#if DEBUG_IT
-	if (touched)
+	
+	/* Draw the high priority characters */
+	while (save > overoffset)
 	{
-		memcpy (videoram, realv, VIDEO_RAM_SIZE);
-		memcpy (colorram, realc, VIDEO_RAM_SIZE);
+		int sx,sy,mx,my;
+
+		offs = *--save;
+
+		if (offs >= videoram_size - 64)
+		{
+			/* Draw the top 2 lines. */
+			mx = offs % 32;
+			my = (offs - (videoram_size - 64)) / 32;
+
+			sx = 29 - mx;
+			sy = my;
+			
+			sx *= 8;
+		}
+		else if (offs >= videoram_size - 128)
+		{
+			/* Draw the bottom 2 lines. */
+			mx = offs % 32;
+			my = (offs - (videoram_size - 128)) / 32;
+
+			sx = 29 - mx;
+			sy = my + 34;
+			
+			sx *= 8;
+		}
+		else
+		{
+			/* draw the rest of the screen */
+			mx = offs / 32;
+			my = offs % 32;
+
+			sx = 59 - mx;
+			sy = my + 2;
+			
+			sx = (8*sx+mappy_scroll-255);
+		}
+		
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs],
+				colorram[offs],
+				0,0,sx,8*sy,
+				0,TRANSPARENCY_COLOR,0);
 	}
-#endif
 }

@@ -54,7 +54,7 @@ Off On                           Free play
 -------------------------------------------------------------------------------
 Settings of 8-Toggle Switch on Black Widow CPU PCB (at B4)
  8   7   6   5   4   3   2   1   Option
- 
+
 Note: The bits are the exact opposite of the switch numbers - switch 8 is bit 0.
 -------------------------------------------------------------------------------
 Off Off                          Maximum start at level 13
@@ -84,7 +84,7 @@ On  On                           Maximum start at level 53
 
 GRAVITAR SWITCH SETTINGS (Atari, 1982)
 --------------------------------------
- 
+
 -------------------------------------------------------------------------------
 Settings of 8-Toggle Switch on Gravitar PCB (at B4)
  8   7   6   5   4   3   2   1   Option
@@ -205,22 +205,13 @@ $Manufacturer's suggested settings
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/atari_vg.h"
+#include "machine/atari_vg.h"
+#include "sndhrdw/pokyintf.h"
 
+int spacduel_IN3_r(int offset);
 
-extern int spacduel_IN3_r(int offset);
-
-extern void bzone_vh_init_colors(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
-extern int bzone_vh_start(void);
-extern void bzone_vh_stop(void);
-extern void bzone_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int bzone_IN0_r(int offset);
-extern int bzone_rand_r(int offset);
-
-extern void milliped_pokey1_w(int offset,int data);
-extern void milliped_pokey2_w(int offset,int data);
-extern int milliped_sh_start(void);
-extern void milliped_sh_stop(void);
-extern void milliped_sh_update(void);
+int bzone_IN0_r(int offset);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -229,13 +220,14 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9000, 0xffff, MRA_ROM },
 	{ 0x2800, 0x5fff, MRA_ROM },
 	{ 0x2000, 0x27ff, MRA_RAM, &vectorram },
+	{ 0x7000, 0x7000, atari_vg_earom_r },
 	{ 0x7800, 0x7800, bzone_IN0_r },	/* IN0 */
 	{ 0x6008, 0x6008, input_port_1_r },	/* DSW1 */
 	{ 0x6808, 0x6808, input_port_2_r },	/* DSW2 */
 	{ 0x8000, 0x8000, input_port_3_r },	/* IN1 */
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
-	{ 0x600a, 0x600a, bzone_rand_r },
-	{ 0x680a, 0x680a, bzone_rand_r },
+	{ 0x6000, 0x600f, pokey1_r },
+	{ 0x6800, 0x680f, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
@@ -243,10 +235,15 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM, &vectorram },
-	{ 0x6000, 0x67ff, milliped_pokey1_w },
-	{ 0x6800, 0x6fff, milliped_pokey2_w },
-	{ 0x8840, 0x8840, vg_go },
+	{ 0x6000, 0x67ff, pokey1_w },
+	{ 0x6800, 0x6fff, pokey2_w },
+	{ 0x8800, 0x8800, MWA_NOP }, /* coin out */
+	{ 0x8840, 0x8840, atari_vg_go },
 	{ 0x8880, 0x8880, vg_reset },
+	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
+	{ 0x8900, 0x8900, atari_vg_earom_ctrl },
+	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
+	{ 0x8940, 0x897f, atari_vg_earom_w },
 	{ 0x9000, 0xffff, MWA_ROM },
 	{ 0x2800, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -259,13 +256,14 @@ static struct MemoryReadAddress spacduel_readmem[] =
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ 0x2800, 0x3fff, MRA_ROM },
 	{ 0x2000, 0x27ff, MRA_RAM, &vectorram },
+	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x1008, 0x1008, input_port_1_r },	/* DSW1 */
 	{ 0x1408, 0x1408, input_port_2_r },	/* DSW2 */
 	{ 0x0900, 0x0907, spacduel_IN3_r },	/* IN1 */
 	{ 0x0900, 0x0907, input_port_3_r },	/* IN1 */
-	{ 0x100a, 0x100a, bzone_rand_r },
-	{ 0x140a, 0x140a, bzone_rand_r },
+	{ 0x1000, 0x100f, pokey1_r },
+	{ 0x1400, 0x140f, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
@@ -273,10 +271,16 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM, &vectorram },
-	{ 0x1000, 0x13ff, milliped_pokey1_w },
-	{ 0x1400, 0x17ff, milliped_pokey2_w },
-	{ 0x0c80, 0x0c80, vg_go },
+	{ 0x1000, 0x13ff, pokey1_w },
+	{ 0x1400, 0x17ff, pokey2_w },
+	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
+	{ 0x0c00, 0x0c00, MWA_NOP }, /* coin out */
+	{ 0x0c80, 0x0c80, atari_vg_go },
+	{ 0x0d00, 0x0d00, MWA_NOP }, /* watchdog clear */
 	{ 0x0d80, 0x0d80, vg_reset },
+	{ 0x0e00, 0x0e00, MWA_NOP }, /* interrupt acknowledge */
+	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl },
+	{ 0x0f00, 0x0f3f, atari_vg_earom_w },
 	{ 0x4000, 0x8fff, MWA_ROM },
 	{ 0x2800, 0x3fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
@@ -304,7 +308,7 @@ static struct InputPort bwidow_input_ports[] =
 	},
 	{       /* IN1 */
 		0xff,
-		{ OSD_KEY_D, OSD_KEY_A, OSD_KEY_S, OSD_KEY_W,
+		{ OSD_KEY_F, OSD_KEY_S, OSD_KEY_D, OSD_KEY_E,
 			0, OSD_KEY_1, OSD_KEY_2, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
 			0, 0, 0, 0 }
@@ -341,11 +345,11 @@ static struct KEYSet bwidow_keys[] =
 
 static struct DSW bwidow_dsw[] =
 {
-	{ 1, 0xc0, "COINS", { "1 COIN 1 CREDIT", "1 COIN 2 CREDITS", "2 COINS 1 CREDIT", "FREE PLAY" } },
-	{ 2, 0xc0, "BONUS", { "20000", "30000", "40000", "NONE" } },
-	{ 2, 0x30, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "DEMO" } },
-	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" } },
+	{ 1, 0x03, "COINS", { "1 COIN 1 CREDIT", "2 COINS 1 CREDIT", "FREE PLAY", "1 COIN 2 CREDITS" } },
 	{ 2, 0x03, "MAX START", { "LEVEL 13", "LEVEL 21", "LEVEL 37", "LEVEL 53" } },
+	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" } },
+	{ 2, 0x30, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "DEMO" } },
+	{ 2, 0xc0, "BONUS", { "20000", "30000", "40000", "NONE" } },
 	{ -1 }
 };
 
@@ -357,12 +361,12 @@ static struct InputPort gravitar_input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* DSW1 */
-		0x00,
+		0x13,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* DSW2 */
-		0x14,
+		0x00,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -400,10 +404,10 @@ static struct KEYSet gravitar_keys[] =
 
 static struct DSW gravitar_dsw[] =
 {
-	{ 1, 0x03, "COINS", { "1 COIN 1 CREDIT", "1 COIN 2 CREDITS", "2 COINS 1 CREDIT", "FREE PLAY" } },
-	{ 2, 0xc0, "BONUS", { "20000", "30000", "40000", "NONE" } },
-	{ 2, 0x10, "DIFFICULTY", { "HARD", "EASY" } },
-	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" } },
+	{ 2, 0x03, "COINS", { "1 COIN 1 CREDIT", "2 COINS 1 CREDIT", "FREE PLAY", "1 COIN 2 CREDITS" } },
+	{ 1, 0xc0, "BONUS", { "10000", "20000", "30000", "NONE" } },
+	{ 1, 0x10, "DIFFICULTY", { "HARD", "EASY" } },
+	{ 1, 0x0c, "LIVES", { "3", "4", "5", "6" } },
 	{ -1 }
 };
 
@@ -467,26 +471,43 @@ static struct DSW spacduel_dsw[] =
 	{ -1 }
 };
 
+static struct GfxLayout fakelayout =
+{
+        1,1,
+        0,
+        1,
+        { 0 },
+        { 0 },
+        { 0 },
+        0
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
+        { 0, 0,      &fakelayout,     0, 256 },
+        { -1 } /* end of array */
 };
-
 
 static unsigned char color_prom[] =
 {
 	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x02, /* BLUE */
-	0x00,0x02,0x00, /* GREEN */
-	0x00,0x02,0x02, /* CYAN */
-	0x02,0x00,0x00, /* RED */
-	0x02,0x00,0x02, /* MAGENTA */
-	0x02,0x02,0x00, /* YELLOW */
-	0x02,0x02,0x02	/* WHITE */
-};
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x00,0x01,0x01, /* CYAN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01,	/* WHITE */
+	0x00,0x00,0x00, /* BLACK */
+	0x00,0x00,0x01, /* BLUE */
+	0x00,0x01,0x00, /* GREEN */
+	0x00,0x01,0x01, /* CYAN */
+	0x01,0x00,0x00, /* RED */
+	0x01,0x00,0x01, /* MAGENTA */
+	0x01,0x01,0x00, /* YELLOW */
+	0x01,0x01,0x01	/* WHITE */};
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver bwidow_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -502,22 +523,55 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	640, 480, { 0, 640, 0, 480 },
+	288, 224, { 0, 480, 0, 440 },
 	gfxdecodeinfo,
-	128, 128,
-	bzone_vh_init_colors,
+	256, 256,
+	atari_vg_init_colors,
 
 	0,
-	bzone_vh_start,
-	bzone_vh_stop,
-	bzone_vh_screenrefresh,
+	atari_vg_avg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey2_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
+};
+static struct MachineDriver gravitar_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,	/* 1.5 Mhz */
+			0,
+			readmem,writemem,0,0,
+			interrupt,4 /* 1 interrupt per frame? */
+		}
+	},
+	60, /* frames per second */
+	0,
+
+	/* video hardware */
+	288, 224, { 0, 420, 0, 400 },
+	gfxdecodeinfo,
+	256, 256,
+	atari_vg_init_colors,
+
+	0,
+	atari_vg_avg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	pokey2_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 static struct MachineDriver spacduel_machine_driver =
@@ -536,22 +590,22 @@ static struct MachineDriver spacduel_machine_driver =
 	0,
 
 	/* video hardware */
-	640, 480, { 0, 640, 0, 480 },
+	288, 224, { 0, 540, 0, 400 },
 	gfxdecodeinfo,
-	128, 128,
-	bzone_vh_init_colors,
+	256, 256,
+	atari_vg_init_colors,
 
 	0,
-	bzone_vh_start,
-	bzone_vh_stop,
-	bzone_vh_screenrefresh,
+	atari_vg_avg_start,
+	atari_vg_stop,
+	atari_vg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	milliped_sh_start,
-	milliped_sh_stop,
-	milliped_sh_update
+	pokey2_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
 };
 
 
@@ -562,23 +616,61 @@ static struct MachineDriver spacduel_machine_driver =
 
 ***************************************************************************/
 
+/* Black Widow cannot use the the earom routines
+ * She writes into some locations at $2fac-$2fd7, which is clearly
+ * the vector rom. Perhaps there is some address-logic that is not yet
+ * emulated
+ */
+
+static int bwidow_hiload(const char *name)
+{
+        /* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
+                        memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
+        {
+                FILE *f;
+
+
+                if ((f = fopen(name,"rb")) != 0)
+                {
+                        fread(&RAM[0x0310],1,7*21,f);
+                        fclose(f);
+                }
+
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void bwidow_hisave(const char *name)
+{
+        FILE *f;
+
+
+        if ((f = fopen(name,"wb")) != 0)
+        {
+                fwrite(&RAM[0x0310],1,7*21,f);
+                fclose(f);
+        }
+}
+
+
 ROM_START( bwidow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136017.107",  0x2800, 0x0800 )
-	ROM_LOAD( "136017.108",  0x3000, 0x1000 )
-	ROM_LOAD( "136017.109",  0x4000, 0x1000 )
-	ROM_LOAD( "136017.110",  0x5000, 0x1000 )
+	ROM_LOAD( "136017.107",  0x2800, 0x0800, 0x77a524db )
+	ROM_LOAD( "136017.108",  0x3000, 0x1000, 0xf741f7f7 )
+	ROM_LOAD( "136017.109",  0x4000, 0x1000, 0xa9854243 )
+	ROM_LOAD( "136017.110",  0x5000, 0x1000, 0x46b9d3d1 )
 	/* Program ROM */
-	ROM_LOAD( "136017.101",  0x9000, 0x1000 )
-	ROM_LOAD( "136017.102",  0xa000, 0x1000 )
-	ROM_LOAD( "136017.103",  0xb000, 0x1000 )
-	ROM_LOAD( "136017.104",  0xc000, 0x1000 )
-	ROM_LOAD( "136017.105",  0xd000, 0x1000 )
-	ROM_LOAD( "136017.106",  0xe000, 0x1000 )
-	ROM_LOAD( "136017.106",  0xf000, 0x1000 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "136017.101",  0x9000, 0x1000, 0xd30d0201 )
+	ROM_LOAD( "136017.102",  0xa000, 0x1000, 0x68115551 )
+	ROM_LOAD( "136017.103",  0xb000, 0x1000, 0x82fc6164 )
+	ROM_LOAD( "136017.104",  0xc000, 0x1000, 0xcaf00204 )
+	ROM_LOAD( "136017.105",  0xd000, 0x1000, 0x71d02f2a )
+	ROM_LOAD( "136017.106",  0xe000, 0x1000, 0x7db99991 )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
-
 
 
 struct GameDriver bwidow_driver =
@@ -587,7 +679,7 @@ struct GameDriver bwidow_driver =
 	"bwidow",
 	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
 	"ALLARD VAN DER BAS\nBERND WIEBELT",
-	&machine_driver,
+	&bwidow_machine_driver,
 
 	bwidow_rom,
 	0, 0,
@@ -598,7 +690,7 @@ struct GameDriver bwidow_driver =
 	color_prom, 0,0,
 	140, 110,     /* paused_x, paused_y */
 
-	0, 0
+	bwidow_hiload, bwidow_hisave
 };
 
 /***************************************************************************
@@ -607,23 +699,27 @@ struct GameDriver bwidow_driver =
 
 ***************************************************************************/
 
+/* Gravitar now uses the earom routines
+ * However, we keep the highscore location, just in case
+ *		fwrite(&RAM[0x041e],1,3*16,f);
+ */
+
 ROM_START( gravitar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136010.210",  0x2800, 0x0800 )
-	ROM_LOAD( "136010.207",  0x3000, 0x1000 )
-	ROM_LOAD( "136010.208",  0x4000, 0x1000 )
-	ROM_LOAD( "136010.209",  0x5000, 0x1000 )
+	ROM_LOAD( "136010.210",  0x2800, 0x0800, 0x83e7be41 )
+	ROM_LOAD( "136010.207",  0x3000, 0x1000, 0x52422c2c )
+	ROM_LOAD( "136010.208",  0x4000, 0x1000, 0xc89b1213 )
+	ROM_LOAD( "136010.209",  0x5000, 0x1000, 0xe0622624 )
 	/* Program ROM */
-	ROM_LOAD( "136010.201",  0x9000, 0x1000 )
-	ROM_LOAD( "136010.202",  0xa000, 0x1000 )
-	ROM_LOAD( "136010.203",  0xb000, 0x1000 )
-	ROM_LOAD( "136010.204",  0xc000, 0x1000 )
-	ROM_LOAD( "136010.205",  0xd000, 0x1000 )
-	ROM_LOAD( "136010.206",  0xe000, 0x1000 )
-	ROM_LOAD( "136010.206",  0xf000, 0x1000 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "136010.201",  0x9000, 0x1000, 0x869f0e0d )
+	ROM_LOAD( "136010.202",  0xa000, 0x1000, 0x215c9692 )
+	ROM_LOAD( "136010.203",  0xb000, 0x1000, 0x0a18292c )
+	ROM_LOAD( "136010.204",  0xc000, 0x1000, 0x8a68a4a2 )
+	ROM_LOAD( "136010.205",  0xd000, 0x1000, 0x3edff8ff )
+	ROM_LOAD( "136010.206",  0xe000, 0x1000, 0xc20f979f )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
-
 
 
 struct GameDriver gravitar_driver =
@@ -632,7 +728,7 @@ struct GameDriver gravitar_driver =
 	"gravitar",
 	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH"
 	"ALLARD VAN DER BAS\nBERND WIEBELT",
-	&machine_driver,
+	&gravitar_machine_driver,
 
 	gravitar_rom,
 	0, 0,
@@ -643,7 +739,7 @@ struct GameDriver gravitar_driver =
 	color_prom, 0, 0,
 	140, 110,     /* paused_x, paused_y */
 
-	0, 0
+	atari_vg_earom_load, atari_vg_earom_save
 };
 
 /***************************************************************************
@@ -652,21 +748,30 @@ struct GameDriver gravitar_driver =
 
 ***************************************************************************/
 
+/* Space Duel now uses the earom routines
+ * However, we keep the highscore location, just in case
+ *	fwrite(&RAM[0x00dd],1,3*20+3*25,f);
+ */
+
 ROM_START( spacduel_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136006.106",  0x2800, 0x0800 )
-	ROM_LOAD( "136006.107",  0x3000, 0x1000 )
+	ROM_LOAD( "136006.106",  0x2800, 0x0800, 0x015b926d )
+	ROM_LOAD( "136006.107",  0x3000, 0x1000, 0xfdff3939 )
 	/* Program ROM */
-	ROM_LOAD( "136006.201",  0x4000, 0x1000 )
-	ROM_LOAD( "136006.102",  0x5000, 0x1000 )
-	ROM_LOAD( "136006.103",  0x6000, 0x1000 )
-	ROM_LOAD( "136006.104",  0x7000, 0x1000 )
-	ROM_LOAD( "136006.105",  0x8000, 0x1000 )
-	ROM_LOAD( "136006.105",  0xf000, 0x1000 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "136006.201",  0x4000, 0x1000, 0x76179c9d )
+	ROM_LOAD( "136006.102",  0x5000, 0x1000, 0x3e245c5e )
+	ROM_LOAD( "136006.103",  0x6000, 0x1000, 0xdfc2e1e2 )
+	ROM_LOAD( "136006.104",  0x7000, 0x1000, 0x1a240e0a )
+	ROM_LOAD( "136006.105",  0x8000, 0x1000, 0xd3ccbbbe )
+	ROM_RELOAD(              0x9000, 0x1000 )
+	ROM_RELOAD(              0xa000, 0x1000 )
+	ROM_RELOAD(              0xb000, 0x1000 )
+	ROM_RELOAD(              0xc000, 0x1000 )
+	ROM_RELOAD(              0xd000, 0x1000 )
+	ROM_RELOAD(              0xe000, 0x1000 )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
-
-
 
 struct GameDriver spacduel_driver =
 {
@@ -685,6 +790,5 @@ struct GameDriver spacduel_driver =
 	color_prom, 0, 0,
 	140, 110,     /* paused_x, paused_y */
 
-	0, 0
+	atari_vg_earom_load, atari_vg_earom_save
 };
-

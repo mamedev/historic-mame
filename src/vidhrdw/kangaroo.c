@@ -21,24 +21,34 @@
 #include "Z80.h"
 
 static struct osd_bitmap *tmpbitmap2;
+static unsigned char inverse_palette[256]; /* JB 970727 */
 
 static void kangaroo_color_shadew(int val);
+
+
+
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
-
 int kangaroo_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	int i;	/* JB 970727 */
+
+
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		generic_vh_stop();
+		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
+
+	/* JB 970727 */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		inverse_palette[ Machine->pens[i] ] = i;
 
 	return 0;
 }
@@ -52,17 +62,10 @@ int kangaroo_vh_start(void)
 void kangaroo_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
-	generic_vh_stop();
+	osd_free_bitmap(tmpbitmap);
 }
 
 
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
 
 /* There has to be a better way to do this ;-)
    and faster -V-
@@ -136,143 +139,147 @@ static void kangaroo_color_shadew(int val)
 */
 void kangaroo_videoramw(int offset, int val)
 {
-  int plane1,plane2,plane3,plane4;
-  unsigned char *bm;
-  unsigned char *pom;
-     int sx, sy;
+	int plane1,plane2,plane3,plane4;
+	unsigned char *bm;
+	int sx, sy;
 
-  plane1 = Machine->memory_region[0][0xe808] & 0x01;
-  plane2 = Machine->memory_region[0][0xe808] & 0x02;
-  plane3 = Machine->memory_region[0][0xe808] & 0x04;
-  plane4 = Machine->memory_region[0][0xe808] & 0x08;
+
+	plane1 = Machine->memory_region[0][0xe808] & 0x01;
+	plane2 = Machine->memory_region[0][0xe808] & 0x02;
+	plane3 = Machine->memory_region[0][0xe808] & 0x04;
+	plane4 = Machine->memory_region[0][0xe808] & 0x08;
 
 
 	sx = offset % 256;
 	sy = (0x3f - (offset / 256)) * 4;
 
-
-     pom = tmpbitmap->line[sy] + sx;
-
-     bm = pom;
-
-     if (plane2)
-     {
-	*bm &= 0xfc;
-        if (val & 0x80) *bm |= 2;
-        if (val & 0x08) *bm |= 1;
-	bm = tmpbitmap->line[sy+1] + sx;
-
-	*bm &= 0xfc;
-        if (val & 0x40) *bm |= 2;
-        if (val & 0x04) *bm |= 1;
-        bm = tmpbitmap->line[sy+2] + sx;
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = inverse_palette[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = inverse_palette[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = inverse_palette[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = inverse_palette[ tmpbitmap2->line[sy+3][sx] ];
 
 
-	*bm &= 0xfc;
-        if (val & 0x20) *bm |= 2;
-        if (val & 0x02) *bm |= 1;
-        bm = tmpbitmap->line[sy+3] + sx;
+	if (plane2)
+	{
+		bm = tmpbitmap->line[sy] + sx;
+		*bm &= 0xfc;
+		if (val & 0x80) *bm |= 2;
+		if (val & 0x08) *bm |= 1;
 
+		bm = tmpbitmap->line[sy+1] + sx;
+		*bm &= 0xfc;
+		if (val & 0x40) *bm |= 2;
+		if (val & 0x04) *bm |= 1;
 
-	*bm &= 0xfc;
-        if (val & 0x10) *bm |= 2;
-        if (val & 0x01) *bm |= 1;
-/* TODO: remap the pixel color thru the color table */
+		bm = tmpbitmap->line[sy+2] + sx;
+		*bm &= 0xfc;
+		if (val & 0x20) *bm |= 2;
+		if (val & 0x02) *bm |= 1;
 
-     }
+		bm = tmpbitmap->line[sy+3] + sx;
+		*bm &= 0xfc;
+		if (val & 0x10) *bm |= 2;
+		if (val & 0x01) *bm |= 1;
+	}
 
-     bm=pom;
-     if (plane1)
-     {
-	*bm &= 0xf3;
-        if (val & 0x80) *bm |= 8;
-        if (val & 0x08) *bm |= 4;
-	bm = tmpbitmap->line[sy+1] + sx;
+	if (plane1)
+	{
+		bm = tmpbitmap->line[sy] + sx;
+		*bm &= 0xf3;
+		if (val & 0x80) *bm |= 8;
+		if (val & 0x08) *bm |= 4;
 
+		bm = tmpbitmap->line[sy+1] + sx;
+		*bm &= 0xf3;
+		if (val & 0x40) *bm |= 8;
+		if (val & 0x04) *bm |= 4;
 
-	*bm &= 0xf3;
-        if (val & 0x40) *bm |= 8;
-        if (val & 0x04) *bm |= 4;
-        bm = tmpbitmap->line[sy+2] + sx;
+		bm = tmpbitmap->line[sy+2] + sx;
+		*bm &= 0xf3;
+		if (val & 0x20) *bm |= 8;
+		if (val & 0x02) *bm |= 4;
 
+		bm = tmpbitmap->line[sy+3] + sx;
+		*bm &= 0xf3;
+		if (val & 0x10) *bm |= 8;
+		if (val & 0x01) *bm |= 4;
+	}
 
-	*bm &= 0xf3;
-        if (val & 0x20) *bm |= 8;
-        if (val & 0x02) *bm |= 4;
-        bm = tmpbitmap->line[sy+3] + sx;
+	if (plane4)
+	{
+		bm = tmpbitmap2->line[sy] + sx;
+		*bm &= 0xfc;
+		if (val & 0x80) *bm |= 2;
+		if (val & 0x08) *bm |= 1;
 
+		bm = tmpbitmap2->line[sy+1] + sx;
+		*bm &= 0xfc;
+		if (val & 0x40) *bm |= 2;
+		if (val & 0x04) *bm |= 1;
 
-	*bm &= 0xf3;
-        if (val & 0x10) *bm |= 8;
-        if (val & 0x01) *bm |= 4;
-/* TODO: remap the pixel color thru the color table */
+		bm = tmpbitmap2->line[sy+2] + sx;
+		*bm &= 0xfc;
+		if (val & 0x20) *bm |= 2;
+		if (val & 0x02) *bm |= 1;
 
-     }
+		bm = tmpbitmap2->line[sy+3] + sx;
+		*bm &= 0xfc;
+		if (val & 0x10) *bm |= 2;
+		if (val & 0x01) *bm |= 1;
+	}
 
+	if (plane3)
+	{
+		bm = tmpbitmap2->line[sy] + sx;
+		*bm &= 0xf3;
+		if (val & 0x80) *bm |= 8;
+		if (val & 0x08) *bm |= 4;
 
-     pom = tmpbitmap2->line[sy] + sx;
-     bm = pom;
+		bm = tmpbitmap2->line[sy+1] + sx;
+		*bm &= 0xf3;
+		if (val & 0x40) *bm |= 8;
+		if (val & 0x04) *bm |= 4;
 
-     if (plane4)
-     {
-        *bm &= 0xfc;
-        if (val & 0x80) *bm |= 2;
-        if (val & 0x08) *bm |= 1;
-        bm = tmpbitmap2->line[sy+1] + sx;
+		bm = tmpbitmap2->line[sy+2] + sx;
+		*bm &= 0xf3;
+		if (val & 0x20) *bm |= 8;
+		if (val & 0x02) *bm |= 4;
 
+		bm = tmpbitmap2->line[sy+3] + sx;
+		*bm &= 0xf3;
+		if (val & 0x10) *bm |= 8;
+		if (val & 0x01) *bm |= 4;
+	}
 
-        *bm &= 0xfc;
-        if (val & 0x40) *bm |= 2;
-        if (val & 0x04) *bm |= 1;
-        bm = tmpbitmap2->line[sy+2] + sx;
-
-
-        *bm &= 0xfc;
-        if (val & 0x20) *bm |= 2;
-        if (val & 0x02) *bm |= 1;
-        bm = tmpbitmap2->line[sy+3] + sx;
-
-
-        *bm &= 0xfc;
-        if (val & 0x10) *bm |= 2;
-        if (val & 0x01) *bm |= 1;
-/* TODO: remap the pixel color thru the color table */
-
-     }
-
-     bm=pom;
-     if (plane3)
-     {
-        *bm &= 0xf3;
-        if (val & 0x80) *bm |= 8;
-        if (val & 0x08) *bm |= 4;
-        bm = tmpbitmap2->line[sy+1] + sx;
-
-
-        *bm &= 0xf3;
-        if (val & 0x40) *bm |= 8;
-        if (val & 0x04) *bm |= 4;
-        bm = tmpbitmap2->line[sy+2] + sx;
-
-
-        *bm &= 0xf3;
-        if (val & 0x20) *bm |= 8;
-        if (val & 0x02) *bm |= 4;
-        bm = tmpbitmap2->line[sy+3] + sx;
-
-        *bm &= 0xf3;
-        if (val & 0x10) *bm |= 8;
-        if (val & 0x01) *bm |= 4;
-/* TODO: remap the pixel color thru the color table */
-
-     }
-
+	/* JB 970727 */
+	tmpbitmap->line[sy][sx] = Machine->pens[ tmpbitmap->line[sy][sx] ];
+	tmpbitmap->line[sy+1][sx] = Machine->pens[ tmpbitmap->line[sy+1][sx] ];
+	tmpbitmap->line[sy+2][sx] = Machine->pens[ tmpbitmap->line[sy+2][sx] ];
+	tmpbitmap->line[sy+3][sx] = Machine->pens[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap2->line[sy][sx] = Machine->pens[ tmpbitmap2->line[sy][sx] ];
+	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
+	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
+	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
 }
 
 
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
 void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the character mapped graphics */
         copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-        copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,\
+        	TRANSPARENCY_COLOR,0);/* JB 970727 */
 }

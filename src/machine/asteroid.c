@@ -25,7 +25,6 @@
 #define IN1_LEFT	(1 << 7)
 
 static int bank = 0;
-static int vblank;
 
 int asteroid_IN0_r (int offset) {
 
@@ -39,12 +38,8 @@ int asteroid_IN0_r (int offset) {
 		case 0: /* nothing */
 			break;
 		case 1:  /* clock toggles at 3 KHz*/
-			if (vblank) {
+			if (cpu_gettotalcycles() & 0x100)
 				res = 0x80;
-				vblank = 0;
-				}
-			else res = 0x00;
-			break;
 		case 2: /* vector generator halt */
 			break;
 		case 3: /* hyperspace/shield */
@@ -184,9 +179,3 @@ int asteroid_init_machine(const char *gamename) {
 	return 0;
 	}
 	
-int asteroid_interrupt(void)
-{
-	vblank = 1;
-
-	return nmi_interrupt();
-}

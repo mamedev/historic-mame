@@ -281,7 +281,7 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 			stars_blink = (stars_blink + 1) % 4;
 		}
 
-		bpen = Machine->background_pen;
+		bpen = Machine->pens[0];
 		for (offs = 0;offs < total_stars;offs++)
 		{
 			int x,y;

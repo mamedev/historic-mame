@@ -14,7 +14,7 @@
 
 #define GFX_CHAR 0
 #define GFX_TILE 1
-#define GFX_SPRITE 5
+#define GFX_SPRITE 2
 
 unsigned char *gng_paletteram;
 static const unsigned char *colors;
@@ -115,7 +115,7 @@ int gng_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,gng_bgvideoram_size);
+	memset(dirtybuffer2,1,gng_bgvideoram_size);
 
 	if ((spritebuffer1 = malloc(spriteram_size)) == 0)
 	{
@@ -268,8 +268,8 @@ if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 
 			sx = offs / 32;
 			sy = offs % 32;
 
-			drawgfx(tmpbitmap2,Machine->gfx[GFX_TILE + ((gng_bgcolorram[offs] >> 6) & 0x03)],
-					gng_bgvideoram[offs],
+			drawgfx(tmpbitmap2,Machine->gfx[GFX_TILE],
+					gng_bgvideoram[offs] + 256*((gng_bgcolorram[offs] >> 6) & 0x03),
 					gng_bgcolorram[offs] & 0x07,
 					gng_bgcolorram[offs] & 0x10,gng_bgcolorram[offs] & 0x20,
 					16 * sx,16 * sy,
@@ -306,8 +306,9 @@ if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 
 		bank = ((spritebuffer2[offs + 1] >> 6) & 3);
 
 		if (bank < 3)
-			drawgfx(bitmap,Machine->gfx[GFX_SPRITE + bank],
-					spritebuffer2[offs],(spritebuffer2[offs + 1] >> 4) & 3,
+			drawgfx(bitmap,Machine->gfx[GFX_SPRITE],
+					spritebuffer2[offs] + 256*bank,
+					(spritebuffer2[offs + 1] >> 4) & 3,
 					spritebuffer2[offs + 1] & 0x04,spritebuffer2[offs + 1] & 0x08,
 					spritebuffer2[offs + 3] - 0x100 * (spritebuffer2[offs + 1] & 0x01),spritebuffer2[offs + 2],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
@@ -332,8 +333,8 @@ if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 
 				sx = ((16 * (offs / 32) + scrollx + 16) & 0x1ff) - 16;
 				sy = ((16 * (offs % 32) + scrolly + 16) & 0x1ff) - 16;
 
-				drawgfx(bitmap,Machine->gfx[GFX_TILE + ((gng_bgcolorram[offs] >> 6) & 0x03)],
-						gng_bgvideoram[offs],
+				drawgfx(bitmap,Machine->gfx[GFX_TILE],
+						gng_bgvideoram[offs] + 256*((gng_bgcolorram[offs] >> 6) & 0x03),
 						gng_bgcolorram[offs] & 0x07,
 						gng_bgcolorram[offs] & 0x10,gng_bgcolorram[offs] & 0x20,
 						sx,sy,

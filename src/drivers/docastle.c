@@ -72,27 +72,27 @@ ec00      sound port 4
 
 
 extern unsigned char *docastle_intkludge1,*docastle_intkludge2;
-extern int docastle_intkludge1_r(int offset);
-extern int docastle_intkludge2_r(int offset);
-extern int docastle_shared0_r(int offset);
-extern int docastle_shared1_r(int offset);
-extern void docastle_shared0_w(int offset,int data);
-extern void docastle_shared1_w(int offset,int data);
-extern void docastle_nmitrigger(int offset,int data);
-extern int docastle_interrupt2(void);
+int docastle_intkludge1_r(int offset);
+int docastle_intkludge2_r(int offset);
+int docastle_shared0_r(int offset);
+int docastle_shared1_r(int offset);
+void docastle_shared0_w(int offset,int data);
+void docastle_shared1_w(int offset,int data);
+void docastle_nmitrigger(int offset,int data);
+int docastle_interrupt2(void);
 
-extern void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int docastle_vh_start(void);
-extern void docastle_vh_stop(void);
-extern void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
+void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int docastle_vh_start(void);
+void docastle_vh_stop(void);
+void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void docastle_sound1_w(int offset,int data);
-extern void docastle_sound2_w(int offset,int data);
-extern void docastle_sound3_w(int offset,int data);
-extern void docastle_sound4_w(int offset,int data);
-extern int docastle_sh_start(void);
-extern void docastle_sh_stop(void);
-extern void docastle_sh_update(void);
+void docastle_sound1_w(int offset,int data);
+void docastle_sound2_w(int offset,int data);
+void docastle_sound3_w(int offset,int data);
+void docastle_sound4_w(int offset,int data);
+int docastle_sh_start(void);
+void docastle_sh_stop(void);
+void docastle_sh_update(void);
 
 
 
@@ -212,6 +212,15 @@ static struct DSW dsw[] =
 	{ -1 }
 };
 
+static struct DSW dsw_unicorn[] =
+{
+	{ 3, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
+	{ 3, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
+	{ 3, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
+        { 3, 0x08, "DSW 4", { "ON", "OFF" }, 1 },
+        { 3, 0x04, "RACK ADVANCE", { "ON", "OFF" }, 1 },
+	{ -1 }
+};
 
 
 static struct GfxLayout charlayout =
@@ -321,22 +330,40 @@ static struct MachineDriver machine_driver =
 
 ROM_START( docastle_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "A1",  0x0000, 0x2000 )
-	ROM_LOAD( "A2",  0x2000, 0x2000 )
-	ROM_LOAD( "A3",  0x4000, 0x2000 )
-	ROM_LOAD( "A4",  0x6000, 0x2000 )
+	ROM_LOAD( "A1",  0x0000, 0x2000, 0x3da4962a )
+	ROM_LOAD( "A2",  0x2000, 0x2000, 0x95c22212 )
+	ROM_LOAD( "A3",  0x4000, 0x2000, 0xbb0a5c16 )
+	ROM_LOAD( "A4",  0x6000, 0x2000, 0x3006fcde )
 
 	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "A5",  0x0000, 0x4000 )
-	ROM_LOAD( "A6",  0x4000, 0x2000 )
-	ROM_LOAD( "A7",  0x6000, 0x2000 )
-	ROM_LOAD( "A8",  0x8000, 0x2000 )
-	ROM_LOAD( "A9",  0xa000, 0x2000 )
+	ROM_LOAD( "A5",  0x0000, 0x4000, 0x85e90c0d )
+	ROM_LOAD( "A6",  0x4000, 0x2000, 0xc53b3bc7 )
+	ROM_LOAD( "A7",  0x6000, 0x2000, 0x3ed9763d )
+	ROM_LOAD( "A8",  0x8000, 0x2000, 0xc159accb )
+	ROM_LOAD( "A9",  0xa000, 0x2000, 0x4d6a5692 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "A10", 0x0000, 0x4000 )
+	ROM_LOAD( "A10", 0x0000, 0x4000, 0xda659397 )
 ROM_END
 
+
+ROM_START( dounicorn_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "DOREV1.BIN",  0x0000, 0x2000, 0x37a4cc78 )
+        ROM_LOAD( "DOREV2.BIN",  0x2000, 0x2000, 0xadbc98e4 )
+        ROM_LOAD( "DOREV3.BIN",  0x4000, 0x2000, 0x3d89c3d9 )
+        ROM_LOAD( "DOREV4.BIN",  0x6000, 0x2000, 0x4010e2d6 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "DOREV5.BIN",  0x0000, 0x4000, 0x85e90c0d )
+        ROM_LOAD( "DOREV6.BIN",  0x4000, 0x2000, 0x31cdcc51 )
+        ROM_LOAD( "DOREV7.BIN",  0x6000, 0x2000, 0x4dcfe391 )
+        ROM_LOAD( "DOREV8.BIN",  0x8000, 0x2000, 0x56488818 )
+        ROM_LOAD( "DOREV9.BIN",  0xa000, 0x2000, 0x20de2a92 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+        ROM_LOAD( "DOREV10.BIN", 0x0000, 0x4000, 0x92ad5143 )
+ROM_END
 
 
 static int hiload(const char *name)
@@ -387,7 +414,7 @@ struct GameDriver docastle_driver =
 {
 	"Mr. Do's Castle",
 	"docastle",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
 	&machine_driver,
 
 	docastle_rom,
@@ -401,3 +428,23 @@ struct GameDriver docastle_driver =
 
 	hiload, hisave
 };
+
+struct GameDriver dounicorn_driver =
+{
+        "Mr. Do VS The Unicorns",
+        "douni",
+        "MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nLEE TAYLOR",
+	&machine_driver,
+
+        dounicorn_rom,
+	0, 0,
+	0,
+
+        input_ports, trak_ports, dsw_unicorn, keys,
+
+	color_prom, 0, 0,
+	8*13, 8*16,
+
+	hiload, hisave
+};
+

@@ -60,17 +60,17 @@ Sound processor (6502) memory map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int mplanets_vh_start(void);
-extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
-extern void gottlieb_sh_update(void);
+int mplanets_vh_start(void);
+void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh_w(int offset, int data);
+void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
-extern void gottlieb_output(int offset, int data);
-extern int mplanets_IN1_r(int offset);
-extern int mplanets_dial_r(int offset);
+void gottlieb_output(int offset, int data);
+int mplanets_IN1_r(int offset);
+int mplanets_dial_r(int offset);
 extern unsigned char *gottlieb_paletteram;
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -243,19 +243,19 @@ static const struct MachineDriver machine_driver =
 
 ROM_START( mplanets_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM0",  0xe000, 0x2000 )
-	ROM_LOAD( "ROM1",  0xc000, 0x2000 )
-	ROM_LOAD( "ROM2",  0xa000, 0x2000 )
-	ROM_LOAD( "ROM3",  0x8000, 0x2000 )
-	ROM_LOAD( "ROM4",  0x6000, 0x2000 )
+	ROM_LOAD( "ROM4", 0x6000, 0x2000, 0xf09b30bb )
+	ROM_LOAD( "ROM3", 0x8000, 0x2000, 0x52223738 )
+	ROM_LOAD( "ROM2", 0xa000, 0x2000, 0xe406bbb6 )
+	ROM_LOAD( "ROM1", 0xc000, 0x2000, 0x385a7fa6 )
+	ROM_LOAD( "ROM0", 0xe000, 0x2000, 0x29df430b )
 
 	ROM_REGION(0xA000)      /* temporary space for graphics */
-	ROM_LOAD( "BG0",  0x0000, 0x1000 )
-	ROM_LOAD( "BG1",  0x1000, 0x1000 )
-	ROM_LOAD( "FG3",  0x2000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG2",  0x4000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG1",  0x6000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG0",  0x8000, 0x2000 )       /* sprites */
+	ROM_LOAD( "BG0", 0x0000, 0x1000, 0xb85b00c3 )
+	ROM_LOAD( "BG1", 0x1000, 0x1000, 0x175bc547 )
+	ROM_LOAD( "FG3", 0x2000, 0x2000, 0x7c6a72bc )       /* sprites */
+	ROM_LOAD( "FG2", 0x4000, 0x2000, 0x6ab56cc7 )       /* sprites */
+	ROM_LOAD( "FG1", 0x6000, 0x2000, 0x16c596b7 )       /* sprites */
+	ROM_LOAD( "FG0", 0x8000, 0x2000, 0x96727f86 )       /* sprites */
 ROM_END
 
 static unsigned short mplanets_colors[256]={
@@ -291,6 +291,34 @@ static unsigned short mplanets_colors[256]={
 	0xf72, 0xf73, 0xf80
 };
 
+static int hiload(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	/* no need to wait for anything: Mad Planets doesn't touch the tables
+		if the checksum is correct */
+	if (f) {
+		fread(RAM+0x536,1,2,f); /* hiscore table checksum */
+		fread(RAM+0x538,41,7,f); /* 20+20+1 hiscore entries */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+	/* not saving distributions tables : does anyone really want them ? */
+		fwrite(RAM+0x536,1,2,f); /* hiscore table checksum */
+		fwrite(RAM+0x538,41,7,f); /* 20+20+1 hiscore entries */
+		fclose(f);
+	}
+}
+
 
 struct GameDriver mplanets_driver =
 {
@@ -310,5 +338,5 @@ struct GameDriver mplanets_driver =
 
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+	hiload,hisave     /* hi-score load and save */
 };

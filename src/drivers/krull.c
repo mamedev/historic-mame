@@ -57,18 +57,18 @@ Sound processor (6502) memory map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int krull_vh_start(void);
-extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
-extern void gottlieb_sh_update(void);
+int krull_vh_start(void);
+void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh_w(int offset, int data);
+void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
-extern void gottlieb_output(int offset, int data);
-extern int krull_IN1_r(int offset);
+void gottlieb_output(int offset, int data);
+int krull_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
-extern void gottlieb_paletteram_w(int offset,int data);
-extern void gottlieb_characterram_w(int offset, int data);
-extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_paletteram_w(int offset,int data);
+void gottlieb_characterram_w(int offset, int data);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -250,22 +250,26 @@ static const struct MachineDriver machine_driver =
 	gottlieb_sh_update
 };
 
+
+
 ROM_START( krull_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM0.BIN",  0xe000, 0x2000 )
-	ROM_LOAD( "ROM1.BIN",  0xc000, 0x2000 )
-	ROM_LOAD( "ROM2.BIN",  0xa000, 0x2000 )
-	ROM_LOAD( "ROM3.BIN",  0x8000, 0x2000 )
-	ROM_LOAD( "ROM4.BIN",  0x6000, 0x2000 )
-	ROM_LOAD( "RAM4.BIN",  0x2000, 0x1000 )
-	ROM_LOAD( "RAM2.BIN",  0x1000, 0x1000 )
+	ROM_LOAD( "RAM2.BIN", 0x1000, 0x1000, 0x03fa87a8 )
+	ROM_LOAD( "RAM4.BIN", 0x2000, 0x1000, 0x8d50227a )
+	ROM_LOAD( "ROM4.BIN", 0x6000, 0x2000, 0x5e10647c )
+	ROM_LOAD( "ROM3.BIN", 0x8000, 0x2000, 0xdda2011c )
+	ROM_LOAD( "ROM2.BIN", 0xa000, 0x2000, 0x2ab22372 )
+	ROM_LOAD( "ROM1.BIN", 0xc000, 0x2000, 0x5341023f )
+	ROM_LOAD( "ROM0.BIN", 0xe000, 0x2000, 0x16e7bc1d )
 
 	ROM_REGION(0x8000)      /* temporary space for graphics */
-	ROM_LOAD( "FG3.BIN",  0x0000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG2.BIN",  0x2000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG1.BIN",  0x4000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG0.BIN",  0x6000, 0x2000 )       /* sprites */
+	ROM_LOAD( "FG3.BIN", 0x0000, 0x2000, 0xf7bee74c )	/* sprites */
+	ROM_LOAD( "FG2.BIN", 0x2000, 0x2000, 0xcf79bc05 )	/* sprites */
+	ROM_LOAD( "FG1.BIN", 0x4000, 0x2000, 0xf2f27094 )	/* sprites */
+	ROM_LOAD( "FG0.BIN", 0x6000, 0x2000, 0xdae82e5a )	/* sprites */
 ROM_END
+
+
 
 static unsigned short krull_colors[256]={
 	0x000, 0xfff, 0xff0,
@@ -301,11 +305,35 @@ static unsigned short krull_colors[256]={
 };
 
 
+static int hiload(const char *name)
+{
+	FILE *f=fopen(name,"rb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	/* ok, I've been lazy for this one */
+	if (f) {
+		fread(RAM,0xD00,1,f); /* hiscore table checksum */
+		fclose(f);
+	}
+	return 1;
+}
+
+static void hisave(const char *name)
+{
+	FILE *f=fopen(name,"wb");
+	unsigned char *RAM=Machine->memory_region[0];
+
+	if (f) {
+		fwrite(RAM,0xD00,1,f);
+		fclose(f);
+	}
+}
+
 struct GameDriver krull_driver =
 {
-        "Krull",
+	"Krull",
 	"krull",
-        "FABRICE FRANCES",
+	"FABRICE FRANCES",
 	&machine_driver,
 
 	krull_rom,
@@ -319,5 +347,5 @@ struct GameDriver krull_driver =
 
 	8*11,8*20,
 
-	0,0     /* hi-score load and save */
+        hiload, hisave
 };

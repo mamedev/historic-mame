@@ -18,6 +18,32 @@ enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE };
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+int invaders_vh_start(void)
+{
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Stop the video hardware emulation.
+
+***************************************************************************/
+void invaders_vh_stop(void)
+{
+	osd_free_bitmap(tmpbitmap);
+}
+
+
+
 void invaders_videoram_w(int offset,int data)
 {
 	if (invaders_videoram[offset] != data)

@@ -238,7 +238,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		copyscrollbitmap(bitmap,tmpbitmap1,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

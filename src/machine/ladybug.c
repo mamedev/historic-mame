@@ -11,13 +11,6 @@
 #include "Z80.h"
 
 
-#define IN1_VBLANK (1<<7)
-#define IN1_NOT_VBLANK (1<<6)
-
-
-
-static int vblank;
-
 
 int ladybug_IN0_r(int offset)
 {
@@ -63,43 +56,9 @@ int ladybug_IN0_r(int offset)
 
 
 
-int ladybug_IN1_r(int offset)
-{
-	int res,pc;
-
-
-	res = 0x3f;	/* no player input here, just the vblank */
-
-	/* to speed up the emulation, detect when the program is looping waiting */
-	/* for a vblank, and force an interrupt in that case */
-	pc = cpu_getpc();
-	if (!vblank && (pc == 0x1fd4 || pc == 0x0530))
-		cpu_seticount(0);
-
-	/* I'm not yet sure about how the vertical blanking should be handled. */
-	/* I think that IN1_VBLANK should be 1 during the whole vblank, which */
-	/* should last roughly 1/12th of the frame. */
-	if (vblank && cpu_geticount() >
-			Z80_IPeriod - Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / 12)
-	{
-		res |= IN1_VBLANK;
-	}
-	else
-	{
-		vblank = 0;
-		res |= IN1_NOT_VBLANK;
-	}
-
-	return res;
-}
-
-
-
 /***************************************************************************
 
-  Lady Bug doesn't have VBlank interrupts; the software polls port IN0 to
-  know when a vblank is happening. Therefore we set a flag here, to let
-  ladybug_IN1_r() know when it has to report a vblank.
+  Lady Bug doesn't have VBlank interrupts.
   Interrupts are still used by the game: but they are related to coin
   slots. Left chute generates an interrupt, Right chute a NMI.
 
@@ -107,10 +66,6 @@ int ladybug_IN1_r(int offset)
 int ladybug_interrupt(void)
 {
 	static int coin;
-
-
-	/* let ladybug_IN1_r() know that it is time to report a vblank */
-	vblank = 1;
 
 
 	/* user asks to insert coin: generate an interrupt. */
@@ -123,7 +78,6 @@ int ladybug_interrupt(void)
 		}
 	}
 	else coin = 0;
-
 
 	return Z80_IGNORE_INT;
 }

@@ -12,7 +12,6 @@
 
 
 
-extern int generic_vh_start(void);
 extern struct osd_bitmap *tmpbitmap;
 unsigned char *gottlieb_paletteram;
 unsigned char *gottlieb_characterram;
@@ -61,7 +60,7 @@ int reactor_vh_start(void)
 	rotated90 = 0;
 	bottomupchars = 0;
 	for (offs = 0;offs < 256;offs++)
-		dirtycharacter[offs] = 0;
+		dirtycharacter[offs] = 1;
 
 	return generic_vh_start();
 }
@@ -87,7 +86,7 @@ int krull_vh_start(void)
 	rotated90 = 1;
 	bottomupchars = 0;
 	for (offs = 0;offs < 256;offs++)
-		dirtycharacter[offs] = 0;
+		dirtycharacter[offs] = 1;
 
 	return generic_vh_start();
 }
@@ -256,7 +255,6 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 					hflip, vflip,
 					sx,sy,
 					&Machine->drv->visible_area,
-					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
-					background_priority ? Machine->background_pen : 0);
+					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,0);
 	}
 }

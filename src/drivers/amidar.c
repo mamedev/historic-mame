@@ -97,12 +97,12 @@ interrupt mode 1 triggered by the main CPU
 
 
 extern unsigned char *amidar_attributesram;
-extern void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void amidar_attributes_w(int offset,int data);
-extern void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
+void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void amidar_attributes_w(int offset,int data);
+void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int amidar_sh_interrupt(void);
-extern int amidar_sh_start(void);
+int amidar_sh_interrupt(void);
+int amidar_sh_start(void);
 
 
 
@@ -409,69 +409,69 @@ static struct MachineDriver turtles_machine_driver =
 
 ROM_START( amidar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "amidarus.2c", 0x0000, 0x1000 )
-	ROM_LOAD( "amidarus.2e", 0x1000, 0x1000 )
-	ROM_LOAD( "amidarus.2f", 0x2000, 0x1000 )
-	ROM_LOAD( "amidarus.2h", 0x3000, 0x1000 )
-	ROM_LOAD( "amidarus.2j", 0x4000, 0x1000 )
+	ROM_LOAD( "amidarus.2c", 0x0000, 0x1000, 0xd04355e9 )
+	ROM_LOAD( "amidarus.2e", 0x1000, 0x1000, 0xaaf3b9f9 )
+	ROM_LOAD( "amidarus.2f", 0x2000, 0x1000, 0x65dbb08f )
+	ROM_LOAD( "amidarus.2h", 0x3000, 0x1000, 0x42647e74 )
+	ROM_LOAD( "amidarus.2j", 0x4000, 0x1000, 0x80994cd9 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800 )
-	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800 )
+	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800, 0xa114cb34 )
+	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800, 0x0d1cafd2 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c", 0x0000, 0x1000 )
-	ROM_LOAD( "amidarus.5d", 0x1000, 0x1000 )
+	ROM_LOAD( "amidarus.5c", 0x0000, 0x1000, 0x2fd961f7 )
+	ROM_LOAD( "amidarus.5d", 0x1000, 0x1000, 0xfa4bd265 )
 ROM_END
 
 ROM_START( amidarjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "amidar.2c", 0x0000, 0x1000 )
-	ROM_LOAD( "amidar.2e", 0x1000, 0x1000 )
-	ROM_LOAD( "amidar.2f", 0x2000, 0x1000 )
-	ROM_LOAD( "amidar.2h", 0x3000, 0x1000 )
+	ROM_LOAD( "amidar.2c", 0x0000, 0x1000, 0x061cf902 )
+	ROM_LOAD( "amidar.2e", 0x1000, 0x1000, 0x68948086 )
+	ROM_LOAD( "amidar.2f", 0x2000, 0x1000, 0x89747538 )
+	ROM_LOAD( "amidar.2h", 0x3000, 0x1000, 0xa1bc1266 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "amidar.5f", 0x0000, 0x0800 )
-	ROM_LOAD( "amidar.5h", 0x0800, 0x0800 )
+	ROM_LOAD( "amidar.5f", 0x0000, 0x0800, 0x1e31bc69 )
+	ROM_LOAD( "amidar.5h", 0x0800, 0x0800, 0x8b6560db )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "amidar.5c", 0x0000, 0x1000 )
-	ROM_LOAD( "amidar.5d", 0x1000, 0x1000 )
+	ROM_LOAD( "amidar.5c", 0x0000, 0x1000, 0xcdfaa8be )
+	ROM_LOAD( "amidar.5d", 0x1000, 0x1000, 0xc84cdcfc )
 ROM_END
 
 ROM_START( turtles_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "turt_vid.2c", 0x0000, 0x1000 )
-	ROM_LOAD( "turt_vid.2e", 0x1000, 0x1000 )
-	ROM_LOAD( "turt_vid.2f", 0x2000, 0x1000 )
-	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000 )
-	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000 )
+	ROM_LOAD( "turt_vid.2c", 0x0000, 0x1000, 0xd64b683b )
+	ROM_LOAD( "turt_vid.2e", 0x1000, 0x1000, 0x694c07b6 )
+	ROM_LOAD( "turt_vid.2f", 0x2000, 0x1000, 0x07385210 )
+	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000, 0xb71c1118 )
+	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000, 0x2f33ea7b )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800 )
-	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800 )
+	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
+	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000 )
-	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000 )
+	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
+	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
 
 ROM_START( turpin_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M1", 0x0000, 0x1000 )
-	ROM_LOAD( "M2", 0x1000, 0x1000 )
-	ROM_LOAD( "M3", 0x2000, 0x1000 )
-	ROM_LOAD( "M4", 0x3000, 0x1000 )
-	ROM_LOAD( "M5", 0x4000, 0x1000 )
+	ROM_LOAD( "M1", 0x0000, 0x1000, 0x805f1577 )
+	ROM_LOAD( "M2", 0x1000, 0x1000, 0x694f9789 )
+	ROM_LOAD( "M3", 0x2000, 0x1000, 0x1b08134e )
+	ROM_LOAD( "M4", 0x3000, 0x1000, 0xb71c1118 )
+	ROM_LOAD( "M5", 0x4000, 0x1000, 0x112be471 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "C1", 0x0000, 0x0800 )
-	ROM_LOAD( "C2", 0x0800, 0x0800 )
+	ROM_LOAD( "C1", 0x0000, 0x0800, 0x077a3a46 )
+	ROM_LOAD( "C2", 0x0800, 0x0800, 0xd1107d84 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "D1", 0x0000, 0x1000 )
-	ROM_LOAD( "D2", 0x1000, 0x1000 )
+	ROM_LOAD( "D1", 0x0000, 0x1000, 0x90ecc748 )
+	ROM_LOAD( "D2", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
 
 

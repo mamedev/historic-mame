@@ -1,9 +1,7 @@
 /***************************************************************************
 Note:
- new sound driver modifications--see sndhrdw\phoenix.c
- also, Pleiades has its own color table--still need 
- authentic colors though
- Andrew Scott (ascott@utkux.utcc.utk.edu) 
+   pleiads is using another sound driver, sndhrdw\pleiads.c
+ Andrew Scott (ascott@utkux.utcc.utk.edu)
 
 Phoenix memory map
 
@@ -43,8 +41,8 @@ read-only:
 
  * DSW
  * bit 7 : VBlank
- * bit 6 : free play (Pleiades only)
- * bit 5 : attract sound 0 = off 1 = on (Pleiades only?)
+ * bit 6 : free play (pleiads only)
+ * bit 5 : attract sound 0 = off 1 = on (pleiads only?)
  * bit 4 : coins per play  0 = 1 coin  1 = 2 coins
  * bit 3 :\ bonus
  * bit 2 :/ 00 = 3000  01 = 4000  10 = 5000  11 = 6000
@@ -70,21 +68,26 @@ int phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void phoenix_sound_control_a_w(int offset, int data);
-extern void phoenix_sound_control_b_w(int offset, int data);
-extern int phoenix_sh_init(const char *gamename);
-extern int phoenix_sh_start(void);
-extern void phoenix_sh_update(void);
+void phoenix_sound_control_a_w(int offset, int data);
+void phoenix_sound_control_b_w(int offset, int data);
+int phoenix_sh_init(const char *gamename);
+int phoenix_sh_start(void);
+void phoenix_sh_update(void);
+void pleiads_sound_control_a_w(int offset, int data);
+void pleiads_sound_control_b_w(int offset, int data);
+int pleiads_sh_init(const char *gamename);
+int pleiads_sh_start(void);
+void pleiads_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x7800, 0x7Bff, input_port_1_r },	/* DSW */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_RAM },	/* video RAM */
 	{ 0x5000, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x73ff, input_port_0_r },	/* IN0 */
 	{ 0x7400, 0x77ff, MRA_RAM },
-	{ 0x7800, 0x7Bff, phoenix_DSW_r },	/* DSW */
 	{ 0x7c00, 0x7fff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -109,6 +112,25 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryWriteAddress pl_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, phoenix_videoram2_w, &phoenix_videoram2 },
+	{ 0x4400, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x4C00, 0x4fff, MWA_RAM },
+	{ 0x5000, 0x53ff, phoenix_videoreg_w },
+	{ 0x5400, 0x57ff, MWA_RAM },
+	{ 0x5800, 0x5bff, phoenix_scrollreg_w },
+	{ 0x5C00, 0x5fff, MWA_RAM },
+        { 0x6000, 0x63ff, pleiads_sound_control_a_w },
+	{ 0x6400, 0x67ff, MWA_RAM },
+        { 0x6800, 0x6bff, pleiads_sound_control_b_w },
+	{ 0x6C00, 0x6fff, MWA_RAM },
+	{ 0x7400, 0x77ff, MWA_RAM },
+	{ 0x7C00, 0x7fff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
 
 
 static struct InputPort input_ports[] =
@@ -121,7 +143,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* DSW */
 		0x60,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -334,6 +356,39 @@ static struct MachineDriver machine_driver =
         phoenix_sh_update
 };
 
+static struct MachineDriver pleiads_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3 Mhz ? */
+			0,
+                        readmem,pl_writemem,0,0,
+			phoenix_interrupt,1
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	0,
+	phoenix_vh_start,
+	phoenix_vh_stop,
+	phoenix_vh_screenrefresh,
+
+	/* sound hardware */
+        samples,
+        pleiads_sh_init,
+        pleiads_sh_start,
+	0,
+        pleiads_sh_update
+};
 
 static const char *phoenix_sample_names[] =
 {
@@ -341,8 +396,6 @@ static const char *phoenix_sample_names[] =
 	"death8.sam",
 	0	/* end of array */
 };
-
-
 
 /***************************************************************************
 
@@ -352,75 +405,76 @@ static const char *phoenix_sample_names[] =
 
 ROM_START( phoenix_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD("phoenix.45", 0x0000, 0x0800)
-	ROM_LOAD("phoenix.46", 0x0800, 0x0800)
-	ROM_LOAD("phoenix.47", 0x1000, 0x0800)
-	ROM_LOAD("phoenix.48", 0x1800, 0x0800)
-	ROM_LOAD("phoenix.49", 0x2000, 0x0800)
-	ROM_LOAD("phoenix.50", 0x2800, 0x0800)
-	ROM_LOAD("phoenix.51", 0x3000, 0x0800)
-	ROM_LOAD("phoenix.52", 0x3800, 0x0800)
+	ROM_LOAD( "ic45", 0x0000, 0x0800, 0x2278c24a )
+	ROM_LOAD( "ic46", 0x0800, 0x0800, 0xfefbcdb1 )
+	ROM_LOAD( "ic47", 0x1000, 0x0800, 0x39e00a04 )
+	ROM_LOAD( "ic48", 0x1800, 0x0800, 0xdc27f959 )
+	ROM_LOAD( "ic49", 0x2000, 0x0800, 0x08391997 )
+	ROM_LOAD( "ic50", 0x2800, 0x0800, 0x0e45f309 )
+	ROM_LOAD( "ic51", 0x3000, 0x0800, 0x45f34a7b )
+	ROM_LOAD( "ic52", 0x3800, 0x0800, 0xce53b2e1 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("phoenix.39", 0x0000, 0x0800)
-	ROM_LOAD("phoenix.40", 0x0800, 0x0800)
-	ROM_LOAD("phoenix.23", 0x1000, 0x0800)
-	ROM_LOAD("phoenix.24", 0x1800, 0x0800)
+	ROM_LOAD( "ic39", 0x0000, 0x0800, 0x721b653d )
+	ROM_LOAD( "ic40", 0x0800, 0x0800, 0x8ee80800 )
+	ROM_LOAD( "ic23", 0x1000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "ic24", 0x1800, 0x0800, 0xa8b5c2b1 )
 ROM_END
 
-ROM_START( phoenixa_rom )
+ROM_START( phoenixt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD("ic45", 0x0000, 0x0800)
-	ROM_LOAD("ic46", 0x0800, 0x0800)
-	ROM_LOAD("ic47", 0x1000, 0x0800)
-	ROM_LOAD("ic48", 0x1800, 0x0800)
-	ROM_LOAD("ic49", 0x2000, 0x0800)
-	ROM_LOAD("ic50", 0x2800, 0x0800)
-	ROM_LOAD("ic51", 0x3000, 0x0800)
-	ROM_LOAD("ic52", 0x3800, 0x0800)
+	ROM_LOAD( "phoenix.45", 0x0000, 0x0800, 0xb0ae4830 )
+	ROM_LOAD( "phoenix.46", 0x0800, 0x0800, 0xfafbc9b1 )
+	ROM_LOAD( "phoenix.47", 0x1000, 0x0800, 0x687116a3 )
+	ROM_LOAD( "phoenix.48", 0x1800, 0x0800, 0xeb71206d )
+	ROM_LOAD( "phoenix.49", 0x2000, 0x0800, 0xc7f9d957 )
+	ROM_LOAD( "phoenix.50", 0x2800, 0x0800, 0x0e45f309 )
+	ROM_LOAD( "phoenix.51", 0x3000, 0x0800, 0x45f34a7b )
+	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xd456acde )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("ic39", 0x0000, 0x0800)
-	ROM_LOAD("ic40", 0x0800, 0x0800)
-	ROM_LOAD("ic23", 0x1000, 0x0800)
-	ROM_LOAD("ic24", 0x1800, 0x0800)
+	ROM_LOAD( "phoenix.39", 0x0000, 0x0800, 0x721b653d )
+	ROM_LOAD( "phoenix.40", 0x0800, 0x0800, 0x8ee80800 )
+	ROM_LOAD( "phoenix.23", 0x1000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "phoenix.24", 0x1800, 0x0800, 0xa8b5c2b1 )
 ROM_END
 
 ROM_START( phoenix3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD("%s.45", 0x0000, 0x0800)
-	ROM_LOAD("%s.46", 0x0800, 0x0800)
-	ROM_LOAD("%s.47", 0x1000, 0x0800)
-	ROM_LOAD("%s.48", 0x1800, 0x0800)
-	ROM_LOAD("%s.49", 0x2000, 0x0800)
-	ROM_LOAD("%s.50", 0x2800, 0x0800)
-	ROM_LOAD("%s.51", 0x3000, 0x0800)
-	ROM_LOAD("%s.52", 0x3800, 0x0800)
+	ROM_LOAD( "phoenix.45", 0x0000, 0x0800, 0x585c1ef6 )
+	ROM_LOAD( "phoenix.46", 0x0800, 0x0800, 0x19d5cb29 )
+	ROM_LOAD( "phoenix.47", 0x1000, 0x0800, 0x687116a3 )
+	ROM_LOAD( "phoenix.48", 0x1800, 0x0800, 0x83722aac )
+	ROM_LOAD( "phoenix.49", 0x2000, 0x0800, 0x08391997 )
+	ROM_LOAD( "phoenix.50", 0x2800, 0x0800, 0x0e45f309 )
+	ROM_LOAD( "phoenix.51", 0x3000, 0x0800, 0x45f34a7b )
+	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xcc51b4e3 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("%s.39", 0x0000, 0x0800)
-	ROM_LOAD("%s.40", 0x0800, 0x0800)
-	ROM_LOAD("%s.23", 0x1000, 0x0800)
-	ROM_LOAD("%s.24", 0x1800, 0x0800)
+	ROM_LOAD( "phoenix.39", 0x0000, 0x0800, 0xa93f0f43 )
+	ROM_LOAD( "phoenix.40", 0x0800, 0x0800, 0x8ee80800 )
+	ROM_LOAD( "phoenix.23", 0x1000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "phoenix.24", 0x1800, 0x0800, 0xa8b5c2b1 )
 ROM_END
 
 ROM_START( pleiads_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pleiades.47", 0x0000, 0x0800)
-	ROM_LOAD( "pleiades.48", 0x0800, 0x0800)
-	ROM_LOAD( "pleiades.49", 0x1000, 0x0800)
-	ROM_LOAD( "pleiades.50", 0x1800, 0x0800)
-	ROM_LOAD( "pleiades.51", 0x2000, 0x0800)
-	ROM_LOAD( "pleiades.52", 0x2800, 0x0800)
-	ROM_LOAD( "pleiades.53", 0x3000, 0x0800)
-	ROM_LOAD( "pleiades.54", 0x3800, 0x0800)
+	ROM_LOAD( "pleiades.47", 0x0000, 0x0800, 0x11a6373e )
+	ROM_LOAD( "pleiades.48", 0x0800, 0x0800, 0x63c4c9d2 )
+	ROM_LOAD( "pleiades.49", 0x1000, 0x0800, 0xc88cbee2 )
+	ROM_LOAD( "pleiades.50", 0x1800, 0x0800, 0x0bc4e7c0 )
+	ROM_LOAD( "pleiades.51", 0x2000, 0x0800, 0x48470843 )
+	ROM_LOAD( "pleiades.52", 0x2800, 0x0800, 0xafa44e9c )
+	ROM_LOAD( "pleiades.53", 0x3000, 0x0800, 0xa18f0cdd )
+	ROM_LOAD( "pleiades.54", 0x3800, 0x0800, 0x1d125968 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pleiades.27", 0x0000, 0x0800)
-	ROM_LOAD( "pleiades.26", 0x0800, 0x0800)
-	ROM_LOAD( "pleiades.45", 0x1000, 0x0800)
-	ROM_LOAD( "pleiades.44", 0x1800, 0x0800)
+	ROM_LOAD( "pleiades.27", 0x0000, 0x0800, 0x880280d4 )
+	ROM_LOAD( "pleiades.26", 0x0800, 0x0800, 0x96ac4eb6 )
+	ROM_LOAD( "pleiades.45", 0x1000, 0x0800, 0x3617f459 )
+	ROM_LOAD( "pleiades.44", 0x1800, 0x0800, 0x35271f77 )
 ROM_END
+
 
 
 static int hiload(const char *name)
@@ -491,14 +545,14 @@ static void hisave(const char *name)
 
 struct GameDriver phoenix_driver =
 {
-	"Phoenix (Centuri)",
+	"Phoenix (Amstar)",
 	"phoenix",
-        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	phoenix_rom,
 	0, 0,
-        phoenix_sample_names,
+	phoenix_sample_names,
 
 	input_ports, trak_ports, dsw, keys,
 
@@ -508,16 +562,16 @@ struct GameDriver phoenix_driver =
 	hiload, hisave
 };
 
-struct GameDriver phoenixa_driver =
+struct GameDriver phoenixt_driver =
 {
-	"Phoenix (Amstar)",
-	"phoenixa",
-        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"Phoenix (Taito)",
+	"phoenixt",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
-	phoenixa_rom,
+	phoenixt_rom,
 	0, 0,
-        phoenix_sample_names,
+	phoenix_sample_names,
 
 	input_ports, trak_ports, dsw, keys,
 
@@ -531,12 +585,12 @@ struct GameDriver phoenix3_driver =
 {
 	"Phoenix (T.P.N.)",
 	"phoenix3",
-        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	phoenix3_rom,
 	0, 0,
-        phoenix_sample_names,
+	phoenix_sample_names,
 
 	input_ports, trak_ports, dsw, keys,
 
@@ -550,12 +604,12 @@ struct GameDriver pleiads_driver =
 {
 	"Pleiads",
 	"pleiads",
-        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
-	&machine_driver,
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	&pleiads_machine_driver,
 
 	pleiads_rom,
 	0, 0,
-        0,
+        phoenix_sample_names,
 
 	input_ports, trak_ports, dsw, keys,
 

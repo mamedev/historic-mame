@@ -106,15 +106,15 @@ NMI causes a ROM/RAM test.
 
 
 
-extern int zaxxon_IN2_r(int offset);
+int zaxxon_IN2_r(int offset);
 
 extern unsigned char *zaxxon_background_position;
 extern unsigned char *zaxxon_background_color;
 extern unsigned char *zaxxon_background_enable;
-extern void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int  zaxxon_vh_start(void);
-extern void zaxxon_vh_stop(void);
-extern void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
+void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int  zaxxon_vh_start(void);
+void zaxxon_vh_stop(void);
+void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -262,23 +262,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00, /* BLACK */
+  0x00,0x00,0x00, /* BLACK */
   0xFF,0x00,0x00, /* RED */
-	0xdb,0x92,0x49, /* BROWN */
-	0xff,0xb6,0xdb, /* PINK */
-	0xFF,0xFF,0xFF, /* WHITE */
-	0x00,0xFF,0xFF, /* CYAN */
-	0x49,0xb6,0xdb, /* DKCYAN */
+  0xdb,0x92,0x49, /* BROWN */
+  0xff,0xb6,0xdb, /* PINK */
+  0xFF,0xFF,0xFF, /* WHITE */
+  0x00,0xFF,0xFF, /* CYAN */
+  0x49,0xb6,0xdb, /* DKCYAN */
   0xFF,0x60,0x00, /* DKORANGE */
-	0x00,0x00,0x96, /* DKBLUE */
+  0x00,0x00,0x96, /* DKBLUE */
   0xFF,0xFF,0x00, /* YELLOW */
-	0x03,0x96,0xd2, /* LTBLUE */
-	0x24,0x24,0xdb, /* BLUE */
-	0x00,0xdb,0x00, /* GREEN */
-	0x49,0xb6,0x92, /* DKGREEN */
-	0xff,0xb6,0x92, /* LTORANGE */
-	0xb6,0xb6,0xb6, /* GRAY */
-	0x19,0x96,0x62, /* VDKGREEN */
+  0x03,0x96,0xd2, /* LTBLUE */
+  0x24,0x24,0xdb, /* BLUE */
+  0x00,0xdb,0x00, /* GREEN */
+  0x49,0xb6,0x92, /* DKGREEN */
+  0xff,0xb6,0x92, /* LTORANGE */
+  0xb6,0xb6,0xb6, /* GRAY */
+  0x19,0x96,0x62, /* VDKGREEN */
   0xC0,0x00,0x00, /* DKRED */
 
   0xFF,0x00,0xFF, /* CUSTOM1 magenta*/
@@ -336,30 +336,46 @@ enum {BLACK,RED,BROWN,PINK,WHITE,CYAN,DKCYAN,DKORANGE,
 static unsigned char colortable[] =
 {
 	/* chars */
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,YELLOW,RED,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,BACK3,WHITE,
-	0,BLACK,BACK3,BLACK,
-	0,BLACK,YELLOW,RED,
+	0,BLACK,BLACK,WHITE,          /* 0-9 */
+	0,BLACK,BLACK,WHITE,          /* A-O */
+	0,BLACK,BLACK,WHITE,          /* P-Z */
+	0,BLACK,BLACK,WHITE,          /* = */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,BLACK,YELLOW,BLACK,         /* Round Flag - Stick */
+	0,BLACK,YELLOW,RED,           /* Round Flag - Flag */
+	0,BLACK,BACK5,BLACK,
+	0,0,0,0,
+	0,0,0,0,
+	0,BLACK,BACK5,RED,            /* Altitude Bar - Foreground */
+	0,BLACK,BACK5,BLACK,          /* Altitude Bar - Background */
+	0,BLACK,YELLOW,RED,           /* Fuel Bar & Remaining Ships */
 
+ /*       0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,
+	0,BLACK,WHITE,WHITE,    */
 
 	/* sprites */
 	0,YELLOW3,YELLOW1,YELLOW2,YELLOW2,YELLOW1,YELLOW5,DKORANGE,   /* Explosion Space */
 	0,RED,WHITE,CYAN,YELLOW,BLUE,GREEN,DKORANGE,                  /* Explosion plane 1 */
 	0,DKRED,YELLOW,CYAN,RED,BLUE,GREEN,DKORANGE,                  /* Explosion plane 2 */
 	0,RED,DKRED,RED,DKORANGE,RED,DKRED,DKRED2,                    /* Explosion Rocket 1 and NMI bullet in space (low level)*/
-	0,BLACK,BLACK,GREEN,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
+	0,BLACK,BLACK,RED,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
 	0,0,0,0,0,0,0,0,
 	0,RED,RED,RED,RED,RED,RED,RED,                            /* NMI Bullet */
 	0,BLUE2,RED,BACK5,BACK4,BLUE1,BLUE3,BLACK,                /* Satellite 1/2 */
@@ -405,7 +421,7 @@ static unsigned char colortable[] =
 	0,BACK1,WHITE,BACK5,BLACK,BACK6,BACK2,BACK4,              /* City BG 2 */
 	0,BACK2,BACK5,BACK4,BACK6,BACK1,BACK3,BLACK,              /* City BG 1 */
 	0,WHITE,BACK6,BLACK,BACK5,BACK4,YELLOW,BACK2,             /* Buildings */
-	/* background tiles (during death sequencel) */
+	/* background tiles (during death sequence) */
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
@@ -471,25 +487,25 @@ static struct MachineDriver machine_driver =
 
 ROM_START( zaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.3",  0x0000, 0x2000 )
-	ROM_LOAD( "%s.2",  0x2000, 0x2000 )
-	ROM_LOAD( "%s.1",  0x4000, 0x1000 )
+	ROM_LOAD( "zaxxon.3", 0x0000, 0x2000, 0x5ab9126b )
+	ROM_LOAD( "zaxxon.2", 0x2000, 0x2000, 0x37df69f1 )
+	ROM_LOAD( "zaxxon.1", 0x4000, 0x1000, 0xba9f739d )
 
 	ROM_REGION(0xd000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.15", 0x0000, 0x0800 )
-	ROM_LOAD( "%s.14", 0x0800, 0x0800 )
-	ROM_LOAD( "%s.13", 0x1000, 0x2000 )
-	ROM_LOAD( "%s.12", 0x3000, 0x2000 )
-	ROM_LOAD( "%s.11", 0x5000, 0x2000 )
-	ROM_LOAD( "%s.6",  0x7000, 0x2000 )
-	ROM_LOAD( "%s.5",  0x9000, 0x2000 )
-	ROM_LOAD( "%s.4",  0xb000, 0x2000 )
+	ROM_LOAD( "zaxxon.15", 0x0000, 0x0800, 0x77cd19bf )
+	ROM_LOAD( "zaxxon.14", 0x0800, 0x0800, 0xec944b06 )
+	ROM_LOAD( "zaxxon.13", 0x1000, 0x2000, 0xe2f87f5c )
+	ROM_LOAD( "zaxxon.12", 0x3000, 0x2000, 0x4b4f1449 )
+	ROM_LOAD( "zaxxon.11", 0x5000, 0x2000, 0x666b4c71 )
+	ROM_LOAD( "zaxxon.6",  0x7000, 0x2000, 0x27b35545 )
+	ROM_LOAD( "zaxxon.5",  0x9000, 0x2000, 0x1b73959d )
+	ROM_LOAD( "zaxxon.4",  0xb000, 0x2000, 0x3deedf22 )
 
 	ROM_REGION(0x8000)	/* background graphics */
-	ROM_LOAD( "%s.8",  0x0000, 0x2000 )
-	ROM_LOAD( "%s.7",  0x2000, 0x2000 )
-	ROM_LOAD( "%s.10", 0x4000, 0x2000 )
-	ROM_LOAD( "%s.9",  0x6000, 0x2000 )
+	ROM_LOAD( "zaxxon.8",  0x0000, 0x2000, 0x974ee47c )
+	ROM_LOAD( "zaxxon.7",  0x2000, 0x2000, 0xa9dc2e00 )
+	ROM_LOAD( "zaxxon.10", 0x4000, 0x2000, 0x46743110 )
+	ROM_LOAD( "zaxxon.9",  0x6000, 0x2000, 0x6be85050 )
 ROM_END
 
 

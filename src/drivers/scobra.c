@@ -71,20 +71,20 @@ a002      protection check control?
 
 
 
-extern int scramble_IN2_r(int offset);
-extern int scramble_protection_r(int offset);
+int scramble_IN2_r(int offset);
+int scramble_protection_r(int offset);
 
 extern unsigned char *scramble_attributesram;
 extern unsigned char *scramble_bulletsram;
 extern int scramble_bulletsram_size;
-extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void scramble_attributes_w(int offset,int data);
-extern void scramble_stars_w(int offset,int data);
-extern int scramble_vh_start(void);
-extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
+void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void scramble_attributes_w(int offset,int data);
+void scramble_stars_w(int offset,int data);
+int scramble_vh_start(void);
+void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int scramble_sh_interrupt(void);
-extern int scramble_sh_start(void);
+int scramble_sh_interrupt(void);
+int scramble_sh_start(void);
 
 
 
@@ -423,6 +423,13 @@ static unsigned char color_prom[] =
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
+static unsigned char rescue_color_prom[] =
+{
+	/* palette */
+	0x00,0xA4,0x18,0x5B,0x00,0xB6,0x07,0x36,0x00,0xDB,0xA3,0x9B,0x00,0xDC,0x27,0xAD,
+	0x00,0xC0,0x2B,0x5F,0x00,0xAD,0x2F,0x85,0x00,0xE4,0x3F,0x28,0x00,0x9A,0xC0,0x27
+};
+
 
 
 static struct MachineDriver machine_driver =
@@ -441,7 +448,7 @@ static struct MachineDriver machine_driver =
 			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,1
+			scramble_sh_interrupt,10
 		}
 	},
 	60,
@@ -475,136 +482,136 @@ static struct MachineDriver machine_driver =
 
 ROM_START( scobra_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000 )
-	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0x0fe64f76 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0x205664e2 )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0x59e8525e )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0x303ac596 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x156d771d )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0xbc79c629 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800, 0x4b2a202a )
+	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800 )
-	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0x5b7ffd15 )
+	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xc1522792 )
+	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0xc4b1e3e7 )
 ROM_END
 
 ROM_START( scobrak_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c", 0x0000, 0x1000 )
-	ROM_LOAD( "2e", 0x1000, 0x1000 )
-	ROM_LOAD( "2f", 0x2000, 0x1000 )
-	ROM_LOAD( "2h", 0x3000, 0x1000 )
-	ROM_LOAD( "2j", 0x4000, 0x1000 )
-	ROM_LOAD( "2l", 0x5000, 0x1000 )
+	ROM_LOAD( "2c", 0x0000, 0x1000, 0x71fcefba )
+	ROM_LOAD( "2e", 0x1000, 0x1000, 0xd8edcd97 )
+	ROM_LOAD( "2f", 0x2000, 0x1000, 0xd884517c )
+	ROM_LOAD( "2h", 0x3000, 0x1000, 0x81707f54 )
+	ROM_LOAD( "2j", 0x4000, 0x1000, 0xe9ac3850 )
+	ROM_LOAD( "2l", 0x5000, 0x1000, 0x3b37371b )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f", 0x0000, 0x0800 )
-	ROM_LOAD( "5h", 0x0800, 0x0800 )
+	ROM_LOAD( "5f", 0x0000, 0x0800, 0x4b2a202a )
+	ROM_LOAD( "5h", 0x0800, 0x0800, 0xaa5bbcd1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",      0x0000, 0x0800 )
-	ROM_LOAD( "5d",      0x0800, 0x0800 )
-	ROM_LOAD( "5e",      0x1000, 0x0800 )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0x5b7ffd15 )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0xc1522792 )
+	ROM_LOAD( "5e", 0x1000, 0x0800, 0xc4b1e3e7 )
 ROM_END
 
 ROM_START( scobrab_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800 )
-	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800 )
-	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800 )
-	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800 )
-	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800 )
-	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800 )
-	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800 )
-	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800 )
-	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800 )
-	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800 )
-	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800 )
-	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800 )
+	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800, 0x9eab7bb3 )
+	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800, 0x3b6585fd )
+	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800, 0x3336090a )
+	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800, 0xed206de8 )
+	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800, 0xbefdffe5 )
+	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800, 0x9aebadbb )
+	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800, 0x2a29599d )
+	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800, 0x06119c0b )
+	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800, 0xf35e2d38 )
+	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800, 0x220f5a25 )
+	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800, 0xef190401 )
+	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800, 0xcd60c228 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800 )
-	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "vid_5f.bin", 0x0000, 0x0800, 0x4b2a202a )
+	ROM_LOAD( "vid_5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800 )
-	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800 )
-	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800 )
+	ROM_LOAD( "snd_5c.bin", 0x0000, 0x0800, 0xb5c45422 )
+	ROM_LOAD( "snd_5d.bin", 0x0800, 0x0800, 0xaa50e11a )
+	ROM_LOAD( "snd_5e.bin", 0x1000, 0x0800, 0xb7b4dd96 )
 ROM_END
 
 ROM_START( losttomb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c",      0x0000, 0x1000 )
-	ROM_LOAD( "2e",      0x1000, 0x1000 )
-	ROM_LOAD( "2f",      0x2000, 0x1000 )
-	ROM_LOAD( "2h-easy", 0x3000, 0x1000 )
-	ROM_LOAD( "2j",      0x4000, 0x1000 )
-	ROM_LOAD( "2l",      0x5000, 0x1000 )
-	ROM_LOAD( "2m",      0x6000, 0x1000 )
+	ROM_LOAD( "2c",      0x0000, 0x1000, 0x55248120 )
+	ROM_LOAD( "2e",      0x1000, 0x1000, 0x8d5d9663 )
+	ROM_LOAD( "2f",      0x2000, 0x1000, 0xb53e6390 )
+	ROM_LOAD( "2h-easy", 0x3000, 0x1000, 0x18d580a9 )
+	ROM_LOAD( "2j",      0x4000, 0x1000, 0x5d21f893 )
+	ROM_LOAD( "2l",      0x5000, 0x1000, 0x030788df )
+	ROM_LOAD( "2m",      0x6000, 0x1000, 0x24205f0e )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f",      0x1000, 0x0800 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "5h",      0x1800, 0x0800 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_LOAD( "5f",      0x1000, 0x0800, 0x5be70b13 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "5h",      0x1800, 0x0800, 0xd6e32f73 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",      0x0000, 0x0800 )
-	ROM_LOAD( "5d",      0x0800, 0x0800 )
+	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
+	ROM_LOAD( "5d",      0x0800, 0x0800, 0x70ea19ea )
 ROM_END
 
 ROM_START( anteater_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ra1-2c", 0x0000, 0x1000 )
-	ROM_LOAD( "ra1-2e", 0x1000, 0x1000 )
-	ROM_LOAD( "ra1-2f", 0x2000, 0x1000 )
-	ROM_LOAD( "ra1-2h", 0x3000, 0x1000 )
+	ROM_LOAD( "ra1-2c", 0x0000, 0x1000, 0x3a99be31 )
+	ROM_LOAD( "ra1-2e", 0x1000, 0x1000, 0xb46154bb )
+	ROM_LOAD( "ra1-2f", 0x2000, 0x1000, 0xd467888d )
+	ROM_LOAD( "ra1-2h", 0x3000, 0x1000, 0xfbcffc91 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ra6-5f", 0x1000, 0x0800 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "ra6-5h", 0x1800, 0x0800 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_LOAD( "ra6-5f", 0x1000, 0x0800, 0x5a8a7eb6 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "ra6-5h", 0x1800, 0x0800, 0x491cbf24 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ra4-5c", 0x0000, 0x0800 )
-	ROM_LOAD( "ra4-5d", 0x0800, 0x0800 )
+	ROM_LOAD( "ra4-5c", 0x0000, 0x0800, 0xa8a615f0 )
+	ROM_LOAD( "ra4-5d", 0x0800, 0x0800, 0x2ff74b03 )
 ROM_END
 
 ROM_START( rescue_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000 )
-	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000 )
-	ROM_LOAD( "rb15ccpu.bin", 0x2000, 0x1000 )
-	ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000 )
-	ROM_LOAD( "rb15ecpu.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000, 0x2d7f947b )
+	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000, 0x09fbbe11 )
+	ROM_LOAD( "rb15ccpu.bin", 0x2000, 0x1000, 0x7d76d748 )
+	ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000, 0x592c8dd0 )
+	ROM_LOAD( "rb15ecpu.bin", 0x4000, 0x1000, 0x9c059431 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rb15fcpu.bin", 0x1000, 0x0800 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "rb15hcpu.bin", 0x1800, 0x0800 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_LOAD( "rb15fcpu.bin", 0x1000, 0x0800, 0xb55f561f )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "rb15hcpu.bin", 0x1800, 0x0800, 0x7a13c447 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800 )
-	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0xfd8c78cc )
+	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xfdbb116f )
 ROM_END
 
 ROM_START( hunchy_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "1b.bin",     0x0000, 0x1000 )
-	ROM_LOAD( "2a.bin",     0x1000, 0x1000 )
-	ROM_LOAD( "3a.bin",     0x2000, 0x1000 )
-	ROM_LOAD( "4c.bin",     0x3000, 0x1000 )
-	ROM_LOAD( "5a.bin",     0x4000, 0x1000 )
-	ROM_LOAD( "6c.bin",     0x5000, 0x1000 )
+	ROM_LOAD( "1b.bin", 0x0000, 0x1000, 0xedc7328b )
+	ROM_LOAD( "2a.bin", 0x1000, 0x1000, 0x07a951d3 )
+	ROM_LOAD( "3a.bin", 0x2000, 0x1000, 0x84d6fc0e )
+	ROM_LOAD( "4c.bin", 0x3000, 0x1000, 0xe2a39fbd )
+	ROM_LOAD( "5a.bin", 0x4000, 0x1000, 0x2f46d302 )
+	ROM_LOAD( "6c.bin", 0x5000, 0x1000, 0x8d6b2637 )
 
 	ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "8a.bin",     0x0000, 0x0800 )
-	ROM_LOAD( "9b.bin",     0x0800, 0x0800 )
-	ROM_LOAD( "10b.bin",    0x1000, 0x0800 )
-	ROM_LOAD( "11a.bin",    0x1800, 0x0800 )
+	ROM_LOAD( "8a.bin",  0x0000, 0x0800, 0x7afe3b86 )
+	ROM_LOAD( "9b.bin",  0x0800, 0x0800, 0x015ee94c )
+	ROM_LOAD( "10b.bin", 0x1000, 0x0800, 0x72d82f86 )
+	ROM_LOAD( "11a.bin", 0x1800, 0x0800, 0xf5280414 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "5b_snd.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "5b_snd.bin", 0x0000, 0x0800, 0xd71b1c53 )
 ROM_END
 
 
@@ -809,7 +816,7 @@ static int anteater_hiload(const char *name)
 {
   unsigned char *RAM = Machine->memory_region[0];
   FILE *f;
-  
+
   /* Wait for machine initialization to be done. */
   if (memcmp(&RAM[0x146a], "\x01\x04\x80", 3) != 0) return 0;
 
@@ -861,7 +868,7 @@ struct GameDriver rescue_driver =
 {
 	"Rescue",
 	"rescue",
-	"JAMES R. TWINE\nCHRIS HARDY\nMIRKO BUFFONI\nFABIO BUFFONI",
+	"JAMES R. TWINE\nCHRIS HARDY\nMIRKO BUFFONI\nFABIO BUFFONI\nALAN J MCCORMICK",
 	&machine_driver,
 
 	rescue_rom,
@@ -870,7 +877,7 @@ struct GameDriver rescue_driver =
 
 	Rescueinput_ports, trak_ports, Rescuedsw, Rescuekeys,
 
-	color_prom, 0, 0,
+	rescue_color_prom, 0, 0,
 	8*13, 8*16,
 
 	0, 0

@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Emulator, V2.2                                        */
+/* Module:  POKEY Chip Emulator, V2.3                                        */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /*                                                                           */
@@ -16,6 +16,8 @@
 /* 04/06/97 - Brad Oliver - Some cross-platform modifications. Added         */
 /*                          big/little endian #defines, removed <dos.h>,     */
 /*                          conditional defines for TRUE/FALSE               */
+/* 08/08/97 - Brad Oliver - Added code to read the random number register.   */
+/*            & Eric Smith  This code relies on writes to SKCNTL as well.    */
 /*                                                                           */
 /* V2.0 Detailed Changes                                                     */
 /* ---------------------                                                     */
@@ -155,6 +157,9 @@ static uint8 Outbit[4 * MAXPOKEYS]; /* current state of the output (high or low)
 
 static uint8 Outvol[4 * MAXPOKEYS]; /* last output volume for each channel */
 
+static uint8 rng[MAXPOKEYS];		/* Determines if the random number generator is */
+                                    /* generating new random values or returning the */
+                                    /* same value */
 
 /* Initialze the bit patterns for the polynomials. */
 
@@ -275,7 +280,10 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    {
       AUDCTL[chip] = 0;
       Base_mult[chip] = DIV_64;
+      /* Enable the random number generator */
+      rng[chip] = TRUE;
    }
+
 
    /* set the number of pokey chips currently emulated */
    Num_pokeys = num_pokeys;
@@ -307,7 +315,7 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 {
     uint32 new_val = 0;
     uint8 chan;
-    uint8 chan_mask;
+    uint8 chan_mask = 0;
     uint8 chip_offs;
 
     /* disable interrupts to handle critical sections */
@@ -384,6 +392,14 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
              Base_mult[chip] = DIV_64;
 
           break;
+
+       /* If the 2 least significant bits of SKCTL are 0, the random number generator is
+          disabled. Thanks to Eric Smith for pointing out this critical bit of info! */
+	   case SKCTL_C:
+		  if (val & 0x02)
+		     rng[chip] = TRUE;
+		  else rng[chip] = FALSE;
+		  break;
 
        default:
           chan_mask = 0;
@@ -786,4 +802,42 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
           n--;
        }
     }
+}
+
+/*****************************************************************************/
+/* Module:  Read_pokey_regs()                                                */
+/* Purpose: To return the values of the Pokey registers. Currently, only the */
+/*          random number generator register is returned.                    */
+/*                                                                           */
+/* Author:  Brad Oliver & Eric Smith                                         */
+/* Date:    August 8, 1997                                                   */
+/*                                                                           */
+/* Inputs:  addr - the address of the parameter to be changed                */
+/*          chip - the pokey chip to read                                    */
+/*                                                                           */
+/* Outputs: Adjusts local globals, returns the register in question          */
+/*                                                                           */
+/*****************************************************************************/
+
+int Read_pokey_regs (uint16 addr, uint8 chip)
+{
+    static uint8 random[MAXPOKEYS];
+
+    switch (addr & 0x0f)
+    {
+    	/* Currently only the random number generator value is emulated */
+		case RANDOM_C:
+			/* If the random number generator is enabled, get a new random number */
+			if (rng[chip]) {
+				random[chip] = rand();
+				}
+			return random[chip];
+			break;
+		default:
+#ifdef MAME_DEBUG
+			if (errorlog) fprintf (errorlog, "Pokey #%d read from register %02x\n", chip, addr);
+#endif
+			return 0;
+			break;
+	}
 }

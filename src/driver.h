@@ -44,6 +44,11 @@ struct MemoryWriteAddress
 #define MWA_NOP 0	/* do nothing */
 #define MWA_RAM ((void(*)())-1)	/* plain RAM location (store the value) */
 #define MWA_ROM ((void(*)())-2)	/* plain ROM location (do nothing) */
+/* RAM[] and ROM[] are usually the same, but they aren't if the CPU opcodes are */
+/* encrypted. In such a case, opcodes are fetched from ROM[], and arguments from */
+/* RAM[]. If the program dynamically creates code in RAM and executes it, it */
+/* won't work unless writes to RAM affects both RAM[] and ROM[]. */
+#define MWA_RAMROM ((void(*)())-3)	/* write to both the RAM[] and ROM[] array. */
 
 
 /***************************************************************************
@@ -86,6 +91,12 @@ struct InputPort
 	int keyboard[8];	/* keys affecting the 8 bits of the input port (0 means none) */
 	int joystick[8];	/* same for joystick */
 };
+
+/* Many games poll an input bit to check for vertical blanks instead of using */
+/* interrupts. This special value to put in the keyboard[] field allows you to */
+/* handle that. If you set one of the input bits to this, the bit will be */
+/* inverted while a vertical blank is happening. */
+#define IPB_VBLANK	(-1)
 
 
 
@@ -244,5 +255,10 @@ struct GameDriver
 
 extern const struct GameDriver *drivers[];
 
+#ifdef WIN32
+#pragma warning(disable:4113)
+#define PI 3.1415926535
+#define inline __inline
+#endif
 
 #endif

@@ -57,7 +57,7 @@ int mpatrol_vh_start(void)
 	for (i = 0;i < 27;i++)
 	{
 		for (j = 0;j < 256;j++)
-		if (bgbitmap->line[63 - i][j] == Machine->background_pen)
+		if (bgbitmap->line[63 - i][j] == Machine->pens[0])
 			bgbitmap->line[63 - i][j] = Machine->gfx[4]->colortable[3];
 	}
 
@@ -164,7 +164,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		for (i = 13*8;i < 13*8+10;i++)
-			memset(bitmap->line[i],Machine->background_pen,256);
+			memset(bitmap->line[i],Machine->pens[0],256);
 
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
@@ -176,8 +176,8 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		clip.min_y = bg1ypos;
 		clip.max_y = bg1ypos + 33;
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,0);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,0);
 		clip.min_y = bg1ypos + 34;
 		clip.max_y = bg1ypos + BGHEIGHT-1;
 		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_NONE,0);
@@ -189,7 +189,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		for (i = 13*8;i < 13*8+10;i++)
-			memset(bitmap->line[i],Machine->background_pen,256);
+			memset(bitmap->line[i],Machine->pens[0],256);
 
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
@@ -201,8 +201,8 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		clip.min_y = bg1ypos;
 		clip.max_y = bg1ypos + 36;
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos,&clip,TRANSPARENCY_COLOR,0);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos,&clip,TRANSPARENCY_COLOR,0);
 		clip.min_y = bg1ypos + 37;
 		clip.max_y = bg1ypos + BGHEIGHT-1;
 		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos,&clip,TRANSPARENCY_NONE,0);
@@ -225,13 +225,13 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		clip.min_y = 24 * 8;
 		clip.max_y = 27 * 8 - 1;
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_COLOR,0);
+		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_COLOR,0);
 
 		clip.min_y = 27 * 8;
 		clip.max_y = 32 * 8 - 1;
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_NONE,Machine->background_pen);
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_NONE,Machine->background_pen);
+		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_NONE,0);
 	}
 
 

@@ -14,12 +14,13 @@
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-        1250000000,     /* 1.250000000 MHZ?????? */
-        { 255 },
-	{ },
-	{ },
-	{ },
-	{ }
+	1,	/* 1 update per video frame (low quality) */
+	1250000000,     /* 1.250000000 MHZ?????? */
+	{ 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
 

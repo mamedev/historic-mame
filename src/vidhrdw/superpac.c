@@ -10,15 +10,61 @@
 #include "vidhrdw/generic.h"
 
 
+/***************************************************************************
 
-#define VIDEO_RAM_SIZE 0x400
+  Convert the color PROMs into a more useable format.
+
+  digdug has one 32x8 palette PROM and two 256x4 color lookup table PROMs
+  (one for characters, one for sprites). Only the first 128 bytes of the
+  lookup tables seem to be used.
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void superpac_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	for (i = 0;i < 32;i++)
+	{
+		int bit0,bit1,bit2;
+
+		bit0 = (color_prom[31-i] >> 0) & 0x01;
+		bit1 = (color_prom[31-i] >> 1) & 0x01;
+		bit2 = (color_prom[31-i] >> 2) & 0x01;
+		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[31-i] >> 3) & 0x01;
+		bit1 = (color_prom[31-i] >> 4) & 0x01;
+		bit2 = (color_prom[31-i] >> 5) & 0x01;
+		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = 0;
+		bit1 = (color_prom[31-i] >> 6) & 0x01;
+		bit2 = (color_prom[31-i] >> 7) & 0x01;
+		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	}
+
+	/* characters */
+	for (i = 0;i < 64*4;i++)
+		colortable[i] = (color_prom[i + 32] & 0x0f);
+	/* sprites */
+	for (i = 64*4;i < 128*4;i++)
+		colortable[i] = 0x1f - (color_prom[i + 32] & 0x0f);
+}
 
 
 void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-		TRANSPARENCY_PEN,0);
+		TRANSPARENCY_COLOR,16);
 }
 
 
@@ -31,19 +77,21 @@ void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int
 ***************************************************************************/
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
+
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
 
+
 			dirtybuffer[offs] = 0;
 
-	/* Even if Pengo's screen is 28x36, the memory layout is 32x32. We therefore */
+	/* Even if Super Pac-Man's screen is 28x36, the memory layout is 32x32. We therefore */
 	/* have to convert the memory coordinates into screen coordinates. */
 	/* Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM */
 	/* don't map to a screen position. We don't check that here, however: range */
@@ -80,195 +128,84 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. */
-	for (i = 0;i < 64;i++)
+	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		/* is it on? */
-		if ((spriteram_3[2*i+1] & 2) == 0)
+		if ((spriteram_3[offs+1] & 2) == 0)
 		{
-			int sprite = spriteram[2*i];
-			int color = spriteram[2*i+1];
-			int x = spriteram_2[2*i]-17;
-			int y = (spriteram_2[2*i+1]-40) + 0x100*(spriteram_3[2*i+1] & 1);
-			int flipx = spriteram_3[2*i] & 2;
-			int flipy = spriteram_3[2*i] & 1;
-			
-			if (color > 37) color -= 32;
-			
-			/* is it on-screen? */
-			if (x > -16)
+			int sprite = spriteram[offs];
+			int color = spriteram[offs+1];
+			int x = spriteram_2[offs]-17;
+			int y = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
+			int flipx = spriteram_3[offs] & 2;
+			int flipy = spriteram_3[offs] & 1;
+
+			switch (spriteram_3[offs] & 0x0c)
 			{
-				switch (spriteram_3[2*i] & 0x0c)
-				{
-					case 0:		/* normal size */
+				case 0:		/* normal size */
+					superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+					break;
+
+				case 4:		/* 2x vertical */
+					sprite &= ~1;
+					if (!flipy)
+					{
 						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						break;
-
-					case 4:		/* 2x vertical */
-						if (!flipy)
-						{
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-						}
-						else
-						{
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						}
-						break;
-					
-					case 8:		/* 2x horizontal */
-						if (!flipx)
-						{
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-						}
-						else
-						{
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-						}
-						break;
-					
-					case 12:		/* 2x both ways */
-						if (!flipy && !flipx)
-						{
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else if (flipy && flipx)
-						{
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else if (flipx)
-						{
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
-						}
-						else /* flipy */
-						{
-							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
-							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
-							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
-						}
-						break;
-				}
-			}
-		}
-	}
-
-#if 0
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (i = 0;i < 56; i++)
-	{
-		if (spriteram[32*i+1])
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-				/*charnum*/ spriteram[32*i + 1],
-				spriteram[32*i + 2] + 32,
-				/*hflip*/ spriteram[32*i] & 0x02,
-				/*vflip*/ spriteram[32*i] & 0x01,
-				/*xpos*/ 231 - spriteram[32*i + 3],
-				/*ypos*/ 8 + spriteram[32*i + 4],
-				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-	}
-	/* Draw the pacman sprite(s). */
-	for( i=0; i<4; i++)
-	{
-		/* ugly hack to handle big pacman sprite */
-		if( spriteram_2[32*i] & 0x04 )
-		{
-			unsigned char off[4] = { 0,0,0,0 };
-			
-			/* order of chars depends on hflip/vflip */
-			switch( spriteram_2[32*i] & 0x03 )
-			{
-				case 0x00:
-					off[0] = 2; off[1] = 3; off[2] = 0; off[3] = 1;
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+					}
+					else
+					{
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+					}
 					break;
-				case 0x01:
-					off[0] = 3; off[1] = 2; off[2] = 1; off[3] = 0;
+
+				case 8:		/* 2x horizontal */
+					sprite &= ~2;
+					if (!flipx)
+					{
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+					}
+					else
+					{
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+					}
 					break;
-				case 0x02:
-					off[0] = 0; off[1] = 1; off[2] = 2; off[3] = 3;
+
+				case 12:		/* 2x both ways */
+					sprite &= ~3;
+					if (!flipy && !flipx)
+					{
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else if (flipy && flipx)
+					{
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+						superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else if (flipx)
+					{
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+						superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+					}
+					else /* flipy */
+					{
+						superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
+						superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
+						superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+					}
 					break;
 			}
-			/*	0 norm  -8  +16,  -8 + 0	A	char + 2
-				1 norm  -8  +16,  -8 + 16	B	char + 3
-				2 norm  -8  +0,   -8 + 0	C	char + 0
-				3 norm  -8  +0,   -8 + 16	D	char + 1
-
-				0 hflip -8  +0,   -8 + 0	C   char + 0
-				1 hflip -8  +0,   -8 + 16	D   char + 1
-				2 hflip -8 +16,   -8 + 0	A	char + 2
-				3 hflip -8 +16,   -8 + 16	B	char + 3
-
-				0 vflip -8 +16,   -8 + 16	B	char + 3
-				1 vflip -8 +16,   -8 + 0	A	char + 2
-				2 vflip -8 +0,    -8 + 16	D	char + 1
-				3 vflip -8 + 0,   -8 + 0	C	char + 0	*/
-			
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-					/*charnum*/ spriteram_2[32*i + 1]+off[0],     /* spriteram[2*i] >> 2, */
-					/*color*/ spriteram_2[32*i + 2],              /* spriteram[2*i + 1],  */
-					/*hflip*/ spriteram_2[32*i] & 0x02,           /* spriteram[2*i] & 2,  */
-					/*vflip*/ spriteram_2[32*i] & 0x01,           /* spriteram[2*i] & 1,  */
-					/*xpos*/ 231 - 8 - spriteram_2[32*i + 3],     /* 239 - spriteram_2[2*i], */
-					/*ypos*/ 8 - 8 + spriteram_2[32*i + 4],       /* 272 - spriteram_2[2*i + 1], */
-					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-					/*charnum*/ spriteram_2[32*i + 1]+off[1],
-					/*color*/ spriteram_2[32*i + 2],
-					/*hflip*/ spriteram_2[32*i] & 0x02,
-					/*vflip*/ spriteram_2[32*i] & 0x01,
-					/*xpos*/ 231 - 8 - spriteram_2[32*i + 3],
-					/*ypos*/ 8 + 8 + spriteram_2[32*i + 4],
-					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-					/*charnum*/ spriteram_2[32*i + 1]+off[2],
-					/*color*/ spriteram_2[32*i + 2],
-					/*hflip*/ spriteram_2[32*i] & 0x02,
-					/*vflip*/ spriteram_2[32*i] & 0x01,
-					/*xpos*/ 8 + 231 - spriteram_2[32*i + 3],
-					/*ypos*/ 8 - 8 + spriteram_2[32*i + 4],
-					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-					
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-					/*charnum*/ spriteram_2[32*i + 1]+off[3],
-					/*color*/ spriteram_2[32*i + 2],
-					/*hflip*/ spriteram_2[32*i] & 0x02,
-					/*vflip*/ spriteram_2[32*i] & 0x01,
-					/*xpos*/ 8 + 231 - spriteram_2[32*i + 3],
-					/*ypos*/ 8 + 8 + spriteram_2[32*i + 4],
-					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-		}
-		else
-		{
-			/* another ugly hack (sigh...) */
-			unsigned char color;
-			
-			color = spriteram_2[32*i + 2];
-			if( color<0x20 ) color += 0x20;
-
-			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-					/*charnum*/ spriteram_2[32*i + 1],              /* spriteram[2*i] >> 2,        */
-					/*color*/ color /*spriteram_2[32*i + 2]*/,      /* spriteram[2*i + 1],         */
-					/*hflip*/ spriteram_2[32*i] & 0x02,             /* spriteram[2*i] & 2,         */
-					/*vflip*/ spriteram_2[32*i] & 0x01,             /* spriteram[2*i] & 1,         */
-					/*xpos*/ 231 - spriteram_2[32*i + 3],           /* 239 - spriteram_2[2*i],     */
-					/*ypos*/ 8 + spriteram_2[32*i + 4],             /* 272 - spriteram_2[2*i + 1], */
-					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 		}
 	}
-#endif
 }
