@@ -16,13 +16,12 @@ int gberet_interrupt(void)
 	static int nmi;
 
 
-	nmi = (nmi + 1) % Machine->drv->cpu[0].interrupts_per_frame;
+	nmi = (nmi + 1) % 10;
 
-	if (nmi == 0) return 0xff;	/* vblank */
+	if (nmi == 0) return 0xff;
 	else
 	{
-		if ((RAM[0xe044] & 1) == 0) return Z80_IGNORE_INT;
-
-		return Z80_NMI_INT;
+		if (RAM[0xe044] & 1) return Z80_NMI_INT;
+		else return Z80_IGNORE_INT;
 	}
 }

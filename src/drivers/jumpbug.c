@@ -51,6 +51,8 @@ read:
 
 
 write:
+5800      8910 write port
+5900      8910 control port
 7001      interrupt enable
 7002      coin counter ????
 7003      ?

@@ -7,8 +7,8 @@
 #define emulation_rate 11025
 #define buffer_len 69000
 
-char samp_buf[25][buffer_len];
-int buf_size[25];
+static char samp_buf[25][buffer_len];
+static int buf_size[25];
 
 int dkong_sh_init(const char *gamename)
 {

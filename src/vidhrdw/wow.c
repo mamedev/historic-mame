@@ -213,7 +213,12 @@ void wow_magicram_w(int offset,int data)
 void wow_pattern_board_w(int offset,int data)
 {
 	static int src;
-	static int mode;	/* ?? */
+	static int mode;	/*  bit 0 = direction
+							bit 1 = expand mode
+							bit 2 = constant
+							bit 3 = flush
+							bit 4 = flip
+							bit 5 = flop */
 	static int skip;	/* bytes to skip after row copy */
 	static int dest;
 	static int length;	/* row length */

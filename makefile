@@ -2,7 +2,8 @@ CC	= gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
+CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 \
+         -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
@@ -44,9 +45,11 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/vanguard.o obj/vidhrdw/vanguard.o obj/drivers/vanguard.o \
          obj/machine/gberet.o obj/vidhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/venture.o obj/drivers/venture.o \
-         obj/Z80/Z80.o obj/M6502/M6502.o
+         obj/vidhrdw/qbert.o obj/sndhrdw/qbert.o obj/drivers/qbert.o \
+         obj/drivers/mplanets.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o
 
-VPATH = src src/Z80 src/M6502
+VPATH = src src/Z80 src/M6502 src/I86
 
 all: mame.exe
 
@@ -63,12 +66,14 @@ obj/%.o: src/%.c mame.h common.h driver.h
 obj/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
+obj/I86/I86.o:	I86.c I86.h global.h instr.h mytypes.h
 
 
 clean:
 	del obj\*.o
 	del obj\Z80\*.o
 	del obj\M6502\*.o
+	del obj\I86\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o

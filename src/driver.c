@@ -86,7 +86,11 @@ extern struct GameDriver jumpbug_driver;
 extern struct GameDriver jbugsega_driver;
 extern struct GameDriver vanguard_driver;
 extern struct GameDriver gberet_driver;
+extern struct GameDriver rushatck_driver;
 extern struct GameDriver venture_driver;
+extern struct GameDriver qbert_driver;
+extern struct GameDriver qbertjp_driver;
+extern struct GameDriver mplanets_driver;
 
 
 
@@ -176,6 +180,10 @@ const struct GameDriver *drivers[] =
 	&jbugsega_driver,
 	&vanguard_driver,
 	&gberet_driver,
+	&rushatck_driver,
 	&venture_driver,
+	&qbert_driver,
+	&qbertjp_driver,
+	&mplanets_driver,
 	0	/* end of array */
 };

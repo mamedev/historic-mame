@@ -12,6 +12,8 @@
 #include "Z80.h"
 #include "M6502.h"
 
+extern void I86_Execute();
+extern void I86_Reset(int cycles);
 
 
 static int activecpu;
@@ -82,6 +84,9 @@ reset:
 					Reset6502(ctxt);
 				}
 				break;
+			case CPU_I86:
+				I86_Reset(cycles);
+				break;
 		}
 	}
 
@@ -128,6 +133,11 @@ reset:
 				case CPU_M6502:
 					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
 						Run6502((M6502 *)cpucontext[activecpu]);
+					break;
+
+				case CPU_I86:
+					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
+						I86_Execute();
 					break;
 			}
 		}

@@ -127,6 +127,7 @@ struct MachineCPU
 
 #define CPU_Z80 1
 #define CPU_M6502 2
+#define CPU_I86 3
 
 
 #define MAX_CPU 4

@@ -66,8 +66,10 @@ Moon Patrol                    Yes          No         No        No
 Burger Time                    Yes         Yes        Yes       Yes
 Lost Tomb                       No          No        Yes       n/a
 Jump Bug                       Yes          No        Yes        No
-Green Beret                    Yes          No     Music only    No
+Green Beret                    Yes         Yes     Music only    No
 Venture                     Partially       No         No        No
+Q*Bert                         Yes         Yes?    Partial (1)   No
+Mad Planets                    Yes         Yes?        No        No
 
 (1) Needs samples, provided in a separate archive
 
@@ -89,6 +91,7 @@ Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
 M6502 Emulator Copyright (C) Marat Fayzullin, Alex Krasivsky 1996
    Note: the version used in MAME is slightly modified. You can find the
    original version at http://freeflight.com/fms/.
+I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 Allegro library by Shawn Hargreaves, 1994/96
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
    Carlos Hasan. All Rights Reserved.
@@ -117,12 +120,13 @@ Carnival driver completed by Mike Coates and Richard Davies.
 Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
 Venture driver by Marc Lafontaine (marclaf@sympatico.ca).
+Q*Bert and Mad Planets drivers by Fabrice Frances (frances@ensica.fr)
 
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
 Thanks to Paul Swan for the information on the Lady Bug sound hardware and
-   Mr.Do! colors.
+   Mr.Do! and Green Beret colors.
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention them all.
 Thanks to Simon Walls (wallss@ecid.cig.mot.com) for the color information
@@ -935,8 +939,11 @@ Arrows  Move around
 CTRL    Knife
 ALT     Fire
 
+Clones supported:
+  US version, called Rush'n Attack ("rushatck")
+
 Known issues:
-- Is the speed right? Isn't it too fast?
+- Is the speed right?
 
 
 
@@ -949,3 +956,23 @@ On startup, keep 1 or 2 pressed to proceed
 
 Known issues:
 - Sprites are not drawn correctly.
+
+
+
+Q*Bert ("qbert")
+----------------
+
+Arrows  Move around
+
+Clones supported:
+  Japanese version ("qbertjp")
+
+
+
+Mad Planets ("mplanets")
+------------------------
+
+Runs on the same hardware as Q*Bert
+
+Arrows  Move around
+CTRL    Fire
