@@ -53,10 +53,8 @@ extern int superpac_init_machine(const char *gamename);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x07ff, MRA_RAM },	/* video and color RAM */
-	{ 0x0800, 0x08ff, MRA_RAM },	/* sprite codes at 0x0810 */
-	{ 0x1630, 0x16ff, MRA_RAM },	/* sprite codes at 0x1630 */
-	{ 0xc000, 0xffff, MRA_ROM },	/* SPC-2.1C at 0xc0000, SPC-1.1B at 0xe0000 */
+	{ 0x0000, 0x10bf, MRA_RAM },
+	{ 0x10c7, 0xffff, MRA_RAM },
 	{ 0x10c6, 0x10c6, input_port_0_r }, /* DSW-2 */
 	{ 0x10c5, 0x10c5, input_port_1_r }, /* DSW-3 */
 	{ 0x10c0, 0x10c0, input_port_2_r }, /* Insert Coin */
@@ -256,7 +254,7 @@ static unsigned char superpac_color_table[] =
 	0x00,0x09,0x07,0x01, /* bottom of logo (containing PAC-MAN)*/
 	0x00,0x0f,0x0f,0x0f, /* maze/doors blink */   
 	0x00,0x01,0x02,0x0f, /* level indicator apple */
-	0x00,0x09,0x0f,0x02, /* level indicator banana */  
+	0x00,0x09,0x0f,0x02, /* level indicator banana */
 	0x00,0x02,0x07,0x0f, /* level indicator donut */
 	0x00,0x02,0x0f,0x0c, /* level indicator burger*/
 	0x00,0x0f,0x09,0x02, /* level indicator egg */

@@ -266,8 +266,8 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 Register scr224x288[] =
 {
 	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x37},
-	{ 0x3d4, 0x02, 0x38},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4f},
-	{ 0x3d4, 0x05, 0x98},{ 0x3d4, 0x06, 0x55},{ 0x3d4, 0x07, 0xf0},
+	{ 0x3d4, 0x02, 0x38},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
+	{ 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x55},{ 0x3d4, 0x07, 0xf0},
 	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x61},{ 0x3d4, 0x10, 0x40},
 	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0x3f},{ 0x3d4, 0x13, 0x1c},
 	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x40},{ 0x3d4, 0x16, 0x4a},
@@ -355,7 +355,18 @@ Register scr320x204[] =
 	{ 0x3c0, 0x13, 0x00}
 };
 
-
+Register scr240x272[] =
+{
+        { 0x3c2, 0x0, 0xe3}, { 0x3d4, 0x0, 0x5f}, { 0x3d4, 0x1, 0x3b},
+        { 0x3d4, 0x2, 0x38}, { 0x3d4, 0x3, 0x82}, { 0x3d4, 0x4, 0x4a},
+        { 0x3d4, 0x5, 0x9a}, { 0x3d4, 0x6, 0x55}, { 0x3d4, 0x7, 0xf0},
+        { 0x3d4, 0x8, 0x0},  { 0x3d4, 0x9, 0x61}, { 0x3d4, 0x10, 0x40},
+        { 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0x20},{ 0x3d4, 0x13, 0x1e},
+        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x40},{ 0x3d4, 0x16, 0x4a},
+        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},  { 0x3c4, 0x4, 0xe},
+        { 0x3ce, 0x5, 0x40}, { 0x3ce, 0x6, 0x5},  { 0x3c0, 0x10, 0x41},
+        { 0x3c0, 0x13, 0x0}
+};
 
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. I don't do any test here (224x288 will just do */
@@ -368,15 +379,16 @@ struct osd_bitmap *osd_create_display(int width,int height)
 
 
 	if (!(width == 224 && height == 288) &&
-			!(width == 256 && height == 256) &&
-			!(width == 288 && height == 224) &&
-			!(width == 320 && height == 204))
+            !(width == 256 && height == 256) &&
+	    !(width == 288 && height == 224) &&
+	    !(width == 320 && height == 204) &&
+            !(width == 240 && height == 272))
 		use_vesa = 1;
 
 	if (use_vesa)
 	{
 		if (set_gfx_mode(SCREEN_MODE,VESA_SCREEN_WIDTH,VESA_SCREEN_HEIGHT,0,0) != 0)
-			return 0;
+                   return 0;
 	}
 	else if (use_vesascan)
 	{
@@ -454,6 +466,11 @@ struct osd_bitmap *osd_create_display(int width,int height)
 				reglen = sizeof(scr288x224scanlines)/sizeof(Register);
 			}
 		}
+                else if (width == 240 && height == 272)
+                {
+			reg = scr240x272;
+			reglen = sizeof(scr240x272)/sizeof(Register);
+                }
 		else if (width == 320 && height == 204)
 		{
 			reg = scr320x204;
@@ -735,8 +752,24 @@ int osd_key_pressed(int keycode)
 /* wait for a key press and return the keycode */
 int osd_read_key(void)
 {
-	clear_keybuf();
-	return readkey() >> 8;
+        int key;
+
+
+        /* wait for all keys to be released */
+        do
+        {
+                for (key = 0;key <= OSD_MAX_KEY;key++)
+                        if (osd_key_pressed(key)) break;
+        } while (key <= OSD_MAX_KEY);
+
+        /* wait for a key press */
+        do
+        {
+                for (key = 0;key <= OSD_MAX_KEY;key++)
+                        if (osd_key_pressed(key)) break;
+        } while (key > OSD_MAX_KEY);
+
+        return key;
 }
 
 

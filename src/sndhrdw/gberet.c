@@ -48,7 +48,7 @@ int gberet_sh_start(void)
 	}
 
 	for (i = 0;i < TONE_LENGTH;i++)
-		tone[i] = WAVE_AMPLITUDE * sin(2*M_PI*i/TONE_PERIOD);
+		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
 	for (i = 0;i < NOISE_LENGTH;i++)
 		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
 

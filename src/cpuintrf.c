@@ -59,6 +59,10 @@ void cpu_run(void)
 	totalcpu = 0;
 	while (totalcpu < MAX_CPU)
 	{
+		const struct MemoryReadAddress *mra;
+		const struct MemoryWriteAddress *mwa;
+
+
 		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
 
 		/* if sound is disabled, don't emulate the audio CPU */
@@ -66,6 +70,22 @@ void cpu_run(void)
 			cpurunning[totalcpu] = 0;
 		else
 			cpurunning[totalcpu] = 1;
+
+		/* initialize the memory base pointers for memory hooks */
+		RAM = Machine->memory_region[Machine->drv->cpu[totalcpu].memory_region];
+		mra = Machine->drv->cpu[totalcpu].memory_read;
+		while (mra->start != -1)
+		{
+			if (mra->base) *mra->base = &RAM[mra->start];
+			mra++;
+		}
+		mwa = Machine->drv->cpu[totalcpu].memory_write;
+		while (mwa->start != -1)
+		{
+			if (mwa->base) *mwa->base = &RAM[mwa->start];
+			mwa++;
+		}
+
 
 		totalcpu++;
 	}

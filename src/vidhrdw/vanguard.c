@@ -24,29 +24,6 @@ static int vanguard_scrollx;
 static int vanguard_scrolly;
 
 
-void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i,b;
-        unsigned char intensity4[] = { 0, 31, 47, 63 };
-        unsigned char intensity8[] = { 0, 15, 23, 31, 39, 47, 55, 63 };
-
-	for (i = 0, b=0 ;i < 256; i++, b++)
-	{
-                palette[i*3  ] = intensity8[b&07] << 2;
-                palette[i*3+1] = intensity8[(b&0x38)>>3] << 2;
-                palette[i*3+2] = intensity4[(b&0xc0)>>6] << 2;
-	}
-
-	for (i = 0;i < 16; i++)
-        {
-	        colortable[i*4] = 0;
-                colortable[i*4+2] = color_prom[i*4+1];
-                colortable[i*4+1] = color_prom[i*4+2];
-                colortable[i*4+3] = color_prom[i*4+3];
-        }
-}
-
-
 
 /***************************************************************************
 
@@ -154,7 +131,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					vanguard_videoram2[offs],
-					colorram[offs] & 0x7,
+					colorram[offs] >> 4,
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -164,7 +141,6 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 	if (sx < 0) sx += 256;
 	sy = vanguard_scrolly /* + 2*8 */;
 	if (sy >= 256) sy -= 256;
-
 
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,sx,-sy,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -180,7 +156,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 		charcode = videoram[offs];
 
 		/* background */
-/*		if (dirtybuffer[offs] || dirtycharacter[charcode])*/
+/*//		if (dirtybuffer[offs] || dirtycharacter[charcode])*/
 		{
 			int sx,sy;
 
@@ -200,7 +176,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					charcode,
-					colorram[offs] & 0xf,
+					colorram[offs] & 0x0f,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

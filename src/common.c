@@ -174,7 +174,6 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	int i;
 	struct GameSamples *samples;
 
-
 	if (samplenames == 0 || samplenames[0] == 0) return 0;
 
 	i = 0;
@@ -875,7 +874,8 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
   "cols" and "colscroll".
   If the bitmap cannot scroll in one direction, set rows or columns to 0.
   If the bitmap scrolls as a whole, set rows and/or cols to 1.
-  Bidirectional scrolling is supported only if the bitmap scrolls as a whole.
+  Bidirectional scrolling is, of course, supported only if the bitmap
+  scrolls as a whole in at least one direction.
 
 ***************************************************************************/
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
@@ -906,13 +906,13 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (col + cons < cols &&	colscroll[col + cons] == scroll)
 				cons++;
 
+			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
+			else scroll %= src->height;
+
 			myclip.min_x = col * colwidth;
 			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
 			myclip.max_x = (col + cons) * colwidth - 1;
 			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
-
-			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
-			else scroll %= src->height;
 
 			copybitmap(dest,src,0,0,0,scroll,&myclip,transparency,transparent_color);
 			copybitmap(dest,src,0,0,0,scroll - src->height,&myclip,transparency,transparent_color);
@@ -944,13 +944,13 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (row + cons < rows &&	rowscroll[row + cons] == scroll)
 				cons++;
 
+			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
+			else scroll %= src->width;
+
 			myclip.min_y = row * rowheight;
 			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
 			myclip.max_y = (row + cons) * rowheight - 1;
 			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
-
-			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
-			else scroll %= src->width;
 
 			copybitmap(dest,src,0,0,scroll,0,&myclip,transparency,transparent_color);
 			copybitmap(dest,src,0,0,scroll - src->width,0,&myclip,transparency,transparent_color);
@@ -974,6 +974,106 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		copybitmap(dest,src,0,0,scrollx,scrolly - src->height,clip,transparency,transparent_color);
 		copybitmap(dest,src,0,0,scrollx - src->width,scrolly,clip,transparency,transparent_color);
 		copybitmap(dest,src,0,0,scrollx - src->width,scrolly - src->height,clip,transparency,transparent_color);
+	}
+	else if (rows == 1)
+	{
+		/* scrolling columns + horizontal scroll */
+		int col,colwidth;
+		int scrollx;
+		struct rectangle myclip;
+
+
+		if (rowscroll[0] < 0) scrollx = src->width - (-rowscroll[0]) % src->width;
+		else scrollx = rowscroll[0] % src->width;
+
+		colwidth = src->width / cols;
+
+		myclip.min_y = clip->min_y;
+		myclip.max_y = clip->max_y;
+
+		col = 0;
+		while (col < cols)
+		{
+			int cons,scroll;
+
+
+			/* count consecutive columns scrolled by the same amount */
+			scroll = colscroll[col];
+			cons = 1;
+			while (col + cons < cols &&	colscroll[col + cons] == scroll)
+				cons++;
+
+			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
+			else scroll %= src->height;
+
+			myclip.min_x = col * colwidth + scrollx;
+			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
+			myclip.max_x = (col + cons) * colwidth - 1 + scrollx;
+			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
+
+			copybitmap(dest,src,0,0,scrollx,scroll,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scrollx,scroll - src->height,&myclip,transparency,transparent_color);
+
+			myclip.min_x = col * colwidth + scrollx - src->width;
+			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
+			myclip.max_x = (col + cons) * colwidth - 1 + scrollx - src->width;
+			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
+
+			copybitmap(dest,src,0,0,scrollx - src->width,scroll,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scrollx - src->width,scroll - src->height,&myclip,transparency,transparent_color);
+
+			col += cons;
+		}
+	}
+	else if (cols == 1)
+	{
+		/* scrolling rows + vertical scroll */
+		int row,rowheight;
+		int scrolly;
+		struct rectangle myclip;
+
+
+		if (colscroll[0] < 0) scrolly = src->height - (-colscroll[0]) % src->height;
+		else scrolly = colscroll[0] % src->height;
+
+		rowheight = src->height / rows;
+
+		myclip.min_x = clip->min_x;
+		myclip.max_x = clip->max_x;
+
+		row = 0;
+		while (row < rows)
+		{
+			int cons,scroll;
+
+
+			/* count consecutive rows scrolled by the same amount */
+			scroll = rowscroll[row];
+			cons = 1;
+			while (row + cons < rows &&	rowscroll[row + cons] == scroll)
+				cons++;
+
+			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
+			else scroll %= src->width;
+
+			myclip.min_y = row * rowheight + scrolly;
+			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
+			myclip.max_y = (row + cons) * rowheight - 1 + scrolly;
+			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
+
+			copybitmap(dest,src,0,0,scroll,scrolly,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - src->width,scrolly,&myclip,transparency,transparent_color);
+
+			myclip.min_y = row * rowheight + scrolly - src->height;
+			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
+			myclip.max_y = (row + cons) * rowheight - 1 + scrolly - src->height;
+			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
+
+			copybitmap(dest,src,0,0,scroll,scrolly - src->height,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - src->width,scrolly - src->height,&myclip,transparency,transparent_color);
+
+			row += cons;
+		}
 	}
 }
 
@@ -1151,7 +1251,8 @@ int setkeysettings(void)
 			        dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * s + 1].text);
 		                displaytext(dt,1);
 		                key = osd_read_key();
-                                Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = key;
+                                if (key != OSD_KEY_ESC)
+                                  Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = key;
                                 key = OSD_KEY_ENTER;
                                 }
                                 break;

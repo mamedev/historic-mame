@@ -26,7 +26,7 @@ int galaga_sharedram_r(int offset)
 void galaga_sharedram_w(int offset,int data)
 {
 	galaga_sharedram[offset] = data;
-        if (offset == 0x1ab9) {
+        if (offset == 0x1ab9 && Machine->samples) {
           if (data && testdone && Machine->samples->sample[0]) {
                 osd_play_sample(7,Machine->samples->sample[0]->data,
                         Machine->samples->sample[0]->length,
@@ -112,7 +112,6 @@ extern void galaga_customio_w(int offset,int data)
 					else fire = 1;
 				}
 				else fire = 0;
-
 
 				if (mode)	/* switch mode */
 /* TODO: investigate what each bit does. bit 7 is the service switch */

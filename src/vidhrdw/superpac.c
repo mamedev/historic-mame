@@ -106,7 +106,8 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (i = 0;i < 56; i++)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
+		if (spriteram[32*i+1])
+			drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
 				/*charnum*/ spriteram[32*i + 1],
 				spriteram[32*i + 2] + 32,
 				/*hflip*/ spriteram[32*i] & 0x02,

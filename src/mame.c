@@ -1,3 +1,39 @@
+/***************************************************************************
+
+    M.A.M.E.  -  Multiple Arcade Machine Emulator
+    Copyright (C) 1997  by Nicola Salmoria and Mirko Buffoni
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    You can contact us via e-mail to the following addresses:
+
+    Nicola Salmoria:   MC6489@mclink.it
+    Mirko Buffoni:     mix@lim.dsi.unimi.it
+
+    Note to the GPL from Nicola and Mirko :
+
+    This General Public License does not limit the use of MAME specific
+    source code (drivers, machine emulation etc.). Use of the code is even
+    encouraged. But do note that if you make a 'derived' work as stated in
+    the full GPL, it is required that full source code must be made available.
+
+    Making available full source code will benefit both the MAME project
+    developers and MAME users and is the sole reason for bringing MAME
+    under the GPL.
+
+***************************************************************************/
+
 #include "driver.h"
 #include "strings.h"
 #include <time.h>
@@ -118,8 +154,6 @@ int main(int argc,char **argv)
 int init_machine(const char *gamename,int argc,char **argv)
 {
 	int i;
-	const struct MemoryReadAddress *mra;
-	const struct MemoryWriteAddress *mwa;
 
 
 	frameskip = 0;
@@ -185,23 +219,8 @@ int init_machine(const char *gamename,int argc,char **argv)
 	}
 
 
-	/* initialize the memory base pointers for memory hooks */
-	mra = drv->cpu[0].memory_read;
-	while (mra->start != -1)
-	{
-		if (mra->base) *mra->base = &RAM[mra->start];
-		mra++;
-	}
-	mwa = drv->cpu[0].memory_write;
-	while (mwa->start != -1)
-	{
-		if (mwa->base) *mwa->base = &RAM[mwa->start];
-		mwa++;
-	}
-
-
 	/* read audio samples if available */
-	Machine->samples = readsamples(gamedrv->samplenames,gamename);
+        Machine->samples = readsamples(gamedrv->samplenames,gamename);
 
 
 	if (*drv->init_machine && (*drv->init_machine)(gamename) != 0)

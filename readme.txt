@@ -1,10 +1,36 @@
 
-                                M A M E
+              M.A.M.E.  -  Multiple Arcade Machine Emulator
+         Copyright (C) 1997  by Nicola Salmoria and Mirko Buffoni
 
-                    Multiple Arcade Machine Emulator
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-                  by Nicola Salmoria (MC6489@mclink.it)
-                 and Mirko Buffoni (mix@lim.dsi.unimi.it)
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    You can contact us via e-mail to the following addresses:
+
+    Nicola Salmoria:   MC6489@mclink.it
+    Mirko Buffoni:     mix@lim.dsi.unimi.it
+
+    Note to the GPL from Nicola and Mirko :
+
+    This General Public License does not limit the use of MAME specific
+    source code (drivers, machine emulation etc.). Use of the code is even
+    encouraged. But do note that if you make a 'derived' work as stated in
+    the full GPL, it is required that full source code must be made available.
+
+    Making available full source code will benefit both the MAME project
+    developers and MAME users and is the sole reason for bringing MAME
+    under the GPL.
+
 
 Important note:  from now on I, Mirko, am the coordinator of project MAME.
 I created a new account address for those of you who intend to contribute to
@@ -56,7 +82,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong 3               |  Yes   |   No   |   No   |  Yes   | dkong3   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Elevator Action - Bootleg   |  Yes   |   No   |   No   |  n/a   | elevator |
+| Elevator Action - Bootleg   |  Yes   |  Yes   |   No   |  n/a   | elevator |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Elevator Action - Original  |   No   |   No   |   No   |   No   | elevatob |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -76,11 +102,11 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gyruss                      |  Yes   | Close  | Yes(1) |  Yes   | gyruss   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| "Japanese Irem game"        |  Yes   |  Yes   | Limited|   No   | japirem  |
+| Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Jump Bug                    |  Yes   |   No   |  Yes   |   No   | jumpbug  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Jungle King                 |  Yes   |   No   |   No   |   No   | junglek  |
+| Jungle King                 |  Yes   | Close  |   No   |   No   | junglek  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Kangaroo                    |  Yes   |   No   |  Yes   |  n/a   | kangaroo |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -92,7 +118,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Mad Planets                 |  Yes   |  Yes?  |   No   | Yes(1) | mplanets |
+| Mad Planets                 |  Yes   |  Yes?  | Yes(1) |  n/a   | mplanets |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Millipede                   |  Yes   |   No   |   No   |  Yes   | milliped |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -124,7 +150,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pleiads                     |  Yes   |   No   | Limited|   No   | pleiads  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Pooyan                      |  Yes   |   No   |  Yes   |  Yes   | pooyan   |
+| Pooyan                      |  Yes   | Close  |  Yes   |  Yes   | pooyan   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Popeye - Bootleg            |  Yes   |  Yes   |  Yes   |  Yes   | popeyebl |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -411,7 +437,6 @@ F2      Test mode
   Galaxian Turbo ("galturbo")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 
 
@@ -449,8 +474,8 @@ Known issues:
 
 
 
-"Japanese Irem game" ("japirem")
-================================
+Gingateikoku No Gyakushu ("japirem")
+====================================
 This runs on a modified Galaxian board.
 
 Arrows  Move around
@@ -460,7 +485,6 @@ Clones supported:
   Uniwars ("uniwars")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 - What does dip switch 6 do?
 
@@ -490,9 +514,6 @@ CTRL    Jump
 Clones supported:
   bootleg version called Jungle Hunt ("jhunt")
 
-Known issues:
-- I haven't the gfx bank selector switch, therefore the background graphics
-  are not selected appropriately. Use C and V to change the gfx set.
 
 
 
@@ -508,7 +529,6 @@ Krull ("krull")
 Runs on the same hardware as Q*Bert
 
 Arrows  Move around
-CTRL    Fire
 E,S,D,F Firing joystick
 F1      Test mode
 F2      Select
@@ -584,7 +604,6 @@ Clones supported:
   bootleg version called Fantazia ("fantazia")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 - What do the dip switches do?
 
@@ -616,7 +635,6 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 
 
@@ -734,7 +752,6 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 - What do the dip switches do?
 
@@ -838,9 +855,6 @@ Clones supported (some of these have wrong colors, and the dip switch menu
   Lunar Rescur ("lrescue")
   Destination Earth ("desterth")
 
-Known issues:
-- The color stripes are not placed correctly
-
 
 
 Space Panic ("panic")
@@ -918,9 +932,6 @@ Clones supported:
   bootleg version ("spaceplt")
 
 Known issues:
-- The ROM copyright message and the dipswitch menu are unreadable. Time Pilot
-  doesn't have consecutive letters in the graphics ROms, I'll have to modify
-  my text routines to handle that.
 - This game uses double-width sprites for the clouds, but I haven't yet figured
   out they are selected. The code is currently a hack - just double the sprites
   which I know are used for clouds...
@@ -985,7 +996,6 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
 - The star background is probably not entirely accurate.
 - What do the dip switches do?
 
@@ -1183,7 +1193,9 @@ The following keys work in all emulators:
 Tab     Change dip switch settings
 P       Pause
 F3      Reset
-F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit.
+F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit
+F8      To select keys assignment.
+F9      To change volume percentage thru 100,75,50,25,0 values
 F10     Toggle speed throttling
 F11     Toggle fps counter
 F12     Save a screen snapshot

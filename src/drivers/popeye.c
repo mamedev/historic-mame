@@ -57,9 +57,13 @@ I/O 2  ;bit 0 Coin in 1
 extern unsigned char *popeye_videoram,*popeye_colorram,*popeye_backgroundram;
 extern unsigned char *popeye_background_pos,*popeye_palette_bank;
 extern void popeye_backgroundram_w(int offset,int data);
+extern void popeye_videoram_w(int offset,int data);
+extern void popeye_colorram_w(int offset,int data);
 extern void popeye_palettebank_w(int offset,int data);
 extern void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern int  popeye_vh_start(void);
+extern void popeye_vh_stop(void);
 
 extern int popeye_sh_start(void);
 
@@ -79,8 +83,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram },
 	{ 0x8f00, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa3ff, MWA_RAM, &popeye_videoram },
-	{ 0xa400, 0xa7ff, MWA_RAM, &popeye_colorram },
+	{ 0xa000, 0xa3ff, popeye_videoram_w, &popeye_videoram },
+	{ 0xa400, 0xa7ff, popeye_colorram_w, &popeye_colorram },
 	{ 0xc000, 0xcfff, popeye_backgroundram_w, &popeye_backgroundram },
 	{ 0x8c00, 0x8c01, MWA_RAM, &popeye_background_pos },
 	{ 0x8c03, 0x8c03, popeye_palettebank_w, &popeye_palette_bank },
@@ -289,8 +293,8 @@ static struct MachineDriver machine_driver =
 	popeye_vh_convert_color_prom,
 
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	popeye_vh_start,
+	popeye_vh_stop,
 	popeye_vh_screenrefresh,
 
 	/* sound hardware */

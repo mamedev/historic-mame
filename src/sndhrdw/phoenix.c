@@ -5,6 +5,7 @@
 #define SBLIMIT 1000
 #define SBFREQ  1400
 
+
 /* I played around with these until they sounded ok */
 static max_freq = 22050;
 static inc_freq = 4500;
@@ -30,10 +31,10 @@ int noisemulate = 0;
 
 int phoenix_sh_init(const char *gamename)
 {
-        if (Machine->samples->sample[0] == 0)
-          noisemulate = 1;
-        else
+        if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
           noisemulate = 0;
+        else
+          noisemulate = 1;
 
         return 0;
 }

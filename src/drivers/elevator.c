@@ -4,15 +4,17 @@ Elevator Action memory map (preliminary)
 
 0000-7fff ROM
 8000-87ff RAM
-c400-c7ff Video RAM 1
-c800-cbff Video RAM 2
-cc00-cfff Video RAM 3
+9000-bfff Character generator RAM
+c400-c7ff Video RAM: front playfield
+c800-cbff Video RAM: middle playfield
+cc00-cfff Video RAM: back playfield
 d100-d17f Sprites
+d200-d27f Palette (64 pairs: xxxxxxxR RRGGGBBB. bits are inverted, i.e. 0x01ff = black)
 
 read:
 8800      ?
 8801      ? the code stops until bit 0 and 1 are = 1
-d404      returns contents of background ROM, pointed by d509-d50a
+d404      returns contents of graphic ROM, pointed by d509-d50a
 d408      IN0
           bit 5 = jump player 1
           bit 4 = fire player 1
@@ -49,12 +51,21 @@ d40f      DSW3
 		  bit 0-1 difficulty
 
 write
-d020-d03f playfield #2 column scroll
-d040-d05f playfield #1 column scroll
-d509-d50a pointer to background ROM to read from d404
+d000-d01f front playfield column scroll (always 0)
+d020-d03f middle playfield column scroll
+d040-d05f back playfield column scroll
+d300      ?
+d40e-d40f ?
+d500-d505 ?
+d506      bits 0-3 = front playfield color code
+          bits 4-7 = middle playfield color code
+d507      bits 0-3 = back playfield color code
+          bits 4-7 = sprite color bank (1 bank = 2 color codes)
+d509-d50a pointer to graphic ROM to read from d404
 d50d      watchdog reset ?
 d50e      bootleg version: $01 -> ROM ea54.bin is mapped at 7000-7fff
                            $81 -> ROM ea52.bin is mapped at 7000-7fff
+d600      video enable? (maybe per playfield: 0xf0 = all on, 0x00 = all off)
 
 ***************************************************************************/
 
@@ -69,11 +80,17 @@ extern int elevator_unknown_r(int offset);
 extern void elevatob_bankswitch_w(int offset,int data);
 
 extern unsigned char *elevator_videoram2,*elevator_videoram3;
-extern unsigned char *elevator_scroll1,*elevator_scroll2;
-extern unsigned char *elevator_attributesram;
-extern int elevator_background_r(int offset);
+extern unsigned char *elevator_characterram;
+extern unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
+extern unsigned char *elevator_gfxpointer,*elevator_paletteram;
+extern unsigned char *elevator_colorbank,*elevator_video_enable;
+extern void elevator_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern int elevator_gfxrom_r(int offset);
 extern void elevator_videoram2_w(int offset,int data);
 extern void elevator_videoram3_w(int offset,int data);
+extern void elevator_paletteram_w(int offset,int data);
+extern void elevator_colorbank_w(int offset,int data);
+extern void elevator_characterram_w(int offset,int data);
 extern int elevator_vh_start(void);
 extern void elevator_vh_stop(void);
 extern void elevator_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -91,7 +108,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
 	{ 0xd40f, 0xd40f, input_port_5_r },	/* DSW3 */
-	{ 0xd404, 0xd404, elevator_background_r },
+	{ 0xd404, 0xd404, elevator_gfxrom_r },
 	{ 0x8801, 0x8801, elevator_unknown_r },
 	{ 0x8800, 0x8800, elevator_protection_r },
 	{ -1 }	/* end of table */
@@ -104,13 +121,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc800, 0xcbff, elevator_videoram2_w, &elevator_videoram2 },
 	{ 0xcc00, 0xcfff, elevator_videoram3_w, &elevator_videoram3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram },
+	{ 0xd000, 0xd01f, MWA_RAM, &elevator_scroll1 },
 	{ 0xd020, 0xd03f, MWA_RAM, &elevator_scroll2 },
-	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll1 },
+	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll3 },
 	{ 0xd50d, 0xd50d, MWA_NOP },
+	{ 0xd509, 0xd50a, MWA_RAM, &elevator_gfxpointer },
+	{ 0xd506, 0xd507, elevator_colorbank_w, &elevator_colorbank },
+	{ 0xd200, 0xd27f, elevator_paletteram_w, &elevator_paletteram },
+	{ 0x9000, 0xbfff, elevator_characterram_w, &elevator_characterram },
 	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
-        { 0xd40e, 0xd40f, MWA_RAM },
-        { 0xd509, 0xd50a, MWA_RAM },
-        { 0x8800, 0x8800, MWA_NOP },
+	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_enable },
+{ 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -155,16 +176,18 @@ static struct InputPort input_ports[] =
 };
 
 
+
 static struct KEYSet keys[] =
 {
-        { 0, 3, "MOVE UP" },
-        { 0, 0, "MOVE LEFT"  },
-        { 0, 1, "MOVE RIGHT" },
-        { 0, 2, "MOVE DOWN" },
-        { 0, 4, "FIRE" },
-        { 0, 5, "JUMP" },
-        { -1 }
+	{ 0, 3, "MOVE UP" },
+	{ 0, 0, "MOVE LEFT"  },
+	{ 0, 1, "MOVE RIGHT" },
+	{ 0, 2, "MOVE DOWN" },
+	{ 0, 4, "FIRE" },
+	{ 0, 5, "JUMP" },
+	{ -1 }
 };
+
 
 
 static struct DSW dsw[] =
@@ -181,93 +204,66 @@ static struct DSW dsw[] =
 
 
 
-static struct GfxLayout charlayout =
+struct GfxLayout elevator_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	3,	/* 3 bits per pixel */
-	{ 0, 256*8*8, 512*8*8 },	/* the bitplanes are separated */
+	{ 512*8*8, 256*8*8, 0 },	/* the bitplanes are separated */
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout spritelayout =
+struct GfxLayout elevator_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 64*16*16, 128*16*16 },	/* the bitplanes are separated */
+	{ 128*16*16, 64*16*16, 0 },	/* the bitplanes are separated */
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 		8*8+7, 8*8+6, 8*8+5, 8*8+4, 8*8+3, 8*8+2, 8*8+1, 8*8+0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+/* there's nothing here, this is just a placeholder to let the video hardware */
+/* pick the remapped color table and dynamically build the real one. */
+static struct GfxLayout fakelayout =
+{
+	1,1,
+	0,
+	1,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
+};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x3000, &charlayout,    0, 3 },
-	{ 1, 0x0000, &charlayout,    0, 3 },
-	{ 1, 0x0000, &spritelayout, 3*8, 2 },
-	{ 1, 0x1800, &spritelayout, 3*8, 2 },
-	{ 1, 0x4800, &spritelayout, 3*8, 2 },	/* seems to be unused (contains garbage in the bootleg version) */
+	{ 1, 0x0000, &elevator_charlayout,   8*8,  3 },	/* not used by the game, here only for the dip switch menu */
+	{ 0, 0x9000, &elevator_charlayout,     0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &elevator_spritelayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &elevator_spritelayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0,      &fakelayout,           11*8, 37 },
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char palette[] =
+/* Elevator Action doesn't have a color PROM, it uses a RAM to generate colors */
+/* and change them during the game. Here is the list of all the colors is uses. */
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	25,34,195,	/* BLUE */
-	25,161,153,	/* CYAN */
-	68,68,68, /* DKGRAY */
-  0xff,0x00,0x00, /* RED */
-	153,153,153,	/* GRAY */
-	229,229,229, /* LTGRAY */
-	195,195,195, /* LTGRAY2 */
-	238,153,195,	/* PINK */
-	25,110,110,	/* DKCYAN */
-	195,153,110,	/* BROWN1 */
-	238,195,153,	/* BROWN2 */
-	170,136,51,	/* BROWN3 */
-	238,238,238, /* WHITE */
-	238,110,195,	/* DKPINK */
-
-  0x00,0xff,0x00, /* GREEN */
-  0xff,0xff,0x00, /* YELLOW */
-  0xff,0x00,0xff, /* MAGENTA */
-
-	0xe0,0xb0,0x70,	/* BROWN */
-	0xd0,0xa0,0x60,	/* BROWN0 */
-	0x54,0x40,0x14,	/* BROWN4 */
-
-  0x54,0xa8,0xff, /* LTBLUE */
-  0x00,0xa0,0x00, /* DKGREEN */
-  0x00,0xe0,0x00, /* GRASSGREEN */
-
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0xff,0xb6,0x92,	/* LTORANGE */
-};
-
-enum {BLACK,BLUE,CYAN,DKGRAY,RED,GRAY,LTGRAY,LTGRAY2,PINK,DKCYAN,
-		BROWN1,BROWN2,BROWN3,WHITE,DKPINK,
-
-		GREEN,YELLOW,MAGENTA,
-       BROWN,BROWN0,BROWN4,
-			 LTBLUE,DKGREEN,GRASSGREEN,DKORANGE,LTORANGE
-            };
-
-static unsigned char colortable[] =
-{
-        0,BLUE,CYAN,LTGRAY,GRAY,RED,LTGRAY2,DKGRAY,
-        0,PINK,DKGRAY,LTGRAY2,DKCYAN,GRAY,GRAY,15,
-        0,BROWN3,WHITE,BROWN2,DKPINK,BROWN1,DKGRAY,RED,
-		/* sprites */
-        0,BROWN2,BROWN3,11,RED,LTGRAY,BROWN1,3,
-        0,CYAN,GRAY,DKGRAY,BLUE,LTGRAY,LTGRAY2,5,
+	/* total: 37 colors (2 bytes per color) */
+	0x01,0xFF,	/* transparent black */
+	0x01,0xFF,0x01,0xFA,0x01,0xF8,0x01,0xE2,0x01,0xD8,0x01,0xD1,0x01,0xC7,0x01,0xB6,
+	0x01,0xB1,0x01,0xA4,0x01,0x92,0x01,0x89,0x01,0x6D,0x01,0x24,0x01,0x20,0x00,0xDB,
+	0x00,0xA7,0x00,0x9C,0x00,0x98,0x00,0x92,0x00,0x87,0x00,0x80,0x00,0x59,0x00,0x53,
+	0x00,0x49,0x00,0x40,0x00,0x3F,0x00,0x1A,0x00,0x19,0x00,0x11,0x00,0x0B,0x00,0x0A,
+	0x00,0x08,0x00,0x07,0x00,0x03,0x00,0x00
 };
 
 
@@ -290,8 +286,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	37,8*8+3*8+37,	/* 8 codes for the game, 3 for the dip switch menu, and 37 spots for the available colors */
+	elevator_vh_convert_color_prom,
 
 	0,
 	elevator_vh_start,
@@ -325,17 +321,19 @@ ROM_START( elevator_rom )
 	ROM_LOAD( "ea-ic55.bin", 0x6000, 0x1000 )
 	ROM_LOAD( "ea-ic54.bin", 0x7000, 0x1000 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ea-ic4.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "ea-ic5.bin",  0x1000, 0x1000 )
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
 	ROM_LOAD( "ea-ic1.bin",  0x0000, 0x1000 )
 	ROM_LOAD( "ea-ic2.bin",  0x1000, 0x1000 )
 	ROM_LOAD( "ea-ic3.bin",  0x2000, 0x1000 )
 	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000 )
 	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000 )
 	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000 )
-
-	ROM_REGION(0x2000)	/* background graphics */
-	ROM_LOAD( "ea-ic7.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea-ic8.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000 )
+	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000 )
 
 #if 0
 	ROM_LOAD( "ea-ic70.bin", , 0x1000 )
@@ -357,17 +355,19 @@ ROM_START( elevatob_rom )
 	ROM_LOAD( "ea54.bin", 0xe000, 0x1000 )	/* copy for my convenience */
 	ROM_LOAD( "ea52.bin", 0xf000, 0x1000 )	/* protection crack, bank switched at 7000 */
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ea04.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "ea05.bin",  0x1000, 0x1000 )
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
 	ROM_LOAD( "ea01.bin",  0x0000, 0x1000 )
 	ROM_LOAD( "ea02.bin",  0x1000, 0x1000 )
 	ROM_LOAD( "ea03.bin",  0x2000, 0x1000 )
 	ROM_LOAD( "ea04.bin",  0x3000, 0x1000 )
 	ROM_LOAD( "ea05.bin",  0x4000, 0x1000 )
 	ROM_LOAD( "ea06.bin",  0x5000, 0x1000 )
-
-	ROM_REGION(0x2000)	/* background graphics */
-	ROM_LOAD( "ea07.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea08.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "ea07.bin",  0x6000, 0x1000 )
+	ROM_LOAD( "ea08.bin",  0x7000, 0x1000 )
 
 #if 0
 	ROM_LOAD( "ea70.bin", , 0x1000 )
@@ -388,12 +388,12 @@ struct GameDriver elevator_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom,0,0,
 	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
 		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
 		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
-	0x06, 0x04,
-	8*13, 8*16, 0x00,
+	0, 1,
+	8*13, 8*16, 2,
 
 	0, 0
 };
@@ -409,12 +409,12 @@ struct GameDriver elevatob_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom,0,0,
 	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
 		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
 		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
-	0x01, 0x02,
-	8*13, 8*16, 0x01,
+	0, 1,
+	8*13, 8*16, 2,
 
 	0, 0
 };

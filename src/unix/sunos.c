@@ -2,8 +2,6 @@
 * SunOS dependent code
 */
 #ifdef sunos
-#define __SUNOS_C_
-#include "xmame.h"
 	
 int sysdep_init(void) {
 	play_sound	= FALSE;
