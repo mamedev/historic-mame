@@ -45,6 +45,34 @@ General notes:
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
+Revision History:
+
+Acho A. Tang, 3-16-2002
+
+[Super Stingray]
+- improved color, added sound, game timer and coin handler, corrected DIP settings
+note: CLUT and color assignment PROMs missing
+
+[Kyros]
+- fixed color, added sound and coin handler, corrected DIP settings
+
+[Paddle Mania]
+- reactivated driver
+- improved color, added sound, fixed control and priority, corrected DIP settings
+
+[Time Soldiers]
+- fixed priority
+
+[Gold Medalist]
+- fixed gameplay, control and priority, corrected DIP settings
+note: bad sound ROM
+
+[Sky Adventure]
+- fixed sprite position and priority
+
+[Gang Wars]
+- fixed color in the 2nd last graphics bank
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -58,6 +86,7 @@ VIDEO_UPDATE( sstingry );
 VIDEO_UPDATE( alpha68k_I );
 VIDEO_UPDATE( kouyakyu );
 PALETTE_INIT( kyros );
+PALETTE_INIT( paddlem );
 VIDEO_UPDATE( alpha68k_II );
 WRITE16_HANDLER( alpha68k_II_video_bank_w );
 VIDEO_UPDATE( alpha68k_V );
@@ -70,7 +99,7 @@ WRITE16_HANDLER( alpha68k_videoram_w );
 WRITE16_HANDLER( kouyakyu_video_w );
 
 static data16_t *shared_ram;
-static unsigned char *sound_ram;
+//static unsigned char *sound_ram; //AT: not needed
 static int invert_controls,microcontroller_id,coin_id;
 
 /******************************************************************************/
@@ -143,7 +172,16 @@ static WRITE16_HANDLER( alpha68k_V_sound_w )
 	if(ACCESSING_MSB)
 		alpha68k_V_video_bank_w((data>>8)&0xff);
 }
-
+//AT
+static WRITE16_HANDLER( paddlema_soundlatch_w )
+{
+        if (ACCESSING_LSB)
+        {
+                soundlatch_w(0, data);
+                cpu_set_irq_line(1, 0, HOLD_LINE);
+        }
+}
+//ZT
 /******************************************************************************/
 
 /* Time Soldiers, Sky Soldiers, Gold Medalist */
@@ -162,6 +200,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 			return 0;
 
 		case 0x29: /* Query microcontroller for coin insert */
+                if (microcontroller_id != 0x8803) { //AT
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
 				shared_ram[0x29] = (source&0xff00)|0x22;
@@ -175,7 +214,23 @@ static READ16_HANDLER( alpha_II_trigger_r )
 			else
 				shared_ram[0x29] = (source&0xff00)|0x00;
 			return 0;
-
+//AT: unidentified jump code: 0x5b
+                }
+                else
+                {
+                        if ((readinputport(2)&0x3)==3) latch=0;
+                        if ((readinputport(2)&0x1)==0 && !latch) {
+                                shared_ram[0x29] = (source&0xff00)|0x23; // coinA
+                                latch=1;
+                        } else if ((readinputport(2)&0x2)==0 && !latch) {
+                                shared_ram[0x29] = (source&0xff00)|0x24; // coinB
+                                latch=1;
+                        }
+                        else
+                                shared_ram[0x29] = (source&0xff00)|0x21; // timer
+                        return 0;
+                }
+//ZT
 		case 0xfe:	/* Custom ID check, same for all games */
 			shared_ram[0xfe] = (source&0xff00)|0x87;
 			break;
@@ -272,12 +327,17 @@ static WRITE16_HANDLER( alpha_microcontroller_w )
 
 static READ16_HANDLER( kyros_alpha_trigger_r )
 {
+//AT: possible jump codes: 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49,0x00
+        static unsigned coinvalue, trigstate=0, deposits=0, credits=0;
+        static UINT8 coinage[8][2]={{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{3,2}};
+//ZT
 	static int latch;
 	int source=shared_ram[offset];
 
 	switch (offset) {
 		case 0x22: /* Coin value */
-			shared_ram[0x22] = (source&0xff00)|0x1;
+			//shared_ram[0x22] = (source&0xff00)|0x1;
+                        shared_ram[0x22] = (source&0xff00)|(credits&0x00ff); //AT
 			return 0;
 		case 0x29: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x1)==1) latch=0;
@@ -285,6 +345,18 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 				shared_ram[0x29] = (source&0xff00)|0x22;
 				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
+//AT
+                                coinvalue = readinputport(1)>>1 & 7;
+                                if (++deposits==coinage[coinvalue][0]) {
+                                        credits = coinage[coinvalue][1];
+                                        deposits = 0;
+                                } else
+                                        credits = 0;
+                        }
+                        else if (++trigstate>=12) { // sets jump cycle to 12(arbitrary)
+                                shared_ram[0x29] = (source&0xff00)|0x21;
+                                trigstate = 0;
+//ZT
 			}
 			else
 				shared_ram[0x29] = (source&0xff00)|0x00;
@@ -321,7 +393,8 @@ static MEMORY_WRITE16_START( kouyakyu_writemem )
 	{ 0x140000, 0x1407ff, MWA16_RAM },
 	{ 0x780000, 0x780001, MWA16_NOP }, /* Watchdog? */
 MEMORY_END
-
+//AT
+#if 0
 static MEMORY_READ16_START( kyros_readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x020000, 0x020fff, MRA16_RAM },
@@ -356,7 +429,45 @@ static MEMORY_WRITE16_START( alpha68k_I_writemem )
 	{ 0x180000, 0x180001, MWA16_NOP }, /* Watchdog */
 	{ 0x380000, 0x380001, alpha68k_II_sound_w },
 MEMORY_END
+#endif
+static MEMORY_READ16_START( kyros_readmem )
+        { 0x000000, 0x01ffff, MRA16_ROM }, // main program
+        { 0x020000, 0x020fff, MRA16_RAM }, // work RAM
+        { 0x040000, 0x041fff, MRA16_RAM }, // sprite RAM
+        { 0x060000, 0x060001, MRA16_RAM }, // MSB: watchdog
+        { 0x080000, 0x0801ff, kyros_alpha_trigger_r },
+        { 0x0c0000, 0x0c0001, input_port_0_word_r },
+        { 0x0e0000, 0x0e0001, kyros_dip_r },
+MEMORY_END
 
+static MEMORY_WRITE16_START( kyros_writemem )
+        { 0x000000, 0x01ffff, MWA16_ROM },
+        { 0x020000, 0x020fff, MWA16_RAM, &shared_ram },
+        { 0x040000, 0x041fff, MWA16_RAM, &spriteram16 },
+        { 0x060000, 0x060001, MWA16_RAM, &videoram16 }, // LSB: BGC
+        { 0x080000, 0x0801ff, MWA16_NOP },
+        { 0x0e0000, 0x0e0001, kyros_sound_w },
+MEMORY_END
+
+static MEMORY_READ16_START( alpha68k_I_readmem )
+        { 0x000000, 0x03ffff, MRA16_ROM }, // main program
+        { 0x080000, 0x083fff, MRA16_RAM }, // work RAM
+        { 0x100000, 0x103fff, MRA16_RAM }, // video RAM
+        { 0x180000, 0x180001, input_port_3_word_r }, // LSB: DSW0
+        { 0x180008, 0x180009, input_port_4_word_r }, // LSB: DSW1
+        { 0x300000, 0x300001, input_port_0_word_r }, // joy1, joy2
+        { 0x340000, 0x340001, input_port_1_word_r }, // coin, start, service
+        { 0x380000, 0x380001, input_port_2_word_r }, // joy3, joy4
+MEMORY_END
+
+static MEMORY_WRITE16_START( alpha68k_I_writemem )
+        { 0x000000, 0x03ffff, MWA16_NOP },
+        { 0x080000, 0x083fff, MWA16_RAM },
+        { 0x100000, 0x103fff, MWA16_RAM, &spriteram16 },
+        { 0x180000, 0x180001, MWA16_NOP }, // MSB: watchdog(?)
+        { 0x380000, 0x380001, paddlema_soundlatch_w }, // LSB: sound latch write and RST38 trigger
+MEMORY_END
+//ZT
 static MEMORY_READ16_START( alpha68k_II_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x040000, 0x040fff, MRA16_RAM },
@@ -433,7 +544,8 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 MEMORY_END
-
+//AT
+/*
 static MEMORY_READ_START( kyros_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
@@ -463,7 +575,59 @@ static MEMORY_WRITE_START( sstingry_sound_writemem )
 	{ 0x8000, 0x83ff, MWA_RAM, &sound_ram },
 //	{ 0xc000, 0xc3ff, soundram_mirror_w },
 MEMORY_END
+*/
+static MEMORY_READ_START( kyros_sound_readmem )
+        { 0x0000, 0xbfff, MRA_ROM },
+        { 0xc000, 0xc7ff, MRA_RAM },
+        { 0xe000, 0xe000, soundlatch_r },
+MEMORY_END
 
+static MEMORY_WRITE_START( kyros_sound_writemem )
+        { 0x0000, 0xbfff, MWA_ROM },
+        { 0xc000, 0xc7ff, MWA_RAM },
+        { 0xe002, 0xe002, soundlatch_clear_w },
+        { 0xe004, 0xe004, DAC_0_signed_data_w },
+        { 0xe006, 0xe00e, MWA_NOP }, // soundboard I/O's, ignored
+/* for reference only
+        { 0xe006, 0xe006, MWA_NOP }, // NMI: diminishing saw-tooth
+        { 0xe008, 0xe008, MWA_NOP }, // NMI: 00
+        { 0xe00a, 0xe00a, MWA_NOP }, // RST38: 20
+        { 0xe00c, 0xe00c, MWA_NOP }, // RST30: 00 on entry
+        { 0xe00e, 0xe00e, MWA_NOP }, // RST30: 00,02,ff on exit(0x1d88)
+*/
+MEMORY_END
+
+static MEMORY_READ_START( sstingry_sound_readmem )
+        { 0x0000, 0x7fff, MRA_ROM },
+        { 0x8000, 0x87ff, MRA_RAM },
+        { 0xc100, 0xc100, soundlatch_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( sstingry_sound_writemem )
+        { 0x0000, 0x7fff, MWA_ROM },
+        { 0x8000, 0x87ff, MWA_RAM },
+        { 0xc102, 0xc102, soundlatch_clear_w },
+        { 0xc104, 0xc104, DAC_0_signed_data_w },
+        { 0xc106, 0xc10e, MWA_NOP }, // soundboard I/O's, ignored
+MEMORY_END
+
+static MEMORY_READ_START( alpha68k_I_s_readmem )
+        { 0x0000, 0x9fff, MRA_ROM }, // sound program
+        { 0xe000, 0xe000, soundlatch_r },
+        { 0xe800, 0xe800, YM3812_status_port_0_r },
+        { 0xf000, 0xf7ff, MRA_RAM }, // work RAM
+        { 0xfc00, 0xfc00, MRA_RAM }, // ???
+MEMORY_END
+
+static MEMORY_WRITE_START( alpha68k_I_s_writemem )
+        { 0x0000, 0x9fff, MWA_ROM },
+        { 0xe000, 0xe000, soundlatch_clear_w },
+        { 0xe800, 0xe800, YM3812_control_port_0_w },
+        { 0xec00, 0xec00, YM3812_write_port_0_w },
+        { 0xf000, 0xf7ff, MWA_RAM },
+        { 0xfc00, 0xfc00, MWA_RAM }, // ???
+MEMORY_END
+//ZT
 static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
 PORT_END
@@ -483,10 +647,18 @@ static PORT_WRITE_START( kyros_sound_writeport )
 //	{ 0x08, 0x08, DAC_0_data_w },
 	{ 0x10, 0x10, YM2203_control_port_0_w },
 	{ 0x11, 0x11, YM2203_write_port_0_w },
+//AT
+/*
 	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ 0x81, 0x81, AY8910_control_port_0_w },
 	{ 0x90, 0x90, AY8910_write_port_1_w },
 	{ 0x91, 0x91, AY8910_control_port_1_w },
+*/
+        { 0x80, 0x80, YM2203_write_port_1_w },
+        { 0x81, 0x81, YM2203_control_port_1_w },
+        { 0x90, 0x90, YM2203_write_port_2_w },
+        { 0x91, 0x91, YM2203_control_port_2_w },
+//ZT
 PORT_END
 
 /******************************************************************************/
@@ -533,6 +705,8 @@ INPUT_PORTS_START( kyros )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
 
 	PORT_START	/* dipswitches */
+//AT
+/*
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -556,7 +730,31 @@ INPUT_PORTS_START( kyros )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
+*/
+        PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x0e, 0x00, DEF_STR( Coinage ) )
+        PORT_DIPSETTING(    0x00, "A 1C/1P B 1C/1P" )
+        PORT_DIPSETTING(    0x02, "A 1C/2P B 2C/1P" )
+        PORT_DIPSETTING(    0x04, "A 1C/3P B 3C/1P" )
+        PORT_DIPSETTING(    0x06, "A 1C/4P B 4C/1P" )
+        PORT_DIPSETTING(    0x08, "A 1C/5P B 5C/1P" )
+        PORT_DIPSETTING(    0x0a, "A 1C/6P B 6C/1P" )
+        PORT_DIPSETTING(    0x0c, "A 2C/3P B 7C/1P" )
+        PORT_DIPSETTING(    0x0e, "A 3C/2P B 8C/1P" )
+        PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+        PORT_DIPSETTING(    0x00, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x20, "5" )
+        PORT_DIPSETTING(    0x30, "6" )
+        PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
+        PORT_DIPSETTING(    0x00, "Easy" )
+        PORT_DIPSETTING(    0x40, "Hard" )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+//ZT
 	PORT_START /* Coin input to microcontroller */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -581,7 +779,9 @@ INPUT_PORTS_START( sstingry )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
 
-	PORT_START	/* Player 1 controls */
+	PORT_START
+//AT
+/*
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -606,12 +806,140 @@ INPUT_PORTS_START( sstingry )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+*/
+        PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+        PORT_DIPNAME( 0x0e, 0x00, DEF_STR( Coinage ) )
+        PORT_DIPSETTING(    0x00, "A 1C/1P B 1C/1P" )
+        PORT_DIPSETTING(    0x02, "A 1C/2P B 2C/1P" )
+        PORT_DIPSETTING(    0x04, "A 1C/3P B 3C/1P" )
+        PORT_DIPSETTING(    0x06, "A 1C/4P B 4C/1P" )
+        PORT_DIPSETTING(    0x08, "A 1C/5P B 5C/1P" )
+        PORT_DIPSETTING(    0x0a, "A 1C/6P B 6C/1P" )
+        PORT_DIPSETTING(    0x0c, "A 2C/3P B 7C/1P" )
+        PORT_DIPSETTING(    0x0e, "A 3C/2P B 8C/1P" )
+        PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+        PORT_DIPSETTING(    0x00, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x20, "5" )
+        PORT_DIPSETTING(    0x30, "6" )
+        PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+        PORT_DIPSETTING(    0x40, "Easy" )
+        PORT_DIPSETTING(    0x00, "Hard" )
+        PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+//ZT
 	PORT_START	/* Coin input to microcontroller */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 INPUT_PORTS_END
+//AT
+INPUT_PORTS_START( paddlema )
+        PORT_START // control port 0
+        PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  | IPF_8WAY )
+        PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+        PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+        PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+        PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+        PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+        PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+        PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 )
+        PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+        PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+        PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+        PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 
+        PORT_START // control port 1
+        PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+        PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+        PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN4 )
+        PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+        PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+        PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
+        PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START4 )
+        PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+        PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_SERVICE2 )
+        PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE3 )
+        PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE4 )
+
+        PORT_START // control port 2
+        PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+        PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+        PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+        PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )
+        PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  | IPF_8WAY | IPF_PLAYER4 )
+        PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+        PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+        PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+        PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+        PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+        PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+        PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER4 )
+
+        PORT_START // DSW0
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, "1/1C" )
+	PORT_DIPSETTING(    0x08, "2/1C" )
+	PORT_DIPSETTING(    0x04, "3/1C" )
+	PORT_DIPSETTING(    0x0c, "4/1C" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x03, "1/2C" )
+	PORT_DIPSETTING(    0x01, "1/3C" )
+	PORT_DIPSETTING(    0x02, "1/4C" )
+	PORT_DIPSETTING(    0x00, "1/6C" )
+        PORT_DIPNAME( 0x30, 0x30, "Game Time" )
+        PORT_DIPSETTING(    0x00, "1:00" )
+        PORT_DIPSETTING(    0x20, "1:10" )
+        PORT_DIPSETTING(    0x10, "1:20" )
+        PORT_DIPSETTING(    0x30, "1:30" )
+        PORT_DIPNAME( 0xc0, 0x40, "Match Type" )
+        PORT_DIPSETTING(    0x80, "A to B" )
+        PORT_DIPSETTING(    0x00, "A to C" )
+        PORT_DIPSETTING(    0x40, "A to E" )
+        //PORT_DIPSETTING(    0xc0, "A to B" )
+
+        PORT_START // DSW1
+        PORT_DIPNAME( 0x01, 0x00, DEF_STR( Service_Mode ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+        PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+        PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+        PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+        PORT_DIPNAME( 0x30, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPSETTING(    0x30, "Freeze" )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+        PORT_DIPNAME( 0x40, 0x00, "Language" )
+        PORT_DIPSETTING(    0x00, "English" )
+        PORT_DIPSETTING(    0x40, "Japanese" )
+        PORT_DIPNAME( 0x80, 0x00, "Continue" )
+        PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+INPUT_PORTS_END
+//ZT
 INPUT_PORTS_START( timesold )
 	ALPHA68K_PLAYER1_INPUT
 	ALPHA68K_PLAYER2_INPUT
@@ -814,7 +1142,8 @@ INPUT_PORTS_START( goldmedl )
 	PORT_START	/* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-
+//AT
+#if 0
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
@@ -853,7 +1182,43 @@ INPUT_PORTS_START( goldmedl )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+#endif
+        PORT_DIPNAME( 0x04, 0x00, "Event Select" )
+        PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+        PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+        PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+        PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+        PORT_DIPNAME( 0x80, 0x80, "No. of Players" )
+        PORT_DIPSETTING(    0x00, "1-2" )
+        PORT_DIPSETTING(    0x80, "1-4" )
 
+        PORT_START
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x1c, "A 1C/1C B 1C/1C" )
+	PORT_DIPSETTING(    0x18, "A 1C/2C B 2C/1C" )
+	PORT_DIPSETTING(    0x14, "A 1C/3C B 3C/1C" )
+	PORT_DIPSETTING(    0x10, "A 1C/4C B 4C/1C" )
+	PORT_DIPSETTING(    0x0c, "A 1C/5C B 5C/1C" )
+	PORT_DIPSETTING(    0x08, "A 1C/6C B 6C/1C" )
+	PORT_DIPSETTING(    0x04, "A 2C/3C B 7C/1C" )
+	PORT_DIPSETTING(    0x00, "A 3C/2C B 8C/1C" )
+        PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+//ZT
 	PORT_START	/* player 1 12-way rotary control */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1123,7 +1488,8 @@ static struct GfxLayout spritelayout_V =
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
-
+//AT
+#if 0
 static struct GfxLayout paddle_layout =
 {
 	8,8,	/* 8*8 chars */
@@ -1174,7 +1540,51 @@ static struct GfxLayout sting_layout3 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
+#endif
+static struct GfxLayout paddle_layout =
+{
+        8,8,    /* 8*8 chars */
+        0x4000,
+        4,      /* 4 bits per pixel */
+        { 0, 4, 0x40000*8, 0x40000*8+4 },
+        { 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
+        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+        16*8    /* every char takes 16 consecutive bytes */
+};
 
+static struct GfxLayout sting_layout1 =
+{
+        8,8,    /* 8*8 chars */
+        1024,
+        3,      /* 3 bits per pixel */
+        { 4, 4+(0x8000*8), 0+(0x10000*4) },
+        { 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
+        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+        16*8    /* every char takes 16 consecutive bytes */
+};
+
+static struct GfxLayout sting_layout2 =
+{
+        8,8,    /* 8*8 chars */
+        1024,
+        3,      /* 3 bits per pixel */
+        { 0, 0+(0x28000*8), 4+(0x28000*8) },
+        { 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
+        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+        16*8    /* every char takes 16 consecutive bytes */
+};
+
+static struct GfxLayout sting_layout3 =
+{
+        8,8,    /* 8*8 chars */
+        1024,
+        3,      /* 3 bits per pixel */
+        { 0, 0+(0x10000*8), 4+(0x10000*8) },
+        { 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
+        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+        16*8    /* every char takes 16 consecutive bytes */
+};
+//ZT
 static struct GfxLayout kyros_char_layout1 =
 {
 	8,8,	/* 8*8 chars */
@@ -1287,7 +1697,44 @@ static struct GfxDecodeInfo kouyakyu_gfxdecodeinfo[] =
 };
 
 /******************************************************************************/
+//AT
+static struct YM2203interface kyros_ym2203_interface =
+{
+        3,
+        3000000,
+        { YM2203_VOL(35,35), YM2203_VOL(35,35), YM2203_VOL(90,90) },
+        { 0 },
+        { 0 },
+        { 0 },
+        { 0 },
+        { 0 }
+};
 
+static struct YM2203interface sstingry_ym2203_interface =
+{
+        3,
+        3000000,
+        { YM2203_VOL(35,35), YM2203_VOL(35,35), YM2203_VOL(50,50) },
+        { 0 },
+        { 0 },
+        { 0 },
+        { 0 },
+        { 0 }
+};
+
+static void YM3812_irq(int param)
+{
+        cpu_set_irq_line(1, 0, (param) ? HOLD_LINE : CLEAR_LINE);
+}
+
+static struct YM3812interface ym3812_interface =
+{
+        1,
+        4000000,
+        { 75 },
+        { YM3812_irq },
+};
+//ZT
 static struct YM2413interface ym2413_interface=
 {
     1,
@@ -1306,7 +1753,8 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 	{ 0 }
 };
-
+//AT
+#if 0
 static struct AY8910interface ay8910_interface =
 {
 	2, /* 2 chips */
@@ -1317,7 +1765,16 @@ static struct AY8910interface ay8910_interface =
 	{ 0 },
 	{ 0 }
 };
+#endif
 
+static INTERRUPT_GEN( goldmedl_interrupt )
+{
+        if (cpu_getiloops() == 0)
+                cpu_set_irq_line(0, 1, HOLD_LINE);
+        else
+                cpu_set_irq_line(0, 2, HOLD_LINE);
+}
+//ZT
 static struct DACinterface dac_interface =
 {
 	1,
@@ -1380,8 +1837,11 @@ static MACHINE_DRIVER_START( kyros )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
 	MDRV_CPU_MEMORY(kyros_sound_readmem,kyros_sound_writemem)
 	MDRV_CPU_PORTS(0,kyros_sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)
-
+//AT
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)
+        MDRV_CPU_VBLANK_INT(irq0_line_hold, 2)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000)
+//ZT
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1397,8 +1857,13 @@ static MACHINE_DRIVER_START( kyros )
 	MDRV_VIDEO_UPDATE(kyros)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+//AT
+	//MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	//MDRV_SOUND_ADD(AY8910, ay8910_interface)
+        MDRV_SOUND_ADD(YM2203, kyros_ym2203_interface)
+        MDRV_SOUND_ADD(DAC, dac_interface)
+//ZT
+
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sstingry )
@@ -1412,7 +1877,11 @@ static MACHINE_DRIVER_START( sstingry )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
 	MDRV_CPU_MEMORY(sstingry_sound_readmem,sstingry_sound_writemem)
 	MDRV_CPU_PORTS(0,kyros_sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,32)
+//AT
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,32)
+        MDRV_CPU_VBLANK_INT(irq0_line_hold, 2)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000)
+//ZT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1423,13 +1892,20 @@ static MACHINE_DRIVER_START( sstingry )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(sstingry_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-
+//AT
+	//MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+        MDRV_COLORTABLE_LENGTH(256)
+        MDRV_PALETTE_INIT(kyros)
+//ZT
 	MDRV_VIDEO_UPDATE(sstingry)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+//AT
+	//MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	//MDRV_SOUND_ADD(AY8910, ay8910_interface)
+        MDRV_SOUND_ADD(YM2203, sstingry_ym2203_interface)
+        MDRV_SOUND_ADD(DAC, dac_interface)
+//ZT
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alpha68k_I )
@@ -1438,13 +1914,18 @@ static MACHINE_DRIVER_START( alpha68k_I )
 	MDRV_CPU_ADD(M68000, 6000000) /* 24MHz/4? */
 	MDRV_CPU_MEMORY(alpha68k_I_readmem,alpha68k_I_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
-
+//AT
+#if 0
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
+#endif
+        MDRV_CPU_ADD(Z80, 4000000) //AT: 4Mhz seems to yield the correct tone
+        MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+        MDRV_CPU_MEMORY(alpha68k_I_s_readmem, alpha68k_I_s_writemem) //AT
+//ZT
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1453,13 +1934,19 @@ static MACHINE_DRIVER_START( alpha68k_I )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(paddle_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
+//AT
+	//MDRV_PALETTE_LENGTH(256)
 
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	//MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+        MDRV_PALETTE_LENGTH(272)
+        MDRV_COLORTABLE_LENGTH(1024)
+        MDRV_PALETTE_INIT(paddlem)
+//ZT
 	MDRV_VIDEO_UPDATE(alpha68k_I)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	//MDRV_SOUND_ADD(YM2203, ym2203_interface)
+        MDRV_SOUND_ADD(YM3812, ym3812_interface) //AT
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alpha68k_II )
@@ -1473,7 +1960,8 @@ static MACHINE_DRIVER_START( alpha68k_II )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Correct?? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,116)
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,116)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1493,7 +1981,39 @@ static MACHINE_DRIVER_START( alpha68k_II )
 	MDRV_SOUND_ADD(YM2413, ym2413_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
+//AT
+static MACHINE_DRIVER_START( alpha68k_II_gm )
 
+        /* basic machine hardware */
+        MDRV_CPU_ADD(M68000, 8000000)
+        MDRV_CPU_MEMORY(alpha68k_II_readmem, alpha68k_II_writemem)
+        MDRV_CPU_VBLANK_INT(goldmedl_interrupt, 4)
+
+        MDRV_CPU_ADD(Z80, 4000000*2)
+        MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+        MDRV_CPU_MEMORY(sound_readmem, sound_writemem)
+        MDRV_CPU_PORTS(sound_readport, sound_writeport)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500)
+
+        MDRV_FRAMES_PER_SECOND(60)
+        MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+        /* video hardware */
+        MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+        MDRV_SCREEN_SIZE(32*8, 32*8)
+        MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+        MDRV_GFXDECODE(alpha68k_II_gfxdecodeinfo)
+        MDRV_PALETTE_LENGTH(2048)
+
+        MDRV_VIDEO_START(alpha68k)
+        MDRV_VIDEO_UPDATE(alpha68k_II)
+
+        /* sound hardware */
+        MDRV_SOUND_ADD(YM2203, ym2203_interface)
+        MDRV_SOUND_ADD(YM2413, ym2413_interface)
+        MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+//ZT
 static MACHINE_DRIVER_START( alpha68k_V )
 
 	/* basic machine hardware */
@@ -1505,7 +2025,8 @@ static MACHINE_DRIVER_START( alpha68k_V )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,148)
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,148)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1537,7 +2058,8 @@ static MACHINE_DRIVER_START( alpha68k_V_sb )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,112)
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,112)
+        MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1622,48 +2144,55 @@ ROM_START( sstingry )
 	ROM_LOAD( "ss_11.rom",       0x20000, 0x4000, 0xd134302e )
 	ROM_LOAD( "ss_09.rom",       0x28000, 0x4000, 0x6f9d938a )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_REGION( 0x500, REGION_PROMS, 0 )
 	ROM_LOAD( "ic92",            0x0000, 0x0100, 0xe7ce1179 )
-	ROM_LOAD( "ic91",            0x0100, 0x0100, 0xc3965079 )
-	ROM_LOAD( "ic93",            0x0200, 0x0100, 0x9af8a375 )
+	ROM_LOAD( "ic93",            0x0100, 0x0100, 0x9af8a375 )
+	ROM_LOAD( "ic91",            0x0200, 0x0100, 0xc3965079 )
+	ROM_LOAD( "clut_hi.rom",     0x0300, 0x0100, 0 ) // missing
+	ROM_LOAD( "clut_lo.rom",     0x0400, 0x0100, 0 ) // missing
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "colormap.rom",    0x0000, 0x2000, 0 ) // may or may not exist
 ROM_END
 
 ROM_START( kyros )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "2.10c", 0x00000,  0x4000, 0x4bd030b1 )
-	ROM_CONTINUE   (          0x10000, 0x4000 )
+	ROM_CONTINUE   (          0x10000,  0x4000 )
 	ROM_LOAD16_BYTE( "1.13c", 0x00001,  0x4000, 0x75cfbc5e )
-	ROM_CONTINUE   (          0x10001, 0x4000 )
+	ROM_CONTINUE   (          0x10001,  0x4000 )
 	ROM_LOAD16_BYTE( "4.10b", 0x08000,  0x4000, 0xbe2626c2 )
-	ROM_CONTINUE   (          0x18000, 0x4000 )
+	ROM_CONTINUE   (          0x18000,  0x4000 )
 	ROM_LOAD16_BYTE( "3.13b", 0x08001,  0x4000, 0xfb25e71a )
-	ROM_CONTINUE   (          0x18001, 0x4000 )
+	ROM_CONTINUE   (          0x18001,  0x4000 )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* Sound CPU */
 	ROM_LOAD( "2s.1f",      0x00000, 0x4000, 0x800ceb27 )
-	ROM_LOAD( "1s.1d",      0x10000, 0x8000, 0x87d3e719 ) /* todo */
-	ROM_LOAD( "0.1t",       0x18000, 0x2000, 0x5d0acb4c ) /* todo */
+	ROM_LOAD( "1s.1d",      0x04000, 0x8000, 0x87d3e719 )
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "8.9pr",      0x00000, 0x8000, 0xc5290944 )
 	ROM_LOAD( "11.11m",     0x08000, 0x8000, 0xfbd44f1e )
-	ROM_LOAD( "12.11n",		0x10000, 0x8000, 0x10fed501 )
-	ROM_LOAD( "9.9s",		0x18000, 0x8000, 0xdd40ca33 )
-	ROM_LOAD( "13.11p",		0x20000, 0x8000, 0xe6a02030 )
-	ROM_LOAD( "14.11r",		0x28000, 0x8000, 0x722ad23a )
-	ROM_LOAD( "15.3t",		0x30000, 0x8000, 0x045fdda4 )
-	ROM_LOAD( "17.7t",		0x38000, 0x8000, 0x7618ec00 )
-	ROM_LOAD( "18.9t",		0x40000, 0x8000, 0x0ee74171 )
-	ROM_LOAD( "16.5t",		0x48000, 0x8000, 0x2cf14824 )
-	ROM_LOAD( "19.11t",		0x50000, 0x8000, 0x4f336306 )
-	ROM_LOAD( "20.13t",		0x58000, 0x8000, 0xa165d06b )
+	ROM_LOAD( "12.11n",	0x10000, 0x8000, 0x10fed501 )
+	ROM_LOAD( "9.9s",	0x18000, 0x8000, 0xdd40ca33 )
+	ROM_LOAD( "13.11p",	0x20000, 0x8000, 0xe6a02030 )
+	ROM_LOAD( "14.11r",	0x28000, 0x8000, 0x722ad23a )
+	ROM_LOAD( "15.3t",	0x30000, 0x8000, 0x045fdda4 )
+	ROM_LOAD( "17.7t",	0x38000, 0x8000, 0x7618ec00 )
+	ROM_LOAD( "18.9t",	0x40000, 0x8000, 0x0ee74171 )
+	ROM_LOAD( "16.5t",	0x48000, 0x8000, 0x2cf14824 )
+	ROM_LOAD( "19.11t",	0x50000, 0x8000, 0x4f336306 )
+	ROM_LOAD( "20.13t",	0x58000, 0x8000, 0xa165d06b )
 
-	ROM_REGION( 0x0500, REGION_PROMS, 0 )
+	ROM_REGION( 0x500, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7114l.5r", 0x000, 0x100, 0x3628bf36 )
 	ROM_LOAD( "mb7114l.4r", 0x100, 0x100, 0x850704e4 )
 	ROM_LOAD( "mb7114l.6r", 0x200, 0x100, 0xa54f60d7 )
 	ROM_LOAD( "mb7114l.5p", 0x300, 0x100, 0x1cc53765 )
 	ROM_LOAD( "mb7114l.6p", 0x400, 0x100, 0xb0d6971f )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "0.1t",      0x0000,0x2000, 0x5d0acb4c )
 ROM_END
 
 ROM_START( paddlema )
@@ -1686,13 +2215,15 @@ ROM_START( paddlema )
 	ROM_LOAD( "padlem.6m",       0x60000, 0x10000, 0x3f47910c )
 	ROM_LOAD( "padlem.6n",       0x70000, 0x10000, 0xfe337655 )
 
-	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples? */
-	ROM_LOAD( "padlem.18n",      0x0000,  0x8000,  0x06506200 )
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )
+	ROM_LOAD( "padlem.a",        0x0000,  0x0100,  0xcae6bcd6 ) /* R */
+	ROM_LOAD( "padlem.b",        0x0100,  0x0100,  0xb6df8dcb ) /* G */
+	ROM_LOAD( "padlem.c",        0x0200,  0x0100,  0x39ca9b86 ) /* B */
+	ROM_LOAD( "padlem.17j",      0x0300,  0x0400,  0x86170069 ) /* Clut low nibble */
+	ROM_LOAD( "padlem.16j",      0x0700,  0x0400,  0x8da58e2c ) /* Clut high nibble */
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "padlem.a",        0x0000,  0x0100,  0xcae6bcd6 )
-	ROM_LOAD( "padlem.b",        0x0100,  0x0100,  0xb6df8dcb )
-	ROM_LOAD( "padlem.c",        0x0200,  0x0100,  0x39ca9b86 )
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	ROM_LOAD( "padlem.18n",      0x0000,  0x8000,  0x06506200 ) /* Colour lookup */
 ROM_END
 
 ROM_START( timesold )
@@ -1849,8 +2380,8 @@ ROM_START( goldmedl )
 	ROM_LOAD16_BYTE( "gm.2",      0x20001,  0x10000, 0x4b6a13e4 )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
-	ROM_LOAD( "goldsnd0.c47",   0x00000,  0x08000, 0x031d27dc )
-	ROM_CONTINUE(               0x18000,  0x78000 )
+	ROM_LOAD( "goldsnd0.c47",   0x00000,  0x08000, BADCRC(0x031d27dc) )
+	ROM_CONTINUE(               0x10000,  0x78000 )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "gm.5",           0x000000, 0x08000, 0x667f33f1 )
@@ -1991,7 +2522,8 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.313",		0x050000, 0x10000, 0xc18f4ca8 )
 	ROM_LOAD( "gwb_ic.314",		0x060000, 0x10000, 0xdfc44b60 )
 	ROM_LOAD( "gwb_ic.307",		0x070000, 0x10000, 0x28082a7f )
-	ROM_LOAD( "gwb_ic.320",		0x080000, 0x10000, 0x9a7b51d8 )
+	//ROM_LOAD( "gwb_ic.320",		0x080000, 0x10000, 0x9a7b51d8 )
+        ROM_LOAD( "gwb_ic.280",         0x080000, 0x10000, 0x222b3dcd ) //AT
 	ROM_LOAD( "gwb_ic.321",		0x090000, 0x10000, 0x6b421c7b )
 	ROM_LOAD( "gwb_ic.300",		0x0a0000, 0x10000, 0xf3fa0877 )
 	ROM_LOAD( "gwb_ic.301",		0x0b0000, 0x10000, 0xf8c866de )
@@ -2001,7 +2533,8 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.305",		0x0f0000, 0x10000, 0x5e04a9aa )
 	ROM_LOAD( "gwb_ic.306",		0x100000, 0x10000, 0xe2172955 )
 	ROM_LOAD( "gwb_ic.299",		0x110000, 0x10000, 0xe39f5599 )
-	ROM_LOAD( "gwb_ic.318",		0x120000, 0x10000, 0x9aeaddf9 )
+	//ROM_LOAD( "gwb_ic.318",		0x120000, 0x10000, 0x9aeaddf9 )
+        ROM_LOAD( "gwb_ic.320",         0x120000, 0x10000, 0x9a7b51d8 ) //AT
 	ROM_LOAD( "gwb_ic.319",		0x130000, 0x10000, 0xc5b862b7 )
 	ROM_LOAD( "gwb_ic.292",		0x140000, 0x10000, 0xc125f7be )
 	ROM_LOAD( "gwb_ic.293",		0x150000, 0x10000, 0xc04fce8e )
@@ -2011,7 +2544,8 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.297",		0x190000, 0x10000, 0x10373f63 )
 	ROM_LOAD( "gwb_ic.298",		0x1a0000, 0x10000, 0xdf37ec4d )
 	ROM_LOAD( "gwb_ic.291",		0x1b0000, 0x10000, 0xbeb07a2e )
-	ROM_LOAD( "gwb_ic.316",		0x1c0000, 0x10000, 0x655b1518 )
+	//ROM_LOAD( "gwb_ic.316",		0x1c0000, 0x10000, 0x655b1518 )
+        ROM_LOAD( "gwb_ic.318",         0x1c0000, 0x10000, 0x9aeaddf9 ) //AT
 	ROM_LOAD( "gwb_ic.317",		0x1d0000, 0x10000, 0x1622fadd )
 	ROM_LOAD( "gwb_ic.284",		0x1e0000, 0x10000, 0x4aa95d66 )
 	ROM_LOAD( "gwb_ic.285",		0x1f0000, 0x10000, 0x3a1f3ce0 )
@@ -2021,7 +2555,8 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.289",		0x230000, 0x10000, 0xc754d69f )
 	ROM_LOAD( "gwb_ic.290",		0x240000, 0x10000, 0x306d1963 )
 	ROM_LOAD( "gwb_ic.283",		0x250000, 0x10000, 0xb46e5761 )
-	ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
+	//ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
+        ROM_LOAD( "gwb_ic.316",         0x260000, 0x10000, 0x655b1518 ) //AT
 	ROM_LOAD( "gwb_ic.315",		0x270000, 0x10000, 0xe7c9b103 )
 
 	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 ) /* Extra code bank */
@@ -2053,7 +2588,8 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.313",		0x050000, 0x10000, 0xc18f4ca8 )
 	ROM_LOAD( "gwb_ic.314",		0x060000, 0x10000, 0xdfc44b60 )
 	ROM_LOAD( "gwb_ic.307",		0x070000, 0x10000, 0x28082a7f )
-	ROM_LOAD( "gwb_ic.320",		0x080000, 0x10000, 0x9a7b51d8 )
+	//ROM_LOAD( "gwb_ic.320",		0x080000, 0x10000, 0x9a7b51d8 )
+        ROM_LOAD( "gwb_ic.280",         0x080000, 0x10000, 0x222b3dcd ) //AT
 	ROM_LOAD( "gwb_ic.321",		0x090000, 0x10000, 0x6b421c7b )
 	ROM_LOAD( "gwb_ic.300",		0x0a0000, 0x10000, 0xf3fa0877 )
 	ROM_LOAD( "gwb_ic.301",		0x0b0000, 0x10000, 0xf8c866de )
@@ -2063,7 +2599,8 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.305",		0x0f0000, 0x10000, 0x5e04a9aa )
 	ROM_LOAD( "gwb_ic.306",		0x100000, 0x10000, 0xe2172955 )
 	ROM_LOAD( "gwb_ic.299",		0x110000, 0x10000, 0xe39f5599 )
-	ROM_LOAD( "gwb_ic.318",		0x120000, 0x10000, 0x9aeaddf9 )
+	//ROM_LOAD( "gwb_ic.318",		0x120000, 0x10000, 0x9aeaddf9 )
+        ROM_LOAD( "gwb_ic.320",         0x120000, 0x10000, 0x9a7b51d8 ) //AT
 	ROM_LOAD( "gwb_ic.319",		0x130000, 0x10000, 0xc5b862b7 )
 	ROM_LOAD( "gwb_ic.292",		0x140000, 0x10000, 0xc125f7be )
 	ROM_LOAD( "gwb_ic.293",		0x150000, 0x10000, 0xc04fce8e )
@@ -2073,7 +2610,8 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.297",		0x190000, 0x10000, 0x10373f63 )
 	ROM_LOAD( "gwb_ic.298",		0x1a0000, 0x10000, 0xdf37ec4d )
 	ROM_LOAD( "gwb_ic.291",		0x1b0000, 0x10000, 0xbeb07a2e )
-	ROM_LOAD( "gwb_ic.316",		0x1c0000, 0x10000, 0x655b1518 )
+	//ROM_LOAD( "gwb_ic.316",		0x1c0000, 0x10000, 0x655b1518 )
+        ROM_LOAD( "gwb_ic.318",         0x1c0000, 0x10000, 0x9aeaddf9 ) //AT
 	ROM_LOAD( "gwb_ic.317",		0x1d0000, 0x10000, 0x1622fadd )
 	ROM_LOAD( "gwb_ic.284",		0x1e0000, 0x10000, 0x4aa95d66 )
 	ROM_LOAD( "gwb_ic.285",		0x1f0000, 0x10000, 0x3a1f3ce0 )
@@ -2083,7 +2621,8 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.289",		0x230000, 0x10000, 0xc754d69f )
 	ROM_LOAD( "gwb_ic.290",		0x240000, 0x10000, 0x306d1963 )
 	ROM_LOAD( "gwb_ic.283",		0x250000, 0x10000, 0xb46e5761 )
-	ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
+	//ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
+        ROM_LOAD( "gwb_ic.316",         0x260000, 0x10000, 0x655b1518 ) //AT
 	ROM_LOAD( "gwb_ic.315",		0x270000, 0x10000, 0xe7c9b103 )
 
 	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 ) /* Extra code bank */
@@ -2168,6 +2707,7 @@ static DRIVER_INIT( goldmedb )
 {
 	cpu_setbank(8, memory_region(REGION_USER1));
 	invert_controls=0;
+        microcontroller_id=0x8803; //AT
 }
 
 static DRIVER_INIT( gangwars )
@@ -2228,19 +2768,20 @@ static DRIVER_INIT( sstingry )
 static DRIVER_INIT( goldmedl )
 {
 	invert_controls=0;
+        microcontroller_id=0x8803; //AT
 }
 
 /******************************************************************************/
 
 GAMEX(1985, kouyakyu, 0,        kouyakyu,      sstingry, 0,        ROT0,  "Alpha Denshi Co.", "The Koukouyakyuh", GAME_NOT_WORKING )
-GAMEX(1986, sstingry, 0,        sstingry,      sstingry, sstingry, ROT90, "Alpha Denshi Co.", "Super Stingray", GAME_WRONG_COLORS | GAME_NO_SOUND )
-GAMEX(1987, kyros,    0,        kyros,         kyros,    kyros,    ROT90, "World Games Inc", "Kyros", GAME_WRONG_COLORS | GAME_NO_SOUND )
-GAMEX(1988, paddlema, 0,        alpha68k_I,    timesold, 0,        ROT90, "SNK", "Paddle Mania", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1986, sstingry, 0,        sstingry,      sstingry, sstingry, ROT90, "Alpha Denshi Co.", "Super Stingray", GAME_NO_COCKTAIL | GAME_WRONG_COLORS )
+GAMEX(1987, kyros,    0,        kyros,         kyros,    kyros,    ROT90, "World Games Inc", "Kyros", GAME_NO_COCKTAIL )
+GAMEX(1988, paddlema, 0,        alpha68k_I,    paddlema, 0,        ROT90, "SNK", "Paddle Mania", GAME_NO_COCKTAIL )
 GAME( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90, "SNK / Romstar", "Time Soldiers (US Rev 3)" )
 GAME( 1987, timesol1, timesold, alpha68k_II,   timesold, btlfield, ROT90, "SNK / Romstar", "Time Soldiers (US Rev 1)" )
 GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90, "SNK", "Battle Field (Japan)" )
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90, "SNK / Romstar", "Sky Soldiers (US)" )
-GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, goldmedl, ROT0,  "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1988, goldmedl, 0,        alpha68k_II_gm,goldmedl, goldmedl, ROT0,  "SNK", "Gold Medalist", GAME_IMPERFECT_SOUND ) //AT
 GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,  "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90, "Alpha Denshi Co.", "Sky Adventure (World)" )
 GAME( 1989, skyadvnu, skyadvnt, alpha68k_V,    skyadvnt, skyadvnu, ROT90, "Alpha Denshi Co. (SNK of America license)", "Sky Adventure (US)" )

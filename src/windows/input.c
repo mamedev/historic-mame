@@ -1286,10 +1286,20 @@ void osd_joystick_end_calibration(void)
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
 	static InputSeq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+	int fullscreen_set = 0;
 
 	// loop over all the defaults
 	while (defaults->type != IPT_END)
 	{
+		// Add alt-enter for fullscreen
+		if (defaults->type == IPT_OSD_RESERVED && !fullscreen_set)
+		{
+			defaults->type = IPT_OSD_1;
+			defaults->name = "Toggle fullscreen";
+			seq_set_2(&defaults->seq, KEYCODE_LALT, KEYCODE_ENTER);
+			fullscreen_set = 1;
+		}
+
 		// in all cases, disable the config menu if the ALT key is down
 		if (defaults->type == IPT_UI_CONFIGURE)
 			seq_copy(&defaults->seq, &no_alt_tab_seq);

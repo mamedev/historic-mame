@@ -174,7 +174,7 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
 	int shift = (op >> 6) & 31;
-	
+
 	switch (op >> 26)
 	{
 		case 0x00:	/* SPECIAL */
@@ -224,7 +224,7 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);							break;
 			}
 			break;
-		
+
 		case 0x01:	/* REGIMM */
 			switch ((op >> 16) & 31)
 			{
@@ -245,7 +245,7 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);							break;
 			}
 			break;
-		
+
 		case 0x02:	sprintf(buffer, "j      $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
 		case 0x03:	sprintf(buffer, "jal    $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
 		case 0x04:	if (rs == 0 && rt == 0)

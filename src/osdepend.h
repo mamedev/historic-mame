@@ -304,23 +304,23 @@ typedef struct
 enum
 {
 	OSD_FILETYPE_ROM = 1,
+	OSD_FILETYPE_ROM_NOCRC,
+	OSD_FILETYPE_IMAGE_R,
+	OSD_FILETYPE_IMAGE_RW,
+	OSD_FILETYPE_IMAGE_DIFF,
 	OSD_FILETYPE_SAMPLE,
+	OSD_FILETYPE_ARTWORK,
 	OSD_FILETYPE_NVRAM,
 	OSD_FILETYPE_HIGHSCORE,
-	OSD_FILETYPE_HIGHSCORE_DB, /* LBO 040400 */
+	OSD_FILETYPE_HIGHSCORE_DB,
 	OSD_FILETYPE_CONFIG,
 	OSD_FILETYPE_INPUTLOG,
 	OSD_FILETYPE_STATE,
-	OSD_FILETYPE_ARTWORK,
 	OSD_FILETYPE_MEMCARD,
 	OSD_FILETYPE_SCREENSHOT,
-	OSD_FILETYPE_HISTORY,  /* LBO 040400 */
-	OSD_FILETYPE_CHEAT,  /* LBO 040400 */
-	OSD_FILETYPE_LANGUAGE, /* LBO 042400 */
-#ifdef MESS
-	OSD_FILETYPE_IMAGE_R,
-	OSD_FILETYPE_IMAGE_RW,
-#endif
+	OSD_FILETYPE_HISTORY,
+	OSD_FILETYPE_CHEAT,
+	OSD_FILETYPE_LANGUAGE,
 	OSD_FILETYPE_end /* dummy last entry */
 };
 
@@ -345,7 +345,6 @@ int osd_fwrite_swap(void *file,const void *buffer,int length);
 #define osd_fread_lsbfirst osd_fread_swap
 #define osd_fwrite_lsbfirst osd_fwrite_swap
 #endif
-int osd_fread_scatter(void *file,void *buffer,int length,int increment);
 int osd_fseek(void *file,int offset,int whence);
 void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);

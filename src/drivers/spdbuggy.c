@@ -35,10 +35,7 @@ added together (=873b), subtracted [f840] (=87d9)
 ***************************************************************************/
 #include "driver.h"
 
-unsigned char *devram, *sharedram;
-
-/* Variables that vidhrdw has access to */
-int flipscreen;
+extern unsigned char *devram, *sharedram;
 
 /* Variables defined in vidhrdw */
 unsigned char *spdbuggy_bgram, *spdbuggy_fgram;

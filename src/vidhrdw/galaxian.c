@@ -717,6 +717,17 @@ WRITE_HANDLER( gteikob2_flip_screen_y_w )
 }
 
 
+WRITE_HANDLER( batman2_flip_screen_x_w )
+{
+	flip_screen_x_set(data & 0x01);
+}
+
+WRITE_HANDLER( batman2_flip_screen_y_w )
+{
+	flip_screen_y_set(data & 0x01);
+}
+
+
 WRITE_HANDLER( scramble_background_enable_w )
 {
 	background_enable = data & 0x01;

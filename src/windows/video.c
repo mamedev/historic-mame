@@ -44,7 +44,7 @@ extern UINT8 win_trying_to_quit;
 //============================================================
 
 // frameskipping
-#define FRAMESKIP_LEVELS		12
+#define FRAMESKIP_LEVELS			12
 
 
 
@@ -123,6 +123,7 @@ static float brightness_adjust;
 // timing measurements for throttling
 static TICKER last_skipcount0_time;
 static TICKER this_frame_base;
+static int allow_sleep;
 
 // FPS display info
 static int showfps;
@@ -139,6 +140,11 @@ static int frames_to_display;
 // frameskipping
 static int frameskip_counter;
 static int frameskipadjust;
+
+// game states that invalidate autoframeskip
+static int game_was_paused;
+static int game_is_paused;
+static int debugger_was_visible;
 
 // frameskipping tables
 static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
@@ -216,6 +222,7 @@ struct rc_option video_opts[] =
 	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, NULL, "sets the number of frames to run within the game" },
 	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
 	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
+	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow MAME to give back time to the system when it's not needed" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -715,8 +722,6 @@ int osd_skip_this_frame(void)
 
 static void check_inputs(void)
 {
-	static int alt_enter_pressed;
-
 	// increment frameskip?
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
@@ -801,15 +806,8 @@ static void check_inputs(void)
 	}
 
 	// check for toggling fullscreen mode
-	if (code_pressed(KEYCODE_ENTER) &&
-		(code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT)))
-	{
-		if (!alt_enter_pressed)
-			win_toggle_full_screen();
-		alt_enter_pressed = 1;
-	}
-	else
-		alt_enter_pressed = 0;
+	if (input_ui_pressed(IPT_OSD_1))
+		win_toggle_full_screen();
 }
 
 
@@ -820,8 +818,8 @@ static void check_inputs(void)
 
 static void throttle_speed(void)
 {
-	TICKER target;
-	TICKER curr;
+	static double ticks_per_sleep_msec = 0;
+	TICKER target, curr;
 
 	// if we're only syncing to the refresh, bail now
 	if (win_sync_refresh)
@@ -837,10 +835,26 @@ static void throttle_speed(void)
 	// sync
 	if (curr - target < 0)
 	{
-		do
+		// initialize the ticks per sleep
+		if (ticks_per_sleep_msec == 0)
+			ticks_per_sleep_msec = (double)(TICKS_PER_SEC / 1000);
+
+		// loop until we reach the target time
+		while (curr - target < 0)
 		{
+			// if we have enough time to sleep, do it
+			// ...but not if we're autoframeskipping and we're behind
+			if (allow_sleep && (!autoframeskip || frameskip == 0) &&
+				(target - curr) > (TICKER)(ticks_per_sleep_msec * 1.1))
+			{
+				// keep track of how long we actually slept
+				Sleep(1);
+				ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(ticker() - curr) * 0.10);
+			}
+
+			// update the current time
 			curr = ticker();
-		} while (curr - target < 0);
+		}
 	}
 
 	// idle time done
@@ -909,7 +923,7 @@ static void display_fps(struct mame_bitmap *bitmap)
 		sprintf(buf, " %d vector updates", vups);
 		ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, Machine->uifontheight);
 	}
-	else
+	else if (partial_update_count > 1)
 	{
 		sprintf(buf, " %d partial updates", partial_update_count);
 		ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, Machine->uifontheight);
@@ -932,38 +946,47 @@ static void display_fps(struct mame_bitmap *bitmap)
 
 void update_autoframeskip(void)
 {
-	// if we're too fast, attempt to increase the frameskip
-	if (game_speed_percent >= 100)
+	// don't adjust frameskip if we're paused or if the debugger was
+	// visible this cycle or if we haven't run yet
+	if (!game_was_paused && !debugger_was_visible && cpu_getcurrentframe() > 2 * FRAMESKIP_LEVELS)
 	{
-		frameskipadjust++;
-
-		// but only after 3 consecutive frames where we are too fast
-		if (frameskipadjust >= 3)
+		// if we're too fast, attempt to increase the frameskip
+		if (game_speed_percent >= 100)
 		{
-			frameskipadjust = 0;
-			if (frameskip > 0) frameskip--;
+			frameskipadjust++;
+
+			// but only after 3 consecutive frames where we are too fast
+			if (frameskipadjust >= 3)
+			{
+				frameskipadjust = 0;
+				if (frameskip > 0) frameskip--;
+			}
+		}
+
+		// if we're too slow, attempt to increase the frameskip
+		else
+		{
+			// if below 80% speed, be more aggressive
+			if (game_speed_percent < 80)
+				frameskipadjust -= (90 - game_speed_percent) / 5;
+
+			// if we're close, only force it up to frameskip 8
+			else if (frameskip < 8)
+				frameskipadjust--;
+
+			// perform the adjustment
+			while (frameskipadjust <= -2)
+			{
+				frameskipadjust += 2;
+				if (frameskip < FRAMESKIP_LEVELS - 1)
+					frameskip++;
+			}
 		}
 	}
 
-	// if we're too slow, attempt to increase the frameskip
-	else
-	{
-		// if below 80% speed, be more aggressive
-		if (game_speed_percent < 80)
-			frameskipadjust -= (90 - game_speed_percent) / 5;
-
-		// if we're close, only force it up to frameskip 8
-		else if (frameskip < 8)
-			frameskipadjust--;
-
-		// perform the adjustment
-		while (frameskipadjust <= -2)
-		{
-			frameskipadjust += 2;
-			if (frameskip < FRAMESKIP_LEVELS - 1)
-				frameskip++;
-		}
-	}
+	// clear the other states
+	game_was_paused = game_is_paused;
+	debugger_was_visible = 0;
 }
 
 
@@ -1035,7 +1058,6 @@ static void render_frame(struct mame_bitmap *bitmap)
 	if (dirtypalette)
 	{
 		dirtypalette = 0;
-
 		if (bitmap->depth == 15 || bitmap->depth == 16)
 			update_palette_16();
 	}
@@ -1086,7 +1108,10 @@ void osd_update_video_and_audio(struct mame_bitmap *game_bitmap, struct mame_bit
 
 	// update the debugger
 	if (debug_bitmap)
+	{
 		win_update_debug_window(debug_bitmap);
+		debugger_was_visible = 1;
+	}
 
 	// check for inputs
 	check_inputs();
@@ -1172,6 +1197,11 @@ void osd_save_snapshot(struct mame_bitmap *bitmap)
 
 void osd_pause(int paused)
 {
+	// note that we were paused during this autoframeskip cycle
+	game_is_paused = paused;
+	if (game_is_paused)
+		game_was_paused = 1;
+
 	// tell the input system
 	win_pause_input(paused);
 

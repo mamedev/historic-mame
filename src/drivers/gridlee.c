@@ -411,7 +411,7 @@ static struct CustomSound_interface custom_interface =
 
 static const char *sample_names[] =
 {
-	"gridlee",
+	"*gridlee",
 	"bounce1.wav",
 	"bounce2.wav",
 	0	/* end of array */
@@ -437,23 +437,23 @@ static MACHINE_DRIVER_START( gridlee )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 5000000/4)
 	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(gridlee)
 	MDRV_NVRAM_HANDLER(generic_0fill)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(256, 240)
 	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_PALETTE_INIT(gridlee)
 	MDRV_VIDEO_START(gridlee)
 	MDRV_VIDEO_UPDATE(gridlee)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM,  custom_interface)
 	MDRV_SOUND_ADD(SAMPLES, samples_interface)

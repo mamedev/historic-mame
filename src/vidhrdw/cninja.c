@@ -123,15 +123,19 @@ static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 static void get_pf2_tile_info(int tile_index)
 {
 	int tile=cninja_pf2_data[tile_index];
+	int colour_mask=0xff;
 
-	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf2_bank,(tile>>12)+48,0)
+	if (pf23_gfx_bank==4) colour_mask=0; /* No palette banks when in 8bpp mode */
+	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf2_bank,((tile>>12)+48)&colour_mask,0)
 }
 
 static void get_pf3_tile_info(int tile_index)
 {
 	int tile=cninja_pf3_data[tile_index];
+	int colour_mask=0xff;
 
-	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf3_bank,tile>>12,0)
+	if (pf23_gfx_bank==4) colour_mask=0; /* No palette banks when in 8bpp mode */
+	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf3_bank,(tile>>12)&colour_mask,0)
 }
 
 static void get_pf4_tile_info(int tile_index)

@@ -16,6 +16,19 @@
 
 #include "osd_cpu.h"
 
+
+/**************************************************************************
+	Internal Clock divisor
+
+	External Clock is divided internally by 3 to produce the machine state
+	generator. This is then divided by 5 for the instruction cycle times.
+	(Each instruction cycle passes through 5 machine states).
+*/
+
+#define I8039_CLOCK_DIVIDER		(3*5)
+
+
+
 enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A,  I8039_IRQ_STATE, I8039_TC,
 	   I8039_P1,   I8039_P2, I8039_R0,  I8039_R1, I8039_R2,
 	   I8039_R3,   I8039_R4, I8039_R5,  I8039_R6, I8039_R7
@@ -72,6 +85,7 @@ extern unsigned i8039_dasm(char *buffer, unsigned pc);
 #define I8035_R6				I8039_R6
 #define I8035_R7				I8039_R7
 
+#define I8035_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define i8035_ICount			i8039_ICount
 
 extern void i8035_init(void);
@@ -109,6 +123,7 @@ extern unsigned i8035_dasm(char *buffer, unsigned pc);
 #define I8048_R6				I8039_R6
 #define I8048_R7				I8039_R7
 
+#define I8048_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define i8048_ICount			i8039_ICount
 
 extern void i8048_init(void);
@@ -146,6 +161,7 @@ extern unsigned i8048_dasm(char *buffer, unsigned pc);
 #define N7751_R6				I8039_R6
 #define N7751_R7				I8039_R7
 
+#define N7751_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define n7751_ICount			i8039_ICount
 
 extern void n7751_init(void);

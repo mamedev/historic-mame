@@ -19,6 +19,8 @@ extern unsigned char* mermaid_foreground_scrollram;
 
 PALETTE_INIT( mermaid );
 VIDEO_UPDATE( mermaid );
+WRITE_HANDLER( mermaid_flip_screen_x_w );
+WRITE_HANDLER( mermaid_flip_screen_y_w );
 
 
 static unsigned char *mermaid_AY8910_enable;
@@ -41,6 +43,12 @@ static READ_HANDLER( mermaid_f800_r )
 	// collision register active LO
 	// Bit 0
 	// Bit 1 - Sprite - Foreground
+	// Bit 2 - Sprite - Stream
+	// Bit 3
+	// Bit 4
+	// Bit 5
+	// Bit 6
+	// Bit 7
 	//return rand() & 0xff;
 	return 0x00;
 }
@@ -56,7 +64,8 @@ static MEMORY_READ_START( readmem )
 	{ 0xe000, 0xe000, input_port_0_r },
 	{ 0xe800, 0xe800, input_port_1_r },
 	{ 0xf000, 0xf000, input_port_2_r },
-	{ 0xf800, 0xf800, mermaid_f800_r },
+	{ 0xf800, 0xf800, input_port_3_r },
+//	{ 0xf800, 0xf800, mermaid_f800_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
@@ -69,6 +78,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xd880, 0xd8bf, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xdc00, 0xdfff, MWA_RAM, &mermaid_foreground_colorram },
 	{ 0xe000, 0xe001, MWA_RAM, &mermaid_AY8910_enable },
+	{ 0xe005, 0xe005, mermaid_flip_screen_x_w },
+	{ 0xe006, 0xe006, mermaid_flip_screen_y_w },
 	{ 0xe007, 0xe007, interrupt_enable_w },
 	{ 0xe807, 0xe807, MWA_NOP },	/* watchdog? */
 	{ 0xf802, 0xf802, MWA_NOP },	/* ??? see memory map */
@@ -82,25 +93,71 @@ INPUT_PORTS_START( mermaid )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ))
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
 
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 )
 
+	PORT_START		/* Fake IN for debug features (0xf800 -> 0xc01a, cpl) */
+	PORT_DIPNAME( 0x01, 0x00, "0xf800 bit 0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "0xf800 bit 1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "0xf800 bit 2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "0xf800 bit 3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "0xf800 bit 4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "0xf800 bit 5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "0xf800 bit 6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "0xf800 bit 7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 

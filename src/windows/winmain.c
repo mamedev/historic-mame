@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winnt.h>
+#include <mmsystem.h>
 
 // standard includes
 #include <time.h>
@@ -82,7 +83,23 @@ int main(int argc, char **argv)
 
 	// have we decided on a game?
 	if (game_index != -1)
+	{
+		TIMECAPS caps;
+		MMRESULT result;
+
+		// crank up the multimedia timer resolution to its max
+		// this gives the system much finer timeslices
+		result = timeGetDevCaps(&caps, sizeof(caps));
+		if (result == TIMERR_NOERROR)
+			timeBeginPeriod(caps.wPeriodMin);
+
+		// run the game
 		res = run_game(game_index);
+
+		// restore the timer resolution
+		if (result == TIMERR_NOERROR)
+			timeEndPeriod(caps.wPeriodMin);
+	}
 
 	// restore the original LED state
 	osd_set_leds(original_leds);

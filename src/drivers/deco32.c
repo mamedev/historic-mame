@@ -574,7 +574,7 @@ MEMORY_END
 
 /**********************************************************************************/
 
-INPUT_PORTS_START( deco32 )
+INPUT_PORTS_START( captaven )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -600,34 +600,34 @@ INPUT_PORTS_START( deco32 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_VBLANK ) //check
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1 ) /* Service */
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE2 ) /* Only on some games */
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
@@ -666,13 +666,13 @@ INPUT_PORTS_START( deco32 )
 	PORT_DIPSETTING(      0x0c00, "Normal" )
 	PORT_DIPSETTING(      0x0400, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Coin Switches" )
-	PORT_DIPSETTING(      0x1000, "1-2" )
-	PORT_DIPSETTING(      0x0000, "1-4" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Coin Slots" )
+	PORT_DIPSETTING(      0x1000, "Common" )
+	PORT_DIPSETTING(      0x0000, "Individual" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Mode Select" )
 	PORT_DIPSETTING(      0x2000, "2 Player" )
 	PORT_DIPSETTING(      0x0000, "4 Player" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Continues" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
@@ -947,7 +947,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
 	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 85, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 95, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct BSMT2000interface bsmt2000_interface =
@@ -1098,158 +1098,210 @@ MACHINE_DRIVER_END
 
 ROM_START( captaven )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
-	ROM_LOAD32_BYTE( "hn00-4.1e", 0x000000, 0x20000, 0x147fb094 )
-	ROM_LOAD32_BYTE( "hn01-4.1h", 0x000001, 0x20000, 0x11ecdb95 )
-	ROM_LOAD32_BYTE( "hn02-4.1k", 0x000002, 0x20000, 0x35d2681f )
-	ROM_LOAD32_BYTE( "hn03-4.1m", 0x000003, 0x20000, 0x3b59ba05 )
-	ROM_LOAD32_BYTE( "hh-04.bin", 0x080000, 0x20000, 0xd6261e98 ) /* Aka MAN-12.3e */
-	ROM_LOAD32_BYTE( "hh-05.bin", 0x080001, 0x20000, 0x40f0764d ) /* Aka MAN-13.3h */
-	ROM_LOAD32_BYTE( "hh-06.bin", 0x080002, 0x20000, 0x7cb9a4bd ) /* Aka MAN-14.3k */
-	ROM_LOAD32_BYTE( "hh-07.bin", 0x080003, 0x20000, 0xc7854fe8 ) /* Aka MAN-15.3m */
+	ROM_LOAD32_BYTE( "hn_00-4.1e",	0x000000, 0x20000, 0x147fb094 )
+	ROM_LOAD32_BYTE( "hn_01-4.1h",	0x000001, 0x20000, 0x11ecdb95 )
+	ROM_LOAD32_BYTE( "hn_02-4.1k",	0x000002, 0x20000, 0x35d2681f )
+	ROM_LOAD32_BYTE( "hn_03-4.1m",	0x000003, 0x20000, 0x3b59ba05 )
+	ROM_LOAD32_BYTE( "man-12.3e",	0x080000, 0x20000, 0xd6261e98 )
+	ROM_LOAD32_BYTE( "man-13.3h",	0x080001, 0x20000, 0x40f0764d )
+	ROM_LOAD32_BYTE( "man-14.3k",	0x080002, 0x20000, 0x7cb9a4bd )
+	ROM_LOAD32_BYTE( "man-15.3m",	0x080003, 0x20000, 0xc7854fe8 )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "hh-08.bin",   0x000000,  0x10000,  0x361fbd16 ) /* Aka HH-06 on mask program rom boards */
+	ROM_LOAD( "hj_08.17k",	0x00000,  0x10000,  0x361fbd16 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-00.8a",   0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
+	ROM_LOAD( "man-00.8a",	0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
 
 	ROM_REGION( 0x500000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-05.bin",  0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x140000,  0x40000 )
-	ROM_CONTINUE(            0x280000,  0x40000 )
-	ROM_CONTINUE(            0x3c0000,  0x40000 )
-	ROM_LOAD( "man-04.bin",  0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x180000,  0x40000 )
-	ROM_CONTINUE(            0x2c0000,  0x40000 )
-	ROM_CONTINUE(            0x400000,  0x40000 )
-	ROM_LOAD( "man-03.bin",  0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x1c0000,  0x40000 )
-	ROM_CONTINUE(            0x300000,  0x40000 )
-	ROM_CONTINUE(            0x440000,  0x40000 )
-	ROM_LOAD( "man-02.bin",  0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x200000,  0x40000 )
-	ROM_CONTINUE(            0x340000,  0x40000 )
-	ROM_CONTINUE(            0x480000,  0x40000 )
-	ROM_LOAD( "man-01.bin",  0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x240000,  0x40000 )
-	ROM_CONTINUE(            0x380000,  0x40000 )
-	ROM_CONTINUE(            0x4c0000,  0x40000 )
+	ROM_LOAD( "man-05.16a",	0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x140000,  0x40000 )
+	ROM_CONTINUE( 			0x280000,  0x40000 )
+	ROM_CONTINUE( 			0x3c0000,  0x40000 )
+	ROM_LOAD( "man-04.14a",	0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x180000,  0x40000 )
+	ROM_CONTINUE( 			0x2c0000,  0x40000 )
+	ROM_CONTINUE( 			0x400000,  0x40000 )
+	ROM_LOAD( "man-03.12a",	0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x1c0000,  0x40000 )
+	ROM_CONTINUE( 			0x300000,  0x40000 )
+	ROM_CONTINUE( 			0x440000,  0x40000 )
+	ROM_LOAD( "man-02.11a",	0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x200000,  0x40000 )
+	ROM_CONTINUE( 			0x340000,  0x40000 )
+	ROM_CONTINUE( 			0x480000,  0x40000 )
+	ROM_LOAD( "man-01.10a",	0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x240000,  0x40000 )
+	ROM_CONTINUE( 			0x380000,  0x40000 )
+	ROM_CONTINUE( 			0x4c0000,  0x40000 )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD16_BYTE( "man-06.bin",  0x000000,  0x100000,  0xa9a64297 )
-	ROM_LOAD16_BYTE( "man-07.bin",  0x000001,  0x100000,  0xb1db200c )
-	ROM_LOAD16_BYTE( "man-08.bin",  0x200000,  0x100000,  0x28e98e66 )
-	ROM_LOAD16_BYTE( "man-09.bin",  0x200001,  0x100000,  0x1921245d )
+	ROM_LOAD16_BYTE( "man-06.17a",	0x000000,  0x100000,  0xa9a64297 )
+	ROM_LOAD16_BYTE( "man-07.18a",	0x000001,  0x100000,  0xb1db200c )
+	ROM_LOAD16_BYTE( "man-08.17c",	0x200000,  0x100000,  0x28e98e66 )
+	ROM_LOAD16_BYTE( "man-09.21c",	0x200001,  0x100000,  0x1921245d )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "man-10.bin",  0x000000,  0x80000,  0x0132c578 )
+	ROM_LOAD( "man-10.14k",	0x000000,  0x80000,  0x0132c578 )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "man-11.bin",  0x000000,  0x80000,  0x0dc60a4c )
+	ROM_LOAD( "man-11.16k",	0x000000,  0x80000,  0x0dc60a4c )
 ROM_END
 
-ROM_START( captavee )
+ROM_START( captavne )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
-	ROM_LOAD32_BYTE( "hg00-4.2f", 0x000000, 0x20000, 0x7008d43c )
-	ROM_LOAD32_BYTE( "hg01-4.2h", 0x000001, 0x20000, 0x53dc1042 )
-	ROM_LOAD32_BYTE( "hg02-4.2k", 0x000002, 0x20000, 0x9e3f9ee2 )
-	ROM_LOAD32_BYTE( "hg03-4.2l", 0x000003, 0x20000, 0xbc050740 )
-	ROM_LOAD32_BYTE( "hh-04.bin", 0x080000, 0x20000, 0xd6261e98 )
-	ROM_LOAD32_BYTE( "hh-05.bin", 0x080001, 0x20000, 0x40f0764d )
-	ROM_LOAD32_BYTE( "hh-06.bin", 0x080002, 0x20000, 0x7cb9a4bd )
-	ROM_LOAD32_BYTE( "hh-07.bin", 0x080003, 0x20000, 0xc7854fe8 )
+	ROM_LOAD32_BYTE( "hg_00-4.1e",	0x000000, 0x20000, 0x7008d43c )
+	ROM_LOAD32_BYTE( "hg_01-4.1h",	0x000001, 0x20000, 0x53dc1042 )
+	ROM_LOAD32_BYTE( "hg_02-4.1k",	0x000002, 0x20000, 0x9e3f9ee2 )
+	ROM_LOAD32_BYTE( "hg_03-4.1m",	0x000003, 0x20000, 0xbc050740 )
+	ROM_LOAD32_BYTE( "man-12.3e",	0x080000, 0x20000, 0xd6261e98 )
+	ROM_LOAD32_BYTE( "man-13.3h",	0x080001, 0x20000, 0x40f0764d )
+	ROM_LOAD32_BYTE( "man-14.3k",	0x080002, 0x20000, 0x7cb9a4bd )
+	ROM_LOAD32_BYTE( "man-15.3m",	0x080003, 0x20000, 0xc7854fe8 )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "hh-08.bin",  0x00000,  0x10000,  0x361fbd16 )
+	ROM_LOAD( "hj_08.17k",	0x00000,  0x10000,  0x361fbd16 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-00.8a",   0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
+	ROM_LOAD( "man-00.8a",	0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
 
 	ROM_REGION( 0x500000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-05.bin",  0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x140000,  0x40000 )
-	ROM_CONTINUE(            0x280000,  0x40000 )
-	ROM_CONTINUE(            0x3c0000,  0x40000 )
-	ROM_LOAD( "man-04.bin",  0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x180000,  0x40000 )
-	ROM_CONTINUE(            0x2c0000,  0x40000 )
-	ROM_CONTINUE(            0x400000,  0x40000 )
-	ROM_LOAD( "man-03.bin",  0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x1c0000,  0x40000 )
-	ROM_CONTINUE(            0x300000,  0x40000 )
-	ROM_CONTINUE(            0x440000,  0x40000 )
-	ROM_LOAD( "man-02.bin",  0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x200000,  0x40000 )
-	ROM_CONTINUE(            0x340000,  0x40000 )
-	ROM_CONTINUE(            0x480000,  0x40000 )
-	ROM_LOAD( "man-01.bin",  0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x240000,  0x40000 )
-	ROM_CONTINUE(            0x380000,  0x40000 )
-	ROM_CONTINUE(            0x4c0000,  0x40000 )
+	ROM_LOAD( "man-05.16a",	0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x140000,  0x40000 )
+	ROM_CONTINUE( 			0x280000,  0x40000 )
+	ROM_CONTINUE( 			0x3c0000,  0x40000 )
+	ROM_LOAD( "man-04.14a",	0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x180000,  0x40000 )
+	ROM_CONTINUE( 			0x2c0000,  0x40000 )
+	ROM_CONTINUE( 			0x400000,  0x40000 )
+	ROM_LOAD( "man-03.12a",	0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x1c0000,  0x40000 )
+	ROM_CONTINUE( 			0x300000,  0x40000 )
+	ROM_CONTINUE( 			0x440000,  0x40000 )
+	ROM_LOAD( "man-02.11a",	0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x200000,  0x40000 )
+	ROM_CONTINUE( 			0x340000,  0x40000 )
+	ROM_CONTINUE( 			0x480000,  0x40000 )
+	ROM_LOAD( "man-01.10a",	0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x240000,  0x40000 )
+	ROM_CONTINUE( 			0x380000,  0x40000 )
+	ROM_CONTINUE( 			0x4c0000,  0x40000 )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD16_BYTE( "man-06.bin",  0x000000,  0x100000,  0xa9a64297 )
-	ROM_LOAD16_BYTE( "man-07.bin",  0x000001,  0x100000,  0xb1db200c )
-	ROM_LOAD16_BYTE( "man-08.bin",  0x200000,  0x100000,  0x28e98e66 )
-	ROM_LOAD16_BYTE( "man-09.bin",  0x200001,  0x100000,  0x1921245d )
+	ROM_LOAD16_BYTE( "man-06.17a",	0x000000,  0x100000,  0xa9a64297 )
+	ROM_LOAD16_BYTE( "man-07.18a",	0x000001,  0x100000,  0xb1db200c )
+	ROM_LOAD16_BYTE( "man-08.17c",	0x200000,  0x100000,  0x28e98e66 )
+	ROM_LOAD16_BYTE( "man-09.21c",	0x200001,  0x100000,  0x1921245d )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "man-10.bin",  0x000000,  0x80000,  0x0132c578 )
+	ROM_LOAD( "man-10.14k",	0x000000,  0x80000,  0x0132c578 )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "man-11.bin",  0x000000,  0x80000,  0x0dc60a4c )
+	ROM_LOAD( "man-11.16k",	0x000000,  0x80000,  0x0dc60a4c )
 ROM_END
 
-ROM_START( captav19 )
+ROM_START( captavnu )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
-	ROM_LOAD32_BYTE( "hh-00.bin", 0x000000, 0x20000, 0x08b870e0 )
-	ROM_LOAD32_BYTE( "hh-01.bin", 0x000001, 0x20000, 0x0dc0feca )
-	ROM_LOAD32_BYTE( "hh-02.bin", 0x000002, 0x20000, 0x26ef94c0 )
-	ROM_LOAD32_BYTE( "hn03-4.1m", 0x000003, 0x20000, 0x3b59ba05 )
-	ROM_LOAD32_BYTE( "hh-04.bin", 0x080000, 0x20000, 0xd6261e98 )
-	ROM_LOAD32_BYTE( "hh-05.bin", 0x080001, 0x20000, 0x40f0764d )
-	ROM_LOAD32_BYTE( "hh-06.bin", 0x080002, 0x20000, 0x7cb9a4bd )
-	ROM_LOAD32_BYTE( "hh-07.bin", 0x080003, 0x20000, 0xc7854fe8 )
+	ROM_LOAD32_BYTE( "hh_00-19.1e",	0x000000, 0x20000, 0x08b870e0 )
+	ROM_LOAD32_BYTE( "hh_01-19.1h",	0x000001, 0x20000, 0x0dc0feca )
+	ROM_LOAD32_BYTE( "hh_02-19.1k",	0x000002, 0x20000, 0x26ef94c0 )
+	ROM_LOAD32_BYTE( "hn_03-4.1m",	0x000003, 0x20000, 0x3b59ba05 )
+	ROM_LOAD32_BYTE( "man-12.3e",	0x080000, 0x20000, 0xd6261e98 )
+	ROM_LOAD32_BYTE( "man-13.3h",	0x080001, 0x20000, 0x40f0764d )
+	ROM_LOAD32_BYTE( "man-14.3k",	0x080002, 0x20000, 0x7cb9a4bd )
+	ROM_LOAD32_BYTE( "man-15.3m",	0x080003, 0x20000, 0xc7854fe8 )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "hh-08.bin",  0x00000,  0x10000,  0x361fbd16 )
+	ROM_LOAD( "hj_08.17k",	0x00000,  0x10000,  0x361fbd16 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-00.8a",   0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
+	ROM_LOAD( "man-00.8a",	0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
 
 	ROM_REGION( 0x500000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "man-05.bin",  0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x140000,  0x40000 )
-	ROM_CONTINUE(            0x280000,  0x40000 )
-	ROM_CONTINUE(            0x3c0000,  0x40000 )
-	ROM_LOAD( "man-04.bin",  0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x180000,  0x40000 )
-	ROM_CONTINUE(            0x2c0000,  0x40000 )
-	ROM_CONTINUE(            0x400000,  0x40000 )
-	ROM_LOAD( "man-03.bin",  0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x1c0000,  0x40000 )
-	ROM_CONTINUE(            0x300000,  0x40000 )
-	ROM_CONTINUE(            0x440000,  0x40000 )
-	ROM_LOAD( "man-02.bin",  0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x200000,  0x40000 )
-	ROM_CONTINUE(            0x340000,  0x40000 )
-	ROM_CONTINUE(            0x480000,  0x40000 )
-	ROM_LOAD( "man-01.bin",  0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
-	ROM_CONTINUE(            0x240000,  0x40000 )
-	ROM_CONTINUE(            0x380000,  0x40000 )
-	ROM_CONTINUE(            0x4c0000,  0x40000 )
+	ROM_LOAD( "man-05.16a",	0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x140000,  0x40000 )
+	ROM_CONTINUE( 			0x280000,  0x40000 )
+	ROM_CONTINUE( 			0x3c0000,  0x40000 )
+	ROM_LOAD( "man-04.14a",	0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x180000,  0x40000 )
+	ROM_CONTINUE( 			0x2c0000,  0x40000 )
+	ROM_CONTINUE( 			0x400000,  0x40000 )
+	ROM_LOAD( "man-03.12a",	0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x1c0000,  0x40000 )
+	ROM_CONTINUE( 			0x300000,  0x40000 )
+	ROM_CONTINUE( 			0x440000,  0x40000 )
+	ROM_LOAD( "man-02.11a",	0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x200000,  0x40000 )
+	ROM_CONTINUE( 			0x340000,  0x40000 )
+	ROM_CONTINUE( 			0x480000,  0x40000 )
+	ROM_LOAD( "man-01.10a",	0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x240000,  0x40000 )
+	ROM_CONTINUE( 			0x380000,  0x40000 )
+	ROM_CONTINUE( 			0x4c0000,  0x40000 )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD16_BYTE( "man-06.bin",  0x000000,  0x100000,  0xa9a64297 )
-	ROM_LOAD16_BYTE( "man-07.bin",  0x000001,  0x100000,  0xb1db200c )
-	ROM_LOAD16_BYTE( "man-08.bin",  0x200000,  0x100000,  0x28e98e66 )
-	ROM_LOAD16_BYTE( "man-09.bin",  0x200001,  0x100000,  0x1921245d )
+	ROM_LOAD16_BYTE( "man-06.17a",	0x000000,  0x100000,  0xa9a64297 )
+	ROM_LOAD16_BYTE( "man-07.18a",	0x000001,  0x100000,  0xb1db200c )
+	ROM_LOAD16_BYTE( "man-08.17c",	0x200000,  0x100000,  0x28e98e66 )
+	ROM_LOAD16_BYTE( "man-09.21c",	0x200001,  0x100000,  0x1921245d )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "man-10.bin",  0x000000,  0x80000,  0x0132c578 )
+	ROM_LOAD( "man-10.14k",	0x000000,  0x80000,  0x0132c578 )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "man-11.bin",  0x000000,  0x80000,  0x0dc60a4c )
+	ROM_LOAD( "man-11.16k",	0x000000,  0x80000,  0x0dc60a4c )
+ROM_END
+
+ROM_START( captavnj )
+	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
+	ROM_LOAD32_BYTE( "hj_00-2.1e",	0x000000, 0x20000, 0x10b1faaf )
+	ROM_LOAD32_BYTE( "hj_01-2.1h",	0x000001, 0x20000, 0x62c59f27 )
+	ROM_LOAD32_BYTE( "hj_02-2.1k",	0x000002, 0x20000, 0xce946cad )
+	ROM_LOAD32_BYTE( "hj_03-2.1m",	0x000003, 0x20000, 0x140cf9ce )
+	ROM_LOAD32_BYTE( "man-12.3e",	0x080000, 0x20000, 0xd6261e98 )
+	ROM_LOAD32_BYTE( "man-13.3h",	0x080001, 0x20000, 0x40f0764d )
+	ROM_LOAD32_BYTE( "man-14.3k",	0x080002, 0x20000, 0x7cb9a4bd )
+	ROM_LOAD32_BYTE( "man-15.3m",	0x080003, 0x20000, 0xc7854fe8 )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "hj_08.17k",	0x00000,  0x10000,  0x361fbd16 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "man-00.8a",	0x000000,  0x80000,  0x7855a607 ) /* Encrypted tiles */
+
+	ROM_REGION( 0x500000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "man-05.16a",	0x000000,  0x40000,  0xd44d1995 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x140000,  0x40000 )
+	ROM_CONTINUE( 			0x280000,  0x40000 )
+	ROM_CONTINUE( 			0x3c0000,  0x40000 )
+	ROM_LOAD( "man-04.14a",	0x040000,  0x40000,  0x541492a1 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x180000,  0x40000 )
+	ROM_CONTINUE( 			0x2c0000,  0x40000 )
+	ROM_CONTINUE( 			0x400000,  0x40000 )
+	ROM_LOAD( "man-03.12a",	0x080000,  0x40000,  0x2d9c52b2 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x1c0000,  0x40000 )
+	ROM_CONTINUE( 			0x300000,  0x40000 )
+	ROM_CONTINUE( 			0x440000,  0x40000 )
+	ROM_LOAD( "man-02.11a",	0x0c0000,  0x40000,  0x07674c05 ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x200000,  0x40000 )
+	ROM_CONTINUE( 			0x340000,  0x40000 )
+	ROM_CONTINUE( 			0x480000,  0x40000 )
+	ROM_LOAD( "man-01.10a",	0x100000,  0x40000,  0xae714ada ) /* Encrypted tiles */
+	ROM_CONTINUE( 			0x240000,  0x40000 )
+	ROM_CONTINUE( 			0x380000,  0x40000 )
+	ROM_CONTINUE( 			0x4c0000,  0x40000 )
+
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "man-06.17a",	0x000000,  0x100000,  0xa9a64297 )
+	ROM_LOAD16_BYTE( "man-07.18a",	0x000001,  0x100000,  0xb1db200c )
+	ROM_LOAD16_BYTE( "man-08.17c",	0x200000,  0x100000,  0x28e98e66 )
+	ROM_LOAD16_BYTE( "man-09.21c",	0x200001,  0x100000,  0x1921245d )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 )
+	ROM_LOAD( "man-10.14k",	0x000000,  0x80000,  0x0132c578 )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "man-11.16k",	0x000000,  0x80000,  0x0dc60a4c )
 ROM_END
 
 ROM_START( dragngun )
@@ -1578,11 +1630,12 @@ static void init_lockload(void)
 
 /**********************************************************************************/
 
-GAME( 1991, captaven, 0,        captaven, deco32,   captaven, ROT0, "Data East Corporation", "Captain America (Asia Rev 4)" )
-GAME( 1991, captavee, captaven, captaven, deco32,   captaven, ROT0, "Data East Corporation", "Captain America (UK Rev 4)" )
-GAME( 1991, captav19, captaven, captaven, deco32,   captaven, ROT0, "Data East Corporation", "Captain America (US Rev 1.9)" )
+GAME( 1991, captaven, 0,        captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America (Asia Rev 4)" )
+GAME( 1991, captavne, captaven, captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America (UK Rev 4)" )
+GAME( 1991, captavnu, captaven, captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America (US Rev 1.9)" )
+GAME( 1991, captavnj, captaven, captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America (Japan Rev 2)" )
 GAMEX(1993, dragngun, 0,        dragngun, lockload, dragngun, ROT0, "Data East Corporation", "Dragon Gun (US)", GAME_IMPERFECT_GRAPHICS  )
 GAMEX(1993, fghthist, 0,        fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1993, fghthstw, fghthist, fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (World)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, lockload, 0,        dragngun, lockload, lockload, ROT0, "Data East Corporation", "Locked 'N Loaded (US)", GAME_IMPERFECT_GRAPHICS  )
-GAMEX(1994, tattass,  0,        tattass,  deco32,   0,        ROT0, "Data East Pinball",     "Tattoo Assassins (Prototype)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, tattass,  0,        tattass,  captaven, 0,        ROT0, "Data East Pinball",     "Tattoo Assassins (Prototype)", GAME_IMPERFECT_GRAPHICS )

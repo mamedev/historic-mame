@@ -581,10 +581,6 @@ int frontend_help (char *gamename)
 						if( drv.sound[j].sound_type == SOUND_SAMPLES )
 							samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
 #endif
-#if (HAS_VLM5030)
-						if( drv.sound[j].sound_type == SOUND_VLM5030 )
-							samplenames = ((struct VLM5030interface *)drv.sound[j].sound_interface)->samplenames;
-#endif
 						if (samplenames != 0 && samplenames[0] != 0)
 						{
 							printf("%-10s",drivers[i]->name);
@@ -623,10 +619,6 @@ int frontend_help (char *gamename)
 #if (HAS_SAMPLES)
 					if( drv.sound[k].sound_type == SOUND_SAMPLES )
 							samplenames = ((struct Samplesinterface *)drv.sound[k].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-					if( drv.sound[k].sound_type == SOUND_VLM5030 )
-							samplenames = ((struct VLM5030interface *)drv.sound[k].sound_interface)->samplenames;
 #endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
@@ -698,7 +690,7 @@ int frontend_help (char *gamename)
 					const struct MachineCPU *x_cpu;
 					const struct MachineSound *x_sound;
 					struct InternalMachineDriver x_driver;
-					
+
 					expand_machine_driver(drivers[i]->drv, &x_driver);
 					x_cpu = x_driver.cpu;
 					x_sound = x_driver.sound;
@@ -879,13 +871,6 @@ int frontend_help (char *gamename)
 							if (drv.sound[j].sound_type == SOUND_SAMPLES)
 							{
 								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
-								break;
-							}
-#endif
-#if (HAS_VLM5030)
-							if (drv.sound[j].sound_type == SOUND_VLM5030)
-							{
-								samplenames = ((struct VLM5030interface *)drv.sound[j].sound_interface)->samplenames;
 								break;
 							}
 #endif
@@ -1218,7 +1203,7 @@ int frontend_help (char *gamename)
 						{
 							struct InternalMachineDriver x_driver;
 							const struct MachineCPU *x_cpu;
-							
+
 							expand_machine_driver(drivers[i]->drv, &x_driver);
 							x_cpu = x_driver.cpu;
 
@@ -1300,10 +1285,6 @@ j = 0;	// count only the main cpu
 #if (HAS_SAMPLES)
  					if( drv.sound[j].sound_type == SOUND_SAMPLES )
  						samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-					if( drv.sound[j].sound_type == SOUND_VLM5030 )
-						samplenames = ((struct VLM5030interface *)drv.sound[j].sound_interface)->samplenames;
 #endif
 				}
 #endif

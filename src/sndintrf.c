@@ -329,9 +329,6 @@ int MSM5205_clock(const struct MachineSound *msound) { return ((struct MSM5205in
 #if (HAS_MSM5232)
 int MSM5232_clock(const struct MachineSound *msound) { return ((struct MSM5232interface*)msound->sound_interface)->baseclock; }
 #endif
-#if (HAS_UPD7759)
-int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
-#endif
 #if (HAS_ASTROCADE)
 int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
 int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
@@ -775,9 +772,9 @@ struct snd_interface sndintf[] =
 		SOUND_UPD7759,
 		"uPD7759",
 		0,
-		UPD7759_clock,
+		0,
 		UPD7759_sh_start,
-		UPD7759_sh_stop,
+		0,
 		0,
 		0
 	},

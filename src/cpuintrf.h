@@ -234,13 +234,17 @@ enum
 	CPU_JAGUARDSP,
 #endif
 #if (HAS_R3000)
-	CPU_R3000,
+	CPU_R3000BE,
+	CPU_R3000LE,
 #endif
 #if (HAS_TMS320C31)
 	CPU_TMS320C31,
 #endif
 #if (HAS_ARM)
 	CPU_ARM,
+#endif
+#if (HAS_SH2)
+	CPU_SH2,
 #endif
 
 #ifdef MESS
@@ -270,9 +274,6 @@ enum
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,
-#endif
-#if (HAS_SH2)
-	CPU_SH2,
 #endif
 #if (HAS_SPC700)
 	CPU_SPC700,
@@ -308,7 +309,7 @@ enum
 	INTERNAL_ASSERT_LINE = 100 + ASSERT_LINE,
 
 	/* interrupt parameters */
-	MAX_IRQ_LINES =	8,			/* maximum number of IRQ lines per CPU */
+	MAX_IRQ_LINES =	16,			/* maximum number of IRQ lines per CPU */
 	IRQ_LINE_NMI = 127			/* IRQ line for NMIs */
 };
 

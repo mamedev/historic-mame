@@ -4122,7 +4122,7 @@ GAME( 1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "R
 GAME( 1983, upndown,  0,        system1,  upndown,  nprinces, ROT270, "Sega", "Up'n Down" )
 GAME( 1983, upndownu, upndown,  system1,  upndown,  0,        ROT270, "Sega", "Up'n Down (not encrypted)" )
 GAME( 1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking" )
-GAME( 1984, mrvikngj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
+GAME( 1984, mrvikngj, mrviking, small,    mrvikngj, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
 GAME( 1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT" )
 GAME( 1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (128k Ver.)" )
 GAME( 1984, flickyo,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (64k Ver.)" )

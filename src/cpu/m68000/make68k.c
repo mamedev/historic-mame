@@ -166,7 +166,6 @@ int		DisOp;
 #undef cpu_readmem24bew
 #undef cpu_readmem24bew_word
 
-#include "cpuintrf.h"
 
 /*
  * Defines used by Program

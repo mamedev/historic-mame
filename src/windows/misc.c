@@ -32,7 +32,6 @@ Version 0.2, May 2000
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 
 #ifndef _MSC_VER

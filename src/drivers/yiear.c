@@ -259,7 +259,7 @@ struct VLM5030interface vlm5030_interface =
 	3580000,    /* master clock  */
 	100,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
-	0,          /* memory size of speech rom */
+	0           /* memory size of speech rom */
 };
 
 

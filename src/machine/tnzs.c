@@ -216,6 +216,7 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 		/*
 		0xc1: read number of credits, then buttons
 		0x54+0x41: add value to number of credits
+		0x15: sub 1 credit (when "Continue Play" only)
 		0x84: coin 1 lockout (issued only in test mode)
 		0x88: coin 2 lockout (issued only in test mode)
 		0x80: release coin lockout (issued only in test mode)
@@ -232,6 +233,9 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 
 		if (data == 0xc1)
 			mcu_readcredits = 0;	/* reset input port number */
+
+		if (data == 0x15)
+			mcu_credits = (mcu_credits - 1) & 0xff;
 
 		mcu_command = data;
 	}

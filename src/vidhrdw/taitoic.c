@@ -59,6 +59,65 @@ Control registers
 
 
 
+PC090OJ
+-------
+
+		Information from Raine (todo: reformat)
+
+		OBJECT RAM
+		----------
+
+		- 8 bytes/sprite
+		- 256 sprites (0x800 bytes)
+		- First sprite has *highest* priority
+
+		-----+--------+-------------------------
+		Byte | Bit(s) | Use
+		-----+76543210+-------------------------
+		  0  |.x......| Flip Y Axis
+		  0  |x.......| Flip X Axis
+		  1  |....xxxx| Colour Bank
+		  2  |.......x| Sprite Y
+		  3  |xxxxxxxx| Sprite Y
+		  4  |...xxxxx| Sprite Tile
+		  5  |xxxxxxxx| Sprite Tile
+		  6  |.......x| Sprite X
+		  7  |xxxxxxxx| Sprite X
+		-----+--------+-------------------------
+
+		SPRITE CONTROL
+		--------------
+
+		- Maze of Flott [603D MASK] 201C 200B 200F
+		- Earth Joker 001C
+		- Cadash 0011 0013 0010 0000
+
+		-----+--------+-------------------------
+		Byte | Bit(s) | Use
+		-----+76543210+-------------------------
+		  0  |.......x| ?
+		  0  |......x.| Write Acknowledge?
+		  0  |..xxxx..| Colour Bank Offset
+		  0  |xx......| Unused
+		  1  |...xxxxx| Unused
+		  1  |..x.....| BG1:Sprite Priority
+		  1  |.x......| Priority?
+		  1  |x.......| Unused
+		-----+--------+-------------------------
+
+		OLD SPRITE CONTROL (RASTAN TYPE)
+		--------------------------------
+
+		-----+--------+-------------------------
+		Byte | Bit(s) | Use
+		-----+76543210+-------------------------
+		  1  |.......x| BG1:Sprite Priority?
+		  1  |......x.| Write Acknowledge?
+		  1  |xxx.....| Colour Bank Offset
+		-----+--------+-------------------------
+
+
+
 TC0080VCO
 ---------
 Combined tilemap and motion object generator. The front tilemap
@@ -1384,7 +1443,164 @@ void PC080SN_tilemap_draw_special(struct mame_bitmap *bitmap,const struct rectan
 
 
 
+
 /***************************************************************************/
+
+
+#define PC090OJ_RAM_SIZE 0x4000
+#define PC090OJ_ACTIVE_RAM_SIZE 0x800
+
+/* NB: PC090OJ_ctrl is the internal register controlling flipping
+
+   PC090OJ_sprite_ctrl is a representation of the hardware OUTSIDE the PC090OJ
+   which impacts on sprite plotting, and which varies between games. It
+   includes color banking and (optionally) priority. It allows each game to
+   control these aspects of the sprites in different ways, while keeping the
+   routines here modular.
+
+*/
+
+static data16_t PC090OJ_ctrl,PC090OJ_buffer,PC090OJ_gfxnum;
+UINT16 PC090OJ_sprite_ctrl;
+
+static data16_t *PC090OJ_ram,*PC090OJ_ram_buffered;
+
+static int PC090OJ_xoffs,PC090OJ_yoffs;
+
+
+
+int PC090OJ_vh_start(int gfxnum,int x_offset,int y_offset,int use_buffer)
+{
+	/* use the given gfx set */
+	PC090OJ_gfxnum = gfxnum;
+
+	PC090OJ_xoffs = x_offset;
+	PC090OJ_yoffs = y_offset;
+
+	PC090OJ_buffer = use_buffer;
+
+	PC090OJ_ram = auto_malloc(PC090OJ_RAM_SIZE);
+	PC090OJ_ram_buffered = auto_malloc(PC090OJ_RAM_SIZE);
+
+	if (!PC090OJ_ram || !PC090OJ_ram_buffered)
+		return 1;
+
+	memset(PC090OJ_ram,0,PC090OJ_RAM_SIZE);
+	memset(PC090OJ_ram_buffered,0,PC090OJ_RAM_SIZE);
+
+	state_save_register_UINT16("PC090OJ", 0, "memory", PC090OJ_ram, PC090OJ_RAM_SIZE/2);
+	state_save_register_UINT16("PC090OJb", 0, "memory", PC090OJ_ram_buffered, PC090OJ_RAM_SIZE/2);
+	state_save_register_UINT16("PC090OJc", 0, "register", &PC090OJ_ctrl, 1);
+
+//	state_save_register_func_postload(PC090OJ_restore);
+
+	return 0;
+}
+
+READ16_HANDLER( PC090OJ_word_0_r )	// in case we find a game using 2...
+{
+	return PC090OJ_ram[offset];
+}
+
+static void PC090OJ_word_w(offs_t offset,data16_t data,UINT32 mem_mask)
+{
+	COMBINE_DATA(&PC090OJ_ram[offset]);
+
+	/* If we're not buffering sprite ram, write it straight through... */
+	if (!PC090OJ_buffer)
+		PC090OJ_ram_buffered[offset] = PC090OJ_ram[offset];
+
+	if (offset == 0xdff)
+	{
+		/* Bit 0 is flip control, others seem unused */
+		PC090OJ_ctrl = data;
+
+#if 0
+	usrintf_showmessage("PC090OJ ctrl = %4x",data);
+#endif
+	}
+}
+
+WRITE16_HANDLER( PC090OJ_word_0_w )	// in case we find a game using 2...
+{
+	PC090OJ_word_w(offset,data,mem_mask);
+}
+
+void PC090OJ_eof_callback(void)
+{
+	if (PC090OJ_buffer)
+	{
+		int i;
+		for (i=0;i<PC090OJ_ACTIVE_RAM_SIZE/2;i++)
+			PC090OJ_ram_buffered[i] = PC090OJ_ram[i];
+	}
+}
+
+
+void PC090OJ_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect,int pri_type)
+{
+	int offs,priority=0;
+	int sprite_colbank = (PC090OJ_sprite_ctrl & 0xf) << 4;	/* top nibble */
+
+	switch (pri_type)
+	{
+		case 0x00:
+			priority = 0;	/* sprites over top bg layer */
+			break;
+
+		case 0x01:
+			priority = 1;	/* sprites under top bg layer */
+			break;
+
+		case 0x02:
+			priority = PC090OJ_sprite_ctrl >> 15;	/* variable sprite/tile priority */
+	}
+
+
+	for (offs = 0;offs < PC090OJ_ACTIVE_RAM_SIZE/2;offs += 4)
+	{
+		int flipx, flipy;
+		int x, y;
+		int data,code,color;
+
+		data = PC090OJ_ram_buffered[offs+0];
+		flipy = (data & 0x8000) >> 15;
+		flipx = (data & 0x4000) >> 14;
+		color = (data & 0x000f) | sprite_colbank;
+
+		code = PC090OJ_ram_buffered[offs+2] & 0x1fff;
+		x = PC090OJ_ram_buffered[offs+3] & 0x1ff;   /* mask verified with Rainbowe board */
+		y = PC090OJ_ram_buffered[offs+1] & 0x1ff;   /* mask verified with Rainbowe board */
+
+		/* treat coords as signed */
+		if (x>0x140) x -= 0x200;
+		if (y>0x140) y -= 0x200;
+
+		if (!(PC090OJ_ctrl & 1))	/* sprites flipscreen */
+		{
+			x = 320 - x - 16;
+			y = 256 - y - 16;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		x += PC090OJ_xoffs;
+		y += PC090OJ_yoffs;
+
+		pdrawgfx(bitmap,Machine->gfx[PC090OJ_gfxnum],
+				code,
+				color,
+				flipx,flipy,
+				x,y,
+				cliprect,TRANSPARENCY_PEN,0,
+				priority ? 0xfc : 0xf0);
+	}
+}
+
+
+
+
+/******************************************************************************/
 
 
 #define TC0080VCO_RAM_SIZE 0x21000

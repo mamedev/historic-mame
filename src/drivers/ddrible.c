@@ -332,7 +332,7 @@ static struct VLM5030interface vlm5030_interface =
 	3580000,    /* 3.58 MHz */
 	100,         /* volume */
 	REGION_SOUND1,/* memory region of speech rom */
-	0x10000,    /* memory size 64Kbyte * 2 bank */
+	0x10000     /* memory size 64Kbyte * 2 bank */
 };
 
 static MACHINE_DRIVER_START( ddribble )

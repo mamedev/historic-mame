@@ -759,26 +759,13 @@ static struct NESinterface nes_interface =
 	{ 50 },
 };
 
-/* filename for speech sample files */
-static const char *punchout_sample_names[] =
-{
-	"*punchout",
-	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
-	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
-	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
-	"18.wav","19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav",
-	"20.wav","21.wav","22.wav","23.wav","24.wav","25.wav","26.wav","27.wav",
-	"28.wav","29.wav","2a.wav","2b.wav",
-	0
-};
 
 static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock */
 	50,        /* volume       */
 	REGION_SOUND1,	/* memory region of speech rom */
-	0,          /* memory size of speech rom */
-	punchout_sample_names
+	0           /* memory size of speech rom */
 };
 
 

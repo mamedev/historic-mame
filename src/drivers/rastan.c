@@ -15,7 +15,6 @@ driver by Jarek Burczynski
 data16_t *rastan_ram;	/* speedup hack */
 
 WRITE16_HANDLER( rastan_spritectrl_w );
-WRITE16_HANDLER( rastan_spriteflip_w );
 
 VIDEO_START( rastan );
 VIDEO_UPDATE( rastan );
@@ -23,8 +22,6 @@ VIDEO_UPDATE( rastan );
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
-
-static int banknum = -1;
 
 
 static READ16_HANDLER( rastan_cycle_r )
@@ -37,7 +34,6 @@ static READ16_HANDLER( rastan_cycle_r )
 
 static MEMORY_READ16_START( rastan_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
-//	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
 	{ 0x10dc10, 0x10dc11, rastan_cycle_r },
 	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
 	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
@@ -49,12 +45,11 @@ static MEMORY_READ16_START( rastan_readmem )
 	{ 0x390008, 0x390009, input_port_3_word_r },
 	{ 0x39000a, 0x39000b, input_port_4_word_r },
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd00fff, MRA16_RAM },	/* sprite ram, upper half only used in service mode */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( rastan_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
-//	{ 0x10dc10, 0x10dc13, rastan_speedup_w },
 	{ 0x10c000, 0x10ffff, MWA16_RAM, &rastan_ram },
 	{ 0x200000, 0x200fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x350008, 0x35000b, MWA16_NOP },	/* 0 only (often) ? */
@@ -66,20 +61,13 @@ static MEMORY_WRITE16_START( rastan_writemem )
 	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
 	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
 	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd00fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 
-static void reset_sound_region(void)
-{
-	cpu_setbank( 5, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
-
 static WRITE_HANDLER( rastan_bankswitch_w )
 {
-	banknum = (data ^1) & 0x01;
-	reset_sound_region();
+	cpu_setbank( 5, memory_region(REGION_CPU2) + ((data ^1) & 0x01) * 0x4000 + 0x10000 );
 }
 
 static MEMORY_READ_START( rastan_s_readmem )
@@ -476,15 +464,8 @@ ROM_START( rastsaga )
 ROM_END
 
 
-static DRIVER_INIT( rastan )
-{
-	state_save_register_int("sound", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-GAME( 1987, rastan,   0,      rastan, rastan,   rastan, ROT0, "Taito Corporation Japan", "Rastan (World)")
+GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)")
 /* IDENTICAL to rastan, only difference is copyright notice and Coin B coinage */
-GAME( 1987, rastanu,  rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 1)")
-GAME( 1987, rastanu2, rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 2)")
-GAME( 1987, rastsaga, rastan, rastan, rastsaga, rastan, ROT0, "Taito Corporation", "Rastan Saga (Japan)")
+GAME( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)")
+GAME( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)")
+GAME( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)")

@@ -462,7 +462,7 @@ static MACHINE_INIT( f3 )
 static struct ES5505interface es5505_interface =
 {
 	1,					/* total number of chips */
-	{ 16000000 },		/* freq */
+	{ 30476100/2 },		/* freq */
 	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
 	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */

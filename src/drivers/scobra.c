@@ -648,34 +648,26 @@ INPUT_PORTS_START( spdcoin )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Freeze" )   /* Dip Sw #2 */
+	PORT_DIPNAME( 0x01, 0x00, "Freeze" )			/* Dip Sw #2 */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR ( Unknown ) ) /* Dip Sw #1 */
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Free_Play ) )	/* Dip Sw #1 */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )    /* Dip Sw #5 */
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )		/* Dip Sw #5 - Check code at 0x0569 */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )    /* Dip Sw #4 */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )    /* Dip Sw #3 */
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )	/* Dip Sw #4 */
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )		/* Dip Sw #3 */
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 /* cocktail mode is N/A */
@@ -1260,7 +1252,7 @@ static MACHINE_DRIVER_START( rescue )
 	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+128)	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */
 	MDRV_COLORTABLE_LENGTH(8*4)
-	
+
 	MDRV_PALETTE_INIT(rescue)
 	MDRV_VIDEO_START(rescue)
 	MDRV_VIDEO_UPDATE(galaxian)
@@ -1294,7 +1286,7 @@ static MACHINE_DRIVER_START( minefld )
 	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+256)	/* 32 for characters, 64 for stars, 2 for bullets, 256 for background */
 	MDRV_COLORTABLE_LENGTH(8*4)
-	
+
 	MDRV_PALETTE_INIT(minefld)
 	MDRV_VIDEO_START(minefld)
 	MDRV_VIDEO_UPDATE(galaxian)

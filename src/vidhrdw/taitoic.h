@@ -2,7 +2,7 @@
 				Taito Custom Chips
 ***************************************************************************/
 
-const int TC0100SCN_SINGLE_VDU;	/* value set in taitoic.c */
+extern const int TC0100SCN_SINGLE_VDU;	/* value set in taitoic.c */
 
 int number_of_TC0100SCN(void);
 int has_TC0110PCR(void);
@@ -41,6 +41,20 @@ void PC080SN_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 /* For Topspeed */
 void PC080SN_tilemap_draw_special(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int layer,int flags,UINT32 priority,data16_t *ram);
+
+
+/***************************************************************************/
+
+int PC090OJ_vh_start(int gfxnum,int x_offset,int y_offset,int use_buffer);
+
+READ16_HANDLER( PC090OJ_word_0_r );
+WRITE16_HANDLER( PC090OJ_word_0_w );
+
+void PC090OJ_eof_callback(void);
+void PC090OJ_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect,int pri_type);
+
+extern UINT16 PC090OJ_sprite_ctrl;
+
 
 /***************************************************************************/
 

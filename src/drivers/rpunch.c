@@ -112,7 +112,6 @@
 
 
 #define MASTER_CLOCK		16000000
-#define UPD_CLOCK			640000
 
 
 /* video driver data & functions */
@@ -226,7 +225,7 @@ WRITE_HANDLER( upd_control_w )
 
 WRITE_HANDLER( upd_data_w )
 {
-	UPD7759_message_w(0, data);
+	UPD7759_port_w(0, data);
 	UPD7759_start_w(0, 0);
 	UPD7759_start_w(0, 1);
 }
@@ -609,7 +608,6 @@ static struct YM2151interface ym2151_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,			/* 1 chip */
-	UPD_CLOCK,
 	{ 50 },
 	{ REGION_SOUND1 },
 	UPD7759_STANDALONE_MODE,

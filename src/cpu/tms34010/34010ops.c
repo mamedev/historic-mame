@@ -51,6 +51,11 @@
 
 static void unimpl(void)
 {
+	/* kludge for Super High Impact -- this doesn't seem to cause */
+	/* an illegal opcode exception */
+	if (cpu_readop16(TOBYTE(PC - 0x10)) == 0x0007)
+		return;
+
 	PUSH(PC);
 	PUSH(GET_ST());
 	RESET_ST();

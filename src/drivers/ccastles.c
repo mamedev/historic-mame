@@ -5,7 +5,7 @@
 	driver by Pat Lawrence
 
 	Games supported:
-		* Canyon Bomber
+		* Crystal Castles (1983) [3 sets]
 
 	Known issues:
 		* none at this time
@@ -191,13 +191,13 @@ INPUT_PORTS_START( ccastles )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )				/* 1p Jump, non-cocktail start1 */
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* 2p Jump, non-cocktail start2 */
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )		/* 2p Jump, non-cocktail start2 */
 
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START1 )				/* cocktail only */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )				/* cocktail only */
-	PORT_DIPNAME(0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING (   0x20, DEF_STR( Cocktail ) )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -279,7 +279,7 @@ static MACHINE_DRIVER_START( ccastles )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -305,6 +305,20 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( ccastles )
+     ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code */
+     ROM_LOAD( "022-403.bin",  0x0a000, 0x2000, 0x81471ae5 )
+     ROM_LOAD( "022-404.bin",  0x0c000, 0x2000, 0x820daf29 )
+     ROM_LOAD( "022-405.bin",  0x0e000, 0x2000, 0x4befc296 )
+     ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
+     ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
+
+     ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+     ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x39960b7d )
+     ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
+ROM_END
+
+
+ROM_START( ccastle3 )
      ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code */
      ROM_LOAD( "ccastles.303", 0x0a000, 0x2000, 0x10e39fce )
      ROM_LOAD( "ccastles.304", 0x0c000, 0x2000, 0x74510f72 )
@@ -339,5 +353,6 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, ccastles, 0,        ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (set 1)" )
-GAME( 1983, ccastle2, ccastles, ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (set 2)" )
+GAME( 1983, ccastles, 0,        ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (version 4)" )
+GAME( 1983, ccastle3, ccastles, ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (version 3)" )
+GAME( 1983, ccastle2, ccastles, ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (version 2)" )

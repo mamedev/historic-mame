@@ -493,6 +493,7 @@ static int cursor_x, cursor_y, cursor_on;
 /* This will be intialized depending on the game framerate */
 static int dbg_key_repeat = 4;
 
+UINT8 debugger_idle;
 
 UINT8 debugger_palette[] = {
 	0x00,0x00,0x00, /* black	 */
@@ -597,10 +598,12 @@ static int readkey(void)
 	int cursor_flash = 0;
 
 	i = 0;
+	debugger_idle = 0;
 	do
 	{
 		if ((cursor_flash++ & 15) == 0)
 			toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
+		reset_partial_updates();
 		draw_screen();	/* so we can change stuff in RAM and see the effect on screen */
 		update_video_and_audio();
 
@@ -704,7 +707,12 @@ static int readkey(void)
 /*		if (keyboard_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
 /*		if (keyboard_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
 /*		if (keyboard_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
+
+		if (k == KEYCODE_NONE)
+			debugger_idle = 1;
+
 	} while (k == KEYCODE_NONE);
+	debugger_idle = 0;
 	if (cursor_on)
 		toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
 

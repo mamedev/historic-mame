@@ -305,10 +305,6 @@ int AuditSampleSet (int game, tMissingSample **audit)
 		if( drv.sound[j].sound_type == SOUND_SAMPLES )
 			samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
 #endif
-#if (HAS_VLM5030)
-		if( drv.sound[j].sound_type == SOUND_VLM5030 )
-			samplenames = ((struct VLM5030interface *)drv.sound[j].sound_interface)->samplenames;
-#endif
 	}
 #endif
     /* does the game use samples at all? */

@@ -216,7 +216,7 @@ static UINT8 flags8d[256]= /* decrement */
 #define IDX1BYTE(b) {INDEXED1;b=RM(EAD);}
 #define IDX2BYTE(b) {INDEXED2;b=RM(EAD);}
 /* Macros for branch instructions */
-#define BRANCH(f) { UINT8 t; IMMBYTE(t); if(f) { PC+=SIGNED(t); } }
+#define BRANCH(f) { UINT8 t; IMMBYTE(t); if(f) { PC+=SIGNED(t); if (t==0xfe) { /* speed up busy loops */ if(m6805_ICount > 0) m6805_ICount = 0; } } }
 
 /* what they say it is ... */
 static unsigned char cycles1[] =
@@ -246,31 +246,31 @@ static unsigned char cycles1[] =
 
 INLINE void rd_s_handler_b( UINT8 *b )
 {
-	*b = RM( S );
 	SP_INC;
+	*b = RM( S );
 }
 
 INLINE void rd_s_handler_w( PAIR *p )
 {
 	CLEAR_PAIR(p);
+	SP_INC;
 	p->b.h = RM( S );
 	SP_INC;
 	p->b.l = RM( S );
-	SP_INC;
 }
 
 INLINE void wr_s_handler_b( UINT8 *b )
 {
-	SP_DEC;
 	WM( S, *b );
+	SP_DEC;
 }
 
 INLINE void wr_s_handler_w( PAIR *p )
 {
-    SP_DEC;
 	WM( S, p->b.l );
     SP_DEC;
 	WM( S, p->b.h );
+    SP_DEC;
 }
 
 INLINE void RM16( UINT32 Addr, PAIR *p )
@@ -313,9 +313,11 @@ static void Interrupt(void)
 		m6805_ICount -= 11;
 
 	}
-	else if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|HD63705_INT_MASK)) != 0 && (CC & IFLAG) == 0 )
+	else if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|HD63705_INT_MASK)) != 0 ) {
+		if ( (CC & IFLAG) == 0 ) {
 #else
-	if( (m6805.pending_interrupts & (1<<M6805_IRQ_LINE)) != 0 && (CC & IFLAG) == 0 )
+	if( (m6805.pending_interrupts & (1<<M6805_IRQ_LINE)) != 0 ) {
+		if ( (CC & IFLAG) == 0 ) {
 #endif
 	{
         /* standard IRQ */
@@ -383,8 +385,11 @@ static void Interrupt(void)
 		else
 #endif
 		{
-			m6805.pending_interrupts &= ~(1<<M6805_IRQ_LINE);
 			RM16( AMASK - 5, &pPC );
+		}
+
+		}	// CC & IFLAG
+			m6805.pending_interrupts &= ~(1<<M6805_IRQ_LINE);
 		}
 		m6805_ICount -= 11;
 	}

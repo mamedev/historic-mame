@@ -3148,6 +3148,7 @@ static void h4000w(UINT16 opcode)
 	register UINT16 src;
 	register UINT16 dest;
 	register UINT16 value;
+	int a,b;
 
 	src = decipheraddr(opcode) & ~1;
 	dest = decipheraddr(opcode >> 6) & ~1;
@@ -3165,20 +3166,26 @@ static void h4000w(UINT16 opcode)
 	case 3:   /* S */
 		/* S ----- Subtract */
 		/* D -= S */
-		value = setst_sub_laeco(readword(dest), readword(src));
+		a = readword(dest);
+		b = readword(src);
+		value = setst_sub_laeco(a, b);
 		writeword(dest, value);
 		CYCLES(14, 4);
 		break;
 	case 4:   /* C */
 		/* C ----- Compare */
 		/* ST = (D - S) */
-		setst_c_lae(readword(dest), readword(src));
+		a = readword(dest);
+		b = readword(src);
+		setst_c_lae(a, b);
 		CYCLES(14, 4);
 		break;
 	case 5:   /* A */
 		/* A ----- Add */
 		/* D += S */
-		value = setst_add_laeco(readword(dest), readword(src));
+		a = readword(dest);
+		b = readword(src);
+		value = setst_add_laeco(a, b);
 		writeword(dest, value);
 		CYCLES(14, 4);
 		break;

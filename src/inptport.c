@@ -318,6 +318,10 @@ struct ipd inputport_defaults[] =
 	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", SEQ_DEF_1(JOYCODE_4_DOWN) },
 
 	{ IPT_UNKNOWN,             "UNKNOWN",         SEQ_DEF_0 },
+	{ IPT_OSD_RESERVED,        "",                SEQ_DEF_0 },
+	{ IPT_OSD_RESERVED,        "",                SEQ_DEF_0 },
+	{ IPT_OSD_RESERVED,        "",                SEQ_DEF_0 },
+	{ IPT_OSD_RESERVED,        "",                SEQ_DEF_0 },
 	{ IPT_END,                 0,                 SEQ_DEF_0 }	/* returned when there is no match */
 };
 
@@ -529,10 +533,13 @@ static void save_default_keys(void)
 		i = 0;
 		while (inputport_defaults[i].type != IPT_END)
 		{
-			writeint(f,inputport_defaults[i].type);
+			if (inputport_defaults[i].type != IPT_OSD_RESERVED)
+			{
+				writeint(f,inputport_defaults[i].type);
 
-			seq_write(f,&inputport_defaults_backup[i].seq);
-			seq_write(f,&inputport_defaults[i].seq);
+				seq_write(f,&inputport_defaults_backup[i].seq);
+				seq_write(f,&inputport_defaults[i].seq);
+			}
 
 			i++;
 		}

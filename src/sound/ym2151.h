@@ -3,10 +3,10 @@
 ** File: ym2151.h - header file for software implementation of YM2151
 **                                            FM Operator Type-M(OPM)
 **
-** (c) 1997-2001 Jarek Burczynski (s0246@poczta.onet.pl)
+** (c) 1997-2002 Jarek Burczynski (s0246@poczta.onet.pl)
 ** Some of the optimizing ideas by Tatsuyuki Satoh
 **
-** Version 2.150 August, 28th 2001
+** Version 2.150b February, 19th 2002
 **
 **
 ** I would like to thank the following people for making this project possible:

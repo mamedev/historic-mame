@@ -488,7 +488,7 @@ static void neogeo_custom_memory(void)
 	/* the game hangs after a while without this patch */
 		install_mem_read16_handler(0, 0x104fbc, 0x104fbd, popbounc_sfix_16_r);
 
-	if (!strcmp(Machine->gamedrv->name,"kof99"))
+	if (!strcmp(Machine->gamedrv->name,"kof99") || !strcmp(Machine->gamedrv->name,"kof99e"))
 	{
 		/* special ROM banking handler */
 		install_mem_write16_handler(0, 0x2ffff0, 0x2ffff1, kof99_bankswitch_w);
@@ -547,6 +547,7 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof97") ||
 			!strcmp(Machine->gamedrv->name,"kof98") ||
 			!strcmp(Machine->gamedrv->name,"kof99") ||
+			!strcmp(Machine->gamedrv->name,"kof99e") ||
 			!strcmp(Machine->gamedrv->name,"kof99n") ||
 			!strcmp(Machine->gamedrv->name,"kof99p") ||
 			!strcmp(Machine->gamedrv->name,"kof2000") ||

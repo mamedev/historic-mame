@@ -618,7 +618,7 @@ const char *arm_info(void *context, int regnum)
 	if( !context )
 		pRegs = &arm;
 
-	which = ++which % 32;
+	which = (which + 1) % 32;
 	buffer[which][0] = '\0';
 
 	switch( regnum )

@@ -7,6 +7,7 @@
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "palette.h"
+#include "harddisk.h"
 
 #define TEST_CLIPPING 0
 
@@ -35,6 +36,19 @@ static int last_partial_scanline;
 int partial_update_count;
 
 
+
+static void *mame_hard_disk_open(const char *filename, const char *mode);
+static void mame_hard_disk_close(void *file);
+static UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 mame_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer);
+
+static struct hard_disk_interface mame_hard_disk_interface =
+{
+	mame_hard_disk_open,
+	mame_hard_disk_close,
+	mame_hard_disk_read,
+	mame_hard_disk_write
+};
 
 
 
@@ -706,6 +720,9 @@ int init_machine(void)
 	/* other initialization routines */
 	cpu_init();
 
+	/* init the hard drives */
+	hard_disk_set_interface(&mame_hard_disk_interface);
+
 	/* load input ports settings (keys, dip switches, and so on) */
 	settingsloaded = load_input_port_settings();
 
@@ -745,6 +762,9 @@ void shutdown_machine(void)
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 		free_memory_region(i);
+
+	/* close all hard drives */
+	hard_disk_close_all();
 
 	/* reset the CPU system */
 	cpu_exit();
@@ -1423,3 +1443,39 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 
 	logerror("Can't find sound '%s'!\n", tag);
 }
+
+
+void *mame_hard_disk_open(const char *filename, const char *mode)
+{
+	/* look for read-only drives first in the ROM path */
+	if (mode[0] == 'r' && !strchr(mode, '+'))
+	{
+		void *file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
+		if (file)
+			return file;
+	}
+
+	/* look for read/write drives in the diff area */
+	return osd_fopen(NULL, filename, OSD_FILETYPE_IMAGE_DIFF, 1);
+}
+
+
+void mame_hard_disk_close(void *file)
+{
+	osd_fclose(file);
+}
+
+
+UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
+{
+	osd_fseek(file, offset, SEEK_SET);
+	return osd_fread(file, buffer, count);
+}
+
+
+UINT32 mame_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
+{
+	osd_fseek(file, offset, SEEK_SET);
+	return osd_fwrite(file, buffer, count);
+}
+

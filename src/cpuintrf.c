@@ -137,6 +137,9 @@
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
+#if (HAS_SH2)
+#include "cpu/sh2/sh2.h"
+#endif
 
 
 #ifdef MESS
@@ -167,9 +170,6 @@
 #endif
 #if (HAS_SC61860)
 #include "mess/cpu/sc61860/sc61860.h"
-#endif
-#if (HAS_SH2)
-#include "mess/cpu/sh2/sh2.h"
 #endif
 #if (HAS_SPC700)
 #include "mess/cpu/spc700/spc700.h"
@@ -577,8 +577,10 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(JAGUARDSP,jaguards, 6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
 #endif
 #if (HAS_R3000)
-	#define r3000_ICount r3000_icount
-	CPU0(R3000,    r3000,    1,  0,1.00,32,29bedw, 0,29,BE,4, 4 ),
+	#define r3000be_ICount r3000_icount
+	#define r3000le_ICount r3000_icount
+	CPU0(R3000BE,  r3000be,  1,  0,1.00,32,29bedw, 0,29,BE,4, 4 ),
+	CPU0(R3000LE,  r3000le,  1,  0,1.00,32,29ledw, 0,29,LE,4, 4 ),
 #endif
 #if (HAS_TMS320C31)
 	#define tms320c31_ICount tms320c31_icount
@@ -586,6 +588,9 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,32,26ledw, 0,26,LE,4, 4	),
+#endif
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	16,  0,1.00,32,32bedw,   0,32,BE,2, 2  ),
 #endif
 
 #ifdef MESS
@@ -621,9 +626,6 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
 	CPU0(SC61860,  sc61860,  1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
-#endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,32,32bedw,   0,32,BE,2, 2  ),
 #endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),

@@ -2981,6 +2981,30 @@ DIP settings:
 
 ROM_START( mgcrystl )
  	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "magcrstl.u18", 0x000000, 0x020000, 0xc7456ba7 )
+	ROM_LOAD16_BYTE( "magcrstl.u19", 0x000001, 0x040000, 0xea8f9300 ) //!!
+
+	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "mc000.u38",    0x000000, 0x100000, 0x28acf6f4 )
+	ROM_LOAD( "mc001.u37",    0x100000, 0x080000, 0x005bc43d )
+	ROM_RELOAD(               0x180000, 0x080000             )
+	ROM_LOAD( "magcrstl.u36", 0x200000, 0x020000, 0x22729037 )
+	ROM_RELOAD(               0x220000, 0x020000             )
+	ROM_RELOAD(               0x240000, 0x020000             )
+	ROM_RELOAD(               0x260000, 0x020000             )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc010.u04",  0x000000, 0x100000, 0x85072772 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc020.u34",  0x000000, 0x100000, 0x1ea92ff1 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "mc030.u32",  0x000000, 0x040000, 0xc165962e )
+ROM_END
+
+ROM_START( mgcrystj )
+ 	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
 	ROM_LOAD16_BYTE( "mc100j.u18", 0x000000, 0x020000, 0xafe5882d )
 	ROM_LOAD16_BYTE( "mc101j.u19", 0x000001, 0x040000, 0x60da5492 )	//!!
 
@@ -3159,7 +3183,8 @@ DRIVER_INIT( shogwarr )
 
 GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 1)" )
 GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 2)" )
-GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (Japan)" )
+GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (World)" )
+GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)" )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16, ROT0,  "Atlus",  "Blaze On (Japan)" )
 GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "Sand Scorpion" )
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )

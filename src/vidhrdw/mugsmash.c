@@ -67,20 +67,21 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 static void get_mugsmash_tile_info1(int tile_index)
 {
 
-	/* ---- cccc  nnnn nnnn */
+	/* fF-- cccc  nnnn nnnn */
 
 	/* c = colour?
 	   n = number?
-
+	   F = flip-X
+	   f = flip-Y
 	*/
 
-	int tileno,colour;
+	int tileno,colour,fx;
 
 	tileno = mugsmash_videoram1[tile_index *2 +1];
 	colour = mugsmash_videoram1[tile_index *2] & 0x000f;
+	fx = (mugsmash_videoram1[tile_index *2] & 0xc0) >>6;
 
-
-	SET_TILE_INFO(1,tileno,colour,0)
+	SET_TILE_INFO(1,tileno,colour,TILE_FLIPYX(fx))
 }
 
 WRITE16_HANDLER( mugsmash_videoram1_w )
@@ -95,24 +96,21 @@ WRITE16_HANDLER( mugsmash_videoram1_w )
 static void get_mugsmash_tile_info2(int tile_index)
 {
 
-	/* ---- -??? nnnn nnnn */
+	/* fF-- cccc  nnnn nnnn */
 
-	/* ? = unknown, see below
-	   n = number
+	/* c = colour?
+	   n = number?
+	   F = flip-X
+	   f = flip-Y
 	*/
 
-	/*
-	 ---x  behind map, windows, doors
-	 --x-  behind drainpipe, sewer cover
-	 -x--  behind hydrant, on door, on pavement
-	 x---  unused?
-	*/
-
-	int tileno;
+	int tileno,colour,fx;
 
 	tileno = mugsmash_videoram2[tile_index *2 +1];
+	colour = mugsmash_videoram2[tile_index *2] & 0x000f;
+	fx = (mugsmash_videoram2[tile_index *2] & 0xc0) >>6;
 
-	SET_TILE_INFO(1,tileno,16,0)
+	SET_TILE_INFO(1,tileno,16+colour,TILE_FLIPYX(fx))
 }
 
 WRITE16_HANDLER( mugsmash_videoram2_w )
@@ -132,16 +130,16 @@ WRITE16_HANDLER (mugsmash_reg_w)
 	switch (offset)
 	{
 	case 0:
-		tilemap_set_scrollx(mugsmash_tilemap2,0, mugsmash_regs1[0]+4);
+		tilemap_set_scrollx(mugsmash_tilemap2,0, mugsmash_regs1[2]+4); // verify
 		break;
 	case 1:
-		tilemap_set_scrolly(mugsmash_tilemap2,0, mugsmash_regs1[1]+4);
+		tilemap_set_scrolly(mugsmash_tilemap2,0, mugsmash_regs1[3]+4);
 		break;
 	case 2:
-		tilemap_set_scrollx(mugsmash_tilemap1,0, mugsmash_regs1[2]+4);
+		tilemap_set_scrollx(mugsmash_tilemap1,0, mugsmash_regs1[0]+4); // verify
 		break;
 	case 3:
-		tilemap_set_scrolly(mugsmash_tilemap1,0, mugsmash_regs1[3]+4);
+		tilemap_set_scrolly(mugsmash_tilemap1,0, mugsmash_regs1[1]+4);
 		break;
 	}
 }

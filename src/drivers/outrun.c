@@ -84,6 +84,7 @@ static void generate_gr_screen(
 	int start_color,int end_color, int source_size )
 {
 	UINT8 *buf = malloc( source_size );
+	UINT8 *buf_base = buf;
 	if( buf ){
 		UINT8 *gr = memory_region(REGION_GFX3);
 		UINT8 *grr = NULL;
@@ -145,7 +146,7 @@ static void generate_gr_screen(
 		i=1;
 		while ( (1<<i) < sys16_gr_bitmap_width ) i++;
 		sys16_gr_bitmap_width=i; // power of 2
-		free(buf);
+		free(buf_base);
 	}
 }
 
@@ -1052,32 +1053,32 @@ static MACHINE_DRIVER_START( outrun )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(outrun_readmem,outrun_writemem)
 	MDRV_CPU_VBLANK_INT(or_interrupt,2)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(outrun_sound_readmem,outrun_sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	
+
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(outrun_readmem2,outrun_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,2)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(outrun)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(outrun)
 	MDRV_VIDEO_UPDATE(outrun)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
@@ -1089,7 +1090,7 @@ static MACHINE_DRIVER_START( outruna )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(outrun)
-	
+
 	MDRV_MACHINE_INIT(outruna)
 MACHINE_DRIVER_END
 
@@ -1292,31 +1293,31 @@ static MACHINE_DRIVER_START( shangon )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_MEMORY(shangon_readmem,shangon_writemem)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(shangon_sound_readmem,shangon_sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	
+
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_MEMORY(shangon_readmem2,shangon_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(100)
 
 	MDRV_MACHINE_INIT(shangon)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(hangon)
 	MDRV_VIDEO_UPDATE(hangon)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)

@@ -6,7 +6,6 @@
 
 /* global access */
 
-int m68k_ICount;
 struct m68k_memory_interface m68k_memory_intf;
 
 #ifndef A68K0

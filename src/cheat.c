@@ -2010,6 +2010,9 @@ void cheat_save(int cheat_num)
 	if(!theFile)
 		return;
 
+	/* seek to the end */
+	osd_fseek(theFile, 0, SEEK_END);
+
 	for(i = 0; i <= CheatTable[cheat_num].num_sub; i++)
 	{
 		code = CheatTable[cheat_num].subcheat[i].code;
@@ -5053,6 +5056,9 @@ static void SaveWatch(int idx)
 
 	if(!theFile)
 		return;
+
+	/* seek to the end */
+	osd_fseek(theFile, 0, SEEK_END);
 
 	sprintf(name, "%s - %.*X (%d)", ui_getstring(UI_watch), CPUAddressWidth(watches[idx].cpu), watches[idx].address, watches[idx].cpu);
 

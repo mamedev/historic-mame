@@ -1258,7 +1258,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					if (skip_tmap)
 						tilemap_ypos -= skip_tmap;
 					else
-						tilemap_ypos -= bitmap->height;
+						tilemap_ypos -= bitmap->height/4;
 					changed = 1;
 					break;
 				}
@@ -1290,7 +1290,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					if (skip_tmap)
 						tilemap_ypos += skip_tmap;
 					else
-						tilemap_ypos += bitmap->height;
+						tilemap_ypos += bitmap->height/4;
 					changed = 1;
 					break;
 				}
@@ -1306,7 +1306,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					if (skip_tmap)
 						tilemap_xpos -= skip_tmap;
 					else
-						tilemap_xpos -= bitmap->width;
+						tilemap_xpos -= bitmap->width/4;
 					changed = 1;
 					break;
 				}
@@ -1322,7 +1322,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					if (skip_tmap)
 						tilemap_xpos += skip_tmap;
 					else
-						tilemap_xpos += bitmap->width;
+						tilemap_xpos += bitmap->width/4;
 					changed = 1;
 					break;
 				}
@@ -1966,67 +1966,73 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 
 	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 	{
-		if ((sel % ENTRIES) == 0)
-		/* keyboard/joystick delta */
+		if(sel != total2 - 1)
 		{
-			int val = IP_GET_DELTA(entry[sel/ENTRIES]);
+			if ((sel % ENTRIES) == 0)
+			/* keyboard/joystick delta */
+			{
+				int val = IP_GET_DELTA(entry[sel/ENTRIES]);
 
-			val --;
-			if (val < 1) val = 1;
-			IP_SET_DELTA(entry[sel/ENTRIES],val);
-		}
-		else if ((sel % ENTRIES) == 1)
-		/* reverse */
-		{
-			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
-			if (reverse)
-				reverse=0;
-			else
-				reverse=IPF_REVERSE;
-			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
-			entry[sel/ENTRIES]->type |= reverse;
-		}
-		else if ((sel % ENTRIES) == 2)
-		/* sensitivity */
-		{
-			int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
+				val --;
+				if (val < 1) val = 1;
+				IP_SET_DELTA(entry[sel/ENTRIES],val);
+			}
+			else if ((sel % ENTRIES) == 1)
+			/* reverse */
+			{
+				int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
+				if (reverse)
+					reverse=0;
+				else
+					reverse=IPF_REVERSE;
+				entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
+				entry[sel/ENTRIES]->type |= reverse;
+			}
+			else if ((sel % ENTRIES) == 2)
+			/* sensitivity */
+			{
+				int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
 
-			val --;
-			if (val < 1) val = 1;
-			IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+				val --;
+				if (val < 1) val = 1;
+				IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+			}
 		}
 	}
 
 	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 	{
-		if ((sel % ENTRIES) == 0)
-		/* keyboard/joystick delta */
+		if(sel != total2 - 1)
 		{
-			int val = IP_GET_DELTA(entry[sel/ENTRIES]);
+			if ((sel % ENTRIES) == 0)
+			/* keyboard/joystick delta */
+			{
+				int val = IP_GET_DELTA(entry[sel/ENTRIES]);
 
-			val ++;
-			if (val > 255) val = 255;
-			IP_SET_DELTA(entry[sel/ENTRIES],val);
-		}
-		else if ((sel % ENTRIES) == 1)
-		/* reverse */
-		{
-			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
-			if (reverse)
-				reverse=0;
-			else
-				reverse=IPF_REVERSE;
-			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
-			entry[sel/ENTRIES]->type |= reverse;
-		}
-		else if ((sel % ENTRIES) == 2)
-		/* sensitivity */
-		{
-			int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
+				val ++;
+				if (val > 255) val = 255;
+				IP_SET_DELTA(entry[sel/ENTRIES],val);
+			}
+			else if ((sel % ENTRIES) == 1)
+			/* reverse */
+			{
+				int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
+				if (reverse)
+					reverse=0;
+				else
+					reverse=IPF_REVERSE;
+				entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
+				entry[sel/ENTRIES]->type |= reverse;
+			}
+			else if ((sel % ENTRIES) == 2)
+			/* sensitivity */
+			{
+				int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
 
-			val ++;
-			if (val > 255) val = 255;
-			IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+				val ++;
+				if (val > 255) val = 255;
+				IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+			}
 		}
 	}
 
@@ -3509,10 +3515,64 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 	messagecounter = seconds * Machine->drv->frames_per_second;
 }
 
+void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
+{
+	int file = 0;
+
+	osd_sound_enable(0);
+	osd_pause(1);
+
+	do
+	{
+		InputCode code;
+
+		if (request_loadsave == LOADSAVE_SAVE)
+			displaymessage(bitmap, "Select position to save to");
+		else
+			displaymessage(bitmap, "Select position to load from");
+
+		update_video_and_audio();
+		reset_partial_updates();
+
+		if (input_ui_pressed(IPT_UI_CANCEL))
+			break;
+
+		code = code_read_async();
+		if (code != CODE_NONE)
+		{
+			if (code >= KEYCODE_A && code <= KEYCODE_Z)
+				file = 'a' + (code - KEYCODE_A);
+			else if (code >= KEYCODE_0 && code <= KEYCODE_9)
+				file = '0' + (code - KEYCODE_0);
+			else if (code >= KEYCODE_0_PAD && code <= KEYCODE_9_PAD)
+				file = '0' + (code - KEYCODE_0);
+		}
+	}
+	while (!file);
+
+	osd_pause(0);
+	osd_sound_enable(1);
+
+	if (file > 0)
+	{
+		if (request_loadsave == LOADSAVE_SAVE)
+			usrintf_showmessage("Save to position %c", file);
+		else
+			usrintf_showmessage("Load from position %c", file);
+		cpu_loadsave_schedule(request_loadsave, file);
+	}
+	else
+	{
+		if (request_loadsave == LOADSAVE_SAVE)
+			usrintf_showmessage("Save cancelled");
+		else
+			usrintf_showmessage("Load cancelled");
+	}
+}
+
 int handle_user_interface(struct mame_bitmap *bitmap)
 {
 	static int show_profiler;
-	int request_loadsave = LOADSAVE_NONE;
 
 #ifdef MESS
 if (Machine->gamedrv->flags & GAME_COMPUTER)
@@ -3662,64 +3722,10 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		machine_reset();
 
 	if (input_ui_pressed(IPT_UI_SAVE_STATE))
-		request_loadsave = LOADSAVE_SAVE;
+		do_loadsave(bitmap, LOADSAVE_SAVE);
 
 	if (input_ui_pressed(IPT_UI_LOAD_STATE))
-		request_loadsave = LOADSAVE_LOAD;
-
-	if (request_loadsave != LOADSAVE_NONE)
-	{
-		int file = 0;
-
-		osd_sound_enable(0);
-		osd_pause(1);
-
-		do
-		{
-			InputCode code;
-
-			if (request_loadsave == LOADSAVE_SAVE)
-				displaymessage(bitmap, "Select position to save to");
-			else
-				displaymessage(bitmap, "Select position to load from");
-
-			update_video_and_audio();
-
-			if (input_ui_pressed(IPT_UI_CANCEL))
-				break;
-
-			code = code_read_async();
-			if (code != CODE_NONE)
-			{
-				if (code >= KEYCODE_A && code <= KEYCODE_Z)
-					file = 'a' + (code - KEYCODE_A);
-				else if (code >= KEYCODE_0 && code <= KEYCODE_9)
-					file = '0' + (code - KEYCODE_0);
-				else if (code >= KEYCODE_0_PAD && code <= KEYCODE_9_PAD)
-					file = '0' + (code - KEYCODE_0);
-			}
-		}
-		while (!file);
-
-		osd_pause(0);
-		osd_sound_enable(1);
-
-		if (file > 0)
-		{
-			if (request_loadsave == LOADSAVE_SAVE)
-				usrintf_showmessage("Save to position %c", file);
-			else
-				usrintf_showmessage("Load from position %c", file);
-			cpu_loadsave_schedule(request_loadsave, file);
-		}
-		else
-		{
-			if (request_loadsave == LOADSAVE_SAVE)
-				usrintf_showmessage("Save cancelled");
-			else
-				usrintf_showmessage("Load cancelled");
-		}
-	}
+		do_loadsave(bitmap, LOADSAVE_LOAD);
 
 	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
@@ -3748,6 +3754,17 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 
 			if (input_ui_pressed(IPT_UI_SNAPSHOT))
 				osd_save_snapshot(bitmap);
+
+
+			if (input_ui_pressed(IPT_UI_SAVE_STATE))
+				do_loadsave(bitmap, LOADSAVE_SAVE);
+
+			if (input_ui_pressed(IPT_UI_LOAD_STATE))
+				do_loadsave(bitmap, LOADSAVE_LOAD);
+
+			/* if the user pressed F4, show the character set */
+			if (input_ui_pressed(IPT_UI_SHOW_GFX))
+				showcharset(bitmap);
 
 			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
@@ -3780,6 +3797,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			if (messagecounter > 0) displaymessage(bitmap, messagetext);
 
 			update_video_and_audio();
+			reset_partial_updates();
 		}
 
 		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))

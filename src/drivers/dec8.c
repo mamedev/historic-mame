@@ -1457,7 +1457,7 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPSETTING(    0x20, "Every 60000" )
 	PORT_DIPSETTING(    0x10, "Every 90000" )
 	PORT_DIPSETTING(    0x00, "50000 only" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) //invincible?
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )

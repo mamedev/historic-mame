@@ -384,9 +384,11 @@ static WRITE16_HANDLER( upd7759_w )
 	/* only works if we're accessing the low byte */
 	if (ACCESSING_LSB)
 	{
-		UPD7759_reset_w(0, (data & 2));
-		UPD7759_message_w(0, data & 0xff);
+		UPD7759_reset_w(0, 0);
+		UPD7759_reset_w(0, 1);
+		UPD7759_port_w(0, data & 0xff);
 		UPD7759_start_w(0, 0);
+		UPD7759_start_w(0, 1);
 	}
 }
 
@@ -768,7 +770,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x800200, 0x800201, control_w },					/* Seems to be global controls */
 	{ 0x840000, 0x84001f, iochip_w },					/* I/O Chip */
 	{ 0x840100, 0x840107, ym3438_w },					/* Ym3438 Sound Chip Writes */
-	{ 0x880000, 0x880001, upd7759_w },					/* UPD7751 Sound Writes */
+	{ 0x880000, 0x880001, upd7759_w },					/* UPD7759 Sound Writes */
 	{ 0x880134, 0x880135, counter_timer_w },			/* Bookkeeping */
 	{ 0x880334, 0x880335, counter_timer_w },			/* Bookkeeping (mirror) */
 	{ 0x8c0000, 0x8c0fff, palette_w, &paletteram16 },	/* Palette Ram */
@@ -1422,7 +1424,6 @@ INPUT_PORTS_END
 static struct UPD7759_interface upd7759_intf =
 {
 	1,								/* One chip */
-	MASTER_CLOCK/14,				/* Clock (unsure) */
 	{ 50 },							/* Volume */
 	{ REGION_SOUND1 },				/* Memory pointer (gen.h) */
 	UPD7759_STANDALONE_MODE			/* Chip mode */
@@ -1470,7 +1471,7 @@ static MACHINE_DRIVER_START( segac )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
-	
+
 	MDRV_MACHINE_INIT(segac2)
 
 	/* video hardware */
@@ -1498,7 +1499,7 @@ static MACHINE_DRIVER_START( segac2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
-	
+
 	MDRV_MACHINE_INIT(segac2)
 
 	/* video hardware */

@@ -24,6 +24,7 @@
 #include "winddraw.h"
 #include "video.h"
 #include "blit.h"
+#include "mamedbg.h"
 #include "../window.h"
 
 
@@ -144,6 +145,7 @@ static RECT non_maximized_bounds;
 
 // debugger
 static int debug_focus;
+static int in_background;
 
 // effects table
 static struct win_effect_data effect_table[] =
@@ -724,6 +726,11 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			win_video_window = 0;
 			break;
 
+		// track whether we are in the foreground
+		case WM_ACTIVATEAPP:
+			in_background = !wparam;
+			break;
+
 		// everything else: defaults
 		default:
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -1162,7 +1169,7 @@ void win_process_events_periodic(void)
 //	win_process_events
 //============================================================
 
-void win_process_events(void)
+int win_process_events(void)
 {
 	MSG message;
 
@@ -1194,6 +1201,9 @@ void win_process_events(void)
 				break;
 		}
 	}
+
+	// return 1 if we slept this frame
+	return 0;
 }
 
 

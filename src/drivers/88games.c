@@ -90,26 +90,16 @@ static READ_HANDLER( cheat_r )
 }
 
 static int speech_chip;
-static int invalid_code;
-static int total_samples[] = { 0x39, 0x15 };
-
 static WRITE_HANDLER( speech_control_w )
 {
-	int reset = ( ( data >> 1 ) & 1 );
-	int start = ( ~data ) & 1;
-
 	speech_chip = ( data & 4 ) ? 1 : 0;
-
-	UPD7759_reset_w( speech_chip, reset );
-
-	if (!invalid_code)
-		UPD7759_start_w( speech_chip, start );
+	UPD7759_reset_w( speech_chip, data & 2 );
+	UPD7759_start_w( speech_chip, !(data & 1) );
 }
 
 static WRITE_HANDLER( speech_msg_w )
 {
-	UPD7759_message_w( speech_chip, data );
-	invalid_code = (data == total_samples[speech_chip]);
+	UPD7759_port_w( speech_chip, data );
 }
 
 static MEMORY_READ_START( readmem )
@@ -279,7 +269,6 @@ static struct YM2151interface ym2151_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	2,							/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 30, 30 },					/* volume */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
 	UPD7759_STANDALONE_MODE,	/* chip mode */

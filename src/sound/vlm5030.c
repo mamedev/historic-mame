@@ -1,4 +1,3 @@
-#define NEED_SAMPLING_MODE 0
 /*
 	vlm5030.c
 
@@ -111,10 +110,6 @@ static int VLM5030_frame_size;
 static int pitch_offset;
 static UINT8 interp_step;
 
-#if NEED_SAMPLING_MODE
-static UINT8 sampling_mode;
-#endif
-
 static UINT8 interp_count;       /* number of interp periods    */
 static UINT8 sample_count;       /* sample number within interp */
 static UINT8 pitch_count;
@@ -219,16 +214,6 @@ static const INT16 K3_table[] = {
 static const INT16 K5_table[] = {
        0,   -8127,  -16384,  -24511,   32638,   24511,   16254,    8127
 };
-
-/* check sample file */
-static int check_samplefile(int num)
-{
-	if (Machine->samples == 0) return 0;
-	if (Machine->samples->total <= num ) return 0;
-	if (Machine->samples->sample[num] == 0) return 0;
-	/* sample file is found */
-	return 1;
-}
 
 static int get_bits(int sbit,int bits)
 {
@@ -456,18 +441,6 @@ phase_stop:
 /* realtime update */
 static void VLM5030_update(void)
 {
-#if NEED_SAMPLING_MODE
-	if( sampling_mode )
-	{
-		/* sampling mode (check  busy flag) */
-		if( pin_ST == 0 && pin_BSY == 1 )
-		{
-			if( !mixer_is_sample_playing(schannel) )
-				pin_BSY = 0;
-		}
-		return;
-	}
-#endif
 	stream_update(channel,0);
 }
 
@@ -573,10 +546,6 @@ void VLM5030_RST (int pin )
 			pin_RST = 1;
 			if( pin_BSY )
 			{
-#if NEED_SAMPLING_MODE
-				if( sampling_mode )
-					mixer_stop_sample( schannel );
-#endif
 				VLM5030_reset();
 			}
 		}
@@ -620,42 +589,18 @@ void VLM5030_ST(int pin )
 				{	/* direct access mode */
 					VLM5030_address = (vcu_addr_h&0xff00) + latch_data;
 					vcu_addr_h = 0;
-#if NEED_SAMPLING_MODE
-					if( sampling_mode )
-					{
-						/* can't use sample playback mode */
-						sampling_mode = 0;
-						table = -1; /* dummy */
-					}
-#endif
 				}
 				else
 				{	/* indirect accedd mode */
 					table = (latch_data&0xfe) + (((int)latch_data&1)<<8);
 					VLM5030_address = (((int)VLM5030_rom[table&VLM5030_address_mask])<<8)
 					                |        VLM5030_rom[(table+1)&VLM5030_address_mask];
-#if NEED_SAMPLING_MODE
-					/* sample available flag */
-					sampling_mode = check_samplefile(table/2);
-#endif
 #if 0
 /* show unsupported parameter message */
 if( interp_step != 1)
 	usrintf_showmessage("No %d %dBPS parameter",table/2,interp_step*2400);
 #endif
 				}
-#if NEED_SAMPLING_MODE
-				if( sampling_mode )
-				{
-					int num = table>>1;
-					mixer_play_sample(schannel,
-						Machine->samples->sample[num]->data,
-						Machine->samples->sample[num]->length,
-						Machine->samples->sample[num]->smpfreq,
-						0);
-					return;
-				}
-#endif
 				VLM5030_update();
 				/* logerror("VLM5030 %02X start adr=%04X\n",table/2,VLM5030_address ); */
 				/* reset process status */
@@ -684,7 +629,6 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	int emulation_rate;
 
 	intf = msound->sound_interface;
-	Machine->samples = readsamples(intf->samplenames,Machine->gamedrv->name);
 
 	emulation_rate = intf->baseclock / 440;
 
@@ -719,9 +663,6 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	state_save_register_UINT16 (VLM_NAME,0,"vcu_addr", &vcu_addr_h    , 1);
 	state_save_register_UINT8  (VLM_NAME,0,"parameter", &VLM5030_parameter, 1);
 	state_save_register_UINT8  (VLM_NAME,0,"phase"   , &VLM5030_phase , 1);
-#if NEED_SAMPLING_MODE
-	state_save_register_UINT8  (VLM_NAME,0,"samplemode", &sampling_mode  , 1);
-#endif
 	state_save_register_UINT8  (VLM_NAME,0,"interporator"  , &interp_count , 1);
 	state_save_register_UINT8  (VLM_NAME,0,"sample count"  , &sample_count , 1);
 	state_save_register_UINT8  (VLM_NAME,0,"pitch count"   , &pitch_count , 1);

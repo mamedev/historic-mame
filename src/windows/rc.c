@@ -32,7 +32,6 @@ Version 0.3, Februari 2000
 #include <stdlib.h>
 #include <string.h>
 //#include <pwd.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>

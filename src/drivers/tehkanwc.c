@@ -15,6 +15,68 @@ TODO:
 NOTES:
 - Samples MUST be on Memory Region 4
 
+Additional notes (Steph 2002.01.14)
+
+Even if there is NO "screen flipping" for 'tehkanwc' and 'gridiron', there are writes
+to 0xfe60 and 0xfe70 of the main CPU with 00 ...
+
+About 'teedoff' :
+
+The main problem with that game is that it should sometimes jumps into shared memory
+(see 'init_teedoff' function below) depending on a value that is supposed to be
+in the palette RAM !
+
+Palette RAM is reset here (main CPU) :
+
+5D15: ED 57       ld   a,i
+5D17: CB FF       set  7,a
+5D19: ED 47       ld   i,a
+5D1B: AF          xor  a
+5D1C: 21 00 D8    ld   hl,$D800
+5D1F: 01 80 0C    ld   bc,$0C80
+5D22: 77          ld   (hl),a
+5D23: 23          inc  hl
+5D24: 0D          dec  c
+5D25: 20 FB       jr   nz,$5D22
+5D27: 0E 80       ld   c,$80
+5D29: 10 F7       djnz $5D22
+....
+
+Then it is filled here (main CPU) :
+
+5D50: 21 C4 70    ld   hl,$70C4
+5D53: 11 00 D8    ld   de,$D800
+5D56: 01 00 02    ld   bc,$0200
+5D59: ED B0       ldir
+5D5B: 21 C4 72    ld   hl,$72C4
+5D5E: 01 00 01    ld   bc,$0100
+5D61: ED B0       ldir
+5D63: C9          ret
+
+0x72c4 is in ROM and it's ALWAYS 00 !
+
+Another place where the palette is filled is here (sub CPU) :
+
+16AC: 21 06 1D    ld   hl,$1D06
+16AF: 11 00 DA    ld   de,$DA00
+16B2: 01 C0 00    ld   bc,$00C0
+16B5: ED B0       ldir
+
+But here again, 0x1d06 is in ROM and it's ALWAYS 00 !
+
+So the "jp z" instruction at 0x0238 of the main CPU will ALWAYS jump
+in shared memory when NO code seems to be written !
+
+TO DO :
+
+  - Check MEMORY_* definitions (too many M?A_NOP areas)
+  - Check sound in all games (too many messages like this in the .log file :
+    'Warning: sound latch 2 written before being read')
+  - "Screen flipping" support in 'teedoff' (in src/vidhrdw/tehkanwc.c)
+  - Figure out the controls in 'tehkanwc' (they are told to be better in MAME 0.34)
+  - Figure out the controls in 'teedoff'
+  - Confirm "Difficulty" Dip Switch in 'teedoff'
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -48,6 +110,18 @@ static READ_HANDLER( shared_r )
 static WRITE_HANDLER( shared_w )
 {
 	shared_ram[offset] = data;
+}
+
+
+/* To me moved in src/vidhrdw/tehkanwc.c */
+WRITE_HANDLER( flip_screen_x_w )
+{
+	flip_screen_x_set(data & 0x40);
+}
+
+WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data & 0x40);
 }
 
 
@@ -211,6 +285,103 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xf812, 0xf812, gridiron_led1_w },
 	{ 0xf820, 0xf820, sound_command_w },
 	{ 0xf840, 0xf840, sub_cpu_halt_w },
+	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
+	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
+MEMORY_END
+
+static MEMORY_READ_START( gridiron_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcfff, shared_r },
+	{ 0xd000, 0xd3ff, videoram_r },
+	{ 0xd400, 0xd7ff, colorram_r },
+	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
+	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
+	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
+	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
+	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
+	{ 0xf802, 0xf802, input_port_9_r }, /* Coin & Start */
+	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
+	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
+	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
+	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
+	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
+	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
+	{ 0xf860, 0xf860, watchdog_reset_r },
+	{ 0xf870, 0xf870, MRA_NOP },	/* ?? read in the IRQ handler */
+MEMORY_END
+
+static MEMORY_WRITE_START( gridiron_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xc800, 0xcfff, shared_w, &shared_ram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
+	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
+	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
+	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
+	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
+	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
+	{ 0xf802, 0xf802, gridiron_led0_w },
+	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
+	{ 0xf812, 0xf812, gridiron_led1_w },
+	{ 0xf820, 0xf820, sound_command_w },
+	{ 0xf840, 0xf840, sub_cpu_halt_w },
+	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
+	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
+MEMORY_END
+
+static MEMORY_READ_START( teedoff_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcfff, shared_r },
+	{ 0xd000, 0xd3ff, videoram_r },
+	{ 0xd400, 0xd7ff, colorram_r },
+	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
+	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
+	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
+	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
+	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
+	{ 0xf802, 0xf802, input_port_9_r }, /* Coin */
+	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
+	{ 0xf806, 0xf806, input_port_9_r }, /* Start */
+	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
+	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
+	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
+	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
+	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
+	{ 0xf860, 0xf860, watchdog_reset_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( teedoff_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xc800, 0xcfff, shared_w, &shared_ram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
+	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
+	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
+	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
+	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
+	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
+	{ 0xf802, 0xf802, gridiron_led0_w },
+	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
+	{ 0xf812, 0xf812, gridiron_led1_w },
+	{ 0xf820, 0xf820, sound_command_w },
+	{ 0xf840, 0xf840, sub_cpu_halt_w },
+	{ 0xf850, 0xf850, MWA_NOP },				/* ?? Same value as in 0xf840 */
+	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
 MEMORY_END
 
 static MEMORY_READ_START( readmem_sub )
@@ -291,12 +462,11 @@ INPUT_PORTS_START( tehkanwc )
 	PORT_DIPSETTING (   0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING (   0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING (   0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, "Extra Time per Coin" )
-	PORT_DIPSETTING (   0x40, "Normal" )
-	PORT_DIPSETTING (   0x00, "Double" )
-	PORT_DIPNAME( 0x80, 0x80, "1 Player Start" )
-	PORT_DIPSETTING (   0x00, "2 Credits" )
-	PORT_DIPSETTING (   0x80, "1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Start Credits (P1&P2)/Extra" )
+	PORT_DIPSETTING (   0x80, "1&1/200%" )
+	PORT_DIPSETTING (   0xc0, "1&2/100%" )
+	PORT_DIPSETTING (   0x40, "2&2/100%" )
+	PORT_DIPSETTING (   0x00, "2&3/67%" )
 
 	PORT_START /* DSW2 - Active LOW */
 	PORT_DIPNAME( 0x03, 0x03, "1P Game Time" )
@@ -392,30 +562,30 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gridiron )
 	PORT_START /* DSW1 - Active LOW */
-	PORT_DIPNAME( 0x01, 0x01, "1 Player Start" )
-	PORT_DIPSETTING (   0x00, "2 Credits" )
-	PORT_DIPSETTING (   0x01, "1 Credit" )
-	PORT_DIPNAME( 0x02, 0x02, "2 Players Start" )
-	PORT_DIPSETTING (   0x02, "2 Credits" )
-	PORT_DIPSETTING (   0x00, "1 Credit" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, "Start Credits (P1&P2)/Extra" )
+	PORT_DIPSETTING (   0x01, "1&1/200%" )
+	PORT_DIPSETTING (   0x03, "1&2/100%" )
+//	PORT_DIPSETTING (   0x00, "2&1/200%" )				// Is this setting possible ?
+	PORT_DIPSETTING (   0x02, "2&2/100%" )
+	/* This Dip Switch only has an effect in a 2 players game.
+	   If offense player selects his formation before defense player,
+	   defense formation time will be set to 3, 5 or 7 seconds.
+	   Check code at 0x3ed9 and table at 0x3f89. */
+	PORT_DIPNAME( 0x0c, 0x0c, "Formation Time (Defense)" )
+	PORT_DIPSETTING (   0x0c, "Same as Offense" )
+	PORT_DIPSETTING (   0x00, "7" )
+	PORT_DIPSETTING (   0x08, "5" )
+	PORT_DIPSETTING (   0x04, "3" )
+	PORT_DIPNAME( 0x30, 0x30, "Timer Speed" )
+	PORT_DIPSETTING (   0x30, "60/60" )
+	PORT_DIPSETTING (   0x00, "57/60" )
+	PORT_DIPSETTING (   0x10, "54/60" )
+	PORT_DIPSETTING (   0x20, "50/60" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Formation Time (Offense)" )
+	PORT_DIPSETTING (   0x00, "25" )
+	PORT_DIPSETTING (   0x40, "20" )
+	PORT_DIPSETTING (   0xc0, "15" )
+	PORT_DIPSETTING (   0x80, "10" )
 
 	PORT_START /* DSW2 - Active LOW */
 	PORT_DIPNAME( 0x03, 0x03, "1P Game Time" )
@@ -456,22 +626,12 @@ INPUT_PORTS_START( gridiron )
 	PORT_DIPSETTING (   0x18, "1:00/0:45 Extra" )
 	PORT_DIPSETTING (   0x38, "1:00/0:35 Extra" )
 	PORT_DIPSETTING (   0x58, "1:00/0:30 Extra" )
-	PORT_DIPNAME( 0x80, 0x80, "Game Type?" )
-	PORT_DIPSETTING (   0x80, "Timer In" )
-	PORT_DIPSETTING (   0x00, "Credit In" )
-
-	PORT_START /* DSW3 - Active LOW */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
-	PORT_DIPSETTING (   0x02, "Easy" )
-	PORT_DIPSETTING (   0x03, "Normal" )
-	PORT_DIPSETTING (   0x01, "Hard" )
-	PORT_DIPSETTING (   0x00, "Very Hard" )
-	PORT_DIPNAME( 0x04, 0x04, "Timer Speed?" )
-	PORT_DIPSETTING (   0x04, "60/60" )
-	PORT_DIPSETTING (   0x00, "55/60" )
-	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds?" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )		// Check code at 0x14b4
 	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x08, DEF_STR( On ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
+
+	PORT_START /* no DSW3 */
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* IN0 - X AXIS */
 	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0, 0 )
@@ -514,28 +674,44 @@ INPUT_PORTS_START( teedoff )
 	PORT_DIPSETTING (   0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING (   0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x30, 0x30, "Balls" )
+	PORT_DIPSETTING (   0x30, "5" )
+	PORT_DIPSETTING (   0x20, "6" )
+	PORT_DIPSETTING (   0x10, "7" )
+	PORT_DIPSETTING (   0x00, "8" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )			// Check code at 0x0c5c
+	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING (   0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )		// Check code at 0x5dd0
 	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
 
 	PORT_START /* DSW2 - Active LOW */
-	PORT_DIPNAME( 0xff, 0xff, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0xff, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unused SW 3-1" )
+	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 3-2" )
+	PORT_DIPSETTING (   0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unused SW 3-3" )
+	PORT_DIPSETTING (   0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, "Penalty (Over Par)" )		// Check table at 0x2d67
+	PORT_DIPSETTING (   0x10, "1/1/2/3/4" )				// +1 / +2 / +3 / +4 / +5 or +6
+	PORT_DIPSETTING (   0x18, "1/2/3/3/4" )
+	PORT_DIPSETTING (   0x08, "1/2/3/4/4" )
+	PORT_DIPSETTING (   0x00, "2/3/3/4/4" )
+	PORT_DIPNAME( 0x20, 0x20, "Bonus Balls (Multiple coins)" )
+	PORT_DIPSETTING (   0x20, "None" )
+	PORT_DIPSETTING (   0x00, "+1" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty?" )				// Check table at 0x5df9
+	PORT_DIPSETTING (   0x80, "Easy" )
+	PORT_DIPSETTING (   0xc0, "Normal" )
+	PORT_DIPSETTING (   0x40, "Hard" )
+	PORT_DIPSETTING (   0x00, "Hardest" )
 
-	PORT_START /* DSW3 - Active LOW */
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Unknown ) )
-	PORT_DIPSETTING (   0x0f, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_START /* no DSW3 */
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* IN0 - X AXIS */
 	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0, 0 )
@@ -556,8 +732,11 @@ INPUT_PORTS_START( teedoff )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START /* IN2 - Active LOW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	/* "Coin"  buttons are read from address 0xf802 */
+	/* "Start" buttons are read from address 0xf806 */
+	/* coin input must be active between 2 and 15 frames to be consistently recognized */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 
@@ -637,7 +816,7 @@ static struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( tehkanwc )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4 */
+	MDRV_CPU_ADD_TAG("main", Z80, 4608000)	/* 18.432000 / 4 */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -668,6 +847,50 @@ static MACHINE_DRIVER_START( tehkanwc )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( gridiron )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(tehkanwc)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(gridiron_readmem,gridiron_writemem)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( teedoff )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(tehkanwc)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(teedoff_readmem,teedoff_writemem)
+MACHINE_DRIVER_END
+
+
+
+static DRIVER_INIT( teedoff )
+{
+	/* Patch to avoid the game jumping in shared memory */
+
+	/* Code at 0x0233 (main CPU) :
+
+		0233: 3A 00 DA    ld   a,($DA00)
+		0236: CB 7F       bit  7,a
+		0238: CA 00 C8    jp   z,$C800
+
+	   changed to :
+
+		0233: 3A 00 DA    ld   a,($DA00)
+		0236: CB 7F       bit  7,a
+		0238: 00          nop
+		0239: 00          nop
+		023A: 00          nop
+	*/
+
+	data8_t *ROM = memory_region(REGION_CPU1);
+
+	ROM[0x0238] = 0x00;
+	ROM[0x0239] = 0x00;
+	ROM[0x023a] = 0x00;
+}
 
 
 
@@ -763,6 +986,6 @@ ROM_END
 
 
 
-GAME( 1985, tehkanwc, 0, tehkanwc, tehkanwc, 0, ROT0,  "Tehkan", "Tehkan World Cup" )
-GAME( 1985, gridiron, 0, tehkanwc, gridiron, 0, ROT0,  "Tehkan", "Gridiron Fight" )
-GAMEX(1986, teedoff,  0, tehkanwc, teedoff,  0, ROT90, "Tecmo", "Tee'd Off", GAME_NOT_WORKING )
+GAME( 1985, tehkanwc, 0, tehkanwc, tehkanwc, 0,        ROT0,  "Tehkan", "Tehkan World Cup" )
+GAME( 1985, gridiron, 0, gridiron, gridiron, 0,        ROT0,  "Tehkan", "Gridiron Fight" )
+GAMEX(1986, teedoff,  0, teedoff,  teedoff,  teedoff,  ROT90, "Tecmo", "Tee'd Off (Japan)", GAME_NO_COCKTAIL )

@@ -21,8 +21,10 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/machine/mb87078.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \
+	$(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
+	$(OBJ)/sound/wavwrite.o \
 	$(sort $(DBGOBJS))
 
-TOOLS = romcmp$(EXE)
+TOOLS = romcmp$(EXE) hdcomp$(EXE)
 TEXTS = gamelist.txt
 

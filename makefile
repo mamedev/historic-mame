@@ -140,7 +140,7 @@ DBGDEFS =
 DBGOBJS =
 endif
 
-extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
+extra:	$(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
@@ -156,6 +156,10 @@ ifndef DEBUG
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+hdcomp$(EXE): $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 

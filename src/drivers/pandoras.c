@@ -21,7 +21,6 @@ TODO:
 
 static int irq_enable_a, irq_enable_b;
 static int firq_old_data_a, firq_old_data_b;
-static int i8039_irqenable;
 static int i8039_status;
 
 unsigned char *pandoras_sharedram;
@@ -113,15 +112,13 @@ WRITE_HANDLER( pandoras_cpub_irqtrigger_w ){
 
 WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
 {
-	if (i8039_irqenable)
-		cpu_set_irq_line(3, 0, ASSERT_LINE);
+	cpu_set_irq_line(3, 0, ASSERT_LINE);
 }
 
 static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	/* bit 7 enables IRQ */
-	i8039_irqenable = data & 0x80;
-	if (i8039_irqenable == 0)
+	if ((data & 0x80) == 0)
 		cpu_set_irq_line(3, 0, CLEAR_LINE);
 
 	/* bit 5 goes to 8910 port A */
@@ -412,11 +409,11 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( pandoras )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809,	18432000/6)	/* CPU A */
+	MDRV_CPU_ADD(M6809,18432000/6)	/* CPU A */
 	MDRV_CPU_MEMORY(pandoras_readmem_a,pandoras_writemem_a)
 	MDRV_CPU_VBLANK_INT(pandoras_interrupt_a,1)
 
-	MDRV_CPU_ADD(M6809,	18432000/6)	/* CPU B */
+	MDRV_CPU_ADD(M6809,18432000/6)	/* CPU B */
 	MDRV_CPU_MEMORY(pandoras_readmem_b,pandoras_writemem_b)
 	MDRV_CPU_VBLANK_INT(pandoras_interrupt_b,1)
 
@@ -424,7 +421,7 @@ static MACHINE_DRIVER_START( pandoras )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(pandoras_readmem_snd,pandoras_writemem_snd)
 
-	MDRV_CPU_ADD(I8039,14318000/2/15)
+	MDRV_CPU_ADD(I8039,(14318000/2)/I8039_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
 	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)

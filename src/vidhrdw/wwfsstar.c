@@ -138,27 +138,57 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap, const struct recta
 	data16_t *source = spriteram16;
 	data16_t *finish = source + 0x3ff/2;
 
-	while( source<finish )
+	while (source < finish)
 	{
-		int xpos, ypos, colourbank, flipx, flipy, chain, enable, number;
+		int xpos, ypos, colourbank, flipx, flipy, chain, enable, number, count;
 
-		ypos = ((source [0] & 0x00ff) | ((source [1] & 0x0004) << 6) );
-	    ypos=(((256-ypos)&0x1ff)-16) ;
-		xpos = ((source [4] & 0x00ff) | ((source [1] & 0x0008) << 5) );
-		xpos = (((256-xpos)&0x1ff)-16);
-		colourbank = (source [1] & 0x00f0) >> 4;
-		flipx = (source [2] & 0x0080 ) >> 7;
-		flipy = (source [2] & 0x0040 ) >> 6;
-		chain = (source [1] & 0x0002 ) >> 1;
 		enable = (source [1] & 0x0001);
-		number = (source [3] & 0x00ff) | ((source [2] & 0x003f) << 8);
 
-		 if (enable) {
-			if (chain){
-				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos-16,cliprect,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,gfx,number+1,colourbank,flipx,flipy,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
-			} else {
-				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
+		if (enable)
+		{
+			ypos = ((source [0] & 0x00ff) | ((source [1] & 0x0004) << 6) );
+			ypos = (((256 - ypos) & 0x1ff) - 16) ;
+			xpos = ((source [4] & 0x00ff) | ((source [1] & 0x0008) << 5) );
+			xpos = (((256 - xpos) & 0x1ff) - 16);
+			flipx = (source [2] & 0x0080 ) >> 7;
+			flipy = (source [2] & 0x0040 ) >> 6;
+			chain = (source [1] & 0x0002 ) >> 1;
+			chain += 1;
+			number = (source [3] & 0x00ff) | ((source [2] & 0x003f) << 8);
+			colourbank = (source [1] & 0x00f0) >> 4;
+
+			if (flip_screen)
+			{
+				flipy = !flipy;
+				flipx = !flipx;
+				ypos=240-ypos;
+				xpos=240-xpos;
+			}
+
+			for (count=0;count<chain;count++)
+			{
+				if (flip_screen)
+				{
+					if (!flipy)
+					{
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+16*count,cliprect,TRANSPARENCY_PEN,0);
+					}
+					else
+					{
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+(16*(chain-1))-(16*count),cliprect,TRANSPARENCY_PEN,0);
+					}
+				}
+				else
+				{
+					if (!flipy)
+					{
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-(16*(chain-1))+(16*count),cliprect,TRANSPARENCY_PEN,0);
+					}
+					else
+					{
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-16*count,cliprect,TRANSPARENCY_PEN,0);
+					}
+				}
 			}
 		}
 

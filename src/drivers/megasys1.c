@@ -72,17 +72,17 @@ Input Ports R	080000-080009	0e0000-0e0001**	0d8000-d80001**	100000-100001**
 
 Sound CPU		RW		MS1-A			MS1-B			MS1-C			MS1-D
 -----------------------------------------------------------------------------------
-ROM				R	000000-01ffff	000000-01ffff	000000-01ffff	 No Sound CPU
-Latch #1		R	040000-040001	<				060000-060001
-Latch #2		 W	060000-060001	<				<
-2151 reg		 W	080000-080001	<				<
-2151 data		 W	080002-080003	<				<
-2151 status		R 	080002-080003	<				<
-6295 #1 data	 W 	0a0000-0a0003	<				<
-6295 #1 status	R 	0a0000-0a0001	<				<
-6295 #2 data	 W 	0c0000-0c0003	<				<
-6295 #2 status	R 	0c0000-0c0001	<				<
-RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
+ROM			R		000000-01ffff		000000-01ffff		000000-01ffff	 	No Sound CPU
+Latch #1		R		040000-040001		<			060000-060001
+Latch #2		 W		060000-060001		<			<
+2151 reg		 W		080000-080001		<			<
+2151 data		 W		080002-080003		<			<
+2151 status		R 		080002-080003		<			<
+6295 #1 data	 	 W 		0a0000-0a0003		<			<
+6295 #1 status		R 		0a0000-0a0001		<			<
+6295 #2 data	 	 W 		0c0000-0c0003		<			<
+6295 #2 status		R 		0c0000-0c0001		<			<
+RAM			RW		0f0000-0f3fff		0e0000-0effff?		<
 -----------------------------------------------------------------------------------
 
 
@@ -443,13 +443,19 @@ MEMORY_END
  unfortunately, this trick makes most of the effects disappear in at
  least one game: hachoo!
 
+ IRQ 4 comes from the YM2151.  This is confirmed by jitsupro, which
+ runs at a much slower timer rate than the other games and formerly
+ required it's own machine driver to get interrupts at around the
+ right speed.  Now with the 2151 driving all games have the proper
+ tempo with no hacks.
+
 */
 
-/* See stdragon, which is interrupt driven */
-#define SOUND_INTERRUPT_NUM		8
-static INTERRUPT_GEN( sound_interrupt )
+/* YM2151 IRQ */
+static void megasys1_sound_irq(int irq)
 {
-	cpu_set_irq_line(1, 4, HOLD_LINE);
+	if (irq)
+		cpu_set_irq_line(1, 4, HOLD_LINE);
 }
 
 
@@ -621,7 +627,7 @@ static struct YM2151interface ym2151_interface =
 	1,
 	7000000/2,
 	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ 0 }
+	{ megasys1_sound_irq }
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -642,13 +648,12 @@ static MACHINE_DRIVER_START( system_A )
 	MDRV_CPU_ADD_TAG("sound", M68000, 7000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem_A,sound_writemem_A)
-	MDRV_CPU_VBLANK_INT(sound_interrupt,SOUND_INTERRUPT_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(megasys1)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
@@ -690,42 +695,6 @@ static MACHINE_DRIVER_START( system_C )
 
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(sound_readmem_C,sound_writemem_C)
-MACHINE_DRIVER_END
-
-
-/* OSC:	4, 8, 7, 12 MHz - Type A, but only one interrupt per frame on the sound CPU */
-static MACHINE_DRIVER_START( jitsupro )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(readmem_A,writemem_A)
-	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
-
-	MDRV_CPU_ADD(M68000, 7000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem_A,sound_writemem_A)
-	MDRV_CPU_VBLANK_INT(sound_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	MDRV_MACHINE_INIT(megasys1)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_ABC)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_PALETTE_INIT(megasys1)
-	MDRV_VIDEO_START(megasys1)
-	MDRV_VIDEO_UPDATE(megasys1)
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -3553,7 +3522,7 @@ GAME( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,   "Jaleco", 
 GAME( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax" )
 GAME( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)" )
 GAMEX(1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
-GAME( 1989, jitsupro, 0,        jitsupro, jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
+GAME( 1989, jitsupro, 0,        system_A, jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
 GAME( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270, "Jaleco", "Plus Alpha" )
 GAME( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,   "Jaleco", "Saint Dragon" )
 GAME( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,   "Jaleco", "Rod-Land (World)" )

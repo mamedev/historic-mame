@@ -98,7 +98,7 @@ struct atarimo_data
 	struct atarimo_cache *endcache;			/* end of the cache */
 	struct atarimo_cache *curcache;			/* current cache entry */
 	struct atarimo_cache *prevcache;		/* previous cache entry */
-	
+
 	void *				update_timer;		/* update timer */
 
 	ataripf_overrender_cb overrender0;		/* overrender callback for PF 0 */
@@ -322,10 +322,6 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->codehighshift = compute_log(round_to_powerof2(mo->codemask.mask));
 
 	mo->slipram       = (map == 0) ? &atarimo_0_slipram : &atarimo_1_slipram;
-
-	/* allocate the priority bitmap */
-	priority_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
-	VERIFYRETFREE(priority_bitmap, "atarimo_init: out of memory for priority bitmap", 0)
 
 	/* allocate the spriteram */
 	mo->spriteram = auto_malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);

@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------------------------------
 Year + Game				CPU		Sound			Gfx							Misc
 ---------------------------------------------------------------------------------------------------
-89 Sports Match			Z80 	YM2203			Color PROM + 6845 + DYNAX?
+89 Sports Match			Z80 	YM2203			Color PROM + 6845 + DYNAX(TC17G032AP-0246)
 94 Rong Rong			Z80		YM2413 + M6295	NAKANIHON NL-002
 95 Don Den Lover Vol 1	68000	YM2413 + M6295	NAKANIHON NL-005			NVRAM + RTC 72421B 4382
 ---------------------------------------------------------------------------------------------------
@@ -97,16 +97,22 @@ static WRITE_HANDLER( sprtmtch_coincounter_1_w )
 
 static READ_HANDLER( ret_ff )	{	return 0xff;	}
 
+static WRITE_HANDLER( sprtmtch_rombank_w )
+{
+	data8_t *ROM = memory_region(REGION_CPU1);
+	cpu_setbank(1,&ROM[0x10000+0x8000*(data & 0x07)]);
+}
+
 static MEMORY_READ_START( sprtmtch_readmem )
 	{ 0x0000, 0x6fff, MRA_ROM					},	// ROM
 	{ 0x7000, 0x7fff, MRA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MRA_ROM					},	// ROM
+	{ 0x8000, 0xffff, MRA_BANK1					},	// BANKED ROM
 MEMORY_END
 
 static MEMORY_WRITE_START( sprtmtch_writemem )
 	{ 0x0000, 0x6fff, MWA_ROM					},	// ROM
 	{ 0x7000, 0x7fff, MWA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM
+	{ 0x8000, 0xffff, MWA_ROM					},	// BANKED ROM
 MEMORY_END
 
 static PORT_READ_START( sprtmtch_readport )
@@ -131,6 +137,7 @@ static PORT_WRITE_START( sprtmtch_writeport )
 //	{ 0x12, 0x12, IOWP_NOP					},	// ?? CRT Controller ??
 //	{ 0x13, 0x13, IOWP_NOP					},	// ?? CRT Controller ??
 	{ 0x30, 0x30, dynax_blit_enable_w		},	// Layers Enable
+	{ 0x31, 0x31, sprtmtch_rombank_w		},	// BANK ROM Select
 	{ 0x32, 0x32, dynax_blit_dest_w			},	// Destination Layer
 	{ 0x33, 0x33, dynax_blit_pen_w			},	// Destination Pen
 	{ 0x34, 0x34, dynax_blit_palette01_w	},	// Layers Palettes (Low Bits)
@@ -420,7 +427,7 @@ INPUT_PORTS_START( sprtmtch )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	// IN4 - DSW
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )	// Time
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )	// Time
 	PORT_DIPSETTING(    0x00, "1 (Easy)" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
@@ -429,18 +436,18 @@ INPUT_PORTS_START( sprtmtch )
 	PORT_DIPSETTING(    0x05, "6" )
 	PORT_DIPSETTING(    0x06, "7" )
 	PORT_DIPSETTING(    0x07, "8 (Hard)" )
-	PORT_DIPNAME( 0x18, 0x18, "Vs Time" )
+	PORT_DIPNAME( 0x18, 0x10, "Vs Time" )
 	PORT_DIPSETTING(    0x18, "8 s" )
 	PORT_DIPSETTING(    0x10, "10 s" )
 	PORT_DIPSETTING(    0x08, "12 s" )
 	PORT_DIPSETTING(    0x00, "14 s" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-8" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -608,7 +615,7 @@ INPUT_PORTS_END
 static struct YM2203interface ym2203_intf =
 {
 	1,
-	22000000 / 6,					/* ? */
+	22000000 / 8,					/* 2.75MHz */
 	{ YM2203_VOL(100,100) },
 	{ input_port_3_r },				/* Port A Read: DSW */
 	{ input_port_4_r },				/* Port B Read: DSW */
@@ -620,7 +627,7 @@ static struct YM2203interface ym2203_intf =
 static MACHINE_DRIVER_START( sprtmtch )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,22000000 / 6)	/* ? */
+	MDRV_CPU_ADD(Z80,22000000 / 4)	/* 5.5MHz */
 	MDRV_CPU_MEMORY(sprtmtch_readmem,sprtmtch_writemem)
 	MDRV_CPU_PORTS(sprtmtch_readport,sprtmtch_writeport)
 	MDRV_CPU_VBLANK_INT(sprtmtch_vblank_interrupt,1)	/* IM 0 needs an opcode on the data bus */
@@ -639,7 +646,6 @@ static MACHINE_DRIVER_START( sprtmtch )
 	MDRV_VIDEO_UPDATE(sprtmtch)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, ym2203_intf)
 MACHINE_DRIVER_END
 
@@ -684,7 +690,6 @@ static MACHINE_DRIVER_START( ddenlovr )
 	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2413, ym2413_intf)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
 MACHINE_DRIVER_END
@@ -716,7 +721,6 @@ static MACHINE_DRIVER_START( rongrong )
 	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2413, ym2413_intf)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
 MACHINE_DRIVER_END
@@ -756,8 +760,9 @@ Dynax 1989
 ***************************************************************************/
 
 ROM_START( sprtmtch )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "3101.3d", 0x0000, 0x10000, 0xd8fa9638 )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "3101.3d", 0x00000, 0x08000, 0xd8fa9638 )
+	ROM_CONTINUE(        0x30000, 0x08000 )
 
 	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* Gfx Data (Do not dispose) */
 	ROM_LOAD( "3102.6c", 0x00000, 0x20000, 0x46f90e59 )
@@ -767,6 +772,7 @@ ROM_START( sprtmtch )
 	ROM_LOAD( "18g", 0x000, 0x200, 0xdcc4e0dd )	// FIXED BITS (0xxxxxxx)
 	ROM_LOAD( "17g", 0x200, 0x200, 0x5443ebfb )
 ROM_END
+
 
 
 
@@ -862,7 +868,8 @@ ROM_END
 
 ***************************************************************************/
 
-GAME ( 1989, sprtmtch, 0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
+GAME ( 1989, sprtmtch,        0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
+
 
 /* TESTDRIVERS */
 GAMEX( 1995, ddenlovr, 0, ddenlovr, ddenlovr, 0, ROT0, "Dynax",     "Don Den Lover Vol 1", GAME_NOT_WORKING )

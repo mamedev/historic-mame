@@ -27,7 +27,7 @@ static void line(void)
 
 		P_FLAG = 1;
 		TEMP = (state.op & 0x80) ? 1 : 0;  /* boundary value depends on the algorithm */
-		LOGGFX(("%08X:LINE (%d,%d)-(%d,%d)\n", PC, DADDR_X, DADDR_Y, DADDR_X + DYDX_X, DADDR_Y + DYDX_Y));
+		LOGGFX(("%08X(%3d):LINE (%d,%d)-(%d,%d)\n", PC, cpu_getscanline(), DADDR_X, DADDR_Y, DADDR_X + DYDX_X, DADDR_Y + DYDX_Y));
 	}
 
 	if (COUNT > 0)
@@ -156,12 +156,12 @@ static int apply_window(int srcbpp, UINT32 *srcaddr, XY *dst, int *dx, int *dy)
 	So, to address this, here is a simplified approximate version
 	of the timing.
 
-		timing = setup + (srcwords * 2 + dstwords * (2 + gfxop)) * rows
+		timing = setup + (srcwords * 2 + dstwords * gfxop) * rows
 
-	Each read/write access takes 2 cycles. Each gfx operation has
+	Each read access takes 2 cycles. Each gfx operation has
 	its own timing as specified in the 34010 manual. So, it's 2
-	cycles per read plus 2 cycles per write plus gfxop cycles
-	per operation. Pretty simple, no?
+	cycles per read plus gfxop cycles per operation. Pretty
+	simple, no?
 
 *******************************************************************/
 
@@ -173,10 +173,10 @@ int compute_fill_cycles(int left_partials, int right_partials, int full_words, i
 	if (right_partials) full_words += 1;
 	dstwords = full_words;
 
-	return (dstwords * (2 + op_timing)) * rows + 2;
+	return (dstwords * op_timing) * rows + 2;
 }
 
-int compute_pixblt_cycles(int left_partials, int right_partials, int full_words, int rows, int op_timing)
+int compute_pixblt_cycles(int left_partials, int right_partials, int full_words, int op_timing)
 {
 	int srcwords, dstwords;
 
@@ -185,7 +185,7 @@ int compute_pixblt_cycles(int left_partials, int right_partials, int full_words,
 	srcwords = full_words;
 	dstwords = full_words;
 
-	return (dstwords * (2 + op_timing) + srcwords * 2) * rows + 2;
+	return (dstwords * op_timing + srcwords * 2) + 2;
 }
 
 int compute_pixblt_b_cycles(int left_partials, int right_partials, int full_words, int rows, int op_timing, int bpp)
@@ -197,7 +197,7 @@ int compute_pixblt_b_cycles(int left_partials, int right_partials, int full_word
 	srcwords = full_words * bpp / 16;
 	dstwords = full_words;
 
-	return (dstwords * (2 + op_timing) + srcwords * 2) * rows + 2;
+	return (dstwords * op_timing + srcwords * 2) * rows + 2;
 }
 
 
@@ -904,7 +904,7 @@ static void pixblt_b_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT B,L (%dx%d) depth=%d\n", PC, cpu_getscanline(), DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(1);
@@ -916,7 +916,7 @@ static void pixblt_b_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT B,XY (%d,%d) (%dx%d) depth=%d\n", PC, cpu_getscanline(), DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(0);
@@ -929,7 +929,7 @@ static void pixblt_l_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT L,L (%dx%d) depth=%d\n", PC, cpu_getscanline(), DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -945,7 +945,7 @@ static void pixblt_l_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT L,XY (%d,%d) (%dx%d) depth=%d\n", PC, cpu_getscanline(), DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -961,7 +961,7 @@ static void pixblt_xy_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT XY,L (%dx%d) depth=%d\n", PC, cpu_getscanline(), DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -977,7 +977,7 @@ static void pixblt_xy_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,XY (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):PIXBLT XY,XY (%dx%d) depth=%d\n", PC, cpu_getscanline(), DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -992,7 +992,7 @@ static void fill_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:FILL L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):FILL L (%dx%d) depth=%d\n", PC, cpu_getscanline(), DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(1);
@@ -1004,7 +1004,7 @@ static void fill_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:FILL XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
+	if (!P_FLAG) LOGGFX(("%08X(%3d):FILL XY (%d,%d) (%dx%d) depth=%d\n", PC, cpu_getscanline(), DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(0);
@@ -1103,7 +1103,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				full_words /= PIXELS_PER_WORD;
 
 			/* compute cycles */
-			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, 1, PIXEL_OP_TIMING);
+			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, PIXEL_OP_TIMING);
 
 			/* use word addresses each row */
 			swordaddr = saddr >> 4;
@@ -1123,6 +1123,13 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < left_partials; x++)
 				{
+					/* fetch another word if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(swordaddr++ << 1);
+						srcmask = PIXEL_MASK;
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1135,11 +1142,6 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask <<= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(swordaddr++ << 1);
-						srcmask = PIXEL_MASK;
-					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1162,6 +1164,13 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < PIXELS_PER_WORD; x++)
 				{
+					/* fetch another word if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(swordaddr++ << 1);
+						srcmask = PIXEL_MASK;
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1174,11 +1183,6 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask <<= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(swordaddr++ << 1);
-						srcmask = PIXEL_MASK;
-					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1198,6 +1202,13 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < right_partials; x++)
 				{
+					/* fetch another word if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(swordaddr++ << 1);
+						srcmask = PIXEL_MASK;
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1210,11 +1221,6 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask <<= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(swordaddr++ << 1);
-						srcmask = PIXEL_MASK;
-					}
 
 					/* update the destination */
 					dstmask <<= BITS_PER_PIXEL;
@@ -1236,6 +1242,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				daddr -= DPTCH;
 			}
 		}
+		LOGGFX(("  (%d cycles)\n", state.gfxcycles));
 	}
 
 	/* eat cycles */
@@ -1345,7 +1352,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 				full_words /= PIXELS_PER_WORD;
 
 			/* compute cycles */
-			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, 1, PIXEL_OP_TIMING);
+			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, PIXEL_OP_TIMING);
 
 			/* use word addresses each row */
 			swordaddr = (saddr + 15) >> 4;
@@ -1479,6 +1486,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 				daddr -= DPTCH;
 			}
 		}
+		LOGGFX(("  (%d cycles)\n", state.gfxcycles));
 	}
 
 	/* eat cycles */
@@ -1688,6 +1696,7 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 			saddr += SPTCH;
 			daddr += DPTCH;
 		}
+		LOGGFX(("  (%d cycles)\n", state.gfxcycles));
 	}
 
 	/* eat cycles */
@@ -1852,6 +1861,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 			/* update for next row */
 			daddr += DPTCH;
 		}
+		LOGGFX(("  (%d cycles)\n", state.gfxcycles));
 	}
 
 	/* eat cycles */

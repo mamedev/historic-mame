@@ -100,6 +100,16 @@ static void get_tile_info( int offset )
 			0)
 }
 
+WRITE_HANDLER( looping_flip_screen_x_w )
+{
+	flip_screen_x_set(~data & 0x01);
+}
+
+WRITE_HANDLER( looping_flip_screen_y_w )
+{
+	flip_screen_y_set(~data & 0x01);
+}
+
 WRITE_HANDLER( looping_colorram_w )
 {
 	int i,offs;
@@ -147,23 +157,42 @@ WRITE_HANDLER( looping_videoram_w )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int tile_number;
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source + 0x10*4; /* ? */
 
-	while( source<finish )
+	UINT8 sx, sy;
+	int flipx, flipy, code, color;
+
+	while( source < finish )
 	{
-		tile_number = source[1];
-		drawgfx( bitmap,
-			Machine->gfx[1],
-			tile_number&0x3f,
-			source[2], /* color */
-			tile_number&0x40, /* flipx */
-			tile_number&0x80, /* flipy */
-			source[3], /* xpos */
-			240 - source[0], /* ypos */
-			cliprect,
-			TRANSPARENCY_PEN,0 );
+		sx = source[3];
+		sy = source[0];
+		flipx = source[1] & 0x40;
+		flipy = source[1] & 0x80;
+		code  = source[1] & 0x3f;
+		color = source[2];
+
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+
+		if (flip_screen_y)
+		{
+			flipy = !flipy;
+		}
+		else
+		{
+			sy = 240 - sy;
+		}
+
+		drawgfx( bitmap, Machine->gfx[1],
+				code, color,
+				flipx, flipy,
+				sx, sy,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN, 0 );
 
 		source += 4;
 	}
@@ -238,7 +267,8 @@ static MEMORY_WRITE_START( looping_writemem )
 	{ 0x9800, 0x983f, looping_colorram_w, &colorram },
 	{ 0x9840, 0x987f, MWA_RAM, &spriteram },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xb006, 0xb007, MWA_RAM }, /* unknown */
+	{ 0xb006, 0xb006, looping_flip_screen_x_w },
+	{ 0xb007, 0xb007, looping_flip_screen_y_w },
 	{ 0xf801, 0xf801, looping_soundlatch_w },
 MEMORY_END
 
@@ -377,11 +407,9 @@ INPUT_PORTS_START( looping )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_B ) )
@@ -396,18 +424,62 @@ INPUT_PORTS_START( looping )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )		// Check code at 0x2c00
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+/* Same as 'looping' but additional "Infinite Lives" Dip Switch */
+INPUT_PORTS_START( skybump )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* shoot */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* accel? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START /* cocktail? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0e, 0x02, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )		// Check code at 0x2c00
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x60, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+//	PORT_BITX( 0,       0x20, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 ROM_START( loopinga )
@@ -504,4 +576,5 @@ DRIVER_INIT( looping ){
 /*          rom       parent    machine   inp       init */
 GAME( 1982, looping,  0,        looping, looping, looping, ROT90, "Venture Line", "Looping (set 1)" )
 GAME( 1982, loopinga, looping,  looping, looping, looping, ROT90, "Venture Line", "Looping (set 2)" )
-GAME( 1982, skybump,  0,        looping, looping, looping, ROT90, "Venture Line", "Sky Bumper" )
+GAME( 1982, skybump,  0,        looping, skybump, looping, ROT90, "Venture Line", "Sky Bumper" )
+

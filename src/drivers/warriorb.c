@@ -198,6 +198,8 @@ When it is long, 14 stages everything is possible.
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
+MACHINE_INIT( taito_dualscreen );
+
 VIDEO_START( darius2d );
 VIDEO_START( warriorb );
 VIDEO_UPDATE( warriorb );
@@ -235,7 +237,20 @@ static READ16_HANDLER( warriorb_sound_r )
 	else return 0;
 }
 
-
+/**** sound pan control ****/
+static int ninjaw_pandata[4];
+WRITE_HANDLER( warriorb_pancontrol )
+{
+  offset = offset&3;
+  ninjaw_pandata[offset] = (data<<1) + data;   /* original volume * 3 */
+  //usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+  if( offset < 2 ){
+    mixer_set_stereo_volume( 3, ninjaw_pandata[0], ninjaw_pandata[1] );
+  }
+  else{
+    mixer_set_stereo_volume( 4, ninjaw_pandata[2], ninjaw_pandata[3] );
+  }
+}
 /***********************************************************
 			 MEMORY STRUCTURES
 ***********************************************************/
@@ -324,7 +339,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
 	{ 0xe200, 0xe200, taitosound_slave_port_w },
 	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
+	{ 0xe400, 0xe403, warriorb_pancontrol }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
 	{ 0xf200, 0xf200, sound_bankswitch_w },
@@ -542,7 +557,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 
@@ -587,6 +602,8 @@ static MACHINE_DRIVER_START( darius2d )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_INIT( taito_dualscreen )
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
 	MDRV_ASPECT_RATIO(8,3)
@@ -618,6 +635,8 @@ static MACHINE_DRIVER_START( warriorb )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT( taito_dualscreen )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
@@ -777,6 +796,11 @@ static DRIVER_INIT( warriorb )
 	state_save_register_func_postload(reset_sound_region);
 }
 
+MACHINE_INIT( taito_dualscreen )
+{
+  /**** mixer control enable ****/
+  mixer_sound_enable_global_w( 1 );	/* mixer enabled */
+}
 
 /* Working Games */
 

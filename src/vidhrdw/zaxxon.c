@@ -20,7 +20,7 @@ static const unsigned char *color_codes;
 int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 
 #define ZAXXON_VID	0
-#define CONGO_VID	1
+#define CONGO_VID		1
 #define FUTSPY_VID	2
 
 
@@ -278,11 +278,26 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 			if (spriteram[offs+2] != 0xff)
 			{
+				int sx,sy,flipx,flipy;
+
+				sx = ((spriteram[offs+2+3] + 16) & 0xff) - 31;
+				sy = 255 - spriteram[offs+2] - 15;
+				flipx = spriteram[offs+2+2] & 0x80;
+				flipy = spriteram[offs+2+1] & 0x80;
+
+				if (flip_screen)
+				{
+					flipx = !flipx;
+					flipy = !flipy;
+					sx = 223 - sx;
+					sy = 224 - sy;
+				}
+
 				drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+2+1]& 0x7f,
 						spriteram[offs+2+2],
-						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
-						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
+						flipx,flipy,
+						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -293,11 +308,26 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		{
 			if (spriteram[offs] != 0xff)
 			{
-					drawgfx(bitmap,Machine->gfx[2],
+				int sx,sy,flipx,flipy;
+
+				sx = ((spriteram[offs+3] + 16) & 0xff) - 32;
+				sy = 255 - spriteram[offs] - 16;
+				flipx = spriteram[offs+1] & 0x80;
+				flipy = spriteram[offs+1] & 0x80;
+
+				if (flip_screen)
+				{
+					flipx = !flipx;
+					flipy = !flipy;
+					sx = 223 - sx;
+					sy = 224 - sy;
+				}
+
+				drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+1] & 0x7f,
 						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
-						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						flipx,flipy,
+						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -362,7 +392,12 @@ VIDEO_UPDATE( zaxxon )
 					scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 			}
 			else
-				scroll = (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7)) - 32;
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = 1024 + (zaxxon_background_position[0] + 256*zaxxon_background_position[1]) - 32;
+				else
+					scroll = (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7)) - 32;
+			}
 
 			skew = 128 - 512 + 2 * Machine->visible_area.min_x;
 
@@ -396,7 +431,12 @@ VIDEO_UPDATE( zaxxon )
 							- backgroundbitmap1->height + 256;
 			}
 			else
-				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = -(2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])) - 2052;
+				else
+					scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
+			}
 
 			skew = 72 - (255 - Machine->visible_area.max_y);
 
@@ -491,10 +531,16 @@ VIDEO_UPDATE( razmataz )
 		code = videoram[offs];
 		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -532,10 +578,16 @@ VIDEO_UPDATE( ixion )
 		code = videoram[offs];
 		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}

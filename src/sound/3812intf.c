@@ -202,15 +202,21 @@ static void nonemu_YM3812_write_port_w(int chip,int data)
 
 				/*  bit 0 starts/stops timer 1 */
 				if (data & 0x01)
-					timer_adjust(st->timer1, (double)st->timer1_val*4*timer_step, chip, 0);
+				{
+					if (!timer_enable(st->timer1, 1))
+						timer_adjust(st->timer1, (double)st->timer1_val*4*timer_step, chip, 0);
+				}
 				else
-					timer_adjust(st->timer1, TIME_NEVER, chip, 0);
+					timer_enable(st->timer1, 0);
 
 				/*  bit 1 starts/stops timer 2 */
 				if (data & 0x02)
-					timer_adjust(st->timer2, (double)st->timer2_val*16*timer_step, chip, 0);
+				{
+					if (!timer_enable(st->timer2, 1))
+						timer_adjust(st->timer2, (double)st->timer2_val*16*timer_step, chip, 0);
+				}
 				else
-					timer_adjust(st->timer2, TIME_NEVER, chip, 0);
+					timer_enable(st->timer2, 0);
 
 				/* bits 5 & 6 clear and mask the appropriate bit in the status register */
 				st->status_register &= ~(data & 0x60);
@@ -283,7 +289,7 @@ static void TimerHandler(int c,double period)
 {
 	if( period == 0 )
 	{	/* Reset FM Timer */
-		timer_adjust(Timer[c], TIME_NEVER, c, 0);
+		timer_enable(Timer[c], 0);
 	}
 	else
 	{	/* Start FM Timer */
@@ -334,7 +340,7 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		OPLSetTimerHandler(F3812[i],TimerHandler,i*2);
 		OPLSetIRQHandler(F3812[i]  ,IRQHandler,i);
 		OPLSetUpdateHandler(F3812[i],stream_update,stream[i]);
-		
+
 		Timer[i*2+0] = timer_alloc(timer_callback_3812);
 		Timer[i*2+1] = timer_alloc(timer_callback_3812);
 	}

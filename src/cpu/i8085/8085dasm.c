@@ -48,7 +48,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x05: sprintf (buff,"dec  b");                          break;
 		case 0x06: sprintf (buff,"ld   b,$%02x", ARG(pc)); pc++;     break;
 		case 0x07: sprintf (buff,"rlca");                            break;
-		case 0x08: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x08: sprintf (buff,"sub  hl,bc (*)");                  break;
 		case 0x09: sprintf (buff,"add  hl,bc");                      break;
 		case 0x0a: sprintf (buff,"ld   a,(bc)");                     break;
 		case 0x0b: sprintf (buff,"dec  bc");                         break;
@@ -56,7 +56,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x0d: sprintf (buff,"dec  c");                          break;
 		case 0x0e: sprintf (buff,"ld   c,$%02x", ARG(pc)); pc++;     break;
 		case 0x0f: sprintf (buff,"rrca");                            break;
-		case 0x10: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x10: sprintf (buff,"sra  hl (*)");                     break;
 		case 0x11: sprintf (buff,"ld   de,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0x12: sprintf (buff,"ld   (de),a");                     break;
 		case 0x13: sprintf (buff,"inc  de");                         break;
@@ -64,7 +64,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x15: sprintf (buff,"dec  d");                          break;
 		case 0x16: sprintf (buff,"ld   d,$%02x", ARG(pc)); pc++;     break;
 		case 0x17: sprintf (buff,"rla");                             break;
-		case 0x18: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x18: sprintf (buff,"rl   de (*)");                     break;
 		case 0x19: sprintf (buff,"add  hl,de");                      break;
 		case 0x1a: sprintf (buff,"ld   a,(de)");                     break;
 		case 0x1b: sprintf (buff,"dec  de");                         break;
@@ -80,7 +80,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x25: sprintf (buff,"dec  h");                          break;
 		case 0x26: sprintf (buff,"ld   h,$%02x", ARG(pc)); pc++;     break;
 		case 0x27: sprintf (buff,"daa");                             break;
-		case 0x28: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x28: sprintf (buff,"ld   de,hl+$%02x (*)",ARG(pc));pc++;break;
 		case 0x29: sprintf (buff,"add  hl,hl");                      break;
 		case 0x2a: sprintf (buff,"ld   hl,($%04x)", ARGW(pc)); pc+=2;break;
 		case 0x2b: sprintf (buff,"dec  hl");                         break;
@@ -96,7 +96,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x35: sprintf (buff,"dec  (hl)");                       break;
 		case 0x36: sprintf (buff,"ld   (hl),$%02x", ARG(pc)); pc++;  break;
 		case 0x37: sprintf (buff,"scf");                             break;
-		case 0x38: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x38: sprintf (buff,"ld   de,sp+$%02x (*)",ARG(pc));pc++;break;
 		case 0x39: sprintf (buff,"add  hl,sp");                      break;
 		case 0x3a: sprintf (buff,"ld   a,($%04x)", ARGW(pc)); pc+=2; break;
 		case 0x3b: sprintf (buff,"dec  sp");                         break;
@@ -243,7 +243,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xc8: sprintf (buff,"ret  z");                          break;
 		case 0xc9: sprintf (buff,"ret");                             break;
 		case 0xca: sprintf (buff,"jp   z,$%04x", ARGW(pc)); pc+=2;   break;
-		case 0xcb: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xcb: sprintf (buff,"rst  v,$40 (*)");                  break;
 		case 0xcc: sprintf (buff,"call z,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xce: sprintf (buff,"adc  a,$%02x", ARG(pc)); pc++;     break;
@@ -257,11 +257,11 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xd6: sprintf (buff,"sub  $%02x", ARG(pc)); pc++;       break;
 		case 0xd7: sprintf (buff,"rst  $10");                        break;
 		case 0xd8: sprintf (buff,"ret  c");                          break;
-		case 0xd9: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xd9: sprintf (buff,"ld   (de),hl (*)");                break;
 		case 0xda: sprintf (buff,"jp   c,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0xdb: sprintf (buff,"in   a,($%02x)", ARG(pc)); pc++;   break;
 		case 0xdc: sprintf (buff,"call c,$%04x", ARGW(pc)); pc+=2;   break;
-		case 0xdd: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xdd: sprintf (buff,"jp   nx,$%04x (*)",ARGW(pc));pc+=2;break;
 		case 0xde: sprintf (buff,"sub  $%02x", ARG(pc)); pc++;       break;
 		case 0xdf: sprintf (buff,"rst  $18");                        break;
 		case 0xe0: sprintf (buff,"ret  pe");                         break;
@@ -277,7 +277,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xea: sprintf (buff,"jp   po,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0xeb: sprintf (buff,"ex   de,hl");                      break;
 		case 0xec: sprintf (buff,"call po,$%04x", ARGW(pc)); pc+=2;  break;
-		case 0xed: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xed: sprintf (buff,"ld   hl,(de) (*)");                break;
 		case 0xee: sprintf (buff,"xor  $%02x", ARG(pc)); pc++;       break;
 		case 0xef: sprintf (buff,"rst  $28");                        break;
 		case 0xf0: sprintf (buff,"ret  p");                          break;
@@ -293,7 +293,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xfa: sprintf (buff,"jp   m,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0xfb: sprintf (buff,"ei");                              break;
 		case 0xfc: sprintf (buff,"call m,$%04x", ARGW(pc)); pc+=2;   break;
-		case 0xfd: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xfd: sprintf (buff,"jp   x,$%04x (*)",ARGW(pc));pc+=2; break;
 		case 0xfe: sprintf (buff,"cp   $%02x", ARG(pc)); pc++;       break;
 		case 0xff: sprintf (buff,"rst  $38");                        break;
 #else
@@ -305,7 +305,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x05: sprintf (buff,"dcr  b");                          break;
 		case 0x06: sprintf (buff,"mvi  b,$%02x", ARG(pc)); pc++;     break;
 		case 0x07: sprintf (buff,"rlc");                             break;
-		case 0x08: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x08: sprintf (buff,"dsub (*)");                        break;
 		case 0x09: sprintf (buff,"dad  b");                          break;
 		case 0x0a: sprintf (buff,"ldax b");                          break;
 		case 0x0b: sprintf (buff,"dcx  b");                          break;
@@ -313,7 +313,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x0d: sprintf (buff,"dcr  c");                          break;
 		case 0x0e: sprintf (buff,"mvi  c,$%02x", ARG(pc)); pc++;     break;
 		case 0x0f: sprintf (buff,"rrc");                             break;
-		case 0x10: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x10: sprintf (buff,"asrh (*)");                        break;
 		case 0x11: sprintf (buff,"lxi  d,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0x12: sprintf (buff,"stax d");                          break;
 		case 0x13: sprintf (buff,"inx  d");                          break;
@@ -321,7 +321,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x15: sprintf (buff,"dcr  d");                          break;
 		case 0x16: sprintf (buff,"mvi  d,$%02x", ARG(pc)); pc++;     break;
 		case 0x17: sprintf (buff,"ral");                             break;
-		case 0x18: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x18: sprintf (buff,"rlde (*)");                        break;
 		case 0x19: sprintf (buff,"dad  d");                          break;
 		case 0x1a: sprintf (buff,"ldax d");                          break;
 		case 0x1b: sprintf (buff,"dcx  d");                          break;
@@ -337,7 +337,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x25: sprintf (buff,"dcr  h");                          break;
 		case 0x26: sprintf (buff,"mvi  h,$%02x", ARG(pc)); pc++;     break;
 		case 0x27: sprintf (buff,"daa");                             break;
-		case 0x28: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x28: sprintf (buff,"ldeh $%02x (*)", ARG(pc)); pc++;   break;
 		case 0x29: sprintf (buff,"dad  h");                          break;
 		case 0x2a: sprintf (buff,"lhld $%04x", ARGW(pc)); pc+=2;     break;
 		case 0x2b: sprintf (buff,"dcx  h");                          break;
@@ -353,7 +353,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x35: sprintf (buff,"dcr  m");                          break;
 		case 0x36: sprintf (buff,"mvi  m,$%02x", ARG(pc)); pc++;     break;
 		case 0x37: sprintf (buff,"stc");                             break;
-		case 0x38: sprintf (buff,"???  $%02x", op);                  break;
+		case 0x28: sprintf (buff,"ldes $%02x", ARG(pc)); pc++;       break;
 		case 0x39: sprintf (buff,"dad sp");                          break;
 		case 0x3a: sprintf (buff,"ldax $%04x", ARGW(pc)); pc+=2;     break;
 		case 0x3b: sprintf (buff,"dcx  sp");                         break;
@@ -500,7 +500,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xc8: sprintf (buff,"rz");                              break;
 		case 0xc9: sprintf (buff,"ret");                             break;
 		case 0xca: sprintf (buff,"jz   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xcb: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xcb: sprintf (buff,"rstv 8 (*)");                      break;
 		case 0xcc: sprintf (buff,"cz   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xce: sprintf (buff,"aci  $%02x", ARG(pc)); pc++;       break;
@@ -514,11 +514,11 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xd6: sprintf (buff,"sui  $%02x", ARG(pc)); pc++;       break;
 		case 0xd7: sprintf (buff,"rst  2");                          break;
 		case 0xd8: sprintf (buff,"rc");                              break;
-		case 0xd9: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xd9: sprintf (buff,"shlx d (*)");                      break;
 		case 0xda: sprintf (buff,"jc   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xdb: sprintf (buff,"in   $%02x", ARG(pc)); pc++;       break;
 		case 0xdc: sprintf (buff,"cc   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xdd: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xdd: sprintf (buff,"jnx  $%04x (*)", ARGW(pc)); pc+=2; break;
 		case 0xde: sprintf (buff,"sbi  $%02x", ARG(pc)); pc++;       break;
 		case 0xdf: sprintf (buff,"rst  3");                          break;
 		case 0xe0: sprintf (buff,"rpe");                             break;
@@ -534,7 +534,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xea: sprintf (buff,"jpo  $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xeb: sprintf (buff,"xchg");                            break;
 		case 0xec: sprintf (buff,"cpo  $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xed: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xed: sprintf (buff,"lhlx d (*)");                      break;
 		case 0xee: sprintf (buff,"xri  $%02x", ARG(pc)); pc++;       break;
 		case 0xef: sprintf (buff,"rst  5");                          break;
 		case 0xf0: sprintf (buff,"rp");                              break;
@@ -550,7 +550,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xfa: sprintf (buff,"jm   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xfb: sprintf (buff,"ei");                              break;
 		case 0xfc: sprintf (buff,"cm   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xfd: sprintf (buff,"???  $%02x", op);                  break;
+		case 0xfd: sprintf (buff,"jx   $%04x (*)", ARGW(pc)); pc+=2; break;
 		case 0xfe: sprintf (buff,"cpi  $%02x", ARG(pc)); pc++;       break;
 		case 0xff: sprintf (buff,"rst  7");                          break;
 #endif

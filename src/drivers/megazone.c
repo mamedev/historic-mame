@@ -24,7 +24,6 @@ extern unsigned char *megazone_videoram2;
 extern unsigned char *megazone_colorram2;
 extern size_t megazone_videoram2_size;
 
-static int i8039_irqenable;
 static int i8039_status;
 
 VIDEO_START( megazone );
@@ -102,14 +101,12 @@ WRITE_HANDLER( megazone_sharedram_w )
 
 static WRITE_HANDLER( megazone_i8039_irq_w )
 {
-	if (i8039_irqenable)
-		cpu_set_irq_line(2, 0, ASSERT_LINE);
+	cpu_set_irq_line(2, 0, ASSERT_LINE);
 }
 
 WRITE_HANDLER( i8039_irqen_and_status_w )
 {
-	i8039_irqenable = data & 0x80;
-	if (i8039_irqenable == 0)
+	if ((data & 0x80) == 0)
 		cpu_set_irq_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
@@ -183,7 +180,6 @@ MEMORY_END
 
 static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch_r },
-	{ 0x111,0x111, IORP_NOP },
 PORT_END
 
 static PORT_WRITE_START( i8039_writeport )
@@ -339,7 +335,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( megazone )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 2048000)        /* 2 MHz */
+	MDRV_CPU_ADD(M6809, 18432000/9)        /* 2 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -348,7 +344,7 @@ static MACHINE_DRIVER_START( megazone )
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(I8039,14318000/2/15)
+	MDRV_CPU_ADD(I8039,(14318000/2)/I8039_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1/2 14MHz crystal */
 	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
 	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)

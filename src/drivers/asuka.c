@@ -104,19 +104,18 @@ the prog rom. Doesn't seem to cause problems though.
 
 #include "driver.h"
 #include "state.h"
-#include "cpu/m68000/m68000.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
 WRITE16_HANDLER( asuka_spritectrl_w );
-WRITE16_HANDLER( asuka_spriteflip_w );
 
 INTERRUPT_GEN( rastan_s_interrupt );
 
 VIDEO_START( asuka );
 VIDEO_START( galmedes );
+VIDEO_START( cadash );
 VIDEO_UPDATE( asuka );
+VIDEO_UPDATE( bonzeadv );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
@@ -148,17 +147,9 @@ INTERRUPT_GEN( cadash_interrupt )
 			SOUND
 ************************************************/
 
-static int banknum = -1;
-
-static void reset_sound_region(void)
-{
-	cpu_setbank( 1, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
-
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	banknum = (data-1) & 0x03;
-	reset_sound_region();
+	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
 
 
@@ -178,8 +169,7 @@ static MEMORY_READ16_START( bonzeadv_readmem )
 	{ 0x800000, 0x800803, bonzeadv_c_chip_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
-	{ 0xd00800, 0xd01fff, MRA16_RAM },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( bonzeadv_writemem )
@@ -193,9 +183,7 @@ static MEMORY_WRITE16_START( bonzeadv_writemem )
 	{ 0x800000, 0x800c01, bonzeadv_c_chip_w },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, asuka_spriteflip_w },
-	{ 0xd00800, 0xd01fff, MWA16_RAM },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_READ16_START( asuka_readmem )
@@ -208,7 +196,7 @@ static MEMORY_READ16_START( asuka_readmem )
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( asuka_writemem )
@@ -222,8 +210,7 @@ static MEMORY_WRITE16_START( asuka_writemem )
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc10000, 0xc103ff, MWA16_NOP },	/* error in Asuka init code */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, asuka_spriteflip_w },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_READ16_START( cadash_readmem )
@@ -234,7 +221,7 @@ static MEMORY_READ16_START( cadash_readmem )
 	{ 0x800000, 0x800fff, MRA16_RAM },	/* network ram */
 	{ 0x900000, 0x90000f, TC0220IOC_halfword_r },
 	{ 0xa00000, 0xa0000f, TC0110PCR_word_r },
-	{ 0xb00000, 0xb007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xb00000, 0xb03fff, PC090OJ_word_0_r },	/* sprite ram */
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
 MEMORY_END
@@ -248,8 +235,7 @@ static MEMORY_WRITE16_START( cadash_writemem )
 	{ 0x800000, 0x800fff, MWA16_RAM },	/* network ram */
 	{ 0x900000, 0x90000f, TC0220IOC_halfword_w },
 	{ 0xa00000, 0xa0000f, TC0110PCR_step1_4bpg_word_w },
-	{ 0xb00000, 0xb007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xb01bfe, 0xb01bff, asuka_spriteflip_w },
+	{ 0xb00000, 0xb03fff, PC090OJ_word_0_w },	/* sprite ram */
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
 MEMORY_END
@@ -262,7 +248,7 @@ static MEMORY_READ16_START( eto_readmem )
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },	/* service mode mirror */
 	{ 0x4e0000, 0x4e0001, MRA16_NOP },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_r },
-	{ 0xc00000, 0xc007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xc00000, 0xc03fff, PC090OJ_word_0_r },	/* sprite ram */
 	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_r },
 MEMORY_END
@@ -275,8 +261,7 @@ static MEMORY_WRITE16_START( eto_writemem )	/* N.B. tc100scn mirror overlaps spr
 	{ 0x4a0000, 0x4a0003, asuka_spritectrl_w },
 	{ 0x4e0000, 0x4e0001, taitosound_port16_lsb_w },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_w },
-	{ 0xc00000, 0xc007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xc01bfe, 0xc01bff, asuka_spriteflip_w },
+	{ 0xc00000, 0xc03fff, PC090OJ_word_0_w },	/* sprite ram */
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* service mode mirror */
 	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_w },
@@ -1005,8 +990,9 @@ static struct ADPCMinterface adpcm_interface =
 
 VIDEO_EOF( asuka )
 {
-	buffer_spriteram16_w(0,0,0);
+	PC090OJ_eof_callback();
 }
+
 
 static MACHINE_DRIVER_START( bonzeadv )
 
@@ -1031,7 +1017,7 @@ static MACHINE_DRIVER_START( bonzeadv )
 
 	MDRV_VIDEO_START(asuka)
 	MDRV_VIDEO_EOF(asuka)
-	MDRV_VIDEO_UPDATE(asuka)
+	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
@@ -1088,9 +1074,9 @@ static MACHINE_DRIVER_START( cadash )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
 
-	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_START(cadash)
 	MDRV_VIDEO_EOF(asuka)
-	MDRV_VIDEO_UPDATE(asuka)
+	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
@@ -1471,23 +1457,16 @@ ROM_START( eto )
 ROM_END
 
 
-static DRIVER_INIT( asuka )
-{
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, asuka, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World)" )
-GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, asuka, ROT0,   "Taito America Corporation", "Bonze Adventure (US)" )
-GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, asuka, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)" )
-GAME( 1988, asuka,    0,        asuka,    asuka,    asuka, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
-GAME( 1989, mofflott, 0,        galmedes, mofflott, asuka, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
-GAME( 1989, cadash,   0,        cadash,   cadash,   asuka, ROT0,   "Taito Corporation Japan", "Cadash (World)" )
-GAME( 1989, cadashj,  cadash,   cadash,   cadashj,  asuka, ROT0,   "Taito Corporation", "Cadash (Japan)" )
-GAME( 1989, cadashu,  cadash,   cadash,   cadashu,  asuka, ROT0,   "Taito America Corporation", "Cadash (US)" )
-GAME( 1989, cadashi,  cadash,   cadash,   cadash,   asuka, ROT0,   "Taito Corporation Japan", "Cadash (Italy)" )
-GAME( 1989, cadashf,  cadash,   cadash,   cadash,   asuka, ROT0,   "Taito Corporation Japan", "Cadash (France)" )
-GAME( 1992, galmedes, 0,        galmedes, galmedes, asuka, ROT270, "Visco", "Galmedes (Japan)" )
-GAME( 1993, earthjkr, 0,        galmedes, earthjkr, asuka, ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
-GAME( 1994, eto,      0,        eto,      eto,      asuka, ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )
+GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World)" )
+GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito America Corporation", "Bonze Adventure (US)" )
+GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)" )
+GAME( 1988, asuka,    0,        asuka,    asuka,    0, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
+GAME( 1989, mofflott, 0,        galmedes, mofflott, 0, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
+GAME( 1989, cadash,   0,        cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (World)" )
+GAME( 1989, cadashj,  cadash,   cadash,   cadashj,  0, ROT0,   "Taito Corporation", "Cadash (Japan)" )
+GAME( 1989, cadashu,  cadash,   cadash,   cadashu,  0, ROT0,   "Taito America Corporation", "Cadash (US)" )
+GAME( 1989, cadashi,  cadash,   cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (Italy)" )
+GAME( 1989, cadashf,  cadash,   cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (France)" )
+GAME( 1992, galmedes, 0,        galmedes, galmedes, 0, ROT270, "Visco", "Galmedes (Japan)" )
+GAME( 1993, earthjkr, 0,        galmedes, earthjkr, 0, ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
+GAME( 1994, eto,      0,        eto,      eto,      0, ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )

@@ -127,8 +127,8 @@ INLINE double getabsolutetime(void)
 
 
 /*-------------------------------------------------
-	timer_adjust_icount - adjust the current CPU's 
-	instruction counter so that a new event will 
+	timer_adjust_icount - adjust the current CPU's
+	instruction counter so that a new event will
 	fire at the right time
 -------------------------------------------------*/
 
@@ -178,7 +178,7 @@ INLINE timer_entry *timer_new(void)
 
 
 /*-------------------------------------------------
-	timer_list_insert - insert a new timer into 
+	timer_list_insert - insert a new timer into
 	the list at the appropriate location
 -------------------------------------------------*/
 
@@ -220,7 +220,7 @@ INLINE void timer_list_insert(timer_entry *timer)
 
 
 /*-------------------------------------------------
-	timer_list_remove - remove a timer from the 
+	timer_list_remove - remove a timer from the
 	linked list
 -------------------------------------------------*/
 
@@ -272,7 +272,7 @@ void timer_init(void)
 	for (cpu = cpudata, i = 0; i < MAX_CPU; cpu++, i++)
 	{
 		int cputype = Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK;
-		
+
 		/* stop when we hit a dummy */
 		if (cputype == CPU_DUMMY)
 			break;
@@ -303,7 +303,7 @@ void timer_init(void)
 
 
 /*-------------------------------------------------
-	timer_get_overclock - get overclocking factor 
+	timer_get_overclock - get overclocking factor
 	for a CPU
 -------------------------------------------------*/
 
@@ -315,7 +315,7 @@ double timer_get_overclock(int cpunum)
 
 
 /*-------------------------------------------------
-	timer_set_overclock - set overclocking factor 
+	timer_set_overclock - set overclocking factor
 	for a CPU
 -------------------------------------------------*/
 
@@ -345,7 +345,7 @@ void *timer_alloc(void (*callback)(int))
 	/* fill in the record */
 	timer->callback = callback;
 	timer->callback_param = 0;
-	timer->enabled = 1;
+	timer->enabled = 0;
 	timer->temporary = 0;
 	timer->tag = get_resource_tag();
 	timer->period = 0;
@@ -378,12 +378,12 @@ void timer_adjust(void *which, double duration, int param, double period)
 	/* compute the time of the next firing and insert into the list */
 	timer->callback_param = param;
 	timer->enabled = 1;
-	
+
 	/* set the start and expire times */
 	timer->start = time;
 	timer->expire = time + duration;
 	timer->period = period;
-	
+
 	/* remove and re-insert the timer in its new order */
 	timer_list_remove(timer);
 	timer_list_insert(timer);
@@ -395,8 +395,8 @@ void timer_adjust(void *which, double duration, int param, double period)
 
 
 /*-------------------------------------------------
-	timer_pulse - allocate a pulse timer, which 
-	repeatedly calls the callback using the given 
+	timer_pulse - allocate a pulse timer, which
+	repeatedly calls the callback using the given
 	period
 -------------------------------------------------*/
 
@@ -414,7 +414,7 @@ void timer_pulse(double period, int param, void (*callback)(int))
 
 
 /*-------------------------------------------------
-	timer_set - allocate a one-shot timer, which 
+	timer_set - allocate a one-shot timer, which
 	calls the callback after the given duration
 -------------------------------------------------*/
 
@@ -425,7 +425,7 @@ void timer_set(double duration, int param, void (*callback)(int))
 	/* fail if we can't allocate */
 	if (!timer)
 		return;
-		
+
 	/* mark the timer temporary */
 	timer->temporary = 1;
 
@@ -442,7 +442,7 @@ void timer_reset(void *which, double duration)
 {
 	timer_entry *timer = which;
 
-	/* adjust the timer */	
+	/* adjust the timer */
 	timer_adjust(timer, duration, timer->callback_param, timer->period);
 }
 
@@ -454,7 +454,7 @@ void timer_reset(void *which, double duration)
 void timer_remove(void *which)
 {
 	timer_entry *timer = which;
-	
+
 	/* error if this is an inactive timer */
 	if (timer->tag == -1)
 	{
@@ -464,7 +464,7 @@ void timer_remove(void *which)
 
 	/* remove it from the list */
 	timer_list_remove(timer);
-	
+
 	/* mark it as dead */
 	timer->tag = -1;
 
@@ -482,7 +482,7 @@ void timer_remove(void *which)
 
 
 /*-------------------------------------------------
-	timer_free - remove all timers on the current 
+	timer_free - remove all timers on the current
 	resource tag
 -------------------------------------------------*/
 
@@ -490,20 +490,20 @@ void timer_free(void)
 {
 	int tag = get_resource_tag();
 	timer_entry *timer, *next;
-	
+
 	/* scan the list */
 	for (timer = timer_head; timer != NULL; timer = next)
 	{
 		/* prefetch the next timer in case we remove this one */
 		next = timer->next;
-		
+
 		/* if this tag matches, remove it */
 		if (timer->tag == tag)
 			timer_remove(timer);
 	}
-} 
+}
 
- 
+
 /*-------------------------------------------------
 	timer_enable - enable/disable a timer
 -------------------------------------------------*/
@@ -545,7 +545,7 @@ double timer_timeelapsed(void *which)
 
 
 /*-------------------------------------------------
-	timer_timeleft - return the time until the 
+	timer_timeleft - return the time until the
 	next trigger
 -------------------------------------------------*/
 
@@ -569,7 +569,7 @@ double timer_get_time(void)
 
 
 /*-------------------------------------------------
-	timer_starttime - return the time when this 
+	timer_starttime - return the time when this
 	timer started counting
 -------------------------------------------------*/
 
@@ -581,7 +581,7 @@ double timer_starttime(void *which)
 
 
 /*-------------------------------------------------
-	timer_firetime - return the time when this 
+	timer_firetime - return the time when this
 	timer will fire next
 -------------------------------------------------*/
 
@@ -593,7 +593,7 @@ double timer_firetime(void *which)
 
 
 /*-------------------------------------------------
-	timer_schedule_cpu - begin CPU execution by 
+	timer_schedule_cpu - begin CPU execution by
 	determining how many cycles the CPU should run
 -------------------------------------------------*/
 
@@ -618,6 +618,10 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 			verbose_print("T=%.6g: %08X fired (exp time=%.6g)\n", getabsolutetime() + global_offset, timer, timer->expire + global_offset);
 		#endif
 
+		/* if this is a one-shot timer, disable it now */
+		if (timer->period == 0)
+			timer->enabled = 0;
+
 		/* set the global state of which callback we're in */
 		callback_timer_modified = 0;
 		callback_timer = timer;
@@ -639,12 +643,12 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 			/* if the timer is temporary, remove it now */
 			if (timer->temporary)
 				timer_remove(timer);
-			
+
 			/* otherwise, reschedule it */
 			else
 			{
 				timer->start = timer->expire;
-				timer->expire = timer->period ? timer->expire + timer->period : TIME_NEVER;
+				timer->expire += timer->period;
 
 				timer_list_remove(timer);
 				timer_list_insert(timer);
@@ -668,8 +672,8 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 
 
 /*-------------------------------------------------
-	timer_update_cpu - end CPU execution by 
-	updating the number of cycles the CPU 
+	timer_update_cpu - end CPU execution by
+	updating the number of cycles the CPU
 	actually ran
 -------------------------------------------------*/
 
@@ -721,7 +725,7 @@ void timer_update_cpu(int cpunum, int ran)
 
 
 /*-------------------------------------------------
-	timer_suspendcpu - suspend a CPU but continue 
+	timer_suspendcpu - suspend a CPU but continue
 	to count time for it
 -------------------------------------------------*/
 
@@ -780,7 +784,7 @@ void timer_suspendcpu(int cpunum, int suspend, int reason)
 
 
 /*-------------------------------------------------
-	timer_holdcpu - hold a CPU and don't count 
+	timer_holdcpu - hold a CPU and don't count
 	time for it
 -------------------------------------------------*/
 
@@ -799,7 +803,7 @@ void timer_holdcpu(int cpunum, int hold, int reason)
 
 
 /*-------------------------------------------------
-	timer_iscpususpended - query if a CPU is 
+	timer_iscpususpended - query if a CPU is
 	suspended or not
 -------------------------------------------------*/
 
@@ -846,7 +850,7 @@ void timer_suspendcpu_trigger(int cpunum, int trigger)
 
 
 /*-------------------------------------------------
-	timer_holdcpu_trigger - hold a CPU and don't 
+	timer_holdcpu_trigger - hold a CPU and don't
 	count time for it
 -------------------------------------------------*/
 

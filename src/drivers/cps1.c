@@ -3529,7 +3529,7 @@ static MACHINE_DRIVER_START( forgottn )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(cps1)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("okim", OKIM6295, okim6295_interface_6061)
 MACHINE_DRIVER_END
@@ -3557,11 +3557,11 @@ static MACHINE_DRIVER_START( qsound )
 	MDRV_IMPORT_FROM(cps1)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(cps1_qsound_interrupt,1)  /* ??? interrupts per frame */
-	
+
 	MDRV_CPU_REPLACE("sound", Z80, 6000000)
 	MDRV_CPU_FLAGS(0)	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
 	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,250)	/* ?? */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
 
 	MDRV_NVRAM_HANDLER(qsound)
 
@@ -3841,6 +3841,63 @@ ROM_START( stridrja )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "strider.18",   0x00000, 0x20000, 0x4386bc80 )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
+ROM_END
+
+ROM_START( dw )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "d_wars30.11f", 0x00000, 0x20000, 0xf9ec6d68 )
+	ROM_LOAD16_BYTE( "d_wars35.11h", 0x00001, 0x20000, 0xe41fff2f )
+	ROM_LOAD16_BYTE( "d_wars31.12f", 0x40000, 0x20000, 0xe3de76ff )
+	ROM_LOAD16_BYTE( "d_wars36.12h", 0x40001, 0x20000, 0x7a13cfbf )
+	ROM_LOAD16_BYTE( "34.bin",       0x80000, 0x20000, 0x8f663d00 )
+	ROM_LOAD16_BYTE( "40.bin",       0x80001, 0x20000, 0x1586dbf3 )
+	ROM_LOAD16_BYTE( "35.bin",       0xc0000, 0x20000, 0x9db93d7a )
+	ROM_LOAD16_BYTE( "41.bin",       0xc0001, 0x20000, 0x1aae69a4 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "09.bin",       0x000000, 0x20000, 0xc3e83c69, ROM_SKIP(7) )
+	ROMX_LOAD( "01.bin",       0x000001, 0x20000, 0x187b2886, ROM_SKIP(7) )
+	ROMX_LOAD( "13.bin",       0x000002, 0x20000, 0x0273d87d, ROM_SKIP(7) )
+	ROMX_LOAD( "05.bin",       0x000003, 0x20000, 0x339378b8, ROM_SKIP(7) )
+	ROMX_LOAD( "24.bin",       0x000004, 0x20000, 0xc6909b6f, ROM_SKIP(7) )
+	ROMX_LOAD( "17.bin",       0x000005, 0x20000, 0x2e2f8320, ROM_SKIP(7) )
+	ROMX_LOAD( "38.bin",       0x000006, 0x20000, 0xcd7923ed, ROM_SKIP(7) )
+	ROMX_LOAD( "32.bin",       0x000007, 0x20000, 0x21a0a453, ROM_SKIP(7) )
+	ROMX_LOAD( "10.bin",       0x100000, 0x20000, 0xff28f8d0, ROM_SKIP(7) )
+	ROMX_LOAD( "02.bin",       0x100001, 0x20000, 0xcc83c02f, ROM_SKIP(7) )
+	ROMX_LOAD( "14.bin",       0x100002, 0x20000, 0x18fb232c, ROM_SKIP(7) )
+	ROMX_LOAD( "06.bin",       0x100003, 0x20000, 0x6f9edd75, ROM_SKIP(7) )
+	ROMX_LOAD( "25.bin",       0x100004, 0x20000, 0x152ea74a, ROM_SKIP(7) )
+	ROMX_LOAD( "18.bin",       0x100005, 0x20000, 0x1833f932, ROM_SKIP(7) )
+	ROMX_LOAD( "39.bin",       0x100006, 0x20000, 0xbc09b360, ROM_SKIP(7) )
+	ROMX_LOAD( "33.bin",       0x100007, 0x20000, 0x89de1533, ROM_SKIP(7) )
+	ROMX_LOAD( "11.bin",       0x200000, 0x20000, 0x29eaf490, ROM_SKIP(7) )
+	ROMX_LOAD( "03.bin",       0x200001, 0x20000, 0x7bf51337, ROM_SKIP(7) )
+	ROMX_LOAD( "15.bin",       0x200002, 0x20000, 0xd36cdb91, ROM_SKIP(7) )
+	ROMX_LOAD( "07.bin",       0x200003, 0x20000, 0xe04af054, ROM_SKIP(7) )
+	ROMX_LOAD( "26.bin",       0x200004, 0x20000, 0x07fc714b, ROM_SKIP(7) )
+	ROMX_LOAD( "19.bin",       0x200005, 0x20000, 0x7114e5c6, ROM_SKIP(7) )
+	ROMX_LOAD( "28.bin",       0x200006, 0x20000, 0xaf62bf07, ROM_SKIP(7) )
+	ROMX_LOAD( "21.bin",       0x200007, 0x20000, 0x523f462a, ROM_SKIP(7) )
+	ROMX_LOAD( "12.bin",       0x300000, 0x20000, 0x38652339, ROM_SKIP(7) )
+	ROMX_LOAD( "04.bin",       0x300001, 0x20000, 0x4951bc0f, ROM_SKIP(7) )
+	ROMX_LOAD( "16.bin",       0x300002, 0x20000, 0x381608ae, ROM_SKIP(7) )
+	ROMX_LOAD( "08.bin",       0x300003, 0x20000, 0xb475d4e9, ROM_SKIP(7) )
+	ROMX_LOAD( "27.bin",       0x300004, 0x20000, 0xa27e81fa, ROM_SKIP(7) )
+	ROMX_LOAD( "20.bin",       0x300005, 0x20000, 0x002796dc, ROM_SKIP(7) )
+	ROMX_LOAD( "29.bin",       0x300006, 0x20000, 0x6b41f82d, ROM_SKIP(7) )
+	ROMX_LOAD( "22.bin",       0x300007, 0x20000, 0x52145369, ROM_SKIP(7) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 ) /* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "23.bin",        0x00000, 0x08000, 0xb3b79d4f )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "d_wars19.12c",  0x20000, 0x20000, 0x068741db )
+	ROM_LOAD( "d_wars18.11c",  0x00000, 0x20000, 0xac6e307d )
 ROM_END
 
 ROM_START( dwj )
@@ -6487,7 +6544,8 @@ GAME( 1988, daimakai, ghouls,   cps1,     ghouls,   cps1,     ROT0,   "Capcom", 
 GAME( 1989, strider,  0,        cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider (US)" )
 GAME( 1989, striderj, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider Hiryu (Japan set 1)" )
 GAME( 1989, stridrja, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider Hiryu (Japan set 2)" )
-GAME( 1989, dwj,      0,        cps1,     dwj,      cps1,     ROT0,   "Capcom", "Tenchi wo Kurau (Japan)" )
+GAME( 1989, dw,       0,        cps1,     dwj,      cps1,     ROT0,   "Capcom", "Dynasty Wars (World)" )
+GAME( 1989, dwj,      dw,       cps1,     dwj,      cps1,     ROT0,   "Capcom", "Tenchi wo Kurau (Japan)" )
 GAME( 1989, willow,   0,        cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, English)" )
 GAME( 1989, willowj,  willow,   cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, Japanese)" )
 GAME( 1989, unsquad,  0,        cps1,     unsquad,  cps1,     ROT0,   "Capcom", "U.N. Squadron (US)" )

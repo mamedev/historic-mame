@@ -89,52 +89,50 @@ INPUT_PORTS_START( kncljoe )
 
 	PORT_START	/* DSW A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING( 0x04, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING( 0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING( 0x06, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( 0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( 0x03, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING( 0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING( 0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING( 0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( 0x18, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( 0x08, DEF_STR( 1C_2C ) )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Energy", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "RAM Test?" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )	// Not working due to code at 0x296f
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unused SW B-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10k and every 20k" )
+	PORT_DIPSETTING(    0x10, "20k and every 40k" )
+	PORT_DIPSETTING(    0x08, "30k and every 60k" )
+	PORT_DIPSETTING(    0x00, "40k and every 80k" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty?" )			// Stored at 0xf018
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -176,7 +174,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( kncljoe )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000) /* ? MHz */
+//	MDRV_CPU_ADD(Z80, 4000000) /* ? MHz */
+	MDRV_CPU_ADD(Z80, 6000000) /* with this value, the game doesn't hang ! */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -267,5 +266,5 @@ ROM_END
 
 
 
-GAMEX( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)", GAME_NOT_WORKING )
-GAMEX( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)", GAME_NOT_WORKING )
+GAME( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)" )
+GAME( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)" )

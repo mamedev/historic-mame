@@ -84,6 +84,11 @@ typedef struct
 	UINT8 Z;
 } Flags;
 
+/* Workaround for LinuxPPC. */
+#ifdef PPC
+#undef PPC
+#endif
+
 // v60 Register Inside (Hm... It's not a pentium inside :-))) )
 struct v60info {
 	UINT32 reg[58];
@@ -140,7 +145,7 @@ int v60_ICount;
 #define PSW		v60.reg[33]
 #define TR		v60.reg[34]
 #define PIR		v60.reg[35]
-#define _PPC	v60.PPC
+#define PPC		v60.PPC
 
 // Privileged registers
 #define ISP		v60.reg[36]
@@ -435,7 +440,7 @@ int v60_execute(int cycles)
 	if(v60.irq_line != CLEAR_LINE)
 		v60_try_irq();
 	while(v60_ICount) {
-		_PPC = PC;
+		PPC = PC;
 		CALL_MAME_DEBUG;
 		v60_ICount--;
 		PC += OpCodeTable[MemRead8(PC)]();
@@ -499,7 +504,7 @@ unsigned v60_get_reg(int regnum)
 	case REG_PC:
 		return PC;
 	case REG_PREVIOUSPC:
-		return _PPC;
+		return PPC;
 	case REG_SP:
 		return SP;
 	}

@@ -28,14 +28,19 @@ INLINE void brset (UINT8 bit)
 	UINT8 t,r;
 	DIRBYTE(r);
 	IMMBYTE(t);
-	if (r&bit)
+
+	CLC;
+
+	if (r&bit) {
+		SEC;
 		PC+=SIGNED(t);
-	else
-	if (t==0xfd)
-	{
-		/* speed up busy loops */
-		if(m6805_ICount > 0)
-			m6805_ICount = 0;
+
+		if (t==0xfd)
+		{
+			/* speed up busy loops */
+			if(m6805_ICount > 0)
+				m6805_ICount = 0;
+		}
 	}
 }
 
@@ -45,14 +50,20 @@ INLINE void brclr (UINT8 bit)
 	UINT8 t,r;
 	DIRBYTE(r);
 	IMMBYTE(t);
-	if (!(r&bit))
+
+	SEC;
+
+	if (!(r&bit)) {
+		CLC;
 		PC+=SIGNED(t);
-	else
-	{
-		/* speed up busy loops */
-		if(m6805_ICount > 0)
-			m6805_ICount = 0;
-    }
+
+		if (t==0xfd)
+		{
+			/* speed up busy loops */
+			if(m6805_ICount > 0)
+				m6805_ICount = 0;
+	    }
+	}
 }
 
 

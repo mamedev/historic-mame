@@ -111,6 +111,9 @@
 #include "atarifb.h"
 
 
+int atarifb_game;
+int atarifb_lamp1, atarifb_lamp2;
+
 /* sound code shamelessly ripped from bsktball.c */
 static int crowd_mask;
 static int noise_b10=0;
@@ -701,7 +704,7 @@ static MACHINE_DRIVER_START( atarifb )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2037)	/* 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
-	
+
 	MDRV_MACHINE_INIT(atarifb)
 
 	/* video hardware */
@@ -711,7 +714,7 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
-	
+
 	MDRV_PALETTE_INIT(atarifb)
 	MDRV_VIDEO_START(atarifb)
 	MDRV_VIDEO_UPDATE(atarifb)

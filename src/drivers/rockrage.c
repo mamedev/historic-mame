@@ -258,7 +258,7 @@ static struct VLM5030interface vlm5030_interface =
 	3579545,	/* 3.579545 MHz */
 	60,			/* volume */
 	REGION_SOUND1,	/* memory region of speech rom */
-	0,
+	0
 };
 
 static MACHINE_DRIVER_START( rockrage )

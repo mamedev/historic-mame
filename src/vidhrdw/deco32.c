@@ -94,22 +94,17 @@ static void captaven_drawsprites(struct mame_bitmap *bitmap, data32_t *spritedat
 	int offs;
 
 	/*
-		There may be a 'flash' and 'enable' attribute not found yet.
-
 		Word 0:
 			0x8000:	Y flip
 			0x4000: X flip
-			0x3000:	?
-			0x0fff:	Y value
+			0x2000:	Flash (Sprite toggles on/off every frame)
+			0x1fff:	Y value
 		Word 1:
 			0xffff: X value
 		Word 2:
 			0xf000:	Block height
 			0x0f00: Block width
-			0x0800: ?
-			0x0400: ?
-			0x0200: ?
-			0x01c0: ?
+			0x00c0: Unused?
 			0x0020: Priority
 			0x001f: Colour
 		Word 3:
@@ -133,8 +128,7 @@ static void captaven_drawsprites(struct mame_bitmap *bitmap, data32_t *spritedat
 
 		sx = spritedata[offs+1];
 
-//		flash=sy&0x1000;
-//		if (flash && (cpu_getcurrentframe() & 1)) continue;
+		if ((sy&0x2000) && (cpu_getcurrentframe() & 1)) continue;
 
 		colour = (spritedata[offs+2] >>0) & 0x1f;
 
@@ -142,8 +136,6 @@ static void captaven_drawsprites(struct mame_bitmap *bitmap, data32_t *spritedat
 		w = (spritedata[offs+2]&0x0f00)>> 8;
 		fx = !(spritedata[offs+0]&0x4000);
 		fy = !(spritedata[offs+0]&0x8000);
-
-//continue on bit 8000 not set??
 
 		sx = sx & 0x01ff;
 		sy = sy & 0x01ff;

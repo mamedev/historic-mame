@@ -770,6 +770,17 @@ else
 CPUDEFS += -DHAS_UPD7810=0
 endif
 
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/arm
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/cpu/arm/arm.o
+DBGOBJS += $(OBJ)/cpu/arm/armdasm.o
+$(OBJ)/cpu/arm/arm.o: arm.c arm.h
+else
+CPUDEFS += -DHAS_ARM=0
+endif
+
 CPU=$(strip $(findstring JAGUAR@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/jaguar
@@ -803,15 +814,15 @@ else
 CPUDEFS += -DHAS_TMS320C31=0
 endif
 
-CPU=$(strip $(findstring ARM@,$(CPUS)))
+CPU=$(strip $(findstring SH2@,$(CPUS)))
 ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/arm
-CPUDEFS += -DHAS_ARM=1
-CPUOBJS += $(OBJ)/cpu/arm/arm.o
-DBGOBJS += $(OBJ)/cpu/arm/armdasm.o
-$(OBJ)/cpu/arm/arm.o: arm.c arm.h
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
 else
-CPUDEFS += -DHAS_ARM=0
+CPUDEFS += -DHAS_SH2=0
 endif
 
 

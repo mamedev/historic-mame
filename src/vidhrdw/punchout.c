@@ -668,7 +668,7 @@ VIDEO_UPDATE( armwrest )
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					startx,starty - 0x200*(TOP_MONITOR_ROWS-2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);

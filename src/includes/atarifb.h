@@ -6,8 +6,8 @@
 
 /*----------- defined in drivers/atarifb.c -----------*/
 
-int atarifb_lamp1, atarifb_lamp2;
-int atarifb_game;
+extern int atarifb_game;
+extern int atarifb_lamp1, atarifb_lamp2;
 
 
 /*----------- defined in machine/atarifb.c -----------*/

@@ -277,10 +277,7 @@ READ_HANDLER( twin16_sres_r )
 WRITE_HANDLER( twin16_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
-	if ((data & 0x02) == 0)
-	{
-		UPD7759_reset_w(0,(data & 0x02) >> 1);
-	}
+	UPD7759_reset_w(0, data & 2);
 	twin16_soundlatch = data;
 }
 
@@ -288,7 +285,7 @@ WRITE_HANDLER( twin16_sres_w )
 // Added by Takahiro Nogi. (1999/10/27)
 static WRITE_HANDLER( twin16_UPD7759_start_w )
 {
-	UPD7759_start_w(offset, (!(data & 0x01)));
+	UPD7759_start_w(offset, !(data & 1));
 }
 
 static MEMORY_READ_START( readmem_sound )
@@ -308,7 +305,7 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0xb000, 0xb00d, K007232_write_port_0_w  },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xd000, 0xd000, UPD7759_0_message_w },
+	{ 0xd000, 0xd000, UPD7759_0_port_w },
 	{ 0xe000, 0xe000, twin16_UPD7759_start_w },	// Changed by Takahiro Nogi. (1999/10/27)
 MEMORY_END
 
@@ -1073,7 +1070,6 @@ static struct K007232_interface k007232_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 20 }, /* volume */
 	{ REGION_SOUND2 }, /* memory region */
 	UPD7759_STANDALONE_MODE, /* chip mode */

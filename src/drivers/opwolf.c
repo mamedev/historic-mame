@@ -55,7 +55,6 @@ register. So what is controlling priority.
 
 #include "driver.h"
 #include "state.h"
-#include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
@@ -113,17 +112,9 @@ static READ_HANDLER( z80_input2_r )
 				SOUND
 ******************************************************/
 
-static int banknum = -1;
-
-static void reset_sound_region(void)
-{
-	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
-
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	banknum = (data-1) & 0x03;
-	reset_sound_region();
+	cpu_setbank( 10, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
 
 
@@ -144,8 +135,7 @@ static MEMORY_READ16_START( opwolf_readmem )
 	{ 0x3e0000, 0x3e0001, MRA16_NOP },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_msb_r },
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-//	{ 0xc10000, 0xc1ffff, MRA16_RAM },	// (don't think this area is used)
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( opwolf_writemem )
@@ -162,8 +152,7 @@ static MEMORY_WRITE16_START( opwolf_writemem )
 	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
 	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
 	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 /***************************************************************************
@@ -612,10 +601,8 @@ static DRIVER_INIT( opwolf )
 	opwolf_gun_yoffs = 0;
 
 	/* (there are other sound vars that may need saving too) */
-	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_UINT8("sound2", 0, "registers", adpcm_b, 8);
 	state_save_register_UINT8("sound3", 0, "registers", adpcm_c, 8);
-	state_save_register_func_postload(reset_sound_region);
 }
 
 static DRIVER_INIT( opwolfb )
@@ -625,10 +612,8 @@ static DRIVER_INIT( opwolfb )
 	opwolf_gun_yoffs = 17;
 
 	/* (there are other sound vars that may need saving too) */
-	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_UINT8("sound2", 0, "registers", adpcm_b, 8);
 	state_save_register_UINT8("sound3", 0, "registers", adpcm_c, 8);
-	state_save_register_func_postload(reset_sound_region);
 }
 
 

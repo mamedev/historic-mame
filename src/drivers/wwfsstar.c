@@ -27,12 +27,15 @@
 ********************************************************************************
 
  Change Log:
- 18 Jun 2001 | Changed Interrupt Function .. its not fully understood whats
+ 04 Mar 2002	 | Fixed Dip Switches and Inputs	(Steph)
+			 | Fixed screen flipping by using similar routine to the one
+			 | in src/vidhrdw/wwfwfest.c		(Steph)
+ 18 Jun 2001	 | Changed Interrupt Function .. its not fully understood whats
 			 | is meant to be going on ..
- 15 Jun 2001 | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
+ 15 Jun 2001	 | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
 			 | mapped DSW's
- 15 Jun 2001 | First Submission of Driver,
- 14 Jun 2001 | Started Driver, using Raine Source as a reference for getting it
+ 15 Jun 2001	 | First Submission of Driver,
+ 14 Jun 2001	 | Started Driver, using Raine Source as a reference for getting it
 			 | up and running
 
 ********************************************************************************
@@ -49,6 +52,9 @@
    of match scenario, or the other way round the game is very sluggish and
    non-responsive to controls.  It seems both interrupts must happen during the
    vblank period or something.
+   Steph's update : I don't have this problem, but I have this message in the log file :
+	"Warning: you are using IPT_VBLANK with vblank_duration = 0.
+	You need to increase vblank_duration for IPT_VBLANK to work."
 
 *******************************************************************************/
 
@@ -70,6 +76,12 @@ WRITE16_HANDLER( wwfsstar_bg0_videoram_w );
 WRITE16_HANDLER ( wwfsstar_soundwrite );
 
 int vbl;
+
+
+static WRITE16_HANDLER( wwfsstar_flipscreen_w )
+{
+	flip_screen_set(data & 1);
+}
 
 
 /*******************************************************************************
@@ -101,8 +113,11 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0c0000, 0x0c0fff, wwfsstar_bg0_videoram_w, &wwfsstar_bg0_videoram },	/* BG0 Ram */
 	{ 0x100000, 0x1003ff, MWA16_RAM, &spriteram16 },	/* SPR Ram */
 	{ 0x140000, 0x140fff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x180000, 0x180001, MWA16_NOP },	/* ??? */
+	{ 0x180002, 0x180003, MWA16_NOP },	/* ??? */
 	{ 0x180004, 0x180007, wwfsstar_scrollwrite },
 	{ 0x180008, 0x180009, wwfsstar_soundwrite },
+	{ 0x18000a, 0x18000b, wwfsstar_flipscreen_w },
 	{ 0x1c0000, 0x1c3fff, MWA16_RAM },	/* Work Ram */
 MEMORY_END
 
@@ -136,11 +151,11 @@ WRITE16_HANDLER ( wwfsstar_scrollwrite )
 	switch (offset)
 	{
 		case 0x00:
-		wwfsstar_scrollx = data;
-		break;
+			wwfsstar_scrollx = data;
+			break;
 		case 0x01:
-		wwfsstar_scrolly = data;
-		break;
+			wwfsstar_scrolly = data;
+			break;
 	}
 }
 
@@ -165,86 +180,84 @@ READ16_HANDLER( input_port_2_word_r_cust )
 
 INPUT_PORTS_START( wwfsstar )
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_START1, "Button A (1P VS CPU - Power Up)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x0040, IP_ACTIVE_LOW, IPT_START3, "Button C (1P/2P VS CPU)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_START2, "Button B (1P VS 2P - Buy-in)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )  /* IPT_VBLANK is ignored for custom indicator */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
-	/* Note: This is what Raine says but it doesn't appear to be correct? */
+	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x00,  DEF_STR( 4C_1C )  )
-	PORT_DIPSETTING(	0x01,  DEF_STR( 3C_1C )  )
-	PORT_DIPSETTING(	0x02,  DEF_STR( 2C_1C )  )
-	PORT_DIPSETTING(	0x07,  DEF_STR( 1C_1C )  )
-	PORT_DIPSETTING(	0x06,  DEF_STR( 1C_2C )  )
-	PORT_DIPSETTING(	0x05,  DEF_STR( 1C_3C )  )
-	PORT_DIPSETTING(	0x04,  DEF_STR( 1C_4C )  )
-	PORT_DIPSETTING(	0x03,  DEF_STR( 1C_5C )  )
-
+	PORT_DIPSETTING(    0x00,  DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01,  DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02,  DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07,  DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06,  DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05,  DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04,  DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03,  DEF_STR( 1C_5C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x00,  DEF_STR( 4C_1C )  )
-	PORT_DIPSETTING(	0x08,  DEF_STR( 3C_1C )  )
-	PORT_DIPSETTING(	0x10,  DEF_STR( 2C_1C )  )
-	PORT_DIPSETTING(	0x38,  DEF_STR( 1C_1C )  )
-	PORT_DIPSETTING(	0x30,  DEF_STR( 1C_2C )  )
-	PORT_DIPSETTING(	0x28,  DEF_STR( 1C_3C )  )
-	PORT_DIPSETTING(	0x20,  DEF_STR( 1C_4C )  )
-	PORT_DIPSETTING(	0x18,  DEF_STR( 1C_5C )  )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, "Screen Invert?" )
+	PORT_DIPSETTING(    0x00,  DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08,  DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10,  DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38,  DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30,  DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28,  DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20,  DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18,  DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x02, "Easy" )
-	PORT_DIPSETTING(	0x03, "Normal" )
-	PORT_DIPSETTING(	0x01, "Hard" )
-	PORT_DIPSETTING(	0x00, "Hardest" )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Super Techniques" )
-	PORT_DIPSETTING(	0x08, "Normal" )
-	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x30, 0x30, "Game Timer Change" )
-	PORT_DIPSETTING(	0x00, "-30" )
-	PORT_DIPSETTING(	0x10, "-15" )
-	PORT_DIPSETTING(	0x30, "0" )
-	PORT_DIPSETTING(	0x20, "+15" )
-	PORT_DIPNAME( 0x40, 0x00, "3 Button Mode" )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Game Clear" )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Super Techniques" )			// Check code at 0x014272
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x30, 0x30, "Time" )
+	PORT_DIPSETTING(    0x20, "+2:30" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x10, "-2:30" )
+	PORT_DIPSETTING(    0x00, "-5:00" )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 1-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Health For Winning" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 /*******************************************************************************

@@ -231,27 +231,27 @@ PORT_END
 // 7759
 static MEMORY_READ_START( sound_readmem_7759 )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xdfff, UPD7759_0_data_r },
+	{ 0x8000, 0xdfff, MRA_BANK1 },
 	{ 0xe800, 0xe800, soundlatch_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
-// some games (aurail, riotcity, eswat), seem to send different format data to the 7759
-// this function changes that data to what the 7759 expects, but it sounds quite poor.
-static WRITE_HANDLER( UPD7759_process_message_w )
+static WRITE_HANDLER( UPD7759_bank_w )
 {
-	if((data & 0xc0) == 0x40) data=0xc0;
-	else data&=0x3f;
+	int size = (memory_region_length(REGION_CPU2)-0x10000);
+	int mask = size <= 0x20000 ? 0x1ffff : size < 0x40000 ? 0x3ffff : 0x7ffff;
+	cpu_setbank(1, memory_region(REGION_CPU2) + 0x10000 + ((0x4000*data) & mask));
 
-	UPD7759_message_w(offset,data);
+	UPD7759_reset_w(0, data & 0x40);
 }
 
 static PORT_WRITE_START( sound_writeport_7759 )
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
-	{ 0x40, 0x40, UPD7759_process_message_w },
-	{ 0x80, 0x80, UPD7759_0_start_w },
+	{ 0x40, 0x40, UPD7759_bank_w },
+	{ 0x80, 0x80, UPD7759_0_port_w },
 PORT_END
+
 
 static WRITE16_HANDLER( sound_command_w ){
 	if( ACCESSING_LSB ){
@@ -294,25 +294,25 @@ static MACHINE_DRIVER_START( system16 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD_TAG("sound", Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(system16)
 	MDRV_VIDEO_UPDATE(system16)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD_TAG("2151", YM2151, sys16_ym2151_interface)
@@ -323,11 +323,11 @@ static MACHINE_DRIVER_START( system16_7759 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(sound_readmem_7759,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport_7759)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("7759", UPD7759, sys16_upd7759_interface)
 MACHINE_DRIVER_END
@@ -337,16 +337,16 @@ static MACHINE_DRIVER_START( system16_7751 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(sound_readmem_7751,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport_7751,sound_writeport_7751)
-	
+
 	MDRV_CPU_ADD(N7751, 6000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_7751,writemem_7751)
 	MDRV_CPU_PORTS(readport_7751,writeport_7751)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, sys16_7751_dac_interface)
 MACHINE_DRIVER_END
@@ -578,7 +578,7 @@ static MACHINE_DRIVER_START( alexkidd )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(alexkidd_readmem,alexkidd_writemem)
-	
+
 	MDRV_MACHINE_INIT(alexkidd)
 MACHINE_DRIVER_END
 
@@ -810,11 +810,8 @@ static MACHINE_DRIVER_START( aliensyn )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(aliensyn_readmem,aliensyn_writemem)
-	
+
 	MDRV_MACHINE_INIT(aliensyn)
-	
-	/* sound hardware */
-	MDRV_SOUND_REPLACE("7759", UPD7759, aliensyn_upd7759_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1017,7 +1014,7 @@ static MACHINE_DRIVER_START( altbeast )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(altbeast_readmem,altbeast_writemem)
-	
+
 	MDRV_MACHINE_INIT(altbeast)
 MACHINE_DRIVER_END
 
@@ -1028,7 +1025,7 @@ static MACHINE_DRIVER_START( altbeas2 )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(altbeast_readmem,altbeast_writemem)
-	
+
 	MDRV_MACHINE_INIT(altbeas2)
 MACHINE_DRIVER_END
 
@@ -1207,11 +1204,11 @@ static MACHINE_DRIVER_START( atomicp )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(atomicp_readmem,atomicp_writemem)
 	MDRV_CPU_VBLANK_INT(ap_interrupt,2)
-	
+
 	MDRV_CPU_REMOVE("sound")
-	
+
 	MDRV_MACHINE_INIT(atomicp)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_REPLACE("2151", YM2413, sys16_ym2413_interface)
@@ -1429,7 +1426,7 @@ static MACHINE_DRIVER_START( aurail )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(aurail_readmem,aurail_writemem)
-	
+
 	MDRV_MACHINE_INIT(aurail)
 MACHINE_DRIVER_END
 
@@ -1658,7 +1655,7 @@ static MACHINE_DRIVER_START( bayroute )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(bayroute_readmem,bayroute_writemem)
-	
+
 	MDRV_MACHINE_INIT(bayroute)
 MACHINE_DRIVER_END
 
@@ -1899,7 +1896,7 @@ static MACHINE_DRIVER_START( bodyslam )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(bodyslam_readmem,bodyslam_writemem)
-	
+
 	MDRV_MACHINE_INIT(bodyslam)
 MACHINE_DRIVER_END
 
@@ -2082,7 +2079,7 @@ static MACHINE_DRIVER_START( dduxbl )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(dduxbl_readmem,dduxbl_writemem)
-	
+
 	MDRV_MACHINE_INIT(dduxbl)
 MACHINE_DRIVER_END
 
@@ -2257,7 +2254,7 @@ static MACHINE_DRIVER_START( eswat )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(eswat_readmem,eswat_writemem)
-	
+
 	MDRV_MACHINE_INIT(eswat)
 MACHINE_DRIVER_END
 
@@ -2484,7 +2481,7 @@ static MACHINE_DRIVER_START( fantzono )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(fantzono_readmem,fantzono_writemem)
-	
+
 	MDRV_MACHINE_INIT(fantzono)
 MACHINE_DRIVER_END
 
@@ -2495,7 +2492,7 @@ static MACHINE_DRIVER_START( fantzone )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(fantzone_readmem,fantzone_writemem)
-	
+
 	MDRV_MACHINE_INIT(fantzone)
 MACHINE_DRIVER_END
 
@@ -2684,7 +2681,7 @@ static MACHINE_DRIVER_START( fpoint )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(fpoint_readmem,fpoint_writemem)
-	
+
 	MDRV_MACHINE_INIT(fpoint)
 MACHINE_DRIVER_END
 
@@ -2933,7 +2930,7 @@ static MACHINE_DRIVER_START( goldnaxe )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(goldnaxe_readmem,goldnaxe_writemem)
-	
+
 	MDRV_MACHINE_INIT(goldnaxe)
 MACHINE_DRIVER_END
 
@@ -3126,7 +3123,7 @@ static MACHINE_DRIVER_START( goldnaxa )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(goldnaxa_readmem,goldnaxa_writemem)
-	
+
 	MDRV_MACHINE_INIT(goldnaxa)
 MACHINE_DRIVER_END
 
@@ -3329,7 +3326,7 @@ static MACHINE_DRIVER_START( hwchamp )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(hwchamp_readmem,hwchamp_writemem)
-	
+
 	MDRV_MACHINE_INIT(hwchamp)
 MACHINE_DRIVER_END
 
@@ -3567,7 +3564,7 @@ static MACHINE_DRIVER_START( mjleague )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(mjleague_readmem,mjleague_writemem)
-	
+
 	MDRV_MACHINE_INIT(mjleague)
 MACHINE_DRIVER_END
 
@@ -3942,7 +3939,7 @@ static MACHINE_DRIVER_START( passsht )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(passsht_readmem,passsht_writemem)
-	
+
 	MDRV_MACHINE_INIT(passsht)
 MACHINE_DRIVER_END
 
@@ -3953,7 +3950,7 @@ static MACHINE_DRIVER_START( passht4b )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(passht4b_readmem,passht4b_writemem)
-	
+
 	MDRV_MACHINE_INIT(passht4b)
 MACHINE_DRIVER_END
 
@@ -4184,7 +4181,7 @@ static MACHINE_DRIVER_START( quartet )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(quartet_readmem,quartet_writemem)
-	
+
 	MDRV_MACHINE_INIT(quartet)
 MACHINE_DRIVER_END
 
@@ -4335,7 +4332,7 @@ static MACHINE_DRIVER_START( quartet2 )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(quartet2_readmem,quartet2_writemem)
-	
+
 	MDRV_MACHINE_INIT(quartet2)
 MACHINE_DRIVER_END
 
@@ -4488,7 +4485,7 @@ static MACHINE_DRIVER_START( riotcity )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(riotcity_readmem,riotcity_writemem)
-	
+
 	MDRV_MACHINE_INIT(riotcity)
 MACHINE_DRIVER_END
 
@@ -4699,7 +4696,7 @@ static MACHINE_DRIVER_START( sdi )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(sdi_readmem,sdi_writemem)
-	
+
 	MDRV_MACHINE_INIT(sdi)
 MACHINE_DRIVER_END
 
@@ -4871,7 +4868,7 @@ static MACHINE_DRIVER_START( shinobi )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(shinobi_readmem,shinobi_writemem)
-	
+
 	MDRV_MACHINE_INIT(shinobi)
 MACHINE_DRIVER_END
 
@@ -5015,7 +5012,7 @@ static MACHINE_DRIVER_START( shinobl )
 	MDRV_IMPORT_FROM(system16_7751)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(shinobl_readmem,shinobl_writemem)
-	
+
 	MDRV_MACHINE_INIT(shinobl)
 MACHINE_DRIVER_END
 
@@ -5181,7 +5178,7 @@ static MACHINE_DRIVER_START( tetris )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(tetris_readmem,tetris_writemem)
-	
+
 	MDRV_MACHINE_INIT(tetris)
 MACHINE_DRIVER_END
 
@@ -5352,7 +5349,7 @@ static MACHINE_DRIVER_START( timscanr )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(timscanr_readmem,timscanr_writemem)
-	
+
 	MDRV_MACHINE_INIT(timscanr)
 MACHINE_DRIVER_END
 
@@ -5480,7 +5477,7 @@ static MACHINE_DRIVER_START( toryumon )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(toryumon_readmem,toryumon_writemem)
-	
+
 	MDRV_MACHINE_INIT(toryumon)
 MACHINE_DRIVER_END
 
@@ -5649,7 +5646,7 @@ static MACHINE_DRIVER_START( tturf )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(tturf_readmem,tturf_writemem)
-	
+
 	MDRV_MACHINE_INIT(tturf)
 MACHINE_DRIVER_END
 
@@ -5785,7 +5782,7 @@ static MACHINE_DRIVER_START( tturfbl )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(tturfbl_readmem,tturfbl_writemem)
-	
+
 	MDRV_MACHINE_INIT(tturfbl)
 MACHINE_DRIVER_END
 
@@ -5944,7 +5941,7 @@ static MACHINE_DRIVER_START( wb3 )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(wb3_readmem,wb3_writemem)
-	
+
 	MDRV_MACHINE_INIT(wb3)
 MACHINE_DRIVER_END
 
@@ -6076,7 +6073,7 @@ static MACHINE_DRIVER_START( wb3bl )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(wb3bl_readmem,wb3bl_writemem)
-	
+
 	MDRV_MACHINE_INIT(wb3bl)
 MACHINE_DRIVER_END
 
@@ -6218,7 +6215,7 @@ static MACHINE_DRIVER_START( wrestwar )
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(wrestwar_readmem,wrestwar_writemem)
-	
+
 	MDRV_MACHINE_INIT(wrestwar)
 MACHINE_DRIVER_END
 
@@ -6253,7 +6250,7 @@ static MACHINE_DRIVER_START( s16dummy )
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(sys16_dummy_readmem,sys16_dummy_writemem)
-	
+
 	MDRV_MACHINE_INIT(sys16_dummy)
 MACHINE_DRIVER_END
 

@@ -88,6 +88,8 @@ void konami1_decode(void);
 
 extern unsigned char *tutankhm_scrollx;
 
+static int i8039_status;
+
 WRITE_HANDLER( tutankhm_videoram_w );
 WRITE_HANDLER( junofrst_blitter_w );
 VIDEO_UPDATE( tutankhm );
@@ -104,10 +106,6 @@ WRITE_HANDLER( junofrst_bankselect_w )
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
 	cpu_setbank(1,&RAM[bankaddress]);
 }
-
-
-static int i8039_irqenable;
-static int i8039_status;
 
 static READ_HANDLER( junofrst_portA_r )
 {
@@ -159,14 +157,12 @@ WRITE_HANDLER( junofrst_sh_irqtrigger_w )
 
 WRITE_HANDLER( junofrst_i8039_irq_w )
 {
-	if (i8039_irqenable)
-		cpu_set_irq_line(2, 0, ASSERT_LINE);
+	cpu_set_irq_line(2, 0, ASSERT_LINE);
 }
 
 static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
-	i8039_irqenable = data & 0x80;
-	if (i8039_irqenable == 0)
+	if ((data & 0x80) == 0)
 		cpu_set_irq_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
@@ -239,7 +235,6 @@ MEMORY_END
 
 static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch2_r },
-	{ 0x111,0x111, IORP_NOP },
 PORT_END
 
 static PORT_WRITE_START( i8039_writeport )
@@ -373,7 +368,7 @@ static MACHINE_DRIVER_START( junofrst )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
-	MDRV_CPU_ADD(I8039,8000000/15)
+	MDRV_CPU_ADD(I8039,8000000/I8039_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
 	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
 	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)

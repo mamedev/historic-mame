@@ -24,6 +24,24 @@ static struct rectangle spritevisiblearea =
 	2*8, 30*8-1
 };
 
+static struct rectangle flip_spritevisiblearea =
+{
+	6*8, 31*8-1,
+	2*8, 30*8-1
+};
+
+
+WRITE_HANDLER( mermaid_flip_screen_x_w )
+{
+	flip_screen_x_set(data & 0x01);
+}
+
+WRITE_HANDLER( mermaid_flip_screen_y_w )
+{
+	flip_screen_y_set(data & 0x01);
+}
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -100,10 +118,18 @@ VIDEO_UPDATE( mermaid )
 
 		code = mermaid_background_videoram[offs];
 
+		if (flip_screen_x)
+			sx = 248 - sx;
+
+		if (flip_screen_y)
+			sy = 248 - sy;
+
 		drawgfx(tmpbitmap,Machine->gfx[2],
 				code,
-				(sx >= 26*8) ? 0 : 1,
-				0,0,
+				(flip_screen_x ?
+				    ((sx <= 5*8) ? 0 : 1) :
+				    ((sx >= 26*8) ? 0 : 1)),
+				flip_screen_x,flip_screen_y,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
 	}
@@ -116,7 +142,9 @@ VIDEO_UPDATE( mermaid )
 
 		for (i = 0;i < 32;i++)
 		{
-			scroll[i] = -mermaid_background_scrollram[i];
+			scroll[i] = (flip_screen_x ?
+			    mermaid_background_scrollram[31 - i] :
+			    -mermaid_background_scrollram[i]);
 		}
 
 
@@ -137,10 +165,16 @@ VIDEO_UPDATE( mermaid )
 
 		code = mermaid_foreground_videoram[offs] | ((mermaid_foreground_colorram[offs] & 0x30) << 4);
 
+		if (flip_screen_x)
+			sx = 31 - sx;
+
+		if (flip_screen_y)
+			sy = 248 - sy;
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				mermaid_foreground_colorram[offs] & 0x0f,
-				0,0,
+				flip_screen_x,flip_screen_y,
 				8*sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -180,11 +214,23 @@ VIDEO_UPDATE( mermaid )
 
 		code = (spriteram[offs + 0] & 0x3f) | (bank << 6);
 
+		if (flip_screen_x) {
+			flipx = !flipx;
+			sx = 240 - sx;
+		}
+
+		if (flip_screen_y) {
+			flipy = !flipy;
+			sy = spriteram[offs + 1];
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				spriteram[offs + 2] & 0x0f,
 				flipx, flipy,
 				sx, sy,
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+				(flip_screen_x ? &flip_spritevisiblearea :
+				    &spritevisiblearea),
+				TRANSPARENCY_PEN,0);
 	}
 }

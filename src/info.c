@@ -396,19 +396,15 @@ static void print_game_sample(FILE* out, const struct GameDriver* game)
 #if (HAS_SAMPLES || HAS_VLM5030)
 	struct InternalMachineDriver drv;
 	int i;
-	
+
 	expand_machine_driver(game->drv, &drv);
-	
+
 	for( i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++ )
 	{
 		const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 		if( drv.sound[i].sound_type == SOUND_SAMPLES )
 			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-		if( drv.sound[i].sound_type == SOUND_VLM5030 )
-			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
 #endif
 		if (samplenames != 0 && samplenames[0] != 0) {
 			int k = 0;
@@ -442,7 +438,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 	const struct MachineCPU* cpu;
 	const struct MachineSound* sound;
 	int j;
-	
+
 	expand_machine_driver(game->drv, &driver);
 	cpu = driver.cpu;
 	sound = driver.sound;

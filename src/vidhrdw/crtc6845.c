@@ -17,8 +17,6 @@
 #include "crtc6845.h"
 
 
-extern int spiders_page_flip;
-
 READ_HANDLER( crtc6845_register_r )
 {
 	int retval=0;

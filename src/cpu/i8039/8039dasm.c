@@ -120,7 +120,7 @@ char *Formats[] = {
 	FMT("11000101", "sel  rb0"),
 	FMT("11010101", "sel  rb1"),
 	FMT("01100101", "stop tcnt"),
-	FMT("01000101", "strt tcnt"),
+	FMT("01000101", "strt cnt"),
 	FMT("01010101", "strt t"),
 	FMT("01000111", "swap a"),
 	FMT("00101rrr", "xch  a,%R"),

@@ -1211,6 +1211,28 @@ INPUT_PORTS_START( champwru )
 	CHAMPWR_INPUTS
 INPUT_PORTS_END
 
+#define KURIKIN_DSWB \
+	PORT_START \
+	TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x40, 0x40, "Bosses' messages" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" ) \
+	PORT_DIPSETTING(    0x80, "5 Times" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
 INPUT_PORTS_START( kurikint )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
@@ -1219,26 +1241,24 @@ INPUT_PORTS_START( kurikint )
 	TAITO_L_DSWA_2_4
 	TAITO_COINAGE_WORLD_8
 
+	KURIKIN_DSWB
+
+	TAITO_L_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	TAITO_L_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	TAITO_L_SYSTEM_INPUT( IP_ACTIVE_HIGH, 4 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( kurikinj )
 	PORT_START
-	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, "5 Times" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	TAITO_L_DSWA_2_4
+	TAITO_COINAGE_JAPAN_8
+
+	KURIKIN_DSWB
 
 	TAITO_L_PLAYERS_INPUT( IPF_PLAYER1 )
 
@@ -1264,24 +1284,23 @@ INPUT_PORTS_START( kurikina )
 	TAITO_COINAGE_WORLD_8
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level select", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Bosses' messages" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2070,7 +2089,7 @@ static MACHINE_DRIVER_START( fhawk )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
-	
+
 	MDRV_MACHINE_INIT(fhawk)
 
 	/* video hardware */
@@ -2095,19 +2114,19 @@ static MACHINE_DRIVER_START( champwr )
 	MDRV_IMPORT_FROM(fhawk)
 	MDRV_CPU_MODIFY("cpu1")
 	MDRV_CPU_MEMORY(champwr_readmem,champwr_writemem)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(champwr_3_readmem,champwr_3_writemem)
 
-	MDRV_CPU_MODIFY("cpu2")	
+	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_MEMORY(champwr_2_readmem,champwr_2_writemem)
-	
+
 	MDRV_MACHINE_INIT(champwr)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
 MACHINE_DRIVER_END
-	
+
 
 static MACHINE_DRIVER_START( raimais )
 
@@ -2115,19 +2134,19 @@ static MACHINE_DRIVER_START( raimais )
 	MDRV_IMPORT_FROM(fhawk)
 	MDRV_CPU_MODIFY("cpu1")
 	MDRV_CPU_MEMORY(raimais_readmem,raimais_writemem)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(raimais_3_readmem,raimais_3_writemem)
 
-	MDRV_CPU_MODIFY("cpu2")	
+	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_MEMORY(raimais_2_readmem,raimais_2_writemem)
-	
+
 	MDRV_MACHINE_INIT(raimais)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("2203", YM2610, ym2610_interface)
 MACHINE_DRIVER_END
-	
+
 
 static MACHINE_DRIVER_START( kurikint )
 
@@ -2159,6 +2178,16 @@ static MACHINE_DRIVER_START( kurikint )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface_double)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( kurikina )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(kurikint)
+
+	/* video hardware */
+	MDRV_GFXDECODE(gfxdecodeinfo1)
 MACHINE_DRIVER_END
 
 
@@ -2542,12 +2571,10 @@ GAME( 1988, fhawk,    0,        fhawk,    fhawk,    0,        ROT270, "Taito Cor
 GAME( 1989, champwr,  0,        champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)" )
 GAME( 1989, champwru, champwr,  champwr,  champwru, 0,        ROT0,   "Taito America Corporation", "Champion Wrestler (US)" )
 GAME( 1989, champwrj, champwr,  champwr,  champwrj, 0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)" )
-
 GAME( 1988, kurikint, 0,        kurikint, kurikint, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World)" )
-GAME( 1988, kurikinu, kurikint, kurikint, kurikint, 0,        ROT0,   "Taito America Corporation", "Kuri Kinton (US)" )
-GAME( 1988, kurikinj, kurikint, kurikint, kurikint, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
-GAME( 1988, kurikina, kurikint, kurikint, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (prototype?)" )
-
+GAME( 1988, kurikinu, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito America Corporation", "Kuri Kinton (US)" )
+GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
+GAME( 1988, kurikina, kurikint, kurikina, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World, prototype?)" )
 GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)" )
 GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
 GAME( 1990, horshoes, 0,        horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)" )

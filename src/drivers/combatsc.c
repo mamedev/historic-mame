@@ -199,8 +199,7 @@ static WRITE_HANDLER( combasc_sh_irqtrigger_w )
 
 static WRITE_HANDLER( combasc_play_w )
 {
-	if (data & 0x02)
-        UPD7759_start_w(0, 0);
+	UPD7759_start_w(0, data & 2);
 }
 
 static WRITE_HANDLER( combasc_voice_reset_w )
@@ -305,7 +304,7 @@ static MEMORY_WRITE_START( combasc_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },				/* RAM */
 	{ 0x9000, 0x9000, combasc_play_w },			/* uPD7759 play voice */
-	{ 0xa000, 0xa000, UPD7759_0_message_w },	/* uPD7759 voice select */
+	{ 0xa000, 0xa000, UPD7759_0_port_w },		/* uPD7759 voice select */
 	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
  	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */
@@ -616,7 +615,6 @@ static struct YM2203interface ym2203_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,							/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 70 },						/* volume */
 	{ REGION_SOUND1 },			/* memory region */
 	UPD7759_STANDALONE_MODE,	/* chip mode */

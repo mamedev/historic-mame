@@ -311,7 +311,7 @@ static struct AY8910interface popper_ay8910_interface =
 {
 	2,	/* 2 chips */
 	18432000/12,
-	{ 12, 12 },
+	{ 25, 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -340,7 +340,6 @@ static MACHINE_DRIVER_START( popper )
 	MDRV_VISIBLE_AREA(0*8, 33*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(popper_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	MDRV_COLORTABLE_LENGTH(64)
 
 	MDRV_PALETTE_INIT(popper)
 	MDRV_VIDEO_START(popper)

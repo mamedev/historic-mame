@@ -310,7 +310,7 @@ static INTERRUPT_GEN( exprraid_interrupt )
 	if ( ( ~readinputport( 3 ) ) & 0xc0 ) {
 		if ( coin == 0 ) {
 			coin = 1;
-			cpu_set_irq_line(0, IRQ_LINE_NMI, HOLD_LINE);
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 		}
 	} else
 		coin = 0;

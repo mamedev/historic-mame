@@ -5,72 +5,198 @@ Rainbow Islands  (c) Taito 1987   + Jumping
 
 driver by Mike Coates
 
-c-chip enhancements and notes by Stefan Jokisch
+c-chip enhanced by Robert Gallagher, with many thanks to Tormod Tjaberg for providing
+his PCB for dumping/collecting the c-chip data from Rainbow Islands Extra.
 
-			***
+                            ***
 
-Notes on the Jumping bootleg
-----------------------------
+Notes on Rainbow Islands romsets by Robert Gallagher
+----------------------------------------------------
 
-The bootleggers didn't manage to break the protection completely.
-The secret rooms are broken, and there are a few other glitches too.
-Some dying enemy sprites have obviously wrong graphics. And you can
-sometimes see monsters falling through a platform. This happens right
-at the start of round 1. There are two small platforms at the left side,
-and a longer platform above and to the right. When a monster falls off
-the left edge of the longer platform, it will fall straight through the
-small platforms.
+There are 3 code segments that differ between Rainbow Islands old and new
+version. They are all related to secret rooms;
 
-Monsters move slightly differently compared to Rainbow Islands, I don't
-think this is intentional. (E.g. when you start a game and wait for the
-monsters to reach you, the monster nearest to you tends to leave its
-platform on the wrong side.)
+   The first code segment is entered at the start of a secret room.
+
+
+         rainbowo                             rainbow
+   $55EE lea    $C01308,a0              $55EE lea    $C00B08,a0
+         move.w #$13,d0                       bsr    $561C
+   $55F8 move.w #$15fa,2(a0)                  lea    $C00D08,a0
+         move.w #$15fa,6(a0)                  bsr    $561C
+         move.w #$15fa,$102(a0)               lea    $C00F08,a0
+         move.w #$15fa,$106(a0)               bsr    $561C
+         adda.l #8,a0                         lea    $C01108,a0
+         dbf    d0,$55F8                      bsr    $561C
+         rts                            $561C lea    $C01308,a0
+                                              move.w #$13,d0
+                                              ...
+
+   The next code segment fixes the bonus related to entering ALL 10 Secret rooms.
+   In Rainbow Islands, If you enter the last secret room, you receive a 10,000,000
+   point bonus. If you have entered all 10 secret rooms, you receive a 50,000,000 point
+   bonus. (BUG THAT'S NOT A BUG - the games says 1,000,000 and 5,000,000, but the code gives
+   you 10mil and 50mil)
+   The counter is in $10D05C.b, the (rainbowo) romset never increments this counter, making
+   it impossible to achieve.
+
+   $56A2 cmpi.w #$31,$11c6(a5)          $56CA addi.b #1,$105C(a5)   ;increment the secret room count
+         bne                                  cmpi.w #$31,$11c6(a5) ;is it round 49 (50)?
+                                              bne
+
+   The final change fixes a Secret room bug that was noted by Stefan Jokisch.
+   In (rainbowo) it is possible to scroll the screen inside a secret room.
+   You can walk right off the top of the screen, and scroll the 'next' secret
+   room into view. This is fixed in (rainbow) with the following code;
+
+   $5F06 move.b #1,d0                   $5F34 tst.b  $11c4(a5)  ; in secret room?
+         jsr    $1736                         bne    $600A      ; exit this routine, which is getting
+                                              move.b #1,d0      ; the room height from c-chip bank 1
+                                              jsr    $1736      ; which we don't need
+                                              ...
+                                        $600A rts
+
+   The (jumping) bootleg is based on the (rainbowo) roms.
+
+Notes on Rainbow Islands Extra by Robert Gallagher
+--------------------------------------------------
+   In Rainbow Islands Extra, there are more changes than just the differing enemies/rounds.
+
+   In RIE if you end a level with the same 2 digits in your score as xxxx220, you will receive
+   items at the "GOAL IN" worth 3000 points each (instead of 500pts) as:
+
+   00 = french fries
+   11 = neopolaton ice cream
+   22 = creme caramel
+   33 = hamburgers
+   44 = cake slice
+   55 = iced bun
+   66 = mug of beer
+   77 = hotdog on a stick
+   88 = vanilla ice cream
+   99 = blue popsicle
+
+   There are two other possibilities:
+   moneybags - worth 500pts if you don't have double digits, or worth 3000 points if you do (any)
+               if you got the 'Money Coin' powerup in a secret room.
+   hearts - worth 10,000 each, this is based on a timer in 0x0010DBA4 && 128 == 0, making this a
+            1 in 128 chance.
+
+
+   The items received in 'Secret Room' are not the same as Rainbow Islands. They are based on
+   the LAST diamond you collect in the round before entering. That is; you must still collect
+   the 7 diamonds in order, Red, Orange, Yellow... to enter a secret room, however, AFTER completing
+   this, you can still collect diamonds. If you collect (last), you get:
+
+   Red - Book of Continues - this allows you to continue after world 7
+   Orange - Money Bag - this will make a 100,000pt Money bag fall from the sky on every round.
+            it will also make all fruit at 'GOAL IN' into money bags.
+   Yellow - Key - when taken, this will show the Secret room code completely for about 8 seconds.
+   Green - Protection Fairy, gives you the protection fairy for about 8 seconds at the beginning
+           of each round, or after you die. (NOT perm. like RI, code at $C528 in RIE handles this,
+           and is distinctly different from the code at $BC8C in RI)
+   Blue - Yellow Potion, gives you perm. fast rainbow power
+   Indigo - Red Potion, gives you perm. 2X rainbow power
+   Violet - Shoes, gives you perm. fast feet.
+
+   Unlike the secret rooms in Rainbow Islands, in Rainbow Islands Extra, only 2 letters of the code
+   for that room are revealed. The first letter, and the second letter will corespond to the last
+   diamond collected before entering the secret room. (You can see this with the coloured hearts
+   that remain). The idea is that you must enter the secret room 7X to get the full code, making the
+   game harder. Otherwise, collecting a yellow diamond will give you the 'key' to the room, and reveal
+   the code for about 5 seconds.
+
+   In the secret rooms of RIE there is an added bonus; If you exit the room without collecting the
+   power-up item, you will receive a 1,000,000pt bonus. The text in the room in Japanese reads:
+   "KYOUKA-SOUBI WO TORAZUNI DERUTO 1000000 TEN HAIRUYO !!"
+
+   If you enter all 10 secret rooms in Rainbow Islands Extra, and do NOT collect the powerups in
+   _any_ of the rooms, you will receive "SPECIAL BIG BONUS !! 50000000 PTS."
+
+   If you enter all 10 secret rooms, and do NOT collect the bubble-rainbow power in secret room 10,
+   (though you may collect them in others) you will receive "SPECIAL BIG BONUS !! 10000000 PTS."
+
+   If you collect the bubble-rainbow power in secret room 10, you will receive "ALL ROOM CLEAR
+   5000000" bonus instead.
+
+   In Rainbow Islands Extra (as in Rainbow Islands), if you collect 2 of any colour 'cane'...
+     (canes are collected for collecting 7 of one colour of diamond, WITHOUT 'complete' happening, or
+     if 'complete', you must collect 7 of the same colour diamond within one round. (the diamond
+     counters are reset to one at the beginning of each round once 'complete' has occured).
+   ...you will receive a 'Potion' (not Rainbow powerup potions)
+   of the appropriate colour. Once collected, you will receive a
+   100,000pts. large fruit item at 'GOAL IN' for that round. Although the code for this is present in
+   Rainbow Islands, it is rarely seen. This is not a result of poor emulation, but rather poor coding;
+   In both RI and RIE, there are tables that indicate which special item is deserved, and what actions
+   are required to earn them. (the number of times the event must occur).
+   In both RI and RIE, you receive a special item for every 3rd enemy you kill as:
+   1. Shoes
+   2. Red Potion
+   3. Yellow Potion
+   4. Red Potion
+   5. Crystal Ball
+   6. Yellow star
+   7. Red Star
+   8. - Special item - depending on what you deserve.
+
+   The Special item table can be found at $ADC0 in RI, and $B5E8 in RIE. This table is checked in
+   linear fashion until a special item requirement is met.
+   items 24/25/26 are: Blue Ring/Violet Ring/Red Ring.
+   To get these items you collect: Red Potion/Yellow Potion/Shoes. (note that each potion collect =+2)
+   In Rainbow Islands, this table shows that we need only collect:
+   3 red potions (but each one counts as +2 if you created it, or +1 if you 'found' it in a level),
+   3 yellow potions ""
+   3 red shoes (only count as one)
+   The 'canes', and 'potions' occur -after- these entries (cane index 27-33, potion index 34-40)
+   So the reason that you (rarely!) see the canes, and hence the potions in RI, is because you will
+   almost ALWAYS satisfy at least one of these requirements: 2 RED potions are given before 1 'special'
+   In Rainbow Islands Extra however, the canes are more common. This is because the index shows that
+   we need to collect 12/12/12 of the above before we can get the rings.
+
+   One more condition has been added to RIE regards this;
+   if _no_ special item has been earned, you will receive a Potion that is the same colour as the
+   LAST diamond you have collected in the round.
+
+
+
+Bugs in Jumping
+---------------
+
+The bootleggers didn't defeat the protection completely: Secret
+rooms are broken, some dying enemy sprites have obviously wrong
+graphics, monsters are falling through platforms etc.
 
 
 Secret rooms in Rainbow Islands
 -------------------------------
 
-Getting the small diamonds in order [red through to purple, i.e.
-from left to right on the display at the bottom of screen] opens
+Getting the small diamonds in order (red through to purple) opens
 a secret door in the boss room. The trick is to turn an enemy into
-a diamond of a specific color. It depends on enemy x position and
-direction.
+a diamond of a specific color: It depends on its x position and
+direction. There is a cheat code at the top of each secret room
+that can be entered on the copyright screen:
 
+	L -> left
+	R -> right
+	J -> jump
+	B -> rainbow
+	S -> start
 
-Secret room codes
------------------
-
-The code at top of each secret room is a cheat code you can enter on
-the copyright screen. The "8" means B, and the symbol like a "T"
-in a circle means J. The others are L, R, S. These letters map to:
-
-L -> left
-R -> right
-J -> jump
-B -> rainbow
-S -> start
-
-These are the available codes (only one per game):
-
-"BLRBJSBJ"  Permanent fast shoes
-"RJSBJSBR"  Permanent double rainbows
-"SSSLLRRS"  Permanent fast rainbows
-"BJBJBJRS"  Hint a
-"LJLSLBLS"  Hint b
-"LBSJRLJL"  Continue after island five
-"RRLLBBJS"  All hidden food becomes money bags
-"RRRRSBSJ"  Does both of the previous two
-"SJBLRJSR"  Hint c
-"SRBJSLSB"  Gives you 100 million counter
-
-After you enter a code (except for hints), a symbol will appear
-in the bottom left corner of the "Push only 1p button" screen.
-
-
-TODO
-====
-
-Rainbowe needs dump of its c-chip.
+				  |  regular   |  extra
+	--------------+------------+------------
+	Fast Feet     |  BLRBJSBJ  |  SLLSRJRR
+	Red Potion    |  RJSBJLBR  |  JLSSSBRJ
+	Yellow Potion |  SSSLLRRS  |  BRSLJSLJ
+	Hint A        |  BJBJBJRS  |  BJBJBJRS
+	Hint B        |  LJLSLBLS  |  LJLSLBLS
+	Continue      |  LBSJRLJL  |  LJLRSJJJ
+	Money Bags    |  RRLLBBJS  |  LLSBRRJB
+	Money + Cont  |  RRRRSBSJ  |  RSJRLBRS
+	Hint C        |  SJBLRJSR  |  SJBLRJSR
+	100M Counter  |  SRBJSLSB  |  BBSSJJJJ
+	Hint D        |  N/A       |  BBJJRLSL
+	Hint E        |  N/A       |  LRSLRSJR
+	Hint F        |  N/A       |  SBJLSBRR
 
 ***************************************************************************/
 
@@ -78,25 +204,25 @@ Rainbowe needs dump of its c-chip.
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
-#include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
-
-//data16_t *rainbow_mainram;
 
 VIDEO_START( rainbow );
 VIDEO_START( jumping );
+
 VIDEO_UPDATE( rainbow );
 VIDEO_UPDATE( jumping );
-INTERRUPT_GEN( rainbow_interrupt );
 
+WRITE16_HANDLER( jumping_spritectrl_w );
 WRITE16_HANDLER( rainbow_spritectrl_w );
-WRITE16_HANDLER( rastan_spriteflip_w );
-READ16_HANDLER ( rainbow_c_chip_r );
-WRITE16_HANDLER( rainbow_c_chip_w );
+WRITE16_HANDLER( rainbow_cchip_ram_w );
+WRITE16_HANDLER( rainbow_cchip_ctrl_w );
+WRITE16_HANDLER( rainbow_cchip_bank_w );
 
-void rainbow_cchip_init(void);
+READ16_HANDLER( rainbow_cchip_ram_r );
+READ16_HANDLER( rainbow_cchip_ctrl_r );
 
-static int banknum = -1;
+void rainbow_cchip_init(int version);
+
 static int jumping_latch = 0;
 
 
@@ -111,22 +237,22 @@ static WRITE16_HANDLER( jumping_sound_w )
 
 
 /***************************************************************************
-				MEMORY STRUCTURES
+                            MEMORY STRUCTURES
 ***************************************************************************/
 
 static MEMORY_READ16_START( rainbow_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
+	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* main RAM */
 	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
 	{ 0x201000, 0x203fff, MRA16_RAM },	/* read in initial checks */
 	{ 0x390000, 0x390003, input_port_0_word_r },
 	{ 0x3b0000, 0x3b0003, input_port_1_word_r },
 	{ 0x3e0000, 0x3e0001, MRA16_NOP },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x800000, 0x80ffff, rainbow_c_chip_r },
+	{ 0x800000, 0x8007ff, rainbow_cchip_ram_r },
+	{ 0x800802, 0x800803, rainbow_cchip_ctrl_r },
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
-	{ 0xd00800, 0xd03fff, MRA16_RAM },	/* stuff gets stored here */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram + other stuff */
 MEMORY_END
 
 static MEMORY_WRITE16_START( rainbow_writemem )
@@ -134,24 +260,24 @@ static MEMORY_WRITE16_START( rainbow_writemem )
 	{ 0x10c000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x201000, 0x203fff, MWA16_RAM },	/* written in initial checks */
-	{ 0x3a0000, 0x3a0003, rainbow_spritectrl_w },	/* sprite palette bank, other unknowns */
-	{ 0x3c0000, 0x3c0003, MWA16_NOP },	/* written very often, watchdog ? */
+	{ 0x3a0000, 0x3a0001, rainbow_spritectrl_w },
+	{ 0x3c0000, 0x3c0003, MWA16_NOP },	/* written very often, watchdog? */
 	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0x800000, 0x80ffff, rainbow_c_chip_w },
+	{ 0x800000, 0x8007ff, rainbow_cchip_ram_w },
+	{ 0x800802, 0x800803, rainbow_cchip_ctrl_w },
+	{ 0x800c00, 0x800c01, rainbow_cchip_bank_w },
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
 	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
 	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
 	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
-	{ 0xd00800, 0xd03fff, MWA16_RAM },	/* stuff gets stored here */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram + other stuff */
 MEMORY_END
 
 
 static MEMORY_READ16_START( jumping_readmem )
 	{ 0x000000, 0x09ffff, MRA16_ROM },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
+	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* main RAM */
 	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
 	{ 0x201000, 0x203fff, MRA16_RAM },	/* read in initial checks */
 	{ 0x400000, 0x400001, input_port_0_word_r },
@@ -169,12 +295,12 @@ static MEMORY_WRITE16_START( jumping_writemem )
 	{ 0x10c000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200fff, paletteram16_xxxxBBBBGGGGRRRR_word_w , &paletteram16 },
 	{ 0x201000, 0x203fff, MWA16_RAM },	/* written in initial checks */
-	{ 0x3a0000, 0x3a0003, rainbow_spritectrl_w },	/* sprite palette bank, other unknowns */
-	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog ? */
+	{ 0x3a0000, 0x3a0001, jumping_spritectrl_w },
+	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog? */
 	{ 0x400006, 0x400007, jumping_sound_w },
 	{ 0x430000, 0x430003, PC080SN_yscroll_word_0_w },
 	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x800000, 0x80ffff, MWA16_NOP },	/* original C-Chip location (not used) */
+	{ 0x800000, 0x80ffff, MWA16_NOP },	/* original c-chip location (not used) */
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
 	{ 0xc20000, 0xc20003, MWA16_NOP },	/* seems it is a leftover from rainbow: scroll y written here too */
 	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
@@ -182,22 +308,16 @@ static MEMORY_WRITE16_START( jumping_writemem )
 MEMORY_END
 
 
-/***********************************************************
-				SOUND
+/**********************************************************
+                         SOUND
 
-		Rainbow uses a YM2151 and YM3012
-		Jumping uses two YM2203's
+              Rainbow uses a YM2151 and YM3012
+              Jumping uses two YM2203's
 ***********************************************************/
-
-static void reset_sound_region(void)
-{
-	cpu_setbank( 5, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
 
 static WRITE_HANDLER( bankswitch_w )
 {
-	banknum = (data - 1) & 3;
-	reset_sound_region();
+	cpu_setbank(5, memory_region(REGION_CPU2) + ((data - 1) & 3) * 0x4000 + 0x10000);
 }
 
 static READ_HANDLER( jumping_latch_r )
@@ -205,18 +325,6 @@ static READ_HANDLER( jumping_latch_r )
 	return jumping_latch;
 }
 
-#if 0
-static WRITE_HANDLER( jumping_bankswitch_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data & 1);
-
-	// if (!(data & 8)) logerror("bankswitch not ORed with 8 !!!\n");
-	// if (banknum != 1) logerror("bank selected =%02x\n", banknum);
-
-	cpu_setbank( 6, &RAM[ 0x10000 + ( banknum * 0x2000 ) ] );
-}
-#endif
 
 static MEMORY_READ_START( rainbow_s_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -252,8 +360,7 @@ static MEMORY_WRITE_START( jumping_sound_writemem )
 	{ 0xb001, 0xb001, YM2203_write_port_0_w },
 	{ 0xb400, 0xb400, YM2203_control_port_1_w },
 	{ 0xb401, 0xb401, YM2203_write_port_1_w },
-	{ 0xbc00, 0xbc00, MWA_NOP },
-//	{ 0xbc00, 0xbc00, jumping_bankswitch_w },	/* looks like a bankswitch, but sound works with or without it */
+	{ 0xbc00, 0xbc00, MWA_NOP },	/* looks like a bankswitch, but sound works with or without it */
 MEMORY_END
 
 
@@ -333,12 +440,6 @@ INPUT_PORTS_START( rainbow )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( jumping )
@@ -397,101 +498,83 @@ INPUT_PORTS_START( jumping )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* 401003 - Player Controls */
-  	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-  	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
-  	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-  	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 INPUT_PORTS_END
 
 
 /**************************************************************
-				GFX DECODING
+                         GFX DECODING
 **************************************************************/
 
-static struct GfxLayout spritelayout1 =
+static struct GfxLayout tilelayout =
 {
-	8,8,		/* 8*8 sprites */
-	16384,	/* 16384 sprites */
-	4,		/* 4 bits per pixel */
+	8,8,    /* 8*8 tiles */
+	RGN_FRAC(1,1),
+	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 8, 12, 0, 4, 24, 28, 16, 20 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8		/* every sprite takes 32 consecutive bytes */
+	32*8    /* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout2 =
+static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	4096,		/* 1024 sprites */
-	4,		/* 4 bits per pixel */
+	16,16,  /* 16*16 sprites */
+	RGN_FRAC(1,1),
+	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 8, 12, 0, 4, 24, 28, 16, 20, 40, 44, 32, 36, 56, 60, 48, 52 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	128*8		/* every sprite takes 128 consecutive bytes */
-};
-
-static struct GfxLayout spritelayout3 =
-{
-	16,16,	/* 16*16 sprites */
-	1024,		/* 1024 sprites */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{
-	0, 4, 0x10000*8+0 ,0x10000*8+4,
-	8+0, 8+4, 0x10000*8+8+0, 0x10000*8+8+4,
-	16+0, 16+4, 0x10000*8+16+0, 0x10000*8+16+4,
-	24+0, 24+4, 0x10000*8+24+0, 0x10000*8+24+4
-	},
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	64*8		/* every sprite takes 64 consecutive bytes */
+	128*8   /* every sprite takes 128 consecutive bytes */
 };
 
 static struct GfxDecodeInfo rainbow_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0x000000, &spritelayout2, 0, 0x80 },	/* sprites 16x16 */
-	{ REGION_GFX1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
-	{ REGION_GFX2, 0x080000, &spritelayout3, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX2, 0x000000, &spritelayout, 0, 0x80 },	/* OBJ 16x16 */
+	{ REGION_GFX1, 0x000000, &tilelayout,   0, 0x80 },	/* SCR 8x8 */
 	{ -1 }	/* end of array */
 };
 
+
 static struct GfxLayout jumping_tilelayout =
 {
-	8,8,	/* 8*8 sprites */
-	16384,	/* 16384 sprites */
-	4,		/* 4 bits per pixel */
+	8,8,    /* 8*8 tiles */
+	16384,  /* 16384 tiles */
+	4,      /* 4 bits per pixel */
 	{ 0, 0x20000*8, 0x40000*8, 0x60000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8		/* every sprite takes 8 consecutive bytes */
+	8*8     /* every tile takes 8 consecutive bytes */
 };
 
 static struct GfxLayout jumping_spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	5120,	/* 5120 sprites */
-	4,		/* 4 bits per pixel */
+	16,16,  /* 16*16 sprites */
+	5120,   /* 5120 sprites */
+	4,      /* 4 bits per pixel */
 	{ 0x78000*8,0x50000*8,0x28000*8,0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7 },
 	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8		/* every sprite takes 32 consecutive bytes */
+	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
 static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &jumping_spritelayout, 0, 0x80 },	/* sprites 16x16 */
-	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },	/* sprites 8x8 */
+	{ REGION_GFX2, 0, &jumping_spritelayout, 0, 0x80 },	/* OBJ 16x16 */
+	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },	/* SCR 8x8 */
 	{ -1 }	/* end of array */
 };
 
 
 /**************************************************************
-			YM2151 & YM2203 (SOUND)
+                   YM2151 & YM2203 (SOUND)
 **************************************************************/
 
-/* handler called by the YM2151 emulator when the internal
-   timers cause an IRQ */
+/* handler called by the YM2151 emulator when the internal timers cause an IRQ */
 
 static void irqhandler(int irq)
 {
@@ -500,8 +583,8 @@ static void irqhandler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
+	1,          /* 1 chip */
+	4000000,    /* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ irqhandler },
 	{ bankswitch_w }
@@ -509,8 +592,8 @@ static struct YM2151interface ym2151_interface =
 
 static struct YM2203interface ym2203_interface =
 {
-	2,		/* 2 chips */
-	3579545,	/* ?? MHz */
+	2,          /* 2 chips */
+	3579545,    /* ?? MHz */
 	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
 	{ 0 },
 	{ 0 },
@@ -521,17 +604,17 @@ static struct YM2203interface ym2203_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                      MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_DRIVER_START( rainbow )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_ADD(M68000, 8000000)
 	MDRV_CPU_MEMORY(rainbow_readmem,rainbow_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(rainbow_s_readmem,rainbow_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -556,11 +639,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( jumping )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_ADD(M68000, 8000000)
 	MDRV_CPU_MEMORY(jumping_readmem,jumping_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(jumping_sound_readmem,jumping_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -583,153 +666,140 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                                  DRIVERS
 ***************************************************************************/
 
 ROM_START( rainbow )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "b22-10",     0x00000, 0x10000, 0x3b013495 )
-	ROM_LOAD16_BYTE( "b22-11",     0x00001, 0x10000, 0x80041a3d )
-	ROM_LOAD16_BYTE( "b22-08",     0x20000, 0x10000, 0x962fb845 )
-	ROM_LOAD16_BYTE( "b22-09",     0x20001, 0x10000, 0xf43efa27 )
-	ROM_LOAD16_BYTE( "ri_m03.rom", 0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD16_BYTE( "ri_m04.rom", 0x40001, 0x20000, 0x91625e7f )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "b22-10-1.19",   0x00000, 0x10000, 0xe34a50ca )
+	ROM_LOAD16_BYTE( "b22-11-1.20",   0x00001, 0x10000, 0x6a31a093 )
+	ROM_LOAD16_BYTE( "b22-08-1.21",   0x20000, 0x10000, 0x15d6e17a )
+	ROM_LOAD16_BYTE( "b22-09-1.22",   0x20001, 0x10000, 0x454e66bc )
+	ROM_LOAD16_BYTE( "b22-03.23",     0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD16_BYTE( "b22-04.24",     0x40001, 0x20000, 0x91625e7f )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
-	ROM_CONTINUE(           	 0x10000, 0xc000 )
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )
+	ROM_LOAD( "b22-14.43",            0x00000, 0x4000, 0x113c1a5b )
+	ROM_CONTINUE(                     0x10000, 0xc000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ri_m01.rom", 	 0x00000, 0x80000, 0xb76c9168 )	/* 8x8 gfx */
+	ROM_LOAD( "b22-01.2",             0x00000, 0x80000, 0xb76c9168 )	/* tiles */
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "ri_m02.rom", 	 0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
-	ROM_LOAD( "b22-13",     	 0x80000, 0x10000, 0x2fda099f )
-	ROM_LOAD( "b22-12",     	 0x90000, 0x10000, 0x67a76dc6 )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* Dump of C-Chip */
-	ROM_LOAD( "jb1_f89",    	 0x00000, 0x10000, 0x0810d327 )
+	ROM_LOAD( "b22-01.5",             0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
+	ROM_LOAD16_BYTE( "b22-12.7",      0x80000, 0x10000, 0x67a76dc6 )
+	ROM_LOAD16_BYTE( "b22-13.6",      0x80001, 0x10000, 0x2fda099f )
 ROM_END
 
-ROM_START( rainbowa )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "b22_10-1",   0x00000, 0x10000, 0xe34a50ca )
-	ROM_LOAD16_BYTE( "b22_11-1",   0x00001, 0x10000, 0x6a31a093 )
-	ROM_LOAD16_BYTE( "b22_08-1",   0x20000, 0x10000, 0x15d6e17a )
-	ROM_LOAD16_BYTE( "b22_09-1",   0x20001, 0x10000, 0x454e66bc )
-	ROM_LOAD16_BYTE( "ri_m03.rom", 0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD16_BYTE( "ri_m04.rom", 0x40001, 0x20000, 0x91625e7f )
+ROM_START( rainbowo )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "b22-10.19",     0x00000, 0x10000, 0x3b013495 )
+	ROM_LOAD16_BYTE( "b22-11.20",     0x00001, 0x10000, 0x80041a3d )
+	ROM_LOAD16_BYTE( "b22-08.21",     0x20000, 0x10000, 0x962fb845 )
+	ROM_LOAD16_BYTE( "b22-09.22",     0x20001, 0x10000, 0xf43efa27 )
+	ROM_LOAD16_BYTE( "b22-03.23",     0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD16_BYTE( "b22-04.24",     0x40001, 0x20000, 0x91625e7f )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
-	ROM_CONTINUE(           	 0x10000, 0xc000 )
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )
+	ROM_LOAD( "b22-14.43",            0x00000, 0x4000, 0x113c1a5b )
+	ROM_CONTINUE(                     0x10000, 0xc000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ri_m01.rom", 	 0x00000, 0x80000, 0xb76c9168 )	/* 8x8 gfx */
+	ROM_LOAD( "b22-01.2",             0x00000, 0x80000, 0xb76c9168 )	/* tiles */
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "ri_m02.rom", 	 0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
-	ROM_LOAD( "b22-13",     	 0x80000, 0x10000, 0x2fda099f )
-	ROM_LOAD( "b22-12",     	 0x90000, 0x10000, 0x67a76dc6 )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* Dump of C-Chip */
-	ROM_LOAD( "jb1_f89",    	 0x00000, 0x10000, 0x0810d327 )
+  	ROM_LOAD( "b22-01.5",             0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
+	ROM_LOAD16_BYTE( "b22-12.7",      0x80000, 0x10000, 0x67a76dc6 )
+	ROM_LOAD16_BYTE( "b22-13.6",      0x80001, 0x10000, 0x2fda099f )
 ROM_END
 
 ROM_START( rainbowe )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
-	ROM_LOAD16_BYTE( "ri_02.rom",    0x00001, 0x10000, 0x4dead71f )
-	ROM_LOAD16_BYTE( "ri_03.rom",    0x20000, 0x10000, 0x4a4cb785 )
-	ROM_LOAD16_BYTE( "ri_04.rom",    0x20001, 0x10000, 0x4caa53bd )
-	ROM_LOAD16_BYTE( "ri_m03.rom",   0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD16_BYTE( "ri_m04.rom",   0x40001, 0x20000, 0x91625e7f )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "b39-01.19",     0x00000, 0x10000, 0x50690880 )
+	ROM_LOAD16_BYTE( "b39-02.20",     0x00001, 0x10000, 0x4dead71f )
+	ROM_LOAD16_BYTE( "b39-03.21",     0x20000, 0x10000, 0x4a4cb785 )
+	ROM_LOAD16_BYTE( "b39-04.22",     0x20001, 0x10000, 0x4caa53bd )
+	ROM_LOAD16_BYTE( "b22-03.23",     0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD16_BYTE( "b22-04.24",     0x40001, 0x20000, 0x91625e7f )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "b22-14",              0x00000, 0x4000, 0x113c1a5b )
-	ROM_CONTINUE(                    0x10000, 0xc000 )
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )
+	ROM_LOAD( "b22-14.43",            0x00000, 0x4000, 0x113c1a5b )
+	ROM_CONTINUE(                     0x10000, 0xc000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ri_m01.rom",          0x00000, 0x80000, 0xb76c9168 )	/* 8x8 gfx */
+	ROM_LOAD( "b22-01.2",             0x00000, 0x80000, 0xb76c9168 )	/* tiles */
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "ri_m02.rom",          0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
-	ROM_LOAD( "b22-13",              0x80000, 0x10000, 0x2fda099f )
-	ROM_LOAD( "b22-12",              0x90000, 0x10000, 0x67a76dc6 )
-
-	/* C-Chip is missing: until it is dumped, we fall back on rom from Jumping */
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 )
-	ROM_LOAD( "jb1_f89",             0x00000, 0x10000, 0x0810d327 )	/* WRONG C-Chip */
+  	ROM_LOAD( "b22-01.5",             0x00000, 0x80000, 0x1b87ecf0 )	/* sprites */
+	ROM_LOAD16_BYTE( "b22-12.7",      0x80000, 0x10000, 0x67a76dc6 )
+	ROM_LOAD16_BYTE( "b22-13.6",      0x80001, 0x10000, 0x2fda099f )
 ROM_END
 
 ROM_START( jumping )
-	ROM_REGION( 0xa0000, REGION_CPU1, 0 )	/* 8*64k for code, 64k*2 for protection chip */
-	ROM_LOAD16_BYTE( "jb1_h4",       0x00000, 0x10000, 0x3fab6b31 )
-	ROM_LOAD16_BYTE( "jb1_h8",       0x00001, 0x10000, 0x8c878827 )
-	ROM_LOAD16_BYTE( "jb1_i4",       0x20000, 0x10000, 0x443492cf )
-	ROM_LOAD16_BYTE( "jb1_i8",       0x20001, 0x10000, 0xed33bae1 )
-	ROM_LOAD16_BYTE( "ri_m03.rom",   0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD16_BYTE( "ri_m04.rom",   0x40001, 0x20000, 0x91625e7f )
-	ROM_LOAD16_BYTE( "jb1_f89",      0x80001, 0x10000, 0x0810d327 )	/* Dump of C-Chip */
+	ROM_REGION( 0xa0000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "jb1_h4",        0x00000, 0x10000, 0x3fab6b31 )
+	ROM_LOAD16_BYTE( "jb1_h8",        0x00001, 0x10000, 0x8c878827 )
+	ROM_LOAD16_BYTE( "jb1_i4",        0x20000, 0x10000, 0x443492cf )
+	ROM_LOAD16_BYTE( "jb1_i8",        0x20001, 0x10000, 0xed33bae1 )
+	ROM_LOAD16_BYTE( "b22-03.23",     0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD16_BYTE( "b22-04.24",     0x40001, 0x20000, 0x91625e7f )
+	ROM_LOAD16_BYTE( "jb1_f89",       0x80001, 0x10000, 0x0810d327 )	/* c-chip substitute */
 
-	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "jb1_cd67",      0x00000, 0x8000, 0x8527c00e )
-	ROM_CONTINUE(              0x10000, 0x4000 )
-	ROM_CONTINUE(              0x0c000, 0x4000 )
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )
+	ROM_LOAD( "jb1_cd67",             0x00000, 0x8000, 0x8527c00e )
+	ROM_CONTINUE(                     0x10000, 0x4000 )
+	ROM_CONTINUE(                     0x0c000, 0x4000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "jb2_ic8",           0x00000, 0x10000, 0x65b76309 )	/* 8x8 characters */
-	ROM_LOAD( "jb2_ic7",           0x10000, 0x10000, 0x43a94283 )
-	ROM_LOAD( "jb2_ic10",          0x20000, 0x10000, 0xe61933fb )
-	ROM_LOAD( "jb2_ic9",           0x30000, 0x10000, 0xed031eb2 )
-	ROM_LOAD( "jb2_ic12",          0x40000, 0x10000, 0x312700ca )
-	ROM_LOAD( "jb2_ic11",          0x50000, 0x10000, 0xde3b0b88 )
-	ROM_LOAD( "jb2_ic14",          0x60000, 0x10000, 0x9fdc6c8e )
-	ROM_LOAD( "jb2_ic13",          0x70000, 0x10000, 0x06226492 )
+	ROM_LOAD( "jb2_ic8",              0x00000, 0x10000, 0x65b76309 )	/* tiles */
+	ROM_LOAD( "jb2_ic7",              0x10000, 0x10000, 0x43a94283 )
+	ROM_LOAD( "jb2_ic10",             0x20000, 0x10000, 0xe61933fb )
+	ROM_LOAD( "jb2_ic9",              0x30000, 0x10000, 0xed031eb2 )
+	ROM_LOAD( "jb2_ic12",             0x40000, 0x10000, 0x312700ca )
+	ROM_LOAD( "jb2_ic11",             0x50000, 0x10000, 0xde3b0b88 )
+	ROM_LOAD( "jb2_ic14",             0x60000, 0x10000, 0x9fdc6c8e )
+	ROM_LOAD( "jb2_ic13",             0x70000, 0x10000, 0x06226492 )
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "jb2_ic62",          0x00000, 0x10000, 0x8548db6c )	/* 16x16 sprites */
-	ROM_LOAD( "jb2_ic61",          0x10000, 0x10000, 0x37c5923b )
-	ROM_LOAD( "jb2_ic60",          0x20000, 0x08000, 0x662a2f1e )
-	ROM_LOAD( "jb2_ic78",          0x28000, 0x10000, 0x925865e1 )
-	ROM_LOAD( "jb2_ic77",          0x38000, 0x10000, 0xb09695d1 )
-	ROM_LOAD( "jb2_ic76",          0x48000, 0x08000, 0x41937743 )
-	ROM_LOAD( "jb2_ic93",          0x50000, 0x10000, 0xf644eeab )
-	ROM_LOAD( "jb2_ic92",          0x60000, 0x10000, 0x3fbccd33 )
-	ROM_LOAD( "jb2_ic91",          0x70000, 0x08000, 0xd886c014 )
-	ROM_LOAD( "jb2_i121",          0x78000, 0x10000, 0x93df1e4d )
-	ROM_LOAD( "jb2_i120",          0x88000, 0x10000, 0x7c4e893b )
-	ROM_LOAD( "jb2_i119",          0x98000, 0x08000, 0x7e1d58d8 )
+	ROM_LOAD( "jb2_ic62",             0x00000, 0x10000, 0x8548db6c )	/* sprites */
+	ROM_LOAD( "jb2_ic61",             0x10000, 0x10000, 0x37c5923b )
+	ROM_LOAD( "jb2_ic60",             0x20000, 0x08000, 0x662a2f1e )
+	ROM_LOAD( "jb2_ic78",             0x28000, 0x10000, 0x925865e1 )
+	ROM_LOAD( "jb2_ic77",             0x38000, 0x10000, 0xb09695d1 )
+	ROM_LOAD( "jb2_ic76",             0x48000, 0x08000, 0x41937743 )
+	ROM_LOAD( "jb2_ic93",             0x50000, 0x10000, 0xf644eeab )
+	ROM_LOAD( "jb2_ic92",             0x60000, 0x10000, 0x3fbccd33 )
+	ROM_LOAD( "jb2_ic91",             0x70000, 0x08000, 0xd886c014 )
+	ROM_LOAD( "jb2_i121",             0x78000, 0x10000, 0x93df1e4d )
+	ROM_LOAD( "jb2_i120",             0x88000, 0x10000, 0x7c4e893b )
+	ROM_LOAD( "jb2_i119",             0x98000, 0x08000, 0x7e1d58d8 )
 ROM_END
-
 
 
 static DRIVER_INIT( rainbow )
 {
-	state_save_register_int("rainbow", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-	rainbow_cchip_init();
+	rainbow_cchip_init(0);
+}
+
+static DRIVER_INIT( rainbowe )
+{
+	rainbow_cchip_init(1);
 }
 
 static DRIVER_INIT( jumping )
 {
-	/* sprite roms need all bits reversing, as colours are    */
-	/* mapped back to front from the pattern used by Rainbow! */
-
-	/* Sprite colour map is reversed - switch to normal */
 	int i;
 
+	/* Sprite colour map is reversed - switch to normal */
+
 	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
-			memory_region(REGION_GFX2)[i] ^= 0xff;
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	state_save_register_int("jumping", 0, "sound", &jumping_latch);
 }
 
 
-GAME( 1987, rainbow,  0,       rainbow, rainbow, rainbow, ROT0, "Taito Corporation", "Rainbow Islands (set 1)" )
-GAME( 1987, rainbowa, rainbow, rainbow, rainbow, rainbow, ROT0, "Taito Corporation", "Rainbow Islands (set 2)" )
-GAMEX(1988, rainbowe, rainbow, rainbow, rainbow, rainbow, ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING )
-GAME( 1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping" )
-
-
+GAME( 1987, rainbow,  0,       rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (new version)" )
+GAME( 1987, rainbowo, rainbow, rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (old version)" )
+GAME( 1988, rainbowe, rainbow, rainbow, rainbow, rainbowe, ROT0, "Taito Corporation", "Rainbow Islands (Extra)" )
+GAME( 1989, jumping,  rainbow, jumping, jumping, jumping,  ROT0, "bootleg", "Jumping" )

@@ -84,7 +84,11 @@ WRITE_HANDLER( popper_flipscreen_w )
 	tilemap_set_flip( ALL_TILEMAPS,popper_flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
 
 	tilemap_clip = Machine->visible_area;
-	tilemap_clip.max_x=15;
+
+	if (popper_flipscreen)
+		tilemap_clip.min_x=tilemap_clip.max_x-15;
+	else
+		tilemap_clip.max_x=15;
 }
 
 WRITE_HANDLER( popper_e002_w )
@@ -181,7 +185,6 @@ VIDEO_START( popper )
 	tilemap_set_transmask(popper_ol_p0_tilemap,  1,0x0e,0x0f);
 
 	tilemap_clip = Machine->visible_area;
-	tilemap_clip.max_x=15;
 
 	state_save_register_int ("video", 0, "flipscreen", &popper_flipscreen);
 //	state_save_register_int ("video", 0, "e002",       &popper_e002);
@@ -236,22 +239,22 @@ VIDEO_UPDATE( popper )
 {
 	struct rectangle finalclip = tilemap_clip;
 	sect_rect(&finalclip, cliprect);
-	
+
 	//attribram
 	//76543210
 	//x------- draw over sprites
 	//-xxx---- colour for pen 0 (from second prom?)
 	//----xxxx colour for pens 1,2,3
 
-	tilemap_draw( bitmap,&finalclip,popper_p123_tilemap,   TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,&finalclip,popper_p0_tilemap,     TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,cliprect,popper_ol_p123_tilemap,TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,cliprect,popper_ol_p0_tilemap,  TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,cliprect,popper_p123_tilemap,     TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,cliprect,popper_p0_tilemap,       TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,&finalclip,popper_ol_p123_tilemap,TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,&finalclip,popper_ol_p0_tilemap,  TILEMAP_BACK,0 );
 
 	popper_draw_sprites(bitmap,cliprect);
 
-	tilemap_draw( bitmap,&finalclip,popper_p123_tilemap,   TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,&finalclip,popper_p0_tilemap,     TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,cliprect,popper_ol_p123_tilemap,TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,cliprect,popper_ol_p0_tilemap,  TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,cliprect,popper_p123_tilemap,     TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,cliprect,popper_p0_tilemap,       TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,&finalclip,popper_ol_p123_tilemap,TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,&finalclip,popper_ol_p0_tilemap,  TILEMAP_FRONT,0 );
 }

@@ -17,7 +17,6 @@ extern UINT8* destroyr_alpha_num_ram;
 
 static int destroyr_potmask[2];
 static int destroyr_potsense[2];
-static int destroyr_int_flag;
 static int destroyr_attract;
 static int destroyr_motor_speed;
 static int destroyr_noise;
@@ -34,19 +33,17 @@ static void destroyr_dial_callback(int dial)
 	   computer then reads the VSYNC data functions to tell where the
 	   cursor should be located. */
 
+	destroyr_potsense[dial] = 1;
+
 	if (destroyr_potmask[dial])
 	{
 		cpu_set_nmi_line(0, PULSE_LINE);
-
-		destroyr_potsense[dial] = 1;
 	}
 }
 
 
 static void destroyr_frame_callback(int dummy)
 {
-	timer_set(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
-
 	destroyr_potsense[0] = 0;
 	destroyr_potsense[1] = 0;
 
@@ -56,21 +53,9 @@ static void destroyr_frame_callback(int dummy)
 }
 
 
-static INTERRUPT_GEN( destroyr_interrupt )
-{
-	if (!destroyr_int_flag)
-	{
-		destroyr_int_flag = 1;
-		cpu_set_irq_line(0, 0, HOLD_LINE);
-	}
-}
-
-
 static MACHINE_INIT( destroyr )
 {
-	timer_set(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
-
-	destroyr_zero_page = auto_malloc(0x100);
+	timer_pulse(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
 }
 
 
@@ -106,7 +91,7 @@ WRITE_HANDLER( destroyr_cursor_load_w )
 
 WRITE_HANDLER( destroyr_interrupt_ack_w )
 {
-	destroyr_int_flag = 0;
+	cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -164,9 +149,9 @@ READ_HANDLER( destroyr_input_r )
 	{
 		UINT8 ret = readinputport(0);
 
-		if (destroyr_potsense[0])
+		if (destroyr_potsense[0] && destroyr_potmask[0])
 			ret |= 4;
-		if (destroyr_potsense[1])
+		if (destroyr_potsense[1] && destroyr_potmask[1])
 			ret |= 8;
 
 		return ret;
@@ -190,7 +175,8 @@ READ_HANDLER( destroyr_scanline_r )
 
 
 static MEMORY_READ_START( destroyr_readmem )
-	{ 0x0000, 0x0fff, destroyr_ram_r },
+	{ 0x0000, 0x00ff, MRA_RAM },
+	{ 0x0100, 0x0fff, destroyr_ram_r },
 	{ 0x1000, 0x1fff, destroyr_input_r },
 	{ 0x2000, 0x2fff, input_port_2_r },
 	{ 0x6000, 0x6fff, destroyr_scanline_r },
@@ -200,7 +186,8 @@ static MEMORY_READ_START( destroyr_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( destroyr_writemem )
-	{ 0x0000, 0x0fff, destroyr_ram_w },
+	{ 0x0000, 0x00ff, MWA_RAM, &destroyr_zero_page },
+	{ 0x0100, 0x0fff, destroyr_ram_w },
 	{ 0x1000, 0x1fff, destroyr_output_w },
 	{ 0x3000, 0x30ff, MWA_RAM, &destroyr_alpha_num_ram },
 	{ 0x4000, 0x401f, MWA_RAM, &destroyr_major_obj_ram },
@@ -215,10 +202,10 @@ MEMORY_END
 
 INPUT_PORTS_START( destroyr )
 	PORT_START /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED ) /* call 7400 */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED ) /* potsense1 */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* potsense2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED ) /* call 7400 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED ) /* potsense1 */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED ) /* potsense2 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_DIPNAME( 0xc0, 0x80, "Extended Play" )
@@ -268,13 +255,14 @@ static struct GfxLayout destroyr_alpha_num_layout =
 	1,        /* planes        */
 	{ 0 },    /* plane offsets */
 	{
-		0x04, 0x05, 0x06, 0x07, 0x0C, 0x0D, 0x0E, 0x0F
+		0x4, 0x5, 0x6, 0x7, 0xC, 0xD, 0xE, 0xF
 	},
 	{
 		0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70
 	},
 	0x80      /* increment */
 };
+
 
 static struct GfxLayout destroyr_minor_object_layout =
 {
@@ -283,8 +271,8 @@ static struct GfxLayout destroyr_minor_object_layout =
 	1,        /* planes        */
 	{ 0 },    /* plane offsets */
 	{
-	  0x004, 0x005, 0x006, 0x007, 0x00C, 0x00D, 0x00E, 0x00F,
-	  0x014, 0x015, 0x016, 0x017, 0x01C, 0x01D, 0x01E, 0x01F
+	  0x04, 0x05, 0x06, 0x07, 0x0C, 0x0D, 0x0E, 0x0F,
+	  0x14, 0x15, 0x16, 0x17, 0x1C, 0x1D, 0x1E, 0x1F
 	},
 	{
 	  0x000, 0x020, 0x040, 0x060, 0x080, 0x0a0, 0x0c0, 0x0e0,
@@ -293,6 +281,7 @@ static struct GfxLayout destroyr_minor_object_layout =
 	0x200     /* increment */
 };
 
+
 static struct GfxLayout destroyr_major_object_layout =
 {
 	64, 16,   /* width, height */
@@ -300,21 +289,22 @@ static struct GfxLayout destroyr_major_object_layout =
 	2,        /* planes        */
 	{ 1, 0 }, /* plane offsets */
 	{
-	  0x0004, 0x0006, 0x2004, 0x2006, 0x000C, 0x000E, 0x200C, 0x200E,
-	  0x0014, 0x0016, 0x2014, 0x2016, 0x001C, 0x001E, 0x201C, 0x201E,
-	  0x0024, 0x0026, 0x2024, 0x2026, 0x002C, 0x002E, 0x202C, 0x202E,
-	  0x0034, 0x0036, 0x2034, 0x2036, 0x003C, 0x003E, 0x203C, 0x203E,
-	  0x0044, 0x0046, 0x2044, 0x2046, 0x004C, 0x004E, 0x204C, 0x204E,
-	  0x0054, 0x0056, 0x2054, 0x2056, 0x005C, 0x005E, 0x205C, 0x205E,
-	  0x0064, 0x0066, 0x2064, 0x2066, 0x006C, 0x006E, 0x206C, 0x206E,
-	  0x0074, 0x0076, 0x2074, 0x2076, 0x007C, 0x007E, 0x207C, 0x207E
+	  0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E,
+	  0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E,
+	  0x20, 0x22, 0x24, 0x26, 0x28, 0x2A, 0x2C, 0x2E,
+	  0x30, 0x32, 0x34, 0x36, 0x38, 0x3A, 0x3C, 0x3E,
+	  0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E,
+	  0x50, 0x52, 0x54, 0x56, 0x58, 0x5A, 0x5C, 0x5E,
+	  0x60, 0x62, 0x64, 0x66, 0x68, 0x6A, 0x6C, 0x6E,
+	  0x70, 0x72, 0x74, 0x76, 0x78, 0x7A, 0x7C, 0x7E
 	},
 	{
-	  0x0000, 0x0080, 0x0100, 0x0180, 0x0200, 0x0280, 0x0300, 0x0380,
-	  0x0400, 0x0480, 0x0500, 0x0580, 0x0600, 0x0680, 0x0700, 0x0780
+	  0x000, 0x080, 0x100, 0x180, 0x200, 0x280, 0x300, 0x380,
+	  0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780
 	},
 	0x0800     /* increment */
 };
+
 
 static struct GfxLayout destroyr_waves_layout =
 {
@@ -323,14 +313,14 @@ static struct GfxLayout destroyr_waves_layout =
 	1,        /* planes        */
 	{ 0 },    /* plane offsets */
 	{
-	  0x03, 0x02, 0x01, 0x00, 0x0B, 0x0A, 0x09, 0x08,
-	  0x13, 0x12, 0x11, 0x10, 0x1B, 0x1A, 0x19, 0x18,
-	  0x23, 0x22, 0x21, 0x20, 0x2B, 0x2A, 0x29, 0x28,
-	  0x33, 0x32, 0x31, 0x30, 0x3B, 0x3A, 0x39, 0x38,
-	  0x43, 0x42, 0x41, 0x40, 0x4B, 0x4A, 0x49, 0x48,
-	  0x53, 0x52, 0x51, 0x50, 0x5B, 0x5A, 0x59, 0x58,
-	  0x63, 0x62, 0x61, 0x60, 0x6B, 0x6A, 0x69, 0x68,
-	  0x73, 0x72, 0x71, 0x70, 0x7B, 0x7A, 0x79, 0x78
+	  0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B,
+	  0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1A, 0x1B,
+	  0x20, 0x21, 0x22, 0x23, 0x28, 0x29, 0x2A, 0x2B,
+	  0x30, 0x31, 0x32, 0x33, 0x38, 0x39, 0x3A, 0x3B,
+	  0x40, 0x41, 0x42, 0x43, 0x48, 0x49, 0x4A, 0x4B,
+	  0x50, 0x51, 0x52, 0x53, 0x58, 0x59, 0x5A, 0x5B,
+	  0x60, 0x61, 0x62, 0x63, 0x68, 0x69, 0x6A, 0x6B,
+	  0x70, 0x71, 0x72, 0x73, 0x78, 0x79, 0x7A, 0x7B
 	},
 	{
 	  0x00, 0x80
@@ -341,10 +331,10 @@ static struct GfxLayout destroyr_waves_layout =
 
 static struct GfxDecodeInfo destroyr_gfx_decode_info[] =
 {
-	{ REGION_GFX1, 0, &destroyr_alpha_num_layout, 4, 2 },
-	{ REGION_GFX2, 0, &destroyr_minor_object_layout, 4, 2 },
-	{ REGION_GFX3, 0, &destroyr_major_object_layout, 0, 4 },
-	{ REGION_GFX4, 0, &destroyr_waves_layout, 4, 2 },
+	{ REGION_GFX1, 0, &destroyr_alpha_num_layout, 4, 1 },
+	{ REGION_GFX2, 0, &destroyr_minor_object_layout, 4, 1 },
+	{ REGION_GFX3, 0, &destroyr_major_object_layout, 0, 1 },
+	{ REGION_GFX4, 0, &destroyr_waves_layout, 4, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -354,10 +344,10 @@ static PALETTE_INIT( destroyr )
 	static UINT8 palette_source[] =
 	{
 		0x00, 0x00, 0x00,   /* major objects */
-		0x55, 0x55, 0x55,
-		0xB0, 0xB0, 0xB0,
+		0x50, 0x50, 0x50,
+		0xAF, 0xAF, 0xAF,
 		0xFF ,0xFF, 0xFF,
-		0x00, 0x00, 0x00,   /* alpha numericals, waves, minor objects */
+		0x00, 0x00, 0x00,   /* alpha numerics, waves, minor objects */
 		0xFF, 0xFF, 0xFF,
 		0x00, 0x00, 0x00,   /* cursor */
 		0x78, 0x78, 0x78
@@ -370,12 +360,12 @@ static PALETTE_INIT( destroyr )
 static MACHINE_DRIVER_START( destroyr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6800,12096000 / 16)
-	MDRV_CPU_MEMORY(destroyr_readmem,destroyr_writemem)
-	MDRV_CPU_VBLANK_INT(destroyr_interrupt,4)
+	MDRV_CPU_ADD(M6800, 12096000 / 16)
+	MDRV_CPU_MEMORY(destroyr_readmem, destroyr_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_assert, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION((int) ((22.5 * 1000000) / (262.5 * 60) + 0.5))
+	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
 
 	MDRV_MACHINE_INIT(destroyr)
 
@@ -385,7 +375,6 @@ static MACHINE_DRIVER_START( destroyr )
 	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_GFXDECODE(destroyr_gfx_decode_info)
 	MDRV_PALETTE_LENGTH(8)
-
 	MDRV_PALETTE_INIT(destroyr)
 	MDRV_VIDEO_UPDATE(destroyr)
 
@@ -394,22 +383,22 @@ MACHINE_DRIVER_END
 
 
 ROM_START( destroyr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	               /* program code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )                  /* program code */
 	ROM_LOAD( "30146-01.c3", 0x7800, 0x0800, 0xe560c712 )
 	ROM_RELOAD(              0xF800, 0x0800 )
 
-	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )   /* alpha numericals */
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )   /* alpha numerics */
 	ROM_LOAD( "30135-01.p4", 0x0000, 0x0400, 0x184824cf )
 
 	ROM_REGION( 0x0400, REGION_GFX2, ROMREGION_DISPOSE )   /* minor objects */
 	ROM_LOAD( "30132-01.f4", 0x0000, 0x0400, 0xe09d3d55 )
 
-	ROM_REGION( 0x0800, REGION_GFX3, ROMREGION_DISPOSE )   /* major objects */
-	ROM_LOAD( "30134-01.p8", 0x0000, 0x0400, 0x6259e007 )
-	ROM_LOAD( "30133-01.n8", 0x0400, 0x0400, 0x108d3e2c )
+	ROM_REGION( 0x0400, REGION_GFX3, ROMREGION_DISPOSE )   /* major objects */
+	ROM_LOAD_NIB_HIGH( "30134-01.p8", 0x0000, 0x0400, 0x6259e007 )
+	ROM_LOAD_NIB_LOW ( "30133-01.n8", 0x0000, 0x0400, 0x108d3e2c )
 
 	ROM_REGION( 0x0020, REGION_GFX4, ROMREGION_DISPOSE )   /* waves */
-	ROM_LOAD( "30136-01.k2", 0x0000, 0x0020, BADCRC( 0xe6741ac3 ))
+	ROM_LOAD( "30136-01.k2", 0x0000, 0x0020, 0x532c11b1 )
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 )                  /* sync (unused) */
 	ROM_LOAD( "30131-01.m1", 0x0000, 0x0100, 0xb8094b4c )

@@ -252,7 +252,7 @@ static int dvg_generate_vector_list(void)
 		opcode = firstwd >> 12;
 
 		/* the DVCTR and DLABS opcodes take two words */
-		if (opcode >= DVCTR && opcode <= DLABS)
+		if (opcode >= 0 && opcode <= DLABS)
 			secondwd = vector_word(pc++);
 
 		/* debugging */
@@ -1119,9 +1119,13 @@ WRITE16_HANDLER( quantum_colorram_w )
 {
 	if (ACCESSING_LSB)
 	{
-		int r = (data & 8) ? 0x00 : 0x0f;
-		int b = (data & 4) ? 0x00 : 0x0f;
-		int g = ((data & 2) ? 0x00 : 0x0a) | ((data & 1) ? 0x00 : 0x05);
+		int bit3 = (~data >> 3) & 1;
+		int bit2 = (~data >> 2) & 1;
+		int bit1 = (~data >> 1) & 1;
+		int bit0 = (~data >> 0) & 1;
+		int r = bit3 * 0xee;
+		int g = bit1 * 0xee + bit0 * 0x11;
+		int b = bit2 * 0xee;
 
 		colorram[offset & 0x0f] = MAKE_RGB(r, g, b);
 	}

@@ -27,7 +27,7 @@ MACHINE_INIT( demonwld );
 MACHINE_INIT( vimana );
 MACHINE_INIT( zerozone );	/* hack for ZeroWing/OutZone. See vidhrdw */
 
-int toaplan1_unk_reset_port;
+extern int toaplan1_unk_reset_port;
 
 extern data8_t *toaplan1_sharedram;
 

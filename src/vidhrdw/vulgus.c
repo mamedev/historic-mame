@@ -164,9 +164,9 @@ WRITE_HANDLER( vulgus_c804_w )
 
 WRITE_HANDLER( vulgus_palette_bank_w )
 {
-	if (vulgus_palette_bank != data)
+	if (vulgus_palette_bank != (data & 3))
 	{
-		vulgus_palette_bank = data;
+		vulgus_palette_bank = data & 3;
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }

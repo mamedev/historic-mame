@@ -97,10 +97,15 @@ CPS2:
 
 * Its unknown what CPS2_OBJ_BASE register (0x400000) does but it is not a object base
   register. All games use 0x7000 even if 0x7080 is used at this register (checked on
-  real HW). Maybe it sets the object bank used when cps2_objram_bank is set?
+  real HW). Maybe it sets the object bank used when cps2_objram_bank is set.
 
 * Sprites are currently lagged by one frame to keep sync with backgrounds. This causes
   sprites to stay on screen one frame longer (visable in VSAV attract mode).
+
+Marvel Vs. Capcom
+* Sometimes currupt gfx are displayed on the 32x32 layer as the screen flashes at the
+  start of super combo moves. The problem seems to be due to tiles being fetched before
+  the first 32x32 tile offset and results in data coming from 16x16 or 8x8 tiles instead.
 
 CPS1:
 SF2
@@ -242,6 +247,7 @@ static struct CPS1config cps1_config_table[]=
 	{"strider", CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"striderj",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"stridrja",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
+	{"dw",      UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
 	{"dwj",     UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
 	{"willow",  UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
 	{"willowj", UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
@@ -331,6 +337,7 @@ static struct CPS1config cps1_config_table[]=
 	{"cps2",    NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2",    NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2a",   NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2ar1", NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2j",   NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2jr1", NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ssf2jr2", NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
@@ -594,7 +601,7 @@ static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 #define CPS2_OBJ_PRI	0x04	/* Layers priorities */
 #define CPS2_OBJ_UK2	0x06	/* Unknown (usually 0x0000, 0x1101 in ssf2, 0x0001 in 19XX) */
 #define CPS2_OBJ_XOFFS	0x08	/* X offset (usually 0x0040) */
-#define CPS2_OBJ_UK4	0x0a	/* Unknown (always 0x0010). Could be Y offset. */
+#define CPS2_OBJ_YOFFS	0x0a	/* Y offset (always 0x0010) */
 
 INLINE int cps2_port(int offset)
 {
@@ -1190,8 +1197,7 @@ void cps1_build_palette(void)
 					0x0010	colour
 					0x0020	X Flip
 					0x0040	Y Flip
-					0x0080	unknown (appears to be object X offset toggle,
-					            used only by Marvel vs. Capcom.)
+					0x0080	X & Y offset toggle (used in Marvel vs. Capcom.)
 					0x0100	X block size (in sprites)
 					0x0200	X block size
 					0x0400	X block size
@@ -1499,8 +1505,11 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		int col=colour&0x1f;
 
 		if(colour & 0x80)
-			x += cps2_port(CPS2_OBJ_XOFFS);  /* To fix the offset of some */
-						/* sprites in the Marvel vs. Capcom ending credits */
+		{
+			x += cps2_port(CPS2_OBJ_XOFFS);  /* fix the offset of some games */
+			y += cps2_port(CPS2_OBJ_YOFFS);  /* like Marvel vs. Capcom ending credits */
+		}
+
 		if (colour & 0xff00 )
 		{
 			/* handle blocked sprites */
@@ -1785,16 +1794,14 @@ VIDEO_UPDATE( cps1 )
 		l2pri = (pri_ctrl >> 4*l2) & 0x0f;
 		l3pri = (pri_ctrl >> 4*l3) & 0x0f;
 
-#ifdef MAME_DEBUG
+#if 0
 if (	(cps2_port(CPS2_OBJ_BASE) != 0x7080 && cps2_port(CPS2_OBJ_BASE) != 0x7000) ||
 		cps2_port(CPS2_OBJ_UK1) != 0x807d ||
 		(cps2_port(CPS2_OBJ_UK2) != 0x0000 && cps2_port(CPS2_OBJ_UK2) != 0x1101 && cps2_port(CPS2_OBJ_UK2) != 0x0001) ||
-		cps2_port(CPS2_OBJ_UK4) != 0x0010)
-	usrintf_showmessage("base %04x uk1 %04x uk2 %04x uk4 %04x",
+	usrintf_showmessage("base %04x uk1 %04x uk2 %04x",
 			cps2_port(CPS2_OBJ_BASE),
 			cps2_port(CPS2_OBJ_UK1),
-			cps2_port(CPS2_OBJ_UK2),
-			cps2_port(CPS2_OBJ_UK4));
+			cps2_port(CPS2_OBJ_UK2));
 
 if (0 && keyboard_pressed(KEYCODE_Z))
 	usrintf_showmessage("order: %d (%d) %d (%d) %d (%d) %d (%d)",l0,l0pri,l1,l1pri,l2,l2pri,l3,l3pri);

@@ -1168,7 +1168,7 @@ READ16_HANDLER( williams_dcs_bank_r )
 	UINT8	*banks = memory_region( REGION_CPU1+williams_cpunum ) + ADSP2100_SIZE;
 
 	offset += ( dcs.bank & 0x7ff ) << 12;
-	return banks[offset];
+	return banks[BYTE_XOR_LE(offset)];
 }
 
 

@@ -55,9 +55,9 @@ MEMORY_END
 
 static WRITE_HANDLER( D7759_write_port_0_w )
 {
-	UPD7759_reset_w (0,0);
-	UPD7759_message_w(offset,data);
+	UPD7759_port_w(offset,data);
 	UPD7759_start_w (0,0);
+	UPD7759_start_w (0,1);
 }
 
 static MEMORY_READ_START( prehisle_sound_readmem )
@@ -79,7 +79,7 @@ static PORT_WRITE_START( prehisle_sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x20, 0x20, YM3812_write_port_0_w },
 	{ 0x40, 0x40, D7759_write_port_0_w},
-	{ 0x80, 0x80, MWA_NOP }, /* IRQ ack? */
+	{ 0x80, 0x80, UPD7759_0_reset_w },
 PORT_END
 
 /******************************************************************************/
@@ -227,8 +227,7 @@ static struct YM3812interface ym3812_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,							/* number of chips */
-	UPD7759_STANDARD_CLOCK,
-	{ 50 }, 					/* volume */
+	{ 90 }, 					/* volume */
 	{ REGION_SOUND1 },			/* memory region */
 	UPD7759_STANDALONE_MODE,	/* chip mode */
 	{ NULL }

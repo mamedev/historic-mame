@@ -48,12 +48,13 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		timer_adjust(Timer[n][c], TIME_NEVER, (c<<7)|n, 0);
+		timer_enable(Timer[n][c], 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
-		timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
+		if (!timer_enable(Timer[n][c], 1))
+			timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
 	}
 }
 

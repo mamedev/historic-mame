@@ -35,7 +35,7 @@ VIDEO_START( dv );
 
 static INTERRUPT_GEN( mainevt_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) 
+	if (K052109_is_IRQ_enabled())
 		irq0_line_hold();
 }
 
@@ -49,7 +49,7 @@ static WRITE_HANDLER( dv_nmienable_w )
 
 static INTERRUPT_GEN( dv_interrupt )
 {
-	if (nmi_enable) 
+	if (nmi_enable)
 		nmi_line_pulse();
 }
 
@@ -91,15 +91,8 @@ WRITE_HANDLER( mainevt_sh_irqtrigger_w )
 
 WRITE_HANDLER( mainevt_sh_irqcontrol_w )
 {
- 	/* I think bit 1 resets the UPD7795C sound chip */
- 	if ((data & 0x02) == 0)
- 	{
- 		UPD7759_reset_w(0,(data & 0x02) >> 1);
- 	}
-	else if ((data & 0x01))
- 	{
-		UPD7759_start_w(0,0);
- 	}
+	UPD7759_reset_w(0, data & 2);
+	UPD7759_start_w(0, data & 1);
 
 	interrupt_enable_w(0,data & 4);
 }
@@ -111,7 +104,6 @@ interrupt_enable_w(0,data & 4);
 
 WRITE_HANDLER( mainevt_sh_bankswitch_w )
 {
-	unsigned char *src,*dest;
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
@@ -123,9 +115,7 @@ WRITE_HANDLER( mainevt_sh_bankswitch_w )
 	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
-	src = &memory_region(REGION_SOUND2)[0x20000];
-	dest = memory_region(REGION_SOUND2);
-	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
+	UPD7759_set_bank_base(0, ((data >> 4) & 0x03) * 0x20000);
 }
 
 WRITE_HANDLER( dv_sh_bankswitch_w )
@@ -214,7 +204,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
-	{ 0x9000, 0x9000, UPD7759_0_message_w },
+	{ 0x9000, 0x9000, UPD7759_0_port_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
 MEMORY_END
@@ -601,7 +591,6 @@ static struct K007232_interface k007232_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
 	{ REGION_SOUND2 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
@@ -707,9 +696,8 @@ ROM_START( mainevt )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( mainevt2 )
@@ -736,9 +724,8 @@ ROM_START( mainevt2 )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( ringohja )
@@ -765,9 +752,8 @@ ROM_START( ringohja )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( devstors )

@@ -21,12 +21,13 @@ UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 
 /* local data */
 static UINT8 segment_address, segment_increment;
-static UINT8 osel, bsel, accel;
+static UINT8 osel, bsel, turbo_accel;
 static UINT8 port_8279;
 
 static UINT8 buckrog_status;
 static UINT8 buckrog_command;
-
+static UINT8 buckrog_hit;
+static UINT8 buckrog_myship;
 
 
 /*******************************************
@@ -35,7 +36,7 @@ static UINT8 buckrog_command;
 
 *******************************************/
 
-static void update_samples(void)
+static void turbo_update_samples(void)
 {
 	/* accelerator sounds */
 	/* BSEL == 3 --> off */
@@ -47,7 +48,18 @@ static void update_samples(void)
 	else if (bsel != 3 && !sample_playing(6))
 		sample_start(6, 7, 1);
 	if (sample_playing(6))
-		sample_set_freq(6, 44100 * (accel & 0x3f) / 5.25 + 44100);
+		sample_set_freq(6, 44100 * (turbo_accel & 0x3f) / 5.25 + 44100);
+}
+
+
+static void buckrog_update_samples(void)
+{
+	/* accelerator sounds -- */
+	if (sample_playing(0))
+		sample_set_freq(0, 44100 * buckrog_myship / 100.25 + 44100);
+
+	if (sample_playing(1))
+		sample_set_freq(1, 44100 * buckrog_hit / 5.25 + 44100);
 }
 
 
@@ -121,7 +133,7 @@ static WRITE_HANDLER( turbo_sound_A_w )
 	if (!(data & 0x40)) sample_start(1, 4, 0);
 	if (!(data & 0x80)) sample_start(2, 5, 0);
 	osel = (osel & 6) | ((data >> 5) & 1);
-	update_samples();
+	turbo_update_samples();
 }
 
 
@@ -137,8 +149,8 @@ static WRITE_HANDLER( turbo_sound_B_w )
 		2PB6 = /AMBU
 		2PB7 = /SPIN
 	*/
-	accel = data & 0x3f;
-	update_samples();
+	turbo_accel = data & 0x3f;
+	turbo_update_samples();
 	if (!(data & 0x40))
 	{
 		if (!sample_playing(7))
@@ -167,7 +179,7 @@ static WRITE_HANDLER( turbo_sound_C_w )
 	turbo_speed = (data >> 4) & 0x0f;
 	bsel = (data >> 2) & 3;
 	osel = (osel & 1) | ((data & 3) << 1);
-	update_samples();
+	turbo_update_samples();
 }
 
 
@@ -287,12 +299,50 @@ static WRITE_HANDLER( buckrog_fore_palette_w )
 static WRITE_HANDLER( buckrog_sound_A_w )
 {
 	/* sound controls */
+	static int last = -1;
+
+	if ((last & 0x10) && !(data & 0x10))
+	{
+		buckrog_hit = data & 0x07;
+		buckrog_update_samples();
+	}
+
+	if ((last & 0x20) && !(data & 0x20))
+	{
+		buckrog_myship = data & 0x0f;
+		buckrog_update_samples();
+	}
+
+	if ((last & 0x40) && !(data & 0x40)) sample_start(5, 0, 0); /* alarm0 */
+	if ((last & 0x80) && !(data & 0x80)) sample_start(5, 1, 0); /* alarm1 */
+
+	last = data;
 }
 
 
 static WRITE_HANDLER( buckrog_sound_B_w )
 {
 	/* sound controls */
+	static int last = -1;
+
+	if ((last & 0x01) && !(data & 0x01)) sample_start(5, 2, 0); /* alarm2 */
+	if ((last & 0x02) && !(data & 0x02)) sample_start(5, 3, 0); /* alarm3 */
+	if ((last & 0x04) && !(data & 0x04)) sample_start(2, 5, 0); /* fire */
+	if ((last & 0x08) && !(data & 0x08)) sample_start(3, 4, 0); /* exp */
+	if ((last & 0x10) && !(data & 0x10)) { sample_start(1, 7, 0); buckrog_update_samples(); } /* hit */
+	if ((last & 0x20) && !(data & 0x20)) sample_start(4, 6, 0);	/* rebound */
+
+	if ((data & 0x40) && !sample_playing(0))
+	{
+		sample_start(0, 8, 1); /* ship */
+		buckrog_update_samples();
+	}
+	if (!(data & 0x40) && sample_playing(0))
+		sample_stop(0);
+
+	mixer_sound_enable_global_w(data & 0x80);
+
+	last = data;
 }
 
 
@@ -472,7 +522,7 @@ void turbo_rom_decode(void)
  *
  */
 
-	static const UINT8 xortable[4][32]=
+	static const UINT8 xortable[][32]=
 	{
 		/* Table 0 */
 		/* 0x0000-0x3ff */

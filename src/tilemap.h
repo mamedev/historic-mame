@@ -122,6 +122,8 @@ void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ); /* def
 void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
 
+void tilemap_set_palette_offset( struct tilemap *tilemap, int offset );
+
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
 void tilemap_set_flip( struct tilemap *tilemap, int attributes );

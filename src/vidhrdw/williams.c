@@ -35,6 +35,7 @@ UINT8 *blaster_color_zero_flags;
 UINT8 *blaster_color_zero_table;
 static const UINT8 *blaster_remap;
 static UINT8 *blaster_remap_lookup;
+static int blaster_back_color;
 
 /* tilemap variables */
 UINT8 williams2_tilemap_mask;
@@ -114,10 +115,13 @@ static void (*williams2_blitters[])(int, int, int, int, int) =
 
 static void copy_pixels(struct mame_bitmap *bitmap, const struct rectangle *clip, int transparent_pen)
 {
-	int blaster_back_color = 0;
 	int pairs = (clip->max_x - clip->min_x + 1) / 2;
 	int xoffset = clip->min_x;
 	int x, y;
+
+	/* determine an accurate state for the Blaster background color */
+	if (williams_blitter_remap && clip->min_y == Machine->visible_area.min_y)
+		blaster_back_color = 0;
 
 	/* loop over rows */
 	for (y = clip->min_y; y <= clip->max_y; y++)
@@ -128,7 +132,7 @@ static void copy_pixels(struct mame_bitmap *bitmap, const struct rectangle *clip
 		int erase_behind;
 
 		/* should we erase as we draw? */
-		erase_behind = (williams_blitter_remap && y >= 32 && (*blaster_video_bits & 0x02));
+		erase_behind = (williams_blitter_remap && (*blaster_video_bits & blaster_color_zero_flags[y] & 0x02));
 
 		/* draw all pairs */
 		for (x = 0; x < pairs; x++, source += 256)
