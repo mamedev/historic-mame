@@ -5,7 +5,7 @@
 //
 // The encrypted sprite offset comes from the rom.  There are 10-bytes
 // structures at address:
-//   224eb4 + nb*10        for sprites 0..1f3f
+//   223eb4 + nb*10        for sprites 0..1f3f
 //   23773e + (nb_1f40)*10 for sprites 1f40..3bff
 //
 // struct is:

@@ -451,12 +451,16 @@ void CLIB_DECL terse_printf(const char *fmt,...)
 
 int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
+	int cmp;
 	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
 	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
 	char name1[200],name2[200];
 	namecopy(name1,drv1->description);
 	namecopy(name2,drv2->description);
-	return strcmp(name1,name2);
+	cmp = stricmp(name1,name2);
+	if (cmp == 0)
+		cmp = stricmp(drv1->description, drv2->description);
+	return cmp;
 }
 
 

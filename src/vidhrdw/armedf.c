@@ -7,17 +7,20 @@ data16_t armedf_vreg;
 data16_t *terraf_text_videoram;
 data16_t *armedf_bg_videoram;
 data16_t *armedf_fg_videoram;
+data16_t *legion_cmd;
 static data16_t armedf_fg_scrollx,armedf_fg_scrolly;
 
 data16_t terraf_scroll_msb;
 
 static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
-static int scroll_type,sprite_offy;
+static int scroll_type,sprite_offy, mcu_mode, old_mcu_mode;
 
 void armedf_setgfxtype( int type )
 {
 	scroll_type = type;
+	mcu_mode = 0;
+	old_mcu_mode = 0;
 }
 
 /***************************************************************************
@@ -34,10 +37,11 @@ static UINT32 armedf_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 		return col*32+row;
 
 	case 3: /* legion */
-		return (col&0x1f)*32+row+0x400*(col/32);
+	case 6: /* legiono */
+		return (col&0x1f)*32+row+0x800*(col/32);
 
 	default:
-		return 32*(31-row)+(col&0x1f)+0x400*(col/32);
+		return 32*(31-row)+(col&0x1f)+0x800*(col/32);
 	}
 }
 
@@ -93,7 +97,8 @@ static void get_bg_tile_info( int tile_index )
 VIDEO_START( armedf )
 {
 	if( scroll_type == 4 || /* cclimbr2 */
-		scroll_type == 3 )  /* legion */
+		scroll_type == 3 || /* legion */
+		scroll_type == 6 )  /* legiono */
 	{
 		sprite_offy = 0;
 	}
@@ -102,7 +107,8 @@ VIDEO_START( armedf )
 		sprite_offy = 128;
 	}
 
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	//bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 	tx_tilemap = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
@@ -111,6 +117,7 @@ VIDEO_START( armedf )
 
 	tilemap_set_transparent_pen(fg_tilemap,0xf);
 	tilemap_set_transparent_pen(tx_tilemap,0xf);
+	tilemap_set_transparent_pen(bg_tilemap,0xf);
 
 	if( scroll_type!=1 )
 	{
@@ -141,6 +148,15 @@ WRITE16_HANDLER( armedf_text_videoram_w )
 			tilemap_mark_tile_dirty(tx_tilemap,offset & 0xbff);
 		}
 	}
+		
+/*	if (offset<0x10)
+		logerror("%04x %04x %04x %04x %04x %04x %04x %04x-%04x %04x %04x %04x %04x %04x %04x %04x (%04x)\n",
+			terraf_text_videoram[0], terraf_text_videoram[1], terraf_text_videoram[2],
+			terraf_text_videoram[3], terraf_text_videoram[4], terraf_text_videoram[5],
+			terraf_text_videoram[6], terraf_text_videoram[7], terraf_text_videoram[8],
+			terraf_text_videoram[9], terraf_text_videoram[10], terraf_text_videoram[11],
+			terraf_text_videoram[12], terraf_text_videoram[13], terraf_text_videoram[14],
+			terraf_text_videoram[15], offset);*/
 }
 
 
@@ -212,6 +228,11 @@ WRITE16_HANDLER( armedf_bg_scrolly_w )
 	tilemap_set_scrolly(bg_tilemap,0,scroll);
 }
 
+WRITE16_HANDLER( armedf_mcu_cmd )
+{
+	COMBINE_DATA(&mcu_mode);	
+}
+
 
 
 /***************************************************************************
@@ -261,6 +282,24 @@ VIDEO_UPDATE( armedf )
 	tilemap_set_enable( bg_tilemap, armedf_vreg&0x800 );
 	tilemap_set_enable( fg_tilemap, armedf_vreg&0x400 );
 	tilemap_set_enable( tx_tilemap, armedf_vreg&0x100 );
+	
+	if ((scroll_type == 0)||(scroll_type == 5 )) {
+		if (old_mcu_mode!=mcu_mode) {
+			if ((mcu_mode&0x000f)==0x0004) {		// transparent tx
+				tilemap_set_transparent_pen(tx_tilemap, 0x0f);
+				tilemap_mark_all_tiles_dirty( tx_tilemap );
+				//logerror("? Transparent TX 0x0f\n");
+			}
+			if ((mcu_mode&0x000f)==0x000f) {		// opaque tx
+				tilemap_set_transparent_pen(tx_tilemap, 0x10);
+				tilemap_mark_all_tiles_dirty( tx_tilemap );
+				//logerror("? Opaque TX\n");
+			}
+			
+			old_mcu_mode = mcu_mode;
+			//logerror("MCU Change => %04x\n",mcu_mode);
+		}
+	}
 
 	switch (scroll_type)
 	{
@@ -274,8 +313,12 @@ VIDEO_UPDATE( armedf )
 			tilemap_set_scrolly( fg_tilemap, 0, armedf_fg_scrolly );
 			break;
 
+		case 6: /* legiono */
+			tilemap_set_scrollx( fg_tilemap, 0, (legion_cmd[13] & 0xff) | ((legion_cmd[14] & 0x3)<<8) );
+			tilemap_set_scrolly( fg_tilemap, 0, (legion_cmd[11] & 0xff) | ((legion_cmd[12] & 0x3)<<8) );
+			break;
 		case 2: /* kodure ookami */
-		case 3: /* legion */
+		case 3:
 		case 4: /* crazy climber 2 */
 			{
 				int scrollx,scrolly;
@@ -285,35 +328,37 @@ VIDEO_UPDATE( armedf )
 				scrolly = (terraf_text_videoram[11] & 0xff) | (terraf_text_videoram[12] << 8);
 				tilemap_set_scrollx( fg_tilemap, 0, scrollx);
 				tilemap_set_scrolly( fg_tilemap, 0, scrolly);
+				
 			}
 			break;
+		case 5: /* terra force (US) */
+			tilemap_set_scrollx( fg_tilemap, 0, (terraf_text_videoram[13] & 0xff) | ((terraf_text_videoram[14] & 0x3)<<8) );
+			tilemap_set_scrolly( fg_tilemap, 0, (terraf_text_videoram[11] & 0xff) | ((terraf_text_videoram[12] & 0x3)<<8) );
+			break;
+			
 	}
 
-	if( armedf_vreg & 0x0800 )
+
+	fillbitmap( bitmap, 0xff, cliprect );
+	if (armedf_vreg & 0x0800) tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
+	/*if( armedf_vreg & 0x0800 )
 	{
 		tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
 	}
 	else
 	{
-		fillbitmap( bitmap, get_black_pen(), cliprect ); /* disabled bg_tilemap - all black? */
-	}
+		fillbitmap( bitmap, get_black_pen()&0x0f, cliprect );
+	}*/
 
+	if ((mcu_mode&0x0030)==0x0030) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
+	if ((mcu_mode&0x0030)==0x0020) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	tilemap_draw( bitmap, cliprect, fg_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0010) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
-	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0000) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
-
-	if( code_pressed(KEYCODE_1 ) ||
-		code_pressed(KEYCODE_2 ) )
-	{ /* HACK! wipe the text layer */
-		unsigned i;
-		for( i=0; i<0x800; i++ )
-		{
-			terraf_text_videoram[i] = 0x0;
-		}
-		tilemap_mark_all_tiles_dirty( tx_tilemap );
-	}
+	
 }
 
 VIDEO_EOF( armedf )

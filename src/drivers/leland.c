@@ -10,6 +10,7 @@
 		* Power Play
 		* World Series: The Season
 		* Alley Master
+		* Up Your Alley
 		* Danger Zone
 		* Baseball The Season II
 		* Super Baseball Double Play Home Run Derby
@@ -251,6 +252,42 @@ INPUT_PORTS_START( alleymas )		/* complete, verified from code */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )		/* redundant inputs */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )		/* redundant inputs */
+
+	PORT_START      /* 0xD1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_EEPROM_DATA )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(1)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* Analog joystick 1 */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(1)
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,224) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(1)
+	PORT_START      /* Analog joystick 2 */
+	PORT_START
+	PORT_START      /* Analog joystick 3 */
+	PORT_START
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( upyoural )		/* complete, verified from code */
+	PORT_START      /* 0xC0 */
+	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START      /* 0xC1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_SERVICE_NO_TOGGLE( 0x02, IP_ACTIVE_LOW )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0xD0 */
+	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START      /* 0xD1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_EEPROM_DATA )
@@ -1013,6 +1050,56 @@ ROM_START( alleymas )
 	ROM_LOAD( "090",  0x14000, 0x2000, CRC(0e1769e3) SHA1(7ca5e3205e790d90e0a39dc88766c582f25147b7) )
 	/* U67 = Empty */
 	/* U89 = Empty */
+
+    ROM_REGION( LELAND_BATTERY_RAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
+ROM_END
+
+
+ROM_START( upyoural )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "uya-u101.bin", 0x00000, 0x02000, CRC(82bf3b7a) SHA1(1a23da0535c736fa2f49a83fe5e33b8d60117bd1) )
+	ROM_LOAD( "uya-u102.bin", 0x10000, 0x02000, CRC(e1681268) SHA1(205519bf59e3be1ec485de7d81e3c4751e6630f6) )
+	ROM_CONTINUE(             0x1c000, 0x02000 )
+	ROM_LOAD( "uya-u103.bin", 0x12000, 0x02000, CRC(0d36aa78) SHA1(77241adf02e65e5ff85dcc4a2f70411a637eed54) )
+	ROM_CONTINUE(             0x1e000, 0x02000 )
+	ROM_LOAD( "uya-u104.bin", 0x14000, 0x02000, CRC(a4473886) SHA1(af63f8c0e96b3f9ce58469948a0ebdb6a853f5c4) )
+	ROM_CONTINUE(             0x20000, 0x02000 )
+	ROM_LOAD( "uya-u105.bin", 0x16000, 0x02000, CRC(4cad86a4) SHA1(f330800ca276aec7301a76c7c974736ee25290ce) )
+	ROM_CONTINUE(             0x22000, 0x02000 )
+	ROM_LOAD( "uya-u106.bin", 0x18000, 0x02000, CRC(26f4848e) SHA1(b76179b89483a19ca3ca16e0b56af3667c252d8b) )
+	ROM_CONTINUE(             0x24000, 0x02000 )
+	ROM_LOAD( "uya-u107.bin", 0x1a000, 0x02000, CRC(fd087cc7) SHA1(96b70e94d96baf4ea66d98b225cf67bf69cdd972) )
+	ROM_CONTINUE(             0x26000, 0x02000 )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "uya-u3.bin",  0x00000, 0x02000, CRC(3fee63ae) SHA1(519fe4981dc2c6d025fc2f27af6682103c99dd5e) )
+	ROM_LOAD( "uya-u4.bin",  0x10000, 0x02000, CRC(d302b5d1) SHA1(77263944d7b4e335fbc3b91d69def6cc85648ec6) )
+	ROM_CONTINUE(            0x1c000, 0x02000 )
+	ROM_LOAD( "uya-u5.bin",  0x12000, 0x02000, CRC(79bdb24d) SHA1(f64c3c5a715d5f4a27e01aeb31e1c43f1f3d5b17) )
+	ROM_CONTINUE(            0x1e000, 0x02000 )
+	ROM_LOAD( "uya-u6.bin",  0x14000, 0x02000, CRC(f0b15d68) SHA1(8017fce4b30e2f3bee74fba82d2a0154b3a1ab6d) )
+	ROM_CONTINUE(            0x20000, 0x02000 )
+	ROM_LOAD( "uya-u7.bin",  0x16000, 0x02000, CRC(6974036c) SHA1(222dd4d8c6d69f6b44b76681a508ff2cfafe1acc) )
+	ROM_CONTINUE(            0x22000, 0x02000 )
+	ROM_LOAD( "uya-u8.bin",  0x18000, 0x02000, CRC(a4357b5a) SHA1(c58505e1ef66641f4da5f29edbb197c5a09a367b) )
+	ROM_CONTINUE(            0x24000, 0x02000 )
+	ROM_LOAD( "uya-u9.bin",  0x1a000, 0x02000, CRC(6d74274e) SHA1(10bb04243eabeb8178884b4e0691c5e1765a1dc4) )
+	ROM_CONTINUE(            0x26000, 0x02000 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "uya-u93.bin", 0x00000, 0x04000, CRC(e8addd70) SHA1(6fd6a09fbdbe866440c3205b103e4bede7e4b2d5) )
+	ROM_LOAD( "uya-u94.bin", 0x04000, 0x04000, CRC(3fd3be09) SHA1(abdafbf9472fe3320be1a3effd13407dadf66709) )
+	ROM_LOAD( "uya-u95.bin", 0x08000, 0x04000, CRC(37088dd1) SHA1(35e4a3b338baceae2e4b8ac6d95691af49ebc3c1) )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )   /* Ordering: 70/92/69/91/68/90/67/89 */
+	/* U70 = Empty */
+	ROM_LOAD( "uya-u92.bin",  0x04000, 0x2000, CRC(a020eab5) SHA1(2f4f51f0eff8a042bf23d5f3ff42166db56e7822) )
+	ROM_LOAD( "uya-u69.bin",  0x08000, 0x2000, CRC(79abb979) SHA1(dfff8ea4d13dd0db2836e75b6b57f5f3ddac0201) )
+	/* U91 = Empty */
+	ROM_LOAD( "uya-u68.bin",  0x10000, 0x2000, CRC(0c583385) SHA1(4bf5648991441470c4427c88ce17265b447d30d0) )
+	ROM_LOAD( "uya-u90.bin",  0x14000, 0x2000, CRC(0e1769e3) SHA1(7ca5e3205e790d90e0a39dc88766c582f25147b7) )
+	ROM_LOAD( "uya-u67.bin",  0x18000, 0x4000, CRC(d30a385d) SHA1(a1e83d360acef6087c24235c5a56457d25ccd937) )
+	ROM_LOAD( "uya-u89.bin",  0x1c000, 0x4000, CRC(5c17401e) SHA1(2759b1d336ee43116cc4e34db36bd9c56762cca9) )
 
     ROM_REGION( LELAND_BATTERY_RAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
@@ -2054,6 +2141,31 @@ static DRIVER_INIT( alleymas )
 }
 
 
+static DRIVER_INIT( upyoural )
+{
+	/* initialize the default EEPROM state */
+	static const UINT16 upyoural_eeprom_data[] =
+	{
+		0x0c,0x07bb,
+		0x0d,0xf483,
+		0x13,0xfefe,
+		0x14,0xfefe,
+		0x15,0xfbfb,
+		0x17,0x00ff,
+		0x18,0xff00,
+		0x37,0x00ff,
+		0xffff
+	};
+	leland_init_eeprom(0xff, upyoural_eeprom_data, 0x0c, SERIAL_TYPE_ENCRYPT_XOR);
+
+	/* master CPU bankswitching */
+	leland_update_master_bank = mayhem_bankswitch;
+
+	/* set up the master CPU I/O ports */
+	init_master_ports(0x00, 0xc0);
+}
+
+
 static DRIVER_INIT( dangerz )
 {
 	/* initialize the default EEPROM state */
@@ -2503,6 +2615,7 @@ GAME( 1985, mayhem,   0,       leland,  mayhem,   mayhem,   ROT0,   "Cinematroni
 GAME( 1985, powrplay, 0,       leland,  mayhem,   powrplay, ROT0,   "Cinematronics", "Power Play" )
 GAME( 1985, wseries,  0,       leland,  wseries,  wseries,  ROT0,   "Cinematronics", "World Series: The Season" )
 GAME( 1986, alleymas, 0,       leland,  alleymas, alleymas, ROT270, "Cinematronics", "Alley Master" )
+GAME( 1987, upyoural, 0,       leland,  upyoural, upyoural, ROT270, "Cinematronics", "Up Your Alley" )
 
 /* odd master banks, small slave banks */
 GAME( 1986, dangerz,  0,       leland,  dangerz,  dangerz,  ROT0,   "Cinematronics", "Danger Zone" )

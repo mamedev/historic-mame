@@ -10,6 +10,10 @@
   layout is unknown. It can be set for either period or white noise; again,
   the details are unknown.
 
+  28/03/2005 : Sebastien Chevalier
+  Update th SN76496Write func, according to SN76489 doc found on SMSPower.
+   - On write with 0x80 set to 0, when LastRegister is other then TONE,
+   the function is similar than update with 0x80 set to 1
 ***************************************************************************/
 
 #include "driver.h"
@@ -102,7 +106,7 @@ static void SN76496Write(int chip,int data)
 					R->NoiseFB = (n & 4) ? FB_WNOISE : FB_PNOISE;
 					n &= 3;
 					/* N/512,N/1024,N/2048,Tone #3 output */
-					R->Period[3] = (n == 3) ? 2 * R->Period[2] : (R->UpdateStep << (5+n));
+					R->Period[3] = ((n&3) == 3) ? 2 * R->Period[2] : (R->UpdateStep << (5+(n&3)));
 
 					/* reset noise shifter */
 					R->RNG = NG_PRESET;
@@ -131,6 +135,27 @@ static void SN76496Write(int chip,int data)
 						R->Period[3] = 2 * R->Period[2];
 				}
 				break;
+			case 1:	/* tone 0 : volume */
+			case 3:	/* tone 1 : volume */
+			case 5:	/* tone 2 : volume */
+			case 7:	/* noise  : volume */
+				R->Volume[c] = R->VolTable[data & 0x0f];
+				R->Register[r] = (R->Register[r] & 0x3f0) | (data & 0x0f);
+				break;
+			case 6:	/* noise  : frequency, mode */
+				{
+					R->Register[r] = (R->Register[r] & 0x3f0) | (data & 0x0f);
+					int n = R->Register[6];
+					R->NoiseFB = (n & 4) ? FB_WNOISE : FB_PNOISE;
+					n &= 3;
+					/* N/512,N/1024,N/2048,Tone #3 output */
+					R->Period[3] = ((n&3) == 3) ? 2 * R->Period[2] : (R->UpdateStep << (5+(n&3)));
+
+					/* reset noise shifter */
+					R->RNG = NG_PRESET;
+					R->Output[3] = R->RNG & 1;
+				}
+				break;
 		}
 	}
 }
@@ -140,7 +165,6 @@ WRITE8_HANDLER( SN76496_0_w ) {	SN76496Write(0,data); }
 WRITE8_HANDLER( SN76496_1_w ) {	SN76496Write(1,data); }
 WRITE8_HANDLER( SN76496_2_w ) {	SN76496Write(2,data); }
 WRITE8_HANDLER( SN76496_3_w ) {	SN76496Write(3,data); }
-
 
 
 static void SN76496Update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
@@ -313,7 +337,7 @@ static int SN76496_init(struct SN76496 *R,int sndindex,int clock,int sample_rate
 static void *sn76496_start(int sndindex, int clock, const void *config)
 {
 	struct SN76496 *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

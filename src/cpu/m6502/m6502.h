@@ -61,6 +61,12 @@ enum {
    positiv edge sets overflow flag */
 #define M6502_SET_OVERFLOW	1
 
+enum
+{
+	CPUINFO_PTR_M6502_READINDEXED_CALLBACK = CPUINFO_PTR_CPU_SPECIFIC,
+	CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK
+};
+
 extern void m6502_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************

@@ -30,7 +30,6 @@ static struct tms34061_interface tms34061intf =
 {
 	8,						/* VRAM address is (row << rowshift) | col */
 	0x10000,				/* size of video RAM */
-	0x100,					/* size of dirty chunks (must be power of 2) */
 	generate_interrupt		/* interrupt gen callback */
 };
 
@@ -158,7 +157,6 @@ READ8_HANDLER( bowlrama_blitter_r )
 
 VIDEO_UPDATE( capbowl )
 {
-	int halfwidth = (cliprect->max_x - cliprect->min_x + 1) / 2;
 	struct tms34061_display state;
 	int x, y;
 
@@ -168,44 +166,32 @@ VIDEO_UPDATE( capbowl )
 	/* if we're blanked, just fill with black */
 	if (state.blanked)
 	{
-		fillbitmap(bitmap, Machine->pens[0], cliprect);
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 		return;
 	}
-
-	/* update the palette and color usage */
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-		if (state.dirty[y])
-		{
-			UINT8 *src = &state.vram[256 * y];
-
-			/* update the palette */
-			for (x = 0; x < 16; x++)
-			{
-				int r = *src++ & 0x0f;
-				int g = *src >> 4;
-				int b = *src++ & 0x0f;
-
-				palette_set_color(y * 16 + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
-			}
-		}
 
 	/* now regenerate the bitmap */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT8 *src = &state.vram[256 * y + 32 + cliprect->min_x / 2];
-		UINT8 scanline[400];
-		UINT8 *dst = scanline;
-
-		/* expand row to 8bpp */
-		for (x = 0; x < halfwidth; x++)
+		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT8 *src = &state.vram[256 * y];
+		int ybase = 16 * y;
+		
+		/* first update the palette for this scanline */
+		for (x = 0; x < 16; x++)
 		{
-			int pix = *src++;
-			*dst++ = pix >> 4;
-			*dst++ = pix & 0x0f;
+			int r = *src++ & 0x0f;
+			int g = *src >> 4;
+			int b = *src++ & 0x0f;
+			palette_set_color(ybase + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
 		}
-
-		/* redraw the scanline and mark it no longer dirty */
-		draw_scanline8(bitmap, cliprect->min_x, y, halfwidth * 2, scanline, &Machine->pens[16 * y], -1);
-		state.dirty[y] = 0;
+		
+		/* expand row to 8bpp */
+		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
+		{
+			int pix = src[x/2];
+			*dest++ = ybase + (pix >> 4);
+			*dest++ = ybase + (pix & 0x0f);
+		}
 	}
 }

@@ -1,8 +1,89 @@
 /***************************************************************************
 
-  vidhrdw.c
+	Incredible Technologies/Strata system
+	(8-bit blitter variant)
 
-  Functions to emulate the video hardware of the machine.
+****************************************************************************
+
+	The games run in one of two modes, either 4bpp mode with a latched
+	palette nibble, or straight 8bpp.
+	
+	arligntn:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+	hstennis:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+	neckneck:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+	ninclown:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+	peggle:		4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+	rimrockn:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+
+	dynobop:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+	pokrdice:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+	slikshot:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+
+	gtg:		8bpp mode, dp = C0
+	stratab:	8bpp mode, dp = C0, always draws to 2xxxx
+	wfortune:	8bpp mode, dp = C0, always draws to 2xxxx
+	
+****************************************************************************
+
+	8-bit blitter data format:
+	
+	+00  hhhhhhhh   MSB of 16-bit source address
+	+01  llllllll   LSB of 16-bit source address
+	+02  ---t----   Transparent: when set, don't write 0 nibbles
+	     ----r---   RLE: when set, source data is RLE compressed
+	     -----y--   Y-flip: when set, draw up instead of down
+	     ------x-   X-flip: when set, draw right instead of left
+	     -------s   Shift: when set, offset drawing by one nibble
+	+03  s-------   Blit status: when set, blit is in progress
+	+03  --------   Blit start: a write here starts the blit
+	+04  wwwwwwww   Width of blit, in bytes
+	+05  hhhhhhhh   Height of blit, in rows
+	+06  mmmmmmmm   Blit mask, applied to each source pixel
+	+07  ?-------   Set by ninclown at startup
+	     -4------   Set by games that use 4bpp latched output
+	     --?-----   Set by gtg, gtg2, peggle, pokrdice, stratab
+	     ---l----   Video status LED
+	     ----?---   Set by gtg2, ninclown, peggle, stratab
+	     ------?-   Set by arligntn, neckneck, gtg, gtg2, ninclown, peggle, pokrdice, rimrockn, stratab
+	+08  xxxxxxxx   Number of pixels to skip before drawing each row
+	+09  yyyyyyyy   Number of rows to draw (the first height - y rows are skipped)
+	+0A  eeeeeeee   Number of pixels to skip at the end of each row
+	+0B  ssssssss   Number of rows to skip at the end of drawing
+	
+****************************************************************************
+
+	Blitter timing
+	
+	Times are in 2MHz NOPs (@ 2 cycles/NOP) after issuing a blit start 
+	command:
+	
+	  1x1 =	1-2		1x  1 = 1-2
+	  2x1 =	2		1x  2 = 2
+	  3x1 =	2		1x  3 = 2
+	  4x1 =	2		1x  4 = 2
+	  5x1 =	3		1x  5 = 3
+	  6x1 =	3		1x  6 = 3
+	  7x1 =	3-4		1x  7 = 3
+	  8x1 =	4		1x  8 = 4
+	  9x1 =	4		1x  9 = 4
+	 10x1 =	4		1x 10 = 4-5
+	 11x1 =	5		1x 11 = 5
+	 12x1 =	5		1x 12 = 5
+	 13x1 =	5-6		1x 13 = 5
+	 14x1 =	6		1x 14 = 6
+	 15x1 =	6		1x 15 = 6
+	 16x1 =	6-7		1x 16 = 6
+	 24x1 =	9-10	1x 24 = 9
+	 32x1 =	12		1x 32 = 12
+	 48x1 =	17		1x 48 = 17
+	 64x1 =	23		1x 64 = 22
+	 96x1 =	33		1x 96 = 33
+	128x1 =	44		1x128 = 44
+	192x1 =	65		1x192 = 65
+	240x1 =	81-82	1x240 = 81-82
+	
+	Times are not affected by transparency or RLE settings at all.
+	Times are slightly variable in nature in my tests (within 1 NOP).
 
 ***************************************************************************/
 
@@ -21,7 +102,6 @@
 
 #define FULL_LOGGING			0
 #define BLIT_LOGGING			0
-#define INSTANT_BLIT			1
 
 
 
@@ -59,13 +139,16 @@
  *************************************/
 
 data8_t *itech8_grom_bank;
-data8_t *itech8_display_page;
-
 
 static UINT8 blitter_data[16];
 static UINT8 blit_in_progress;
 
-static UINT8 slikshot;
+static UINT8 page_select;
+
+static offs_t fetch_offset;
+static UINT8 fetch_rle_count;
+static UINT8 fetch_rle_value;
+static UINT8 fetch_rle_literal;
 
 static struct tms34061_display tms_state;
 static UINT8 *grom_base;
@@ -91,7 +174,6 @@ static struct tms34061_interface tms34061intf =
 {
 	8,						/* VRAM address is (row << rowshift) | col */
 	0x40000,				/* size of video RAM */
-	0x100,					/* size of dirty chunks (must be power of 2) */
 	generate_interrupt		/* interrupt gen callback */
 };
 
@@ -113,20 +195,13 @@ VIDEO_START( itech8 )
 	tms34061_get_display_state(&tms_state);
 
 	/* reset statics */
-	slikshot = 0;
+	page_select = 0xc0;
 
 	/* fetch the GROM base */
 	grom_base = memory_region(REGION_GFX1);
 	grom_size = memory_region_length(REGION_GFX1);
 
 	return 0;
-}
-
-VIDEO_START( slikshot )
-{
-	int result = video_start_itech8();
-	slikshot = 1;
-	return result;
 }
 
 
@@ -146,465 +221,225 @@ WRITE8_HANDLER( itech8_palette_w )
 
 /*************************************
  *
- *	Low-level blitting primitives
+ *	Paging control
  *
  *************************************/
 
-INLINE void draw_byte(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
+WRITE8_HANDLER( itech8_page_w )
 {
-	tms_state.vram[addr] = val & mask;
-	tms_state.latchram[addr] = latch;
+	force_partial_update(cpu_getscanline());
+	logerror("%04x:display_page = %02X (%d)\n", activecpu_get_pc(), data, cpu_getscanline());
+	page_select = data;
 }
 
 
-INLINE void draw_byte_trans4(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	if (!val)
-		return;
 
-	if (val & 0xf0)
+
+/*************************************
+ *
+ *	Blitter data fetchers
+ *
+ *************************************/
+
+INLINE UINT8 fetch_next_raw(void)
+{
+	return grom_base[fetch_offset++ % grom_size];
+}
+
+
+INLINE void consume_raw(int count)
+{
+	fetch_offset += count;
+}
+
+
+INLINE UINT8 fetch_next_rle(void)
+{
+	if (fetch_rle_count == 0)
 	{
-		if (val & 0x0f)
+		fetch_rle_count = grom_base[fetch_offset++ % grom_size];
+		fetch_rle_literal = fetch_rle_count & 0x80;
+		fetch_rle_count &= 0x7f;
+		
+		if (!fetch_rle_literal)
+			fetch_rle_value = grom_base[fetch_offset++ % grom_size];
+	}
+
+	fetch_rle_count--;
+	if (fetch_rle_literal)
+		fetch_rle_value = grom_base[fetch_offset++ % grom_size];
+
+	return fetch_rle_value;
+}
+
+
+INLINE void consume_rle(int count)
+{
+	while (count)
+	{
+		int num_to_consume;
+		
+		if (fetch_rle_count == 0)
 		{
-			tms_state.vram[addr] = val & mask;
-			tms_state.latchram[addr] = latch;
+			fetch_rle_count = grom_base[fetch_offset++ % grom_size];
+			fetch_rle_literal = fetch_rle_count & 0x80;
+			fetch_rle_count &= 0x7f;
+			
+			if (!fetch_rle_literal)
+				fetch_rle_value = grom_base[fetch_offset++ % grom_size];
 		}
-		else
-		{
-			tms_state.vram[addr] = (tms_state.vram[addr] & 0x0f) | (val & mask & 0xf0);
-			tms_state.latchram[addr] = (tms_state.latchram[addr] & 0x0f) | (latch & 0xf0);
-		}
-	}
-	else
-	{
-		tms_state.vram[addr] = (tms_state.vram[addr] & 0xf0) | (val & mask & 0x0f);
-		tms_state.latchram[addr] = (tms_state.latchram[addr] & 0xf0) | (latch & 0x0f);
+
+		num_to_consume = (count < fetch_rle_count) ? count : fetch_rle_count;
+		count -= num_to_consume;
+
+		fetch_rle_count -= num_to_consume;
+		if (fetch_rle_literal)
+			fetch_offset += num_to_consume;
 	}
 }
 
 
-INLINE void draw_byte_trans8(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	if (val) draw_byte(addr, val, mask, latch);
-}
-
-
 
 /*************************************
  *
- *	Low-level shifted blitting primitives
+ *	Core blitter
  *
  *************************************/
 
-INLINE void draw_byte_shift(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
+static void perform_blit(void)
 {
-	tms_state.vram[addr] = (tms_state.vram[addr] & 0xf0) | ((val & mask) >> 4);
-	tms_state.latchram[addr] = (tms_state.latchram[addr] & 0xf0) | (latch >> 4);
-	tms_state.vram[addr + 1] = (tms_state.vram[addr + 1] & 0x0f) | ((val & mask) << 4);
-	tms_state.latchram[addr + 1] = (tms_state.latchram[addr + 1] & 0x0f) | (latch << 4);
-}
+	offs_t addr = tms_state.regs[TMS34061_XYADDRESS] | ((tms_state.regs[TMS34061_XYOFFSET] & 0x300) << 8);
+	UINT8 shift = (BLITTER_FLAGS & BLITFLAG_SHIFT) ? 4 : 0;
+	int transparent = (BLITTER_FLAGS & BLITFLAG_TRANSPARENT);
+	int ydir = (BLITTER_FLAGS & BLITFLAG_YFLIP) ? -1 : 1;
+	int xdir = (BLITTER_FLAGS & BLITFLAG_XFLIP) ? -1 : 1;
+	int xflip = (BLITTER_FLAGS & BLITFLAG_XFLIP);
+	int rle = (BLITTER_FLAGS & BLITFLAG_RLE);
+	int color = tms34061_latch_r(0);
+	int width = BLITTER_WIDTH;
+	int height = BLITTER_HEIGHT;
+	UINT8 transmaskhi, transmasklo;
+	UINT8 mask = BLITTER_MASK;
+	UINT8 skip[3];
+	int x, y;
 
-
-INLINE void draw_byte_shift_trans4(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	if (!val)
-		return;
-
-	if (val & 0xf0)
-	{
-		tms_state.vram[addr] = (tms_state.vram[addr] & 0xf0) | ((val & mask) >> 4);
-		tms_state.latchram[addr] = (tms_state.latchram[addr] & 0xf0) | (latch >> 4);
-	}
-	if (val & 0x0f)
-	{
-		tms_state.vram[addr + 1] = (tms_state.vram[addr + 1] & 0x0f) | ((val & mask) << 4);
-		tms_state.latchram[addr + 1] = (tms_state.latchram[addr + 1] & 0x0f) | (latch << 4);
-	}
-}
-
-
-INLINE void draw_byte_shift_trans8(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	if (val) draw_byte_shift(addr, val, mask, latch);
-}
-
-
-
-/*************************************
- *
- *	Low-level flipped blitting primitives
- *
- *************************************/
-
-INLINE void draw_byte_xflip(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	val = (val >> 4) | (val << 4);
-	draw_byte(addr, val, mask, latch);
-}
-
-
-INLINE void draw_byte_trans4_xflip(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	val = (val >> 4) | (val << 4);
-	draw_byte_trans4(addr, val, mask, latch);
-}
-
-
-INLINE void draw_byte_shift_xflip(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	val = (val >> 4) | (val << 4);
-	draw_byte_shift(addr, val, mask, latch);
-}
-
-
-INLINE void draw_byte_shift_trans4_xflip(offs_t addr, UINT8 val, UINT8 mask, UINT8 latch)
-{
-	val = (val >> 4) | (val << 4);
-	draw_byte_shift_trans4(addr, val, mask, latch);
-}
-
-
-
-/*************************************
- *
- *	Uncompressed blitter macro
- *
- *************************************/
-
-#define DRAW_RAW_MACRO(NAME, TRANSPARENT, OPERATION) 										\
-static void NAME(void)																		\
-{																							\
-	UINT8 *src = &grom_base[((*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO) % grom_size];\
-	offs_t addr = tms_state.regs[TMS34061_XYADDRESS] | ((tms_state.regs[TMS34061_XYOFFSET] & 0x300) << 8);\
-	int ydir = (BLITTER_FLAGS & BLITFLAG_YFLIP) ? -1 : 1;									\
-	int xdir = (BLITTER_FLAGS & BLITFLAG_XFLIP) ? -1 : 1;									\
-	int color = tms34061_latch_r(0);														\
-	int width = BLITTER_WIDTH;																\
-	int height = BLITTER_HEIGHT;															\
-	UINT8 mask = BLITTER_MASK;																\
-	UINT8 skip[3];																			\
-	int x, y;																				\
-																							\
-	/* compute horiz skip counts */															\
-	skip[0] = BLITTER_XSTART;																\
-	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;						\
-	if (xdir == -1) { int temp = skip[0]; skip[0] = skip[1]; skip[1] = temp; }				\
-	width -= skip[0] + skip[1];																\
-																							\
-	/* compute vertical skip counts */														\
-	if (ydir == 1)																			\
-	{																						\
-		skip[2] = (height <= BLITTER_YCOUNT) ? 0 : height - BLITTER_YCOUNT;					\
-		if (BLITTER_YSKIP > 1) height -= BLITTER_YSKIP - 1;									\
-	}																						\
-	else																					\
-	{																						\
-		skip[2] = (height <= BLITTER_YSKIP) ? 0 : height - BLITTER_YSKIP;					\
-		if (BLITTER_YCOUNT > 1) height -= BLITTER_YCOUNT - 1;								\
-	}																						\
-																							\
-	/* skip top */																			\
-	for (y = 0; y < skip[2]; y++)															\
-	{																						\
-		/* skip src and dest */																\
-		addr += xdir * (width + skip[0] + skip[1]);											\
-		src += width + skip[0] + skip[1];													\
-																							\
-		/* back up one and reverse directions */											\
-		addr -= xdir;																		\
-		addr += ydir * 256;																	\
-		addr &= 0x3ffff;																	\
-		xdir = -xdir;																		\
-	}																						\
-																							\
-	/* loop over height */																	\
-	for (y = skip[2]; y < height; y++)														\
-	{																						\
-		/* skip left */																		\
-		addr += xdir * skip[y & 1];															\
-		src += skip[y & 1];																	\
-																							\
-		/* loop over width */																\
-		for (x = 0; x < width; x++)															\
-		{																					\
-			OPERATION(addr, *src++, mask, color);											\
-			addr += xdir;																	\
-		}																					\
-																							\
-		/* skip right */																	\
-		addr += xdir * skip[~y & 1];														\
-		src += skip[~y & 1];																\
-																							\
-		/* back up one and reverse directions */											\
-		addr -= xdir;																		\
-		addr += ydir * 256;																	\
-		addr &= 0x3ffff;																	\
-		xdir = -xdir;																		\
-	}																						\
-}
-
-
-
-/*************************************
- *
- *	Compressed blitter macro
- *
- *************************************/
-
-#define DRAW_RLE_MACRO(NAME, TRANSPARENT, OPERATION) 										\
-static void NAME(void)																		\
-{																							\
-	UINT8 *src = &grom_base[((*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO) % grom_size];\
-	offs_t addr = tms_state.regs[TMS34061_XYADDRESS] | ((tms_state.regs[TMS34061_XYOFFSET] & 0x300) << 8);\
-	int ydir = (BLITTER_FLAGS & BLITFLAG_YFLIP) ? -1 : 1;									\
-	int xdir = (BLITTER_FLAGS & BLITFLAG_XFLIP) ? -1 : 1;									\
-	int count = 0, val = -1, innercount;													\
-	int color = tms34061_latch_r(0);														\
-	int width = BLITTER_WIDTH;																\
-	int height = BLITTER_HEIGHT;															\
-	UINT8 mask = BLITTER_MASK;																\
-	UINT8 skip[3];																			\
-	int xleft, y;																			\
-																							\
-	/* skip past the double-0's */															\
-	src += 2;																				\
-																							\
-	/* compute horiz skip counts */															\
-	skip[0] = BLITTER_XSTART;																\
-	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;						\
-	if (xdir == -1) { int temp = skip[0]; skip[0] = skip[1]; skip[1] = temp; }				\
-	width -= skip[0] + skip[1];																\
-																							\
-	/* compute vertical skip counts */														\
-	if (ydir == 1)																			\
-	{																						\
-		skip[2] = (height <= BLITTER_YCOUNT) ? 0 : height - BLITTER_YCOUNT;					\
-		if (BLITTER_YSKIP > 1) height -= BLITTER_YSKIP - 1;									\
-	}																						\
-	else																					\
-	{																						\
-		skip[2] = (height <= BLITTER_YSKIP) ? 0 : height - BLITTER_YSKIP;					\
-		if (BLITTER_YCOUNT > 1) height -= BLITTER_YCOUNT - 1;								\
-	}																						\
-																							\
-	/* skip top */																			\
-	for (y = 0; y < skip[2]; y++)															\
-	{																						\
-		/* skip dest */																		\
-		addr += xdir * (width + skip[0] + skip[1]);											\
-																							\
-		/* scan RLE until done */															\
-		for (xleft = width + skip[0] + skip[1]; xleft > 0; )								\
-		{																					\
-			/* load next RLE chunk if needed */												\
-			if (!count)																		\
-			{																				\
-				count = *src++;																\
-				val = (count & 0x80) ? -1 : *src++;											\
-				count &= 0x7f;																\
-			}																				\
-																							\
-			/* determine how much to bite off */											\
-			innercount = (xleft > count) ? count : xleft;									\
-			count -= innercount;															\
-			xleft -= innercount;															\
-																							\
-			/* skip past the data */														\
-			if (val == -1) src += innercount;												\
-		}																					\
-																							\
-		/* back up one and reverse directions */											\
-		addr -= xdir;																		\
-		addr += ydir * 256;																	\
-		addr &= 0x3ffff;																	\
-		xdir = -xdir;																		\
-	}																						\
-																							\
-	/* loop over height */																	\
-	for (y = skip[2]; y < height; y++)														\
-	{																						\
-		/* skip left */																		\
-		addr += xdir * skip[y & 1];															\
-		for (xleft = skip[y & 1]; xleft > 0; )												\
-		{																					\
-			/* load next RLE chunk if needed */												\
-			if (!count)																		\
-			{																				\
-				count = *src++;																\
-				val = (count & 0x80) ? -1 : *src++;											\
-				count &= 0x7f;																\
-			}																				\
-																							\
-			/* determine how much to bite off */											\
-			innercount = (xleft > count) ? count : xleft;									\
-			count -= innercount;															\
-			xleft -= innercount;															\
-																							\
-			/* skip past the data */														\
-			if (val == -1) src += innercount;												\
-		}																					\
-																							\
-		/* loop over width */																\
-		for (xleft = width; xleft > 0; )													\
-		{																					\
-			/* load next RLE chunk if needed */												\
-			if (!count)																		\
-			{																				\
-				count = *src++;																\
-				val = (count & 0x80) ? -1 : *src++;											\
-				count &= 0x7f;																\
-			}																				\
-																							\
-			/* determine how much to bite off */											\
-			innercount = (xleft > count) ? count : xleft;									\
-			count -= innercount;															\
-			xleft -= innercount;															\
-																							\
-			/* run of literals */															\
-			if (val == -1)																	\
-				for ( ; innercount--; addr += xdir)											\
-					OPERATION(addr, *src++, mask, color);									\
-																							\
-			/* run of non-transparent repeats */											\
-			else if (!TRANSPARENT || val)													\
-				for ( ; innercount--; addr += xdir)											\
-					OPERATION(addr, val, mask, color);										\
-																							\
-			/* run of transparent repeats */												\
-			else																			\
-				addr += xdir * innercount;													\
-		}																					\
-																							\
-		/* skip right */																	\
-		addr += xdir * skip[~y & 1];														\
-		for (xleft = skip[~y & 1]; xleft > 0; )												\
-		{																					\
-			/* load next RLE chunk if needed */												\
-			if (!count)																		\
-			{																				\
-				count = *src++;																\
-				val = (count & 0x80) ? -1 : *src++;											\
-				count &= 0x7f;																\
-			}																				\
-																							\
-			/* determine how much to bite off */											\
-			innercount = (xleft > count) ? count : xleft;									\
-			count -= innercount;															\
-			xleft -= innercount;															\
-																							\
-			/* skip past the data */														\
-			if (val == -1) src += innercount;												\
-		}																					\
-																							\
-		/* back up one and reverse directions */											\
-		addr -= xdir;																		\
-		addr += ydir * 256;																	\
-		addr &= 0x3ffff;																	\
-		xdir = -xdir;																		\
-	}																						\
-}
-
-
-
-/*************************************
- *
- *	Blitter functions and tables
- *
- *************************************/
-
-DRAW_RAW_MACRO(draw_raw,              0, draw_byte)
-DRAW_RAW_MACRO(draw_raw_shift,        0, draw_byte_shift)
-DRAW_RAW_MACRO(draw_raw_trans4,       1, draw_byte_trans4)
-DRAW_RAW_MACRO(draw_raw_trans8,       1, draw_byte_trans8)
-DRAW_RAW_MACRO(draw_raw_shift_trans4, 1, draw_byte_shift_trans4)
-DRAW_RAW_MACRO(draw_raw_shift_trans8, 1, draw_byte_shift_trans8)
-
-DRAW_RLE_MACRO(draw_rle,              0, draw_byte)
-DRAW_RLE_MACRO(draw_rle_shift,        0, draw_byte_shift)
-DRAW_RLE_MACRO(draw_rle_trans4,       1, draw_byte_trans4)
-DRAW_RLE_MACRO(draw_rle_trans8,       1, draw_byte_trans8)
-DRAW_RLE_MACRO(draw_rle_shift_trans4, 1, draw_byte_shift_trans4)
-DRAW_RLE_MACRO(draw_rle_shift_trans8, 1, draw_byte_shift_trans8)
-
-DRAW_RAW_MACRO(draw_raw_xflip,              0, draw_byte_xflip)
-DRAW_RAW_MACRO(draw_raw_shift_xflip,        0, draw_byte_shift_xflip)
-DRAW_RAW_MACRO(draw_raw_trans4_xflip,       1, draw_byte_trans4_xflip)
-DRAW_RAW_MACRO(draw_raw_shift_trans4_xflip, 1, draw_byte_shift_trans4_xflip)
-
-DRAW_RLE_MACRO(draw_rle_xflip,              0, draw_byte_xflip)
-DRAW_RLE_MACRO(draw_rle_shift_xflip,        0, draw_byte_shift_xflip)
-DRAW_RLE_MACRO(draw_rle_trans4_xflip,       1, draw_byte_trans4_xflip)
-DRAW_RLE_MACRO(draw_rle_shift_trans4_xflip, 1, draw_byte_shift_trans4_xflip)
-
-
-static void (*blit_table4[0x20])(void) =
-{
-	draw_raw,			draw_raw_shift,			draw_raw,			draw_raw_shift,
-	draw_raw,			draw_raw_shift,			draw_raw,			draw_raw_shift,
-	draw_rle,			draw_rle_shift,			draw_rle,			draw_rle_shift,
-	draw_rle,			draw_rle_shift,			draw_rle,			draw_rle_shift,
-	draw_raw_trans4,	draw_raw_shift_trans4,	draw_raw_trans4,	draw_raw_shift_trans4,
-	draw_raw_trans4,	draw_raw_shift_trans4,	draw_raw_trans4,	draw_raw_shift_trans4,
-	draw_rle_trans4,	draw_rle_shift_trans4,	draw_rle_trans4,	draw_rle_shift_trans4,
-	draw_rle_trans4,	draw_rle_shift_trans4,	draw_rle_trans4,	draw_rle_shift_trans4
-};
-
-static void (*blit_table4_xflip[0x20])(void) =
-{
-	draw_raw_xflip,			draw_raw_shift_xflip,			draw_raw_xflip,			draw_raw_shift_xflip,
-	draw_raw_xflip,			draw_raw_shift_xflip,			draw_raw_xflip,			draw_raw_shift_xflip,
-	draw_rle_xflip,			draw_rle_shift_xflip,			draw_rle_xflip,			draw_rle_shift_xflip,
-	draw_rle_xflip,			draw_rle_shift_xflip,			draw_rle_xflip,			draw_rle_shift_xflip,
-	draw_raw_trans4_xflip,	draw_raw_shift_trans4_xflip,	draw_raw_trans4_xflip,	draw_raw_shift_trans4_xflip,
-	draw_raw_trans4_xflip,	draw_raw_shift_trans4_xflip,	draw_raw_trans4_xflip,	draw_raw_shift_trans4_xflip,
-	draw_rle_trans4_xflip,	draw_rle_shift_trans4_xflip,	draw_rle_trans4_xflip,	draw_rle_shift_trans4_xflip,
-	draw_rle_trans4_xflip,	draw_rle_shift_trans4_xflip,	draw_rle_trans4_xflip,	draw_rle_shift_trans4_xflip
-};
-
-static void (*blit_table8[0x20])(void) =
-{
-	draw_raw,			draw_raw_shift,			draw_raw,			draw_raw_shift,
-	draw_raw,			draw_raw_shift,			draw_raw,			draw_raw_shift,
-	draw_rle,			draw_rle_shift,			draw_rle,			draw_rle_shift,
-	draw_rle,			draw_rle_shift,			draw_rle,			draw_rle_shift,
-	draw_raw_trans8,	draw_raw_shift_trans8,	draw_raw_trans8,	draw_raw_shift_trans8,
-	draw_raw_trans8,	draw_raw_shift_trans8,	draw_raw_trans8,	draw_raw_shift_trans8,
-	draw_rle_trans8,	draw_rle_shift_trans8,	draw_rle_trans8,	draw_rle_shift_trans8,
-	draw_rle_trans8,	draw_rle_shift_trans8,	draw_rle_trans8,	draw_rle_shift_trans8
-};
-
-
-
-/*************************************
- *
- *	Blitter operations
- *
- *************************************/
-
-static int perform_blit(void)
-{
 	/* debugging */
 	if (FULL_LOGGING)
 		logerror("Blit: scan=%d  src=%06x @ (%05x) for %dx%d ... flags=%02x\n",
 				cpu_getscanline(),
 				(*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO,
-				0, BLITTER_WIDTH, BLITTER_HEIGHT, BLITTER_FLAGS);
+				tms_state.regs[TMS34061_XYADDRESS] | ((tms_state.regs[TMS34061_XYOFFSET] & 0x300) << 8),
+				BLITTER_WIDTH, BLITTER_HEIGHT, BLITTER_FLAGS);
+	
+	/* initialize the fetcher */
+	fetch_offset = (*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO;
+	fetch_rle_count = 0;
+	
+	/* RLE starts with a couple of extra 0's */
+	if (rle)
+		fetch_offset += 2;
 
-	/* draw appropriately */
+	/* select 4-bit versus 8-bit transparency */
 	if (BLITTER_OUTPUT & 0x40)
+		transmaskhi = 0xf0, transmasklo = 0x0f;
+	else
+		transmaskhi = transmasklo = 0xff;
+	
+	/* compute horiz skip counts */
+	skip[0] = BLITTER_XSTART;
+	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;
+	if (xdir == -1) { int temp = skip[0]; skip[0] = skip[1]; skip[1] = temp; }
+	width -= skip[0] + skip[1];
+
+	/* compute vertical skip counts */
+	if (ydir == 1)
 	{
-		if (BLITTER_FLAGS & BLITFLAG_XFLIP)
-			(*blit_table4_xflip[BLITTER_FLAGS & 0x1f])();
-		else
-			(*blit_table4[BLITTER_FLAGS & 0x1f])();
+		skip[2] = (height <= BLITTER_YCOUNT) ? 0 : height - BLITTER_YCOUNT;
+		if (BLITTER_YSKIP > 1) height -= BLITTER_YSKIP - 1;
 	}
 	else
-		(*blit_table8[BLITTER_FLAGS & 0x1f])();
+	{
+		skip[2] = (height <= BLITTER_YSKIP) ? 0 : height - BLITTER_YSKIP;
+		if (BLITTER_YCOUNT > 1) height -= BLITTER_YCOUNT - 1;
+	}
 
-	/* return the number of bytes processed */
-	return BLITTER_WIDTH * BLITTER_HEIGHT;
+	/* skip top */
+	for (y = 0; y < skip[2]; y++)
+	{
+		/* skip src and dest */
+		addr += xdir * (width + skip[0] + skip[1]);
+		if (rle)
+			consume_rle(width + skip[0] + skip[1]);
+		else
+			consume_raw(width + skip[0] + skip[1]);
+
+		/* back up one and reverse directions */
+		addr -= xdir;
+		addr += ydir * 256;
+		addr &= 0x3ffff;
+		xdir = -xdir;
+	}
+
+	/* loop over height */
+	for (y = skip[2]; y < height; y++)
+	{
+		/* skip left */
+		addr += xdir * skip[y & 1];
+		if (rle)
+			consume_rle(skip[y & 1]);
+		else
+			consume_raw(skip[y & 1]);
+
+		/* loop over width */
+		for (x = 0; x < width; x++)
+		{
+			UINT8 pix = rle ? fetch_next_rle() : fetch_next_raw();
+
+			/* swap pixels for X flip in 4bpp mode */
+			if (xflip && transmaskhi != 0xff)
+				pix = (pix >> 4) | (pix << 4);
+
+			/* draw upper pixel */			
+			if (!transparent || (pix & transmaskhi))
+			{
+				tms_state.vram[addr] = (tms_state.vram[addr] & (0x0f << shift)) | ((pix & mask & 0xf0) >> shift);
+				tms_state.latchram[addr] = (tms_state.latchram[addr] & (0x0f << shift)) | ((color & 0xf0) >> shift);
+			}
+			
+			/* draw lower pixel */			
+			if (!transparent || (pix & transmasklo))
+			{
+				offs_t addr1 = addr + shift/4;
+				tms_state.vram[addr1] = (tms_state.vram[addr1] & (0xf0 >> shift)) | ((pix & mask & 0x0f) << shift);
+				tms_state.latchram[addr1] = (tms_state.latchram[addr1] & (0xf0 >> shift)) | ((color & 0x0f) << shift);
+			}
+
+			/* advance to the next byte */			
+			addr += xdir;
+		}
+
+		/* skip right */
+		addr += xdir * skip[~y & 1];
+		if (rle)
+			consume_rle(skip[~y & 1]);
+		else
+			consume_raw(skip[~y & 1]);
+
+		/* back up one and reverse directions */
+		addr -= xdir;
+		addr += ydir * 256;
+		addr &= 0x3ffff;
+		xdir = -xdir;
+	}
 }
 
+
+
+/*************************************
+ *
+ *	Blitter finished callback
+ *
+ *************************************/
 
 static void blitter_done(int param)
 {
@@ -660,19 +495,15 @@ WRITE8_HANDLER( itech8_blitter_w )
 	/* a write to offset 3 starts things going */
 	if (offset == 3)
 	{
-		int pixels;
-
 		/* log to the blitter file */
 		if (BLIT_LOGGING)
 		{
-			static FILE *blitlog;
-			if (!blitlog) blitlog = fopen("blitter.log", "w");
-			if (blitlog) fprintf(blitlog, "Blit: XY=%1X%02X%02X SRC=%02X%02X%02X SIZE=%3dx%3d FLAGS=%02x",
-						tms34061_r(14*4+2, 0, 0) & 0x0f, tms34061_r(15*4+2, 0, 0), tms34061_r(15*4+0, 0, 0),
+			logerror("Blit: XY=%1X%04X SRC=%02X%02X%02X SIZE=%3dx%3d FLAGS=%02x",
+						(tms_state.regs[TMS34061_XYOFFSET] >> 8) & 0x0f, tms_state.regs[TMS34061_XYADDRESS],
 						*itech8_grom_bank, blitter_data[0], blitter_data[1],
 						blitter_data[4], blitter_data[5],
 						blitter_data[2]);
-			if (blitlog) fprintf(blitlog, "   %02X %02X %02X [%02X] %02X %02X %02X [%02X]-%02X %02X %02X %02X [%02X %02X %02X %02X]\n",
+			logerror("   %02X %02X %02X [%02X] %02X %02X %02X [%02X]-%02X %02X %02X %02X [%02X %02X %02X %02X]\n",
 						blitter_data[0], blitter_data[1],
 						blitter_data[2], blitter_data[3],
 						blitter_data[4], blitter_data[5],
@@ -684,14 +515,11 @@ WRITE8_HANDLER( itech8_blitter_w )
 		}
 
 		/* perform the blit */
-		pixels = perform_blit();
+		perform_blit();
 		blit_in_progress = 1;
 
 		/* set a timer to go off when we're done */
-		if (INSTANT_BLIT)
-			blitter_done(0);
-		else
-			timer_set((double)pixels * TIME_IN_HZ(12000000), 0, blitter_done);
+		timer_set((double)(BLITTER_WIDTH * BLITTER_HEIGHT + 12) * TIME_IN_HZ(12000000/4), 0, blitter_done);
 	}
 
 	/* debugging */
@@ -743,9 +571,10 @@ READ8_HANDLER( itech8_tms34061_r )
  *
  *************************************/
 
-VIDEO_UPDATE( itech8 )
+VIDEO_UPDATE( itech8_2layer )
 {
-	int y, ty;
+	UINT32 page_offset;
+	int x, y;
 
 	/* first get the current display state */
 	tms34061_get_display_state(&tms_state);
@@ -753,61 +582,88 @@ VIDEO_UPDATE( itech8 )
 	/* if we're blanked, just fill with black */
 	if (tms_state.blanked)
 	{
-		fillbitmap(bitmap, Machine->pens[0], cliprect);
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 		return;
 	}
 
-	/* perform one of two types of blitting; I'm not sure if bit 40 in */
-	/* the blitter mode register really controls this type of behavior, but */
-	/* it is set consistently enough that we can use it */
-
-	/* blit mode one: 4bpp in the TMS34061 RAM, plus 4bpp of latched data */
-	/* two pages are available, at 0x00000 and 0x20000 */
-	/* pages are selected via the display page register */
-	/* width can be up to 512 pixels */
-	if (BLITTER_OUTPUT & 0x40)
+	/* there are two layers: */
+	/*    top layer @ 0x00000 is only 4bpp, colors come from the first 16 palettes */
+	/* bottom layer @ 0x20000 is full 8bpp */
+	page_offset = tms_state.dispstart & 0x0ffff;
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		int halfwidth = (Machine->visible_area.max_x + 2) / 2;
-		UINT8 *base = &tms_state.vram[(~*itech8_display_page & 0x80) << 10];
-		UINT8 *latch = &tms_state.latchram[(~*itech8_display_page & 0x80) << 10];
-
-		base += (cliprect->min_y - Machine->visible_area.min_y) * 256;
-		latch += (cliprect->min_y - Machine->visible_area.min_y) * 256;
-
-		/* now regenerate the bitmap */
-		for (ty = 0, y = cliprect->min_y; y <= cliprect->max_y; y++, ty++)
+		UINT8 *base0 = &tms_state.vram[(0x00000 + page_offset + y * 256) & 0x3ffff];
+		UINT8 *base2 = &tms_state.vram[(0x20000 + page_offset + y * 256) & 0x3ffff];
+		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		
+		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
-			UINT8 scanline[512];
-			int x;
-
-			for (x = 0; x < halfwidth; x++)
-			{
-				scanline[x * 2 + 0] = (latch[256 * ty + x] & 0xf0) | (base[256 * ty + x] >> 4);
-				scanline[x * 2 + 1] = (latch[256 * ty + x] << 4) | (base[256 * ty + x] & 0x0f);
-			}
-			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], Machine->pens, -1);
+			int pix0 = base0[x] & 0x0f;
+			dest[x] = pix0 ? pix0 : base2[x];
 		}
 	}
+}
 
-	/* blit mode one: 8bpp in the TMS34061 RAM */
-	/* two planes are available, at 0x00000 and 0x20000 */
-	/* both planes are rendered; with 0x20000 transparent via color 0 */
-	/* width can be up to 256 pixels */
-	else
+
+VIDEO_UPDATE( itech8_2page )
+{
+	UINT32 page_offset;
+	int x, y;
+
+	/* first get the current display state */
+	tms34061_get_display_state(&tms_state);
+
+	/* if we're blanked, just fill with black */
+	if (tms_state.blanked)
 	{
-		UINT8 *base = &tms_state.vram[tms_state.dispstart & ~0x30000];
-
-		base += (cliprect->min_y - Machine->visible_area.min_y) * 256;
-
-		/* now regenerate the bitmap */
-		for (ty = 0, y = cliprect->min_y; y <= cliprect->max_y; y++, ty++)
-		{
-			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &base[0x20000 + 256 * ty + cliprect->min_x], Machine->pens, -1);
-			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &base[0x00000 + 256 * ty + cliprect->min_x], Machine->pens, 0);
-		}
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+		return;
 	}
 
-	/* extra rendering for slikshot */
-	if (slikshot)
-		slikshot_extra_draw(bitmap, cliprect);
+	/* there are two pages, each of which is a full 8bpp */
+	/* page index is selected by the top bit of the page_select register */
+	page_offset = ((page_select & 0x80) << 10) | (tms_state.dispstart & 0x0ffff);
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+	{
+		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
+		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		
+		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
+			dest[x] = base[x];
+	}
+}
+
+
+VIDEO_UPDATE( itech8_2page_large )
+{
+	UINT32 page_offset;
+	int x, y;
+
+	/* first get the current display state */
+	tms34061_get_display_state(&tms_state);
+
+	/* if we're blanked, just fill with black */
+	if (tms_state.blanked)
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+		return;
+	}
+
+	/* there are two pages, each of which is a full 8bpp */
+	/* the low 4 bits come from the bitmap directly */
+	/* the upper 4 bits were latched on each write into a separate bitmap */
+	/* page index is selected by the top bit of the page_select register */
+	page_offset = ((~page_select & 0x80) << 10) | (tms_state.dispstart & 0x0ffff);
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+	{
+		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
+		UINT8 *latch = &tms_state.latchram[(page_offset + y * 256) & 0x3ffff];
+		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		
+		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
+		{
+			dest[x + 0] = (latch[x/2] & 0xf0) | (base[x/2] >> 4);
+			dest[x + 1] = ((latch[x/2] << 4) & 0xf0) | (base[x/2] & 0x0f);
+		}
+	}
 }

@@ -16,6 +16,7 @@
 	The Irem Skins Game (USA Set 1)	M92-F	(c) 1992 Irem America Corp
 	The Irem Skins Game (USA Set 2)	M92-F	(c) 1992 Irem America Corp
 	Hook (World)							(c) 1992 Irem Corp
+	Hook (Japan)							(c) 1992 Irem Corp
 	Hook (USA)								(c) 1992 Irem America Corp
 	R-Type Leo (World)						(c) 1992 Irem Corp
 	R-Type Leo (Japan)						(c) 1992 Irem Corp
@@ -2228,7 +2229,7 @@ static READ8_HANDLER( kaiteids_cycle_r ) // by bkc
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000 && line<247) {
-		if ((activecpu_get_pc()==0x885 || activecpu_get_pc()==0x8ac) 
+		if ((activecpu_get_pc()==0x885 || activecpu_get_pc()==0x8ac)
 			&& m92_ram[0x25f]==0 && offset==1) { // 0x8ac , 0x885
 			/* Adjust in-game counter, based on cycles left to run */
 			int old;

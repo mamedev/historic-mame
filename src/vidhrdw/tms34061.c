@@ -14,6 +14,8 @@
 #include "tms34061.h"
 
 
+#define VERBOSE		(0)
+
 
 /*************************************
  *
@@ -31,8 +33,6 @@ struct tms34061_data
 	UINT8 *			latchram;
 	UINT8			latchdata;
 	UINT8 *			shiftreg;
-	UINT8 *			dirty;
-	UINT8			dirtyshift;
 	void *			timer;
 	struct tms34061_interface intf;
 };
@@ -47,7 +47,22 @@ struct tms34061_data
 
 static struct tms34061_data tms34061;
 
+static const char *regnames[] =
+{
+	"HORENDSYNC",	"HORENDBLNK",	"HORSTARTBLNK",		"HORTOTAL",
+	"VERENDSYNC",	"VERENDBLNK",	"VERSTARTBLNK",		"VERTOTAL",
+	"DISPUPDATE",	"DISPSTART",	"VERINT",			"CONTROL1",
+	"CONTROL2",		"STATUS",		"XYOFFSET",			"XYADDRESS",
+	"DISPADDRESS",	"VERCOUNTER"
+};
 
+
+
+/*************************************
+ *
+ *	Prototypes
+ *
+ *************************************/
 
 static void tms34061_interrupt(int param);
 
@@ -61,17 +76,10 @@ static void tms34061_interrupt(int param);
 
 int tms34061_start(struct tms34061_interface *interface)
 {
-	int temp;
-
 	/* reset the data */
 	memset(&tms34061, 0, sizeof(tms34061));
 	tms34061.intf = *interface;
 	tms34061.vrammask = tms34061.intf.vramsize - 1;
-
-	/* compute the dirty shift */
-	temp = tms34061.intf.dirtychunk;
-	while (!(temp & 1))
-		tms34061.dirtyshift++, temp >>= 1;
 
 	/* allocate memory for VRAM */
 	tms34061.vram = auto_malloc(tms34061.intf.vramsize + 256 * 2);
@@ -84,12 +92,6 @@ int tms34061_start(struct tms34061_interface *interface)
 	if (!tms34061.latchram)
 		return 1;
 	memset(tms34061.latchram, 0, tms34061.intf.vramsize + 256 * 2);
-
-	/* allocate memory for dirty rows */
-	tms34061.dirty = auto_malloc(1 << (20 - tms34061.dirtyshift));
-	if (!tms34061.dirty)
-		return 1;
-	memset(tms34061.dirty, 1, 1 << (20 - tms34061.dirtyshift));
 
 	/* add some buffer space for VRAM and latch RAM */
 	tms34061.vram += 256;
@@ -145,10 +147,27 @@ INLINE void update_interrupts(void)
 }
 
 
+INLINE double get_verint_scanline_time(void)
+{
+	int scanline = tms34061.regs[TMS34061_VERINT] - tms34061.regs[TMS34061_VERENDBLNK];
+	double result;
+	
+	if (scanline < 0)
+		result += tms34061.regs[TMS34061_VERTOTAL];
+	
+	/* we fire at the HBLANK signal */
+	result = cpu_getscanlinetime(scanline) + cpu_getscanlineperiod() * 0.9;
+	if (result < cpu_getscanlineperiod() * 10)
+		result += TIME_IN_HZ(Machine->refresh_rate);
+	
+	return result;
+}
+
+
 static void tms34061_interrupt(int param)
 {
 	/* set timer for next frame */
-	timer_adjust(tms34061.timer, cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, 0);
+	timer_adjust(tms34061.timer, get_verint_scanline_time(), 0, 0);
 
 	/* set the interrupt bit in the status reg */
 	tms34061.regs[TMS34061_STATUS] |= 1;
@@ -168,20 +187,27 @@ static void tms34061_interrupt(int param)
 static WRITE8_HANDLER( register_w )
 {
 	int regnum = offset >> 2;
-	UINT16 oldval = tms34061.regs[regnum];
+
+	/* certain registers affect the display directly */
+	if ((regnum >= TMS34061_HORENDSYNC && regnum <= TMS34061_DISPSTART) ||
+		(regnum == TMS34061_CONTROL2))
+		force_partial_update(cpu_getscanline());
 
 	/* store the hi/lo half */
 	if (offset & 0x02)
 		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0x00ff) | (data << 8);
 	else
 		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0xff00) | data;
+	
+	/* log it */
+	if (VERBOSE) logerror("%04X:tms34061 %s = %04X\n", activecpu_get_pc(), regnames[regnum], tms34061.regs[regnum]);
 
 	/* update the state of things */
 	switch (regnum)
 	{
 		/* vertical interrupt: adjust the timer */
 		case TMS34061_VERINT:
-			timer_adjust(tms34061.timer, cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, 0);
+			timer_adjust(tms34061.timer, get_verint_scanline_time(), 0, 0);
 			break;
 
 		/* XY offset: set the X and Y masks */
@@ -206,20 +232,8 @@ static WRITE8_HANDLER( register_w )
 			update_interrupts();
 			break;
 
-		/* CONTROL2: they could have blanked the display */
-		case TMS34061_CONTROL2:
-			if ((oldval ^ tms34061.regs[TMS34061_CONTROL2]) & 0x2000)
-				memset(tms34061.dirty, 1, 1 << (20 - tms34061.dirtyshift));
-			break;
-
 		/* other supported registers */
 		case TMS34061_XYADDRESS:
-			break;
-
-		/* report all others */
-		default:
-			logerror("Unsupported tms34061 write. Reg #%02X=%04X - PC: %04X\n",
-					regnum, tms34061.regs[regnum], activecpu_get_previouspc());
 			break;
 	}
 }
@@ -235,13 +249,10 @@ static WRITE8_HANDLER( register_w )
 static READ8_HANDLER( register_r )
 {
 	int regnum = offset >> 2;
-	data8_t result;
+	data16_t result;
 
 	/* extract the correct portion of the register */
-	if (offset & 0x02)
-		result = tms34061.regs[regnum] >> 8;
-	else
-		result = tms34061.regs[regnum];
+	result = tms34061.regs[regnum];
 
 	/* special cases: */
 	switch (regnum)
@@ -254,19 +265,13 @@ static READ8_HANDLER( register_r )
 
 		/* vertical count register: return the current scanline */
 		case TMS34061_VERCOUNTER:
-			if (offset & 0x02)
-				result = cpu_getscanline() >> 8;
-			else
-				result = cpu_getscanline();
-			break;
-
-		/* report all others */
-		default:
-			logerror("Unsupported tms34061 read.  Reg #%02X      - PC: %04X\n",
-					regnum, activecpu_get_previouspc());
+			result = (cpu_getscanline() + tms34061.regs[TMS34061_VERENDBLNK]) % tms34061.regs[TMS34061_VERTOTAL];
 			break;
 	}
-	return result;
+
+	/* log it */
+	if (VERBOSE) logerror("%04X:tms34061 %s read = %04X\n", activecpu_get_pc(), regnames[regnum], result);
+	return (offset & 0x02) ? (result >> 8) : result;
 }
 
 
@@ -374,12 +379,8 @@ static WRITE8_HANDLER( xypixel_w )
 	pixeloffs &= tms34061.vrammask;
 
 	/* set the pixel data */
-	if (tms34061.vram[pixeloffs] != data || tms34061.latchram[pixeloffs] != tms34061.latchdata)
-	{
-		tms34061.vram[pixeloffs] = data;
-		tms34061.latchram[pixeloffs] = tms34061.latchdata;
-		tms34061.dirty[pixeloffs >> tms34061.dirtyshift] = 1;
-	}
+	tms34061.vram[pixeloffs] = data;
+	tms34061.latchram[pixeloffs] = tms34061.latchdata;
 }
 
 
@@ -429,11 +430,12 @@ void tms34061_w(int col, int row, int func, data8_t data)
 		/* function 3 maps to direct access */
 		case 3:
 			offs = ((row << tms34061.intf.rowshift) | col) & tms34061.vrammask;
+			if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
 			if (tms34061.vram[offs] != data || tms34061.latchram[offs] != tms34061.latchdata)
 			{
 				tms34061.vram[offs] = data;
 				tms34061.latchram[offs] = tms34061.latchdata;
-				tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
 			}
 			break;
 
@@ -446,7 +448,6 @@ void tms34061_w(int col, int row, int func, data8_t data)
 
 			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
 			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
-			tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
 			break;
 
 		/* function 5 performs a shift reg transfer from VRAM */
@@ -461,8 +462,7 @@ void tms34061_w(int col, int row, int func, data8_t data)
 
 		/* log anything else */
 		default:
-			logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-					func, activecpu_get_pc());
+			logerror("Unsupported TMS34061 function %d - PC: %04X\n", func, activecpu_get_pc());
 			break;
 	}
 }
@@ -502,7 +502,6 @@ data8_t tms34061_r(int col, int row, int func)
 
 			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
 			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
-			tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
 			break;
 
 		/* function 5 performs a shift reg transfer from VRAM */
@@ -541,6 +540,7 @@ READ8_HANDLER( tms34061_latch_r )
 
 WRITE8_HANDLER( tms34061_latch_w )
 {
+	if (VERBOSE) logerror("tms34061_latch = %02X\n", data);
 	tms34061.latchdata = data;
 }
 
@@ -550,16 +550,8 @@ void tms34061_get_display_state(struct tms34061_display *state)
 	state->blanked = (~tms34061.regs[TMS34061_CONTROL2] >> 13) & 1;
 	state->vram = tms34061.vram;
 	state->latchram = tms34061.latchram;
-	state->dirty = tms34061.dirty;
 	state->regs = tms34061.regs;
 
 	/* compute the display start */
-	state->dispstart = tms34061.regs[TMS34061_DISPSTART];
-
-	/* if B6 of control reg 2 is set, upper bits of display start come from B0-B1 */
-	if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
-		state->dispstart |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
-
-	/* mask to actual VRAM size */
-	state->dispstart &= tms34061.vrammask;
+	state->dispstart = (tms34061.regs[TMS34061_DISPSTART] << (tms34061.intf.rowshift - 2)) & tms34061.vrammask;
 }

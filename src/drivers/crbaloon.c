@@ -371,14 +371,14 @@ static struct SN76477interface sn76477_interface =
 static void crbaloon_tone_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int len)
 {
 	stream_sample_t *buffer = outputs[0];
-	
-	memset(buffer, 0, len * sizeof(INT16));
+
+	memset(buffer, 0, len * sizeof(stream_sample_t));
 
 	if (crbaloon_tone_step)
 	{
 		while (len-- > 0)
 		{
-			*buffer++ = crbaloon_tone_pos & 0x80000000 ? 0x7fff : 0x8000;
+			*buffer++ = crbaloon_tone_pos & 0x80000000 ? 32767 : -32768;
 			crbaloon_tone_pos += crbaloon_tone_step;
 		}
 	}
@@ -410,7 +410,7 @@ static MACHINE_DRIVER_START( crbaloon )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(crbaloon)
 
 	/* video hardware */

@@ -63,6 +63,9 @@
 
 #define PPC m6502.ppc.d
 
+#define RDMEM_ID	m6502.rdmem_id
+#define WRMEM_ID	m6502.wrmem_id
+
 #if FAST_MEMORY
 extern	MHELE	*cur_mwhard;
 extern	MHELE	*cur_mrhard;
@@ -214,8 +217,8 @@ extern	UINT8	*RAM;
 #define RD_ABX	EA_ABX; tmp = RDMEM(EAD)
 #define RD_ABY	EA_ABY; tmp = RDMEM(EAD)
 #define RD_ZPI	EA_ZPI; tmp = RDMEM(EAD)
-#define RD_IDX	EA_IDX; tmp = RDMEM(EAD)
-#define RD_IDY	EA_IDY; tmp = RDMEM(EAD)
+#define RD_IDX	EA_IDX; tmp = RDMEM_ID(EAD)
+#define RD_IDY	EA_IDY; tmp = RDMEM_ID(EAD)
 
 /* write a value from tmp */
 #define WR_ZPG	EA_ZPG; WRMEM(EAD, tmp)
@@ -225,8 +228,8 @@ extern	UINT8	*RAM;
 #define WR_ABX	EA_ABX; WRMEM(EAD, tmp)
 #define WR_ABY	EA_ABY; WRMEM(EAD, tmp)
 #define WR_ZPI	EA_ZPI; WRMEM(EAD, tmp)
-#define WR_IDX	EA_IDX; WRMEM(EAD, tmp)
-#define WR_IDY	EA_IDY; WRMEM(EAD, tmp)
+#define WR_IDX	EA_IDX; WRMEM_ID(EAD, tmp)
+#define WR_IDY	EA_IDY; WRMEM_ID(EAD, tmp)
 
 /* write back a value from tmp to the last EA */
 #define WB_ACC	A = (UINT8)tmp;

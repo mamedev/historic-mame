@@ -309,9 +309,7 @@ static int mcu_data = 0;
 static int video_status;
 static int prev_scanline;
 static INT8 old_p1_paddle_h;			/* For Ghox */
-static INT8 old_p1_paddle_v;
 static INT8 old_p2_paddle_h;
-static INT8 old_p2_paddle_v;
 static int current_bank = 2;			/* Z80 bank used in Battle Garegga and Batrider */
 static int raizing_Z80_busreq;
 static int bbakraid_unlimited_ver;
@@ -391,10 +389,8 @@ static MACHINE_INIT( toaplan2 )		/* machine_init_toaplan2(); */
 static MACHINE_INIT( ghox )
 {
 	old_p1_paddle_h = 0;
-	old_p1_paddle_v = 0;
 	old_p2_paddle_h = 0;
-	old_p2_paddle_v = 0;
-
+	
 	machine_init_toaplan2();
 }
 
@@ -767,21 +763,6 @@ static READ16_HANDLER( ghox_p1_h_analog_r )
 	return value;
 }
 
-static READ16_HANDLER( ghox_p1_v_analog_r )
-{
-	INT8 new_value;
-
-	new_value = input_port_9_r(0);		/* fake vertical movement */
-	if (new_value == old_p1_paddle_v) return input_port_1_r(0);
-	if (new_value >  old_p1_paddle_v)
-	{
-		old_p1_paddle_v = new_value;
-		return (input_port_1_r(0) | 2);
-	}
-	old_p1_paddle_v = new_value;
-	return (input_port_1_r(0) | 1);
-}
-
 static READ16_HANDLER( ghox_p2_h_analog_r )
 {
 	INT8 value, new_value;
@@ -791,21 +772,6 @@ static READ16_HANDLER( ghox_p2_h_analog_r )
 	value = new_value - old_p2_paddle_h;
 	old_p2_paddle_h = new_value;
 	return value;
-}
-
-static READ16_HANDLER( ghox_p2_v_analog_r )
-{
-	INT8 new_value;
-
-	new_value = input_port_10_r(0);		/* fake vertical movement */
-	if (new_value == old_p2_paddle_v) return input_port_2_r(0);
-	if (new_value >  old_p2_paddle_v)
-	{
-		old_p2_paddle_v = new_value;
-		return (input_port_2_r(0) | 2);
-	}
-	old_p2_paddle_v = new_value;
-	return (input_port_2_r(0) | 1);
 }
 
 static READ16_HANDLER( ghox_mcu_r )
@@ -1451,10 +1417,8 @@ static ADDRESS_MAP_START( ghox_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x180010, 0x180011) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-//	AM_RANGE(0x18000c, 0x18000d) AM_READ(input_port_1_word_r)	/* Player 1 controls (real) */
-//	AM_RANGE(0x18000e, 0x18000f) AM_READ(input_port_2_word_r)	/* Player 2 controls (real) */
-	AM_RANGE(0x18000c, 0x18000d) AM_READ(ghox_p1_v_analog_r)	/* Player 1 controls */
-	AM_RANGE(0x18000e, 0x18000f) AM_READ(ghox_p2_v_analog_r)	/* Player 2 controls */
+        AM_RANGE(0x18000c, 0x18000d) AM_READ(input_port_1_word_r)	/* Player 1 controls  */
+ 	AM_RANGE(0x18000e, 0x18000f) AM_READ(input_port_2_word_r)	/* Player 2 controls  */
 	AM_RANGE(0x180500, 0x180fff) AM_READ(ghox_shared_ram_r)
 	AM_RANGE(0x18100c, 0x18100d) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
 ADDRESS_MAP_END
@@ -2462,11 +2426,6 @@ INPUT_PORTS_START( ghox )
 	PORT_START_TAG("IN8")		/* (8)  Paddle 2 (left-right)  read at $040000 */
 	PORT_BIT( 0xff,	0x00, IPT_DIAL ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
 
-	PORT_START_TAG("IN9")		/* (9)  Paddle 1 (fake up-down) */
-	PORT_BIT( 0xff,	0x00, IPT_DIAL_V ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(15) PORT_KEYDELTA(0) PORT_PLAYER(1)
-
-	PORT_START_TAG("IN10")		/* (10) Paddle 2 (fake up-down) */
-	PORT_BIT( 0xff,	0x00, IPT_DIAL_V ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(15) PORT_KEYDELTA(0) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dogyuun )

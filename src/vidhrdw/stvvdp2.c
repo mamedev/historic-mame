@@ -2471,7 +2471,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		--------BBBBBBBBGGGGGGGGRRRRRRRR
 		*/
 		case 4:
-			//usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
+			//usrintf_showmessage("BITMAP type 4 enabled");
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
 				destline = (UINT16 *)(bitmap->line[ycnt+yoffs]);
@@ -2483,6 +2483,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					t_pen = ((gfxdata[0] & 0x80) >> 7);
 					if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
 
+					/*TODO: 8bpp*/
 					b = (gfxdata[1] & 0xf8) >> 3;
 					g = (gfxdata[2] & 0xf8) >> 3;
 					r = (gfxdata[3] & 0xf8) >> 3;
@@ -2494,7 +2495,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 							destline[xcnt] = b | g << 5 | r << 10;
 					}
 					gfxdata+=4;
-					if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow;
+					/*This is not used for this type,see shanhigw Sunsoft logo*/
+					//if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow;
 				}
 			}
 			break;

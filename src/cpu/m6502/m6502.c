@@ -88,6 +88,8 @@ typedef struct
 	UINT8	irq_state;
 	UINT8   so_state;
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
+	read8_handler rdmem_id;					/* readmem callback for indexed instructions */
+	write8_handler wrmem_id;				/* readmem callback for indexed instructions */
 }	m6502_Regs;
 
 int m6502_ICount = 0;
@@ -150,6 +152,8 @@ static void m6502_init(void)
 {
 	m6502.subtype = SUBTYPE_6502;
 	m6502.insn = insn6502;
+	m6502.rdmem_id = program_read_byte_8;
+	m6502.wrmem_id = program_write_byte_8;
 	m6502_state_register("m6502");
 }
 
@@ -681,6 +685,8 @@ static void m6502_set_info(UINT32 state, union cpuinfo *info)
 		
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m6502.irq_callback = info->irqcallback;	break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6502.rdmem_id = (read8_handler) info->f;	break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6502.wrmem_id = (write8_handler) info->f;	break;
 	}
 }
 
@@ -747,6 +753,8 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6502_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6502_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6502_win_layout;				break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m6502.rdmem_id;		break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m6502.wrmem_id;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6502"); break;

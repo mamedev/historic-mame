@@ -280,7 +280,7 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 							*pr |= lpri;
 						}
 						src++;
-						dst++;	
+						dst++;
 						pr++;
 					}
 
@@ -410,7 +410,7 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 						if(*srct++ == tpri)
 							*dst = pens[*src];
 						src++;
-						dst++;	
+						dst++;
 					}
 
 				} else if(m == 0xffff) {
@@ -757,6 +757,10 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		int xmod, ymod;
 		int min_x, min_y, max_x, max_y;
 
+		UINT32 addoffset;
+		UINT32 newoffset;
+		UINT32 offset;
+
 		source = sprd[countspr];
 		cclip = clip[countspr];
 
@@ -826,7 +830,7 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			colors[px*2+1] = c;
 		}
 
-		pix = sys24_sprite_ram + (source[2] & 0x7fff) * 0x10;
+		offset = (source[2] & 0x7fff) * 0x10;
 
 		xmod = 0x20;
 		ymod = 0x20;
@@ -835,7 +839,9 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			int xpos1 = x;
 			int ypos1 = y, ymod1 = ymod;
 			for(px=0; px<sx; px++) {
-				const UINT16 *pix1 = pix + 0x10*(flipx ? sx-px-1 : px) + 0x10*sx*(flipy ? sy-py-1 : py) + (flipy ? 7*2 : 0);
+				addoffset = 0x10*(flipx ? sx-px-1 : px) + 0x10*sx*(flipy ? sy-py-1 : py) + (flipy ? 7*2 : 0);
+				newoffset = offset + addoffset;
+
 				int xmod2 = xmod1, xpos2 = xpos1;
 				int zy;
 				ymod1 = ymod;
@@ -854,7 +860,8 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 								while(xmod2 >= 0x40) {
 									if(xpos2 >= min_x && xpos2 <= max_x) {
 										int zx1 = flipx ? 7-zx : zx;
-										int c = (pix1[zx1>>2] >> (((~zx1) & 3) << 2)) & 0xf;
+										UINT32 neweroffset = (newoffset+(zx1>>2))&0x1ffff; // crackdown sometimes attempts to use data past the end of spriteram
+										int c = (sys24_sprite_ram[neweroffset] >> (((~zx1) & 3) << 2)) & 0xf;
 										UINT8 *pri = ((UINT8 *)priority_bitmap->line[ypos1]) + xpos2;
 										if(!(*pri & pm[c])) {
 											c = colors[c];
@@ -877,9 +884,9 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 						ypos1++;
 					}
 					if(flipy)
-						pix1 -= 2;
+						newoffset -= 2;
 					else
-						pix1 += 2;
+						newoffset += 2;
 				}
 
 				xpos1 = xpos2;

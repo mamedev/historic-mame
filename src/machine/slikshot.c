@@ -71,15 +71,27 @@
 #include "cpu/z80/z80.h"
 #include "itech8.h"
 
+
+#define YBUFFER_COUNT	15
+#define MINDY			100
+
 static UINT8 z80_ctrl;
 static UINT8 z80_port_val;
 static UINT8 z80_clear_to_send;
 
-static UINT16 nextsensor0, nextsensor1, nextsensor2, nextsensor3;
 static UINT16 sensor0, sensor1, sensor2, sensor3;
 
 static UINT8 curvx, curvy = 1, curx;
-static UINT8 lastshoot;
+
+static INT8 xbuffer[YBUFFER_COUNT];
+static INT8 ybuffer[YBUFFER_COUNT];
+static int ybuffer_next;
+static int curxpos;
+static int last_ytotal;
+
+static UINT8 crosshair_vis;
+static int crosshair_min;
+static int crosshair_max;
 
 
 
@@ -93,7 +105,7 @@ static UINT8 lastshoot;
  *
  *************************************/
 
-#if 0
+#ifdef STANDALONE
 static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 sens3,
 							UINT16 *word1, UINT16 *word2, UINT16 *word3, UINT8 *beams)
 {
@@ -131,7 +143,7 @@ static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 se
  *
  *************************************/
 
-#if 0
+#ifdef STANDALONE
 static void words_to_inters(UINT16 word1, UINT16 word2, UINT16 word3, UINT8 beams,
 							UINT16 *inter1, UINT16 *inter2, UINT16 *inter3)
 {
@@ -403,9 +415,9 @@ static void compute_sensors(void)
 	/* reverse map the inputs */
 	vels_to_inters(curx, curvx, curvy, &inter1, &inter2, &inter3, &beams);
 	inters_to_words(inter1, inter2, inter3, &beams, &word1, &word2, &word3);
-	words_to_sensors(word1, word2, word3, beams, &nextsensor0, &nextsensor1, &nextsensor2, &nextsensor3);
+	words_to_sensors(word1, word2, word3, beams, &sensor0, &sensor1, &sensor2, &sensor3);
 
-	logerror("%15f: Sensor values: %04x %04x %04x %04x\n", timer_get_time(), nextsensor0, nextsensor1, nextsensor2, nextsensor3);
+	logerror("%15f: Sensor values: %04x %04x %04x %04x\n", timer_get_time(), sensor0, sensor1, sensor2, sensor3);
 }
 
 
@@ -464,8 +476,6 @@ READ8_HANDLER( slikshot_z80_r )
 {
 	/* allow the Z80 to send us stuff now */
 	z80_clear_to_send = 1;
-	timer_set(TIME_NOW, 0, NULL);
-
 	return z80_port_val;
 }
 
@@ -490,125 +500,123 @@ READ8_HANDLER( slikshot_z80_control_r )
  *
  *************************************/
 
+static void delayed_z80_control_w(int data)
+{
+	/* bit 4 controls the reset line on the Z80 */
+
+	/* this is a big kludge: only allow a reset if the Z80 is stopped */
+	/* at its endpoint; otherwise, we never get a result from the Z80 */
+	if ((data & 0x10) || cpunum_get_reg(2, Z80_PC) == 0x13a)
+	{
+		cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+	
+		/* on the rising edge, make the crosshair visible again */
+		if ((data & 0x10) && !(z80_ctrl & 0x10))
+			crosshair_vis = 1;
+	}
+
+	/* boost the interleave whenever this is written to */
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
+
+	/* stash the new value */
+	z80_ctrl = data;
+}
+
+
 WRITE8_HANDLER( slikshot_z80_control_w )
 {
-	UINT8 delta = z80_ctrl ^ data;
-	z80_ctrl = data;
-
-	/* reset the Z80 on bit 4 changing */
-	if (delta & 0x10)
-	{
-//		logerror("%15f: Reset Z80: %02x  PC=%04x\n", timer_get_time(), data & 0x10, cpunum_get_reg(2, Z80_PC));
-
-		/* this is a big kludge: only allow a reset if the Z80 is stopped */
-		/* at its endpoint; otherwise, we never get a result from the Z80 */
-		if ((data & 0x10) || cpunum_get_reg(2, Z80_PC) == 0x13a)
-		{
-			cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
-
-			/* on the rising edge, do housekeeping */
-			if (data & 0x10)
-			{
-				sensor0 = nextsensor0;
-				sensor1 = nextsensor1;
-				sensor2 = nextsensor2;
-				sensor3 = nextsensor3;
-				nextsensor0 = nextsensor1 = nextsensor2 = nextsensor3 = 0;
-				z80_clear_to_send = 0;
-			}
-		}
-	}
-
-	/* on bit 5 going live, this looks like a clock, but the system */
-	/* won't work with it configured as such */
-	if (delta & data & 0x20)
-	{
-//		logerror("%15f: Clock edge high\n", timer_get_time());
-	}
+	timer_set(TIME_NOW, data, delayed_z80_control_w);
 }
 
 
 
 /*************************************
  *
- *	slikshot_extra_draw
+ *	slikshot_set_crosshair_range
  *
- *	render a line representing the
- *	current X crossing and the
- *	velocities
+ *	set the range for the crosshair
  *
  *************************************/
 
-void slikshot_extra_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void slikshot_set_crosshair_range(int miny, int maxy)
 {
-	INT8 vx = (INT8)readinputport(3);
-	INT8 vy = (INT8)readinputport(4);
-	UINT8 xpos = readinputport(5);
-	int xstart, ystart, xend, yend;
-	int dx, dy, absdx, absdy;
-	int count, i;
-	int newshoot;
+	crosshair_min = miny;
+	crosshair_max = maxy;
+}
 
-	/* make sure color 256 is white for our crosshair */
-	palette_set_color(256, 0xff, 0xff, 0xff);
 
-	/* compute the updated values */
-	curvx = vx;
-	curvy = (vy < 1) ? 1 : vy;
-	curx = xpos;
+
+/*************************************
+ *
+ *	video_update_slikshot
+ *
+ *************************************/
+
+VIDEO_UPDATE( slikshot )
+{
+	int totaldy, totaldx;
+	int temp, i;
+	
+	/* draw the normal video first */
+	video_update_itech8_2page(bitmap, cliprect);
+
+	/* add the current X,Y positions to the list */
+	xbuffer[ybuffer_next % YBUFFER_COUNT] = readinputportbytag_safe("FAKEX", 0);
+	ybuffer[ybuffer_next % YBUFFER_COUNT] = readinputportbytag_safe("FAKEY", 0);
+	ybuffer_next++;
+	
+	/* determine where to draw the starting point */
+	curxpos += xbuffer[(ybuffer_next + 1) % YBUFFER_COUNT];
+	if (curxpos < -0x80) curxpos = -0x80;
+	if (curxpos >  0x80) curxpos =  0x80;
+	
+	/* compute the total X/Y movement */
+	totaldx = totaldy = 0;
+	for (i = 0; i < YBUFFER_COUNT - 1; i++)
+	{
+		totaldx += xbuffer[(ybuffer_next + i + 1) % YBUFFER_COUNT];
+		totaldy += ybuffer[(ybuffer_next + i + 1) % YBUFFER_COUNT];
+	}
 
 	/* if the shoot button is pressed, fire away */
-	newshoot = readinputport(7) & 1;
-	if (newshoot && !lastshoot)
+	if (totaldy < last_ytotal && last_ytotal > 50 && crosshair_vis)
 	{
+		/* compute the updated values */
+		temp = totaldx;
+		if (temp <= -0x80) temp = -0x7f;
+		if (temp >=  0x80) temp =  0x7f;
+		curvx = temp;
+
+		temp = last_ytotal - 50;
+		if (temp <=  0x10) temp =  0x10;
+		if (temp >=  0x7f) temp =  0x7f;
+		curvy = temp;
+		
+		temp = 0x60 + (curxpos * 0x30 / 0x80);
+		if (temp <=  0x30) temp =  0x30;
+		if (temp >=  0x90) temp =  0x90;
+		curx = temp;
+
 		compute_sensors();
-//		usrintf_showmessage("V=%02x,%02x  X=%02x", curvx, curvy, curx);
+		usrintf_showmessage("V=%02x,%02x  X=%02x", curvx, curvy, curx);
+		crosshair_vis = 0;
 	}
-	lastshoot = newshoot;
+	last_ytotal = totaldy;
+
+	/* clear the buffer while the crosshair is not visible */
+	if (!crosshair_vis)
+	{
+		memset(xbuffer, 0, sizeof(xbuffer));
+		memset(ybuffer, 0, sizeof(ybuffer));
+	}
 
 	/* draw a crosshair (rotated) */
-	xstart = (((int)curx - 0x60) * 0x100 / 0xd0) + 144;
-	ystart = 256 - 48;
-	xend = xstart + (INT8)curvx;
-	yend = ystart - (INT8)curvy;
-
-	/* compute line params */
-	dx = xend - xstart;
-	dy = yend - ystart;
-	absdx = (dx < 0) ? -dx : dx;
-	absdy = (dy < 0) ? -dy : dy;
-	if (absdx > absdy)
+	if (crosshair_vis)
 	{
-		dy = absdx ? ((dy << 16) / absdx) : 0;
-		dx = (dx < 0) ? -0x10000 : 0x10000;
-		count = absdx;
-	}
-	else
-	{
-		dx = absdy ? ((dx << 16) / absdy) : 0;
-		dy = (dy < 0) ? -0x10000 : 0x10000;
-		count = absdy;
-	}
-
-	/* scale the start points */
-	xstart <<= 16;
-	ystart <<= 16;
-
-	/* draw the line */
-	for (i = 0; i < count; i++)
-	{
-		int px = xstart >> 16, py = ystart >> 16;
-
-		if (px >= cliprect->min_x && px <= cliprect->max_x &&
-			py >= cliprect->min_y && py <= cliprect->max_y)
-		{
-			if (bitmap->depth == 8)
-				((UINT8 *)bitmap->line[py])[px] = Machine->pens[256];
-			else
-				((UINT16 *)bitmap->line[py])[px] = Machine->pens[256];
-		}
-		xstart += dx;
-		ystart += dy;
+		if ((Machine->gamedrv->flags & ORIENTATION_MASK) == ROT90)
+			draw_crosshair(bitmap, 256 - 48, (crosshair_min + crosshair_max) / 2 - (curxpos * (crosshair_max - crosshair_min) / 0x100), cliprect);
+		else
+			draw_crosshair(bitmap, 48, (crosshair_min + crosshair_max) / 2 + (curxpos * (crosshair_max - crosshair_min) / 0x100), cliprect);
 	}
 }
 
@@ -623,7 +631,7 @@ void slikshot_extra_draw(struct mame_bitmap *bitmap, const struct rectangle *cli
  *
  *************************************/
 
-#if 0
+#ifdef STANDALONE
 
 int main(int argc, char *argv[])
 {

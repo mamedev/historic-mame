@@ -3286,7 +3286,7 @@ INPUT_PORTS_START ( mp_mazin )
 	PORT_DIPNAME( 0x01, 0x01, "DSW C-1" )
     PORT_DIPSETTING( 0x01, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
-
+	
 	PORT_DIPNAME( 0x02, 0x02, "DSW C-2" )
     PORT_DIPSETTING( 0x02, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
@@ -3294,10 +3294,33 @@ INPUT_PORTS_START ( mp_mazin )
 	PORT_DIPNAME( 0x04, 0x04, "DSW C-3" )
     PORT_DIPSETTING( 0x04, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
-
+	
 	PORT_DIPNAME( 0x08, 0x08, "DSW C-4" )
     PORT_DIPSETTING( 0x08, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( mp_soni2 )
+	GENESIS_PORTS
+	MEGAPLAY_TEST
+	MEGAPLAY_COIN
+	MEGAPLAY_DSWA
+	MEGAPLAY_DSWB
+
+	PORT_START
+	// DSW C  (per game settings)
+	PORT_DIPNAME( 0x03, 0x01, "Initial Players (Normal mode)" )
+    PORT_DIPSETTING( 0x00, "4" )
+    PORT_DIPSETTING( 0x01, "3" )
+    PORT_DIPSETTING( 0x02, "2" )
+    PORT_DIPSETTING( 0x03, "1" )
+
+	PORT_DIPNAME( 0x0c, 0x0c, "Initial Players (Dual mode)" )
+    PORT_DIPSETTING( 0x00, "4" )
+    PORT_DIPSETTING( 0x04, "2" )
+    PORT_DIPSETTING( 0x08, "1" )
+    PORT_DIPSETTING( 0x0c, "3" )
 
 INPUT_PORTS_END
 
@@ -5066,7 +5089,7 @@ static DRIVER_INIT (megaplay)
 /* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)"  )
 /* 05 */ GAMEB( 1993, mp_sor2,  megaplay, megaplay, megaplay, mp_sor2,	megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)"  )
 /* 06 */ GAMEB( 1993, mp_bio,   megaplay, megaplay, megaplay, mp_bio,	megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)"  )
-/* 07 */ GAMEB( 1993, mp_soni2, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega Play)"  )
+/* 07 */ GAMEB( 1993, mp_soni2, megaplay, megaplay, megaplay, mp_soni2, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega Play)"  )
 /* 08 */
 /* 09 */
 /* 10 */

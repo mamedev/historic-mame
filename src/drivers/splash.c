@@ -443,7 +443,7 @@ static MACHINE_DRIVER_START( splash )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(splash)
-	MDRV_VIDEO_UPDATE(funystrp)
+	MDRV_VIDEO_UPDATE(splash)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

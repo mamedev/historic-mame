@@ -140,6 +140,8 @@ Stephh's notes (based on the games M68000 code and some tests) :
 /*
 
 	2003-06-01	Added cocktail support to all games
+	
+	2005-04-02	Sebastien Chevalier : various update to video on terrafu, plus some typos here and there
 
 */
 
@@ -169,12 +171,14 @@ WRITE16_HANDLER( armedf_fg_scrollx_w );
 WRITE16_HANDLER( armedf_fg_scrolly_w );
 WRITE16_HANDLER( armedf_bg_scrollx_w );
 WRITE16_HANDLER( armedf_bg_scrolly_w );
+WRITE16_HANDLER( armedf_mcu_cmd );
 
 extern data16_t armedf_vreg;
 extern data16_t *armedf_bg_videoram;
 extern data16_t *armedf_fg_videoram;
 extern data16_t *terraf_text_videoram;
-
+extern data16_t *legion_cmd;
+extern struct tilemap *tx_tilemap;
 
 static WRITE16_HANDLER( io_w )
 {
@@ -182,6 +186,26 @@ static WRITE16_HANDLER( io_w )
 	/* bits 0 and 1 of armedf_vreg are coin counters */
 	/* bit 12 seems to handle screen flipping */
 	flip_screen_set(armedf_vreg & 0x1000);
+}
+
+static WRITE16_HANDLER( terraf_io_w )
+{
+	COMBINE_DATA(&armedf_vreg);
+	/* bits 0 and 1 of armedf_vreg are coin counters */
+	/* bit 12 seems to handle screen flipping */
+	flip_screen_set(armedf_vreg & 0x1000);
+
+	if ((armedf_vreg & 0x4000) && !(armedf_vreg & 0x0100))
+	{
+		int i;
+		for (i = 0x10; i < 0x1000; i++)
+		{
+			terraf_text_videoram[i]=0x20;
+		}
+		tilemap_mark_all_tiles_dirty( tx_tilemap );
+		//logerror("vreg WIPE TX\n");
+	}
+	//logerror("VReg = %04x\n", armedf_vreg);
 }
 
 static WRITE16_HANDLER( kodure_io_w )
@@ -206,6 +230,12 @@ static WRITE16_HANDLER( sound_command_w )
 {
 	if (ACCESSING_LSB)
 		soundlatch_w(0,((data & 0x7f) << 1) | 1);
+}
+
+static WRITE16_HANDLER( legion_command_c )
+{
+	COMBINE_DATA(&legion_cmd[offset]);
+	//logerror("Legion CMD %04x=%04x", offset, data);
 }
 
 
@@ -235,12 +265,14 @@ static ADDRESS_MAP_START( terraf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x06C000, 0x06C9ff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x070000, 0x070fff) AM_WRITE(armedf_fg_videoram_w) AM_BASE(&armedf_fg_videoram)
 	AM_RANGE(0x074000, 0x074fff) AM_WRITE(armedf_bg_videoram_w) AM_BASE(&armedf_bg_videoram)
-	AM_RANGE(0x07c000, 0x07c001) AM_WRITE(io_w)
+	AM_RANGE(0x07c000, 0x07c001) AM_WRITE(terraf_io_w)
 	AM_RANGE(0x07c002, 0x07c003) AM_WRITE(armedf_bg_scrollx_w)
 	AM_RANGE(0x07c004, 0x07c005) AM_WRITE(armedf_bg_scrolly_w)
-	AM_RANGE(0x07c006, 0x07c007) AM_WRITE(terraf_fg_scrollx_w)
+	AM_RANGE(0x07c006, 0x07c007) AM_WRITE(terraf_fg_scrollx_w)	/* not use in terrafu, 0x07c008 neither */
 	AM_RANGE(0x07c008, 0x07c009) AM_WRITE(terraf_fg_scrolly_w)	/* written twice, lsb and msb */
 	AM_RANGE(0x07c00a, 0x07c00b) AM_WRITE(sound_command_w)
+	AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)		/* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
+	AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(armedf_mcu_cmd)		/* MCU Command ? */
 	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(terraf_fg_scroll_msb_arm_w) /* written between two consecutive writes to 7c008 */
 ADDRESS_MAP_END
 
@@ -307,6 +339,48 @@ static ADDRESS_MAP_START( cclimbr2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x07c002, 0x07c003) AM_WRITE(armedf_bg_scrollx_w)
 	AM_RANGE(0x07c004, 0x07c005) AM_WRITE(armedf_bg_scrolly_w)
 	AM_RANGE(0x07c00a, 0x07c00b) AM_WRITE(sound_command_w)
+	AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(MWA16_NOP)		/* ? */
+	AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)		/* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( legion_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x060fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x061000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x064000, 0x064fff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x068000, 0x069fff) AM_WRITE(armedf_text_videoram_w) AM_BASE(&terraf_text_videoram)
+	AM_RANGE(0x06a000, 0x06a9ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06c000, 0x06c9ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06ca00, 0x06cbff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x070000, 0x070fff) AM_WRITE(armedf_fg_videoram_w) AM_BASE(&armedf_fg_videoram)
+	AM_RANGE(0x074000, 0x074fff) AM_WRITE(armedf_bg_videoram_w) AM_BASE(&armedf_bg_videoram)
+	AM_RANGE(0x07c000, 0x07c001) AM_WRITE(terraf_io_w)
+	AM_RANGE(0x07c002, 0x07c003) AM_WRITE(armedf_bg_scrollx_w)
+	AM_RANGE(0x07c004, 0x07c005) AM_WRITE(armedf_bg_scrolly_w)
+	AM_RANGE(0x07c00a, 0x07c00b) AM_WRITE(sound_command_w)
+	AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(armedf_mcu_cmd)		/* MCU Command ? */
+	AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)		/* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( legiono_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x04003f) AM_WRITE(MWA16_RAM) AM_BASE(&legion_cmd)
+	AM_RANGE(0x040040, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x060fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x061000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x064000, 0x064fff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x068000, 0x069fff) AM_WRITE(armedf_text_videoram_w) AM_BASE(&terraf_text_videoram)
+	AM_RANGE(0x06a000, 0x06a9ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06c000, 0x06c9ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06ca00, 0x06cbff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x070000, 0x070fff) AM_WRITE(armedf_fg_videoram_w) AM_BASE(&armedf_fg_videoram)
+	AM_RANGE(0x074000, 0x074fff) AM_WRITE(armedf_bg_videoram_w) AM_BASE(&armedf_bg_videoram)
+	AM_RANGE(0x07c000, 0x07c001) AM_WRITE(terraf_io_w)
+	AM_RANGE(0x07c002, 0x07c003) AM_WRITE(armedf_bg_scrollx_w)
+	AM_RANGE(0x07c004, 0x07c005) AM_WRITE(armedf_bg_scrolly_w)
+	AM_RANGE(0x07c00a, 0x07c00b) AM_WRITE(sound_command_w)
+	//AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(armedf_mcu_cmd)		/* MCU Command ? */
+	//AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)		/* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( armedf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -930,6 +1004,86 @@ static MACHINE_DRIVER_START( cclimbr2 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( legion )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_PROGRAM_MAP(cclimbr2_readmem,legion_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_PROGRAM_MAP(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(armedf)
+	MDRV_VIDEO_UPDATE(armedf)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( legiono )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_PROGRAM_MAP(cclimbr2_readmem,legiono_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_PROGRAM_MAP(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(armedf)
+	MDRV_VIDEO_UPDATE(armedf)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+MACHINE_DRIVER_END
+
 
 ROM_START( legion )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64K*8 for 68000 code */
@@ -1195,10 +1349,16 @@ DRIVER_INIT( terraf )
 	armedf_setgfxtype(0);
 }
 
+DRIVER_INIT( terrafu )
+{
+	armedf_setgfxtype(5);
+}
+
 DRIVER_INIT( armedf )
 {
 	armedf_setgfxtype(1);
 }
+
 
 DRIVER_INIT( kodure )
 {
@@ -1229,7 +1389,7 @@ DRIVER_INIT( legiono )
 	/* No need to patch the checksum routine (see notes) ! */
 #endif
 
-	armedf_setgfxtype(3);
+	armedf_setgfxtype(6);
 }
 
 DRIVER_INIT( cclimbr2 )
@@ -1239,10 +1399,10 @@ DRIVER_INIT( cclimbr2 )
 
 
 /*     YEAR, NAME,   PARENT,   MACHINE,  INPUT,    INIT,     MONITOR, COMPANY,     FULLNAME, FLAGS */
-GAMEX( 1987, legion,   0,        cclimbr2, legion,   legion,   ROT270, "Nichibutsu", "Legion (ver 2.03)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, legiono,  legion,   cclimbr2, legion,   legiono,  ROT270, "Nichibutsu", "Legion (ver 1.05)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, legion,   0,        legion,   legion,   legion,   ROT270, "Nichibutsu", "Legion (ver 2.03)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, legiono,  legion,   legiono,  legion,   legiono,  ROT270, "Nichibutsu", "Legion (ver 1.05)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAMEX( 1987, terraf,   0,        terraf,   terraf,   terraf,   ROT0,   "Nichibutsu", "Terra Force",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, terrafu,  terraf,   terraf,   terraf,   terraf,   ROT0,   "Nichibutsu USA", "Terra Force (US)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, terrafu,  terraf,   terraf,   terraf,   terrafu,  ROT0,   "Nichibutsu USA", "Terra Force (US)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAMEX( 1987, kodure,   0,        kodure,   kodure,   kodure,   ROT0,   "Nichibutsu", "Kodure Ookami (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAME(  1988, cclimbr2, 0,        cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)")
 GAME(  1988, cclmbr2a, cclimbr2, cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan Harder)")

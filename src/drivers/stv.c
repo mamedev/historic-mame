@@ -29,7 +29,7 @@ also has a DSP;
  1 back layer;
  1 line layer;
  The VDP2 is capable of the following things (in order):
- -dynamic resolution (up to 704x480) & various interlacing modes;
+ -dynamic resolution (up to 704x512) & various interlacing modes;
  -mosaic process;
  -scrolling,scaling,horizontal & vertical cell scrolling for the normal planes,
   the roz ones can also rotate;
@@ -39,7 +39,6 @@ also has a DSP;
  -global rgb brightness control,separate for every plane;
 
 this hardware comes above hell on the great list of hellish things as far as emulation goes anyway ;-)
-6063280
 
 Memory map:
 -----------
@@ -84,16 +83,14 @@ of them seem just mirrors of the previous valid memory allocated.
 ToDo / Notes:
 -------------
 
+-To enter into an Advanced Test Mode,keep pressed the Test Button (F2) on the start-up.
+
 (Main issues)
 -complete the Master/Slave communication.
 -fix properly the IC13 issue,several games still fails their booting.
 -any rom which has a non-plain loaded rom at 0x2200000 (or 0x2000000, i think it
  recognises a cart at either) appears to fail its self check, reason unknown, the roms
  are almost certainly not bad its a mystery.
--SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
- are really for.The manual also call them Reset disable/Reset enable.I suppose that
- there are 2 resets buttons,one for resetting just the cart and another for resetting the
- entire machine... -AS
 -Clean-ups and split the various chips(SCU,SMPC)into their respective files.
 -CD block:complete it & add proper CD image support into MAME.
 -the Cart-Dev mode...we need the proper ST-V Cart-Dev bios to be dumped in order to
@@ -106,6 +103,15 @@ ToDo / Notes:
 -SCSP to master irq: see if there is a sound cpu mask bit.
 -VDP1: Re-add the framebuffer reading,bios checks fails because of that.
 -Does the cpunum_set_clock really works?Investigate.
+-Memo: Some tests done on the original & working PCB,to be implemented:
+ -The AD-Stick returns 0x00
+ -The Ports E,F & G must return 0xff
+ -The regular BIOS tests (Memory Test) changes his background color at some point to
+  several gradients of red,green and blue.Current implementation remains black.I dunno
+  if this is a framebuffer write or a funky transparency issue (i.e TRANSPARENT_NONE
+  should instead show the back layer).
+ -RBG0 rotating can be checked on the "Advanced Test" menu thru the VDP1/VDP2 check.
+  It rotates clockwise IIRC.
 
 (per-game issues)
 -groovef: hangs soon after loaded,caused by two memory addresses in the Work RAM-H range.
@@ -124,10 +130,11 @@ ToDo / Notes:
 -grdforce: missing roz on RBG0 layer.
 -kiwames: locks up after one match.Also the VDP1 sprites refresh is too slow,causing the
  the "Draw by request" mode to flicker.Moved back to default ATM...
--introdon: game works *without* the IC13 hack.
--pblbeach: T&E Soft logo animation then hangs...
- update: It was waiting for a timer 1 irq as I said in the past,it uses VDP1 "tile"
- sprites and they are mostly wrong...
+-introdon/batmanfr: These two work *without* the IC13 hack.
+-pblbeach: Sprites are offset,caused by the stvvdp1_local_x/y command,commenting that will
+ give centered sprites.Also this game uses to write to the framebuffer for:
+ A)Remain sprites on screen (buffer purpose)
+ B)Write some extra graphics (chars in attract/test modes)
 -decathlt: isn't getting proper DMA parameters,as a result of this there are
  missing/wrong graphics,and no sound (obviously because there isn't any
  proper program loaded).
@@ -136,14 +143,14 @@ ToDo / Notes:
  My current best guess is that there isn't any MINIT triggered,so no VDP1
  sprites and no gameplay...
  Update: you can go after that by let the game read at cartridge at pc=060264BC instead of
- the ummapped area(i.e $21fxxxx instead of $01fxxxx),but the game still suffers from
+ the ummapped area(i.e $21fxxxx instead of $01fxxxx),but the game still suffers of
  missing/wrong graphics...
 -maruchan: hangs at the Sega logo.
 -sokyugrt: Has wrong vector reading with the Work Ram-H,caused by IC13 or some funky rom
  loading,also has the same sound issue as myfairld,playing with the debugger will give
  some text chars in the VDP2 area but then the SH-2 program dies.
 -introdon: Note that the working button in this game is BUTTON2 and not BUTTON1,weird
- design choice.
+ design choice.Another weird design choice is batmanfr:BUTTON1 isn't used at all...
 -seabass: Player sprite is corrupt during movements.
 -sss: Missing backgrounds during gameplay. <- seems just too dark (night),probably
  just the positioning isn't correct...
@@ -153,6 +160,8 @@ ToDo / Notes:
 -findlove: Has a strange rom loading at 0x100000,it tests "START   MES" string,there are
  two strings at ic13 and ic7 that matches it,notice also that the check it's not
  straight...
+-batmanfr: Missing sound,caused by an extra ADSP chip which is on the cart.AFAIK it might
+ be a ADSP-2115,and is located on memory $04800000/$04800003
 
 */
 
@@ -2114,7 +2123,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x10:
 				if(LOG_SMPC) logerror ("SMPC: Status Acquire\n");
 				smpc_ram[0x5f]=0x10;
-				smpc_ram[0x21]=0x80;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
 			  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
 		    	smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
 	    		smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
@@ -2183,12 +2192,15 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x19:
 				if(LOG_SMPC) logerror ("SMPC: NMI Enable\n");
 				smpc_ram[0x5f]=0x19;
-				NMI_reset = 1;
+				NMI_reset = 0;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
 				break;
 			case 0x1a:
 				if(LOG_SMPC) logerror ("SMPC: NMI Disable\n");
 				smpc_ram[0x5f]=0x1a;
-				NMI_reset = 0;
+				NMI_reset = 1;
+				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+
 				break;
 			default:
 				if(LOG_SMPC) logerror ("cpu #%d (PC=%08X) SMPC: undocumented Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
@@ -2271,8 +2283,8 @@ static INTERRUPT_GEN( stv_interrupt )
 		{
 			if(LOG_IRQ) logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
 			cpunum_set_input_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
-			stv_vblank = 0;
 		}
+		stv_vblank = 0;
 	}
 	else if(scanline <= 223 && scanline >= 1)/*Correct?*/
 	{
@@ -2296,8 +2308,6 @@ static INTERRUPT_GEN( stv_interrupt )
 					cpunum_set_input_line_and_vector(0, 0xb, HOLD_LINE, 0x44 );
 				}
 			}
-			//if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
-			//	cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
 		}
 		if(timer_0 == (stv_scu[36] & 0x1ff))
 		{
@@ -2324,8 +2334,8 @@ static INTERRUPT_GEN( stv_interrupt )
 		{
 			if(LOG_IRQ) logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
 			cpunum_set_input_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
-			stv_vblank = 1;
 		}
+		stv_vblank = 1;
 
 		if(timer_0 == (stv_scu[36] & 0x1ff))
 		{
@@ -2335,6 +2345,8 @@ static INTERRUPT_GEN( stv_interrupt )
 				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 			}
 		}
+		if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
+			cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
 	}
 }
 
@@ -3501,8 +3513,8 @@ static READ32_HANDLER( a_bus_ctrl_r )
 				ctrl_index++;
 				return ROM[ctrl_index];
 			case 0x10da0000://ffreveng, boot vectors at $6080000,test mode
-				//ctrl_index++;
-				return 0x0603c83c;//ROM[ctrl_index];
+				ctrl_index++;
+				return ROM[ctrl_index];
 			case 0x10d70000://ffreveng, boot vectors at $6080000,attract mode
 				ctrl_index++;
 				return ROM[ctrl_index];
@@ -3544,8 +3556,8 @@ static WRITE32_HANDLER ( a_bus_ctrl_w )
 			/*astrass,I need an original test mode screen to compare...*/
 			case 0x01230000: ctrl_index = ((0x400000)/4)-1; break;
 			/*ffreveng*/
-			case 0x10d70000: ctrl_index = ((0x22c1b8)/4)-1; break;
-			case 0x10da0000: ctrl_index = ((0x22c1b8)/4)-1; break;
+			case 0x10d70000: ctrl_index = ((0x22c504)/4)-1; break;
+			case 0x10da0000: ctrl_index = ((0x22c504)/4)-1; break;
 			/*sss,TRUSTED*/
 			case 0x2c5b0000: ctrl_index = (0x145ffac/4)-1; break;
 			/*sss,might be offset...*/
@@ -4057,8 +4069,10 @@ MACHINE_INIT( stv )
 	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 
 	timer_0 = 0;
+	timer_1 = 0;
 	en_68k = 0;
-	smpc_ram[0x21] = 0x80;
+	NMI_reset = 1;
+	smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
 
 	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
 	minit_boost = 400;
@@ -4984,28 +4998,23 @@ ROM_START( batmanfr )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
-	/* the batman forever rom test is more useless than most, i'm not really sure how
-	   the roms should map, it doesn't even appear to test enough roms nor the right sizes!
-	   everything fails for now
-       range      tested as
-	   040 - 04f  ic2
-	   0c0 - 0ff  ic4
-	   180 - 1bf  ic1
-	   1c0 - 1ff  ic8
-	   200 - 20f  ic9
-	   2c0 - 2df  ic12
-	   000 - ?    ic13
-
-	   */
+	/* Many thanks to Runik to point this out*/
 	ROM_LOAD16_BYTE( "350-mpa1.u19",    0x0000000, 0x0100000, CRC(2a5a8c3a) SHA1(374ec55a39ea909cc672e4a629422681d1f2da05) )
+	ROM_RELOAD(                         0x0200000, 0x0100000 )
+	//ROM_LOAD16_BYTE( "350-mpa1.u19",    0x0200000, 0x0100000, CRC(2a5a8c3a) SHA1(374ec55a39ea909cc672e4a629422681d1f2da05) )
 	ROM_LOAD16_BYTE( "350-mpa1.u16",    0x0000001, 0x0100000, CRC(735e23ab) SHA1(133e2284a07a611aed8ada2707248f392f4509aa) )
+	ROM_RELOAD(                         0x0200001, 0x0100000 )
+
+	//ROM_LOAD16_BYTE( "350-mpa1.u16",    0x0200001, 0x0100000, CRC(735e23ab) SHA1(133e2284a07a611aed8ada2707248f392f4509aa) )
+	//ROM_COPY(rgn,srcoffset,offset,length)
+	//ROM_COPY( REGION_USER1,             0x0000000, 0x0200000, 0x0200000)
 	ROM_LOAD16_WORD_SWAP( "gfx0.u1",    0x0400000, 0x0400000, CRC(a82d0b7e) SHA1(37a7a177634d51620b1b43e58732987df166c7e6) )
-	ROM_LOAD16_WORD_SWAP( "gfx1.u3",    0x0c00000, 0x0400000, CRC(a41e55d9) SHA1(b896d3a6c36d325c3cece699da54f340a4512703) )
-	ROM_LOAD16_WORD_SWAP( "gfx2.u5",    0x1800000, 0x0400000, CRC(4c1ebeb7) SHA1(cdd139652d9484ae5837a39c2fd48d0a8d966d43) )
-	ROM_LOAD16_WORD_SWAP( "gfx3.u8",    0x1c00000, 0x0400000, CRC(f679a3e7) SHA1(db11b033b8bbdd80b81e3bc098bd40ad3a8784f2) )
-	ROM_LOAD16_WORD_SWAP( "gfx4.u12",   0x0800000, 0x0400000, CRC(52d95242) SHA1(b554a95933c2be4c72fb4226d3bc4775695da2c1) )
-	ROM_LOAD16_WORD_SWAP( "gfx5.u15",   0x2000000, 0x0400000, CRC(e201f830) SHA1(5aa22fcc8f2e153d1abc3aa4050c594b3942ee67) )
-	ROM_LOAD16_WORD_SWAP( "gfx6.u18",   0x2c00000, 0x0400000, CRC(c6b381a3) SHA1(46431f1e47c084a0bf85535d35af27471653b008) )
+	ROM_LOAD16_WORD_SWAP( "gfx1.u3",    0x0800000, 0x0400000, CRC(a41e55d9) SHA1(b896d3a6c36d325c3cece699da54f340a4512703) )
+	ROM_LOAD16_WORD_SWAP( "gfx2.u5",    0x0c00000, 0x0400000, CRC(4c1ebeb7) SHA1(cdd139652d9484ae5837a39c2fd48d0a8d966d43) )
+	ROM_LOAD16_WORD_SWAP( "gfx3.u8",    0x1000000, 0x0400000, CRC(f679a3e7) SHA1(db11b033b8bbdd80b81e3bc098bd40ad3a8784f2) )
+	ROM_LOAD16_WORD_SWAP( "gfx4.u12",   0x1400000, 0x0400000, CRC(52d95242) SHA1(b554a95933c2be4c72fb4226d3bc4775695da2c1) )
+	ROM_LOAD16_WORD_SWAP( "gfx5.u15",   0x1800000, 0x0400000, CRC(e201f830) SHA1(5aa22fcc8f2e153d1abc3aa4050c594b3942ee67) )
+	ROM_LOAD16_WORD_SWAP( "gfx6.u18",   0x1c00000, 0x0400000, CRC(c6b381a3) SHA1(46431f1e47c084a0bf85535d35af27471653b008) )
 
 	/* it also has an extra adsp sound board, i guess this isn't tested */
 	ROM_REGION( 0x080000, REGION_USER2, 0 ) /* ADSP code */
@@ -5114,6 +5123,7 @@ GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0,   "Sega",
 //GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
 /* Playable */
 GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     				  "Baku Baku Animal (J 950407 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Columns '97 (JET 961209 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				  "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				  "Cotton Boomerang (JUET 980709 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -5156,7 +5166,6 @@ GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Data E
 GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* not working,black screen */
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Capcom",     				  "Final Fight Revenge (JUET 990714 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )

@@ -902,6 +902,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/vidhrdw/kncljoe.o $(OBJ)/drivers/kncljoe.o \
 	$(OBJ)/machine/stfight.o $(OBJ)/vidhrdw/stfight.o $(OBJ)/drivers/stfight.o \
 	$(OBJ)/drivers/cshooter.o \
+	$(OBJ)/drivers/panicr.o \
 	$(OBJ)/sndhrdw/seibu.o \
 	$(OBJ)/vidhrdw/deadang.o $(OBJ)/drivers/deadang.o \
 	$(OBJ)/vidhrdw/dynduke.o $(OBJ)/drivers/dynduke.o \
@@ -1040,10 +1041,14 @@ $(OBJ)/comad.a: \
 	$(OBJ)/vidhrdw/pushman.o $(OBJ)/drivers/pushman.o \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
+	$(OBJ)/drivers/cwbbc97.o \
+
+
 
 $(OBJ)/playmark.a: \
 	$(OBJ)/vidhrdw/sslam.o $(OBJ)/drivers/sslam.o \
 	$(OBJ)/vidhrdw/playmark.o $(OBJ)/drivers/playmark.o \
+	$(OBJ)/drivers/drtomy.o \
 
 $(OBJ)/pacific.a: \
 	$(OBJ)/vidhrdw/thief.o $(OBJ)/drivers/thief.o \
@@ -1267,6 +1272,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/laserbas.o \
 	$(OBJ)/drivers/turbosub.o \
+	$(OBJ)/drivers/penocup.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

@@ -374,6 +374,20 @@ int pia_read(int which, int offset)
 				/* combine input and output values */
 				val = (p->out_b & p->ddr_b) + (p->in_b & ~p->ddr_b);
 
+				/* This read will implicitly clear the IRQ B1 flag.  If CB2 is in write-strobe
+				   output mode with CB1 restore, and a CB1 active transition set the flag,
+				   clearing it will cause CB2 to go high again.  Note that this is different
+				   from what happens with port A. */
+				if (p->irq_b1 && C2_OUTPUT(p->ctl_b) && C2_STROBE_MODE(p->ctl_b) && STROBE_C1_RESET(p->ctl_b))
+				{
+					/* call the CB2 output function */
+					if (!p->out_cb2)
+						if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, 1);
+
+					/* clear CB2 */
+					p->out_cb2 = 1;
+				}
+
 				/* IRQ flags implicitly cleared by a read */
 				p->irq_b1 = p->irq_b2 = 0;
 				update_6821_interrupts(p);
@@ -556,16 +570,24 @@ void pia_write(int which, int offset, int data)
 
 			LOG(("%04x: PIA%d control A write = %02X\n", activecpu_get_previouspc(), which, data));
 
-			/* CA2 is configured as output and in set/reset mode */
-			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CA2 */
-//			if (C2_OUTPUT(data) && C2_SET_MODE(data))
+			/* CA2 is configured as output */
 			if (C2_OUTPUT(data))
 			{
-				/* determine the new value */
-				int temp = SET_C2(data) ? 1 : 0;
+				int temp;
 
-				/* if this creates a transition, call the CA2 output function */
-				if (p->out_ca2 ^ temp)
+				if (C2_SET_MODE(data))
+				{
+					/* set/reset mode--bit value determines the new output */
+					temp = SET_C2(data) ? 1 : 0;
+				}
+				else {
+					/* strobe mode--output is always high unless strobed. */
+					temp = 1;
+				}
+
+				/* if we're going from input to output mode, or we're already in output mode
+				   and this change creates a transition, call the CA2 output function */
+				if (C2_INPUT(p->ctl_a) || (C2_OUTPUT(p->ctl_a) && (p->out_ca2 ^ temp)))
 					if (p->intf->out_ca2_func) p->intf->out_ca2_func(0, temp);
 
 				/* set the new value */
@@ -588,16 +610,24 @@ void pia_write(int which, int offset, int data)
 
 			LOG(("%04x: PIA%d control B write = %02X\n", activecpu_get_previouspc(), which, data));
 
-			/* CB2 is configured as output and in set/reset mode */
-			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CB2 */
-//			if (C2_OUTPUT(data) && C2_SET_MODE(data))
+			/* CB2 is configured as output */
 			if (C2_OUTPUT(data))
 			{
-				/* determine the new value */
-				int temp = SET_C2(data) ? 1 : 0;
+				int temp;
 
-				/* if this creates a transition, call the CA2 output function */
-				if (p->out_cb2 ^ temp)
+				if (C2_SET_MODE(data))
+				{
+					/* set/reset mode--bit value determines the new output */
+					temp = SET_C2(data) ? 1 : 0;
+				}
+				else {
+					/* strobe mode--output is always high unless strobed. */
+					temp = 1;
+				}
+
+				/* if we're going from input to output mode, or we're already in output mode
+				   and this change creates a transition, call the CB2 output function */
+				if (C2_INPUT(p->ctl_b) || (C2_OUTPUT(p->ctl_b) && (p->out_cb2 ^ temp)))
 					if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, temp);
 
 				/* set the new value */
@@ -736,20 +766,10 @@ void pia_set_input_cb1(int which, int data)
 			/* update externals */
 			update_6821_interrupts(p);
 
-			/* CB2 is configured as output and in write strobe mode and cleared by a CA1 transition */
-			if (C2_OUTPUT(p->ctl_b) && C2_STROBE_MODE(p->ctl_b) && STROBE_C1_RESET(p->ctl_b))
-			{
-				/* the IRQ1 flag must have also been cleared */
-				if (!p->irq_b1)
-				{
-					/* call the CB2 output function */
-					if (!p->out_cb2)
-						if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, 1);
-
-					/* clear CB2 */
-					p->out_cb2 = 1;
-				}
-			}
+			/* If CB2 is configured as a write-strobe output which is reset by a CB1
+			   transition, this reset will only happen when a read from port B implicitly
+			   clears the IRQ B1 flag.  So we handle the CB2 reset there.  Note that this
+			   is different from what happens with port A. */
 		}
 	}
 
