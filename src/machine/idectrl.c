@@ -1560,7 +1560,7 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 			ide->dma_last_buffer = 0;
 			ide->dma_descriptor = ide->bus_master_descriptor;
 			ide->dma_cpu = cpu_getactivecpu();
-			ide->dma_address_xor = (activecpu_endianess() == CPU_IS_LE) ? 0 : 3;
+			ide->dma_address_xor = (activecpu_endianness() == CPU_IS_LE) ? 0 : 3;
 			
 			/* if we're going live, start the pending read/write */
 			if (ide->dma_active)

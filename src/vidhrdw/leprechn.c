@@ -49,8 +49,9 @@ VIDEO_START( leprechn )
 
 WRITE_HANDLER( leprechn_graphics_command_w )
 {
-    graphics_command = data;
+    graphics_command = data & 0x38;
 }
+
 
 
 static void clear_screen_done_callback(int param)

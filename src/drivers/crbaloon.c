@@ -199,30 +199,30 @@ READ_HANDLER( crbaloon_IN_r )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x4bff, MRA_RAM },
-	{ 0x5000, 0x53ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4bff, crbaloon_videoram_w, &videoram },
-	{ 0x5000, 0x53ff, crbaloon_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(crbaloon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(crbaloon_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x0f, crbaloon_IN_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x0f) AM_READ(crbaloon_IN_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x02, 0x04, crbaloon_spritectrl_w },
-	{ 0x06, 0x06, crbaloon_06_w },
-	{ 0x08, 0x08, crbaloon_08_w },
-	{ 0x0a, 0x0a, crbaloon_0a_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x04) AM_WRITE(crbaloon_spritectrl_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(crbaloon_06_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(crbaloon_08_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(crbaloon_0a_w)
+ADDRESS_MAP_END
 
 
 
@@ -356,8 +356,8 @@ static MACHINE_DRIVER_START( crbaloon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ????? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

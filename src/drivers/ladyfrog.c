@@ -143,65 +143,65 @@ static READ_HANDLER( snd_flag_r )
 	return snd_flag | 0xfd;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc07f, MRA_RAM },
-	{ 0xc080, 0xc87f, ladyfrog_videoram_r },
-	{ 0xd400, 0xd400, from_snd_r },
-	{ 0xd401, 0xd401, snd_flag_r },
-	{ 0xd800, 0xd800, input_port_0_r },
-	{ 0xd801, 0xd801, input_port_1_r },
-	{ 0xd804, 0xd804, input_port_2_r },
-	{ 0xd806, 0xd806, input_port_3_r },
-	{ 0xdc00, 0xdc9f, ladyfrog_spriteram_r},
-	{ 0xdca0, 0xdcbf, ladyfrog_scrlram_r },
-	{ 0xdcc0, 0xdcff, MRA_RAM },
-	{ 0xdd00, 0xdeff, ladyfrog_palette_r },
-	{ 0xd0d0, 0xd0d0, MRA_NOP }, /* code jumps to ASCII text "Alfa tecnology"  @ $b7 */
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc07f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc080, 0xc87f) AM_READ(ladyfrog_videoram_r)
+	AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
+	AM_RANGE(0xd401, 0xd401) AM_READ(snd_flag_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_2_r)
+	AM_RANGE(0xd806, 0xd806) AM_READ(input_port_3_r)
+	AM_RANGE(0xdc00, 0xdc9f) AM_READ(ladyfrog_spriteram_r)
+	AM_RANGE(0xdca0, 0xdcbf) AM_READ(ladyfrog_scrlram_r)
+	AM_RANGE(0xdcc0, 0xdcff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(ladyfrog_palette_r)
+	AM_RANGE(0xd0d0, 0xd0d0) AM_READ(MRA8_NOP) /* code jumps to ASCII text "Alfa tecnology"  @ $b7 */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc07f, MWA_RAM },
-	{ 0xc080, 0xc87f, ladyfrog_videoram_w, &videoram, &videoram_size },
-	{ 0xd000, 0xd000, ladyfrog_gfxctrl2_w},
-	{ 0xd400, 0xd400, sound_command_w },
-	{ 0xd403, 0xd403, sound_cpu_reset_w },
-	{ 0xdc00, 0xdc9f, ladyfrog_spriteram_w },
-	{ 0xdca0, 0xdcbf, ladyfrog_scrlram_w, &ladyfrog_scrlram },
-	{ 0xdcc0, 0xdcff, MWA_RAM },
-	{ 0xdd00, 0xdeff, ladyfrog_palette_w },
-	{ 0xdf03, 0xdf03, ladyfrog_gfxctrl_w },
-	{ 0xe000, 0xffff, MWA_RAM},
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc07f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc080, 0xc87f) AM_WRITE(ladyfrog_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(ladyfrog_gfxctrl2_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(sound_command_w)
+	AM_RANGE(0xd403, 0xd403) AM_WRITE(sound_cpu_reset_w)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(ladyfrog_spriteram_w)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(ladyfrog_scrlram_w) AM_BASE(&ladyfrog_scrlram)
+	AM_RANGE(0xdcc0, 0xdcff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(ladyfrog_palette_w)
+	AM_RANGE(0xdf03, 0xdf03) AM_WRITE(ladyfrog_gfxctrl_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd000, 0xd000, soundlatch_r },
-	{ 0xd200, 0xd200, MRA_NOP },
-	{ 0xe000, 0xefff, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
+	AM_RANGE(0xd200, 0xd200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800,0xc801, MWA_NOP },
-	{ 0xc802, 0xc802, AY8910_control_port_0_w },
-	{ 0xc803, 0xc803, AY8910_write_port_0_w },
-	{ 0xc900, 0xc90d, MSM5232_0_w },
-	{ 0xca00, 0xca00, MWA_NOP},
-	{ 0xcb00, 0xcb00, MWA_NOP},
-	{ 0xcc00, 0xcc00, MWA_NOP},
-	{ 0xd000, 0xd000, to_main_w },
-	{ 0xd200, 0xd200, nmi_enable_w },
-	{ 0xd400, 0xd400, nmi_disable_w },
-	{ 0xd600, 0xd600, MWA_NOP},
-	{ 0xe000, 0xefff, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xc801) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc802, 0xc802) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xc803, 0xc803) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc900, 0xc90d) AM_WRITE(MSM5232_0_w)
+	AM_RANGE(0xca00, 0xca00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xcb00, 0xcb00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(to_main_w)
+	AM_RANGE(0xd200, 0xd200) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(nmi_disable_w)
+	AM_RANGE(0xd600, 0xd600) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ladyfrog )
@@ -227,10 +227,10 @@ INPUT_PORTS_START( ladyfrog )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x01, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -286,12 +286,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( ladyfrog )
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -292,7 +292,7 @@ static void draw_radar(struct mame_bitmap *bitmap,const struct rectangle *clipre
 						sx >= cliprect->min_x && sx <= cliprect->max_x)
 						plot_pixel(bitmap,
 								   sx, sy,
-								   Machine->pens[offs < 0x200 ? 400 : 401]);
+								   Machine->pens[offs < 0x200 ? 512 : 513]);
 				}
 			}
 		}
@@ -356,8 +356,8 @@ VIDEO_UPDATE( senjyo )
 
 
 	/* two colors for the radar dots (verified on the real board) */
-	palette_set_color(400,0xff,0x00,0x00);	/* red for enemies */
-	palette_set_color(401,0xff,0xff,0x00);	/* yellow for player */
+	palette_set_color(512,0xff,0x00,0x00);	/* red for enemies */
+	palette_set_color(513,0xff,0xff,0x00);	/* yellow for player */
 
 	{
 		int scrollx,scrolly;

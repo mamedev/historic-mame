@@ -180,67 +180,67 @@ static WRITE_HANDLER( bwp2_ctrl_w )
 // CPU Memory Maps
 
 // Main CPU
-static MEMORY_READ_START( bwp1_readmem )
-	{ 0x1b00, 0x1b07, bwp1_io_r },
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, bwing_scrollram_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bwp1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1b00, 0x1b07) AM_READ(bwp1_io_r)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(bwing_scrollram_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bwp1_writemem )
-	{ 0x0000, 0x07ff, bwp12_sharedram1_w, &bwp1_sharedram1 },
-	{ 0x0800, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x13ff, bwing_videoram_w, &videoram },
-	{ 0x1800, 0x19ff, bwing_spriteram_w, &buffered_spriteram },
-	{ 0x1a00, 0x1aff, bwing_paletteram_w, &paletteram },
-	{ 0x1b00, 0x1b07, bwing_scrollreg_w },
-	{ 0x1c00, 0x1c07, bwp1_ctrl_w },
-	{ 0x2000, 0x3fff, bwing_scrollram_w },
-	{ 0x1000, 0x1fff, MWA_RAM }, // falls through
-	{ 0x4000, 0xffff, MWA_NOP }, // "B-Wings US" writes to 9631-9632(debug?)
-MEMORY_END
+static ADDRESS_MAP_START( bwp1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(bwp12_sharedram1_w) AM_BASE(&bwp1_sharedram1)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(bwing_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1800, 0x19ff) AM_WRITE(bwing_spriteram_w) AM_BASE(&buffered_spriteram)
+	AM_RANGE(0x1a00, 0x1aff) AM_WRITE(bwing_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1b00, 0x1b07) AM_WRITE(bwing_scrollreg_w)
+	AM_RANGE(0x1c00, 0x1c07) AM_WRITE(bwp1_ctrl_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(bwing_scrollram_w)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) // falls through
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_NOP) // "B-Wings US" writes to 9631-9632(debug?)
+ADDRESS_MAP_END
 
 
 // Sub CPU
-static MEMORY_READ_START( bwp2_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0xa000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bwp2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bwp2_writemem )
-	{ 0x0000, 0x07ff, bwp12_sharedram1_w, &bwp2_sharedram1 },
-	{ 0x0800, 0x0fff, MWA_RAM },
-	{ 0x1800, 0x1803, bwp2_ctrl_w },
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bwp2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(bwp12_sharedram1_w) AM_BASE(&bwp2_sharedram1)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1803) AM_WRITE(bwp2_ctrl_w)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 // Sound CPU
-static MEMORY_READ_START( bwp3_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bwp3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bwp3_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x0200, DAC_0_signed_data_w },
-	{ 0x1000, 0x1000, bwp3_nmiack_w },
-	{ 0x2000, 0x2000, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-	{ 0xd000, 0xd000, bwp3_nmimask_w },
-	{ 0xe000, 0xffff, MWA_ROM, &bwp3_rombase, &bwp3_romsize },
-MEMORY_END
+static ADDRESS_MAP_START( bwp3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x0200) AM_WRITE(DAC_0_signed_data_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(bwp3_nmiack_w)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(bwp3_nmimask_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM) AM_BASE(&bwp3_rombase) AM_SIZE(&bwp3_romsize)
+ADDRESS_MAP_END
 
-static PORT_READ_START( bwp3_readport )
-	{ 0x00, 0x00, input_port_6_r },
-PORT_END
+static ADDRESS_MAP_START( bwp3_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_6_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( bwp3_writeport )
-	{ 0x00, 0x00, bwp3_u8F_w },
-PORT_END
+static ADDRESS_MAP_START( bwp3_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(bwp3_u8F_w)
+ADDRESS_MAP_END
 
 //****************************************************************************
 // I/O Port Maps
@@ -412,17 +412,17 @@ static MACHINE_DRIVER_START( bwing )
 
 	// basic machine hardware
 	MDRV_CPU_ADD(M6809, 2000000)
-	MDRV_CPU_MEMORY(bwp1_readmem, bwp1_writemem)
+	MDRV_CPU_PROGRAM_MAP(bwp1_readmem, bwp1_writemem)
 	MDRV_CPU_VBLANK_INT(bwp1_interrupt, 3)
 
 	MDRV_CPU_ADD(M6809, 2000000)
-	MDRV_CPU_MEMORY(bwp2_readmem, bwp2_writemem)
+	MDRV_CPU_PROGRAM_MAP(bwp2_readmem, bwp2_writemem)
 //	MDRV_CPU_VBLANK_INT(irq1_line_assert, 1) // vblank triggers FIRQ on CPU2 by design (unused)
 
 	MDRV_CPU_ADD(DECO16, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(bwp3_readmem, bwp3_writemem)
-	MDRV_CPU_PORTS(bwp3_readport, bwp3_writeport)
+	MDRV_CPU_PROGRAM_MAP(bwp3_readmem, bwp3_writemem)
+	MDRV_CPU_IO_MAP(bwp3_readport, bwp3_writeport)
 	MDRV_CPU_PERIODIC_INT(bwp3_interrupt, 1000)
 
 	MDRV_FRAMES_PER_SECOND(60)

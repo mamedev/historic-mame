@@ -94,45 +94,45 @@ static WRITE_HANDLER( subcpu_reset_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x8bff, MRA_RAM },
-	{ 0x9000, 0x93ff, shared1_r },
-	{ 0x9800, 0x9bff, shared2_r },
-	{ 0xa800, 0xa807, ports_r },
-	{ 0xb000, 0xb7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(shared1_r)
+	AM_RANGE(0x9800, 0x9bff) AM_READ(shared2_r)
+	AM_RANGE(0xa800, 0xa807) AM_READ(ports_r)
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, colorram_w, &colorram },
-	{ 0x8800, 0x88ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x8900, 0x8bff, MWA_RAM },
-	{ 0x9000, 0x93ff, shared1_w, &sharedram1 },
-	{ 0x9800, 0x9bff, shared2_w, &sharedram2 },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa002, 0xa002, wiping_flipscreen_w },
-	{ 0xa003, 0xa003, subcpu_reset_w },
-	{ 0xb000, 0xb7ff, MWA_RAM },
-	{ 0xb800, 0xb800, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8900, 0x8bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(shared1_w) AM_BASE(&sharedram1)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(shared2_w) AM_BASE(&sharedram2)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(wiping_flipscreen_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(subcpu_reset_w)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
 
 /* Sound cpu data */
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x9000, 0x93ff, shared1_r },
-	{ 0x9800, 0x9bff, shared2_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(shared1_r)
+	AM_RANGE(0x9800, 0x9bff) AM_READ(shared2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x7fff, wiping_sound_w, &wiping_soundregs },
-	{ 0x9000, 0x93ff, shared1_w },
-	{ 0x9800, 0x9bff, shared2_w },
-	{ 0xa001, 0xa001, interrupt_enable_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wiping_sound_w) AM_BASE(&wiping_soundregs)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(shared1_w)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(shared2_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(interrupt_enable_w)
+ADDRESS_MAP_END
 
 
 
@@ -313,12 +313,12 @@ static MACHINE_DRIVER_START( wiping )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,18432000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)	/* periodic interrupt, don't know about the frequency */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -2,6 +2,7 @@
 #define _MIPS_H
 
 #include "osd_cpu.h"
+#include "driver.h"
 
 enum
 {
@@ -75,8 +76,6 @@ enum
 	MIPS_CP2CR28, MIPS_CP2CR29,
 	MIPS_CP2CR30, MIPS_CP2CR31
 };
-
-extern int mips_ICount;
 
 #define MIPS_INT_NONE	( -1 )
 
@@ -197,50 +196,14 @@ extern int mips_ICount;
 /* OP_COP0 */
 #define CF_RFE ( 16 )
 
-extern void mips_stop(void);
-
-extern void mips_init(void);
-extern void mips_reset(void *param);
-extern void mips_exit(void);
-extern int mips_execute(int cycles);
-extern unsigned mips_get_context(void *dst);
-extern void mips_set_context(void *src);
-extern unsigned mips_get_reg(int regnum);
-extern void mips_set_reg(int regnum, unsigned val);
-extern void mips_set_nmi_line(int linestate);
-extern void mips_set_irq_line(int irqline, int linestate);
-extern void mips_set_irq_callback(int (*callback)(int irqline));
-extern const char *mips_info(void *context, int regnum);
-extern unsigned mips_dasm(char *buffer, unsigned pc);
+extern void mips_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmMIPS(char *buff, unsigned _pc);
 #endif
 
-#if HAS_PSXCPU
-
-#define psxcpu_ICount mips_ICount
-
-#define psxcpu_init mips_init
-#define psxcpu_reset mips_reset
-#define psxcpu_exit mips_exit
-#define psxcpu_execute mips_execute
-#define psxcpu_get_context mips_get_context
-#define psxcpu_set_context mips_set_context
-#define psxcpu_get_pc mips_get_pc
-#define psxcpu_set_pc mips_set_pc
-#define psxcpu_get_sp mips_get_sp
-#define psxcpu_set_sp mips_set_sp
-#define psxcpu_get_reg mips_get_reg
-#define psxcpu_set_reg mips_set_reg
-#define psxcpu_set_nmi_line mips_set_nmi_line
-#define psxcpu_set_irq_line mips_set_irq_line
-#define psxcpu_set_irq_callback mips_set_irq_callback
-#define psxcpu_state_save mips_state_save
-#define psxcpu_state_load mips_state_load
-#define psxcpu_info mips_info
-#define psxcpu_dasm mips_dasm
-
+#if (HAS_PSXCPU)
+extern void psxcpu_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #endif

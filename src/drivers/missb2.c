@@ -3,7 +3,13 @@
 A rather odd bootleg of Bubble Bobble with level select, redesigned levels,
 redesigned (8bpp!) graphics and different sound hardware... Crazy
 
--- where is oki?
+The Sound NMI and/or Interrupts aren't likely to be right. The Sound CPU
+starts writing to unusual memory ports - either because the NMI/Interrupt
+timing is out, or the sheer fact that the Sound CPU code is rather poorly
+written, so it may be normal behaviour.
+
+Also, the OKI M6295 seems to be playing the wrong samples, however the current
+OKI M6295 sound ROM dump is bad.
 
 */
 
@@ -168,96 +174,93 @@ WRITE_HANDLER( bg_bank_w )
 }
 
 
+static INTERRUPT_GEN( missb2_interrupt )
+{
+	cpu_set_irq_line(2,0,HOLD_LINE);
+}
 
-static MEMORY_READ_START( missb2_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-	{ 0xf800, 0xf9ff, MRA_RAM },
-	{ 0xfc00, 0xfcff, bublbobl_sharedram2_r },
 
-	{ 0xfe00, 0xfe03, MRA_RAM }, // ?
-	{ 0xfe80, 0xfe83, MRA_RAM }, // ?
 
-	{ 0xff00, 0xff00, input_port_0_r },
-	{ 0xff01, 0xff01, input_port_1_r },
-	{ 0xff02, 0xff02, input_port_2_r },
-	{ 0xff03, 0xff03, input_port_3_r },
-	{ 0xfd00, 0xfdff, MRA_RAM }, /* ? */
-MEMORY_END
+static ADDRESS_MAP_START( missb2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+	AM_RANGE(0xf800, 0xf9ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ(bublbobl_sharedram2_r)
+	AM_RANGE(0xfe00, 0xfe03) AM_READ(MRA8_RAM)	// ?
+	AM_RANGE(0xfe80, 0xfe83) AM_READ(MRA8_RAM)	// ?
+	AM_RANGE(0xff00, 0xff00) AM_READ(input_port_0_r)
+	AM_RANGE(0xff01, 0xff01) AM_READ(input_port_1_r)
+	AM_RANGE(0xff02, 0xff02) AM_READ(input_port_2_r)
+	AM_RANGE(0xff03, 0xff03) AM_READ(input_port_3_r)
+	AM_RANGE(0xfd00, 0xfdff) AM_READ(MRA8_RAM)	// ?
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( missb2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
-	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram  },
-	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
-	{ 0xfa80, 0xfa80, MWA_NOP },
-	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
-	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
-	{ 0xfc00, 0xfcff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
-	{ 0xfd00, 0xfdff, MWA_RAM }, /* ? */
+static ADDRESS_MAP_START( missb2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
+	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
+	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfd00, 0xfdff) AM_WRITE(MWA8_RAM)	// ?
+	AM_RANGE(0xfe00, 0xfe03) AM_WRITE(MWA8_RAM)	// ?
+	AM_RANGE(0xfe80, 0xfe83) AM_WRITE(MWA8_RAM)	// ?
+	AM_RANGE(0xff94, 0xff94) AM_WRITE(MWA8_NOP)	// ?
+ADDRESS_MAP_END
 
-	{ 0xfe00, 0xfe03, MWA_RAM }, // ?
-	{ 0xfe80, 0xfe83, MWA_RAM }, // ?
 
-	{ 0xff94, 0xff94, MWA_NOP }, // ?
-MEMORY_END
+static ADDRESS_MAP_START( missb2_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 
-//READ_HANDLER ( missb_random )
-//{
-//	return rand();
-//}
+	AM_RANGE(0x9000, 0xafff) AM_READ(MRA8_BANK2)	/* ROM data for the background palette ram*/
+	AM_RANGE(0xb000, 0xb1ff) AM_READ(MRA8_ROM)		// ? banked ?
 
-static MEMORY_READ_START( missb2_readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)	/* main? */
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+ADDRESS_MAP_END
 
-	{ 0x9000, 0xafff, MRA_BANK2 }, /* ROM data for the background palette ram*/
-	{ 0xb000, 0xb1ff, MRA_ROM }, // ? banked ?
+static ADDRESS_MAP_START( missb2_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(bg_paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&bg_paletteram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM)	/* main? */
 
-	{ 0xc800, 0xcfff, MRA_RAM }, /* main? */
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-MEMORY_END
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(bg_bank_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(MWA8_RAM) AM_BASE(&bg_vram)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( missb2_writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc1ff, bg_paletteram_RRRRGGGGBBBBxxxx_swap_w,&bg_paletteram  },
-	{ 0xc800, 0xcfff, MWA_RAM }, /* main? */
 
-	{ 0xd000, 0xd000, bg_bank_w },
-	{ 0xd002, 0xd002, MWA_NOP },
-	{ 0xd003, 0xd003, MWA_RAM,&bg_vram },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w },
-MEMORY_END
+/* Looks like the original bublbobl code modified to support the OKI M6295. */
 
-/* does it actually use the original sound hw or is it just leftover code .. */
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	/* bit 0: message pending for main cpu */
+											/* bit 1: message pending for sound cpu */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0x9001, 0x9001, YM2203_read_port_0_r },
-	{ 0xa000, 0xa000, YM3526_status_port_0_r },
-	{ 0xb000, 0xb000, soundlatch_r },
-	{ 0xb001, 0xb001, MRA_NOP },	/* bit 0: message pending for main cpu */
-									/* bit 1: message pending for sound cpu */
-	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2203_control_port_0_w },
-	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, YM3526_control_port_0_w },
-	{ 0xa001, 0xa001, YM3526_write_port_0_w },
-	{ 0xb000, 0xb000, MWA_NOP },	/* message for main cpu */
-	{ 0xb001, 0xb001, bublbobl_sh_nmi_enable_w },
-	{ 0xb002, 0xb002, bublbobl_sh_nmi_disable_w },
-	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* message for main cpu */
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(bublbobl_sh_nmi_enable_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
 
 
@@ -355,30 +358,30 @@ static struct GfxLayout bglayout =
 		4*8,      5*8, 2052*8, 2053*8,   12*8,   13*8, 2060*8, 2061*8,
 		256*8 , 257*8, 2304*8, 2305*8,  264*8,  265*8, 2312*8, 2313*8,
 		260*8 , 261*8, 2308*8, 2309*8,  268*8,  269*8, 2316*8, 2317*8,
-       1024*8, 1025*8, 3072*8, 3073*8, 1032*8, 1033*8, 3080*8, 3081*8,
+	   1024*8, 1025*8, 3072*8, 3073*8, 1032*8, 1033*8, 3080*8, 3081*8,
 	   1028*8, 1029*8, 3076*8, 3077*8, 1036*8, 1037*8, 3084*8, 3085*8,
 	   1280*8, 1281*8, 3328*8, 3329*8, 1288*8, 1289*8, 3336*8, 3337*8,
-       1284*8, 1285*8, 3332*8, 3333*8, 1292*8, 1293*8, 3340*8, 3341*8,
+	   1284*8, 1285*8, 3332*8, 3333*8, 1292*8, 1293*8, 3340*8, 3341*8,
 		512*8,  513*8, 2560*8, 2561*8,  520*8,  521*8, 2568*8, 2569*8,
 		516*8,  517*8, 2564*8, 2565*8,	524*8,  525*8, 2572*8, 2573*8,
-        768*8,  769*8, 2816*8, 2817*8,  776*8,  777*8, 2824*8, 2825*8,
-        772*8,  773*8, 2820*8, 2821*8,  780*8,  781*8, 2828*8, 2829*8,
+		768*8,  769*8, 2816*8, 2817*8,  776*8,  777*8, 2824*8, 2825*8,
+		772*8,  773*8, 2820*8, 2821*8,  780*8,  781*8, 2828*8, 2829*8,
 	   1536*8, 1537*8, 3584*8, 3585*8, 1544*8, 1545*8, 3592*8, 3593*8,
-       1540*8, 1541*8, 3588*8, 3589*8, 1548*8, 1549*8, 3596*8, 3597*8,
+	   1540*8, 1541*8, 3588*8, 3589*8, 1548*8, 1549*8, 3596*8, 3597*8,
 	   1792*8, 1793*8, 3840*8, 3841*8, 1800*8, 1801*8, 3848*8, 3849*8,
 	   1796*8, 1797*8, 3844*8, 3845*8, 1804*8, 1805*8, 3852*8, 3853*8,
-          2*8,    3*8, 2050*8, 2051*8,   10*8,   11*8, 2058*8, 2059*8,
+		  2*8,    3*8, 2050*8, 2051*8,   10*8,   11*8, 2058*8, 2059*8,
 		  6*8,    7*8, 2054*8, 2055*8,	 14*8,   15*8, 2062*8, 2063*8,
-	    258*8,  259*8, 2306*8, 2307*8,  266*8,  267*8, 2314*8, 2315*8,
+		258*8,  259*8, 2306*8, 2307*8,  266*8,  267*8, 2314*8, 2315*8,
 		262*8,  263*8, 2310*8, 2311*8,	270*8,  271*8, 2318*8, 2319*8,
-       1026*8, 1027*8, 3074*8, 3075*8, 1034*8, 1035*8, 3082*8, 3083*8,
-       1030*8, 1031*8, 3078*8, 3079*8, 1038*8, 1039*8, 3086*8, 3087*8,
-       1282*8, 1283*8, 3330*8, 3331*8, 1290*8, 1291*8, 3338*8, 3339*8,
-       1286*8, 1287*8, 3334*8, 3335*8, 1294*8, 1295*8, 3342*8, 3343*8,
-        514*8,  515*8, 2562*8, 2563*8, 	522*8,  523*8, 2570*8, 2571*8,
+	   1026*8, 1027*8, 3074*8, 3075*8, 1034*8, 1035*8, 3082*8, 3083*8,
+	   1030*8, 1031*8, 3078*8, 3079*8, 1038*8, 1039*8, 3086*8, 3087*8,
+	   1282*8, 1283*8, 3330*8, 3331*8, 1290*8, 1291*8, 3338*8, 3339*8,
+	   1286*8, 1287*8, 3334*8, 3335*8, 1294*8, 1295*8, 3342*8, 3343*8,
+		514*8,  515*8, 2562*8, 2563*8, 	522*8,  523*8, 2570*8, 2571*8,
 		518*8,  519*8, 2566*8, 2567*8,  526*8,  527*8, 2574*8, 2575*8,
 		770*8,  771*8, 2818*8, 2819*8,  778*8,  779*8, 2826*8, 2827*8,
-        774*8,  775*8, 2822*8, 2823*8,  782*8,  783*8, 2830*8, 2831*8,
+		774*8,  775*8, 2822*8, 2823*8,  782*8,  783*8, 2830*8, 2831*8,
 	   1538*8, 1539*8, 3586*8, 3587*8, 1546*8, 1547*8, 3594*8, 3595*8,
 	   1542*8, 1543*8, 3590*8, 3591*8, 1550*8, 1551*8, 3598*8, 3599*8,
 	   1794*8, 1795*8, 3842*8, 3843*8, 1802*8, 1803*8, 3850*8, 3851*8,
@@ -398,57 +401,49 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 // ?? not sure for this
 #define MAIN_XTAL 24000000
 
-/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+/* Handler called by the 3526 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	logerror("YM3526 firing an IRQ\n");
+//	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
-
-static struct YM2203interface ym2203_interface =
-{
-	1,			/* 1 chip */
-	MAIN_XTAL/8,	/* 3 MHz */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
 
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip (no more supported) */
+	1,				/* 1 chip (no more supported) */
 	MAIN_XTAL/8,	/* 3 MHz */
-	{ 50 }		/* volume */
+	{ 50 },			/* volume */
+	{ irqhandler }
 };
 
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,                  /* 1 chip */
-	{ 8000 },           /* ? frequency */
+	1,					/* 1 chip */
+	{ 8000 },			/* ? frequency */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
+
 
 
 static MACHINE_DRIVER_START( missb2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(missb2_readmem,missb2_writemem)
+	MDRV_CPU_PROGRAM_MAP(missb2_readmem,missb2_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(missb2_readmem2,missb2_writemem2)
+	MDRV_CPU_PROGRAM_MAP(missb2_readmem2,missb2_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-								/* IRQs are triggered by the YM2203 */
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(missb2_interrupt,1)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
@@ -464,8 +459,7 @@ static MACHINE_DRIVER_START( missb2 )
 	MDRV_VIDEO_UPDATE(missb2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface) // ?
-	MDRV_SOUND_ADD(YM3526, ym3526_interface) // ?
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
@@ -497,7 +491,7 @@ ROM_START( missb2 )
 	ROM_LOAD16_BYTE( "msbub2-u.ic4", 0x000000, 0x80000, CRC(be71c9f0) SHA1(1961e931017f644486cea0ce431d50973679c848) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "msbub2-u.13", 0x00000, 0x20000, CRC(14f07386) SHA1(097897d92226f900e11dbbdd853aff3ac46ff016) )
+	ROM_LOAD( "msbub2-u.13", 0x00000, 0x20000, BAD_DUMP CRC(14f07386) SHA1(097897d92226f900e11dbbdd853aff3ac46ff016) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "a71-25.bin",  0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing - taken from bublbobl */
@@ -513,4 +507,4 @@ static DRIVER_INIT( missb2 )
 
 }
 
-GAMEX( 1996, missb2, bublbobl, missb2, missb2, missb2, ROT0,  "Alpha Co", "Miss Bubble 2", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1996, missb2, bublbobl, missb2, missb2, missb2, ROT0,  "Alpha Co", "Miss Bubble 2", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

@@ -137,80 +137,80 @@ static WRITE_HANDLER( flip_screen_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, MRA_RAM },
-	{ 0x9800, 0x987f, MRA_RAM },
-	{ 0x9c00, 0x9d8f, MRA_RAM },
-	{ 0x9e00, 0x9e3f, MRA_RAM },
-	{ 0xa000, 0xa37f, MRA_RAM },
-	{ 0xa800, 0xaaff, MRA_RAM },
-	{ 0xb000, 0xb1ff, MRA_RAM },
-	{ 0xb800, 0xbbff, MRA_RAM },
-	{ 0xd000, 0xd000, input_port_0_r },	/* player 1 input */
-	{ 0xd001, 0xd001, input_port_1_r },	/* player 2 input */
-	{ 0xd002, 0xd002, input_port_2_r },	/* coin */
-	{ 0xd004, 0xd004, input_port_3_r },	/* DSW1 */
-	{ 0xd005, 0xd005, input_port_4_r },	/* DSW2 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x987f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9c00, 0x9dff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9e00, 0x9e3f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xafff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb800, 0xbbff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)	/* player 1 input */
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)	/* player 2 input */
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)	/* coin */
+	AM_RANGE(0xd004, 0xd004) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xd005, 0xd005) AM_READ(input_port_4_r)	/* DSW2 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, senjyo_fgvideoram_w, &senjyo_fgvideoram },
-	{ 0x9400, 0x97ff, senjyo_fgcolorram_w, &senjyo_fgcolorram },
-	{ 0x9800, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9c00, 0x9d8f, paletteram_IIBBGGRR_w, &paletteram },
-	{ 0x9e00, 0x9e1f, MWA_RAM, &senjyo_fgscroll },
-	{ 0x9e20, 0x9e21, MWA_RAM, &senjyo_scrolly3 },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(senjyo_fgvideoram_w) AM_BASE(&senjyo_fgvideoram)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(senjyo_fgcolorram_w) AM_BASE(&senjyo_fgcolorram)
+	AM_RANGE(0x9800, 0x987f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9c00, 0x9dff) AM_WRITE(paletteram_IIBBGGRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9e00, 0x9e1f) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_fgscroll)
+	AM_RANGE(0x9e20, 0x9e21) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly3)
 /*	{ 0x9e22, 0x9e23, height of the layer (Senjyo only, fixed at 0x380) */
-	{ 0x9e25, 0x9e25, MWA_RAM, &senjyo_scrollx3 },
-	{ 0x9e27, 0x9e27, senjyo_bgstripes_w, &senjyo_bgstripesram },	/* controls width of background stripes */
-	{ 0x9e28, 0x9e29, MWA_RAM, &senjyo_scrolly2 },
+	AM_RANGE(0x9e25, 0x9e25) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx3)
+	AM_RANGE(0x9e27, 0x9e27) AM_WRITE(senjyo_bgstripes_w) AM_BASE(&senjyo_bgstripesram)	/* controls width of background stripes */
+	AM_RANGE(0x9e28, 0x9e29) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly2)
 /*	{ 0x9e2a, 0x9e2b, height of the layer (Senjyo only, fixed at 0x200) */
-	{ 0x9e2d, 0x9e2d, MWA_RAM, &senjyo_scrollx2 },
-	{ 0x9e30, 0x9e31, MWA_RAM, &senjyo_scrolly1 },
+	AM_RANGE(0x9e2d, 0x9e2d) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx2)
+	AM_RANGE(0x9e30, 0x9e31) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly1)
 /*	{ 0x9e32, 0x9e33, height of the layer (Senjyo only, fixed at 0x100) */
-	{ 0x9e35, 0x9e35, MWA_RAM, &senjyo_scrollx1 },
+	AM_RANGE(0x9e35, 0x9e35) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx1)
 /*	{ 0x9e38, 0x9e38, probably radar y position (Senjyo only, fixed at 0x61) */
 /*	{ 0x9e3d, 0x9e3d, probably radar x position (Senjyo only, 0x00/0xc0 depending on screen flip) */
-{ 0x9e00, 0x9e3f, MWA_RAM },
-	{ 0xa000, 0xa37f, senjyo_bg3videoram_w, &senjyo_bg3videoram },
-	{ 0xa800, 0xaaff, senjyo_bg2videoram_w, &senjyo_bg2videoram },
-	{ 0xb000, 0xb1ff, senjyo_bg1videoram_w, &senjyo_bg1videoram },
-	{ 0xb800, 0xbbff, MWA_RAM, &senjyo_radarram },
-	{ 0xd000, 0xd000, flip_screen_w },
-	{ 0xd004, 0xd004, z80pioA_0_p_w },
-MEMORY_END
+AM_RANGE(0x9e00, 0x9e3f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(senjyo_bg3videoram_w) AM_BASE(&senjyo_bg3videoram)
+	AM_RANGE(0xa800, 0xafff) AM_WRITE(senjyo_bg2videoram_w) AM_BASE(&senjyo_bg2videoram)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(senjyo_bg1videoram_w) AM_BASE(&senjyo_bg1videoram)
+	AM_RANGE(0xb800, 0xbbff) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_radarram)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(flip_screen_w)
+	AM_RANGE(0xd004, 0xd004) AM_WRITE(z80pioA_0_p_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x8000, 0x8000, SN76496_0_w },
-	{ 0x9000, 0x9000, SN76496_1_w },
-	{ 0xa000, 0xa000, SN76496_2_w },
-	{ 0xd000, 0xd000, senjyo_volume_w },
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(senjyo_volume_w)
 #if 0
-	{ 0xe000, 0xe000, unknown },
-	{ 0xf000, 0xf000, unknown },
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(unknown)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(unknown)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x03, z80pio_0_r },
-	{ 0x08, 0x0b, z80ctc_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READ(z80pio_0_r)
+	AM_RANGE(0x08, 0x0b) AM_READ(z80ctc_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x03, z80pio_0_w },
-	{ 0x08, 0x0b, z80ctc_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_WRITE(z80pio_0_w)
+	AM_RANGE(0x08, 0x0b) AM_WRITE(z80ctc_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -567,14 +567,14 @@ static MACHINE_DRIVER_START( senjyo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(senjyo_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 2000000)
 	MDRV_CPU_CONFIG(daisy_chain)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -586,7 +586,7 @@ static MACHINE_DRIVER_START( senjyo )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(400+2)	/* 400 real palette + 2 for the radar */
+	MDRV_PALETTE_LENGTH(512+2)	/* 512 real palette + 2 for the radar */
 
 	MDRV_VIDEO_START(senjyo)
 	MDRV_VIDEO_UPDATE(senjyo)

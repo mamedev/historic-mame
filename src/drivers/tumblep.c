@@ -205,133 +205,133 @@ static READ16_HANDLER( tumblepop_controls_r )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( tumblepop_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x120000, 0x123fff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x180000, 0x18000f, tumblepop_controls_r },
-	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
-	{ 0x320000, 0x320fff, MRA16_RAM },
-	{ 0x322000, 0x322fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tumblepop_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(tumblepop_controls_r)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x320000, 0x320fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x322000, 0x322fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( tumblepop_writemem )
+static ADDRESS_MAP_START( tumblepop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 #if TUMBLEP_HACK
-	{ 0x000000, 0x07ffff, MWA16_RAM },	// To write levels modifications
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_RAM)	// To write levels modifications
 #else
-	{ 0x000000, 0x07ffff, MWA16_ROM },
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 #endif
-	{ 0x100000, 0x100001, tumblep_sound_w },
-	{ 0x120000, 0x123fff, MWA16_RAM },
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x18000c, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a07ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
-	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
-	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
-	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA16_NOP },
-	{ 0x342400, 0x34247f, MWA16_NOP },
-MEMORY_END
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(tumblep_sound_w)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x18000c, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblep_control_0_w)
+	AM_RANGE(0x320000, 0x320fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
+	AM_RANGE(0x322000, 0x322fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_NOP) /* Unused row scroll */
+	AM_RANGE(0x340400, 0x34047f) AM_WRITE(MWA16_NOP) /* Unused col scroll */
+	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( tumblepopb_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, tumblep_prot_r },
-	{ 0x120000, 0x123fff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x160000, 0x1607ff, MRA16_RAM },
-	{ 0x180000, 0x18000f, tumblepop_controls_r },
-	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tumblepopb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(tumblep_prot_r)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(tumblepop_controls_r)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( tumblepopb_writemem )
+static ADDRESS_MAP_START( tumblepopb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 #if TUMBLEP_HACK
-	{ 0x000000, 0x07ffff, MWA16_RAM },	// To write levels modifications
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_RAM)	// To write levels modifications
 #else
-	{ 0x000000, 0x07ffff, MWA16_ROM },
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 #endif
-	{ 0x100000, 0x100001, tumblep_oki_w },
-	{ 0x120000, 0x123fff, MWA16_RAM, &tumblep_mainram },
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16, &spriteram_size }, /* Bootleg sprite buffer */
-	{ 0x18000c, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
-	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
-	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
-	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
-	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA16_NOP },
-	{ 0x342400, 0x34247f, MWA16_NOP },
-MEMORY_END
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(tumblep_oki_w)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblep_mainram)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Bootleg sprite buffer */
+	AM_RANGE(0x18000c, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblep_control_0_w)
+	AM_RANGE(0x320000, 0x320fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
+	AM_RANGE(0x322000, 0x322fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_NOP) /* Unused row scroll */
+	AM_RANGE(0x340400, 0x34047f) AM_WRITE(MWA16_NOP) /* Unused col scroll */
+	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( fncywld_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x100001, YM2151_status_port_0_lsb_r },
-	{ 0x100002, 0x100003, MRA16_NOP }, // ym?
-	{ 0x100004, 0x100005, OKIM6295_status_0_lsb_r },
-	{ 0x140000, 0x140fff, MRA16_RAM },
-	{ 0x160000, 0x1607ff, MRA16_RAM },
-	{ 0x180000, 0x18000f, tumblepop_controls_r },
-	{ 0x320000, 0x321fff, MRA16_RAM },
-	{ 0x322000, 0x323fff, MRA16_RAM },
-	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
-	{ 0xff0000, 0xffffff, MRA16_RAM }, // RAM
-MEMORY_END
+static ADDRESS_MAP_START( fncywld_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(YM2151_status_port_0_lsb_r)
+	AM_RANGE(0x100002, 0x100003) AM_READ(MRA16_NOP) // ym?
+	AM_RANGE(0x100004, 0x100005) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x140000, 0x140fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(tumblepop_controls_r)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM) // RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fncywld_writemem )
+static ADDRESS_MAP_START( fncywld_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 #if FNCYWLD_HACK
-	{ 0x000000, 0x0fffff, MWA16_RAM },	// To write levels modifications
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_RAM)	// To write levels modifications
 #else
-	{ 0x000000, 0x0fffff, MWA16_ROM },
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 #endif
-	{ 0x100000, 0x100001, YM2151_register_port_0_lsb_w },
-	{ 0x100002, 0x100003, YM2151_data_port_0_lsb_w },
-	{ 0x100004, 0x100005, OKIM6295_data_0_lsb_w },
-	{ 0x140000, 0x140fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16, &spriteram_size }, /* sprites */
-	{ 0x160800, 0x16080f, MWA16_RAM }, /* goes slightly past the end of spriteram? */
-	{ 0x18000c, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
-	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x321fff, fncywld_pf1_data_w, &tumblep_pf1_data },
-	{ 0x322000, 0x323fff, fncywld_pf2_data_w, &tumblep_pf2_data },
-	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
-	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA16_NOP },
-	{ 0x342400, 0x34247f, MWA16_NOP },
-	{ 0xff0000, 0xffffff, MWA16_RAM }, // RAM
-MEMORY_END
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(YM2151_register_port_0_lsb_w)
+	AM_RANGE(0x100002, 0x100003) AM_WRITE(YM2151_data_port_0_lsb_w)
+	AM_RANGE(0x100004, 0x100005) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x140000, 0x140fff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* sprites */
+	AM_RANGE(0x160800, 0x16080f) AM_WRITE(MWA16_RAM) /* goes slightly past the end of spriteram? */
+	AM_RANGE(0x18000c, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblep_control_0_w)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(fncywld_pf1_data_w) AM_BASE(&tumblep_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(fncywld_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_NOP) /* Unused row scroll */
+	AM_RANGE(0x340400, 0x34047f) AM_WRITE(MWA16_NOP) /* Unused col scroll */
+	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM) // RAM
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( htchctch_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x120000, 0x123fff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x160000, 0x160fff, MRA16_RAM },
-	{ 0x180000, 0x18000f, tumblepop_controls_r },
-	{ 0x1a0000, 0x1a0fff, MRA16_RAM },
-	{ 0x341000, 0x342fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( htchctch_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x160fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(tumblepop_controls_r)
+	AM_RANGE(0x1a0000, 0x1a0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x341000, 0x342fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( htchctch_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x100001, semicom_soundcmd_w },
-	{ 0x120000, 0x123fff, MWA16_RAM, &tumblep_mainram },
-	{ 0x140000, 0x1407ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x160000, 0x160fff, MWA16_RAM, &spriteram16, &spriteram_size }, /* Bootleg sprite buffer */
-	{ 0x18000c, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a0fff, MWA16_RAM },
-	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
-	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
-//	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
-	{ 0x341000, 0x342fff, MWA16_RAM }, // extra ram?
-//	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
-//	{ 0x342000, 0x3421ff, MWA16_NOP },
-//	{ 0x342400, 0x34247f, MWA16_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( htchctch_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(semicom_soundcmd_w)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblep_mainram)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x160000, 0x160fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Bootleg sprite buffer */
+	AM_RANGE(0x18000c, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a0fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblep_control_0_w)
+	AM_RANGE(0x320000, 0x320fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
+	AM_RANGE(0x322000, 0x322fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+//	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_NOP) /* Unused row scroll */
+	AM_RANGE(0x341000, 0x342fff) AM_WRITE(MWA16_RAM) // extra ram?
+//	AM_RANGE(0x340400, 0x34047f) AM_WRITE(MWA16_NOP) /* Unused col scroll */
+//	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)
+//	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -348,47 +348,47 @@ static WRITE_HANDLER( YM2151_w )
 }
 
 /* Physical memory map (21 bits) */
-static MEMORY_READ_START( sound_readmem )
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x100000, 0x100001, MRA_NOP },
-	{ 0x110000, 0x110001, YM2151_status_port_0_r },
-	{ 0x120000, 0x120001, OKIM6295_status_0_r },
-	{ 0x130000, 0x130001, MRA_NOP }, /* This board only has 1 oki chip */
-	{ 0x140000, 0x140001, soundlatch_r },
-	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(MRA8_NOP)
+	AM_RANGE(0x110000, 0x110001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x120000, 0x120001) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x130000, 0x130001) AM_READ(MRA8_NOP) /* This board only has 1 oki chip */
+	AM_RANGE(0x140000, 0x140001) AM_READ(soundlatch_r)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_READ(MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
-	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w },
-	{ 0x130000, 0x130001, MWA_NOP },
-	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
-	{ 0x1fec00, 0x1fec01, H6280_timer_w },
-	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA8_NOP) /* YM2203 - this board doesn't have one */
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(YM2151_w)
+	AM_RANGE(0x120000, 0x120001) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x130000, 0x130001) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_WRITE(MWA8_BANK8)
+	AM_RANGE(0x1fec00, 0x1fec01) AM_WRITE(H6280_timer_w)
+	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+ADDRESS_MAP_END
 
 WRITE16_HANDLER( semicom_soundcmd_w )
 {
 	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);
 }
 
-static MEMORY_READ_START( semicom_sound_readmem )
-	{ 0x0000, 0xcfff, MRA_ROM },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xf001, 0xf001, YM2151_status_port_0_r },
-	{ 0xf008, 0xf008, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( semicom_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf001, 0xf001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf008, 0xf008) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( semicom_sound_writemem )
-	{ 0x0000, 0xcfff, MWA_ROM },
-	{ 0xd000, 0xd7ff, MWA_RAM },
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },
-	{ 0xf002, 0xf002, OKIM6295_data_0_w },
-//	{ 0xf006, 0xf006,  }, ???
-MEMORY_END
+static ADDRESS_MAP_START( semicom_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
+//	AM_RANGE(0xf006, 0xf006) ???
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -603,53 +603,54 @@ INPUT_PORTS_START( htchctch )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Dip switch bank 1 (wrong) */
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x01, "2 Coins to Start, 1 to Continue" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x80, "1" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0xc0, "3" )
-	PORT_DIPSETTING(    0x40, "4" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x30, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x06, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x04, "Very Hard" )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x40, 0x40, "Stage Skip" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -747,12 +748,12 @@ static MACHINE_DRIVER_START( tumblep )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(tumblepop_readmem,tumblepop_writemem)
+	MDRV_CPU_PROGRAM_MAP(tumblepop_readmem,tumblepop_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)	/* Custom chip 45; Audio section crystal is 32.220 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
@@ -778,7 +779,7 @@ static MACHINE_DRIVER_START( tumblepb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(tumblepopb_readmem,tumblepopb_writemem)
+	MDRV_CPU_PROGRAM_MAP(tumblepopb_readmem,tumblepopb_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -802,7 +803,7 @@ static MACHINE_DRIVER_START( jumpkids )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(tumblepopb_readmem,tumblepopb_writemem)
+	MDRV_CPU_PROGRAM_MAP(tumblepopb_readmem,tumblepopb_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	/* z80? */
@@ -827,7 +828,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fncywld )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(fncywld_readmem,fncywld_writemem)
+	MDRV_CPU_PROGRAM_MAP(fncywld_readmem,fncywld_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -875,13 +876,13 @@ static struct OKIM6295interface semicom_okim6295_interface =
 static MACHINE_DRIVER_START( htchctch )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 15000000) /* verified */
-	MDRV_CPU_MEMORY(htchctch_readmem,htchctch_writemem)
+	MDRV_CPU_PROGRAM_MAP(htchctch_readmem,htchctch_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD( Z80, 3427190) /* verified */
 
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(semicom_sound_readmem,semicom_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(semicom_sound_readmem,semicom_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

@@ -153,33 +153,27 @@ static PALETTE_INIT( bsktball )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero Page RAM */
-	{ 0x0800, 0x0800, bsktball_in0_r },
-	{ 0x0802, 0x0802, input_port_5_r },
-	{ 0x0803, 0x0803, input_port_6_r },
-	{ 0x1800, 0x1cff, MRA_RAM }, /* video ram */
-	{ 0x2000, 0x3fff, MRA_ROM }, /* PROGRAM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
-	{ 0x1000, 0x1000, MWA_NOP }, /* Timer Reset */
-	{ 0x1010, 0x1010, bsktball_bounce_w }, /* Crowd Amp / Bounce */
-	{ 0x1022, 0x1023, MWA_NOP }, /* Coin Counter */
-	{ 0x1024, 0x1025, bsktball_led1_w }, /* LED 1 */
-	{ 0x1026, 0x1027, bsktball_led2_w }, /* LED 2 */
-	{ 0x1028, 0x1029, bsktball_ld1_w }, /* LD 1 */
-	{ 0x102a, 0x102b, bsktball_ld2_w }, /* LD 2 */
-	{ 0x102c, 0x102d, bsktball_noise_reset_w }, /* Noise Reset */
-	{ 0x102e, 0x102f, bsktball_nmion_w }, /* NMI On */
-	{ 0x1030, 0x1030, bsktball_note_w }, /* Music Ckt Note Dvsr */
-	{ 0x1800, 0x1bbf, bsktball_videoram_w, &videoram }, /* DISPLAY */
-	{ 0x1bc0, 0x1bff, MWA_RAM, &bsktball_motion },
-	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM /* Zero Page RAM */
+	AM_RANGE(0x0800, 0x0800) AM_READ(bsktball_in0_r)
+	AM_RANGE(0x0802, 0x0802) AM_READ(input_port_5_r)
+	AM_RANGE(0x0803, 0x0803) AM_READ(input_port_6_r)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_NOP) /* Timer Reset */
+	AM_RANGE(0x1010, 0x1010) AM_WRITE(bsktball_bounce_w) /* Crowd Amp / Bounce */
+	AM_RANGE(0x1022, 0x1023) AM_WRITE(MWA8_NOP) /* Coin Counter */
+	AM_RANGE(0x1024, 0x1025) AM_WRITE(bsktball_led1_w) /* LED 1 */
+	AM_RANGE(0x1026, 0x1027) AM_WRITE(bsktball_led2_w) /* LED 2 */
+	AM_RANGE(0x1028, 0x1029) AM_WRITE(bsktball_ld1_w) /* LD 1 */
+	AM_RANGE(0x102a, 0x102b) AM_WRITE(bsktball_ld2_w) /* LD 2 */
+	AM_RANGE(0x102c, 0x102d) AM_WRITE(bsktball_noise_reset_w) /* Noise Reset */
+	AM_RANGE(0x102e, 0x102f) AM_WRITE(bsktball_nmion_w) /* NMI On */
+	AM_RANGE(0x1030, 0x1030) AM_WRITE(bsktball_note_w) /* Music Ckt Note Dvsr */
+	AM_RANGE(0x1800, 0x1bbf) AM_READWRITE(MRA8_RAM, bsktball_videoram_w) AM_BASE(&videoram) /* DISPLAY */
+	AM_RANGE(0x1bc0, 0x1bff) AM_RAM AM_BASE(&bsktball_motion)
+	AM_RANGE(0x1c00, 0x1cff) AM_RAM
+	AM_RANGE(0x2000, 0x3fff) AM_ROM /* PROGRAM */
+ADDRESS_MAP_END
 
 
 
@@ -340,7 +334,7 @@ static DISCRETE_SOUND_START(bsktball_sound_interface)
 	/************************************************/
 	/* Bounce is a trigger fed directly to the amp  */
 	/************************************************/
-	DISCRETE_FILTER2(BSKTBALL_BOUNCE_SND, 1, BSKTBALL_BOUNCE_EN, 10.0, 5, DISC_FILTER_HIGHPASS)	// remove DC
+	DISCRETE_CRFILTER(BSKTBALL_BOUNCE_SND, 1, BSKTBALL_BOUNCE_EN, 100000, 1.e-8)	// remove DC (C54)
 
 	/************************************************/
 	/* Crowd effect is variable amplitude, filtered */
@@ -368,7 +362,7 @@ static DISCRETE_SOUND_START(bsktball_sound_interface)
 	DISCRETE_SQUAREWAVE(BSKTBALL_NOTE_SND, BSKTBALL_NOTE_DATA, NODE_21, 1000, 50.0, 0, 0.0)	/* NOTE=FF Disables audio */
 
 	DISCRETE_ADDER3(NODE_90, 1, BSKTBALL_BOUNCE_SND, BSKTBALL_NOTE_SND, BSKTBALL_CROWD_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0+1000.0+213.6))
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0+2000.0+213.6))
 	DISCRETE_OUTPUT(NODE_91, 100)
 DISCRETE_SOUND_END
 
@@ -383,7 +377,7 @@ static MACHINE_DRIVER_START( bsktball )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,750000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(bsktball_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -414,12 +408,11 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( bsktball )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x4000, REGION_CPU1, 0 ) /* 16k for code */
 	ROM_LOAD( "034765.d1",    0x2000, 0x0800, CRC(798cea39) SHA1(b1b709a74258b01b21d7c2038a3b6abe879944c5) )
 	ROM_LOAD( "034764.c1",    0x2800, 0x0800, CRC(a087109e) SHA1(f5d6dcccc4a54db35be3d8997bc51e73892747fb) )
 	ROM_LOAD( "034766.f1",    0x3000, 0x0800, CRC(a82e9a9f) SHA1(9aca236c5145c04a8aaebb316179482bbdc9ddfc) )
 	ROM_LOAD( "034763.b1",    0x3800, 0x0800, CRC(1fc69359) SHA1(a215ba3bb18ea2c57c443dfc4c4a0a3846bbedfe) )
-	ROM_RELOAD(               0xf800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "034757.a6",    0x0000, 0x0800, CRC(010e8ad3) SHA1(43ce2c2089ec3011e2d28e8257a35efeed0e71c5) )

@@ -120,110 +120,110 @@ static void tecmo_adpcm_int(int num)
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf7ff, MRA_BANK1 },
-	{ 0xf800, 0xf800, input_port_0_r },
-	{ 0xf801, 0xf801, input_port_1_r },
-	{ 0xf802, 0xf802, input_port_2_r },
-	{ 0xf803, 0xf803, input_port_3_r },
-	{ 0xf804, 0xf804, input_port_4_r },
-	{ 0xf805, 0xf805, input_port_5_r },
-	{ 0xf806, 0xf806, input_port_6_r },
-	{ 0xf807, 0xf807, input_port_7_r },
-	{ 0xf808, 0xf808, input_port_8_r },
-	{ 0xf809, 0xf809, input_port_9_r },
-	{ 0xf80f, 0xf80f, input_port_10_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_0_r)
+	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_1_r)
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_2_r)
+	AM_RANGE(0xf803, 0xf803) AM_READ(input_port_3_r)
+	AM_RANGE(0xf804, 0xf804) AM_READ(input_port_4_r)
+	AM_RANGE(0xf805, 0xf805) AM_READ(input_port_5_r)
+	AM_RANGE(0xf806, 0xf806) AM_READ(input_port_6_r)
+	AM_RANGE(0xf807, 0xf807) AM_READ(input_port_7_r)
+	AM_RANGE(0xf808, 0xf808) AM_READ(input_port_8_r)
+	AM_RANGE(0xf809, 0xf809) AM_READ(input_port_9_r)
+	AM_RANGE(0xf80f, 0xf80f) AM_READ(input_port_10_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rygar_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
-	{ 0xd800, 0xdbff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
-	{ 0xdc00, 0xdfff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
-	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf802, tecmo_fgscroll_w },
-	{ 0xf803, 0xf805, tecmo_bgscroll_w },
-	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, tecmo_flipscreen_w },
-	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf80b, 0xf80b, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( rygar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(tecmo_txvideoram_w) AM_BASE(&tecmo_txvideoram)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(tecmo_fgvideoram_w) AM_BASE(&tecmo_fgvideoram)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(tecmo_bgvideoram_w) AM_BASE(&tecmo_bgvideoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xf802) AM_WRITE(tecmo_fgscroll_w)
+	AM_RANGE(0xf803, 0xf805) AM_WRITE(tecmo_bgscroll_w)
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(tecmo_sound_command_w)
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(tecmo_flipscreen_w)
+	AM_RANGE(0xf808, 0xf808) AM_WRITE(tecmo_bankswitch_w)
+	AM_RANGE(0xf80b, 0xf80b) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gemini_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
-	{ 0xd800, 0xdbff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
-	{ 0xdc00, 0xdfff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
-	{ 0xe000, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
-	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf802, tecmo_fgscroll_w },
-	{ 0xf803, 0xf805, tecmo_bgscroll_w },
-	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, tecmo_flipscreen_w },
-	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf80b, 0xf80b, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( gemini_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(tecmo_txvideoram_w) AM_BASE(&tecmo_txvideoram)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(tecmo_fgvideoram_w) AM_BASE(&tecmo_fgvideoram)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(tecmo_bgvideoram_w) AM_BASE(&tecmo_bgvideoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xf802) AM_WRITE(tecmo_fgscroll_w)
+	AM_RANGE(0xf803, 0xf805) AM_WRITE(tecmo_bgscroll_w)
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(tecmo_sound_command_w)
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(tecmo_flipscreen_w)
+	AM_RANGE(0xf808, 0xf808) AM_WRITE(tecmo_bankswitch_w)
+	AM_RANGE(0xf80b, 0xf80b) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( silkworm_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
-	{ 0xc400, 0xc7ff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
-	{ 0xc800, 0xcfff, tecmo_txvideoram_w, &tecmo_txvideoram },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf802, tecmo_fgscroll_w },
-	{ 0xf803, 0xf805, tecmo_bgscroll_w },
-	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, tecmo_flipscreen_w },
-	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf809, 0xf809, MWA_NOP },	/* ? */
-	{ 0xf80b, 0xf80b, MWA_NOP },	/* ? if mapped to watchdog like in the others, causes reset */
-MEMORY_END
+static ADDRESS_MAP_START( silkworm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(tecmo_bgvideoram_w) AM_BASE(&tecmo_bgvideoram)
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(tecmo_fgvideoram_w) AM_BASE(&tecmo_fgvideoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(tecmo_txvideoram_w) AM_BASE(&tecmo_txvideoram)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xf802) AM_WRITE(tecmo_fgscroll_w)
+	AM_RANGE(0xf803, 0xf805) AM_WRITE(tecmo_bgscroll_w)
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(tecmo_sound_command_w)
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(tecmo_flipscreen_w)
+	AM_RANGE(0xf808, 0xf808) AM_WRITE(tecmo_bankswitch_w)
+	AM_RANGE(0xf809, 0xf809) AM_WRITE(MWA8_NOP)	/* ? */
+	AM_RANGE(0xf80b, 0xf80b) AM_WRITE(MWA8_NOP)	/* ? if mapped to watchdog like in the others, causes reset */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( rygar_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( rygar_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rygar_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x8000, YM3812_control_port_0_w },
-	{ 0x8001, 0x8001, YM3812_write_port_0_w },
-	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
-	{ 0xd000, 0xd000, tecmo_adpcm_end_w },
-	{ 0xe000, 0xe000, tecmo_adpcm_vol_w },
-	{ 0xf000, 0xf000, MWA_NOP },	/* NMI acknowledge */
-MEMORY_END
+static ADDRESS_MAP_START( rygar_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(tecmo_adpcm_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(tecmo_adpcm_end_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(tecmo_adpcm_vol_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( tecmo_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( tecmo_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tecmo_sound_writemem )
-	{ 0x2000, 0x207f, MWA_RAM },	/* Silkworm set #2 has a custom CPU which */
+static ADDRESS_MAP_START( tecmo_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x207f) AM_WRITE(MWA8_RAM)	/* Silkworm set #2 has a custom CPU which */
 									/* writes code to this area */
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa000, YM3812_control_port_0_w },
-	{ 0xa001, 0xa001, YM3812_write_port_0_w },
-	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
-	{ 0xc400, 0xc400, tecmo_adpcm_end_w },
-	{ 0xc800, 0xc800, tecmo_adpcm_vol_w },
-	{ 0xcc00, 0xcc00, MWA_NOP },	/* NMI acknowledge */
-MEMORY_END
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(tecmo_adpcm_start_w)
+	AM_RANGE(0xc400, 0xc400) AM_WRITE(tecmo_adpcm_end_w)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(tecmo_adpcm_vol_w)
+	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
+ADDRESS_MAP_END
 
 
 
@@ -574,12 +574,12 @@ static MACHINE_DRIVER_START( rygar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem,rygar_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,rygar_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(rygar_sound_readmem,rygar_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(rygar_sound_readmem,rygar_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
@@ -605,10 +605,10 @@ static MACHINE_DRIVER_START( gemini )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(rygar)
 	MDRV_CPU_REPLACE("main", Z80, 6000000)
-	MDRV_CPU_MEMORY(readmem,gemini_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,gemini_writemem)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_MEMORY(tecmo_sound_readmem,tecmo_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(tecmo_sound_readmem,tecmo_sound_writemem)
 MACHINE_DRIVER_END
 
 
@@ -617,7 +617,7 @@ static MACHINE_DRIVER_START( silkworm )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gemini)
 	MDRV_CPU_REPLACE("main", Z80, 6000000)
-	MDRV_CPU_MEMORY(readmem,silkworm_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,silkworm_writemem)
 MACHINE_DRIVER_END
 
 

@@ -98,31 +98,31 @@ static READ_HANDLER( exerion_protection_r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6008, 0x600b, exerion_protection_r },
-	{ 0x6000, 0x67ff, MRA_RAM },
-	{ 0x8000, 0x8bff, MRA_RAM },
-	{ 0xa000, 0xa000, exerion_port01_r },
-	{ 0xa800, 0xa800, input_port_2_r },
-	{ 0xb000, 0xb000, exerion_port3_r },
-	{ 0xd802, 0xd802, AY8910_read_port_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6008, 0x600b) AM_READ(exerion_protection_r)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(exerion_port01_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_2_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(exerion_port3_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8800, 0x887f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x8800, 0x8bff, MWA_RAM },
-	{ 0xc000, 0xc000, exerion_videoreg_w },
-	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xd000, 0xd000, AY8910_control_port_0_w },
-	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-	{ 0xd800, 0xd800, AY8910_control_port_1_w },
-	{ 0xd801, 0xd801, AY8910_write_port_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8800, 0x887f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(exerion_videoreg_w)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xd801, 0xd801) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -132,19 +132,19 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( cpu2_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0xa000, 0xa000, exerion_video_timing_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(exerion_video_timing_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( cpu2_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x800c, exerion_video_latch_w },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x800c) AM_WRITE(exerion_video_latch_w)
+ADDRESS_MAP_END
 
 
 
@@ -311,11 +311,11 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( exerion )
 
 	MDRV_CPU_ADD(Z80, 10000000/3)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(exerion_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 10000000/3)
-	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

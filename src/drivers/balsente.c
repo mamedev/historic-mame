@@ -154,37 +154,27 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x8fff, MRA_RAM },
-	{ 0x9400, 0x9401, balsente_adc_data_r },
-	{ 0x9900, 0x9900, input_port_0_r },
-	{ 0x9901, 0x9901, input_port_1_r },
-	{ 0x9902, 0x9902, input_port_2_r },
-	{ 0x9903, 0x9903, input_port_3_r },
-	{ 0x9a00, 0x9a03, balsente_random_num_r },
-	{ 0x9a04, 0x9a05, balsente_m6850_r },
-	{ 0x9b00, 0x9bff, MRA_RAM },		/* system NOVRAM */
-	{ 0x9c00, 0x9cff, MRA_RAM },		/* cart NOVRAM */
-	{ 0xa000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xffff, MRA_BANK2 },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x0800, 0x7fff, balsente_videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0x8fff, balsente_paletteram_w, &paletteram },
-	{ 0x9000, 0x9007, balsente_adc_select_w },
-	{ 0x9800, 0x987f, balsente_misc_output_w },
-	{ 0x9880, 0x989f, balsente_random_reset_w },
-	{ 0x98a0, 0x98bf, balsente_rombank_select_w },
-	{ 0x98c0, 0x98df, balsente_palette_select_w },
-	{ 0x98e0, 0x98ff, watchdog_reset_w },
-	{ 0x9903, 0x9903, MWA_NOP },
-	{ 0x9a04, 0x9a05, balsente_m6850_w },
-	{ 0x9b00, 0x9cff, MWA_RAM, &generic_nvram, &generic_nvram_size },		/* system NOVRAM + cart NOVRAM */
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0x0800, 0x7fff) AM_READWRITE(MRA8_RAM, balsente_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_RAM, balsente_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9000, 0x9007) AM_WRITE(balsente_adc_select_w)
+	AM_RANGE(0x9400, 0x9401) AM_READ(balsente_adc_data_r)
+	AM_RANGE(0x9800, 0x987f) AM_WRITE(balsente_misc_output_w)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(balsente_random_reset_w)
+	AM_RANGE(0x98a0, 0x98bf) AM_WRITE(balsente_rombank_select_w)
+	AM_RANGE(0x98c0, 0x98df) AM_WRITE(balsente_palette_select_w)
+	AM_RANGE(0x98e0, 0x98ff) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x9900, 0x9900) AM_READ(input_port_0_r)
+	AM_RANGE(0x9901, 0x9901) AM_READ(input_port_1_r)
+	AM_RANGE(0x9902, 0x9902) AM_READ(input_port_2_r)
+	AM_RANGE(0x9903, 0x9903) AM_READWRITE(input_port_3_r, MWA8_NOP)
+	AM_RANGE(0x9a00, 0x9a03) AM_READ(balsente_random_num_r)
+	AM_RANGE(0x9a04, 0x9a05) AM_READWRITE(balsente_m6850_r, balsente_m6850_w)
+	AM_RANGE(0x9b00, 0x9cff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* system+cart NOVRAM */
+	AM_RANGE(0xa000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xffff) AM_ROMBANK(2)
+ADDRESS_MAP_END
 
 
 
@@ -194,33 +184,22 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x5fff, MRA_RAM },
-	{ 0xe000, 0xffff, balsente_m6850_sound_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x5fff) AM_RAM
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(balsente_m6850_sound_w)
+	AM_RANGE(0xe000, 0xffff) AM_READ(balsente_m6850_sound_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x7fff, balsente_m6850_sound_w },
-MEMORY_END
-
-
-static PORT_READ_START( readport_cpu2 )
-	{ 0x00, 0x03, balsente_counter_8253_r },
-	{ 0x08, 0x0f, balsente_counter_state_r },
-PORT_END
-
-
-static PORT_WRITE_START( writeport_cpu2 )
-	{ 0x00, 0x03, balsente_counter_8253_w },
-	{ 0x08, 0x09, balsente_counter_control_w },
-	{ 0x0a, 0x0b, balsente_dac_data_w },
-	{ 0x0c, 0x0d, balsente_register_addr_w },
-	{ 0x0e, 0x0f, balsente_chip_select_w },
-PORT_END
+static ADDRESS_MAP_START( cpu2_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READWRITE(balsente_counter_8253_r, balsente_counter_8253_w)
+	AM_RANGE(0x08, 0x0f) AM_READ(balsente_counter_state_r)
+	AM_RANGE(0x08, 0x09) AM_WRITE(balsente_counter_control_w)
+	AM_RANGE(0x0a, 0x0b) AM_WRITE(balsente_dac_data_w)
+	AM_RANGE(0x0c, 0x0d) AM_WRITE(balsente_register_addr_w)
+	AM_RANGE(0x0e, 0x0f) AM_WRITE(balsente_chip_select_w)
+ADDRESS_MAP_END
 
 
 
@@ -231,19 +210,11 @@ PORT_END
  *************************************/
 
 /* CPU 1 read addresses */
-static MEMORY_READ16_START( readmem_shrike68k )
-	{ 0x000000, 0x003fff, MRA16_ROM },
-	{ 0x010000, 0x01001f, shrike_shared_68k_r },
-	{ 0x018000, 0x018fff, MRA16_RAM },
-MEMORY_END
-
-
-/* CPU 1 write addresses */
-static MEMORY_WRITE16_START( writemem_shrike68k )
-	{ 0x000000, 0x003fff, MWA16_ROM },
-	{ 0x010000, 0x01001f, shrike_shared_68k_w, &shrike_shared },
-	{ 0x018000, 0x018fff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( shrike68k_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_ROM
+	AM_RANGE(0x010000, 0x01001f) AM_READWRITE(shrike_shared_68k_r, shrike_shared_68k_w) AM_BASE(&shrike_shared)
+	AM_RANGE(0x018000, 0x018fff) AM_RAM
+ADDRESS_MAP_END
 
 
 
@@ -1576,13 +1547,13 @@ static MACHINE_DRIVER_START( balsente )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 5000000/4)
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(cpu1_map,0)
 	MDRV_CPU_VBLANK_INT(balsente_update_analog_inputs,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
+	MDRV_CPU_IO_MAP(cpu2_io_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1611,7 +1582,7 @@ static MACHINE_DRIVER_START( shrike )
 	MDRV_IMPORT_FROM(balsente)
 
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(readmem_shrike68k,writemem_shrike68k)
+	MDRV_CPU_PROGRAM_MAP(shrike68k_map,0)
 
 	MDRV_INTERLEAVE(100)
 
@@ -2289,8 +2260,8 @@ static DRIVER_INIT( grudge )
 }
 static DRIVER_INIT( shrike )
 {
-	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA_RAM);
-	install_mem_write_handler(0, 0x9e00, 0x9fff, MWA_RAM);
+	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA8_RAM);
+	install_mem_write_handler(0, 0x9e00, 0x9fff, MWA8_RAM);
 	install_mem_read_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_r);
 	install_mem_write_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_w);
 	expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 32;

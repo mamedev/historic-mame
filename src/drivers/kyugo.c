@@ -31,26 +31,26 @@
  *
  *************************************/
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, MRA_RAM },
-	{ 0x9800, 0x9fff, kyugo_spriteram_2_r },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xf000, 0xf7ff, kyugo_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9fff) AM_READ(kyugo_spriteram_2_r)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(kyugo_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, kyugo_bgvideoram_w, &kyugo_bgvideoram },
-	{ 0x8800, 0x8fff, kyugo_bgattribram_w, &kyugo_bgattribram },
-	{ 0x9000, 0x97ff, kyugo_fgvideoram_w, &kyugo_fgvideoram },
-	{ 0x9800, 0x9fff, MWA_RAM, &kyugo_spriteram_2 },
-	{ 0xa000, 0xa7ff, MWA_RAM, &kyugo_spriteram_1 },
-	{ 0xa800, 0xa800, kyugo_scroll_x_lo_w },
-	{ 0xb000, 0xb000, kyugo_gfxctrl_w },
-	{ 0xb800, 0xb800, kyugo_scroll_y_w },
-	{ 0xf000, 0xf7ff, kyugo_sharedram_w, &kyugo_sharedram },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(kyugo_bgvideoram_w) AM_BASE(&kyugo_bgvideoram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(kyugo_bgattribram_w) AM_BASE(&kyugo_bgattribram)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(kyugo_fgvideoram_w) AM_BASE(&kyugo_fgvideoram)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM) AM_BASE(&kyugo_spriteram_2)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&kyugo_spriteram_1)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(kyugo_scroll_x_lo_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(kyugo_gfxctrl_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(kyugo_scroll_y_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(kyugo_sharedram_w) AM_BASE(&kyugo_sharedram)
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -60,11 +60,11 @@ MEMORY_END
  *************************************/
 
 #define Main_PortMap( name, base )							\
-static PORT_WRITE_START( name##_writeport )					\
-	{ base+0, base+0, interrupt_enable_w },					\
-	{ base+1, base+1, kyugo_flipscreen_w },					\
-	{ base+2, base+2, kyugo_sub_cpu_control_w },			\
-PORT_END
+static ADDRESS_MAP_START( name##_writeport, ADDRESS_SPACE_IO, 8 )					\
+	AM_RANGE(base+0, base+0) AM_WRITE(interrupt_enable_w)					\
+	AM_RANGE(base+1, base+1) AM_WRITE(kyugo_flipscreen_w)					\
+	AM_RANGE(base+2, base+2) AM_WRITE(kyugo_sub_cpu_control_w)			\
+ADDRESS_MAP_END
 
 Main_PortMap( gyrodine, 0x00 )
 Main_PortMap( flashgal, 0x40 )
@@ -78,18 +78,18 @@ Main_PortMap( srdmissn, 0x08 )
  *************************************/
 
 #define Sub_MemMap( name, rom_end, shared, in0, in1, in2 )	\
-static MEMORY_READ_START( name##_sub_readmem )				\
-	{ 0x0000, rom_end, MRA_ROM },							\
-	{ shared, shared+0x7ff, kyugo_sharedram_r },			\
-	{ in0, in0, input_port_2_r },							\
-	{ in1, in1, input_port_3_r },							\
-	{ in2, in2, input_port_4_r },							\
-MEMORY_END													\
+static ADDRESS_MAP_START( name##_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )				\
+	AM_RANGE(0x0000, rom_end) AM_READ(MRA8_ROM)							\
+	AM_RANGE(shared, shared+0x7ff) AM_READ(kyugo_sharedram_r)			\
+	AM_RANGE(in0, in0) AM_READ(input_port_2_r)							\
+	AM_RANGE(in1, in1) AM_READ(input_port_3_r)							\
+	AM_RANGE(in2, in2) AM_READ(input_port_4_r)							\
+ADDRESS_MAP_END													\
 															\
-static MEMORY_WRITE_START( name##_sub_writemem )			\
-	{ 0x0000, rom_end, MWA_ROM },							\
-	{ shared, shared+0x7ff, kyugo_sharedram_w },			\
-MEMORY_END
+static ADDRESS_MAP_START( name##_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )			\
+	AM_RANGE(0x0000, rom_end) AM_WRITE(MWA8_ROM)							\
+	AM_RANGE(shared, shared+0x7ff) AM_WRITE(kyugo_sharedram_w)			\
+ADDRESS_MAP_END
 
 Sub_MemMap( gyrodine, 0x1fff, 0x4000, 0x8080, 0x8040, 0x8000 )
 Sub_MemMap( sonofphx, 0x7fff, 0xa000, 0xc080, 0xc040, 0xc000 )
@@ -104,16 +104,16 @@ Sub_MemMap( legend,   0x7fff, 0xc000, 0xf800, 0xf801, 0xf802 )
  *************************************/
 
 #define Sub_PortMap( name, ay0_base, ay1_base )				\
-static PORT_READ_START( name##_sub_readport )				\
-	{ ay0_base+2, ay0_base+2, AY8910_read_port_0_r },		\
-PORT_END													\
+static ADDRESS_MAP_START( name##_sub_readport, ADDRESS_SPACE_IO, 8 )				\
+	AM_RANGE(ay0_base+2, ay0_base+2) AM_READ(AY8910_read_port_0_r)		\
+ADDRESS_MAP_END													\
 															\
-static PORT_WRITE_START( name##_sub_writeport )				\
-	{ ay0_base+0, ay0_base+0, AY8910_control_port_0_w },	\
-	{ ay0_base+1, ay0_base+1, AY8910_write_port_0_w },		\
-	{ ay1_base+0, ay1_base+0, AY8910_control_port_1_w },	\
-	{ ay1_base+1, ay1_base+1, AY8910_write_port_1_w },		\
-PORT_END
+static ADDRESS_MAP_START( name##_sub_writeport, ADDRESS_SPACE_IO, 8 )				\
+	AM_RANGE(ay0_base+0, ay0_base+0) AM_WRITE(AY8910_control_port_0_w)	\
+	AM_RANGE(ay0_base+1, ay0_base+1) AM_WRITE(AY8910_write_port_0_w)		\
+	AM_RANGE(ay1_base+0, ay1_base+0) AM_WRITE(AY8910_control_port_1_w)	\
+	AM_RANGE(ay1_base+1, ay1_base+1) AM_WRITE(AY8910_write_port_1_w)		\
+ADDRESS_MAP_END
 
 Sub_PortMap( gyrodine, 0x00, 0xc0 )
 Sub_PortMap( sonofphx, 0x00, 0x40 )
@@ -612,13 +612,13 @@ static MACHINE_DRIVER_START( gyrodine )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000 / 4)	/* 18.432 MHz crystal */
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
-	MDRV_CPU_PORTS(0,gyrodine_writeport)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_IO_MAP(0,gyrodine_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD_TAG("sub", Z80, 18432000 / 4)	/* 18.432 MHz crystal */
-	MDRV_CPU_MEMORY(gyrodine_sub_readmem,gyrodine_sub_writemem)
-	MDRV_CPU_PORTS(gyrodine_sub_readport,gyrodine_sub_writeport)
+	MDRV_CPU_PROGRAM_MAP(gyrodine_sub_readmem,gyrodine_sub_writemem)
+	MDRV_CPU_IO_MAP(gyrodine_sub_readport,gyrodine_sub_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -647,8 +647,8 @@ static MACHINE_DRIVER_START( sonofphx )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gyrodine)
 	MDRV_CPU_MODIFY("sub")
-	MDRV_CPU_MEMORY(sonofphx_sub_readmem,sonofphx_sub_writemem)
-	MDRV_CPU_PORTS(sonofphx_sub_readport,sonofphx_sub_writeport)
+	MDRV_CPU_PROGRAM_MAP(sonofphx_sub_readmem,sonofphx_sub_writemem)
+	MDRV_CPU_IO_MAP(sonofphx_sub_readport,sonofphx_sub_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( srdmissn )
@@ -656,11 +656,11 @@ static MACHINE_DRIVER_START( srdmissn )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gyrodine)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(0,srdmissn_writeport)
+	MDRV_CPU_IO_MAP(0,srdmissn_writeport)
 
 	MDRV_CPU_MODIFY("sub")
-	MDRV_CPU_MEMORY(srdmissn_sub_readmem,srdmissn_sub_writemem)
-	MDRV_CPU_PORTS(srdmissn_sub_readport,srdmissn_sub_writeport)
+	MDRV_CPU_PROGRAM_MAP(srdmissn_sub_readmem,srdmissn_sub_writemem)
+	MDRV_CPU_IO_MAP(srdmissn_sub_readport,srdmissn_sub_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( flashgal )
@@ -668,7 +668,7 @@ static MACHINE_DRIVER_START( flashgal )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(sonofphx)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(0,flashgal_writeport)
+	MDRV_CPU_IO_MAP(0,flashgal_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( legend )
@@ -676,8 +676,8 @@ static MACHINE_DRIVER_START( legend )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gyrodine)
 	MDRV_CPU_MODIFY("sub")
-	MDRV_CPU_MEMORY(legend_sub_readmem,legend_sub_writemem)
-	MDRV_CPU_PORTS(srdmissn_sub_readport,srdmissn_sub_writeport)
+	MDRV_CPU_PROGRAM_MAP(legend_sub_readmem,legend_sub_writemem)
+	MDRV_CPU_IO_MAP(srdmissn_sub_readport,srdmissn_sub_writeport)
 MACHINE_DRIVER_END
 
 
@@ -1098,8 +1098,8 @@ static DRIVER_INIT( srdmissn )
 	install_mem_write_handler(0, 0xe000, 0xe7ff, kyugo_sharedram_w);
 
 	/* extra RAM on sub CPU  */
-	install_mem_read_handler (1, 0x8800, 0x8fff, MRA_RAM);
-	install_mem_write_handler(1, 0x8800, 0x8fff, MWA_RAM);
+	install_mem_read_handler (1, 0x8800, 0x8fff, MRA8_RAM);
+	install_mem_write_handler(1, 0x8800, 0x8fff, MWA8_RAM);
 }
 
 

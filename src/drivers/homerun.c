@@ -81,22 +81,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },		
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },		
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)		
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)		
 	
-MEMORY_END
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },		
-	{ 0x8000, 0x9fff, homerun_videoram_w, &homerun_videoram },
-	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram,  &spriteram_size },	
-	{ 0xb000, 0xb0ff, homerun_color_w},
-	{ 0xc000, 0xdfff, MWA_RAM },		
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)		
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(homerun_videoram_w) AM_BASE(&homerun_videoram)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	
+	AM_RANGE(0xb000, 0xb0ff) AM_WRITE(homerun_color_w)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)		
 
-MEMORY_END
+ADDRESS_MAP_END
 
 
 static READ_HANDLER(homerun_40_r)
@@ -108,22 +108,22 @@ static READ_HANDLER(homerun_40_r)
 }
 
 
-static PORT_READ_START( readport )
-	{0x30, 0x33, ppi8255_0_r },
-	{0x40, 0x40, homerun_40_r  },
-	{0x50, 0x50, input_port_2_r },
-	{0x60, 0x60, input_port_1_r },
-	{0x70, 0x70, YM2203_status_port_0_r},
-	{0x71, 0x71, YM2203_read_port_0_r},
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x30, 0x33) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(homerun_40_r)
+	AM_RANGE(0x50, 0x50) AM_READ(input_port_2_r)
+	AM_RANGE(0x60, 0x60) AM_READ(input_port_1_r)
+	AM_RANGE(0x70, 0x70) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x71, 0x71) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x10, 0x10, IOWP_NOP }, /* ?? */
-	{ 0x20, 0x20, IOWP_NOP }, /* ?? */
-	{ 0x30, 0x33, ppi8255_0_w },
-	{ 0x70, 0x70, YM2203_control_port_0_w },
-	{ 0x71, 0x71, YM2203_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP) /* ?? */
+	AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP) /* ?? */
+	AM_RANGE(0x30, 0x33) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x70, 0x70) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x71, 0x71) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 static struct YM2203interface ym2203_interface =
 {
@@ -172,8 +172,8 @@ static MACHINE_DRIVER_START( homerun )
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 	
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 

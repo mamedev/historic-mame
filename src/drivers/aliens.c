@@ -87,45 +87,45 @@ static WRITE_HANDLER( aliens_snd_bankswitch_w )
 }
 
 
-static MEMORY_READ_START( aliens_readmem )
-	{ 0x0000, 0x03ff, bankedram_r },			/* palette + work RAM */
-	{ 0x0400, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, MRA_BANK1 },				/* banked ROM */
-	{ 0x5f80, 0x5f80, input_port_2_r },			/* DIPSW #3 */
-	{ 0x5f81, 0x5f81, input_port_3_r },			/* Player 1 inputs */
-	{ 0x5f82, 0x5f82, input_port_4_r },			/* Player 2 inputs */
-	{ 0x5f83, 0x5f83, input_port_1_r },			/* DIPSW #2 */
-	{ 0x5f84, 0x5f84, input_port_0_r },			/* DIPSW #1 */
-	{ 0x5f88, 0x5f88, watchdog_reset_r },
-	{ 0x4000, 0x7fff, K052109_051960_r },
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM e24_j02.bin */
-MEMORY_END
+static ADDRESS_MAP_START( aliens_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(bankedram_r)			/* palette + work RAM */
+	AM_RANGE(0x0400, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK1)				/* banked ROM */
+	AM_RANGE(0x5f80, 0x5f80) AM_READ(input_port_2_r)			/* DIPSW #3 */
+	AM_RANGE(0x5f81, 0x5f81) AM_READ(input_port_3_r)			/* Player 1 inputs */
+	AM_RANGE(0x5f82, 0x5f82) AM_READ(input_port_4_r)			/* Player 2 inputs */
+	AM_RANGE(0x5f83, 0x5f83) AM_READ(input_port_1_r)			/* DIPSW #2 */
+	AM_RANGE(0x5f84, 0x5f84) AM_READ(input_port_0_r)			/* DIPSW #1 */
+	AM_RANGE(0x5f88, 0x5f88) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(K052109_051960_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM e24_j02.bin */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( aliens_writemem )
-	{ 0x0000, 0x03ff, bankedram_w, &ram },			/* palette + work RAM */
-	{ 0x0400, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3fff, MWA_ROM },					/* banked ROM */
-	{ 0x5f88, 0x5f88, aliens_coin_counter_w },		/* coin counters */
-	{ 0x5f8c, 0x5f8c, aliens_sh_irqtrigger_w },		/* cause interrupt on audio CPU */
-	{ 0x4000, 0x7fff, K052109_051960_w },
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM e24_j02.bin */
-MEMORY_END
+static ADDRESS_MAP_START( aliens_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(bankedram_w) AM_BASE(&ram)			/* palette + work RAM */
+	AM_RANGE(0x0400, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)					/* banked ROM */
+	AM_RANGE(0x5f88, 0x5f88) AM_WRITE(aliens_coin_counter_w)		/* coin counters */
+	AM_RANGE(0x5f8c, 0x5f8c) AM_WRITE(aliens_sh_irqtrigger_w)		/* cause interrupt on audio CPU */
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(K052109_051960_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM e24_j02.bin */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( aliens_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM g04_b03.bin */
-	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
-	{ 0xa001, 0xa001, YM2151_status_port_0_r },
-	{ 0xc000, 0xc000, soundlatch_r },			/* soundlatch_r */
-	{ 0xe000, 0xe00d, K007232_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( aliens_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)				/* ROM g04_b03.bin */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)				/* RAM */
+	AM_RANGE(0xa001, 0xa001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)			/* soundlatch_r */
+	AM_RANGE(0xe000, 0xe00d) AM_READ(K007232_read_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( aliens_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM g04_b03.bin */
-	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
-	{ 0xa000, 0xa000, YM2151_register_port_0_w },
-	{ 0xa001, 0xa001, YM2151_data_port_0_w },
-	{ 0xe000, 0xe00d, K007232_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( aliens_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)					/* ROM g04_b03.bin */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xe000, 0xe00d) AM_WRITE(K007232_write_port_0_w)
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -266,12 +266,12 @@ static MACHINE_DRIVER_START( aliens )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(KONAMI, 3000000)		/* ? */
-	MDRV_CPU_MEMORY(aliens_readmem,aliens_writemem)
+	MDRV_CPU_PROGRAM_MAP(aliens_readmem,aliens_writemem)
 	MDRV_CPU_VBLANK_INT(aliens_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
-	MDRV_CPU_MEMORY(aliens_readmem_sound,aliens_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(aliens_readmem_sound,aliens_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -450,7 +450,7 @@ static MACHINE_INIT( aliens )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	konami_cpu_setlines_callback = aliens_banking;
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)aliens_banking);
 
 	/* init the default bank */
 	cpu_setbank( 1, &RAM[0x10000] );

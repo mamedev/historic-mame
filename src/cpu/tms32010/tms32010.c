@@ -115,7 +115,7 @@ typedef struct			/* Page 3-6 shows all registers */
 static tms32010_Regs R;
 static PAIR oldacc;
 static UINT16 memaccess;
-int    tms32010_icount;
+static int tms32010_icount;
 typedef void (*opcode_fn) (void);
 
 
@@ -721,7 +721,7 @@ static opcode_fn opcode_7F_other[32]=
 /****************************************************************************
  *	Inits CPU emulation
  ****************************************************************************/
-void tms32010_init (void)
+static void tms32010_init (void)
 {
 	int cpu = cpu_getactivecpu();
 
@@ -745,7 +745,7 @@ void tms32010_init (void)
 /****************************************************************************
  *	Reset registers to their initial values
  ****************************************************************************/
-void tms32010_reset (void *param)
+static void tms32010_reset (void *param)
 {
 	R.PC    = 0;
 	R.STR   = 0xfefe;
@@ -757,7 +757,7 @@ void tms32010_reset (void *param)
 /****************************************************************************
  *	Shut down CPU emulation
  ****************************************************************************/
-void tms32010_exit (void)
+static void tms32010_exit (void)
 {
 	/* nothing to do ? */
 }
@@ -785,7 +785,7 @@ static int Ext_IRQ(void)
 /****************************************************************************
  *	Execute IPeriod. Return 0 if emulation should be stopped
  ****************************************************************************/
-int tms32010_execute(int cycles)
+static int tms32010_execute(int cycles)
 {
 	tms32010_icount = cycles;
 
@@ -820,17 +820,16 @@ int tms32010_execute(int cycles)
 /****************************************************************************
  *	Get all registers in given buffer
  ****************************************************************************/
-unsigned tms32010_get_context (void *dst)
+static void tms32010_get_context (void *dst)
 {
 	if( dst )
 		*(tms32010_Regs*)dst = R;
-	return sizeof(tms32010_Regs);
 }
 
 /****************************************************************************
  *	Set all registers to given values
  ****************************************************************************/
-void tms32010_set_context (void *src)
+static void tms32010_set_context (void *src)
 {
 	if (src)
 		R = *(tms32010_Regs*)src;
@@ -838,139 +837,16 @@ void tms32010_set_context (void *src)
 
 
 /****************************************************************************
- *	Return a specific register
- ****************************************************************************/
-unsigned tms32010_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case TMS32010_PC: return R.PC;
-		/* This is actually not a stack pointer, but the stack contents */
-		case REG_SP:
-		case TMS32010_STK3: return R.STACK[3];
-		case TMS32010_ACC:  return R.ACC.d;
-		case TMS32010_STR:  return R.STR;
-		case TMS32010_PREG: return R.Preg.d;
-		case TMS32010_TREG: return R.Treg;
-		case TMS32010_AR0:  return R.AR[0];
-		case TMS32010_AR1:  return R.AR[1];
-		case REG_PREVIOUSPC: return R.PREVPC;
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if (offset < 4)
-					return R.STACK[offset];
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************
- *	Set a specific register
- ****************************************************************************/
-void tms32010_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case TMS32010_PC: R.PC = val; break;
-		/* This is actually not a stack pointer, but the stack contents */
-		/* Stack is a 4 level First In Last Out stack */
-		case REG_SP:
-		case TMS32010_STK3: R.STACK[3] = val; break;
-		case TMS32010_STR:  R.STR    = val; break;
-		case TMS32010_ACC:  R.ACC.d  = val; break;
-		case TMS32010_PREG: R.Preg.d = val; break;
-		case TMS32010_TREG: R.Treg   = val; break;
-		case TMS32010_AR0:  R.AR[0]  = val; break;
-		case TMS32010_AR1:  R.AR[1]  = val; break;
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if (offset < 4)
-					R.STACK[offset] = val;
-			}
-	}
-}
-
-
-/****************************************************************************
  *	Set IRQ line state
  ****************************************************************************/
-void tms32010_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	/* Pending Interrupts cannot be cleared! */
 	if (state == ASSERT_LINE) R.INTF |=  TMS32010_INT_PENDING;
 }
 
-void tms32010_set_irq_callback(int (*callback)(int irqline))
-{
-	/* There are no IRQ Acknowledge Pins on this device */
-}
 
-/****************************************************************************
- *	Return a formatted string for a register
- ****************************************************************************/
-const char *tms32010_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	tms32010_Regs *r = context;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if (!context)
-		r = &R;
-
-	switch (regnum)
-	{
-		case CPU_INFO_REG+TMS32010_PC:   sprintf(buffer[which], "PC:%04X",   r->PC); break;
-		case CPU_INFO_REG+TMS32010_SP:   sprintf(buffer[which], "SP:%X", 0); /* fake stack pointer */ break;
-		case CPU_INFO_REG+TMS32010_STR:  sprintf(buffer[which], "STR:%04X",  r->STR); break;
-		case CPU_INFO_REG+TMS32010_ACC:  sprintf(buffer[which], "ACC:%08X",  r->ACC.d); break;
-		case CPU_INFO_REG+TMS32010_PREG: sprintf(buffer[which], "P:%08X",    r->Preg.d); break;
-		case CPU_INFO_REG+TMS32010_TREG: sprintf(buffer[which], "T:%04X",    r->Treg); break;
-		case CPU_INFO_REG+TMS32010_AR0:  sprintf(buffer[which], "AR0:%04X",  r->AR[0]); break;
-		case CPU_INFO_REG+TMS32010_AR1:  sprintf(buffer[which], "AR1:%04X",  r->AR[1]); break;
-		case CPU_INFO_REG+TMS32010_STK0: sprintf(buffer[which], "STK0:%04X", r->STACK[0]); break;
-		case CPU_INFO_REG+TMS32010_STK1: sprintf(buffer[which], "STK1:%04X", r->STACK[1]); break;
-		case CPU_INFO_REG+TMS32010_STK2: sprintf(buffer[which], "STK2:%04X", r->STACK[2]); break;
-		case CPU_INFO_REG+TMS32010_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->STR & 0x8000 ? 'O':'.',
-				r->STR & 0x4000 ? 'M':'.',
-				r->STR & 0x2000 ? 'I':'.',
-				r->STR & 0x1000 ? '.':'?',
-				r->STR & 0x0800 ? 'a':'?',
-				r->STR & 0x0400 ? 'r':'?',
-				r->STR & 0x0200 ? 'p':'?',
-				r->STR & 0x0100 ? '1':'0',
-				r->STR & 0x0080 ? '.':'?',
-				r->STR & 0x0040 ? '.':'?',
-				r->STR & 0x0020 ? '.':'?',
-				r->STR & 0x0010 ? '.':'?',
-				r->STR & 0x0008 ? '.':'?',
-				r->STR & 0x0004 ? 'd':'?',
-				r->STR & 0x0002 ? 'p':'?',
-				r->STR & 0x0001 ? '1':'0');
-			break;
-		case CPU_INFO_NAME: return "TMS32010";
-		case CPU_INFO_FAMILY: return "Texas Instruments TMS32010";
-		case CPU_INFO_VERSION: return "1.20";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C)1999-2002+ by Tony La Porta";
-		case CPU_INFO_REG_LAYOUT: return (const char*)tms32010_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)tms32010_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned tms32010_dasm(char *buffer, unsigned pc)
+static offs_t tms32010_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm32010( buffer, pc );
@@ -978,4 +854,139 @@ unsigned tms32010_dasm(char *buffer, unsigned pc)
 	sprintf( buffer, "$%04X", TMS32010_RDOP(pc) );
 	return 2;
 #endif
+}
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void tms32010_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32010_PC:		R.PC = info->i;							break;
+		/* This is actually not a stack pointer, but the stack contents */
+		/* Stack is a 4 level First In Last Out stack */
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + TMS32010_STK3:		R.STACK[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32010_STR:		R.STR    = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_ACC:		R.ACC.d  = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_PREG:		R.Preg.d = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_TREG:		R.Treg   = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_AR0:		R.AR[0]  = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_AR1:		R.AR[1]  = info->i;						break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					/* not supported */						break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void tms32010_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(R);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1*CLK;						break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 12;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
+
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = (R.INTF & TMS32010_INT_PENDING) ? ASSERT_LINE : CLEAR_LINE;	break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = R.PREVPC;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32010_PC:		info->i = R.PC;							break;
+		/* This is actually not a stack pointer, but the stack contents */
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + TMS32010_STK3:		info->i = R.STACK[3];					break;
+		case CPUINFO_INT_REGISTER + TMS32010_ACC: 		info->i = R.ACC.d;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_STR: 		info->i = R.STR;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_PREG:		info->i = R.Preg.d;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_TREG:		info->i = R.Treg;						break;
+		case CPUINFO_INT_REGISTER + TMS32010_AR0: 		info->i = R.AR[0];						break;
+		case CPUINFO_INT_REGISTER + TMS32010_AR1: 		info->i = R.AR[1];						break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = tms32010_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tms32010_get_context; break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tms32010_set_context; break;
+		case CPUINFO_PTR_INIT:							info->init = tms32010_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = tms32010_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = tms32010_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = tms32010_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32010_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					/* not supported */						break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32010_icount;		break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32010_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32010_win_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32010"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS32010"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.20"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C)1999-2002+ by Tony La Porta"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				R.STR & 0x8000 ? 'O':'.',
+				R.STR & 0x4000 ? 'M':'.',
+				R.STR & 0x2000 ? 'I':'.',
+				R.STR & 0x1000 ? '.':'?',
+				R.STR & 0x0800 ? 'a':'?',
+				R.STR & 0x0400 ? 'r':'?',
+				R.STR & 0x0200 ? 'p':'?',
+				R.STR & 0x0100 ? '1':'0',
+				R.STR & 0x0080 ? '.':'?',
+				R.STR & 0x0040 ? '.':'?',
+				R.STR & 0x0020 ? '.':'?',
+				R.STR & 0x0010 ? '.':'?',
+				R.STR & 0x0008 ? '.':'?',
+				R.STR & 0x0004 ? 'd':'?',
+				R.STR & 0x0002 ? 'p':'?',
+				R.STR & 0x0001 ? '1':'0');
+			break;
+
+		case CPUINFO_STR_REGISTER + +TMS32010_PC:   	sprintf(info->s = cpuintrf_temp_str(), "PC:%04X",   R.PC); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_SP:   	sprintf(info->s = cpuintrf_temp_str(), "SP:%X", 0); /* fake stack pointer */ break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STR:  	sprintf(info->s = cpuintrf_temp_str(), "STR:%04X",  R.STR); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_ACC:  	sprintf(info->s = cpuintrf_temp_str(), "ACC:%08X",  R.ACC.d); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_PREG: 	sprintf(info->s = cpuintrf_temp_str(), "P:%08X",    R.Preg.d); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_TREG: 	sprintf(info->s = cpuintrf_temp_str(), "T:%04X",    R.Treg); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_AR0:  	sprintf(info->s = cpuintrf_temp_str(), "AR0:%04X",  R.AR[0]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_AR1:  	sprintf(info->s = cpuintrf_temp_str(), "AR1:%04X",  R.AR[1]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK0: 	sprintf(info->s = cpuintrf_temp_str(), "STK0:%04X", R.STACK[0]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK1: 	sprintf(info->s = cpuintrf_temp_str(), "STK1:%04X", R.STACK[1]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK2: 	sprintf(info->s = cpuintrf_temp_str(), "STK2:%04X", R.STACK[2]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK3: 	sprintf(info->s = cpuintrf_temp_str(), "STK3:%04X", R.STACK[3]); break;
+	}
 }

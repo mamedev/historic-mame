@@ -2,7 +2,7 @@
 
 Space Firebird memory map (preliminary)
 
-  Memory Map figured out by Chris Hardy (chrish@kcbbs.gen.nz), Paul Johnson and Andy Clark
+  Memory Map figured out by Chris Hardy, Paul Johnson and Andy Clark
   MAME driver by Chris Hardy
 
   Schematics scanned and provided by James Twine
@@ -12,9 +12,9 @@ Space Firebird memory map (preliminary)
   pcb.
 
 TODO
-	- Add "Red" flash when you die.
 	- Add Starfield. It is NOT a Galaxians starfield
-	-
+	- Need to verify that the red background is correct. Currently every sprite has 8x8 or 4x4 opaque pixels.
+	  This is correct for the sprite over sprite graphics, but maybe incorrect for the background colour and stars
 
 0000-3FFF ROM		Code
 8000-83FF RAM		Sprite RAM
@@ -31,16 +31,7 @@ Port 3 - Dipswitch
 
 OUT:
 Port 0 - RV,VREF and CREF
-Port 1 - Comms to the Sound card (-> 8212)
-    bit 0 = discrete sound
-    bit 1 = INT to 8035
-    bit 2 = T1 input to 8035
-    bit 3 = PB4 input to 8035
-    bit 4 = PB5 input to 8035
-    bit 5 = T0 input to 8035
-    bit 6 = discrete sound
-    bit 7 = discrete sound
-
+Port 1 - Comms to the Sound card (via 8212 latch)
 Port 2 - Video contrast values (used by sound board only)
 Port 3 - Unused
 
@@ -103,21 +94,28 @@ Port 0 - Video
    bit 7 = unused
 
 Port 1
-	8 bits gets "sent" to a 8212 chip
+    bit 0 = discrete sound (Enemy death)
+    bit 1 = INT to 8035
+    bit 2 = T1 input to 8035
+    bit 3 = PB4 input to 8035
+    bit 4 = PB5 input to 8035
+    bit 5 = T0 input to 8035
+    bit 6 = discrete sound (Ship fire)
+    bit 7 = discrete sound (Explosion noise)
 
 Port 2 - Video control
 
 These are passed to the sound board and are used to produce a
 red flash effect when you die.
 
-   bit 0 = CONT R
+   bit 0 = CONT R		Changes contrast of the red/green/blue part of the stars. This is used to make the starfield flicker
    bit 1 = CONT G
    bit 2 = CONT B
-   bit 3 = ALRD
-   bit 4 = ALBU
+   bit 3 = ALRD			Turns background red on
+   bit 4 = ALBU			Turns background blue on
    bit 5 = unused
    bit 6 = unused
-   bit 7 = ALBA
+   bit 7 = ALBA			Turns on Starfield or turns background colour to white
 
 
 ***************************************************************************/
@@ -160,53 +158,119 @@ static READ_HANDLER( spacefb_sh_t1_r )
 
 static WRITE_HANDLER( spacefb_port_1_w )
 {
+	static int bit0 = 0;
+	static int bit6 = 0;
+	static int bit7 = 0;
+	static int explosion_playing = 0;
+	int bit;
+
 	spacefb_sound_latch = data;
 	cpu_set_irq_line(1, 0, (!(data & 0x02)) ? ASSERT_LINE : CLEAR_LINE);
+
+/* Enemy killed */
+	bit = 1-(data & 1);
+	if ((bit) & (!bit0))
+	{
+		sample_start(0,0,0);
+	}
+	bit0 = bit;
+
+/* Ship fire */
+	bit = 1-((data >> 6) & 1);
+	if ((bit) && (!bit6))
+	{
+		sample_start(1,1,0);
+	}
+	bit6 = bit;
+
+/*
+	Explosion Noise
+
+	Actual sample has a bit of attack at the start, but these doesn't seem to be an easy way
+	to play the attack part, then loop the middle bit until the sample is turned off
+	Fortunately it seems like the recorded sample of the spaceship death is the longest the sample plays for.
+	We loop it just in case it runs out
+*/
+	bit = 1-((data >> 7) & 1);
+	if (bit ^ bit7)
+	{
+		if (bit)
+		{
+			/* Start looping noise */
+			sample_start(2,2,1);
+			explosion_playing = 1;
+		}
+		else
+		{
+			/* play decaying noise */
+			sample_start(2,3,0);
+			explosion_playing = 0;
+		}
+	}
+	bit7 = bit;
+
 }
 
+static const char *spacefb_sample_names[] =
+{
+	"*spacefb",
+	"ekilled.wav",
+	"shipfire.wav",
+	"explode1.wav",
+	"explode2.wav",
+	0	/* end of array */
+};
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-MEMORY_END
+static struct Samplesinterface spacefb_samples_interface =
+{
+	3,	/* 3 channels */
+	100,	/* volume */
+	spacefb_sample_names
+};
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r }, /* IN 0 */
-	{ 0x01, 0x01, input_port_1_r }, /* IN 1 */
-	{ 0x02, 0x02, input_port_2_r }, /* Coin - Start */
-	{ 0x03, 0x03, input_port_3_r }, /* DSW0 */
-PORT_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, spacefb_video_control_w },
-	{ 0x01, 0x01, spacefb_port_1_w },
-	{ 0x02, 0x02, spacefb_port_2_w },
-PORT_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x03ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* IN 0 */
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r) /* IN 1 */
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r) /* Coin - Start */
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r) /* DSW0 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x03ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(spacefb_video_control_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(spacefb_port_1_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(spacefb_port_2_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_sound )
-	{ I8039_p2, I8039_p2, spacefb_sh_p2_r },
-	{ I8039_t0, I8039_t0, spacefb_sh_t0_r },
-	{ I8039_t1, I8039_t1, spacefb_sh_t1_r },
-PORT_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_sound )
-	{ I8039_p1, I8039_p1, DAC_0_data_w },
-PORT_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p2, I8039_p2) AM_READ(spacefb_sh_p2_r)
+	AM_RANGE(I8039_t0, I8039_t0) AM_READ(spacefb_sh_t0_r)
+	AM_RANGE(I8039_t1, I8039_t1) AM_READ(spacefb_sh_t1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writeport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(DAC_0_data_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( spacefb )
@@ -360,14 +424,14 @@ static MACHINE_DRIVER_START( spacefb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)    /* 4 MHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(spacefb_interrupt,2) /* two int's per frame */
 
 	MDRV_CPU_ADD(I8035,6000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
+	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -379,7 +443,7 @@ static MACHINE_DRIVER_START( spacefb )
 	MDRV_SCREEN_SIZE(264, 256)
 	MDRV_VISIBLE_AREA(0, 263, 16, 247)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32)
+	MDRV_PALETTE_LENGTH(32+4)
 	MDRV_COLORTABLE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(spacefb)
@@ -388,6 +452,7 @@ static MACHINE_DRIVER_START( spacefb )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, spacefb_samples_interface)
 MACHINE_DRIVER_END
 
 

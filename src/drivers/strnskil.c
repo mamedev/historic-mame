@@ -70,52 +70,52 @@ static WRITE_HANDLER( protection_w )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( strnskil_readmem1 )
-	{ 0x0000, 0x9fff, MRA_ROM },
+static ADDRESS_MAP_START( strnskil_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
 
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, strnskil_sharedram_r },
-	{ 0xd000, 0xd7ff, MRA_RAM }, /* videoram */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(strnskil_sharedram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) /* videoram */
 
-	{ 0xd800, 0xd800, strnskil_d800_r },
-	{ 0xd801, 0xd801, input_port_0_r }, /* dsw 1 */
-	{ 0xd802, 0xd802, input_port_1_r }, /* dsw 2 */
-	{ 0xd803, 0xd803, input_port_4_r }, /* other inputs */
-	{ 0xd804, 0xd804, input_port_2_r }, /* player1 */
-	{ 0xd805, 0xd805, input_port_3_r }, /* player2 */
+	AM_RANGE(0xd800, 0xd800) AM_READ(strnskil_d800_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_0_r) /* dsw 1 */
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_1_r) /* dsw 2 */
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_4_r) /* other inputs */
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_2_r) /* player1 */
+	AM_RANGE(0xd805, 0xd805) AM_READ(input_port_3_r) /* player2 */
 
-	{ 0xd806, 0xd806, protection_r }, /* protection data read (pettanp) */
-MEMORY_END
+	AM_RANGE(0xd806, 0xd806) AM_READ(protection_r) /* protection data read (pettanp) */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( strnskil_writemem1 )
-	{ 0x0000, 0x9fff, MWA_ROM },
+static ADDRESS_MAP_START( strnskil_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
 
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, strnskil_sharedram_w },
-	{ 0xd000, 0xd7ff, strnskil_videoram_w, &videoram },
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(strnskil_sharedram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(strnskil_videoram_w) AM_BASE(&videoram)
 
-	{ 0xd808, 0xd808, strnskil_scrl_ctrl_w },
-	{ 0xd809, 0xd809, MWA_NOP }, /* coin counter? */
-	{ 0xd80a, 0xd80b, strnskil_scroll_x_w },
+	AM_RANGE(0xd808, 0xd808) AM_WRITE(strnskil_scrl_ctrl_w)
+	AM_RANGE(0xd809, 0xd809) AM_WRITE(MWA8_NOP) /* coin counter? */
+	AM_RANGE(0xd80a, 0xd80b) AM_WRITE(strnskil_scroll_x_w)
 
-//	{ 0xd80c, 0xd80c, MWA_NOP },		/* protection reset? */
-	{ 0xd80d, 0xd80d, protection_w },	/* protection data write (pettanp) */
-MEMORY_END
+//	AM_RANGE(0xd80c, 0xd80c) AM_WRITE(MWA8_NOP)		/* protection reset? */
+	AM_RANGE(0xd80d, 0xd80d) AM_WRITE(protection_w)	/* protection data write (pettanp) */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( strnskil_readmem2 )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, spriteram_r },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( strnskil_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(spriteram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( strnskil_writemem2 )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc800, 0xcfff, MWA_RAM, &strnskil_sharedram },
+static ADDRESS_MAP_START( strnskil_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&strnskil_sharedram)
 
-	{ 0xd801, 0xd801, SN76496_0_w },
-	{ 0xd802, 0xd802, SN76496_1_w },
-MEMORY_END
+	AM_RANGE(0xd801, 0xd801) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xd802, 0xd802) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
 
 /****************************************************************************/
@@ -343,11 +343,11 @@ static MACHINE_DRIVER_START( strnskil )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(strnskil_readmem1,strnskil_writemem1)
+	MDRV_CPU_PROGRAM_MAP(strnskil_readmem1,strnskil_writemem1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(strnskil_readmem2,strnskil_writemem2)
+	MDRV_CPU_PROGRAM_MAP(strnskil_readmem2,strnskil_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

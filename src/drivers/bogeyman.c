@@ -66,31 +66,31 @@ static WRITE_HANDLER( bogeyman_8910_control_w )
 
 /******************************************************************************/
 
-static MEMORY_READ_START( bogeyman_readmem )
-	{ 0x0000, 0x17ff, MRA_RAM },
-	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x21ff, MRA_RAM },
-	{ 0x2800, 0x2bff, MRA_RAM },
-	{ 0x3800, 0x3800, input_port_0_r },	/* Player 1 */
-	{ 0x3801, 0x3801, input_port_1_r },	/* Player 2 + VBL */
-	{ 0x3802, 0x3802, input_port_2_r },	/* Dip 1 */
-	{ 0x3803, 0x3803, input_port_3_r },	/* Dip 2 + Coins */
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bogeyman_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x21ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2800, 0x2bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3800) AM_READ(input_port_0_r)	/* Player 1 */
+	AM_RANGE(0x3801, 0x3801) AM_READ(input_port_1_r)	/* Player 2 + VBL */
+	AM_RANGE(0x3802, 0x3802) AM_READ(input_port_2_r)	/* Dip 1 */
+	AM_RANGE(0x3803, 0x3803) AM_READ(input_port_3_r)	/* Dip 2 + Coins */
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bogeyman_writemem )
-	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1bff, bogeyman_videoram2_w, &bogeyman_videoram2 },
-	{ 0x1c00, 0x1fff, bogeyman_colorram2_w, &bogeyman_colorram2 },
-  	{ 0x2000, 0x20ff, bogeyman_videoram_w, &videoram },
-  	{ 0x2100, 0x21ff, bogeyman_colorram_w, &colorram },
-	{ 0x2800, 0x2bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x300f, bogeyman_paletteram_w, &paletteram },
-	{ 0x3800, 0x3800, bogeyman_8910_control_w },
-	{ 0x3801, 0x3801, bogeyman_8910_latch_w },
-	{ 0x3803, 0x3803, MWA_NOP },	/* ?? This has something to do with sound */
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bogeyman_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(bogeyman_videoram2_w) AM_BASE(&bogeyman_videoram2)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(bogeyman_colorram2_w) AM_BASE(&bogeyman_colorram2)
+  	AM_RANGE(0x2000, 0x20ff) AM_WRITE(bogeyman_videoram_w) AM_BASE(&videoram)
+  	AM_RANGE(0x2100, 0x21ff) AM_WRITE(bogeyman_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3000, 0x300f) AM_WRITE(bogeyman_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(bogeyman_8910_control_w)
+	AM_RANGE(0x3801, 0x3801) AM_WRITE(bogeyman_8910_latch_w)
+	AM_RANGE(0x3803, 0x3803) AM_WRITE(MWA8_NOP)	/* ?? This has something to do with sound */
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -251,7 +251,7 @@ static MACHINE_DRIVER_START( bogeyman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 2000000) /* 12 MHz clock on board */
-	MDRV_CPU_MEMORY(bogeyman_readmem,bogeyman_writemem)
+	MDRV_CPU_PROGRAM_MAP(bogeyman_readmem,bogeyman_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,16) /* Controls sound */
 
 	MDRV_FRAMES_PER_SECOND(60)

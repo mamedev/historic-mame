@@ -2166,9 +2166,6 @@ TABLE_FUNCTION(uint, get_reg, (int regnum))
 		case G65816_NMI_STATE: return LINE_NMI;
 		case G65816_IRQ_STATE: return LINE_IRQ;
 		case REG_PREVIOUSPC: return REGISTER_PPC;
-		default:
-			if(regnum <= REG_SP_CONTENTS)
-				return read_16_NORM(REGISTER_S + 2 * (REG_SP_CONTENTS - regnum));
 	}
 	return 0;
 }
@@ -2200,9 +2197,6 @@ TABLE_FUNCTION(void, set_reg, (int regnum, uint val))
 #endif
 		case G65816_NMI_STATE: FTABLE_SET_LINE(G65816_LINE_NMI, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
 		case G65816_IRQ_STATE: FTABLE_SET_LINE(G65816_LINE_IRQ, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
-		default:
-			if(regnum <= REG_SP_CONTENTS)
-				write_16_NORM(REGISTER_S + 2 * (REG_SP_CONTENTS - regnum), val);
 	 }
 }
 

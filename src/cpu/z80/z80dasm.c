@@ -411,6 +411,8 @@ static int offs(INT8 offset)
 	return offset;
 }
 
+static unsigned z80_get_reg(int reg) { union cpuinfo info; z80_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
@@ -448,7 +450,7 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 		if( op1 == 0xcb )
 		{
 			offset = (INT8) cpu_readop_arg(pc++);
-			op1 = cpu_readop_arg(pc++); /* fourth byte from OP_RAM! */
+			op1 = cpu_readop_arg(pc++); /* fourth byte from opcode_arg_base! */
 			xy = z80_get_reg( Z80_IX );
 			ea = (xy + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];
@@ -461,7 +463,7 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 		if( op1 == 0xcb )
 		{
 			offset = (INT8) cpu_readop_arg(pc++);
-			op1 = cpu_readop_arg(pc++); /* fourth byte from OP_RAM! */
+			op1 = cpu_readop_arg(pc++); /* fourth byte from opcode_arg_base! */
 			xy = z80_get_reg( Z80_IY );
 			ea = (ea + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];

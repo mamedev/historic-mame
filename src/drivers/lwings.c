@@ -272,120 +272,120 @@ static WRITE_HANDLER( msm5205_w )
 	MSM5205_vclk_w(offset,0);
 }
 
-static MEMORY_READ_START( avengers_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xf7ff, MRA_RAM },
-	{ 0xf808, 0xf808, input_port_0_r },
-	{ 0xf809, 0xf809, input_port_1_r },
-	{ 0xf80a, 0xf80a, input_port_2_r },
-	{ 0xf80b, 0xf80b, input_port_3_r },
-	{ 0xf80c, 0xf80c, input_port_4_r },
-	{ 0xf80d, 0xf80d, avengers_protection_r },
-MEMORY_END
+static ADDRESS_MAP_START( avengers_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf808, 0xf808) AM_READ(input_port_0_r)
+	AM_RANGE(0xf809, 0xf809) AM_READ(input_port_1_r)
+	AM_RANGE(0xf80a, 0xf80a) AM_READ(input_port_2_r)
+	AM_RANGE(0xf80b, 0xf80b) AM_READ(input_port_3_r)
+	AM_RANGE(0xf80c, 0xf80c) AM_READ(input_port_4_r)
+	AM_RANGE(0xf80d, 0xf80d) AM_READ(avengers_protection_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( avengers_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xddff, MWA_RAM },
-	{ 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xdf80, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
-	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
-	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
-	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
-	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
-	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
-	{ 0xf804, 0xf804, trojan_bg2_scrollx_w },
-	{ 0xf805, 0xf805, trojan_bg2_image_w },
-	{ 0xf808, 0xf808, MWA_NOP }, /* ? */
-	{ 0xf809, 0xf809, avengers_protection_w },
-	{ 0xf80c, 0xf80c, avengers_prot_bank_w },
-	{ 0xf80d, 0xf80d, avengers_adpcm_w },
-	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( avengers_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xddff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdf7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xdf80, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(lwings_fgvideoram_w) AM_BASE(&lwings_fgvideoram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(lwings_bg1videoram_w) AM_BASE(&lwings_bg1videoram)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(lwings_bg1_scrollx_w)
+	AM_RANGE(0xf802, 0xf803) AM_WRITE(lwings_bg1_scrolly_w)
+	AM_RANGE(0xf804, 0xf804) AM_WRITE(trojan_bg2_scrollx_w)
+	AM_RANGE(0xf805, 0xf805) AM_WRITE(trojan_bg2_image_w)
+	AM_RANGE(0xf808, 0xf808) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf809, 0xf809) AM_WRITE(avengers_protection_w)
+	AM_RANGE(0xf80c, 0xf80c) AM_WRITE(avengers_prot_bank_w)
+	AM_RANGE(0xf80d, 0xf80d) AM_WRITE(avengers_adpcm_w)
+	AM_RANGE(0xf80e, 0xf80e) AM_WRITE(lwings_bankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem ) /* common to trojan and lwings */
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xf7ff, MRA_RAM },
-	{ 0xf808, 0xf808, input_port_0_r },
-	{ 0xf809, 0xf809, input_port_1_r },
-	{ 0xf80a, 0xf80a, input_port_2_r },
-	{ 0xf80b, 0xf80b, input_port_3_r },
-	{ 0xf80c, 0xf80c, input_port_4_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 ) /* common to trojan and lwings */
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf808, 0xf808) AM_READ(input_port_0_r)
+	AM_RANGE(0xf809, 0xf809) AM_READ(input_port_1_r)
+	AM_RANGE(0xf80a, 0xf80a) AM_READ(input_port_2_r)
+	AM_RANGE(0xf80b, 0xf80b) AM_READ(input_port_3_r)
+	AM_RANGE(0xf80c, 0xf80c) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem ) /* lwings */
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xddff, MWA_RAM },
-	{ 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
-	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
-	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
-	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
-	{ 0xf808, 0xf809, lwings_bg1_scrollx_w },
-	{ 0xf80a, 0xf80b, lwings_bg1_scrolly_w },
-	{ 0xf80c, 0xf80c, soundlatch_w },
-	{ 0xf80d, 0xf80d, watchdog_reset_w },
-	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 ) /* lwings */
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xddff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(lwings_fgvideoram_w) AM_BASE(&lwings_fgvideoram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(lwings_bg1videoram_w) AM_BASE(&lwings_bg1videoram)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf808, 0xf809) AM_WRITE(lwings_bg1_scrollx_w)
+	AM_RANGE(0xf80a, 0xf80b) AM_WRITE(lwings_bg1_scrolly_w)
+	AM_RANGE(0xf80c, 0xf80c) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xf80d, 0xf80d) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xf80e, 0xf80e) AM_WRITE(lwings_bankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( trojan_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xddff, MWA_RAM },
-	{ 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xdf80, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
-	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
-	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
-	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
-	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
-	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
-	{ 0xf804, 0xf804, trojan_bg2_scrollx_w },
-	{ 0xf805, 0xf805, trojan_bg2_image_w },
-	{ 0xf80c, 0xf80c, soundlatch_w },
-	{ 0xf80d, 0xf80d, watchdog_reset_w },
-	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( trojan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xddff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdf7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xdf80, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(lwings_fgvideoram_w) AM_BASE(&lwings_fgvideoram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(lwings_bg1videoram_w) AM_BASE(&lwings_bg1videoram)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(lwings_bg1_scrollx_w)
+	AM_RANGE(0xf802, 0xf803) AM_WRITE(lwings_bg1_scrolly_w)
+	AM_RANGE(0xf804, 0xf804) AM_WRITE(trojan_bg2_scrollx_w)
+	AM_RANGE(0xf805, 0xf805) AM_WRITE(trojan_bg2_image_w)
+	AM_RANGE(0xf80c, 0xf80c) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xf80d, 0xf80d) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xf80e, 0xf80e) AM_WRITE(lwings_bankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc800, soundlatch_r },
-	{ 0xe006, 0xe006, avengers_soundlatch2_r }, //AT: (avengers061gre)
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_READ(soundlatch_r)
+	AM_RANGE(0xe006, 0xe006) AM_READ(avengers_soundlatch2_r) //AT: (avengers061gre)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2203_control_port_0_w },
-	{ 0xe001, 0xe001, YM2203_write_port_0_w },
-	{ 0xe002, 0xe002, YM2203_control_port_1_w },
-	{ 0xe003, 0xe003, YM2203_write_port_1_w },
-	{ 0xe006, 0xe006, MWA_RAM, &avengers_soundlatch2 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xe006, 0xe006) AM_WRITE(MWA8_RAM) AM_BASE(&avengers_soundlatch2)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( adpcm_readmem )
-	{ 0x0000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( adpcm_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 /* Yes, _no_ ram */
-static MEMORY_WRITE_START( adpcm_writemem )
-/*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
-	{ 0x0000, 0xffff, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( adpcm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+/*	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM) avoid cluttering up error.log */
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_READ_START( avengers_adpcm_readport )
-	{ 0x00, 0x00, avengers_adpcm_r },
-PORT_END
+static ADDRESS_MAP_START( avengers_adpcm_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(avengers_adpcm_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( adpcm_readport )
-	{ 0x00, 0x00, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( adpcm_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( adpcm_writeport )
-	{ 0x01, 0x01, msm5205_w },
-PORT_END
+static ADDRESS_MAP_START( adpcm_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(msm5205_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( sectionz )
 	PORT_START      /* IN0 */
@@ -875,12 +875,12 @@ static MACHINE_DRIVER_START( lwings )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -906,18 +906,18 @@ static MACHINE_DRIVER_START( trojan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,trojan_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,trojan_writemem)
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
-	MDRV_CPU_PORTS(adpcm_readport,adpcm_writeport)
+	MDRV_CPU_PROGRAM_MAP(adpcm_readmem,adpcm_writemem)
+	MDRV_CPU_IO_MAP(adpcm_readport,adpcm_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -944,18 +944,18 @@ static MACHINE_DRIVER_START( avengers )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000) //AT: (avengers37b16gre)
-	MDRV_CPU_MEMORY(avengers_readmem,avengers_writemem)
+	MDRV_CPU_PROGRAM_MAP(avengers_readmem,avengers_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) // RST 38h triggered by software
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
-	MDRV_CPU_PORTS(avengers_adpcm_readport,adpcm_writeport)
+	MDRV_CPU_PROGRAM_MAP(adpcm_readmem,adpcm_writemem)
+	MDRV_CPU_IO_MAP(avengers_adpcm_readport,adpcm_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)
 
 	MDRV_FRAMES_PER_SECOND(60)

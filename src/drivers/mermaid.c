@@ -54,38 +54,38 @@ static READ_HANDLER( mermaid_f800_r )
 }
 #endif
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xc000, 0xcbff, MRA_RAM },
-	{ 0xd000, 0xd3ff, MRA_RAM },
-	{ 0xd800, 0xd81f, MRA_RAM },
-	{ 0xd840, 0xd8bf, MRA_RAM },
-	{ 0xdc00, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, input_port_0_r },
-	{ 0xe800, 0xe800, input_port_1_r },
-	{ 0xf000, 0xf000, input_port_2_r },
-	{ 0xf800, 0xf800, input_port_3_r },
-//	{ 0xf800, 0xf800, mermaid_f800_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcbff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xd81f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd840, 0xd8bf) AM_READ(MRA8_RAM)
+	AM_RANGE(0xdc00, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_1_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_2_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_3_r)
+//	AM_RANGE(0xf800, 0xf800) AM_READ(mermaid_f800_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcbff, MWA_RAM, &mermaid_background_videoram, &videoram_size },
-	{ 0xd000, 0xd3ff, MWA_RAM, &mermaid_foreground_videoram },
-	{ 0xd800, 0xd81f, MWA_RAM, &mermaid_background_scrollram },
-	{ 0xd840, 0xd85f, MWA_RAM, &mermaid_foreground_scrollram },
-	{ 0xd880, 0xd8bf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xdc00, 0xdfff, MWA_RAM, &mermaid_foreground_colorram },
-	{ 0xe000, 0xe001, MWA_RAM, &mermaid_AY8910_enable },
-	{ 0xe005, 0xe005, mermaid_flip_screen_x_w },
-	{ 0xe006, 0xe006, mermaid_flip_screen_y_w },
-	{ 0xe007, 0xe007, interrupt_enable_w },
-	{ 0xe807, 0xe807, MWA_NOP },	/* watchdog? */
-	{ 0xf802, 0xf802, MWA_NOP },	/* ??? see memory map */
-	{ 0xf806, 0xf806, mermaid_AY8910_write_port_w },
-	{ 0xf807, 0xf807, mermaid_AY8910_control_port_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcbff) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_background_videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_foreground_videoram)
+	AM_RANGE(0xd800, 0xd81f) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_background_scrollram)
+	AM_RANGE(0xd840, 0xd85f) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_foreground_scrollram)
+	AM_RANGE(0xd880, 0xd8bf) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_foreground_colorram)
+	AM_RANGE(0xe000, 0xe001) AM_WRITE(MWA8_RAM) AM_BASE(&mermaid_AY8910_enable)
+	AM_RANGE(0xe005, 0xe005) AM_WRITE(mermaid_flip_screen_x_w)
+	AM_RANGE(0xe006, 0xe006) AM_WRITE(mermaid_flip_screen_y_w)
+	AM_RANGE(0xe007, 0xe007) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe807, 0xe807) AM_WRITE(MWA8_NOP)	/* watchdog? */
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(MWA8_NOP)	/* ??? see memory map */
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(mermaid_AY8910_write_port_w)
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(mermaid_AY8910_control_port_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( mermaid )
@@ -222,7 +222,7 @@ static MACHINE_DRIVER_START( mermaid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.00 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

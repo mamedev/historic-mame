@@ -139,43 +139,43 @@ extern PALETTE_INIT( dorunrun );
 extern VIDEO_START( docastle );
 extern VIDEO_UPDATE( docastle );
 
-static MEMORY_READ_START( docastle_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, MRA_RAM },
-	{ 0xa000, 0xa008, docastle_shared0_r },
-	{ 0xb800, 0xbbff, videoram_r }, /* mirror of video ram */
-	{ 0xbc00, 0xbfff, colorram_r }, /* mirror of color ram */
-MEMORY_END
+static ADDRESS_MAP_START( docastle_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa008) AM_READ(docastle_shared0_r)
+	AM_RANGE(0xb800, 0xbbff) AM_READ(videoram_r) /* mirror of video ram */
+	AM_RANGE(0xbc00, 0xbfff) AM_READ(colorram_r) /* mirror of color ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( docastle_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x97ff, MWA_RAM },
-	{ 0x9800, 0x99ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xa000, 0xa008, docastle_shared1_w },
-	{ 0xa800, 0xa800, watchdog_reset_w },
-	{ 0xb000, 0xb3ff, docastle_videoram_w, &videoram },
-	{ 0xb400, 0xb7ff, docastle_colorram_w, &colorram },
-	{ 0xe000, 0xe000, docastle_nmitrigger_w },
-MEMORY_END
+static ADDRESS_MAP_START( docastle_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9800, 0x99ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa000, 0xa008) AM_WRITE(docastle_shared1_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xb000, 0xb3ff) AM_WRITE(docastle_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xb400, 0xb7ff) AM_WRITE(docastle_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(docastle_nmitrigger_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( dorunrun_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x37ff, MRA_RAM },
-	{ 0x4000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xa008, docastle_shared0_r },
-MEMORY_END
+static ADDRESS_MAP_START( dorunrun_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa008) AM_READ(docastle_shared0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dorunrun_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa008, docastle_shared1_w },
-	{ 0xb000, 0xb3ff, docastle_videoram_w, &videoram },
-	{ 0xb400, 0xb7ff, docastle_colorram_w, &colorram },
-	{ 0xb800, 0xb800, docastle_nmitrigger_w },
-	{ 0xa800, 0xa800, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( dorunrun_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x4000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa008) AM_WRITE(docastle_shared1_w)
+	AM_RANGE(0xb000, 0xb3ff) AM_WRITE(docastle_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xb400, 0xb7ff) AM_WRITE(docastle_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(docastle_nmitrigger_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
 /* what is this really, sound related? */
 static READ_HANDLER(idsoccer_c000_r)
@@ -184,114 +184,114 @@ static READ_HANDLER(idsoccer_c000_r)
 	i ^= 0x80; return i;
 }
 
-static MEMORY_READ_START( idsoccer_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x59ff, MRA_RAM },
-	{ 0x6000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xa008, docastle_shared0_r },
-	{ 0xb800, 0xbbff, videoram_r },
-	{ 0xbc00, 0xbfff, colorram_r },
-	{ 0xc000, 0xc000, idsoccer_c000_r }, /* ?? */
-MEMORY_END
+static ADDRESS_MAP_START( idsoccer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x59ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa008) AM_READ(docastle_shared0_r)
+	AM_RANGE(0xb800, 0xbbff) AM_READ(videoram_r)
+	AM_RANGE(0xbc00, 0xbfff) AM_READ(colorram_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(idsoccer_c000_r) /* ?? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( idsoccer_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x59ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x6000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa008, docastle_shared1_w },
-	{ 0xa800, 0xa800, watchdog_reset_w },
-	{ 0xb000, 0xb3ff, docastle_videoram_w, &videoram },
-	{ 0xb400, 0xb7ff, docastle_colorram_w, &colorram },
-	{ 0xc000, 0xc000, MWA_NOP }, /* ?? */
-	{ 0xe000, 0xe000, docastle_nmitrigger_w },
-MEMORY_END
+static ADDRESS_MAP_START( idsoccer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x57ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5800, 0x59ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x6000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa008) AM_WRITE(docastle_shared1_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xb000, 0xb3ff) AM_WRITE(docastle_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xb400, 0xb7ff) AM_WRITE(docastle_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP) /* ?? */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(docastle_nmitrigger_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( docastle_readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa008, docastle_shared1_r },
-	{ 0xc003, 0xc003, input_port_0_r },
-	{ 0xc083, 0xc083, input_port_0_r },
-	{ 0xc005, 0xc005, input_port_1_r },
-	{ 0xc085, 0xc085, input_port_1_r },
-	{ 0xc007, 0xc007, input_port_2_r },
-	{ 0xc087, 0xc087, input_port_2_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc082, 0xc082, input_port_3_r },
-	{ 0xc001, 0xc001, input_port_4_r },
-	{ 0xc081, 0xc081, input_port_4_r },
-	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
-	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
-MEMORY_END
+static ADDRESS_MAP_START( docastle_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa008) AM_READ(docastle_shared1_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_0_r)
+	AM_RANGE(0xc083, 0xc083) AM_READ(input_port_0_r)
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_1_r)
+	AM_RANGE(0xc085, 0xc085) AM_READ(input_port_1_r)
+	AM_RANGE(0xc007, 0xc007) AM_READ(input_port_2_r)
+	AM_RANGE(0xc087, 0xc087) AM_READ(input_port_2_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc082, 0xc082) AM_READ(input_port_3_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_4_r)
+	AM_RANGE(0xc081, 0xc081) AM_READ(input_port_4_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(docastle_flipscreen_off_r)
+	AM_RANGE(0xc084, 0xc084) AM_READ(docastle_flipscreen_on_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( docastle_writemem2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa008, docastle_shared0_w },
-	{ 0xe000, 0xe000, SN76496_0_w },
-	{ 0xe400, 0xe400, SN76496_1_w },
-	{ 0xe800, 0xe800, SN76496_2_w },
-	{ 0xec00, 0xec00, SN76496_3_w },
-	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
-	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
-MEMORY_END
+static ADDRESS_MAP_START( docastle_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa008) AM_WRITE(docastle_shared0_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xe400, 0xe400) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(SN76496_3_w)
+	AM_RANGE(0xc004, 0xc004) AM_WRITE(docastle_flipscreen_off_w)
+	AM_RANGE(0xc084, 0xc084) AM_WRITE(docastle_flipscreen_on_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( idsoccer_readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa008, docastle_shared1_r },
-	{ 0xc003, 0xc003, input_port_0_r },
-	{ 0xc083, 0xc083, input_port_0_r },
-	{ 0xc005, 0xc005, input_port_1_r },
-	{ 0xc085, 0xc085, input_port_1_r },
-	{ 0xc007, 0xc007, input_port_2_r },
-	{ 0xc087, 0xc087, input_port_2_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc082, 0xc082, input_port_3_r },
-	{ 0xc001, 0xc001, input_port_4_r },
-	{ 0xc081, 0xc081, input_port_4_r },
-	{ 0xc004, 0xc004, input_port_5_r },
-	{ 0xc084, 0xc084, input_port_5_r },
-MEMORY_END
+static ADDRESS_MAP_START( idsoccer_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa008) AM_READ(docastle_shared1_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_0_r)
+	AM_RANGE(0xc083, 0xc083) AM_READ(input_port_0_r)
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_1_r)
+	AM_RANGE(0xc085, 0xc085) AM_READ(input_port_1_r)
+	AM_RANGE(0xc007, 0xc007) AM_READ(input_port_2_r)
+	AM_RANGE(0xc087, 0xc087) AM_READ(input_port_2_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc082, 0xc082) AM_READ(input_port_3_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_4_r)
+	AM_RANGE(0xc081, 0xc081) AM_READ(input_port_4_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_5_r)
+	AM_RANGE(0xc084, 0xc084) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( docastle_readmem3 )
-	{ 0x0000, 0x0100, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( docastle_readmem3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0100) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( docastle_writemem3 )
-	{ 0x0000, 0x0100, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( docastle_writemem3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0100) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( dorunrun_readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xc003, 0xc003, input_port_0_r },
-	{ 0xc083, 0xc083, input_port_0_r },
-	{ 0xc005, 0xc005, input_port_1_r },
-	{ 0xc085, 0xc085, input_port_1_r },
-	{ 0xc007, 0xc007, input_port_2_r },
-	{ 0xc087, 0xc087, input_port_2_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc082, 0xc082, input_port_3_r },
-	{ 0xc001, 0xc001, input_port_4_r },
-	{ 0xc081, 0xc081, input_port_4_r },
-	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
-	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
-	{ 0xe000, 0xe008, docastle_shared1_r },
-MEMORY_END
+static ADDRESS_MAP_START( dorunrun_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_0_r)
+	AM_RANGE(0xc083, 0xc083) AM_READ(input_port_0_r)
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_1_r)
+	AM_RANGE(0xc085, 0xc085) AM_READ(input_port_1_r)
+	AM_RANGE(0xc007, 0xc007) AM_READ(input_port_2_r)
+	AM_RANGE(0xc087, 0xc087) AM_READ(input_port_2_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc082, 0xc082) AM_READ(input_port_3_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_4_r)
+	AM_RANGE(0xc081, 0xc081) AM_READ(input_port_4_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(docastle_flipscreen_off_r)
+	AM_RANGE(0xc084, 0xc084) AM_READ(docastle_flipscreen_on_r)
+	AM_RANGE(0xe000, 0xe008) AM_READ(docastle_shared1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dorunrun_writemem2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa000, SN76496_0_w },
-	{ 0xa400, 0xa400, SN76496_1_w },
-	{ 0xa800, 0xa800, SN76496_2_w },
-	{ 0xac00, 0xac00, SN76496_3_w },
-	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
-	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
-	{ 0xe000, 0xe008, docastle_shared0_w },
-MEMORY_END
+static ADDRESS_MAP_START( dorunrun_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xac00, 0xac00) AM_WRITE(SN76496_3_w)
+	AM_RANGE(0xc004, 0xc004) AM_WRITE(docastle_flipscreen_off_w)
+	AM_RANGE(0xc084, 0xc084) AM_WRITE(docastle_flipscreen_on_w)
+	AM_RANGE(0xe000, 0xe008) AM_WRITE(docastle_shared0_w)
+ADDRESS_MAP_END
 
 
 
@@ -497,7 +497,6 @@ INPUT_PORTS_START( dowild )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-
 PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, "Special" )
 	PORT_DIPSETTING(    0x40, "Given" )
@@ -664,30 +663,28 @@ INPUT_PORTS_START( idsoccer )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "One Player vs. Computer" ) /* Additional time extended for winning score */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Player 2 Time Extension" ) /* Player may play same game with additional credit */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Player 1 Time Extension" ) /* Player may play same game with additional credit */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Actual Time of Game" ) /* Indicator always shows 3:00 and counts down */
+	PORT_DIPSETTING(    0xc0, "3:00 Minutes" )
+	PORT_DIPSETTING(    0x80, "2:30 Minutes" )
+	PORT_DIPSETTING(    0x40, "2:00 Minutes" )
+	PORT_DIPSETTING(    0x00, "1:00 Minutes" )
 
 	COINAGE_PORT
 
@@ -751,15 +748,15 @@ static MACHINE_DRIVER_START( docastle )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(docastle_readmem,docastle_writemem)
+	MDRV_CPU_PROGRAM_MAP(docastle_readmem,docastle_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(docastle_readmem2,docastle_writemem2)
+	MDRV_CPU_PROGRAM_MAP(docastle_readmem2,docastle_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+	MDRV_CPU_PROGRAM_MAP(docastle_readmem3,docastle_writemem3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -784,15 +781,15 @@ static MACHINE_DRIVER_START( dorunrun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(dorunrun_readmem,dorunrun_writemem)
+	MDRV_CPU_PROGRAM_MAP(dorunrun_readmem,dorunrun_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(dorunrun_readmem2,dorunrun_writemem2)
+	MDRV_CPU_PROGRAM_MAP(dorunrun_readmem2,dorunrun_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+	MDRV_CPU_PROGRAM_MAP(docastle_readmem3,docastle_writemem3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -817,15 +814,15 @@ static MACHINE_DRIVER_START( idsoccer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(idsoccer_readmem,idsoccer_writemem)
+	MDRV_CPU_PROGRAM_MAP(idsoccer_readmem,idsoccer_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(idsoccer_readmem2,docastle_writemem2)
+	MDRV_CPU_PROGRAM_MAP(idsoccer_readmem2,docastle_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+	MDRV_CPU_PROGRAM_MAP(docastle_readmem3,docastle_writemem3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

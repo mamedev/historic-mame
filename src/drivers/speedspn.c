@@ -109,59 +109,59 @@ static WRITE_HANDLER(speedspn_sound_w)
 
 /* main cpu */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9fff, speedspn_vidram_r }, /* banked? */
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xafff, MRA_RAM },
-	{ 0xb000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xffff, MRA_BANK1 }, /* banked ROM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(speedspn_vidram_r) /* banked? */
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xafff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK1) /* banked ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },	/* RAM COLOUR */
-	{ 0x8800, 0x8fff, speedspn_attram_w, &speedspn_attram },
-	{ 0x9000, 0x9fff, speedspn_vidram_w },	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17)*/
-	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xa800, 0xafff, MWA_RAM },
-	{ 0xb000, 0xbfff, MWA_RAM },	/* RAM PROGRAM */
-	{ 0xc000, 0xffff, MWA_ROM },	/* banked ROM */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)	/* RAM COLOUR */
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(speedspn_attram_w) AM_BASE(&speedspn_attram)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(speedspn_vidram_w)	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17)*/
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa800, 0xafff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM)	/* RAM PROGRAM */
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)	/* banked ROM */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x07, 0x07, speedspn_global_display_w },
-	{ 0x12, 0x12, speedspn_banked_rom_change },
-	{ 0x13, 0x13, speedspn_sound_w },
-	{ 0x17, 0x17, speedspn_banked_vidram_change },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x07, 0x07) AM_WRITE(speedspn_global_display_w)
+	AM_RANGE(0x12, 0x12) AM_WRITE(speedspn_banked_rom_change)
+	AM_RANGE(0x13, 0x13) AM_WRITE(speedspn_sound_w)
+	AM_RANGE(0x17, 0x17) AM_WRITE(speedspn_banked_vidram_change)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x10, 0x10, input_port_0_r }, // inputs
-	{ 0x11, 0x11, input_port_1_r }, // inputs
-	{ 0x12, 0x12, input_port_2_r }, // inputs
-	{ 0x13, 0x13, input_port_3_r },
-	{ 0x14, 0x14, input_port_4_r }, // inputs
-	{ 0x16, 0x16, speedspn_irq_ack_r }, // @@@ could be watchdog, value is discarded
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r) // inputs
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r) // inputs
+	AM_RANGE(0x12, 0x12) AM_READ(input_port_2_r) // inputs
+	AM_RANGE(0x13, 0x13) AM_READ(input_port_3_r)
+	AM_RANGE(0x14, 0x14) AM_READ(input_port_4_r) // inputs
+	AM_RANGE(0x16, 0x16) AM_READ(speedspn_irq_ack_r) // @@@ could be watchdog, value is discarded
+ADDRESS_MAP_END
 
 /* sound cpu */
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x9000, MWA_NOP }, // ??
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP) // ??
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 /*** INPUT PORT **************************************************************/
 
@@ -305,13 +305,13 @@ static MACHINE_DRIVER_START( speedspn )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)		 /* 6 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport, writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,6000000)		 /* 6 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

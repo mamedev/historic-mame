@@ -32,7 +32,7 @@ typedef struct TAITO8741_status{
 	unsigned char pending4a;
 	int serial_out;
 	int coins;
-	mem_read_handler portHandler;
+	read8_handler portHandler;
 }I8741;
 
 static const struct TAITO8741interface *intf;

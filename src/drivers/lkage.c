@@ -82,71 +82,73 @@ static WRITE_HANDLER( lkage_sh_nmi_enable_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xefff, paletteram_r },
-	{ 0xf000, 0xf003, MRA_RAM },
-	{ 0xf062, 0xf062, lkage_mcu_r },
-	{ 0xf080, 0xf080, input_port_0_r }, /* DSW1 */
-	{ 0xf081, 0xf081, input_port_1_r }, /* DSW2 (coinage) */
-	{ 0xf082, 0xf082, input_port_2_r }, /* DSW3 */
-	{ 0xf083, 0xf083, input_port_3_r },	/* start buttons, insert coin, tilt */
-	{ 0xf084, 0xf084, input_port_4_r },	/* P1 controls */
-	{ 0xf086, 0xf086, input_port_5_r },	/* P2 controls */
-	{ 0xf087, 0xf087, lkage_mcu_status_r },
-//	{ 0xf0a3, 0xf0a3, MRA_NOP }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MRA_RAM },
-	{ 0xf100, 0xf15f, MRA_RAM },
-	{ 0xf400, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_READ(paletteram_r)
+	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf062, 0xf062) AM_READ(lkage_mcu_r)
+	AM_RANGE(0xf080, 0xf080) AM_READ(input_port_0_r) /* DSW1 */
+	AM_RANGE(0xf081, 0xf081) AM_READ(input_port_1_r) /* DSW2 (coinage) */
+	AM_RANGE(0xf082, 0xf082) AM_READ(input_port_2_r) /* DSW3 */
+	AM_RANGE(0xf083, 0xf083) AM_READ(input_port_3_r)	/* start buttons, insert coin, tilt */
+	AM_RANGE(0xf084, 0xf084) AM_READ(input_port_4_r)	/* P1 controls */
+	AM_RANGE(0xf086, 0xf086) AM_READ(input_port_5_r)	/* P2 controls */
+	AM_RANGE(0xf087, 0xf087) AM_READ(lkage_mcu_status_r)
+//	AM_RANGE(0xf0a3, 0xf0a3) AM_READ(MRA8_NOP) /* unknown */
+	AM_RANGE(0xf0c0, 0xf0c5) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf100, 0xf15f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&paletteram)
 //	paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
-	{ 0xf000, 0xf003, MWA_RAM, &lkage_vreg }, /* video registers */
-	{ 0xf060, 0xf060, lkage_sound_command_w },
-	{ 0xf061, 0xf061, MWA_NOP }, /* unknown */
-	{ 0xf062, 0xf062, lkage_mcu_w },
-//	{ 0xf063, 0xf063, MWA_NOP }, /* unknown */
-//	{ 0xf0a2, 0xf0a2, MWA_NOP }, /* unknown */
-//	{ 0xf0a3, 0xf0a3, MWA_NOP }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MWA_RAM, &lkage_scroll }, /* scrolling */
-//	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
-	{ 0xf100, 0xf15f, MWA_RAM, &spriteram }, /* spriteram */
-	{ 0xf400, 0xffff, lkage_videoram_w, &videoram }, /* videoram */
-MEMORY_END
+	AM_RANGE(0xf000, 0xf003) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_vreg) /* video registers */
+	AM_RANGE(0xf060, 0xf060) AM_WRITE(lkage_sound_command_w)
+	AM_RANGE(0xf061, 0xf061) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xf062, 0xf062) AM_WRITE(lkage_mcu_w)
+//	AM_RANGE(0xf063, 0xf063) AM_WRITE(MWA8_NOP) /* unknown */
+//	AM_RANGE(0xf0a2, 0xf0a2) AM_WRITE(MWA8_NOP) /* unknown */
+//	AM_RANGE(0xf0a3, 0xf0a3) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xf0c0, 0xf0c5) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_scroll) /* scrolling */
+//	AM_RANGE(0xf0e1, 0xf0e1) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xf100, 0xf15f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* spriteram */
+	AM_RANGE(0xf400, 0xffff) AM_WRITE(lkage_videoram_w) AM_BASE(&videoram) /* videoram */
+ADDRESS_MAP_END
 
 static READ_HANDLER( port_fetch_r )
 {
 	return memory_region(REGION_USER1)[offset];
 }
 
-static PORT_READ_START( readport )
-	{ 0x4000, 0x7fff, port_fetch_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4000, 0x7fff) AM_READ(port_fetch_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( m68705_readmem )
-	{ 0x0000, 0x0000, lkage_68705_portA_r },
-	{ 0x0001, 0x0001, lkage_68705_portB_r },
-	{ 0x0002, 0x0002, lkage_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(lkage_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(lkage_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(lkage_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m68705_writemem )
-	{ 0x0000, 0x0000, lkage_68705_portA_w },
-	{ 0x0001, 0x0001, lkage_68705_portB_w },
-	{ 0x0002, 0x0002, lkage_68705_portC_w },
-	{ 0x0004, 0x0004, lkage_68705_ddrA_w },
-	{ 0x0005, 0x0005, lkage_68705_ddrB_w },
-	{ 0x0006, 0x0006, lkage_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(lkage_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(lkage_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(lkage_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(lkage_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(lkage_68705_ddrB_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(lkage_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -154,28 +156,28 @@ MEMORY_END
 
 /* sound section is almost identical to Bubble Bobble, YM2203 instead of YM3526 */
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0xa000, 0xa000, YM2203_status_port_1_r },
-	{ 0xb000, 0xb000, soundlatch_r },
-	{ 0xb001, 0xb001, MRA_NOP },	/* ??? */
-	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	/* ??? */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2203_control_port_0_w },
-	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, YM2203_control_port_1_w },
-	{ 0xa001, 0xa001, YM2203_write_port_1_w },
-	{ 0xb000, 0xb000, MWA_NOP },	/* ??? */
-	{ 0xb001, 0xb001, lkage_sh_nmi_enable_w },
-	{ 0xb002, 0xb002, lkage_sh_nmi_disable_w },
-	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(lkage_sh_nmi_enable_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(lkage_sh_nmi_disable_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -356,16 +358,16 @@ static MACHINE_DRIVER_START( lkage )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_CPU_ADD(M68705,4000000/2)	/* ??? */
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -394,13 +396,13 @@ static MACHINE_DRIVER_START( lkageb )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

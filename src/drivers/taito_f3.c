@@ -173,64 +173,64 @@ static WRITE32_HANDLER( f3_sound_bankswitch_w )
 
 /******************************************************************************/
 
-static MEMORY_READ32_START( f3_readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-  	{ 0x400000, 0x43ffff, MRA32_RAM },
-	{ 0x440000, 0x447fff, MRA32_RAM }, /* Palette ram */
-	{ 0x4a0000, 0x4a0017, f3_control_r },
-	{ 0x600000, 0x60ffff, MRA32_RAM }, /* Object data */
-	{ 0x610000, 0x61bfff, MRA32_RAM }, /* Playfield data */
-	{ 0x61c000, 0x61dfff, MRA32_RAM }, /* Text layer */
-	{ 0x61e000, 0x61ffff, MRA32_RAM }, /* Vram */
-	{ 0x620000, 0x62ffff, MRA32_RAM }, /* Line ram */
-	{ 0x630000, 0x63ffff, MRA32_RAM }, /* Pivot ram */
-	{ 0xc00000, 0xc007ff, MRA32_RAM }, /* Sound CPU shared ram */
-MEMORY_END
+static ADDRESS_MAP_START( f3_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+  	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x440000, 0x447fff) AM_READ(MRA32_RAM) /* Palette ram */
+	AM_RANGE(0x4a0000, 0x4a0017) AM_READ(f3_control_r)
+	AM_RANGE(0x600000, 0x60ffff) AM_READ(MRA32_RAM) /* Object data */
+	AM_RANGE(0x610000, 0x61bfff) AM_READ(MRA32_RAM) /* Playfield data */
+	AM_RANGE(0x61c000, 0x61dfff) AM_READ(MRA32_RAM) /* Text layer */
+	AM_RANGE(0x61e000, 0x61ffff) AM_READ(MRA32_RAM) /* Vram */
+	AM_RANGE(0x620000, 0x62ffff) AM_READ(MRA32_RAM) /* Line ram */
+	AM_RANGE(0x630000, 0x63ffff) AM_READ(MRA32_RAM) /* Pivot ram */
+	AM_RANGE(0xc00000, 0xc007ff) AM_READ(MRA32_RAM) /* Sound CPU shared ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( f3_writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0x300000, 0x30007f, f3_sound_bankswitch_w },
-	{ 0x400000, 0x43ffff, MWA32_RAM, &f3_ram },
-	{ 0x440000, 0x447fff, f3_palette_24bit_w, &paletteram32 },
-	{ 0x4a0000, 0x4a001f, f3_control_w },
-	{ 0x600000, 0x60ffff, MWA32_RAM, &spriteram32, &spriteram_size },
-	{ 0x610000, 0x61bfff, f3_pf_data_w, &f3_pf_data },
-	{ 0x61c000, 0x61dfff, f3_videoram_w, &videoram32 },
-	{ 0x61e000, 0x61ffff, f3_vram_w, &f3_vram },
-	{ 0x620000, 0x62ffff, f3_lineram_w, &f3_line_ram },
-	{ 0x630000, 0x63ffff, f3_pivot_w, &f3_pivot_ram },
-	{ 0x660000, 0x66000f, f3_control_0_w },
-	{ 0x660010, 0x66001f, f3_control_1_w },
-	{ 0xc00000, 0xc007ff, MWA32_RAM, &f3_shared_ram },
-	{ 0xc80000, 0xc80003, f3_sound_reset_0_w },
-	{ 0xc80100, 0xc80103, f3_sound_reset_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( f3_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x300000, 0x30007f) AM_WRITE(f3_sound_bankswitch_w)
+	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA32_RAM) AM_BASE(&f3_ram)
+	AM_RANGE(0x440000, 0x447fff) AM_WRITE(f3_palette_24bit_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x4a0000, 0x4a001f) AM_WRITE(f3_control_w)
+	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x610000, 0x61bfff) AM_WRITE(f3_pf_data_w) AM_BASE(&f3_pf_data)
+	AM_RANGE(0x61c000, 0x61dfff) AM_WRITE(f3_videoram_w) AM_BASE(&videoram32)
+	AM_RANGE(0x61e000, 0x61ffff) AM_WRITE(f3_vram_w) AM_BASE(&f3_vram)
+	AM_RANGE(0x620000, 0x62ffff) AM_WRITE(f3_lineram_w) AM_BASE(&f3_line_ram)
+	AM_RANGE(0x630000, 0x63ffff) AM_WRITE(f3_pivot_w) AM_BASE(&f3_pivot_ram)
+	AM_RANGE(0x660000, 0x66000f) AM_WRITE(f3_control_0_w)
+	AM_RANGE(0x660010, 0x66001f) AM_WRITE(f3_control_1_w)
+	AM_RANGE(0xc00000, 0xc007ff) AM_WRITE(MWA32_RAM) AM_BASE(&f3_shared_ram)
+	AM_RANGE(0xc80000, 0xc80003) AM_WRITE(f3_sound_reset_0_w)
+	AM_RANGE(0xc80100, 0xc80103) AM_WRITE(f3_sound_reset_1_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( sound_readmem )
-	{ 0x000000, 0x03ffff, MRA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_r },
-	{ 0x200000, 0x20001f, ES5505_data_0_r },
-	{ 0x260000, 0x2601ff, es5510_dsp_r },
-	{ 0x280000, 0x28001f, f3_68681_r },
-	{ 0xc00000, 0xc1ffff, MRA16_BANK1 },
-	{ 0xc20000, 0xc3ffff, MRA16_BANK2 },
-	{ 0xc40000, 0xc7ffff, MRA16_BANK3 },
-	{ 0xff8000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
+	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
+	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
+	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA16_BANK2)
+	AM_RANGE(0xc40000, 0xc7ffff) AM_READ(MRA16_BANK3)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sound_writemem )
-	{ 0x000000, 0x03ffff, MWA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_w },
-	{ 0x200000, 0x20001f, ES5505_data_0_w },
-	{ 0x260000, 0x2601ff, es5510_dsp_w },
-	{ 0x280000, 0x28001f, f3_68681_w },
-	{ 0x300000, 0x30003f, f3_es5505_bank_w },
-	{ 0x340000, 0x340003, f3_volume_w }, /* 8 channel volume control */
-	{ 0xc00000, 0xc7ffff, MWA16_ROM },
-	{ 0xff8000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
+	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
+	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
+	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
+	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
+	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
+	AM_RANGE(0xc00000, 0xc7ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -470,12 +470,12 @@ static MACHINE_DRIVER_START( f3 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)
-	MDRV_CPU_MEMORY(f3_readmem,f3_writemem)
+	MDRV_CPU_PROGRAM_MAP(f3_readmem,f3_writemem)
 	MDRV_CPU_VBLANK_INT(f3_interrupt,2)
 
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
@@ -1316,35 +1316,64 @@ ROM_END
 
 ROM_START( intcup94 )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
- 	ROM_LOAD32_BYTE("d78-07", 0x000000, 0x20000, CRC(8525d990) SHA1(b28aeb8727d615cae9eafd7710bf833a612ef7d4) )
-	ROM_LOAD32_BYTE("d78-06", 0x000001, 0x20000, CRC(42db1d41) SHA1(daf617764b04cd24e76dfa95423213c2a3692068) )
-	ROM_LOAD32_BYTE("d78-05", 0x000002, 0x20000, CRC(5f7fbbbc) SHA1(8936bcc4026b2819b8708911c9defe4436d070ad) )
-	ROM_LOAD32_BYTE("d78-11", 0x000003, 0x20000, CRC(bb9d2987) SHA1(98bea0346702eefd9f6f1839b95932b9b8bca902) )
+ 	ROM_LOAD32_BYTE("d78-07.20", 0x000000, 0x20000, CRC(8525d990) SHA1(b28aeb8727d615cae9eafd7710bf833a612ef7d4) )
+	ROM_LOAD32_BYTE("d78-06.19", 0x000001, 0x20000, CRC(42db1d41) SHA1(daf617764b04cd24e76dfa95423213c2a3692068) )
+	ROM_LOAD32_BYTE("d78-05.18", 0x000002, 0x20000, CRC(5f7fbbbc) SHA1(8936bcc4026b2819b8708911c9defe4436d070ad) )
+	ROM_LOAD32_BYTE("d78-11.17", 0x000003, 0x20000, CRC(bb9d2987) SHA1(98bea0346702eefd9f6f1839b95932b9b8bca902) )
 
 	ROM_REGION(0xc00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
-	ROM_LOAD16_BYTE("d49-01", 0x000000, 0x200000, CRC(1dc89f1c) SHA1(9597b1d8c9b447080ca9401aee83bb4a64bb8332) )
-  	ROM_LOAD16_BYTE("d49-02", 0x000001, 0x200000, CRC(1e4c374f) SHA1(512edc6a934578d0e7371410a041150d3b13aaad) )
-	ROM_LOAD16_BYTE("d49-06", 0x400000, 0x100000, CRC(71ef4ee1) SHA1(1d7729dbc77f7201ff574e8aef65a55bd81c25a7) )
-  	ROM_LOAD16_BYTE("d49-07", 0x400001, 0x100000, CRC(e5655b8f) SHA1(2c21745370bfe9dbf0e95f7ce42ed34a162bff64) )
-	ROM_LOAD       ("d49-03", 0x900000, 0x200000, CRC(cf9a8727) SHA1(f21787fdcdd8be2009c2d481a9b2d7fc03ce782e) )
-	ROM_LOAD       ("d49-08", 0xb00000, 0x100000, CRC(7d3c6536) SHA1(289b4bf79ebd9cbdf64ab956784d226e6d546654) )
+	ROM_LOAD16_BYTE("d49-01.12", 0x000000, 0x200000, CRC(1dc89f1c) SHA1(9597b1d8c9b447080ca9401aee83bb4a64bb8332) )
+  	ROM_LOAD16_BYTE("d49-02.8",  0x000001, 0x200000, CRC(1e4c374f) SHA1(512edc6a934578d0e7371410a041150d3b13aaad) )
+	ROM_LOAD16_BYTE("d49-06.11", 0x400000, 0x100000, CRC(71ef4ee1) SHA1(1d7729dbc77f7201ff574e8aef65a55bd81c25a7) )
+  	ROM_LOAD16_BYTE("d49-07.7",  0x400001, 0x100000, CRC(e5655b8f) SHA1(2c21745370bfe9dbf0e95f7ce42ed34a162bff64) )
+	ROM_LOAD       ("d49-03.4",  0x900000, 0x200000, CRC(cf9a8727) SHA1(f21787fdcdd8be2009c2d481a9b2d7fc03ce782e) )
+	ROM_LOAD       ("d49-08.3",  0xb00000, 0x100000, CRC(7d3c6536) SHA1(289b4bf79ebd9cbdf64ab956784d226e6d546654) )
 	ROM_FILL       (          0x600000, 0x300000, 0 )
 
 	ROM_REGION(0x200000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
-	ROM_LOAD16_BYTE("d78-01", 0x000000, 0x080000, NO_DUMP ) /* 0x543f8967 from raine */
-	ROM_LOAD16_BYTE("d78-02", 0x000001, 0x080000, NO_DUMP ) /* 0xe8289394 from raine */
-	ROM_LOAD       ("d78-03", 0x180000, 0x080000, NO_DUMP ) /* 0xa8bc36e5 from raine */
+	ROM_LOAD16_BYTE("d78-01.47", 0x000000, 0x080000, CRC(543f8967) SHA1(2efa935e7d0fd317bbbad2758a618d408a56317c) )
+	ROM_LOAD16_BYTE("d78-02.45", 0x000001, 0x080000, CRC(e8289394) SHA1(b9957675f868f772943678b6a19fcc21dfd97a8d) )
+	ROM_LOAD       ("d78-03.43", 0x180000, 0x080000, CRC(a8bc36e5) SHA1(5777b9457292e8a9cbb4e8226ba939530ffab07c) )
 	ROM_FILL       (          0x100000, 0x080000, 0 )
 
 	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
-	/* these might be ok, but I have a feeling they could be half the correct size, there isn't much sound
-	   when the GFX roms are (re)dumped this should be checked too */
-	ROM_LOAD16_BYTE("d78-08", 0x100000, 0x20000, BAD_DUMP CRC(a629d07c) SHA1(b2904e106633a3960ceb2bc58b600ea60034ff0b) ) /* are these the right size? */
-	ROM_LOAD16_BYTE("d78-09", 0x100001, 0x20000, BAD_DUMP CRC(1f0efe01) SHA1(7bff748b9fcee170e430d90ee07eb9975d8fba59) )
+	ROM_LOAD16_BYTE("d78-08.32", 0x100000, 0x20000, CRC(a629d07c) SHA1(b2904e106633a3960ceb2bc58b600ea60034ff0b) )
+	ROM_LOAD16_BYTE("d78-09.33", 0x100001, 0x20000, CRC(1f0efe01) SHA1(7bff748b9fcee170e430d90ee07eb9975d8fba59) )
 
 	ROM_REGION16_BE(0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("d49-04", 0x000000, 0x200000, CRC(44b365a9) SHA1(14c4a6b193a0069360406c74c500ba24f2a55b62) )
-	ROM_LOAD16_BYTE("d49-05", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
+	ROM_LOAD16_BYTE("d49-04.38", 0x000000, 0x200000, CRC(44b365a9) SHA1(14c4a6b193a0069360406c74c500ba24f2a55b62) )
+	ROM_LOAD16_BYTE("d49-05.41", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
+ROM_END
+
+ROM_START( hthero94 )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d78-07.20", 0x000000, 0x20000, CRC(8525d990) SHA1(b28aeb8727d615cae9eafd7710bf833a612ef7d4) )
+	ROM_LOAD32_BYTE("d78-06.19", 0x000001, 0x20000, CRC(42db1d41) SHA1(daf617764b04cd24e76dfa95423213c2a3692068) )
+	ROM_LOAD32_BYTE("d78-05.18", 0x000002, 0x20000, CRC(5f7fbbbc) SHA1(8936bcc4026b2819b8708911c9defe4436d070ad) )
+	ROM_LOAD32_BYTE("d78-10.17", 0x000003, 0x20000, CRC(cc9a1911) SHA1(341b6c33b182e3a64a22f1dc43e9cf72c6aeea7b) )
+
+	ROM_REGION(0xc00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d49-01.12", 0x000000, 0x200000, CRC(1dc89f1c) SHA1(9597b1d8c9b447080ca9401aee83bb4a64bb8332) )
+  	ROM_LOAD16_BYTE("d49-02.8",  0x000001, 0x200000, CRC(1e4c374f) SHA1(512edc6a934578d0e7371410a041150d3b13aaad) )
+	ROM_LOAD16_BYTE("d49-06.11", 0x400000, 0x100000, CRC(71ef4ee1) SHA1(1d7729dbc77f7201ff574e8aef65a55bd81c25a7) )
+  	ROM_LOAD16_BYTE("d49-07.7",  0x400001, 0x100000, CRC(e5655b8f) SHA1(2c21745370bfe9dbf0e95f7ce42ed34a162bff64) )
+	ROM_LOAD       ("d49-03.4",  0x900000, 0x200000, CRC(cf9a8727) SHA1(f21787fdcdd8be2009c2d481a9b2d7fc03ce782e) )
+	ROM_LOAD       ("d49-08.3",  0xb00000, 0x100000, CRC(7d3c6536) SHA1(289b4bf79ebd9cbdf64ab956784d226e6d546654) )
+	ROM_FILL       (          0x600000, 0x300000, 0 )
+
+	ROM_REGION(0x200000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d78-01.47", 0x000000, 0x080000, CRC(543f8967) SHA1(2efa935e7d0fd317bbbad2758a618d408a56317c) )
+	ROM_LOAD16_BYTE("d78-02.45", 0x000001, 0x080000, CRC(e8289394) SHA1(b9957675f868f772943678b6a19fcc21dfd97a8d) )
+	ROM_LOAD       ("d78-03.43", 0x180000, 0x080000, CRC(a8bc36e5) SHA1(5777b9457292e8a9cbb4e8226ba939530ffab07c) )
+	ROM_FILL       (          0x100000, 0x080000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d78-08.32", 0x100000, 0x20000, CRC(a629d07c) SHA1(b2904e106633a3960ceb2bc58b600ea60034ff0b) )
+	ROM_LOAD16_BYTE("d78-09.33", 0x100001, 0x20000, CRC(1f0efe01) SHA1(7bff748b9fcee170e430d90ee07eb9975d8fba59) )
+
+	ROM_REGION16_BE(0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d49-04.38", 0x000000, 0x200000, CRC(44b365a9) SHA1(14c4a6b193a0069360406c74c500ba24f2a55b62) )
+	ROM_LOAD16_BYTE("d49-05.41", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
 ROM_END
 
 ROM_START( kaiserkn )
@@ -3191,10 +3220,11 @@ GAME( 1993, gunlock,  0,        f3_224a, f3, gunlock,  ROT90,  "Taito Corporatio
 GAME( 1993, rayforcj, gunlock,  f3_224a, f3, gunlock,  ROT90,  "Taito Corporation",         "Rayforce (Japan)" )
 GAME( 1993, rayforce, gunlock,  f3_224a, f3, gunlock,  ROT90,  "Taito America Corporation", "Rayforce (US)" )
 GAME( 1993, scfinals, 0,        f3_224a, f3, scfinals, ROT0,   "Taito Corporation Japan",   "Super Cup Finals (World)" )
-/* I don't think these really are clones of SCFinals - SCFinals may be a sequel that just shares graphics roms (Different Taito ROM code) */
-GAME( 1992, hthero93, scfinals, f3_224a, f3, cupfinal, ROT0,   "Taito Corporation",         "Hat Trick Hero '93 (Japan)" )
-GAME( 1993, cupfinal, scfinals, f3_224a, f3, cupfinal, ROT0,   "Taito Corporation Japan",   "Taito Cup Finals (World)" )
-GAME( 1994, intcup94, scfinals, f3_224a, f3, intcup94, ROT0,   "Taito Corporation Japan",   "International Cup '94" )
+/* Most of the football games share some GFX roms but shouldn't be considered clones unless they have the same Taito game code for the program roms */
+GAME( 1993, cupfinal, 0,        f3_224a, f3, cupfinal, ROT0,   "Taito Corporation Japan",   "Taito Cup Finals (World)" )
+GAME( 1992, hthero93, cupfinal, f3_224a, f3, cupfinal, ROT0,   "Taito Corporation",         "Hat Trick Hero '93 (Japan)" )
+GAME( 1994, intcup94, 0,        f3_224a, f3, intcup94, ROT0,   "Taito Corporation Japan",   "International Cup '94 (World)" )
+GAME( 1994, hthero94, intcup94, f3_224a, f3, intcup94, ROT0,   "Taito America Corporation", "Hat Trick Hero '94 (US)" )
 GAME( 1993, trstar,   0,        f3,      f3, trstaroj, ROT0,   "Taito Corporation Japan",   "Top Ranking Stars (World new version)" )
 GAME( 1993, trstarj,  trstar,   f3,      f3, trstaroj, ROT0,   "Taito Corporation",         "Top Ranking Stars (Japan new version)" )
 GAME( 1993, prmtmfgt, trstar,   f3,      f3, trstaroj, ROT0,   "Taito America Corporation", "Prime Time Fighter (US new version)" )

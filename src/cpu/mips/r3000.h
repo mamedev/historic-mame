@@ -59,54 +59,10 @@ struct r3000_config
 
 
 /*###################################################################################################
-**	PUBLIC GLOBALS
-**#################################################################################################*/
-
-extern int r3000_icount;
-
-
-/*###################################################################################################
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
-extern void r3000_init(void);
-extern void r3000be_reset(void *param);
-extern void r3000le_reset(void *param);
-extern void r3000_exit(void);
-extern int r3000_execute(int cycles);
-extern unsigned r3000_get_context(void *dst);
-extern void r3000_set_context(void *src);
-extern unsigned r3000_get_reg(int regnum);
-extern void r3000_set_reg(int regnum, unsigned val);
-extern void r3000_set_irq_line(int irqline, int state);
-extern void r3000_set_irq_callback(int (*callback)(int irqline));
-extern const char *r3000_info(void *context, int regnum);
-extern unsigned r3000_dasm(char *buffer, unsigned pc);
-
-#define r3000be_init				r3000_init
-#define r3000be_exit				r3000_exit
-#define r3000be_execute				r3000_execute
-#define r3000be_get_context			r3000_get_context
-#define r3000be_set_context			r3000_set_context
-#define r3000be_get_reg				r3000_get_reg
-#define r3000be_set_reg				r3000_set_reg
-#define r3000be_set_irq_line		r3000_set_irq_line
-#define r3000be_set_irq_callback	r3000_set_irq_callback
-#define r3000be_info 				r3000_info
-#define r3000be_dasm 				r3000_dasm
-
-#define r3000le_init				r3000_init
-#define r3000le_exit				r3000_exit
-#define r3000le_execute				r3000_execute
-#define r3000le_get_context			r3000_get_context
-#define r3000le_set_context			r3000_set_context
-#define r3000le_get_reg				r3000_get_reg
-#define r3000le_set_reg				r3000_set_reg
-#define r3000le_set_irq_line		r3000_set_irq_line
-#define r3000le_set_irq_callback	r3000_set_irq_callback
-#define r3000le_info 				r3000_info
-#define r3000le_dasm 				r3000_dasm
-
-
+extern void r3000be_get_info(UINT32 state, union cpuinfo *info);
+extern void r3000le_get_info(UINT32 state, union cpuinfo *info);
 
 #endif /* _JAGUAR_H */

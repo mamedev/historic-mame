@@ -2,7 +2,7 @@
 #include <string.h>
 #include "ccpu.h"
 
-#define CCPU_FETCH(A)	cpu_readop(CCPU_PGM_OFFSET+A)
+#define CCPU_FETCH(A)	cpu_readop(A)
 
 /*
  * opcode tables for debugging

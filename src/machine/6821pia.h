@@ -33,16 +33,16 @@
 
 struct pia6821_interface
 {
-	mem_read_handler in_a_func;
-	mem_read_handler in_b_func;
-	mem_read_handler in_ca1_func;
-	mem_read_handler in_cb1_func;
-	mem_read_handler in_ca2_func;
-	mem_read_handler in_cb2_func;
-	mem_write_handler out_a_func;
-	mem_write_handler out_b_func;
-	mem_write_handler out_ca2_func;
-	mem_write_handler out_cb2_func;
+	read8_handler in_a_func;
+	read8_handler in_b_func;
+	read8_handler in_ca1_func;
+	read8_handler in_cb1_func;
+	read8_handler in_ca2_func;
+	read8_handler in_cb2_func;
+	write8_handler out_a_func;
+	write8_handler out_b_func;
+	write8_handler out_ca2_func;
+	write8_handler out_cb2_func;
 	void (*irq_a_func)(int state);
 	void (*irq_b_func)(int state);
 };
@@ -64,7 +64,7 @@ void pia_set_input_b(int which, int data);
 void pia_set_input_cb1(int which, int data);
 void pia_set_input_cb2(int which, int data);
 
-#define PIA_UNUSED_VAL(x) ((mem_read_handler)(x+1))
+#define PIA_UNUSED_VAL(x) ((read8_handler)(x+1))
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 
 READ_HANDLER( pia_0_r );

@@ -17,31 +17,31 @@ VIDEO_UPDATE( pkunwar );
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xa001, 0xa001, AY8910_read_port_0_r },
-	{ 0xa003, 0xa003, AY8910_read_port_1_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa001, 0xa001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xa003, 0xa003) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
-	{ 0x8c00, 0x8fff, colorram_w, &colorram },
-	{ 0xa000, 0xa000, &AY8910_control_port_0_w },
-	{ 0xa001, 0xa001, &AY8910_write_port_0_w },
-	{ 0xa002, 0xa002, &AY8910_control_port_1_w },
-	{ 0xa003, 0xa003, &AY8910_write_port_1_w },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(&AY8910_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(&AY8910_write_port_0_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(&AY8910_control_port_1_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(&AY8910_write_port_1_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, pkunwar_flipscreen_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(pkunwar_flipscreen_w)
+ADDRESS_MAP_END
 
 
 
@@ -168,8 +168,8 @@ static MACHINE_DRIVER_START( pkunwar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12000000/4)	/* 3 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

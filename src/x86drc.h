@@ -187,6 +187,13 @@ extern const UINT8 scale_lookup[];
 #define FPRND_UP	2
 #define FPRND_CHOP	3
 
+/* features */
+#define CPUID_FEATURES_MMX		(1 << 23)
+#define CPUID_FEATURES_SSE		(1 << 26)
+#define CPUID_FEATURES_SSE2		(1 << 25)
+#define CPUID_FEATURES_CMOV		(1 << 15)
+#define CPUID_FEATURES_TSC		(1 << 4)
+
 
 
 /*###################################################################################################
@@ -464,6 +471,12 @@ do { OP1(0x0f); OP1(0xb6); MODRM_MABS(dreg, addr); } while (0)
 
 #define _movzx_r32_m16abs(dreg, addr) \
 do { OP1(0x0f); OP1(0xb7); MODRM_MABS(dreg, addr); } while (0)
+
+#define _movzx_r32_m8bd(dreg, base, disp) \
+do { OP1(0x0f); OP1(0xb6); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _movzx_r32_m16bd(dreg, base, disp) \
+do { OP1(0x0f); OP1(0xb7); MODRM_MBD(dreg, base, disp); } while (0)
 
 
 
@@ -1110,6 +1123,11 @@ do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_REG(r1, r2); } while (0)
 
 
 
+#define _cmov_r32_r32(cond, dreg, sreg) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_REG(dreg, sreg); } while (0)
+
+
+
 /*###################################################################################################
 **	FUNCTION PROTOTYPES
 **#################################################################################################*/
@@ -1143,6 +1161,8 @@ void drc_append_restore_fp_rounding(struct drccore *drc);
 /* disassembling drc code */
 void drc_dasm(FILE *f, unsigned pc, void *begin, void *end);
 
+/* x86 CPU features */
+UINT32 drc_x86_get_features(void);
 
 
 #endif

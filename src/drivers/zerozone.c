@@ -65,39 +65,39 @@ WRITE16_HANDLER( zerozone_sound_w )
 	}
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x080000, 0x08000f, zerozone_input_r },
-	{ 0x088000, 0x0881ff, MRA16_RAM },
-	{ 0x098000, 0x098001, MRA16_RAM }, /* watchdog? */
-	{ 0x09ce00, 0x09ffff, MRA16_RAM },
-	{ 0x0c0000, 0x0cffff, MRA16_RAM },
-	{ 0x0f8000, 0x0f87ff, MRA16_RAM }, // never actually used
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08000f) AM_READ(zerozone_input_r)
+	AM_RANGE(0x088000, 0x0881ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x098000, 0x098001) AM_READ(MRA16_RAM) /* watchdog? */
+	AM_RANGE(0x09ce00, 0x09ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0f8000, 0x0f87ff) AM_READ(MRA16_RAM) // never actually used
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },
-	{ 0x084000, 0x084001, zerozone_sound_w },
-	{ 0x088000, 0x0881ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-	{ 0x09ce00, 0x09ddff, zerozone_tilemap_w, &zerozone_videoram, &videoram_size },
-	{ 0x0b4000, 0x0b4001, zerozone_tilebank_w },
-	{ 0x0c0000, 0x0cffff, MWA16_RAM }, /* RAM */
-	{ 0x0f8000, 0x0f87ff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x084000, 0x084001) AM_WRITE(zerozone_sound_w)
+	AM_RANGE(0x088000, 0x0881ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x09ce00, 0x09ddff) AM_WRITE(zerozone_tilemap_w) AM_BASE(&zerozone_videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0b4000, 0x0b4001) AM_WRITE(zerozone_tilebank_w)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(MWA16_RAM) /* RAM */
+	AM_RANGE(0x0f8000, 0x0f87ff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( zerozone )
 	PORT_START      /* IN0 */
@@ -213,12 +213,12 @@ static MACHINE_DRIVER_START( zerozone )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 1000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

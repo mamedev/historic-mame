@@ -180,28 +180,28 @@ static WRITE_HANDLER( tubep_backgroundram_w )
 	tubep_backgroundram[offset] = data;
 }
 
-static MEMORY_READ_START( tubep_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tubep_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tubep_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram },	/* RAM on GFX PCB @B13 */
-	{ 0xe000, 0xe7ff, cpu_sharedram_w },
-	{ 0xe800, 0xebff, tubep_backgroundram_w },				/* row of 8 x 2147 RAMs on main PCB */
-MEMORY_END
+static ADDRESS_MAP_START( tubep_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(tubep_textram_w) AM_BASE(&tubep_textram)	/* RAM on GFX PCB @B13 */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(cpu_sharedram_w)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(tubep_backgroundram_w)				/* row of 8 x 2147 RAMs on main PCB */
+ADDRESS_MAP_END
 
-static PORT_READ_START( tubep_readport )
-	{ 0x80, 0x80, input_port_3_r },
-	{ 0x90, 0x90, input_port_4_r },
-	{ 0xa0, 0xa0, input_port_5_r },
+static ADDRESS_MAP_START( tubep_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_READ(input_port_3_r)
+	AM_RANGE(0x90, 0x90) AM_READ(input_port_4_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(input_port_5_r)
 
-	{ 0xb0, 0xb0, input_port_2_r },
-	{ 0xc0, 0xc0, input_port_1_r },
-	{ 0xd0, 0xd0, input_port_0_r },
-PORT_END
+	AM_RANGE(0xb0, 0xb0) AM_READ(input_port_2_r)
+	AM_RANGE(0xc0, 0xc0) AM_READ(input_port_1_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(input_port_0_r)
+ADDRESS_MAP_END
 
 
 
@@ -217,33 +217,33 @@ static WRITE_HANDLER( tubep_soundlatch_w )
 	sound_latch = (data&0x7f) | 0x80;
 }
 
-static PORT_WRITE_START( tubep_writeport )
-	{ 0x80, 0x80, main_cpu_irq_line_clear_w },
-	{ 0xb0, 0xb7, tubep_LS259_w },
-	{ 0xd0, 0xd0, tubep_soundlatch_w },
-PORT_END
+static ADDRESS_MAP_START( tubep_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_WRITE(main_cpu_irq_line_clear_w)
+	AM_RANGE(0xb0, 0xb7) AM_WRITE(tubep_LS259_w)
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(tubep_soundlatch_w)
+ADDRESS_MAP_END
 
 
 
 
 /************************** Slave CPU on main PCB ****************************/
 
-static MEMORY_READ_START( tubep_g_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xe000, 0xe7ff, cpu_sharedram_r },
-	{ 0xf800, 0xffff, tubep_sprite_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( tubep_g_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(cpu_sharedram_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(tubep_sprite_sharedram_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( tubep_g_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa000, tubep_background_a000_w },
-	{ 0xc000, 0xc000, tubep_background_c000_w },
-	{ 0xe000, 0xe7ff, cpu_sharedram_w, &cpu_sharedram },	/* 6116 #1 */
-	{ 0xe800, 0xebff, MWA_RAM, &tubep_backgroundram },		/* row of 8 x 2147 RAMs on main PCB */
-	{ 0xf000, 0xf3ff, tubep_sprite_colorsharedram_w },		/* sprites color lookup table */
-	{ 0xf800, 0xffff, tubep_sprite_sharedram_w },			/* program copies here part of shared ram ?? */
-MEMORY_END
+static ADDRESS_MAP_START( tubep_g_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tubep_background_a000_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(tubep_background_c000_w)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(cpu_sharedram_w) AM_BASE(&cpu_sharedram)	/* 6116 #1 */
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_RAM) AM_BASE(&tubep_backgroundram)		/* row of 8 x 2147 RAMs on main PCB */
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(tubep_sprite_colorsharedram_w)		/* sprites color lookup table */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(tubep_sprite_sharedram_w)			/* program copies here part of shared ram ?? */
+ADDRESS_MAP_END
 
 static READ_HANDLER( tubep_soundlatch_r )
 {
@@ -270,30 +270,30 @@ static WRITE_HANDLER( tubep_sound_unknown )
 }
 
 
-static MEMORY_READ_START( tubep_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0xd000, 0xd000, tubep_sound_irq_ack },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tubep_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(tubep_sound_irq_ack)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tubep_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },		/* 6116 #3 */
-MEMORY_END
+static ADDRESS_MAP_START( tubep_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)		/* 6116 #3 */
+ADDRESS_MAP_END
 
-static PORT_READ_START( tubep_sound_readport )
-	{ 0x06, 0x06, tubep_soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( tubep_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x06, 0x06) AM_READ(tubep_soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( tubep_sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x02, 0x02, AY8910_control_port_1_w },
-	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ 0x04, 0x04, AY8910_control_port_2_w },
-	{ 0x05, 0x05, AY8910_write_port_2_w },
-	{ 0x07, 0x07, tubep_sound_unknown },
-PORT_END
+static ADDRESS_MAP_START( tubep_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(tubep_sound_unknown)
+ADDRESS_MAP_END
 
 static void scanline_callback(int scanline)
 {
@@ -347,73 +347,73 @@ static WRITE_HANDLER( rjammer_soundlatch_w )
 	cpu_set_nmi_line(2, PULSE_LINE);
 }
 
-static PORT_READ_START( rjammer_readport )
-	{ 0x00, 0x00, input_port_2_r },	/* a bug in game code (during attract mode) */
-	{ 0x80, 0x80, input_port_2_r },
-	{ 0x90, 0x90, input_port_3_r },
-	{ 0xa0, 0xa0, input_port_4_r },
-	{ 0xb0, 0xb0, input_port_0_r },
-	{ 0xc0, 0xc0, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( rjammer_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_2_r)	/* a bug in game code (during attract mode) */
+	AM_RANGE(0x80, 0x80) AM_READ(input_port_2_r)
+	AM_RANGE(0x90, 0x90) AM_READ(input_port_3_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(input_port_4_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(input_port_0_r)
+	AM_RANGE(0xc0, 0xc0) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( rjammer_writeport )
-	{ 0xd0, 0xd7, rjammer_LS259_w },
-	{ 0xe0, 0xe0, main_cpu_irq_line_clear_w },	/* clear IRQ interrupt */
-	{ 0xf0, 0xf0, rjammer_soundlatch_w },
-PORT_END
-
-
-static MEMORY_READ_START( rjammer_readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, cpu_sharedram_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( rjammer_writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },						/* MB8416 SRAM on daughterboard on main PCB (there are two SRAMs, this is the one on the left) */
-	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram },/* RAM on GFX PCB @B13 */
-	{ 0xe000, 0xe7ff, cpu_sharedram_w },				/* MB8416 SRAM on daughterboard (the one on the right) */
-MEMORY_END
+static ADDRESS_MAP_START( rjammer_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xd0, 0xd7) AM_WRITE(rjammer_LS259_w)
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(main_cpu_irq_line_clear_w)	/* clear IRQ interrupt */
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(rjammer_soundlatch_w)
+ADDRESS_MAP_END
 
 
+static ADDRESS_MAP_START( rjammer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(cpu_sharedram_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( rjammer_slave_writeport )
-	{ 0xb0, 0xb0, rjammer_background_page_w },
-	{ 0xd0, 0xd0, rjammer_background_LS377_w },
-PORT_END
+static ADDRESS_MAP_START( rjammer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)						/* MB8416 SRAM on daughterboard on main PCB (there are two SRAMs, this is the one on the left) */
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(tubep_textram_w) AM_BASE(&tubep_textram)/* RAM on GFX PCB @B13 */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(cpu_sharedram_w)				/* MB8416 SRAM on daughterboard (the one on the right) */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( rjammer_slave_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },			/* M5M5117P @21G */
-	{ 0xe000, 0xe7ff, cpu_sharedram_r },	/* MB8416 on daughterboard (the one on the right) */
-	{ 0xe800, 0xefff, MRA_RAM },			/* M5M5117P @19B (background) */
-	{ 0xf800, 0xffff, tubep_sprite_sharedram_r },
-MEMORY_END
 
-static MEMORY_WRITE_START( rjammer_slave_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },						/* M5M5117P @21G */
-	{ 0xe000, 0xe7ff, cpu_sharedram_w, &cpu_sharedram },/* MB8416 on daughterboard (the one on the right) */
-	{ 0xe800, 0xefff, MWA_RAM, &rjammer_backgroundram },/* M5M5117P @19B (background) */
-	{ 0xf800, 0xffff, tubep_sprite_sharedram_w },
-MEMORY_END
+
+static ADDRESS_MAP_START( rjammer_slave_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(rjammer_background_page_w)
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(rjammer_background_LS377_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( rjammer_slave_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)			/* M5M5117P @21G */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(cpu_sharedram_r)	/* MB8416 on daughterboard (the one on the right) */
+	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)			/* M5M5117P @19B (background) */
+	AM_RANGE(0xf800, 0xffff) AM_READ(tubep_sprite_sharedram_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( rjammer_slave_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)						/* M5M5117P @21G */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(cpu_sharedram_w) AM_BASE(&cpu_sharedram)/* MB8416 on daughterboard (the one on the right) */
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&rjammer_backgroundram)/* M5M5117P @19B (background) */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(tubep_sprite_sharedram_w)
+ADDRESS_MAP_END
 
 
 /* MS2010-A CPU (equivalent to NSC8105 with one new opcode: 0xec) on graphics PCB */
-static MEMORY_READ_START( nsc_readmem )
-	{ 0x0000, 0x03ff, tubep_sprite_colorsharedram_r },
-	{ 0x0800, 0x0fff, tubep_sprite_sharedram_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( nsc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(tubep_sprite_colorsharedram_r)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(tubep_sprite_sharedram_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( nsc_writemem )
-	{ 0x0000, 0x03ff, tubep_sprite_colorsharedram_w, &tubep_sprite_colorsharedram },
-	{ 0x0800, 0x0fff, tubep_sprite_sharedram_w, &tubep_sprite_sharedram },
-	{ 0x2000, 0x2009, tubep_sprite_control_w },
-	{ 0x200a, 0x200b, MWA_NOP }, /* not used by the games - perhaps designed for debugging */
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( nsc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(tubep_sprite_colorsharedram_w) AM_BASE(&tubep_sprite_colorsharedram)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(tubep_sprite_sharedram_w) AM_BASE(&tubep_sprite_sharedram)
+	AM_RANGE(0x2000, 0x2009) AM_WRITE(tubep_sprite_control_w)
+	AM_RANGE(0x200a, 0x200b) AM_WRITE(MWA8_NOP) /* not used by the games - perhaps designed for debugging */
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -492,32 +492,32 @@ static WRITE_HANDLER( rjammer_voice_intensity_control_w )
 	return;
 }
 
-static MEMORY_READ_START( rjammer_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rjammer_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rjammer_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },	/* M5M5117P (M58125P @2C on schematics) */
-MEMORY_END
+static ADDRESS_MAP_START( rjammer_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)	/* M5M5117P (M58125P @2C on schematics) */
+ADDRESS_MAP_END
 
-static PORT_READ_START( rjammer_sound_readport )
-	{ 0x00, 0x00, rjammer_soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( rjammer_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(rjammer_soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( rjammer_sound_writeport )
-	{ 0x10, 0x10, rjammer_voice_startstop_w },
-	{ 0x18, 0x18, rjammer_voice_frequency_select_w },
-	{ 0x80, 0x80, rjammer_voice_input_w },
-	{ 0x90, 0x90, AY8910_control_port_0_w },
-	{ 0x91, 0x91, AY8910_write_port_0_w },
-	{ 0x92, 0x92, AY8910_control_port_1_w },
-	{ 0x93, 0x93, AY8910_write_port_1_w },
-	{ 0x94, 0x94, AY8910_control_port_2_w },
-	{ 0x95, 0x95, AY8910_write_port_2_w },
-	{ 0x96, 0x96, rjammer_voice_intensity_control_w },
-PORT_END
+static ADDRESS_MAP_START( rjammer_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(rjammer_voice_startstop_w)
+	AM_RANGE(0x18, 0x18) AM_WRITE(rjammer_voice_frequency_select_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(rjammer_voice_input_w)
+	AM_RANGE(0x90, 0x90) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x91, 0x91) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x92, 0x92) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x93, 0x93) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x94, 0x94) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x95, 0x95) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(rjammer_voice_intensity_control_w)
+ADDRESS_MAP_END
 
 
 static WRITE_HANDLER( ay8910_portA_0_w )
@@ -786,21 +786,21 @@ static MACHINE_DRIVER_START( tubep )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
-	MDRV_CPU_MEMORY(tubep_readmem,tubep_writemem)
-	MDRV_CPU_PORTS(tubep_readport,tubep_writeport)
+	MDRV_CPU_PROGRAM_MAP(tubep_readmem,tubep_writemem)
+	MDRV_CPU_IO_MAP(tubep_readport,tubep_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
-	MDRV_CPU_MEMORY(tubep_g_readmem,tubep_g_writemem)
+	MDRV_CPU_PROGRAM_MAP(tubep_g_readmem,tubep_g_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,19968000 / 8)	/* X2 19968000 Hz divided by LS669 (on Qc output) (signal RH0) */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(tubep_sound_readmem,tubep_sound_writemem)
-	MDRV_CPU_PORTS(tubep_sound_readport,tubep_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(tubep_sound_readmem,tubep_sound_writemem)
+	MDRV_CPU_IO_MAP(tubep_sound_readport,tubep_sound_writeport)
 
 	MDRV_CPU_ADD(NSC8105,6000000/4)	/* 6 MHz Xtal - divided internally ??? */
-	MDRV_CPU_MEMORY(nsc_readmem,nsc_writemem)
+	MDRV_CPU_PROGRAM_MAP(nsc_readmem,nsc_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -830,22 +830,22 @@ static MACHINE_DRIVER_START( rjammer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
-	MDRV_CPU_MEMORY(rjammer_readmem,rjammer_writemem)
-	MDRV_CPU_PORTS(rjammer_readport,rjammer_writeport)
+	MDRV_CPU_PROGRAM_MAP(rjammer_readmem,rjammer_writemem)
+	MDRV_CPU_IO_MAP(rjammer_readport,rjammer_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
-	MDRV_CPU_MEMORY(rjammer_slave_readmem,rjammer_slave_writemem)
-	MDRV_CPU_PORTS(0,rjammer_slave_writeport)
+	MDRV_CPU_PROGRAM_MAP(rjammer_slave_readmem,rjammer_slave_writemem)
+	MDRV_CPU_IO_MAP(0,rjammer_slave_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,19968000 / 8)	/* Xtal3 divided by LS669 (on Qc output) (signal RH0) */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(rjammer_sound_readmem,rjammer_sound_writemem)
-	MDRV_CPU_PORTS(rjammer_sound_readport,rjammer_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(rjammer_sound_readmem,rjammer_sound_writemem)
+	MDRV_CPU_IO_MAP(rjammer_sound_readport,rjammer_sound_writeport)
 
 	MDRV_CPU_ADD(NSC8105,6000000/4)	/* 6 MHz Xtal - divided internally ??? */
-	MDRV_CPU_MEMORY(nsc_readmem,nsc_writemem)
+	MDRV_CPU_PROGRAM_MAP(nsc_readmem,nsc_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 

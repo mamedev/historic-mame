@@ -40,22 +40,24 @@ enum {
 	SS_UINT16,
 	SS_INT32,
 	SS_UINT32,
+	SS_INT64,
+	SS_UINT64,
 	SS_INT,
 	SS_DOUBLE,
 	SS_FLOAT
 };
 
 #ifdef VERBOSE
-static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "int", "dbl", "flt" };
+static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "int", "dbl", "flt" };
 #endif
-static int		   ss_size[] =	{	 1,    1,	  2,	 2, 	4,	   4,	  4,	 8,     4 };
+static int         ss_size[] =	{  1,   1,     2,     2,     4,     4,     8,     8,     4,     8,     4 };
 
 static void ss_c2(unsigned char *, unsigned);
 static void ss_c4(unsigned char *, unsigned);
 static void ss_c8(unsigned char *, unsigned);
 
 static void (*ss_conv[])(unsigned char *, unsigned) = {
-	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, 0, ss_c8, ss_c4
+	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, ss_c8, ss_c8, 0, ss_c8, ss_c4
 };
 
 
@@ -272,6 +274,18 @@ void state_save_register_INT32 (const char *module, int instance,
 								const char *name, INT32 *val, unsigned size)
 {
 	ss_register_entry(module, instance, name, SS_INT32, val, size);
+}
+
+void state_save_register_UINT64(const char *module, int instance,
+								const char *name, UINT64 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_UINT64, val, size);
+}
+
+void state_save_register_INT64 (const char *module, int instance,
+								const char *name, INT64 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_INT64, val, size);
 }
 
 void state_save_register_int   (const char *module, int instance,

@@ -145,91 +145,46 @@ static PALETTE_INIT( atarifb )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x1000, 0x13bf, MRA_RAM },
-	{ 0x13c0, 0x13ff, MRA_RAM },
-	{ 0x3000, 0x3000, MRA_RAM },
-	{ 0x4000, 0x4000, atarifb_in0_r },
-	{ 0x4002, 0x4002, atarifb_in2_r },
-	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( atarifb_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x025f) AM_WRITE(atarifb_alphap1_vram_w) AM_BASE(&atarifb_alphap1_vram) AM_SIZE(&atarifb_alphap1_vram_size)
+	AM_RANGE(0x0260, 0x039f) AM_RAM
+	AM_RANGE(0x03a0, 0x03ff) AM_WRITE(atarifb_alphap2_vram_w) AM_BASE(&atarifb_alphap2_vram) AM_SIZE(&atarifb_alphap2_vram_size)
+	AM_RANGE(0x1000, 0x13bf) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x13c0, 0x13ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(atarifb_scroll_w) AM_BASE(&atarifb_scroll_register) /* OUT 0 */
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(atarifb_out1_w) /* OUT 1 */
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(atarifb_out2_w) /* OUT 2 */
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(atarifb_out3_w) /* OUT 3 */
+	AM_RANGE(0x3000, 0x3000) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_NOP) /* Interrupt Acknowledge */
+	AM_RANGE(0x4000, 0x4000) AM_READ(atarifb_in0_r)
+	AM_RANGE(0x4002, 0x4002) AM_READ(atarifb_in2_r)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x6000, 0x7fff) AM_ROM
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x1000, 0x13bf, videoram_w, &videoram, &videoram_size },
-	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x2001, 0x2001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x2002, 0x2002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x2003, 0x2003, atarifb_out3_w }, /* OUT 3 */
-	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-MEMORY_END
-
-
-static MEMORY_READ_START( atarifb4_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x1000, 0x13bf, MRA_RAM },
-	{ 0x13c0, 0x13ff, MRA_RAM },
-	{ 0x3000, 0x3000, MRA_RAM },
-	{ 0x4000, 0x4000, atarifb4_in0_r },
-	{ 0x4001, 0x4001, input_port_1_r },
-	{ 0x4002, 0x4002, atarifb4_in2_r },
-	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( atarifb4_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x1000, 0x13bf, videoram_w, &videoram, &videoram_size },
-	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x2001, 0x2001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x2002, 0x2002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x2003, 0x2003, atarifb_out3_w }, /* OUT 3 */
-	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-MEMORY_END
-
-
-static MEMORY_READ_START( soccer_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0bff, MRA_RAM },	/* playfield/object RAM */
-	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM */
-	{ 0x1800, 0x1800, atarifb4_in0_r },
-	{ 0x1801, 0x1801, input_port_1_r },
-	{ 0x1802, 0x1802, atarifb4_in2_r },
-	{ 0x1803, 0x1803, input_port_11_r },
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( soccer_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x0800, 0x0bbf, videoram_w, &videoram, &videoram_size },
-	{ 0x0bc0, 0x0bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1000, 0x1000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x1001, 0x1001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x1002, 0x1002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x1004, 0x1004, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x1005, 0x1005, watchdog_reset_w },
-	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
-MEMORY_END
+static ADDRESS_MAP_START( soccer_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x025f) AM_WRITE(atarifb_alphap1_vram_w) AM_BASE(&atarifb_alphap1_vram) AM_SIZE(&atarifb_alphap1_vram_size)
+	AM_RANGE(0x0260, 0x039f) AM_RAM
+	AM_RANGE(0x03a0, 0x03ff) AM_WRITE(atarifb_alphap2_vram_w) AM_BASE(&atarifb_alphap2_vram) AM_SIZE(&atarifb_alphap2_vram_size)
+	AM_RANGE(0x0800, 0x0bbf) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0bc0, 0x0bff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(atarifb_scroll_w) AM_BASE(&atarifb_scroll_register) /* OUT 0 */
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(atarifb_out1_w) /* OUT 1 */
+	AM_RANGE(0x1002, 0x1002) AM_WRITE(atarifb_out2_w) /* OUT 2 */
+	AM_RANGE(0x1004, 0x1004) AM_WRITE(MWA8_NOP) /* Interrupt Acknowledge */
+	AM_RANGE(0x1005, 0x1005) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1800, 0x1800) AM_READ(atarifb4_in0_r)
+	AM_RANGE(0x1801, 0x1801) AM_READ(input_port_1_r)
+	AM_RANGE(0x1802, 0x1802) AM_READ(atarifb4_in2_r)
+	AM_RANGE(0x1803, 0x1803) AM_READ(input_port_11_r)
+	AM_RANGE(0x2000, 0x3fff) AM_ROM
+ADDRESS_MAP_END
 
 
 
@@ -716,7 +671,7 @@ static MACHINE_DRIVER_START( atarifb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 750000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(atarifb_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -743,9 +698,8 @@ static MACHINE_DRIVER_START( atarifb4 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarifb)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(atarifb4_readmem,atarifb4_writemem)
 
+	/* video hardware */
 	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 MACHINE_DRIVER_END
 
@@ -765,7 +719,7 @@ static MACHINE_DRIVER_START( soccer )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarifb)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(soccer_readmem,soccer_writemem)
+	MDRV_CPU_PROGRAM_MAP(soccer_map,0)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0*8, 38*8-1, 2*8, 32*8-1)
@@ -781,11 +735,10 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( atarifb )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, CRC(352e35db) SHA1(ae3f1bdb274858edf203dbffe4ba2912c065cff2) )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, CRC(a79c79ca) SHA1(7791b431e9aadb09fd286ae56699c4beda54830a) )
 	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, CRC(e7e916ae) SHA1(d3a188809e83c311699cb103040c4525b36a56e3) )
-	ROM_RELOAD( 			    0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
@@ -797,11 +750,10 @@ ROM_END
 
 
 ROM_START( atarifb1 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, CRC(f8ce7ed8) SHA1(54520d7d31c6c8f9028b7253a33aba3b2c35ae7c) )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, CRC(a79c79ca) SHA1(7791b431e9aadb09fd286ae56699c4beda54830a) )
 	ROM_LOAD( "03302701.n1", 0x7800, 0x0800, CRC(7740be51) SHA1(3f610061f081eb5589b00a496877bc58f6e0f09f) )
-	ROM_RELOAD( 			    0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
@@ -813,7 +765,7 @@ ROM_END
 
 
 ROM_START( atarifb4 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "34889.m1", 0x6000, 0x0400, CRC(5c63974a) SHA1(e91f318be80d985a09ff92f4db5792290a06dc0f) )
 	ROM_LOAD_NIB_HIGH( "34891.m2", 0x6000, 0x0400, CRC(9d03baa1) SHA1(1b57f39fa4d43e3f3d22f2d9a5478b5f5e4d0cb1) )
 	ROM_LOAD_NIB_LOW ( "34890.n1", 0x6400, 0x0400, CRC(2deb5844) SHA1(abc7cc80d5fcac13f50f6cc550ea7a8f322434c9) )
@@ -829,9 +781,7 @@ ROM_START( atarifb4 )
 	ROM_LOAD_NIB_LOW ( "34881.h1", 0x7800, 0x0400, CRC(d9055541) SHA1(ffbf86c5cc325587d89e17da0560518244d3d8e9) )
 	ROM_LOAD_NIB_HIGH( "34883.h2", 0x7800, 0x0400, CRC(8a912448) SHA1(1756874964eedb75e066a4d6dccecf16a652f6bb) )
 	ROM_LOAD_NIB_LOW ( "34882.j1", 0x7c00, 0x0400, CRC(060c9cdb) SHA1(3c6d04c535195dfa8f8405ff8e80f4693844d1a1) )
-	ROM_RELOAD(                    0xfc00, 0x0400 ) /* for 6502 vectors */
 	ROM_LOAD_NIB_HIGH( "34884.j2", 0x7c00, 0x0400, CRC(aa699a3a) SHA1(2c13eb9cda3fe9cfd348ef5cf309625f77c75056) )
-	ROM_RELOAD(                    0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) )
@@ -843,12 +793,11 @@ ROM_END
 
 
 ROM_START( abaseb )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, CRC(edcfffe8) SHA1(a445668352da5039ed1a090bcdf2ce092215f165) )
 	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, CRC(7250863f) SHA1(83ec735a60d74ca9c3e3f5d4b248071f3e3330af) )
 	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, CRC(54854d7c) SHA1(536d57b00929bf9d1cd1b209b41004cb78e2cd93) )
 	ROM_LOAD( "34736-01.n1", 0x7800, 0x0800, CRC(af444eb0) SHA1(783293426cec6938a2cd9c66c491f073cfb2683f) )
-	ROM_RELOAD( 			 0xf800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, CRC(31275d86) SHA1(465ff2032e62bcd5a7bb5c947212da4ea4d59353) )
@@ -860,7 +809,7 @@ ROM_END
 
 
 ROM_START( abaseb2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "034725.c0", 0x6000, 0x0400, CRC(95912c58) SHA1(cb15b60e31ee212e30a81c170611be1e36d2a6dd) )
 	ROM_LOAD_NIB_HIGH( "034723.m0", 0x6000, 0x0400, CRC(5eb1597f) SHA1(78f83d4e79de13d3723732d68738660c3f8d4787) )
 	ROM_LOAD_NIB_LOW ( "034726.b0", 0x6400, 0x0400, CRC(1f8d506c) SHA1(875464ca2ee50b36ceb5989cd40a28c69953c641) )
@@ -876,9 +825,7 @@ ROM_START( abaseb2 )
 	ROM_LOAD_NIB_LOW ( "034719.h1", 0x7800, 0x0400, CRC(85046ee5) SHA1(2e8559349460a44734c95a1440a84713c5344495) )
 	ROM_LOAD_NIB_HIGH( "034713.f1", 0x7800, 0x0400, CRC(0c67c48d) SHA1(eec24da32632c1ba00aee22f1b9abb144b38cc8a) )
 	ROM_LOAD_NIB_LOW ( "034720.h0", 0x7c00, 0x0400, CRC(37c5f149) SHA1(89ad4471b949f8318abbdb38c4f373f711130198) )
-	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 	ROM_LOAD_NIB_HIGH( "034714.f0", 0x7c00, 0x0400, CRC(920979ea) SHA1(aba499376c084b8ceb6f0cc6599bd51cec133cc7) )
-	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, CRC(31275d86) SHA1(465ff2032e62bcd5a7bb5c947212da4ea4d59353) )
@@ -890,7 +837,7 @@ ROM_END
 
 
 ROM_START( soccer )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGION( 0x4000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "035222.e1", 0x2000, 0x0400, CRC(03ec6bce) SHA1(f81f2ac3bab5f1ae687543427e0187ca51d3be7e) )
 	ROM_LOAD_NIB_HIGH( "035224.e2", 0x2000, 0x0400, CRC(a1aeaa70) SHA1(2018318a0e652b1dbea7696ef3dc2b7f12ebd632) )
 	ROM_LOAD_NIB_LOW ( "035223.f1", 0x2400, 0x0400, CRC(9c600726) SHA1(f652b42b93e43124b0363b52f0f13cb9154987e3) )
@@ -907,9 +854,7 @@ ROM_START( soccer )
 	ROM_LOAD_NIB_LOW ( "035234.m1", 0x3800, 0x0400, CRC(83524bb7) SHA1(d45233b666463f789257c7366c3dfb4d9b55f87e) )
 	ROM_LOAD_NIB_HIGH( "035236.m2", 0x3800, 0x0400, CRC(c53f4d13) SHA1(ebba48e50c98e7f74d19826cf559cf6633e24f3b) )
 	ROM_LOAD_NIB_LOW ( "035235.n1", 0x3c00, 0x0400, CRC(d6855b0e) SHA1(379d010ebebde6f1b5fec5519a3c0aa4380be28b) )
-	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 	ROM_LOAD_NIB_HIGH( "035237.n2", 0x3c00, 0x0400, CRC(1d01b054) SHA1(7f3dc1130b2aadb13813e223420672c5baf25ad8) )
-	ROM_RELOAD(                     0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "035250.r2", 0x0000, 0x0400, CRC(12f43dca) SHA1(a463f5068d5522ddf74052429aa6da23e5475844) ) /* characters */
@@ -941,6 +886,10 @@ static DRIVER_INIT( atarifb4 )
 {
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 2;
+
+	install_mem_read_handler(0, 0x4000, 0x4000, atarifb4_in0_r);
+	install_mem_read_handler(0, 0x4001, 0x4001, input_port_1_r);
+	install_mem_read_handler(0, 0x4002, 0x4002, atarifb4_in2_r);
 }
 
 

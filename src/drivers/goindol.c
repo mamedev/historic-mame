@@ -96,52 +96,52 @@ logerror("%04x: prot_fcb0_w(%02x)\n",activecpu_get_pc(),data);
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc800, MRA_NOP },	// watchdog?
-	{ 0xd000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf000, input_port_3_r },
-	{ 0xf422, 0xf422, prot_f422_r },
-	{ 0xf800, 0xf800, input_port_4_r },
-	{ 0xc834, 0xc834, input_port_1_r },
-	{ 0xc820, 0xc820, input_port_2_r },
-	{ 0xc830, 0xc830, input_port_0_r },
-	{ 0xe000, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_READ(MRA8_NOP)	// watchdog?
+	AM_RANGE(0xd000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_3_r)
+	AM_RANGE(0xf422, 0xf422) AM_READ(prot_f422_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_4_r)
+	AM_RANGE(0xc834, 0xc834) AM_READ(input_port_1_r)
+	AM_RANGE(0xc820, 0xc820) AM_READ(input_port_2_r)
+	AM_RANGE(0xc830, 0xc830) AM_READ(input_port_0_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM, &ram },
-	{ 0xc810, 0xc810, goindol_bankswitch_w },
-	{ 0xc820, 0xd820, MWA_RAM, &goindol_fg_scrolly },
-	{ 0xc830, 0xd830, MWA_RAM, &goindol_fg_scrollx },
-	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xd000, 0xd03f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd040, 0xd7ff, MWA_RAM },
-	{ 0xd800, 0xdfff, goindol_bg_videoram_w, &goindol_bg_videoram, &goindol_bg_videoram_size },
-	{ 0xe000, 0xe03f, MWA_RAM, &spriteram_2 },
-	{ 0xe040, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, goindol_fg_videoram_w, &goindol_fg_videoram, &goindol_fg_videoram_size },
-	{ 0xfc44, 0xfc44, prot_fc44_w },
-	{ 0xfc66, 0xfc66, prot_fc66_w },
-	{ 0xfcb0, 0xfcb0, prot_fcb0_w },
-	{ 0xfd99, 0xfd99, prot_fd99_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&ram)
+	AM_RANGE(0xc810, 0xc810) AM_WRITE(goindol_bankswitch_w)
+	AM_RANGE(0xc820, 0xd820) AM_WRITE(MWA8_RAM) AM_BASE(&goindol_fg_scrolly)
+	AM_RANGE(0xc830, 0xd830) AM_WRITE(MWA8_RAM) AM_BASE(&goindol_fg_scrollx)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xd000, 0xd03f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd040, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(goindol_bg_videoram_w) AM_BASE(&goindol_bg_videoram) AM_SIZE(&goindol_bg_videoram_size)
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xe040, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(goindol_fg_videoram_w) AM_BASE(&goindol_fg_videoram) AM_SIZE(&goindol_fg_videoram_size)
+	AM_RANGE(0xfc44, 0xfc44) AM_WRITE(prot_fc44_w)
+	AM_RANGE(0xfc66, 0xfc66) AM_WRITE(prot_fc66_w)
+	AM_RANGE(0xfcb0, 0xfcb0) AM_WRITE(prot_fcb0_w)
+	AM_RANGE(0xfd99, 0xfd99) AM_WRITE(prot_fd99_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd800, 0xd800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xd800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xa000, 0xa000, YM2203_control_port_0_w },
-	{ 0xa001, 0xa001, YM2203_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( goindol )
@@ -329,12 +329,12 @@ static MACHINE_DRIVER_START( goindol )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 6 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -55,54 +55,59 @@ static WRITE_HANDLER( circusc_coin_counter_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x1000, 0x1000, input_port_0_r }, /* IO Coin */
-	{ 0x1001, 0x1001, input_port_1_r }, /* P1 IO */
-	{ 0x1002, 0x1002, input_port_2_r }, /* P2 IO */
-	{ 0x1400, 0x1400, input_port_3_r }, /* DIP 1 */
-	{ 0x1800, 0x1800, input_port_4_r }, /* DIP 2 */
-	{ 0x2000, 0x39ff, MRA_RAM },
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM) /* colorram */
+	AM_RANGE(0x3400, 0x37ff) AM_READ(MRA8_RAM) /* videoram */
+	AM_RANGE(0x3800, 0x38ff) AM_READ(MRA8_RAM) /* spriteram2 */
+	AM_RANGE(0x3900, 0x39ff) AM_READ(MRA8_RAM) /* spriteram */
+	AM_RANGE(0x3a00, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0000, circusc_flipscreen_w },
-	{ 0x0001, 0x0001, interrupt_enable_w },
-	{ 0x0003, 0x0004, circusc_coin_counter_w },  /* Coin counters */
-	{ 0x0005, 0x0005, MWA_RAM, &circusc_spritebank },
-	{ 0x0400, 0x0400, watchdog_reset_w },
-	{ 0x0800, 0x0800, soundlatch_w },
-	{ 0x0c00, 0x0c00, circusc_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x1c00, 0x1c00, MWA_RAM, &circusc_scroll },
-	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x33ff, circusc_colorram_w, &circusc_colorram },
-	{ 0x3400, 0x37ff, circusc_videoram_w, &circusc_videoram },
-	{ 0x3800, 0x38ff, MWA_RAM, &spriteram_2 },
-	{ 0x3900, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3a00, 0x3fff, MWA_RAM },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(circusc_flipscreen_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x0003, 0x0004) AM_WRITE(circusc_coin_counter_w)  /* Coin counters */
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(MWA8_RAM) AM_BASE(&circusc_spritebank)
+	AM_RANGE(0x0400, 0x0400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x0c00, 0x0c00) AM_WRITE(circusc_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(MWA8_RAM) AM_BASE(&circusc_scroll)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x33ff) AM_WRITE(circusc_colorram_w) AM_BASE(&circusc_colorram)
+	AM_RANGE(0x3400, 0x37ff) AM_WRITE(circusc_videoram_w) AM_BASE(&circusc_videoram)
+	AM_RANGE(0x3800, 0x38ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x3900, 0x39ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3a00, 0x3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, circusc_sh_timer_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(circusc_sh_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, MWA_NOP },    /* latch command for the 76496. We should buffer this */
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP)    /* latch command for the 76496. We should buffer this */
 									/* command and send it to the chip, but we just use */
 									/* the triggers below because the program always writes */
 									/* the same number here and there. */
-	{ 0xa001, 0xa001, SN76496_0_w },        /* trigger the 76496 to read the latch */
-	{ 0xa002, 0xa002, SN76496_1_w },        /* trigger the 76496 to read the latch */
-	{ 0xa003, 0xa003, circusc_dac_w },
-	{ 0xa004, 0xa004, MWA_NOP },            /* ??? */
-	{ 0xa07c, 0xa07c, MWA_NOP },            /* ??? */
-MEMORY_END
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(SN76496_0_w)        /* trigger the 76496 to read the latch */
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(SN76496_1_w)        /* trigger the 76496 to read the latch */
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(circusc_dac_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(MWA8_NOP)            /* ??? */
+	AM_RANGE(0xa07c, 0xa07c) AM_WRITE(MWA8_NOP)            /* ??? */
+ADDRESS_MAP_END
 
 
 
@@ -252,12 +257,12 @@ static MACHINE_DRIVER_START( circusc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2048000)        /* 2 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)     /* Z80 Clock is derived from a 14.31818 MHz crystal */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

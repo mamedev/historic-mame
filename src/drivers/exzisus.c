@@ -159,86 +159,86 @@ static struct YM2151interface ym2151_interface =
 	{ irqhandler },
 };
 
-static MEMORY_READ_START( cpua_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc5ff, exzisus_objectram_0_r },
-	{ 0xc600, 0xdfff, exzisus_videoram_0_r },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf000, MRA_NOP },
-	{ 0xf001, 0xf001, taitosound_comm_r },
-	{ 0xf400, 0xf400, input_port_0_r },
-	{ 0xf401, 0xf401, input_port_1_r },
-	{ 0xf402, 0xf402, input_port_2_r },
-	{ 0xf404, 0xf404, input_port_3_r },
-	{ 0xf405, 0xf405, input_port_4_r },
-	{ 0xf800, 0xffff, exzisus_sharedram_ac_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpua_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc5ff) AM_READ(exzisus_objectram_0_r)
+	AM_RANGE(0xc600, 0xdfff) AM_READ(exzisus_videoram_0_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_READ(MRA8_NOP)
+	AM_RANGE(0xf001, 0xf001) AM_READ(taitosound_comm_r)
+	AM_RANGE(0xf400, 0xf400) AM_READ(input_port_0_r)
+	AM_RANGE(0xf401, 0xf401) AM_READ(input_port_1_r)
+	AM_RANGE(0xf402, 0xf402) AM_READ(input_port_2_r)
+	AM_RANGE(0xf404, 0xf404) AM_READ(input_port_3_r)
+	AM_RANGE(0xf405, 0xf405) AM_READ(input_port_4_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(exzisus_sharedram_ac_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpua_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc5ff, exzisus_objectram_0_w, &exzisus_objectram0, &exzisus_objectram_size0 },
-	{ 0xc600, 0xdfff, exzisus_videoram_0_w, &exzisus_videoram0 },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf000, taitosound_port_w },
-	{ 0xf001, 0xf001, taitosound_comm_w },
-	{ 0xf400, 0xf400, exzisus_cpua_bankswitch_w },
-	{ 0xf402, 0xf402, exzisus_coincounter_w },
-	{ 0xf404, 0xf404, MWA_NOP }, // ??
-	{ 0xf800, 0xffff, exzisus_sharedram_ac_w },
-MEMORY_END
+static ADDRESS_MAP_START( cpua_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc5ff) AM_WRITE(exzisus_objectram_0_w) AM_BASE(&exzisus_objectram0) AM_SIZE(&exzisus_objectram_size0)
+	AM_RANGE(0xc600, 0xdfff) AM_WRITE(exzisus_videoram_0_w) AM_BASE(&exzisus_videoram0)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(taitosound_port_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(taitosound_comm_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(exzisus_cpua_bankswitch_w)
+	AM_RANGE(0xf402, 0xf402) AM_WRITE(exzisus_coincounter_w)
+	AM_RANGE(0xf404, 0xf404) AM_WRITE(MWA8_NOP) // ??
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(exzisus_sharedram_ac_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cpub_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x85ff, exzisus_objectram_1_r },
-	{ 0x8600, 0x9fff, exzisus_videoram_1_r },
-	{ 0xa000, 0xafff, exzisus_sharedram_bc_r },
-	{ 0xb000, 0xbfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cpub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x85ff) AM_READ(exzisus_objectram_1_r)
+	AM_RANGE(0x8600, 0x9fff) AM_READ(exzisus_videoram_1_r)
+	AM_RANGE(0xa000, 0xafff) AM_READ(exzisus_sharedram_bc_r)
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpub_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x85ff, exzisus_objectram_1_w },
-	{ 0x8600, 0x9fff, exzisus_videoram_1_w },
-	{ 0xa000, 0xafff, exzisus_sharedram_bc_w },
-	{ 0xb000, 0xbfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cpub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x85ff) AM_WRITE(exzisus_objectram_1_w)
+	AM_RANGE(0x8600, 0x9fff) AM_WRITE(exzisus_videoram_1_w)
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(exzisus_sharedram_bc_w)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cpuc_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xc5ff, exzisus_objectram_1_r },
-	{ 0xc600, 0xdfff, exzisus_videoram_1_r },
-	{ 0xe000, 0xefff, exzisus_sharedram_bc_r },
-	{ 0xf800, 0xffff, exzisus_sharedram_ac_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpuc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xc5ff) AM_READ(exzisus_objectram_1_r)
+	AM_RANGE(0xc600, 0xdfff) AM_READ(exzisus_videoram_1_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(exzisus_sharedram_bc_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(exzisus_sharedram_ac_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpuc_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc5ff, exzisus_objectram_1_w, &exzisus_objectram1, &exzisus_objectram_size1 },
-	{ 0xc600, 0xdfff, exzisus_videoram_1_w, &exzisus_videoram1 },
-	{ 0xe000, 0xefff, exzisus_sharedram_bc_w, &exzisus_sharedram_bc },
-	{ 0xf400, 0xf400, exzisus_cpub_bankswitch_w },
-	{ 0xf800, 0xffff, exzisus_sharedram_ac_w, &exzisus_sharedram_ac },
-MEMORY_END
+static ADDRESS_MAP_START( cpuc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc5ff) AM_WRITE(exzisus_objectram_1_w) AM_BASE(&exzisus_objectram1) AM_SIZE(&exzisus_objectram_size1)
+	AM_RANGE(0xc600, 0xdfff) AM_WRITE(exzisus_videoram_1_w) AM_BASE(&exzisus_videoram1)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(exzisus_sharedram_bc_w) AM_BASE(&exzisus_sharedram_bc)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(exzisus_cpub_bankswitch_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(exzisus_sharedram_ac_w) AM_BASE(&exzisus_sharedram_ac)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, MRA_NOP },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0xa000, 0xa000, MRA_NOP },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(MRA8_NOP)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(MRA8_NOP)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -356,18 +356,18 @@ static MACHINE_DRIVER_START( exzisus )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
-	MDRV_CPU_MEMORY(cpua_readmem,cpua_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpua_readmem,cpua_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)			/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
-	MDRV_CPU_MEMORY(cpub_readmem,cpub_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpub_readmem,cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
-	MDRV_CPU_MEMORY(cpuc_readmem,cpuc_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpuc_readmem,cpuc_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

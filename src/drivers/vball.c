@@ -164,31 +164,31 @@ WRITE_HANDLER( vb_scrollx_hi_w )
 	//logerror("%04x: vb_scrollx_hi = %d\n",activecpu_get_previouspc(), vb_scrollx_hi);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1000, input_port_0_r },
-	{ 0x1001, 0x1001, input_port_1_r },
-	{ 0x1002, 0x1002, input_port_2_r },
-	{ 0x1003, 0x1003, input_port_3_r },
-	{ 0x1004, 0x1004, input_port_4_r },
-	{ 0x1005, 0x1005, input_port_5_r },
-	{ 0x1006, 0x1006, input_port_6_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r)
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r)
+	AM_RANGE(0x1003, 0x1003) AM_READ(input_port_3_r)
+	AM_RANGE(0x1004, 0x1004) AM_READ(input_port_4_r)
+	AM_RANGE(0x1005, 0x1005) AM_READ(input_port_5_r)
+	AM_RANGE(0x1006, 0x1006) AM_READ(input_port_6_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( vball2pj_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1000, input_port_0_r },
-	{ 0x1001, 0x1001, input_port_1_r },
-	{ 0x1002, 0x1002, input_port_2_r },
-	{ 0x1003, 0x1003, input_port_3_r },
-	{ 0x1004, 0x1004, input_port_4_r },
-	{ 0x1005, 0x1005, MRA_RAM },		//Strange, that these are read!
-	{ 0x1006, 0x1006, MRA_RAM },		//Strange, that these are read!
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( vball2pj_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r)
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r)
+	AM_RANGE(0x1003, 0x1003) AM_READ(input_port_3_r)
+	AM_RANGE(0x1004, 0x1004) AM_READ(input_port_4_r)
+	AM_RANGE(0x1005, 0x1005) AM_READ(MRA8_RAM)		//Strange, that these are read!
+	AM_RANGE(0x1006, 0x1006) AM_READ(MRA8_RAM)		//Strange, that these are read!
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 WRITE_HANDLER(vb_scrollx_lo_w)
 {
@@ -197,36 +197,36 @@ WRITE_HANDLER(vb_scrollx_lo_w)
 }
 
 //Cheaters note: Scores are stored in ram @ 0x57-0x58 (though the space is used for other things between matches)
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x08ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1008, 0x1008, vb_scrollx_hi_w },
-	{ 0x1009, 0x1009, vb_bankswitch_w },
-	{ 0x100a, 0x100a, MWA_RAM },
-	{ 0x100b, 0x100b, MWA_RAM },		//Counts from 0 to 7 continuously
-	{ 0x100c, 0x100c, vb_scrollx_lo_w },
-	{ 0x100d, 0x100d, cpu_sound_command_w },
-	{ 0x100e, 0x100e, MWA_RAM, &vb_scrolly_lo },
-	{ 0x2000, 0x2fff, vb_videoram_w, &vb_videoram },
-	{ 0x3000, 0x3fff, vb_attrib_w, &vb_attribram },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1008, 0x1008) AM_WRITE(vb_scrollx_hi_w)
+	AM_RANGE(0x1009, 0x1009) AM_WRITE(vb_bankswitch_w)
+	AM_RANGE(0x100a, 0x100a) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x100b, 0x100b) AM_WRITE(MWA8_RAM)		//Counts from 0 to 7 continuously
+	AM_RANGE(0x100c, 0x100c) AM_WRITE(vb_scrollx_lo_w)
+	AM_RANGE(0x100d, 0x100d) AM_WRITE(cpu_sound_command_w)
+	AM_RANGE(0x100e, 0x100e) AM_WRITE(MWA8_RAM) AM_BASE(&vb_scrolly_lo)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(vb_videoram_w) AM_BASE(&vb_videoram)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(vb_attrib_w) AM_BASE(&vb_attribram)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xA000, 0xA000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xA000, 0xA000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9803, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9800, 0x9803) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 #define COMMON_PORTS_BEFORE  PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
@@ -412,12 +412,12 @@ static MACHINE_DRIVER_START( vball )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz - measured by guru but it makes the game far far too slow ?! */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -442,12 +442,12 @@ static MACHINE_DRIVER_START( vball2pj )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(M6502, 2000000)	/* 2.0 MHz */
-	MDRV_CPU_MEMORY(vball2pj_readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(vball2pj_readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

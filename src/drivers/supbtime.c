@@ -68,60 +68,60 @@ static WRITE16_HANDLER( sound_w )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( supbtime_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x120000, 0x1207ff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x180000, 0x18000f, supbtime_controls_r },
-	{ 0x320000, 0x321fff, supbtime_pf1_data_r },
-	{ 0x322000, 0x323fff, supbtime_pf2_data_r },
-	{ 0x340000, 0x3401ff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( supbtime_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(supbtime_controls_r)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(supbtime_pf1_data_r)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(supbtime_pf2_data_r)
+	AM_RANGE(0x340000, 0x3401ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( supbtime_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x104000, 0x11ffff, MWA16_NOP }, /* Nothing there */
-	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16 },
-	{ 0x120800, 0x13ffff, MWA16_NOP }, /* Nothing there */
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x18000a, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a0001, sound_w },
+static ADDRESS_MAP_START( supbtime_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x104000, 0x11ffff) AM_WRITE(MWA16_NOP) /* Nothing there */
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x120800, 0x13ffff) AM_WRITE(MWA16_NOP) /* Nothing there */
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x18000a, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a0001) AM_WRITE(sound_w)
 
-	{ 0x300000, 0x30000f, supbtime_control_0_w },
-	{ 0x320000, 0x321fff, supbtime_pf1_data_w, &supbtime_pf1_data },
-	{ 0x322000, 0x323fff, supbtime_pf2_data_w, &supbtime_pf2_data },
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(supbtime_control_0_w)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(supbtime_pf1_data_w) AM_BASE(&supbtime_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(supbtime_pf2_data_w) AM_BASE(&supbtime_pf2_data)
 
-	{ 0x340000, 0x3401ff, MWA16_RAM, &supbtime_pf1_row },
-	{ 0x340400, 0x3405ff, MWA16_NOP },/* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA16_NOP },/* Unused row scroll */
-	{ 0x342400, 0x3425ff, MWA16_NOP },/* Unused col scroll */
-MEMORY_END
+	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_RAM) AM_BASE(&supbtime_pf1_row)
+	AM_RANGE(0x340400, 0x3405ff) AM_WRITE(MWA16_NOP)/* Unused col scroll */
+	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)/* Unused row scroll */
+	AM_RANGE(0x342400, 0x3425ff) AM_WRITE(MWA16_NOP)/* Unused col scroll */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( chinatwn_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x120000, 0x1207ff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x180000, 0x18000f, supbtime_controls_r },
-	{ 0x1a0000, 0x1a3fff, MRA16_RAM },
-	{ 0x320000, 0x321fff, supbtime_pf1_data_r },
-	{ 0x322000, 0x323fff, supbtime_pf2_data_r },
-	{ 0x340000, 0x3401ff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( chinatwn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(supbtime_controls_r)
+	AM_RANGE(0x1a0000, 0x1a3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(supbtime_pf1_data_r)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(supbtime_pf2_data_r)
+	AM_RANGE(0x340000, 0x3401ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( chinatwn_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x100001, sound_w },
-	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16 },
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x18000a, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a3fff, MWA16_RAM },
+static ADDRESS_MAP_START( chinatwn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(sound_w)
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x18000a, 0x18000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x1a0000, 0x1a3fff) AM_WRITE(MWA16_RAM)
 
-	{ 0x300000, 0x30000f, supbtime_control_0_w },
-	{ 0x320000, 0x321fff, supbtime_pf1_data_w, &supbtime_pf1_data },
-	{ 0x322000, 0x323fff, supbtime_pf2_data_w, &supbtime_pf2_data },
-MEMORY_END
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(supbtime_control_0_w)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(supbtime_pf1_data_w) AM_BASE(&supbtime_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(supbtime_pf2_data_w) AM_BASE(&supbtime_pf2_data)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -138,26 +138,26 @@ static WRITE_HANDLER( YM2151_w )
 }
 
 /* Physical memory map (21 bits) */
-static MEMORY_READ_START( sound_readmem )
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x100000, 0x100001, MRA_NOP },
-	{ 0x110000, 0x110001, YM2151_status_port_0_r },
-	{ 0x120000, 0x120001, OKIM6295_status_0_r },
-	{ 0x130000, 0x130001, MRA_NOP }, /* This board only has 1 oki chip */
-	{ 0x140000, 0x140001, soundlatch_r },
-	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(MRA8_NOP)
+	AM_RANGE(0x110000, 0x110001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x120000, 0x120001) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x130000, 0x130001) AM_READ(MRA8_NOP) /* This board only has 1 oki chip */
+	AM_RANGE(0x140000, 0x140001) AM_READ(soundlatch_r)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_READ(MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
-	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w },
-	{ 0x130000, 0x130001, MWA_NOP },
-	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
-	{ 0x1fec00, 0x1fec01, H6280_timer_w },
-	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA8_NOP) /* YM2203 - this board doesn't have one */
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(YM2151_w)
+	AM_RANGE(0x120000, 0x120001) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x130000, 0x130001) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_WRITE(MWA8_BANK8)
+	AM_RANGE(0x1fec00, 0x1fec01) AM_WRITE(H6280_timer_w)
+	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -399,12 +399,12 @@ static MACHINE_DRIVER_START( supbtime )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(supbtime_readmem,supbtime_writemem)
+	MDRV_CPU_PROGRAM_MAP(supbtime_readmem,supbtime_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)	/* Custom chip 45, audio section crystal is 32.220 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
@@ -429,12 +429,12 @@ static MACHINE_DRIVER_START( chinatwn )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(chinatwn_readmem,chinatwn_writemem)
+	MDRV_CPU_PROGRAM_MAP(chinatwn_readmem,chinatwn_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8) /* Custom chip 45, audio section crystal is 32.220 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)

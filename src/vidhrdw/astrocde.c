@@ -461,7 +461,7 @@ WRITE_HANDLER( astrocde_pattern_board_w )
 
 		/* Kludge: have to steal some cycles from the Z80 otherwise text
 		   scrolling in Gorf is too fast. */
-		z80_ICount -= 4 * (length+1) * (loops+1);
+		activecpu_adjust_icount(- 4 * (length+1) * (loops+1));
 
 		for (i = 0; i <= loops;i++)
 		{
@@ -472,11 +472,11 @@ WRITE_HANDLER( astrocde_pattern_board_w )
 					if (mode & 0x01)			/* Direction */
 						RAM[src]=RAM[dest];
 					else
-						if (dest >= 0) cpu_writemem16(dest,RAM[src]);	/* ASG 971005 */
+						if (dest >= 0) program_write_byte(dest,RAM[src]);	/* ASG 971005 */
 				}
 				/* close out writes in case of shift... I think this is wrong */
 				else if (j == length)
-					if (dest >= 0) cpu_writemem16(dest,0);
+					if (dest >= 0) program_write_byte(dest,0);
 
 				if ((j & 1) || !(mode & 0x02))  /* Expand Mode - don't increment source on odd loops */
 					if (mode & 0x04) src++;		/* Constant mode - don't increment at all! */

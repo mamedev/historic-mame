@@ -1,8 +1,117 @@
-#include "driver.h"
 #include "state.h"
+#include "driver.h"
 #include "vidhrdw/generic.h"
-#include "namcos2.h"	/* for game-specific hacks */
+#include "namcos2.h" /* for game-specific hacks */
 #include "namcoic.h"
+
+static void zdrawgfxzoom(
+		struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color,
+		int scalex, int scaley, int zpos )
+{
+	if (!scalex || !scaley) return;
+	if (dest_bmp->depth == 15 || dest_bmp->depth == 16)
+	{
+		if( gfx && gfx->colortable )
+		{
+			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
+			UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
+			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
+			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
+			if (sprite_screen_width && sprite_screen_height)
+			{
+				/* compute sprite increment per screen pixel */
+				int dx = (gfx->width<<16)/sprite_screen_width;
+				int dy = (gfx->height<<16)/sprite_screen_height;
+
+				int ex = sx+sprite_screen_width;
+				int ey = sy+sprite_screen_height;
+
+				int x_index_base;
+				int y_index;
+
+				if( flipx )
+				{
+					x_index_base = (sprite_screen_width-1)*dx;
+					dx = -dx;
+				}
+				else
+				{
+					x_index_base = 0;
+				}
+
+				if( flipy )
+				{
+					y_index = (sprite_screen_height-1)*dy;
+					dy = -dy;
+				}
+				else
+				{
+					y_index = 0;
+				}
+
+				if( clip )
+				{
+					if( sx < clip->min_x)
+					{ /* clip left */
+						int pixels = clip->min_x-sx;
+						sx += pixels;
+						x_index_base += pixels*dx;
+					}
+					if( sy < clip->min_y )
+					{ /* clip top */
+						int pixels = clip->min_y-sy;
+						sy += pixels;
+						y_index += pixels*dy;
+					}
+					if( ex > clip->max_x+1 )
+					{ /* clip right */
+						int pixels = ex-clip->max_x-1;
+						ex -= pixels;
+					}
+					if( ey > clip->max_y+1 )
+					{ /* clip bottom */
+						int pixels = ey-clip->max_y-1;
+						ey -= pixels;
+					}
+				}
+
+				if( ex>sx )
+				{ /* skip if inner loop doesn't draw anything */
+					int y;
+					if (transparency == TRANSPARENCY_PEN)
+					{
+						if( priority_bitmap )
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT8 *pri = priority_bitmap->line[y];
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if( pri[x]<=zpos )
+										{
+											dest[x] = pal[c];
+											pri[x] = zpos;
+										}
+									}
+									x_index += dx;
+								}
+								y_index += dy;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 static data16_t mSpritePos[4];
 
@@ -86,6 +195,7 @@ static int mPalXOR;		/* XOR'd with palette select register; needed for System21 
 /**
  * 0x00000 sprite attr (page0)
  * 0x02000 sprite list (page0)
+ *
  * 0x02400 window attributes
  * 0x04000 format
  * 0x08000 tile
@@ -93,11 +203,11 @@ static int mPalXOR;		/* XOR'd with palette select register; needed for System21 
  * 0x14000 sprite list (page1)
  */
 static void
-draw_spriteC355( int page, struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *pSource, int pri, int zpos )
+draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *pSource, int pri, int zpos )
 {
 	unsigned screen_height_remaining, screen_width_remaining;
 	unsigned source_height_remaining, source_width_remaining;
-	INT32 hpos,vpos;
+	int hpos,vpos;
 	data16_t hsize,vsize;
 	data16_t palette;
 	data16_t linkno;
@@ -113,10 +223,11 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const struct rectangle *c
 	int tile_screen_width;
 	int tile_screen_height;
 	const data16_t *spriteformat16 = &spriteram16[0x4000/2];
-	const data16_t *spritetile16 = &spriteram16[0x8000/2];
+	const data16_t *spritetile16   = &spriteram16[0x8000/2];
 	int color;
-
+	const data16_t *pWinAttr;
 	struct rectangle clip;
+	int xscroll, yscroll;
 
 	/**
 	 * ----xxxx-------- window select
@@ -148,75 +259,69 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const struct rectangle *c
 	/* pSource[6] contains priority/palette */
 	/* pSource[7] is used in Lucky & Wild, possibly for sprite-road priority */
 
-	if( linkno*4>=0x4000/2 ) return; /* avoid garbage memory read */
+	if( linkno*4>=0x4000/2 ) return; /* avoid garbage memory reads */
 
-	switch( namcos2_gametype )
-	{
-	case NAMCOS21_SOLVALOU: /* hack */
-		hpos -= 0x80;
-		vpos -= 0x40;
-		clip = Machine->visible_area;
-		break;
+	xscroll = (INT16)mSpritePos[1];
+	yscroll = (INT16)mSpritePos[0];
 
-	case NAMCOS21_CYBERSLED: /* hack */
-		hpos -= 0x110;
-		vpos -= 2+32;
-		clip = Machine->visible_area;
-		break;
+	xscroll &= 0x1ff; if( xscroll & 0x100 ) xscroll |= ~0x1ff;
+	yscroll &= 0x1ff; if( yscroll & 0x100 ) yscroll |= ~0x1ff;
 
-	case NAMCOS21_AIRCOMBAT: /* hack */
-		vpos -= 0x22;
-		hpos -= 0x02;
-		clip = Machine->visible_area;
-		break;
-
-	case NAMCOS21_STARBLADE: /* hack */
-		if( page )
+	if( bitmap->width > 288 )
+	{ /* Medium Resolution: System21 adjust */
+		if( namcos2_gametype == NAMCOS21_CYBERSLED )
 		{
-			hpos -= 0x80;
-			vpos -= 0x20;
+			xscroll -= 0x04;
+			yscroll += 0x1d;
 		}
-		clip = Machine->visible_area;
-		break;
-
-	case NAMCONB1_NEBULRAY:
-	case NAMCONB1_GUNBULET:
-	case NAMCONB1_GSLGR94U:
-	case NAMCONB1_SWS95:
-	case NAMCONB1_SWS96:
-	case NAMCONB1_SWS97:
-	case NAMCONB2_OUTFOXIES:
-	case NAMCONB2_MACH_BREAKERS:
-	case NAMCONB1_VSHOOT:
-	case NAMCOS2_SUZUKA_8_HOURS_2:
-	case NAMCOS2_SUZUKA_8_HOURS:
-	case NAMCOS2_LUCKY_AND_WILD:
-	case NAMCOS2_STEEL_GUNNER_2:
-	default:
-		{
-			int dh = mSpritePos[1];
-			int dv = mSpritePos[0];
-			const data16_t *pWinAttr = &spriteram16[0x2400/2+((palette>>8)&0xf)*4];
-
-			dh &= 0x1ff; if( dh&0x100 ) dh |= ~0x1ff;
-			dv &= 0x1ff; if( dv&0x100 ) dv |= ~0x1ff;
-			vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff;
-			hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff;
-			hpos += -0x26 - dh;
-			vpos += -0x19 - dv;
-			// 0026 0145 0019 00f8 (lucky&wild)
-			// 0025 0145 0019 00f8 (point blank)
-			clip.min_x = pWinAttr[0] - 0x26 - dh;
-			clip.max_x = pWinAttr[1] - 0x26 - dh;
-			clip.min_y = pWinAttr[2] - 0x19 - dv;
-			clip.max_y = pWinAttr[3] - 0x19 - dv;
-			if( clip.min_x < cliprect->min_x ) clip.min_x = cliprect->min_x;
-			if( clip.min_y < cliprect->min_y ) clip.min_y = cliprect->min_y;
-			if( clip.max_x > cliprect->max_x ) clip.max_x = cliprect->max_x;
-			if( clip.max_y > cliprect->max_y ) clip.max_y = cliprect->max_y;
+		else
+		{ /* Starblade */
+			yscroll += 0x10;
 		}
-		break;
 	}
+	else
+	{ /* Namco NB1, Namco System 2 */
+		xscroll += 0x26;
+		yscroll += 0x19;
+	}
+	
+	hpos -= xscroll;
+	vpos -= yscroll;
+	pWinAttr = &spriteram16[0x2400/2+((palette>>8)&0xf)*4];
+	/**
+	 * 0026 0145 0019 00f8 (lucky&wild)
+	 * 0025 0145 0019 00f8 (point blank)
+	 * 0080 026f 0000 01ff (starblade)
+	 *
+	 * 00f8 02f7 0000 01ff (cybersled)
+	 * 01b8 0248 0078 01b8
+	 * 0260 02e0 00d0 01e0
+	 * 0278 02c8 0168 01d8
+	 * 0125 0199 01a6 01e1
+	 * 0256 02da 003f 008f
+	 * 0138 0198 0078 0198
+	 * 0268 02c8 0078 0198
+	 * 0100 01c0 0020 00b0
+	 * 0270 02f0 0030 00e0
+	 * 01b0 0280 0030 00e0
+	 * 01b0 0270 00d0 0190
+	 * 0120 0270 0180 01e0
+	 * 0118 019e 002e 006e
+	 * 0118 016a 006e 008e
+	 * 0190 0257 0096 018f
+	 */
+	clip.min_x = pWinAttr[0] - xscroll;
+	clip.max_x = pWinAttr[1] - xscroll;
+	clip.min_y = pWinAttr[2] - yscroll;
+	clip.max_y = pWinAttr[3] - yscroll;
+	if( clip.min_x < cliprect->min_x ){ clip.min_x = cliprect->min_x; }
+	if( clip.min_y < cliprect->min_y ){ clip.min_y = cliprect->min_y; }
+	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
+	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
+
+	hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff; /* sign extend */
+	vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff; /* sign extend */
+
 	tile_index		= spriteformat16[linkno*4+0];
 	format			= spriteformat16[linkno*4+1];
 	dx				= spriteformat16[linkno*4+2];
@@ -283,14 +388,15 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const struct rectangle *c
 			tile = spritetile16[tile_index++];
 			if( (tile&0x8000)==0 )
 			{
-				/*z*/drawgfxzoom(bitmap,Machine->gfx[mGfxC355],
+				zdrawgfxzoom(
+					bitmap,Machine->gfx[mGfxC355],
 					mpCodeToTile(tile) + offset,
 					color,
 					flipx,flipy,
 					sx,sy,
 					&clip,
 					TRANSPARENCY_PEN,0xff,
-					zoomx, zoomy/*, zpos*/ );
+					zoomx, zoomy, zpos );
 			}
 			if( !flipx )
 			{
@@ -314,7 +420,8 @@ static int DefaultCodeToTile( int code )
 	return code;
 }
 
-void namco_obj_init( int gfxbank, int palXOR, int (*codeToTile)( int code ) )
+void
+namco_obj_init( int gfxbank, int palXOR, int (*codeToTile)( int code ) )
 {
 	mGfxC355 = gfxbank;
 	mPalXOR = palXOR;
@@ -326,7 +433,7 @@ void namco_obj_init( int gfxbank, int palXOR, int (*codeToTile)( int code ) )
 	{
 		mpCodeToTile = DefaultCodeToTile;
 	}
-	spriteram16 = auto_malloc(0x14200);
+	spriteram16 = auto_malloc(0x20000);
 	memset( mSpritePos,0x00,sizeof(mSpritePos) );
 } /* namcosC355_init */
 
@@ -336,8 +443,7 @@ DrawObjectList(
 		const struct rectangle *cliprect,
 		int pri,
 		const data16_t *pSpriteList16,
-		const data16_t *pSpriteTable,
-		int n )
+		const data16_t *pSpriteTable )
 {
 	data16_t which;
 	int i;
@@ -353,15 +459,20 @@ DrawObjectList(
 	for( i=0; i<count; i++ )
 	{
 		which = pSpriteList16[i];
-		draw_spriteC355( n, bitmap, cliprect, &pSpriteTable[(which&0xff)*8], pri, i );
+		draw_spriteC355( bitmap, cliprect, &pSpriteTable[(which&0xff)*8], pri, i );
 	}
 } /* DrawObjectList */
 
 void
 namco_obj_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
-	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x02000/2], &spriteram16[0x00000/2],0 );
-	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x14000/2], &spriteram16[0x10000/2],1 );
+	if( pri==0 )
+	{
+		fillbitmap( priority_bitmap, 0, NULL );
+	}
+
+	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x02000/2], &spriteram16[0x00000/2] );
+	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x14000/2], &spriteram16[0x10000/2] );
 } /* namco_obj_draw */
 
 WRITE16_HANDLER( namco_obj16_w )

@@ -483,6 +483,17 @@ else
 CPUDEFS += -DHAS_M6809=0
 endif
 
+CPU=$(strip $(findstring M6809E@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/m6809
+CPUDEFS += -DHAS_M6809E=1
+CPUOBJS += $(OBJ)/cpu/m6809/m6809.o
+DBGOBJS += $(OBJ)/cpu/m6809/6809dasm.o
+$(OBJ)/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
+else
+CPUDEFS += -DHAS_M6809E=0
+endif
+
 CPU=$(strip $(findstring KONAMI@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/konami
@@ -746,6 +757,17 @@ DBGOBJS += $(OBJ)/cpu/tms32025/32025dsm.o
 $(OBJ)/cpu/tms32025/tms32025.o: tms32025.c tms32025.h
 else
 CPUDEFS += -DHAS_TMS32025=0
+endif
+
+CPU=$(strip $(findstring TMS32026@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/tms32025
+CPUDEFS += -DHAS_TMS32026=1
+CPUOBJS += $(OBJ)/cpu/tms32025/tms32025.o
+DBGOBJS += $(OBJ)/cpu/tms32025/32025dsm.o
+$(OBJ)/cpu/tms32025/tms32025.o: tms32025.c tms32025.h
+else
+CPUDEFS += -DHAS_TMS32026=0
 endif
 
 CPU=$(strip $(findstring TMS32031@,$(CPUS)))

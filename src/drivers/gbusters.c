@@ -117,50 +117,50 @@ static WRITE_HANDLER( gbusters_snd_bankswitch_w )
 #endif
 }
 
-static MEMORY_READ_START( gbusters_readmem )
-	{ 0x1f90, 0x1f90, input_port_3_r },		/* coinsw & startsw */
-	{ 0x1f91, 0x1f91, input_port_4_r },		/* Player 1 inputs */
-	{ 0x1f92, 0x1f92, input_port_5_r },		/* Player 2 inputs */
-	{ 0x1f93, 0x1f93, input_port_2_r },		/* DIPSW #3 */
-	{ 0x1f94, 0x1f94, input_port_0_r },		/* DIPSW #1 */
-	{ 0x1f95, 0x1f95, input_port_1_r },		/* DIPSW #2 */
-	{ 0x0000, 0x3fff, K052109_051960_r },	/* tiles + sprites (RAM H21, G21 & H6) */
-	{ 0x4000, 0x57ff, MRA_RAM },			/* RAM I12 */
-	{ 0x5800, 0x5fff, bankedram_r },		/* palette + work RAM (RAM D16 & C16) */
-	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },			/* ROM 878n02.rom */
-MEMORY_END
+static ADDRESS_MAP_START( gbusters_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1f90, 0x1f90) AM_READ(input_port_3_r)		/* coinsw & startsw */
+	AM_RANGE(0x1f91, 0x1f91) AM_READ(input_port_4_r)		/* Player 1 inputs */
+	AM_RANGE(0x1f92, 0x1f92) AM_READ(input_port_5_r)		/* Player 2 inputs */
+	AM_RANGE(0x1f93, 0x1f93) AM_READ(input_port_2_r)		/* DIPSW #3 */
+	AM_RANGE(0x1f94, 0x1f94) AM_READ(input_port_0_r)		/* DIPSW #1 */
+	AM_RANGE(0x1f95, 0x1f95) AM_READ(input_port_1_r)		/* DIPSW #2 */
+	AM_RANGE(0x0000, 0x3fff) AM_READ(K052109_051960_r)	/* tiles + sprites (RAM H21, G21 & H6) */
+	AM_RANGE(0x4000, 0x57ff) AM_READ(MRA8_RAM)			/* RAM I12 */
+	AM_RANGE(0x5800, 0x5fff) AM_READ(bankedram_r)		/* palette + work RAM (RAM D16 & C16) */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* ROM 878n02.rom */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gbusters_writemem )
-	{ 0x1f80, 0x1f80, gbusters_coin_counter_w },	/* coin counters */
-	{ 0x1f84, 0x1f84, soundlatch_w },				/* sound code # */
-	{ 0x1f88, 0x1f88, gbusters_sh_irqtrigger_w },	/* cause interrupt on audio CPU */
-	{ 0x1f8c, 0x1f8c, watchdog_reset_w },			/* watchdog reset */
-	{ 0x1f98, 0x1f98, gbusters_1f98_w },			/* enable gfx ROM read through VRAM */
-	{ 0x1f9c, 0x1f9c, gbusters_unknown_w },			/* ??? */
-	{ 0x0000, 0x3fff, K052109_051960_w },			/* tiles + sprites (RAM H21, G21 & H6) */
-	{ 0x4000, 0x57ff, MWA_RAM },					/* RAM I12 */
-	{ 0x5800, 0x5fff, bankedram_w, &ram },			/* palette + work RAM (RAM D16 & C16) */
-	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM 878n02.rom */
-MEMORY_END
+static ADDRESS_MAP_START( gbusters_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1f80, 0x1f80) AM_WRITE(gbusters_coin_counter_w)	/* coin counters */
+	AM_RANGE(0x1f84, 0x1f84) AM_WRITE(soundlatch_w)				/* sound code # */
+	AM_RANGE(0x1f88, 0x1f88) AM_WRITE(gbusters_sh_irqtrigger_w)	/* cause interrupt on audio CPU */
+	AM_RANGE(0x1f8c, 0x1f8c) AM_WRITE(watchdog_reset_w)			/* watchdog reset */
+	AM_RANGE(0x1f98, 0x1f98) AM_WRITE(gbusters_1f98_w)			/* enable gfx ROM read through VRAM */
+	AM_RANGE(0x1f9c, 0x1f9c) AM_WRITE(gbusters_unknown_w)			/* ??? */
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(K052109_051960_w)			/* tiles + sprites (RAM H21, G21 & H6) */
+	AM_RANGE(0x4000, 0x57ff) AM_WRITE(MWA8_RAM)					/* RAM I12 */
+	AM_RANGE(0x5800, 0x5fff) AM_WRITE(bankedram_w) AM_BASE(&ram)			/* palette + work RAM (RAM D16 & C16) */
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)					/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM 878n02.rom */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( gbusters_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM 878h01.rom */
-	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
-	{ 0xa000, 0xa000, soundlatch_r },			/* soundlatch_r */
-	{ 0xb000, 0xb00d, K007232_read_port_0_r },	/* 007232 registers */
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },	/* YM 2151 */
-MEMORY_END
+static ADDRESS_MAP_START( gbusters_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)				/* ROM 878h01.rom */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)				/* RAM */
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)			/* soundlatch_r */
+	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)	/* 007232 registers */
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)	/* YM 2151 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gbusters_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM 878h01.rom */
-	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
-	{ 0xb000, 0xb00d, K007232_write_port_0_w },		/* 007232 registers */
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM 2151 */
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM 2151 */
-	{ 0xf000, 0xf000, gbusters_snd_bankswitch_w },	/* 007232 bankswitch? */
-MEMORY_END
+static ADDRESS_MAP_START( gbusters_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)					/* ROM 878h01.rom */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)		/* 007232 registers */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)	/* YM 2151 */
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)		/* YM 2151 */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(gbusters_snd_bankswitch_w)	/* 007232 bankswitch? */
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -308,12 +308,12 @@ static MACHINE_DRIVER_START( gbusters )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(KONAMI, 3000000)	/* Konami custom 052526 */
-	MDRV_CPU_MEMORY(gbusters_readmem,gbusters_writemem)
+	MDRV_CPU_PROGRAM_MAP(gbusters_readmem,gbusters_writemem)
 	MDRV_CPU_VBLANK_INT(gbusters_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
-	MDRV_CPU_MEMORY(gbusters_readmem_sound,gbusters_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(gbusters_readmem_sound,gbusters_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -411,7 +411,7 @@ static MACHINE_INIT( gbusters )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	konami_cpu_setlines_callback = gbusters_banking;
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)gbusters_banking);
 
 	/* mirror address for banked ROM */
 	memcpy(&RAM[0x18000], &RAM[0x10000], 0x08000 );

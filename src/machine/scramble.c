@@ -537,12 +537,12 @@ static WRITE_HANDLER( cavelon_banksw_w )
 
 READ_HANDLER( hunchbks_mirror_r )
 {
-	return cpu_readmem16(0x1000+offset);
+	return program_read_byte(0x1000+offset);
 }
 
 WRITE_HANDLER( hunchbks_mirror_w )
 {
-	cpu_writemem16(0x1000+offset,data);
+	program_write_byte(0x1000+offset,data);
 }
 
 
@@ -941,14 +941,14 @@ DRIVER_INIT( mariner )
 	init_scramble_ppi();
 
 	/* extra ROM */
-	install_mem_read_handler (0, 0x5800, 0x67ff, MRA_ROM);
-	install_mem_write_handler(0, 0x5800, 0x67ff, MWA_ROM);
+	install_mem_read_handler (0, 0x5800, 0x67ff, MRA8_ROM);
+	install_mem_write_handler(0, 0x5800, 0x67ff, MWA8_ROM);
 
 	install_mem_read_handler(0, 0x9008, 0x9008, mariner_protection_2_r);
 	install_mem_read_handler(0, 0xb401, 0xb401, mariner_protection_1_r);
 
 	/* ??? (it's NOT a background enable) */
-	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);*/
+	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA8_NOP);*/
 }
 
 DRIVER_INIT( frogger )
@@ -1038,14 +1038,15 @@ DRIVER_INIT( cavelon )
 	init_scramble_ppi();
 
 	/* banked ROM */
-	install_mem_read_handler(0, 0x0000, 0x3fff, MRA_BANK1);
+	install_mem_read_handler(0, 0x0000, 0x3fff, MRA8_BANK1);
+	cavelon_banksw();
 
 	/* A15 switches memory banks */
 	install_mem_read_handler (0, 0x8000, 0xffff, cavelon_banksw_r);
 	install_mem_write_handler(0, 0x8000, 0xffff, cavelon_banksw_w);
 
-	install_mem_write_handler(0, 0x2000, 0x2000, MWA_NOP);	/* ??? */
-	install_mem_write_handler(0, 0x3800, 0x3801, MWA_NOP);  /* looks suspicously like
+	install_mem_write_handler(0, 0x2000, 0x2000, MWA8_NOP);	/* ??? */
+	install_mem_write_handler(0, 0x3800, 0x3801, MWA8_NOP);  /* looks suspicously like
 															   an AY8910, but not sure */
 }
 

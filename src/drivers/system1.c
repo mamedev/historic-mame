@@ -140,175 +140,188 @@ WRITE_HANDLER( system1_soundport_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xf3ff, MRA_RAM },
-	{ 0xf800, 0xfbff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAMROM },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
-	{ 0xe000, 0xe7ff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
-	{ 0xe800, 0xeeff, MWA_RAM, &system1_videoram, &system1_videoram_size },
-	{ 0xefbd, 0xefbd, MWA_RAM, &system1_scroll_y },
-	{ 0xeffc, 0xeffd, MWA_RAM, &system1_scroll_x },
-	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
-	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(system1_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(system1_backgroundram_w) AM_BASE(&system1_backgroundram) AM_SIZE(&system1_backgroundram_size)
+	AM_RANGE(0xe800, 0xeeff) AM_WRITE(MWA8_RAM) AM_BASE(&system1_videoram) AM_SIZE(&system1_videoram_size)
+	AM_RANGE(0xefbd, 0xefbd) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_y)
+	AM_RANGE(0xeffc, 0xeffd) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_x)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(system1_background_collisionram_w) AM_BASE(&system1_background_collisionram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(system1_sprites_collisionram_w) AM_BASE(&system1_sprites_collisionram)
 
-static MEMORY_WRITE_START( blockgal_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAMROM },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
-	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
-	{ 0xe000, 0xe6ff, MWA_RAM, &system1_videoram, &system1_videoram_size },
-	{ 0xe7bd, 0xe7bd, MWA_RAM, &system1_scroll_y },	// ???
-	{ 0xe7c0, 0xe7c1, MWA_RAM, &system1_scroll_x },
-	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
-	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-MEMORY_END
+	/* these are required to make various games work (teddybb, imsorry, raflesia) */
+	/* these may actually be backed by RAM, or may be mirrors of other RAM areas */
+	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xef00, 0xefbc) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xefbe, 0xeffb) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xeffe, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( brain_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xf3ff, MRA_RAM },
-	{ 0xf800, 0xfbff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( blockgal_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(system1_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe800, 0xeeff) AM_WRITE(system1_backgroundram_w) AM_BASE(&system1_backgroundram) AM_SIZE(&system1_backgroundram_size)
+	AM_RANGE(0xe000, 0xe6ff) AM_WRITE(MWA8_RAM) AM_BASE(&system1_videoram) AM_SIZE(&system1_videoram_size)
+	AM_RANGE(0xe7bd, 0xe7bd) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_y)	// ???
+	AM_RANGE(0xe7c0, 0xe7c1) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_x)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(system1_background_collisionram_w) AM_BASE(&system1_background_collisionram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(system1_sprites_collisionram_w) AM_BASE(&system1_sprites_collisionram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( wbml_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, wbml_paged_videoram_r },
-	{ 0xf020, 0xf03f, MRA_RAM },
-	{ 0xf800, 0xfbff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( brain_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xf3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( wbml_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(wbml_paged_videoram_r)
+	AM_RANGE(0xf000, 0xf3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( wbml_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAMROM },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
-	{ 0xe000, 0xefff, wbml_paged_videoram_w },
-	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
-	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-MEMORY_END
+static ADDRESS_MAP_START( wbml_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(system1_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(wbml_paged_videoram_w)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(system1_background_collisionram_w) AM_BASE(&system1_background_collisionram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(system1_sprites_collisionram_w) AM_BASE(&system1_sprites_collisionram)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( chplft_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAMROM },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
-	{ 0xe7c0, 0xe7ff, choplifter_scroll_x_w, &system1_scrollx_ram },
-	{ 0xe000, 0xe7ff, MWA_RAM, &system1_videoram, &system1_videoram_size },
-	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
-	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
-	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-MEMORY_END
+static ADDRESS_MAP_START( chplft_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(system1_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe7c0, 0xe7ff) AM_WRITE(choplifter_scroll_x_w) AM_BASE(&system1_scrollx_ram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&system1_videoram) AM_SIZE(&system1_videoram_size)
+	AM_RANGE(0xe800, 0xeeff) AM_WRITE(system1_backgroundram_w) AM_BASE(&system1_backgroundram) AM_SIZE(&system1_backgroundram_size)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(system1_background_collisionram_w) AM_BASE(&system1_background_collisionram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(system1_sprites_collisionram_w) AM_BASE(&system1_sprites_collisionram)
 
-static MEMORY_WRITE_START( nobo_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, system1_background_collisionram_w, &system1_background_collisionram },
-	{ 0xc800, 0xcbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd200, 0xd7ff, MWA_RAM },
-	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
-	{ 0xde00, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
-	{ 0xe800, 0xeeff, MWA_RAM, &system1_videoram, &system1_videoram_size },
-	{ 0xefbd, 0xefbd, MWA_RAM, &system1_scroll_y },
-	{ 0xeffc, 0xeffd, MWA_RAM, &system1_scroll_x },
-	{ 0xf000, 0xffff, MWA_RAM },
+	 /* needed for P.O.S.T. */
+	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xef00, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nobo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(system1_background_collisionram_w) AM_BASE(&system1_background_collisionram)
+	AM_RANGE(0xc800, 0xcbff) AM_WRITE(system1_sprites_collisionram_w) AM_BASE(&system1_sprites_collisionram)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(system1_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(system1_backgroundram_w) AM_BASE(&system1_backgroundram) AM_SIZE(&system1_backgroundram_size)
+	AM_RANGE(0xe800, 0xeeff) AM_WRITE(MWA8_RAM) AM_BASE(&system1_videoram) AM_SIZE(&system1_videoram_size)
+	AM_RANGE(0xefbd, 0xefbd) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_y)
+	AM_RANGE(0xeffc, 0xeffd) AM_WRITE(MWA8_RAM) AM_BASE(&system1_scroll_x)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
 
 	/* These addresses are written during P.O.S.T. but don't seem to be used after */
-	{ 0xc400, 0xc7ff, MWA_RAM },
-	{ 0xcc00, 0xcfff, MWA_RAM },
-	{ 0xd200, 0xd7ff, MWA_RAM },
-	{ 0xde00, 0xdfff, MWA_RAM },
-	{ 0xef00, 0xefbc, MWA_RAM },
-	{ 0xefbf, 0xeffb, MWA_RAM },
-	{ 0xeffe, 0xefff, MWA_RAM },
-MEMORY_END
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xef00, 0xefbc) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xefbf, 0xeffb) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xeffe, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r }, /* joy1 */
-	{ 0x04, 0x04, input_port_1_r }, /* joy2 */
-	{ 0x08, 0x08, input_port_2_r }, /* coin,start */
-	{ 0x0c, 0x0c, input_port_3_r }, /* DIP2 */
-	{ 0x0e, 0x0e, input_port_3_r }, /* DIP2 blckgalb reads it from here */
-	{ 0x0d, 0x0d, input_port_4_r }, /* DIP1 some games read it from here... */
-	{ 0x10, 0x10, input_port_4_r }, /* DIP1 ... and some others from here */
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* joy1 */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r) /* joy2 */
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r) /* coin,start */
+	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_3_r) /* DIP2 */
+	AM_RANGE(0x0e, 0x0e) AM_READ(input_port_3_r) /* DIP2 blckgalb reads it from here */
+	AM_RANGE(0x0d, 0x0d) AM_READ(input_port_4_r) /* DIP1 some games read it from here... */
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_4_r) /* DIP1 ... and some others from here */
 									/* but there are games which check BOTH! */
-	{ 0x15, 0x15, system1_videomode_r },
-	{ 0x19, 0x19, system1_videomode_r },    /* mirror address */
-PORT_END
+	AM_RANGE(0x15, 0x15) AM_READ(system1_videomode_r)
+	AM_RANGE(0x19, 0x19) AM_READ(system1_videomode_r)    /* mirror address */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
-	{ 0x15, 0x15, system1_videomode_w },    /* video control and (in some games) bank switching */
-	{ 0x18, 0x18, system1_soundport_w },    /* mirror address */
-	{ 0x19, 0x19, system1_videomode_w },    /* mirror address */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_WRITE(system1_soundport_w)    /* sound commands */
+	AM_RANGE(0x15, 0x15) AM_WRITE(system1_videomode_w)    /* video control and (in some games) bank switching */
+	AM_RANGE(0x18, 0x18) AM_WRITE(system1_soundport_w)    /* mirror address */
+	AM_RANGE(0x19, 0x19) AM_WRITE(system1_videomode_w)    /* mirror address */
+ADDRESS_MAP_END
 
-static PORT_READ_START( wbml_readport )
-	{ 0x00, 0x00, input_port_0_r }, /* joy1 */
-	{ 0x04, 0x04, input_port_1_r }, /* joy2 */
-	{ 0x08, 0x08, input_port_2_r }, /* coin,start */
-	{ 0x0c, 0x0c, input_port_3_r }, /* DIP2 */
-	{ 0x0d, 0x0d, input_port_4_r }, /* DIP1 some games read it from here... */
-	{ 0x10, 0x10, input_port_4_r }, /* DIP1 ... and some others from here */
+static ADDRESS_MAP_START( wbml_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* joy1 */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r) /* joy2 */
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r) /* coin,start */
+	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_3_r) /* DIP2 */
+	AM_RANGE(0x0d, 0x0d) AM_READ(input_port_4_r) /* DIP1 some games read it from here... */
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_4_r) /* DIP1 ... and some others from here */
 									/* but there are games which check BOTH! */
-	{ 0x15, 0x15, system1_videomode_r },
-	{ 0x16, 0x16, wbml_videoram_bank_latch_r },
-	{ 0x19, 0x19, system1_videomode_r },  /* mirror address */
-PORT_END
+	AM_RANGE(0x15, 0x15) AM_READ(system1_videomode_r)
+	AM_RANGE(0x16, 0x16) AM_READ(wbml_videoram_bank_latch_r)
+	AM_RANGE(0x19, 0x19) AM_READ(system1_videomode_r)  /* mirror address */
+ADDRESS_MAP_END
 
-static PORT_READ_START( nobo_readport )
-	{ 0x00, 0x00, input_port_0_r },	/* Player 1 inputs */
-	{ 0x04, 0x04, input_port_1_r },	/* Player 2 inputs */
-	{ 0x08, 0x08, input_port_2_r },	/* System inputs */
-	{ 0x0c, 0x0c, input_port_3_r },	/* DSW1 */
-	{ 0x0d, 0x0d, input_port_4_r },	/* DSW0 */
-	{ 0x15, 0x15, system1_videomode_r },
-	{ 0x16, 0x16, inport16_r },			/* Used - check code at 0x05cb */
-	{ 0x1c, 0x1c, inport1c_r },			/* Shouldn't be called ! */
-	{ 0x22, 0x22, inport22_r },			/* Used - check code at 0xb253 */
-	{ 0x23, 0x23, inport23_r },			/* Used - check code at 0xb275 and 0xb283 */
-PORT_END
+static ADDRESS_MAP_START( nobo_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)	/* Player 1 inputs */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r)	/* Player 2 inputs */
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r)	/* System inputs */
+	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0x0d, 0x0d) AM_READ(input_port_4_r)	/* DSW0 */
+	AM_RANGE(0x15, 0x15) AM_READ(system1_videomode_r)
+	AM_RANGE(0x16, 0x16) AM_READ(inport16_r)			/* Used - check code at 0x05cb */
+	AM_RANGE(0x1c, 0x1c) AM_READ(inport1c_r)			/* Shouldn't be called ! */
+	AM_RANGE(0x22, 0x22) AM_READ(inport22_r)			/* Used - check code at 0xb253 */
+	AM_RANGE(0x23, 0x23) AM_READ(inport23_r)			/* Used - check code at 0xb275 and 0xb283 */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( wbml_writeport )
-	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
-	{ 0x15, 0x15, chplft_videomode_w },
-	{ 0x16, 0x16, wbml_videoram_bank_latch_w },
-PORT_END
+static ADDRESS_MAP_START( wbml_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_WRITE(system1_soundport_w)    /* sound commands */
+	AM_RANGE(0x15, 0x15) AM_WRITE(chplft_videomode_w)
+	AM_RANGE(0x16, 0x16) AM_WRITE(wbml_videoram_bank_latch_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( hvymetal_writeport )
-	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
-	{ 0x19, 0x19, hvymetal_videomode_w },
-PORT_END
+static ADDRESS_MAP_START( hvymetal_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x18, 0x18) AM_WRITE(system1_soundport_w)    /* sound commands */
+	AM_RANGE(0x19, 0x19) AM_WRITE(hvymetal_videomode_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( brain_writeport )
-	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
-	{ 0x19, 0x19, brain_videomode_w },
-PORT_END
+static ADDRESS_MAP_START( brain_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x18, 0x18) AM_WRITE(system1_soundport_w)    /* sound commands */
+	AM_RANGE(0x19, 0x19) AM_WRITE(brain_videomode_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( chplft_writeport )
-	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
-	{ 0x15, 0x15, chplft_videomode_w },
-PORT_END
+static ADDRESS_MAP_START( chplft_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_WRITE(system1_soundport_w)    /* sound commands */
+	AM_RANGE(0x15, 0x15) AM_WRITE(chplft_videomode_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( nobo_writeport )
-	{ 0x14, 0x14, system1_soundport_w },	/* sound commands ? */
-	{ 0x15, 0x15, brain_videomode_w },	/* video control + bank switching */
-	{ 0x16, 0x16, outport16_w },			/* Used - check code at 0x05cb */
-	{ 0x17, 0x17, outport17_w },			/* Not handled in emul. of other SS1/2 games */
-	{ 0x24, 0x24, outport24_w },			/* Used - check code at 0xb24e and 0xb307 */
-PORT_END
+static ADDRESS_MAP_START( nobo_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_WRITE(system1_soundport_w)	/* sound commands ? */
+	AM_RANGE(0x15, 0x15) AM_WRITE(brain_videomode_w)	/* video control + bank switching */
+	AM_RANGE(0x16, 0x16) AM_WRITE(outport16_w)			/* Used - check code at 0x05cb */
+	AM_RANGE(0x17, 0x17) AM_WRITE(outport17_w)			/* Not handled in emul. of other SS1/2 games */
+	AM_RANGE(0x24, 0x24) AM_WRITE(outport24_w)			/* Used - check code at 0xb24e and 0xb307 */
+ADDRESS_MAP_END
 
 
 static unsigned char *work_ram;
@@ -323,21 +336,21 @@ static WRITE_HANDLER( work_ram_w )
 	work_ram[offset] = data;
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, work_ram_r },
-	{ 0x8800, 0x8fff, work_ram_r },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xffff, 0xffff, soundlatch_r },   /* 4D warriors reads also from here - bug? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(work_ram_r)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(work_ram_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xffff, 0xffff) AM_READ(soundlatch_r)   /* 4D warriors reads also from here - bug? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, work_ram_w, &work_ram },
-	{ 0x8800, 0x8fff, work_ram_w },
-	{ 0xa000, 0xa003, SN76496_0_w },    /* Choplifter writes to the four addresses */
-	{ 0xc000, 0xc003, SN76496_1_w },    /* in sequence */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(work_ram_w) AM_BASE(&work_ram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(work_ram_w)
+	AM_RANGE(0xa000, 0xa003) AM_WRITE(SN76496_0_w)    /* Choplifter writes to the four addresses */
+	AM_RANGE(0xc000, 0xc003) AM_WRITE(SN76496_1_w)    /* in sequence */
+ADDRESS_MAP_END
 
 
 #define IN0_PORT \
@@ -427,7 +440,7 @@ INPUT_PORTS_START( starjack )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x38, 0x30, DEF_STR (Bonus_Life ) )
 	PORT_DIPSETTING(	0x38, "Every 20k" )
 	PORT_DIPSETTING(	0x28, "Every 30k" )
@@ -479,7 +492,7 @@ INPUT_PORTS_START( starjacs )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x08, 0x08, "Ship" )
 	PORT_DIPSETTING(	0x08, "Single" )
 	PORT_DIPSETTING(	0x00, "Multi" )
@@ -533,7 +546,7 @@ INPUT_PORTS_START( regulus )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x10, "Unused SW 0-4" )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -587,7 +600,7 @@ INPUT_PORTS_START( reguluso )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x10, "Unused SW 0-4" )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -637,7 +650,7 @@ INPUT_PORTS_START( upndown )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x38, "10000" )
 	PORT_DIPSETTING(	0x30, "20000" )
@@ -692,7 +705,7 @@ INPUT_PORTS_START( mrviking )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "10k, 30k then every 30k" )
 	PORT_DIPSETTING(	0x20, "20k, 40k then every 30k" )
@@ -744,7 +757,7 @@ INPUT_PORTS_START( mrvikngj )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "10k, 30k then every 30k" )
 	PORT_DIPSETTING(	0x20, "20k, 40k then every 30k" )
@@ -793,7 +806,7 @@ INPUT_PORTS_START( swat )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x38, "30000" )
 	PORT_DIPSETTING(	0x30, "40000" )
@@ -849,7 +862,7 @@ INPUT_PORTS_START( flicky )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "30000 80000 160000" )
 	PORT_DIPSETTING(	0x20, "30000 100000 200000" )
@@ -957,7 +970,7 @@ INPUT_PORTS_START( bullfgt )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "30000" )
 	PORT_DIPSETTING(	0x20, "50000" )
@@ -1007,7 +1020,7 @@ INPUT_PORTS_START( spatter )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "40k, 120k and 480k" )
 	PORT_DIPSETTING(	0x20, "50k and 200k" )
@@ -1057,7 +1070,7 @@ INPUT_PORTS_START( pitfall2 )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x10, "20000 50000" )
 	PORT_DIPSETTING(	0x00, "30000 70000" )
@@ -1107,7 +1120,7 @@ INPUT_PORTS_START( pitfallu )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x18, 0x18, "Starting Stage" )
 	PORT_DIPSETTING(	0x18, "1" )
 	PORT_DIPSETTING(	0x10, "2" )
@@ -1162,7 +1175,7 @@ INPUT_PORTS_START( seganinj )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "240" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x10, "20k 70k 120k 170k" )
 	PORT_DIPSETTING(	0x00, "50k 100k 150k 200k" )
@@ -1213,7 +1226,7 @@ INPUT_PORTS_START( imsorry )
 	PORT_DIPSETTING(	0x0C, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "30000" )
 	PORT_DIPSETTING(	0x20, "40000" )
@@ -1263,7 +1276,7 @@ INPUT_PORTS_START( teddybb )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "252", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "252" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "100k 400k" )
 	PORT_DIPSETTING(	0x20, "200k 600k" )
@@ -1313,7 +1326,7 @@ INPUT_PORTS_START( hvymetal )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "50000 100000" )
 	PORT_DIPSETTING(	0x20, "60000 120000" )
@@ -1365,7 +1378,7 @@ INPUT_PORTS_START( myhero )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "30000" )
 	PORT_DIPSETTING(	0x20, "50000" )
@@ -1412,7 +1425,7 @@ INPUT_PORTS_START( shtngmst )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "100k 500k" )
 	PORT_DIPSETTING(	0x20, "150k 600k" )
@@ -1463,7 +1476,7 @@ INPUT_PORTS_START( chplft )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -1516,7 +1529,7 @@ INPUT_PORTS_START( 4dwarrio )
 	PORT_DIPSETTING(	0x06, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x38, "30000" )
 	PORT_DIPSETTING(	0x30, "40000" )
@@ -1570,7 +1583,7 @@ INPUT_PORTS_START( brain )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -1623,7 +1636,7 @@ INPUT_PORTS_START( raflesia )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "20k, 70k and 120k" )
 	PORT_DIPSETTING(	0x20, "30k, 80k and 150k" )
@@ -1673,7 +1686,7 @@ INPUT_PORTS_START( wboy )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x10, "30k 100k 170k 240k" )
 	PORT_DIPSETTING(	0x00, "30k 120k 210k 300k" )
@@ -1728,7 +1741,7 @@ INPUT_PORTS_START( wbdeluxe )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x10, "30k 100k 170k 240k" )
 	PORT_DIPSETTING(	0x00, "30k 120k 210k 300k" )
@@ -2003,7 +2016,7 @@ INPUT_PORTS_START( wbml )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x20, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_BITX(	0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Test Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
@@ -2073,7 +2086,7 @@ INPUT_PORTS_START( noboranb )
 	PORT_DIPSETTING(	0x02, "2" )
 	PORT_DIPSETTING(	0x03, "3" )
 	PORT_DIPSETTING(	0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "99" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x08, "40k, 80k, 120k and 160k" )
 	PORT_DIPSETTING(	0x0c, "50k, 100k and 150k" )
@@ -2126,13 +2139,13 @@ static MACHINE_DRIVER_START( system1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2182,8 +2195,8 @@ static MACHINE_DRIVER_START( hvymetal )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(brain_readmem,writemem)
-	MDRV_CPU_PORTS(wbml_readport,hvymetal_writeport)
+	MDRV_CPU_PROGRAM_MAP(brain_readmem,writemem)
+	MDRV_CPU_IO_MAP(wbml_readport,hvymetal_writeport)
 
 MACHINE_DRIVER_END
 
@@ -2193,8 +2206,8 @@ static MACHINE_DRIVER_START( chplft )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(brain_readmem,chplft_writemem)
-	MDRV_CPU_PORTS(wbml_readport,chplft_writeport)
+	MDRV_CPU_PROGRAM_MAP(brain_readmem,chplft_writemem)
+	MDRV_CPU_IO_MAP(wbml_readport,chplft_writeport)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(choplifter)
@@ -2207,8 +2220,8 @@ static MACHINE_DRIVER_START( brain )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(brain_readmem,writemem)
-	MDRV_CPU_PORTS(readport,brain_writeport)
+	MDRV_CPU_PROGRAM_MAP(brain_readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,brain_writeport)
 
 MACHINE_DRIVER_END
 
@@ -2218,8 +2231,8 @@ static MACHINE_DRIVER_START( wbml )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(wbml_readmem,wbml_writemem)
-	MDRV_CPU_PORTS(wbml_readport,wbml_writeport)
+	MDRV_CPU_PROGRAM_MAP(wbml_readmem,wbml_writemem)
+	MDRV_CPU_IO_MAP(wbml_readport,wbml_writeport)
 
 	MDRV_MACHINE_INIT(wbml)
 
@@ -2233,8 +2246,8 @@ static MACHINE_DRIVER_START( noboranb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_REPLACE( "main", Z80, 8000000)    /* ? guess ? */
-	MDRV_CPU_MEMORY(brain_readmem,nobo_writemem)
-	MDRV_CPU_PORTS(nobo_readport,nobo_writeport)
+	MDRV_CPU_PROGRAM_MAP(brain_readmem,nobo_writemem)
+	MDRV_CPU_IO_MAP(nobo_readport,nobo_writeport)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 28*8-1)
@@ -2246,7 +2259,7 @@ static MACHINE_DRIVER_START( blockgal )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( system1 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,blockgal_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,blockgal_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(blockgal)

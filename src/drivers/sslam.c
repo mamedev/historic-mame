@@ -55,49 +55,49 @@ VIDEO_UPDATE(sslam);
 
 /* these will need verifying .. the game writes all over the place ... */
 
-static MEMORY_READ16_START( sslam_readmem )
-	{ 0x000000, 0x0003ff, MRA16_ROM },
+static ADDRESS_MAP_START( sslam_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0003ff) AM_READ(MRA16_ROM)
 
-	{ 0x000400, 0x0107ff, MRA16_RAM },
-	{ 0x020000, 0x07ffff, MRA16_RAM },
+	AM_RANGE(0x000400, 0x0107ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x020000, 0x07ffff) AM_READ(MRA16_RAM)
 
-	{ 0x100000, 0x10ffff, MRA16_RAM },
-	{ 0x280000, 0x280fff, MRA16_RAM },
-	{ 0x201000, 0x220fff, MRA16_RAM },
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x280000, 0x280fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x201000, 0x220fff) AM_READ(MRA16_RAM)
 
-	{ 0x300010, 0x300011, input_port_0_word_r },
-	{ 0x300012, 0x300013, input_port_1_word_r },
-	{ 0x300014, 0x300015, input_port_2_word_r },
-	{ 0x300016, 0x300017, input_port_3_word_r },
-	{ 0x300018, 0x300019, input_port_4_word_r },
+	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300012, 0x300013) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x300014, 0x300015) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x300016, 0x300017) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x300018, 0x300019) AM_READ(input_port_4_word_r)
 
-	{ 0x30001a, 0x30001b, input_port_5_word_r },
-	{ 0x30001c, 0x30001d, input_port_6_word_r },
+	AM_RANGE(0x30001a, 0x30001b) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x30001c, 0x30001d) AM_READ(input_port_6_word_r)
 
-	{ 0xc00000, 0xcfffff, MRA16_ROM },
+	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA16_ROM)
 
-	{ 0xfe0000, 0xfeffff, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sslam_writemem )
-	{ 0x000000, 0x0003ff, MWA16_ROM },
+static ADDRESS_MAP_START( sslam_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0003ff) AM_WRITE(MWA16_ROM)
 
-	{ 0x000400, 0x0107ff, MWA16_RAM },
-	{ 0x020000, 0x07ffff, MWA16_RAM },
+	AM_RANGE(0x000400, 0x0107ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x020000, 0x07ffff) AM_WRITE(MWA16_RAM)
 
-	{ 0x100000, 0x103fff, sslam_bg_tileram_w, &sslam_bg_tileram },
-	{ 0x104000, 0x107fff, sslam_md_tileram_w, &sslam_md_tileram },
-	{ 0x108000, 0x10ffff, sslam_tx_tileram_w, &sslam_tx_tileram },
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(sslam_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
+	AM_RANGE(0x104000, 0x107fff) AM_WRITE(sslam_md_tileram_w) AM_BASE(&sslam_md_tileram)
+	AM_RANGE(0x108000, 0x10ffff) AM_WRITE(sslam_tx_tileram_w) AM_BASE(&sslam_tx_tileram)
 
-	{ 0x110000, 0x11000f, MWA16_RAM, &sslam_regs },
+	AM_RANGE(0x110000, 0x11000f) AM_WRITE(MWA16_RAM) AM_BASE(&sslam_regs)
 
-	{ 0x280000, 0x280fff, bigtwin_paletteram_w, &paletteram16 },
-	{ 0x201000, 0x220fff, MWA16_RAM, &sslam_spriteram }, /* probably not all of it .. */
+	AM_RANGE(0x280000, 0x280fff) AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x201000, 0x220fff) AM_WRITE(MWA16_RAM) AM_BASE(&sslam_spriteram) /* probably not all of it .. */
 
-	{ 0xc00000, 0xcfffff, MWA16_ROM },
+	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA16_ROM)
 
-	{ 0xfe0000, 0xfeffff, MWA16_RAM },
-MEMORY_END
+	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /* Input Ports */
 
@@ -244,7 +244,7 @@ static MACHINE_DRIVER_START( sslam )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
-	MDRV_CPU_MEMORY(sslam_readmem,sslam_writemem)
+	MDRV_CPU_PROGRAM_MAP(sslam_readmem,sslam_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

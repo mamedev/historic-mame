@@ -589,8 +589,8 @@ DRIVER_INIT( pceboard )
 	ppu_latch = mapper9_latch;
 
 	/* nvram at $6000-$6fff */
-	install_mem_read_handler( 1, 0x6000, 0x6fff, MRA_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x6fff, MWA_RAM );
+	install_mem_read_handler( 1, 0x6000, 0x6fff, MRA8_RAM );
+	install_mem_write_handler( 1, 0x6000, 0x6fff, MWA8_RAM );
 
 	/* common init */
 	init_playch10();
@@ -777,8 +777,8 @@ DRIVER_INIT( pcgboard )
 	install_mem_write_handler( 1, 0x8000, 0xffff, gboard_rom_switch_w );
 
 	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_RAM );
 
 	gboard_banks[0] = 0x1e;
 	gboard_banks[1] = 0x1f;
@@ -841,8 +841,8 @@ DRIVER_INIT( pchboard )
 	install_mem_write_handler( 1, 0x8000, 0xffff, gboard_rom_switch_w );
 
 	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_RAM );
 
 	gboard_banks[0] = 0x1e;
 	gboard_banks[1] = 0x1f;

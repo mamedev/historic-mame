@@ -96,174 +96,174 @@ static WRITE_HANDLER( sound_select_w )
 
 
 
-static MEMORY_READ_START( lasso_readmem )
-	{ 0x0000, 0x0c7f, MRA_RAM },
-	{ 0x1000, 0x17ff, lasso_sharedram_r	},
-	{ 0x1804, 0x1804, input_port_0_r },
-	{ 0x1805, 0x1805, input_port_1_r },
-	{ 0x1806, 0x1806, input_port_2_r },
-	{ 0x1807, 0x1807, input_port_3_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0c7f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x17ff) AM_READ(lasso_sharedram_r	)
+	AM_RANGE(0x1804, 0x1804) AM_READ(input_port_0_r)
+	AM_RANGE(0x1805, 0x1805) AM_READ(input_port_1_r)
+	AM_RANGE(0x1806, 0x1806) AM_READ(input_port_2_r)
+	AM_RANGE(0x1807, 0x1807) AM_READ(input_port_3_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( lasso_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, lasso_videoram_w, &lasso_videoram },
-	{ 0x0800, 0x0bff, lasso_colorram_w, &lasso_colorram },
-	{ 0x0c00, 0x0c7f, MWA_RAM, &lasso_spriteram, &lasso_spriteram_size },
-	{ 0x1000, 0x17ff, lasso_sharedram_w	},
-	{ 0x1800, 0x1800, sound_command_w },
-	{ 0x1801, 0x1801, lasso_backcolor_w	},
-	{ 0x1802, 0x1802, lasso_video_control_w },
-	{ 0x1806, 0x1806, MWA_NOP },	// games uses 'lsr' to read port
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ_START( chameleo_readmem )
-	{ 0x0000, 0x10ff, MRA_RAM },
-	{ 0x1804, 0x1804, input_port_0_r },
-	{ 0x1805, 0x1805, input_port_1_r },
-	{ 0x1806, 0x1806, input_port_2_r },
-	{ 0x1807, 0x1807, input_port_3_r },
-	{ 0x2000, 0xffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( chameleo_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, lasso_videoram_w, &lasso_videoram },
-	{ 0x0800, 0x0bff, lasso_colorram_w, &lasso_colorram },
-	{ 0x0c00, 0x0fff, MWA_RAM },	//
-	{ 0x1000, 0x107f, MWA_RAM, &lasso_spriteram, &lasso_spriteram_size },
-	{ 0x1080, 0x10ff, MWA_RAM },
-	{ 0x1800, 0x1800, sound_command_w },
-	{ 0x1801, 0x1801, lasso_backcolor_w	},
-	{ 0x1802, 0x1802, lasso_video_control_w },
-	{ 0x2000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(lasso_videoram_w) AM_BASE(&lasso_videoram)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(lasso_colorram_w) AM_BASE(&lasso_colorram)
+	AM_RANGE(0x0c00, 0x0c7f) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_spriteram) AM_SIZE(&lasso_spriteram_size)
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(lasso_sharedram_w	)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(sound_command_w)
+	AM_RANGE(0x1801, 0x1801) AM_WRITE(lasso_backcolor_w	)
+	AM_RANGE(0x1802, 0x1802) AM_WRITE(lasso_video_control_w)
+	AM_RANGE(0x1806, 0x1806) AM_WRITE(MWA8_NOP)	// games uses 'lsr' to read port
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( wwjgtin_readmem )
-	{ 0x0000, 0x10ff, MRA_RAM },
-	{ 0x1804, 0x1804, input_port_0_r },
-	{ 0x1805, 0x1805, input_port_1_r },
-	{ 0x1806, 0x1806, input_port_2_r },
-	{ 0x1807, 0x1807, input_port_3_r },
-	{ 0x5000, 0xbfff, MRA_ROM },
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( chameleo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1804, 0x1804) AM_READ(input_port_0_r)
+	AM_RANGE(0x1805, 0x1805) AM_READ(input_port_1_r)
+	AM_RANGE(0x1806, 0x1806) AM_READ(input_port_2_r)
+	AM_RANGE(0x1807, 0x1807) AM_READ(input_port_3_r)
+	AM_RANGE(0x2000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( wwjgtin_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0bff, lasso_videoram_w, &lasso_videoram },
-	{ 0x0c00, 0x0fff, lasso_colorram_w, &lasso_colorram },
-	{ 0x1000, 0x10ff, MWA_RAM, &lasso_spriteram, &lasso_spriteram_size },
-	{ 0x1800, 0x1800, sound_command_w },
-	{ 0x1801, 0x1801, lasso_backcolor_w	},
-	{ 0x1802, 0x1802, wwjgtin_video_control_w	},
-	{ 0x1c00, 0x1c03, wwjgtin_lastcolor_w },
-	{ 0x1c04, 0x1c07, MWA_RAM, &wwjgtin_track_scroll },
-	{ 0x5000, 0xbfff, MWA_ROM },
-	{ 0xfffa, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( chameleo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(lasso_videoram_w) AM_BASE(&lasso_videoram)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(lasso_colorram_w) AM_BASE(&lasso_colorram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(MWA8_RAM)	//
+	AM_RANGE(0x1000, 0x107f) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_spriteram) AM_SIZE(&lasso_spriteram_size)
+	AM_RANGE(0x1080, 0x10ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(sound_command_w)
+	AM_RANGE(0x1801, 0x1801) AM_WRITE(lasso_backcolor_w	)
+	AM_RANGE(0x1802, 0x1802) AM_WRITE(lasso_video_control_w)
+	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( pinbo_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, lasso_videoram_w, &lasso_videoram },
-	{ 0x0800, 0x0bff, lasso_colorram_w, &lasso_colorram },
-	{ 0x1000, 0x10ff, MWA_RAM, &lasso_spriteram, &lasso_spriteram_size },
-	{ 0x1800, 0x1800, sound_command_w },
-	{ 0x1802, 0x1802, pinbo_video_control_w },
-	{ 0x2000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( wwjgtin_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1804, 0x1804) AM_READ(input_port_0_r)
+	AM_RANGE(0x1805, 0x1805) AM_READ(input_port_1_r)
+	AM_RANGE(0x1806, 0x1806) AM_READ(input_port_2_r)
+	AM_RANGE(0x1807, 0x1807) AM_READ(input_port_3_r)
+	AM_RANGE(0x5000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xfffa, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( wwjgtin_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(lasso_videoram_w) AM_BASE(&lasso_videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(lasso_colorram_w) AM_BASE(&lasso_colorram)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_spriteram) AM_SIZE(&lasso_spriteram_size)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(sound_command_w)
+	AM_RANGE(0x1801, 0x1801) AM_WRITE(lasso_backcolor_w	)
+	AM_RANGE(0x1802, 0x1802) AM_WRITE(wwjgtin_video_control_w	)
+	AM_RANGE(0x1c00, 0x1c03) AM_WRITE(wwjgtin_lastcolor_w)
+	AM_RANGE(0x1c04, 0x1c07) AM_WRITE(MWA8_RAM) AM_BASE(&wwjgtin_track_scroll)
+	AM_RANGE(0x5000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xfffa, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( lasso_coprocessor_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x8000, 0x8fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( lasso_coprocessor_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM, &lasso_sharedram},
-	{ 0x2000, 0x3fff, MWA_RAM, &lasso_bitmap_ram },
-	{ 0x8000, 0x8fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pinbo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(lasso_videoram_w) AM_BASE(&lasso_videoram)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(lasso_colorram_w) AM_BASE(&lasso_colorram)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_spriteram) AM_SIZE(&lasso_spriteram_size)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(sound_command_w)
+	AM_RANGE(0x1802, 0x1802) AM_WRITE(pinbo_video_control_w)
+	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( lasso_sound_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xb004, 0xb004, sound_status_r },
-	{ 0xb005, 0xb005, soundlatch_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_coprocessor_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( lasso_sound_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x5000, 0x7fff, MWA_ROM },
-	{ 0xb000, 0xb000, sound_data_w },
-	{ 0xb001, 0xb001, sound_select_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_coprocessor_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_sharedram)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&lasso_bitmap_ram)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( chameleo_sound_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_ROM },
-	{ 0x6000, 0x7fff, MRA_ROM },
-	{ 0xb004, 0xb004, sound_status_r },
-	{ 0xb005, 0xb005, soundlatch_r },
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb004, 0xb004) AM_READ(sound_status_r)
+	AM_RANGE(0xb005, 0xb005) AM_READ(soundlatch_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( chameleo_sound_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x1000, 0x1fff, MWA_ROM },
-	{ 0x6000, 0x7fff, MWA_ROM },
-	{ 0xb000, 0xb000, sound_data_w },
-	{ 0xb001, 0xb001, sound_select_w },
-	{ 0xfffa, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lasso_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(sound_data_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(sound_select_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( wwjgtin_sound_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x5000, 0x7fff, MWA_ROM },
-	{ 0xb000, 0xb000, sound_data_w },
-	{ 0xb001, 0xb001, sound_select_w },
-	{ 0xb003, 0xb003, DAC_0_data_w },
-	{ 0xfffa, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( chameleo_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb004, 0xb004) AM_READ(sound_status_r)
+	AM_RANGE(0xb005, 0xb005) AM_READ(soundlatch_r)
+	AM_RANGE(0xfffa, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( chameleo_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(sound_data_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(sound_select_w)
+	AM_RANGE(0xfffa, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( pinbo_sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( wwjgtin_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(sound_data_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(sound_select_w)
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0xfffa, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pinbo_sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
 
-static PORT_READ_START( pinbo_sound_readport )
-	{ 0x02, 0x02, AY8910_read_port_0_r },
-	{ 0x06, 0x06, AY8910_read_port_1_r },
-	{ 0x08, 0x08, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( pinbo_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( pinbo_sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x04, 0x04, AY8910_control_port_1_w },
-	{ 0x05, 0x05, AY8910_write_port_1_w },
-	{ 0x08, 0x08, MWA_NOP },	/* ??? */
-	{ 0x14, 0x14, MWA_NOP },	/* ??? */
-PORT_END
+static ADDRESS_MAP_START( pinbo_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pinbo_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pinbo_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x14, 0x14) AM_WRITE(MWA8_NOP)	/* ??? */
+ADDRESS_MAP_END
 
 
 
@@ -704,15 +704,15 @@ static MACHINE_DRIVER_START( lasso )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 2000000)	/* 2 MHz (?) */
-	MDRV_CPU_MEMORY(lasso_readmem,lasso_writemem)
+	MDRV_CPU_PROGRAM_MAP(lasso_readmem,lasso_writemem)
 	MDRV_CPU_VBLANK_INT(lasso_interrupt,2)		/* IRQ = VBlank, NMI = Coin Insertion */
 
 	MDRV_CPU_ADD_TAG("audio", M6502, 600000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ?? (controls music tempo) */
-	MDRV_CPU_MEMORY(lasso_sound_readmem,lasso_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(lasso_sound_readmem,lasso_sound_writemem)
 
 	MDRV_CPU_ADD_TAG("blitter", M6502, 2000000)	/* 2 MHz (?) */
-	MDRV_CPU_MEMORY(lasso_coprocessor_readmem,lasso_coprocessor_writemem)
+	MDRV_CPU_PROGRAM_MAP(lasso_coprocessor_readmem,lasso_coprocessor_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -738,10 +738,10 @@ static MACHINE_DRIVER_START( chameleo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(lasso)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(chameleo_readmem,chameleo_writemem)
+	MDRV_CPU_PROGRAM_MAP(chameleo_readmem,chameleo_writemem)
 
 	MDRV_CPU_MODIFY("audio")
-	MDRV_CPU_MEMORY(chameleo_sound_readmem,chameleo_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(chameleo_sound_readmem,chameleo_sound_writemem)
 
 	MDRV_CPU_REMOVE("blitter")
 
@@ -754,10 +754,10 @@ static MACHINE_DRIVER_START( wwjgtin )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(lasso)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(wwjgtin_readmem,wwjgtin_writemem)
+	MDRV_CPU_PROGRAM_MAP(wwjgtin_readmem,wwjgtin_writemem)
 
 	MDRV_CPU_MODIFY("audio")
-	MDRV_CPU_MEMORY(lasso_sound_readmem,wwjgtin_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(lasso_sound_readmem,wwjgtin_sound_writemem)
 
 	MDRV_CPU_REMOVE("blitter")
 
@@ -780,11 +780,11 @@ static MACHINE_DRIVER_START( pinbo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(lasso)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(chameleo_readmem,pinbo_writemem)
+	MDRV_CPU_PROGRAM_MAP(chameleo_readmem,pinbo_writemem)
 
 	MDRV_CPU_REPLACE("audio", Z80, 3000000)
-	MDRV_CPU_MEMORY(pinbo_sound_readmem,pinbo_sound_writemem)
-	MDRV_CPU_PORTS(pinbo_sound_readport,pinbo_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(pinbo_sound_readmem,pinbo_sound_writemem)
+	MDRV_CPU_IO_MAP(pinbo_sound_readport,pinbo_sound_writeport)
 
 	MDRV_CPU_REMOVE("blitter")
 

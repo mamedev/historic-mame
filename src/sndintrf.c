@@ -202,8 +202,6 @@ void soundlatch_setclearedvalue(int value)
 ***************************************************************************/
 
 static void *sound_update_timer;
-static double refresh_period;
-static double refresh_period_inv;
 
 
 struct snd_interface
@@ -1223,8 +1221,6 @@ logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sn
 	/* samples will be read later if needed */
 	Machine->samples = 0;
 
-	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
-	refresh_period_inv = 1.0 / refresh_period;
 	sound_update_timer = timer_alloc(NULL);
 
 	if (mixer_sh_start() != 0)
@@ -1345,7 +1341,7 @@ int sound_clock(const struct MachineSound *msound)
 
 int sound_scalebufferpos(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed(sound_update_timer) * refresh_period_inv);
+	int result = (int)((double)value * timer_timeelapsed(sound_update_timer) * Machine->refresh_rate);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }

@@ -157,36 +157,36 @@
  *
  *************************************/
 
-static MEMORY_READ_START( turbo_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xb000, 0xb1ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf803, ppi8255_0_r },
-	{ 0xf900, 0xf903, ppi8255_1_r },
-	{ 0xfa00, 0xfa03, ppi8255_2_r },
-	{ 0xfb00, 0xfb03, ppi8255_3_r },
-	{ 0xfc00, 0xfcff, turbo_8279_r },
-	{ 0xfd00, 0xfdff, input_port_0_r },
-	{ 0xfe00, 0xfeff, turbo_collision_r },
-MEMORY_END
+static ADDRESS_MAP_START( turbo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb000, 0xb1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf803) AM_READ(ppi8255_0_r)
+	AM_RANGE(0xf900, 0xf903) AM_READ(ppi8255_1_r)
+	AM_RANGE(0xfa00, 0xfa03) AM_READ(ppi8255_2_r)
+	AM_RANGE(0xfb00, 0xfb03) AM_READ(ppi8255_3_r)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ(turbo_8279_r)
+	AM_RANGE(0xfd00, 0xfdff) AM_READ(input_port_0_r)
+	AM_RANGE(0xfe00, 0xfeff) AM_READ(turbo_collision_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( turbo_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xa800, 0xa807, turbo_coin_and_lamp_w },
-	{ 0xb000, 0xb1ff, MWA_RAM, &sega_sprite_position },
-	{ 0xb800, 0xb800, MWA_NOP },	/* resets the analog wheel value */
-	{ 0xe000, 0xe7ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xe800, 0xe800, turbo_collision_clear_w },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf803, ppi8255_0_w },
-	{ 0xf900, 0xf903, ppi8255_1_w },
-	{ 0xfa00, 0xfa03, ppi8255_2_w },
-	{ 0xfb00, 0xfb03, ppi8255_3_w },
-	{ 0xfc00, 0xfcff, turbo_8279_w },
-MEMORY_END
+static ADDRESS_MAP_START( turbo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa800, 0xa807) AM_WRITE(turbo_coin_and_lamp_w)
+	AM_RANGE(0xb000, 0xb1ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* resets the analog wheel value */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(turbo_collision_clear_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf803) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0xf900, 0xf903) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xfa00, 0xfa03) AM_WRITE(ppi8255_2_w)
+	AM_RANGE(0xfb00, 0xfb03) AM_WRITE(ppi8255_3_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(turbo_8279_w)
+ADDRESS_MAP_END
 
 
 
@@ -196,30 +196,30 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( subroc3d_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xa800, input_port_0_r },
-	{ 0xa801, 0xa801, input_port_1_r },
-	{ 0xa802, 0xa802, input_port_2_r },
-	{ 0xa803, 0xa803, input_port_3_r },
-	{ 0xb000, 0xb7ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xe803, ppi8255_0_r },
-	{ 0xf000, 0xf003, ppi8255_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( subroc3d_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_0_r)
+	AM_RANGE(0xa801, 0xa801) AM_READ(input_port_1_r)
+	AM_RANGE(0xa802, 0xa802) AM_READ(input_port_2_r)
+	AM_RANGE(0xa803, 0xa803) AM_READ(input_port_3_r)
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xe803) AM_READ(ppi8255_0_r)
+	AM_RANGE(0xf000, 0xf003) AM_READ(ppi8255_1_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( subroc3d_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xa000, 0xa3ff, MWA_RAM, &sega_sprite_position },
-	{ 0xa400, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xb000, 0xb7ff, MWA_RAM },
-	{ 0xe000, 0xe7ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xe800, 0xe803, ppi8255_0_w },
-	{ 0xf000, 0xf003, ppi8255_1_w },
-	{ 0xf800, 0xf801, turbo_8279_w },
-MEMORY_END
+static ADDRESS_MAP_START( subroc3d_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xa400, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xe803) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0xf000, 0xf003) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(turbo_8279_w)
+ADDRESS_MAP_END
 
 
 
@@ -229,47 +229,47 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( buckrog_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc803, ppi8255_0_r },
-	{ 0xd000, 0xd003, ppi8255_1_r },
-	{ 0xe000, 0xe1ff, MRA_RAM },
-	{ 0xe800, 0xe800, input_port_0_r },
-	{ 0xe801, 0xe801, input_port_1_r },
-	{ 0xe802, 0xe802, buckrog_port_2_r },
-	{ 0xe803, 0xe803, buckrog_port_3_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( buckrog_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc803) AM_READ(ppi8255_0_r)
+	AM_RANGE(0xd000, 0xd003) AM_READ(ppi8255_1_r)
+	AM_RANGE(0xe000, 0xe1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
+	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
+	AM_RANGE(0xe802, 0xe802) AM_READ(buckrog_port_2_r)
+	AM_RANGE(0xe803, 0xe803) AM_READ(buckrog_port_3_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( buckrog_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xc800, 0xc803, ppi8255_0_w },
-	{ 0xd000, 0xd003, ppi8255_1_w },
-	{ 0xd800, 0xd801, turbo_8279_w },
-	{ 0xe000, 0xe1ff, MWA_RAM, &sega_sprite_position },
-	{ 0xe400, 0xe4ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( buckrog_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc800, 0xc803) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0xd000, 0xd003) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xd800, 0xd801) AM_WRITE(turbo_8279_w)
+	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xe400, 0xe4ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( buckrog_readmem2 )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( buckrog_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( buckrog_readport2 )
-	{ 0x00, 0x00, buckrog_cpu2_command_r },
-PORT_END
+static ADDRESS_MAP_START( buckrog_readport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(buckrog_cpu2_command_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( buckrog_writemem2 )
-	{ 0x0000, 0xdfff, buckrog_bitmap_w },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( buckrog_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(buckrog_bitmap_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -575,7 +575,7 @@ static MACHINE_DRIVER_START( turbo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(turbo_readmem,turbo_writemem)
+	MDRV_CPU_PROGRAM_MAP(turbo_readmem,turbo_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -602,7 +602,7 @@ static MACHINE_DRIVER_START( subroc3d )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(subroc3d_readmem,subroc3d_writemem)
+	MDRV_CPU_PROGRAM_MAP(subroc3d_readmem,subroc3d_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -628,12 +628,12 @@ static MACHINE_DRIVER_START( buckrog )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(buckrog_readmem,buckrog_writemem)
+	MDRV_CPU_PROGRAM_MAP(buckrog_readmem,buckrog_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(buckrog_readmem2,buckrog_writemem2)
-	MDRV_CPU_PORTS(buckrog_readport2,0)
+	MDRV_CPU_PROGRAM_MAP(buckrog_readmem2,buckrog_writemem2)
+	MDRV_CPU_IO_MAP(buckrog_readport2,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

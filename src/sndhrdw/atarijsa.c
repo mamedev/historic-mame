@@ -700,72 +700,72 @@ static void update_all_volumes(void)
  *
  *************************************/
 
-MEMORY_READ_START( atarijsa1_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x2800, 0x2bff, jsa1_io_r },
-	{ 0x3000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa1_io_r)
+	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( atarijsa1_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2bff, jsa1_io_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa1_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_READ_START( atarijsa2_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x2800, 0x2bff, jsa2_io_r },
-	{ 0x3000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa2_io_r)
+	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( atarijsa2_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2bff, jsa2_io_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa2_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_READ_START( atarijsa3_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x2800, 0x2bff, jsa3_io_r },
-	{ 0x3000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa3_io_r)
+	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( atarijsa3_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2bff, jsa3_io_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa3_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_READ_START( atarijsa3s_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x2800, 0x2bff, jsa3s_io_r },
-	{ 0x3000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa3s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa3s_io_r)
+	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( atarijsa3s_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2bff, jsa3s_io_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( atarijsa3s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa3s_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -839,7 +839,7 @@ MACHINE_DRIVER_START( jsa_i_stereo )
 	
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
-	MDRV_CPU_MEMORY(atarijsa1_readmem,atarijsa1_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa1_readmem,atarijsa1_writemem)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
 	
 	/* sound hardware */
@@ -888,7 +888,7 @@ MACHINE_DRIVER_START( jsa_ii_mono )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_i_stereo)
 	MDRV_CPU_MODIFY("jsa")
-	MDRV_CPU_MEMORY(atarijsa2_readmem,atarijsa2_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa2_readmem,atarijsa2_writemem)
 	
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
@@ -902,7 +902,7 @@ MACHINE_DRIVER_START( jsa_iii_mono )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 	MDRV_CPU_MODIFY("jsa")
-	MDRV_CPU_MEMORY(atarijsa3_readmem,atarijsa3_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa3_readmem,atarijsa3_writemem)
 MACHINE_DRIVER_END
 
 
@@ -923,7 +923,7 @@ MACHINE_DRIVER_START( jsa_iiis_stereo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_iii_mono)
 	MDRV_CPU_MODIFY("jsa")
-	MDRV_CPU_MEMORY(atarijsa3s_readmem,atarijsa3s_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa3s_readmem,atarijsa3s_writemem)
 	
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)

@@ -173,6 +173,8 @@ static char *opcode_strings[0x0100] =
 };
 #endif
 
+static unsigned m6805_get_reg(int reg) { union cpuinfo info; m6805_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+
 unsigned Dasm6805 (char *buf, unsigned pc)
 {
 	const char *sym1, *sym2;

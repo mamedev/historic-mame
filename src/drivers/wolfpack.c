@@ -168,53 +168,53 @@ static WRITE_HANDLER( wolfpack_coldetres_w )
 }
 
 
-static MEMORY_READ_START( wolfpack_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x01ff, wolfpack_zeropage_r },
-	{ 0x1000, 0x1000, wolfpack_input_r },
-	{ 0x2000, 0x2000, wolfpack_misc_r },
-	{ 0x3000, 0x3000, input_port_1_r },
-	{ 0x7000, 0x7fff, MRA_ROM },
-	{ 0x9000, 0x9000, MRA_NOP }, /* debugger ROM location? */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( wolfpack_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(wolfpack_zeropage_r)
+	AM_RANGE(0x1000, 0x1000) AM_READ(wolfpack_input_r)
+	AM_RANGE(0x2000, 0x2000) AM_READ(wolfpack_misc_r)
+	AM_RANGE(0x3000, 0x3000) AM_READ(input_port_1_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(MRA8_NOP) /* debugger ROM location? */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( wolfpack_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x01ff, wolfpack_zeropage_w },
-	{ 0x1000, 0x10ff, MWA_RAM, &wolfpack_alpha_num_ram },
-	{ 0x2000, 0x2000, wolfpack_high_explo_w },
-	{ 0x2001, 0x2001, wolfpack_sonar_ping_w },
-	{ 0x2002, 0x2002, wolfpack_sirlat_w },
-	{ 0x2003, 0x2003, wolfpack_pt_sound_w },
-	{ 0x2004, 0x2004, wolfpack_start_speech_w },
-	{ 0x2005, 0x2005, wolfpack_launch_torpedo_w },
-	{ 0x2006, 0x2006, wolfpack_low_explo_w },
-	{ 0x2007, 0x2007, wolfpack_screw_cont_w },
-	{ 0x2008, 0x2008, wolfpack_video_invert_w },
-	{ 0x2009, 0x2009, wolfpack_ship_reflect_w },
-	{ 0x200a, 0x200a, wolfpack_lamp_flash_w },
-	{ 0x200c, 0x200c, wolfpack_credit_w },
-	{ 0x200d, 0x200d, wolfpack_attract_w },
-	{ 0x200e, 0x200e, wolfpack_pt_pos_select_w },
-	{ 0x200f, 0x200f, wolfpack_warning_light_w },
-	{ 0x3000, 0x3000, wolfpack_audamp_w },
-	{ 0x3001, 0x3001, wolfpack_pt_horz_w },
-	{ 0x3003, 0x3003, wolfpack_pt_pic_w },
-	{ 0x3004, 0x3004, wolfpack_word_w },
-	{ 0x3007, 0x3007, wolfpack_coldetres_w },
-	{ 0x4000, 0x4000, wolfpack_ship_h_w },
-	{ 0x4001, 0x4001, wolfpack_torpedo_pic_w },
-	{ 0x4002, 0x4002, wolfpack_ship_size_w },
-	{ 0x4003, 0x4003, wolfpack_ship_h_precess_w },
-	{ 0x4004, 0x4004, wolfpack_ship_pic_w },
-	{ 0x4005, 0x4005, wolfpack_torpedo_h_w },
-	{ 0x4006, 0x4006, wolfpack_torpedo_v_w },
-	{ 0x5000, 0x5fff, watchdog_reset_w },
-	{ 0x7000, 0x7fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( wolfpack_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(wolfpack_zeropage_w)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&wolfpack_alpha_num_ram)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(wolfpack_high_explo_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(wolfpack_sonar_ping_w)
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(wolfpack_sirlat_w)
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(wolfpack_pt_sound_w)
+	AM_RANGE(0x2004, 0x2004) AM_WRITE(wolfpack_start_speech_w)
+	AM_RANGE(0x2005, 0x2005) AM_WRITE(wolfpack_launch_torpedo_w)
+	AM_RANGE(0x2006, 0x2006) AM_WRITE(wolfpack_low_explo_w)
+	AM_RANGE(0x2007, 0x2007) AM_WRITE(wolfpack_screw_cont_w)
+	AM_RANGE(0x2008, 0x2008) AM_WRITE(wolfpack_video_invert_w)
+	AM_RANGE(0x2009, 0x2009) AM_WRITE(wolfpack_ship_reflect_w)
+	AM_RANGE(0x200a, 0x200a) AM_WRITE(wolfpack_lamp_flash_w)
+	AM_RANGE(0x200c, 0x200c) AM_WRITE(wolfpack_credit_w)
+	AM_RANGE(0x200d, 0x200d) AM_WRITE(wolfpack_attract_w)
+	AM_RANGE(0x200e, 0x200e) AM_WRITE(wolfpack_pt_pos_select_w)
+	AM_RANGE(0x200f, 0x200f) AM_WRITE(wolfpack_warning_light_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(wolfpack_audamp_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(wolfpack_pt_horz_w)
+	AM_RANGE(0x3003, 0x3003) AM_WRITE(wolfpack_pt_pic_w)
+	AM_RANGE(0x3004, 0x3004) AM_WRITE(wolfpack_word_w)
+	AM_RANGE(0x3007, 0x3007) AM_WRITE(wolfpack_coldetres_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(wolfpack_ship_h_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(wolfpack_torpedo_pic_w)
+	AM_RANGE(0x4002, 0x4002) AM_WRITE(wolfpack_ship_size_w)
+	AM_RANGE(0x4003, 0x4003) AM_WRITE(wolfpack_ship_h_precess_w)
+	AM_RANGE(0x4004, 0x4004) AM_WRITE(wolfpack_ship_pic_w)
+	AM_RANGE(0x4005, 0x4005) AM_WRITE(wolfpack_torpedo_h_w)
+	AM_RANGE(0x4006, 0x4006) AM_WRITE(wolfpack_torpedo_v_w)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( wolfpack )
@@ -354,7 +354,7 @@ static MACHINE_DRIVER_START(wolfpack)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(wolfpack_readmem, wolfpack_writemem)
+	MDRV_CPU_PROGRAM_MAP(wolfpack_readmem, wolfpack_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

@@ -214,7 +214,7 @@ logerror("%04x: 68705 -> Z80 %02x\n",activecpu_get_pc(),portA_out);
 logerror("%04x: 68705 write %02x to address %04x\n",activecpu_get_pc(),portA_out,address);
 #endif
         memory_set_context(0);
-		cpu_writemem16(address, portA_out);
+		program_write_byte(address, portA_out);
         memory_set_context(2);
 
 		/* increase low 8 bits of latched address for burst writes */
@@ -226,7 +226,7 @@ logerror("%04x: 68705 write %02x to address %04x\n",activecpu_get_pc(),portA_out
 logerror("%04x: 68705 read %02x from address %04x\n",activecpu_get_pc(),portA_in,address);
 #endif
         memory_set_context(0);
-		portA_in = cpu_readmem16(address);
+		portA_in = program_read_byte(address);
         memory_set_context(2);
 	}
 	if (~data & 0x40)

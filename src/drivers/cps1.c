@@ -302,82 +302,82 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 
 
 
-static MEMORY_READ16_START( cps1_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
-	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
-	{ 0x800010, 0x800011, input_port_4_word_r }, /* ?? */
-	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
-	{ 0x800020, 0x800021, MRA16_NOP }, /* ? Used by Rockman ? */
-	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
-	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
-	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
-	{ 0x800178, 0x800179, cps1_input3_r }, /* Captain Commando player 4 controls */
-	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
-	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
-	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
-	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
-	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
-	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
-	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
-	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
-	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_r },	/* Q RAM */
-	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( cps1_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM) /* 68000 ROM */
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_4_word_r) /* Player input ports */
+	AM_RANGE(0x800010, 0x800011) AM_READ(input_port_4_word_r) /* ?? */
+	AM_RANGE(0x800018, 0x80001f) AM_READ(cps1_input_r) /* Input ports */
+	AM_RANGE(0x800020, 0x800021) AM_READ(MRA16_NOP) /* ? Used by Rockman ? */
+	AM_RANGE(0x800052, 0x800055) AM_READ(forgottn_dial_0_r) /* forgotten worlds */
+	AM_RANGE(0x80005a, 0x80005d) AM_READ(forgottn_dial_1_r) /* forgotten worlds */
+	AM_RANGE(0x800176, 0x800177) AM_READ(cps1_input2_r) /* Extra input ports */
+	AM_RANGE(0x800178, 0x800179) AM_READ(cps1_input3_r) /* Captain Commando player 4 controls */
+	AM_RANGE(0x8001fc, 0x8001fd) AM_READ(cps1_input2_r) /* Input ports (SF Rev E) */
+	AM_RANGE(0x800100, 0x8001ff) AM_READ(cps1_output_r)   /* Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_READ(MRA16_RAM)	/* SF2CE executes code from here */
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(qsound_rom_r)		/* Slammasters protection */
+	AM_RANGE(0xf18000, 0xf19fff) AM_READ(qsound_sharedram1_r)	/* Q RAM */
+	AM_RANGE(0xf1c000, 0xf1c001) AM_READ(cps1_input2_r)   /* Player 3 controls (later games) */
+	AM_RANGE(0xf1c002, 0xf1c003) AM_READ(cps1_input3_r)   /* Player 4 controls (later games - muscle bombers) */
+	AM_RANGE(0xf1c006, 0xf1c007) AM_READ(cps1_eeprom_port_r)
+	AM_RANGE(0xf1e000, 0xf1ffff) AM_READ(qsound_sharedram2_r)	/* Q RAM */
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)   /* RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( cps1_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
-	{ 0x800030, 0x800031, cps1_coinctrl_w },
-	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
-	{ 0x800048, 0x800049, forgottn_dial_1_reset_w },
-	{ 0x800180, 0x800181, cps1_sound_command_w },  /* Sound command */
-	{ 0x800188, 0x800189, cps1_sound_fade_w },
-	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, cps1_gfxram_w, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
-	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
-	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
-	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_w }, /* Q RAM */
-	{ 0xff0000, 0xffffff, MWA16_RAM },        /* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( cps1_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)      /* ROM */
+	AM_RANGE(0x800030, 0x800031) AM_WRITE(cps1_coinctrl_w)
+	AM_RANGE(0x800040, 0x800041) AM_WRITE(forgottn_dial_0_reset_w)
+	AM_RANGE(0x800048, 0x800049) AM_WRITE(forgottn_dial_1_reset_w)
+	AM_RANGE(0x800180, 0x800181) AM_WRITE(cps1_sound_command_w)  /* Sound command */
+	AM_RANGE(0x800188, 0x800189) AM_WRITE(cps1_sound_fade_w)
+	AM_RANGE(0x800100, 0x8001ff) AM_WRITE(cps1_output_w) AM_BASE(&cps1_output) AM_SIZE(&cps1_output_size)  /* Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_WRITE(cps1_gfxram_w) AM_BASE(&cps1_gfxram) AM_SIZE(&cps1_gfxram_size)
+	AM_RANGE(0xf18000, 0xf19fff) AM_WRITE(qsound_sharedram1_w) /* Q RAM */
+	AM_RANGE(0xf1c004, 0xf1c005) AM_WRITE(cpsq_coinctrl2_w)   /* Coin control2 (later games) */
+	AM_RANGE(0xf1c006, 0xf1c007) AM_WRITE(cps1_eeprom_port_w)
+	AM_RANGE(0xf1e000, 0xf1ffff) AM_WRITE(qsound_sharedram2_w) /* Q RAM */
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)        /* RAM */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xf001, 0xf001, YM2151_status_port_0_r },
-	{ 0xf002, 0xf002, OKIM6295_status_0_r },
-	{ 0xf008, 0xf008, soundlatch_r },
-	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf001, 0xf001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xf008, 0xf008) AM_READ(soundlatch_r)
+	AM_RANGE(0xf00a, 0xf00a) AM_READ(cps1_snd_fade_timer_r) /* Sound timer fade */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd000, 0xd7ff, MWA_RAM },
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },
-	{ 0xf002, 0xf002, OKIM6295_data_0_w },
-	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
-//	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xf004, 0xf004) AM_WRITE(cps1_snd_bankswitch_w)
+//	AM_RANGE(0xf006, 0xf006) AM_WRITE(MWA8_NOP) /* ???? Unknown ???? */
+ADDRESS_MAP_END
 
-MEMORY_READ_START( qsound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd007, 0xd007, qsound_status_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+ADDRESS_MAP_START( qsound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)  /* banked (contains music data) */
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd007, 0xd007) AM_READ(qsound_status_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( qsound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
-	{ 0xd000, 0xd000, qsound_data_h_w },
-	{ 0xd001, 0xd001, qsound_data_l_w },
-	{ 0xd002, 0xd002, qsound_cmd_w },
-	{ 0xd003, 0xd003, qsound_banksw_w },
-	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
-MEMORY_END
+ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&qsound_sharedram1)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(qsound_data_h_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(qsound_data_l_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(qsound_cmd_w)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(qsound_banksw_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&qsound_sharedram2)
+ADDRESS_MAP_END
 
 /***********************************************************
 			 INPUT PORTS, DIPs
@@ -3683,12 +3683,12 @@ static MACHINE_DRIVER_START( cps1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
-	MDRV_CPU_MEMORY(cps1_readmem,cps1_writemem)
+	MDRV_CPU_PROGRAM_MAP(cps1_readmem,cps1_writemem)
 	MDRV_CPU_VBLANK_INT(cps1_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* 4 MHz ??? TODO: find real FRQ */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3745,7 +3745,7 @@ static MACHINE_DRIVER_START( qsound )
 
 	MDRV_CPU_REPLACE("sound", Z80, 6000000)
 	MDRV_CPU_FLAGS(0)	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
-	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
 
 	MDRV_NVRAM_HANDLER(qsound)

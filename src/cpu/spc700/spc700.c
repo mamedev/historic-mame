@@ -147,12 +147,7 @@ static uint spc700i_destination;
 /* Layout of the registers in the MAME debugger */
 static unsigned char spc700_register_layout[] =
 {
-#if SPC700_OPTIMIZE_SNES
 	SPC700_PC, SPC700_S, SPC700_P, SPC700_A, SPC700_X, SPC700_Y, 0,
-#else
-	SPC700_PC, SPC700_S, SPC700_P, SPC700_A, SPC700_X, SPC700_Y, -1,
-	SPC700_NMI_STATE, SPC700_IRQ_STATE, 0
-#endif /* SPC700_OPTIMIZE_SNES */
 };
 
 /* Layout of the MAME debugger windows x,y,w,h */
@@ -1367,6 +1362,11 @@ unsigned spc700_get_context(void *dst_context)
 	return sizeof(spc700i_cpu);
 }
 
+static void spc700_get_context_mame(void *dst_context)
+{
+	spc700_get_context(dst_context);
+}
+
 /* Set the current CPU context */
 void spc700_set_context(void *src_context)
 {
@@ -1400,54 +1400,6 @@ void spc700_set_sp(unsigned val)
 {
 	REG_S = MAKE_UINT_8(val);
 }
-
-/* Get a register from the CPU core */
-unsigned spc700_get_reg(int regnum)
-{
-	switch(regnum)
-	{
-		case SPC700_PC: return REG_PC;
-		case SPC700_S: return REG_S + STACK_PAGE;
-		case SPC700_P: return GET_REG_P();
-		case SPC700_A: return REG_A;
-		case SPC700_X: return REG_X;
-		case SPC700_Y: return REG_Y;
-		case REG_PREVIOUSPC: return REG_PPC;
-		default:
-			if(regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = REG_S + STACK_PAGE + 2 * (REG_SP_CONTENTS - regnum);
-				if(offset < 0x1ff)
-					return read_8_STK(offset) | (read_8_STK(offset + 1) << 8);
-			}
-	}
-	return 0;
-}
-
-/* Set a register in the CPU core */
-void spc700_set_reg(int regnum, unsigned val)
-{
-	switch(regnum)
-	{
-		case SPC700_PC: REG_PC = MAKE_UINT_16(val); break;
-		case SPC700_S: REG_S = MAKE_UINT_8(val); break;
-		case SPC700_P: SET_REG_P(val); break;
-		case SPC700_A: REG_A = MAKE_UINT_8(val); break;
-		case SPC700_X: REG_X = MAKE_UINT_8(val); break;
-		case SPC700_Y: REG_Y = MAKE_UINT_8(val); break;
-		default:
-			if(regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = REG_S + STACK_PAGE + 2 * (REG_SP_CONTENTS - regnum);
-				if(offset < 0x1ff)
-				{
-					write_8_STK(offset, MAKE_UINT_8(val));
-					write_8_STK(offset + 1, MAKE_UINT_8(val >> 8));
-				}
-			}
-	 }
-}
-
 
 /* Assert or clear the NMI line of the CPU */
 void spc700_set_nmi_line(int state)
@@ -1519,64 +1471,23 @@ void spc700_state_load(void *file)
 }
 
 
-/* Get a formatted string representing a register and its contents */
-const char *spc700_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	spc700i_cpu_struct* r = context;
-	uint p;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if(!context)
-		r = &spc700i_cpu;
-
-	p =  ((r->flag_nz & 0x80)			|
-			((r->flag_v & 0x80) >> 1)	|
-			r->flag_p>>3				|
-			r->flag_b					|
-			((r->flag_h&0x10) >> 1)		|
-			r->flag_i					|
-			((!r->flag_nz) << 1)		|
-			((r->flag_c >> 8)&1));
-
-	 switch(regnum)
-	{
-		case CPU_INFO_REG+SPC700_PC:		sprintf(buffer[which], "PC:%04X", r->pc); break;
-		case CPU_INFO_REG+SPC700_S:			sprintf(buffer[which], "S:%02X", r->s); break;
-		case CPU_INFO_REG+SPC700_P:			sprintf(buffer[which], "P:%02X", p); break;
-		case CPU_INFO_REG+SPC700_A:			sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+SPC700_X:			sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+SPC700_Y:			sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				p & 0x80 ? 'N':'.',
-				p & 0x40 ? 'V':'.',
-				p & 0x20 ? 'P':'.',
-				p & 0x10 ? 'B':'.',
-				p & 0x08 ? 'H':'.',
-				p & 0x04 ? 'I':'.',
-				p & 0x02 ? 'Z':'.',
-				p & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "SPC700";
-		case CPU_INFO_FAMILY: return "Sony SPC700";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) , all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)spc700_register_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)spc700_window_layout;
-	}
-	return buffer[which];
-}
-
-
 #ifdef MAME_DEBUG
 #include "spc700ds.h"
 #endif
 /* Disassemble an instruction */
 unsigned spc700_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return spc700_disassemble(buffer, pc);
+#else
+//	sprintf(buffer, "$%02X", read_8_instruction(pc));
+	return 1;
+#endif
+}
+
+
+/* Disassemble an instruction */
+static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return spc700_disassemble(buffer, pc);
@@ -1859,6 +1770,129 @@ int spc700_execute(int clocks)
 		}
 	}
 	return clocks - CLOCKS;
+}
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void spc700_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + 0:					spc700_set_irq_line(0, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		spc700_set_nmi_line(info->i);			break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + SPC700_PC:			REG_PC = MAKE_UINT_16(info->i);			break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + SPC700_S:			REG_S = MAKE_UINT_8(info->i);			break;
+		case CPUINFO_INT_REGISTER + SPC700_P:			SET_REG_P(info->i);						break;
+		case CPUINFO_INT_REGISTER + SPC700_A:			REG_A = MAKE_UINT_8(info->i);			break;
+		case CPUINFO_INT_REGISTER + SPC700_X:			REG_X = MAKE_UINT_8(info->i);			break;
+		case CPUINFO_INT_REGISTER + SPC700_Y:			REG_Y = MAKE_UINT_8(info->i);			break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					INT_ACK = info->irqcallback;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void spc700_get_info(UINT32 state, union cpuinfo *info)
+{
+	uint p = ((spc700i_cpu.flag_nz & 0x80)			|
+				((spc700i_cpu.flag_v & 0x80) >> 1)	|
+				spc700i_cpu.flag_p>>3				|
+				spc700i_cpu.flag_b					|
+				((spc700i_cpu.flag_h&0x10) >> 1)		|
+				spc700i_cpu.flag_i					|
+				((!spc700i_cpu.flag_nz) << 1)		|
+				((spc700i_cpu.flag_c >> 8)&1));
+
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(spc700i_cpu);			break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 8;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = (LINE_IRQ == IRQ_SET) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = REG_PPC;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + SPC700_PC:			info->i = REG_PC;						break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + SPC700_S:			info->i = REG_S + STACK_PAGE;			break;
+		case CPUINFO_INT_REGISTER + SPC700_P:			info->i = GET_REG_P();					break;
+		case CPUINFO_INT_REGISTER + SPC700_A:			info->i = REG_A;						break;
+		case CPUINFO_INT_REGISTER + SPC700_X:			info->i = REG_X;						break;
+		case CPUINFO_INT_REGISTER + SPC700_Y:			info->i = REG_Y;						break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = spc700_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = spc700_get_context_mame;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = spc700_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = spc700_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = spc700_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = spc700_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = spc700_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mame_spc700_dasm;	break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = INT_ACK;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &spc700_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = spc700_register_layout;		break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = spc700_window_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SPC700"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Sony SPC700"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) , all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				p & 0x80 ? 'N':'.',
+				p & 0x40 ? 'V':'.',
+				p & 0x20 ? 'P':'.',
+				p & 0x10 ? 'B':'.',
+				p & 0x08 ? 'H':'.',
+				p & 0x04 ? 'I':'.',
+				p & 0x02 ? 'Z':'.',
+				p & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + SPC700_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", spc700i_cpu.pc); break;
+		case CPUINFO_STR_REGISTER + SPC700_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", spc700i_cpu.s); break;
+		case CPUINFO_STR_REGISTER + SPC700_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", p); break;
+		case CPUINFO_STR_REGISTER + SPC700_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", spc700i_cpu.a); break;
+		case CPUINFO_STR_REGISTER + SPC700_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", spc700i_cpu.x); break;
+		case CPUINFO_STR_REGISTER + SPC700_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", spc700i_cpu.y); break;
+	}
 }
 
 

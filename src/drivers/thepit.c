@@ -80,90 +80,90 @@ static WRITE_HANDLER( flip_screen_y_w )
 }
 
 
-static MEMORY_READ_START( thepit_readmem )
-	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x93ff, MRA_RAM },
-	{ 0x9400, 0x97ff, videoram_r },
-	{ 0x9800, 0x98ff, MRA_RAM },
-	{ 0xa000, 0xa000, thepit_input_port_0_r },
-	{ 0xa800, 0xa800, input_port_1_r },
-	{ 0xb000, 0xb000, input_port_2_r },
-	{ 0xb800, 0xb800, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( thepit_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r)
+	AM_RANGE(0x9800, 0x98ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(thepit_input_port_0_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( thepit_writemem )
-	{ 0x0000, 0x4fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, colorram_w },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, videoram_w },
-	{ 0x9800, 0x983f, thepit_attributes_w, &thepit_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
-	{ 0xa000, 0xa000, MWA_NOP }, // Not hooked up according to the schematics
-	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
-	{ 0xb002, 0xb002, MWA_NOP }, // coin_lockout_w
-	{ 0xb003, 0xb003, thepit_sound_enable_w },
-	{ 0xb004, 0xb005, MWA_NOP }, // Unused, but initialized
-	{ 0xb006, 0xb006, flip_screen_x_w },
-	{ 0xb007, 0xb007, flip_screen_y_w },
-	{ 0xb800, 0xb800, soundlatch_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( intrepid_readmem )
-	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x98ff, MRA_RAM },
-	{ 0xa000, 0xa000, thepit_input_port_0_r },
-	{ 0xa800, 0xa800, input_port_1_r },
-	{ 0xb000, 0xb000, input_port_2_r },
-	{ 0xb800, 0xb800, watchdog_reset_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( intrepid_writemem )
-	{ 0x0000, 0x4fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, colorram_w, &colorram },
-	{ 0x9800, 0x983f, thepit_attributes_w, &thepit_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
-	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
-	{ 0xb002, 0xb002, MWA_NOP }, // coin_lockout_w
-	{ 0xb003, 0xb003, thepit_sound_enable_w },
-	{ 0xb004, 0xb004, MWA_NOP }, // Unused, but initialized
-	{ 0xb005, 0xb005, intrepid_graphics_bank_select_w },
-	{ 0xb006, 0xb006, flip_screen_x_w },
-	{ 0xb007, 0xb007, flip_screen_y_w },
-	{ 0xb800, 0xb800, soundlatch_w },
-MEMORY_END
+static ADDRESS_MAP_START( thepit_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(colorram_w)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(thepit_attributes_w) AM_BASE(&thepit_attributesram)
+	AM_RANGE(0x9840, 0x985f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9860, 0x98ff) AM_WRITE(MWA8_RAM) // Probably unused
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) // Not hooked up according to the schematics
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(MWA8_NOP) // Unused, but initialized
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(MWA8_NOP) // coin_lockout_w
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(thepit_sound_enable_w)
+	AM_RANGE(0xb004, 0xb005) AM_WRITE(MWA8_NOP) // Unused, but initialized
+	AM_RANGE(0xb006, 0xb006) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xb007, 0xb007) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(soundlatch_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x3800, 0x3bff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( intrepid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x98ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(thepit_input_port_0_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x3800, 0x3bff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( intrepid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(thepit_attributes_w) AM_BASE(&thepit_attributesram)
+	AM_RANGE(0x9840, 0x985f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9860, 0x98ff) AM_WRITE(MWA8_RAM) // Probably unused
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(MWA8_NOP) // Unused, but initialized
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(MWA8_NOP) // coin_lockout_w
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(thepit_sound_enable_w)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(MWA8_NOP) // Unused, but initialized
+	AM_RANGE(0xb005, 0xb005) AM_WRITE(intrepid_graphics_bank_select_w)
+	AM_RANGE(0xb006, 0xb006) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xb007, 0xb007) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(soundlatch_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x8f, 0x8f, AY8910_read_port_0_r },
-PORT_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, soundlatch_clear_w },
-	{ 0x8c, 0x8c, AY8910_control_port_1_w },
-	{ 0x8d, 0x8d, AY8910_write_port_1_w },
-	{ 0x8e, 0x8e, AY8910_control_port_0_w },
-	{ 0x8f, 0x8f, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8f, 0x8f) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_clear_w)
+	AM_RANGE(0x8c, 0x8c) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8d, 0x8d) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8e, 0x8e) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8f, 0x8f) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( thepit )
@@ -613,13 +613,13 @@ static MACHINE_DRIVER_START( thepit )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)     /* 3.072 MHz */
-	MDRV_CPU_MEMORY(thepit_readmem,thepit_writemem)
+	MDRV_CPU_PROGRAM_MAP(thepit_readmem,thepit_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 10000000/4)     /* 2.5 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -647,7 +647,7 @@ static MACHINE_DRIVER_START( intrepid )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(thepit)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(intrepid_readmem,intrepid_writemem)
+	MDRV_CPU_PROGRAM_MAP(intrepid_readmem,intrepid_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(intrepid_gfxdecodeinfo)

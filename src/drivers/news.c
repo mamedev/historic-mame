@@ -21,24 +21,24 @@ Notes:
 #include "news.h"
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, OKIM6295_status_0_r },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },	/* 4000-7fff is written to during startup, probably leftover code */
-	{ 0x8000, 0x87ff, news_fgram_w, &news_fgram },
-	{ 0x8800, 0x8fff, news_bgram_w, &news_bgram },
-	{ 0x9000, 0x91ff, paletteram_xxxxRRRRGGGGBBBB_swap_w, &paletteram },
-	{ 0xc002, 0xc002, OKIM6295_data_0_w }, /* ?? */
-	{ 0xc003, 0xc003, news_bgpic_w },
-	{ 0xe000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)	/* 4000-7fff is written to during startup, probably leftover code */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(news_fgram_w) AM_BASE(&news_fgram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(news_bgram_w) AM_BASE(&news_bgram)
+	AM_RANGE(0x9000, 0x91ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(OKIM6295_data_0_w) /* ?? */
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(news_bgpic_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( news )
@@ -111,7 +111,7 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( news )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

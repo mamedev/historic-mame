@@ -86,68 +86,68 @@ WRITE_HANDLER( stactics_chardata_e_w );
 WRITE_HANDLER( stactics_videoram_f_w );
 WRITE_HANDLER( stactics_chardata_f_w );
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0x2fff, MRA_ROM },
-    { 0x4000, 0x47ff, MRA_RAM },
-    { 0x5000, 0x5fff, input_port_0_r, },
-    { 0x6000, 0x6fff, input_port_1_r, },
-    { 0x7000, 0x7fff, stactics_port_2_r, },
-    { 0x8000, 0x8fff, stactics_port_3_r },
-    { 0x9000, 0x9fff, stactics_vert_pos_r },
-    { 0xa000, 0xafff, stactics_horiz_pos_r },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x5000, 0x5fff) AM_READ(input_port_0_r)
+    AM_RANGE(0x6000, 0x6fff) AM_READ(input_port_1_r)
+    AM_RANGE(0x7000, 0x7fff) AM_READ(stactics_port_2_r)
+    AM_RANGE(0x8000, 0x8fff) AM_READ(stactics_port_3_r)
+    AM_RANGE(0x9000, 0x9fff) AM_READ(stactics_vert_pos_r)
+    AM_RANGE(0xa000, 0xafff) AM_READ(stactics_horiz_pos_r)
 
-    { 0xb000, 0xb3ff, MRA_RAM },
-    { 0xb800, 0xbfff, MRA_RAM },
+    AM_RANGE(0xb000, 0xb3ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0xb800, 0xbfff) AM_READ(MRA8_RAM)
 
-    { 0xd000, 0xd3ff, MRA_RAM },
-    { 0xd600, 0xd7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xd800, 0xdfff, MRA_RAM },
+    AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0xd600, 0xd7ff) AM_READ(MRA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 
-    { 0xe000, 0xe3ff, MRA_RAM },
-    { 0xe600, 0xe7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xe800, 0xefff, MRA_RAM },
+    AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0xe600, 0xe7ff) AM_READ(MRA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)
 
-    { 0xf000, 0xf3ff, MRA_RAM },
-    { 0xf600, 0xf7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xf800, 0xffff, MRA_RAM },
+    AM_RANGE(0xf000, 0xf3ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0xf600, 0xf7ff) AM_READ(MRA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x4000, 0x47ff, MWA_RAM },
-    { 0x6000, 0x6001, stactics_coin_lockout_w },
-    { 0x6006, 0x6007, stactics_palette_w },
-    /* { 0x6010, 0x601f, stactics_sound_w }, */
-    { 0x6016, 0x6016, MWA_RAM, &stactics_motor_on },  /* Note: This overlaps rocket sound */
-    /* { 0x6020, 0x602f, stactics_lamp_latch_w }, */
-    { 0x6030, 0x603f, stactics_speed_latch_w },
-    { 0x6040, 0x604f, stactics_shot_trigger_w },
-    { 0x6050, 0x605f, stactics_shot_flag_clear_w },
-    { 0x6060, 0x606f, MWA_RAM, &stactics_display_buffer },
-    /* { 0x60a0, 0x60ef, stactics_sound2_w }, */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x6000, 0x6001) AM_WRITE(stactics_coin_lockout_w)
+    AM_RANGE(0x6006, 0x6007) AM_WRITE(stactics_palette_w)
+    /* AM_RANGE(0x6010, 0x601f) AM_WRITE(stactics_sound_w) */
+    AM_RANGE(0x6016, 0x6016) AM_WRITE(MWA8_RAM) AM_BASE(&stactics_motor_on)  /* Note: This overlaps rocket sound */
+    /* AM_RANGE(0x6020, 0x602f) AM_WRITE(stactics_lamp_latch_w) */
+    AM_RANGE(0x6030, 0x603f) AM_WRITE(stactics_speed_latch_w)
+    AM_RANGE(0x6040, 0x604f) AM_WRITE(stactics_shot_trigger_w)
+    AM_RANGE(0x6050, 0x605f) AM_WRITE(stactics_shot_flag_clear_w)
+    AM_RANGE(0x6060, 0x606f) AM_WRITE(MWA8_RAM) AM_BASE(&stactics_display_buffer)
+    /* AM_RANGE(0x60a0, 0x60ef) AM_WRITE(stactics_sound2_w) */
 
-    { 0x8000, 0x8fff, stactics_scroll_ram_w, &stactics_scroll_ram },
+    AM_RANGE(0x8000, 0x8fff) AM_WRITE(stactics_scroll_ram_w) AM_BASE(&stactics_scroll_ram)
 
-    { 0xb000, 0xb3ff, stactics_videoram_b_w, &stactics_videoram_b, &videoram_size },
-    { 0xb400, 0xb7ff, MWA_RAM },   /* Unused, but initialized */
-    { 0xb800, 0xbfff, stactics_chardata_b_w, &stactics_chardata_b },
+    AM_RANGE(0xb000, 0xb3ff) AM_WRITE(stactics_videoram_b_w) AM_BASE(&stactics_videoram_b) AM_SIZE(&videoram_size)
+    AM_RANGE(0xb400, 0xb7ff) AM_WRITE(MWA8_RAM)   /* Unused, but initialized */
+    AM_RANGE(0xb800, 0xbfff) AM_WRITE(stactics_chardata_b_w) AM_BASE(&stactics_chardata_b)
 
-    { 0xc000, 0xcfff, MWA_NOP }, /* according to the schematics, nothing is mapped here */
+    AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_NOP) /* according to the schematics, nothing is mapped here */
                                  /* but, the game still tries to clear this out         */
 
-    { 0xd000, 0xd3ff, stactics_videoram_d_w, &stactics_videoram_d },
-    { 0xd400, 0xd7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xd800, 0xdfff, stactics_chardata_d_w, &stactics_chardata_d },
+    AM_RANGE(0xd000, 0xd3ff) AM_WRITE(stactics_videoram_d_w) AM_BASE(&stactics_videoram_d)
+    AM_RANGE(0xd400, 0xd7ff) AM_WRITE(MWA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xd800, 0xdfff) AM_WRITE(stactics_chardata_d_w) AM_BASE(&stactics_chardata_d)
 
-    { 0xe000, 0xe3ff, stactics_videoram_e_w, &stactics_videoram_e },
-    { 0xe400, 0xe7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xe800, 0xefff, stactics_chardata_e_w, &stactics_chardata_e },
+    AM_RANGE(0xe000, 0xe3ff) AM_WRITE(stactics_videoram_e_w) AM_BASE(&stactics_videoram_e)
+    AM_RANGE(0xe400, 0xe7ff) AM_WRITE(MWA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xe800, 0xefff) AM_WRITE(stactics_chardata_e_w) AM_BASE(&stactics_chardata_e)
 
-    { 0xf000, 0xf3ff, stactics_videoram_f_w, &stactics_videoram_f },
-    { 0xf400, 0xf7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xf800, 0xffff, stactics_chardata_f_w, &stactics_chardata_f },
+    AM_RANGE(0xf000, 0xf3ff) AM_WRITE(stactics_videoram_f_w) AM_BASE(&stactics_videoram_f)
+    AM_RANGE(0xf400, 0xf7ff) AM_WRITE(MWA8_RAM)   /* Used as scratch RAM, high scores, etc. */
+    AM_RANGE(0xf800, 0xffff) AM_WRITE(stactics_chardata_f_w) AM_BASE(&stactics_chardata_f)
 
-MEMORY_END
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( stactics )
 
@@ -260,7 +260,7 @@ static MACHINE_DRIVER_START( stactics )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 1933560)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(stactics_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

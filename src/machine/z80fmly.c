@@ -28,7 +28,7 @@ typedef struct
 	double invclock16;          /* 16/system clock */
 	double invclock256;         /* 256/system clock */
 	void (*intr)(int which);    /* interrupt callback */
-	mem_write_handler zc[4];    /* zero crossing callbacks */
+	write8_handler zc[4];    /* zero crossing callbacks */
 	int notimer;                /* no timer masks */
 	int mask[4];                /* masked channel flags */
 	int mode[4];                /* current mode */

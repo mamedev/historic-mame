@@ -76,30 +76,10 @@ struct dsp32_config
 
 
 /*###################################################################################################
-**	PUBLIC GLOBALS
-**#################################################################################################*/
-
-extern int dsp32_icount;
-
-
-
-/*###################################################################################################
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
-extern void dsp32c_init(void);
-extern void dsp32c_reset(void *param);
-extern void dsp32c_exit(void);
-extern int dsp32c_execute(int cycles);
-extern unsigned dsp32c_get_context(void *dst);
-extern void dsp32c_set_context(void *src);
-extern unsigned dsp32c_get_reg(int regnum);
-extern void dsp32c_set_reg(int regnum, unsigned val);
-extern void dsp32c_set_irq_line(int irqline, int state);
-extern void dsp32c_set_irq_callback(int (*callback)(int irqline));
-extern const char *dsp32c_info(void *context, int regnum);
-
-extern unsigned dsp32c_dasm(char *buffer, unsigned pc);
+extern void dsp32c_get_info(UINT32 state, union cpuinfo *info);
 
 extern void dsp32c_pio_w(int cpunum, int reg, int data);
 extern int dsp32c_pio_r(int cpunum, int reg);

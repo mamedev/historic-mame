@@ -5,8 +5,6 @@
   Written by Ernesto Corvi
 
   Notes:
-  - Sound is missing. Looking at the code and the scarse info available, i would think it uses a DAC.
-	(Check writes to $8003/$8004)
   - The board uses a battery backed ram for protection, mapped at $7c00-$7fff.
   - If the battery backup data is corrupt, it comes up with some sort of code entry screen.
 	As far as I can tell, you can't do anything with it.
@@ -28,24 +26,26 @@ PALETTE_INIT( truco );
 /***************************************************************************/
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x17ff, MRA_RAM },		/* general purpose ram */
-	{ 0x1800, 0x7bff, MRA_RAM },		/* video ram */
-	{ 0x7c00, 0x7fff, MRA_RAM },		/* battery backed ram */
-	{ 0x8000, 0x8000, input_port_0_r },	/* controls (and irq ack?) */
-	{ 0x8001, 0x8001, MRA_NOP },		/* unknown */
-	{ 0x8002, 0x8002, input_port_1_r },	/* dipswitches */
-	{ 0x8003, 0x8007, MRA_NOP },		/* unknown */
-	{ 0x8008, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_RAM)		/* general purpose ram */
+	AM_RANGE(0x1800, 0x7bff) AM_READ(MRA8_RAM)		/* video ram */
+	AM_RANGE(0x7c00, 0x7fff) AM_READ(MRA8_RAM)		/* battery backed ram */
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_0_r)	/* controls (and irq ack?) */
+	AM_RANGE(0x8001, 0x8001) AM_READ(MRA8_NOP)		/* unknown */
+	AM_RANGE(0x8002, 0x8002) AM_READ(input_port_1_r)	/* dipswitches */
+	AM_RANGE(0x8003, 0x8007) AM_READ(MRA8_NOP)		/* unknown */
+	AM_RANGE(0x8008, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x17ff, MWA_RAM },		/* general purpose ram */
-	{ 0x1800, 0x7bff, MWA_RAM },		/* video ram */
-	{ 0x7c00, 0x7fff, MWA_RAM },		/* battery backed ram */
-	{ 0x8000, 0x8007, MWA_NOP },		/* unknown (dac?) */
-	{ 0x8008, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_RAM)		/* general purpose ram */
+	AM_RANGE(0x1800, 0x7bff) AM_WRITE(MWA8_RAM)		/* video ram */
+	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(MWA8_RAM)		/* battery backed ram */
+	AM_RANGE(0x8000, 0x8001) AM_WRITE(MWA8_NOP)		/* unknown */
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x8003, 0x8007) AM_WRITE(MWA8_NOP)		/* unknown */
+	AM_RANGE(0x8008, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( truco )
 	PORT_START	/* IN0 */
@@ -142,11 +142,18 @@ static INTERRUPT_GEN( truco_interrupt )
 		trigger = 0;
 }
 
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 80 }
+};
+
+
 static MACHINE_DRIVER_START( truco )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1000000)        /* 1 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_ADD(M6809, 750000)        /* ?? guess */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -164,6 +171,7 @@ static MACHINE_DRIVER_START( truco )
 	MDRV_VIDEO_UPDATE(truco)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
 
@@ -179,4 +187,4 @@ ROM_START( truco )
 	ROM_LOAD( "truco.u2",   0x0c000, 0x4000, CRC(ff355750) SHA1(1538f20b1919928ffca439e4046a104ddfbc756c) )
 ROM_END
 
-GAMEX( 198?, truco,  0, truco, truco, 0, ROT0, "Playtronic SRL", "Truco-Tron", GAME_NO_SOUND )
+GAMEX( 198?, truco,  0, truco, truco, 0, ROT0, "Playtronic SRL", "Truco-Tron", GAME_IMPERFECT_SOUND )

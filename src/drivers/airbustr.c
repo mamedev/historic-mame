@@ -296,21 +296,21 @@ unsigned char *RAM = memory_region(REGION_CPU1);
 
 /* Memory */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, devram_r },
-	{ 0xf000, 0xffff, sharedram_r },
-MEMORY_END
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },	// writing at 0 should cause a reset
-	{ 0xc000, 0xcfff, MWA_RAM, &spriteram },			// RAM 0/1
-	{ 0xd000, 0xdfff, MWA_RAM },						// RAM 2
-	{ 0xe000, 0xefff, devram_w, &devram },				// RAM 3
-	{ 0xf000, 0xffff, sharedram_w, &sharedram },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(devram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(sharedram_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)	// writing at 0 should cause a reset
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)			// RAM 0/1
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)						// RAM 2
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(devram_w) AM_BASE(&devram)				// RAM 3
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
+ADDRESS_MAP_END
 
 /* Ports */
 
@@ -319,11 +319,11 @@ static WRITE_HANDLER( cause_nmi_w )
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, bankswitch_w },
-//	{ 0x01, 0x01, IOWP_NOP },	// ?? only 2 (see 378b)
-	{ 0x02, 0x02, cause_nmi_w },	// always 0. Cause a nmi to sub cpu
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(bankswitch_w)
+//	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)	// ?? only 2 (see 378b)
+	AM_RANGE(0x02, 0x02) AM_WRITE(cause_nmi_w)	// always 0. Cause a nmi to sub cpu
+ADDRESS_MAP_END
 
 
 
@@ -394,25 +394,25 @@ WRITE_HANDLER( airbustr_paletteram_w )
 
 /* Memory */
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xd5ff, paletteram_r },
-	{ 0xd600, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd5ff) AM_READ(paletteram_r)
+	AM_RANGE(0xd600, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, airbustr_fgram_w, &airbustr_fgram },
-	{ 0xc800, 0xcfff, airbustr_bgram_w, &airbustr_bgram },
-	{ 0xd000, 0xd5ff, airbustr_paletteram_w, &paletteram },
-	{ 0xd600, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xffff, sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(airbustr_fgram_w) AM_BASE(&airbustr_fgram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(airbustr_bgram_w) AM_BASE(&airbustr_bgram)
+	AM_RANGE(0xd000, 0xd5ff) AM_WRITE(airbustr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd600, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(sharedram_w)
+ADDRESS_MAP_END
 
 
 /* Ports */
@@ -458,21 +458,21 @@ static WRITE_HANDLER( soundcommand_w )
 WRITE_HANDLER( port_38_w )	{	u4 = data; } // for debug
 
 
-static PORT_READ_START( readport2 )
-	{ 0x02, 0x02, soundcommand2_r },		// from sound cpu
-	{ 0x0e, 0x0e, soundcommand_status_r },	// status of the latches ?
-	{ 0x20, 0x20, input_port_0_r },			// player 1
-	{ 0x22, 0x22, input_port_1_r },			// player 2
-	{ 0x24, 0x24, input_port_2_r },			// service
-PORT_END
+static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(soundcommand2_r)		// from sound cpu
+	AM_RANGE(0x0e, 0x0e) AM_READ(soundcommand_status_r)	// status of the latches ?
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)			// player 1
+	AM_RANGE(0x22, 0x22) AM_READ(input_port_1_r)			// player 2
+	AM_RANGE(0x24, 0x24) AM_READ(input_port_2_r)			// service
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport2 )
-	{ 0x00, 0x00, bankswitch2_w },			// bits 2-0 bank, bit 4 (on if dsw1-1 active)?,  bit 5?
-	{ 0x02, 0x02, soundcommand_w },			// to sound cpu
-	{ 0x04, 0x0c, airbustr_scrollregs_w },	// Scroll values
-//	{ 0x28, 0x28, port_38_w },				// ??
-//	{ 0x38, 0x38, IOWP_NOP },				// ?? Followed by EI. Value isn't important
-PORT_END
+static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(bankswitch2_w)			// bits 2-0 bank, bit 4 (on if dsw1-1 active)?,  bit 5?
+	AM_RANGE(0x02, 0x02) AM_WRITE(soundcommand_w)			// to sound cpu
+	AM_RANGE(0x04, 0x0c) AM_WRITE(airbustr_scrollregs_w)	// Scroll values
+//	AM_RANGE(0x28, 0x28) AM_WRITE(port_38_w)				// ??
+//	AM_RANGE(0x38, 0x38) AM_WRITE(MWA8_NOP)				// ?? Followed by EI. Value isn't important
+ADDRESS_MAP_END
 
 
 
@@ -505,16 +505,16 @@ unsigned char *RAM = memory_region(REGION_CPU3);
 
 /* Memory */
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK3 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 /* Ports */
@@ -533,20 +533,20 @@ WRITE_HANDLER( soundcommand2_w )
 }
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x02, 0x02, YM2203_status_port_0_r },
-	{ 0x03, 0x03, YM2203_read_port_0_r },
-	{ 0x04, 0x04, OKIM6295_status_0_r },
-	{ 0x06, 0x06, soundcommand_r },			// read command from sub cpu
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x04, 0x04) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x06, 0x06) AM_READ(soundcommand_r)			// read command from sub cpu
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, sound_bankswitch_w },
-	{ 0x02, 0x02, YM2203_control_port_0_w },
-	{ 0x03, 0x03, YM2203_write_port_0_w },
-	{ 0x04, 0x04, OKIM6295_data_0_w },
-	{ 0x06, 0x06, soundcommand2_w },		// write command result to sub cpu
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(sound_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(soundcommand2_w)		// write command result to sub cpu
+ADDRESS_MAP_END
 
 
 
@@ -791,18 +791,18 @@ static MACHINE_DRIVER_START( airbustr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(airbustr_interrupt,2)	/* nmi caused by sub cpu?, ? */
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
-	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	MDRV_CPU_IO_MAP(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(airbustr_interrupt2,2)	/* nmi caused by main cpu, ? */
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* nmi are caused by sub cpu writing a sound command */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -96,46 +96,46 @@ static WRITE16_HANDLER( sound_command_w )
 		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
-static MEMORY_READ16_START( taotaido_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x800000, 0x803fff, MRA16_RAM },			// bg ram?
-	{ 0xa00000, 0xa01fff, MRA16_RAM },			// sprite ram
-	{ 0xc00000, 0xc0ffff, MRA16_RAM },			// sprite tile look up
-	{ 0xfe0000, 0xfeffff, MRA16_RAM },			// main ram
-	{ 0xffc000, 0xffcfff, MRA16_RAM },			// palette ram
-	{ 0xffe000, 0xffe3ff, MRA16_RAM },			// rowscroll / rowselect / scroll ram
+static ADDRESS_MAP_START( taotaido_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM)			// bg ram?
+	AM_RANGE(0xa00000, 0xa01fff) AM_READ(MRA16_RAM)			// sprite ram
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM)			// sprite tile look up
+	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_RAM)			// main ram
+	AM_RANGE(0xffc000, 0xffcfff) AM_READ(MRA16_RAM)			// palette ram
+	AM_RANGE(0xffe000, 0xffe3ff) AM_READ(MRA16_RAM)			// rowscroll / rowselect / scroll ram
 
-	{ 0xffff80, 0xffff81, input_port_0_word_r },	// player 1 inputs
-	{ 0xffff82, 0xffff83, input_port_1_word_r },	// player 2 inputs
-	{ 0xffff84, 0xffff85, input_port_2_word_r },	// system inputs
-	{ 0xffff86, 0xffff87, input_port_3_word_r },	// DSWA
-	{ 0xffff88, 0xffff89, input_port_4_word_r },	// DSWB
-	{ 0xffff8a, 0xffff8b, input_port_5_word_r },	// DSWC
-	{ 0xffff8c, 0xffff8d, MRA16_RAM },			// unknown
-	{ 0xffff8e, 0xffff8f, input_port_6_word_r },	// jumpers
+	AM_RANGE(0xffff80, 0xffff81) AM_READ(input_port_0_word_r)	// player 1 inputs
+	AM_RANGE(0xffff82, 0xffff83) AM_READ(input_port_1_word_r)	// player 2 inputs
+	AM_RANGE(0xffff84, 0xffff85) AM_READ(input_port_2_word_r)	// system inputs
+	AM_RANGE(0xffff86, 0xffff87) AM_READ(input_port_3_word_r)	// DSWA
+	AM_RANGE(0xffff88, 0xffff89) AM_READ(input_port_4_word_r)	// DSWB
+	AM_RANGE(0xffff8a, 0xffff8b) AM_READ(input_port_5_word_r)	// DSWC
+	AM_RANGE(0xffff8c, 0xffff8d) AM_READ(MRA16_RAM)			// unknown
+	AM_RANGE(0xffff8e, 0xffff8f) AM_READ(input_port_6_word_r)	// jumpers
 #if TAOTAIDO_SHOW_ALL_INPUTS
-	{ 0xffffa0, 0xffffa1, input_port_7_word_r },	// player 3 inputs (unused)
-	{ 0xffffa2, 0xffffa3, input_port_8_word_r },	// player 4 inputs (unused)
+	AM_RANGE(0xffffa0, 0xffffa1) AM_READ(input_port_7_word_r)	// player 3 inputs (unused)
+	AM_RANGE(0xffffa2, 0xffffa3) AM_READ(input_port_8_word_r)	// player 4 inputs (unused)
 #endif
 
-	{ 0xffffe0, 0xffffe1, pending_command_r },	// guess - seems to be needed for all the sounds to work
-MEMORY_END
+	AM_RANGE(0xffffe0, 0xffffe1) AM_READ(pending_command_r)	// guess - seems to be needed for all the sounds to work
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( taotaido_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x800000, 0x803fff, taotaido_bgvideoram_w, &taotaido_bgram },	// bg ram?
-	{ 0xa00000, 0xa01fff, MWA16_RAM, &taotaido_spriteram },		// sprite ram
-	{ 0xc00000, 0xc0ffff, MWA16_RAM, &taotaido_spriteram2 },		// sprite tile lookup ram
-	{ 0xfe0000, 0xfeffff, MWA16_RAM },						// main ram
-	{ 0xffc000, 0xffcfff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },	// palette ram
-	{ 0xffe000, 0xffe3ff, MWA16_RAM, &taotaido_scrollram },		// rowscroll / rowselect / scroll ram
+static ADDRESS_MAP_START( taotaido_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(taotaido_bgvideoram_w) AM_BASE(&taotaido_bgram)	// bg ram?
+	AM_RANGE(0xa00000, 0xa01fff) AM_WRITE(MWA16_RAM) AM_BASE(&taotaido_spriteram)		// sprite ram
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taotaido_spriteram2)		// sprite tile lookup ram
+	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_RAM)						// main ram
+	AM_RANGE(0xffc000, 0xffcfff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)	// palette ram
+	AM_RANGE(0xffe000, 0xffe3ff) AM_WRITE(MWA16_RAM) AM_BASE(&taotaido_scrollram)		// rowscroll / rowselect / scroll ram
 
-	{ 0xffff00, 0xffff0f, taotaido_tileregs_w },
-	{ 0xffff10, 0xffff11, MWA16_NOP },						// unknown
-	{ 0xffff20, 0xffff21, MWA16_NOP },						// unknown - flip screen related
-	{ 0xffff40, 0xffff47, taotaido_sprite_character_bank_select_w },
-	{ 0xffffc0, 0xffffc1, sound_command_w },					// seems right
-MEMORY_END
+	AM_RANGE(0xffff00, 0xffff0f) AM_WRITE(taotaido_tileregs_w)
+	AM_RANGE(0xffff10, 0xffff11) AM_WRITE(MWA16_NOP)						// unknown
+	AM_RANGE(0xffff20, 0xffff21) AM_WRITE(MWA16_NOP)						// unknown - flip screen related
+	AM_RANGE(0xffff40, 0xffff47) AM_WRITE(taotaido_sprite_character_bank_select_w)
+	AM_RANGE(0xffffc0, 0xffffc1) AM_WRITE(sound_command_w)					// seems right
+ADDRESS_MAP_END
 
 /* sound cpu - same as aerofgt */
 
@@ -152,32 +152,32 @@ static WRITE_HANDLER( taotaido_sh_bankswitch_w )
 	cpu_setbank(1,rom + (data & 0x03) * 0x8000);
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( taotaido_sound_readport )
-	{ 0x00, 0x00, YM2610_status_port_0_A_r },
-	{ 0x02, 0x02, YM2610_status_port_0_B_r },
-	{ 0x0c, 0x0c, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( taotaido_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x02, 0x02) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( taotaido_sound_writeport )
-	{ 0x00, 0x00, YM2610_control_port_0_A_w },
-	{ 0x01, 0x01, YM2610_data_port_0_A_w },
-	{ 0x02, 0x02, YM2610_control_port_0_B_w },
-	{ 0x03, 0x03, YM2610_data_port_0_B_w },
-	{ 0x04, 0x04, taotaido_sh_bankswitch_w },
-	{ 0x08, 0x08, pending_command_clear_w },
-PORT_END
+static ADDRESS_MAP_START( taotaido_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(taotaido_sh_bankswitch_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(pending_command_clear_w)
+ADDRESS_MAP_END
 
 
 
@@ -379,13 +379,13 @@ static struct YM2610interface ym2610_interface =
 
 static MACHINE_DRIVER_START( taotaido )
 	MDRV_CPU_ADD(M68000, 32000000/2)
-	MDRV_CPU_MEMORY(taotaido_readmem,taotaido_writemem)
+	MDRV_CPU_PROGRAM_MAP(taotaido_readmem,taotaido_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,20000000/4) // ??
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(taotaido_sound_readport,taotaido_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(taotaido_sound_readport,taotaido_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
 
 	MDRV_FRAMES_PER_SECOND(60)

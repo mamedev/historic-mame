@@ -338,87 +338,87 @@ static DRIVER_INIT( mmcamera )
 
 
 
-static MEMORY_READ_START( readmem_gionbana )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf00f, gionbana_paltbl_r },
-	{ 0xf400, 0xf5ff, gionbana_palette_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_gionbana, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf00f) AM_READ(gionbana_paltbl_r)
+	AM_RANGE(0xf400, 0xf5ff) AM_READ(gionbana_palette_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_gionbana )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf00f, gionbana_paltbl_w },
-	{ 0xf400, 0xf5ff, gionbana_palette_w },
-	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_gionbana, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf00f) AM_WRITE(gionbana_paltbl_w)
+	AM_RANGE(0xf400, 0xf5ff) AM_WRITE(gionbana_palette_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_hanamomo )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, gionbana_palette_r },
-	{ 0xf400, 0xf40f, gionbana_paltbl_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_hanamomo, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf1ff) AM_READ(gionbana_palette_r)
+	AM_RANGE(0xf400, 0xf40f) AM_READ(gionbana_paltbl_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_hanamomo )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, gionbana_palette_w },
-	{ 0xf400, 0xf40f, gionbana_paltbl_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_hanamomo, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(gionbana_palette_w)
+	AM_RANGE(0xf400, 0xf40f) AM_WRITE(gionbana_paltbl_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_scandalm )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf400, 0xf5ff, gionbana_palette_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_scandalm, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf400, 0xf5ff) AM_READ(gionbana_palette_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_scandalm )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf400, 0xf5ff, gionbana_palette_w },
-	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_scandalm, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf400, 0xf5ff) AM_WRITE(gionbana_palette_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_club90s )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf80f, gionbana_paltbl_r },
-	{ 0xfc00, 0xfdff, gionbana_palette_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_club90s, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf80f) AM_READ(gionbana_paltbl_r)
+	AM_RANGE(0xfc00, 0xfdff) AM_READ(gionbana_palette_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_club90s )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf80f, gionbana_paltbl_w },
-	{ 0xfc00, 0xfdff, gionbana_palette_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_club90s, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf80f) AM_WRITE(gionbana_paltbl_w)
+	AM_RANGE(0xfc00, 0xfdff) AM_WRITE(gionbana_palette_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_maiko )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf1ff, maiko_palette_r },
-	{ 0xf400, 0xf40f, gionbana_paltbl_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_maiko, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf1ff) AM_READ(maiko_palette_r)
+	AM_RANGE(0xf400, 0xf40f) AM_READ(gionbana_paltbl_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_maiko )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf1ff, maiko_palette_w },
-	{ 0xf400, 0xf40f, gionbana_paltbl_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_maiko, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(maiko_palette_w)
+	AM_RANGE(0xf400, 0xf40f) AM_WRITE(gionbana_paltbl_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_hanaoji )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf200, 0xf3ff, maiko_palette_r },
-	{ 0xf700, 0xf70f, gionbana_paltbl_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_hanaoji, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf200, 0xf3ff) AM_READ(maiko_palette_r)
+	AM_RANGE(0xf700, 0xf70f) AM_READ(gionbana_paltbl_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_hanaoji )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf200, 0xf3ff, maiko_palette_w },
-	{ 0xf700, 0xf70f, gionbana_paltbl_w },
-	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_hanaoji, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf200, 0xf3ff) AM_WRITE(maiko_palette_w)
+	AM_RANGE(0xf700, 0xf70f) AM_WRITE(gionbana_paltbl_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( io_gionbana_r )
@@ -439,9 +439,9 @@ static READ_HANDLER( io_gionbana_r )
 	}
 }
 
-static PORT_READ_START( readport_gionbana )
-	{ 0x0000, 0xffff, io_gionbana_r },
-PORT_END
+static ADDRESS_MAP_START( readport_gionbana, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(io_gionbana_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_gionbana_w )
 {
@@ -476,9 +476,9 @@ static WRITE_HANDLER( io_gionbana_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_gionbana )
-	{ 0x0000, 0xffff, io_gionbana_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_gionbana, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_gionbana_w)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_hanamomo_w )
 {
@@ -513,9 +513,9 @@ static WRITE_HANDLER( io_hanamomo_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_hanamomo )
-	{ 0x0000, 0xffff, io_hanamomo_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_hanamomo, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_hanamomo_w)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_msjiken_w )
 {
@@ -550,9 +550,9 @@ static WRITE_HANDLER( io_msjiken_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_msjiken )
-	{ 0x0000, 0xffff, io_msjiken_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_msjiken, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_msjiken_w)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_scandal_w )
 {
@@ -592,9 +592,9 @@ static WRITE_HANDLER( io_scandal_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_scandal )
-	{ 0x0000, 0xffff, io_scandal_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_scandal, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_scandal_w)
+ADDRESS_MAP_END
 
 static READ_HANDLER( io_scandalm_r )
 {
@@ -615,9 +615,9 @@ static READ_HANDLER( io_scandalm_r )
 	}
 }
 
-static PORT_READ_START( readport_scandalm )
-	{ 0x0000, 0xffff, io_scandalm_r },
-PORT_END
+static ADDRESS_MAP_START( readport_scandalm, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(io_scandalm_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_scandalm_w )
 {
@@ -657,9 +657,9 @@ static WRITE_HANDLER( io_scandalm_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_scandalm )
-	{ 0x0000, 0xffff, io_scandalm_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_scandalm, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_scandalm_w)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_bananadr_w )
 {
@@ -700,9 +700,9 @@ static WRITE_HANDLER( io_bananadr_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_bananadr )
-	{ 0x0000, 0xffff, io_bananadr_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_bananadr, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_bananadr_w)
+ADDRESS_MAP_END
 
 static READ_HANDLER( io_maiko_r )
 {
@@ -722,9 +722,9 @@ static READ_HANDLER( io_maiko_r )
 	}
 }
 
-static PORT_READ_START( readport_maiko )
-	{ 0x0000, 0xffff, io_maiko_r },
-PORT_END
+static ADDRESS_MAP_START( readport_maiko, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(io_maiko_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_maiko_w )
 {
@@ -759,9 +759,9 @@ static WRITE_HANDLER( io_maiko_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_maiko )
-	{ 0x0000, 0xffff, io_maiko_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_maiko, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_maiko_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( hanamomo )
@@ -2260,8 +2260,8 @@ static MACHINE_DRIVER_START( gionbana )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 20000000/4)	/* 5.00 MHz ? */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem_gionbana,writemem_gionbana)
-	MDRV_CPU_PORTS(readport_gionbana,writeport_gionbana)
+	MDRV_CPU_PROGRAM_MAP(readmem_gionbana,writemem_gionbana)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_gionbana)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,132)	// nmiclock = 60
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2290,7 +2290,7 @@ static MACHINE_DRIVER_START( mmcamera )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gionbana)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(readport_gionbana,writeport_hanamomo)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_hanamomo)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 
 	MDRV_NVRAM_HANDLER(nb1413m3)
@@ -2305,8 +2305,8 @@ static MACHINE_DRIVER_START( hanamomo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gionbana)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_hanamomo,writemem_hanamomo)
-	MDRV_CPU_PORTS(readport_gionbana,writeport_hanamomo)
+	MDRV_CPU_PROGRAM_MAP(readmem_hanamomo,writemem_hanamomo)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_hanamomo)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 
 	/* video hardware */
@@ -2320,8 +2320,8 @@ static MACHINE_DRIVER_START( msjiken )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hanamomo)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_gionbana,writemem_gionbana)
-	MDRV_CPU_PORTS(readport_gionbana,writeport_msjiken)
+	MDRV_CPU_PROGRAM_MAP(readmem_gionbana,writemem_gionbana)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_msjiken)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,142)	// nmiclock = 70
 MACHINE_DRIVER_END
 
@@ -2369,7 +2369,7 @@ static MACHINE_DRIVER_START( mjnanpas )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gionbana)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_club90s,writemem_club90s)
+	MDRV_CPU_PROGRAM_MAP(readmem_club90s,writemem_club90s)
 MACHINE_DRIVER_END
 
 
@@ -2378,8 +2378,8 @@ static MACHINE_DRIVER_START( maiko )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mjnanpas)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_maiko,writemem_maiko)
-	MDRV_CPU_PORTS(readport_maiko,writeport_maiko)
+	MDRV_CPU_PROGRAM_MAP(readmem_maiko,writemem_maiko)
+	MDRV_CPU_IO_MAP(readport_maiko,writeport_maiko)
 MACHINE_DRIVER_END
 
 
@@ -2388,7 +2388,7 @@ static MACHINE_DRIVER_START( hanaoji )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(maiko)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_hanaoji,writemem_hanaoji)
+	MDRV_CPU_PROGRAM_MAP(readmem_hanaoji,writemem_hanaoji)
 
 	MDRV_NVRAM_HANDLER(nb1413m3)
 MACHINE_DRIVER_END
@@ -2399,8 +2399,8 @@ static MACHINE_DRIVER_START( scandal )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hanamomo)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
-	MDRV_CPU_PORTS(readport_gionbana,writeport_scandal)
+	MDRV_CPU_PROGRAM_MAP(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_scandal)
 MACHINE_DRIVER_END
 
 
@@ -2409,8 +2409,8 @@ static MACHINE_DRIVER_START( bananadr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mjnanpas)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
-	MDRV_CPU_PORTS(readport_gionbana,writeport_bananadr)
+	MDRV_CPU_PROGRAM_MAP(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_IO_MAP(readport_gionbana,writeport_bananadr)
 
 	MDRV_NVRAM_HANDLER(nb1413m3)
 MACHINE_DRIVER_END
@@ -2422,8 +2422,8 @@ static MACHINE_DRIVER_START( mjfocusm )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gionbana)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
-	MDRV_CPU_PORTS(readport_scandalm,writeport_scandalm)
+	MDRV_CPU_PROGRAM_MAP(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_IO_MAP(readport_scandalm,writeport_scandalm)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 
 	MDRV_NVRAM_HANDLER(nb1413m3)

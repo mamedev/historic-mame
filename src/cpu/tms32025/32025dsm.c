@@ -37,12 +37,11 @@
 #include "memory.h"
 #include "tms32025.h"
 #include "mamedbg.h"
-extern offs_t TMS32025_DATA_BANK[0x10];
-extern offs_t TMS32025_PRGM_BANK[0x10];
+extern data16_t *tms32025_pgmmap[0x200];
 //#define READOP16(A)  (cpu_readop16((A)     | (TMS32025_PGM_OFFSET << 1)))
 //#define READARG16(A) (cpu_readop_arg16((A) | (TMS32025_PGM_OFFSET << 1)))
-#define READOP16(A)  (cpu_readop16(TMS32025_PRGM_BANK( (A>>1) )))
-#define READARG16(A) (cpu_readop_arg16(TMS32025_PRGM_BANK( (A>>1) )))
+#define READOP16(A)		((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))
+#define READARG16(A)	((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))
 #else								/* Compile interface for standalone */
 extern unsigned char *Buffer;
 #ifdef MSB_FIRST
@@ -420,7 +419,7 @@ unsigned Dasm32025(char *str, unsigned pc)
 	if (!OpInizialized) InitDasm32025();
 
 	op = -1;				/* no matching opcode */
-	code = READOP16(2*pc);
+	code = READOP16(pc);
 	for ( i = 0; i < MAX_OPS; i++)
 	{
 		if ((code & Op[i].mask) == Op[i].bits)
@@ -443,7 +442,7 @@ unsigned Dasm32025(char *str, unsigned pc)
 	{
 		bit = 31;
 		code <<= 16;
-		code |= READARG16(2*(pc+cnt));
+		code |= READARG16(pc+cnt);
 		cnt++;
 	}
 	else

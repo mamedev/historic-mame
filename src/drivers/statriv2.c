@@ -1,7 +1,9 @@
 /****************************************************************\
-* Status Trivia 2 driver by David Haywood, MooglyGuy, and Stephh *
-* Super Trivia driver by MooglyGuy                               *
+* Status Triv Two driver by David Haywood, MooglyGuy, and Stephh *
+* Super Triv II driver by MooglyGuy                              *
 * Triv Quiz driver by MooglyGuy                                  *
+* Triv Four driver by Pierpaolo Prazzoli                         *
+* Super Triv III driver by Pierpaolo Prazzoli                    *
 *                                                                *
 ******************************************************************
 *                                                                *
@@ -66,7 +68,6 @@ unsigned char statriv2_default_eeprom[256] = {
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
-
 
 data8_t *statriv2_videoram;
 static struct tilemap* statriv2_tilemap;
@@ -143,7 +144,6 @@ static NVRAM_HANDLER (statriv2)
 	else
 		memcpy ( generic_nvram, statriv2_default_eeprom, 0x100 );
 }
-
 
 static data8_t  question_offset_low;
 static data8_t  question_offset_med;
@@ -253,88 +253,124 @@ static READ_HANDLER (supertr2_questions_read)
 	return (question_data[offs] ^ 0xFF) ^ XORval;
 }
 
-static MEMORY_READ_START( statriv2_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x48ff, MRA_RAM },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+static READ_HANDLER (supertr3_questions_read)
+{
+	data8_t *question_data = memory_region( REGION_USER1 );
+	int offs;
 
-static MEMORY_WRITE_START( statriv2_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x48ff, MWA_RAM, &generic_nvram, &generic_nvram_size },    // backup ram?
-	{ 0xc800, 0xcfff, statriv2_videoram_w, &statriv2_videoram },
-MEMORY_END
+	offs = (question_offset_high << 16) | (question_offset_med << 8) | question_offset_low;
 
-static MEMORY_READ_START( supertr2_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x48ff, MRA_RAM },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+	return question_data[offs] ^ 0xFF;
+}
 
-static MEMORY_WRITE_START( supertr2_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x48ff, MWA_RAM, &generic_nvram, &generic_nvram_size },    // backup ram?
-	{ 0xc800, 0xcfff, statriv2_videoram_w, &statriv2_videoram },
-MEMORY_END
+static ADDRESS_MAP_START( statriv2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( statriv2_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x2b, 0x2b, statriv2_questions_read },		// question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)    // backup ram?
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(statriv2_videoram_w) AM_BASE(&statriv2_videoram)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( statriv2_writeport )
-	{ 0x22, 0x22, IOWP_NOP },				// ???
-	{ 0x23, 0x23, IOWP_NOP },				// ???
-	{ 0x29, 0x29, question_offset_low_w },
-	{ 0x2a, 0x2a, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( supertr2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( supertr2_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x28, 0x28, supertr2_questions_read },                // question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( supertr2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)    // backup ram?
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(statriv2_videoram_w) AM_BASE(&statriv2_videoram)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( supertr2_writeport )
-	{ 0x22, 0x22, IOWP_NOP },				// ???
-	{ 0x23, 0x23, IOWP_NOP },				// ???
-	{ 0x28, 0x28, question_offset_low_w },
-	{ 0x29, 0x29, question_offset_med_w },
-	{ 0x2a, 0x2a, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x2b, 0x2b) AM_READ(statriv2_questions_read)		// question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( trivquiz_writeport )
-        { 0x22, 0x22, IOWP_NOP },                               // ???
-        { 0x23, 0x23, IOWP_NOP },                               // ???
-        { 0x28, 0x28, question_offset_low_w },
-        { 0x29, 0x29, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_low_w)
+	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_READ_START( trivquiz_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x2a, 0x2a, statriv2_questions_read },                // question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv4_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x28, 0x28) AM_READ(statriv2_questions_read)		// question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( statriv4_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_low_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( supertr2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x28, 0x28) AM_READ(supertr2_questions_read)                // question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)			// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( supertr2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)			// ???
+	AM_RANGE(0x28, 0x28) AM_WRITE(question_offset_low_w)
+	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_med_w)
+	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( trivquiz_writeport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)                               // ???
+    AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)                               // ???
+    AM_RANGE(0x28, 0x28) AM_WRITE(question_offset_low_w)
+    AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( trivquiz_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x2a, 0x2a) AM_READ(statriv2_questions_read)                // question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( supertr3_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x28, 0x28) AM_READ(supertr3_questions_read)                // question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( statriv2 )
 	PORT_START
@@ -353,11 +389,41 @@ INPUT_PORTS_START( statriv2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x20, 0x20, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Freeze" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( statriv4 )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE3, "Play All",   IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE2, "Play 10000", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1,  "Button A",   IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2,  "Button B",   IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON3,  "Button C",   IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON4,  "Button D",   IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+ 	PORT_START
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE1, "Play 1000",  IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x20, 0x20, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( supertr2 )
@@ -419,9 +485,9 @@ static INTERRUPT_GEN( statriv2_interrupt )
 
 static MACHINE_DRIVER_START( statriv2 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(statriv2_readmem,statriv2_writemem)
-	MDRV_CPU_PORTS(statriv2_readport,statriv2_writeport)
+	MDRV_CPU_ADD_TAG("main",8085A,12400000)              /* 12.4MHz / 4? */
+	MDRV_CPU_PROGRAM_MAP(statriv2_readmem,statriv2_writemem)
+	MDRV_CPU_IO_MAP(statriv2_readport,statriv2_writeport)
 	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -430,7 +496,7 @@ static MACHINE_DRIVER_START( statriv2 )
 	MDRV_NVRAM_HANDLER(statriv2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(4*8, 38*8-1, 0, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -445,60 +511,48 @@ static MACHINE_DRIVER_START( statriv2 )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( supertr2 )
+static MACHINE_DRIVER_START( statriv4 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(supertr2_readmem,supertr2_writemem)
-	MDRV_CPU_PORTS(supertr2_readport,supertr2_writeport)
-	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
+	MDRV_IMPORT_FROM(statriv2)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	MDRV_NVRAM_HANDLER(generic_0fill)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(statriv4_readport,statriv4_writeport)
+	
 	MDRV_VISIBLE_AREA(2*8, 36*8-1, 0, 32*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(2*256)
-
-	MDRV_PALETTE_INIT(statriv2)
-	MDRV_VIDEO_START(statriv2)
-	MDRV_VIDEO_UPDATE(statriv2)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( trivquiz )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(supertr2_readmem,supertr2_writemem)
-	MDRV_CPU_PORTS(trivquiz_readport,trivquiz_writeport)
-	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
+	MDRV_IMPORT_FROM(statriv2)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(trivquiz_readport,trivquiz_writeport)
+MACHINE_DRIVER_END
 
-	MDRV_NVRAM_HANDLER(statriv2)
+static MACHINE_DRIVER_START( supertr2 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(statriv2)
 
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(4*8, 40*8-1, 0, 32*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(2*256)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(supertr2_readmem,supertr2_writemem)
+	MDRV_CPU_IO_MAP(supertr2_readport,supertr2_writeport)
+	
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
-	MDRV_PALETTE_INIT(statriv2)
-	MDRV_VIDEO_START(statriv2)
-	MDRV_VIDEO_UPDATE(statriv2)
+	MDRV_VISIBLE_AREA(2*8, 36*8-1, 0, 32*8-1)
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+static MACHINE_DRIVER_START( supertr3 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(statriv2)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(supertr2_readmem,supertr2_writemem)
+	MDRV_CPU_IO_MAP(supertr3_readport,supertr2_writeport)
+	
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	MDRV_VISIBLE_AREA(2*8, 36*8-1, 0, 32*8-1)
 MACHINE_DRIVER_END
 
 ROM_START( statriv2 )
@@ -519,6 +573,26 @@ ROM_START( statriv2 )
 	ROM_LOAD( "statuspb.u6", 0x0a000, 0x02000, CRC(7ee1cea0) SHA1(00ef768524e54890ebd1fdb3dd52d0080a18fc03) )
 	ROM_LOAD( "statuspb.u7", 0x0c000, 0x02000, CRC(121d6976) SHA1(2e4da8f2c3620c8f46fd4951551b0747b3c38caf) )
 	ROM_LOAD( "statuspb.u8", 0x0e000, 0x02000, CRC(5080df10) SHA1(b5cb0868d844bbb598159177fd5ce65ff3f18eda) )
+ROM_END
+
+ROM_START( statriv4 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "triv4.u07",    0x00000, 0x01000, CRC(38800e01) SHA1(3d174c4194169eae7c033e8bb30bd02779170d42) )
+	ROM_LOAD( "triv4.u08",    0x01000, 0x01000, CRC(7557e97e) SHA1(9096e7055b7a7579cc9206ad678063f9c882785b) )
+	ROM_LOAD( "triv4.u09",    0x02000, 0x01000, CRC(7f1b2e1d) SHA1(12249335a1c7fed8912009051e400e216688bdbc) )
+
+	ROM_REGION( 0x1000,  REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "triv4.u36",    0x00000, 0x01000, CRC(af5f434a) SHA1(1e7ae7ad7ea697007a30f5ba89127802a835eddc) )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* question data */
+	ROM_LOAD( "triv4.u41",    0x00000, 0x02000, CRC(aed8eead) SHA1(a615786d11c879875e9b7d3c3593fe0334e79178) )
+	ROM_LOAD( "triv4.u42",    0x02000, 0x02000, CRC(3354d389) SHA1(527e46e9276f4dfaad57a77f0b549d9d26c59226) )
+	ROM_LOAD( "triv4.u43",    0x04000, 0x02000, CRC(de7513e8) SHA1(c2e38cb39aacf57edb27cf5ee0b0fd49a44befa3) )
+	ROM_LOAD( "triv4.u44",    0x06000, 0x02000, CRC(b4293435) SHA1(5e2b96c19c4f5c63a5afa2de504d29fe64a4c908) )
+	ROM_LOAD( "triv4.u45",    0x08000, 0x02000, CRC(0b082745) SHA1(73c375d1dd906f0cc1106eac1fba45c51c751f86) )
+	ROM_LOAD( "triv4.u46",    0x0a000, 0x02000, CRC(fa53158a) SHA1(3814b60d999ad234f6c08ace2c84893fcb745a3c) )
+	ROM_LOAD( "triv4.u47",    0x0c000, 0x02000, CRC(fddbb113) SHA1(a88a1afdb1be035fc71929ef0236b61b8403cc1b) )
+	ROM_LOAD( "triv4.u48",    0x0e000, 0x02000, CRC(30ca8393) SHA1(dfb2f16f9b014d23793efe085be1ed75342c00dc) )	
 ROM_END
 
 ROM_START( trivquiz )
@@ -562,6 +636,29 @@ ROM_START( supertr2 )
 	ROM_LOAD( "astq2-8.rom", 0x38000, 0x08000, CRC(cd2674d5) SHA1(7fb6513172ffe8e3b9e0f4dc9ecdb42d954b1ff0) )
 ROM_END
 
+ROM_START( supertr3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "triv3.u07",    0x00000, 0x01000, CRC(f04a19d7) SHA1(f887ec976d9eb14329621ac75d6547fca6808bb3) )
+	ROM_LOAD( "triv3.u08",    0x01000, 0x01000, CRC(543d5664) SHA1(58ee8b94964b567fc052f7c4df4517ee029046bd) )
+	ROM_LOAD( "triv3.u09",    0x02000, 0x01000, CRC(047faed4) SHA1(e24c919434ad4e9a1059e34e6609a7271accd8f1) )
+	ROM_LOAD( "triv3.u10",    0x03000, 0x01000, CRC(df4b81b5) SHA1(b1ab666c51b838c4176f8b314677d6ae129997d0) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "ast2-0d.rom", 0x00000, 0x01000, BAD_DUMP CRC(a40f9201) SHA1(a87cfc3dbe5cff82926f5f8486c37fd3f4449135) )
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* question data */
+	ROM_LOAD( "triv3.u41",    0x00000, 0x08000, CRC(d62960c4) SHA1(d6f7dbdb016c14ca1cab5a0e965c9ae40dcbbc28) )
+	ROM_LOAD( "triv3.u42",    0x08000, 0x08000, CRC(6d50fec9) SHA1(6edb3ed92781e8961eacc342c0bceeb052b81a3e) )
+	ROM_LOAD( "triv3.u43",    0x10000, 0x08000, CRC(8c0a73de) SHA1(2a7175b7845b26b8d0d53279cd8793edee95d3a1) )
+	ROM_LOAD( "triv3.u44",    0x18000, 0x08000, CRC(fec7e3d0) SHA1(6921386be4de06efb2d4c382733c2d22948fdf4f) )
+	ROM_LOAD( "triv3.u45",    0x20000, 0x08000, CRC(b28d81dd) SHA1(d4a6026b437dcaf6881232b960b9e870754c9ec6) )
+	ROM_LOAD( "triv3.u46",    0x28000, 0x08000, CRC(86cffc1f) SHA1(06557bcc51b415349e5f7440f753ef2f66dcfde2) )
+	ROM_LOAD( "triv3.u47",    0x30000, 0x08000, CRC(f316803c) SHA1(31edb97bad7083ed32e0ee75256bc7d488fa234b) )
+	ROM_LOAD( "triv3.u48",    0x38000, 0x08000, CRC(1a99b268) SHA1(6369c79f645962b4a2f85b18e9d93c3cc65defc1) )
+ROM_END
+
 GAMEX( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz", GAME_WRONG_COLORS )
-GAMEX( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "(Status) Triv Two", GAME_WRONG_COLORS )
+GAMEX( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "Triv Two", GAME_WRONG_COLORS )
+GAMEX( 1985, statriv4, 0, statriv4, statriv4, 0, ROT0, "Status Games", "Triv Four", GAME_WRONG_COLORS )
 GAMEX( 1986, supertr2, 0, supertr2, supertr2, 0, ROT0, "Status Games", "Super Triv II", GAME_WRONG_COLORS )
+GAMEX( 1988, supertr3, 0, supertr3, supertr2, 0, ROT0, "Status Games", "Super Triv III", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS)

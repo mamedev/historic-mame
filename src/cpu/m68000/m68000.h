@@ -26,7 +26,7 @@ struct m68k_memory_interface
 	void		(*write8)(offs_t, data8_t);		// Write 8 bit
 	void		(*write16)(offs_t, data16_t);	// Write 16 bit
 	void		(*write32)(offs_t, data32_t);	// Write 32 bit
-	void		(*changepc)(offs_t);			// Change PC routine
+	void		(*changepc)(offs_t);			// Change PC
 
     // For Encrypted Stuff
 
@@ -61,19 +61,7 @@ struct m68k_encryption_interface
 #define MC68000_INT_ACK_AUTOVECTOR    -1
 #define MC68000_INT_ACK_SPURIOUS      -2
 
-#define m68000_ICount                   m68k_ICount
-extern void m68000_init(void);
-extern void m68000_reset(void *param);
-extern void m68000_exit(void);
-extern int	m68000_execute(int cycles);
-extern unsigned m68000_get_context(void *dst);
-extern void m68000_set_context(void *src);
-extern unsigned m68000_get_reg(int regnum);
-extern void m68000_set_reg(int regnum, unsigned val);
-extern void m68000_set_irq_line(int irqline, int state);
-extern void m68000_set_irq_callback(int (*callback)(int irqline));
-extern const char *m68000_info(void *context, int regnum);
-extern unsigned m68000_dasm(char *buffer, unsigned pc);
+void m68000_get_info(UINT32 state, union cpuinfo *info);
 extern void m68000_memory_interface_set(int Entry,void * memory_routine);
 
 /****************************************************************************
@@ -90,19 +78,7 @@ extern void m68000_memory_interface_set(int Entry,void * memory_routine);
 #define MC68010_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
 #define MC68010_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68010_ICount                   m68k_ICount
-extern void m68010_init(void);
-extern void m68010_reset(void *param);
-extern void m68010_exit(void);
-extern int	m68010_execute(int cycles);
-extern unsigned m68010_get_context(void *dst);
-extern void m68010_set_context(void *src);
-extern unsigned m68010_get_reg(int regnum);
-extern void m68010_set_reg(int regnum, unsigned val);
-extern void m68010_set_irq_line(int irqline, int state);
-extern void m68010_set_irq_callback(int (*callback)(int irqline));
-const char *m68010_info(void *context, int regnum);
-extern unsigned m68010_dasm(char *buffer, unsigned pc);
+void m68010_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -119,19 +95,7 @@ extern unsigned m68010_dasm(char *buffer, unsigned pc);
 #define MC68EC020_INT_ACK_AUTOVECTOR	MC68000_INT_ACK_AUTOVECTOR
 #define MC68EC020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68ec020_ICount                 m68k_ICount
-extern void m68ec020_init(void);
-extern void m68ec020_reset(void *param);
-extern void m68ec020_exit(void);
-extern int	m68ec020_execute(int cycles);
-extern unsigned m68ec020_get_context(void *dst);
-extern void m68ec020_set_context(void *src);
-extern unsigned m68ec020_get_reg(int regnum);
-extern void m68ec020_set_reg(int regnum, unsigned val);
-extern void m68ec020_set_irq_line(int irqline, int state);
-extern void m68ec020_set_irq_callback(int (*callback)(int irqline));
-const char *m68ec020_info(void *context, int regnum);
-extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
+void m68ec020_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -148,19 +112,7 @@ extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
 #define MC68020_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
 #define MC68020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68020_ICount                   m68k_ICount
-extern void m68020_init(void);
-extern void m68020_reset(void *param);
-extern void m68020_exit(void);
-extern int	m68020_execute(int cycles);
-extern unsigned m68020_get_context(void *dst);
-extern void m68020_set_context(void *src);
-extern unsigned m68020_get_reg(int regnum);
-extern void m68020_set_reg(int regnum, unsigned val);
-extern void m68020_set_irq_line(int irqline, int state);
-extern void m68020_set_irq_callback(int (*callback)(int irqline));
-const char *m68020_info(void *context, int regnum);
-extern unsigned m68020_dasm(char *buffer, unsigned pc);
+void m68020_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 // C Core header

@@ -110,56 +110,56 @@ static WRITE_HANDLER( flip_screen_w )
 }
 
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x8000, 0x9fff, galaga_sharedram_r },
-	{ 0x6800, 0x6807, galaga_dsw_r },
-	{ 0x7000, 0x700f, galaga_customio_data_r },
-	{ 0x7100, 0x7100, galaga_customio_r },
-	{ 0x0000, 0x3fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_READ(galaga_sharedram_r)
+	AM_RANGE(0x6800, 0x6807) AM_READ(galaga_dsw_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(galaga_customio_data_r)
+	AM_RANGE(0x7100, 0x7100) AM_READ(galaga_customio_r)
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x8000, 0x9fff, galaga_sharedram_r },
-	{ 0x6800, 0x6807, galaga_dsw_r },
-	{ 0x0000, 0x1fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_READ(galaga_sharedram_r)
+	AM_RANGE(0x6800, 0x6807) AM_READ(galaga_dsw_r)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x8000, 0x9fff, galaga_sharedram_r },
-	{ 0x6800, 0x6807, galaga_dsw_r },
-	{ 0x0000, 0x1fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_READ(galaga_sharedram_r)
+	AM_RANGE(0x6800, 0x6807) AM_READ(galaga_dsw_r)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x8000, 0x9fff, galaga_sharedram_w, &galaga_sharedram },
-	{ 0x6830, 0x6830, MWA_NOP },
-	{ 0x7000, 0x700f, galaga_customio_data_w },
-	{ 0x7100, 0x7100, galaga_customio_w },
-	{ 0xa000, 0xa005, MWA_RAM, &galaga_starcontrol },
-	{ 0x6820, 0x6820, galaga_interrupt_enable_1_w },
-	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, galaga_halt_w },
-	{ 0xa007, 0xa007, flip_screen_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },       /* these three are here just to initialize */
-	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },      /* the pointers. The actual writes are */
-	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },      /* handled by galaga_sharedram_w() */
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size }, /* dirtybuffer[] handling is not needed because */
-	{ 0x8400, 0x87ff, MWA_RAM, &colorram }, /* characters are redrawn every frame */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(galaga_sharedram_w) AM_BASE(&galaga_sharedram)
+	AM_RANGE(0x6830, 0x6830) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(galaga_customio_data_w)
+	AM_RANGE(0x7100, 0x7100) AM_WRITE(galaga_customio_w)
+	AM_RANGE(0xa000, 0xa005) AM_WRITE(MWA8_RAM) AM_BASE(&galaga_starcontrol)
+	AM_RANGE(0x6820, 0x6820) AM_WRITE(galaga_interrupt_enable_1_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(galaga_interrupt_enable_3_w)
+	AM_RANGE(0x6823, 0x6823) AM_WRITE(galaga_halt_w)
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(flip_screen_w)
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8b80, 0x8bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)       /* these three are here just to initialize */
+	AM_RANGE(0x9380, 0x93ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)      /* the pointers. The actual writes are */
+	AM_RANGE(0x9b80, 0x9bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)      /* handled by galaga_sharedram_w() */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* dirtybuffer[] handling is not needed because */
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&colorram) /* characters are redrawn every frame */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x8000, 0x9fff, galaga_sharedram_w },
-	{ 0x6821, 0x6821, galaga_interrupt_enable_2_w },
-	{ 0x0000, 0x1fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(galaga_sharedram_w)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(galaga_interrupt_enable_2_w)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x8000, 0x9fff, galaga_sharedram_w },
-	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
-	{ 0x0000, 0x1fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(galaga_sharedram_w)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(galaga_interrupt_enable_3_w)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -395,15 +395,15 @@ static MACHINE_DRIVER_START( galaga )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(galaga_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(galaga_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_VBLANK_INT(galaga_interrupt_3,2)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

@@ -23,13 +23,13 @@
 
 ***************************************************************************/
 
-extern const struct Memory_ReadAddress seibu_sound_readmem[];
-extern const struct Memory_WriteAddress seibu_sound_writemem[];
-extern const struct Memory_ReadAddress seibu2_sound_readmem[];
-extern const struct Memory_WriteAddress seibu2_sound_writemem[];
-extern const struct Memory_ReadAddress seibu3_sound_readmem[];
-extern const struct Memory_WriteAddress seibu3_sound_writemem[];
-extern const struct Memory_WriteAddress seibu3_adpcm_sound_writemem[];
+ADDRESS_MAP_EXTERN(seibu_sound_readmem);
+ADDRESS_MAP_EXTERN(seibu_sound_writemem);
+ADDRESS_MAP_EXTERN(seibu2_sound_readmem);
+ADDRESS_MAP_EXTERN(seibu2_sound_writemem);
+ADDRESS_MAP_EXTERN(seibu3_sound_readmem);
+ADDRESS_MAP_EXTERN(seibu3_sound_writemem);
+ADDRESS_MAP_EXTERN(seibu3_adpcm_sound_writemem);
 
 READ16_HANDLER( seibu_main_word_r );
 READ_HANDLER( seibu_main_v30_r );
@@ -148,22 +148,22 @@ static struct YM2203interface ym2203_interface =					\
 #define SEIBU_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
-	MDRV_CPU_MEMORY(seibu_sound_readmem,seibu_sound_writemem)		\
+	MDRV_CPU_PROGRAM_MAP(seibu_sound_readmem,seibu_sound_writemem)		\
 
 #define SEIBU2_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
-	MDRV_CPU_MEMORY(seibu2_sound_readmem,seibu2_sound_writemem)		\
+	MDRV_CPU_PROGRAM_MAP(seibu2_sound_readmem,seibu2_sound_writemem)		\
 
 #define SEIBU3_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
-	MDRV_CPU_MEMORY(seibu3_sound_readmem,seibu3_sound_writemem)		\
+	MDRV_CPU_PROGRAM_MAP(seibu3_sound_readmem,seibu3_sound_writemem)		\
 
 #define SEIBU3A_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
-	MDRV_CPU_MEMORY(seibu3_sound_readmem,seibu3_adpcm_sound_writemem)		\
+	MDRV_CPU_PROGRAM_MAP(seibu3_sound_readmem,seibu3_adpcm_sound_writemem)		\
 
 #define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE							\
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)						\

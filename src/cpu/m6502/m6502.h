@@ -58,7 +58,7 @@
 
 enum {
 	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
-	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SO_STATE,
+	M6502_EA, M6502_ZP,
 	M6502_SUBTYPE
 };
 
@@ -68,20 +68,7 @@ enum {
    positiv edge sets overflow flag */
 #define M6502_SET_OVERFLOW	1
 
-extern int m6502_ICount;				/* cycle count */
-
-extern void m6502_init(void);
-extern void m6502_reset(void *param);
-extern void m6502_exit(void);
-extern int	m6502_execute(int cycles);
-extern unsigned m6502_get_context(void *dst);
-extern void m6502_set_context(void *src);
-extern unsigned m6502_get_reg(int regnum);
-extern void m6502_set_reg(int regnum, unsigned val);
-extern void m6502_set_irq_line(int irqline, int state);
-extern void m6502_set_irq_callback(int (*callback)(int irqline));
-extern const char *m6502_info(void *context, int regnum);
-extern unsigned m6502_dasm(char *buffer, unsigned pc);
+extern void m6502_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************
  * The 6510
@@ -100,20 +87,7 @@ extern unsigned m6502_dasm(char *buffer, unsigned pc);
 
 #define M6510_IRQ_LINE					M6502_IRQ_LINE
 
-#define m6510_ICount					m6502_ICount
-
-extern void m6510_init(void);
-extern void m6510_reset(void *param);
-extern void m6510_exit(void);
-extern int	m6510_execute(int cycles);
-extern unsigned m6510_get_context(void *dst);
-extern void m6510_set_context(void *src);
-extern unsigned m6510_get_reg(int regnum);
-extern void m6510_set_reg(int regnum, unsigned val);
-extern void m6510_set_irq_line(int irqline, int state);
-extern void m6510_set_irq_callback(int (*callback)(int irqline));
-extern const char *m6510_info(void *context, int regnum);
-extern unsigned m6510_dasm(char *buffer, unsigned pc);
+extern void m6510_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned int Dasm6510( char *dst, unsigned pc );
@@ -135,22 +109,7 @@ extern unsigned int Dasm6510( char *dst, unsigned pc );
 
 #define M6510T_IRQ_LINE					M6502_IRQ_LINE
 
-#define m6510t_ICount                   m6502_ICount
-
-#define m6510t_init m6510_init
-#define m6510t_reset m6510_reset
-#define m6510t_exit m6510_exit
-#define m6510t_execute m6510_execute
-#define m6510t_get_context m6510_get_context
-#define m6510t_set_context m6510_set_context
-#define m6510t_get_reg m6510_get_reg
-#define m6510t_set_reg m6510_set_reg
-#define m6510t_set_irq_line m6510_set_irq_line
-#define m6510t_set_irq_callback m6510_set_irq_callback
-#define m6510t_state_save m6510_state_save
-#define m6510t_state_load m6510_state_load
-extern const char *m6510t_info(void *context, int regnum);
-#define m6510t_dasm m6510_dasm
+extern void m6510t_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef HAS_M7501
@@ -167,22 +126,7 @@ extern const char *m6510t_info(void *context, int regnum);
 
 #define M7501_IRQ_LINE					M6502_IRQ_LINE
 
-#define m7501_ICount                    m6502_ICount
-
-#define m7501_init m6510_init
-#define m7501_reset m6510_reset
-#define m7501_exit m6510_exit
-#define m7501_execute m6510_execute
-#define m7501_get_context m6510_get_context
-#define m7501_set_context m6510_set_context
-#define m7501_get_reg m6510_get_reg
-#define m7501_set_reg m6510_set_reg
-#define m7501_set_irq_line m6510_set_irq_line
-#define m7501_set_irq_callback m6510_set_irq_callback
-#define m7501_state_save m6510_state_save
-#define m7501_state_load m6510_state_load
-extern const char *m7501_info(void *context, int regnum);
-#define m7501_dasm m6510_dasm
+extern void m7501_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef HAS_M8502
@@ -199,22 +143,7 @@ extern const char *m7501_info(void *context, int regnum);
 
 #define M8502_IRQ_LINE					M6502_IRQ_LINE
 
-#define m8502_ICount                    m6502_ICount
-
-#define m8502_init m6510_init
-#define m8502_reset m6510_reset
-#define m8502_exit m6510_exit
-#define m8502_execute m6510_execute
-#define m8502_get_context m6510_get_context
-#define m8502_set_context m6510_set_context
-#define m8502_get_reg m6510_get_reg
-#define m8502_set_reg m6510_set_reg
-#define m8502_set_irq_line m6510_set_irq_line
-#define m8502_set_irq_callback m6510_set_irq_callback
-#define m8502_state_save m6510_state_save
-#define m8502_state_load m6510_state_load
-extern const char *m8502_info(void *context, int regnum);
-#define m8502_dasm m6510_dasm
+extern void m8502_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 
@@ -235,21 +164,7 @@ extern const char *m8502_info(void *context, int regnum);
 
 #define N2A03_IRQ_LINE					M6502_IRQ_LINE
 
-#define n2a03_ICount					m6502_ICount
-
-extern void n2a03_init(void);
-extern void n2a03_reset(void *param);
-extern void n2a03_exit(void);
-extern int	n2a03_execute(int cycles);
-extern unsigned n2a03_get_context(void *dst);
-extern void n2a03_set_context(void *src);
-extern unsigned n2a03_get_reg(int regnum);
-extern void n2a03_set_reg (int regnum, unsigned val);
-extern void n2a03_set_irq_line(int irqline, int state);
-extern void n2a03_set_irq_callback(int (*callback)(int irqline));
-extern const char *n2a03_info(void *context, int regnum);
-extern unsigned n2a03_dasm(char *buffer, unsigned pc);
-
+extern void n2a03_get_info(UINT32 state, union cpuinfo *info);
 
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
@@ -278,20 +193,7 @@ extern void n2a03_irq(void);
 
 #define M65C02_IRQ_LINE					M6502_IRQ_LINE
 
-#define m65c02_ICount					m6502_ICount
-
-extern void m65c02_init(void);
-extern void m65c02_reset(void *param);
-extern void m65c02_exit(void);
-extern int	m65c02_execute(int cycles);
-extern unsigned m65c02_get_context(void *dst);
-extern void m65c02_set_context(void *src);
-extern unsigned m65c02_get_reg(int regnum);
-extern void m65c02_set_reg(int regnum, unsigned val);
-extern void m65c02_set_irq_line(int irqline, int state);
-extern void m65c02_set_irq_callback(int (*callback)(int irqline));
-extern const char *m65c02_info(void *context, int regnum);
-extern unsigned m65c02_dasm(char *buffer, unsigned pc);
+extern void m65c02_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -311,20 +213,7 @@ extern unsigned m65c02_dasm(char *buffer, unsigned pc);
 
 #define M65SC02_IRQ_LINE				M6502_IRQ_LINE
 
-#define m65sc02_ICount					m6502_ICount
-
-extern void m65sc02_init(void);
-extern void m65sc02_reset(void *param);
-extern void m65sc02_exit(void);
-extern int	m65sc02_execute(int cycles);
-extern unsigned m65sc02_get_context(void *dst);
-extern void m65sc02_set_context(void *src);
-extern unsigned m65sc02_get_reg(int regnum);
-extern void m65sc02_set_reg(int regnum, unsigned val);
-extern void m65sc02_set_irq_line(int irqline, int state);
-extern void m65sc02_set_irq_callback(int (*callback)(int irqline));
-extern const char *m65sc02_info(void *context, int regnum);
-extern unsigned m65sc02_dasm(char *buffer, unsigned pc);
+extern void m65sc02_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -344,20 +233,7 @@ extern unsigned m65sc02_dasm(char *buffer, unsigned pc);
 
 #define DECO16_IRQ_LINE					M6502_IRQ_LINE
 
-#define deco16_ICount					m6502_ICount
-
-extern void deco16_init(void);
-extern void deco16_reset(void *param);
-extern void deco16_exit(void);
-extern int	deco16_execute(int cycles);
-extern unsigned deco16_get_context(void *dst);
-extern void deco16_set_context(void *src);
-extern unsigned deco16_get_reg(int regnum);
-extern void deco16_set_reg(int regnum, unsigned val);
-extern void deco16_set_irq_line(int irqline, int state);
-extern void deco16_set_irq_callback(int (*callback)(int irqline));
-extern const char *deco16_info(void *context, int regnum);
-extern unsigned deco16_dasm(char *buffer, unsigned pc);
+extern void deco16_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG

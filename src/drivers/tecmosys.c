@@ -213,37 +213,37 @@ static WRITE16_HANDLER(reg_e80000_w)
 
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x200000, 0x20ffff, MRA16_RAM },
-	{ 0x300000, 0x3013ff, MRA16_RAM },
-	{ 0x400000, 0x4013ff, MRA16_RAM },
-	{ 0x500000, 0x5013ff, MRA16_RAM },
-	{ 0x700000, 0x703fff, MRA16_RAM },
-	{ 0x800000, 0x80ffff, MRA16_RAM },
-	{ 0x900000, 0x907fff, MRA16_RAM },
-	{ 0x980000, 0x980fff, MRA16_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x3013ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x400000, 0x4013ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x500000, 0x5013ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x900000, 0x907fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x980000, 0x980fff) AM_READ(MRA16_RAM)
 
-	{ 0xb80000, 0xb80001, reg_b80000_r },
-	{ 0xf80000, 0xf80001, reg_f80000_r },
+	AM_RANGE(0xb80000, 0xb80001) AM_READ(reg_b80000_r)
+	AM_RANGE(0xf80000, 0xf80001) AM_READ(reg_f80000_r)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x200000, 0x20ffff, MWA16_RAM, &protram  },
-	{ 0x300000, 0x3013ff, MWA16_RAM },
-	{ 0x400000, 0x4013ff, MWA16_RAM },
-	{ 0x500000, 0x5013ff, MWA16_RAM },
-	{ 0x700000, 0x703fff, MWA16_RAM },
-	{ 0x800000, 0x80ffff, MWA16_RAM },
-	{ 0x900000, 0x907fff, MWA16_RAM },
-	{ 0x980000, 0x980fff, MWA16_RAM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM) AM_BASE(&protram)
+	AM_RANGE(0x300000, 0x3013ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x400000, 0x4013ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x500000, 0x5013ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x900000, 0x907fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x980000, 0x980fff) AM_WRITE(MWA16_RAM)
 
-{0x880022, 0x880023, MWA16_NOP },
+AM_RANGE(0x880022, 0x880023) AM_WRITE(MWA16_NOP)
 
-	{ 0xe80000, 0xe80001, reg_e80000_w },
-MEMORY_END
+	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(reg_e80000_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( deroon )
 INPUT_PORTS_END
@@ -276,42 +276,42 @@ static WRITE_HANDLER( deroon_bankswitch_w )
 	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-2) & 0x0f) * 0x4000 + 0x10000 );
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xe000, 0xf7ff, MRA_RAM },
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xf7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, YMF262_status_0_r },
-	{ 0x40, 0x40, soundlatch_r },
-	//{ 0x60, 0x60, YMZ280B_status_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YMF262_status_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(soundlatch_r)
+	//AM_RANGE(0x60, 0x60) AM_READ(YMZ280B_status_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, YMF262_register_A_0_w },
-	{ 0x01, 0x01, YMF262_data_A_0_w },
-	{ 0x02, 0x02, YMF262_register_B_0_w },
-	{ 0x03, 0x03, YMF262_data_B_0_w },
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YMF262_register_A_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YMF262_data_A_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YMF262_register_B_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YMF262_data_B_0_w)
 
-	{ 0x10, 0x10, OKIM6295_data_0_w },
+	AM_RANGE(0x10, 0x10) AM_WRITE(OKIM6295_data_0_w)
 
-	{ 0x30, 0x30, deroon_bankswitch_w },
+	AM_RANGE(0x30, 0x30) AM_WRITE(deroon_bankswitch_w)
 
-	//{ 0x50, 0x50, to_main_cpu_latch_w },
-	{ 0x50, 0x50, IOWP_NOP },
+	//AM_RANGE(0x50, 0x50) AM_WRITE(to_main_cpu_latch_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP)
 
-	{ 0x60, 0x60, YMZ280B_register_0_w },
-	{ 0x61, 0x61, YMZ280B_data_0_w },
-PORT_END
+	AM_RANGE(0x60, 0x60) AM_WRITE(YMZ280B_register_0_w)
+	AM_RANGE(0x61, 0x61) AM_WRITE(YMZ280B_data_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -433,13 +433,13 @@ static struct YMZ280Binterface ymz280b_interface =
 
 static MACHINE_DRIVER_START( deroon )
 	MDRV_CPU_ADD(M68000, 16000000/8) /* the /8 divider is here only for OPL3 testing */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	//MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/2 )	/* 8 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

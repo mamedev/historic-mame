@@ -88,42 +88,42 @@ static WRITE_HANDLER( cloud9_coin_counter_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0002, cloud9_bitmap_regs_r },
-	{ 0x0003, 0x05ff, MRA_RAM },
-	{ 0x0600, 0x3fff, MRA_RAM },
-	{ 0x5500, 0x557f, MRA_RAM },
-	{ 0x5800, 0x5800, input_port_0_r },
-	{ 0x5801, 0x5801, input_port_1_r },
-	{ 0x5900, 0x5900, input_port_2_r },
-	{ 0x5901, 0x5901, input_port_3_r },
-	{ 0x5a00, 0x5a0f, pokey1_r },
-	{ 0x5b00, 0x5b0f, pokey2_r },
-	{ 0x5c00, 0x5cff, MRA_RAM },	/* EAROM */
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0002) AM_READ(cloud9_bitmap_regs_r)
+	AM_RANGE(0x0003, 0x05ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0600, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5500, 0x557f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_0_r)
+	AM_RANGE(0x5801, 0x5801) AM_READ(input_port_1_r)
+	AM_RANGE(0x5900, 0x5900) AM_READ(input_port_2_r)
+	AM_RANGE(0x5901, 0x5901) AM_READ(input_port_3_r)
+	AM_RANGE(0x5a00, 0x5a0f) AM_READ(pokey1_r)
+	AM_RANGE(0x5b00, 0x5b0f) AM_READ(pokey2_r)
+	AM_RANGE(0x5c00, 0x5cff) AM_READ(MRA8_RAM)	/* EAROM */
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0002, cloud9_bitmap_regs_w, &cloud9_bitmap_regs },
-	{ 0x0003, 0x05ff, MWA_RAM },
-	{ 0x0600, 0x3fff, cloud9_bitmap_w, &videoram, &videoram_size },
-	{ 0x5000, 0x50ff, MWA_RAM, &spriteram },
-	{ 0x5400, 0x5400, watchdog_reset_w },
-	{ 0x5480, 0x5480, MWA_NOP },	/* IRQ Ack */
-	{ 0x5500, 0x557f, cloud9_paletteram_w, &paletteram },
-	{ 0x5580, 0x5580, MWA_RAM, &cloud9_auto_inc_x },
-	{ 0x5581, 0x5581, MWA_RAM, &cloud9_auto_inc_y },
-	{ 0x5584, 0x5584, MWA_RAM, &cloud9_both_banks },
-	{ 0x5586, 0x5586, MWA_RAM, &cloud9_vram_bank },
-	{ 0x5587, 0x5587, MWA_RAM, &cloud9_color_bank },
-	{ 0x5600, 0x5601, cloud9_coin_counter_w },
-	{ 0x5602, 0x5603, cloud9_led_w },
-	{ 0x5a00, 0x5a0f, pokey1_w },
-	{ 0x5b00, 0x5b0f, pokey2_w },
-	{ 0x5c00, 0x5cff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0002) AM_WRITE(cloud9_bitmap_regs_w) AM_BASE(&cloud9_bitmap_regs)
+	AM_RANGE(0x0003, 0x05ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0600, 0x3fff) AM_WRITE(cloud9_bitmap_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x5000, 0x50ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x5400, 0x5400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5480, 0x5480) AM_WRITE(MWA8_NOP)	/* IRQ Ack */
+	AM_RANGE(0x5500, 0x557f) AM_WRITE(cloud9_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x5580, 0x5580) AM_WRITE(MWA8_RAM) AM_BASE(&cloud9_auto_inc_x)
+	AM_RANGE(0x5581, 0x5581) AM_WRITE(MWA8_RAM) AM_BASE(&cloud9_auto_inc_y)
+	AM_RANGE(0x5584, 0x5584) AM_WRITE(MWA8_RAM) AM_BASE(&cloud9_both_banks)
+	AM_RANGE(0x5586, 0x5586) AM_WRITE(MWA8_RAM) AM_BASE(&cloud9_vram_bank)
+	AM_RANGE(0x5587, 0x5587) AM_WRITE(MWA8_RAM) AM_BASE(&cloud9_color_bank)
+	AM_RANGE(0x5600, 0x5601) AM_WRITE(cloud9_coin_counter_w)
+	AM_RANGE(0x5602, 0x5603) AM_WRITE(cloud9_led_w)
+	AM_RANGE(0x5a00, 0x5a0f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x5b00, 0x5b0f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x5c00, 0x5cff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -259,7 +259,7 @@ static MACHINE_DRIVER_START( cloud9 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12096000/8)	/* 1.512 MHz?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -67,43 +67,43 @@ static READ16_HANDLER( realbrk_dsw_r )
 
 ***************************************************************************/
 
-static MEMORY_READ16_START( realbrk_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x203fff, MRA16_RAM					},	// Sprites
-	{ 0x400000, 0x40ffff, MRA16_RAM					},	// Palette
-	{ 0x600000, 0x601fff, MRA16_RAM					},	// Background	(0)
-	{ 0x602000, 0x603fff, MRA16_RAM					},	// Background	(1)
-	{ 0x604000, 0x604fff, MRA16_RAM					},	// Text			(2)
-	{ 0x606000, 0x60600f, MRA16_RAM					},	// Scroll + Video Regs
-	{ 0x605000, 0x61ffff, MRA16_RAM					},	//
-	{ 0x800002, 0x800003, YMZ280B_status_0_msb_r	},	// YMZ280
-	{ 0xc00000, 0xc00001, input_port_0_word_r		},	// P1 & P2 (Inputs)
-	{ 0xc00002, 0xc00003, input_port_1_word_r		},	// Coins
-	{ 0xc00004, 0xc00005, realbrk_dsw_r				},	// 4 x DSW (10 bits each)
-	{ 0xfe0000, 0xfeffff, MRA16_RAM					},	// RAM
-	{ 0xff0000, 0xfffbff, MRA16_RAM					},	// RAM
-	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
-MEMORY_END
+static ADDRESS_MAP_START( realbrk_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x200000, 0x203fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA16_RAM					)	// Background	(0)
+	AM_RANGE(0x602000, 0x603fff) AM_READ(MRA16_RAM					)	// Background	(1)
+	AM_RANGE(0x604000, 0x604fff) AM_READ(MRA16_RAM					)	// Text			(2)
+	AM_RANGE(0x606000, 0x60600f) AM_READ(MRA16_RAM					)	// Scroll + Video Regs
+	AM_RANGE(0x605000, 0x61ffff) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0x800002, 0x800003) AM_READ(YMZ280B_status_0_msb_r	)	// YMZ280
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(input_port_0_word_r		)	// P1 & P2 (Inputs)
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r		)	// Coins
+	AM_RANGE(0xc00004, 0xc00005) AM_READ(realbrk_dsw_r				)	// 4 x DSW (10 bits each)
+	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0xff0000, 0xfffbff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0xfffc00, 0xffffff) AM_READ(MRA16_RAM					)	// TMP68301 Registers
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( realbrk_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM
-	{ 0x200000, 0x203fff, MWA16_RAM, &spriteram16			},	// Sprites
-	{ 0x400000, 0x40ffff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16	},	// Palette
-	{ 0x600000, 0x601fff, realbrk_vram_0_w, &realbrk_vram_0	},	// Background	(0)
-	{ 0x602000, 0x603fff, realbrk_vram_1_w, &realbrk_vram_1	},	// Background	(1)
-	{ 0x604000, 0x604fff, realbrk_vram_2_w, &realbrk_vram_2	},	// Text			(2)
-	{ 0x606000, 0x60600f, realbrk_vregs_w, &realbrk_vregs  	},	// Scroll + Video Regs
-	{ 0x605000, 0x61ffff, MWA16_RAM							},	//
-	{ 0x800000, 0x800001, YMZ280B_register_0_msb_w			},	// YMZ280
-	{ 0x800002, 0x800003, YMZ280B_data_0_msb_w				},	//
-	{ 0x800008, 0x800009, YM2413_register_port_0_lsb_w		},	// YM2413
-	{ 0x80000a, 0x80000b, YM2413_data_port_0_lsb_w			},	//
-	{ 0xc00004, 0xc00005, MWA16_RAM, &realbrk_dsw_select	},	// DSW select
-	{ 0xfe0000, 0xfeffff, MWA16_RAM							},	// RAM
-	{ 0xff0000, 0xfffbff, MWA16_RAM							},	// RAM
-	{ 0xfffd0a, 0xfffd0b, realbrk_flipscreen_w				},	// Hack! Parallel port data register
-	{ 0xfffc00, 0xffffff, tmp68301_regs_w, &tmp68301_regs	},	// TMP68301 Registers
-MEMORY_END
+static ADDRESS_MAP_START( realbrk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM							)	// ROM
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16			)	// Sprites
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x600000, 0x601fff) AM_WRITE(realbrk_vram_0_w) AM_BASE(&realbrk_vram_0	)	// Background	(0)
+	AM_RANGE(0x602000, 0x603fff) AM_WRITE(realbrk_vram_1_w) AM_BASE(&realbrk_vram_1	)	// Background	(1)
+	AM_RANGE(0x604000, 0x604fff) AM_WRITE(realbrk_vram_2_w) AM_BASE(&realbrk_vram_2	)	// Text			(2)
+	AM_RANGE(0x606000, 0x60600f) AM_WRITE(realbrk_vregs_w) AM_BASE(&realbrk_vregs 	)	// Scroll + Video Regs
+	AM_RANGE(0x605000, 0x61ffff) AM_WRITE(MWA16_RAM							)	//
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(YMZ280B_register_0_msb_w			)	// YMZ280
+	AM_RANGE(0x800002, 0x800003) AM_WRITE(YMZ280B_data_0_msb_w				)	//
+	AM_RANGE(0x800008, 0x800009) AM_WRITE(YM2413_register_port_0_lsb_w		)	// YM2413
+	AM_RANGE(0x80000a, 0x80000b) AM_WRITE(YM2413_data_port_0_lsb_w			)	//
+	AM_RANGE(0xc00004, 0xc00005) AM_WRITE(MWA16_RAM) AM_BASE(&realbrk_dsw_select	)	// DSW select
+	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_RAM							)	// RAM
+	AM_RANGE(0xff0000, 0xfffbff) AM_WRITE(MWA16_RAM							)	// RAM
+	AM_RANGE(0xfffd0a, 0xfffd0b) AM_WRITE(realbrk_flipscreen_w				)	// Hack! Parallel port data register
+	AM_RANGE(0xfffc00, 0xffffff) AM_WRITE(tmp68301_regs_w) AM_BASE(&tmp68301_regs	)	// TMP68301 Registers
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -297,7 +297,7 @@ static MACHINE_DRIVER_START( realbrk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M68000,32000000 / 2)			/* !! TMP68301 !! */
-	MDRV_CPU_MEMORY(realbrk_readmem,realbrk_writemem)
+	MDRV_CPU_PROGRAM_MAP(realbrk_readmem,realbrk_writemem)
 	MDRV_CPU_VBLANK_INT(realbrk_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

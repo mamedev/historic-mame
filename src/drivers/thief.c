@@ -152,58 +152,58 @@ static READ_HANDLER( thief_io_r )
 	return 0x00;
 }
 
-static MEMORY_READ_START( sharkatt_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },			/* 2114 (working RAM) */
-	{ 0xc000, 0xdfff, thief_videoram_r },	/* 4116 */
-MEMORY_END
+static ADDRESS_MAP_START( sharkatt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)			/* 2114 (working RAM) */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(thief_videoram_r)	/* 4116 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sharkatt_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },			/* 2114 */
-	{ 0xc000, 0xdfff, thief_videoram_w },	/* 4116 */
-MEMORY_END
+static ADDRESS_MAP_START( sharkatt_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)			/* 2114 */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(thief_videoram_w)	/* 4116 */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( thief_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },			/* 2114 (working RAM) */
-	{ 0xa000, 0xafff, MRA_ROM },			/* NATO Defense diagnostic ROM */
-	{ 0xc000, 0xdfff, thief_videoram_r },	/* 4116 */
-	{ 0xe000, 0xe008, thief_coprocessor_r },
-	{ 0xe010, 0xe02f, MRA_ROM },
-	{ 0xe080, 0xe0bf, thief_context_ram_r },
-MEMORY_END
+static ADDRESS_MAP_START( thief_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)			/* 2114 (working RAM) */
+	AM_RANGE(0xa000, 0xafff) AM_READ(MRA8_ROM)			/* NATO Defense diagnostic ROM */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(thief_videoram_r)	/* 4116 */
+	AM_RANGE(0xe000, 0xe008) AM_READ(thief_coprocessor_r)
+	AM_RANGE(0xe010, 0xe02f) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe080, 0xe0bf) AM_READ(thief_context_ram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( thief_writemem )
-	{ 0x0000, 0x0000, thief_blit_w },
-	{ 0x0001, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },			/* 2114 */
-	{ 0xc000, 0xdfff, thief_videoram_w },	/* 4116 */
-	{ 0xe000, 0xe008, thief_coprocessor_w },
-	{ 0xe010, 0xe02f, MWA_ROM },
-	{ 0xe080, 0xe0bf, thief_context_ram_w },
-	{ 0xe0c0, 0xe0c0, thief_context_bank_w },
-MEMORY_END
+static ADDRESS_MAP_START( thief_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(thief_blit_w)
+	AM_RANGE(0x0001, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)			/* 2114 */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(thief_videoram_w)	/* 4116 */
+	AM_RANGE(0xe000, 0xe008) AM_WRITE(thief_coprocessor_w)
+	AM_RANGE(0xe010, 0xe02f) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe080, 0xe0bf) AM_WRITE(thief_context_ram_w)
+	AM_RANGE(0xe0c0, 0xe0c0) AM_WRITE(thief_context_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x31, 0x31, thief_io_r }, // 8255
-	{ 0x41, 0x41, AY8910_read_port_0_r },
-	{ 0x43, 0x43, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x31, 0x31) AM_READ(thief_io_r) // 8255
+	AM_RANGE(0x41, 0x41) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x43, 0x43) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, MWA_NOP }, /* watchdog */
-	{ 0x10, 0x10, thief_video_control_w },
-	{ 0x30, 0x30, thief_input_select_w }, // 8255
-	{ 0x33, 0x33, tape_control_w },
-	{ 0x40, 0x40, AY8910_control_port_0_w },
-	{ 0x41, 0x41, AY8910_write_port_0_w },
-	{ 0x42, 0x42, AY8910_control_port_1_w },
-	{ 0x43, 0x43, AY8910_write_port_1_w },
-	{ 0x50, 0x50, thief_color_plane_w },
-	{ 0x60, 0x6f, thief_vtcsel_w },
-	{ 0x70, 0x7f, thief_color_map_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) /* watchdog */
+	AM_RANGE(0x10, 0x10) AM_WRITE(thief_video_control_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(thief_input_select_w) // 8255
+	AM_RANGE(0x33, 0x33) AM_WRITE(tape_control_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x42, 0x42) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x43, 0x43) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(thief_color_plane_w)
+	AM_RANGE(0x60, 0x6f) AM_WRITE(thief_vtcsel_w)
+	AM_RANGE(0x70, 0x7f) AM_WRITE(thief_color_map_w)
+ADDRESS_MAP_END
 
 
 
@@ -468,8 +468,8 @@ static MACHINE_DRIVER_START( sharkatt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz? */
-	MDRV_CPU_MEMORY(sharkatt_readmem,sharkatt_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(sharkatt_readmem,sharkatt_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -494,8 +494,8 @@ static MACHINE_DRIVER_START( thief )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz? */
-	MDRV_CPU_MEMORY(thief_readmem,thief_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(thief_readmem,thief_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -520,8 +520,8 @@ static MACHINE_DRIVER_START( natodef )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz? */
-	MDRV_CPU_MEMORY(thief_readmem,thief_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(thief_readmem,thief_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

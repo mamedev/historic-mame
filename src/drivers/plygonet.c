@@ -274,40 +274,40 @@ static WRITE32_HANDLER( dsp_w )
 	}
 }
 
-static MEMORY_READ32_START( polygonet_readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-	{ 0x200000, 0x21ffff, MRA32_RAM },
-	{ 0x440000, 0x440fff, MRA32_RAM },
-	{ 0x480000, 0x480003, polygonet_eeprom_r },
-	{ 0x500000, 0x503fff, MRA32_RAM },
-	{ 0x506004, 0x506007, dsp_r },
-	{ 0x540000, 0x540fff, polygonet_ttl_ram_r },
-	{ 0x541000, 0x54101f, MRA32_RAM },
-	{ 0x580000, 0x5807ff, MRA32_RAM },
-//	{ 0x580800, 0x580803, MRA32_RAM },	// network RAM / registers?
-	{ 0x600008, 0x60000b, sound_r },
-	{ 0x700000, 0x73ffff, psac_rom_r },
-	{ 0x780000, 0x79ffff, ttl_rom_r },
-	{ 0xff8000, 0xffffff, MRA32_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( polygonet_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x480000, 0x480003) AM_READ(polygonet_eeprom_r)
+	AM_RANGE(0x500000, 0x503fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x506004, 0x506007) AM_READ(dsp_r)
+	AM_RANGE(0x540000, 0x540fff) AM_READ(polygonet_ttl_ram_r)
+	AM_RANGE(0x541000, 0x54101f) AM_READ(MRA32_RAM)
+	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x580800, 0x580803) AM_READ(MRA32_RAM)	// network RAM / registers?
+	AM_RANGE(0x600008, 0x60000b) AM_READ(sound_r)
+	AM_RANGE(0x700000, 0x73ffff) AM_READ(psac_rom_r)
+	AM_RANGE(0x780000, 0x79ffff) AM_READ(ttl_rom_r)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA32_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( polygonet_writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0x200000, 0x21ffff, MWA32_RAM },	// PSAC2 tilemap
-	{ 0x440000, 0x440fff, MWA32_RAM,},	// PSAC2 lineram
-	{ 0x4C0000, 0x4C0003, polygonet_eeprom_w },
-	{ 0x500000, 0x503fff, MWA32_RAM, &dsp_shared_ram },
-	{ 0x504000, 0x504003, dsp_2_w },
-	{ 0x506000, 0x506003, dsp_w },
-	{ 0x540000, 0x540fff, polygonet_ttl_ram_w },
-	{ 0x541000, 0x54101f, MWA32_RAM },
-	{ 0x580000, 0x5807ff, MWA32_RAM },	// A21K
-//	{ 0x580800, 0x580803, MWA32_RAM },	// network RAM / registers?
-	{ 0x600004, 0x600007, sound_w },
-	{ 0x640000, 0x640003, sound_irq_w },
-	{ 0x680000, 0x680003, watchdog_reset32_w },
-	{ 0xff8000, 0xffffff, MWA32_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( polygonet_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(MWA32_RAM)	// PSAC2 tilemap
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA32_RAM)	// PSAC2 lineram
+	AM_RANGE(0x4C0000, 0x4C0003) AM_WRITE(polygonet_eeprom_w)
+	AM_RANGE(0x500000, 0x503fff) AM_WRITE(MWA32_RAM) AM_BASE(&dsp_shared_ram)
+	AM_RANGE(0x504000, 0x504003) AM_WRITE(dsp_2_w)
+	AM_RANGE(0x506000, 0x506003) AM_WRITE(dsp_w)
+	AM_RANGE(0x540000, 0x540fff) AM_WRITE(polygonet_ttl_ram_w)
+	AM_RANGE(0x541000, 0x54101f) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA32_RAM)	// A21K
+//	AM_RANGE(0x580800, 0x580803) AM_WRITE(MWA32_RAM)	// network RAM / registers?
+	AM_RANGE(0x600004, 0x600007) AM_WRITE(sound_w)
+	AM_RANGE(0x640000, 0x640003) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x680000, 0x680003) AM_WRITE(watchdog_reset32_w)
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA32_RAM)
+ADDRESS_MAP_END
 
 /**********************************************************************************/
 
@@ -330,29 +330,29 @@ static INTERRUPT_GEN(audio_interrupt)
 	cpu_set_nmi_line(1, PULSE_LINE);
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_r },
-	{ 0xe230, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe62f, K054539_1_r },
-	{ 0xe630, 0xe7ff, MRA_RAM },
-	{ 0xf002, 0xf002, soundlatch_r },
-	{ 0xf003, 0xf003, soundlatch2_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_READ(K054539_0_r)
+	AM_RANGE(0xe230, 0xe3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe400, 0xe62f) AM_READ(K054539_1_r)
+	AM_RANGE(0xe630, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch_r)
+	AM_RANGE(0xf003, 0xf003) AM_READ(soundlatch2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_NOP },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_w },
-	{ 0xe230, 0xe3ff, MWA_RAM },
-	{ 0xe400, 0xe62f, K054539_1_w },
-	{ 0xe630, 0xe7ff, MWA_RAM },
-	{ 0xf000, 0xf000, soundlatch3_w },
-	{ 0xf800, 0xf800, sound_bankswitch_w },
-	{ 0xfff1, 0xfff3, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_WRITE(K054539_0_w)
+	AM_RANGE(0xe230, 0xe3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe400, 0xe62f) AM_WRITE(K054539_1_w)
+	AM_RANGE(0xe630, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch3_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_bankswitch_w)
+	AM_RANGE(0xfff1, 0xfff3) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 static struct K054539interface k054539_interface =
 {
@@ -386,12 +386,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz (xtal is 32.0 MHz) */
-	MDRV_CPU_MEMORY(polygonet_readmem,polygonet_writemem)
+	MDRV_CPU_PROGRAM_MAP(polygonet_readmem,polygonet_writemem)
 	MDRV_CPU_VBLANK_INT(polygonet_interrupt, 2)
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, 480)
 
 	MDRV_FRAMES_PER_SECOND(60)

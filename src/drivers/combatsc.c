@@ -133,6 +133,7 @@ VIDEO_START( combascb );
 WRITE_HANDLER( combascb_bankselect_w );
 WRITE_HANDLER( combasc_bankselect_w );
 MACHINE_INIT( combasc );
+MACHINE_INIT( combascb );
 WRITE_HANDLER( combasc_pf_control_w );
 READ_HANDLER( combasc_scrollram_r );
 WRITE_HANDLER( combasc_scrollram_w );
@@ -256,101 +257,101 @@ static READ_HANDLER ( combasc_YM2203_status_port_0_r )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( combasc_readmem )
-	{ 0x0020, 0x005f, combasc_scrollram_r },
-	{ 0x0200, 0x0201, protection_r },
-	{ 0x0400, 0x0400, input_port_0_r },
-	{ 0x0401, 0x0401, input_port_1_r },			/* DSW #3 */
-	{ 0x0402, 0x0402, input_port_2_r },			/* DSW #1 */
-	{ 0x0403, 0x0403, input_port_3_r },			/* DSW #2 */
-	{ 0x0404, 0x0407, trackball_r },			/* 1P & 2P controls / trackball */
-	{ 0x0600, 0x06ff, MRA_RAM },				/* palette */
-	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, combasc_video_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM area */
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( combasc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0020, 0x005f) AM_READ(combasc_scrollram_r)
+	AM_RANGE(0x0200, 0x0201) AM_READ(protection_r)
+	AM_RANGE(0x0400, 0x0400) AM_READ(input_port_0_r)
+	AM_RANGE(0x0401, 0x0401) AM_READ(input_port_1_r)			/* DSW #3 */
+	AM_RANGE(0x0402, 0x0402) AM_READ(input_port_2_r)			/* DSW #1 */
+	AM_RANGE(0x0403, 0x0403) AM_READ(input_port_3_r)			/* DSW #2 */
+	AM_RANGE(0x0404, 0x0407) AM_READ(trackball_r)			/* 1P & 2P controls / trackball */
+	AM_RANGE(0x0600, 0x06ff) AM_READ(MRA8_RAM)				/* palette */
+	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(combasc_video_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)				/* banked ROM area */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( combasc_writemem )
-	{ 0x0000, 0x0007, combasc_pf_control_w },
-	{ 0x0020, 0x005f, combasc_scrollram_w },
-//	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
-	{ 0x0200, 0x0201, protection_w },
-	{ 0x0206, 0x0206, protection_clock_w },
-	{ 0x0408, 0x0408, combasc_coin_counter_w },	/* coin counters */
-	{ 0x040c, 0x040c, combasc_vreg_w },
-	{ 0x0410, 0x0410, combasc_bankselect_w },
-	{ 0x0414, 0x0414, soundlatch_w },
-	{ 0x0418, 0x0418, combasc_sh_irqtrigger_w },
-	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
-	{ 0x2000, 0x3fff, combasc_video_w },
-	{ 0x4000, 0x7fff, MWA_ROM },					/* banked ROM area */
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( combasc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_WRITE(combasc_pf_control_w)
+	AM_RANGE(0x0020, 0x005f) AM_WRITE(combasc_scrollram_w)
+//	AM_RANGE(0x0060, 0x00ff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0x0200, 0x0201) AM_WRITE(protection_w)
+	AM_RANGE(0x0206, 0x0206) AM_WRITE(protection_clock_w)
+	AM_RANGE(0x0408, 0x0408) AM_WRITE(combasc_coin_counter_w)	/* coin counters */
+	AM_RANGE(0x040c, 0x040c) AM_WRITE(combasc_vreg_w)
+	AM_RANGE(0x0410, 0x0410) AM_WRITE(combasc_bankselect_w)
+	AM_RANGE(0x0414, 0x0414) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x0418, 0x0418) AM_WRITE(combasc_sh_irqtrigger_w)
+	AM_RANGE(0x041c, 0x041c) AM_WRITE(watchdog_reset_w)			/* watchdog reset? */
+	AM_RANGE(0x0600, 0x06ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(combasc_video_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)					/* banked ROM area */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( combascb_readmem )
-	{ 0x0000, 0x04ff, MRA_RAM },
-	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
-	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, combasc_video_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM/RAM area */
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( combascb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x04ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0600, 0x06ff) AM_READ(MRA8_RAM)	/* palette */
+	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(combasc_video_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)				/* banked ROM/RAM area */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( combascb_writemem )
-	{ 0x0000, 0x04ff, MWA_RAM },
-	{ 0x0500, 0x0500, combascb_bankselect_w },
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x0800, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3fff, combasc_video_w },
-	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },/* banked ROM/RAM area */
-	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( combascb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x04ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0500, 0x0500) AM_WRITE(combascb_bankselect_w)
+	AM_RANGE(0x0600, 0x06ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(combasc_video_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_BANK1) AM_BASE(&banked_area)/* banked ROM/RAM area */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
 #if 0
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
-	{ 0x8000, 0x87ef, MRA_RAM },					/* RAM */
-	{ 0x87f0, 0x87ff, MRA_RAM },					/* ??? */
-	{ 0x9000, 0x9000, YM2203_status_port_0_r },		/* YM 2203 */
-	{ 0x9008, 0x9008, YM2203_status_port_0_r },		/* ??? */
-	{ 0xa000, 0xa000, soundlatch_r },				/* soundlatch_r? */
-	{ 0x8800, 0xfffb, MRA_ROM },					/* ROM? */
-	{ 0xfffc, 0xffff, MRA_RAM },					/* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)					/* ROM */
+	AM_RANGE(0x8000, 0x87ef) AM_READ(MRA8_RAM)					/* RAM */
+	AM_RANGE(0x87f0, 0x87ff) AM_READ(MRA8_RAM)					/* ??? */
+	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)		/* YM 2203 */
+	AM_RANGE(0x9008, 0x9008) AM_READ(YM2203_status_port_0_r)		/* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)				/* soundlatch_r? */
+	AM_RANGE(0x8800, 0xfffb) AM_READ(MRA8_ROM)					/* ROM? */
+	AM_RANGE(0xfffc, 0xffff) AM_READ(MRA8_RAM)					/* ??? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },				/* ROM */
-	{ 0x8000, 0x87ef, MWA_RAM },				/* RAM */
-	{ 0x87f0, 0x87ff, MWA_RAM },				/* ??? */
- 	{ 0x9000, 0x9000, YM2203_control_port_0_w },/* YM 2203 */
-	{ 0x9001, 0x9001, YM2203_write_port_0_w },	/* YM 2203 */
-	//{ 0x9800, 0x9800, combasc_unknown_w_1 },	/* OKIM5205? */
-	//{ 0xa800, 0xa800, combasc_unknown_w_2 },	/* OKIM5205? */
-	{ 0x8800, 0xfffb, MWA_ROM },				/* ROM */
-	{ 0xfffc, 0xffff, MWA_RAM },				/* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)				/* ROM */
+	AM_RANGE(0x8000, 0x87ef) AM_WRITE(MWA8_RAM)				/* RAM */
+	AM_RANGE(0x87f0, 0x87ff) AM_WRITE(MWA8_RAM)				/* ??? */
+ 	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)/* YM 2203 */
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)	/* YM 2203 */
+	//AM_RANGE(0x9800, 0x9800) AM_WRITE(combasc_unknown_w_1)	/* OKIM5205? */
+	//AM_RANGE(0xa800, 0xa800) AM_WRITE(combasc_unknown_w_2)	/* OKIM5205? */
+	AM_RANGE(0x8800, 0xfffb) AM_WRITE(MWA8_ROM)				/* ROM */
+	AM_RANGE(0xfffc, 0xffff) AM_WRITE(MWA8_RAM)				/* ??? */
+ADDRESS_MAP_END
 #endif
 
-static MEMORY_READ_START( combasc_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
-	{ 0x8000, 0x87ff, MRA_RAM },					/* RAM */
-	{ 0xb000, 0xb000, UPD7759_0_busy_r },			/* UPD7759 busy? */
-	{ 0xd000, 0xd000, soundlatch_r },				/* soundlatch_r? */
-	{ 0xe000, 0xe000, combasc_YM2203_status_port_0_r },	/* YM 2203 intercepted */
-MEMORY_END
+static ADDRESS_MAP_START( combasc_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)					/* ROM */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)					/* RAM */
+	AM_RANGE(0xb000, 0xb000) AM_READ(UPD7759_0_busy_r)			/* UPD7759 busy? */
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)				/* soundlatch_r? */
+	AM_RANGE(0xe000, 0xe000) AM_READ(combasc_YM2203_status_port_0_r)	/* YM 2203 intercepted */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( combasc_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },				/* ROM */
-	{ 0x8000, 0x87ff, MWA_RAM },				/* RAM */
-	{ 0x9000, 0x9000, combasc_play_w },			/* uPD7759 play voice */
-	{ 0xa000, 0xa000, UPD7759_0_port_w },		/* uPD7759 voice select */
-	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
- 	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
-	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */
-MEMORY_END
+static ADDRESS_MAP_START( combasc_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)				/* ROM */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)				/* RAM */
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(combasc_play_w)			/* uPD7759 play voice */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(UPD7759_0_port_w)		/* uPD7759 voice select */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(combasc_voice_reset_w)	/* uPD7759 reset? */
+ 	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2203_control_port_0_w)/* YM 2203 */
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2203_write_port_0_w)	/* YM 2203 */
+ADDRESS_MAP_END
 
 
 #define COINAGE \
@@ -669,12 +670,12 @@ static MACHINE_DRIVER_START( combasc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(HD6309, 3000000)	/* 3 MHz? */
-	MDRV_CPU_MEMORY(combasc_readmem,combasc_writemem)
+	MDRV_CPU_PROGRAM_MAP(combasc_readmem,combasc_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(combasc_readmem_sound,combasc_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -704,12 +705,12 @@ static MACHINE_DRIVER_START( combascb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(HD6309, 3000000)	/* 3 MHz? */
-	MDRV_CPU_MEMORY(combascb_readmem,combascb_writemem)
+	MDRV_CPU_PROGRAM_MAP(combascb_readmem,combascb_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound) /* FAKE */
+	MDRV_CPU_PROGRAM_MAP(combasc_readmem_sound,combasc_writemem_sound) /* FAKE */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -860,7 +861,7 @@ ROM_START( combascb )
 	ROM_LOAD( "combat.001",  0x00000, 0x10000, CRC(61456b3b) SHA1(320db628283dd1bec465e95020d1a1158e6d6ae4) )
 	ROM_LOAD( "611g03.rom",  0x00000, 0x08000, CRC(2a544db5) SHA1(94a97c3c54bf13ccc665aa5057ac6b1d700fae2d) ) /* FAKE - from Konami set! */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "combat.006",  0x00000, 0x10000, CRC(8dc29a1f) SHA1(564dd7c6acff34db93b8e300dda563f5f38ba159) ) /* tiles, bank 0 */
 	ROM_LOAD( "combat.008",  0x10000, 0x10000, CRC(61599f46) SHA1(cfd79a88bb496773daf207552c67f595ee696bc4) )
 	ROM_LOAD( "combat.010",  0x20000, 0x10000, CRC(d5cda7cd) SHA1(140db6270c3f358aa27013db3bb819a48ceb5142) )
@@ -870,7 +871,7 @@ ROM_START( combascb )
 	ROM_LOAD( "combat.009",  0x60000, 0x10000, CRC(5ac80383) SHA1(1e89c371a92afc000d593daebda4156952a15244) )
 	ROM_LOAD( "combat.011",  0x70000, 0x10000, CRC(cda83114) SHA1(12d2a9f694287edb3bb0ee7a8ba0e0724dad8e1f) )
 
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "combat.013",  0x00000, 0x10000, CRC(4bed2293) SHA1(3369de47d4ba041d9f17a18dcca2af7ac9f8bc0c) ) /* sprites, bank 0 */
 	ROM_LOAD( "combat.015",  0x10000, 0x10000, CRC(26c41f31) SHA1(f8eb7d0729a21a0dd92ce99c9cda0cde9526b861) )
 	ROM_LOAD( "combat.017",  0x20000, 0x10000, CRC(6071e6da) SHA1(ba5f8e83b07faaffc564d3568630e17efdb5a09f) )
@@ -910,17 +911,6 @@ static DRIVER_INIT( combasc )
 
 static DRIVER_INIT( combascb )
 {
-	unsigned char *gfx;
-	int i;
-
-	gfx = memory_region(REGION_GFX1);
-	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
-		gfx[i] = ~gfx[i];
-
-	gfx = memory_region(REGION_GFX2);
-	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
-		gfx[i] = ~gfx[i];
-
 	combasc_init_common();
 }
 

@@ -42,7 +42,7 @@
 #define IRQ_LEVEL_DETECT 0
 
 static UINT8 m6805_reg_layout[] = {
-	M6805_PC, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE, 0
+	M6805_PC, M6805_S, M6805_CC, M6805_A, M6805_X, 0
 };
 
 enum {
@@ -64,7 +64,6 @@ static UINT8 m6805_win_layout[] = {
 typedef struct
 {
 	int 	subtype;		/* Which sub-type is being emulated */
-	UINT32	amask;			/* Address bus width */
 	UINT32	sp_mask;		/* Stack pointer address mask */
 	UINT32	sp_low; 		/* Stack pointer low water mark (or floor) */
     PAIR    pc;             /* Program counter */
@@ -83,7 +82,6 @@ typedef struct
 static m6805_Regs m6805;
 
 #define SUBTYPE	m6805.subtype	/* CPU Type */
-#define AMASK	m6805.amask 	/* address mask */
 #define SP_MASK m6805.sp_mask	/* stack pointer mask */
 #define SP_LOW	m6805.sp_low	/* stack pointer low water mark */
 #define pPC 	m6805.pc		/* program counter PAIR */
@@ -101,8 +99,8 @@ static PAIR ea; 		/* effective address */
 int m6805_ICount=50000;
 
 /* DS -- THESE ARE RE-DEFINED IN m6805.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
-#define RM(Addr)			M6805_RDMEM((Addr) & AMASK)
-#define WM(Addr,Value)		M6805_WRMEM((Addr) & AMASK,Value)
+#define RM(Addr)			M6805_RDMEM(Addr)
+#define WM(Addr,Value)		M6805_WRMEM(Addr,Value)
 #define M_RDOP(Addr)        M6805_RDOP(Addr)
 #define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
@@ -277,14 +275,16 @@ INLINE void RM16( UINT32 Addr, PAIR *p )
 {
 	CLEAR_PAIR(p);
     p->b.h = RM(Addr);
-	if( ++Addr > AMASK ) Addr = 0;
+    ++Addr;
+//	if( ++Addr > AMASK ) Addr = 0;
 	p->b.l = RM(Addr);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )
 {
 	WM( Addr, p->b.h );
-	if( ++Addr > AMASK ) Addr = 0;
+    ++Addr;
+//	if( ++Addr > AMASK ) Addr = 0;
 	WM( Addr, p->b.l );
 }
 
@@ -321,10 +321,10 @@ static void Interrupt(void)
 #endif
 	{
         /* standard IRQ */
-#if (HAS_HD63705)
-		if(SUBTYPE!=SUBTYPE_HD63705)
-#endif
-			PC |= ~AMASK;
+//#if (HAS_HD63705)
+//		if(SUBTYPE!=SUBTYPE_HD63705)
+//#endif
+//			PC |= ~AMASK;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -385,7 +385,7 @@ static void Interrupt(void)
 		else
 #endif
 		{
-			RM16( AMASK - 5, &pPC );
+			RM16( 0xffff - 5, &pPC );
 		}
 
 		}	// CC & IFLAG
@@ -407,27 +407,26 @@ static void state_register(const char *type)
 	state_save_register_INT32(type, cpu, "IRQ_STATE", &m6805.irq_state[0], 1);
 }
 
-void m6805_init(void)
+static void m6805_init(void)
 {
 	state_register("m6805");
 }
 
-void m6805_reset(void *param)
+static void m6805_reset(void *param)
 {
 	memset(&m6805, 0, sizeof(m6805));
 	/* Force CPU sub-type and relevant masks */
 	m6805.subtype	= SUBTYPE_M6805;
-	AMASK	= 0x7ff;
 	SP_MASK = 0x07f;
 	SP_LOW	= 0x060;
 	/* Initial stack pointer */
 	S = SP_MASK;
 	/* IRQ disabled */
     SEI;
-	RM16( AMASK - 1 , &pPC );
+	RM16( 0xfffe , &pPC );
 }
 
-void m6805_exit(void)
+static void m6805_exit(void)
 {
 	/* nothing to do */
 }
@@ -435,18 +434,17 @@ void m6805_exit(void)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned m6805_get_context(void *dst)
+static void m6805_get_context(void *dst)
 {
 	if( dst )
 		*(m6805_Regs*)dst = m6805;
-    return sizeof(m6805_Regs);
 }
 
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void m6805_set_context(void *src)
+static void m6805_set_context(void *src)
 {
 	if( src )
 	{
@@ -456,63 +454,7 @@ void m6805_set_context(void *src)
 }
 
 
-/****************************************************************************
- * Return a specific register
- ****************************************************************************/
-unsigned m6805_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case M6805_A: return A;
-		case REG_PC: return PC & AMASK;
-		case M6805_PC: return PC;
-		case REG_SP:
-		case M6805_S: return SP_ADJUST(S);
-		case M6805_X: return X;
-		case M6805_CC: return CC;
-		case M6805_IRQ_STATE: return m6805.irq_state[0];
-		default:
-			if( regnum < REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < SP_MASK )
-					return (RM( offset ) << 8) | RM( offset+1 );
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-void m6805_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case M6805_A: A = val; break;
-		case REG_PC:
-		case M6805_PC: PC = val & AMASK; break;
-		case REG_SP:
-		case M6805_S: S = SP_ADJUST(val); break;
-		case M6805_X: X = val; break;
-		case M6805_CC: CC = val; break;
-		case M6805_IRQ_STATE: m6805_set_irq_line(0,val); break;
-		default:
-			if( regnum < REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < SP_MASK )
-				{
-                    WM( offset, (val >> 8) & 0xff );
-					WM( offset+1, val & 0xff );
-				}
-			}
-	}
-}
-
-
-void m6805_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	/* Basic 6805 only has one IRQ line */
 	/* See HD63705 specific version     */
@@ -521,11 +463,6 @@ void m6805_set_irq_line(int irqline, int state)
 	m6805.irq_state[0] = state;
 	if (state != CLEAR_LINE)
 		m6805.pending_interrupts |= 1<<M6805_IRQ_LINE;
-}
-
-void m6805_set_irq_callback(int (*callback)(int irqline))
-{
-	m6805.irq_callback = callback;
 }
 
 #include "6805ops.c"
@@ -815,53 +752,7 @@ int m6805_execute(int cycles)
 	return cycles - m6805_ICount;
 }
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *m6805_info(void *context, int regnum)
-{
-	static char buffer[8][47+1];
-	static int which = 0;
-	m6805_Regs *r = context;
-
-	which = (which+1) % 8;
-    buffer[which][0] = '\0';
-
-    if( !context )
-		r = &m6805;
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6805";
-		case CPU_INFO_FAMILY: return "Motorola 6805";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "The MAME team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)m6805_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)m6805_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? '?':'.',
-                r->cc & 0x40 ? '?':'.',
-                r->cc & 0x20 ? '?':'.',
-                r->cc & 0x10 ? 'H':'.',
-                r->cc & 0x08 ? 'I':'.',
-                r->cc & 0x04 ? 'N':'.',
-                r->cc & 0x02 ? 'Z':'.',
-                r->cc & 0x01 ? 'C':'.');
-            break;
-		case CPU_INFO_REG+M6805_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M6805_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
-		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[0]); break;
-    }
-	return buffer[which];
-}
-
-unsigned m6805_dasm(char *buffer, unsigned pc)
+static offs_t m6805_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return Dasm6805(buffer,pc);
@@ -875,19 +766,6 @@ unsigned m6805_dasm(char *buffer, unsigned pc)
  * M68705 section
  ****************************************************************************/
 #if (HAS_M68705)
-static UINT8 m68705_reg_layout[] = {
-	M68705_PC, M68705_S, M68705_CC, M68705_A, M68705_X, M68705_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m68705_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 void m68705_init(void)
 {
 	state_register("m68705");
@@ -895,45 +773,10 @@ void m68705_init(void)
 
 void m68705_reset(void *param)
 {
-	UINT32 *p_amask = param;
 	m6805_reset(param);
 	/* Overide default 6805 type */
 	m6805.subtype = SUBTYPE_M68705;
-	if (p_amask)
-		AMASK = *p_amask;
-	else
-		AMASK = 0x7ff; /* default if no AMASK is specified */
-	RM16( AMASK-1, &m6805.pc );
-}
-void m68705_exit(void) { m6805_exit(); }
-int  m68705_execute(int cycles) { return m6805_execute(cycles); }
-unsigned m68705_get_context(void *dst) { return m6805_get_context(dst); }
-void m68705_set_context(void *src) { m6805_set_context(src); }
-unsigned m68705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
-void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
-void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
-void m68705_set_irq_callback(int (*callback)(int irqline))	{ m6805_set_irq_callback(callback); }
-
-const char *m68705_info(void *context, int regnum)
-{
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M68705";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m68705_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m68705_win_layout;
-    }
-	return m6805_info(context,regnum);
-}
-
-unsigned m68705_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return Dasm6805(buffer,pc);
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
+	RM16( 0xfffe, &m6805.pc );
 }
 #endif
 
@@ -941,20 +784,6 @@ unsigned m68705_dasm(char *buffer, unsigned pc)
  * HD63705 section
  ****************************************************************************/
 #if (HAS_HD63705)
-static UINT8 hd63705_reg_layout[] = {
-	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, -1,-1,
-	HD63705_NMI_STATE, HD63705_IRQ1_STATE, HD63705_IRQ2_STATE, HD63705_ADCONV_STATE,0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 hd63705_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 void hd63705_init(void)
 {
 	int cpu = cpu_getactivecpu();
@@ -975,19 +804,11 @@ void hd63705_reset(void *param)
 
 	/* Overide default 6805 types */
 	m6805.subtype	= SUBTYPE_HD63705;
-	AMASK	= 0xffff;
 	SP_MASK = 0x17f;
 	SP_LOW	= 0x100;
 	RM16( 0x1ffe, &m6805.pc );
 	S = 0x17f;
 }
-void hd63705_exit(void) { m6805_exit(); }
-int	hd63705_execute(int cycles) { return m6805_execute(cycles); }
-unsigned hd63705_get_context(void *dst) { return m6805_get_context(dst); }
-void hd63705_set_context(void *src) { m6805_set_context(src); }
-
-unsigned hd63705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
-void hd63705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
 
 void hd63705_set_irq_line(int irqline, int state)
 {
@@ -1006,43 +827,202 @@ void hd63705_set_irq_line(int irqline, int state)
 		if (state != CLEAR_LINE) m6805.pending_interrupts |= 1<<irqline;
 	}
 }
+#endif
 
-void hd63705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }
 
-const char *hd63705_info(void *context, int regnum)
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void m6805_set_info(UINT32 state, union cpuinfo *info)
 {
-	static char buffer[8][47+1];
-	static int which = 0;
-	m6805_Regs *r = context;
-
-	which = (which+1) % 8;
-    buffer[which][0] = '\0';
-
-    if( !context )
-		r = &m6805;
-
-	switch( regnum )
+	switch (state)
 	{
-		case CPU_INFO_NAME: return "HD63705";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_CREDITS: return "Keith Wilkins, Juergen Buchmueller";
-		case CPU_INFO_REG_LAYOUT: return (const char *)hd63705_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)hd63705_win_layout;
-		case CPU_INFO_REG+HD63705_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); return buffer[which];
-		case CPU_INFO_REG+HD63705_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[HD63705_INT_IRQ1]); return buffer[which];
-		case CPU_INFO_REG+HD63705_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[HD63705_INT_IRQ2]); return buffer[which];
-		case CPU_INFO_REG+HD63705_ADCONV_STATE: sprintf(buffer[which], "ADCONV:%X", r->irq_state[HD63705_INT_ADCONV]); return buffer[which];
-    }
-	return m6805_info(context,regnum);
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + M6805_IRQ_LINE:	set_irq_line(M6805_IRQ_LINE, info->i);	break;
+
+		case CPUINFO_INT_REGISTER + M6805_A:			A = info->i;							break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + M6805_PC:			PC = info->i;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + M6805_S:			S = SP_ADJUST(info->i);					break;
+		case CPUINFO_INT_REGISTER + M6805_X:			X = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6805_CC:			CC = info->i;							break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					m6805.irq_callback = info->irqcallback;	break;
+	}
 }
 
-unsigned hd63705_dasm(char *buffer, unsigned pc)
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void m6805_get_info(UINT32 state, union cpuinfo *info)
 {
-#ifdef MAME_DEBUG
-	return Dasm6805(buffer,pc);
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6805);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + M6805_IRQ_LINE:	info->i = m6805.irq_state[M6805_IRQ_LINE]; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
+
+		case CPUINFO_INT_REGISTER + M6805_A:			info->i = A;							break;
+		case CPUINFO_INT_PC:							info->i = PC;							break;
+		case CPUINFO_INT_REGISTER + M6805_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + M6805_S:			info->i = SP_ADJUST(S);					break;
+		case CPUINFO_INT_REGISTER + M6805_X:			info->i = X;							break;
+		case CPUINFO_INT_REGISTER + M6805_CC:			info->i = CC;							break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6805_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6805_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6805_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = m6805_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = m6805_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = m6805_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6805_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6805_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6805.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6805_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6805_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6805_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6805"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6805"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "The MAME team."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				m6805.cc & 0x80 ? '?':'.',
+                m6805.cc & 0x40 ? '?':'.',
+                m6805.cc & 0x20 ? '?':'.',
+                m6805.cc & 0x10 ? 'H':'.',
+                m6805.cc & 0x08 ? 'I':'.',
+                m6805.cc & 0x04 ? 'N':'.',
+                m6805.cc & 0x02 ? 'Z':'.',
+                m6805.cc & 0x01 ? 'C':'.');
+            break;
+
+		case CPUINFO_STR_REGISTER + M6805_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6805.a); break;
+		case CPUINFO_STR_REGISTER + M6805_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6805.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6805_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m6805.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6805_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m6805.x); break;
+		case CPUINFO_STR_REGISTER + M6805_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6805.cc); break;
+	}
+}
+
+
+#if (HAS_M68705)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m68705_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m68705_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = m68705_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M68705"); break;
+
+		default:
+			m6805_get_info(state, info);
+			break;
+	}
+}
 #endif
+
+
+#if (HAS_HD63705)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+static void hd63705_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ1:	hd63705_set_irq_line(HD63705_INT_IRQ1, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ2:	hd63705_set_irq_line(HD63705_INT_IRQ2, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER1:hd63705_set_irq_line(HD63705_INT_TIMER1, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER2:hd63705_set_irq_line(HD63705_INT_TIMER2, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER3:hd63705_set_irq_line(HD63705_INT_TIMER3, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_PCI:	hd63705_set_irq_line(HD63705_INT_PCI, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_SCI:	hd63705_set_irq_line(HD63705_INT_SCI, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_ADCONV:hd63705_set_irq_line(HD63705_INT_ADCONV, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		hd63705_set_irq_line(IRQ_LINE_NMI, info->i); break;
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+
+		default:
+			m6805_set_info(state, info);
+			break;
+	}
+}
+
+void hd63705_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ1:	info->i = m6805.irq_state[HD63705_INT_IRQ1]; break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ2:	info->i = m6805.irq_state[HD63705_INT_IRQ2]; break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER1:info->i = m6805.irq_state[HD63705_INT_TIMER1]; break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER2:info->i = m6805.irq_state[HD63705_INT_TIMER2]; break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER3:info->i = m6805.irq_state[HD63705_INT_TIMER3]; break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_PCI:	info->i = m6805.irq_state[HD63705_INT_PCI];	break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_SCI:	info->i = m6805.irq_state[HD63705_INT_SCI];	break;
+		case CPUINFO_INT_IRQ_STATE + HD63705_INT_ADCONV:info->i = m6805.irq_state[HD63705_INT_ADCONV]; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6805.irq_state[HD63705_INT_NMI];	break;
+
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = hd63705_set_info;		break;
+		case CPUINFO_PTR_INIT:							info->init = hd63705_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = hd63705_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD63705"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Keith Wilkins, Juergen Buchmueller"); break;
+
+		default:
+			m6805_get_info(state, info);
+			break;
+	}
 }
 #endif

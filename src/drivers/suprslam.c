@@ -132,63 +132,63 @@ static WRITE_HANDLER( suprslam_sh_bankswitch_w )
 
 /*** MEMORY MAPS *************************************************************/
 
-static MEMORY_READ16_START( suprslam_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0xfb0000, 0xfb1fff, MRA16_RAM },
-	{ 0xfc0000, 0xfcffff, MRA16_RAM },
-	{ 0xfd0000, 0xfdffff, MRA16_RAM },
-	{ 0xfe0000, 0xfe0fff, MRA16_RAM },
-	{ 0xff0000, 0xff1fff, MRA16_RAM },
-	{ 0xff8000, 0xff8fff, MRA16_RAM },
-	{ 0xffa000, 0xffafff, MRA16_RAM },
-	{ 0xfff000, 0xfff001, input_port_0_word_r },
-	{ 0xfff002, 0xfff003, input_port_1_word_r },
-	{ 0xfff004, 0xfff005, input_port_2_word_r },
-	{ 0xfff006, 0xfff007, input_port_3_word_r },
-	{ 0xfff008, 0xfff009, input_port_4_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( suprslam_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0xfb0000, 0xfb1fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfc0000, 0xfcffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfd0000, 0xfdffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfe0000, 0xfe0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff0000, 0xff1fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff8000, 0xff8fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffa000, 0xffafff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfff002, 0xfff003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfff006, 0xfff007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xfff008, 0xfff009) AM_READ(input_port_4_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( suprslam_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0xfb0000, 0xfb1fff, MWA16_RAM, &suprslam_spriteram },
-	{ 0xfc0000, 0xfcffff, MWA16_RAM, &suprslam_sp_videoram },
-	{ 0xfd0000, 0xfdffff, MWA16_RAM },
-	{ 0xfe0000, 0xfe0fff, suprslam_screen_videoram_w, &suprslam_screen_videoram },
-	{ 0xff0000, 0xff1fff, suprslam_bg_videoram_w, &suprslam_bg_videoram },
-//	{ 0xff2000, 0xff203f, MWA16_RAM }, /* ?? */
-	{ 0xff8000, 0xff8fff, MWA16_RAM, &K053936_0_linectrl },
-	{ 0xff9000, 0xff9001, sound_command_w },
-	{ 0xffa000, 0xffafff, paletteram16_xGGGGGBBBBBRRRRR_word_w, &paletteram16 },
-	{ 0xffd000, 0xffd01f, MWA16_RAM, &K053936_0_ctrl },
-	{ 0xffe000, 0xffe001, suprslam_bank_w },
-MEMORY_END
+static ADDRESS_MAP_START( suprslam_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xfb0000, 0xfb1fff) AM_WRITE(MWA16_RAM) AM_BASE(&suprslam_spriteram)
+	AM_RANGE(0xfc0000, 0xfcffff) AM_WRITE(MWA16_RAM) AM_BASE(&suprslam_sp_videoram)
+	AM_RANGE(0xfd0000, 0xfdffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xfe0000, 0xfe0fff) AM_WRITE(suprslam_screen_videoram_w) AM_BASE(&suprslam_screen_videoram)
+	AM_RANGE(0xff0000, 0xff1fff) AM_WRITE(suprslam_bg_videoram_w) AM_BASE(&suprslam_bg_videoram)
+//	AM_RANGE(0xff2000, 0xff203f) AM_WRITE(MWA16_RAM) /* ?? */
+	AM_RANGE(0xff8000, 0xff8fff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_linectrl)
+	AM_RANGE(0xff9000, 0xff9001) AM_WRITE(sound_command_w)
+	AM_RANGE(0xffa000, 0xffafff) AM_WRITE(paletteram16_xGGGGGBBBBBRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xffd000, 0xffd01f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)
+	AM_RANGE(0xffe000, 0xffe001) AM_WRITE(suprslam_bank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( suprslam_sound_readport )
-	{ 0x04, 0x04, soundlatch_r },
-	{ 0x08, 0x08, YM2610_status_port_0_A_r },
-	{ 0x0a, 0x0a, YM2610_status_port_0_B_r },
-PORT_END
+static ADDRESS_MAP_START( suprslam_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(YM2610_status_port_0_B_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( suprslam_sound_writeport )
-	{ 0x00, 0x00, suprslam_sh_bankswitch_w },
-	{ 0x04, 0x04, pending_command_clear_w },
-	{ 0x08, 0x08, YM2610_control_port_0_A_w },
-	{ 0x09, 0x09, YM2610_data_port_0_A_w },
-	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
-	{ 0x0b, 0x0b, YM2610_data_port_0_B_w },
-PORT_END
+static ADDRESS_MAP_START( suprslam_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(suprslam_sh_bankswitch_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(pending_command_clear_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(YM2610_data_port_0_B_w)
+ADDRESS_MAP_END
 
 /*** INPUT PORTS *************************************************************/
 
@@ -334,13 +334,13 @@ static struct YM2610interface ym2610_interface =
 
 static MACHINE_DRIVER_START( suprslam )
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(suprslam_readmem,suprslam_writemem)
+	MDRV_CPU_PROGRAM_MAP(suprslam_readmem,suprslam_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(suprslam_sound_readport,suprslam_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(suprslam_sound_readport,suprslam_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2300) /* hand-tuned */

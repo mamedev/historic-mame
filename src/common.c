@@ -761,7 +761,17 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 	UINT32 saved_rgb_components[3];
 
 	/* allow the artwork system to override certain parameters */
-	bounds = Machine->visible_area;
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		bounds.min_x = 0;
+		bounds.max_x = bitmap->width - 1;
+		bounds.min_y = 0;
+		bounds.max_y = bitmap->height - 1;
+	}
+	else
+	{
+		bounds = Machine->visible_area;
+	}
 	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
 	artwork_override_screenshot_params(&bitmap, &bounds, direct_rgb_components);
 
@@ -1235,7 +1245,7 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 		printf("%s", romdata->errorbuf);
 
 		/* if we're not getting out of here, wait for a keypress */
-		if (!options.gui_host && !bailing)
+		if (!options.gui_host && !options.skip_warnings && !bailing)
 		{
 			int k;
 
@@ -1284,8 +1294,8 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 		int cputype = Machine->drv->cpu[type - REGION_CPU1].cpu_type;
 		if (cputype != 0)
 		{
-			datawidth = cputype_databus_width(cputype) / 8;
-			littleendian = (cputype_endianess(cputype) == CPU_IS_LE);
+			datawidth = cputype_databus_width(cputype, ADDRESS_SPACE_PROGRAM) / 8;
+			littleendian = (cputype_endianness(cputype) == CPU_IS_LE);
 			debugload("+ CPU region #%d: datawidth=%d little=%d\n", type - REGION_CPU1, datawidth, littleendian);
 		}
 	}
@@ -1692,17 +1702,12 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 		{
 			struct chd_file *source, *diff = NULL;
 			struct chd_header header;
-			char filename[1024], *c;
+			char filename[1024];
 			char acthash[HASH_BUF_SIZE];
 			int err;
 
 			/* make the filename of the source */
-			strcpy(filename, ROM_GETNAME(romp));
-			c = strrchr(filename, '.');
-			if (c)
-				strcpy(c, ".chd");
-			else
-				strcat(filename, ".chd");
+			sprintf(filename, "%s.chd", ROM_GETNAME(romp));
 
 			/* first open the source drive */
 			debugload("Opening disk image: %s\n", filename);
@@ -1736,12 +1741,7 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 			if (!DISK_ISREADONLY(romp))
 			{
 				/* make the filename of the diff */
-				strcpy(filename, ROM_GETNAME(romp));
-				c = strrchr(filename, '.');
-				if (c)
-					strcpy(c, ".dif");
-				else
-					strcat(filename, ".dif");
+				sprintf(filename, "%s.dif", ROM_GETNAME(romp));
 
 				/* try to open the diff */
 				debugload("Opening differencing image: %s\n", filename);

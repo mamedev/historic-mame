@@ -48,47 +48,47 @@ static WRITE_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
 
 /******************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x07fff, MRA_RAM },
-	{ 0x0a000, 0x0afff, dynduke_shared_r },
-	{ 0x0b000, 0x0b000, input_port_1_r },
-	{ 0x0b001, 0x0b001, input_port_2_r },
-	{ 0x0b002, 0x0b002, input_port_3_r },
-	{ 0x0b003, 0x0b003, input_port_4_r },
-	{ 0x0d000, 0x0d00d, seibu_main_v30_r },
-	{ 0xa0000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0a000, 0x0afff) AM_READ(dynduke_shared_r)
+	AM_RANGE(0x0b000, 0x0b000) AM_READ(input_port_1_r)
+	AM_RANGE(0x0b001, 0x0b001) AM_READ(input_port_2_r)
+	AM_RANGE(0x0b002, 0x0b002) AM_READ(input_port_3_r)
+	AM_RANGE(0x0b003, 0x0b003) AM_READ(input_port_4_r)
+	AM_RANGE(0x0d000, 0x0d00d) AM_READ(seibu_main_v30_r)
+	AM_RANGE(0xa0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x06fff, MWA_RAM },
-	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x08000, 0x080ff, MWA_RAM, &dynduke_scroll_ram },
-	{ 0x0a000, 0x0afff, dynduke_shared_w, &dynduke_shared_ram },
-	{ 0x0b000, 0x0b007, dynduke_control_w, &dynduke_control_ram },
-	{ 0x0c000, 0x0c7ff, dynduke_text_w, &videoram },
-	{ 0x0d000, 0x0d00d, seibu_main_v30_w },
-	{ 0xa0000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x06fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x07000, 0x07fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08000, 0x080ff) AM_WRITE(MWA8_RAM) AM_BASE(&dynduke_scroll_ram)
+	AM_RANGE(0x0a000, 0x0afff) AM_WRITE(dynduke_shared_w) AM_BASE(&dynduke_shared_ram)
+	AM_RANGE(0x0b000, 0x0b007) AM_WRITE(dynduke_control_w) AM_BASE(&dynduke_control_ram)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_WRITE(dynduke_text_w) AM_BASE(&videoram)
+	AM_RANGE(0x0d000, 0x0d00d) AM_WRITE(seibu_main_v30_w)
+	AM_RANGE(0xa0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x00000, 0x05fff, MRA_RAM },
-	{ 0x06000, 0x067ff, dynduke_background_r },
-	{ 0x06800, 0x06fff, dynduke_foreground_r },
-	{ 0x07000, 0x07fff, paletteram_r },
-	{ 0x08000, 0x08fff, dynduke_shared_r },
-	{ 0xc0000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x05fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x06000, 0x067ff) AM_READ(dynduke_background_r)
+	AM_RANGE(0x06800, 0x06fff) AM_READ(dynduke_foreground_r)
+	AM_RANGE(0x07000, 0x07fff) AM_READ(paletteram_r)
+	AM_RANGE(0x08000, 0x08fff) AM_READ(dynduke_shared_r)
+	AM_RANGE(0xc0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x00000, 0x05fff, MWA_RAM },
-	{ 0x06000, 0x067ff, dynduke_background_w, &dynduke_back_data },
-	{ 0x06800, 0x06fff, dynduke_foreground_w, &dynduke_fore_data },
-	{ 0x07000, 0x07fff, dynduke_paletteram_w, &paletteram },
-	{ 0x08000, 0x08fff, dynduke_shared_w },
-	{ 0x0a000, 0x0a001, dynduke_gfxbank_w },
-	{ 0x0c000, 0x0c001, MWA_NOP },
-	{ 0xc0000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x05fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x06000, 0x067ff) AM_WRITE(dynduke_background_w) AM_BASE(&dynduke_back_data)
+	AM_RANGE(0x06800, 0x06fff) AM_WRITE(dynduke_foreground_w) AM_BASE(&dynduke_fore_data)
+	AM_RANGE(0x07000, 0x07fff) AM_WRITE(dynduke_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x08000, 0x08fff) AM_WRITE(dynduke_shared_w)
+	AM_RANGE(0x0a000, 0x0a001) AM_WRITE(dynduke_gfxbank_w)
+	AM_RANGE(0x0c000, 0x0c001) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -256,11 +256,11 @@ static MACHINE_DRIVER_START( dynduke )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
 
 	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)

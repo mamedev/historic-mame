@@ -682,20 +682,20 @@ WRITE_HANDLER( williams_blitter_w )
 
 
 /* early Williams blitters */
-#define WILLIAMS_DEST_WRITE(d,v)		if (d < 0x9800) williams_videoram[d] = v; else cpu_writemem16(d, v)
-#define WILLIAMS_DEST_READ(d)    		((d < 0x9800) ? williams_videoram[d] : cpu_readmem16(d))
+#define WILLIAMS_DEST_WRITE(d,v)		if (d < 0x9800) williams_videoram[d] = v; else program_write_byte(d, v)
+#define WILLIAMS_DEST_READ(d)    		((d < 0x9800) ? williams_videoram[d] : program_read_byte(d))
 
 /* Sinistar blitter checks clipping circuit */
-#define SINISTAR_DEST_WRITE(d,v)		if (d < sinistar_clip) { if (d < 0x9800) williams_videoram[d] = v; else cpu_writemem16(d, v); }
-#define SINISTAR_DEST_READ(d)    		((d < 0x9800) ? williams_videoram[d] : cpu_readmem16(d))
+#define SINISTAR_DEST_WRITE(d,v)		if (d < sinistar_clip) { if (d < 0x9800) williams_videoram[d] = v; else program_write_byte(d, v); }
+#define SINISTAR_DEST_READ(d)    		((d < 0x9800) ? williams_videoram[d] : program_read_byte(d))
 
 /* Blaster blitter remaps through a lookup table */
-#define BLASTER_DEST_WRITE(d,v)			if (d < 0x9700) williams_videoram[d] = v; else cpu_writemem16(d, v)
-#define BLASTER_DEST_READ(d)    		((d < 0x9700) ? williams_videoram[d] : cpu_readmem16(d))
+#define BLASTER_DEST_WRITE(d,v)			if (d < 0x9700) williams_videoram[d] = v; else program_write_byte(d, v)
+#define BLASTER_DEST_READ(d)    		((d < 0x9700) ? williams_videoram[d] : program_read_byte(d))
 
 /* later Williams blitters */
-#define WILLIAMS2_DEST_WRITE(d,v)		if (d < 0x9000 && (williams2_bank & 0x03) != 0x03) williams_videoram[d] = v; else if (d < 0x9000 || d >= 0xc000 || *williams2_blit_inhibit == 0) cpu_writemem16(d, v)
-#define WILLIAMS2_DEST_READ(d)    		((d < 0x9000 && (williams2_bank & 0x03) != 0x03) ? williams_videoram[d] : cpu_readmem16(d))
+#define WILLIAMS2_DEST_WRITE(d,v)		if (d < 0x9000 && (williams2_bank & 0x03) != 0x03) williams_videoram[d] = v; else if (d < 0x9000 || d >= 0xc000 || *williams2_blit_inhibit == 0) program_write_byte(d, v)
+#define WILLIAMS2_DEST_READ(d)    		((d < 0x9000 && (williams2_bank & 0x03) != 0x03) ? williams_videoram[d] : program_read_byte(d))
 
 /* to remap or not remap */
 #define REMAP_FUNC(r)					blaster_remap[(r) & 0xff]
@@ -885,7 +885,7 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 			/* loop over the width */
 			for (j = w; j > 0; j--)
 			{
-				int srcdata = cpu_readmem16(source);
+				int srcdata = program_read_byte(source);
 				BLITTER_OP(dest, srcdata, keepmask);
 
 				source = (source + sxadv) & 0xffff;
@@ -918,7 +918,7 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 			dest = dstart & 0xffff;
 
 			/* left edge case */
-			pixdata = cpu_readmem16(source);
+			pixdata = program_read_byte(source);
 			srcdata = (pixdata >> 4) & 0x0f;
 			shiftedmask = keepmask | 0xf0;
 			BLITTER_OP(dest, srcdata, shiftedmask);
@@ -929,7 +929,7 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 			/* loop over the width */
 			for (j = w - 1; j > 0; j--)
 			{
-				pixdata = (pixdata << 8) | cpu_readmem16(source);
+				pixdata = (pixdata << 8) | program_read_byte(source);
 				srcdata = (pixdata >> 4) & 0xff;
 				BLITTER_OP(dest, srcdata, keepmask);
 

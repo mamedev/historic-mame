@@ -177,66 +177,66 @@ static MACHINE_INIT( themj )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xb7ff, MRA_RAM },
-	{ 0xc000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM },	/* rmhaisei only */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xb7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)	/* rmhaisei only */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( themj_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xb7ff, MRA_RAM },
-	{ 0xc000, 0xdfff, MRA_BANK2 },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( themj_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xb7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xa800, 0xafff, rmhaihai_colorram_w, &colorram },
-	{ 0xb000, 0xb7ff, rmhaihai_videoram_w, &videoram },
-	{ 0xb83c, 0xb83c, MWA_NOP },	// ??
-	{ 0xbc00, 0xbc00, MWA_NOP },	// ??
-	{ 0xc000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_ROM },	/* rmhaisei only */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa800, 0xafff) AM_WRITE(rmhaihai_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(rmhaihai_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xb83c, 0xb83c) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0xbc00, 0xbc00) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)	/* rmhaisei only */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x0000, 0x7fff, samples_r },
-	{ 0x8000, 0x8000, keyboard_r },
-	{ 0x8001, 0x8001, IORP_NOP },	// ??
-	{ 0x8020, 0x8020, AY8910_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(samples_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(keyboard_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(MRA8_NOP)	// ??
+	AM_RANGE(0x8020, 0x8020) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x8000, 0x8000, IOWP_NOP },	// ??
-	{ 0x8001, 0x8001, keyboard_w },
-	{ 0x8020, 0x8020, AY8910_control_port_0_w },
-	{ 0x8021, 0x8021, AY8910_write_port_0_w },
-	{ 0x8040, 0x8040, adpcm_w },
-	{ 0x8060, 0x8060, ctrl_w },
-	{ 0x8080, 0x8080, IOWP_NOP },	// ??
-	{ 0xbc04, 0xbc04, IOWP_NOP },	// ??
-	{ 0xbc0c, 0xbc0c, IOWP_NOP },	// ??
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(keyboard_w)
+	AM_RANGE(0x8020, 0x8020) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8021, 0x8021) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8040, 0x8040) AM_WRITE(adpcm_w)
+	AM_RANGE(0x8060, 0x8060) AM_WRITE(ctrl_w)
+	AM_RANGE(0x8080, 0x8080) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0xbc04, 0xbc04) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0xbc0c, 0xbc0c) AM_WRITE(MWA8_NOP)	// ??
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( themj_writeport )
-	{ 0x8000, 0x8000, IOWP_NOP },	// ??
-	{ 0x8001, 0x8001, keyboard_w },
-	{ 0x8020, 0x8020, AY8910_control_port_0_w },
-	{ 0x8021, 0x8021, AY8910_write_port_0_w },
-	{ 0x8040, 0x8040, adpcm_w },
-	{ 0x8060, 0x8060, ctrl_w },
-	{ 0x8080, 0x8080, IOWP_NOP },	// ??
-	{ 0x80a0, 0x80a0, themj_rombank_w },
-	{ 0xbc04, 0xbc04, IOWP_NOP },	// ??
-	{ 0xbc0c, 0xbc0c, IOWP_NOP },	// ??
-MEMORY_END
+static ADDRESS_MAP_START( themj_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(keyboard_w)
+	AM_RANGE(0x8020, 0x8020) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8021, 0x8021) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8040, 0x8040) AM_WRITE(adpcm_w)
+	AM_RANGE(0x8060, 0x8060) AM_WRITE(ctrl_w)
+	AM_RANGE(0x8080, 0x8080) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0x80a0, 0x80a0) AM_WRITE(themj_rombank_w)
+	AM_RANGE(0xbc04, 0xbc04) AM_WRITE(MWA8_NOP)	// ??
+	AM_RANGE(0xbc0c, 0xbc0c) AM_WRITE(MWA8_NOP)	// ??
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( rmhaihai )
 	PORT_START  /* dsw2 */
@@ -533,8 +533,8 @@ static MACHINE_DRIVER_START( rmhaihai )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",Z80,20000000/4)	/* 5 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -572,8 +572,8 @@ static MACHINE_DRIVER_START( themj )
 	MDRV_IMPORT_FROM(rmhaihai)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(themj_readmem,writemem)
-	MDRV_CPU_PORTS(readport,themj_writeport)
+	MDRV_CPU_PROGRAM_MAP(themj_readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,themj_writeport)
 
 	MDRV_MACHINE_INIT(themj)
 

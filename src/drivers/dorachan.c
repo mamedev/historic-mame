@@ -39,35 +39,35 @@ static WRITE_HANDLER(dorachan_ctrl_w)
 	dorachan_ctrl=data;
 }
 
-static MEMORY_READ_START( readmem )
-	{0x0000, 0x17ff, MRA_ROM },
-	{0x1800, 0x1fff, MRA_RAM },
-	{0x2000, 0x23ff, MRA_ROM },
-	{0x2400, 0x2400, dorachan_protection_r},
-	{0x2800, 0x2800, input_port_0_r },
-	{0x2c00, 0x2c00, input_port_1_r},
-	{0x3800, 0x3800, dorachan_status_r },
-	{0x4000, 0x5fff, MRA_RAM },
-	{0x6000, 0x77ff, MRA_ROM},
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2400, 0x2400) AM_READ(dorachan_protection_r)
+	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_0_r)
+	AM_RANGE(0x2c00, 0x2c00) AM_READ(input_port_1_r)
+	AM_RANGE(0x3800, 0x3800) AM_READ(dorachan_status_r)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x77ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{0x0000, 0x17ff, MWA_ROM},
-	{0x1800, 0x1fff, MWA_RAM },
-	{0x2000, 0x23ff, MWA_ROM},
-	{0x4000, 0x5fff, dorachan_videoram_w,&videoram},
-	{0x6000, 0x77ff, MWA_ROM},
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(dorachan_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x6000, 0x77ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{0x01, 0x01, IOWP_NOP},
-	{0x02, 0x02, IOWP_NOP},
-	{0x03, 0x03, dorachan_ctrl_w},
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x03, 0x03) AM_WRITE(dorachan_ctrl_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( dorachan )
 	PORT_START
@@ -100,8 +100,8 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( dorachan )
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)

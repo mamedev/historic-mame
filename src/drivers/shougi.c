@@ -263,42 +263,42 @@ static INTERRUPT_GEN( shougi_vblank_nmi )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },		/* 2114 x 2 (0x400 x 4bit each) */
-	{ 0x4800, 0x4800, input_port_2_r },
-	{ 0x5000, 0x5000, input_port_0_r },
-	{ 0x5800, 0x5800, input_port_0_r },
-	{ 0x7000, 0x73ff, MRA_RAM },		/* 2114 x 2 (0x400 x 4bit each) */
-	{ 0x7800, 0x7bff, cpu_sharedram_r },/* 2114 x 2 (0x400 x 4bit each) */
-	{ 0x8000, 0xffff, MRA_RAM },		/* 4116 x 16 (32K) */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)		/* 2114 x 2 (0x400 x 4bit each) */
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_2_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_0_r)
+	AM_RANGE(0x7000, 0x73ff) AM_READ(MRA8_RAM)		/* 2114 x 2 (0x400 x 4bit each) */
+	AM_RANGE(0x7800, 0x7bff) AM_READ(cpu_sharedram_r)/* 2114 x 2 (0x400 x 4bit each) */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)		/* 4116 x 16 (32K) */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },		/* main RAM */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)		/* main RAM */
 	/* 4800-480f connected to the 74LS259, A3 is data line so 4800-4807 write 0, and 4808-480f write 1 */
-	{ 0x4800, 0x4800, cpu_shared_ctrl_sub_w },
-	{ 0x4808, 0x4808, cpu_shared_ctrl_main_w },
-	{ 0x4801, 0x4801, nmi_disable_and_clear_line_w },
-	{ 0x4809, 0x4809, nmi_enable_w },
-	{ 0x4802, 0x4802, MWA_NOP },
-	{ 0x480a, 0x480a, MWA_NOP },
-	{ 0x4803, 0x4803, MWA_NOP },
-	{ 0x480b, 0x480b, MWA_NOP },
-	{ 0x4804, 0x4804, MWA_NOP },//halt/run MCU
-	{ 0x480c, 0x480c, MWA_NOP },//halt/run MCU
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(cpu_shared_ctrl_sub_w)
+	AM_RANGE(0x4808, 0x4808) AM_WRITE(cpu_shared_ctrl_main_w)
+	AM_RANGE(0x4801, 0x4801) AM_WRITE(nmi_disable_and_clear_line_w)
+	AM_RANGE(0x4809, 0x4809) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0x4802, 0x4802) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x480a, 0x480a) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x4803, 0x4803) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x480b, 0x480b) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x4804, 0x4804) AM_WRITE(MWA8_NOP)//halt/run MCU
+	AM_RANGE(0x480c, 0x480c) AM_WRITE(MWA8_NOP)//halt/run MCU
 
-	{ 0x4807, 0x4807, MWA_NOP },//?????? connected to +5v via resistor
-	{ 0x480f, 0x480f, MWA_NOP },
+	AM_RANGE(0x4807, 0x4807) AM_WRITE(MWA8_NOP)//?????? connected to +5v via resistor
+	AM_RANGE(0x480f, 0x480f) AM_WRITE(MWA8_NOP)
 
-	{ 0x5800, 0x5800, shougi_watchdog_reset_w },		/* game won't boot if watchdog doesn't work */
-	{ 0x6000, 0x6000, AY8910_control_port_0_w },
-	{ 0x6800, 0x6800, AY8910_write_port_0_w },
-	{ 0x7000, 0x73ff, MWA_RAM },						/* sharedram main/MCU */
-	{ 0x7800, 0x7bff, cpu_sharedram_main_w, &cpu_sharedram },/* sharedram main/sub */
-	{ 0x8000, 0xffff, videoram_w, &videoram, &videoram_size },	/* 4116 x 16 (32K) */
-MEMORY_END
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(shougi_watchdog_reset_w)		/* game won't boot if watchdog doesn't work */
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_RAM)						/* sharedram main/MCU */
+	AM_RANGE(0x7800, 0x7bff) AM_WRITE(cpu_sharedram_main_w) AM_BASE(&cpu_sharedram)/* sharedram main/sub */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)	/* 4116 x 16 (32K) */
+ADDRESS_MAP_END
 
 
 
@@ -313,19 +313,19 @@ static READ_HANDLER ( dummy_r )
 		return 0;
 }
 
-static PORT_READ_START( readport_sub )
-	{ 0x00,0x00, dummy_r},
-PORT_END
+static ADDRESS_MAP_START( readport_sub, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(dummy_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x63ff, cpu_sharedram_r },	/* sharedram main/sub */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x63ff) AM_READ(cpu_sharedram_r)	/* sharedram main/sub */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x63ff, cpu_sharedram_sub_w },	/* sharedram main/sub */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(cpu_sharedram_sub_w)	/* sharedram main/sub */
+ADDRESS_MAP_END
 
 
 
@@ -377,12 +377,12 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( shougi )
 
 	MDRV_CPU_ADD(Z80,10000000/4)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(shougi_vblank_nmi,1)
 
 	MDRV_CPU_ADD(Z80,10000000/4)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
-	MDRV_CPU_PORTS(readport_sub,0)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
+	MDRV_CPU_IO_MAP(readport_sub,0)
 	/* NMIs triggered in shougi_vblank_nmi() */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -43,61 +43,61 @@ static WRITE16_HANDLER( soundcommand_w )
 }
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x3fffff, MRA16_ROM },
-	{ 0x700000, 0x703fff, MRA16_RAM },	/* galspnbl */
-	{ 0x708000, 0x70ffff, MRA16_RAM },	/* galspnbl */
-	{ 0x800000, 0x803fff, MRA16_RAM },	/* hotpinbl */
-	{ 0x808000, 0x80ffff, MRA16_RAM },	/* hotpinbl */
-	{ 0x880000, 0x880fff, MRA16_RAM },
-	{ 0x900000, 0x900fff, MRA16_RAM },
-	{ 0x904000, 0x904fff, MRA16_RAM },
-	{ 0x980000, 0x9bffff, MRA16_RAM },
-	{ 0xa80000, 0xa80001, input_port_0_word_r },
-	{ 0xa80010, 0xa80011, input_port_1_word_r },
-	{ 0xa80020, 0xa80021, input_port_2_word_r },
-	{ 0xa80030, 0xa80031, input_port_3_word_r },
-	{ 0xa80040, 0xa80041, input_port_4_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM)	/* galspnbl */
+	AM_RANGE(0x708000, 0x70ffff) AM_READ(MRA16_RAM)	/* galspnbl */
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM)	/* hotpinbl */
+	AM_RANGE(0x808000, 0x80ffff) AM_READ(MRA16_RAM)	/* hotpinbl */
+	AM_RANGE(0x880000, 0x880fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x900000, 0x900fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x904000, 0x904fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x980000, 0x9bffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xa80000, 0xa80001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xa80010, 0xa80011) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xa80020, 0xa80021) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xa80030, 0xa80031) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xa80040, 0xa80041) AM_READ(input_port_4_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x3fffff, MWA16_ROM },
-	{ 0x700000, 0x703fff, MWA16_RAM },	/* galspnbl work RAM */
-	{ 0x708000, 0x70ffff, MWA16_RAM },	/* galspnbl work RAM, bitmaps are decompressed here */
-	{ 0x800000, 0x803fff, MWA16_RAM },	/* hotpinbl work RAM */
-	{ 0x808000, 0x80ffff, MWA16_RAM },	/* hotpinbl work RAM, bitmaps are decompressed here */
-	{ 0x880000, 0x880fff, MWA16_RAM, &spriteram16, &spriteram_size },
-{ 0x8ff400, 0x8fffff, MWA16_NOP },	/* ??? */
-	{ 0x900000, 0x900fff, MWA16_RAM, &galspnbl_colorram },
-{ 0x901000, 0x903fff, MWA16_NOP },	/* ??? */
-	{ 0x904000, 0x904fff, MWA16_RAM, &galspnbl_videoram },
-{ 0x905000, 0x907fff, MWA16_NOP },	/* ??? */
-	{ 0x980000, 0x9bffff, galspnbl_bgvideoram_w, &galspnbl_bgvideoram },
-{ 0xa00000, 0xa00fff, MWA16_NOP },	/* more palette ? */
-	{ 0xa01000, 0xa017ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-{ 0xa01800, 0xa027ff, MWA16_NOP },	/* more palette ? */
-	{ 0xa80010, 0xa80011, soundcommand_w },
-	{ 0xa80020, 0xa80021, MWA16_NOP },	/* could be watchdog, but causes resets when picture is shown */
-	{ 0xa80030, 0xa80031, MWA16_NOP },	/* irq ack? */
-	{ 0xa80050, 0xa80051, galspnbl_scroll_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM)	/* galspnbl work RAM */
+	AM_RANGE(0x708000, 0x70ffff) AM_WRITE(MWA16_RAM)	/* galspnbl work RAM, bitmaps are decompressed here */
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(MWA16_RAM)	/* hotpinbl work RAM */
+	AM_RANGE(0x808000, 0x80ffff) AM_WRITE(MWA16_RAM)	/* hotpinbl work RAM, bitmaps are decompressed here */
+	AM_RANGE(0x880000, 0x880fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+AM_RANGE(0x8ff400, 0x8fffff) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x900000, 0x900fff) AM_WRITE(MWA16_RAM) AM_BASE(&galspnbl_colorram)
+AM_RANGE(0x901000, 0x903fff) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x904000, 0x904fff) AM_WRITE(MWA16_RAM) AM_BASE(&galspnbl_videoram)
+AM_RANGE(0x905000, 0x907fff) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x980000, 0x9bffff) AM_WRITE(galspnbl_bgvideoram_w) AM_BASE(&galspnbl_bgvideoram)
+AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(MWA16_NOP)	/* more palette ? */
+	AM_RANGE(0xa01000, 0xa017ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+AM_RANGE(0xa01800, 0xa027ff) AM_WRITE(MWA16_NOP)	/* more palette ? */
+	AM_RANGE(0xa80010, 0xa80011) AM_WRITE(soundcommand_w)
+	AM_RANGE(0xa80020, 0xa80021) AM_WRITE(MWA16_NOP)	/* could be watchdog, but causes resets when picture is shown */
+	AM_RANGE(0xa80030, 0xa80031) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0xa80050, 0xa80051) AM_WRITE(galspnbl_scroll_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_status_0_r },
-	{ 0xfc00, 0xfc00, MRA_NOP },	/* irq ack ?? */
-	{ 0xfc20, 0xfc20, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(MRA8_NOP)	/* irq ack ?? */
+	AM_RANGE(0xfc20, 0xfc20) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_data_0_w },
-	{ 0xf810, 0xf810, YM3812_control_port_0_w },
-	{ 0xf811, 0xf811, YM3812_write_port_0_w },
-	{ 0xfc00, 0xfc00, MWA_NOP },	/* irq ack ?? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xf810, 0xf810) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xf811, 0xf811) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(MWA8_NOP)	/* irq ack ?? */
+ADDRESS_MAP_END
 
 
 
@@ -124,8 +124,8 @@ INPUT_PORTS_START( hotpinbl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -208,8 +208,8 @@ INPUT_PORTS_START( galspnbl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -331,12 +331,12 @@ static MACHINE_DRIVER_START( hotpinbl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* also has vector for 6, but it does nothing */
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMI is caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

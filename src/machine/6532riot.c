@@ -2,6 +2,9 @@
 
   RIOT 6532 emulation
 
+TODO:
+- irq callback for timer overflow
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -21,6 +24,11 @@ struct R6532
 	int cleared;
 
 	UINT32 target;
+
+	int pa7_enable;
+	int pa7_direction;	/* 0 = high-to-low, 1 = low-to-high */
+	int pa7_flag;
+	UINT8 pa7_last;
 };
 
 
@@ -73,6 +81,8 @@ static void r6532_write_portA(int n, UINT8 data)
 	{
 		r6532[n]->intf.portA_w(0, r6532_combineA(n, 0xFF));
 	}
+	else
+		logerror("Write %02x to unhandled 6532 #%d port A\n", data, n);
 }
 
 
@@ -84,6 +94,8 @@ static void r6532_write_portB(int n, UINT8 data)
 	{
 		r6532[n]->intf.portB_w(0, r6532_combineB(n, 0xFF));
 	}
+	else
+		logerror("Write %02x to unhandled 6532 #%d port B\n", data, n);
 }
 
 
@@ -91,7 +103,7 @@ static void r6532_write(int n, offs_t offset, UINT8 data)
 {
 	if (offset & 4)
 	{
-		if (offset & 16)
+		if (offset & 0x10)
 		{
 			r6532[n]->cleared = 0;
 
@@ -115,7 +127,8 @@ static void r6532_write(int n, offs_t offset, UINT8 data)
 		}
 		else
 		{
-			logerror("Write to unimplemented 6532 #%d edge detect control\n", n);
+			r6532[n]->pa7_enable = (offset & 2) >> 1;
+			r6532[n]->pa7_direction = offset & 1;
 		}
 	}
 	else
@@ -161,18 +174,50 @@ static UINT8 r6532_read_timer(int n, int enable)
 }
 
 
-static UINT8 r6532_read_flags(int n)
+static void r6532_PA7_write(int n, offs_t offset, UINT8 data)
+{
+	data &= 0x80;
+
+	if ((r6532[n]->pa7_last ^ data) &&
+			((r6532[n]->pa7_direction == 0 && !data) ||
+			 (r6532[n]->pa7_direction == 1 &&  data)))
+	{
+		r6532[n]->pa7_flag = 1;
+		if (r6532[n]->pa7_enable)
+		{
+			if (r6532[n]->intf.irq_func != NULL)
+				(*r6532[n]->intf.irq_func)(ASSERT_LINE);
+			else
+				logerror("No irq handler for 6532 #%d PA7 edge detect\n", n);
+		}
+	}
+
+	r6532[n]->pa7_last = data;
+}
+
+
+
+static UINT8 r6532_read_irq_flags(int n)
 {
 	int count = r6532[n]->target - activecpu_gettotalcycles();
+	int res = 0;
 
-	if (count >= 0 || r6532[n]->cleared)
+	if (count < 0 && !r6532[n]->cleared)
+		res |= 0x80;
+
+	if (r6532[n]->pa7_flag)
 	{
-		return 0x00;
+		res |= 0x40;
+		r6532[n]->pa7_flag = 0;
+
+		if (r6532[n]->intf.irq_func != NULL)
+		{
+			/* TODO: shouldn't clear line if timer irq pending */
+			(*r6532[n]->intf.irq_func)(CLEAR_LINE);
+		}
 	}
-	else
-	{
-		return 0x80;
-	}
+
+	return res;
 }
 
 
@@ -198,13 +243,13 @@ static UINT8 r6532_read(int n, offs_t offset)
 		val = r6532_read_timer(n, 0);
 		break;
 	case 5:
-		val = r6532_read_flags(n);
+		val = r6532_read_irq_flags(n);
 		break;
 	case 6:
 		val = r6532_read_timer(n, 1);
 		break;
 	case 7:
-		val = r6532_read_flags(n);
+		val = r6532_read_irq_flags(n);
 		break;
 	}
 
@@ -215,9 +260,11 @@ static UINT8 r6532_read(int n, offs_t offset)
 WRITE_HANDLER( r6532_0_w ) { r6532_write(0, offset, data); }
 WRITE_HANDLER( r6532_1_w ) { r6532_write(1, offset, data); }
 
-
 READ_HANDLER( r6532_0_r ) { return r6532_read(0, offset); }
 READ_HANDLER( r6532_1_r ) { return r6532_read(1, offset); }
+
+WRITE_HANDLER( r6532_0_PA7_w ) { r6532_PA7_write(0, offset, data); }
+WRITE_HANDLER( r6532_1_PA7_w ) { r6532_PA7_write(1, offset, data); }
 
 
 void r6532_init(int n, const struct R6532interface* intf)
@@ -235,4 +282,12 @@ void r6532_init(int n, const struct R6532interface* intf)
 	r6532[n]->cleared = 0;
 
 	r6532[n]->target = 0;
+
+	r6532[n]->pa7_enable = 0;
+	r6532[n]->pa7_direction = 0;
+	r6532[n]->pa7_flag = 0;
+	r6532[n]->pa7_last = 0;
+
+	if (r6532[n]->intf.irq_func != NULL)
+		(*r6532[n]->intf.irq_func)(CLEAR_LINE);
 }

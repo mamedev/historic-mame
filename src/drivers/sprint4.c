@@ -196,37 +196,37 @@ static WRITE_HANDLER( sprint4_skid_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x001f, sprint4_analog_r },
-	{ 0x0020, 0x003f, sprint4_coin_r },
-	{ 0x0040, 0x005f, sprint4_gas_r },
-	{ 0x0060, 0x007f, sprint4_dip_r },
-	{ 0x0080, 0x00ff, sprint4_wram_r },
-	{ 0x0180, 0x01ff, sprint4_wram_r },
-	{ 0x0800, 0x0bff, MRA_RAM },
-	{ 0x1000, 0x17ff, input_port_2_r },
-	{ 0x1800, 0x1fff, input_port_3_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xe800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(sprint4_analog_r)
+	AM_RANGE(0x0020, 0x003f) AM_READ(sprint4_coin_r)
+	AM_RANGE(0x0040, 0x005f) AM_READ(sprint4_gas_r)
+	AM_RANGE(0x0060, 0x007f) AM_READ(sprint4_dip_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(sprint4_wram_r)
+	AM_RANGE(0x0180, 0x01ff) AM_READ(sprint4_wram_r)
+	AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x17ff) AM_READ(input_port_2_r)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(input_port_3_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x001f, sprint4_attract_w },
-	{ 0x0020, 0x003f, sprint4_collision_reset_w },
-	{ 0x0040, 0x0041, sprint4_analog_w },
-	{ 0x0042, 0x0043, sprint4_crash_w },
-	{ 0x0044, 0x0045, MWA_NOP }, /* watchdog, disabled during service mode */
-	{ 0x0046, 0x0047, MWA_NOP }, /* SPARE */
-	{ 0x0060, 0x0067, sprint4_lamp_w },
-	{ 0x0068, 0x006f, sprint4_skid_w },
-	{ 0x0080, 0x00ff, sprint4_wram_w },
-	{ 0x0180, 0x01ff, sprint4_wram_w },
-	{ 0x0800, 0x0bff, sprint4_video_ram_w, &sprint4_video_ram },
-	{ 0x2000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, MWA_NOP }, /* diagnostic ROM location */
-	{ 0xe800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(sprint4_attract_w)
+	AM_RANGE(0x0020, 0x003f) AM_WRITE(sprint4_collision_reset_w)
+	AM_RANGE(0x0040, 0x0041) AM_WRITE(sprint4_analog_w)
+	AM_RANGE(0x0042, 0x0043) AM_WRITE(sprint4_crash_w)
+	AM_RANGE(0x0044, 0x0045) AM_WRITE(MWA8_NOP) /* watchdog, disabled during service mode */
+	AM_RANGE(0x0046, 0x0047) AM_WRITE(MWA8_NOP) /* SPARE */
+	AM_RANGE(0x0060, 0x0067) AM_WRITE(sprint4_lamp_w)
+	AM_RANGE(0x0068, 0x006f) AM_WRITE(sprint4_skid_w)
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(sprint4_wram_w)
+	AM_RANGE(0x0180, 0x01ff) AM_WRITE(sprint4_wram_w)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(sprint4_video_ram_w) AM_BASE(&sprint4_video_ram)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_NOP) /* diagnostic ROM location */
+	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( sprint4 )
@@ -362,7 +362,7 @@ static MACHINE_DRIVER_START( sprint4 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(38 * 1000000 / 15750)

@@ -873,64 +873,64 @@ static WRITE16_HANDLER( jp_v60_write_cab )
 }
 
 
-static MEMORY_READ16_START( system32_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM },
-	{ 0x200000, 0x23ffff, MRA16_RAM }, // work RAM
-	{ 0x300000, 0x31ffff, sys32_videoram_r }, // Tile Ram
-	{ 0x400000, 0x41ffff, MRA16_RAM }, // sprite RAM
-	{ 0x500002, 0x500003, jp_v60_read_cab },
-	{ 0x500000, 0x50000d, MRA16_RAM },	// Unknown
+static ADDRESS_MAP_START( system32_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x23ffff) AM_READ(MRA16_RAM) // work RAM
+	AM_RANGE(0x300000, 0x31ffff) AM_READ(sys32_videoram_r) // Tile Ram
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM) // sprite RAM
+	AM_RANGE(0x500002, 0x500003) AM_READ(jp_v60_read_cab)
+	AM_RANGE(0x500000, 0x50000d) AM_READ(MRA16_RAM)	// Unknown
 
-	{ 0x600000, 0x6100ff, MRA16_RAM }, // Palette + mixer registers (Monitor A)
+	AM_RANGE(0x600000, 0x6100ff) AM_READ(MRA16_RAM) // Palette + mixer registers (Monitor A)
 
-	{ 0x700000, 0x701fff, MRA16_RAM },	// shared RAM
-	{ 0x800000, 0x80000f, MRA16_RAM },	// Unknown
-	{ 0x80007e, 0x80007f, MRA16_RAM },	// Unknown f1lap
-	{ 0x801000, 0x801003, MRA16_RAM },	// Unknown
-	{ 0xa00000, 0xa00001, MRA16_RAM }, // Unknown dbzvrvs
+	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)	// shared RAM
+	AM_RANGE(0x800000, 0x80000f) AM_READ(MRA16_RAM)	// Unknown
+	AM_RANGE(0x80007e, 0x80007f) AM_READ(MRA16_RAM)	// Unknown f1lap
+	AM_RANGE(0x801000, 0x801003) AM_READ(MRA16_RAM)	// Unknown
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(MRA16_RAM) // Unknown dbzvrvs
 
-	{ 0xc00000, 0xc0003f, system32_io_r },
+	AM_RANGE(0xc00000, 0xc0003f) AM_READ(system32_io_r)
 // 0xc00040, 0xc0005f - Game specific implementation of the analog controls
-	{ 0xc00060, 0xc0007f, system32_io_2_r },
+	AM_RANGE(0xc00060, 0xc0007f) AM_READ(system32_io_2_r)
 
-	{ 0xd80000, 0xd80001, sys32_read_random },
-	{ 0xd80002, 0xd80003, MRA16_RAM }, // Unknown harddunk
-	{ 0xe00000, 0xe0000f, MRA16_RAM },   // Unknown
-	{ 0xe80000, 0xe80003, MRA16_RAM }, // Unknown
-	{ 0xf00000, 0xffffff, MRA16_BANK1 }, // High rom mirror
-MEMORY_END
+	AM_RANGE(0xd80000, 0xd80001) AM_READ(sys32_read_random)
+	AM_RANGE(0xd80002, 0xd80003) AM_READ(MRA16_RAM) // Unknown harddunk
+	AM_RANGE(0xe00000, 0xe0000f) AM_READ(MRA16_RAM)   // Unknown
+	AM_RANGE(0xe80000, 0xe80003) AM_READ(MRA16_RAM) // Unknown
+	AM_RANGE(0xf00000, 0xffffff) AM_READ(MRA16_BANK1) // High rom mirror
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( system32_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM },
-	{ 0x200000, 0x23ffff, MWA16_RAM, &system32_workram },
-	{ 0x300000, 0x31ffff, sys32_videoram_w },
-	{ 0x400000, 0x41ffff, sys32_spriteram_w, &sys32_spriteram16 }, // Sprites
-	{ 0x500000, 0x50000d, MWA16_RAM },	// Unknown
+static ADDRESS_MAP_START( system32_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(MWA16_RAM) AM_BASE(&system32_workram)
+	AM_RANGE(0x300000, 0x31ffff) AM_WRITE(sys32_videoram_w)
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(sys32_spriteram_w) AM_BASE(&sys32_spriteram16) // Sprites
+	AM_RANGE(0x500000, 0x50000d) AM_WRITE(MWA16_RAM)	// Unknown
 
-	{ 0x600000, 0x607fff, system32_paletteram16_xBBBBBGGGGGRRRRR_scrambled_word_w, &scrambled_paletteram16[0] },	// magic data-line-scrambled mirror of palette RAM * we need to shuffle data written then?
-	{ 0x608000, 0x60ffff, system32_paletteram16_xBGRBBBBGGGGRRRR_word_w, &paletteram16 }, // Palettes
-	{ 0x610000, 0x6100ff, MWA16_RAM, &system32_mixerregs[0] }, // mixer chip registers
+	AM_RANGE(0x600000, 0x607fff) AM_WRITE(system32_paletteram16_xBBBBBGGGGGRRRRR_scrambled_word_w) AM_BASE(&scrambled_paletteram16[0])	// magic data-line-scrambled mirror of palette RAM * we need to shuffle data written then?
+	AM_RANGE(0x608000, 0x60ffff) AM_WRITE(system32_paletteram16_xBGRBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16) // Palettes
+	AM_RANGE(0x610000, 0x6100ff) AM_WRITE(MWA16_RAM) AM_BASE(&system32_mixerregs[0]) // mixer chip registers
 
-	{ 0x700000, 0x701fff, MWA16_RAM, &system32_shared_ram }, // Shared ram with the z80
-	{ 0x800000, 0x80000f, MWA16_RAM },	// Unknown
-	{ 0x80007e, 0x80007f, MWA16_RAM },	// Unknown f1lap
-	{ 0x801000, 0x801003, MWA16_RAM },	// Unknown
-	{ 0x81002a, 0x81002b, MWA16_RAM },	// Unknown dbzvrvs
-	{ 0x810100, 0x810101, MWA16_RAM },	// Unknown dbzvrvs
-	{ 0xa00000, 0xa00fff, MWA16_RAM, &sys32_protram },	// protection RAM
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&system32_shared_ram) // Shared ram with the z80
+	AM_RANGE(0x800000, 0x80000f) AM_WRITE(MWA16_RAM)	// Unknown
+	AM_RANGE(0x80007e, 0x80007f) AM_WRITE(MWA16_RAM)	// Unknown f1lap
+	AM_RANGE(0x801000, 0x801003) AM_WRITE(MWA16_RAM)	// Unknown
+	AM_RANGE(0x81002a, 0x81002b) AM_WRITE(MWA16_RAM)	// Unknown dbzvrvs
+	AM_RANGE(0x810100, 0x810101) AM_WRITE(MWA16_RAM)	// Unknown dbzvrvs
+	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(MWA16_RAM) AM_BASE(&sys32_protram)	// protection RAM
 
-	{ 0xc00000, 0xc0003f, system32_io_w },
+	AM_RANGE(0xc00000, 0xc0003f) AM_WRITE(system32_io_w)
 // 0xc00040, 0xc0005f - Game specific implementation of the analog controls
-	{ 0xc00060, 0xc0007f, system32_io_2_w },
+	AM_RANGE(0xc00060, 0xc0007f) AM_WRITE(system32_io_2_w)
 
-	{ 0xd00000, 0xd00005, MWA16_RAM }, // Unknown
-	{ 0xd00006, 0xd00007, irq_ack_w },
-	{ 0xd00008, 0xd0000b, MWA16_RAM }, // Unknown
-	{ 0xd80000, 0xd80003, MWA16_RAM }, // Unknown titlef / harddunk
-	{ 0xe00000, 0xe0000f, MWA16_RAM },   // Unknown
-	{ 0xe80000, 0xe80003, MWA16_RAM }, // Unknown
-	{ 0xf00000, 0xffffff, MWA16_ROM },
-MEMORY_END
+	AM_RANGE(0xd00000, 0xd00005) AM_WRITE(MWA16_RAM) // Unknown
+	AM_RANGE(0xd00006, 0xd00007) AM_WRITE(irq_ack_w)
+	AM_RANGE(0xd00008, 0xd0000b) AM_WRITE(MWA16_RAM) // Unknown
+	AM_RANGE(0xd80000, 0xd80003) AM_WRITE(MWA16_RAM) // Unknown titlef / harddunk
+	AM_RANGE(0xe00000, 0xe0000f) AM_WRITE(MWA16_RAM)   // Unknown
+	AM_RANGE(0xe80000, 0xe80003) AM_WRITE(MWA16_RAM) // Unknown
+	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 
 static UINT8 *sys32_SoundMemBank;
 
@@ -966,19 +966,19 @@ static WRITE_HANDLER( sys32_sound_prot_w )
 	s32_f1_prot = data;
 }
 
-static MEMORY_READ_START( sound_readmem_32 )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xbfff, system32_bank_r },
-	{ 0xd000, 0xdfff, RF5C68_r },
-	{ 0xe000, 0xffff, sys32_shared_snd_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem_32, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(system32_bank_r)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(RF5C68_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(sys32_shared_snd_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem_32 )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xc000, 0xc008, RF5C68_reg_w },
-	{ 0xd000, 0xdfff, RF5C68_w },
-	{ 0xe000, 0xffff, sys32_shared_snd_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem_32, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc008) AM_WRITE(RF5C68_reg_w)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(RF5C68_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(sys32_shared_snd_w)
+ADDRESS_MAP_END
 
 static void s32_recomp_bank(void)
 {
@@ -1019,26 +1019,26 @@ static WRITE_HANDLER( sys32_soundbank_hi_w )
 	s32_recomp_bank();
 }
 
-static PORT_READ_START( sound_readport_32 )
-	{ 0x80, 0x80, YM2612_status_port_0_A_r },
-	{ 0x90, 0x90, YM2612_status_port_1_A_r },
-	{ 0xf1, 0xf1, sys32_sound_prot_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport_32, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0x90, 0x90) AM_READ(YM2612_status_port_1_A_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(sys32_sound_prot_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport_32 )
-	{ 0x80, 0x80, YM2612_control_port_0_A_w },
-	{ 0x81, 0x81, YM2612_data_port_0_A_w },
-	{ 0x82, 0x82, YM2612_control_port_0_B_w },
-	{ 0x83, 0x83, YM2612_data_port_0_B_w },
-	{ 0x90, 0x90, YM2612_control_port_1_A_w },
-	{ 0x91, 0x91, YM2612_data_port_1_A_w },
-	{ 0x92, 0x92, YM2612_control_port_1_B_w },
-	{ 0x93, 0x93, YM2612_data_port_1_B_w },
-	{ 0xa0, 0xa0, sys32_soundbank_lo_w },
-	{ 0xb0, 0xb0, sys32_soundbank_hi_w },
-	{ 0xc1, 0xc1, IOWP_NOP },
-	{ 0xf1, 0xf1, sys32_sound_prot_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport_32, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2612_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2612_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(YM2612_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x90, 0x90) AM_WRITE(YM2612_control_port_1_A_w)
+	AM_RANGE(0x91, 0x91) AM_WRITE(YM2612_data_port_1_A_w)
+	AM_RANGE(0x92, 0x92) AM_WRITE(YM2612_control_port_1_B_w)
+	AM_RANGE(0x93, 0x93) AM_WRITE(YM2612_data_port_1_B_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(sys32_soundbank_lo_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(sys32_soundbank_hi_w)
+	AM_RANGE(0xc1, 0xc1) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf1, 0xf1) AM_WRITE(sys32_sound_prot_w)
+ADDRESS_MAP_END
 
 static MACHINE_INIT( system32 )
 {
@@ -1078,37 +1078,37 @@ static READ_HANDLER( jpcab_z80_read )
 	return tocab;
 }
 
-static MEMORY_READ_START( jpcab_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xc000, 0xc008, jpcab_z80_read },
-	{ 0xd000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( jpcab_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc008) AM_READ(jpcab_z80_read)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( jpcab_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0xc000, 0xc008, MWA_RAM },
-	{ 0xd000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( jpcab_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc008) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( jpcab_readport )
-	{ 0x04, 0x04, IORP_NOP },		// interrupt control
-	{ 0x80, 0x83, IORP_NOP },
-	{ 0x90, 0x93, IORP_NOP },
-	{ 0xc0, 0xc1, IORP_NOP },
-	{ 0xd0, 0xd3, IORP_NOP },
-	{ 0xd8, 0xd8, IORP_NOP },
-PORT_END
+static ADDRESS_MAP_START( jpcab_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP)		// interrupt control
+	AM_RANGE(0x80, 0x83) AM_READ(MRA8_NOP)
+	AM_RANGE(0x90, 0x93) AM_READ(MRA8_NOP)
+	AM_RANGE(0xc0, 0xc1) AM_READ(MRA8_NOP)
+	AM_RANGE(0xd0, 0xd3) AM_READ(MRA8_NOP)
+	AM_RANGE(0xd8, 0xd8) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( jpcab_writeport )
-	{ 0x04, 0x04, IOWP_NOP },
-	{ 0x80, 0x83, IOWP_NOP },
-	{ 0x90, 0x93, IOWP_NOP },
-	{ 0xc0, 0xc1, IOWP_NOP },
-	{ 0xd0, 0xd3, IOWP_NOP },
-	{ 0xd8, 0xd8, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( jpcab_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x80, 0x83) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x90, 0x93) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc0, 0xc1) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd0, 0xd3) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd8, 0xd8) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 /* Analog Input Handlers */
 /* analog controls for sonic */
@@ -2015,13 +2015,13 @@ static MACHINE_DRIVER_START( system32 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V60, OSC_A/2/12) // Reality is 16.somethingMHz, use magic /12 factor to get approximate speed
-	MDRV_CPU_MEMORY(system32_readmem,system32_writemem)
+	MDRV_CPU_PROGRAM_MAP(system32_readmem,system32_writemem)
 	MDRV_CPU_VBLANK_INT(system32_interrupt,2)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, OSC_A/4)	// verified on real PCB
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem_32, sound_writemem_32)
-	MDRV_CPU_PORTS(sound_readport_32, sound_writeport_32)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem_32, sound_writemem_32)
+	MDRV_CPU_IO_MAP(sound_readport_32, sound_writeport_32)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(100 /*DEFAULT_60HZ_VBLANK_DURATION*/)
@@ -2058,8 +2058,8 @@ static MACHINE_DRIVER_START( jpark )
 	MDRV_IMPORT_FROM( system32 )
 
 	MDRV_CPU_ADD_TAG("cabinet", Z80, OSC_A/8)	// ???
-	MDRV_CPU_MEMORY( jpcab_readmem, jpcab_writemem )
-	MDRV_CPU_PORTS( jpcab_readport, jpcab_writeport )
+	MDRV_CPU_PROGRAM_MAP( jpcab_readmem, jpcab_writemem )
+	MDRV_CPU_IO_MAP( jpcab_readport, jpcab_writeport )
 //	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)		// CPU has an IRQ handler, it appears to be periodic
 
 MACHINE_DRIVER_END
@@ -2917,7 +2917,7 @@ static DRIVER_INIT ( brival )
 	system32_mixerShift = 5;
 
 	install_mem_read16_handler (0, 0x20ba00, 0x20ba07, brival_protection_r);
-	install_mem_write16_handler(0, 0xa000000, 0xa00fff, brival_protboard_w);
+	install_mem_write16_handler(0, 0xa00000, 0xa00fff, brival_protboard_w);
 }
 
 static DRIVER_INIT ( ga2 )

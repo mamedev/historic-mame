@@ -35,7 +35,7 @@ static void sound_volume_decay(int param)
 WRITE_HANDLER( warpwarp_sound_w )
 {
 	stream_update(channel,0);
-	sound_latch = data;
+	sound_latch = data & 0x0f;
 	sound_volume = 0x7fff; /* set sound_volume */
 	noise = 0x0000;  /* reset noise shifter */
 
@@ -70,7 +70,7 @@ WRITE_HANDLER( warpwarp_sound_w )
 WRITE_HANDLER( warpwarp_music1_w )
 {
     stream_update(channel,0);
-	music1_latch = data & 63;
+	music1_latch = data & 0x3f;
 }
 
 static void music_volume_decay(int param)
@@ -82,10 +82,10 @@ static void music_volume_decay(int param)
 WRITE_HANDLER( warpwarp_music2_w )
 {
     stream_update(channel,0);
-	music2_latch = data;
+	music2_latch = data & 0x3f;
 	music_volume = 0x7fff;
 	/* fast decay enabled? */
-	if( music2_latch & 16 )
+	if( music2_latch & 0x10 )
 	{
 		/*
 		 * Ra (R83?) is 10k, Rb is 0, C92 is 1uF

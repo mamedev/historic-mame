@@ -91,83 +91,83 @@ static WRITE16_HANDLER( YM3812_write_port_0_msb_w )
 
 
 
-static MEMORY_READ16_START( deniam16b_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x400000, 0x40ffff, MRA16_RAM },
-	{ 0x410000, 0x410fff, MRA16_RAM },
-	{ 0xc40002, 0xc40003, deniam_coinctrl_r },
-	{ 0xc44000, 0xc44001, input_port_0_word_r },
-	{ 0xc44002, 0xc44003, input_port_1_word_r },
-	{ 0xc44004, 0xc44005, input_port_2_word_r },
-	{ 0xc44006, 0xc44007, MRA16_NOP },	/* unused? */
-	{ 0xc4400a, 0xc4400b, input_port_3_word_r },
-	{ 0xff0000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( deniam16b_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x410000, 0x410fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc40002, 0xc40003) AM_READ(deniam_coinctrl_r)
+	AM_RANGE(0xc44000, 0xc44001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xc44002, 0xc44003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xc44004, 0xc44005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xc44006, 0xc44007) AM_READ(MRA16_NOP)	/* unused? */
+	AM_RANGE(0xc4400a, 0xc4400b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( deniam16b_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x400000, 0x40ffff, deniam_videoram_w, &deniam_videoram },
-	{ 0x410000, 0x410fff, deniam_textram_w, &deniam_textram },
-	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram16 },
-	{ 0xc40000, 0xc40001, sound_command_w },
-	{ 0xc40002, 0xc40003, deniam_coinctrl_w },
-	{ 0xc40004, 0xc40005, MWA16_NOP },	/* irq ack? */
-	{ 0xff0000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( deniam16b_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(deniam_videoram_w) AM_BASE(&deniam_videoram)
+	AM_RANGE(0x410000, 0x410fff) AM_WRITE(deniam_textram_w) AM_BASE(&deniam_textram)
+	AM_RANGE(0x440000, 0x4407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x840000, 0x840fff) AM_WRITE(deniam_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_w)
+	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(deniam_coinctrl_w)
+	AM_RANGE(0xc40004, 0xc40005) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xf7ff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x01, 0x01, soundlatch_r },
-	{ 0x05, 0x05, OKIM6295_status_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(soundlatch_r)
+	AM_RANGE(0x05, 0x05) AM_READ(OKIM6295_status_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x02, 0x02, YM3812_control_port_0_w },
-	{ 0x03, 0x03, YM3812_write_port_0_w },
-	{ 0x05, 0x05, OKIM6295_data_0_w },
-	{ 0x07, 0x07, deniam16b_oki_rom_bank_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(deniam16b_oki_rom_bank_w)
+ADDRESS_MAP_END
 
 
 /* identical to 16b, but handles sound directly */
-static MEMORY_READ16_START( deniam16c_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x400000, 0x40ffff, MRA16_RAM },
-	{ 0x410000, 0x410fff, MRA16_RAM },
-	{ 0xc40000, 0xc40001, OKIM6295_status_0_lsb_r },
-	{ 0xc40002, 0xc40003, deniam_coinctrl_r },
-	{ 0xc44000, 0xc44001, input_port_0_word_r },
-	{ 0xc44002, 0xc44003, input_port_1_word_r },
-	{ 0xc44004, 0xc44005, input_port_2_word_r },
-	{ 0xc44006, 0xc44007, MRA16_NOP },	/* unused? */
-	{ 0xc4400a, 0xc4400b, input_port_3_word_r },
-	{ 0xff0000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( deniam16c_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x410000, 0x410fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc40000, 0xc40001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0xc40002, 0xc40003) AM_READ(deniam_coinctrl_r)
+	AM_RANGE(0xc44000, 0xc44001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xc44002, 0xc44003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xc44004, 0xc44005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xc44006, 0xc44007) AM_READ(MRA16_NOP)	/* unused? */
+	AM_RANGE(0xc4400a, 0xc4400b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( deniam16c_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x400000, 0x40ffff, deniam_videoram_w, &deniam_videoram },
-	{ 0x410000, 0x410fff, deniam_textram_w, &deniam_textram },
-	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram16 },
-	{ 0xc40000, 0xc40001, OKIM6295_data_0_lsb_w },
-	{ 0xc40002, 0xc40003, deniam_coinctrl_w },
-	{ 0xc40004, 0xc40005, MWA16_NOP },	/* irq ack? */
-	{ 0xc40006, 0xc40007, deniam16c_oki_rom_bank_w },
-	{ 0xc40008, 0xc40009, YM3812_control_port_0_msb_w },
-	{ 0xc4000a, 0xc4000b, YM3812_write_port_0_msb_w },
-	{ 0xff0000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( deniam16c_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(deniam_videoram_w) AM_BASE(&deniam_videoram)
+	AM_RANGE(0x410000, 0x410fff) AM_WRITE(deniam_textram_w) AM_BASE(&deniam_textram)
+	AM_RANGE(0x440000, 0x4407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x840000, 0x840fff) AM_WRITE(deniam_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(deniam_coinctrl_w)
+	AM_RANGE(0xc40004, 0xc40005) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0xc40006, 0xc40007) AM_WRITE(deniam16c_oki_rom_bank_w)
+	AM_RANGE(0xc40008, 0xc40009) AM_WRITE(YM3812_control_port_0_msb_w)
+	AM_RANGE(0xc4000a, 0xc4000b) AM_WRITE(YM3812_write_port_0_msb_w)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -335,12 +335,12 @@ static MACHINE_DRIVER_START( deniam16b )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,25000000/2)	/* ??? */
-	MDRV_CPU_MEMORY(deniam16b_readmem,deniam16b_writemem)
+	MDRV_CPU_PROGRAM_MAP(deniam16b_readmem,deniam16b_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,25000000/4)	/* (makes logicpro music tempo correct) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -366,7 +366,7 @@ static MACHINE_DRIVER_START( deniam16c )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,25000000/2)	/* ??? */
-	MDRV_CPU_MEMORY(deniam16c_readmem,deniam16c_writemem)
+	MDRV_CPU_PROGRAM_MAP(deniam16c_readmem,deniam16c_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

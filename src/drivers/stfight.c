@@ -262,57 +262,57 @@ extern unsigned char *stfight_text_attr_ram;
 extern unsigned char *stfight_vh_latch_ram;
 extern unsigned char *stfight_sprite_ram;
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },          /* sf02.bin */
-	{ 0xc000, 0xc1ff, MRA_RAM },            /* palette ram */
-	{ 0xc200, 0xc200, input_port_0_r },     /* IN1 */
-	{ 0xc201, 0xc201, input_port_1_r },     /* IN2 */
-	{ 0xc202, 0xc202, input_port_2_r },     /* IN3 */
-	{ 0xc203, 0xc204, stfight_dsw_r },      /* DS0,1 */
-	{ 0xc205, 0xc205, stfight_coin_r },     /* coin mech */
-	{ 0xd000, 0xd7ff, MRA_RAM },            /* video */
-	{ 0xe000, 0xffff, MRA_RAM },
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)          /* sf02.bin */
+	AM_RANGE(0xc000, 0xc1ff) AM_READ(MRA8_RAM)            /* palette ram */
+	AM_RANGE(0xc200, 0xc200) AM_READ(input_port_0_r)     /* IN1 */
+	AM_RANGE(0xc201, 0xc201) AM_READ(input_port_1_r)     /* IN2 */
+	AM_RANGE(0xc202, 0xc202) AM_READ(input_port_2_r)     /* IN3 */
+	AM_RANGE(0xc203, 0xc204) AM_READ(stfight_dsw_r)      /* DS0,1 */
+	AM_RANGE(0xc205, 0xc205) AM_READ(stfight_coin_r)     /* coin mech */
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)            /* video */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },                  /* sf02.bin */
-	{ 0xc000, 0xc0ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
-	{ 0xc100, 0xc1ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
-	{ 0xc500, 0xc500, stfight_fm_w },               /* play fm sound */
-	{ 0xc600, 0xc600, stfight_adpcm_control_w },    /* voice control */
-	{ 0xc700, 0xc700, stfight_coin_w },             /* coin mech */
-	{ 0xc804, 0xc806, MWA_NOP },                    /* TBD */
-	{ 0xc807, 0xc807, stfight_sprite_bank_w },
-	{ 0xd000, 0xd3ff, stfight_text_char_w,      &stfight_text_char_ram },
-	{ 0xd400, 0xd7ff, stfight_text_attr_w,      &stfight_text_attr_ram },
-	{ 0xd800, 0xd808, stfight_vh_latch_w,       &stfight_vh_latch_ram },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xffff, MWA_RAM,                  &stfight_sprite_ram },
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)                  /* sf02.bin */
+	AM_RANGE(0xc000, 0xc0ff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc100, 0xc1ff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xc500, 0xc500) AM_WRITE(stfight_fm_w)               /* play fm sound */
+	AM_RANGE(0xc600, 0xc600) AM_WRITE(stfight_adpcm_control_w)    /* voice control */
+	AM_RANGE(0xc700, 0xc700) AM_WRITE(stfight_coin_w)             /* coin mech */
+	AM_RANGE(0xc804, 0xc806) AM_WRITE(MWA8_NOP)                    /* TBD */
+	AM_RANGE(0xc807, 0xc807) AM_WRITE(stfight_sprite_bank_w)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(stfight_text_char_w) AM_BASE(&stfight_text_char_ram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(stfight_text_attr_w) AM_BASE(&stfight_text_attr_ram)
+	AM_RANGE(0xd800, 0xd808) AM_WRITE(stfight_vh_latch_w) AM_BASE(&stfight_vh_latch_ram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&stfight_sprite_ram)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc001, 0xc001, YM2203_read_port_0_r },
-	{ 0xc801, 0xc801, YM2203_read_port_1_r },
-	{ 0xf000, 0xf000, stfight_fm_r },
-	{ 0xf800, 0xffff, MRA_RAM },
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xc801, 0xc801) AM_READ(YM2203_read_port_1_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(stfight_fm_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc000, YM2203_control_port_0_w },
-	{ 0xc001, 0xc001, YM2203_write_port_0_w },
-	{ 0xc800, 0xc800, YM2203_control_port_1_w },
-	{ 0xc801, 0xc801, YM2203_write_port_1_w },
-	{ 0xe800, 0xe800, stfight_e800_w },
-	{ 0xf800, 0xffff, MWA_RAM },
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(stfight_e800_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( stfight )
@@ -501,13 +501,13 @@ static MACHINE_DRIVER_START( stfight )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(stfight_vb_interrupt,1)
 	MDRV_CPU_PERIODIC_INT(stfight_interrupt_1,30)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)
 
 	MDRV_FRAMES_PER_SECOND(60)

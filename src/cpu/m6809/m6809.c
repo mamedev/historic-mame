@@ -93,7 +93,7 @@
 
 static UINT8 m6809_reg_layout[] = {
 	M6809_PC, M6809_S, M6809_CC, M6809_A, M6809_B, M6809_X, -1,
-	M6809_Y, M6809_U, M6809_DP, M6809_NMI_STATE, M6809_IRQ_STATE, M6809_FIRQ_STATE, 0
+	M6809_Y, M6809_U, M6809_DP, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -169,13 +169,13 @@ static PAIR ea;         /* effective address */
 #define EA	ea.w.l
 #define EAD ea.d
 
-#define CHANGE_PC change_pc16(PCD)
+#define CHANGE_PC change_pc(PCD)
 #if 0
 #define CHANGE_PC	{			\
 	if( m6809_slapstic )		\
 		cpu_setOPbase16(PCD);	\
 	else						\
-		change_pc16(PCD);		\
+		change_pc(PCD);		\
 	}
 #endif
 
@@ -238,7 +238,7 @@ static PAIR ea;         /* effective address */
 	}
 
 /* public globals */
-int m6809_ICount=50000;
+static int m6809_ICount;
 
 /* these are re-defined in m6809.h TO RAM, ROM or functions in cpuintrf.c */
 #define RM(Addr)		M6809_RDMEM(Addr)
@@ -420,17 +420,16 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned m6809_get_context(void *dst)
+static void m6809_get_context(void *dst)
 {
 	if( dst )
 		*(m6809_Regs*)dst = m6809;
-	return sizeof(m6809_Regs);
 }
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void m6809_set_context(void *src)
+static void m6809_set_context(void *src)
 {
 	if( src )
 		m6809 = *(m6809_Regs*)src;
@@ -441,78 +440,9 @@ void m6809_set_context(void *src)
 
 
 /****************************************************************************/
-/* Return a specific register                                               */
-/****************************************************************************/
-unsigned m6809_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case M6809_PC: return PC;
-		case REG_SP:
-		case M6809_S: return S;
-		case M6809_CC: return CC;
-		case M6809_U: return U;
-		case M6809_A: return A;
-		case M6809_B: return B;
-		case M6809_X: return X;
-		case M6809_Y: return Y;
-		case M6809_DP: return DP;
-		case M6809_NMI_STATE: return m6809.nmi_state;
-		case M6809_IRQ_STATE: return m6809.irq_state[M6809_IRQ_LINE];
-		case M6809_FIRQ_STATE: return m6809.irq_state[M6809_FIRQ_LINE];
-		case REG_PREVIOUSPC: return PPC;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return ( RM( offset ) << 8 ) | RM( offset + 1 );
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************/
-/* Set a specific register                                                  */
-/****************************************************************************/
-void m6809_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case M6809_PC: PC = val; CHANGE_PC; break;
-		case REG_SP:
-		case M6809_S: S = val; break;
-		case M6809_CC: CC = val; CHECK_IRQ_LINES; break;
-		case M6809_U: U = val; break;
-		case M6809_A: A = val; break;
-		case M6809_B: B = val; break;
-		case M6809_X: X = val; break;
-		case M6809_Y: Y = val; break;
-		case M6809_DP: DP = val; break;
-		case M6809_NMI_STATE: m6809.nmi_state = val; break;
-		case M6809_IRQ_STATE: m6809.irq_state[M6809_IRQ_LINE] = val; break;
-		case M6809_FIRQ_STATE: m6809.irq_state[M6809_FIRQ_LINE] = val; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, (val >> 8) & 0xff );
-					WM( offset+1, val & 0xff );
-				}
-			}
-    }
-}
-
-
-/****************************************************************************/
 /* Reset registers to their initial values									*/
 /****************************************************************************/
-void m6809_init(void)
+static void m6809_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("m6809", cpu, "PC", &PC, 1);
@@ -528,7 +458,7 @@ void m6809_init(void)
 	state_save_register_UINT8("m6809", cpu, "FIRQ", &m6809.irq_state[1], 1);
 }
 
-void m6809_reset(void *param)
+static void m6809_reset(void *param)
 {
 	m6809.int_state = 0;
 	m6809.nmi_state = CLEAR_LINE;
@@ -544,7 +474,7 @@ void m6809_reset(void *param)
 	CHANGE_PC;
 }
 
-void m6809_exit(void)
+static void m6809_exit(void)
 {
 	/* nothing to do ? */
 }
@@ -553,7 +483,7 @@ void m6809_exit(void)
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-void m6809_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -598,66 +528,7 @@ void m6809_set_irq_line(int irqline, int state)
 	}
 }
 
-/****************************************************************************
- * Set IRQ vector callback
- ****************************************************************************/
-void m6809_set_irq_callback(int (*callback)(int irqline))
-{
-	m6809.irq_callback = callback;
-}
-
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *m6809_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6809_Regs *r = context;
-
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &m6809;
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6809";
-		case CPU_INFO_FAMILY: return "Motorola 6809";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) John Butler 1997";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6809_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6809_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? 'E':'.',
-				r->cc & 0x40 ? 'F':'.',
-                r->cc & 0x20 ? 'H':'.',
-                r->cc & 0x10 ? 'I':'.',
-                r->cc & 0x08 ? 'N':'.',
-                r->cc & 0x04 ? 'Z':'.',
-                r->cc & 0x02 ? 'V':'.',
-                r->cc & 0x01 ? 'C':'.');
-            break;
-		case CPU_INFO_REG+M6809_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6809_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+M6809_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6809_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+M6809_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+M6809_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+M6809_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+M6809_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+M6809_DP: sprintf(buffer[which], "DP:%02X", r->dp.b.h); break;
-		case CPU_INFO_REG+M6809_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6809_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6809_IRQ_LINE]); break;
-		case CPU_INFO_REG+M6809_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%X", r->irq_state[M6809_FIRQ_LINE]); break;
-	}
-	return buffer[which];
-}
-
-unsigned m6809_dasm(char *buffer, unsigned pc)
+static offs_t m6809_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return Dasm6809(buffer,pc);
@@ -674,7 +545,7 @@ unsigned m6809_dasm(char *buffer, unsigned pc)
 #include "6809ops.c"
 
 /* execute instructions on this CPU until icount expires */
-int m6809_execute(int cycles)	/* NS 970908 */
+static int m6809_execute(int cycles)	/* NS 970908 */
 {
     m6809_ICount = cycles - m6809.extra_cycles;
 	m6809.extra_cycles = 0;
@@ -1245,5 +1116,153 @@ INLINE void fetch_effective_address( void )
 	case 0xfd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	m6809_ICount-=8;   break;
 	case 0xfe: EA=0;																   break; /*ILLEGAL*/
 	case 0xff: IMMWORD(ea); 						EAD=RM16(EAD);	m6809_ICount-=5;   break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void m6809_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + M6809_IRQ_LINE:	set_irq_line(M6809_IRQ_LINE, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + M6809_FIRQ_LINE:	set_irq_line(M6809_FIRQ_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + M6809_PC:			PC = info->i; CHANGE_PC;				break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + M6809_S:			S = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_CC:			CC = info->i; CHECK_IRQ_LINES;			break;
+		case CPUINFO_INT_REGISTER + M6809_U:			U = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_A:			A = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_B:			B = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_X:			X = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_Y:			Y = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6809_DP:			DP = info->i;							break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					m6809.irq_callback = info->irqcallback;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void m6809_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6809);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 19;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + M6809_IRQ_LINE:	info->i = m6809.irq_state[M6809_IRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + M6809_FIRQ_LINE:	info->i = m6809.irq_state[M6809_FIRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6809.nmi_state;			break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + M6809_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + M6809_S:			info->i = S;							break;
+		case CPUINFO_INT_REGISTER + M6809_CC:			info->i = CC;							break;
+		case CPUINFO_INT_REGISTER + M6809_U:			info->i = U;							break;
+		case CPUINFO_INT_REGISTER + M6809_A:			info->i = A;							break;
+		case CPUINFO_INT_REGISTER + M6809_B:			info->i = B;							break;
+		case CPUINFO_INT_REGISTER + M6809_X:			info->i = X;							break;
+		case CPUINFO_INT_REGISTER + M6809_Y:			info->i = Y;							break;
+		case CPUINFO_INT_REGISTER + M6809_DP:			info->i = DP;							break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6809_set_info;				break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6809_get_context;			break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6809_set_context;			break;
+		case CPUINFO_PTR_INIT:							info->init = m6809_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = m6809_reset;					break;
+		case CPUINFO_PTR_EXIT:							info->exit = m6809_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6809_execute;				break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6809_dasm;					break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6809.irq_callback;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6809_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6809_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6809"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6809"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) John Butler 1997"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				m6809.cc & 0x80 ? 'E':'.',
+				m6809.cc & 0x40 ? 'F':'.',
+                m6809.cc & 0x20 ? 'H':'.',
+                m6809.cc & 0x10 ? 'I':'.',
+                m6809.cc & 0x08 ? 'N':'.',
+                m6809.cc & 0x04 ? 'Z':'.',
+                m6809.cc & 0x02 ? 'V':'.',
+                m6809.cc & 0x01 ? 'C':'.');
+            break;
+
+		case CPUINFO_STR_REGISTER + M6809_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6809.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m6809.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6809.cc); break;
+		case CPUINFO_STR_REGISTER + M6809_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", m6809.u.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6809.d.b.h); break;
+		case CPUINFO_STR_REGISTER + M6809_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m6809.d.b.l); break;
+		case CPUINFO_STR_REGISTER + M6809_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", m6809.x.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", m6809.y.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", m6809.dp.b.h); break;
+	}
+}
+
+
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m6809e_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 4;							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6809E"); break;
+
+		default:
+			m6809_get_info(state, info);
+			break;
 	}
 }

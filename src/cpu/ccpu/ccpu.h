@@ -26,7 +26,7 @@
 
 /* added these includes */
 #include "osd_cpu.h"
-#include "memory.h"
+#include "driver.h"
 
 enum {
 	CCPU_PC=1, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG,
@@ -39,36 +39,19 @@ enum {
 #define TRUE	(!FALSE)
 #endif
 
-/* an ICount variable (mostly irrelevant) */
-extern int ccpu_icount;
-
-#define CCPU_DATA_OFFSET    0x0000
-#define CCPU_PGM_OFFSET     0x8000
-
 /* MAME interface functions */
-void ccpu_init(void);
-void ccpu_reset(void *param);
-void ccpu_exit(void);
-int ccpu_execute(int cycles);
-unsigned ccpu_get_context(void *dst);
-void ccpu_set_context(void *src);
-unsigned ccpu_get_reg(int regnum);
-void ccpu_set_reg(int regnum, unsigned val);
-void ccpu_set_irq_line(int irqline, int state);
-void ccpu_set_irq_callback(int (*callback)(int irqline));
-const char *ccpu_info(void *context, int regnum);
-unsigned ccpu_dasm(char *buffer, unsigned pc);
+extern void ccpu_get_info(UINT32 state, union cpuinfo *info);
 
 /* I/O routine */
 void ccpu_SetInputs(int inputs, int switches);
 
 /* constants for configuring the system */
-#define CCPU_PORT_IOSWITCHES   	(0<<1)
-#define CCPU_PORT_IOINPUTS     	(1<<1)
-#define CCPU_PORT_IOOUTPUTS    	(2<<1)
-#define CCPU_PORT_IN_JOYSTICKX 	(3<<1)
-#define CCPU_PORT_IN_JOYSTICKY 	(4<<1)
-#define CCPU_PORT_MAX          	(5<<1)
+#define CCPU_PORT_IOSWITCHES   	(0)
+#define CCPU_PORT_IOINPUTS     	(1)
+#define CCPU_PORT_IOOUTPUTS    	(2)
+#define CCPU_PORT_IN_JOYSTICKX 	(3)
+#define CCPU_PORT_IN_JOYSTICKY 	(4)
+#define CCPU_PORT_MAX          	(5)
 
 #define CCPU_MEMSIZE_4K        	0
 #define CCPU_MEMSIZE_8K        	1

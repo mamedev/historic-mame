@@ -138,69 +138,69 @@ static WRITE_HANDLER( m92_sound_status_w )
 
 /*****************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x9ffff, MRA_ROM },
-	{ 0xa0000, 0xbffff, MRA_BANK1 },
-	{ 0xd0000, 0xdffff, m107_vram_r },
-	{ 0xe0000, 0xeffff, MRA_RAM },
-	{ 0xf8000, 0xf8fff, MRA_RAM },
-	{ 0xf9000, 0xf9fff, paletteram_r },
-	{ 0xffff0, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x9ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa0000, 0xbffff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xd0000, 0xdffff) AM_READ(m107_vram_r)
+	AM_RANGE(0xe0000, 0xeffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf8000, 0xf8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf9000, 0xf9fff) AM_READ(paletteram_r)
+	AM_RANGE(0xffff0, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0xbffff, MWA_ROM },
-	{ 0xd0000, 0xdffff, m107_vram_w, &m107_vram_data },
-	{ 0xe0000, 0xeffff, MWA_RAM, &m107_ram }, /* System ram */
-	{ 0xf8000, 0xf8fff, MWA_RAM, &spriteram },
-	{ 0xf9000, 0xf9fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0xffff0, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0xbffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd0000, 0xdffff) AM_WRITE(m107_vram_w) AM_BASE(&m107_vram_data)
+	AM_RANGE(0xe0000, 0xeffff) AM_WRITE(MWA8_RAM) AM_BASE(&m107_ram) /* System ram */
+	AM_RANGE(0xf8000, 0xf8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xf9000, 0xf9fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xffff0, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
-	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
-	{ 0x02, 0x02, m107_port_4_r },	/* Coins */
-	{ 0x03, 0x03, input_port_7_r }, /* Dip 3 */
-	{ 0x04, 0x04, input_port_6_r }, /* Dip 2 */
-	{ 0x05, 0x05, input_port_5_r }, /* Dip 1 */
-	{ 0x06, 0x06, input_port_2_r }, /* Player 3 */
-	{ 0x07, 0x07, input_port_3_r }, /* Player 4 */
-	{ 0x08, 0x09, m92_sound_status_r },	/* answer from sound CPU */
-	{ 0xc0, 0xc2, MRA_NOP }, /* Only wpksoc: ticket related? */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* Player 1 */
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r) /* Player 2 */
+	AM_RANGE(0x02, 0x02) AM_READ(m107_port_4_r)	/* Coins */
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_7_r) /* Dip 3 */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_6_r) /* Dip 2 */
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_5_r) /* Dip 1 */
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_2_r) /* Player 3 */
+	AM_RANGE(0x07, 0x07) AM_READ(input_port_3_r) /* Player 4 */
+	AM_RANGE(0x08, 0x09) AM_READ(m92_sound_status_r)	/* answer from sound CPU */
+	AM_RANGE(0xc0, 0xc2) AM_READ(MRA8_NOP) /* Only wpksoc: ticket related? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x01, m92_soundlatch_w },
-	{ 0x02, 0x03, m107_coincounter_w },
-	{ 0x04, 0x05, MWA_NOP }, /* ??? 0008 */
-	{ 0x06, 0x07, bankswitch_w },
-	{ 0x80, 0x9f, m107_control_w },
-	{ 0xa0, 0xaf, MWA_NOP }, /* Written with 0's in interrupt */
-	{ 0xb0, 0xb1, m107_spritebuffer_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(m92_soundlatch_w)
+	AM_RANGE(0x02, 0x03) AM_WRITE(m107_coincounter_w)
+	AM_RANGE(0x04, 0x05) AM_WRITE(MWA8_NOP) /* ??? 0008 */
+	AM_RANGE(0x06, 0x07) AM_WRITE(bankswitch_w)
+	AM_RANGE(0x80, 0x9f) AM_WRITE(m107_control_w)
+	AM_RANGE(0xa0, 0xaf) AM_WRITE(MWA8_NOP) /* Written with 0's in interrupt */
+	AM_RANGE(0xb0, 0xb1) AM_WRITE(m107_spritebuffer_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x00000, 0x1ffff, MRA_ROM },
-	{ 0xa0000, 0xa3fff, MRA_RAM },
-	{ 0xa8042, 0xa8043, YM2151_status_port_0_r },
-	{ 0xa8044, 0xa8045, m92_soundlatch_r },
-	{ 0xffff0, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x1ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa0000, 0xa3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa8042, 0xa8043) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xa8044, 0xa8045) AM_READ(m92_soundlatch_r)
+	AM_RANGE(0xffff0, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x00000, 0x1ffff, MWA_ROM },
-	{ 0x9ff00, 0x9ffff, MWA_NOP }, /* Irq controller? */
-	{ 0xa0000, 0xa3fff, MWA_RAM },
-	{ 0xa8000, 0xa803f, IremGA20_w },
-	{ 0xa8040, 0xa8041, YM2151_register_port_0_w },
-	{ 0xa8042, 0xa8043, YM2151_data_port_0_w },
-	{ 0xa8044, 0xa8045, m92_sound_irq_ack_w },
-	{ 0xa8046, 0xa8047, m92_sound_status_w },
-	{ 0xffff0, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x1ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9ff00, 0x9ffff) AM_WRITE(MWA8_NOP) /* Irq controller? */
+	AM_RANGE(0xa0000, 0xa3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa8000, 0xa803f) AM_WRITE(IremGA20_w)
+	AM_RANGE(0xa8040, 0xa8041) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xa8042, 0xa8043) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa8044, 0xa8045) AM_WRITE(m92_sound_irq_ack_w)
+	AM_RANGE(0xa8046, 0xa8047) AM_WRITE(m92_sound_status_w)
+	AM_RANGE(0xffff0, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -513,13 +513,13 @@ static MACHINE_DRIVER_START( firebarr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V33, 28000000/2)	/* NEC V33, 28MHz clock */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m107_raster_interrupt,256) /* 8 prelines, 240 visible lines, 8 for vblank? */
 
 	MDRV_CPU_ADD(V30, 14318000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -545,13 +545,13 @@ static MACHINE_DRIVER_START( dsoccr94 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V33, 20000000/2)	/* NEC V33, Could be 28MHz clock? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m107_interrupt,1)
 
 	MDRV_CPU_ADD(V30, 14318000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -28,28 +28,28 @@ struct cpu_info {
 /* Memory accesses for 16-bit data bus, 24-bit address bus (V60) */
 /*****************************************************************/
 
-#define MemRead8_16		cpu_readmem24lew
-#define MemWrite8_16	cpu_writemem24lew
+#define MemRead8_16		program_read_byte_16le
+#define MemWrite8_16	program_write_byte_16le
 
 static UINT16 MemRead16_16(offs_t address)
 {
 	if (!(address & 1))
-		return cpu_readmem24lew_word(address);
+		return program_read_word_16le(address);
 	else
 	{
-		UINT16 result = cpu_readmem24lew(address);
-		return result | cpu_readmem24lew(address + 1) << 8;
+		UINT16 result = program_read_byte_16le(address);
+		return result | program_read_byte_16le(address + 1) << 8;
 	}
 }
 
 static void MemWrite16_16(offs_t address, UINT16 data)
 {
 	if (!(address & 1))
-		cpu_writemem24lew_word(address, data);
+		program_write_word_16le(address, data);
 	else
 	{
-		cpu_writemem24lew(address, data);
-		cpu_writemem24lew(address + 1, data >> 8);
+		program_write_byte_16le(address, data);
+		program_write_byte_16le(address + 1, data >> 8);
 	}
 }
 
@@ -57,14 +57,14 @@ static UINT32 MemRead32_16(offs_t address)
 {
 	if (!(address & 1))
 	{
-		UINT32 result = cpu_readmem24lew_word(address);
-		return result | (cpu_readmem24lew_word(address + 2) << 16);
+		UINT32 result = program_read_word_16le(address);
+		return result | (program_read_word_16le(address + 2) << 16);
 	}
 	else
 	{
-		UINT32 result = cpu_readmem24lew(address);
-		result |= cpu_readmem24lew_word(address + 1) << 8;
-		return result | cpu_readmem24lew(address + 3) << 24;
+		UINT32 result = program_read_byte_16le(address);
+		result |= program_read_word_16le(address + 1) << 8;
+		return result | program_read_byte_16le(address + 3) << 24;
 	}
 }
 
@@ -72,14 +72,14 @@ static void MemWrite32_16(offs_t address, UINT32 data)
 {
 	if (!(address & 1))
 	{
-		cpu_writemem24lew_word(address, data);
-		cpu_writemem24lew_word(address + 2, data >> 16);
+		program_write_word_16le(address, data);
+		program_write_word_16le(address + 2, data >> 16);
 	}
 	else
 	{
-		cpu_writemem24lew(address, data);
-		cpu_writemem24lew_word(address + 1, data >> 8);
-		cpu_writemem24lew(address + 3, data >> 24);
+		program_write_byte_16le(address, data);
+		program_write_word_16le(address + 1, data >> 8);
+		program_write_byte_16le(address + 3, data >> 24);
 	}
 }
 
@@ -88,28 +88,28 @@ static void MemWrite32_16(offs_t address, UINT32 data)
 /* Port accesses for 16-bit data bus, 24-bit address bus (V60) */
 /***************************************************************/
 
-#define PortRead8_16		cpu_readport24lew
-#define PortWrite8_16		cpu_writeport24lew
+#define PortRead8_16		io_read_byte_16le
+#define PortWrite8_16		io_write_byte_16le
 
 static UINT16 PortRead16_16(offs_t address)
 {
 	if (!(address & 1))
-		return cpu_readport24lew_word(address);
+		return io_read_word_16le(address);
 	else
 	{
-		UINT16 result = cpu_readport24lew(address);
-		return result | cpu_readport24lew(address + 1) << 8;
+		UINT16 result = io_read_byte_16le(address);
+		return result | io_read_byte_16le(address + 1) << 8;
 	}
 }
 
 static void PortWrite16_16(offs_t address, UINT16 data)
 {
 	if (!(address & 1))
-		cpu_writeport24lew_word(address, data);
+		io_write_word_16le(address, data);
 	else
 	{
-		cpu_writeport24lew(address, data);
-		cpu_writeport24lew(address + 1, data >> 8);
+		io_write_byte_16le(address, data);
+		io_write_byte_16le(address + 1, data >> 8);
 	}
 }
 
@@ -117,14 +117,14 @@ static UINT32 PortRead32_16(offs_t address)
 {
 	if (!(address & 1))
 	{
-		UINT32 result = cpu_readport24lew_word(address);
-		return result | (cpu_readport24lew_word(address + 2) << 16);
+		UINT32 result = io_read_word_16le(address);
+		return result | (io_read_word_16le(address + 2) << 16);
 	}
 	else
 	{
-		UINT32 result = cpu_readport24lew(address);
-		result |= cpu_readport24lew_word(address + 1) << 8;
-		return result | cpu_readport24lew(address + 3) << 24;
+		UINT32 result = io_read_byte_16le(address);
+		result |= io_read_word_16le(address + 1) << 8;
+		return result | io_read_byte_16le(address + 3) << 24;
 	}
 }
 
@@ -132,14 +132,14 @@ static void PortWrite32_16(offs_t address, UINT32 data)
 {
 	if (!(address & 1))
 	{
-		cpu_writeport24lew_word(address, data);
-		cpu_writeport24lew_word(address + 2, data >> 16);
+		io_write_word_16le(address, data);
+		io_write_word_16le(address + 2, data >> 16);
 	}
 	else
 	{
-		cpu_writeport24lew(address, data);
-		cpu_writeport24lew_word(address + 1, data >> 8);
-		cpu_writeport24lew(address + 3, data >> 24);
+		io_write_byte_16le(address, data);
+		io_write_word_16le(address + 1, data >> 8);
+		io_write_byte_16le(address + 3, data >> 24);
 	}
 }
 
@@ -151,23 +151,23 @@ static void PortWrite32_16(offs_t address, UINT32 data)
 
 static UINT8 OpRead8_16(offs_t address)
 {
-	return OP_ROM[BYTE_XOR_LE(address)];
+	return cpu_readop(BYTE_XOR_LE(address));
 }
 
 static UINT16 OpRead16_16(offs_t address)
 {
-	return OP_ROM[BYTE_XOR_LE(address)] | (OP_ROM[BYTE_XOR_LE(address+1)] << 8);
+	return cpu_readop(BYTE_XOR_LE(address)) | (cpu_readop(BYTE_XOR_LE(address+1)) << 8);
 }
 
 static UINT32 OpRead32_16(offs_t address)
 {
-	return OP_ROM[BYTE_XOR_LE(address)] | (OP_ROM[BYTE_XOR_LE(address+1)] << 8) |
-			(OP_ROM[BYTE_XOR_LE(address+2)] << 16) | (OP_ROM[BYTE_XOR_LE(address+3)] << 24);
+	return cpu_readop(BYTE_XOR_LE(address)) | (cpu_readop(BYTE_XOR_LE(address+1)) << 8) |
+			(cpu_readop(BYTE_XOR_LE(address+2)) << 16) | (cpu_readop(BYTE_XOR_LE(address+3)) << 24);
 }
 
 static void ChangePC_16(offs_t pc)
 {
-	change_pc24lew(pc);
+	change_pc(pc);
 }
 
 
@@ -176,62 +176,62 @@ static void ChangePC_16(offs_t pc)
 /* Memory accesses for 32-bit data bus, 32-bit address bus (V70) */
 /*****************************************************************/
 
-#define MemRead8_32		cpu_readmem32ledw
-#define MemWrite8_32	cpu_writemem32ledw
+#define MemRead8_32		program_read_byte_32le
+#define MemWrite8_32	program_write_byte_32le
 
 static UINT16 MemRead16_32(offs_t address)
 {
 	if (!(address & 1))
-		return cpu_readmem32ledw_word(address);
+		return program_read_word_32le(address);
 	else
 	{
-		UINT16 result = cpu_readmem32ledw(address);
-		return result | cpu_readmem32ledw(address + 1) << 8;
+		UINT16 result = program_read_byte_32le(address);
+		return result | program_read_byte_32le(address + 1) << 8;
 	}
 }
 
 static void MemWrite16_32(offs_t address, UINT16 data)
 {
 	if (!(address & 1))
-		cpu_writemem32ledw_word(address, data);
+		program_write_word_32le(address, data);
 	else
 	{
-		cpu_writemem32ledw(address, data);
-		cpu_writemem32ledw(address + 1, data >> 8);
+		program_write_byte_32le(address, data);
+		program_write_byte_32le(address + 1, data >> 8);
 	}
 }
 
 static UINT32 MemRead32_32(offs_t address)
 {
 	if (!(address & 3))
-		return cpu_readmem32ledw_dword(address);
+		return program_read_dword_32le(address);
 	else if (!(address & 1))
 	{
-		UINT32 result = cpu_readmem32ledw_word(address);
-		return result | (cpu_readmem32ledw_word(address + 2) << 16);
+		UINT32 result = program_read_word_32le(address);
+		return result | (program_read_word_32le(address + 2) << 16);
 	}
 	else
 	{
-		UINT32 result = cpu_readmem32ledw(address);
-		result |= cpu_readmem32ledw_word(address + 1) << 8;
-		return result | cpu_readmem32ledw(address + 3) << 24;
+		UINT32 result = program_read_byte_32le(address);
+		result |= program_read_word_32le(address + 1) << 8;
+		return result | program_read_byte_32le(address + 3) << 24;
 	}
 }
 
 static void MemWrite32_32(offs_t address, UINT32 data)
 {
 	if (!(address & 3))
-		cpu_writemem32ledw_dword(address, data);
+		program_write_dword_32le(address, data);
 	else if (!(address & 1))
 	{
-		cpu_writemem32ledw_word(address, data);
-		cpu_writemem32ledw_word(address + 2, data >> 16);
+		program_write_word_32le(address, data);
+		program_write_word_32le(address + 2, data >> 16);
 	}
 	else
 	{
-		cpu_writemem32ledw(address, data);
-		cpu_writemem32ledw_word(address + 1, data >> 8);
-		cpu_writemem32ledw(address + 3, data >> 24);
+		program_write_byte_32le(address, data);
+		program_write_word_32le(address + 1, data >> 8);
+		program_write_byte_32le(address + 3, data >> 24);
 	}
 }
 
@@ -241,19 +241,19 @@ static void MemWrite32_32(offs_t address, UINT32 data)
 /* Port accesses for 32-bit data bus, 32-bit address bus (V70) */
 /***************************************************************/
 
-#define PortRead8_32		cpu_readport32ledw
-#define PortWrite8_32		cpu_writeport32ledw
+#define PortRead8_32		io_read_byte_32le
+#define PortWrite8_32		io_write_byte_32le
 
 static UINT16 PortRead16_32(offs_t address)
 {
 	if (!(address & 1))
 	{
-		return cpu_readport32ledw_word(address);
+		return io_read_word_32le(address);
 	}
 	else
 	{
-		UINT16 result = cpu_readport32ledw(address);
-		return result | cpu_readport32ledw(address + 1) << 8;
+		UINT16 result = io_read_byte_32le(address);
+		return result | io_read_byte_32le(address + 1) << 8;
 	}
 }
 
@@ -261,46 +261,46 @@ static void PortWrite16_32(offs_t address, UINT16 data)
 {
 	if (!(address & 1))
 	{
-		cpu_writeport32ledw_word(address, data);
+		io_write_word_32le(address, data);
 	}
 	else
 	{
-		cpu_writeport32ledw(address, data);
-		cpu_writeport32ledw(address + 1, data >> 8);
+		io_write_byte_32le(address, data);
+		io_write_byte_32le(address + 1, data >> 8);
 	}
 }
 
 static UINT32 PortRead32_32(offs_t address)
 {
 	if (!(address & 3))
-		return cpu_readport32ledw_dword(address);
+		return io_read_dword_32le(address);
 	else if (!(address & 1))
 	{
-		UINT32 result = cpu_readport32ledw_word(address);
-		return result | (cpu_readport32ledw_word(address + 2) << 16);
+		UINT32 result = io_read_word_32le(address);
+		return result | (io_read_word_32le(address + 2) << 16);
 	}
 	else
 	{
-		UINT32 result = cpu_readport32ledw(address);
-		result |= cpu_readport32ledw_word(address + 1) << 8;
-		return result | cpu_readport32ledw(address + 3) << 24;
+		UINT32 result = io_read_byte_32le(address);
+		result |= io_read_word_32le(address + 1) << 8;
+		return result | io_read_byte_32le(address + 3) << 24;
 	}
 }
 
 static void PortWrite32_32(offs_t address, UINT32 data)
 {
 	if (!(address & 3))
-		cpu_writeport32ledw_dword(address, data);
+		io_write_dword_32le(address, data);
 	else if (!(address & 1))
 	{
-		cpu_writeport32ledw_word(address, data);
-		cpu_writeport32ledw_word(address + 2, data >> 16);
+		io_write_word_32le(address, data);
+		io_write_word_32le(address + 2, data >> 16);
 	}
 	else
 	{
-		cpu_writeport32ledw(address, data);
-		cpu_writeport32ledw_word(address + 1, data >> 8);
-		cpu_writeport32ledw(address + 3, data >> 24);
+		io_write_byte_32le(address, data);
+		io_write_word_32le(address + 1, data >> 8);
+		io_write_byte_32le(address + 3, data >> 24);
 	}
 }
 
@@ -312,23 +312,23 @@ static void PortWrite32_32(offs_t address, UINT32 data)
 
 static UINT8 OpRead8_32(offs_t address)
 {
-	return OP_ROM[BYTE4_XOR_LE(address)];
+	return cpu_readop(BYTE4_XOR_LE(address));
 }
 
 static UINT16 OpRead16_32(offs_t address)
 {
-	return OP_ROM[BYTE4_XOR_LE(address)] | (OP_ROM[BYTE4_XOR_LE(address+1)] << 8);
+	return cpu_readop(BYTE4_XOR_LE(address)) | (cpu_readop(BYTE4_XOR_LE(address+1)) << 8);
 }
 
 static UINT32 OpRead32_32(offs_t address)
 {
-	return OP_ROM[BYTE4_XOR_LE(address)] | (OP_ROM[BYTE4_XOR_LE(address+1)] << 8) |
-			(OP_ROM[BYTE4_XOR_LE(address+2)] << 16) | (OP_ROM[BYTE4_XOR_LE(address+3)] << 24);
+	return cpu_readop(BYTE4_XOR_LE(address)) | (cpu_readop(BYTE4_XOR_LE(address+1)) << 8) |
+			(cpu_readop(BYTE4_XOR_LE(address+2)) << 16) | (cpu_readop(BYTE4_XOR_LE(address+3)) << 24);
 }
 
 static void ChangePC_32(offs_t pc)
 {
-	change_pc32ledw(pc);
+	change_pc(pc);
 }
 
 
@@ -376,9 +376,9 @@ static struct cpu_info v70_i =
 #define PortWrite32 v60.info.pw32
 
 #if defined(LSB_FIRST) && !defined(ALIGN_INTS)
-#define OpRead8(a)	(OP_ROM[a])
-#define OpRead16(a)	(*(UINT16 *)&OP_ROM[a])
-#define OpRead32(a)	(*(UINT32 *)&OP_ROM[a])
+#define OpRead8(a)	(cpu_readop(a))
+#define OpRead16(a)	(cpu_readop16(a))
+#define OpRead32(a)	(cpu_readop32(a))
 #else
 #define OpRead8     v60.info.mr8
 #define OpRead16    v60.info.mr16

@@ -492,7 +492,7 @@ static WRITE16_HANDLER( blitter_w )
 			for ( ; size > 0 ; size--)
 			{
 				/* maybe slower than a memcpy but safer (and errors are logged) */
-				cpu_writemem24bew_word(dest,cpu_readmem24bew_word(src));
+				program_write_word(dest,program_read_word(src));
 				src += 2;
 				dest += 2;
 			}
@@ -505,23 +505,23 @@ static WRITE16_HANDLER( blitter_w )
 				int i, j, destptr;
 
 				/* Read offset of source from the list of blits */
-				i = src + cpu_readmem24bew_word(list+2);
+				i = src + program_read_word(list+2);
 				j = i + (size<<1);
 				destptr = dest;
 
 				for (; i<j; destptr+=2, i+=2)
-					cpu_writemem24bew_word(destptr, cpu_readmem24bew_word(i));
+					program_write_word(destptr, program_read_word(i));
 
 				destptr = dest + 14;
-				i = cpu_readmem24bew_word(list) + spr_color_offs;
-				cpu_writemem24bew_word(destptr, i);
+				i = program_read_word(list) + spr_color_offs;
+				program_write_word(destptr, i);
 
 				dest += 16;
 				list += 4;
 			}
 
 			/* hack for the blit to Sprites RAM - Sprite list end-marker */
-			cpu_writemem24bew_word(dest,0xFFFF);
+			program_write_word(dest,0xFFFF);
 		}
 	}
 }
@@ -533,42 +533,42 @@ static WRITE16_HANDLER( blitter_w )
 
 static WRITE16_HANDLER( wecleman_soundlatch_w );
 
-static MEMORY_READ16_START( wecleman_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM             },	// ROM
-	{ 0x040000, 0x043fff, MRA16_RAM             },	// RAM
-	{ 0x060006, 0x060007, wecleman_protection_r },	// MCU read
-	{ 0x080000, 0x080011, MRA16_RAM             },	// Blitter (reading is for debug)
-	{ 0x100000, 0x103fff, MRA16_RAM             },	// Background Layers
-	{ 0x108000, 0x108fff, MRA16_RAM             },	// Text Layer
-	{ 0x110000, 0x110fff, MRA16_RAM             },	// Palette
-	{ 0x124000, 0x127fff, sharedram_r           },	// Shared with sub CPU
-	{ 0x130000, 0x130fff, MRA16_RAM             },	// Sprites
+static ADDRESS_MAP_START( wecleman_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)	// ROM
+	AM_RANGE(0x040000, 0x043fff) AM_READ(MRA16_RAM)	// RAM
+	AM_RANGE(0x060006, 0x060007) AM_READ(wecleman_protection_r)	// MCU read
+	AM_RANGE(0x080000, 0x080011) AM_READ(MRA16_RAM)	// Blitter (reading is for debug)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)	// Background Layers
+	AM_RANGE(0x108000, 0x108fff) AM_READ(MRA16_RAM)	// Text Layer
+	AM_RANGE(0x110000, 0x110fff) AM_READ(MRA16_RAM)	// Palette
+	AM_RANGE(0x124000, 0x127fff) AM_READ(sharedram_r)	// Shared with sub CPU
+	AM_RANGE(0x130000, 0x130fff) AM_READ(MRA16_RAM)	// Sprites
 	// Input Ports:
-	{ 0x140010, 0x140011, input_port_0_word_r },	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_word_r },	// ??
-	{ 0x140014, 0x140015, input_port_2_word_r },	// DSW
-	{ 0x140016, 0x140017, input_port_3_word_r },	// DSW
-	{ 0x140020, 0x140021, selected_ip_r       },	// Accelerator or Wheel or ..
-MEMORY_END
+	AM_RANGE(0x140010, 0x140011) AM_READ(input_port_0_word_r)	// Coins + brake + gear
+	AM_RANGE(0x140012, 0x140013) AM_READ(input_port_1_word_r)	// ??
+	AM_RANGE(0x140014, 0x140015) AM_READ(input_port_2_word_r)	// DSW
+	AM_RANGE(0x140016, 0x140017) AM_READ(input_port_3_word_r)	// DSW
+	AM_RANGE(0x140020, 0x140021) AM_READ(selected_ip_r)	// Accelerator or Wheel or ..
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( wecleman_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM                             },	// ROM (03c000-03ffff used as RAM sometimes!)
-	{ 0x040494, 0x040495, wecleman_videostatus_w, &wecleman_videostatus },	// cloud blending control (HACK)
-	{ 0x040000, 0x043fff, MWA16_RAM                             },	// RAM
-	{ 0x060000, 0x060005, wecleman_protection_w, &wecleman_protection_ram },
-	{ 0x080000, 0x080011, blitter_w,          &blitter_regs     },	// Blitter
-	{ 0x100000, 0x103fff, wecleman_pageram_w, &wecleman_pageram },	// Background Layers
-	{ 0x108000, 0x108fff, wecleman_txtram_w,  &wecleman_txtram  },	// Text Layer
-	{ 0x110000, 0x110fff, wecleman_paletteram16_SSSSBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x124000, 0x127fff, sharedram_w,        &sharedram        },	// Shared with main CPU
-	{ 0x130000, 0x130fff, MWA16_RAM,          &spriteram16,     },	// Sprites
-	{ 0x140000, 0x140001, wecleman_soundlatch_w                 },	// To sound CPU
-	{ 0x140002, 0x140003, selected_ip_w                         },	// Selects accelerator / wheel / ..
-	{ 0x140004, 0x140005, irqctrl_w                             },	// Main CPU controls the other CPUs
-	{ 0x140006, 0x140007, MWA16_NOP                             },	// Watchdog reset
-	{ 0x140020, 0x140021, MWA16_RAM                             },	// Paired with writes to $140003
-	{ 0x140030, 0x140031, MWA16_NOP },	// toggles between 0 & 1 on hitting bumps and crashes (vibration?)
-MEMORY_END
+static ADDRESS_MAP_START( wecleman_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)	// ROM (03c000-03ffff used as RAM sometimes!)
+	AM_RANGE(0x040494, 0x040495) AM_WRITE(wecleman_videostatus_w) AM_BASE(&wecleman_videostatus)	// cloud blending control (HACK)
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(MWA16_RAM)	// RAM
+	AM_RANGE(0x060000, 0x060005) AM_WRITE(wecleman_protection_w) AM_BASE(&wecleman_protection_ram)
+	AM_RANGE(0x080000, 0x080011) AM_WRITE(blitter_w) AM_BASE(&blitter_regs)	// Blitter
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(wecleman_pageram_w) AM_BASE(&wecleman_pageram)	// Background Layers
+	AM_RANGE(0x108000, 0x108fff) AM_WRITE(wecleman_txtram_w) AM_BASE(&wecleman_txtram)	// Text Layer
+	AM_RANGE(0x110000, 0x110fff) AM_WRITE(wecleman_paletteram16_SSSSBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x124000, 0x127fff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)	// Shared with main CPU
+	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	// Sprites
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(wecleman_soundlatch_w)	// To sound CPU
+	AM_RANGE(0x140002, 0x140003) AM_WRITE(selected_ip_w)	// Selects accelerator / wheel / ..
+	AM_RANGE(0x140004, 0x140005) AM_WRITE(irqctrl_w)	// Main CPU controls the other CPUs
+	AM_RANGE(0x140006, 0x140007) AM_WRITE(MWA16_NOP)	// Watchdog reset
+	AM_RANGE(0x140020, 0x140021) AM_WRITE(MWA16_RAM)	// Paired with writes to $140003
+	AM_RANGE(0x140030, 0x140031) AM_WRITE(MWA16_NOP)	// toggles between 0 & 1 on hitting bumps and crashes (vibration?)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -607,79 +607,79 @@ static WRITE16_HANDLER( hotchase_K051316_ctrl_1_w )
 
 WRITE16_HANDLER( hotchase_soundlatch_w );
 
-static MEMORY_READ16_START( hotchase_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM                         },	// ROM
-	{ 0x040000, 0x063fff, MRA16_RAM                         },	// RAM (weird size!?)
-	{ 0x080000, 0x080011, MRA16_RAM                         },	// Blitter
-	{ 0x100000, 0x100fff, hotchase_K051316_0_r              },	// Background
-	{ 0x102000, 0x102fff, hotchase_K051316_1_r              },	// Foreground
-	{ 0x110000, 0x111fff, MRA16_RAM                         },	// Palette (only the first 2048 colors used)
-	{ 0x120000, 0x123fff, sharedram_r                       },	// Shared with sub CPU
-	{ 0x130000, 0x130fff, MRA16_RAM                         },	// Sprites
+static ADDRESS_MAP_START( hotchase_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)	// ROM
+	AM_RANGE(0x040000, 0x063fff) AM_READ(MRA16_RAM)	// RAM (weird size!?)
+	AM_RANGE(0x080000, 0x080011) AM_READ(MRA16_RAM)	// Blitter
+	AM_RANGE(0x100000, 0x100fff) AM_READ(hotchase_K051316_0_r)	// Background
+	AM_RANGE(0x102000, 0x102fff) AM_READ(hotchase_K051316_1_r)	// Foreground
+	AM_RANGE(0x110000, 0x111fff) AM_READ(MRA16_RAM)	// Palette (only the first 2048 colors used)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(sharedram_r)	// Shared with sub CPU
+	AM_RANGE(0x130000, 0x130fff) AM_READ(MRA16_RAM)	// Sprites
 	// Input Ports:
-	{ 0x140006, 0x140007, MRA16_NOP                         },	// Watchdog reset
-	{ 0x140010, 0x140011, input_port_0_word_r               },	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_word_r               },	// ?? bit 4 from sound cpu
-	{ 0x140014, 0x140015, input_port_2_word_r               },	// DSW 2
-	{ 0x140016, 0x140017, input_port_3_word_r               },	// DSW 1
-	{ 0x140020, 0x140021, selected_ip_r                     },	// Accelerator or Wheel
-	{ 0x140022, 0x140023, MRA16_NOP                         },	// ??
-MEMORY_END
+	AM_RANGE(0x140006, 0x140007) AM_READ(MRA16_NOP)	// Watchdog reset
+	AM_RANGE(0x140010, 0x140011) AM_READ(input_port_0_word_r)	// Coins + brake + gear
+	AM_RANGE(0x140012, 0x140013) AM_READ(input_port_1_word_r)	// ?? bit 4 from sound cpu
+	AM_RANGE(0x140014, 0x140015) AM_READ(input_port_2_word_r)	// DSW 2
+	AM_RANGE(0x140016, 0x140017) AM_READ(input_port_3_word_r)	// DSW 1
+	AM_RANGE(0x140020, 0x140021) AM_READ(selected_ip_r)	// Accelerator or Wheel
+	AM_RANGE(0x140022, 0x140023) AM_READ(MRA16_NOP)	// ??
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( hotchase_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM                 },	// ROM
-	{ 0x040000, 0x063fff, MWA16_RAM                 },	// RAM (weird size!?)
-	{ 0x080000, 0x080011, blitter_w, &blitter_regs  },	// Blitter
-	{ 0x100000, 0x100fff, hotchase_K051316_0_w      },	// Background
-	{ 0x101000, 0x10101f, hotchase_K051316_ctrl_0_w },	// Background Ctrl
-	{ 0x102000, 0x102fff, hotchase_K051316_1_w      },	// Foreground
-	{ 0x103000, 0x10301f, hotchase_K051316_ctrl_1_w },	// Foreground Ctrl
-	{ 0x110000, 0x111fff, hotchase_paletteram16_SBGRBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x120000, 0x123fff, sharedram_w, &sharedram   },	// Shared with sub CPU
-	{ 0x130000, 0x130fff, MWA16_RAM, &spriteram16   },	// Sprites
+static ADDRESS_MAP_START( hotchase_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)	// ROM
+	AM_RANGE(0x040000, 0x063fff) AM_WRITE(MWA16_RAM)	// RAM (weird size!?)
+	AM_RANGE(0x080000, 0x080011) AM_WRITE(blitter_w) AM_BASE(&blitter_regs)	// Blitter
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(hotchase_K051316_0_w)	// Background
+	AM_RANGE(0x101000, 0x10101f) AM_WRITE(hotchase_K051316_ctrl_0_w)	// Background Ctrl
+	AM_RANGE(0x102000, 0x102fff) AM_WRITE(hotchase_K051316_1_w)	// Foreground
+	AM_RANGE(0x103000, 0x10301f) AM_WRITE(hotchase_K051316_ctrl_1_w)	// Foreground Ctrl
+	AM_RANGE(0x110000, 0x111fff) AM_WRITE(hotchase_paletteram16_SBGRBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)	// Shared with sub CPU
+	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	// Sprites
 	// Input Ports:
-	{ 0x140000, 0x140001, hotchase_soundlatch_w     },	// To sound CPU
-	{ 0x140002, 0x140003, selected_ip_w             },	// Selects accelerator / wheel /
-	{ 0x140004, 0x140005, irqctrl_w                 },	// Main CPU controls the other CPUs
-	{ 0x140020, 0x140021, MWA16_NOP                 },	// Paired with writes to $140003
-	{ 0x140030, 0x140031, MWA16_NOP                 },	// signal to cabinet vibration motors?
-MEMORY_END
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(hotchase_soundlatch_w)	// To sound CPU
+	AM_RANGE(0x140002, 0x140003) AM_WRITE(selected_ip_w)	// Selects accelerator / wheel /
+	AM_RANGE(0x140004, 0x140005) AM_WRITE(irqctrl_w)	// Main CPU controls the other CPUs
+	AM_RANGE(0x140020, 0x140021) AM_WRITE(MWA16_NOP)	// Paired with writes to $140003
+	AM_RANGE(0x140030, 0x140031) AM_WRITE(MWA16_NOP)	// signal to cabinet vibration motors?
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 					WEC Le Mans 24 Sub CPU Handlers
 ***************************************************************************/
 
-static MEMORY_READ16_START( wecleman_sub_readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM    },	// ROM
-	{ 0x060000, 0x060fff, MRA16_RAM    },	// Road
-	{ 0x070000, 0x073fff, &sharedram_r },	// RAM (Shared with main CPU)
-MEMORY_END
+static ADDRESS_MAP_START( wecleman_sub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)	// ROM
+	AM_RANGE(0x060000, 0x060fff) AM_READ(MRA16_RAM)	// Road
+	AM_RANGE(0x070000, 0x073fff) AM_READ(&sharedram_r)	// RAM (Shared with main CPU)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( wecleman_sub_writemem )
-	{ 0x000000, 0x00ffff, MWA16_ROM    },	// ROM
-	{ 0x060000, 0x060fff, MWA16_RAM, &wecleman_roadram, &wecleman_roadram_size },	// Road
-	{ 0x070000, 0x073fff, sharedram_w  },	// RAM (Shared with main CPU)
-MEMORY_END
+static ADDRESS_MAP_START( wecleman_sub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)	// ROM
+	AM_RANGE(0x060000, 0x060fff) AM_WRITE(MWA16_RAM) AM_BASE(&wecleman_roadram) AM_SIZE(&wecleman_roadram_size)	// Road
+	AM_RANGE(0x070000, 0x073fff) AM_WRITE(sharedram_w)	// RAM (Shared with main CPU)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 						Hot Chase Sub CPU Handlers
 ***************************************************************************/
 
-static MEMORY_READ16_START( hotchase_sub_readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM    },	// ROM
-	{ 0x020000, 0x020fff, MRA16_RAM    },	// Road
-	{ 0x060000, 0x060fff, MRA16_RAM    },	// RAM
-	{ 0x040000, 0x043fff, &sharedram_r },	// Shared with main CPU
-MEMORY_END
+static ADDRESS_MAP_START( hotchase_sub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)	// ROM
+	AM_RANGE(0x020000, 0x020fff) AM_READ(MRA16_RAM)	// Road
+	AM_RANGE(0x060000, 0x060fff) AM_READ(MRA16_RAM)	// RAM
+	AM_RANGE(0x040000, 0x043fff) AM_READ(&sharedram_r)	// Shared with main CPU
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( hotchase_sub_writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM    },	// ROM
-	{ 0x020000, 0x020fff, MWA16_RAM, &wecleman_roadram, &wecleman_roadram_size },	// Road
-	{ 0x060000, 0x060fff, MWA16_RAM    },	// RAM
-	{ 0x040000, 0x043fff, sharedram_w  },	// Shared with main CPU
-MEMORY_END
+static ADDRESS_MAP_START( hotchase_sub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)	// ROM
+	AM_RANGE(0x020000, 0x020fff) AM_WRITE(MWA16_RAM) AM_BASE(&wecleman_roadram) AM_SIZE(&wecleman_roadram_size)	// Road
+	AM_RANGE(0x060000, 0x060fff) AM_WRITE(MWA16_RAM)	// RAM
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(sharedram_w)	// Shared with main CPU
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -728,26 +728,26 @@ WRITE_HANDLER( wecleman_K00723216_bank_w )
 	K007232_set_bank( 0, 0, ~data&1 );	//* (wecleman062gre)
 }
 
-static MEMORY_READ_START( wecleman_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM                },	// ROM
-	{ 0x8000, 0x83ff, MRA_RAM                },	// RAM
-	{ 0x9000, 0x9000, multiply_r             },	// Protection
-	{ 0xa000, 0xa000, soundlatch_r           },	// From main CPU
-	{ 0xb000, 0xb00d, K007232_read_port_0_r  },	// K007232 (Reading offset 5/b triggers the sample)
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },	// YM2151
-MEMORY_END
+static ADDRESS_MAP_START( wecleman_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)	// ROM
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)	// RAM
+	AM_RANGE(0x9000, 0x9000) AM_READ(multiply_r)	// Protection
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)	// From main CPU
+	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)	// K007232 (Reading offset 5/b triggers the sample)
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)	// YM2151
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( wecleman_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM                   },	// ROM
-	{ 0x8000, 0x83ff, MWA_RAM                   },	// RAM
-	{ 0x8500, 0x8500, MWA_NOP                   },	// incresed with speed (global volume)?
-	{ 0x9000, 0x9001, multiply_w                },	// Protection
-	{ 0x9006, 0x9006, MWA_NOP                   },	// ?
-	{ 0xb000, 0xb00d, K007232_write_port_0_w    },	// K007232
-	{ 0xc000, 0xc000, YM2151_register_port_0_w  },	// YM2151
-	{ 0xc001, 0xc001, YM2151_data_port_0_w      },
-	{ 0xf000, 0xf000, wecleman_K00723216_bank_w },	// Samples banking
-MEMORY_END
+static ADDRESS_MAP_START( wecleman_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)	// ROM
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)	// RAM
+	AM_RANGE(0x8500, 0x8500) AM_WRITE(MWA8_NOP)	// incresed with speed (global volume)?
+	AM_RANGE(0x9000, 0x9001) AM_WRITE(multiply_w)	// Protection
+	AM_RANGE(0x9006, 0x9006) AM_WRITE(MWA8_NOP)	// ?
+	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)	// K007232
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)	// YM2151
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(wecleman_K00723216_bank_w)	// Samples banking
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -839,25 +839,25 @@ HOTCHASE_K007232_RW(0)
 HOTCHASE_K007232_RW(1)
 HOTCHASE_K007232_RW(2)
 
-static MEMORY_READ_START( hotchase_sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM              },	// RAM
-	{ 0x1000, 0x100d, hotchase_K007232_0_r },	// 3 x  K007232
-	{ 0x2000, 0x200d, hotchase_K007232_1_r },
-	{ 0x3000, 0x300d, hotchase_K007232_2_r },
-	{ 0x6000, 0x6000, soundlatch_r         },	// From main CPU (Read on IRQ)
-	{ 0x8000, 0xffff, MRA_ROM              },	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( hotchase_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)	// RAM
+	AM_RANGE(0x1000, 0x100d) AM_READ(hotchase_K007232_0_r)	// 3 x  K007232
+	AM_RANGE(0x2000, 0x200d) AM_READ(hotchase_K007232_1_r)
+	AM_RANGE(0x3000, 0x300d) AM_READ(hotchase_K007232_2_r)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)	// From main CPU (Read on IRQ)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hotchase_sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM                  },	// RAM
-	{ 0x1000, 0x100d, hotchase_K007232_0_w     },	// 3 x K007232
-	{ 0x2000, 0x200d, hotchase_K007232_1_w     },
-	{ 0x3000, 0x300d, hotchase_K007232_2_w     },
-	{ 0x4000, 0x4007, hotchase_sound_control_w },	// Sound volume, banking, etc.
-	{ 0x5000, 0x5000, MWA_NOP                  },	// ? (written with 0 on IRQ, 1 on FIRQ)
-	{ 0x7000, 0x7000, MWA_NOP                  },	// Command acknowledge ?
-	{ 0x8000, 0xffff, MWA_ROM                  },	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( hotchase_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)	// RAM
+	AM_RANGE(0x1000, 0x100d) AM_WRITE(hotchase_K007232_0_w)	// 3 x K007232
+	AM_RANGE(0x2000, 0x200d) AM_WRITE(hotchase_K007232_1_w)
+	AM_RANGE(0x3000, 0x300d) AM_WRITE(hotchase_K007232_2_w)
+	AM_RANGE(0x4000, 0x4007) AM_WRITE(hotchase_sound_control_w)	// Sound volume, banking, etc.
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_NOP)	// ? (written with 0 on IRQ, 1 on FIRQ)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)	// Command acknowledge ?
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)	// ROM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1152,16 +1152,16 @@ static MACHINE_DRIVER_START( wecleman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* Schems show 10MHz */
-	MDRV_CPU_MEMORY(wecleman_readmem,wecleman_writemem)
+	MDRV_CPU_PROGRAM_MAP(wecleman_readmem,wecleman_writemem)
 	MDRV_CPU_VBLANK_INT(wecleman_interrupt,5 + 1)	/* in order to read the inputs once per frame */
 
 	MDRV_CPU_ADD(M68000, 10000000)	/* Schems show 10MHz */
-	MDRV_CPU_MEMORY(wecleman_sub_readmem,wecleman_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(wecleman_sub_readmem,wecleman_sub_writemem)
 
 	/* Schems: can be reset, no nmi, soundlatch, 3.58MHz */
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(wecleman_sound_readmem,wecleman_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(wecleman_sound_readmem,wecleman_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1199,15 +1199,15 @@ static MACHINE_DRIVER_START( hotchase )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz - PCB is drawn in one set's readme */
-	MDRV_CPU_MEMORY(hotchase_readmem,hotchase_writemem)
+	MDRV_CPU_PROGRAM_MAP(hotchase_readmem,hotchase_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz - PCB is drawn in one set's readme */
-	MDRV_CPU_MEMORY(hotchase_sub_readmem,hotchase_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(hotchase_sub_readmem,hotchase_sub_writemem)
 
 	MDRV_CPU_ADD(M6809, 3579545 / 2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579/2 MHz - PCB is drawn in one set's readme */
-	MDRV_CPU_MEMORY(hotchase_sound_readmem,hotchase_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(hotchase_sound_readmem,hotchase_sound_writemem)
 	MDRV_CPU_PERIODIC_INT( hotchase_sound_timer, 496 )
 
 	/* Amuse: every 2 ms */

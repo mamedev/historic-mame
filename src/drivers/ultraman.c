@@ -108,60 +108,60 @@ static WRITE16_HANDLER( sound_irq_trigger_w )
 
 
 
-static MEMORY_READ16_START( ultraman_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },				/* ROM */
-	{ 0x080000, 0x08ffff, MRA16_RAM },				/* RAM */
-	{ 0x180000, 0x183fff, MRA16_RAM },				/* Palette */
-	{ 0x1c0000, 0x1c0001, input_port_0_word_r },	/* Coins + Service */
-	{ 0x1c0002, 0x1c0003, input_port_1_word_r },	/* 1P controls */
-	{ 0x1c0004, 0x1c0005, input_port_2_word_r },	/* 2P controls */
-	{ 0x1c0006, 0x1c0007, input_port_3_word_r },	/* DIPSW #1 */
-	{ 0x1c0008, 0x1c0009, input_port_4_word_r },	/* DIPSW #2 */
-	{ 0x204000, 0x204fff, ultraman_K051316_0_r },	/* K051316 #0 RAM */
-	{ 0x205000, 0x205fff, ultraman_K051316_1_r },	/* K051316 #1 RAM */
-	{ 0x206000, 0x206fff, ultraman_K051316_2_r },	/* K051316 #2 RAM */
-	{ 0x304000, 0x30400f, ultraman_K051937_r },		/* Sprite control */
-	{ 0x304800, 0x304fff, ultraman_K051960_r },		/* Sprite RAM */
-MEMORY_END
+static ADDRESS_MAP_START( ultraman_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)				/* ROM */
+	AM_RANGE(0x080000, 0x08ffff) AM_READ(MRA16_RAM)				/* RAM */
+	AM_RANGE(0x180000, 0x183fff) AM_READ(MRA16_RAM)				/* Palette */
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(input_port_0_word_r)	/* Coins + Service */
+	AM_RANGE(0x1c0002, 0x1c0003) AM_READ(input_port_1_word_r)	/* 1P controls */
+	AM_RANGE(0x1c0004, 0x1c0005) AM_READ(input_port_2_word_r)	/* 2P controls */
+	AM_RANGE(0x1c0006, 0x1c0007) AM_READ(input_port_3_word_r)	/* DIPSW #1 */
+	AM_RANGE(0x1c0008, 0x1c0009) AM_READ(input_port_4_word_r)	/* DIPSW #2 */
+	AM_RANGE(0x204000, 0x204fff) AM_READ(ultraman_K051316_0_r)	/* K051316 #0 RAM */
+	AM_RANGE(0x205000, 0x205fff) AM_READ(ultraman_K051316_1_r)	/* K051316 #1 RAM */
+	AM_RANGE(0x206000, 0x206fff) AM_READ(ultraman_K051316_2_r)	/* K051316 #2 RAM */
+	AM_RANGE(0x304000, 0x30400f) AM_READ(ultraman_K051937_r)		/* Sprite control */
+	AM_RANGE(0x304800, 0x304fff) AM_READ(ultraman_K051960_r)		/* Sprite RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( ultraman_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },					/* ROM */
-	{ 0x080000, 0x08ffff, MWA16_RAM },					/* RAM */
-	{ 0x180000, 0x183fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },/* Palette */
-	{ 0x1c0018, 0x1c0019, ultraman_gfxctrl_w },	/* counters + gfx ctrl */
-	{ 0x1c0020, 0x1c0021, sound_cmd_w },
-	{ 0x1c0028, 0x1c0029, sound_irq_trigger_w },
-	{ 0x1c0030, 0x1c0031, watchdog_reset16_w },
-	{ 0x204000, 0x204fff, ultraman_K051316_0_w },		/* K051316 #0 RAM */
-	{ 0x205000, 0x205fff, ultraman_K051316_1_w },		/* K051316 #1 RAM */
-	{ 0x206000, 0x206fff, ultraman_K051316_2_w },		/* K051316 #2 RAM */
-	{ 0x207f80, 0x207f9f, ultraman_K051316_ctrl_0_w	},	/* K051316 #0 registers  */
-	{ 0x207fa0, 0x207fbf, ultraman_K051316_ctrl_1_w	},	/* K051316 #1 registers */
-	{ 0x207fc0, 0x207fdf, ultraman_K051316_ctrl_2_w	},	/* K051316 #2 registers */
-	{ 0x304000, 0x30400f, ultraman_K051937_w },			/* Sprite control */
-	{ 0x304800, 0x304fff, ultraman_K051960_w },			/* Sprite RAM */
-MEMORY_END
+static ADDRESS_MAP_START( ultraman_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)					/* ROM */
+	AM_RANGE(0x080000, 0x08ffff) AM_WRITE(MWA16_RAM)					/* RAM */
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)/* Palette */
+	AM_RANGE(0x1c0018, 0x1c0019) AM_WRITE(ultraman_gfxctrl_w)	/* counters + gfx ctrl */
+	AM_RANGE(0x1c0020, 0x1c0021) AM_WRITE(sound_cmd_w)
+	AM_RANGE(0x1c0028, 0x1c0029) AM_WRITE(sound_irq_trigger_w)
+	AM_RANGE(0x1c0030, 0x1c0031) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x204000, 0x204fff) AM_WRITE(ultraman_K051316_0_w)		/* K051316 #0 RAM */
+	AM_RANGE(0x205000, 0x205fff) AM_WRITE(ultraman_K051316_1_w)		/* K051316 #1 RAM */
+	AM_RANGE(0x206000, 0x206fff) AM_WRITE(ultraman_K051316_2_w)		/* K051316 #2 RAM */
+	AM_RANGE(0x207f80, 0x207f9f) AM_WRITE(ultraman_K051316_ctrl_0_w	)	/* K051316 #0 registers  */
+	AM_RANGE(0x207fa0, 0x207fbf) AM_WRITE(ultraman_K051316_ctrl_1_w	)	/* K051316 #1 registers */
+	AM_RANGE(0x207fc0, 0x207fdf) AM_WRITE(ultraman_K051316_ctrl_2_w	)	/* K051316 #2 registers */
+	AM_RANGE(0x304000, 0x30400f) AM_WRITE(ultraman_K051937_w)			/* Sprite control */
+	AM_RANGE(0x304800, 0x304fff) AM_WRITE(ultraman_K051960_w)			/* Sprite RAM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( ultraman_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
-	{ 0x8000, 0xbfff, MRA_RAM },					/* RAM */
-	{ 0xc000, 0xc000, soundlatch_r },				/* Sound latch read */
-	{ 0xe000, 0xe000, OKIM6295_status_0_r },		/* M6295 */
-	{ 0xf001, 0xf001, YM2151_status_port_0_r },		/* YM2151 */
-MEMORY_END
+static ADDRESS_MAP_START( ultraman_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)					/* ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_RAM)					/* RAM */
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)				/* Sound latch read */
+	AM_RANGE(0xe000, 0xe000) AM_READ(OKIM6295_status_0_r)		/* M6295 */
+	AM_RANGE(0xf001, 0xf001) AM_READ(YM2151_status_port_0_r)		/* YM2151 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ultraman_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
-	{ 0x8000, 0xbfff, MWA_RAM },					/* RAM */
-//	{ 0xd000, 0xd000, MWA_NOP },					/* ??? */
-	{ 0xe000, 0xe000, OKIM6295_data_0_w },			/* M6295 */
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },	/* YM2151 */
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },		/* YM2151 */
-MEMORY_END
+static ADDRESS_MAP_START( ultraman_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)					/* ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_RAM)					/* RAM */
+//	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)					/* ??? */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(OKIM6295_data_0_w)			/* M6295 */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)	/* YM2151 */
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)		/* YM2151 */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( ultraman_writeport_sound )
-//	{ 0x00, 0x00, MWA_NOP },						/* ??? */
-PORT_END
+static ADDRESS_MAP_START( ultraman_writeport_sound, ADDRESS_SPACE_IO, 8 )
+//	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)						/* ??? */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ultraman )
@@ -280,13 +280,13 @@ static MACHINE_DRIVER_START( ultraman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000/2)		/* 12 MHz? */
-	MDRV_CPU_MEMORY(ultraman_readmem,ultraman_writemem)
+	MDRV_CPU_PROGRAM_MAP(ultraman_readmem,ultraman_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,24000000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
-	MDRV_CPU_MEMORY(ultraman_readmem_sound,ultraman_writemem_sound)
-	MDRV_CPU_PORTS(0,ultraman_writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(ultraman_readmem_sound,ultraman_writemem_sound)
+	MDRV_CPU_IO_MAP(0,ultraman_writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

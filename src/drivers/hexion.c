@@ -110,35 +110,35 @@ if ((data & 0xdc) != 0x10) usrintf_showmessage("coincntr %02x",data);
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xdffe, hexion_bankedram_r },
-	{ 0xf400, 0xf400, input_port_0_r },
-	{ 0xf401, 0xf401, input_port_1_r },
-	{ 0xf402, 0xf402, input_port_3_r },
-	{ 0xf403, 0xf403, input_port_4_r },
-	{ 0xf440, 0xf440, input_port_2_r },
-	{ 0xf441, 0xf441, input_port_5_r },
-	{ 0xf540, 0xf540, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xdffe) AM_READ(hexion_bankedram_r)
+	AM_RANGE(0xf400, 0xf400) AM_READ(input_port_0_r)
+	AM_RANGE(0xf401, 0xf401) AM_READ(input_port_1_r)
+	AM_RANGE(0xf402, 0xf402) AM_READ(input_port_3_r)
+	AM_RANGE(0xf403, 0xf403) AM_READ(input_port_4_r)
+	AM_RANGE(0xf440, 0xf440) AM_READ(input_port_2_r)
+	AM_RANGE(0xf441, 0xf441) AM_READ(input_port_5_r)
+	AM_RANGE(0xf540, 0xf540) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xdffe, hexion_bankedram_w },
-	{ 0xdfff, 0xdfff, hexion_bankctrl_w },
-	{ 0xe800, 0xe87f, K051649_waveform_w },
-	{ 0xe880, 0xe889, K051649_frequency_w },
-	{ 0xe88a, 0xe88e, K051649_volume_w },
-	{ 0xe88f, 0xe88f, K051649_keyonoff_w },
-	{ 0xf000, 0xf00f, MWA_NOP },	/* 053252? f00e = IRQ ack, f00f = NMI ack */
-	{ 0xf200, 0xf200, OKIM6295_data_0_w },
-	{ 0xf480, 0xf480, hexion_bankswitch_w },
-	{ 0xf4c0, 0xf4c0, coincntr_w },
-	{ 0xf500, 0xf500, hexion_gfxrom_select_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xdffe) AM_WRITE(hexion_bankedram_w)
+	AM_RANGE(0xdfff, 0xdfff) AM_WRITE(hexion_bankctrl_w)
+	AM_RANGE(0xe800, 0xe87f) AM_WRITE(K051649_waveform_w)
+	AM_RANGE(0xe880, 0xe889) AM_WRITE(K051649_frequency_w)
+	AM_RANGE(0xe88a, 0xe88e) AM_WRITE(K051649_volume_w)
+	AM_RANGE(0xe88f, 0xe88f) AM_WRITE(K051649_keyonoff_w)
+	AM_RANGE(0xf000, 0xf00f) AM_WRITE(MWA8_NOP)	/* 053252? f00e = IRQ ack, f00f = NMI ack */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xf480, 0xf480) AM_WRITE(hexion_bankswitch_w)
+	AM_RANGE(0xf4c0, 0xf4c0) AM_WRITE(coincntr_w)
+	AM_RANGE(0xf500, 0xf500) AM_WRITE(hexion_gfxrom_select_w)
+ADDRESS_MAP_END
 
 
 
@@ -299,7 +299,7 @@ static MACHINE_DRIVER_START( hexion )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,24000000/4)	/* Z80B 6 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(hexion_interrupt,3)	/* both IRQ and NMI are used */
 
 	MDRV_FRAMES_PER_SECOND(60)

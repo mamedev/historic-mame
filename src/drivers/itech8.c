@@ -9,7 +9,7 @@
 		* Strata Bowling [2 sets]
 		* Super Strike Bowling
 		* Wheel of Fortune [2 sets]
-		* Golden Tee Golf
+		* Golden Tee Golf [2 sets]
 		* Golden Tee Golf II [3 sets]
 		* Slick Shot [2 sets]
 		* Dyno-Bop
@@ -622,122 +622,122 @@ static NVRAM_HANDLER( itech8 )
  *************************************/
 
 /*------ common layout with TMS34061 at 0000 ------*/
-static MEMORY_READ_START( tmslo_readmem )
-	{ 0x0000, 0x0fff, itech8_tms34061_r },
-	{ 0x1140, 0x1140, special_port0_r },
-	{ 0x1160, 0x1160, input_port_1_r },
-	{ 0x1180, 0x1180, input_port_2_r },
-	{ 0x11c0, 0x11d7, itech8_blitter_r },
-	{ 0x11d8, 0x11d9, input_port_3_r },
-	{ 0x11da, 0x11db, input_port_4_r },
-	{ 0x11dc, 0x11dd, input_port_5_r },
-	{ 0x11de, 0x11df, input_port_6_r },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( tmslo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(itech8_tms34061_r)
+	AM_RANGE(0x1140, 0x1140) AM_READ(special_port0_r)
+	AM_RANGE(0x1160, 0x1160) AM_READ(input_port_1_r)
+	AM_RANGE(0x1180, 0x1180) AM_READ(input_port_2_r)
+	AM_RANGE(0x11c0, 0x11d7) AM_READ(itech8_blitter_r)
+	AM_RANGE(0x11d8, 0x11d9) AM_READ(input_port_3_r)
+	AM_RANGE(0x11da, 0x11db) AM_READ(input_port_4_r)
+	AM_RANGE(0x11dc, 0x11dd) AM_READ(input_port_5_r)
+	AM_RANGE(0x11de, 0x11df) AM_READ(input_port_6_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( tmslo_writemem )
-	{ 0x0000, 0x0fff, itech8_tms34061_w },
-	{ 0x1100, 0x1100, MWA_NOP },
-	{ 0x1120, 0x1120, sound_data_w },
-	{ 0x1140, 0x1140, MWA_RAM, &itech8_grom_bank },
-	{ 0x1160, 0x1160, MWA_RAM, &itech8_display_page },
-	{ 0x1180, 0x1180, tms34061_latch_w },
-	{ 0x11a0, 0x11a0, itech8_nmi_ack_w },
-	{ 0x11c0, 0x11df, blitter_w },
-	{ 0x11e0, 0x11ff, itech8_palette_w },
-	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( tmslo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(itech8_tms34061_w)
+	AM_RANGE(0x1100, 0x1100) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1120, 0x1120) AM_WRITE(sound_data_w)
+	AM_RANGE(0x1140, 0x1140) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_grom_bank)
+	AM_RANGE(0x1160, 0x1160) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_display_page)
+	AM_RANGE(0x1180, 0x1180) AM_WRITE(tms34061_latch_w)
+	AM_RANGE(0x11a0, 0x11a0) AM_WRITE(itech8_nmi_ack_w)
+	AM_RANGE(0x11c0, 0x11df) AM_WRITE(blitter_w)
+	AM_RANGE(0x11e0, 0x11ff) AM_WRITE(itech8_palette_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*------ common layout with TMS34061 at 1000 ------*/
-static MEMORY_READ_START( tmshi_readmem )
-	{ 0x1000, 0x1fff, itech8_tms34061_r },
-	{ 0x0140, 0x0140, special_port0_r },
-	{ 0x0160, 0x0160, input_port_1_r },
-	{ 0x0180, 0x0180, input_port_2_r },
-	{ 0x01c0, 0x01d7, itech8_blitter_r },
-	{ 0x01d8, 0x01d9, input_port_3_r },
-	{ 0x01da, 0x01db, input_port_4_r },
-	{ 0x01dc, 0x01dd, input_port_5_r },
-	{ 0x01de, 0x01df, input_port_6_r },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( tmshi_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1fff) AM_READ(itech8_tms34061_r)
+	AM_RANGE(0x0140, 0x0140) AM_READ(special_port0_r)
+	AM_RANGE(0x0160, 0x0160) AM_READ(input_port_1_r)
+	AM_RANGE(0x0180, 0x0180) AM_READ(input_port_2_r)
+	AM_RANGE(0x01c0, 0x01d7) AM_READ(itech8_blitter_r)
+	AM_RANGE(0x01d8, 0x01d9) AM_READ(input_port_3_r)
+	AM_RANGE(0x01da, 0x01db) AM_READ(input_port_4_r)
+	AM_RANGE(0x01dc, 0x01dd) AM_READ(input_port_5_r)
+	AM_RANGE(0x01de, 0x01df) AM_READ(input_port_6_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( tmshi_writemem )
-	{ 0x1000, 0x1fff, itech8_tms34061_w },
-	{ 0x0100, 0x0100, MWA_NOP },
-	{ 0x0120, 0x0120, sound_data_w },
-	{ 0x0140, 0x0140, MWA_RAM, &itech8_grom_bank },
-	{ 0x0160, 0x0160, MWA_RAM, &itech8_display_page },
-	{ 0x0180, 0x0180, tms34061_latch_w },
-	{ 0x01a0, 0x01a0, itech8_nmi_ack_w },
-	{ 0x01c0, 0x01df, blitter_w },
-	{ 0x01e0, 0x01ff, itech8_palette_w },
-	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( tmshi_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(itech8_tms34061_w)
+	AM_RANGE(0x0100, 0x0100) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0120, 0x0120) AM_WRITE(sound_data_w)
+	AM_RANGE(0x0140, 0x0140) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_grom_bank)
+	AM_RANGE(0x0160, 0x0160) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_display_page)
+	AM_RANGE(0x0180, 0x0180) AM_WRITE(tms34061_latch_w)
+	AM_RANGE(0x01a0, 0x01a0) AM_WRITE(itech8_nmi_ack_w)
+	AM_RANGE(0x01c0, 0x01df) AM_WRITE(blitter_w)
+	AM_RANGE(0x01e0, 0x01ff) AM_WRITE(itech8_palette_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*------ Golden Tee Golf II 1992 layout ------*/
-static MEMORY_READ_START( gtg2_readmem )
-	{ 0x1000, 0x1fff, itech8_tms34061_r },
-	{ 0x0100, 0x0100, input_port_0_r },
-	{ 0x0120, 0x0120, input_port_1_r },
-	{ 0x0140, 0x0140, input_port_2_r },
-	{ 0x0180, 0x0197, itech8_blitter_r },
-	{ 0x0198, 0x0199, input_port_3_r },
-	{ 0x019a, 0x019b, input_port_4_r },
-	{ 0x019c, 0x019d, input_port_5_r },
-	{ 0x019e, 0x019f, input_port_6_r },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( gtg2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1fff) AM_READ(itech8_tms34061_r)
+	AM_RANGE(0x0100, 0x0100) AM_READ(input_port_0_r)
+	AM_RANGE(0x0120, 0x0120) AM_READ(input_port_1_r)
+	AM_RANGE(0x0140, 0x0140) AM_READ(input_port_2_r)
+	AM_RANGE(0x0180, 0x0197) AM_READ(itech8_blitter_r)
+	AM_RANGE(0x0198, 0x0199) AM_READ(input_port_3_r)
+	AM_RANGE(0x019a, 0x019b) AM_READ(input_port_4_r)
+	AM_RANGE(0x019c, 0x019d) AM_READ(input_port_5_r)
+	AM_RANGE(0x019e, 0x019f) AM_READ(input_port_6_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( gtg2_writemem )
-	{ 0x1000, 0x1fff, itech8_tms34061_w },
-	{ 0x01c0, 0x01c0, gtg2_sound_data_w },
-	{ 0x0160, 0x0160, MWA_RAM, &itech8_grom_bank },
-	{ 0x0120, 0x0120, MWA_RAM, &itech8_display_page },
-	{ 0x01e0, 0x01e0, tms34061_latch_w },
-	{ 0x0100, 0x0100, itech8_nmi_ack_w },
-	{ 0x0180, 0x019f, blitter_w },
-	{ 0x0140, 0x015f, itech8_palette_w },
-	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( gtg2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(itech8_tms34061_w)
+	AM_RANGE(0x01c0, 0x01c0) AM_WRITE(gtg2_sound_data_w)
+	AM_RANGE(0x0160, 0x0160) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_grom_bank)
+	AM_RANGE(0x0120, 0x0120) AM_WRITE(MWA8_RAM) AM_BASE(&itech8_display_page)
+	AM_RANGE(0x01e0, 0x01e0) AM_WRITE(tms34061_latch_w)
+	AM_RANGE(0x0100, 0x0100) AM_WRITE(itech8_nmi_ack_w)
+	AM_RANGE(0x0180, 0x019f) AM_WRITE(blitter_w)
+	AM_RANGE(0x0140, 0x015f) AM_WRITE(itech8_palette_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*------ Ninja Clowns layout ------*/
-static MEMORY_READ16_START( ninclown_readmem )
-	{ 0x000000, 0x003fff, MRA16_RAM },
-	{ 0x004000, 0x07ffff, MRA16_ROM },
-	{ 0x100100, 0x100101, input_port_0_word_r },
-	{ 0x100180, 0x100181, input_port_1_word_r },
-	{ 0x100280, 0x100281, input_port_2_word_r },
-	{ 0x100300, 0x10031f, blitter16_r },
-	{ 0x110000, 0x110fff, tms34061_16_r },
-MEMORY_END
+static ADDRESS_MAP_START( ninclown_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x004000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100100, 0x100101) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x100180, 0x100181) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x100280, 0x100281) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x100300, 0x10031f) AM_READ(blitter16_r)
+	AM_RANGE(0x110000, 0x110fff) AM_READ(tms34061_16_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( ninclown_writemem )
-	{ 0x000000, 0x00007f, MWA16_RAM },
-	{ 0x000080, 0x003fff, MWA16_RAM, (data16_t **)&main_ram, &main_ram_size },
-	{ 0x004000, 0x07ffff, MWA16_ROM },
-	{ 0x100080, 0x100081, sound_data16_w },
-	{ 0x100100, 0x100101, grom_bank16_w, (data16_t **)&itech8_grom_bank },
-	{ 0x100180, 0x100181, display_page16_w, (data16_t **)&itech8_display_page },
-	{ 0x100240, 0x100241, tms34061_latch16_w },
-	{ 0x100280, 0x100281, MWA16_NOP },
-	{ 0x100300, 0x10031f, blitter16_w },
-	{ 0x100380, 0x1003ff, palette16_w },
-	{ 0x110000, 0x110fff, tms34061_16_w },
-MEMORY_END
+static ADDRESS_MAP_START( ninclown_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00007f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x000080, 0x003fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x004000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100080, 0x100081) AM_WRITE(sound_data16_w)
+	AM_RANGE(0x100100, 0x100101) AM_WRITE(grom_bank16_w) AM_BASE((data16_t **)&itech8_grom_bank)
+	AM_RANGE(0x100180, 0x100181) AM_WRITE(display_page16_w) AM_BASE((data16_t **)&itech8_display_page)
+	AM_RANGE(0x100240, 0x100241) AM_WRITE(tms34061_latch16_w)
+	AM_RANGE(0x100280, 0x100281) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x100300, 0x10031f) AM_WRITE(blitter16_w)
+	AM_RANGE(0x100380, 0x1003ff) AM_WRITE(palette16_w)
+	AM_RANGE(0x110000, 0x110fff) AM_WRITE(tms34061_16_w)
+ADDRESS_MAP_END
 
 
 
@@ -748,48 +748,48 @@ MEMORY_END
  *************************************/
 
 /*------ YM2203-based sound board ------*/
-static MEMORY_READ_START( sound2203_readmem )
-	{ 0x1000, 0x1000, sound_data_r },
-	{ 0x2000, 0x2000, YM2203_status_port_0_r },
-	{ 0x2002, 0x2002, YM2203_status_port_0_r },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x4000, 0x4000, OKIM6295_status_0_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound2203_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1000) AM_READ(sound_data_r)
+	AM_RANGE(0x2000, 0x2000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x2002, 0x2002) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound2203_writemem )
-	{ 0x0000, 0x0000, MWA_NOP },
-	{ 0x2000, 0x2000, YM2203_control_port_0_w },
-	{ 0x2001, 0x2001, YM2203_write_port_0_w },
-	{ 0x2002, 0x2002, YM2203_control_port_0_w },
-	{ 0x2003, 0x2003, YM2203_write_port_0_w },
-	{ 0x3000, 0x37ff, MWA_RAM },
-	{ 0x4000, 0x4000, OKIM6295_data_0_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound2203_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*------ YM3812-based sound board ------*/
-static MEMORY_READ_START( sound3812_readmem )
-	{ 0x1000, 0x1000, sound_data_r },
-	{ 0x2000, 0x2000, YM3812_status_port_0_r },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x4000, 0x4000, OKIM6295_status_0_r },
-	{ 0x5000, 0x5003, pia_0_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound3812_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1000) AM_READ(sound_data_r)
+	AM_RANGE(0x2000, 0x2000) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x5000, 0x5003) AM_READ(pia_0_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound3812_writemem )
-	{ 0x0000, 0x0000, MWA_NOP },
-	{ 0x2000, 0x2000, YM3812_control_port_0_w },
-	{ 0x2001, 0x2001, YM3812_write_port_0_w },
-	{ 0x3000, 0x37ff, MWA_RAM },
-	{ 0x4000, 0x4000, OKIM6295_data_0_w },
-	{ 0x5000, 0x5003, pia_0_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound3812_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x5000, 0x5003) AM_WRITE(pia_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -799,24 +799,24 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( slikz80_readmem )
-	{ 0x0000, 0x7ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( slikz80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( slikz80_writemem )
-	{ 0x0000, 0x7f, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( slikz80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7f) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( slikz80_readport )
-	{ 0x00, 0x00, slikz80_port_r },
-MEMORY_END
+static ADDRESS_MAP_START( slikz80_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(slikz80_port_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( slikz80_writeport )
-	{ 0x00, 0x00, slikz80_port_w },
-MEMORY_END
+static ADDRESS_MAP_START( slikz80_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(slikz80_port_w)
+ADDRESS_MAP_END
 
 
 
@@ -968,6 +968,36 @@ INPUT_PORTS_START( gtg )
 
 	UNUSED_ANALOG	/* analog C */
 	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( gtgt )
+	PORT_START	/* 40 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* 60 */
+	PORT_BIT     ( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT     ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT_NAME( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Face Right" )
+	PORT_BIT_NAME( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Face Left" )
+	PORT_BIT     ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT     ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT     ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT     ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* 80 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* analog C */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog D */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
 	UNUSED_ANALOG	/* analog E */
 	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
@@ -1441,7 +1471,7 @@ static MACHINE_DRIVER_START( itech8_core_lo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, CLOCK_8MHz/4)
-	MDRV_CPU_MEMORY(tmslo_readmem,tmslo_writemem)
+	MDRV_CPU_PROGRAM_MAP(tmslo_readmem,tmslo_writemem)
 	MDRV_CPU_VBLANK_INT(generate_nmi,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1469,7 +1499,7 @@ static MACHINE_DRIVER_START( itech8_core_hi )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(itech8_core_lo)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(tmshi_readmem,tmshi_writemem)
+	MDRV_CPU_PROGRAM_MAP(tmshi_readmem,tmshi_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1477,7 +1507,7 @@ static MACHINE_DRIVER_START( itech8_sound_ym2203 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
-	MDRV_CPU_MEMORY(sound2203_readmem,sound2203_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound2203_readmem,sound2203_writemem)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("ym", YM2203, ym2203_interface)
@@ -1488,7 +1518,7 @@ static MACHINE_DRIVER_START( itech8_sound_ym3812 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
-	MDRV_CPU_MEMORY(sound3812_readmem,sound3812_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound3812_readmem,sound3812_writemem)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("ym", YM3812, ym3812_interface)
@@ -1520,7 +1550,7 @@ static MACHINE_DRIVER_START( gtg2 )
 	MDRV_IMPORT_FROM(itech8_sound_ym3812)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(gtg2_readmem,gtg2_writemem)
+	MDRV_CPU_PROGRAM_MAP(gtg2_readmem,gtg2_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1591,7 +1621,7 @@ static MACHINE_DRIVER_START( ninclown )
 	MDRV_IMPORT_FROM(itech8_sound_ym3812)
 
 	MDRV_CPU_REPLACE("main", M68000, CLOCK_12MHz)
-	MDRV_CPU_MEMORY(ninclown_readmem,ninclown_writemem)
+	MDRV_CPU_PROGRAM_MAP(ninclown_readmem,ninclown_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(64, 423, 0, 239)
@@ -1605,8 +1635,8 @@ static MACHINE_DRIVER_START( slikshot )
 	MDRV_IMPORT_FROM(itech8_sound_ym2203)
 
 	MDRV_CPU_ADD(Z80, CLOCK_8MHz/2)
-	MDRV_CPU_MEMORY(slikz80_readmem,slikz80_writemem)
-	MDRV_CPU_PORTS(slikz80_readport,slikz80_writeport)
+	MDRV_CPU_PROGRAM_MAP(slikz80_readmem,slikz80_writemem)
+	MDRV_CPU_IO_MAP(slikz80_readport,slikz80_writeport)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 255, 0, 239)
@@ -1623,8 +1653,8 @@ static MACHINE_DRIVER_START( sstrike )
 	MDRV_IMPORT_FROM(itech8_sound_ym2203)
 
 	MDRV_CPU_ADD(Z80, CLOCK_8MHz/2)
-	MDRV_CPU_MEMORY(slikz80_readmem,slikz80_writemem)
-	MDRV_CPU_PORTS(slikz80_readport,slikz80_writeport)
+	MDRV_CPU_PROGRAM_MAP(slikz80_readmem,slikz80_writemem)
+	MDRV_CPU_IO_MAP(slikz80_readport,slikz80_writeport)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 255, 0, 239)
@@ -1736,6 +1766,27 @@ ROM_START( gtg )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, CRC(1cccbfdf) SHA1(546059fea2e7cd5627a666d80b1fc3ed8fcc0762) )
+ROM_END
+
+ROM_START( gtgt )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "pgm-u5.512", 0x04000, 0x4000, CRC(ec70b510) SHA1(318984d77eb1df6258b855781ae1c9a09aa74f15) )
+	ROM_CONTINUE(       0x10000, 0xc000 )
+	ROM_COPY( REGION_CPU1, 0x14000, 0x8000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "snd-u27.256", 0x08000, 0x8000, CRC(471da557) SHA1(32bfe450a42d9eb6c14edcfa2b4e33f65a11126e) )
+
+	ROM_REGION( 0xb0000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, CRC(a29c688a) SHA1(32dbb996a5e4c23cfd44b79312ac4a767658f20a) )
+	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, CRC(b52a23f6) SHA1(092961acf47875179b44342e2dd8955670e67ea2) )
+	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, CRC(9b8e3a61) SHA1(1b5682b1328d6c97b604fb71512e8f72322a688f) )
+	ROM_LOAD( "grom3.bin", 0x60000, 0x20000, CRC(b6e9fb15) SHA1(c1b28ea911696cb4ed56bfba212848693530b59f) )
+	ROM_LOAD( "grom4.bin", 0x80000, 0x20000, CRC(faa16729) SHA1(5d46cddda66b6d23c9ebdf2fb4cebce15586b4ad) )
+	ROM_LOAD( "grom5.512", 0xa0000, 0x10000, CRC(44b47015) SHA1(5dde4c932a697b51fe02eab8d948889b3fe7baff) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.010", 0x00000, 0x20000, CRC(d041e0c9) SHA1(1d90f37071d92c714ff69ab2b0337c7c66147995) )
 ROM_END
 
 
@@ -2208,6 +2259,7 @@ GAME ( 1990, stratab,  0,        tmshi2203, stratab,  0,        ROT270, "Strata/
 GAME ( 1990, stratab1, stratab,  tmshi2203, stratab,  0,        ROT270, "Strata/Incredible Technologies", "Strata Bowling (V1)" )
 GAMEX( 1990, sstrike,  0,        sstrike,   sstrike,  sstrike,  ROT270, "Strata/Incredible Technologies", "Super Strike Bowling", GAME_NOT_WORKING )
 GAME ( 1990, gtg,      0,        tmshi2203, gtg,      0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf (Joystick, v3.1)" )
+GAME ( 1989, gtgt,     gtg,      tmshi2203, gtgt,     0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf (Trackball, v1.0)" )
 GAME ( 1990, slikshot, 0,        slikshot,  slikshot, slikshot, ROT90,  "Grand Products/Incredible Technologies", "Slick Shot (V2.2)" )
 GAME ( 1990, sliksh17, slikshot, slikshot,  slikshot, slikshot, ROT90,  "Grand Products/Incredible Technologies", "Slick Shot (V1.7)" )
 GAMEX( 1990, dynobop,  0,        slikshot,  dynobop,  slikshot, ROT90,  "Grand Products/Incredible Technologies", "Dyno Bop", GAME_NOT_WORKING )

@@ -35,33 +35,33 @@ OVERLAY_START( tinv2650_overlay )
 	OVERLAY_RECT( 576,   0, 627, 768, PURPLE )
 OVERLAY_END
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x17ff, MRA_ROM },
-    { 0x1800, 0x1bff, MRA_RAM },
-	{ 0x1c00, 0x1cff, MRA_RAM },
-	{ 0x1d00, 0x1dff, MRA_RAM },
-    { 0x1e80, 0x1e80, tinvader_port_0_r },
-    { 0x1e81, 0x1e81, input_port_1_r },
-    { 0x1e82, 0x1e82, input_port_2_r },
-	{ 0x1e85, 0x1e85, input_port_4_r },			/* Dodgem Only */
-	{ 0x1e86, 0x1e86, input_port_5_r },			/* Dodgem Only */
-    { 0x1f00, 0x1fff, zac_s2636_r },			/* S2636 Chip */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x1800, 0x1bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c00, 0x1cff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1d00, 0x1dff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x1e80, 0x1e80) AM_READ(tinvader_port_0_r)
+    AM_RANGE(0x1e81, 0x1e81) AM_READ(input_port_1_r)
+    AM_RANGE(0x1e82, 0x1e82) AM_READ(input_port_2_r)
+	AM_RANGE(0x1e85, 0x1e85) AM_READ(input_port_4_r)			/* Dodgem Only */
+	AM_RANGE(0x1e86, 0x1e86) AM_READ(input_port_5_r)			/* Dodgem Only */
+    AM_RANGE(0x1f00, 0x1fff) AM_READ(zac_s2636_r)			/* S2636 Chip */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x17ff, MWA_ROM },
-	{ 0x1800, 0x1bff, tinvader_videoram_w, &videoram },
-	{ 0x1c00, 0x1cff, MWA_RAM },
-    { 0x1d00, 0x1dff, MWA_RAM },
-    { 0x1e80, 0x1e80, tinvader_sound_w },
-	{ 0x1e86, 0x1e86, MWA_NOP },				/* Dodgem Only */
-    { 0x1f00, 0x1fff, zac_s2636_w, &s2636ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(tinvader_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1c00, 0x1cff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x1d00, 0x1dff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x1e80, 0x1e80) AM_WRITE(tinvader_sound_w)
+	AM_RANGE(0x1e86, 0x1e86) AM_WRITE(MWA8_NOP)				/* Dodgem Only */
+    AM_RANGE(0x1f00, 0x1fff) AM_WRITE(zac_s2636_w) AM_BASE(&s2636ram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( tinvader )
 
@@ -324,8 +324,8 @@ static MACHINE_DRIVER_START( tinvader )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 3800000/4/3)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(1041)
@@ -360,7 +360,7 @@ WRITE_HANDLER( tinvader_sound_w )
 }
 
 ROM_START( sia2650 )
-	ROM_REGION( 0x2000, REGION_CPU1, 0 )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "42_1.bin",   0x0000, 0x0800, CRC(a85550a9) SHA1(3f1e6b8e61894ff997e31b9c5ff819aa4678394e) )
 	ROM_LOAD( "44_2.bin",   0x0800, 0x0800, CRC(48d5a3ed) SHA1(7f6421ba8225d49c1038595517f31b076d566586) )
 	ROM_LOAD( "46_3.bin",   0x1000, 0x0800, CRC(d766e784) SHA1(88c113855c4cde8cefbe862d3e5abf80bd17aaa0) )
@@ -370,7 +370,7 @@ ROM_START( sia2650 )
 ROM_END
 
 ROM_START( tinv2650 )
-	ROM_REGION( 0x2000, REGION_CPU1, 0 )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "42_1.bin",   0x0000, 0x0800, CRC(a85550a9) SHA1(3f1e6b8e61894ff997e31b9c5ff819aa4678394e) )
 	ROM_LOAD( "44_2t.bin",  0x0800, 0x0800, CRC(083c8621) SHA1(d9b33d532903b0e6dee2357b9e3b329856505a73) )
 	ROM_LOAD( "46_3t.bin",  0x1000, 0x0800, CRC(12c0934f) SHA1(9fd67d425c533b0e09b201301020639eb9e452f7) )
@@ -380,7 +380,7 @@ ROM_START( tinv2650 )
 ROM_END
 
 ROM_START( dodgem )
-	ROM_REGION( 0x2000, REGION_CPU1, 0 )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "rom1.bin",     0x0000, 0x0400, CRC(a327b57d) SHA1(a9cb17e60ab7b4ed9d5a9e7f8451a8f29bb7d00d) )
 	ROM_LOAD( "rom2.bin",     0x0400, 0x0400, CRC(2a06ec74) SHA1(34fd3cbb1ddadb81abde54046bf245e2285bb740) )
 	ROM_LOAD( "rom3.bin",     0x0800, 0x0400, CRC(e9ed656d) SHA1(a36ec04fd7cdf26aa7fa36e18cd44b159ed53906) )

@@ -2,10 +2,6 @@
 
 	Driver for Williams/Midway Wolf-unit games.
 
-	Hints for finding speedups:
-
-		search disassembly for ": CAF9"
-
 **************************************************************************/
 
 #include "driver.h"
@@ -14,30 +10,6 @@
 #include "sndhrdw/dcs.h"
 #include "midwunit.h"
 #include "midwayic.h"
-
-
-/* speedup installation macros */
-#define INSTALL_SPEEDUP_1_16BIT(addr, pc, spin1, offs1, offs2) \
-	midyunit_speedup_pc = (pc); \
-	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_spin[0] = spin1; \
-	midyunit_speedup_spin[1] = offs1; \
-	midyunit_speedup_spin[2] = offs2; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_1_16bit);
-
-#define INSTALL_SPEEDUP_3(addr, pc, spin1, spin2, spin3) \
-	midyunit_speedup_pc = (pc); \
-	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_spin[0] = spin1; \
-	midyunit_speedup_spin[1] = spin2; \
-	midyunit_speedup_spin[2] = spin3; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_3);
-
-#define INSTALL_SPEEDUP_1_ADDRESS( addr, pc ) \
-	midyunit_speedup_pc = (pc); \
-	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midwunit_generic_speedup_1_address);
-
 
 
 /* code-related variables */
@@ -376,9 +348,6 @@ static void init_wunit_generic(void)
 	UINT8 *base;
 	int i, j;
 
-	/* set up code ROMs */
-	memcpy(midyunit_code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
 	/* load the graphics ROMs -- quadruples */
 	midyunit_gfx_rom = base = memory_region(REGION_GFX1);
 	for (i = 0; i < memory_region_length(REGION_GFX1) / 0x400000; i++)
@@ -422,31 +391,26 @@ static void init_mk3_common(void)
 DRIVER_INIT( mk3 )
 {
 	init_mk3_common();
-	INSTALL_SPEEDUP_3(0x1069bd0, 0xff926810, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
 DRIVER_INIT( mk3r20 )
 {
 	init_mk3_common();
-	INSTALL_SPEEDUP_3(0x1069bd0, 0xff926790, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
 DRIVER_INIT( mk3r10 )
 {
 	init_mk3_common();
-	INSTALL_SPEEDUP_3(0x1078e50, 0xff923e30, 0x105d490, 0x105d4b0, 0x105d4d0);
 }
 
 DRIVER_INIT( umk3 )
 {
 	init_mk3_common();
-	INSTALL_SPEEDUP_3(0x106a0e0, 0xff9696a0, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
 DRIVER_INIT( umk3r11 )
 {
 	init_mk3_common();
-	INSTALL_SPEEDUP_3(0x106a0e0, 0xff969680, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
 
@@ -471,27 +435,10 @@ DRIVER_INIT( nbahangt )
 
 	/* serial prefixes 459, 470, 528 */
 	midway_serial_pic_init(528);
-
-	INSTALL_SPEEDUP_1_16BIT(0x10731f0, 0xff8a5510, 0x1002040, 0xd0, 0xb0);
 }
 
 
 /********************** WWF Wrestlemania **********************/
-
-static READ16_HANDLER( midwunit_generic_speedup_1_address )
-{
-	data16_t value = midyunit_speedup_base[offset];
-
-	/* just return if this isn't the offset we're looking for */
-	if (offset != midyunit_speedup_offset)
-		return value;
-
-	/* suspend cpu if it's waiting for an interrupt */
-	if (activecpu_get_pc() == midyunit_speedup_pc && !value)
-		cpu_spinuntil_int();
-
-	return value;
-}
 
 static WRITE16_HANDLER( wwfmania_io_0_w )
 {
@@ -548,12 +495,10 @@ DRIVER_INIT( wwfmania )
 	init_wunit_generic();
 
 	/* enable I/O shuffling */
-	install_mem_write16_handler(0, TOBYTE(0x01800000), TOBYTE(0x0180000f), wwfmania_io_0_w);
+	install_mem_write16_handler(0, 0x01800000, 0x0180000f, wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
 	midway_serial_pic_init(528);
-
-	INSTALL_SPEEDUP_1_ADDRESS(0x105c250, 0xff8189d0);
 }
 
 
@@ -575,10 +520,6 @@ DRIVER_INIT( revx )
 {
 	UINT8 *base;
 	int i, j;
-
-	/* common init */
-	/* set up code ROMs */
-	memcpy(midyunit_code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 
 	/* load the graphics ROMs -- quadruples */
 	midyunit_gfx_rom = base = memory_region(REGION_GFX1);

@@ -147,31 +147,31 @@ WRITE_HANDLER ( xyonix_io_w )
 
 /* Mem / Port Maps ***********************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xffff, xyonix_vidram_w, &xyonix_vidram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(xyonix_vidram_w) AM_BASE(&xyonix_vidram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( port_readmem )
-	{ 0x20, 0x21, IORP_NOP },	/* SN76496 ready signal */
-	{ 0xe0, 0xe0, xyonix_io_r },
-MEMORY_END
+static ADDRESS_MAP_START( port_readmem, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x21) AM_READ(MRA8_NOP)	/* SN76496 ready signal */
+	AM_RANGE(0xe0, 0xe0) AM_READ(xyonix_io_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( port_writemem )
-	{ 0x20, 0x20, SN76496_0_w },
-	{ 0x21, 0x21, SN76496_1_w },
-	{ 0xe0, 0xe0, xyonix_io_w },
-	{ 0x40, 0x40, IOWP_NOP },	// NMI ack?
-	{ 0x50, 0x50, xyonix_irqack_w },
-	{ 0x60, 0x61, IOWP_NOP },	// crtc6845
-MEMORY_END
+static ADDRESS_MAP_START( port_writemem, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x21, 0x21) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(xyonix_io_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(MWA8_NOP)	// NMI ack?
+	AM_RANGE(0x50, 0x50) AM_WRITE(xyonix_irqack_w)
+	AM_RANGE(0x60, 0x61) AM_WRITE(MWA8_NOP)	// crtc6845
+ADDRESS_MAP_END
 
 /* Inputs Ports **************************************************************/
 
@@ -251,8 +251,8 @@ static MACHINE_DRIVER_START( xyonix )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,16000000 / 4)		 /* 4 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(port_readmem,port_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(port_readmem,port_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 	MDRV_CPU_PERIODIC_INT(irq0_line_assert,4*60)	/* ?? controls music tempo */
 

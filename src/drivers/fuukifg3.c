@@ -3,11 +3,11 @@
 						  -= Fuuki 32 Bit Games (FG-3) =-
 
 				driver by Paul Priest and David Haywood
-				based on fuuki16 by Luca Elia
+				based on fuukifg2 by Luca Elia
 
 Hardware is similar to FG-2 used for :
 "Go Go! Mile Smile", "Susume! Mile Smile (Japan)" & "Gyakuten!! Puzzle Bancho (Japan)"
-See fuuki16.c
+See fuukifg2.c
 
 Main  CPU	:	M68020
 
@@ -20,8 +20,6 @@ Year + Game
 
 --
 Notes so far:
-
-- Z80 isn't hooked up properly, unknown sound chips. Need hw specs (Being worked on, OPL4)
 
 - Dips, need DIP sheet.
 
@@ -93,11 +91,13 @@ FG-3J ROM-J 507KA0301P04       Rev:1.3
 #include "vidhrdw/generic.h"
 
 static int fuuki32_raster_enable = 1; /* Enabled by default */
+static data8_t fuuki32_shared_ram[16];
 
 // Described in src/vidhrdw/fuuki32.c
 extern data32_t *fuuki32_vram_0, *fuuki32_vram_1;
 extern data32_t *fuuki32_vram_2, *fuuki32_vram_3;
 extern data32_t *fuuki32_vregs, *fuuki32_priority, *fuuki32_tilebank;
+
 
 /* Functions defined in vidhrdw: */
 
@@ -183,79 +183,83 @@ FUUKI32_INPUT( 1 ) /* $810000.l Player Inputs */
 FUUKI32_INPUT( 2 ) /* $880000.l Dipswitches + Service */
 FUUKI32_INPUT( 3 ) /* $890000.l More Dipswitches */
 
-/* Fake sound return */
-static READ32_HANDLER( shared )
+/* Sound comms */
+static READ32_HANDLER( snd_020_r )
 {
-	if(offset==0)
-		return (0x00cd0000) | (fuuki32_vregs[offset] & 0xff00ffff); // Comms with sound
+	return fuuki32_shared_ram[offset*2]<<16 | fuuki32_shared_ram[(offset*2)+1];
+}
 
-	else return fuuki32_vregs[offset];
+static WRITE32_HANDLER( snd_020_w )
+{
+	if (!(mem_mask & 0x00ff0000))
+	{
+		fuuki32_shared_ram[offset*2] = data>>16;
+	}
+
+	if (!(mem_mask & 0x000000ff))
+	{
+		fuuki32_shared_ram[(offset*2)+1] = data & 0xff;
+	}
 }
 
 // Lines with empty comment are for debug only
 
-static MEMORY_READ32_START( fuuki32_readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-	{ 0x400000, 0x40ffff, MRA32_RAM }, // Work RAM
-	{ 0x500000, 0x501fff, MRA32_RAM }, // Tilemap 1
-	{ 0x502000, 0x503fff, MRA32_RAM }, // Tilemap 2
-	{ 0x504000, 0x505fff, MRA32_RAM }, // Tilemap bg
-	{ 0x506000, 0x507fff, MRA32_RAM }, // Tilemap bg2
-	{ 0x508000, 0x517fff, MRA32_RAM }, // More tilemap, or linescroll? Seems to be empty all of the time
-	{ 0x600000, 0x601fff, MRA32_RAM }, // Sprites
+static ADDRESS_MAP_START( fuuki32_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA32_RAM) // Work RAM
+	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA32_RAM) // Tilemap 1
+	AM_RANGE(0x502000, 0x503fff) AM_READ(MRA32_RAM) // Tilemap 2
+	AM_RANGE(0x504000, 0x505fff) AM_READ(MRA32_RAM) // Tilemap bg
+	AM_RANGE(0x506000, 0x507fff) AM_READ(MRA32_RAM) // Tilemap bg2
+	AM_RANGE(0x508000, 0x517fff) AM_READ(MRA32_RAM) // More tilemap, or linescroll? Seems to be empty all of the time
+	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA32_RAM) // Sprites
 
-	{ 0x700000, 0x703fff, MRA32_RAM }, // Palette
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA32_RAM) // Palette
 
-	{ 0x800000, 0x800003, io32_0_r }, // Coin
-	{ 0x810000, 0x810003, io32_1_r }, // Player Inputs
-	{ 0x880000, 0x880003, io32_2_r }, // Service + DIPS
-	{ 0x890000, 0x890003, io32_3_r }, // More DIPS
+	AM_RANGE(0x800000, 0x800003) AM_READ(io32_0_r) // Coin
+	AM_RANGE(0x810000, 0x810003) AM_READ(io32_1_r) // Player Inputs
+	AM_RANGE(0x880000, 0x880003) AM_READ(io32_2_r) // Service + DIPS
+	AM_RANGE(0x890000, 0x890003) AM_READ(io32_3_r) // More DIPS
 
-	{ 0x8c0000, 0x8c001f, MRA32_RAM },// Video Registers
+	AM_RANGE(0x8c0000, 0x8c001f) AM_READ(MRA32_RAM)// Video Registers
 
-/**/{ 0x8d0000, 0x8d0003, MRA32_RAM }, // Flipscreen Related
-/**/{ 0x8e0000, 0x8e0003, MRA32_RAM }, // Controls layer order
+/**/AM_RANGE(0x8d0000, 0x8d0003) AM_READ(MRA32_RAM) // Flipscreen Related
+/**/AM_RANGE(0x8e0000, 0x8e0003) AM_READ(MRA32_RAM) // Controls layer order
 
-	{ 0x903fe0, 0x903fff, shared }, // Shared with Z80, faked for now
-//	{ 0x903fe0, 0x903fe3, fuuki32_sound_command_r }, // Shared with Z80
-//	{ 0x903fe4, 0x903fff, MRA32_RAM }, // ??
-MEMORY_END
+	AM_RANGE(0x903fe0, 0x903fff) AM_READ(snd_020_r) // Shared with Z80
+//	AM_RANGE(0x903fe0, 0x903fe3) AM_READ(fuuki32_sound_command_r) // Shared with Z80
+//	AM_RANGE(0x903fe4, 0x903fff) AM_READ(MRA32_RAM) // ??
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( fuuki32_writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0x400000, 0x40ffff, MWA32_RAM }, // Work RAM
-	{ 0x500000, 0x501fff, fuuki32_vram_0_w, &fuuki32_vram_0 }, // Tilemap 1
-	{ 0x502000, 0x503fff, fuuki32_vram_1_w, &fuuki32_vram_1 }, // Tilemap 2
-	{ 0x504000, 0x505fff, fuuki32_vram_2_w, &fuuki32_vram_2 }, // Tilemap bg
-	{ 0x506000, 0x507fff, fuuki32_vram_3_w, &fuuki32_vram_3 }, // Tilemap bg2
-	{ 0x508000, 0x517fff, MWA32_RAM }, // More tilemap, or linescroll? Seems to be empty all of the time
+static ADDRESS_MAP_START( fuuki32_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA32_RAM) // Work RAM
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(fuuki32_vram_0_w) AM_BASE(&fuuki32_vram_0) // Tilemap 1
+	AM_RANGE(0x502000, 0x503fff) AM_WRITE(fuuki32_vram_1_w) AM_BASE(&fuuki32_vram_1) // Tilemap 2
+	AM_RANGE(0x504000, 0x505fff) AM_WRITE(fuuki32_vram_2_w) AM_BASE(&fuuki32_vram_2) // Tilemap bg
+	AM_RANGE(0x506000, 0x507fff) AM_WRITE(fuuki32_vram_3_w) AM_BASE(&fuuki32_vram_3) // Tilemap bg2
+	AM_RANGE(0x508000, 0x517fff) AM_WRITE(MWA32_RAM) // More tilemap, or linescroll? Seems to be empty all of the time
 
-	{ 0x600000, 0x601fff, MWA32_RAM, &spriteram32, &spriteram_size	},	// Sprites
-	{ 0x700000, 0x703fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 }, // Palette
+	AM_RANGE(0x600000, 0x601fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(paletteram32_xRRRRRGGGGGBBBBB_dword_w) AM_BASE(&paletteram32) // Palette
 
-	{ 0x800000, 0x800003, MWA32_NOP }, // Clear buffered inputs
-	{ 0x810000, 0x810003, MWA32_NOP }, // Clear buffered inputs
+	AM_RANGE(0x800000, 0x800003) AM_WRITE(MWA32_NOP) // Clear buffered inputs
+	AM_RANGE(0x810000, 0x810003) AM_WRITE(MWA32_NOP) // Clear buffered inputs
 
-	{ 0x8c0000, 0x8c001f, MWA32_RAM, &fuuki32_vregs },	// Video Registers
+	AM_RANGE(0x8c0000, 0x8c001f) AM_WRITE(MWA32_RAM) AM_BASE(&fuuki32_vregs)	// Video Registers
 
-	{ 0x8d0000, 0x8d0003, MWA32_RAM }, // Flipscreen Related
-	{ 0x8e0000, 0x8e0003, MWA32_RAM, &fuuki32_priority }, // Controls layer order
+	AM_RANGE(0x8d0000, 0x8d0003) AM_WRITE(MWA32_RAM) // Flipscreen Related
+	AM_RANGE(0x8e0000, 0x8e0003) AM_WRITE(MWA32_RAM) AM_BASE(&fuuki32_priority) // Controls layer order
 
-	{ 0x903fe0, 0x903fff, MWA32_RAM }, // Shared with Z80
-//	{ 0x903fe0, 0x903fe3, fuuki32_sound_command_w }, // Shared with Z80
-//	{ 0x903fe4, 0x903fff, MWA32_RAM }, // Shared with Z80
+	AM_RANGE(0x903fe0, 0x903fff) AM_WRITE(snd_020_w) // z80 comms
 
-	{ 0xa00000, 0xa00003, MWA32_RAM, &fuuki32_tilebank },
-MEMORY_END
+	AM_RANGE(0xa00000, 0xa00003) AM_WRITE(MWA32_RAM) AM_BASE(&fuuki32_tilebank)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 
-
 							Memory Maps - Sound CPU
-
-TODO: Everything
-What sound chip?
 
 ***************************************************************************/
 
@@ -263,37 +267,47 @@ static WRITE_HANDLER ( fuuki32_sound_bw_w )
 {
 	data8_t *rom = memory_region(REGION_CPU2);
 
-	cpu_setbank(1,rom + data * 0x4000);
+	cpu_setbank(1, rom + 0x10000 + (data * 0x8000));
 }
 
-static MEMORY_READ_START( fuuki32_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM		},	// ROM
-	{ 0x6000, 0x6fff, MRA_RAM		},	// RAM
-	{ 0x7ff0, 0x7ff0, soundlatch_r  },
-	{ 0x8000, 0xbfff, MRA_BANK1		},	// ROM
-MEMORY_END
+static READ_HANDLER( snd_z80_r )
+{
+	return fuuki32_shared_ram[offset];
+}
 
-static MEMORY_WRITE_START( fuuki32_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM		},	// ROM
-	{ 0x6000, 0x6fff, MWA_RAM		},	// RAM
-	{ 0x7ff0, 0x7ff0, soundlatch2_w  },
-	{ 0x8000, 0xbfff, MWA_ROM		},	// ROM
-MEMORY_END
+static WRITE_HANDLER( snd_z80_w )
+{
+	fuuki32_shared_ram[offset] = data;
+}
 
-static PORT_READ_START( fuuki32_sound_readport )
-	{ 0x40, 0x40, MRA_NOP }, // Status?
-PORT_END
+static ADDRESS_MAP_START( fuuki32_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM		)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM		)	// RAM
+	AM_RANGE(0x7ff0, 0x7fff) AM_READ(snd_z80_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1		)	// ROM
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( fuuki32_sound_writeport )
-	{ 0x00, 0x00, fuuki32_sound_bw_w },
-	{ 0x30, 0x30, MWA_NOP },
-	{ 0x40, 0x40, MWA_NOP },
-	{ 0x41, 0x41, MWA_NOP },
-	{ 0x42, 0x42, MWA_NOP },
-	{ 0x43, 0x43, MWA_NOP },
-	{ 0x44, 0x44, MWA_NOP },
-	{ 0x45, 0x45, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( fuuki32_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM		)	// RAM
+	AM_RANGE(0x7ff0, 0x7fff) AM_WRITE(snd_z80_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM		)	// ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fuuki32_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(YMF262_status_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fuuki32_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(fuuki32_sound_bw_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x40, 0x40) AM_WRITE(YMF262_register_A_0_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(YMF262_data_A_0_w)
+	AM_RANGE(0x42, 0x42) AM_WRITE(YMF262_register_B_0_w)
+	AM_RANGE(0x43, 0x43) AM_WRITE(YMF262_data_B_0_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(YMF278B_control_port_0_C_w)
+	AM_RANGE(0x45, 0x45) AM_WRITE(YMF278B_data_port_0_C_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -491,16 +505,39 @@ static INTERRUPT_GEN( fuuki32_interrupt )
 	}
 }
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static struct YMF278B_interface ymf278b_interface =
+{
+	1,
+	{ YMF278B_STD_CLOCK },
+	{ REGION_SOUND1 },
+	{ YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+static struct YMF262interface ymf262_interface =
+{
+	1,					/* 1 chip */
+	14318180,			/* X1 ? */
+	{ YAC512_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* channels A and B */
+	{ YAC512_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* channels C and D */
+	{ irqhandler },		/* irq */
+};
+
 static MACHINE_DRIVER_START( fuuki32 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 20000000) /* verified */
-	MDRV_CPU_MEMORY(fuuki32_readmem,fuuki32_writemem)
+	MDRV_CPU_PROGRAM_MAP(fuuki32_readmem,fuuki32_writemem)
 	MDRV_CPU_VBLANK_INT(fuuki32_interrupt,INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 6000000) /* verified */
-	MDRV_CPU_MEMORY(fuuki32_sound_readmem,fuuki32_sound_writemem)
-	MDRV_CPU_PORTS(fuuki32_sound_readport,fuuki32_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(fuuki32_sound_readmem,fuuki32_sound_writemem)
+	MDRV_CPU_IO_MAP(fuuki32_sound_readport,fuuki32_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -517,9 +554,9 @@ static MACHINE_DRIVER_START( fuuki32 )
 	MDRV_VIDEO_EOF(fuuki32)
 
 	/* sound hardware */
-//	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-//	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-//	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMF262, ymf262_interface)
+	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -555,8 +592,9 @@ ROM_START( asurabld )
 	ROM_LOAD32_BYTE( "pgm1.u3", 0x000002, 0x80000, CRC(35104452) SHA1(03cfd81429f8a945d5419c9750925bfa997d0607) )
 	ROM_LOAD32_BYTE( "pgm0.u4", 0x000003, 0x80000, CRC(68615497) SHA1(de93751f151f195a863dc6fe83b6e7ed8f99430a) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* Z80 */
+	ROM_REGION( 0x090000, REGION_CPU2, 0 ) /* Z80 */
 	ROM_LOAD( "srom.u7", 0x00000, 0x80000, CRC(bb1deb89) SHA1(b1c70abddc0b9a88beb69a592376ff69a7e091eb) )
+	ROM_RELOAD(          0x10000, 0x80000) /* for banks */
 
 	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* 0x0000000 - 0x03fffff empty */ /* spXX.uYY - XX is the bank number! */
@@ -578,7 +616,7 @@ ROM_START( asurabld )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE ) // background tiles
 	ROM_LOAD( "map.u5", 0x00000, 0x200000, CRC(e681155e) SHA1(458845b9c86df72685d92d0d4052aacc2fa7d1bd) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) // doesn't seem to be oki
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) // OPL4 samples
 	ROM_LOAD( "pcm.u6", 0x00000, 0x400000, CRC(ac72225a) SHA1(8d16399ed34ac5bd69dbf43b2de2b0db9ac1c610) )
 ROM_END
 
@@ -591,4 +629,4 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX( 1998, asurabld,	0, fuuki32, asurabld, 0, ROT0, "Fuuki", "Asura Blade - Sword of Dynasty (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, asurabld,	0, fuuki32, asurabld, 0, ROT0, "Fuuki", "Asura Blade - Sword of Dynasty (Japan)", GAME_IMPERFECT_GRAPHICS )

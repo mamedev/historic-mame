@@ -253,101 +253,101 @@ static READ_HANDLER( shareram_r )
 }
 #endif
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x4bff, MRA_RAM }, /* radar */
-	{ 0x5000, 0x53ff, MRA_RAM }, /* text layer */
-	{ 0x5800, 0x58ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_READ(MRA8_RAM) /* radar */
+	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM) /* text layer */
+	AM_RANGE(0x5800, 0x58ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
- 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4bff, MWA_RAM, &grchamp_radar },
-	{ 0x5000, 0x53ff, MWA_RAM, &videoram },
-	{ 0x5800, 0x583f, MWA_RAM, &colorram },
-	{ 0x5840, 0x58ff, MWA_RAM, &spriteram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(MWA8_RAM) AM_BASE(&grchamp_radar)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram)
+	AM_RANGE(0x5800, 0x583f) AM_WRITE(MWA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0x5840, 0x58ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_3_r },		/* accel */
-	{ 0x01, 0x01, PC3259_0_r },
-	{ 0x02, 0x02, grchamp_port_0_r },	/* comm */
-	{ 0x03, 0x03, input_port_4_r },		/* wheel */
-	{ 0x00, 0x03, grchamp_port_0_r },	/* scanline read, cpu2 read, etc */
-	{ 0x04, 0x04, input_port_0_r },		/* DSWA */
-	{ 0x05, 0x05, input_port_1_r },		/* DSWB */
-	{ 0x06, 0x06, input_port_2_r },		/* tilt, coin, reset HS, etc */
-	{ 0x09, 0x09, PC3259_1_r },
-	{ 0x11, 0x11, PC3259_2_r },
-	{ 0x19, 0x19, PC3259_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_3_r)		/* accel */
+	AM_RANGE(0x01, 0x01) AM_READ(PC3259_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(grchamp_port_0_r)	/* comm */
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_4_r)		/* wheel */
+	AM_RANGE(0x00, 0x03) AM_READ(grchamp_port_0_r)	/* scanline read, cpu2 read, etc */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_0_r)		/* DSWA */
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_1_r)		/* DSWB */
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_2_r)		/* tilt, coin, reset HS, etc */
+	AM_RANGE(0x09, 0x09) AM_READ(PC3259_1_r)
+	AM_RANGE(0x11, 0x11) AM_READ(PC3259_2_r)
+	AM_RANGE(0x19, 0x19) AM_READ(PC3259_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, grchamp_control0_w },
-	{ 0x01, 0x01, PC3259_control_w }, // ?
-	{ 0x02, 0x02, grchamp_player_xpos_w },
-	{ 0x03, 0x03, grchamp_player_ypos_w },
-	{ 0x04, 0x04, grchamp_tile_select_w },
-	{ 0x07, 0x07, grchamp_rain_xpos_w },
-	{ 0x08, 0x08, grchamp_rain_ypos_w },
-	{ 0x09, 0x09, grchamp_coinled_w },
-	{ 0x0a, 0x0a, MWA_NOP }, // ?
-	{ 0x0d, 0x0d, MWA_NOP }, // watchdog?
-	{ 0x0e, 0x0e, grchamp_sound_w },
-	{ 0x10, 0x13, grchamp_comm_w },
-	{ 0x20, 0x20, grchamp_led_data0_w },
-	{ 0x24, 0x24, grchamp_led_data1_w },
-	{ 0x28, 0x28, grchamp_led_data2_w },
-	{ 0x2c, 0x2c, grchamp_led_data3_w },
-PORT_END
-
-/***************************************************************************/
-
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x37ff, MRA_RAM }, /* tilemaps */
-	{ 0x3800, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5000, 0x6fff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( writemem2 )
- 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x37ff, grchamp_videoram_w, &grchamp_videoram },
-	{ 0x3800, 0x3fff, MWA_RAM },
-	{ 0x4000, 0x43ff, MWA_RAM }, /* working ram */
-	{ 0x5000, 0x6fff, MWA_ROM },
-MEMORY_END
-
-
-static PORT_READ_START( readport2 )
-	{ 0x00, 0x03, grchamp_port_1_r },
-PORT_END
-
-static PORT_WRITE_START( writeport2 )
-	{ 0x00, 0x0f, grchamp_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(grchamp_control0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(PC3259_control_w) // ?
+	AM_RANGE(0x02, 0x02) AM_WRITE(grchamp_player_xpos_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(grchamp_player_ypos_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(grchamp_tile_select_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(grchamp_rain_xpos_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(grchamp_rain_ypos_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(grchamp_coinled_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(MWA8_NOP) // ?
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(MWA8_NOP) // watchdog?
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(grchamp_sound_w)
+	AM_RANGE(0x10, 0x13) AM_WRITE(grchamp_comm_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(grchamp_led_data0_w)
+	AM_RANGE(0x24, 0x24) AM_WRITE(grchamp_led_data1_w)
+	AM_RANGE(0x28, 0x28) AM_WRITE(grchamp_led_data2_w)
+	AM_RANGE(0x2c, 0x2c) AM_WRITE(grchamp_led_data3_w)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5000, 0x5000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM) /* tilemaps */
+	AM_RANGE(0x3800, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x6fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
- 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4800, AY8910_control_port_0_w },
-	{ 0x4801, 0x4801, AY8910_write_port_0_w },
-	{ 0x4802, 0x4802, AY8910_control_port_1_w },
-	{ 0x4803, 0x4803, AY8910_write_port_1_w },
-	{ 0x4804, 0x4804, AY8910_control_port_2_w },
-	{ 0x4805, 0x4805, AY8910_write_port_2_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x37ff) AM_WRITE(grchamp_videoram_w) AM_BASE(&grchamp_videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM) /* working ram */
+	AM_RANGE(0x5000, 0x6fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READ(grchamp_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x0f) AM_WRITE(grchamp_port_1_w)
+ADDRESS_MAP_END
+
+/***************************************************************************/
+
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x5000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x4801, 0x4801) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4802, 0x4802) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x4803, 0x4803) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x4804, 0x4804) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x4805, 0x4805) AM_WRITE(AY8910_write_port_2_w)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -378,18 +378,18 @@ static MACHINE_DRIVER_START( grchamp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000) /* ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 6000000) /* ? */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
-	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	MDRV_CPU_IO_MAP(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)	/* irq's are triggered from the main cpu */
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 3 MHz (confirmed) */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,75)		/* irq's are triggered every 75 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)

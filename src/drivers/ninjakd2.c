@@ -314,64 +314,64 @@ WRITE_HANDLER( ninjakd2_pcm_play_w )
 		sample_start(0,i,0);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc000, input_port_2_r },
-	{ 0xc001, 0xc001, input_port_0_r },
-	{ 0xc002, 0xc002, input_port_1_r },
-	{ 0xc003, 0xc003, input_port_3_r },
-	{ 0xc004, 0xc004, input_port_4_r },
-	{ 0xc200, 0xc200, MRA_RAM },
-	{ 0xc201, 0xc201, MRA_RAM },		// unknown but used
-	{ 0xc202, 0xc202, ninjakd2_bankselect_r },
-	{ 0xc203, 0xc203, MRA_RAM },
-	{ 0xc208, 0xc209, MRA_RAM },
-	{ 0xc20a, 0xc20b, MRA_RAM },
-	{ 0xc20c, 0xc20c, MRA_RAM },
-	{ 0xc800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_2_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_0_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_1_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)
+	AM_RANGE(0xc200, 0xc200) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc201, 0xc201) AM_READ(MRA8_RAM)		// unknown but used
+	AM_RANGE(0xc202, 0xc202) AM_READ(ninjakd2_bankselect_r)
+	AM_RANGE(0xc203, 0xc203) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc208, 0xc209) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc20a, 0xc20b) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc20c, 0xc20c) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc200, 0xc200, soundlatch_w },
-	{ 0xc201, 0xc201, MWA_RAM },		// unknown but used
-	{ 0xc202, 0xc202, ninjakd2_bankselect_w },
-	{ 0xc203, 0xc203, ninjakd2_sprite_overdraw_w, &ninjakd2_spoverdraw_ram },
-	{ 0xc208, 0xc209, MWA_RAM, &ninjakd2_scrollx_ram },
-	{ 0xc20a, 0xc20b, MWA_RAM, &ninjakd2_scrolly_ram },
-	{ 0xc20c, 0xc20c, ninjakd2_background_enable_w, &ninjakd2_bgenable_ram },
-	{ 0xc800, 0xcdff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xd000, 0xd7ff, ninjakd2_fgvideoram_w, &ninjakd2_foreground_videoram, &ninjakd2_foregroundram_size },
-	{ 0xd800, 0xdfff, ninjakd2_bgvideoram_w, &ninjakd2_background_videoram, &ninjakd2_backgroundram_size },
-	{ 0xe000, 0xf9ff, MWA_RAM },
-	{ 0xfa00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc200, 0xc200) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc201, 0xc201) AM_WRITE(MWA8_RAM)		// unknown but used
+	AM_RANGE(0xc202, 0xc202) AM_WRITE(ninjakd2_bankselect_w)
+	AM_RANGE(0xc203, 0xc203) AM_WRITE(ninjakd2_sprite_overdraw_w) AM_BASE(&ninjakd2_spoverdraw_ram)
+	AM_RANGE(0xc208, 0xc209) AM_WRITE(MWA8_RAM) AM_BASE(&ninjakd2_scrollx_ram)
+	AM_RANGE(0xc20a, 0xc20b) AM_WRITE(MWA8_RAM) AM_BASE(&ninjakd2_scrolly_ram)
+	AM_RANGE(0xc20c, 0xc20c) AM_WRITE(ninjakd2_background_enable_w) AM_BASE(&ninjakd2_bgenable_ram)
+	AM_RANGE(0xc800, 0xcdff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(ninjakd2_fgvideoram_w) AM_BASE(&ninjakd2_foreground_videoram) AM_SIZE(&ninjakd2_foregroundram_size)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(ninjakd2_bgvideoram_w) AM_BASE(&ninjakd2_background_videoram) AM_SIZE(&ninjakd2_backgroundram_size)
+	AM_RANGE(0xe000, 0xf9ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xfa00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( snd_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xefee, 0xefee, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xefee, 0xefee) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( snd_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, ninjakd2_pcm_play_w },	/* PCM SAMPLE OFFSET*256 */
-	{ 0xeff5, 0xeff6, MWA_NOP },			/* SAMPLE FREQUENCY ??? */
-	{ 0xefee, 0xefee, MWA_NOP },			/* CHIP COMMAND ?? */
-MEMORY_END
+static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(ninjakd2_pcm_play_w)	/* PCM SAMPLE OFFSET*256 */
+	AM_RANGE(0xeff5, 0xeff6) AM_WRITE(MWA8_NOP)			/* SAMPLE FREQUENCY ??? */
+	AM_RANGE(0xefee, 0xefee) AM_WRITE(MWA8_NOP)			/* CHIP COMMAND ?? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( snd_writeport )
-	{ 0x0000, 0x0000, YM2203_control_port_0_w },
-	{ 0x0001, 0x0001, YM2203_write_port_0_w },
-	{ 0x0080, 0x0080, YM2203_control_port_1_w },
-	{ 0x0081, 0x0081, YM2203_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( snd_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x0080, 0x0080) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x0081, 0x0081) AM_WRITE(YM2203_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -525,7 +525,7 @@ static MACHINE_DRIVER_START( ninjakd2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -550,13 +550,13 @@ static MACHINE_DRIVER_START( ninjak2a )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
-	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
-	MDRV_CPU_PORTS(0,snd_writeport)
+	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
+	MDRV_CPU_IO_MAP(0,snd_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(10000)

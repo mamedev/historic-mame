@@ -45,12 +45,12 @@ WRITE_HANDLER( sega_w )
 	}
 
 
-	/* MWA_ROM */
+	/* MWA8_ROM */
 	if		((off>=0x0000) && (off<=0xbfff))
 	{
 		;
 	}
-	/* MWA_RAM */
+	/* MWA8_RAM */
 	else if ((off>=0xc800) && (off<=0xefff))
 	{
 		sega_mem[off]=data;

@@ -327,31 +327,14 @@ WRITE_HANDLER( combascb_sh_irqtrigger_w )
 	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-READ_HANDLER( combasc_io_r )
+READ_HANDLER( combascb_io_r )
 {
-	if ((offset <= 0x403) && (offset >= 0x400))
-	{
-		switch (offset)
-		{
-			case 0x400:	return input_port_0_r(0); break;
-			case 0x401:	return input_port_1_r(0); break;
-			case 0x402:	return input_port_2_r(0); break;
-			case 0x403:	return input_port_3_r(0); break;
-		}
-	}
-	return banked_area[offset];
+	return readinputport(offset);
 }
 
-WRITE_HANDLER( combasc_io_w )
+WRITE_HANDLER( combascb_priority_w )
 {
-	switch (offset)
-	{
-		case 0x400: priority = data & 0x20; break;
-		case 0x800: combascb_sh_irqtrigger_w(0, data); break;
-		case 0xc00:	combasc_vreg_w(0, data); break;
-		default:
-			combasc_io_ram[offset] = data;
-	}
+	priority = data & 0x20;
 }
 
 WRITE_HANDLER( combasc_bankselect_w )
@@ -413,14 +396,16 @@ WRITE_HANDLER( combascb_bankselect_w )
 
 		if (data == 0x1f)
 		{
-cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
-			memory_set_bankhandler_r (1, 0, combasc_io_r);/* IO RAM & Video Registers */
-			memory_set_bankhandler_w (1, 0, combasc_io_w);
+			cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+			install_mem_read_handler (0, 0x4400, 0x4403, combascb_io_r);/* IO RAM & Video Registers */
+			install_mem_write_handler(0, 0x4400, 0x4400, combascb_priority_w);
+			install_mem_write_handler(0, 0x4800, 0x4800, combascb_sh_irqtrigger_w);
+			install_mem_write_handler(0, 0x4c00, 0x4c00, combasc_vreg_w);
 		}
 		else
 		{
-			memory_set_bankhandler_r (1, 0, MRA_BANK1);	/* banked ROM */
-			memory_set_bankhandler_w (1, 0, MWA_ROM);
+			install_mem_read_handler (0, 0x4000, 0x7fff, MRA8_BANK1);	/* banked ROM */
+			install_mem_write_handler(0, 0x4000, 0x7fff, MWA8_ROM);
 		}
 	}
 }

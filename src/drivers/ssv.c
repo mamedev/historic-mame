@@ -282,35 +282,35 @@ NVRAM_HANDLER( ssv )
 //static READ16_HANDLER( fake_r )	{	return ssv_scroll[offset];	}
 
 #define SSV_READMEM( _ROM  )										\
-	{ 0x000000, 0x00ffff, MRA16_RAM				},	/*	RAM		*/	\
-	{ 0x100000, 0x13ffff, MRA16_RAM				},	/*	Sprites	*/	\
-	{ 0x140000, 0x15ffff, MRA16_RAM				},	/*	Palette	*/	\
-	{ 0x160000, 0x17ffff, MRA16_RAM				},	/*			*/	\
-	{ 0x1c0000, 0x1c0001, ssv_vblank_r			},	/*	Vblank?	*/	\
-/**/{ 0x1c0002, 0x1c007f, MRA16_RAM				},	/*	Scroll	*/	\
-	{ 0x210002, 0x210003, input_port_0_word_r	},	/*	DSW		*/	\
-	{ 0x210004, 0x210005, input_port_1_word_r	},	/*	DSW		*/	\
-	{ 0x210008, 0x210009, input_port_2_word_r	},	/*	P1		*/	\
-	{ 0x21000a, 0x21000b, input_port_3_word_r	},	/*	P2		*/	\
-	{ 0x21000c, 0x21000d, input_port_4_word_r	},	/*	Coins	*/	\
-	{ 0x21000e, 0x21000f, MRA16_NOP				},	/*			*/	\
-	{ 0x300000, 0x30007f, ES5506_data_0_word_r	},	/*	Sound	*/	\
-	{ _ROM,     0xffffff, MRA16_BANK1			},	/*	ROM		*/	\
-	/*{ 0x990000, 0x99007f, fake_r	},*/
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM				)	/*	RAM		*/	\
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM				)	/*	Sprites	*/	\
+	AM_RANGE(0x140000, 0x15ffff) AM_READ(MRA16_RAM				)	/*	Palette	*/	\
+	AM_RANGE(0x160000, 0x17ffff) AM_READ(MRA16_RAM				)	/*			*/	\
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(ssv_vblank_r			)	/*	Vblank?	*/	\
+/**/AM_RANGE(0x1c0002, 0x1c007f) AM_READ(MRA16_RAM				)	/*	Scroll	*/	\
+	AM_RANGE(0x210002, 0x210003) AM_READ(input_port_0_word_r	)	/*	DSW		*/	\
+	AM_RANGE(0x210004, 0x210005) AM_READ(input_port_1_word_r	)	/*	DSW		*/	\
+	AM_RANGE(0x210008, 0x210009) AM_READ(input_port_2_word_r	)	/*	P1		*/	\
+	AM_RANGE(0x21000a, 0x21000b) AM_READ(input_port_3_word_r	)	/*	P2		*/	\
+	AM_RANGE(0x21000c, 0x21000d) AM_READ(input_port_4_word_r	)	/*	Coins	*/	\
+	AM_RANGE(0x21000e, 0x21000f) AM_READ(MRA16_NOP				)	/*			*/	\
+	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*	Sound	*/	\
+	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*	ROM		*/	\
+	/*{ 0x990000, 0x99007f, fake_r	)*/
 
 #define SSV_WRITEMEM														\
-	{ 0x000000, 0x00ffff, MWA16_RAM						},	/*	RAM			*/	\
-	{ 0x100000, 0x13ffff, MWA16_RAM, &spriteram16		},	/*	Sprites		*/	\
-	{ 0x140000, 0x15ffff, paletteram16_xrgb_swap_word_w, &paletteram16	},		\
-	{ 0x160000, 0x17ffff, MWA16_RAM						},	/*				*/	\
-	{ 0x1c0000, 0x1c007f, ssv_scroll_w, &ssv_scroll		},	/*	Scroll		*/	\
-	{ 0x21000e, 0x21000f, ssv_lockout_w					},	/*	Lockout		*/	\
-	{ 0x210010, 0x210011, MWA16_NOP						},	/*				*/	\
-	{ 0x230000, 0x230071, MWA16_RAM, &ssv_irq_vectors	},	/*	IRQ Vectors	*/	\
-	{ 0x240000, 0x240071, ssv_irq_ack_w					},	/*	IRQ Ack.	*/	\
-	{ 0x260000, 0x260001, ssv_irq_enable_w				},	/*	IRQ Enable	*/	\
-	{ 0x300000, 0x30007f, ES5506_data_0_word_w			},	/*	Sound		*/\
-	/*{ 0x990000, 0x99007f, ssv_scroll_w	},*/
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM						)	/*	RAM			*/	\
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	/*	Sprites		*/	\
+	AM_RANGE(0x140000, 0x15ffff) AM_WRITE(paletteram16_xrgb_swap_word_w) AM_BASE(&paletteram16	)		\
+	AM_RANGE(0x160000, 0x17ffff) AM_WRITE(MWA16_RAM						)	/*				*/	\
+	AM_RANGE(0x1c0000, 0x1c007f) AM_WRITE(ssv_scroll_w) AM_BASE(&ssv_scroll		)	/*	Scroll		*/	\
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_w					)	/*	Lockout		*/	\
+	AM_RANGE(0x210010, 0x210011) AM_WRITE(MWA16_NOP						)	/*				*/	\
+	AM_RANGE(0x230000, 0x230071) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_irq_vectors	)	/*	IRQ Vectors	*/	\
+	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w					)	/*	IRQ Ack.	*/	\
+	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w				)	/*	IRQ Enable	*/	\
+	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w			)	/*	Sound		*/\
+	/*AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w	)*/
 
 
 static data16_t *ssv_input_sel;
@@ -329,24 +329,24 @@ static READ16_HANDLER( drifto94_482022_r )
 	return 0x009b;
 }
 
-static MEMORY_READ16_START( drifto94_readmem )
-	{ 0x480000, 0x480000, MRA16_NOP				},	// ?
-	{ 0x482022, 0x482023, drifto94_482022_r		},	// ?? protection?
-	{ 0x482042, 0x482043, MRA16_NOP				},	// ?? protection?
-	{ 0x510000, 0x510001, drifto94_rand_r		},	// ??
-	{ 0x520000, 0x520001, drifto94_rand_r		},	// ??
-	{ 0x580000, 0x5807ff, MRA16_RAM				},	// NVRAM
+static ADDRESS_MAP_START( drifto94_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x480000, 0x480001) AM_READ(MRA16_NOP				)	// ?
+	AM_RANGE(0x482022, 0x482023) AM_READ(drifto94_482022_r		)	// ?? protection?
+	AM_RANGE(0x482042, 0x482043) AM_READ(MRA16_NOP				)	// ?? protection?
+	AM_RANGE(0x510000, 0x510001) AM_READ(drifto94_rand_r		)	// ??
+	AM_RANGE(0x520000, 0x520001) AM_READ(drifto94_rand_r		)	// ??
+	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA16_RAM				)	// NVRAM
 	SSV_READMEM( 0xc00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( drifto94_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP				},	// ? 1 at the start
-	{ 0x400000, 0x47ffff, MWA16_RAM				},	// ?
-	{ 0x480000, 0x480001, MWA16_NOP				},	// ?
-	{ 0x482000, 0x485fff, MWA16_NOP				},	// ?
-	{ 0x500000, 0x500001, MWA16_NOP				},	// ??
-	{ 0x580000, 0x5807ff, MWA16_RAM, &ssv_nvram, &ssv_nvram_size	},	// NVRAM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( drifto94_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
+	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM				)	// ?
+	AM_RANGE(0x480000, 0x480001) AM_WRITE(MWA16_NOP				)	// ?
+	AM_RANGE(0x482000, 0x485fff) AM_WRITE(MWA16_NOP				)	// ?
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP				)	// ??
+	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -372,42 +372,42 @@ static READ16_HANDLER( hypreact_input_r )
 	return 0xffff;
 }
 
-static MEMORY_READ16_START( hypreact_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r		},	// Watchdog
-//	{ 0x280000, 0x280001, MRA16_NOP					},	// ? read at the start, value not used
-	{ 0xc00000, 0xc00001, hypreact_input_r			},	// Inputs
-	{ 0xc00006, 0xc00007, MRA16_RAM					},	//
-	{ 0xc00008, 0xc00009, MRA16_NOP					},	//
+static ADDRESS_MAP_START( hypreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r		)	// Watchdog
+//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP					)	// ? read at the start, value not used
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(hypreact_input_r			)	// Inputs
+	AM_RANGE(0xc00006, 0xc00007) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0xc00008, 0xc00009) AM_READ(MRA16_NOP					)	//
 	SSV_READMEM( 0xf00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( hypreact_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP					},	// ? 5 at the start
-	{ 0x21000e, 0x21000f, ssv_lockout_inv_w			},	// Inverted lockout lines
-	{ 0xc00006, 0xc00007, MWA16_RAM, &ssv_input_sel	},	// Inputs
-	{ 0xc00008, 0xc00009, MWA16_NOP					},	//
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( hypreact_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 5 at the start
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Inverted lockout lines
+	AM_RANGE(0xc00006, 0xc00007) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
+	AM_RANGE(0xc00008, 0xc00009) AM_WRITE(MWA16_NOP					)	//
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Hyper Reaction 2
 ***************************************************************************/
 
-static MEMORY_READ16_START( hypreac2_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r		},	// Watchdog
-//	{ 0x280000, 0x280001, MRA16_NOP					},	// ? read at the start, value not used
-	{ 0x500000, 0x500001, hypreact_input_r			},	// Inputs
-	{ 0x500002, 0x500003, hypreact_input_r			},	// (again?)
+static ADDRESS_MAP_START( hypreac2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r		)	// Watchdog
+//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP					)	// ? read at the start, value not used
+	AM_RANGE(0x500000, 0x500001) AM_READ(hypreact_input_r			)	// Inputs
+	AM_RANGE(0x500002, 0x500003) AM_READ(hypreact_input_r			)	// (again?)
 //	  0x540000, 0x540003  communication with another unit
 	SSV_READMEM( 0xe00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( hypreac2_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP					},	// ? 5 at the start
-	{ 0x21000e, 0x21000f, ssv_lockout_inv_w			},	// Inverted lockout lines
-	{ 0x520000, 0x520001, MWA16_RAM, &ssv_input_sel	},	// Inputs
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( hypreac2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 5 at the start
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Inverted lockout lines
+	AM_RANGE(0x520000, 0x520001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 //	  0x540000, 0x540003  communication with other units
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -416,81 +416,81 @@ MEMORY_END
 
 static READ16_HANDLER( srmp4_input_r );
 
-static MEMORY_READ16_START( janjans1_readmem )
-	{ 0x210006, 0x210007, MRA16_NOP					},
-	{ 0x800002, 0x800003, srmp4_input_r				},	// Inputs
+static ADDRESS_MAP_START( janjans1_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210006, 0x210007) AM_READ(MRA16_NOP					)
+	AM_RANGE(0x800002, 0x800003) AM_READ(srmp4_input_r				)	// Inputs
 	SSV_READMEM( 0xc00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( janjans1_writemem )
-	{ 0x210000, 0x210001, MWA16_NOP					},	// koikois2 but not janjans1
-//	{ 0x210002, 0x210003, MWA16_NOP					},	// ? 1 at the start
-	{ 0x800000, 0x800001, MWA16_RAM, &ssv_input_sel	},	// Inputs
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( janjans1_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_WRITE(MWA16_NOP					)	// koikois2 but not janjans1
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 1 at the start
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Keith & Lucy
 ***************************************************************************/
 
-static MEMORY_READ16_START( keithlcy_readmem )
-	{ 0x21000e, 0x21000f, MRA16_NOP			},	//
+static ADDRESS_MAP_START( keithlcy_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x21000e, 0x21000f) AM_READ(MRA16_NOP			)	//
 	SSV_READMEM( 0xe00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( keithlcy_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP			},	// ? 1 at the start
-	{ 0x210010, 0x210011, MWA16_NOP			},	//
-	{ 0x400000, 0x47ffff, MWA16_RAM			},	// ?
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( keithlcy_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 1 at the start
+	AM_RANGE(0x210010, 0x210011) AM_WRITE(MWA16_NOP			)	//
+	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM			)	// ?
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Meosis Magic
 ***************************************************************************/
 
-static MEMORY_READ16_START( meosism_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog
-//	{ 0x280000, 0x280001, MRA16_NOP				},	// ? read once, value not used
-	{ 0x580000, 0x58ffff, MRA16_RAM				},	// NVRAM
+static ADDRESS_MAP_START( meosism_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
+//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP				)	// ? read once, value not used
+	AM_RANGE(0x580000, 0x58ffff) AM_READ(MRA16_RAM				)	// NVRAM
 	SSV_READMEM( 0xf00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( meosism_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP				},	// ? 5 at the start
-//	{ 0x500004, 0x500005, MWA16_NOP				},	// ? 0,58,18
-	{ 0x580000, 0x58ffff, MWA16_RAM, &ssv_nvram, &ssv_nvram_size	},	// NVRAM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( meosism_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 5 at the start
+//	AM_RANGE(0x500004, 0x500005) AM_WRITE(MWA16_NOP				)	// ? 0,58,18
+	AM_RANGE(0x580000, 0x58ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Monster Slider
 ***************************************************************************/
 
-static MEMORY_READ16_START( mslider_readmem )
-	{ 0x010000, 0x01ffff, MRA16_RAM			},	// More RAM
+static ADDRESS_MAP_START( mslider_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x01ffff) AM_READ(MRA16_RAM			)	// More RAM
 	SSV_READMEM( 0xf00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( mslider_writemem )
-	{ 0x010000, 0x01ffff, MWA16_RAM			},	// More RAM
-//	{ 0x210002, 0x210003, MWA16_NOP			},	// ? 1 at the start
-	{ 0x400000, 0x47ffff, MWA16_RAM			},	// ?
-//	{ 0x500000, 0x500001, MWA16_NOP			},	// ? ff at the start
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( mslider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x01ffff) AM_WRITE(MWA16_RAM			)	// More RAM
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 1 at the start
+	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM			)	// ?
+//	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP			)	// ? ff at the start
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 					Gourmet Battle Quiz Ryohrioh CooKing
 ***************************************************************************/
 
-static MEMORY_READ16_START( ryorioh_readmem )
+static ADDRESS_MAP_START( ryorioh_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xc00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( ryorioh_writemem )
-	{ 0x210000, 0x210001, watchdog_reset16_w	},	// Watchdog
-//	{ 0x210002, 0x210003, MWA16_NOP				},	// ? 1 at the start
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( ryorioh_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_WRITE(watchdog_reset16_w	)	// Watchdog
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -508,17 +508,17 @@ static READ16_HANDLER( srmp4_input_r )
 	return 0xffff;
 }
 
-static MEMORY_READ16_START( srmp4_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r		},	// Watchdog
-	{ 0xc0000a, 0xc0000b, srmp4_input_r				},	// Inputs
+static ADDRESS_MAP_START( srmp4_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r		)	// Watchdog
+	AM_RANGE(0xc0000a, 0xc0000b) AM_READ(srmp4_input_r				)	// Inputs
 	SSV_READMEM( 0xf00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( srmp4_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP					},	// ? 1,5 at the start
-	{ 0xc0000e, 0xc0000f, MWA16_RAM, &ssv_input_sel	},	// Inputs
-	{ 0xc00010, 0xc00011, MWA16_NOP					},	//
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( srmp4_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 1,5 at the start
+	AM_RANGE(0xc0000e, 0xc0000f) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
+	AM_RANGE(0xc00010, 0xc00011) AM_WRITE(MWA16_NOP					)	//
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -556,40 +556,40 @@ static READ16_HANDLER( srmp7_input_r )
 	return 0xffff;
 }
 
-static MEMORY_READ16_START( srmp7_readmem )
-	{ 0x010000, 0x050faf, MRA16_RAM				},	// More RAM
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog
-	{ 0x300076, 0x300077, srmp7_irqv_r			},	// Sound
+static ADDRESS_MAP_START( srmp7_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x050faf) AM_READ(MRA16_RAM				)	// More RAM
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
+	AM_RANGE(0x300076, 0x300077) AM_READ(srmp7_irqv_r			)	// Sound
 //	  0x540000, 0x540003, related to lev 5 irq?
-	{ 0x600000, 0x600001, srmp7_input_r			},	// Inputs
+	AM_RANGE(0x600000, 0x600001) AM_READ(srmp7_input_r			)	// Inputs
 	SSV_READMEM( 0xc00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( srmp7_writemem )
-	{ 0x010000, 0x050faf, MWA16_RAM					},	// More RAM
-//	{ 0x210002, 0x210003, MWA16_NOP					},	// ? 0,4 at the start
-	{ 0x21000e, 0x21000f, ssv_lockout_inv_w			},	// Coin Counters / Lockouts
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( srmp7_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x050faf) AM_WRITE(MWA16_RAM					)	// More RAM
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 0,4 at the start
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Coin Counters / Lockouts
 //	  0x540000, 0x540003, related to lev 5 irq?
-	{ 0x580000, 0x580001, srmp7_sound_bank_w		},	// Sound Bank
-	{ 0x680000, 0x680001, MWA16_RAM, &ssv_input_sel	},	// Inputs
+	AM_RANGE(0x580000, 0x580001) AM_WRITE(srmp7_sound_bank_w		)	// Sound Bank
+	AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Survival Arts
 ***************************************************************************/
 
-static MEMORY_READ16_START( survarts_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog
-//	{ 0x290000, 0x290001, MRA16_NOP				},	// ?
-//	{ 0x2a0000, 0x2a0001, MRA16_NOP				},	// ?
-	{ 0x500008, 0x500009, input_port_5_word_r	},	// Extra Buttons
+static ADDRESS_MAP_START( survarts_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
+//	AM_RANGE(0x290000, 0x290001) AM_READ(MRA16_NOP				)	// ?
+//	AM_RANGE(0x2a0000, 0x2a0001) AM_READ(MRA16_NOP				)	// ?
+	AM_RANGE(0x500008, 0x500009) AM_READ(input_port_5_word_r	)	// Extra Buttons
 	SSV_READMEM( 0xf00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( survarts_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP				},	// ? 0,4 at the start
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( survarts_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 0,4 at the start
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -629,53 +629,53 @@ static WRITE16_HANDLER( sxyreact_motor_w )
 //	usrintf_showmessage("%04X",data);	// 8 = motor on; 0 = motor off
 }
 
-static MEMORY_READ16_START( sxyreact_readmem )
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog
-	{ 0x500002, 0x500003, sxyreact_ballswitch_r	},	// ?
-	{ 0x500004, 0x500005, sxyreact_dial_r		},	// Dial Value (serial)
-	{ 0x580000, 0x58ffff, MRA16_RAM				},	// NVRAM
+static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
+	AM_RANGE(0x500002, 0x500003) AM_READ(sxyreact_ballswitch_r	)	// ?
+	AM_RANGE(0x500004, 0x500005) AM_READ(sxyreact_dial_r		)	// Dial Value (serial)
+	AM_RANGE(0x580000, 0x58ffff) AM_READ(MRA16_RAM				)	// NVRAM
 	SSV_READMEM( 0xe00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( sxyreact_writemem )
-//	{ 0x210002, 0x210003, MWA16_NOP				},	// ? 1 at the start
-	{ 0x21000e, 0x21000f, ssv_lockout_inv_w		},	// Inverted lockout lines
-	{ 0x520000, 0x520001, sxyreact_dial_w		},	// Dial Value (advance 1 bit)
-	{ 0x520004, 0x520005, sxyreact_motor_w		},	// Dial Motor?
-	{ 0x580000, 0x58ffff, MWA16_RAM, &ssv_nvram, &ssv_nvram_size	},	// NVRAM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( sxyreact_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w		)	// Inverted lockout lines
+	AM_RANGE(0x520000, 0x520001) AM_WRITE(sxyreact_dial_w		)	// Dial Value (advance 1 bit)
+	AM_RANGE(0x520004, 0x520005) AM_WRITE(sxyreact_motor_w		)	// Dial Motor?
+	AM_RANGE(0x580000, 0x58ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Twin Eagle II
 ***************************************************************************/
 
-static MEMORY_READ16_START( twineag2_readmem )
-	{ 0x010000, 0x03ffff, MRA16_RAM				},	// More RAM
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog (also value is cmp.b with mem 8)
-	{ 0x482022, 0x482023, drifto94_482022_r		},	// ?? protection ??
+static ADDRESS_MAP_START( twineag2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x03ffff) AM_READ(MRA16_RAM				)	// More RAM
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog (also value is cmp.b with mem 8)
+	AM_RANGE(0x482022, 0x482023) AM_READ(drifto94_482022_r		)	// ?? protection ??
 	SSV_READMEM( 0xe00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( twineag2_writemem )
-	{ 0x010000, 0x03ffff, MWA16_RAM				},	// More RAM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( twineag2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x03ffff) AM_WRITE(MWA16_RAM				)	// More RAM
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 									Ultra X
 ***************************************************************************/
 
-static MEMORY_READ16_START( ultrax_readmem )
-	{ 0x010000, 0x03ffff, MRA16_RAM				},	// More RAM
-	{ 0x210000, 0x210001, watchdog_reset16_r	},	// Watchdog (also value is cmp.b with memory address 8)
+static ADDRESS_MAP_START( ultrax_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x03ffff) AM_READ(MRA16_RAM				)	// More RAM
+	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog (also value is cmp.b with memory address 8)
 	SSV_READMEM( 0xe00000 )
-MEMORY_END
-static MEMORY_WRITE16_START( ultrax_writemem )
-	{ 0x010000, 0x03ffff, MWA16_RAM			},	// More RAM
-//	{ 0x210002, 0x210003, MWA16_NOP			},	// ? 2,6 at the start
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( ultrax_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x010000, 0x03ffff) AM_WRITE(MWA16_RAM			)	// More RAM
+//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 2,6 at the start
 	SSV_WRITEMEM
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -2718,7 +2718,7 @@ static MACHINE_DRIVER_START( drifto94 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(drifto94_readmem, drifto94_writemem)
+	MDRV_CPU_PROGRAM_MAP(drifto94_readmem, drifto94_writemem)
 
 	MDRV_NVRAM_HANDLER(ssv)
 
@@ -2732,7 +2732,7 @@ static MACHINE_DRIVER_START( hypreact )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(hypreact_readmem, hypreact_writemem)
+	MDRV_CPU_PROGRAM_MAP(hypreact_readmem, hypreact_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(8, 0x148-1, 16, 0xf0-1)
@@ -2744,7 +2744,7 @@ static MACHINE_DRIVER_START( hypreac2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(hypreac2_readmem, hypreac2_writemem)
+	MDRV_CPU_PROGRAM_MAP(hypreac2_readmem, hypreac2_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
@@ -2756,7 +2756,7 @@ static MACHINE_DRIVER_START( janjans1 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(janjans1_readmem, janjans1_writemem)
+	MDRV_CPU_PROGRAM_MAP(janjans1_readmem, janjans1_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -2768,7 +2768,7 @@ static MACHINE_DRIVER_START( keithlcy )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(keithlcy_readmem, keithlcy_writemem)
+	MDRV_CPU_PROGRAM_MAP(keithlcy_readmem, keithlcy_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
@@ -2780,7 +2780,7 @@ static MACHINE_DRIVER_START( meosism )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(meosism_readmem, meosism_writemem)
+	MDRV_CPU_PROGRAM_MAP(meosism_readmem, meosism_writemem)
 
 	MDRV_NVRAM_HANDLER(ssv)
 
@@ -2794,7 +2794,7 @@ static MACHINE_DRIVER_START( mslider )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mslider_readmem, mslider_writemem)
+	MDRV_CPU_PROGRAM_MAP(mslider_readmem, mslider_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -2806,7 +2806,7 @@ static MACHINE_DRIVER_START( ryorioh )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(ryorioh_readmem, ryorioh_writemem)
+	MDRV_CPU_PROGRAM_MAP(ryorioh_readmem, ryorioh_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -2818,7 +2818,7 @@ static MACHINE_DRIVER_START( srmp4 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(srmp4_readmem, srmp4_writemem)
+	MDRV_CPU_PROGRAM_MAP(srmp4_readmem, srmp4_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
@@ -2830,7 +2830,7 @@ static MACHINE_DRIVER_START( srmp7 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(srmp7_readmem, srmp7_writemem)
+	MDRV_CPU_PROGRAM_MAP(srmp7_readmem, srmp7_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -2842,7 +2842,7 @@ static MACHINE_DRIVER_START( stmblade )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(drifto94_readmem, drifto94_writemem)
+	MDRV_CPU_PROGRAM_MAP(drifto94_readmem, drifto94_writemem)
 
 	MDRV_NVRAM_HANDLER(ssv)
 	/* video hardware */
@@ -2855,7 +2855,7 @@ static MACHINE_DRIVER_START( survarts )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(survarts_readmem, survarts_writemem)
+	MDRV_CPU_PROGRAM_MAP(survarts_readmem, survarts_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
@@ -2878,7 +2878,7 @@ static MACHINE_DRIVER_START( sxyreact )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(sxyreact_readmem, sxyreact_writemem)
+	MDRV_CPU_PROGRAM_MAP(sxyreact_readmem, sxyreact_writemem)
 
 	MDRV_NVRAM_HANDLER(ssv)
 
@@ -2892,7 +2892,7 @@ static MACHINE_DRIVER_START( twineag2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(twineag2_readmem, twineag2_writemem)
+	MDRV_CPU_PROGRAM_MAP(twineag2_readmem, twineag2_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -2904,7 +2904,7 @@ static MACHINE_DRIVER_START( ultrax )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(ultrax_readmem, ultrax_writemem)
+	MDRV_CPU_PROGRAM_MAP(ultrax_readmem, ultrax_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)

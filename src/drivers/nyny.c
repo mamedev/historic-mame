@@ -170,72 +170,72 @@ WRITE_HANDLER( snd_answer_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, nyny_videoram0_r }, // WE1 8k
-	{ 0x2000, 0x3fff, nyny_colourram0_r }, // WE3
-	{ 0x4000, 0x5fff, nyny_videoram1_r }, // WE2
-	{ 0x6000, 0x7fff, nyny_colourram1_r }, // WE4
-	{ 0x8000, 0x9fff, MRA_RAM }, // WE1 8k
-	{ 0xa000, 0xa007, MRA_RAM }, // SRAM
-	{ 0xa204, 0xa207, pia_0_r },
-	{ 0xa208, 0xa20b, pia_1_r },
-	{ 0xa300, 0xa300, snd_answer_r },
-	{ 0xa800, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM }, // WE2
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(nyny_videoram0_r) // WE1 8k
+	AM_RANGE(0x2000, 0x3fff) AM_READ(nyny_colourram0_r) // WE3
+	AM_RANGE(0x4000, 0x5fff) AM_READ(nyny_videoram1_r) // WE2
+	AM_RANGE(0x6000, 0x7fff) AM_READ(nyny_colourram1_r) // WE4
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM) // WE1 8k
+	AM_RANGE(0xa000, 0xa007) AM_READ(MRA8_RAM) // SRAM
+	AM_RANGE(0xa204, 0xa207) AM_READ(pia_0_r)
+	AM_RANGE(0xa208, 0xa20b) AM_READ(pia_1_r)
+	AM_RANGE(0xa300, 0xa300) AM_READ(snd_answer_r)
+	AM_RANGE(0xa800, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM) // WE2
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, nyny_videoram0_w }, // WE1
-	{ 0x2000, 0x3fff, nyny_colourram0_w }, // WE3
-	{ 0x4000, 0x5fff, nyny_videoram1_w }, // WE2
-	{ 0x6000, 0x7fff, nyny_colourram1_w }, // WE4
-	{ 0x8000, 0x9fff, MWA_RAM }, // WE1
-	{ 0xa000, 0xa007, MWA_RAM, &generic_nvram, &generic_nvram_size }, // SRAM (coin counter, shown when holding F2)
-	{ 0xa204, 0xa207, pia_0_w },
-	{ 0xa208, 0xa20b, pia_1_w },
-	{ 0xa300, 0xa300, shared_w_irq },
-	{ 0xa100, 0xa100, crtc6845_address_w },
-	{ 0xa101, 0xa101, crtc6845_register_w },
-	{ 0xa800, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM }, // WE2
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x9001, 0x9001, soundlatch_r },
-	{ 0xa000, 0xa001, input_port_4_r },
-	{ 0xb000, 0xb000, AY8910_read_port_0_r },
-	{ 0xb002, 0xb002, AY8910_read_port_1_r },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(nyny_videoram0_w) // WE1
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(nyny_colourram0_w) // WE3
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(nyny_videoram1_w) // WE2
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(nyny_colourram1_w) // WE4
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM) // WE1
+	AM_RANGE(0xa000, 0xa007) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) // SRAM (coin counter, shown when holding F2)
+	AM_RANGE(0xa204, 0xa207) AM_WRITE(pia_0_w)
+	AM_RANGE(0xa208, 0xa20b) AM_WRITE(pia_1_w)
+	AM_RANGE(0xa300, 0xa300) AM_WRITE(shared_w_irq)
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0xa101, 0xa101) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0xa800, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) // WE2
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x9001, 0x9001, snd_answer_w },
-	{ 0xb000, 0xb000, AY8910_write_port_0_w },
-	{ 0xb001, 0xb001, AY8910_control_port_0_w },
-	{ 0xb002, 0xb002, AY8910_write_port_1_w },
-	{ 0xb003, 0xb003, AY8910_control_port_1_w },
-	{ 0xd000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_READ(soundlatch_r)
+	AM_RANGE(0xa000, 0xa001) AM_READ(input_port_4_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xb002, 0xb002) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound2_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x9000, 0x9000, soundlatch2_r },
-	{ 0xa000, 0xa000, AY8910_read_port_2_r },
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
 
-static MEMORY_WRITE_START( sound2_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0xa000, 0xa000, AY8910_write_port_2_w },
-	{ 0xa001, 0xa001, AY8910_control_port_2_w },
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(snd_answer_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(soundlatch2_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(AY8910_read_port_2_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -342,14 +342,14 @@ static MACHINE_DRIVER_START( nyny )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1400000)	/* 1.40 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nyny_interrupt,2) /* game doesn't use video based irqs it's polling based */
 
 	MDRV_CPU_ADD(M6802,4000000/4)	/* 1 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(M6802,4000000/4)	/* 1 MHz */
-	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound2_readmem,sound2_writemem)
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

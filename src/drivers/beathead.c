@@ -202,10 +202,10 @@ static void update_interrupts(void)
 	if (irq_line_state != gen_int)
 	{
 		irq_line_state = gen_int;
-		if (irq_line_state != CLEAR_LINE)
+//		if (irq_line_state != CLEAR_LINE)
 			cpu_set_irq_line(0, ASAP_IRQ0, irq_line_state);
-		else
-			asap_set_irq_line(ASAP_IRQ0, irq_line_state);
+//		else
+//			asap_set_irq_line(ASAP_IRQ0, irq_line_state);
 	}
 }
 
@@ -340,44 +340,33 @@ static WRITE32_HANDLER( coin_count_w )
  *
  *************************************/
 
-static MEMORY_READ32_START( readmem )
-	{ 0x00000000, 0x0001ffff, MRA32_RAM },
-	{ 0x01800000, 0x01bfffff, MRA32_ROM },
-	{ 0x40000000, 0x400007ff, MRA32_RAM },
-	{ 0x41000000, 0x41000003, sound_data_r },
-	{ 0x41000100, 0x41000103, interrupt_control_r },
-	{ 0x41000200, 0x41000203, input_0_r },
-	{ 0x41000204, 0x41000207, input_1_r },
-	{ 0x41000300, 0x41000303, input_2_r },
-	{ 0x41000304, 0x41000307, input_3_r },
-	{ 0x42000000, 0x4201ffff, MRA32_RAM },
-	{ 0x43000000, 0x43000007, beathead_hsync_ram_r },
-	{ 0x8df80000, 0x8df80003, MRA32_NOP },	/* noisy x4 during scanline int */
-	{ 0x8f980000, 0x8f9fffff, MRA32_RAM },
-MEMORY_END
-
-
-static MEMORY_WRITE32_START( writemem )
-	{ 0x00000000, 0x0001ffff, MWA32_RAM, &ram_base },
-	{ 0x01800000, 0x01bfffff, MWA32_ROM, &rom_base },
-	{ 0x40000000, 0x400007ff, eeprom_data_w, (data32_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x41000000, 0x41000003, sound_data_w },
-	{ 0x41000100, 0x4100011f, interrupt_control_w },
-	{ 0x41000208, 0x4100020f, sound_reset_w },
-	{ 0x41000220, 0x41000227, coin_count_w },
-	{ 0x41000400, 0x41000403, MWA32_RAM, &beathead_palette_select },
-	{ 0x41000500, 0x41000503, eeprom_enable_w },
-	{ 0x41000600, 0x41000603, beathead_finescroll_w },
-	{ 0x41000700, 0x41000703, watchdog_reset32_w },
-	{ 0x42000000, 0x4201ffff, beathead_palette_w, &paletteram32 },
-	{ 0x43000000, 0x43000007, beathead_hsync_ram_w },
-	{ 0x8f380000, 0x8f3fffff, beathead_vram_latch_w },
-	{ 0x8f900000, 0x8f97ffff, beathead_vram_transparent_w },
-	{ 0x8f980000, 0x8f9fffff, MWA32_RAM, &videoram32 },
-	{ 0x8fb80000, 0x8fbfffff, beathead_vram_bulk_w },
-	{ 0x8fff8000, 0x8fff8003, MWA32_RAM, &beathead_vram_bulk_latch },
-	{ 0x9e280000, 0x9e2fffff, beathead_vram_copy_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_RAM AM_BASE(&ram_base)
+	AM_RANGE(0x01800000, 0x01bfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rom_base)
+	AM_RANGE(0x40000000, 0x400007ff) AM_READWRITE(MRA32_RAM, eeprom_data_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x41000000, 0x41000003) AM_READWRITE(sound_data_r, sound_data_w)
+	AM_RANGE(0x41000100, 0x41000103) AM_READ(interrupt_control_r)
+	AM_RANGE(0x41000100, 0x4100011f) AM_WRITE(interrupt_control_w)
+	AM_RANGE(0x41000200, 0x41000203) AM_READ(input_0_r)
+	AM_RANGE(0x41000204, 0x41000207) AM_READ(input_1_r)
+	AM_RANGE(0x41000208, 0x4100020f) AM_WRITE(sound_reset_w)
+	AM_RANGE(0x41000220, 0x41000227) AM_WRITE(coin_count_w)
+	AM_RANGE(0x41000300, 0x41000303) AM_READ(input_2_r)
+	AM_RANGE(0x41000304, 0x41000307) AM_READ(input_3_r)
+	AM_RANGE(0x41000400, 0x41000403) AM_WRITE(MWA32_RAM) AM_BASE(&beathead_palette_select)
+	AM_RANGE(0x41000500, 0x41000503) AM_WRITE(eeprom_enable_w)
+	AM_RANGE(0x41000600, 0x41000603) AM_WRITE(beathead_finescroll_w)
+	AM_RANGE(0x41000700, 0x41000703) AM_WRITE(watchdog_reset32_w)
+	AM_RANGE(0x42000000, 0x4201ffff) AM_READWRITE(MRA32_RAM, beathead_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x43000000, 0x43000007) AM_READWRITE(beathead_hsync_ram_r, beathead_hsync_ram_w)
+	AM_RANGE(0x8df80000, 0x8df80003) AM_READ(MRA32_NOP)	/* noisy x4 during scanline int */
+	AM_RANGE(0x8f380000, 0x8f3fffff) AM_WRITE(beathead_vram_latch_w)
+	AM_RANGE(0x8f900000, 0x8f97ffff) AM_WRITE(beathead_vram_transparent_w)
+	AM_RANGE(0x8f980000, 0x8f9fffff) AM_RAM AM_BASE(&videoram32)
+	AM_RANGE(0x8fb80000, 0x8fbfffff) AM_WRITE(beathead_vram_bulk_w)
+	AM_RANGE(0x8fff8000, 0x8fff8003) AM_WRITE(MWA32_RAM) AM_BASE(&beathead_vram_bulk_latch)
+	AM_RANGE(0x9e280000, 0x9e2fffff) AM_WRITE(beathead_vram_copy_w)
+ADDRESS_MAP_END
 
 
 
@@ -440,7 +429,7 @@ static MACHINE_DRIVER_START( beathead )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(ASAP, ATARI_CLOCK_14MHz)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
@@ -470,13 +459,11 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( beathead )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )			/* dummy ASAP region */
-
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )			/* 64k + 16k for 6502 code */
 	ROM_LOAD( "bhsnd.bin",  0x10000, 0x4000, CRC(dfd33f02) SHA1(479a4838c89691d5a4654a4cd84b6433a9e86109) )
 	ROM_CONTINUE(           0x04000, 0xc000 )
 
-	ROM_REGION32_LE( 0x400000, REGION_USER1, ROMREGION_DISPOSE )	/* 4MB for ASAP code */
+	ROM_REGION32_LE( 0x400000, REGION_USER1, 0 )	/* 4MB for ASAP code */
 	ROM_LOAD32_BYTE( "bhprog0.bin", 0x000000, 0x80000, CRC(87975721) SHA1(862cb3a290c829aedea26ee7100c50a12e9517e7) )
 	ROM_LOAD32_BYTE( "bhprog1.bin", 0x000001, 0x80000, CRC(25d89743) SHA1(9ff9a41355aa6914efc4a44909026e648a3c40f3) )
 	ROM_LOAD32_BYTE( "bhprog2.bin", 0x000002, 0x80000, CRC(87722609) SHA1(dbd766fa57f4528702a98db28ae48fb5d2a7f7df) )
@@ -545,9 +532,6 @@ static DRIVER_INIT( beathead )
 	atarijsa_init(1, 4, 2, 0x0040);
 	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarigen_init_6502_speedup(1, 0x4321, 0x4339);
-
-	/* copy the ROM data */
-	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 
 	/* prepare the speedups */
 	speedup_data = install_mem_read32_handler(0, 0x00000ae8, 0x00000aeb, speedup_r);

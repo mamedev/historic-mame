@@ -346,79 +346,79 @@ static WRITE16_HANDLER(fitfight_700000_w)
 		fitfight_700000_data = data;
 }
 
-static MEMORY_READ16_START( fitfight_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
+static ADDRESS_MAP_START( fitfight_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 
-	{ 0x200000, 0x200001, input_port_0_word_r },
-	{ 0x300000, 0x300001, input_port_1_word_r },	// for 'histryma' only
-	{ 0x400000, 0x400001, input_port_2_word_r },
-	{ 0x500000, 0x500001, input_port_3_word_r },
-//	{ 0x700000, 0x700001, xxxx }, /* see init */
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_1_word_r)	// for 'histryma' only
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_3_word_r)
+//	AM_RANGE(0x700000, 0x700001) AM_READ(xxxx) /* see init */
 
-	{ 0xb00000, 0xb0ffff, MRA16_RAM },
-	{ 0xc00000, 0xc003ff, MRA16_RAM },
-	{ 0xc00400, 0xc00fff, MRA16_RAM },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },
-	{ 0xe00000, 0xe0ffff, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0xb00000, 0xb0ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00000, 0xc003ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xd00000, 0xd007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xe00000, 0xe0ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fitfight_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
+static ADDRESS_MAP_START( fitfight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 
-	{ 0x100000, 0x100001, MWA16_RAM, &fof_100000 },
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
 
-	{ 0xb00000, 0xb03fff,  MWA16_RAM }, /* unused layer? */
-	{ 0xb04000, 0xb07fff,  fof_bak_tileram_w, &fof_bak_tileram },
-	{ 0xb08000, 0xb0bfff,  fof_mid_tileram_w, &fof_mid_tileram },
-	{ 0xb0c000, 0xb0ffff,  fof_txt_tileram_w, &fof_txt_tileram },
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) /* unused layer? */
+	AM_RANGE(0xb04000, 0xb07fff) AM_WRITE(fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
+	AM_RANGE(0xb08000, 0xb0bfff) AM_WRITE(fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
+	AM_RANGE(0xb0c000, 0xb0ffff) AM_WRITE(fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
 
-	{ 0x600000, 0x600001, MWA16_RAM, &fof_600000 },
-	{ 0x700000, 0x700001, fitfight_700000_w, &fof_700000 },
-	{ 0x800000, 0x800001, MWA16_RAM, &fof_800000 },
-	{ 0x900000, 0x900001, MWA16_RAM, &fof_900000 },
-	{ 0xa00000, 0xa00001, MWA16_RAM, &fof_a00000 },
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_600000)
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_900000)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_a00000)
 
-	{ 0xc00000, 0xc00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &fitfight_spriteram },
-	{ 0xe00000, 0xe0ffff, MWA16_RAM },
-MEMORY_END
+	AM_RANGE(0xc00000, 0xc00fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xd00000, 0xd007ff) AM_WRITE(MWA16_RAM) AM_BASE(&fitfight_spriteram)
+	AM_RANGE(0xe00000, 0xe0ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( bbprot_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
+static ADDRESS_MAP_START( bbprot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 
-	{ 0x300000, 0x300001, input_port_0_word_r },
-	{ 0x380000, 0x380001, input_port_1_word_r },
-	{ 0x400000, 0x400001, input_port_2_word_r },
-	{ 0x480000, 0x480001, input_port_3_word_r },
-	{ 0x700000, 0x700001, bbprot_700000_r },
+	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x380000, 0x380001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x480000, 0x480001) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x700000, 0x700001) AM_READ(bbprot_700000_r)
 
-	{ 0xb00000, 0xb0ffff, MRA16_RAM },
-	{ 0xc00000, 0xc003ff, MRA16_RAM },
-	{ 0xc00400, 0xc00fff, MRA16_RAM },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },
-	{ 0xe00000, 0xe0ffff, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0xb00000, 0xb0ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00000, 0xc003ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xd00000, 0xd007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xe00000, 0xe0ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( bbprot_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
+static ADDRESS_MAP_START( bbprot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 
-	{ 0x100000, 0x100001, MWA16_RAM, &fof_100000 },
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
 
-	{ 0xb00000, 0xb03fff,  MWA16_RAM }, /* unused layer? */
-	{ 0xb04000, 0xb07fff,  fof_bak_tileram_w, &fof_bak_tileram },
-	{ 0xb08000, 0xb0bfff,  fof_mid_tileram_w, &fof_mid_tileram },
-	{ 0xb0c000, 0xb0ffff,  fof_txt_tileram_w, &fof_txt_tileram },
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) /* unused layer? */
+	AM_RANGE(0xb04000, 0xb07fff) AM_WRITE(fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
+	AM_RANGE(0xb08000, 0xb0bfff) AM_WRITE(fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
+	AM_RANGE(0xb0c000, 0xb0ffff) AM_WRITE(fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
 
-	{ 0x600000, 0x600001, MWA16_RAM, &fof_600000 },
-	{ 0x700000, 0x700001, fitfight_700000_w, &fof_700000 },
-	{ 0x800000, 0x800001, MWA16_RAM, &fof_800000 },
-	{ 0x900000, 0x900001, MWA16_RAM, &fof_900000 },
-	{ 0xa00000, 0xa00001, MWA16_RAM, &fof_a00000 },
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_600000)
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_900000)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_a00000)
 
-	{ 0xc00000, 0xc03fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &fitfight_spriteram },
-	{ 0xe00000, 0xe0ffff, MWA16_RAM },
-MEMORY_END
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xd00000, 0xd007ff) AM_WRITE(MWA16_RAM) AM_BASE(&fitfight_spriteram)
+	AM_RANGE(0xe00000, 0xe0ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /* I've put the inputs the same way they can be read in the "test mode" */
 
@@ -893,7 +893,7 @@ static struct GfxDecodeInfo prot_gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( fitfight )
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(fitfight_readmem,fitfight_writemem)
+	MDRV_CPU_PROGRAM_MAP(fitfight_readmem,fitfight_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -914,7 +914,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbprot )
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(bbprot_readmem,bbprot_writemem)
+	MDRV_CPU_PROGRAM_MAP(bbprot_readmem,bbprot_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

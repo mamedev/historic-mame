@@ -139,54 +139,54 @@ static READ_HANDLER( speedup_r )
 
 /********************************************/
 
-static MEMORY_READ_START( parodius_readmem )
-	{ 0x0000, 0x07ff, bankedram_r },
-	{ 0x1837, 0x1837, speedup_r },
-	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x3f8c, 0x3f8c, input_port_0_r },
-	{ 0x3f8d, 0x3f8d, input_port_1_r },
-	{ 0x3f8e, 0x3f8e, input_port_4_r },
-	{ 0x3f8f, 0x3f8f, input_port_2_r },
-	{ 0x3f90, 0x3f90, input_port_3_r },
-	{ 0x3fa0, 0x3faf, K053244_r },
-	{ 0x3fc0, 0x3fc0, watchdog_reset_r },
-	{ 0x3fcc, 0x3fcd, parodius_sound_r },	/* K053260 */
-	{ 0x2000, 0x27ff, parodius_052109_053245_r },
-	{ 0x2000, 0x5fff, K052109_r },
-	{ 0x6000, 0x9fff, MRA_BANK1 },			/* banked ROM */
-	{ 0xa000, 0xffff, MRA_ROM },			/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( parodius_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(bankedram_r)
+	AM_RANGE(0x1837, 0x1837) AM_READ(speedup_r)
+	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3f8c, 0x3f8c) AM_READ(input_port_0_r)
+	AM_RANGE(0x3f8d, 0x3f8d) AM_READ(input_port_1_r)
+	AM_RANGE(0x3f8e, 0x3f8e) AM_READ(input_port_4_r)
+	AM_RANGE(0x3f8f, 0x3f8f) AM_READ(input_port_2_r)
+	AM_RANGE(0x3f90, 0x3f90) AM_READ(input_port_3_r)
+	AM_RANGE(0x3fa0, 0x3faf) AM_READ(K053244_r)
+	AM_RANGE(0x3fc0, 0x3fc0) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x3fcc, 0x3fcd) AM_READ(parodius_sound_r)	/* K053260 */
+	AM_RANGE(0x2000, 0x27ff) AM_READ(parodius_052109_053245_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(K052109_r)
+	AM_RANGE(0x6000, 0x9fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)			/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( parodius_writemem )
-	{ 0x0000, 0x07ff, bankedram_w, &ram },
-	{ 0x0800, 0x1fff, MWA_RAM },
-	{ 0x3fa0, 0x3faf, K053244_w },
-	{ 0x3fb0, 0x3fbf, K053251_w },
-	{ 0x3fc0, 0x3fc0, parodius_3fc0_w },
-	{ 0x3fc4, 0x3fc4, parodius_videobank_w },
-	{ 0x3fc8, 0x3fc8, parodius_sh_irqtrigger_w },
-	{ 0x3fcc, 0x3fcd, K053260_0_w },
-	{ 0x2000, 0x27ff, parodius_052109_053245_w },
-	{ 0x2000, 0x5fff, K052109_w },
-	{ 0x6000, 0x9fff, MWA_ROM },					/* banked ROM */
-	{ 0xa000, 0xffff, MWA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( parodius_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(bankedram_w) AM_BASE(&ram)
+	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3fa0, 0x3faf) AM_WRITE(K053244_w)
+	AM_RANGE(0x3fb0, 0x3fbf) AM_WRITE(K053251_w)
+	AM_RANGE(0x3fc0, 0x3fc0) AM_WRITE(parodius_3fc0_w)
+	AM_RANGE(0x3fc4, 0x3fc4) AM_WRITE(parodius_videobank_w)
+	AM_RANGE(0x3fc8, 0x3fc8) AM_WRITE(parodius_sh_irqtrigger_w)
+	AM_RANGE(0x3fcc, 0x3fcd) AM_WRITE(K053260_0_w)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(parodius_052109_053245_w)
+	AM_RANGE(0x2000, 0x5fff) AM_WRITE(K052109_w)
+	AM_RANGE(0x6000, 0x9fff) AM_WRITE(MWA8_ROM)					/* banked ROM */
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( parodius_readmem_sound )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( parodius_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf801, 0xf801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xfc00, 0xfc2f) AM_READ(K053260_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( parodius_writemem_sound )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, YM2151_register_port_0_w },
-	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( parodius_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(sound_arm_nmi_w)
+	AM_RANGE(0xfc00, 0xfc2f) AM_WRITE(K053260_0_w)
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -322,12 +322,12 @@ static MACHINE_DRIVER_START( parodius )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(KONAMI, 3000000)		/* 053248 */
-	MDRV_CPU_MEMORY(parodius_readmem,parodius_writemem)
+	MDRV_CPU_PROGRAM_MAP(parodius_readmem,parodius_writemem)
 	MDRV_CPU_VBLANK_INT(parodius_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(parodius_readmem_sound,parodius_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(parodius_readmem_sound,parodius_writemem_sound)
 								/* NMIs are triggered by the 053260 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -419,7 +419,7 @@ static MACHINE_INIT( parodius )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	konami_cpu_setlines_callback = parodius_banking;
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)parodius_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 

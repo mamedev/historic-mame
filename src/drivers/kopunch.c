@@ -61,45 +61,45 @@ static WRITE_HANDLER( kopunch_coin_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x6000, 0x63ff, kopunch_videoram_w, &videoram },
-	{ 0x7000, 0x70ff, kopunch_videoram2_w, &kopunch_videoram2 },
-	{ 0x7100, 0x7aff, MWA_RAM },	// ???
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(kopunch_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x7000, 0x70ff) AM_WRITE(kopunch_videoram2_w) AM_BASE(&kopunch_videoram2)
+	AM_RANGE(0x7100, 0x7aff) AM_WRITE(MWA8_RAM)	// ???
+ADDRESS_MAP_END
 
 static READ_HANDLER( pip_r )
 {
 	return rand();
 }
 
-static PORT_READ_START( readport )
-	{ 0x30, 0x30, input_port_0_r },
-	{ 0x31, 0x32, kopunch_in_r },
-	{ 0x3a, 0x3a, input_port_2_r },
-	{ 0x3e, 0x3e, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x30, 0x30) AM_READ(input_port_0_r)
+	AM_RANGE(0x31, 0x32) AM_READ(kopunch_in_r)
+	AM_RANGE(0x3a, 0x3a) AM_READ(input_port_2_r)
+	AM_RANGE(0x3e, 0x3e) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x33, 0x33, IOWP_NOP },	// ???
-	{ 0x34, 0x34, kopunch_coin_w },
-	{ 0x35, 0x35, IOWP_NOP },	// ???
-	{ 0x36, 0x36, IOWP_NOP },	// ???
-	{ 0x37, 0x37, IOWP_NOP },	// ???
-	{ 0x38, 0x38, kopunch_lamp_w },
-	{ 0x39, 0x39, IOWP_NOP },	// ???
-	{ 0x3b, 0x3b, IOWP_NOP },	// ???
-	{ 0x3c, 0x3c, kopunch_scroll_x_w },
-	{ 0x3d, 0x3d, kopunch_scroll_y_w },
-	{ 0x3e, 0x3e, kopunch_gfxbank_w },
-	{ 0x3f, 0x3f, IOWP_NOP },	// ???
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x33, 0x33) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x34, 0x34) AM_WRITE(kopunch_coin_w)
+	AM_RANGE(0x35, 0x35) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x36, 0x36) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x37, 0x37) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x38, 0x38) AM_WRITE(kopunch_lamp_w)
+	AM_RANGE(0x39, 0x39) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x3b, 0x3b) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x3c, 0x3c) AM_WRITE(kopunch_scroll_x_w)
+	AM_RANGE(0x3d, 0x3d) AM_WRITE(kopunch_scroll_y_w)
+	AM_RANGE(0x3e, 0x3e) AM_WRITE(kopunch_gfxbank_w)
+	AM_RANGE(0x3f, 0x3f) AM_WRITE(MWA8_NOP)	// ???
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( kopunch )
@@ -182,8 +182,8 @@ static MACHINE_DRIVER_START( kopunch )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 4000000)	/* 4 MHz ???? appears to use 8080 instructions, not z80 */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(kopunch_interrupt,4)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)

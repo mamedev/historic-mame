@@ -166,55 +166,55 @@ static READ_HANDLER ( raiden2_kludge_r )
 
 /* MEMORY MAPS */
 
-static MEMORY_READ_START( raiden2_readmem )
-	{ 0x00000, 0x003ff, MRA_RAM },
+static ADDRESS_MAP_START( raiden2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x003ff) AM_READ(MRA8_RAM)
 
 	/* I have my doubts these are really mapped here, protection? */
-	{ 0x00740, 0x00740, input_port_2_r }, // dip 1
-	{ 0x00741, 0x00741, input_port_3_r }, // dip 2
-	{ 0x00744, 0x00744, input_port_0_r }, // player 1
-	{ 0x00745, 0x00745, input_port_1_r }, // player 2
-	{ 0x0074b, 0x0074d, input_port_4_r }, // start buttons
-	{ 0x00400, 0x007ff, raiden2_kludge_r },
+	AM_RANGE(0x00740, 0x00740) AM_READ(input_port_2_r) // dip 1
+	AM_RANGE(0x00741, 0x00741) AM_READ(input_port_3_r) // dip 2
+	AM_RANGE(0x00744, 0x00744) AM_READ(input_port_0_r) // player 1
+	AM_RANGE(0x00745, 0x00745) AM_READ(input_port_1_r) // player 2
+	AM_RANGE(0x0074b, 0x0074d) AM_READ(input_port_4_r) // start buttons
+	AM_RANGE(0x00400, 0x007ff) AM_READ(raiden2_kludge_r)
 
-	{ 0x00800, 0x0afff, MRA_RAM },
+	AM_RANGE(0x00800, 0x0afff) AM_READ(MRA8_RAM)
 
-	{ 0x0b000, 0x0bfff, MRA_RAM }, // protection?
+	AM_RANGE(0x0b000, 0x0bfff) AM_READ(MRA8_RAM) // protection?
 
-	{ 0x0c000, 0x0cfff, MRA_RAM }, // sprites
-	{ 0x0d000, 0x0d7ff, MRA_RAM }, // background
-	{ 0x0d800, 0x0dfff, MRA_RAM }, // middle
-	{ 0x0e800, 0x0f7ff, MRA_RAM }, // front
-	{ 0x0f800, 0x0ffff, MRA_RAM }, /* Stack area */
+	AM_RANGE(0x0c000, 0x0cfff) AM_READ(MRA8_RAM) // sprites
+	AM_RANGE(0x0d000, 0x0d7ff) AM_READ(MRA8_RAM) // background
+	AM_RANGE(0x0d800, 0x0dfff) AM_READ(MRA8_RAM) // middle
+	AM_RANGE(0x0e800, 0x0f7ff) AM_READ(MRA8_RAM) // front
+	AM_RANGE(0x0f800, 0x0ffff) AM_READ(MRA8_RAM) /* Stack area */
 
-	{ 0x10000, 0x1efff, MRA_RAM },
+	AM_RANGE(0x10000, 0x1efff) AM_READ(MRA8_RAM)
 
-	{ 0x1f000, 0x1ffff, MRA_RAM }, // palette
+	AM_RANGE(0x1f000, 0x1ffff) AM_READ(MRA8_RAM) // palette
 
-	{ 0x20000, 0x3ffff, MRA_BANK1 }, // rom
-	{ 0x40000, 0xfffff, MRA_BANK2 }, // rom
-MEMORY_END
+	AM_RANGE(0x20000, 0x3ffff) AM_READ(MRA8_BANK1) // rom
+	AM_RANGE(0x40000, 0xfffff) AM_READ(MRA8_BANK2) // rom
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( raiden2_writemem )
-	{ 0x00000, 0x003ff, MWA_RAM },
-//	{ 0x00400, 0x007ff, MWA_RAM },
-	{ 0x00800, 0x0afff, MWA_RAM },
+static ADDRESS_MAP_START( raiden2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x003ff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0x00400, 0x007ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x00800, 0x0afff) AM_WRITE(MWA8_RAM)
 
-	{ 0x0b000, 0x0bfff, MWA_RAM }, // protection?
+	AM_RANGE(0x0b000, 0x0bfff) AM_WRITE(MWA8_RAM) // protection?
 
-	{ 0x0c000, 0x0cfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x0d000, 0x0d7ff, raiden2_background_w, &back_data },
-	{ 0x0d800, 0x0dfff, raiden2_midground_w, &mid_data },
-	{ 0x0e000, 0x0e7ff, raiden2_foreground_w, &fore_data },
-	{ 0x0e800, 0x0f7ff, raiden2_text_w, &videoram },
-	{ 0x0f800, 0x0ffff, MWA_RAM }, /* Stack area */
+	AM_RANGE(0x0c000, 0x0cfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x0d000, 0x0d7ff) AM_WRITE(raiden2_background_w) AM_BASE(&back_data)
+	AM_RANGE(0x0d800, 0x0dfff) AM_WRITE(raiden2_midground_w) AM_BASE(&mid_data)
+	AM_RANGE(0x0e000, 0x0e7ff) AM_WRITE(raiden2_foreground_w) AM_BASE(&fore_data)
+	AM_RANGE(0x0e800, 0x0f7ff) AM_WRITE(raiden2_text_w) AM_BASE(&videoram)
+	AM_RANGE(0x0f800, 0x0ffff) AM_WRITE(MWA8_RAM) /* Stack area */
 
-	{ 0x10000, 0x1efff, MWA_RAM },
+	AM_RANGE(0x10000, 0x1efff) AM_WRITE(MWA8_RAM)
 
-	{ 0x1f000, 0x1ffff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
+	AM_RANGE(0x1f000, 0x1ffff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
 
-	{ 0x20000, 0xfffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x20000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /* INPUT PORTS */
 
@@ -334,7 +334,7 @@ static MACHINE_DRIVER_START( raiden2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,32000000/2) /* NEC V30 CPU, 32? Mhz */
-	MDRV_CPU_MEMORY(raiden2_readmem,raiden2_writemem)
+	MDRV_CPU_PROGRAM_MAP(raiden2_readmem,raiden2_writemem)
 	MDRV_CPU_VBLANK_INT(raiden2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

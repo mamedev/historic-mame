@@ -187,37 +187,37 @@ static WRITE_HANDLER( sprint8_attract_w ) {}
 static WRITE_HANDLER( sprint8_motor_w ) {}
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x1c00, 0x1c00, sprint8_collision_r },
-	{ 0x1c01, 0x1c08, sprint8_input_r },
-	{ 0x1c09, 0x1c09, input_port_16_r },
-	{ 0x1c0a, 0x1c0a, input_port_17_r },
-	{ 0x1c0f, 0x1c0f, input_port_18_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(sprint8_collision_r)
+	AM_RANGE(0x1c01, 0x1c08) AM_READ(sprint8_input_r)
+	AM_RANGE(0x1c09, 0x1c09) AM_READ(input_port_16_r)
+	AM_RANGE(0x1c0a, 0x1c0a) AM_READ(input_port_17_r)
+	AM_RANGE(0x1c0f, 0x1c0f) AM_READ(input_port_18_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x1800, 0x1bff, sprint8_video_ram_w, &sprint8_video_ram },
-	{ 0x1c00, 0x1c0f, MWA_RAM, &sprint8_pos_h_ram },
-	{ 0x1c10, 0x1c1f, MWA_RAM, &sprint8_pos_v_ram },
-	{ 0x1c20, 0x1c2f, MWA_RAM, &sprint8_pos_d_ram },
-	{ 0x1c30, 0x1c37, sprint8_lockout_w },
-	{ 0x1d00, 0x1d00, sprint8_int_reset_w },
-	{ 0x1d01, 0x1d01, sprint8_crash_w },
-	{ 0x1d02, 0x1d02, sprint8_explosion_w },
-	{ 0x1d03, 0x1d03, sprint8_bugle_w },
-	{ 0x1d04, 0x1d04, sprint8_bug_w },
-	{ 0x1d05, 0x1d05, sprint8_team_w },
-	{ 0x1d06, 0x1d06, sprint8_attract_w },
-	{ 0x1e00, 0x1e07, sprint8_motor_w },
-	{ 0x1f00, 0x1f00, MWA_NOP }, /* probably a watchdog, disabled in service mode */
-	{ 0x2000, 0x3fff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(sprint8_video_ram_w) AM_BASE(&sprint8_video_ram)
+	AM_RANGE(0x1c00, 0x1c0f) AM_WRITE(MWA8_RAM) AM_BASE(&sprint8_pos_h_ram)
+	AM_RANGE(0x1c10, 0x1c1f) AM_WRITE(MWA8_RAM) AM_BASE(&sprint8_pos_v_ram)
+	AM_RANGE(0x1c20, 0x1c2f) AM_WRITE(MWA8_RAM) AM_BASE(&sprint8_pos_d_ram)
+	AM_RANGE(0x1c30, 0x1c37) AM_WRITE(sprint8_lockout_w)
+	AM_RANGE(0x1d00, 0x1d00) AM_WRITE(sprint8_int_reset_w)
+	AM_RANGE(0x1d01, 0x1d01) AM_WRITE(sprint8_crash_w)
+	AM_RANGE(0x1d02, 0x1d02) AM_WRITE(sprint8_explosion_w)
+	AM_RANGE(0x1d03, 0x1d03) AM_WRITE(sprint8_bugle_w)
+	AM_RANGE(0x1d04, 0x1d04) AM_WRITE(sprint8_bug_w)
+	AM_RANGE(0x1d05, 0x1d05) AM_WRITE(sprint8_team_w)
+	AM_RANGE(0x1d06, 0x1d06) AM_WRITE(sprint8_attract_w)
+	AM_RANGE(0x1e00, 0x1e07) AM_WRITE(sprint8_motor_w)
+	AM_RANGE(0x1f00, 0x1f00) AM_WRITE(MWA8_NOP) /* probably a watchdog, disabled in service mode */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( sprint8 )
@@ -543,7 +543,7 @@ static MACHINE_DRIVER_START( sprint8 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 11055000 / 11) /* ? */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(29 * 1000000 / 15750)

@@ -55,22 +55,22 @@ extern VIDEO_START( mrjong );
 extern VIDEO_UPDATE( mrjong );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe400, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xe000, 0xe3ff, mrjong_videoram_w, &videoram },
-	{ 0xe400, 0xe7ff, mrjong_colorram_w, &colorram },
-	{ 0xe000, 0xe03f, MWA_RAM, &spriteram, &spriteram_size},	/* here to initialize the pointer */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(mrjong_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(mrjong_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* here to initialize the pointer */
+ADDRESS_MAP_END
 
 
 WRITE_HANDLER( io_0x00_w )
@@ -83,18 +83,18 @@ READ_HANDLER( io_0x03_r )
 	return 0x00;
 }
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },		// Input 1
-	{ 0x01, 0x01, input_port_1_r },		// Input 2
-	{ 0x02, 0x02, input_port_2_r },		// DipSw 1
-	{ 0x03, 0x03, io_0x03_r },		// Unknown
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)		// Input 1
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)		// Input 2
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)		// DipSw 1
+	AM_RANGE(0x03, 0x03) AM_READ(io_0x03_r)		// Unknown
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, io_0x00_w },
-	{ 0x01, 0x01, SN76496_0_w },
-	{ 0x02, 0x02, SN76496_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(io_0x00_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( mrjong )
@@ -188,8 +188,8 @@ static MACHINE_DRIVER_START( mrjong )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,15468000/6)	/* 2.578 MHz?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

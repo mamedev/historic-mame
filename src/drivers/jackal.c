@@ -74,50 +74,50 @@ INTERRUPT_GEN( jackal_interrupt )
 
 
 
-static MEMORY_READ_START( jackal_readmem )
-	{ 0x0010, 0x0010, input_port_0_r },
-	{ 0x0011, 0x0011, input_port_1_r },
-	{ 0x0012, 0x0012, input_port_2_r },
-	{ 0x0013, 0x0013, input_port_3_r },
-	{ 0x0014, 0x0014, rotary_0_r },
-	{ 0x0015, 0x0015, rotary_1_r },
-	{ 0x0018, 0x0018, input_port_4_r },
-	{ 0x0020, 0x005f, jackal_zram_r },	/* MAIN   Z RAM,SUB    Z RAM */
-	{ 0x0060, 0x1fff, jackal_commonram_r },	/* M COMMON RAM,S COMMON RAM */
-	{ 0x2000, 0x2fff, jackal_voram_r },	/* MAIN V O RAM,SUB  V O RAM */
-	{ 0x3000, 0x3fff, jackal_spriteram_r },	/* MAIN V O RAM,SUB  V O RAM */
-	{ 0x4000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( jackal_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0010, 0x0010) AM_READ(input_port_0_r)
+	AM_RANGE(0x0011, 0x0011) AM_READ(input_port_1_r)
+	AM_RANGE(0x0012, 0x0012) AM_READ(input_port_2_r)
+	AM_RANGE(0x0013, 0x0013) AM_READ(input_port_3_r)
+	AM_RANGE(0x0014, 0x0014) AM_READ(rotary_0_r)
+	AM_RANGE(0x0015, 0x0015) AM_READ(rotary_1_r)
+	AM_RANGE(0x0018, 0x0018) AM_READ(input_port_4_r)
+	AM_RANGE(0x0020, 0x005f) AM_READ(jackal_zram_r)	/* MAIN   Z RAM,SUB    Z RAM */
+	AM_RANGE(0x0060, 0x1fff) AM_READ(jackal_commonram_r)	/* M COMMON RAM,S COMMON RAM */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(jackal_voram_r)	/* MAIN V O RAM,SUB  V O RAM */
+	AM_RANGE(0x3000, 0x3fff) AM_READ(jackal_spriteram_r)	/* MAIN V O RAM,SUB  V O RAM */
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( jackal_writemem )
-	{ 0x0000, 0x0003, MWA_RAM, &jackal_videoctrl },	/* scroll + other things */
-	{ 0x0004, 0x0004, ctrl_w },
-	{ 0x0019, 0x0019, MWA_NOP },	/* possibly watchdog reset */
-	{ 0x001c, 0x001c, jackal_rambank_w },
-	{ 0x0020, 0x005f, jackal_zram_w },
-	{ 0x0060, 0x1fff, jackal_commonram_w },
-	{ 0x2000, 0x2fff, jackal_voram_w },
-	{ 0x3000, 0x3fff, jackal_spriteram_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( jackal_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0003) AM_WRITE(MWA8_RAM) AM_BASE(&jackal_videoctrl)	/* scroll + other things */
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(ctrl_w)
+	AM_RANGE(0x0019, 0x0019) AM_WRITE(MWA8_NOP)	/* possibly watchdog reset */
+	AM_RANGE(0x001c, 0x001c) AM_WRITE(jackal_rambank_w)
+	AM_RANGE(0x0020, 0x005f) AM_WRITE(jackal_zram_w)
+	AM_RANGE(0x0060, 0x1fff) AM_WRITE(jackal_commonram_w)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(jackal_voram_w)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(jackal_spriteram_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( jackal_sound_readmem )
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x43ff, MRA_RAM },		/* COLOR RAM (Self test only check 0x4000-0x423f */
-	{ 0x6000, 0x605f, MRA_RAM },		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
-	{ 0x6060, 0x7fff, jackal_commonram1_r }, /* COMMON RAM */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( jackal_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)		/* COLOR RAM (Self test only check 0x4000-0x423f */
+	AM_RANGE(0x6000, 0x605f) AM_READ(MRA8_RAM)		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
+	AM_RANGE(0x6060, 0x7fff) AM_READ(jackal_commonram1_r) /* COMMON RAM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( jackal_sound_writemem )
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x43ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x6000, 0x605f, MWA_RAM },
-	{ 0x6060, 0x7fff, jackal_commonram1_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( jackal_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x6000, 0x605f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6060, 0x7fff) AM_WRITE(jackal_commonram1_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -378,11 +378,11 @@ static MACHINE_DRIVER_START( jackal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_MEMORY(jackal_readmem,jackal_writemem)
+	MDRV_CPU_PROGRAM_MAP(jackal_readmem,jackal_writemem)
 	MDRV_CPU_VBLANK_INT(jackal_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_MEMORY(jackal_sound_readmem,jackal_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(jackal_sound_readmem,jackal_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

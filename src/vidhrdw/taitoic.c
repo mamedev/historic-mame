@@ -623,57 +623,31 @@ INLINE void taitoic_drawscanline(
 /* Note: various assumptions are made in these routines, typically that
    only CPU#0 is of interest. If in doubt, check the routine. */
 
+static int has_write_handler(int cpunum, write16_handler handler)
+{
+	const struct address_map_t *map;
+	for (map = memory_get_map(cpunum, ADDRESS_SPACE_PROGRAM); map && !IS_AMENTRY_END(map); map++)
+		if (map->write.handler16 == handler)
+			return 1;
+	
+	return 0;
+}
 
 int number_of_TC0100SCN(void)
 {
 	int has_chip[3] = {0,0,0};
-	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see how many TC0100SCN are used */
+	if (has_write_handler(0, TC0100SCN_word_0_w) ||
+		has_write_handler(0, TC0100SCN_dual_screen_w) ||
+		has_write_handler(0, TC0100SCN_triple_screen_w))
+		has_chip[0] = 1;
 
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if ((mwa->handler == TC0100SCN_word_0_w) ||
-					(mwa->handler == TC0100SCN_dual_screen_w) ||
-					(mwa->handler == TC0100SCN_triple_screen_w))
-				has_chip[0] = 1;
-			}
-			mwa++;
-		}
-	}
+	if (has_write_handler(0, TC0100SCN_word_1_w))
+		has_chip[1] = 1;
 
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0100SCN_word_1_w)
-					has_chip[1] = 1;
-			}
-			mwa++;
-		}
-	}
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0100SCN_word_2_w)
-					has_chip[2] = 1;
-			}
-			mwa++;
-		}
-	}
+	if (has_write_handler(0, TC0100SCN_word_2_w))
+		has_chip[2] = 1;
 
 	/* Catch illegal configurations */
 	/* TODO: we should give an appropriate warning */
@@ -690,218 +664,53 @@ int number_of_TC0100SCN(void)
 
 int has_TC0110PCR(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if ((mwa->handler == TC0110PCR_word_w) || (mwa->handler == TC0110PCR_step1_word_w) ||
-					(mwa->handler == TC0110PCR_step1_rbswap_word_w) || (mwa->handler == TC0110PCR_step1_4bpg_word_w))
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0110PCR_word_w) ||
+			has_write_handler(0, TC0110PCR_step1_word_w) ||
+			has_write_handler(0, TC0110PCR_step1_rbswap_word_w) ||
+			has_write_handler(0, TC0110PCR_step1_4bpg_word_w);
 }
 
 int has_second_TC0110PCR(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if a second TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_word_1_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0110PCR_step1_word_1_w);
 }
 
 int has_third_TC0110PCR(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if a third TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_word_2_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0110PCR_step1_word_2_w);
 }
 
 
 int has_TC0150ROD(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers for cpus 0-2 and see if the TC0150ROD is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0150ROD_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	mwa = Machine->drv->cpu[1].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0150ROD_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	mwa = Machine->drv->cpu[2].memory_write;	/* needed if Z80 sandwiched between 68Ks */
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0150ROD_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0150ROD_word_w) ||
+			has_write_handler(1, TC0150ROD_word_w) ||
+			has_write_handler(2, TC0150ROD_word_w);
 }
 
 
 int has_TC0280GRD(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0280GRD is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0280GRD_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0280GRD_word_w);
 }
 
 
 int has_TC0360PRI(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0360PRI is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if ((mwa->handler == TC0360PRI_halfword_w) ||
-						(mwa->handler == TC0360PRI_halfword_swap_w))
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0360PRI_halfword_w) ||
+			has_write_handler(0, TC0360PRI_halfword_swap_w);
 }
 
 
 int has_TC0430GRW(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0430GRW is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0430GRW_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0430GRW_word_w);
 }
 
 
 int has_TC0480SCP(void)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0480SCP is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0480SCP_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
+	return	has_write_handler(0, TC0480SCP_word_w);
 }
 
 

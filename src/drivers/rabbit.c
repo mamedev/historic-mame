@@ -60,21 +60,21 @@ READ32_HANDLER( rabbit_unk_r1 )
 	return 0xffffffff;
 }
 
-static MEMORY_READ32_START( rabbit_readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-	{ 0x200000, 0x200003, rabbit_unk_r1 },
-	{ 0x440000, 0x44ffff, MRA32_RAM },
-	{ 0x450000, 0x45ffff, MRA32_RAM },
-	{ 0x460000, 0x46ffff, MRA32_RAM },
-	{ 0x470000, 0x47ffff, MRA32_RAM },
+static ADDRESS_MAP_START( rabbit_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x200000, 0x200003) AM_READ(rabbit_unk_r1)
+	AM_RANGE(0x440000, 0x44ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x450000, 0x45ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x470000, 0x47ffff) AM_READ(MRA32_RAM)
 
-	{ 0xff0000, 0xffffff, MRA32_RAM },
-MEMORY_END
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA32_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( rabbit_writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0xff0000, 0xffffff, MWA32_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rabbit_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA32_RAM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( rabbit )
 INPUT_PORTS_END
@@ -93,7 +93,7 @@ VIDEO_UPDATE(rabbit)
 
 static MACHINE_DRIVER_START( rabbit )
 	MDRV_CPU_ADD(M68020, 24000000 )
-	MDRV_CPU_MEMORY(rabbit_readmem,rabbit_writemem)
+	MDRV_CPU_PROGRAM_MAP(rabbit_readmem,rabbit_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 	/* (rabbit) */
 /*	lev 1 : 0x64 : 0000 027c -

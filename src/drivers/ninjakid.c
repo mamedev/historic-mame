@@ -79,57 +79,57 @@ static WRITE_HANDLER( cpu2_A002_w ){
  Memory Maps
 *******************************************************************************/
 
-static MEMORY_READ_START( ninjakid_primary_readmem )
-    { 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8003, ninjakun_io_8000_r },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa001, 0xa001, input_port_1_r },
-	{ 0xa002, 0xa002, ninjakun_io_A002_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },	/* tilemaps */
-	{ 0xc800, 0xcfff, ninjakid_bg_videoram_r },
-    { 0xd000, 0xd7ff, MRA_RAM },	/* spriteram */
-    { 0xd800, 0xd9ff, paletteram_r },
-    { 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( ninjakid_primary_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8003) AM_READ(ninjakun_io_8000_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)
+	AM_RANGE(0xa002, 0xa002) AM_READ(ninjakun_io_A002_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)	/* tilemaps */
+	AM_RANGE(0xc800, 0xcfff) AM_READ(ninjakid_bg_videoram_r)
+    AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)	/* spriteram */
+    AM_RANGE(0xd800, 0xd9ff) AM_READ(paletteram_r)
+    AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ninjakid_primary_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x7fff, MWA_ROM, &ninjakid_gfx_rom },
-	{ 0x8000, 0x8003, ninjakun_io_8000_w },
-	{ 0xa002, 0xa002, cpu1_A002_w },
-	{ 0xa003, 0xa003, ninjakun_flipscreen_w },
-	{ 0xc000, 0xc7ff, ninjakid_fg_videoram_w, &videoram },
-	{ 0xc800, 0xcfff, ninjakid_bg_videoram_w },
-	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram },
-	{ 0xd800, 0xd9ff, ninjakun_paletteram_w, &paletteram },
-	{ 0xe000, 0xe7ff, MWA_RAM, &shareram },
-MEMORY_END
+static ADDRESS_MAP_START( ninjakid_primary_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x7fff) AM_WRITE(MWA8_ROM) AM_BASE(&ninjakid_gfx_rom)
+	AM_RANGE(0x8000, 0x8003) AM_WRITE(ninjakun_io_8000_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(cpu1_A002_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(ninjakun_flipscreen_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(ninjakid_fg_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(ninjakid_bg_videoram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xd800, 0xd9ff) AM_WRITE(ninjakun_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&shareram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( ninjakid_secondary_readmem )
-    { 0x0000, 0x1fff, MRA_ROM },
-    { 0x2000, 0x7fff, ninjakid_shared_rom_r },
-	{ 0x8000, 0x8003, ninjakun_io_8000_r },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa001, 0xa001, input_port_1_r },
-	{ 0xa002, 0xa002, ninjakun_io_A002_r },
-	{ 0xc000, 0xc7ff, videoram_r },		/* tilemaps */
-	{ 0xc800, 0xcfff, ninjakid_bg_videoram_r },
-    { 0xd000, 0xd7ff, spriteram_r },	/* shareram */
-    { 0xd800, 0xd9ff, paletteram_r },
-    { 0xe000, 0xe7ff, shareram_r },
-MEMORY_END
+static ADDRESS_MAP_START( ninjakid_secondary_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x2000, 0x7fff) AM_READ(ninjakid_shared_rom_r)
+	AM_RANGE(0x8000, 0x8003) AM_READ(ninjakun_io_8000_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)
+	AM_RANGE(0xa002, 0xa002) AM_READ(ninjakun_io_A002_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(videoram_r)		/* tilemaps */
+	AM_RANGE(0xc800, 0xcfff) AM_READ(ninjakid_bg_videoram_r)
+    AM_RANGE(0xd000, 0xd7ff) AM_READ(spriteram_r)	/* shareram */
+    AM_RANGE(0xd800, 0xd9ff) AM_READ(paletteram_r)
+    AM_RANGE(0xe000, 0xe7ff) AM_READ(shareram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ninjakid_secondary_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x8000, 0x8003, ninjakun_io_8000_w },
-	{ 0xa002, 0xa002, cpu2_A002_w },
-	{ 0xa003, 0xa003, ninjakun_flipscreen_w },
-	{ 0xc000, 0xc7ff, ninjakid_fg_videoram_w },
-	{ 0xc800, 0xcfff, ninjakid_bg_videoram_w },
-	{ 0xd000, 0xd7ff, spriteram_w },	/* shareram */
-	{ 0xd800, 0xd9ff, ninjakun_paletteram_w },
-    { 0xe000, 0xe7ff, shareram_w },
-MEMORY_END
+static ADDRESS_MAP_START( ninjakid_secondary_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8003) AM_WRITE(ninjakun_io_8000_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(cpu2_A002_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(ninjakun_flipscreen_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(ninjakid_fg_videoram_w)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(ninjakid_bg_videoram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(spriteram_w)	/* shareram */
+	AM_RANGE(0xd800, 0xd9ff) AM_WRITE(ninjakun_paletteram_w)
+    AM_RANGE(0xe000, 0xe7ff) AM_WRITE(shareram_w)
+ADDRESS_MAP_END
 
 /*******************************************************************************
  GFX Decoding Information
@@ -186,11 +186,11 @@ static MACHINE_DRIVER_START( ninjakid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000) /* 3.00MHz */
-	MDRV_CPU_MEMORY(ninjakid_primary_readmem,ninjakid_primary_writemem)
+	MDRV_CPU_PROGRAM_MAP(ninjakid_primary_readmem,ninjakid_primary_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000) /* 3.00MHz */
-	MDRV_CPU_MEMORY(ninjakid_secondary_readmem,ninjakid_secondary_writemem)
+	MDRV_CPU_PROGRAM_MAP(ninjakid_secondary_readmem,ninjakid_secondary_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) /* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)

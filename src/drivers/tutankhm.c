@@ -216,34 +216,34 @@ static WRITE_HANDLER( flip_screen_y_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_RAM },
-	{ 0x8120, 0x8120, watchdog_reset_r },
-	{ 0x8160, 0x8160, input_port_0_r },	/* DSW2 (inverted bits) */
-	{ 0x8180, 0x8180, input_port_1_r },	/* IN0 I/O: Coin slots, service, 1P/2P buttons */
-	{ 0x81a0, 0x81a0, input_port_2_r },	/* IN1: Player 1 I/O */
-	{ 0x81c0, 0x81c0, input_port_3_r },	/* IN2: Player 2 I/O */
-	{ 0x81e0, 0x81e0, input_port_4_r },	/* DSW1 (inverted bits) */
-	{ 0x8800, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8120, 0x8120) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8160, 0x8160) AM_READ(input_port_0_r)	/* DSW2 (inverted bits) */
+	AM_RANGE(0x8180, 0x8180) AM_READ(input_port_1_r)	/* IN0 I/O: Coin slots, service, 1P/2P buttons */
+	AM_RANGE(0x81a0, 0x81a0) AM_READ(input_port_2_r)	/* IN1: Player 1 I/O */
+	AM_RANGE(0x81c0, 0x81c0) AM_READ(input_port_3_r)	/* IN2: Player 2 I/O */
+	AM_RANGE(0x81e0, 0x81e0) AM_READ(input_port_4_r)	/* DSW1 (inverted bits) */
+	AM_RANGE(0x8800, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, tutankhm_videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0x800f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0x8100, 0x8100, MWA_RAM, &tutankhm_scrollx },
-	{ 0x8200, 0x8200, interrupt_enable_w },
-	{ 0x8202, 0x8203, tutankhm_coin_counter_w },
-	{ 0x8205, 0x8205, MWA_NOP },	/* ??? */
-	{ 0x8206, 0x8206, flip_screen_x_w },
-	{ 0x8207, 0x8207, flip_screen_y_w },
-	{ 0x8300, 0x8300, tutankhm_bankselect_w },
-	{ 0x8600, 0x8600, timeplt_sh_irqtrigger_w },
-	{ 0x8700, 0x8700, soundlatch_w },
-	{ 0x8800, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(tutankhm_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8000, 0x800f) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x8100, 0x8100) AM_WRITE(MWA8_RAM) AM_BASE(&tutankhm_scrollx)
+	AM_RANGE(0x8200, 0x8200) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x8202, 0x8203) AM_WRITE(tutankhm_coin_counter_w)
+	AM_RANGE(0x8205, 0x8205) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x8206, 0x8206) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0x8207, 0x8207) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0x8300, 0x8300) AM_WRITE(tutankhm_bankselect_w)
+	AM_RANGE(0x8600, 0x8600) AM_WRITE(timeplt_sh_irqtrigger_w)
+	AM_RANGE(0x8700, 0x8700) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( tutankhm )
@@ -345,12 +345,12 @@ static MACHINE_DRIVER_START( tutankhm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1500000)			/* 1.5 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.789772727 MHz */						\
-	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(timeplt_sound_readmem,timeplt_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)

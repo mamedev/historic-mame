@@ -252,52 +252,52 @@ static WRITE_HANDLER( p2_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf800, 0xf800, input_port_0_r },
-	{ 0xf801, 0xf801, input_port_1_r },
-	{ 0xf802, 0xf802, input_port_2_r },
-	{ 0xf806, 0xf806, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_0_r)
+	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_1_r)
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_2_r)
+	AM_RANGE(0xf806, 0xf806) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe1ff, MWA_RAM },
-	{ 0xe200, 0xe2ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe300, 0xe3ff, MWA_RAM, &wilytowr_scrollram },
-	{ 0xe400, 0xe7ff, wilytowr_videoram2_w, &wilytowr_videoram2 },
-	{ 0xe800, 0xebff, wilytowr_videoram_w, &videoram },
-	{ 0xec00, 0xefff, wilytowr_colorram_w, &colorram },
-	{ 0xf000, 0xf000, interrupt_enable_w },	/* NMI enable */
-	{ 0xf002, 0xf002, wilytwr_flipscreen_w },
-	{ 0xf003, 0xf003, wilytwr_palbank_w },
-	{ 0xf006, 0xf007, coin_w },
-	{ 0xf800, 0xf800, soundlatch_w },
-	{ 0xf801, 0xf801, watchdog_reset_w },	/* unknown (cleared by NMI handler) */
-	{ 0xf803, 0xf803, snd_irq_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe200, 0xe2ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe300, 0xe3ff) AM_WRITE(MWA8_RAM) AM_BASE(&wilytowr_scrollram)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(wilytowr_videoram2_w) AM_BASE(&wilytowr_videoram2)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(wilytowr_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xec00, 0xefff) AM_WRITE(wilytowr_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(interrupt_enable_w)	/* NMI enable */
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(wilytwr_flipscreen_w)
+	AM_RANGE(0xf003, 0xf003) AM_WRITE(wilytwr_palbank_w)
+	AM_RANGE(0xf006, 0xf007) AM_WRITE(coin_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(watchdog_reset_w)	/* unknown (cleared by NMI handler) */
+	AM_RANGE(0xf803, 0xf803) AM_WRITE(snd_irq_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( i8039_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( i8039_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( i8039_readport )
-//	{ 0x00, 0xff, },
-//	{ I8039_t1, I8039_t1,  },
-PORT_END
+static ADDRESS_MAP_START( i8039_readport, ADDRESS_SPACE_IO, 8 )
+//	AM_RANGE(0x00, 0xff)
+//	AM_RANGE(I8039_t1, I8039_t1)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( i8039_writeport )
-	{ 0x00, 0xff, snddata_w },
-	{ I8039_p1, I8039_p1, p1_w },
-	{ I8039_p2, I8039_p2, p2_w },
-PORT_END
+static ADDRESS_MAP_START( i8039_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_WRITE(snddata_w)
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(p1_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(p2_w)
+ADDRESS_MAP_END
 
 
 
@@ -444,13 +444,13 @@ static MACHINE_DRIVER_START( wilytowr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,4000000)	/* 4 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8039,8000000/15)	/* ????? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
-	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
+	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

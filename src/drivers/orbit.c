@@ -122,34 +122,34 @@ READ_HANDLER( orbit_zeropage_r )
 }
 
 
-static MEMORY_READ_START( orbit_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x07ff, orbit_zeropage_r },
-	{ 0x0800, 0x0800, input_port_0_r },
-	{ 0x1000, 0x1000, input_port_1_r },
-	{ 0x1800, 0x1800, input_port_2_r },
-	{ 0x2000, 0x2000, input_port_3_r },
-	{ 0x2800, 0x2800, input_port_4_r },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x6800, 0x7fff, MRA_ROM }, /* program */
-	{ 0xfc00, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( orbit_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x07ff) AM_READ(orbit_zeropage_r)
+	AM_RANGE(0x0800, 0x0800) AM_READ(input_port_0_r)
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_1_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_2_r)
+	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_3_r)
+	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_4_r)
+	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6800, 0x7fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( orbit_writemem )
-	{ 0x0000, 0x07ff, orbit_zeropage_w },
-	{ 0x3000, 0x33bf, orbit_playfield_w, &orbit_playfield_ram },
-	{ 0x33c0, 0x33ff, orbit_sprite_w, &orbit_sprite_ram },
-	{ 0x3400, 0x37bf, orbit_playfield_w },
-	{ 0x37c0, 0x37ff, orbit_sprite_w },
-	{ 0x3800, 0x3800, orbit_note_w },
-	{ 0x3900, 0x3900, orbit_noise_amp_w },
-	{ 0x3a00, 0x3a00, orbit_note_amp_w },
-	{ 0x3c00, 0x3c0f, orbit_misc_w },
-	{ 0x3e00, 0x3e00, orbit_noise_rst_w },
-	{ 0x3f00, 0x3f00, watchdog_reset_w },
-	{ 0x6800, 0x7fff, MWA_ROM }, /* program */
-	{ 0xfc00, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( orbit_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(orbit_zeropage_w)
+	AM_RANGE(0x3000, 0x33bf) AM_WRITE(orbit_playfield_w) AM_BASE(&orbit_playfield_ram)
+	AM_RANGE(0x33c0, 0x33ff) AM_WRITE(orbit_sprite_w) AM_BASE(&orbit_sprite_ram)
+	AM_RANGE(0x3400, 0x37bf) AM_WRITE(orbit_playfield_w)
+	AM_RANGE(0x37c0, 0x37ff) AM_WRITE(orbit_sprite_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(orbit_note_w)
+	AM_RANGE(0x3900, 0x3900) AM_WRITE(orbit_noise_amp_w)
+	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(orbit_note_amp_w)
+	AM_RANGE(0x3c00, 0x3c0f) AM_WRITE(orbit_misc_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(orbit_noise_rst_w)
+	AM_RANGE(0x3f00, 0x3f00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x6800, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( orbit )
@@ -417,7 +417,7 @@ static MACHINE_DRIVER_START( orbit )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 12096000 / 16)
-	MDRV_CPU_MEMORY(orbit_readmem, orbit_writemem)
+	MDRV_CPU_PROGRAM_MAP(orbit_readmem, orbit_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse, 1)
 	MDRV_CPU_PERIODIC_INT(orbit_interrupt, 240)
 

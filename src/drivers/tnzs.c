@@ -322,75 +322,75 @@ static WRITE_HANDLER( kageki_csport_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 }, /* ROM + RAM */
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_r },	/* WORK RAM (shared by the 2 z80's */
-	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
-	{ 0xf600, 0xf600, MRA_NOP },	/* ? */
-	{ 0xf800, 0xfbff, MRA_RAM },	/* not in extrmatn and arknoid2 (PROMs instead) */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) /* ROM + RAM */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_r)	/* WORK RAM (shared by the 2 z80's */
+	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)	/* VDC RAM */
+	AM_RANGE(0xf600, 0xf600) AM_READ(MRA8_NOP)	/* ? */
+	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)	/* not in extrmatn and arknoid2 (PROMs instead) */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },	/* ROM + RAM */
-	{ 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
-	{ 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
-	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
-	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
-	{ 0xf400, 0xf400, MWA_NOP },	/* ? */
-	{ 0xf600, 0xf600, tnzs_bankswitch_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)	/* ROM + RAM */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_w) AM_BASE(&tnzs_workram)
+	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_vdcram)
+	AM_RANGE(0xf200, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP)	/* ? */
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(tnzs_bankswitch_w)
 	/* arknoid2, extrmatn, plumppop and drtoppel have PROMs instead of RAM */
 	/* drtoppel writes here anyway! (maybe leftover from tests during development) */
 	/* so the handler is patched out in init_drtopple() */
-	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-MEMORY_END
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK2 },
-	{ 0xb000, 0xb000, YM2203_status_port_0_r },
-	{ 0xb001, 0xb001, YM2203_read_port_0_r },
-	{ 0xc000, 0xc001, tnzs_mcu_r },	/* plain input ports in insectx (memory handler */
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xb000, 0xb000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xc000, 0xc001) AM_READ(tnzs_mcu_r)	/* plain input ports in insectx (memory handler */
 									/* changed in insectx_init() ) */
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-	{ 0xf000, 0xf003, arknoid2_sh_f000_r },	/* paddles in arkanoid2/plumppop. The ports are */
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xf000, 0xf003) AM_READ(arknoid2_sh_f000_r)	/* paddles in arkanoid2/plumppop. The ports are */
 						/* read but not used by the other games, and are not read at */
 						/* all by insectx. */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-	{ 0xc000, 0xc001, tnzs_mcu_w },	/* not present in insectx */
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_w },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(tnzs_mcu_w)	/* not present in insectx */
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( kageki_sub_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK2 },
-	{ 0xb000, 0xb000, YM2203_status_port_0_r },
-	{ 0xb001, 0xb001, YM2203_read_port_0_r },
-	{ 0xc000, 0xc000, input_port_2_r },
-	{ 0xc001, 0xc001, input_port_3_r },
-	{ 0xc002, 0xc002, input_port_4_r },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-MEMORY_END
+static ADDRESS_MAP_START( kageki_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xb000, 0xb000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_2_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( kageki_sub_writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_w },
-MEMORY_END
+static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+ADDRESS_MAP_END
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
 
@@ -400,69 +400,69 @@ static WRITE_HANDLER( tnzsb_sound_command_w )
 	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
-static MEMORY_READ_START( tnzsb_readmem1 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK2 },
-	{ 0xb002, 0xb002, input_port_0_r },
-	{ 0xb003, 0xb003, input_port_1_r },
-	{ 0xc000, 0xc000, input_port_2_r },
-	{ 0xc001, 0xc001, input_port_3_r },
-	{ 0xc002, 0xc002, input_port_4_r },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-	{ 0xf000, 0xf003, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tnzsb_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xb002, 0xb002) AM_READ(input_port_0_r)
+	AM_RANGE(0xb003, 0xb003) AM_READ(input_port_1_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_2_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tnzsb_writemem1 )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
-	{ 0xb004, 0xb004, tnzsb_sound_command_w },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_sub_w },
-	{ 0xf000, 0xf3ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-MEMORY_END
+static ADDRESS_MAP_START( tnzsb_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( tnzsb_readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tnzsb_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tnzsb_writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tnzsb_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( tnzsb_readport )
-	{ 0x00, 0x00, YM2203_status_port_0_r  },
-	{ 0x02, 0x02, soundlatch_r  },
-PORT_END
+static ADDRESS_MAP_START( tnzsb_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( tnzsb_writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w  },
-	{ 0x01, 0x01, YM2203_write_port_0_w  },
-PORT_END
+static ADDRESS_MAP_START( tnzsb_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( i8742_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0800, 0x08ff, MRA_RAM },	/* Internal i8742 RAM */
-MEMORY_END
+static ADDRESS_MAP_START( i8742_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)	/* Internal i8742 RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( i8742_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0800, 0x08ff, MWA_RAM },	/* Internal i8742 RAM */
-MEMORY_END
+static ADDRESS_MAP_START( i8742_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0800, 0x08ff) AM_WRITE(MWA8_RAM)	/* Internal i8742 RAM */
+ADDRESS_MAP_END
 
-static PORT_READ_START( i8742_readport )
-	{ 0x01, 0x01, tnzs_port1_r },
-	{ 0x02, 0x02, tnzs_port2_r },
-	{ I8X41_t0, I8X41_t0, input_port_5_r },
-	{ I8X41_t1, I8X41_t1, input_port_6_r },
-PORT_END
+static ADDRESS_MAP_START( i8742_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(tnzs_port1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(tnzs_port2_r)
+	AM_RANGE(I8X41_t0, I8X41_t0) AM_READ(input_port_5_r)
+	AM_RANGE(I8X41_t1, I8X41_t1) AM_READ(input_port_6_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( i8742_writeport )
-	{ 0x02, 0x02, tnzs_port2_w },
-PORT_END
+static ADDRESS_MAP_START( i8742_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(tnzs_port2_w)
+ADDRESS_MAP_END
 
 
 
@@ -1682,11 +1682,11 @@ static MACHINE_DRIVER_START( arknoid2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 8000000)	/* ?? Hz (only crystal is 12MHz) */
 								/* 8MHz is wrong, but extrmatn doesn't work properly at 6MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(arknoid2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* ?? Hz */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1714,11 +1714,11 @@ static MACHINE_DRIVER_START( drtoppel )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(arknoid2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1746,16 +1746,16 @@ static MACHINE_DRIVER_START( tnzs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(I8X41,(12000000/2)/I8X41_CLOCK_DIVIDER)	/* 400KHz ??? - Main board Crystal is 12MHz */
-	MDRV_CPU_MEMORY(i8742_readmem,i8742_writemem)
-	MDRV_CPU_PORTS(i8742_readport,i8742_writeport)
+	MDRV_CPU_PROGRAM_MAP(i8742_readmem,i8742_writemem)
+	MDRV_CPU_IO_MAP(i8742_readport,i8742_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1781,16 +1781,16 @@ static MACHINE_DRIVER_START( tnzsb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
-	MDRV_CPU_MEMORY(tnzsb_readmem1,tnzsb_writemem1)
+	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem1,tnzsb_writemem1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz??? */
-	MDRV_CPU_MEMORY(tnzsb_readmem2,tnzsb_writemem2)
-	MDRV_CPU_PORTS(tnzsb_readport,tnzsb_writeport)
+	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem2,tnzsb_writemem2)
+	MDRV_CPU_IO_MAP(tnzsb_readport,tnzsb_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1816,11 +1816,11 @@ static MACHINE_DRIVER_START( insectx )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz(?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz(?) */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1847,11 +1847,11 @@ static MACHINE_DRIVER_START( kageki )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)		/* 12000000/3 ??? */
-	MDRV_CPU_MEMORY(kageki_sub_readmem,kageki_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(kageki_sub_readmem,kageki_sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1893,7 +1893,7 @@ ROM_START( plumppop )
 	ROM_LOAD( "a98-11.bin", 0x00000, 0x08000, CRC(bc56775c) SHA1(0c22c22c0e9d7ec0e34f8ab4bfe61068f65e8759) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "plmp8742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1929,7 +1929,7 @@ ROM_START( extrmatn )
 	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, CRC(744f2c84) SHA1(7565c1594c2a3bae1ae45afcbf93363fe2b12d58) )
 	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "extr8742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1953,7 +1953,7 @@ ROM_START( arknoid2 )
 	ROM_LOAD( "b08_13.3e", 0x00000, 0x08000, CRC(e8035ef1) SHA1(9a54e952cff0036c4b6affd9ffb1097cdccbe255) )
 	ROM_CONTINUE(          0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "ark28742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1977,7 +1977,7 @@ ROM_START( arknid2u )
 	ROM_LOAD( "b08_12.3e", 0x00000, 0x08000, CRC(dc84e27d) SHA1(d549d8c9fbec0521517f0c5f5cee763e27d48633) )
 	ROM_CONTINUE(          0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "ark28742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2001,7 +2001,7 @@ ROM_START( arknid2j )
 	ROM_LOAD( "b08_06.3e", 0x00000, 0x08000, CRC(adfcd40c) SHA1(f91299407ed21e2dd244c9b1a315b27ed32f5514) )
 	ROM_CONTINUE(          0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "ark28742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2025,7 +2025,7 @@ ROM_START( drtoppel )
 	ROM_LOAD( "b19-11w", 0x00000, 0x08000, CRC(37a0d3fb) SHA1(f65fb9382af5f5b09725c39b660c5138b3912f53) )
 	ROM_CONTINUE(        0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "drt8742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2053,7 +2053,7 @@ ROM_START( drtopplu )
 	ROM_LOAD( "b19-11u", 0x00000, 0x08000, CRC(05565b22) SHA1(d1aa47b438d3b44c5177337809e38b50f6445c36) )
 	ROM_CONTINUE(        0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "drt8742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2081,7 +2081,7 @@ ROM_START( drtopplj )
 	ROM_LOAD( "b19-11j", 0x00000, 0x08000, CRC(524dc249) SHA1(158b2de0fcd17ad16ba72bb24888122bf704e216) )
 	ROM_CONTINUE(        0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "drt8742.bin", 0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2157,7 +2157,7 @@ ROM_START( chukatai )
 	ROM_LOAD( "b44-12w", 0x00000, 0x08000, CRC(e80ecdca) SHA1(cd96403ca97f18f630118dcb3dc2179c01147213) )
 	ROM_CONTINUE(        0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "b44-8742.mcu", 0x0000, 0x0800, CRC(7dff3f9f) SHA1(bbf4e036d025fe8179b053d639f9b8ad401e6e68) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2205,7 +2205,7 @@ ROM_START( chukataj )
 	ROM_LOAD( "b44-12j", 0x00000, 0x08000, CRC(0600ace6) SHA1(3d5767b91ea63128bfbff3527ddcf90fcf43af2e) )
 	ROM_CONTINUE(        0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "b44-8742.mcu", 0x0000, 0x0800, CRC(7dff3f9f) SHA1(bbf4e036d025fe8179b053d639f9b8ad401e6e68) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2228,7 +2228,7 @@ ROM_START( tnzs )
 	ROM_LOAD( "b53_11.38", 0x00000, 0x08000, CRC(9784d443) SHA1(bc3647aac9974031dbe4898417fbaa99841f9548) )
 	ROM_CONTINUE(          0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "tnzs8742.u46", 0x0000, 0x0800, CRC(a4bfce19) SHA1(9340862d5bdc1ad4799dc92cae9bce1428b47478) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2276,7 +2276,7 @@ ROM_START( tnzs2 )
 	ROM_LOAD( "ns_e-3.rom", 0x00000, 0x08000, CRC(c7662e96) SHA1(be28298bfde4e3867cfe75633ffb0f8611dbbd8b) )
 	ROM_CONTINUE(           0x10000, 0x08000 )
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
 	ROM_LOAD( "tnzs8742.u46", 0x0000, 0x0800, CRC(a4bfce19) SHA1(9340862d5bdc1ad4799dc92cae9bce1428b47478) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )

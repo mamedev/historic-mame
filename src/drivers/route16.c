@@ -102,85 +102,85 @@ READ_HANDLER( routex_prot_read )
 
 }
 
-static MEMORY_READ_START( cpu1_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-  /*{ 0x3000, 0x3001, MRA_NOP },	 Route 16 protection device */
-	{ 0x4000, 0x43ff, route16_sharedram_r },
-	{ 0x4800, 0x4800, input_port_0_r },
-	{ 0x5000, 0x5000, input_port_1_r },
-	{ 0x5800, 0x5800, input_port_2_r },
-	{ 0x8000, 0xbfff, route16_videoram1_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+  /*AM_RANGE(0x3000, 0x3001) AM_READ(MRA8_NOP)	 Route 16 protection device */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(route16_sharedram_r)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_1_r)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_2_r)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(route16_videoram1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpu1_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
- 	/*{ 0x3001, 0x3001, MWA_NOP },	 Route 16 protection device */
-	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
-	{ 0x4800, 0x4800, route16_out0_w },
-	{ 0x5000, 0x5000, route16_out1_w },
-	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
-	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
+static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+ 	/*AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_NOP)	 Route 16 protection device */
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(route16_sharedram_w) AM_BASE(&route16_sharedram)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(route16_out0_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(route16_out1_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(route16_videoram1_w) AM_BASE(&route16_videoram1) AM_SIZE(&route16_videoram_size)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_RAM) // Stratvox has an off by one error
                                  // when clearing the screen
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( routex_cpu1_readmem )
-	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x4000, 0x43ff, route16_sharedram_r },
-	{ 0x4800, 0x4800, input_port_0_r },
-	{ 0x5000, 0x5000, input_port_1_r },
-	{ 0x5800, 0x5800, input_port_2_r },
- 	{ 0x6400, 0x6400, routex_prot_read },
-	{ 0x8000, 0xbfff, route16_videoram1_r },
-MEMORY_END
+static ADDRESS_MAP_START( routex_cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(route16_sharedram_r)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_1_r)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_2_r)
+ 	AM_RANGE(0x6400, 0x6400) AM_READ(routex_prot_read)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(route16_videoram1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( routex_cpu1_writemem )
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
-	{ 0x4800, 0x4800, route16_out0_w },
-	{ 0x5000, 0x5000, route16_out1_w },
-	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
-	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
+static ADDRESS_MAP_START( routex_cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(route16_sharedram_w) AM_BASE(&route16_sharedram)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(route16_out0_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(route16_out1_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(route16_videoram1_w) AM_BASE(&route16_videoram1) AM_SIZE(&route16_videoram_size)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_RAM) // Stratvox has an off by one error
                                  // when clearing the screen
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( altcpu1_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, route16_sharedram_r },
-	{ 0x4800, 0x4800, input_port_0_r },
-	{ 0x5000, 0x5000, input_port_1_r },
-	{ 0x5800, 0x5800, input_port_2_r },
-	{ 0x6000, 0x6000, speakres_in3_r },
-	{ 0x8000, 0xbfff, route16_videoram1_r },
-MEMORY_END
+static ADDRESS_MAP_START( altcpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(route16_sharedram_r)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_1_r)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_2_r)
+	AM_RANGE(0x6000, 0x6000) AM_READ(speakres_in3_r)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(route16_videoram1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( altcpu1_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
-	{ 0x4800, 0x4800, route16_out0_w },
-	{ 0x5000, 0x5000, route16_out1_w },
-	{ 0x5800, 0x5800, speakres_out2_w },
-	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
-	{ 0xc000, 0xc000, MWA_RAM }, // Speak & Rescue/Space Echo have same off by one error
-MEMORY_END
+static ADDRESS_MAP_START( altcpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(route16_sharedram_w) AM_BASE(&route16_sharedram)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(route16_out0_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(route16_out1_w)
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(speakres_out2_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(route16_videoram1_w) AM_BASE(&route16_videoram1) AM_SIZE(&route16_videoram_size)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_RAM) // Speak & Rescue/Space Echo have same off by one error
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cpu1_writeport )
-	{ 0x6800, 0x6800, AY8910_write_port_0_w },
-	{ 0x6900, 0x6900, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( cpu1_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6900, 0x6900) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cpu2_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, route16_sharedram_r },
-	{ 0x8000, 0xbfff, route16_videoram2_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(route16_sharedram_r)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(route16_videoram2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpu2_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2800, 0x2800, DAC_0_data_w }, // Not used by Route 16
-	{ 0x4000, 0x43ff, route16_sharedram_w },
-	{ 0x8000, 0xbfff, route16_videoram2_w, &route16_videoram2 },
-	{ 0xc000, 0xc1ff, MWA_NOP }, // Route 16 sometimes writes outside of
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(DAC_0_data_w) // Not used by Route 16
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(route16_sharedram_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(route16_videoram2_w) AM_BASE(&route16_videoram2)
+	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(MWA8_NOP) // Route 16 sometimes writes outside of
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( route16 )
@@ -414,12 +414,12 @@ static MACHINE_DRIVER_START( route16 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu1", Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(cpu1_readmem,cpu1_writemem)
-	MDRV_CPU_PORTS(0,cpu1_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu1_readmem,cpu1_writemem)
+	MDRV_CPU_IO_MAP(0,cpu1_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("cpu2", Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
-	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)       /* frames per second, vblank duration */
@@ -443,7 +443,7 @@ static MACHINE_DRIVER_START( routex )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(route16)
 	MDRV_CPU_MODIFY("cpu1")
-	MDRV_CPU_MEMORY(routex_cpu1_readmem,routex_cpu1_writemem)
+	MDRV_CPU_PROGRAM_MAP(routex_cpu1_readmem,routex_cpu1_writemem)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( stratvox )
@@ -462,7 +462,7 @@ static MACHINE_DRIVER_START( speakres )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(stratvox)
 	MDRV_CPU_MODIFY("cpu1")
-	MDRV_CPU_MEMORY(altcpu1_readmem,altcpu1_writemem)
+	MDRV_CPU_PROGRAM_MAP(altcpu1_readmem,altcpu1_writemem)
 MACHINE_DRIVER_END
 
 

@@ -114,65 +114,65 @@ static WRITE_HANDLER( flip_screen_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, vastar_bg2videoram_r },
-	{ 0x9000, 0x9fff, vastar_bg1videoram_r },
-	{ 0xa000, 0xafff, vastar_bg2videoram_r },	/* mirror address */
-	{ 0xb000, 0xbfff, vastar_bg1videoram_r },	/* mirror address */
-	{ 0xc400, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, watchdog_reset_r },
-	{ 0xf000, 0xf0ff, vastar_sharedram_r },
-	{ 0xf100, 0xf7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(vastar_bg2videoram_r)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(vastar_bg1videoram_r)
+	AM_RANGE(0xa000, 0xafff) AM_READ(vastar_bg2videoram_r)	/* mirror address */
+	AM_RANGE(0xb000, 0xbfff) AM_READ(vastar_bg1videoram_r)	/* mirror address */
+	AM_RANGE(0xc400, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf000, 0xf0ff) AM_READ(vastar_sharedram_r)
+	AM_RANGE(0xf100, 0xf7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, vastar_bg2videoram_w, &vastar_bg2videoram },
-	{ 0x9000, 0x9fff, vastar_bg1videoram_w, &vastar_bg1videoram },
-	{ 0xa000, 0xafff, vastar_bg2videoram_w },				/* mirror address */
-	{ 0xb000, 0xbfff, vastar_bg1videoram_w },  				/* mirror address */
-	{ 0xc000, 0xc000, MWA_RAM, &vastar_sprite_priority },	/* sprite/BG priority */
-	{ 0xc400, 0xcfff, vastar_fgvideoram_w, &vastar_fgvideoram },
-	{ 0xe000, 0xe000, watchdog_reset_w },
-	{ 0xf000, 0xf0ff, vastar_sharedram_w, &vastar_sharedram },
-	{ 0xf100, 0xf7ff, MWA_RAM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(vastar_bg2videoram_w) AM_BASE(&vastar_bg2videoram)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(vastar_bg1videoram_w) AM_BASE(&vastar_bg1videoram)
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(vastar_bg2videoram_w)				/* mirror address */
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(vastar_bg1videoram_w)  				/* mirror address */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_RAM) AM_BASE(&vastar_sprite_priority)	/* sprite/BG priority */
+	AM_RANGE(0xc400, 0xcfff) AM_WRITE(vastar_fgvideoram_w) AM_BASE(&vastar_fgvideoram)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(vastar_sharedram_w) AM_BASE(&vastar_sharedram)
+	AM_RANGE(0xf100, 0xf7ff) AM_WRITE(MWA8_RAM)
 
 	/* in hidden portions of video RAM: */
-	{ 0xc400, 0xc43f, MWA_RAM, &spriteram, &spriteram_size },	/* actually c410-c41f and c430-c43f */
-	{ 0xc7c0, 0xc7df, MWA_RAM, &vastar_bg1_scroll },
-	{ 0xc7e0, 0xc7ff, MWA_RAM, &vastar_bg2_scroll },
-	{ 0xc800, 0xc83f, MWA_RAM, &spriteram_2 },	/* actually c810-c81f and c830-c83f */
-	{ 0xcc00, 0xcc3f, MWA_RAM, &spriteram_3 },	/* actually cc10-cc1f and cc30-cc3f */
-MEMORY_END
+	AM_RANGE(0xc400, 0xc43f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* actually c410-c41f and c430-c43f */
+	AM_RANGE(0xc7c0, 0xc7df) AM_WRITE(MWA8_RAM) AM_BASE(&vastar_bg1_scroll)
+	AM_RANGE(0xc7e0, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&vastar_bg2_scroll)
+	AM_RANGE(0xc800, 0xc83f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* actually c810-c81f and c830-c83f */
+	AM_RANGE(0xcc00, 0xcc3f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)	/* actually cc10-cc1f and cc30-cc3f */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, interrupt_enable_w },
-	{ 0x01, 0x01, flip_screen_w },
-	{ 0x02, 0x02, vastar_hold_cpu2_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(flip_screen_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(vastar_hold_cpu2_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cpu2_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x40ff, vastar_sharedram_r },
-	{ 0x8000, 0x8000, input_port_1_r },
-	{ 0x8040, 0x8040, input_port_0_r },
-	{ 0x8080, 0x8080, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x40ff) AM_READ(vastar_sharedram_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_1_r)
+	AM_RANGE(0x8040, 0x8040) AM_READ(input_port_0_r)
+	AM_RANGE(0x8080, 0x8080) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpu2_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x40ff, vastar_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x40ff) AM_WRITE(vastar_sharedram_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( cpu2_readport )
-	{ 0x02, 0x02, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( cpu2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cpu2_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( cpu2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -329,13 +329,13 @@ static MACHINE_DRIVER_START( vastar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ???? */
-	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
-	MDRV_CPU_PORTS(cpu2_readport,cpu2_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_IO_MAP(cpu2_readport,cpu2_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -9,7 +9,6 @@
  *	Online help is available by pressing F1 (context sensitive!)
  *
  *	TODO:
- *	- Add stack view using activecpu_get_reg(REG_SP_CONTENTS+offset)
  *	- Add more display modes for the memory windows (binary? octal? decimal?)
  *
  ****************************************************************************/
@@ -35,18 +34,18 @@
  * Externals (define in the header files)
  ****************************************************************************/
 /* Long(er) function names, short macro names... */
-#define ABITS	activecpu_address_bits()
-#define AMASK	activecpu_address_mask()
-#define ASHIFT	activecpu_address_shift()
-#define ALIGN	activecpu_align_unit()
-#define INSTL	activecpu_max_inst_len()
-#define ENDIAN	activecpu_endianess()
+#define ABITS	(activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM))
+#define AMASK	(0xffffffffUL >> (32 - activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM)))
+#define ASHIFT	(activecpu_addrbus_shift(ADDRESS_SPACE_PROGRAM))
+#define ALIGN	(activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8)
+#define INSTL	activecpu_max_instruction_bytes()
+#define ENDIAN	activecpu_endianness()
 
-#define RDMEM(a)	(*cputype_get_interface(cputype)->memory_read)(a)
-#define WRMEM(a,v)	(*cputype_get_interface(cputype)->memory_write)(a,v)
-#define RDINT(a)	(*cputype_get_interface(cputype)->internal_read)(a)
-#define WRINT(a,v)	(*cputype_get_interface(cputype)->internal_write)(a,v)
-#define PGM_MEMORY	cputype_get_interface(cputype)->pgm_memory_base
+#define RDMEM(a)	(program_read_byte(a))
+#define WRMEM(a,v)	(program_write_byte(a,v))
+#define RDINT(a)	(program_read_byte(a))
+#define WRINT(a,v)	(program_write_byte(a,v))
+#define PGM_MEMORY	(0)  /* fix me -- need to do right! cputype_get_interface(cputype)->pgm_memory_base */
 
 /****************************************************************************
  * Globals
@@ -842,7 +841,7 @@ static s_command commands[] = {
 	"SAVE",         0,          CODE_NONE,
 	"<filename> <start> <end> [OPCODES|DATA]",
 	"Save binary to <filename> from address <start> to <end>\n" \
-	"[either OPCODES (from OP_ROM, default) or DATA (from OP_RAM), also 0|1].",
+	"[either OPCODES (from opcode_base, default) or DATA (from opcode_arg_base), also 0|1].",
 	cmd_save_to_file },
 {	(1<<EDIT_CMDS),
 	"SCANLINE",     0,          CODE_NONE,
@@ -1676,7 +1675,7 @@ static void trace_output( void )
 			if( TRACE.regs[0] )
 			{
 				for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
-					dst += sprintf( dst, "%s ", activecpu_dump_reg(TRACE.regs[i]) );
+					dst += sprintf( dst, "%s ", activecpu_reg_string(TRACE.regs[i]) );
 			}
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			activecpu_dasm( dst, pc );
@@ -1846,8 +1845,7 @@ static const char *name_rdmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct MachineCPU *cpu = &Machine->drv->cpu[active_cpu];
-	const struct Memory_ReadAddress *mr = cpu->memory_read;
+	const struct address_map_t *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
 	char *dst;
@@ -1856,108 +1854,113 @@ static const char *name_rdmem( unsigned base )
 	dst = buffer[which];
 	*dst = '\0';
 
-	while( *dst == '\0' && !IS_MEMPORT_END(mr))
+	while( *dst == '\0' && !IS_AMENTRY_END(map))
 	{
-		if (!IS_MEMPORT_MARKER(mr))
+		if (!IS_AMENTRY_EXTENDED(map) && map->read.handler)
 		{
-			if( base >= mr->start && base <= mr->end )
+			if( (!IS_AMENTRY_MATCH_MASK(map) && base >= map->start && base <= map->end ) ||
+				(IS_AMENTRY_MATCH_MASK(map) && (base & map->end) == map->start))
 			{
-				unsigned offset = base - mr->start;
+				unsigned offset = base - map->start;
 
 #if 0
 /* Won't work since the MemoryWrite doesn't support ->base anymore */
-				if( mr->description )
-					sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
+				if( map->description )
+					sprintf(dst, "%s+%04X", map->description, lshift(offset) );
 				else
-				if( mr->base && *mr->base == videoram )
+				if( map->base && *map->base == videoram )
 					sprintf(dst, "video+%04X", lshift(offset) );
 				else
-				if( mr->base && *mr->base == colorram )
+				if( map->base && *map->base == colorram )
 					sprintf(dst, "color+%04X", lshift(offset) );
 				else
-				if( mr->base && *mr->base == spriteram )
+				if( map->base && *map->base == spriteram )
 					sprintf(dst, "sprite+%04X", lshift(offset) );
 				else
 #endif
-				switch( (FPTR)mr->handler )
+				switch( (FPTR)map->read.handler )
 				{
-				case (FPTR)MRA_RAM:
+				case (FPTR)MRA8_RAM:
 					sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 					break;
-				case (FPTR)MRA_ROM:
-					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, mr->start );
+				case (FPTR)MRA8_ROM:
+					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, map->start );
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
-				case (FPTR)MRA_BANK1: case (FPTR)MRA_BANK2:
-				case (FPTR)MRA_BANK3: case (FPTR)MRA_BANK4:
-				case (FPTR)MRA_BANK5: case (FPTR)MRA_BANK6:
-				case (FPTR)MRA_BANK7: case (FPTR)MRA_BANK8:
-				case (FPTR)MRA_BANK9: case (FPTR)MRA_BANK10:
-				case (FPTR)MRA_BANK11: case (FPTR)MRA_BANK12:
-				case (FPTR)MRA_BANK13: case (FPTR)MRA_BANK14:
-				case (FPTR)MRA_BANK15: case (FPTR)MRA_BANK16:
-					sprintf(dst, "BANK%d+%04X", 1 + (int)(MRA_BANK1) - (int)(mr->handler), lshift(offset) );
+				case (FPTR)MRA8_BANK1: case (FPTR)MRA8_BANK2:
+				case (FPTR)MRA8_BANK3: case (FPTR)MRA8_BANK4:
+				case (FPTR)MRA8_BANK5: case (FPTR)MRA8_BANK6:
+				case (FPTR)MRA8_BANK7: case (FPTR)MRA8_BANK8:
+				case (FPTR)MRA8_BANK9: case (FPTR)MRA8_BANK10:
+				case (FPTR)MRA8_BANK11: case (FPTR)MRA8_BANK12:
+				case (FPTR)MRA8_BANK13: case (FPTR)MRA8_BANK14:
+				case (FPTR)MRA8_BANK15: case (FPTR)MRA8_BANK16:
+				case (FPTR)MWA8_BANK17: case (FPTR)MWA8_BANK18:
+				case (FPTR)MWA8_BANK19: case (FPTR)MWA8_BANK20:
+				case (FPTR)MWA8_BANK21: case (FPTR)MWA8_BANK22:
+				case (FPTR)MWA8_BANK23: case (FPTR)MWA8_BANK24:
+					sprintf(dst, "BANK%d+%04X", 1 + (int)(MRA8_BANK1) - (int)(map->read.handler), lshift(offset) );
 					break;
-				case (FPTR)MRA_NOP:
+				case (FPTR)MRA8_NOP:
 					sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(offset) );
 					break;
 				default:
-					if( (FPTR)mr->handler == (FPTR)input_port_0_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_0_r )
 						sprintf(dst, "input_port_0+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_1_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_1_r )
 						sprintf(dst, "input_port_1+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_2_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_2_r )
 						sprintf(dst, "input_port_2+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_3_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_3_r )
 						sprintf(dst, "input_port_3+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_4_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_4_r )
 						sprintf(dst, "input_port_4+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_5_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_5_r )
 						sprintf(dst, "input_port_5+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_6_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_6_r )
 						sprintf(dst, "input_port_6+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_7_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_7_r )
 						sprintf(dst, "input_port_7+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_8_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_8_r )
 						sprintf(dst, "input_port_8+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_9_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_9_r )
 						sprintf(dst, "input_port_9+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_10_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_10_r )
 						sprintf(dst, "input_port_10+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_11_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_11_r )
 						sprintf(dst, "input_port_11+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_12_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_12_r )
 						sprintf(dst, "input_port_12+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_13_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_13_r )
 						sprintf(dst, "input_port_13+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_14_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_14_r )
 						sprintf(dst, "input_port_14+%04X", lshift(offset) );
 					else
-					if( (FPTR)mr->handler == (FPTR)input_port_15_r )
+					if( (FPTR)map->read.handler == (FPTR)input_port_15_r )
 						sprintf(dst, "input_port_15+%04X", lshift(offset) );
 				}
 			}
-			switch( (FPTR)mr->handler )
+			switch( (FPTR)map->read.handler )
 			{
-			case (FPTR)MRA_RAM: ram_cnt++; break;
-			case (FPTR)MRA_NOP: nop_cnt++; break;
+			case (FPTR)MRA8_RAM: ram_cnt++; break;
+			case (FPTR)MRA8_NOP: nop_cnt++; break;
 			}
 		}
-		mr++;
+		map++;
 	}
 
 	return dst;
@@ -1971,8 +1974,7 @@ static const char *name_wrmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct MachineCPU *cpu = &Machine->drv->cpu[active_cpu];
-	const struct Memory_WriteAddress *mw = cpu->memory_write;
+	const struct address_map_t *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
 	char *dst;
@@ -1982,64 +1984,69 @@ static const char *name_wrmem( unsigned base )
 	*dst = '\0';
 
 	ram_cnt = nop_cnt = 1;
-	while( *dst == '\0' && !IS_MEMPORT_END(mw))
+	while( *dst == '\0' && !IS_AMENTRY_END(map))
 	{
-		if (!IS_MEMPORT_MARKER(mw))
+		if (!IS_AMENTRY_EXTENDED(map) && map->write.handler)
 		{
-			if( base >= mw->start && base <= mw->end )
+			if( (!IS_AMENTRY_MATCH_MASK(map) && base >= map->start && base <= map->end ) ||
+				(IS_AMENTRY_MATCH_MASK(map) && (base & map->end) == map->start))
 			{
 #if 0
 /* Won't work since the MemoryRead doesn't support ->description anymore */
-				if( mw->description )
-					sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
+				if( map->description )
+					sprintf(dst, "%s+%04X", map->description, lshift(base - map->start) );
 				else
 #endif
 #if 0
-				if( mw->base && *mw->base == videoram )
-					sprintf(dst, "video+%04X", lshift(base - mw->start) );
+				if( map->base && *map->base == videoram )
+					sprintf(dst, "video+%04X", lshift(base - map->start) );
 				else
-				if( mw->base && *mw->base == colorram )
-					sprintf(dst, "color+%04X", lshift(base - mw->start) );
+				if( map->base && *map->base == colorram )
+					sprintf(dst, "color+%04X", lshift(base - map->start) );
 				else
-				if( mw->base && *mw->base == spriteram )
-					sprintf(dst, "sprite+%04X", lshift(base - mw->start) );
+				if( map->base && *map->base == spriteram )
+					sprintf(dst, "sprite+%04X", lshift(base - map->start) );
 				else
 #endif
-				switch( (FPTR)mw->handler )
+				switch( (FPTR)map->write.handler )
 				{
-				case (FPTR)MWA_RAM:
-					sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
+				case (FPTR)MWA8_RAM:
+					sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - map->start) );
 					break;
-				case (FPTR)MWA_ROM:
-					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, mw->start );
+				case (FPTR)MWA8_ROM:
+					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, map->start );
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
-				case (FPTR)MWA_RAMROM:
-					name = name_rom("RAMROM", REGION_CPU1+active_cpu, &base, mw->start);
+				case (FPTR)MWA8_RAMROM:
+					name = name_rom("RAMROM", REGION_CPU1+active_cpu, &base, map->start);
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
-				case (FPTR)MWA_BANK1: case (FPTR)MWA_BANK2:
-				case (FPTR)MWA_BANK3: case (FPTR)MWA_BANK4:
-				case (FPTR)MWA_BANK5: case (FPTR)MWA_BANK6:
-				case (FPTR)MWA_BANK7: case (FPTR)MWA_BANK8:
-				case (FPTR)MWA_BANK9: case (FPTR)MWA_BANK10:
-				case (FPTR)MWA_BANK11: case (FPTR)MWA_BANK12:
-				case (FPTR)MWA_BANK13: case (FPTR)MWA_BANK14:
-				case (FPTR)MWA_BANK15: case (FPTR)MWA_BANK16:
-					sprintf(dst, "BANK%d+%04X", 1 + (int)(MWA_BANK1) - (int)(mw->handler), lshift(base - mw->start) );
+				case (FPTR)MWA8_BANK1: case (FPTR)MWA8_BANK2:
+				case (FPTR)MWA8_BANK3: case (FPTR)MWA8_BANK4:
+				case (FPTR)MWA8_BANK5: case (FPTR)MWA8_BANK6:
+				case (FPTR)MWA8_BANK7: case (FPTR)MWA8_BANK8:
+				case (FPTR)MWA8_BANK9: case (FPTR)MWA8_BANK10:
+				case (FPTR)MWA8_BANK11: case (FPTR)MWA8_BANK12:
+				case (FPTR)MWA8_BANK13: case (FPTR)MWA8_BANK14:
+				case (FPTR)MWA8_BANK15: case (FPTR)MWA8_BANK16:
+				case (FPTR)MWA8_BANK17: case (FPTR)MWA8_BANK18:
+				case (FPTR)MWA8_BANK19: case (FPTR)MWA8_BANK20:
+				case (FPTR)MWA8_BANK21: case (FPTR)MWA8_BANK22:
+				case (FPTR)MWA8_BANK23: case (FPTR)MWA8_BANK24:
+					sprintf(dst, "BANK%d+%04X", 1 + (int)(MWA8_BANK1) - (int)(map->write.handler), lshift(base - map->start) );
 					break;
-				case (FPTR)MWA_NOP:
-					sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(base - mw->start) );
+				case (FPTR)MWA8_NOP:
+					sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(base - map->start) );
 					break;
 				}
 			}
-			switch( (FPTR)mw->handler )
+			switch( (FPTR)map->write.handler )
 			{
-			case (FPTR)MRA_RAM: ram_cnt++; break;
-			case (FPTR)MRA_NOP: nop_cnt++; break;
+			case (FPTR)MRA8_RAM: ram_cnt++; break;
+			case (FPTR)MRA8_NOP: nop_cnt++; break;
 			}
 		}
-		mw++;
+		map++;
 	}
 
 	return dst;
@@ -2142,7 +2149,7 @@ INLINE void dbg_set_rect( struct rectangle *r, int x, int y, int w, int h )
 /**************************************************************************
  * dbg_open_windows
  * Depending on the CPU type, create a window layout specified
- * by the CPU core - returned by function cputype_win_layout()
+ * by the CPU core - returned by function cputype_window_layout()
  **************************************************************************/
 static void dbg_open_windows( void )
 {
@@ -2159,7 +2166,7 @@ static void dbg_open_windows( void )
 
 	for( i = 0; i < total_cpu; i++ )
 	{
-		const UINT8 *win_layout = (UINT8*)cpunum_win_layout(i);
+		const UINT8 *win_layout = (UINT8*)cpunum_window_layout(i);
 		struct rectangle regs, dasm, mem1, mem2, cmds;
 
 		#define REGS_X	win_layout[0*4+0]
@@ -2364,7 +2371,7 @@ static void dump_regs( void )
 	int h = win_get_h(win);
 	int i, j, l, x, y;
 	UINT8 color;
-	const INT8 *reg = (INT8*)activecpu_reg_layout();
+	const INT8 *reg = (INT8*)activecpu_register_layout();
 
 	/* Called the very first time: find max_width */
 	if( regs->count == 0 )
@@ -2373,7 +2380,7 @@ static void dump_regs( void )
 		{
 			if( reg[i] == -1 )
 				continue;		/* skip row breaks */
-			width = strlen( activecpu_dump_reg(reg[i]) );
+			width = strlen( activecpu_reg_string(reg[i]) );
 			if( width >= regs->max_width )
 				regs->max_width = width + 1;
 		}
@@ -2479,7 +2486,7 @@ static void dump_regs( void )
 		}
 		else
 		{
-			name = activecpu_dump_reg(*reg);
+			name = activecpu_reg_string(*reg);
 			if( *name == '\0' )
 				continue;
 
@@ -2780,7 +2787,7 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 			*val = RDINT( DBGMEM[which].address );
 		else
 		if( DBGMEM[which].pgm_memory_base )
-			*val = OP_ROM[DBGMEM[which].pgm_memory_base + DBGMEM[which].address];
+			*val = cpu_readop(DBGMEM[which].pgm_memory_base + DBGMEM[which].address);
 		else
 			*val = RDMEM( DBGMEM[which].address );
 
@@ -3108,8 +3115,8 @@ static void edit_mem( int which )
 			/* now modify the register */
 			if( DBGMEM[which].internal )
 			{
-				if( cputype_get_interface(cputype)->internal_write )
-					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
+//				if( cputype_get_interface(cputype)->internal_write )
+//					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
 			}
 			else
 			if( DBGMEM[which].pgm_memory_base == 0 )
@@ -3210,6 +3217,7 @@ static void edit_mem( int which )
 		break;
 
 	case KEYCODE_I: /* internal memory */
+#if 0
 		if( cputype_get_interface(cputype)->internal_read )
 		{
 			DBGMEM[which].internal ^= 1;
@@ -3217,6 +3225,7 @@ static void edit_mem( int which )
 			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 			update_window = 1;
 		}
+#endif
 		break;
 
 	case KEYCODE_ENTER:
@@ -3484,13 +3493,13 @@ static void cmd_help( void )
 	case EDIT_REGS:
 		title = "MAME debugger CPU registers help";
 		dst += sprintf( dst, "%s [%s] Version %s", activecpu_name(), activecpu_core_family(), activecpu_core_version() ) + 1;
-		dst += sprintf( dst, "Address bits   : %d [%08X]", activecpu_address_bits(), activecpu_address_mask() ) + 1;
-		dst += sprintf( dst, "Code align unit: %d byte(s)", activecpu_align_unit() ) + 1;
+		dst += sprintf( dst, "Address bits   : %d [%08X]", (int)activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM), (int)(0xffffffffUL >> (32 - (int)activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM))) ) + 1;
+		dst += sprintf( dst, "Code align unit: %d byte(s)", (int)activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8 ) + 1;
 		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
 		dst += sprintf( dst, "Source file    : %s", activecpu_core_file() ) + 1;
-		dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
-		dst += sprintf( dst, "Internal write : %s", cputype_get_interface(cputype)->internal_write ? "yes" : "no" ) + 1;
-		dst += sprintf( dst, "Program / Data : %s", cputype_get_interface(cputype)->pgm_memory_base ? "yes" : "no" ) + 1;
+//		dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
+//		dst += sprintf( dst, "Internal write : %s", cputype_get_interface(cputype)->internal_write ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "Program / Data : %s", (cputype_databus_width(cputype, ADDRESS_SPACE_DATA) > 0) ? "yes" : "no" ) + 1;
 		dst += sprintf( dst, "%s", activecpu_core_credits() ) + 1;
 		break;
 	case EDIT_DASM:
@@ -4125,7 +4134,7 @@ static void cmd_dump_to_file( void )
 
 /**************************************************************************
  * cmd_save_to_file
- * Save binary image of a range of OP_ROM or OP_RAM
+ * Save binary image of a range of opcode_base or opcode_arg_base
  **************************************************************************/
 static void cmd_save_to_file( void )
 {
@@ -4162,7 +4171,7 @@ static void cmd_save_to_file( void )
 	}
 
 	save_what = get_option_or_value( &cmd, &length, "OPCODES\0DATA\0");
-	if( !length ) save_what = 0;	/* default to OP_ROM */
+	if( !length ) save_what = 0;	/* default to opcode_base */
 
 	file = fopen(filename, "wb");
 	if( !file )
@@ -5085,7 +5094,7 @@ static void cmd_set_key_repeat( void )
 
 	dbg_key_repeat = dtou( &cmd, NULL );
 	if( dbg_key_repeat == 0 )
-		dbg_key_repeat = Machine->drv->frames_per_second / 15;
+		dbg_key_repeat = Machine->refresh_rate / 15;
 
 	edit_cmds_reset();
 	dbg_update = 1;
@@ -5217,16 +5226,17 @@ void mame_debug_init(void)
 		DBG.brk_temp = INVALID;
 		DBGMEM[0].base = 0x0000;
 		DBGMEM[1].base = 1 << (ABITS / 2);
-		switch( cpunum_align_unit(active_cpu) )
+		switch( cpunum_databus_width(active_cpu, ADDRESS_SPACE_PROGRAM) )
 		{
-			case 1: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
-			case 2: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
-			case 4: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
+			case  8: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
+			case 16: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
+			case 32: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
+//			case 64: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT64; break;
 		}
 	}
 
 	/* set keyboard repeat rate based on the game's frame rate */
-	dbg_key_repeat = Machine->drv->frames_per_second / 15;
+	dbg_key_repeat = Machine->refresh_rate / 15;
 
 	/* create windows for the active CPU */
 	dbg_open_windows();

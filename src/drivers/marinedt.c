@@ -98,19 +98,19 @@ static int marinedt_obj1_a, marinedt_obj1_x, marinedt_obj1_y, marinedt_music, ma
 static	int coll,cx,cyr,cyq;
 static	int collh,cxh,cyrh,cyqh;
 
-static MEMORY_READ_START( marinedt_readmem )
-	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4400, 0x47ff, MRA_RAM },	//unused, vram mirror?
-	{ 0x4000, 0x4bff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( marinedt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4400, 0x47ff) AM_READ(MRA8_RAM)	//unused, vram mirror?
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( marinedt_writemem )
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4c00, 0x4c00, MWA_NOP },	//?? maybe off by one error
-MEMORY_END
+static ADDRESS_MAP_START( marinedt_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4c00, 0x4c00) AM_WRITE(MWA8_NOP)	//?? maybe off by one error
+ADDRESS_MAP_END
 
 static READ_HANDLER( marinedt_port1_r )
 {
@@ -172,16 +172,16 @@ static READ_HANDLER( marinedt_obj1_yq_r )
 	return cyq | (cyqh<<4);
 }
 
-static PORT_READ_START( marinedt_readport )
-	{ 0x00, 0x00, input_port_0_r },		//dips coinage
-	{ 0x01, 0x01, marinedt_port1_r },	//trackball xy muxed
-	{ 0x02, 0x02, marinedt_obj1_x_r },
-	{ 0x03, 0x03, input_port_1_r },		//buttons
-	{ 0x04, 0x04, input_port_2_r },		//dips
-	{ 0x06, 0x06, marinedt_obj1_yr_r },
-	{ 0x0a, 0x0a, marinedt_obj1_yq_r },
-	{ 0x0e, 0x0e, marinedt_coll_r },
-PORT_END
+static ADDRESS_MAP_START( marinedt_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)		//dips coinage
+	AM_RANGE(0x01, 0x01) AM_READ(marinedt_port1_r)	//trackball xy muxed
+	AM_RANGE(0x02, 0x02) AM_READ(marinedt_obj1_x_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_1_r)		//buttons
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)		//dips
+	AM_RANGE(0x06, 0x06) AM_READ(marinedt_obj1_yr_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(marinedt_obj1_yq_r)
+	AM_RANGE(0x0e, 0x0e) AM_READ(marinedt_coll_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( marinedt_obj1_a_w ) {	marinedt_obj1_a = data; }
 static WRITE_HANDLER( marinedt_obj1_x_w ) {	marinedt_obj1_x = data; }
@@ -236,19 +236,19 @@ static WRITE_HANDLER( marinedt_pf_w )
 
 }
 
-static PORT_WRITE_START( marinedt_writeport )
-	{ 0x02, 0x02, marinedt_obj1_a_w },
-	{ 0x03, 0x03, marinedt_obj1_x_w },
-	{ 0x04, 0x04, marinedt_obj1_y_w },
-	{ 0x05, 0x05, marinedt_music_w },
-	{ 0x06, 0x06, marinedt_sound_w },
-	{ 0x08, 0x08, marinedt_obj2_a_w },
-	{ 0x09, 0x09, marinedt_obj2_x_w },
-	{ 0x0a, 0x0a, marinedt_obj2_y_w },
-	{ 0x0d, 0x0d, marinedt_pd_w },
-	{ 0x0e, 0x0e, watchdog_reset_w },
-	{ 0x0f, 0x0f, marinedt_pf_w },
-PORT_END
+static ADDRESS_MAP_START( marinedt_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(marinedt_obj1_a_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(marinedt_obj1_x_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(marinedt_obj1_y_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(marinedt_music_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(marinedt_sound_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(marinedt_obj2_a_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(marinedt_obj2_x_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(marinedt_obj2_y_w)
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(marinedt_pd_w)
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x0f, 0x0f) AM_WRITE(marinedt_pf_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( marinedt )
 	PORT_START	/* IN0 */
@@ -597,8 +597,8 @@ static MACHINE_DRIVER_START( marinedt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10000000/4)
-	MDRV_CPU_MEMORY(marinedt_readmem,marinedt_writemem)
-	MDRV_CPU_PORTS(marinedt_readport,marinedt_writeport)
+	MDRV_CPU_PROGRAM_MAP(marinedt_readmem,marinedt_writemem)
+	MDRV_CPU_IO_MAP(marinedt_readport,marinedt_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

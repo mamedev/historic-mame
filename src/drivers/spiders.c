@@ -181,39 +181,39 @@ INTERRUPT_GEN( spiders_timed_irq );
 
 /* Driver structure definition */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_RAM },
-	{ 0xc001, 0xc001, crtc6845_register_r },
-	{ 0xc044, 0xc047, pia_0_r },
-	{ 0xc048, 0xc04b, pia_1_r },
-	{ 0xc050, 0xc053, pia_2_r },
-	{ 0xc060, 0xc060, input_port_2_r },
-	{ 0xc080, 0xc080, input_port_3_r },
-	{ 0xc0a0, 0xc0a0, input_port_4_r },
-	{ 0xc100, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc001, 0xc001) AM_READ(crtc6845_register_r)
+	AM_RANGE(0xc044, 0xc047) AM_READ(pia_0_r)
+	AM_RANGE(0xc048, 0xc04b) AM_READ(pia_1_r)
+	AM_RANGE(0xc050, 0xc053) AM_READ(pia_2_r)
+	AM_RANGE(0xc060, 0xc060) AM_READ(input_port_2_r)
+	AM_RANGE(0xc080, 0xc080) AM_READ(input_port_3_r)
+	AM_RANGE(0xc0a0, 0xc0a0) AM_READ(input_port_4_r)
+	AM_RANGE(0xc100, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc000, crtc6845_address_w },
-	{ 0xc001, 0xc001, crtc6845_register_w },
-	{ 0xc044, 0xc047, pia_0_w },
-	{ 0xc048, 0xc04b, pia_1_w },
-	{ 0xc050, 0xc053, pia_2_w },
-	{ 0xc100, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0xc044, 0xc047) AM_WRITE(pia_0_w)
+	AM_RANGE(0xc048, 0xc04b) AM_WRITE(pia_1_w)
+	AM_RANGE(0xc050, 0xc053) AM_WRITE(pia_2_w)
+	AM_RANGE(0xc100, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0080, 0x0080, soundlatch_r },
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x0080) AM_READ(soundlatch_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -305,12 +305,12 @@ static MACHINE_DRIVER_START( spiders )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2800000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_PERIODIC_INT(spiders_timed_irq , 25)   /* Timed Int  */
 
 	MDRV_CPU_ADD(M6802,3000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -91,97 +91,97 @@ WRITE_HANDLER( gyruss_sharedram_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa7ff, gyruss_sharedram_r },
-	{ 0xc000, 0xc000, input_port_4_r },	/* DSW1 */
-	{ 0xc080, 0xc080, input_port_0_r },	/* IN0 */
-	{ 0xc0a0, 0xc0a0, input_port_1_r },	/* IN1 */
-	{ 0xc0c0, 0xc0c0, input_port_2_r },	/* IN2 */
-	{ 0xc0e0, 0xc0e0, input_port_3_r },	/* DSW0 */
-	{ 0xc100, 0xc100, input_port_5_r },	/* DSW2 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(gyruss_sharedram_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_4_r)	/* DSW1 */
+	AM_RANGE(0xc080, 0xc080) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xc0a0, 0xc0a0) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xc0c0, 0xc0c0) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xc0e0, 0xc0e0) AM_READ(input_port_3_r)	/* DSW0 */
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_5_r)	/* DSW2 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },                 /* rom space+1        */
-	{ 0x8000, 0x83ff, colorram_w, &colorram },
-	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, gyruss_sharedram_w, &gyruss_sharedram },
-	{ 0xc000, 0xc000, MWA_NOP },	/* watchdog reset */
-	{ 0xc080, 0xc080, gyruss_sh_irqtrigger_w },
-	{ 0xc100, 0xc100, soundlatch_w },         /* command to soundb  */
-	{ 0xc180, 0xc180, interrupt_enable_w },      /* NMI enable         */
-	{ 0xc185, 0xc185, gyruss_flipscreen_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)                 /* rom space+1        */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(gyruss_sharedram_w) AM_BASE(&gyruss_sharedram)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)	/* watchdog reset */
+	AM_RANGE(0xc080, 0xc080) AM_WRITE(gyruss_sh_irqtrigger_w)
+	AM_RANGE(0xc100, 0xc100) AM_WRITE(soundlatch_w)         /* command to soundb  */
+	AM_RANGE(0xc180, 0xc180) AM_WRITE(interrupt_enable_w)      /* NMI enable         */
+	AM_RANGE(0xc185, 0xc185) AM_WRITE(gyruss_flipscreen_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( m6809_readmem )
-	{ 0x0000, 0x0000, gyruss_scanline_r },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x67ff, gyruss_sharedram_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6809_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(gyruss_scanline_r)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(gyruss_sharedram_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m6809_writemem )
-	{ 0x2000, 0x2000, interrupt_enable_w },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4040, 0x40ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x6000, 0x67ff, gyruss_sharedram_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6809_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4040, 0x40ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(gyruss_sharedram_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },                 /* rom soundboard     */
-	{ 0x6000, 0x63ff, MRA_RAM },                 /* ram soundboard     */
-	{ 0x8000, 0x8000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)                 /* rom soundboard     */
+	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM)                 /* ram soundboard     */
+	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },                 /* rom soundboard     */
-	{ 0x6000, 0x63ff, MWA_RAM },                 /* ram soundboard     */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)                 /* rom soundboard     */
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)                 /* ram soundboard     */
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-  	{ 0x05, 0x05, AY8910_read_port_1_r },
-	{ 0x09, 0x09, AY8910_read_port_2_r },
-  	{ 0x0d, 0x0d, AY8910_read_port_3_r },
-  	{ 0x11, 0x11, AY8910_read_port_4_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+  	AM_RANGE(0x05, 0x05) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x09, 0x09) AM_READ(AY8910_read_port_2_r)
+  	AM_RANGE(0x0d, 0x0d) AM_READ(AY8910_read_port_3_r)
+  	AM_RANGE(0x11, 0x11) AM_READ(AY8910_read_port_4_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x04, 0x04, AY8910_control_port_1_w },
-	{ 0x06, 0x06, AY8910_write_port_1_w },
-	{ 0x08, 0x08, AY8910_control_port_2_w },
-	{ 0x0a, 0x0a, AY8910_write_port_2_w },
-	{ 0x0c, 0x0c, AY8910_control_port_3_w },
-	{ 0x0e, 0x0e, AY8910_write_port_3_w },
-	{ 0x10, 0x10, AY8910_control_port_4_w },
-	{ 0x12, 0x12, AY8910_write_port_4_w },
-	{ 0x14, 0x14, gyruss_i8039_irq_w },
-	{ 0x18, 0x18, soundlatch2_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(AY8910_control_port_3_w)
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(AY8910_write_port_3_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_4_w)
+	AM_RANGE(0x12, 0x12) AM_WRITE(AY8910_write_port_4_w)
+	AM_RANGE(0x14, 0x14) AM_WRITE(gyruss_i8039_irq_w)
+	AM_RANGE(0x18, 0x18) AM_WRITE(soundlatch2_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( i8039_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( i8039_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( i8039_readport )
-	{ 0x00, 0xff, soundlatch2_r },
-PORT_END
+static ADDRESS_MAP_START( i8039_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(soundlatch2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( i8039_writeport )
-	{ I8039_p1, I8039_p1, DAC_0_data_w },
-	{ I8039_p2, I8039_p2, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( i8039_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 
@@ -440,22 +440,22 @@ static MACHINE_DRIVER_START( gyruss )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz ??? */
-	MDRV_CPU_MEMORY(m6809_readmem,m6809_writemem)
+	MDRV_CPU_PROGRAM_MAP(m6809_readmem,m6809_writemem)
 	MDRV_CPU_VBLANK_INT(gyruss_6809_interrupt,256)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_CPU_ADD(I8039,8000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
-	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
-	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
+	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

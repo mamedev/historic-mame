@@ -162,12 +162,12 @@ static WRITE_HANDLER( cloak_custom_w )
 
 static WRITE_HANDLER( cloak_irq_reset_0_w )
 {
-	cpu_set_irq_line(0, data, CLEAR_LINE);
+	cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
 static WRITE_HANDLER( cloak_irq_reset_1_w )
 {
-	cpu_set_irq_line(1, data, CLEAR_LINE);
+	cpu_set_irq_line(1, 0, CLEAR_LINE);
 }
 
 static WRITE_HANDLER( cloak_nvram_enable_w )
@@ -181,40 +181,40 @@ static WRITE_HANDLER( cloak_nvram_enable_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0fff, cloak_sharedram_r },
-	{ 0x2800, 0x29ff, MRA_RAM },
-	{ 0x1000, 0x100f, pokey1_r },		/* DSW0 also */
-//	{ 0x1008, 0x1008, MRA_RAM },
-	{ 0x1800, 0x180f, pokey2_r },		/* DSW1 also */
-	{ 0x2000, 0x2000, input_port_0_r },	/* IN0 */
-	{ 0x2200, 0x2200, input_port_1_r },	/* IN1 */
-	{ 0x2400, 0x2400, input_port_2_r },	/* IN2 */
-	{ 0x2800, 0x29ff, MRA_RAM },
-	{ 0x3000, 0x30ff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(cloak_sharedram_r)
+	AM_RANGE(0x2800, 0x29ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x100f) AM_READ(pokey1_r)		/* DSW0 also */
+//	AM_RANGE(0x1008, 0x1008) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x180f) AM_READ(pokey2_r)		/* DSW1 also */
+	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x2200, 0x2200) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0x2800, 0x29ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x30ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, cloak_videoram_w, &videoram },
-	{ 0x0800, 0x0fff, cloak_sharedram_w, &cloak_sharedram },
-	{ 0x1000, 0x100f, pokey1_w },
-	{ 0x1800, 0x180f, pokey2_w },
-	{ 0x2600, 0x2600, cloak_custom_w },
-	{ 0x2800, 0x29ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3200, 0x327f, cloak_paletteram_w },
-	{ 0x3800, 0x3801, cloak_coin_counter_w },
-	{ 0x3803, 0x3803, cloak_flipscreen_w },
-	{ 0x3805, 0x3805, MWA_NOP },	// ???
-	{ 0x3806, 0x3807, cloak_led_w },
-	{ 0x3a00, 0x3a00, watchdog_reset_w },
-	{ 0x3c00, 0x3c00, cloak_irq_reset_0_w },
-	{ 0x3e00, 0x3e00, cloak_nvram_enable_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(cloak_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(cloak_sharedram_w) AM_BASE(&cloak_sharedram)
+	AM_RANGE(0x1000, 0x100f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x1800, 0x180f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x2600, 0x2600) AM_WRITE(cloak_custom_w)
+	AM_RANGE(0x2800, 0x29ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3200, 0x327f) AM_WRITE(cloak_paletteram_w)
+	AM_RANGE(0x3800, 0x3801) AM_WRITE(cloak_coin_counter_w)
+	AM_RANGE(0x3803, 0x3803) AM_WRITE(cloak_flipscreen_w)
+	AM_RANGE(0x3805, 0x3805) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x3806, 0x3807) AM_WRITE(cloak_led_w)
+	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(cloak_irq_reset_0_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(cloak_nvram_enable_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /*************************************
  *
@@ -222,24 +222,24 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x0007, MRA_RAM },
-	{ 0x0008, 0x000f, graph_processor_r },
-	{ 0x0010, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0fff, cloak_sharedram_r },
-	{ 0x2000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0008, 0x000f) AM_READ(graph_processor_r)
+	AM_RANGE(0x0010, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(cloak_sharedram_r)
+	AM_RANGE(0x2000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x0007, MWA_RAM },
-	{ 0x0008, 0x000f, graph_processor_w },
-	{ 0x0010, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0fff, cloak_sharedram_w },
-	{ 0x1000, 0x1000, cloak_irq_reset_1_w },
-	{ 0x1200, 0x1200, cloak_clearbmp_w },
-	{ 0x1400, 0x1400, cloak_custom_w },
-	{ 0x2000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0008, 0x000f) AM_WRITE(graph_processor_w)
+	AM_RANGE(0x0010, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(cloak_sharedram_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(cloak_irq_reset_1_w)
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(cloak_clearbmp_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(cloak_custom_w)
+	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /*************************************
  *
@@ -368,11 +368,11 @@ static MACHINE_DRIVER_START( cloak )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1000000)		/* 1 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(M6502,1250000)		/* 1.25 MHz ???? */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

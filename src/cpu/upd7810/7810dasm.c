@@ -3963,6 +3963,7 @@ const char *regname[32] =
 	"illegal", "TMM",     "PT",      "illegal"
 };
 
+static unsigned upd7810_get_reg(int reg) { union cpuinfo info; upd7810_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
 unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 {

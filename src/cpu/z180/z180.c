@@ -5,17 +5,43 @@
  *
  *	 Copyright (C) 2000 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *
+ *   - This source code is released as freeware for non-commercial purposes
+ *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
+ *	   The licensing terms of MAME apply to this piece of code for the MAME
+ *	   project and derviative works, as defined by the MAME license. You
+ *	   may opt to make modifications, improvements or derivative works under
+ *	   that same conditions, and the MAME project may opt to keep
+ *	   modifications, improvements or derivatives under their terms exclusively.
+ *
+ *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *     below) to this - and only this - piece of code or your derivative works.
+ *	   Note that in no case your choice can have any impact on any other
+ *	   source code of the MAME project, or binary, or executable, be it closely
+ *	   or losely related to this piece of code.
+ *
+ *	-  At your choice you are also free to remove either licensing terms from
+ *	   this file and continue to use it under only one of the two licenses. Do this
+ *	   if you think that licenses are not compatible (enough) for you, or if you
+ *	   consider either license 'too restrictive' or 'too free'.
+ *
+ *	-  GPL (GNU General Public License)
+ *	   This program is free software; you can redistribute it and/or
+ *	   modify it under the terms of the GNU General Public License
+ *	   as published by the Free Software Foundation; either version 2
+ *	   of the License, or (at your option) any later version.
+ *
+ *	   This program is distributed in the hope that it will be useful,
+ *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	   GNU General Public License for more details.
+ *
+ *	   You should have received a copy of the GNU General Public License
+ *	   along with this program; if not, write to the Free Software
+ *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
  *
  *****************************************************************************/
 
@@ -54,7 +80,7 @@ static UINT8 z180_reg_layout[] = {
 	Z180_PC, Z180_SP, Z180_AF,	Z180_BC,	Z180_DE,   Z180_HL, -1,
 	Z180_IX, Z180_IY, Z180_AF2, Z180_BC2,	Z180_DE2,  Z180_HL2, -1,
 	Z180_R,  Z180_I,  Z180_IL,	Z180_IM,	Z180_IFF1, Z180_IFF2, -1,
-	Z180_INT0_STATE,Z180_INT1_STATE,Z180_INT2_STATE,Z180_DC0, Z180_DC1,Z180_DC2,Z180_DC3, -1,
+	Z180_DC0, Z180_DC1,Z180_DC2,Z180_DC3, -1,
 	Z180_CCR,Z180_ITC,Z180_CBR, Z180_BBR,	Z180_CBAR, Z180_OMCR, 0
 };
 
@@ -757,6 +783,8 @@ static data8_t z180_readcontrol(offs_t port);
 static void z180_writecontrol(offs_t port, data8_t data);
 static void z180_dma0(void);
 static void z180_dma1(void);
+static void z180_burn(int cycles);
+static void z180_set_info(UINT32 state, union cpuinfo *info);
 
 #include "z180daa.h"
 #include "z180ops.h"
@@ -772,7 +800,7 @@ static void z180_dma1(void);
 static data8_t z180_readcontrol(offs_t port)
 {
 	/* normal external readport */
-	data8_t data = cpu_readport16(port);
+	data8_t data = io_read_byte_8(port);
 
 	/* but ignore the data and read the internal register */
 	switch ((port & 0x3f) + Z180_CNTLA0)
@@ -1133,7 +1161,7 @@ static data8_t z180_readcontrol(offs_t port)
 static void z180_writecontrol(offs_t port, data8_t data)
 {
 	/* normal external write port */
-	cpu_writeport16(port, data);
+	io_write_byte_8(port, data);
 	/* store the data in the internal register */
 	switch ((port & 0x3f) + Z180_CNTLA0)
 	{
@@ -1489,18 +1517,18 @@ static void z180_dma0(void)
 		switch( IO_DMODE & (Z180_DMODE_SM | Z180_DMODE_DM) )
 		{
 		case 0x00:	/* memory SAR0+1 to memory DAR0+1 */
-			cpu_writemem20(dar0++, cpu_readmem20(sar0++));
+			program_write_byte_8(dar0++, program_read_byte_8(sar0++));
 			break;
 		case 0x04:	/* memory SAR0-1 to memory DAR0+1 */
-			cpu_writemem20(dar0++, cpu_readmem20(sar0--));
+			program_write_byte_8(dar0++, program_read_byte_8(sar0--));
 			break;
 		case 0x08:	/* memory SAR0 fixed to memory DAR0+1 */
-			cpu_writemem20(dar0++, cpu_readmem20(sar0));
+			program_write_byte_8(dar0++, program_read_byte_8(sar0));
 			break;
 		case 0x0c:	/* I/O SAR0 fixed to memory DAR0+1 */
 			if (Z180.iol & Z180_DREQ0)
 			{
-				cpu_writemem20(dar0++, IN(sar0));
+				program_write_byte_8(dar0++, IN(sar0));
 				/* edge sensitive DREQ0 ? */
 				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
@@ -1510,18 +1538,18 @@ static void z180_dma0(void)
 			}
 			break;
 		case 0x10:	/* memory SAR0+1 to memory DAR0-1 */
-			cpu_writemem20(dar0--, cpu_readmem20(sar0++));
+			program_write_byte_8(dar0--, program_read_byte_8(sar0++));
 			break;
 		case 0x14:	/* memory SAR0-1 to memory DAR0-1 */
-			cpu_writemem20(dar0--, cpu_readmem20(sar0--));
+			program_write_byte_8(dar0--, program_read_byte_8(sar0--));
 			break;
 		case 0x18:	/* memory SAR0 fixed to memory DAR0-1 */
-			cpu_writemem20(dar0--, cpu_readmem20(sar0));
+			program_write_byte_8(dar0--, program_read_byte_8(sar0));
 			break;
 		case 0x1c:	/* I/O SAR0 fixed to memory DAR0-1 */
 			if (Z180.iol & Z180_DREQ0)
             {
-				cpu_writemem20(dar0--, IN(sar0));
+				program_write_byte_8(dar0--, IN(sar0));
 				/* edge sensitive DREQ0 ? */
 				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
@@ -1531,10 +1559,10 @@ static void z180_dma0(void)
 			}
 			break;
 		case 0x20:	/* memory SAR0+1 to memory DAR0 fixed */
-			cpu_writemem20(dar0, cpu_readmem20(sar0++));
+			program_write_byte_8(dar0, program_read_byte_8(sar0++));
 			break;
 		case 0x24:	/* memory SAR0-1 to memory DAR0 fixed */
-			cpu_writemem20(dar0, cpu_readmem20(sar0--));
+			program_write_byte_8(dar0, program_read_byte_8(sar0--));
 			break;
 		case 0x28:	/* reserved */
 			break;
@@ -1543,7 +1571,7 @@ static void z180_dma0(void)
 		case 0x30:	/* memory SAR0+1 to I/O DAR0 fixed */
 			if (Z180.iol & Z180_DREQ0)
             {
-				OUT(dar0, cpu_readmem20(sar0++));
+				OUT(dar0, program_read_byte_8(sar0++));
 				/* edge sensitive DREQ0 ? */
 				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
@@ -1555,7 +1583,7 @@ static void z180_dma0(void)
 		case 0x34:	/* memory SAR0-1 to I/O DAR0 fixed */
 			if (Z180.iol & Z180_DREQ0)
             {
-				OUT(dar0, cpu_readmem20(sar0--));
+				OUT(dar0, program_read_byte_8(sar0--));
 				/* edge sensitive DREQ0 ? */
 				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
@@ -1620,16 +1648,16 @@ static void z180_dma1(void)
 	switch (IO_DCNTL & (Z180_DCNTL_DIM1 | Z180_DCNTL_DIM0))
 	{
 	case 0x00:	/* memory MAR1+1 to I/O IAR1 fixed */
-		cpu_writeport16(iar1, cpu_readmem20(mar1++));
+		io_write_byte_8(iar1, program_read_byte_8(mar1++));
 		break;
 	case 0x01:	/* memory MAR1-1 to I/O IAR1 fixed */
-		cpu_writeport16(iar1, cpu_readmem20(mar1--));
+		io_write_byte_8(iar1, program_read_byte_8(mar1--));
 		break;
 	case 0x02:	/* I/O IAR1 fixed to memory MAR1+1 */
-		cpu_writemem20(mar1++, cpu_readport16(iar1));
+		program_write_byte_8(mar1++, io_read_byte_8(iar1));
 		break;
 	case 0x03:	/* I/O IAR1 fixed to memory MAR1-1 */
-		cpu_writemem20(mar1--, cpu_readport16(iar1));
+		program_write_byte_8(mar1--, io_read_byte_8(iar1));
 		break;
 	}
 
@@ -1781,7 +1809,7 @@ static void z180_write_iolines(UINT32 data)
 }
 
 
-void z180_init(void)
+static void z180_init(void)
 {
 	int cpu = cpu_getactivecpu();
 
@@ -1818,7 +1846,7 @@ void z180_init(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-void z180_reset(void *param)
+static void z180_reset(void *param)
 {
 	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	int i, p;
@@ -2011,7 +2039,7 @@ void z180_reset(void *param)
 	z180_change_pc(_PCD);
 }
 
-void z180_exit(void)
+static void z180_exit(void)
 {
 #if BIG_FLAGS_ARRAY
 	if (SZHVC_add) free(SZHVC_add);
@@ -2024,7 +2052,7 @@ void z180_exit(void)
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
-int z180_execute(int cycles)
+static int z180_execute(int cycles)
 {
 	z180_icount = cycles - Z180.extra_cycles;
 	Z180.extra_cycles = 0;
@@ -2080,7 +2108,7 @@ again:
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
-void z180_burn(int cycles)
+static void z180_burn(int cycles)
 {
 	if( cycles > 0 )
 	{
@@ -2094,265 +2122,20 @@ void z180_burn(int cycles)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned z180_get_context (void *dst)
+static void z180_get_context (void *dst)
 {
 	if( dst )
 		*(Z180_Regs*)dst = Z180;
-	return sizeof(Z180_Regs);
 }
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void z180_set_context (void *src)
+static void z180_set_context (void *src)
 {
 	if( src )
 		Z180 = *(Z180_Regs*)src;
 	z180_change_pc(_PCD);
-}
-
-/****************************************************************************
- * Get a pointer to a cycle count table
- ****************************************************************************/
-const void *z180_get_cycle_table (int which)
-{
-	if (which >= 0 && which <= Z180_TABLE_xycb)
-		return cc[which];
-	return NULL;
-}
-
-/****************************************************************************
- * Set a new cycle count table
- ****************************************************************************/
-void z180_set_cycle_table (int which, void *new_table)
-{
-	if (which >= 0 && which <= Z180_TABLE_ex)
-		cc[which] = new_table;
-}
-
-/****************************************************************************
- * Return a specific register
- ****************************************************************************/
-unsigned z180_get_reg (int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return _PCD;
-		case Z180_PC: return Z180.PC.w.l;
-		case REG_SP: return _SPD;
-		case Z180_SP: return Z180.SP.w.l;
-		case Z180_AF: return Z180.AF.w.l;
-		case Z180_BC: return Z180.BC.w.l;
-		case Z180_DE: return Z180.DE.w.l;
-		case Z180_HL: return Z180.HL.w.l;
-		case Z180_IX: return Z180.IX.w.l;
-		case Z180_IY: return Z180.IY.w.l;
-		case Z180_R: return (Z180.R & 0x7f) | (Z180.R2 & 0x80);
-		case Z180_I: return Z180.I;
-		case Z180_AF2: return Z180.AF2.w.l;
-		case Z180_BC2: return Z180.BC2.w.l;
-		case Z180_DE2: return Z180.DE2.w.l;
-		case Z180_HL2: return Z180.HL2.w.l;
-		case Z180_IM: return Z180.IM;
-		case Z180_IFF1: return Z180.IFF1;
-		case Z180_IFF2: return Z180.IFF2;
-		case Z180_HALT: return Z180.HALT;
-        case Z180_NMI_STATE: return Z180.nmi_state;
-		case Z180_INT0_STATE: return Z180.irq_state[0];
-		case Z180_INT1_STATE: return Z180.irq_state[1];
-		case Z180_INT2_STATE: return Z180.irq_state[2];
-		case Z180_DC0: return Z180.int_state[0];
-		case Z180_DC1: return Z180.int_state[1];
-		case Z180_DC2: return Z180.int_state[2];
-		case Z180_DC3: return Z180.int_state[3];
-		case Z180_CNTLA0: return Z180.io[0x00];
-		case Z180_CNTLA1: return Z180.io[0x01];
-		case Z180_CNTLB0: return Z180.io[0x02];
-		case Z180_CNTLB1: return Z180.io[0x03];
-		case Z180_STAT0: return Z180.io[0x04];
-		case Z180_STAT1: return Z180.io[0x05];
-		case Z180_TDR0: return Z180.io[0x06];
-		case Z180_TDR1: return Z180.io[0x07];
-		case Z180_RDR0: return Z180.io[0x08];
-		case Z180_RDR1: return Z180.io[0x09];
-		case Z180_CNTR: return Z180.io[0x0a];
-		case Z180_TRDR: return Z180.io[0x0b];
-		case Z180_TMDR0L: return Z180.io[0x0c];
-		case Z180_TMDR0H: return Z180.io[0x0d];
-		case Z180_RLDR0L: return Z180.io[0x0e];
-		case Z180_RLDR0H: return Z180.io[0x0f];
-		case Z180_TCR: return Z180.io[0x10];
-		case Z180_IO11: return Z180.io[0x11];
-		case Z180_ASEXT0: return Z180.io[0x12];
-		case Z180_ASEXT1: return Z180.io[0x13];
-		case Z180_TMDR1L: return Z180.io[0x14];
-		case Z180_TMDR1H: return Z180.io[0x15];
-		case Z180_RLDR1L: return Z180.io[0x16];
-		case Z180_RLDR1H: return Z180.io[0x17];
-		case Z180_FRC: return Z180.io[0x18];
-		case Z180_IO19: return Z180.io[0x19];
-		case Z180_ASTC0L: return Z180.io[0x1a];
-		case Z180_ASTC0H: return Z180.io[0x1b];
-		case Z180_ASTC1L: return Z180.io[0x1c];
-		case Z180_ASTC1H: return Z180.io[0x1d];
-		case Z180_CMR: return Z180.io[0x1e];
-		case Z180_CCR: return Z180.io[0x1f];
-		case Z180_SAR0L: return Z180.io[0x20];
-		case Z180_SAR0H: return Z180.io[0x21];
-		case Z180_SAR0B: return Z180.io[0x22];
-		case Z180_DAR0L: return Z180.io[0x23];
-		case Z180_DAR0H: return Z180.io[0x24];
-		case Z180_DAR0B: return Z180.io[0x25];
-		case Z180_BCR0L: return Z180.io[0x26];
-		case Z180_BCR0H: return Z180.io[0x27];
-		case Z180_MAR1L: return Z180.io[0x28];
-		case Z180_MAR1H: return Z180.io[0x29];
-		case Z180_MAR1B: return Z180.io[0x2a];
-		case Z180_IAR1L: return Z180.io[0x2b];
-		case Z180_IAR1H: return Z180.io[0x2c];
-		case Z180_IAR1B: return Z180.io[0x2d];
-		case Z180_BCR1L: return Z180.io[0x2e];
-		case Z180_BCR1H: return Z180.io[0x2f];
-		case Z180_DSTAT: return Z180.io[0x30];
-		case Z180_DMODE: return Z180.io[0x31];
-		case Z180_DCNTL: return Z180.io[0x32];
-		case Z180_IL: return Z180.io[0x33];
-		case Z180_ITC: return Z180.io[0x34];
-		case Z180_IO35: return Z180.io[0x35];
-		case Z180_RCR: return Z180.io[0x36];
-		case Z180_IO37: return Z180.io[0x37];
-		case Z180_CBR: return Z180.io[0x38];
-		case Z180_BBR: return Z180.io[0x39];
-		case Z180_CBAR: return Z180.io[0x3a];
-		case Z180_IO3B: return Z180.io[0x3b];
-		case Z180_IO3C: return Z180.io[0x3c];
-		case Z180_IO3D: return Z180.io[0x3d];
-		case Z180_OMCR: return Z180.io[0x3e];
-		case Z180_IOCR: return Z180.io[0x3f];
-		case Z180_IOLINES: return Z180.iol; break;
-        case REG_PREVIOUSPC: return Z180.PREPC.w.l;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return RM( offset ) | ( RM( offset + 1) << 8 );
-			}
-	}
-	return 0;
-}
-
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-void z180_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC: _PC = val; z180_change_pc(_PCD); break;
-		case Z180_PC: Z180.PC.w.l = val; break;
-		case REG_SP: _SP = val; break;
-		case Z180_SP: Z180.SP.w.l = val; break;
-		case Z180_AF: Z180.AF.w.l = val; break;
-		case Z180_BC: Z180.BC.w.l = val; break;
-		case Z180_DE: Z180.DE.w.l = val; break;
-		case Z180_HL: Z180.HL.w.l = val; break;
-		case Z180_IX: Z180.IX.w.l = val; break;
-		case Z180_IY: Z180.IY.w.l = val; break;
-		case Z180_R: Z180.R = val; Z180.R2 = val & 0x80; break;
-		case Z180_I: Z180.I = val; break;
-		case Z180_AF2: Z180.AF2.w.l = val; break;
-		case Z180_BC2: Z180.BC2.w.l = val; break;
-		case Z180_DE2: Z180.DE2.w.l = val; break;
-		case Z180_HL2: Z180.HL2.w.l = val; break;
-		case Z180_IM: Z180.IM = val; break;
-		case Z180_IFF1: Z180.IFF1 = val; break;
-		case Z180_IFF2: Z180.IFF2 = val; break;
-		case Z180_HALT: Z180.HALT = val; break;
-        case Z180_NMI_STATE: z180_set_irq_line(IRQ_LINE_NMI,val); break;
-		case Z180_INT0_STATE: z180_set_irq_line(0,val); break;
-		case Z180_INT1_STATE: z180_set_irq_line(1,val); break;
-		case Z180_INT2_STATE: z180_set_irq_line(2,val); break;
-		case Z180_DC0: Z180.int_state[0] = val; break;
-		case Z180_DC1: Z180.int_state[1] = val; break;
-		case Z180_DC2: Z180.int_state[2] = val; break;
-		case Z180_DC3: Z180.int_state[3] = val; break;
-		case Z180_CNTLA0: Z180.io[0x00] = val; break;
-		case Z180_CNTLA1: Z180.io[0x01] = val; break;
-		case Z180_CNTLB0: Z180.io[0x02] = val; break;
-		case Z180_CNTLB1: Z180.io[0x03] = val; break;
-		case Z180_STAT0: Z180.io[0x04] = val; break;
-		case Z180_STAT1: Z180.io[0x05] = val; break;
-		case Z180_TDR0: Z180.io[0x06] = val; break;
-		case Z180_TDR1: Z180.io[0x07] = val; break;
-		case Z180_RDR0: Z180.io[0x08] = val; break;
-		case Z180_RDR1: Z180.io[0x09] = val; break;
-		case Z180_CNTR: Z180.io[0x0a] = val; break;
-		case Z180_TRDR: Z180.io[0x0b] = val; break;
-		case Z180_TMDR0L: Z180.io[0x0c] = val; break;
-		case Z180_TMDR0H: Z180.io[0x0d] = val; break;
-		case Z180_RLDR0L: Z180.io[0x0e] = val; break;
-		case Z180_RLDR0H: Z180.io[0x0f] = val; break;
-		case Z180_TCR: Z180.io[0x10] = val; break;
-		case Z180_IO11: Z180.io[0x11] = val; break;
-		case Z180_ASEXT0: Z180.io[0x12] = val; break;
-		case Z180_ASEXT1: Z180.io[0x13] = val; break;
-		case Z180_TMDR1L: Z180.io[0x14] = val; break;
-		case Z180_TMDR1H: Z180.io[0x15] = val; break;
-		case Z180_RLDR1L: Z180.io[0x16] = val; break;
-		case Z180_RLDR1H: Z180.io[0x17] = val; break;
-		case Z180_FRC: Z180.io[0x18] = val; break;
-		case Z180_IO19: Z180.io[0x19] = val; break;
-		case Z180_ASTC0L: Z180.io[0x1a] = val; break;
-		case Z180_ASTC0H: Z180.io[0x1b] = val; break;
-		case Z180_ASTC1L: Z180.io[0x1c] = val; break;
-		case Z180_ASTC1H: Z180.io[0x1d] = val; break;
-		case Z180_CMR: Z180.io[0x1e] = val; break;
-		case Z180_CCR: Z180.io[0x1f] = val; break;
-		case Z180_SAR0L: Z180.io[0x20] = val; break;
-		case Z180_SAR0H: Z180.io[0x21] = val; break;
-		case Z180_SAR0B: Z180.io[0x22] = val; break;
-		case Z180_DAR0L: Z180.io[0x23] = val; break;
-		case Z180_DAR0H: Z180.io[0x24] = val; break;
-		case Z180_DAR0B: Z180.io[0x25] = val; break;
-		case Z180_BCR0L: Z180.io[0x26] = val; break;
-		case Z180_BCR0H: Z180.io[0x27] = val; break;
-		case Z180_MAR1L: Z180.io[0x28] = val; break;
-		case Z180_MAR1H: Z180.io[0x29] = val; break;
-		case Z180_MAR1B: Z180.io[0x2a] = val; break;
-		case Z180_IAR1L: Z180.io[0x2b] = val; break;
-		case Z180_IAR1H: Z180.io[0x2c] = val; break;
-		case Z180_IAR1B: Z180.io[0x2d] = val; break;
-		case Z180_BCR1L: Z180.io[0x2e] = val; break;
-		case Z180_BCR1H: Z180.io[0x2f] = val; break;
-		case Z180_DSTAT: Z180.io[0x30] = val; break;
-		case Z180_DMODE: Z180.io[0x31] = val; break;
-		case Z180_DCNTL: Z180.io[0x32] = val; break;
-		case Z180_IL: Z180.io[0x33] = val; break;
-		case Z180_ITC: Z180.io[0x34] = val; break;
-		case Z180_IO35: Z180.io[0x35] = val; break;
-		case Z180_RCR: Z180.io[0x36] = val; break;
-		case Z180_IO37: Z180.io[0x37] = val; break;
-		case Z180_CBR: Z180.io[0x38] = val; z180_mmu(); break;
-		case Z180_BBR: Z180.io[0x39] = val; z180_mmu(); break;
-		case Z180_CBAR: Z180.io[0x3a] = val; z180_mmu(); break;
-		case Z180_IO3B: Z180.io[0x3b] = val; break;
-		case Z180_IO3C: Z180.io[0x3c] = val; break;
-		case Z180_IO3D: Z180.io[0x3d] = val; break;
-		case Z180_OMCR: Z180.io[0x3e] = val; break;
-		case Z180_IOCR: Z180.io[0x3f] = val; break;
-		case Z180_IOLINES: z180_write_iolines(val); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, val & 0xff );
-					WM( offset+1, (val >> 8) & 0xff );
-				}
-			}
-	}
 }
 
 READ_HANDLER( z180_internal_r )
@@ -2362,13 +2145,15 @@ READ_HANDLER( z180_internal_r )
 
 WRITE_HANDLER( z180_internal_w )
 {
-	z180_set_reg( Z180_CNTLA0 + (offset & 0x3f), data );
+	union cpuinfo info;
+	info.i = data;
+	z180_set_info( CPUINFO_INT_REGISTER + Z180_CNTLA0 + (offset & 0x3f), &info );
 }
 
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-void z180_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -2438,87 +2223,7 @@ void z180_set_irq_line(int irqline, int state)
 	}
 }
 
-/****************************************************************************
- * Set IRQ vector callback
- ****************************************************************************/
-void z180_set_irq_callback(int (*callback)(int))
-{
-	LOG(("Z180 #%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
-	Z180.irq_callback = callback;
-}
-
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *z180_info(void *context, int regnum)
-{
-	static char buffer[32][47+1];
-	static int which = 0;
-	Z180_Regs *r = context;
-
-	which = (which+1) % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &Z180;
-
-	switch( regnum )
-	{
-	case CPU_INFO_REG+Z180_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-	case CPU_INFO_REG+Z180_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-	case CPU_INFO_REG+Z180_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
-	case CPU_INFO_REG+Z180_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
-	case CPU_INFO_REG+Z180_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
-	case CPU_INFO_REG+Z180_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-	case CPU_INFO_REG+Z180_IX: sprintf(buffer[which], "IX:%04X", r->IX.w.l); break;
-	case CPU_INFO_REG+Z180_IY: sprintf(buffer[which], "IY:%04X", r->IY.w.l); break;
-	case CPU_INFO_REG+Z180_R:  sprintf(buffer[which], "R   :%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
-	case CPU_INFO_REG+Z180_I:  sprintf(buffer[which], "I   :%02X", r->I); break;
-	case CPU_INFO_REG+Z180_IL: sprintf(buffer[which], "IL  :%02X", r->io[Z180_IL-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_AF2: sprintf(buffer[which], "AF'%04X", r->AF2.w.l); break;
-	case CPU_INFO_REG+Z180_BC2: sprintf(buffer[which], "BC'%04X", r->BC2.w.l); break;
-	case CPU_INFO_REG+Z180_DE2: sprintf(buffer[which], "DE'%04X", r->DE2.w.l); break;
-	case CPU_INFO_REG+Z180_HL2: sprintf(buffer[which], "HL'%04X", r->HL2.w.l); break;
-	case CPU_INFO_REG+Z180_IM: sprintf(buffer[which], "IM  :%X", r->IM); break;
-	case CPU_INFO_REG+Z180_IFF1: sprintf(buffer[which], "IFF1:%X", r->IFF1); break;
-	case CPU_INFO_REG+Z180_IFF2: sprintf(buffer[which], "IFF2:%X", r->IFF2); break;
-	case CPU_INFO_REG+Z180_HALT: sprintf(buffer[which], "HALT:%X", r->HALT); break;
-	case CPU_INFO_REG+Z180_INT0_STATE: sprintf(buffer[which], "INT0:%X", r->irq_state[0]); break;
-	case CPU_INFO_REG+Z180_INT1_STATE: sprintf(buffer[which], "INT1:%X", r->irq_state[1]); break;
-	case CPU_INFO_REG+Z180_INT2_STATE: sprintf(buffer[which], "INT2:%X", r->irq_state[2]); break;
-	case CPU_INFO_REG+Z180_DC0: if(Z180.irq_max >= 1) sprintf(buffer[which], "DC0:%X", r->int_state[0]); break;
-	case CPU_INFO_REG+Z180_DC1: if(Z180.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
-	case CPU_INFO_REG+Z180_DC2: if(Z180.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
-	case CPU_INFO_REG+Z180_DC3: if(Z180.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-	case CPU_INFO_REG+Z180_CCR:  sprintf(buffer[which], "CCR :%02X", r->io[Z180_CCR-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_ITC:  sprintf(buffer[which], "ITC :%02X", r->io[Z180_ITC-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_CBR:  sprintf(buffer[which], "CBR :%02X", r->io[Z180_CBR-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_BBR:  sprintf(buffer[which], "BBR :%02X", r->io[Z180_BBR-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_CBAR: sprintf(buffer[which], "CBAR:%02X", r->io[Z180_CBAR-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_OMCR: sprintf(buffer[which], "OMCR:%02X", r->io[Z180_OMCR-Z180_CNTLA0]); break;
-	case CPU_INFO_REG+Z180_IOCR: sprintf(buffer[which], "IOCR:%02X", r->io[Z180_IOCR-Z180_CNTLA0]); break;
-    case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-			r->AF.b.l & 0x80 ? 'S':'.',
-			r->AF.b.l & 0x40 ? 'Z':'.',
-			r->AF.b.l & 0x20 ? '5':'.',
-			r->AF.b.l & 0x10 ? 'H':'.',
-			r->AF.b.l & 0x08 ? '3':'.',
-			r->AF.b.l & 0x04 ? 'P':'.',
-			r->AF.b.l & 0x02 ? 'N':'.',
-			r->AF.b.l & 0x01 ? 'C':'.');
-		break;
-	case CPU_INFO_NAME: return "Z180";
-	case CPU_INFO_FAMILY: return "Zilog Z8x180";
-	case CPU_INFO_VERSION: return "0.2";
-	case CPU_INFO_FILE: return __FILE__;
-	case CPU_INFO_CREDITS: return "Copyright (C) 2000 Juergen Buchmueller, all rights reserved.";
-	case CPU_INFO_REG_LAYOUT: return (const char *)z180_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char *)z180_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned z180_dasm( char *buffer, unsigned pc )
+static offs_t z180_dasm( char *buffer, offs_t pc )
 {
 #ifdef MAME_DEBUG
 	return DasmZ180( buffer, pc );
@@ -2528,3 +2233,319 @@ unsigned z180_dasm( char *buffer, unsigned pc )
 #endif
 }
 
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void z180_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT0:			set_irq_line(Z180_INT0, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT1:			set_irq_line(Z180_INT1, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT2:			set_irq_line(Z180_INT2, info->i);		break;
+
+		case CPUINFO_INT_PC:							_PC = info->i; z180_change_pc(_PCD);	break;
+		case CPUINFO_INT_REGISTER + Z180_PC:			Z180.PC.w.l = info->i;					break;
+		case CPUINFO_INT_SP:							_SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + Z180_SP:			Z180.SP.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_AF:			Z180.AF.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_BC:			Z180.BC.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_DE:			Z180.DE.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_HL:			Z180.HL.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_IX:			Z180.IX.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_IY:			Z180.IY.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_R:				Z180.R = info->i; Z180.R2 = info->i & 0x80;	break;
+		case CPUINFO_INT_REGISTER + Z180_I:				Z180.I = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z180_AF2:			Z180.AF2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_BC2:			Z180.BC2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_DE2:			Z180.DE2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_HL2:			Z180.HL2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_IM:			Z180.IM = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z180_IFF1:			Z180.IFF1 = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_IFF2:			Z180.IFF2 = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_HALT:			Z180.HALT = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z180_DC0:			Z180.int_state[0] = info->i;			break;
+		case CPUINFO_INT_REGISTER + Z180_DC1:			Z180.int_state[1] = info->i;			break;
+		case CPUINFO_INT_REGISTER + Z180_DC2:			Z180.int_state[2] = info->i;			break;
+		case CPUINFO_INT_REGISTER + Z180_DC3:			Z180.int_state[3] = info->i;			break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLA0:		Z180.io[0x00] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLA1:		Z180.io[0x01] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLB0:		Z180.io[0x02] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLB1:		Z180.io[0x03] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_STAT0:			Z180.io[0x04] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_STAT1:			Z180.io[0x05] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TDR0:			Z180.io[0x06] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TDR1:			Z180.io[0x07] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RDR0:			Z180.io[0x08] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RDR1:			Z180.io[0x09] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTR:			Z180.io[0x0a] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TRDR:			Z180.io[0x0b] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR0L:		Z180.io[0x0c] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR0H:		Z180.io[0x0d] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR0L:		Z180.io[0x0e] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR0H:		Z180.io[0x0f] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TCR:			Z180.io[0x10] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO11:			Z180.io[0x11] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASEXT0:		Z180.io[0x12] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASEXT1:		Z180.io[0x13] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR1L:		Z180.io[0x14] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR1H:		Z180.io[0x15] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR1L:		Z180.io[0x16] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR1H:		Z180.io[0x17] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_FRC:			Z180.io[0x18] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO19:			Z180.io[0x19] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC0L:		Z180.io[0x1a] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC0H:		Z180.io[0x1b] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC1L:		Z180.io[0x1c] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC1H:		Z180.io[0x1d] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CMR:			Z180.io[0x1e] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CCR:			Z180.io[0x1f] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0L:			Z180.io[0x20] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0H:			Z180.io[0x21] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0B:			Z180.io[0x22] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0L:			Z180.io[0x23] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0H:			Z180.io[0x24] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0B:			Z180.io[0x25] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR0L:			Z180.io[0x26] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR0H:			Z180.io[0x27] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1L:			Z180.io[0x28] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1H:			Z180.io[0x29] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1B:			Z180.io[0x2a] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1L:			Z180.io[0x2b] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1H:			Z180.io[0x2c] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1B:			Z180.io[0x2d] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR1L:			Z180.io[0x2e] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR1H:			Z180.io[0x2f] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DSTAT:			Z180.io[0x30] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DMODE:			Z180.io[0x31] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_DCNTL:			Z180.io[0x32] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IL:			Z180.io[0x33] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_ITC:			Z180.io[0x34] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO35:			Z180.io[0x35] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_RCR:			Z180.io[0x36] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO37:			Z180.io[0x37] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_CBR:			Z180.io[0x38] = info->i; z180_mmu();	break;
+		case CPUINFO_INT_REGISTER + Z180_BBR:			Z180.io[0x39] = info->i; z180_mmu();	break;
+		case CPUINFO_INT_REGISTER + Z180_CBAR:			Z180.io[0x3a] = info->i; z180_mmu();	break;
+		case CPUINFO_INT_REGISTER + Z180_IO3B:			Z180.io[0x3b] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO3C:			Z180.io[0x3c] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IO3D:			Z180.io[0x3d] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_OMCR:			Z180.io[0x3e] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IOCR:			Z180.io[0x3f] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z180_IOLINES:		z180_write_iolines(info->i);			break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					Z180.irq_callback = info->irqcallback;	break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: cc[Z180_TABLE_op] = info->p;			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: cc[Z180_TABLE_cb] = info->p;			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ed: cc[Z180_TABLE_ed] = info->p;			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_xy: cc[Z180_TABLE_xy] = info->p;			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_xycb: cc[Z180_TABLE_xycb] = info->p;		break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ex: cc[Z180_TABLE_ex] = info->p;			break;
+	}
+}
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void z180_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(Z180);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = Z180.nmi_state;				break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT0:			info->i = Z180.irq_state[0];			break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT1:			info->i = Z180.irq_state[1];			break;
+		case CPUINFO_INT_IRQ_STATE + Z180_INT2:			info->i = Z180.irq_state[2];			break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = Z180.PREPC.w.l;				break;
+
+		case CPUINFO_INT_PC:							info->i = _PCD;							break;
+		case CPUINFO_INT_REGISTER + Z180_PC:			info->i = Z180.PC.w.l;					break;
+		case CPUINFO_INT_SP:							info->i = _SPD;							break;
+		case CPUINFO_INT_REGISTER + Z180_SP:			info->i = Z180.SP.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_AF:			info->i = Z180.AF.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_BC:			info->i = Z180.BC.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_DE:			info->i = Z180.DE.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_HL:			info->i = Z180.HL.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_IX:			info->i = Z180.IX.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_IY:			info->i = Z180.IY.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_R:				info->i = (Z180.R & 0x7f) | (Z180.R2 & 0x80); break;
+		case CPUINFO_INT_REGISTER + Z180_I:				info->i = Z180.I;						break;
+		case CPUINFO_INT_REGISTER + Z180_AF2:			info->i = Z180.AF2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_BC2:			info->i = Z180.BC2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_DE2:			info->i = Z180.DE2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_HL2:			info->i = Z180.HL2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z180_IM:			info->i = Z180.IM;						break;
+		case CPUINFO_INT_REGISTER + Z180_IFF1:			info->i = Z180.IFF1;					break;
+		case CPUINFO_INT_REGISTER + Z180_IFF2:			info->i = Z180.IFF2;					break;
+		case CPUINFO_INT_REGISTER + Z180_HALT:			info->i = Z180.HALT;					break;
+		case CPUINFO_INT_REGISTER + Z180_DC0:			info->i = Z180.int_state[0];			break;
+		case CPUINFO_INT_REGISTER + Z180_DC1:			info->i = Z180.int_state[1];			break;
+		case CPUINFO_INT_REGISTER + Z180_DC2:			info->i = Z180.int_state[2];			break;
+		case CPUINFO_INT_REGISTER + Z180_DC3:			info->i = Z180.int_state[3];			break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLA0:		info->i = Z180.io[0x00];				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLA1:		info->i = Z180.io[0x01];				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLB0:		info->i = Z180.io[0x02];				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTLB1:		info->i = Z180.io[0x03];				break;
+		case CPUINFO_INT_REGISTER + Z180_STAT0:			info->i = Z180.io[0x04];				break;
+		case CPUINFO_INT_REGISTER + Z180_STAT1:			info->i = Z180.io[0x05];				break;
+		case CPUINFO_INT_REGISTER + Z180_TDR0:			info->i = Z180.io[0x06];				break;
+		case CPUINFO_INT_REGISTER + Z180_TDR1:			info->i = Z180.io[0x07];				break;
+		case CPUINFO_INT_REGISTER + Z180_RDR0:			info->i = Z180.io[0x08];				break;
+		case CPUINFO_INT_REGISTER + Z180_RDR1:			info->i = Z180.io[0x09];				break;
+		case CPUINFO_INT_REGISTER + Z180_CNTR:			info->i = Z180.io[0x0a];				break;
+		case CPUINFO_INT_REGISTER + Z180_TRDR:			info->i = Z180.io[0x0b];				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR0L:		info->i = Z180.io[0x0c];				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR0H:		info->i = Z180.io[0x0d];				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR0L:		info->i = Z180.io[0x0e];				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR0H:		info->i = Z180.io[0x0f];				break;
+		case CPUINFO_INT_REGISTER + Z180_TCR:			info->i = Z180.io[0x10];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO11:			info->i = Z180.io[0x11];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASEXT0:		info->i = Z180.io[0x12];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASEXT1:		info->i = Z180.io[0x13];				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR1L:		info->i = Z180.io[0x14];				break;
+		case CPUINFO_INT_REGISTER + Z180_TMDR1H:		info->i = Z180.io[0x15];				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR1L:		info->i = Z180.io[0x16];				break;
+		case CPUINFO_INT_REGISTER + Z180_RLDR1H:		info->i = Z180.io[0x17];				break;
+		case CPUINFO_INT_REGISTER + Z180_FRC:			info->i = Z180.io[0x18];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO19:			info->i = Z180.io[0x19];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC0L:		info->i = Z180.io[0x1a];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC0H:		info->i = Z180.io[0x1b];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC1L:		info->i = Z180.io[0x1c];				break;
+		case CPUINFO_INT_REGISTER + Z180_ASTC1H:		info->i = Z180.io[0x1d];				break;
+		case CPUINFO_INT_REGISTER + Z180_CMR:			info->i = Z180.io[0x1e];				break;
+		case CPUINFO_INT_REGISTER + Z180_CCR:			info->i = Z180.io[0x1f];				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0L:			info->i = Z180.io[0x20];				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0H:			info->i = Z180.io[0x21];				break;
+		case CPUINFO_INT_REGISTER + Z180_SAR0B:			info->i = Z180.io[0x22];				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0L:			info->i = Z180.io[0x23];				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0H:			info->i = Z180.io[0x24];				break;
+		case CPUINFO_INT_REGISTER + Z180_DAR0B:			info->i = Z180.io[0x25];				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR0L:			info->i = Z180.io[0x26];				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR0H:			info->i = Z180.io[0x27];				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1L:			info->i = Z180.io[0x28];				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1H:			info->i = Z180.io[0x29];				break;
+		case CPUINFO_INT_REGISTER + Z180_MAR1B:			info->i = Z180.io[0x2a];				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1L:			info->i = Z180.io[0x2b];				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1H:			info->i = Z180.io[0x2c];				break;
+		case CPUINFO_INT_REGISTER + Z180_IAR1B:			info->i = Z180.io[0x2d];				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR1L:			info->i = Z180.io[0x2e];				break;
+		case CPUINFO_INT_REGISTER + Z180_BCR1H:			info->i = Z180.io[0x2f];				break;
+		case CPUINFO_INT_REGISTER + Z180_DSTAT:			info->i = Z180.io[0x30];				break;
+		case CPUINFO_INT_REGISTER + Z180_DMODE:			info->i = Z180.io[0x31];				break;
+		case CPUINFO_INT_REGISTER + Z180_DCNTL:			info->i = Z180.io[0x32];				break;
+		case CPUINFO_INT_REGISTER + Z180_IL:			info->i = Z180.io[0x33];				break;
+		case CPUINFO_INT_REGISTER + Z180_ITC:			info->i = Z180.io[0x34];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO35:			info->i = Z180.io[0x35];				break;
+		case CPUINFO_INT_REGISTER + Z180_RCR:			info->i = Z180.io[0x36];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO37:			info->i = Z180.io[0x37];				break;
+		case CPUINFO_INT_REGISTER + Z180_CBR:			info->i = Z180.io[0x38];				break;
+		case CPUINFO_INT_REGISTER + Z180_BBR:			info->i = Z180.io[0x39];				break;
+		case CPUINFO_INT_REGISTER + Z180_CBAR:			info->i = Z180.io[0x3a];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO3B:			info->i = Z180.io[0x3b];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO3C:			info->i = Z180.io[0x3c];				break;
+		case CPUINFO_INT_REGISTER + Z180_IO3D:			info->i = Z180.io[0x3d];				break;
+		case CPUINFO_INT_REGISTER + Z180_OMCR:			info->i = Z180.io[0x3e];				break;
+		case CPUINFO_INT_REGISTER + Z180_IOCR:			info->i = Z180.io[0x3f];				break;
+		case CPUINFO_INT_REGISTER + Z180_IOLINES:		info->i = Z180.iol;						break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = z180_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = z180_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = z180_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = z180_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = z180_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = z180_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = z180_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = z180_burn;					break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z180_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = Z180.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z180_icount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z180_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z180_win_layout;				break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: info->p = cc[Z180_TABLE_op];			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: info->p = cc[Z180_TABLE_cb];			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ed: info->p = cc[Z180_TABLE_ed];			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_xy: info->p = cc[Z180_TABLE_xy];			break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_xycb: info->p = cc[Z180_TABLE_xycb];		break;
+		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ex: info->p = cc[Z180_TABLE_ex];			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Z180"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Zilog Z8x180"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.2"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2000 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				Z180.AF.b.l & 0x80 ? 'S':'.',
+				Z180.AF.b.l & 0x40 ? 'Z':'.',
+				Z180.AF.b.l & 0x20 ? '5':'.',
+				Z180.AF.b.l & 0x10 ? 'H':'.',
+				Z180.AF.b.l & 0x08 ? '3':'.',
+				Z180.AF.b.l & 0x04 ? 'P':'.',
+				Z180.AF.b.l & 0x02 ? 'N':'.',
+				Z180.AF.b.l & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + Z180_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", Z180.PC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", Z180.SP.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_AF:			sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", Z180.AF.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_BC:			sprintf(info->s = cpuintrf_temp_str(), "BC:%04X", Z180.BC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_DE:			sprintf(info->s = cpuintrf_temp_str(), "DE:%04X", Z180.DE.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_HL:			sprintf(info->s = cpuintrf_temp_str(), "HL:%04X", Z180.HL.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IX:			sprintf(info->s = cpuintrf_temp_str(), "IX:%04X", Z180.IX.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IY:			sprintf(info->s = cpuintrf_temp_str(), "IY:%04X", Z180.IY.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_R: 			sprintf(info->s = cpuintrf_temp_str(), "R   :%02X", (Z180.R & 0x7f) | (Z180.R2 & 0x80)); break;
+		case CPUINFO_STR_REGISTER + Z180_I: 			sprintf(info->s = cpuintrf_temp_str(), "I   :%02X", Z180.I); break;
+		case CPUINFO_STR_REGISTER + Z180_IL:			sprintf(info->s = cpuintrf_temp_str(), "IL  :%02X", Z180.io[Z180_IL-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_AF2:			sprintf(info->s = cpuintrf_temp_str(), "AF'%04X", Z180.AF2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_BC2:			sprintf(info->s = cpuintrf_temp_str(), "BC'%04X", Z180.BC2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_DE2:			sprintf(info->s = cpuintrf_temp_str(), "DE'%04X", Z180.DE2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_HL2:			sprintf(info->s = cpuintrf_temp_str(), "HL'%04X", Z180.HL2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IM:			sprintf(info->s = cpuintrf_temp_str(), "IM  :%X", Z180.IM); break;
+		case CPUINFO_STR_REGISTER + Z180_IFF1:			sprintf(info->s = cpuintrf_temp_str(), "IFF1:%X", Z180.IFF1); break;
+		case CPUINFO_STR_REGISTER + Z180_IFF2:			sprintf(info->s = cpuintrf_temp_str(), "IFF2:%X", Z180.IFF2); break;
+		case CPUINFO_STR_REGISTER + Z180_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", Z180.HALT); break;
+		case CPUINFO_STR_REGISTER + Z180_DC0: 			sprintf(info->s = cpuintrf_temp_str(), "DC0:%X", Z180.irq_max >= 1 && Z180.int_state[0]); break;
+		case CPUINFO_STR_REGISTER + Z180_DC1: 			sprintf(info->s = cpuintrf_temp_str(), "DC1:%X", Z180.irq_max >= 2 && Z180.int_state[1]); break;
+		case CPUINFO_STR_REGISTER + Z180_DC2: 			sprintf(info->s = cpuintrf_temp_str(), "DC2:%X", Z180.irq_max >= 3 && Z180.int_state[2]); break;
+		case CPUINFO_STR_REGISTER + Z180_DC3: 			sprintf(info->s = cpuintrf_temp_str(), "DC3:%X", Z180.irq_max >= 4 && Z180.int_state[3]); break;
+		case CPUINFO_STR_REGISTER + Z180_CCR: 			sprintf(info->s = cpuintrf_temp_str(), "CCR :%02X", Z180.io[Z180_CCR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_ITC: 			sprintf(info->s = cpuintrf_temp_str(), "ITC :%02X", Z180.io[Z180_ITC-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_CBR: 			sprintf(info->s = cpuintrf_temp_str(), "CBR :%02X", Z180.io[Z180_CBR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_BBR: 			sprintf(info->s = cpuintrf_temp_str(), "BBR :%02X", Z180.io[Z180_BBR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_CBAR:			sprintf(info->s = cpuintrf_temp_str(), "CBAR:%02X", Z180.io[Z180_CBAR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_OMCR:			sprintf(info->s = cpuintrf_temp_str(), "OMCR:%02X", Z180.io[Z180_OMCR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_IOCR:			sprintf(info->s = cpuintrf_temp_str(), "IOCR:%02X", Z180.io[Z180_IOCR-Z180_CNTLA0]); break;
+	}
+}

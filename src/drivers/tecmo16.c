@@ -58,95 +58,95 @@ static WRITE16_HANDLER( tecmo16_sound_command_w )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( fstarfrc_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x110000, 0x110fff, MRA16_RAM },
-	{ 0x120000, 0x1207ff, MRA16_RAM },
-	{ 0x120800, 0x120fff, MRA16_RAM },
-	{ 0x121000, 0x1217ff, MRA16_RAM },
-	{ 0x121800, 0x121fff, MRA16_RAM },
-	{ 0x122000, 0x127fff, MRA16_RAM },
-	{ 0x130000, 0x130fff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x150030, 0x150031, input_port_1_word_r },
-	{ 0x150040, 0x150041, input_port_0_word_r },
-	{ 0x150050, 0x150051, input_port_2_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( fstarfrc_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x110000, 0x110fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120800, 0x120fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x121000, 0x1217ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x121800, 0x121fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x122000, 0x127fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x130000, 0x130fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x150030, 0x150031) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x150040, 0x150041) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x150050, 0x150051) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fstarfrc_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
-	{ 0x110000, 0x110fff, tecmo16_charram_w, &tecmo16_charram },
-	{ 0x120000, 0x1207ff, tecmo16_videoram_w, &tecmo16_videoram },
-	{ 0x120800, 0x120fff, tecmo16_colorram_w, &tecmo16_colorram },
-	{ 0x121000, 0x1217ff, tecmo16_videoram2_w, &tecmo16_videoram2 },
-	{ 0x121800, 0x121fff, tecmo16_colorram2_w, &tecmo16_colorram2 },
-	{ 0x122000, 0x127fff, MWA16_RAM },	/* work area */
-	{ 0x130000, 0x130fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x150010, 0x150011, tecmo16_sound_command_w },
-	{ 0x150030, 0x150031, MWA16_NOP },	/* ??? */
-	{ 0x160000, 0x160001, tecmo16_scroll_char_x_w },
-	{ 0x16000c, 0x16000d, tecmo16_scroll_x_w },
-	{ 0x160012, 0x160013, tecmo16_scroll_y_w },
-	{ 0x160018, 0x160019, tecmo16_scroll2_x_w },
-	{ 0x16001e, 0x16001f, tecmo16_scroll2_y_w },
-MEMORY_END
+static ADDRESS_MAP_START( fstarfrc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)	/* Main RAM */
+	AM_RANGE(0x110000, 0x110fff) AM_WRITE(tecmo16_charram_w) AM_BASE(&tecmo16_charram)
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(tecmo16_videoram_w) AM_BASE(&tecmo16_videoram)
+	AM_RANGE(0x120800, 0x120fff) AM_WRITE(tecmo16_colorram_w) AM_BASE(&tecmo16_colorram)
+	AM_RANGE(0x121000, 0x1217ff) AM_WRITE(tecmo16_videoram2_w) AM_BASE(&tecmo16_videoram2)
+	AM_RANGE(0x121800, 0x121fff) AM_WRITE(tecmo16_colorram2_w) AM_BASE(&tecmo16_colorram2)
+	AM_RANGE(0x122000, 0x127fff) AM_WRITE(MWA16_RAM)	/* work area */
+	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x150010, 0x150011) AM_WRITE(tecmo16_sound_command_w)
+	AM_RANGE(0x150030, 0x150031) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x160000, 0x160001) AM_WRITE(tecmo16_scroll_char_x_w)
+	AM_RANGE(0x16000c, 0x16000d) AM_WRITE(tecmo16_scroll_x_w)
+	AM_RANGE(0x160012, 0x160013) AM_WRITE(tecmo16_scroll_y_w)
+	AM_RANGE(0x160018, 0x160019) AM_WRITE(tecmo16_scroll2_x_w)
+	AM_RANGE(0x16001e, 0x16001f) AM_WRITE(tecmo16_scroll2_y_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( ginkun_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x110000, 0x110fff, MRA16_RAM },
-	{ 0x120000, 0x120fff, MRA16_RAM },
-	{ 0x121000, 0x121fff, MRA16_RAM },
-	{ 0x122000, 0x122fff, MRA16_RAM },
-	{ 0x123000, 0x123fff, MRA16_RAM },
-	{ 0x130000, 0x130fff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x150030, 0x150031, input_port_1_word_r },
-	{ 0x150040, 0x150041, input_port_0_word_r },
-	{ 0x150050, 0x150051, input_port_2_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( ginkun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x110000, 0x110fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x120fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x121000, 0x121fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x122000, 0x122fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x123000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x130000, 0x130fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x150030, 0x150031) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x150040, 0x150041) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x150050, 0x150051) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( ginkun_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
-	{ 0x110000, 0x110fff, tecmo16_charram_w, &tecmo16_charram },
-	{ 0x120000, 0x120fff, tecmo16_videoram_w, &tecmo16_videoram },
-	{ 0x121000, 0x121fff, tecmo16_colorram_w, &tecmo16_colorram },
-	{ 0x122000, 0x122fff, tecmo16_videoram2_w, &tecmo16_videoram2 },
-	{ 0x123000, 0x123fff, tecmo16_colorram2_w, &tecmo16_colorram2 },
-	{ 0x130000, 0x130fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x150010, 0x150011, tecmo16_sound_command_w },
-	{ 0x160000, 0x160001, tecmo16_scroll_char_x_w },
-	{ 0x160006, 0x160007, tecmo16_scroll_char_y_w },
-	{ 0x16000c, 0x16000d, tecmo16_scroll_x_w },
-	{ 0x160012, 0x160013, tecmo16_scroll_y_w },
-	{ 0x160018, 0x160019, tecmo16_scroll2_x_w },
-	{ 0x16001e, 0x16001f, tecmo16_scroll2_y_w },
-MEMORY_END
+static ADDRESS_MAP_START( ginkun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)	/* Main RAM */
+	AM_RANGE(0x110000, 0x110fff) AM_WRITE(tecmo16_charram_w) AM_BASE(&tecmo16_charram)
+	AM_RANGE(0x120000, 0x120fff) AM_WRITE(tecmo16_videoram_w) AM_BASE(&tecmo16_videoram)
+	AM_RANGE(0x121000, 0x121fff) AM_WRITE(tecmo16_colorram_w) AM_BASE(&tecmo16_colorram)
+	AM_RANGE(0x122000, 0x122fff) AM_WRITE(tecmo16_videoram2_w) AM_BASE(&tecmo16_videoram2)
+	AM_RANGE(0x123000, 0x123fff) AM_WRITE(tecmo16_colorram2_w) AM_BASE(&tecmo16_colorram2)
+	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x150010, 0x150011) AM_WRITE(tecmo16_sound_command_w)
+	AM_RANGE(0x160000, 0x160001) AM_WRITE(tecmo16_scroll_char_x_w)
+	AM_RANGE(0x160006, 0x160007) AM_WRITE(tecmo16_scroll_char_y_w)
+	AM_RANGE(0x16000c, 0x16000d) AM_WRITE(tecmo16_scroll_x_w)
+	AM_RANGE(0x160012, 0x160013) AM_WRITE(tecmo16_scroll_y_w)
+	AM_RANGE(0x160018, 0x160019) AM_WRITE(tecmo16_scroll2_x_w)
+	AM_RANGE(0x16001e, 0x16001f) AM_WRITE(tecmo16_scroll2_y_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xfbff, MRA_RAM },	/* Sound RAM */
-	{ 0xfc00, 0xfc00, OKIM6295_status_0_r },
-	{ 0xfc05, 0xfc05, YM2151_status_port_0_r },
-	{ 0xfc08, 0xfc08, soundlatch_r },
-	{ 0xfc0c, 0xfc0c, MRA_NOP },
-	{ 0xfffe, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xfbff) AM_READ(MRA8_RAM)	/* Sound RAM */
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xfc05, 0xfc05) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xfc08, 0xfc08) AM_READ(soundlatch_r)
+	AM_RANGE(0xfc0c, 0xfc0c) AM_READ(MRA8_NOP)
+	AM_RANGE(0xfffe, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xfbff, MWA_RAM },	/* Sound RAM */
-	{ 0xfc00, 0xfc00, OKIM6295_data_0_w },
-	{ 0xfc04, 0xfc04, YM2151_register_port_0_w },
-	{ 0xfc05, 0xfc05, YM2151_data_port_0_w },
-	{ 0xfc0c, 0xfc0c, MWA_NOP },
-	{ 0xfffe, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xfbff) AM_WRITE(MWA8_RAM)	/* Sound RAM */
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xfc04, 0xfc04) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xfc05, 0xfc05) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xfc0c, 0xfc0c) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xfffe, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -358,12 +358,12 @@ static MACHINE_DRIVER_START( fstarfrc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000/2)			/* 12MHz */
-	MDRV_CPU_MEMORY(fstarfrc_readmem,fstarfrc_writemem)
+	MDRV_CPU_PROGRAM_MAP(fstarfrc_readmem,fstarfrc_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -390,12 +390,12 @@ static MACHINE_DRIVER_START( ginkun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000/2)			/* 12MHz */
-	MDRV_CPU_MEMORY(ginkun_readmem,ginkun_writemem)
+	MDRV_CPU_PROGRAM_MAP(ginkun_readmem,ginkun_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

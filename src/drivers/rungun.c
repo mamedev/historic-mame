@@ -27,7 +27,6 @@
      - missing sprites and priority
 
    Known Issues:
-     - ** sound program ROM "247-a05" needs redump **
      - no dual monitor support
      - synchronization and other oddities (rungunu doesn't show attract mode)
      - swapped P12 and P34 controls in 4-player mode team selectet (real puzzler)
@@ -212,47 +211,47 @@ static INTERRUPT_GEN(rng_interrupt)
 		cpu_set_irq_line(0, MC68000_IRQ_5, ASSERT_LINE);
 }
 
-static MEMORY_READ16_START( rngreadmem )
-	{ 0x000000, 0x2fffff, MRA16_ROM },		// main program + data
-	{ 0x300000, 0x3007ff, MRA16_RAM },		// palette RAM
-	{ 0x380000, 0x39ffff, MRA16_RAM },		// work RAM
-	{ 0x400000, 0x43ffff, MRA16_NOP },		// K053936_0_rom_r }, // '936 ROM readback window
-	{ 0x480000, 0x48001f, rng_sysregs_r },
-	{ 0x4c0000, 0x4c001f, K053252_word_r },	// CCU (for scanline and vblank polling)
-	{ 0x580014, 0x580015, sound_status_msb_r },
-	{ 0x580000, 0x58001f, MRA16_RAM },		// sound regs read fall-through
-	{ 0x5c0000, 0x5c000d, K053246_word_r },	// 246A ROM readback window
-	{ 0x600000, 0x600fff, K053247_word_r },	// OBJ RAM
-	{ 0x601000, 0x601fff, MRA16_RAM },		// communication? second monitor buffer?
-	{ 0x6c0000, 0x6cffff, MRA16_RAM },		// PSAC2 render RAM
-	{ 0x700000, 0x7007ff, MRA16_RAM },		// PSAC2 line effect
-	{ 0x740000, 0x741fff, ttl_ram_r },		// text plane RAM
+static ADDRESS_MAP_START( rngreadmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x2fffff) AM_READ(MRA16_ROM)		// main program + data
+	AM_RANGE(0x300000, 0x3007ff) AM_READ(MRA16_RAM)		// palette RAM
+	AM_RANGE(0x380000, 0x39ffff) AM_READ(MRA16_RAM)		// work RAM
+	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_NOP)		// K053936_0_rom_r }, // '936 ROM readback window
+	AM_RANGE(0x480000, 0x48001f) AM_READ(rng_sysregs_r)
+	AM_RANGE(0x4c0000, 0x4c001f) AM_READ(K053252_word_r)	// CCU (for scanline and vblank polling)
+	AM_RANGE(0x580014, 0x580015) AM_READ(sound_status_msb_r)
+	AM_RANGE(0x580000, 0x58001f) AM_READ(MRA16_RAM)		// sound regs read fall-through
+	AM_RANGE(0x5c0000, 0x5c000d) AM_READ(K053246_word_r)	// 246A ROM readback window
+	AM_RANGE(0x600000, 0x600fff) AM_READ(K053247_word_r)	// OBJ RAM
+	AM_RANGE(0x601000, 0x601fff) AM_READ(MRA16_RAM)		// communication? second monitor buffer?
+	AM_RANGE(0x6c0000, 0x6cffff) AM_READ(MRA16_RAM)		// PSAC2 render RAM
+	AM_RANGE(0x700000, 0x7007ff) AM_READ(MRA16_RAM)		// PSAC2 line effect
+	AM_RANGE(0x740000, 0x741fff) AM_READ(ttl_ram_r)		// text plane RAM
 #if RNG_DEBUG
-	{ 0x5c0010, 0x5c001f, K053247_reg_word_r },
-	{ 0x640000, 0x640007, K053246_reg_word_r },
+	AM_RANGE(0x5c0010, 0x5c001f) AM_READ(K053247_reg_word_r)
+	AM_RANGE(0x640000, 0x640007) AM_READ(K053246_reg_word_r)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( rngwritemem )
-	{ 0x000000, 0x2fffff, MWA16_ROM },
-	{ 0x300000, 0x3007ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x380000, 0x39ffff, MWA16_RAM },		// work RAM
-	{ 0x480000, 0x48001f, rng_sysregs_w, &rng_sysreg },
-	{ 0x4c0000, 0x4c001f, K053252_word_w },	// CCU
-	{ 0x540000, 0x540001, sound_irq_w },
-	{ 0x58000c, 0x58000d, sound_cmd1_w },
-	{ 0x58000e, 0x58000f, sound_cmd2_w },
-	{ 0x580000, 0x58001f, MWA16_RAM },		// sound regs write fall-through
-	{ 0x5c0010, 0x5c001f, K053247_reg_word_w },
-	{ 0x600000, 0x600fff, K053247_word_w },	// OBJ RAM
-	{ 0x601000, 0x601fff, MWA16_RAM },		// communication? second monitor buffer?
-	{ 0x640000, 0x640007, K053246_word_w },	// '246A registers
-	{ 0x680000, 0x68001f, MWA16_RAM, &K053936_0_ctrl },				// '936 registers
-	{ 0x6c0000, 0x6cffff, rng_936_videoram_w, &rng_936_videoram },	// PSAC2 ('936) RAM (34v + 35v)
-	{ 0x700000, 0x7007ff, MWA16_RAM, &K053936_0_linectrl },			// "Line RAM"
-	{ 0x740000, 0x741fff, ttl_ram_w },		// text plane RAM
-	{ 0x7c0000, 0x7c0001, MWA16_NOP },		// watchdog
-MEMORY_END
+static ADDRESS_MAP_START( rngwritemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x2fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x300000, 0x3007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x380000, 0x39ffff) AM_WRITE(MWA16_RAM)		// work RAM
+	AM_RANGE(0x480000, 0x48001f) AM_WRITE(rng_sysregs_w) AM_BASE(&rng_sysreg)
+	AM_RANGE(0x4c0000, 0x4c001f) AM_WRITE(K053252_word_w)	// CCU
+	AM_RANGE(0x540000, 0x540001) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x58000c, 0x58000d) AM_WRITE(sound_cmd1_w)
+	AM_RANGE(0x58000e, 0x58000f) AM_WRITE(sound_cmd2_w)
+	AM_RANGE(0x580000, 0x58001f) AM_WRITE(MWA16_RAM)		// sound regs write fall-through
+	AM_RANGE(0x5c0010, 0x5c001f) AM_WRITE(K053247_reg_word_w)
+	AM_RANGE(0x600000, 0x600fff) AM_WRITE(K053247_word_w)	// OBJ RAM
+	AM_RANGE(0x601000, 0x601fff) AM_WRITE(MWA16_RAM)		// communication? second monitor buffer?
+	AM_RANGE(0x640000, 0x640007) AM_WRITE(K053246_word_w)	// '246A registers
+	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)				// '936 registers
+	AM_RANGE(0x6c0000, 0x6cffff) AM_WRITE(rng_936_videoram_w) AM_BASE(&rng_936_videoram)	// PSAC2 ('936) RAM (34v + 35v)
+	AM_RANGE(0x700000, 0x7007ff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_linectrl)			// "Line RAM"
+	AM_RANGE(0x740000, 0x741fff) AM_WRITE(ttl_ram_w)		// text plane RAM
+	AM_RANGE(0x7c0000, 0x7c0001) AM_WRITE(MWA16_NOP)		// watchdog
+ADDRESS_MAP_END
 
 /**********************************************************************************/
 
@@ -280,29 +279,29 @@ static INTERRUPT_GEN(audio_interrupt)
 
 /* sound (this should be split into sndhrdw/xexex.c or pregx.c or so someday) */
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_r },
-	{ 0xe230, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe62f, K054539_1_r },
-	{ 0xe630, 0xe7ff, MRA_RAM },
-	{ 0xf002, 0xf002, soundlatch_r },
-	{ 0xf003, 0xf003, soundlatch2_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_READ(K054539_0_r)
+	AM_RANGE(0xe230, 0xe3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe400, 0xe62f) AM_READ(K054539_1_r)
+	AM_RANGE(0xe630, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch_r)
+	AM_RANGE(0xf003, 0xf003) AM_READ(soundlatch2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_w },
-	{ 0xe230, 0xe3ff, MWA_RAM },
-	{ 0xe400, 0xe62f, K054539_1_w },
-	{ 0xe630, 0xe7ff, MWA_RAM },
-	{ 0xf000, 0xf000, sound_status_w },
-	{ 0xf800, 0xf800, z80ctrl_w },
-	{ 0xfff0, 0xfff3, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_WRITE(K054539_0_w)
+	AM_RANGE(0xe230, 0xe3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe400, 0xe62f) AM_WRITE(K054539_1_w)
+	AM_RANGE(0xe630, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(sound_status_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(z80ctrl_w)
+	AM_RANGE(0xfff0, 0xfff3) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 static struct K054539interface k054539_interface =
 {
@@ -338,12 +337,12 @@ static MACHINE_DRIVER_START( rng )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 16000000)
-	MDRV_CPU_MEMORY(rngreadmem,rngwritemem)
+	MDRV_CPU_PROGRAM_MAP(rngreadmem,rngwritemem)
 	MDRV_CPU_VBLANK_INT(rng_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 10000000) // 8Mhz (10Mhz is much safer in self-test due to heavy sync)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, 480)
 
 	MDRV_INTERLEAVE(100) // higher if sound stutters
@@ -449,11 +448,87 @@ INPUT_PORTS_END
 
 #define ROM_LOAD64_WORD(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(6))
 
-ROM_START( rungunu )
-	/* main program */
+ROM_START( rungun )
+	/* main program Europe Version AA  1993, 10.8 */
 	ROM_REGION( 0x300000, REGION_CPU1, 0)
-	ROM_LOAD16_BYTE( "247b03", 0x000000, 0x80000, CRC(f259fd11) SHA1(60381a3fa7f78022dcb3e2f3d13ea32a10e4e36e) )
-	ROM_LOAD16_BYTE( "247b04", 0x000001, 0x80000, CRC(b918cf5a) SHA1(4314c611ef600ec081f409c78218de1639f8b463) )
+	ROM_LOAD16_BYTE( "247eaa03.bin", 0x000000, 0x80000, CRC(f5c91ec0) SHA1(298926ea30472fa8d2c0578dfeaf9a93509747ef) )
+	ROM_LOAD16_BYTE( "247eaa04.bin", 0x000001, 0x80000, CRC(0e62471f) SHA1(2861b7a4e78ff371358d318a1b13a6488c0ac364) )
+
+	/* data (Guru 1 megabyte redump) */
+	ROM_LOAD16_BYTE( "247b01.23n", 0x200000, 0x80000, CRC(2d774f27) SHA1(c48de9cb9daba25603b8278e672f269807aa0b20) )
+	ROM_CONTINUE(                  0x100000, 0x80000)
+	ROM_LOAD16_BYTE( "247b02.21n", 0x200001, 0x80000, CRC(d088c9de) SHA1(19d7ad4120f7cfed9cae862bb0c799fdad7ab15c) )
+	ROM_CONTINUE(                  0x100001, 0x80000)
+
+	/* sound program */
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )
+	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
+	ROM_RELOAD(         0x010000, 0x20000 )
+
+	/* '936 tiles */
+	ROM_REGION( 0x400000, REGION_GFX1, 0)
+	ROM_LOAD( "247-a13", 0x000000, 0x200000, CRC(cc194089) SHA1(b5af94f5f583d282ac1499b371bbaac8b2fedc03) )
+
+	/* sprites */
+	ROM_REGION( 0x800000, REGION_GFX2, 0)
+	ROM_LOAD64_WORD( "247-a11", 0x000000, 0x200000, CRC(c3f60854) SHA1(cbee7178ab9e5aa6a5aeed0511e370e29001fb01) )	// 5y
+	ROM_LOAD64_WORD( "247-a08", 0x000002, 0x200000, CRC(3e315eef) SHA1(898bc4d5ad244e5f91cbc87820b5d0be99ef6662) )	// 2u
+	ROM_LOAD64_WORD( "247-a09", 0x000004, 0x200000, CRC(5ca7bc06) SHA1(83c793c68227399f93bd1ed167dc9ed2aaac4167) )	// 2y
+	ROM_LOAD64_WORD( "247-a10", 0x000006, 0x200000, CRC(a5ccd243) SHA1(860b88ade1a69f8b6c5b8206424814b386343571) )	// 5u
+
+	/* TTL text plane ("fix layer") */
+	ROM_REGION( 0x20000, REGION_GFX3, 0)
+	ROM_LOAD( "247-a12", 0x000000, 0x20000, CRC(57a8d26e) SHA1(0431d10b76d77c26a1f6f2b55d9dbcfa959e1cd0) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0)
+	ROM_LOAD( "247-a06", 0x000000, 0x200000, CRC(b8b2a67e) SHA1(a873d32f4b178c714743664fa53c0dca29cb3ce4) )
+	ROM_LOAD( "247-a07", 0x200000, 0x200000, CRC(0108142d) SHA1(4dc6a36d976dad9c0da5a5b1f01f2eb3b369c99d) )
+ROM_END
+
+ROM_START( runguna )
+	/* main program Europe Version AA 1993, 10.4 */
+	ROM_REGION( 0x300000, REGION_CPU1, 0)
+	ROM_LOAD16_BYTE( "247eaa03.rom", 0x000000, 0x80000, CRC(fec3e1d6) SHA1(cd89dc32ad06308134d277f343a7e8b5fe381f69) )
+	ROM_LOAD16_BYTE( "247eaa04.rom", 0x000001, 0x80000, CRC(1b556af9) SHA1(c8351ebd595307d561d089c66cd6ed7f6111d996) )
+
+	/* data (Guru 1 megabyte redump) */
+	ROM_LOAD16_BYTE( "247b01.23n", 0x200000, 0x80000, CRC(2d774f27) SHA1(c48de9cb9daba25603b8278e672f269807aa0b20) )
+	ROM_CONTINUE(                  0x100000, 0x80000)
+	ROM_LOAD16_BYTE( "247b02.21n", 0x200001, 0x80000, CRC(d088c9de) SHA1(19d7ad4120f7cfed9cae862bb0c799fdad7ab15c) )
+	ROM_CONTINUE(                  0x100001, 0x80000)
+
+	/* sound program */
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )
+	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
+	ROM_RELOAD(         0x010000, 0x20000 )
+
+	/* '936 tiles */
+	ROM_REGION( 0x400000, REGION_GFX1, 0)
+	ROM_LOAD( "247-a13", 0x000000, 0x200000, CRC(cc194089) SHA1(b5af94f5f583d282ac1499b371bbaac8b2fedc03) )
+
+	/* sprites */
+	ROM_REGION( 0x800000, REGION_GFX2, 0)
+	ROM_LOAD64_WORD( "247-a11", 0x000000, 0x200000, CRC(c3f60854) SHA1(cbee7178ab9e5aa6a5aeed0511e370e29001fb01) )	// 5y
+	ROM_LOAD64_WORD( "247-a08", 0x000002, 0x200000, CRC(3e315eef) SHA1(898bc4d5ad244e5f91cbc87820b5d0be99ef6662) )	// 2u
+	ROM_LOAD64_WORD( "247-a09", 0x000004, 0x200000, CRC(5ca7bc06) SHA1(83c793c68227399f93bd1ed167dc9ed2aaac4167) )	// 2y
+	ROM_LOAD64_WORD( "247-a10", 0x000006, 0x200000, CRC(a5ccd243) SHA1(860b88ade1a69f8b6c5b8206424814b386343571) )	// 5u
+
+	/* TTL text plane ("fix layer") */
+	ROM_REGION( 0x20000, REGION_GFX3, 0)
+	ROM_LOAD( "247-a12", 0x000000, 0x20000, CRC(57a8d26e) SHA1(0431d10b76d77c26a1f6f2b55d9dbcfa959e1cd0) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0)
+	ROM_LOAD( "247-a06", 0x000000, 0x200000, CRC(b8b2a67e) SHA1(a873d32f4b178c714743664fa53c0dca29cb3ce4) )
+	ROM_LOAD( "247-a07", 0x200000, 0x200000, CRC(0108142d) SHA1(4dc6a36d976dad9c0da5a5b1f01f2eb3b369c99d) )
+ROM_END
+
+ROM_START( rungunu )
+	/* main program US Version AB 1993 10.12 */
+	ROM_REGION( 0x300000, REGION_CPU1, 0)
+	ROM_LOAD16_BYTE( "247uab03.bin", 0x000000, 0x80000, CRC(f259fd11) SHA1(60381a3fa7f78022dcb3e2f3d13ea32a10e4e36e) )
+	ROM_LOAD16_BYTE( "247uab04.bin", 0x000001, 0x80000, CRC(b918cf5a) SHA1(4314c611ef600ec081f409c78218de1639f8b463) )
 
 	/* data */
 	ROM_LOAD16_BYTE( "247a01", 0x100000, 0x80000, CRC(8341cf7d) SHA1(372c147c4a5d54aed2a16b0ed258247e65dda563) )
@@ -485,11 +560,11 @@ ROM_START( rungunu )
 	ROM_LOAD( "247-a07", 0x200000, 0x200000, CRC(0108142d) SHA1(4dc6a36d976dad9c0da5a5b1f01f2eb3b369c99d) )
 ROM_END
 
-ROM_START( rungun )
-	/* main program */
+ROM_START( rungunua )
+	/* main program US Version BA 1993 10.8 */
 	ROM_REGION( 0x300000, REGION_CPU1, 0)
-	ROM_LOAD16_BYTE( "247-c03", 0x000000, 0x80000, CRC(fec3e1d6) SHA1(cd89dc32ad06308134d277f343a7e8b5fe381f69) )
-	ROM_LOAD16_BYTE( "247-c04", 0x000001, 0x80000, CRC(1b556af9) SHA1(c8351ebd595307d561d089c66cd6ed7f6111d996) )
+	ROM_LOAD16_BYTE( "247uba03.bin", 0x000000, 0x80000, CRC(c24d7500) SHA1(38e6ae9fc00bf8f85549be4733992336c46fe1f3) )
+	ROM_LOAD16_BYTE( "247uba04.bin", 0x000001, 0x80000, CRC(3f255a4a) SHA1(3a4d50ecec8546933ad8dabe21682ba0951eaad0) )
 
 	/* data (Guru 1 megabyte redump) */
 	ROM_LOAD16_BYTE( "247b01.23n", 0x200000, 0x80000, CRC(2d774f27) SHA1(c48de9cb9daba25603b8278e672f269807aa0b20) )
@@ -499,15 +574,12 @@ ROM_START( rungun )
 
 	/* sound program */
 	ROM_REGION( 0x030000, REGION_CPU2, 0 )
-	// bad dump (higher banks and the second half of lower banks filled with 0xff)
-	ROM_LOAD("247-a05", 0x000000, 0x20000, BAD_DUMP CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
-	// borrowed from rungunu
-	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
-	ROM_RELOAD(         0x010000, 0x20000 )
+	ROM_LOAD("247a05", 0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
+	ROM_RELOAD(        0x010000, 0x20000 )
 
 	/* '936 tiles */
 	ROM_REGION( 0x400000, REGION_GFX1, 0)
-	ROM_LOAD( "247-a13", 0x000000, 0x200000, CRC(cc194089) SHA1(b5af94f5f583d282ac1499b371bbaac8b2fedc03) )
+	ROM_LOAD( "247a13", 0x000000, 0x200000, CRC(c5a8ef29) SHA1(23938b8093bc0b9eef91f6d38127ca7acbdc06a6) )
 
 	/* sprites */
 	ROM_REGION( 0x800000, REGION_GFX2, 0)
@@ -527,7 +599,7 @@ ROM_START( rungun )
 ROM_END
 
 ROM_START( slmdunkj )
-	/* main program */
+	/* main program Japan Version AA 1993 10.8 */
 	ROM_REGION( 0x300000, REGION_CPU1, 0)
 	ROM_LOAD16_BYTE( "247jaa03.bin", 0x000000, 0x20000, CRC(87572078) SHA1(cfa784eb40ed8b3bda9d57abb6022bbe92056206) )
 	ROM_LOAD16_BYTE( "247jaa04.bin", 0x000001, 0x20000, CRC(aa105e00) SHA1(617ac14535048b6e0da43cc98c4b67c8e306bef1) )
@@ -540,9 +612,6 @@ ROM_START( slmdunkj )
 
 	/* sound program */
 	ROM_REGION( 0x030000, REGION_CPU2, 0 )
-	// bad dump (higher banks and the second half of lower banks filled with 0xff)
-	ROM_LOAD("247-a05", 0x000000, 0x20000, BAD_DUMP CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
-	// borrowed from rungunu
 	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
 	ROM_RELOAD(         0x010000, 0x20000 )
 
@@ -581,6 +650,8 @@ MACHINE_INIT( rng )
 	rng_sound_status = 0;
 }
 
-GAMEX( 1993, rungun,   0,      rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, rungunu,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UAB)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, slmdunkj, rungun, rng, rng, rng, ROT0, "Konami", "Slam Dunk (Japan ver. JAA))", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungun,   0,      rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, runguna,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA 1993 10.4)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungunu,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UAB 1993 10.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungunua, rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UBA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, slmdunkj, rungun, rng, rng, rng, ROT0, "Konami", "Slam Dunk (Japan ver. JAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

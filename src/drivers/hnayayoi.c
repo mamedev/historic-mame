@@ -99,117 +99,117 @@ static MACHINE_INIT( hnayayoi )
 
 
 
-static MEMORY_READ_START( hnayayoi_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( hnayayoi_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hnayayoi_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static PORT_READ_START( hnayayoi_readport )
-	{ 0x02, 0x02, YM2203_status_port_0_r },
-	{ 0x03, 0x03, YM2203_read_port_0_r },
-	{ 0x04, 0x04, input_port_2_r },
-	{ 0x41, 0x41, keyboard_0_r },
-	{ 0x42, 0x42, keyboard_1_r },
-	{ 0x43, 0x43, input_port_3_r },
-PORT_END
-
-static PORT_WRITE_START( hnayayoi_writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x06, 0x06, adpcm_data_w },
-//	{ 0x08, 0x08, IOWP_NOP },	// CRT Controller
-//	{ 0x09, 0x09, IOWP_NOP },	// CRT Controller
-	{ 0x0a, 0x0a, dynax_blitter_rev1_start_w },
-	{ 0x0c, 0x0c, dynax_blitter_rev1_clear_w },
-	{ 0x23, 0x23, adpcm_vclk_w },
-	{ 0x24, 0x24, adpcm_reset_w },
-	{ 0x40, 0x40, keyboard_w },
-	{ 0x60, 0x61, hnayayoi_palbank_w },
-	{ 0x62, 0x67, dynax_blitter_rev1_param_w },
-PORT_END
+static ADDRESS_MAP_START( hnayayoi_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( hnfubuki_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xfeff, MRA_ROM },
-	{ 0xff02, 0xff02, YM2203_status_port_0_r },
-	{ 0xff03, 0xff03, YM2203_read_port_0_r },
-	{ 0xff04, 0xff04, input_port_2_r },
-	{ 0xff41, 0xff41, keyboard_0_r },
-	{ 0xff42, 0xff42, keyboard_1_r },
-	{ 0xff43, 0xff43, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( hnayayoi_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)
+	AM_RANGE(0x41, 0x41) AM_READ(keyboard_0_r)
+	AM_RANGE(0x42, 0x42) AM_READ(keyboard_1_r)
+	AM_RANGE(0x43, 0x43) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hnfubuki_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8000, 0xfeff, MWA_ROM },
-	{ 0xff00, 0xff00, YM2203_control_port_0_w },
-	{ 0xff01, 0xff01, YM2203_write_port_0_w },
-	{ 0xff06, 0xff06, adpcm_data_w },
-//	{ 0xff08, 0xff08, IOWP_NOP },	// CRT Controller
-//	{ 0xff09, 0xff09, IOWP_NOP },	// CRT Controller
-	{ 0xff0a, 0xff0a, dynax_blitter_rev1_start_w },
-	{ 0xff0c, 0xff0c, dynax_blitter_rev1_clear_w },
-	{ 0xff23, 0xff23, adpcm_vclk_w },
-	{ 0xff24, 0xff24, adpcm_reset_inv_w },
-	{ 0xff40, 0xff40, keyboard_w },
-	{ 0xff60, 0xff61, hnayayoi_palbank_w },
-	{ 0xff62, 0xff67, dynax_blitter_rev1_param_w },
-MEMORY_END
+static ADDRESS_MAP_START( hnayayoi_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(adpcm_data_w)
+//	AM_RANGE(0x08, 0x08) AM_WRITE(MWA8_NOP)	// CRT Controller
+//	AM_RANGE(0x09, 0x09) AM_WRITE(MWA8_NOP)	// CRT Controller
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(dynax_blitter_rev1_start_w)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(dynax_blitter_rev1_clear_w)
+	AM_RANGE(0x23, 0x23) AM_WRITE(adpcm_vclk_w)
+	AM_RANGE(0x24, 0x24) AM_WRITE(adpcm_reset_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(keyboard_w)
+	AM_RANGE(0x60, 0x61) AM_WRITE(hnayayoi_palbank_w)
+	AM_RANGE(0x62, 0x67) AM_WRITE(dynax_blitter_rev1_param_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( hnfubuki_readport )
-PORT_END
+static ADDRESS_MAP_START( hnfubuki_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xfeff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xff02, 0xff02) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xff03, 0xff03) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xff04, 0xff04) AM_READ(input_port_2_r)
+	AM_RANGE(0xff41, 0xff41) AM_READ(keyboard_0_r)
+	AM_RANGE(0xff42, 0xff42) AM_READ(keyboard_1_r)
+	AM_RANGE(0xff43, 0xff43) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( hnfubuki_writeport )
-PORT_END
+static ADDRESS_MAP_START( hnfubuki_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8000, 0xfeff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xff00, 0xff00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xff01, 0xff01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xff06, 0xff06) AM_WRITE(adpcm_data_w)
+//	AM_RANGE(0xff08, 0xff08) AM_WRITE(MWA8_NOP)	// CRT Controller
+//	AM_RANGE(0xff09, 0xff09) AM_WRITE(MWA8_NOP)	// CRT Controller
+	AM_RANGE(0xff0a, 0xff0a) AM_WRITE(dynax_blitter_rev1_start_w)
+	AM_RANGE(0xff0c, 0xff0c) AM_WRITE(dynax_blitter_rev1_clear_w)
+	AM_RANGE(0xff23, 0xff23) AM_WRITE(adpcm_vclk_w)
+	AM_RANGE(0xff24, 0xff24) AM_WRITE(adpcm_reset_inv_w)
+	AM_RANGE(0xff40, 0xff40) AM_WRITE(keyboard_w)
+	AM_RANGE(0xff60, 0xff61) AM_WRITE(hnayayoi_palbank_w)
+	AM_RANGE(0xff62, 0xff67) AM_WRITE(dynax_blitter_rev1_param_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( untoucha_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( hnfubuki_readport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( untoucha_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( hnfubuki_writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( untoucha_readport )
-	{ 0x11, 0x11, YM2203_status_port_0_r },
-	{ 0x51, 0x51, YM2203_read_port_0_r },
-	{ 0x16, 0x16, keyboard_0_r },	// bit 7 = blitter busy flag
-	{ 0x15, 0x15, keyboard_1_r },
-	{ 0x14, 0x14, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( untoucha_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( untoucha_writeport )
-	{ 0x10, 0x10, YM2203_control_port_0_w },
-	{ 0x50, 0x50, YM2203_write_port_0_w },
-	{ 0x13, 0x13, adpcm_data_w },
-//	{ 0x12, 0x12, IOWP_NOP },	// CRT Controller
-//	{ 0x52, 0x52, IOWP_NOP },	// CRT Controller
-	{ 0x28, 0x28, dynax_blitter_rev1_start_w },
-	{ 0x20, 0x20, dynax_blitter_rev1_clear_w },
-	{ 0x31, 0x31, adpcm_vclk_w },
-	{ 0x32, 0x32, adpcm_reset_inv_w },
-	{ 0x17, 0x17, keyboard_w },
-	{ 0x18, 0x19, hnayayoi_palbank_w },
-	{ 0x1a, 0x1f, dynax_blitter_rev1_param_w },
-PORT_END
+static ADDRESS_MAP_START( untoucha_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( untoucha_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x11, 0x11) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x51, 0x51) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x16, 0x16) AM_READ(keyboard_0_r)	// bit 7 = blitter busy flag
+	AM_RANGE(0x15, 0x15) AM_READ(keyboard_1_r)
+	AM_RANGE(0x14, 0x14) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( untoucha_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x13, 0x13) AM_WRITE(adpcm_data_w)
+//	AM_RANGE(0x12, 0x12) AM_WRITE(MWA8_NOP)	// CRT Controller
+//	AM_RANGE(0x52, 0x52) AM_WRITE(MWA8_NOP)	// CRT Controller
+	AM_RANGE(0x28, 0x28) AM_WRITE(dynax_blitter_rev1_start_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_blitter_rev1_clear_w)
+	AM_RANGE(0x31, 0x31) AM_WRITE(adpcm_vclk_w)
+	AM_RANGE(0x32, 0x32) AM_WRITE(adpcm_reset_inv_w)
+	AM_RANGE(0x17, 0x17) AM_WRITE(keyboard_w)
+	AM_RANGE(0x18, 0x19) AM_WRITE(hnayayoi_palbank_w)
+	AM_RANGE(0x1a, 0x1f) AM_WRITE(dynax_blitter_rev1_param_w)
+ADDRESS_MAP_END
 
 
 
@@ -620,8 +620,8 @@ struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( hnayayoi )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 20000000/4 )        /* 5 MHz ???? */
-	MDRV_CPU_MEMORY(hnayayoi_readmem,hnayayoi_writemem)
-	MDRV_CPU_PORTS(hnayayoi_readport,hnayayoi_writeport)
+	MDRV_CPU_PROGRAM_MAP(hnayayoi_readmem,hnayayoi_writemem)
+	MDRV_CPU_IO_MAP(hnayayoi_readport,hnayayoi_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,8000)
 
@@ -649,15 +649,15 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hnfubuki )
 	MDRV_IMPORT_FROM(hnayayoi)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(hnfubuki_readmem,hnfubuki_writemem)
-	MDRV_CPU_PORTS(hnfubuki_readport,hnfubuki_writeport)
+	MDRV_CPU_PROGRAM_MAP(hnfubuki_readmem,hnfubuki_writemem)
+	MDRV_CPU_IO_MAP(hnfubuki_readport,hnfubuki_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( untoucha )
 	MDRV_IMPORT_FROM(hnayayoi)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(untoucha_readmem,untoucha_writemem)
-	MDRV_CPU_PORTS(untoucha_readport,untoucha_writeport)
+	MDRV_CPU_PROGRAM_MAP(untoucha_readmem,untoucha_writemem)
+	MDRV_CPU_IO_MAP(untoucha_readport,untoucha_writeport)
 
 	MDRV_VIDEO_START(untoucha)
 MACHINE_DRIVER_END

@@ -80,76 +80,76 @@ static WRITE_HANDLER( actfancr_sound_w )
 
 /******************************************************************************/
 
-static MEMORY_READ_START( actfan_readmem )
-	{ 0x000000, 0x02ffff, MRA_ROM },
-	{ 0x062000, 0x063fff, actfancr_pf1_data_r },
-	{ 0x072000, 0x0727ff, actfancr_pf2_data_r },
-	{ 0x100000, 0x1007ff, MRA_RAM },
-	{ 0x130000, 0x130003, actfan_control_1_r },
-	{ 0x140000, 0x140001, actfan_control_0_r },
-	{ 0x120000, 0x1205ff, paletteram_r },
-	{ 0x1f0000, 0x1f3fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( actfan_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x062000, 0x063fff) AM_READ(actfancr_pf1_data_r)
+	AM_RANGE(0x072000, 0x0727ff) AM_READ(actfancr_pf2_data_r)
+	AM_RANGE(0x100000, 0x1007ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x130000, 0x130003) AM_READ(actfan_control_1_r)
+	AM_RANGE(0x140000, 0x140001) AM_READ(actfan_control_0_r)
+	AM_RANGE(0x120000, 0x1205ff) AM_READ(paletteram_r)
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( actfan_writemem )
-	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0x060000, 0x06001f, actfancr_pf1_control_w },
-	{ 0x062000, 0x063fff, actfancr_pf1_data_w, &actfancr_pf1_data },
-	{ 0x070000, 0x07001f, actfancr_pf2_control_w },
-	{ 0x072000, 0x0727ff, actfancr_pf2_data_w, &actfancr_pf2_data },
-	{ 0x100000, 0x1007ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x110000, 0x110001, buffer_spriteram_w },
-	{ 0x120000, 0x1205ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0x150000, 0x150001, actfancr_sound_w },
-	{ 0x1f0000, 0x1f3fff, MWA_RAM, &actfancr_ram }, /* Main ram */
-MEMORY_END
+static ADDRESS_MAP_START( actfan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x060000, 0x06001f) AM_WRITE(actfancr_pf1_control_w)
+	AM_RANGE(0x062000, 0x063fff) AM_WRITE(actfancr_pf1_data_w) AM_BASE(&actfancr_pf1_data)
+	AM_RANGE(0x070000, 0x07001f) AM_WRITE(actfancr_pf2_control_w)
+	AM_RANGE(0x072000, 0x0727ff) AM_WRITE(actfancr_pf2_data_w) AM_BASE(&actfancr_pf2_data)
+	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(buffer_spriteram_w)
+	AM_RANGE(0x120000, 0x1205ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x150000, 0x150001) AM_WRITE(actfancr_sound_w)
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_ram) /* Main ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( triothep_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x044000, 0x045fff, actfancr_pf2_data_r },
-	{ 0x064000, 0x0647ff, actfancr_pf1_data_r },
-	{ 0x120000, 0x1207ff, MRA_RAM },
-	{ 0x130000, 0x1305ff, paletteram_r },
-	{ 0x140000, 0x140001, MRA_NOP }, /* Value doesn't matter */
-	{ 0x1f0000, 0x1f3fff, MRA_RAM },
-	{ 0x1ff000, 0x1ff001, triothep_control_r },
-MEMORY_END
+static ADDRESS_MAP_START( triothep_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x044000, 0x045fff) AM_READ(actfancr_pf2_data_r)
+	AM_RANGE(0x064000, 0x0647ff) AM_READ(actfancr_pf1_data_r)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x130000, 0x1305ff) AM_READ(paletteram_r)
+	AM_RANGE(0x140000, 0x140001) AM_READ(MRA8_NOP) /* Value doesn't matter */
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1ff000, 0x1ff001) AM_READ(triothep_control_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( triothep_writemem )
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x04001f, actfancr_pf2_control_w },
-	{ 0x044000, 0x045fff, actfancr_pf2_data_w, &actfancr_pf2_data },
-	{ 0x046400, 0x0467ff, MWA_NOP }, /* Pf2 rowscroll - is it used? */
-	{ 0x060000, 0x06001f, actfancr_pf1_control_w },
-	{ 0x064000, 0x0647ff, actfancr_pf1_data_w, &actfancr_pf1_data },
-	{ 0x066400, 0x0667ff, MWA_RAM, &actfancr_pf1_rowscroll_data },
-	{ 0x100000, 0x100001, actfancr_sound_w },
-	{ 0x110000, 0x110001, buffer_spriteram_w },
-	{ 0x120000, 0x1207ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x130000, 0x1305ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0x1f0000, 0x1f3fff, MWA_RAM, &actfancr_ram }, /* Main ram */
-	{ 0x1ff000, 0x1ff001, triothep_control_select_w },
-	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-MEMORY_END
+static ADDRESS_MAP_START( triothep_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x040000, 0x04001f) AM_WRITE(actfancr_pf2_control_w)
+	AM_RANGE(0x044000, 0x045fff) AM_WRITE(actfancr_pf2_data_w) AM_BASE(&actfancr_pf2_data)
+	AM_RANGE(0x046400, 0x0467ff) AM_WRITE(MWA8_NOP) /* Pf2 rowscroll - is it used? */
+	AM_RANGE(0x060000, 0x06001f) AM_WRITE(actfancr_pf1_control_w)
+	AM_RANGE(0x064000, 0x0647ff) AM_WRITE(actfancr_pf1_data_w) AM_BASE(&actfancr_pf1_data)
+	AM_RANGE(0x066400, 0x0667ff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_pf1_rowscroll_data)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(actfancr_sound_w)
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(buffer_spriteram_w)
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x130000, 0x1305ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_ram) /* Main ram */
+	AM_RANGE(0x1ff000, 0x1ff001) AM_WRITE(triothep_control_select_w)
+	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( dec0_s_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x3000, 0x3000, soundlatch_r },
-	{ 0x3800, 0x3800, OKIM6295_status_0_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( dec0_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
+	AM_RANGE(0x3800, 0x3800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dec0_s_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0800, YM2203_control_port_0_w },
-	{ 0x0801, 0x0801, YM2203_write_port_0_w },
-	{ 0x1000, 0x1000, YM3812_control_port_0_w },
-	{ 0x1001, 0x1001, YM3812_write_port_0_w },
-	{ 0x3800, 0x3800, OKIM6295_data_0_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( dec0_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -408,12 +408,12 @@ static MACHINE_DRIVER_START( actfancr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(H6280,21477200/3) /* Should be accurate */
-	MDRV_CPU_MEMORY(actfan_readmem,actfan_writemem)
+	MDRV_CPU_PROGRAM_MAP(actfan_readmem,actfan_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
-	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(dec0_s_readmem,dec0_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
@@ -438,12 +438,12 @@ static MACHINE_DRIVER_START( triothep )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(H6280,21477200/3) /* Should be accurate */
-	MDRV_CPU_MEMORY(triothep_readmem,triothep_writemem)
+	MDRV_CPU_PROGRAM_MAP(triothep_readmem,triothep_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
-	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(dec0_s_readmem,dec0_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

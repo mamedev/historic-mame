@@ -53,36 +53,36 @@ extern VIDEO_UPDATE( bankp );
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xf000, 0xf3ff, bankp_videoram_w, &videoram },
-	{ 0xf400, 0xf7ff, bankp_colorram_w, &colorram },
-	{ 0xf800, 0xfbff, bankp_videoram2_w, &bankp_videoram2 },
-	{ 0xfc00, 0xffff, bankp_colorram2_w, &bankp_colorram2 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(bankp_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(bankp_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(bankp_videoram2_w) AM_BASE(&bankp_videoram2)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(bankp_colorram2_w) AM_BASE(&bankp_colorram2)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },	/* IN0 */
-	{ 0x01, 0x01, input_port_1_r },	/* IN1 */
-	{ 0x02, 0x02, input_port_2_r },	/* IN2 */
-	{ 0x04, 0x04, input_port_3_r },	/* DSW */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_3_r)	/* DSW */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, SN76496_0_w },
-	{ 0x01, 0x01, SN76496_1_w },
-	{ 0x02, 0x02, SN76496_2_w },
-	{ 0x05, 0x05, bankp_scroll_w },
-	{ 0x07, 0x07, bankp_out_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(bankp_scroll_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(bankp_out_w)
+ADDRESS_MAP_END
 
 
 
@@ -184,8 +184,8 @@ static MACHINE_DRIVER_START( bankp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3867120)	/* ?? the main oscillator is 15.46848 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

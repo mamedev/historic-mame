@@ -252,85 +252,85 @@ static WRITE_HANDLER( namcos1_sub_firq_w )
 
 
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x1fff, MRA_BANK1 },
-	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
-	{ 0x6000, 0x7fff, MRA_BANK4 },
-	{ 0x8000, 0x9fff, MRA_BANK5 },
-	{ 0xa000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xdfff, MRA_BANK7 },
-	{ 0xe000, 0xffff, MRA_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK4)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK7)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x1fff, MWA_BANK1 },
-	{ 0x2000, 0x3fff, MWA_BANK2 },
-	{ 0x4000, 0x5fff, MWA_BANK3 },
-	{ 0x6000, 0x7fff, MWA_BANK4 },
-	{ 0x8000, 0x9fff, MWA_BANK5 },
-	{ 0xa000, 0xbfff, MWA_BANK6 },
-	{ 0xc000, 0xdfff, MWA_BANK7 },
-	{ 0xe000, 0xefff, namcos1_bankswitch_w },
-	{ 0xf000, 0xf000, namcos1_cpu_control_w },
-	{ 0xf200, 0xf200, MWA_NOP }, // watchdog
-	{ 0xf400, 0xf400, MWA_NOP }, // unknown
-	{ 0xf600, 0xf600, MWA_NOP }, // main video update(handler installs separately)
-	{ 0xfa00, 0xfa00, namcos1_sub_firq_w }, // asserts FIRQ on CPU1
-	{ 0xfc00, 0xfc01, namcos1_subcpu_bank_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_BANK2)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_BANK3)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_BANK4)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_BANK5)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_BANK6)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_BANK7)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(namcos1_bankswitch_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(namcos1_cpu_control_w)
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(MWA8_NOP) // watchdog
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // unknown
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(MWA8_NOP) // main video update(handler installs separately)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(namcos1_sub_firq_w) // asserts FIRQ on CPU1
+	AM_RANGE(0xfc00, 0xfc01) AM_WRITE(namcos1_subcpu_bank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x0000, 0x1fff, MRA_BANK9 },
-	{ 0x2000, 0x3fff, MRA_BANK10 },
-	{ 0x4000, 0x5fff, MRA_BANK11 },
-	{ 0x6000, 0x7fff, MRA_BANK12 },
-	{ 0x8000, 0x9fff, MRA_BANK13 },
-	{ 0xa000, 0xbfff, MRA_BANK14 },
-	{ 0xc000, 0xdfff, MRA_BANK15 },
-	{ 0xe000, 0xffff, MRA_BANK16 },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK9)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK11)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK12)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK13)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK14)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK15)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_BANK16)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x0000, 0x1fff, MWA_BANK9 },
-	{ 0x2000, 0x3fff, MWA_BANK10 },
-	{ 0x4000, 0x5fff, MWA_BANK11 },
-	{ 0x6000, 0x7fff, MWA_BANK12 },
-	{ 0x8000, 0x9fff, MWA_BANK13 },
-	{ 0xa000, 0xbfff, MWA_BANK14 },
-	{ 0xc000, 0xdfff, MWA_BANK15 },
-	{ 0xe000, 0xefff, namcos1_bankswitch_w },
-	{ 0xf000, 0xf000, MWA_NOP }, // IO Chip
-	{ 0xf200, 0xf200, MWA_NOP }, // watchdog
-	{ 0xf400, 0xf400, MWA_NOP }, // unknown
-	{ 0xf600, 0xf600, MWA_NOP }, // sub video update(handler installs separately)
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_BANK9)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_BANK10)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_BANK11)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_BANK12)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_BANK13)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_BANK14)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_BANK15)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(namcos1_bankswitch_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // IO Chip
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(MWA8_NOP) // watchdog
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // unknown
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(MWA8_NOP) // sub video update(handler installs separately)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK17 }, /* Banked ROMs */
-	{ 0x4000, 0x4001, YM2151_status_port_0_r },
-	{ 0x5000, 0x50ff, namcos1_wavedata_r }, /* PSG ( Shared ) */
-	{ 0x5100, 0x513f, namcos1_sound_r },    /* PSG ( Shared ) */
-	{ 0x5140, 0x54ff, MRA_RAM },    /* Sound RAM 1 - ( Shared ) */
-	{ 0x7000, 0x77ff, MRA_BANK18 }, /* Sound RAM 2 - ( Shared ) */
-	{ 0x8000, 0x9fff, MRA_RAM },    /* Sound RAM 3 */
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK17) /* Banked ROMs */
+	AM_RANGE(0x4000, 0x4001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x5000, 0x50ff) AM_READ(namcos1_wavedata_r) /* PSG ( Shared ) */
+	AM_RANGE(0x5100, 0x513f) AM_READ(namcos1_sound_r)    /* PSG ( Shared ) */
+	AM_RANGE(0x5140, 0x54ff) AM_READ(MRA8_RAM)    /* Sound RAM 1 - ( Shared ) */
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_BANK18) /* Sound RAM 2 - ( Shared ) */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)    /* Sound RAM 3 */
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },    /* Banked ROMs */
-	{ 0x4000, 0x4000, YM2151_register_port_0_w },
-	{ 0x4001, 0x4001, YM2151_data_port_0_w },
-	{ 0x5000, 0x50ff, namcos1_wavedata_w,&namco_wavedata }, /* PSG ( Shared ) */
-	{ 0x5100, 0x513f, namcos1_sound_w,&namco_soundregs },   /* PSG ( Shared ) */
-	{ 0x5140, 0x54ff, MWA_RAM },    /* Sound RAM 1 - ( Shared ) */
-	{ 0x7000, 0x77ff, MWA_BANK18 }, /* Sound RAM 2 - ( Shared ) */
-	{ 0x8000, 0x9fff, MWA_RAM },    /* Sound RAM 3 */
-	{ 0xc000, 0xc001, namcos1_sound_bankswitch_w }, /* bank selector */
-	{ 0xd001, 0xd001, MWA_NOP },    /* watchdog? */
-	{ 0xe000, 0xe000, MWA_NOP },    /* IRQ clear ? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)    /* Banked ROMs */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x5000, 0x50ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata) /* PSG ( Shared ) */
+	AM_RANGE(0x5100, 0x513f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs)   /* PSG ( Shared ) */
+	AM_RANGE(0x5140, 0x54ff) AM_WRITE(MWA8_RAM)    /* Sound RAM 1 - ( Shared ) */
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_BANK18) /* Sound RAM 2 - ( Shared ) */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)    /* Sound RAM 3 */
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(namcos1_sound_bankswitch_w) /* bank selector */
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(MWA8_NOP)    /* watchdog? */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)    /* IRQ clear ? */
+ADDRESS_MAP_END
 
 static READ_HANDLER( dsw_r )
 {
@@ -445,64 +445,64 @@ static READ_HANDLER( faceoff_in1_r )
 	return ret;
 }
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
-	{ 0x1400, 0x1400, input_port_0_r },
-	{ 0x1401, 0x1401, input_port_1_r },
-	{ 0x1000, 0x1003, dsw_r },
-	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
-	{ 0xc000, 0xc7ff, MRA_BANK19 },
-	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM) /* built in RAM */
+	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_0_r)
+	AM_RANGE(0x1401, 0x1401) AM_READ(input_port_1_r)
+	AM_RANGE(0x1000, 0x1003) AM_READ(dsw_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK20) /* banked ROM */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_BANK19)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* EEPROM */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_w },
-	{ 0x0080, 0x00ff, MWA_RAM }, /* built in RAM */
-	{ 0x4000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc000, namcos1_mcu_patch_w },
-	{ 0xc000, 0xc7ff, MWA_BANK19 },
-	{ 0xc800, 0xcfff, MWA_RAM, &generic_nvram, &generic_nvram_size }, /* EEPROM */
-	{ 0xd000, 0xd000, namcos1_dac0_w },
-	{ 0xd400, 0xd400, namcos1_dac1_w },
-	{ 0xd800, 0xd800, namcos1_mcu_bankswitch_w }, /* BANK selector */
-	{ 0xf000, 0xf000, MWA_NOP }, /* IRQ clear ? */
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM) /* built in RAM */
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(namcos1_mcu_patch_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_BANK19)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEPROM */
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(namcos1_dac0_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(namcos1_dac1_w)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(namcos1_mcu_bankswitch_w) /* BANK selector */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* IRQ clear ? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( quester_mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
-	{ 0x1400, 0x1400, quester_in0_r },
-	{ 0x1401, 0x1401, quester_in1_r },
-	{ 0x1000, 0x1003, dsw_r },
-	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
-	{ 0xc000, 0xc7ff, MRA_BANK19 },
-	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( quester_mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM) /* built in RAM */
+	AM_RANGE(0x1400, 0x1400) AM_READ(quester_in0_r)
+	AM_RANGE(0x1401, 0x1401) AM_READ(quester_in1_r)
+	AM_RANGE(0x1000, 0x1003) AM_READ(dsw_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK20) /* banked ROM */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_BANK19)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* EEPROM */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( faceoff_mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
-	{ 0x1400, 0x1400, faceoff_in0_r },
-	{ 0x1401, 0x1401, faceoff_in1_r },
-	{ 0x1000, 0x1003, dsw_r },
-	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
-	{ 0xc000, 0xc7ff, MRA_BANK19 },
-	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( faceoff_mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM) /* built in RAM */
+	AM_RANGE(0x1400, 0x1400) AM_READ(faceoff_in0_r)
+	AM_RANGE(0x1401, 0x1401) AM_READ(faceoff_in1_r)
+	AM_RANGE(0x1000, 0x1003) AM_READ(dsw_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK20) /* banked ROM */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_BANK19)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* EEPROM */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mcu_readport )
-	{ HD63701_PORT1, HD63701_PORT1, input_port_3_r },
-	{ 0x0101, 0x0101, MRA_NOP }, // unknown port read(added to cut the number of error warnings)
-PORT_END
+static ADDRESS_MAP_START( mcu_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_READ(input_port_3_r)
+	AM_RANGE(0x0101, 0x0101) AM_READ(MRA8_NOP) // unknown port read(added to cut the number of error warnings)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcu_writeport )
-	{ HD63701_PORT1, HD63701_PORT1, namcos1_coin_w },
-	{ HD63701_PORT2, HD63701_PORT2, namcos1_dac_gain_w },
-PORT_END
+static ADDRESS_MAP_START( mcu_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_WRITE(namcos1_coin_w)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_WRITE(namcos1_dac_gain_w)
+ADDRESS_MAP_END
 
 
 
@@ -1162,20 +1162,20 @@ static MACHINE_DRIVER_START( ns1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M6809,49152000/24) /* Not sure if divided by 32 or 24 */
-	MDRV_CPU_MEMORY(main_readmem, main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem, main_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sub",M6809,49152000/24) /* Not sure if divided by 32 or 24 */
-	MDRV_CPU_MEMORY(sub_readmem, sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem, sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809,49152000/32) /* Not sure if divided by 32 or 24 */
-	MDRV_CPU_MEMORY(sound_readmem, sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem, sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("MCU",HD63701,49152000/32) /* Not sure if divided by 32 or 24 */
-	MDRV_CPU_MEMORY(mcu_readmem, mcu_writemem)
-	MDRV_CPU_PORTS(mcu_readport, mcu_writeport)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem, mcu_writemem)
+	MDRV_CPU_IO_MAP(mcu_readport, mcu_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60) // 60.606060?
@@ -1221,7 +1221,7 @@ static MACHINE_DRIVER_START( quester )
 	MDRV_IMPORT_FROM(ns1)
 
 	MDRV_CPU_MODIFY("MCU")
-	MDRV_CPU_MEMORY(quester_mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(quester_mcu_readmem,mcu_writemem)
 
 MACHINE_DRIVER_END
 
@@ -1231,7 +1231,7 @@ static MACHINE_DRIVER_START( faceoff )
 	MDRV_IMPORT_FROM(ns1)
 
 	MDRV_CPU_MODIFY("MCU")
-	MDRV_CPU_MEMORY(faceoff_mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(faceoff_mcu_readmem,mcu_writemem)
 
 MACHINE_DRIVER_END
 

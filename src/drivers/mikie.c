@@ -60,53 +60,53 @@ static WRITE_HANDLER( mikie_coin_counter_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },	/* ???? */
-	{ 0x2400, 0x2400, input_port_0_r },	/* coins + selftest */
-	{ 0x2401, 0x2401, input_port_1_r },	/* player 1 controls */
-	{ 0x2402, 0x2402, input_port_2_r },	/* player 2 controls */
-	{ 0x2403, 0x2403, input_port_3_r },	/* flip */
-	{ 0x2500, 0x2500, input_port_4_r },	/* Dipswitch settings */
-	{ 0x2501, 0x2501, input_port_5_r },	/* Dipswitch settings */
-	{ 0x2800, 0x2fff, MRA_RAM },	/* RAM BANK 2 */
-	{ 0x3000, 0x37ff, MRA_RAM },	/* RAM BANK 3 */
-	{ 0x3800, 0x3fff, MRA_RAM },	/* video RAM */
-	{ 0x4000, 0x5fff, MRA_ROM },    /* Machine checks for extra rom */
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)	/* ???? */
+	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_0_r)	/* coins + selftest */
+	AM_RANGE(0x2401, 0x2401) AM_READ(input_port_1_r)	/* player 1 controls */
+	AM_RANGE(0x2402, 0x2402) AM_READ(input_port_2_r)	/* player 2 controls */
+	AM_RANGE(0x2403, 0x2403) AM_READ(input_port_3_r)	/* flip */
+	AM_RANGE(0x2500, 0x2500) AM_READ(input_port_4_r)	/* Dipswitch settings */
+	AM_RANGE(0x2501, 0x2501) AM_READ(input_port_5_r)	/* Dipswitch settings */
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)	/* RAM BANK 2 */
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)	/* RAM BANK 3 */
+	AM_RANGE(0x3800, 0x3fff) AM_READ(MRA8_RAM)	/* video RAM */
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_ROM)    /* Machine checks for extra rom */
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x2000, 0x2001, mikie_coin_counter_w },
-	{ 0x2002, 0x2002, mikie_sh_irqtrigger_w },
-	{ 0x2006, 0x2006, mikie_flipscreen_w },
-	{ 0x2007, 0x2007, interrupt_enable_w },
-	{ 0x2100, 0x2100, watchdog_reset_w },
-	{ 0x2200, 0x2200, mikie_palettebank_w },
-	{ 0x2400, 0x2400, soundlatch_w },
-	{ 0x2800, 0x288f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2890, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x3bff, mikie_colorram_w, &colorram },
-	{ 0x3c00, 0x3fff, mikie_videoram_w, &videoram },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2001) AM_WRITE(mikie_coin_counter_w)
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(mikie_sh_irqtrigger_w)
+	AM_RANGE(0x2006, 0x2006) AM_WRITE(mikie_flipscreen_w)
+	AM_RANGE(0x2007, 0x2007) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x2100, 0x2100) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2200, 0x2200) AM_WRITE(mikie_palettebank_w)
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x2800, 0x288f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2890, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(mikie_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x3c00, 0x3fff) AM_WRITE(mikie_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x8003, 0x8003, soundlatch_r },
-	{ 0x8005, 0x8005, mikie_sh_timer_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8003, 0x8003) AM_READ(soundlatch_r)
+	AM_RANGE(0x8005, 0x8005) AM_READ(mikie_sh_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x8000, 0x8000, MWA_NOP },	/* sound command latch */
-	{ 0x8001, 0x8001, MWA_NOP },	/* ??? */
-	{ 0x8002, 0x8002, SN76496_0_w },	/* trigger read of latch */
-	{ 0x8004, 0x8004, SN76496_1_w },	/* trigger read of latch */
-	{ 0x8079, 0x8079, MWA_NOP },	/* ??? */
-//	{ 0xa003, 0xa003, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)	/* sound command latch */
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(SN76496_0_w)	/* trigger read of latch */
+	AM_RANGE(0x8004, 0x8004) AM_WRITE(SN76496_1_w)	/* trigger read of latch */
+	AM_RANGE(0x8079, 0x8079) AM_WRITE(MWA8_NOP)	/* ??? */
+//	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -260,12 +260,12 @@ static MACHINE_DRIVER_START( mikie )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

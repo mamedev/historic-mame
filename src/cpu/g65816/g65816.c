@@ -250,6 +250,11 @@ unsigned g65816_get_context(void *dst_context)
 	return sizeof(g65816i_cpu);
 }
 
+static void mame_g65816_get_context(void *dst_context)
+{
+	g65816_get_context(dst_context);
+}
+
 /* Set the current CPU context */
 void g65816_set_context(void *src_context)
 {
@@ -330,63 +335,6 @@ void g65816_set_irq_callback(int (*callback)(int))
 }
 
 
-/* Get a formatted string representing a register and its contents */
-const char *g65816_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	g65816i_cpu_struct* r = context;
-
-	which = (which + 1) % 16;
-	buffer[which][0] = '\0';
-	if(!context)
-		r = &g65816i_cpu;
-
-	switch(regnum)
-	{
-		case CPU_INFO_REG+G65816_PC:		sprintf(buffer[which], "PC:%04X", r->pc); break;
-		case CPU_INFO_REG+G65816_PB:		sprintf(buffer[which], "PB:%02X", r->pb>>16); break;
-		case CPU_INFO_REG+G65816_DB:		sprintf(buffer[which], "DB:%02X", r->db>>16); break;
-		case CPU_INFO_REG+G65816_D:			sprintf(buffer[which], "D:%04X", r->d); break;
-		case CPU_INFO_REG+G65816_S:			sprintf(buffer[which], "S:%04X", r->s); break;
-		case CPU_INFO_REG+G65816_P:			sprintf(buffer[which], "P:%02X",
-											 (r->flag_n&0x80)		|
-											((r->flag_v>>1)&0x40)	|
-											r->flag_m				|
-											r->flag_x				|
-											r->flag_d				|
-											r->flag_i				|
-											((!r->flag_z)<<1)		|
-											((r->flag_c>>8)&1)); break;
-		case CPU_INFO_REG+G65816_E:			sprintf(buffer[which], "E:%d", r->flag_e); break;
-		case CPU_INFO_REG+G65816_A:			sprintf(buffer[which], "A:%04X", r->a | r->b); break;
-		case CPU_INFO_REG+G65816_X:			sprintf(buffer[which], "X:%04X", r->x); break;
-		case CPU_INFO_REG+G65816_Y:			sprintf(buffer[which], "Y:%04X", r->y); break;
-		case CPU_INFO_REG+G65816_NMI_STATE:	sprintf(buffer[which], "NMI:%X", r->line_nmi); break;
-		case CPU_INFO_REG+G65816_IRQ_STATE:	sprintf(buffer[which], "IRQ:%X", r->line_irq); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->flag_n & NFLAG_SET ? 'N':'.',
-				r->flag_v & VFLAG_SET ? 'V':'.',
-				r->flag_m & MFLAG_SET ? 'M':'.',
-				r->flag_x & XFLAG_SET ? 'X':'.',
-				r->flag_d & DFLAG_SET ? 'D':'.',
-				r->flag_i & IFLAG_SET ? 'I':'.',
-				r->flag_z == 0        ? 'Z':'.',
-				r->flag_c & CFLAG_SET ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "G65C816";
-		case CPU_INFO_FAMILY: return "6500";
-		case CPU_INFO_VERSION: return "0.90";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 2000 Karl Stenerud, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)g65816i_register_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)g65816i_window_layout;
-	}
-	return buffer[which];
-}
-
-
 /* Disassemble an instruction */
 #ifdef MAME_DEBUG
 #include "g65816ds.h"
@@ -404,6 +352,156 @@ unsigned g65816_dasm(char *buffer, unsigned pc)
 
 void g65816_init(void){ return; }
 
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void g65816_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_IRQ:	g65816_set_irq_line(G65816_LINE_IRQ, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_NMI:	g65816_set_irq_line(G65816_LINE_NMI, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_ABORT:	g65816_set_irq_line(G65816_LINE_ABORT, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_SO:	g65816_set_irq_line(G65816_LINE_SO, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RDY:	g65816_set_irq_line(G65816_LINE_RDY, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RESET:	g65816_set_irq_line(G65816_LINE_RESET, info->i); break;
+
+		case CPUINFO_INT_PC:							g65816_set_pc(info->i);					break;
+		case CPUINFO_INT_SP:							g65816_set_sp(info->i);					break;
+
+		case CPUINFO_INT_REGISTER + G65816_PC:			g65816_set_reg(G65816_PC, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_S:			g65816_set_reg(G65816_S, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_P:			g65816_set_reg(G65816_P, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_A:			g65816_set_reg(G65816_A, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_X:			g65816_set_reg(G65816_X, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_Y:			g65816_set_reg(G65816_Y, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_PB:			g65816_set_reg(G65816_PB, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_DB:			g65816_set_reg(G65816_DB, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_D:			g65816_set_reg(G65816_D, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_E:			g65816_set_reg(G65816_E, info->i);		break;
+		case CPUINFO_INT_REGISTER + G65816_NMI_STATE:	g65816_set_reg(G65816_NMI_STATE, info->i); break;
+		case CPUINFO_INT_REGISTER + G65816_IRQ_STATE:	g65816_set_reg(G65816_IRQ_STATE, info->i); break;
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					g65816_set_irq_callback(info->irqcallback); break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void g65816_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(g65816i_cpu);			break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_IRQ:	info->i = LINE_IRQ;						break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_NMI:	info->i = LINE_NMI;						break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_ABORT:	info->i = 0;							break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_SO:	info->i = 0;							break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RDY:	info->i = 0;							break;
+		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RESET:	info->i = 0;							break;
+
+		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
+
+		case CPUINFO_INT_PC:							info->i = g65816_get_pc();				break;
+		case CPUINFO_INT_SP:							info->i = g65816_get_sp();				break;
+
+		case CPUINFO_INT_REGISTER + G65816_PC:			info->i = g65816_get_reg(G65816_PC);	break;
+		case CPUINFO_INT_REGISTER + G65816_S:			info->i = g65816_get_reg(G65816_S);		break;
+		case CPUINFO_INT_REGISTER + G65816_P:			info->i = g65816_get_reg(G65816_P);		break;
+		case CPUINFO_INT_REGISTER + G65816_A:			info->i = g65816_get_reg(G65816_A);		break;
+		case CPUINFO_INT_REGISTER + G65816_X:			info->i = g65816_get_reg(G65816_X);		break;
+		case CPUINFO_INT_REGISTER + G65816_Y:			info->i = g65816_get_reg(G65816_Y);		break;
+		case CPUINFO_INT_REGISTER + G65816_PB:			info->i = g65816_get_reg(G65816_PB);	break;
+		case CPUINFO_INT_REGISTER + G65816_DB:			info->i = g65816_get_reg(G65816_DB);	break;
+		case CPUINFO_INT_REGISTER + G65816_D:			info->i = g65816_get_reg(G65816_D);		break;
+		case CPUINFO_INT_REGISTER + G65816_E:			info->i = g65816_get_reg(G65816_E);		break;
+		case CPUINFO_INT_REGISTER + G65816_NMI_STATE:	info->i = g65816_get_reg(G65816_NMI_STATE); break;
+		case CPUINFO_INT_REGISTER + G65816_IRQ_STATE:	info->i = g65816_get_reg(G65816_IRQ_STATE); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = g65816_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = mame_g65816_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = g65816_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = g65816_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = g65816_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = g65816_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = g65816_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = g65816_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = INT_ACK;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &g65816_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = g65816i_register_layout;		break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = g65816i_window_layout;		break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "G65C816"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "6500"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.90"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2000 Karl Stenerud, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				g65816i_cpu.flag_n & NFLAG_SET ? 'N':'.',
+				g65816i_cpu.flag_v & VFLAG_SET ? 'V':'.',
+				g65816i_cpu.flag_m & MFLAG_SET ? 'M':'.',
+				g65816i_cpu.flag_x & XFLAG_SET ? 'X':'.',
+				g65816i_cpu.flag_d & DFLAG_SET ? 'D':'.',
+				g65816i_cpu.flag_i & IFLAG_SET ? 'I':'.',
+				g65816i_cpu.flag_z == 0        ? 'Z':'.',
+				g65816i_cpu.flag_c & CFLAG_SET ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + G65816_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", g65816i_cpu.pc); break;
+		case CPUINFO_STR_REGISTER + G65816_PB:			sprintf(info->s = cpuintrf_temp_str(), "PB:%02X", g65816i_cpu.pb>>16); break;
+		case CPUINFO_STR_REGISTER + G65816_DB:			sprintf(info->s = cpuintrf_temp_str(), "DB:%02X", g65816i_cpu.db>>16); break;
+		case CPUINFO_STR_REGISTER + G65816_D:			sprintf(info->s = cpuintrf_temp_str(), "D:%04X", g65816i_cpu.d); break;
+		case CPUINFO_STR_REGISTER + G65816_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", g65816i_cpu.s); break;
+		case CPUINFO_STR_REGISTER + G65816_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X",
+																 (g65816i_cpu.flag_n&0x80)		|
+																((g65816i_cpu.flag_v>>1)&0x40)	|
+																g65816i_cpu.flag_m				|
+																g65816i_cpu.flag_x				|
+																g65816i_cpu.flag_d				|
+																g65816i_cpu.flag_i				|
+																((!g65816i_cpu.flag_z)<<1)		|
+																((g65816i_cpu.flag_c>>8)&1)); break;
+		case CPUINFO_STR_REGISTER + G65816_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%d", g65816i_cpu.flag_e); break;
+		case CPUINFO_STR_REGISTER + G65816_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%04X", g65816i_cpu.a | g65816i_cpu.b); break;
+		case CPUINFO_STR_REGISTER + G65816_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", g65816i_cpu.x); break;
+		case CPUINFO_STR_REGISTER + G65816_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", g65816i_cpu.y); break;
+		case CPUINFO_STR_REGISTER + G65816_NMI_STATE:	sprintf(info->s = cpuintrf_temp_str(), "NMI:%X", g65816i_cpu.line_nmi); break;
+		case CPUINFO_STR_REGISTER + G65816_IRQ_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQ:%X", g65816i_cpu.line_irq); break;
+	}
+}
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

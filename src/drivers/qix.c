@@ -211,58 +211,58 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_data )
-	{ 0x8000, 0x83ff, qix_sharedram_r },
-	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8800, MRA_NOP },   /* ACIA */
-	{ 0x8c00, 0x8c00, qix_video_firq_r },
-	{ 0x8c01, 0x8c01, qix_data_firq_ack_r },
-	{ 0x9000, 0x93ff, pia_3_r },
-	{ 0x9400, 0x97ff, pia_0_r },
-	{ 0x9800, 0x9bff, pia_1_r },
-	{ 0x9c00, 0x9fff, pia_2_r },
-	{ 0xa000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_data, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x83ff) AM_READ(qix_sharedram_r)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(MRA8_NOP)   /* ACIA */
+	AM_RANGE(0x8c00, 0x8c00) AM_READ(qix_video_firq_r)
+	AM_RANGE(0x8c01, 0x8c01) AM_READ(qix_data_firq_ack_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(pia_3_r)
+	AM_RANGE(0x9400, 0x97ff) AM_READ(pia_0_r)
+	AM_RANGE(0x9800, 0x9bff) AM_READ(pia_1_r)
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(pia_2_r)
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_data )
-	{ 0x8000, 0x83ff, qix_sharedram_w, &qix_sharedram },
-	{ 0x8400, 0x87ff, MWA_RAM },
-	{ 0x8c00, 0x8c00, qix_video_firq_w },
-	{ 0x8c01, 0x8c01, qix_data_firq_ack_w },
-	{ 0x9000, 0x93ff, pia_3_w },
-	{ 0x9400, 0x97ff, qix_pia_0_w },
-	{ 0x9800, 0x9bff, pia_1_w },
-	{ 0x9c00, 0x9fff, pia_2_w },
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_data, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(qix_sharedram_w) AM_BASE(&qix_sharedram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(qix_video_firq_w)
+	AM_RANGE(0x8c01, 0x8c01) AM_WRITE(qix_data_firq_ack_w)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(pia_3_w)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(qix_pia_0_w)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(pia_1_w)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(pia_2_w)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( zoo_readmem_data )
-	{ 0x0000, 0x03ff, qix_sharedram_r },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0800, MRA_NOP },   /* ACIA */
-	{ 0x0c00, 0x0c00, qix_video_firq_r },
-	{ 0x0c01, 0x0c01, qix_data_firq_ack_r },
-	{ 0x1000, 0x13ff, pia_3_r },
-	{ 0x1400, 0x17ff, pia_0_r },
-	{ 0x1900, 0x1bff, pia_1_r },
-	{ 0x1c00, 0x1fff, pia_2_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( zoo_readmem_data, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(qix_sharedram_r)
+	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_READ(MRA8_NOP)   /* ACIA */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(qix_video_firq_r)
+	AM_RANGE(0x0c01, 0x0c01) AM_READ(qix_data_firq_ack_r)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(pia_3_r)
+	AM_RANGE(0x1400, 0x17ff) AM_READ(pia_0_r)
+	AM_RANGE(0x1900, 0x1bff) AM_READ(pia_1_r)
+	AM_RANGE(0x1c00, 0x1fff) AM_READ(pia_2_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( zoo_writemem_data )
-	{ 0x0000, 0x03ff, qix_sharedram_w, &qix_sharedram },
-	{ 0x0400, 0x07ff, MWA_RAM },
-	{ 0x0c00, 0x0c00, qix_video_firq_w },
-	{ 0x0c01, 0x0c01, qix_data_firq_ack_w },
-	{ 0x1000, 0x13ff, pia_3_w },
-	{ 0x1400, 0x17ff, qix_pia_0_w },
-	{ 0x1900, 0x1bff, pia_1_w },
-	{ 0x1c00, 0x1fff, pia_2_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( zoo_writemem_data, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(qix_sharedram_w) AM_BASE(&qix_sharedram)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0c00, 0x0c00) AM_WRITE(qix_video_firq_w)
+	AM_RANGE(0x0c01, 0x0c01) AM_WRITE(qix_data_firq_ack_w)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(pia_3_w)
+	AM_RANGE(0x1400, 0x17ff) AM_WRITE(qix_pia_0_w)
+	AM_RANGE(0x1900, 0x1bff) AM_WRITE(pia_1_w)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(pia_2_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -272,62 +272,62 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_video )
-	{ 0x0000, 0x7fff, qix_videoram_r },
-	{ 0x8000, 0x83ff, qix_sharedram_r },
-	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8c00, 0x8c00, qix_data_firq_r },
-	{ 0x8c01, 0x8c01, qix_video_firq_ack_r },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9400, 0x9400, qix_addresslatch_r },
-	{ 0x9800, 0x9800, qix_scanline_r },
-	{ 0xa000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_video, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(qix_videoram_r)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(qix_sharedram_r)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8c00, 0x8c00) AM_READ(qix_data_firq_r)
+	AM_RANGE(0x8c01, 0x8c01) AM_READ(qix_video_firq_ack_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x9400) AM_READ(qix_addresslatch_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(qix_scanline_r)
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_video )
-	{ 0x0000, 0x7fff, qix_videoram_w },
-	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8400, 0x87ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8800, 0x8800, qix_palettebank_w },
-	{ 0x8c00, 0x8c00, qix_data_firq_w },
-	{ 0x8c01, 0x8c01, qix_video_firq_ack_w },
-	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
-	{ 0x9400, 0x9400, qix_addresslatch_w },
-	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
-	{ 0x9c00, 0x9fff, MWA_RAM }, /* Video controller */
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_video, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(qix_videoram_w)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(qix_sharedram_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(qix_palettebank_w)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(qix_data_firq_w)
+	AM_RANGE(0x8c01, 0x8c01) AM_WRITE(qix_video_firq_ack_w)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(qix_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9400, 0x9400) AM_WRITE(qix_addresslatch_w)
+	AM_RANGE(0x9402, 0x9403) AM_WRITE(MWA8_RAM) AM_BASE(&qix_videoaddress)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_RAM) /* Video controller */
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( zoo_readmem_video )
-	{ 0x0000, 0x7fff, qix_videoram_r },
-	{ 0x8000, 0x83ff, qix_sharedram_r },
-	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8c00, 0x8c00, qix_data_firq_r },
-	{ 0x8c01, 0x8c01, qix_video_firq_ack_r },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9400, 0x9400, qix_addresslatch_r },
-	{ 0x9800, 0x9800, qix_scanline_r },
-	{ 0xa000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( zoo_readmem_video, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(qix_videoram_r)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(qix_sharedram_r)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8c00, 0x8c00) AM_READ(qix_data_firq_r)
+	AM_RANGE(0x8c01, 0x8c01) AM_READ(qix_video_firq_ack_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x9400) AM_READ(qix_addresslatch_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(qix_scanline_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( zoo_writemem_video )
-	{ 0x0000, 0x7fff, qix_videoram_w },
-	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8400, 0x87ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8800, 0x8800, qix_palettebank_w },
-	{ 0x8801, 0x8801, zoo_bankswitch_w },
-	{ 0x8c00, 0x8c00, qix_data_firq_w },
-	{ 0x8c01, 0x8c01, qix_video_firq_ack_w },
-	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
-	{ 0x9400, 0x9400, qix_addresslatch_w },
-	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
-	{ 0x9c00, 0x9fff, MWA_RAM }, /* Video controller */
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( zoo_writemem_video, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(qix_videoram_w)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(qix_sharedram_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(qix_palettebank_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(zoo_bankswitch_w)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(qix_data_firq_w)
+	AM_RANGE(0x8c01, 0x8c01) AM_WRITE(qix_video_firq_ack_w)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(qix_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9400, 0x9400) AM_WRITE(qix_addresslatch_w)
+	AM_RANGE(0x9402, 0x9403) AM_WRITE(MWA8_RAM) AM_BASE(&qix_videoaddress)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_RAM) /* Video controller */
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -337,20 +337,20 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x2000, 0x2003, pia_5_r },
-	{ 0x4000, 0x4003, pia_4_r },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2003) AM_READ(pia_5_r)
+	AM_RANGE(0x4000, 0x4003) AM_READ(pia_4_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2003, pia_5_w },
-	{ 0x4000, 0x4003, pia_4_w },
-	{ 0xd000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2003) AM_WRITE(pia_5_w)
+	AM_RANGE(0x4000, 0x4003) AM_WRITE(pia_4_w)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -360,23 +360,25 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0000, qix_68705_portA_r },
-	{ 0x0001, 0x0001, qix_68705_portB_r },
-	{ 0x0002, 0x0002, qix_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(qix_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(qix_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(qix_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0000, qix_68705_portA_w, &qix_68705_port_out },
-	{ 0x0001, 0x0001, qix_68705_portB_w },
-	{ 0x0002, 0x0002, qix_68705_portC_w },
-	{ 0x0004, 0x0007, MWA_RAM, &qix_68705_ddr },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(qix_68705_portA_w) AM_BASE(&qix_68705_port_out)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(qix_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(qix_68705_portC_w)
+	AM_RANGE(0x0004, 0x0007) AM_WRITE(MWA8_RAM) AM_BASE(&qix_68705_ddr)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -665,15 +667,15 @@ static MACHINE_DRIVER_START( qix )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, MAIN_CLOCK_OSC/4/4)	/* 1.25 MHz */
-	MDRV_CPU_MEMORY(readmem_data,writemem_data)
+	MDRV_CPU_PROGRAM_MAP(readmem_data,writemem_data)
 	MDRV_CPU_VBLANK_INT(qix_vblank_start,1)
 
 	MDRV_CPU_ADD_TAG("video", M6809, MAIN_CLOCK_OSC/4/4)	/* 1.25 MHz */
-	MDRV_CPU_MEMORY(readmem_video,writemem_video)
+	MDRV_CPU_PROGRAM_MAP(readmem_video,writemem_video)
 
 	MDRV_CPU_ADD_TAG("sound", M6802, SOUND_CLOCK_OSC/2/4)	/* 0.92 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -701,7 +703,7 @@ static MACHINE_DRIVER_START( mcu )
 	MDRV_IMPORT_FROM(qix)
 
 	MDRV_CPU_ADD(M68705, COIN_CLOCK_OSC/4)	/* 1.00 MHz */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_MACHINE_INIT(qixmcu)
 MACHINE_DRIVER_END
@@ -713,10 +715,10 @@ static MACHINE_DRIVER_START( zookeep )
 	MDRV_IMPORT_FROM(mcu)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(zoo_readmem_data,zoo_writemem_data)
+	MDRV_CPU_PROGRAM_MAP(zoo_readmem_data,zoo_writemem_data)
 
 	MDRV_CPU_MODIFY("video")
-	MDRV_CPU_MEMORY(zoo_readmem_video,zoo_writemem_video)
+	MDRV_CPU_PROGRAM_MAP(zoo_readmem_video,zoo_writemem_video)
 MACHINE_DRIVER_END
 
 

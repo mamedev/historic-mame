@@ -67,45 +67,45 @@ static INTERRUPT_GEN( commando_interrupt )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, input_port_2_r },
-	{ 0xc003, 0xc003, input_port_3_r },
-	{ 0xc004, 0xc004, input_port_4_r },
-	{ 0xd000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xc804, 0xc804, commando_c804_w },
-	{ 0xc808, 0xc809, commando_scrollx_w },
-	{ 0xc80a, 0xc80b, commando_scrolly_w },
-	{ 0xd000, 0xd7ff, commando_fgvideoram_w, &commando_fgvideoram },
-	{ 0xd800, 0xdfff, commando_bgvideoram_w, &commando_bgvideoram },
-	{ 0xe000, 0xfdff, MWA_RAM },
-	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xff80, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(commando_c804_w)
+	AM_RANGE(0xc808, 0xc809) AM_WRITE(commando_scrollx_w)
+	AM_RANGE(0xc80a, 0xc80b) AM_WRITE(commando_scrolly_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(commando_fgvideoram_w) AM_BASE(&commando_fgvideoram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(commando_bgvideoram_w) AM_BASE(&commando_bgvideoram)
+	AM_RANGE(0xe000, 0xfdff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xfe00, 0xff7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xff80, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x8000, YM2203_control_port_0_w },
-	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-	{ 0x8002, 0x8002, YM2203_control_port_1_w },
-	{ 0x8003, 0x8003, YM2203_write_port_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(YM2203_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -333,12 +333,12 @@ static MACHINE_DRIVER_START( commando )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(commando_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

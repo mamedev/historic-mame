@@ -7,40 +7,26 @@
 #include "osd_cpu.h"
 
 enum {
-	HD6309_PC=1, HD6309_S, HD6309_CC ,HD6309_A, HD6309_B, HD6309_U, HD6309_X, HD6309_Y, HD6309_DP, HD6309_NMI_STATE,
-	HD6309_IRQ_STATE, HD6309_FIRQ_STATE, HD6309_E, HD6309_F, HD6309_V, HD6309_MD };
+	HD6309_PC=1, HD6309_S, HD6309_CC ,HD6309_A, HD6309_B, HD6309_U, HD6309_X, HD6309_Y, HD6309_DP, 
+	HD6309_E, HD6309_F, HD6309_V, HD6309_MD };
 
 #define HD6309_IRQ_LINE 0	/* IRQ line number */
 #define HD6309_FIRQ_LINE 1	 /* FIRQ line number */
 
-/* PUBLIC GLOBALS */
-extern int	hd6309_ICount;
-
 
 /* PUBLIC FUNCTIONS */
-extern void hd6309_init(void);
-extern void hd6309_reset(void *param);
-extern void hd6309_exit(void);
-extern int hd6309_execute(int cycles);	/* NS 970908 */
-extern unsigned hd6309_get_context(void *dst);
-extern void hd6309_set_context(void *src);
-extern unsigned hd6309_get_reg(int regnum);
-extern void hd6309_set_reg(int regnum, unsigned val);
-extern void hd6309_set_irq_line(int irqline, int state);
-extern void hd6309_set_irq_callback(int (*callback)(int irqline));
-extern const char *hd6309_info(void *context,int regnum);
-extern unsigned hd6309_dasm(char *buffer, unsigned pc);
+void hd6309_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************/
 /* Read a byte from given memory location									*/
 /****************************************************************************/
-/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
-#define HD6309_RDMEM(Addr) ((unsigned)cpu_readmem16(Addr))
+/* ASG 971005 -- changed to program_read_byte_8/cpu_writemem16 */
+#define HD6309_RDMEM(Addr) ((unsigned)program_read_byte_8(Addr))
 
 /****************************************************************************/
 /* Write a byte to given memory location									*/
 /****************************************************************************/
-#define HD6309_WRMEM(Addr,Value) (cpu_writemem16(Addr,Value))
+#define HD6309_WRMEM(Addr,Value) (program_write_byte_8(Addr,Value))
 
 /****************************************************************************/
 /* Z80_RDOP() is identical to Z80_RDMEM() except it is used for reading 	*/

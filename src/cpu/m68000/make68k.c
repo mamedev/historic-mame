@@ -154,8 +154,8 @@
 char *	codebuf;
 int		DisOp;
 
-#define cpu_readmem24bew(addr)			(0)
-#define cpu_readmem24bew_word(addr)	 	(DisOp)
+#define program_read_byte_8bew(addr)			(0)
+#define program_read_byte_8bew_word(addr)	 	(DisOp)
 
 #define MEMORY_H	/* so memory.h will not be included... */
 /*
@@ -163,8 +163,8 @@ int		DisOp;
 */
 #undef MEMORY_H
 
-#undef cpu_readmem24bew
-#undef cpu_readmem24bew_word
+#undef program_read_byte_8bew
+#undef program_read_byte_8bew_word
 
 
 /*
@@ -542,7 +542,7 @@ void MemoryBanking(int BaseCode)
 
 	/* Update our copy */
 
-	fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+	fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 
 	fprintf(fp, "OP%d_%5.5x_Bank:\n",CPU,BaseCode);
 }
@@ -1113,7 +1113,7 @@ void Memory_Read(char Size,int AReg,const char *Flags,int Mask)
 
 	if ((Flags[EBP] != '-') && (SavedRegs[EBP] == '-'))
 	{
-		fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+		fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 	}
 }
 
@@ -1258,7 +1258,7 @@ void Memory_Write(char Size,int AReg,int DReg,const char *Flags,int Mask)
 
 	if ((Flags[EBP] != '-') && (SavedRegs[EBP] == '-'))
 	{
-		fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+		fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 	}
 }
 
@@ -1275,7 +1275,7 @@ void Memory_Fetch(char Size,int Dreg,int Extend)
 {
 	static int loopcount=0;
 
-	/* Always goes via OP_ROM */
+	/* Always goes via opcode_base */
 
 	if(CPU!=2)
 	{
@@ -1364,7 +1364,7 @@ void PushPC(int Wreg,int Wreg2,const char *Flags, int Mask)
 
 	if (Wreg2 == EBP)
 	{
-		fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+		fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 	}
 
 #endif
@@ -5654,7 +5654,7 @@ void reset(void)
 		fprintf(fp, "\t\t mov   ESI,[%s]\n",REG_PC);
 		fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
 		fprintf(fp, "\t\t pop   ECX\n");
-		fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+		fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 
 		fprintf(fp, "OP%d_%4.4x_END:\n",CPU,BaseCode);
 		fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
@@ -7638,8 +7638,8 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "\t\t EXTERN %sillegal_op\n", PREF);
 	fprintf(fp, "\t\t EXTERN %sillegal_pc\n", PREF);
 
-	fprintf(fp, "\t\t EXTERN %sOP_ROM\n", PREF);
-	fprintf(fp, "\t\t EXTERN %sOP_RAM\n", PREF);
+	//fprintf(fp, "\t\t EXTERN %sOP_ROM\n", PREF);
+	fprintf(fp, "\t\t EXTERN %sopcode_base\n", PREF);
 
 	fprintf(fp, "\t\t EXTERN %sopcode_entry\n", PREF);
 //	fprintf(fp, "\t\t EXTERN %scur_mrhard\n", PREF);
@@ -7714,7 +7714,7 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "\t\t pushad\n");
 	fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
 	fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
-	fprintf(fp, "\t\t mov   ebp,dword [%sOP_ROM]\n", PREF);
+	fprintf(fp, "\t\t mov   ebp,dword [%sopcode_base]\n", PREF);
 
 	fprintf(fp,"; Check for Interrupt waiting\n\n");
 	fprintf(fp,"\t\t test  [%s],byte 07H\n",REG_IRQ);

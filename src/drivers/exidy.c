@@ -153,91 +153,91 @@ static WRITE_HANDLER( fax_bank_select_w )
  *
  *************************************/
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x3fff, MRA_ROM },			/* Targ, Spectar only */
-	{ 0x4000, 0x43ff, videoram_r },
-	{ 0x4400, 0x47ff, videoram_r },			/* mirror (sidetrac requires this) */
-	{ 0x4800, 0x4fff, MRA_RAM },
-	{ 0x5100, 0x5100, input_port_0_r },		/* DSW */
-	{ 0x5101, 0x5101, input_port_1_r },		/* IN0 */
-	{ 0x5103, 0x5103, exidy_interrupt_r },	/* IN1 */
-	{ 0x5105, 0x5105, input_port_4_r },		/* IN3 - Targ, Spectar only */
-	{ 0x5200, 0x520F, pia_0_r },
-	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
-	{ 0x6000, 0x6fff, MRA_RAM },			/* Pepper II only */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x3fff) AM_READ(MRA8_ROM)			/* Targ, Spectar only */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(videoram_r)
+	AM_RANGE(0x4400, 0x47ff) AM_READ(videoram_r)			/* mirror (sidetrac requires this) */
+	AM_RANGE(0x4800, 0x4fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5100, 0x5100) AM_READ(input_port_0_r)		/* DSW */
+	AM_RANGE(0x5101, 0x5101) AM_READ(input_port_1_r)		/* IN0 */
+	AM_RANGE(0x5103, 0x5103) AM_READ(exidy_interrupt_r)	/* IN1 */
+	AM_RANGE(0x5105, 0x5105) AM_READ(input_port_4_r)		/* IN3 - Targ, Spectar only */
+	AM_RANGE(0x5200, 0x520F) AM_READ(pia_0_r)
+	AM_RANGE(0x5213, 0x5213) AM_READ(input_port_3_r)		/* IN2 */
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)			/* Pepper II only */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0800, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, videoram_w },
-	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
-	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
-	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
-	{ 0x5080, 0x5080, MWA_RAM, &exidy_sprite2_xpos },
-	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
-	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_0_w },
-	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(videoram_w)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(exidy_characterram_w) AM_BASE(&exidy_characterram)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_xpos)
+	AM_RANGE(0x5040, 0x5040) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_ypos)
+	AM_RANGE(0x5080, 0x5080) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_xpos)
+	AM_RANGE(0x50C0, 0x50C0) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_ypos)
+	AM_RANGE(0x5100, 0x5100) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_no)
+	AM_RANGE(0x5101, 0x5101) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_enable)
+	AM_RANGE(0x5200, 0x520F) AM_WRITE(pia_0_w)
+	AM_RANGE(0x5210, 0x5212) AM_WRITE(exidy_color_w) AM_BASE(&exidy_color_latch)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rallys_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, videoram_w },
-	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
-	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
-	{ 0x5001, 0x5001, MWA_RAM, &exidy_sprite1_ypos },
-	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_0_w },
-	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
-	{ 0x5300, 0x5300, MWA_RAM, &exidy_sprite2_xpos },
-	{ 0x5301, 0x5301, MWA_RAM, &exidy_sprite2_ypos },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( rallys_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(videoram_w)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(exidy_characterram_w) AM_BASE(&exidy_characterram)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_xpos)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_ypos)
+	AM_RANGE(0x5100, 0x5100) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_no)
+	AM_RANGE(0x5101, 0x5101) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_enable)
+	AM_RANGE(0x5200, 0x520F) AM_WRITE(pia_0_w)
+	AM_RANGE(0x5210, 0x5212) AM_WRITE(exidy_color_w) AM_BASE(&exidy_color_latch)
+	AM_RANGE(0x5300, 0x5300) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_xpos)
+	AM_RANGE(0x5301, 0x5301) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_ypos)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( fax_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },			/* Fax only */
-	{ 0x1a00, 0x1a00, input_port_4_r },		/* IN3 - Fax only */
-	{ 0x1c00, 0x1c00, input_port_3_r },		/* IN2 - Fax only */
-	{ 0x2000, 0x3fff, MRA_BANK1 },			/* Fax only */
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5100, 0x5100, input_port_0_r },		/* DSW */
-	{ 0x5101, 0x5101, input_port_1_r },		/* IN0 */
-	{ 0x5103, 0x5103, exidy_interrupt_r },	/* IN1 */
-	{ 0x5200, 0x520F, pia_0_r },
-	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
-	{ 0x6000, 0x6fff, MRA_RAM },			/* Fax, Pepper II only */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( fax_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)			/* Fax only */
+	AM_RANGE(0x1a00, 0x1a00) AM_READ(input_port_4_r)		/* IN3 - Fax only */
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(input_port_3_r)		/* IN2 - Fax only */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK1)			/* Fax only */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5100, 0x5100) AM_READ(input_port_0_r)		/* DSW */
+	AM_RANGE(0x5101, 0x5101) AM_READ(input_port_1_r)		/* IN0 */
+	AM_RANGE(0x5103, 0x5103) AM_READ(exidy_interrupt_r)	/* IN1 */
+	AM_RANGE(0x5200, 0x520F) AM_READ(pia_0_r)
+	AM_RANGE(0x5213, 0x5213) AM_READ(input_port_3_r)		/* IN2 */
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)			/* Fax, Pepper II only */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( fax_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM },			/* Fax only */
-	{ 0x2000, 0x2000, fax_bank_select_w },	/* Fax only */
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
-	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
-	{ 0x5080, 0x5080, MWA_RAM, &exidy_sprite2_xpos },
-	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
-	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_0_w },
-	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
-	{ 0x5213, 0x5217, MWA_NOP },			/* empty control lines on color/sound board */
-	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( fax_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(MWA8_RAM)			/* Fax only */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(fax_bank_select_w)	/* Fax only */
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_xpos)
+	AM_RANGE(0x5040, 0x5040) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite1_ypos)
+	AM_RANGE(0x5080, 0x5080) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_xpos)
+	AM_RANGE(0x50C0, 0x50C0) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite2_ypos)
+	AM_RANGE(0x5100, 0x5100) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_no)
+	AM_RANGE(0x5101, 0x5101) AM_WRITE(MWA8_RAM) AM_BASE(&exidy_sprite_enable)
+	AM_RANGE(0x5200, 0x520F) AM_WRITE(pia_0_w)
+	AM_RANGE(0x5210, 0x5212) AM_WRITE(exidy_color_w) AM_BASE(&exidy_color_latch)
+	AM_RANGE(0x5213, 0x5217) AM_WRITE(MWA8_NOP)			/* empty control lines on color/sound board */
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(exidy_characterram_w) AM_BASE(&exidy_characterram) /* two 6116 character RAMs */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -247,52 +247,52 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0fff, exidy_shriot_r },
-	{ 0x1000, 0x100f, pia_1_r },
-	{ 0x1800, 0x1fff, exidy_sh8253_r },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x2800, 0x2fff, exidy_sh6840_r },
-	{ 0x5800, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(exidy_shriot_r)
+	AM_RANGE(0x1000, 0x100f) AM_READ(pia_1_r)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(exidy_sh8253_r)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2800, 0x2fff) AM_READ(exidy_sh6840_r)
+	AM_RANGE(0x5800, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0fff, exidy_shriot_w },
-	{ 0x1000, 0x100f, pia_1_w },
-	{ 0x1800, 0x1fff, exidy_sh8253_w },
-	{ 0x2000, 0x27ff, MWA_RAM },
-	{ 0x2800, 0x2fff, exidy_sh6840_w },
-	{ 0x3000, 0x3700, exidy_sfxctrl_w },
-	{ 0x5800, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(exidy_shriot_w)
+	AM_RANGE(0x1000, 0x100f) AM_WRITE(pia_1_w)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(exidy_sh8253_w)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(exidy_sh6840_w)
+	AM_RANGE(0x3000, 0x3700) AM_WRITE(exidy_sfxctrl_w)
+	AM_RANGE(0x5800, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( cvsd_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( cvsd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( cvsd_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( cvsd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( cvsd_iowrite )
-	{ 0x00, 0xff, mtrap_voiceio_w },
-PORT_END
+static ADDRESS_MAP_START( cvsd_iowrite, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_WRITE(mtrap_voiceio_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( cvsd_ioread )
-	{ 0x00, 0xff, mtrap_voiceio_r },
-PORT_END
+static ADDRESS_MAP_START( cvsd_ioread, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(mtrap_voiceio_r)
+ADDRESS_MAP_END
 
 
 
@@ -930,7 +930,7 @@ static MACHINE_DRIVER_START( targ )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 11289000/16)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(exidy_vblank_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -961,7 +961,7 @@ static MACHINE_DRIVER_START( rallys )
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(main_readmem,rallys_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,rallys_writemem)
 MACHINE_DRIVER_END
 
 
@@ -972,7 +972,7 @@ static MACHINE_DRIVER_START( venture )
 
 	MDRV_CPU_ADD(M6502, 3579545/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_INTERLEAVE(10)
 
@@ -990,8 +990,8 @@ static MACHINE_DRIVER_START( mtrap )
 
 	MDRV_CPU_ADD(Z80, 3579545/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(cvsd_readmem,cvsd_writemem)
-	MDRV_CPU_PORTS(cvsd_ioread,cvsd_iowrite)
+	MDRV_CPU_PROGRAM_MAP(cvsd_readmem,cvsd_writemem)
+	MDRV_CPU_IO_MAP(cvsd_ioread,cvsd_iowrite)
 
 	MDRV_INTERLEAVE(32)
 
@@ -1016,7 +1016,7 @@ static MACHINE_DRIVER_START( fax )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(pepper2)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(fax_readmem,fax_writemem)
+	MDRV_CPU_PROGRAM_MAP(fax_readmem,fax_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1452,7 +1452,7 @@ DRIVER_INIT( pepper2 )
 	exidy_collision_invert	= 0x04;
 
 	/* two 6116 character RAMs */
-	install_mem_write_handler(0, 0x4800, 0x4fff, MWA_NOP);
+	install_mem_write_handler(0, 0x4800, 0x4fff, MWA8_NOP);
 	exidy_characterram = install_mem_write_handler(0, 0x6000, 0x6fff, exidy_characterram_w);
 }
 

@@ -181,39 +181,39 @@ static READ_HANDLER (controls_r)
 		return input_port_3_r(0);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x8000, 0xbfff, MRA_RAM },
-	{ 0xf801, 0xf801, AY8910_read_port_0_r },
-	{ 0xfc00, 0xffff, MRA_RAM },		
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf801, 0xf801) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)		
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x8000, 0xbfff, sbw_videoram_w, &videoram, &videoram_size },
-	{ 0xf800, 0xf800, AY8910_control_port_0_w },
-	{ 0xf801, 0xf801, AY8910_write_port_0_w },
-	{ 0xfc00, 0xffff, MWA_RAM },	
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(sbw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_RAM)	
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{0x00,0x00, input_port_0_r },
-	{0x01,0x01, controls_r},
-	{0x02,0x02, pix_data_r },
-	{0x03,0x03, input_port_1_r },
-	{0x04,0x04, input_port_4_r},
-	{0x05,0x05, input_port_5_r},
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(controls_r)
+	AM_RANGE(0x02, 0x02) AM_READ(pix_data_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_1_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, watchdog_reset_w },
-	{ 0x01, 0x01, pix_data_w },
-	{ 0x02, 0x02, pix_shift_w },
-	{ 0x03, 0x03, IOWP_NOP },
-	{ 0x04, 0x04, system_w },
-	{ 0x05, 0x05, graph_control_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(pix_data_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(pix_shift_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x04, 0x04) AM_WRITE(system_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(graph_control_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( sbowling )
@@ -355,8 +355,8 @@ static PALETTE_INIT( sbowling )
 static MACHINE_DRIVER_START( sbowling )
 
 	MDRV_CPU_ADD(8080, 19968000/10 )
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(sbw_interrupt, 2)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

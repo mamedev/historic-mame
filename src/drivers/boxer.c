@@ -194,32 +194,22 @@ static WRITE_HANDLER( boxer_bad_address_w )
 }
 
 
-static MEMORY_READ_START( boxer_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0200, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x08ff, boxer_input_r },
-	{ 0x1000, 0x17ff, boxer_misc_r },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0xbfff, boxer_bad_address_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( boxer_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x03ff, MWA_RAM, &boxer_tile_ram },
-	{ 0x1800, 0x1800, boxer_pot_w },
-	{ 0x1900, 0x19ff, boxer_led_w },
-	{ 0x1a00, 0x1aff, boxer_sound_w },
-	{ 0x1b00, 0x1bff, boxer_crowd_w },
-	{ 0x1c00, 0x1cff, boxer_irq_reset_w },
-	{ 0x1d00, 0x1dff, boxer_bell_w },
-	{ 0x1e00, 0x1eff, MWA_RAM, &boxer_sprite_ram },
-	{ 0x1f00, 0x1fff, watchdog_reset_w },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0xbfff, boxer_bad_address_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( boxer_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x03ff) AM_RAM AM_BASE(&boxer_tile_ram)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(boxer_input_r)
+	AM_RANGE(0x1000, 0x17ff) AM_READ(boxer_misc_r)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(boxer_pot_w)
+	AM_RANGE(0x1900, 0x19ff) AM_WRITE(boxer_led_w)
+	AM_RANGE(0x1a00, 0x1aff) AM_WRITE(boxer_sound_w)
+	AM_RANGE(0x1b00, 0x1bff) AM_WRITE(boxer_crowd_w)
+	AM_RANGE(0x1c00, 0x1cff) AM_WRITE(boxer_irq_reset_w)
+	AM_RANGE(0x1d00, 0x1dff) AM_WRITE(boxer_bell_w)
+	AM_RANGE(0x1e00, 0x1eff) AM_WRITE(MWA8_RAM) AM_BASE(&boxer_sprite_ram)
+	AM_RANGE(0x1f00, 0x1fff) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3000, 0x3fff) AM_ROM
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( boxer )
@@ -320,7 +310,7 @@ static MACHINE_DRIVER_START(boxer)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(boxer_readmem, boxer_writemem)
+	MDRV_CPU_PROGRAM_MAP(boxer_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 
@@ -342,19 +332,13 @@ MACHINE_DRIVER_END
 
 ROM_START( boxer )
 
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x4000, REGION_CPU1, 0 )
 	ROM_LOAD_NIB_LOW ( "3400l.e1", 0x3400, 0x0400, CRC(df85afa4) SHA1(5a74a08f1e0b0bbec02999d5e46513d8afd333ac) )
-	ROM_RELOAD       (             0xF400, 0x0400 )
 	ROM_LOAD_NIB_HIGH( "3400m.a1", 0x3400, 0x0400, CRC(23fe06aa) SHA1(03a4eedbf60f07d1dd8d7af576828df5f032146e) )
-	ROM_RELOAD       (             0xF400, 0x0400 )
 	ROM_LOAD_NIB_LOW ( "3800l.j1", 0x3800, 0x0400, CRC(087263fb) SHA1(cc3715a68bd05f23b4abf9f18ca14a8fe55163f7) )
-	ROM_RELOAD       (             0xF800, 0x0400 )
 	ROM_LOAD_NIB_HIGH( "3800m.d1", 0x3800, 0x0400, CRC(3bbf605e) SHA1(be4ff1702eb837710421a7dafcdc60fe2d3259e8) )
-	ROM_RELOAD       (             0xF800, 0x0400 )
 	ROM_LOAD_NIB_LOW ( "3c00l.h1", 0x3C00, 0x0400, CRC(09e204f2) SHA1(565d4c8865da7d96a45e909973d570101de61f63) )
-	ROM_RELOAD       (             0xFC00, 0x0400 )
 	ROM_LOAD_NIB_HIGH( "3c00m.c1", 0x3C00, 0x0400, CRC(2f8ebc85) SHA1(05a4e29ec7e49173200d5fe5344274fd6afd16d7) )
-	ROM_RELOAD       (             0xFC00, 0x0400 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE ) /* lower boxer */
 	ROM_LOAD( "bx137l.c8", 0x0000, 0x0400, CRC(e91f2048) SHA1(64039d07557e210aa4f6663cd7e72814cb881310) )

@@ -33,32 +33,32 @@ secondary crystal, numbers unknown for the TMS9928
 #include "vidhrdw/tms9928a.h"
 #include "machine/segacrpt.h"
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0xbFFF, MRA_ROM },
-    { 0xc000, 0xc3ff, MRA_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0xbFFF) AM_READ(MRA8_ROM)
+    AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0xbFFF, MWA_ROM },
-    { 0xc000, 0xc3ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0xbFFF) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START ( readport )
-    { 0xBE, 0xBE, TMS9928A_vram_r },
-    { 0xBF, 0xBF, TMS9928A_register_r },
-    { 0xDC, 0xDC, input_port_0_r},
-    { 0xDD, 0xDD, input_port_1_r},
-    { 0xDE, 0xDE, input_port_2_r},
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0xBE, 0xBE) AM_READ(TMS9928A_vram_r)
+    AM_RANGE(0xBF, 0xBF) AM_READ(TMS9928A_register_r)
+    AM_RANGE(0xDC, 0xDC) AM_READ(input_port_0_r)
+    AM_RANGE(0xDD, 0xDD) AM_READ(input_port_1_r)
+    AM_RANGE(0xDE, 0xDE) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START ( writeport )
-    { 0xBE, 0xBE, TMS9928A_vram_w },
-    { 0xBF, 0xBF, TMS9928A_register_w },
-    { 0xDF, 0xDF, MWA_NOP },  //? 8255 ?
-    { 0x7f, 0x7F, SN76496_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0xBE, 0xBE) AM_WRITE(TMS9928A_vram_w)
+    AM_RANGE(0xBF, 0xBF) AM_WRITE(TMS9928A_register_w)
+    AM_RANGE(0xDF, 0xDF) AM_WRITE(MWA8_NOP)  //? 8255 ?
+    AM_RANGE(0x7f, 0x7F) AM_WRITE(SN76496_0_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( chwrestl )
     PORT_START
@@ -159,8 +159,8 @@ static const TMS9928a_interface tms9928a_interface =
 
 static MACHINE_DRIVER_START( sg1000a )
 	MDRV_CPU_ADD(Z80, 3579545)       /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_CPU_VBLANK_INT(sg100a_interrupt,1)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

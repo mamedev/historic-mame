@@ -77,60 +77,60 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc000, mainsnk_port_0_r },
-	{ 0xC100, 0xC100, input_port_1_r },
-	{ 0xC200, 0xC200, input_port_2_r },
-	{ 0xC300, 0xC300, input_port_3_r },
-	{ 0xC500, 0xC500, input_port_4_r },
-	{ 0xd800, 0xdbff, me_bgram_r },
-	{ 0xdc00, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM },
-	{ 0xec00, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf3ff, me_fgram_r },
-	{ 0xf400, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xfbff, MRA_RAM },
-	{ 0xfc00, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(mainsnk_port_0_r)
+	AM_RANGE(0xC100, 0xC100) AM_READ(input_port_1_r)
+	AM_RANGE(0xC200, 0xC200) AM_READ(input_port_2_r)
+	AM_RANGE(0xC300, 0xC300) AM_READ(input_port_3_r)
+	AM_RANGE(0xC500, 0xC500) AM_READ(input_port_4_r)
+	AM_RANGE(0xd800, 0xdbff) AM_READ(me_bgram_r)
+	AM_RANGE(0xdc00, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe400, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xec00, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf3ff) AM_READ(me_fgram_r)
+	AM_RANGE(0xf400, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xC600, 0xC600, me_c600_w },
-	{ 0xc700, 0xc700, sound_command_w },
-	{ 0xd800, 0xdbff, me_bgram_w, &me_bgram },
-	{ 0xdc00, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ 0xe400, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xebff, MWA_RAM },
-	{ 0xec00, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf3ff, me_fgram_w, &me_fgram },
-	{ 0xf400, 0xf7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xC600, 0xC600) AM_WRITE(me_c600_w)
+	AM_RANGE(0xc700, 0xc700) AM_WRITE(sound_command_w)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(me_bgram_w) AM_BASE(&me_bgram)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xec00, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(me_fgram_w) AM_BASE(&me_fgram)
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa000, sound_command_r },
-	{ 0xc000, 0xc000, sound_ack_r },
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(sound_command_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(sound_ack_r)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xe000, 0xe000, AY8910_control_port_0_w },
-	{ 0xe001, 0xe001, AY8910_write_port_0_w },
-	{ 0xe002, 0xe007, snkwave_w },
-	{ 0xe008, 0xe008, AY8910_control_port_1_w },
-	{ 0xe009, 0xe009, AY8910_write_port_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) AM_BASE(&namco_wavedata)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xe002, 0xe007) AM_WRITE(snkwave_w)
+	AM_RANGE(0xe008, 0xe008) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xe009, 0xe009) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_sound )
-	{ 0x0000, 0x0000, MRA_NOP },
-PORT_END
+static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( mainsnk )
 	PORT_START
@@ -225,13 +225,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( mainsnk)
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	
- 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
- 	MDRV_CPU_PORTS(readport_sound,0)
+ 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+ 	MDRV_CPU_IO_MAP(readport_sound,0)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 244)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

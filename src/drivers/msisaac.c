@@ -215,65 +215,65 @@ static WRITE_HANDLER( msisaac_mcu_w )
 #endif
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
 
-	{ 0xf0e0, 0xf0e0, msisaac_mcu_r },
-	{ 0xf0e1, 0xf0e1, msisaac_mcu_status_r },
+	AM_RANGE(0xf0e0, 0xf0e0) AM_READ(msisaac_mcu_r)
+	AM_RANGE(0xf0e1, 0xf0e1) AM_READ(msisaac_mcu_status_r)
 
-	{ 0xf080, 0xf080, input_port_0_r },
-	{ 0xf081, 0xf081, input_port_1_r },
-	{ 0xf082, 0xf082, input_port_2_r },
-	{ 0xf083, 0xf083, input_port_3_r },
-	{ 0xf084, 0xf084, input_port_4_r },
-//{ 0xf086, 0xf086, input_port_5_r },
-MEMORY_END
+	AM_RANGE(0xf080, 0xf080) AM_READ(input_port_0_r)
+	AM_RANGE(0xf081, 0xf081) AM_READ(input_port_1_r)
+	AM_RANGE(0xf082, 0xf082) AM_READ(input_port_2_r)
+	AM_RANGE(0xf083, 0xf083) AM_READ(input_port_3_r)
+	AM_RANGE(0xf084, 0xf084) AM_READ(input_port_4_r)
+//AM_RANGE(0xf086, 0xf086) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
 
-	{ 0xe800, 0xefff, paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)
 
-//{ 0xf400, 0xf43f, msisaac_fg_colorram_w, &colorram },
+//AM_RANGE(0xf400, 0xf43f) AM_WRITE(msisaac_fg_colorram_w) AM_BASE(&colorram)
 
-	{ 0xf0a3, 0xf0a3, ms_unknown_w },			//???? written in interrupt routine
+	AM_RANGE(0xf0a3, 0xf0a3) AM_WRITE(ms_unknown_w)			//???? written in interrupt routine
 
-	{ 0xf060, 0xf060, sound_command_w },		//sound command
-	{ 0xf061, 0xf061, MWA_NOP /*sound_reset*/},	//????
+	AM_RANGE(0xf060, 0xf060) AM_WRITE(sound_command_w)		//sound command
+	AM_RANGE(0xf061, 0xf061) AM_WRITE(MWA8_NOP) /*sound_reset*/	//????
 
-	{ 0xf000, 0xf000, msisaac_bg2_textbank_w },
-	{ 0xf001, 0xf001, MWA_RAM }, 			//???
-	{ 0xf002, 0xf002, MWA_RAM }, 			//???
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(msisaac_bg2_textbank_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(MWA8_RAM) 			//???
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(MWA8_RAM) 			//???
 
-	{ 0xf0c0, 0xf0c0, msisaac_fg_scrollx_w },
-	{ 0xf0c1, 0xf0c1, msisaac_fg_scrolly_w },
-	{ 0xf0c2, 0xf0c2, msisaac_bg2_scrollx_w },
-	{ 0xf0c3, 0xf0c3, msisaac_bg2_scrolly_w },
-	{ 0xf0c4, 0xf0c4, msisaac_bg_scrollx_w },
-	{ 0xf0c5, 0xf0c5, msisaac_bg_scrolly_w },
+	AM_RANGE(0xf0c0, 0xf0c0) AM_WRITE(msisaac_fg_scrollx_w)
+	AM_RANGE(0xf0c1, 0xf0c1) AM_WRITE(msisaac_fg_scrolly_w)
+	AM_RANGE(0xf0c2, 0xf0c2) AM_WRITE(msisaac_bg2_scrollx_w)
+	AM_RANGE(0xf0c3, 0xf0c3) AM_WRITE(msisaac_bg2_scrolly_w)
+	AM_RANGE(0xf0c4, 0xf0c4) AM_WRITE(msisaac_bg_scrollx_w)
+	AM_RANGE(0xf0c5, 0xf0c5) AM_WRITE(msisaac_bg_scrolly_w)
 
-	{ 0xf0e0, 0xf0e0, msisaac_mcu_w },
+	AM_RANGE(0xf0e0, 0xf0e0) AM_WRITE(msisaac_mcu_w)
 
-	{ 0xf100, 0xf17f, MWA_RAM, &spriteram },	//sprites
-	{ 0xf400, 0xf7ff, msisaac_fg_videoram_w, &videoram },
-	{ 0xf800, 0xfbff, msisaac_bg2_videoram_w,&msisaac_videoram2 },
-	{ 0xfc00, 0xffff, msisaac_bg_videoram_w, &msisaac_videoram },
-
-
-//	{ 0xf801, 0xf801, msisaac_bgcolor_w },
-//	{ 0xfc00, 0xfc00, flip_screen_w },
-//	{ 0xfc03, 0xfc04, msisaac_coin_counter_w },
-MEMORY_END
+	AM_RANGE(0xf100, 0xf17f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)	//sprites
+	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(msisaac_fg_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(msisaac_bg2_videoram_w) AM_BASE(&msisaac_videoram2)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(msisaac_bg_videoram_w) AM_BASE(&msisaac_videoram)
 
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-	{ 0xe000, 0xffff, MRA_NOP }, /*space for diagnostic ROM (not dumped, not reachable) */
-MEMORY_END
+//	AM_RANGE(0xf801, 0xf801) AM_WRITE(msisaac_bgcolor_w)
+//	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(flip_screen_w)
+//	AM_RANGE(0xfc03, 0xfc04) AM_WRITE(msisaac_coin_counter_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_NOP) /*space for diagnostic ROM (not dumped, not reachable) */
+ADDRESS_MAP_END
 
 
 static int vol_ctrl[16];
@@ -323,42 +323,44 @@ static WRITE_HANDLER( sound_control_1_w )
 
 
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
 
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ 0x8001, 0x8001, AY8910_write_port_0_w   },
-	{ 0x8002, 0x8002, AY8910_control_port_1_w },
-	{ 0x8003, 0x8003, AY8910_write_port_1_w   },
-	{ 0x8010, 0x801d, MSM5232_0_w },
-	{ 0x8020, 0x8020, sound_control_0_w  },
-	{ 0x8030, 0x8030, sound_control_1_w  },
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8010, 0x801d) AM_WRITE(MSM5232_0_w)
+	AM_RANGE(0x8020, 0x8020) AM_WRITE(sound_control_0_w)
+	AM_RANGE(0x8030, 0x8030) AM_WRITE(sound_control_1_w)
 
-	{ 0xc001, 0xc001, nmi_enable_w },
-	{ 0xc002, 0xc002, nmi_disable_w },
-	{ 0xc003, 0xc003, MWA_NOP }, /*???*/ /* this is NOT mixer_enable */
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(nmi_disable_w)
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(MWA8_NOP) /*???*/ /* this is NOT mixer_enable */
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0000, buggychl_68705_portA_r },
-	{ 0x0001, 0x0001, buggychl_68705_portB_r },
-	{ 0x0002, 0x0002, buggychl_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(buggychl_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(buggychl_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(buggychl_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0000, buggychl_68705_portA_w },
-	{ 0x0001, 0x0001, buggychl_68705_portB_w },
-	{ 0x0002, 0x0002, buggychl_68705_portC_w },
-	{ 0x0004, 0x0004, buggychl_68705_ddrA_w },
-	{ 0x0005, 0x0005, buggychl_68705_ddrB_w },
-	{ 0x0006, 0x0006, buggychl_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(buggychl_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(buggychl_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(buggychl_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(buggychl_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(buggychl_68705_ddrB_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(buggychl_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( msisaac )
@@ -538,17 +540,17 @@ static MACHINE_DRIVER_START( msisaac )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* source of IRQs is unknown */
 
 #ifdef USE_MCU
 	MDRV_CPU_ADD(M68705,8000000/2)  /* 4 MHz */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)

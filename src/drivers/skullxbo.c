@@ -114,44 +114,44 @@ static WRITE16_HANDLER( skullxbo_mobwr_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0xff2000, 0xff2fff, MRA16_RAM },
-	{ 0xff5000, 0xff5001, atarigen_sound_r },
-	{ 0xff5800, 0xff5801, input_port_0_word_r },
-	{ 0xff5802, 0xff5803, special_port1_r },
-	{ 0xff6000, 0xff6fff, atarigen_eeprom_r },
-	{ 0xff8000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0xff2000, 0xff2fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff5000, 0xff5001) AM_READ(atarigen_sound_r)
+	AM_RANGE(0xff5800, 0xff5801) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xff5802, 0xff5803) AM_READ(special_port1_r)
+	AM_RANGE(0xff6000, 0xff6fff) AM_READ(atarigen_eeprom_r)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0xff0000, 0xff07ff, skullxbo_mobmsb_w },
-	{ 0xff0800, 0xff0bff, atarigen_halt_until_hblank_0_w },
-	{ 0xff0c00, 0xff0fff, atarigen_eeprom_enable_w },
-	{ 0xff1000, 0xff13ff, atarigen_video_int_ack_w },
-	{ 0xff1400, 0xff17ff, atarigen_sound_w },
-	{ 0xff1800, 0xff1bff, atarigen_sound_reset_w },
-	{ 0xff1c00, 0xff1c7f, skullxbo_playfieldlatch_w },
-	{ 0xff1c80, 0xff1cff, skullxbo_xscroll_w, &atarigen_xscroll },
-	{ 0xff1d00, 0xff1d7f, atarigen_scanline_int_ack_w },
-	{ 0xff1d80, 0xff1dff, watchdog_reset16_w },
-	{ 0xff1e00, 0xff1e7f, skullxbo_playfieldlatch_w },
-	{ 0xff1e80, 0xff1eff, skullxbo_xscroll_w },
-	{ 0xff1f00, 0xff1f7f, atarigen_scanline_int_ack_w },
-	{ 0xff1f80, 0xff1fff, watchdog_reset16_w },
-	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w, &paletteram16 },
-	{ 0xff4000, 0xff47ff, skullxbo_yscroll_w, &atarigen_yscroll },
-	{ 0xff4800, 0xff4fff, skullxbo_mobwr_w },
-	{ 0xff6000, 0xff6fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xff8000, 0xff9fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
-	{ 0xffa000, 0xffbfff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
-	{ 0xffc000, 0xffcf7f, atarigen_alpha_w, &atarigen_alpha },
-	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0xffd000, 0xffdfff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0xffe000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xff0000, 0xff07ff) AM_WRITE(skullxbo_mobmsb_w)
+	AM_RANGE(0xff0800, 0xff0bff) AM_WRITE(atarigen_halt_until_hblank_0_w)
+	AM_RANGE(0xff0c00, 0xff0fff) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0xff1000, 0xff13ff) AM_WRITE(atarigen_video_int_ack_w)
+	AM_RANGE(0xff1400, 0xff17ff) AM_WRITE(atarigen_sound_w)
+	AM_RANGE(0xff1800, 0xff1bff) AM_WRITE(atarigen_sound_reset_w)
+	AM_RANGE(0xff1c00, 0xff1c7f) AM_WRITE(skullxbo_playfieldlatch_w)
+	AM_RANGE(0xff1c80, 0xff1cff) AM_WRITE(skullxbo_xscroll_w) AM_BASE(&atarigen_xscroll)
+	AM_RANGE(0xff1d00, 0xff1d7f) AM_WRITE(atarigen_scanline_int_ack_w)
+	AM_RANGE(0xff1d80, 0xff1dff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xff1e00, 0xff1e7f) AM_WRITE(skullxbo_playfieldlatch_w)
+	AM_RANGE(0xff1e80, 0xff1eff) AM_WRITE(skullxbo_xscroll_w)
+	AM_RANGE(0xff1f00, 0xff1f7f) AM_WRITE(atarigen_scanline_int_ack_w)
+	AM_RANGE(0xff1f80, 0xff1fff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xff2000, 0xff2fff) AM_WRITE(atarigen_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xff4000, 0xff47ff) AM_WRITE(skullxbo_yscroll_w) AM_BASE(&atarigen_yscroll)
+	AM_RANGE(0xff4800, 0xff4fff) AM_WRITE(skullxbo_mobwr_w)
+	AM_RANGE(0xff6000, 0xff6fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xff8000, 0xff9fff) AM_WRITE(atarigen_playfield_latched_lsb_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xffa000, 0xffbfff) AM_WRITE(atarigen_playfield_upper_w) AM_BASE(&atarigen_playfield_upper)
+	AM_RANGE(0xffc000, 0xffcf7f) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0xffcf80, 0xffcfff) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
+	AM_RANGE(0xffd000, 0xffdfff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xffe000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -256,7 +256,7 @@ static MACHINE_DRIVER_START( skullxbo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	
 	MDRV_FRAMES_PER_SECOND(60)

@@ -85,51 +85,51 @@ static WRITE_HANDLER( blueprnt_coin_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9400, 0x97ff, videoram_r },	/* mirror address, I THINK */
-	{ 0xa000, 0xa01f, MRA_RAM },
-	{ 0xb000, 0xb0ff, MRA_RAM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc003, 0xc003, blueprnt_sh_dipsw_r },
-	{ 0xe000, 0xe000, watchdog_reset_r },
-	{ 0xf000, 0xf3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r)	/* mirror address, I THINK */
+	AM_RANGE(0xa000, 0xa01f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb0ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(blueprnt_sh_dipsw_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf000, 0xf3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0xa000, 0xa01f, MWA_RAM, &blueprnt_scrollram },
-	{ 0xb000, 0xb0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc000, 0xc000, blueprnt_coin_w },
-	{ 0xd000, 0xd000, blueprnt_sound_command_w },
-	{ 0xe000, 0xe000, blueprnt_flipscreen_w },	/* + gfx bank */
-	{ 0xf000, 0xf3ff, colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xa000, 0xa01f) AM_WRITE(MWA8_RAM) AM_BASE(&blueprnt_scrollram)
+	AM_RANGE(0xb000, 0xb0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(blueprnt_coin_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(blueprnt_sound_command_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(blueprnt_flipscreen_w)	/* + gfx bank */
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6002, 0x6002, AY8910_read_port_0_r },
-	{ 0x8002, 0x8002, AY8910_read_port_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6002, 0x6002) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x6000, 0x6000, AY8910_control_port_0_w },
-	{ 0x6001, 0x6001, AY8910_write_port_0_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-	{ 0x8001, 0x8001, AY8910_write_port_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6001, 0x6001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -328,11 +328,11 @@ static MACHINE_DRIVER_START( blueprnt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10000000/4)	/* 2.5 MHz (2H) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,10000000/4)	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQs connected to 32V */
 											/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

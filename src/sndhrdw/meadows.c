@@ -72,7 +72,7 @@ int preset, amp;
 		/* amplitude is a combination of the upper 4 bits of 0c01 */
 		/* and bit 4 merged from S2650's flag output */
 		amp = ((meadows_0c03 & ENABLE_CTR1) == 0) ? 0 : (meadows_0c01 & 0xf0) >> 1;
-		if( s2650_get_flag() )
+		if( activecpu_get_reg(S2650_FO) )
 			amp += 0x80;
 		/* calculate frequency for counter #1 */
 		/* bit 0..3 of 0c01 are ctr preset */

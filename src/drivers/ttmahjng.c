@@ -55,40 +55,40 @@ READ_HANDLER( input_port_matrix_r )
 }
 
 
-static MEMORY_READ_START( cpu1_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, ttmahjng_sharedram_r },
-	{ 0x4800, 0x4800, input_port_0_r },
-	{ 0x5000, 0x5000, input_port_1_r },
-	{ 0x5800, 0x5800, input_port_matrix_r },
-	{ 0x7838, 0x7838, MRA_NOP },
-	{ 0x7859, 0x7859, MRA_NOP },
-	{ 0x8000, 0xbfff, ttmahjng_videoram1_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(ttmahjng_sharedram_r)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_1_r)
+	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_matrix_r)
+	AM_RANGE(0x7838, 0x7838) AM_READ(MRA8_NOP)
+	AM_RANGE(0x7859, 0x7859) AM_READ(MRA8_NOP)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(ttmahjng_videoram1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpu1_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, ttmahjng_sharedram_w, &ttmahjng_sharedram },
-	{ 0x4800, 0x4800, ttmahjng_out0_w },
-	{ 0x5000, 0x5000, ttmahjng_out1_w },
-	{ 0x5800, 0x5800, input_port_matrix_w },
-	{ 0x5f3e, 0x5f3e, MWA_NOP },
-	{ 0x6800, 0x6800, AY8910_write_port_0_w },
-	{ 0x6900, 0x6900, AY8910_control_port_0_w },
-	{ 0x8000, 0xbfff, ttmahjng_videoram1_w, &ttmahjng_videoram1, &ttmahjng_videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(ttmahjng_sharedram_w) AM_BASE(&ttmahjng_sharedram)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(ttmahjng_out0_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(ttmahjng_out1_w)
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(input_port_matrix_w)
+	AM_RANGE(0x5f3e, 0x5f3e) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6900, 0x6900) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(ttmahjng_videoram1_w) AM_BASE(&ttmahjng_videoram1) AM_SIZE(&ttmahjng_videoram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cpu2_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, ttmahjng_sharedram_r },
-	{ 0x8000, 0xbfff, ttmahjng_videoram2_r },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(ttmahjng_sharedram_r)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(ttmahjng_videoram2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cpu2_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x43ff, ttmahjng_sharedram_w },
-	{ 0x8000, 0xbfff, ttmahjng_videoram2_w, &ttmahjng_videoram2 },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(ttmahjng_sharedram_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(ttmahjng_videoram2_w) AM_BASE(&ttmahjng_videoram2)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ttmahjng )
@@ -187,11 +187,11 @@ static MACHINE_DRIVER_START( ttmahjng )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,2500000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* 10MHz / 4 = 2.5MHz */
-	MDRV_CPU_MEMORY(cpu1_readmem,cpu1_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpu1_readmem,cpu1_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
-	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

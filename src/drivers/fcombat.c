@@ -137,66 +137,66 @@ static READ_HANDLER( fcombat_port3_r )
 }
 
 
-static MEMORY_READ_START( fcombat_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xe000, 0xe000, fcombat_port01_r },
-	{ 0xe100, 0xe100, input_port_2_r },
-	{ 0xe200, 0xe200, fcombat_port3_r },
-	{ 0xe300, 0xe300, MRA_RAM }, // unknown - even checked in "demo mode" - affects 0xec00 and 0xed00
-	{ 0xe400, 0xe400, fcombat_protection_r }, // protection?
-	{ 0xc000, 0xc7ff, MRA_RAM }, // ram?
-	{ 0xd000, 0xd7ff, MRA_RAM }, // bgs?
-	{ 0xd800, 0xd87f, MRA_RAM }, // sprites?
-	{ 0xd880, 0xd8ff, MRA_RAM }, // something else ..
-MEMORY_END
+static ADDRESS_MAP_START( fcombat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(fcombat_port01_r)
+	AM_RANGE(0xe100, 0xe100) AM_READ(input_port_2_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(fcombat_port3_r)
+	AM_RANGE(0xe300, 0xe300) AM_READ(MRA8_RAM) // unknown - even checked in "demo mode" - affects 0xec00 and 0xed00
+	AM_RANGE(0xe400, 0xe400) AM_READ(fcombat_protection_r) // protection?
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM) // ram?
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) // bgs?
+	AM_RANGE(0xd800, 0xd87f) AM_READ(MRA8_RAM) // sprites?
+	AM_RANGE(0xd880, 0xd8ff) AM_READ(MRA8_RAM) // something else ..
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fcombat_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xd87f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd880, 0xd8ff, MWA_RAM },
+static ADDRESS_MAP_START( fcombat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd800, 0xd87f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd880, 0xd8ff) AM_WRITE(MWA8_RAM)
 
-	{ 0xe800, 0xe800, exerion_videoreg_w },	// at least bit 0 for flip screen and joystick input multiplexor
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(exerion_videoreg_w)	// at least bit 0 for flip screen and joystick input multiplexor
 
-	{ 0xe900, 0xe900, MWA_RAM },	// video ?
-	{ 0xea00, 0xea00, MWA_RAM },	// video ?
-	{ 0xeb00, 0xeb00, MWA_RAM },	// video ?
+	AM_RANGE(0xe900, 0xe900) AM_WRITE(MWA8_RAM)	// video ?
+	AM_RANGE(0xea00, 0xea00) AM_WRITE(MWA8_RAM)	// video ?
+	AM_RANGE(0xeb00, 0xeb00) AM_WRITE(MWA8_RAM)	// video ?
 
-	{ 0xec00, 0xec00, MWA_RAM },	// affected by read at 0xe300
-	{ 0xed00, 0xed00, MWA_RAM },	// affected by read at 0xe300
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(MWA8_RAM)	// affected by read at 0xe300
+	AM_RANGE(0xed00, 0xed00) AM_WRITE(MWA8_RAM)	// affected by read at 0xe300
 
-	{ 0xe300, 0xe300, MWA_RAM },	// for debug purpose
+	AM_RANGE(0xe300, 0xe300) AM_WRITE(MWA8_RAM)	// for debug purpose
 
-	{ 0xee00, 0xee00, MWA_RAM },	// related to protection ? - doesn't seem to have any effect
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_RAM)	// related to protection ? - doesn't seem to have any effect
 
 	/* erk ... */
 
-	{ 0xd880, 0xd8ff, MWA_RAM },
-	{ 0xef00, 0xef00, soundlatch_w },
-MEMORY_END
+	AM_RANGE(0xd880, 0xd8ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xef00, 0xef00) AM_WRITE(soundlatch_w)
+ADDRESS_MAP_END
 
 /* sound cpu */
 
-static MEMORY_READ_START( fcombat_readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8001, 0x8001, AY8910_read_port_0_r },
-	{ 0xa001, 0xa001, AY8910_read_port_1_r },
-	{ 0xc001, 0xc001, AY8910_read_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( fcombat_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(AY8910_read_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fcombat_writemem2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8002, 0x8002, AY8910_write_port_0_w },
-	{ 0x8003, 0x8003, AY8910_control_port_0_w },
-	{ 0xa002, 0xa002, AY8910_write_port_1_w },
-	{ 0xa003, 0xa003, AY8910_control_port_1_w },
-	{ 0xc002, 0xc002, AY8910_write_port_2_w },
-	{ 0xc003, 0xc003, AY8910_control_port_2_w },
-MEMORY_END
+static ADDRESS_MAP_START( fcombat_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(AY8910_control_port_2_w)
+ADDRESS_MAP_END
 
 /*************************************
  *
@@ -296,11 +296,11 @@ static INTERRUPT_GEN( fcombat_interrupt )
 static MACHINE_DRIVER_START( fcombat )
 
 	MDRV_CPU_ADD(Z80, 10000000/3)
-	MDRV_CPU_MEMORY(fcombat_readmem,fcombat_writemem)
+	MDRV_CPU_PROGRAM_MAP(fcombat_readmem,fcombat_writemem)
 	MDRV_CPU_VBLANK_INT(fcombat_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 10000000/3)
-	MDRV_CPU_MEMORY(fcombat_readmem2,fcombat_writemem2)
+	MDRV_CPU_PROGRAM_MAP(fcombat_readmem2,fcombat_writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

@@ -119,7 +119,7 @@ static void DZError(void);
 static UINT8 hd6309_reg_layout[] = {
 	HD6309_A, HD6309_B, HD6309_E, HD6309_F, HD6309_MD, HD6309_CC, HD6309_DP,  -1,
 	HD6309_X, HD6309_Y, HD6309_S, HD6309_U, HD6309_V, -1,
-	HD6309_PC, HD6309_NMI_STATE, HD6309_IRQ_STATE, HD6309_FIRQ_STATE, 0
+	HD6309_PC, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -213,13 +213,13 @@ static PAIR ea; 		/* effective address */
 #define EA	ea.w.l
 #define EAD ea.d
 
-#define CHANGE_PC change_pc16(PCD)
+#define CHANGE_PC change_pc(PCD)
 #if 0
 #define CHANGE_PC	{			\
 	if( hd6309_slapstic )		\
 		cpu_setOPbase16(PCD);	\
 	else						\
-		change_pc16(PCD);		\
+		change_pc(PCD);		\
 	}
 #endif
 
@@ -228,7 +228,7 @@ static PAIR ea; 		/* effective address */
 #define HD6309_LDS		32	/* set when LDS occured at least once */
 
 /* public globals */
-int hd6309_ICount=50000;
+static int hd6309_ICount;
 
 /* these are re-defined in hd6309.h TO RAM, ROM or functions in cpuintrf.c */
 #define RM(mAddr)		HD6309_RDMEM(mAddr)
@@ -496,17 +496,16 @@ void CHECK_IRQ_LINES( void )
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned hd6309_get_context(void *dst)
+static void hd6309_get_context(void *dst)
 {
 	if( dst )
 		*(hd6309_Regs*)dst = hd6309;
-	return sizeof(hd6309_Regs);
 }
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void hd6309_set_context(void *src)
+static void hd6309_set_context(void *src)
 {
 	if( src )
 		hd6309 = *(hd6309_Regs*)src;
@@ -517,83 +516,7 @@ void hd6309_set_context(void *src)
 }
 
 
-/****************************************************************************/
-/* Return a specific register												*/
-/****************************************************************************/
-unsigned hd6309_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case HD6309_PC: return PC;
-		case REG_SP:
-		case HD6309_S: return S;
-		case HD6309_CC: return CC;
-		case HD6309_MD: return MD;
-		case HD6309_U: return U;
-		case HD6309_A: return A;
-		case HD6309_B: return B;
-		case HD6309_E: return E;
-		case HD6309_F: return F;
-		case HD6309_X: return X;
-		case HD6309_Y: return Y;
-		case HD6309_V: return V;
-		case HD6309_DP: return DP;
-		case HD6309_NMI_STATE: return hd6309.nmi_state;
-		case HD6309_IRQ_STATE: return hd6309.irq_state[HD6309_IRQ_LINE];
-		case HD6309_FIRQ_STATE: return hd6309.irq_state[HD6309_FIRQ_LINE];
-		case REG_PREVIOUSPC: return PPC;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return ( RM( offset ) << 8 ) | RM( offset + 1 );
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************/
-/* Set a specific register													*/
-/****************************************************************************/
-void hd6309_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case HD6309_PC: PC = val; CHANGE_PC; break;
-		case REG_SP:
-		case HD6309_S: S = val; break;
-		case HD6309_CC: CC = val; CHECK_IRQ_LINES(); break;
-		case HD6309_MD: MD = val; UpdateState(); break;
-		case HD6309_U: U = val; break;
-		case HD6309_A: A = val; break;
-		case HD6309_B: B = val; break;
-		case HD6309_E: E = val; break;
-		case HD6309_F: F = val; break;
-		case HD6309_X: X = val; break;
-		case HD6309_Y: Y = val; break;
-		case HD6309_V: V = val; break;
-		case HD6309_DP: DP = val; break;
-		case HD6309_NMI_STATE: hd6309.nmi_state = val; break;
-		case HD6309_IRQ_STATE: hd6309.irq_state[HD6309_IRQ_LINE] = val; break;
-		case HD6309_FIRQ_STATE: hd6309.irq_state[HD6309_FIRQ_LINE] = val; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, (val >> 8) & 0xff );
-					WM( offset+1, val & 0xff );
-				}
-			}
-	}
-}
-
-void hd6309_init(void)
+static void hd6309_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("hd6309", cpu, "PC", &PC, 1);
@@ -615,7 +538,7 @@ void hd6309_init(void)
 /****************************************************************************/
 /* Reset registers to their initial values									*/
 /****************************************************************************/
-void hd6309_reset(void *param)
+static void hd6309_reset(void *param)
 {
 	hd6309.int_state = 0;
 	hd6309.nmi_state = CLEAR_LINE;
@@ -642,7 +565,7 @@ void hd6309_exit(void)
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-void hd6309_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -694,75 +617,7 @@ void hd6309_set_irq_line(int irqline, int state)
 	}
 }
 
-/****************************************************************************
- * Set IRQ vector callback
- ****************************************************************************/
-void hd6309_set_irq_callback(int (*callback)(int irqline))
-{
-	hd6309.irq_callback = callback;
-}
-
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *hd6309_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	hd6309_Regs *r = context;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &hd6309;
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "HD6309";
-		case CPU_INFO_FAMILY: return "Hitachi 6309";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) John Butler 1997 and Tim Lindner 2000";
-		case CPU_INFO_REG_LAYOUT: return (const char*)hd6309_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)hd6309_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c (MD:%c%c%c%c)",
-				r->cc & 0x80 ? 'E':'.',
-				r->cc & 0x40 ? 'F':'.',
-				r->cc & 0x20 ? 'H':'.',
-				r->cc & 0x10 ? 'I':'.',
-				r->cc & 0x08 ? 'N':'.',
-				r->cc & 0x04 ? 'Z':'.',
-				r->cc & 0x02 ? 'V':'.',
-				r->cc & 0x01 ? 'C':'.',
-
-				r->md & 0x80 ? 'E':'e',
-				r->md & 0x40 ? 'F':'f',
-				r->md & 0x02 ? 'I':'i',
-				r->md & 0x01 ? 'Z':'z');
-			break;
-		case CPU_INFO_REG+HD6309_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+HD6309_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+HD6309_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+HD6309_MD: sprintf(buffer[which], "MD:%02X", r->md); break;
-		case CPU_INFO_REG+HD6309_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+HD6309_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+HD6309_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+HD6309_E: sprintf(buffer[which], "E:%02X", r->w.b.h); break;
-		case CPU_INFO_REG+HD6309_F: sprintf(buffer[which], "F:%02X", r->w.b.l); break;
-		case CPU_INFO_REG+HD6309_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+HD6309_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+HD6309_V: sprintf(buffer[which], "V:%04X", r->v.w.l); break;
-		case CPU_INFO_REG+HD6309_DP: sprintf(buffer[which], "DP:%02X", r->dp.b.h); break;
-		case CPU_INFO_REG+HD6309_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+HD6309_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[HD6309_IRQ_LINE]); break;
-		case CPU_INFO_REG+HD6309_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%X", r->irq_state[HD6309_FIRQ_LINE]); break;
-	}
-	return buffer[which];
-}
-
-unsigned hd6309_dasm(char *buffer, unsigned pc)
+static offs_t hd6309_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm6309(buffer,pc);
@@ -776,7 +631,7 @@ unsigned hd6309_dasm(char *buffer, unsigned pc)
 #include "6309ops.c"
 
 /* execute instructions on this CPU until icount expires */
-int hd6309_execute(int cycles)	/* NS 970908 */
+static int hd6309_execute(int cycles)	/* NS 970908 */
 {
 	hd6309_ICount = cycles - hd6309.extra_cycles;
 	hd6309.extra_cycles = 0;
@@ -1354,3 +1209,145 @@ INLINE void fetch_effective_address( void )
 	hd6309_ICount -= index_cycle[postbyte];
 }
 
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void hd6309_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + HD6309_IRQ_LINE:	set_irq_line(HD6309_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + HD6309_FIRQ_LINE:	set_irq_line(HD6309_FIRQ_LINE, info->i);break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + HD6309_PC:		PC = info->i; CHANGE_PC;					break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + HD6309_S:		S = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_CC:		CC = info->i; CHECK_IRQ_LINES();			break;
+		case CPUINFO_INT_REGISTER + HD6309_MD:		MD = info->i; UpdateState();				break;
+		case CPUINFO_INT_REGISTER + HD6309_U: 		U = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_A: 		A = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_B: 		B = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_E: 		E = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_F: 		F = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_X: 		X = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_Y: 		Y = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_V: 		V = info->i;								break;
+		case CPUINFO_INT_REGISTER + HD6309_DP: 		DP = info->i;								break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:				hd6309.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void hd6309_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(hd6309);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 20;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + HD6309_IRQ_LINE:	info->i = hd6309.irq_state[HD6309_IRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + HD6309_FIRQ_LINE:	info->i = hd6309.irq_state[HD6309_FIRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = hd6309.nmi_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + HD6309_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + HD6309_S:			info->i = S;							break;
+		case CPUINFO_INT_REGISTER + HD6309_CC:			info->i = CC;							break;
+		case CPUINFO_INT_REGISTER + HD6309_MD:			info->i = MD;							break;
+		case CPUINFO_INT_REGISTER + HD6309_U:			info->i = U;							break;
+		case CPUINFO_INT_REGISTER + HD6309_A:			info->i = A;							break;
+		case CPUINFO_INT_REGISTER + HD6309_B:			info->i = B;							break;
+		case CPUINFO_INT_REGISTER + HD6309_E:			info->i = E;							break;
+		case CPUINFO_INT_REGISTER + HD6309_F:			info->i = F;							break;
+		case CPUINFO_INT_REGISTER + HD6309_X:			info->i = X;							break;
+		case CPUINFO_INT_REGISTER + HD6309_Y:			info->i = Y;							break;
+		case CPUINFO_INT_REGISTER + HD6309_V:			info->i = V;							break;
+		case CPUINFO_INT_REGISTER + HD6309_DP:			info->i = DP;							break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = hd6309_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = hd6309_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = hd6309_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = hd6309_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = hd6309_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = hd6309_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = hd6309_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hd6309_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = hd6309.irq_callback; break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hd6309_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hd6309_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = hd6309_win_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD6309"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hitachi 6309"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) John Butler 1997 and Tim Lindner 2000"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c (MD:%c%c%c%c)",
+				hd6309.cc & 0x80 ? 'E':'.',
+				hd6309.cc & 0x40 ? 'F':'.',
+				hd6309.cc & 0x20 ? 'H':'.',
+				hd6309.cc & 0x10 ? 'I':'.',
+				hd6309.cc & 0x08 ? 'N':'.',
+				hd6309.cc & 0x04 ? 'Z':'.',
+				hd6309.cc & 0x02 ? 'V':'.',
+				hd6309.cc & 0x01 ? 'C':'.',
+
+				hd6309.md & 0x80 ? 'E':'e',
+				hd6309.md & 0x40 ? 'F':'f',
+				hd6309.md & 0x02 ? 'I':'i',
+				hd6309.md & 0x01 ? 'Z':'z');
+			break;
+
+		case CPUINFO_STR_REGISTER + HD6309_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", hd6309.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", hd6309.s.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", hd6309.cc); break;
+		case CPUINFO_STR_REGISTER + HD6309_MD:			sprintf(info->s = cpuintrf_temp_str(), "MD:%02X", hd6309.md); break;
+		case CPUINFO_STR_REGISTER + HD6309_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", hd6309.u.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", hd6309.d.b.h); break;
+		case CPUINFO_STR_REGISTER + HD6309_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", hd6309.d.b.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%02X", hd6309.w.b.h); break;
+		case CPUINFO_STR_REGISTER + HD6309_F:			sprintf(info->s = cpuintrf_temp_str(), "F:%02X", hd6309.w.b.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", hd6309.x.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", hd6309.y.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_V:			sprintf(info->s = cpuintrf_temp_str(), "V:%04X", hd6309.v.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", hd6309.dp.b.h); break;
+	}
+}

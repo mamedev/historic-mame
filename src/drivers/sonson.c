@@ -75,43 +75,43 @@ WRITE_HANDLER( sonson_sh_irqtrigger_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x17ff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-	{ 0x3002, 0x3002, input_port_0_r },	/* IN0 */
-	{ 0x3003, 0x3003, input_port_1_r },	/* IN1 */
-	{ 0x3004, 0x3004, input_port_2_r },	/* IN2 */
-	{ 0x3005, 0x3005, input_port_3_r },	/* DSW0 */
-	{ 0x3006, 0x3006, input_port_4_r },	/* DSW1 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3002, 0x3002) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x3003, 0x3003) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x3004, 0x3004) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0x3005, 0x3005) AM_READ(input_port_3_r)	/* DSW0 */
+	AM_RANGE(0x3006, 0x3006) AM_READ(input_port_4_r)	/* DSW1 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x13ff, sonson_videoram_w, &videoram, &videoram_size },
-	{ 0x1400, 0x17ff, sonson_colorram_w, &colorram },
-	{ 0x2020, 0x207f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x3000, sonson_scroll_w },
-	{ 0x3008, 0x3008, MWA_NOP },
-	{ 0x3010, 0x3010, soundlatch_w },
-	{ 0x3018, 0x3018, sonson_flipscreen_w },
-	{ 0x3019, 0x3019, sonson_sh_irqtrigger_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(sonson_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1400, 0x17ff) AM_WRITE(sonson_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x2020, 0x207f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(sonson_scroll_w)
+	AM_RANGE(0x3008, 0x3008) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x3010, 0x3010) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x3018, 0x3018) AM_WRITE(sonson_flipscreen_w)
+	AM_RANGE(0x3019, 0x3019) AM_WRITE(sonson_sh_irqtrigger_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x2000, AY8910_control_port_0_w },
-	{ 0x2001, 0x2001, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_1_w },
-	{ 0x4001, 0x4001, AY8910_write_port_1_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -249,12 +249,12 @@ static MACHINE_DRIVER_START( sonson )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,12000000/6)	/* 2 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809,12000000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* FIRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)

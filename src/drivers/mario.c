@@ -135,79 +135,79 @@ WRITE_HANDLER( masao_sh_irqtrigger_w )
 	last = data;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_RAM },
-	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
-	{ 0x7c00, 0x7c00, input_port_0_r },	/* IN0 */
-	{ 0x7c80, 0x7c80, input_port_1_r },	/* IN1 */
-	{ 0x7f80, 0x7f80, input_port_2_r },	/* DSW */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7400, 0x77ff) AM_READ(MRA8_RAM)	/* video RAM */
+	AM_RANGE(0x7c00, 0x7c00) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x7c80, 0x7c80) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x7f80, 0x7f80) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x68ff, MWA_RAM },
-	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7400, 0x77ff, mario_videoram_w, &videoram },
-	{ 0x7c00, 0x7c00, mario_sh1_w }, /* Mario run sample */
-	{ 0x7c80, 0x7c80, mario_sh2_w }, /* Luigi run sample */
-	{ 0x7d00, 0x7d00, mario_scroll_w },
-	{ 0x7e80, 0x7e80, mario_gfxbank_w },
-	{ 0x7e83, 0x7e83, mario_palettebank_w },
-	{ 0x7e84, 0x7e84, interrupt_enable_w },
-	{ 0x7f00, 0x7f00, mario_sh_w },	/* death */
-	{ 0x7f01, 0x7f01, mario_sh_getcoin_w },
-	{ 0x7f03, 0x7f03, mario_sh_crab_w },
-	{ 0x7f04, 0x7f04, mario_sh_turtle_w },
-	{ 0x7f05, 0x7f05, mario_sh_fly_w },
-	{ 0x7f00, 0x7f07, mario_sh3_w }, /* Misc discrete samples */
-	{ 0x7e00, 0x7e00, mario_sh_tuneselect_w },
-	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
-//	{ 0x7e85, 0x7e85, MWA_RAM },	/* Sets alternative 1 and 0 */
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x68ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6a80, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6900, 0x6a7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x7400, 0x77ff) AM_WRITE(mario_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x7c00, 0x7c00) AM_WRITE(mario_sh1_w) /* Mario run sample */
+	AM_RANGE(0x7c80, 0x7c80) AM_WRITE(mario_sh2_w) /* Luigi run sample */
+	AM_RANGE(0x7d00, 0x7d00) AM_WRITE(mario_scroll_w)
+	AM_RANGE(0x7e80, 0x7e80) AM_WRITE(mario_gfxbank_w)
+	AM_RANGE(0x7e83, 0x7e83) AM_WRITE(mario_palettebank_w)
+	AM_RANGE(0x7e84, 0x7e84) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x7f00, 0x7f00) AM_WRITE(mario_sh_w)	/* death */
+	AM_RANGE(0x7f01, 0x7f01) AM_WRITE(mario_sh_getcoin_w)
+	AM_RANGE(0x7f03, 0x7f03) AM_WRITE(mario_sh_crab_w)
+	AM_RANGE(0x7f04, 0x7f04) AM_WRITE(mario_sh_turtle_w)
+	AM_RANGE(0x7f05, 0x7f05) AM_WRITE(mario_sh_fly_w)
+	AM_RANGE(0x7f00, 0x7f07) AM_WRITE(mario_sh3_w) /* Misc discrete samples */
+	AM_RANGE(0x7e00, 0x7e00) AM_WRITE(mario_sh_tuneselect_w)
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_NOP)	/* ??? */
+//	AM_RANGE(0x7e85, 0x7e85) AM_WRITE(MWA8_RAM)	/* Sets alternative 1 and 0 */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( masao_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x68ff, MWA_RAM },
-	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7400, 0x77ff, mario_videoram_w, &videoram },
-	{ 0x7d00, 0x7d00, mario_scroll_w },
-	{ 0x7e00, 0x7e00, soundlatch_w },
-	{ 0x7e80, 0x7e80, mario_gfxbank_w },
-	{ 0x7e83, 0x7e83, mario_palettebank_w },
-	{ 0x7e84, 0x7e84, interrupt_enable_w },
-	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
-	{ 0x7f00, 0x7f00, masao_sh_irqtrigger_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( masao_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x68ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6a80, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6900, 0x6a7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x7400, 0x77ff) AM_WRITE(mario_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x7d00, 0x7d00) AM_WRITE(mario_scroll_w)
+	AM_RANGE(0x7e00, 0x7e00) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x7e80, 0x7e80) AM_WRITE(mario_gfxbank_w)
+	AM_RANGE(0x7e83, 0x7e83) AM_WRITE(mario_palettebank_w)
+	AM_RANGE(0x7e84, 0x7e84) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x7f00, 0x7f00) AM_WRITE(masao_sh_irqtrigger_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mario_writeport )
-	{ 0x00,   0x00,   IOWP_NOP },  /* unknown... is this a trigger? */
-PORT_END
+static ADDRESS_MAP_START( mario_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)  /* unknown... is this a trigger? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x0fff, MRA_ROM },
-MEMORY_END
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x0fff, MWA_ROM },
-MEMORY_END
-static PORT_READ_START( readport_sound )
-	{ 0x00,     0xff,     mario_sh_tune_r },
-	{ I8039_p1, I8039_p1, mario_sh_p1_r },
-	{ I8039_p2, I8039_p2, mario_sh_p2_r },
-	{ I8039_t0, I8039_t0, mario_sh_t0_r },
-	{ I8039_t1, I8039_t1, mario_sh_t1_r },
-PORT_END
-static PORT_WRITE_START( writeport_sound )
-	{ 0x00,     0xff,     mario_sh_sound_w },
-	{ I8039_p1, I8039_p1, mario_sh_p1_w },
-	{ I8039_p2, I8039_p2, mario_sh_p2_w },
-PORT_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(mario_sh_tune_r)
+	AM_RANGE(I8039_p1, I8039_p1) AM_READ(mario_sh_p1_r)
+	AM_RANGE(I8039_p2, I8039_p2) AM_READ(mario_sh_p2_r)
+	AM_RANGE(I8039_t0, I8039_t0) AM_READ(mario_sh_t0_r)
+	AM_RANGE(I8039_t1, I8039_t1) AM_READ(mario_sh_t1_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( writeport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_WRITE(mario_sh_sound_w)
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(mario_sh_p1_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(mario_sh_p2_w)
+ADDRESS_MAP_END
 
 
 
@@ -381,32 +381,32 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static MEMORY_READ_START( masao_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( masao_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( masao_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x6000, 0x6000, AY8910_control_port_0_w },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( masao_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 static MACHINE_DRIVER_START( mario )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,mario_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,mario_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8039, 730000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)         /* 730 kHz */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
+	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -433,12 +433,12 @@ static MACHINE_DRIVER_START( masao )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.000 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,masao_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,masao_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,24576000/16)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
-	MDRV_CPU_MEMORY(masao_sound_readmem,masao_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(masao_sound_readmem,masao_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

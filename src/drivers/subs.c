@@ -52,35 +52,35 @@ static PALETTE_INIT( subs )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0007, subs_control_r },
-	{ 0x0020, 0x0027, subs_coin_r },
-	{ 0x0060, 0x0063, subs_options_r },
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0800, 0x0bff, MRA_RAM },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM }, /* A14/A15 unused, so mirror ROM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_READ(subs_control_r)
+	AM_RANGE(0x0020, 0x0027) AM_READ(subs_coin_r)
+	AM_RANGE(0x0060, 0x0063) AM_READ(subs_options_r)
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM) /* A14/A15 unused, so mirror ROM */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0000, subs_noise_reset_w },
-	{ 0x0020, 0x0020, subs_steer_reset_w },
-//	{ 0x0040, 0x0040, subs_timer_reset_w },
-	{ 0x0060, 0x0061, subs_lamp1_w },
-	{ 0x0062, 0x0063, subs_lamp2_w },
-	{ 0x0064, 0x0065, subs_sonar2_w },
-	{ 0x0066, 0x0067, subs_sonar1_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(subs_noise_reset_w)
+	AM_RANGE(0x0020, 0x0020) AM_WRITE(subs_steer_reset_w)
+//	AM_RANGE(0x0040, 0x0040) AM_WRITE(subs_timer_reset_w)
+	AM_RANGE(0x0060, 0x0061) AM_WRITE(subs_lamp1_w)
+	AM_RANGE(0x0062, 0x0063) AM_WRITE(subs_lamp2_w)
+	AM_RANGE(0x0064, 0x0065) AM_WRITE(subs_sonar2_w)
+	AM_RANGE(0x0066, 0x0067) AM_WRITE(subs_sonar1_w)
 // Schematics show crash and explode reversed.  But this is proper.
-	{ 0x0068, 0x0069, subs_explode_w },
-	{ 0x006a, 0x006b, subs_crash_w },
-	{ 0x006c, 0x006d, subs_invert1_w },
-	{ 0x006e, 0x006f, subs_invert2_w },
-	{ 0x0090, 0x009f, spriteram_w, &spriteram },
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x2000, 0x3fff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x0068, 0x0069) AM_WRITE(subs_explode_w)
+	AM_RANGE(0x006a, 0x006b) AM_WRITE(subs_crash_w)
+	AM_RANGE(0x006c, 0x006d) AM_WRITE(subs_invert1_w)
+	AM_RANGE(0x006e, 0x006f) AM_WRITE(subs_invert2_w)
+	AM_RANGE(0x0090, 0x009f) AM_WRITE(spriteram_w) AM_BASE(&spriteram)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -307,7 +307,7 @@ static MACHINE_DRIVER_START( subs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12096000/16)		/* clock input is the "4H" signal */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(subs_interrupt,4)
 
 	MDRV_FRAMES_PER_SECOND(57)

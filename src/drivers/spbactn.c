@@ -141,77 +141,77 @@ static WRITE16_HANDLER( soundcommand_w )
 	}
 }
 
-static MEMORY_READ16_START( spbactn_readmem )
-	{ 0x00000, 0x3ffff, MRA16_ROM },
-	{ 0x40000, 0x43fff, MRA16_RAM },
-	{ 0x50000, 0x50fff, MRA16_RAM },
-	{ 0x60000, 0x67fff, MRA16_RAM },
-	{ 0x70000, 0x77fff, MRA16_RAM },
-	{ 0x80000, 0x82fff, MRA16_RAM },
-	{ 0x90000, 0x90001, input_port_0_word_r },
-	{ 0x90010, 0x90011, input_port_1_word_r },
-	{ 0x90020, 0x90021, input_port_2_word_r },
-	{ 0x90030, 0x90031, input_port_4_word_r },
-	{ 0x90040, 0x90041, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( spbactn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000, 0x3ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x40000, 0x43fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x50000, 0x50fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x60000, 0x67fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x70000, 0x77fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x80000, 0x82fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x90000, 0x90001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x90010, 0x90011) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x90020, 0x90021) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x90030, 0x90031) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x90040, 0x90041) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( spbactn_writemem )
-	{ 0x00000, 0x3ffff, MWA16_ROM },
-	{ 0x40000, 0x43fff, MWA16_RAM },	// main ram
-	{ 0x50000, 0x50fff, MWA16_RAM, &spbactn_spvideoram },
-	{ 0x60000, 0x67fff, MWA16_RAM, &spbactn_fgvideoram },
-	{ 0x70000, 0x77fff, MWA16_RAM, &spbactn_bgvideoram },
-	{ 0x80000, 0x827ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+static ADDRESS_MAP_START( spbactn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000, 0x3ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x40000, 0x43fff) AM_WRITE(MWA16_RAM)	// main ram
+	AM_RANGE(0x50000, 0x50fff) AM_WRITE(MWA16_RAM) AM_BASE(&spbactn_spvideoram)
+	AM_RANGE(0x60000, 0x67fff) AM_WRITE(MWA16_RAM) AM_BASE(&spbactn_fgvideoram)
+	AM_RANGE(0x70000, 0x77fff) AM_WRITE(MWA16_RAM) AM_BASE(&spbactn_bgvideoram)
+	AM_RANGE(0x80000, 0x827ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
 
 	/* this is an awful lot of unknowns */
-	{ 0x90000, 0x90001, MWA16_NOP },
-	{ 0x90010, 0x90011, soundcommand_w },
-//	{ 0x90020, 0x90021, soundcommand_w },
-	{ 0x90030, 0x90031, MWA16_NOP },
+	AM_RANGE(0x90000, 0x90001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x90010, 0x90011) AM_WRITE(soundcommand_w)
+//	AM_RANGE(0x90020, 0x90021) AM_WRITE(soundcommand_w)
+	AM_RANGE(0x90030, 0x90031) AM_WRITE(MWA16_NOP)
 
-	{ 0x90080, 0x90081, MWA16_NOP },
-	{ 0x90090, 0x90091, MWA16_NOP },
-	{ 0x900a0, 0x900a1, MWA16_NOP },
-	{ 0x900b0, 0x900b1, MWA16_NOP },
-	{ 0x900c0, 0x900c1, MWA16_NOP },
-	{ 0x900d0, 0x900d1, MWA16_NOP },
-	{ 0x900e0, 0x900e1, MWA16_NOP },
-	{ 0x900f0, 0x900f1, MWA16_NOP },
+	AM_RANGE(0x90080, 0x90081) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x90090, 0x90091) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900a0, 0x900a1) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900b0, 0x900b1) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900c0, 0x900c1) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900d0, 0x900d1) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900e0, 0x900e1) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x900f0, 0x900f1) AM_WRITE(MWA16_NOP)
 
-	{ 0xa0000, 0xa0001, MWA16_NOP },
-	{ 0xa0004, 0xa0005, MWA16_NOP },
-	{ 0xa0008, 0xa0009, MWA16_NOP },
-	{ 0xa000c, 0xa000d, MWA16_NOP },
-	{ 0xa0010, 0xa0011, MWA16_NOP },
+	AM_RANGE(0xa0000, 0xa0001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0004, 0xa0005) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0008, 0xa0009) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa000c, 0xa000d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0010, 0xa0011) AM_WRITE(MWA16_NOP)
 
-	{ 0xa0100, 0xa0101, MWA16_NOP },
-	{ 0xa0104, 0xa0105, MWA16_NOP },
-	{ 0xa0108, 0xa0109, MWA16_NOP },
-	{ 0xa010c, 0xa010d, MWA16_NOP },
-	{ 0xa0110, 0xa0111, MWA16_NOP },
+	AM_RANGE(0xa0100, 0xa0101) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0104, 0xa0105) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0108, 0xa0109) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa010c, 0xa010d) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0110, 0xa0111) AM_WRITE(MWA16_NOP)
 
-	{ 0xa0200, 0xa0201, MWA16_NOP },
-	{ 0xa0202, 0xa0203, MWA16_NOP },
-	{ 0xa0204, 0xa0205, MWA16_NOP },
-	{ 0xa0206, 0xa0207, MWA16_NOP },
-MEMORY_END
+	AM_RANGE(0xa0200, 0xa0201) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0202, 0xa0203) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0204, 0xa0205) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xa0206, 0xa0207) AM_WRITE(MWA16_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_status_0_r },
-	{ 0xfc00, 0xfc00, MRA_NOP },	/* irq ack ?? */
-	{ 0xfc20, 0xfc20, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(MRA8_NOP)	/* irq ack ?? */
+	AM_RANGE(0xfc20, 0xfc20) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_data_0_w },
-	{ 0xf810, 0xf810, YM3812_control_port_0_w },
-	{ 0xf811, 0xf811, YM3812_write_port_0_w },
-	{ 0xfc00, 0xfc00, MWA_NOP },	/* irq ack ?? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xf810, 0xf810) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xf811, 0xf811) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(MWA8_NOP)	/* irq ack ?? */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( spbactn )
 	PORT_START	/* IN0 */
@@ -235,8 +235,8 @@ INPUT_PORTS_START( spbactn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )		// Press mulitple times for multiple players
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -365,12 +365,12 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( spbactn )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(spbactn_readmem,spbactn_writemem)
+	MDRV_CPU_PROGRAM_MAP(spbactn_readmem,spbactn_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

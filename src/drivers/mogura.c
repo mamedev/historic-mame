@@ -85,14 +85,14 @@ WRITE_HANDLER( mogura_tileram_w )
 }
 
 
-static PORT_READ_START( readport )
-	{ 0x08, 0x08, input_port_0_r },
-	{ 0x0c, 0x0c, input_port_1_r },
-	{ 0x0d, 0x0d, input_port_2_r },
-	{ 0x0e, 0x0e, input_port_3_r },
-	{ 0x0f, 0x0f, input_port_4_r },
-	{ 0x10, 0x10, input_port_5_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_0_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_1_r)
+	AM_RANGE(0x0d, 0x0d) AM_READ(input_port_2_r)
+	AM_RANGE(0x0e, 0x0e) AM_READ(input_port_3_r)
+	AM_RANGE(0x0f, 0x0f) AM_READ(input_port_4_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
 
 static WRITE_HANDLER(dac_w)
@@ -102,10 +102,10 @@ static WRITE_HANDLER(dac_w)
 }
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, MWA_NOP }, // ??
-	{ 0x14, 0x14, dac_w },	/* 4 bit DAC x 2. MSB = left, LSB = right */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) // ??
+	AM_RANGE(0x14, 0x14) AM_WRITE(dac_w)	/* 4 bit DAC x 2. MSB = left, LSB = right */
+ADDRESS_MAP_END
 
 
 WRITE_HANDLER ( mogura_gfxram_w )
@@ -118,19 +118,19 @@ WRITE_HANDLER ( mogura_gfxram_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM }, // main ram
-	{ 0xe000, 0xefff, MRA_RAM }, // ram based characters
-	{ 0xf000, 0xffff, MRA_RAM }, // tilemap
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM) // main ram
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) // ram based characters
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM) // tilemap
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, mogura_gfxram_w, &mogura_gfxram },
-	{ 0xf000, 0xffff, mogura_tileram_w, &mogura_tileram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(mogura_gfxram_w) AM_BASE(&mogura_gfxram)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(mogura_tileram_w) AM_BASE(&mogura_tileram)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( mogura )
@@ -217,8 +217,8 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( mogura )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,3000000)		 /* 3 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60) // ?

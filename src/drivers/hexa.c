@@ -43,23 +43,23 @@ WRITE_HANDLER( hexa_d008_w );
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd001, 0xd001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd000, AY8910_control_port_0_w },
-	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-	{ 0xd008, 0xd008, hexa_d008_w },
-	{ 0xd010, 0xd010, watchdog_reset_w },	/* or IRQ acknowledge, or both */
-	{ 0xe000, 0xe7ff, hexa_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xd008, 0xd008) AM_WRITE(hexa_d008_w)
+	AM_RANGE(0xd010, 0xd010) AM_WRITE(watchdog_reset_w)	/* or IRQ acknowledge, or both */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(hexa_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
 
@@ -139,7 +139,7 @@ static MACHINE_DRIVER_START( hexa )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz ??????? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

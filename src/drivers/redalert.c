@@ -44,114 +44,114 @@ READ_HANDLER( redalert_sound_register_IC1_r );
 WRITE_HANDLER( redalert_sound_register_IC2_w );
 
 
-static MEMORY_READ_START( redalert_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero page / stack */
-	{ 0x0200, 0x0fff, MRA_RAM }, /* ? */
-	{ 0x1000, 0x1fff, MRA_RAM }, /* Scratchpad video RAM */
-	{ 0x2000, 0x4fff, MRA_RAM }, /* Video RAM */
-	{ 0x5000, 0xbfff, MRA_ROM },
-	{ 0xc100, 0xc100, input_port_0_r },
-	{ 0xc110, 0xc110, input_port_1_r },
-	{ 0xc120, 0xc120, input_port_2_r },
-	{ 0xc170, 0xc170, watchdog_reset_r },
-	{ 0xf000, 0xffff, MRA_ROM }, /* remapped ROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( redalert_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM) /* Zero page / stack */
+	AM_RANGE(0x0200, 0x0fff) AM_READ(MRA8_RAM) /* ? */
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM) /* Scratchpad video RAM */
+	AM_RANGE(0x2000, 0x4fff) AM_READ(MRA8_RAM) /* Video RAM */
+	AM_RANGE(0x5000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_0_r)
+	AM_RANGE(0xc110, 0xc110) AM_READ(input_port_1_r)
+	AM_RANGE(0xc120, 0xc120) AM_READ(input_port_2_r)
+	AM_RANGE(0xc170, 0xc170) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM) /* remapped ROM for 6502 vectors */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( redalert_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x0fff, MWA_RAM }, /* ? */
-	{ 0x1000, 0x1fff, MWA_RAM }, /* Scratchpad video RAM */
-	{ 0x2000, 0x3fff, redalert_backram_w, &redalert_backram },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, redalert_spriteram1_w, &redalert_spriteram1 },
-	{ 0x4800, 0x4bff, redalert_characterram_w, &redalert_characterram },
-	{ 0x4c00, 0x4fff, redalert_spriteram2_w, &redalert_spriteram2 },
-	{ 0x5000, 0xbfff, MWA_ROM },
-	{ 0xc130, 0xc130, redalert_c030_w },
-	{ 0xc140, 0xc140, redalert_c040_w },
-	{ 0xc150, 0xc150, redalert_backcolor_w },
-	{ 0xc160, 0xc160, redalert_soundlatch_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( redalert_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x0fff) AM_WRITE(MWA8_RAM) /* ? */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) /* Scratchpad video RAM */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(redalert_backram_w) AM_BASE(&redalert_backram)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(redalert_spriteram1_w) AM_BASE(&redalert_spriteram1)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(redalert_characterram_w) AM_BASE(&redalert_characterram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(redalert_spriteram2_w) AM_BASE(&redalert_spriteram2)
+	AM_RANGE(0x5000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc130, 0xc130) AM_WRITE(redalert_c030_w)
+	AM_RANGE(0xc140, 0xc140) AM_WRITE(redalert_c040_w)
+	AM_RANGE(0xc150, 0xc150) AM_WRITE(redalert_backcolor_w)
+	AM_RANGE(0xc160, 0xc160) AM_WRITE(redalert_soundlatch_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( redalert_sound_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x7800, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },
-	{ 0x1001, 0x1001, redalert_sound_register_IC1_r },
-MEMORY_END
+static ADDRESS_MAP_START( redalert_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1001, 0x1001) AM_READ(redalert_sound_register_IC1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( redalert_sound_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x7800, 0x7fff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_ROM },
-	{ 0x1000, 0x1000, redalert_AY8910_w },
-	{ 0x1001, 0x1001, redalert_sound_register_IC2_w },
-MEMORY_END
+static ADDRESS_MAP_START( redalert_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(redalert_AY8910_w)
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(redalert_sound_register_IC2_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( redalert_voice_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xc000, 0xc000, redalert_voicecommand_r }, /* reads command from D0-D5? */
-MEMORY_END
+static ADDRESS_MAP_START( redalert_voice_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(redalert_voicecommand_r) /* reads command from D0-D5? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( redalert_voice_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( redalert_voice_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( demoneye_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero page / stack */
-	{ 0x0200, 0x0fff, MRA_RAM }, /* ? */
-	{ 0x1000, 0x1fff, MRA_RAM }, /* Scratchpad video RAM */
-	{ 0x2000, 0x4fff, MRA_RAM }, /* Video RAM */
-	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0xbfff, MRA_ROM },
-	{ 0xc100, 0xc100, input_port_0_r },
-	{ 0xc110, 0xc110, input_port_1_r },
-	{ 0xc120, 0xc120, input_port_2_r },
-	{ 0xf000, 0xffff, MRA_ROM }, /* remapped ROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( demoneye_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM) /* Zero page / stack */
+	AM_RANGE(0x0200, 0x0fff) AM_READ(MRA8_RAM) /* ? */
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM) /* Scratchpad video RAM */
+	AM_RANGE(0x2000, 0x4fff) AM_READ(MRA8_RAM) /* Video RAM */
+	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_0_r)
+	AM_RANGE(0xc110, 0xc110) AM_READ(input_port_1_r)
+	AM_RANGE(0xc120, 0xc120) AM_READ(input_port_2_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM) /* remapped ROM for 6502 vectors */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( demoneye_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x0fff, MWA_RAM }, /* ? */
-	{ 0x1000, 0x1fff, MWA_RAM }, /* Scratchpad video RAM */
-	{ 0x2000, 0x3fff, redalert_backram_w, &redalert_backram },
-	{ 0x4000, 0x43ff, redalert_characterram_w, &redalert_characterram },
-	{ 0x4400, 0x47ff, redalert_spriteram1_w, &redalert_spriteram1 },
-	{ 0x4800, 0x4bff, redalert_characterram2_w, &redalert_characterram2 },
-	{ 0x4c00, 0x4fff, redalert_spriteram2_w, &redalert_spriteram2 },
-	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
-	{ 0x5400, 0x57ff, redalert_spriteram3_w, &redalert_spriteram3 },
-	{ 0x5800, 0x5bff, MWA_RAM }, //???
-	{ 0x5c00, 0x5fff, MWA_RAM }, //???
-	{ 0x6000, 0xbfff, MWA_ROM },
-	{ 0xc130, 0xc130, MWA_NOP },
-	{ 0xc140, 0xc140, demoneye_c040_w },
-	{ 0xc150, 0xc150, redalert_backcolor_w },
-	{ 0xc160, 0xc160, MWA_NOP },
-	{ 0xc161, 0xc161, MWA_NOP },
-	{ 0xc162, 0xc162, watchdog_reset_w },
-	{ 0xc163, 0xc163, MWA_NOP },
-	{ 0xc170, 0xc170, MWA_NOP },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( demoneye_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x0fff) AM_WRITE(MWA8_RAM) /* ? */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) /* Scratchpad video RAM */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(redalert_backram_w) AM_BASE(&redalert_backram)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(redalert_characterram_w) AM_BASE(&redalert_characterram)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(redalert_spriteram1_w) AM_BASE(&redalert_spriteram1)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(redalert_characterram2_w) AM_BASE(&redalert_characterram2)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(redalert_spriteram2_w) AM_BASE(&redalert_spriteram2)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x5400, 0x57ff) AM_WRITE(redalert_spriteram3_w) AM_BASE(&redalert_spriteram3)
+	AM_RANGE(0x5800, 0x5bff) AM_WRITE(MWA8_RAM) //???
+	AM_RANGE(0x5c00, 0x5fff) AM_WRITE(MWA8_RAM) //???
+	AM_RANGE(0x6000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc130, 0xc130) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc140, 0xc140) AM_WRITE(demoneye_c040_w)
+	AM_RANGE(0xc150, 0xc150) AM_WRITE(redalert_backcolor_w)
+	AM_RANGE(0xc160, 0xc160) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc161, 0xc161) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc162, 0xc162) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xc163, 0xc163) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc170, 0xc170) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( demoneye_sound_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0500, 0x0503, pia_0_r },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( demoneye_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0500, 0x0503) AM_READ(pia_0_r)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( demoneye_sound_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x0500, 0x0503, pia_0_w },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( demoneye_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0500, 0x0503) AM_WRITE(pia_0_w)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( redalert )
@@ -363,18 +363,18 @@ static MACHINE_DRIVER_START( redalert )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)	   /* ???? */
-	MDRV_CPU_MEMORY(redalert_readmem,redalert_writemem)
+	MDRV_CPU_PROGRAM_MAP(redalert_readmem,redalert_writemem)
 	MDRV_CPU_VBLANK_INT(redalert_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz */
-	MDRV_CPU_MEMORY(redalert_sound_readmem,redalert_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(redalert_sound_readmem,redalert_sound_writemem)
 			/* IRQ is hooked to a 555 timer, whose freq is 1150 Hz */
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,1150)
 
 	MDRV_CPU_ADD(8085A, 1000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz? */
-	MDRV_CPU_MEMORY(redalert_voice_readmem,redalert_voice_writemem)
+	MDRV_CPU_PROGRAM_MAP(redalert_voice_readmem,redalert_voice_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -426,12 +426,12 @@ static MACHINE_DRIVER_START( demoneye )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 11730000/2)	/* 11.73MHz */
-	MDRV_CPU_MEMORY(demoneye_readmem,demoneye_writemem)
+	MDRV_CPU_PROGRAM_MAP(demoneye_readmem,demoneye_writemem)
 	MDRV_CPU_VBLANK_INT(redalert_interrupt,1)
 
 	MDRV_CPU_ADD(M6802, 3579545)	/* 3.579545 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(demoneye_sound_readmem,demoneye_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(demoneye_sound_readmem,demoneye_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

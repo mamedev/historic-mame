@@ -679,15 +679,15 @@ WRITE_HANDLER( defender_bank_select_w )
 	/* if the bank maps into normal RAM, it represents I/O space */
 	if (bank_offset < 0x10000)
 	{
-		memory_set_bankhandler_r(2, 0, defender_io_r);
-		memory_set_bankhandler_w(2, 0, defender_io_w);
+		install_mem_read_handler(0, 0xc000, 0xcfff, defender_io_r);
+		install_mem_write_handler(0, 0xc000, 0xcfff, defender_io_w);
 	}
 
 	/* otherwise, it's ROM space */
 	else
 	{
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_w(2, 0, MWA_ROM);
+		install_mem_read_handler(0, 0xc000, 0xcfff, MRA8_BANK2);
+		install_mem_write_handler(0, 0xc000, 0xcfff, MWA8_ROM);
 	}
 }
 

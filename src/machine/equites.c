@@ -23,8 +23,8 @@ drivers by Acho A. Tang
 #define EQUITES_ADD_SOUNDBOARD7 \
 	MDRV_CPU_ADD(8085A, 5000000) \
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) \
-	MDRV_CPU_MEMORY(equites_s_readmem, equites_s_writemem) \
-	MDRV_CPU_PORTS(0, equites_s_writeport) \
+	MDRV_CPU_PROGRAM_MAP(equites_s_readmem, equites_s_writemem) \
+	MDRV_CPU_IO_MAP(0, equites_s_writeport) \
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000) \
 	MDRV_SOUND_ADD(MSM5232, equites_5232intf) \
 	MDRV_SOUND_ADD(AY8910, equites_8910intf) \
@@ -45,29 +45,29 @@ extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
 extern struct DACinterface equites_dacintf;
 
-static MEMORY_READ_START( equites_s_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM }, // sound program
+static ADDRESS_MAP_START( equites_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	{ 0x0000, 0xbfff, MRA8_ROM }, // sound program
 	{ 0xc000, 0xc000, soundlatch_r },
-	{ 0xe000, 0xe0ff, MRA_RAM }, // stack and variables
-MEMORY_END
+	{ 0xe000, 0xe0ff, MRA8_RAM }, // stack and variables
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( equites_s_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM }, // sound program
+static ADDRESS_MAP_START( equites_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	{ 0x0000, 0xbfff, MWA8_ROM }, // sound program
 	{ 0xc080, 0xc08d, equites_5232_w },
 	{ 0xc0a0, 0xc0a0, equites_8910data_w },
 	{ 0xc0a1, 0xc0a1, equites_8910control_w },
-	{ 0xc0b0, 0xc0b0, MWA_NOP }, // INTR: sync with main melody
-	{ 0xc0c0, 0xc0c0, MWA_NOP }, // INTR: sync with specific beats
+	{ 0xc0b0, 0xc0b0, MWA8_NOP }, // INTR: sync with main melody
+	{ 0xc0c0, 0xc0c0, MWA8_NOP }, // INTR: sync with specific beats
 	{ 0xc0d0, 0xc0d0, equites_dac0_w },
 	{ 0xc0e0, 0xc0e0, equites_dac1_w },
-	{ 0xc0f8, 0xc0fe, MWA_NOP }, // soundboard I/O, ignored
+	{ 0xc0f8, 0xc0fe, MWA8_NOP }, // soundboard I/O, ignored
 	{ 0xc0ff, 0xc0ff, soundlatch_clear_w },
-	{ 0xe000, 0xe0ff, MWA_RAM }, // stack and variables
-MEMORY_END
+	{ 0xe000, 0xe0ff, MWA8_RAM }, // stack and variables
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( equites_s_writeport )
-	{ 0x00e0, 0x00e5, MWA_NOP }, // soundboard I/O, ignored
-PORT_END
+static ADDRESS_MAP_START( equites_s_writeport, ADDRESS_SPACE_IO, 8 )
+	{ 0x00e0, 0x00e5, MWA8_NOP }, // soundboard I/O, ignored
+ADDRESS_MAP_END
 // Common Hardware End
 
 #endif

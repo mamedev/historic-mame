@@ -166,168 +166,172 @@ WRITE_HANDLER( bublbobl_sh_nmi_enable_w );
 
 
 
-static MEMORY_READ_START( bublbobl_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-	{ 0xf800, 0xf9ff, paletteram_r },
-	{ 0xfc00, 0xffff, bublbobl_sharedram2_r },
-MEMORY_END
+static ADDRESS_MAP_START( bublbobl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
+	AM_RANGE(0xfc00, 0xffff) AM_READ(bublbobl_sharedram2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bublbobl_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
-	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
-//	{ 0xfa03, 0xfa03,  }, clocks reset to sound cpu
-	{ 0xfa80, 0xfa80, watchdog_reset_w },
-	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
-	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
-	{ 0xfc00, 0xffff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
-MEMORY_END
+static ADDRESS_MAP_START( bublbobl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
+	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
+//	AM_RANGE(0xfa03, 0xfa03) clocks reset to sound cpu
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
+	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( m68705_readmem )
-	{ 0x0000, 0x0000, bublbobl_68705_portA_r },
-	{ 0x0001, 0x0001, bublbobl_68705_portB_r },
-	{ 0x0002, 0x0002, input_port_0_r },	/* COIN */
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(bublbobl_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(bublbobl_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_0_r)	/* COIN */
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m68705_writemem )
-	{ 0x0000, 0x0000, bublbobl_68705_portA_w },
-	{ 0x0001, 0x0001, bublbobl_68705_portB_w },
-	{ 0x0004, 0x0004, bublbobl_68705_ddrA_w },
-	{ 0x0005, 0x0005, bublbobl_68705_ddrB_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ_START( boblbobl_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-	{ 0xf800, 0xf9ff, paletteram_r },
-	{ 0xfc00, 0xfcff, bublbobl_sharedram2_r },
-	{ 0xff00, 0xff00, input_port_0_r },
-	{ 0xff01, 0xff01, input_port_1_r },
-	{ 0xff02, 0xff02, input_port_2_r },
-	{ 0xff03, 0xff03, input_port_3_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( boblbobl_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
-	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
-	{ 0xfa80, 0xfa80, MWA_NOP },
-	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
-	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
-	{ 0xfc00, 0xfcff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
-MEMORY_END
-
-static MEMORY_READ_START( bublbobl_readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( bublbobl_writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(bublbobl_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(bublbobl_68705_portB_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(bublbobl_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(bublbobl_68705_ddrB_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0x9001, 0x9001, YM2203_read_port_0_r },
-	{ 0xa000, 0xa000, YM3526_status_port_0_r },
-	{ 0xb000, 0xb000, soundlatch_r },
-	{ 0xb001, 0xb001, MRA_NOP },	/* bit 0: message pending for main cpu */
+static ADDRESS_MAP_START( boblbobl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ(bublbobl_sharedram2_r)
+	AM_RANGE(0xfd00, 0xfeff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xff00, 0xff00) AM_READ(input_port_0_r)
+	AM_RANGE(0xff01, 0xff01) AM_READ(input_port_1_r)
+	AM_RANGE(0xff02, 0xff02) AM_READ(input_port_2_r)
+	AM_RANGE(0xff03, 0xff03) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( boblbobl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
+	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
+	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfd00, 0xfeff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( bublbobl_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( bublbobl_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	/* bit 0: message pending for main cpu */
 									/* bit 1: message pending for sound cpu */
-	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2203_control_port_0_w },
-	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, YM3526_control_port_0_w },
-	{ 0xa001, 0xa001, YM3526_write_port_0_w },
-	{ 0xb000, 0xb000, MWA_NOP },	/* message for main cpu */
-	{ 0xb001, 0xb001, bublbobl_sh_nmi_enable_w },
-	{ 0xb002, 0xb002, bublbobl_sh_nmi_disable_w },
-	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* message for main cpu */
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(bublbobl_sh_nmi_enable_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( tokio_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-	{ 0xf800, 0xf9ff, paletteram_r },
-	{ 0xfa03, 0xfa03, input_port_0_r },
-	{ 0xfa04, 0xfa04, input_port_1_r },
-	{ 0xfa05, 0xfa05, input_port_2_r },
-	{ 0xfa06, 0xfa06, input_port_3_r },
-	{ 0xfa07, 0xfa07, input_port_4_r },
-	{ 0xfe00, 0xfe00, tokio_fake_r },
-MEMORY_END
+static ADDRESS_MAP_START( tokio_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
+	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
+	AM_RANGE(0xfa03, 0xfa03) AM_READ(input_port_0_r)
+	AM_RANGE(0xfa04, 0xfa04) AM_READ(input_port_1_r)
+	AM_RANGE(0xfa05, 0xfa05) AM_READ(input_port_2_r)
+	AM_RANGE(0xfa06, 0xfa06) AM_READ(input_port_3_r)
+	AM_RANGE(0xfa07, 0xfa07) AM_READ(input_port_4_r)
+	AM_RANGE(0xfe00, 0xfe00) AM_READ(tokio_fake_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tokio_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
-	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
-	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xfa00, 0xfa00, MWA_NOP },
-	{ 0xfa80, 0xfa80, tokio_bankswitch_w },
-	{ 0xfb00, 0xfb00, tokio_videoctrl_w },
-	{ 0xfb80, 0xfb80, bublbobl_nmitrigger_w },
-	{ 0xfc00, 0xfc00, bublbobl_sound_command_w },
-	{ 0xfe00, 0xfe00, MWA_NOP }, /* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( tokio_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
+	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(tokio_bankswitch_w)
+	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(tokio_videoctrl_w)
+	AM_RANGE(0xfb80, 0xfb80) AM_WRITE(bublbobl_nmitrigger_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(bublbobl_sound_command_w)
+	AM_RANGE(0xfe00, 0xfe00) AM_WRITE(MWA8_NOP) /* ??? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( tokio_readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, bublbobl_sharedram1_r },
-MEMORY_END
+static ADDRESS_MAP_START( tokio_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_READ(bublbobl_sharedram1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tokio_writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x97ff, bublbobl_sharedram1_w },
-MEMORY_END
+static ADDRESS_MAP_START( tokio_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_WRITE(bublbobl_sharedram1_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( tokio_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, soundlatch_r },
-//	{ 0x9800, 0x9800, MRA_NOP },	/* ??? */
-	{ 0xb000, 0xb000, YM2203_status_port_0_r },
-	{ 0xb001, 0xb001, YM2203_read_port_0_r },
-	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( tokio_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(soundlatch_r)
+//	AM_RANGE(0x9800, 0x9800) AM_READ(MRA8_NOP)	/* ??? */
+	AM_RANGE(0xb000, 0xb000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tokio_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-//	{ 0x9000, 0x9000, MWA_NOP },	/* ??? */
-	{ 0xa000, 0xa000, bublbobl_sh_nmi_disable_w },
-	{ 0xa800, 0xa800, bublbobl_sh_nmi_enable_w },
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-MEMORY_END
+static ADDRESS_MAP_START( tokio_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(bublbobl_sh_nmi_disable_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(bublbobl_sh_nmi_enable_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+ADDRESS_MAP_END
 
 
 
@@ -683,19 +687,19 @@ static MACHINE_DRIVER_START( bublbobl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(bublbobl_readmem,bublbobl_writemem)
+	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem,bublbobl_writemem)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(bublbobl_readmem2,bublbobl_writemem2)
+	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem2,bublbobl_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
 
 	MDRV_CPU_ADD(M68705,4000000/2)	/* xtal is 4MHz, I think it's divided by 2 internally */
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt,2)	/* ??? should come from the same */
 					/* clock which latches the INT pin on the second Z80 */
 
@@ -722,16 +726,16 @@ static MACHINE_DRIVER_START( boblbobl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(boblbobl_readmem,boblbobl_writemem)
+	MDRV_CPU_PROGRAM_MAP(boblbobl_readmem,boblbobl_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* interrupt mode 1, unlike Bubble Bobble */
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(bublbobl_readmem2,bublbobl_writemem2)
+	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem2,bublbobl_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -756,16 +760,16 @@ static MACHINE_DRIVER_START( tokio )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(tokio_readmem,tokio_writemem)
+	MDRV_CPU_PROGRAM_MAP(tokio_readmem,tokio_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_MEMORY(tokio_readmem2,tokio_writemem2)
+	MDRV_CPU_PROGRAM_MAP(tokio_readmem2,tokio_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_MEMORY(tokio_sound_readmem,tokio_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(tokio_sound_readmem,tokio_sound_writemem)
 						/* NMIs are triggered by the main CPU */
 						/* IRQs are triggered by the YM2203 */
 

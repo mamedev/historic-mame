@@ -145,58 +145,58 @@ static MACHINE_INIT( sshangha )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( sshangha_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
+static ADDRESS_MAP_START( sshangha_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 
-	{ 0x084000, 0x0847ff, sshanghb_protection16_r },
-	{ 0x101000, 0x101001, deco_71_r },//bootleg hack
+	AM_RANGE(0x084000, 0x0847ff) AM_READ(sshanghb_protection16_r)
+	AM_RANGE(0x101000, 0x101001) AM_READ(deco_71_r)//bootleg hack
 
-	{ 0x200000, 0x207fff, MRA16_RAM },
-	{ 0x340000, 0x340fff, MRA16_RAM },
-	{ 0x350000, 0x350001, deco_71_r },
-	{ 0x360000, 0x360fff, MRA16_RAM },
-	{ 0x370000, 0x370001, deco_71_r },
-	{ 0x380000, 0x383fff, MRA16_RAM },
-	{ 0xfec000, 0xff3fff, MRA16_RAM },
-	{ 0xff4000, 0xff47ff, sshangha_protection16_r },
-MEMORY_END
+	AM_RANGE(0x200000, 0x207fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x340000, 0x340fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x350000, 0x350001) AM_READ(deco_71_r)
+	AM_RANGE(0x360000, 0x360fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x370000, 0x370001) AM_READ(deco_71_r)
+	AM_RANGE(0x380000, 0x383fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfec000, 0xff3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff4000, 0xff47ff) AM_READ(sshangha_protection16_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sshangha_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x10000c, 0x10000d, sshangha_sound_w },
-	{ 0x10100c, 0x10100d, sshangha_sound_w },	/* the bootleg writes here */
-	{ 0x200000, 0x201fff, sshangha_pf1_data_w, &sshangha_pf1_data },
-	{ 0x202000, 0x203fff, sshangha_pf2_data_w, &sshangha_pf2_data },
-	{ 0x204000, 0x2047ff, MWA16_RAM, &sshangha_pf1_rowscroll },
-	{ 0x206000, 0x2067ff, MWA16_RAM, &sshangha_pf2_rowscroll },
-	{ 0x300000, 0x30000f, sshangha_control_0_w },
-	{ 0x320000, 0x320001, sshangha_video_w },
-	{ 0x320002, 0x320005, MWA16_NOP },
-	{ 0x340000, 0x340fff, MWA16_RAM, &spriteram16 },
-	{ 0x350000, 0x350007, MWA16_NOP },
-	{ 0x360000, 0x360fff, MWA16_RAM, &spriteram16_2 },
-	{ 0x370000, 0x370007, MWA16_NOP },
-	{ 0x380000, 0x383fff, sshangha_palette_24bit_w, &paletteram16 },
-	{ 0x3c0000, 0x3c0fff, MWA16_RAM },	/* Sprite ram buffer on bootleg only?? */
-	{ 0xfec000, 0xff3fff, MWA16_RAM },
-	{ 0xff4000, 0xff47ff, sshangha_protection16_w, &sshangha_prot_data },
-MEMORY_END
+static ADDRESS_MAP_START( sshangha_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x10000c, 0x10000d) AM_WRITE(sshangha_sound_w)
+	AM_RANGE(0x10100c, 0x10100d) AM_WRITE(sshangha_sound_w)	/* the bootleg writes here */
+	AM_RANGE(0x200000, 0x201fff) AM_WRITE(sshangha_pf1_data_w) AM_BASE(&sshangha_pf1_data)
+	AM_RANGE(0x202000, 0x203fff) AM_WRITE(sshangha_pf2_data_w) AM_BASE(&sshangha_pf2_data)
+	AM_RANGE(0x204000, 0x2047ff) AM_WRITE(MWA16_RAM) AM_BASE(&sshangha_pf1_rowscroll)
+	AM_RANGE(0x206000, 0x2067ff) AM_WRITE(MWA16_RAM) AM_BASE(&sshangha_pf2_rowscroll)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(sshangha_control_0_w)
+	AM_RANGE(0x320000, 0x320001) AM_WRITE(sshangha_video_w)
+	AM_RANGE(0x320002, 0x320005) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x340000, 0x340fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x350000, 0x350007) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x360000, 0x360fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)
+	AM_RANGE(0x370000, 0x370007) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x380000, 0x383fff) AM_WRITE(sshangha_palette_24bit_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3c0000, 0x3c0fff) AM_WRITE(MWA16_RAM)	/* Sprite ram buffer on bootleg only?? */
+	AM_RANGE(0xfec000, 0xff3fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xff4000, 0xff47ff) AM_WRITE(sshangha_protection16_w) AM_BASE(&sshangha_prot_data)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc000, YM2203_status_port_0_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-//	{ 0xf800, 0xf800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+//	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc000, YM2203_control_port_0_w },
-	{ 0xc001, 0xc001, YM2203_write_port_0_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -363,12 +363,12 @@ static MACHINE_DRIVER_START( sshangha )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 28000000/2)
-	MDRV_CPU_MEMORY(sshangha_readmem,sshangha_writemem)
+	MDRV_CPU_PROGRAM_MAP(sshangha_readmem,sshangha_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

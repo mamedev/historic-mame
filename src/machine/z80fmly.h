@@ -14,9 +14,9 @@ typedef struct
 	int baseclock[MAX_CTC];                           /* timer clock */
 	int notimer[MAX_CTC];                         /* timer disablers */
 	void (*intr[MAX_CTC])(int which);             /* callback when change interrupt status */
-	mem_write_handler zc0[MAX_CTC];   /* ZC/TO0 callback */
-	mem_write_handler zc1[MAX_CTC];   /* ZC/TO1 callback */
-	mem_write_handler zc2[MAX_CTC];   /* ZC/TO2 callback */
+	write8_handler zc0[MAX_CTC];   /* ZC/TO0 callback */
+	write8_handler zc1[MAX_CTC];   /* ZC/TO1 callback */
+	write8_handler zc2[MAX_CTC];   /* ZC/TO2 callback */
 } z80ctc_interface;
 
 void z80ctc_init (z80ctc_interface *intf);

@@ -325,93 +325,95 @@ static WRITE_HANDLER( sound_bankswitch_w )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ16_START( airsys_readmem )
-	{ 0x000000, 0x0bffff, MRA16_ROM },
-	{ 0x0c0000, 0x0cffff, MRA16_RAM },			/* 68000 RAM */
-	{ 0x180000, 0x183fff, MRA16_RAM },			/* "gradiation ram (0)" */
-	{ 0x184000, 0x187fff, MRA16_RAM },			/* "gradiation ram (1)" */
-	{ 0x188000, 0x18bfff, paletteram16_word_r },/* "color ram" */
-	{ 0x800000, 0x820fff, TC0080VCO_word_r },	/* tilemaps, sprites */
-	{ 0x908000, 0x90ffff, MRA16_RAM },			/* "line ram" */
-	{ 0x910000, 0x91ffff, MRA16_RAM },			/* "dsp common ram" (TMS320C25) */
-	{ 0xa00000, 0xa00007, stick_input_r },
-	{ 0xa00100, 0xa00107, stick2_input_r },
-	{ 0xa00200, 0xa0020f, TC0220IOC_halfword_r },	/* other I/O */
-	{ 0xa80000, 0xa80001, MRA16_NOP },
-	{ 0xa80002, 0xa80003, taitosound_comm16_lsb_r },
-	{ 0xb00000, 0xb007ff, MRA16_RAM },			/* "power common ram" (mecha drive) */
-MEMORY_END
+static ADDRESS_MAP_START( airsys_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(MRA16_RAM)			/* 68000 RAM */
+	AM_RANGE(0x180000, 0x183fff) AM_READ(MRA16_RAM)			/* "gradiation ram (0)" */
+	AM_RANGE(0x184000, 0x187fff) AM_READ(MRA16_RAM)			/* "gradiation ram (1)" */
+	AM_RANGE(0x188000, 0x18bfff) AM_READ(paletteram16_word_r)/* "color ram" */
+	AM_RANGE(0x800000, 0x820fff) AM_READ(TC0080VCO_word_r)	/* tilemaps, sprites */
+	AM_RANGE(0x908000, 0x90ffff) AM_READ(MRA16_RAM)			/* "line ram" */
+	AM_RANGE(0x910000, 0x91ffff) AM_READ(MRA16_RAM)			/* "dsp common ram" (TMS320C25) */
+	AM_RANGE(0xa00000, 0xa00007) AM_READ(stick_input_r)
+	AM_RANGE(0xa00100, 0xa00107) AM_READ(stick2_input_r)
+	AM_RANGE(0xa00200, 0xa0020f) AM_READ(TC0220IOC_halfword_r)	/* other I/O */
+	AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_NOP)
+	AM_RANGE(0xa80002, 0xa80003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0xb00000, 0xb007ff) AM_READ(MRA16_RAM)			/* "power common ram" (mecha drive) */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( airsys_writemem )
-	{ 0x000000, 0x0bffff, MWA16_ROM },
-	{ 0x0c0000, 0x0cffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x140000, 0x140001, system_control_w },	/* Pause the TMS32025 */
-	{ 0x180000, 0x183fff, MWA16_RAM },			/* "gradiation ram (0)" */
-	{ 0x184000, 0x187fff, MWA16_RAM },			/* "gradiation ram (1)" */
-	{ 0x188000, 0x18bfff, airsys_paletteram16_w, &paletteram16 },
-//	{ 0x188000, 0x18bfff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x800000, 0x820fff, TC0080VCO_word_w },		/* tilemaps, sprites */
-	{ 0x908000, 0x90ffff, MWA16_RAM, &taitoair_line_ram },	/* "line ram" */
-	{ 0x910000, 0x91ffff, MWA16_RAM, &dsp_ram },	/* "dsp common ram" (TMS320C25) */
-	{ 0xa00200, 0xa0020f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0xa80000, 0xa80001, taitosound_port16_lsb_w },
-	{ 0xa80002, 0xa80003, taitosound_comm16_lsb_w },
-	{ 0xb00000, 0xb007ff, MWA16_RAM },			/* "power common ram" (mecha drive) */
-MEMORY_END
+static ADDRESS_MAP_START( airsys_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoh_68000_mainram)
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(system_control_w)	/* Pause the TMS32025 */
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (0)" */
+	AM_RANGE(0x184000, 0x187fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (1)" */
+	AM_RANGE(0x188000, 0x18bfff) AM_WRITE(airsys_paletteram16_w) AM_BASE(&paletteram16)
+//	AM_RANGE(0x188000, 0x18bfff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x800000, 0x820fff) AM_WRITE(TC0080VCO_word_w)		/* tilemaps, sprites */
+	AM_RANGE(0x908000, 0x90ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoair_line_ram)	/* "line ram" */
+	AM_RANGE(0x910000, 0x91ffff) AM_WRITE(MWA16_RAM) AM_BASE(&dsp_ram)	/* "dsp common ram" (TMS320C25) */
+	AM_RANGE(0xa00200, 0xa0020f) AM_WRITE(TC0220IOC_halfword_w)	/* I/O */
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0xa80002, 0xa80003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(MWA16_RAM)			/* "power common ram" (mecha drive) */
+ADDRESS_MAP_END
 
 /************************** Z80 ****************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP },		/* pan control */
-	{ 0xee00, 0xee00, MWA_NOP }, 		/* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, 		/* ? */
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP)		/* pan control */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) 		/* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) 		/* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 /********************************** TMS32025 ********************************/
-static MEMORY_READ16_START( DSP_readmem )
-	{ TMS32025_INTERNAL_MEMORY_BLOCKS_READ },
-	{ TMS32025_DATA_ADDR_RANGE(0x4000, 0x7fff), lineram_r },
-	{ TMS32025_DATA_ADDR_RANGE(0x8000, 0xffff), dspram_r },
+static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
 
-	{ TMS32025_PRGM_ADDR_RANGE(0x0000, 0x1fff), MRA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( DSP_writemem )
-	{ TMS32025_INTERNAL_MEMORY_BLOCKS_WRITE },
-	{ TMS32025_DATA_ADDR_RANGE(0x4000, 0x7fff), lineram_w },
-	{ TMS32025_DATA_ADDR_RANGE(0x8000, 0xffff), dspram_w },
+static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x4000, 0x7fff) AM_READ(lineram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(dspram_r)
+ADDRESS_MAP_END
 
-	{ TMS32025_PRGM_ADDR_RANGE(0x0000, 0x1fff), MWA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(lineram_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(dspram_w)
+ADDRESS_MAP_END
 
-static PORT_READ16_START( DSP_readport )
-	{ TMS32025_PORT_RANGE( TMS32025_HOLD, TMS32025_HOLD ), dsp_HOLD_signal_r },
-PORT_END
+static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(TMS32025_HOLD, TMS32025_HOLD) AM_READ(dsp_HOLD_signal_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE16_START( DSP_writeport )
-	{ TMS32025_PORT_RANGE( TMS32025_HOLDA, TMS32025_HOLDA ), dsp_HOLDA_signal_w },
-PORT_END
+static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
+ADDRESS_MAP_END
 
 
 
@@ -645,15 +647,16 @@ static MACHINE_DRIVER_START( airsys )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(airsys_readmem,airsys_writemem)
+	MDRV_CPU_PROGRAM_MAP(airsys_readmem,airsys_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)			/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(TMS32025,24000000)			/* 24 MHz ??? *///
-	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
-	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
+	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
+	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
+	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -694,9 +697,9 @@ ROM_START( topland )
 	ROM_LOAD( "b62-42.34", 0x00000, 0x04000, CRC(389230e0) SHA1(3a336987aad7bf4df658f924de4bbe6f0fff6d59) )
 	ROM_CONTINUE(          0x10000, 0x0c000 )
 
-	ROM_REGION( 0x24000, REGION_CPU3, 0 )	/* TMS320C25 */
-	ROM_LOAD16_BYTE( "b62-21.35", 0x20000, 0x02000, CRC(5f38460d) SHA1(0593718d15b30b10f7686959932e2c934de2a529) )	// cpu board
-	ROM_LOAD16_BYTE( "b62-20.6",  0x20001, 0x02000, CRC(a4afe958) SHA1(7593a327f4ea0cc9e28fd3269278871f62fb0598) )	// cpu board
+	ROM_REGION( 0x20000, REGION_CPU3, 0 )	/* TMS320C25 */
+	ROM_LOAD16_BYTE( "b62-21.35", 0x00000, 0x02000, CRC(5f38460d) SHA1(0593718d15b30b10f7686959932e2c934de2a529) )	// cpu board
+	ROM_LOAD16_BYTE( "b62-20.6",  0x00001, 0x02000, CRC(a4afe958) SHA1(7593a327f4ea0cc9e28fd3269278871f62fb0598) )	// cpu board
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
 	ROM_LOAD16_BYTE( "b62-33.39",  0x000000, 0x20000, CRC(38786867) SHA1(7292e3fa69cad6494f2e8e7efa9c3f989bdf958d) )
@@ -735,9 +738,9 @@ ROM_START( ainferno )
 	ROM_LOAD( "c45-23.34", 0x00000, 0x04000, CRC(d0750c78) SHA1(63232c2acef86e8c8ffaad36ab0b6c4cc1eb48f8) )
 	ROM_CONTINUE(          0x10000, 0x0c000 )
 
-	ROM_REGION( 0x24000, REGION_CPU3, 0 )	/* TMS320C25 */
-	ROM_LOAD16_BYTE( "c45-25.35", 0x20000, 0x02000, CRC(c0d39f95) SHA1(542aa6e2af510aea00db40bf803cb6653d4e7747) )
-	ROM_LOAD16_BYTE( "c45-24.6",  0x20001, 0x02000, CRC(1013d937) SHA1(817769d21583f5281ba044ce8c134c9239d1e83e) )
+	ROM_REGION( 0x20000, REGION_CPU3, 0 )	/* TMS320C25 */
+	ROM_LOAD16_BYTE( "c45-25.35", 0x00000, 0x02000, CRC(c0d39f95) SHA1(542aa6e2af510aea00db40bf803cb6653d4e7747) )
+	ROM_LOAD16_BYTE( "c45-24.6",  0x00001, 0x02000, CRC(1013d937) SHA1(817769d21583f5281ba044ce8c134c9239d1e83e) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
 	ROM_LOAD16_BYTE( "c45-11.28", 0x000000, 0x20000, CRC(d9b4b77c) SHA1(69d570efa8146fb0a712ff45e77bda6fd85769f8) )

@@ -70,38 +70,14 @@ struct tms34010_config
 
 
 /* PUBLIC FUNCTIONS - 34010 */
-void		tms34010_init(void);
-void		tms34010_reset(void *param);
-void		tms34010_exit(void);
-int			tms34010_execute(int cycles);
-unsigned	tms34010_get_context(void *dst);
-void		tms34010_set_context(void *src);
-unsigned	tms34010_get_reg(int regnum);
-void		tms34010_set_reg(int regnum, unsigned val);
-void 		tms34010_set_irq_line(int irqline, int linestate);
-void 		tms34010_set_irq_callback(int (*callback)(int irqline));
-void 		tms34010_internal_interrupt(int type);
-const char *tms34010_info(void *context, int regnum);
-unsigned 	tms34010_dasm(char *buffer, unsigned pc);
+void tms34010_get_info(UINT32 state, union cpuinfo *info);
 
 int 		tms34010_io_display_blanked(int cpu);
 int 		tms34010_get_DPYSTRT(int cpu);
 
 
 /* PUBLIC FUNCTIONS - 34020 */
-void		tms34020_init(void);
-void 		tms34020_reset(void *param);
-void 		tms34020_exit(void);
-int			tms34020_execute(int cycles);
-unsigned 	tms34020_get_context(void *dst);
-void 		tms34020_set_context(void *src);
-unsigned 	tms34020_get_reg(int regnum);
-void 		tms34020_set_reg(int regnum, unsigned val);
-void 		tms34020_set_irq_line(int irqline, int linestate);
-void 		tms34020_set_irq_callback(int (*callback)(int irqline));
-void 		tms34020_internal_interrupt(int type);
-const char *tms34020_info(void *context, int regnum);
-unsigned 	tms34020_dasm(char *buffer, unsigned pc);
+void tms34020_get_info(UINT32 state, union cpuinfo *info);
 
 int 		tms34020_io_display_blanked(int cpu);
 int 		tms34020_get_DPYSTRT(int cpu);
@@ -117,18 +93,13 @@ void		tms34010_host_w(int cpunum, int reg, int data);
 int			tms34010_host_r(int cpunum, int reg);
 
 
-/* Reads & writes to the 34010 I/O registers; place at TOBYTE(0xc0000000) */
+/* Reads & writes to the 34010 I/O registers; place at 0xc0000000 */
 WRITE16_HANDLER( tms34010_io_register_w );
 READ16_HANDLER( tms34010_io_register_r );
 
-/* Reads & writes to the 34020 I/O registers; place at TOBYTE(0xc0000000) */
+/* Reads & writes to the 34020 I/O registers; place at 0xc0000000 */
 WRITE16_HANDLER( tms34020_io_register_w );
 READ16_HANDLER( tms34020_io_register_r );
-
-
-/* PUBLIC GLOBALS */
-extern int tms34010_ICount;
-#define tms34020_ICount tms34010_ICount
 
 
 /* Use this macro in the memory definitions to specify bit-based addresses */

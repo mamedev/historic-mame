@@ -155,42 +155,42 @@ static NVRAM_HANDLER( mcr1 )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x77ff, MRA_RAM },
-	{ 0xf000, 0xf1ff, MRA_RAM },
-	{ 0xfc00, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x6fff, MWA_ROM },
-	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf400, 0xf41f, paletteram_xxxxRRRRBBBBGGGG_split1_w, &paletteram },
-	{ 0xf800, 0xf81f, paletteram_xxxxRRRRBBBBGGGG_split2_w, &paletteram_2 },
-	{ 0xfc00, 0xffff, mcr1_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf400, 0xf41f) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf81f) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(mcr1_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-	{ 0x04, 0x04, input_port_4_r },
-	{ 0x07, 0x07, ssio_status_r },
-	{ 0x10, 0x10, input_port_0_r },
-	{ 0xf0, 0xf3, z80ctc_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
+	AM_RANGE(0x07, 0x07) AM_READ(ssio_status_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
+	AM_RANGE(0xf0, 0xf3) AM_READ(z80ctc_0_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x1c, 0x1f, ssio_data_w },
-	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, MWA_NOP },
-	{ 0xf0, 0xf3, z80ctc_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x1c, 0x1f) AM_WRITE(ssio_data_w)
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xe8, 0xe8) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf0, 0xf3) AM_WRITE(z80ctc_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -350,8 +350,8 @@ static MACHINE_DRIVER_START( mcr1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_OSC_MCR_I/8)
 	MDRV_CPU_CONFIG(mcr_daisy_chain)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(30)

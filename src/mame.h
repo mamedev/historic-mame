@@ -87,6 +87,9 @@ struct RunningMachine
 	struct rectangle 		visible_area;
 	struct rectangle		absolute_visible_area;
 
+	/* current video refresh rate */
+	float					refresh_rate;
+
 	/* remapped palette pen numbers. When you write directly to a bitmap in a
 	   non-paletteized mode, use this array to look up the pen number. For example,
 	   if you want to use color #6 in the palette, use pens[6] instead of just 6. */
@@ -195,6 +198,7 @@ struct GameOptions
 	int 	gui_host;		/* 1 to tweak some UI-related things for better GUI integration */
 	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
 	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
+	int 	skip_warnings;		/* 1 to skip the warnings screen at startup */
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
@@ -257,32 +261,34 @@ struct GameOptions
 #define DEBUG_PALETTE_CHANGED		0x00000020
 #define DEBUG_FOCUS_CHANGED			0x00000040
 #define LED_STATE_CHANGED			0x00000080
+#define GAME_REFRESH_RATE_CHANGED	0x00000100
 
 
 /* the main mame_display structure, containing the current state of the */
 /* video display */
 struct mame_display
 {
-    /* bitfield indicating which states have changed */
-    UINT32					changed_flags;
+	/* bitfield indicating which states have changed */
+	UINT32					changed_flags;
 
-    /* game bitmap and display information */
-    struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
-    struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
-    const rgb_t *			game_palette;			/* points to game's adjusted palette */
-    UINT32					game_palette_entries;	/* number of palette entries in game's palette */
-    UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
-    struct rectangle 		game_visible_area;		/* the game's visible area */
-    void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
+	/* game bitmap and display information */
+	struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
+	struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
+	const rgb_t *			game_palette;			/* points to game's adjusted palette */
+	UINT32					game_palette_entries;	/* number of palette entries in game's palette */
+	UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
+	struct rectangle 		game_visible_area;		/* the game's visible area */
+	float					game_refresh_rate;		/* refresh rate */
+	void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
 
-    /* debugger bitmap and display information */
-    struct mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
-    const rgb_t *			debug_palette;			/* points to debugger's palette */
-    UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
-    UINT8					debug_focus;			/* set to 1 if debugger has focus */
+	/* debugger bitmap and display information */
+	struct mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
+	const rgb_t *			debug_palette;			/* points to debugger's palette */
+	UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
+	UINT8					debug_focus;			/* set to 1 if debugger has focus */
 
-    /* other misc information */
-    UINT8					led_state;				/* bitfield of current LED states */
+	/* other misc information */
+	UINT8					led_state;				/* bitfield of current LED states */
 };
 
 
@@ -338,6 +344,9 @@ void mame_pause(int pause);
 
 /* set the current visible area of the screen bitmap */
 void set_visible_area(int min_x, int max_x, int min_y, int max_y);
+
+/* set the current refresh rate of the video mode */
+void set_refresh_rate(float fps);
 
 /* force an erase and a complete redraw of the video next frame */
 void schedule_full_refresh(void);

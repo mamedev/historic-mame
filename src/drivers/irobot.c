@@ -119,40 +119,40 @@ static WRITE_HANDLER( irobot_clearfirq_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0x07ff, MRA_RAM },
-    { 0x0800, 0x0fff, MRA_BANK2 },
-    { 0x1000, 0x103f, input_port_0_r },
-    { 0x1040, 0x1040, input_port_1_r },
-    { 0x1080, 0x1080, irobot_status_r },
-    { 0x10c0, 0x10c0, input_port_3_r },
-    { 0x1200, 0x12ff, MRA_RAM },
-    { 0x1300, 0x13ff, irobot_control_r },
-    { 0x1400, 0x143f, quad_pokey_r },
-    { 0x1c00, 0x1fff, MRA_RAM },
-    { 0x2000, 0x3fff, irobot_sharedmem_r },
-    { 0x4000, 0x5fff, MRA_BANK1 },
-    { 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x0800, 0x0fff) AM_READ(MRA8_BANK2)
+    AM_RANGE(0x1000, 0x103f) AM_READ(input_port_0_r)
+    AM_RANGE(0x1040, 0x1040) AM_READ(input_port_1_r)
+    AM_RANGE(0x1080, 0x1080) AM_READ(irobot_status_r)
+    AM_RANGE(0x10c0, 0x10c0) AM_READ(input_port_3_r)
+    AM_RANGE(0x1200, 0x12ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x1300, 0x13ff) AM_READ(irobot_control_r)
+    AM_RANGE(0x1400, 0x143f) AM_READ(quad_pokey_r)
+    AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x2000, 0x3fff) AM_READ(irobot_sharedmem_r)
+    AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK1)
+    AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x07ff, MWA_RAM },
-    { 0x0800, 0x0fff, MWA_BANK2 },
-    { 0x1100, 0x1100, irobot_clearirq_w },
-    { 0x1140, 0x1140, irobot_statwr_w },
-    { 0x1180, 0x1180, irobot_out0_w },
-    { 0x11c0, 0x11c0, irobot_rom_banksel_w },
-    { 0x1200, 0x12ff, irobot_nvram_w, &generic_nvram, &generic_nvram_size },
-    { 0x1400, 0x143f, quad_pokey_w },
-    { 0x1800, 0x18ff, irobot_paletteram_w },
-    { 0x1900, 0x19ff, MWA_RAM },            /* Watchdog reset */
-    { 0x1a00, 0x1a00, irobot_clearfirq_w },
-    { 0x1b00, 0x1bff, irobot_control_w },
-    { 0x1c00, 0x1fff, MWA_RAM, &videoram, &videoram_size },
-    { 0x2000, 0x3fff, irobot_sharedmem_w},
-    { 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x0800, 0x0fff) AM_WRITE(MWA8_BANK2)
+    AM_RANGE(0x1100, 0x1100) AM_WRITE(irobot_clearirq_w)
+    AM_RANGE(0x1140, 0x1140) AM_WRITE(irobot_statwr_w)
+    AM_RANGE(0x1180, 0x1180) AM_WRITE(irobot_out0_w)
+    AM_RANGE(0x11c0, 0x11c0) AM_WRITE(irobot_rom_banksel_w)
+    AM_RANGE(0x1200, 0x12ff) AM_WRITE(irobot_nvram_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+    AM_RANGE(0x1400, 0x143f) AM_WRITE(quad_pokey_w)
+    AM_RANGE(0x1800, 0x18ff) AM_WRITE(irobot_paletteram_w)
+    AM_RANGE(0x1900, 0x19ff) AM_WRITE(MWA8_RAM)            /* Watchdog reset */
+    AM_RANGE(0x1a00, 0x1a00) AM_WRITE(irobot_clearfirq_w)
+    AM_RANGE(0x1b00, 0x1bff) AM_WRITE(irobot_control_w)
+    AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+    AM_RANGE(0x2000, 0x3fff) AM_WRITE(irobot_sharedmem_w)
+    AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -312,7 +312,7 @@ static MACHINE_DRIVER_START( irobot )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,1500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

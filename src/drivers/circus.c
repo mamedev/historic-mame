@@ -66,27 +66,27 @@ OVERLAY_END
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x8000, 0x8000, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xc000, 0xc000, input_port_1_r }, /* DSW */
-	{ 0xd000, 0xd000, input_port_2_r }, //AT
-	//{ 0xd000, 0xd000, ripcord_IN2_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_1_r) /* DSW */
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_2_r) //AT
+	//AM_RANGE(0xd000, 0xd000) AM_READ(ripcord_IN2_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x1000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x2000, circus_clown_x_w },
-	{ 0x3000, 0x3000, circus_clown_y_w },
-	{ 0x4000, 0x43ff, circus_videoram_w, &videoram },
-	{ 0x8000, 0x8000, circus_clown_z_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(circus_clown_x_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(circus_clown_y_w)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(circus_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(circus_clown_z_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( circus )
@@ -292,7 +292,7 @@ static MACHINE_DRIVER_START( circus )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -319,7 +319,7 @@ static MACHINE_DRIVER_START( robotbwl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -344,7 +344,7 @@ static MACHINE_DRIVER_START( crash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16) /* 705.562kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -369,7 +369,7 @@ static MACHINE_DRIVER_START( ripcord )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 705562)        /* 11.289MHz / 16 */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	//MDRV_CPU_VBLANK_INT(ripcord_interrupt,1) //AT
 
 	MDRV_FRAMES_PER_SECOND(57)

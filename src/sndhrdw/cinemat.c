@@ -805,32 +805,32 @@ MACHINE_INIT( demon_sound )
 }
 
 
-MEMORY_READ_START( demon_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4001, 0x4001, AY8910_read_port_0_r },
-	{ 0x5001, 0x5001, AY8910_read_port_1_r },
-	{ 0x6001, 0x6001, AY8910_read_port_2_r },
-MEMORY_END
+ADDRESS_MAP_START( demon_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4001, 0x4001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x5001, 0x5001) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x6001, 0x6001) AM_READ(AY8910_read_port_2_r)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( demon_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4002, 0x4002, AY8910_write_port_0_w },
-	{ 0x4003, 0x4003, AY8910_control_port_0_w },
-	{ 0x5002, 0x5002, AY8910_write_port_1_w },
-	{ 0x5003, 0x5003, AY8910_control_port_1_w },
-	{ 0x6002, 0x6002, AY8910_write_port_2_w },
-	{ 0x6003, 0x6003, AY8910_control_port_2_w },
-	{ 0x7000, 0x7000, MWA_NOP },  /* watchdog? */
-MEMORY_END
+ADDRESS_MAP_START( demon_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x33ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4002, 0x4002) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4003, 0x4003) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x5002, 0x5002) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x6002, 0x6002) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x6003, 0x6003) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)  /* watchdog? */
+ADDRESS_MAP_END
 
 
-PORT_WRITE_START( demon_sound_writeport )
-	{ 0x00, 0x03, z80ctc_0_w },
-	{ 0x1c, 0x1f, z80ctc_0_w },
-PORT_END
+ADDRESS_MAP_START( demon_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_WRITE(z80ctc_0_w)
+	AM_RANGE(0x1c, 0x1f) AM_WRITE(z80ctc_0_w)
+ADDRESS_MAP_END
 
 
 static Z80_DaisyChain daisy_chain[] =
@@ -846,8 +846,8 @@ MACHINE_DRIVER_START( demon_sound )
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU);
 	MDRV_CPU_CONFIG(daisy_chain)
-	MDRV_CPU_MEMORY(demon_sound_readmem,demon_sound_writemem)
-	MDRV_CPU_PORTS(0,demon_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(demon_sound_readmem,demon_sound_writemem)
+	MDRV_CPU_IO_MAP(0,demon_sound_writeport)
 	
 	MDRV_MACHINE_INIT( demon_sound )
 	

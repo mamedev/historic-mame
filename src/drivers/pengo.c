@@ -73,32 +73,32 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },	/* video and color RAM, scratchpad RAM, sprite codes */
-	{ 0x9000, 0x903f, input_port_3_r },	/* DSW1 */
-	{ 0x9040, 0x907f, input_port_2_r },	/* DSW0 */
-	{ 0x9080, 0x90bf, input_port_1_r },	/* IN1 */
-	{ 0x90c0, 0x90ff, input_port_0_r },	/* IN0 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)	/* video and color RAM, scratchpad RAM, sprite codes */
+	AM_RANGE(0x9000, 0x903f) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0x9040, 0x907f) AM_READ(input_port_2_r)	/* DSW0 */
+	AM_RANGE(0x9080, 0x90bf) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x90c0, 0x90ff) AM_READ(input_port_0_r)	/* IN0 */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, colorram_w, &colorram },
-	{ 0x8800, 0x8fef, MWA_RAMROM },
-	{ 0x8ff0, 0x8fff, MWA_RAM, &spriteram, &spriteram_size},
-	{ 0x9000, 0x901f, pengo_sound_w, &pengo_soundregs },
-	{ 0x9020, 0x902f, MWA_RAM, &spriteram_2 },
-	{ 0x9040, 0x9040, interrupt_enable_w },
-	{ 0x9041, 0x9041, pengo_sound_enable_w },
-	{ 0x9042, 0x9042, MWA_NOP },
-	{ 0x9043, 0x9043, pengo_flipscreen_w },
-	{ 0x9044, 0x9046, MWA_NOP },
-	{ 0x9047, 0x9047, pengo_gfxbank_w },
-	{ 0x9070, 0x9070, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8fef) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0x8ff0, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9000, 0x901f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x9020, 0x902f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x9040, 0x9040) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x9041, 0x9041) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x9042, 0x9042) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x9043, 0x9043) AM_WRITE(pengo_flipscreen_w)
+	AM_RANGE(0x9044, 0x9046) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x9047, 0x9047) AM_WRITE(pengo_gfxbank_w)
+	AM_RANGE(0x9070, 0x9070) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 
@@ -270,7 +270,7 @@ static MACHINE_DRIVER_START( pengo )
 									/* accurate emulation speed (time for two attract mode */
 									/* cycles after power up, until the high score list appears */
 									/* for the second time: 3'39") */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

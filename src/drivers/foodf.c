@@ -206,36 +206,36 @@ static WRITE16_HANDLER( pokey3_word_w ) { if (ACCESSING_LSB) pokey3_w(offset, da
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM },
-	{ 0x014000, 0x01cfff, MRA16_RAM },
-	{ 0x800000, 0x8007ff, MRA16_RAM },
-	{ 0x900000, 0x9001ff, nvram_r },
-	{ 0x940000, 0x940007, analog_r },
-	{ 0x948000, 0x948001, input_port_4_word_r },
-	{ 0x94c000, 0x94c001, MRA16_NOP }, /* Used from PC 0x776E */
-	{ 0x958000, 0x958001, watchdog_reset16_r },
-	{ 0xa40000, 0xa4001f, pokey2_word_r },
-	{ 0xa80000, 0xa8001f, pokey1_word_r },
-	{ 0xac0000, 0xac001f, pokey3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x014000, 0x01cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x8007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x900000, 0x9001ff) AM_READ(nvram_r)
+	AM_RANGE(0x940000, 0x940007) AM_READ(analog_r)
+	AM_RANGE(0x948000, 0x948001) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x94c000, 0x94c001) AM_READ(MRA16_NOP) /* Used from PC 0x776E */
+	AM_RANGE(0x958000, 0x958001) AM_READ(watchdog_reset16_r)
+	AM_RANGE(0xa40000, 0xa4001f) AM_READ(pokey2_word_r)
+	AM_RANGE(0xa80000, 0xa8001f) AM_READ(pokey1_word_r)
+	AM_RANGE(0xac0000, 0xac001f) AM_READ(pokey3_word_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x00ffff, MWA16_ROM },
-	{ 0x014000, 0x01bfff, MWA16_RAM },
-	{ 0x01c000, 0x01cfff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x800000, 0x8007ff, atarigen_playfield_w, &atarigen_playfield },
-	{ 0x900000, 0x9001ff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x944000, 0x944007, analog_w },
-	{ 0x948000, 0x948001, digital_w },
-	{ 0x950000, 0x9501ff, foodf_paletteram_w, &paletteram16 },
-	{ 0x954000, 0x954001, MWA16_NOP },
-	{ 0x958000, 0x958001, watchdog_reset16_w },
-	{ 0xa40000, 0xa4001f, pokey2_word_w },
-	{ 0xa80000, 0xa8001f, pokey1_word_w },
-	{ 0xac0000, 0xac001f, pokey3_word_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x014000, 0x01bfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x01c000, 0x01cfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x800000, 0x8007ff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0x900000, 0x9001ff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x944000, 0x944007) AM_WRITE(analog_w)
+	AM_RANGE(0x948000, 0x948001) AM_WRITE(digital_w)
+	AM_RANGE(0x950000, 0x9501ff) AM_WRITE(foodf_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x954000, 0x954001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x958000, 0x958001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xa40000, 0xa4001f) AM_WRITE(pokey2_word_w)
+	AM_RANGE(0xa80000, 0xa8001f) AM_WRITE(pokey1_word_w)
+	AM_RANGE(0xac0000, 0xac001f) AM_WRITE(pokey3_word_w)
+ADDRESS_MAP_END
 
 
 
@@ -372,7 +372,7 @@ static MACHINE_DRIVER_START( foodf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 6000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

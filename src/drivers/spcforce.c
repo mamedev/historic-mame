@@ -78,48 +78,48 @@ static WRITE_HANDLER( spcforce_soundtrigger_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x7000, 0x7000, input_port_0_r },
-	{ 0x7001, 0x7001, input_port_1_r },
-	{ 0x7002, 0x7002, input_port_2_r },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0xa000, 0xa3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_READ(input_port_0_r)
+	AM_RANGE(0x7001, 0x7001) AM_READ(input_port_1_r)
+	AM_RANGE(0x7002, 0x7002) AM_READ(input_port_2_r)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x7000, 0x7000, soundlatch_w },
-	{ 0x7001, 0x7001, spcforce_soundtrigger_w },
-	{ 0x700b, 0x700b, spcforce_flip_screen_w },
-	{ 0x700e, 0x700e, interrupt_enable_w },
-	{ 0x700f, 0x700f, MWA_NOP },
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x9000, 0x93ff, MWA_RAM, &colorram },
-	{ 0xa000, 0xa3ff, MWA_RAM, &spcforce_scrollram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x7001, 0x7001) AM_WRITE(spcforce_soundtrigger_w)
+	AM_RANGE(0x700b, 0x700b) AM_WRITE(spcforce_flip_screen_w)
+	AM_RANGE(0x700e, 0x700e) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x700f, 0x700f) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(MWA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM) AM_BASE(&spcforce_scrollram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ I8039_bus, I8039_bus, soundlatch_r },
-	{ I8039_p2,  I8039_p2,  spcforce_SN76496_select_r },
-	{ I8039_t0,  I8039_t0,  spcforce_t0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_bus, I8039_bus) AM_READ(soundlatch_r)
+	AM_RANGE(I8039_p2, I8039_p2) AM_READ(spcforce_SN76496_select_r)
+	AM_RANGE(I8039_t0, I8039_t0) AM_READ(spcforce_t0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ I8039_p1,  I8039_p1,  spcforce_SN76496_latch_w },
-	{ I8039_p2,  I8039_p2,  spcforce_SN76496_select_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(spcforce_SN76496_latch_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(spcforce_SN76496_select_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( spcforce )
@@ -262,13 +262,13 @@ static MACHINE_DRIVER_START( spcforce )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8085A, 4000000)        /* 4.00 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_CPU_ADD(I8035,6144000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* divisor ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

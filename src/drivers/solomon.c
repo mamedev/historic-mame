@@ -28,55 +28,55 @@ static WRITE_HANDLER( solomon_sh_command_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },	/* RAM */
-	{ 0xd000, 0xdfff, MRA_RAM },	/* video + color + bg */
-	{ 0xe000, 0xe07f, MRA_RAM },	/* spriteram  */
-	{ 0xe400, 0xe5ff, MRA_RAM },	/* paletteram */
-	{ 0xe600, 0xe600, input_port_0_r },
-	{ 0xe601, 0xe601, input_port_1_r },
-	{ 0xe602, 0xe602, input_port_2_r },
-	{ 0xe604, 0xe604, input_port_3_r },	/* DSW1 */
-	{ 0xe605, 0xe605, input_port_4_r },	/* DSW2 */
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)	/* RAM */
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)	/* video + color + bg */
+	AM_RANGE(0xe000, 0xe07f) AM_READ(MRA8_RAM)	/* spriteram  */
+	AM_RANGE(0xe400, 0xe5ff) AM_READ(MRA8_RAM)	/* paletteram */
+	AM_RANGE(0xe600, 0xe600) AM_READ(input_port_0_r)
+	AM_RANGE(0xe601, 0xe601) AM_READ(input_port_1_r)
+	AM_RANGE(0xe602, 0xe602) AM_READ(input_port_2_r)
+	AM_RANGE(0xe604, 0xe604) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xe605, 0xe605) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, solomon_colorram_w, &colorram },
-	{ 0xd400, 0xd7ff, solomon_videoram_w, &videoram },
-	{ 0xd800, 0xdbff, solomon_colorram2_w, &solomon_colorram2 },
-	{ 0xdc00, 0xdfff, solomon_videoram2_w, &solomon_videoram2 },
-	{ 0xe000, 0xe07f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0xe600, 0xe600, interrupt_enable_w },
-	{ 0xe604, 0xe604, solomon_flipscreen_w },
-	{ 0xe800, 0xe800, solomon_sh_command_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(solomon_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(solomon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(solomon_colorram2_w) AM_BASE(&solomon_colorram2)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(solomon_videoram2_w) AM_BASE(&solomon_videoram2)
+	AM_RANGE(0xe000, 0xe07f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe400, 0xe5ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe600, 0xe600) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe604, 0xe604) AM_WRITE(solomon_flipscreen_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(solomon_sh_command_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( solomon_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x8000, 0x8000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( solomon_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( solomon_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0xffff, 0xffff, MWA_NOP },	/* watchdog? */
-MEMORY_END
+static ADDRESS_MAP_START( solomon_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(MWA8_NOP)	/* watchdog? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( solomon_sound_writeport )
-	{ 0x10, 0x10, AY8910_control_port_0_w },
-	{ 0x11, 0x11, AY8910_write_port_0_w },
-	{ 0x20, 0x20, AY8910_control_port_1_w },
-	{ 0x21, 0x21, AY8910_write_port_1_w },
-	{ 0x30, 0x30, AY8910_control_port_2_w },
-	{ 0x31, 0x31, AY8910_write_port_2_w },
-PORT_END
+static ADDRESS_MAP_START( solomon_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x21, 0x21) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x31, 0x31) AM_WRITE(AY8910_write_port_2_w)
+ADDRESS_MAP_END
 
 
 
@@ -208,13 +208,13 @@ static MACHINE_DRIVER_START( solomon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?????) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz (?????) */
-	MDRV_CPU_MEMORY(solomon_sound_readmem,solomon_sound_writemem)
-	MDRV_CPU_PORTS(0,solomon_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(solomon_sound_readmem,solomon_sound_writemem)
+	MDRV_CPU_IO_MAP(0,solomon_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ??? */
 						/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

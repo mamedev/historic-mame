@@ -137,56 +137,56 @@ static WRITE_HANDLER( sound_bankswitch_w )
 }
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x100fff, K053247_word_r },
-	{ 0x101000, 0x101fff, MRA16_RAM },
-	{ 0x104000, 0x104fff, MRA16_RAM },
-	{ 0x108054, 0x108055, sound_status_r },
-	{ 0x10a000, 0x10a001, input_port_0_word_r },
-	{ 0x10a002, 0x10a003, input_port_1_word_r },
-	{ 0x10a004, 0x10a005, eeprom_r },
-	{ 0x10a00c, 0x10a00d, K053246_word_r },
-	{ 0x110000, 0x113fff, MRA16_RAM },	/* main RAM */
-	{ 0x18c000, 0x197fff, K052109_lsb_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(K053247_word_r)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x108054, 0x108055) AM_READ(sound_status_r)
+	AM_RANGE(0x10a000, 0x10a001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x10a002, 0x10a003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x10a004, 0x10a005) AM_READ(eeprom_r)
+	AM_RANGE(0x10a00c, 0x10a00d) AM_READ(K053246_word_r)
+	AM_RANGE(0x110000, 0x113fff) AM_READ(MRA16_RAM)	/* main RAM */
+	AM_RANGE(0x18c000, 0x197fff) AM_READ(K052109_lsb_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x100fff, K053247_word_w },
-	{ 0x101000, 0x101fff, MWA16_RAM },
-	{ 0x104000, 0x104fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x108000, 0x108001, eeprom_w },
-	{ 0x108020, 0x108027, K053246_word_w },
-	{ 0x10804c, 0x10804d, sound_cmd_w },
-	{ 0x10804e, 0x10804f, sound_irq_w },
-	{ 0x108060, 0x10807f, K053251_lsb_w },
-	{ 0x10a000, 0x10a001, watchdog_reset16_w },
-	{ 0x110000, 0x113fff, MWA16_RAM },	/* main RAM */
-	{ 0x18fa00, 0x18fa01, xmen_18fa00_w },
-	{ 0x18c000, 0x197fff, K052109_lsb_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(K053247_word_w)
+	AM_RANGE(0x101000, 0x101fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x104000, 0x104fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x108000, 0x108001) AM_WRITE(eeprom_w)
+	AM_RANGE(0x108020, 0x108027) AM_WRITE(K053246_word_w)
+	AM_RANGE(0x10804c, 0x10804d) AM_WRITE(sound_cmd_w)
+	AM_RANGE(0x10804e, 0x10804f) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x108060, 0x10807f) AM_WRITE(K053251_lsb_w)
+	AM_RANGE(0x10a000, 0x10a001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x110000, 0x113fff) AM_WRITE(MWA16_RAM)	/* main RAM */
+	AM_RANGE(0x18fa00, 0x18fa01) AM_WRITE(xmen_18fa00_w)
+	AM_RANGE(0x18c000, 0x197fff) AM_WRITE(K052109_lsb_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK4 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_r },
-	{ 0xec01, 0xec01, YM2151_status_port_0_r },
-	{ 0xf002, 0xf002, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK4)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_READ(K054539_0_r)
+	AM_RANGE(0xec01, 0xec01) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_w },
-	{ 0xe800, 0xe800, YM2151_register_port_0_w },
-	{ 0xec01, 0xec01, YM2151_data_port_0_w },
-	{ 0xf000, 0xf000, soundlatch2_w },
-	{ 0xf800, 0xf800, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_WRITE(K054539_0_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xec01, 0xec01) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch2_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
 
@@ -327,12 +327,12 @@ static MACHINE_DRIVER_START( xmen )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	/* ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(xmen_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,2*3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

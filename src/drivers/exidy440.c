@@ -543,37 +543,37 @@ READ_HANDLER( showdown_pld_select2_r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x209f, MRA_RAM },
-	{ 0x20a0, 0x29ff, MRA_RAM },
-	{ 0x2a00, 0x2aff, exidy440_videoram_r },
-	{ 0x2b00, 0x2b00, exidy440_vertical_pos_r },
-	{ 0x2b01, 0x2b01, exidy440_horizontal_pos_r },
-	{ 0x2b02, 0x2b02, MRA_RAM },
-	{ 0x2b03, 0x2b03, input_r },
-	{ 0x2c00, 0x2dff, exidy440_paletteram_r },
-	{ 0x2e00, 0x2eff, io1_r },
-	{ 0x3000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x209f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x20a0, 0x29ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2a00, 0x2aff) AM_READ(exidy440_videoram_r)
+	AM_RANGE(0x2b00, 0x2b00) AM_READ(exidy440_vertical_pos_r)
+	AM_RANGE(0x2b01, 0x2b01) AM_READ(exidy440_horizontal_pos_r)
+	AM_RANGE(0x2b02, 0x2b02) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2b03, 0x2b03) AM_READ(input_r)
+	AM_RANGE(0x2c00, 0x2dff) AM_READ(exidy440_paletteram_r)
+	AM_RANGE(0x2e00, 0x2eff) AM_READ(io1_r)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
-	{ 0x2000, 0x209f, exidy440_spriteram_w, &spriteram },
-	{ 0x20a0, 0x29ff, MWA_RAM },
-	{ 0x2a00, 0x2aff, exidy440_videoram_w },
-	{ 0x2b01, 0x2b01, exidy440_interrupt_clear_w },
-	{ 0x2b02, 0x2b02, MWA_RAM, &exidy440_scanline },
-	{ 0x2b03, 0x2b03, exidy440_control_w },
-	{ 0x2c00, 0x2dff, exidy440_paletteram_w },
-	{ 0x2e00, 0x2eff, io1_w },
-	{ 0x3000, 0x3fff, MWA_RAM },
-	{ 0x4000, 0x7fff, bankram_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&exidy440_imageram)
+	AM_RANGE(0x2000, 0x209f) AM_WRITE(exidy440_spriteram_w) AM_BASE(&spriteram)
+	AM_RANGE(0x20a0, 0x29ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2a00, 0x2aff) AM_WRITE(exidy440_videoram_w)
+	AM_RANGE(0x2b01, 0x2b01) AM_WRITE(exidy440_interrupt_clear_w)
+	AM_RANGE(0x2b02, 0x2b02) AM_WRITE(MWA8_RAM) AM_BASE(&exidy440_scanline)
+	AM_RANGE(0x2b03, 0x2b03) AM_WRITE(exidy440_control_w)
+	AM_RANGE(0x2c00, 0x2dff) AM_WRITE(exidy440_paletteram_w)
+	AM_RANGE(0x2e00, 0x2eff) AM_WRITE(io1_w)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(bankram_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -583,24 +583,24 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x8000, 0x8016, exidy440_m6844_r },
-	{ 0x8400, 0x8407, MRA_RAM },
-	{ 0x8800, 0x8800, exidy440_sound_command_r },
-	{ 0x9800, 0x9800, MRA_NOP },
-	{ 0xa000, 0xbfff, MRA_RAM },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x8016) AM_READ(exidy440_m6844_r)
+	AM_RANGE(0x8400, 0x8407) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(exidy440_sound_command_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(MRA8_NOP)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x8000, 0x8016, exidy440_m6844_w, &exidy440_m6844_data },
-	{ 0x8400, 0x8407, exidy440_sound_volume_w, &exidy440_sound_volume },
-	{ 0x9400, 0x9403, MWA_RAM, &exidy440_sound_banks },
-	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear_w },
-	{ 0xa000, 0xbfff, MWA_RAM },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x8016) AM_WRITE(exidy440_m6844_w) AM_BASE(&exidy440_m6844_data)
+	AM_RANGE(0x8400, 0x8407) AM_WRITE(exidy440_sound_volume_w) AM_BASE(&exidy440_sound_volume)
+	AM_RANGE(0x9400, 0x9403) AM_WRITE(MWA8_RAM) AM_BASE(&exidy440_sound_banks)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(exidy440_sound_interrupt_clear_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -1090,12 +1090,12 @@ static MACHINE_DRIVER_START( exidy440 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,12979200/8)
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(main_interrupt,1)
 
 	MDRV_CPU_ADD(M6809,12979200/4/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

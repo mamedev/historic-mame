@@ -157,35 +157,35 @@ static WRITE_HANDLER( signature_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x4800, 0x4803, ppi8255_0_r },
-	{ 0x5000, 0x5003, ppi8255_1_r },
-	{ 0x6400, 0x6400, signature_r },
-	{ 0x7800, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ 0x0000, 0xffff, catchall },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4803) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x5000, 0x5003) AM_READ(ppi8255_1_r)
+	AM_RANGE(0x6400, 0x6400) AM_READ(signature_r)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x0000, 0xffff) AM_READ(catchall)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x4800, 0x4803, ppi8255_0_w },
-	{ 0x5000, 0x5003, ppi8255_1_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x4800, 0x4803) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x5000, 0x5003) AM_WRITE(ppi8255_1_w)
 	/* banked ROMs are enabled by low 6 bits of the address */
-	{ 0x603e, 0x603e, banksel_1_w },
-	{ 0x603d, 0x603d, banksel_2_w },
-	{ 0x603b, 0x603b, banksel_3_w },
-	{ 0x6037, 0x6037, banksel_4_w },
-	{ 0x602f, 0x602f, banksel_5_w },
-	{ 0x601f, 0x601f, banksel_main_w },
-	{ 0x6200, 0x6200, signature_w },
-	{ 0x7800, 0x7fff, MWA_ROM },	/* space for diagnostic ROM? */
-	{ 0x8000, 0x8002, findout_drawctrl_w },
-	{ 0xc000, 0xffff, findout_bitmap_w },
-	{ 0x8000, 0xffff, MWA_ROM },	/* overlapped by the above */
-MEMORY_END
+	AM_RANGE(0x603e, 0x603e) AM_WRITE(banksel_1_w)
+	AM_RANGE(0x603d, 0x603d) AM_WRITE(banksel_2_w)
+	AM_RANGE(0x603b, 0x603b) AM_WRITE(banksel_3_w)
+	AM_RANGE(0x6037, 0x6037) AM_WRITE(banksel_4_w)
+	AM_RANGE(0x602f, 0x602f) AM_WRITE(banksel_5_w)
+	AM_RANGE(0x601f, 0x601f) AM_WRITE(banksel_main_w)
+	AM_RANGE(0x6200, 0x6200) AM_WRITE(signature_w)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+	AM_RANGE(0x8000, 0x8002) AM_WRITE(findout_drawctrl_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(findout_bitmap_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)	/* overlapped by the above */
+ADDRESS_MAP_END
 
 
 
@@ -251,7 +251,7 @@ static MACHINE_DRIVER_START( findout )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,4000000)	/* 4 MHz ?????? (affects sound pitch) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

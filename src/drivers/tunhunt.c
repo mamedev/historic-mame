@@ -143,34 +143,34 @@ static READ_HANDLER( dsw2_4r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA_RAM }, /* Work RAM */
-	{ 0x2000, 0x2007, tunhunt_button_r },
-	{ 0x3000, 0x300f, pokey1_r },
-	{ 0x4000, 0x400f, pokey2_r },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM) /* Work RAM */
+	AM_RANGE(0x2000, 0x2007) AM_READ(tunhunt_button_r)
+	AM_RANGE(0x3000, 0x300f) AM_READ(pokey1_r)
+	AM_RANGE(0x4000, 0x400f) AM_READ(pokey2_r)
+	AM_RANGE(0x5000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xfffa, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA_RAM }, /* Work RAM */
-	{ 0x1080, 0x10ff, MWA_RAM },
-	{ 0x1200, 0x12ff, MWA_RAM },
-	{ 0x1400, 0x14ff, MWA_RAM },
-	{ 0x1600, 0x160f, MWA_RAM, &paletteram }, /* COLRAM (D7-D4 SHADE; D3-D0 COLOR) */
-	{ 0x1800, 0x1800, MWA_RAM }, /* SHEL0H */
-	{ 0x1a00, 0x1a00, MWA_RAM }, /* SHEL1H */
-	{ 0x1c00, 0x1c00, MWA_RAM }, /* MOBJV */
-	{ 0x1e00, 0x1eff, tunhunt_videoram_w, &videoram },	/* ALPHA */
-	{ 0x2c00, 0x2fff, tunhunt_mott_w, &spriteram },
-	{ 0x2000, 0x2000, MWA_NOP }, /* watchdog */
-	{ 0x2400, 0x2400, MWA_NOP }, /* INT ACK */
-	{ 0x2800, 0x2800, tunhunt_control_w },
-	{ 0x3000, 0x300f, pokey1_w },
-	{ 0x4000, 0x400f, pokey2_w },
-	{ 0x5000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) /* Work RAM */
+	AM_RANGE(0x1080, 0x10ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1400, 0x14ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1600, 0x160f) AM_WRITE(MWA8_RAM) AM_BASE(&paletteram) /* COLRAM (D7-D4 SHADE; D3-D0 COLOR) */
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(MWA8_RAM) /* SHEL0H */
+	AM_RANGE(0x1a00, 0x1a00) AM_WRITE(MWA8_RAM) /* SHEL1H */
+	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(MWA8_RAM) /* MOBJV */
+	AM_RANGE(0x1e00, 0x1eff) AM_WRITE(tunhunt_videoram_w) AM_BASE(&videoram)	/* ALPHA */
+	AM_RANGE(0x2c00, 0x2fff) AM_WRITE(tunhunt_mott_w) AM_BASE(&spriteram)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP) /* watchdog */
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(MWA8_NOP) /* INT ACK */
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(tunhunt_control_w)
+	AM_RANGE(0x3000, 0x300f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x4000, 0x400f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x5000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -323,7 +323,7 @@ static MACHINE_DRIVER_START( tunhunt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,2000000)		/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ? probably wrong */
 
 	MDRV_FRAMES_PER_SECOND(60)

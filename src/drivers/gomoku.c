@@ -50,29 +50,29 @@ static READ_HANDLER( input_port_r )
 }
 
 
-static MEMORY_READ_START( readmem_gomoku )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4800, 0x4fff, MRA_RAM },
-	{ 0x5000, 0x53ff, MRA_RAM },
-	{ 0x5400, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x58ff, MRA_RAM },
-	{ 0x7800, 0x7807, input_port_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_gomoku, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4800, 0x4fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5400, 0x57ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5800, 0x58ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7800, 0x7807) AM_READ(input_port_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_gomoku )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4800, 0x4fff, MWA_RAM },
-	{ 0x5000, 0x53ff, gomoku_videoram_w, &gomoku_videoram },
-	{ 0x5400, 0x57ff, gomoku_colorram_w, &gomoku_colorram },
-	{ 0x5800, 0x58ff, gomoku_bgram_w, &gomoku_bgram },
+static ADDRESS_MAP_START( writemem_gomoku, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(gomoku_videoram_w) AM_BASE(&gomoku_videoram)
+	AM_RANGE(0x5400, 0x57ff) AM_WRITE(gomoku_colorram_w) AM_BASE(&gomoku_colorram)
+	AM_RANGE(0x5800, 0x58ff) AM_WRITE(gomoku_bgram_w) AM_BASE(&gomoku_bgram)
 	// sound: 0x6000 - 0x601f, 0x6800 - 0x681f
-	{ 0x6000, 0x681f, gomoku_sound_w, &gomoku_soundregs },
-	{ 0x7000, 0x7000, MWA_NOP },
-	{ 0x7001, 0x7001, gomoku_flipscreen_w },
-	{ 0x7002, 0x7002, gomoku_bg_dispsw_w },
-	{ 0x7003, 0x7007, MWA_NOP },
-	{ 0x7800, 0x7800, MWA_NOP },
-MEMORY_END
+	AM_RANGE(0x6000, 0x681f) AM_WRITE(gomoku_sound_w) AM_BASE(&gomoku_soundregs)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x7001, 0x7001) AM_WRITE(gomoku_flipscreen_w)
+	AM_RANGE(0x7002, 0x7002) AM_WRITE(gomoku_bg_dispsw_w)
+	AM_RANGE(0x7003, 0x7007) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( gomoku )
@@ -164,7 +164,7 @@ static struct CustomSound_interface custom_interface =
 static MACHINE_DRIVER_START( gomoku )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/8)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem_gomoku,writemem_gomoku)
+	MDRV_CPU_PROGRAM_MAP(readmem_gomoku,writemem_gomoku)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

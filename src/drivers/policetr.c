@@ -269,43 +269,43 @@ static NVRAM_HANDLER( policetr )
  *
  *************************************/
 
-static MEMORY_READ32_START( policetr_readmem )
-	{ 0x00000000, 0x0001ffff, MRA32_RAM },
-	{ 0x00400000, 0x00400003, policetr_video_r },
-	{ 0x00600000, 0x00600003, bsmt2000_data_r },
-	{ 0x00a00000, 0x00a00003, port0_r },
-	{ 0x00a20000, 0x00a20003, port1_r },
-	{ 0x00a40000, 0x00a40003, port2_r },
-	{ 0x1fc00000, 0x1fdfffff, MRA32_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( policetr_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x00400000, 0x00400003) AM_READ(policetr_video_r)
+	AM_RANGE(0x00600000, 0x00600003) AM_READ(bsmt2000_data_r)
+	AM_RANGE(0x00a00000, 0x00a00003) AM_READ(port0_r)
+	AM_RANGE(0x00a20000, 0x00a20003) AM_READ(port1_r)
+	AM_RANGE(0x00a40000, 0x00a40003) AM_READ(port2_r)
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE32_START( policetr_writemem )
-	{ 0x00000000, 0x0001ffff, MWA32_RAM, &policetr_rambase },
-	{ 0x00200000, 0x0020000f, policetr_video_w },
-	{ 0x00500000, 0x00500003, MWA32_NOP },		// copies ROM here at startup, plus checksum
-	{ 0x00700000, 0x00700003, bsmt2000_reg_w },
-	{ 0x00800000, 0x00800003, bsmt2000_data_w },
-	{ 0x00900000, 0x00900003, policetr_palette_offset_w },
-	{ 0x00920000, 0x00920003, policetr_palette_data_w },
-	{ 0x00a00000, 0x00a00003, control_w },
-	{ 0x00e00000, 0x00e00003, MWA32_NOP },		// watchdog???
-	{ 0x1fc00000, 0x1fdfffff, MWA32_ROM, &rom_base },
-MEMORY_END
+static ADDRESS_MAP_START( policetr_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_WRITE(MWA32_RAM) AM_BASE(&policetr_rambase)
+	AM_RANGE(0x00200000, 0x0020000f) AM_WRITE(policetr_video_w)
+	AM_RANGE(0x00500000, 0x00500003) AM_WRITE(MWA32_NOP)		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00700000, 0x00700003) AM_WRITE(bsmt2000_reg_w)
+	AM_RANGE(0x00800000, 0x00800003) AM_WRITE(bsmt2000_data_w)
+	AM_RANGE(0x00900000, 0x00900003) AM_WRITE(policetr_palette_offset_w)
+	AM_RANGE(0x00920000, 0x00920003) AM_WRITE(policetr_palette_data_w)
+	AM_RANGE(0x00a00000, 0x00a00003) AM_WRITE(control_w)
+	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITE(MWA32_NOP)		// watchdog???
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE32_START( sshooter_writemem )
-	{ 0x00000000, 0x0001ffff, MWA32_RAM, &policetr_rambase },
-	{ 0x00200000, 0x00200003, bsmt2000_data_w },
-	{ 0x00300000, 0x00300003, policetr_palette_offset_w },
-	{ 0x00320000, 0x00320003, policetr_palette_data_w },
-	{ 0x00500000, 0x00500003, MWA32_NOP },		// copies ROM here at startup, plus checksum
-	{ 0x00700000, 0x00700003, bsmt2000_reg_w },
-	{ 0x00800000, 0x0080000f, policetr_video_w },
-	{ 0x00a00000, 0x00a00003, control_w },
-	{ 0x00e00000, 0x00e00003, MWA32_NOP },		// watchdog???
-	{ 0x1fc00000, 0x1fdfffff, MWA32_ROM, &rom_base },
-MEMORY_END
+static ADDRESS_MAP_START( sshooter_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_WRITE(MWA32_RAM) AM_BASE(&policetr_rambase)
+	AM_RANGE(0x00200000, 0x00200003) AM_WRITE(bsmt2000_data_w)
+	AM_RANGE(0x00300000, 0x00300003) AM_WRITE(policetr_palette_offset_w)
+	AM_RANGE(0x00320000, 0x00320003) AM_WRITE(policetr_palette_data_w)
+	AM_RANGE(0x00500000, 0x00500003) AM_WRITE(MWA32_NOP)		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00700000, 0x00700003) AM_WRITE(bsmt2000_reg_w)
+	AM_RANGE(0x00800000, 0x0080000f) AM_WRITE(policetr_video_w)
+	AM_RANGE(0x00a00000, 0x00a00003) AM_WRITE(control_w)
+	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITE(MWA32_NOP)		// watchdog???
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+ADDRESS_MAP_END
 
 
 
@@ -431,7 +431,7 @@ MACHINE_DRIVER_START( policetr )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", R3000BE, MASTER_CLOCK/2)
 	MDRV_CPU_CONFIG(config)
-	MDRV_CPU_MEMORY(policetr_readmem,policetr_writemem)
+	MDRV_CPU_PROGRAM_MAP(policetr_readmem,policetr_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -459,7 +459,7 @@ MACHINE_DRIVER_START( sshooter )
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(policetr_readmem,sshooter_writemem)
+	MDRV_CPU_PROGRAM_MAP(policetr_readmem,sshooter_writemem)
 MACHINE_DRIVER_END
 
 

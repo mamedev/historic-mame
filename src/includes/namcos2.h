@@ -11,15 +11,11 @@
 
 /* CPU reference numbers */
 
-#define NAMCOS2_CPU1	0
-#define NAMCOS2_CPU2	1
-#define NAMCOS2_CPU3	2
-#define NAMCOS2_CPU4	3
-
-#define CPU_MASTER	NAMCOS2_CPU1
-#define CPU_SLAVE	NAMCOS2_CPU2
-#define CPU_SOUND	NAMCOS2_CPU3
-#define CPU_MCU 	NAMCOS2_CPU4
+#define CPU_MASTER	0
+#define CPU_SLAVE	1
+#define CPU_SOUND	2
+#define CPU_MCU 	3
+#define CPU_GPU 	4
 
 /* VIDHRDW */
 
@@ -29,7 +25,9 @@
 /* OUT WHAT GAME IS RUNNING 				 */
 /*********************************************/
 
-enum {
+enum
+{
+	/* Namco System 2 */
 	NAMCOS2_ASSAULT = 0x1000,
 	NAMCOS2_ASSAULT_JP,
 	NAMCOS2_ASSAULT_PLUS,
@@ -64,12 +62,14 @@ enum {
 	NAMCOS2_VALKYRIE,
 	NAMCOS2_KYUUKAI_DOUCHUUKI,
 
+	/* Namco System21 */
 	NAMCOS21_AIRCOMBAT,
 	NAMCOS21_STARBLADE,
 	NAMCOS21_CYBERSLED,
 	NAMCOS21_SOLVALOU,
 	NAMCOS21_WINRUN91,
 
+	/* Namco NB1 */
 	NAMCONB1_NEBULRAY,
 	NAMCONB1_GUNBULET,
 	NAMCONB1_GSLGR94U,
@@ -78,6 +78,7 @@ enum {
 	NAMCONB1_SWS97,
 	NAMCONB1_VSHOOT,
 
+	/* Namco NB2 */
 	NAMCONB2_OUTFOXIES,
 	NAMCONB2_MACH_BREAKERS
 };
@@ -88,10 +89,9 @@ extern data16_t *namcos21_dspram16;
 
 #define NAMCOS21_NUM_COLORS 0x8000
 
-/*********************************************/
-
 VIDEO_START( namcos21 );
 VIDEO_UPDATE( namcos21_default );
+VIDEO_UPDATE( namcos21_winrun );
 
 VIDEO_START( namcos2 );
 VIDEO_UPDATE( namcos2_default );
@@ -124,7 +124,7 @@ READ16_HANDLER( namcos2_flap_prot_r );
 /**************************************************************/
 /*	EEPROM memory function handlers 						  */
 /**************************************************************/
-#define NAMCOS2_68K_EEPROM_W	namcos2_68k_eeprom_w, &namcos2_eeprom, &namcos2_eeprom_size
+#define NAMCOS2_68K_EEPROM_W	namcos2_68k_eeprom_w
 #define NAMCOS2_68K_EEPROM_R	namcos2_68k_eeprom_r
 NVRAM_HANDLER( namcos2 );
 WRITE16_HANDLER( namcos2_68k_eeprom_w );
@@ -210,9 +210,7 @@ void namcos2_68k_slave_posirq( int moog );
 /* MASTER CPU RAM MEMORY									  */
 /**************************************************************/
 
-extern data16_t *namcos2_68k_master_ram;
-
-#define NAMCOS2_68K_MASTER_RAM_W	MWA16_BANK3, &namcos2_68k_master_ram
+#define NAMCOS2_68K_MASTER_RAM_W	MWA16_BANK3
 #define NAMCOS2_68K_MASTER_RAM_R	MRA16_BANK3
 
 
@@ -220,9 +218,7 @@ extern data16_t *namcos2_68k_master_ram;
 /* SLAVE CPU RAM MEMORY 									  */
 /**************************************************************/
 
-extern data16_t *namcos2_68k_slave_ram;
-
-#define NAMCOS2_68K_SLAVE_RAM_W 	MWA16_BANK4, &namcos2_68k_slave_ram
+#define NAMCOS2_68K_SLAVE_RAM_W 	MWA16_BANK4
 #define NAMCOS2_68K_SLAVE_RAM_R 	MRA16_BANK4
 
 
@@ -240,7 +236,7 @@ extern data16_t *namcos2_68k_roz_ram;
 /**************************************************************/
 /*															  */
 /**************************************************************/
-#define BANKED_SOUND_ROM_R		MRA_BANK6
+#define BANKED_SOUND_ROM_R		MRA8_BANK6
 #define CPU3_ROM1				6			/* Bank number */
 
 

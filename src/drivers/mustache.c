@@ -89,29 +89,29 @@ READ_HANDLER ( mustache_coin_hack_r )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, videoram_r },		/* videoram */
-	{ 0xd001, 0xd001, MRA_RAM }, /* T5182 ? */
-	{ 0xd400, 0xd4ff, MRA_RAM }, /* shared with T5182 ?*/
-	{ 0xd800, 0xd800, input_port_0_r }, /* IN 0 */
-	{ 0xd801, 0xd801, input_port_1_r }, /* IN 1 */
-	{ 0xd802, 0xd802, input_port_2_r }, /* IN 2 */
-	{ 0xd803, 0xd803, input_port_3_r },	/* DSW A */
-	{ 0xd804, 0xd804, input_port_4_r },	/* DSW B */
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(videoram_r)		/* videoram */
+	AM_RANGE(0xd001, 0xd001) AM_READ(MRA8_RAM) /* T5182 ? */
+	AM_RANGE(0xd400, 0xd4ff) AM_READ(MRA8_RAM) /* shared with T5182 ?*/
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r) /* IN 0 */
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r) /* IN 1 */
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r) /* IN 2 */
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)	/* DSW A */
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)	/* DSW B */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, mustache_videoram_w, &videoram },
-	{ 0xd000, 0xd003, MWA_RAM }, /* T5182 ? */
-	{ 0xd400, 0xd4ff, MWA_RAM }, /* shared with T5182 ?*/
-	{ 0xd806, 0xd806, mustache_scroll_w },
-	{ 0xd807, 0xd807, mustache_video_control_w },
-	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(mustache_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd000, 0xd003) AM_WRITE(MWA8_RAM) /* T5182 ? */
+	AM_RANGE(0xd400, 0xd4ff) AM_WRITE(MWA8_RAM) /* shared with T5182 ?*/
+	AM_RANGE(0xd806, 0xd806) AM_WRITE(mustache_scroll_w)
+	AM_RANGE(0xd807, 0xd807) AM_WRITE(mustache_video_control_w)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -228,7 +228,7 @@ static MACHINE_DRIVER_START( mustache )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/4) /* maybe 12000000/3 - two xtals (18.432 and 12.xxx) near cpu*/
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(mustache_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

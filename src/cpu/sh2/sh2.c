@@ -156,7 +156,7 @@ typedef struct
 	int     is_slave, cpu_number;
 } SH2;
 
-int sh2_icount;
+static int sh2_icount;
 static SH2 sh2;
 
 // Atrocious hack that makes the soldivid music correct
@@ -192,12 +192,12 @@ INLINE data8_t RB(offs_t A)
 		return sh2_internal_r((A & 0x1fc)>>2, ~(0xff << (((~A) & 3)*8))) >> (((~A) & 3)*8);
 
 	if (A >= 0xc0000000)
-		return cpu_readmem32bedw(A);
+		return program_read_byte_32be(A);
 
 	if (A >= 0x40000000)
 		return 0xa5;
 
-	return cpu_readmem32bedw(A & AM);
+	return program_read_byte_32be(A & AM);
 }
 
 INLINE data16_t RW(offs_t A)
@@ -206,12 +206,12 @@ INLINE data16_t RW(offs_t A)
 		return sh2_internal_r((A & 0x1fc)>>2, ~(0xffff << (((~A) & 2)*8))) >> (((~A) & 2)*8);
 
 	if (A >= 0xc0000000)
-		return cpu_readmem32bedw_word(A);
+		return program_read_word_32be(A);
 
 	if (A >= 0x40000000)
 		return 0xa5a5;
 
-	return cpu_readmem32bedw_word(A & AM);
+	return program_read_word_32be(A & AM);
 }
 
 INLINE data32_t RL(offs_t A)
@@ -220,12 +220,12 @@ INLINE data32_t RL(offs_t A)
 		return sh2_internal_r((A & 0x1fc)>>2, 0);
 
 	if (A >= 0xc0000000)
-		return cpu_readmem32bedw_dword(A);
+		return program_read_dword_32be(A);
 
 	if (A >= 0x40000000)
 		return 0xa5a5a5a5;
 
-  return cpu_readmem32bedw_dword(A & AM);
+  return program_read_dword_32be(A & AM);
 }
 
 INLINE void WB(offs_t A, data8_t V)
@@ -239,14 +239,14 @@ INLINE void WB(offs_t A, data8_t V)
 
 	if (A >= 0xc0000000)
 	{
-		cpu_writemem32bedw(A,V);
+		program_write_byte_32be(A,V);
 		return;
 	}
 
 	if (A >= 0x40000000)
 		return;
 
-	cpu_writemem32bedw(A & AM,V);
+	program_write_byte_32be(A & AM,V);
 }
 
 INLINE void WW(offs_t A, data16_t V)
@@ -259,14 +259,14 @@ INLINE void WW(offs_t A, data16_t V)
 
 	if (A >= 0xc0000000)
 	{
-		cpu_writemem32bedw_word(A,V);
+		program_write_word_32be(A,V);
 		return;
 	}
 
 	if (A >= 0x40000000)
 		return;
 
-	cpu_writemem32bedw_word(A & AM,V);
+	program_write_word_32be(A & AM,V);
 }
 
 INLINE void WL(offs_t A, data32_t V)
@@ -279,14 +279,14 @@ INLINE void WL(offs_t A, data32_t V)
 
 	if (A >= 0xc0000000)
 	{
-		cpu_writemem32bedw_dword(A,V);
+		program_write_dword_32be(A,V);
 		return;
 	}
 
 	if (A >= 0x40000000)
 		return;
 
-	cpu_writemem32bedw_dword(A & AM,V);
+	program_write_dword_32be(A & AM,V);
 }
 
 INLINE void sh2_exception(const char *message, int irqline)
@@ -338,7 +338,7 @@ INLINE void sh2_exception(const char *message, int irqline)
 
 	/* fetch PC */
 	sh2.pc = RL( sh2.vbr + vector * 4 );
-	change_pc32bedw(sh2.pc & AM);
+	change_pc(sh2.pc & AM);
 }
 
 #define CHECK_PENDING_IRQ(message)				\
@@ -498,7 +498,7 @@ INLINE void BF(UINT32 d)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc32bedw(sh2.pc & AM);
+		change_pc(sh2.pc & AM);
 		sh2_icount -= 2;
 	}
 }
@@ -589,7 +589,7 @@ INLINE void BT(UINT32 d)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc32bedw(sh2.pc & AM);
+		change_pc(sh2.pc & AM);
 		sh2_icount -= 2;
 	}
 }
@@ -1906,7 +1906,7 @@ INLINE void TRAPA(UINT32 i)
 	WL( sh2.r[15], sh2.pc );
 
 	sh2.pc = RL( sh2.ea );
-	change_pc32bedw(sh2.pc & AM);
+	change_pc(sh2.pc & AM);
 
 	sh2_icount -= 7;
 }
@@ -2055,6 +2055,9 @@ INLINE void op0000(UINT16 opcode)
 	case 0x3f: MAC_L(Rm, Rn);				break;
 	case 0x3a: NOP();						break;
 	case 0x3b: NOP();						break;
+
+
+
 	}
 }
 
@@ -2180,6 +2183,7 @@ INLINE void op0100(UINT16 opcode)
 	case 0x3d: NOP();						break;
 	case 0x3e: NOP();						break;
 	case 0x3f: MAC_W(Rm, Rn);				break;
+
 	}
 }
 
@@ -2218,24 +2222,24 @@ INLINE void op0111(UINT16 opcode)
 
 INLINE void op1000(UINT16 opcode)
 {
-	switch ((opcode >> 8) & 15)
+	switch ( opcode  & (15<<8) )
 	{
-	case  0: MOVBS4(opcode & 0x0f, Rm); 	break;
-	case  1: MOVWS4(opcode & 0x0f, Rm); 	break;
-	case  2: NOP(); 						break;
-	case  3: NOP(); 						break;
-	case  4: MOVBL4(Rm, opcode & 0x0f); 	break;
-	case  5: MOVWL4(Rm, opcode & 0x0f); 	break;
-	case  6: NOP(); 						break;
-	case  7: NOP(); 						break;
-	case  8: CMPIM(opcode & 0xff);			break;
-	case  9: BT(opcode & 0xff); 			break;
-	case 10: NOP(); 						break;
-	case 11: BF(opcode & 0xff); 			break;
-	case 12: NOP(); 						break;
-	case 13: BTS(opcode & 0xff);			break;
-	case 14: NOP(); 						break;
-	case 15: BFS(opcode & 0xff);			break;
+	case  0 << 8: MOVBS4(opcode & 0x0f, Rm); 	break;
+	case  1 << 8: MOVWS4(opcode & 0x0f, Rm); 	break;
+	case  2<< 8: NOP(); 				break;
+	case  3<< 8: NOP(); 				break;
+	case  4<< 8: MOVBL4(Rm, opcode & 0x0f); 	break;
+	case  5<< 8: MOVWL4(Rm, opcode & 0x0f); 	break;
+	case  6<< 8: NOP(); 				break;
+	case  7<< 8: NOP(); 				break;
+	case  8<< 8: CMPIM(opcode & 0xff);		break;
+	case  9<< 8: BT(opcode & 0xff); 		break;
+	case 10<< 8: NOP(); 				break;
+	case 11<< 8: BF(opcode & 0xff); 		break;
+	case 12<< 8: NOP(); 				break;
+	case 13<< 8: BTS(opcode & 0xff);		break;
+	case 14<< 8: NOP(); 				break;
+	case 15<< 8: BFS(opcode & 0xff);		break;
 	}
 }
 
@@ -2257,24 +2261,24 @@ INLINE void op1011(UINT16 opcode)
 
 INLINE void op1100(UINT16 opcode)
 {
-	switch ((opcode >> 8) & 15)
+	switch (opcode & (15<<8))
 	{
-	case  0: MOVBSG(opcode & 0xff); 		break;
-	case  1: MOVWSG(opcode & 0xff); 		break;
-	case  2: MOVLSG(opcode & 0xff); 		break;
-	case  3: TRAPA(opcode & 0xff);			break;
-	case  4: MOVBLG(opcode & 0xff); 		break;
-	case  5: MOVWLG(opcode & 0xff); 		break;
-	case  6: MOVLLG(opcode & 0xff); 		break;
-	case  7: MOVA(opcode & 0xff);			break;
-	case  8: TSTI(opcode & 0xff);			break;
-	case  9: ANDI(opcode & 0xff);			break;
-	case 10: XORI(opcode & 0xff);			break;
-	case 11: ORI(opcode & 0xff);			break;
-	case 12: TSTM(opcode & 0xff);			break;
-	case 13: ANDM(opcode & 0xff);			break;
-	case 14: XORM(opcode & 0xff);			break;
-	case 15: ORM(opcode & 0xff);			break;
+	case  0<<8: MOVBSG(opcode & 0xff); 		break;
+	case  1<<8: MOVWSG(opcode & 0xff); 		break;
+	case  2<<8: MOVLSG(opcode & 0xff); 		break;
+	case  3<<8: TRAPA(opcode & 0xff);		break;
+	case  4<<8: MOVBLG(opcode & 0xff); 		break;
+	case  5<<8: MOVWLG(opcode & 0xff); 		break;
+	case  6<<8: MOVLLG(opcode & 0xff); 		break;
+	case  7<<8: MOVA(opcode & 0xff);		break;
+	case  8<<8: TSTI(opcode & 0xff);		break;
+	case  9<<8: ANDI(opcode & 0xff);		break;
+	case 10<<8: XORI(opcode & 0xff);		break;
+	case 11<<8: ORI(opcode & 0xff);			break;
+	case 12<<8: TSTM(opcode & 0xff);		break;
+	case 13<<8: ANDM(opcode & 0xff);		break;
+	case 14<<8: XORM(opcode & 0xff);		break;
+	case 15<<8: ORM(opcode & 0xff);			break;
 	}
 }
 
@@ -2297,7 +2301,7 @@ INLINE void op1111(UINT16 opcode)
  *	MAME CPU INTERFACE
  *****************************************************************************/
 
-void sh2_reset(void *param)
+static void sh2_reset(void *param)
 {
 	void *tsave, *tsaved0, *tsaved1;
 	UINT32 *m;
@@ -2325,13 +2329,13 @@ void sh2_reset(void *param)
 	sh2.pc = RL(0);
 	sh2.r[15] = RL(4);
 	sh2.sr = I;
-	change_pc32bedw(sh2.pc & AM);
+	change_pc(sh2.pc & AM);
 
 	sh2.internal_irq_level = -1;
 }
 
 /* Shut down CPU core */
-void sh2_exit(void)
+static void sh2_exit(void)
 {
 	if (sh2.m)
 		free(sh2.m);
@@ -2339,7 +2343,7 @@ void sh2_exit(void)
 }
 
 /* Execute cycles - returns number of cycles actually run */
-int sh2_execute(int cycles)
+static int sh2_execute(int cycles)
 {
 	sh2_icount = cycles;
 
@@ -2349,11 +2353,11 @@ int sh2_execute(int cycles)
 	do
 	{
 		UINT32 opcode;
-
+	
 		if (sh2.delay)
 		{
 			opcode = RW(sh2.delay & AM);
-			change_pc32bedw(sh2.pc & AM);
+			change_pc(sh2.pc & AM);
 			sh2.pc -= 2;
 		}
 		else
@@ -2365,23 +2369,23 @@ int sh2_execute(int cycles)
 		sh2.pc += 2;
 		sh2.ppc = sh2.pc;
 
-		switch ((opcode >> 12) & 15)
+		switch (opcode & ( 15 << 12))
 		{
-		case  0: op0000(opcode); break;
-		case  1: op0001(opcode); break;
-		case  2: op0010(opcode); break;
-		case  3: op0011(opcode); break;
-		case  4: op0100(opcode); break;
-		case  5: op0101(opcode); break;
-		case  6: op0110(opcode); break;
-		case  7: op0111(opcode); break;
-		case  8: op1000(opcode); break;
-		case  9: op1001(opcode); break;
-		case 10: op1010(opcode); break;
-		case 11: op1011(opcode); break;
-		case 12: op1100(opcode); break;
-		case 13: op1101(opcode); break;
-		case 14: op1110(opcode); break;
+		case  0<<12: op0000(opcode); break;
+		case  1<<12: op0001(opcode); break;
+		case  2<<12: op0010(opcode); break;
+		case  3<<12: op0011(opcode); break;
+		case  4<<12: op0100(opcode); break;
+		case  5<<12: op0101(opcode); break;
+		case  6<<12: op0110(opcode); break;
+		case  7<<12: op0111(opcode); break;
+		case  8<<12: op1000(opcode); break;
+		case  9<<12: op1001(opcode); break;
+		case 10<<12: op1010(opcode); break;
+		case 11<<12: op1011(opcode); break;
+		case 12<<12: op1100(opcode); break;
+		case 13<<12: op1101(opcode); break;
+		case 14<<12: op1110(opcode); break;
 		default: op1111(opcode); break;
 		}
 
@@ -2397,15 +2401,14 @@ int sh2_execute(int cycles)
 }
 
 /* Get registers, return context size */
-unsigned sh2_get_context(void *dst)
+static void sh2_get_context(void *dst)
 {
 	if( dst )
 		memcpy(dst, &sh2, sizeof(SH2));
-	return sizeof(SH2);
 }
 
 /* Set registers */
-void sh2_set_context(void *src)
+static void sh2_set_context(void *src)
 {
 	if( src )
 		memcpy(&sh2, src, sizeof(SH2));
@@ -2462,7 +2465,7 @@ static void sh2_timer_activate(void)
 static void sh2_recalc_irq(void)
 {
 	int irq = 0, vector = -1;
-	int i, level;
+	int  level;
 
 	// Timer irqs
 	if((sh2.m[4]>>8) & sh2.m[4] & (ICF|OCFA|OCFB|OVF))
@@ -2482,16 +2485,22 @@ static void sh2_recalc_irq(void)
 	}
 
 	// DMA irqs
-	for(i=0; i<2; i++)
-	{
-		if((sh2.m[0x63+4*i] & 6) == 6) {
-			level = (sh2.m[0x38] >> 8) & 15;
-			if(level > irq) {
-				irq = level;
-				vector = (sh2.m[0x68+2*i] >> 24) & 0x7f;
-			}
+	if((sh2.m[0x63] & 6) == 6) {
+		level = (sh2.m[0x38] >> 8) & 15;
+		if(level > irq) {
+			irq = level;
+			vector = (sh2.m[0x68] >> 24) & 0x7f;
 		}
 	}
+
+	if((sh2.m[0x67] & 6) == 6) {
+		level = (sh2.m[0x38] >> 8) & 15;
+		if(level > irq) {
+			irq = level;
+			vector = (sh2.m[0x6a] >> 24) & 0x7f;
+		}
+	}
+
 
 	sh2.internal_irq_level = irq;
 	sh2.internal_irq_vector = vector;
@@ -2579,7 +2588,7 @@ static void sh2_dmac_check(int dma)
 						src --;
 					if(incd == 2)
 						dst --;
-					cpu_writemem32bedw(dst, cpu_readmem32bedw(src));
+					program_write_byte_32be(dst, program_read_byte_32be(src));
 					if(incs == 1)
 						src ++;
 					if(incd == 1)
@@ -2595,7 +2604,7 @@ static void sh2_dmac_check(int dma)
 						src -= 2;
 					if(incd == 2)
 						dst -= 2;
-					cpu_writemem32bedw_word(dst, cpu_readmem32bedw_word(src));
+					program_write_word_32be(dst, program_read_word_32be(src));
 					if(incs == 1)
 						src += 2;
 					if(incd == 1)
@@ -2611,11 +2620,12 @@ static void sh2_dmac_check(int dma)
 						src -= 4;
 					if(incd == 2)
 						dst -= 4;
-					cpu_writemem32bedw_dword(dst, cpu_readmem32bedw_dword(src));
+					program_write_dword_32be(dst, program_read_dword_32be(src));
 					if(incs == 1)
 						src += 4;
 					if(incd == 1)
 						dst += 4;
+
 				}
 				break;
 			case 3:
@@ -2626,10 +2636,10 @@ static void sh2_dmac_check(int dma)
 				{
 					if(incd == 2)
 						dst -= 16;
-					cpu_writemem32bedw_dword(dst, cpu_readmem32bedw_dword(src));
-					cpu_writemem32bedw_dword(dst+4, cpu_readmem32bedw_dword(src+4));
-					cpu_writemem32bedw_dword(dst+8, cpu_readmem32bedw_dword(src+8));
-					cpu_writemem32bedw_dword(dst+12, cpu_readmem32bedw_dword(src+12));
+					program_write_dword_32be(dst, program_read_dword_32be(src));
+					program_write_dword_32be(dst+4, program_read_dword_32be(src+4));
+					program_write_dword_32be(dst+8, program_read_dword_32be(src+8));
+					program_write_dword_32be(dst+12, program_read_dword_32be(src+12));
 					src += 16;
 					if(incd == 1)
 						dst += 16;
@@ -2887,85 +2897,7 @@ void sh2_set_frt_input(int cpunum, int state)
 	cpuintrf_pop_context();
 }
 
-unsigned sh2_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-	case REG_PREVIOUSPC:
-		return sh2.ppc;
-	case REG_PC:
-	case SH2_PC:
-		if (sh2.delay)
-			return sh2.delay & AM;
-		return sh2.pc & AM;
-	case REG_SP:   return sh2.r[15];
-	case SH2_PR:   return sh2.pr;
-	case SH2_SR:   return sh2.sr;
-	case SH2_GBR:  return sh2.gbr;
-	case SH2_VBR:  return sh2.vbr;
-	case SH2_MACH: return sh2.mach;
-	case SH2_MACL: return sh2.macl;
-	case SH2_R0:   return sh2.r[ 0];
-	case SH2_R1:   return sh2.r[ 1];
-	case SH2_R2:   return sh2.r[ 2];
-	case SH2_R3:   return sh2.r[ 3];
-	case SH2_R4:   return sh2.r[ 4];
-	case SH2_R5:   return sh2.r[ 5];
-	case SH2_R6:   return sh2.r[ 6];
-	case SH2_R7:   return sh2.r[ 7];
-	case SH2_R8:   return sh2.r[ 8];
-	case SH2_R9:   return sh2.r[ 9];
-	case SH2_R10:  return sh2.r[10];
-	case SH2_R11:  return sh2.r[11];
-	case SH2_R12:  return sh2.r[12];
-	case SH2_R13:  return sh2.r[13];
-	case SH2_R14:  return sh2.r[14];
-	case SH2_R15:  return sh2.r[15];
-	case SH2_EA:   return sh2.ea;
-	}
-	return 0;
-}
-
-void sh2_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case SH2_PC:
-	case REG_PC:
-		sh2.pc = val;
-		sh2.delay = 0;
-		break;
-	case REG_SP:   sh2.r[15] = val;    break;
-	case SH2_PR:   sh2.pr = val;	   break;
-	case SH2_SR:
-		sh2.sr = val;
-		CHECK_PENDING_IRQ("sh2_set_reg");
-		break;
-	case SH2_GBR:  sh2.gbr = val;	   break;
-	case SH2_VBR:  sh2.vbr = val;	   break;
-	case SH2_MACH: sh2.mach = val;	   break;
-	case SH2_MACL: sh2.macl = val;	   break;
-	case SH2_R0:   sh2.r[ 0] = val;    break;
-	case SH2_R1:   sh2.r[ 1] = val;    break;
-	case SH2_R2:   sh2.r[ 2] = val;    break;
-	case SH2_R3:   sh2.r[ 3] = val;    break;
-	case SH2_R4:   sh2.r[ 4] = val;    break;
-	case SH2_R5:   sh2.r[ 5] = val;    break;
-	case SH2_R6:   sh2.r[ 6] = val;    break;
-	case SH2_R7:   sh2.r[ 7] = val;    break;
-	case SH2_R8:   sh2.r[ 8] = val;    break;
-	case SH2_R9:   sh2.r[ 9] = val;    break;
-	case SH2_R10:  sh2.r[10] = val;    break;
-	case SH2_R11:  sh2.r[11] = val;    break;
-	case SH2_R12:  sh2.r[12] = val;    break;
-	case SH2_R13:  sh2.r[13] = val;    break;
-	case SH2_R14:  sh2.r[14] = val;    break;
-	case SH2_R15:  sh2.r[15] = val;    break;
-	case SH2_EA:   sh2.ea = val;	   break;
-	}
-}
-
-void sh2_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
     {
@@ -3004,68 +2936,7 @@ void sh2_set_irq_line(int irqline, int state)
 	}
 }
 
-void sh2_set_irq_callback(int (*callback)(int irqline))
-{
-	sh2.irq_callback = callback;
-}
-
-const char *sh2_info(void *context, int regnum)
-{
-	static char buffer[8][15+1];
-	static int which = 0;
-	SH2 *r = context;
-
-	which = (which + 1) % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &sh2;
-
-	switch( regnum )
-	{
-	case CPU_INFO_REG+SH2_PC:  sprintf(buffer[which], "PC  :%08X", r->pc); break;
-	case CPU_INFO_REG+SH2_SR:  sprintf(buffer[which], "SR  :%08X", r->sr); break;
-	case CPU_INFO_REG+SH2_PR:  sprintf(buffer[which], "PR  :%08X", r->pr); break;
-	case CPU_INFO_REG+SH2_GBR: sprintf(buffer[which], "GBR :%08X", r->gbr); break;
-	case CPU_INFO_REG+SH2_VBR: sprintf(buffer[which], "VBR :%08X", r->vbr); break;
-	case CPU_INFO_REG+SH2_MACH:sprintf(buffer[which], "MACH:%08X", r->mach); break;
-	case CPU_INFO_REG+SH2_MACL:sprintf(buffer[which], "MACL:%08X", r->macl); break;
-	case CPU_INFO_REG+SH2_R0:  sprintf(buffer[which], "R0  :%08X", r->r[ 0]); break;
-	case CPU_INFO_REG+SH2_R1:  sprintf(buffer[which], "R1  :%08X", r->r[ 1]); break;
-	case CPU_INFO_REG+SH2_R2:  sprintf(buffer[which], "R2  :%08X", r->r[ 2]); break;
-	case CPU_INFO_REG+SH2_R3:  sprintf(buffer[which], "R3  :%08X", r->r[ 3]); break;
-	case CPU_INFO_REG+SH2_R4:  sprintf(buffer[which], "R4  :%08X", r->r[ 4]); break;
-	case CPU_INFO_REG+SH2_R5:  sprintf(buffer[which], "R5  :%08X", r->r[ 5]); break;
-	case CPU_INFO_REG+SH2_R6:  sprintf(buffer[which], "R6  :%08X", r->r[ 6]); break;
-	case CPU_INFO_REG+SH2_R7:  sprintf(buffer[which], "R7  :%08X", r->r[ 7]); break;
-	case CPU_INFO_REG+SH2_R8:  sprintf(buffer[which], "R8  :%08X", r->r[ 8]); break;
-	case CPU_INFO_REG+SH2_R9:  sprintf(buffer[which], "R9  :%08X", r->r[ 9]); break;
-	case CPU_INFO_REG+SH2_R10: sprintf(buffer[which], "R10 :%08X", r->r[10]); break;
-	case CPU_INFO_REG+SH2_R11: sprintf(buffer[which], "R11 :%08X", r->r[11]); break;
-	case CPU_INFO_REG+SH2_R12: sprintf(buffer[which], "R12 :%08X", r->r[12]); break;
-	case CPU_INFO_REG+SH2_R13: sprintf(buffer[which], "R13 :%08X", r->r[13]); break;
-	case CPU_INFO_REG+SH2_R14: sprintf(buffer[which], "R14 :%08X", r->r[14]); break;
-	case CPU_INFO_REG+SH2_R15: sprintf(buffer[which], "R15 :%08X", r->r[15]); break;
-	case CPU_INFO_REG+SH2_EA:  sprintf(buffer[which], "EA  :%08X", r->ea);    break;
-	case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c%c%d%c%c",
-				r->sr & M ? 'M':'.',
-				r->sr & Q ? 'Q':'.',
-				(r->sr & I) >> 4,
-				r->sr & S ? 'S':'.',
-				r->sr & T ? 'T':'.');
-		break;
-	case CPU_INFO_NAME: return "SH-2";
-	case CPU_INFO_FAMILY: return "Hitachi SH7600";
-	case CPU_INFO_VERSION: return "1.01";
-	case CPU_INFO_FILE: return __FILE__;
-	case CPU_INFO_CREDITS: return "Copyright (c) 2000 Juergen Buchmueller, all rights reserved.";
-	case CPU_INFO_REG_LAYOUT: return (const char*)sh2_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char*)sh2_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned sh2_dasm(char *buffer, unsigned pc)
+static offs_t sh2_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return DasmSH2( buffer, pc );
@@ -3075,7 +2946,7 @@ unsigned sh2_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-void sh2_init(void)
+static void sh2_init(void)
 {
 	int cpu = cpu_getactivecpu();
 
@@ -3122,3 +2993,203 @@ void sh2_init(void)
 	return;
 }
 
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void sh2_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLIN:		set_irq_line(SH2_INT_VBLIN, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLOUT:	set_irq_line(SH2_INT_VBLOUT, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_HBLIN:		set_irq_line(SH2_INT_HBLIN, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER0:	set_irq_line(SH2_INT_TIMER0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER1:	set_irq_line(SH2_INT_TIMER1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DSP:		set_irq_line(SH2_INT_DSP, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SOUND:		set_irq_line(SH2_INT_SOUND, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SMPC:		set_irq_line(SH2_INT_SMPC, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_PAD:		set_irq_line(SH2_INT_PAD, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA2:		set_irq_line(SH2_INT_DMA2, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA1:		set_irq_line(SH2_INT_DMA1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA0:		set_irq_line(SH2_INT_DMA0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMAILL:	set_irq_line(SH2_INT_DMAILL, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SPRITE:	set_irq_line(SH2_INT_SPRITE, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_14:		set_irq_line(SH2_INT_14, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_15:		set_irq_line(SH2_INT_15, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_ABUS:		set_irq_line(SH2_INT_ABUS, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_REGISTER + SH2_PC:
+		case CPUINFO_INT_PC:							sh2.pc = info->i; sh2.delay = 0;		break;
+		case CPUINFO_INT_SP:							sh2.r[15] = info->i;    				break;
+		case CPUINFO_INT_REGISTER + SH2_PR:   			sh2.pr = info->i;	   					break;
+		case CPUINFO_INT_REGISTER + SH2_SR:				sh2.sr = info->i; CHECK_PENDING_IRQ("sh2_set_reg"); break;
+		case CPUINFO_INT_REGISTER + SH2_GBR:			sh2.gbr = info->i;						break;
+		case CPUINFO_INT_REGISTER + SH2_VBR:			sh2.vbr = info->i;						break;
+		case CPUINFO_INT_REGISTER + SH2_MACH: 			sh2.mach = info->i;						break;
+		case CPUINFO_INT_REGISTER + SH2_MACL:			sh2.macl = info->i;						break;
+		case CPUINFO_INT_REGISTER + SH2_R0:				sh2.r[ 0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R1:				sh2.r[ 1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R2:				sh2.r[ 2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R3:				sh2.r[ 3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R4:				sh2.r[ 4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R5:				sh2.r[ 5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R6:				sh2.r[ 6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R7:				sh2.r[ 7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R8:				sh2.r[ 8] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R9:				sh2.r[ 9] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R10:			sh2.r[10] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R11:			sh2.r[11] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R12:			sh2.r[12] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R13:			sh2.r[13] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R14:			sh2.r[14] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_R15:			sh2.r[15] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SH2_EA:				sh2.ea = info->i;						break;
+		
+		case CPUINFO_INT_SH2_FRT_INPUT:					sh2_set_frt_input(cpu_getactivecpu(), info->i); break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					sh2.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void sh2_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(sh2);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 16;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLIN:		info->i = sh2.irq_line_state[SH2_INT_VBLIN]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLOUT:	info->i = sh2.irq_line_state[SH2_INT_VBLOUT]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_HBLIN:		info->i = sh2.irq_line_state[SH2_INT_HBLIN]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER0:	info->i = sh2.irq_line_state[SH2_INT_TIMER0]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER1:	info->i = sh2.irq_line_state[SH2_INT_TIMER1]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DSP:		info->i = sh2.irq_line_state[SH2_INT_DSP]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SOUND:		info->i = sh2.irq_line_state[SH2_INT_SOUND]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SMPC:		info->i = sh2.irq_line_state[SH2_INT_SMPC];	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_PAD:		info->i = sh2.irq_line_state[SH2_INT_PAD]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA2:		info->i = sh2.irq_line_state[SH2_INT_DMA2];	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA1:		info->i = sh2.irq_line_state[SH2_INT_DMA1];	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA0:		info->i = sh2.irq_line_state[SH2_INT_DMA0];	break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMAILL:	info->i = sh2.irq_line_state[SH2_INT_DMAILL]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_SPRITE:	info->i = sh2.irq_line_state[SH2_INT_SPRITE]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_14:		info->i = sh2.irq_line_state[SH2_INT_14]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_15:		info->i = sh2.irq_line_state[SH2_INT_15]; break;
+		case CPUINFO_INT_IRQ_STATE + SH2_INT_ABUS:		info->i = sh2.irq_line_state[SH2_INT_ABUS];	break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = sh2.nmi_line_state;			break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = sh2.ppc;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + SH2_PC:				info->i = (sh2.delay) ? (sh2.delay & AM) : (sh2.pc & AM); break;
+		case CPUINFO_INT_SP:   							info->i = sh2.r[15];					break;
+		case CPUINFO_INT_REGISTER + SH2_PR:				info->i = sh2.pr;						break;
+		case CPUINFO_INT_REGISTER + SH2_SR:				info->i = sh2.sr;						break;
+		case CPUINFO_INT_REGISTER + SH2_GBR:			info->i = sh2.gbr;						break;
+		case CPUINFO_INT_REGISTER + SH2_VBR:			info->i = sh2.vbr;						break;
+		case CPUINFO_INT_REGISTER + SH2_MACH:			info->i = sh2.mach;						break;
+		case CPUINFO_INT_REGISTER + SH2_MACL:			info->i = sh2.macl;						break;
+		case CPUINFO_INT_REGISTER + SH2_R0:				info->i = sh2.r[ 0];					break;
+		case CPUINFO_INT_REGISTER + SH2_R1:				info->i = sh2.r[ 1];					break;
+		case CPUINFO_INT_REGISTER + SH2_R2:				info->i = sh2.r[ 2];					break;
+		case CPUINFO_INT_REGISTER + SH2_R3:				info->i = sh2.r[ 3];					break;
+		case CPUINFO_INT_REGISTER + SH2_R4:				info->i = sh2.r[ 4];					break;
+		case CPUINFO_INT_REGISTER + SH2_R5:				info->i = sh2.r[ 5];					break;
+		case CPUINFO_INT_REGISTER + SH2_R6:				info->i = sh2.r[ 6];					break;
+		case CPUINFO_INT_REGISTER + SH2_R7:				info->i = sh2.r[ 7];					break;
+		case CPUINFO_INT_REGISTER + SH2_R8:				info->i = sh2.r[ 8];					break;
+		case CPUINFO_INT_REGISTER + SH2_R9:				info->i = sh2.r[ 9];					break;
+		case CPUINFO_INT_REGISTER + SH2_R10:			info->i = sh2.r[10];					break;
+		case CPUINFO_INT_REGISTER + SH2_R11:			info->i = sh2.r[11];					break;
+		case CPUINFO_INT_REGISTER + SH2_R12:			info->i = sh2.r[12];					break;
+		case CPUINFO_INT_REGISTER + SH2_R13:			info->i = sh2.r[13];					break;
+		case CPUINFO_INT_REGISTER + SH2_R14:			info->i = sh2.r[14];					break;
+		case CPUINFO_INT_REGISTER + SH2_R15:			info->i = sh2.r[15];					break;
+		case CPUINFO_INT_REGISTER + SH2_EA:				info->i = sh2.ea;						break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = sh2_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = sh2_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = sh2_set_context;		break;
+		case CPUINFO_PTR_INIT:							info->init = sh2_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = sh2_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = sh2_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = sh2_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sh2_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = sh2.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sh2_icount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sh2_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sh2_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SH-2"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hitachi SH7600"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.01"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2000 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%d%c%c",
+					sh2.sr & M ? 'M':'.',
+					sh2.sr & Q ? 'Q':'.',
+					(sh2.sr & I) >> 4,
+					sh2.sr & S ? 'S':'.',
+					sh2.sr & T ? 'T':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + SH2_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", sh2.pc); break;
+		case CPUINFO_STR_REGISTER + SH2_SR:				sprintf(info->s = cpuintrf_temp_str(), "SR  :%08X", sh2.sr); break;
+		case CPUINFO_STR_REGISTER + SH2_PR:				sprintf(info->s = cpuintrf_temp_str(), "PR  :%08X", sh2.pr); break;
+		case CPUINFO_STR_REGISTER + SH2_GBR:			sprintf(info->s = cpuintrf_temp_str(), "GBR :%08X", sh2.gbr); break;
+		case CPUINFO_STR_REGISTER + SH2_VBR:			sprintf(info->s = cpuintrf_temp_str(), "VBR :%08X", sh2.vbr); break;
+		case CPUINFO_STR_REGISTER + SH2_MACH:			sprintf(info->s = cpuintrf_temp_str(), "MACH:%08X", sh2.mach); break;
+		case CPUINFO_STR_REGISTER + SH2_MACL:			sprintf(info->s = cpuintrf_temp_str(), "MACL:%08X", sh2.macl); break;
+		case CPUINFO_STR_REGISTER + SH2_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0  :%08X", sh2.r[ 0]); break;
+		case CPUINFO_STR_REGISTER + SH2_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1  :%08X", sh2.r[ 1]); break;
+		case CPUINFO_STR_REGISTER + SH2_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2  :%08X", sh2.r[ 2]); break;
+		case CPUINFO_STR_REGISTER + SH2_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3  :%08X", sh2.r[ 3]); break;
+		case CPUINFO_STR_REGISTER + SH2_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4  :%08X", sh2.r[ 4]); break;
+		case CPUINFO_STR_REGISTER + SH2_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5  :%08X", sh2.r[ 5]); break;
+		case CPUINFO_STR_REGISTER + SH2_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6  :%08X", sh2.r[ 6]); break;
+		case CPUINFO_STR_REGISTER + SH2_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7  :%08X", sh2.r[ 7]); break;
+		case CPUINFO_STR_REGISTER + SH2_R8:				sprintf(info->s = cpuintrf_temp_str(), "R8  :%08X", sh2.r[ 8]); break;
+		case CPUINFO_STR_REGISTER + SH2_R9:				sprintf(info->s = cpuintrf_temp_str(), "R9  :%08X", sh2.r[ 9]); break;
+		case CPUINFO_STR_REGISTER + SH2_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10 :%08X", sh2.r[10]); break;
+		case CPUINFO_STR_REGISTER + SH2_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11 :%08X", sh2.r[11]); break;
+		case CPUINFO_STR_REGISTER + SH2_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12 :%08X", sh2.r[12]); break;
+		case CPUINFO_STR_REGISTER + SH2_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13 :%08X", sh2.r[13]); break;
+		case CPUINFO_STR_REGISTER + SH2_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14 :%08X", sh2.r[14]); break;
+		case CPUINFO_STR_REGISTER + SH2_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15 :%08X", sh2.r[15]); break;
+		case CPUINFO_STR_REGISTER + SH2_EA:				sprintf(info->s = cpuintrf_temp_str(), "EA  :%08X", sh2.ea);    break;
+	}
+}

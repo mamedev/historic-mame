@@ -34,6 +34,9 @@ extern void win_poll_input(void);
 extern void win_pause_input(int pause);
 extern UINT8 win_trying_to_quit;
 
+// from sound.c
+extern void sound_update_refresh_rate(float newrate);
+
 // from wind3dfx.c
 extern struct rc_option win_d3d_opts[];
 
@@ -159,6 +162,7 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 // prototypes
 static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority);
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority);
+static int decode_ftr(struct rc_option *option, const char *arg, int priority);
 static int decode_effect(struct rc_option *option, const char *arg, int priority);
 static int decode_aspect(struct rc_option *option, const char *arg, int priority);
 static void update_visible_area(struct mame_display *display);
@@ -195,7 +199,7 @@ struct rc_option video_opts[] =
 	{ "syncrefresh", NULL, rc_bool, &win_sync_refresh, "0", 0, 0, NULL, "syncronize only to the monitor refresh" },
 	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
 	{ "full_screen_brightness", "fsb", rc_float, &win_gfx_brightness, "0.0", 0.0, 4.0, NULL, "sets the brightness in full screen mode" },
-	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, NULL, "sets the number of frames to run within the game" },
+	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, decode_ftr, "sets the number of frames to run within the game" },
 	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
 	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
 	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow " APPNAME " to give back time to the system when it's not needed" },
@@ -283,6 +287,31 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 	}
 	options.vector_width = win_gfx_width;
 	options.vector_height = win_gfx_height;
+
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_ftr
+//============================================================
+
+static int decode_ftr(struct rc_option *option, const char *arg, int priority)
+{
+	int ftr;
+
+	if (sscanf(arg, "%d", &ftr) != 1)
+	{
+		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
+		return -1;
+	}
+
+	/* if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing */
+	frames_to_display = ftr;
+	if (frames_to_display > 0 && frames_to_display < 60*60*5)
+		options.skip_warnings = 1;
 
 	option->priority = priority;
 	return 0;
@@ -523,7 +552,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 			autoframeskip ? "auto" : "fskp", frameskip,
 			(int)(performance->game_speed_percent + 0.5),
 			(int)(performance->frames_per_second + 0.5),
-			(int)(Machine->drv->frames_per_second + 0.5));
+			(int)(Machine->refresh_rate + 0.5));
 
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -834,7 +863,21 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 	{
 		frames_displayed++;
 		if (frames_displayed + 1 == frames_to_display)
+		{
+			char name[20];
+			mame_file *fp;
+
+			// make a filename with an underscore prefix
+			sprintf(name, "_%.8s", Machine->gamedrv->name);
+
+			// write out the screenshot
+			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
+			{
+				save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+				mame_fclose(fp);
+			}
 			win_trying_to_quit = 1;
+		}
 		end_time = curr;
 	}
 
@@ -877,6 +920,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 	// if the visible area has changed, update it
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 		update_visible_area(display);
+
+	// if the refresh rate has changed, update it
+	if (display->changed_flags & GAME_REFRESH_RATE_CHANGED)
+	{
+		video_fps = display->game_refresh_rate;
+		sound_update_refresh_rate(display->game_refresh_rate);
+	}
 
 	// if the debugger focus changed, update it
 	if (display->changed_flags & DEBUG_FOCUS_CHANGED)

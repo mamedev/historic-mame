@@ -239,71 +239,71 @@ static WRITE32_HANDLER( superchs_stick_w )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ32_START( superchs_readmem )
-	{ 0x000000, 0x0fffff, MRA32_ROM },
-	{ 0x100000, 0x11ffff, MRA32_RAM },	/* main CPUA ram */
-	{ 0x140000, 0x141fff, MRA32_RAM },	/* Sprite ram */
-	{ 0x180000, 0x18ffff, TC0480SCP_long_r },
-	{ 0x1b0000, 0x1b002f, TC0480SCP_ctrl_long_r },
-	{ 0x200000, 0x20ffff, MRA32_RAM },	/* Shared ram */
-	{ 0x280000, 0x287fff, MRA32_RAM },	/* Palette ram */
-	{ 0x2c0000, 0x2c07ff, MRA32_RAM },	/* Sound shared ram */
-	{ 0x300000, 0x300007, superchs_input_r },
-	{ 0x340000, 0x340003, superchs_stick_r },	/* stick coord read */
-MEMORY_END
+static ADDRESS_MAP_START( superchs_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x100000, 0x11ffff) AM_READ(MRA32_RAM)	/* main CPUA ram */
+	AM_RANGE(0x140000, 0x141fff) AM_READ(MRA32_RAM)	/* Sprite ram */
+	AM_RANGE(0x180000, 0x18ffff) AM_READ(TC0480SCP_long_r)
+	AM_RANGE(0x1b0000, 0x1b002f) AM_READ(TC0480SCP_ctrl_long_r)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA32_RAM)	/* Shared ram */
+	AM_RANGE(0x280000, 0x287fff) AM_READ(MRA32_RAM)	/* Palette ram */
+	AM_RANGE(0x2c0000, 0x2c07ff) AM_READ(MRA32_RAM)	/* Sound shared ram */
+	AM_RANGE(0x300000, 0x300007) AM_READ(superchs_input_r)
+	AM_RANGE(0x340000, 0x340003) AM_READ(superchs_stick_r)	/* stick coord read */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( superchs_writemem )
-	{ 0x000000, 0x0fffff, MWA32_ROM },
-	{ 0x100000, 0x11ffff, MWA32_RAM, &superchs_ram },
-	{ 0x140000, 0x141fff, MWA32_RAM, &spriteram32, &spriteram_size },
-	{ 0x180000, 0x18ffff, TC0480SCP_long_w },
-	{ 0x1b0000, 0x1b002f, TC0480SCP_ctrl_long_w },
-	{ 0x200000, 0x20ffff, MWA32_RAM, &shared_ram },
-	{ 0x240000, 0x240003, cpua_ctrl_w },
-	{ 0x280000, 0x287fff, superchs_palette_w, &paletteram32 },
-	{ 0x2c0000, 0x2c07ff, MWA32_RAM, &f3_shared_ram },
-	{ 0x300000, 0x300007, superchs_input_w },	/* eerom etc. */
-	{ 0x340000, 0x340003, superchs_stick_w },	/* stick int request */
-MEMORY_END
+static ADDRESS_MAP_START( superchs_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x100000, 0x11ffff) AM_WRITE(MWA32_RAM) AM_BASE(&superchs_ram)
+	AM_RANGE(0x140000, 0x141fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x180000, 0x18ffff) AM_WRITE(TC0480SCP_long_w)
+	AM_RANGE(0x1b0000, 0x1b002f) AM_WRITE(TC0480SCP_ctrl_long_w)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA32_RAM) AM_BASE(&shared_ram)
+	AM_RANGE(0x240000, 0x240003) AM_WRITE(cpua_ctrl_w)
+	AM_RANGE(0x280000, 0x287fff) AM_WRITE(superchs_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x2c0000, 0x2c07ff) AM_WRITE(MWA32_RAM) AM_BASE(&f3_shared_ram)
+	AM_RANGE(0x300000, 0x300007) AM_WRITE(superchs_input_w)	/* eerom etc. */
+	AM_RANGE(0x340000, 0x340003) AM_WRITE(superchs_stick_w)	/* stick int request */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( superchs_cpub_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x200000, 0x20ffff, MRA16_RAM },	/* local ram */
-	{ 0x800000, 0x80ffff, shared_ram_r },
-	{ 0xa00000, 0xa001ff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( superchs_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)	/* local ram */
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(shared_ram_r)
+	AM_RANGE(0xa00000, 0xa001ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( superchs_cpub_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x200000, 0x20ffff, MWA16_RAM },
-	{ 0x600000, 0x60ffff, TC0480SCP_word_w }, /* Only written upon errors */
-	{ 0x800000, 0x80ffff, shared_ram_w },
-	{ 0xa00000, 0xa001ff, MWA16_RAM },	/* Extra road control?? */
-MEMORY_END
+static ADDRESS_MAP_START( superchs_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(TC0480SCP_word_w) /* Only written upon errors */
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(shared_ram_w)
+	AM_RANGE(0xa00000, 0xa001ff) AM_WRITE(MWA16_RAM)	/* Extra road control?? */
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( sound_readmem )
-	{ 0x000000, 0x03ffff, MRA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_r },
-	{ 0x200000, 0x20001f, ES5505_data_0_r },
-	{ 0x260000, 0x2601ff, es5510_dsp_r },
-	{ 0x280000, 0x28001f, f3_68681_r },
-	{ 0xc00000, 0xcfffff, MRA16_BANK1 },
-	{ 0xff8000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
+	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
+	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
+	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
+	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sound_writemem )
-	{ 0x000000, 0x03ffff, MWA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_w },
-	{ 0x200000, 0x20001f, ES5505_data_0_w },
-	{ 0x260000, 0x2601ff, es5510_dsp_w },
-	{ 0x280000, 0x28001f, f3_68681_w },
-	{ 0x300000, 0x30003f, f3_es5505_bank_w },
-	{ 0x340000, 0x340003, f3_volume_w }, /* 8 channel volume control */
-	{ 0xc00000, 0xcfffff, MWA16_ROM },
-	{ 0xff8000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
+	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
+	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
+	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
+	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
+	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
+	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /***********************************************************/
 
@@ -469,15 +469,15 @@ static MACHINE_DRIVER_START( superchs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
-	MDRV_CPU_MEMORY(superchs_readmem,superchs_writemem)
+	MDRV_CPU_PROGRAM_MAP(superchs_readmem,superchs_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
-	MDRV_CPU_MEMORY(superchs_cpub_readmem,superchs_cpub_writemem)
+	MDRV_CPU_PROGRAM_MAP(superchs_cpub_readmem,superchs_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
 
 	MDRV_FRAMES_PER_SECOND(60)

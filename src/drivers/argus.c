@@ -295,156 +295,156 @@ static WRITE_HANDLER( butasan_pagedram_w )
 
 ***************************************************************************/
 
-static MEMORY_READ_START( argus_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc000, input_port_0_r },			// Coin
-	{ 0xc001, 0xc001, input_port_1_r },			// Player 1
-	{ 0xc002, 0xc002, input_port_2_r },			// Player 2
-	{ 0xc003, 0xc003, input_port_3_r },			// DSW 1
-	{ 0xc004, 0xc004, input_port_4_r },			// DSW 2
-	{ 0xc400, 0xcfff, argus_paletteram_r, },
-	{ 0xd000, 0xd7ff, argus_txram_r },
-	{ 0xd800, 0xdfff, argus_bg1ram_r },
-	{ 0xe000, 0xf1ff, MRA_RAM },
-	{ 0xf200, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( argus_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)			// Coin
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)			// Player 1
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)			// Player 2
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)			// DSW 1
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)			// DSW 2
+	AM_RANGE(0xc400, 0xcfff) AM_READ(argus_paletteram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(argus_txram_r)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(argus_bg1ram_r)
+	AM_RANGE(0xe000, 0xf1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf200, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( argus_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },
-	{ 0xc200, 0xc200, soundlatch_w },
-	{ 0xc201, 0xc201, argus_flipscreen_w },
-	{ 0xc202, 0xc202, argus_bankselect_w },
-	{ 0xc300, 0xc301, argus_bg0_scrollx_w, &argus_bg0_scrollx },
-	{ 0xc302, 0xc303, argus_bg0_scrolly_w, &argus_bg0_scrolly },
-	{ 0xc308, 0xc309, argus_bg1_scrollx_w, &argus_bg1_scrollx },
-	{ 0xc30a, 0xc30b, argus_bg1_scrolly_w, &argus_bg1_scrolly },
-	{ 0xc30c, 0xc30c, argus_bg_status_w },
-	{ 0xc400, 0xcfff, argus_paletteram_w, &argus_paletteram },
-	{ 0xd000, 0xd7ff, argus_txram_w, &argus_txram },
-	{ 0xd800, 0xdfff, argus_bg1ram_w, &argus_bg1ram },
-	{ 0xe000, 0xf1ff, MWA_RAM },
-	{ 0xf200, 0xf7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( argus_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0xc200, 0xc200) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc201, 0xc201) AM_WRITE(argus_flipscreen_w)
+	AM_RANGE(0xc202, 0xc202) AM_WRITE(argus_bankselect_w)
+	AM_RANGE(0xc300, 0xc301) AM_WRITE(argus_bg0_scrollx_w) AM_BASE(&argus_bg0_scrollx)
+	AM_RANGE(0xc302, 0xc303) AM_WRITE(argus_bg0_scrolly_w) AM_BASE(&argus_bg0_scrolly)
+	AM_RANGE(0xc308, 0xc309) AM_WRITE(argus_bg1_scrollx_w) AM_BASE(&argus_bg1_scrollx)
+	AM_RANGE(0xc30a, 0xc30b) AM_WRITE(argus_bg1_scrolly_w) AM_BASE(&argus_bg1_scrolly)
+	AM_RANGE(0xc30c, 0xc30c) AM_WRITE(argus_bg_status_w)
+	AM_RANGE(0xc400, 0xcfff) AM_WRITE(argus_paletteram_w) AM_BASE(&argus_paletteram)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(argus_txram_w) AM_BASE(&argus_txram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(argus_bg1ram_w) AM_BASE(&argus_bg1ram)
+	AM_RANGE(0xe000, 0xf1ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf200, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( valtric_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc000, input_port_0_r },			// Coin
-	{ 0xc001, 0xc001, input_port_1_r },			// Player 1
-	{ 0xc002, 0xc002, input_port_2_r },			// Player 2
-	{ 0xc003, 0xc003, input_port_3_r },			// DSW 1
-	{ 0xc004, 0xc004, input_port_4_r },			// DSW 2
-	{ 0xc400, 0xcfff, argus_paletteram_r, },
-	{ 0xd000, 0xd7ff, argus_txram_r },
-	{ 0xd800, 0xdfff, argus_bg1ram_r },
-	{ 0xe000, 0xf1ff, MRA_RAM },
-	{ 0xf200, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( valtric_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)			// Coin
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)			// Player 1
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)			// Player 2
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)			// DSW 1
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)			// DSW 2
+	AM_RANGE(0xc400, 0xcfff) AM_READ(argus_paletteram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(argus_txram_r)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(argus_bg1ram_r)
+	AM_RANGE(0xe000, 0xf1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf200, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( valtric_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },
-	{ 0xc200, 0xc200, soundlatch_w },
-	{ 0xc201, 0xc201, argus_flipscreen_w },
-	{ 0xc202, 0xc202, argus_bankselect_w },
-	{ 0xc308, 0xc309, argus_bg1_scrollx_w, &argus_bg1_scrollx },
-	{ 0xc30a, 0xc30b, argus_bg1_scrolly_w, &argus_bg1_scrolly },
-	{ 0xc30c, 0xc30c, valtric_bg_status_w },
-	{ 0xc400, 0xcfff, valtric_paletteram_w, &argus_paletteram },
-	{ 0xd000, 0xd7ff, argus_txram_w, &argus_txram },
-	{ 0xd800, 0xdfff, argus_bg1ram_w, &argus_bg1ram },
-	{ 0xe000, 0xf1ff, MWA_RAM },
-	{ 0xf200, 0xf7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( valtric_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0xc200, 0xc200) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc201, 0xc201) AM_WRITE(argus_flipscreen_w)
+	AM_RANGE(0xc202, 0xc202) AM_WRITE(argus_bankselect_w)
+	AM_RANGE(0xc308, 0xc309) AM_WRITE(argus_bg1_scrollx_w) AM_BASE(&argus_bg1_scrollx)
+	AM_RANGE(0xc30a, 0xc30b) AM_WRITE(argus_bg1_scrolly_w) AM_BASE(&argus_bg1_scrolly)
+	AM_RANGE(0xc30c, 0xc30c) AM_WRITE(valtric_bg_status_w)
+	AM_RANGE(0xc400, 0xcfff) AM_WRITE(valtric_paletteram_w) AM_BASE(&argus_paletteram)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(argus_txram_w) AM_BASE(&argus_txram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(argus_bg1ram_w) AM_BASE(&argus_bg1ram)
+	AM_RANGE(0xe000, 0xf1ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf200, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( butasan_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc000, input_port_0_r },			// Coin
-	{ 0xc001, 0xc001, input_port_1_r },			// Player 1
-	{ 0xc002, 0xc002, input_port_2_r },			// Player 2
-	{ 0xc003, 0xc003, input_port_3_r },			// DSW 1
-	{ 0xc004, 0xc004, input_port_4_r },			// DSW 2
-	{ 0xc400, 0xc7ff, butasan_bg1ram_r },
-	{ 0xc800, 0xcfff, argus_paletteram_r },
-	{ 0xd000, 0xdfff, butasan_pagedram_r },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf67f, MRA_RAM },
-	{ 0xf680, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( butasan_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)			// Coin
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)			// Player 1
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)			// Player 2
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)			// DSW 1
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)			// DSW 2
+	AM_RANGE(0xc400, 0xc7ff) AM_READ(butasan_bg1ram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(argus_paletteram_r)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(butasan_pagedram_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf67f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf680, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( butasan_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },
-	{ 0xc200, 0xc200, soundlatch_w },
-	{ 0xc201, 0xc201, argus_flipscreen_w },
-	{ 0xc202, 0xc202, argus_bankselect_w },
-	{ 0xc203, 0xc203, butasan_pageselect_w },
-	{ 0xc300, 0xc301, butasan_bg0_scrollx_w, &argus_bg0_scrollx },
-	{ 0xc302, 0xc303, argus_bg0_scrolly_w, &argus_bg0_scrolly },
-	{ 0xc304, 0xc304, butasan_bg0_status_w },
-	{ 0xc308, 0xc309, argus_bg1_scrollx_w, &argus_bg1_scrollx },
-	{ 0xc30a, 0xc30b, argus_bg1_scrolly_w, &argus_bg1_scrolly },
-	{ 0xc30c, 0xc30c, butasan_bg1_status_w },
-	{ 0xc400, 0xc7ff, butasan_bg1ram_w, &butasan_bg1ram },
-	{ 0xc800, 0xcfff, butasan_paletteram_w, &argus_paletteram },
-	{ 0xd000, 0xdfff, butasan_pagedram_w },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf67f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf680, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( butasan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0xc200, 0xc200) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc201, 0xc201) AM_WRITE(argus_flipscreen_w)
+	AM_RANGE(0xc202, 0xc202) AM_WRITE(argus_bankselect_w)
+	AM_RANGE(0xc203, 0xc203) AM_WRITE(butasan_pageselect_w)
+	AM_RANGE(0xc300, 0xc301) AM_WRITE(butasan_bg0_scrollx_w) AM_BASE(&argus_bg0_scrollx)
+	AM_RANGE(0xc302, 0xc303) AM_WRITE(argus_bg0_scrolly_w) AM_BASE(&argus_bg0_scrolly)
+	AM_RANGE(0xc304, 0xc304) AM_WRITE(butasan_bg0_status_w)
+	AM_RANGE(0xc308, 0xc309) AM_WRITE(argus_bg1_scrollx_w) AM_BASE(&argus_bg1_scrollx)
+	AM_RANGE(0xc30a, 0xc30b) AM_WRITE(argus_bg1_scrolly_w) AM_BASE(&argus_bg1_scrolly)
+	AM_RANGE(0xc30c, 0xc30c) AM_WRITE(butasan_bg1_status_w)
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(butasan_bg1ram_w) AM_BASE(&butasan_bg1ram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(butasan_paletteram_w) AM_BASE(&argus_paletteram)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(butasan_pagedram_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf67f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf680, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem_a )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem_a, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem_a )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem_a, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem_b )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem_b, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem_b )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem_b, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport_1 )
-	{ 0x0000, 0x0000, YM2203_status_port_0_r },
-	{ 0x0001, 0x0001, YM2203_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport_1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport_1 )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport_1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport_2 )
-	{ 0x0000, 0x0000, YM2203_status_port_0_r },
-	{ 0x0001, 0x0001, YM2203_read_port_0_r },
-	{ 0x0080, 0x0080, YM2203_status_port_1_r },
-	{ 0x0081, 0x0081, YM2203_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport_2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x0080, 0x0080) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x0081, 0x0081) AM_READ(YM2203_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport_2 )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x80, 0x80, YM2203_control_port_1_w },
-	{ 0x81, 0x81, YM2203_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport_2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2203_write_port_1_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -812,13 +812,13 @@ static MACHINE_DRIVER_START( argus )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)			/* 4 MHz */
-	MDRV_CPU_MEMORY(argus_readmem,argus_writemem)
+	MDRV_CPU_PROGRAM_MAP(argus_readmem,argus_writemem)
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4 MHz */
-	MDRV_CPU_MEMORY(sound_readmem_a,sound_writemem_a)
-	MDRV_CPU_PORTS(sound_readport_1,sound_writeport_1)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem_a,sound_writemem_a)
+	MDRV_CPU_IO_MAP(sound_readport_1,sound_writeport_1)
 
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */
@@ -842,13 +842,13 @@ static MACHINE_DRIVER_START( valtric )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)			/* 5 MHz */
-	MDRV_CPU_MEMORY(valtric_readmem,valtric_writemem)
+	MDRV_CPU_PROGRAM_MAP(valtric_readmem,valtric_writemem)
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
-	MDRV_CPU_MEMORY(sound_readmem_a,sound_writemem_a)
-	MDRV_CPU_PORTS(sound_readport_2,sound_writeport_2)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem_a,sound_writemem_a)
+	MDRV_CPU_IO_MAP(sound_readport_2,sound_writeport_2)
 
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */
@@ -872,13 +872,13 @@ static MACHINE_DRIVER_START( butasan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)			/* 5 MHz */
-	MDRV_CPU_MEMORY(butasan_readmem,butasan_writemem)
+	MDRV_CPU_PROGRAM_MAP(butasan_readmem,butasan_writemem)
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
-	MDRV_CPU_MEMORY(sound_readmem_b,sound_writemem_b)
-	MDRV_CPU_PORTS(sound_readport_2,sound_writeport_2)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem_b,sound_writemem_b)
+	MDRV_CPU_IO_MAP(sound_readport_2,sound_writeport_2)
 
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */

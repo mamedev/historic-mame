@@ -72,58 +72,58 @@ static WRITE_HANDLER ( aeroboto_1a2_w )
 	if (data) disable_irq = 1;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, MRA_RAM }, // main RAM
-	{ 0x0800, 0x08ff, MRA_RAM }, // tile color buffer; copied to 0x2000
-	{ 0x1000, 0x17ff, MRA_RAM }, // tile RAM
-	{ 0x1800, 0x183f, MRA_RAM }, // horizontal scroll regs
-	{ 0x2000, 0x20ff, MRA_RAM }, // tile color RAM
-	{ 0x2800, 0x28ff, MRA_RAM }, // sprite RAM
-	{ 0x2973, 0x2973, aeroboto_2973_r }, // protection read
-	{ 0x3000, 0x3000, aeroboto_in0_r },
-	{ 0x3001, 0x3001, input_port_2_r },
-	{ 0x3002, 0x3002, input_port_3_r },
-	{ 0x3004, 0x3004, aeroboto_201_r }, // protection read
-	{ 0x3800, 0x3800, MRA_NOP }, // watchdog or IRQ ack
-	{ 0x4000, 0xffff, MRA_ROM }, // main ROM
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM) // main RAM
+	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM) // tile color buffer; copied to 0x2000
+	AM_RANGE(0x1000, 0x17ff) AM_READ(MRA8_RAM) // tile RAM
+	AM_RANGE(0x1800, 0x183f) AM_READ(MRA8_RAM) // horizontal scroll regs
+	AM_RANGE(0x2000, 0x20ff) AM_READ(MRA8_RAM) // tile color RAM
+	AM_RANGE(0x2800, 0x28ff) AM_READ(MRA8_RAM) // sprite RAM
+	AM_RANGE(0x2973, 0x2973) AM_READ(aeroboto_2973_r) // protection read
+	AM_RANGE(0x3000, 0x3000) AM_READ(aeroboto_in0_r)
+	AM_RANGE(0x3001, 0x3001) AM_READ(input_port_2_r)
+	AM_RANGE(0x3002, 0x3002) AM_READ(input_port_3_r)
+	AM_RANGE(0x3004, 0x3004) AM_READ(aeroboto_201_r) // protection read
+	AM_RANGE(0x3800, 0x3800) AM_READ(MRA8_NOP) // watchdog or IRQ ack
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM) // main ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x01a2, 0x01a2, aeroboto_1a2_w }, // affects IRQ line (more protection?)
-	{ 0x0000, 0x07ff, MWA_RAM, &aeroboto_mainram },
-	{ 0x0800, 0x08ff, MWA_RAM },
-	{ 0x0900, 0x09ff, MWA_RAM }, // a backup of default tile colors
-	{ 0x1000, 0x17ff, aeroboto_videoram_w, &aeroboto_videoram },
-	{ 0x1800, 0x183f, MWA_RAM, &aeroboto_hscroll },
-	{ 0x2000, 0x20ff, aeroboto_tilecolor_w, &aeroboto_tilecolor },
-	{ 0x1840, 0x27ff, MWA_NOP }, // cleared during custom LSI test
-	{ 0x2800, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2900, 0x2fff, MWA_NOP }, // cleared along with sprite RAM
-	{ 0x3000, 0x3000, aeroboto_3000_w },
-	{ 0x3001, 0x3001, soundlatch_w },
-	{ 0x3002, 0x3002, soundlatch2_w },
-	{ 0x3003, 0x3003, MWA_RAM, &aeroboto_vscroll },
-	{ 0x3004, 0x3004, MWA_RAM, &aeroboto_starx },
-	{ 0x3005, 0x3005, MWA_RAM, &aeroboto_stary }, // usable but probably wrong
-	{ 0x3006, 0x3006, MWA_RAM, &aeroboto_bgcolor },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x01a2, 0x01a2) AM_WRITE(aeroboto_1a2_w) // affects IRQ line (more protection?)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_mainram)
+	AM_RANGE(0x0800, 0x08ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0900, 0x09ff) AM_WRITE(MWA8_RAM) // a backup of default tile colors
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(aeroboto_videoram_w) AM_BASE(&aeroboto_videoram)
+	AM_RANGE(0x1800, 0x183f) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_hscroll)
+	AM_RANGE(0x2000, 0x20ff) AM_WRITE(aeroboto_tilecolor_w) AM_BASE(&aeroboto_tilecolor)
+	AM_RANGE(0x1840, 0x27ff) AM_WRITE(MWA8_NOP) // cleared during custom LSI test
+	AM_RANGE(0x2800, 0x28ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2900, 0x2fff) AM_WRITE(MWA8_NOP) // cleared along with sprite RAM
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(aeroboto_3000_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x3002, 0x3002) AM_WRITE(soundlatch2_w)
+	AM_RANGE(0x3003, 0x3003) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_vscroll)
+	AM_RANGE(0x3004, 0x3004) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_starx)
+	AM_RANGE(0x3005, 0x3005) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_stary) // usable but probably wrong
+	AM_RANGE(0x3006, 0x3006) AM_WRITE(MWA8_RAM) AM_BASE(&aeroboto_bgcolor)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x9002, 0x9002, AY8910_read_port_0_r },
-	{ 0xa002, 0xa002, AY8910_read_port_1_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9002, 0x9002) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xa002, 0xa002) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x9000, 0x9000, AY8910_control_port_0_w },
-	{ 0x9001, 0x9001, AY8910_write_port_0_w },
-	{ 0xa000, 0xa000, AY8910_control_port_1_w },
-	{ 0xa001, 0xa001, AY8910_write_port_1_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -261,12 +261,12 @@ static MACHINE_DRIVER_START( formatz )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1250000) // 1.25MHz
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(aeroboto_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 640000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -12,55 +12,43 @@
 /*  - "The Amazing Maze Game" on title screen, but manual, flyer,           */
 /*    cabinet side art all call it just "Amazing Maze"                      */
 /*                                                                          */
-/*  - Desert Gun is also known as Road Runner                               */
+/*  - Desert Gun was originally named Road Runner. The name was changed     */
+/*    when Midway merged with Bally who had a game by the same title        */
 /*                                                                          */
 /*  - Space Invaders Deluxe still says Space Invaders Part II,              */
 /*    because according to KLOV, Midway was only allowed to make minor      */
-/*    modifications of the Taito code.  Read all about it here:             */
-/*    http://www.klov.com/S/Space_Invaders_Deluxe.html                      */
+/*    modifications of the Taito code.                                      */
 /*                                                                          */
 /*                                                                          */
 /*  To Do:                                                                  */
 /*  -----                                                                   */
 /*                                                                          */
-/*  - Space Invaders Deluxe: overlay                                        */
-/*                                                                          */
 /*  - Space Encounters: 'trench' circuit                                    */
 /*                                                                          */
 /*  - Phantom II: verify clouds                                             */
 /*                                                                          */
-/*  - Helifire: analog wave and star background                             */
-/*                                                                          */
 /*  - Sheriff: color PROM                                           		*/
 /*                                                                          */
 /*                                                                          */
-/*  Games confirmed not use an overlay (pure black and white):              */
-/*  ---------------------------------------------------------               */
+/* Change Log:                                                              */
+/* ----------                                                               */
 /*                                                                          */
-/*  - 4 Player Bowling                                                      */
+/* 24 Dec 1998 - added sitv [LT]                                            */
 /*                                                                          */
-/****************************************************************************/
+/* 21 Nov 1999 - added spacewar3 [LT]                                       */
 /*                                                                          */
-/* Change Log                                                               */
+/* 26 May 2001 - added galxwars                                             */
+/*                     galxwar2                                             */
+/*                     jspectr2                                             */
+/*                     ozmawar2                                             */
+/*                     spaceatt                                             */
+/*                     sstrangr                                             */
 /*                                                                          */
-/* 26 May 2001 - Following were renamed                                     */
-/* galxwars -> galxwart - Galaxy Wars (c)1979 Taito, possible bootleg       */
-/* spaceatt -> spaceat2 - Space Attack Part II                              */
+/* 26 May 2001 - changed galxwars input port so the new sets work           */
 /*                                                                          */
-/* 26 May 2001 - Following were added                                       */
-/* galxwars - Galaxy Wars (set 1) (c)1979 Universal                         */
-/* galxwar2 - Galaxy Wars (set 2) (c)1979 Universal                         */
-/* jspectr2 - Jatre Specter (set 2) (c)1979 Jatre                           */
-/* ozmawar2 - Ozma Wars (set 2) (c)1979 SNK, on Taito 3 Colour Invaders BD  */
-/* spaceatt - Space Attack (c)1978 Video Game GMBH                          */
-/* sstrangr - Space Stranger (c)1978 Yachiyo Electronics, Ltd.              */
+/* 30 Jul 2001 - added sstrngr2                                             */
 /*                                                                          */
-/* 26 May 2001 - galxwars input port changed slightly so the new sets work  */
 /*                                                                          */
-/* ------------------------------------------------------------------------ */
-/*                                                                          */
-/* 30 July 2001 - sstrngr2 Added (c)1979 Yachiyo, Colour version of Space   */
-/*                Stranger, board has Stranger 2 written on it              */
 /****************************************************************************/
 
 #include "driver.h"
@@ -71,63 +59,53 @@
 extern struct Samplesinterface circus_samples_interface;
 
 
-static PALETTE_INIT( 8080bw )
-{
-	palette_set_color(0,0x00,0x00,0x00); /* black */
-	palette_set_color(1,0xff,0xff,0xff); /* white */
-}
+/* gmissile and m4 need the RAM mirror */
 
+static ADDRESS_MAP_START( c8080bw_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_MIRROR(0x4000) AM_READWRITE(MRA8_RAM, c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( c8080bw_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x63ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( c8080bw_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(c8080bw_shift_data_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c8080bw_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x63ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writeport_0_3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(c8080bw_shift_amount_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( c8080bw_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, c8080bw_shift_data_r },
-PORT_END
+static ADDRESS_MAP_START( writeport_1_2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(c8080bw_shift_amount_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_data_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_0_3 )
-	{ 0x00, 0x00, c8080bw_shift_amount_w },
-	{ 0x03, 0x03, c8080bw_shift_data_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_2_3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_amount_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_1_2 )
-	{ 0x01, 0x01, c8080bw_shift_amount_w },
-	{ 0x02, 0x02, c8080bw_shift_data_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_2_4, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_amount_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_data_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_2_3 )
-	{ 0x02, 0x02, c8080bw_shift_amount_w },
-	{ 0x03, 0x03, c8080bw_shift_data_w },
-PORT_END
-
-static PORT_WRITE_START( writeport_2_4 )
-	{ 0x02, 0x02, c8080bw_shift_amount_w },
-	{ 0x04, 0x04, c8080bw_shift_data_w },
-PORT_END
-
-static PORT_WRITE_START( writeport_4_3 )
-	{ 0x03, 0x03, c8080bw_shift_data_w },
-	{ 0x04, 0x04, c8080bw_shift_amount_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_4_3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_amount_w)
+ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( 8080bw )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",8080,2000000)        /* 2 MHz? */
-	MDRV_CPU_MEMORY(c8080bw_readmem,c8080bw_writemem)
-	MDRV_CPU_PORTS(c8080bw_readport,writeport_2_4)
+	MDRV_CPU_PROGRAM_MAP(c8080bw_cpu_map,0)
+	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_2_4)
 	MDRV_CPU_VBLANK_INT(c8080bw_interrupt,2)    /* two interrupts per frame */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -137,7 +115,7 @@ static MACHINE_DRIVER_START( 8080bw )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(2)
-	MDRV_PALETTE_INIT(8080bw)
+	MDRV_PALETTE_INIT(black_and_white)
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(8080bw)
 
@@ -215,8 +193,6 @@ MACHINE_DRIVER_END
 /*                                                     */
 /* Space Invaders TV Version (Taito)                   */
 /*                                                     */
-/*LT 24-12-1998                                        */
-
 /*******************************************************/
 
 /* same as Invaders with a test mode switch */
@@ -268,7 +244,6 @@ INPUT_PORTS_END
 
 /*******************************************************/
 /*                                                     */
-
 /* Midway "Space Invaders Part II"                     */
 /*                                                     */
 /*******************************************************/
@@ -331,6 +306,7 @@ static MACHINE_DRIVER_START( invadpt2 )
 	MDRV_PALETTE_INIT(invadpt2)
 MACHINE_DRIVER_END
 
+
 /*******************************************************/
 /*                                                     */
 /* Cosmo                                               */
@@ -376,41 +352,41 @@ INPUT_PORTS_START( cosmo )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-static MEMORY_READ_START( cosmo_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x57ff, MRA_ROM },
-	{ 0x5c00, 0x5fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cosmo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x57ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5c00, 0x5fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cosmo_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x57ff, MWA_ROM },
-	{ 0x5c00, 0x5fff, cosmo_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( cosmo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x57ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5c00, 0x5fff) AM_WRITE(cosmo_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( cosmo_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( cosmo_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-/* at least one of these IOWP_NOPs must be sound related */
-static PORT_WRITE_START( cosmo_writeport )
-	{ 0x00, 0x00, IOWP_NOP },
-	{ 0x01, 0x01, IOWP_NOP },
-	{ 0x02, 0x02, IOWP_NOP },
-	{ 0x06, 0x06, watchdog_reset_w },
-	{ 0x07, 0x07, IOWP_NOP },
-PORT_END
+/* at least one of these MWA8_NOPs must be sound related */
+static ADDRESS_MAP_START( cosmo_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x06, 0x06) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 	
 static MACHINE_DRIVER_START( cosmo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(invaders)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(cosmo_readmem, cosmo_writemem)
-	MDRV_CPU_PORTS(cosmo_readport, cosmo_writeport)
+	MDRV_CPU_PROGRAM_MAP(cosmo_readmem, cosmo_writemem)
+	MDRV_CPU_IO_MAP(cosmo_readport, cosmo_writeport)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
@@ -652,19 +628,19 @@ MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
-/* Yachiro "Space Strangers"                           */
+/* Yachiyo "Space Stranger"                            */
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( sstrangr_readport )
-	{ 0x41, 0x41, input_port_2_r },
-	{ 0x42, 0x42, input_port_1_r },
-	{ 0x44, 0x44, input_port_4_r },
-PORT_END
+static ADDRESS_MAP_START( sstrangr_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x41, 0x41) AM_READ(input_port_2_r)
+	AM_RANGE(0x42, 0x42) AM_READ(input_port_1_r)
+	AM_RANGE(0x44, 0x44) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sstrangr_writeport )
+static ADDRESS_MAP_START( sstrangr_writeport, ADDRESS_SPACE_IO, 8 )
 	/* no shifter circuit */
-PORT_END
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( sstrangr )
 	PORT_START      /* IN0 */
@@ -722,7 +698,7 @@ static MACHINE_DRIVER_START( sstrangr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(sstrangr_readport,sstrangr_writeport)
+	MDRV_CPU_IO_MAP(sstrangr_readport,sstrangr_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_MACHINE_INIT(sstrangr)
 
@@ -737,9 +713,18 @@ MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
-/* Yachiro "Space Strangers 2"                         */
+/* Yachiyo "Space Stranger 2"                          */
 /*                                                     */
 /*******************************************************/
+
+/* colour version of Space Stranger, board has Stranger 2 written on it */
+
+static ADDRESS_MAP_START( sstrngr2_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_RAM, c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x63ff) AM_ROM
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( sstrngr2 )
 	PORT_START      /* IN0 */
@@ -798,7 +783,8 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(sstrangr_readport,sstrangr_writeport)
+	MDRV_CPU_PROGRAM_MAP(sstrngr2_cpu_map,0)
+	MDRV_CPU_IO_MAP(sstrangr_readport,sstrangr_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_MACHINE_INIT(sstrangr)
 
@@ -816,7 +802,6 @@ MACHINE_DRIVER_END
 /*******************************************************/
 /*                                                     */
 /* Taito "Space Laser"                                 */
-
 /*                                                     */
 /*******************************************************/
 
@@ -869,9 +854,6 @@ INPUT_PORTS_END
 /*******************************************************/
 /*                                                     */
 /* Space War Part 3                                    */
-/*                                                     */
-/* Added 21/11/1999 By LT                              */
-/* Thanks to Peter Fyfe for machine info               */
 /*                                                     */
 /*******************************************************/
 
@@ -1088,23 +1070,23 @@ INPUT_PORTS_END
 /*                                                     */
 /*******************************************************/
 
-static MEMORY_READ_START( rollingc_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-//  { 0x2000, 0x2002, MRA_RAM },
-//  { 0x2003, 0x2003, hack },
-	{ 0x4000, 0x5fff, MRA_ROM },
-	{ 0xa000, 0xbfff, schaser_colorram_r },
-	{ 0xe400, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rollingc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+//  AM_RANGE(0x2000, 0x2002) AM_READ(MRA8_RAM)
+//  AM_RANGE(0x2003, 0x2003) AM_READ(hack)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(schaser_colorram_r)
+	AM_RANGE(0xe400, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rollingc_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x5fff, MWA_ROM },
-	{ 0xa000, 0xbfff, schaser_colorram_w, &colorram },
-	{ 0xe400, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rollingc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(schaser_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe400, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( rollingc )
 	PORT_START      /* IN0 */
@@ -1156,7 +1138,7 @@ static MACHINE_DRIVER_START( rollingc )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(rollingc_readmem,rollingc_writemem)
+	MDRV_CPU_PROGRAM_MAP(rollingc_readmem,rollingc_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
@@ -1177,42 +1159,42 @@ MACHINE_DRIVER_END
 /*                                                       */
 /*********************************************************/
 
-static MEMORY_READ_START( sheriff_readmem )
-	{ 0x0000, 0x27ff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sheriff_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x27ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sheriff_writemem )
-	{ 0x0000, 0x27ff, MWA_ROM },
-	{ 0x4000, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x6000, 0x7fff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sheriff_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x27ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sheriff_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, c8080bw_shift_data_r },
-	{ 0x04, 0x04, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( sheriff_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(c8080bw_shift_data_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sheriff_sound_readmem )
-	{ 0x0000, 0x03ff, MRA_ROM },
-MEMORY_END
-static MEMORY_WRITE_START( sheriff_sound_writemem )
-	{ 0x0000, 0x03ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sheriff_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( sheriff_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sheriff_sound_readport )
-	{ I8039_p1, I8039_p1, sheriff_sh_p1_r },
-	{ I8039_p2, I8039_p2, sheriff_sh_p2_r },
-	{ I8039_t0, I8039_t0, sheriff_sh_t0_r },
-	{ I8039_t1, I8039_t1, sheriff_sh_t1_r },
-PORT_END
+static ADDRESS_MAP_START( sheriff_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_READ(sheriff_sh_p1_r)
+	AM_RANGE(I8039_p2, I8039_p2) AM_READ(sheriff_sh_p2_r)
+	AM_RANGE(I8039_t0, I8039_t0) AM_READ(sheriff_sh_t0_r)
+	AM_RANGE(I8039_t1, I8039_t1) AM_READ(sheriff_sh_t1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sheriff_sound_writeport )
-	{ I8039_p2, I8039_p2, sheriff_sh_p2_w },
-PORT_END
+static ADDRESS_MAP_START( sheriff_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(sheriff_sh_p2_w)
+ADDRESS_MAP_END
 
 /* All of the controls/dips for cocktail mode are as per the schematic */
 /* BUT a coffee table version was never manufactured and support was   */
@@ -1339,14 +1321,14 @@ static MACHINE_DRIVER_START( sheriff )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,20160000/8)        /* 2.52 MHz */
-	MDRV_CPU_MEMORY(sheriff_readmem,sheriff_writemem)
-	MDRV_CPU_PORTS(sheriff_readport,writeport_2_3)
+	MDRV_CPU_PROGRAM_MAP(sheriff_readmem,sheriff_writemem)
+	MDRV_CPU_IO_MAP(sheriff_readport,writeport_2_3)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 
-	MDRV_CPU_MEMORY(sheriff_sound_readmem,sheriff_sound_writemem)
-	MDRV_CPU_PORTS(sheriff_sound_readport,sheriff_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sheriff_sound_readmem,sheriff_sound_writemem)
+	MDRV_CPU_IO_MAP(sheriff_sound_readport,sheriff_sound_writeport)
 
 	MDRV_MACHINE_INIT(sheriff)
 
@@ -1365,11 +1347,11 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( spcenctr_readport )
-	{ 0x00, 0x00, spcenctr_port_0_r }, /* These 2 ports use Gray's binary encoding */
-	{ 0x01, 0x01, spcenctr_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( spcenctr_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(spcenctr_port_0_r) /* These 2 ports use Gray's binary encoding */
+	AM_RANGE(0x01, 0x01) AM_READ(spcenctr_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( spcenctr )
@@ -1412,7 +1394,7 @@ static MACHINE_DRIVER_START( spcenctr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(spcenctr_readport,0)
+	MDRV_CPU_IO_MAP(spcenctr_readport,0)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -1424,12 +1406,12 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( gunfight_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, boothill_shift_data_r },
-PORT_END
+static ADDRESS_MAP_START( gunfight_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(boothill_shift_data_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( gunfight )
     /* Gun position uses bits 4-6, handled using fake paddles */
@@ -1500,7 +1482,7 @@ static MACHINE_DRIVER_START( gunfight )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(gunfight_readport,writeport_2_4)
+	MDRV_CPU_IO_MAP(gunfight_readport,writeport_2_4)
 	MDRV_MACHINE_INIT(gunfight)
 
 	/* sound hardware */
@@ -1556,7 +1538,7 @@ static MACHINE_DRIVER_START( m4 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(gunfight_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -1612,7 +1594,7 @@ static MACHINE_DRIVER_START( boothill )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(gunfight_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
 	MDRV_MACHINE_INIT(boothill)
 
 	/* sound hardware */
@@ -1626,19 +1608,19 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static MEMORY_READ_START( schaser_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_ROM },
-	{ 0xc000, 0xdfff, schaser_colorram_r },
-MEMORY_END
+static ADDRESS_MAP_START( schaser_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(schaser_colorram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( schaser_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x5fff, MWA_ROM },
-	{ 0xc000, 0xdfff, schaser_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( schaser_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(schaser_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( schaser )
 	PORT_START      /* IN0 */
@@ -1696,9 +1678,8 @@ static MACHINE_DRIVER_START( schaser )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
-	MDRV_CPU_MEMORY(schaser_readmem,schaser_writemem)
+	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
 	MDRV_MACHINE_INIT(schaser)
-
 
 	/* video hardware */
 
@@ -1765,7 +1746,7 @@ INPUT_PORTS_END
 
 /*******************************************************/
 /*                                                     */
-/* Taito "Staright Flush"                              */
+/* Taito "Straight Flush"                              */
 /*                                                     */
 /*******************************************************/
 
@@ -1777,36 +1758,37 @@ static READ_HANDLER( sfl_input_r )
 	return sfl_int|input_port_1_r(0);
 }
 
-static MEMORY_READ_START( sflush_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM}, //?
-	{ 0x4000, 0x5fff, MRA_RAM},
-	{ 0xa000, 0xbfff, schaser_colorram_r},
-	{ 0x8008, 0x8008, input_port_2_r},
-	{ 0x8009, 0x8009, c8080bw_shift_data_r },
-	{ 0x800a, 0x800a, sfl_input_r },
-	{ 0x800b, 0x800b, input_port_0_r },
-	{ 0xd800, 0xffff, MRA_ROM },
+static ADDRESS_MAP_START( sflush_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM) //?
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(schaser_colorram_r)
+	AM_RANGE(0x8008, 0x8008) AM_READ(input_port_2_r)
+	AM_RANGE(0x8009, 0x8009) AM_READ(c8080bw_shift_data_r)
+	AM_RANGE(0x800a, 0x800a) AM_READ(sfl_input_r)
+	AM_RANGE(0x800b, 0x800b) AM_READ(input_port_0_r)
+	AM_RANGE(0xd800, 0xffff) AM_READ(MRA8_ROM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sflush_writemem )
-	{0x0000, 0x1fff, MWA_RAM},
-	{0x4000, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size},
-	{0x8018, 0x8018, c8080bw_shift_data_w },
-	{0x8019, 0x8019, c8080bw_shift_amount_w },
-	{0x801a, 0x801a, MWA_NOP },
-	{0x801c, 0x801c, MWA_NOP },
-	{0x801d, 0x801d, MWA_NOP },
-	{0xa000, 0xbfff, schaser_colorram_w, &colorram},
-	{0xd800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sflush_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8018, 0x8018) AM_WRITE(c8080bw_shift_data_w)
+	AM_RANGE(0x8019, 0x8019) AM_WRITE(c8080bw_shift_amount_w)
+	AM_RANGE(0x801a, 0x801a) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x801c, 0x801c) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x801d, 0x801d) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(schaser_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( sflush )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",M6800,2000000)        /* ?? */
-	MDRV_CPU_MEMORY(sflush_readmem,sflush_writemem)
+	MDRV_CPU_PROGRAM_MAP(sflush_readmem,sflush_writemem)
+	MDRV_CPU_IO_MAP(0,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,2)
 
 	/* video hardware */
@@ -1936,7 +1918,7 @@ static MACHINE_DRIVER_START( clowns )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(c8080bw_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_1_2)
 	MDRV_MACHINE_INIT(clowns)
 
 	/* sound hardware */
@@ -1977,7 +1959,6 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x08, "70" )
@@ -1987,8 +1968,8 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x00, "500" )
 	PORT_DIPSETTING(    0x20, "700" )
 	PORT_DIPSETTING(    0x10, "1000" )
-	PORT_DIPSETTING(    0x30, "None" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPSETTING(    0x30, "1300" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
@@ -2038,7 +2019,7 @@ static MACHINE_DRIVER_START( 280zzzap )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(c8080bw_readport,writeport_4_3)
+	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_4_3)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2098,7 +2079,7 @@ static MACHINE_DRIVER_START( lupin3 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(schaser_readmem,schaser_writemem)
+	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
@@ -2115,35 +2096,35 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static MEMORY_READ_START( helifire_readmem )
-	{ 0x0000, 0x27ff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-	{ 0xc000, 0xddff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( helifire_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x27ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xddff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( helifire_writemem )
-	{ 0x0000, 0x27ff, MWA_ROM },
-	{ 0x4000, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0x6000, 0x7fff, MWA_RAM },
-	{ 0xc000, 0xdfff, helifire_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( helifire_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x27ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(helifire_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( helifire_sound_readmem )
-	{ 0x0000, 0x03ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( helifire_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( helifire_sound_writemem )
-	{ 0x0000, 0x03ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( helifire_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( helifire_sound_readport )
-	{ I8039_p1, I8039_p1, helifire_sh_p1_r },
-PORT_END
+static ADDRESS_MAP_START( helifire_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_READ(helifire_sh_p1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( helifire_sound_writeport )
-	{ I8039_p1, I8039_p1, helifire_sh_p1_w }, /* DAC data */
-	{ I8039_p2, I8039_p2, helifire_sh_p2_w }, /* bit7: DAC vref control, other bits: analog sounds */
-PORT_END
+static ADDRESS_MAP_START( helifire_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(helifire_sh_p1_w) /* DAC data */
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(helifire_sh_p2_w) /* bit7: DAC vref control, other bits: analog sounds */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( helifire )
 	PORT_START      /* 00 Main Controls */
@@ -2256,14 +2237,14 @@ static MACHINE_DRIVER_START( helifire )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,20160000/8)        /* 2.52 MHz */
-	MDRV_CPU_MEMORY(helifire_readmem,helifire_writemem)
-	MDRV_CPU_PORTS(sheriff_readport,writeport_2_3)
+	MDRV_CPU_PROGRAM_MAP(helifire_readmem,helifire_writemem)
+	MDRV_CPU_IO_MAP(sheriff_readport,writeport_2_3)
 	MDRV_MACHINE_INIT(helifire)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(helifire_sound_readmem,helifire_sound_writemem)
-	MDRV_CPU_PORTS(helifire_sound_readport,helifire_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(helifire_sound_readmem,helifire_sound_writemem)
+	MDRV_CPU_IO_MAP(helifire_sound_readport,helifire_sound_writeport)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8+4*256) /* 8 standard, 2*256 for shades of blue and red without the green star, 2*256 for the shades of blue and red with the green star - used for analog background emulation */
@@ -2388,9 +2369,9 @@ static MACHINE_DRIVER_START( polaris )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
-	MDRV_CPU_MEMORY(schaser_readmem,schaser_writemem)
+	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
 
-	MDRV_CPU_PORTS(c8080bw_readport,writeport_0_3)
+	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_0_3)
 	MDRV_CPU_VBLANK_INT(polaris_interrupt,2)
 	MDRV_MACHINE_INIT(polaris)
 
@@ -2447,7 +2428,6 @@ INPUT_PORTS_END
 
 
 /*******************************************************/
-
 /*                                                     */
 /* Midway "Phantom II"                                 */
 /*                                                     */
@@ -2498,7 +2478,7 @@ static MACHINE_DRIVER_START( phantom2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(gunfight_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
 	MDRV_CPU_VBLANK_INT(phantom2_interrupt,2)
 	MDRV_MACHINE_INIT(phantom2)
 
@@ -2559,17 +2539,16 @@ INPUT_PORTS_END
 /*******************************************************/
 /*                                                     */
 /* Midway "4 Player Bowling"                           */
-
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( bowler_readport )
-	{ 0x01, 0x01, c8080bw_shift_data_comp_r },
-	{ 0x02, 0x02, input_port_0_r },				/* dip switch */
-	{ 0x04, 0x04, input_port_1_r },				/* coins / switches */
-	{ 0x05, 0x05, input_port_2_r },				/* ball vert */
-	{ 0x06, 0x06, input_port_3_r },				/* ball horz */
-PORT_END
+static ADDRESS_MAP_START( bowler_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(c8080bw_shift_data_comp_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_0_r)				/* dip switch */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r)				/* coins / switches */
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_2_r)				/* ball vert */
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)				/* ball horz */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( bowler )
 	PORT_START      /* IN2 */
@@ -2616,7 +2595,7 @@ static MACHINE_DRIVER_START( bowler )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(bowler_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(bowler_readport,writeport_1_2)
 	MDRV_MACHINE_INIT(bowler)
 
 	/* video hardware */
@@ -2633,13 +2612,13 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( shuffle_readport )
-	{ 0x01, 0x01, c8080bw_shift_data_r },
-	{ 0x02, 0x02, input_port_0_r },				/* dip switch */
-	{ 0x04, 0x04, input_port_1_r },				/* coins / switches */
-	{ 0x05, 0x05, input_port_2_r },				/* ball vert */
-	{ 0x06, 0x06, input_port_3_r },				/* ball horz */
-PORT_END
+static ADDRESS_MAP_START( shuffle_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(c8080bw_shift_data_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_0_r)				/* dip switch */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r)				/* coins / switches */
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_2_r)				/* ball vert */
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)				/* ball horz */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( shuffle )
 	PORT_START      /* DSW0 */
@@ -2685,7 +2664,7 @@ static MACHINE_DRIVER_START( shuffle )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(shuffle_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(shuffle_readport,writeport_1_2)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2697,12 +2676,12 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( seawolf_readport )
-	{ 0x00, 0x00, c8080bw_shift_data_rev_r },
-	{ 0x01, 0x01, input_port_0_r },
-	{ 0x02, 0x02, input_port_1_r },
-	{ 0x03, 0x03, c8080bw_shift_data_r },
-PORT_END
+static ADDRESS_MAP_START( seawolf_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(c8080bw_shift_data_rev_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+	AM_RANGE(0x03, 0x03) AM_READ(c8080bw_shift_data_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( seawolf )
 	PORT_START      /* IN0 */
@@ -2739,7 +2718,7 @@ static MACHINE_DRIVER_START( seawolf )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(seawolf_readport,writeport_4_3)
+	MDRV_CPU_IO_MAP(seawolf_readport,writeport_4_3)
 	MDRV_MACHINE_INIT(seawolf)
 
 	/* sound hardware */
@@ -2776,7 +2755,7 @@ static MACHINE_DRIVER_START( blueshrk )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(seawolf_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(seawolf_readport,writeport_1_2)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2820,7 +2799,7 @@ static MACHINE_DRIVER_START( desertgu )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(seawolf_readport,writeport_1_2)
+	MDRV_CPU_IO_MAP(seawolf_readport,writeport_1_2)
 	MDRV_MACHINE_INIT(desertgu)
 
 	/* sound hardware */
@@ -2850,8 +2829,8 @@ INPUT_PORTS_START( einnings )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )		/* vistor bat */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )	/* vistor fielders left */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )		/* visitor bat */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )	/* visitor fielders left */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	/* visitor fielders right */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )	/* visitor pitch left */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	/* visitor pitch right */
@@ -2988,12 +2967,12 @@ INPUT_PORTS_END
 /*                                                     */
 /*******************************************************/
 
-static PORT_READ_START( checkmat_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( checkmat_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( checkmat )
@@ -3056,7 +3035,7 @@ static MACHINE_DRIVER_START( checkmat )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(checkmat_readport,0)
+	MDRV_CPU_IO_MAP(checkmat_readport,0)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -3332,15 +3311,71 @@ MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
-/* Yosaku To Donbee                                    */
+/* Wing "Yosaku To Donbei"                             */
 /*                                                     */
 /*******************************************************/
+
+static ADDRESS_MAP_START( yosakdon_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( yosakdon_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM) /* what's this? */
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( yosakdon_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( yosakdon_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x05, 0x05) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP) /* character numbers */
+ADDRESS_MAP_END
+
+
+INPUT_PORTS_START( yosakdon )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 
 static MACHINE_DRIVER_START( yosakdon )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(yosakdon_readmem, yosakdon_writemem)
+	MDRV_CPU_IO_MAP(yosakdon_readport, yosakdon_writeport)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
@@ -3348,6 +3383,12 @@ static MACHINE_DRIVER_START( yosakdon )
 	/* sound hardware */
 MACHINE_DRIVER_END
 
+
+/*******************************************************/
+/*                                                     */
+/* Leijac "Space King"                                 */
+/*                                                     */
+/*******************************************************/
 
 INPUT_PORTS_START( spceking )
 	PORT_START      /* IN0 */
@@ -3461,7 +3502,6 @@ ROM_START( tst_invd )
 	ROM_LOAD( "invaders.f",   0x1000, 0x0800, CRC(0ccead96) SHA1(537aef03468f63c5b9e11dd61e253f7ae17d9743) )
 	ROM_LOAD( "invaders.e",   0x1800, 0x0800, CRC(14e538b0) SHA1(1d6ca0c99f9df71e2990b610deb9d7da0125e2d8) )
 ROM_END
-
 
 ROM_START( alieninv )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -3590,7 +3630,6 @@ ROM_START( invaddlx )
 	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, CRC(f4aa1880) SHA1(995d77b67cb4f2f3781c2c8747cb058b7c1b3412) )
 	ROM_LOAD( "invdelux.e",   0x1800, 0x0800, CRC(408849c1) SHA1(f717e81017047497a2e9f33f0aafecfec5a2ed7d) )
 	ROM_LOAD( "invdelux.d",   0x4000, 0x0800, CRC(e8d5afcd) SHA1(91fde9a9e7c3dd53aac4770bd169721a79b41ed1) )
-
 ROM_END
 
 ROM_START( moonbase )
@@ -3741,7 +3780,6 @@ ROM_START( cosmo )
 	ROM_LOAD( "2.35",         0x0800, 0x0800, CRC(df3eb731) SHA1(fb90c1d0f2518195dd49062c9f0fd890536d89f4) ) 
 	ROM_LOAD( "3.34",         0x1000, 0x0800, CRC(772c813f) SHA1(a1c0d857c660fb0b838dd0466af7bf5d73bcd55d) ) 
 	ROM_LOAD( "4.33",         0x1800, 0x0800, CRC(279f66e6) SHA1(8ce71c08cca0bdde2f2e0ef21622731c4610c030) ) 
-
 	ROM_LOAD( "5.32",         0x4000, 0x0800, CRC(cefb18df) SHA1(bb500cf3f7d1a54045a165d3613a92ab3f11d3e8) ) 
 	ROM_LOAD( "6.31",         0x4800, 0x0800, CRC(b037f6c4) SHA1(b9a42948052b8cda8d2e4575e59909589f4e7a8d) ) 
 	ROM_LOAD( "7.42",         0x5000, 0x0800, CRC(c3831ea2) SHA1(8c67ef0312656ef0eeff34b8463376c736bd8ea1) ) 
@@ -4129,6 +4167,17 @@ ROM_START( yosakdon )
 	ROM_LOAD( "yd7.bin", 	  0x1c00, 0x0400, CRC(2744e68b) SHA1(5ad5a7a615d36f57b6d560425e035c15e25e9005) )
 ROM_END
 
+ROM_START( yosakdoa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "yosaku1",      0x0000, 0x0400, CRC(d132f4f0) SHA1(373c7ea1bd6debcb3dad5881793b8c31dc7a01e6) ) 
+	ROM_LOAD( "yd2.bin", 	  0x0400, 0x0400, CRC(78336df4) SHA1(b0b6254568d191d2d0b9c9280a3ccf2417ef3f38) )
+	ROM_LOAD( "yosaku3",      0x0800, 0x0400, CRC(b1a0b3eb) SHA1(4eb80668920b45dc6216424f8ca53d753a35f4f1) ) 
+	ROM_LOAD( "yosaku4",      0x0c00, 0x0400, CRC(c06c225e) SHA1(2699e3c13b09b6de16bd3ca3ca2e9d7a91b7e268) ) 
+	ROM_LOAD( "yosaku5",      0x1400, 0x0400, CRC(ae422a43) SHA1(5219680f9d6c5d984b29167f85106fa375856121) ) 
+	ROM_LOAD( "yosaku6",      0x1800, 0x0400, CRC(26b24a12) SHA1(387589fa4027d41b6fb06555661d4f92fe2f990c) ) 
+	ROM_LOAD( "yosaku7",      0x1c00, 0x0400, CRC(878d5a18) SHA1(6adc8763d5644602eed7fe6d9186a48be105aace) ) 
+ROM_END
+
 ROM_START( sheriff )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
 	ROM_LOAD( "f1",           0x0000, 0x0400, CRC(e79df6e8) SHA1(908176de9bfc3d48e2da9af6ba7ebdee698ec2de) )
@@ -4263,7 +4312,7 @@ ROM_END
 /* 605 */ GAMEX(1976, tornbase, 0,        8080bw,   tornbase, 8080bw,	ROT0,   "Midway", "Tornado Baseball", GAME_NO_SOUND )
 /* 610 */ GAMEX(1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   "Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
 /* 611 */ GAMEX(1976, maze,     0,        8080bw,   maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND )
-/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   "Midway", "Boot Hill" )
+/* 612 */ GAMEX(1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   "Midway", "Boot Hill" , GAME_IMPERFECT_SOUND )
 /* 615 */ GAMEX(1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   "Midway", "Checkmate", GAME_NO_SOUND )
 /* 618 */ GAMEX(1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   "Midway", "Desert Gun", GAME_NO_SOUND )
 /* 619 */ GAMEX(1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   "Midway", "Double Play", GAME_NO_SOUND )
@@ -4271,7 +4320,7 @@ ROM_END
 /* 623 */ GAMEX(1977, gmissile, 0,        m4,       gmissile, 8080bw,   ROT0,   "Midway", "Guided Missile", GAME_NO_SOUND )
 /* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_NO_SOUND )
 /* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_IMPERFECT_SOUND )
-/* 630 */ GAMEX(1978, clowns1,  clowns,   clowns,   clowns1,   8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND )
+/* 630 */ GAMEX(1978, clowns1,  clowns,   clowns,   clowns1,  8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND )
 /* 640    																		"Midway", "Space Walk" */
 /* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
@@ -4299,7 +4348,7 @@ ROM_END
 	  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue" )
 	  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth" )
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)" )
-	  GAMEX(1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "bootleg", "Cosmo", GAME_NO_SOUND )
+	  GAMEX(1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "TDS & Mints", "Cosmo", GAME_NO_SOUND )
 	  GAMEX(1979, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 	  GAMEX(1979, schasrcv, schaser,  lupin3,   schasrcv, schaser,  ROT270, "Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
 	  GAMEX(1979, sflush,   0,        sflush,   sflush,   rollingc,	ROT270, "Taito", "Straight Flush",GAME_NO_SOUND| GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL)
@@ -4340,7 +4389,6 @@ ROM_END
 	  GAMEX(19??, invrvnge, 0,        invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND )
 	  GAMEX(19??, invrvnga, invrvnge, invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd. (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
 	  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "GamePlan (Taito)", "Space Laser" )
-
 	  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser" )
 	  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)" )
 	  GAMEX(1979, rollingc, 0,        rollingc, rollingc, rollingc, ROT270, "Nichibutsu", "Rolling Crash / Moon Base", GAME_NO_SOUND )
@@ -4348,4 +4396,5 @@ ROM_END
 	  GAME( 1979, ozmawar2, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "SNK", "Ozma Wars (set 2)" ) /* Uses Taito's three board colour version of Space Invaders PCB */
 	  GAME( 1979, solfight, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "bootleg", "Solar Fight" )
 	  GAME( 1979, spaceph,  ozmawars, invaders, spaceph,  8080bw,   ROT270, "Zilec Games", "Space Phantoms" )
-	  GAMEX(1979, yosakdon, 0,        yosakdon, lrescue,  8080bw,   ROT270, "bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )
+	  GAMEX(1979, yosakdon, 0,        yosakdon, yosakdon, 8080bw,   ROT270, "Wing", "Yosaku To Donbei (set 1)", GAME_NO_SOUND ) /* bootleg? */
+	  GAMEX(1979, yosakdoa, yosakdon, yosakdon, yosakdon, 8080bw,   ROT270, "Wing", "Yosaku To Donbei (set 2)", GAME_NO_SOUND ) /* bootleg? */

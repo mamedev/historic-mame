@@ -1180,43 +1180,30 @@ static READ32_HANDLER( inputs_01_r )
  *
  *************************************/
 
-static MEMORY_READ32_START( main_readmem )
-	{ 0x000000, 0x07ffff, MRA32_ROM },
-	{ 0xc80000, 0xc80fff, MRA32_RAM },
-	{ 0xca0000, 0xca0fff, atarigx2_protection_r },
-	{ 0xd00000, 0xd1ffff, a2d_data_r },
-	{ 0xd20000, 0xd20fff, atarigen_eeprom_upper32_r },
-	{ 0xd40000, 0xd40fff, MRA32_RAM },
-	{ 0xd70000, 0xd7ffff, MRA32_RAM },
-	{ 0xe80000, 0xe80003, inputs_01_r },
-	{ 0xe82000, 0xe82003, special_port2_r },
-	{ 0xe82004, 0xe82007, special_port3_r },
-	{ 0xe86000, 0xe86003, atarigen_sound_upper32_r },
-	{ 0xff8000, 0xffffff, MRA32_RAM },
-MEMORY_END
-
-
-static MEMORY_WRITE32_START( main_writemem )
-	{ 0x000000, 0x07ffff, MWA32_ROM },
-	{ 0xc80000, 0xc80fff, MWA32_RAM },
-	{ 0xca0000, 0xca0fff, atarigx2_protection_w, &protection_base },
-	{ 0xd20000, 0xd20fff, atarigen_eeprom32_w, (data32_t **)&atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xd40000, 0xd40fff, atarigen_666_paletteram32_w, &paletteram32 },
-	{ 0xd70000, 0xd71fff, MWA32_RAM },
-	{ 0xd72000, 0xd75fff, atarigen_playfield32_w, &atarigen_playfield32 },
-	{ 0xd76000, 0xd76fff, atarigen_alpha32_w, &atarigen_alpha32 },
-	{ 0xd77000, 0xd77fff, MWA32_RAM },
-	{ 0xd78000, 0xd78fff, atarirle_0_spriteram32_w, &atarirle_0_spriteram32 },
-	{ 0xd79000, 0xd7a1ff, MWA32_RAM },
-	{ 0xd7a200, 0xd7a203, mo_command_w, &mo_command },
-	{ 0xd7a204, 0xd7ffff, MWA32_RAM },
-	{ 0xd80000, 0xd9ffff, atarigen_eeprom_enable32_w },
-	{ 0xe06000, 0xe06003, atarigen_sound_upper32_w },
-	{ 0xe08000, 0xe08003, latch_w },
-	{ 0xe0c000, 0xe0c003, atarigen_video_int_ack32_w },
-	{ 0xe0e000, 0xe0e003, MWA32_NOP },//watchdog_reset_w },
-	{ 0xff8000, 0xffffff, MWA32_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0xc80000, 0xc80fff) AM_RAM
+	AM_RANGE(0xca0000, 0xca0fff) AM_READWRITE(atarigx2_protection_r, atarigx2_protection_w) AM_BASE(&protection_base)
+	AM_RANGE(0xd00000, 0xd1ffff) AM_READ(a2d_data_r)
+	AM_RANGE(0xd20000, 0xd20fff) AM_READWRITE(atarigen_eeprom_upper32_r, atarigen_eeprom32_w) AM_BASE((data32_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xd40000, 0xd40fff) AM_READWRITE(MRA32_RAM, atarigen_666_paletteram32_w) AM_BASE(&paletteram32)
+	AM_RANGE(0xd72000, 0xd75fff) AM_WRITE(atarigen_playfield32_w) AM_BASE(&atarigen_playfield32)
+	AM_RANGE(0xd76000, 0xd76fff) AM_WRITE(atarigen_alpha32_w) AM_BASE(&atarigen_alpha32)
+	AM_RANGE(0xd78000, 0xd78fff) AM_WRITE(atarirle_0_spriteram32_w) AM_BASE(&atarirle_0_spriteram32)
+	AM_RANGE(0xd7a200, 0xd7a203) AM_WRITE(mo_command_w) AM_BASE(&mo_command)
+	AM_RANGE(0xd70000, 0xd7ffff) AM_RAM
+	AM_RANGE(0xd80000, 0xd9ffff) AM_WRITE(atarigen_eeprom_enable32_w)
+	AM_RANGE(0xe06000, 0xe06003) AM_WRITE(atarigen_sound_upper32_w)
+	AM_RANGE(0xe08000, 0xe08003) AM_WRITE(latch_w)
+	AM_RANGE(0xe0c000, 0xe0c003) AM_WRITE(atarigen_video_int_ack32_w)
+	AM_RANGE(0xe0e000, 0xe0e003) AM_WRITE(MWA32_NOP)//watchdog_reset_w },
+	AM_RANGE(0xe80000, 0xe80003) AM_READ(inputs_01_r)
+	AM_RANGE(0xe82000, 0xe82003) AM_READ(special_port2_r)
+	AM_RANGE(0xe82004, 0xe82007) AM_READ(special_port3_r)
+	AM_RANGE(0xe86000, 0xe86003) AM_READ(atarigen_sound_upper32_r)
+	AM_RANGE(0xff8000, 0xffffff) AM_RAM
+ADDRESS_MAP_END
 
 
 
@@ -1446,7 +1433,7 @@ static MACHINE_DRIVER_START( atarigx2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_14MHz)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1705,8 +1692,6 @@ static DRIVER_INIT( spclords )
 	atarigx2_playfield_base = 0x000;
 	atarigx2_motion_object_base = 0x400;
 	atarigx2_motion_object_mask = 0x3ff;
-	
-	memory_set_unmap_value(~0);
 }
 
 
@@ -1719,8 +1704,6 @@ static DRIVER_INIT( motofren )
 	atarigx2_playfield_base = 0x400;
 	atarigx2_motion_object_base = 0x200;
 	atarigx2_motion_object_mask = 0x1ff;
-
-	memory_set_unmap_value(~0);
 /*
 L/W=!68.A23*!E.A22*!E.A21										= 000x xxxx = 000000-1fffff
    +68.A23*E.A22*E.A21*68.A20*68.A19*68.A18*68.A17				= 1111 111x = fe0000-ffffff

@@ -610,42 +610,29 @@ static WRITE32_HANDLER( colorram_protection_w )
  *
  *************************************/
 
-static MEMORY_READ32_START( readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-	{ 0xc00000, 0xc00003, sound_data_r },
-	{ 0xd00014, 0xd00017, analog_port0_r },
-	{ 0xd0001c, 0xd0001f, analog_port1_r },
-	{ 0xd20000, 0xd20fff, atarigen_eeprom_upper32_r },
-	{ 0xd70000, 0xd7ffff, MRA32_RAM },
-	{ 0xd80000, 0xdfffff, colorram_protection_r },
-	{ 0xe80000, 0xe80003, inputs_01_r },
-	{ 0xe82000, 0xe82003, special_port2_r },
-	{ 0xe82004, 0xe82007, special_port3_r },
-	{ 0xf80000, 0xffffff, MRA32_RAM },
-MEMORY_END
-
-
-static MEMORY_WRITE32_START( writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0xc00000, 0xc00003, sound_data_w },
-	{ 0xd20000, 0xd20fff, atarigen_eeprom32_w, (data32_t **)&atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xd40000, 0xd4ffff, atarigen_eeprom_enable32_w },
-	{ 0xd70000, 0xd71fff, MWA32_RAM },
-	{ 0xd72000, 0xd75fff, atarigen_playfield32_w, &atarigen_playfield32 },
-	{ 0xd76000, 0xd76fff, atarigen_alpha32_w, &atarigen_alpha32 },
-	{ 0xd77000, 0xd77fff, MWA32_RAM },
-	{ 0xd78000, 0xd78fff, atarirle_0_spriteram32_w, &atarirle_0_spriteram32 },
-	{ 0xd79000, 0xd7a1ff, MWA32_RAM },
-	{ 0xd7a200, 0xd7a203, mo_command_w, &mo_command },
-	{ 0xd7a204, 0xd7ffff, MWA32_RAM },
-	{ 0xd80000, 0xdfffff, colorram_protection_w, (data32_t **)&atarigt_colorram },
-	{ 0xe04000, 0xe04003, led_w },
-	{ 0xe08000, 0xe08003, latch_w },
-	{ 0xe0a000, 0xe0a003, atarigen_scanline_int_ack32_w },
-	{ 0xe0c000, 0xe0c003, atarigen_video_int_ack32_w },
-	{ 0xe0e000, 0xe0e003, MWA32_NOP },//watchdog_reset_w },
-	{ 0xf80000, 0xffffff, MWA32_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
+	AM_RANGE(0xc00000, 0xc00003) AM_READWRITE(sound_data_r, sound_data_w)
+	AM_RANGE(0xd00014, 0xd00017) AM_READ(analog_port0_r)
+	AM_RANGE(0xd0001c, 0xd0001f) AM_READ(analog_port1_r)
+	AM_RANGE(0xd20000, 0xd20fff) AM_READWRITE(atarigen_eeprom_upper32_r, atarigen_eeprom32_w) AM_BASE((data32_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xd40000, 0xd4ffff) AM_WRITE(atarigen_eeprom_enable32_w)
+	AM_RANGE(0xd72000, 0xd75fff) AM_WRITE(atarigen_playfield32_w) AM_BASE(&atarigen_playfield32)
+	AM_RANGE(0xd76000, 0xd76fff) AM_WRITE(atarigen_alpha32_w) AM_BASE(&atarigen_alpha32)
+	AM_RANGE(0xd78000, 0xd78fff) AM_WRITE(atarirle_0_spriteram32_w) AM_BASE(&atarirle_0_spriteram32)
+	AM_RANGE(0xd7a200, 0xd7a203) AM_WRITE(mo_command_w) AM_BASE(&mo_command)
+	AM_RANGE(0xd70000, 0xd7ffff) AM_RAM
+	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(colorram_protection_r, colorram_protection_w) AM_BASE((data32_t **)&atarigt_colorram)
+	AM_RANGE(0xe04000, 0xe04003) AM_WRITE(led_w)
+	AM_RANGE(0xe08000, 0xe08003) AM_WRITE(latch_w)
+	AM_RANGE(0xe0a000, 0xe0a003) AM_WRITE(atarigen_scanline_int_ack32_w)
+	AM_RANGE(0xe0c000, 0xe0c003) AM_WRITE(atarigen_video_int_ack32_w)
+	AM_RANGE(0xe0e000, 0xe0e003) AM_WRITE(MWA32_NOP)//watchdog_reset_w },
+	AM_RANGE(0xe80000, 0xe80003) AM_READ(inputs_01_r)
+	AM_RANGE(0xe82000, 0xe82003) AM_READ(special_port2_r)
+	AM_RANGE(0xe82004, 0xe82007) AM_READ(special_port3_r)
+	AM_RANGE(0xf80000, 0xffffff) AM_RAM
+ADDRESS_MAP_END
 
 
 
@@ -844,7 +831,7 @@ static MACHINE_DRIVER_START( atarigt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_50MHz/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	MDRV_CPU_PERIODIC_INT(atarigen_scanline_int_gen,250)
 
@@ -1123,14 +1110,14 @@ static WRITE32_HANDLER( tmek_pf_w )
 	/* protected version */
 	if (pc == 0x2EB3C || pc == 0x2EB48)
 	{
-		logerror("%06X:PFW@%06X = %08X & %08X (src=%06X)\n", activecpu_get_pc(), 0xd72000 + offset*4, data, ~mem_mask, activecpu_get_reg(M68K_A4) - 2);
+		logerror("%06X:PFW@%06X = %08X & %08X (src=%06X)\n", activecpu_get_pc(), 0xd72000 + offset*4, data, ~mem_mask, (UINT32)activecpu_get_reg(M68K_A4) - 2);
 		/* skip these writes to make more stuff visible */
 		return;
 	}
 
 	/* unprotected version */
 	if (pc == 0x25834 || pc == 0x25860)
-		logerror("%06X:PFW@%06X = %08X & %08X (src=%06X)\n", activecpu_get_pc(), 0xd72000 + offset*4, data, ~mem_mask, activecpu_get_reg(M68K_A3) - 2);
+		logerror("%06X:PFW@%06X = %08X & %08X (src=%06X)\n", activecpu_get_pc(), 0xd72000 + offset*4, data, ~mem_mask, (UINT32)activecpu_get_reg(M68K_A3) - 2);
 
 	atarigen_playfield32_w(offset, data, mem_mask);
 }

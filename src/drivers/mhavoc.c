@@ -244,40 +244,40 @@ static WRITE_HANDLER( mhavoc_gammaram_w )
  *
  *************************************/
 
-static MEMORY_READ_START( alpha_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },			/* 0.5K Program Ram */
-	{ 0x0200, 0x07ff, MRA_BANK1 },			/* 3K Paged Program RAM	*/
-	{ 0x0800, 0x09ff, MRA_RAM },			/* 0.5K Program RAM */
-	{ 0x1000, 0x1000, mhavoc_gamma_r },		/* Gamma Read Port */
-	{ 0x1200, 0x1200, mhavoc_port_0_r },	/* Alpha Input Port 0 */
-	{ 0x1800, 0x1fff, MRA_RAM },			/* Shared Beta Ram */
-	{ 0x2000, 0x3fff, MRA_BANK2 },			/* Paged Program ROM (32K) */
-	{ 0x4000, 0x4fff, MRA_RAM }, 			/* Vector RAM (4K) */
-	{ 0x5000, 0x5fff, MRA_ROM },			/* Vector ROM (4K) */
-	{ 0x6000, 0x7fff, MRA_BANK3 },			/* Paged Vector ROM (32K) */
-	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (32K) */
-MEMORY_END
+static ADDRESS_MAP_START( alpha_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM	*/
+	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
+	AM_RANGE(0x1000, 0x1000) AM_READ(mhavoc_gamma_r)		/* Gamma Read Port */
+	AM_RANGE(0x1200, 0x1200) AM_READ(mhavoc_port_0_r)	/* Alpha Input Port 0 */
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)			/* Shared Beta Ram */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)			/* Paged Program ROM (32K) */
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM) 			/* Vector RAM (4K) */
+	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_ROM)			/* Vector ROM (4K) */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK3)			/* Paged Vector ROM (32K) */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (32K) */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( alpha_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },			/* 0.5K Program Ram */
-	{ 0x0200, 0x07ff, MWA_BANK1 },			/* 3K Paged Program RAM */
-	{ 0x0800, 0x09ff, MWA_RAM },			/* 0.5K Program RAM */
-	{ 0x1200, 0x1200, MWA_NOP },			/* don't care */
-	{ 0x1400, 0x141f, mhavoc_colorram_w },	/* ColorRAM */
-	{ 0x1600, 0x1600, mhavoc_out_0_w },		/* Control Signals */
-	{ 0x1640, 0x1640, avgdvg_go_w },		/* Vector Generator GO */
-	{ 0x1680, 0x1680, watchdog_reset_w },	/* Watchdog Clear */
-	{ 0x16c0, 0x16c0, avgdvg_reset_w },		/* Vector Generator Reset */
-	{ 0x1700, 0x1700, mhavoc_alpha_irq_ack_w },/* IRQ ack */
-	{ 0x1740, 0x1740, mhavoc_rom_banksel_w },/* Program ROM Page Select */
-	{ 0x1780, 0x1780, mhavoc_ram_banksel_w },/* Program RAM Page Select */
-	{ 0x17c0, 0x17c0, mhavoc_gamma_w },		/* Gamma Communication Write Port */
-	{ 0x1800, 0x1fff, MWA_RAM },			/* Shared Beta Ram */
-	{ 0x2000, 0x3fff, MWA_ROM },			/* Major Havoc writes here.*/
-	{ 0x4000, 0x4fff, MWA_RAM, &vectorram, &vectorram_size },/* Vector Generator RAM	*/
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( alpha_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_WRITE(MWA8_BANK1)			/* 3K Paged Program RAM */
+	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program RAM */
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(MWA8_NOP)			/* don't care */
+	AM_RANGE(0x1400, 0x141f) AM_WRITE(mhavoc_colorram_w)	/* ColorRAM */
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(mhavoc_out_0_w)		/* Control Signals */
+	AM_RANGE(0x1640, 0x1640) AM_WRITE(avgdvg_go_w)		/* Vector Generator GO */
+	AM_RANGE(0x1680, 0x1680) AM_WRITE(watchdog_reset_w)	/* Watchdog Clear */
+	AM_RANGE(0x16c0, 0x16c0) AM_WRITE(avgdvg_reset_w)		/* Vector Generator Reset */
+	AM_RANGE(0x1700, 0x1700) AM_WRITE(mhavoc_alpha_irq_ack_w)/* IRQ ack */
+	AM_RANGE(0x1740, 0x1740) AM_WRITE(mhavoc_rom_banksel_w)/* Program ROM Page Select */
+	AM_RANGE(0x1780, 0x1780) AM_WRITE(mhavoc_ram_banksel_w)/* Program RAM Page Select */
+	AM_RANGE(0x17c0, 0x17c0) AM_WRITE(mhavoc_gamma_w)		/* Gamma Communication Write Port */
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)			/* Shared Beta Ram */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM	*/
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -287,28 +287,28 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( gamma_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },			/* Program RAM (2K)	*/
-	{ 0x0800, 0x1fff, mhavoc_gammaram_r },	/* wraps to 0x000-0x7ff */
-	{ 0x2000, 0x203f, quad_pokey_r },		/* Quad Pokey read	*/
-	{ 0x2800, 0x2800, mhavoc_port_1_r },	/* Gamma Input Port	*/
-	{ 0x3000, 0x3000, mhavoc_alpha_r },		/* Alpha Comm. Read Port*/
-	{ 0x3800, 0x3803, input_port_2_r },		/* Roller Controller Input*/
-	{ 0x4000, 0x4000, input_port_4_r },		/* DSW at 8S */
-	{ 0x6000, 0x61ff, MRA_RAM },			/* EEROM		*/
-	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (16K)	*/
-MEMORY_END
+static ADDRESS_MAP_START( gamma_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)			/* Program RAM (2K)	*/
+	AM_RANGE(0x0800, 0x1fff) AM_READ(mhavoc_gammaram_r)	/* wraps to 0x000-0x7ff */
+	AM_RANGE(0x2000, 0x203f) AM_READ(quad_pokey_r)		/* Quad Pokey read	*/
+	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)	/* Gamma Input Port	*/
+	AM_RANGE(0x3000, 0x3000) AM_READ(mhavoc_alpha_r)		/* Alpha Comm. Read Port*/
+	AM_RANGE(0x3800, 0x3803) AM_READ(input_port_2_r)		/* Roller Controller Input*/
+	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_4_r)		/* DSW at 8S */
+	AM_RANGE(0x6000, 0x61ff) AM_READ(MRA8_RAM)			/* EEROM		*/
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (16K)	*/
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( gamma_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },			/* Program RAM (2K)	*/
-	{ 0x0800, 0x1fff, mhavoc_gammaram_w, &gammaram },	/* wraps to 0x000-0x7ff */
-	{ 0x2000, 0x203f, quad_pokey_w },		/* Quad Pokey write	*/
-	{ 0x4000, 0x4000, mhavoc_gamma_irq_ack_w },	/* IRQ Acknowledge	*/
-	{ 0x4800, 0x4800, mhavoc_out_1_w },		/* Coin Counters 	*/
-	{ 0x5000, 0x5000, mhavoc_alpha_w },		/* Alpha Comm. Write Port */
-	{ 0x6000, 0x61ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* EEROM		*/
-MEMORY_END
+static ADDRESS_MAP_START( gamma_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)			/* Program RAM (2K)	*/
+	AM_RANGE(0x0800, 0x1fff) AM_WRITE(mhavoc_gammaram_w) AM_BASE(&gammaram)	/* wraps to 0x000-0x7ff */
+	AM_RANGE(0x2000, 0x203f) AM_WRITE(quad_pokey_w)		/* Quad Pokey write	*/
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(mhavoc_gamma_irq_ack_w)	/* IRQ Acknowledge	*/
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(mhavoc_out_1_w)		/* Coin Counters 	*/
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(mhavoc_alpha_w)		/* Alpha Comm. Write Port */
+	AM_RANGE(0x6000, 0x61ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM		*/
+ADDRESS_MAP_END
 
 
 
@@ -318,42 +318,42 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( alphaone_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },			/* 0.5K Program Ram */
-	{ 0x0200, 0x07ff, MRA_BANK1 },			/* 3K Paged Program RAM	*/
-	{ 0x0800, 0x09ff, MRA_RAM },			/* 0.5K Program RAM */
-	{ 0x1020, 0x103f, dual_pokey_r },
-	{ 0x1040, 0x1040, alphaone_port_0_r },	/* Alpha Input Port 0 */
-	{ 0x1060, 0x1060, input_port_1_r },		/* Gamma Input Port	*/
-	{ 0x1080, 0x1080, input_port_2_r },		/* Roller Controller Input*/
-	{ 0x1800, 0x18ff, MRA_RAM },			/* EEROM		*/
-	{ 0x2000, 0x3fff, MRA_BANK2 },			/* Paged Program ROM (32K) */
-	{ 0x4000, 0x4fff, MRA_RAM }, 			/* Vector RAM (4K) */
-	{ 0x5000, 0x5fff, MRA_ROM },			/* Vector ROM (4K) */
-	{ 0x6000, 0x7fff, MRA_BANK3 },			/* Paged Vector ROM (32K) */
-	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (32K) */
-MEMORY_END
+static ADDRESS_MAP_START( alphaone_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM	*/
+	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
+	AM_RANGE(0x1020, 0x103f) AM_READ(dual_pokey_r)
+	AM_RANGE(0x1040, 0x1040) AM_READ(alphaone_port_0_r)	/* Alpha Input Port 0 */
+	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)		/* Gamma Input Port	*/
+	AM_RANGE(0x1080, 0x1080) AM_READ(input_port_2_r)		/* Roller Controller Input*/
+	AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)			/* EEROM		*/
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)			/* Paged Program ROM (32K) */
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM) 			/* Vector RAM (4K) */
+	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_ROM)			/* Vector ROM (4K) */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK3)			/* Paged Vector ROM (32K) */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (32K) */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( alphaone_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },			/* 0.5K Program Ram */
-	{ 0x0200, 0x07ff, MWA_BANK1 },			/* 3K Paged Program RAM */
-	{ 0x0800, 0x09ff, MWA_RAM },			/* 0.5K Program RAM */
-	{ 0x1020, 0x103f, dual_pokey_w },
-	{ 0x1040, 0x1040, MWA_NOP },			/* Nothing here */
-	{ 0x10a0, 0x10a0, alphaone_out_0_w },	/* Control Signals */
-	{ 0x10a4, 0x10a4, avgdvg_go_w },		/* Vector Generator GO */
-	{ 0x10a8, 0x10a8, watchdog_reset_w },	/* Watchdog Clear */
-	{ 0x10ac, 0x10ac, avgdvg_reset_w },		/* Vector Generator Reset */
-	{ 0x10b0, 0x10b0, mhavoc_alpha_irq_ack_w },	/* IRQ ack */
-	{ 0x10b4, 0x10b4, mhavoc_rom_banksel_w },
-	{ 0x10b8, 0x10b8, mhavoc_ram_banksel_w },
-	{ 0x10e0, 0x10ff, mhavoc_colorram_w },	/* ColorRAM */
-	{ 0x1800, 0x18ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* EEROM		*/
-	{ 0x2000, 0x3fff, MWA_ROM },			/* Major Havoc writes here.*/
-	{ 0x4000, 0x4fff, MWA_RAM, &vectorram, &vectorram_size },/* Vector Generator RAM	*/
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( alphaone_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_WRITE(MWA8_BANK1)			/* 3K Paged Program RAM */
+	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program RAM */
+	AM_RANGE(0x1020, 0x103f) AM_WRITE(dual_pokey_w)
+	AM_RANGE(0x1040, 0x1040) AM_WRITE(MWA8_NOP)			/* Nothing here */
+	AM_RANGE(0x10a0, 0x10a0) AM_WRITE(alphaone_out_0_w)	/* Control Signals */
+	AM_RANGE(0x10a4, 0x10a4) AM_WRITE(avgdvg_go_w)		/* Vector Generator GO */
+	AM_RANGE(0x10a8, 0x10a8) AM_WRITE(watchdog_reset_w)	/* Watchdog Clear */
+	AM_RANGE(0x10ac, 0x10ac) AM_WRITE(avgdvg_reset_w)		/* Vector Generator Reset */
+	AM_RANGE(0x10b0, 0x10b0) AM_WRITE(mhavoc_alpha_irq_ack_w)	/* IRQ ack */
+	AM_RANGE(0x10b4, 0x10b4) AM_WRITE(mhavoc_rom_banksel_w)
+	AM_RANGE(0x10b8, 0x10b8) AM_WRITE(mhavoc_ram_banksel_w)
+	AM_RANGE(0x10e0, 0x10ff) AM_WRITE(mhavoc_colorram_w)	/* ColorRAM */
+	AM_RANGE(0x1800, 0x18ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM		*/
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM	*/
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -580,10 +580,10 @@ static MACHINE_DRIVER_START( mhavoc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("alpha", M6502, MHAVOC_CLOCK_2_5M)		/* 2.5 MHz */
-	MDRV_CPU_MEMORY(alpha_readmem,alpha_writemem)
+	MDRV_CPU_PROGRAM_MAP(alpha_readmem,alpha_writemem)
 
 	MDRV_CPU_ADD_TAG("gamma", M6502, MHAVOC_CLOCK_1_25M)	/* 1.25 MHz */
-	MDRV_CPU_MEMORY(gamma_readmem,gamma_writemem)
+	MDRV_CPU_PROGRAM_MAP(gamma_readmem,gamma_writemem)
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_MACHINE_INIT(mhavoc)
@@ -609,7 +609,7 @@ static MACHINE_DRIVER_START( alphaone )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mhavoc)
 	MDRV_CPU_MODIFY("alpha")
-	MDRV_CPU_MEMORY(alphaone_readmem,alphaone_writemem)
+	MDRV_CPU_PROGRAM_MAP(alphaone_readmem,alphaone_writemem)
 	MDRV_CPU_REMOVE("gamma")
 
 	/* video hardware */

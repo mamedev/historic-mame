@@ -11,67 +11,69 @@
 
 
 
-static MEMORY_READ_START( berzerk_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0800, 0x09ff, MRA_RAM },
-	{ 0x1000, 0x37ff, MRA_ROM },
-	{ 0x4000, 0x87ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( berzerk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x37ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x87ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( berzerk_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0800, 0x09ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x1000, 0x37ff, MWA_ROM },
-	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram },
-	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram },
-	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram },
-MEMORY_END
-
-
-static MEMORY_READ_START( frenzy_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x87ff, MRA_RAM },
-	{ 0xc000, 0xcfff, MRA_ROM },
-	{ 0xf800, 0xf9ff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( frenzy_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram },
-	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram },
-	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram },
-	{ 0xc000, 0xcfff, MWA_ROM },
-	{ 0xf800, 0xf9ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( berzerk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1000, 0x37ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(berzerk_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(berzerk_magicram_w) AM_BASE(&berzerk_magicram)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(berzerk_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x44, 0x44, berzerk_voiceboard_r },
-	{ 0x48, 0x48, input_port_0_r },
-	{ 0x49, 0x49, input_port_1_r },
-	{ 0x4a, 0x4a, input_port_2_r },
-	{ 0x4c, 0x4c, berzerk_nmi_enable_r },
-	{ 0x4d, 0x4d, berzerk_nmi_disable_r },
-	{ 0x4e, 0x4e, berzerk_port_4e_r },
-	{ 0x60, 0x60, input_port_4_r },
-	{ 0x61, 0x61, input_port_5_r },
-	{ 0x62, 0x62, input_port_6_r },
-	{ 0x63, 0x63, input_port_7_r },
-	{ 0x64, 0x64, input_port_8_r },
-	{ 0x65, 0x65, input_port_9_r },
-	{ 0x66, 0x66, berzerk_led_off_r },
-	{ 0x67, 0x67, berzerk_led_on_r },
-PORT_END
+static ADDRESS_MAP_START( frenzy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xf9ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x40, 0x46, berzerk_sound_control_a_w }, /* First sound board */
-	{ 0x47, 0x47, IOWP_NOP }, /* not used sound stuff */
-	{ 0x4b, 0x4b, berzerk_magicram_control_w },
-	{ 0x4c, 0x4c, berzerk_nmi_enable_w },
-	{ 0x4d, 0x4d, berzerk_nmi_disable_w },
-	{ 0x4f, 0x4f, berzerk_irq_enable_w },
-	{ 0x50, 0x57, IOWP_NOP }, /* Second sound board but not used */
-PORT_END
+static ADDRESS_MAP_START( frenzy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(berzerk_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(berzerk_magicram_w) AM_BASE(&berzerk_magicram)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(berzerk_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x44, 0x44) AM_READ(berzerk_voiceboard_r)
+	AM_RANGE(0x48, 0x48) AM_READ(input_port_0_r)
+	AM_RANGE(0x49, 0x49) AM_READ(input_port_1_r)
+	AM_RANGE(0x4a, 0x4a) AM_READ(input_port_2_r)
+	AM_RANGE(0x4c, 0x4c) AM_READ(berzerk_nmi_enable_r)
+	AM_RANGE(0x4d, 0x4d) AM_READ(berzerk_nmi_disable_r)
+	AM_RANGE(0x4e, 0x4e) AM_READ(berzerk_port_4e_r)
+	AM_RANGE(0x60, 0x60) AM_READ(input_port_4_r)
+	AM_RANGE(0x61, 0x61) AM_READ(input_port_5_r)
+	AM_RANGE(0x62, 0x62) AM_READ(input_port_6_r)
+	AM_RANGE(0x63, 0x63) AM_READ(input_port_7_r)
+	AM_RANGE(0x64, 0x64) AM_READ(input_port_8_r)
+	AM_RANGE(0x65, 0x65) AM_READ(input_port_9_r)
+	AM_RANGE(0x66, 0x66) AM_READ(berzerk_led_off_r)
+	AM_RANGE(0x67, 0x67) AM_READ(berzerk_led_on_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x46) AM_WRITE(berzerk_sound_control_a_w) /* First sound board */
+	AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) /* not used sound stuff */
+	AM_RANGE(0x4b, 0x4b) AM_WRITE(berzerk_magicram_control_w)
+	AM_RANGE(0x4c, 0x4c) AM_WRITE(berzerk_nmi_enable_w)
+	AM_RANGE(0x4d, 0x4d) AM_WRITE(berzerk_nmi_disable_w)
+	AM_RANGE(0x4f, 0x4f) AM_WRITE(berzerk_irq_enable_w)
+	AM_RANGE(0x50, 0x57) AM_WRITE(MWA8_NOP) /* Second sound board but not used */
+ADDRESS_MAP_END
 
 
 #define COINAGE(CHUTE) \
@@ -309,8 +311,8 @@ static MACHINE_DRIVER_START( berzerk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 2500000)        /* 2.5 MHz */
-	MDRV_CPU_MEMORY(berzerk_readmem,berzerk_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(berzerk_readmem,berzerk_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -339,7 +341,7 @@ static MACHINE_DRIVER_START( frenzy )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(berzerk)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(frenzy_readmem,frenzy_writemem)
+	MDRV_CPU_PROGRAM_MAP(frenzy_readmem,frenzy_writemem)
 
 	MDRV_MACHINE_INIT(NULL)
 	MDRV_NVRAM_HANDLER(NULL)

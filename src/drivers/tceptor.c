@@ -224,144 +224,144 @@ static READ_HANDLER( readFF )
 
 /*******************************************************************/
 
-static MEMORY_READ_START( m6809_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x16ff, MRA_RAM },
-	{ 0x1700, 0x17ff, MRA_RAM },
-	{ 0x1800, 0x1bff, tceptor_tile_ram_r },
-	{ 0x1c00, 0x1fff, tceptor_tile_attr_r },
-	{ 0x2000, 0x3fff, tceptor_bg_ram_r },		// background (VIEW RAM)
-	{ 0x4000, 0x40ff, namcos1_wavedata_r },
-	{ 0x4000, 0x43ff, mcu_shared_r },
-	{ 0x4f00, 0x4f00, MRA_NOP },			// unknown
-	{ 0x4f01, 0x4f01, input_port_4_r },		// analog input (accel)
-	{ 0x4f02, 0x4f02, input_port_5_r },		// analog input (left/right)
-	{ 0x4f03, 0x4f03, input_port_6_r },		// analog input (up/down)
-	{ 0x6000, 0x7fff, m68k_shared_r },		// COM RAM
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6809_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x16ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x1bff) AM_READ(tceptor_tile_ram_r)
+	AM_RANGE(0x1c00, 0x1fff) AM_READ(tceptor_tile_attr_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(tceptor_bg_ram_r)		// background (VIEW RAM)
+	AM_RANGE(0x4000, 0x40ff) AM_READ(namcos1_wavedata_r)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(mcu_shared_r)
+	AM_RANGE(0x4f00, 0x4f00) AM_READ(MRA8_NOP)			// unknown
+	AM_RANGE(0x4f01, 0x4f01) AM_READ(input_port_4_r)		// analog input (accel)
+	AM_RANGE(0x4f02, 0x4f02) AM_READ(input_port_5_r)		// analog input (left/right)
+	AM_RANGE(0x4f03, 0x4f03) AM_READ(input_port_6_r)		// analog input (up/down)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(m68k_shared_r)		// COM RAM
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m6809_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x16ff, MWA_RAM },
-	{ 0x1700, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1bff, tceptor_tile_ram_w, &tceptor_tile_ram },
-	{ 0x1c00, 0x1fff, tceptor_tile_attr_w, &tceptor_tile_attr },
-	{ 0x2000, 0x3fff, tceptor_bg_ram_w, &tceptor_bg_ram },	// background (VIEW RAM)
-	{ 0x4000, 0x40ff, namcos1_wavedata_w },
-	{ 0x4000, 0x43ff, mcu_shared_w },
-	{ 0x4800, 0x4800, MWA_NOP },			// 3D scope left/right?
-	{ 0x4f00, 0x4f03, MWA_NOP },			// analog input control?
-	{ 0x5000, 0x5006, tceptor_bg_scroll_w },	// bg scroll
-	{ 0x6000, 0x7fff, m68k_shared_w, &m68k_shared_ram },
-	{ 0x8000, 0x8000, m6809_irq_disable_w },
-	{ 0x8800, 0x8800, m6809_irq_enable_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ_START( m6502_a_readmem )
-	{ 0x0000, 0x00ff, m6502_b_shared_r },
-	{ 0x0100, 0x01ff, MRA_RAM },
-	{ 0x0200, 0x02ff, MRA_RAM },
-	{ 0x0300, 0x030f, MRA_RAM },
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x3000, 0x30ff, m6502_a_shared_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( m6502_a_writemem )
-	{ 0x0000, 0x00ff, m6502_b_shared_w },
-	{ 0x0100, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x02ff, MWA_RAM },
-	{ 0x0300, 0x030f, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x3000, 0x30ff, m6502_a_shared_w, &m6502_a_shared_ram },
-	{ 0x3c01, 0x3c01, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6809_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x16ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(tceptor_tile_ram_w) AM_BASE(&tceptor_tile_ram)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(tceptor_tile_attr_w) AM_BASE(&tceptor_tile_attr)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(tceptor_bg_ram_w) AM_BASE(&tceptor_bg_ram)	// background (VIEW RAM)
+	AM_RANGE(0x4000, 0x40ff) AM_WRITE(namcos1_wavedata_w)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(mcu_shared_w)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(MWA8_NOP)			// 3D scope left/right?
+	AM_RANGE(0x4f00, 0x4f03) AM_WRITE(MWA8_NOP)			// analog input control?
+	AM_RANGE(0x5000, 0x5006) AM_WRITE(tceptor_bg_scroll_w)	// bg scroll
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(m68k_shared_w) AM_BASE(&m68k_shared_ram)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(m6809_irq_disable_w)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(m6809_irq_enable_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( m6502_b_readmem )
-	{ 0x0000, 0x00ff, m6502_b_shared_r },
-	{ 0x0100, 0x01ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6502_a_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(m6502_b_shared_r)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0200, 0x02ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0300, 0x030f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x3000, 0x30ff) AM_READ(m6502_a_shared_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m6502_b_writemem )
-	{ 0x0000, 0x00ff, m6502_b_shared_w, &m6502_b_shared_ram },
-	{ 0x0100, 0x01ff, MWA_RAM },
-	{ 0x4000, 0x4000, voice_w },			// voice data
-	{ 0x5000, 0x5000, MWA_RAM },			// voice ctrl??
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ16_START( m68k_readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM },		// M68K ERROR 1
-	{ 0x100000, 0x10ffff, MRA16_ROM },		// not sure
-	{ 0x200000, 0x203fff, MRA16_RAM },		// M68K ERROR 0
-	{ 0x700000, 0x703fff, m68k_shared_word_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( m68k_writemem )
-	{ 0x000000, 0x00ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_ROM },		// not sure
-	{ 0x200000, 0x203fff, MWA16_RAM },
-	{ 0x300000, 0x300001, MWA16_RAM },
-	{ 0x400000, 0x4001ff, MWA16_RAM, &tceptor_sprite_ram },
-	{ 0x500000, 0x51ffff, namco_road16_w },
-	{ 0x600000, 0x600001, m68k_irq_enable_w },	// not sure
-	{ 0x700000, 0x703fff, m68k_shared_word_w },
-MEMORY_END
+static ADDRESS_MAP_START( m6502_a_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(m6502_b_shared_w)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x02ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0300, 0x030f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x3000, 0x30ff) AM_WRITE(m6502_a_shared_w) AM_BASE(&m6502_a_shared_ram)
+	AM_RANGE(0x3c01, 0x3c01) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x1000, 0x10ff, namcos1_wavedata_r },
-	{ 0x1000, 0x13ff, mcu_shared_r },
-	{ 0x1400, 0x154d, MRA_RAM },
-	{ 0x17c0, 0x17ff, MRA_RAM },
-	{ 0x2000, 0x20ff, m6502_a_shared_r },
-	{ 0x2100, 0x2100, dsw0_r },
-	{ 0x2101, 0x2101, dsw1_r },
-	{ 0x2200, 0x2200, input0_r },
-	{ 0x2201, 0x2201, input1_r },
-	{ 0x8000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xdfff, MRA_RAM },			// Battery Backup
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6502_b_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(m6502_b_shared_r)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_w },
-	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },
-	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs },
-	{ 0x1000, 0x13ff, mcu_shared_w, &mcu_shared_ram },
-	{ 0x1400, 0x154d, MWA_RAM },
-	{ 0x17c0, 0x17ff, MWA_RAM },
-	{ 0x2000, 0x20ff, m6502_a_shared_w },
-	{ 0x8000, 0x8000, mcu_irq_disable_w },
-	{ 0x8800, 0x8800, mcu_irq_enable_w },
-	{ 0x8000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xdfff, MWA_RAM, &generic_nvram, &generic_nvram_size },	// Battery Backup
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m6502_b_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(m6502_b_shared_w) AM_BASE(&m6502_b_shared_ram)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(voice_w)			// voice data
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM)			// voice ctrl??
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( mcu_readport )
-	{ HD63701_PORT1, HD63701_PORT1, readFF },
-	{ HD63701_PORT2, HD63701_PORT2, readFF },
-PORT_END
+static ADDRESS_MAP_START( m68k_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)		// M68K ERROR 1
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_ROM)		// not sure
+	AM_RANGE(0x200000, 0x203fff) AM_READ(MRA16_RAM)		// M68K ERROR 0
+	AM_RANGE(0x700000, 0x703fff) AM_READ(m68k_shared_word_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcu_writeport )
-	{ HD63701_PORT1, HD63701_PORT1, MWA_NOP },
-	{ HD63701_PORT2, HD63701_PORT2, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( m68k_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_ROM)		// not sure
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x400000, 0x4001ff) AM_WRITE(MWA16_RAM) AM_BASE(&tceptor_sprite_ram)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(namco_road16_w)
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(m68k_irq_enable_w)	// not sure
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(m68k_shared_word_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_READ(namcos1_wavedata_r)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(mcu_shared_r)
+	AM_RANGE(0x1400, 0x154d) AM_READ(MRA8_RAM)
+	AM_RANGE(0x17c0, 0x17ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x20ff) AM_READ(m6502_a_shared_r)
+	AM_RANGE(0x2100, 0x2100) AM_READ(dsw0_r)
+	AM_RANGE(0x2101, 0x2101) AM_READ(dsw1_r)
+	AM_RANGE(0x2200, 0x2200) AM_READ(input0_r)
+	AM_RANGE(0x2201, 0x2201) AM_READ(input1_r)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xdfff) AM_READ(MRA8_RAM)			// Battery Backup
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata)
+	AM_RANGE(0x1100, 0x113f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(mcu_shared_w) AM_BASE(&mcu_shared_ram)
+	AM_RANGE(0x1400, 0x154d) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x17c0, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x20ff) AM_WRITE(m6502_a_shared_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(mcu_irq_disable_w)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(mcu_irq_enable_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	// Battery Backup
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( mcu_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_READ(readFF)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_READ(readFF)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_WRITE(MWA8_NOP)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 /*******************************************************************/
@@ -549,24 +549,24 @@ static MACHINE_DRIVER_START( tceptor )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 49152000/32)
-	MDRV_CPU_MEMORY(m6809_readmem,m6809_writemem)
+	MDRV_CPU_PROGRAM_MAP(m6809_readmem,m6809_writemem)
 	MDRV_CPU_VBLANK_INT(m6809_vb_interrupt,1)
 
 	MDRV_CPU_ADD(M65C02, 49152000/24)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(m6502_a_readmem,m6502_a_writemem)
+	MDRV_CPU_PROGRAM_MAP(m6502_a_readmem,m6502_a_writemem)
 
 	MDRV_CPU_ADD(M65C02, 49152000/24)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(m6502_b_readmem,m6502_b_writemem)
+	MDRV_CPU_PROGRAM_MAP(m6502_b_readmem,m6502_b_writemem)
 
 	MDRV_CPU_ADD(M68000, 49152000/4)
-	MDRV_CPU_MEMORY(m68k_readmem,m68k_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68k_readmem,m68k_writemem)
 	MDRV_CPU_VBLANK_INT(m68k_vb_interrupt,1)
 
 	MDRV_CPU_ADD(HD63701, 49152000/32)	/* or compatible 6808 with extra instructions */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
-	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+	MDRV_CPU_IO_MAP(mcu_readport,mcu_writeport)
 	MDRV_CPU_VBLANK_INT(mcu_vb_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

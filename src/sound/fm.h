@@ -220,9 +220,9 @@ void OPMUpdateOne(int num, INT16 **buffer, int length );
 /* ---- set callback hander when port CT0/1 write ----- */
 /* CT.bit0 = CT0 , CT.bit1 = CT1 */
 /*
-typedef void (*mem_write_handler)(int offset,int data);
+typedef void (*write8_handler)(int offset,int data);
 */
-void OPMSetPortHander(int n,mem_write_handler PortWrite);
+void OPMSetPortHander(int n,write8_handler PortWrite);
 /* JB 981119  - so it will match MAME's memory write functions scheme*/
 
 int YM2151Write(int n,int a,unsigned char v);

@@ -25,10 +25,10 @@ struct AY8910
 {
 	int Channel;
 	int SampleRate;
-	mem_read_handler PortAread;
-	mem_read_handler PortBread;
-	mem_write_handler PortAwrite;
-	mem_write_handler PortBwrite;
+	read8_handler PortAread;
+	read8_handler PortBread;
+	write8_handler PortAwrite;
+	write8_handler PortBwrite;
 	int register_latch;
 	unsigned char Regs[16];
 	int lastEnable;
@@ -712,8 +712,8 @@ void AY8910_sh_reset(void)
 
 static int AY8910_init(const char *chip_name,int chip,
 		int clock,int volume,int sample_rate,
-		mem_read_handler portAread,mem_read_handler portBread,
-		mem_write_handler portAwrite,mem_write_handler portBwrite)
+		read8_handler portAread,read8_handler portBread,
+		write8_handler portAwrite,write8_handler portBwrite)
 {
 	int i;
 	struct AY8910 *PSG = &AYPSG[chip];

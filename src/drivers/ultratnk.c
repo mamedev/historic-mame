@@ -310,40 +310,40 @@ static WRITE_HANDLER( mirror_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x01ff, mirror_r },
-	{ 0x0800, 0x0bff, MRA_RAM },
-	{ 0x0c00, 0x0cff, MRA_RAM },
-	{ 0x1000, 0x1000, input_port_1_r }, /* self test, vblank */
-	{ 0x1800, 0x1800, ultratnk_barrier_r }, /* barrier */
-	{ 0x2000, 0x2007, ultratnk_controls_r },
-	{ 0x2020, 0x2026, ultratnk_coin_r },
-	{ 0x2040, 0x2043, ultratnk_collision_r },
-	{ 0x2046, 0x2046, ultratnk_tilt_r },
-	{ 0x2060, 0x2063, ultratnk_dipsw_r },
-	{ 0x2800, 0x2fff, MRA_NOP }, /* diagnostic ROM (see code at B1F3) */
-	{ 0xb000, 0xbfff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(mirror_r)
+	AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0c00, 0x0cff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_1_r) /* self test, vblank */
+	AM_RANGE(0x1800, 0x1800) AM_READ(ultratnk_barrier_r) /* barrier */
+	AM_RANGE(0x2000, 0x2007) AM_READ(ultratnk_controls_r)
+	AM_RANGE(0x2020, 0x2026) AM_READ(ultratnk_coin_r)
+	AM_RANGE(0x2040, 0x2043) AM_READ(ultratnk_collision_r)
+	AM_RANGE(0x2046, 0x2046) AM_READ(ultratnk_tilt_r)
+	AM_RANGE(0x2060, 0x2063) AM_READ(ultratnk_dipsw_r)
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_NOP) /* diagnostic ROM (see code at B1F3) */
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM, &mirror_ram },
-	{ 0x0100, 0x01ff, mirror_w },
-	{ 0x0800, 0x0bff, ultratnk_videoram_w, &videoram },
-	{ 0x0c00, 0x0cff, MWA_RAM }, /* ? */
-	{ 0x2000, 0x201f, ultratnk_attract_w }, /* attract */
-	{ 0x2020, 0x203f, MWA_NOP }, /* collision reset 1-4, 2020-21=cr1, 22-23=cr2, 24-25=cr3, 26,27=cr4 */
-	{ 0x2040, 0x2041, da_latch_w }, /* D/A LATCH */
-	{ 0x2042, 0x2043, ultratnk_explosion_w }, /* EXPLOSION (sound) */
-	{ 0x2044, 0x2045, MWA_NOP }, /* TIMER (watchdog) RESET */
-	{ 0x2066, 0x2067, MWA_NOP }, /* LOCKOUT */
-	{ 0x2068, 0x206b, ultratnk_leds_w },
-	{ 0x206c, 0x206f, ultratnk_fire_w }, /* fire 1/2 */
-	{ 0xb000, 0xbfff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_BASE(&mirror_ram)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(mirror_w)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(ultratnk_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0cff) AM_WRITE(MWA8_RAM) /* ? */
+	AM_RANGE(0x2000, 0x201f) AM_WRITE(ultratnk_attract_w) /* attract */
+	AM_RANGE(0x2020, 0x203f) AM_WRITE(MWA8_NOP) /* collision reset 1-4, 2020-21=cr1, 22-23=cr2, 24-25=cr3, 26,27=cr4 */
+	AM_RANGE(0x2040, 0x2041) AM_WRITE(da_latch_w) /* D/A LATCH */
+	AM_RANGE(0x2042, 0x2043) AM_WRITE(ultratnk_explosion_w) /* EXPLOSION (sound) */
+	AM_RANGE(0x2044, 0x2045) AM_WRITE(MWA8_NOP) /* TIMER (watchdog) RESET */
+	AM_RANGE(0x2066, 0x2067) AM_WRITE(MWA8_NOP) /* LOCKOUT */
+	AM_RANGE(0x2068, 0x206b) AM_WRITE(ultratnk_leds_w)
+	AM_RANGE(0x206c, 0x206f) AM_WRITE(ultratnk_fire_w) /* fire 1/2 */
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -638,7 +638,7 @@ static MACHINE_DRIVER_START( ultratnk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(ultratnk_interrupt,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

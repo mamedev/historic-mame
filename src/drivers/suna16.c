@@ -82,32 +82,32 @@ WRITE16_HANDLER( uballoon_leds_w )
 							Back Street Soccer
 ***************************************************************************/
 
-static MEMORY_READ16_START( bssoccer_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM 				},	// ROM
-	{ 0x200000, 0x203fff, MRA16_RAM 				},	// RAM
-	{ 0x400000, 0x4001ff, suna16_paletteram16_r	},	// Banked Palette
-	{ 0x400200, 0x400fff, MRA16_RAM 				},	//
-	{ 0x600000, 0x61ffff, MRA16_RAM 				},	// Sprites
-	{ 0xa00000, 0xa00001, input_port_0_word_r		},	// P1 (Inputs)
-	{ 0xa00002, 0xa00003, input_port_1_word_r		},	// P2
-	{ 0xa00004, 0xa00005, input_port_2_word_r		},	// P3
-	{ 0xa00006, 0xa00007, input_port_3_word_r		},	// P4
-	{ 0xa00008, 0xa00009, input_port_4_word_r		},	// DSWs
-	{ 0xa0000a, 0xa0000b, input_port_5_word_r		},	// Coins
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM 				)	// ROM
+	AM_RANGE(0x200000, 0x203fff) AM_READ(MRA16_RAM 				)	// RAM
+	AM_RANGE(0x400000, 0x4001ff) AM_READ(suna16_paletteram16_r	)	// Banked Palette
+	AM_RANGE(0x400200, 0x400fff) AM_READ(MRA16_RAM 				)	//
+	AM_RANGE(0x600000, 0x61ffff) AM_READ(MRA16_RAM 				)	// Sprites
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(input_port_0_word_r		)	// P1 (Inputs)
+	AM_RANGE(0xa00002, 0xa00003) AM_READ(input_port_1_word_r		)	// P2
+	AM_RANGE(0xa00004, 0xa00005) AM_READ(input_port_2_word_r		)	// P3
+	AM_RANGE(0xa00006, 0xa00007) AM_READ(input_port_3_word_r		)	// P4
+	AM_RANGE(0xa00008, 0xa00009) AM_READ(input_port_4_word_r		)	// DSWs
+	AM_RANGE(0xa0000a, 0xa0000b) AM_READ(input_port_5_word_r		)	// Coins
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( bssoccer_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM 				},	// ROM
-	{ 0x200000, 0x203fff, MWA16_RAM 				},	// RAM
-	{ 0x400000, 0x4001ff, suna16_paletteram16_w, &paletteram16 },  // Banked Palette
-	{ 0x400200, 0x400fff, MWA16_RAM 				},	//
-	{ 0x600000, 0x61ffff, MWA16_RAM, &spriteram16	},	// Sprites
-	{ 0xa00000, 0xa00001, suna16_soundlatch_w		},	// To Sound CPU
-	{ 0xa00002, 0xa00003, suna16_flipscreen_w		},	// Flip Screen
-	{ 0xa00004, 0xa00005, bssoccer_leds_w			},	// Leds
-	{ 0xa00006, 0xa00007, MWA16_NOP					},	// ? IRQ 1 Ack
-	{ 0xa00008, 0xa00009, MWA16_NOP					},	// ? IRQ 2 Ack
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM 				)	// ROM
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM 				)	// RAM
+	AM_RANGE(0x400000, 0x4001ff) AM_WRITE(suna16_paletteram16_w) AM_BASE(&paletteram16)  // Banked Palette
+	AM_RANGE(0x400200, 0x400fff) AM_WRITE(MWA16_RAM 				)	//
+	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(suna16_soundlatch_w		)	// To Sound CPU
+	AM_RANGE(0xa00002, 0xa00003) AM_WRITE(suna16_flipscreen_w		)	// Flip Screen
+	AM_RANGE(0xa00004, 0xa00005) AM_WRITE(bssoccer_leds_w			)	// Leds
+	AM_RANGE(0xa00006, 0xa00007) AM_WRITE(MWA16_NOP					)	// ? IRQ 1 Ack
+	AM_RANGE(0xa00008, 0xa00009) AM_WRITE(MWA16_NOP					)	// ? IRQ 2 Ack
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -119,33 +119,33 @@ WRITE16_HANDLER( uballoon_spriteram16_w )
 	COMBINE_DATA( &spriteram16[offset] );
 }
 
-static MEMORY_READ16_START( uballoon_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM 				},	// ROM
-	{ 0x800000, 0x803fff, MRA16_RAM 				},	// RAM
-	{ 0x200000, 0x2001ff, suna16_paletteram16_r	},	// Banked Palette
-	{ 0x200200, 0x200fff, MRA16_RAM 				},	//
-	{ 0x400000, 0x41ffff, MRA16_RAM 				},	// Sprites
-	{ 0x600000, 0x600001, input_port_0_word_r		},	// P1 + Coins(Inputs)
-	{ 0x600002, 0x600003, input_port_1_word_r		},	// P2 + Coins
-	{ 0x600004, 0x600005, input_port_2_word_r		},	// DSW 1
-	{ 0x600006, 0x600007, input_port_3_word_r		},	// DSW 2
-	{ 0xa00000, 0xa0ffff, MRA16_NOP					},	// Protection
-MEMORY_END
+static ADDRESS_MAP_START( uballoon_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM 				)	// ROM
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM 				)	// RAM
+	AM_RANGE(0x200000, 0x2001ff) AM_READ(suna16_paletteram16_r	)	// Banked Palette
+	AM_RANGE(0x200200, 0x200fff) AM_READ(MRA16_RAM 				)	//
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM 				)	// Sprites
+	AM_RANGE(0x600000, 0x600001) AM_READ(input_port_0_word_r		)	// P1 + Coins(Inputs)
+	AM_RANGE(0x600002, 0x600003) AM_READ(input_port_1_word_r		)	// P2 + Coins
+	AM_RANGE(0x600004, 0x600005) AM_READ(input_port_2_word_r		)	// DSW 1
+	AM_RANGE(0x600006, 0x600007) AM_READ(input_port_3_word_r		)	// DSW 2
+	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(MRA16_NOP					)	// Protection
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( uballoon_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM 				},	// ROM
-	{ 0x800000, 0x803fff, MWA16_RAM 				},	// RAM
-	{ 0x200000, 0x2001ff, suna16_paletteram16_w, &paletteram16 },  // Banked Palette
-	{ 0x200200, 0x200fff, MWA16_RAM 				},	//
-	{ 0x400000, 0x41ffff, MWA16_RAM, &spriteram16	},	// Sprites
-	{ 0x5c0000, 0x5dffff, uballoon_spriteram16_w	},	// Sprites (Mirror?)
-	{ 0x600000, 0x600001, suna16_soundlatch_w		},	// To Sound CPU
-	{ 0x600004, 0x600005, suna16_flipscreen_w		},	// Flip Screen
-	{ 0x600008, 0x600009, uballoon_leds_w			},	// Leds
-	{ 0x60000c, 0x60000d, MWA16_NOP					},	// ? IRQ 1 Ack
-	{ 0x600010, 0x600011, MWA16_NOP					},	// ? IRQ 1 Ack
-	{ 0xa00000, 0xa0ffff, MWA16_NOP					},	// Protection
-MEMORY_END
+static ADDRESS_MAP_START( uballoon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM 				)	// ROM
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(MWA16_RAM 				)	// RAM
+	AM_RANGE(0x200000, 0x2001ff) AM_WRITE(suna16_paletteram16_w) AM_BASE(&paletteram16)  // Banked Palette
+	AM_RANGE(0x200200, 0x200fff) AM_WRITE(MWA16_RAM 				)	//
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites
+	AM_RANGE(0x5c0000, 0x5dffff) AM_WRITE(uballoon_spriteram16_w	)	// Sprites (Mirror?)
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(suna16_soundlatch_w		)	// To Sound CPU
+	AM_RANGE(0x600004, 0x600005) AM_WRITE(suna16_flipscreen_w		)	// Flip Screen
+	AM_RANGE(0x600008, 0x600009) AM_WRITE(uballoon_leds_w			)	// Leds
+	AM_RANGE(0x60000c, 0x60000d) AM_WRITE(MWA16_NOP					)	// ? IRQ 1 Ack
+	AM_RANGE(0x600010, 0x600011) AM_WRITE(MWA16_NOP					)	// ? IRQ 1 Ack
+	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(MWA16_NOP					)	// Protection
+ADDRESS_MAP_END
 
 
 
@@ -164,40 +164,40 @@ MEMORY_END
 							Back Street Soccer
 ***************************************************************************/
 
-static MEMORY_READ_START( bssoccer_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MRA_RAM					},	// RAM
-	{ 0xf801, 0xf801, YM2151_status_port_0_r	},	// YM2151
-	{ 0xfc00, 0xfc00, soundlatch_r				},	// From Main CPU
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0xf801, 0xf801) AM_READ(YM2151_status_port_0_r	)	// YM2151
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(soundlatch_r				)	// From Main CPU
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bssoccer_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MWA_RAM					},	// RAM
-	{ 0xf800, 0xf800, YM2151_register_port_0_w	},	// YM2151
-	{ 0xf801, 0xf801, YM2151_data_port_0_w		},	//
-	{ 0xfd00, 0xfd00, soundlatch2_w 			},	// To PCM Z80 #1
-	{ 0xfe00, 0xfe00, soundlatch3_w 			},	// To PCM Z80 #2
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(YM2151_data_port_0_w		)	//
+	AM_RANGE(0xfd00, 0xfd00) AM_WRITE(soundlatch2_w 			)	// To PCM Z80 #1
+	AM_RANGE(0xfe00, 0xfe00) AM_WRITE(soundlatch3_w 			)	// To PCM Z80 #2
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Ultra Balloon
 ***************************************************************************/
 
-static MEMORY_READ_START( uballoon_sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MRA_RAM					},	// RAM
-	{ 0xf801, 0xf801, YM2151_status_port_0_r	},	// YM2151
-	{ 0xfc00, 0xfc00, soundlatch_r				},	// From Main CPU
-MEMORY_END
+static ADDRESS_MAP_START( uballoon_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0xf801, 0xf801) AM_READ(YM2151_status_port_0_r	)	// YM2151
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(soundlatch_r				)	// From Main CPU
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( uballoon_sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MWA_RAM					},	// RAM
-	{ 0xf800, 0xf800, YM2151_register_port_0_w	},	// YM2151
-	{ 0xf801, 0xf801, YM2151_data_port_0_w		},	//
-	{ 0xfc00, 0xfc00, soundlatch2_w				},	// To PCM Z80
-MEMORY_END
+static ADDRESS_MAP_START( uballoon_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(YM2151_data_port_0_w		)	//
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(soundlatch2_w				)	// To PCM Z80
+ADDRESS_MAP_END
 
 
 
@@ -237,22 +237,22 @@ static WRITE_HANDLER( bssoccer_pcm_2_bankswitch_w )
 
 /* Memory maps: Yes, *no* RAM */
 
-static MEMORY_READ_START( bssoccer_pcm_1_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM			},	// ROM
-	{ 0x1000, 0xffff, MRA_BANK1 		},	// Banked ROM
-MEMORY_END
-static MEMORY_WRITE_START( bssoccer_pcm_1_writemem )
-	{ 0x0000, 0xffff, MWA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_pcm_1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x1000, 0xffff) AM_READ(MRA8_BANK1 		)	// Banked ROM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( bssoccer_pcm_1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( bssoccer_pcm_2_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM			},	// ROM
-	{ 0x1000, 0xffff, MRA_BANK2 		},	// Banked ROM
-MEMORY_END
-static MEMORY_WRITE_START( bssoccer_pcm_2_writemem )
-	{ 0x0000, 0xffff, MWA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( bssoccer_pcm_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x1000, 0xffff) AM_READ(MRA8_BANK2 		)	// Banked ROM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( bssoccer_pcm_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
 
 
@@ -270,21 +270,21 @@ static WRITE_HANDLER( bssoccer_DAC_2_w )
 
 
 
-static PORT_READ_START( bssoccer_pcm_1_readport )
-	{ 0x00, 0x00, soundlatch2_r 				},	// From The Sound Z80
-PORT_END
-static PORT_WRITE_START( bssoccer_pcm_1_writeport )
-	{ 0x00, 0x01, bssoccer_DAC_1_w				},	// 2 x DAC
-	{ 0x03, 0x03, bssoccer_pcm_1_bankswitch_w	},	// Rom Bank
-PORT_END
+static ADDRESS_MAP_START( bssoccer_pcm_1_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch2_r 				)	// From The Sound Z80
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( bssoccer_pcm_1_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(bssoccer_DAC_1_w				)	// 2 x DAC
+	AM_RANGE(0x03, 0x03) AM_WRITE(bssoccer_pcm_1_bankswitch_w	)	// Rom Bank
+ADDRESS_MAP_END
 
-static PORT_READ_START( bssoccer_pcm_2_readport )
-	{ 0x00, 0x00, soundlatch3_r 				},	// From The Sound Z80
-PORT_END
-static PORT_WRITE_START( bssoccer_pcm_2_writeport )
-	{ 0x00, 0x01, bssoccer_DAC_2_w				},	// 2 x DAC
-	{ 0x03, 0x03, bssoccer_pcm_2_bankswitch_w	},	// Rom Bank
-PORT_END
+static ADDRESS_MAP_START( bssoccer_pcm_2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch3_r 				)	// From The Sound Z80
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( bssoccer_pcm_2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(bssoccer_DAC_2_w				)	// 2 x DAC
+	AM_RANGE(0x03, 0x03) AM_WRITE(bssoccer_pcm_2_bankswitch_w	)	// Rom Bank
+ADDRESS_MAP_END
 
 
 
@@ -304,22 +304,22 @@ static WRITE_HANDLER( uballoon_pcm_1_bankswitch_w )
 
 /* Memory maps: Yes, *no* RAM */
 
-static MEMORY_READ_START( uballoon_pcm_1_readmem )
-	{ 0x0000, 0x03ff, MRA_ROM			},	// ROM
-	{ 0x0400, 0xffff, MRA_BANK1 		},	// Banked ROM
-MEMORY_END
-static MEMORY_WRITE_START( uballoon_pcm_1_writemem )
-	{ 0x0000, 0xffff, MWA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( uballoon_pcm_1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x0400, 0xffff) AM_READ(MRA8_BANK1 		)	// Banked ROM
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( uballoon_pcm_1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( uballoon_pcm_1_readport )
-	{ 0x00, 0x00, soundlatch2_r 				},	// From The Sound Z80
-PORT_END
-static PORT_WRITE_START( uballoon_pcm_1_writeport )
-	{ 0x00, 0x01, bssoccer_DAC_1_w				},	// 2 x DAC
-	{ 0x03, 0x03, uballoon_pcm_1_bankswitch_w	},	// Rom Bank
-PORT_END
+static ADDRESS_MAP_START( uballoon_pcm_1_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch2_r 				)	// From The Sound Z80
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( uballoon_pcm_1_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(bssoccer_DAC_1_w				)	// 2 x DAC
+	AM_RANGE(0x03, 0x03) AM_WRITE(uballoon_pcm_1_bankswitch_w	)	// Rom Bank
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -592,22 +592,22 @@ static MACHINE_DRIVER_START( bssoccer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* ? */
-	MDRV_CPU_MEMORY(bssoccer_readmem,bssoccer_writemem)
+	MDRV_CPU_PROGRAM_MAP(bssoccer_readmem,bssoccer_writemem)
 	MDRV_CPU_VBLANK_INT(bssoccer_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)		/* Z80B */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(bssoccer_sound_readmem,bssoccer_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(bssoccer_sound_readmem,bssoccer_sound_writemem)
 
 	MDRV_CPU_ADD(Z80, 5000000)		/* Z80B */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(bssoccer_pcm_1_readmem,bssoccer_pcm_1_writemem)
-	MDRV_CPU_PORTS(bssoccer_pcm_1_readport,bssoccer_pcm_1_writeport)
+	MDRV_CPU_PROGRAM_MAP(bssoccer_pcm_1_readmem,bssoccer_pcm_1_writemem)
+	MDRV_CPU_IO_MAP(bssoccer_pcm_1_readport,bssoccer_pcm_1_writeport)
 
 	MDRV_CPU_ADD(Z80, 5000000)		/* Z80B */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(bssoccer_pcm_2_readmem,bssoccer_pcm_2_writemem)
-	MDRV_CPU_PORTS(bssoccer_pcm_2_readport,bssoccer_pcm_2_writeport)
+	MDRV_CPU_PROGRAM_MAP(bssoccer_pcm_2_readmem,bssoccer_pcm_2_writemem)
+	MDRV_CPU_IO_MAP(bssoccer_pcm_2_readport,bssoccer_pcm_2_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -654,17 +654,17 @@ static MACHINE_DRIVER_START( uballoon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(uballoon_readmem,uballoon_writemem)
+	MDRV_CPU_PROGRAM_MAP(uballoon_readmem,uballoon_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(uballoon_sound_readmem,uballoon_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(uballoon_sound_readmem,uballoon_sound_writemem)
 
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(uballoon_pcm_1_readmem,uballoon_pcm_1_writemem)
-	MDRV_CPU_PORTS(uballoon_pcm_1_readport,uballoon_pcm_1_writeport)
+	MDRV_CPU_PROGRAM_MAP(uballoon_pcm_1_readmem,uballoon_pcm_1_writemem)
+	MDRV_CPU_IO_MAP(uballoon_pcm_1_readport,uballoon_pcm_1_writeport)
 
 	/* 2nd PCM Z80 missing */
 

@@ -71,36 +71,36 @@ WRITE_HANDLER( amspdwy_sound_w )
 	cpu_set_nmi_line(1,PULSE_LINE);
 }
 
-static MEMORY_READ_START( amspdwy_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM				},	// ROM
-//	{ 0x8000, 0x801f, MRA_RAM				},	// Palette
-	{ 0x9000, 0x93ff, videoram_r			},	// Layer
-	{ 0x9400, 0x97ff, videoram_r			},	// Mirror?
-	{ 0x9800, 0x9bff, colorram_r			},	// Layer
-	{ 0x9c00, 0x9fff, MRA_RAM				},	// Unused?
-	{ 0xa000, 0xa000, input_port_0_r		},	// DSW 1
-	{ 0xa400, 0xa400, input_port_1_r		},	// DSW 2
-	{ 0xa800, 0xa800, amspdwy_wheel_0_r		},	// Player 1
-	{ 0xac00, 0xac00, amspdwy_wheel_1_r		},	// Player 2
-	{ 0xb400, 0xb400, amspdwy_sound_r		},	// YM2151 Status + Buttons
-	{ 0xc000, 0xc0ff, MRA_RAM				},	// Sprites
-	{ 0xe000, 0xe7ff, MRA_RAM				},	// Work RAM
-MEMORY_END
+static ADDRESS_MAP_START( amspdwy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM				)	// ROM
+//	AM_RANGE(0x8000, 0x801f) AM_READ(MRA8_RAM				)	// Palette
+	AM_RANGE(0x9000, 0x93ff) AM_READ(videoram_r			)	// Layer
+	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r			)	// Mirror?
+	AM_RANGE(0x9800, 0x9bff) AM_READ(colorram_r			)	// Layer
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM				)	// Unused?
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r		)	// DSW 1
+	AM_RANGE(0xa400, 0xa400) AM_READ(input_port_1_r		)	// DSW 2
+	AM_RANGE(0xa800, 0xa800) AM_READ(amspdwy_wheel_0_r		)	// Player 1
+	AM_RANGE(0xac00, 0xac00) AM_READ(amspdwy_wheel_1_r		)	// Player 2
+	AM_RANGE(0xb400, 0xb400) AM_READ(amspdwy_sound_r		)	// YM2151 Status + Buttons
+	AM_RANGE(0xc000, 0xc0ff) AM_READ(MRA8_RAM				)	// Sprites
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM				)	// Work RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( amspdwy_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM							},	// ROM
-	{ 0x8000, 0x801f, amspdwy_paletteram_w, &paletteram	},	// Palette
-	{ 0x9000, 0x93ff, amspdwy_videoram_w, &videoram		},	// Layer
-	{ 0x9400, 0x97ff, amspdwy_videoram_w				},	// Mirror?
-	{ 0x9800, 0x9bff, amspdwy_colorram_w, &colorram		},	// Layer
-	{ 0x9c00, 0x9fff, MWA_RAM							},	// Unused?
-//	{ 0xa000, 0xa000, MWA_NOP							},	// ?
-	{ 0xa400, 0xa400, amspdwy_flipscreen_w				},	// Toggle Flip Screen?
-	{ 0xb000, 0xb000, MWA_NOP							},	// ? Exiting IRQ
-	{ 0xb400, 0xb400, amspdwy_sound_w					},	// To Sound CPU
-	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size	},	// Sprites
-	{ 0xe000, 0xe7ff, MWA_RAM							},	// Work RAM
-MEMORY_END
+static ADDRESS_MAP_START( amspdwy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM							)	// ROM
+	AM_RANGE(0x8000, 0x801f) AM_WRITE(amspdwy_paletteram_w) AM_BASE(&paletteram	)	// Palette
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(amspdwy_videoram_w) AM_BASE(&videoram		)	// Layer
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(amspdwy_videoram_w				)	// Mirror?
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(amspdwy_colorram_w) AM_BASE(&colorram		)	// Layer
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_RAM							)	// Unused?
+//	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP							)	// ?
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(amspdwy_flipscreen_w				)	// Toggle Flip Screen?
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP							)	// ? Exiting IRQ
+	AM_RANGE(0xb400, 0xb400) AM_WRITE(amspdwy_sound_w					)	// To Sound CPU
+	AM_RANGE(0xc000, 0xc0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM							)	// Work RAM
+ADDRESS_MAP_END
 
 
 READ_HANDLER( amspdwy_port_r )
@@ -109,9 +109,9 @@ READ_HANDLER( amspdwy_port_r )
 	return Tracks[offset];
 }
 
-static PORT_READ_START( amspdwy_readport )
-	{ 0x0000, 0x7fff, amspdwy_port_r	},
-PORT_END
+static ADDRESS_MAP_START( amspdwy_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(amspdwy_port_r	)
+ADDRESS_MAP_END
 
 
 
@@ -123,20 +123,20 @@ PORT_END
 
 ***************************************************************************/
 
-static MEMORY_READ_START( amspdwy_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM					},	// ROM
-	{ 0x9000, 0x9000, soundlatch_r				},	// From Main CPU
-	{ 0xc000, 0xdfff, MRA_RAM					},	// Work RAM
-	{ 0xffff, 0xffff, MRA_NOP					},	// ??? IY = FFFF at the start ?
-MEMORY_END
+static ADDRESS_MAP_START( amspdwy_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0x9000, 0x9000) AM_READ(soundlatch_r				)	// From Main CPU
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM					)	// Work RAM
+	AM_RANGE(0xffff, 0xffff) AM_READ(MRA8_NOP					)	// ??? IY = FFFF at the start ?
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( amspdwy_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
-//	{ 0x8000, 0x8000, MWA_NOP					},	// ? Written with 0 at the start
-	{ 0xa000, 0xa000, YM2151_register_port_0_w	},	// YM2151
-	{ 0xa001, 0xa001, YM2151_data_port_0_w		},	//
-	{ 0xc000, 0xdfff, MWA_RAM					},	// Work RAM
-MEMORY_END
+static ADDRESS_MAP_START( amspdwy_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM					)	// ROM
+//	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP					)	// ? Written with 0 at the start
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2151_data_port_0_w		)	//
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM					)	// Work RAM
+ADDRESS_MAP_END
 
 
 
@@ -263,12 +263,12 @@ static MACHINE_DRIVER_START( amspdwy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,3000000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ? */
-	MDRV_CPU_MEMORY(amspdwy_readmem,amspdwy_writemem)
-	MDRV_CPU_PORTS(amspdwy_readport,0)
+	MDRV_CPU_PROGRAM_MAP(amspdwy_readmem,amspdwy_writemem)
+	MDRV_CPU_IO_MAP(amspdwy_readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ: 60Hz, NMI: retn */
 
 	MDRV_CPU_ADD(Z80,3000000)	/* Can't be disabled: the YM2151 timers must work */
-	MDRV_CPU_MEMORY(amspdwy_sound_readmem,amspdwy_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(amspdwy_sound_readmem,amspdwy_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

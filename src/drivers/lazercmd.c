@@ -442,59 +442,59 @@ OVERLAY_END
 
 
 
-static MEMORY_WRITE_START( lazercmd_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x1c00, 0x1c1f, MWA_RAM },
-	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
-	{ 0x1f00, 0x1f03, lazercmd_hardware_w },
-MEMORY_END
+static ADDRESS_MAP_START( lazercmd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(lazercmd_hardware_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( lazercmd_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x1c00, 0x1c1f, MRA_RAM },
-	{ 0x1c20, 0x1eff, MRA_RAM },
-	{ 0x1f00, 0x1f07, lazercmd_hardware_r },
-MEMORY_END
+static ADDRESS_MAP_START( lazercmd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( medlanes_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x1000, 0x1800, MWA_ROM },
-	{ 0x1c00, 0x1c1f, MWA_RAM },
-	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
-	{ 0x1f00, 0x1f03, medlanes_hardware_w },
-MEMORY_END
+static ADDRESS_MAP_START( medlanes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x1800) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(medlanes_hardware_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( medlanes_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x1000, 0x1800, MRA_ROM },
-	{ 0x1c00, 0x1c1f, MRA_RAM },
-	{ 0x1c20, 0x1eff, MRA_RAM },
-	{ 0x1f00, 0x1f07, lazercmd_hardware_r },
-MEMORY_END
+static ADDRESS_MAP_START( medlanes_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1000, 0x1800) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bbonk_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x1c00, 0x1c1f, MWA_RAM },
-	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
-	{ 0x1f00, 0x1f03, bbonk_hardware_w },
-MEMORY_END
+static ADDRESS_MAP_START( bbonk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(bbonk_hardware_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( bbonk_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x1c00, 0x1c1f, MRA_RAM },
-	{ 0x1c20, 0x1eff, MRA_RAM },
-	{ 0x1f00, 0x1f07, lazercmd_hardware_r },
-MEMORY_END
+static ADDRESS_MAP_START( bbonk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( lazercmd_writeport )
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_w },
-	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_w },
-PORT_END
+static ADDRESS_MAP_START( lazercmd_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_WRITE(lazercmd_ctrl_port_w)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_WRITE(lazercmd_data_port_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( lazercmd_readport )
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_r },
-	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_r },
-PORT_END
+static ADDRESS_MAP_START( lazercmd_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READ(lazercmd_ctrl_port_r)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(lazercmd_data_port_r)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( lazercmd )
@@ -676,8 +676,8 @@ static MACHINE_DRIVER_START( lazercmd )
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_MEMORY(lazercmd_readmem,lazercmd_writemem)
-	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(lazercmd_readmem,lazercmd_writemem)
+	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -709,8 +709,8 @@ static MACHINE_DRIVER_START( medlanes )
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_MEMORY(medlanes_readmem,medlanes_writemem)
-	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(medlanes_readmem,medlanes_writemem)
+	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -741,8 +741,8 @@ static MACHINE_DRIVER_START( bbonk )
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_MEMORY(bbonk_readmem,bbonk_writemem)
-	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(bbonk_readmem,bbonk_writemem)
+	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(bbonk_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)

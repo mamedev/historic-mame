@@ -34,37 +34,26 @@
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), midtunit_vram_r },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA16_RAM },
-	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), midtunit_cmos_r },
-	{ TOBYTE(0x01600000), TOBYTE(0x0160003f), midtunit_input_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), MRA16_RAM },
-	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), midtunit_dma_r },
-	{ TOBYTE(0x01d00000), TOBYTE(0x01d0001f), midtunit_sound_state_r },
-	{ TOBYTE(0x01d01020), TOBYTE(0x01d0103f), midtunit_sound_r },
-	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), midtunit_gfxrom_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
-
-
-static MEMORY_WRITE16_START( writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), midtunit_vram_w },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA16_RAM, &midyunit_scratch_ram },
-	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), midtunit_cmos_w, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ TOBYTE(0x01480000), TOBYTE(0x014fffff), midtunit_cmos_enable_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), midtunit_paletteram_w, &paletteram16 },
-	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), midtunit_dma_w },
-	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), midtunit_control_w },
-/*	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), midtunit_cmos_enable_w }, */
-	{ TOBYTE(0x01d01020), TOBYTE(0x01d0103f), midtunit_sound_w },
-	{ TOBYTE(0x01d81060), TOBYTE(0x01d8107f), watchdog_reset16_w },
-	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), midtunit_control_w },
-	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MWA16_ROM, (data16_t **)&midyunit_gfx_rom, &midyunit_gfx_rom_size },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &midyunit_code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READWRITE(midtunit_vram_r, midtunit_vram_w)
+	AM_RANGE(0x01000000, 0x013fffff) AM_RAM
+	AM_RANGE(0x01400000, 0x0141ffff) AM_READWRITE(midtunit_cmos_r, midtunit_cmos_w) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x01480000, 0x014fffff) AM_WRITE(midtunit_cmos_enable_w)
+	AM_RANGE(0x01600000, 0x0160003f) AM_READ(midtunit_input_r)
+	AM_RANGE(0x01800000, 0x0187ffff) AM_READWRITE(MRA16_RAM, midtunit_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x01a80000, 0x01a800ff) AM_READWRITE(midtunit_dma_r, midtunit_dma_w)
+	AM_RANGE(0x01b00000, 0x01b0001f) AM_WRITE(midtunit_control_w)
+/*	AM_RANGE(0x01c00060, 0x01c0007f) AM_WRITE(midtunit_cmos_enable_w) */
+	AM_RANGE(0x01d00000, 0x01d0001f) AM_READ(midtunit_sound_state_r)
+	AM_RANGE(0x01d01020, 0x01d0103f) AM_READWRITE(midtunit_sound_r, midtunit_sound_w)
+	AM_RANGE(0x01d81060, 0x01d8107f) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x01f00000, 0x01f0001f) AM_WRITE(midtunit_control_w)
+	AM_RANGE(0x02000000, 0x07ffffff) AM_READ(midtunit_gfxrom_r) AM_BASE((data16_t **)&midyunit_gfx_rom) AM_SIZE(&midyunit_gfx_rom_size)
+//	AM_RANGE(0x1f800000, 0x1fffffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* mirror used by MK */
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xff800000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
+ADDRESS_MAP_END
 
 
 
@@ -621,7 +610,7 @@ static MACHINE_DRIVER_START( tunit_core )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
 	MDRV_VBLANK_DURATION((1000000 * (288 - 254)) / (MKLA5_FPS * 288))
@@ -663,8 +652,6 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( mk )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) 	/* sound CPU */
 	ROM_LOAD( "mks-u3.rom", 0x10000, 0x40000, CRC(c615844c) SHA1(5732f9053a5f73b0cc3b0166d7dc4430829d5bc7) )
 
@@ -672,7 +659,7 @@ ROM_START( mk )
 	ROM_LOAD( "mks-u12.rom", 0x00000, 0x40000, CRC(258bd7f9) SHA1(463890b23f17350fb9b8a85897b0777c45bc2d54) )
 	ROM_LOAD( "mks-u13.rom", 0x40000, 0x40000, CRC(7b7ec3b6) SHA1(6eec1b90d4a4855f34a7ebfbf93f3358d5627db4) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "mkt-uj12.bin", 0x00000, 0x80000, CRC(f4990bf2) SHA1(796ec84d37c8d20ca36d6439c14dee626fb8481e) )
 	ROM_LOAD16_BYTE( "mkt-ug12.bin", 0x00001, 0x80000, CRC(b06aeac1) SHA1(f66655eeab67c8cf5e496ae42dbae54d6400586f) )
 
@@ -696,8 +683,6 @@ ROM_END
 
 
 ROM_START( mkr4 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) 	/* sound CPU */
 	ROM_LOAD( "mks-u3.rom", 0x10000, 0x40000, CRC(c615844c) SHA1(5732f9053a5f73b0cc3b0166d7dc4430829d5bc7) )
 
@@ -705,7 +690,7 @@ ROM_START( mkr4 )
 	ROM_LOAD( "mks-u12.rom", 0x00000, 0x40000, CRC(258bd7f9) SHA1(463890b23f17350fb9b8a85897b0777c45bc2d54) )
 	ROM_LOAD( "mks-u13.rom", 0x40000, 0x40000, CRC(7b7ec3b6) SHA1(6eec1b90d4a4855f34a7ebfbf93f3358d5627db4) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "mkr4uj12.bin", 0x00000, 0x80000, CRC(a1b6635a) SHA1(22d396cc9c1e3a14cb01d196de6d3e864f7afc55) )
 	ROM_LOAD16_BYTE( "mkr4ug12.bin", 0x00001, 0x80000, CRC(aa94f7ea) SHA1(bd8957bf52f73b49767cc78fec84ed1109a37701) )
 
@@ -729,24 +714,22 @@ ROM_END
 
 
 ROM_START( mk2 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.l31", 0x00000, 0x80000, CRC(cf100a75) SHA1(c5cf739fdb08e311f47794eb93a8d34d4bc11cde) )
 	ROM_LOAD16_BYTE( "ug12.l31", 0x00001, 0x80000, CRC(582c7dfd) SHA1(f32bd1213ce70f74caa97a2047815cf4baee56b5) )
 
@@ -770,24 +753,22 @@ ROM_END
 
 
 ROM_START( mk2r32 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.l32", 0x00000, 0x80000, CRC(43f773a6) SHA1(a97b75bac2793f99738abcbd4054f2b860aff574) )
 	ROM_LOAD16_BYTE( "ug12.l32", 0x00001, 0x80000, CRC(dcde9619) SHA1(72b39bd68eff5938cd87d3388074172a07bda816) )
 
@@ -811,24 +792,22 @@ ROM_END
 
 
 ROM_START( mk2r21 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.121", 0x00000, 0x80000, CRC(d6a35699) SHA1(17feee7886108d6f946bf04669479d35c2edac76) )
 	ROM_LOAD16_BYTE( "ug12.121", 0x00001, 0x80000, CRC(aeb703ff) SHA1(e94cd9e6feb45e3de85661ca12452aff6e14d3ae) )
 
@@ -852,24 +831,22 @@ ROM_END
 
 
 ROM_START( mk2r14 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.l14", 0x00000, 0x80000, CRC(6d43bc6d) SHA1(578ea9c60fa94689d6ae583b86769cd56d8db311) )
 	ROM_LOAD16_BYTE( "ug12.l14", 0x00001, 0x80000, CRC(42b0da21) SHA1(94ef25b04c35b4c26b692c2c3c5f68ba747bef49) )
 
@@ -893,24 +870,22 @@ ROM_END
 
 
 ROM_START( mk2r42 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "mk242j12.bin", 0x00000, 0x80000, CRC(c7fb1525) SHA1(350be1a6f6da3a6b42764cfceae196696482def2) )
 	ROM_LOAD16_BYTE( "mk242g12.bin", 0x00001, 0x80000, CRC(443d0e0a) SHA1(20e69c266cda59be92d7cd6423f6e03ad65226eb) )
 
@@ -934,24 +909,22 @@ ROM_END
 
 
 ROM_START( mk2r91 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.l91", 0x00000, 0x80000, CRC(41953903) SHA1(f72f92beb32e724d37e5f951b24539902dc16a9f) )
 	ROM_LOAD16_BYTE( "ug12.l91", 0x00001, 0x80000, CRC(c07f745a) SHA1(049a18bc162274c897cae695032f32c851e57330) )
 
@@ -975,24 +948,22 @@ ROM_END
 
 
 ROM_START( mk2chal )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION( ADSP2100_SIZE + 0x800000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	ROM_LOAD( "su2.l1", ADSP2100_SIZE + 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x080000, 0x80000 )
-	ROM_LOAD( "su3.l1", ADSP2100_SIZE + 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x180000, 0x80000 )
-	ROM_LOAD( "su4.l1", ADSP2100_SIZE + 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x280000, 0x80000 )
-	ROM_LOAD( "su5.l1", ADSP2100_SIZE + 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x380000, 0x80000 )
-	ROM_LOAD( "su6.l1", ADSP2100_SIZE + 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x480000, 0x80000 )
-	ROM_LOAD( "su7.l1", ADSP2100_SIZE + 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
-	ROM_RELOAD(	        ADSP2100_SIZE + 0x580000, 0x80000 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "su2.l1", 0x000000, 0x80000, CRC(5f23d71d) SHA1(54c2afef243759e0f3dbe2907edbc4302f5c8bad) )
+	ROM_RELOAD(	        0x080000, 0x80000 )
+	ROM_LOAD( "su3.l1", 0x100000, 0x80000, CRC(d6d92bf9) SHA1(397351c6b707f2595e36360471015f9fa494e894) )
+	ROM_RELOAD(	        0x180000, 0x80000 )
+	ROM_LOAD( "su4.l1", 0x200000, 0x80000, CRC(eebc8e0f) SHA1(705ab63ff7672a4857d546afda6dca4973cce1ad) )
+	ROM_RELOAD(	        0x280000, 0x80000 )
+	ROM_LOAD( "su5.l1", 0x300000, 0x80000, CRC(2b0b7961) SHA1(1cdc64aab74d14afbd8c3531e3d0bd49271a281f) )
+	ROM_RELOAD(	        0x380000, 0x80000 )
+	ROM_LOAD( "su6.l1", 0x400000, 0x80000, CRC(f694b27f) SHA1(d43e38a124665f49ebb4ffc5a55e8f19a1a64686) )
+	ROM_RELOAD(	        0x480000, 0x80000 )
+	ROM_LOAD( "su7.l1", 0x500000, 0x80000, CRC(20387e0a) SHA1(505d05173b2a1f1ee3ebc2898ccd3a95c98dd04a) )
+	ROM_RELOAD(	        0x580000, 0x80000 )
 	/* su8 and su9 are unpopulated */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "uj12.chl", 0x00000, 0x80000, CRC(2d5c04e6) SHA1(85947876319c86bdcdeccda99ae1ddbcfb212484) )
 	ROM_LOAD16_BYTE( "ug12.chl", 0x00001, 0x80000, CRC(3e7a4bad) SHA1(9a8ad99e09badcea7f2bcf80a649c96a883a0463) )
 
@@ -1049,8 +1020,6 @@ ROM_END
 
 
 ROM_START( nbajam )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "nbau3.bin", 0x010000, 0x20000, CRC(3a3ea480) SHA1(d12a45cba5c35f046b176661d7877fa4fd0e6c13) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1059,7 +1028,7 @@ ROM_START( nbajam )
 	ROM_LOAD( "nbau12.bin", 0x000000, 0x80000, CRC(b94847f1) SHA1(e7efa0a379bfa91fe4ffb75f07a5dfbfde9a96b4) )
 	ROM_LOAD( "nbau13.bin", 0x080000, 0x80000, CRC(b6fe24bd) SHA1(f70f75b5570a2b368ebc74d2a7d264c618940430) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "nbauj12.bin", 0x00000, 0x80000, CRC(b93e271c) SHA1(b0e9f055376a4a4cd1115a81f71c933903c251b1) )
 	ROM_LOAD16_BYTE( "nbaug12.bin", 0x00001, 0x80000, CRC(407d3390) SHA1(a319bc890d94310e44fe2ec98bfc95665a662701) )
 
@@ -1087,8 +1056,6 @@ ROM_END
 
 
 ROM_START( nbajamr2 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "nbau3.bin", 0x010000, 0x20000, CRC(3a3ea480) SHA1(d12a45cba5c35f046b176661d7877fa4fd0e6c13) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1097,7 +1064,7 @@ ROM_START( nbajamr2 )
 	ROM_LOAD( "nbau12.bin", 0x000000, 0x80000, CRC(b94847f1) SHA1(e7efa0a379bfa91fe4ffb75f07a5dfbfde9a96b4) )
 	ROM_LOAD( "nbau13.bin", 0x080000, 0x80000, CRC(b6fe24bd) SHA1(f70f75b5570a2b368ebc74d2a7d264c618940430) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "jam2uj12.bin", 0x00000, 0x80000, CRC(0fe80b36) SHA1(fe6b21dc9b393b25c511b2914b568fa92301d749) )
 	ROM_LOAD16_BYTE( "jam2ug12.bin", 0x00001, 0x80000, CRC(5d106315) SHA1(e2cddd9ed6771e77711e3a4f25fe2d07712d954e) )
 
@@ -1125,8 +1092,6 @@ ROM_END
 
 
 ROM_START( nbajamte )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "te-u3.bin", 0x010000, 0x20000, CRC(d4551195) SHA1(e8908fbe4339fb8c93f7e74113dfd25dda1667ea) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1135,7 +1100,7 @@ ROM_START( nbajamte )
 	ROM_LOAD( "te-u12.bin", 0x000000, 0x80000, CRC(4fac97bc) SHA1(bd88d8c3edab0e35ad9f9350bcbaa17cda61d87a) )
 	ROM_LOAD( "te-u13.bin", 0x080000, 0x80000, CRC(6f27b202) SHA1(c1f0db15624d1e7102ce9fd1db49ccf86e8611d6) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "te-uj12.l4", 0x00000, 0x80000, CRC(d7c21bc4) SHA1(e05f0299b955500df6a08b1c0b24b932a9cdfa6a) )
 	ROM_LOAD16_BYTE( "te-ug12.l4", 0x00001, 0x80000, CRC(7ad49229) SHA1(e9ceedb0e620809d8a4d42087d806aa296a4cd59) )
 
@@ -1163,8 +1128,6 @@ ROM_END
 
 
 ROM_START( nbajamt1 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "te-u3.bin", 0x010000, 0x20000, CRC(d4551195) SHA1(e8908fbe4339fb8c93f7e74113dfd25dda1667ea) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1173,7 +1136,7 @@ ROM_START( nbajamt1 )
 	ROM_LOAD( "te-u12.bin", 0x000000, 0x80000, CRC(4fac97bc) SHA1(bd88d8c3edab0e35ad9f9350bcbaa17cda61d87a) )
 	ROM_LOAD( "te-u13.bin", 0x080000, 0x80000, CRC(6f27b202) SHA1(c1f0db15624d1e7102ce9fd1db49ccf86e8611d6) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "te-uj12.l1", 0x00000, 0x80000, CRC(a9f555ad) SHA1(34f5fc1b003ef8acbb2b38fbacd58d018d20ab1b) )
 	ROM_LOAD16_BYTE( "te-ug12.l1", 0x00001, 0x80000, CRC(bd4579b5) SHA1(c893cff931f1e60a1d0d29d2719f514d92fb3490) )
 
@@ -1201,8 +1164,6 @@ ROM_END
 
 
 ROM_START( nbajamt2 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "te-u3.bin", 0x010000, 0x20000, CRC(d4551195) SHA1(e8908fbe4339fb8c93f7e74113dfd25dda1667ea) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1211,7 +1172,7 @@ ROM_START( nbajamt2 )
 	ROM_LOAD( "te-u12.bin", 0x000000, 0x80000, CRC(4fac97bc) SHA1(bd88d8c3edab0e35ad9f9350bcbaa17cda61d87a) )
 	ROM_LOAD( "te-u13.bin", 0x080000, 0x80000, CRC(6f27b202) SHA1(c1f0db15624d1e7102ce9fd1db49ccf86e8611d6) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "te-uj12.l2", 0x00000, 0x80000, CRC(eaa6fb32) SHA1(8c8c0c6ace2b98679d7fe90e1f9284bdf0e14eaf) )
 	ROM_LOAD16_BYTE( "te-ug12.l2", 0x00001, 0x80000, CRC(5a694d9a) SHA1(fb74e4242d9adba03f24a81451ea06e8d9b4af96) )
 
@@ -1239,8 +1200,6 @@ ROM_END
 
 
 ROM_START( nbajamt3 )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "te-u3.bin", 0x010000, 0x20000, CRC(d4551195) SHA1(e8908fbe4339fb8c93f7e74113dfd25dda1667ea) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1249,7 +1208,7 @@ ROM_START( nbajamt3 )
 	ROM_LOAD( "te-u12.bin", 0x000000, 0x80000, CRC(4fac97bc) SHA1(bd88d8c3edab0e35ad9f9350bcbaa17cda61d87a) )
 	ROM_LOAD( "te-u13.bin", 0x080000, 0x80000, CRC(6f27b202) SHA1(c1f0db15624d1e7102ce9fd1db49ccf86e8611d6) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "te-uj12.l3", 0x00000, 0x80000, CRC(8fdf77b4) SHA1(1a8a178b19d0b8e7a5fd2ddf373a4279321440d0) )
 	ROM_LOAD16_BYTE( "te-ug12.l3", 0x00001, 0x80000, CRC(656579ed) SHA1(b038fdc814ebc8d203724fdb2f7501d40f1dc21f) )
 
@@ -1277,8 +1236,6 @@ ROM_END
 
 
 ROM_START( jdreddp )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
-
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD(  "jd_u3.rom", 0x010000, 0x20000, CRC(6154d108) SHA1(54328455ec22ba815de85aa3bfe6405353c64f5c) )
 	ROM_RELOAD(             0x030000, 0x20000 )
@@ -1287,7 +1244,7 @@ ROM_START( jdreddp )
 	ROM_LOAD( "jd_u12.rom", 0x000000, 0x80000, CRC(ef32f202) SHA1(16aea085e63496dec259291de1a64fbeab52f039) )
 	ROM_LOAD( "jd_u13.rom", 0x080000, 0x80000, CRC(3dc70473) SHA1(a3d7210301ff0579889009a075092115d9bf0600) )
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "jd_uj12.rom", 0x00000, 0x80000, CRC(7e5c8d5a) SHA1(65c0e887fea01846426067adfc4cf60dce4a1e24) )
 	ROM_LOAD16_BYTE( "jd_ug12.rom", 0x00001, 0x80000, CRC(a16b8a4a) SHA1(77abb31e7cb3b66c63ef7c1874d8544ae9a02667) )
 
@@ -1321,22 +1278,22 @@ ROM_END
  *
  *************************************/
 
-GAME( 1992, mk,       0,       tunit_adpcm, mk,      mk,       ROT0, "Midway",   "Mortal Kombat (rev 5.0 T-Unit 03/19/93)" )
-GAME( 1992, mkr4,     mk,      tunit_adpcm, mk,      mkr4,     ROT0, "Midway",   "Mortal Kombat (rev 4.0 T-Unit 02/11/93)" )
+GAME( 1992, mk,       0,       tunit_adpcm, mk,       mktunit,  ROT0, "Midway",   "Mortal Kombat (rev 5.0 T-Unit 03/19/93)" )
+GAME( 1992, mkr4,     mk,      tunit_adpcm, mk,       mktunit,  ROT0, "Midway",   "Mortal Kombat (rev 4.0 T-Unit 02/11/93)" )
 
-GAME( 1993, mk2,      0,       tunit_dcs,   mk2,     mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L3.1)" )
-GAME( 1993, mk2r32,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L3.2 (European))" )
-GAME( 1993, mk2r21,   mk2,     tunit_dcs,   mk2,     mk2r21,   ROT0, "Midway",   "Mortal Kombat II (rev L2.1)" )
-GAME( 1993, mk2r14,   mk2,     tunit_dcs,   mk2,     mk2r14,   ROT0, "Midway",   "Mortal Kombat II (rev L1.4)" )
-GAME( 1993, mk2r42,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II (rev L4.2, hack)" )
-GAME( 1993, mk2r91,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II (rev L9.1, hack)" )
-GAME( 1993, mk2chal,  mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II Challenger (hack)" )
+GAME( 1993, mk2,      0,       tunit_dcs,   mk2,      mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L3.1)" )
+GAME( 1993, mk2r32,   mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L3.2 (European))" )
+GAME( 1993, mk2r21,   mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L2.1)" )
+GAME( 1993, mk2r14,   mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "Midway",   "Mortal Kombat II (rev L1.4)" )
+GAME( 1993, mk2r42,   mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "hack",     "Mortal Kombat II (rev L4.2, hack)" )
+GAME( 1993, mk2r91,   mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "hack",     "Mortal Kombat II (rev L9.1, hack)" )
+GAME( 1993, mk2chal,  mk2,     tunit_dcs,   mk2,      mk2,      ROT0, "hack",     "Mortal Kombat II Challenger (hack)" )
 
-GAME( 1993, jdreddp,  0,       tunit_adpcm, jdreddp, jdreddp,  ROT0, "Midway",   "Judge Dredd (rev LA1, prototype)" )
+GAME( 1993, jdreddp,  0,       tunit_adpcm, jdreddp,  jdreddp,  ROT0, "Midway",   "Judge Dredd (rev LA1, prototype)" )
 
-GAME( 1993, nbajam,   0,       tunit_adpcm, nbajam,  nbajam,   ROT0, "Midway",   "NBA Jam (rev 3.01 04/07/93)" )
-GAME( 1993, nbajamr2, nbajam,  tunit_adpcm, nbajam,  nbajam20, ROT0, "Midway",   "NBA Jam (rev 2.00 02/10/93)" )
-GAME( 1994, nbajamte, nbajam,  tunit_adpcm, nbajamte,  nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 4.0 03/23/94)" )
-GAME( 1994, nbajamt1, nbajam,  tunit_adpcm, nbajamte,  nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 1.0 01/17/94)" )
-GAME( 1994, nbajamt2, nbajam,  tunit_adpcm, nbajamte,  nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 2.0 01/28/94)" )
-GAME( 1994, nbajamt3, nbajam,  tunit_adpcm, nbajamte,  nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 3.0 03/04/94)" )
+GAME( 1993, nbajam,   0,       tunit_adpcm, nbajam,   nbajam,   ROT0, "Midway",   "NBA Jam (rev 3.01 04/07/93)" )
+GAME( 1993, nbajamr2, nbajam,  tunit_adpcm, nbajam,   nbajam,   ROT0, "Midway",   "NBA Jam (rev 2.00 02/10/93)" )
+GAME( 1994, nbajamte, nbajam,  tunit_adpcm, nbajamte, nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 4.0 03/23/94)" )
+GAME( 1994, nbajamt1, nbajam,  tunit_adpcm, nbajamte, nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 1.0 01/17/94)" )
+GAME( 1994, nbajamt2, nbajam,  tunit_adpcm, nbajamte, nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 2.0 01/28/94)" )
+GAME( 1994, nbajamt3, nbajam,  tunit_adpcm, nbajamte, nbajamte, ROT0, "Midway",   "NBA Jam TE (rev 3.0 03/04/94)" )

@@ -109,101 +109,101 @@ static WRITE16_HANDLER( heberpop_sound_command_w )
 
 
 
-static MEMORY_READ16_START( shangha3_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100fff, MRA16_RAM },
-	{ 0x200000, 0x200001, input_port_0_word_r },
-	{ 0x200002, 0x200003, input_port_1_word_r },
-	{ 0x20001e, 0x20001f, AY8910_read_port_0_lsb_r },
-	{ 0x20004e, 0x20004f, shangha3_prot_r },
-	{ 0x20006e, 0x20006f, OKIM6295_status_0_lsb_r },
-	{ 0x300000, 0x30ffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( shangha3_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x200002, 0x200003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x20001e, 0x20001f) AM_READ(AY8910_read_port_0_lsb_r)
+	AM_RANGE(0x20004e, 0x20004f) AM_READ(shangha3_prot_r)
+	AM_RANGE(0x20006e, 0x20006f) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( shangha3_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x100fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
-	{ 0x200008, 0x200009, shangha3_blitter_go_w },
-	{ 0x20000a, 0x20000b, MWA16_NOP },	/* irq ack? */
-	{ 0x20000c, 0x20000d, shangha3_coinctrl_w },
-	{ 0x20002e, 0x20002f, AY8910_write_port_0_lsb_w },
-	{ 0x20003e, 0x20003f, AY8910_control_port_0_lsb_w },
-	{ 0x20004e, 0x20004f, shangha3_prot_w },
-	{ 0x20006e, 0x20006f, OKIM6295_data_0_lsb_w },
-	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
-	{ 0x340000, 0x340001, shangha3_flipscreen_w },
-	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-MEMORY_END
-
-
-static MEMORY_READ16_START( heberpop_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x100fff, MRA16_RAM },
-	{ 0x200000, 0x200001, input_port_0_word_r },
-	{ 0x200002, 0x200003, input_port_1_word_r },
-	{ 0x200004, 0x200005, input_port_2_word_r },
-	{ 0x300000, 0x30ffff, MRA16_RAM },
-	{ 0x800000, 0xb7ffff, heberpop_gfxrom_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( heberpop_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x100fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
-	{ 0x200008, 0x200009, shangha3_blitter_go_w },
-	{ 0x20000a, 0x20000b, MWA16_NOP },	/* irq ack? */
-	{ 0x20000c, 0x20000d, heberpop_coinctrl_w },
-	{ 0x20000e, 0x20000f, heberpop_sound_command_w },
-	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
-	{ 0x340000, 0x340001, shangha3_flipscreen_w },
-	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-MEMORY_END
-
-static MEMORY_READ16_START( blocken_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x100001, input_port_0_word_r },
-	{ 0x100002, 0x100003, input_port_1_word_r },
-	{ 0x100004, 0x100005, input_port_2_word_r },
-	{ 0x200000, 0x200fff, MRA16_RAM },
-	{ 0x300000, 0x30ffff, MRA16_RAM },
-	{ 0x800000, 0xb7ffff, heberpop_gfxrom_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( blocken_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100008, 0x100009, shangha3_blitter_go_w },
-	{ 0x10000a, 0x10000b, MWA16_NOP },	/* irq ack? */
-	{ 0x10000c, 0x10000d, heberpop_coinctrl_w },
-	{ 0x10000e, 0x10000f, heberpop_sound_command_w },
-	{ 0x200000, 0x200fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
-	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
-	{ 0x340000, 0x340001, shangha3_flipscreen_w },
-	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-MEMORY_END
+static ADDRESS_MAP_START( shangha3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x200008, 0x200009) AM_WRITE(shangha3_blitter_go_w)
+	AM_RANGE(0x20000a, 0x20000b) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0x20000c, 0x20000d) AM_WRITE(shangha3_coinctrl_w)
+	AM_RANGE(0x20002e, 0x20002f) AM_WRITE(AY8910_write_port_0_lsb_w)
+	AM_RANGE(0x20003e, 0x20003f) AM_WRITE(AY8910_control_port_0_lsb_w)
+	AM_RANGE(0x20004e, 0x20004f) AM_WRITE(shangha3_prot_w)
+	AM_RANGE(0x20006e, 0x20006f) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM) AM_BASE(&shangha3_ram) AM_SIZE(&shangha3_ram_size)	/* gfx & work ram */
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(shangha3_flipscreen_w)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(shangha3_gfxlist_addr_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( heberpop_sound_readmem )
-	{ 0x0000, 0xf7ff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( heberpop_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x200002, 0x200003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0xb7ffff) AM_READ(heberpop_gfxrom_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( heberpop_sound_writemem )
-	{ 0x0000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( heberpop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x200008, 0x200009) AM_WRITE(shangha3_blitter_go_w)
+	AM_RANGE(0x20000a, 0x20000b) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0x20000c, 0x20000d) AM_WRITE(heberpop_coinctrl_w)
+	AM_RANGE(0x20000e, 0x20000f) AM_WRITE(heberpop_sound_command_w)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM) AM_BASE(&shangha3_ram) AM_SIZE(&shangha3_ram_size)	/* gfx & work ram */
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(shangha3_flipscreen_w)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(shangha3_gfxlist_addr_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( heberpop_sound_readport )
-	{ 0x00, 0x00, YM2612_status_port_0_A_r },
-	{ 0x80, 0x80, OKIM6295_status_0_r },
-	{ 0xc0, 0xc0, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( blocken_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x100002, 0x100003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x100004, 0x100005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0xb7ffff) AM_READ(heberpop_gfxrom_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( heberpop_sound_writeport )
-	{ 0x00, 0x00, YM2612_control_port_0_A_w },
-	{ 0x01, 0x01, YM2612_data_port_0_A_w },
-	{ 0x02, 0x02, YM2612_control_port_0_B_w },
-	{ 0x03, 0x03, YM2612_data_port_0_B_w },
-	{ 0x80, 0x80, OKIM6295_data_0_w },
-PORT_END
+static ADDRESS_MAP_START( blocken_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100008, 0x100009) AM_WRITE(shangha3_blitter_go_w)
+	AM_RANGE(0x10000a, 0x10000b) AM_WRITE(MWA16_NOP)	/* irq ack? */
+	AM_RANGE(0x10000c, 0x10000d) AM_WRITE(heberpop_coinctrl_w)
+	AM_RANGE(0x10000e, 0x10000f) AM_WRITE(heberpop_sound_command_w)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM) AM_BASE(&shangha3_ram) AM_SIZE(&shangha3_ram_size)	/* gfx & work ram */
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(shangha3_flipscreen_w)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(shangha3_gfxlist_addr_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( heberpop_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( heberpop_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( heberpop_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( heberpop_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2612_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2612_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2612_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -516,7 +516,7 @@ static MACHINE_DRIVER_START( shangha3 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
-	MDRV_CPU_MEMORY(shangha3_readmem,shangha3_writemem)
+	MDRV_CPU_PROGRAM_MAP(shangha3_readmem,shangha3_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -542,12 +542,12 @@ static MACHINE_DRIVER_START( heberpop )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
-	MDRV_CPU_MEMORY(heberpop_readmem,heberpop_writemem)
+	MDRV_CPU_PROGRAM_MAP(heberpop_readmem,heberpop_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ??? */
-	MDRV_CPU_MEMORY(heberpop_sound_readmem,heberpop_sound_writemem)
-	MDRV_CPU_PORTS(heberpop_sound_readport,heberpop_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(heberpop_sound_readmem,heberpop_sound_writemem)
+	MDRV_CPU_IO_MAP(heberpop_sound_readport,heberpop_sound_writeport)
 								/* NMI triggered by YM3438 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -572,12 +572,12 @@ static MACHINE_DRIVER_START( blocken )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
-	MDRV_CPU_MEMORY(blocken_readmem,blocken_writemem)
+	MDRV_CPU_PROGRAM_MAP(blocken_readmem,blocken_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ??? */
-	MDRV_CPU_MEMORY(heberpop_sound_readmem,heberpop_sound_writemem)
-	MDRV_CPU_PORTS(heberpop_sound_readport,heberpop_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(heberpop_sound_readmem,heberpop_sound_writemem)
+	MDRV_CPU_IO_MAP(heberpop_sound_readport,heberpop_sound_writeport)
 								/* NMI triggered by YM3438 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -236,7 +236,7 @@ static void via_t1_timeout (int which)
     }
 	if (v->ddr_b)
 	{
-		UINT8 write_data = v->out_b & v->ddr_b;
+		UINT8 write_data = (v->out_b & v->ddr_b) | (v->ddr_b ^ 0xff);
 
 		if (v->intf->out_b_func)
 			v->intf->out_b_func(0, write_data);
@@ -508,7 +508,7 @@ void via_write(int which, int offset, int data)
 
 		if (v->ddr_b)
 		{
-			UINT8 write_data = v->out_b & v->ddr_b;
+			UINT8 write_data = (v->out_b & v->ddr_b) | (v->ddr_b ^ 0xff);
 
 			if (v->intf->out_b_func)
 				v->intf->out_b_func(0, write_data);
@@ -541,7 +541,7 @@ void via_write(int which, int offset, int data)
 
 		if (v->ddr_a)
 		{
-			UINT8 write_data = v->out_a & v->ddr_a;
+			UINT8 write_data = (v->out_a & v->ddr_a) | (v->ddr_a ^ 0xff);
 
 			if (v->intf->out_a_func)
 				v->intf->out_a_func(0, write_data);
@@ -553,7 +553,21 @@ void via_write(int which, int offset, int data)
 
 		/* If CA2 is configured as output and in pulse or handshake mode,
 		   CA2 is set now */
-		if (CA2_AUTO_HS(v->pcr))
+		if (CA2_PULSE_OUTPUT(v->pcr))
+		{
+			/* call the CA2 output function */
+			if (v->intf->out_ca2_func)
+			{
+				v->intf->out_ca2_func(0, 0);
+				v->intf->out_ca2_func(0, 1);
+			}
+			else
+				logerror("6522VIA chip %d: Port CA2 is being pulsed but has no handler.  PC: %08X\n", which, activecpu_get_pc());
+
+			/* set CA2 (shouldn't be needed) */
+			v->out_ca2 = 1;
+		}
+		else if (CA2_AUTO_HS(v->pcr))
 		{
 			if (v->out_ca2)
 			{
@@ -575,7 +589,7 @@ void via_write(int which, int offset, int data)
 
 		if (v->ddr_a)
 		{
-			UINT8 write_data = v->out_a & v->ddr_a;
+			UINT8 write_data = (v->out_a & v->ddr_a) | (v->ddr_a ^ 0xff);
 
 			if (v->intf->out_a_func)
 				v->intf->out_a_func(0, write_data);
@@ -593,7 +607,7 @@ void via_write(int which, int offset, int data)
 
 			//if (v->ddr_b)
 			{
-				UINT8 write_data = v->out_b & v->ddr_b;
+				UINT8 write_data = (v->out_b & v->ddr_b) | (v->ddr_b ^ 0xff);
 
 				if (v->intf->out_b_func)
 					v->intf->out_b_func(0, write_data);
@@ -611,7 +625,7 @@ void via_write(int which, int offset, int data)
 
 			//if (v->ddr_a)
 			{
-				UINT8 write_data = v->out_a & v->ddr_a;
+				UINT8 write_data = (v->out_a & v->ddr_a) | (v->ddr_a ^ 0xff);
 
 				if (v->intf->out_a_func)
 					v->intf->out_a_func(0, write_data);
@@ -643,7 +657,7 @@ void via_write(int which, int offset, int data)
 
 			//if (v->ddr_b)
 			{
-				UINT8 write_data = v->out_b & v->ddr_b;
+				UINT8 write_data = (v->out_b & v->ddr_b) | (v->ddr_b ^ 0xff);
 
 				if (v->intf->out_b_func)
 					v->intf->out_b_func(0, write_data);
@@ -740,7 +754,7 @@ logerror("6522VIA chip %d: PCR = %02X.  PC: %08X\n", which, data, activecpu_get_
 
 			//if (v->ddr_b)
 			{
-				UINT8 write_data = v->out_b & v->ddr_b;
+				UINT8 write_data = (v->out_b & v->ddr_b) | (v->ddr_b ^ 0xff);
 
 				if (v->intf->out_b_func)
 					v->intf->out_b_func(0, write_data);

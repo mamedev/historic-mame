@@ -169,100 +169,100 @@ static MACHINE_INIT( cclimber )
 /* Note that River Patrol reads/writes to a000-a4f0. This is a bug in the code.
    The instruction at 0x0593 should say LD DE,$8000 */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6bff, MRA_RAM },	/* Crazy Kong only */
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8800, 0x8bff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
-	{ 0x9800, 0x9bff, MRA_RAM },	/* column scroll registers */
-	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
-	{ 0xa000, 0xa000, input_port_0_r },     /* IN0 */
-	{ 0xa800, 0xa800, input_port_1_r },     /* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },     /* DSW */
-	{ 0xb800, 0xb800, input_port_3_r },     /* IN2 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6bff) AM_READ(MRA8_RAM)	/* Crazy Kong only */
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)	/* video RAM */
+	AM_RANGE(0x9800, 0x9bff) AM_READ(MRA8_RAM)	/* column scroll registers */
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)	/* color RAM */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)     /* IN0 */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)     /* IN1 */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)     /* DSW */
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)     /* IN2 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x6bff, MWA_RAM },    /* Crazy Kong only */
-	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram, &cclimber_bsvideoram_size },
-	{ 0x8900, 0x8bff, MWA_RAM },  /* not used, but initialized */
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, videoram_w }, /* mirror address, used by Crazy Climber to draw windows */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6bff) AM_WRITE(MWA8_RAM)    /* Crazy Kong only */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
+	AM_RANGE(0x8900, 0x8bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w) /* mirror address, used by Crazy Climber to draw windows */
 	/* 9800-9bff and 9c00-9fff share the same RAM, interleaved */
 	/* (9800-981f for scroll, 9c20-9c3f for color RAM, and so on) */
-	{ 0x9800, 0x981f, MWA_RAM, &cclimber_column_scroll },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x98dc, 0x98df, MWA_RAM, &cclimber_bigspriteram },
-	{ 0x9800, 0x9bff, MWA_RAM },  /* not used, but initialized */
-	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa001, flip_screen_x_w },
-	{ 0xa002, 0xa002, flip_screen_y_w },
-	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
-	{ 0xa800, 0xa800, cclimber_sample_rate_w },
-	{ 0xb000, 0xb000, cclimber_sample_volume_w },
-MEMORY_END
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x98dc, 0x98df) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(cclimber_sample_trigger_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(cclimber_sample_rate_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(cclimber_sample_volume_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cannonb_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6bff, MRA_RAM },	/* Crazy Kong only, Cannon Ball also*/
-	{ 0x8000, 0x83ff, MRA_RAM },
+static ADDRESS_MAP_START( cannonb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6bff) AM_READ(MRA8_RAM)	/* Crazy Kong only, Cannon Ball also*/
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
 
-	{ 0x8800, 0x8800, MRA_NOP }, /* must not return what's written (game will reset after coin insert if it returns 0xff)*/
+	AM_RANGE(0x8800, 0x8800) AM_READ(MRA8_NOP) /* must not return what's written (game will reset after coin insert if it returns 0xff)*/
 
-//{ 0x8800, 0x8bff, MRA_RAM },
+//AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
 
-	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
-	{ 0x9800, 0x981f, MRA_RAM },	/* column scroll registers */
-	{ 0x9820, 0x9bff, MRA_RAM },	/* */
-	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)	/* video RAM */
+	AM_RANGE(0x9800, 0x981f) AM_READ(MRA8_RAM)	/* column scroll registers */
+	AM_RANGE(0x9820, 0x9bff) AM_READ(MRA8_RAM)	/* */
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)	/* color RAM */
 
-	{ 0xa000, 0xa000, input_port_0_r },     /* IN0 */
-	{ 0xa800, 0xa800, input_port_1_r },     /* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },     /* DSW */
-	{ 0xb800, 0xb800, input_port_3_r },     /* IN2 */
-MEMORY_END
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)     /* IN0 */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)     /* IN1 */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)     /* DSW */
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)     /* IN2 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cannonb_writemem )
+static ADDRESS_MAP_START( cannonb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 
-	{ 0x5045, 0x505f, MWA_NOP},	/* do not errorlog this */
+	AM_RANGE(0x5045, 0x505f) AM_WRITE(MWA8_NOP)	/* do not errorlog this */
 
-	{ 0x0000, 0x5fff, MWA_ROM },
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
 
-	{ 0x6000, 0x6bff, MWA_RAM },    /* Crazy Kong only, Cannon Ball also */
-	{ 0x8000, 0x83ff, MWA_RAM },
+	AM_RANGE(0x6000, 0x6bff) AM_WRITE(MWA8_RAM)    /* Crazy Kong only, Cannon Ball also */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
 
-	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram, &cclimber_bsvideoram_size },
-//{ 0x8900, 0x8bff, MWA_RAM },  /* not used, but initialized */
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, videoram_w }, /* mirror address, used by Crazy Climber to draw windows */
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
+//AM_RANGE(0x8900, 0x8bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w) /* mirror address, used by Crazy Climber to draw windows */
 	/* 9800-9bff and 9c00-9fff share the same RAM, interleaved */
 	/* (9800-981f for scroll, 9c20-9c3f for color RAM, and so on) */
-	{ 0x9800, 0x981f, MWA_RAM, &cclimber_column_scroll },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x98dc, 0x98df, MWA_RAM, &cclimber_bigspriteram },
-	{ 0x9800, 0x9bff, MWA_RAM },  /* not used, but initialized */
-	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa001, flip_screen_x_w },
-	{ 0xa002, 0xa002, flip_screen_y_w },
-	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
-	{ 0xa800, 0xa800, cclimber_sample_rate_w },
-	{ 0xb000, 0xb000, cclimber_sample_volume_w },
-MEMORY_END
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x98dc, 0x98df) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(cclimber_sample_trigger_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(cclimber_sample_rate_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(cclimber_sample_volume_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x0c, 0x0c, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x08, 0x08, AY8910_control_port_0_w },
-	{ 0x09, 0x09, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -577,8 +577,8 @@ static MACHINE_DRIVER_START( cclimber )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -608,8 +608,8 @@ static MACHINE_DRIVER_START( cannonb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(cannonb_readmem,cannonb_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(cannonb_readmem,cannonb_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1087,63 +1087,63 @@ WRITE_HANDLER( swimmer_sh_soundlatch_w )
 
 
 
-static MEMORY_READ_START( swimmer_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9400, 0x97ff, videoram_r }, /* mirror address (used by Swimmer) */
-	{ 0x9c00, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa800, 0xa800, input_port_1_r },
-	{ 0xb000, 0xb000, input_port_2_r },
-	{ 0xb800, 0xb800, input_port_3_r },
-	{ 0xb880, 0xb880, input_port_4_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },    /* ??? used by Guzzler */
-	{ 0xe000, 0xffff, MRA_ROM },    /* Guzzler only */
-MEMORY_END
+static ADDRESS_MAP_START( swimmer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r) /* mirror address (used by Swimmer) */
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)
+	AM_RANGE(0xb880, 0xb880) AM_READ(input_port_4_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)    /* ??? used by Guzzler */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)    /* Guzzler only */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( swimmer_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram, &cclimber_bsvideoram_size },
-	{ 0x8900, 0x89ff, cclimber_bigsprite_videoram_w },      /* mirror for the above (Guzzler writes to both) */
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, videoram_w }, /* mirror address (used by Guzzler) */
-	{ 0x9800, 0x981f, MWA_RAM, &cclimber_column_scroll },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x98fc, 0x98ff, MWA_RAM, &cclimber_bigspriteram },
-	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa001, flip_screen_x_w },
-	{ 0xa002, 0xa002, flip_screen_y_w },
-	{ 0xa003, 0xa003, swimmer_sidepanel_enable_w },
-	{ 0xa004, 0xa004, swimmer_palettebank_w },
-	{ 0xa800, 0xa800, swimmer_sh_soundlatch_w },
-	{ 0xb800, 0xb800, swimmer_bgcolor_w },  /* river color in Swimmer */
-	{ 0xc000, 0xc7ff, MWA_RAM },    /* ??? used by Guzzler */
-	{ 0xe000, 0xffff, MWA_ROM },    /* Guzzler only */
-MEMORY_END
+static ADDRESS_MAP_START( swimmer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
+	AM_RANGE(0x8900, 0x89ff) AM_WRITE(cclimber_bigsprite_videoram_w)      /* mirror for the above (Guzzler writes to both) */
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w) /* mirror address (used by Guzzler) */
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x98fc, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(swimmer_sidepanel_enable_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(swimmer_palettebank_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(swimmer_sh_soundlatch_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(swimmer_bgcolor_w)  /* river color in Swimmer */
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)    /* ??? used by Guzzler */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)    /* Guzzler only */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x3000, 0x3000, soundlatch_r },
-	{ 0x4000, 0x4001, MRA_RAM },    /* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
+	AM_RANGE(0x4000, 0x4001) AM_READ(MRA8_RAM)    /* ??? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x4000, 0x4000, MWA_RAM },    /* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_RAM)    /* ??? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_write_port_0_w },
-	{ 0x01, 0x01, AY8910_control_port_0_w },
-	{ 0x80, 0x80, AY8910_write_port_1_w },
-	{ 0x81, 0x81, AY8910_control_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_control_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -1371,13 +1371,13 @@ static MACHINE_DRIVER_START( swimmer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(swimmer_readmem,swimmer_writemem)
+	MDRV_CPU_PROGRAM_MAP(swimmer_readmem,swimmer_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,4000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000000/16384) /* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)

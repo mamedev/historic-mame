@@ -82,17 +82,17 @@ struct POKEYinterface {
 	int num;    /* total number of pokeys in the machine */
 	int baseclock;
 	int mixing_level[MAXPOKEYS];
-	mem_read_handler pot0_r[MAXPOKEYS];
-	mem_read_handler pot1_r[MAXPOKEYS];
-	mem_read_handler pot2_r[MAXPOKEYS];
-	mem_read_handler pot3_r[MAXPOKEYS];
-	mem_read_handler pot4_r[MAXPOKEYS];
-	mem_read_handler pot5_r[MAXPOKEYS];
-	mem_read_handler pot6_r[MAXPOKEYS];
-	mem_read_handler pot7_r[MAXPOKEYS];
-	mem_read_handler allpot_r[MAXPOKEYS];
-	mem_read_handler serin_r[MAXPOKEYS];
-	mem_write_handler serout_w[MAXPOKEYS];
+	read8_handler pot0_r[MAXPOKEYS];
+	read8_handler pot1_r[MAXPOKEYS];
+	read8_handler pot2_r[MAXPOKEYS];
+	read8_handler pot3_r[MAXPOKEYS];
+	read8_handler pot4_r[MAXPOKEYS];
+	read8_handler pot5_r[MAXPOKEYS];
+	read8_handler pot6_r[MAXPOKEYS];
+	read8_handler pot7_r[MAXPOKEYS];
+	read8_handler allpot_r[MAXPOKEYS];
+	read8_handler serin_r[MAXPOKEYS];
+	write8_handler serout_w[MAXPOKEYS];
 	void (*interrupt_cb[MAXPOKEYS])(int mask);
 };
 

@@ -6,8 +6,8 @@ extern data16_t *cps1_output;     /* Output ports */
 extern size_t cps1_gfxram_size;
 extern size_t cps1_output_size;
 
-extern const struct Memory_ReadAddress qsound_readmem[];
-extern const struct Memory_WriteAddress qsound_writemem[];
+ADDRESS_MAP_EXTERN(qsound_readmem);
+ADDRESS_MAP_EXTERN(qsound_writemem);
 
 READ16_HANDLER( qsound_sharedram1_r );
 WRITE16_HANDLER( qsound_sharedram1_w );

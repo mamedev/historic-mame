@@ -361,70 +361,70 @@ static WRITE_HANDLER( pending_command_clear_w )
 }
 
 
-static MEMORY_READ16_START( welltris_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x17ffff, MRA16_ROM },
-	{ 0x800000, 0x81ffff, MRA16_RAM }, /* Graph_1 & 2*/
-	{ 0xff8000, 0xffbfff, MRA16_RAM }, /* Work */
-	{ 0xffc000, 0xffc3ff, MRA16_RAM }, /* Sprite */
-	{ 0xffd000, 0xffdfff, MRA16_RAM }, /* Char */
-	{ 0xffe000, 0xffefff, MRA16_RAM }, /* Palette */
+static ADDRESS_MAP_START( welltris_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x17ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x81ffff) AM_READ(MRA16_RAM) /* Graph_1 & 2*/
+	AM_RANGE(0xff8000, 0xffbfff) AM_READ(MRA16_RAM) /* Work */
+	AM_RANGE(0xffc000, 0xffc3ff) AM_READ(MRA16_RAM) /* Sprite */
+	AM_RANGE(0xffd000, 0xffdfff) AM_READ(MRA16_RAM) /* Char */
+	AM_RANGE(0xffe000, 0xffefff) AM_READ(MRA16_RAM) /* Palette */
 
-	{ 0xfff000, 0xfff001, input_port_1_word_r }, /* Bottom Controls */
-	{ 0xfff002, 0xfff003, input_port_2_word_r }, /* Top Controls */
-	{ 0xfff004, 0xfff005, input_port_3_word_r }, /* Left Side Ctrls */
-	{ 0xfff006, 0xfff007, input_port_4_word_r }, /* Right Side Ctrls */
+	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_1_word_r) /* Bottom Controls */
+	AM_RANGE(0xfff002, 0xfff003) AM_READ(input_port_2_word_r) /* Top Controls */
+	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_3_word_r) /* Left Side Ctrls */
+	AM_RANGE(0xfff006, 0xfff007) AM_READ(input_port_4_word_r) /* Right Side Ctrls */
 
-	{ 0xfff008, 0xfff009, in0_r }, /* Coinage, Start Buttons, pending sound command etc. */  /* Bit 5 Tested at start of irq 1 */
-	{ 0xfff00a, 0xfff00b, input_port_5_word_r }, /* P3+P4 Coin + Start Buttons */
-	{ 0xfff00c, 0xfff00d, input_port_6_word_r }, /* DSW0 Coinage */
-	{ 0xfff00e, 0xfff00f, input_port_7_word_r }, /* DSW1 Game Options */
-MEMORY_END
+	AM_RANGE(0xfff008, 0xfff009) AM_READ(in0_r) /* Coinage, Start Buttons, pending sound command etc. */  /* Bit 5 Tested at start of irq 1 */
+	AM_RANGE(0xfff00a, 0xfff00b) AM_READ(input_port_5_word_r) /* P3+P4 Coin + Start Buttons */
+	AM_RANGE(0xfff00c, 0xfff00d) AM_READ(input_port_6_word_r) /* DSW0 Coinage */
+	AM_RANGE(0xfff00e, 0xfff00f) AM_READ(input_port_7_word_r) /* DSW1 Game Options */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( welltris_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x17ffff, MWA16_ROM },
-	{ 0x800000, 0x81ffff, MWA16_RAM, &welltris_pixelram },
-	{ 0xff8000, 0xffbfff, MWA16_RAM },
+static ADDRESS_MAP_START( welltris_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x17ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x800000, 0x81ffff) AM_WRITE(MWA16_RAM) AM_BASE(&welltris_pixelram)
+	AM_RANGE(0xff8000, 0xffbfff) AM_WRITE(MWA16_RAM)
 
-	{ 0xffc000, 0xffc3ff, welltris_spriteram_w, &welltris_spriteram },
-	{ 0xffd000, 0xffdfff, welltris_charvideoram_w, &welltris_charvideoram },
-	{ 0xffe000, 0xffefff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	AM_RANGE(0xffc000, 0xffc3ff) AM_WRITE(welltris_spriteram_w) AM_BASE(&welltris_spriteram)
+	AM_RANGE(0xffd000, 0xffdfff) AM_WRITE(welltris_charvideoram_w) AM_BASE(&welltris_charvideoram)
+	AM_RANGE(0xffe000, 0xffefff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 
-	{ 0xfff000, 0xfff001, welltris_palette_bank_w },
-	{ 0xfff002, 0xfff003, welltris_gfxbank_w },
-	{ 0xfff004, 0xfff007, welltris_scrollreg_w },
-	{ 0xfff008, 0xfff009, sound_command_w },
-	{ 0xfff00c, 0xfff00d, MWA16_NOP },		// ??
-	{ 0xfff00e, 0xfff00f, MWA16_NOP },		// ??
-MEMORY_END
+	AM_RANGE(0xfff000, 0xfff001) AM_WRITE(welltris_palette_bank_w)
+	AM_RANGE(0xfff002, 0xfff003) AM_WRITE(welltris_gfxbank_w)
+	AM_RANGE(0xfff004, 0xfff007) AM_WRITE(welltris_scrollreg_w)
+	AM_RANGE(0xfff008, 0xfff009) AM_WRITE(sound_command_w)
+	AM_RANGE(0xfff00c, 0xfff00d) AM_WRITE(MWA16_NOP)		// ??
+	AM_RANGE(0xfff00e, 0xfff00f) AM_WRITE(MWA16_NOP)		// ??
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x08, 0x08, YM2610_status_port_0_A_r },
-	{ 0x0a, 0x0a, YM2610_status_port_0_B_r },
-	{ 0x10, 0x10, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0x10, 0x10) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, welltris_sh_bankswitch_w },
-	{ 0x08, 0x08, YM2610_control_port_0_A_w },
-	{ 0x09, 0x09, YM2610_data_port_0_A_w },
-	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
-	{ 0x0b, 0x0b, YM2610_data_port_0_B_w },
-	{ 0x18, 0x18, pending_command_clear_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(welltris_sh_bankswitch_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0x18, 0x18) AM_WRITE(pending_command_clear_w)
+ADDRESS_MAP_END
 
 
 
@@ -757,13 +757,13 @@ static MACHINE_DRIVER_START( welltris )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz */
-	MDRV_CPU_MEMORY(welltris_readmem,welltris_writemem)
+	MDRV_CPU_PROGRAM_MAP(welltris_readmem,welltris_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)		/* 4 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 								/* IRQs are triggered by the YM2610 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

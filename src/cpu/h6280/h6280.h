@@ -34,20 +34,8 @@ enum {
 #define H6280_IRQ1_VEC	0xfff8
 #define H6280_IRQ2_VEC	0xfff6			/* Aka BRK vector */
 
-extern int h6280_ICount;				/* cycle count */
+void h6280_get_info(UINT32 state, union cpuinfo *info);
 
-extern void h6280_init(void);
-extern void h6280_reset(void *param);			/* Reset registers to the initial values */
-extern void h6280_exit(void);					/* Shut down CPU */
-extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
-extern unsigned h6280_get_context(void *dst);	/* Get registers, return context size */
-extern void h6280_set_context(void *src);		/* Set registers */
-extern unsigned h6280_get_reg (int regnum);
-extern void h6280_set_reg (int regnum, unsigned val);
-extern void h6280_set_irq_line(int irqline, int state);
-extern void h6280_set_irq_callback(int (*callback)(int irqline));
-extern const char *h6280_info(void *context, int regnum);
-extern unsigned h6280_dasm(char *buffer, unsigned pc);
 
 READ_HANDLER( H6280_irq_status_r );
 WRITE_HANDLER( H6280_irq_status_w );

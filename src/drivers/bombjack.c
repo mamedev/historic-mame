@@ -105,53 +105,53 @@ READ_HANDLER( bombjack_soundlatch_r )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, MRA_RAM },	/* including video and color RAM */
-	{ 0xb000, 0xb000, input_port_0_r },	/* player 1 input */
-	{ 0xb001, 0xb001, input_port_1_r },	/* player 2 input */
-	{ 0xb002, 0xb002, input_port_2_r },	/* coin */
-	{ 0xb003, 0xb003, MRA_NOP },	/* watchdog reset? */
-	{ 0xb004, 0xb004, input_port_3_r },	/* DSW1 */
-	{ 0xb005, 0xb005, input_port_4_r },	/* DSW2 */
-	{ 0xc000, 0xdfff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_READ(MRA8_RAM)	/* including video and color RAM */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_0_r)	/* player 1 input */
+	AM_RANGE(0xb001, 0xb001) AM_READ(input_port_1_r)	/* player 2 input */
+	AM_RANGE(0xb002, 0xb002) AM_READ(input_port_2_r)	/* coin */
+	AM_RANGE(0xb003, 0xb003) AM_READ(MRA8_NOP)	/* watchdog reset? */
+	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, bombjack_videoram_w, &videoram },
-	{ 0x9400, 0x97ff, bombjack_colorram_w, &colorram },
-	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9a00, 0x9a00, MWA_NOP },
-	{ 0x9c00, 0x9cff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0x9e00, 0x9e00, bombjack_background_w },
-	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0xb004, 0xb004, bombjack_flipscreen_w },
-	{ 0xb800, 0xb800, bombjack_soundlatch_w },
-	{ 0xc000, 0xdfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(bombjack_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(bombjack_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x9820, 0x987f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9a00, 0x9a00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x9c00, 0x9cff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9e00, 0x9e00) AM_WRITE(bombjack_background_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(bombjack_flipscreen_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(bombjack_soundlatch_w)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( bombjack_sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, bombjack_soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( bombjack_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(bombjack_soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bombjack_sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( bombjack_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( bombjack_sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x10, 0x10, AY8910_control_port_1_w },
-	{ 0x11, 0x11, AY8910_write_port_1_w },
-	{ 0x80, 0x80, AY8910_control_port_2_w },
-	{ 0x81, 0x81, AY8910_write_port_2_w },
-PORT_END
+static ADDRESS_MAP_START( bombjack_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_write_port_2_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( bombjack )
@@ -314,13 +314,13 @@ static MACHINE_DRIVER_START( bombjack )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz????? */
-	MDRV_CPU_MEMORY(bombjack_sound_readmem,bombjack_sound_writemem)
-	MDRV_CPU_PORTS(0,bombjack_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(bombjack_sound_readmem,bombjack_sound_writemem)
+	MDRV_CPU_IO_MAP(0,bombjack_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

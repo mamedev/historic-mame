@@ -17,8 +17,10 @@
 static const char *regs[8] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 static UINT8 ridx[8] = { T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5,T11_SP,T11_PC };
 
-#define PARAM_WORD(v) ((v) = cpu_readmem16lew_word (pc), pc += 2)
-#define RWORD(a)	cpu_readmem16lew_word(a)
+#define PARAM_WORD(v) ((v) = program_read_word (pc), pc += 2)
+#define RWORD(a)	program_read_word(a)
+
+static unsigned t11_get_reg(int reg) { union cpuinfo info; t11_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
 unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode)
 {

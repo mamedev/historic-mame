@@ -25,10 +25,10 @@ struct Y8950interface
 
 	int rom_region[MAX_8950]; /* delta-T ADPCM ROM/RAM region */
 
-	mem_read_handler keyboardread[MAX_8950];
-	mem_write_handler keyboardwrite[MAX_8950];
-	mem_read_handler portread[MAX_8950];
-	mem_write_handler portwrite[MAX_8950];
+	read8_handler keyboardread[MAX_8950];
+	write8_handler keyboardwrite[MAX_8950];
+	read8_handler portread[MAX_8950];
+	write8_handler portwrite[MAX_8950];
 };
 
 

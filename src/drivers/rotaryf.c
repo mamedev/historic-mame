@@ -31,37 +31,37 @@ INTERRUPT_GEN( rotaryf_interrupt )
 
 }
 
-static MEMORY_READ_START( rotaryf_readmem )
-	{ 0x0000, 0x03ff, MRA_ROM },
-	{ 0x4000, 0x57ff, MRA_ROM },
-//	{ 0x6ffb, 0x6ffb, random_r }, ??
-//	{ 0x6ffd, 0x6ffd, random_r }, ??
-//	{ 0x6fff, 0x6fff, random_r }, ??
-	{ 0x7000, 0x73ff, MRA_RAM },
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa1ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rotaryf_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x57ff) AM_READ(MRA8_ROM)
+//	AM_RANGE(0x6ffb, 0x6ffb) AM_READ(random_r) ??
+//	AM_RANGE(0x6ffd, 0x6ffd) AM_READ(random_r) ??
+//	AM_RANGE(0x6fff, 0x6fff) AM_READ(random_r) ??
+	AM_RANGE(0x7000, 0x73ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa1ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rotaryf_writemem )
-	{ 0x0000, 0x03ff, MWA_ROM },
-	{ 0x4000, 0x57ff, MWA_ROM },
-	{ 0x7000, 0x73ff, MWA_RAM }, // clears to 1ff ?
-	{ 0x8000, 0x9fff, c8080bw_videoram_w, &videoram, &videoram_size },
-	{ 0xa000, 0xa1ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( rotaryf_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x57ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_RAM) // clears to 1ff ?
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xa000, 0xa1ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( rotaryf_readport )
-//	{ 0x00, 0x00, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x29, 0x29, input_port_2_r },
-	{ 0x26, 0x26, input_port_3_r },
-//	{ 0x28, 0x28, c8080bw_shift_data_r },
-PORT_END
+static ADDRESS_MAP_START( rotaryf_readport, ADDRESS_SPACE_IO, 8 )
+//	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x29, 0x29) AM_READ(input_port_2_r)
+	AM_RANGE(0x26, 0x26) AM_READ(input_port_3_r)
+//	AM_RANGE(0x28, 0x28) AM_READ(c8080bw_shift_data_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( rotaryf_writeport )
-//	{ 0x21, 0x21, c8080bw_shift_amount_w },
-//	{ 0x28, 0x28, c8080bw_shift_data_w },
-PORT_END
+static ADDRESS_MAP_START( rotaryf_writeport, ADDRESS_SPACE_IO, 8 )
+//	AM_RANGE(0x21, 0x21) AM_WRITE(c8080bw_shift_amount_w)
+//	AM_RANGE(0x28, 0x28) AM_WRITE(c8080bw_shift_data_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( rotaryf )
 	PORT_START      /* IN0 */
@@ -126,8 +126,8 @@ static MACHINE_DRIVER_START( rotaryf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",8085A,2000000) /* 8080? */ /* 2 MHz? */
-	MDRV_CPU_MEMORY(rotaryf_readmem,rotaryf_writemem)
-	MDRV_CPU_PORTS(rotaryf_readport,rotaryf_writeport)
+	MDRV_CPU_PROGRAM_MAP(rotaryf_readmem,rotaryf_writemem)
+	MDRV_CPU_IO_MAP(rotaryf_readport,rotaryf_writeport)
 	MDRV_CPU_VBLANK_INT(rotaryf_interrupt,5)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -53,56 +53,56 @@ VIDEO_UPDATE( funkyjet );
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( funkyjet_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x120000, 0x1207ff, MRA16_RAM },
-	{ 0x140000, 0x143fff, MRA16_RAM },
-	{ 0x160000, 0x1607ff, MRA16_RAM },
-	{ 0x180000, 0x1807ff, deco16_146_funkyjet_prot_r },
-	{ 0x320000, 0x321fff, MRA16_RAM },
-	{ 0x322000, 0x323fff, MRA16_RAM },
-	{ 0x340000, 0x340bff, MRA16_RAM },
-	{ 0x342000, 0x342bff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( funkyjet_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x1807ff) AM_READ(deco16_146_funkyjet_prot_r)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x340000, 0x340bff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x342000, 0x342bff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( funkyjet_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x120000, 0x1207ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 },
-	{ 0x180000, 0x1807ff, deco16_146_funkyjet_prot_w, &deco16_prot_ram },
-	{ 0x184000, 0x184001, MWA16_NOP },
-	{ 0x188000, 0x188001, MWA16_NOP },
-	{ 0x300000, 0x30000f, MWA16_RAM, &deco16_pf12_control },
-	{ 0x320000, 0x321fff, deco16_pf1_data_w, &deco16_pf1_data },
-	{ 0x322000, 0x323fff, deco16_pf2_data_w, &deco16_pf2_data },
-	{ 0x340000, 0x340bff, MWA16_RAM, &deco16_pf1_rowscroll },
-	{ 0x342000, 0x342bff, MWA16_RAM, &deco16_pf2_rowscroll },
-MEMORY_END
+static ADDRESS_MAP_START( funkyjet_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x180000, 0x1807ff) AM_WRITE(deco16_146_funkyjet_prot_w) AM_BASE(&deco16_prot_ram)
+	AM_RANGE(0x184000, 0x184001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x188000, 0x188001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x340000, 0x340bff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x342000, 0x342bff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
 /* Physical memory map (21 bits) */
-static MEMORY_READ_START( sound_readmem )
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x100000, 0x100001, MRA_NOP },
-	{ 0x110000, 0x110001, YM2151_status_port_0_r },
-	{ 0x120000, 0x120001, OKIM6295_status_0_r },
-	{ 0x130000, 0x130001, MRA_NOP }, /* This board only has 1 oki chip */
-	{ 0x140000, 0x140001, soundlatch_r },
-	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(MRA8_NOP)
+	AM_RANGE(0x110000, 0x110001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x120000, 0x120001) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x130000, 0x130001) AM_READ(MRA8_NOP) /* This board only has 1 oki chip */
+	AM_RANGE(0x140000, 0x140001) AM_READ(soundlatch_r)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_READ(MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
-	{ 0x110000, 0x110001, YM2151_word_0_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w },
-	{ 0x130000, 0x130001, MWA_NOP },
-	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
-	{ 0x1fec00, 0x1fec01, H6280_timer_w },
-	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA8_NOP) /* YM2203 - this board doesn't have one */
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(YM2151_word_0_w)
+	AM_RANGE(0x120000, 0x120001) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x130000, 0x130001) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1f0000, 0x1f1fff) AM_WRITE(MWA8_BANK8)
+	AM_RANGE(0x1fec00, 0x1fec01) AM_WRITE(H6280_timer_w)
+	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -323,12 +323,12 @@ static MACHINE_DRIVER_START( funkyjet )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000) /* 28 MHz crystal */
-	MDRV_CPU_MEMORY(funkyjet_readmem,funkyjet_writemem)
+	MDRV_CPU_PROGRAM_MAP(funkyjet_readmem,funkyjet_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(H6280,32220000/8)	/* Custom chip 45, Audio section crystal is 32.220 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

@@ -13,16 +13,8 @@
 
 /*----------- defined in machine/midyunit.c -----------*/
 
-extern data16_t *midyunit_code_rom;
-extern data16_t *midyunit_scratch_ram;
-
 extern data16_t *midyunit_cmos_ram;
 extern UINT32 	midyunit_cmos_page;
-
-extern offs_t 	midyunit_speedup_pc;
-extern offs_t 	midyunit_speedup_offset;
-extern offs_t 	midyunit_speedup_spin[3];
-extern data16_t *midyunit_speedup_base;
 
 WRITE16_HANDLER( midyunit_cmos_w );
 READ16_HANDLER( midyunit_cmos_r );
@@ -32,40 +24,17 @@ READ16_HANDLER( midyunit_protection_r );
 
 READ16_HANDLER( midyunit_input_r );
 
-READ16_HANDLER( midyunit_generic_speedup_1_16bit );
-READ16_HANDLER( midyunit_generic_speedup_1_mixedbits );
-READ16_HANDLER( midyunit_generic_speedup_1_32bit );
-READ16_HANDLER( midyunit_generic_speedup_3 );
-
 DRIVER_INIT( narc );
-DRIVER_INIT( narc3 );
-
 DRIVER_INIT( trog );
-DRIVER_INIT( trog3 );
-DRIVER_INIT( trogpa6 );
-DRIVER_INIT( trogp );
-
 DRIVER_INIT( smashtv );
-DRIVER_INIT( smashtv4 );
-
 DRIVER_INIT( hiimpact );
 DRIVER_INIT( shimpact );
-DRIVER_INIT( shimpacp );
-
 DRIVER_INIT( strkforc );
-
-DRIVER_INIT( mkprot9 );
-DRIVER_INIT( mkla1 );
-DRIVER_INIT( mkla2 );
-DRIVER_INIT( mkla3 );
-DRIVER_INIT( mkla4 );
-
+DRIVER_INIT( mkyunit );
 DRIVER_INIT( term2 );
 DRIVER_INIT( term2la2 );
 DRIVER_INIT( term2la1 );
-
 DRIVER_INIT( totcarn );
-DRIVER_INIT( totcarnp );
 
 MACHINE_INIT( midyunit );
 

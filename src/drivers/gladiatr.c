@@ -260,83 +260,83 @@ static READ_HANDLER( glad_cpu_sound_command_r )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x7fff, MRA_BANK1},
-	{ 0x8000, 0xbfff, MRA_BANK2},
-	{ 0xc000, 0xcbff, MRA_RAM },
-	{ 0xcc00, 0xcfff, gladiatr_video_registers_r },
-	{ 0xd000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xcbff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xcc00, 0xcfff) AM_READ(gladiatr_video_registers_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcbff, MWA_RAM, &spriteram },
-	{ 0xcc00, 0xcfff, gladiatr_video_registers_w },
-	{ 0xd000, 0xd1ff, gladiatr_paletteram_rg_w, &paletteram },
-	{ 0xd200, 0xd3ff, MWA_RAM },
-	{ 0xd400, 0xd5ff, gladiatr_paletteram_b_w, &paletteram_2 },
-	{ 0xd600, 0xd7ff, MWA_RAM },
-	{ 0xd800, 0xdfff, videoram_w, &videoram },
-	{ 0xe000, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xefff, MWA_RAM, &gladiator_text },
-	{ 0xf000, 0xf3ff, MWA_RAM, &generic_nvram, &generic_nvram_size }, /* battery backed RAM */
-	{ 0xf400, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcbff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(gladiatr_video_registers_w)
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(gladiatr_paletteram_rg_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd200, 0xd3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd400, 0xd5ff) AM_WRITE(gladiatr_paletteram_b_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xd600, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&gladiator_text)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* battery backed RAM */
+	AM_RANGE(0xf400, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x2000, 0x2fff, glad_cpu_sound_command_r },
-	{ 0x4000, 0x7fff, MRA_BANK3 }, /* BANKED ROM */
-	{ 0x8000, 0xbfff, MRA_BANK4 }, /* BANKED ROM */
-	{ 0xc000, 0xffff, MRA_BANK5 }, /* BANKED ROM */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2fff) AM_READ(glad_cpu_sound_command_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK3) /* BANKED ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK4) /* BANKED ROM */
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK5) /* BANKED ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x1000, 0x1fff, glad_adpcm_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(glad_adpcm_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x02, 0x02, gladiatr_bankswitch_r },
-	{ 0x9e, 0x9f, TAITO8741_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(gladiatr_bankswitch_r)
+	AM_RANGE(0x9e, 0x9f) AM_READ(TAITO8741_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x01, 0x01, gladiatr_spritebank_w},
-	{ 0x02, 0x02, gladiatr_bankswitch_w},
-	{ 0x04, 0x04, gladiatr_irq_patch_w}, /* !!! patch to 2nd CPU IRQ !!! */
-	{ 0x9e, 0x9f, TAITO8741_0_w },
-	{ 0xbf, 0xbf, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(gladiatr_spritebank_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(gladiatr_bankswitch_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(gladiatr_irq_patch_w) /* !!! patch to 2nd CPU IRQ !!! */
+	AM_RANGE(0x9e, 0x9f) AM_WRITE(TAITO8741_0_w)
+	AM_RANGE(0xbf, 0xbf) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_cpu2 )
-	{ 0x00, 0x00, YM2203_status_port_0_r },
-	{ 0x01, 0x01, YM2203_read_port_0_r },
-	{ 0x20, 0x21, TAITO8741_1_r },
-	{ 0x40, 0x40, IORP_NOP },
-	{ 0x60, 0x61, TAITO8741_2_r },
-	{ 0x80, 0x81, TAITO8741_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x20, 0x21) AM_READ(TAITO8741_1_r)
+	AM_RANGE(0x40, 0x40) AM_READ(MRA8_NOP)
+	AM_RANGE(0x60, 0x61) AM_READ(TAITO8741_2_r)
+	AM_RANGE(0x80, 0x81) AM_READ(TAITO8741_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_cpu2 )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x20, 0x21, TAITO8741_1_w },
-	{ 0x60, 0x61, TAITO8741_2_w },
-	{ 0x80, 0x81, TAITO8741_3_w },
-/*	{ 0x40, 0x40, glad_sh_irq_clr }, */
-	{ 0xe0, 0xe0, glad_cpu_sound_command_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x20, 0x21) AM_WRITE(TAITO8741_1_w)
+	AM_RANGE(0x60, 0x61) AM_WRITE(TAITO8741_2_w)
+	AM_RANGE(0x80, 0x81) AM_WRITE(TAITO8741_3_w)
+/*	AM_RANGE(0x40, 0x40) AM_WRITE(glad_sh_irq_clr) */
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(glad_cpu_sound_command_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( gladiatr )
 	PORT_START		/* DSW1 (8741-0 parallel port)*/
@@ -549,17 +549,17 @@ static MACHINE_DRIVER_START( gladiatr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000) /* 3 MHz? */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
 
 	MDRV_CPU_ADD(M6809, 750000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 750 kHz (hand tuned) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION) /* fps, vblank duration */

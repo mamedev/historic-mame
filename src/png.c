@@ -913,7 +913,7 @@ int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 	memset (mhdr, 0, 28);
 	convert_to_network_order(bitmap->width, mhdr);
 	convert_to_network_order(bitmap->height, mhdr+4);
-	convert_to_network_order(Machine->drv->frames_per_second, mhdr+8);
+	convert_to_network_order(Machine->refresh_rate, mhdr+8);
 	convert_to_network_order(0x0041, mhdr+24); /* Simplicity profile */
 	/* frame count and play time unspecified because
 	   we don't know at this stage */

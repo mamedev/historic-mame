@@ -411,7 +411,7 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "mov   @r%d,#%s", op&1, sym);
 		break;
 	case 0xb3: /* 2: 1011 0011 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readmem16((PC & 0x700) | activecpu_get_reg(I8X41_A)), EA_UINT16, EA_ABS_PC);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | program_read_byte_8((PC & 0x700) | activecpu_get_reg(I8X41_A)), EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jmpp  @a");
 		break;
 	case 0xb5: /* 1: 1011 0101 */

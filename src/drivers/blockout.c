@@ -41,49 +41,49 @@ static WRITE16_HANDLER( blockout_sound_command_w )
 }
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, input_port_0_word_r },
-	{ 0x100002, 0x100003, input_port_1_word_r },
-	{ 0x100004, 0x100005, input_port_2_word_r },
-	{ 0x100006, 0x100007, input_port_3_word_r },
-	{ 0x100008, 0x100009, input_port_4_word_r },
-	{ 0x180000, 0x1bffff, MRA16_RAM },
-	{ 0x1d4000, 0x1dffff, MRA16_RAM },
-	{ 0x1f4000, 0x1fffff, MRA16_RAM },
-	{ 0x200000, 0x207fff, MRA16_RAM },
-	{ 0x208000, 0x21ffff, MRA16_RAM },
-	{ 0x280200, 0x2805ff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x100002, 0x100003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x100004, 0x100005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x100006, 0x100007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x100008, 0x100009) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x180000, 0x1bffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1d4000, 0x1dffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1f4000, 0x1fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x207fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x208000, 0x21ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x280200, 0x2805ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100014, 0x100015, blockout_sound_command_w },
-	{ 0x100016, 0x100017, MWA16_NOP },	/* don't know, maybe reset sound CPU */
-	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
-	{ 0x1d4000, 0x1dffff, MWA16_RAM },	/* work RAM */
-	{ 0x1f4000, 0x1fffff, MWA16_RAM },	/* work RAM */
-	{ 0x200000, 0x207fff, MWA16_RAM, &blockout_frontvideoram },
-	{ 0x208000, 0x21ffff, MWA16_RAM },	/* ??? */
-	{ 0x280002, 0x280003, blockout_frontcolor_w },
-	{ 0x280200, 0x2805ff, blockout_paletteram_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100014, 0x100015) AM_WRITE(blockout_sound_command_w)
+	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP)	/* don't know, maybe reset sound CPU */
+	AM_RANGE(0x180000, 0x1bffff) AM_WRITE(blockout_videoram_w) AM_BASE(&blockout_videoram)
+	AM_RANGE(0x1d4000, 0x1dffff) AM_WRITE(MWA16_RAM)	/* work RAM */
+	AM_RANGE(0x1f4000, 0x1fffff) AM_WRITE(MWA16_RAM)	/* work RAM */
+	AM_RANGE(0x200000, 0x207fff) AM_WRITE(MWA16_RAM) AM_BASE(&blockout_frontvideoram)
+	AM_RANGE(0x208000, 0x21ffff) AM_WRITE(MWA16_RAM)	/* ??? */
+	AM_RANGE(0x280002, 0x280003) AM_WRITE(blockout_frontcolor_w)
+	AM_RANGE(0x280200, 0x2805ff) AM_WRITE(blockout_paletteram_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( blockout )
@@ -267,12 +267,12 @@ static MACHINE_DRIVER_START( blockout )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8760000)       /* MRH - 8.76 makes gfx/adpcm samples sync better */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(blockout_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz (?) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

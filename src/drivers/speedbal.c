@@ -77,52 +77,52 @@ WRITE_HANDLER( speedbal_sharedram_w )
     speedbal_sharedram[offset] = data;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xdbff, MRA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_r },  // shared with SOUND
-	{ 0xe000, 0xe1ff, speedbal_background_videoram_r },
-	{ 0xe800, 0xefff, speedbal_foreground_videoram_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdbff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xdc00, 0xdfff) AM_READ(speedbal_sharedram_r)  // shared with SOUND
+	AM_RANGE(0xe000, 0xe1ff) AM_READ(speedbal_background_videoram_r)
+	AM_RANGE(0xe800, 0xefff) AM_READ(speedbal_foreground_videoram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xdbff, MWA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_w, &speedbal_sharedram },  // shared with SOUND
-	{ 0xe000, 0xe1ff, speedbal_background_videoram_w, &speedbal_background_videoram, &speedbal_background_videoram_size },
-	{ 0xe800, 0xefff, speedbal_foreground_videoram_w, &speedbal_foreground_videoram, &speedbal_foreground_videoram_size },
-	{ 0xf000, 0xf5ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xf600, 0xfeff, MWA_RAM },
-	{ 0xff00, 0xffff, MWA_RAM, &speedbal_sprites_dataram, &speedbal_sprites_dataram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdbff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(speedbal_sharedram_w) AM_BASE(&speedbal_sharedram)  // shared with SOUND
+	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(speedbal_background_videoram_w) AM_BASE(&speedbal_background_videoram) AM_SIZE(&speedbal_background_videoram_size)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(speedbal_foreground_videoram_w) AM_BASE(&speedbal_foreground_videoram) AM_SIZE(&speedbal_foreground_videoram_size)
+	AM_RANGE(0xf000, 0xf5ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf600, 0xfeff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xff00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&speedbal_sprites_dataram) AM_SIZE(&speedbal_sprites_dataram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_r }, // shared with MAIN CPU
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xdc00, 0xdfff) AM_READ(speedbal_sharedram_r) // shared with MAIN CPU
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_w }, // shared with MAIN CPU
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(speedbal_sharedram_w) // shared with MAIN CPU
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x10, 0x10, input_port_1_r },
-	{ 0x20, 0x20, input_port_2_r },
-	{ 0x30, 0x30, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_1_r)
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_2_r)
+	AM_RANGE(0x30, 0x30) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, YM3812_status_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM3812_control_port_0_w },
-	{ 0x01, 0x01, YM3812_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -257,13 +257,13 @@ static MACHINE_DRIVER_START( speedbal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 2660000)	/* 2.66 MHz ???  Maybe yes */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_FRAMES_PER_SECOND(60)

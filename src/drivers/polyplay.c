@@ -166,35 +166,35 @@ static INTERRUPT_GEN( coin_interrupt )
 
 
 /* memory mapping */
-static MEMORY_READ_START( polyplay_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x8fff, MRA_ROM },
-	{ 0xe800, 0xebff, MRA_ROM },
-	{ 0xec00, 0xf7ff, polyplay_characterram_r },
-	{ 0xf800, 0xffff, videoram_r },
-MEMORY_END
+static ADDRESS_MAP_START( polyplay_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x8fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xec00, 0xf7ff) AM_READ(polyplay_characterram_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(videoram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( polyplay_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x8fff, MWA_ROM },
-	{ 0xe800, 0xebff, MWA_ROM },
-	{ 0xec00, 0xf7ff, polyplay_characterram_w, &polyplay_characterram },
-	{ 0xf800, 0xffff, videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( polyplay_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xec00, 0xf7ff) AM_WRITE(polyplay_characterram_w) AM_BASE(&polyplay_characterram)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
 /* port mapping */
-static PORT_READ_START( readport_polyplay )
-	{ 0x84, 0x84, input_port_0_r },
-	{ 0x83, 0x83, polyplay_random_read },
-PORT_END
+static ADDRESS_MAP_START( readport_polyplay, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x84, 0x84) AM_READ(input_port_0_r)
+	AM_RANGE(0x83, 0x83) AM_READ(polyplay_random_read)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_polyplay )
-	{ 0x80, 0x81, polyplay_sound_channel },
-	{ 0x82, 0x82, polyplay_start_timer2 },
-PORT_END
+static ADDRESS_MAP_START( writeport_polyplay, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x81) AM_WRITE(polyplay_sound_channel)
+	AM_RANGE(0x82, 0x82) AM_WRITE(polyplay_start_timer2)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( polyplay )
 	PORT_START	/* IN0 */
@@ -308,8 +308,8 @@ static MACHINE_DRIVER_START( polyplay )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 9830400/4)
-	MDRV_CPU_MEMORY(polyplay_readmem,polyplay_writemem)
-	MDRV_CPU_PORTS(readport_polyplay,writeport_polyplay)
+	MDRV_CPU_PROGRAM_MAP(polyplay_readmem,polyplay_writemem)
+	MDRV_CPU_IO_MAP(readport_polyplay,writeport_polyplay)
 	MDRV_CPU_PERIODIC_INT(periodic_interrupt,75)
 	MDRV_CPU_VBLANK_INT(coin_interrupt,1)
 

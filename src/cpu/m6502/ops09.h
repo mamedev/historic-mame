@@ -34,7 +34,7 @@
 #define IB		m6509.ind_bank.d
 
 #undef CHANGE_PC
-#define CHANGE_PC change_pc20(PCD|PB)
+#define CHANGE_PC program_write_byte_8(PCD|PB)
 
 /***************************************************************
  *  RDOP    read an opcode
@@ -52,13 +52,13 @@
  *  RDMEM   read memory
  ***************************************************************/
 #undef RDMEM
-#define RDMEM(addr) cpu_readmem20(addr)
+#define RDMEM(addr) program_read_byte_8(addr)
 
 /***************************************************************
  *  WRMEM   write memory
  ***************************************************************/
 #undef WRMEM
-#define WRMEM(addr,data) cpu_writemem20(addr,data)
+#define WRMEM(addr,data) program_write_byte_8(addr,data)
 
 /***************************************************************
  * push a register onto the stack

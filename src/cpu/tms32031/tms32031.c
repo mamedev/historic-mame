@@ -112,6 +112,7 @@ typedef struct
 
 	void			(*xf0_w)(UINT8 val);
 	void			(*xf1_w)(UINT8 val);
+	int				(*irq_callback)(int state);
 } tms32031_regs;
 
 
@@ -129,7 +130,7 @@ static UINT32 boot_loader(UINT32 boot_rom_addr);
 **	PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
-int	tms32031_icount=50000;
+static int	tms32031_icount;
 
 
 
@@ -148,9 +149,9 @@ static tms32031_regs tms32031;
 #define ROPCODE(pc)		cpu_readop32((pc) * 4)
 #define OP				tms32031.op
 
-#define RMEM(addr)		cpu_readmem26ledw_dword(((addr) & 0xffffff) * 4)
-#define WMEM(addr,data)	cpu_writemem26ledw_dword(((addr) & 0xffffff) * 4, data)
-#define UPDATEPC(addr)	cpu_setopbase26ledw(((addr) & 0xffffff) * 4)
+#define RMEM(addr)		program_read_dword_32le(((addr) & 0xffffff) * 4)
+#define WMEM(addr,data)	program_write_dword_32le(((addr) & 0xffffff) * 4, data)
+#define UPDATEPC(addr)	change_pc(((addr) & 0xffffff) * 4)
 
 
 
@@ -308,7 +309,7 @@ static void check_irqs(void)
 }
 
 
-void tms32031_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline < 11)
 	{
@@ -325,29 +326,20 @@ void tms32031_set_irq_line(int irqline, int state)
 }
 
 
-void tms32031_set_irq_callback(int (*callback)(int irqline))
-{
-	/* finish me! */
-}
-
-
 
 /*###################################################################################################
 **	CONTEXT SWITCHING
 **#################################################################################################*/
 
-unsigned tms32031_get_context(void *dst)
+static void tms32031_get_context(void *dst)
 {
 	/* copy the context */
 	if (dst)
 		*(tms32031_regs *)dst = tms32031;
-
-	/* return the context size */
-	return sizeof(tms32031_regs);
 }
 
 
-void tms32031_set_context(void *src)
+static void tms32031_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
@@ -364,11 +356,11 @@ void tms32031_set_context(void *src)
 **	INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
-void tms32031_init(void)
+static void tms32031_init(void)
 {
 }
 
-void tms32031_reset(void *param)
+static void tms32031_reset(void *param)
 {
 	struct tms32031_config *config = param;
 
@@ -430,7 +422,7 @@ void tms32031_exit(void)
 **	CORE EXECUTION LOOP
 **#################################################################################################*/
 
-int tms32031_execute(int cycles)
+static int tms32031_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	tms32031_icount = cycles;
@@ -476,129 +468,6 @@ int tms32031_execute(int cycles)
 
 
 /*###################################################################################################
-**	REGISTER SNOOP
-**#################################################################################################*/
-
-unsigned tms32031_get_reg(int regnum)
-{
-	float temp;
-
-	switch (regnum)
-	{
-		case REG_PC:		return tms32031.pc;
-
-		case TMS32031_R0:	return IREG(TMR_R0);
-		case TMS32031_R1:	return IREG(TMR_R1);
-		case TMS32031_R2:	return IREG(TMR_R2);
-		case TMS32031_R3:	return IREG(TMR_R3);
-		case TMS32031_R4:	return IREG(TMR_R4);
-		case TMS32031_R5:	return IREG(TMR_R5);
-		case TMS32031_R6:	return IREG(TMR_R6);
-		case TMS32031_R7:	return IREG(TMR_R7);
-		case TMS32031_R0F:	temp = dsp_to_double(&tms32031.r[TMR_R0]); return *(UINT32 *)&temp;
-		case TMS32031_R1F:	temp = dsp_to_double(&tms32031.r[TMR_R1]); return *(UINT32 *)&temp;
-		case TMS32031_R2F:	temp = dsp_to_double(&tms32031.r[TMR_R2]); return *(UINT32 *)&temp;
-		case TMS32031_R3F:	temp = dsp_to_double(&tms32031.r[TMR_R3]); return *(UINT32 *)&temp;
-		case TMS32031_R4F:	temp = dsp_to_double(&tms32031.r[TMR_R4]); return *(UINT32 *)&temp;
-		case TMS32031_R5F:	temp = dsp_to_double(&tms32031.r[TMR_R5]); return *(UINT32 *)&temp;
-		case TMS32031_R6F:	temp = dsp_to_double(&tms32031.r[TMR_R6]); return *(UINT32 *)&temp;
-		case TMS32031_R7F:	temp = dsp_to_double(&tms32031.r[TMR_R7]); return *(UINT32 *)&temp;
-		case TMS32031_AR0:	return IREG(TMR_AR0);
-		case TMS32031_AR1:	return IREG(TMR_AR1);
-		case TMS32031_AR2:	return IREG(TMR_AR2);
-		case TMS32031_AR3:	return IREG(TMR_AR3);
-		case TMS32031_AR4:	return IREG(TMR_AR4);
-		case TMS32031_AR5:	return IREG(TMR_AR5);
-		case TMS32031_AR6:	return IREG(TMR_AR6);
-		case TMS32031_AR7:	return IREG(TMR_AR7);
-		case TMS32031_DP:	return IREG(TMR_DP);
-		case TMS32031_IR0:	return IREG(TMR_IR0);
-		case TMS32031_IR1:	return IREG(TMR_IR1);
-		case TMS32031_BK:	return IREG(TMR_BK);
-		case REG_SP:
-		case TMS32031_SP:	return IREG(TMR_SP);
-		case TMS32031_ST:	return IREG(TMR_ST);
-		case TMS32031_IE:	return IREG(TMR_IE);
-		case TMS32031_IF:	return IREG(TMR_IF);
-		case TMS32031_IOF:	return IREG(TMR_IOF);
-		case TMS32031_RS:	return IREG(TMR_RS);
-		case TMS32031_RE:	return IREG(TMR_RE);
-		case TMS32031_RC:	return IREG(TMR_RC);
-
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-//				unsigned offset = REG_SP_CONTENTS - regnum;
-//				if (offset < PC_STACK_DEPTH)
-//					return tms32031.pc_stack[offset];
-			}
-	}
-	return 0;
-}
-
-
-
-/*###################################################################################################
-**	REGISTER MODIFY
-**#################################################################################################*/
-
-void tms32031_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:		tms32031.pc = val; 				break;
-
-		case TMS32031_R0:	IREG(TMR_R0) = val; 		break;
-		case TMS32031_R1:	IREG(TMR_R1) = val; 		break;
-		case TMS32031_R2:	IREG(TMR_R2) = val; 		break;
-		case TMS32031_R3:	IREG(TMR_R3) = val; 		break;
-		case TMS32031_R4:	IREG(TMR_R4) = val; 		break;
-		case TMS32031_R5:	IREG(TMR_R5) = val; 		break;
-		case TMS32031_R6:	IREG(TMR_R6) = val; 		break;
-		case TMS32031_R7:	IREG(TMR_R7) = val; 		break;
-		case TMS32031_R0F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R0]);	break;
-		case TMS32031_R1F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R1]);	break;
-		case TMS32031_R2F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R2]);	break;
-		case TMS32031_R3F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R3]);	break;
-		case TMS32031_R4F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R4]);	break;
-		case TMS32031_R5F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R5]);	break;
-		case TMS32031_R6F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R6]);	break;
-		case TMS32031_R7F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R7]);	break;
-		case TMS32031_AR0:	IREG(TMR_AR0) = val; 		break;
-		case TMS32031_AR1:	IREG(TMR_AR1) = val; 		break;
-		case TMS32031_AR2:	IREG(TMR_AR2) = val; 		break;
-		case TMS32031_AR3:	IREG(TMR_AR3) = val; 		break;
-		case TMS32031_AR4:	IREG(TMR_AR4) = val; 		break;
-		case TMS32031_AR5:	IREG(TMR_AR5) = val; 		break;
-		case TMS32031_AR6:	IREG(TMR_AR6) = val; 		break;
-		case TMS32031_AR7:	IREG(TMR_AR7) = val; 		break;
-		case TMS32031_DP:	IREG(TMR_DP) = val; 		break;
-		case TMS32031_IR0:	IREG(TMR_IR0) = val; 		break;
-		case TMS32031_IR1:	IREG(TMR_IR1) = val; 		break;
-		case TMS32031_BK:	IREG(TMR_BK) = val; 		break;
-		case REG_SP:
-		case TMS32031_SP:	IREG(TMR_SP) = val; 		break;
-		case TMS32031_ST:	IREG(TMR_ST) = val; 		break;
-		case TMS32031_IE:	IREG(TMR_IE) = val; 		break;
-		case TMS32031_IF:	IREG(TMR_IF) = val; 		break;
-		case TMS32031_IOF:	IREG(TMR_IOF) = val; 		break;
-		case TMS32031_RS:	IREG(TMR_RS) = val; 		break;
-		case TMS32031_RE:	IREG(TMR_RE) = val; 		break;
-		case TMS32031_RC:	IREG(TMR_RC) = val; 		break;
-
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-//				unsigned offset = REG_SP_CONTENTS - regnum;
-//				if (offset < PC_STACK_DEPTH)
-//					tms32031.pc_stack[offset] = val;
-			}
-    }
-}
-
-
-
-/*###################################################################################################
 **	DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
@@ -637,96 +506,10 @@ static UINT8 tms32031_win_layout[] =
 
 
 /*###################################################################################################
-**	DEBUGGER STRINGS
-**#################################################################################################*/
-
-const char *tms32031_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	tms32031_regs *r = context;
-
-	which = ( which + 1 ) % 16;
-    buffer[which][0] = '\0';
-
-	if (!context)
-		r = &tms32031;
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+TMS32031_PC:  	sprintf(buffer[which], "PC: %08X", r->pc); break;
-
-		case CPU_INFO_REG+TMS32031_R0:		sprintf(buffer[which], " R0:%08X", r->r[TMR_R0].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R1:		sprintf(buffer[which], " R1:%08X", r->r[TMR_R1].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R2:		sprintf(buffer[which], " R2:%08X", r->r[TMR_R2].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R3:		sprintf(buffer[which], " R3:%08X", r->r[TMR_R3].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R4:		sprintf(buffer[which], " R4:%08X", r->r[TMR_R4].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R5:		sprintf(buffer[which], " R5:%08X", r->r[TMR_R5].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R6:		sprintf(buffer[which], " R6:%08X", r->r[TMR_R6].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R7:		sprintf(buffer[which], " R7:%08X", r->r[TMR_R7].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_R0F:		sprintf(buffer[which], "R0F:%8g", dsp_to_double(&r->r[TMR_R0])); break;
-		case CPU_INFO_REG+TMS32031_R1F:		sprintf(buffer[which], "R1F:%8g", dsp_to_double(&r->r[TMR_R1])); break;
-		case CPU_INFO_REG+TMS32031_R2F:		sprintf(buffer[which], "R2F:%8g", dsp_to_double(&r->r[TMR_R2])); break;
-		case CPU_INFO_REG+TMS32031_R3F:		sprintf(buffer[which], "R3F:%8g", dsp_to_double(&r->r[TMR_R3])); break;
-		case CPU_INFO_REG+TMS32031_R4F:		sprintf(buffer[which], "R4F:%8g", dsp_to_double(&r->r[TMR_R4])); break;
-		case CPU_INFO_REG+TMS32031_R5F:		sprintf(buffer[which], "R5F:%8g", dsp_to_double(&r->r[TMR_R5])); break;
-		case CPU_INFO_REG+TMS32031_R6F:		sprintf(buffer[which], "R6F:%8g", dsp_to_double(&r->r[TMR_R6])); break;
-		case CPU_INFO_REG+TMS32031_R7F:		sprintf(buffer[which], "R7F:%8g", dsp_to_double(&r->r[TMR_R7])); break;
-		case CPU_INFO_REG+TMS32031_AR0:		sprintf(buffer[which], "AR0:%08X", r->r[TMR_AR0].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR1:		sprintf(buffer[which], "AR1:%08X", r->r[TMR_AR1].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR2:		sprintf(buffer[which], "AR2:%08X", r->r[TMR_AR2].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR3:		sprintf(buffer[which], "AR3:%08X", r->r[TMR_AR3].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR4:		sprintf(buffer[which], "AR4:%08X", r->r[TMR_AR4].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR5:		sprintf(buffer[which], "AR5:%08X", r->r[TMR_AR5].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR6:		sprintf(buffer[which], "AR6:%08X", r->r[TMR_AR6].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_AR7:		sprintf(buffer[which], "AR7:%08X", r->r[TMR_AR7].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_DP:		sprintf(buffer[which], " DP:%02X", r->r[TMR_DP].i8[0]); break;
-		case CPU_INFO_REG+TMS32031_IR0:		sprintf(buffer[which], "IR0:%08X", r->r[TMR_IR0].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_IR1:		sprintf(buffer[which], "IR1:%08X", r->r[TMR_IR1].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_BK:		sprintf(buffer[which], " BK:%08X", r->r[TMR_BK].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_SP:		sprintf(buffer[which], " SP:%08X", r->r[TMR_SP].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_ST:		sprintf(buffer[which], " ST:%08X", r->r[TMR_ST].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_IE:		sprintf(buffer[which], " IE:%08X", r->r[TMR_IE].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_IF:		sprintf(buffer[which], " IF:%08X", r->r[TMR_IF].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_IOF:		sprintf(buffer[which], "IOF:%08X", r->r[TMR_IOF].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_RS:		sprintf(buffer[which], " RS:%08X", r->r[TMR_RS].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_RE:		sprintf(buffer[which], " RE:%08X", r->r[TMR_RE].i32[0]); break;
-		case CPU_INFO_REG+TMS32031_RC:		sprintf(buffer[which], " RC:%08X", r->r[TMR_RC].i32[0]); break;
-
-		case CPU_INFO_FLAGS:
-		{
-			UINT32 temp = r->r[TMR_ST].i32[0];
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				(temp & 0x80) ? 'O':'.',
-				(temp & 0x40) ? 'U':'.',
-                (temp & 0x20) ? 'V':'.',
-                (temp & 0x10) ? 'u':'.',
-                (temp & 0x08) ? 'n':'.',
-                (temp & 0x04) ? 'z':'.',
-                (temp & 0x02) ? 'v':'.',
-                (temp & 0x01) ? 'c':'.');
-            break;
-        }
-
-		case CPU_INFO_NAME: return "TMS32031";
-		case CPU_INFO_FAMILY: return "TMS32031";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 2002";
-		case CPU_INFO_REG_LAYOUT: return (const char *)tms32031_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)tms32031_win_layout;
-		case CPU_INFO_REG+10000: return "         ";
-    }
-	return buffer[which];
-}
-
-
-
-/*###################################################################################################
 **	DISASSEMBLY HOOK
 **#################################################################################################*/
 
-unsigned tms32031_dasm(char *buffer, unsigned pc)
+static offs_t tms32031_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	extern unsigned dasm_tms32031(char *, unsigned);
@@ -804,4 +587,236 @@ static UINT32 boot_loader(UINT32 boot_rom_addr)
 
 	/* keep the compiler happy */
 	return 0;
+}
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void tms32031_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ0:		set_irq_line(TMS32031_IRQ0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ1:		set_irq_line(TMS32031_IRQ1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ2:		set_irq_line(TMS32031_IRQ2, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ3:		set_irq_line(TMS32031_IRQ3, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT0:	set_irq_line(TMS32031_XINT0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT0:	set_irq_line(TMS32031_RINT0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT1:	set_irq_line(TMS32031_XINT1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT1:	set_irq_line(TMS32031_RINT1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT0:	set_irq_line(TMS32031_TINT0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT1:	set_irq_line(TMS32031_TINT1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_DINT:		set_irq_line(TMS32031_DINT, info->i);	break;
+
+		case CPUINFO_INT_PC:							tms32031.pc = info->i; 					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R0:		IREG(TMR_R0) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R1:		IREG(TMR_R1) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R2:		IREG(TMR_R2) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R3:		IREG(TMR_R3) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R4:		IREG(TMR_R4) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R5:		IREG(TMR_R5) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R6:		IREG(TMR_R6) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R7:		IREG(TMR_R7) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_R0F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R0]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R1F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R1]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R2F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R2]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R3F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R3]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R4F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R4]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R5F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R5]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R6F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R6]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_R7F:		double_to_dsp(*(float *)&info->i, &tms32031.r[TMR_R7]); break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR0:		IREG(TMR_AR0) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR1:		IREG(TMR_AR1) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR2:		IREG(TMR_AR2) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR3:		IREG(TMR_AR3) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR4:		IREG(TMR_AR4) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR5:		IREG(TMR_AR5) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR6:		IREG(TMR_AR6) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR7:		IREG(TMR_AR7) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_DP:		IREG(TMR_DP) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IR0:		IREG(TMR_IR0) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IR1:		IREG(TMR_IR1) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_BK:		IREG(TMR_BK) = info->i; 				break;
+		case CPUINFO_INT_SP:	
+		case CPUINFO_INT_REGISTER + TMS32031_SP:		IREG(TMR_SP) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_ST:		IREG(TMR_ST) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IE:		IREG(TMR_IE) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IF:		IREG(TMR_IF) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IOF:		IREG(TMR_IOF) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_RS:		IREG(TMR_RS) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_RE:		IREG(TMR_RE) = info->i; 				break;
+		case CPUINFO_INT_REGISTER + TMS32031_RC:		IREG(TMR_RC) = info->i; 				break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					tms32031.irq_callback = info->irqcallback; break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void tms32031_get_info(UINT32 state, union cpuinfo *info)
+{
+	float ftemp;
+
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(tms32031);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 11;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -2;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ0:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ1:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ2:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ2)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ3:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ3)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32031_DINT:		info->i = (IREG(TMR_IF) & (1 << TMS32031_DINT)) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = tms32031.ppc;					break;
+
+		case CPUINFO_INT_PC:							info->i = tms32031.pc;					break;
+
+		case CPUINFO_INT_REGISTER + TMS32031_R0:		info->i = IREG(TMR_R0);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R1:		info->i = IREG(TMR_R1);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R2:		info->i = IREG(TMR_R2);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R3:		info->i = IREG(TMR_R3);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R4:		info->i = IREG(TMR_R4);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R5:		info->i = IREG(TMR_R5);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R6:		info->i = IREG(TMR_R6);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R7:		info->i = IREG(TMR_R7);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_R0F:		ftemp = dsp_to_double(&tms32031.r[TMR_R0]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R1F:		ftemp = dsp_to_double(&tms32031.r[TMR_R1]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R2F:		ftemp = dsp_to_double(&tms32031.r[TMR_R2]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R3F:		ftemp = dsp_to_double(&tms32031.r[TMR_R3]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R4F:		ftemp = dsp_to_double(&tms32031.r[TMR_R4]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R5F:		ftemp = dsp_to_double(&tms32031.r[TMR_R5]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R6F:		ftemp = dsp_to_double(&tms32031.r[TMR_R6]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_R7F:		ftemp = dsp_to_double(&tms32031.r[TMR_R7]); info->i = *(UINT32 *)&ftemp; break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR0:		info->i = IREG(TMR_AR0);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR1:		info->i = IREG(TMR_AR1);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR2:		info->i = IREG(TMR_AR2);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR3:		info->i = IREG(TMR_AR3);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR4:		info->i = IREG(TMR_AR4);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR5:		info->i = IREG(TMR_AR5);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR6:		info->i = IREG(TMR_AR6);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_AR7:		info->i = IREG(TMR_AR7);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_DP:		info->i = IREG(TMR_DP);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_IR0:		info->i = IREG(TMR_IR0);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_IR1:		info->i = IREG(TMR_IR1);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_BK:		info->i = IREG(TMR_BK);					break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + TMS32031_SP:		info->i = IREG(TMR_SP);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_ST:		info->i = IREG(TMR_ST);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_IE:		info->i = IREG(TMR_IE);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_IF:		info->i = IREG(TMR_IF);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_IOF:		info->i = IREG(TMR_IOF);				break;
+		case CPUINFO_INT_REGISTER + TMS32031_RS:		info->i = IREG(TMR_RS);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_RE:		info->i = IREG(TMR_RE);					break;
+		case CPUINFO_INT_REGISTER + TMS32031_RC:		info->i = IREG(TMR_RC);					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = tms32031_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tms32031_get_context; break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tms32031_set_context; break;
+		case CPUINFO_PTR_INIT:							info->init = tms32031_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = tms32031_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = tms32031_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = tms32031_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32031_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = tms32031.irq_callback; break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32031_icount;		break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32031_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32031_win_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32031"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS32031"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 2002"); break;
+
+		case CPUINFO_STR_FLAGS:
+		{
+			UINT32 temp = tms32031.r[TMR_ST].i32[0];
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				(temp & 0x80) ? 'O':'.',
+				(temp & 0x40) ? 'U':'.',
+                (temp & 0x20) ? 'V':'.',
+                (temp & 0x10) ? 'u':'.',
+                (temp & 0x08) ? 'n':'.',
+                (temp & 0x04) ? 'z':'.',
+                (temp & 0x02) ? 'v':'.',
+                (temp & 0x01) ? 'c':'.');
+            break;
+        }
+
+		case CPUINFO_STR_REGISTER + TMS32031_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", tms32031.pc); break;
+
+		case CPUINFO_STR_REGISTER + TMS32031_R0:		sprintf(info->s = cpuintrf_temp_str(), " R0:%08X", tms32031.r[TMR_R0].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R1:		sprintf(info->s = cpuintrf_temp_str(), " R1:%08X", tms32031.r[TMR_R1].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R2:		sprintf(info->s = cpuintrf_temp_str(), " R2:%08X", tms32031.r[TMR_R2].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R3:		sprintf(info->s = cpuintrf_temp_str(), " R3:%08X", tms32031.r[TMR_R3].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R4:		sprintf(info->s = cpuintrf_temp_str(), " R4:%08X", tms32031.r[TMR_R4].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R5:		sprintf(info->s = cpuintrf_temp_str(), " R5:%08X", tms32031.r[TMR_R5].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R6:		sprintf(info->s = cpuintrf_temp_str(), " R6:%08X", tms32031.r[TMR_R6].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R7:		sprintf(info->s = cpuintrf_temp_str(), " R7:%08X", tms32031.r[TMR_R7].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R0F:		sprintf(info->s = cpuintrf_temp_str(), "R0F:%8g", dsp_to_double(&tms32031.r[TMR_R0])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R1F:		sprintf(info->s = cpuintrf_temp_str(), "R1F:%8g", dsp_to_double(&tms32031.r[TMR_R1])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R2F:		sprintf(info->s = cpuintrf_temp_str(), "R2F:%8g", dsp_to_double(&tms32031.r[TMR_R2])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R3F:		sprintf(info->s = cpuintrf_temp_str(), "R3F:%8g", dsp_to_double(&tms32031.r[TMR_R3])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R4F:		sprintf(info->s = cpuintrf_temp_str(), "R4F:%8g", dsp_to_double(&tms32031.r[TMR_R4])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R5F:		sprintf(info->s = cpuintrf_temp_str(), "R5F:%8g", dsp_to_double(&tms32031.r[TMR_R5])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R6F:		sprintf(info->s = cpuintrf_temp_str(), "R6F:%8g", dsp_to_double(&tms32031.r[TMR_R6])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_R7F:		sprintf(info->s = cpuintrf_temp_str(), "R7F:%8g", dsp_to_double(&tms32031.r[TMR_R7])); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR0:		sprintf(info->s = cpuintrf_temp_str(), "AR0:%08X", tms32031.r[TMR_AR0].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR1:		sprintf(info->s = cpuintrf_temp_str(), "AR1:%08X", tms32031.r[TMR_AR1].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR2:		sprintf(info->s = cpuintrf_temp_str(), "AR2:%08X", tms32031.r[TMR_AR2].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR3:		sprintf(info->s = cpuintrf_temp_str(), "AR3:%08X", tms32031.r[TMR_AR3].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR4:		sprintf(info->s = cpuintrf_temp_str(), "AR4:%08X", tms32031.r[TMR_AR4].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR5:		sprintf(info->s = cpuintrf_temp_str(), "AR5:%08X", tms32031.r[TMR_AR5].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR6:		sprintf(info->s = cpuintrf_temp_str(), "AR6:%08X", tms32031.r[TMR_AR6].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_AR7:		sprintf(info->s = cpuintrf_temp_str(), "AR7:%08X", tms32031.r[TMR_AR7].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_DP:		sprintf(info->s = cpuintrf_temp_str(), " DP:%02X", tms32031.r[TMR_DP].i8[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_IR0:		sprintf(info->s = cpuintrf_temp_str(), "IR0:%08X", tms32031.r[TMR_IR0].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_IR1:		sprintf(info->s = cpuintrf_temp_str(), "IR1:%08X", tms32031.r[TMR_IR1].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_BK:		sprintf(info->s = cpuintrf_temp_str(), " BK:%08X", tms32031.r[TMR_BK].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_SP:		sprintf(info->s = cpuintrf_temp_str(), " SP:%08X", tms32031.r[TMR_SP].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_ST:		sprintf(info->s = cpuintrf_temp_str(), " ST:%08X", tms32031.r[TMR_ST].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_IE:		sprintf(info->s = cpuintrf_temp_str(), " IE:%08X", tms32031.r[TMR_IE].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_IF:		sprintf(info->s = cpuintrf_temp_str(), " IF:%08X", tms32031.r[TMR_IF].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_IOF:		sprintf(info->s = cpuintrf_temp_str(), "IOF:%08X", tms32031.r[TMR_IOF].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_RS:		sprintf(info->s = cpuintrf_temp_str(), " RS:%08X", tms32031.r[TMR_RS].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_RE:		sprintf(info->s = cpuintrf_temp_str(), " RE:%08X", tms32031.r[TMR_RE].i32[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32031_RC:		sprintf(info->s = cpuintrf_temp_str(), " RC:%08X", tms32031.r[TMR_RC].i32[0]); break;
+	}
 }

@@ -35,21 +35,21 @@ static READ_HANDLER( beaminv_input_port_3_r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x17ff, MRA_ROM },
-	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2400, 0x2400, input_port_0_r },
-	{ 0x2800, 0x28ff, input_port_1_r },
-	{ 0x3400, 0x3400, input_port_2_r },
-	{ 0x3800, 0x3800, beaminv_input_port_3_r },
-	{ 0x4000, 0x5fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_0_r)
+	AM_RANGE(0x2800, 0x28ff) AM_READ(input_port_1_r)
+	AM_RANGE(0x3400, 0x3400) AM_READ(input_port_2_r)
+	AM_RANGE(0x3800, 0x3800) AM_READ(beaminv_input_port_3_r)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x17ff, MWA_ROM },
-	{ 0x1800, 0x1fff, MWA_RAM },
-	{ 0x4000, 0x5fff, beaminv_videoram_w, &videoram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(beaminv_videoram_w) AM_BASE(&videoram)
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -58,8 +58,8 @@ MEMORY_END
  *
  *************************************/
 
-static PORT_WRITE_START( writeport )
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -120,8 +120,8 @@ static MACHINE_DRIVER_START( beaminv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)	/* 2 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

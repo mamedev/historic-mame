@@ -136,40 +136,40 @@ static INTERRUPT_GEN( freekick_irqgen )
 	if (nmi_en) cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
 }
 
-static MEMORY_READ_START( gigas_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, input_port_2_r },
-	{ 0xe800, 0xe800, input_port_3_r },
-	{ 0xf000, 0xf000, input_port_4_r },
-	{ 0xf800, 0xf800, input_port_5_r },
-MEMORY_END
+static ADDRESS_MAP_START( gigas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_2_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_3_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_4_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gigas_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, freek_videoram_w, &freek_videoram },
-	{ 0xd800, 0xd8ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd900, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe001, MWA_NOP },// probably not flipscreen
-	{ 0xe002, 0xe003, coin_w },
-	{ 0xe004, 0xe004, nmi_enable_w },
-	{ 0xe005, 0xe005, MWA_NOP},
-	{ 0xf000, 0xf000, MWA_NOP }, //bankswitch ?
-	{ 0xfc00, 0xfc00, SN76496_0_w },
-	{ 0xfc01, 0xfc01, SN76496_1_w },
-	{ 0xfc02, 0xfc02, SN76496_2_w },
-	{ 0xfc03, 0xfc03, SN76496_3_w },
-MEMORY_END
+static ADDRESS_MAP_START( gigas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(freek_videoram_w) AM_BASE(&freek_videoram)
+	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd900, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe001) AM_WRITE(MWA8_NOP)// probably not flipscreen
+	AM_RANGE(0xe002, 0xe003) AM_WRITE(coin_w)
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xe005, 0xe005) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) //bankswitch ?
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( gigas_readport )
-	{ 0x00, 0x00, gigas_spinner_r },
-	{ 0x01, 0x01, MRA_NOP }, //unused dip 3
-PORT_END
+static ADDRESS_MAP_START( gigas_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( gigas_writeport )
-	{ 0x00, 0x00 ,spinner_select_w },
-PORT_END
+static ADDRESS_MAP_START( gigas_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
+ADDRESS_MAP_END
 
 
 
@@ -224,76 +224,76 @@ static READ_HANDLER(oigas_2_r)
 	return 1;
 }
 
-static PORT_READ_START( oigas_readport )
-	{ 0x00, 0x00, gigas_spinner_r },
-	{ 0x01, 0x01, IORP_NOP }, //unused dip 3
-	{ 0x02, 0x02, oigas_2_r },
-	{ 0x03, 0x03, oigas_3_r },
-PORT_END
+static ADDRESS_MAP_START( oigas_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
+	AM_RANGE(0x02, 0x02) AM_READ(oigas_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(oigas_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( oigas_writeport )
-	{ 0x00, 0x00, spinner_select_w },
-	{ 0x05, 0x05, oigas_5_w },
-PORT_END
-
-
+static ADDRESS_MAP_START( oigas_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(oigas_5_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( pbillrd_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, input_port_0_r },
-	{ 0xe800, 0xe800, input_port_1_r },
-	{ 0xf000, 0xf000, input_port_2_r },
-	{ 0xf800, 0xf800, input_port_3_r },
-MEMORY_END
 
-static MEMORY_WRITE_START( pbillrd_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, freek_videoram_w, &freek_videoram },
-	{ 0xd800, 0xd8ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd900, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe001, flipscreen_w },
-	{ 0xe002, 0xe003, coin_w },
-	{ 0xe004, 0xe004, nmi_enable_w },
-	{ 0xf000, 0xf000, pbillrd_bankswitch_w },
-	{ 0xfc00, 0xfc00, SN76496_0_w },
-	{ 0xfc01, 0xfc01, SN76496_1_w },
-	{ 0xfc02, 0xfc02, SN76496_2_w },
-	{ 0xfc03, 0xfc03, SN76496_3_w },
-MEMORY_END
 
-static MEMORY_READ_START( freekckb_readmem )
-	{ 0x0000, 0xcfff, MRA_ROM },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },	// tilemap
-	{ 0xe800, 0xe8ff, MRA_RAM },	// sprites
-	{ 0xec00, 0xec03, ppi8255_0_r },
-	{ 0xf000, 0xf003, ppi8255_1_r },
-	{ 0xf800, 0xf800, input_port_3_r },
-	{ 0xf801, 0xf801, input_port_4_r },
-	{ 0xf802, 0xf802, MRA_NOP },	//MUST return bit 0 = 0, otherwise game resets
-	{ 0xf803, 0xf803, spinner_r },
-MEMORY_END
+static ADDRESS_MAP_START( pbillrd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_1_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_2_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( freekckb_writemem )
-	{ 0x0000, 0xcfff, MWA_ROM },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, freek_videoram_w, &freek_videoram },
-	{ 0xe800, 0xe8ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xec00, 0xec03, ppi8255_0_w },
-	{ 0xf000, 0xf003, ppi8255_1_w },
-	{ 0xf800, 0xf801, flipscreen_w },
-	{ 0xf802, 0xf803, coin_w },
-	{ 0xf804, 0xf804, nmi_enable_w },
-	{ 0xf806, 0xf806, spinner_select_w },
-	{ 0xfc00, 0xfc00, SN76496_0_w },
-	{ 0xfc01, 0xfc01, SN76496_1_w },
-	{ 0xfc02, 0xfc02, SN76496_2_w },
-	{ 0xfc03, 0xfc03, SN76496_3_w },
-MEMORY_END
+static ADDRESS_MAP_START( pbillrd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(freek_videoram_w) AM_BASE(&freek_videoram)
+	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd900, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe001) AM_WRITE(flipscreen_w)
+	AM_RANGE(0xe002, 0xe003) AM_WRITE(coin_w)
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(pbillrd_bankswitch_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( freekckb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)	// tilemap
+	AM_RANGE(0xe800, 0xe8ff) AM_READ(MRA8_RAM)	// sprites
+	AM_RANGE(0xec00, 0xec03) AM_READ(ppi8255_0_r)
+	AM_RANGE(0xf000, 0xf003) AM_READ(ppi8255_1_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_3_r)
+	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_4_r)
+	AM_RANGE(0xf802, 0xf802) AM_READ(MRA8_NOP)	//MUST return bit 0 = 0, otherwise game resets
+	AM_RANGE(0xf803, 0xf803) AM_READ(spinner_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( freekckb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(freek_videoram_w) AM_BASE(&freek_videoram)
+	AM_RANGE(0xe800, 0xe8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xec00, 0xec03) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0xf000, 0xf003) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(flipscreen_w)
+	AM_RANGE(0xf802, 0xf803) AM_WRITE(coin_w)
+	AM_RANGE(0xf804, 0xf804) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(spinner_select_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
+ADDRESS_MAP_END
 
 
 static int ff_data;
@@ -308,13 +308,13 @@ static WRITE_HANDLER (freekick_ff_w)
 	ff_data = data;
 }
 
-static PORT_READ_START( freekckb_readport )
-	{ 0xff, 0xff, freekick_ff_r },
-PORT_END
+static ADDRESS_MAP_START( freekckb_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xff, 0xff) AM_READ(freekick_ff_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( freekckb_writeport )
-	{ 0xff, 0xff, freekick_ff_w },
-PORT_END
+static ADDRESS_MAP_START( freekckb_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xff, 0xff) AM_WRITE(freekick_ff_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( gigas )
 
@@ -745,7 +745,7 @@ static struct SN76496interface sn76496_interface =
 
 static MACHINE_DRIVER_START( pbillrd )
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
-	MDRV_CPU_MEMORY(pbillrd_readmem,pbillrd_writemem)
+	MDRV_CPU_PROGRAM_MAP(pbillrd_readmem,pbillrd_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
@@ -769,8 +769,8 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( freekckb )
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
-	MDRV_CPU_MEMORY(freekckb_readmem,freekckb_writemem)
-	MDRV_CPU_PORTS(freekckb_readport,freekckb_writeport)
+	MDRV_CPU_PROGRAM_MAP(freekckb_readmem,freekckb_writemem)
+	MDRV_CPU_IO_MAP(freekckb_readport,freekckb_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
@@ -795,8 +795,8 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gigas )
 	MDRV_CPU_ADD_TAG("main",Z80, 18432000/6)	//confirmed
-	MDRV_CPU_MEMORY(gigas_readmem,gigas_writemem)
-	MDRV_CPU_PORTS(gigas_readport,gigas_writeport)
+	MDRV_CPU_PROGRAM_MAP(gigas_readmem,gigas_writemem)
+	MDRV_CPU_IO_MAP(gigas_readport,gigas_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3)
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
@@ -821,7 +821,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( oigas )
 	MDRV_IMPORT_FROM(gigas)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(oigas_readport,oigas_writeport)
+	MDRV_CPU_IO_MAP(oigas_readport,oigas_writeport)
 MACHINE_DRIVER_END
 
 /* roms */

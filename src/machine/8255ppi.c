@@ -18,12 +18,12 @@ static int num;
 
 typedef struct
 {
-	mem_read_handler portAread;
-	mem_read_handler portBread;
-	mem_read_handler portCread;
-	mem_write_handler portAwrite;
-	mem_write_handler portBwrite;
-	mem_write_handler portCwrite;
+	read8_handler portAread;
+	read8_handler portBread;
+	read8_handler portCread;
+	write8_handler portAwrite;
+	write8_handler portBwrite;
+	write8_handler portCwrite;
 	int groupA_mode;
 	int groupB_mode;
 	int in_mask[3];	/* input mask */
@@ -236,33 +236,33 @@ data8_t ppi8255_peek( int which, offs_t offset )
 #endif
 
 
-void ppi8255_set_portAread(int which, mem_read_handler portAread)
+void ppi8255_set_portAread(int which, read8_handler portAread)
 {
 	chips[which].portAread = portAread;
 }
 
-void ppi8255_set_portBread(int which, mem_read_handler portBread)
+void ppi8255_set_portBread(int which, read8_handler portBread)
 {
 	chips[which].portBread = portBread;
 }
 
-void ppi8255_set_portCread(int which, mem_read_handler portCread)
+void ppi8255_set_portCread(int which, read8_handler portCread)
 {
 	chips[which].portCread = portCread;
 }
 
 
-void ppi8255_set_portAwrite(int which, mem_write_handler portAwrite)
+void ppi8255_set_portAwrite(int which, write8_handler portAwrite)
 {
 	chips[which].portAwrite = portAwrite;
 }
 
-void ppi8255_set_portBwrite(int which, mem_write_handler portBwrite)
+void ppi8255_set_portBwrite(int which, write8_handler portBwrite)
 {
 	chips[which].portBwrite = portBwrite;
 }
 
-void ppi8255_set_portCwrite(int which, mem_write_handler portCwrite)
+void ppi8255_set_portCwrite(int which, write8_handler portCwrite)
 {
 	chips[which].portCwrite = portCwrite;
 }

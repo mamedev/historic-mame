@@ -65,44 +65,44 @@ static WRITE_HANDLER ( coinlock_w )
 
 ***************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8800, chaknpop_mcu_portA_r },
-	{ 0x8801, 0x8801, chaknpop_mcu_portB_r },
-	{ 0x8802, 0x8802, chaknpop_mcu_portC_r },
-	{ 0x8805, 0x8805, AY8910_read_port_0_r },
-	{ 0x8807, 0x8807, AY8910_read_port_1_r },
-	{ 0x8808, 0x8808, input_port_3_r },		// DSW C
-	{ 0x8809, 0x8809, input_port_1_r },		// IN1
-	{ 0x880a, 0x880a, input_port_0_r },		// IN0
-	{ 0x880b, 0x880b, input_port_2_r },		// IN2
-	{ 0x880c, 0x880c, chaknpop_gfxmode_r },
-	{ 0x9000, 0x93ff, MRA_RAM },			// TX tilemap
-	{ 0x9800, 0x983f, MRA_RAM },			// Color attribute
-	{ 0x9840, 0x98ff, MRA_RAM },			// sprite
-	{ 0xa000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xffff, MRA_BANK1 },			// bitmap plane 1-4
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(chaknpop_mcu_portA_r)
+	AM_RANGE(0x8801, 0x8801) AM_READ(chaknpop_mcu_portB_r)
+	AM_RANGE(0x8802, 0x8802) AM_READ(chaknpop_mcu_portC_r)
+	AM_RANGE(0x8805, 0x8805) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x8807, 0x8807) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x8808, 0x8808) AM_READ(input_port_3_r)		// DSW C
+	AM_RANGE(0x8809, 0x8809) AM_READ(input_port_1_r)		// IN1
+	AM_RANGE(0x880a, 0x880a) AM_READ(input_port_0_r)		// IN0
+	AM_RANGE(0x880b, 0x880b) AM_READ(input_port_2_r)		// IN2
+	AM_RANGE(0x880c, 0x880c) AM_READ(chaknpop_gfxmode_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)			// TX tilemap
+	AM_RANGE(0x9800, 0x983f) AM_READ(MRA8_RAM)			// Color attribute
+	AM_RANGE(0x9840, 0x98ff) AM_READ(MRA8_RAM)			// sprite
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK1)			// bitmap plane 1-4
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, chaknpop_mcu_portA_w },
-	{ 0x8801, 0x8801, chaknpop_mcu_portB_w },
-	{ 0x8802, 0x8802, chaknpop_mcu_portC_w },
-	{ 0x8804, 0x8804, AY8910_control_port_0_w },
-	{ 0x8805, 0x8805, AY8910_write_port_0_w },
-	{ 0x8806, 0x8806, AY8910_control_port_1_w },
-	{ 0x8807, 0x8807, AY8910_write_port_1_w },
-	{ 0x880c, 0x880c, chaknpop_gfxmode_w },
-	{ 0x880D, 0x880D, coinlock_w },			// coin lock out
-	{ 0x9000, 0x93ff, chaknpop_txram_w, &chaknpop_txram },
-	{ 0x9800, 0x983f, chaknpop_attrram_w, &chaknpop_attrram },
-	{ 0x9840, 0x98ff, MWA_RAM, &chaknpop_sprram, &chaknpop_sprram_size },
-	{ 0xa000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xffff, MWA_BANK1 },			// bitmap plane 1-4
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(chaknpop_mcu_portA_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(chaknpop_mcu_portB_w)
+	AM_RANGE(0x8802, 0x8802) AM_WRITE(chaknpop_mcu_portC_w)
+	AM_RANGE(0x8804, 0x8804) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8805, 0x8805) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8806, 0x8806) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8807, 0x8807) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x880c, 0x880c) AM_WRITE(chaknpop_gfxmode_w)
+	AM_RANGE(0x880D, 0x880D) AM_WRITE(coinlock_w)			// coin lock out
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(chaknpop_txram_w) AM_BASE(&chaknpop_txram)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(chaknpop_attrram_w) AM_BASE(&chaknpop_attrram)
+	AM_RANGE(0x9840, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&chaknpop_sprram) AM_SIZE(&chaknpop_sprram_size)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_BANK1)			// bitmap plane 1-4
+ADDRESS_MAP_END
 
 static struct AY8910interface ay8910_interface =
 {
@@ -284,7 +284,7 @@ static MACHINE_DRIVER_START( chaknpop )
 	/* the real board is 3.072MHz, but it is faster for MAME */
 	//MDRV_CPU_ADD(Z80, 18432000 / 6)	/* 3.072 MHz */
 	MDRV_CPU_ADD(Z80, 2860000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

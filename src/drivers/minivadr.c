@@ -20,17 +20,17 @@ VIDEO_UPDATE( minivadr );
 PALETTE_INIT( minivadr );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0xa000, 0xbfff, MRA_RAM },
-	{ 0xe008, 0xe008, input_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe008, 0xe008) AM_READ(input_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0xa000, 0xbfff, minivadr_videoram_w, &videoram, &videoram_size },
-	{ 0xe008, 0xe008, MWA_NOP },		// ???
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(minivadr_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe008, 0xe008) AM_WRITE(MWA8_NOP)		// ???
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( minivadr )
@@ -50,7 +50,7 @@ static MACHINE_DRIVER_START( minivadr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,24000000 / 6)		 /* 4 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

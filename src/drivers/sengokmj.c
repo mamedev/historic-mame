@@ -150,53 +150,53 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x003ff, MRA_RAM },/*Just initialized at start-up,then not used at all...*/
-	{ 0x06700, 0x068ff, MRA_RAM },
-	{ 0x07800, 0x07fff, MRA_RAM },
-	{ 0x08000, 0x087ff, MRA_RAM },
-	{ 0x08800, 0x097ff, MRA_RAM },
-	{ 0x09800, 0x09fff, MRA_RAM },
-	{ 0x0c000, 0x0c7ff, sengoku_bg_vram_r },
-	{ 0x0c800, 0x0cfff, sengoku_fg_vram_r },
-	{ 0x0d000, 0x0d7ff, sengoku_md_vram_r },
-	{ 0x0d800, 0x0e7ff, sengoku_tx_vram_r },
-	{ 0x0f000, 0x0f7ff, paletteram_r },
-	{ 0x0f800, 0x0ffff, MRA_RAM },
-	{ 0xc0000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x003ff) AM_READ(MRA8_RAM)/*Just initialized at start-up,then not used at all...*/
+	AM_RANGE(0x06700, 0x068ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x07800, 0x07fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x08000, 0x087ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x08800, 0x097ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x09800, 0x09fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_READ(sengoku_bg_vram_r)
+	AM_RANGE(0x0c800, 0x0cfff) AM_READ(sengoku_fg_vram_r)
+	AM_RANGE(0x0d000, 0x0d7ff) AM_READ(sengoku_md_vram_r)
+	AM_RANGE(0x0d800, 0x0e7ff) AM_READ(sengoku_tx_vram_r)
+	AM_RANGE(0x0f000, 0x0f7ff) AM_READ(paletteram_r)
+	AM_RANGE(0x0f800, 0x0ffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x003ff, MWA_RAM },  /*Ditto from above...*/
-	{ 0x06700, 0x068ff, MWA_RAM },
-	{ 0x07800, 0x07fff, MWA_RAM },
-	{ 0x08000, 0x087ff, MWA_RAM },
-	{ 0x08800, 0x097ff, MWA_RAM },
-	{ 0x09800, 0x09fff, MWA_RAM },
-	{ 0x0c000, 0x0c7ff, sengoku_bg_vram_w ,&bg_vram },
-	{ 0x0c800, 0x0cfff, sengoku_fg_vram_w ,&fg_vram },
-	{ 0x0d000, 0x0d7ff, sengoku_md_vram_w ,&md_vram },
-	{ 0x0d800, 0x0e7ff, sengoku_tx_vram_w ,&tx_vram },
-	{ 0x0e800, 0x0f7ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x0f800, 0x0ffff, MWA_RAM ,&spriteram },
-	{ 0xc0000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x003ff) AM_WRITE(MWA8_RAM)  /*Ditto from above...*/
+	AM_RANGE(0x06700, 0x068ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x07800, 0x07fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x08000, 0x087ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x08800, 0x097ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x09800, 0x09fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_WRITE(sengoku_bg_vram_w) AM_BASE(&bg_vram)
+	AM_RANGE(0x0c800, 0x0cfff) AM_WRITE(sengoku_fg_vram_w) AM_BASE(&fg_vram)
+	AM_RANGE(0x0d000, 0x0d7ff) AM_WRITE(sengoku_md_vram_w) AM_BASE(&md_vram)
+	AM_RANGE(0x0d800, 0x0e7ff) AM_WRITE(sengoku_tx_vram_w) AM_BASE(&tx_vram)
+	AM_RANGE(0x0e800, 0x0f7ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0f800, 0x0ffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xc0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x4000, 0x400f, seibu_main_v30_r },
-	{ 0xc000, 0xc000, input_port_1_r },
-	{ 0xc001, 0xc001, input_port_2_r },
-	{ 0xc002, 0xc002, mahjong_panel_0_r },
-	{ 0xc003, 0xc003, mahjong_panel_1_r },
-	{ 0xc004, 0xc004, input_port_10_r },
-	{ 0xc005, 0xc005, input_port_11_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4000, 0x400f) AM_READ(seibu_main_v30_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_1_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_2_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(mahjong_panel_0_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(mahjong_panel_1_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_10_r)
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_11_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x4000, 0x400f, seibu_main_v30_w },
-	{ 0x8010, 0x801f, seibu_main_v30_w },
-	{ 0x8140, 0x8141, mahjong_panel_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4000, 0x400f) AM_WRITE(seibu_main_v30_w)
+	AM_RANGE(0x8010, 0x801f) AM_WRITE(seibu_main_v30_w)
+	AM_RANGE(0x8140, 0x8141) AM_WRITE(mahjong_panel_w)
+ADDRESS_MAP_END
 
 /***************************************************************************************/
 
@@ -214,8 +214,8 @@ static MACHINE_DRIVER_START( sengokmj )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30, 16000000/2) /* V30-8 */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(sengokmj_interrupt,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)

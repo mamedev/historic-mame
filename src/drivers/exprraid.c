@@ -20,7 +20,7 @@ Main CPU: ( 6502 )
 2100-2100 Sound latch write
 2800-2801 Protection
 3800-3800 VBblank ( bootleg 1 only )
-4000-ffff MRA_ROM
+4000-ffff MRA8_ROM
 
 Sound Cpu: ( 6809 )
 0000-1fff RAM
@@ -107,52 +107,52 @@ static READ_HANDLER( vblank_r ) {
 	return val;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see init_exprraid below */
-    { 0x0000, 0x05ff, MRA_RAM },
-    { 0x0600, 0x07ff, MRA_RAM }, /* sprites */
-    { 0x0800, 0x0bff, MRA_RAM },
-    { 0x0c00, 0x0fff, MRA_RAM },
-    { 0x1800, 0x1800, input_port_1_r }, /* DSW 0 */
-    { 0x1801, 0x1801, input_port_2_r }, /* Controls */
-    { 0x1802, 0x1802, input_port_3_r }, /* Coins */
-    { 0x1803, 0x1803, input_port_4_r }, /* DSW 1 */
-	{ 0x2800, 0x2800, exprraid_prot_0_r }, /* protection */
-	{ 0x2801, 0x2801, exprraid_prot_1_r }, /* protection */
-    { 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00ff, 0x00ff) AM_READ(vblank_r) /* HACK!!!! see init_exprraid below */
+    AM_RANGE(0x0000, 0x05ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x0600, 0x07ff) AM_READ(MRA8_RAM) /* sprites */
+    AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x0c00, 0x0fff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x1800, 0x1800) AM_READ(input_port_1_r) /* DSW 0 */
+    AM_RANGE(0x1801, 0x1801) AM_READ(input_port_2_r) /* Controls */
+    AM_RANGE(0x1802, 0x1802) AM_READ(input_port_3_r) /* Coins */
+    AM_RANGE(0x1803, 0x1803) AM_READ(input_port_4_r) /* DSW 1 */
+	AM_RANGE(0x2800, 0x2800) AM_READ(exprraid_prot_0_r) /* protection */
+	AM_RANGE(0x2801, 0x2801) AM_READ(exprraid_prot_1_r) /* protection */
+    AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x05ff, MWA_RAM },
-    { 0x0600, 0x07ff, MWA_RAM, &spriteram, &spriteram_size }, /* sprites */
-    { 0x0800, 0x0bff, exprraid_videoram_w, &videoram },
-    { 0x0c00, 0x0fff, exprraid_colorram_w, &colorram },
-    { 0x2001, 0x2001, sound_cpu_command_w },
-	{ 0x2002, 0x2002, exprraid_flipscreen_w },
-    { 0x2800, 0x2803, exprraid_bgselect_w },
-    { 0x2804, 0x2804, exprraid_scrolly_w },
-    { 0x2805, 0x2806, exprraid_scrollx_w },
-    { 0x2807, 0x2807, MWA_NOP },	// Scroll related ?
-    { 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x05ff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x0600, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* sprites */
+    AM_RANGE(0x0800, 0x0bff) AM_WRITE(exprraid_videoram_w) AM_BASE(&videoram)
+    AM_RANGE(0x0c00, 0x0fff) AM_WRITE(exprraid_colorram_w) AM_BASE(&colorram)
+    AM_RANGE(0x2001, 0x2001) AM_WRITE(sound_cpu_command_w)
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(exprraid_flipscreen_w)
+    AM_RANGE(0x2800, 0x2803) AM_WRITE(exprraid_bgselect_w)
+    AM_RANGE(0x2804, 0x2804) AM_WRITE(exprraid_scrolly_w)
+    AM_RANGE(0x2805, 0x2806) AM_WRITE(exprraid_scrollx_w)
+    AM_RANGE(0x2807, 0x2807) AM_WRITE(MWA8_NOP)	// Scroll related ?
+    AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-    { 0x0000, 0x1fff, MRA_RAM },
-    { 0x2000, 0x2000, YM2203_status_port_0_r },
-	{ 0x2001, 0x2001, YM2203_read_port_0_r },
-    { 0x4000, 0x4000, YM3526_status_port_0_r },
-	{ 0x6000, 0x6000, soundlatch_r },
-    { 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x2000, 0x2000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2203_read_port_0_r)
+    AM_RANGE(0x4000, 0x4000) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+    AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-    { 0x0000, 0x1fff, MWA_RAM },
-    { 0x2000, 0x2000, YM2203_control_port_0_w },
-	{ 0x2001, 0x2001, YM2203_write_port_0_w },
-    { 0x4000, 0x4000, YM3526_control_port_0_w },
-    { 0x4001, 0x4001, YM3526_write_port_0_w },
-    { 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2203_write_port_0_w)
+    AM_RANGE(0x4000, 0x4000) AM_WRITE(YM3526_control_port_0_w)
+    AM_RANGE(0x4001, 0x4001) AM_WRITE(YM3526_write_port_0_w)
+    AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( exprraid )
 	PORT_START /* IN 0 - 0x3800 */
@@ -337,11 +337,11 @@ static MACHINE_DRIVER_START( exprraid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 4000000)        /* 4 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(exprraid_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz ??? */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 								/* IRQs are caused by the YM3526 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

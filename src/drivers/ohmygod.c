@@ -89,37 +89,37 @@ READ16_HANDLER( ohmygod_sound_status_r )
 	return OKIM6295_status_0_lsb_r(offset, mem_mask);
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x300000, 0x303fff, MRA16_RAM },
-	{ 0x304000, 0x307fff, MRA16_RAM },
-	{ 0x308000, 0x30ffff, MRA16_RAM },
-	{ 0x700000, 0x703fff, MRA16_RAM },
-	{ 0x704000, 0x707fff, MRA16_RAM },
-	{ 0x708000, 0x70ffff, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0xa00000, 0xa00001, input_port_2_word_r },
-	{ 0xa00002, 0xa00003, input_port_3_word_r },
-	{ 0xb00000, 0xb00001, ohmygod_sound_status_r },
-	{ 0xc00000, 0xc00001, watchdog_reset16_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x300000, 0x303fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x304000, 0x307fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x308000, 0x30ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x704000, 0x707fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x708000, 0x70ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xa00002, 0xa00003) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(ohmygod_sound_status_r)
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(watchdog_reset16_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x300000, 0x303fff, MWA16_RAM },
-	{ 0x304000, 0x307fff, ohmygod_videoram_w, &ohmygod_videoram },
-	{ 0x308000, 0x30ffff, MWA16_RAM },
-	{ 0x400000, 0x400001, ohmygod_scrollx_w },
-	{ 0x400002, 0x400003, ohmygod_scrolly_w },
-	{ 0x600000, 0x6007ff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },
-	{ 0x700000, 0x703fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x704000, 0x707fff, MWA16_RAM },
-	{ 0x708000, 0x70ffff, MWA16_RAM },	/* work RAM */
-	{ 0x900000, 0x900001, ohmygod_ctrl_w },
-	{ 0xb00000, 0xb00001, OKIM6295_data_0_lsb_w },
-	{ 0xd00000, 0xd00001, ohmygod_spritebank_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x304000, 0x307fff) AM_WRITE(ohmygod_videoram_w) AM_BASE(&ohmygod_videoram)
+	AM_RANGE(0x308000, 0x30ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(ohmygod_scrollx_w)
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(ohmygod_scrolly_w)
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x704000, 0x707fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x708000, 0x70ffff) AM_WRITE(MWA16_RAM)	/* work RAM */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(ohmygod_ctrl_w)
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(ohmygod_spritebank_w)
+ADDRESS_MAP_END
 
 
 
@@ -372,7 +372,7 @@ static MACHINE_DRIVER_START( ohmygod )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

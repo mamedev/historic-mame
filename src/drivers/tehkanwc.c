@@ -229,202 +229,202 @@ void tehkanwc_adpcm_int (int data)
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, MRA_RAM },
-	{ 0xd400, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xddff, MRA_RAM },
-	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
-	{ 0xec00, 0xec01, MRA_RAM },
-	{ 0xec02, 0xec02, MRA_RAM },
-	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
-	{ 0xf802, 0xf802, input_port_9_r }, /* Coin & Start */
-	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
-	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
-	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
-	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
-	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
-	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
-	{ 0xf860, 0xf860, watchdog_reset_r },
-	{ 0xf870, 0xf870, input_port_2_r }, /* DSW3 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(shared_r)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xddff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_READ(MRA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_READ(MRA8_RAM)
+	AM_RANGE(0xec02, 0xec02) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf801) AM_READ(tehkanwc_track_0_r) /* track 0 x/y */
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_9_r) /* Coin & Start */
+	AM_RANGE(0xf803, 0xf803) AM_READ(input_port_5_r) /* joy0 - button */
+	AM_RANGE(0xf810, 0xf811) AM_READ(tehkanwc_track_1_r) /* track 1 x/y */
+	AM_RANGE(0xf813, 0xf813) AM_READ(input_port_8_r) /* joy1 - button */
+	AM_RANGE(0xf820, 0xf820) AM_READ(soundlatch2_r)	/* answer from the sound CPU */
+	AM_RANGE(0xf840, 0xf840) AM_READ(input_port_0_r) /* DSW1 */
+	AM_RANGE(0xf850, 0xf850) AM_READ(input_port_1_r)	/* DSW2 */
+	AM_RANGE(0xf860, 0xf860) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf870, 0xf870) AM_READ(input_port_2_r) /* DSW3 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
-	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
-	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
-	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
-	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
-	{ 0xf802, 0xf802, gridiron_led0_w },
-	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
-	{ 0xf812, 0xf812, gridiron_led1_w },
-	{ 0xf820, 0xf820, sound_command_w },
-	{ 0xf840, 0xf840, sub_cpu_halt_w },
-	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
-	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(shared_w) AM_BASE(&shared_ram)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(tehkanwc_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(tehkanwc_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(tehkanwc_videoram2_w) AM_BASE(&tehkanwc_videoram2)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(spriteram_w) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_WRITE(tehkanwc_scroll_x_w)
+	AM_RANGE(0xec02, 0xec02) AM_WRITE(tehkanwc_scroll_y_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(tehkanwc_track_0_reset_w)
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(gridiron_led0_w)
+	AM_RANGE(0xf810, 0xf811) AM_WRITE(tehkanwc_track_1_reset_w)
+	AM_RANGE(0xf812, 0xf812) AM_WRITE(gridiron_led1_w)
+	AM_RANGE(0xf820, 0xf820) AM_WRITE(sound_command_w)
+	AM_RANGE(0xf840, 0xf840) AM_WRITE(sub_cpu_halt_w)
+	AM_RANGE(0xf850, 0xf850) AM_WRITE(MWA8_NOP)				/* ?? writes 0x00 or 0xff */
+	AM_RANGE(0xf860, 0xf860) AM_WRITE(tehkanwc_flipscreen_x_w)		/* Check if it's really X */
+	AM_RANGE(0xf870, 0xf870) AM_WRITE(tehkanwc_flipscreen_y_w)		/* Check if it's really Y */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( gridiron_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, MRA_RAM },
-	{ 0xd400, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xddff, MRA_RAM },
-	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
-	{ 0xec00, 0xec01, MRA_RAM },
-	{ 0xec02, 0xec02, MRA_RAM },
-	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
-	{ 0xf802, 0xf802, input_port_9_r }, /* Coin & Start */
-	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
-	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
-	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
-	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
-	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
-	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
-	{ 0xf860, 0xf860, watchdog_reset_r },
-	{ 0xf870, 0xf870, MRA_NOP },	/* ?? read in the IRQ handler */
-MEMORY_END
+static ADDRESS_MAP_START( gridiron_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(shared_r)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xddff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_READ(MRA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_READ(MRA8_RAM)
+	AM_RANGE(0xec02, 0xec02) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf801) AM_READ(tehkanwc_track_0_r) /* track 0 x/y */
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_9_r) /* Coin & Start */
+	AM_RANGE(0xf803, 0xf803) AM_READ(input_port_5_r) /* joy0 - button */
+	AM_RANGE(0xf810, 0xf811) AM_READ(tehkanwc_track_1_r) /* track 1 x/y */
+	AM_RANGE(0xf813, 0xf813) AM_READ(input_port_8_r) /* joy1 - button */
+	AM_RANGE(0xf820, 0xf820) AM_READ(soundlatch2_r)	/* answer from the sound CPU */
+	AM_RANGE(0xf840, 0xf840) AM_READ(input_port_0_r) /* DSW1 */
+	AM_RANGE(0xf850, 0xf850) AM_READ(input_port_1_r)	/* DSW2 */
+	AM_RANGE(0xf860, 0xf860) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf870, 0xf870) AM_READ(MRA8_NOP)	/* ?? read in the IRQ handler */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gridiron_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
-	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
-	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
-	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
-	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
-	{ 0xf802, 0xf802, gridiron_led0_w },
-	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
-	{ 0xf812, 0xf812, gridiron_led1_w },
-	{ 0xf820, 0xf820, sound_command_w },
-	{ 0xf840, 0xf840, sub_cpu_halt_w },
-	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
-	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
-MEMORY_END
+static ADDRESS_MAP_START( gridiron_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(shared_w) AM_BASE(&shared_ram)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(tehkanwc_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(tehkanwc_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(tehkanwc_videoram2_w) AM_BASE(&tehkanwc_videoram2)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(spriteram_w) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_WRITE(tehkanwc_scroll_x_w)
+	AM_RANGE(0xec02, 0xec02) AM_WRITE(tehkanwc_scroll_y_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(tehkanwc_track_0_reset_w)
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(gridiron_led0_w)
+	AM_RANGE(0xf810, 0xf811) AM_WRITE(tehkanwc_track_1_reset_w)
+	AM_RANGE(0xf812, 0xf812) AM_WRITE(gridiron_led1_w)
+	AM_RANGE(0xf820, 0xf820) AM_WRITE(sound_command_w)
+	AM_RANGE(0xf840, 0xf840) AM_WRITE(sub_cpu_halt_w)
+	AM_RANGE(0xf850, 0xf850) AM_WRITE(MWA8_NOP)				/* ?? writes 0x00 or 0xff */
+	AM_RANGE(0xf860, 0xf860) AM_WRITE(tehkanwc_flipscreen_x_w)		/* Check if it's really X */
+	AM_RANGE(0xf870, 0xf870) AM_WRITE(tehkanwc_flipscreen_y_w)		/* Check if it's really Y */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( teedoff_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, MRA_RAM },
-	{ 0xd400, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xddff, MRA_RAM },
-	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
-	{ 0xec00, 0xec01, MRA_RAM },
-	{ 0xec02, 0xec02, MRA_RAM },
-	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
-	{ 0xf802, 0xf802, input_port_9_r }, /* Coin */
-	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
-	{ 0xf806, 0xf806, input_port_9_r }, /* Start */
-	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
-	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
-	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
-	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
-	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
-	{ 0xf860, 0xf860, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( teedoff_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(shared_r)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xddff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_READ(MRA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_READ(MRA8_RAM)
+	AM_RANGE(0xec02, 0xec02) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf801) AM_READ(tehkanwc_track_0_r) /* track 0 x/y */
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_9_r) /* Coin */
+	AM_RANGE(0xf803, 0xf803) AM_READ(input_port_5_r) /* joy0 - button */
+	AM_RANGE(0xf806, 0xf806) AM_READ(input_port_9_r) /* Start */
+	AM_RANGE(0xf810, 0xf811) AM_READ(tehkanwc_track_1_r) /* track 1 x/y */
+	AM_RANGE(0xf813, 0xf813) AM_READ(input_port_8_r) /* joy1 - button */
+	AM_RANGE(0xf820, 0xf820) AM_READ(soundlatch2_r)	/* answer from the sound CPU */
+	AM_RANGE(0xf840, 0xf840) AM_READ(input_port_0_r) /* DSW1 */
+	AM_RANGE(0xf850, 0xf850) AM_READ(input_port_1_r)	/* DSW2 */
+	AM_RANGE(0xf860, 0xf860) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( teedoff_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
-	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
-	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
-	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
-	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
-	{ 0xf802, 0xf802, gridiron_led0_w },
-	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
-	{ 0xf812, 0xf812, gridiron_led1_w },
-	{ 0xf820, 0xf820, sound_command_w },
-	{ 0xf840, 0xf840, sub_cpu_halt_w },
-	{ 0xf850, 0xf850, MWA_NOP },				/* ?? Same value as in 0xf840 */
-	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
-MEMORY_END
+static ADDRESS_MAP_START( teedoff_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(shared_w) AM_BASE(&shared_ram)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(tehkanwc_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(tehkanwc_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(tehkanwc_videoram2_w) AM_BASE(&tehkanwc_videoram2)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(spriteram_w) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_WRITE(tehkanwc_scroll_x_w)
+	AM_RANGE(0xec02, 0xec02) AM_WRITE(tehkanwc_scroll_y_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(tehkanwc_track_0_reset_w)
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(gridiron_led0_w)
+	AM_RANGE(0xf810, 0xf811) AM_WRITE(tehkanwc_track_1_reset_w)
+	AM_RANGE(0xf812, 0xf812) AM_WRITE(gridiron_led1_w)
+	AM_RANGE(0xf820, 0xf820) AM_WRITE(sound_command_w)
+	AM_RANGE(0xf840, 0xf840) AM_WRITE(sub_cpu_halt_w)
+	AM_RANGE(0xf850, 0xf850) AM_WRITE(MWA8_NOP)				/* ?? Same value as in 0xf840 */
+	AM_RANGE(0xf860, 0xf860) AM_WRITE(tehkanwc_flipscreen_x_w)		/* Check if it's really X */
+	AM_RANGE(0xf870, 0xf870) AM_WRITE(tehkanwc_flipscreen_y_w)		/* Check if it's really Y */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, MRA_RAM },
-	{ 0xd400, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xddff, MRA_RAM },
-	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
-	{ 0xec00, 0xec01, MRA_RAM },
-	{ 0xec02, 0xec02, MRA_RAM },
-	{ 0xf860, 0xf860, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(shared_r)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xddff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xde00, 0xdfff) AM_READ(MRA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_READ(MRA8_RAM)
+	AM_RANGE(0xec02, 0xec02) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf860, 0xf860) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, shared_w },
-	{ 0xd000, 0xd3ff, tehkanwc_videoram_w },
-	{ 0xd400, 0xd7ff, tehkanwc_colorram_w },
-	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w },
-	{ 0xe800, 0xebff, spriteram_w }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(shared_w)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(tehkanwc_videoram_w)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(tehkanwc_colorram_w)
+	AM_RANGE(0xd800, 0xddff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)	/* unused part of the palette RAM, I think? Gridiron uses it */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(tehkanwc_videoram2_w)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(spriteram_w) /* sprites */
+	AM_RANGE(0xec00, 0xec01) AM_WRITE(tehkanwc_scroll_x_w)
+	AM_RANGE(0xec02, 0xec02) AM_WRITE(tehkanwc_scroll_y_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8001, 0x8001, msm_reset_w },/* MSM51xx reset */
-	{ 0x8002, 0x8002, MWA_NOP },	/* ?? written in the IRQ handler */
-	{ 0x8003, 0x8003, MWA_NOP },	/* ?? written in the NMI handler */
-	{ 0xc000, 0xc000, sound_answer_w },	/* answer for main CPU */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(msm_reset_w)/* MSM51xx reset */
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(MWA8_NOP)	/* ?? written in the IRQ handler */
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_NOP)	/* ?? written in the NMI handler */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(sound_answer_w)	/* answer for main CPU */
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, AY8910_read_port_0_r },
-	{ 0x02, 0x02, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_write_port_0_w },
-	{ 0x01, 0x01, AY8910_control_port_0_w },
-	{ 0x02, 0x02, AY8910_write_port_1_w },
-	{ 0x03, 0x03, AY8910_control_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -795,16 +795,16 @@ static MACHINE_DRIVER_START( tehkanwc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4608000)	/* 18.432000 / 4 */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4 */
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4; communication is bidirectional, can't mark it as AUDIO_CPU */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -831,7 +831,7 @@ static MACHINE_DRIVER_START( gridiron )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(tehkanwc)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(gridiron_readmem,gridiron_writemem)
+	MDRV_CPU_PROGRAM_MAP(gridiron_readmem,gridiron_writemem)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( teedoff )
@@ -839,7 +839,7 @@ static MACHINE_DRIVER_START( teedoff )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(tehkanwc)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(teedoff_readmem,teedoff_writemem)
+	MDRV_CPU_PROGRAM_MAP(teedoff_readmem,teedoff_writemem)
 MACHINE_DRIVER_END
 
 

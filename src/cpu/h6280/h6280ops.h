@@ -99,53 +99,53 @@
  *  RDMEM   read memory
  ***************************************************************/
 #define RDMEM(addr) 											\
-	cpu_readmem21( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
+	program_read_byte_8( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
 
 /***************************************************************
  *  WRMEM   write memory
  ***************************************************************/
 #define WRMEM(addr,data)										\
-	cpu_writemem21( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff),data);
+	program_write_byte_8( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff),data);
 
 /***************************************************************
  *  RDMEMZ   read memory - zero page
  ***************************************************************/
 #define RDMEMZ(addr) 											\
-	cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff));
+	program_read_byte_8( (h6280.mmr[1] << 13) | ((addr)&0x1fff));
 
 /***************************************************************
  *  WRMEMZ   write memory - zero page
  ***************************************************************/
 #define WRMEMZ(addr,data) 										\
-	cpu_writemem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff),data);
+	program_write_byte_8( (h6280.mmr[1] << 13) | ((addr)&0x1fff),data);
 
 /***************************************************************
  *  RDMEMW   read word from memory
  ***************************************************************/
 #define RDMEMW(addr)											\
-	cpu_readmem21( (h6280.mmr[(addr)  >>13] << 13) | ((addr  )&0x1fff)) \
-| ( cpu_readmem21( (h6280.mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
+	program_read_byte_8( (h6280.mmr[(addr)  >>13] << 13) | ((addr  )&0x1fff)) \
+| ( program_read_byte_8( (h6280.mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
 
 /***************************************************************
  *  RDZPWORD    read a word from a zero page address
  ***************************************************************/
 #define RDZPWORD(addr)											\
 	((addr&0xff)==0xff) ?										\
-		cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
-		+(cpu_readmem21( (h6280.mmr[1] << 13) | ((addr-0xff)&0x1fff))<<8) : \
-		cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
-		+(cpu_readmem21( (h6280.mmr[1] << 13) | ((addr+1)&0x1fff))<<8)
+		program_read_byte_8( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
+		+(program_read_byte_8( (h6280.mmr[1] << 13) | ((addr-0xff)&0x1fff))<<8) : \
+		program_read_byte_8( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
+		+(program_read_byte_8( (h6280.mmr[1] << 13) | ((addr+1)&0x1fff))<<8)
 
 
 /***************************************************************
  * push a register onto the stack
  ***************************************************************/
-#define PUSH(Rg) cpu_writemem21( (h6280.mmr[1] << 13) | h6280.sp.d,Rg); S--
+#define PUSH(Rg) program_write_byte_8( (h6280.mmr[1] << 13) | h6280.sp.d,Rg); S--
 
 /***************************************************************
  * pull a register from the stack
  ***************************************************************/
-#define PULL(Rg) S++; Rg = cpu_readmem21( (h6280.mmr[1] << 13) | h6280.sp.d)
+#define PULL(Rg) S++; Rg = program_read_byte_8( (h6280.mmr[1] << 13) | h6280.sp.d)
 
 /***************************************************************
  *  RDOP    read an opcode
@@ -895,19 +895,19 @@
  *  ST0 Store at hardware address 0
  ***************************************************************/
 #define ST0                                                     \
-    cpu_writeport16(0x0000,tmp)
+    io_write_byte_8(0x0000,tmp)
 
 /* 6280 ********************************************************
  *  ST1 Store at hardware address 2
  ***************************************************************/
 #define ST1                                                     \
-    cpu_writeport16(0x0002,tmp)
+    io_write_byte_8(0x0002,tmp)
 
 /* 6280 ********************************************************
  *  ST2 Store at hardware address 3
  ***************************************************************/
 #define ST2                                                     \
-    cpu_writeport16(0x0003,tmp)
+    io_write_byte_8(0x0003,tmp)
 
 /* 6280 ********************************************************
  *	STA Store accumulator

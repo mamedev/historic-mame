@@ -70,15 +70,15 @@ static DRIVER_INIT( pastelgl )
 }
 
 
-static MEMORY_READ_START( readmem_pastelgl )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_pastelgl, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_pastelgl )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_pastelgl, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( io_pastelgl_r )
@@ -101,9 +101,9 @@ static READ_HANDLER( io_pastelgl_r )
 	}
 }
 
-static PORT_READ_START( readport_pastelgl )
-	{ 0x0000, 0xffff, io_pastelgl_r },
-PORT_END
+static ADDRESS_MAP_START( readport_pastelgl, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(io_pastelgl_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_pastelgl_w )
 {
@@ -142,9 +142,9 @@ static WRITE_HANDLER( io_pastelgl_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_pastelgl )
-	{ 0x0000, 0xffff, io_pastelgl_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_pastelgl, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_pastelgl_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( pastelgl )
@@ -263,8 +263,8 @@ static MACHINE_DRIVER_START( pastelgl )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 19968000/8)	/* 2.496 MHz ? */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem_pastelgl, writemem_pastelgl)
-	MDRV_CPU_PORTS(readport_pastelgl, writeport_pastelgl)
+	MDRV_CPU_PROGRAM_MAP(readmem_pastelgl, writemem_pastelgl)
+	MDRV_CPU_IO_MAP(readport_pastelgl, writeport_pastelgl)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)	// nmiclock not written, chip is 1411M1 instead of 1413M3
 
 	MDRV_FRAMES_PER_SECOND(60)

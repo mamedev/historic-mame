@@ -1892,7 +1892,7 @@ WRITE16_HANDLER( K055550_word_w )
 
 				lim = adr+bsize*count;
 				for(i=adr; i<lim; i+=2)
-					cpu_writemem24bew_word(i, prot_data[0x1a/2]);
+					program_write_word(i, prot_data[0x1a/2]);
 			break;
 
 			// WARNING: The following cases are speculation based with questionable accuracy!(AAT)
@@ -1923,41 +1923,41 @@ WRITE16_HANDLER( K055550_word_w )
 				// let's hope GCC will inline the mem24bew calls
 				for (src=adr; src<srcend; src+=bsize)
 				{
-					cx1 = (short)cpu_readmem24bew_word(src);
-					sx1 = (short)cpu_readmem24bew_word(src + 2);
-					wx1 = (short)cpu_readmem24bew_word(src + 4);
+					cx1 = (short)program_read_word(src);
+					sx1 = (short)program_read_word(src + 2);
+					wx1 = (short)program_read_word(src + 4);
 
-					cy1 = (short)cpu_readmem24bew_word(src + 6);
-					sy1 = (short)cpu_readmem24bew_word(src + 8);
-					wy1 = (short)cpu_readmem24bew_word(src +10);
+					cy1 = (short)program_read_word(src + 6);
+					sy1 = (short)program_read_word(src + 8);
+					wy1 = (short)program_read_word(src +10);
 
-					cz1 = (short)cpu_readmem24bew_word(src +12);
-					sz1 = (short)cpu_readmem24bew_word(src +14);
-					wz1 = (short)cpu_readmem24bew_word(src +16);
+					cz1 = (short)program_read_word(src +12);
+					sz1 = (short)program_read_word(src +14);
+					wz1 = (short)program_read_word(src +16);
 
 					count = i = src + skip;
 					tgt = src + bsize;
 
-					for (; count<tgt; count++) cpu_writemem24bew(count, 0);
+					for (; count<tgt; count++) program_write_byte(count, 0);
 
 					for (; tgt<tgtend; i++, tgt+=bsize)
 					{
-						c2 = (short)cpu_readmem24bew_word(tgt);
-						s2 = (short)cpu_readmem24bew_word(tgt + 2);
-						w2 = (short)cpu_readmem24bew_word(tgt + 4);
+						c2 = (short)program_read_word(tgt);
+						s2 = (short)program_read_word(tgt + 2);
+						w2 = (short)program_read_word(tgt + 4);
 						if (abs((cx1+sx1)-(c2+s2))>=wx1+w2) continue; // X rejection
 
-						c2 = (short)cpu_readmem24bew_word(tgt + 6);
-						s2 = (short)cpu_readmem24bew_word(tgt + 8);
-						w2 = (short)cpu_readmem24bew_word(tgt +10);
+						c2 = (short)program_read_word(tgt + 6);
+						s2 = (short)program_read_word(tgt + 8);
+						w2 = (short)program_read_word(tgt +10);
 						if (abs((cy1+sy1)-(c2+s2))>=wy1+w2) continue; // Y rejection
 
-						c2 = (short)cpu_readmem24bew_word(tgt +12);
-						s2 = (short)cpu_readmem24bew_word(tgt +14);
-						w2 = (short)cpu_readmem24bew_word(tgt +16);
+						c2 = (short)program_read_word(tgt +12);
+						s2 = (short)program_read_word(tgt +14);
+						w2 = (short)program_read_word(tgt +16);
 						if (abs((cz1+sz1)-(c2+s2))>=wz1+w2) continue; // Z rejection
 
-						cpu_writemem24bew(i, 0x80); // collision confirmed
+						program_write_byte(i, 0x80); // collision confirmed
 					}
 				}
 			break;
@@ -2031,13 +2031,13 @@ WRITE16_HANDLER( K053990_martchmp_word_w )
 				if (element_size == 1)
 				for (i=src_count; i; i--)
 				{
-					cpu_writemem24bew(dst_addr, cpu_readmem24bew(src_addr));
+					program_write_byte(dst_addr, program_read_byte(src_addr));
 					src_addr += src_skip;
 					dst_addr += dst_skip;
 				}
 				else for (i=src_count; i; i--)
 				{
-					cpu_writemem24bew_word(dst_addr, cpu_readmem24bew_word(src_addr));
+					program_write_word(dst_addr, program_read_word(src_addr));
 					src_addr += src_skip;
 					dst_addr += dst_skip;
 				}
@@ -2062,15 +2062,15 @@ WRITE16_HANDLER( K053990_martchmp_word_w )
 
 				for (i=mod_count; i; i--)
 				{
-					mod_val  = cpu_readmem24bew_word(mod_addr);
+					mod_val  = program_read_word(mod_addr);
 					mod_addr += mod_skip;
 
-					mod_data = cpu_readmem24bew_word(src_addr);
+					mod_data = program_read_word(src_addr);
 					src_addr += src_skip;
 
 					mod_data += mod_val;
 
-					cpu_writemem24bew_word(dst_addr, mod_data);
+					program_write_word(dst_addr, mod_data);
 					dst_addr += dst_skip;
 				}
 			break;

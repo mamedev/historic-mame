@@ -358,90 +358,90 @@ static WRITE_HANDLER( cpu3_bankswitch_w )
 
 /******************************************************************************/
 
-static MEMORY_READ_START( cpu1_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xb000, 0xbfff, MRA_RAM }, /* spriteram */
-	{ 0xc000, 0xdfff, MRA_BANK1 },
-	{ 0xe000, 0xefff, MRA_RAM }, /* shareram */
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM) /* spriteram */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) /* shareram */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( cpu1_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xb000, 0xbfff, MWA_RAM, &spriteram },
-	{ 0xc000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_RAM, &sharedram },
-MEMORY_END
+static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cpu1_writeport )
-	{ 0x00, 0x00, cpu1_bankswitch_w },
-PORT_END
-
-/******************************************************************************/
-
-static MEMORY_READ_START( cpu2_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xcfff, MRA_RAM }, /* videoram */
-	{ 0xd000, 0xd3ff, MRA_RAM }, /* paletteram */
-	{ 0xd400, 0xd7ff, MRA_RAM }, /* workram */
-	/* { 0xd800, 0xd8ff, MRA_RAM }, */ /* protection? */
-	{ 0xe000, 0xffff, sharedram_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( cpu2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, djboy_videoram_w, &videoram },
-	{ 0xd000, 0xd3ff, djboy_paletteram_w, &paletteram },
-	{ 0xd400, 0xd7ff, MWA_RAM }, /* workram */
-	/* { 0xd800, 0xd8ff, MWA_RAM }, */ /* protection? */
-	{ 0xe000, 0xffff, sharedram_w },
-MEMORY_END
-
-static PORT_READ_START( readport2 )
-	{ 0x04, 0x04, cpu2_data_r },
-	{ 0x0c, 0x0c, cpu2_status_r },
-PORT_END
-
-static PORT_WRITE_START( writeport2 )
-	{ 0x00, 0x00, cpu2_bankswitch_w },
-	{ 0x02, 0x02, cpu3_nmi_soundcommand_w },
-	{ 0x04, 0x04, cpu2_data_w },
-	{ 0x0a, 0x0a, cpu1_cause_nmi_w },
-	{ 0x06, 0x06, djboy_scrolly_w },
-	{ 0x08, 0x08, djboy_scrollx_w },
-PORT_END
+static ADDRESS_MAP_START( cpu1_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu1_bankswitch_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( cpu3_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK3 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM) /* videoram */
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM) /* paletteram */
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM) /* workram */
+	/* AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM) */ /* protection? */
+	AM_RANGE(0xe000, 0xffff) AM_READ(sharedram_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(djboy_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(djboy_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(MWA8_RAM) /* workram */
+	/* AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) */ /* protection? */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(sharedram_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(cpu2_data_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(cpu2_status_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu2_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(cpu3_nmi_soundcommand_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(cpu2_data_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(cpu1_cause_nmi_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(djboy_scrolly_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(djboy_scrollx_w)
+ADDRESS_MAP_END
+
+/******************************************************************************/
+
+static ADDRESS_MAP_START( cpu3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( cpu3_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cpu3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( cpu3_readport )
-	{ 0x02, 0x02, YM2203_status_port_0_r },
-	{ 0x03, 0x03, YM2203_read_port_0_r },
-	{ 0x04, 0x04, soundlatch_r },
-	{ 0x06, 0x06, OKIM6295_status_0_r },
-	{ 0x07, 0x07, OKIM6295_status_1_r },
-PORT_END
+static ADDRESS_MAP_START( cpu3_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+	AM_RANGE(0x06, 0x06) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x07, 0x07) AM_READ(OKIM6295_status_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cpu3_writeport )
-	{ 0x00, 0x00, cpu3_bankswitch_w },
-	{ 0x02, 0x02, YM2203_control_port_0_w },
-	{ 0x03, 0x03, YM2203_write_port_0_w },
-	{ 0x06, 0x06, OKIM6295_data_0_w },
-	{ 0x07, 0x07, OKIM6295_data_1_w },
-PORT_END
+static ADDRESS_MAP_START( cpu3_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu3_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(OKIM6295_data_1_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -506,19 +506,19 @@ static INTERRUPT_GEN( djboy_interrupt )
 
 static MACHINE_DRIVER_START( djboy )
 	MDRV_CPU_ADD(Z80,6000000) /* ? */
-	MDRV_CPU_MEMORY(cpu1_readmem,cpu1_writemem)
-	MDRV_CPU_PORTS(0,cpu1_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu1_readmem,cpu1_writemem)
+	MDRV_CPU_IO_MAP(0,cpu1_writeport)
 	MDRV_CPU_VBLANK_INT(djboy_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,6000000) /* ? */
-	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
-	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_IO_MAP(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000) /* ? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(cpu3_readmem,cpu3_writemem)
-	MDRV_CPU_PORTS(cpu3_readport,cpu3_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu3_readmem,cpu3_writemem)
+	MDRV_CPU_IO_MAP(cpu3_readport,cpu3_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

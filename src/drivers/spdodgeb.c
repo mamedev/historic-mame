@@ -260,44 +260,44 @@ static READ_HANDLER( port_0_r )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3000, port_0_r },
-	{ 0x3001, 0x3001, input_port_1_r },	/* DIPs */
-	{ 0x3801, 0x3805, mcu63701_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(port_0_r)
+	AM_RANGE(0x3001, 0x3001) AM_READ(input_port_1_r)	/* DIPs */
+	AM_RANGE(0x3801, 0x3805) AM_READ(mcu63701_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x10ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2fff, spdodgeb_videoram_w, &spdodgeb_videoram },
-//	{ 0x3000, 0x3000, MWA_RAM },
-//	{ 0x3001, 0x3001, MWA_RAM },
-	{ 0x3002, 0x3002, sound_command_w },
-//	{ 0x3003, 0x3003, MWA_RAM },
-	{ 0x3004, 0x3004, spdodgeb_scrollx_lo_w },
-//	{ 0x3005, 0x3005, MWA_RAM }, /* mcu63701_output_w */
-	{ 0x3006, 0x3006, spdodgeb_ctrl_w },	/* scroll hi, flip screen, bank switch, palette select */
-	{ 0x3800, 0x3800, mcu63701_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(spdodgeb_videoram_w) AM_BASE(&spdodgeb_videoram)
+//	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3002, 0x3002) AM_WRITE(sound_command_w)
+//	AM_RANGE(0x3003, 0x3003) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3004, 0x3004) AM_WRITE(spdodgeb_scrollx_lo_w)
+//	AM_RANGE(0x3005, 0x3005) AM_WRITE(MWA8_RAM) /* mcu63701_output_w */
+	AM_RANGE(0x3006, 0x3006) AM_WRITE(spdodgeb_ctrl_w)	/* scroll hi, flip screen, bank switch, palette select */
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(mcu63701_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1000, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x2800, 0x2800, YM3812_control_port_0_w },
-	{ 0x2801, 0x2801, YM3812_write_port_0_w },
-	{ 0x3800, 0x3807, spd_adpcm_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x2801, 0x2801) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x3800, 0x3807) AM_WRITE(spd_adpcm_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( spdodgeb )
@@ -437,12 +437,12 @@ static MACHINE_DRIVER_START( spdodgeb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12000000/6)	/* 2MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(spdodgeb_interrupt,33)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
 
 	MDRV_CPU_ADD(M6809,12000000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2MHz ? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

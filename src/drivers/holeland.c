@@ -26,52 +26,52 @@ WRITE_HANDLER( holeland_pal_offs_w );
 WRITE_HANDLER( holeland_scroll_w );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xbfff, MRA_ROM },
-	{ 0xf000, 0xf3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc001, holeland_pal_offs_w },
-	{ 0xc006, 0xc007, holeland_flipscreen_w },
-	{ 0xe000, 0xe3ff, holeland_colorram_w, &colorram },
-	{ 0xe400, 0xe7ff, holeland_videoram_w, &videoram, &videoram_size },
-	{ 0xf000, 0xf3ff, MWA_RAM, &spriteram, &spriteram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(holeland_pal_offs_w)
+	AM_RANGE(0xc006, 0xc007) AM_WRITE(holeland_flipscreen_w)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(holeland_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(holeland_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( crzrally_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( crzrally_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( crzrally_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xe000, 0xe3ff, holeland_colorram_w, &colorram },
-	{ 0xe400, 0xe7ff, holeland_videoram_w, &videoram, &videoram_size },
-	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf000, holeland_scroll_w },
-	{ 0xf800, 0xf801, holeland_pal_offs_w },
-MEMORY_END
+static ADDRESS_MAP_START( crzrally_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(holeland_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(holeland_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(holeland_scroll_w)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(holeland_pal_offs_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, watchdog_reset_r },	/* ? */
-	{ 0x04, 0x04, AY8910_read_port_0_r },
-	{ 0x06, 0x06, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(watchdog_reset_r)	/* ? */
+	AM_RANGE(0x04, 0x04) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x04, 0x04, AY8910_control_port_0_w },
-	{ 0x05, 0x05, AY8910_write_port_0_w },
-	{ 0x06, 0x06, AY8910_control_port_1_w },
-	{ 0x07, 0x07, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -299,8 +299,8 @@ static MACHINE_DRIVER_START( holeland )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -326,8 +326,8 @@ static MACHINE_DRIVER_START( crzrally )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz ? */
-	MDRV_CPU_MEMORY(crzrally_readmem,crzrally_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(crzrally_readmem,crzrally_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -9,7 +9,7 @@
 
 enum {
 	M6800_PC=1, M6800_S, M6800_A, M6800_B, M6800_X, M6800_CC,
-	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE };
+	M6800_WAI_STATE };
 
 #define M6800_WAI		8			/* set when WAI is waiting for an interrupt */
 #define M6800_SLP		0x10		/* HD63701 only */
@@ -21,22 +21,8 @@ enum {
 									/* raise eddge : CLEAR_LINE  -> ASSERT_LINE     */
 									/* fall  eddge : ASSERT_LINE -> CLEAR_LINE      */
 									/* it is usuali to use PULSE_LINE state         */
-/* PUBLIC GLOBALS */
-extern int m6800_ICount;
 
-/* PUBLIC FUNCTIONS */
-void m6800_init(void);
-void m6800_reset(void *param);
-void m6800_exit(void);
-int	m6800_execute(int cycles);
-unsigned m6800_get_context(void *dst);
-void m6800_set_context(void *src);
-unsigned m6800_get_reg(int regnum);
-void m6800_set_reg(int regnum, unsigned val);
-void m6800_set_irq_line(int irqline, int state);
-void m6800_set_irq_callback(int (*callback)(int irqline));
-const char *m6800_info(void *context, int regnum);
-unsigned m6800_dasm(char *buffer, unsigned pc);
+extern void m6800_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************
  * For now make the 6801 using the m6800 variables and functions
@@ -55,19 +41,7 @@ unsigned m6800_dasm(char *buffer, unsigned pc);
 #define M6801_WAI					M6800_WAI
 #define M6801_IRQ_LINE				M6800_IRQ_LINE
 
-#define m6801_ICount				m6800_ICount
-void m6801_init(void);
-void m6801_reset(void *param);
-void m6801_exit(void);
-int	m6801_execute(int cycles);
-unsigned m6801_get_context(void *dst);
-void m6801_set_context(void *src);
-unsigned m6801_get_reg(int regnum);
-void m6801_set_reg(int regnum, unsigned val);
-void m6801_set_irq_line(int irqline, int state);
-void m6801_set_irq_callback(int (*callback)(int irqline));
-const char *m6801_info(void *context, int regnum);
-unsigned m6801_dasm(char *buffer, unsigned pc);
+extern void m6801_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -87,19 +61,7 @@ unsigned m6801_dasm(char *buffer, unsigned pc);
 #define M6802_WAI					M6800_WAI
 #define M6802_IRQ_LINE				M6800_IRQ_LINE
 
-#define m6802_ICount				m6800_ICount
-void m6802_init(void);
-void m6802_reset(void *param);
-void m6802_exit(void);
-int	m6802_execute(int cycles);
-unsigned m6802_get_context(void *dst);
-void m6802_set_context(void *src);
-unsigned m6802_get_reg(int regnum);
-void m6802_set_reg(int regnum, unsigned val);
-void m6802_set_irq_line(int irqline, int state);
-void m6802_set_irq_callback(int (*callback)(int irqline));
-const char *m6802_info(void *context, int regnum);
-unsigned m6802_dasm(char *buffer, unsigned pc);
+extern void m6802_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -120,19 +82,7 @@ unsigned m6802_dasm(char *buffer, unsigned pc);
 #define M6803_IRQ_LINE				M6800_IRQ_LINE
 #define M6803_TIN_LINE				M6800_TIN_LINE
 
-#define m6803_ICount				m6800_ICount
-void m6803_init(void);
-void m6803_reset(void *param);
-void m6803_exit(void);
-int	m6803_execute(int cycles);
-unsigned m6803_get_context(void *dst);
-void m6803_set_context(void *src);
-unsigned m6803_get_reg(int regnum);
-void m6803_set_reg(int regnum, unsigned val);
-void m6803_set_irq_line(int irqline, int state);
-void m6803_set_irq_callback(int (*callback)(int irqline));
-const char *m6803_info(void *context, int regnum);
-unsigned m6803_dasm(char *buffer, unsigned pc);
+extern void m6803_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #if (HAS_M6803||HAS_HD63701)
@@ -166,19 +116,7 @@ WRITE_HANDLER( m6803_internal_registers_w );
 #define M6808_WAI                   M6800_WAI
 #define M6808_IRQ_LINE              M6800_IRQ_LINE
 
-#define m6808_ICount                m6800_ICount
-void m6808_init(void);
-void m6808_reset(void *param);
-void m6808_exit(void);
-int	m6808_execute(int cycles);
-unsigned m6808_get_context(void *dst);
-void m6808_set_context(void *src);
-unsigned m6808_get_reg(int regnum);
-void m6808_set_reg(int regnum, unsigned val);
-void m6808_set_irq_line(int irqline, int state);
-void m6808_set_irq_callback(int (*callback)(int irqline));
-const char *m6808_info(void *context, int regnum);
-unsigned m6808_dasm(char *buffer, unsigned pc);
+extern void m6808_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -200,19 +138,7 @@ unsigned m6808_dasm(char *buffer, unsigned pc);
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
 #define HD63701_TIN_LINE			 M6800_TIN_LINE
 
-#define hd63701_ICount				 m6800_ICount
-void hd63701_init(void);
-void hd63701_reset(void *param);
-void hd63701_exit(void);
-int	hd63701_execute(int cycles);
-unsigned hd63701_get_context(void *dst);
-void hd63701_set_context(void *src);
-unsigned hd63701_get_reg(int regnum);
-void hd63701_set_reg(int regnum, unsigned val);
-void hd63701_set_irq_line(int irqline, int state);
-void hd63701_set_irq_callback(int (*callback)(int irqline));
-const char *hd63701_info(void *context, int regnum);
-unsigned hd63701_dasm(char *buffer, unsigned pc);
+extern void hd63701_get_info(UINT32 state, union cpuinfo *info);
 
 void hd63701_trap_pc(void);
 
@@ -245,31 +171,19 @@ WRITE_HANDLER( hd63701_internal_registers_w );
 #define NSC8105_IRQ_LINE			 M6800_IRQ_LINE
 #define NSC8105_TIN_LINE			 M6800_TIN_LINE
 
-#define nsc8105_ICount				 m6800_ICount
-void nsc8105_init(void);
-void nsc8105_reset(void *param);
-void nsc8105_exit(void);
-int	nsc8105_execute(int cycles);
-unsigned nsc8105_get_context(void *dst);
-void nsc8105_set_context(void *src);
-unsigned nsc8105_get_reg(int regnum);
-void nsc8105_set_reg(int regnum, unsigned val);
-void nsc8105_set_irq_line(int irqline, int state);
-void nsc8105_set_irq_callback(int (*callback)(int irqline));
-const char *nsc8105_info(void *context, int regnum);
-unsigned nsc8105_dasm(char *buffer, unsigned pc);
+extern void nsc8105_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************/
 /* Read a byte from given memory location									*/
 /****************************************************************************/
-/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
-#define M6800_RDMEM(Addr) ((unsigned)cpu_readmem16(Addr))
+/* ASG 971005 -- changed to program_read_byte_8/program_write_byte_8 */
+#define M6800_RDMEM(Addr) ((unsigned)program_read_byte_8(Addr))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-#define M6800_WRMEM(Addr,Value) (cpu_writemem16(Addr,Value))
+#define M6800_WRMEM(Addr,Value) (program_write_byte_8(Addr,Value))
 
 /****************************************************************************/
 /* M6800_RDOP() is identical to M6800_RDMEM() except it is used for reading */

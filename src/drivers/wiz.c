@@ -220,60 +220,60 @@ static WRITE_HANDLER( wiz_coin_counter_w )
 	coin_counter_w(offset,data);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd000, 0xd85f, MRA_RAM },
-	{ 0xe000, 0xe85f, MRA_RAM },
-	{ 0xf000, 0xf000, input_port_2_r },	/* DSW0 */
-	{ 0xf008, 0xf008, input_port_3_r },	/* DSW1 */
-	{ 0xf010, 0xf010, input_port_0_r },	/* IN0 */
-	{ 0xf018, 0xf018, input_port_1_r },	/* IN1 */
-	{ 0xf800, 0xf800, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd85f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe85f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_2_r)	/* DSW0 */
+	AM_RANGE(0xf008, 0xf008) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xf010, 0xf010) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xf018, 0xf018) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xf800, 0xf800) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc801, wiz_coin_counter_w },
-	{ 0xd000, 0xd3ff, MWA_RAM, &wiz_videoram2 },
-	{ 0xd400, 0xd7ff, MWA_RAM, &wiz_colorram2 },
-	{ 0xd800, 0xd83f, MWA_RAM, &wiz_attributesram2 },
-	{ 0xd840, 0xd85f, MWA_RAM, &spriteram_2, &spriteram_size },
-	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe400, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xe83f, wiz_attributes_w, &wiz_attributesram },
-	{ 0xe840, 0xe85f, MWA_RAM, &spriteram },
-	{ 0xf000, 0xf000, MWA_RAM, &wiz_sprite_bank },
-	{ 0xf001, 0xf001, interrupt_enable_w },
-	{ 0xf002, 0xf003, wiz_palettebank_w },
-	{ 0xf004, 0xf005, wiz_char_bank_select_w },
-	{ 0xf006, 0xf006, wiz_flipx_w },
-	{ 0xf007, 0xf007, wiz_flipy_w },
-	{ 0xf008, 0xf00f, MWA_NOP },			// initialized by Stinger/Scion
-	{ 0xf800, 0xf80f, sound_command_w },	// sound registers
-	{ 0xf818, 0xf818, wiz_bgcolor_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xc801) AM_WRITE(wiz_coin_counter_w)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(MWA8_RAM) AM_BASE(&wiz_videoram2)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&wiz_colorram2)
+	AM_RANGE(0xd800, 0xd83f) AM_WRITE(MWA8_RAM) AM_BASE(&wiz_attributesram2)
+	AM_RANGE(0xd840, 0xd85f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe800, 0xe83f) AM_WRITE(wiz_attributes_w) AM_BASE(&wiz_attributesram)
+	AM_RANGE(0xe840, 0xe85f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_RAM) AM_BASE(&wiz_sprite_bank)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xf002, 0xf003) AM_WRITE(wiz_palettebank_w)
+	AM_RANGE(0xf004, 0xf005) AM_WRITE(wiz_char_bank_select_w)
+	AM_RANGE(0xf006, 0xf006) AM_WRITE(wiz_flipx_w)
+	AM_RANGE(0xf007, 0xf007) AM_WRITE(wiz_flipy_w)
+	AM_RANGE(0xf008, 0xf00f) AM_WRITE(MWA8_NOP)			// initialized by Stinger/Scion
+	AM_RANGE(0xf800, 0xf80f) AM_WRITE(sound_command_w)	// sound registers
+	AM_RANGE(0xf818, 0xf818) AM_WRITE(wiz_bgcolor_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x3000, 0x3000, soundlatch_r },	/* Stinger/Scion */
-	{ 0x7000, 0x7000, soundlatch_r },	/* Wiz */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)	/* Stinger/Scion */
+	AM_RANGE(0x7000, 0x7000) AM_READ(soundlatch_r)	/* Wiz */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x3000, 0x3000, interrupt_enable_w },			/* Stinger/Scion */
-	{ 0x4000, 0x4000, AY8910_control_port_2_w },
-	{ 0x4001, 0x4001, AY8910_write_port_2_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x5001, 0x5001, AY8910_write_port_0_w },
-	{ 0x6000, 0x6000, AY8910_control_port_1_w },	/* Wiz only */
-	{ 0x6001, 0x6001, AY8910_write_port_1_w },		/* Wiz only */
-	{ 0x7000, 0x7000, interrupt_enable_w },			/* Wiz */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(interrupt_enable_w)			/* Stinger/Scion */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_1_w)	/* Wiz only */
+	AM_RANGE(0x6001, 0x6001) AM_WRITE(AY8910_write_port_1_w)		/* Wiz only */
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(interrupt_enable_w)			/* Wiz */
+ADDRESS_MAP_END
 
 
 
@@ -786,12 +786,12 @@ static MACHINE_DRIVER_START( wiz )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/6)	/* 3.072 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 14318000/8)	/* ? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)

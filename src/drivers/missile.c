@@ -154,20 +154,20 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x18ff, MRA_RAM },
-	{ 0x1900, 0xfff9, missile_r }, /* shared region */
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x18ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1900, 0xfff9) AM_READ(missile_r) /* shared region */
+	AM_RANGE(0xfffa, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x05ff, missile_video_3rd_bit_w },
-	{ 0x0600, 0x063f, MWA_RAM },
-	{ 0x0640, 0x4fff, missile_w }, /* shared region */
-	{ 0x5000, 0xffff, missile_video2_w, &missile_video2ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x05ff) AM_WRITE(missile_video_3rd_bit_w)
+	AM_RANGE(0x0600, 0x063f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0640, 0x4fff) AM_WRITE(missile_w) /* shared region */
+	AM_RANGE(0x5000, 0xffff) AM_WRITE(missile_video2_w) AM_BASE(&missile_video2ram)
+ADDRESS_MAP_END
 
 
 
@@ -378,7 +378,7 @@ static MACHINE_DRIVER_START( missile )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1000000)		/* 1 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

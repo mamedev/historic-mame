@@ -532,7 +532,7 @@ READ_HANDLER( bosco_customio_data_2_r )
 	{
 		case 0x91:
 			if (offset == 2)
-				return cpu_readmem16(0x89cc);
+				return program_read_byte(0x89cc);
 			else if (offset <= 3)
 				return 0;
 			break;

@@ -79,101 +79,101 @@ static READ_HANDLER( deco16_io_r )
 
 /***************************************************************************/
 
-static MEMORY_READ_START( prosport_readmem )
-	{ 0x0200, 0x021f, paletteram_r },
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x2fff, MRA_RAM },
-	{ 0x8000, 0x800f, deco16_io_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosport_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0200, 0x021f) AM_READ(paletteram_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x800f) AM_READ(deco16_io_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( prosport_writemem )
-	{ 0x0200, 0x021f, prosport_paletteram_w, &paletteram },
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1200, 0x1fff, MWA_RAM },
-	{ 0x3000, 0x37ff, liberate_videoram_w, &videoram },
-	{ 0x3800, 0x3fff, MWA_RAM, &spriteram },
-	{ 0x8000, 0x800f, deco16_io_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosport_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0200, 0x021f) AM_WRITE(prosport_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1200, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x8000, 0x800f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( liberate_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x3fff, MRA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x7fff, deco16_bank_r },
-	{ 0x8000, 0x800f, deco16_io_r },
-	{ 0x6200, 0x67ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberate_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_READ(MRA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(deco16_bank_r)
+	AM_RANGE(0x8000, 0x800f) AM_READ(deco16_io_r)
+	AM_RANGE(0x6200, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( liberate_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x3fff, MWA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x47ff, liberate_videoram_w, &videoram },
-	{ 0x4800, 0x4fff, MWA_RAM, &spriteram },
-	{ 0x6200, 0x67ff, MWA_RAM, &scratchram },
-	{ 0x8000, 0x800f, deco16_io_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberate_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x6200, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&scratchram)
+	AM_RANGE(0x8000, 0x800f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( deco16_readport )
-	{ 0x00, 0x00, input_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( deco16_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( deco16_writeport )
-	{ 0x00, 0x00, deco16_bank_w },
-PORT_END
+static ADDRESS_MAP_START( deco16_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(deco16_bank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( liberatb_readmem )
-	{ 0x00fe, 0x00fe, input_port_0_r },
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x3fff, MRA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x7fff, deco16_bank_r },
-	{ 0xf000, 0xf00f, deco16_io_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberatb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00fe, 0x00fe) AM_READ(input_port_0_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_READ(MRA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(deco16_bank_r)
+	AM_RANGE(0xf000, 0xf00f) AM_READ(deco16_io_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( liberatb_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x3fff, MWA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x47ff, liberate_videoram_w, &videoram },
-	{ 0x4800, 0x4fff, MWA_RAM, &spriteram },
-	{ 0x6200, 0x67ff, MWA_RAM, &scratchram },
-//	{ 0xf000, 0xf00f, deco16_io_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberatb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x6200, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&scratchram)
+//	AM_RANGE(0xf000, 0xf00f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static MEMORY_READ_START( prosoccr_sound_readmem )
-    { 0x0000, 0x01ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-    { 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( prosoccr_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+    AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( prosoccr_sound_writemem )
-    { 0x0000, 0x01ff, MWA_RAM },
-	{ 0x2000, 0x2000, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-    { 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosoccr_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+    AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-    { 0x0000, 0x01ff, MRA_RAM },
-	{ 0xb000, 0xb000, soundlatch_r },
-    { 0xc000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
+    AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-    { 0x0000, 0x01ff, MWA_RAM },
-	{ 0x3000, 0x3000, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x7000, 0x7000, AY8910_write_port_1_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-    { 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+    AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -396,8 +396,91 @@ INPUT_PORTS_START( liberate )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x80, "Manufacturer" )
-	PORT_DIPSETTING(    0x00, "Data East USA" )
-	PORT_DIPSETTING(    0x80, "Data East Corporation" )
+	PORT_DIPSETTING(    0x00, "(Invalid) Data East USA (Dual Assault)" )
+	PORT_DIPSETTING(    0x80, "Data East Corporation (Liberation)" )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x0c, "20000 30000" )
+	PORT_DIPSETTING(    0x08, "30000 50000" )
+	PORT_DIPSETTING(    0x04, "50000 70000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Difficulty? */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) /* Difficulty? */
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dualaslt )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, "Manufacturer / Title" )
+	PORT_DIPSETTING(    0x00, "Data East USA (Dual Assault)" )
+	PORT_DIPSETTING(    0x80, "(Invalid) Data East Corporation (Liberation)" )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -543,12 +626,12 @@ static MACHINE_DRIVER_START( prosoccr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 3000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(prosoccr_sound_readmem,prosoccr_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(prosoccr_sound_readmem,prosoccr_sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -574,12 +657,12 @@ static MACHINE_DRIVER_START( prosport )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(prosport_readmem,prosport_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(prosport_readmem,prosport_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -604,13 +687,13 @@ static MACHINE_DRIVER_START( boomrang )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -636,13 +719,13 @@ static MACHINE_DRIVER_START( liberate )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -668,13 +751,12 @@ static MACHINE_DRIVER_START( liberatb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_MEMORY(liberatb_readmem,liberatb_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberatb_readmem,liberatb_writemem)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1) //todo
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -834,6 +916,36 @@ ROM_START( liberate )
 	ROM_LOAD( "bt14.bin", 0x0000, 32,  CRC(20281d61) SHA1(905dd2744c148d50332fcad34a57dc573d41bb0a) )
 ROM_END
 
+ROM_START( dualaslt )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_LOAD( "bt12",       0x8000, 0x4000, CRC(1434ee46) SHA1(c431982c25323787b8e2ac1b433fc0e81650fbf9) )
+	ROM_RELOAD(             0x0000, 0x4000 )
+	ROM_LOAD( "bt13",       0xc000, 0x4000, CRC(38e0ffa4) SHA1(c450960cdcfa9b2b136f96bc1e3a37995a37f60c) )
+
+	ROM_REGION( 0x10000 * 2, REGION_CPU2, 0 )
+	ROM_LOAD( "bt11.bin",  0xe000, 0x2000,  CRC(b549ccaa) SHA1(e4c8350fea61ed85d21037cbd4c3c50f9a9de09f) )
+
+	ROM_REGION( 0x12000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bt04-5",   0x00000, 0x4000, CRC(159a3e85) SHA1(e916ee7e96c7c64d9ef05ff410d0cbba4d1b8ad0) ) 	/* Chars/Sprites */
+	ROM_LOAD( "bt03.bin", 0x04000, 0x2000, CRC(29ad1b59) SHA1(4d5a385ccad4cdebe87300ef08e1220bc9303673) )
+	ROM_LOAD( "bt06-5",   0x06000, 0x4000, CRC(3b5a80c8) SHA1(8b55b18ab46a64381fc135e84ab82fc451ee722d) )
+	ROM_LOAD( "bt05.bin", 0x0a000, 0x2000, CRC(a8896c20) SHA1(c21412c8a6b10719d324ce7ecb01ec4e9d803932) )
+	ROM_LOAD( "bt08-5",   0x0c000, 0x4000, CRC(b0cebde8) SHA1(9ed418705f56bc43fd864dbfb412cd7062229006) )
+	ROM_LOAD( "bt07.bin", 0x10000, 0x2000, CRC(f919e8e2) SHA1(e9eafa10f024aa522947f6098480bddf1fbe960f) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "bt01",     0x0000, 0x2000, CRC(c0ddbeb5) SHA1(043c3ef2aa62a0e8b650d4daddb944e694078e01) )
+	ROM_LOAD( "bt02a",    0x2000, 0x2000, CRC(846d9d24) SHA1(d0c395876601cf666dcf40a0f95e461095a98df4) )
+ 	ROM_LOAD( "bt00.bin", 0x4000, 0x2000, CRC(b744454d) SHA1(664619c3907c538f353d8ac04d66086dcfbd53d4) )
+
+	ROM_REGION(0x4000, REGION_USER1, 0 )
+	ROM_LOAD( "bt09",  0x0000, 0x2000, CRC(2ea31472) SHA1(2e3125b53755260a036dfc2940970eeb4c5c058b) )
+	ROM_LOAD( "bt10a", 0x2000, 0x2000, CRC(69d9aa8d) SHA1(4587481d304bf34de56ab027668b22e716ee1da7) )
+
+	ROM_REGION( 32, REGION_PROMS, 0 )
+	ROM_LOAD( "bt14.bin", 0x0000, 32,  CRC(20281d61) SHA1(905dd2744c148d50332fcad34a57dc573d41bb0a) )
+ROM_END
+
 ROM_START( liberatb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "liber6.c17", 0x8000, 0x2000, CRC(c1811fe0) SHA1(1f857042ce00e489c2e73bb459b81a2461ea0b25) )
@@ -917,4 +1029,5 @@ GAMEX(1983, prosport, 0,        prosport,  liberate, prosport, ROT270, "Data Eas
 GAME( 1983, boomrang, 0,        boomrang,  boomrang, prosport, ROT270, "Data East Corporation", "Boomer Rang'r / Genesis" )
 GAME( 1984, kamikcab, 0,        boomrang,  kamikcab, prosport, ROT270, "Data East Corporation", "Kamikaze Cabbie" )
 GAME( 1984, liberate, 0,        liberate,  liberate, liberate, ROT270, "Data East Corporation", "Liberation" )
+GAME( 1984, dualaslt, liberate, liberate,  dualaslt, liberate, ROT270, "Data East USA", "Dual Assault" )
 GAMEX(1984, liberatb, liberate, liberatb,  liberate, prosport, ROT270, "bootleg",               "Liberation (bootleg)", GAME_NOT_WORKING )

@@ -17,8 +17,8 @@
 #else
 #include "memory.h"
 #define PC __pc
-#define PARAM_WORD(v) { v = cpu_readmem29lew_word(_pc>>3); _pc += 16; }
-#define PARAM_LONG(v) { v = (cpu_readmem29lew_word((_pc>>3)+2)<<16)|cpu_readmem29lew_word(_pc>>3); _pc += 32; }
+#define PARAM_WORD(v) { v = program_read_word_16le(_pc>>3); _pc += 16; }
+#define PARAM_LONG(v) { v = (program_read_word_16le((_pc>>3)+2)<<16)|program_read_word_16le(_pc>>3); _pc += 32; }
 #endif
 
 static UINT8 rf;

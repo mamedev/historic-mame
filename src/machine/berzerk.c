@@ -19,8 +19,6 @@ static int int_count;
 
 MACHINE_INIT( berzerk )
 {
-	memory_set_unmap_value(0xff);
-
 	irq_enabled = 0;
 	nmi_enabled = 0;
 	int_count = 0;

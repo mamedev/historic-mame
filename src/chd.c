@@ -249,7 +249,11 @@ INLINE void extract_old_map_entry(const UINT8 *base, struct map_entry *entry, UI
 	entry->crc = 0;
 	entry->length = entry->offset >> 44;
 	entry->flags = MAP_ENTRY_FLAG_NO_CRC | ((entry->length == hunkbytes) ? MAP_ENTRY_TYPE_UNCOMPRESSED : MAP_ENTRY_TYPE_COMPRESSED);
+#ifdef __MWERKS__
+	entry->offset = entry->offset & 0x00000FFFFFFFFFFFLL;
+#else
 	entry->offset = (entry->offset << 20) >> 20;
+#endif
 }
 
 INLINE void assemble_old_map_entry(UINT8 *base, struct map_entry *entry)

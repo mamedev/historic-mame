@@ -151,22 +151,22 @@ static PALETTE_INIT( safarir )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x17ff, MRA_ROM },
-	{ 0x2000, 0x27ff, safarir_ram_r },
-	{ 0x3800, 0x38ff, input_port_0_r },
-	{ 0x3c00, 0x3cff, input_port_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(safarir_ram_r)
+	AM_RANGE(0x3800, 0x38ff) AM_READ(input_port_0_r)
+	AM_RANGE(0x3c00, 0x3cff) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x17ff, MWA_ROM },
-	{ 0x2000, 0x27ff, safarir_ram_w, &safarir_ram1, &safarir_ram_size },
-	{ 0x2800, 0x28ff, safarir_ram_bank_w },
-	{ 0x2c00, 0x2cff, safarir_scroll_w },
-	{ 0x3000, 0x30ff, MWA_NOP },	/* goes to SN76477 */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(safarir_ram_w) AM_BASE(&safarir_ram1) AM_SIZE(&safarir_ram_size)
+	AM_RANGE(0x2800, 0x28ff) AM_WRITE(safarir_ram_bank_w)
+	AM_RANGE(0x2c00, 0x2cff) AM_WRITE(safarir_scroll_w)
+	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_NOP)	/* goes to SN76477 */
 
-	{ 0x8000, 0x87ff, MWA_NOP, &safarir_ram2 },	/* only here to initialize pointer */
-MEMORY_END
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_NOP) AM_BASE(&safarir_ram2)	/* only here to initialize pointer */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( safarir )
@@ -250,7 +250,7 @@ static MACHINE_DRIVER_START( safarir )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 3072000)	/* 3 MHz ? */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -188,79 +188,79 @@ static WRITE_HANDLER( bagman_coin_counter_w )
 	coin_counter_w(offset,data);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x67ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x9bff, MRA_RAM },
-	{ 0xa000, 0xa000, bagman_pal16r6_r },
-	//{ 0xa800, 0xa805, bagman_ls259_r }, /*just for debugging purposes*/
-	{ 0xb000, 0xb000, input_port_2_r }, /* DSW */
-	{ 0xb800, 0xb800, MRA_NOP },
-	{ 0xc000, 0xffff, MRA_ROM },	/* Super Bagman only */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(bagman_pal16r6_r)
+	//AM_RANGE(0xa800, 0xa805) AM_READ(bagman_ls259_r) /*just for debugging purposes*/
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r) /* DSW */
+	AM_RANGE(0xb800, 0xb800) AM_READ(MRA8_NOP)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)	/* Super Bagman only */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x9000, 0x93ff, bagman_videoram_w, &videoram },
-	{ 0x9800, 0x9bff, bagman_colorram_w, &colorram },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa002, bagman_flipscreen_w },
-	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
-	{ 0xc000, 0xffff, MWA_ROM },	/* Super Bagman only */
-	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(bagman_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(bagman_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa002) AM_WRITE(bagman_flipscreen_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_RAM) AM_BASE(&bagman_video_enable)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)	/* Super Bagman only */
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
 									/* writes are handled by colorram_w */
-	{ 0xa800, 0xa805, bagman_ls259_w }, /* TMS5110 driving state machine */
-	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
-	{ 0xa004, 0xa004, bagman_coin_counter_w },
+	AM_RANGE(0xa800, 0xa805) AM_WRITE(bagman_ls259_w) /* TMS5110 driving state machine */
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_NOP)	/* written to, but unused */
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(bagman_coin_counter_w)
 
 #if 0
-	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
-	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
-	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP)	/* ???? */
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* ???? */
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* ???? */
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pickin_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7000, 0x77ff, MRA_RAM },
-	{ 0x8800, 0x8bff, MRA_RAM },
-	{ 0x9800, 0x9bff, MRA_RAM },
-	{ 0xa800, 0xa800, input_port_2_r },
-	{ 0xb800, 0xb800, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( pickin_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pickin_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0x8800, 0x8bff, bagman_videoram_w, &videoram },
-	{ 0x9800, 0x9bff, bagman_colorram_w, &colorram },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa002, bagman_flipscreen_w },
-	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
-	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
+static ADDRESS_MAP_START( pickin_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(bagman_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9800, 0x9bff) AM_WRITE(bagman_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa002) AM_WRITE(bagman_flipscreen_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_RAM) AM_BASE(&bagman_video_enable)
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
 									/* writes are handled by colorram_w */
-	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
-	{ 0xa004, 0xa004, bagman_coin_counter_w },
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_NOP)	/* written to, but unused */
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(bagman_coin_counter_w)
 #if 0
-	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
-	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
-	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP)	/* ???? */
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* ???? */
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* ???? */
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x0c, 0x0c, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x08, 0x08, AY8910_control_port_0_w },
-	{ 0x09, 0x09, AY8910_write_port_0_w },
-	//{ 0x56, 0x56, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+	//AM_RANGE(0x56, 0x56) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 
@@ -524,8 +524,8 @@ static MACHINE_DRIVER_START( bagman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -553,8 +553,8 @@ static MACHINE_DRIVER_START( pickin )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(pickin_readmem,pickin_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(pickin_readmem,pickin_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

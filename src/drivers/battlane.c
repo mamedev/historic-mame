@@ -109,33 +109,33 @@ READ_HANDLER( battlane_shared_ram_r )
 }
 
 
-static MEMORY_READ_START( battlane_readmem )
-	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-    { 0x1000, 0x17ff, MRA_RAM },
-    { 0x1800, 0x18ff, MRA_RAM },
-	{ 0x1c00, 0x1c00, input_port_0_r },
-    { 0x1c01, 0x1c01, input_port_1_r },   /* VBLANK port */
-	{ 0x1c02, 0x1c02, input_port_2_r },
-	{ 0x1c03, 0x1c03, input_port_3_r },
-	{ 0x1c04, 0x1c04, YM3526_status_port_0_r },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( battlane_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(battlane_shared_ram_r)
+    AM_RANGE(0x1000, 0x17ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(input_port_0_r)
+    AM_RANGE(0x1c01, 0x1c01) AM_READ(input_port_1_r)   /* VBLANK port */
+	AM_RANGE(0x1c02, 0x1c02) AM_READ(input_port_2_r)
+	AM_RANGE(0x1c03, 0x1c03) AM_READ(input_port_3_r)
+	AM_RANGE(0x1c04, 0x1c04) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( battlane_writemem )
-	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-    { 0x1000, 0x17ff, battlane_tileram_w, &battlane_tileram },
-    { 0x1800, 0x18ff, battlane_spriteram_w, &battlane_spriteram },
-	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
-    { 0x1c01, 0x1c01, battlane_scrollx_w },
-    { 0x1c02, 0x1c02, battlane_scrolly_w },
-    { 0x1c03, 0x1c03, battlane_cpu_command_w },
-	{ 0x1c04, 0x1c04, YM3526_control_port_0_w },
-	{ 0x1c05, 0x1c05, YM3526_write_port_0_w },
-	{ 0x1e00, 0x1e3f, battlane_palette_w },
-	{ 0x2000, 0x3fff, battlane_bitmap_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( battlane_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(battlane_shared_ram_w)
+    AM_RANGE(0x1000, 0x17ff) AM_WRITE(battlane_tileram_w) AM_BASE(&battlane_tileram)
+    AM_RANGE(0x1800, 0x18ff) AM_WRITE(battlane_spriteram_w) AM_BASE(&battlane_spriteram)
+	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(battlane_video_ctrl_w)
+    AM_RANGE(0x1c01, 0x1c01) AM_WRITE(battlane_scrollx_w)
+    AM_RANGE(0x1c02, 0x1c02) AM_WRITE(battlane_scrolly_w)
+    AM_RANGE(0x1c03, 0x1c03) AM_WRITE(battlane_cpu_command_w)
+	AM_RANGE(0x1c04, 0x1c04) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0x1c05, 0x1c05) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0x1e00, 0x1e3f) AM_WRITE(battlane_palette_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(battlane_bitmap_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INTERRUPT_GEN( battlane_cpu1_interrupt )
@@ -295,11 +295,11 @@ static MACHINE_DRIVER_START( battlane )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_MEMORY(battlane_readmem, battlane_writemem)
+	MDRV_CPU_PROGRAM_MAP(battlane_readmem, battlane_writemem)
 	MDRV_CPU_VBLANK_INT(battlane_cpu1_interrupt, 1)
 
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_MEMORY(battlane_readmem, battlane_writemem)
+	MDRV_CPU_PROGRAM_MAP(battlane_readmem, battlane_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

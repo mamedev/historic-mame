@@ -50,22 +50,22 @@ static WRITE_HANDLER( chqflag_bankswitch_w )
 
 	/* bit 5 = memory bank select */
 	if (data & 0x20){
-		memory_set_bankhandler_r (2, 0, paletteram_r);							/* palette */
-		memory_set_bankhandler_w (2, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
+		install_mem_read_handler (0, 0x1800, 0x1fff, paletteram_r);							/* palette */
+		install_mem_write_handler (0, 0x1800, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
 		if (K051316_readroms){
-			memory_set_bankhandler_r (1, 0, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
-			memory_set_bankhandler_w (1, 0, K051316_0_w);		/* 051316 #1 */
+			install_mem_read_handler (0, 0x1000, 0x17ff, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
+			install_mem_write_handler (0, 0x1000, 0x17ff, K051316_0_w);		/* 051316 #1 */
 		}
 		else{
-			memory_set_bankhandler_r (1, 0, K051316_0_r);		/* 051316 #1 */
-			memory_set_bankhandler_w (1, 0, K051316_0_w);		/* 051316 #1 */
+			install_mem_read_handler (0, 0x1000, 0x17ff, K051316_0_r);		/* 051316 #1 */
+			install_mem_write_handler (0, 0x1000, 0x17ff, K051316_0_w);		/* 051316 #1 */
 		}
 	}
 	else{
-		memory_set_bankhandler_r (1, 0, MRA_RAM);				/* RAM */
-		memory_set_bankhandler_w (1, 0, MWA_RAM);				/* RAM */
-		memory_set_bankhandler_r (2, 0, MRA_RAM);				/* RAM */
-		memory_set_bankhandler_w (2, 0, MWA_RAM);				/* RAM */
+		install_mem_read_handler (0, 0x1000, 0x17ff, MRA8_RAM);				/* RAM */
+		install_mem_write_handler (0, 0x1000, 0x17ff, MWA8_RAM);				/* RAM */
+		install_mem_read_handler (0, 0x1800, 0x1fff, MRA8_RAM);				/* RAM */
+		install_mem_write_handler (0, 0x1800, 0x1fff, MWA8_RAM);				/* RAM */
 	}
 
 	/* other bits unknown/unused */
@@ -81,10 +81,10 @@ static WRITE_HANDLER( chqflag_vreg_w )
 
 	/* bit 4 = enable rom reading thru K051316 #1 & #2 */
 	if ((K051316_readroms = (data & 0x10))){
-		memory_set_bankhandler_r (3, 0, K051316_rom_1_r);	/* 051316 (ROM test) */
+		install_mem_read_handler (0, 0x2800, 0x2fff, K051316_rom_1_r);	/* 051316 (ROM test) */
 	}
 	else{
-		memory_set_bankhandler_r (3, 0, K051316_1_r);		/* 051316 */
+		install_mem_read_handler (0, 0x2800, 0x2fff, K051316_1_r);		/* 051316 */
 	}
 
 	/* Bits 3-7 probably control palette dimming in a similar way to TMNT2/Saunset Riders, */
@@ -145,54 +145,54 @@ WRITE_HANDLER( chqflag_sh_irqtrigger_w )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( chqflag_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },					/* RAM */
-	{ 0x1000, 0x17ff, MRA_BANK1 },					/* banked RAM (RAM/051316 (chip 1)) */
-	{ 0x1800, 0x1fff, MRA_BANK2 },					/* palette + RAM */
-	{ 0x2000, 0x2007, K051937_r },					/* Sprite control registers */
-	{ 0x2400, 0x27ff, K051960_r },					/* Sprite RAM */
-	{ 0x2800, 0x2fff, MRA_BANK3 },					/* 051316 zoom/rotation (chip 2) */
-	{ 0x3100, 0x3100, input_port_0_r },				/* DIPSW #1  */
-	{ 0x3200, 0x3200, input_port_3_r },				/* COINSW, STARTSW, test mode */
-	{ 0x3201, 0x3201, input_port_2_r },				/* DIPSW #3, SW 4 */
-	{ 0x3203, 0x3203, input_port_1_r },				/* DIPSW #2 */
-	{ 0x3400, 0x341f, K051733_r },					/* 051733 (protection) */
-	{ 0x3701, 0x3701, input_port_4_r },				/* Brake + Shift + ? */
-	{ 0x3702, 0x3702, analog_read_r },				/* accelerator/wheel */
-	{ 0x4000, 0x7fff, MRA_BANK4 },					/* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( chqflag_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)					/* RAM */
+	AM_RANGE(0x1000, 0x17ff) AM_READ(MRA8_BANK1)					/* banked RAM (RAM/051316 (chip 1)) */
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_BANK2)					/* palette + RAM */
+	AM_RANGE(0x2000, 0x2007) AM_READ(K051937_r)					/* Sprite control registers */
+	AM_RANGE(0x2400, 0x27ff) AM_READ(K051960_r)					/* Sprite RAM */
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_BANK3)					/* 051316 zoom/rotation (chip 2) */
+	AM_RANGE(0x3100, 0x3100) AM_READ(input_port_0_r)				/* DIPSW #1  */
+	AM_RANGE(0x3200, 0x3200) AM_READ(input_port_3_r)				/* COINSW, STARTSW, test mode */
+	AM_RANGE(0x3201, 0x3201) AM_READ(input_port_2_r)				/* DIPSW #3, SW 4 */
+	AM_RANGE(0x3203, 0x3203) AM_READ(input_port_1_r)				/* DIPSW #2 */
+	AM_RANGE(0x3400, 0x341f) AM_READ(K051733_r)					/* 051733 (protection) */
+	AM_RANGE(0x3701, 0x3701) AM_READ(input_port_4_r)				/* Brake + Shift + ? */
+	AM_RANGE(0x3702, 0x3702) AM_READ(analog_read_r)				/* accelerator/wheel */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK4)					/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( chqflag_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },					/* RAM */
-	{ 0x1000, 0x17ff, MWA_BANK1 },					/* banked RAM (RAM/051316 (chip 1)) */
-	{ 0x1800, 0x1fff, MWA_BANK2 },					/* palette + RAM */
-	{ 0x2000, 0x2007, K051937_w },					/* Sprite control registers */
-	{ 0x2400, 0x27ff, K051960_w },					/* Sprite RAM */
-	{ 0x2800, 0x2fff, K051316_1_w },				/* 051316 zoom/rotation (chip 2) */
-	{ 0x3000, 0x3000, soundlatch_w },				/* sound code # */
-	{ 0x3001, 0x3001, chqflag_sh_irqtrigger_w },	/* cause interrupt on audio CPU */
-	{ 0x3002, 0x3002, chqflag_bankswitch_w },		/* bankswitch control */
-	{ 0x3003, 0x3003, chqflag_vreg_w },				/* enable K051316 ROM reading */
-	{ 0x3300, 0x3300, watchdog_reset_w },			/* watchdog timer */
-	{ 0x3400, 0x341f, K051733_w },					/* 051733 (protection) */
-	{ 0x3500, 0x350f, K051316_ctrl_0_w },			/* 051316 control registers (chip 1) */
-	{ 0x3600, 0x360f, K051316_ctrl_1_w },			/* 051316 control registers (chip 2) */
-	{ 0x3700, 0x3700, select_analog_ctrl_w },		/* select accelerator/wheel */
-	{ 0x3702, 0x3702, select_analog_ctrl_w },		/* select accelerator/wheel (mirror?) */
-	{ 0x4000, 0x7fff, MWA_ROM },					/* banked ROM */
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( chqflag_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(MWA8_BANK1)					/* banked RAM (RAM/051316 (chip 1)) */
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_BANK2)					/* palette + RAM */
+	AM_RANGE(0x2000, 0x2007) AM_WRITE(K051937_w)					/* Sprite control registers */
+	AM_RANGE(0x2400, 0x27ff) AM_WRITE(K051960_w)					/* Sprite RAM */
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(K051316_1_w)				/* 051316 zoom/rotation (chip 2) */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(soundlatch_w)				/* sound code # */
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(chqflag_sh_irqtrigger_w)	/* cause interrupt on audio CPU */
+	AM_RANGE(0x3002, 0x3002) AM_WRITE(chqflag_bankswitch_w)		/* bankswitch control */
+	AM_RANGE(0x3003, 0x3003) AM_WRITE(chqflag_vreg_w)				/* enable K051316 ROM reading */
+	AM_RANGE(0x3300, 0x3300) AM_WRITE(watchdog_reset_w)			/* watchdog timer */
+	AM_RANGE(0x3400, 0x341f) AM_WRITE(K051733_w)					/* 051733 (protection) */
+	AM_RANGE(0x3500, 0x350f) AM_WRITE(K051316_ctrl_0_w)			/* 051316 control registers (chip 1) */
+	AM_RANGE(0x3600, 0x360f) AM_WRITE(K051316_ctrl_1_w)			/* 051316 control registers (chip 2) */
+	AM_RANGE(0x3700, 0x3700) AM_WRITE(select_analog_ctrl_w)		/* select accelerator/wheel */
+	AM_RANGE(0x3702, 0x3702) AM_WRITE(select_analog_ctrl_w)		/* select accelerator/wheel (mirror?) */
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)					/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( chqflag_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM */
-	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
-	{ 0xa000, 0xa00d, K007232_read_port_0_r },	/* 007232 (chip 1) */
-	{ 0xb000, 0xb00d, K007232_read_port_1_r },	/* 007232 (chip 2) */
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },	/* YM2151 */
-	{ 0xd000, 0xd000, soundlatch_r },			/* soundlatch_r */
-	//{ 0xe000, 0xe000, MRA_NOP },				/* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( chqflag_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)				/* ROM */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)				/* RAM */
+	AM_RANGE(0xa000, 0xa00d) AM_READ(K007232_read_port_0_r)	/* 007232 (chip 1) */
+	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_1_r)	/* 007232 (chip 2) */
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)	/* YM2151 */
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)			/* soundlatch_r */
+	//AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)				/* ??? */
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( k007232_bankswitch_w )
 {
@@ -209,18 +209,18 @@ static WRITE_HANDLER( k007232_bankswitch_w )
 	K007232_set_bank( 1, bank_A, bank_B );
 }
 
-static MEMORY_WRITE_START( chqflag_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
-	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
-	{ 0x9000, 0x9000, k007232_bankswitch_w },		/* 007232 bankswitch */
-	{ 0xa000, 0xa00d, K007232_write_port_0_w },		/* 007232 (chip 1) */
-	{ 0xa01c, 0xa01c, k007232_extvolume_w },/* extra volume, goes to the 007232 w/ A11 */
+static ADDRESS_MAP_START( chqflag_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)					/* ROM */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(k007232_bankswitch_w)		/* 007232 bankswitch */
+	AM_RANGE(0xa000, 0xa00d) AM_WRITE(K007232_write_port_0_w)		/* 007232 (chip 1) */
+	AM_RANGE(0xa01c, 0xa01c) AM_WRITE(k007232_extvolume_w)/* extra volume, goes to the 007232 w/ A11 */
 											/* selecting a different latch for the external port */
-	{ 0xb000, 0xb00d, K007232_write_port_1_w },		/* 007232 (chip 2) */
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM2151 */
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM2151 */
-	{ 0xf000, 0xf000, MWA_NOP },					/* ??? */
-MEMORY_END
+	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_1_w)		/* 007232 (chip 2) */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)	/* YM2151 */
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)		/* YM2151 */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP)					/* ??? */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( chqflag )
@@ -367,12 +367,12 @@ static MACHINE_DRIVER_START( chqflag )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(KONAMI,3000000)	/* 052001 */
-	MDRV_CPU_MEMORY(chqflag_readmem,chqflag_writemem)
+	MDRV_CPU_PROGRAM_MAP(chqflag_readmem,chqflag_writemem)
 	MDRV_CPU_VBLANK_INT(chqflag_interrupt,16)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(chqflag_readmem_sound,chqflag_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(chqflag_readmem_sound,chqflag_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -215,55 +215,55 @@ static WRITE32_HANDLER(silk_ym_dataport_w)
 	}
 }
 
-static MEMORY_READ32_START( readmem )
-	{ 0x000000, 0x1fffff, MRA32_ROM },
-	{ 0x40c000, 0x40cfff, MRA32_RAM },
-	{ 0x600000, 0x603fff, MRA32_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x40c000, 0x40cfff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x600000, 0x603fff) AM_READ(MRA32_RAM)
 
-	{ 0x800000, 0x803fff, MRA32_RAM },
-	{ 0x804000, 0x807fff, MRA32_RAM },
-	{ 0x808000, 0x80bfff, MRA32_RAM },
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x804000, 0x807fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x808000, 0x80bfff) AM_READ(MRA32_RAM)
 
-	{ 0xC00000, 0xC00003, io32_r },	// player inputs
-	{ 0xC00004, 0xC00007, io32_1_r }, // dip switches
-	{ 0xC00024, 0xC00027, silk_6295_0_r },
-	{ 0xC0002C, 0xC0002f, silk_ym_r },
-	{ 0xC00030, 0xC00033, silk_6295_1_r },
+	AM_RANGE(0xC00000, 0xC00003) AM_READ(io32_r)	// player inputs
+	AM_RANGE(0xC00004, 0xC00007) AM_READ(io32_1_r) // dip switches
+	AM_RANGE(0xC00024, 0xC00027) AM_READ(silk_6295_0_r)
+	AM_RANGE(0xC0002C, 0xC0002f) AM_READ(silk_ym_r)
+	AM_RANGE(0xC00030, 0xC00033) AM_READ(silk_6295_1_r)
 
-	{ 0xfe0000, 0xffffff, MRA32_RAM },
-MEMORY_END
+	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA32_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( writemem )
-	{ 0x000000, 0x1fffff, MWA32_ROM },
-	{ 0x40c000, 0x40cfff, MWA32_RAM, &silkroad_sprram }, // sprites
-	{ 0x600000, 0x603fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 }, // palette
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x40c000, 0x40cfff) AM_WRITE(MWA32_RAM) AM_BASE(&silkroad_sprram) // sprites
+	AM_RANGE(0x600000, 0x603fff) AM_WRITE(paletteram32_xRRRRRGGGGGBBBBB_dword_w) AM_BASE(&paletteram32) // palette
 
-	{ 0x800000, 0x803fff, silkroad_fgram_w, &silkroad_vidram },  // lower Layer
-	{ 0x804000, 0x807fff, silkroad_fgram2_w, &silkroad_vidram2 },  // higher layer
-	{ 0x808000, 0x80bfff, silkroad_fgram3_w, &silkroad_vidram3 }, // even higher layer
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(silkroad_fgram_w) AM_BASE(&silkroad_vidram)  // lower Layer
+	AM_RANGE(0x804000, 0x807fff) AM_WRITE(silkroad_fgram2_w) AM_BASE(&silkroad_vidram2)  // higher layer
+	AM_RANGE(0x808000, 0x80bfff) AM_WRITE(silkroad_fgram3_w) AM_BASE(&silkroad_vidram3) // even higher layer
 
 
-	{ 0xC00024, 0xC00027, silk_6295_0_w },
-	{ 0xC00028, 0xC0002b, silk_ym_regport_w },
-	{ 0xC0002C, 0xC0002f, silk_ym_dataport_w },
-	{ 0xC00030, 0xC00033, silk_6295_1_w },
+	AM_RANGE(0xC00024, 0xC00027) AM_WRITE(silk_6295_0_w)
+	AM_RANGE(0xC00028, 0xC0002b) AM_WRITE(silk_ym_regport_w)
+	AM_RANGE(0xC0002C, 0xC0002f) AM_WRITE(silk_ym_dataport_w)
+	AM_RANGE(0xC00030, 0xC00033) AM_WRITE(silk_6295_1_w)
 
 	// C00038 appears to be the coin counter, bit 0 is pulsed when a coin is inserted
 /*
-	{ 0xC00034, 0xC00037, MWA32_NOP },
+	AM_RANGE(0xC00034, 0xC00037) AM_WRITE(MWA32_NOP)
 */
 
-	{ 0xC0010c, 0xC00123, MWA32_RAM, &silkroad_regs },
+	AM_RANGE(0xC0010c, 0xC00123) AM_WRITE(MWA32_RAM) AM_BASE(&silkroad_regs)
 /*
-	{ 0xC0010C, 0xC0010f, MWA32_NOP }, // 0
-	{ 0xC00110, 0xC00113, MWA32_NOP }, // 1
-	{ 0xC00114, 0xC00117, MWA32_NOP }, // 2
+	AM_RANGE(0xC0010C, 0xC0010f) AM_WRITE(MWA32_NOP) // 0
+	AM_RANGE(0xC00110, 0xC00113) AM_WRITE(MWA32_NOP) // 1
+	AM_RANGE(0xC00114, 0xC00117) AM_WRITE(MWA32_NOP) // 2
 
-	{ 0xC0011c, 0xC0011f, MWA32_NOP }, // 4
-	{ 0xC00120, 0xC00123, MWA32_NOP }, // 5
+	AM_RANGE(0xC0011c, 0xC0011f) AM_WRITE(MWA32_NOP) // 4
+	AM_RANGE(0xC00120, 0xC00123) AM_WRITE(MWA32_NOP) // 5
 */
-	{ 0xfe0000, 0xffffff, MWA32_RAM },
-MEMORY_END
+	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA32_RAM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( silkroad )
@@ -396,7 +396,7 @@ static MACHINE_DRIVER_START( silkroad )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

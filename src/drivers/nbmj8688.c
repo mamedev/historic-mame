@@ -210,37 +210,37 @@ static DRIVER_INIT( apparel )
 
 
 
-static MEMORY_READ_START( readmem_mjsikaku )
-	{ 0x0000, 0xf7ff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_mjsikaku, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_mjsikaku )
-	{ 0x0000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_mjsikaku, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_secolove )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_secolove, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_secolove )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_secolove, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_ojousan )
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_ojousan, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_ojousan )
-	{ 0x0000, 0x6fff, MWA_ROM },
-	{ 0x7000, 0x7fff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_ojousan, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -260,140 +260,140 @@ static READ_HANDLER( ff_r )
 
 
 
-static PORT_READ_START( readport_secolove )
-	{ 0x00, 0x7f, sndrom_r },
-	{ 0x81, 0x81, AY8910_read_port_0_r },
-	{ 0x90, 0x90, nb1413m3_inputport0_r },
-	{ 0xa0, 0xa0, nb1413m3_inputport1_r },
-	{ 0xb0, 0xb0, nb1413m3_inputport2_r },
-	{ 0xd0, 0xd0, ff_r },	// irq ack? watchdog?
-	{ 0xf0, 0xf0, nb1413m3_dipsw1_r },
-	{ 0xf1, 0xf1, nb1413m3_dipsw2_r },
-PORT_END
+static ADDRESS_MAP_START( readport_secolove, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x7f) AM_READ(sndrom_r)
+	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
+	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_secolove )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0x90, 0x95, nbmj8688_blitter_w },
-	{ 0x96, 0x96, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_secolove, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x90, 0x95) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x97, 0x97,
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
-	{ 0xc0, 0xcf, nbmj8688_color_lookup_w },
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(nbmj8688_color_lookup_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, secolove_romsel_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(secolove_romsel_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_crystal2 )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0x90, 0x95, nbmj8688_blitter_w },
-	{ 0x96, 0x96, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_crystal2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x90, 0x95) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x97, 0x97,
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
-	{ 0xc0, 0xcf, nbmj8688_color_lookup_w },
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(nbmj8688_color_lookup_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, crystal2_romsel_w },
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(crystal2_romsel_w)
 //	{ 0xf0, 0xf0,
-PORT_END
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport_otonano )
-	{ 0x00, 0x7f, sndrom_r },
-	{ 0x80, 0x80, YM3812_status_port_0_r },
-	{ 0x90, 0x90, nb1413m3_inputport0_r },
-	{ 0xa0, 0xa0, nb1413m3_inputport1_r },
-	{ 0xb0, 0xb0, nb1413m3_inputport2_r },
-	{ 0xd0, 0xd0, ff_r },	// irq ack? watchdog?
-	{ 0xf0, 0xf0, nb1413m3_dipsw1_r },
-	{ 0xf1, 0xf1, nb1413m3_dipsw2_r },
-PORT_END
+static ADDRESS_MAP_START( readport_otonano, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x7f) AM_READ(sndrom_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
+	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_otonano )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x20, 0x3f, nbmj8688_color_lookup_w },
-	{ 0x50, 0x50, mjsikaku_romsel_w },
-	{ 0x70, 0x75, nbmj8688_blitter_w },
-	{ 0x76, 0x76, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_otonano, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(nbmj8688_color_lookup_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(mjsikaku_romsel_w)
+	AM_RANGE(0x70, 0x75) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x76, 0x76) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x77, 0x77,
-	{ 0x80, 0x80, YM3812_control_port_0_w },
-	{ 0x81, 0x81, YM3812_write_port_0_w },
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, mjsikaku_gfxflag2_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(mjsikaku_gfxflag2_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport_kaguya )
-	{ 0x00, 0x7f, sndrom_r },
-	{ 0x81, 0x81, AY8910_read_port_0_r },
-	{ 0x90, 0x90, nb1413m3_inputport0_r },
-	{ 0xa0, 0xa0, nb1413m3_inputport1_r },
-	{ 0xb0, 0xb0, nb1413m3_inputport2_r },
-	{ 0xd0, 0xd0, ff_r },	// irq ack? watchdog?
-	{ 0xf0, 0xf0, nb1413m3_dipsw1_r },
-	{ 0xf1, 0xf1, nb1413m3_dipsw2_r },
-PORT_END
+static ADDRESS_MAP_START( readport_kaguya, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x7f) AM_READ(sndrom_r)
+	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
+	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_kaguya )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x20, 0x3f, nbmj8688_color_lookup_w },
-	{ 0x50, 0x50, mjsikaku_romsel_w },
-	{ 0x70, 0x75, nbmj8688_blitter_w },
-	{ 0x76, 0x76, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_kaguya, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(nbmj8688_color_lookup_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(mjsikaku_romsel_w)
+	AM_RANGE(0x70, 0x75) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x76, 0x76) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x77, 0x77,
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, mjsikaku_gfxflag2_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(mjsikaku_gfxflag2_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport_iemoto )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x20, 0x3f, nbmj8688_color_lookup_w },
-	{ 0x10, 0x10, nb1413m3_sndrombank2_w },
-	{ 0x40, 0x45, nbmj8688_blitter_w },
-	{ 0x46, 0x46, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_iemoto, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(nbmj8688_color_lookup_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(nb1413m3_sndrombank2_w)
+	AM_RANGE(0x40, 0x45) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x46, 0x46) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x47, 0x47,
-	{ 0x50, 0x50, seiha_romsel_w },
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
+	AM_RANGE(0x50, 0x50) AM_WRITE(seiha_romsel_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, mjsikaku_gfxflag2_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(mjsikaku_gfxflag2_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
 static WRITE_HANDLER( seiha_b0_w )
@@ -402,84 +402,84 @@ static WRITE_HANDLER( seiha_b0_w )
 	nb1413m3_sndrombank1_w(0,data);
 }
 
-static PORT_WRITE_START( writeport_seiha )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x10, 0x10, nb1413m3_sndrombank2_w },
-	{ 0x20, 0x3f, nbmj8688_color_lookup_w },
-	{ 0x50, 0x50, seiha_romsel_w },
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0x90, 0x95, nbmj8688_blitter_w },
-	{ 0x96, 0x96, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_seiha, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(nb1413m3_sndrombank2_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(nbmj8688_color_lookup_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(seiha_romsel_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x90, 0x95) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x97, 0x97,
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, seiha_b0_w },
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(seiha_b0_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, mjsikaku_gfxflag2_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(mjsikaku_gfxflag2_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport_p16bit_LCD )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x42, 0x42, nbmj8688_HD61830B_0_data_w },
-	{ 0x43, 0x43, nbmj8688_HD61830B_0_instr_w },
-	{ 0x44, 0x44, nbmj8688_HD61830B_1_data_w },
-	{ 0x45, 0x45, nbmj8688_HD61830B_1_instr_w },
-	{ 0x46, 0x46, nbmj8688_HD61830B_both_data_w },
-	{ 0x47, 0x47, nbmj8688_HD61830B_both_instr_w },
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0x90, 0x95, nbmj8688_blitter_w },
-	{ 0x96, 0x96, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_p16bit_LCD, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x42, 0x42) AM_WRITE(nbmj8688_HD61830B_0_data_w)
+	AM_RANGE(0x43, 0x43) AM_WRITE(nbmj8688_HD61830B_0_instr_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(nbmj8688_HD61830B_1_data_w)
+	AM_RANGE(0x45, 0x45) AM_WRITE(nbmj8688_HD61830B_1_instr_w)
+	AM_RANGE(0x46, 0x46) AM_WRITE(nbmj8688_HD61830B_both_data_w)
+	AM_RANGE(0x47, 0x47) AM_WRITE(nbmj8688_HD61830B_both_instr_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x90, 0x95) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x97, 0x97,
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
-	{ 0xc0, 0xcf, nbmj8688_color_lookup_w },
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(nbmj8688_color_lookup_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, secolove_romsel_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(secolove_romsel_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport_mjsikaku )
-	{ 0x00, 0x7f, sndrom_r },
-	{ 0x90, 0x90, nb1413m3_inputport0_r },
-	{ 0xa0, 0xa0, nb1413m3_inputport1_r },
-	{ 0xb0, 0xb0, nb1413m3_inputport2_r },
-	{ 0xd0, 0xd0, ff_r },	// irq ack? watchdog?
-	{ 0xf0, 0xf0, nb1413m3_dipsw1_r },
-	{ 0xf1, 0xf1, nb1413m3_dipsw2_r },
-PORT_END
+static ADDRESS_MAP_START( readport_mjsikaku, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x7f) AM_READ(sndrom_r)
+	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
+	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_mjsikaku )
-	{ 0x00, 0x00, nb1413m3_nmi_clock_w },
-	{ 0x10, 0x10, nb1413m3_sndrombank2_w },
-	{ 0x20, 0x3f, nbmj8688_color_lookup_w },
-	{ 0x50, 0x50, mjsikaku_romsel_w },
-	{ 0x60, 0x65, nbmj8688_blitter_w },
-	{ 0x66, 0x66, mjsikaku_gfxflag1_w },
+static ADDRESS_MAP_START( writeport_mjsikaku, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(nb1413m3_sndrombank2_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(nbmj8688_color_lookup_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(mjsikaku_romsel_w)
+	AM_RANGE(0x60, 0x65) AM_WRITE(nbmj8688_blitter_w)
+	AM_RANGE(0x66, 0x66) AM_WRITE(mjsikaku_gfxflag1_w)
 //	{ 0x67, 0x67,
-	{ 0x80, 0x80, YM3812_control_port_0_w },
-	{ 0x81, 0x81, YM3812_write_port_0_w },
-	{ 0xa0, 0xa0, nb1413m3_inputportsel_w },
-	{ 0xb0, 0xb0, nb1413m3_sndrombank1_w },
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 #if SIGNED_DAC
-	{ 0xd0, 0xd0, DAC_0_signed_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_signed_data_w)
 #else
-	{ 0xd0, 0xd0, DAC_0_data_w },
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_data_w)
 #endif
-	{ 0xe0, 0xe0, mjsikaku_gfxflag2_w },
-	{ 0xf0, 0xf0, mjsikaku_scrolly_w },
-PORT_END
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(mjsikaku_gfxflag2_w)
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(mjsikaku_scrolly_w)
+ADDRESS_MAP_END
 
 
 
@@ -2113,8 +2113,8 @@ static MACHINE_DRIVER_START( crystalg )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_256)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_crystal2)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_crystal2)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)	// nmiclock = 2f
 MACHINE_DRIVER_END
 
@@ -2124,8 +2124,8 @@ static MACHINE_DRIVER_START( apparel )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_256)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_secolove)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60
 MACHINE_DRIVER_END
 
@@ -2135,8 +2135,8 @@ static MACHINE_DRIVER_START( mbmj_h12bit )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_4096)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_secolove)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60
 
 	/* video hardware */
@@ -2149,8 +2149,8 @@ static MACHINE_DRIVER_START( mbmj_p16bit )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_65536)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_secolove)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60/40
 
 	/* video hardware */
@@ -2163,7 +2163,7 @@ static MACHINE_DRIVER_START( mbmj_p16bit_LCD )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mbmj_p16bit)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(readport_secolove,writeport_p16bit_LCD)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_p16bit_LCD)
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(512, 256 + 64*2)
@@ -2180,8 +2180,8 @@ static MACHINE_DRIVER_START( seiha )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_65536)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_seiha)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_seiha)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60
 MACHINE_DRIVER_END
 
@@ -2191,8 +2191,8 @@ static MACHINE_DRIVER_START( iemoto )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_65536)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
-	MDRV_CPU_PORTS(readport_secolove,writeport_iemoto)
+	MDRV_CPU_PROGRAM_MAP(readmem_secolove,writemem_secolove)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_iemoto)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60
 MACHINE_DRIVER_END
 
@@ -2202,8 +2202,8 @@ static MACHINE_DRIVER_START( ojousan )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_65536)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_ojousan,writemem_ojousan)
-	MDRV_CPU_PORTS(readport_secolove,writeport_iemoto)
+	MDRV_CPU_PROGRAM_MAP(readmem_ojousan,writemem_ojousan)
+	MDRV_CPU_IO_MAP(readport_secolove,writeport_iemoto)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)	// nmiclock = 60
 MACHINE_DRIVER_END
 
@@ -2213,8 +2213,8 @@ static MACHINE_DRIVER_START( mbmj_p12bit )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_4096)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
-	MDRV_CPU_PORTS(readport_kaguya,writeport_kaguya)
+	MDRV_CPU_PROGRAM_MAP(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_IO_MAP(readport_kaguya,writeport_kaguya)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 MACHINE_DRIVER_END
 
@@ -2224,8 +2224,8 @@ static MACHINE_DRIVER_START( mjsikaku )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(NBMJDRV_4096)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
-	MDRV_CPU_PORTS(readport_mjsikaku,writeport_mjsikaku)
+	MDRV_CPU_PROGRAM_MAP(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_IO_MAP(readport_mjsikaku,writeport_mjsikaku)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,144)	// nmiclock = 70
 
 	/* sound hardware */
@@ -2238,7 +2238,7 @@ static MACHINE_DRIVER_START( otonano )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mjsikaku)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(readport_otonano,writeport_otonano)
+	MDRV_CPU_IO_MAP(readport_otonano,writeport_otonano)
 MACHINE_DRIVER_END
 
 

@@ -191,75 +191,75 @@ static READ_HANDLER( some_changing_input )
 	return variable_data;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xbfff, MRA_BANK2 },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x9fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK2)
 
-	{ 0xe000, 0xe007, debug_output_area_r },
+	AM_RANGE(0xe000, 0xe007) AM_READ(debug_output_area_r)
 
-	{ 0xf000, 0xf7ff, MRA_RAM },
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
 
-//{ 0xf800, 0xffff, read_from_unmapped_memory },	/* a bug in game code ? */
+//AM_RANGE(0xf800, 0xffff) AM_READ(read_from_unmapped_memory)	/* a bug in game code ? */
 
-	{ 0xe800, 0xe800, input_port_0_r },
-	{ 0xe801, 0xe801, input_port_1_r },
-	{ 0xe802, 0xe802, input_port_2_r },
-	{ 0xe803, 0xe803, some_changing_input },/*unknown. Game expects this to change so this is not player input */
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
+	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
+	AM_RANGE(0xe802, 0xe802) AM_READ(input_port_2_r)
+	AM_RANGE(0xe803, 0xe803) AM_READ(some_changing_input)/*unknown. Game expects this to change so this is not player input */
 
-	{ 0xc000, 0xc7ff, tankbust_background_videoram_r },
-	{ 0xc800, 0xcfff, tankbust_background_colorram_r },
-	{ 0xd000, 0xd7ff, tankbust_txtram_r },
-	{ 0xd800, 0xd8ff, MRA_RAM },
-MEMORY_END
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(tankbust_background_videoram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(tankbust_background_colorram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(tankbust_txtram_r)
+	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xbfff, MWA_ROM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
 
-	{ 0xf000, 0xf7ff, MWA_RAM },
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
 
-	{ 0xe000, 0xe007, tankbust_e0xx_w },
+	AM_RANGE(0xe000, 0xe007) AM_WRITE(tankbust_e0xx_w)
 
-	{ 0xe800, 0xe800, tankbust_yscroll_w },
-	{ 0xe801, 0xe802, tankbust_xscroll_w },
-	{ 0xe803, 0xe803, tankbust_soundlatch_w },
-	{ 0xe804, 0xe804, MWA_NOP },	/* watchdog ? ; written in long-lasting loops */
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(tankbust_yscroll_w)
+	AM_RANGE(0xe801, 0xe802) AM_WRITE(tankbust_xscroll_w)
+	AM_RANGE(0xe803, 0xe803) AM_WRITE(tankbust_soundlatch_w)
+	AM_RANGE(0xe804, 0xe804) AM_WRITE(MWA8_NOP)	/* watchdog ? ; written in long-lasting loops */
 
-	{ 0xc000, 0xc7ff, tankbust_background_videoram_w, &videoram },
-	{ 0xc800, 0xcfff, tankbust_background_colorram_w, &colorram },
-	{ 0xd000, 0xd7ff, tankbust_txtram_w, &txt_ram },
-	{ 0xd800, 0xd8ff, MWA_RAM, &spriteram, &spriteram_size },
-MEMORY_END
-
-
-static PORT_READ_START( readport2 )
-	{ 0xc0, 0xc0, AY8910_read_port_0_r },
-	{ 0x30, 0x30, AY8910_read_port_1_r },
-PORT_END
-
-static PORT_WRITE_START( writeport2 )
-	{ 0xc0, 0xc0, AY8910_control_port_0_w },
-	{ 0x40, 0x40, AY8910_write_port_0_w },
-	{ 0x30, 0x30, AY8910_control_port_1_w },
-	{ 0x10, 0x10, AY8910_write_port_1_w },
-PORT_END
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(tankbust_background_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(tankbust_background_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(tankbust_txtram_w) AM_BASE(&txt_ram)
+	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xc0, 0xc0) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x30, 0x30) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
+static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
-	{ 0x2000, 0x3fff, MWA_NOP },	/* garbage, written in initialization loop */
+
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_NOP)	/* garbage, written in initialization loop */
 //0x4000 and 0x4040-0x4045 seem to be used (referenced in the code)
-	{ 0x4000, 0x7fff, MWA_NOP },	/* garbage, written in initialization loop */
-MEMORY_END
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_NOP)	/* garbage, written in initialization loop */
+ADDRESS_MAP_END
 
 
 
@@ -373,12 +373,12 @@ static MACHINE_DRIVER_START( tankbust )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz ? */
-	MDRV_CPU_MEMORY( readmem, writemem )
+	MDRV_CPU_PROGRAM_MAP( readmem, writemem )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)		/* 3.072 MHz ? */
-	MDRV_CPU_MEMORY( readmem2, writemem2 )
-	MDRV_CPU_PORTS( readport2, writeport2 )
+	MDRV_CPU_PROGRAM_MAP( readmem2, writemem2 )
+	MDRV_CPU_IO_MAP( readport2, writeport2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -238,35 +238,35 @@ WRITE_HANDLER( upd_data_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	MEMORY_ADDRESS_BITS(20)
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x04ffff, MRA16_RAM },
-	{ 0x060000, 0x060fff, MRA16_RAM },
-	{ 0x080000, 0x083fff, MRA16_RAM },
-	{ 0x0c0018, 0x0c001b, common_port_r },
-	{ 0x0c001c, 0x0c001d, input_port_3_word_r },
-	{ 0x0c001e, 0x0c001f, sound_busy_r },
-	{ 0x0a0000, 0x0a07ff, MRA16_RAM },
-	{ 0x0fc000, 0x0fffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x04ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x060000, 0x060fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c0018, 0x0c001b) AM_READ(common_port_r)
+	AM_RANGE(0x0c001c, 0x0c001d) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0c001e, 0x0c001f) AM_READ(sound_busy_r)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0fc000, 0x0fffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( writemem )
-	MEMORY_ADDRESS_BITS(20)
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x04ffff, rpunch_bitmap_w, &rpunch_bitmapram, &rpunch_bitmapram_size },
-	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16 },
-	{ 0x080000, 0x083fff, rpunch_videoram_w, &videoram16, &videoram_size },
-	{ 0x0a0000, 0x0a07ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x0c0000, 0x0c0007, rpunch_scrollreg_w },
-	{ 0x0c0008, 0x0c0009, rpunch_crtc_data_w },
-	{ 0x0c000c, 0x0c000d, rpunch_videoreg_w },
-	{ 0x0c000e, 0x0c000f, sound_command_w },
-	{ 0x0c0010, 0x0c0013, rpunch_ins_w },
-	{ 0x0c0028, 0x0c0029, rpunch_crtc_register_w },
-	{ 0x0fc000, 0x0fffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x04ffff) AM_WRITE(rpunch_bitmap_w) AM_BASE(&rpunch_bitmapram) AM_SIZE(&rpunch_bitmapram_size)
+	AM_RANGE(0x060000, 0x060fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x080000, 0x083fff) AM_WRITE(rpunch_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0c0000, 0x0c0007) AM_WRITE(rpunch_scrollreg_w)
+	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(rpunch_crtc_data_w)
+	AM_RANGE(0x0c000c, 0x0c000d) AM_WRITE(rpunch_videoreg_w)
+	AM_RANGE(0x0c000e, 0x0c000f) AM_WRITE(sound_command_w)
+	AM_RANGE(0x0c0010, 0x0c0013) AM_WRITE(rpunch_ins_w)
+	AM_RANGE(0x0c0028, 0x0c0029) AM_WRITE(rpunch_crtc_register_w)
+	AM_RANGE(0x0fc000, 0x0fffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -276,22 +276,22 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf001, YM2151_status_port_0_r },
-	{ 0xf200, 0xf200, sound_command_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf200, 0xf200) AM_READ(sound_command_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },
-	{ 0xf400, 0xf400, upd_control_w },
-	{ 0xf600, 0xf600, upd_data_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(upd_control_w)
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(upd_data_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -626,10 +626,10 @@ static MACHINE_DRIVER_START( rpunch )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, MASTER_CLOCK/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

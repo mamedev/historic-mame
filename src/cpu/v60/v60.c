@@ -93,7 +93,7 @@ struct v60info {
 	UINT32 PPC;
 } v60;
 
-int v60_ICount;
+static int v60_ICount;
 
 #define _CY v60.flags.CY
 #define _OV v60.flags.OV
@@ -410,7 +410,7 @@ static void v60_try_irq(void)
 		v60.irq_line = CLEAR_LINE;
 }
 
-void v60_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if(irqline == IRQ_LINE_NMI) {
 		switch(state) {
@@ -435,14 +435,9 @@ void v60_set_irq_line(int irqline, int state)
 	}
 }
 
-void v60_set_irq_callback(int (*irq_cb)(int irqline))
-{
-	v60.irq_cb = irq_cb;
-}
-
 // Actual cycles/instruction is unknown
 
-int v60_execute(int cycles)
+static int v60_execute(int cycles)
 {
 	v60_ICount = cycles;
 	if(v60.irq_line != CLEAR_LINE)
@@ -459,14 +454,13 @@ int v60_execute(int cycles)
 	return cycles - v60_ICount;
 }
 
-unsigned v60_get_context(void *dst)
+static void v60_get_context(void *dst)
 {
 	if(dst)
 		*(struct v60info *)dst = v60;
-	return sizeof(struct v60info);
 }
 
-void v60_set_context(void *src)
+static void v60_set_context(void *src)
 {
 	if(src)
 	{
@@ -510,96 +504,312 @@ static UINT8 v60_win_layout[] = {
 };
 
 
-unsigned v60_get_reg(int regnum)
-{
-	switch(regnum) {
-	case REG_PC:
-		return PC;
-	case REG_PREVIOUSPC:
-		return PPC;
-	case REG_SP:
-		return SP;
-	case V60_TCB:
-		return TCB;
-	}
-	if(regnum >= 1 && regnum < V60_REGMAX)
-		return v60.reg[regnum - 1];
-	return 0;
-}
-
-void v60_set_reg(int regnum, unsigned val)
-{
-	switch(regnum) {
-	case REG_PC:
-		PC = val;
-		ChangePC(PC);
-		return;
-	case REG_SP:
-		SP = val;
-		return;
-	case V60_TCB:
-		TCB = val;
-		return;
-	}
-	if(regnum >= 1 && regnum < V60_REGMAX)
-		v60.reg[regnum - 1] = val;
-}
-
-const char *v60_info(void *context, int regnum)
-{
-	struct v60info *r = context ? context : &v60;
-	static char buffer[32][47+1];
-	static int which = 0;
-
-	switch(regnum) {
-	case CPU_INFO_NAME:
-		return "V60";
-	case CPU_INFO_FAMILY:
-		return "NEC V60";
-	case CPU_INFO_VERSION:
-		return "1.0";
-	case CPU_INFO_CREDITS:
-		return "Farfetch'd and R.Belmont";
-	case CPU_INFO_REG_LAYOUT:
-		return (const char *)v60_reg_layout;
-	case CPU_INFO_WIN_LAYOUT:
-		return (const char *)v60_win_layout;
-	}
-
-	which = (which+1) % 32;
-	buffer[which][0] = '\0';
-
-	if(regnum > CPU_INFO_REG && regnum < CPU_INFO_REG + V60_REGMAX) {
-		int reg = regnum - CPU_INFO_REG - 1;
-		sprintf(buffer[which], "%s:%08X", v60_reg_names[reg], reg == V60_TCB ? r->tcb : r->reg[reg]);
-	}
-
-	return buffer[which];
-}
-
-const char *v70_info(void *context, int regnum)
-{
-	switch(regnum) {
-	case CPU_INFO_NAME:
-		return "V70";
-	case CPU_INFO_FAMILY:
-		return "NEC V70";
-	default:
-		return v60_info(context, regnum);
-	}
-}
-
 #ifndef MAME_DEBUG
-unsigned v60_dasm(char *buffer,  unsigned pc)
+static offs_t v60_dasm(char *buffer,  offs_t pc)
 {
-	sprintf(buffer, "$%02X", cpu_readmem24lew(pc));
+	sprintf(buffer, "$%02X", program_read_byte_16le(pc));
 	return 1;
 }
 
-unsigned v70_dasm(char *buffer,  unsigned pc)
+static offs_t v70_dasm(char *buffer,  offs_t pc)
 {
-	sprintf(buffer, "$%02X", cpu_readmem32ledw(pc));
+	sprintf(buffer, "$%02X", program_read_byte_32le(pc));
 	return 1;
 }
+#else
+offs_t v60_dasm(char *buffer,  offs_t pc);
+offs_t v70_dasm(char *buffer,  offs_t pc);
 #endif
 
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void v60_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_PC:							PC = info->i; ChangePC(PC);				break;
+		case CPUINFO_INT_SP:							SP = info->i;							break;
+
+		case CPUINFO_INT_REGISTER + V60_R0:				R0 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R1:				R1 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R2:				R2 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R3:				R3 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R4:				R4 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R5:				R5 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R6:				R6 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R7:				R7 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R8:				R8 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R9:				R9 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R10:			R10 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R11:			R11 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R12:			R12 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R13:			R13 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R14:			R14 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R15:			R15 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R16:			R16 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R17:			R17 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R18:			R18 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R19:			R19 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R20:			R20 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R21:			R21 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R22:			R22 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R23:			R23 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R24:			R24 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R25:			R25 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R26:			R26 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R27:			R27 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_R28:			R28 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_AP:				AP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_FP:				FP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_SP:				SP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_PC:				PC = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_PSW:			PSW = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_ISP:			ISP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_L0SP:			L0SP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_L1SP:			L1SP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_L2SP:			L2SP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_L3SP:			L3SP = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_SBR:			SBR = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_TR:				TR = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_SYCW:			SYCW = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_TKCW:			TKCW = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_PIR:			PIR = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_PSW2:			PSW2 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR0:			ATBR0 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR0:			ATLR0 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR1:			ATBR1 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR1:			ATLR1 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR2:			ATBR2 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR2:			ATLR2 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR3:			ATBR3 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR3:			ATLR3 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_TRMODE:			TRMODE = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTR0:			ADTR0 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTR1:			ADTR1 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTMR0:			ADTMR0 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTMR1:			ADTMR1 = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V60_TCB:			TCB = info->i;							break;	
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					v60.irq_cb = info->irqcallback;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void v60_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(v60);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 11;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = v60.irq_line;					break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = v60.nmi_line;					break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+
+		case CPUINFO_INT_REGISTER + V60_R0:				info->i = R0;							break;	
+		case CPUINFO_INT_REGISTER + V60_R1:				info->i = R1;							break;	
+		case CPUINFO_INT_REGISTER + V60_R2:				info->i = R2;							break;	
+		case CPUINFO_INT_REGISTER + V60_R3:				info->i = R3;							break;	
+		case CPUINFO_INT_REGISTER + V60_R4:				info->i = R4;							break;	
+		case CPUINFO_INT_REGISTER + V60_R5:				info->i = R5;							break;	
+		case CPUINFO_INT_REGISTER + V60_R6:				info->i = R6;							break;	
+		case CPUINFO_INT_REGISTER + V60_R7:				info->i = R7;							break;	
+		case CPUINFO_INT_REGISTER + V60_R8:				info->i = R8;							break;	
+		case CPUINFO_INT_REGISTER + V60_R9:				info->i = R9;							break;	
+		case CPUINFO_INT_REGISTER + V60_R10:			info->i = R10;							break;	
+		case CPUINFO_INT_REGISTER + V60_R11:			info->i = R11;							break;	
+		case CPUINFO_INT_REGISTER + V60_R12:			info->i = R12;							break;	
+		case CPUINFO_INT_REGISTER + V60_R13:			info->i = R13;							break;	
+		case CPUINFO_INT_REGISTER + V60_R14:			info->i = R14;							break;	
+		case CPUINFO_INT_REGISTER + V60_R15:			info->i = R15;							break;	
+		case CPUINFO_INT_REGISTER + V60_R16:			info->i = R16;							break;	
+		case CPUINFO_INT_REGISTER + V60_R17:			info->i = R17;							break;	
+		case CPUINFO_INT_REGISTER + V60_R18:			info->i = R18;							break;	
+		case CPUINFO_INT_REGISTER + V60_R19:			info->i = R19;							break;	
+		case CPUINFO_INT_REGISTER + V60_R20:			info->i = R20;							break;	
+		case CPUINFO_INT_REGISTER + V60_R21:			info->i = R21;							break;	
+		case CPUINFO_INT_REGISTER + V60_R22:			info->i = R22;							break;	
+		case CPUINFO_INT_REGISTER + V60_R23:			info->i = R23;							break;	
+		case CPUINFO_INT_REGISTER + V60_R24:			info->i = R24;							break;	
+		case CPUINFO_INT_REGISTER + V60_R25:			info->i = R25;							break;	
+		case CPUINFO_INT_REGISTER + V60_R26:			info->i = R26;							break;	
+		case CPUINFO_INT_REGISTER + V60_R27:			info->i = R27;							break;	
+		case CPUINFO_INT_REGISTER + V60_R28:			info->i = R28;							break;	
+		case CPUINFO_INT_REGISTER + V60_AP:				info->i = AP;							break;	
+		case CPUINFO_INT_REGISTER + V60_FP:				info->i = FP;							break;	
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + V60_SP:				info->i = SP;							break;	
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + V60_PC:				info->i = PC;							break;	
+		case CPUINFO_INT_REGISTER + V60_PSW:			info->i = PSW;							break;	
+		case CPUINFO_INT_REGISTER + V60_ISP:			info->i = ISP;							break;	
+		case CPUINFO_INT_REGISTER + V60_L0SP:			info->i = L0SP;							break;	
+		case CPUINFO_INT_REGISTER + V60_L1SP:			info->i = L1SP;							break;	
+		case CPUINFO_INT_REGISTER + V60_L2SP:			info->i = L2SP;							break;	
+		case CPUINFO_INT_REGISTER + V60_L3SP:			info->i = L3SP;							break;	
+		case CPUINFO_INT_REGISTER + V60_SBR:			info->i = SBR;							break;	
+		case CPUINFO_INT_REGISTER + V60_TR:				info->i = TR;							break;	
+		case CPUINFO_INT_REGISTER + V60_SYCW:			info->i = SYCW;							break;	
+		case CPUINFO_INT_REGISTER + V60_TKCW:			info->i = TKCW;							break;	
+		case CPUINFO_INT_REGISTER + V60_PIR:			info->i = PIR;							break;	
+		case CPUINFO_INT_REGISTER + V60_PSW2:			info->i = PSW2;							break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR0:			info->i = ATBR0;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR0:			info->i = ATLR0;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR1:			info->i = ATBR1;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR1:			info->i = ATLR1;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR2:			info->i = ATBR2;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR2:			info->i = ATLR2;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATBR3:			info->i = ATBR3;						break;	
+		case CPUINFO_INT_REGISTER + V60_ATLR3:			info->i = ATLR3;						break;	
+		case CPUINFO_INT_REGISTER + V60_TRMODE:			info->i = TRMODE;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTR0:			info->i = ADTR0;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTR1:			info->i = ADTR1;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTMR0:			info->i = ADTMR0;						break;	
+		case CPUINFO_INT_REGISTER + V60_ADTMR1:			info->i = ADTMR1;						break;	
+		case CPUINFO_INT_REGISTER + V60_TCB:			info->i = TCB;							break;	
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = v60_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = v60_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = v60_set_context;		break;
+		case CPUINFO_PTR_INIT:							info->init = v60_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = v60_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = v60_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = v60_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v60_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = v60.irq_cb;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v60_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = v60_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = v60_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V60"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC V60"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Farfetch'd and R.Belmont"); break;
+
+		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+
+		case CPUINFO_STR_REGISTER + V60_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0:%08X", R0);	break;
+		case CPUINFO_STR_REGISTER + V60_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1:%08X", R1);	break;
+		case CPUINFO_STR_REGISTER + V60_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2:%08X", R2);	break;
+		case CPUINFO_STR_REGISTER + V60_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3:%08X", R3);	break;
+		case CPUINFO_STR_REGISTER + V60_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4:%08X", R4);	break;
+		case CPUINFO_STR_REGISTER + V60_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5:%08X", R5);	break;
+		case CPUINFO_STR_REGISTER + V60_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6:%08X", R6);	break;
+		case CPUINFO_STR_REGISTER + V60_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7:%08X", R7);	break;
+		case CPUINFO_STR_REGISTER + V60_R8:				sprintf(info->s = cpuintrf_temp_str(), "R8:%08X", R8);	break;
+		case CPUINFO_STR_REGISTER + V60_R9:				sprintf(info->s = cpuintrf_temp_str(), "R9:%08X", R9);	break;
+		case CPUINFO_STR_REGISTER + V60_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", R10); break;
+		case CPUINFO_STR_REGISTER + V60_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", R11); break;
+		case CPUINFO_STR_REGISTER + V60_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", R12); break;
+		case CPUINFO_STR_REGISTER + V60_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", R13); break;
+		case CPUINFO_STR_REGISTER + V60_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", R14); break;
+		case CPUINFO_STR_REGISTER + V60_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", R15); break;
+		case CPUINFO_STR_REGISTER + V60_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", R16); break;
+		case CPUINFO_STR_REGISTER + V60_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", R17); break;
+		case CPUINFO_STR_REGISTER + V60_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", R18); break;
+		case CPUINFO_STR_REGISTER + V60_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", R19); break;
+		case CPUINFO_STR_REGISTER + V60_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", R20); break;
+		case CPUINFO_STR_REGISTER + V60_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", R21); break;
+		case CPUINFO_STR_REGISTER + V60_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", R22); break;
+		case CPUINFO_STR_REGISTER + V60_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", R23); break;
+		case CPUINFO_STR_REGISTER + V60_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", R24); break;
+		case CPUINFO_STR_REGISTER + V60_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", R25); break;
+		case CPUINFO_STR_REGISTER + V60_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", R26); break;
+		case CPUINFO_STR_REGISTER + V60_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", R27); break;
+		case CPUINFO_STR_REGISTER + V60_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", R28); break;
+		case CPUINFO_STR_REGISTER + V60_AP:				sprintf(info->s = cpuintrf_temp_str(), "AP:%08X", AP); break;
+		case CPUINFO_STR_REGISTER + V60_FP:				sprintf(info->s = cpuintrf_temp_str(), "FP:%08X", FP); break;
+		case CPUINFO_STR_REGISTER + V60_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%08X", SP); break;
+		case CPUINFO_STR_REGISTER + V60_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%08X", PC); break;
+		case CPUINFO_STR_REGISTER + V60_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%08X", PSW); break;
+		case CPUINFO_STR_REGISTER + V60_ISP:			sprintf(info->s = cpuintrf_temp_str(), "ISP:%08X", ISP); break;
+		case CPUINFO_STR_REGISTER + V60_L0SP:			sprintf(info->s = cpuintrf_temp_str(), "L0SP:%08X", L0SP); break;
+		case CPUINFO_STR_REGISTER + V60_L1SP:			sprintf(info->s = cpuintrf_temp_str(), "L1SP:%08X", L1SP); break;
+		case CPUINFO_STR_REGISTER + V60_L2SP:			sprintf(info->s = cpuintrf_temp_str(), "L2SP:%08X", L2SP); break;
+		case CPUINFO_STR_REGISTER + V60_L3SP:			sprintf(info->s = cpuintrf_temp_str(), "L3SP:%08X", L3SP); break;
+		case CPUINFO_STR_REGISTER + V60_SBR:			sprintf(info->s = cpuintrf_temp_str(), "SBR:%08X", SBR); break;
+		case CPUINFO_STR_REGISTER + V60_TR:				sprintf(info->s = cpuintrf_temp_str(), "TR:%08X", TR); break;
+		case CPUINFO_STR_REGISTER + V60_SYCW:			sprintf(info->s = cpuintrf_temp_str(), "SYCW:%08X", SYCW); break;
+		case CPUINFO_STR_REGISTER + V60_TKCW:			sprintf(info->s = cpuintrf_temp_str(), "TKCW:%08X", TKCW); break;
+		case CPUINFO_STR_REGISTER + V60_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR:%08X", PIR); break;
+		case CPUINFO_STR_REGISTER + V60_PSW2:			sprintf(info->s = cpuintrf_temp_str(), "PSW2:%08X", PSW2); break;
+		case CPUINFO_STR_REGISTER + V60_ATBR0:			sprintf(info->s = cpuintrf_temp_str(), "ATBR0:%08X", ATBR0); break;
+		case CPUINFO_STR_REGISTER + V60_ATLR0:			sprintf(info->s = cpuintrf_temp_str(), "ATLR0:%08X", ATLR0); break;
+		case CPUINFO_STR_REGISTER + V60_ATBR1:			sprintf(info->s = cpuintrf_temp_str(), "ATBR1:%08X", ATBR1); break;
+		case CPUINFO_STR_REGISTER + V60_ATLR1:			sprintf(info->s = cpuintrf_temp_str(), "ATLR1:%08X", ATLR1); break;
+		case CPUINFO_STR_REGISTER + V60_ATBR2:			sprintf(info->s = cpuintrf_temp_str(), "ATBR2:%08X", ATBR2); break;
+		case CPUINFO_STR_REGISTER + V60_ATLR2:			sprintf(info->s = cpuintrf_temp_str(), "ATLR2:%08X", ATLR2); break;
+		case CPUINFO_STR_REGISTER + V60_ATBR3:			sprintf(info->s = cpuintrf_temp_str(), "ATBR3:%08X", ATBR3); break;
+		case CPUINFO_STR_REGISTER + V60_ATLR3:			sprintf(info->s = cpuintrf_temp_str(), "ATLR3:%08X", ATLR3); break;
+		case CPUINFO_STR_REGISTER + V60_TRMODE:			sprintf(info->s = cpuintrf_temp_str(), "TRMODE:%08X", TRMODE); break;
+		case CPUINFO_STR_REGISTER + V60_ADTR0:			sprintf(info->s = cpuintrf_temp_str(), "ADTR0:%08X", ADTR0); break;
+		case CPUINFO_STR_REGISTER + V60_ADTR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTR1:%08X", ADTR1); break;
+		case CPUINFO_STR_REGISTER + V60_ADTMR0:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR0:%08X", ADTMR0); break;
+		case CPUINFO_STR_REGISTER + V60_ADTMR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR1:%08X", ADTMR1); break;
+		case CPUINFO_STR_REGISTER + V60_TCB:			sprintf(info->s = cpuintrf_temp_str(), "TCB:%08X", TCB); break;
+	}
+}
+
+
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void v70_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = v70_init;					break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v70_dasm;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V70"); break;
+
+		default:
+			v60_get_info(state, info);
+			break;
+	}
+}

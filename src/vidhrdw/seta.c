@@ -803,7 +803,7 @@ static void zombraid_drawcrosshairs( struct mame_bitmap *bitmap, const struct re
 /* For games without tilemaps */
 VIDEO_UPDATE( seta_no_layers )
 {
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap(bitmap,Machine->pens[0x1f0],cliprect);
 	seta_draw_sprites(bitmap,cliprect);
 }
 

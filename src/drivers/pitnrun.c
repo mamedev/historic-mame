@@ -118,85 +118,87 @@ static WRITE_HANDLER(pitnrun_vflip_w)
 	flip_screen_y_set(data);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM},
-	{ 0x8800, 0x8fff, pitnrun_videoram_r},
-	{ 0x9000, 0x9fff, pitnrun_videoram2_r },
-	{ 0xa000, 0xa0ff, spriteram_r },
-	{ 0xa800, 0xa800, input_port_0_r },
-	{ 0xb000, 0xb000, input_port_1_r },
-	{ 0xb800, 0xb800, input_port_2_r },
-	{ 0xd800, 0xd800, pitnrun_mcu_status_r},
-	{ 0xd000, 0xd000, pitnrun_mcu_data_r },
-	{ 0xf000, 0xf000, watchdog_reset_r},
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(pitnrun_videoram_r)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(pitnrun_videoram2_r)
+	AM_RANGE(0xa000, 0xa0ff) AM_READ(spriteram_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_0_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_1_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_2_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(pitnrun_mcu_status_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(pitnrun_mcu_data_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8fff, pitnrun_videoram_w, &videoram ,&videoram_size },
-	{ 0x9000, 0x9fff, pitnrun_videoram2_w, &videoram2 },
-	{ 0xa000, 0xa0ff, spriteram_w, &spriteram, &spriteram_size },
-	{ 0xa800, 0xa807, MWA_NOP }, /* Analog Sound */
-	{ 0xb000, 0xb000, nmi_enable_w },
-	{ 0xb001, 0xb001, pitnrun_color_select_w },
-	{ 0xb004, 0xb004, MWA_NOP },/* COLOR SEL 2 - not used ?*/
-	{ 0xb005, 0xb005, pitnrun_char_bank_select},
-	{ 0xb006, 0xb006, pitnrun_hflip_w},
-	{ 0xb007, 0xb007, pitnrun_vflip_w},
-	{ 0xb800, 0xb800, soundlatch_w },
-	{ 0xc800, 0xc801, pitnrun_scroll_w },
-	{ 0xc802, 0xc802, MWA_NOP },/* VP(VF?)MCV - not used ?*/
-	{ 0xc804, 0xc804, pitnrun_mcu_data_w },
-	{ 0xc805, 0xc805, pitnrun_h_heed_w },
- 	{ 0xc806, 0xc806, pitnrun_v_heed_w },
-	{ 0xc807, 0xc807, pitnrun_ha_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(pitnrun_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(pitnrun_videoram2_w) AM_BASE(&videoram2)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(spriteram_w) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa800, 0xa807) AM_WRITE(MWA8_NOP) /* Analog Sound */
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(pitnrun_color_select_w)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(MWA8_NOP)/* COLOR SEL 2 - not used ?*/
+	AM_RANGE(0xb005, 0xb005) AM_WRITE(pitnrun_char_bank_select)
+	AM_RANGE(0xb006, 0xb006) AM_WRITE(pitnrun_hflip_w)
+	AM_RANGE(0xb007, 0xb007) AM_WRITE(pitnrun_vflip_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc800, 0xc801) AM_WRITE(pitnrun_scroll_w)
+	AM_RANGE(0xc802, 0xc802) AM_WRITE(MWA8_NOP)/* VP(VF?)MCV - not used ?*/
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(pitnrun_mcu_data_w)
+	AM_RANGE(0xc805, 0xc805) AM_WRITE(pitnrun_h_heed_w)
+ 	AM_RANGE(0xc806, 0xc806) AM_WRITE(pitnrun_v_heed_w)
+	AM_RANGE(0xc807, 0xc807) AM_WRITE(pitnrun_ha_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, soundlatch_clear_w },
-	{ 0x8c, 0x8c, AY8910_control_port_1_w },
-	{ 0x8d, 0x8d, AY8910_write_port_1_w   },
-	{ 0x8e, 0x8e, AY8910_control_port_0_w },
-	{ 0x8f, 0x8f, AY8910_write_port_0_w   },
-	{ 0x90, 0x96, MWA_NOP },
-	{ 0x97, 0x97, MWA_NOP },
-	{ 0x98, 0x98, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_clear_w)
+	AM_RANGE(0x8c, 0x8c) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8d, 0x8d) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8e, 0x8e) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8f, 0x8f) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x90, 0x96) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x97, 0x97) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x98, 0x98) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x8f, 0x8f, AY8910_read_port_0_r },
-PORT_END
-
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3800, 0x3bff, MRA_RAM },
-
-MEMORY_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8f, 0x8f) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x3800, 0x3bff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA8_RAM)
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0000, pitnrun_68705_portA_r },
-	{ 0x0001, 0x0001, pitnrun_68705_portB_r },
-	{ 0x0002, 0x0002, pitnrun_68705_portC_r },
-	{ 0x0003, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0000, pitnrun_68705_portA_w },
-	{ 0x0001, 0x0001, pitnrun_68705_portB_w },
-	{ 0x0003, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(pitnrun_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(pitnrun_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(pitnrun_68705_portC_r)
+	AM_RANGE(0x0003, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(pitnrun_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(pitnrun_68705_portB_w)
+	AM_RANGE(0x0003, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( pitnrun )
 	PORT_START      /* IN0 */
@@ -288,7 +290,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( pitnrun )
 	MDRV_CPU_ADD(Z80,8000000/2)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(pitnrun_nmi_source,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -297,12 +299,12 @@ static MACHINE_DRIVER_START( pitnrun )
 	MDRV_CPU_ADD(Z80, 10000000/4)     /* 2.5 MHz */
 
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M68705,2000000)
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_MACHINE_INIT(pitnrun)
 

@@ -274,13 +274,6 @@ unsigned i286_get_reg(int regnum)
 		case I286_NMI_STATE: return I.nmi_state;
 		case I286_IRQ_STATE: return I.irq_state;
 		case REG_PREVIOUSPC: return I.prevpc;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < I.amask )
-					return cpu_readmem24( offset ) | ( cpu_readmem24( offset + 1) << 8 );
-			}
 	}
 	return 0;
 }
@@ -333,16 +326,6 @@ void i286_set_reg(int regnum, unsigned val)
 		case I286_PENDING: /* obsolete */ break;
 		case I286_NMI_STATE: i286_set_irq_line(IRQ_LINE_NMI,val); break;
 		case I286_IRQ_STATE: i286_set_irq_line(0,val); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < I.amask - 1 )
-				{
-					cpu_writemem24( offset, val & 0xff );
-					cpu_writemem24( offset+1, (val >> 8) & 0xff );
-				}
-			}
     }
 }
 

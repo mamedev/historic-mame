@@ -90,51 +90,51 @@ static WRITE_HANDLER( sound_command_w )
 }
 
 
-static MEMORY_READ_START( flower_mn_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa102, 0xa102, input_port_0_r },
-	{ 0xa103, 0xa103, input_port_1_r },
-	{ 0xc000, 0xffff, flower_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( flower_mn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa102, 0xa102) AM_READ(input_port_0_r)
+	AM_RANGE(0xa103, 0xa103) AM_READ(input_port_1_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(flower_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( flower_mn_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa000, MWA_NOP },	//watchdog?
-	{ 0xa001, 0xa001, MWA_NOP },	//flip screen - check code at 0x759f
-	{ 0xa002, 0xa002, flower_irq_ack },	//irq ack / enable, maybe?
-	{ 0xa004, 0xa004, MWA_NOP },	//nmi enable (routine is empty)
-	{ 0xc000, 0xffff, flower_sharedram_w, &flower_sharedram },	//c23b-c62a cleared for something
-MEMORY_END
+static ADDRESS_MAP_START( flower_mn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP)	//watchdog?
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP)	//flip screen - check code at 0x759f
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flower_irq_ack)	//irq ack / enable, maybe?
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(MWA8_NOP)	//nmi enable (routine is empty)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(flower_sharedram_w) AM_BASE(&flower_sharedram)	//c23b-c62a cleared for something
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( flower_sl_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa100, 0xa100, input_port_2_r },
-	{ 0xa101, 0xa101, input_port_3_r },
-	{ 0xc000, 0xffff, flower_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( flower_sl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_2_r)
+	AM_RANGE(0xa101, 0xa101) AM_READ(input_port_3_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(flower_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( flower_sl_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa003, 0xa003, MWA_NOP },	//irq enable
-	{ 0xa005, 0xa005, MWA_NOP },	//nmi enable (routine is empty)
-	{ 0xa400, 0xa400, sound_command_w },
-	{ 0xc000, 0xffff, flower_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( flower_sl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_NOP)	//irq enable
+	AM_RANGE(0xa005, 0xa005) AM_WRITE(MWA8_NOP)	//nmi enable (routine is empty)
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(sound_command_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(flower_sharedram_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( flower_sn_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( flower_sn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( flower_sn_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, sn_irq_enable_w },
-	{ 0x4001, 0x4001, sn_nmi_enable_w },
-	{ 0x8000, 0x803f, flower_sound1_w, &flower_soundregs1 },
-	{ 0xa000, 0xa03f, flower_sound2_w, &flower_soundregs2 },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( flower_sn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(sn_irq_enable_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(sn_nmi_enable_w)
+	AM_RANGE(0x8000, 0x803f) AM_WRITE(flower_sound1_w) AM_BASE(&flower_soundregs1)
+	AM_RANGE(0xa000, 0xa03f) AM_WRITE(flower_sound2_w) AM_BASE(&flower_soundregs2)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -252,17 +252,17 @@ static MACHINE_DRIVER_START( flower )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_MEMORY(flower_mn_readmem,flower_mn_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_mn_readmem,flower_mn_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,10)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) //nmis stuff up the writes to shared ram
 
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_MEMORY(flower_sl_readmem,flower_sl_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_sl_readmem,flower_sl_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_MEMORY(flower_sn_readmem,flower_sn_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_sn_readmem,flower_sn_writemem)
 	MDRV_CPU_PERIODIC_INT(sn_irq,90)	/* periodic interrupt, don't know about the frequency */
 
 

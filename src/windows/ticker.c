@@ -11,6 +11,7 @@
 
 // MAME headers
 #include "driver.h"
+#include "x86drc.h"
 
 
 
@@ -48,48 +49,14 @@ static cycles_t suspend_time;
 
 
 //============================================================
-//	init_cycle_counter
+//	has_rdtsc
 //============================================================
 
-#ifdef _MSC_VER
-
 static int has_rdtsc(void)
 {
-	int nFeatures;
-
-	__asm {
-
-		mov eax, 1
-		cpuid
-		mov nFeatures, edx
-	}
-
-	return ((nFeatures & 0x10) == 0x10) ? TRUE : FALSE;
+	return (drc_x86_get_features() & CPUID_FEATURES_TSC) ? TRUE : FALSE;
 }
 
-#else
-
-static int has_rdtsc(void)
-{
-	int result;
-
-	__asm__ (
-		"movl $1,%%eax     ; "
-		"xorl %%ebx,%%ebx  ; "
-		"xorl %%ecx,%%ecx  ; "
-		"xorl %%edx,%%edx  ; "
-		"cpuid             ; "
-		"testl $0x10,%%edx ; "
-		"setne %%al        ; "
-		"andl $1,%%eax     ; "
-	:  "=&a" (result)   /* the result has to go in eax */
-	:       /* no inputs */
-	:  "%ebx", "%ecx", "%edx" /* clobbers ebx ecx edx */
-	);
-	return result;
-}
-
-#endif
 
 
 

@@ -103,29 +103,29 @@ READ_HANDLER( spdbuggy_ram_r )
 }
 
 // f002 read : watchdog reset
-static MEMORY_READ_START ( spdbuggy_readmem )
-	{ 0x00000, 0x023ff, MRA_RAM },
+static ADDRESS_MAP_START( spdbuggy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x023ff) AM_READ(MRA8_RAM)
 
-	{ 0x08000, 0x08fff, MRA_RAM },
-	{ 0x0a000, 0x0afff, MRA_RAM },	// shared?
-	{ 0x18000, 0x18fff, MRA_RAM },
+	AM_RANGE(0x08000, 0x08fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0a000, 0x0afff) AM_READ(MRA8_RAM)	// shared?
+	AM_RANGE(0x18000, 0x18fff) AM_READ(MRA8_RAM)
 
-	{ 0x10000, 0x17fff, MRA_ROM },
-	{ 0x20000, 0x2ffff, MRA_ROM },
-	{ 0xf0000, 0xfffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0x10000, 0x17fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x20000, 0x2ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START ( spdbuggy_writemem )
-	{ 0x00000, 0x023ff, MWA_RAM },
+static ADDRESS_MAP_START( spdbuggy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x023ff) AM_WRITE(MWA8_RAM)
 
-	{ 0x08000, 0x08fff, spdbuggy_fgram_w, &spdbuggy_fgram	},	// fg
-	{ 0x18000, 0x18fff, spdbuggy_bgram_w, &spdbuggy_bgram	},	// bg
-	{ 0x0a000, 0x0afff, MWA_RAM },	// shared?
+	AM_RANGE(0x08000, 0x08fff) AM_WRITE(spdbuggy_fgram_w) AM_BASE(&spdbuggy_fgram	)	// fg
+	AM_RANGE(0x18000, 0x18fff) AM_WRITE(spdbuggy_bgram_w) AM_BASE(&spdbuggy_bgram	)	// bg
+	AM_RANGE(0x0a000, 0x0afff) AM_WRITE(MWA8_RAM)	// shared?
 
-	{ 0x10000, 0x17fff, MWA_ROM },
-	{ 0x20000, 0x2ffff, MWA_ROM },
-	{ 0xf0000, 0xfffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x10000, 0x17fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x20000, 0x2ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -159,15 +159,15 @@ READ_HANDLER( spdbuggy_ram2_r )
 }
 
 
-static MEMORY_READ_START ( spdbuggy_readmem2 )
-	{ 0x0000, 0x7fff, spdbuggy_ram2_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( spdbuggy_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(spdbuggy_ram2_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START ( spdbuggy_writemem2 )
-	{ 0x0000, 0x7fff, MWA_RAM, &spdbuggy_ram2 },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( spdbuggy_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&spdbuggy_ram2)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -373,10 +373,10 @@ static MACHINE_DRIVER_START( spdbuggy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V20, 4000000)	/* ?? */
-	MDRV_CPU_MEMORY(spdbuggy_readmem,spdbuggy_writemem)
+	MDRV_CPU_PROGRAM_MAP(spdbuggy_readmem,spdbuggy_writemem)
 
 	MDRV_CPU_ADD(V20, 4000000)	/* ?? */
-	MDRV_CPU_MEMORY(spdbuggy_readmem2,spdbuggy_writemem2)
+	MDRV_CPU_PROGRAM_MAP(spdbuggy_readmem2,spdbuggy_writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -347,46 +347,46 @@ static WRITE_HANDLER( nvram_enable_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x08ff, MRA_RAM },
-	{ 0x0c00, 0x0c00, input_port_0_r },
-	{ 0x0c01, 0x0c01, special_port1_r },
-	{ 0x1400, 0x1400, sound_ack_latch_r },
-	{ 0x1800, 0x1800, a2d_data_r },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x2800, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x37bf, MRA_RAM },
-	{ 0x37c0, 0x3bff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r)
+	AM_RANGE(0x0c01, 0x0c01) AM_READ(special_port1_r)
+	AM_RANGE(0x1400, 0x1400) AM_READ(sound_ack_latch_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(a2d_data_r)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x37bf) AM_READ(MRA8_RAM)
+	AM_RANGE(0x37c0, 0x3bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x08ff, nvram_data_w, &generic_nvram, &generic_nvram_size },
-	{ 0x1c00, 0x1c01, nvram_enable_w },
-	{ 0x1c80, 0x1c82, a2d_select_w },
-	{ 0x1d00, 0x1d00, MWA_NOP },	/* NVRAM store */
-	{ 0x1d80, 0x1d80, watchdog_reset_w },
-	{ 0x1e00, 0x1e00, main_irq_ack_w },
-	{ 0x1e80, 0x1e81, jedi_coin_counter_w },
-	{ 0x1e82, 0x1e83, MWA_NOP },	/* LED control; not used */
-	{ 0x1e84, 0x1e84, jedi_alpha_banksel_w },
-	{ 0x1e86, 0x1e86, sound_reset_w },
-	{ 0x1e87, 0x1e87, jedi_video_off_w },
-	{ 0x1f00, 0x1f00, sound_latch_w },
-	{ 0x1f80, 0x1f80, rom_banksel_w },
-	{ 0x2000, 0x27ff, jedi_backgroundram_w, &jedi_backgroundram, &jedi_backgroundram_size },
-	{ 0x2800, 0x2fff, jedi_paletteram_w, &paletteram },
-	{ 0x3000, 0x37bf, videoram_w, &videoram, &videoram_size },
-	{ 0x37c0, 0x3bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3c00, 0x3c01, jedi_vscroll_w },
-	{ 0x3d00, 0x3d01, jedi_hscroll_w },
-	{ 0x3e00, 0x3fff, jedi_PIXIRAM_w, &jedi_PIXIRAM },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_WRITE(nvram_data_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1c00, 0x1c01) AM_WRITE(nvram_enable_w)
+	AM_RANGE(0x1c80, 0x1c82) AM_WRITE(a2d_select_w)
+	AM_RANGE(0x1d00, 0x1d00) AM_WRITE(MWA8_NOP)	/* NVRAM store */
+	AM_RANGE(0x1d80, 0x1d80) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1e00, 0x1e00) AM_WRITE(main_irq_ack_w)
+	AM_RANGE(0x1e80, 0x1e81) AM_WRITE(jedi_coin_counter_w)
+	AM_RANGE(0x1e82, 0x1e83) AM_WRITE(MWA8_NOP)	/* LED control; not used */
+	AM_RANGE(0x1e84, 0x1e84) AM_WRITE(jedi_alpha_banksel_w)
+	AM_RANGE(0x1e86, 0x1e86) AM_WRITE(sound_reset_w)
+	AM_RANGE(0x1e87, 0x1e87) AM_WRITE(jedi_video_off_w)
+	AM_RANGE(0x1f00, 0x1f00) AM_WRITE(sound_latch_w)
+	AM_RANGE(0x1f80, 0x1f80) AM_WRITE(rom_banksel_w)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(jedi_backgroundram_w) AM_BASE(&jedi_backgroundram) AM_SIZE(&jedi_backgroundram_size)
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(jedi_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3000, 0x37bf) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x37c0, 0x3bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3c00, 0x3c01) AM_WRITE(jedi_vscroll_w)
+	AM_RANGE(0x3d00, 0x3d01) AM_WRITE(jedi_hscroll_w)
+	AM_RANGE(0x3e00, 0x3fff) AM_WRITE(jedi_PIXIRAM_w) AM_BASE(&jedi_PIXIRAM)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -396,31 +396,31 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x080f, pokey1_r },
-	{ 0x0810, 0x081f, pokey2_r },
-	{ 0x0820, 0x082f, pokey3_r },
-	{ 0x0830, 0x083f, pokey4_r },
-	{ 0x1800, 0x1800, sound_latch_r },
-	{ 0x1c00, 0x1c00, speech_ready_r },
-	{ 0x1c01, 0x1c01, soundstat_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x080f) AM_READ(pokey1_r)
+	AM_RANGE(0x0810, 0x081f) AM_READ(pokey2_r)
+	AM_RANGE(0x0820, 0x082f) AM_READ(pokey3_r)
+	AM_RANGE(0x0830, 0x083f) AM_READ(pokey4_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(sound_latch_r)
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(speech_ready_r)
+	AM_RANGE(0x1c01, 0x1c01) AM_READ(soundstat_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x080f, pokey1_w },
-	{ 0x0810, 0x081f, pokey2_w },
-	{ 0x0820, 0x082f, pokey3_w },
-	{ 0x0830, 0x083f, pokey4_w },
-	{ 0x1000, 0x1000, sound_irq_ack_w },
-	{ 0x1100, 0x11ff, speech_data_w },
-	{ 0x1200, 0x13ff, speech_strobe_w },
-	{ 0x1400, 0x1400, sound_ack_latch_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x080f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x0810, 0x081f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x0820, 0x082f) AM_WRITE(pokey3_w)
+	AM_RANGE(0x0830, 0x083f) AM_WRITE(pokey4_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(sound_irq_ack_w)
+	AM_RANGE(0x1100, 0x11ff) AM_WRITE(speech_data_w)
+	AM_RANGE(0x1200, 0x13ff) AM_WRITE(speech_strobe_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(sound_ack_latch_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -555,10 +555,10 @@ static MACHINE_DRIVER_START( jedi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,MAIN_CPU_OSC/2/2)		/* 2.5MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(M6502,SOUND_CPU_OSC/2/4)		/* 1.5MHz */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

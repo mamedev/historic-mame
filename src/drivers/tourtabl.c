@@ -60,30 +60,30 @@ static READ_HANDLER( r6532_1_ram_r )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x007F, tia_r },
-	{ 0x0080, 0x00FF, r6532_0_ram_r },
-	{ 0x0100, 0x017F, tia_r },
-	{ 0x0180, 0x01FF, r6532_0_ram_r },
-	{ 0x0280, 0x029F, r6532_0_r },
-	{ 0x0400, 0x047F, r6532_1_ram_r },
-	{ 0x0500, 0x051F, r6532_1_r },
-	{ 0x0800, 0x1FFF, MRA_ROM },
-	{ 0xE800, 0xFFFF, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007F) AM_READ(tia_r)
+	AM_RANGE(0x0080, 0x00FF) AM_READ(r6532_0_ram_r)
+	AM_RANGE(0x0100, 0x017F) AM_READ(tia_r)
+	AM_RANGE(0x0180, 0x01FF) AM_READ(r6532_0_ram_r)
+	AM_RANGE(0x0280, 0x029F) AM_READ(r6532_0_r)
+	AM_RANGE(0x0400, 0x047F) AM_READ(r6532_1_ram_r)
+	AM_RANGE(0x0500, 0x051F) AM_READ(r6532_1_r)
+	AM_RANGE(0x0800, 0x1FFF) AM_READ(MRA8_ROM)
+	AM_RANGE(0xE800, 0xFFFF) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x007F, tia_w },
-	{ 0x0080, 0x00FF, r6532_0_ram_w, &r6532_0_ram },
-	{ 0x0100, 0x017F, tia_w },
-	{ 0x0180, 0x01FF, r6532_0_ram_w },
-	{ 0x0280, 0x029F, r6532_0_w },
-	{ 0x0400, 0x047F, r6532_1_ram_w, &r6532_1_ram },
-	{ 0x0500, 0x051F, r6532_1_w },
-	{ 0x0800, 0x1FFF, MWA_ROM },
-	{ 0xE800, 0xFFFF, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007F) AM_WRITE(tia_w)
+	AM_RANGE(0x0080, 0x00FF) AM_WRITE(r6532_0_ram_w) AM_BASE(&r6532_0_ram)
+	AM_RANGE(0x0100, 0x017F) AM_WRITE(tia_w)
+	AM_RANGE(0x0180, 0x01FF) AM_WRITE(r6532_0_ram_w)
+	AM_RANGE(0x0280, 0x029F) AM_WRITE(r6532_0_w)
+	AM_RANGE(0x0400, 0x047F) AM_WRITE(r6532_1_ram_w) AM_BASE(&r6532_1_ram)
+	AM_RANGE(0x0500, 0x051F) AM_WRITE(r6532_1_w)
+	AM_RANGE(0x0800, 0x1FFF) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xE800, 0xFFFF) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 static const struct R6532interface r6532_interface_0 =
@@ -197,7 +197,7 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( tourtabl )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 3579575 / 3)	/* actually M6507 */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

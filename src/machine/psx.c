@@ -25,6 +25,9 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
+data32_t *psxram;
+size_t psxramsize;
+
 static UINT8 *m_p_n_ram;
 static size_t m_n_ramsize;
 
@@ -1060,8 +1063,8 @@ void psx_driver_init( void )
 	psx_dma_install_write_handler( 0, mdec0_write );
 	psx_dma_install_write_handler( 2, gpu_write );
 
-	m_p_n_ram = memory_region( REGION_CPU1 );
-	m_n_ramsize = memory_region_length( REGION_CPU1 ) - 1;
+	m_p_n_ram = (UINT8 *)psxram;
+	m_n_ramsize = psxramsize - 1;
 
 	state_save_register_UINT32( "psx", 0, "m_n_irqdata", &m_n_irqdata, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_irqmask", &m_n_irqmask, 1 );

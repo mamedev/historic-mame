@@ -5,17 +5,43 @@
  *
  *	 Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *
+ *   - This source code is released as freeware for non-commercial purposes
+ *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
+ *	   The licensing terms of MAME apply to this piece of code for the MAME
+ *	   project and derviative works, as defined by the MAME license. You
+ *	   may opt to make modifications, improvements or derivative works under
+ *	   that same conditions, and the MAME project may opt to keep
+ *	   modifications, improvements or derivatives under their terms exclusively.
+ *
+ *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *     below) to this - and only this - piece of code or your derivative works.
+ *	   Note that in no case your choice can have any impact on any other
+ *	   source code of the MAME project, or binary, or executable, be it closely
+ *	   or losely related to this piece of code.
+ *
+ *	-  At your choice you are also free to remove either licensing terms from
+ *	   this file and continue to use it under only one of the two licenses. Do this
+ *	   if you think that licenses are not compatible (enough) for you, or if you
+ *	   consider either license 'too restrictive' or 'too free'.
+ *
+ *	-  GPL (GNU General Public License)
+ *	   This program is free software; you can redistribute it and/or
+ *	   modify it under the terms of the GNU General Public License
+ *	   as published by the Free Software Foundation; either version 2
+ *	   of the License, or (at your option) any later version.
+ *
+ *	   This program is distributed in the hope that it will be useful,
+ *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	   GNU General Public License for more details.
+ *
+ *	   You should have received a copy of the GNU General Public License
+ *	   along with this program; if not, write to the Free Software
+ *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
  *
  *	This work is based on the
  *	"NEC Electronics User's Manual, April 1987"
@@ -372,20 +398,8 @@ STOP            01001000  10111011          12  stop
 #include "mamedbg.h"
 #include "upd7810.h"
 
-#ifdef RUNTIME_LOADER
-#define upd7810_ICount upd7810_icount
-struct cpu_interface upd7810_interface=
-CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	);
-
-extern void upd7810_runtime_loader_init(void)
-{
-	cpuintf[CPU_UPD7810]=upd7810_interface;
-}
-#endif
-
-
-UPD7810 upd7810;
-int upd7810_icount;
+static UPD7810 upd7810;
+static int upd7810_icount;
 
 /* Layout of the registers in the debugger */
 static UINT8 upd7810_reg_layout[] = {
@@ -533,8 +547,8 @@ struct opcode_s {
 
 #define RDOP(O) 	O = cpu_readop(PCD); PC++
 #define RDOPARG(A)	A = cpu_readop_arg(PCD); PC++
-#define RM(A)		cpu_readmem16(A)
-#define WM(A,V) 	cpu_writemem16(A,V)
+#define RM(A)		program_read_byte_8(A)
+#define WM(A,V) 	program_write_byte_8(A,V)
 
 #define ZHC_ADD(after,before,carry) 	\
 	if (after == 0) PSW |= Z; else PSW &= ~Z; \
@@ -575,17 +589,17 @@ static data8_t RP(offs_t port)
 	{
 	case UPD7810_PORTA:
 		if (upd7810.ma)	// NS20031301 no need to read if the port is set as output
-			upd7810.pa_in = cpu_readport16(port);
+			upd7810.pa_in = io_read_byte_8(port);
 		data = (upd7810.pa_in & upd7810.ma) | (upd7810.pa_out & ~upd7810.ma);
 		break;
 	case UPD7810_PORTB:
 		if (upd7810.mb)	// NS20031301 no need to read if the port is set as output
-			upd7810.pb_in = cpu_readport16(port);
+			upd7810.pb_in = io_read_byte_8(port);
 		data = (upd7810.pb_in & upd7810.mb) | (upd7810.pb_out & ~upd7810.mb);
 		break;
 	case UPD7810_PORTC:
 		if (upd7810.mc)	// NS20031301 no need to read if the port is set as output
-			upd7810.pc_in = cpu_readport16(port);
+			upd7810.pc_in = io_read_byte_8(port);
 		data = (upd7810.pc_in & upd7810.mc) | (upd7810.pc_out & ~upd7810.mc);
 		if (upd7810.mcc & 0x01) 	/* PC0 = TxD output */
 			data = (data & ~0x01) | (upd7810.txd & 1 ? 0x01 : 0x00);
@@ -605,7 +619,7 @@ static data8_t RP(offs_t port)
 			data = (data & ~0x80) | (upd7810.co1 & 1 ? 0x80 : 0x00);
 		break;
 	case UPD7810_PORTD:
-		upd7810.pd_in = cpu_readport16(port);
+		upd7810.pd_in = io_read_byte_8(port);
 		switch (upd7810.mm & 0x07)
 		{
 		case 0x00:			/* PD input mode, PF port mode */
@@ -620,7 +634,7 @@ static data8_t RP(offs_t port)
 		}
 		break;
 	case UPD7810_PORTF:
-		upd7810.pf_in = cpu_readport16(port);
+		upd7810.pf_in = io_read_byte_8(port);
 		switch (upd7810.mm & 0x06)
 		{
 		case 0x00:			/* PD input/output mode, PF port mode */
@@ -640,7 +654,7 @@ static data8_t RP(offs_t port)
 		}
 		break;
 	case UPD7807_PORTT:	// NS20031301 partial implementation
-		data = cpu_readport16(port);
+		data = io_read_byte_8(port);
 		break;
 	default:
 		logerror("uPD7810 internal error: RP() called with invalid port number\n");
@@ -656,13 +670,13 @@ static void WP(offs_t port, data8_t data)
 		upd7810.pa_out = data;
 //		data = (data & ~upd7810.ma) | (upd7810.pa_in & upd7810.ma);
 		data = (data & ~upd7810.ma) | (upd7810.ma);	// NS20031401
-		cpu_writeport16(port, data);
+		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTB:
 		upd7810.pb_out = data;
 //		data = (data & ~upd7810.mb) | (upd7810.pb_in & upd7810.mb);
 		data = (data & ~upd7810.mb) | (upd7810.mb);	// NS20031401
-		cpu_writeport16(port, data);
+		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTC:
 		upd7810.pc_out = data;
@@ -684,7 +698,7 @@ static void WP(offs_t port, data8_t data)
 			data = (data & ~0x40) | (upd7810.co0 & 1 ? 0x40 : 0x00);
 		if (upd7810.mcc & 0x80) 	/* PC7 = CO1 output */
 			data = (data & ~0x80) | (upd7810.co1 & 1 ? 0x80 : 0x00);
-		cpu_writeport16(port, data);
+		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTD:
 		upd7810.pd_out = data;
@@ -699,7 +713,7 @@ static void WP(offs_t port, data8_t data)
 		default:			/* PD extension mode, PF port/extension mode */
 			return;
 		}
-		cpu_writeport16(port, data);
+		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTF:
 		upd7810.pf_out = data;
@@ -718,7 +732,7 @@ static void WP(offs_t port, data8_t data)
 			data |= 0xff;	/* what would come out for the lower bits here? */
 			break;
 		}
-		cpu_writeport16(port, data);
+		io_write_byte_8(port, data);
 		break;
 	default:
 		logerror("uPD7810 internal error: RP() called with invalid port number\n");
@@ -837,7 +851,7 @@ static void upd7810_take_irq(void)
 		IFF = 0;
 		PSW &= ~(SK|L0|L1);
 		PC = vector;
-		change_pc16( PCD );
+		change_pc( PCD );
 	}
 }
 
@@ -1569,7 +1583,7 @@ void upd7810_init(void)
 #include "7810tbl.c"
 #include "7810ops.c"
 
-void upd7810_reset (void *param)
+static void upd7810_reset (void *param)
 {
 	memset(&upd7810, 0, sizeof(upd7810));
 	upd7810.opXX = opXX_7810;
@@ -1595,17 +1609,17 @@ void upd7810_reset (void *param)
 	MKH = 0xff; //?
 }
 
-void upd7807_reset (void *param)
+static void upd7807_reset (void *param)
 {
 	upd7810_reset(param);
 	upd7810.opXX = opXX_7807;
 }
 
-void upd7810_exit (void)
+static void upd7810_exit (void)
 {
 }
 
-int upd7810_execute (int cycles)
+static int upd7810_execute (int cycles)
 {
 	const struct opcode_s *opXX = upd7810.opXX;
 
@@ -1674,7 +1688,7 @@ int upd7810_execute (int cycles)
 			}
 			PSW &= ~SK;
 			upd7810_timers( cc );
-			change_pc16( PCD );
+			change_pc( PCD );
 		}
 		else
 		{
@@ -1690,157 +1704,19 @@ int upd7810_execute (int cycles)
 	return cycles - upd7810_icount;
 }
 
-unsigned upd7810_get_context (void *dst)
+static void upd7810_get_context (void *dst)
 {
 	if (dst)
 		memcpy(dst, &upd7810, sizeof(upd7810));
-	return sizeof(upd7810);
 }
 
-void upd7810_set_context (void *src)
+static void upd7810_set_context (void *src)
 {
 	if (src)
 		memcpy(&upd7810, src, sizeof(upd7810));
 }
 
-unsigned upd7810_get_reg (int regnum)
-{
-	switch (regnum)
-	{
-	case REG_PC:
-	case UPD7810_PC:	return PC;
-	case REG_SP:
-	case UPD7810_SP:	return SP;
-	case UPD7810_PSW:	return PSW;
-	case UPD7810_EA:	return EA;
-	case UPD7810_VA:	return VA;
-	case UPD7810_BC:	return BC;
-	case UPD7810_DE:	return DE;
-	case UPD7810_HL:	return HL;
-	case UPD7810_EA2:	return EA2;
-	case UPD7810_VA2:	return VA2;
-	case UPD7810_BC2:	return BC2;
-	case UPD7810_DE2:	return DE2;
-	case UPD7810_HL2:	return HL2;
-	case UPD7810_CNT0:	return CNT0;
-	case UPD7810_CNT1:	return CNT1;
-	case UPD7810_TM0:	return TM0;
-	case UPD7810_TM1:	return TM1;
-	case UPD7810_ECNT:	return ECNT;
-	case UPD7810_ECPT:	return ECPT;
-	case UPD7810_ETM0:	return ETM0;
-	case UPD7810_ETM1:	return ETM1;
-	case UPD7810_MA:	return MA;
-	case UPD7810_MB:	return MB;
-	case UPD7810_MCC:	return MCC;
-	case UPD7810_MC:	return MC;
-	case UPD7810_MM:	return MM;
-	case UPD7810_MF:	return MF;
-	case UPD7810_TMM:	return TMM;
-	case UPD7810_ETMM:	return ETMM;
-	case UPD7810_EOM:	return EOM;
-	case UPD7810_SML:	return SML;
-	case UPD7810_SMH:	return SMH;
-	case UPD7810_ANM:	return ANM;
-	case UPD7810_MKL:	return MKL;
-	case UPD7810_MKH:	return MKH;
-	case UPD7810_ZCM:	return ZCM;
-	case UPD7810_TXB:	return TXB;
-	case UPD7810_RXB:	return RXB;
-	case UPD7810_CR0:	return CR0;
-	case UPD7810_CR1:	return CR1;
-	case UPD7810_CR2:	return CR2;
-	case UPD7810_CR3:	return CR3;
-	case UPD7810_TXD:	return TXD;
-	case UPD7810_RXD:	return RXD;
-	case UPD7810_SCK:	return SCK;
-	case UPD7810_TI:	return TI;
-	case UPD7810_TO:	return TO;
-	case UPD7810_CI:	return CI;
-	case UPD7810_CO0:	return CO0;
-	case UPD7810_CO1:	return CO1;
-
-	case REG_PREVIOUSPC:return PPC;
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = SP + (REG_SP_CONTENTS - regnum);
-			return RM( offset ) | ( RM( offset + 1 ) << 8 );
-		}
-	}
-	return 0;
-
-}
-
-void upd7810_set_reg (int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-	case REG_PC:		PC = val; change_pc16(PCD); break;
-	case UPD7810_PC:	PC = val;	break;
-	case REG_SP:
-	case UPD7810_SP:	SP = val;	break;
-	case UPD7810_PSW:	PSW = val;	break;
-	case UPD7810_A:		A = val; break;
-	case UPD7810_V:		V = val; break;
-	case UPD7810_EA:	EA = val;	break;
-	case UPD7810_VA:	VA = val;	break;
-	case UPD7810_BC:	BC = val;	break;
-	case UPD7810_DE:	DE = val;	break;
-	case UPD7810_HL:	HL = val;	break;
-	case UPD7810_EA2:	EA2 = val;	break;
-	case UPD7810_VA2:	VA2 = val;	break;
-	case UPD7810_BC2:	BC2 = val;	break;
-	case UPD7810_DE2:	DE2 = val;	break;
-	case UPD7810_HL2:	HL2 = val;	break;
-	case UPD7810_CNT0:	CNT0 = val; break;
-	case UPD7810_CNT1:	CNT1 = val; break;
-	case UPD7810_TM0:	TM0 = val;	break;
-	case UPD7810_TM1:	TM1 = val;	break;
-	case UPD7810_ECNT:	ECNT = val; break;
-	case UPD7810_ECPT:	ECPT = val; break;
-	case UPD7810_ETM0:	ETM0 = val; break;
-	case UPD7810_ETM1:	ETM1 = val; break;
-	case UPD7810_MA:	MA = val;	break;
-	case UPD7810_MB:	MB = val;	break;
-	case UPD7810_MCC:	MCC = val;	break;
-	case UPD7810_MC:	MC = val;	break;
-	case UPD7810_MM:	MM = val;	break;
-	case UPD7810_MF:	MF = val;	break;
-	case UPD7810_TMM:	TMM = val;	break;
-	case UPD7810_ETMM:	ETMM = val; break;
-	case UPD7810_EOM:	EOM = val;	break;
-	case UPD7810_SML:	SML = val;	break;
-	case UPD7810_SMH:	SMH = val;	break;
-	case UPD7810_ANM:	ANM = val;	break;
-	case UPD7810_MKL:	MKL = val;	break;
-	case UPD7810_MKH:	MKH = val;	break;
-	case UPD7810_ZCM:	ZCM = val;	break;
-	case UPD7810_TXB:	TXB = val;	break;
-	case UPD7810_RXB:	RXB = val;	break;
-	case UPD7810_CR0:	CR0 = val;	break;
-	case UPD7810_CR1:	CR1 = val;	break;
-	case UPD7810_CR2:	CR2 = val;	break;
-	case UPD7810_CR3:	CR3 = val;	break;
-	case UPD7810_TXD:	TXD = val;	break;
-	case UPD7810_RXD:	RXD = val;	break;
-	case UPD7810_SCK:	SCK = val;	break;
-	case UPD7810_TI:	TI	= val;	break;
-	case UPD7810_TO:	TO	= val;	break;
-	case UPD7810_CI:	CI	= val;	break;
-	case UPD7810_CO0:	CO0 = val;	break;
-	case UPD7810_CO1:	CO1 = val;	break;
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = SP + (REG_SP_CONTENTS - regnum);
-			WM( offset, val & 0xff );
-			WM( offset + 1, (val >> 8) & 0xff );
-		}
-	}
-}
-
-void upd7810_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (state != CLEAR_LINE)
 	{
@@ -1858,7 +1734,7 @@ void upd7810_set_irq_line(int irqline, int state)
 				WM( SP, PCL );
 				IFF = 0;
 				PC = 0x0004;
-				change_pc16( PCD );
+				change_pc( PCD );
 			}
 		}
 		else
@@ -1877,103 +1753,8 @@ void upd7810_set_irq_line(int irqline, int state)
 	/* resetting interrupt requests is done with the SKIT/SKNIT opcodes only! */
 }
 
-void upd7810_set_irq_callback(int (*callback)(int irqline))
-{
-	upd7810.irq_callback = callback;
-}
 
-const char *upd7810_info(void *context, int regnum)
-{
-	static char buffer[8][31+1];
-	static int which = 0;
-	UPD7810 *r = context;
-
-	which = (which+1) % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &upd7810;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+UPD7810_PC:	sprintf(buffer[which], "PC  :%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+UPD7810_SP:	sprintf(buffer[which], "SP  :%04X", r->sp.w.l); break;
-		case CPU_INFO_REG+UPD7810_PSW:	sprintf(buffer[which], "PSW :%02X", r->psw); break;
-		case CPU_INFO_REG+UPD7810_A:	sprintf(buffer[which], "A   :%02X", r->va.b.l); break;
-		case CPU_INFO_REG+UPD7810_V:	sprintf(buffer[which], "V   :%02X", r->va.b.h); break;
-		case CPU_INFO_REG+UPD7810_EA:	sprintf(buffer[which], "EA  :%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+UPD7810_BC:	sprintf(buffer[which], "BC  :%04X", r->bc.w.l); break;
-		case CPU_INFO_REG+UPD7810_DE:	sprintf(buffer[which], "DE  :%04X", r->de.w.l); break;
-		case CPU_INFO_REG+UPD7810_HL:	sprintf(buffer[which], "HL  :%04X", r->hl.w.l); break;
-		case CPU_INFO_REG+UPD7810_A2:	sprintf(buffer[which], "A'  :%02X", r->va2.b.l); break;
-		case CPU_INFO_REG+UPD7810_V2:	sprintf(buffer[which], "V'  :%02X", r->va2.b.h); break;
-		case CPU_INFO_REG+UPD7810_EA2:	sprintf(buffer[which], "EA' :%04X", r->ea2.w.l); break;
-		case CPU_INFO_REG+UPD7810_BC2:	sprintf(buffer[which], "BC' :%04X", r->bc2.w.l); break;
-		case CPU_INFO_REG+UPD7810_DE2:	sprintf(buffer[which], "DE' :%04X", r->de2.w.l); break;
-		case CPU_INFO_REG+UPD7810_HL2:	sprintf(buffer[which], "HL' :%04X", r->hl2.w.l); break;
-		case CPU_INFO_REG+UPD7810_CNT0: sprintf(buffer[which], "CNT0:%02X", r->cnt.b.l); break;
-		case CPU_INFO_REG+UPD7810_CNT1: sprintf(buffer[which], "CNT1:%02X", r->cnt.b.h); break;
-		case CPU_INFO_REG+UPD7810_TM0:	sprintf(buffer[which], "TM0 :%02X", r->tm.b.l); break;
-		case CPU_INFO_REG+UPD7810_TM1:	sprintf(buffer[which], "TM1 :%02X", r->tm.b.h); break;
-		case CPU_INFO_REG+UPD7810_ECNT: sprintf(buffer[which], "ECNT:%04X", r->ecnt.w.l); break;
-		case CPU_INFO_REG+UPD7810_ECPT: sprintf(buffer[which], "ECPT:%04X", r->ecnt.w.h); break;
-		case CPU_INFO_REG+UPD7810_ETM0: sprintf(buffer[which], "ETM0:%04X", r->etm.w.l); break;
-		case CPU_INFO_REG+UPD7810_ETM1: sprintf(buffer[which], "ETM1:%04X", r->etm.w.h); break;
-		case CPU_INFO_REG+UPD7810_MA:	sprintf(buffer[which], "MA  :%02X", r->ma); break;
-		case CPU_INFO_REG+UPD7810_MB:	sprintf(buffer[which], "MB  :%02X", r->mb); break;
-		case CPU_INFO_REG+UPD7810_MCC:	sprintf(buffer[which], "MCC :%02X", r->mcc); break;
-		case CPU_INFO_REG+UPD7810_MC:	sprintf(buffer[which], "MC  :%02X", r->mc); break;
-		case CPU_INFO_REG+UPD7810_MM:	sprintf(buffer[which], "MM  :%02X", r->mm); break;
-		case CPU_INFO_REG+UPD7810_MF:	sprintf(buffer[which], "MF  :%02X", r->mf); break;
-		case CPU_INFO_REG+UPD7810_TMM:	sprintf(buffer[which], "TMM :%02X", r->tmm); break;
-		case CPU_INFO_REG+UPD7810_ETMM: sprintf(buffer[which], "ETMM:%02X", r->etmm); break;
-		case CPU_INFO_REG+UPD7810_EOM:	sprintf(buffer[which], "EOM :%02X", r->eom); break;
-		case CPU_INFO_REG+UPD7810_SML:	sprintf(buffer[which], "SML :%02X", r->sml); break;
-		case CPU_INFO_REG+UPD7810_SMH:	sprintf(buffer[which], "SMH :%02X", r->smh); break;
-		case CPU_INFO_REG+UPD7810_ANM:	sprintf(buffer[which], "ANM :%02X", r->anm); break;
-		case CPU_INFO_REG+UPD7810_MKL:	sprintf(buffer[which], "MKL :%02X", r->mkl); break;
-		case CPU_INFO_REG+UPD7810_MKH:	sprintf(buffer[which], "MKH :%02X", r->mkh); break;
-		case CPU_INFO_REG+UPD7810_ZCM:	sprintf(buffer[which], "ZCM :%02X", r->zcm); break;
-		case CPU_INFO_REG+UPD7810_CR0:	sprintf(buffer[which], "CR0 :%02X", r->cr0); break;
-		case CPU_INFO_REG+UPD7810_CR1:	sprintf(buffer[which], "CR1 :%02X", r->cr1); break;
-		case CPU_INFO_REG+UPD7810_CR2:	sprintf(buffer[which], "CR2 :%02X", r->cr2); break;
-		case CPU_INFO_REG+UPD7810_CR3:	sprintf(buffer[which], "CR3 :%02X", r->cr3); break;
-		case CPU_INFO_REG+UPD7810_RXB:	sprintf(buffer[which], "RXB :%02X", r->rxb); break;
-		case CPU_INFO_REG+UPD7810_TXB:	sprintf(buffer[which], "TXB :%02X", r->txb); break;
-		case CPU_INFO_REG+UPD7810_TXD:	sprintf(buffer[which], "TXD :%d", r->txd); break;
-		case CPU_INFO_REG+UPD7810_RXD:	sprintf(buffer[which], "RXD :%d", r->rxd); break;
-		case CPU_INFO_REG+UPD7810_SCK:	sprintf(buffer[which], "SCK :%d", r->sck); break;
-		case CPU_INFO_REG+UPD7810_TI:	sprintf(buffer[which], "TI  :%d", r->ti); break;
-		case CPU_INFO_REG+UPD7810_TO:	sprintf(buffer[which], "TO  :%d", r->to); break;
-		case CPU_INFO_REG+UPD7810_CI:	sprintf(buffer[which], "CI  :%d", r->ci); break;
-		case CPU_INFO_REG+UPD7810_CO0:	sprintf(buffer[which], "CO0 :%d", r->co0 & 1); break;
-		case CPU_INFO_REG+UPD7810_CO1:	sprintf(buffer[which], "CO1 :%d", r->co1 & 1); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%s:%s:%s:%s:%s:%s",
-				r->psw & 0x40 ? "ZF":"--",
-				r->psw & 0x20 ? "SK":"--",
-				r->psw & 0x10 ? "HC":"--",
-				r->psw & 0x08 ? "L1":"--",
-				r->psw & 0x04 ? "L0":"--",
-				r->psw & 0x01 ? "CY":"--");
-			break;
-		case CPU_INFO_NAME: return "uPD7810";
-		case CPU_INFO_FAMILY: return "NEC uPD7810";
-		case CPU_INFO_VERSION: return "0.3";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 2001 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)upd7810_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)upd7810_win_layout;
-	}
-	return buffer[which];
-}
-
-const char *upd7807_info(void *context, int regnum)
-{
-	if (regnum == CPU_INFO_NAME) return "uPD7807";
-	else return upd7810_info(context, regnum);
-}
-
-unsigned upd7810_dasm(char *buffer, unsigned pc)
+static offs_t upd7810_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm7810( buffer, pc );
@@ -1985,7 +1766,7 @@ unsigned upd7810_dasm(char *buffer, unsigned pc)
 }
 
 
-unsigned upd7807_dasm(char *buffer, unsigned pc)
+static offs_t upd7807_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm7807( buffer, pc );
@@ -1994,4 +1775,279 @@ unsigned upd7807_dasm(char *buffer, unsigned pc)
 	sprintf( buffer, "$%02X", op );
 	return 1;
 #endif
+}
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void upd7810_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTF1:		set_irq_line(UPD7810_INTF1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTF2:		set_irq_line(UPD7810_INTF2, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTFE1:	set_irq_line(UPD7810_INTFE1, info->i);	break;
+
+		case CPUINFO_INT_PC:							PC = info->i; change_pc(PCD);			break;
+		case CPUINFO_INT_REGISTER + UPD7810_PC:			PC = info->i; 							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + UPD7810_SP:			SP = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_PSW:		PSW = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_A:			A = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_V:			V = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_EA:			EA = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_VA:			VA = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_BC:			BC = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_DE:			DE = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_HL:			HL = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_EA2:		EA2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_VA2:		VA2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_BC2:		BC2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_DE2:		DE2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_HL2:		HL2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CNT0:		CNT0 = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_CNT1:		CNT1 = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_TM0:		TM0 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TM1:		TM1 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ECNT:		ECNT = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_ECPT:		ECPT = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETM0:		ETM0 = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETM1:		ETM1 = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_MA:			MA = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MB:			MB = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MCC:		MCC = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MC:			MC = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MM:			MM = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MF:			MF = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TMM:		TMM = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETMM:		ETMM = info->i; 						break;
+		case CPUINFO_INT_REGISTER + UPD7810_EOM:		EOM = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SML:		SML = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SMH:		SMH = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ANM:		ANM = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MKL:		MKL = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MKH:		MKH = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ZCM:		ZCM = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TXB:		TXB = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_RXB:		RXB = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR0:		CR0 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR1:		CR1 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR2:		CR2 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR3:		CR3 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TXD:		TXD = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_RXD:		RXD = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SCK:		SCK = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TI:			TI	= info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TO:			TO	= info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CI:			CI	= info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CO0:		CO0 = info->i; 							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CO1:		CO1 = info->i; 							break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					upd7810.irq_callback = info->irqcallback; break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void upd7810_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(upd7810);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = (IRR & INTNMI) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTF1:		info->i = (IRR & INTF1) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTF2:		info->i = (IRR & INTF2) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + UPD7810_INTFE1:	info->i = (IRR & INTFE1) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + UPD7810_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + UPD7810_SP:			info->i = SP;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_PSW:		info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_EA:			info->i = EA;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_VA:			info->i = VA;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_BC:			info->i = BC;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_DE:			info->i = DE;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_HL:			info->i = HL;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_EA2:		info->i = EA2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_VA2:		info->i = VA2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_BC2:		info->i = BC2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_DE2:		info->i = DE2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_HL2:		info->i = HL2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CNT0:		info->i = CNT0;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CNT1:		info->i = CNT1;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TM0:		info->i = TM0;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TM1:		info->i = TM1;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ECNT:		info->i = ECNT;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ECPT:		info->i = ECPT;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETM0:		info->i = ETM0;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETM1:		info->i = ETM1;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MA:			info->i = MA;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MB:			info->i = MB;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MCC:		info->i = MCC;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MC:			info->i = MC;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MM:			info->i = MM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MF:			info->i = MF;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TMM:		info->i = TMM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ETMM:		info->i = ETMM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_EOM:		info->i = EOM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SML:		info->i = SML;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SMH:		info->i = SMH;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ANM:		info->i = ANM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MKL:		info->i = MKL;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_MKH:		info->i = MKH;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_ZCM:		info->i = ZCM;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TXB:		info->i = TXB;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_RXB:		info->i = RXB;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR0:		info->i = CR0;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR1:		info->i = CR1;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR2:		info->i = CR2;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CR3:		info->i = CR3;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TXD:		info->i = TXD;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_RXD:		info->i = RXD;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_SCK:		info->i = SCK;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TI:			info->i = TI;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_TO:			info->i = TO;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CI:			info->i = CI;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CO0:		info->i = CO0;							break;
+		case CPUINFO_INT_REGISTER + UPD7810_CO1:		info->i = CO1;							break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = upd7810_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = upd7810_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = upd7810_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = upd7810_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = upd7810_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = upd7810_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = upd7810_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = upd7810_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = upd7810.irq_callback; break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &upd7810_icount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = upd7810_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = upd7810_win_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "uPD7810"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC uPD7810"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.3"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2001 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%s:%s:%s:%s:%s:%s",
+				upd7810.psw & 0x40 ? "ZF":"--",
+				upd7810.psw & 0x20 ? "SK":"--",
+				upd7810.psw & 0x10 ? "HC":"--",
+				upd7810.psw & 0x08 ? "L1":"--",
+				upd7810.psw & 0x04 ? "L0":"--",
+				upd7810.psw & 0x01 ? "CY":"--");
+			break;
+
+		case CPUINFO_STR_REGISTER + UPD7810_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC  :%04X", upd7810.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP  :%04X", upd7810.sp.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_PSW:		sprintf(info->s = cpuintrf_temp_str(), "PSW :%02X", upd7810.psw); break;
+		case CPUINFO_STR_REGISTER + UPD7810_A:			sprintf(info->s = cpuintrf_temp_str(), "A   :%02X", upd7810.va.b.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_V:			sprintf(info->s = cpuintrf_temp_str(), "V   :%02X", upd7810.va.b.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA  :%04X", upd7810.ea.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_BC:			sprintf(info->s = cpuintrf_temp_str(), "BC  :%04X", upd7810.bc.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_DE:			sprintf(info->s = cpuintrf_temp_str(), "DE  :%04X", upd7810.de.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_HL:			sprintf(info->s = cpuintrf_temp_str(), "HL  :%04X", upd7810.hl.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_A2:			sprintf(info->s = cpuintrf_temp_str(), "A'  :%02X", upd7810.va2.b.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_V2:			sprintf(info->s = cpuintrf_temp_str(), "V'  :%02X", upd7810.va2.b.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_EA2:		sprintf(info->s = cpuintrf_temp_str(), "EA' :%04X", upd7810.ea2.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_BC2:		sprintf(info->s = cpuintrf_temp_str(), "BC' :%04X", upd7810.bc2.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_DE2:		sprintf(info->s = cpuintrf_temp_str(), "DE' :%04X", upd7810.de2.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_HL2:		sprintf(info->s = cpuintrf_temp_str(), "HL' :%04X", upd7810.hl2.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CNT0:		sprintf(info->s = cpuintrf_temp_str(), "CNT0:%02X", upd7810.cnt.b.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CNT1:		sprintf(info->s = cpuintrf_temp_str(), "CNT1:%02X", upd7810.cnt.b.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TM0:		sprintf(info->s = cpuintrf_temp_str(), "TM0 :%02X", upd7810.tm.b.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TM1:		sprintf(info->s = cpuintrf_temp_str(), "TM1 :%02X", upd7810.tm.b.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ECNT:		sprintf(info->s = cpuintrf_temp_str(), "ECNT:%04X", upd7810.ecnt.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ECPT:		sprintf(info->s = cpuintrf_temp_str(), "ECPT:%04X", upd7810.ecnt.w.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ETM0:		sprintf(info->s = cpuintrf_temp_str(), "ETM0:%04X", upd7810.etm.w.l); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ETM1:		sprintf(info->s = cpuintrf_temp_str(), "ETM1:%04X", upd7810.etm.w.h); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MA:			sprintf(info->s = cpuintrf_temp_str(), "MA  :%02X", upd7810.ma); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MB:			sprintf(info->s = cpuintrf_temp_str(), "MB  :%02X", upd7810.mb); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MCC:		sprintf(info->s = cpuintrf_temp_str(), "MCC :%02X", upd7810.mcc); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MC:			sprintf(info->s = cpuintrf_temp_str(), "MC  :%02X", upd7810.mc); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MM:			sprintf(info->s = cpuintrf_temp_str(), "MM  :%02X", upd7810.mm); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MF:			sprintf(info->s = cpuintrf_temp_str(), "MF  :%02X", upd7810.mf); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TMM:		sprintf(info->s = cpuintrf_temp_str(), "TMM :%02X", upd7810.tmm); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ETMM:		sprintf(info->s = cpuintrf_temp_str(), "ETMM:%02X", upd7810.etmm); break;
+		case CPUINFO_STR_REGISTER + UPD7810_EOM:		sprintf(info->s = cpuintrf_temp_str(), "EOM :%02X", upd7810.eom); break;
+		case CPUINFO_STR_REGISTER + UPD7810_SML:		sprintf(info->s = cpuintrf_temp_str(), "SML :%02X", upd7810.sml); break;
+		case CPUINFO_STR_REGISTER + UPD7810_SMH:		sprintf(info->s = cpuintrf_temp_str(), "SMH :%02X", upd7810.smh); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ANM:		sprintf(info->s = cpuintrf_temp_str(), "ANM :%02X", upd7810.anm); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MKL:		sprintf(info->s = cpuintrf_temp_str(), "MKL :%02X", upd7810.mkl); break;
+		case CPUINFO_STR_REGISTER + UPD7810_MKH:		sprintf(info->s = cpuintrf_temp_str(), "MKH :%02X", upd7810.mkh); break;
+		case CPUINFO_STR_REGISTER + UPD7810_ZCM:		sprintf(info->s = cpuintrf_temp_str(), "ZCM :%02X", upd7810.zcm); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CR0:		sprintf(info->s = cpuintrf_temp_str(), "CR0 :%02X", upd7810.cr0); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CR1:		sprintf(info->s = cpuintrf_temp_str(), "CR1 :%02X", upd7810.cr1); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CR2:		sprintf(info->s = cpuintrf_temp_str(), "CR2 :%02X", upd7810.cr2); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CR3:		sprintf(info->s = cpuintrf_temp_str(), "CR3 :%02X", upd7810.cr3); break;
+		case CPUINFO_STR_REGISTER + UPD7810_RXB:		sprintf(info->s = cpuintrf_temp_str(), "RXB :%02X", upd7810.rxb); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TXB:		sprintf(info->s = cpuintrf_temp_str(), "TXB :%02X", upd7810.txb); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TXD:		sprintf(info->s = cpuintrf_temp_str(), "TXD :%d", upd7810.txd); break;
+		case CPUINFO_STR_REGISTER + UPD7810_RXD:		sprintf(info->s = cpuintrf_temp_str(), "RXD :%d", upd7810.rxd); break;
+		case CPUINFO_STR_REGISTER + UPD7810_SCK:		sprintf(info->s = cpuintrf_temp_str(), "SCK :%d", upd7810.sck); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TI:			sprintf(info->s = cpuintrf_temp_str(), "TI  :%d", upd7810.ti); break;
+		case CPUINFO_STR_REGISTER + UPD7810_TO:			sprintf(info->s = cpuintrf_temp_str(), "TO  :%d", upd7810.to); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CI:			sprintf(info->s = cpuintrf_temp_str(), "CI  :%d", upd7810.ci); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CO0:		sprintf(info->s = cpuintrf_temp_str(), "CO0 :%d", upd7810.co0 & 1); break;
+		case CPUINFO_STR_REGISTER + UPD7810_CO1:		sprintf(info->s = cpuintrf_temp_str(), "CO1 :%d", upd7810.co1 & 1); break;
+	}
+}
+
+
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void upd7807_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = upd7807_reset;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = upd7807_dasm;		break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "uPD7807"); break;
+
+		default:
+			upd7810_get_info(state, info);
+			break;
+	}
 }

@@ -731,7 +731,7 @@ struct SearchRegion
 	UINT8	flags;
 
 	UINT8	* cachedPointer;
-	const struct Memory_WriteAddress
+	const struct address_map_t
 			* writeHandler;
 
 	UINT8	* first;
@@ -7895,7 +7895,7 @@ static void RestoreRegionBackup(SearchRegion * region)
 
 static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 {
-	mem_write_handler	handler = region->writeHandler->handler;
+	write8_handler		handler = region->writeHandler->write.handler8;
 	UINT32				handlerAddress = (UINT32)handler;
 
 	switch(info->searchSpeed)
@@ -7914,7 +7914,7 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			}
 #endif
 
-			if(	(handler == MWA_RAM) &&
+			if(	(handler == MWA8_RAM) &&
 				(!region->writeHandler->base))
 				return 1;
 
@@ -7929,7 +7929,7 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				if(	(Machine->gamedrv->clone_of == &driver_neogeo) &&
 					(info->targetType == kRegionType_CPU) &&
 					(info->targetIdx == 0) &&
-					(handler == MWA_BANK1))
+					(handler == MWA8_BANK1))
 					return 1;
 			}
 
@@ -7943,14 +7943,14 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			if(	(Machine->drv->cpu[1].cpu_type == CPU_TMS34010) &&
 				(info->targetType == kRegionType_CPU) &&
 				(info->targetIdx == 1) &&
-				(handler == MWA_BANK1))
+				(handler == MWA8_BANK1))
 				return 1;
 
 			// for smashtv, search bank two
 			if(	(Machine->drv->cpu[0].cpu_type == CPU_TMS34010) &&
 				(info->targetType == kRegionType_CPU) &&
 				(info->targetIdx == 0) &&
-				(handler == MWA_BANK2))
+				(handler == MWA8_BANK2))
 				return 1;
 
 #endif
@@ -7958,18 +7958,18 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			return 0;
 
 		case kSearchSpeed_Medium:
-			if(	(handlerAddress >= ((UINT32)MWA_BANK1)) &&
-				(handlerAddress <= ((UINT32)MWA_BANK24)))
+			if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) &&
+				(handlerAddress <= ((UINT32)MWA8_BANK24)))
 				return 1;
 
-			if(handler == MWA_RAM)
+			if(handler == MWA8_RAM)
 				return 1;
 
 			return 0;
 
 		case kSearchSpeed_Slow:
-			if(	(handler == MWA_NOP) ||
-				(handler == MWA_ROM))
+			if(	(handler == MWA8_NOP) ||
+				(handler == MWA8_ROM))
 				return 0;
 
 			if(	(handlerAddress > STATIC_COUNT) &&
@@ -7979,8 +7979,8 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			return 1;
 
 		case kSearchSpeed_VerySlow:
-			if(	(handler == MWA_NOP) ||
-				(handler == MWA_ROM))
+			if(	(handler == MWA8_NOP) ||
+				(handler == MWA8_ROM))
 				return 0;
 
 			return 1;
@@ -7999,22 +7999,22 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 
 			if(region->writeHandler)
 			{
-				mem_write_handler	handler = region->writeHandler->handler;
+				void *				handler = region->writeHandler->write.handler;
 				UINT32				handlerAddress = (UINT32)handler;
 
-				if(	(handlerAddress >= ((UINT32)MWA_BANK1)) &&
-					(handlerAddress <= ((UINT32)MWA_BANK24)))
+				if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) &&
+					(handlerAddress <= ((UINT32)MWA8_BANK24)))
 				{
-					sprintf(desc, "BANK%.2d", (handlerAddress - ((UINT32)MWA_BANK1)) + 1);
+					sprintf(desc, "BANK%.2d", (handlerAddress - ((UINT32)MWA8_BANK1)) + 1);
 				}
 				else
 				{
 					switch(handlerAddress)
 					{
-						case (UINT32)MWA_NOP:		strcpy(desc, "NOP   ");	break;
-						case (UINT32)MWA_RAM:		strcpy(desc, "RAM   ");	break;
-						case (UINT32)MWA_ROM:		strcpy(desc, "ROM   ");	break;
-						case (UINT32)MWA_RAMROM:	strcpy(desc, "RAMROM");	break;
+						case (UINT32)MWA8_NOP:		strcpy(desc, "NOP   ");	break;
+						case (UINT32)MWA8_RAM:		strcpy(desc, "RAM   ");	break;
+						case (UINT32)MWA8_ROM:		strcpy(desc, "ROM   ");	break;
+						case (UINT32)MWA8_RAMROM:	strcpy(desc, "RAMROM");	break;
 						default:					strcpy(desc, "CUSTOM");	break;
 					}
 				}
@@ -8143,40 +8143,40 @@ static void BuildSearchRegions(SearchInfo * info)
 			}
 			else if(info->targetIdx < cpu_gettotalcpu())
 			{
-				const struct Memory_WriteAddress	* mwa = NULL;
+				const struct address_map_t			* map = NULL;
 				SearchRegion						* traverse;
 				int									count = 0;
 
-				mwa = Machine->drv->cpu[info->targetIdx].memory_write;
+				map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
 
-				while(!IS_MEMPORT_END(mwa))
+				while(!IS_AMENTRY_END(map))
 				{
-					if(!IS_MEMPORT_MARKER(mwa))
+					if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
 					{
 						count++;
 					}
 
-					mwa++;
+					map++;
 				}
 
 				info->regionList = calloc(sizeof(SearchRegion), count);
 				info->regionListLength = count;
 				traverse = info->regionList;
 
-				mwa = Machine->drv->cpu[info->targetIdx].memory_write;
+				map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
 
-				while(!IS_MEMPORT_END(mwa))
+				while(!IS_AMENTRY_END(map))
 				{
-					if(!IS_MEMPORT_MARKER(mwa))
+					if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
 					{
-						UINT32	length = (mwa->end - mwa->start) + 1;
+						UINT32	length = (map->end - map->start) + 1;
 
-						traverse->address = mwa->start;
+						traverse->address = map->start;
 						traverse->length = length;
 
 						traverse->targetIdx = info->targetIdx;
 						traverse->targetType = info->targetType;
-						traverse->writeHandler = mwa;
+						traverse->writeHandler = map;
 
 						traverse->first = NULL;
 						traverse->last = NULL;
@@ -8192,7 +8192,7 @@ static void BuildSearchRegions(SearchInfo * info)
 						traverse++;
 					}
 
-					mwa++;
+					map++;
 				}
 			}
 		}
@@ -9251,23 +9251,23 @@ static void DoSearch(SearchInfo * search)
 
 static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelativeAddress)
 {
-	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[cpu].memory_write;
+	const struct address_map_t	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
 
-	while(!IS_MEMPORT_END(mwa))
+	while(!IS_AMENTRY_END(map))
 	{
-		if(!IS_MEMPORT_MARKER(mwa))
+		if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
 		{
-			if(	(address >= mwa->start) &&
-				(address <= mwa->end))
+			if(	(address >= map->start) &&
+				(address <= map->end))
 			{
 				if(outRelativeAddress)
-					*outRelativeAddress = address - mwa->start;
+					*outRelativeAddress = address - map->start;
 
-				return mwa->base;
+				return (UINT8 **)map->base;
 			}
 		}
 
-		mwa++;
+		map++;
 	}
 
 	return NULL;
@@ -10033,7 +10033,7 @@ static void DoCheatAction(CheatAction * action)
 	{
 		case kType_NormalOrDelay:
 		{
-			if(action->frameTimer >= (parameter * Machine->drv->frames_per_second))
+			if(action->frameTimer >= (parameter * Machine->refresh_rate))
 			{
 				action->frameTimer = 0;
 
@@ -10079,7 +10079,7 @@ static void DoCheatAction(CheatAction * action)
 
 				if(currentValue != action->lastValue)
 				{
-					action->frameTimer = parameter * Machine->drv->frames_per_second;
+					action->frameTimer = parameter * Machine->refresh_rate;
 
 					action->flags |= kActionFlag_WasModified;
 				}
@@ -10387,15 +10387,15 @@ static void BuildCPUInfoList(void)
 			int		type = Machine->drv->cpu[i].cpu_type;
 
 			info->type = type;
-			info->dataBits = cputype_databus_width(type);
-			info->addressBits = cputype_address_bits(type);
-			info->addressMask = 0xFFFFFFFF >> (32 - cputype_address_bits(type));
+			info->dataBits = cputype_databus_width(type, ADDRESS_SPACE_PROGRAM);
+			info->addressBits = cputype_addrbus_width(type, ADDRESS_SPACE_PROGRAM);
+			info->addressMask = 0xFFFFFFFF >> (32 - cputype_addrbus_width(type, ADDRESS_SPACE_PROGRAM));
 
 			info->addressCharsNeeded = info->addressBits >> 2;
 			if(info->addressBits & 0x3)
 				info->addressCharsNeeded++;
 
-			info->endianness = (cputype_endianess(type) == CPU_IS_BE);
+			info->endianness = (cputype_endianness(type) == CPU_IS_BE);
 
 			switch(type)
 			{

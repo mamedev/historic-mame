@@ -33,8 +33,8 @@
 #include "memory.h"
 #include "tms32010.h"
 #include "mamedbg.h"
-#define READOP16(A)  (cpu_readop16((A)     | TMS32010_PGM_OFFSET))
-#define READARG16(A) (cpu_readop_arg16((A) | TMS32010_PGM_OFFSET))
+#define READOP16(A)  (cpu_readop16(A))
+#define READARG16(A) (cpu_readop_arg16(A))
 #else								/* Compile interface for standalone */
 extern unsigned char *Buffer;
 #ifdef MSB_FIRST

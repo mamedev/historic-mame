@@ -18,18 +18,18 @@ MACHINE_DRIVER_EXTERN(galaxian_base);
 
 /* defined in drivers/scobra.c */
 extern struct AY8910interface scobra_ay8910_interface;
-extern const struct Memory_ReadAddress scobra_sound_readmem[];
-extern const struct Memory_WriteAddress scobra_sound_writemem[];
-extern const struct IO_ReadPort scobra_sound_readport[];
-extern const struct IO_WritePort scobra_sound_writeport[];
+ADDRESS_MAP_EXTERN(scobra_sound_readmem);
+ADDRESS_MAP_EXTERN(scobra_sound_writemem);
+ADDRESS_MAP_EXTERN(scobra_sound_readport);
+ADDRESS_MAP_EXTERN(scobra_sound_writeport);
 
 
 /* defined in drivers/frogger.c */
 extern struct AY8910interface frogger_ay8910_interface;
-extern const struct Memory_ReadAddress frogger_sound_readmem[];
-extern const struct Memory_WriteAddress frogger_sound_writemem[];
-extern const struct IO_ReadPort frogger_sound_readport[];
-extern const struct IO_WritePort frogger_sound_writeport[];
+ADDRESS_MAP_EXTERN(frogger_sound_readmem);
+ADDRESS_MAP_EXTERN(frogger_sound_writemem);
+ADDRESS_MAP_EXTERN(frogger_sound_readport);
+ADDRESS_MAP_EXTERN(frogger_sound_writeport);
 
 
 /* defined in vidhrdw/galaxian.c */

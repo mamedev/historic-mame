@@ -20,6 +20,10 @@ void state_save_register_UINT32(const char *module, int instance,
 								const char *name, UINT32 *val, unsigned size);
 void state_save_register_INT32 (const char *module, int instance,
 								const char *name, INT32 *val, unsigned size);
+void state_save_register_UINT64(const char *module, int instance,
+								const char *name, UINT64 *val, unsigned size);
+void state_save_register_INT64 (const char *module, int instance,
+								const char *name, INT64 *val, unsigned size);
 void state_save_register_double(const char *module, int instance,
 								const char *name, double *val, unsigned size);
 void state_save_register_float (const char *module, int instance,

@@ -155,116 +155,116 @@ static WRITE_HANDLER( coin_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x1200, 0x1200, input_port_4_r }, /* DIP 2 */
-	{ 0x1280, 0x1280, input_port_0_r }, /* IO Coin */
-//	{ 0x1281, 0x1281, input_port_1_r }, /* P1 IO */
-	{ 0x1281, 0x1281, konami_IN1_r },	/* P1 IO and handle fake button for cheating */
-	{ 0x1282, 0x1282, input_port_2_r }, /* P2 IO */
-	{ 0x1283, 0x1283, input_port_3_r }, /* DIP 1 */
-	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2800, 0x3fff, MRA_RAM },
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x1280, 0x1280) AM_READ(input_port_0_r) /* IO Coin */
+//	AM_RANGE(0x1281, 0x1281) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x1281, 0x1281) AM_READ(konami_IN1_r)	/* P1 IO and handle fake button for cheating */
+	AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x1283, 0x1283) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2800, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x1000, 0x1000, watchdog_reset_w },
-	{ 0x1080, 0x1080, trackfld_flipscreen_w },
-	{ 0x1081, 0x1081, konami_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x1083, 0x1084, coin_w },
-	{ 0x1087, 0x1087, interrupt_enable_w },
-	{ 0x1100, 0x1100, soundlatch_w },
-	{ 0x1800, 0x183f, MWA_RAM, &spriteram_2 },
-	{ 0x1840, 0x185f, MWA_RAM, &trackfld_scroll },
-	{ 0x1860, 0x1bff, MWA_RAM },
-	{ 0x1c00, 0x1c3f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1c40, 0x1c5f, MWA_RAM, &trackfld_scroll2 },
-	{ 0x1c60, 0x1fff, MWA_RAM },
-	{ 0x2800, 0x2bff, MWA_RAM },
-	{ 0x2c00, 0x2fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x3000, 0x37ff, trackfld_videoram_w, &videoram },
-	{ 0x3800, 0x3fff, trackfld_colorram_w, &colorram },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1080, 0x1080) AM_WRITE(trackfld_flipscreen_w)
+	AM_RANGE(0x1081, 0x1081) AM_WRITE(konami_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x1083, 0x1084) AM_WRITE(coin_w)
+	AM_RANGE(0x1087, 0x1087) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x1100, 0x1100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x1800, 0x183f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x1840, 0x185f) AM_WRITE(MWA8_RAM) AM_BASE(&trackfld_scroll)
+	AM_RANGE(0x1860, 0x1bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1c00, 0x1c3f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1c40, 0x1c5f) AM_WRITE(MWA8_RAM) AM_BASE(&trackfld_scroll2)
+	AM_RANGE(0x1c60, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2c00, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(trackfld_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(trackfld_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mastkin_readmem )
-	{ 0x1200, 0x1200, input_port_4_r }, /* DIP 2 */
-	{ 0x1280, 0x1280, input_port_0_r }, /* IO Coin */
-	{ 0x1281, 0x1281, input_port_1_r }, /* P1 IO */
-//	{ 0x1282, 0x1282, input_port_2_r }, /* unused */
-	{ 0x1283, 0x1283, input_port_3_r }, /* DIP 1 */
-	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2800, 0x3fff, MRA_RAM },
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mastkin_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x1280, 0x1280) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x1281, 0x1281) AM_READ(input_port_1_r) /* P1 IO */
+//	AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* unused */
+	AM_RANGE(0x1283, 0x1283) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2800, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mastkin_writemem )
-	{ 0x1000, 0x1000, watchdog_reset_w },
-	{ 0x10b0, 0x10b0, trackfld_flipscreen_w },
-	{ 0x10b1, 0x10b1, konami_sh_irqtrigger_w },
-	{ 0x1083, 0x1084, coin_w },
-	{ 0x1087, 0x1087, interrupt_enable_w },
-	{ 0x1100, 0x1100, soundlatch_w },
-	{ 0x1800, 0x183f, MWA_RAM, &spriteram_2 },
-	{ 0x1840, 0x185f, MWA_RAM, &trackfld_scroll },
-	{ 0x1860, 0x1bff, MWA_RAM },
-	{ 0x1c00, 0x1c3f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1c40, 0x1c5f, MWA_RAM, &trackfld_scroll2 },
-	{ 0x1c60, 0x1fff, MWA_RAM },
-	{ 0x2800, 0x2bff, MWA_RAM },
-	{ 0x2c00, 0x2fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x3000, 0x37ff, trackfld_videoram_w, &videoram },
-	{ 0x3800, 0x3fff, trackfld_colorram_w, &colorram },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mastkin_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x10b0, 0x10b0) AM_WRITE(trackfld_flipscreen_w)
+	AM_RANGE(0x10b1, 0x10b1) AM_WRITE(konami_sh_irqtrigger_w)
+	AM_RANGE(0x1083, 0x1084) AM_WRITE(coin_w)
+	AM_RANGE(0x1087, 0x1087) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x1100, 0x1100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x1800, 0x183f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x1840, 0x185f) AM_WRITE(MWA8_RAM) AM_BASE(&trackfld_scroll)
+	AM_RANGE(0x1860, 0x1bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1c00, 0x1c3f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1c40, 0x1c5f) AM_WRITE(MWA8_RAM) AM_BASE(&trackfld_scroll2)
+	AM_RANGE(0x1c60, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2c00, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(trackfld_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(trackfld_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, trackfld_sh_timer_r },
-	{ 0xe002, 0xe002, trackfld_speech_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(trackfld_sh_timer_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(trackfld_speech_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
-	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, DAC_0_data_w },
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(SN76496_0_w)	/* Loads the snd command into the snd latch */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)		/* This address triggers the SN chip to read the data port. */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 
 	Currently these are un-supported by Mame
 */
-	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
-	{ 0xe004, 0xe004, VLM5030_data_w },
-	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech control */
-MEMORY_END
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) /* watch dog ? */
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(VLM5030_data_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(trackfld_sound_w) /* e003 speech control */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( hyprolyb_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, trackfld_sh_timer_r },
-	{ 0xe002, 0xe002, hyprolyb_speech_r },
-MEMORY_END
+static ADDRESS_MAP_START( hyprolyb_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(trackfld_sh_timer_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(hyprolyb_speech_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hyprolyb_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
-	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, DAC_0_data_w },
+static ADDRESS_MAP_START( hyprolyb_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(SN76496_0_w)	/* Loads the snd command into the snd latch */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)		/* This address triggers the SN chip to read the data port. */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 
 	Currently these are un-supported by Mame
 */
-	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
-	{ 0xe004, 0xe004, hyprolyb_ADPCM_data_w },
-	{ 0xe000, 0xefff, MWA_NOP },
-MEMORY_END
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) /* watch dog ? */
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(hyprolyb_ADPCM_data_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 
@@ -492,12 +492,12 @@ static MACHINE_DRIVER_START( trackfld )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, 2048000)        /* 1.400 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Z80 Clock is derived from a 14.31818 MHz crystal */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -528,12 +528,12 @@ static MACHINE_DRIVER_START( hyprolyb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2048000)        /* 1.400 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Z80 Clock is derived from a 14.31818 MHz crystal */
-	MDRV_CPU_MEMORY(hyprolyb_sound_readmem,hyprolyb_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(hyprolyb_sound_readmem,hyprolyb_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -564,7 +564,7 @@ static MACHINE_DRIVER_START( mastkin )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(trackfld)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mastkin_readmem,mastkin_writemem)
+	MDRV_CPU_PROGRAM_MAP(mastkin_readmem,mastkin_writemem)
 
 	MDRV_NVRAM_HANDLER(mastkin)
 MACHINE_DRIVER_END

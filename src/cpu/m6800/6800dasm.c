@@ -181,6 +181,8 @@ static UINT8 table[0x102][5] = {
 #define ARG2    cpu_readop_arg(pc+2)
 #define ARGW	(cpu_readop_arg(pc+1)<<8) + cpu_readop_arg(pc+2)
 
+static unsigned m6800_get_reg(int reg) { union cpuinfo info; m6800_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+
 unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 {
 	int invalid_mask;

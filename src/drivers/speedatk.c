@@ -148,40 +148,40 @@ static READ_HANDLER( read_8001 )
 	return 1;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8000, key_matrix_r },
-	{ 0x8001, 0x8001, read_8001 },
-	{ 0x8588, 0x858f, MRA_RAM },
-	{ 0x8800, 0x8bff, MRA_RAM },
-	{ 0x8c00, 0x8fff, MRA_RAM },
-	{ 0xa000, 0xa3ff, MRA_RAM },
-	{ 0xb000, 0xb3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(key_matrix_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(read_8001)
+	AM_RANGE(0x8588, 0x858f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8c00, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8000, key_matrix_w },
-	{ 0x8588, 0x858f, MWA_RAM },
-	{ 0x8800, 0x8bff, MWA_RAM },
-	{ 0x8c00, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa3ff, speedatk_videoram_w, &videoram },
-	{ 0xb000, 0xb3ff, speedatk_colorram_w ,&colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(key_matrix_w)
+	AM_RANGE(0x8588, 0x858f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(speedatk_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xb000, 0xb3ff) AM_WRITE(speedatk_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x40, 0x40, input_port_0_r },
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_0_r)
 	/* are these not used? after they're read it sets bit 7 */
-	{ 0x60, 0x60, MRA_NOP },
-	{ 0x61, 0x61, MRA_NOP },
-	{ 0x68, 0x68, MRA_NOP },
-PORT_END
+	AM_RANGE(0x60, 0x60) AM_READ(MRA8_NOP)
+	AM_RANGE(0x61, 0x61) AM_READ(MRA8_NOP)
+	AM_RANGE(0x68, 0x68) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x01, 0x01, speedatk_flip_screen_w },
-	{ 0x40, 0x40, AY8910_control_port_0_w },
-	{ 0x41, 0x41, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(speedatk_flip_screen_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( speedatk )
 	PORT_START
@@ -279,8 +279,8 @@ static struct AY8910interface ay8910_interface =
 
 static MACHINE_DRIVER_START( speedatk )
 	MDRV_CPU_ADD(Z80,12000000/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

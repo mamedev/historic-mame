@@ -118,74 +118,74 @@ static WRITE_HANDLER( megazone_coin_counter_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x3800, 0x3fff, megazone_sharedram_r },
-	{ 0x4000, 0xffff, MRA_ROM },		/* 4000->5FFF is a debug rom */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3fff) AM_READ(megazone_sharedram_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)		/* 4000->5FFF is a debug rom */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0001, megazone_coin_counter_w }, /* coin counter 2, coin counter 1 */
-	{ 0x0005, 0x0005, megazone_flipscreen_w },
-	{ 0x0007, 0x0007, interrupt_enable_w },
-	{ 0x0800, 0x0800, watchdog_reset_w },
-	{ 0x1800, 0x1800, MWA_RAM, &megazone_scrollx },
-	{ 0x1000, 0x1000, MWA_RAM, &megazone_scrolly },
-	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2400, 0x27ff, megazone_videoram2_w, &megazone_videoram2, &megazone_videoram2_size },
-	{ 0x2800, 0x2bff, colorram_w, &colorram },
-	{ 0x2c00, 0x2fff, megazone_colorram2_w, &megazone_colorram2 },
-	{ 0x3000, 0x33ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3fff, megazone_sharedram_w, &megazone_sharedram },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0001) AM_WRITE(megazone_coin_counter_w) /* coin counter 2, coin counter 1 */
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(megazone_flipscreen_w)
+	AM_RANGE(0x0007, 0x0007) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(MWA8_RAM) AM_BASE(&megazone_scrollx)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_RAM) AM_BASE(&megazone_scrolly)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x2400, 0x27ff) AM_WRITE(megazone_videoram2_w) AM_BASE(&megazone_videoram2) AM_SIZE(&megazone_videoram2_size)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x2c00, 0x2fff) AM_WRITE(megazone_colorram2_w) AM_BASE(&megazone_colorram2)
+	AM_RANGE(0x3000, 0x33ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(megazone_sharedram_w) AM_BASE(&megazone_sharedram)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x6000, 0x6000, input_port_0_r }, /* IO Coin */
-	{ 0x6001, 0x6001, input_port_1_r }, /* P1 IO */
-	{ 0x6002, 0x6002, input_port_2_r }, /* P2 IO */
-	{ 0x8000, 0x8000, input_port_3_r }, /* DIP 1 */
-	{ 0x8001, 0x8001, input_port_4_r }, /* DIP 2 */
-	{ 0xe000, 0xe7ff, megazone_sharedram_r },  /* Shared with $3800->3fff of main CPU */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x6001, 0x6001) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x6002, 0x6002) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x8001, 0x8001) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(megazone_sharedram_r)  /* Shared with $3800->3fff of main CPU */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x2000, megazone_i8039_irq_w },	/* START line. Interrupts 8039 */
-	{ 0x4000, 0x4000, soundlatch_w },			/* CODE  line. Command Interrupts 8039 */
-	{ 0xa000, 0xa000, MWA_RAM },				/* INTMAIN - Interrupts main CPU (unused) */
-	{ 0xc000, 0xc000, MWA_RAM },				/* INT (Actually is NMI) enable/disable (unused)*/
-	{ 0xc001, 0xc001, watchdog_reset_w },
-	{ 0xe000, 0xe7ff, megazone_sharedram_w },	/* Shared with $3800->3fff of main CPU */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(megazone_i8039_irq_w)	/* START line. Interrupts 8039 */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(soundlatch_w)			/* CODE  line. Command Interrupts 8039 */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_RAM)				/* INTMAIN - Interrupts main CPU (unused) */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_RAM)				/* INT (Actually is NMI) enable/disable (unused)*/
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(megazone_sharedram_w)	/* Shared with $3800->3fff of main CPU */
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x02, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x02) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( i8039_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( i8039_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( i8039_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( i8039_readport )
-	{ 0x00, 0xff, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( i8039_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( i8039_writeport )
-	{ I8039_p1, I8039_p1, DAC_0_data_w },
-	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
-PORT_END
+static ADDRESS_MAP_START( i8039_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(i8039_irqen_and_status_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( megazone )
 	PORT_START      /* IN0 */
@@ -336,18 +336,18 @@ static MACHINE_DRIVER_START( megazone )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 18432000/9)        /* 2 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,18432000/6)     /* Z80 Clock is derived from the H1 signal */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(I8039,(14318000/2)/I8039_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1/2 14MHz crystal */
-	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
-	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
+	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

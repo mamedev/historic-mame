@@ -154,37 +154,37 @@ logerror("e000 = %02x\n",RAM[0xe000]);
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc000, input_port_0_r },	/* DSW0 */
-	{ 0xc001, 0xc001, input_port_1_r },	/* DSW1 */
-	{ 0xc004, 0xc004, input_port_2_r },	/* COIN (Gun Dealer only) */
-	{ 0xc005, 0xc005, input_port_3_r },	/* IN1 (Gun Dealer only) */
-	{ 0xc006, 0xc006, input_port_4_r },	/* IN0 (Gun Dealer only) */
-	{ 0xc400, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)	/* DSW0 */
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)	/* DSW1 */
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_2_r)	/* COIN (Gun Dealer only) */
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_3_r)	/* IN1 (Gun Dealer only) */
+	AM_RANGE(0xc006, 0xc006) AM_READ(input_port_4_r)	/* IN0 (Gun Dealer only) */
+	AM_RANGE(0xc400, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc010, 0xc013, yamyam_fg_scroll_w },		/* Yam Yam only */
-	{ 0xc014, 0xc014, gundealr_flipscreen_w },
-	{ 0xc016, 0xc016, yamyam_bankswitch_w },
-	{ 0xc020, 0xc023, gundealr_fg_scroll_w },	/* Gun Dealer only */
-	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &paletteram },
-	{ 0xc800, 0xcfff, gundealr_bg_videoram_w, &gundealr_bg_videoram },
-	{ 0xd000, 0xdfff, gundealr_fg_videoram_w, &gundealr_fg_videoram },
-	{ 0xe000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc010, 0xc013) AM_WRITE(yamyam_fg_scroll_w)		/* Yam Yam only */
+	AM_RANGE(0xc014, 0xc014) AM_WRITE(gundealr_flipscreen_w)
+	AM_RANGE(0xc016, 0xc016) AM_WRITE(yamyam_bankswitch_w)
+	AM_RANGE(0xc020, 0xc023) AM_WRITE(gundealr_fg_scroll_w)	/* Gun Dealer only */
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(gundealr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gundealr_bg_videoram_w) AM_BASE(&gundealr_bg_videoram)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(gundealr_fg_videoram_w) AM_BASE(&gundealr_fg_videoram)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, YM2203_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -484,8 +484,8 @@ static MACHINE_DRIVER_START( gundealr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 8000000)	/* 8 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(yamyam_interrupt,4)	/* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -32,37 +32,37 @@ static READ16_HANDLER( rastan_cycle_r )
 }
 
 
-static MEMORY_READ16_START( rastan_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x10dc10, 0x10dc11, rastan_cycle_r },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
-	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
-	{ 0x3e0000, 0x3e0001, MRA16_NOP },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x390000, 0x390001, input_port_0_word_r },
-	{ 0x390002, 0x390003, input_port_1_word_r },
-	{ 0x390006, 0x390007, input_port_2_word_r },
-	{ 0x390008, 0x390009, input_port_3_word_r },
-	{ 0x39000a, 0x39000b, input_port_4_word_r },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( rastan_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x10dc10, 0x10dc11) AM_READ(rastan_cycle_r)
+	AM_RANGE(0x10c000, 0x10ffff) AM_READ(MRA16_RAM)	/* RAM */
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)	/* palette */
+	AM_RANGE(0x3e0000, 0x3e0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x390000, 0x390001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x390002, 0x390003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x390006, 0x390007) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x390008, 0x390009) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x39000a, 0x39000b) AM_READ(input_port_4_word_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(PC080SN_word_0_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( rastan_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x10c000, 0x10ffff, MWA16_RAM, &rastan_ram },
-	{ 0x200000, 0x200fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x350008, 0x35000b, MWA16_NOP },	/* 0 only (often) ? */
-	{ 0x380000, 0x380003, rastan_spritectrl_w },	/* sprite palette bank, coin counters, other unknowns */
-	{ 0x3c0000, 0x3c0003, MWA16_NOP },	/* 0000,0020,0063,0992,1753 (very often) watchdog ? */
-	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
-	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
-	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
-	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( rastan_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&rastan_ram)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x350008, 0x35000b) AM_WRITE(MWA16_NOP)	/* 0 only (often) ? */
+	AM_RANGE(0x380000, 0x380003) AM_WRITE(rastan_spritectrl_w)	/* sprite palette bank, coin counters, other unknowns */
+	AM_RANGE(0x3c0000, 0x3c0003) AM_WRITE(MWA16_NOP)	/* 0000,0020,0063,0992,1753 (very often) watchdog ? */
+	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(PC080SN_word_0_w)
+	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(PC080SN_yscroll_word_0_w)
+	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
+	AM_RANGE(0xc50000, 0xc50003) AM_WRITE(PC080SN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+ADDRESS_MAP_END
 
 
 static WRITE_HANDLER( rastan_bankswitch_w )
@@ -70,26 +70,26 @@ static WRITE_HANDLER( rastan_bankswitch_w )
 	cpu_setbank( 5, memory_region(REGION_CPU2) + ((data ^1) & 0x01) * 0x4000 + 0x10000 );
 }
 
-static MEMORY_READ_START( rastan_s_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK5 },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( rastan_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rastan_s_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
-	{ 0xc000, 0xc000, rastan_c000_w },
-	{ 0xd000, 0xd000, rastan_d000_w },
-MEMORY_END
+static ADDRESS_MAP_START( rastan_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_adpcm_trigger_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_c000_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_d000_w)
+ADDRESS_MAP_END
 
 
 
@@ -314,11 +314,11 @@ static MACHINE_DRIVER_START( rastan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
-	MDRV_CPU_MEMORY(rastan_readmem,rastan_writemem)
+	MDRV_CPU_PROGRAM_MAP(rastan_readmem,rastan_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(rastan_s_readmem,rastan_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(rastan_s_readmem,rastan_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

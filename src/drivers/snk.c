@@ -421,93 +421,93 @@ static READ_HANDLER( snk_soundlatch_clear_r ){ /* TNK3 */
 
 /*********************************************************************/
 
-static MEMORY_READ_START( YM3526_readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xc000, 0xc000, snk_soundlatch_clear_r },
-	{ 0xe000, 0xe000, YM3526_status_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(snk_soundlatch_clear_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM3526_status_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( YM3526_writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xe000, 0xe000, YM3526_control_port_0_w },
-	{ 0xe001, 0xe001, YM3526_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM3526_write_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( YM3526_YM3526_readmem_sound )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xe800, 0xe800, YM3526_status_port_0_r },
-	{ 0xf000, 0xf000, YM3526_status_port_1_r },
-	{ 0xf800, 0xf800, snk_sound_register_r },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_YM3526_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(YM3526_status_port_1_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(snk_sound_register_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( YM3526_YM3526_writemem_sound )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xe800, 0xe800, YM3526_control_port_0_w },
-	{ 0xec00, 0xec00, YM3526_write_port_0_w },
-	{ 0xf000, 0xf000, YM3526_control_port_1_w },
-	{ 0xf400, 0xf400, YM3526_write_port_1_w },
-	{ 0xf800, 0xf800, snk_sound_register_w },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_YM3526_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM3526_control_port_1_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(YM3526_write_port_1_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(snk_sound_register_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( YM3526_Y8950_readmem_sound )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xe800, 0xe800, YM3526_status_port_0_r },
-	{ 0xf000, 0xf000, Y8950_status_port_0_r },
-	{ 0xf800, 0xf800, snk_sound_register_r },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_Y8950_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM3526_status_port_0_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(Y8950_status_port_0_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(snk_sound_register_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( YM3526_Y8950_writemem_sound )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xe800, 0xe800, YM3526_control_port_0_w },
-	{ 0xec00, 0xec00, YM3526_write_port_0_w },
-	{ 0xf000, 0xf000, Y8950_control_port_0_w },
-	{ 0xf400, 0xf400, Y8950_write_port_0_w },
-	{ 0xf800, 0xf800, snk_sound_register_w },
-MEMORY_END
+static ADDRESS_MAP_START( YM3526_Y8950_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(Y8950_control_port_0_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(Y8950_write_port_0_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(snk_sound_register_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( YM3812_Y8950_readmem_sound )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xe800, 0xe800, YM3812_status_port_0_r },
-	{ 0xf000, 0xf000, Y8950_status_port_0_r },
-	{ 0xf800, 0xf800, snk_sound_register_r },
-MEMORY_END
+static ADDRESS_MAP_START( YM3812_Y8950_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(Y8950_status_port_0_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(snk_sound_register_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( YM3812_Y8950_writemem_sound )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xe800, 0xe800, YM3812_control_port_0_w },
-	{ 0xec00, 0xec00, YM3812_write_port_0_w },
-	{ 0xf000, 0xf000, Y8950_control_port_0_w },
-	{ 0xf400, 0xf400, Y8950_write_port_0_w },
-	{ 0xf800, 0xf800, snk_sound_register_w },
-MEMORY_END
+static ADDRESS_MAP_START( YM3812_Y8950_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(Y8950_control_port_0_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(Y8950_write_port_0_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(snk_sound_register_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( Y8950_readmem_sound )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xf000, 0xf000, Y8950_status_port_0_r },
-	{ 0xf800, 0xf800, snk_sound_register_r },
-MEMORY_END
+static ADDRESS_MAP_START( Y8950_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(Y8950_status_port_0_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(snk_sound_register_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( Y8950_writemem_sound )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xf000, 0xf000, Y8950_control_port_0_w },
-	{ 0xf400, 0xf400, Y8950_write_port_0_w },
-	{ 0xf800, 0xf800, snk_sound_register_w },
-MEMORY_END
+static ADDRESS_MAP_START( Y8950_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(Y8950_control_port_0_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(Y8950_write_port_0_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(snk_sound_register_w)
+ADDRESS_MAP_END
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
 
@@ -601,58 +601,58 @@ static WRITE_HANDLER( cpuB_io_w )
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
 
-static MEMORY_READ_START( tnk3_readmem_cpuA )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r },
-	{ 0xd000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
-static MEMORY_WRITE_START( tnk3_writemem_cpuA )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
-	{ 0xd000, 0xf7ff, MWA_RAM, &shared_ram2 },
-	{ 0xf800, 0xffff, MWA_RAM, &shared_ram },
-MEMORY_END
+static ADDRESS_MAP_START( tnk3_readmem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(cpuA_io_r)
+	AM_RANGE(0xd000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( tnk3_writemem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(cpuA_io_w) AM_BASE(&io_ram)
+	AM_RANGE(0xd000, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram2)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( tnk3_readmem_cpuB )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, cpuB_io_r },
-	{ 0xc800, 0xefff, shared_ram2_r },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, shared_ram_r },
-MEMORY_END
-static MEMORY_WRITE_START( tnk3_writemem_cpuB )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, cpuB_io_w },
-	{ 0xc800, 0xefff, shared_ram2_w },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xffff, shared_ram_w },
-MEMORY_END
+static ADDRESS_MAP_START( tnk3_readmem_cpuB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(cpuB_io_r)
+	AM_RANGE(0xc800, 0xefff) AM_READ(shared_ram2_r)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(shared_ram_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( tnk3_writemem_cpuB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(cpuB_io_w)
+	AM_RANGE(0xc800, 0xefff) AM_WRITE(shared_ram2_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(shared_ram_w)
+ADDRESS_MAP_END
 
 
 /* Chopper I, T.D.Fever, Psycho S., Bermuda T. */
 
-static MEMORY_READ_START( readmem_cpuA )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r },
-	{ 0xd000, 0xffff, MRA_RAM },
-MEMORY_END
-static MEMORY_WRITE_START( writemem_cpuA )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
-	{ 0xd000, 0xffff, MWA_RAM, &shared_ram },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(cpuA_io_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( writemem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(cpuA_io_w) AM_BASE(&io_ram)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpuB )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuB_io_r },
-	{ 0xd000, 0xffff, shared_ram_r },
-MEMORY_END
-static MEMORY_WRITE_START( writemem_cpuB )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuB_io_w },
-	{ 0xd000, 0xffff, shared_ram_w },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpuB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(cpuB_io_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(shared_ram_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( writemem_cpuB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(cpuB_io_w)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(shared_ram_w)
+ADDRESS_MAP_END
 
 /*********************************************************************/
 
@@ -927,16 +927,16 @@ static MACHINE_DRIVER_START( tnk3 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_readmem_sound,YM3526_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_readmem_sound,YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -963,16 +963,16 @@ static MACHINE_DRIVER_START( athena )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -999,16 +999,16 @@ static MACHINE_DRIVER_START( ikari )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1035,16 +1035,16 @@ static MACHINE_DRIVER_START( victroad )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1072,16 +1072,16 @@ static MACHINE_DRIVER_START( gwar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1109,17 +1109,17 @@ static MACHINE_DRIVER_START( bermudat )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	// 5MHz gives CPUB higher priority or ROM test will fail if the first NMI is triggered too early by CPUA
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1147,16 +1147,16 @@ static MACHINE_DRIVER_START( psychos )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1184,16 +1184,16 @@ static MACHINE_DRIVER_START( chopper1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1221,16 +1221,16 @@ static MACHINE_DRIVER_START( tdfever )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(snk_irq_AB,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 //	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1258,16 +1258,16 @@ static MACHINE_DRIVER_START( tdfever2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(snk_irq_AB,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 //	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1295,16 +1295,16 @@ static MACHINE_DRIVER_START( ftsoccer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(Y8950_readmem_sound,Y8950_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(Y8950_readmem_sound,Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1721,6 +1721,48 @@ ROM_START( dogosoke ) /* Victory Road Japan */
 	ROM_LOAD( "up02_g3.rom",  0x10000, 0x8000, CRC(92579bf3) SHA1(eb2084bf5c62cbbf08dc25997702f8e8eb3dcc5d) )
 
 	ROM_REGION( 0x30000, REGION_GFX4, ROMREGION_DISPOSE ) /* 32x32 sprites */
+	ROM_LOAD( "p11", 0x00000, 0x8000, CRC(668b25a4) SHA1(235423e3b442271581dde0195fdff2a37596a9bc) )
+	ROM_LOAD( "p14", 0x08000, 0x8000, CRC(a7031d4a) SHA1(9ea184990372909de7d8fe0891bb3e0441b13f90) )
+	ROM_LOAD( "p12", 0x10000, 0x8000, CRC(f44e95fa) SHA1(6633bd1e9e947cae5ba696f6fd393bf0cd7969b0) )
+	ROM_LOAD( "p15", 0x18000, 0x8000, CRC(120d2450) SHA1(8699db76f598e7719fa5f9a3dcc07d24c53e5da4) )
+	ROM_LOAD( "p13", 0x20000, 0x8000, CRC(980ca3d8) SHA1(bda6f19edf43c61c0c8d2235bb60def76c801b87) )
+	ROM_LOAD( "p16", 0x28000, 0x8000, CRC(9f820e8a) SHA1(2be0128d6861241f6a9c5a7032368dbc6d57b44e) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "up03_f5.rom", 0x00000, 0x10000, CRC(5b43fe9f) SHA1(28f803f633b83b17f9b10516d38c862f90d55ff3) )
+	ROM_LOAD( "up03_g5.rom", 0x10000, 0x10000, CRC(aae30cd6) SHA1(9d0d2c0f947387a0924bf0ed73de9305c1625054) )
+ROM_END
+
+ROM_START( dogosokj ) /* Victory Road Japan (Joystik version) */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* CPU A code */
+	ROM_LOAD( "01",  0x00000, 0x10000, CRC(53b0ad90) SHA1(7581365d6c82b35189852d96437b0f19abe2cf74) )
+
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 )	/* CPU B code */
+	ROM_LOAD( "p2",  0x00000, 0x10000, CRC(907fac83) SHA1(691d95f95ef7a308c7f5e7defb20971b54423745) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* sound code */
+	ROM_LOAD( "up03_k7.rom",  0x00000, 0x10000, CRC(173fa571) SHA1(fb9c783e5377fa86f70afee6804c8ee9061b27fd) )
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122e.1k", 0x000, 0x400, CRC(491ab831) SHA1(2801d68d8a7fddaca5c48f09d421fc48ff53d244) )
+	ROM_LOAD( "mb7122e.2l", 0x400, 0x400, CRC(8feca424) SHA1(c3d666f4b4b914199b24ded02f9a1b643bf90d26) )
+	ROM_LOAD( "mb7122e.1l", 0x800, 0x400, CRC(220076ca) SHA1(a353c770c0ffb1105fb93c97977597ad2fda8ac8) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "up02_b3.rom",  0x0000, 0x4000,  CRC(51a4ec83) SHA1(8cb743c68a51b71ef3d78127b2cf6ab0877b13f6) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "p17",  0x00000, 0x8000, CRC(19d4518c) SHA1(133ac6e3d75af6cfc9aa9d1d467f16696c7f3794) )
+	ROM_LOAD( "p18",  0x08000, 0x8000, CRC(d818be43) SHA1(274827b13e8572f68302b7e0b5964d3e32544303) )
+	ROM_LOAD( "p19",  0x10000, 0x8000, CRC(d64e0f89) SHA1(41204d5b0bc9d2f2599c3e881f10b73bddae3c5c) )
+	ROM_LOAD( "p20",  0x18000, 0x8000, CRC(edba0f31) SHA1(b3fc886d3cf7a34b470dd72cc0268a193f9a64d7) )
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
+	ROM_LOAD( "up02_d3.rom",  0x00000, 0x8000, CRC(d43044f8) SHA1(4d5bc3730ea1bb1978ae246745416b71979cb100) )
+	ROM_LOAD( "up02_e3.rom",  0x08000, 0x8000, CRC(365ed2d8) SHA1(e0f600c936483e3d0d03709ae709321d072145bd) )
+	ROM_LOAD( "up02_g3.rom",  0x10000, 0x8000, CRC(92579bf3) SHA1(eb2084bf5c62cbbf08dc25997702f8e8eb3dcc5d) )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE ) /* 32x32 sprites */
 	ROM_LOAD( "p11", 0x00000, 0x8000, CRC(668b25a4) SHA1(235423e3b442271581dde0195fdff2a37596a9bc) )
 	ROM_LOAD( "p14", 0x08000, 0x8000, CRC(a7031d4a) SHA1(9ea184990372909de7d8fe0891bb3e0441b13f90) )
 	ROM_LOAD( "p12", 0x10000, 0x8000, CRC(f44e95fa) SHA1(6633bd1e9e947cae5ba696f6fd393bf0cd7969b0) )
@@ -2731,6 +2773,63 @@ INPUT_PORTS_START( victroad )
 	SNK_JOY1_PORT
 
 	SNK_JOY2_PORT
+
+	SNK_BUTTON_PORT
+
+	PORT_START /* DSW 1 */
+	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Kill friend & walk everywhere" ,0 ,0 )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "P1 & P2 Fire Buttons" )
+	PORT_DIPSETTING(    0x02, "Separate" )
+	PORT_DIPSETTING(    0x00, "Common" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurrence" )
+	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	SNK_COINAGE
+
+	PORT_START /* DSW 2 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x08, "Game Mode" )
+	PORT_DIPSETTING(    0x0c, "Demo Sounds Off" )
+	PORT_DIPSETTING(    0x08, "Demo Sounds On" )
+	PORT_DIPSETTING(    0x00, "Freeze" )
+	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "50k 100k" )
+	PORT_DIPSETTING(    0x20, "60k 120k" )
+	PORT_DIPSETTING(    0x10, "100k 200k" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x40 ,0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( dogosokj )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) 	/* sound related ??? */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	SNK_JOY1_NODIAL_PORT
+
+	SNK_JOY2_NODIAL_PORT
 
 	SNK_BUTTON_PORT
 
@@ -3995,6 +4094,7 @@ GAMEX( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270, "SNK", "I
 GAMEX( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270, "bootleg", "Ikari (Japan bootleg)", GAME_NO_COCKTAIL )
 GAMEX( 1986, victroad, 0,        victroad, victroad, victroad, ROT270, "SNK", "Victory Road", GAME_NO_COCKTAIL )
 GAMEX( 1986, dogosoke, victroad, victroad, victroad, dogosoke, ROT270, "SNK", "Dogou Souken", GAME_NO_COCKTAIL )
+GAMEX( 1986, dogosokj, victroad, victroad, dogosokj, dogosoke, ROT270, "bootleg", "Dogou Souken (Joystick bootleg)", GAME_NO_COCKTAIL )
 GAMEX( 1987, gwar,     0,        gwar,     gwar,     gwar,     ROT270, "SNK", "Guerrilla War (US)", GAME_NO_COCKTAIL )
 GAMEX( 1987, gwarj,    gwar,     gwar,     gwar,     gwar,     ROT270, "SNK", "Guevara (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, gwara,    gwar,     gwar,     gwar,     gwara,    ROT270, "SNK", "Guerrilla War (Version 1)", GAME_NO_COCKTAIL )

@@ -146,30 +146,20 @@ static WRITE_HANDLER( canyon_wram_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x01ff, canyon_wram_r },
-	{ 0x0800, 0x0bff, MRA_RAM },
-	{ 0x1000, 0x17ff, canyon_switches_r },
-	{ 0x1800, 0x1fff, canyon_options_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM }, /* mirror for 6502 vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x01ff, canyon_wram_w },
-	{ 0x0400, 0x0401, canyon_motor_w },
-	{ 0x0500, 0x0500, canyon_explode_w },
-	{ 0x0501, 0x0501, MWA_NOP }, /* watchdog, disabled in service mode */
-	{ 0x0600, 0x0603, canyon_whistle_w },
-	{ 0x0680, 0x0683, canyon_led_w },
-	{ 0x0700, 0x0703, canyon_attract_w },
-	{ 0x0800, 0x0bff, canyon_videoram_w, &canyon_videoram },
-	{ 0x1000, 0x17ff, MWA_NOP }, /* sloppy code writes here */
-	{ 0x2000, 0x3fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x100) AM_RAM
+	AM_RANGE(0x0400, 0x0401) AM_WRITE(canyon_motor_w)
+	AM_RANGE(0x0500, 0x0500) AM_WRITE(canyon_explode_w)
+	AM_RANGE(0x0501, 0x0501) AM_WRITE(MWA8_NOP) /* watchdog, disabled in service mode */
+	AM_RANGE(0x0600, 0x0603) AM_WRITE(canyon_whistle_w)
+	AM_RANGE(0x0680, 0x0683) AM_WRITE(canyon_led_w)
+	AM_RANGE(0x0700, 0x0703) AM_WRITE(canyon_attract_w)
+	AM_RANGE(0x0800, 0x0bff) AM_READWRITE(MRA8_RAM, canyon_videoram_w) AM_BASE(&canyon_videoram)
+	AM_RANGE(0x1000, 0x17ff) AM_READWRITE(canyon_switches_r, MWA8_NOP)  /* sloppy code writes here */
+	AM_RANGE(0x1800, 0x1fff) AM_READ(canyon_options_r)
+	AM_RANGE(0x2000, 0x3fff) AM_ROM
+ADDRESS_MAP_END
 
 
 
@@ -466,7 +456,7 @@ static MACHINE_DRIVER_START( canyon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -498,11 +488,10 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( canyon )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x4000, REGION_CPU1, 0 )
 	ROM_LOAD_NIB_LOW ( "9499-01.j1", 0x3000, 0x0400, CRC(31800767) SHA1(d4aebe12d3c45a2a8a361dc6f63e1a6230a78c17) )
 	ROM_LOAD_NIB_HIGH( "9503-01.p1", 0x3000, 0x0400, CRC(1eddbe28) SHA1(7d30280bf9edff743c16386d7cdec78094477996) )
 	ROM_LOAD         ( "9496-01.d1", 0x3800, 0x0800, CRC(8be15080) SHA1(095c15e9ac91623b2d514858dca2e4c261d36fd0) )
-	ROM_RELOAD(                      0xF800, 0x0800 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )
@@ -517,13 +506,11 @@ ROM_END
 
 
 ROM_START( canyonp )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x4000, REGION_CPU1, 0 )
 	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, CRC(49cf29a0) SHA1(b58f024f45f85e5c2a48a95c60e80fd1be60eaac) )
 	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, CRC(b4385c23) SHA1(b550dfe9182f2b29aedba160a0917ca78b82f0e7) )
 	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, CRC(c7ee4431) SHA1(7a0f4454a981c4e9ee27e273e9a8379458e660e5) )
-	ROM_RELOAD(                       0xf800, 0x0800 ) /* for 6502 vectors */
 	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, CRC(94246a9a) SHA1(5ff8b69fb744a5f62d4cf291e8f25e3620b479e7) )
-	ROM_RELOAD(                       0xf800, 0x0800 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )

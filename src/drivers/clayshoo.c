@@ -25,32 +25,32 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x4000, 0x47ff, MRA_ROM },
-	{ 0xc800, 0xc800, clayshoo_analog_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc800, 0xc800) AM_READ(clayshoo_analog_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x4000, 0x47ff, MWA_ROM },
-	{ 0x8000, 0x97ff, clayshoo_videoram_w },	 /* 6k of video ram according to readme */
-	{ 0x9800, 0xa800, MWA_NOP },				 /* not really mapped, but cleared */
-	{ 0xc800, 0xc800, clayshoo_analog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x97ff) AM_WRITE(clayshoo_videoram_w)	 /* 6k of video ram according to readme */
+	AM_RANGE(0x9800, 0xa800) AM_WRITE(MWA8_NOP)				 /* not really mapped, but cleared */
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(clayshoo_analog_reset_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x20, 0x23, ppi8255_0_r },
-	{ 0x30, 0x33, ppi8255_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x23) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x30, 0x33) AM_READ(ppi8255_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, watchdog_reset_w },
-	{ 0x20, 0x23, ppi8255_0_w },
-	{ 0x30, 0x33, ppi8255_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x20, 0x23) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x30, 0x33) AM_WRITE(ppi8255_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -128,8 +128,8 @@ static MACHINE_DRIVER_START( clayshoo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,5068000/4)		/* 5.068/4 Mhz (divider is a guess) */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

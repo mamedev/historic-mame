@@ -71,43 +71,43 @@ static MACHINE_INIT( springer )
 	machine_init_espial();
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8bff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa800, 0xa800, input_port_1_r },
-	{ 0xb000, 0xb000, input_port_2_r },
-	{ 0xb800, 0xb800, input_port_3_r },  /* also watchdog */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)  /* also watchdog */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
-	{ 0x8c00, 0x8c3f, MWA_RAM, &spriteram },  /* Hoccer only */
-	{ 0x9000, 0x93ff, colorram_w, &colorram },
-	{ 0x9800, 0x9800, MWA_RAM, &marineb_column_scroll },
-	{ 0x9a00, 0x9a00, marineb_palbank0_w },
-	{ 0x9c00, 0x9c00, marineb_palbank1_w },
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa001, marineb_flipscreen_y_w },
-	{ 0xa002, 0xa002, marineb_flipscreen_x_w },
-	{ 0xb800, 0xb800, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8c00, 0x8c3f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)  /* Hoccer only */
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(MWA8_RAM) AM_BASE(&marineb_column_scroll)
+	AM_RANGE(0x9a00, 0x9a00) AM_WRITE(marineb_palbank0_w)
+	AM_RANGE(0x9c00, 0x9c00) AM_WRITE(marineb_palbank1_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(marineb_flipscreen_y_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(marineb_flipscreen_x_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( marineb_writeport )
-	{ 0x08, 0x08, AY8910_control_port_0_w },
-	{ 0x09, 0x09, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( marineb_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( wanted_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x02, 0x02, AY8910_control_port_1_w },
-	{ 0x03, 0x03, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( wanted_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( marineb )
@@ -567,8 +567,8 @@ static MACHINE_DRIVER_START( marineb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3072000)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,marineb_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,marineb_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -630,7 +630,7 @@ static MACHINE_DRIVER_START( wanted )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(marineb)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(0,wanted_writeport)
+	MDRV_CPU_IO_MAP(0,wanted_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	/* video hardware */
@@ -657,8 +657,8 @@ static MACHINE_DRIVER_START( bcruzm12 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz  */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,wanted_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,wanted_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -713,6 +713,25 @@ ROM_START( changes )
 	ROM_LOAD( "changes.3",     0x2000, 0x1000, CRC(ff8291e9) SHA1(c07394cb384259287a6820ce0e513e32c69d768b) )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, CRC(a8e9aa22) SHA1(fbccf017851eb099960ad51ef3060a16bc0107a5) )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, CRC(f4198e9e) SHA1(4a9aea2b38d3bf093d9e97c884a7a9d16c203a46) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "changes.7",     0x0000, 0x2000, CRC(2204194e) SHA1(97ee40dd804158e92a2a1034f8e910f1057a7b54) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "changes.6",     0x0000, 0x2000, CRC(985c9db4) SHA1(d95a8794b96aec9133fd49b7d5724c161c5478bf) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "changes.1b",    0x0000, 0x0100, CRC(f693c153) SHA1(463426b580fa02f00baf2fff9f42d34b52bd6be4) ) /* palette low 4 bits */
+	ROM_LOAD( "changes.1c",    0x0100, 0x0100, CRC(f8331705) SHA1(cbead7ed85f96219af14b6552301906f32260b69) ) /* palette high 4 bits */
+ROM_END
+
+ROM_START( changesa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "changes3.1",    0x0000, 0x1000, CRC(ff80cad7) SHA1(00a97137c0b92e8b9532c824bade89002ec5d63c) ) 
+	ROM_LOAD( "changes.2",     0x1000, 0x1000, CRC(0e627f0b) SHA1(59012c8f65b921387b381dbc5157a7a22b3d50dc) )
+	ROM_LOAD( "changes3.3",    0x2000, 0x1000, CRC(359bf7e1) SHA1(9c3cc4415ccaa0276f98224ca373922c2425bb40) ) 
+	ROM_LOAD( "changes.4",     0x3000, 0x1000, CRC(a8e9aa22) SHA1(fbccf017851eb099960ad51ef3060a16bc0107a5) )
+	ROM_LOAD( "changes3.5",    0x4000, 0x1000, CRC(c197e64a) SHA1(86b9f5f51f208bc9cdda3d13176147dbcafdc913) ) 
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "changes.7",     0x0000, 0x2000, CRC(2204194e) SHA1(97ee40dd804158e92a2a1034f8e910f1057a7b54) )
@@ -897,6 +916,7 @@ ROM_END
 /*    year  name      parent   machine   inputs */
 GAME( 1982, marineb,  0,       marineb,  marineb, 0, ROT0,   "Orca", "Marine Boy" )
 GAME( 1982, changes,  0,       changes,  changes, 0, ROT0,   "Orca", "Changes" )
+GAME( 1982, changesa, changes, changes,  changes, 0, ROT0,   "Orca (Eastern Micro Electronics, Inc. license)", "Changes (EME license)")
 GAME( 1982, looper,   changes, changes,  changes, 0, ROT0,   "Orca", "Looper" )
 GAME( 1982, springer, 0,       springer, marineb, 0, ROT270, "Orca", "Springer" )
 GAME( 1983, hoccer,   0,       hoccer,   hoccer,  0, ROT90,  "Eastern Micro Electronics, Inc.", "Hoccer (set 1)" )

@@ -140,39 +140,39 @@ static WRITE_HANDLER( port_c0_w )
 
 /***************************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{	0x0000,	0x7fff,	MRA_ROM	},
-	{   0x8000, 0x9fff, MRA_BANK1 },
-	{	0xaf80, 0xafff, custom_ram_r },
-	{	0xb000, 0xb0ff, paletteram_r },
-	{	0xc000, 0xc3ff, MRA_RAM },
-	{	0xd000, 0xd3ff, MRA_RAM },
-	{   0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(	0x0000, 	0x7fff) AM_READ(	MRA8_ROM	)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(	0xaf80, 0xafff) AM_READ(custom_ram_r)
+	AM_RANGE(	0xb000, 0xb0ff) AM_READ(paletteram_r)
+	AM_RANGE(	0xc000, 0xc3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(	0xd000, 0xd3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 	0x0000, 0x7fff, MWA_ROM },
-	{   0x8000, 0x9fff, MWA_ROM },
-	{	0xa7fc, 0xa7fc, prot_lock_w },
-	{   0xa7ff, 0xa7ff, nvram_lock_w },
-	{	0xaf80, 0xafff, custom_ram_w ,&cus_ram }, //260d - 2626
-	{	0xb000, 0xb0ff, paletteram_BBGGGRRR_w , &paletteram },/*Wrong format?*/
-	{	0xc000, 0xc3ff, yumefuda_vram_w	, &videoram },
-	{	0xd000, 0xd3ff, MWA_RAM,&colorram },
-	{   0xe000, 0xffff, MWA_RAM },/*work ram*/
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(	0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(	0xa7fc, 0xa7fc) AM_WRITE(prot_lock_w)
+	AM_RANGE(0xa7ff, 0xa7ff) AM_WRITE(nvram_lock_w)
+	AM_RANGE(	0xaf80, 0xafff) AM_WRITE(custom_ram_w) AM_BASE(&cus_ram) //260d - 2626
+	AM_RANGE(	0xb000, 0xb0ff) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)/*Wrong format?*/
+	AM_RANGE(	0xc000, 0xc3ff) AM_WRITE(yumefuda_vram_w	) AM_BASE(&videoram)
+	AM_RANGE(	0xd000, 0xd3ff) AM_WRITE(MWA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)/*work ram*/
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{	0x00, 0x00, AY8910_read_port_0_r },
-	{   0x81, 0x81, input_port_2_r },
-	{   0x82, 0x82, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(	0x00, 0x00) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x81, 0x81) AM_READ(input_port_2_r)
+	AM_RANGE(0x82, 0x82) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 	0x00, 0x00, AY8910_control_port_0_w },
-	{ 	0x01, 0x01, AY8910_write_port_0_w },
-	{	0xc0, 0xc0,	port_c0_w }, //watchdog write?
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(	0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(	0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(	0xc0, 0xc0) AM_WRITE(	port_c0_w) //watchdog write?
+ADDRESS_MAP_END
 
 static struct AY8910interface ay8910_interface =
 {
@@ -189,8 +189,8 @@ static MACHINE_DRIVER_START( yumefuda )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80 , 6000000)/*???*/
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

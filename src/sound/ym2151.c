@@ -167,7 +167,7 @@ typedef struct
 	UINT32		noise_tab[32];			/* 17bit Noise Generator periods */
 
 	void (*irqhandler)(int irq);		/* IRQ function handler */
-	mem_write_handler porthandler;		/* port write function handler */
+	write8_handler porthandler;		/* port write function handler */
 
 	unsigned int clock;					/* chip clock in Hz (passed from 2151intf.c) */
 	unsigned int sampfreq;				/* sampling frequency in Hz (passed from 2151intf.c) */
@@ -2465,7 +2465,7 @@ void YM2151SetIrqHandler(int n, void(*handler)(int irq))
 	YMPSG[n].irqhandler = handler;
 }
 
-void YM2151SetPortWriteHandler(int n, mem_write_handler handler)
+void YM2151SetPortWriteHandler(int n, write8_handler handler)
 {
 	YMPSG[n].porthandler = handler;
 }

@@ -149,71 +149,73 @@ static READ_HANDLER( track_kludge_r )
 	return 0x03;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xd00c, 0xd00c, arkanoid_68705_input_0_r },  /* mainly an input port, with 2 bits from the 68705 */
-	{ 0xd010, 0xd010, input_port_1_r },
-	{ 0xd018, 0xd018, arkanoid_Z80_mcu_r },  /* input from the 68705 */
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_NOP },	/* fixes instant death in final level */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd001, 0xd001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xd00c, 0xd00c) AM_READ(arkanoid_68705_input_0_r)  /* mainly an input port, with 2 bits from the 68705 */
+	AM_RANGE(0xd010, 0xd010) AM_READ(input_port_1_r)
+	AM_RANGE(0xd018, 0xd018) AM_READ(arkanoid_Z80_mcu_r)  /* input from the 68705 */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_NOP)	/* fixes instant death in final level */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd000, AY8910_control_port_0_w },
-	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
-	{ 0xd010, 0xd010, watchdog_reset_w },
-	{ 0xd018, 0xd018, arkanoid_Z80_mcu_w }, /* output to the 68705 */
-	{ 0xe000, 0xe7ff, arkanoid_videoram_w, &videoram },
-	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe840, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)	/* gfx bank, flip screen etc. */
+	AM_RANGE(0xd010, 0xd010) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xd018, 0xd018) AM_WRITE(arkanoid_Z80_mcu_w) /* output to the 68705 */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe800, 0xe83f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe840, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( boot_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xd00c, 0xd00c, input_port_0_r },
-	{ 0xd010, 0xd010, input_port_1_r },
-	{ 0xd018, 0xd018, arkanoid_input_2_r },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_NOP },	/* fixes instant death in final level */
-MEMORY_END
+static ADDRESS_MAP_START( boot_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd001, 0xd001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xd00c, 0xd00c) AM_READ(input_port_0_r)
+	AM_RANGE(0xd010, 0xd010) AM_READ(input_port_1_r)
+	AM_RANGE(0xd018, 0xd018) AM_READ(arkanoid_input_2_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_NOP)	/* fixes instant death in final level */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( boot_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd000, AY8910_control_port_0_w },
-	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
-	{ 0xd010, 0xd010, watchdog_reset_w },
-	{ 0xd018, 0xd018, MWA_NOP },
-	{ 0xe000, 0xe7ff, arkanoid_videoram_w, &videoram },
-	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe840, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( boot_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)	/* gfx bank, flip screen etc. */
+	AM_RANGE(0xd010, 0xd010) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xd018, 0xd018) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe800, 0xe83f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe840, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0000, arkanoid_68705_portA_r },
-	{ 0x0001, 0x0001, arkanoid_input_2_r },
-	{ 0x0002, 0x0002, arkanoid_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(arkanoid_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(arkanoid_input_2_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(arkanoid_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0000, arkanoid_68705_portA_w },
-	{ 0x0002, 0x0002, arkanoid_68705_portC_w },
-	{ 0x0004, 0x0004, arkanoid_68705_ddrA_w },
-	{ 0x0006, 0x0006, arkanoid_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(arkanoid_68705_portA_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(arkanoid_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(arkanoid_68705_ddrA_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(arkanoid_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( arkanoid )
@@ -405,11 +407,11 @@ static MACHINE_DRIVER_START( arkanoid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -436,7 +438,7 @@ static MACHINE_DRIVER_START( bootleg )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
-	MDRV_CPU_MEMORY(boot_readmem,boot_writemem)
+	MDRV_CPU_PROGRAM_MAP(boot_readmem,boot_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

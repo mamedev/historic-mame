@@ -100,43 +100,43 @@ static WRITE_HANDLER( rallyx_play_sound_w )
 	last = data;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9800, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r }, /* IN0 */
-	{ 0xa080, 0xa080, input_port_1_r }, /* IN1 */
-	{ 0xa100, 0xa100, input_port_2_r }, /* DSW1 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_2_r) /* DSW1 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
-	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa004, 0xa00f, MWA_RAM, &rallyx_radarattr },
-	{ 0xa080, 0xa080, watchdog_reset_w },
-	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
-	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
-	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	//{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, rallyx_play_sound_w },
-	{ 0xa181, 0xa181, interrupt_enable_w },
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa185, rallyx_leds_w },
-	{ 0xa186, 0xa186, rallyx_coin_lockout_w },
-	{ 0xa187, 0xa187, rallyx_coin_counter_w },
-	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
-	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size }, /* ditto */
-	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radary },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(rallyx_videoram2_w) AM_BASE(&rallyx_videoram2)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(rallyx_colorram2_w) AM_BASE(&rallyx_colorram2)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa004, 0xa00f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarattr)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xa100, 0xa11f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0xa130, 0xa130) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrollx)
+	AM_RANGE(0xa140, 0xa140) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrolly)
+	//AM_RANGE(0xa170, 0xa170) AM_WRITE(MWA8_NOP)	/* ????? */
+	AM_RANGE(0xa180, 0xa180) AM_WRITE(rallyx_play_sound_w)
+	AM_RANGE(0xa181, 0xa181) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa183, 0xa183) AM_WRITE(rallyx_flipscreen_w)
+	AM_RANGE(0xa184, 0xa185) AM_WRITE(rallyx_leds_w)
+	AM_RANGE(0xa186, 0xa186) AM_WRITE(rallyx_coin_lockout_w)
+	AM_RANGE(0xa187, 0xa187) AM_WRITE(rallyx_coin_counter_w)
+	AM_RANGE(0x8014, 0x801f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* these are here just to initialize */
+	AM_RANGE(0x8814, 0x881f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* the pointers. */
+	AM_RANGE(0x8034, 0x803f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarx) AM_SIZE(&rallyx_radarram_size) /* ditto */
+	AM_RANGE(0x8834, 0x883f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radary)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0, 0, interrupt_vector_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0, 0) AM_WRITE(interrupt_vector_w)
+ADDRESS_MAP_END
 
 
 
@@ -234,54 +234,6 @@ INPUT_PORTS_START( nrallyx )
 	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nrallyv )
-	PORT_START		/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN |IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START		/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START		/* DSW0 */
-	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	/* TODO: the bonus score depends on the number of lives */
-	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x02, "A" )
-	PORT_DIPSETTING(	0x04, "B" )
-	PORT_DIPSETTING(	0x06, "C" )
-	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x10, "1 Car, Medium" )
-	PORT_DIPSETTING(	0x28, "1 Car, Hard" )
-	PORT_DIPSETTING(	0x18, "2 Cars, Medium" )
-	PORT_DIPSETTING(	0x30, "2 Cars, Hard" )
-	PORT_DIPSETTING(	0x00, "3 Cars, Easy" )
-	PORT_DIPSETTING(	0x20, "3 Cars, Medium" )
-	PORT_DIPSETTING(	0x38, "3 Cars, Hard" )
-	PORT_DIPSETTING(	0x08, "4 Cars, Easy" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
-INPUT_PORTS_END
-
-
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -356,8 +308,8 @@ static MACHINE_DRIVER_START( rallyx )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -401,9 +353,11 @@ ROM_START( rallyx )
 	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, CRC(3c16f62c) SHA1(7a3800be410e306cf85753b9953ffc5575afbcd6) )  /* dots */
 
-	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, CRC(c7865434) SHA1(70c1c9610ba6f1ead77f347e7132958958bccb31) )
-	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, CRC(834d4fda) SHA1(617864d3df0917a513e8255ad8d96ae7a04da5a1) )
+	ROM_REGION( 0x0160, REGION_PROMS, 0 )
+	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, CRC(c7865434) SHA1(70c1c9610ba6f1ead77f347e7132958958bccb31) )  /* palette */
+	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, CRC(834d4fda) SHA1(617864d3df0917a513e8255ad8d96ae7a04da5a1) )  /* lookup table */
+	ROM_LOAD( "r-2.4n",       0x0120, 0x0020, CRC(8f574815) SHA1(4f84162db9d58b64742c67dc689eb665b9862fb3) )  /* vertical sync (not used) */
+	ROM_LOAD( "r-3.7k",       0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) )  /* not used */
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, CRC(4bad7017) SHA1(3e6da9d798f5e07fa18d6ce7d0b148be98c766d5) )
@@ -423,9 +377,11 @@ ROM_START( rallyxm )
 	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, CRC(3c16f62c) SHA1(7a3800be410e306cf85753b9953ffc5575afbcd6) )  /* dots */
 
-	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, CRC(c7865434) SHA1(70c1c9610ba6f1ead77f347e7132958958bccb31) )
-	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, CRC(834d4fda) SHA1(617864d3df0917a513e8255ad8d96ae7a04da5a1) )
+	ROM_REGION( 0x0160, REGION_PROMS, 0 )
+	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, CRC(c7865434) SHA1(70c1c9610ba6f1ead77f347e7132958958bccb31) )  /* palette */
+	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, CRC(834d4fda) SHA1(617864d3df0917a513e8255ad8d96ae7a04da5a1) )  /* lookup table */
+	ROM_LOAD( "r-2.4n",       0x0120, 0x0020, CRC(8f574815) SHA1(4f84162db9d58b64742c67dc689eb665b9862fb3) )  /* vertical sync (not used) */
+	ROM_LOAD( "r-3.7k",       0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) )  /* not used */
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, CRC(4bad7017) SHA1(3e6da9d798f5e07fa18d6ce7d0b148be98c766d5) )
@@ -443,33 +399,13 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, CRC(ca7a174a) SHA1(dc553df18c45ba399661122be75b71d6cb54d6a2) )
 
 	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, CRC(3c16f62c) SHA1(7a3800be410e306cf85753b9953ffc5575afbcd6) )    /* dots */
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, CRC(3c16f62c) SHA1(7a3800be410e306cf85753b9953ffc5575afbcd6) )  /* dots */
 
-	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, CRC(a0a49017) SHA1(494c920a157e9f876d533c1b0146275a366c4989) )
-	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, CRC(b2b7ca15) SHA1(e604d58f2f20ebf042f28b01e74eddeacf5baba9) )
-
-	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound proms */
-	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, CRC(b75c4e87) SHA1(450f79a5ae09e34f7624d37769815baf93c0028e) )
-	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )  /* timing - not used */
-ROM_END
-
-ROM_START( nrallyv )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, CRC(9404c8d6) SHA1(ee7e45c22a2fbf72d3ac5ac26ab1111a22623fc5) )
-	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, CRC(ac01bf3f) SHA1(8e1a7cce92ef709d18727db6ee7f89936f4b8df8) )
-	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, CRC(aeba29b5) SHA1(2a6e4568729b83c430bf70e43c4146ad6a556b1b) )
-	ROM_LOAD( "nrallyx.1k",   0x3000, 0x1000, CRC(78f17da7) SHA1(1e035746a10f91e898166a58093d45bdb158ae47) )
-
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nrallyv.8e",   0x0000, 0x1000, CRC(031acfc5) SHA1(7e0df966b7f2be416e22ec2c36bb86425138c203) )
-
-	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, CRC(3c16f62c) SHA1(7a3800be410e306cf85753b9953ffc5575afbcd6) )    /* dots */
-
-	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, CRC(a0a49017) SHA1(494c920a157e9f876d533c1b0146275a366c4989) )
-	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, CRC(b2b7ca15) SHA1(e604d58f2f20ebf042f28b01e74eddeacf5baba9) )
+	ROM_REGION( 0x0160, REGION_PROMS, 0 )
+	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, CRC(a0a49017) SHA1(494c920a157e9f876d533c1b0146275a366c4989) )  /* palette */
+	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, CRC(b2b7ca15) SHA1(e604d58f2f20ebf042f28b01e74eddeacf5baba9) )  /* lookup table */
+	ROM_LOAD( "r-2.4n",       0x0120, 0x0020, CRC(8f574815) SHA1(4f84162db9d58b64742c67dc689eb665b9862fb3) )  /* vertical sync (not used) */
+	ROM_LOAD( "r-3.7k",       0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) )  /* not used */
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound proms */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, CRC(b75c4e87) SHA1(450f79a5ae09e34f7624d37769815baf93c0028e) )
@@ -480,4 +416,3 @@ ROM_END
 GAME( 1980, rallyx,  0,       rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
 GAME( 1980, rallyxm, rallyx,  rallyx, rallyx,  0, ROT0, "[Namco] (Midway license)", "Rally X (Midway)" )
 GAME( 1981, nrallyx, 0,       rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )
-GAME( 1981, nrallyv, nrallyx, rallyx, nrallyv, 0, ROT90, "hack", "New Rally X (Vertical Screen)" )

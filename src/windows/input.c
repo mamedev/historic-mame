@@ -89,6 +89,7 @@ static int					use_lightgun;
 static int					use_lightgun_dual;
 static int					use_lightgun_reload;
 static int					use_keyboard_leds;
+static const char *			ledmode;
 static int					steadykey;
 static const char*			ctrlrtype;
 static const char*			ctrlrname;
@@ -138,12 +139,14 @@ static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
 // led states
 static int original_leds;
 static HANDLE hKbdDev;
-static OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
-
+static int ledmethod;
 
 //============================================================
 //	OPTIONS
 //============================================================
+
+// prototypes
+static int decode_ledmode(struct rc_option *option, const char *arg, int priority);
 
 // global input options
 struct rc_option input_opts[] =
@@ -159,6 +162,7 @@ struct rc_option input_opts[] =
 	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },				
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
+	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
 	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
@@ -179,6 +183,22 @@ struct rc_option ctrlr_input_opts2[] =
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
+
+//============================================================
+//	decode_cleanstretch
+//============================================================
+
+static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
+{
+	if( strcmp( arg, "ps/2" ) != 0 &&
+		strcmp( arg, "usb" ) != 0 )
+	{
+		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
 
 //============================================================
 //	PROTOTYPES
@@ -2062,7 +2082,19 @@ int osd_get_leds(void)
 		return 0;
 
 	// if we're on Win9x, use GetKeyboardState
-	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+	if( ledmethod == 0 )
+	{
+		BYTE key_states[256];
+
+		// get the current state
+		GetKeyboardState(&key_states[0]);
+
+		// set the numlock bit
+		result |= (key_states[VK_NUMLOCK] & 1);
+		result |= (key_states[VK_CAPITAL] & 1) << 1;
+		result |= (key_states[VK_SCROLL] & 1) << 2;
+	}
+	else if( ledmethod == 1 ) // WinNT/2K/XP, use GetKeyboardState
 	{
 		BYTE key_states[256];
 
@@ -2109,7 +2141,7 @@ void osd_set_leds(int state)
 		return;
 
 	// if we're on Win9x, use SetKeyboardState
-	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+	if( ledmethod == 0 )
 	{
 		// thanks to Lee Taylor for the original version of this code
 		BYTE key_states[256];
@@ -2123,6 +2155,26 @@ void osd_set_leds(int state)
 		key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | ((state >> 2) & 1);
 
 		SetKeyboardState(&key_states[0]);
+	}
+	else if( ledmethod == 1 ) // WinNT/2K/XP, use keybd_event()
+	{
+		int k;
+		BYTE keyState[ 256 ];
+		const BYTE vk[ 3 ] = { VK_NUMLOCK, VK_CAPITAL, VK_SCROLL };
+
+		GetKeyboardState( (LPBYTE)&keyState );
+		for( k = 0; k < 3; k++ )
+		{
+			if( (  ( ( state >> k ) & 1 ) && !( keyState[ vk[ k ] ] & 1 ) ) ||
+				( !( ( state >> k ) & 1 ) &&  ( keyState[ vk[ k ] ] & 1 ) ) )
+			{
+				// Simulate a key press
+				keybd_event( vk[ k ], 0x45, KEYEVENTF_EXTENDEDKEY | 0, 0 );
+
+				// Simulate a key release
+				keybd_event( vk[ k ], 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0 );
+			}
+		}
 	}
 	else // WinNT/2K/XP, use DeviceIoControl
 	{
@@ -2157,16 +2209,30 @@ void osd_set_leds(int state)
 
 void start_led(void)
 {
+	OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
+
 	if (!use_keyboard_leds)
 		return;
 
 	// retrive windows version
 	GetVersionEx(&osinfo);
 
-	// nt/2k/xp
-	if (!(osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS))
+	if ( osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
 	{
+		// 98
+		ledmethod = 0;
+	}
+	else if( strcmp( ledmode, "usb" ) == 0 )
+	{
+		// nt/2k/xp
+		ledmethod = 1;
+	}
+	else
+	{
+		// nt/2k/xp
 		int error_number;
+
+		ledmethod = 2;
 
 		if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd",
 					"\\Device\\KeyboardClass0"))
@@ -2209,9 +2275,15 @@ void stop_led(void)
 	// restore the initial LED states
 	osd_set_leds(original_leds);
 
-	// nt/2k/xp
-	if (!(osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS))
+	if( ledmethod == 0 )
 	{
+	}
+	else if( ledmethod == 1 )
+	{
+	}
+	else
+	{
+		// nt/2k/xp
 		if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
 		{
 			error_number = GetLastError();

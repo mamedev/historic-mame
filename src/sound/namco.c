@@ -114,12 +114,12 @@ static int build_decoded_waveform(int region)
 	if (region == -1)
 	{
 		/* We need waveform data. It fails if region is not specified. */
-		if (!namco_wavedata)
-			return 1;
-
-		/* use full byte, first 4 high bits, then low 4 bits, 256 bytes */
-		for (offset = 0; offset < 256; offset++)
-			update_namcos1_waveform(offset, namco_wavedata[offset]);
+		if (namco_wavedata)
+		{
+			/* use full byte, first 4 high bits, then low 4 bits, 256 bytes */
+			for (offset = 0; offset < 256; offset++)
+				update_namcos1_waveform(offset, namco_wavedata[offset]);
+		}
 	}
 	else
 	{
@@ -574,9 +574,9 @@ WRITE_HANDLER( polepos_sound_w )
 	0x3e		ch 7	waveform select & frequency
 */
 
-WRITE_HANDLER( mappy_sound_enable_w )
+void mappy_sound_enable(int enable)
 {
-	sound_enable = offset;
+	sound_enable = enable;
 }
 
 WRITE_HANDLER( mappy_sound_w )

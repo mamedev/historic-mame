@@ -253,51 +253,51 @@ WRITE_HANDLER( looping_sound_sw )
 	DAC_data_w(0, ((r[1]<<7) + (r[2]<<6))*r[6]);
 }
 
-static MEMORY_READ_START( looping_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-/*	{ 0x9000, 0x9fff, MRA_RAM }, videoram is write only? */
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf800, 0xf800, input_port_0_r },	/* inp */
-	{ 0xf801, 0xf801, input_port_1_r },
-	{ 0xf802, 0xf802, input_port_2_r },	/* dsw */
-MEMORY_END
+static ADDRESS_MAP_START( looping_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+/*	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM) videoram is write only? */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_0_r)	/* inp */
+	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_1_r)
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_2_r)	/* dsw */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( looping_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x9000, 0x93ff, looping_videoram_w, &videoram },
-	{ 0x9800, 0x983f, looping_colorram_w, &colorram },
-	{ 0x9840, 0x987f, MWA_RAM, &spriteram },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xb006, 0xb006, looping_flip_screen_x_w },
-	{ 0xb007, 0xb007, looping_flip_screen_y_w },
-	{ 0xf801, 0xf801, looping_soundlatch_w },
-MEMORY_END
+static ADDRESS_MAP_START( looping_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(looping_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(looping_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x9840, 0x987f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xb006, 0xb006) AM_WRITE(looping_flip_screen_x_w)
+	AM_RANGE(0xb007, 0xb007) AM_WRITE(looping_flip_screen_y_w)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(looping_soundlatch_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( looping_writeport)
-	{ 0x000, 0x000, MWA_NOP },
-	{ 0x406, 0x406, looping_intack },
-	{ 0x407, 0x407, watchdog_reset_w },
-PORT_END
+static ADDRESS_MAP_START( looping_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x000, 0x000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x406, 0x406) AM_WRITE(looping_intack)
+	AM_RANGE(0x407, 0x407) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( looping_io_readmem )
-	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x3800, 0x3bff, MRA_RAM },
-	{ 0x3c00, 0x3c00, AY8910_read_port_0_r },
-	{ 0x3e02, 0x3e02, tms5220_status_r },
-MEMORY_END
+static ADDRESS_MAP_START( looping_io_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3c00, 0x3c00) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x3e02, 0x3e02) AM_READ(tms5220_status_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( looping_io_writemem )
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x3800, 0x3bff, MWA_RAM },
-	{ 0x3c00, 0x3c00, AY8910_control_port_0_w },
-	{ 0x3c02, 0x3c02, AY8910_write_port_0_w },
-	{ 0x3e00, 0x3e00, tms5220_data_w },
-MEMORY_END
+static ADDRESS_MAP_START( looping_io_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x3c02, 0x3c02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(tms5220_data_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( looping_io_writeport)
-	{ 0x000, 0x000, looping_souint_clr },
-	{ 0x001, 0x007, looping_sound_sw },
-PORT_END
+static ADDRESS_MAP_START( looping_io_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x000, 0x000) AM_WRITE(looping_souint_clr)
+	AM_RANGE(0x001, 0x007) AM_WRITE(looping_sound_sw)
+ADDRESS_MAP_END
 
 static struct GfxLayout tile_layout =
 {
@@ -362,13 +362,13 @@ static MACHINE_DRIVER_START( looping )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS9995, 3000000) /* ? */
-	MDRV_CPU_MEMORY(looping_readmem,looping_writemem)
-	MDRV_CPU_PORTS(0,looping_writeport)
+	MDRV_CPU_PROGRAM_MAP(looping_readmem,looping_writemem)
+	MDRV_CPU_IO_MAP(0,looping_writeport)
 	MDRV_CPU_VBLANK_INT(looping_interrupt,1)
 
 	MDRV_CPU_ADD(TMS9980, 2000000) // ?
-	MDRV_CPU_MEMORY(looping_io_readmem,looping_io_writemem)
-	MDRV_CPU_PORTS(0,looping_io_writeport)
+	MDRV_CPU_PROGRAM_MAP(looping_io_readmem,looping_io_writemem)
+	MDRV_CPU_IO_MAP(0,looping_io_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2500)

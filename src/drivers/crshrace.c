@@ -182,66 +182,66 @@ static WRITE_HANDLER( pending_command_clear_w )
 
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x300000, 0x3fffff, extrarom1_r },
-	{ 0x400000, 0x4fffff, extrarom2_r },
-	{ 0x500000, 0x5fffff, extrarom2_r },	/* mirror */
-	{ 0xa00000, 0xa0ffff, MRA16_RAM },
-	{ 0xd00000, 0xd01fff, MRA16_RAM },
-	{ 0xe00000, 0xe01fff, MRA16_RAM },
-	{ 0xfe0000, 0xfeffff, MRA16_RAM },
-	{ 0xffd000, 0xffdfff, MRA16_RAM },
-	{ 0xffe000, 0xffefff, MRA16_RAM },
-	{ 0xfff000, 0xfff001, input_port_0_word_r },
-	{ 0xfff002, 0xfff003, input_port_1_word_r },
-	{ 0xfff004, 0xfff005, input_port_2_word_r },
-	{ 0xfff006, 0xfff007, country_sndpending_r },
-	{ 0xfff00a, 0xfff00b, input_port_3_word_r },
-	{ 0xfff00e, 0xfff00f, input_port_4_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x300000, 0x3fffff) AM_READ(extrarom1_r)
+	AM_RANGE(0x400000, 0x4fffff) AM_READ(extrarom2_r)
+	AM_RANGE(0x500000, 0x5fffff) AM_READ(extrarom2_r)	/* mirror */
+	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xd00000, 0xd01fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xe00000, 0xe01fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffd000, 0xffdfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffe000, 0xffefff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfff002, 0xfff003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfff006, 0xfff007) AM_READ(country_sndpending_r)
+	AM_RANGE(0xfff00a, 0xfff00b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xfff00e, 0xfff00f) AM_READ(input_port_4_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0xa00000, 0xa0ffff, MWA16_RAM, &spriteram16_2, &spriteram_2_size },			// RAM-5
-	{ 0xd00000, 0xd01fff, crshrace_videoram1_w, &crshrace_videoram1 },				// RAM-3 H/L
-	{ 0xe00000, 0xe01fff, MWA16_RAM, &spriteram16, &spriteram_size },				// RAM-6
-	{ 0xffc000, 0xffc001, crshrace_roz_bank_w },
-	{ 0xfe0000, 0xfeffff, MWA16_RAM },	/* work RAM */								// RAM-1 H/L
-	{ 0xffd000, 0xffdfff, crshrace_videoram2_w, &crshrace_videoram2 },				// RAM-2 H/L
-	{ 0xffe000, 0xffefff, paletteram16_xGGGGGBBBBBRRRRR_word_w, &paletteram16 },	// RAM-4 H/L
-	{ 0xfff000, 0xfff001, crshrace_gfxctrl_w },
-	{ 0xfff008, 0xfff009, sound_command_w },
-	{ 0xfff020, 0xfff03f, MWA16_RAM, &K053936_0_ctrl },
-	{ 0xfff044, 0xfff047, MWA16_RAM },	// ??? moves during race
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2) AM_SIZE(&spriteram_2_size)			// RAM-5
+	AM_RANGE(0xd00000, 0xd01fff) AM_WRITE(crshrace_videoram1_w) AM_BASE(&crshrace_videoram1)				// RAM-3 H/L
+	AM_RANGE(0xe00000, 0xe01fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)				// RAM-6
+	AM_RANGE(0xffc000, 0xffc001) AM_WRITE(crshrace_roz_bank_w)
+	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_RAM)	/* work RAM */								// RAM-1 H/L
+	AM_RANGE(0xffd000, 0xffdfff) AM_WRITE(crshrace_videoram2_w) AM_BASE(&crshrace_videoram2)				// RAM-2 H/L
+	AM_RANGE(0xffe000, 0xffefff) AM_WRITE(paletteram16_xGGGGGBBBBBRRRRR_word_w) AM_BASE(&paletteram16)	// RAM-4 H/L
+	AM_RANGE(0xfff000, 0xfff001) AM_WRITE(crshrace_gfxctrl_w)
+	AM_RANGE(0xfff008, 0xfff009) AM_WRITE(sound_command_w)
+	AM_RANGE(0xfff020, 0xfff03f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)
+	AM_RANGE(0xfff044, 0xfff047) AM_WRITE(MWA16_RAM)	// ??? moves during race
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x04, 0x04, soundlatch_r },
-	{ 0x08, 0x08, YM2610_status_port_0_A_r },
-	{ 0x0a, 0x0a, YM2610_status_port_0_B_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(YM2610_status_port_0_B_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, crshrace_sh_bankswitch_w },
-	{ 0x04, 0x04, pending_command_clear_w },
-	{ 0x08, 0x08, YM2610_control_port_0_A_w },
-	{ 0x09, 0x09, YM2610_data_port_0_A_w },
-	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
-	{ 0x0b, 0x0b, YM2610_data_port_0_B_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(crshrace_sh_bankswitch_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(pending_command_clear_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(YM2610_data_port_0_B_w)
+ADDRESS_MAP_END
 
 
 
@@ -631,13 +631,13 @@ static MACHINE_DRIVER_START( crshrace )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,16000000)	/* 16 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,4000000)	/* 4 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

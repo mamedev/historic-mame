@@ -102,56 +102,56 @@ static WRITE_HANDLER( bladestl_speech_ctrl_w ){
 	UPD7759_start_w(0, data & 2);
 }
 
-static MEMORY_READ_START( bladestl_readmem )
-	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
-	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
-	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
-	{ 0x2400, 0x245f, paletteram_r },		/* Palette */
-	{ 0x2e01, 0x2e01, input_port_3_r },		/* 1P controls */
-	{ 0x2e02, 0x2e02, input_port_4_r },		/* 2P controls */
-	{ 0x2e03, 0x2e03, input_port_1_r },		/* DISPW #2 */
-	{ 0x2e40, 0x2e40, input_port_0_r },		/* DIPSW #1 */
-	{ 0x2e00, 0x2e00, input_port_2_r },		/* DIPSW #3, coinsw, startsw */
-	{ 0x2f00, 0x2f03, trackball_r },		/* Trackballs */
-	{ 0x2f80, 0x2f9f, K051733_r },			/* Protection: 051733 */
-	{ 0x4000, 0x5fff, MRA_RAM },			/* Work RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( bladestl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(K007342_r)			/* Color RAM + Video RAM */
+	AM_RANGE(0x2000, 0x21ff) AM_READ(K007420_r)			/* Sprite RAM */
+	AM_RANGE(0x2200, 0x23ff) AM_READ(K007342_scroll_r)	/* Scroll RAM */
+	AM_RANGE(0x2400, 0x245f) AM_READ(paletteram_r)		/* Palette */
+	AM_RANGE(0x2e01, 0x2e01) AM_READ(input_port_3_r)		/* 1P controls */
+	AM_RANGE(0x2e02, 0x2e02) AM_READ(input_port_4_r)		/* 2P controls */
+	AM_RANGE(0x2e03, 0x2e03) AM_READ(input_port_1_r)		/* DISPW #2 */
+	AM_RANGE(0x2e40, 0x2e40) AM_READ(input_port_0_r)		/* DIPSW #1 */
+	AM_RANGE(0x2e00, 0x2e00) AM_READ(input_port_2_r)		/* DIPSW #3, coinsw, startsw */
+	AM_RANGE(0x2f00, 0x2f03) AM_READ(trackball_r)		/* Trackballs */
+	AM_RANGE(0x2f80, 0x2f9f) AM_READ(K051733_r)			/* Protection: 051733 */
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)			/* Work RAM */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bladestl_writemem )
-	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
-	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
-	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
-	{ 0x2400, 0x245f, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* palette */
-	{ 0x2600, 0x2607, K007342_vreg_w },			/* Video Registers */
-	{ 0x2e80, 0x2e80, bladestl_sh_irqtrigger_w },/* cause interrupt on audio CPU */
-	{ 0x2ec0, 0x2ec0, watchdog_reset_w },		/* watchdog reset */
-	{ 0x2f40, 0x2f40, bladestl_bankswitch_w },	/* bankswitch control */
-	{ 0x2f80, 0x2f9f, K051733_w },				/* Protection: 051733 */
-	{ 0x2fc0, 0x2fc0, MWA_NOP },				/* ??? */
-	{ 0x4000, 0x5fff, MWA_RAM },				/* Work RAM */
-	{ 0x6000, 0x7fff, MWA_RAM },				/* banked ROM */
-	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( bladestl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(K007342_w)				/* Color RAM + Video RAM */
+	AM_RANGE(0x2000, 0x21ff) AM_WRITE(K007420_w)				/* Sprite RAM */
+	AM_RANGE(0x2200, 0x23ff) AM_WRITE(K007342_scroll_w)		/* Scroll RAM */
+	AM_RANGE(0x2400, 0x245f) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)/* palette */
+	AM_RANGE(0x2600, 0x2607) AM_WRITE(K007342_vreg_w)			/* Video Registers */
+	AM_RANGE(0x2e80, 0x2e80) AM_WRITE(bladestl_sh_irqtrigger_w)/* cause interrupt on audio CPU */
+	AM_RANGE(0x2ec0, 0x2ec0) AM_WRITE(watchdog_reset_w)		/* watchdog reset */
+	AM_RANGE(0x2f40, 0x2f40) AM_WRITE(bladestl_bankswitch_w)	/* bankswitch control */
+	AM_RANGE(0x2f80, 0x2f9f) AM_WRITE(K051733_w)				/* Protection: 051733 */
+	AM_RANGE(0x2fc0, 0x2fc0) AM_WRITE(MWA8_NOP)				/* ??? */
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM)				/* Work RAM */
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_RAM)				/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( bladestl_readmem_sound )
-	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
-	{ 0x1000, 0x1000, YM2203_status_port_0_r },	/* YM2203 */
-	{ 0x1001, 0x1001, YM2203_read_port_0_r },	/* YM2203 */
-	{ 0x4000, 0x4000, UPD7759_0_busy_r },		/* UPD7759 */
-	{ 0x6000, 0x6000, soundlatch_r },			/* soundlatch_r */
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( bladestl_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)				/* RAM */
+	AM_RANGE(0x1000, 0x1000) AM_READ(YM2203_status_port_0_r)	/* YM2203 */
+	AM_RANGE(0x1001, 0x1001) AM_READ(YM2203_read_port_0_r)	/* YM2203 */
+	AM_RANGE(0x4000, 0x4000) AM_READ(UPD7759_0_busy_r)		/* UPD7759 */
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)			/* soundlatch_r */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bladestl_writemem_sound )
-	{ 0x0000, 0x07ff, MWA_RAM },				/* RAM */
-	{ 0x1000, 0x1000, YM2203_control_port_0_w },/* YM2203 */
-	{ 0x1001, 0x1001, YM2203_write_port_0_w },	/* YM2203 */
-	{ 0x3000, 0x3000, bladestl_speech_ctrl_w },	/* UPD7759 */
-	{ 0x5000, 0x5000, MWA_NOP },				/* ??? */
-	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( bladestl_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)				/* RAM */
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM2203_control_port_0_w)/* YM2203 */
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM2203_write_port_0_w)	/* YM2203 */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(bladestl_speech_ctrl_w)	/* UPD7759 */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_NOP)				/* ??? */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -440,12 +440,12 @@ static MACHINE_DRIVER_START( bladestl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(HD6309, 3000000)		/* 24MHz/8 (?) */
-	MDRV_CPU_MEMORY(bladestl_readmem,bladestl_writemem)
+	MDRV_CPU_PROGRAM_MAP(bladestl_readmem,bladestl_writemem)
 	MDRV_CPU_VBLANK_INT(bladestl_interrupt,2) /* (1 IRQ + 1 NMI) */
 
 	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
-	MDRV_CPU_MEMORY(bladestl_readmem_sound,bladestl_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(bladestl_readmem_sound,bladestl_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -113,7 +113,7 @@ static MACHINE_INIT( ddragon2 )
 
 static WRITE_HANDLER( ddragon_bankswitch_w )
 {
-	const data8_t *RAM = memory_region(REGION_CPU1);
+	data8_t *RAM = memory_region(REGION_CPU1);
 
 	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
@@ -170,7 +170,7 @@ static WRITE_HANDLER( darktowr_bankswitch_w )
 
 static READ_HANDLER( darktowr_bank_r )
 {
-	const data8_t *RAM = memory_region(REGION_CPU1);
+	data8_t *RAM = memory_region(REGION_CPU1);
 
 	/* MCU is mapped into main cpu memory as a bank */
 	if (darktowr_bank==4) {
@@ -354,175 +354,177 @@ static READ_HANDLER( dd_adpcm_status_r )
 
 /*****************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, ddragon_spriteram_r },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x3800, 0x3800, input_port_0_r },
-	{ 0x3801, 0x3801, input_port_1_r },
-	{ 0x3802, 0x3802, port4_r },
-	{ 0x3803, 0x3803, input_port_2_r },
-	{ 0x3804, 0x3804, input_port_3_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(ddragon_spriteram_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3800) AM_READ(input_port_0_r)
+	AM_RANGE(0x3801, 0x3801) AM_READ(input_port_1_r)
+	AM_RANGE(0x3802, 0x3802) AM_READ(port4_r)
+	AM_RANGE(0x3803, 0x3803) AM_READ(input_port_2_r)
+	AM_RANGE(0x3804, 0x3804) AM_READ(input_port_3_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x1400, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
-	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
-	{ 0x3000, 0x37ff, ddragon_bgvideoram_w, &ddragon_bgvideoram },
-	{ 0x3808, 0x3808, ddragon_bankswitch_w },
-	{ 0x3809, 0x3809, MWA_RAM, &ddragon_scrollx_lo },
-	{ 0x380a, 0x380a, MWA_RAM, &ddragon_scrolly_lo },
-	{ 0x380b, 0x380f, ddragon_interrupt_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x11ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1200, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0x1400, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(ddragon_fgvideoram_w) AM_BASE(&ddragon_fgvideoram)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(ddragon_spriteram_w) AM_BASE(&ddragon_spriteram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(ddragon_bgvideoram_w) AM_BASE(&ddragon_bgvideoram)
+	AM_RANGE(0x3808, 0x3808) AM_WRITE(ddragon_bankswitch_w)
+	AM_RANGE(0x3809, 0x3809) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrollx_lo)
+	AM_RANGE(0x380a, 0x380a) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrolly_lo)
+	AM_RANGE(0x380b, 0x380f) AM_WRITE(ddragon_interrupt_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( darktowr_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, ddragon_spriteram_r },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x3800, 0x3800, input_port_0_r },
-	{ 0x3801, 0x3801, input_port_1_r },
-	{ 0x3802, 0x3802, port4_r },
-	{ 0x3803, 0x3803, input_port_2_r },
-	{ 0x3804, 0x3804, input_port_3_r },
-	{ 0x4000, 0x7fff, darktowr_bank_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( darktowr_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(ddragon_spriteram_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3800) AM_READ(input_port_0_r)
+	AM_RANGE(0x3801, 0x3801) AM_READ(input_port_1_r)
+	AM_RANGE(0x3802, 0x3802) AM_READ(port4_r)
+	AM_RANGE(0x3803, 0x3803) AM_READ(input_port_2_r)
+	AM_RANGE(0x3804, 0x3804) AM_READ(input_port_3_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(darktowr_bank_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( darktowr_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x1400, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
-	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
-	{ 0x3000, 0x37ff, ddragon_bgvideoram_w, &ddragon_bgvideoram },
-	{ 0x3808, 0x3808, darktowr_bankswitch_w },
-	{ 0x3809, 0x3809, MWA_RAM, &ddragon_scrollx_lo },
-	{ 0x380a, 0x380a, MWA_RAM, &ddragon_scrolly_lo },
-	{ 0x380b, 0x380f, ddragon_interrupt_w },
-	{ 0x4000, 0x7fff, darktowr_bank_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( darktowr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x11ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1200, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0x1400, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(ddragon_fgvideoram_w) AM_BASE(&ddragon_fgvideoram)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(ddragon_spriteram_w) AM_BASE(&ddragon_spriteram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(ddragon_bgvideoram_w) AM_BASE(&ddragon_bgvideoram)
+	AM_RANGE(0x3808, 0x3808) AM_WRITE(darktowr_bankswitch_w)
+	AM_RANGE(0x3809, 0x3809) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrollx_lo)
+	AM_RANGE(0x380a, 0x380a) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrolly_lo)
+	AM_RANGE(0x380b, 0x380f) AM_WRITE(ddragon_interrupt_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(darktowr_bank_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( dd2_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, ddragon_spriteram_r },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x3800, 0x3800, input_port_0_r },
-	{ 0x3801, 0x3801, input_port_1_r },
-	{ 0x3802, 0x3802, port4_r },
-	{ 0x3803, 0x3803, input_port_2_r },
-	{ 0x3804, 0x3804, input_port_3_r },
-	{ 0x3c00, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(ddragon_spriteram_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3800) AM_READ(input_port_0_r)
+	AM_RANGE(0x3801, 0x3801) AM_READ(input_port_1_r)
+	AM_RANGE(0x3802, 0x3802) AM_READ(port4_r)
+	AM_RANGE(0x3803, 0x3803) AM_READ(input_port_2_r)
+	AM_RANGE(0x3804, 0x3804) AM_READ(input_port_3_r)
+	AM_RANGE(0x3c00, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dd2_writemem )
-	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
-	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
-	{ 0x3000, 0x37ff, ddragon_bgvideoram_w, &ddragon_bgvideoram },
-	{ 0x3808, 0x3808, ddragon_bankswitch_w },
-	{ 0x3809, 0x3809, MWA_RAM, &ddragon_scrollx_lo },
-	{ 0x380a, 0x380a, MWA_RAM, &ddragon_scrolly_lo },
-	{ 0x380b, 0x380f, ddragon_interrupt_w },
-	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(ddragon_fgvideoram_w) AM_BASE(&ddragon_fgvideoram)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(ddragon_spriteram_w) AM_BASE(&ddragon_spriteram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(ddragon_bgvideoram_w) AM_BASE(&ddragon_bgvideoram)
+	AM_RANGE(0x3808, 0x3808) AM_WRITE(ddragon_bankswitch_w)
+	AM_RANGE(0x3809, 0x3809) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrollx_lo)
+	AM_RANGE(0x380a, 0x380a) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrolly_lo)
+	AM_RANGE(0x380b, 0x380f) AM_WRITE(ddragon_interrupt_w)
+	AM_RANGE(0x3c00, 0x3dff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3e00, 0x3fff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( toffy_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x1400, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
-	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
-	{ 0x3000, 0x37ff, ddragon_bgvideoram_w, &ddragon_bgvideoram },
-	{ 0x3808, 0x3808, toffy_bankswitch_w },
-	{ 0x3809, 0x3809, MWA_RAM, &ddragon_scrollx_lo },
-	{ 0x380a, 0x380a, MWA_RAM, &ddragon_scrolly_lo },
-	{ 0x380b, 0x380f, ddragon_interrupt_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( toffy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x11ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1200, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0x1400, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(ddragon_fgvideoram_w) AM_BASE(&ddragon_fgvideoram)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(ddragon_spriteram_w) AM_BASE(&ddragon_spriteram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(ddragon_bgvideoram_w) AM_BASE(&ddragon_bgvideoram)
+	AM_RANGE(0x3808, 0x3808) AM_WRITE(toffy_bankswitch_w)
+	AM_RANGE(0x3809, 0x3809) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrollx_lo)
+	AM_RANGE(0x380a, 0x380a) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrolly_lo)
+	AM_RANGE(0x380b, 0x380f) AM_WRITE(ddragon_interrupt_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x0000, 0x001f, ddragon_hd63701_internal_registers_r },
-	{ 0x001f, 0x0fff, MRA_RAM },
-	{ 0x8000, 0x8fff, ddragon_spriteram_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(ddragon_hd63701_internal_registers_r)
+	AM_RANGE(0x001f, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(ddragon_spriteram_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x0000, 0x001f, ddragon_hd63701_internal_registers_w },
-	{ 0x001f, 0x0fff, MWA_RAM },
-	{ 0x8000, 0x8fff, ddragon_spriteram_w },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(ddragon_hd63701_internal_registers_w)
+	AM_RANGE(0x001f, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(ddragon_spriteram_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1000, soundlatch_r },
-	{ 0x1800, 0x1800, dd_adpcm_status_r },
-	{ 0x2800, 0x2801, YM2151_status_port_0_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(soundlatch_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(dd_adpcm_status_r)
+	AM_RANGE(0x2800, 0x2801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x2800, 0x2800, YM2151_register_port_0_w },
-	{ 0x2801, 0x2801, YM2151_data_port_0_w },
-	{ 0x3800, 0x3807, dd_adpcm_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2801, 0x2801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x3800, 0x3807) AM_WRITE(dd_adpcm_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( dd2_sub_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc3ff, ddragon_spriteram_r },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_READ(ddragon_spriteram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dd2_sub_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, ddragon_spriteram_w },
-	{ 0xd000, 0xd000, ddragon2_sub_irq_ack_w },
-	{ 0xe000, 0xe000, ddragon2_sub_irq_w },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(ddragon_spriteram_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(ddragon2_sub_irq_ack_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(ddragon2_sub_irq_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( dd2_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xA000, 0xA000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xA000, 0xA000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dd2_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( dd2_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0007, darktowr_mcu_r },
-	{ 0x0008, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0007) AM_READ(darktowr_mcu_r)
+	AM_RANGE(0x0008, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0007, darktowr_mcu_w, &darktowr_mcu_ports },
-	{ 0x0008, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0007) AM_WRITE(darktowr_mcu_w) AM_BASE(&darktowr_mcu_ports)
+	AM_RANGE(0x0008, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /*****************************************************************************/
 
@@ -900,15 +902,15 @@ static MACHINE_DRIVER_START( ddragon )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
 	MDRV_CPU_ADD(HD63701, 3579545 / 3) /* This divider seems correct by comparison to real board */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
  	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
@@ -935,18 +937,18 @@ static MACHINE_DRIVER_START( darktowr )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(darktowr_readmem,darktowr_writemem)
+	MDRV_CPU_PROGRAM_MAP(darktowr_readmem,darktowr_writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
  	MDRV_CPU_ADD(HD63701, 3579545 / 3)
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
  	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(M68705,8000000/2)  /* ? MHz */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
@@ -973,15 +975,15 @@ static MACHINE_DRIVER_START( ddragonb )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
  	MDRV_CPU_ADD(HD6309, 12000000 / 3) /* 4 MHz */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
  	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
@@ -1008,15 +1010,15 @@ static MACHINE_DRIVER_START( ddragon2 )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(dd2_readmem,dd2_writemem)
+	MDRV_CPU_PROGRAM_MAP(dd2_readmem,dd2_writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
 	MDRV_CPU_ADD(Z80,12000000 / 3) /* 4 MHz */
-	MDRV_CPU_MEMORY(dd2_sub_readmem,dd2_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(dd2_sub_readmem,dd2_sub_writemem)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(dd2_sound_readmem,dd2_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(dd2_sound_readmem,dd2_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
@@ -1043,12 +1045,12 @@ static MACHINE_DRIVER_START( toffy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,3579545) // 12 MHz / 2 or 3.579545 ?
-	MDRV_CPU_MEMORY(readmem,toffy_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,toffy_writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
 	MDRV_CPU_ADD(M6809, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)

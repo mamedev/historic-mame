@@ -113,50 +113,50 @@ static WRITE16_HANDLER( semicom_soundcmd_w )
 
 /* Snow Bros Memory Map */
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x300000, 0x300001, snowbros_68000_sound_r },
-	{ 0x500000, 0x500001, input_port_0_word_r },
-	{ 0x500002, 0x500003, input_port_1_word_r },
-	{ 0x500004, 0x500005, input_port_2_word_r },
-	{ 0x600000, 0x6001ff, MRA16_RAM },
-	{ 0x700000, 0x701fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x300001) AM_READ(snowbros_68000_sound_r)
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x600000, 0x6001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x200000, 0x200001, watchdog_reset16_w },
-	{ 0x300000, 0x300001, snowbros_68000_sound_w },
-	{ 0x400000, 0x400001, snowbros_flipscreen_w },
-	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x700000, 0x701fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
-	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(snowbros_68000_sound_w)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(snowbros_flipscreen_w)
+	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP)	/* IRQ 4 acknowledge? */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP)	/* IRQ 3 acknowledge? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* IRQ 2 acknowledge? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x02, 0x02, YM3812_status_port_0_r },
-	{ 0x04, 0x04, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x02, 0x02, YM3812_control_port_0_w },
-	{ 0x03, 0x03, YM3812_write_port_0_w },
-	{ 0x04, 0x04, soundlatch_w },	/* goes back to the main CPU, checked during boot */
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(soundlatch_w)	/* goes back to the main CPU, checked during boot */
+ADDRESS_MAP_END
 
 /* SemiCom Memory Map
 
@@ -165,46 +165,46 @@ sound hardware is also different
 
 */
 
-static MEMORY_READ16_START( hyperpac_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
+static ADDRESS_MAP_START( hyperpac_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
 
-	{ 0x500000, 0x500001, input_port_0_word_r },
-	{ 0x500002, 0x500003, input_port_1_word_r },
-	{ 0x500004, 0x500005, input_port_2_word_r },
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r)
 
-	{ 0x600000, 0x6001ff, MRA16_RAM },
-	{ 0x700000, 0x701fff, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0x600000, 0x6001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( hyperpac_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &hyperpac_ram },
-	{ 0x300000, 0x300001, semicom_soundcmd_w },
-//	{ 0x400000, 0x400001,  }, ???
-	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x700000, 0x701fff, MWA16_RAM, &spriteram16, &spriteram_size },
+static ADDRESS_MAP_START( hyperpac_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&hyperpac_ram)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(semicom_soundcmd_w)
+//	AM_RANGE(0x400000, 0x400001) ???
+	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 
-	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
-	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
-MEMORY_END
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP)	/* IRQ 4 acknowledge? */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP)	/* IRQ 3 acknowledge? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* IRQ 2 acknowledge? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( hyperpac_sound_readmem )
-	{ 0x0000, 0xcfff, MRA_ROM },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xf001, 0xf001, YM2151_status_port_0_r },
-	{ 0xf008, 0xf008, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( hyperpac_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf001, 0xf001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf008, 0xf008) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hyperpac_sound_writemem )
-	{ 0x0000, 0xcfff, MWA_ROM },
-	{ 0xd000, 0xd7ff, MWA_RAM },
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },
-	{ 0xf002, 0xf002, OKIM6295_data_0_w },
-//	{ 0xf006, 0xf006,  }, ???
-MEMORY_END
+static ADDRESS_MAP_START( hyperpac_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
+//	AM_RANGE(0xf006, 0xf006) ???
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
@@ -255,7 +255,7 @@ INPUT_PORTS_START( snowbros )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
@@ -329,7 +329,7 @@ INPUT_PORTS_START( snowbroj )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
@@ -603,17 +603,26 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
+MACHINE_INIT (semiprot)
+{
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
+
+	for (i = 0;i < 0x200/2;i++)
+	hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+}
+
 static MACHINE_DRIVER_START( snowbros )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000) /* 8 Mhz - confirmed */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 6000000) /* 6 MHz - confirmed */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(57.5) /* ~57.5 - confirmed */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -643,16 +652,16 @@ static MACHINE_DRIVER_START( wintbob )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( hyperpac )
+static MACHINE_DRIVER_START( semicom )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(snowbros)
 	MDRV_CPU_REPLACE("main", M68000, 16000000) /* 16mhz or 12mhz ? */
-	MDRV_CPU_MEMORY(hyperpac_readmem,hyperpac_writemem)
+	MDRV_CPU_PROGRAM_MAP(hyperpac_readmem,hyperpac_writemem)
 
 	MDRV_CPU_REPLACE("sound", Z80, 4000000) /* 4.0 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(hyperpac_sound_readmem,hyperpac_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(hyperpac_sound_readmem,hyperpac_sound_writemem)
 
 	MDRV_GFXDECODE(hyperpac_gfxdecodeinfo)
 
@@ -661,9 +670,14 @@ static MACHINE_DRIVER_START( hyperpac )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( semiprot )
+	MDRV_IMPORT_FROM(semicom)
+	MDRV_MACHINE_INIT ( semiprot )
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( _4in1 )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(hyperpac)
+	MDRV_IMPORT_FROM(semicom)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -793,6 +807,14 @@ ROM_START( moremorp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) SHA1(a79d417e7525a25dd6697da9f3d1de269e759d2e) )
 
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(782dd2aa) SHA1(2587734271e0c85cb76bcdee171366c4e6fc9f81) )
+
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) SHA1(48138547822a8e76c101dd4189d581f80eee1e24) )
 
@@ -833,7 +855,7 @@ ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
 	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(5a06a928) SHA1(d35f239f2dddfe174547c1404aed6faf6b61e19f) ) // half missing
+	ROM_LOAD( "u78", 0x000000, 0x200000, CRC(6c1fbc9c) SHA1(067f32cae89fd4d57b90be659d2d648e557c11df) )
 ROM_END
 
 
@@ -862,11 +884,29 @@ ROM_START( cookbib2 )
 	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) SHA1(bede6bdd8331128b9f2b229d718133470bf407c9) )
 ROM_END
 
+READ16_HANDLER ( moremorp_0a_read )
+{
+	return 0x000a;
+}
+
+static DRIVER_INIT( moremorp )
+{
+//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//	int i;
+
+//	for (i = 0;i < 0x200/2;i++)
+//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+
+	/* explicit check in the code */
+	install_mem_read16_handler (0, 0x200000, 0x200001, moremorp_0a_read );
+}
+
+
 static DRIVER_INIT( cookbib2 )
 {
 //	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
-	int i;
+//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//	int i;
 //	hyperpac_ram[0xf000/2] = 0x46fc;
 //	hyperpac_ram[0xf002/2] = 0x2700;
 
@@ -883,8 +923,8 @@ static DRIVER_INIT( cookbib2 )
 //for (i = 0;i < sizeof(cookbib2_mcu68k)/sizeof(cookbib2_mcu68k[0]);i++)
 //		hyperpac_ram[0xf000/2 + i] = cookbib2_mcu68k[i];
 
-	for (i = 0;i < 0x200/2;i++)
-		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+//	for (i = 0;i < 0x200/2;i++)
+//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 
 
 	// trojan is actually buggy and gfx flicker like crazy
@@ -1266,12 +1306,13 @@ GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Br
 GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)" )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )
 /* SemiCom Games */
-GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
-GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
-GAME (1996, cookbib2, 0,        hyperpac, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" ) // sound cuts out in later levels? (investigate)
+GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
+GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
+GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
+GAME( 1999, moremorp, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
+
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
-GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX(1997, 3in1semi, 0,        semicom, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 /* bad dump */
 GAMEX(199?, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING ) // gfx rom is half the size it should be, pacman 2 and snowbros are playable tho

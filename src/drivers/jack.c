@@ -67,53 +67,53 @@ static WRITE_HANDLER( jack_sh_command_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0xb000, 0xb07f, MRA_RAM },
-	{ 0xb500, 0xb500, input_port_0_r },
-	{ 0xb501, 0xb501, input_port_1_r },
-	{ 0xb502, 0xb502, input_port_2_r },
-	{ 0xb503, 0xb503, input_port_3_r },
-	{ 0xb504, 0xb504, input_port_4_r },
-	{ 0xb505, 0xb505, input_port_5_r },
-	{ 0xb506, 0xb507, jack_flipscreen_r },
-	{ 0xb800, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb07f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb500, 0xb500) AM_READ(input_port_0_r)
+	AM_RANGE(0xb501, 0xb501) AM_READ(input_port_1_r)
+	AM_RANGE(0xb502, 0xb502) AM_READ(input_port_2_r)
+	AM_RANGE(0xb503, 0xb503) AM_READ(input_port_3_r)
+	AM_RANGE(0xb504, 0xb504) AM_READ(input_port_4_r)
+	AM_RANGE(0xb505, 0xb505) AM_READ(input_port_5_r)
+	AM_RANGE(0xb506, 0xb507) AM_READ(jack_flipscreen_r)
+	AM_RANGE(0xb800, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, MWA_RAM },
-	{ 0xb000, 0xb07f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xb400, 0xb400, jack_sh_command_w },
-	{ 0xb506, 0xb507, jack_flipscreen_w },
-	{ 0xb600, 0xb61f, jack_paletteram_w, &paletteram },
-	{ 0xb800, 0xbbff, jack_videoram_w, &videoram },
-	{ 0xbc00, 0xbfff, jack_colorram_w, &colorram },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xb000, 0xb07f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xb400, 0xb400) AM_WRITE(jack_sh_command_w)
+	AM_RANGE(0xb506, 0xb507) AM_WRITE(jack_flipscreen_w)
+	AM_RANGE(0xb600, 0xb61f) AM_WRITE(jack_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xb800, 0xbbff) AM_WRITE(jack_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xbc00, 0xbfff) AM_WRITE(jack_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x6000, 0x6fff, MWA_NOP },  /* R/C filter ??? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_NOP)  /* R/C filter ??? */
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x40, 0x40, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x80, 0x80, AY8910_control_port_0_w },
-	{ 0x40, 0x40, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( jack )
@@ -699,13 +699,13 @@ static MACHINE_DRIVER_START( jack )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18000000/6)	/* 3 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* jack needs 1 or its too fast */
 
 	MDRV_CPU_ADD(Z80,18000000/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

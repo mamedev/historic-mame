@@ -120,71 +120,71 @@ static INTERRUPT_GEN( xainA_interrupt )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, xain_sharedram_r },
-	{ 0x2000, 0x37ff, MRA_RAM },
-	{ 0x3a00, 0x3a00, input_port_0_r },
-	{ 0x3a01, 0x3a01, input_port_1_r },
-	{ 0x3a02, 0x3a02, input_port_2_r },
-	{ 0x3a03, 0x3a03, input_port_3_r },
-	{ 0x3a04, 0x3a04, xain_68705_r },	/* from the 68705 */
-	{ 0x3a05, 0x3a05, input_port_4_r },
-//	{ 0x3a06, 0x3a06, MRA_NOP },	/* ?? read (and discarded) on startup. Maybe reset the 68705 */
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(xain_sharedram_r)
+	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3a00, 0x3a00) AM_READ(input_port_0_r)
+	AM_RANGE(0x3a01, 0x3a01) AM_READ(input_port_1_r)
+	AM_RANGE(0x3a02, 0x3a02) AM_READ(input_port_2_r)
+	AM_RANGE(0x3a03, 0x3a03) AM_READ(input_port_3_r)
+	AM_RANGE(0x3a04, 0x3a04) AM_READ(xain_68705_r)	/* from the 68705 */
+	AM_RANGE(0x3a05, 0x3a05) AM_READ(input_port_4_r)
+//	AM_RANGE(0x3a06, 0x3a06) AM_READ(MRA8_NOP)	/* ?? read (and discarded) on startup. Maybe reset the 68705 */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, xain_sharedram_w, &xain_sharedram },
-	{ 0x2000, 0x27ff, xain_charram_w, &xain_charram },
-	{ 0x2800, 0x2fff, xain_bgram1_w, &xain_bgram1 },
-	{ 0x3000, 0x37ff, xain_bgram0_w, &xain_bgram0 },
-	{ 0x3800, 0x397f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3a00, 0x3a01, xain_scrollxP1_w },
-	{ 0x3a02, 0x3a03, xain_scrollyP1_w },
-	{ 0x3a04, 0x3a05, xain_scrollxP0_w },
-	{ 0x3a06, 0x3a07, xain_scrollyP0_w },
-	{ 0x3a08, 0x3a08, xain_sound_command_w },
-	{ 0x3a09, 0x3a09, MWA_NOP },	/* NMI acknowledge */
-	{ 0x3a0a, 0x3a0a, xain_firqA_clear_w },
-	{ 0x3a0b, 0x3a0b, xain_irqA_clear_w },
-	{ 0x3a0c, 0x3a0c, xain_irqB_assert_w },
-	{ 0x3a0d, 0x3a0d, xain_flipscreen_w },
-	{ 0x3a0e, 0x3a0e, xain_68705_w },	/* to 68705 */
-	{ 0x3a0f, 0x3a0f, xainCPUA_bankswitch_w },
-	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(xain_sharedram_w) AM_BASE(&xain_sharedram)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(xain_charram_w) AM_BASE(&xain_charram)
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(xain_bgram1_w) AM_BASE(&xain_bgram1)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(xain_bgram0_w) AM_BASE(&xain_bgram0)
+	AM_RANGE(0x3800, 0x397f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3a00, 0x3a01) AM_WRITE(xain_scrollxP1_w)
+	AM_RANGE(0x3a02, 0x3a03) AM_WRITE(xain_scrollyP1_w)
+	AM_RANGE(0x3a04, 0x3a05) AM_WRITE(xain_scrollxP0_w)
+	AM_RANGE(0x3a06, 0x3a07) AM_WRITE(xain_scrollyP0_w)
+	AM_RANGE(0x3a08, 0x3a08) AM_WRITE(xain_sound_command_w)
+	AM_RANGE(0x3a09, 0x3a09) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
+	AM_RANGE(0x3a0a, 0x3a0a) AM_WRITE(xain_firqA_clear_w)
+	AM_RANGE(0x3a0b, 0x3a0b) AM_WRITE(xain_irqA_clear_w)
+	AM_RANGE(0x3a0c, 0x3a0c) AM_WRITE(xain_irqB_assert_w)
+	AM_RANGE(0x3a0d, 0x3a0d) AM_WRITE(xain_flipscreen_w)
+	AM_RANGE(0x3a0e, 0x3a0e) AM_WRITE(xain_68705_w)	/* to 68705 */
+	AM_RANGE(0x3a0f, 0x3a0f) AM_WRITE(xainCPUA_bankswitch_w)
+	AM_RANGE(0x3c00, 0x3dff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3e00, 0x3fff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmemB )
-	{ 0x0000, 0x1fff, xain_sharedram_r },
-	{ 0x4000, 0x7fff, MRA_BANK2 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmemB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(xain_sharedram_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writememB )
-	{ 0x0000, 0x1fff, xain_sharedram_w },
-	{ 0x2000, 0x2000, xain_irqA_assert_w },
-	{ 0x2800, 0x2800, xain_irqB_clear_w },
-	{ 0x3000, 0x3000, xainCPUB_bankswitch_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writememB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(xain_sharedram_w)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(xain_irqA_assert_w)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(xain_irqB_clear_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(xainCPUB_bankswitch_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x1000, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2800, 0x2800, YM2203_control_port_0_w },
-	{ 0x2801, 0x2801, YM2203_write_port_0_w },
-	{ 0x3000, 0x3000, YM2203_control_port_1_w },
-	{ 0x3001, 0x3001, YM2203_write_port_1_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x2801, 0x2801) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -325,7 +325,7 @@ static MACHINE_DRIVER_START( xsleena )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(xainA_interrupt,4)	/* wrong, this is just a hack */
 								/* IRQs are caused by CPU B */
 								/* FIRQs are caused by ? */
@@ -333,11 +333,11 @@ static MACHINE_DRIVER_START( xsleena )
 								/* the vblank bit before RTI, and there are other places in */
 								/* the code that check that bit, so it would cause lockups */
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
-	MDRV_CPU_MEMORY(readmemB,writememB)
+	MDRV_CPU_PROGRAM_MAP(readmemB,writememB)
 
 	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* FIRQs are caused by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

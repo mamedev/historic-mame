@@ -75,43 +75,43 @@ static WRITE_HANDLER( dogfgt_soundcontrol_w )
 
 
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x07ff, sharedram_r },
-	{ 0x1800, 0x1800, input_port_0_r },
-	{ 0x1810, 0x1810, input_port_1_r },
-	{ 0x1820, 0x1820, input_port_2_r },
-	{ 0x1830, 0x1830, input_port_3_r },
-	{ 0x2000, 0x3fff, dogfgt_bitmapram_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(sharedram_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
+	AM_RANGE(0x1810, 0x1810) AM_READ(input_port_1_r)
+	AM_RANGE(0x1820, 0x1820) AM_READ(input_port_2_r)
+	AM_RANGE(0x1830, 0x1830) AM_READ(input_port_3_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(dogfgt_bitmapram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x07ff, sharedram_w, &sharedram },
-	{ 0x0f80, 0x0fdf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1000, 0x17ff, dogfgt_bgvideoram_w, &dogfgt_bgvideoram },
-	{ 0x1800, 0x1800, dogfgt_1800_w },	/* text color, flip screen & coin counters */
-	{ 0x1810, 0x1810, subirqtrigger_w },
-	{ 0x1820, 0x1823, dogfgt_scroll_w },
-	{ 0x1824, 0x1824, dogfgt_plane_select_w },
-	{ 0x1830, 0x1830, dogfgt_soundlatch_w },
-	{ 0x1840, 0x1840, dogfgt_soundcontrol_w },
-	{ 0x1870, 0x187f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0x2000, 0x3fff, dogfgt_bitmapram_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
+	AM_RANGE(0x0f80, 0x0fdf) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(dogfgt_bgvideoram_w) AM_BASE(&dogfgt_bgvideoram)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(dogfgt_1800_w)	/* text color, flip screen & coin counters */
+	AM_RANGE(0x1810, 0x1810) AM_WRITE(subirqtrigger_w)
+	AM_RANGE(0x1820, 0x1823) AM_WRITE(dogfgt_scroll_w)
+	AM_RANGE(0x1824, 0x1824) AM_WRITE(dogfgt_plane_select_w)
+	AM_RANGE(0x1830, 0x1830) AM_WRITE(dogfgt_soundlatch_w)
+	AM_RANGE(0x1840, 0x1840) AM_WRITE(dogfgt_soundcontrol_w)
+	AM_RANGE(0x1870, 0x187f) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(dogfgt_bitmapram_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x27ff, sharedram_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(sharedram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x27ff, sharedram_w },
-	{ 0x4000, 0x4000, sub_irqack_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(sharedram_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(sub_irqack_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -255,11 +255,11 @@ static MACHINE_DRIVER_START( dogfgt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ???? */
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,16)	/* ? controls music tempo */
 
 	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ???? */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

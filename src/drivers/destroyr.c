@@ -174,30 +174,30 @@ READ_HANDLER( destroyr_scanline_r )
 }
 
 
-static MEMORY_READ_START( destroyr_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x0fff, destroyr_ram_r },
-	{ 0x1000, 0x1fff, destroyr_input_r },
-	{ 0x2000, 0x2fff, input_port_2_r },
-	{ 0x6000, 0x6fff, destroyr_scanline_r },
-	{ 0x7000, 0x77ff, MRA_NOP }, /* missing translation ROMs */
-	{ 0x7800, 0x7fff, MRA_ROM }, /* program */
-	{ 0xf800, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( destroyr_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x0fff) AM_READ(destroyr_ram_r)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(destroyr_input_r)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(input_port_2_r)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(destroyr_scanline_r)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_NOP) /* missing translation ROMs */
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( destroyr_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM, &destroyr_zero_page },
-	{ 0x0100, 0x0fff, destroyr_ram_w },
-	{ 0x1000, 0x1fff, destroyr_output_w },
-	{ 0x3000, 0x30ff, MWA_RAM, &destroyr_alpha_num_ram },
-	{ 0x4000, 0x401f, MWA_RAM, &destroyr_major_obj_ram },
-	{ 0x5000, 0x5000, destroyr_cursor_load_w },
-	{ 0x5001, 0x5001, destroyr_interrupt_ack_w },
-	{ 0x5002, 0x5007, MWA_RAM, &destroyr_minor_obj_ram },
-	{ 0x7000, 0x77ff, MWA_NOP }, /* missing translation ROMs */
-	{ 0x7800, 0x7fff, MWA_ROM }, /* program */
-	{ 0xf800, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( destroyr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_zero_page)
+	AM_RANGE(0x0100, 0x0fff) AM_WRITE(destroyr_ram_w)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(destroyr_output_w)
+	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_alpha_num_ram)
+	AM_RANGE(0x4000, 0x401f) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_major_obj_ram)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(destroyr_cursor_load_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(destroyr_interrupt_ack_w)
+	AM_RANGE(0x5002, 0x5007) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_minor_obj_ram)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_NOP) /* missing translation ROMs */
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( destroyr )
@@ -356,7 +356,7 @@ static MACHINE_DRIVER_START( destroyr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 12096000 / 16)
-	MDRV_CPU_MEMORY(destroyr_readmem, destroyr_writemem)
+	MDRV_CPU_PROGRAM_MAP(destroyr_readmem, destroyr_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)

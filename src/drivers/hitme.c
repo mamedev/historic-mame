@@ -239,43 +239,43 @@ static READ_HANDLER ( hitme_unknown_r )
 }
 #endif
 
-static MEMORY_READ_START( hitme_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0c00, 0x0eff, MRA_RAM },
-	{ 0x1000, 0x13ff, MRA_RAM },
+static ADDRESS_MAP_START( hitme_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(MRA8_RAM)
 	/* guesswork, probably wrong but it reads from these addresses */
-	{ 0x1420, 0x1420, hitme_port_0_r },
-	{ 0x1520, 0x1520, hitme_port_1_r },
-	{ 0x1620, 0x1620, hitme_port_2_r },
-	{ 0x1720, 0x1720, hitme_port_3_r },
-MEMORY_END
+	AM_RANGE(0x1420, 0x1420) AM_READ(hitme_port_0_r)
+	AM_RANGE(0x1520, 0x1520) AM_READ(hitme_port_1_r)
+	AM_RANGE(0x1620, 0x1620) AM_READ(hitme_port_2_r)
+	AM_RANGE(0x1720, 0x1720) AM_READ(hitme_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hitme_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0c00, 0x0eff, hitme_vidram_w, &hitme_vidram },
-	{ 0x1000, 0x13ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( hitme_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0c00, 0x0eff) AM_WRITE(hitme_vidram_w) AM_BASE(&hitme_vidram)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( hitme_readport )
-	{ 0x14, 0x14, hitme_port_0_r },
-	{ 0x15, 0x15, hitme_port_1_r },
-	{ 0x16, 0x16, hitme_port_2_r },
-	{ 0x17, 0x17, hitme_port_3_r },
-	{ 0x18, 0x18, input_port_4_r },
-	{ 0x19, 0x19, input_port_5_r },
-PORT_END
+static ADDRESS_MAP_START( hitme_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_READ(hitme_port_0_r)
+	AM_RANGE(0x15, 0x15) AM_READ(hitme_port_1_r)
+	AM_RANGE(0x16, 0x16) AM_READ(hitme_port_2_r)
+	AM_RANGE(0x17, 0x17) AM_READ(hitme_port_3_r)
+	AM_RANGE(0x18, 0x18) AM_READ(input_port_4_r)
+	AM_RANGE(0x19, 0x19) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( hitme_writeport )
-	{ 0x1d, 0x1d, output_port_0_w }, /* OUT0 */
-//	{ 0x1e, 0x1e, output_port_1_r }, /* OUT1 */
-PORT_END
+static ADDRESS_MAP_START( hitme_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x1d, 0x1d) AM_WRITE(output_port_0_w) /* OUT0 */
+//	AM_RANGE(0x1e, 0x1e) AM_WRITE(output_port_1_r) /* OUT1 */
+ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( hitme )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 8945000/16 )	/* .559 MHz */
-	MDRV_CPU_MEMORY(hitme_readmem,hitme_writemem)
-	MDRV_CPU_PORTS(hitme_readport,hitme_writeport)
+	MDRV_CPU_PROGRAM_MAP(hitme_readmem,hitme_writemem)
+	MDRV_CPU_IO_MAP(hitme_readport,hitme_writeport)
 	/* interrupts not used */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -306,8 +306,8 @@ static MACHINE_DRIVER_START( brickyrd )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 8945000/16 )	/* .559 MHz */
-	MDRV_CPU_MEMORY(hitme_readmem,hitme_writemem)
-	MDRV_CPU_PORTS(hitme_readport,hitme_writeport)
+	MDRV_CPU_PROGRAM_MAP(hitme_readmem,hitme_writemem)
+	MDRV_CPU_IO_MAP(hitme_readport,hitme_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

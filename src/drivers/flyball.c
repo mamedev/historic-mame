@@ -168,30 +168,30 @@ WRITE_HANDLER( flyball_misc_w )
 }
 
 
-static MEMORY_READ_START( flyball_readmem )
-	{ 0x0000, 0x01ff, flyball_ram_r },
-	{ 0x0800, 0x0800, MRA_NOP },
-	{ 0x0802, 0x0802, flyball_scanline_r },
-	{ 0x0803, 0x0803, flyball_potsense_r },
-	{ 0x0b00, 0x0b00, flyball_input_r },
-	{ 0x1000, 0x1fff, MRA_ROM }, /* program */
-	{ 0xf000, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( flyball_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(flyball_ram_r)
+	AM_RANGE(0x0800, 0x0800) AM_READ(MRA8_NOP)
+	AM_RANGE(0x0802, 0x0802) AM_READ(flyball_scanline_r)
+	AM_RANGE(0x0803, 0x0803) AM_READ(flyball_potsense_r)
+	AM_RANGE(0x0b00, 0x0b00) AM_READ(flyball_input_r)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( flyball_writemem )
-	{ 0x0000, 0x01ff, flyball_ram_w },
-	{ 0x0800, 0x0800, MWA_NOP },
-	{ 0x0801, 0x0801, flyball_pitcher_pic_w },
-	{ 0x0804, 0x0804, flyball_ball_vert_w },
-	{ 0x0805, 0x0805, flyball_ball_horz_w },
-	{ 0x0806, 0x0806, flyball_pitcher_vert_w },
-	{ 0x0807, 0x0807, flyball_pitcher_horz_w },
-	{ 0x0900, 0x0900, flyball_potmask_w },
-	{ 0x0a00, 0x0a07, flyball_misc_w },
-	{ 0x0d00, 0x0eff, MWA_RAM, &flyball_playfield_ram },
-	{ 0x1000, 0x1fff, MWA_ROM }, /* program */
-	{ 0xf000, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( flyball_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(flyball_ram_w)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(flyball_pitcher_pic_w)
+	AM_RANGE(0x0804, 0x0804) AM_WRITE(flyball_ball_vert_w)
+	AM_RANGE(0x0805, 0x0805) AM_WRITE(flyball_ball_horz_w)
+	AM_RANGE(0x0806, 0x0806) AM_WRITE(flyball_pitcher_vert_w)
+	AM_RANGE(0x0807, 0x0807) AM_WRITE(flyball_pitcher_horz_w)
+	AM_RANGE(0x0900, 0x0900) AM_WRITE(flyball_potmask_w)
+	AM_RANGE(0x0a00, 0x0a07) AM_WRITE(flyball_misc_w)
+	AM_RANGE(0x0d00, 0x0eff) AM_WRITE(MWA8_RAM) AM_BASE(&flyball_playfield_ram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( flyball )
@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( flyball )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(flyball_readmem, flyball_writemem)
+	MDRV_CPU_PROGRAM_MAP(flyball_readmem, flyball_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

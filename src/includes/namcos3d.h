@@ -20,6 +20,11 @@ typedef struct
 	double power;	/* 0.0..1.0 */
 } namcos22_camera;
 
+typedef struct
+{
+	double zoomx, zoomy, cx, cy;
+} namcos21_camera;
+
 struct RotParam
 {
 	double thx_sin, thx_cos;
@@ -36,13 +41,18 @@ void namcos3d_Start( struct mame_bitmap *pBitmap );
 
 void namcos22_BlitTri(
 	struct mame_bitmap *pBitmap,
+	/* const struct rectangle *cliprect, */
 	const struct VerTex v[3],
 	unsigned color,
-	INT32 bias,
+	INT32 zsort,
 	INT32 flags,
 	const namcos22_camera * );
 
-void /*namcos21_*/BlitTriFlat(
+void namcos21_BlitTriFlat(
 	struct mame_bitmap *pBitmap,
+	const struct rectangle *cliprect,
 	const struct VerTex v[3],
-	unsigned color );
+	unsigned color,
+	INT32 zsort,
+	/* INT32 flags, */
+	const namcos21_camera * );

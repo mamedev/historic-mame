@@ -21,32 +21,32 @@ WRITE_HANDLER( beezer_ram_w );
 DRIVER_INIT( beezer );
 WRITE_HANDLER( beezer_bankswitch_w );
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xcfff, MRA_BANK1 },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, beezer_ram_w, &videoram, &videoram_size },
-	{ 0xc000, 0xcfff, MWA_BANK1 },
-	{ 0xd000, 0xffff, beezer_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(beezer_ram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(beezer_bankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x07ff, MRA_RAM },
-//	{ 0x1000, 0x10ff, beezer_6840_r },
-	{ 0x1800, 0x18ff, via_1_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+//	AM_RANGE(0x1000, 0x10ff) AM_READ(beezer_6840_r)
+	AM_RANGE(0x1800, 0x18ff) AM_READ(via_1_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x07ff, MWA_RAM },
-//	{ 0x1000, 0x10ff, beezer_6840_w },
-	{ 0x1800, 0x18ff, via_1_w },
-//	{ 0x8000, 0x9fff, beezer_dac_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0x1000, 0x10ff) AM_WRITE(beezer_6840_w)
+	AM_RANGE(0x1800, 0x18ff) AM_WRITE(via_1_w)
+//	AM_RANGE(0x8000, 0x9fff) AM_WRITE(beezer_dac_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -99,11 +99,11 @@ static MACHINE_DRIVER_START( beezer )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1000000)        /* 1 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(beezer_interrupt,128)
 
 	MDRV_CPU_ADD(M6809, 1000000)        /* 1 MHz */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -94,48 +94,48 @@ static WRITE16_HANDLER( wwfsstar_flipscreen_w )
 
 extern data16_t *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },	/* Rom */
-	{ 0x080000, 0x080fff, MRA16_RAM },	/* FG0 Ram */
-	{ 0x0c0000, 0x0c0fff, MRA16_RAM },	/* BG0 Ram */
-	{ 0x100000, 0x1003ff, MRA16_RAM },	/* SPR Ram */
-	{ 0x180000, 0x180001, input_port_3_word_r },	/* DSW0 */
-	{ 0x180002, 0x180003, input_port_4_word_r },	/* DSW1 */
-	{ 0x180004, 0x180005, input_port_0_word_r },	/* CTRLS0 */
-	{ 0x180006, 0x180007, input_port_1_word_r },	/* CTRLS1 */
-	{ 0x180008, 0x180009, input_port_2_word_r_cust },	/* MISC */
-	{ 0x1c0000, 0x1c3fff, MRA16_RAM },	/* Work Ram */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)	/* Rom */
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)	/* FG0 Ram */
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(MRA16_RAM)	/* BG0 Ram */
+	AM_RANGE(0x100000, 0x1003ff) AM_READ(MRA16_RAM)	/* SPR Ram */
+	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_3_word_r)	/* DSW0 */
+	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_4_word_r)	/* DSW1 */
+	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_0_word_r)	/* CTRLS0 */
+	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_1_word_r)	/* CTRLS1 */
+	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_2_word_r_cust)	/* MISC */
+	AM_RANGE(0x1c0000, 0x1c3fff) AM_READ(MRA16_RAM)	/* Work Ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },	/* Rom */
-	{ 0x080000, 0x080fff, wwfsstar_fg0_videoram_w, &wwfsstar_fg0_videoram },	/* FG0 Ram */
-	{ 0x0c0000, 0x0c0fff, wwfsstar_bg0_videoram_w, &wwfsstar_bg0_videoram },	/* BG0 Ram */
-	{ 0x100000, 0x1003ff, MWA16_RAM, &spriteram16 },	/* SPR Ram */
-	{ 0x140000, 0x140fff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x180000, 0x180001, MWA16_NOP },	/* ??? */
-	{ 0x180002, 0x180003, MWA16_NOP },	/* ??? */
-	{ 0x180004, 0x180007, wwfsstar_scrollwrite },
-	{ 0x180008, 0x180009, wwfsstar_soundwrite },
-	{ 0x18000a, 0x18000b, wwfsstar_flipscreen_w },
-	{ 0x1c0000, 0x1c3fff, MWA16_RAM },	/* Work Ram */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)	/* Rom */
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(wwfsstar_fg0_videoram_w) AM_BASE(&wwfsstar_fg0_videoram)	/* FG0 Ram */
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(wwfsstar_bg0_videoram_w) AM_BASE(&wwfsstar_bg0_videoram)	/* BG0 Ram */
+	AM_RANGE(0x100000, 0x1003ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* SPR Ram */
+	AM_RANGE(0x140000, 0x140fff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x180000, 0x180001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x180002, 0x180003) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x180004, 0x180007) AM_WRITE(wwfsstar_scrollwrite)
+	AM_RANGE(0x180008, 0x180009) AM_WRITE(wwfsstar_soundwrite)
+	AM_RANGE(0x18000a, 0x18000b) AM_WRITE(wwfsstar_flipscreen_w)
+	AM_RANGE(0x1c0000, 0x1c3fff) AM_WRITE(MWA16_RAM)	/* Work Ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 
 /*******************************************************************************
@@ -359,12 +359,12 @@ static MACHINE_DRIVER_START( wwfsstar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* unknown */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,262)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* unknown */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

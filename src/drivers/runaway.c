@@ -84,35 +84,35 @@ static WRITE_HANDLER( runaway_irq_ack_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x3000, 0x3007, runaway_input_r },
-	{ 0x4000, 0x4000, input_port_2_r },
-	{ 0x5000, 0x5000, atari_vg_earom_r },
-	{ 0x6000, 0x600f, pokey1_r },
-	{ 0x7000, 0x700f, pokey2_r },
-	{ 0x8000, 0xcfff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },	/* for the interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3007) AM_READ(runaway_input_r)
+	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_2_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(atari_vg_earom_r)
+	AM_RANGE(0x6000, 0x600f) AM_READ(pokey1_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(pokey2_r)
+	AM_RANGE(0x8000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)	/* for the interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07bf, runaway_video_ram_w, &runaway_video_ram },
-	{ 0x07c0, 0x07ff, MWA_RAM, &runaway_sprite_ram },
-	{ 0x1000, 0x1000, runaway_irq_ack_w },
-	{ 0x1400, 0x143F, atari_vg_earom_w },
-	{ 0x1800, 0x1800, atari_vg_earom_ctrl_w },
-	{ 0x1c00, 0x1c0f, runaway_paletteram_w },
-	{ 0x2000, 0x2000, MWA_NOP }, /* coin counter? */
-	{ 0x2001, 0x2001, MWA_NOP }, /* coin counter? */
-	{ 0x2003, 0x2004, runaway_led_w },
-	{ 0x2005, 0x2005, runaway_tile_bank_w },
-	{ 0x6000, 0x600f, pokey1_w },
-	{ 0x7000, 0x700f, pokey2_w },
-	{ 0x8000, 0xcfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07bf) AM_WRITE(runaway_video_ram_w) AM_BASE(&runaway_video_ram)
+	AM_RANGE(0x07c0, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&runaway_sprite_ram)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(runaway_irq_ack_w)
+	AM_RANGE(0x1400, 0x143F) AM_WRITE(atari_vg_earom_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1c00, 0x1c0f) AM_WRITE(runaway_paletteram_w)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP) /* coin counter? */
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(MWA8_NOP) /* coin counter? */
+	AM_RANGE(0x2003, 0x2004) AM_WRITE(runaway_led_w)
+	AM_RANGE(0x2005, 0x2005) AM_WRITE(runaway_tile_bank_w)
+	AM_RANGE(0x6000, 0x600f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x8000, 0xcfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( qwak )
@@ -362,7 +362,7 @@ static MACHINE_DRIVER_START( runaway )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 8) /* ? */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(23. * 1000000 / 15750)

@@ -36,28 +36,28 @@ static INTERRUPT_GEN( pingpong_interrupt )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x97ff, MRA_RAM },
-	{ 0xa800, 0xa800, input_port_0_r },
-	{ 0xa880, 0xa880, input_port_1_r },
-	{ 0xa900, 0xa900, input_port_2_r },
-	{ 0xa980, 0xa980, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_0_r)
+	AM_RANGE(0xa880, 0xa880) AM_READ(input_port_1_r)
+	AM_RANGE(0xa900, 0xa900) AM_READ(input_port_2_r)
+	AM_RANGE(0xa980, 0xa980) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, pingpong_colorram_w, &colorram },
-	{ 0x8400, 0x87ff, pingpong_videoram_w, &videoram },
-	{ 0x9000, 0x9002, MWA_RAM },
-	{ 0x9003, 0x9052, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9053, 0x97ff, MWA_RAM },
-	{ 0xa000, 0xa000, coin_w },	/* coin counters + irq enables */
-	{ 0xa200, 0xa200, MWA_NOP },		/* SN76496 data latch */
-	{ 0xa400, 0xa400, SN76496_0_w },	/* trigger read */
-	{ 0xa600, 0xa600, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(pingpong_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(pingpong_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9000, 0x9002) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9003, 0x9052) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9053, 0x97ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(coin_w)	/* coin counters + irq enables */
+	AM_RANGE(0xa200, 0xa200) AM_WRITE(MWA8_NOP)		/* SN76496 data latch */
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(SN76496_0_w)	/* trigger read */
+	AM_RANGE(0xa600, 0xa600) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
 
 
@@ -183,7 +183,7 @@ static MACHINE_DRIVER_START( pingpong )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)		/* 3.072 MHz (probably) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(pingpong_interrupt,16)	/* 1 IRQ + 8 NMI */
 
 	MDRV_FRAMES_PER_SECOND(60)

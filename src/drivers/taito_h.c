@@ -219,101 +219,101 @@ static WRITE_HANDLER( sound_bankswitch_w )
 
 ***************************************************************************/
 
-static MEMORY_READ16_START( syvalion_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x200001, syvalion_input_bypass_r },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500fff, paletteram16_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( syvalion_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)				/* 68000 RAM */
+	AM_RANGE(0x110000, 0x11ffff) AM_READ(taitoh_mirrorram_r)		/* 68000 RAM (Mirror) */
+	AM_RANGE(0x200000, 0x200001) AM_READ(syvalion_input_bypass_r)
+	AM_RANGE(0x200002, 0x200003) AM_READ(TC0220IOC_halfword_port_r)
+	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x300002, 0x300003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x400000, 0x420fff) AM_READ(TC0080VCO_word_r)
+	AM_RANGE(0x500800, 0x500fff) AM_READ(paletteram16_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( syvalion_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( syvalion_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoh_68000_mainram)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(TC0220IOC_halfword_portreg_w)
+	AM_RANGE(0x200002, 0x200003) AM_WRITE(TC0220IOC_halfword_port_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x300002, 0x300003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x400000, 0x420fff) AM_WRITE(TC0080VCO_word_w)
+	AM_RANGE(0x500800, 0x500fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( recordbr_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500fff, paletteram16_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( recordbr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)				/* 68000 RAM */
+	AM_RANGE(0x110000, 0x11ffff) AM_READ(taitoh_mirrorram_r)		/* 68000 RAM (Mirror) */
+	AM_RANGE(0x200000, 0x200001) AM_READ(TC0220IOC_halfword_portreg_r)
+	AM_RANGE(0x200002, 0x200003) AM_READ(TC0220IOC_halfword_port_r)
+	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x300002, 0x300003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x400000, 0x420fff) AM_READ(TC0080VCO_word_r)
+	AM_RANGE(0x500800, 0x500fff) AM_READ(paletteram16_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( recordbr_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( recordbr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoh_68000_mainram)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(TC0220IOC_halfword_portreg_w)
+	AM_RANGE(0x200002, 0x200003) AM_WRITE(TC0220IOC_halfword_port_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x300002, 0x300003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x400000, 0x420fff) AM_WRITE(TC0080VCO_word_w)
+	AM_RANGE(0x500800, 0x500fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( dleague_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500fff, paletteram16_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( dleague_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)				/* 68000 RAM */
+	AM_RANGE(0x110000, 0x11ffff) AM_READ(taitoh_mirrorram_r)		/* 68000 RAM (Mirror) */
+	AM_RANGE(0x200000, 0x20000f) AM_READ(TC0220IOC_halfword_r)
+	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x300002, 0x300003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x400000, 0x420fff) AM_READ(TC0080VCO_word_r)
+	AM_RANGE(0x500800, 0x500fff) AM_READ(paletteram16_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( dleague_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x600000, 0x600001, MWA16_NOP },	/* ?? writes zero once per frame */
-MEMORY_END
+static ADDRESS_MAP_START( dleague_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoh_68000_mainram)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(TC0220IOC_halfword_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x300002, 0x300003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x400000, 0x420fff) AM_WRITE(TC0080VCO_word_w)
+	AM_RANGE(0x500800, 0x500fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP)	/* ?? writes zero once per frame */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP },		/* pan control */
-	{ 0xee00, 0xee00, MWA_NOP }, 		/* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, 		/* ? */
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP)		/* pan control */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) 		/* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) 		/* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -592,11 +592,11 @@ static MACHINE_DRIVER_START( syvalion )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
-	MDRV_CPU_MEMORY(syvalion_readmem,syvalion_writemem)
+	MDRV_CPU_PROGRAM_MAP(syvalion_readmem,syvalion_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -621,11 +621,11 @@ static MACHINE_DRIVER_START( recordbr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
-	MDRV_CPU_MEMORY(recordbr_readmem,recordbr_writemem)
+	MDRV_CPU_PROGRAM_MAP(recordbr_readmem,recordbr_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -650,11 +650,11 @@ static MACHINE_DRIVER_START( dleague )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
-	MDRV_CPU_MEMORY(dleague_readmem,dleague_writemem)
+	MDRV_CPU_PROGRAM_MAP(dleague_readmem,dleague_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -55,29 +55,18 @@ enum {
 	SH2_R0, SH2_R1, SH2_R2, SH2_R3, SH2_R4, SH2_R5, SH2_R6, SH2_R7,
 	SH2_R8, SH2_R9, SH2_R10, SH2_R11, SH2_R12, SH2_R13, SH2_R14, SH2_R15, SH2_EA
 };
-extern int sh2_icount;				  /* cycle count */
+
+enum
+{
+	CPUINFO_INT_SH2_FRT_INPUT = CPUINFO_INT_CPU_SPECIFIC
+};
 
 struct sh2_config
 {
   int is_slave;
 };
 
-extern void sh2_init(void);
-extern void sh2_reset (void *param);		  /* Reset registers to the initial values */
-extern void sh2_exit  (void);				  /* Shut down CPU core */
-extern int	sh2_execute(int cycles);		  /* Execute cycles - returns number of cycles actually run */
-extern unsigned sh2_get_context (void *dst);  /* Get registers, return context size */
-extern void sh2_set_context (void *src);	  /* Set registers */
-extern unsigned sh2_get_reg (int regnum);
-extern void sh2_set_reg (int regnum, unsigned val);
-extern void sh2_set_irq_line(int irqline, int state);
-extern void sh2_set_irq_callback(int (*callback)(int irqline));
-extern void sh2_state_save(void *file);
-extern void sh2_state_load(void *file);
-extern const char *sh2_info(void *context, int regnum);
-extern unsigned sh2_dasm(char *buffer, unsigned pc);
-
-extern void sh2_set_frt_input(int cpu, int state);
+extern void sh2_get_info(UINT32 state, union cpuinfo *info);
 
 WRITE32_HANDLER( sh2_internal_w );
 READ32_HANDLER( sh2_internal_r );

@@ -86,9 +86,12 @@ static void timer_callback(int param);
 
 static MACHINE_INIT( seattle )
 {
-	cpu_setbank(1, rambase);
-	cpu_setbank(2, rambase);
-	cpu_setbank(3, rombase);
+	/* set the fastest DRC options, but strict verification */
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
+
+//	cpu_setbank(1, rambase);
+//	cpu_setbank(2, rambase);
+//	cpu_setbank(3, rombase);
 
 	if (mame_find_cpu_index("dcs2") != -1)
 	{
@@ -984,57 +987,29 @@ static READ32_HANDLER( generic_speedup2_r )
  *
  *************************************/
 
-static MEMORY_READ32_START( seattle_readmem )
-	{ 0x00000000, 0x007fffff, MRA32_BANK1 },
-	{ 0x80000000, 0x807fffff, MRA32_BANK2 },
-	{ 0x88000000, 0x883fffff, voodoo_regs_r },
-	{ 0x88400000, 0x887fffff, voodoo_framebuf_r },
-	{ 0x9fc00000, 0x9fc7ffff, MRA32_BANK3 },
-	{ 0xa0000000, 0xa07fffff, MRA32_RAM },			// wg3dh only has 4MB; sfrush, blitz99 8MB
-	{ 0xa8000000, 0xa83fffff, voodoo_regs_r },
-	{ 0xa8400000, 0xa87fffff, voodoo_framebuf_r },
-	{ 0xaa000000, 0xaa0003ff, ide_controller32_0_r },
-	{ 0xaa00040c, 0xaa00040f, MRA32_NOP },			// IDE-related, but annoying
-	{ 0xaa000f00, 0xaa000f07, ide_bus_master32_0_r },
-	{ 0xac000000, 0xac000fff, galileo_r },
-	{ 0xb6000000, 0xb600003f, midway_ioasic_r },
-	{ 0xb6100000, 0xb611ffff, cmos_r },
-	{ 0xb7300000, 0xb7300003, MRA32_RAM },
-	{ 0xb7400000, 0xb7400003, MRA32_RAM },
-	{ 0xb7500000, 0xb7500003, vblank_signalled_r },
-	{ 0xb7600000, 0xb7600003, unknown1_r },
-	{ 0xb7900000, 0xb7900003, MRA32_NOP },			// very noisy -- status LEDs?
-	{ 0xb7f00000, 0xb7f00003, MRA32_RAM },
-	{ 0xbfc00000, 0xbfc7ffff, MRA32_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE32_START( seattle_writemem )
-	{ 0x00000000, 0x007fffff, MWA32_BANK1 },
-	{ 0x80000000, 0x807fffff, MWA32_BANK2 },
-	{ 0x88000000, 0x883fffff, voodoo_regs_w },
-	{ 0x88400000, 0x887fffff, voodoo_framebuf_w },
-	{ 0x88800000, 0x88ffffff, voodoo_textureram_w },
-	{ 0x9fc00000, 0x9fc7ffff, MWA32_ROM },
-	{ 0xa0000000, 0xa07fffff, MWA32_RAM, &rambase },			// wg3dh only has 4MB
-	{ 0xa8000000, 0xa83fffff, voodoo_regs_w, &voodoo_regs },
-	{ 0xa8400000, 0xa87fffff, voodoo_framebuf_w },
-	{ 0xa8800000, 0xa8ffffff, voodoo_textureram_w },
-	{ 0xaa000000, 0xaa0003ff, ide_controller32_0_w },
-	{ 0xaa000f00, 0xaa000f07, ide_bus_master32_0_w },
-	{ 0xac000000, 0xac000fff, galileo_w, &galileo_regs },
-	{ 0xb3000000, 0xb3000003, asic_fifo_w },
-	{ 0xb6000000, 0xb600003f, midway_ioasic_w },
-	{ 0xb6100000, 0xb611ffff, cmos_w, (data32_t **)&generic_nvram, &generic_nvram_size },
-	{ 0xb7100000, 0xb7100003, seattle_watchdog_w },
-	{ 0xb7300000, 0xb7300003, vblank_enable_w, &vblank_enable },
-	{ 0xb7400000, 0xb7400003, vblank_config_w, &vblank_config },
-	{ 0xb7700000, 0xb7700003, vblank_clear_w },
-	{ 0xb7800000, 0xb7800003, MWA32_NOP },						// unknown
-	{ 0xb7900000, 0xb7900003, MWA32_NOP },						// very noisy -- status LEDs?
-	{ 0xb7f00000, 0xb7f00003, asic_reset_w, &asic_reset },
-	{ 0xbfc00000, 0xbfc7ffff, MWA32_ROM, &rombase },
-MEMORY_END
+static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x007fffff) AM_MIRROR(0xa0000000) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
+	AM_RANGE(0x88000000, 0x883fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_regs_r, voodoo_regs_w) AM_BASE(&voodoo_regs)
+	AM_RANGE(0x88400000, 0x887fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
+	AM_RANGE(0x88800000, 0x88ffffff) AM_MIRROR(0x20000000) AM_WRITE(voodoo_textureram_w)
+	AM_RANGE(0xaa000000, 0xaa0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
+	AM_RANGE(0xaa00040c, 0xaa00040f) AM_NOP						// IDE-related, but annoying
+	AM_RANGE(0xaa000f00, 0xaa000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
+	AM_RANGE(0xac000000, 0xac000fff) AM_READWRITE(galileo_r, galileo_w) AM_BASE(&galileo_regs)
+	AM_RANGE(0xb3000000, 0xb3000003) AM_WRITE(asic_fifo_w)
+	AM_RANGE(0xb6000000, 0xb600003f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
+	AM_RANGE(0xb6100000, 0xb611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xb7100000, 0xb7100003) AM_WRITE(seattle_watchdog_w)
+	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, vblank_enable_w) AM_BASE(&vblank_enable)
+	AM_RANGE(0xb7400000, 0xb7400003) AM_READWRITE(MRA32_RAM, vblank_config_w) AM_BASE(&vblank_config)
+	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(vblank_signalled_r)
+	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(unknown1_r)
+	AM_RANGE(0xb7700000, 0xb7700003) AM_WRITE(vblank_clear_w)
+	AM_RANGE(0xb7800000, 0xb7800003) AM_NOP
+	AM_RANGE(0xb7900000, 0xb7900003) AM_NOP						// very noisy -- status LEDs?
+	AM_RANGE(0xb7f00000, 0xb7f00003) AM_READWRITE(MRA32_RAM, asic_reset_w) AM_BASE(&asic_reset)
+	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)
+ADDRESS_MAP_END
 
 
 
@@ -1928,7 +1903,7 @@ MACHINE_DRIVER_START( seattle_flagstaff_common )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", R5000LE, 50000000*3)
 	MDRV_CPU_CONFIG(config)
-	MDRV_CPU_MEMORY(seattle_readmem,seattle_writemem)
+	MDRV_CPU_PROGRAM_MAP(seattle_map,0)
 	MDRV_CPU_VBLANK_INT(assert_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -1994,28 +1969,32 @@ MACHINE_DRIVER_END
 ROM_START( wg3dh )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD( "soundl11.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.2 */
 	ROM_LOAD( "wg3dh_12.u32", 0x000000, 0x80000, CRC(15e4cea2) SHA1(72c0db7dc53ce645ba27a5311b5ce803ad39f131) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "wg3dh.chd", 0, MD5(424dbda376e8c45ec873b79194bdb924) SHA1(c12875036487a9324734012e601d1f234d2e783e) )
+	DISK_IMAGE( "wg3dh", 0, MD5(424dbda376e8c45ec873b79194bdb924) SHA1(c12875036487a9324734012e601d1f234d2e783e) )
 ROM_END
 
 
 ROM_START( mace )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD( "soundl11.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "maceboot.u32", 0x000000, 0x80000, CRC(effe3ebc) SHA1(7af3ca3580d6276ffa7ab8b4c57274e15ee6bcbb) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "mace.chd", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
+	DISK_IMAGE( "mace", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
 ROM_END
 
 
@@ -2037,91 +2016,103 @@ ROM_START( sfrush )
 	ROM_LOAD32_WORD( "sfrush.u49",  0x800002, 0x200000, CRC(dfb0a54c) SHA1(ed34f9485f7a7e5bb73bf5c6428b27548e12db12) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version L1.06 */
-	DISK_IMAGE( "sfrush.chd", 0, MD5(7a77addb141fc11fd5ca63850382e0d1) SHA1(0e5805e255e91f08c9802a04b42056d61ba5eb41) )
+	DISK_IMAGE( "sfrush", 0, MD5(7a77addb141fc11fd5ca63850382e0d1) SHA1(0e5805e255e91f08c9802a04b42056d61ba5eb41) )
 ROM_END
 
 
 ROM_START( calspeed )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "calspeed.chd", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
+	DISK_IMAGE( "calspeed", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
 ROM_END
 
 
 ROM_START( biofreak )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "biofreak.u32", 0x000000, 0x80000, CRC(cefa00bb) SHA1(7e171610ede1e8a448fb8d175f9cb9e7d549de28) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "biofreak.chd", 0, MD5(f4663a3fd0ceed436756710b97d283e4) SHA1(88b87cb651b97eac117c9342127938e30dc8c138) )
+	DISK_IMAGE( "biofreak", 0, MD5(f4663a3fd0ceed436756710b97d283e4) SHA1(88b87cb651b97eac117c9342127938e30dc8c138) )
 ROM_END
 
 
 ROM_START( blitz )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
 	ROM_LOAD( "blitz1_2.u32", 0x000000, 0x80000, CRC(38dbecf5) SHA1(7dd5a5b3baf83a7f8f877ff4cd3f5e8b5201b36f) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.21 */
-	DISK_IMAGE( "blitz.chd", 0, MD5(9cec59456c4d239ba05c7802082489e4) SHA1(0f001488b3709d40cee5e278603df2bbae1116b8) )
+	DISK_IMAGE( "blitz", 0, MD5(9cec59456c4d239ba05c7802082489e4) SHA1(0f001488b3709d40cee5e278603df2bbae1116b8) )
 ROM_END
 
 
 ROM_START( blitz99 )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "blitz99.u32", 0x000000, 0x80000, CRC(777119b2) SHA1(40d255181c2f3a787919c339e83593fd506779a5) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.30 */
-	DISK_IMAGE( "blitz99.chd", 0, MD5(4bb6caf8f985e90d99989eede5504188) SHA1(4675751875943b756c8db6997fd288938a7999bb) )
+	DISK_IMAGE( "blitz99", 0, MD5(4bb6caf8f985e90d99989eede5504188) SHA1(4675751875943b756c8db6997fd288938a7999bb) )
 ROM_END
 
 
 ROM_START( blitz2k )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.4 */
 	ROM_LOAD( "bltz2k14.u32", 0x000000, 0x80000, CRC(ac4f0051) SHA1(b8125c17370db7bfd9b783230b4ef3d5b22a2025) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.5 */
-	DISK_IMAGE( "blitz2k.chd", 0, MD5(7778a82f35c05ed797b315439843246c) SHA1(153a7df368833cd5f5a52c3fe17045c5549a0c17) )
+	DISK_IMAGE( "blitz2k", 0, MD5(7778a82f35c05ed797b315439843246c) SHA1(153a7df368833cd5f5a52c3fe17045c5549a0c17) )
 ROM_END
 
 
 ROM_START( carnevil )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
 
-	ROM_REGION( ADSP2100_SIZE + 0x408000, REGION_CPU2, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", ADSP2100_SIZE + 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
+	
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "boot.u32", 0x000000, 0x80000, CRC(82c07f2e) SHA1(fa51c58022ce251c53bad12fc6ffadb35adb8162) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "carnevil.chd", 0, BAD_DUMP MD5(6eafae86091c0a915cf8cfdc3d73adc2) SHA1(5e6524d4b97de141c38e301a17e8af15661cb5d6) )
+	DISK_IMAGE( "carnevil", 0, BAD_DUMP MD5(6eafae86091c0a915cf8cfdc3d73adc2) SHA1(5e6524d4b97de141c38e301a17e8af15661cb5d6) )
 ROM_END
 
 
@@ -2137,12 +2128,6 @@ static void init_common(int ioasic, int serialnum, int yearoffs)
 	/* initialize the subsystems */
 	ide_controller_init(0, &ide_intf);
 	midway_ioasic_init(ioasic, serialnum, yearoffs, ioasic_irq);
-
-	/* copy the boot ROM into its home location */
-	memcpy(rombase, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
-	/* set the fastest DRC options, but strict verification */
-	mips3drc_set_options(0, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
 }
 
 

@@ -268,148 +268,148 @@ static WRITE_HANDLER( congo_daio_w )
 
 /* Memory Maps */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_RAM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xa000, 0xa0ff, MRA_RAM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc003, 0xc003, input_port_4_r },
-	{ 0xc100, 0xc100, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa0ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_4_r)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x4fff, MWA_ROM },
-	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0x8000, 0x83ff, zaxxon_videoram_w, &videoram },
-	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc000, 0xc001, zaxxon_coin_lockout_w },
-	{ 0xc002, 0xc002, MWA_NOP },	// service coin lockout
-	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
-	{ 0xc006, 0xc006, zaxxon_flipscreen_w },
-	{ 0xff3c, 0xff3f, zaxxon_sound_w },
-	{ 0xfff0, 0xfff0, interrupt_enable_w },
-	{ 0xfff1, 0xfff1, MWA_RAM, &zaxxon_char_color_bank },
-	{ 0xfff2, 0xfff7, MWA_NOP },
-	{ 0xfff8, 0xfff9, MWA_RAM, &zaxxon_background_position },
-	{ 0xfffa, 0xfffa, MWA_RAM, &zaxxon_background_color_bank },
-	{ 0xfffb, 0xfffb, MWA_RAM, &zaxxon_background_enable },
-	{ 0xfffc, 0xffff, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(zaxxon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(zaxxon_coin_lockout_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(MWA8_NOP)	// service coin lockout
+	AM_RANGE(0xc003, 0xc004) AM_WRITE(zaxxon_coin_counter_w)
+	AM_RANGE(0xc006, 0xc006) AM_WRITE(zaxxon_flipscreen_w)
+	AM_RANGE(0xff3c, 0xff3f) AM_WRITE(zaxxon_sound_w)
+	AM_RANGE(0xfff0, 0xfff0) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xfff1, 0xfff1) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_char_color_bank)
+	AM_RANGE(0xfff2, 0xfff7) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xfff8, 0xfff9) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_position)
+	AM_RANGE(0xfffa, 0xfffa) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_color_bank)
+	AM_RANGE(0xfffb, 0xfffb) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_enable)
+	AM_RANGE(0xfffc, 0xffff) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( razmataz_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_RAM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xa000, 0xa0ff, MRA_RAM },
-	{ 0xc000, 0xc000, razmataz_dial_0_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc003, 0xc003, input_port_4_r },
-	{ 0xc004, 0xc004, input_port_6_r },
-	{ 0xc008, 0xc008, razmataz_dial_1_r },
-	{ 0xc00c, 0xc00c, input_port_7_r },
-	{ 0xc100, 0xc100, input_port_2_r },
-	{ 0xc80a, 0xc80a, razmataz_unknown1_r },	// needed, otherwise the game hangs
-	{ 0xff3c, 0xff3c, razmataz_unknown2_r },	// timer? if 0, "duck season" ends
-MEMORY_END
+static ADDRESS_MAP_START( razmataz_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa0ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(razmataz_dial_0_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_4_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_6_r)
+	AM_RANGE(0xc008, 0xc008) AM_READ(razmataz_dial_1_r)
+	AM_RANGE(0xc00c, 0xc00c) AM_READ(input_port_7_r)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_2_r)
+	AM_RANGE(0xc80a, 0xc80a) AM_READ(razmataz_unknown1_r)	// needed, otherwise the game hangs
+	AM_RANGE(0xff3c, 0xff3c) AM_READ(razmataz_unknown2_r)	// timer? if 0, "duck season" ends
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( razmataz_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0x8000, 0x83ff, zaxxon_videoram_w, &videoram },
-	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc000, 0xc001, zaxxon_coin_lockout_w },
-	{ 0xc002, 0xc002, MWA_NOP },	// service coin lockout
-	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
-	{ 0xc006, 0xc006, razmataz_flipscreen_w },
-	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
-	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
-	{ 0xe0f2, 0xe0f7, MWA_NOP },
-	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
-	{ 0xe0fa, 0xe0fa, MWA_RAM, &zaxxon_background_color_bank },
-	{ 0xe0fb, 0xe0fb, MWA_RAM, &zaxxon_background_enable },
-	{ 0xe0fc, 0xe0ff, MWA_NOP },
-	{ 0xff3c, 0xff3c, MWA_NOP },	// sound
-MEMORY_END
+static ADDRESS_MAP_START( razmataz_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(zaxxon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(zaxxon_coin_lockout_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(MWA8_NOP)	// service coin lockout
+	AM_RANGE(0xc003, 0xc004) AM_WRITE(zaxxon_coin_counter_w)
+	AM_RANGE(0xc006, 0xc006) AM_WRITE(razmataz_flipscreen_w)
+	AM_RANGE(0xe0f0, 0xe0f0) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe0f1, 0xe0f1) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_char_color_bank)
+	AM_RANGE(0xe0f2, 0xe0f7) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe0f8, 0xe0f9) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_position)
+	AM_RANGE(0xe0fa, 0xe0fa) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_color_bank)
+	AM_RANGE(0xe0fb, 0xe0fb) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_enable)
+	AM_RANGE(0xe0fc, 0xe0ff) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xff3c, 0xff3c) AM_WRITE(MWA8_NOP)	// sound
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( ixion_readmem )
-	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_RAM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0xa000, 0xa0ff, MRA_RAM },
-	{ 0xc000, 0xc000, razmataz_dial_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc003, 0xc003, input_port_4_r },
-	{ 0xc100, 0xc100, input_port_2_r },
-	{ 0xff3c, 0xff3c, razmataz_unknown2_r },	// no idea .. timer? in razmataz
-MEMORY_END
+static ADDRESS_MAP_START( ixion_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa0ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(razmataz_dial_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_4_r)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_2_r)
+	AM_RANGE(0xff3c, 0xff3c) AM_READ(razmataz_unknown2_r)	// no idea .. timer? in razmataz
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( congo_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, input_port_3_r },
-	{ 0xc003, 0xc003, input_port_4_r },
-	{ 0xc008, 0xc008, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( congo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_3_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_4_r)
+	AM_RANGE(0xc008, 0xc008) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( congo_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x8400, 0x8fff, MWA_RAM, &spriteram },
-	{ 0xa000, 0xa3ff, zaxxon_videoram_w, &videoram },
-	{ 0xa400, 0xa7ff, congo_colorram_w, &colorram },
-	{ 0xc018, 0xc019, zaxxon_coin_lockout_w },
-	{ 0xc01a, 0xc01a, MWA_NOP },	// service coin lockout
-	{ 0xc01b, 0xc01c, zaxxon_coin_counter_w },
-	{ 0xc01d, 0xc01d, MWA_RAM, &zaxxon_background_enable },
-	{ 0xc01e, 0xc01e, zaxxon_flipscreen_w },
-	{ 0xc01f, 0xc01f, interrupt_enable_w },
-	{ 0xc021, 0xc021, MWA_NOP },
-	{ 0xc023, 0xc023, MWA_NOP },
-	{ 0xc026, 0xc026, MWA_NOP },
-	{ 0xc027, 0xc027, MWA_NOP },
-	{ 0xc028, 0xc029, MWA_RAM, &zaxxon_background_position },
-	{ 0xc030, 0xc033, MWA_NOP },
-	{ 0xc038, 0xc038, soundlatch_w },
-MEMORY_END
+static ADDRESS_MAP_START( congo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8400, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(zaxxon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xa400, 0xa7ff) AM_WRITE(congo_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc018, 0xc019) AM_WRITE(zaxxon_coin_lockout_w)
+	AM_RANGE(0xc01a, 0xc01a) AM_WRITE(MWA8_NOP)	// service coin lockout
+	AM_RANGE(0xc01b, 0xc01c) AM_WRITE(zaxxon_coin_counter_w)
+	AM_RANGE(0xc01d, 0xc01d) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_enable)
+	AM_RANGE(0xc01e, 0xc01e) AM_WRITE(zaxxon_flipscreen_w)
+	AM_RANGE(0xc01f, 0xc01f) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xc021, 0xc021) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc023, 0xc023) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc026, 0xc026) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc027, 0xc027) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc028, 0xc029) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_position)
+	AM_RANGE(0xc030, 0xc033) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc038, 0xc038) AM_WRITE(soundlatch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( congo_snd_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x8000, 0x8003, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( congo_snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8003) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( congo_snd_writemem )
-	{ 0x0000, 0x2000, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x6000, 0x6003, SN76496_0_w },
-	{ 0x8000, 0x8003, congo_daio_w },
-	{ 0xa000, 0xa003, SN76496_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( congo_snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2000) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6003) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x8000, 0x8003) AM_WRITE(congo_daio_w)
+	AM_RANGE(0xa000, 0xa003) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( futspy_writemem )
-	{ 0x0000, 0x4fff, MWA_ROM },
-	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0x8000, 0x83ff, zaxxon_videoram_w, &videoram },
-	{ 0x8400, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc000, 0xc001, zaxxon_coin_lockout_w },
-	{ 0xc002, 0xc002, MWA_NOP },	// service coin lockout
-	{ 0xc003, 0xc003, zaxxon_coin_counter_w },
-	{ 0xc006, 0xc006, razmataz_flipscreen_w },
-	{ 0xe03c, 0xe03f, zaxxon_sound_w },
-	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
-	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
-	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
-	{ 0xe0fa, 0xe0fa, MWA_RAM, &zaxxon_background_color_bank },
-	{ 0xe0fb, 0xe0fb, MWA_RAM, &zaxxon_background_enable },
-MEMORY_END
+static ADDRESS_MAP_START( futspy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(zaxxon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(zaxxon_coin_lockout_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(MWA8_NOP)	// service coin lockout
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(zaxxon_coin_counter_w)
+	AM_RANGE(0xc006, 0xc006) AM_WRITE(razmataz_flipscreen_w)
+	AM_RANGE(0xe03c, 0xe03f) AM_WRITE(zaxxon_sound_w)
+	AM_RANGE(0xe0f0, 0xe0f0) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe0f1, 0xe0f1) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_char_color_bank)
+	AM_RANGE(0xe0f8, 0xe0f9) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_position)
+	AM_RANGE(0xe0fa, 0xe0fa) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_color_bank)
+	AM_RANGE(0xe0fb, 0xe0fb) AM_WRITE(MWA8_RAM) AM_BASE(&zaxxon_background_enable)
+ADDRESS_MAP_END
 
 /* Input Ports */
 
@@ -1179,7 +1179,7 @@ MACHINE_INIT( futspy )
 static MACHINE_DRIVER_START( root )
 	// basic machine hardware
 	MDRV_CPU_ADD_TAG("main", Z80, 48660000/16)	// 3.04125 MHz
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(zaxxon_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1210,7 +1210,7 @@ static MACHINE_DRIVER_START( razmataz )
 	MDRV_IMPORT_FROM(root)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(razmataz_readmem, razmataz_writemem)
+	MDRV_CPU_PROGRAM_MAP(razmataz_readmem, razmataz_writemem)
 
 	MDRV_VIDEO_START(razmataz)
 	MDRV_VIDEO_UPDATE(razmataz)
@@ -1220,7 +1220,7 @@ static MACHINE_DRIVER_START( ixion )
 	MDRV_IMPORT_FROM(root)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(ixion_readmem, razmataz_writemem)
+	MDRV_CPU_PROGRAM_MAP(ixion_readmem, razmataz_writemem)
 
 	MDRV_VIDEO_START(razmataz)
 	MDRV_VIDEO_UPDATE(razmataz)
@@ -1230,11 +1230,11 @@ static MACHINE_DRIVER_START( congo )
 	MDRV_IMPORT_FROM(root)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(congo_readmem, congo_writemem)
+	MDRV_CPU_PROGRAM_MAP(congo_readmem, congo_writemem)
 
 	MDRV_CPU_ADD(Z80, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(congo_snd_readmem, congo_snd_writemem)
+	MDRV_CPU_PROGRAM_MAP(congo_snd_readmem, congo_snd_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 
 	MDRV_MACHINE_INIT(congo)
@@ -1252,7 +1252,7 @@ static MACHINE_DRIVER_START( futspy )
 	MDRV_IMPORT_FROM(root)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem, futspy_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, futspy_writemem)
 
 	MDRV_MACHINE_INIT(futspy)
 

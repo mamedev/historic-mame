@@ -56,37 +56,37 @@ static WRITE_HANDLER( flip_screen_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa000, watchdog_reset_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc800, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xc080, 0xc09f, MWA_RAM, &ambush_scrollram },
-	{ 0xc100, 0xc1ff, MWA_RAM, &colorram },
-	{ 0xc200, 0xc3ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc400, 0xc7ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xcc00, 0xcc03, MWA_NOP },
-	{ 0xcc04, 0xcc04, flip_screen_w },
-	{ 0xcc05, 0xcc05, MWA_RAM, &ambush_colorbank },
-	{ 0xcc07, 0xcc07, ambush_coin_counter_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc080, 0xc09f) AM_WRITE(MWA8_RAM) AM_BASE(&ambush_scrollram)
+	AM_RANGE(0xc100, 0xc1ff) AM_WRITE(MWA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0xc200, 0xc3ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xcc00, 0xcc03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xcc04, 0xcc04) AM_WRITE(flip_screen_w)
+	AM_RANGE(0xcc05, 0xcc05) AM_WRITE(MWA8_RAM) AM_BASE(&ambush_colorbank)
+	AM_RANGE(0xcc07, 0xcc07) AM_WRITE(ambush_coin_counter_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, AY8910_read_port_0_r },
-	{ 0x80, 0x80, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x80, 0x80, AY8910_control_port_1_w },
-	{ 0x81, 0x81, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ambush )
@@ -185,8 +185,8 @@ static MACHINE_DRIVER_START( ambush )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.00 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

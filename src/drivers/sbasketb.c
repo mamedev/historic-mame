@@ -56,50 +56,50 @@ static WRITE_HANDLER( sbasketb_coin_counter_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x2000, 0x3bff, MRA_RAM },
-	{ 0x3c10, 0x3c10, MRA_NOP },    /* ???? */
-	{ 0x3e00, 0x3e00, input_port_0_r },
-	{ 0x3e01, 0x3e01, input_port_1_r },
-	{ 0x3e02, 0x3e02, input_port_2_r },
-	{ 0x3e03, 0x3e03, MRA_NOP },
-	{ 0x3e80, 0x3e80, input_port_3_r },
-	{ 0x3f00, 0x3f00, input_port_4_r },
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x3bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3c10, 0x3c10) AM_READ(MRA8_NOP)    /* ???? */
+	AM_RANGE(0x3e00, 0x3e00) AM_READ(input_port_0_r)
+	AM_RANGE(0x3e01, 0x3e01) AM_READ(input_port_1_r)
+	AM_RANGE(0x3e02, 0x3e02) AM_READ(input_port_2_r)
+	AM_RANGE(0x3e03, 0x3e03) AM_READ(MRA8_NOP)
+	AM_RANGE(0x3e80, 0x3e80) AM_READ(input_port_3_r)
+	AM_RANGE(0x3f00, 0x3f00) AM_READ(input_port_4_r)
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x33ff, sbasketb_colorram_w, &colorram },
-	{ 0x3400, 0x37ff, sbasketb_videoram_w, &videoram },
-	{ 0x3800, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3a00, 0x3bff, MWA_RAM },           /* Probably unused, but initialized */
-	{ 0x3c00, 0x3c00, watchdog_reset_w },
-	{ 0x3c20, 0x3c20, MWA_RAM, &sbasketb_palettebank },
-	{ 0x3c80, 0x3c80, sbasketb_flipscreen_w },
-	{ 0x3c81, 0x3c81, interrupt_enable_w },
-	{ 0x3c83, 0x3c84, sbasketb_coin_counter_w },
-	{ 0x3c85, 0x3c85, MWA_RAM, &sbasketb_spriteram_select },
-	{ 0x3d00, 0x3d00, soundlatch_w },
-	{ 0x3d80, 0x3d80, sbasketb_sh_irqtrigger_w },
-	{ 0x3f80, 0x3f80, sbasketb_scroll_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x33ff) AM_WRITE(sbasketb_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x3400, 0x37ff) AM_WRITE(sbasketb_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3a00, 0x3bff) AM_WRITE(MWA8_RAM)           /* Probably unused, but initialized */
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3c20, 0x3c20) AM_WRITE(MWA8_RAM) AM_BASE(&sbasketb_palettebank)
+	AM_RANGE(0x3c80, 0x3c80) AM_WRITE(sbasketb_flipscreen_w)
+	AM_RANGE(0x3c81, 0x3c81) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x3c83, 0x3c84) AM_WRITE(sbasketb_coin_counter_w)
+	AM_RANGE(0x3c85, 0x3c85) AM_WRITE(MWA8_RAM) AM_BASE(&sbasketb_spriteram_select)
+	AM_RANGE(0x3d00, 0x3d00) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x3d80, 0x3d80) AM_WRITE(sbasketb_sh_irqtrigger_w)
+	AM_RANGE(0x3f80, 0x3f80) AM_WRITE(sbasketb_scroll_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, hyperspt_sh_timer_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(hyperspt_sh_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
-	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
-	{ 0xe000, 0xe000, DAC_0_data_w },
-	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
-	{ 0xe002, 0xe002, konami_SN76496_0_w },      /* This address triggers the SN chip to read the data port. */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(VLM5030_data_w) /* speech data */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(hyperspt_sound_w)     /* speech and output controll */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(konami_SN76496_latch_w)  /* Loads the snd command into the snd latch */
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(konami_SN76496_0_w)      /* This address triggers the SN chip to read the data port. */
+ADDRESS_MAP_END
 
 
 
@@ -245,12 +245,12 @@ static MACHINE_DRIVER_START( sbasketb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1400000)        /* 1.400 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.5795 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -215,43 +215,43 @@ static WRITE_HANDLER( lamp_control_w )
  *
  *************************************/
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc0ff, victory_video_control_r },
-	{ 0xc400, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, sound_response_r },
-	{ 0xf801, 0xf801, sound_status_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc0ff) AM_READ(victory_video_control_r)
+	AM_RANGE(0xc400, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(sound_response_r)
+	AM_RANGE(0xf801, 0xf801) AM_READ(sound_status_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc100, 0xc1ff, victory_video_control_w },
-	{ 0xc200, 0xc3ff, victory_paletteram_w, &paletteram },
-	{ 0xc400, 0xc7ff, victory_videoram_w, &videoram },
-	{ 0xc800, 0xdfff, victory_charram_w, &victory_charram },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0xf800, 0xf800, sound_command_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc100, 0xc1ff) AM_WRITE(victory_video_control_w)
+	AM_RANGE(0xc200, 0xc3ff) AM_WRITE(victory_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(victory_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xc800, 0xdfff) AM_WRITE(victory_charram_w) AM_BASE(&victory_charram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_command_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( main_readport )
-	{ 0x00, 0x03, input_port_0_r },
-	{ 0x04, 0x07, input_port_1_r },
-	{ 0x08, 0x08, input_port_2_r },
-	{ 0x0a, 0x0a, input_port_3_r },
-	{ 0x0c, 0x0c, input_port_4_r },
-	{ 0x0e, 0x0e, input_port_5_r },
-PORT_END
+static ADDRESS_MAP_START( main_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READ(input_port_0_r)
+	AM_RANGE(0x04, 0x07) AM_READ(input_port_1_r)
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(input_port_3_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_4_r)
+	AM_RANGE(0x0e, 0x0e) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( main_writeport )
-	{ 0x10, 0x13, lamp_control_w },
-PORT_END
+static ADDRESS_MAP_START( main_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x13) AM_WRITE(lamp_control_w)
+ADDRESS_MAP_END
 
 
 
@@ -261,25 +261,25 @@ PORT_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x1000, 0x1fff, exidy_shriot_r },
-	{ 0x2000, 0x200f, pia_0_r },
-	{ 0x3000, 0x3fff, exidy_sh8253_r },
-	{ 0x5000, 0x5fff, exidy_sh6840_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(exidy_shriot_r)
+	AM_RANGE(0x2000, 0x200f) AM_READ(pia_0_r)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(exidy_sh8253_r)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(exidy_sh6840_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x1000, 0x1fff, exidy_shriot_w },
-	{ 0x2000, 0x200f, pia_0_w },
-	{ 0x3000, 0x3fff, exidy_sh8253_w },
-	{ 0x5000, 0x5fff, exidy_sh6840_w },
-	{ 0x6000, 0x6fff, exidy_sfxctrl_w },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(exidy_shriot_w)
+	AM_RANGE(0x2000, 0x200f) AM_WRITE(pia_0_w)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(exidy_sh8253_w)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(exidy_sh6840_w)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(exidy_sfxctrl_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -366,13 +366,13 @@ static MACHINE_DRIVER_START( victory )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
-	MDRV_CPU_PORTS(main_readport,main_writeport)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_IO_MAP(main_readport,main_writeport)
 	MDRV_CPU_VBLANK_INT(victory_vblank_interrupt,1)
 
 	MDRV_CPU_ADD(M6502,3579545/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -599,5 +599,24 @@ rom[0xb3e/2] = 0x8008;
 
 DRIVER_INIT( birdtry )
 {
+	data8_t *src, tmp;
+	int i, j, k;
+
 	GAME=3;
+
+	src = memory_region(REGION_GFX4);
+
+	/* some parts of the graphic have bytes swapped */
+	for (k = 0;k < 0x70000;k += 0x20000)
+	{
+		for (i = 0x2000;i < 0x10000;i += 32)
+		{
+			for (j = 0;j < 16;j++)
+			{
+				tmp = src[k+i+j+16];
+				src[k+i+j+16] = src[k+i+j];
+				src[k+i+j] = tmp;
+			}
+		}
+	}
 }

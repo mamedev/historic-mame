@@ -129,68 +129,68 @@ WRITE16_HANDLER( polepos_road16_vscroll_w );
  * CPU memory structures
  *********************************************************************/
 
-static MEMORY_READ_START( z80_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },				/* ROM */
-	{ 0x3000, 0x37ff, MRA_RAM },				/* Battery Backup */
-	{ 0x4000, 0x47ff, polepos_sprite_r },		/* Motion Object */
-	{ 0x4800, 0x4bff, polepos_road_r }, 		/* Road Memory */
-	{ 0x4c00, 0x4fff, polepos_alpha_r },		/* Alphanumeric (char ram) */
-	{ 0x5000, 0x57ff, polepos_view_r }, 		/* Background Memory */
-	{ 0x8000, 0x83ff, MRA_RAM },				/* Sound Memory */
-	{ 0x9000, 0x90ff, polepos_mcu_data_r }, 	/* 4 bit CPU data */
-	{ 0x9100, 0x9100, polepos_mcu_control_r },	/* 4 bit CPU control */
-	{ 0xa000, 0xa000, polepos_io_r },			/* IO */
-MEMORY_END
+static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)				/* ROM */
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)				/* Battery Backup */
+	AM_RANGE(0x4000, 0x47ff) AM_READ(polepos_sprite_r)		/* Motion Object */
+	AM_RANGE(0x4800, 0x4bff) AM_READ(polepos_road_r) 		/* Road Memory */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(polepos_alpha_r)		/* Alphanumeric (char ram) */
+	AM_RANGE(0x5000, 0x57ff) AM_READ(polepos_view_r) 		/* Background Memory */
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)				/* Sound Memory */
+	AM_RANGE(0x9000, 0x90ff) AM_READ(polepos_mcu_data_r) 	/* 4 bit CPU data */
+	AM_RANGE(0x9100, 0x9100) AM_READ(polepos_mcu_control_r)	/* 4 bit CPU control */
+	AM_RANGE(0xa000, 0xa000) AM_READ(polepos_io_r)			/* IO */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( z80_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },						/* ROM */
-	{ 0x3000, 0x37ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* Battery Backup */
-	{ 0x4000, 0x47ff, polepos_sprite_w },				/* Motion Object */
-	{ 0x4800, 0x4bff, polepos_road_w }, 				/* Road Memory */
-	{ 0x4c00, 0x4fff, polepos_alpha_w },				/* Alphanumeric (char ram) */
-	{ 0x5000, 0x57ff, polepos_view_w }, 				/* Background Memory */
-	{ 0x8000, 0x83bf, MWA_RAM },						/* Sound Memory */
-	{ 0x83c0, 0x83ff, polepos_sound_w, &polepos_soundregs },/* Sound data */
-	{ 0x9000, 0x90ff, polepos_mcu_data_w }, 			/* 4 bit CPU data */
-	{ 0x9100, 0x9100, polepos_mcu_control_w },			/* 4 bit CPU control */
-	{ 0xa000, 0xa000, polepos_z80_irq_enable_w },		/* NMI enable */
-	{ 0xa001, 0xa001, polepos_mcu_enable_w },			/* 4 bit CPU enable */
-	{ 0xa002, 0xa002, MWA_NOP },						/* Sound Enable */
-	{ 0xa003, 0xa003, polepos_adc_select_w },			/* ADC Input select */
-	{ 0xa004, 0xa005, polepos_z8002_enable_w }, 		/* CPU 1/2 enable */
-	{ 0xa006, 0xa006, polepos_start_w },				/* Start Switch */
-	{ 0xa007, 0xa007, MWA_NOP },						/* Color Enable */
-	{ 0xa100, 0xa100, watchdog_reset_w },				/* Watchdog */
-	{ 0xa200, 0xa200, polepos_engine_sound_lsb_w }, 	/* Car Sound ( Lower Nibble ) */
-	{ 0xa300, 0xa300, polepos_engine_sound_msb_w }, 	/* Car Sound ( Upper Nibble ) */
-MEMORY_END
+static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)						/* ROM */
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* Battery Backup */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(polepos_sprite_w)				/* Motion Object */
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(polepos_road_w) 				/* Road Memory */
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(polepos_alpha_w)				/* Alphanumeric (char ram) */
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(polepos_view_w) 				/* Background Memory */
+	AM_RANGE(0x8000, 0x83bf) AM_WRITE(MWA8_RAM)						/* Sound Memory */
+	AM_RANGE(0x83c0, 0x83ff) AM_WRITE(polepos_sound_w) AM_BASE(&polepos_soundregs)/* Sound data */
+	AM_RANGE(0x9000, 0x90ff) AM_WRITE(polepos_mcu_data_w) 			/* 4 bit CPU data */
+	AM_RANGE(0x9100, 0x9100) AM_WRITE(polepos_mcu_control_w)			/* 4 bit CPU control */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(polepos_z80_irq_enable_w)		/* NMI enable */
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(polepos_mcu_enable_w)			/* 4 bit CPU enable */
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(MWA8_NOP)						/* Sound Enable */
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(polepos_adc_select_w)			/* ADC Input select */
+	AM_RANGE(0xa004, 0xa005) AM_WRITE(polepos_z8002_enable_w) 		/* CPU 1/2 enable */
+	AM_RANGE(0xa006, 0xa006) AM_WRITE(polepos_start_w)				/* Start Switch */
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP)						/* Color Enable */
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(watchdog_reset_w)				/* Watchdog */
+	AM_RANGE(0xa200, 0xa200) AM_WRITE(polepos_engine_sound_lsb_w) 	/* Car Sound ( Lower Nibble ) */
+	AM_RANGE(0xa300, 0xa300) AM_WRITE(polepos_engine_sound_msb_w) 	/* Car Sound ( Upper Nibble ) */
+ADDRESS_MAP_END
 
-static PORT_READ_START( z80_readport )
-	{ 0x00, 0x00, polepos_adc_r },
-PORT_END
+static ADDRESS_MAP_START( z80_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(polepos_adc_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( z80_writeport )
-	{ 0x00, 0x00, IOWP_NOP }, /* ??? */
-PORT_END
+static ADDRESS_MAP_START( z80_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) /* ??? */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( z8002_readmem )
-	{ 0x0000, 0x7fff, MRA16_ROM },			/* ROM */
-	{ 0x8000, 0x8fff, polepos_sprite16_r }, /* Motion Object */
-	{ 0x9000, 0x97ff, polepos_road16_r },	/* Road Memory */
-	{ 0x9800, 0x9fff, polepos_alpha16_r },	/* Alphanumeric (char ram) */
-	{ 0xa000, 0xafff, polepos_view16_r },	/* Background memory */
-MEMORY_END
+static ADDRESS_MAP_START( z8002_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA16_ROM)			/* ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(polepos_sprite16_r) /* Motion Object */
+	AM_RANGE(0x9000, 0x97ff) AM_READ(polepos_road16_r)	/* Road Memory */
+	AM_RANGE(0x9800, 0x9fff) AM_READ(polepos_alpha16_r)	/* Alphanumeric (char ram) */
+	AM_RANGE(0xa000, 0xafff) AM_READ(polepos_view16_r)	/* Background memory */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( z8002_writemem )
-	{ 0x6000, 0x6003, polepos_z8002_nvi_enable_w }, 					/* NVI enable */
-	{ 0x0000, 0x7fff, MWA16_ROM },										/* ROM */
-	{ 0x8000, 0x8fff, polepos_sprite16_w, &polepos_sprite16_memory },	/* Motion Object */
-	{ 0x9000, 0x97ff, polepos_road16_w, &polepos_road16_memory },		/* Road Memory */
-	{ 0x9800, 0x9fff, polepos_alpha16_w, &polepos_alpha16_memory }, 	/* Alphanumeric (char ram) */
-	{ 0xa000, 0xafff, polepos_view16_w, &polepos_view16_memory },		/* Background memory */
-	{ 0xc000, 0xc001, polepos_view16_hscroll_w },						/* Background horz scroll position */
-	{ 0xc100, 0xc101, polepos_road16_vscroll_w },						/* Road vertical position */
-MEMORY_END
+static ADDRESS_MAP_START( z8002_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x6000, 0x6003) AM_WRITE(polepos_z8002_nvi_enable_w) 					/* NVI enable */
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA16_ROM)										/* ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(polepos_sprite16_w) AM_BASE(&polepos_sprite16_memory)	/* Motion Object */
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(polepos_road16_w) AM_BASE(&polepos_road16_memory)		/* Road Memory */
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(polepos_alpha16_w) AM_BASE(&polepos_alpha16_memory) 	/* Alphanumeric (char ram) */
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(polepos_view16_w) AM_BASE(&polepos_view16_memory)		/* Background memory */
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(polepos_view16_hscroll_w)						/* Background horz scroll position */
+	AM_RANGE(0xc100, 0xc101) AM_WRITE(polepos_road16_vscroll_w)						/* Road vertical position */
+ADDRESS_MAP_END
 
 
 /*********************************************************************
@@ -446,15 +446,15 @@ static MACHINE_DRIVER_START( polepos )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
-	MDRV_CPU_PORTS(z80_readport,z80_writeport)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
+	MDRV_CPU_IO_MAP(z80_readport,z80_writeport)
 
 	MDRV_CPU_ADD(Z8000, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(z8002_readmem,z8002_writemem)
+	MDRV_CPU_PROGRAM_MAP(z8002_readmem,z8002_writemem)
 	MDRV_CPU_VBLANK_INT(polepos_z8002_1_interrupt,1)
 
 	MDRV_CPU_ADD(Z8000, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(z8002_readmem,z8002_writemem)
+	MDRV_CPU_PROGRAM_MAP(z8002_readmem,z8002_writemem)
 	MDRV_CPU_VBLANK_INT(polepos_z8002_2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

@@ -218,59 +218,59 @@ WRITE16_HANDLER( galpani2_oki_1_bank_w )
 }
 
 
-static MEMORY_READ16_START( galpani2_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA16_RAM					},	// Work RAM
-	{ 0x300000, 0x301fff, MRA16_RAM					},	// ?
-	{ 0x302000, 0x303fff, MRA16_RAM					},	// Sprites
-	{ 0x304000, 0x30401f, MRA16_RAM					},	// Sprites Regs
-	{ 0x310000, 0x3101ff, MRA16_RAM					},	// Background Palette
-	{ 0x318000, 0x318001, galpani2_eeprom_r			},	// EEPROM
-	{ 0x380000, 0x38ffff, MRA16_RAM					},	// ? + Sprites Palette
-	{ 0x400000, 0x43ffff, MRA16_RAM					},	// Background 0
-	{ 0x440000, 0x440001, MRA16_RAM					},	// Background 0 Scroll X
-	{ 0x480000, 0x480001, MRA16_RAM					},	// Background 0 Scroll Y
-	{ 0x500000, 0x53ffff, MRA16_RAM					},	// Background 1
-	{ 0x540000, 0x540001, MRA16_RAM					},	// Background 1 Scroll X
-	{ 0x580000, 0x580001, MRA16_RAM					},	// Background 1 Scroll Y
-	{ 0x780000, 0x780001, input_port_0_word_r		},	// Input Ports
-	{ 0x780002, 0x780003, input_port_1_word_r		},	//
-	{ 0x780004, 0x780005, input_port_2_word_r		},	//
-	{ 0x780006, 0x780007, input_port_3_word_r		},	//
-	{ 0xc00000, 0xc00001, OKIM6295_status_0_lsb_r	},	// 2 x OKIM6295
-	{ 0xc40000, 0xc40001, OKIM6295_status_1_lsb_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( galpani2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM					)	// Work RAM
+	AM_RANGE(0x300000, 0x301fff) AM_READ(MRA16_RAM					)	// ?
+	AM_RANGE(0x302000, 0x303fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x304000, 0x30401f) AM_READ(MRA16_RAM					)	// Sprites Regs
+	AM_RANGE(0x310000, 0x3101ff) AM_READ(MRA16_RAM					)	// Background Palette
+	AM_RANGE(0x318000, 0x318001) AM_READ(galpani2_eeprom_r			)	// EEPROM
+	AM_RANGE(0x380000, 0x38ffff) AM_READ(MRA16_RAM					)	// ? + Sprites Palette
+	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_RAM					)	// Background 0
+	AM_RANGE(0x440000, 0x440001) AM_READ(MRA16_RAM					)	// Background 0 Scroll X
+	AM_RANGE(0x480000, 0x480001) AM_READ(MRA16_RAM					)	// Background 0 Scroll Y
+	AM_RANGE(0x500000, 0x53ffff) AM_READ(MRA16_RAM					)	// Background 1
+	AM_RANGE(0x540000, 0x540001) AM_READ(MRA16_RAM					)	// Background 1 Scroll X
+	AM_RANGE(0x580000, 0x580001) AM_READ(MRA16_RAM					)	// Background 1 Scroll Y
+	AM_RANGE(0x780000, 0x780001) AM_READ(input_port_0_word_r		)	// Input Ports
+	AM_RANGE(0x780002, 0x780003) AM_READ(input_port_1_word_r		)	//
+	AM_RANGE(0x780004, 0x780005) AM_READ(input_port_2_word_r		)	//
+	AM_RANGE(0x780006, 0x780007) AM_READ(input_port_3_word_r		)	//
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(OKIM6295_status_0_lsb_r	)	// 2 x OKIM6295
+	AM_RANGE(0xc40000, 0xc40001) AM_READ(OKIM6295_status_1_lsb_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( galpani2_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM								},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM, &galpani2_ram				},	// Work RAM
-	{ 0x300000, 0x301fff, MWA16_RAM								},	// ?
-	{ 0x302000, 0x303fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
-	{ 0x304000, 0x30401f, kaneko16_sprites_regs_w, &kaneko16_sprites_regs	},	// Sprites Regs
-	{ 0x30c000, 0x30c001, MWA16_NOP								},	// ? hblank effect ?
-	{ 0x310000, 0x3101ff, galpani2_palette_0_w, &galpani2_palette_0		},	// ?
-	{ 0x314000, 0x314001, MWA16_NOP								},	// ? flip backgrounds ?
-	{ 0x318000, 0x318001, galpani2_eeprom_w						},	// EEPROM
-	{ 0x380000, 0x387fff, MWA16_RAM								},	// Palette?
-	{ 0x388000, 0x38ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x400000, 0x43ffff, galpani2_bg8_0_w, &galpani2_bg8_0		},	// Background 0
-	{ 0x440000, 0x440001, MWA16_RAM, &galpani2_bg8_0_scrollx	},	// Background 0 Scroll X
-	{ 0x480000, 0x480001, MWA16_RAM, &galpani2_bg8_0_scrolly	},	// Background 0 Scroll Y
-	{ 0x4c0000, 0x4c0001, MWA16_NOP								},	// ? 0 at startup only
-	{ 0x500000, 0x53ffff, galpani2_bg8_1_w, &galpani2_bg8_1		},	// Background 1
-	{ 0x540000, 0x540001, MWA16_RAM, &galpani2_bg8_1_scrollx	},	// Background 1 Scroll X
-	{ 0x580000, 0x580001, MWA16_RAM, &galpani2_bg8_1_scrolly	},	// Background 1 Scroll Y
-	{ 0x5c0000, 0x5c0001, MWA16_NOP								},	// ? 0 at startup only
-	{ 0x600000, 0x600001, MWA16_NOP								},	// Watchdog
-//	{ 0x640000, 0x640001, MWA16_NOP								},	// ? 0 before resetting and at startup
-//	{ 0x680000, 0x680001, MWA16_NOP								},	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
-{ 0x680000, 0x680001, galpani2_mcu_nmi_w	},	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
-	{ 0x6c0000, 0x6c0001, galpani2_coin_lockout_w				},	// Coin + Card Lockout
-	{ 0xc00000, 0xc00001, OKIM6295_data_0_lsb_w					},	// 2 x OKIM6295
-	{ 0xc40000, 0xc40001, OKIM6295_data_1_lsb_w					},	//
-	{ 0xc80000, 0xc80001, galpani2_oki_0_bank_w					},	//
-	{ 0xcc0000, 0xcc0001, galpani2_oki_1_bank_w					},	//
-MEMORY_END
+static ADDRESS_MAP_START( galpani2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM								)	// ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_ram				)	// Work RAM
+	AM_RANGE(0x300000, 0x301fff) AM_WRITE(MWA16_RAM								)	// ?
+	AM_RANGE(0x302000, 0x303fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size			)	// Sprites
+	AM_RANGE(0x304000, 0x30401f) AM_WRITE(kaneko16_sprites_regs_w) AM_BASE(&kaneko16_sprites_regs	)	// Sprites Regs
+	AM_RANGE(0x30c000, 0x30c001) AM_WRITE(MWA16_NOP								)	// ? hblank effect ?
+	AM_RANGE(0x310000, 0x3101ff) AM_WRITE(galpani2_palette_0_w) AM_BASE(&galpani2_palette_0		)	// ?
+	AM_RANGE(0x314000, 0x314001) AM_WRITE(MWA16_NOP								)	// ? flip backgrounds ?
+	AM_RANGE(0x318000, 0x318001) AM_WRITE(galpani2_eeprom_w						)	// EEPROM
+	AM_RANGE(0x380000, 0x387fff) AM_WRITE(MWA16_RAM								)	// Palette?
+	AM_RANGE(0x388000, 0x38ffff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(galpani2_bg8_0_w) AM_BASE(&galpani2_bg8_0		)	// Background 0
+	AM_RANGE(0x440000, 0x440001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_bg8_0_scrollx	)	// Background 0 Scroll X
+	AM_RANGE(0x480000, 0x480001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_bg8_0_scrolly	)	// Background 0 Scroll Y
+	AM_RANGE(0x4c0000, 0x4c0001) AM_WRITE(MWA16_NOP								)	// ? 0 at startup only
+	AM_RANGE(0x500000, 0x53ffff) AM_WRITE(galpani2_bg8_1_w) AM_BASE(&galpani2_bg8_1		)	// Background 1
+	AM_RANGE(0x540000, 0x540001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_bg8_1_scrollx	)	// Background 1 Scroll X
+	AM_RANGE(0x580000, 0x580001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_bg8_1_scrolly	)	// Background 1 Scroll Y
+	AM_RANGE(0x5c0000, 0x5c0001) AM_WRITE(MWA16_NOP								)	// ? 0 at startup only
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP								)	// Watchdog
+//	AM_RANGE(0x640000, 0x640001) AM_WRITE(MWA16_NOP								)	// ? 0 before resetting and at startup
+//	AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_NOP								)	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
+AM_RANGE(0x680000, 0x680001) AM_WRITE(galpani2_mcu_nmi_w	)	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
+	AM_RANGE(0x6c0000, 0x6c0001) AM_WRITE(galpani2_coin_lockout_w				)	// Coin + Card Lockout
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(OKIM6295_data_0_lsb_w					)	// 2 x OKIM6295
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(OKIM6295_data_1_lsb_w					)	//
+	AM_RANGE(0xc80000, 0xc80001) AM_WRITE(galpani2_oki_0_bank_w					)	//
+	AM_RANGE(0xcc0000, 0xcc0001) AM_WRITE(galpani2_oki_1_bank_w					)	//
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -295,27 +295,27 @@ READ16_HANDLER( galpani2_bankedrom_r )
 }
 
 
-static MEMORY_READ16_START( galpani2_readmem2 )
-	{ 0x000000, 0x03ffff, MRA16_ROM					},	// ROM
-	{ 0x100000, 0x13ffff, MRA16_RAM					},	// Work RAM
-	{ 0x400000, 0x4fffff, MRA16_RAM					},	// bg15
-	{ 0x500000, 0x5fffff, MRA16_RAM					},	// bg15
-	{ 0x800000, 0xffffff, galpani2_bankedrom_r		},	// Banked ROM
-MEMORY_END
+static ADDRESS_MAP_START( galpani2_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM					)	// Work RAM
+	AM_RANGE(0x400000, 0x4fffff) AM_READ(MRA16_RAM					)	// bg15
+	AM_RANGE(0x500000, 0x5fffff) AM_READ(MRA16_RAM					)	// bg15
+	AM_RANGE(0x800000, 0xffffff) AM_READ(galpani2_bankedrom_r		)	// Banked ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( galpani2_writemem2 )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x13ffff, MWA16_RAM, &galpani2_ram2		},	// Work RAM
-	{ 0x400000, 0x4fffff, galpani2_bg15_w, &galpani2_bg15	},	// bg15
-	{ 0x500000, 0x5fffff, MWA16_RAM							},	// bg15
-	{ 0x600000, 0x600001, MWA16_NOP						},	// ? 0 at startup only
-	{ 0x640000, 0x640001, MWA16_NOP						},	// ? 0 at startup only
-	{ 0x680000, 0x680001, MWA16_NOP						},	// ? 0 at startup only
-	{ 0x6c0000, 0x6c0001, MWA16_NOP						},	// ? 0 at startup only
-	{ 0x700000, 0x700001, MWA16_NOP						},	// Watchdog
-	{ 0x780000, 0x780001, MWA16_NOP						},	// ? 0 -> 1 -> 0 (lev 5)
-	{ 0x7c0000, 0x7c0001, MWA16_RAM, &galpani2_rombank	},	// Rom Bank
-MEMORY_END
+static ADDRESS_MAP_START( galpani2_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_ram2		)	// Work RAM
+	AM_RANGE(0x400000, 0x4fffff) AM_WRITE(galpani2_bg15_w) AM_BASE(&galpani2_bg15	)	// bg15
+	AM_RANGE(0x500000, 0x5fffff) AM_WRITE(MWA16_RAM							)	// bg15
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP						)	// ? 0 at startup only
+	AM_RANGE(0x640000, 0x640001) AM_WRITE(MWA16_NOP						)	// ? 0 at startup only
+	AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_NOP						)	// ? 0 at startup only
+	AM_RANGE(0x6c0000, 0x6c0001) AM_WRITE(MWA16_NOP						)	// ? 0 at startup only
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(MWA16_NOP						)	// Watchdog
+	AM_RANGE(0x780000, 0x780001) AM_WRITE(MWA16_NOP						)	// ? 0 -> 1 -> 0 (lev 5)
+	AM_RANGE(0x7c0000, 0x7c0001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_rombank	)	// Rom Bank
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -500,11 +500,11 @@ static MACHINE_DRIVER_START( galpani2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16MHz */
-	MDRV_CPU_MEMORY(galpani2_readmem,galpani2_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpani2_readmem,galpani2_writemem)
 	MDRV_CPU_VBLANK_INT(galpani2_interrupt,GALPANI2_INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16MHz */
-	MDRV_CPU_MEMORY(galpani2_readmem2,galpani2_writemem2)
+	MDRV_CPU_PROGRAM_MAP(galpani2_readmem2,galpani2_writemem2)
 	MDRV_CPU_VBLANK_INT(galpani2_interrupt2,GALPANI2_INTERRUPTS_NUM2)
 
 	MDRV_FRAMES_PER_SECOND(60)

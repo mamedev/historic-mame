@@ -83,52 +83,52 @@ static WRITE_HANDLER( lemmings_sound_ack_w )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( lemmings_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
-	{ 0x120000, 0x1207ff, MRA16_RAM },
-	{ 0x140000, 0x1407ff, MRA16_RAM },
-	{ 0x160000, 0x160fff, MRA16_RAM },
-	{ 0x1a0000, 0x1a07ff, lemmings_prot_r },
-	{ 0x190000, 0x19000f, lemmings_trackball_r },
-	{ 0x200000, 0x202fff, MRA16_RAM },
-	{ 0x300000, 0x37ffff, MRA16_RAM },
-	{ 0x380000, 0x39ffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( lemmings_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x160fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_READ(lemmings_prot_r)
+	AM_RANGE(0x190000, 0x19000f) AM_READ(lemmings_trackball_r)
+	AM_RANGE(0x200000, 0x202fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x37ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x380000, 0x39ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( lemmings_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x140000, 0x1407ff, MWA16_RAM, &spriteram16_2, &spriteram_2_size },
-	{ 0x160000, 0x160fff, lemmings_palette_24bit_w, &paletteram16 },
-	{ 0x170000, 0x17000f, lemmings_control_w, &lemmings_control_data },
-	{ 0x1a0064, 0x1a0065, lemmings_sound_w },
-	{ 0x1c0000, 0x1c0001, buffer_spriteram16_w }, /* 1 written once a frame */
-	{ 0x1e0000, 0x1e0001, buffer_spriteram16_2_w }, /* 1 written once a frame */
-	{ 0x200000, 0x201fff, lemmings_vram_w, &lemmings_vram_data },
-	{ 0x300000, 0x37ffff, lemmings_pixel_0_w, &lemmings_pixel_0_data },
-	{ 0x380000, 0x39ffff, lemmings_pixel_1_w, &lemmings_pixel_1_data },
-MEMORY_END
+static ADDRESS_MAP_START( lemmings_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2) AM_SIZE(&spriteram_2_size)
+	AM_RANGE(0x160000, 0x160fff) AM_WRITE(lemmings_palette_24bit_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x170000, 0x17000f) AM_WRITE(lemmings_control_w) AM_BASE(&lemmings_control_data)
+	AM_RANGE(0x1a0064, 0x1a0065) AM_WRITE(lemmings_sound_w)
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(buffer_spriteram16_w) /* 1 written once a frame */
+	AM_RANGE(0x1e0000, 0x1e0001) AM_WRITE(buffer_spriteram16_2_w) /* 1 written once a frame */
+	AM_RANGE(0x200000, 0x201fff) AM_WRITE(lemmings_vram_w) AM_BASE(&lemmings_vram_data)
+	AM_RANGE(0x300000, 0x37ffff) AM_WRITE(lemmings_pixel_0_w) AM_BASE(&lemmings_pixel_0_data)
+	AM_RANGE(0x380000, 0x39ffff) AM_WRITE(lemmings_pixel_1_w) AM_BASE(&lemmings_pixel_1_data)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0801, 0x0801, YM2151_status_port_0_r },
-	{ 0x1000, 0x1000, OKIM6295_status_0_r },
-	{ 0x1800, 0x1800, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0801, 0x0801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x1000, 0x1000) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0800, YM2151_register_port_0_w },
-	{ 0x0801, 0x0801, YM2151_data_port_0_w },
-	{ 0x1000, 0x1000, OKIM6295_data_0_w },
-	{ 0x1800, 0x1800, lemmings_sound_ack_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(lemmings_sound_ack_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -285,12 +285,12 @@ static MACHINE_DRIVER_START( lemmings )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14000000)
-	MDRV_CPU_MEMORY(lemmings_readmem,lemmings_writemem)
+	MDRV_CPU_PROGRAM_MAP(lemmings_readmem,lemmings_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(M6809,32220000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

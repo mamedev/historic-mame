@@ -237,7 +237,7 @@ VIDEO_START(winspike)
 		return 1;
 	}
 
-	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -42, -23, konamigx_le2_sprite_callback))
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -53, -23, konamigx_type2_sprite_callback))
 	{
 		return 1;
 	}

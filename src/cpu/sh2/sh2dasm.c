@@ -668,7 +668,7 @@ static void op1111(char *buffer, UINT32 pc, UINT16 opcode)
 unsigned DasmSH2(char *buffer, unsigned pc)
 {
 	UINT16 opcode;
-	opcode = cpu_readmem32bedw_word(pc & 0x1fffffff);
+	opcode = program_read_word(pc & 0x1fffffff);
 	pc += 2;
 
 	switch((opcode >> 12) & 15)

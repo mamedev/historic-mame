@@ -81,31 +81,31 @@ static READ16_HANDLER( special_port1_r )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0xff8000, 0xffbfff, MRA16_RAM },
-	{ 0xffc000, 0xffc7ff, MRA16_RAM },
-	{ 0xffd000, 0xffdfff, atarigen_eeprom_r },
-	{ 0xffe000, 0xffe0ff, atarigen_sound_r },
-	{ 0xffe100, 0xffe1ff, input_port_0_word_r },
-	{ 0xffe200, 0xffe2ff, special_port1_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0xff8000, 0xffbfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffc000, 0xffc7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffd000, 0xffdfff) AM_READ(atarigen_eeprom_r)
+	AM_RANGE(0xffe000, 0xffe0ff) AM_READ(atarigen_sound_r)
+	AM_RANGE(0xffe100, 0xffe1ff) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xffe200, 0xffe2ff) AM_READ(special_port1_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0xff8000, 0xff8fff, atarigen_alpha_w, &atarigen_alpha },
-	{ 0xff9000, 0xffadff, MWA16_RAM },
-	{ 0xffae00, 0xffafff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0xffb000, 0xffbfff, atarigen_playfield_w, &atarigen_playfield },
-	{ 0xffc000, 0xffc7ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0xffd000, 0xffdfff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
-	{ 0xffe900, 0xffe9ff, atarigen_sound_w },
-	{ 0xffea00, 0xffeaff, watchdog_reset16_w },
-	{ 0xffeb00, 0xffebff, atarigen_video_int_ack_w },
-	{ 0xffee00, 0xffeeff, atarigen_sound_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xff8000, 0xff8fff) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0xff9000, 0xffadff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xffae00, 0xffafff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xffb000, 0xffbfff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xffc000, 0xffc7ff) AM_WRITE(paletteram16_IIIIRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xffd000, 0xffdfff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xffe800, 0xffe8ff) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0xffe900, 0xffe9ff) AM_WRITE(atarigen_sound_w)
+	AM_RANGE(0xffea00, 0xffeaff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xffeb00, 0xffebff) AM_WRITE(atarigen_video_int_ack_w)
+	AM_RANGE(0xffee00, 0xffeeff) AM_WRITE(atarigen_sound_reset_w)
+ADDRESS_MAP_END
 
 
 
@@ -197,7 +197,7 @@ static MACHINE_DRIVER_START( xybots )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	
 	MDRV_FRAMES_PER_SECOND(60)

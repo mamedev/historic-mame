@@ -246,33 +246,33 @@ struct AY8910interface ssio_ay8910_interface =
 
 
 /********* memory interfaces ***********/
-MEMORY_READ_START( ssio_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x9003, ssio_data_r },
-	{ 0xa001, 0xa001, AY8910_read_port_0_r },
-	{ 0xb001, 0xb001, AY8910_read_port_1_r },
-	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0xf000, 0xf000, input_port_5_r },
-MEMORY_END
+ADDRESS_MAP_START( ssio_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9003) AM_READ(ssio_data_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( ssio_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0xa000, 0xa000, AY8910_control_port_0_w },
-	{ 0xa002, 0xa002, AY8910_write_port_0_w },
-	{ 0xb000, 0xb000, AY8910_control_port_1_w },
-	{ 0xb002, 0xb002, AY8910_write_port_1_w },
-	{ 0xc000, 0xc000, ssio_status_w },
-	{ 0xe000, 0xe000, MWA_NOP },
-MEMORY_END
+ADDRESS_MAP_START( ssio_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(ssio_status_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(mcr_ssio)
 	MDRV_CPU_ADD_TAG("ssio", Z80, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(ssio_readmem,ssio_writemem)
+	MDRV_CPU_PROGRAM_MAP(ssio_readmem,ssio_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
 	
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -341,17 +341,17 @@ struct DACinterface mcr_dual_dac_interface =
 
 
 /********* memory interfaces ***********/
-MEMORY_READ16_START( csdeluxe_readmem )
-	{ 0x000000, 0x007fff, MRA16_ROM },
-	{ 0x018000, 0x018007, pia_0_msb_r },
-	{ 0x01c000, 0x01cfff, MRA16_RAM },
-MEMORY_END
+ADDRESS_MAP_START( csdeluxe_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x007fff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x018000, 0x018007) AM_READ(pia_0_msb_r)
+	AM_RANGE(0x01c000, 0x01cfff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE16_START( csdeluxe_writemem )
-	{ 0x000000, 0x007fff, MWA16_ROM },
-	{ 0x018000, 0x018007, pia_0_msb_w },
-	{ 0x01c000, 0x01cfff, MWA16_RAM },
-MEMORY_END
+ADDRESS_MAP_START( csdeluxe_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x007fff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x018000, 0x018007) AM_WRITE(pia_0_msb_w)
+	AM_RANGE(0x01c000, 0x01cfff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
@@ -367,7 +367,7 @@ struct pia6821_interface csdeluxe_pia_intf =
 MACHINE_DRIVER_START(chip_squeak_deluxe)
 	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(csdeluxe_readmem,csdeluxe_writemem)
+	MDRV_CPU_PROGRAM_MAP(csdeluxe_readmem,csdeluxe_writemem)
 	
 	MDRV_SOUND_ADD_TAG("csd", DAC, mcr_dac_interface)
 MACHINE_DRIVER_END
@@ -434,17 +434,17 @@ struct DACinterface turbocs_plus_soundsgood_dac_interface =
 
 
 /********* memory interfaces ***********/
-MEMORY_READ16_START( soundsgood_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x060000, 0x060007, pia_1_msb_r },
-	{ 0x070000, 0x070fff, MRA16_RAM },
-MEMORY_END
+ADDRESS_MAP_START( soundsgood_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x060007) AM_READ(pia_1_msb_r)
+	AM_RANGE(0x070000, 0x070fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE16_START( soundsgood_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x060000, 0x060007, pia_1_msb_w },
-	{ 0x070000, 0x070fff, MWA16_RAM },
-MEMORY_END
+ADDRESS_MAP_START( soundsgood_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x060007) AM_WRITE(pia_1_msb_w)
+	AM_RANGE(0x070000, 0x070fff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
@@ -463,7 +463,7 @@ struct pia6821_interface soundsgood_pia_intf =
 MACHINE_DRIVER_START(sounds_good)
 	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(soundsgood_readmem,soundsgood_writemem)
+	MDRV_CPU_PROGRAM_MAP(soundsgood_readmem,soundsgood_writemem)
 	
 	MDRV_SOUND_ADD_TAG("sg", DAC, mcr_dac_interface)
 MACHINE_DRIVER_END
@@ -522,19 +522,19 @@ void turbocs_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-MEMORY_READ_START( turbocs_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x4000, 0x4003, pia_0_r },	/* Max RPM accesses the PIA here */
-	{ 0x6000, 0x6003, pia_0_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( turbocs_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4003) AM_READ(pia_0_r)	/* Max RPM accesses the PIA here */
+	AM_RANGE(0x6000, 0x6003) AM_READ(pia_0_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( turbocs_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x4000, 0x4003, pia_0_w },	/* Max RPM accesses the PIA here */
-	{ 0x6000, 0x6003, pia_0_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( turbocs_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4003) AM_WRITE(pia_0_w)	/* Max RPM accesses the PIA here */
+	AM_RANGE(0x6000, 0x6003) AM_WRITE(pia_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
@@ -550,7 +550,7 @@ struct pia6821_interface turbocs_pia_intf =
 MACHINE_DRIVER_START(turbo_chip_squeak)
 	MDRV_CPU_ADD_TAG("tcs", M6809, 9000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(turbocs_readmem,turbocs_writemem)
+	MDRV_CPU_PROGRAM_MAP(turbocs_readmem,turbocs_writemem)
 	
 	MDRV_SOUND_ADD_TAG("tcs", DAC, mcr_dac_interface)
 MACHINE_DRIVER_END
@@ -648,19 +648,19 @@ struct TMS5220interface squawkntalk_tms5220_interface =
 
 
 /********* memory interfaces ***********/
-MEMORY_READ_START( squawkntalk_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0080, 0x0083, pia_0_r },
-	{ 0x0090, 0x0093, pia_1_r },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( squawkntalk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x0083) AM_READ(pia_0_r)
+	AM_RANGE(0x0090, 0x0093) AM_READ(pia_1_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( squawkntalk_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x0080, 0x0083, pia_0_w },
-	{ 0x0090, 0x0093, pia_1_w },
-	{ 0xd000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( squawkntalk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x0083) AM_WRITE(pia_0_w)
+	AM_RANGE(0x0090, 0x0093) AM_WRITE(pia_1_w)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
@@ -683,7 +683,7 @@ struct pia6821_interface squawkntalk_pia1_intf =
 MACHINE_DRIVER_START(squawk_n_talk)
 	MDRV_CPU_ADD_TAG("snt", M6802, 3580000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(squawkntalk_readmem,squawkntalk_writemem)
+	MDRV_CPU_PROGRAM_MAP(squawkntalk_readmem,squawkntalk_writemem)
 	
 	MDRV_SOUND_ADD_TAG("snt", TMS5220, squawkntalk_tms5220_interface)
 MACHINE_DRIVER_END

@@ -162,35 +162,35 @@ static INTERRUPT_GEN( jrpacman_interrupt )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, MRA_RAM },	/* including video and color RAM */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x8000, 0xdfff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)	/* including video and color RAM */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, jrpacman_videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4fef, MWA_RAM },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5003, 0x5003, jrpacman_flipscreen_w },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0x5070, 0x5070, jrpacman_palettebank_w, &jrpacman_palettebank },
-	{ 0x5071, 0x5071, jrpacman_colortablebank_w, &jrpacman_colortablebank },
-	{ 0x5073, 0x5073, MWA_RAM, &jrpacman_bgpriority },
-	{ 0x5074, 0x5074, jrpacman_charbank_w, &jrpacman_charbank },
-	{ 0x5075, 0x5075, MWA_RAM, &jrpacman_spritebank },
-	{ 0x5080, 0x5080, MWA_RAM, &jrpacman_scroll },
-	{ 0x50c0, 0x50c0, MWA_NOP },
-	{ 0x8000, 0xdfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(jrpacman_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4800, 0x4fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4ff0, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(jrpacman_flipscreen_w)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x5070, 0x5070) AM_WRITE(jrpacman_palettebank_w) AM_BASE(&jrpacman_palettebank)
+	AM_RANGE(0x5071, 0x5071) AM_WRITE(jrpacman_colortablebank_w) AM_BASE(&jrpacman_colortablebank)
+	AM_RANGE(0x5073, 0x5073) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_bgpriority)
+	AM_RANGE(0x5074, 0x5074) AM_WRITE(jrpacman_charbank_w) AM_BASE(&jrpacman_charbank)
+	AM_RANGE(0x5075, 0x5075) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_spritebank)
+	AM_RANGE(0x5080, 0x5080) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_scroll)
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -200,9 +200,9 @@ MEMORY_END
  *
  *************************************/
 
-static PORT_WRITE_START( writeport )
-	{ 0, 0, interrupt_vector_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0, 0) AM_WRITE(interrupt_vector_w)
+ADDRESS_MAP_END
 
 
 
@@ -337,8 +337,8 @@ static MACHINE_DRIVER_START( jrpacman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(jrpacman_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

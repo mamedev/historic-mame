@@ -117,36 +117,36 @@ static WRITE_HANDLER( hanaroku_out_2_w )
 
 /* main cpu */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x97ff, MRA_RAM },
-	{ 0xa000, 0xa1ff, MRA_RAM },
-	{ 0xc000, 0xc3ff, MRA_RAM },
-	{ 0xc400, 0xc4ff, MRA_RAM },
-	{ 0xd000, 0xd000, AY8910_read_port_0_r },
-	{ 0xe000, 0xe000, input_port_0_r },
-	{ 0xe001, 0xe001, input_port_1_r },
-	{ 0xe002, 0xe002, input_port_2_r },
-	{ 0xe004, 0xe004, input_port_5_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc400, 0xc4ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_1_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_2_r)
+	AM_RANGE(0xe004, 0xe004) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &hanaroku_spriteram1 },
-	{ 0x9000, 0x97ff, MWA_RAM, &hanaroku_spriteram2 },
-	{ 0xa000, 0xa1ff, MWA_RAM, &hanaroku_spriteram3 },
-	{ 0xa200, 0xa2ff, MWA_NOP },	// ??? written once during P.O.S.T.
-	{ 0xa300, 0xa304, MWA_NOP },	// ???
-	{ 0xc000, 0xc3ff, MWA_RAM },				// main ram
-	{ 0xc400, 0xc4ff, MWA_RAM },	// ???
-	{ 0xb000, 0xb000, MWA_NOP },	// ??? always 0x40
-	{ 0xd000, 0xd000, AY8910_control_port_0_w },
-	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-	{ 0xe000, 0xe000, hanaroku_out_0_w },
-	{ 0xe002, 0xe002, hanaroku_out_1_w },
-	{ 0xe004, 0xe004, hanaroku_out_2_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&hanaroku_spriteram1)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(MWA8_RAM) AM_BASE(&hanaroku_spriteram2)
+	AM_RANGE(0xa000, 0xa1ff) AM_WRITE(MWA8_RAM) AM_BASE(&hanaroku_spriteram3)
+	AM_RANGE(0xa200, 0xa2ff) AM_WRITE(MWA8_NOP)	// ??? written once during P.O.S.T.
+	AM_RANGE(0xa300, 0xa304) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)				// main ram
+	AM_RANGE(0xc400, 0xc4ff) AM_WRITE(MWA8_RAM)	// ???
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	// ??? always 0x40
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(hanaroku_out_0_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(hanaroku_out_1_w)
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(hanaroku_out_2_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( hanaroku )
@@ -244,7 +244,7 @@ static struct AY8910interface ay8910_interface =
 
 static MACHINE_DRIVER_START( hanaroku )
 	MDRV_CPU_ADD(Z80,6000000)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

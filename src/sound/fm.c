@@ -4923,7 +4923,7 @@ typedef struct
 	INT32 *wavetype;			/* LFO waveform      */
 	UINT8 testreg;				/* test register (LFO reset) */
 	UINT32 KC_TABLE[8*12*64+950];/* keycode,keyfunction -> count */
-	mem_write_handler PortWrite;/*  callback when write CT0/CT1 */
+	write8_handler PortWrite;/*  callback when write CT0/CT1 */
 } YM2151;
 
 static YM2151 *FMOPM=NULL;	/* array of YM2151's */
@@ -5485,7 +5485,7 @@ void OPMUpdateOne(int num, INT16 **buffer, int length)
 	OPM->LFOCnt = LFOCnt;
 }
 
-void OPMSetPortHander(int n,mem_write_handler PortWrite)
+void OPMSetPortHander(int n,write8_handler PortWrite)
 {
 	FMOPM[n].PortWrite = PortWrite;
 }

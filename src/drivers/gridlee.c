@@ -298,34 +298,34 @@ static WRITE_HANDLER( gridlee_coin_counter_w )
  *************************************/
 
 /* CPU 1 read addresses */
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x7fff, MRA_RAM },
-	{ 0x9500, 0x9501, analog_port_r },
-	{ 0x9502, 0x9502, input_port_4_r },
-	{ 0x9503, 0x9503, input_port_5_r },
-	{ 0x9600, 0x9600, input_port_6_r },
-	{ 0x9700, 0x9700, input_port_7_r },
-	{ 0x9820, 0x9820, random_num_r },
-	{ 0x9c00, 0x9cff, MRA_RAM },
-	{ 0xa000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9500, 0x9501) AM_READ(analog_port_r)
+	AM_RANGE(0x9502, 0x9502) AM_READ(input_port_4_r)
+	AM_RANGE(0x9503, 0x9503) AM_READ(input_port_5_r)
+	AM_RANGE(0x9600, 0x9600) AM_READ(input_port_6_r)
+	AM_RANGE(0x9700, 0x9700) AM_READ(input_port_7_r)
+	AM_RANGE(0x9820, 0x9820) AM_READ(random_num_r)
+	AM_RANGE(0x9c00, 0x9cff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x0800, 0x7fff, gridlee_videoram_w, &videoram, &videoram_size },
-	{ 0x9000, 0x9000, led_0_w },
-	{ 0x9010, 0x9010, led_1_w },
-	{ 0x9020, 0x9020, gridlee_coin_counter_w },
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x0800, 0x7fff) AM_WRITE(gridlee_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(led_0_w)
+	AM_RANGE(0x9010, 0x9010) AM_WRITE(led_1_w)
+	AM_RANGE(0x9020, 0x9020) AM_WRITE(gridlee_coin_counter_w)
 /*	{ 0x9060, 0x9060, unknown - only written to at startup */
-	{ 0x9070, 0x9070, gridlee_cocktail_flip_w },
-	{ 0x9200, 0x9200, gridlee_palette_select_w },
-	{ 0x9380, 0x9380, watchdog_reset_w },
-	{ 0x9700, 0x9700, MWA_NOP },
-	{ 0x9828, 0x993f, gridlee_sound_w },
-	{ 0x9c00, 0x9cff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0xa000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x9070, 0x9070) AM_WRITE(gridlee_cocktail_flip_w)
+	AM_RANGE(0x9200, 0x9200) AM_WRITE(gridlee_palette_select_w)
+	AM_RANGE(0x9380, 0x9380) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x9700, 0x9700) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x9828, 0x993f) AM_WRITE(gridlee_sound_w)
+	AM_RANGE(0x9c00, 0x9cff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -436,7 +436,7 @@ static MACHINE_DRIVER_START( gridlee )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 5000000/4)
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -85,6 +85,34 @@ static const int sRegisterTable[kNumModes][16] =
 	}
 };
 
+static data8_t arm_reg_layout[] =
+{
+	ARM32_R0, -2,    -1,
+	ARM32_R1, -2,    -1,
+	ARM32_R2, ARM32_IR13,    -1,
+	ARM32_R3, ARM32_IR14,    -1,
+	ARM32_R4, -2,  -1,
+	ARM32_R5, ARM32_SR13,  -1,
+	ARM32_R6, ARM32_SR14,  -1,
+	ARM32_R7, -2,  -1,
+	ARM32_R8, ARM32_FR8,   -1,
+	ARM32_R9, ARM32_FR9,   -1,
+	ARM32_R10,ARM32_FR10,  -1,
+	ARM32_R11,ARM32_FR11,  -1,
+	ARM32_R12,ARM32_FR12,  -1,
+	ARM32_R13,ARM32_FR13,  -1,
+	ARM32_R14,ARM32_FR14,  -1,
+	ARM32_R15,0
+};
+
+static UINT8 arm_win_layout[] = {
+	 0, 0,29,17,	/* register window (top rows) */
+	30, 0,50,17,	/* disassembler window (left colums) */
+	 0,18,48, 4,	/* memory #1 window (right, upper middle) */
+	49,18,31, 4,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
 #define N_BIT	31
 #define Z_BIT	30
 #define C_BIT	29
@@ -224,11 +252,12 @@ typedef struct
 	data32_t sArmRegister[kNumRegisters];
 	data8_t pendingIrq;
 	data8_t pendingFiq;
+	int (*irq_callback)(int);
 } ARM_REGS;
 
 static ARM_REGS arm;
 
-int arm_ICount;
+static int arm_icount;
 
 /* Prototypes */
 static void HandleALU( data32_t insn);
@@ -243,18 +272,18 @@ static data32_t decodeShift( data32_t insn, data32_t *pCarry);
 INLINE void cpu_write32( int addr, data32_t data )
 {
 	/* Unaligned writes are treated as normal writes */
-	cpu_writemem26ledw_dword(addr&ADDRESS_MASK,data);
+	program_write_dword_32le(addr&ADDRESS_MASK,data);
 	if (ARM_DEBUG_CORE && addr&3) logerror("%08x: Unaligned write %08x\n",R15,addr);
 }
 
 INLINE void cpu_write8( int addr, data8_t data )
 {
-	cpu_writemem26ledw(addr,data);
+	program_write_byte_32le(addr,data);
 }
 
 INLINE data32_t cpu_read32( int addr )
 {
-	data32_t result = cpu_readmem26ledw_dword(addr&ADDRESS_MASK);
+	data32_t result = program_read_dword_32le(addr&ADDRESS_MASK);
 
 	/* Unaligned reads rotate the word, they never combine words */
 	if (addr&3) {
@@ -274,7 +303,7 @@ INLINE data32_t cpu_read32( int addr )
 
 INLINE data8_t cpu_read8( int addr )
 {
-	return cpu_readmem26ledw(addr);
+	return program_read_byte_32le(addr);
 }
 
 INLINE data32_t GetRegister( int rIndex )
@@ -289,7 +318,7 @@ INLINE void SetRegister( int rIndex, data32_t value )
 
 /***************************************************************************/
 
-void arm_reset(void *param)
+static void arm_reset(void *param)
 {
 	memset(&arm, 0, sizeof(arm));
 
@@ -297,17 +326,17 @@ void arm_reset(void *param)
 	R15 = eARM_MODE_SVC|I_MASK|F_MASK;
 }
 
-void arm_exit(void)
+static void arm_exit(void)
 {
 	/* nothing to do here */
 }
 
-int arm_execute( int cycles )
+static int arm_execute( int cycles )
 {
 	data32_t pc;
 	data32_t insn;
 
-	arm_ICount = cycles;
+	arm_icount = cycles;
 	do
 	{
 
@@ -402,123 +431,30 @@ int arm_execute( int cycles )
 		{
 			logerror("%08x:  Undefined instruction\n",R15);
 		L_Next:
-			arm_ICount -= S_CYCLE;
+			arm_icount -= S_CYCLE;
 			R15 += 4;
 		}
 
-		arm_ICount -= 3;
-	} while( arm_ICount > 0 );
+		arm_icount -= 3;
+	} while( arm_icount > 0 );
 
-	return cycles - arm_ICount;
+	return cycles - arm_icount;
 } /* arm_execute */
 
 
-unsigned arm_get_context(void *dst)
+static void arm_get_context(void *dst)
 {
 	if( dst )
 	{
 		memcpy( dst, &arm, sizeof(arm) );
 	}
-	return sizeof(arm);
 }
 
-void arm_set_context(void *src)
+static void arm_set_context(void *src)
 {
 	if (src)
 	{
 		memcpy( &arm, src, sizeof(arm) );
-	}
-}
-
-unsigned arm_get_pc(void)
-{
-	return R15;//&ADDRESS_MASK;
-}
-
-void arm_set_pc(unsigned val)
-{
-	R15 = (R15&~ADDRESS_MASK)|val;
-}
-
-unsigned arm_get_sp(void)
-{
-	return GetRegister(13);
-}
-
-void arm_set_sp(unsigned val)
-{
-	SetRegister(13,val);
-}
-
-unsigned arm_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-	case ARM32_R0: return arm.sArmRegister[ 0];
-	case ARM32_R1: return arm.sArmRegister[ 1];
-	case ARM32_R2: return arm.sArmRegister[ 2];
-	case ARM32_R3: return arm.sArmRegister[ 3];
-	case ARM32_R4: return arm.sArmRegister[ 4];
-	case ARM32_R5: return arm.sArmRegister[ 5];
-	case ARM32_R6: return arm.sArmRegister[ 6];
-	case ARM32_R7: return arm.sArmRegister[ 7];
-	case ARM32_R8: return arm.sArmRegister[ 8];
-	case ARM32_R9: return arm.sArmRegister[ 9];
-	case ARM32_R10: return arm.sArmRegister[10];
-	case ARM32_R11: return arm.sArmRegister[11];
-	case ARM32_R12: return arm.sArmRegister[12];
-	case ARM32_R13: return arm.sArmRegister[13];
-	case ARM32_R14: return arm.sArmRegister[14];
-	case ARM32_R15: return arm.sArmRegister[15];
-
-	case ARM32_FR8: return	arm.sArmRegister[eR8_FIQ];
-	case ARM32_FR9:	return arm.sArmRegister[eR9_FIQ];
-	case ARM32_FR10: return arm.sArmRegister[eR10_FIQ];
-	case ARM32_FR11: return arm.sArmRegister[eR11_FIQ];
-	case ARM32_FR12: return arm.sArmRegister[eR12_FIQ];
-	case ARM32_FR13: return arm.sArmRegister[eR13_FIQ];
-	case ARM32_FR14: return arm.sArmRegister[eR14_FIQ];
-	case ARM32_IR13: return arm.sArmRegister[eR13_IRQ];
-	case ARM32_IR14: return arm.sArmRegister[eR14_IRQ];
-	case ARM32_SR13: return arm.sArmRegister[eR13_SVC];
-	case ARM32_SR14: return arm.sArmRegister[eR14_SVC];
-	case REG_PC: return arm.sArmRegister[15]&ADDRESS_MASK;
-	}
-
-	return 0;
-}
-
-void arm_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case ARM32_R0: arm.sArmRegister[ 0]= val; break;
-	case ARM32_R1: arm.sArmRegister[ 1]= val; break;
-	case ARM32_R2: arm.sArmRegister[ 2]= val; break;
-	case ARM32_R3: arm.sArmRegister[ 3]= val; break;
-	case ARM32_R4: arm.sArmRegister[ 4]= val; break;
-	case ARM32_R5: arm.sArmRegister[ 5]= val; break;
-	case ARM32_R6: arm.sArmRegister[ 6]= val; break;
-	case ARM32_R7: arm.sArmRegister[ 7]= val; break;
-	case ARM32_R8: arm.sArmRegister[ 8]= val; break;
-	case ARM32_R9: arm.sArmRegister[ 9]= val; break;
-	case ARM32_R10: arm.sArmRegister[10]= val; break;
-	case ARM32_R11: arm.sArmRegister[11]= val; break;
-	case ARM32_R12: arm.sArmRegister[12]= val; break;
-	case ARM32_R13: arm.sArmRegister[13]= val; break;
-	case ARM32_R14: arm.sArmRegister[14]= val; break;
-	case ARM32_R15: arm.sArmRegister[15]= val; break;
-	case ARM32_FR8: arm.sArmRegister[eR8_FIQ] = val; break;
-	case ARM32_FR9: arm.sArmRegister[eR9_FIQ] = val; break;
-	case ARM32_FR10: arm.sArmRegister[eR10_FIQ] = val; break;
-	case ARM32_FR11: arm.sArmRegister[eR11_FIQ] = val; break;
-	case ARM32_FR12: arm.sArmRegister[eR12_FIQ] = val; break;
-	case ARM32_FR13: arm.sArmRegister[eR13_FIQ] = val; break;
-	case ARM32_FR14: arm.sArmRegister[eR14_FIQ] = val; break;
-	case ARM32_IR13: arm.sArmRegister[eR13_IRQ] = val; break;
-	case ARM32_IR14: arm.sArmRegister[eR14_IRQ] = val; break;
-	case ARM32_SR13: arm.sArmRegister[eR13_SVC] = val; break;
-	case ARM32_SR14: arm.sArmRegister[eR14_SVC] = val; break;
 	}
 }
 
@@ -551,11 +487,7 @@ static void arm_check_irq_state(void)
 	}
 }
 
-void arm_set_nmi_line(int state)
-{
-}
-
-void arm_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	switch (irqline) {
 
@@ -577,118 +509,7 @@ void arm_set_irq_line(int irqline, int state)
 	arm_check_irq_state();
 }
 
-void arm_set_irq_callback(int (*callback)(int irqline))
-{
-}
-
-static const data8_t arm_reg_layout[] =
-{
-	ARM32_R0, -2,    -1,
-	ARM32_R1, -2,    -1,
-	ARM32_R2, ARM32_IR13,    -1,
-	ARM32_R3, ARM32_IR14,    -1,
-	ARM32_R4, -2,  -1,
-	ARM32_R5, ARM32_SR13,  -1,
-	ARM32_R6, ARM32_SR14,  -1,
-	ARM32_R7, -2,  -1,
-	ARM32_R8, ARM32_FR8,   -1,
-	ARM32_R9, ARM32_FR9,   -1,
-	ARM32_R10,ARM32_FR10,  -1,
-	ARM32_R11,ARM32_FR11,  -1,
-	ARM32_R12,ARM32_FR12,  -1,
-	ARM32_R13,ARM32_FR13,  -1,
-	ARM32_R14,ARM32_FR14,  -1,
-	ARM32_R15,0
-};
-
-static const UINT8 arm_win_layout[] = {
-	 0, 0,29,17,	/* register window (top rows) */
-	30, 0,50,17,	/* disassembler window (left colums) */
-	 0,18,48, 4,	/* memory #1 window (right, upper middle) */
-	49,18,31, 4,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-const char *arm_info(void *context, int regnum)
-{
-	static char buffer[32][63+1];
-	static int which = 0;
-
-	ARM_REGS *pRegs = context;
-	if( !context )
-		pRegs = &arm;
-
-	which = (which + 1) % 32;
-	buffer[which][0] = '\0';
-
-	switch( regnum )
-	{
-	case CPU_INFO_REG + ARM32_R0: sprintf( buffer[which], "R0  :%08x", pRegs->sArmRegister[ 0] );  break;
-	case CPU_INFO_REG + ARM32_R1: sprintf( buffer[which], "R1  :%08x", pRegs->sArmRegister[ 1] );  break;
-	case CPU_INFO_REG + ARM32_R2: sprintf( buffer[which], "R2  :%08x", pRegs->sArmRegister[ 2] );  break;
-	case CPU_INFO_REG + ARM32_R3: sprintf( buffer[which], "R3  :%08x", pRegs->sArmRegister[ 3] );  break;
-	case CPU_INFO_REG + ARM32_R4: sprintf( buffer[which], "R4  :%08x", pRegs->sArmRegister[ 4] );  break;
-	case CPU_INFO_REG + ARM32_R5: sprintf( buffer[which], "R5  :%08x", pRegs->sArmRegister[ 5] );  break;
-	case CPU_INFO_REG + ARM32_R6: sprintf( buffer[which], "R6  :%08x", pRegs->sArmRegister[ 6] );  break;
-	case CPU_INFO_REG + ARM32_R7: sprintf( buffer[which], "R7  :%08x", pRegs->sArmRegister[ 7] );  break;
-	case CPU_INFO_REG + ARM32_R8: sprintf( buffer[which], "R8  :%08x", pRegs->sArmRegister[ 8] );  break;
-	case CPU_INFO_REG + ARM32_R9: sprintf( buffer[which], "R9  :%08x", pRegs->sArmRegister[ 9] );  break;
-	case CPU_INFO_REG + ARM32_R10:sprintf( buffer[which], "R10 :%08x", pRegs->sArmRegister[10] );  break;
-	case CPU_INFO_REG + ARM32_R11:sprintf( buffer[which], "R11 :%08x", pRegs->sArmRegister[11] );  break;
-	case CPU_INFO_REG + ARM32_R12:sprintf( buffer[which], "R12 :%08x", pRegs->sArmRegister[12] );  break;
-	case CPU_INFO_REG + ARM32_R13:sprintf( buffer[which], "R13 :%08x", pRegs->sArmRegister[13] );  break;
-	case CPU_INFO_REG + ARM32_R14:sprintf( buffer[which], "R14 :%08x", pRegs->sArmRegister[14] );  break;
-	case CPU_INFO_REG + ARM32_R15:sprintf( buffer[which], "R15 :%08x", pRegs->sArmRegister[15] );  break;
-	case CPU_INFO_REG + ARM32_FR8: sprintf( buffer[which], "FR8 :%08x", pRegs->sArmRegister[eR8_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_FR9: sprintf( buffer[which], "FR9 :%08x", pRegs->sArmRegister[eR9_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_FR10:sprintf( buffer[which], "FR10:%08x", pRegs->sArmRegister[eR10_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_FR11:sprintf( buffer[which], "FR11:%08x", pRegs->sArmRegister[eR11_FIQ]);  break;
-	case CPU_INFO_REG + ARM32_FR12:sprintf( buffer[which], "FR12:%08x", pRegs->sArmRegister[eR12_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_FR13:sprintf( buffer[which], "FR13:%08x", pRegs->sArmRegister[eR13_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_FR14:sprintf( buffer[which], "FR14:%08x", pRegs->sArmRegister[eR14_FIQ] );  break;
-	case CPU_INFO_REG + ARM32_IR13:sprintf( buffer[which], "IR13:%08x", pRegs->sArmRegister[eR13_IRQ] );  break;
-	case CPU_INFO_REG + ARM32_IR14:sprintf( buffer[which], "IR14:%08x", pRegs->sArmRegister[eR14_IRQ] );  break;
-	case CPU_INFO_REG + ARM32_SR13:sprintf( buffer[which], "SR13:%08x", pRegs->sArmRegister[eR13_SVC] );  break;
-	case CPU_INFO_REG + ARM32_SR14:sprintf( buffer[which], "SR14:%08x", pRegs->sArmRegister[eR14_SVC] );  break;
-
-
-	case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c%c%c%c%c%c",
-			(pRegs->sArmRegister[15] & N_MASK) ? 'N' : '-',
-			(pRegs->sArmRegister[15] & Z_MASK) ? 'Z' : '-',
-			(pRegs->sArmRegister[15] & C_MASK) ? 'C' : '-',
-			(pRegs->sArmRegister[15] & V_MASK) ? 'V' : '-',
-			(pRegs->sArmRegister[15] & I_MASK) ? 'I' : '-',
-			(pRegs->sArmRegister[15] & F_MASK) ? 'F' : '-');
-		switch (pRegs->sArmRegister[15] & 3)
-		{
-		case 0:
-			strcat(buffer[which], " USER");
-			break;
-		case 1:
-			strcat(buffer[which], " FIRQ");
-			break;
-		case 2:
-			strcat(buffer[which], " IRQ ");
-			break;
-		default:
-			strcat(buffer[which], " SVC ");
-			break;
-		}
-		break;
-	case CPU_INFO_NAME: 		return "ARM";
-	case CPU_INFO_FAMILY:		return "Acorn Risc Machine";
-	case CPU_INFO_VERSION:		return "1.2";
-	case CPU_INFO_FILE: 		return __FILE__;
-	case CPU_INFO_CREDITS:		return "Copyright 2002 Bryan McPhail, bmcphail@tendril.co.uk";
-	case CPU_INFO_REG_LAYOUT:	return (const char*)arm_reg_layout;
-	case CPU_INFO_WIN_LAYOUT:	return (const char*)arm_win_layout;
-	}
-
-	return buffer[which];
-}
-
-unsigned arm_dasm(char *buffer, unsigned int pc)
+static offs_t arm_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	arm_disasm( buffer, pc, cpu_read32(pc&ADDRESS_MASK) );
@@ -699,7 +520,7 @@ unsigned arm_dasm(char *buffer, unsigned int pc)
 #endif
 }
 
-void arm_init(void)
+static void arm_init(void)
 {
 	int cpu = cpu_getactivecpu(),i;
 	char buf[8];
@@ -1371,3 +1192,197 @@ static data32_t decodeShift( data32_t insn, data32_t *pCarry)
 	logerror("%08x: Decodeshift error\n",R15);
 	return 0;
 } /* decodeShift */
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void arm_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + ARM_IRQ_LINE:	set_irq_line(ARM_IRQ_LINE, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + ARM_FIRQ_LINE:	set_irq_line(ARM_FIRQ_LINE, info->i);		break;
+
+		case CPUINFO_INT_REGISTER + ARM32_R0:	arm.sArmRegister[ 0]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R1:	arm.sArmRegister[ 1]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R2:	arm.sArmRegister[ 2]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R3:	arm.sArmRegister[ 3]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R4:	arm.sArmRegister[ 4]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R5:	arm.sArmRegister[ 5]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R6:	arm.sArmRegister[ 6]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R7:	arm.sArmRegister[ 7]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R8:	arm.sArmRegister[ 8]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R9:	arm.sArmRegister[ 9]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R10:	arm.sArmRegister[10]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R11:	arm.sArmRegister[11]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R12:	arm.sArmRegister[12]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R13:	arm.sArmRegister[13]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R14:	arm.sArmRegister[14]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_R15:	arm.sArmRegister[15]= info->i;					break;
+		case CPUINFO_INT_REGISTER + ARM32_FR8:	arm.sArmRegister[eR8_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR9:	arm.sArmRegister[eR9_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR10:	arm.sArmRegister[eR10_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR11:	arm.sArmRegister[eR11_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR12:	arm.sArmRegister[eR12_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR13:	arm.sArmRegister[eR13_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_FR14:	arm.sArmRegister[eR14_FIQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_IR13:	arm.sArmRegister[eR13_IRQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_IR14:	arm.sArmRegister[eR14_IRQ] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_SR13:	arm.sArmRegister[eR13_SVC] = info->i;			break;
+		case CPUINFO_INT_REGISTER + ARM32_SR14:	arm.sArmRegister[eR14_SVC] = info->i;			break;
+
+		case CPUINFO_INT_PC:					R15 = (R15&~ADDRESS_MASK)|info->i;				break;
+		case CPUINFO_INT_SP:					SetRegister(13,info->i);						break;
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:			arm.irq_callback = info->irqcallback;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void arm_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(arm);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 3;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 26;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + ARM_IRQ_LINE:		info->i = arm.pendingIrq;				break;
+		case CPUINFO_INT_IRQ_STATE + ARM_FIRQ_LINE:		info->i = arm.pendingFiq;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* not implemented */	break;
+		case CPUINFO_INT_PC:							info->i = arm.sArmRegister[15]&ADDRESS_MASK; break;
+		case CPUINFO_INT_SP:							info->i = GetRegister(13);				break;
+
+		case CPUINFO_INT_REGISTER + ARM32_R0:			info->i = arm.sArmRegister[ 0];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R1:			info->i = arm.sArmRegister[ 1];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R2:			info->i = arm.sArmRegister[ 2];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R3:			info->i = arm.sArmRegister[ 3];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R4:			info->i = arm.sArmRegister[ 4];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R5:			info->i = arm.sArmRegister[ 5];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R6:			info->i = arm.sArmRegister[ 6];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R7:			info->i = arm.sArmRegister[ 7];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R8:			info->i = arm.sArmRegister[ 8];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R9:			info->i = arm.sArmRegister[ 9];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R10:			info->i = arm.sArmRegister[10];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R11:			info->i = arm.sArmRegister[11];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R12:			info->i = arm.sArmRegister[12];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R13:			info->i = arm.sArmRegister[13];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R14:			info->i = arm.sArmRegister[14];			break;
+		case CPUINFO_INT_REGISTER + ARM32_R15:			info->i = arm.sArmRegister[15];			break;
+
+		case CPUINFO_INT_REGISTER + ARM32_FR8:			info->i = arm.sArmRegister[eR8_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR9:			info->i = arm.sArmRegister[eR9_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR10:			info->i = arm.sArmRegister[eR10_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR11:			info->i = arm.sArmRegister[eR11_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR12:			info->i = arm.sArmRegister[eR12_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR13:			info->i = arm.sArmRegister[eR13_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_FR14:			info->i = arm.sArmRegister[eR14_FIQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_IR13:			info->i = arm.sArmRegister[eR13_IRQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_IR14:			info->i = arm.sArmRegister[eR14_IRQ];	break;
+		case CPUINFO_INT_REGISTER + ARM32_SR13:			info->i = arm.sArmRegister[eR13_SVC];	break;
+		case CPUINFO_INT_REGISTER + ARM32_SR14:			info->i = arm.sArmRegister[eR14_SVC];	break;
+		
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = arm_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = arm_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = arm_set_context;		break;
+		case CPUINFO_PTR_INIT:							info->init = arm_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = arm_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = arm_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = arm_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = arm_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = arm.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &arm_icount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = arm_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = arm_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ARM"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Acorn Risc Machine"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.2"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright 2002 Bryan McPhail, bmcphail@tendril.co.uk"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c",
+				(arm.sArmRegister[15] & N_MASK) ? 'N' : '-',
+				(arm.sArmRegister[15] & Z_MASK) ? 'Z' : '-',
+				(arm.sArmRegister[15] & C_MASK) ? 'C' : '-',
+				(arm.sArmRegister[15] & V_MASK) ? 'V' : '-',
+				(arm.sArmRegister[15] & I_MASK) ? 'I' : '-',
+				(arm.sArmRegister[15] & F_MASK) ? 'F' : '-');
+			switch (arm.sArmRegister[15] & 3)
+			{
+			case 0:
+				strcat(info->s, " USER");
+				break;
+			case 1:
+				strcat(info->s, " FIRQ");
+				break;
+			case 2:
+				strcat(info->s, " IRQ ");
+				break;
+			default:
+				strcat(info->s, " SVC ");
+				break;
+			}
+			break;
+
+		case CPUINFO_STR_REGISTER + ARM32_R0: sprintf( info->s = cpuintrf_temp_str(), "R0  :%08x", arm.sArmRegister[ 0] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R1: sprintf( info->s = cpuintrf_temp_str(), "R1  :%08x", arm.sArmRegister[ 1] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R2: sprintf( info->s = cpuintrf_temp_str(), "R2  :%08x", arm.sArmRegister[ 2] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R3: sprintf( info->s = cpuintrf_temp_str(), "R3  :%08x", arm.sArmRegister[ 3] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R4: sprintf( info->s = cpuintrf_temp_str(), "R4  :%08x", arm.sArmRegister[ 4] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R5: sprintf( info->s = cpuintrf_temp_str(), "R5  :%08x", arm.sArmRegister[ 5] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R6: sprintf( info->s = cpuintrf_temp_str(), "R6  :%08x", arm.sArmRegister[ 6] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R7: sprintf( info->s = cpuintrf_temp_str(), "R7  :%08x", arm.sArmRegister[ 7] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R8: sprintf( info->s = cpuintrf_temp_str(), "R8  :%08x", arm.sArmRegister[ 8] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R9: sprintf( info->s = cpuintrf_temp_str(), "R9  :%08x", arm.sArmRegister[ 9] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R10:sprintf( info->s = cpuintrf_temp_str(), "R10 :%08x", arm.sArmRegister[10] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R11:sprintf( info->s = cpuintrf_temp_str(), "R11 :%08x", arm.sArmRegister[11] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R12:sprintf( info->s = cpuintrf_temp_str(), "R12 :%08x", arm.sArmRegister[12] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R13:sprintf( info->s = cpuintrf_temp_str(), "R13 :%08x", arm.sArmRegister[13] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R14:sprintf( info->s = cpuintrf_temp_str(), "R14 :%08x", arm.sArmRegister[14] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_R15:sprintf( info->s = cpuintrf_temp_str(), "R15 :%08x", arm.sArmRegister[15] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR8: sprintf( info->s = cpuintrf_temp_str(), "FR8 :%08x", arm.sArmRegister[eR8_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR9: sprintf( info->s = cpuintrf_temp_str(), "FR9 :%08x", arm.sArmRegister[eR9_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR10:sprintf( info->s = cpuintrf_temp_str(), "FR10:%08x", arm.sArmRegister[eR10_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR11:sprintf( info->s = cpuintrf_temp_str(), "FR11:%08x", arm.sArmRegister[eR11_FIQ]);  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR12:sprintf( info->s = cpuintrf_temp_str(), "FR12:%08x", arm.sArmRegister[eR12_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR13:sprintf( info->s = cpuintrf_temp_str(), "FR13:%08x", arm.sArmRegister[eR13_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_FR14:sprintf( info->s = cpuintrf_temp_str(), "FR14:%08x", arm.sArmRegister[eR14_FIQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_IR13:sprintf( info->s = cpuintrf_temp_str(), "IR13:%08x", arm.sArmRegister[eR13_IRQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_IR14:sprintf( info->s = cpuintrf_temp_str(), "IR14:%08x", arm.sArmRegister[eR14_IRQ] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_SR13:sprintf( info->s = cpuintrf_temp_str(), "SR13:%08x", arm.sArmRegister[eR13_SVC] );  break;
+		case CPUINFO_STR_REGISTER + ARM32_SR14:sprintf( info->s = cpuintrf_temp_str(), "SR14:%08x", arm.sArmRegister[eR14_SVC] );  break;
+	}
+}

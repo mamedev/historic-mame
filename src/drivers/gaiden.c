@@ -363,58 +363,60 @@ static READ16_HANDLER( raiga_protection_r )
 	return prot;
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x070000, 0x070fff, MRA16_RAM },
-	{ 0x072000, 0x073fff, gaiden_videoram2_r },
-	{ 0x074000, 0x075fff, gaiden_videoram3_r },
-	{ 0x076000, 0x077fff, MRA16_RAM },
-	{ 0x078000, 0x0787ff, MRA16_RAM },
-	{ 0x078800, 0x079fff, MRA16_NOP },   /* extra portion of palette RAM, not really used */
-	{ 0x07a000, 0x07a001, input_port_0_word_r },
-	{ 0x07a002, 0x07a003, input_port_1_word_r },
-	{ 0x07a004, 0x07a005, input_port_2_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x070000, 0x070fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x072000, 0x073fff) AM_READ(gaiden_videoram2_r)
+	AM_RANGE(0x074000, 0x075fff) AM_READ(gaiden_videoram3_r)
+	AM_RANGE(0x076000, 0x077fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x078000, 0x0787ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x078800, 0x079fff) AM_READ(MRA16_NOP)   /* extra portion of palette RAM, not really used */
+	AM_RANGE(0x07a000, 0x07a001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x07a002, 0x07a003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x07a004, 0x07a005) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x060000, 0x063fff, MWA16_RAM },
-	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram },
-	{ 0x072000, 0x073fff, gaiden_videoram2_w, &gaiden_videoram2 },
-	{ 0x074000, 0x075fff, gaiden_videoram3_w, &gaiden_videoram3 },
-	{ 0x076000, 0x077fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x078000, 0x079fff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x07a104, 0x07a105, gaiden_txscrolly_w },
-	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w },
-	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w },
-	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w },
-	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w },
-	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w },
-	{ 0x07a800, 0x07a801, watchdog_reset16_w },
-	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
-	{ 0x07a806, 0x07a807, MWA16_NOP },
-	{ 0x07a808, 0x07a809, gaiden_flip_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x070000, 0x070fff) AM_WRITE(gaiden_videoram_w) AM_BASE(&gaiden_videoram)
+	AM_RANGE(0x072000, 0x073fff) AM_WRITE(gaiden_videoram2_w) AM_BASE(&gaiden_videoram2)
+	AM_RANGE(0x074000, 0x075fff) AM_WRITE(gaiden_videoram3_w) AM_BASE(&gaiden_videoram3)
+	AM_RANGE(0x076000, 0x077fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x078000, 0x079fff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x07a104, 0x07a105) AM_WRITE(gaiden_txscrolly_w)
+	AM_RANGE(0x07a10c, 0x07a10d) AM_WRITE(gaiden_txscrollx_w)
+	AM_RANGE(0x07a204, 0x07a205) AM_WRITE(gaiden_fgscrolly_w)
+	AM_RANGE(0x07a20c, 0x07a20d) AM_WRITE(gaiden_fgscrollx_w)
+	AM_RANGE(0x07a304, 0x07a305) AM_WRITE(gaiden_bgscrolly_w)
+	AM_RANGE(0x07a30c, 0x07a30d) AM_WRITE(gaiden_bgscrollx_w)
+	AM_RANGE(0x07a800, 0x07a801) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x07a802, 0x07a803) AM_WRITE(gaiden_sound_command_w)
+	AM_RANGE(0x07a806, 0x07a807) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x07a808, 0x07a809) AM_WRITE(gaiden_flip_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_status_0_r },
-	{ 0xfc00, 0xfc00, MRA_NOP },	/* ?? */
-	{ 0xfc20, 0xfc20, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) // raiga only?
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(MRA8_NOP)	/* ?? */
+	AM_RANGE(0xfc20, 0xfc20) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_data_0_w },
-	{ 0xf810, 0xf810, YM2203_control_port_0_w },
-	{ 0xf811, 0xf811, YM2203_write_port_0_w },
-	{ 0xf820, 0xf820, YM2203_control_port_1_w },
-	{ 0xf821, 0xf821, YM2203_write_port_1_w },
-	{ 0xfc00, 0xfc00, MWA_NOP },	/* ?? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM) // raiga only?
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xf810, 0xf810) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xf811, 0xf811) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xf820, 0xf820) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xf821, 0xf821) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(MWA8_NOP)	/* ?? */
+ADDRESS_MAP_END
 
 
 
@@ -830,12 +832,12 @@ static MACHINE_DRIVER_START( shadoww )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 18432000/2)	/* 9.216 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

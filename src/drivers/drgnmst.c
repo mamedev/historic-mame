@@ -165,76 +165,83 @@ static READ_HANDLER( PIC16C5X_T0_clk_r )
 
 
 
-static MEMORY_READ16_START( drgnmst_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
+static ADDRESS_MAP_START( drgnmst_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800018, 0x800019, input_port_1_word_r },
-	{ 0x80001a, 0x80001b, input_port_2_word_r },
-	{ 0x80001c, 0x80001d, input_port_3_word_r },
-	{ 0x800176, 0x800177, input_port_4_word_r },
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800018, 0x800019) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x80001a, 0x80001b) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x80001c, 0x80001d) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x800176, 0x800177) AM_READ(input_port_4_word_r)
 
-	{ 0x900000, 0x903fff, MRA16_RAM },
-	{ 0x904000, 0x907fff, MRA16_RAM },
-	{ 0x908000, 0x90bfff, MRA16_RAM },
-	{ 0x90c000, 0x90ffff, MRA16_RAM },
+	AM_RANGE(0x900000, 0x903fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x904000, 0x907fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x908000, 0x90bfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x90c000, 0x90ffff) AM_READ(MRA16_RAM)
 
-	{ 0x920000, 0x923fff, MRA16_RAM },
-	{ 0x930000, 0x9307ff, MRA16_RAM },
+	AM_RANGE(0x920000, 0x923fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x930000, 0x9307ff) AM_READ(MRA16_RAM)
 
-	{ 0xff0000, 0xffffff, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( drgnmst_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x800030, 0x800031, MWA16_RAM },
+static ADDRESS_MAP_START( drgnmst_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x800030, 0x800031) AM_WRITE(MWA16_RAM)
 
-	{ 0x800100, 0x80011f, MWA16_RAM, &drgnmst_vidregs },
-	{ 0x800120, 0x800121, MWA16_RAM },
-	{ 0x80014a, 0x80014b, MWA16_RAM },
+	AM_RANGE(0x800100, 0x80011f) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs)
+	AM_RANGE(0x800120, 0x800121) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x80014a, 0x80014b) AM_WRITE(MWA16_RAM)
 
-	{ 0x800154, 0x800155, MWA16_RAM, &drgnmst_vidregs2 }, // seems to be priority control
+	AM_RANGE(0x800154, 0x800155) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs2) // seems to be priority control
 
-	{ 0x800180, 0x800181, drgnmst_snd_command_w },
-	{ 0x800188, 0x800189, drgnmst_snd_flag_w },
+	AM_RANGE(0x800180, 0x800181) AM_WRITE(drgnmst_snd_command_w)
+	AM_RANGE(0x800188, 0x800189) AM_WRITE(drgnmst_snd_flag_w)
 
-	{ 0x8001e0, 0x8001e1, MWA16_NOP },
+	AM_RANGE(0x8001e0, 0x8001e1) AM_WRITE(MWA16_NOP)
 
-	{ 0x900000, 0x903fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x904000, 0x907fff, drgnmst_md_videoram_w, &drgnmst_md_videoram  },
-	{ 0x908000, 0x90bfff, drgnmst_bg_videoram_w, &drgnmst_bg_videoram },
-	{ 0x90c000, 0x90ffff, drgnmst_fg_videoram_w, &drgnmst_fg_videoram },
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x904000, 0x907fff) AM_WRITE(drgnmst_md_videoram_w) AM_BASE(&drgnmst_md_videoram)
+	AM_RANGE(0x908000, 0x90bfff) AM_WRITE(drgnmst_bg_videoram_w) AM_BASE(&drgnmst_bg_videoram)
+	AM_RANGE(0x90c000, 0x90ffff) AM_WRITE(drgnmst_fg_videoram_w) AM_BASE(&drgnmst_fg_videoram)
 
-	{ 0x920000, 0x923fff, MWA16_RAM, &drgnmst_rowscrollram }, // rowscroll ram
-	{ 0x930000, 0x9307ff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	AM_RANGE(0x920000, 0x923fff) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_rowscrollram) // rowscroll ram
+	AM_RANGE(0x930000, 0x9307ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
 
-	{ 0xff0000, 0xffffff, MWA16_RAM },
-MEMORY_END
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( drgnmst_sound_readmem )
-	{ PIC16C55_MEMORY_READ },
-		/* $000 - 01F  Internal memory mapped registers */
+static ADDRESS_MAP_START( drgnmst_sound_read_program, ADDRESS_SPACE_PROGRAM, 16 )
+	PIC16C55_PROGRAM_MEMORY_READ
 		/* $000 - 1FF  Program ROM for PIC16C55. Note: code is 12bits wide */
-		/*             View the ROM at $1000 in the debugger memory windows */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( drgnmst_sound_writemem )
-	{ PIC16C55_MEMORY_WRITE },
-MEMORY_END
+static ADDRESS_MAP_START( drgnmst_sound_write_program, ADDRESS_SPACE_PROGRAM, 16 )
+	PIC16C55_PROGRAM_MEMORY_WRITE
+ADDRESS_MAP_END
 
-static PORT_READ_START( drgnmst_sound_readport )
-	{ 0x00, 0x00, pic16c5x_port0_r },		/* 4 bit port */
-	{ 0x01, 0x01, drgnmst_snd_command_r },
-	{ 0x02, 0x02, drgnmst_snd_flag_r },
-	{ PIC16C5x_T0, PIC16C5x_T0, PIC16C5X_T0_clk_r },
-PORT_END
+static ADDRESS_MAP_START( drgnmst_sound_read_data, ADDRESS_SPACE_DATA, 8 )
+	PIC16C55_DATA_MEMORY_READ
+		/* $000 - 01F  Internal memory mapped registers */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( drgnmst_sound_writeport )
-	{ 0x00, 0x00, drgnmst_pcm_banksel_w },	/* 4 bit port */
-	{ 0x01, 0x01, drgnmst_oki_w },
-	{ 0x02, 0x02, drgnmst_snd_control_w },
-PORT_END
+static ADDRESS_MAP_START( drgnmst_sound_write_data, ADDRESS_SPACE_DATA, 8 )
+	PIC16C55_DATA_MEMORY_WRITE
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( drgnmst_sound_read_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(pic16c5x_port0_r)		/* 4 bit port */
+	AM_RANGE(0x01, 0x01) AM_READ(drgnmst_snd_command_r)
+	AM_RANGE(0x02, 0x02) AM_READ(drgnmst_snd_flag_r)
+	AM_RANGE(PIC16C5x_T0, PIC16C5x_T0) AM_READ(PIC16C5X_T0_clk_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( drgnmst_sound_write_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(drgnmst_pcm_banksel_w)	/* 4 bit port */
+	AM_RANGE(0x01, 0x01) AM_WRITE(drgnmst_oki_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(drgnmst_snd_control_w)
+ADDRESS_MAP_END
 
 
 
@@ -396,12 +403,13 @@ static struct OKIM6295interface dual_okim6295_interface =
 
 static MACHINE_DRIVER_START( drgnmst )
 	MDRV_CPU_ADD(M68000, 12000000) /* Confirmed */
-	MDRV_CPU_MEMORY(drgnmst_readmem,drgnmst_writemem)
+	MDRV_CPU_PROGRAM_MAP(drgnmst_readmem,drgnmst_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(PIC16C55, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* Confirmed */
-	MDRV_CPU_MEMORY(drgnmst_sound_readmem,drgnmst_sound_writemem)
-	MDRV_CPU_PORTS(drgnmst_sound_readport,drgnmst_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(drgnmst_sound_read_program,drgnmst_sound_write_program)
+	MDRV_CPU_DATA_MAP(drgnmst_sound_read_data,drgnmst_sound_write_data)
+	MDRV_CPU_IO_MAP(drgnmst_sound_read_io,drgnmst_sound_write_io)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -428,7 +436,7 @@ ROM_START( drgnmst )
 	ROM_LOAD16_BYTE( "dm1000o", 0x00001, 0x80000, CRC(ba48e9cf) SHA1(1107f927424107918bb10ff23f40c50579b23836) )
 
 	ROM_REGION( 0x4000, REGION_CPU2, 0 ) /* PIC16C55 Code */
-//	ROM_LOAD( "pic16c55", PIC16C55_PGM_OFFSET, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
+//	ROM_LOAD( "pic16c55", 0x0000, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
 	/* ROM will be copied here by the init code from the USER1 region */
 
 	ROM_REGION( 0x1000, REGION_USER1, ROMREGION_DISPOSE )
@@ -475,7 +483,7 @@ static UINT8 drgnmst_asciitohex(UINT8 data)
 static DRIVER_INIT( drgnmst )
 {
 	data8_t *drgnmst_PICROM_HEX = memory_region(REGION_USER1);
-	data8_t *drgnmst_PICROM = memory_region(REGION_CPU2);
+	data16_t *drgnmst_PICROM = (data16_t *)memory_region(REGION_CPU2);
 	data8_t *drgnmst_PCM = memory_region(REGION_SOUND1);
 	INT32   offs, data;
 	UINT16  src_pos = 0;
@@ -510,15 +518,20 @@ static DRIVER_INIT( drgnmst )
 			{
 			src_pos += 9;
 
-			for (offs = 0; offs < 32; offs += 2)
+			for (offs = 0; offs < 32; offs += 4)
 			{
 				data_hi = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 0]));
 				data_lo = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 1]));
-
 				if ((data_hi <= 0x0f) && (data_lo <= 0x0f)) {
-					data = (data_hi << 4) | (data_lo << 0);
-					drgnmst_PICROM[PIC16C55_PGM_OFFSET + dst_pos] = data;
-					dst_pos += 1;
+					data =  (data_hi <<  4) | (data_lo << 0);
+					data_hi = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 2]));
+					data_lo = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 3]));
+
+					if ((data_hi <= 0x0f) && (data_lo <= 0x0f)) {
+						data |= (data_hi << 12) | (data_lo << 8);
+						drgnmst_PICROM[dst_pos] = data;
+						dst_pos += 1;
+					}
 				}
 			}
 			src_pos += 32;

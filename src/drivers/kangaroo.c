@@ -193,32 +193,32 @@ static WRITE_HANDLER( kangaroo_coin_counter_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_BANK1 },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe400, input_port_3_r },
-	{ 0xec00, 0xec00, input_port_0_r },
-	{ 0xed00, 0xed00, input_port_1_r },
-	{ 0xee00, 0xee00, input_port_2_r },
-	{ 0xef00, 0xef00, kangaroo_sec_chip_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe400, 0xe400) AM_READ(input_port_3_r)
+	AM_RANGE(0xec00, 0xec00) AM_READ(input_port_0_r)
+	AM_RANGE(0xed00, 0xed00) AM_READ(input_port_1_r)
+	AM_RANGE(0xee00, 0xee00) AM_READ(input_port_2_r)
+	AM_RANGE(0xef00, 0xef00) AM_READ(kangaroo_sec_chip_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0xbfff, kangaroo_videoram_w },
-	{ 0xc000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ 0xe800, 0xe805, kangaroo_blitter_w, &kangaroo_blitter },
-	{ 0xe806, 0xe807, MWA_RAM, &kangaroo_scroll },
-	{ 0xe808, 0xe808, kangaroo_bank_select_w, &kangaroo_bank_select },
-	{ 0xe809, 0xe809, kangaroo_video_control_w, &kangaroo_video_control },
-	{ 0xe80a, 0xe80a, kangaroo_color_mask_w },
-	{ 0xec00, 0xec00, soundlatch_w },
-	{ 0xed00, 0xed00, kangaroo_coin_counter_w },
-	{ 0xef00, 0xefff, kangaroo_sec_chip_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(kangaroo_videoram_w)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xe805) AM_WRITE(kangaroo_blitter_w) AM_BASE(&kangaroo_blitter)
+	AM_RANGE(0xe806, 0xe807) AM_WRITE(MWA8_RAM) AM_BASE(&kangaroo_scroll)
+	AM_RANGE(0xe808, 0xe808) AM_WRITE(kangaroo_bank_select_w) AM_BASE(&kangaroo_bank_select)
+	AM_RANGE(0xe809, 0xe809) AM_WRITE(kangaroo_video_control_w) AM_BASE(&kangaroo_video_control)
+	AM_RANGE(0xe80a, 0xe80a) AM_WRITE(kangaroo_color_mask_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xed00, 0xed00) AM_WRITE(kangaroo_coin_counter_w)
+	AM_RANGE(0xef00, 0xefff) AM_WRITE(kangaroo_sec_chip_w)
+ADDRESS_MAP_END
 
 
 
@@ -228,23 +228,23 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x7000, 0x7000, AY8910_write_port_0_w },
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -413,13 +413,13 @@ static MACHINE_DRIVER_START( kangaroo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 10000000/4)	/* 2.5 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 10000000/4)	/* 2.5 MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT | CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

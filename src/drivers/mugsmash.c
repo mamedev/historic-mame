@@ -175,53 +175,53 @@ static READ16_HANDLER ( mugsmash_input_ports_r )
 }
 #endif
 
-static MEMORY_READ16_START( mugsmash_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x080000, 0x080fff, MRA16_RAM },
-	{ 0x082000, 0x082fff, MRA16_RAM },
-	{ 0x100000, 0x1001ff, MRA16_RAM },
-	{ 0x100200, 0x1005ff, MRA16_RAM },
-	{ 0x1c0000, 0x1c3fff, MRA16_RAM },
-	{ 0x1c4000, 0x1cffff, MRA16_RAM },
-	{ 0x200000, 0x201fff, MRA16_RAM },
-	{ 0x202000, 0x203fff, MRA16_RAM },
+static ADDRESS_MAP_START( mugsmash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x082000, 0x082fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x100000, 0x1001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x100200, 0x1005ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1c0000, 0x1c3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1c4000, 0x1cffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x201fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x202000, 0x203fff) AM_READ(MRA16_RAM)
 #if USE_FAKE_INPUT_PORTS
-	{ 0x180000, 0x180007, mugsmash_input_ports_r },
+	AM_RANGE(0x180000, 0x180007) AM_READ(mugsmash_input_ports_r)
 #else
-	{ 0x180000, 0x180001, input_port_0_word_r },
-	{ 0x180002, 0x180003, input_port_1_word_r },
-	{ 0x180004, 0x180005, input_port_2_word_r },
-	{ 0x180006, 0x180007, input_port_3_word_r },
+	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_3_word_r)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( mugsmash_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x080fff, mugsmash_videoram1_w , &mugsmash_videoram1 },
-	{ 0x082000, 0x082fff, mugsmash_videoram2_w , &mugsmash_videoram2 },
-	{ 0x0C0000, 0x0C0007, mugsmash_reg_w, &mugsmash_regs1 }, 	/* video registers*/
-	{ 0x100000, 0x1005ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x140000, 0x140007, mugsmash_reg2_w, &mugsmash_regs2  }, /* sound + ? */
-	{ 0x1c0000, 0x1c3fff, MWA16_RAM }, /* main ram? */
-	{ 0x1c4000, 0x1cffff, MWA16_RAM },
-	{ 0x200000, 0x203fff, MWA16_RAM, &mugs_spriteram }, /* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( mugsmash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(mugsmash_videoram1_w) AM_BASE(&mugsmash_videoram1)
+	AM_RANGE(0x082000, 0x082fff) AM_WRITE(mugsmash_videoram2_w) AM_BASE(&mugsmash_videoram2)
+	AM_RANGE(0x0C0000, 0x0C0007) AM_WRITE(mugsmash_reg_w) AM_BASE(&mugsmash_regs1) 	/* video registers*/
+	AM_RANGE(0x100000, 0x1005ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x140000, 0x140007) AM_WRITE(mugsmash_reg2_w) AM_BASE(&mugsmash_regs2) /* sound + ? */
+	AM_RANGE(0x1c0000, 0x1c3fff) AM_WRITE(MWA16_RAM) /* main ram? */
+	AM_RANGE(0x1c4000, 0x1cffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM) AM_BASE(&mugs_spriteram) /* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( snd_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( snd_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 
 #define MUGSMASH_PLAYER_INPUT( player, start ) \
@@ -439,12 +439,12 @@ static struct OKIM6295interface okim6295_interface =
 
 static MACHINE_DRIVER_START( mugsmash )
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(mugsmash_readmem,mugsmash_writemem)
+	MDRV_CPU_PROGRAM_MAP(mugsmash_readmem,mugsmash_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
-	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
+	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -198,82 +198,82 @@ static WRITE16_HANDLER( amazon_protection_w )
 
 
 
-static MEMORY_READ16_START( terracre_readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x020000, 0x0201ff, MRA16_RAM },
-	{ 0x020200, 0x021fff, MRA16_RAM },
-	{ 0x023000, 0x023fff, MRA16_RAM },
-	{ 0x024000, 0x024001, input_port_0_word_r },
-	{ 0x024002, 0x024003, input_port_1_word_r },
-	{ 0x024004, 0x024005, input_port_2_word_r },
-	{ 0x024006, 0x024007, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( terracre_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x020000, 0x0201ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x020200, 0x021fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x023000, 0x023fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x024000, 0x024001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x024002, 0x024003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x024004, 0x024005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x024006, 0x024007) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( terracre_writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },
-	{ 0x020000, 0x0201ff, MWA16_RAM, &spriteram16 },
-	{ 0x020200, 0x021fff, MWA16_RAM },
-	{ 0x022000, 0x022fff, amazon_background_w, &amazon_videoram },
-	{ 0x023000, 0x023fff, MWA16_RAM },
-	{ 0x026000, 0x026001, amazon_flipscreen_w },	/* flip screen & coin counters */
-	{ 0x026002, 0x026003, amazon_scrollx_w },
-	{ 0x026004, 0x026005, amazon_scrolly_w },
-	{ 0x02600c, 0x02600d, amazon_sound_w },
-	{ 0x028000, 0x0287ff, amazon_foreground_w, &videoram16 },
-MEMORY_END
+static ADDRESS_MAP_START( terracre_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x020000, 0x0201ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x020200, 0x021fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x022000, 0x022fff) AM_WRITE(amazon_background_w) AM_BASE(&amazon_videoram)
+	AM_RANGE(0x023000, 0x023fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x026000, 0x026001) AM_WRITE(amazon_flipscreen_w)	/* flip screen & coin counters */
+	AM_RANGE(0x026002, 0x026003) AM_WRITE(amazon_scrollx_w)
+	AM_RANGE(0x026004, 0x026005) AM_WRITE(amazon_scrolly_w)
+	AM_RANGE(0x02600c, 0x02600d) AM_WRITE(amazon_sound_w)
+	AM_RANGE(0x028000, 0x0287ff) AM_WRITE(amazon_foreground_w) AM_BASE(&videoram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( amazon_readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x040000, 0x040fff, MRA16_RAM },
-	{ 0x044000, 0x044001, input_port_0_word_r },
-	{ 0x044002, 0x044003, input_port_1_word_r },
-	{ 0x044004, 0x044005, input_port_2_word_r },
-	{ 0x044006, 0x044007, input_port_3_word_r },
-	{ 0x070000, 0x070001, amazon_protection_r },
-MEMORY_END
+static ADDRESS_MAP_START( amazon_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x044000, 0x044001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x044002, 0x044003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x044004, 0x044005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x044006, 0x044007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x070000, 0x070001) AM_READ(amazon_protection_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( amazon_writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },
-	{ 0x040000, 0x0401ff, MWA16_RAM, &spriteram16 },
-	{ 0x040200, 0x040fff, MWA16_RAM },
-	{ 0x042000, 0x042fff, amazon_background_w, &amazon_videoram },
-	{ 0x046000, 0x046001, amazon_flipscreen_w },	/* flip screen & coin counters */
-	{ 0x046002, 0x046003, amazon_scrollx_w },
-	{ 0x046004, 0x046005, amazon_scrolly_w },
-	{ 0x04600c, 0x04600d, amazon_sound_w },
-	{ 0x050000, 0x050fff, amazon_foreground_w, &videoram16 },
-	{ 0x070000, 0x070003, amazon_protection_w },
-MEMORY_END
+static ADDRESS_MAP_START( amazon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x0401ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x040200, 0x040fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x042000, 0x042fff) AM_WRITE(amazon_background_w) AM_BASE(&amazon_videoram)
+	AM_RANGE(0x046000, 0x046001) AM_WRITE(amazon_flipscreen_w)	/* flip screen & coin counters */
+	AM_RANGE(0x046002, 0x046003) AM_WRITE(amazon_scrollx_w)
+	AM_RANGE(0x046004, 0x046005) AM_WRITE(amazon_scrolly_w)
+	AM_RANGE(0x04600c, 0x04600d) AM_WRITE(amazon_sound_w)
+	AM_RANGE(0x050000, 0x050fff) AM_WRITE(amazon_foreground_w) AM_BASE(&videoram16)
+	AM_RANGE(0x070000, 0x070003) AM_WRITE(amazon_protection_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x04, 0x04, soundlatch_clear_r },
-	{ 0x06, 0x06, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_clear_r)
+	AM_RANGE(0x06, 0x06) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport_3526 )
-	{ 0x00, 0x00, YM3526_control_port_0_w },
-	{ 0x01, 0x01, YM3526_write_port_0_w },
-	{ 0x02, 0x02, DAC_0_signed_data_w },
-	{ 0x03, 0x03, DAC_1_signed_data_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport_3526, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(DAC_0_signed_data_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(DAC_1_signed_data_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport_2203 )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x02, 0x02, DAC_0_signed_data_w },
-	{ 0x03, 0x03, DAC_1_signed_data_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport_2203, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(DAC_0_signed_data_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(DAC_1_signed_data_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( terracre )
 	PORT_START
@@ -588,13 +588,13 @@ static struct DACinterface dac_interface =
 
 static MACHINE_DRIVER_START( amazon )
 	MDRV_CPU_ADD(M68000, 8000000 )
-	MDRV_CPU_MEMORY(amazon_readmem,amazon_writemem)
+	MDRV_CPU_PROGRAM_MAP(amazon_readmem,amazon_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport_3526)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_3526)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -617,13 +617,13 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ym3526 )
 	MDRV_CPU_ADD(M68000, 8000000 )
-	MDRV_CPU_MEMORY(terracre_readmem,terracre_writemem)
+	MDRV_CPU_PROGRAM_MAP(terracre_readmem,terracre_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport_3526)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_3526)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -646,13 +646,13 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ym2203 )
 	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
-	MDRV_CPU_MEMORY(terracre_readmem,terracre_writemem)
+	MDRV_CPU_PROGRAM_MAP(terracre_readmem,terracre_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport_2203)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_2203)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)

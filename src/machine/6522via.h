@@ -36,16 +36,16 @@
 
 struct via6522_interface
 {
-	mem_read_handler in_a_func;
-	mem_read_handler in_b_func;
-	mem_read_handler in_ca1_func;
-	mem_read_handler in_cb1_func;
-	mem_read_handler in_ca2_func;
-	mem_read_handler in_cb2_func;
-	mem_write_handler out_a_func;
-	mem_write_handler out_b_func;
-	mem_write_handler out_ca2_func;
-	mem_write_handler out_cb2_func;
+	read8_handler in_a_func;
+	read8_handler in_b_func;
+	read8_handler in_ca1_func;
+	read8_handler in_cb1_func;
+	read8_handler in_ca2_func;
+	read8_handler in_cb2_func;
+	write8_handler out_a_func;
+	write8_handler out_b_func;
+	write8_handler out_ca2_func;
+	write8_handler out_cb2_func;
 	void (*irq_func)(int state);
 
     /* kludges for the Vectrex */

@@ -28,7 +28,7 @@
 
 static UINT8 t11_reg_layout[] =
 {
-	T11_PC, T11_SP, T11_PSW, T11_IRQ0_STATE, T11_IRQ1_STATE, T11_IRQ2_STATE, T11_IRQ3_STATE, -1,
+	T11_PC, T11_SP, T11_PSW, -1,
 	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, -1,
 	T11_BANK0,T11_BANK1,T11_BANK2,T11_BANK3, T11_BANK4,T11_BANK5,T11_BANK6,T11_BANK7, 0
 };
@@ -74,7 +74,7 @@ static t11_Regs t11;
  *
  *************************************/
 
-int	t11_ICount;
+static int	t11_ICount;
 
 
 
@@ -285,11 +285,10 @@ static void t11_check_irqs(void)
  *
  *************************************/
 
-unsigned t11_get_context(void *dst)
+static void t11_get_context(void *dst)
 {
 	if (dst)
 		*(t11_Regs *)dst = t11;
-	return sizeof(t11_Regs);
 }
 
 
@@ -300,7 +299,7 @@ unsigned t11_get_context(void *dst)
  *
  *************************************/
 
-void t11_set_context(void *src)
+static void t11_set_context(void *src)
 {
 	if (src)
 		t11 = *(t11_Regs *)src;
@@ -311,108 +310,16 @@ void t11_set_context(void *src)
 
 /*************************************
  *
- *	External register getting
- *
- *************************************/
-
-unsigned t11_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case T11_PC:			return PCD;
-		case REG_SP:
-		case T11_SP:			return SPD;
-		case T11_PSW:			return PSW;
-		case T11_R0:			return REGD(0);
-		case T11_R1:			return REGD(1);
-		case T11_R2:			return REGD(2);
-		case T11_R3:			return REGD(3);
-		case T11_R4:			return REGD(4);
-		case T11_R5:			return REGD(5);
-		case T11_IRQ0_STATE:	return (t11.irq_state & 1) ? ASSERT_LINE : CLEAR_LINE;
-		case T11_IRQ1_STATE:	return (t11.irq_state & 2) ? ASSERT_LINE : CLEAR_LINE;
-		case T11_IRQ2_STATE:	return (t11.irq_state & 4) ? ASSERT_LINE : CLEAR_LINE;
-		case T11_IRQ3_STATE:	return (t11.irq_state & 8) ? ASSERT_LINE : CLEAR_LINE;
-		case T11_BANK0:			return (unsigned)(t11.bank[0] - OP_RAM);
-		case T11_BANK1:			return (unsigned)(t11.bank[1] - OP_RAM);
-		case T11_BANK2:			return (unsigned)(t11.bank[2] - OP_RAM);
-		case T11_BANK3:			return (unsigned)(t11.bank[3] - OP_RAM);
-		case T11_BANK4:			return (unsigned)(t11.bank[4] - OP_RAM);
-		case T11_BANK5:			return (unsigned)(t11.bank[5] - OP_RAM);
-		case T11_BANK6:			return (unsigned)(t11.bank[6] - OP_RAM);
-		case T11_BANK7:			return (unsigned)(t11.bank[7] - OP_RAM);
-		case REG_PREVIOUSPC:	return t11.ppc.w.l;
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if (offset < 0xffff)
-					return RWORD(offset);
-			}
-	}
-	return 0;
-}
-
-
-
-/*************************************
- *
- *	External register setting
- *
- *************************************/
-
-void t11_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case T11_PC:			PC = val; /* change_pc16 not needed */ break;
-		case REG_SP:
-		case T11_SP:			SP = val; break;
-		case T11_PSW:			PSW = val; break;
-		case T11_R0:			REGW(0) = val; break;
-		case T11_R1:			REGW(1) = val; break;
-		case T11_R2:			REGW(2) = val; break;
-		case T11_R3:			REGW(3) = val; break;
-		case T11_R4:			REGW(4) = val; break;
-		case T11_R5:			REGW(5) = val; break;
-		case T11_IRQ0_STATE:	t11_set_irq_line(T11_IRQ0, val); break;
-		case T11_IRQ1_STATE:	t11_set_irq_line(T11_IRQ1, val); break;
-		case T11_IRQ2_STATE:	t11_set_irq_line(T11_IRQ2, val); break;
-		case T11_IRQ3_STATE:	t11_set_irq_line(T11_IRQ3, val); break;
-		case T11_BANK0:			t11.bank[0] = &OP_RAM[val]; break;
-		case T11_BANK1:			t11.bank[1] = &OP_RAM[val]; break;
-		case T11_BANK2:			t11.bank[2] = &OP_RAM[val]; break;
-		case T11_BANK3:			t11.bank[3] = &OP_RAM[val]; break;
-		case T11_BANK4:			t11.bank[4] = &OP_RAM[val]; break;
-		case T11_BANK5:			t11.bank[5] = &OP_RAM[val]; break;
-		case T11_BANK6:			t11.bank[6] = &OP_RAM[val]; break;
-		case T11_BANK7:			t11.bank[7] = &OP_RAM[val]; break;
-		default:
-			if (regnum < REG_SP_CONTENTS)
-			{
-				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if (offset < 0xffff)
-					WWORD(offset, val & 0xffff);
-			}
-    }
-}
-
-
-
-/*************************************
- *
  *	Low-level initialization/cleanup
  *
  *************************************/
 
-void t11_init(void)
+static void t11_init(void)
 {
 }
 
 
-void t11_exit(void)
+static void t11_exit(void)
 {
 	/* nothing to do */
 }
@@ -425,7 +332,7 @@ void t11_exit(void)
  *
  *************************************/
 
-void t11_reset(void *param)
+static void t11_reset(void *param)
 {
 	static const UINT16 initial_pc[] =
 	{
@@ -449,7 +356,7 @@ void t11_reset(void *param)
 
 	/* initialize the banking */
 	for (i = 0; i < 8; i++)
-		t11.bank[i] = &OP_RAM[i * 0x2000];
+		t11.bank[i] = &opcode_arg_base[i * 0x2000];
 	
 	/* initialize the IRQ state */
 	t11.irq_state = 0;
@@ -463,7 +370,7 @@ void t11_reset(void *param)
  *
  *************************************/
 
-void t11_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	/* set the appropriate bit */
 	if (state == CLEAR_LINE)
@@ -476,12 +383,6 @@ void t11_set_irq_line(int irqline, int state)
 }
 
 
-void t11_set_irq_callback(int (*callback)(int irqline))
-{
-	t11.irq_callback = callback;
-}
-
-
 
 /*************************************
  *
@@ -489,7 +390,7 @@ void t11_set_irq_callback(int (*callback)(int irqline))
  *
  *************************************/
 
-int t11_execute(int cycles)
+static int t11_execute(int cycles)
 {
 	t11_ICount = cycles;
 	t11_ICount -= t11.interrupt_cycles;
@@ -524,81 +425,169 @@ getout:
 
 /*************************************
  *
- *	Return formatted string
- *
- *************************************/
-
-const char *t11_info( void *context, int regnum )
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	t11_Regs *r = context;
-
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-
-	if( !context )
-		r = &t11;
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+T11_PC: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
-		case CPU_INFO_REG+T11_SP: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
-		case CPU_INFO_REG+T11_PSW: sprintf(buffer[which], "PSW:%02X", r->psw.b.l); break;
-		case CPU_INFO_REG+T11_R0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
-		case CPU_INFO_REG+T11_R1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
-		case CPU_INFO_REG+T11_R2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
-		case CPU_INFO_REG+T11_R3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
-		case CPU_INFO_REG+T11_R4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
-		case CPU_INFO_REG+T11_R5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
-		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", (r->irq_state & 1) ? ASSERT_LINE : CLEAR_LINE); break;
-		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", (r->irq_state & 2) ? ASSERT_LINE : CLEAR_LINE); break;
-		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", (r->irq_state & 4) ? ASSERT_LINE : CLEAR_LINE); break;
-		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", (r->irq_state & 8) ? ASSERT_LINE : CLEAR_LINE); break;
-		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "B0:%06X", (unsigned)(r->bank[0] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "B1:%06X", (unsigned)(r->bank[1] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "B2:%06X", (unsigned)(r->bank[2] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK3: sprintf(buffer[which], "B3:%06X", (unsigned)(r->bank[3] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK4: sprintf(buffer[which], "B4:%06X", (unsigned)(r->bank[4] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK5: sprintf(buffer[which], "B5:%06X", (unsigned)(r->bank[5] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK6: sprintf(buffer[which], "B6:%06X", (unsigned)(r->bank[6] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK7: sprintf(buffer[which], "B7:%06X", (unsigned)(r->bank[7] - OP_RAM)); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->psw.b.l & 0x80 ? '?':'.',
-				r->psw.b.l & 0x40 ? 'I':'.',
-				r->psw.b.l & 0x20 ? 'I':'.',
-				r->psw.b.l & 0x10 ? 'T':'.',
-				r->psw.b.l & 0x08 ? 'N':'.',
-				r->psw.b.l & 0x04 ? 'Z':'.',
-				r->psw.b.l & 0x02 ? 'V':'.',
-				r->psw.b.l & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "T11";
-		case CPU_INFO_FAMILY: return "DEC T-11";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 1998";
-		case CPU_INFO_REG_LAYOUT: return (const char*)t11_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)t11_win_layout;
-    }
-	return buffer[which];
-}
-
-
-
-/*************************************
- *
  *	Disassembly hook
  *
  *************************************/
 
-unsigned t11_dasm(char *buffer, unsigned pc)
+static offs_t t11_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return DasmT11(buffer,pc);
 #else
-	sprintf( buffer, "$%04X", cpu_readmem16lew_word(pc) );
+	sprintf( buffer, "$%04X", program_read_word_16le(pc) );
 	return 2;
 #endif
+}
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void t11_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ0:			set_irq_line(T11_IRQ0, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ1:			set_irq_line(T11_IRQ1, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ2:			set_irq_line(T11_IRQ2, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ3:			set_irq_line(T11_IRQ3, info->i);		break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + T11_PC:				PC = info->i; /* change_pc not needed */ break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + T11_SP:				SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + T11_PSW:			PSW = info->i;							break;
+		case CPUINFO_INT_REGISTER + T11_R0:				REGW(0) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_R1:				REGW(1) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_R2:				REGW(2) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_R3:				REGW(3) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_R4:				REGW(4) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_R5:				REGW(5) = info->i;						break;
+		case CPUINFO_INT_REGISTER + T11_BANK0:			t11.bank[0] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK1:			t11.bank[1] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK2:			t11.bank[2] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK3:			t11.bank[3] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK4:			t11.bank[4] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK5:			t11.bank[5] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK6:			t11.bank[6] = &opcode_arg_base[info->i];			break;
+		case CPUINFO_INT_REGISTER + T11_BANK7:			t11.bank[7] = &opcode_arg_base[info->i];			break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					t11.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void t11_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(t11);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 4;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 12;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 110;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ0:			info->i = (t11.irq_state & 1) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ1:			info->i = (t11.irq_state & 2) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ2:			info->i = (t11.irq_state & 4) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + T11_IRQ3:			info->i = (t11.irq_state & 8) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = t11.ppc.w.l;					break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + T11_PC:				info->i = PCD;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + T11_SP:				info->i = SPD;							break;
+		case CPUINFO_INT_REGISTER + T11_PSW:			info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + T11_R0:				info->i = REGD(0);						break;
+		case CPUINFO_INT_REGISTER + T11_R1:				info->i = REGD(1);						break;
+		case CPUINFO_INT_REGISTER + T11_R2:				info->i = REGD(2);						break;
+		case CPUINFO_INT_REGISTER + T11_R3:				info->i = REGD(3);						break;
+		case CPUINFO_INT_REGISTER + T11_R4:				info->i = REGD(4);						break;
+		case CPUINFO_INT_REGISTER + T11_R5:				info->i = REGD(5);						break;
+		case CPUINFO_INT_REGISTER + T11_BANK0:			info->i = (unsigned)(t11.bank[0] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK1:			info->i = (unsigned)(t11.bank[1] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK2:			info->i = (unsigned)(t11.bank[2] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK3:			info->i = (unsigned)(t11.bank[3] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK4:			info->i = (unsigned)(t11.bank[4] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK5:			info->i = (unsigned)(t11.bank[5] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK6:			info->i = (unsigned)(t11.bank[6] - opcode_arg_base); break;
+		case CPUINFO_INT_REGISTER + T11_BANK7:			info->i = (unsigned)(t11.bank[7] - opcode_arg_base); break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = t11_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = t11_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = t11_set_context;		break;
+		case CPUINFO_PTR_INIT:							info->init = t11_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = t11_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = t11_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = t11_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = t11_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = t11.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &t11_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = t11_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = t11_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "T11"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "DEC T-11"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 1998"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				t11.psw.b.l & 0x80 ? '?':'.',
+				t11.psw.b.l & 0x40 ? 'I':'.',
+				t11.psw.b.l & 0x20 ? 'I':'.',
+				t11.psw.b.l & 0x10 ? 'T':'.',
+				t11.psw.b.l & 0x08 ? 'N':'.',
+				t11.psw.b.l & 0x04 ? 'Z':'.',
+				t11.psw.b.l & 0x02 ? 'V':'.',
+				t11.psw.b.l & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + T11_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", t11.reg[7].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", t11.reg[6].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", t11.psw.b.l); break;
+		case CPUINFO_STR_REGISTER + T11_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0:%04X", t11.reg[0].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1:%04X", t11.reg[1].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2:%04X", t11.reg[2].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3:%04X", t11.reg[3].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4:%04X", t11.reg[4].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5:%04X", t11.reg[5].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_BANK0:			sprintf(info->s = cpuintrf_temp_str(), "B0:%06X", (unsigned)(t11.bank[0] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK1:			sprintf(info->s = cpuintrf_temp_str(), "B1:%06X", (unsigned)(t11.bank[1] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK2:			sprintf(info->s = cpuintrf_temp_str(), "B2:%06X", (unsigned)(t11.bank[2] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK3:			sprintf(info->s = cpuintrf_temp_str(), "B3:%06X", (unsigned)(t11.bank[3] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK4:			sprintf(info->s = cpuintrf_temp_str(), "B4:%06X", (unsigned)(t11.bank[4] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK5:			sprintf(info->s = cpuintrf_temp_str(), "B5:%06X", (unsigned)(t11.bank[5] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK6:			sprintf(info->s = cpuintrf_temp_str(), "B6:%06X", (unsigned)(t11.bank[6] - opcode_arg_base)); break;
+		case CPUINFO_STR_REGISTER + T11_BANK7:			sprintf(info->s = cpuintrf_temp_str(), "B7:%06X", (unsigned)(t11.bank[7] - opcode_arg_base)); break;
+	}
 }

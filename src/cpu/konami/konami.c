@@ -52,7 +52,7 @@
 
 static UINT8 konami_reg_layout[] = {
 	KONAMI_PC, KONAMI_S, KONAMI_CC, KONAMI_A, KONAMI_B, KONAMI_X, -1,
-	KONAMI_Y, KONAMI_U, KONAMI_DP, KONAMI_NMI_STATE, KONAMI_IRQ_STATE, KONAMI_FIRQ_STATE, 0
+	KONAMI_Y, KONAMI_U, KONAMI_DP, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -80,6 +80,7 @@ typedef struct
     int     (*irq_callback)(int irqline);
     UINT8   int_state;  /* SYNC and CWAI flags */
 	UINT8	nmi_state;
+	void 	(*setlines_callback)( int lines ); /* callback called when A16-A23 are set */
 } konami_Regs;
 
 /* flag bits in the cc register */
@@ -151,7 +152,7 @@ static PAIR ea;         /* effective address */
 		}																\
 		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */		\
 		PCD = RM16(0xfff6); 											\
-		change_pc16(PC);					/* TS 971002 */ 				\
+		change_pc(PC);					/* TS 971002 */ 				\
 		(void)(*konami.irq_callback)(KONAMI_FIRQ_LINE);					\
 	}																	\
 	else																\
@@ -179,14 +180,13 @@ static PAIR ea;         /* effective address */
 		}																\
 		CC |= CC_II;					/* inhibit IRQ */				\
 		PCD = RM16(0xfff8); 											\
-		change_pc16(PC);					/* TS 971002 */ 				\
+		change_pc(PC);					/* TS 971002 */ 				\
 		(void)(*konami.irq_callback)(KONAMI_IRQ_LINE);					\
 	}
 
 /* public globals */
 int konami_ICount=50000;
 int konami_Flags;	/* flags for speed optimization (obsolete!!) */
-void (*konami_cpu_setlines_callback)( int lines ) = 0; /* callback called when A16-A23 are set */
 
 /* these are re-defined in konami.h TO RAM, ROM or functions in memory.c */
 #define RM(Addr)			KONAMI_RDMEM(Addr)
@@ -309,7 +309,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	if( f ) 							\
 	{									\
 		PC += SIGNED(t);				\
-		change_pc16(PC);	/* TS 971002 */ \
+		change_pc(PC);	/* TS 971002 */ \
 	}									\
 }
 
@@ -320,7 +320,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	{									\
 		konami_ICount -= 1;				\
 		PC += t.w.l;					\
-		change_pc16(PC);	/* TS 971002 */ \
+		change_pc(PC);	/* TS 971002 */ \
 	}									\
 }
 
@@ -386,102 +386,32 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned konami_get_context(void *dst)
+static void konami_get_context(void *dst)
 {
 	if( dst )
 		*(konami_Regs*)dst = konami;
-	return sizeof(konami_Regs);
 }
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void konami_set_context(void *src)
+static void konami_set_context(void *src)
 {
 	if( src )
 		konami = *(konami_Regs*)src;
-    change_pc16(PC);    /* TS 971002 */
+    change_pc(PC);    /* TS 971002 */
 
     CHECK_IRQ_LINES;
 }
 
 /****************************************************************************/
-/* Return a specific register                                               */
-/****************************************************************************/
-unsigned konami_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case KONAMI_PC: return PC;
-		case REG_SP:
-		case KONAMI_S: return S;
-		case KONAMI_CC: return CC;
-		case KONAMI_U: return U;
-		case KONAMI_A: return A;
-		case KONAMI_B: return B;
-		case KONAMI_X: return X;
-		case KONAMI_Y: return Y;
-		case KONAMI_DP: return DP;
-		case KONAMI_NMI_STATE: return konami.nmi_state;
-		case KONAMI_IRQ_STATE: return konami.irq_state[KONAMI_IRQ_LINE];
-		case KONAMI_FIRQ_STATE: return konami.irq_state[KONAMI_FIRQ_LINE];
-		case REG_PREVIOUSPC: return PPC;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return ( RM( offset ) << 8 ) | RM( offset + 1 );
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************/
-/* Set a specific register                                                  */
-/****************************************************************************/
-void konami_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case KONAMI_PC: PC = val; change_pc16(PC); break;
-		case REG_SP:
-		case KONAMI_S: S = val; break;
-		case KONAMI_CC: CC = val; CHECK_IRQ_LINES; break;
-		case KONAMI_U: U = val; break;
-		case KONAMI_A: A = val; break;
-		case KONAMI_B: B = val; break;
-		case KONAMI_X: X = val; break;
-		case KONAMI_Y: Y = val; break;
-		case KONAMI_DP: DP = val; break;
-		case KONAMI_NMI_STATE: konami.nmi_state = val; break;
-		case KONAMI_IRQ_STATE: konami.irq_state[KONAMI_IRQ_LINE] = val; break;
-		case KONAMI_FIRQ_STATE: konami.irq_state[KONAMI_FIRQ_LINE] = val; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, (val >> 8) & 0xff );
-					WM( offset+1, val & 0xff );
-				}
-			}
-    }
-}
-
-
-/****************************************************************************/
 /* Reset registers to their initial values									*/
 /****************************************************************************/
-void konami_init(void)
+static void konami_init(void)
 {
 }
 
-void konami_reset(void *param)
+static void konami_reset(void *param)
 {
 	konami.int_state = 0;
 	konami.nmi_state = CLEAR_LINE;
@@ -494,20 +424,18 @@ void konami_reset(void *param)
     CC |= CC_IF;        /* FIRQ disabled */
 
 	PCD = RM16(0xfffe);
-    change_pc16(PC);    /* TS 971002 */
+    change_pc(PC);    /* TS 971002 */
 }
 
-void konami_exit(void)
+static void konami_exit(void)
 {
-	/* just make sure we deinit this, so the next game set its own */
-	konami_cpu_setlines_callback = 0;
 }
 
 /* Generate interrupts */
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-void konami_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -541,7 +469,7 @@ void konami_set_irq_line(int irqline, int state)
 		}
 		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
 		PCD = RM16(0xfffc);
-		change_pc16(PC);					/* TS 971002 */
+		change_pc(PC);					/* TS 971002 */
 	}
 	else if (irqline < 2)
 	{
@@ -552,13 +480,6 @@ void konami_set_irq_line(int irqline, int state)
 	}
 }
 
-/****************************************************************************
- * Set IRQ vector callback
- ****************************************************************************/
-void konami_set_irq_callback(int (*callback)(int irqline))
-{
-	konami.irq_callback = callback;
-}
 #if 0
 /****************************************************************************
  * Save CPU state
@@ -601,58 +522,8 @@ static void state_load(void *file, const char *module)
 void konami_state_save(void *file) { state_save(file, "konami"); }
 void konami_state_load(void *file) { state_load(file, "konami"); }
 #endif
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *konami_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	konami_Regs *r = context;
 
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &konami;
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "KONAMI";
-		case CPU_INFO_FAMILY: return "KONAMI 5000x";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) The MAME Team 1999";
-		case CPU_INFO_REG_LAYOUT: return (const char*)konami_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)konami_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? 'E':'.',
-				r->cc & 0x40 ? 'F':'.',
-                r->cc & 0x20 ? 'H':'.',
-                r->cc & 0x10 ? 'I':'.',
-                r->cc & 0x08 ? 'N':'.',
-                r->cc & 0x04 ? 'Z':'.',
-                r->cc & 0x02 ? 'V':'.',
-                r->cc & 0x01 ? 'C':'.');
-            break;
-		case CPU_INFO_REG+KONAMI_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+KONAMI_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+KONAMI_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+KONAMI_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+KONAMI_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+KONAMI_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+KONAMI_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+KONAMI_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+KONAMI_DP: sprintf(buffer[which], "DP:%02X", r->dp.b.h); break;
-		case CPU_INFO_REG+KONAMI_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+KONAMI_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[KONAMI_IRQ_LINE]); break;
-		case CPU_INFO_REG+KONAMI_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%X", r->irq_state[KONAMI_FIRQ_LINE]); break;
-	}
-	return buffer[which];
-}
-
-unsigned konami_dasm(char *buffer, unsigned pc)
+static offs_t konami_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return Dasmknmi(buffer,pc);
@@ -669,7 +540,7 @@ unsigned konami_dasm(char *buffer, unsigned pc)
 #include "konamops.c"
 
 /* execute instructions on this CPU until icount expires */
-int konami_execute(int cycles)
+static int konami_execute(int cycles)
 {
 	konami_ICount = cycles - konami.extra_cycles;
 	konami.extra_cycles = 0;
@@ -702,3 +573,130 @@ int konami_execute(int cycles)
 	return cycles - konami_ICount;
 }
 
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void konami_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + KONAMI_IRQ_LINE:	set_irq_line(KONAMI_IRQ_LINE, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + KONAMI_FIRQ_LINE:	set_irq_line(KONAMI_FIRQ_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + KONAMI_PC:			PC = info->i; change_pc(PC);			break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + KONAMI_S:			S = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_CC:			CC = info->i; CHECK_IRQ_LINES;			break;
+		case CPUINFO_INT_REGISTER + KONAMI_U:			U = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_A:			A = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_B:			B = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_X:			X = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_Y:			Y = info->i;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_DP:			DP = info->i;							break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					konami.irq_callback = info->irqcallback; break;
+	case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->p; break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void konami_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(konami);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 13;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + KONAMI_IRQ_LINE:	info->i = konami.irq_state[KONAMI_IRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + KONAMI_FIRQ_LINE:	info->i = konami.irq_state[KONAMI_FIRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = konami.nmi_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + KONAMI_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + KONAMI_S:			info->i = S;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_CC:			info->i = CC;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_U:			info->i = U;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_A:			info->i = A;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_B:			info->i = B;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_X:			info->i = X;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_Y:			info->i = Y;							break;
+		case CPUINFO_INT_REGISTER + KONAMI_DP:			info->i = DP;							break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = konami_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = konami_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = konami_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = konami_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = konami_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = konami_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = konami_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = konami_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = konami.irq_callback; break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = konami_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = konami_win_layout;			break;
+		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->p = (void *)konami.setlines_callback;	break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "KONAMI"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "KONAMI 5000x"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) The MAME Team 1999"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				konami.cc & 0x80 ? 'E':'.',
+				konami.cc & 0x40 ? 'F':'.',
+                konami.cc & 0x20 ? 'H':'.',
+                konami.cc & 0x10 ? 'I':'.',
+                konami.cc & 0x08 ? 'N':'.',
+                konami.cc & 0x04 ? 'Z':'.',
+                konami.cc & 0x02 ? 'V':'.',
+                konami.cc & 0x01 ? 'C':'.');
+            break;
+
+		case CPUINFO_STR_REGISTER + KONAMI_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", konami.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", konami.s.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", konami.cc); break;
+		case CPUINFO_STR_REGISTER + KONAMI_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", konami.u.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", konami.d.b.h); break;
+		case CPUINFO_STR_REGISTER + KONAMI_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", konami.d.b.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", konami.x.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", konami.y.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", konami.dp.b.h); break;
+	}
+}

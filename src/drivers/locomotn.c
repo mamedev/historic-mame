@@ -78,93 +78,93 @@ static WRITE_HANDLER( coin_2_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9800, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
-	{ 0xa080, 0xa080, input_port_1_r },	/* IN1 */
-	{ 0xa100, 0xa100, input_port_2_r },	/* IN2 */
-	{ 0xa180, 0xa180, input_port_3_r },	/* DSW */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xa180, 0xa180) AM_READ(input_port_3_r)	/* DSW */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
-	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa004, 0xa00f, MWA_RAM, &rallyx_radarattr },
-	{ 0xa080, 0xa080, watchdog_reset_w },
-	{ 0xa100, 0xa100, soundlatch_w },
-	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
-	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
-	{ 0xa181, 0xa181, interrupt_enable_w },
-//	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa184, coin_1_w },
-	{ 0xa186, 0xa186, coin_2_w },
-//	{ 0xa187, 0xa187, MWA_NOP },	stars enable
-	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
-	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
-	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radary },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(rallyx_videoram2_w) AM_BASE(&rallyx_videoram2)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(rallyx_colorram2_w) AM_BASE(&rallyx_colorram2)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa004, 0xa00f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarattr)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa130, 0xa130) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrollx)
+	AM_RANGE(0xa140, 0xa140) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrolly)
+	AM_RANGE(0xa170, 0xa170) AM_WRITE(MWA8_NOP)	/* ????? */
+	AM_RANGE(0xa180, 0xa180) AM_WRITE(timeplt_sh_irqtrigger_w)
+	AM_RANGE(0xa181, 0xa181) AM_WRITE(interrupt_enable_w)
+//	AM_RANGE(0xa182, 0xa182) AM_WRITE(MWA8_NOP)	sound mute
+	AM_RANGE(0xa183, 0xa183) AM_WRITE(rallyx_flipscreen_w)
+	AM_RANGE(0xa184, 0xa184) AM_WRITE(coin_1_w)
+	AM_RANGE(0xa186, 0xa186) AM_WRITE(coin_2_w)
+//	AM_RANGE(0xa187, 0xa187) AM_WRITE(MWA8_NOP)	stars enable
+	AM_RANGE(0x8014, 0x801f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* these are here just to initialize */
+	AM_RANGE(0x8814, 0x881f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* the pointers. */
+	AM_RANGE(0x8034, 0x803f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarx) AM_SIZE(&rallyx_radarram_size)	/* ditto */
+	AM_RANGE(0x8834, 0x883f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radary)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( jungler_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
-	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa034, 0xa03f, MWA_RAM, &rallyx_radarattr },
-	{ 0xa080, 0xa080, watchdog_reset_w },
-	{ 0xa100, 0xa100, soundlatch_w },
-	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
-	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
-	{ 0xa181, 0xa181, interrupt_enable_w },
-//	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa184, coin_1_w },
-	{ 0xa186, 0xa186, coin_2_w },
-//	{ 0xa187, 0xa187, MWA_NOP },	stars enable
-	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
-	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
-	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radary },
-MEMORY_END
+static ADDRESS_MAP_START( jungler_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(rallyx_videoram2_w) AM_BASE(&rallyx_videoram2)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(rallyx_colorram2_w) AM_BASE(&rallyx_colorram2)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa034, 0xa03f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarattr)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa130, 0xa130) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrollx)
+	AM_RANGE(0xa140, 0xa140) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrolly)
+	AM_RANGE(0xa170, 0xa170) AM_WRITE(MWA8_NOP)	/* ????? */
+	AM_RANGE(0xa180, 0xa180) AM_WRITE(timeplt_sh_irqtrigger_w)
+	AM_RANGE(0xa181, 0xa181) AM_WRITE(interrupt_enable_w)
+//	AM_RANGE(0xa182, 0xa182) AM_WRITE(MWA8_NOP)	sound mute
+	AM_RANGE(0xa183, 0xa183) AM_WRITE(rallyx_flipscreen_w)
+	AM_RANGE(0xa184, 0xa184) AM_WRITE(coin_1_w)
+	AM_RANGE(0xa186, 0xa186) AM_WRITE(coin_2_w)
+//	AM_RANGE(0xa187, 0xa187) AM_WRITE(MWA8_NOP)	stars enable
+	AM_RANGE(0x8014, 0x801f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* these are here just to initialize */
+	AM_RANGE(0x8814, 0x881f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* the pointers. */
+	AM_RANGE(0x8034, 0x803f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarx) AM_SIZE(&rallyx_radarram_size)	/* ditto */
+	AM_RANGE(0x8834, 0x883f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radary)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( commsega_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
-	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa00f, MWA_RAM, &rallyx_radarattr },
-	{ 0xa080, 0xa080, watchdog_reset_w },
-	{ 0xa100, 0xa100, soundlatch_w },
-	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
-	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
-	{ 0xa181, 0xa181, interrupt_enable_w },
-//	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa184, coin_1_w },
-	{ 0xa186, 0xa186, coin_2_w },
-//	{ 0xa187, 0xa187, MWA_NOP },	stars enable
-	{ 0x8000, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
-	{ 0x8800, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8020, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
-	{ 0x8820, 0x883f, MWA_RAM, &rallyx_radary },
-MEMORY_END
+static ADDRESS_MAP_START( commsega_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(rallyx_videoram2_w) AM_BASE(&rallyx_videoram2)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(rallyx_colorram2_w) AM_BASE(&rallyx_colorram2)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa00f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarattr)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa130, 0xa130) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrollx)
+	AM_RANGE(0xa140, 0xa140) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_scrolly)
+	AM_RANGE(0xa170, 0xa170) AM_WRITE(MWA8_NOP)	/* ????? */
+	AM_RANGE(0xa180, 0xa180) AM_WRITE(timeplt_sh_irqtrigger_w)
+	AM_RANGE(0xa181, 0xa181) AM_WRITE(interrupt_enable_w)
+//	AM_RANGE(0xa182, 0xa182) AM_WRITE(MWA8_NOP)	sound mute
+	AM_RANGE(0xa183, 0xa183) AM_WRITE(rallyx_flipscreen_w)
+	AM_RANGE(0xa184, 0xa184) AM_WRITE(coin_1_w)
+	AM_RANGE(0xa186, 0xa186) AM_WRITE(coin_2_w)
+//	AM_RANGE(0xa187, 0xa187) AM_WRITE(MWA8_NOP)	stars enable
+	AM_RANGE(0x8000, 0x801f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* these are here just to initialize */
+	AM_RANGE(0x8800, 0x881f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* the pointers. */
+	AM_RANGE(0x8020, 0x803f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarx) AM_SIZE(&rallyx_radarram_size)	/* ditto */
+	AM_RANGE(0x8820, 0x883f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radary)
+ADDRESS_MAP_END
 
 
 
@@ -503,12 +503,12 @@ static MACHINE_DRIVER_START( tactcian )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 14318180/8)	/* 1.789772727 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(timeplt_sound_readmem,timeplt_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
@@ -535,7 +535,7 @@ static MACHINE_DRIVER_START( jungler )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(tactcian)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,jungler_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,jungler_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(jungler)
@@ -557,7 +557,7 @@ static MACHINE_DRIVER_START( commsega )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(tactcian)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,commsega_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,commsega_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)

@@ -59,49 +59,49 @@ WRITE_HANDLER( champbas_dac_w )
 	DAC_signed_data_w(0,data<<2);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa040, 0xa040, input_port_1_r },
-	{ 0xa080, 0xa080, input_port_2_r },
-/*	{ 0xa0a0, 0xa0a0,  },	???? */
-	{ 0xa0c0, 0xa0c0, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_2_r)
+/*	AM_RANGE(0xa0a0, 0xa0a0)	???? */
+	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	//{ 0x6000, 0x63ff, champbas_protection_w },
-	{ 0x7000, 0x7000, AY8910_write_port_0_w },
-	{ 0x7001, 0x7001, AY8910_control_port_0_w },
-	{ 0x7800, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, champbas_videoram_w, &videoram },
-	{ 0x8400, 0x87ff, champbas_colorram_w, &colorram },
-	{ 0x8800, 0x8fef, MWA_RAM },
-	{ 0x8ff0, 0x8fff, MWA_RAM, &spriteram, &spriteram_size},
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa002, 0xa002, champbas_gfxbank_w },
-	{ 0xa003, 0xa003, champbas_flipscreen_w },
-	//{ 0xa006, 0xa007, champbas_protection_w },
-	{ 0xa060, 0xa06f, MWA_RAM, &spriteram_2 },
-	{ 0xa080, 0xa080, soundlatch_w },
-	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	//AM_RANGE(0x6000, 0x63ff) AM_WRITE(champbas_protection_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x7001, 0x7001) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(champbas_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(champbas_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8ff0, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(champbas_gfxbank_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(champbas_flipscreen_w)
+	//AM_RANGE(0xa006, 0xa007) AM_WRITE(champbas_protection_w)
+	AM_RANGE(0xa060, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x5fff, MWA_ROM },
-/*	{ 0x8000, 0x8000, MWA_NOP },	unknown - maybe DAC enable */
-	{ 0xa000, 0xa000, soundlatch_w },	/* probably. The sound latch has to be cleared some way */
-	{ 0xc000, 0xc000, champbas_dac_w },
-	{ 0xe000, 0xe3ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+/*	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)	unknown - maybe DAC enable */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_w)	/* probably. The sound latch has to be cleared some way */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(champbas_dac_w)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -224,12 +224,12 @@ static MACHINE_DRIVER_START( champbas )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz ? */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -171,34 +171,34 @@ READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x8fff, MRA_RAM },
-	{ 0xb000, 0xb7ff, input_port_0_r }, 	/* IN0 */
-	{ 0xb800, 0xbfff, input_port_1_r }, 	/* DSW */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(input_port_0_r) 	/* IN0 */
+	AM_RANGE(0xb800, 0xbfff) AM_READ(input_port_1_r) 	/* DSW */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_RAM },
-	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8800, 0x8fff, naughtyb_videoram2_w, &naughtyb_videoram2 },
-	{ 0x9000, 0x97ff, naughtyb_videoreg_w },
-	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
-	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
-	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(naughtyb_videoram2_w) AM_BASE(&naughtyb_videoram2)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(naughtyb_videoreg_w)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM) AM_BASE(&naughtyb_scrollreg)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(pleiads_sound_control_a_w)
+	AM_RANGE(0xa800, 0xafff) AM_WRITE(pleiads_sound_control_b_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( popflame_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_RAM },
-	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8800, 0x8fff, naughtyb_videoram2_w, &naughtyb_videoram2 },
-	{ 0x9000, 0x97ff, popflame_videoreg_w },
-	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
-	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
-	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
-MEMORY_END
+static ADDRESS_MAP_START( popflame_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(naughtyb_videoram2_w) AM_BASE(&naughtyb_videoram2)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(popflame_videoreg_w)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE(MWA8_RAM) AM_BASE(&naughtyb_scrollreg)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(pleiads_sound_control_a_w)
+	AM_RANGE(0xa800, 0xafff) AM_WRITE(pleiads_sound_control_b_w)
+ADDRESS_MAP_END
 
 
 
@@ -318,7 +318,7 @@ static MACHINE_DRIVER_START( naughtyb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -348,7 +348,7 @@ static MACHINE_DRIVER_START( popflame )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
-	MDRV_CPU_MEMORY(readmem,popflame_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,popflame_writemem)
 	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

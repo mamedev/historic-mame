@@ -288,134 +288,134 @@ static READ16_HANDLER( niyanpai_inputport_1_r )
 }
 
 
-static MEMORY_READ16_START( niyanpai_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x040fff, MRA16_RAM },
+static ADDRESS_MAP_START( niyanpai_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM)
 
-	{ 0x0a0000, 0x0a08ff, niyanpai_palette_r },
-	{ 0x0a0900, 0x0a11ff, MRA16_RAM },		// palette work ram?
+	AM_RANGE(0x0a0000, 0x0a08ff) AM_READ(niyanpai_palette_r)
+	AM_RANGE(0x0a0900, 0x0a11ff) AM_READ(MRA16_RAM)		// palette work ram?
 
-	{ 0x0bf800, 0x0bffff, MRA16_RAM },
+	AM_RANGE(0x0bf800, 0x0bffff) AM_READ(MRA16_RAM)
 
-	{ 0x240400, 0x240401, niyanpai_gfxbusy_0_r },
-	{ 0x240402, 0x240403, niyanpai_gfxrom_0_r },
-	{ 0x240600, 0x240601, niyanpai_gfxbusy_1_r },
-	{ 0x240402, 0x240403, niyanpai_gfxrom_1_r },
-	{ 0x240800, 0x240801, niyanpai_gfxbusy_2_r },
-	{ 0x240402, 0x240403, niyanpai_gfxrom_2_r },
+	AM_RANGE(0x240400, 0x240401) AM_READ(niyanpai_gfxbusy_0_r)
+	AM_RANGE(0x240402, 0x240403) AM_READ(niyanpai_gfxrom_0_r)
+	AM_RANGE(0x240600, 0x240601) AM_READ(niyanpai_gfxbusy_1_r)
+	AM_RANGE(0x240402, 0x240403) AM_READ(niyanpai_gfxrom_1_r)
+	AM_RANGE(0x240800, 0x240801) AM_READ(niyanpai_gfxbusy_2_r)
+	AM_RANGE(0x240402, 0x240403) AM_READ(niyanpai_gfxrom_2_r)
 
-	{ 0x280000, 0x280001, niyanpai_dipsw_r },
-	{ 0x280200, 0x280201, niyanpai_inputport_0_r },
-	{ 0x280400, 0x280401, niyanpai_inputport_1_r },
+	AM_RANGE(0x280000, 0x280001) AM_READ(niyanpai_dipsw_r)
+	AM_RANGE(0x280200, 0x280201) AM_READ(niyanpai_inputport_0_r)
+	AM_RANGE(0x280400, 0x280401) AM_READ(niyanpai_inputport_1_r)
 
-	{ 0xfffc00, 0xfffc0f, tmp68301_address_decoder_r },
-	{ 0xfffc80, 0xfffc9f, tmp68301_interrupt_controller_r },
-	{ 0xfffd00, 0xfffd0f, tmp68301_parallel_interface_r },
-	{ 0xfffd80, 0xfffdaf, tmp68301_serial_interface_r },
-	{ 0xfffe00, 0xfffe4f, tmp68301_timer_r },
-MEMORY_END
+	AM_RANGE(0xfffc00, 0xfffc0f) AM_READ(tmp68301_address_decoder_r)
+	AM_RANGE(0xfffc80, 0xfffc9f) AM_READ(tmp68301_interrupt_controller_r)
+	AM_RANGE(0xfffd00, 0xfffd0f) AM_READ(tmp68301_parallel_interface_r)
+	AM_RANGE(0xfffd80, 0xfffdaf) AM_READ(tmp68301_serial_interface_r)
+	AM_RANGE(0xfffe00, 0xfffe4f) AM_READ(tmp68301_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( niyanpai_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x040fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
+static ADDRESS_MAP_START( niyanpai_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x040fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
 
-	{ 0x0a0000, 0x0a08ff, niyanpai_palette_w },
-	{ 0x0a0900, 0x0a11ff, MWA16_RAM },		// palette work ram?
+	AM_RANGE(0x0a0000, 0x0a08ff) AM_WRITE(niyanpai_palette_w)
+	AM_RANGE(0x0a0900, 0x0a11ff) AM_WRITE(MWA16_RAM)		// palette work ram?
 
-	{ 0x0bf800, 0x0bffff, MWA16_RAM },
+	AM_RANGE(0x0bf800, 0x0bffff) AM_WRITE(MWA16_RAM)
 
-	{ 0x200000, 0x200001, niyanpai_sound_w },
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(niyanpai_sound_w)
 
-	{ 0x200200, 0x200201, MWA16_NOP },		// unknown
-	{ 0x240000, 0x240009, MWA16_NOP },		// unknown
-	{ 0x240200, 0x2403ff, MWA16_NOP },		// unknown
+	AM_RANGE(0x200200, 0x200201) AM_WRITE(MWA16_NOP)		// unknown
+	AM_RANGE(0x240000, 0x240009) AM_WRITE(MWA16_NOP)		// unknown
+	AM_RANGE(0x240200, 0x2403ff) AM_WRITE(MWA16_NOP)		// unknown
 
-	{ 0x240400, 0x240401, niyanpai_gfxflag_0_w },
-	{ 0x240402, 0x240405, niyanpai_scrollx_0_w },
-	{ 0x240406, 0x240409, niyanpai_scrolly_0_w },
-	{ 0x24040a, 0x24040f, niyanpai_radr_0_w },
-	{ 0x240410, 0x240411, niyanpai_sizex_0_w },
-	{ 0x240412, 0x240413, niyanpai_sizey_0_w },
-	{ 0x240414, 0x240417, niyanpai_drawx_0_w },
-	{ 0x240418, 0x24041b, niyanpai_drawy_0_w },
+	AM_RANGE(0x240400, 0x240401) AM_WRITE(niyanpai_gfxflag_0_w)
+	AM_RANGE(0x240402, 0x240405) AM_WRITE(niyanpai_scrollx_0_w)
+	AM_RANGE(0x240406, 0x240409) AM_WRITE(niyanpai_scrolly_0_w)
+	AM_RANGE(0x24040a, 0x24040f) AM_WRITE(niyanpai_radr_0_w)
+	AM_RANGE(0x240410, 0x240411) AM_WRITE(niyanpai_sizex_0_w)
+	AM_RANGE(0x240412, 0x240413) AM_WRITE(niyanpai_sizey_0_w)
+	AM_RANGE(0x240414, 0x240417) AM_WRITE(niyanpai_drawx_0_w)
+	AM_RANGE(0x240418, 0x24041b) AM_WRITE(niyanpai_drawy_0_w)
 
-	{ 0x240420, 0x24043f, niyanpai_paltbl_0_w },
+	AM_RANGE(0x240420, 0x24043f) AM_WRITE(niyanpai_paltbl_0_w)
 
-	{ 0x240600, 0x240601, niyanpai_gfxflag_1_w },
-	{ 0x240602, 0x240605, niyanpai_scrollx_1_w },
-	{ 0x240606, 0x240609, niyanpai_scrolly_1_w },
-	{ 0x24060a, 0x24060f, niyanpai_radr_1_w },
-	{ 0x240610, 0x240611, niyanpai_sizex_1_w },
-	{ 0x240612, 0x240613, niyanpai_sizey_1_w },
-	{ 0x240614, 0x240617, niyanpai_drawx_1_w },
-	{ 0x240618, 0x24061b, niyanpai_drawy_1_w },
+	AM_RANGE(0x240600, 0x240601) AM_WRITE(niyanpai_gfxflag_1_w)
+	AM_RANGE(0x240602, 0x240605) AM_WRITE(niyanpai_scrollx_1_w)
+	AM_RANGE(0x240606, 0x240609) AM_WRITE(niyanpai_scrolly_1_w)
+	AM_RANGE(0x24060a, 0x24060f) AM_WRITE(niyanpai_radr_1_w)
+	AM_RANGE(0x240610, 0x240611) AM_WRITE(niyanpai_sizex_1_w)
+	AM_RANGE(0x240612, 0x240613) AM_WRITE(niyanpai_sizey_1_w)
+	AM_RANGE(0x240614, 0x240617) AM_WRITE(niyanpai_drawx_1_w)
+	AM_RANGE(0x240618, 0x24061b) AM_WRITE(niyanpai_drawy_1_w)
 
-	{ 0x240620, 0x24063f, niyanpai_paltbl_1_w },
+	AM_RANGE(0x240620, 0x24063f) AM_WRITE(niyanpai_paltbl_1_w)
 
-	{ 0x240800, 0x240801, niyanpai_gfxflag_2_w },
-	{ 0x240802, 0x240805, niyanpai_scrollx_2_w },
-	{ 0x240806, 0x240809, niyanpai_scrolly_2_w },
-	{ 0x24080a, 0x24080f, niyanpai_radr_2_w },
-	{ 0x240810, 0x240811, niyanpai_sizex_2_w },
-	{ 0x240812, 0x240813, niyanpai_sizey_2_w },
-	{ 0x240814, 0x240817, niyanpai_drawx_2_w },
-	{ 0x240818, 0x24081b, niyanpai_drawy_2_w },
+	AM_RANGE(0x240800, 0x240801) AM_WRITE(niyanpai_gfxflag_2_w)
+	AM_RANGE(0x240802, 0x240805) AM_WRITE(niyanpai_scrollx_2_w)
+	AM_RANGE(0x240806, 0x240809) AM_WRITE(niyanpai_scrolly_2_w)
+	AM_RANGE(0x24080a, 0x24080f) AM_WRITE(niyanpai_radr_2_w)
+	AM_RANGE(0x240810, 0x240811) AM_WRITE(niyanpai_sizex_2_w)
+	AM_RANGE(0x240812, 0x240813) AM_WRITE(niyanpai_sizey_2_w)
+	AM_RANGE(0x240814, 0x240817) AM_WRITE(niyanpai_drawx_2_w)
+	AM_RANGE(0x240818, 0x24081b) AM_WRITE(niyanpai_drawy_2_w)
 
-	{ 0x240820, 0x24083f, niyanpai_paltbl_2_w },
+	AM_RANGE(0x240820, 0x24083f) AM_WRITE(niyanpai_paltbl_2_w)
 
-	{ 0x240a00, 0x240a01, niyanpai_paltblnum_0_w },
-	{ 0x240c00, 0x240c01, niyanpai_paltblnum_1_w },
-	{ 0x240e00, 0x240e01, niyanpai_paltblnum_2_w },
+	AM_RANGE(0x240a00, 0x240a01) AM_WRITE(niyanpai_paltblnum_0_w)
+	AM_RANGE(0x240c00, 0x240c01) AM_WRITE(niyanpai_paltblnum_1_w)
+	AM_RANGE(0x240e00, 0x240e01) AM_WRITE(niyanpai_paltblnum_2_w)
 
-	{ 0xfffc00, 0xfffc0f, tmp68301_address_decoder_w },
-	{ 0xfffc80, 0xfffc9f, tmp68301_interrupt_controller_w },
-	{ 0xfffd00, 0xfffd0f, tmp68301_parallel_interface_w },
-	{ 0xfffd80, 0xfffdaf, tmp68301_serial_interface_w },
-	{ 0xfffe00, 0xfffe4f, tmp68301_timer_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-MEMORY_END
+	AM_RANGE(0xfffc00, 0xfffc0f) AM_WRITE(tmp68301_address_decoder_w)
+	AM_RANGE(0xfffc80, 0xfffc9f) AM_WRITE(tmp68301_interrupt_controller_w)
+	AM_RANGE(0xfffd00, 0xfffd0f) AM_WRITE(tmp68301_parallel_interface_w)
+	AM_RANGE(0xfffd80, 0xfffdaf) AM_WRITE(tmp68301_serial_interface_w)
+	AM_RANGE(0xfffe00, 0xfffe4f) AM_WRITE(tmp68301_timer_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x10, 0x13, z80ctc_0_r },
-	{ 0x50, 0x50, tmpz84c011_0_pa_r },
-	{ 0x51, 0x51, tmpz84c011_0_pb_r },
-	{ 0x52, 0x52, tmpz84c011_0_pc_r },
-	{ 0x30, 0x30, tmpz84c011_0_pd_r },
-	{ 0x40, 0x40, tmpz84c011_0_pe_r },
-	{ 0x54, 0x54, tmpz84c011_0_dir_pa_r },
-	{ 0x55, 0x55, tmpz84c011_0_dir_pb_r },
-	{ 0x56, 0x56, tmpz84c011_0_dir_pc_r },
-	{ 0x34, 0x34, tmpz84c011_0_dir_pd_r },
-	{ 0x44, 0x44, tmpz84c011_0_dir_pe_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x10, 0x13, z80ctc_0_w },
-	{ 0x50, 0x50, tmpz84c011_0_pa_w },
-	{ 0x51, 0x51, tmpz84c011_0_pb_w },
-	{ 0x52, 0x52, tmpz84c011_0_pc_w },
-	{ 0x30, 0x30, tmpz84c011_0_pd_w },
-	{ 0x40, 0x40, tmpz84c011_0_pe_w },
-	{ 0x54, 0x54, tmpz84c011_0_dir_pa_w },
-	{ 0x55, 0x55, tmpz84c011_0_dir_pb_w },
-	{ 0x56, 0x56, tmpz84c011_0_dir_pc_w },
-	{ 0x34, 0x34, tmpz84c011_0_dir_pd_w },
-	{ 0x44, 0x44, tmpz84c011_0_dir_pe_w },
-	{ 0x80, 0x80, YM3812_control_port_0_w },
-	{ 0x81, 0x81, YM3812_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x13) AM_READ(z80ctc_0_r)
+	AM_RANGE(0x50, 0x50) AM_READ(tmpz84c011_0_pa_r)
+	AM_RANGE(0x51, 0x51) AM_READ(tmpz84c011_0_pb_r)
+	AM_RANGE(0x52, 0x52) AM_READ(tmpz84c011_0_pc_r)
+	AM_RANGE(0x30, 0x30) AM_READ(tmpz84c011_0_pd_r)
+	AM_RANGE(0x40, 0x40) AM_READ(tmpz84c011_0_pe_r)
+	AM_RANGE(0x54, 0x54) AM_READ(tmpz84c011_0_dir_pa_r)
+	AM_RANGE(0x55, 0x55) AM_READ(tmpz84c011_0_dir_pb_r)
+	AM_RANGE(0x56, 0x56) AM_READ(tmpz84c011_0_dir_pc_r)
+	AM_RANGE(0x34, 0x34) AM_READ(tmpz84c011_0_dir_pd_r)
+	AM_RANGE(0x44, 0x44) AM_READ(tmpz84c011_0_dir_pe_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x13) AM_WRITE(z80ctc_0_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(tmpz84c011_0_pa_w)
+	AM_RANGE(0x51, 0x51) AM_WRITE(tmpz84c011_0_pb_w)
+	AM_RANGE(0x52, 0x52) AM_WRITE(tmpz84c011_0_pc_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(tmpz84c011_0_pd_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(tmpz84c011_0_pe_w)
+	AM_RANGE(0x54, 0x54) AM_WRITE(tmpz84c011_0_dir_pa_w)
+	AM_RANGE(0x55, 0x55) AM_WRITE(tmpz84c011_0_dir_pb_w)
+	AM_RANGE(0x56, 0x56) AM_WRITE(tmpz84c011_0_dir_pc_w)
+	AM_RANGE(0x34, 0x34) AM_WRITE(tmpz84c011_0_dir_pd_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(tmpz84c011_0_dir_pe_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3812_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( niyanpai )
@@ -515,14 +515,14 @@ static MACHINE_DRIVER_START( niyanpai )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,12288000/2)		/* TMP68301, 6.144 MHz */
-	MDRV_CPU_MEMORY(niyanpai_readmem,niyanpai_writemem)
+	MDRV_CPU_PROGRAM_MAP(niyanpai_readmem,niyanpai_writemem)
 	MDRV_CPU_VBLANK_INT(niyanpai_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 8000000/1)	/* TMPZ84C011, 8.00 MHz */
 	MDRV_CPU_CONFIG(daisy_chain_sound)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -156,63 +156,63 @@ WRITE_HANDLER ( cshooter_c700_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },			// to be confirmed
-	{ 0xb000, 0xb0ff, MRA_RAM },			// sound related ?
-	{ 0xc000, 0xc1ff, MRA_RAM },
-	{ 0xc200, 0xc200, input_port_0_r },
-	{ 0xc201, 0xc201, input_port_1_r },
-	{ 0xc202, 0xc202, input_port_2_r },
-	{ 0xc203, 0xc203, input_port_3_r },
-	{ 0xc204, 0xc204, input_port_4_r },
-	{ 0xc205, 0xc205, cshooter_coin_r },	// hack until I understand
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)			// to be confirmed
+	AM_RANGE(0xb000, 0xb0ff) AM_READ(MRA8_RAM)			// sound related ?
+	AM_RANGE(0xc000, 0xc1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc200, 0xc200) AM_READ(input_port_0_r)
+	AM_RANGE(0xc201, 0xc201) AM_READ(input_port_1_r)
+	AM_RANGE(0xc202, 0xc202) AM_READ(input_port_2_r)
+	AM_RANGE(0xc203, 0xc203) AM_READ(input_port_3_r)
+	AM_RANGE(0xc204, 0xc204) AM_READ(input_port_4_r)
+	AM_RANGE(0xc205, 0xc205) AM_READ(cshooter_coin_r)	// hack until I understand
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },			// to be confirmed
-	{ 0xc000, 0xc1ff, paletteram_BBGGGRRR_w, &paletteram },	// guess, maybe not
-	{ 0xc500, 0xc500, cshooter_c500_w },
-	{ 0xc600, 0xc600, MWA_NOP },			// see notes
-	{ 0xc700, 0xc700, cshooter_c700_w },
-	{ 0xc801, 0xc801, MWA_NOP },			// see notes
-	{ 0xd000, 0xd7ff, cshooter_txram_w, &cshooter_txram },
-	{ 0xd800, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)			// to be confirmed
+	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)	// guess, maybe not
+	AM_RANGE(0xc500, 0xc500) AM_WRITE(cshooter_c500_w)
+	AM_RANGE(0xc600, 0xc600) AM_WRITE(MWA8_NOP)			// see notes
+	AM_RANGE(0xc700, 0xc700) AM_WRITE(cshooter_c700_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(MWA8_NOP)			// see notes
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(cshooter_txram_w) AM_BASE(&cshooter_txram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
 
 /* Sound CPU */
 
-static MEMORY_READ_START( s_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( s_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0xc000, 0xc000, MWA_NOP }, // YM2203_control_port_0_w ?
-	{ 0xc001, 0xc001, MWA_NOP }, // YM2203_write_port_0_w
-	{ 0xc800, 0xc800, MWA_NOP }, // YM2203_control_port_1_w ?
-	{ 0xc801, 0xc801, MWA_NOP }, // YM2203_write_port_1_w
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP) // YM2203_control_port_0_w ?
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(MWA8_NOP) // YM2203_write_port_0_w
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(MWA8_NOP) // YM2203_control_port_1_w ?
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(MWA8_NOP) // YM2203_write_port_1_w
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( s_readport )
-PORT_END
+static ADDRESS_MAP_START( s_readport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( s_writeport )
-PORT_END
+static ADDRESS_MAP_START( s_writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( cshooter )
@@ -337,13 +337,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( cshooter )
 	MDRV_CPU_ADD(Z80,6000000)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(cshooter_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,6000000)		 /* ? MHz */
-	MDRV_CPU_MEMORY(s_readmem,s_writemem)
-	MDRV_CPU_PORTS(s_readport,s_writeport)
+	MDRV_CPU_PROGRAM_MAP(s_readmem,s_writemem)
+	MDRV_CPU_IO_MAP(s_readport,s_writeport)
 //	MDRV_CPU_VBLANK_INT(cshooter_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -63,47 +63,47 @@ static WRITE16_HANDLER( gotcha_oki_bank_w )
 
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x120000, 0x12ffff, MRA16_RAM },
-	{ 0x140000, 0x1405ff, MRA16_RAM },
-	{ 0x160000, 0x1607ff, MRA16_RAM },
-	{ 0x180000, 0x180001, input_port_0_word_r },
-	{ 0x180002, 0x180003, input_port_1_word_r },
-	{ 0x180004, 0x180005, input_port_2_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1405ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x100001, soundlatch_word_w },
-	{ 0x100002, 0x100003, gotcha_lamps_w },
-	{ 0x100004, 0x100005, gotcha_oki_bank_w },
-	{ 0x120000, 0x12ffff, MWA16_RAM },
-	{ 0x140000, 0x1405ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x300000, 0x300001, gotcha_gfxbank_select_w },
-	{ 0x300002, 0x300009, gotcha_scroll_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(soundlatch_word_w)
+	AM_RANGE(0x100002, 0x100003) AM_WRITE(gotcha_lamps_w)
+	AM_RANGE(0x100004, 0x100005) AM_WRITE(gotcha_oki_bank_w)
+	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x1405ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(gotcha_gfxbank_select_w)
+	AM_RANGE(0x300002, 0x300009) AM_WRITE(gotcha_scroll_w)
 //	{ 0x30000c, 0x30000d,
-	{ 0x30000e, 0x30000f, gotcha_gfxbank_w },
-	{ 0x320000, 0x320fff, gotcha_fgvideoram_w, &gotcha_fgvideoram },
-	{ 0x322000, 0x322fff, gotcha_bgvideoram_w, &gotcha_bgvideoram },
-MEMORY_END
+	AM_RANGE(0x30000e, 0x30000f) AM_WRITE(gotcha_gfxbank_w)
+	AM_RANGE(0x320000, 0x320fff) AM_WRITE(gotcha_fgvideoram_w) AM_BASE(&gotcha_fgvideoram)
+	AM_RANGE(0x322000, 0x322fff) AM_WRITE(gotcha_bgvideoram_w) AM_BASE(&gotcha_bgvideoram)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ 0xc006, 0xc006, soundlatch_r },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xc006, 0xc006) AM_READ(soundlatch_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xc002, 0xc003, OKIM6295_data_0_w },	// TWO addresses!
-	{ 0xd000, 0xd7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xc002, 0xc003) AM_WRITE(OKIM6295_data_0_w)	// TWO addresses!
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -247,12 +247,12 @@ static MACHINE_DRIVER_START( gotcha )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,12000000)	/* 12 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,6000000)	/* 6 MHz ? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -305,83 +305,83 @@ static WRITE_HANDLER( flip_screen_w )
 }
 
 
-static MEMORY_READ_START( panic_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x6800, 0x6800, input_port_0_r }, /* IN1 */
-	{ 0x6801, 0x6801, input_port_1_r }, /* IN2 */
-	{ 0x6802, 0x6802, input_port_2_r }, /* DSW */
-	{ 0x6803, 0x6803, input_port_3_r }, /* IN0 */
-MEMORY_END
+static ADDRESS_MAP_START( panic_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_READ(input_port_0_r) /* IN1 */
+	AM_RANGE(0x6801, 0x6801) AM_READ(input_port_1_r) /* IN2 */
+	AM_RANGE(0x6802, 0x6802) AM_READ(input_port_2_r) /* DSW */
+	AM_RANGE(0x6803, 0x6803) AM_READ(input_port_3_r) /* IN0 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( panic_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7000, 0x700b, panic_sound_output_w },
-	{ 0x700c, 0x700e, cosmic_color_register_w },
-	{ 0x700f, 0x700f, flip_screen_w },
-	{ 0x7800, 0x7801, panic_sound_output2_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( cosmica_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x6800, 0x6800, input_port_0_r }, /* IN1 */
-	{ 0x6801, 0x6801, input_port_1_r }, /* IN2 */
-	{ 0x6802, 0x6802, input_port_2_r }, /* DSW */
-	{ 0x6803, 0x6803, cosmica_pixel_clock_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( cosmica_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x6000, 0x601f, MWA_RAM ,&spriteram, &spriteram_size },
-	{ 0x700c, 0x700d, cosmic_color_register_w },
-	{ 0x700f, 0x700f, flip_screen_w },
-MEMORY_END
+static ADDRESS_MAP_START( panic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x6000, 0x601f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x7000, 0x700b) AM_WRITE(panic_sound_output_w)
+	AM_RANGE(0x700c, 0x700e) AM_WRITE(cosmic_color_register_w)
+	AM_RANGE(0x700f, 0x700f) AM_WRITE(flip_screen_w)
+	AM_RANGE(0x7800, 0x7801) AM_WRITE(panic_sound_output2_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( cosmicg_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cosmica_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_READ(input_port_0_r) /* IN1 */
+	AM_RANGE(0x6801, 0x6801) AM_READ(input_port_1_r) /* IN2 */
+	AM_RANGE(0x6802, 0x6802) AM_READ(input_port_2_r) /* DSW */
+	AM_RANGE(0x6803, 0x6803) AM_READ(cosmica_pixel_clock_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cosmicg_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, MWA_RAM, &videoram, &videoram_size },
-MEMORY_END
-
-static PORT_READ_START( cosmicg_readport )
-	{ 0x00, 0x00, cosmicg_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-PORT_END
-
-static PORT_WRITE_START( cosmicg_writeport )
-	{ 0x00, 0x15, cosmicg_output_w },
-	{ 0x16, 0x17, cosmic_color_register_w },
-PORT_END
+static ADDRESS_MAP_START( cosmica_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x6000, 0x601f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x700c, 0x700d) AM_WRITE(cosmic_color_register_w)
+	AM_RANGE(0x700f, 0x700f) AM_WRITE(flip_screen_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( magspot2_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
-	{ 0x5000, 0x5000, input_port_0_r },
-	{ 0x5001, 0x5001, input_port_1_r },
-	{ 0x5002, 0x5002, input_port_2_r },
-	{ 0x5003, 0x5003, input_port_3_r },
-	{ 0x6000, 0x7fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cosmicg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( magspot2_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
-	{ 0x4800, 0x4800, DAC_0_data_w },
-	{ 0x480c, 0x480d, cosmic_color_register_w },
-	{ 0x480f, 0x480f, flip_screen_w },
-	{ 0x6000, 0x7fff, MWA_RAM, &videoram, &videoram_size},
-MEMORY_END
+static ADDRESS_MAP_START( cosmicg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cosmicg_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(cosmicg_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cosmicg_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x15) AM_WRITE(cosmicg_output_w)
+	AM_RANGE(0x16, 0x17) AM_WRITE(cosmic_color_register_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( magspot2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x3807) AM_READ(magspot2_coinage_dip_r)
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)
+	AM_RANGE(0x5001, 0x5001) AM_READ(input_port_1_r)
+	AM_RANGE(0x5002, 0x5002) AM_READ(input_port_2_r)
+	AM_RANGE(0x5003, 0x5003) AM_READ(input_port_3_r)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( magspot2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x401f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x480c, 0x480d) AM_WRITE(cosmic_color_register_w)
+	AM_RANGE(0x480f, 0x480f) AM_WRITE(flip_screen_w)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( panic )
@@ -1027,7 +1027,7 @@ static MACHINE_DRIVER_START( panic )
 	MDRV_IMPORT_FROM(cosmic)
 	MDRV_CPU_MODIFY("main")
 
-	MDRV_CPU_MEMORY(panic_readmem,panic_writemem)
+	MDRV_CPU_PROGRAM_MAP(panic_readmem,panic_writemem)
 	MDRV_CPU_VBLANK_INT(panic_interrupt,2)
 
 	/* video hardware */
@@ -1050,7 +1050,7 @@ static MACHINE_DRIVER_START( cosmica )
 	MDRV_IMPORT_FROM(cosmic)
 	MDRV_CPU_MODIFY("main")
 
-	MDRV_CPU_MEMORY(cosmica_readmem,cosmica_writemem)
+	MDRV_CPU_PROGRAM_MAP(cosmica_readmem,cosmica_writemem)
 	MDRV_CPU_VBLANK_INT(cosmica_interrupt,32)
 
 	/* video hardware */
@@ -1071,8 +1071,8 @@ static MACHINE_DRIVER_START( cosmicg )
 			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
 			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
 			1.5MHz.  So, if someone can check this... */
-	MDRV_CPU_MEMORY(cosmicg_readmem,cosmicg_writemem)
-	MDRV_CPU_PORTS(cosmicg_readport,cosmicg_writeport)
+	MDRV_CPU_PROGRAM_MAP(cosmicg_readmem,cosmicg_writemem)
+	MDRV_CPU_IO_MAP(cosmicg_readport,cosmicg_writeport)
 	MDRV_CPU_VBLANK_INT(cosmicg_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1099,7 +1099,7 @@ static MACHINE_DRIVER_START( magspot2 )
 	MDRV_IMPORT_FROM(cosmic)
 	MDRV_CPU_MODIFY("main")
 
-	MDRV_CPU_MEMORY(magspot2_readmem,magspot2_writemem)
+	MDRV_CPU_PROGRAM_MAP(magspot2_readmem,magspot2_writemem)
 	MDRV_CPU_VBLANK_INT(magspot2_interrupt,1)
 
 	/* video hardware */
@@ -1131,7 +1131,7 @@ static MACHINE_DRIVER_START( nomnlnd )
 	MDRV_IMPORT_FROM(cosmic)
 	MDRV_CPU_MODIFY("main")
 
-	MDRV_CPU_MEMORY(magspot2_readmem,magspot2_writemem)
+	MDRV_CPU_PROGRAM_MAP(magspot2_readmem,magspot2_writemem)
 	MDRV_CPU_VBLANK_INT(nomnlnd_interrupt,1)
 
 	/* video hardware */

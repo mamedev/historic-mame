@@ -156,32 +156,32 @@ static READ_HANDLER( sound_to_main_r )
  *
  *************************************/
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x7fff, MRA_BANK1 },
-	{ 0x8800, 0x8800, sound_to_main_r },
-	{ 0xa000, 0xbfff, crgolf_videoram_bit1_r },
-	{ 0xc000, 0xdfff, crgolf_videoram_bit0_r },
-	{ 0xe000, 0xffff, crgolf_videoram_bit2_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8800, 0x8800) AM_READ(sound_to_main_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(crgolf_videoram_bit1_r)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(crgolf_videoram_bit0_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(crgolf_videoram_bit2_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x7fff, MWA_ROM },
-	{ 0x8003, 0x8003, MWA_RAM, &crgolf_color_select },
-	{ 0x8004, 0x8004, MWA_RAM, &crgolf_screen_flip },
-	{ 0x8005, 0x8005, MWA_RAM, &crgolf_screen_select },
-	{ 0x8006, 0x8006, MWA_RAM, &crgolf_screenb_enable },
-	{ 0x8007, 0x8007, MWA_RAM, &crgolf_screena_enable },
-	{ 0x8800, 0x8800, main_to_sound_w },
-	{ 0x9000, 0x9000, rom_bank_select_w },
-	{ 0xa000, 0xbfff, crgolf_videoram_bit1_w },
-	{ 0xc000, 0xdfff, crgolf_videoram_bit0_w },
-	{ 0xe000, 0xffff, crgolf_videoram_bit2_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_RAM) AM_BASE(&crgolf_color_select)
+	AM_RANGE(0x8004, 0x8004) AM_WRITE(MWA8_RAM) AM_BASE(&crgolf_screen_flip)
+	AM_RANGE(0x8005, 0x8005) AM_WRITE(MWA8_RAM) AM_BASE(&crgolf_screen_select)
+	AM_RANGE(0x8006, 0x8006) AM_WRITE(MWA8_RAM) AM_BASE(&crgolf_screenb_enable)
+	AM_RANGE(0x8007, 0x8007) AM_WRITE(MWA8_RAM) AM_BASE(&crgolf_screena_enable)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(main_to_sound_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(rom_bank_select_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(crgolf_videoram_bit1_w)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(crgolf_videoram_bit0_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(crgolf_videoram_bit2_w)
+ADDRESS_MAP_END
 
 
 
@@ -191,25 +191,25 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xe000, 0xe000, switch_input_r },
-	{ 0xe001, 0xe001, analog_input_r },
-	{ 0xe003, 0xe003, main_to_sound_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(switch_input_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(analog_input_r)
+	AM_RANGE(0xe003, 0xe003) AM_READ(main_to_sound_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xc000, 0xc000, AY8910_control_port_0_w },
-	{ 0xc001, 0xc001, AY8910_write_port_0_w },
-	{ 0xc002, 0xc002, MWA_NOP },
-	{ 0xe000, 0xe000, switch_input_select_w },
-	{ 0xe001, 0xe001, unknown_w },
-	{ 0xe003, 0xe003, sound_to_main_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(switch_input_select_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(unknown_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(sound_to_main_w)
+ADDRESS_MAP_END
 
 
 
@@ -318,11 +318,11 @@ static MACHINE_DRIVER_START( crgolf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,MASTER_CLOCK/3/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,MASTER_CLOCK/3/2)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

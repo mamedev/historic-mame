@@ -119,49 +119,49 @@ static WRITE16_HANDLER ( pass_soundwrite )
 }
 
 /* todo: check all memory regions actually readable / read from */
-static MEMORY_READ16_START( pass_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x083fff, MRA16_RAM },
-	{ 0x200000, 0x200fff, MRA16_RAM },
-	{ 0x210000, 0x213fff, MRA16_RAM },
-	{ 0x220000, 0x2203ff, MRA16_RAM },
-	{ 0x230100, 0x230101, input_port_0_word_r },
-	{ 0x230200, 0x230201, input_port_1_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( pass_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x210000, 0x213fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x220000, 0x2203ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x230100, 0x230101) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x230200, 0x230201) AM_READ(input_port_1_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( pass_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x083fff, MWA16_RAM },
-	{ 0x200000, 0x200fff, pass_bg_videoram_w, &pass_bg_videoram }, // Background
-	{ 0x210000, 0x213fff, pass_fg_videoram_w, &pass_fg_videoram }, // Foreground
-	{ 0x220000, 0x2203ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x230000, 0x230001, pass_soundwrite },
-MEMORY_END
+static ADDRESS_MAP_START( pass_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(pass_bg_videoram_w) AM_BASE(&pass_bg_videoram) // Background
+	AM_RANGE(0x210000, 0x213fff) AM_WRITE(pass_fg_videoram_w) AM_BASE(&pass_fg_videoram) // Foreground
+	AM_RANGE(0x220000, 0x2203ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x230000, 0x230001) AM_WRITE(pass_soundwrite)
+ADDRESS_MAP_END
 
 /* sound cpu */
 
-static MEMORY_READ_START( pass_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( pass_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pass_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( pass_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( pass_sound_readport )
-	{ 0x00, 0x00, soundlatch_r },
-	{ 0x70, 0x70, YM2203_status_port_0_r },
-	{ 0x71, 0x71, YM2203_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( pass_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
+	AM_RANGE(0x70, 0x70) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x71, 0x71) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( pass_sound_writeport )
-	{ 0x70, 0x70, YM2203_control_port_0_w },
-	{ 0x71, 0x71, YM2203_write_port_0_w },
-	{ 0x80, 0x80, OKIM6295_data_0_w },
-	{ 0xc0, 0xc0, soundlatch_clear_w },
-MEMORY_END
+static ADDRESS_MAP_START( pass_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x70, 0x70) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x71, 0x71) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(soundlatch_clear_w)
+ADDRESS_MAP_END
 
 
 /* todo : work out function of unknown but used dsw */
@@ -289,13 +289,13 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( pass )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14318180/2 )
-	MDRV_CPU_MEMORY(pass_readmem,pass_writemem)
+	MDRV_CPU_PROGRAM_MAP(pass_readmem,pass_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* all the same */
 
 	MDRV_CPU_ADD(Z80, 14318180/4 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(pass_sound_readmem,pass_sound_writemem)
-	MDRV_CPU_PORTS(pass_sound_readport,pass_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(pass_sound_readmem,pass_sound_writemem)
+	MDRV_CPU_IO_MAP(pass_sound_readport,pass_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

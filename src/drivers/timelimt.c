@@ -49,60 +49,60 @@ static WRITE_HANDLER( sound_reset_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },		/* rom */
-	{ 0x8000, 0x87ff, MRA_RAM },		/* ram */
-	{ 0x8800, 0x8bff, MRA_RAM },		/* video ram */
-	{ 0x9000, 0x97ff, MRA_RAM },		/* background ram */
-	{ 0x9800, 0x98ff, MRA_RAM },		/* sprite ram */
-	{ 0xa000, 0xa000, input_port_0_r }, /* input port */
-	{ 0xa800, 0xa800, input_port_1_r },	/* input port */
-	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
-	{ 0xb800, 0xb800, MRA_NOP },		/* NMI ack? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)		/* rom */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)		/* ram */
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)		/* video ram */
+	AM_RANGE(0x9000, 0x97ff) AM_READ(MRA8_RAM)		/* background ram */
+	AM_RANGE(0x9800, 0x98ff) AM_READ(MRA8_RAM)		/* sprite ram */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r) /* input port */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)	/* input port */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xb800, 0xb800) AM_READ(MRA8_NOP)		/* NMI ack? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },		/* rom */
-	{ 0x8000, 0x87ff, MWA_RAM },		/* ram */
-	{ 0x8800, 0x8bff, timelimt_videoram_w, &videoram, &videoram_size },	/* video ram */
-	{ 0x9000, 0x97ff, timelimt_bg_videoram_w, &timelimt_bg_videoram, &timelimt_bg_videoram_size },/* background ram */
-	{ 0x9800, 0x98ff, MWA_RAM, &spriteram, &spriteram_size },	/* sprite ram */
-	{ 0xb000, 0xb000, nmi_enable_w },	/* nmi enable */
-	{ 0xb003, 0xb003, sound_reset_w },	/* sound reset ? */
-	{ 0xb800, 0xb800, soundlatch_w }, 	/* sound write */
-	{ 0xc800, 0xc800, timelimt_scroll_x_lsb_w },
-	{ 0xc801, 0xc801, timelimt_scroll_x_msb_w },
-	{ 0xc802, 0xc802, timelimt_scroll_y_w },
-	{ 0xc803, 0xc803, MWA_NOP },		/* ???? bit 0 used only */
-	{ 0xc804, 0xc804, MWA_NOP },		/* ???? not used */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)		/* rom */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)		/* ram */
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(timelimt_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)	/* video ram */
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(timelimt_bg_videoram_w) AM_BASE(&timelimt_bg_videoram) AM_SIZE(&timelimt_bg_videoram_size)/* background ram */
+	AM_RANGE(0x9800, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* sprite ram */
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(nmi_enable_w)	/* nmi enable */
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(sound_reset_w)	/* sound reset ? */
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(soundlatch_w) 	/* sound write */
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(timelimt_scroll_x_lsb_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(timelimt_scroll_x_msb_w)
+	AM_RANGE(0xc802, 0xc802) AM_WRITE(timelimt_scroll_y_w)
+	AM_RANGE(0xc803, 0xc803) AM_WRITE(MWA8_NOP)		/* ???? bit 0 used only */
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(MWA8_NOP)		/* ???? not used */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, watchdog_reset_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x1fff, MRA_ROM },	/* rom */
-	{ 0x3800, 0x3bff, MRA_RAM },	/* ram */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)	/* rom */
+	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA8_RAM)	/* ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x1fff, MWA_ROM },	/* rom */
-	{ 0x3800, 0x3bff, MWA_RAM },	/* ram */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)	/* rom */
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA8_RAM)	/* ram */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_sound )
-	{ 0x8c, 0x8d, AY8910_read_port_0_r },
-	{ 0x8e, 0x8f, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8c, 0x8d) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x8e, 0x8f) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_sound )
-	{ 0x00, 0x00, soundlatch_clear_w },
-	{ 0x8c, 0x8c, AY8910_control_port_0_w },
-	{ 0x8d, 0x8d, AY8910_write_port_0_w },
-	{ 0x8e, 0x8e, AY8910_control_port_1_w },
-	{ 0x8f, 0x8f, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_clear_w)
+	AM_RANGE(0x8c, 0x8c) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8d, 0x8d) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8e, 0x8e) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8f, 0x8f) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -262,14 +262,14 @@ static MACHINE_DRIVER_START( timelimt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)	/* 5.000 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(timelimt_irq,1)
 
 	MDRV_CPU_ADD(Z80,18432000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
+	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)

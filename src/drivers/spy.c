@@ -348,50 +348,50 @@ static WRITE_HANDLER( sound_bank_w )
 
 
 
-static MEMORY_READ_START( spy_readmem )
-	{ 0x0000, 0x07ff, spy_bankedram1_r },
-	{ 0x0800, 0x1aff, MRA_RAM },
-	{ 0x3fd0, 0x3fd0, input_port_4_r },
-	{ 0x3fd1, 0x3fd1, input_port_0_r },
-	{ 0x3fd2, 0x3fd2, input_port_1_r },
-	{ 0x3fd3, 0x3fd3, input_port_2_r },
-	{ 0x3fe0, 0x3fe0, input_port_3_r },
-	{ 0x2000, 0x5fff, K052109_051960_r },
-	{ 0x6000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( spy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(spy_bankedram1_r)
+	AM_RANGE(0x0800, 0x1aff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3fd0, 0x3fd0) AM_READ(input_port_4_r)
+	AM_RANGE(0x3fd1, 0x3fd1) AM_READ(input_port_0_r)
+	AM_RANGE(0x3fd2, 0x3fd2) AM_READ(input_port_1_r)
+	AM_RANGE(0x3fd3, 0x3fd3) AM_READ(input_port_2_r)
+	AM_RANGE(0x3fe0, 0x3fe0) AM_READ(input_port_3_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(K052109_051960_r)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( spy_writemem )
-	{ 0x0000, 0x07ff, spy_bankedram1_w, &ram },
-	{ 0x0800, 0x1aff, MWA_RAM },
-	{ 0x3f80, 0x3f80, bankswitch_w },
-	{ 0x3f90, 0x3f90, spy_3f90_w },
-	{ 0x3fa0, 0x3fa0, watchdog_reset_w },
-	{ 0x3fb0, 0x3fb0, soundlatch_w },
-	{ 0x3fc0, 0x3fc0, spy_sh_irqtrigger_w },
-	{ 0x2000, 0x5fff, K052109_051960_w },
-	{ 0x6000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( spy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(spy_bankedram1_w) AM_BASE(&ram)
+	AM_RANGE(0x0800, 0x1aff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3f80, 0x3f80) AM_WRITE(bankswitch_w)
+	AM_RANGE(0x3f90, 0x3f90) AM_WRITE(spy_3f90_w)
+	AM_RANGE(0x3fa0, 0x3fa0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3fb0, 0x3fb0) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x3fc0, 0x3fc0) AM_WRITE(spy_sh_irqtrigger_w)
+	AM_RANGE(0x2000, 0x5fff) AM_WRITE(K052109_051960_w)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( spy_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa00d, K007232_read_port_0_r },
-	{ 0xb000, 0xb00d, K007232_read_port_1_r },
-	{ 0xc000, 0xc000, YM3812_status_port_0_r },
-	{ 0xd000, 0xd000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( spy_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa00d) AM_READ(K007232_read_port_0_r)
+	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_1_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( spy_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x9000, sound_bank_w },
-	{ 0xa000, 0xa00d, K007232_write_port_0_w },
-	{ 0xb000, 0xb00d, K007232_write_port_1_w },
-	{ 0xc000, 0xc000, YM3812_control_port_0_w },
-	{ 0xc001, 0xc001, YM3812_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( spy_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(sound_bank_w)
+	AM_RANGE(0xa000, 0xa00d) AM_WRITE(K007232_write_port_0_w)
+	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_1_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM3812_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -536,12 +536,12 @@ static MACHINE_DRIVER_START( spy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 3000000) /* ? */
-	MDRV_CPU_MEMORY(spy_readmem,spy_writemem)
+	MDRV_CPU_PROGRAM_MAP(spy_readmem,spy_writemem)
 	MDRV_CPU_VBLANK_INT(spy_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(spy_sound_readmem,spy_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(spy_sound_readmem,spy_sound_writemem)
 								/* nmi by the sound chip */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

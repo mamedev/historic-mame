@@ -348,40 +348,40 @@ static WRITE32_HANDLER( psh_ymf_pcm_w )
 	}
 }
 
-static MEMORY_READ32_START( ps4_readmem )
-	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
-	{ 0x02000000, 0x021fffff, MRA32_BANK1 }, // data ROM
-	{ 0x03000000, 0x030037ff, MRA32_RAM },
-	{ 0x03003fe0, 0x03003fe3, ps4_eeprom_r },
-	{ 0x03003fe4, 0x03003fe7, MRA32_NOP }, // also writes to this address - might be vblank?
-//	{ 0x03003fe8, 0x03003fef, MRA32_RAM }, // vid regs?
-	{ 0x03004000, 0x03005fff, MRA32_RAM },
-	{ 0x05000000, 0x05000003, psh_ymf_fm_r }, // read YMF status
-	{ 0x05800000, 0x05800007, ps4_io32_r }, // Screen 1+2's Controls
-	{ 0x06000000, 0x060fffff, MRA32_RAM },	// main RAM (1 meg)
+static ADDRESS_MAP_START( ps4_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA32_ROM)	// program ROM (1 meg)
+	AM_RANGE(0x02000000, 0x021fffff) AM_READ(MRA32_BANK1) // data ROM
+	AM_RANGE(0x03000000, 0x030037ff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x03003fe0, 0x03003fe3) AM_READ(ps4_eeprom_r)
+	AM_RANGE(0x03003fe4, 0x03003fe7) AM_READ(MRA32_NOP) // also writes to this address - might be vblank?
+//	AM_RANGE(0x03003fe8, 0x03003fef) AM_READ(MRA32_RAM) // vid regs?
+	AM_RANGE(0x03004000, 0x03005fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x05000000, 0x05000003) AM_READ(psh_ymf_fm_r) // read YMF status
+	AM_RANGE(0x05800000, 0x05800007) AM_READ(ps4_io32_r) // Screen 1+2's Controls
+	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_RAM)	// main RAM (1 meg)
 
 #if ROMTEST
-	{ 0x05000004, 0x05000007, ps4_sample_r }, // data for rom tests (Used to verify Sample rom)
-	{ 0x03006000, 0x03007fff, MRA32_BANK2 }, // data for rom tests (gfx), data is controlled by vidreg
+	AM_RANGE(0x05000004, 0x05000007) AM_READ(ps4_sample_r) // data for rom tests (Used to verify Sample rom)
+	AM_RANGE(0x03006000, 0x03007fff) AM_READ(MRA32_BANK2) // data for rom tests (gfx), data is controlled by vidreg
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( ps4_writemem )
-	{ 0x00000000, 0x000fffff, MWA32_ROM },	// program ROM (1 meg)
-	{ 0x03000000, 0x030037ff, MWA32_RAM, &spriteram32, &spriteram_size },
-	{ 0x03003fe0, 0x03003fe3, ps4_eeprom_w },
-//	{ 0x03003fe4, 0x03003fe7, MWA32_NOP }, // might be vblank?
-	{ 0x03003fe4, 0x03003fef, ps4_vidregs_w, &psikyo4_vidregs }, // vid regs?
-	{ 0x03003ff0, 0x03003ff3, ps4_screen1_brt_w }, // screen 1 brightness
-	{ 0x03003ff4, 0x03003ff7, ps4_bgpen_1_dword_w, &bgpen_1 }, // screen 1 clear colour
-	{ 0x03003ff8, 0x03003ffb, ps4_screen2_brt_w }, // screen 2 brightness
-	{ 0x03003ffc, 0x03003fff, ps4_bgpen_2_dword_w, &bgpen_2 }, // screen 2 clear colour
-	{ 0x03004000, 0x03005fff, ps4_paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w, &paletteram32 }, // palette
-	{ 0x05000000, 0x05000003, psh_ymf_fm_w }, // first 2 OPL4 register banks
-	{ 0x05000004, 0x05000007, psh_ymf_pcm_w }, // third OPL4 register bank
-	{ 0x05800008, 0x0580000b, MWA32_RAM, &ps4_io_select }, // Used by Mahjong games to choose input (also maps normal loderndf inputs to offsets)
-	{ 0x06000000, 0x060fffff, MWA32_RAM, &ps4_ram },	// work RAM
-MEMORY_END
+static ADDRESS_MAP_START( ps4_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA32_ROM)	// program ROM (1 meg)
+	AM_RANGE(0x03000000, 0x030037ff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x03003fe0, 0x03003fe3) AM_WRITE(ps4_eeprom_w)
+//	AM_RANGE(0x03003fe4, 0x03003fe7) AM_WRITE(MWA32_NOP) // might be vblank?
+	AM_RANGE(0x03003fe4, 0x03003fef) AM_WRITE(ps4_vidregs_w) AM_BASE(&psikyo4_vidregs) // vid regs?
+	AM_RANGE(0x03003ff0, 0x03003ff3) AM_WRITE(ps4_screen1_brt_w) // screen 1 brightness
+	AM_RANGE(0x03003ff4, 0x03003ff7) AM_WRITE(ps4_bgpen_1_dword_w) AM_BASE(&bgpen_1) // screen 1 clear colour
+	AM_RANGE(0x03003ff8, 0x03003ffb) AM_WRITE(ps4_screen2_brt_w) // screen 2 brightness
+	AM_RANGE(0x03003ffc, 0x03003fff) AM_WRITE(ps4_bgpen_2_dword_w) AM_BASE(&bgpen_2) // screen 2 clear colour
+	AM_RANGE(0x03004000, 0x03005fff) AM_WRITE(ps4_paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_w) AM_BASE(&paletteram32) // palette
+	AM_RANGE(0x05000000, 0x05000003) AM_WRITE(psh_ymf_fm_w) // first 2 OPL4 register banks
+	AM_RANGE(0x05000004, 0x05000007) AM_WRITE(psh_ymf_pcm_w) // third OPL4 register bank
+	AM_RANGE(0x05800008, 0x0580000b) AM_WRITE(MWA32_RAM) AM_BASE(&ps4_io_select) // Used by Mahjong games to choose input (also maps normal loderndf inputs to offsets)
+	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_RAM) AM_BASE(&ps4_ram)	// work RAM
+ADDRESS_MAP_END
 
 static void irqhandler(int linestate)
 {
@@ -403,7 +403,7 @@ static struct YMF278B_interface ymf278b_interface =
 static MACHINE_DRIVER_START( ps4big )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", SH2, MASTER_CLOCK/2)
-	MDRV_CPU_MEMORY(ps4_readmem,ps4_writemem)
+	MDRV_CPU_PROGRAM_MAP(ps4_readmem,ps4_writemem)
 	MDRV_CPU_VBLANK_INT(psikyosh_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

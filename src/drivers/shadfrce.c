@@ -226,58 +226,58 @@ static WRITE16_HANDLER ( shadfrce_sound_brt_w )
 
 /* Memory Maps - ToDo, Work Out Unknowns */
 
-static MEMORY_READ16_START( shadfrce_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x100fff, MRA16_RAM },
-	{ 0x101000, 0x101fff, MRA16_RAM },
-	{ 0x102000, 0x1027ff, MRA16_RAM },
-	{ 0x102800, 0x103fff, MRA16_RAM },
-	{ 0x140000, 0x141fff, MRA16_RAM },
-	{ 0x142000, 0x143fff, MRA16_RAM },
-	{ 0x180000, 0x187fff, MRA16_RAM },
+static ADDRESS_MAP_START( shadfrce_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x102000, 0x1027ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x102800, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x141fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x142000, 0x143fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x187fff) AM_READ(MRA16_RAM)
 	/* inputs, dipswitches etc. */
-	{ 0x1c000a, 0x1c000b, MRA16_NOP }, /* ?? */
-	{ 0x1d000c, 0x1d000d, MRA16_NOP }, /* ?? */
+	AM_RANGE(0x1c000a, 0x1c000b) AM_READ(MRA16_NOP) /* ?? */
+	AM_RANGE(0x1d000c, 0x1d000d) AM_READ(MRA16_NOP) /* ?? */
 #if USE_SHADFRCE_FAKE_INPUT_PORTS
-	{ 0x1d0020, 0x1d0027, shadfrce_input_ports_r },
+	AM_RANGE(0x1d0020, 0x1d0027) AM_READ(shadfrce_input_ports_r)
 #else
-	{ 0x1d0020, 0x1d0021, input_port_0_word_r },
-	{ 0x1d0022, 0x1d0023, input_port_1_word_r },
-	{ 0x1d0024, 0x1d0025, input_port_2_word_r },
-	{ 0x1d0026, 0x1d0027, input_port_3_word_r },
+	AM_RANGE(0x1d0020, 0x1d0021) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x1d0022, 0x1d0023) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x1d0024, 0x1d0025) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x1d0026, 0x1d0027) AM_READ(input_port_3_word_r)
 #endif
-	{ 0x1F0000, 0x1FFFFF, MRA16_RAM },
-MEMORY_END
+	AM_RANGE(0x1F0000, 0x1FFFFF) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( shadfrce_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x100fff, shadfrce_bg0videoram_w, &shadfrce_bg0videoram }, /* video */
-	{ 0x101000, 0x101fff, MWA16_RAM  },
-	{ 0x102000, 0x1027ff, shadfrce_bg1videoram_w, &shadfrce_bg1videoram  }, /* bg 2 */
-	{ 0x102800, 0x103fff, MWA16_RAM },
-	{ 0x140000, 0x141fff, shadfrce_fgvideoram_w, &shadfrce_fgvideoram },
-	{ 0x142000, 0x143fff, MWA16_RAM, &shadfrce_spvideoram, &spriteram_size }, /* sprites */
-	{ 0x180000, 0x187fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 }, /* ?? */
+static ADDRESS_MAP_START( shadfrce_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(shadfrce_bg0videoram_w) AM_BASE(&shadfrce_bg0videoram) /* video */
+	AM_RANGE(0x101000, 0x101fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x102000, 0x1027ff) AM_WRITE(shadfrce_bg1videoram_w) AM_BASE(&shadfrce_bg1videoram) /* bg 2 */
+	AM_RANGE(0x102800, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x141fff) AM_WRITE(shadfrce_fgvideoram_w) AM_BASE(&shadfrce_fgvideoram)
+	AM_RANGE(0x142000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&shadfrce_spvideoram) AM_SIZE(&spriteram_size) /* sprites */
+	AM_RANGE(0x180000, 0x187fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) /* ?? */
 	/* probably video registers etc. */
-//	{ 0x1c0000, 0x1d000d, MWA16_RAM, &shadfrce_videoregs },
-	{ 0x1c0000, 0x1c0001, shadfrce_bg0scrollx_w }, /* SCROLL X */
-	{ 0x1c0002, 0x1c0003, shadfrce_bg0scrolly_w }, /* SCROLL Y */
-	{ 0x1c0004, 0x1c0005, shadfrce_bg1scrollx_w }, /* SCROLL X */
-	{ 0x1c0006, 0x1c0007, shadfrce_bg1scrolly_w }, /* SCROLL Y */
-	{ 0x1c0008, 0x1c0009, MWA16_NOP }, /* ?? */
-	{ 0x1c000a, 0x1c000b, shadfrce_flip_screen },
-	{ 0x1c000c, 0x1c000d, MWA16_NOP }, /* ?? */
-	{ 0x1d0000, 0x1d0001, MWA16_NOP }, /* ?? */
-	{ 0x1d0002, 0x1d0003, MWA16_NOP }, /* ?? */
-	{ 0x1d0006, 0x1d0007, MWA16_NOP }, /* ?? */
-	{ 0x1d0008, 0x1d0009, MWA16_NOP }, /* ?? */
-	{ 0x1d000c, 0x1d000d, shadfrce_sound_brt_w },	/* sound command + screen brightness */
-	{ 0x1d0010, 0x1d0011, MWA16_NOP }, /* ?? */
-	{ 0x1d0012, 0x1d0013, MWA16_NOP }, /* ?? */
-	{ 0x1d0014, 0x1d0015, MWA16_NOP }, /* ?? */
-	{ 0x1d0016, 0x1d0017, MWA16_NOP }, /* ?? */
-	{ 0x1f0000, 0x1fffff, MWA16_RAM },
-MEMORY_END
+//	AM_RANGE(0x1c0000, 0x1d000d) AM_WRITE(MWA16_RAM) AM_BASE(&shadfrce_videoregs)
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(shadfrce_bg0scrollx_w) /* SCROLL X */
+	AM_RANGE(0x1c0002, 0x1c0003) AM_WRITE(shadfrce_bg0scrolly_w) /* SCROLL Y */
+	AM_RANGE(0x1c0004, 0x1c0005) AM_WRITE(shadfrce_bg1scrollx_w) /* SCROLL X */
+	AM_RANGE(0x1c0006, 0x1c0007) AM_WRITE(shadfrce_bg1scrolly_w) /* SCROLL Y */
+	AM_RANGE(0x1c0008, 0x1c0009) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1c000a, 0x1c000b) AM_WRITE(shadfrce_flip_screen)
+	AM_RANGE(0x1c000c, 0x1c000d) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0000, 0x1d0001) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0002, 0x1d0003) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0006, 0x1d0007) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0008, 0x1d0009) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d000c, 0x1d000d) AM_WRITE(shadfrce_sound_brt_w)	/* sound command + screen brightness */
+	AM_RANGE(0x1d0010, 0x1d0011) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0012, 0x1d0013) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0014, 0x1d0015) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1d0016, 0x1d0017) AM_WRITE(MWA16_NOP) /* ?? */
+	AM_RANGE(0x1f0000, 0x1fffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /* and the sound cpu */
 
@@ -286,24 +286,24 @@ static WRITE_HANDLER( oki_bankswitch_w )
 	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc801, 0xc801, YM2151_status_port_0_r },
-	{ 0xd800, 0xd800, OKIM6295_status_0_r },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc801, 0xc801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc800, YM2151_register_port_0_w },
-	{ 0xc801, 0xc801, YM2151_data_port_0_w },
-	{ 0xd800, 0xd800, OKIM6295_data_0_w },
-	{ 0xe800, 0xe800, oki_bankswitch_w },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(oki_bankswitch_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 /* Input Ports */
@@ -563,12 +563,12 @@ static INTERRUPT_GEN( shadfrce_interrupt ) {
 
 static MACHINE_DRIVER_START( shadfrce )
 	MDRV_CPU_ADD(M68000, 28000000/2) /* ? Guess */
-	MDRV_CPU_MEMORY(shadfrce_readmem,shadfrce_writemem)
+	MDRV_CPU_PROGRAM_MAP(shadfrce_readmem,shadfrce_writemem)
 	MDRV_CPU_VBLANK_INT(shadfrce_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 
 	MDRV_FRAMES_PER_SECOND(60)

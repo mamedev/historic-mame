@@ -101,64 +101,64 @@ static WRITE_HANDLER( pacland_led_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x37ff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_BANK1 },
-	{ 0x6800, 0x68ff, namcos1_wavedata_r },		/* PSG device, shared RAM */
-	{ 0x6800, 0x6bff, sharedram1_r },
-	{ 0x7800, 0x7800, MRA_NOP },	/* ??? */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x6800, 0x68ff) AM_READ(namcos1_wavedata_r)		/* PSG device, shared RAM */
+	AM_RANGE(0x6800, 0x6bff) AM_READ(sharedram1_r)
+	AM_RANGE(0x7800, 0x7800) AM_READ(MRA8_NOP)	/* ??? */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, pacland_videoram_w, &videoram },
-	{ 0x1000, 0x1fff, pacland_videoram2_w, &pacland_videoram2 },
-	{ 0x2000, 0x37ff, MWA_RAM },
-	{ 0x2700, 0x27ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2f00, 0x2fff, MWA_RAM, &spriteram_2 },
-	{ 0x3700, 0x37ff, MWA_RAM, &spriteram_3 },
-	{ 0x3800, 0x3801, pacland_scroll0_w },
-	{ 0x3a00, 0x3a01, pacland_scroll1_w },
-	{ 0x3c00, 0x3c00, pacland_bankswitch_w },
-	{ 0x4000, 0x5fff, MWA_ROM },
-	{ 0x6800, 0x68ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
-	{ 0x6800, 0x6bff, sharedram1_w, &sharedram1 },
-	{ 0x7000, 0x7000, MWA_NOP },	/* ??? */
-	{ 0x7800, 0x7800, MWA_NOP },	/* ??? */
-	{ 0x8000, 0x8800, pacland_halt_mcu_w },
-	{ 0x9000, 0x9800, pacland_flipscreen_w },
-	//{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(pacland_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(pacland_videoram2_w) AM_BASE(&pacland_videoram2)
+	AM_RANGE(0x2000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2700, 0x27ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2f00, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x3700, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)
+	AM_RANGE(0x3800, 0x3801) AM_WRITE(pacland_scroll0_w)
+	AM_RANGE(0x3a00, 0x3a01) AM_WRITE(pacland_scroll1_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(pacland_bankswitch_w)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6800, 0x68ff) AM_WRITE(namcos1_wavedata_w) /* PSG device, shared RAM */
+	AM_RANGE(0x6800, 0x6bff) AM_WRITE(sharedram1_w) AM_BASE(&sharedram1)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(MWA8_NOP)	/* ??? */
+	AM_RANGE(0x8000, 0x8800) AM_WRITE(pacland_halt_mcu_w)
+	AM_RANGE(0x9000, 0x9800) AM_WRITE(pacland_flipscreen_w)
+	//AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, MRA_RAM }, /* PSG device */
-	{ 0x1000, 0x13ff, sharedram1_r },
-	{ 0x8000, 0x9fff, MRA_ROM },
-	{ 0xc000, 0xc800, MRA_RAM },
-	{ 0xd000, 0xd000, dsw0_r },
-	{ 0xd000, 0xd001, dsw1_r },
-	{ 0xd000, 0xd002, input_port_2_r },
-	{ 0xd000, 0xd003, input_port_3_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_READ(namcos1_wavedata_r)			/* PSG device, shared RAM */
+	AM_RANGE(0x1100, 0x113f) AM_READ(MRA8_RAM) /* PSG device */
+	AM_RANGE(0x1000, 0x13ff) AM_READ(sharedram1_r)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc800) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(dsw0_r)
+	AM_RANGE(0xd000, 0xd001) AM_READ(dsw1_r)
+	AM_RANGE(0xd000, 0xd002) AM_READ(input_port_2_r)
+	AM_RANGE(0xd000, 0xd003) AM_READ(input_port_3_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_w },
-	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },		/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs }, /* PSG device */
-	{ 0x1000, 0x13ff, sharedram1_w },
-	{ 0x2000, 0x2000, MWA_NOP }, // ???? (w)
-	{ 0x4000, 0x4000, MWA_NOP }, // ???? (w)
-	{ 0x6000, 0x6000, MWA_NOP }, // ???? (w)
-	{ 0x8000, 0x9fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata)		/* PSG device, shared RAM */
+	AM_RANGE(0x1100, 0x113f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs) /* PSG device */
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(sharedram1_w)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP) // ???? (w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_NOP) // ???? (w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(MWA8_NOP) // ???? (w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( readFF )
@@ -166,15 +166,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static PORT_READ_START( mcu_readport )
-	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
-	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-PORT_END
+static ADDRESS_MAP_START( mcu_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_READ(input_port_4_r)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_READ(readFF)	/* leds won't work otherwise */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcu_writeport )
-	{ HD63701_PORT1, HD63701_PORT1, pacland_coin_w },
-	{ HD63701_PORT2, HD63701_PORT2, pacland_led_w },
-PORT_END
+static ADDRESS_MAP_START( mcu_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_WRITE(pacland_coin_w)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_WRITE(pacland_led_w)
+ADDRESS_MAP_END
 
 
 
@@ -308,13 +308,13 @@ static MACHINE_DRIVER_START( pacland )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1500000)	/* 1.500 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(HD63701, 6000000/3.9)	/* or compatible 6808 with extra instructions */
 //			6000000/4,		/* ??? */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
-	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+	MDRV_CPU_IO_MAP(mcu_readport,mcu_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

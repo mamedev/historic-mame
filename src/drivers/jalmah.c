@@ -79,16 +79,16 @@ VIDEO_UPDATE(jalmah)
 INPUT_PORTS_START( jalmah )
 INPUT_PORTS_END
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080004, 0x080005, daireika_mcu_r },
-	{ 0x0f0000, 0x0fffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080004, 0x080005) AM_READ(daireika_mcu_r)
+	AM_RANGE(0x0f0000, 0x0fffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0f0000, 0x0fffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0f0000, 0x0fffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 static struct GfxLayout charlayout =
 {
@@ -125,7 +125,7 @@ static struct GfxDecodeInfo jalmah_gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( jalmah )
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 //	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 

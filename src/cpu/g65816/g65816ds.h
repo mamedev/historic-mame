@@ -26,7 +26,7 @@ unsigned int g65816_read_8_disassembler(unsigned int address);
 #include "driver.h"
 #include "state.h"
 #include "mamedbg.h"
-#define g65816_read_8_disassembler(addr)				cpu_readmem24(addr)
+#define g65816_read_8_disassembler(addr)				program_read_byte_8(addr)
 
 
 #endif /* HEADER__G65816DS */

@@ -34,7 +34,7 @@
 static UINT8 *slapstic_source;
 static UINT8 *slapstic_base;
 static UINT8 current_bank;
-static UINT8 is_esb;
+UINT8 starwars_is_esb;
 
 
 
@@ -47,7 +47,7 @@ static UINT8 is_esb;
 MACHINE_INIT( starwars )
 {
 	/* ESB-specific */
-	if (is_esb)
+	if (starwars_is_esb)
 	{
 		/* reset the slapstic */
 		slapstic_reset();
@@ -155,43 +155,43 @@ OPBASE_HANDLER( esb_setopbase )
  *
  *************************************/
 
-static MEMORY_READ_START( main_readmem )
-	{ 0x0000, 0x2fff, MRA_RAM },			/* vector_ram */
-	{ 0x3000, 0x3fff, MRA_ROM },			/* vector_rom */
-	{ 0x4300, 0x431f, input_port_0_r },		/* Memory mapped input port 0 */
-	{ 0x4320, 0x433f, starwars_input_1_r },	/* Memory mapped input port 1 */
-	{ 0x4340, 0x435f, input_port_2_r },		/* DIP switches bank 0 */
-	{ 0x4360, 0x437f, input_port_3_r },		/* DIP switches bank 1 */
-	{ 0x4380, 0x439f, starwars_adc_r },		/* a-d control result */
-	{ 0x4400, 0x4400, starwars_main_read_r },
-	{ 0x4401, 0x4401, starwars_main_ready_flag_r },
-	{ 0x4500, 0x45ff, MRA_RAM },			/* nov_ram */
-	{ 0x4700, 0x4700, swmathbx_reh_r },
-	{ 0x4701, 0x4701, swmathbx_rel_r },
-	{ 0x4703, 0x4703, swmathbx_prng_r },	/* pseudo random number generator */
-	{ 0x4800, 0x5fff, MRA_RAM },			/* CPU and Math RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },			/* rest of main_rom */
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_RAM)			/* vector_ram */
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_ROM)			/* vector_rom */
+	AM_RANGE(0x4300, 0x431f) AM_READ(input_port_0_r)		/* Memory mapped input port 0 */
+	AM_RANGE(0x4320, 0x433f) AM_READ(starwars_input_1_r)	/* Memory mapped input port 1 */
+	AM_RANGE(0x4340, 0x435f) AM_READ(input_port_2_r)		/* DIP switches bank 0 */
+	AM_RANGE(0x4360, 0x437f) AM_READ(input_port_3_r)		/* DIP switches bank 1 */
+	AM_RANGE(0x4380, 0x439f) AM_READ(starwars_adc_r)		/* a-d control result */
+	AM_RANGE(0x4400, 0x4400) AM_READ(starwars_main_read_r)
+	AM_RANGE(0x4401, 0x4401) AM_READ(starwars_main_ready_flag_r)
+	AM_RANGE(0x4500, 0x45ff) AM_READ(MRA8_RAM)			/* nov_ram */
+	AM_RANGE(0x4700, 0x4700) AM_READ(swmathbx_reh_r)
+	AM_RANGE(0x4701, 0x4701) AM_READ(swmathbx_rel_r)
+	AM_RANGE(0x4703, 0x4703) AM_READ(swmathbx_prng_r)	/* pseudo random number generator */
+	AM_RANGE(0x4800, 0x5fff) AM_READ(MRA8_RAM)			/* CPU and Math RAM */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* rest of main_rom */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( main_writemem )
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x3000, 0x3fff, MWA_ROM },								/* vector_rom */
-	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x4600, 0x461f, avgdvg_go_w },
-	{ 0x4620, 0x463f, avgdvg_reset_w },
-	{ 0x4640, 0x465f, watchdog_reset_w },
-	{ 0x4660, 0x467f, irq_ack_w },
-	{ 0x4680, 0x4687, starwars_out_w },
-	{ 0x46a0, 0x46bf, MWA_NOP },								/* nstore */
-	{ 0x46c0, 0x46c2, starwars_adc_select_w },
-	{ 0x46e0, 0x46e0, starwars_soundrst_w },
-	{ 0x4700, 0x4707, swmathbx_w },
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)								/* vector_rom */
+	AM_RANGE(0x4400, 0x4400) AM_WRITE(starwars_main_wr_w)
+	AM_RANGE(0x4500, 0x45ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x4600, 0x461f) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x4620, 0x463f) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x4640, 0x465f) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x4660, 0x467f) AM_WRITE(irq_ack_w)
+	AM_RANGE(0x4680, 0x4687) AM_WRITE(starwars_out_w)
+	AM_RANGE(0x46a0, 0x46bf) AM_WRITE(MWA8_NOP)								/* nstore */
+	AM_RANGE(0x46c0, 0x46c2) AM_WRITE(starwars_adc_select_w)
+	AM_RANGE(0x46e0, 0x46e0) AM_WRITE(starwars_soundrst_w)
+	AM_RANGE(0x4700, 0x4707) AM_WRITE(swmathbx_w)
+	AM_RANGE(0x4800, 0x5fff) AM_WRITE(MWA8_RAM)		/* CPU and Math RAM */
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)		/* main_rom */
+ADDRESS_MAP_END
 
 
 
@@ -201,26 +201,26 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0800, 0x0fff, starwars_sin_r },		/* SIN Read */
-	{ 0x1000, 0x107f, MRA_RAM },	/* 6532 RAM */
-	{ 0x1080, 0x109f, starwars_m6532_r },
-	{ 0x2000, 0x27ff, MRA_RAM },	/* program RAM */
-	{ 0x4000, 0xbfff, MRA_ROM },	/* sound roms */
-	{ 0xc000, 0xffff, MRA_ROM },	/* load last rom twice */
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0800, 0x0fff) AM_READ(starwars_sin_r)		/* SIN Read */
+	AM_RANGE(0x1000, 0x107f) AM_READ(MRA8_RAM)	/* 6532 RAM */
+	AM_RANGE(0x1080, 0x109f) AM_READ(starwars_m6532_r)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)	/* program RAM */
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_ROM)	/* sound roms */
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)	/* load last rom twice */
 									/* for proper int vec operation */
-MEMORY_END
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, starwars_sout_w },
-	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
-	{ 0x1080, 0x109f, starwars_m6532_w },
-	{ 0x1800, 0x183f, quad_pokey_w },
-	{ 0x2000, 0x27ff, MWA_RAM }, /* program RAM */
-	{ 0x4000, 0xbfff, MWA_ROM }, /* sound rom */
-	{ 0xc000, 0xffff, MWA_ROM }, /* sound rom again, for intvecs */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(starwars_sout_w)
+	AM_RANGE(0x1000, 0x107f) AM_WRITE(MWA8_RAM) /* 6532 ram */
+	AM_RANGE(0x1080, 0x109f) AM_WRITE(starwars_m6532_w)
+	AM_RANGE(0x1800, 0x183f) AM_WRITE(quad_pokey_w)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM) /* program RAM */
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE(MWA8_ROM) /* sound rom */
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM) /* sound rom again, for intvecs */
+ADDRESS_MAP_END
 
 
 
@@ -429,12 +429,12 @@ static MACHINE_DRIVER_START( starwars )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,1500000)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,6)		/* 183Hz ? */
 
 	MDRV_CPU_ADD(M6809,1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_MACHINE_INIT(starwars)
@@ -557,7 +557,7 @@ ROM_END
 static DRIVER_INIT( starwars )
 {
 	/* prepare the mathbox */
-	is_esb = 0;
+	starwars_is_esb = 0;
 	swmathbox_init();
 }
 
@@ -577,10 +577,10 @@ static DRIVER_INIT( esb )
 	install_mem_write_handler(0, 0x8000, 0x9fff, esb_slapstic_w);
 
 	/* install additional banking */
-	install_mem_read_handler(0, 0xa000, 0xffff, MRA_BANK2);
+	install_mem_read_handler(0, 0xa000, 0xffff, MRA8_BANK2);
 
 	/* prepare the mathbox */
-	is_esb = 1;
+	starwars_is_esb = 1;
 	swmathbox_init();
 }
 

@@ -111,78 +111,78 @@ extern data16_t *bloodbro_scroll;
 
 /***************************************************************************/
 
-static MEMORY_READ16_START( readmem_cpu )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x080000, 0x08afff, MRA16_RAM },
-	{ 0x08b000, 0x08bfff, MRA16_RAM },
-	{ 0x08c000, 0x08c3ff, MRA16_RAM },
-	{ 0x08c400, 0x08cfff, MRA16_RAM },
-	{ 0x08d000, 0x08d3ff, MRA16_RAM },
-	{ 0x08d400, 0x08d7ff, MRA16_RAM },
-	{ 0x08d800, 0x08dfff, MRA16_RAM },
-	{ 0x08e000, 0x08e7ff, MRA16_RAM },
-	{ 0x08e800, 0x08f7ff, MRA16_RAM },
-	{ 0x08f800, 0x08ffff, MRA16_RAM },
-	{ 0x0a0000, 0x0a000d, seibu_main_word_r },
-	{ 0x0c0000, 0x0c007f, MRA16_RAM },
-	{ 0x0e0000, 0x0e0001, input_port_1_word_r },
-	{ 0x0e0002, 0x0e0003, input_port_2_word_r },
-	{ 0x0e0004, 0x0e0005, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08afff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08b000, 0x08bfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08c400, 0x08cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d000, 0x08d3ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d400, 0x08d7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d800, 0x08dfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08e000, 0x08e7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08e800, 0x08f7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08f800, 0x08ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a000d) AM_READ(seibu_main_word_r)
+	AM_RANGE(0x0c0000, 0x0c007f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0e0000, 0x0e0001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0e0002, 0x0e0003) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0e0004, 0x0e0005) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_cpu )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x08afff, MWA16_RAM },
-	{ 0x08b000, 0x08bfff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x08c000, 0x08c3ff, bloodbro_bgvideoram_w, &bloodbro_bgvideoram },
-	{ 0x08c400, 0x08cfff, MWA16_RAM },
-	{ 0x08d000, 0x08d3ff, bloodbro_fgvideoram_w, &bloodbro_fgvideoram },
-	{ 0x08d400, 0x08d7ff, MWA16_RAM },
-	{ 0x08d800, 0x08dfff, bloodbro_txvideoram_w, &bloodbro_txvideoram },
-	{ 0x08e000, 0x08e7ff, MWA16_RAM },
-	{ 0x08e800, 0x08f7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x08f800, 0x08ffff, MWA16_RAM },
-	{ 0x0a0000, 0x0a000d, seibu_main_word_w },
-	{ 0x0c0000, 0x0c007f, MWA16_RAM, &bloodbro_scroll },
-	{ 0x0c0080, 0x0c0081, MWA16_NOP }, /* IRQ Ack VBL? */
-	{ 0x0c00c0, 0x0c00c1, MWA16_NOP }, /* watchdog? */
-//	{ 0x0c0100, 0x0c0100, MWA16_NOP }, /* ?? Written 1 time */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x08afff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08b000, 0x08bfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
+	AM_RANGE(0x08c400, 0x08cfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08d000, 0x08d3ff) AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
+	AM_RANGE(0x08d400, 0x08d7ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08d800, 0x08dfff) AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
+	AM_RANGE(0x08e000, 0x08e7ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08e800, 0x08f7ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x08f800, 0x08ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a000d) AM_WRITE(seibu_main_word_w)
+	AM_RANGE(0x0c0000, 0x0c007f) AM_WRITE(MWA16_RAM) AM_BASE(&bloodbro_scroll)
+	AM_RANGE(0x0c0080, 0x0c0081) AM_WRITE(MWA16_NOP) /* IRQ Ack VBL? */
+	AM_RANGE(0x0c00c0, 0x0c00c1) AM_WRITE(MWA16_NOP) /* watchdog? */
+//	AM_RANGE(0x0c0100, 0x0c0100) AM_WRITE(MWA16_NOP) /* ?? Written 1 time */
+ADDRESS_MAP_END
 
 /**** West Story Memory Map ********************************************/
 
-static MEMORY_READ16_START( weststry_readmem_cpu )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x080000, 0x08afff, MRA16_RAM },
-	{ 0x08b000, 0x08bfff, MRA16_RAM },
-	{ 0x08c000, 0x08c3ff, MRA16_RAM },
-	{ 0x08c400, 0x08cfff, MRA16_RAM },
-	{ 0x08d000, 0x08d3ff, MRA16_RAM },
-	{ 0x08d400, 0x08dfff, MRA16_RAM },
-	{ 0x08d800, 0x08dfff, MRA16_RAM },
-	{ 0x08e000, 0x08ffff, MRA16_RAM },
-	{ 0x0c1000, 0x0c1001, input_port_0_word_r },
-	{ 0x0c1002, 0x0c1003, input_port_1_word_r },
-	{ 0x0c1004, 0x0c1005, input_port_2_word_r },
-	{ 0x0c1000, 0x0c17ff, MRA16_RAM },
-	{ 0x128000, 0x1287ff, MRA16_RAM },
-	{ 0x120000, 0x128fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( weststry_readmem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08afff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08b000, 0x08bfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08c400, 0x08cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d000, 0x08d3ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d400, 0x08dfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08d800, 0x08dfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x08e000, 0x08ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c1000, 0x0c1001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0c1002, 0x0c1003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c1004, 0x0c1005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0c1000, 0x0c17ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x128000, 0x1287ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x128fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( weststry_writemem_cpu )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x08afff, MWA16_RAM },
-	{ 0x08b000, 0x08bfff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x08c000, 0x08c3ff, bloodbro_bgvideoram_w, &bloodbro_bgvideoram },
-	{ 0x08c400, 0x08cfff, MWA16_RAM },
-	{ 0x08d000, 0x08d3ff, bloodbro_fgvideoram_w, &bloodbro_fgvideoram },
-	{ 0x08d400, 0x08d7ff, MWA16_RAM },
-	{ 0x08d800, 0x08dfff, bloodbro_txvideoram_w, &bloodbro_txvideoram },
-	{ 0x08e000, 0x08ffff, MWA16_RAM },
-	{ 0x0c1000, 0x0c17ff, MWA16_RAM },
-	{ 0x128000, 0x1287ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x120000, 0x128fff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( weststry_writemem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x08afff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08b000, 0x08bfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
+	AM_RANGE(0x08c400, 0x08cfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08d000, 0x08d3ff) AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
+	AM_RANGE(0x08d400, 0x08d7ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x08d800, 0x08dfff) AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
+	AM_RANGE(0x08e000, 0x08ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x0c1000, 0x0c17ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x128000, 0x1287ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x120000, 0x128fff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -581,7 +581,7 @@ static MACHINE_DRIVER_START( bloodbro )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu,writemem_cpu)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu,writemem_cpu)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
@@ -608,7 +608,7 @@ static MACHINE_DRIVER_START( skysmash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu,writemem_cpu)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu,writemem_cpu)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
@@ -635,7 +635,7 @@ static MACHINE_DRIVER_START( weststry )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_MEMORY(weststry_readmem_cpu,weststry_writemem_cpu)
+	MDRV_CPU_PROGRAM_MAP(weststry_readmem_cpu,weststry_writemem_cpu)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)

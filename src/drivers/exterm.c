@@ -259,46 +259,46 @@ READ_HANDLER( exterm_sound_ym2151_speedup_r )
  *
  *************************************/
 
-static MEMORY_READ16_START( master_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA16_RAM },
-	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
-	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_r },
-	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_1_r },
-	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_2_word_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), MRA16_RAM },
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA16_RAM },
-	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), MRA16_BANK1 },
-	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), MRA16_BANK2 },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( master_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x00c00000, 0x00ffffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x01200000, 0x012fffff) AM_READ(exterm_host_data_r)
+	AM_RANGE(0x01400000, 0x0140000f) AM_READ(exterm_input_port_0_r)
+	AM_RANGE(0x01440000, 0x0144000f) AM_READ(exterm_input_port_1_r)
+	AM_RANGE(0x01480000, 0x0148000f) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x01800000, 0x01807fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x02800000, 0x02807fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x03000000, 0x03ffffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0x3f000000, 0x3fffffff) AM_READ(MRA16_BANK2)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( master_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_RAM, &exterm_master_videoram },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA16_RAM },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), exterm_host_data_w },
-	{ TOBYTE(0x01500000), TOBYTE(0x0150000f), exterm_output_port_0_w },
-	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_word_w },
-	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset16_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size }, /* EEPROM */
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA16_ROM, &exterm_code_rom, &code_rom_size },
-MEMORY_END
+static ADDRESS_MAP_START( master_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&exterm_master_videoram)
+	AM_RANGE(0x00c00000, 0x00ffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x01000000, 0x013fffff) AM_WRITE(exterm_host_data_w)
+	AM_RANGE(0x01500000, 0x0150000f) AM_WRITE(exterm_output_port_0_w)
+	AM_RANGE(0x01580000, 0x0158000f) AM_WRITE(gottlieb_sh_word_w)
+	AM_RANGE(0x015c0000, 0x015c000f) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x01800000, 0x01807fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x02800000, 0x02807fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEPROM */
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&exterm_code_rom) AM_SIZE(&code_rom_size)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( slave_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( slave_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff800000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( slave_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_RAM, &exterm_slave_videoram },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( slave_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&exterm_slave_videoram)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -308,32 +308,32 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_dac_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x4000, 0x4000, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_dac_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_dac_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x8000, 0x8000, exterm_dac_vol_w },
-	{ 0x8001, 0x8001, exterm_dac_data_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_dac_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(exterm_dac_vol_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(exterm_dac_data_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_ym2151_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x6800, 0x6800, soundlatch_r },
-	{ 0x7000, 0x7000, gottlieb_cause_dac_nmi_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_ym2151_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_READ(soundlatch_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(gottlieb_cause_dac_nmi_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_ym2151_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x4000, 0x4000, exterm_ym2151_w },
-	{ 0x6000, 0x6000, gottlieb_nmi_rate_w },
-	{ 0xa000, 0xa000, exterm_sound_control_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_ym2151_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(exterm_ym2151_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(gottlieb_nmi_rate_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(exterm_sound_control_w)
+ADDRESS_MAP_END
 
 
 
@@ -465,19 +465,19 @@ static MACHINE_DRIVER_START( exterm )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010,40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(master_config)
-	MDRV_CPU_MEMORY(master_readmem,master_writemem)
+	MDRV_CPU_PROGRAM_MAP(master_readmem,master_writemem)
 
 	MDRV_CPU_ADD(TMS34010,40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(slave_config)
-	MDRV_CPU_MEMORY(slave_readmem,slave_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_readmem,slave_writemem)
 
 	MDRV_CPU_ADD(M6502, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_dac_readmem,sound_dac_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_dac_readmem,sound_dac_writemem)
 
 	MDRV_CPU_ADD(M6502, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_ym2151_readmem,sound_ym2151_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_ym2151_readmem,sound_ym2151_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (263 - 240)) / (60 * 263))
@@ -557,8 +557,8 @@ DRIVER_INIT( exterm )
 	memcpy(exterm_code_rom, memory_region(REGION_USER1), code_rom_size);
 
 	/* install speedups */
-	exterm_master_speedup = install_mem_read16_handler(0, TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r);
-	exterm_slave_speedup = install_mem_write16_handler(1, TOBYTE(0xfffffb90), TOBYTE(0xfffffb9f), exterm_slave_speedup_w);
+	exterm_master_speedup = install_mem_read16_handler(0, 0x00c800e0, 0x00c800ef, exterm_master_speedup_r);
+	exterm_slave_speedup = install_mem_write16_handler(1, 0xfffffb90, 0xfffffb9f, exterm_slave_speedup_w);
 	install_mem_read_handler(2, 0x0007, 0x0007, exterm_sound_dac_speedup_r);
 	install_mem_read_handler(3, 0x02b6, 0x02b6, exterm_sound_ym2151_speedup_r);
 

@@ -26,7 +26,7 @@ unsigned int spc700_read_8_disassembler(unsigned int address);
 #include "driver.h"
 #include "state.h"
 #include "mamedbg.h"
-#define spc700_read_8_disassembler(addr)				cpu_readmem16(addr)
+#define spc700_read_8_disassembler(addr)				program_read_byte_8(addr)
 
 
 #endif /* HEADER__SPC700DS */

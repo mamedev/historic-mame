@@ -236,34 +236,34 @@ static WRITE_HANDLER( starshp1_zeropage_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x01ff, starshp1_zeropage_r },
-	{ 0x2c00, 0x3fff, MRA_ROM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xb000, 0xb000, starshp1_port_1_r },
-	{ 0xc400, 0xc400, starshp1_port_2_r },
-	{ 0xd800, 0xd800, starshp1_rng_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(starshp1_zeropage_r)
+	AM_RANGE(0x2c00, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(starshp1_port_1_r)
+	AM_RANGE(0xc400, 0xc400) AM_READ(starshp1_port_2_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(starshp1_rng_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x01ff, starshp1_zeropage_w },
-	{ 0x2c00, 0x3fff, MWA_ROM },
-	{ 0xc300, 0xc3ff, starshp1_sspic_w }, /* spaceship picture */
-	{ 0xc400, 0xc4ff, starshp1_ssadd_w }, /* spaceship address */
-	{ 0xc800, 0xc9ff, starshp1_playfield_w, &starshp1_playfield_ram },
-	{ 0xcc00, 0xcc0f, MWA_RAM, &starshp1_hpos_ram },
-	{ 0xd000, 0xd00f, MWA_RAM, &starshp1_vpos_ram },
-	{ 0xd400, 0xd40f, MWA_RAM, &starshp1_obj_ram },
-	{ 0xd800, 0xd80f, starshp1_collision_reset_w },
-	{ 0xdc00, 0xdc0f, starshp1_misc_w },
-	{ 0xdd00, 0xdd0f, starshp1_analog_in_w },
-	{ 0xde00, 0xde0f, starshp1_audio_w },
-	{ 0xdf00, 0xdf0f, starshp1_analog_out_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(starshp1_zeropage_w)
+	AM_RANGE(0x2c00, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc300, 0xc3ff) AM_WRITE(starshp1_sspic_w) /* spaceship picture */
+	AM_RANGE(0xc400, 0xc4ff) AM_WRITE(starshp1_ssadd_w) /* spaceship address */
+	AM_RANGE(0xc800, 0xc9ff) AM_WRITE(starshp1_playfield_w) AM_BASE(&starshp1_playfield_ram)
+	AM_RANGE(0xcc00, 0xcc0f) AM_WRITE(MWA8_RAM) AM_BASE(&starshp1_hpos_ram)
+	AM_RANGE(0xd000, 0xd00f) AM_WRITE(MWA8_RAM) AM_BASE(&starshp1_vpos_ram)
+	AM_RANGE(0xd400, 0xd40f) AM_WRITE(MWA8_RAM) AM_BASE(&starshp1_obj_ram)
+	AM_RANGE(0xd800, 0xd80f) AM_WRITE(starshp1_collision_reset_w)
+	AM_RANGE(0xdc00, 0xdc0f) AM_WRITE(starshp1_misc_w)
+	AM_RANGE(0xdd00, 0xdd0f) AM_WRITE(starshp1_analog_in_w)
+	AM_RANGE(0xde00, 0xde0f) AM_WRITE(starshp1_audio_w)
+	AM_RANGE(0xdf00, 0xdf0f) AM_WRITE(starshp1_analog_out_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( starshp1 )
@@ -379,7 +379,7 @@ static MACHINE_DRIVER_START( starshp1 )
 	/* basic machine hardware */
 
 	MDRV_CPU_ADD(M6502, 750000)
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(starshp1_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

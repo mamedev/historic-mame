@@ -182,32 +182,32 @@ WRITE_HANDLER( blockade_env_off_w )
     return;
 }
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0x07ff, MRA_ROM },
-    { 0x4000, 0x47ff, MRA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, MRA_RAM },
-    { 0xff00, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_ROM)  /* same image */
+    AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+    AM_RANGE(0xff00, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x07ff, MWA_ROM },
-    { 0x4000, 0x47ff, MWA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, blockade_videoram_w, &videoram },
-    { 0xff00, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_ROM)  /* same image */
+    AM_RANGE(0xe000, 0xe3ff) AM_WRITE(blockade_videoram_w) AM_BASE(&videoram)
+    AM_RANGE(0xff00, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-    { 0x01, 0x01, blockade_input_port_0_r },
-    { 0x02, 0x02, input_port_1_r },
-    { 0x04, 0x04, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0x01, 0x01) AM_READ(blockade_input_port_0_r)
+    AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+    AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-    { 0x01, 0x01, blockade_coin_latch_w },
-    { 0x02, 0x02, blockade_sound_freq_w },
-    { 0x04, 0x04, blockade_env_on_w },
-    { 0x08, 0x08, blockade_env_off_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0x01, 0x01) AM_WRITE(blockade_coin_latch_w)
+    AM_RANGE(0x02, 0x02) AM_WRITE(blockade_sound_freq_w)
+    AM_RANGE(0x04, 0x04) AM_WRITE(blockade_env_on_w)
+    AM_RANGE(0x08, 0x08) AM_WRITE(blockade_env_off_w)
+ADDRESS_MAP_END
 
 /* These are not dip switches, they are mapped to */
 /* connectors on the board.  Different games had  */
@@ -463,8 +463,8 @@ static MACHINE_DRIVER_START( blockade )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 2079000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

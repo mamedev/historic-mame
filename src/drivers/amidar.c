@@ -9,34 +9,34 @@
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x98ff, MRA_RAM },
-	{ 0xa800, 0xa800, watchdog_reset_r },
-	{ 0xb000, 0xb03f, amidar_ppi8255_0_r },
-	{ 0xb800, 0xb83f, amidar_ppi8255_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x98ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xb000, 0xb03f) AM_READ(amidar_ppi8255_0_r)
+	AM_RANGE(0xb800, 0xb83f) AM_READ(amidar_ppi8255_1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x9800, 0x983f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x9860, 0x98ff, MWA_RAM },
-	{ 0xa000, 0xa000, scramble_background_red_w },
-	{ 0xa008, 0xa008, galaxian_nmi_enable_w },
-	{ 0xa010, 0xa010, galaxian_flip_screen_x_w },
-	{ 0xa018, 0xa018, galaxian_flip_screen_y_w },
-	{ 0xa020, 0xa020, scramble_background_green_w },
-	{ 0xa028, 0xa028, scramble_background_blue_w },
-	{ 0xa030, 0xa030, galaxian_coin_counter_0_w },
-	{ 0xa038, 0xa038, galaxian_coin_counter_1_w },
-	{ 0xb000, 0xb03f, amidar_ppi8255_0_w },
-	{ 0xb800, 0xb83f, amidar_ppi8255_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x9840, 0x985f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x9860, 0x98ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(scramble_background_red_w)
+	AM_RANGE(0xa008, 0xa008) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0xa010, 0xa010) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0xa018, 0xa018) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0xa020, 0xa020) AM_WRITE(scramble_background_green_w)
+	AM_RANGE(0xa028, 0xa028) AM_WRITE(scramble_background_blue_w)
+	AM_RANGE(0xa030, 0xa030) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0xa038, 0xa038) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0xb000, 0xb03f) AM_WRITE(amidar_ppi8255_0_w)
+	AM_RANGE(0xb800, 0xb83f) AM_WRITE(amidar_ppi8255_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -381,12 +381,12 @@ static MACHINE_DRIVER_START( amidar )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galaxian_base)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
 	MDRV_MACHINE_INIT(scramble)
 

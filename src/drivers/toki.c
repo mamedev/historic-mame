@@ -87,84 +87,84 @@ static WRITE_HANDLER( toki_adpcm_data_w )
 
 /*****************************************************************************/
 
-static MEMORY_READ16_START( toki_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x060000, 0x06d7ff, MRA16_RAM },
-	{ 0x06d800, 0x06dfff, MRA16_RAM },
-	{ 0x06e000, 0x06e7ff, MRA16_RAM },
-	{ 0x06e800, 0x06efff, MRA16_RAM },
-	{ 0x06f000, 0x06f7ff, MRA16_RAM },
-	{ 0x06f800, 0x06ffff, MRA16_RAM },
-	{ 0x080000, 0x08000d, seibu_main_word_r },
-	{ 0x0c0000, 0x0c0001, input_port_1_word_r },
-	{ 0x0c0002, 0x0c0003, input_port_2_word_r },
-	{ 0x0c0004, 0x0c0005, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( toki_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x06d7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06d800, 0x06dfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06e000, 0x06e7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06e800, 0x06efff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06f000, 0x06f7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06f800, 0x06ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x08000d) AM_READ(seibu_main_word_r)
+	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( toki_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x060000, 0x06d7ff, MWA16_RAM },
-	{ 0x06d800, 0x06dfff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x06e000, 0x06e7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16 },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16 },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &videoram16 },
-	{ 0x080000, 0x08000d, seibu_main_word_w },
-	{ 0x0a0000, 0x0a005f, toki_control_w, &toki_scrollram16 },
-MEMORY_END
+static ADDRESS_MAP_START( toki_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x06d7ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06d800, 0x06dfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x06e000, 0x06e7ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x06e800, 0x06efff) AM_WRITE(toki_background1_videoram16_w) AM_BASE(&toki_background1_videoram16)
+	AM_RANGE(0x06f000, 0x06f7ff) AM_WRITE(toki_background2_videoram16_w) AM_BASE(&toki_background2_videoram16)
+	AM_RANGE(0x06f800, 0x06ffff) AM_WRITE(toki_foreground_videoram16_w) AM_BASE(&videoram16)
+	AM_RANGE(0x080000, 0x08000d) AM_WRITE(seibu_main_word_w)
+	AM_RANGE(0x0a0000, 0x0a005f) AM_WRITE(toki_control_w) AM_BASE(&toki_scrollram16)
+ADDRESS_MAP_END
 
 /* In the bootleg, sound and sprites are remapped to 0x70000 */
-static MEMORY_READ16_START( tokib_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x060000, 0x06dfff, MRA16_RAM },
-	{ 0x06e000, 0x06e7ff, MRA16_RAM },
-	{ 0x06e800, 0x06efff, MRA16_RAM },
-	{ 0x06f000, 0x06f7ff, MRA16_RAM },
-	{ 0x06f800, 0x06ffff, MRA16_RAM },
-	{ 0x072000, 0x072001, watchdog_reset16_r },   /* probably */
-	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
-	{ 0x0c0002, 0x0c0003, input_port_1_word_r },
-	{ 0x0c0004, 0x0c0005, input_port_2_word_r },
-	{ 0x0c000e, 0x0c000f, pip16_r },  /* sound related, if we return 0 the code writes */
+static ADDRESS_MAP_START( tokib_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x06dfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06e000, 0x06e7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06e800, 0x06efff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06f000, 0x06f7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x06f800, 0x06ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x072000, 0x072001) AM_READ(watchdog_reset16_r)   /* probably */
+	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0c000e, 0x0c000f) AM_READ(pip16_r)  /* sound related, if we return 0 the code writes */
 				/* the sound command quickly followed by 0 and the */
 				/* sound CPU often misses the command. */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( tokib_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x060000, 0x06dfff, MWA16_RAM },
-	{ 0x06e000, 0x06e7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16 },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16 },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &videoram16 },
-	{ 0x071000, 0x071001, MWA16_NOP },	/* sprite related? seems another scroll register */
+static ADDRESS_MAP_START( tokib_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x06dfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x06e000, 0x06e7ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x06e800, 0x06efff) AM_WRITE(toki_background1_videoram16_w) AM_BASE(&toki_background1_videoram16)
+	AM_RANGE(0x06f000, 0x06f7ff) AM_WRITE(toki_background2_videoram16_w) AM_BASE(&toki_background2_videoram16)
+	AM_RANGE(0x06f800, 0x06ffff) AM_WRITE(toki_foreground_videoram16_w) AM_BASE(&videoram16)
+	AM_RANGE(0x071000, 0x071001) AM_WRITE(MWA16_NOP)	/* sprite related? seems another scroll register */
 				/* gets written the same value as 75000a (bg2 scrollx) */
-	{ 0x071804, 0x071807, MWA16_NOP },	/* sprite related, always 01be0100 */
-	{ 0x07180e, 0x071e45, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x075000, 0x075001, tokib_soundcommand16_w },
-	{ 0x075004, 0x07500b, MWA16_RAM, &toki_scrollram16 },
-MEMORY_END
+	AM_RANGE(0x071804, 0x071807) AM_WRITE(MWA16_NOP)	/* sprite related, always 01be0100 */
+	AM_RANGE(0x07180e, 0x071e45) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x075000, 0x075001) AM_WRITE(tokib_soundcommand16_w)
+	AM_RANGE(0x075004, 0x07500b) AM_WRITE(MWA16_RAM) AM_BASE(&toki_scrollram16)
+ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static MEMORY_READ_START( tokib_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xec00, 0xec00, YM3812_status_port_0_r },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( tokib_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xec00, 0xec00) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tokib_sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xe000, toki_adpcm_control_w },	/* MSM5205 + ROM bank */
-	{ 0xe400, 0xe400, toki_adpcm_data_w },
-	{ 0xec00, 0xec00, YM3812_control_port_0_w },
-	{ 0xec01, 0xec01, YM3812_write_port_0_w },
-	{ 0xec08, 0xec08, YM3812_control_port_0_w },	/* mirror address, it seems */
-	{ 0xec09, 0xec09, YM3812_write_port_0_w },	/* mirror address, it seems */
-	{ 0xf000, 0xf7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tokib_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(toki_adpcm_control_w)	/* MSM5205 + ROM bank */
+	AM_RANGE(0xe400, 0xe400) AM_WRITE(toki_adpcm_data_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xec01, 0xec01) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xec08, 0xec08) AM_WRITE(YM3812_control_port_0_w)	/* mirror address, it seems */
+	AM_RANGE(0xec09, 0xec09) AM_WRITE(YM3812_write_port_0_w)	/* mirror address, it seems */
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 /*****************************************************************************/
 
@@ -461,7 +461,7 @@ static MACHINE_DRIVER_START( toki )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,20000000/2) 	/* Accurate?  There is a 20MHz near the cpu, but a 12MHz elsewhere */
-	MDRV_CPU_MEMORY(toki_readmem,toki_writemem)
+	MDRV_CPU_PROGRAM_MAP(toki_readmem,toki_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
@@ -490,12 +490,12 @@ static MACHINE_DRIVER_START( tokib )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 10MHz causes bad slowdowns with monkey machine rd1 */
-	MDRV_CPU_MEMORY(tokib_readmem,tokib_writemem)
+	MDRV_CPU_PROGRAM_MAP(tokib_readmem,tokib_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL (could be level1, same vector) */
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(tokib_sound_readmem,tokib_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(tokib_sound_readmem,tokib_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

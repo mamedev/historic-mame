@@ -112,35 +112,35 @@ static WRITE_HANDLER( skyraid_scroll_w )
 }
 
 
-static MEMORY_READ_START( skyraid_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x03ff, skyraid_zeropage_r },
-	{ 0x0800, 0x087f, MRA_RAM },
-	{ 0x0880, 0x0bff, skyraid_alpha_num_r },
-	{ 0x1000, 0x1000, skyraid_port_0_r },
-	{ 0x1000, 0x1001, input_port_1_r },
-	{ 0x1400, 0x1400, input_port_2_r },
-	{ 0x1400, 0x1401, input_port_3_r },
-	{ 0x7000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( skyraid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x03ff) AM_READ(skyraid_zeropage_r)
+	AM_RANGE(0x0800, 0x087f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0880, 0x0bff) AM_READ(skyraid_alpha_num_r)
+	AM_RANGE(0x1000, 0x1000) AM_READ(skyraid_port_0_r)
+	AM_RANGE(0x1000, 0x1001) AM_READ(input_port_1_r)
+	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_2_r)
+	AM_RANGE(0x1400, 0x1401) AM_READ(input_port_3_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( skyraid_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x03ff, skyraid_zeropage_w },
-	{ 0x0400, 0x040f, MWA_RAM, &skyraid_pos_ram },
-	{ 0x0800, 0x087f, MWA_RAM, &skyraid_alpha_num_ram },
-	{ 0x0880, 0x0bff, skyraid_alpha_num_w },
-	{ 0x1c00, 0x1c0f, MWA_RAM, &skyraid_obj_ram },
-	{ 0x4000, 0x4000, skyraid_scroll_w },
-	{ 0x4400, 0x4400, skyraid_sound_w },
-	{ 0x4800, 0x4800, skyraid_range_w },
-	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x5800, 0x5800, skyraid_offset_w },
-	{ 0x7000, 0x7fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( skyraid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x03ff) AM_WRITE(skyraid_zeropage_w)
+	AM_RANGE(0x0400, 0x040f) AM_WRITE(MWA8_RAM) AM_BASE(&skyraid_pos_ram)
+	AM_RANGE(0x0800, 0x087f) AM_WRITE(MWA8_RAM) AM_BASE(&skyraid_alpha_num_ram)
+	AM_RANGE(0x0880, 0x0bff) AM_WRITE(skyraid_alpha_num_w)
+	AM_RANGE(0x1c00, 0x1c0f) AM_WRITE(MWA8_RAM) AM_BASE(&skyraid_obj_ram)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(skyraid_scroll_w)
+	AM_RANGE(0x4400, 0x4400) AM_WRITE(skyraid_sound_w)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(skyraid_range_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(skyraid_offset_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( skyraid )
@@ -278,7 +278,7 @@ static MACHINE_DRIVER_START( skyraid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 12)
-	MDRV_CPU_MEMORY(skyraid_readmem, skyraid_writemem)
+	MDRV_CPU_PROGRAM_MAP(skyraid_readmem, skyraid_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

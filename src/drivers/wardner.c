@@ -261,104 +261,108 @@ static WRITE_HANDLER( wardner_ramrom_banks_w )
 
 
 /* Z80 #1 memory/port maps */
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x6fff, MRA_ROM },			/* Main CPU ROM code */
-	{ 0x7000, 0x7fff, wardner_mainram_r },	/* Main RAM */
-	{ 0x8000, 0xffff, wardner_ram_rom_r },	/* Overlapped RAM/Banked ROM - See below */
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)			/* Main CPU ROM code */
+	AM_RANGE(0x7000, 0x7fff) AM_READ(wardner_mainram_r)	/* Main RAM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(wardner_ram_rom_r)	/* Overlapped RAM/Banked ROM - See below */
 	/* memory layout in bank 0 is really as follows */
-//	{ 0x8000, 0x8fff, wardner_sprite_r },	/* Sprite RAM data */
-//	{ 0x9000, 0x9fff, MRA_ROM },			/* Banked ROM */
-//	{ 0xa000, 0xadff, paletteram_r },		/* Palette RAM */
-//	{ 0xae00, 0xafff, MRA_BANK2 },			/* Unused Palette RAM */
-//	{ 0xb000, 0xbfff, MRA_ROM },			/* Banked ROM */
-//	{ 0xc000, 0xc7ff, MRA_BANK3 },			/* Shared RAM with Sound CPU RAM */
-//	{ 0xc800, 0xffff, MRA_ROM },			/* Banked ROM */
-MEMORY_END
+//	AM_RANGE(0x8000, 0x8fff) AM_READ(wardner_sprite_r)	/* Sprite RAM data */
+//	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_ROM)			/* Banked ROM */
+//	AM_RANGE(0xa000, 0xadff) AM_READ(paletteram_r)		/* Palette RAM */
+//	AM_RANGE(0xae00, 0xafff) AM_READ(MRA8_BANK2)			/* Unused Palette RAM */
+//	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_ROM)			/* Banked ROM */
+//	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_BANK3)			/* Shared RAM with Sound CPU RAM */
+//	AM_RANGE(0xc800, 0xffff) AM_READ(MRA8_ROM)			/* Banked ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x6fff, MWA_ROM },
-	{ 0x7000, 0x7fff, wardner_mainram_w, &wardner_mainram },
-	{ 0x8000, 0x8fff, wardner_sprite_w, (data8_t **)&spriteram16, &spriteram_size },
-	{ 0x9000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xadff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0xae00, 0xafff, wardner_spare_pal_ram_w, &wardner_spare_pal_ram },
-	{ 0xc000, 0xc7ff, wardner_sharedram_w, &wardner_sharedram },
-	{ 0xb000, 0xbfff, MWA_ROM },
-	{ 0xc800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(wardner_mainram_w) AM_BASE(&wardner_mainram)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(wardner_sprite_w) AM_BASE((data8_t **)&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xadff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xae00, 0xafff) AM_WRITE(wardner_spare_pal_ram_w) AM_BASE(&wardner_spare_pal_ram)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(wardner_sharedram_w) AM_BASE(&wardner_sharedram)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x50, 0x50, input_port_3_r },			/* DSW A */
-	{ 0x52, 0x52, input_port_4_r },			/* DSW B */
-	{ 0x54, 0x54, input_port_1_r },			/* Player 1 */
-	{ 0x56, 0x56, input_port_2_r },			/* Player 2 */
-	{ 0x58, 0x58, input_port_0_r },			/* V-Blank/Coin/Start */
-	{ 0x60, 0x65, wardner_videoram_r },		/* data from video layer RAM */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x50, 0x50) AM_READ(input_port_3_r)			/* DSW A */
+	AM_RANGE(0x52, 0x52) AM_READ(input_port_4_r)			/* DSW B */
+	AM_RANGE(0x54, 0x54) AM_READ(input_port_1_r)			/* Player 1 */
+	AM_RANGE(0x56, 0x56) AM_READ(input_port_2_r)			/* Player 2 */
+	AM_RANGE(0x58, 0x58) AM_READ(input_port_0_r)			/* V-Blank/Coin/Start */
+	AM_RANGE(0x60, 0x65) AM_READ(wardner_videoram_r)		/* data from video layer RAM */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, CRTC_reg_sel_w },
-	{ 0x02, 0x02, CRTC_data_w },
-	{ 0x10, 0x13, wardner_txscroll_w },		/* scroll text layer */
-	{ 0x14, 0x15, wardner_txlayer_w },		/* offset in text video RAM */
-	{ 0x20, 0x23, wardner_bgscroll_w },		/* scroll bg layer */
-	{ 0x24, 0x25, wardner_bglayer_w },		/* offset in bg video RAM */
-	{ 0x30, 0x33, wardner_fgscroll_w },		/* scroll fg layer */
-	{ 0x34, 0x35, wardner_fglayer_w },		/* offset in fg video RAM */
-	{ 0x40, 0x43, wardner_exscroll_w },		/* scroll extra layer (not used) */
-	{ 0x60, 0x65, wardner_videoram_w },		/* data for video layer RAM */
-	{ 0x5a, 0x5a, wardner_coin_dsp_w },		/* Machine system control */
-	{ 0x5c, 0x5c, wardner_control_w },		/* Machine system control */
-	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(CRTC_reg_sel_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(CRTC_data_w)
+	AM_RANGE(0x10, 0x13) AM_WRITE(wardner_txscroll_w)		/* scroll text layer */
+	AM_RANGE(0x14, 0x15) AM_WRITE(wardner_txlayer_w)		/* offset in text video RAM */
+	AM_RANGE(0x20, 0x23) AM_WRITE(wardner_bgscroll_w)		/* scroll bg layer */
+	AM_RANGE(0x24, 0x25) AM_WRITE(wardner_bglayer_w)		/* offset in bg video RAM */
+	AM_RANGE(0x30, 0x33) AM_WRITE(wardner_fgscroll_w)		/* scroll fg layer */
+	AM_RANGE(0x34, 0x35) AM_WRITE(wardner_fglayer_w)		/* offset in fg video RAM */
+	AM_RANGE(0x40, 0x43) AM_WRITE(wardner_exscroll_w)		/* scroll extra layer (not used) */
+	AM_RANGE(0x60, 0x65) AM_WRITE(wardner_videoram_w)		/* data for video layer RAM */
+	AM_RANGE(0x5a, 0x5a) AM_WRITE(wardner_coin_dsp_w)		/* Machine system control */
+	AM_RANGE(0x5c, 0x5c) AM_WRITE(wardner_control_w)		/* Machine system control */
+	AM_RANGE(0x70, 0x70) AM_WRITE(wardner_ramrom_banks_w)	/* ROM bank select */
+ADDRESS_MAP_END
 
 
 /* Z80 #2 memory/port maps */
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x807f, MRA_BANK4 },
-	{ 0xc000, 0xc7ff, wardner_sharedram_r },
-	{ 0xc800, 0xcfff, MRA_BANK5 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x807f) AM_READ(MRA8_BANK4)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(wardner_sharedram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_BANK5)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x807f, MWA_BANK4 },
-	{ 0xc000, 0xc7ff, wardner_sharedram_w },
-	{ 0xc800, 0xcfff, MWA_BANK5 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x807f) AM_WRITE(MWA8_BANK4)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(wardner_sharedram_w)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_BANK5)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, YM3812_status_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM3812_control_port_0_w },
-	{ 0x01, 0x01, YM3812_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
+ADDRESS_MAP_END
 
 
 /* TMS32010 memory/port maps */
-static MEMORY_READ16_START( DSP_readmem )
-	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MRA16_RAM },	/* 90h words internal RAM */
-	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x5ff), MRA16_ROM },	/* 600h words. The real DSPs ROM is at */
-									/* address 0 */
-									/* View it at 8000h in the debugger */
-MEMORY_END
+static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000, 0x5ff) AM_READ(MRA16_ROM)	
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( DSP_writemem )
-	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MWA16_RAM },
-	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x5ff), MWA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000, 0x5ff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ16_START( DSP_readport )
-	{ TMS32010_PORT_RANGE(1, 1),  twincobr_dsp_r },
-	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), twincobr_BIO_r },
-PORT_END
+static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x000, 0x08f) AM_READ(MRA16_RAM)	/* 90h words internal RAM */
+ADDRESS_MAP_END
 
-static PORT_WRITE16_START( DSP_writeport )
-	{ TMS32010_PORT_RANGE(0, 3),       twincobr_dsp_w },
-PORT_END
+static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x000, 0x08f) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(1, 1) AM_READ(twincobr_dsp_r)
+	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(twincobr_BIO_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0, 3) AM_WRITE(twincobr_dsp_w)
+ADDRESS_MAP_END
 
 
 
@@ -579,17 +583,18 @@ static MACHINE_DRIVER_START( wardner )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,24000000/4)			/* 6MHz ??? - Real board crystal is 24MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wardner_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,24000000/7)			/* 3.43MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_CPU_ADD(TMS32010,14000000)			/* 14MHz Crystal CLKin */
-	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
-	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
+	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
+	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
+	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
 
 	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -785,7 +790,7 @@ ROM_END
 static DRIVER_INIT( wardner )
 {
 	data8_t *source = memory_region(REGION_USER1);
-	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS32010_PGM_OFFSET];
+	data16_t *dest = (data16_t *)memory_region(REGION_CPU3);
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */

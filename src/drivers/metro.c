@@ -462,29 +462,29 @@ logerror("OKIM6295_status_r %02x\n",porta);
 }
 
 
-static MEMORY_READ_START( upd7810_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },	/* External ROM */
-//	{ 0x4000, 0x7fff, MRA_BANK1 },	/* External ROM (Banked) */
-	{ 0x8000, 0x87ff, MRA_RAM },	/* External RAM */
-	{ 0xff00, 0xffff, MRA_RAM },	/* Internal RAM */
-MEMORY_END
+static ADDRESS_MAP_START( upd7810_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)	/* External ROM */
+//	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)	/* External ROM (Banked) */
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)	/* External RAM */
+	AM_RANGE(0xff00, 0xffff) AM_READ(MRA8_RAM)	/* Internal RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( upd7810_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },	/* External ROM */
-	{ 0x4000, 0x7fff, MWA_ROM },	/* External ROM (Banked) */
-	{ 0x8000, 0x87ff, MWA_RAM },	/* External RAM */
-	{ 0xff00, 0xffff, MWA_RAM },	/* Internal RAM */
-MEMORY_END
+static ADDRESS_MAP_START( upd7810_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)	/* External ROM */
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)	/* External ROM (Banked) */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)	/* External RAM */
+	AM_RANGE(0xff00, 0xffff) AM_WRITE(MWA8_RAM)	/* Internal RAM */
+ADDRESS_MAP_END
 
-static PORT_READ_START( upd7810_readport )
-	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_porta_r },
-PORT_END
+static ADDRESS_MAP_START( upd7810_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(UPD7810_PORTA, UPD7810_PORTA) AM_READ(daitorid_porta_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( upd7810_writeport )
-	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_porta_w },
-	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_portb_w },
-//	{ UPD7810_PORTC, UPD7810_PORTC, daitorid_sound_rombank_w },
-PORT_END
+static ADDRESS_MAP_START( upd7810_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(UPD7810_PORTA, UPD7810_PORTA) AM_WRITE(daitorid_porta_w)
+	AM_RANGE(UPD7810_PORTB, UPD7810_PORTB) AM_WRITE(daitorid_portb_w)
+//	AM_RANGE(UPD7810_PORTC, UPD7810_PORTC) AM_WRITE(daitorid_sound_rombank_w)
+ADDRESS_MAP_END
 
 static void metro_sound_irq_handler(int state)
 {
@@ -924,186 +924,186 @@ static READ16_HANDLER( balcube_dsw_r )
 }
 
 
-static MEMORY_READ16_START( balcube_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
-	{ 0x300000, 0x300001, ymf278b_r				},	// Sound
-	{ 0x400000, 0x41ffff, balcube_dsw_r			},	// DSW x 3
-	{ 0x600000, 0x61ffff, MRA16_RAM				},	// Layer 0
-	{ 0x620000, 0x63ffff, MRA16_RAM				},	// Layer 1
-	{ 0x640000, 0x65ffff, MRA16_RAM				},	// Layer 2
-	{ 0x660000, 0x66ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x670000, 0x673fff, MRA16_RAM				},	// Palette
-	{ 0x674000, 0x674fff, MRA16_RAM				},	// Sprites
-	{ 0x678000, 0x6787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x6788a2, 0x6788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x500000, 0x500001, input_port_0_word_r	},	// Inputs
-	{ 0x500002, 0x500003, input_port_1_word_r	},	//
-	{ 0x500006, 0x500007, MRA16_NOP				},	//
-MEMORY_END
+static ADDRESS_MAP_START( balcube_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x300000, 0x300001) AM_READ(ymf278b_r				)	// Sound
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(balcube_dsw_r			)	// DSW x 3
+	AM_RANGE(0x600000, 0x61ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x620000, 0x63ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x640000, 0x65ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x660000, 0x66ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x670000, 0x673fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x674000, 0x674fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x678000, 0x6787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x6788a2, 0x6788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x500006, 0x500007) AM_READ(MRA16_NOP				)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( balcube_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
-	{ 0x300000, 0x30000b, ymf278b_w						},	// Sound
-	{ 0x500002, 0x500009, metro_coin_lockout_4words_w	},	// Coin Lockout
-	{ 0x670000, 0x673fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x674000, 0x674fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x600000, 0x61ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x620000, 0x63ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x640000, 0x65ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x678000, 0x6787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
-	{ 0x678840, 0x67884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
-	{ 0x678860, 0x67886b, metro_window_w, &metro_window				},	// Tilemap Window
-	{ 0x678870, 0x67887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x678880, 0x678881, MWA16_NOP						},	// ? increasing
-	{ 0x678890, 0x678891, MWA16_NOP						},	// ? increasing
-	{ 0x6788a2, 0x6788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x6788a4, 0x6788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x6788aa, 0x6788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x6788ac, 0x6788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x679700, 0x679713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-MEMORY_END
+static ADDRESS_MAP_START( balcube_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x300000, 0x30000b) AM_WRITE(ymf278b_w						)	// Sound
+	AM_RANGE(0x500002, 0x500009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+	AM_RANGE(0x670000, 0x673fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x674000, 0x674fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x620000, 0x63ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x640000, 0x65ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x678000, 0x6787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size		)	// Tiles Set
+	AM_RANGE(0x678840, 0x67884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs		)	// Tiles Blitter
+	AM_RANGE(0x678860, 0x67886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window				)	// Tilemap Window
+	AM_RANGE(0x678870, 0x67887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x678880, 0x678881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x678890, 0x678891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x6788a2, 0x6788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x6788a4, 0x6788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x6788aa, 0x6788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x6788ac, 0x6788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x679700, 0x679713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Bang Bang Ball
 ***************************************************************************/
 
-static MEMORY_READ16_START( bangball_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
-	{ 0xf10000, 0xf10fff, MRA16_RAM				},	// RAM (bug in the ram test routine)
-	{ 0xb00000, 0xb00001, ymf278b_r				},	// Sound
-	{ 0xc00000, 0xc1ffff, balcube_dsw_r			},	// DSW x 3
-	{ 0xd00000, 0xd00001, input_port_0_word_r	},	// Inputs
-	{ 0xd00002, 0xd00003, input_port_1_word_r	},	//
-	{ 0xd00006, 0xd00007, MRA16_NOP				},	//
-	{ 0xe00000, 0xe1ffff, MRA16_RAM				},	// Layer 0
-	{ 0xe20000, 0xe3ffff, MRA16_RAM				},	// Layer 1
-	{ 0xe40000, 0xe5ffff, MRA16_RAM				},	// Layer 2
-	{ 0xe60000, 0xe6ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0xe70000, 0xe73fff, MRA16_RAM				},	// Palette
-	{ 0xe74000, 0xe74fff, MRA16_RAM				},	// Sprites
-	{ 0xe78000, 0xe787ff, MRA16_RAM				},	// Tiles Set
-	{ 0xe788a2, 0xe788a3, metro_irq_cause_r		},	// IRQ Cause
-MEMORY_END
+static ADDRESS_MAP_START( bangball_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xf10000, 0xf10fff) AM_READ(MRA16_RAM				)	// RAM (bug in the ram test routine)
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(ymf278b_r				)	// Sound
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(balcube_dsw_r			)	// DSW x 3
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0xd00002, 0xd00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xd00006, 0xd00007) AM_READ(MRA16_NOP				)	//
+	AM_RANGE(0xe00000, 0xe1ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0xe20000, 0xe3ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0xe40000, 0xe5ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0xe60000, 0xe6ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0xe70000, 0xe73fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xe74000, 0xe74fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0xe78000, 0xe787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0xe788a2, 0xe788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( bangball_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
-	{ 0xf10000, 0xf10fff, MWA16_RAM						},	// RAM
-	{ 0xb00000, 0xb0000b, ymf278b_w						},	// Sound
-	{ 0xd00002, 0xd00009, metro_coin_lockout_4words_w	},	// Coin Lockout
-	{ 0xe00000, 0xe1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0xe20000, 0xe3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0xe40000, 0xe5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xe70000, 0xe73fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0xe74000, 0xe74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xe78000, 0xe787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
-	{ 0xe78840, 0xe7884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
-	{ 0xe78860, 0xe7886b, metro_window_w, &metro_window				},	// Tilemap Window
-	{ 0xe78870, 0xe7887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0xe78880, 0xe78881, MWA16_NOP						},	// ? increasing
-	{ 0xe78890, 0xe78891, MWA16_NOP						},	// ? increasing
-	{ 0xe788a2, 0xe788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0xe788a4, 0xe788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0xe788aa, 0xe788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0xe788ac, 0xe788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0xe79700, 0xe79713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-MEMORY_END
+static ADDRESS_MAP_START( bangball_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xf10000, 0xf10fff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xb00000, 0xb0000b) AM_WRITE(ymf278b_w						)	// Sound
+	AM_RANGE(0xd00002, 0xd00009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+	AM_RANGE(0xe00000, 0xe1ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0xe20000, 0xe3ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0xe40000, 0xe5ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0xe70000, 0xe73fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xe74000, 0xe74fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0xe78000, 0xe787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size		)	// Tiles Set
+	AM_RANGE(0xe78840, 0xe7884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs		)	// Tiles Blitter
+	AM_RANGE(0xe78860, 0xe7886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window				)	// Tilemap Window
+	AM_RANGE(0xe78870, 0xe7887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0xe78880, 0xe78881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xe78890, 0xe78891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xe788a2, 0xe788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0xe788a4, 0xe788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0xe788aa, 0xe788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0xe788ac, 0xe788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0xe79700, 0xe79713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Dai Toride
 ***************************************************************************/
 
-static MEMORY_READ16_START( daitorid_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x800000, 0x80ffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x41ffff, MRA16_RAM				},	// Layer 0
-	{ 0x420000, 0x43ffff, MRA16_RAM				},	// Layer 1
-	{ 0x440000, 0x45ffff, MRA16_RAM				},	// Layer 2
-	{ 0x460000, 0x46ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x470000, 0x473fff, MRA16_RAM				},	// Palette
-	{ 0x474000, 0x474fff, MRA16_RAM				},	// Sprites
-	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x4788a2, 0x4788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0xc00000, 0xc00001, dharma_soundstatus_r	},	// Inputs
-	{ 0xc00002, 0xc00003, input_port_1_word_r	},	//
-	{ 0xc00004, 0xc00005, input_port_2_word_r	},	//
-	{ 0xc00006, 0xc00007, input_port_3_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( daitorid_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x4788a2, 0x4788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(dharma_soundstatus_r	)	// Inputs
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xc00004, 0xc00005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xc00006, 0xc00007) AM_READ(input_port_3_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( daitorid_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x800000, 0x80ffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x478860, 0x47886b, metro_window_w, &metro_window			},	// Tilemap Window
-	{ 0x478870, 0x47887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x478880, 0x478881, MWA16_NOP						},	// ? increasing
-	{ 0x478890, 0x478891, MWA16_NOP						},	// ? increasing
-	{ 0x4788a2, 0x4788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x4788a4, 0x4788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x4788a8, 0x4788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x4788aa, 0x4788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x4788ac, 0x4788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x479700, 0x479713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0xc00000, 0xc00001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0xc00002, 0xc00009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( daitorid_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x470000, 0x473fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x478840, 0x47884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x478860, 0x47886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window			)	// Tilemap Window
+	AM_RANGE(0x478870, 0x47887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x478880, 0x478881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x478890, 0x478891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x4788a2, 0x4788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x4788a4, 0x4788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x4788a8, 0x4788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x4788aa, 0x4788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x4788ac, 0x4788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x479700, 0x479713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0xc00002, 0xc00009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Dharma Doujou
 ***************************************************************************/
 
-static MEMORY_READ16_START( dharma_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x400000, 0x40ffff, MRA16_RAM				},	// RAM
-	{ 0x800000, 0x81ffff, MRA16_RAM				},	// Layer 0
-	{ 0x820000, 0x83ffff, MRA16_RAM				},	// Layer 1
-	{ 0x840000, 0x85ffff, MRA16_RAM				},	// Layer 2
-	{ 0x860000, 0x86ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x870000, 0x873fff, MRA16_RAM				},	// Palette
-	{ 0x874000, 0x874fff, MRA16_RAM				},	// Sprites
-	{ 0x878000, 0x8787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0xc00000, 0xc00001, dharma_soundstatus_r	},	// Inputs
-	{ 0xc00002, 0xc00003, input_port_1_word_r	},	//
-	{ 0xc00004, 0xc00005, input_port_2_word_r	},	//
-	{ 0xc00006, 0xc00007, input_port_3_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( dharma_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(dharma_soundstatus_r	)	// Inputs
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xc00004, 0xc00005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xc00006, 0xc00007) AM_READ(input_port_3_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( dharma_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x400000, 0x40ffff, MWA16_RAM						},	// RAM
-	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x878880, 0x878881, MWA16_NOP						},	// ? increasing
-	{ 0x878890, 0x878891, MWA16_NOP						},	// ? increasing
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x8788a4, 0x8788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x8788a8, 0x8788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x8788aa, 0x8788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x8788ac, 0x8788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x879700, 0x879713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0xc00000, 0xc00001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0xc00002, 0xc00009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( dharma_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788a8, 0x8788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x879700, 0x879713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0xc00002, 0xc00009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1130,48 +1130,48 @@ KARATOUR_VRAM( 0 )
 KARATOUR_VRAM( 1 )
 KARATOUR_VRAM( 2 )
 
-static MEMORY_READ16_START( karatour_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0xffc000, 0xffffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x400001, metro_soundstatus_r	},	// From Sound CPU
-	{ 0x400002, 0x400003, input_port_0_word_r	},	// Inputs
-	{ 0x400004, 0x400005, input_port_1_word_r	},	//
-	{ 0x400006, 0x400007, input_port_2_word_r	},	//
-	{ 0x40000a, 0x40000b, input_port_3_word_r	},	//
-	{ 0x40000c, 0x40000d, input_port_4_word_r	},	//
-	{ 0x860000, 0x86ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x870000, 0x873fff, MRA16_RAM				},	// Palette
-	{ 0x874000, 0x874fff, MRA16_RAM				},	// Sprites
-	{ 0x875000, 0x875fff, karatour_vram_0_r		},	// Layer 0 (Part of)
-	{ 0x876000, 0x876fff, karatour_vram_1_r		},	// Layer 1 (Part of)
-	{ 0x877000, 0x877fff, karatour_vram_2_r		},	// Layer 2 (Part of)
-	{ 0x878000, 0x8787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_r		},	// IRQ Cause
-MEMORY_END
+static ADDRESS_MAP_START( karatour_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_READ(metro_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x400006, 0x400007) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x40000a, 0x40000b) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0x40000c, 0x40000d) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x875000, 0x875fff) AM_READ(karatour_vram_0_r		)	// Layer 0 (Part of)
+	AM_RANGE(0x876000, 0x876fff) AM_READ(karatour_vram_1_r		)	// Layer 1 (Part of)
+	AM_RANGE(0x877000, 0x877fff) AM_READ(karatour_vram_2_r		)	// Layer 2 (Part of)
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( karatour_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xffc000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x400001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x400002, 0x400003, metro_coin_lockout_1word_w	},	// Coin Lockout
-	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x875000, 0x875fff, karatour_vram_0_w				},	// Layer 0 (Part of)
-	{ 0x876000, 0x876fff, karatour_vram_1_w				},	// Layer 1 (Part of)
-	{ 0x877000, 0x877fff, karatour_vram_2_w				},	// Layer 2 (Part of)
-	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x878880, 0x878881, MWA16_NOP						},	// ? increasing
-	{ 0x878890, 0x878891, MWA16_NOP						},	// ? increasing
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x8788a4, 0x8788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x8788a8, 0x8788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x8788aa, 0x8788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x8788ac, 0x8788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-MEMORY_END
+static ADDRESS_MAP_START( karatour_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x875000, 0x875fff) AM_WRITE(karatour_vram_0_w				)	// Layer 0 (Part of)
+	AM_RANGE(0x876000, 0x876fff) AM_WRITE(karatour_vram_1_w				)	// Layer 1 (Part of)
+	AM_RANGE(0x877000, 0x877fff) AM_WRITE(karatour_vram_2_w				)	// Layer 2 (Part of)
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878800, 0x878813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788a8, 0x8788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1180,45 +1180,45 @@ MEMORY_END
 
 /* same limited tilemap access as karatour */
 
-static MEMORY_READ16_START( kokushi_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x7fc000, 0x7fffff, MRA16_RAM				},	// RAM
-	{ 0x860000, 0x86ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x870000, 0x873fff, MRA16_RAM				},	// Palette
-	{ 0x874000, 0x874fff, MRA16_RAM				},	// Sprites
-	{ 0x875000, 0x875fff, karatour_vram_0_r		},	// Layer 0 (Part of)
-	{ 0x876000, 0x876fff, karatour_vram_1_r		},	// Layer 1 (Part of)
-	{ 0x877000, 0x877fff, karatour_vram_2_r		},	// Layer 2 (Part of)
-	{ 0x878000, 0x8787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0xc00000, 0xc00001, dharma_soundstatus_r	},	// From Sound CPU
-	{ 0xc00002, 0xc00003, input_port_1_word_r	},	// Inputs
-	{ 0xc00004, 0xc00005, input_port_2_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( kokushi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x7fc000, 0x7fffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x875000, 0x875fff) AM_READ(karatour_vram_0_r		)	// Layer 0 (Part of)
+	AM_RANGE(0x876000, 0x876fff) AM_READ(karatour_vram_1_r		)	// Layer 1 (Part of)
+	AM_RANGE(0x877000, 0x877fff) AM_READ(karatour_vram_2_r		)	// Layer 2 (Part of)
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(dharma_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r	)	// Inputs
+	AM_RANGE(0xc00004, 0xc00005) AM_READ(input_port_2_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( kokushi_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x7fc000, 0x7fffff, MWA16_RAM						},	// RAM
-	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x875000, 0x875fff, karatour_vram_0_w				},	// Layer 0 (Part of)
-	{ 0x876000, 0x876fff, karatour_vram_1_w				},	// Layer 1 (Part of)
-	{ 0x877000, 0x877fff, karatour_vram_2_w				},	// Layer 2 (Part of)
-	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs - WRONG
-//	{ 0x878880, 0x878881, MWA16_NOP						},	// ? increasing
-	{ 0x878890, 0x878891, MWA16_NOP						},	// ? increasing
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x8788a4, 0x8788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x8788a8, 0x8788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x8788aa, 0x8788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x8788ac, 0x8788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x879700, 0x879713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0xc00000, 0xc00001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0xc00002, 0xc00009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( kokushi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x7fc000, 0x7fffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x875000, 0x875fff) AM_WRITE(karatour_vram_0_w				)	// Layer 0 (Part of)
+	AM_RANGE(0x876000, 0x876fff) AM_WRITE(karatour_vram_1_w				)	// Layer 1 (Part of)
+	AM_RANGE(0x877000, 0x877fff) AM_WRITE(karatour_vram_2_w				)	// Layer 2 (Part of)
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs - WRONG
+//	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788a8, 0x8788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x879700, 0x879713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0xc00002, 0xc00009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 
@@ -1226,50 +1226,50 @@ MEMORY_END
 								Last Fortress
 ***************************************************************************/
 
-static MEMORY_READ16_START( lastfort_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x400000, 0x40ffff, MRA16_RAM				},	// RAM
-	{ 0x800000, 0x81ffff, MRA16_RAM				},	// Layer 0
-	{ 0x820000, 0x83ffff, MRA16_RAM				},	// Layer 1
-	{ 0x840000, 0x85ffff, MRA16_RAM				},	// Layer 2
-	{ 0x860000, 0x86ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x870000, 0x873fff, MRA16_RAM				},	// Palette
-	{ 0x874000, 0x874fff, MRA16_RAM				},	// Sprites
-	{ 0x878000, 0x8787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0xc00000, 0xc00001, metro_soundstatus_r	},	// From Sound CPU
-	{ 0xc00002, 0xc00003, MRA16_NOP				},	//
-	{ 0xc00004, 0xc00005, input_port_0_word_r	},	// Inputs
-	{ 0xc00006, 0xc00007, input_port_1_word_r	},	//
-	{ 0xc00008, 0xc00009, input_port_2_word_r	},	//
-	{ 0xc0000a, 0xc0000b, input_port_3_word_r	},	//
-	{ 0xc0000c, 0xc0000d, input_port_4_word_r	},	//
-	{ 0xc0000e, 0xc0000f, input_port_5_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( lastfort_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(metro_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(MRA16_NOP				)	//
+	AM_RANGE(0xc00004, 0xc00005) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0xc00006, 0xc00007) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xc00008, 0xc00009) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xc0000a, 0xc0000b) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0xc0000c, 0xc0000d) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0xc0000e, 0xc0000f) AM_READ(input_port_5_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( lastfort_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x400000, 0x40ffff, MWA16_RAM						},	// RAM
-	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x878880, 0x878881, MWA16_NOP						},	// ? increasing
-	{ 0x878890, 0x878891, MWA16_NOP						},	// ? increasing
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x8788a4, 0x8788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x8788a8, 0x8788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x8788aa, 0x8788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x8788ac, 0x8788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0xc00000, 0xc00001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0xc00002, 0xc00003, metro_coin_lockout_1word_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( lastfort_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878800, 0x878813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788a8, 0x8788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1336,108 +1336,108 @@ WRITE16_HANDLER( gakusai_eeprom_w )
 	}
 }
 
-static MEMORY_READ16_START( gakusai_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-	{ 0x200000, 0x21ffff, MRA16_RAM					},	// Layer 0
-	{ 0x220000, 0x23ffff, MRA16_RAM					},	// Layer 1
-	{ 0x240000, 0x25ffff, MRA16_RAM					},	// Layer 2
-	{ 0x260000, 0x26ffff, metro_bankedrom_r			},	// Banked ROM
-	{ 0x270000, 0x273fff, MRA16_RAM					},	// Palette
-	{ 0x274000, 0x274fff, MRA16_RAM					},	// Sprites
-	{ 0x278000, 0x2787ff, MRA16_RAM					},	// Tiles Set
-	{ 0x278832, 0x278833, metro_irq_cause_r			},	// IRQ Cause
-	{ 0x278880, 0x278881, gakusai_input_r			},	// Inputs
-	{ 0x278882, 0x278883, input_port_5_word_r		},	//
-	{ 0x27880e, 0x27880f, MRA16_RAM					},	// Screen Control
-	{ 0x700000, 0x700001, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xc00000, 0xc00001, gakusai_eeprom_r			},	// EEPROM
-MEMORY_END
+static ADDRESS_MAP_START( gakusai_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM					)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_READ(MRA16_RAM					)	// Layer 2
+	AM_RANGE(0x260000, 0x26ffff) AM_READ(metro_bankedrom_r			)	// Banked ROM
+	AM_RANGE(0x270000, 0x273fff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_READ(MRA16_RAM					)	// Tiles Set
+	AM_RANGE(0x278832, 0x278833) AM_READ(metro_irq_cause_r			)	// IRQ Cause
+	AM_RANGE(0x278880, 0x278881) AM_READ(gakusai_input_r			)	// Inputs
+	AM_RANGE(0x278882, 0x278883) AM_READ(input_port_5_word_r		)	//
+	AM_RANGE(0x27880e, 0x27880f) AM_READ(MRA16_RAM					)	// Screen Control
+	AM_RANGE(0x700000, 0x700001) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(gakusai_eeprom_r			)	// EEPROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( gakusai_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x270000, 0x273fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x274000, 0x274fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x278000, 0x2787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x27880e, 0x27880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x278810, 0x27881f, MWA16_RAM, &metro_irq_levels	},	// IRQ Levels
-	{ 0x278820, 0x27882f, MWA16_RAM, &metro_irq_vectors	},	// IRQ Vectors
-	{ 0x278830, 0x278831, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x278832, 0x278833, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x278836, 0x278837, watchdog_reset16_w			},	// Watchdog
-	{ 0x278840, 0x27884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x278860, 0x27886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x278850, 0x27885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x278870, 0x278871, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x278888, 0x278889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
-	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x400000, 0x400001, MWA16_NOP						},	// ? 5
-	{ 0x500000, 0x500001, gakusai_oki_bank_lo_w			},	// Sound
-	{ 0x600000, 0x600001, YM2413_register_port_0_lsb_w	},
-	{ 0x600002, 0x600003, YM2413_data_port_0_lsb_w		},
-	{ 0x700000, 0x700001, OKIM6295_data_0_lsb_w 		},
-	{ 0xc00000, 0xc00001, gakusai_eeprom_w				},	// EEPROM
-	{ 0xd00000, 0xd00001, gakusai_oki_bank_hi_w			},
-MEMORY_END
+static ADDRESS_MAP_START( gakusai_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x270000, 0x273fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x27880e, 0x27880f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x278810, 0x27881f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_levels	)	// IRQ Levels
+	AM_RANGE(0x278820, 0x27882f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_vectors	)	// IRQ Vectors
+	AM_RANGE(0x278830, 0x278831) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x278832, 0x278833) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x278836, 0x278837) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0x278840, 0x27884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x278860, 0x27886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x278850, 0x27885b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x278870, 0x278871) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x278888, 0x278889) AM_WRITE(MWA16_RAM) AM_BASE(&gakusai_input_sel	)	// Inputs
+	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP						)	// ? 5
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(gakusai_oki_bank_lo_w			)	// Sound
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(YM2413_register_port_0_lsb_w	)
+	AM_RANGE(0x600002, 0x600003) AM_WRITE(YM2413_data_port_0_lsb_w		)
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(OKIM6295_data_0_lsb_w 		)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(gakusai_eeprom_w				)	// EEPROM
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(gakusai_oki_bank_hi_w			)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Mahjong Gakuensai 2
 ***************************************************************************/
 
-static MEMORY_READ16_START( gakusai2_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-	{ 0x600000, 0x61ffff, MRA16_RAM					},	// Layer 0
-	{ 0x620000, 0x63ffff, MRA16_RAM					},	// Layer 1
-	{ 0x640000, 0x65ffff, MRA16_RAM					},	// Layer 2
-	{ 0x660000, 0x66ffff, metro_bankedrom_r			},	// Banked ROM
-	{ 0x670000, 0x673fff, MRA16_RAM					},	// Palette
-	{ 0x674000, 0x674fff, MRA16_RAM					},	// Sprites
-	{ 0x675000, 0x675fff, MRA16_RAM					},	// Sprites?
-	{ 0x678000, 0x6787ff, MRA16_RAM					},	// Tiles Set
-	{ 0x678832, 0x678833, metro_irq_cause_r			},	// IRQ Cause
-	{ 0x678880, 0x678881, gakusai_input_r			},	// Inputs
-	{ 0x678882, 0x678883, input_port_5_word_r		},	//
-	{ 0x67880e, 0x67880f, MRA16_RAM					},	// Screen Control
-	{ 0xb00000, 0xb00001, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xe00000, 0xe00001, gakusai_eeprom_r			},	// EEPROM
-MEMORY_END
+static ADDRESS_MAP_START( gakusai2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x600000, 0x61ffff) AM_READ(MRA16_RAM					)	// Layer 0
+	AM_RANGE(0x620000, 0x63ffff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x640000, 0x65ffff) AM_READ(MRA16_RAM					)	// Layer 2
+	AM_RANGE(0x660000, 0x66ffff) AM_READ(metro_bankedrom_r			)	// Banked ROM
+	AM_RANGE(0x670000, 0x673fff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x674000, 0x674fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x675000, 0x675fff) AM_READ(MRA16_RAM					)	// Sprites?
+	AM_RANGE(0x678000, 0x6787ff) AM_READ(MRA16_RAM					)	// Tiles Set
+	AM_RANGE(0x678832, 0x678833) AM_READ(metro_irq_cause_r			)	// IRQ Cause
+	AM_RANGE(0x678880, 0x678881) AM_READ(gakusai_input_r			)	// Inputs
+	AM_RANGE(0x678882, 0x678883) AM_READ(input_port_5_word_r		)	//
+	AM_RANGE(0x67880e, 0x67880f) AM_READ(MRA16_RAM					)	// Screen Control
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(gakusai_eeprom_r			)	// EEPROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( gakusai2_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x600000, 0x61ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x620000, 0x63ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x640000, 0x65ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x670000, 0x673fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x674000, 0x674fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x675000, 0x675fff, MWA16_RAM						},	// Sprites?
-	{ 0x678000, 0x6787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x67880e, 0x67880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x678810, 0x67881f, MWA16_RAM, &metro_irq_levels	},	// IRQ Levels
-	{ 0x678820, 0x67882f, MWA16_RAM, &metro_irq_vectors	},	// IRQ Vectors
-	{ 0x678830, 0x678831, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x678832, 0x678833, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x678836, 0x678837, watchdog_reset16_w			},	// Watchdog
-	{ 0x678840, 0x67884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x678860, 0x67886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x678850, 0x67885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x678870, 0x678871, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x678888, 0x678889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
-	{ 0x679700, 0x679713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x800000, 0x800001, MWA16_NOP						},	// ? 5
-	{ 0x900000, 0x900001, gakusai_oki_bank_lo_w			},	// Sound
-	{ 0xa00000, 0xa00001, gakusai_oki_bank_hi_w			},
-	{ 0xb00000, 0xb00001, OKIM6295_data_0_lsb_w 		},
-	{ 0xc00000, 0xc00001, YM2413_register_port_0_lsb_w	},
-	{ 0xc00002, 0xc00003, YM2413_data_port_0_lsb_w		},
-	{ 0xe00000, 0xe00001, gakusai_eeprom_w				},	// EEPROM
-MEMORY_END
+static ADDRESS_MAP_START( gakusai2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x620000, 0x63ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x640000, 0x65ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x670000, 0x673fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x674000, 0x674fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x675000, 0x675fff) AM_WRITE(MWA16_RAM						)	// Sprites?
+	AM_RANGE(0x678000, 0x6787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x67880e, 0x67880f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x678810, 0x67881f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_levels	)	// IRQ Levels
+	AM_RANGE(0x678820, 0x67882f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_vectors	)	// IRQ Vectors
+	AM_RANGE(0x678830, 0x678831) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x678832, 0x678833) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x678836, 0x678837) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0x678840, 0x67884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x678860, 0x67886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x678850, 0x67885b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x678870, 0x678871) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x678888, 0x678889) AM_WRITE(MWA16_RAM) AM_BASE(&gakusai_input_sel	)	// Inputs
+	AM_RANGE(0x679700, 0x679713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP						)	// ? 5
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(gakusai_oki_bank_lo_w			)	// Sound
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(gakusai_oki_bank_hi_w			)
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(OKIM6295_data_0_lsb_w 		)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(YM2413_register_port_0_lsb_w	)
+	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(YM2413_data_port_0_lsb_w		)
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(gakusai_eeprom_w				)	// EEPROM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1475,344 +1475,344 @@ WRITE16_HANDLER( dokyusp_eeprom_reset_w )
 	}
 }
 
-static MEMORY_READ16_START( dokyusp_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM					},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-	{ 0x200000, 0x21ffff, MRA16_RAM					},	// Layer 0
-	{ 0x220000, 0x23ffff, MRA16_RAM					},	// Layer 1
-	{ 0x240000, 0x25ffff, MRA16_RAM					},	// Layer 2
-	{ 0x260000, 0x26ffff, metro_bankedrom_r			},	// Banked ROM
-	{ 0x270000, 0x273fff, MRA16_RAM					},	// Palette
-	{ 0x274000, 0x274fff, MRA16_RAM					},	// Sprites
-	{ 0x278000, 0x2787ff, MRA16_RAM					},	// Tiles Set
-	{ 0x278832, 0x278833, metro_irq_cause_r			},	// IRQ Cause
-	{ 0x278880, 0x278881, gakusai_input_r			},	// Inputs
-	{ 0x278882, 0x278883, input_port_5_word_r		},	//
-	{ 0x27880e, 0x27880f, MRA16_RAM					},	// Screen Control
-	{ 0x700000, 0x700001, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xd00000, 0xd00001, dokyusp_eeprom_r			},	// EEPROM
-MEMORY_END
+static ADDRESS_MAP_START( dokyusp_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM					)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_READ(MRA16_RAM					)	// Layer 2
+	AM_RANGE(0x260000, 0x26ffff) AM_READ(metro_bankedrom_r			)	// Banked ROM
+	AM_RANGE(0x270000, 0x273fff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_READ(MRA16_RAM					)	// Tiles Set
+	AM_RANGE(0x278832, 0x278833) AM_READ(metro_irq_cause_r			)	// IRQ Cause
+	AM_RANGE(0x278880, 0x278881) AM_READ(gakusai_input_r			)	// Inputs
+	AM_RANGE(0x278882, 0x278883) AM_READ(input_port_5_word_r		)	//
+	AM_RANGE(0x27880e, 0x27880f) AM_READ(MRA16_RAM					)	// Screen Control
+	AM_RANGE(0x700000, 0x700001) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(dokyusp_eeprom_r			)	// EEPROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( dokyusp_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x270000, 0x273fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x274000, 0x274fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x278000, 0x2787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x27880e, 0x27880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x278810, 0x27881f, MWA16_RAM, &metro_irq_levels	},	// IRQ Levels
-	{ 0x278820, 0x27882f, MWA16_RAM, &metro_irq_vectors	},	// IRQ Vectors
-	{ 0x278830, 0x278831, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x278832, 0x278833, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x278836, 0x278837, watchdog_reset16_w			},	// Watchdog
-	{ 0x278840, 0x27884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x278860, 0x27886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x278850, 0x27885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x278870, 0x278871, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x278888, 0x278889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
-	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x400000, 0x400001, MWA16_NOP						},	// ? 5
-	{ 0x500000, 0x500001, gakusai_oki_bank_lo_w			},	// Sound
-	{ 0x600000, 0x600001, YM2413_register_port_0_lsb_w	},
-	{ 0x600002, 0x600003, YM2413_data_port_0_lsb_w		},
-	{ 0x700000, 0x700001, OKIM6295_data_0_lsb_w 		},
-	{ 0xc00000, 0xc00001, dokyusp_eeprom_reset_w		},	// EEPROM
-	{ 0xd00000, 0xd00001, dokyusp_eeprom_bit_w			},	// EEPROM
-MEMORY_END
+static ADDRESS_MAP_START( dokyusp_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x270000, 0x273fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x27880e, 0x27880f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x278810, 0x27881f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_levels	)	// IRQ Levels
+	AM_RANGE(0x278820, 0x27882f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_vectors	)	// IRQ Vectors
+	AM_RANGE(0x278830, 0x278831) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x278832, 0x278833) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x278836, 0x278837) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0x278840, 0x27884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x278860, 0x27886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x278850, 0x27885b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x278870, 0x278871) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x278888, 0x278889) AM_WRITE(MWA16_RAM) AM_BASE(&gakusai_input_sel	)	// Inputs
+	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP						)	// ? 5
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(gakusai_oki_bank_lo_w			)	// Sound
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(YM2413_register_port_0_lsb_w	)
+	AM_RANGE(0x600002, 0x600003) AM_WRITE(YM2413_data_port_0_lsb_w		)
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(OKIM6295_data_0_lsb_w 		)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(dokyusp_eeprom_reset_w		)	// EEPROM
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(dokyusp_eeprom_bit_w			)	// EEPROM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 							Mahjong Doukyuusei
 ***************************************************************************/
 
-static MEMORY_READ16_START( dokyusei_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM					},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-	{ 0x400000, 0x41ffff, MRA16_RAM					},	// Layer 0
-	{ 0x420000, 0x43ffff, MRA16_RAM					},	// Layer 1
-	{ 0x440000, 0x45ffff, MRA16_RAM					},	// Layer 2
-	{ 0x460000, 0x46ffff, metro_bankedrom_r			},	// Banked ROM
-	{ 0x470000, 0x473fff, MRA16_RAM					},	// Palette
-	{ 0x474000, 0x474fff, MRA16_RAM					},	// Sprites
-	{ 0x478000, 0x4787ff, MRA16_RAM					},	// Tiles Set
-//	{ 0x478832, 0x478833, metro_irq_cause_r			},	// IRQ Cause
-	{ 0x478880, 0x478881, gakusai_input_r			},	// Inputs
-	{ 0x478882, 0x478883, input_port_5_word_r		},	//
-	{ 0x478884, 0x478885, input_port_6_word_r		},	// 2 x DSW
-	{ 0x478886, 0x478887, input_port_7_word_r		},	//
-	{ 0xd00000, 0xd00001, OKIM6295_status_0_lsb_r	},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( dokyusei_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM					)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_READ(MRA16_RAM					)	// Layer 2
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(metro_bankedrom_r			)	// Banked ROM
+	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM					)	// Tiles Set
+//	AM_RANGE(0x478832, 0x478833) AM_READ(metro_irq_cause_r			)	// IRQ Cause
+	AM_RANGE(0x478880, 0x478881) AM_READ(gakusai_input_r			)	// Inputs
+	AM_RANGE(0x478882, 0x478883) AM_READ(input_port_5_word_r		)	//
+	AM_RANGE(0x478884, 0x478885) AM_READ(input_port_6_word_r		)	// 2 x DSW
+	AM_RANGE(0x478886, 0x478887) AM_READ(input_port_7_word_r		)	//
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( dokyusei_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x460000, 0x46ffff, MWA16_NOP						},	// DSW Selection
-	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x47880e, 0x47880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x478810, 0x47881f, MWA16_RAM, &metro_irq_levels	},	// IRQ Levels
-	{ 0x478820, 0x47882f, MWA16_RAM, &metro_irq_vectors	},	// IRQ Vectors
-	{ 0x478830, 0x478831, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x478832, 0x478833, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x478836, 0x478837, MWA16_NOP						},	// ? watchdog ?
-	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x478850, 0x47885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x478870, 0x478871, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x479700, 0x479713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x478888, 0x478889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
-	{ 0x800000, 0x800001, gakusai_oki_bank_hi_w			},	// Samples Bank?
-	{ 0x900000, 0x900001, MWA16_NOP						},	// ? 4
-	{ 0xa00000, 0xa00001, gakusai_oki_bank_lo_w			},	// Samples Bank
-	{ 0xc00000, 0xc00001, YM2413_register_port_0_lsb_w	},	// Sound
-	{ 0xc00002, 0xc00003, YM2413_data_port_0_lsb_w		},	//
-	{ 0xd00000, 0xd00001, OKIM6295_data_0_lsb_w			},	//
-MEMORY_END
+static ADDRESS_MAP_START( dokyusei_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x460000, 0x46ffff) AM_WRITE(MWA16_NOP						)	// DSW Selection
+	AM_RANGE(0x470000, 0x473fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x47880e, 0x47880f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x478810, 0x47881f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_levels	)	// IRQ Levels
+	AM_RANGE(0x478820, 0x47882f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_vectors	)	// IRQ Vectors
+	AM_RANGE(0x478830, 0x478831) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x478832, 0x478833) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x478836, 0x478837) AM_WRITE(MWA16_NOP						)	// ? watchdog ?
+	AM_RANGE(0x478840, 0x47884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x478860, 0x47886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x478850, 0x47885b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x478870, 0x478871) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x479700, 0x479713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x478888, 0x478889) AM_WRITE(MWA16_RAM) AM_BASE(&gakusai_input_sel	)	// Inputs
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(gakusai_oki_bank_hi_w			)	// Samples Bank?
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP						)	// ? 4
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(gakusai_oki_bank_lo_w			)	// Samples Bank
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(YM2413_register_port_0_lsb_w	)	// Sound
+	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(YM2413_data_port_0_lsb_w		)	//
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_lsb_w			)	//
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Pang Poms
 ***************************************************************************/
 
-static MEMORY_READ16_START( pangpoms_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x41ffff, MRA16_RAM				},	// Layer 0
-	{ 0x420000, 0x43ffff, MRA16_RAM				},	// Layer 1
-	{ 0x440000, 0x45ffff, MRA16_RAM				},	// Layer 2
-	{ 0x460000, 0x46ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x470000, 0x473fff, MRA16_RAM				},	// Palette
-	{ 0x474000, 0x474fff, MRA16_RAM				},	// Sprites
-	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x4788a2, 0x4788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x800000, 0x800001, metro_soundstatus_r	},	// From Sound CPU
-	{ 0x800002, 0x800003, MRA16_NOP				},	//
-	{ 0x800004, 0x800005, input_port_0_word_r	},	// Inputs
-	{ 0x800006, 0x800007, input_port_1_word_r	},	//
-	{ 0x800008, 0x800009, input_port_2_word_r	},	//
-	{ 0x80000a, 0x80000b, input_port_3_word_r	},	//
-	{ 0x80000c, 0x80000d, input_port_4_word_r	},	//
-	{ 0x80000e, 0x80000f, input_port_5_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( pangpoms_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x4788a2, 0x4788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x800000, 0x800001) AM_READ(metro_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0x800002, 0x800003) AM_READ(MRA16_NOP				)	//
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x800006, 0x800007) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x800008, 0x800009) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x80000a, 0x80000b) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0x80000c, 0x80000d) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0x80000e, 0x80000f) AM_READ(input_port_5_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( pangpoms_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0xc00000, 0xc0ffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x478800, 0x478813, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x478870, 0x47887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x478880, 0x478881, MWA16_NOP						},	// ? increasing
-	{ 0x478890, 0x478891, MWA16_NOP						},	// ? increasing
-	{ 0x4788a2, 0x4788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x4788a4, 0x4788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x4788a8, 0x4788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x4788aa, 0x4788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x4788ac, 0x4788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x800000, 0x800001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x800002, 0x800003, metro_coin_lockout_1word_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( pangpoms_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x470000, 0x473fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x478800, 0x478813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x478840, 0x47884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x478860, 0x47886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x478870, 0x47887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x478880, 0x478881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x478890, 0x478891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x4788a2, 0x4788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x4788a4, 0x4788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x4788a8, 0x4788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x4788aa, 0x4788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x4788ac, 0x4788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x800002, 0x800003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Poitto!
 ***************************************************************************/
 
-static MEMORY_READ16_START( poitto_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x400000, 0x40ffff, MRA16_RAM				},	// RAM
-	{ 0xc00000, 0xc1ffff, MRA16_RAM				},	// Layer 0
-	{ 0xc20000, 0xc3ffff, MRA16_RAM				},	// Layer 1
-	{ 0xc40000, 0xc5ffff, MRA16_RAM				},	// Layer 2
-	{ 0xc60000, 0xc6ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0xc70000, 0xc73fff, MRA16_RAM				},	// Palette
-	{ 0xc74000, 0xc74fff, MRA16_RAM				},	// Sprites
-	{ 0xc78000, 0xc787ff, MRA16_RAM				},	// Tiles Set
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x800000, 0x800001, dharma_soundstatus_r	},	// Inputs
-	{ 0x800002, 0x800003, input_port_1_word_r	},	//
-	{ 0x800004, 0x800005, input_port_2_word_r	},	//
-	{ 0x800006, 0x800007, input_port_3_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( poitto_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0xc60000, 0xc6ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0xc70000, 0xc73fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0xc788a2, 0xc788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x800000, 0x800001) AM_READ(dharma_soundstatus_r	)	// Inputs
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x800006, 0x800007) AM_READ(input_port_3_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( poitto_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x400000, 0x40ffff, MWA16_RAM						},	// RAM
-	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0xc78800, 0xc78813, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0xc78870, 0xc7887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0xc78880, 0xc78881, MWA16_NOP						},	// ? increasing
-	{ 0xc78890, 0xc78891, MWA16_NOP						},	// ? increasing
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0xc788a4, 0xc788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0xc788a8, 0xc788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0xc788aa, 0xc788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0xc788ac, 0xc788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x800000, 0x800001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x800002, 0x800009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( poitto_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xc00000, 0xc1ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0xc70000, 0xc73fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0xc78800, 0xc78813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0xc78840, 0xc7884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0xc78860, 0xc7886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0xc78870, 0xc7887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0xc78880, 0xc78881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc78890, 0xc78891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc788a2, 0xc788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0xc788a4, 0xc788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0xc788a8, 0xc788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0xc788aa, 0xc788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0xc788ac, 0xc788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x800002, 0x800009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Sky Alert
 ***************************************************************************/
 
-static MEMORY_READ16_START( skyalert_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// RAM
-	{ 0x800000, 0x81ffff, MRA16_RAM				},	// Layer 0
-	{ 0x820000, 0x83ffff, MRA16_RAM				},	// Layer 1
-	{ 0x840000, 0x85ffff, MRA16_RAM				},	// Layer 2
-	{ 0x860000, 0x86ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x870000, 0x873fff, MRA16_RAM				},	// Palette
-	{ 0x874000, 0x874fff, MRA16_RAM				},	// Sprites
-	{ 0x878000, 0x8787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x400000, 0x400001, metro_soundstatus_r	},	// From Sound CPU
-	{ 0x400002, 0x400003, MRA16_NOP				},	//
-	{ 0x400004, 0x400005, input_port_0_word_r	},	// Inputs
-	{ 0x400006, 0x400007, input_port_1_word_r	},	//
-	{ 0x400008, 0x400009, input_port_2_word_r	},	//
-	{ 0x40000a, 0x40000b, input_port_3_word_r	},	//
-	{ 0x40000c, 0x40000d, input_port_4_word_r	},	//
-	{ 0x40000e, 0x40000f, input_port_5_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( skyalert_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x400000, 0x400001) AM_READ(metro_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_READ(MRA16_NOP				)	//
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x400006, 0x400007) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x400008, 0x400009) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x40000a, 0x40000b) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0x40000c, 0x40000d) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0x40000e, 0x40000f) AM_READ(input_port_5_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( skyalert_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0xc00000, 0xc0ffff, MWA16_RAM						},	// RAM
-	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x878880, 0x878881, MWA16_NOP						},	// ? increasing
-	{ 0x878890, 0x878891, MWA16_NOP						},	// ? increasing
-	{ 0x8788a2, 0x8788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x8788a4, 0x8788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x8788a8, 0x8788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0x8788aa, 0x8788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x8788ac, 0x8788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x400000, 0x400001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x400002, 0x400003, metro_coin_lockout_1word_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( skyalert_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x800000, 0x81ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878800, 0x878813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788a8, 0x8788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Pururun
 ***************************************************************************/
 
-static MEMORY_READ16_START( pururun_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x800000, 0x80ffff, MRA16_RAM				},	// RAM
-	{ 0xc00000, 0xc1ffff, MRA16_RAM				},	// Layer 0
-	{ 0xc20000, 0xc3ffff, MRA16_RAM				},	// Layer 1
-	{ 0xc40000, 0xc5ffff, MRA16_RAM				},	// Layer 2
-	{ 0xc60000, 0xc6ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0xc70000, 0xc73fff, MRA16_RAM				},	// Palette
-	{ 0xc74000, 0xc74fff, MRA16_RAM				},	// Sprites
-	{ 0xc78000, 0xc787ff, MRA16_RAM				},	// Tiles Set
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x400000, 0x400001, dharma_soundstatus_r	},	// Inputs
-	{ 0x400002, 0x400003, input_port_1_word_r	},	//
-	{ 0x400004, 0x400005, input_port_2_word_r	},	//
-	{ 0x400006, 0x400007, input_port_3_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( pururun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0xc60000, 0xc6ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0xc70000, 0xc73fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0xc788a2, 0xc788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x400000, 0x400001) AM_READ(dharma_soundstatus_r	)	// Inputs
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x400006, 0x400007) AM_READ(input_port_3_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( pururun_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
-	{ 0x800000, 0x80ffff, MWA16_RAM						},	// RAM
-	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0xc78870, 0xc7887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0xc78880, 0xc78881, MWA16_NOP						},	// ? increasing
-	{ 0xc78890, 0xc78891, MWA16_NOP						},	// ? increasing
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0xc788a4, 0xc788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0xc788a8, 0xc788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0xc788aa, 0xc788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0xc788ac, 0xc788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0xc79700, 0xc79713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x400000, 0x400001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x400002, 0x400009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( pururun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xc00000, 0xc1ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0xc70000, 0xc73fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0xc78840, 0xc7884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0xc78860, 0xc7886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0xc78870, 0xc7887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0xc78880, 0xc78881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc78890, 0xc78891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc788a2, 0xc788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0xc788a4, 0xc788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0xc788a8, 0xc788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0xc788aa, 0xc788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0xc788ac, 0xc788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0xc79700, 0xc79713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x400002, 0x400009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 							Toride II Adauchi Gaiden
 ***************************************************************************/
 
-static MEMORY_READ16_START( toride2g_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x400000, 0x4cffff, MRA16_RAM				},	// RAM (4xc000-4xffff mirrored?)
-	{ 0xc00000, 0xc1ffff, MRA16_RAM				},	// Layer 0
-	{ 0xc20000, 0xc3ffff, MRA16_RAM				},	// Layer 1
-	{ 0xc40000, 0xc5ffff, MRA16_RAM				},	// Layer 2
-	{ 0xc60000, 0xc6ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0xc70000, 0xc73fff, MRA16_RAM				},	// Palette
-	{ 0xc74000, 0xc74fff, MRA16_RAM				},	// Sprites
-	{ 0xc78000, 0xc787ff, MRA16_RAM				},	// Tiles Set
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x800000, 0x800001, dharma_soundstatus_r	},	// Inputs
-	{ 0x800002, 0x800003, input_port_1_word_r	},	//
-	{ 0x800004, 0x800005, input_port_2_word_r	},	//
-	{ 0x800006, 0x800007, input_port_3_word_r	},	//
-MEMORY_END
+static ADDRESS_MAP_START( toride2g_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x400000, 0x4cffff) AM_READ(MRA16_RAM				)	// RAM (4xc000-4xffff mirrored?)
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0xc60000, 0xc6ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0xc70000, 0xc73fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0xc788a2, 0xc788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x800000, 0x800001) AM_READ(dharma_soundstatus_r	)	// Inputs
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x800006, 0x800007) AM_READ(input_port_3_word_r	)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( toride2g_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x400000, 0x4cffff, MWA16_RAM						},	// RAM (4xc000-4xffff mirrored?)
-	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0xc78870, 0xc7887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0xc78880, 0xc78881, MWA16_NOP						},	// ? increasing
-	{ 0xc78890, 0xc78891, MWA16_NOP						},	// ? increasing
-	{ 0xc788a2, 0xc788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0xc788a4, 0xc788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0xc788a8, 0xc788a9, metro_soundlatch_w			},	// To Sound CPU
-	{ 0xc788aa, 0xc788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0xc788ac, 0xc788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0xc79700, 0xc79713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x800000, 0x800001, metro_soundstatus_w			},	// To Sound CPU
-	{ 0x800002, 0x800009, metro_coin_lockout_4words_w	},	// Coin Lockout
-MEMORY_END
+static ADDRESS_MAP_START( toride2g_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x400000, 0x4cffff) AM_WRITE(MWA16_RAM						)	// RAM (4xc000-4xffff mirrored?)
+	AM_RANGE(0xc00000, 0xc1ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0xc20000, 0xc3ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0xc40000, 0xc5ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0xc70000, 0xc73fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc74000, 0xc74fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0xc78000, 0xc787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0xc78840, 0xc7884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0xc78860, 0xc7886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0xc78870, 0xc7887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0xc78880, 0xc78881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc78890, 0xc78891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0xc788a2, 0xc788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0xc788a4, 0xc788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0xc788a8, 0xc788a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0xc788aa, 0xc788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0xc788ac, 0xc788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0xc79700, 0xc79713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x800002, 0x800009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1854,131 +1854,131 @@ static struct YM2610interface blzntrnd_ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
-static MEMORY_READ_START( blzntrnd_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( blzntrnd_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( blzntrnd_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( blzntrnd_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( blzntrnd_sound_readport )
-	{ 0x40, 0x40, soundlatch_r },
-	{ 0x80, 0x80, YM2610_status_port_0_A_r },
-	{ 0x82, 0x82, YM2610_status_port_0_B_r },
-PORT_END
+static ADDRESS_MAP_START( blzntrnd_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(soundlatch_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x82, 0x82) AM_READ(YM2610_status_port_0_B_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( blzntrnd_sound_writeport )
-	{ 0x00, 0x00, blzntrnd_sh_bankswitch_w },
-	{ 0x40, 0x40, IOWP_NOP },
-	{ 0x80, 0x80, YM2610_control_port_0_A_w },
-	{ 0x81, 0x81, YM2610_data_port_0_A_w },
-	{ 0x82, 0x82, YM2610_control_port_0_B_w },
-	{ 0x83, 0x83, YM2610_data_port_0_B_w },
-PORT_END
+static ADDRESS_MAP_START( blzntrnd_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(blzntrnd_sh_bankswitch_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(YM2610_data_port_0_B_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( blzntrnd_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM				},	// RAM
-//	{ 0x300000, 0x300001, MRA16_NOP				},	// Sound
-	{ 0x200000, 0x21ffff, MRA16_RAM				},	// Layer 0
-	{ 0x220000, 0x23ffff, MRA16_RAM				},	// Layer 1
-	{ 0x240000, 0x25ffff, MRA16_RAM				},	// Layer 2
-	{ 0x260000, 0x26ffff, metro_bankedrom_r		},	// Banked ROM
-	{ 0x270000, 0x273fff, MRA16_RAM				},	// Palette
-	{ 0x274000, 0x274fff, MRA16_RAM				},	// Sprites
-	{ 0x278000, 0x2787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x2788a2, 0x2788a3, metro_irq_cause_r		},	// IRQ Cause
-	{ 0xe00000, 0xe00001, input_port_0_word_r	},	// Inputs
-	{ 0xe00002, 0xe00003, input_port_1_word_r	},	//
-	{ 0xe00004, 0xe00005, input_port_2_word_r	},	//
-	{ 0xe00006, 0xe00007, input_port_3_word_r	},	//
-	{ 0xe00008, 0xe00009, input_port_4_word_r	},	//
-	{ 0x400000, 0x43ffff, MRA16_RAM				},	// 053936
-MEMORY_END
+static ADDRESS_MAP_START( blzntrnd_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
+//	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP				)	// Sound
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x260000, 0x26ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x270000, 0x273fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x2788a2, 0x2788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0xe00002, 0xe00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xe00004, 0xe00005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xe00006, 0xe00007) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0xe00008, 0xe00009) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_RAM				)	// 053936
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( blzntrnd_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x260000, 0x26ffff, MWA16_NOP				},	// ??????
-	{ 0x270000, 0x273fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x274000, 0x274fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x278000, 0x2787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
-	{ 0x278860, 0x27886b, metro_window_w, &metro_window				},	// Tilemap Window
-	{ 0x278870, 0x27887b, MWA16_RAM, &metro_scroll		},	// Scroll
-	{ 0x278890, 0x278891, MWA16_NOP						},	// ? increasing
-	{ 0x2788a2, 0x2788a3, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x2788a4, 0x2788a5, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x2788aa, 0x2788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x2788ac, 0x2788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0x400000, 0x43ffff, metro_K053936_w, &metro_K053936_ram	},	// 053936
-	{ 0x500000, 0x500fff, MWA16_RAM, &K053936_0_linectrl },	// 053936 line control
-	{ 0x600000, 0x60001f, MWA16_RAM, &K053936_0_ctrl	},	// 053936 control
-	{ 0xe00000, 0xe00001, MWA16_NOP },
-	{ 0xe00002, 0xe00003, blzntrnd_sound_w },
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( blzntrnd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x220000, 0x23ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x240000, 0x25ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x260000, 0x26ffff) AM_WRITE(MWA16_NOP				)	// ??????
+	AM_RANGE(0x270000, 0x273fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x274000, 0x274fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x278000, 0x2787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size		)	// Tiles Set
+	AM_RANGE(0x278860, 0x27886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window				)	// Tilemap Window
+	AM_RANGE(0x278870, 0x27887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x278890, 0x278891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x2788a2, 0x2788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x2788a4, 0x2788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x2788aa, 0x2788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x2788ac, 0x2788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(metro_K053936_w) AM_BASE(&metro_K053936_ram	)	// 053936
+	AM_RANGE(0x500000, 0x500fff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_linectrl)	// 053936 line control
+	AM_RANGE(0x600000, 0x60001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl	)	// 053936 control
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xe00002, 0xe00003) AM_WRITE(blzntrnd_sound_w)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 									Mouja
 ***************************************************************************/
 
-static MEMORY_READ16_START( mouja_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x41ffff, MRA16_RAM				},	// Layer 0
-	{ 0x420000, 0x43ffff, MRA16_RAM				},	// Layer 1
-	{ 0x440000, 0x45ffff, MRA16_RAM				},	// Layer 2
-	{ 0x470000, 0x473fff, MRA16_RAM				},	// Palette
-	{ 0x474000, 0x474fff, MRA16_RAM				},	// Sprites
-	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x478832, 0x478833, metro_irq_cause_r		},	// IRQ Cause
-	{ 0x478880, 0x478881, input_port_0_word_r	},	// Inputs
-	{ 0x478882, 0x478883, input_port_1_word_r	},	//
-	{ 0x478884, 0x478885, input_port_2_word_r	},	//
-	{ 0x478886, 0x478887, input_port_3_word_r	},	//
-	{ 0xd00000, 0xd00001, OKIM6295_status_0_lsb_r },
+static ADDRESS_MAP_START( mouja_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x478832, 0x478833) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x478880, 0x478881) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x478882, 0x478883) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x478884, 0x478885) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x478886, 0x478887) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(OKIM6295_status_0_lsb_r)
 #if 0
-	{ 0x460000, 0x46ffff, metro_bankedrom_r		},	// Banked ROM
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( mouja_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
-	{ 0x47880e, 0x47880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
-	{ 0x478810, 0x47881f, MWA16_RAM, &metro_irq_levels	},	// IRQ Levels
-	{ 0x478820, 0x47882f, MWA16_RAM, &metro_irq_vectors	},	// IRQ Vectors
-	{ 0x478830, 0x478831, MWA16_RAM, &metro_irq_enable	},	// IRQ Enable
-	{ 0x478832, 0x478833, metro_irq_cause_w				},	// IRQ Acknowledge
-	{ 0x478836, 0x478837, watchdog_reset16_w			},	// Watchdog
-	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
-	{ 0x478850, 0x47885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
-	{ 0x479700, 0x479713, MWA16_RAM, &metro_videoregs	},	// Video Registers
-	{ 0xc00000, 0xc00001, YM2413_register_port_0_lsb_w	},
-	{ 0xc00002, 0xc00003, YM2413_data_port_0_lsb_w		},
-	{ 0xd00000, 0xd00001, OKIM6295_data_0_msb_w },
+static ADDRESS_MAP_START( mouja_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x470000, 0x473fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x478000, 0x4787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x47880e, 0x47880f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x478810, 0x47881f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_levels	)	// IRQ Levels
+	AM_RANGE(0x478820, 0x47882f) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_vectors	)	// IRQ Vectors
+	AM_RANGE(0x478830, 0x478831) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x478832, 0x478833) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x478836, 0x478837) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0x478860, 0x47886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x478850, 0x47885b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs
+	AM_RANGE(0x479700, 0x479713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(YM2413_register_port_0_lsb_w	)
+	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(YM2413_data_port_0_lsb_w		)
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_msb_w)
 
 #if 0
-	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
-	{ 0x47883a, 0x47883b, MWA16_RAM, &metro_rombank		},	// Rom Bank
-	{ 0x800002, 0x800009, metro_coin_lockout_4words_w	},	// Coin Lockout
+	AM_RANGE(0x478840, 0x47884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x47883a, 0x47883b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x800002, 0x800009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -3528,7 +3528,7 @@ static MACHINE_DRIVER_START( balcube )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(balcube_readmem,balcube_writemem)
+	MDRV_CPU_PROGRAM_MAP(balcube_readmem,balcube_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3556,7 +3556,7 @@ static MACHINE_DRIVER_START( bangball )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(bangball_readmem,bangball_writemem)
+	MDRV_CPU_PROGRAM_MAP(bangball_readmem,bangball_writemem)
 	MDRV_CPU_VBLANK_INT(bangball_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3595,14 +3595,14 @@ static MACHINE_DRIVER_START( daitorid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(daitorid_readmem,daitorid_writemem)
+	MDRV_CPU_PROGRAM_MAP(daitorid_readmem,daitorid_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 #ifdef TEST_SOUND
 	MDRV_CPU_ADD(UPD7810, 12000000)
 	MDRV_CPU_CONFIG(metro_cpu_config)
-	MDRV_CPU_MEMORY(upd7810_readmem,upd7810_writemem)
-	MDRV_CPU_PORTS(upd7810_readport,upd7810_writeport)
+	MDRV_CPU_PROGRAM_MAP(upd7810_readmem,upd7810_writemem)
+	MDRV_CPU_IO_MAP(upd7810_readport,upd7810_writeport)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3633,7 +3633,7 @@ static MACHINE_DRIVER_START( dharma )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(dharma_readmem,dharma_writemem)
+	MDRV_CPU_PROGRAM_MAP(dharma_readmem,dharma_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3663,7 +3663,7 @@ static MACHINE_DRIVER_START( karatour )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(karatour_readmem,karatour_writemem)
+	MDRV_CPU_PROGRAM_MAP(karatour_readmem,karatour_writemem)
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3693,7 +3693,7 @@ static MACHINE_DRIVER_START( 3kokushi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(kokushi_readmem,kokushi_writemem)
+	MDRV_CPU_PROGRAM_MAP(kokushi_readmem,kokushi_writemem)
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3723,7 +3723,7 @@ static MACHINE_DRIVER_START( lastfort )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(lastfort_readmem,lastfort_writemem)
+	MDRV_CPU_PROGRAM_MAP(lastfort_readmem,lastfort_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3753,7 +3753,7 @@ static MACHINE_DRIVER_START( dokyusei )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(dokyusei_readmem,dokyusei_writemem)
+	MDRV_CPU_PROGRAM_MAP(dokyusei_readmem,dokyusei_writemem)
 	MDRV_CPU_VBLANK_INT(dokyusei_interrupt,2)	/* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3795,7 +3795,7 @@ static MACHINE_DRIVER_START( dokyusp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(dokyusp_readmem,dokyusp_writemem)
+	MDRV_CPU_PROGRAM_MAP(dokyusp_readmem,dokyusp_writemem)
 	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3825,7 +3825,7 @@ static MACHINE_DRIVER_START( gakusai )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(gakusai_readmem,gakusai_writemem)
+	MDRV_CPU_PROGRAM_MAP(gakusai_readmem,gakusai_writemem)
 	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3855,7 +3855,7 @@ static MACHINE_DRIVER_START( gakusai2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(gakusai2_readmem,gakusai2_writemem)
+	MDRV_CPU_PROGRAM_MAP(gakusai2_readmem,gakusai2_writemem)
 	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3885,7 +3885,7 @@ static MACHINE_DRIVER_START( pangpoms )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(pangpoms_readmem,pangpoms_writemem)
+	MDRV_CPU_PROGRAM_MAP(pangpoms_readmem,pangpoms_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3915,7 +3915,7 @@ static MACHINE_DRIVER_START( poitto )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(poitto_readmem,poitto_writemem)
+	MDRV_CPU_PROGRAM_MAP(poitto_readmem,poitto_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3945,7 +3945,7 @@ static MACHINE_DRIVER_START( pururun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(pururun_readmem,pururun_writemem)
+	MDRV_CPU_PROGRAM_MAP(pururun_readmem,pururun_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -3975,7 +3975,7 @@ static MACHINE_DRIVER_START( skyalert )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(skyalert_readmem,skyalert_writemem)
+	MDRV_CPU_PROGRAM_MAP(skyalert_readmem,skyalert_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -4005,7 +4005,7 @@ static MACHINE_DRIVER_START( toride2g )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(toride2g_readmem,toride2g_writemem)
+	MDRV_CPU_PROGRAM_MAP(toride2g_readmem,toride2g_writemem)
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	/* Sound CPU is unemulated */
@@ -4035,7 +4035,7 @@ static MACHINE_DRIVER_START( mouja )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* ??? */
-	MDRV_CPU_MEMORY(mouja_readmem,mouja_writemem)
+	MDRV_CPU_PROGRAM_MAP(mouja_readmem,mouja_writemem)
 	MDRV_CPU_VBLANK_INT(mouja_interrupt,2)	/* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4064,13 +4064,13 @@ static MACHINE_DRIVER_START( blzntrnd )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(blzntrnd_readmem,blzntrnd_writemem)
+	MDRV_CPU_PROGRAM_MAP(blzntrnd_readmem,blzntrnd_writemem)
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
-	MDRV_CPU_PORTS(blzntrnd_sound_readport, blzntrnd_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
+	MDRV_CPU_IO_MAP(blzntrnd_sound_readport, blzntrnd_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -4097,13 +4097,13 @@ static MACHINE_DRIVER_START( gstrik2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(blzntrnd_readmem,blzntrnd_writemem)
+	MDRV_CPU_PROGRAM_MAP(blzntrnd_readmem,blzntrnd_writemem)
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
-	MDRV_CPU_PORTS(blzntrnd_sound_readport, blzntrnd_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
+	MDRV_CPU_IO_MAP(blzntrnd_sound_readport, blzntrnd_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

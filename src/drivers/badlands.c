@@ -309,35 +309,26 @@ static WRITE_HANDLER( audio_io_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0xfc0000, 0xfc1fff, sound_busy_r },
-	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_r },
-	{ 0xfe4000, 0xfe5fff, input_port_0_word_r },
-	{ 0xfe6000, 0xfe6001, input_port_1_word_r },
-	{ 0xfe6002, 0xfe6003, input_port_2_word_r },
-	{ 0xfe6004, 0xfe6005, pedal_0_r },
-	{ 0xfe6006, 0xfe6007, pedal_1_r },
-	{ 0xfea000, 0xfebfff, atarigen_sound_upper_r },
-	{ 0xffc000, 0xffc3ff, MRA16_RAM },
-	{ 0xffe000, 0xffffff, MRA16_RAM },
-MEMORY_END
-
-
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0xfc0000, 0xfc1fff, atarigen_sound_reset_w },
-	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xfe0000, 0xfe1fff, watchdog_reset16_w },
-	{ 0xfe2000, 0xfe3fff, atarigen_video_int_ack_w },
-	{ 0xfe8000, 0xfe9fff, atarigen_sound_upper_w },
-	{ 0xfec000, 0xfedfff, badlands_pf_bank_w },
-	{ 0xfee000, 0xfeffff, atarigen_eeprom_enable_w },
-	{ 0xffc000, 0xffc3ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
-	{ 0xffe000, 0xffefff, atarigen_playfield_w, &atarigen_playfield },
-	{ 0xfff000, 0xfff1ff, atarimo_0_spriteram_expanded_w, &atarimo_0_spriteram },
-	{ 0xfff200, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0xfc0000, 0xfc1fff) AM_READWRITE(sound_busy_r, atarigen_sound_reset_w)
+	AM_RANGE(0xfd0000, 0xfd1fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xfe0000, 0xfe1fff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xfe2000, 0xfe3fff) AM_WRITE(atarigen_video_int_ack_w)
+	AM_RANGE(0xfe4000, 0xfe5fff) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfe6000, 0xfe6001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfe6002, 0xfe6003) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfe6004, 0xfe6005) AM_READ(pedal_0_r)
+	AM_RANGE(0xfe6006, 0xfe6007) AM_READ(pedal_1_r)
+	AM_RANGE(0xfe8000, 0xfe9fff) AM_WRITE(atarigen_sound_upper_w)
+	AM_RANGE(0xfea000, 0xfebfff) AM_READ(atarigen_sound_upper_r)
+	AM_RANGE(0xfec000, 0xfedfff) AM_WRITE(badlands_pf_bank_w)
+	AM_RANGE(0xfee000, 0xfeffff) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0xffc000, 0xffc3ff) AM_READWRITE(MRA16_RAM, atarigen_expanded_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xffe000, 0xffefff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xfff000, 0xfff1ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_expanded_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xfff200, 0xffffff) AM_RAM
+ADDRESS_MAP_END
 
 
 
@@ -347,21 +338,13 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( audio_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x2800, 0x2bff, audio_io_r },
-	{ 0x3000, 0xffff, MRA_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( audio_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2bff, audio_io_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( audio_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM
+	AM_RANGE(0x2000, 0x2000) AM_READWRITE(YM2151_status_port_0_r, YM2151_register_port_0_w)
+	AM_RANGE(0x2000, 0x2001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2bff) AM_READWRITE(audio_io_r, audio_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
 
 
@@ -473,11 +456,11 @@ static MACHINE_DRIVER_START( badlands )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(vblank_int,1)
 
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
-	MDRV_CPU_MEMORY(audio_readmem,audio_writemem)
+	MDRV_CPU_PROGRAM_MAP(audio_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -543,7 +526,6 @@ ROM_END
 static DRIVER_INIT( badlands )
 {
 	atarigen_eeprom_default = NULL;
-	atarigen_init_6502_speedup(1, 0x4155, 0x416d);
 
 	/* initialize the audio system */
 	bank_base = &memory_region(REGION_CPU2)[0x03000];

@@ -77,47 +77,47 @@ static READ_HANDLER( pcktgal_adpcm_reset_r )
 
 /***************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1800, 0x1800, input_port_0_r },
-	{ 0x1a00, 0x1a00, input_port_1_r },
-	{ 0x1c00, 0x1c00, input_port_2_r },
-	{ 0x4000, 0x5fff, MRA_BANK1 },
-	{ 0x6000, 0x7fff, MRA_BANK2 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
+	AM_RANGE(0x1a00, 0x1a00) AM_READ(input_port_1_r)
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(input_port_2_r)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0fff, pcktgal_videoram_w, &videoram },
-	{ 0x1000, 0x11ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1801, 0x1801, pcktgal_flipscreen_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(pcktgal_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1000, 0x11ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1801, 0x1801) AM_WRITE(pcktgal_flipscreen_w)
 	/* 1800 - 0x181f are unused BAC-06 registers, see vidhrdw/dec0.c */
-	{ 0x1a00, 0x1a00, pcktgal_sound_w },
-	{ 0x1c00, 0x1c00, pcktgal_bank_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x1a00, 0x1a00) AM_WRITE(pcktgal_sound_w)
+	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(pcktgal_bank_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x3000, 0x3000, soundlatch_r },
-	{ 0x3400, 0x3400, pcktgal_adpcm_reset_r },	/* ? not sure */
-	{ 0x4000, 0x7fff, MRA_BANK3 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
+	AM_RANGE(0x3400, 0x3400) AM_READ(pcktgal_adpcm_reset_r)	/* ? not sure */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0800, YM2203_control_port_0_w },
-	{ 0x0801, 0x0801, YM2203_write_port_0_w },
-	{ 0x1000, 0x1000, YM3812_control_port_0_w },
-	{ 0x1001, 0x1001, YM3812_write_port_0_w },
-	{ 0x1800, 0x1800, pcktgal_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
-	{ 0x2000, 0x2000, pcktgal_sound_bank_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(pcktgal_adpcm_data_w)	/* ADPCM data for the MSM5205 chip */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(pcktgal_sound_bank_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -263,12 +263,12 @@ static MACHINE_DRIVER_START( pcktgal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

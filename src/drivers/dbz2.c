@@ -148,77 +148,77 @@ static void dbz2_sound_irq(int irq)
 		cpu_set_irq_line(1, 0, CLEAR_LINE);
 }
 
-static MEMORY_READ16_START( dbz2readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x480000, 0x48ffff, MRA16_RAM },
-	{ 0x490000, 0x491fff, K054157_ram_word_r },	// '157 RAM is mirrored twice
-	{ 0x492000, 0x493fff, K054157_ram_word_r },
-	{ 0x498000, 0x49ffff, K054157_rom_word_8000_r },	// code near a60 in dbz2, subroutine at 730 in dbz
-	{ 0x4a0000, 0x4a0fff, K053247_word_r },
-	{ 0x4a1000, 0x4a3fff, MRA16_RAM },
-	{ 0x4a8000, 0x4abfff, MRA16_RAM },			// palette
-	{ 0x4c0000, 0x4c0001, K053246_word_r },
-	{ 0x4e0000, 0x4e0001, dbz2_inp0_r },
-	{ 0x4e0002, 0x4e0003, dbz2_inp1_r },
-	{ 0x4e4000, 0x4e4001, dbz2_inp2_r },
-	{ 0x500000, 0x501fff, MRA16_RAM },
-	{ 0x508000, 0x509fff, MRA16_RAM },
-	{ 0x510000, 0x513fff, MRA16_RAM },
-	{ 0x518000, 0x51bfff, MRA16_RAM },
-	{ 0x600000, 0x6fffff, MRA16_NOP }, 			// PSAC 1 ROM readback window
-	{ 0x700000, 0x7fffff, MRA16_NOP }, 			// PSAC 2 ROM readback window
-MEMORY_END
+static ADDRESS_MAP_START( dbz2readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x480000, 0x48ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x490000, 0x491fff) AM_READ(K054157_ram_word_r)	// '157 RAM is mirrored twice
+	AM_RANGE(0x492000, 0x493fff) AM_READ(K054157_ram_word_r)
+	AM_RANGE(0x498000, 0x49ffff) AM_READ(K054157_rom_word_8000_r)	// code near a60 in dbz2, subroutine at 730 in dbz
+	AM_RANGE(0x4a0000, 0x4a0fff) AM_READ(K053247_word_r)
+	AM_RANGE(0x4a1000, 0x4a3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x4a8000, 0x4abfff) AM_READ(MRA16_RAM)			// palette
+	AM_RANGE(0x4c0000, 0x4c0001) AM_READ(K053246_word_r)
+	AM_RANGE(0x4e0000, 0x4e0001) AM_READ(dbz2_inp0_r)
+	AM_RANGE(0x4e0002, 0x4e0003) AM_READ(dbz2_inp1_r)
+	AM_RANGE(0x4e4000, 0x4e4001) AM_READ(dbz2_inp2_r)
+	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x508000, 0x509fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x510000, 0x513fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x518000, 0x51bfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6fffff) AM_READ(MRA16_NOP) 			// PSAC 1 ROM readback window
+	AM_RANGE(0x700000, 0x7fffff) AM_READ(MRA16_NOP) 			// PSAC 2 ROM readback window
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( dbz2writemem )
-	{ 0x480000, 0x48ffff, MWA16_RAM },
-	{ 0x490000, 0x491fff, K054157_ram_word_w },
-	{ 0x492000, 0x493fff, K054157_ram_word_w },
-	{ 0x4a0000, 0x4a0fff, K053247_word_w },
-	{ 0x4a1000, 0x4a3fff, MWA16_RAM },
-	{ 0x4a8000, 0x4abfff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x4c0000, 0x4c0007, K053246_word_w },
-	{ 0x4c4000, 0x4c4007, K053246_word_w },
-	{ 0x4c8000, 0x4c8007, K054157_b_word_w },
-	{ 0x4cc000, 0x4cc03f, K054157_word_w },
-	{ 0x4ec000, 0x4ec001, dbzcontrol_w },
-	{ 0x4d0000, 0x4d001f, MWA16_RAM, &K053936_0_ctrl },
-	{ 0x4d4000, 0x4d401f, MWA16_RAM, &K053936_1_ctrl },
-	{ 0x4e8000, 0x4e8001, MWA16_NOP },
-	{ 0x4f0000, 0x4f0001, dbz2_sound_command_w },
-	{ 0x4f4000, 0x4f4001, dbz2_sound_cause_nmi },
-	{ 0x4f8000, 0x4f801f, MWA16_NOP },			// 251 #1
-	{ 0x4fc000, 0x4fc01f, K053251_lsb_w },		// 251 #2
-	{ 0x500000, 0x501fff, dbz2_bg2_videoram_w, &dbz2_bg2_videoram },
-	{ 0x508000, 0x509fff, dbz2_bg_videoram_w, &dbz2_bg_videoram },
-	{ 0x510000, 0x513fff, MWA16_RAM, &K053936_0_linectrl }, // ?? guess, it might not be
-	{ 0x518000, 0x51bfff, MWA16_RAM, &K053936_1_linectrl }, // ?? guess, it might not be
-MEMORY_END
+static ADDRESS_MAP_START( dbz2writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x480000, 0x48ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x490000, 0x491fff) AM_WRITE(K054157_ram_word_w)
+	AM_RANGE(0x492000, 0x493fff) AM_WRITE(K054157_ram_word_w)
+	AM_RANGE(0x4a0000, 0x4a0fff) AM_WRITE(K053247_word_w)
+	AM_RANGE(0x4a1000, 0x4a3fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x4a8000, 0x4abfff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x4c0000, 0x4c0007) AM_WRITE(K053246_word_w)
+	AM_RANGE(0x4c4000, 0x4c4007) AM_WRITE(K053246_word_w)
+	AM_RANGE(0x4c8000, 0x4c8007) AM_WRITE(K054157_b_word_w)
+	AM_RANGE(0x4cc000, 0x4cc03f) AM_WRITE(K054157_word_w)
+	AM_RANGE(0x4ec000, 0x4ec001) AM_WRITE(dbzcontrol_w)
+	AM_RANGE(0x4d0000, 0x4d001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)
+	AM_RANGE(0x4d4000, 0x4d401f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_1_ctrl)
+	AM_RANGE(0x4e8000, 0x4e8001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x4f0000, 0x4f0001) AM_WRITE(dbz2_sound_command_w)
+	AM_RANGE(0x4f4000, 0x4f4001) AM_WRITE(dbz2_sound_cause_nmi)
+	AM_RANGE(0x4f8000, 0x4f801f) AM_WRITE(MWA16_NOP)			// 251 #1
+	AM_RANGE(0x4fc000, 0x4fc01f) AM_WRITE(K053251_lsb_w)		// 251 #2
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(dbz2_bg2_videoram_w) AM_BASE(&dbz2_bg2_videoram)
+	AM_RANGE(0x508000, 0x509fff) AM_WRITE(dbz2_bg_videoram_w) AM_BASE(&dbz2_bg_videoram)
+	AM_RANGE(0x510000, 0x513fff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_linectrl) // ?? guess, it might not be
+	AM_RANGE(0x518000, 0x51bfff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_1_linectrl) // ?? guess, it might not be
+ADDRESS_MAP_END
 
 /* dbz2 sound */
 /* IRQ: from YM2151.  NMI: from 68000.  Port 0: write to ack NMI */
 
-static MEMORY_READ_START( dbz2sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xc001, YM2151_status_port_0_r },
-	{ 0xd000, 0xd002, OKIM6295_status_0_r },
-	{ 0xe000, 0xe001, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( dbz2sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xc001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xd000, 0xd002) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xe000, 0xe001) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dbz2sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xd000, 0xd001, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( dbz2sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xd000, 0xd001) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( dbz2sound_readport )
-PORT_END
+static ADDRESS_MAP_START( dbz2sound_readport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( dbz2sound_writeport )
-	{ 0x00, 0x00, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( dbz2sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 /**********************************************************************************/
 
@@ -455,13 +455,13 @@ static MACHINE_DRIVER_START( dbz2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 16000000)
-	MDRV_CPU_MEMORY(dbz2readmem,dbz2writemem)
+	MDRV_CPU_PROGRAM_MAP(dbz2readmem,dbz2writemem)
 	MDRV_CPU_VBLANK_INT(dbz2_interrupt,2)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dbz2sound_readmem, dbz2sound_writemem)
-	MDRV_CPU_PORTS(dbz2sound_readport,dbz2sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(dbz2sound_readmem, dbz2sound_writemem)
+	MDRV_CPU_IO_MAP(dbz2sound_readport,dbz2sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -37,43 +37,43 @@ static WRITE_HANDLER( suprloco_soundport_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc1ff, MRA_RAM },
-	{ 0xc800, 0xc800, input_port_0_r },
-	{ 0xd000, 0xd000, input_port_1_r },
-	{ 0xd800, 0xd800, input_port_2_r },
-	{ 0xe000, 0xe000, input_port_3_r },
-	{ 0xe001, 0xe001, input_port_4_r },
-	{ 0xe801, 0xe801, suprloco_control_r },
-	{ 0xf000, 0xf6ff, MRA_RAM },
-	{ 0xf7e0, 0xf7ff, suprloco_scrollram_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_1_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_2_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_3_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_4_r)
+	AM_RANGE(0xe801, 0xe801) AM_READ(suprloco_control_r)
+	AM_RANGE(0xf000, 0xf6ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf7e0, 0xf7ff) AM_READ(suprloco_scrollram_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xe800, suprloco_soundport_w },
-	{ 0xe801, 0xe801, suprloco_control_w },
-	{ 0xf000, 0xf6ff, suprloco_videoram_w, &suprloco_videoram },
-	{ 0xf7e0, 0xf7ff, suprloco_scrollram_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(suprloco_soundport_w)
+	AM_RANGE(0xe801, 0xe801) AM_WRITE(suprloco_control_w)
+	AM_RANGE(0xf000, 0xf6ff) AM_WRITE(suprloco_videoram_w) AM_BASE(&suprloco_videoram)
+	AM_RANGE(0xf7e0, 0xf7ff) AM_WRITE(suprloco_scrollram_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa003, SN76496_0_w },
-	{ 0xc000, 0xc003, SN76496_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa003) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xc000, 0xc003) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -191,12 +191,12 @@ static MACHINE_DRIVER_START( suprloco )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)			/* NMIs are caused by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)

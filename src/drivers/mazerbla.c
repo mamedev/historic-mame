@@ -482,33 +482,33 @@ static WRITE_HANDLER(zpu_coin_counter_w)
 	coin_counter_w(offset, (data&0x40)>>6 );
 }
 
-static PORT_READ_START( readport )
-	{ 0x4c, 0x4f, ls670_1_r },
-	{ 0x62, 0x62, zpu_inputs_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4c, 0x4f) AM_READ(ls670_1_r)
+	AM_RANGE(0x62, 0x62) AM_READ(zpu_inputs_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x4c, 0x4f, ls670_0_w },
-	{ 0x60, 0x60, zpu_bcd_decoder_w },
-	{ 0x68, 0x68, zpu_coin_counter_w },
-	{ 0x6a, 0x6a, zpu_lamps_w },
-	{ 0x6e, 0x6f, zpu_led_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4c, 0x4f) AM_WRITE(ls670_0_w)
+	AM_RANGE(0x60, 0x60) AM_WRITE(zpu_bcd_decoder_w)
+	AM_RANGE(0x68, 0x68) AM_WRITE(zpu_coin_counter_w)
+	AM_RANGE(0x6a, 0x6a) AM_WRITE(zpu_lamps_w)
+	AM_RANGE(0x6e, 0x6f) AM_WRITE(zpu_led_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, sharedram_CFB_ZPU_r },
-	{ 0xd800, 0xd800, cfb_zpu_int_req_clr },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(sharedram_CFB_ZPU_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(cfb_zpu_int_req_clr)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, sharedram_CFB_ZPU_w },
-	{ 0xe000, 0xe7ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0xe800, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(sharedram_CFB_ZPU_w)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -522,26 +522,26 @@ static WRITE_HANDLER( vsb_ls273_audio_control_w )
 }
 
 
-static PORT_READ_START( readport_cpu2 )
-	{ 0x80, 0x83, ls670_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x83) AM_READ(ls670_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_cpu2 )
-	{ 0x00, 0x00, vsb_ls273_audio_control_w },
-	{ 0x80, 0x83, ls670_1_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(vsb_ls273_audio_control_w)
+	AM_RANGE(0x80, 0x83) AM_WRITE(ls670_1_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM }, /* main RAM (stack) */
-	{ 0x8000, 0x83ff, MWA_RAM }, /* waveform ???*/
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM) /* main RAM (stack) */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) /* waveform ???*/
+ADDRESS_MAP_END
 
 
 
@@ -631,27 +631,27 @@ static READ_HANDLER( cfb_port_02_r )
 	return (port02_status);
 }
 
-static PORT_READ_START( readport_cpu3 )
-	{ 0x02, 0x02, cfb_port_02_r },	/* VCU status ? */
-PORT_END
+static ADDRESS_MAP_START( readport_cpu3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_READ(cfb_port_02_r)	/* VCU status ? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_cpu3_mb )
-	{ 0x01, 0x01, cfb_backgnd_color_w },
-	{ 0x02, 0x02, cfb_led_w },
-	{ 0x03, 0x03, cfb_zpu_int_req_set_w },
-	{ 0x04, 0x04, cfb_rom_bank_sel_w },
-	{ 0x05, 0x05, cfb_vbank_w },	//visible/writable videopage select?
-PORT_END
+static ADDRESS_MAP_START( writeport_cpu3_mb, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(cfb_backgnd_color_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(cfb_led_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(cfb_zpu_int_req_set_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(cfb_rom_bank_sel_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(cfb_vbank_w)	//visible/writable videopage select?
+ADDRESS_MAP_END
 
 /* Great Guns has a little different banking layout */
-static PORT_WRITE_START( writeport_cpu3_gg )
-	{ 0x00, 0x00, IOWP_NOP },
-	{ 0x01, 0x01, cfb_backgnd_color_w },
-	{ 0x02, 0x02, cfb_led_w },
-	{ 0x03, 0x03, cfb_zpu_int_req_set_w },
-	{ 0x04, 0x04, cfb_rom_bank_sel_w_gg },
-	{ 0x05, 0x05, cfb_vbank_w },	//visible/writable videopage select?
-PORT_END
+static ADDRESS_MAP_START( writeport_cpu3_gg, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_WRITE(cfb_backgnd_color_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(cfb_led_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(cfb_zpu_int_req_set_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(cfb_rom_bank_sel_w_gg)
+	AM_RANGE(0x05, 0x05) AM_WRITE(cfb_vbank_w)	//visible/writable videopage select?
+ADDRESS_MAP_END
 
 
 
@@ -1047,23 +1047,23 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 	return 0;
 }
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x3800, 0x3fff, sharedram_CFB_ZPU_r },
-	{ 0x4000, 0x5fff, MRA_BANK1 },				/* GFX roms */
-	{ 0x6000, 0x67ff, cfb_ram_r },				/* RAM for VCU commands and parameters */
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x3fff) AM_READ(sharedram_CFB_ZPU_r)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK1)				/* GFX roms */
+	AM_RANGE(0x6000, 0x67ff) AM_READ(cfb_ram_r)				/* RAM for VCU commands and parameters */
 
-	{ 0xa000, 0xa7ff, VCU_set_cmd_param_r },	/* VCU command and parameters LOAD */
-	{ 0xc000, 0xdfff, VCU_set_gfx_addr_r },		/* gfx LOAD (blit) */
-	{ 0xe000, 0xffff, VCU_set_clr_addr_r },		/* palette? LOAD */
-MEMORY_END
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(VCU_set_cmd_param_r)	/* VCU command and parameters LOAD */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(VCU_set_gfx_addr_r)		/* gfx LOAD (blit) */
+	AM_RANGE(0xe000, 0xffff) AM_READ(VCU_set_clr_addr_r)		/* palette? LOAD */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x3800, 0x3fff, sharedram_CFB_ZPU_w, &cfb_zpu_sharedram },
-	{ 0x4000, 0x4003, VCU_video_reg_w },
-	{ 0x6000, 0x67ff, cfb_ram_w, &cfb_ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(sharedram_CFB_ZPU_w) AM_BASE(&cfb_zpu_sharedram)
+	AM_RANGE(0x4000, 0x4003) AM_WRITE(VCU_video_reg_w)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(cfb_ram_w) AM_BASE(&cfb_ram)
+ADDRESS_MAP_END
 
 
 
@@ -1094,17 +1094,17 @@ static WRITE_HANDLER( main_sound_w )
 }
 
 
-static PORT_READ_START( gg_readport )
-	{ 0x62, 0x62, zpu_inputs_r },
-PORT_END
-static PORT_WRITE_START( gg_writeport )
-	{ 0x4c, 0x4c, main_sound_w },
-	{ 0x60, 0x60, zpu_bcd_decoder_w },
-	{ 0x66, 0x66, IOWP_NOP },
-	{ 0x68, 0x68, IOWP_NOP },
+static ADDRESS_MAP_START( gg_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x62, 0x62) AM_READ(zpu_inputs_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( gg_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x4c, 0x4c) AM_WRITE(main_sound_w)
+	AM_RANGE(0x60, 0x60) AM_WRITE(zpu_bcd_decoder_w)
+	AM_RANGE(0x66, 0x66) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x68, 0x68) AM_WRITE(MWA8_NOP)
 
-	{ 0x6e, 0x6f, zpu_led_w },
-PORT_END
+	AM_RANGE(0x6e, 0x6f) AM_WRITE(zpu_led_w)
+ADDRESS_MAP_END
 
 
 
@@ -1130,24 +1130,24 @@ static WRITE_HANDLER( gg_led_ctrl_w )
 	set_led_status(1,data&0x01);
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x27ff, MWA_RAM }, /* main RAM (stack) */
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM) /* main RAM (stack) */
 
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x4001, 0x4001, AY8910_write_port_0_w },
-	{ 0x6000, 0x6000, AY8910_control_port_1_w },
-	{ 0x6001, 0x6001, AY8910_write_port_1_w },
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x6001, 0x6001) AM_WRITE(AY8910_write_port_1_w)
 
-	{ 0x8000, 0x8000, sound_int_clear_w },
-	{ 0xa000, 0xa000, sound_nmi_clear_w },
-MEMORY_END
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(sound_int_clear_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(sound_nmi_clear_w)
+ADDRESS_MAP_END
 
 
 
@@ -1487,17 +1487,17 @@ static struct AY8910interface ay8912_interface =
 static MACHINE_DRIVER_START( mazerbla )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no NMI, IM2 - vectors at 0xf8, 0xfa, 0xfc */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, NMI, IM1 INT */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
 //MDRV_CPU_PERIODIC_INT(irq0_line_hold, 400 ) /* frequency in Hz */
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no  NMI, IM1 INT */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
-	MDRV_CPU_PORTS(readport_cpu3,writeport_cpu3_mb)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_IO_MAP(readport_cpu3,writeport_cpu3_mb)
 /* (vblank related ??) int generated by a custom video processor
 and cleared on ANY port access.
 but handled differently for now
@@ -1529,18 +1529,18 @@ static MACHINE_DRIVER_START( greatgun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no NMI, IM2 - vectors at 0xf8, 0xfa, 0xfc */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(gg_readport,gg_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(gg_readport,gg_writeport)
 
 	MDRV_CPU_ADD(Z80, 14318000 / 4)	/* 3.579500 MHz, NMI - caused by sound command write, periodic INT */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	/* IRQ frequency is: 14318000.0 Hz/16/16/16/16 = 218.475341796875 Hz */
 	/*   that is a period of 1000000000.0 / 218.475341796875 = 4577175.5831 ns */
 	MDRV_CPU_PERIODIC_INT(sound_interrupt, 4577176 ) /* period in nanoseconds */
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no  NMI, IM1 INT */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
-	MDRV_CPU_PORTS(readport_cpu3,writeport_cpu3_gg)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_IO_MAP(readport_cpu3,writeport_cpu3_gg)
 /* (vblank related ??) int generated by a custom video processor
 and cleared on ANY port access.
 but handled differently for now

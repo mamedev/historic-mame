@@ -107,10 +107,10 @@ static unsigned char *palette_ram;
 static unsigned char *empty_ram;
 static unsigned char *shared_ram;
 
-static mem_read_handler porte0_r;
-static mem_read_handler porte1_r;
-static mem_read_handler portf0_r;
-static mem_read_handler portf1_r;
+static read8_handler porte0_r;
+static read8_handler porte1_r;
+static read8_handler portf0_r;
+static read8_handler portf1_r;
 
 static void palette_notifier(int addr)
 {
@@ -618,141 +618,141 @@ static READ_HANDLER( horshoes_trackx_hi_r )
 
 
 #define COMMON_BANKS_READ \
-	{ 0x0000, 0x5fff, MRA_ROM },			\
-	{ 0x6000, 0x7fff, MRA_BANK1 },			\
-	{ 0xc000, 0xcfff, MRA_BANK2 },			\
-	{ 0xd000, 0xdfff, MRA_BANK3 },			\
-	{ 0xe000, 0xefff, MRA_BANK4 },			\
-	{ 0xf000, 0xfdff, MRA_BANK5 },			\
-	{ 0xfe00, 0xfe03, taitol_bankc_r },		\
-	{ 0xfe04, 0xfe04, taitol_control_r },	\
-	{ 0xff00, 0xff02, irq_adr_r },			\
-	{ 0xff03, 0xff03, irq_enable_r },		\
-	{ 0xff04, 0xff07, rambankswitch_r },	\
-	{ 0xff08, 0xff08, rombankswitch_r }
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)			\
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			\
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_BANK2)			\
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_BANK3)			\
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_BANK4)			\
+	AM_RANGE(0xf000, 0xfdff) AM_READ(MRA8_BANK5)			\
+	AM_RANGE(0xfe00, 0xfe03) AM_READ(taitol_bankc_r)		\
+	AM_RANGE(0xfe04, 0xfe04) AM_READ(taitol_control_r)	\
+	AM_RANGE(0xff00, 0xff02) AM_READ(irq_adr_r)			\
+	AM_RANGE(0xff03, 0xff03) AM_READ(irq_enable_r)		\
+	AM_RANGE(0xff04, 0xff07) AM_READ(rambankswitch_r)	\
+	AM_RANGE(0xff08, 0xff08) AM_READ(rombankswitch_r)
 
 #define COMMON_BANKS_WRITE \
-	{ 0x0000, 0x7fff, MWA_ROM },			\
-	{ 0xc000, 0xcfff, bank0_w },			\
-	{ 0xd000, 0xdfff, bank1_w },			\
-	{ 0xe000, 0xefff, bank2_w },			\
-	{ 0xf000, 0xfdff, bank3_w },			\
-	{ 0xfe00, 0xfe03, taitol_bankc_w },		\
-	{ 0xfe04, 0xfe04, taitol_control_w },	\
-	{ 0xff00, 0xff02, irq_adr_w },			\
-	{ 0xff03, 0xff03, irq_enable_w },		\
-	{ 0xff04, 0xff07, rambankswitch_w },	\
-	{ 0xff08, 0xff08, rombankswitch_w }
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)			\
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(bank0_w)			\
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(bank1_w)			\
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(bank2_w)			\
+	AM_RANGE(0xf000, 0xfdff) AM_WRITE(bank3_w)			\
+	AM_RANGE(0xfe00, 0xfe03) AM_WRITE(taitol_bankc_w)		\
+	AM_RANGE(0xfe04, 0xfe04) AM_WRITE(taitol_control_w)	\
+	AM_RANGE(0xff00, 0xff02) AM_WRITE(irq_adr_w)			\
+	AM_RANGE(0xff03, 0xff03) AM_WRITE(irq_enable_w)		\
+	AM_RANGE(0xff04, 0xff07) AM_WRITE(rambankswitch_w)	\
+	AM_RANGE(0xff08, 0xff08) AM_WRITE(rombankswitch_w)
 
 #define COMMON_SINGLE_READ \
-	{ 0xa000, 0xa000, YM2203_status_port_0_r },	\
-	{ 0xa001, 0xa001, ym2203_data0_r },			\
-	{ 0xa003, 0xa003, ym2203_data1_r },			\
-	{ 0x8000, 0x9fff, MRA_RAM }
+	AM_RANGE(0xa000, 0xa000) AM_READ(YM2203_status_port_0_r)	\
+	AM_RANGE(0xa001, 0xa001) AM_READ(ym2203_data0_r)			\
+	AM_RANGE(0xa003, 0xa003) AM_READ(ym2203_data1_r)			\
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
 
 #define COMMON_SINGLE_WRITE \
-	{ 0xa000, 0xa000, YM2203_control_port_0_w },	\
-	{ 0xa001, 0xa001, YM2203_write_port_0_w },		\
-	{ 0x8000, 0x9fff, MWA_RAM }
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2203_control_port_0_w)	\
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2203_write_port_0_w)		\
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
 
 
 
-static MEMORY_READ_START( fhawk_readmem )
-	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xbfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fhawk_writemem )
-	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x9fff, MWA_RAM, &shared_ram },
-	{ 0xa000, 0xbfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( fhawk_2_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK6 },
-	{ 0xc800, 0xc800, MRA_NOP },
-	{ 0xc801, 0xc801, taitosound_comm_r },
-	{ 0xe000, 0xffff, shared_r },
-	{ 0xd000, 0xd000, input_port_0_r },
-	{ 0xd001, 0xd001, input_port_1_r },
-	{ 0xd002, 0xd002, input_port_2_r },
-	{ 0xd003, 0xd003, input_port_3_r },
-	{ 0xd007, 0xd007, input_port_4_r },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0xc800, 0xc800) AM_READ(MRA8_NOP)
+	AM_RANGE(0xc801, 0xc801) AM_READ(taitosound_comm_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(shared_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)
+	AM_RANGE(0xd003, 0xd003) AM_READ(input_port_3_r)
+	AM_RANGE(0xd007, 0xd007) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fhawk_2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc000, rombank2switch_w },
-	{ 0xc800, 0xc800, taitosound_port_w },
-	{ 0xc801, 0xc801, taitosound_comm_w },
-	{ 0xd000, 0xd000, MWA_NOP },	// Direct copy of input port 0
-	{ 0xd004, 0xd004, control2_w },
-	{ 0xd005, 0xd006, MWA_NOP },	// Always 0
-	{ 0xe000, 0xffff, shared_w },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(rombank2switch_w)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(taitosound_port_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(taitosound_comm_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)	// Direct copy of input port 0
+	AM_RANGE(0xd004, 0xd004) AM_WRITE(control2_w)
+	AM_RANGE(0xd005, 0xd006) AM_WRITE(MWA8_NOP)	// Always 0
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(shared_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( fhawk_3_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK7 },
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0xe001, 0xe001, taitosound_slave_comm_r },
-	{ 0xf000, 0xf000, YM2203_status_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK7)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe001, 0xe001) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(YM2203_status_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fhawk_3_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xe000, 0xe000, taitosound_slave_port_w },
-	{ 0xe001, 0xe001, taitosound_slave_comm_w },
-	{ 0xf000, 0xf000, YM2203_control_port_0_w },
-	{ 0xf001, 0xf001, YM2203_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( fhawk_3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( raimais_readmem )
-	COMMON_BANKS_READ,
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8800, mux_r },
-	{ 0x8801, 0x8801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
-	{ 0x8c00, 0x8c00, MRA_NOP },
-	{ 0x8c01, 0x8c01, taitosound_comm_r },
-	{ 0xa000, 0xbfff, MRA_RAM },
-MEMORY_END
-static MEMORY_WRITE_START( raimais_writemem )
-	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x87ff, MWA_RAM, &shared_ram },
-	{ 0x8800, 0x8800, mux_w },
-	{ 0x8801, 0x8801, mux_ctrl_w },
-	{ 0x8c00, 0x8c00, taitosound_port_w },
-	{ 0x8c01, 0x8c01, taitosound_comm_w },
-	{ 0xa000, 0xbfff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( raimais_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(mux_r)
+	AM_RANGE(0x8801, 0x8801) AM_READ(MRA8_NOP)	// Watchdog or interrupt ack (value ignored)
+	AM_RANGE(0x8c00, 0x8c00) AM_READ(MRA8_NOP)
+	AM_RANGE(0x8c01, 0x8c01) AM_READ(taitosound_comm_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( raimais_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(mux_w)
+	AM_RANGE(0x8801, 0x8801) AM_WRITE(mux_ctrl_w)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(taitosound_port_w)
+	AM_RANGE(0x8c01, 0x8c01) AM_WRITE(taitosound_comm_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( raimais_2_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, shared_r },
-MEMORY_END
+static ADDRESS_MAP_START( raimais_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(shared_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( raimais_2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, shared_w },
-MEMORY_END
+static ADDRESS_MAP_START( raimais_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(shared_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( raimais_3_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK7 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( raimais_3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK7)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
@@ -762,225 +762,225 @@ static WRITE_HANDLER( sound_bankswitch_w )
 	cpu_setbank (7, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
-static MEMORY_WRITE_START( raimais_3_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
-	{ 0xe600, 0xe600, MWA_NOP }, /* ? */
-	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( raimais_3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xe600, 0xe600) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( champwr_readmem )
-	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xbfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( champwr_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( champwr_writemem )
-	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xbfff, MWA_RAM, &shared_ram },
-MEMORY_END
+static ADDRESS_MAP_START( champwr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( champwr_2_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xdfff, shared_r },
-	{ 0xe000, 0xe000, input_port_0_r },
-	{ 0xe001, 0xe001, input_port_1_r },
-	{ 0xe002, 0xe002, input_port_2_r },
-	{ 0xe003, 0xe003, input_port_3_r },
-	{ 0xe007, 0xe007, input_port_4_r },
-	{ 0xe008, 0xe00f, MRA_NOP },
-	{ 0xe800, 0xe800, MRA_NOP },
-	{ 0xe801, 0xe801, taitosound_comm_r },
-	{ 0xf000, 0xf000, rombank2switch_r },
-MEMORY_END
+static ADDRESS_MAP_START( champwr_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(shared_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_1_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_2_r)
+	AM_RANGE(0xe003, 0xe003) AM_READ(input_port_3_r)
+	AM_RANGE(0xe007, 0xe007) AM_READ(input_port_4_r)
+	AM_RANGE(0xe008, 0xe00f) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe800, 0xe800) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe801, 0xe801) AM_READ(taitosound_comm_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(rombank2switch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( champwr_2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, shared_w },
-	{ 0xe000, 0xe000, MWA_NOP },	// Watchdog
-	{ 0xe004, 0xe004, control2_w },
-	{ 0xe800, 0xe800, taitosound_port_w },
-	{ 0xe801, 0xe801, taitosound_comm_w },
-	{ 0xf000, 0xf000, rombank2switch_w },
-MEMORY_END
+static ADDRESS_MAP_START( champwr_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(shared_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)	// Watchdog
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(control2_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(taitosound_port_w)
+	AM_RANGE(0xe801, 0xe801) AM_WRITE(taitosound_comm_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(rombank2switch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( champwr_3_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK7 },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0xa000, 0xa000, MRA_NOP },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( champwr_3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK7)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(MRA8_NOP)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( champwr_3_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2203_control_port_0_w },
-	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-	{ 0xb000, 0xb000, champwr_adpcm_hi_w },
-	{ 0xc000, 0xc000, champwr_adpcm_lo_w },
-	{ 0xd000, 0xd000, MWA_NOP },	/* ADPCM related */
-	{ 0xe000, 0xe000, MWA_NOP },	/* ADPCM related */
-MEMORY_END
+static ADDRESS_MAP_START( champwr_3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(champwr_adpcm_hi_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(champwr_adpcm_lo_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)	/* ADPCM related */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)	/* ADPCM related */
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( kurikint_readmem )
-	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xa800, mux_r },
-	{ 0xa801, 0xa801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
-MEMORY_END
+static ADDRESS_MAP_START( kurikint_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(mux_r)
+	AM_RANGE(0xa801, 0xa801) AM_READ(MRA8_NOP)	// Watchdog or interrupt ack (value ignored)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( kurikint_writemem )
-	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM, &shared_ram },
-	{ 0xa800, 0xa800, mux_w },
-	{ 0xa801, 0xa801, mux_ctrl_w },
-MEMORY_END
+static ADDRESS_MAP_START( kurikint_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(mux_w)
+	AM_RANGE(0xa801, 0xa801) AM_WRITE(mux_ctrl_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( kurikint_2_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, shared_r },
-	{ 0xe800, 0xe800, YM2203_status_port_0_r },
+static ADDRESS_MAP_START( kurikint_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(shared_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM2203_status_port_0_r)
 #if 0
-	{ 0xd000, 0xd000, input_port_0_r },
-	{ 0xd001, 0xd001, input_port_1_r },
-	{ 0xd002, 0xd002, input_port_2_r },
-	{ 0xd003, 0xd003, input_port_3_r },
-	{ 0xd007, 0xd007, input_port_4_r },
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)
+	AM_RANGE(0xd003, 0xd003) AM_READ(input_port_3_r)
+	AM_RANGE(0xd007, 0xd007) AM_READ(input_port_4_r)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( kurikint_2_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, shared_w },
-	{ 0xe800, 0xe800, YM2203_control_port_0_w },
-	{ 0xe801, 0xe801, YM2203_write_port_0_w },
+static ADDRESS_MAP_START( kurikint_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(shared_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xe801, 0xe801) AM_WRITE(YM2203_write_port_0_w)
 #if 0
-	{ 0xc000, 0xc000, rombank2switch_w },
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(rombank2switch_w)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( puzznic_readmem )
-	COMMON_BANKS_READ,
-	COMMON_SINGLE_READ,
-	{ 0xa800, 0xa800, MRA_NOP },	// Watchdog
-	{ 0xb000, 0xb7ff, MRA_RAM },	// Wrong, used to overcome protection
-	{ 0xb800, 0xb800, mcu_data_r },
-	{ 0xb801, 0xb801, mcu_control_r },
-MEMORY_END
+static ADDRESS_MAP_START( puzznic_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	COMMON_SINGLE_READ
+	AM_RANGE(0xa800, 0xa800) AM_READ(MRA8_NOP)	// Watchdog
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)	// Wrong, used to overcome protection
+	AM_RANGE(0xb800, 0xb800) AM_READ(mcu_data_r)
+	AM_RANGE(0xb801, 0xb801) AM_READ(mcu_control_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( puzznic_writemem )
-	COMMON_BANKS_WRITE,
-	COMMON_SINGLE_WRITE,
-	{ 0xb000, 0xb7ff, MWA_RAM },	// Wrong, used to overcome protection
-	{ 0xb800, 0xb800, mcu_data_w },
-	{ 0xb801, 0xb801, mcu_control_w },
-	{ 0xbc00, 0xbc00, MWA_NOP },	// Control register, function unknown
-MEMORY_END
-
-
-static MEMORY_READ_START( plotting_readmem )
-	COMMON_BANKS_READ,
-	COMMON_SINGLE_READ,
-MEMORY_END
-
-static MEMORY_WRITE_START( plotting_writemem )
-	COMMON_BANKS_WRITE,
-	COMMON_SINGLE_WRITE,
-	{ 0xa800, 0xa800, MWA_NOP },	// Watchdog or interrupt ack
-	{ 0xb800, 0xb800, MWA_NOP },	// Control register, function unknown
-MEMORY_END
+static ADDRESS_MAP_START( puzznic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	COMMON_SINGLE_WRITE
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(MWA8_RAM)	// Wrong, used to overcome protection
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(mcu_data_w)
+	AM_RANGE(0xb801, 0xb801) AM_WRITE(mcu_control_w)
+	AM_RANGE(0xbc00, 0xbc00) AM_WRITE(MWA8_NOP)	// Control register, function unknown
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( palamed_readmem )
-	COMMON_BANKS_READ,
-	COMMON_SINGLE_READ,
-	{ 0xa800, 0xa800, input_port_2_r },
-	{ 0xa801, 0xa801, input_port_3_r },
-	{ 0xa802, 0xa802, input_port_4_r },
-	{ 0xb001, 0xb001, MRA_NOP },	// Watchdog or interrupt ack
-MEMORY_END
+static ADDRESS_MAP_START( plotting_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	COMMON_SINGLE_READ
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( palamed_writemem )
-	COMMON_BANKS_WRITE,
-	COMMON_SINGLE_WRITE,
-	{ 0xa803, 0xa803, MWA_NOP },	// Control register, function unknown
-	{ 0xb000, 0xb000, MWA_NOP },	// Control register, function unknown (copy of 8822)
-MEMORY_END
+static ADDRESS_MAP_START( plotting_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	COMMON_SINGLE_WRITE
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(MWA8_NOP)	// Watchdog or interrupt ack
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	// Control register, function unknown
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( cachat_readmem )
-	COMMON_BANKS_READ,
-	COMMON_SINGLE_READ,
-	{ 0xa800, 0xa800, input_port_2_r },
-	{ 0xa801, 0xa801, input_port_3_r },
-	{ 0xa802, 0xa802, input_port_4_r },
-	{ 0xb001, 0xb001, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
-	{ 0xfff8, 0xfff8, rombankswitch_r },
-MEMORY_END
+static ADDRESS_MAP_START( palamed_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	COMMON_SINGLE_READ
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_2_r)
+	AM_RANGE(0xa801, 0xa801) AM_READ(input_port_3_r)
+	AM_RANGE(0xa802, 0xa802) AM_READ(input_port_4_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	// Watchdog or interrupt ack
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cachat_writemem )
-	COMMON_BANKS_WRITE,
-	COMMON_SINGLE_WRITE,
-	{ 0xa803, 0xa803, MWA_NOP },	// Control register, function unknown
-	{ 0xb000, 0xb000, MWA_NOP },	// Control register, function unknown
-	{ 0xfff8, 0xfff8, rombankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( palamed_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	COMMON_SINGLE_WRITE
+	AM_RANGE(0xa803, 0xa803) AM_WRITE(MWA8_NOP)	// Control register, function unknown
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	// Control register, function unknown (copy of 8822)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( horshoes_readmem )
-	COMMON_BANKS_READ,
-	COMMON_SINGLE_READ,
-	{ 0xa800, 0xa800, horshoes_tracky_lo_r },
-	{ 0xa802, 0xa802, horshoes_tracky_reset_r },
-	{ 0xa803, 0xa803, horshoes_trackx_reset_r },
-	{ 0xa804, 0xa804, horshoes_tracky_hi_r },
-	{ 0xa808, 0xa808, horshoes_trackx_lo_r },
-	{ 0xa80c, 0xa80c, horshoes_trackx_hi_r },
-	{ 0xb801, 0xb801, MRA_NOP },	// Watchdog or interrupt ack
-MEMORY_END
+static ADDRESS_MAP_START( cachat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	COMMON_SINGLE_READ
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_2_r)
+	AM_RANGE(0xa801, 0xa801) AM_READ(input_port_3_r)
+	AM_RANGE(0xa802, 0xa802) AM_READ(input_port_4_r)
+	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	// Watchdog or interrupt ack (value ignored)
+	AM_RANGE(0xfff8, 0xfff8) AM_READ(rombankswitch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( horshoes_writemem )
-	COMMON_BANKS_WRITE,
-	COMMON_SINGLE_WRITE,
-	{ 0xb802, 0xb802, horshoes_bankg_w },
-	{ 0xbc00, 0xbc00, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( cachat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	COMMON_SINGLE_WRITE
+	AM_RANGE(0xa803, 0xa803) AM_WRITE(MWA8_NOP)	// Control register, function unknown
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	// Control register, function unknown
+	AM_RANGE(0xfff8, 0xfff8) AM_WRITE(rombankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( evilston_readmem )
-	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xa800, 0xa800, input_port_0_r },
-	{ 0xa801, 0xa801, input_port_1_r },
-	{ 0xa802, 0xa802, input_port_2_r },
-	{ 0xa803, 0xa803, input_port_3_r },
-	{ 0xa807, 0xa807, input_port_4_r },
-MEMORY_END
+
+static ADDRESS_MAP_START( horshoes_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	COMMON_SINGLE_READ
+	AM_RANGE(0xa800, 0xa800) AM_READ(horshoes_tracky_lo_r)
+	AM_RANGE(0xa802, 0xa802) AM_READ(horshoes_tracky_reset_r)
+	AM_RANGE(0xa803, 0xa803) AM_READ(horshoes_trackx_reset_r)
+	AM_RANGE(0xa804, 0xa804) AM_READ(horshoes_tracky_hi_r)
+	AM_RANGE(0xa808, 0xa808) AM_READ(horshoes_trackx_lo_r)
+	AM_RANGE(0xa80c, 0xa80c) AM_READ(horshoes_trackx_hi_r)
+	AM_RANGE(0xb801, 0xb801) AM_READ(MRA8_NOP)	// Watchdog or interrupt ack
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( horshoes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	COMMON_SINGLE_WRITE
+	AM_RANGE(0xb802, 0xb802) AM_WRITE(horshoes_bankg_w)
+	AM_RANGE(0xbc00, 0xbc00) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( evilston_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_READ
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_0_r)
+	AM_RANGE(0xa801, 0xa801) AM_READ(input_port_1_r)
+	AM_RANGE(0xa802, 0xa802) AM_READ(input_port_2_r)
+	AM_RANGE(0xa803, 0xa803) AM_READ(input_port_3_r)
+	AM_RANGE(0xa807, 0xa807) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
 
 
@@ -993,30 +993,30 @@ static WRITE_HANDLER (evilston_snd_w)
 
 
 
-static MEMORY_WRITE_START( evilston_writemem )
-	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM,&shared_ram},//shared2_w },
-	{ 0xa800, 0xa800, MWA_RAM },//watchdog ?
-	{ 0xa804, 0xa804, MWA_RAM}, //coin couters/locks ?
+static ADDRESS_MAP_START( evilston_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	COMMON_BANKS_WRITE
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram)//shared2_w },
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(MWA8_RAM)//watchdog ?
+	AM_RANGE(0xa804, 0xa804) AM_WRITE(MWA8_RAM) //coin couters/locks ?
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( evilston_2_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, shared_r},//shared_r },
-	{ 0xe800, 0xe800, YM2203_status_port_0_r },
-	{ 0xf000, 0xf7ff, MRA_BANK7 },
-MEMORY_END
+static ADDRESS_MAP_START( evilston_2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(shared_r)//shared_r },
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_BANK7)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( evilston_2_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, shared_w },
-	{ 0xe800, 0xe800, YM2203_control_port_0_w },
-	{ 0xe801, 0xe801, YM2203_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( evilston_2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(shared_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xe801, 0xe801) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -2236,15 +2236,15 @@ static MACHINE_DRIVER_START( fhawk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu1", Z80, 6000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_MEMORY(fhawk_readmem,fhawk_writemem)
+	MDRV_CPU_PROGRAM_MAP(fhawk_readmem,fhawk_writemem)
 	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* ? xtal is 13.33056 */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(fhawk_3_readmem,fhawk_3_writemem)
+	MDRV_CPU_PROGRAM_MAP(fhawk_3_readmem,fhawk_3_writemem)
 
 	MDRV_CPU_ADD_TAG("cpu2", Z80, 6000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_MEMORY(fhawk_2_readmem,fhawk_2_writemem)
+	MDRV_CPU_PROGRAM_MAP(fhawk_2_readmem,fhawk_2_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2274,13 +2274,13 @@ static MACHINE_DRIVER_START( champwr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(fhawk)
 	MDRV_CPU_MODIFY("cpu1")
-	MDRV_CPU_MEMORY(champwr_readmem,champwr_writemem)
+	MDRV_CPU_PROGRAM_MAP(champwr_readmem,champwr_writemem)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_MEMORY(champwr_3_readmem,champwr_3_writemem)
+	MDRV_CPU_PROGRAM_MAP(champwr_3_readmem,champwr_3_writemem)
 
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(champwr_2_readmem,champwr_2_writemem)
+	MDRV_CPU_PROGRAM_MAP(champwr_2_readmem,champwr_2_writemem)
 
 	MDRV_MACHINE_INIT(champwr)
 
@@ -2294,13 +2294,13 @@ static MACHINE_DRIVER_START( raimais )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(fhawk)
 	MDRV_CPU_MODIFY("cpu1")
-	MDRV_CPU_MEMORY(raimais_readmem,raimais_writemem)
+	MDRV_CPU_PROGRAM_MAP(raimais_readmem,raimais_writemem)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_MEMORY(raimais_3_readmem,raimais_3_writemem)
+	MDRV_CPU_PROGRAM_MAP(raimais_3_readmem,raimais_3_writemem)
 
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(raimais_2_readmem,raimais_2_writemem)
+	MDRV_CPU_PROGRAM_MAP(raimais_2_readmem,raimais_2_writemem)
 
 	MDRV_MACHINE_INIT(raimais)
 
@@ -2313,11 +2313,11 @@ static MACHINE_DRIVER_START( kurikint )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_MEMORY(kurikint_readmem,kurikint_writemem)
+	MDRV_CPU_PROGRAM_MAP(kurikint_readmem,kurikint_writemem)
 	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
 	MDRV_CPU_ADD(Z80, 6000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_MEMORY(kurikint_2_readmem,kurikint_2_writemem)
+	MDRV_CPU_PROGRAM_MAP(kurikint_2_readmem,kurikint_2_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2356,7 +2356,7 @@ static MACHINE_DRIVER_START( plotting )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 6000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_MEMORY(plotting_readmem,plotting_writemem)
+	MDRV_CPU_PROGRAM_MAP(plotting_readmem,plotting_writemem)
 	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2385,7 +2385,7 @@ static MACHINE_DRIVER_START( puzznic )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(plotting)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(puzznic_readmem,puzznic_writemem)
+	MDRV_CPU_PROGRAM_MAP(puzznic_readmem,puzznic_writemem)
 
 	MDRV_MACHINE_INIT(puzznic)
 MACHINE_DRIVER_END
@@ -2396,7 +2396,7 @@ static MACHINE_DRIVER_START( horshoes )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(plotting)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(horshoes_readmem,horshoes_writemem)
+	MDRV_CPU_PROGRAM_MAP(horshoes_readmem,horshoes_writemem)
 
 	MDRV_MACHINE_INIT(horshoes)
 MACHINE_DRIVER_END
@@ -2407,7 +2407,7 @@ static MACHINE_DRIVER_START( palamed )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(plotting)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(palamed_readmem,palamed_writemem)
+	MDRV_CPU_PROGRAM_MAP(palamed_readmem,palamed_writemem)
 
 	MDRV_MACHINE_INIT(palamed)
 MACHINE_DRIVER_END
@@ -2418,7 +2418,7 @@ static MACHINE_DRIVER_START( cachat )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(plotting)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(cachat_readmem,cachat_writemem)
+	MDRV_CPU_PROGRAM_MAP(cachat_readmem,cachat_writemem)
 
 	MDRV_MACHINE_INIT(cachat)
 MACHINE_DRIVER_END
@@ -2427,11 +2427,11 @@ static MACHINE_DRIVER_START( evilston )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)
-	MDRV_CPU_MEMORY(evilston_readmem,evilston_writemem)
+	MDRV_CPU_PROGRAM_MAP(evilston_readmem,evilston_writemem)
 	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
 	MDRV_CPU_ADD(Z80, 6000000)
-	MDRV_CPU_MEMORY(evilston_2_readmem,evilston_2_writemem)
+	MDRV_CPU_PROGRAM_MAP(evilston_2_readmem,evilston_2_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

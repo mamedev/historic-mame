@@ -30,7 +30,7 @@
 static UINT8 s2650_reg_layout[] = {
 	S2650_PC, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3, -1,
 	S2650_SI, S2650_FO, S2650_R1A, S2650_R2A, S2650_R3A, -1,
-	S2650_HALT, S2650_IRQ_STATE, 0
+	S2650_HALT, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -97,6 +97,9 @@ static	UINT8 ccc[0x200] = {
 	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
 	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
 };
+
+static void s2650_set_sense(int state);
+
 
 #define CHECK_IRQ_LINE											\
 	if (S.irq_state != CLEAR_LINE)								\
@@ -183,7 +186,7 @@ INLINE UINT8 ARG(void)
  * RDMEM
  * read memory byte from addr
  ***************************************************************/
-#define RDMEM(addr) cpu_readmem16(addr)
+#define RDMEM(addr) program_read_byte_8(addr)
 
 /***************************************************************
  * handy table to build PC relative offsets
@@ -341,7 +344,7 @@ static	int 	S2650_relative[0x100] =
 		REL_EA( S.page );										\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 	} else S.iar = (S.iar + 1) & PMSK;							\
 }
 
@@ -354,7 +357,7 @@ static	int 	S2650_relative[0x100] =
 	REL_ZERO( 0 );												\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc16(S.ea);											\
+	change_pc(S.ea);											\
 }
 
 /***************************************************************
@@ -368,7 +371,7 @@ static	int 	S2650_relative[0x100] =
 		BRA_EA();												\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 	} else S.iar = (S.iar + 2) & PMSK;							\
 }
 
@@ -382,7 +385,7 @@ static	int 	S2650_relative[0x100] =
 	S.ea   = (S.ea + S.reg[3]) & AMSK;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc16(S.ea);											\
+	change_pc(S.ea);											\
 }
 
 /***************************************************************
@@ -398,7 +401,7 @@ static	int 	S2650_relative[0x100] =
 		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 	} else	S.iar = (S.iar + 1) & PMSK; 						\
 }
 
@@ -413,7 +416,7 @@ static	int 	S2650_relative[0x100] =
 	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc16(S.ea);											\
+	change_pc(S.ea);											\
 }
 
 /***************************************************************
@@ -429,7 +432,7 @@ static	int 	S2650_relative[0x100] =
 		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 	} else S.iar = (S.iar + 2) & PMSK;							\
 }
 
@@ -445,7 +448,7 @@ static	int 	S2650_relative[0x100] =
 	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc16(S.ea);											\
+	change_pc(S.ea);											\
 }
 
 /***************************************************************
@@ -460,7 +463,7 @@ static	int 	S2650_relative[0x100] =
 		S.psu = (S.psu & ~SP) | ((S.psu - 1) & SP); 			\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 	}															\
 }
 
@@ -478,7 +481,7 @@ static	int 	S2650_relative[0x100] =
 		S.psu = (S.psu & ~SP) | ((S.psu - 1) & SP); 			\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc16(S.ea);										\
+		change_pc(S.ea);										\
 		S.psu &= ~II;											\
 		CHECK_IRQ_LINE; 										\
 	}															\
@@ -499,7 +502,7 @@ static	int 	S2650_relative[0x100] =
  * Store source register to memory addr (CC unchanged)
  ***************************************************************/
 #define M_STR(address,source)									\
-	cpu_writemem16(address, source)
+	program_write_byte_8(address, source)
 
 /***************************************************************
  * M_AND
@@ -638,7 +641,7 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_SPSU()												\
 {																\
-	R0 = ((S.psu & ~PSU34) | (cpu_readport16(S2650_SENSE_PORT) & SI)); \
+	R0 = ((S.psu & ~PSU34) | (io_read_byte_8(S2650_SENSE_PORT) & SI)); \
 	SET_CC(R0); 												\
 }
 
@@ -708,7 +711,7 @@ static	int 	S2650_relative[0x100] =
 #define M_TPSU()												\
 {																\
 	UINT8 tpsu = ARG(); 										\
-    UINT8 rpsu = (S.psu | (cpu_readport16(S2650_SENSE_PORT) & SI)); \
+    UINT8 rpsu = (S.psu | (io_read_byte_8(S2650_SENSE_PORT) & SI)); \
 	S.psl &= ~CC;												\
 	if( (rpsu & tpsu) != tpsu )									\
 		S.psl |= 0x80;											\
@@ -751,105 +754,40 @@ static void ABS_EA(void) _ABS_EA()
 static void BRA_EA(void) _BRA_EA()
 #endif
 
-void s2650_init(void)
+static void s2650_init(void)
 {
 }
 
-void s2650_reset(void *param)
+static void s2650_reset(void *param)
 {
 	memset(&S, 0, sizeof(S));
 	S.psl = COM | WC;
 	S.psu = 0;
 }
 
-void s2650_exit(void)
+static void s2650_exit(void)
 {
 	/* nothing to do */
 }
 
-unsigned s2650_get_context(void *dst)
+static void s2650_get_context(void *dst)
 {
 	if( dst )
 		*(s2650_Regs*)dst = S;
-	return sizeof(s2650_Regs);
 }
 
-void s2650_set_context(void *src)
+static void s2650_set_context(void *src)
 {
 	if( src )
 	{
 		S = *(s2650_Regs*)src;
 		S.page = S.page & PAGE;
 		S.iar = S.iar & PMSK;
-        change_pc16(S.page + S.iar);
+        change_pc(S.page + S.iar);
 	}
 }
 
-unsigned s2650_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-		case S2650_PC: return S.page + S.iar;
-		case REG_SP: return S.psu & SP;
-		case S2650_PS: return (S.psu << 8) | S.psl;
-		case S2650_R0: return S.reg[0];
-		case S2650_R1: return S.reg[1];
-		case S2650_R2: return S.reg[2];
-		case S2650_R3: return S.reg[3];
-		case S2650_R1A: return S.reg[4];
-		case S2650_R2A: return S.reg[5];
-		case S2650_R3A: return S.reg[6];
-		case S2650_HALT: return S.halt;
-		case S2650_IRQ_STATE: return S.irq_state;
-		case S2650_SI: return s2650_get_sense(); break;
-		case S2650_FO: return s2650_get_flag(); break;
-		case REG_PREVIOUSPC: return S.ppc; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if( offset < 8 )
-					return S.ras[offset];
-			}
-	}
-	return 0;
-}
-
-void s2650_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-			S.page = val & PAGE;
-			S.iar = val & PMSK;
-			change_pc16(S.page + S.iar);
-			break;
-		case S2650_PC: S.page = val & PAGE; S.iar = val & PMSK; break;
-		case REG_SP: S.psu = (S.psu & ~SP) | (val & SP); break;
-		case S2650_PS: S.psl = val & 0xff; S.psu = val >> 8; break;
-		case S2650_R0: S.reg[0] = val; break;
-		case S2650_R1: S.reg[1] = val; break;
-		case S2650_R2: S.reg[2] = val; break;
-		case S2650_R3: S.reg[3] = val; break;
-		case S2650_R1A: S.reg[4] = val; break;
-		case S2650_R2A: S.reg[5] = val; break;
-		case S2650_R3A: S.reg[6] = val; break;
-		case S2650_HALT: S.halt = val; break;
-		case S2650_IRQ_STATE: s2650_set_irq_line(0, val); break;
-		case S2650_SI: s2650_set_sense(val); break;
-		case S2650_FO: s2650_set_flag(val); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if( offset < 8 )
-					S.ras[offset] = val;
-			}
-    }
-}
-
-void s2650_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == 1)
 	{
@@ -864,12 +802,7 @@ void s2650_set_irq_line(int irqline, int state)
 	CHECK_IRQ_LINE;
 }
 
-void s2650_set_irq_callback(int (*callback)(int irqline))
-{
-	S.irq_callback = callback;
-}
-
-void s2650_set_flag(int state)
+static void s2650_set_flag(int state)
 {
     if (state)
         S.psu |= FO;
@@ -877,12 +810,12 @@ void s2650_set_flag(int state)
         S.psu &= ~FO;
 }
 
-int s2650_get_flag(void)
+static int s2650_get_flag(void)
 {
     return (S.psu & FO) ? 1 : 0;
 }
 
-void s2650_set_sense(int state)
+static void s2650_set_sense(int state)
 {
     if (state)
         S.psu |= SI;
@@ -890,11 +823,11 @@ void s2650_set_sense(int state)
         S.psu &= ~SI;
 }
 
-int s2650_get_sense(void)
+static int s2650_get_sense(void)
 {
 	/* OR'd with Input to allow for external connections */
 
-    return (((S.psu & SI) ? 1 : 0) | ((cpu_readport16(S2650_SENSE_PORT) & SI) ? 1 : 0));
+    return (((S.psu & SI) ? 1 : 0) | ((io_read_byte_8(S2650_SENSE_PORT) & SI) ? 1 : 0));
 }
 
 static  int S2650_Cycles[0x100] = {
@@ -916,7 +849,7 @@ static  int S2650_Cycles[0x100] = {
 	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3
 };
 
-int s2650_execute(int cycles)
+static int s2650_execute(int cycles)
 {
 	s2650_ICount = cycles;
 	do
@@ -1030,7 +963,7 @@ int s2650_execute(int cycles)
 			case 0x31:		/* REDC,1 */
 			case 0x32:		/* REDC,2 */
 			case 0x33:		/* REDC,3 */
-				S.reg[S.r] = cpu_readport16(S2650_CTRL_PORT);
+				S.reg[S.r] = io_read_byte_8(S2650_CTRL_PORT);
 				SET_CC( S.reg[S.r] );
 				break;
 
@@ -1107,7 +1040,7 @@ int s2650_execute(int cycles)
 			case 0x55:		/* REDE,1 v */
 			case 0x56:		/* REDE,2 v */
 			case 0x57:		/* REDE,3 v */
-				S.reg[S.r] = cpu_readport16( ARG() );
+				S.reg[S.r] = io_read_byte_8( ARG() );
 				SET_CC(S.reg[S.r]);
 				break;
 
@@ -1159,7 +1092,7 @@ int s2650_execute(int cycles)
 			case 0x71:		/* REDD,1 */
 			case 0x72:		/* REDD,2 */
 			case 0x73:		/* REDD,3 */
-				S.reg[S.r] = cpu_readport16(S2650_DATA_PORT);
+				S.reg[S.r] = io_read_byte_8(S2650_DATA_PORT);
 				SET_CC(S.reg[S.r]);
 				break;
 
@@ -1292,7 +1225,7 @@ int s2650_execute(int cycles)
 			case 0xb1:		/* WRTC,1 */
 			case 0xb2:		/* WRTC,2 */
 			case 0xb3:		/* WRTC,3 */
-				cpu_writeport16(S2650_CTRL_PORT,S.reg[S.r]);
+				io_write_byte_8(S2650_CTRL_PORT,S.reg[S.r]);
 				break;
 
 			case 0xb4:		/* TPSU */
@@ -1364,7 +1297,7 @@ int s2650_execute(int cycles)
 			case 0xd5:		/* WRTE,1 v */
 			case 0xd6:		/* WRTE,2 v */
 			case 0xd7:		/* WRTE,3 v */
-				cpu_writeport16( ARG(), S.reg[S.r] );
+				io_write_byte_8( ARG(), S.reg[S.r] );
 				break;
 
 			case 0xd8:		/* BIRR,0 (*)a */
@@ -1415,7 +1348,7 @@ int s2650_execute(int cycles)
 			case 0xf1:		/* WRTD,1 */
 			case 0xf2:		/* WRTD,2 */
 			case 0xf3:		/* WRTD,3 */
-				cpu_writeport16(S2650_DATA_PORT, S.reg[S.r]);
+				io_write_byte_8(S2650_DATA_PORT, S.reg[S.r]);
 				break;
 
 			case 0xf4:		/* TMI,0  v */
@@ -1470,67 +1403,9 @@ void s2650_state_load(void *file)
 	state_load_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
 }
 #endif
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *s2650_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	s2650_Regs *r = context;
 
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
 
-    if( !context )
-		r = &S;
-
-    switch( regnum )
-	{
-		case CPU_INFO_FLAGS:
-		case CPU_INFO_REG+S2650_PC: sprintf(buffer[which], "PC:%04X", r->page + r->iar); break;
-		case CPU_INFO_REG+S2650_PS: sprintf(buffer[which], "PS:%02X%02X", r->psu, r->psl); break;
-		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%02X", r->reg[0]); break;
-		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%02X", r->reg[1]); break;
-		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%02X", r->reg[2]); break;
-		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%02X", r->reg[3]); break;
-		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%02X", r->reg[4]); break;
-		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%02X", r->reg[5]); break;
-		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
-		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
-		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+S2650_SI: sprintf(buffer[which], "SI:%X", (r->psu & SI) ? 1 : 0); break;
-		case CPU_INFO_REG+S2650_FO: sprintf(buffer[which], "FO:%X", (r->psu & FO) ? 1 : 0); break;
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->psu & 0x80 ? 'S':'.',
-				r->psu & 0x40 ? 'O':'.',
-				r->psu & 0x20 ? 'I':'.',
-				r->psu & 0x10 ? '?':'.',
-				r->psu & 0x08 ? '?':'.',
-				r->psu & 0x04 ? 's':'.',
-				r->psu & 0x02 ? 's':'.',
-				r->psu & 0x01 ? 's':'.',
-                r->psl & 0x80 ? 'M':'.',
-				r->psl & 0x40 ? 'P':'.',
-				r->psl & 0x20 ? 'H':'.',
-				r->psl & 0x10 ? 'R':'.',
-				r->psl & 0x08 ? 'W':'.',
-				r->psl & 0x04 ? 'V':'.',
-				r->psl & 0x02 ? '2':'.',
-				r->psl & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "S2650";
-		case CPU_INFO_FAMILY: return "Signetics 2650";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
-		case CPU_INFO_REG_LAYOUT: return (const char *)s2650_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)s2650_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned s2650_dasm(char *buffer, unsigned pc)
+static offs_t s2650_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return Dasm2650(buffer,pc);
@@ -1540,3 +1415,147 @@ unsigned s2650_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void s2650_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_IRQ_STATE + 1:					set_irq_line(1, info->i);				break;
+
+		case CPUINFO_INT_PC:
+			S.page = info->i & PAGE;
+			S.iar = info->i & PMSK;
+			change_pc(S.page + S.iar);
+			break;
+		case CPUINFO_INT_REGISTER + S2650_PC:			S.page = info->i & PAGE; S.iar = info->i & PMSK; break;
+		case CPUINFO_INT_SP: 							S.psu = (S.psu & ~SP) | (info->i & SP); break;
+		case CPUINFO_INT_REGISTER + S2650_PS:			S.psl = info->i & 0xff; S.psu = info->i >> 8; break;
+		case CPUINFO_INT_REGISTER + S2650_R0:			S.reg[0] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R1:			S.reg[1] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R2:			S.reg[2] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R3:			S.reg[3] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R1A:			S.reg[4] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R2A:			S.reg[5] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_R3A:			S.reg[6] = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_HALT:			S.halt = info->i;						break;
+		case CPUINFO_INT_REGISTER + S2650_SI:			s2650_set_sense(info->i);				break;
+		case CPUINFO_INT_REGISTER + S2650_FO:			s2650_set_flag(info->i);				break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					S.irq_callback = info->irqcallback;		break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void s2650_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(S);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 15;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = S.irq_state;					break;
+		case CPUINFO_INT_IRQ_STATE + 1:					info->i = s2650_get_sense() ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = S.ppc;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + S2650_PC:			info->i = S.page + S.iar;				break;
+		case CPUINFO_INT_SP:							info->i = S.psu & SP;					break;
+		case CPUINFO_INT_REGISTER + S2650_PS:			info->i = (S.psu << 8) | S.psl;			break;
+		case CPUINFO_INT_REGISTER + S2650_R0:			info->i = S.reg[0];						break;
+		case CPUINFO_INT_REGISTER + S2650_R1:			info->i = S.reg[1];						break;
+		case CPUINFO_INT_REGISTER + S2650_R2:			info->i = S.reg[2];						break;
+		case CPUINFO_INT_REGISTER + S2650_R3:			info->i = S.reg[3];						break;
+		case CPUINFO_INT_REGISTER + S2650_R1A:			info->i = S.reg[4];						break;
+		case CPUINFO_INT_REGISTER + S2650_R2A:			info->i = S.reg[5];						break;
+		case CPUINFO_INT_REGISTER + S2650_R3A:			info->i = S.reg[6];						break;
+		case CPUINFO_INT_REGISTER + S2650_HALT:			info->i = S.halt;						break;
+		case CPUINFO_INT_REGISTER + S2650_SI:			info->i = s2650_get_sense();			break;
+		case CPUINFO_INT_REGISTER + S2650_FO:			info->i = s2650_get_flag();				break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = s2650_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = s2650_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = s2650_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = s2650_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = s2650_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = s2650_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = s2650_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = s2650_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = S.irq_callback;		break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &s2650_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = s2650_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = s2650_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "S2650"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Signetics 2650"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Written by Juergen Buchmueller for use with MAME"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				S.psu & 0x80 ? 'S':'.',
+				S.psu & 0x40 ? 'O':'.',
+				S.psu & 0x20 ? 'I':'.',
+				S.psu & 0x10 ? '?':'.',
+				S.psu & 0x08 ? '?':'.',
+				S.psu & 0x04 ? 's':'.',
+				S.psu & 0x02 ? 's':'.',
+				S.psu & 0x01 ? 's':'.',
+                S.psl & 0x80 ? 'M':'.',
+				S.psl & 0x40 ? 'P':'.',
+				S.psl & 0x20 ? 'H':'.',
+				S.psl & 0x10 ? 'R':'.',
+				S.psl & 0x08 ? 'W':'.',
+				S.psl & 0x04 ? 'V':'.',
+				S.psl & 0x02 ? '2':'.',
+				S.psl & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + S2650_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", S.page + S.iar); break;
+		case CPUINFO_STR_REGISTER + S2650_PS:			sprintf(info->s = cpuintrf_temp_str(), "PS:%02X%02X", S.psu, S.psl); break;
+		case CPUINFO_STR_REGISTER + S2650_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", S.reg[0]); break;
+		case CPUINFO_STR_REGISTER + S2650_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", S.reg[1]); break;
+		case CPUINFO_STR_REGISTER + S2650_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", S.reg[2]); break;
+		case CPUINFO_STR_REGISTER + S2650_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", S.reg[3]); break;
+		case CPUINFO_STR_REGISTER + S2650_R1A:			sprintf(info->s = cpuintrf_temp_str(), "R1'%02X", S.reg[4]); break;
+		case CPUINFO_STR_REGISTER + S2650_R2A:			sprintf(info->s = cpuintrf_temp_str(), "R2'%02X", S.reg[5]); break;
+		case CPUINFO_STR_REGISTER + S2650_R3A:			sprintf(info->s = cpuintrf_temp_str(), "R3'%02X", S.reg[6]); break;
+		case CPUINFO_STR_REGISTER + S2650_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", S.halt); break;
+		case CPUINFO_STR_REGISTER + S2650_SI:			sprintf(info->s = cpuintrf_temp_str(), "SI:%X", (S.psu & SI) ? 1 : 0); break;
+		case CPUINFO_STR_REGISTER + S2650_FO:			sprintf(info->s = cpuintrf_temp_str(), "FO:%X", (S.psu & FO) ? 1 : 0); break;
+	}
+}

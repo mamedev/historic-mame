@@ -103,106 +103,108 @@ static WRITE_HANDLER( soundcommand_w )
       cpu_set_irq_line(2, 0, HOLD_LINE);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7b00, 0x7b00, MRA_NOP },	/* space for diagnostic ROM? The code looks */
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7b00, 0x7b00) AM_READ(MRA8_NOP)	/* space for diagnostic ROM? The code looks */
 									/* for a string here, and jumps if it's present */
-	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
-	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
-	{ 0x8800, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
-	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
-	{ 0xc800, 0xc800, MRA_NOP },
-	{ 0xc000, 0xc000, input_port_1_r },
-	{ 0xc001, 0xc001, input_port_2_r },
-	{ 0xc002, 0xc002, MRA_NOP },	/* bit 7 must be 0, otherwise game resets */
-	{ 0xc003, 0xc003, retofinv_mcu_status_r },
-	{ 0xc004, 0xc004, input_port_0_r },
-	{ 0xc005, 0xc005, input_port_3_r },
-	{ 0xc006, 0xc006, input_port_5_r },
-	{ 0xc007, 0xc007, input_port_4_r },
-	{ 0xe000, 0xe000, retofinv_mcu_r },
-	{ 0xf800, 0xf800, cpu0_mf800_r },
-MEMORY_END
+	AM_RANGE(0x8000, 0x83ff) AM_READ(retofinv_fg_videoram_r)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(retofinv_fg_colorram_r)
+	AM_RANGE(0x8800, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(retofinv_bg_videoram_r)
+	AM_RANGE(0xa400, 0xa7ff) AM_READ(retofinv_bg_colorram_r)
+	AM_RANGE(0xc800, 0xc800) AM_READ(MRA8_NOP)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_1_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_2_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(MRA8_NOP)	/* bit 7 must be 0, otherwise game resets */
+	AM_RANGE(0xc003, 0xc003) AM_READ(retofinv_mcu_status_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_0_r)
+	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_3_r)
+	AM_RANGE(0xc006, 0xc006) AM_READ(input_port_5_r)
+	AM_RANGE(0xc007, 0xc007) AM_READ(input_port_4_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(retofinv_mcu_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(cpu0_mf800_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-//	{ 0x7fff, 0x7fff, MWA_NOP },
-	{ 0x8000, 0x83ff, retofinv_fg_videoram_w, &retofinv_fg_videoram, &retofinv_videoram_size },
-	{ 0x8400, 0x87ff, retofinv_fg_colorram_w, &retofinv_fg_colorram },
-	{ 0x8800, 0x9fff, MWA_RAM, &sharedram },
-	{ 0x8f00, 0x8f7f, MWA_RAM, &retofinv_sprite_ram1 },	/* covered by the above, */
-	{ 0x9700, 0x977f, MWA_RAM, &retofinv_sprite_ram2 },	/* here only to */
-	{ 0x9f00, 0x9f7f, MWA_RAM, &retofinv_sprite_ram3 },	/* initialize the pointers */
-	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w, &retofinv_bg_videoram },
-	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w, &retofinv_bg_colorram },
-	{ 0xb800, 0xb800, retofinv_flip_screen_w },
-	{ 0xb801, 0xb801, MWA_RAM, &retofinv_fg_char_bank },
-	{ 0xb802, 0xb802, MWA_RAM, &retofinv_bg_char_bank },
-	{ 0xc800, 0xc800, MWA_NOP },
-	{ 0xc801, 0xc801, reset_cpu2_w },
-	{ 0xc802, 0xc802, reset_cpu1_w },
-	{ 0xc803, 0xc803, MWA_NOP },
-	{ 0xc804, 0xc804, MWA_NOP },
-	{ 0xc805, 0xc805, cpu1_halt_w },
-	{ 0xd800, 0xd800, soundcommand_w },
-	{ 0xd000, 0xd000, MWA_NOP },
-	{ 0xe800, 0xe800, retofinv_mcu_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+//	AM_RANGE(0x7fff, 0x7fff) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(retofinv_fg_videoram_w) AM_BASE(&retofinv_fg_videoram) AM_SIZE(&retofinv_videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(retofinv_fg_colorram_w) AM_BASE(&retofinv_fg_colorram)
+	AM_RANGE(0x8800, 0x9fff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram)
+	AM_RANGE(0x8f00, 0x8f7f) AM_WRITE(MWA8_RAM) AM_BASE(&retofinv_sprite_ram1)	/* covered by the above, */
+	AM_RANGE(0x9700, 0x977f) AM_WRITE(MWA8_RAM) AM_BASE(&retofinv_sprite_ram2)	/* here only to */
+	AM_RANGE(0x9f00, 0x9f7f) AM_WRITE(MWA8_RAM) AM_BASE(&retofinv_sprite_ram3)	/* initialize the pointers */
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(retofinv_bg_videoram_w) AM_BASE(&retofinv_bg_videoram)
+	AM_RANGE(0xa400, 0xa7ff) AM_WRITE(retofinv_bg_colorram_w) AM_BASE(&retofinv_bg_colorram)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(retofinv_flip_screen_w)
+	AM_RANGE(0xb801, 0xb801) AM_WRITE(MWA8_RAM) AM_BASE(&retofinv_fg_char_bank)
+	AM_RANGE(0xb802, 0xb802) AM_WRITE(MWA8_RAM) AM_BASE(&retofinv_bg_char_bank)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(reset_cpu2_w)
+	AM_RANGE(0xc802, 0xc802) AM_WRITE(reset_cpu1_w)
+	AM_RANGE(0xc803, 0xc803) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc805, 0xc805) AM_WRITE(cpu1_halt_w)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(soundcommand_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(retofinv_mcu_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
-	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
-	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
-	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
-	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
-	{ 0xc804, 0xc804, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(retofinv_fg_videoram_r)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(retofinv_fg_colorram_r)
+	AM_RANGE(0x8800, 0x9fff) AM_READ(retofinv_shared_ram_r)
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(retofinv_bg_videoram_r)
+	AM_RANGE(0xa400, 0xa7ff) AM_READ(retofinv_bg_colorram_r)
+	AM_RANGE(0xc804, 0xc804) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x8000, 0x83ff, retofinv_fg_videoram_w },
-	{ 0x8400, 0x87ff, retofinv_fg_colorram_w },
-	{ 0x8800, 0x9fff, retofinv_shared_ram_w },
-	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w },
-	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w },
-	{ 0xc804, 0xc804, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(retofinv_fg_videoram_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(retofinv_fg_colorram_w)
+	AM_RANGE(0x8800, 0x9fff) AM_WRITE(retofinv_shared_ram_w)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(retofinv_bg_videoram_w)
+	AM_RANGE(0xa400, 0xa7ff) AM_WRITE(retofinv_bg_colorram_w)
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x4000, 0x4000, soundlatch_r },
-	{ 0xe000, 0xe000, MRA_NOP },  		/* Rom version ? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)  		/* Rom version ? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x27ff, MWA_RAM },
-	{ 0x6000, 0x6000, cpu2_m6000_w },
-	{ 0x8000, 0x8000, SN76496_0_w },
-	{ 0xa000, 0xa000, SN76496_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(cpu2_m6000_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0000, retofinv_68705_portA_r },
-	{ 0x0001, 0x0001, retofinv_68705_portB_r },
-	{ 0x0002, 0x0002, retofinv_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(retofinv_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(retofinv_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(retofinv_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0000, retofinv_68705_portA_w },
-	{ 0x0001, 0x0001, retofinv_68705_portB_w },
-	{ 0x0002, 0x0002, retofinv_68705_portC_w },
-	{ 0x0004, 0x0004, retofinv_68705_ddrA_w },
-	{ 0x0005, 0x0005, retofinv_68705_ddrB_w },
-	{ 0x0006, 0x0006, retofinv_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(retofinv_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(retofinv_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(retofinv_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(retofinv_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(retofinv_68705_ddrB_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(retofinv_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -383,19 +385,19 @@ static MACHINE_DRIVER_START( retofinv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,2)
 
 	MDRV_CPU_ADD(M68705,8000000/2)  /* 4 MHz */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -423,15 +425,15 @@ static MACHINE_DRIVER_START( retofinb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

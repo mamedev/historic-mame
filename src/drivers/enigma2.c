@@ -77,40 +77,40 @@ static READ_HANDLER( fake_r3 )
 	return 0x38;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x21ff, MRA_RAM },
-  { 0x2200, 0x3fff, videoram_r },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x5001, 0x5001, fake_r }, /* sub cpu communication */
-	{ 0x5002, 0x5002, fake_r2 },
-	{ 0x5035, 0x5035, fake_r3 },		/* only enigma2a (pc:1282) */
-	{ 0x5801, 0x5801, input_port_0_r }, /* only enigma2a, used instead of ports */
-	{ 0x5802, 0x5802, input_port_1_r }, /* only enigma2a, used instead of ports */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_READ(MRA8_RAM)
+  AM_RANGE(0x2200, 0x3fff) AM_READ(videoram_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5001, 0x5001) AM_READ(fake_r) /* sub cpu communication */
+	AM_RANGE(0x5002, 0x5002) AM_READ(fake_r2)
+	AM_RANGE(0x5035, 0x5035) AM_READ(fake_r3)		/* only enigma2a (pc:1282) */
+	AM_RANGE(0x5801, 0x5801) AM_READ(input_port_0_r) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5802, 0x5802) AM_READ(input_port_1_r) /* only enigma2a, used instead of ports */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x21ff, MWA_RAM },
-	{ 0x2200, 0x3fff, enigma2_videoram_w, &videoram },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x5015, 0x53fb, MWA_RAM }, /* every 0x20 */
-	{ 0x5415, 0x541b, MWA_RAM }, /* always zero ? */
-	{ 0x5803, 0x5803, MWA_RAM }, /* only enigma2a, used instead of ports */
-	{ 0x5805, 0x5805, MWA_RAM }, /* only enigma2a, used instead of ports */
-	{ 0x5806, 0x5806, MWA_RAM }, /* only enigma2a, used instead of ports */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2200, 0x3fff) AM_WRITE(enigma2_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5015, 0x53fb) AM_WRITE(MWA8_RAM) /* every 0x20 */
+	AM_RANGE(0x5415, 0x541b) AM_WRITE(MWA8_RAM) /* always zero ? */
+	AM_RANGE(0x5803, 0x5803) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5805, 0x5805) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5806, 0x5806) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, input_port_0_r },
-	{ 0x02, 0x02, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x03, 0x03, MWA_NOP },
-	{ 0x05, 0x05, MWA_NOP },
-	{ 0x06, 0x06, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x05, 0x05) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( enigma2a )
 	PORT_START
@@ -230,8 +230,8 @@ PALETTE_INIT( enigma2 )
 
 static MACHINE_DRIVER_START( enigma2 )
 	MDRV_CPU_ADD_TAG("main",Z80, 2500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -253,6 +253,28 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_CPU_REPLACE("main", 8080, 2000000)
 MACHINE_DRIVER_END
 
+ROM_START( enigma2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "1.5d",         0x0000, 0x0800, CRC(499749de) SHA1(401928ff41d3b4cbb68e6ad3bf3be4a10ae1781f) )
+	ROM_LOAD( "2.7d",         0x0800, 0x0800, CRC(173c1329) SHA1(3f1ad46d0e58ab236e4ff2b385d09fbf113627da) )
+	ROM_LOAD( "3.8d",         0x1000, 0x0800, CRC(c7d3e6b1) SHA1(43f7c3a02b46747998260d5469248f21714fe12b) )
+	ROM_LOAD( "4.10d",        0x1800, 0x0800, CRC(c6a7428c) SHA1(3503f09856655c5973fb89f60d1045fe41012aa9) )
+	ROM_LOAD( "5.11d",   	  0x4000, 0x0800, CRC(098ac15b) SHA1(cce28a2540a9eabb473391fff92895129ae41751) )
+	ROM_LOAD( "6.13d",   	  0x4800, 0x0800, CRC(240a9d4b) SHA1(ca1c69fafec0471141ce1254ddfaef54fecfcbf0) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "enigma2.s",         0x0000, 0x1000, CRC(68fd8c54) SHA1(69996d5dfd996f0aacb26e397bef314204a2a88a) )
+
+ /* Color Map */
+	ROM_REGION( 0x800, REGION_PROMS, 0 )
+	ROM_LOAD( "7.11f",        0x0000, 0x0800, CRC(409b5aad) SHA1(1b774a70f725637458ed68df9ed42476291b0e43) )
+
+	/* Unknown */
+	ROM_REGION( 0x10000, REGION_USER1, 0 )
+	ROM_LOAD( "8.13f",        0x0000, 0x0800, CRC(e9cb116d) SHA1(41da4f46c5614ec3345c233467ebad022c6b0bf5) )
+ROM_END
+
+
 ROM_START( enigma2a )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "36_en1.bin",   0x0000, 0x0800, CRC(15f44806) SHA1(4a2f7bc91d4edf7a069e0865d964371c97af0a0a) )
@@ -268,27 +290,6 @@ ROM_START( enigma2a )
 
 ROM_END
 
-ROM_START( enigma2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "1.5d",         0x0000, 0x0800, CRC(499749de) SHA1(401928ff41d3b4cbb68e6ad3bf3be4a10ae1781f) )
-	ROM_LOAD( "2.7d",         0x0800, 0x0800, CRC(173c1329) SHA1(3f1ad46d0e58ab236e4ff2b385d09fbf113627da) )
-	ROM_LOAD( "3.8d",         0x1000, 0x0800, CRC(c7d3e6b1) SHA1(43f7c3a02b46747998260d5469248f21714fe12b) )
-	ROM_LOAD( "4.10d",        0x1800, 0x0800, CRC(c6a7428c) SHA1(3503f09856655c5973fb89f60d1045fe41012aa9) )
-	ROM_LOAD( "5.11d",   	  0x4000, 0x0800, CRC(098ac15b) SHA1(cce28a2540a9eabb473391fff92895129ae41751) )
-	ROM_LOAD( "6.13d",   	  0x4800, 0x0800, CRC(240a9d4b) SHA1(ca1c69fafec0471141ce1254ddfaef54fecfcbf0) )
-
-	// the length of the correct rom should be 0x1000
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "s.2f",         0x0000, 0x0800, BAD_DUMP CRC(9bceb714) SHA1(c3d9301cc93d073d7b2694346c26eddd36f94aae) )
-
- /* Color Map */
-	ROM_REGION( 0x800, REGION_PROMS, 0 )
-	ROM_LOAD( "7.11f",        0x0000, 0x0800, CRC(409b5aad) SHA1(1b774a70f725637458ed68df9ed42476291b0e43) )
-
-	/* Unknown */
-	ROM_REGION( 0x10000, REGION_USER1, 0 )
-	ROM_LOAD( "8.13f",        0x0000, 0x0800, CRC(e9cb116d) SHA1(41da4f46c5614ec3345c233467ebad022c6b0bf5) )
-ROM_END
 
 static DRIVER_INIT(enigma2) {	cmap=1;}
 static DRIVER_INIT(enigma2a){	cmap=0;}

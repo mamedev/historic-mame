@@ -67,77 +67,77 @@ static WRITE_HANDLER( lamps2_w )
 
 
 
-static MEMORY_READ_START( usg_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_RAM },
+static ADDRESS_MAP_START( usg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM)
 
-	{ 0x2000, 0x2000, input_port_1_r },
-	{ 0x2010, 0x2010, input_port_0_r },
-	{ 0x2041, 0x2041, input_port_2_r },
-	{ 0x2070, 0x2070, input_port_3_r },
+	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_1_r)
+	AM_RANGE(0x2010, 0x2010) AM_READ(input_port_0_r)
+	AM_RANGE(0x2041, 0x2041) AM_READ(input_port_2_r)
+	AM_RANGE(0x2070, 0x2070) AM_READ(input_port_3_r)
 
-	{ 0x2800, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( usg185_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_RAM },
+static ADDRESS_MAP_START( usg185_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM)
 
-	{ 0x2400, 0x2400, input_port_1_r },
-	{ 0x2410, 0x2410, input_port_0_r },
-	{ 0x2441, 0x2441, input_port_2_r },
-	{ 0x2470, 0x2470, input_port_3_r },
+	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_1_r)
+	AM_RANGE(0x2410, 0x2410) AM_READ(input_port_0_r)
+	AM_RANGE(0x2441, 0x2441) AM_READ(input_port_2_r)
+	AM_RANGE(0x2470, 0x2470) AM_READ(input_port_3_r)
 
-	{ 0x2800, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( usg_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x1fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+static ADDRESS_MAP_START( usg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 
-	{ 0x2020, 0x2020, lamps1_w },
-	{ 0x2030, 0x2030, lamps2_w },
+	AM_RANGE(0x2020, 0x2020) AM_WRITE(lamps1_w)
+	AM_RANGE(0x2030, 0x2030) AM_WRITE(lamps2_w)
 
-	{ 0x2040, 0x2040, crtc6845_address_w },
-	{ 0x2041, 0x2041, crtc6845_register_w },
+	AM_RANGE(0x2040, 0x2040) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x2041, 0x2041) AM_WRITE(crtc6845_register_w)
 
-	{ 0x2400, 0x2400, AY8910_control_port_0_w },
-	{ 0x2401, 0x2401, AY8910_write_port_0_w },
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x2401, 0x2401) AM_WRITE(AY8910_write_port_0_w)
 
-	{ 0x2060, 0x2060, usg_rombank_w },
+	AM_RANGE(0x2060, 0x2060) AM_WRITE(usg_rombank_w)
 
-	{ 0x2800, 0x2fff, usg_charram_w, &usg_charram },
-	{ 0x3000, 0x3fff, usg_videoram_w, &usg_videoram },
-	{ 0x4000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(usg_charram_w) AM_BASE(&usg_charram)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(usg_videoram_w) AM_BASE(&usg_videoram)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( usg185_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x1fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+static ADDRESS_MAP_START( usg185_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 
-	{ 0x2420, 0x2420, lamps1_w },
-	{ 0x2430, 0x2430, lamps2_w },
+	AM_RANGE(0x2420, 0x2420) AM_WRITE(lamps1_w)
+	AM_RANGE(0x2430, 0x2430) AM_WRITE(lamps2_w)
 
-	{ 0x2440, 0x2440, crtc6845_address_w },
-	{ 0x2441, 0x2441, crtc6845_register_w },
+	AM_RANGE(0x2440, 0x2440) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x2441, 0x2441) AM_WRITE(crtc6845_register_w)
 
-	{ 0x2000, 0x2000, AY8910_control_port_0_w },
-	{ 0x2001, 0x2001, AY8910_write_port_0_w },
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(AY8910_write_port_0_w)
 
-	{ 0x2460, 0x2460, usg_rombank_w },
+	AM_RANGE(0x2460, 0x2460) AM_WRITE(usg_rombank_w)
 
-	{ 0x2800, 0x2fff, usg_charram_w, &usg_charram },
-	{ 0x3000, 0x3fff, usg_videoram_w, &usg_videoram },
-	{ 0x4000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(usg_charram_w) AM_BASE(&usg_charram)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(usg_videoram_w) AM_BASE(&usg_videoram)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -267,7 +267,7 @@ static MACHINE_DRIVER_START( usg )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, 2000000) /* ?? */
-	MDRV_CPU_MEMORY(usg_readmem,usg_writemem)
+	MDRV_CPU_PROGRAM_MAP(usg_readmem,usg_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,5) /* ?? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -294,7 +294,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( usg185 )
 	MDRV_IMPORT_FROM(usg)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(usg185_readmem,usg185_writemem)
+	MDRV_CPU_PROGRAM_MAP(usg185_readmem,usg185_writemem)
 MACHINE_DRIVER_END
 
 

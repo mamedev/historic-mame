@@ -136,17 +136,52 @@ Table 3-2.  TMS32025/26 Memory Blocks
 #endif
 
 
-#define M_RDROM(A)		TMS32025_ROM_RDMEM(A)
-#define M_WRTROM(A,V)	TMS32025_ROM_WRMEM(A,V)
-#define M_RDRAM(A)		TMS32025_RAM_RDMEM(A)
-#define M_WRTRAM(A,V)	TMS32025_RAM_WRMEM(A,V)
-#define M_RDOP(A)		TMS32025_RDOP(A)
-#define M_RDOP_ARG(A)	TMS32025_RDOP_ARG(A)
-#define P_IN(A)			TMS32025_In(A)
-#define P_OUT(A,V)		TMS32025_Out(A,V)
-#define S_IN(A)			TMS32025_Signal_In(A)
-#define S_OUT(A,V)		TMS32025_Signal_Out(A,V)
+data16_t *tms32025_pgmmap[0x200];
+data16_t *tms32025_datamap[0x200];
 
+INLINE data16_t M_RDROM(offs_t addr)
+{
+	data16_t *ram;
+	addr &= 0xffff;
+	ram = tms32025_pgmmap[addr >> 7];
+	if (ram) return ram[addr & 0x7f];
+	return program_read_word_16be(addr << 1);
+}
+
+INLINE void M_WRTROM(offs_t addr, data16_t data)
+{
+	data16_t *ram;
+	addr &= 0xffff;
+	ram = tms32025_pgmmap[addr >> 7];
+	if (ram) { ram[addr & 0x7f] = data; }
+	else program_write_word_16be(addr << 1, data);
+}
+
+INLINE data16_t M_RDRAM(offs_t addr)
+{
+	data16_t *ram;
+	addr &= 0xffff;
+	ram = tms32025_datamap[addr >> 7];
+	if (ram) return ram[addr & 0x7f];
+	return data_read_word_16be(addr << 1);
+}
+
+INLINE void M_WRTRAM(offs_t addr, data16_t data)
+{
+	data16_t *ram;
+	addr &= 0xffff;
+	ram = tms32025_datamap[addr >> 7];
+	if (ram) { ram[addr & 0x7f] = data; }
+	else data_write_word_16be(addr << 1, data);
+}
+
+#define P_IN(A)			(io_read_word_16be((A)<<1))
+#define P_OUT(A,V)		(io_write_word_16be(((A)<<1),(V)))
+#define S_IN(A)			(io_read_word_16be((A)<<1))
+#define S_OUT(A,V)		(io_write_word_16be(((A)<<1),(V)))
+
+#define M_RDOP(A)		((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))
+#define M_RDOP_ARG(A)	((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))
 
 
 static UINT8 tms32025_reg_layout[] = {
@@ -194,14 +229,14 @@ typedef struct			/* Page 3-6 (45) shows all registers */
 	int		tms32025_irq_cycles;
 	int		tms32025_dec_cycles;
 	int		(*irq_callback)(int irqline);
+	data16_t *datamap_save[16];
+	data16_t *pgmmap_save[12];
 } tms32025_Regs;
 
 static tms32025_Regs R;
 static PAIR  oldacc;
 static UINT32 memaccess;
-int    tms32025_icount;
-offs_t TMS32025_DATA_BANK[0x10];
-offs_t TMS32025_PRGM_BANK[0x10];
+static int tms32025_icount;
 typedef void (*opcode_fn) (void);
 
 
@@ -270,8 +305,6 @@ typedef void (*opcode_fn) (void);
 #define DMA		(DP | (R.opcode.b.l & 0x7f))	/* address used in direct memory access operations */
 #define DMApg0	(R.opcode.b.l & 0x7f)			/* address used in direct memory access operations for sst instruction */
 #define IND		R.AR[ARP]						/* address used in indirect memory access operations */
-
-
 
 INLINE void CLR0(UINT16 flag) { R.STR0 &= ~flag; R.STR0 |= 0x0400; }
 INLINE void SET0(UINT16 flag) { R.STR0 |=  flag; R.STR0 |= 0x0400; }
@@ -424,8 +457,6 @@ INLINE void PUTDATA_SST(UINT16 data)
 	}
 	M_WRTRAM(memaccess,data);
 }
-
-
 
 
 /* The following functions are here to fill the void for the */
@@ -705,74 +736,126 @@ static void cmpr(void)
 static void cnfd(void)	/** next two fetches need to use previous CNF value ! **/
 {
 		CLR1(CNF0_REG);
-		TMS32025_DATA_BANK[0x2] = TMS32025_DATA_OFFSET + 0x0200;
-		TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0f00;
+		tms32025_datamap[4] = &R.intRAM[0x200];			/* B0 */
+		tms32025_datamap[5] = &R.intRAM[0x280];			/* B0 */
+		tms32025_pgmmap[510] = NULL;
+		tms32025_pgmmap[511] = NULL;
 }
 static void cnfp(void)	/** next two fetches need to use previous CNF value ! **/
 {
 		SET1(CNF0_REG);
-		TMS32025_DATA_BANK[0x2] = TMS32025_DATA_OFFSET + 0xff00;
-		TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0200;
+		tms32025_datamap[4] = NULL;						/* B0 */
+		tms32025_datamap[5] = NULL;						/* B0 */
+		tms32025_pgmmap[510] = &R.intRAM[0x200];
+		tms32025_pgmmap[511] = &R.intRAM[0x280];
 }
 static void conf(void)	/** Need to reconfigure the memory blocks */
 {
 		switch (R.opcode.b.l & 3)
 		{
 			case 00:	CLR1(CNF1_REG); CLR1(CNF0_REG);
-						TMS32025_DATA_BANK[0x2] = TMS32025_DATA_OFFSET + 0x0200;
-						TMS32025_DATA_BANK[0x3] = TMS32025_DATA_OFFSET + 0x0300;
-						TMS32025_DATA_BANK[0x4] = TMS32025_DATA_OFFSET + 0x0400;
-						TMS32025_DATA_BANK[0x5] = TMS32025_DATA_OFFSET + 0x0500;
-						TMS32025_DATA_BANK[0x6] = TMS32025_DATA_OFFSET + 0x0600;
-						TMS32025_DATA_BANK[0x7] = TMS32025_DATA_OFFSET + 0x0700;
-						TMS32025_PRGM_BANK[0xa] = TMS32025_PGM_OFFSET + 0x0a00;
-						TMS32025_PRGM_BANK[0xb] = TMS32025_PGM_OFFSET + 0x0b00;
-						TMS32025_PRGM_BANK[0xc] = TMS32025_PGM_OFFSET + 0x0c00;
-						TMS32025_PRGM_BANK[0xd] = TMS32025_PGM_OFFSET + 0x0d00;
-						TMS32025_PRGM_BANK[0xe] = TMS32025_PGM_OFFSET + 0x0e00;
-						TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0f00;
+						tms32025_datamap[4] = &R.intRAM[0x200];	/* B0 */
+						tms32025_datamap[5] = &R.intRAM[0x280];	/* B0 */
+						tms32025_datamap[6] = &R.intRAM[0x300];	/* B0 */
+						tms32025_datamap[7] = &R.intRAM[0x380];	/* B0 */
+						tms32025_datamap[8] = &R.intRAM[0x400];	/* B1 */
+						tms32025_datamap[9] = &R.intRAM[0x480];	/* B1 */
+						tms32025_datamap[10] = &R.intRAM[0x500];	/* B1 */
+						tms32025_datamap[11] = &R.intRAM[0x580];	/* B1 */
+						tms32025_datamap[12] = &R.intRAM[0x600];	/* B3 */
+						tms32025_datamap[13] = &R.intRAM[0x680];	/* B3 */
+						tms32025_datamap[14] = &R.intRAM[0x700];	/* B3 */
+						tms32025_datamap[15] = &R.intRAM[0x780];	/* B3 */
+						tms32025_pgmmap[500] = NULL;
+						tms32025_pgmmap[501] = NULL;
+						tms32025_pgmmap[502] = NULL;
+						tms32025_pgmmap[503] = NULL;
+						tms32025_pgmmap[504] = NULL;
+						tms32025_pgmmap[505] = NULL;
+						tms32025_pgmmap[506] = NULL;
+						tms32025_pgmmap[507] = NULL;
+						tms32025_pgmmap[508] = NULL;
+						tms32025_pgmmap[509] = NULL;
+						tms32025_pgmmap[510] = NULL;
+						tms32025_pgmmap[511] = NULL;
 						break;
 			case 01:	CLR1(CNF1_REG); SET1(CNF0_REG);
-						TMS32025_DATA_BANK[0x2] = TMS32025_PGM_OFFSET + 0xfa00;
-						TMS32025_DATA_BANK[0x3] = TMS32025_PGM_OFFSET + 0xfb00;
-						TMS32025_DATA_BANK[0x4] = TMS32025_PGM_OFFSET + 0x0400;
-						TMS32025_DATA_BANK[0x5] = TMS32025_PGM_OFFSET + 0x0500;
-						TMS32025_DATA_BANK[0x6] = TMS32025_DATA_OFFSET + 0x0600;
-						TMS32025_DATA_BANK[0x7] = TMS32025_DATA_OFFSET + 0x0700;
-						TMS32025_PRGM_BANK[0xa] = TMS32025_DATA_OFFSET + 0x0200;
-						TMS32025_PRGM_BANK[0xb] = TMS32025_DATA_OFFSET + 0x0300;
-						TMS32025_PRGM_BANK[0xc] = TMS32025_DATA_OFFSET + 0x0c00;
-						TMS32025_PRGM_BANK[0xd] = TMS32025_DATA_OFFSET + 0x0d00;
-						TMS32025_PRGM_BANK[0xe] = TMS32025_PGM_OFFSET + 0x0e00;
-						TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0f00;
+						tms32025_datamap[4] = NULL;
+						tms32025_datamap[5] = NULL;
+						tms32025_datamap[6] = NULL;
+						tms32025_datamap[7] = NULL;
+						tms32025_datamap[8] = &R.intRAM[0x400];	/* B1 */
+						tms32025_datamap[9] = &R.intRAM[0x480];	/* B1 */
+						tms32025_datamap[10] = &R.intRAM[0x500];	/* B1 */
+						tms32025_datamap[11] = &R.intRAM[0x580];	/* B1 */
+						tms32025_datamap[12] = &R.intRAM[0x600];	/* B3 */
+						tms32025_datamap[13] = &R.intRAM[0x680];	/* B3 */
+						tms32025_datamap[14] = &R.intRAM[0x700];	/* B3 */
+						tms32025_datamap[15] = &R.intRAM[0x780];	/* B3 */
+						tms32025_pgmmap[500] = &R.intRAM[0x200];	/* B0 */
+						tms32025_pgmmap[501] = &R.intRAM[0x280];	/* B0 */
+						tms32025_pgmmap[502] = &R.intRAM[0x300];	/* B0 */
+						tms32025_pgmmap[503] = &R.intRAM[0x380];	/* B0 */
+						tms32025_pgmmap[504] = NULL;
+						tms32025_pgmmap[505] = NULL;
+						tms32025_pgmmap[506] = NULL;
+						tms32025_pgmmap[507] = NULL;
+						tms32025_pgmmap[508] = NULL;
+						tms32025_pgmmap[509] = NULL;
+						tms32025_pgmmap[510] = NULL;
+						tms32025_pgmmap[511] = NULL;
 						break;
 			case 02:	SET1(CNF1_REG); CLR1(CNF0_REG);
-						TMS32025_DATA_BANK[0x2] = TMS32025_PGM_OFFSET + 0xfa00;
-						TMS32025_DATA_BANK[0x3] = TMS32025_PGM_OFFSET + 0xfb00;
-						TMS32025_DATA_BANK[0x4] = TMS32025_PGM_OFFSET + 0xfc00;
-						TMS32025_DATA_BANK[0x5] = TMS32025_PGM_OFFSET + 0xfd00;
-						TMS32025_DATA_BANK[0x6] = TMS32025_DATA_OFFSET + 0x0600;
-						TMS32025_DATA_BANK[0x7] = TMS32025_DATA_OFFSET + 0x0700;
-						TMS32025_PRGM_BANK[0xa] = TMS32025_DATA_OFFSET + 0x0200;
-						TMS32025_PRGM_BANK[0xb] = TMS32025_DATA_OFFSET + 0x0300;
-						TMS32025_PRGM_BANK[0xc] = TMS32025_DATA_OFFSET + 0x0400;
-						TMS32025_PRGM_BANK[0xd] = TMS32025_DATA_OFFSET + 0x0500;
-						TMS32025_PRGM_BANK[0xe] = TMS32025_PGM_OFFSET + 0x0e00;
-						TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0f00;
+						tms32025_datamap[4] = NULL;
+						tms32025_datamap[5] = NULL;
+						tms32025_datamap[6] = NULL;
+						tms32025_datamap[7] = NULL;
+						tms32025_datamap[8] = NULL;
+						tms32025_datamap[9] = NULL;
+						tms32025_datamap[10] = NULL;
+						tms32025_datamap[11] = NULL;
+						tms32025_datamap[12] = &R.intRAM[0x600];	/* B3 */
+						tms32025_datamap[13] = &R.intRAM[0x680];	/* B3 */
+						tms32025_datamap[14] = &R.intRAM[0x700];	/* B3 */
+						tms32025_datamap[15] = &R.intRAM[0x780];	/* B3 */
+						tms32025_pgmmap[500] = &R.intRAM[0x200];	/* B0 */
+						tms32025_pgmmap[501] = &R.intRAM[0x280];	/* B0 */
+						tms32025_pgmmap[502] = &R.intRAM[0x300];	/* B0 */
+						tms32025_pgmmap[503] = &R.intRAM[0x380];	/* B0 */
+						tms32025_pgmmap[504] = &R.intRAM[0x400];	/* B1 */
+						tms32025_pgmmap[505] = &R.intRAM[0x480];	/* B1 */
+						tms32025_pgmmap[506] = &R.intRAM[0x500];	/* B1 */
+						tms32025_pgmmap[507] = &R.intRAM[0x580];	/* B1 */
+						tms32025_pgmmap[508] = NULL;
+						tms32025_pgmmap[509] = NULL;
+						tms32025_pgmmap[510] = NULL;
+						tms32025_pgmmap[511] = NULL;
 						break;
 			case 03:	SET1(CNF1_REG); SET1(CNF0_REG);
-						TMS32025_DATA_BANK[0x2] = TMS32025_PGM_OFFSET + 0xfa00;
-						TMS32025_DATA_BANK[0x3] = TMS32025_PGM_OFFSET + 0xfb00;
-						TMS32025_DATA_BANK[0x4] = TMS32025_PGM_OFFSET + 0xfc00;
-						TMS32025_DATA_BANK[0x5] = TMS32025_PGM_OFFSET + 0xfd00;
-						TMS32025_DATA_BANK[0x6] = TMS32025_DATA_OFFSET + 0xfe00;
-						TMS32025_DATA_BANK[0x7] = TMS32025_DATA_OFFSET + 0xff00;
-						TMS32025_PRGM_BANK[0xa] = TMS32025_DATA_OFFSET + 0x0200;
-						TMS32025_PRGM_BANK[0xb] = TMS32025_DATA_OFFSET + 0x0300;
-						TMS32025_PRGM_BANK[0xc] = TMS32025_DATA_OFFSET + 0x0400;
-						TMS32025_PRGM_BANK[0xd] = TMS32025_DATA_OFFSET + 0x0500;
-						TMS32025_PRGM_BANK[0xe] = TMS32025_PGM_OFFSET + 0x0600;
-						TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0700;
+						tms32025_datamap[4] = NULL;
+						tms32025_datamap[5] = NULL;
+						tms32025_datamap[6] = NULL;
+						tms32025_datamap[7] = NULL;
+						tms32025_datamap[8] = NULL;
+						tms32025_datamap[9] = NULL;
+						tms32025_datamap[10] = NULL;
+						tms32025_datamap[11] = NULL;
+						tms32025_datamap[12] = NULL;
+						tms32025_datamap[13] = NULL;
+						tms32025_datamap[14] = NULL;
+						tms32025_datamap[15] = NULL;
+						tms32025_pgmmap[500] = &R.intRAM[0x200];	/* B0 */
+						tms32025_pgmmap[501] = &R.intRAM[0x280];	/* B0 */
+						tms32025_pgmmap[502] = &R.intRAM[0x300];	/* B0 */
+						tms32025_pgmmap[503] = &R.intRAM[0x380];	/* B0 */
+						tms32025_pgmmap[504] = &R.intRAM[0x400];	/* B1 */
+						tms32025_pgmmap[505] = &R.intRAM[0x480];	/* B1 */
+						tms32025_pgmmap[506] = &R.intRAM[0x500];	/* B1 */
+						tms32025_pgmmap[507] = &R.intRAM[0x580];	/* B1 */
+						tms32025_pgmmap[508] = &R.intRAM[0x600];	/* B3 */
+						tms32025_pgmmap[509] = &R.intRAM[0x680];	/* B3 */
+						tms32025_pgmmap[510] = &R.intRAM[0x700];	/* B3 */
+						tms32025_pgmmap[511] = &R.intRAM[0x780];	/* B3 */
 						break;
 			default:	break;
 		}
@@ -1569,7 +1652,7 @@ static opcode_fn opcode_CE_subset[256]=
 /****************************************************************************
  *	Inits CPU emulation
  ****************************************************************************/
-void tms32025_init (void)
+static void tms32025_init (void)
 {
 	int cpu = cpu_getactivecpu();
 
@@ -1605,45 +1688,12 @@ void tms32025_init (void)
 	state_save_register_INT32("tms32025", cpu, "external_mem_access", &R.external_mem_access, 1);
 	state_save_register_INT32("tms32025", cpu, "init_load_addr", &R.init_load_addr, 1);
 	state_save_register_UINT16("tms32025", cpu, "prevpc", &R.PREVPC, 1);
-
-	state_save_register_UINT32("tms32025", cpu, "D_bank0", &TMS32025_DATA_BANK[0x0], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank1", &TMS32025_DATA_BANK[0x1], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank2", &TMS32025_DATA_BANK[0x2], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank3", &TMS32025_DATA_BANK[0x3], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank4", &TMS32025_DATA_BANK[0x4], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank5", &TMS32025_DATA_BANK[0x5], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank6", &TMS32025_DATA_BANK[0x6], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank7", &TMS32025_DATA_BANK[0x7], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank8", &TMS32025_DATA_BANK[0x8], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bank9", &TMS32025_DATA_BANK[0x9], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankA", &TMS32025_DATA_BANK[0xa], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankB", &TMS32025_DATA_BANK[0xb], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankC", &TMS32025_DATA_BANK[0xc], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankD", &TMS32025_DATA_BANK[0xd], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankE", &TMS32025_DATA_BANK[0xe], 1);
-	state_save_register_UINT32("tms32025", cpu, "D_bankF", &TMS32025_DATA_BANK[0xf], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank0", &TMS32025_PRGM_BANK[0x0], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank1", &TMS32025_PRGM_BANK[0x1], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank2", &TMS32025_PRGM_BANK[0x2], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank3", &TMS32025_PRGM_BANK[0x3], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank4", &TMS32025_PRGM_BANK[0x4], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank5", &TMS32025_PRGM_BANK[0x5], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank6", &TMS32025_PRGM_BANK[0x6], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank7", &TMS32025_PRGM_BANK[0x7], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank8", &TMS32025_PRGM_BANK[0x8], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bank9", &TMS32025_PRGM_BANK[0x9], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankA", &TMS32025_PRGM_BANK[0xa], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankB", &TMS32025_PRGM_BANK[0xb], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankC", &TMS32025_PRGM_BANK[0xc], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankD", &TMS32025_PRGM_BANK[0xd], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankE", &TMS32025_PRGM_BANK[0xe], 1);
-	state_save_register_UINT32("tms32025", cpu, "P_bankF", &TMS32025_PRGM_BANK[0xf], 1);
 }
 
 /****************************************************************************
  *	Reset registers to their initial values
  ****************************************************************************/
-void tms32025_reset (void *param)
+static void tms32025_reset (void *param)
 {
 	R.PC = 0;			/* Starting address on a reset */
 	R.STR0 |= 0x0600;	/* INTM and unused bit set to 1 */
@@ -1655,8 +1705,7 @@ void tms32025_reset (void *param)
 
 	S_OUT(TMS32025_XF,ASSERT_LINE);	/* XF flag is high. Must set the pin */
 
-	/* ugly hack.. */
-	R.intRAM = (UINT16 *)memory_region(REGION_CPU1 + cpu_getactivecpu());
+	R.intRAM = malloc(0x800*2);
 	/* Set the internal memory mapped registers */
 	GREG = 0;
 	TIM  = 0xffff;
@@ -1668,48 +1717,48 @@ void tms32025_reset (void *param)
 	R.init_load_addr = 1;
 
 	/* Reset the Data/Program address banks */
-	TMS32025_DATA_BANK[0x0] = TMS32025_DATA_OFFSET + 0x0000;
-	TMS32025_DATA_BANK[0x1] = TMS32025_DATA_OFFSET + 0x0100;
-	TMS32025_DATA_BANK[0x2] = TMS32025_DATA_OFFSET + 0x0200;
-	TMS32025_DATA_BANK[0x3] = TMS32025_DATA_OFFSET + 0x0300;
-	TMS32025_DATA_BANK[0x4] = TMS32025_DATA_OFFSET + 0x0400;
-	TMS32025_DATA_BANK[0x5] = TMS32025_DATA_OFFSET + 0x0500;
-	TMS32025_DATA_BANK[0x6] = TMS32025_DATA_OFFSET + 0x0600;
-	TMS32025_DATA_BANK[0x7] = TMS32025_DATA_OFFSET + 0x0700;
-	TMS32025_DATA_BANK[0x8] = TMS32025_DATA_OFFSET + 0x0800;
-	TMS32025_DATA_BANK[0x9] = TMS32025_DATA_OFFSET + 0x0900;
-	TMS32025_DATA_BANK[0xa] = TMS32025_DATA_OFFSET + 0x0a00;
-	TMS32025_DATA_BANK[0xb] = TMS32025_DATA_OFFSET + 0x0b00;
-	TMS32025_DATA_BANK[0xc] = TMS32025_DATA_OFFSET + 0x0c00;
-	TMS32025_DATA_BANK[0xd] = TMS32025_DATA_OFFSET + 0x0d00;
-	TMS32025_DATA_BANK[0xe] = TMS32025_DATA_OFFSET + 0x0e00;
-	TMS32025_DATA_BANK[0xf] = TMS32025_DATA_OFFSET + 0x0f00;
+	memset(tms32025_pgmmap, 0, sizeof(tms32025_pgmmap));
+	memset(tms32025_datamap, 0, sizeof(tms32025_datamap));
+	
+	tms32025_datamap[0] = &R.intRAM[0x000];			/* B2 */
+	tms32025_datamap[4] = &R.intRAM[0x200];			/* B0 */
+	tms32025_datamap[5] = &R.intRAM[0x280];			/* B0 */
+	tms32025_datamap[6] = &R.intRAM[0x300];			/* B1 */
+	tms32025_datamap[7] = &R.intRAM[0x380];			/* B1 */
+}
 
-	TMS32025_PRGM_BANK[0x0] = TMS32025_PGM_OFFSET + 0x0000;
-	TMS32025_PRGM_BANK[0x1] = TMS32025_PGM_OFFSET + 0x0100;
-	TMS32025_PRGM_BANK[0x2] = TMS32025_PGM_OFFSET + 0x0200;
-	TMS32025_PRGM_BANK[0x3] = TMS32025_PGM_OFFSET + 0x0300;
-	TMS32025_PRGM_BANK[0x4] = TMS32025_PGM_OFFSET + 0x0400;
-	TMS32025_PRGM_BANK[0x5] = TMS32025_PGM_OFFSET + 0x0500;
-	TMS32025_PRGM_BANK[0x6] = TMS32025_PGM_OFFSET + 0x0600;
-	TMS32025_PRGM_BANK[0x7] = TMS32025_PGM_OFFSET + 0x0700;
-	TMS32025_PRGM_BANK[0x8] = TMS32025_PGM_OFFSET + 0x0800;
-	TMS32025_PRGM_BANK[0x9] = TMS32025_PGM_OFFSET + 0x0900;
-	TMS32025_PRGM_BANK[0xa] = TMS32025_PGM_OFFSET + 0x0a00;
-	TMS32025_PRGM_BANK[0xb] = TMS32025_PGM_OFFSET + 0x0b00;
-	TMS32025_PRGM_BANK[0xc] = TMS32025_PGM_OFFSET + 0x0c00;
-	TMS32025_PRGM_BANK[0xd] = TMS32025_PGM_OFFSET + 0x0d00;
-	TMS32025_PRGM_BANK[0xe] = TMS32025_PGM_OFFSET + 0x0e00;
-	TMS32025_PRGM_BANK[0xf] = TMS32025_PGM_OFFSET + 0x0f00;
+static void tms32026_reset (void *param)
+{
+	tms32025_reset(param);
+
+	/* Reset the Data/Program address banks */
+	memset(tms32025_pgmmap, 0, sizeof(tms32025_pgmmap));
+	memset(tms32025_datamap, 0, sizeof(tms32025_datamap));
+	
+	tms32025_datamap[0] = &R.intRAM[0x000];			/* B2 */
+	tms32025_datamap[4] = &R.intRAM[0x200];			/* B0 */
+	tms32025_datamap[5] = &R.intRAM[0x280];			/* B0 */
+	tms32025_datamap[6] = &R.intRAM[0x300];			/* B0 */
+	tms32025_datamap[7] = &R.intRAM[0x380];			/* B0 */
+	tms32025_datamap[8] = &R.intRAM[0x400];			/* B1 */
+	tms32025_datamap[9] = &R.intRAM[0x480];			/* B1 */
+	tms32025_datamap[10] = &R.intRAM[0x500];			/* B1 */
+	tms32025_datamap[11] = &R.intRAM[0x580];			/* B1 */
+	tms32025_datamap[12] = &R.intRAM[0x600];			/* B3 */
+	tms32025_datamap[13] = &R.intRAM[0x680];			/* B3 */
+	tms32025_datamap[14] = &R.intRAM[0x700];			/* B3 */
+	tms32025_datamap[15] = &R.intRAM[0x780];			/* B3 */
 }
 
 
 /****************************************************************************
  *	Shut down CPU emulation
  ****************************************************************************/
-void tms32025_exit (void)
+static void tms32025_exit (void)
 {
-	/* nothing to do ? */
+	if (R.intRAM)
+		free(R.intRAM);
+	R.intRAM = NULL;
 }
 
 
@@ -1808,10 +1857,11 @@ INLINE void process_timer(int counts)
 	}
 }
 
+
 /****************************************************************************
  *	Execute ICount cycles. Exit when 0 or less
  ****************************************************************************/
-int tms32025_execute(int cycles)
+static int tms32025_execute(int cycles)
 {
 	tms32025_icount = cycles;
 
@@ -1967,126 +2017,31 @@ int tms32025_execute(int cycles)
 	return (cycles - tms32025_icount);
 }
 
+
 /****************************************************************************
  *	Get all registers in given buffer
  ****************************************************************************/
-unsigned tms32025_get_context (void *dst)
+static void tms32025_get_context (void *dst)
 {
 	if (dst)
+	{
+		memcpy(&R.datamap_save, &tms32025_datamap[0], sizeof(R.datamap_save));
+		memcpy(&R.pgmmap_save, &tms32025_pgmmap[500], sizeof(R.pgmmap_save));
 		*(tms32025_Regs*)dst = R;
-	return sizeof(tms32025_Regs);
+	}
 }
+
 
 /****************************************************************************
  *	Set all registers to given values
  ****************************************************************************/
-void tms32025_set_context (void *src)
+static void tms32025_set_context (void *src)
 {
 	if (src)
+	{
 		R = *(tms32025_Regs*)src;
-}
-
-
-/****************************************************************************
- *	Return a specific register
- ****************************************************************************/
-unsigned tms32025_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case TMS32025_PC: return R.PC;
-		/* This is actually not a stack pointer, but the stack contents */
-		case REG_SP:
-		case TMS32025_STK7:  return R.STACK[7];
-		case TMS32025_STK6:  return R.STACK[6];
-		case TMS32025_STK5:  return R.STACK[5];
-		case TMS32025_STK4:  return R.STACK[4];
-		case TMS32025_STK3:  return R.STACK[3];
-		case TMS32025_STK2:  return R.STACK[2];
-		case TMS32025_STK1:  return R.STACK[1];
-		case TMS32025_STK0:  return R.STACK[0];
-		case TMS32025_STR0:  return R.STR0;
-		case TMS32025_STR1:  return R.STR1;
-		case TMS32025_IFR:   return R.IFR;
-		case TMS32025_RPTC:  return R.RPTC;
-		case TMS32025_ACC:   return R.ACC.d;
-		case TMS32025_PREG:  return R.Preg.d;
-		case TMS32025_TREG:  return R.Treg;
-		case TMS32025_AR0:   return R.AR[0];
-		case TMS32025_AR1:   return R.AR[1];
-		case TMS32025_AR2:   return R.AR[2];
-		case TMS32025_AR3:   return R.AR[3];
-		case TMS32025_AR4:   return R.AR[4];
-		case TMS32025_AR5:   return R.AR[5];
-		case TMS32025_AR6:   return R.AR[6];
-		case TMS32025_AR7:   return R.AR[7];
-		case TMS32025_DRR:   return M_RDRAM(0);
-		case TMS32025_DXR:   return M_RDRAM(1);
-		case TMS32025_TIM:   return M_RDRAM(2);
-		case TMS32025_PRD:   return M_RDRAM(3);
-		case TMS32025_IMR:   return M_RDRAM(4);
-		case TMS32025_GREG:  return M_RDRAM(5);
-		case REG_PREVIOUSPC: return R.PREVPC;
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if (offset < 8)
-					return R.STACK[offset];
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************
- *	Set a specific register
- ****************************************************************************/
-void tms32025_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case TMS32025_PC: R.PC = val; break;
-		/* This is actually not a stack pointer, but the stack contents */
-		case REG_SP:
-		case TMS32025_STK7: R.STACK[7] = val; break;
-		case TMS32025_STK6: R.STACK[6] = val; break;
-		case TMS32025_STK5: R.STACK[5] = val; break;
-		case TMS32025_STK4: R.STACK[4] = val; break;
-		case TMS32025_STK3: R.STACK[3] = val; break;
-		case TMS32025_STK2: R.STACK[2] = val; break;
-		case TMS32025_STK1: R.STACK[1] = val; break;
-		case TMS32025_STK0: R.STACK[0] = val; break;
-		case TMS32025_STR0: R.STR0 = val; break;
-		case TMS32025_STR1: R.STR1 = val; break;
-		case TMS32025_IFR:  R.IFR = val; break;
-		case TMS32025_RPTC: R.RPTC = val; break;
-		case TMS32025_ACC:  R.ACC.d = val; break;
-		case TMS32025_PREG: R.Preg.d = val; break;
-		case TMS32025_TREG: R.Treg = val; break;
-		case TMS32025_AR0:  R.AR[0] = val; break;
-		case TMS32025_AR1:  R.AR[1] = val; break;
-		case TMS32025_AR2:  R.AR[2] = val; break;
-		case TMS32025_AR3:  R.AR[3] = val; break;
-		case TMS32025_AR4:  R.AR[4] = val; break;
-		case TMS32025_AR5:  R.AR[5] = val; break;
-		case TMS32025_AR6:  R.AR[6] = val; break;
-		case TMS32025_AR7:  R.AR[7] = val; break;
-		case TMS32025_DRR:  M_WRTRAM(0,val); break;
-		case TMS32025_DXR:  M_WRTRAM(1,val); break;
-		case TMS32025_TIM:  M_WRTRAM(2,val); break;
-		case TMS32025_PRD:  M_WRTRAM(3,val); break;
-		case TMS32025_IMR:  M_WRTRAM(4,val); break;
-		case TMS32025_GREG: M_WRTRAM(5,val); break;
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if (offset < 8)
-					R.STACK[offset] = val;
-			}
+		memcpy(&tms32025_datamap[0], &R.datamap_save, sizeof(R.datamap_save));
+		memcpy(&tms32025_pgmmap[500], &R.pgmmap_save, sizeof(R.pgmmap_save));
 	}
 }
 
@@ -2094,7 +2049,7 @@ void tms32025_set_reg(int regnum, unsigned val)
 /****************************************************************************
  *	Set IRQ line state
  ****************************************************************************/
-void tms32025_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	/* Pending IRQs cannot be cleared */
 
@@ -2105,100 +2060,248 @@ void tms32025_set_irq_line(int irqline, int state)
 	}
 }
 
-void tms32025_set_irq_callback(int (*callback)(int irqline))
-{
-	/* IACK is only a general IRQ Ack - no vector related stuff */
-
-	R.irq_callback = callback;
-}
 
 /****************************************************************************
  *	Return a formatted string for a register
  ****************************************************************************/
-const char *tms32025_info(void *context, int regnum)
-{
-	static char buffer[32][63+1];
-	static int which = 0;
-	tms32025_Regs *r = context;
-
-	which = (which+1) % 32;
-	buffer[which][0] = '\0';
-	if (!context)
-		r = &R;
-
-	switch (regnum)
-	{
-		case CPU_INFO_REG+TMS32025_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
-		case CPU_INFO_REG+TMS32025_STR0: sprintf(buffer[which], "STR0:%04X", r->STR0); break;
-		case CPU_INFO_REG+TMS32025_STR1: sprintf(buffer[which], "STR1:%04X", r->STR1); break;
-		case CPU_INFO_REG+TMS32025_IFR: sprintf(buffer[which], "IFR:%04X", r->IFR); break;
-		case CPU_INFO_REG+TMS32025_RPTC: sprintf(buffer[which], "RPTC:%02X", r->RPTC); break;
-		case CPU_INFO_REG+TMS32025_STK7: sprintf(buffer[which], "STK7:%04X", r->STACK[7]); break;
-		case CPU_INFO_REG+TMS32025_STK6: sprintf(buffer[which], "STK6:%04X", r->STACK[6]); break;
-		case CPU_INFO_REG+TMS32025_STK5: sprintf(buffer[which], "STK5:%04X", r->STACK[5]); break;
-		case CPU_INFO_REG+TMS32025_STK4: sprintf(buffer[which], "STK4:%04X", r->STACK[4]); break;
-		case CPU_INFO_REG+TMS32025_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
-		case CPU_INFO_REG+TMS32025_STK2: sprintf(buffer[which], "STK2:%04X", r->STACK[2]); break;
-		case CPU_INFO_REG+TMS32025_STK1: sprintf(buffer[which], "STK1:%04X", r->STACK[1]); break;
-		case CPU_INFO_REG+TMS32025_STK0: sprintf(buffer[which], "STK0:%04X", r->STACK[0]); break;
-		case CPU_INFO_REG+TMS32025_ACC: sprintf(buffer[which], "ACC:%08X", r->ACC.d); break;
-		case CPU_INFO_REG+TMS32025_PREG: sprintf(buffer[which], "P:%08X", r->Preg.d); break;
-		case CPU_INFO_REG+TMS32025_TREG: sprintf(buffer[which], "T:%04X", r->Treg); break;
-		case CPU_INFO_REG+TMS32025_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
-		case CPU_INFO_REG+TMS32025_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-		case CPU_INFO_REG+TMS32025_AR2: sprintf(buffer[which], "AR2:%04X", r->AR[2]); break;
-		case CPU_INFO_REG+TMS32025_AR3: sprintf(buffer[which], "AR3:%04X", r->AR[3]); break;
-		case CPU_INFO_REG+TMS32025_AR4: sprintf(buffer[which], "AR4:%04X", r->AR[4]); break;
-		case CPU_INFO_REG+TMS32025_AR5: sprintf(buffer[which], "AR5:%04X", r->AR[5]); break;
-		case CPU_INFO_REG+TMS32025_AR6: sprintf(buffer[which], "AR6:%04X", r->AR[6]); break;
-		case CPU_INFO_REG+TMS32025_AR7: sprintf(buffer[which], "AR7:%04X", r->AR[7]); break;
-		case CPU_INFO_REG+TMS32025_DRR: sprintf(buffer[which], "DRR:%04X", M_RDRAM(0)); break;
-		case CPU_INFO_REG+TMS32025_DXR: sprintf(buffer[which], "DXR:%04X", M_RDRAM(1)); break;
-		case CPU_INFO_REG+TMS32025_TIM: sprintf(buffer[which], "TIM:%04X", M_RDRAM(2)); break;
-		case CPU_INFO_REG+TMS32025_PRD: sprintf(buffer[which], "PRD:%04X", M_RDRAM(3)); break;
-		case CPU_INFO_REG+TMS32025_IMR: sprintf(buffer[which], "IMR:%04X", M_RDRAM(4)); break;
-		case CPU_INFO_REG+TMS32025_GREG: sprintf(buffer[which], "GREG:%04X", M_RDRAM(5)); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "arp%d%c%c%c%cdp%03x  arb%d%c%c%c%c%c%c%c%c%c%c%cpm%d",
-				(r->STR0 & 0xe000) >> 13,
-				r->STR0 & 0x1000 ? 'O':'.',
-				r->STR0 & 0x0800 ? 'M':'.',
-				r->STR0 & 0x0400 ? '.':'?',
-				r->STR0 & 0x0200 ? 'I':'.',
-				(r->STR0 & 0x01ff),
-
-				(r->STR1 & 0xe000) >> 13,
-				r->STR1 & 0x1000 ? 'P':'D',
-				r->STR1 & 0x0800 ? 'T':'.',
-				r->STR1 & 0x0400 ? 'S':'.',
-				r->STR1 & 0x0200 ? 'C':'?',
-				r->STR0 & 0x0100 ? '.':'?',
-				r->STR1 & 0x0080 ? '.':'?',
-				r->STR1 & 0x0040 ? 'H':'.',
-				r->STR1 & 0x0020 ? 'F':'.',
-				r->STR1 & 0x0010 ? 'X':'.',
-				r->STR1 & 0x0008 ? 'f':'.',
-				r->STR1 & 0x0004 ? 'o':'i',
-				(r->STR1 & 0x0003) );
-			break;
-		case CPU_INFO_NAME: return "TMS32025";
-		case CPU_INFO_FAMILY: return "Texas Instruments TMS320x25";
-		case CPU_INFO_VERSION: return "1.10";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 2001 by Tony La Porta";
-		case CPU_INFO_REG_LAYOUT: return (const char*)tms32025_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)tms32025_win_layout;
-		default: return "";
-	}
-	return buffer[which];
-}
-
-unsigned tms32025_dasm(char *buffer, unsigned pc)
+static offs_t tms32025_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm32025( buffer, pc );
 #else
-	sprintf( buffer, "$%04X", TMS32025_RDOP(pc) );
+	sprintf( buffer, "$%04X", M_RDOP(pc) );
 	return 2;
 #endif
 }
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void tms32025_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT0:		set_irq_line(TMS32025_INT0, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT1:		set_irq_line(TMS32025_INT1, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT2:		set_irq_line(TMS32025_INT2, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_TINT:		set_irq_line(TMS32025_TINT, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_RINT:		set_irq_line(TMS32025_RINT, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_XINT:		set_irq_line(TMS32025_XINT, info->i);	break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32025_PC:		R.PC = info->i;							break;
+		/* This is actually not a stack pointer, but the stack contents */
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + TMS32025_STK7: 		R.STACK[7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK6: 		R.STACK[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK5: 		R.STACK[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK4: 		R.STACK[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK3: 		R.STACK[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK2: 		R.STACK[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK1: 		R.STACK[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK0: 		R.STACK[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STR0: 		R.STR0 = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_STR1: 		R.STR1 = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_IFR:  		R.IFR = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_RPTC: 		R.RPTC = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_ACC:  		R.ACC.d = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_PREG: 		R.Preg.d = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_TREG: 		R.Treg = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR0:  		R.AR[0] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR1:  		R.AR[1] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR2:  		R.AR[2] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR3:  		R.AR[3] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR4:  		R.AR[4] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR5:  		R.AR[5] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR6:  		R.AR[6] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR7:  		R.AR[7] = info->i;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_DRR:		M_WRTRAM(0,info->i);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_DXR:		M_WRTRAM(1,info->i);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_TIM:		M_WRTRAM(2,info->i);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_PRD:		M_WRTRAM(3,info->i);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_IMR:		M_WRTRAM(4,info->i);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_GREG:		M_WRTRAM(5,info->i);					break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					R.irq_callback = info->irqcallback;		break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void tms32025_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(R);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 6;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1*CLK;						break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 17;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
+
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT0:		info->i = (R.IFR & 0x01) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT1:		info->i = (R.IFR & 0x02) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_INT2:		info->i = (R.IFR & 0x04) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_TINT:		info->i = (R.IFR & 0x08) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_RINT:		info->i = (R.IFR & 0x10) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + TMS32025_XINT:		info->i = (R.IFR & 0x20) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = R.PREVPC;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32025_PC:		info->i = R.PC;							break;
+		/* This is actually not a stack pointer, but the stack contents */
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + TMS32025_STK7:		info->i = R.STACK[7];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK6:		info->i = R.STACK[6];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK5:		info->i = R.STACK[5];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK4:		info->i = R.STACK[4];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK3:		info->i = R.STACK[3];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK2:		info->i = R.STACK[2];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK1:		info->i = R.STACK[1];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STK0:		info->i = R.STACK[0];					break;
+		case CPUINFO_INT_REGISTER + TMS32025_STR0:		info->i = R.STR0;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_STR1:		info->i = R.STR1;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_IFR: 		info->i = R.IFR;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_RPTC:		info->i = R.RPTC;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_ACC: 		info->i = R.ACC.d;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_PREG:		info->i = R.Preg.d;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_TREG:		info->i = R.Treg;						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR0: 		info->i = R.AR[0];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR1: 		info->i = R.AR[1];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR2: 		info->i = R.AR[2];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR3: 		info->i = R.AR[3];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR4: 		info->i = R.AR[4];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR5: 		info->i = R.AR[5];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR6: 		info->i = R.AR[6];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_AR7: 		info->i = R.AR[7];						break;
+		case CPUINFO_INT_REGISTER + TMS32025_DRR: 		info->i = M_RDRAM(0);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_DXR: 		info->i = M_RDRAM(1);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_TIM: 		info->i = M_RDRAM(2);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_PRD: 		info->i = M_RDRAM(3);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_IMR: 		info->i = M_RDRAM(4);					break;
+		case CPUINFO_INT_REGISTER + TMS32025_GREG:		info->i = M_RDRAM(5);					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = tms32025_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tms32025_get_context; break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tms32025_set_context; break;
+		case CPUINFO_PTR_INIT:							info->init = tms32025_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = tms32025_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = tms32025_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = tms32025_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32025_dasm;		break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = R.irq_callback;		break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32025_reg_layout;			break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32025_win_layout;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32025"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS320x25"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.10"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2001 by Tony La Porta"); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "arp%d%c%c%c%cdp%03x  arb%d%c%c%c%c%c%c%c%c%c%c%cpm%d",
+				(R.STR0 & 0xe000) >> 13,
+				R.STR0 & 0x1000 ? 'O':'.',
+				R.STR0 & 0x0800 ? 'M':'.',
+				R.STR0 & 0x0400 ? '.':'?',
+				R.STR0 & 0x0200 ? 'I':'.',
+				(R.STR0 & 0x01ff),
+
+				(R.STR1 & 0xe000) >> 13,
+				R.STR1 & 0x1000 ? 'P':'D',
+				R.STR1 & 0x0800 ? 'T':'.',
+				R.STR1 & 0x0400 ? 'S':'.',
+				R.STR1 & 0x0200 ? 'C':'?',
+				R.STR0 & 0x0100 ? '.':'?',
+				R.STR1 & 0x0080 ? '.':'?',
+				R.STR1 & 0x0040 ? 'H':'.',
+				R.STR1 & 0x0020 ? 'F':'.',
+				R.STR1 & 0x0010 ? 'X':'.',
+				R.STR1 & 0x0008 ? 'f':'.',
+				R.STR1 & 0x0004 ? 'o':'i',
+				(R.STR1 & 0x0003) );
+			break;
+
+		case CPUINFO_STR_REGISTER + TMS32025_PC:		sprintf(info->s = cpuintrf_temp_str(), "PC:%04X",  R.PC); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STR0:		sprintf(info->s = cpuintrf_temp_str(), "STR0:%04X", R.STR0); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STR1:		sprintf(info->s = cpuintrf_temp_str(), "STR1:%04X", R.STR1); break;
+		case CPUINFO_STR_REGISTER + TMS32025_IFR:		sprintf(info->s = cpuintrf_temp_str(), "IFR:%04X", R.IFR); break;
+		case CPUINFO_STR_REGISTER + TMS32025_RPTC:		sprintf(info->s = cpuintrf_temp_str(), "RPTC:%02X", R.RPTC); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK7:		sprintf(info->s = cpuintrf_temp_str(), "STK7:%04X", R.STACK[7]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK6:		sprintf(info->s = cpuintrf_temp_str(), "STK6:%04X", R.STACK[6]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK5:		sprintf(info->s = cpuintrf_temp_str(), "STK5:%04X", R.STACK[5]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK4:		sprintf(info->s = cpuintrf_temp_str(), "STK4:%04X", R.STACK[4]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK3:		sprintf(info->s = cpuintrf_temp_str(), "STK3:%04X", R.STACK[3]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK2:		sprintf(info->s = cpuintrf_temp_str(), "STK2:%04X", R.STACK[2]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK1:		sprintf(info->s = cpuintrf_temp_str(), "STK1:%04X", R.STACK[1]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK0:		sprintf(info->s = cpuintrf_temp_str(), "STK0:%04X", R.STACK[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_ACC:		sprintf(info->s = cpuintrf_temp_str(), "ACC:%08X", R.ACC.d); break;
+		case CPUINFO_STR_REGISTER + TMS32025_PREG:		sprintf(info->s = cpuintrf_temp_str(), "P:%08X", R.Preg.d); break;
+		case CPUINFO_STR_REGISTER + TMS32025_TREG:		sprintf(info->s = cpuintrf_temp_str(), "T:%04X", R.Treg); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR0:		sprintf(info->s = cpuintrf_temp_str(), "AR0:%04X", R.AR[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR1:		sprintf(info->s = cpuintrf_temp_str(), "AR1:%04X", R.AR[1]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR2:		sprintf(info->s = cpuintrf_temp_str(), "AR2:%04X", R.AR[2]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR3:		sprintf(info->s = cpuintrf_temp_str(), "AR3:%04X", R.AR[3]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR4:		sprintf(info->s = cpuintrf_temp_str(), "AR4:%04X", R.AR[4]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR5:		sprintf(info->s = cpuintrf_temp_str(), "AR5:%04X", R.AR[5]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR6:		sprintf(info->s = cpuintrf_temp_str(), "AR6:%04X", R.AR[6]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR7:		sprintf(info->s = cpuintrf_temp_str(), "AR7:%04X", R.AR[7]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_DRR:		sprintf(info->s = cpuintrf_temp_str(), "DRR:%04X", M_RDRAM(0)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_DXR:		sprintf(info->s = cpuintrf_temp_str(), "DXR:%04X", M_RDRAM(1)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_TIM:		sprintf(info->s = cpuintrf_temp_str(), "TIM:%04X", M_RDRAM(2)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_PRD:		sprintf(info->s = cpuintrf_temp_str(), "PRD:%04X", M_RDRAM(3)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_IMR:		sprintf(info->s = cpuintrf_temp_str(), "IMR:%04X", M_RDRAM(4)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_GREG:		sprintf(info->s = cpuintrf_temp_str(), "GREG:%04X", M_RDRAM(5)); break;
+	}
+}
+
+
+#if (HAS_TMS32026)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void tms32026_get_info(UINT32 _state, union cpuinfo *info)
+{
+	switch (_state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = tms32026_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32026"); break;
+
+		default:
+			tms32025_get_info(_state, info);
+			break;
+	}
+}
+#endif

@@ -132,85 +132,85 @@ MACHINE_INIT( bballs )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x060000, 0x060007, pushman_68705_r },
-	{ 0xfe0800, 0xfe17ff, MRA16_RAM },
-	{ 0xfe4000, 0xfe4001, input_port_0_word_r },
-	{ 0xfe4002, 0xfe4003, input_port_1_word_r },
-	{ 0xfe4004, 0xfe4005, input_port_2_word_r },
-	{ 0xfec000, 0xfec7ff, MRA16_RAM },
-	{ 0xff8000, 0xff87ff, MRA16_RAM },
-	{ 0xffc000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x060007) AM_READ(pushman_68705_r)
+	AM_RANGE(0xfe0800, 0xfe17ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfe4000, 0xfe4001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfe4002, 0xfe4003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfe4004, 0xfe4005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfec000, 0xfec7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff8000, 0xff87ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },
-	{ 0x060000, 0x060007, pushman_68705_w },
-	{ 0xfe0800, 0xfe17ff, MWA16_RAM, &spriteram16 },
-	{ 0xfe4002, 0xfe4003, pushman_control_w },
-	{ 0xfe8000, 0xfe8003, pushman_scroll_w },
-	{ 0xfe800e, 0xfe800f, MWA16_NOP }, /* ? */
-	{ 0xfec000, 0xfec7ff, pushman_videoram_w, &videoram16 },
-	{ 0xff8000, 0xff87ff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0xffc000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x060007) AM_WRITE(pushman_68705_w)
+	AM_RANGE(0xfe0800, 0xfe17ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0xfe4002, 0xfe4003) AM_WRITE(pushman_control_w)
+	AM_RANGE(0xfe8000, 0xfe8003) AM_WRITE(pushman_scroll_w)
+	AM_RANGE(0xfe800e, 0xfe800f) AM_WRITE(MWA16_NOP) /* ? */
+	AM_RANGE(0xfec000, 0xfec7ff) AM_WRITE(pushman_videoram_w) AM_BASE(&videoram16)
+	AM_RANGE(0xff8000, 0xff87ff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x0007, pushman_68000_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x0fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_READ(pushman_68000_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x0fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x0007, pushman_68000_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x0fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_WRITE(pushman_68000_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x0fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x80, 0x80, YM2203_control_port_1_w },
-	{ 0x81, 0x81, YM2203_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2203_write_port_1_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( bballs_readmem )
-	MEMORY_ADDRESS_BITS(20)
-	{ 0x00000, 0x1ffff, MRA16_ROM },
-	{ 0x60000, 0x60007, bballs_68705_r },
-	{ 0xe0800, 0xe17ff, MRA16_RAM },
-	{ 0xe4000, 0xe4001, input_port_0_word_r },
-	{ 0xe4002, 0xe4003, input_port_1_word_r },
-	{ 0xe4004, 0xe4005, input_port_2_word_r },
-	{ 0xec000, 0xec7ff, MRA16_RAM },
-	{ 0xf8000, 0xf87ff, MRA16_RAM },
-	{ 0xfc000, 0xfffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( bballs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x00000, 0x1ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x60000, 0x60007) AM_READ(bballs_68705_r)
+	AM_RANGE(0xe0800, 0xe17ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xe4000, 0xe4001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xe4002, 0xe4003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xe4004, 0xe4005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xec000, 0xec7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xf8000, 0xf87ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfc000, 0xfffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( bballs_writemem )
-	MEMORY_ADDRESS_BITS(20)
-	{ 0x00000, 0x1ffff, MWA16_ROM },
-	{ 0x60000, 0x60007, bballs_68705_w },
-	{ 0xe0800, 0xe17ff, MWA16_RAM, &spriteram16 },
-	{ 0xe4002, 0xe4003, pushman_control_w },
-	{ 0xe8000, 0xe8003, pushman_scroll_w },
-	{ 0xe800e, 0xe800f, MWA16_NOP }, /* ? */
-	{ 0xec000, 0xec7ff, pushman_videoram_w, &videoram16 },
-	{ 0xf8000, 0xf87ff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0xfc000, 0xfffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( bballs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x00000, 0x1ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x60000, 0x60007) AM_WRITE(bballs_68705_w)
+	AM_RANGE(0xe0800, 0xe17ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0xe4002, 0xe4003) AM_WRITE(pushman_control_w)
+	AM_RANGE(0xe8000, 0xe8003) AM_WRITE(pushman_scroll_w)
+	AM_RANGE(0xe800e, 0xe800f) AM_WRITE(MWA16_NOP) /* ? */
+	AM_RANGE(0xec000, 0xec7ff) AM_WRITE(pushman_videoram_w) AM_BASE(&videoram16)
+	AM_RANGE(0xf8000, 0xf87ff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xfc000, 0xfffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -443,24 +443,21 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static UINT32 amask_m68705 = 0xfff;
-
 static MACHINE_DRIVER_START( pushman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 
 	/* ElSemi. Reversed the CPU order so the sound callback works with bballs */
 	MDRV_CPU_ADD(M68705, 400000)	/* No idea */
-	MDRV_CPU_CONFIG(amask_m68705)
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -484,13 +481,13 @@ static MACHINE_DRIVER_START( bballs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(bballs_readmem,bballs_writemem)
+	MDRV_CPU_PROGRAM_MAP(bballs_readmem,bballs_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -515,8 +512,37 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-
 ROM_START( pushman )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "pushman.012", 0x000000, 0x10000, CRC(330762bc) SHA1(c769b68da40183e6eb84212636bfd1265e5ed2d8) )
+	ROM_LOAD16_BYTE( "pushman.011", 0x000001, 0x10000, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "pushman.013", 0x00000, 0x08000,  CRC(adfe66c1) SHA1(fa4ed13d655c664b06e9b91292d2c0a88cb5a569) )
+
+	ROM_REGION( 0x01000, REGION_CPU3, 0 )
+	ROM_LOAD( "pushman.mcu",  0x00000, 0x01000, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushman.001",  0x00000, 0x08000, CRC(626e5865) SHA1(4ab96c8512f439d18390094d71a898f5c576399c) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushman.004", 0x00000, 0x10000, CRC(87aafa70) SHA1(560661b23ddac106a3d2762fc32da666b31e7424) )
+	ROM_LOAD( "pushman.005", 0x10000, 0x10000, CRC(7fd1200c) SHA1(15d6781a2d7e3ec2e8f85f8585b1e3fd9fe4fd1d) )
+	ROM_LOAD( "pushman.002", 0x20000, 0x10000, CRC(0a094ab0) SHA1(2ff5dcf0d9439eeadd61601170c9767f4d81f022) )
+	ROM_LOAD( "pushman.003", 0x30000, 0x10000, CRC(73d1f29d) SHA1(0a87fe02b1efd04c540f016b2626d32da70219db) )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushman.006", 0x00000, 0x10000, CRC(48ef3da6) SHA1(407d50c2030584bb17a4d4a1bb45e0b04e1a95a4) )
+	ROM_LOAD( "pushman.008", 0x10000, 0x10000, CRC(4b6a3e88) SHA1(c57d0528e942dd77a13e5a4bf39053f52915d44c) )
+	ROM_LOAD( "pushman.007", 0x20000, 0x10000, CRC(b70020bd) SHA1(218ca4a08b87b7dc5c1eed99960f4098c4fc7e0c) )
+	ROM_LOAD( "pushman.009", 0x30000, 0x10000, CRC(cc555667) SHA1(6c79e14fc18d1d836392044779cb3219494a3447) )
+
+	ROM_REGION( 0x10000, REGION_GFX4, 0 )	/* bg tilemaps */
+	ROM_LOAD( "pushman.010", 0x00000, 0x08000, CRC(a500132d) SHA1(26b02c9fea69b51c5f7dc1b43b838cd336ebf862) )
+ROM_END
+
+ROM_START( pushmans )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "pman-12.212", 0x000000, 0x10000, CRC(4251109d) SHA1(d4b020e4ecc2005b3a4c1b34d88de82b09bf5a6b) )
 	ROM_LOAD16_BYTE( "pman-11.197", 0x000001, 0x10000, CRC(1167ed9f) SHA1(ca0296950a75ef15ff6f9d3a776b02180b941d61) )
@@ -579,6 +605,6 @@ ROM_START( bballs )
 	ROM_LOAD( "bb_prom.e9",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
 ROM_END
 
-
-GAME( 1990, pushman, 0, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman" )
-GAME( 1991, bballs,  0, bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls" )
+GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman" )
+GAME( 1990, pushmans, pushman, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman (American Sammy license)" )
+GAME( 1991, bballs,   0,       bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls" )

@@ -64,48 +64,48 @@ READ_HANDLER( ghunter_trackball_high_r )
 
 /* Memory Maps */
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x03fff, MRA_RAM },
-	{ 0x04000, 0x04fff, deadang_shared_r },
-	{ 0x06000, 0x0600f, seibu_main_v30_r },
-	{ 0x0a000, 0x0a000, input_port_1_r },
-	{ 0x0a001, 0x0a001, input_port_2_r },
-	{ 0x0a002, 0x0a002, input_port_3_r },
-	{ 0x0a003, 0x0a003, input_port_4_r },
-	{ 0xc0000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x04000, 0x04fff) AM_READ(deadang_shared_r)
+	AM_RANGE(0x06000, 0x0600f) AM_READ(seibu_main_v30_r)
+	AM_RANGE(0x0a000, 0x0a000) AM_READ(input_port_1_r)
+	AM_RANGE(0x0a001, 0x0a001) AM_READ(input_port_2_r)
+	AM_RANGE(0x0a002, 0x0a002) AM_READ(input_port_3_r)
+	AM_RANGE(0x0a003, 0x0a003) AM_READ(input_port_4_r)
+	AM_RANGE(0xc0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x037ff, MWA_RAM },
-	{ 0x03800, 0x03fff, MWA_RAM, &spriteram },
-	{ 0x04000, 0x04fff, deadang_shared_w, &deadang_shared_ram },
-	{ 0x05000, 0x05fff, MWA_RAM },
-	{ 0x06000, 0x0600f, seibu_main_v30_w },
-	{ 0x06010, 0x07fff, MWA_RAM },
-	{ 0x08000, 0x087ff, deadang_text_w, &videoram },
-	{ 0x08800, 0x0bfff, MWA_RAM },
-	{ 0x0c000, 0x0cfff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0x0d000, 0x0dfff, MWA_RAM },
-	{ 0x0e000, 0x0e0ff, MWA_RAM, &deadang_scroll_ram },
-	{ 0x0e100, 0x0ffff, MWA_RAM },
-	{ 0xc0000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x037ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x03800, 0x03fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x04000, 0x04fff) AM_WRITE(deadang_shared_w) AM_BASE(&deadang_shared_ram)
+	AM_RANGE(0x05000, 0x05fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x06000, 0x0600f) AM_WRITE(seibu_main_v30_w)
+	AM_RANGE(0x06010, 0x07fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x08000, 0x087ff) AM_WRITE(deadang_text_w) AM_BASE(&videoram)
+	AM_RANGE(0x08800, 0x0bfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0c000, 0x0cfff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0d000, 0x0dfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0e000, 0x0e0ff) AM_WRITE(MWA8_RAM) AM_BASE(&deadang_scroll_ram)
+	AM_RANGE(0x0e100, 0x0ffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sub_readmem )
-	{ 0x00000, 0x037ff, MRA_RAM },
-	{ 0x03800, 0x03fff, MRA_RAM },
-	{ 0x04000, 0x04fff, deadang_shared_r },
-	{ 0xe0000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x037ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x03800, 0x03fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x04000, 0x04fff) AM_READ(deadang_shared_r)
+	AM_RANGE(0xe0000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_writemem )
-	{ 0x00000, 0x037ff, MWA_RAM },
-	{ 0x03800, 0x03fff, deadang_foreground_w, &deadang_video_data },
-	{ 0x04000, 0x04fff, deadang_shared_w },
-	{ 0x08000, 0x08000, deadang_bank_w },
-	{ 0x0c000, 0x0c000, watchdog_reset_w },
-	{ 0xe0000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x037ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x03800, 0x03fff) AM_WRITE(deadang_foreground_w) AM_BASE(&deadang_video_data)
+	AM_RANGE(0x04000, 0x04fff) AM_WRITE(deadang_shared_w)
+	AM_RANGE(0x08000, 0x08000) AM_WRITE(deadang_bank_w)
+	AM_RANGE(0x0c000, 0x0c000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xe0000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /* Input Ports */
 
@@ -314,11 +314,11 @@ static MACHINE_DRIVER_START( deadang )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V20,16000000/2) /* Sony 8623h9 CXQ70116D-8 (V20 compatible) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(deadang_interrupt,2)
 
 	MDRV_CPU_ADD(V20,16000000/2) /* Sony 8623h9 CXQ70116D-8 (V20 compatible) */
-	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(deadang_interrupt,2)
 
 	SEIBU3A_SOUND_SYSTEM_CPU(14318180/4)

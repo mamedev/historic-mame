@@ -76,29 +76,29 @@ extern VIDEO_START( pooyan );
 extern VIDEO_UPDATE( pooyan );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },	/* color and video RAM */
-	{ 0xa000, 0xa000, input_port_4_r },	/* DSW2 */
-	{ 0xa080, 0xa080, input_port_0_r },	/* IN0 */
-	{ 0xa0a0, 0xa0a0, input_port_1_r },	/* IN1 */
-	{ 0xa0c0, 0xa0c0, input_port_2_r },	/* IN2 */
-	{ 0xa0e0, 0xa0e0, input_port_3_r },	/* DSW1 */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)	/* color and video RAM */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xa0a0, 0xa0a0) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xa0e0, 0xa0e0) AM_READ(input_port_3_r)	/* DSW1 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, pooyan_colorram_w, &colorram },
-	{ 0x8400, 0x87ff, pooyan_videoram_w, &videoram },
-	{ 0x8800, 0x8fff, MWA_RAM },
-	{ 0x9010, 0x903f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9410, 0x943f, MWA_RAM, &spriteram_2 },
-	{ 0xa000, 0xa000, MWA_NOP },	/* watchdog reset? */
-	{ 0xa100, 0xa100, soundlatch_w },
-	{ 0xa180, 0xa180, interrupt_enable_w },
-	{ 0xa181, 0xa181, timeplt_sh_irqtrigger_w },
-	{ 0xa187, 0xa187, pooyan_flipscreen_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(pooyan_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(pooyan_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9010, 0x903f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9410, 0x943f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP)	/* watchdog reset? */
+	AM_RANGE(0xa100, 0xa100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa180, 0xa180) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa181, 0xa181) AM_WRITE(timeplt_sh_irqtrigger_w)
+	AM_RANGE(0xa187, 0xa187) AM_WRITE(pooyan_flipscreen_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( pooyan )
@@ -234,12 +234,12 @@ static MACHINE_DRIVER_START( pooyan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318180/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.789772727 MHz */						\
-	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(timeplt_sound_readmem,timeplt_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

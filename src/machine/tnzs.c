@@ -281,7 +281,7 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 {
 	if (offset == 0)
 	{
-//		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -298,7 +298,7 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 		0x80: release coin lockout (issued only in test mode)
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
-//		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -324,7 +324,7 @@ static READ_HANDLER( mcu_extrmatn_r )
 {
 	const char *mcu_startup = "\x5a\xa5\x55";
 
-	logerror("PC %04x (re %04x): read mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -409,7 +409,7 @@ static WRITE_HANDLER( mcu_extrmatn_w )
 {
 	if (offset == 0)
 	{
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -431,7 +431,7 @@ static WRITE_HANDLER( mcu_extrmatn_w )
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
 
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -488,7 +488,7 @@ DRIVER_INIT( drtoppel )
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 
 	/* drtoppel writes to the palette RAM area even if it has PROMs! We have to patch it out. */
-	install_mem_write_handler(0, 0xf800, 0xfbff, MWA_NOP);
+	install_mem_write_handler(0, 0xf800, 0xfbff, MWA8_NOP);
 }
 
 DRIVER_INIT( chukatai )

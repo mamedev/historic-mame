@@ -689,33 +689,33 @@ static READ16_HANDLER( math1_compare_r ){ /* 0xe8006 */
 	return 0;
 }
 
-static MEMORY_READ16_START( aburner_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x0c0000, 0x0cffff, SYS16_MRA16_TILERAM },			/* 16 tilemaps */
-	{ 0x0d0000, 0x0d0fff, SYS16_MRA16_TEXTRAM },
+static ADDRESS_MAP_START( aburner_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(SYS16_MRA16_TILERAM)			/* 16 tilemaps */
+	AM_RANGE(0x0d0000, 0x0d0fff) AM_READ(SYS16_MRA16_TEXTRAM)
 
-	{ 0x0e0000, 0x0e001f, math0_product_r },
-	{ 0x0e4000, 0x0e401f, math0_quotient_r },
-	{ 0x0e8000, 0x0e801f, math0_compare_r },
+	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(math0_product_r)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(math0_quotient_r)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(math0_compare_r)
 
-	{ 0x100000, 0x101fff, SYS16_MRA16_SPRITERAM },
-	{ 0x120000, 0x12401f, SYS16_MRA16_PALETTERAM },
-	{ 0x130000, 0x130001, aburner_analog_r },
-	{ 0x140000, 0x140001, aburner_motor_status_r },
-	{ 0x150000, 0x150001, input_port_0_word_r },			/* buttons */
-	{ 0x150004, 0x150005, input_port_1_word_r },			/* DSW A */
-	{ 0x150006, 0x150007, input_port_2_word_r },			/* DSW B */
-	{ 0x200000, 0x27ffff, SYS16_CPU3ROM16_r },				/* CPU2 ROM */
-	{ 0x29c000, 0x2a3fff, SYS16_MRA16_WORKINGRAM2 },
+	AM_RANGE(0x100000, 0x101fff) AM_READ(SYS16_MRA16_SPRITERAM)
+	AM_RANGE(0x120000, 0x12401f) AM_READ(SYS16_MRA16_PALETTERAM)
+	AM_RANGE(0x130000, 0x130001) AM_READ(aburner_analog_r)
+	AM_RANGE(0x140000, 0x140001) AM_READ(aburner_motor_status_r)
+	AM_RANGE(0x150000, 0x150001) AM_READ(input_port_0_word_r)			/* buttons */
+	AM_RANGE(0x150004, 0x150005) AM_READ(input_port_1_word_r)			/* DSW A */
+	AM_RANGE(0x150006, 0x150007) AM_READ(input_port_2_word_r)			/* DSW B */
+	AM_RANGE(0x200000, 0x27ffff) AM_READ(SYS16_CPU3ROM16_r)				/* CPU2 ROM */
+	AM_RANGE(0x29c000, 0x2a3fff) AM_READ(SYS16_MRA16_WORKINGRAM2)
 
-	{ 0x2e0000, 0x2e001f, math1_product_r },
-	{ 0x2e4000, 0x2e401f, math1_quotient_r },
-	{ 0x2e8000, 0x2e801f, math1_compare_r },
+	AM_RANGE(0x2e0000, 0x2e001f) AM_READ(math1_product_r)
+	AM_RANGE(0x2e4000, 0x2e401f) AM_READ(math1_quotient_r)
+	AM_RANGE(0x2e8000, 0x2e801f) AM_READ(math1_compare_r)
 
-	{ 0x2ec000, 0x2ee001, SYS16_MRA16_ROADRAM },
-	{ 0xe00000, 0xe00001, SYS16_CPU2_RESET_HACK },			/* hack! */
-	{ 0xff8000, 0xffffff, SYS16_MRA16_WORKINGRAM },
-MEMORY_END
+	AM_RANGE(0x2ec000, 0x2ee001) AM_READ(SYS16_MRA16_ROADRAM)
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(SYS16_CPU2_RESET_HACK)			/* hack! */
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
+ADDRESS_MAP_END
 
 /*
 	58,63 are CPU1 patched ROMs
@@ -738,79 +738,79 @@ MEMORY_END
 		107:	math chip0 product
 		108:	math chip0 divide?
 */
-static MEMORY_WRITE16_START( aburner_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x0c0000, 0x0cffff, SYS16_MWA16_TILERAM },	/* 134,135 */
-	{ 0x0d0000, 0x0d0fff, SYS16_MWA16_TEXTRAM },	/* 132,133 */
+static ADDRESS_MAP_START( aburner_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)	/* 134,135 */
+	AM_RANGE(0x0d0000, 0x0d0fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)	/* 132,133 */
 
-	{ 0x0e0000, 0x0e001f, math0_product_w },
-	{ 0x0e4000, 0x0e401f, math0_quotient_w },
-	{ 0x0e8000, 0x0e801f, math0_compare_w },		/* includes sound latch! (0x0e8016) */
+	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(math0_product_w)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(math0_quotient_w)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(math0_compare_w)		/* includes sound latch! (0x0e8016) */
 
-	{ 0x100000, 0x101fff, SYS16_MWA16_SPRITERAM },		/* 38,39 */
-	{ 0x110000, 0x110001, MWA16_NOP },				/* unknown */
-	{ 0x120000, 0x12401f, SYS16_MWA16_PALETTERAM },	/* 150, 151 */
-	{ 0x130000, 0x130001, aburner_analog_select_w },
-	{ 0x140002, 0x140003, aburner_motor_power_w },
-	{ 0x140004, 0x140005, aburner_unknown_w },		/* unknown */
-	{ 0x140006, 0x140007, aburner_lamp_w },			/* 0x06 - start lamp, warning lamp */
-	{ 0x200000, 0x27ffff, MWA16_ROM },				/* CPU2 ROM */
-	{ 0x29c000, 0x2a3fff, SYS16_MWA16_WORKINGRAM2 },
+	AM_RANGE(0x100000, 0x101fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)		/* 38,39 */
+	AM_RANGE(0x110000, 0x110001) AM_WRITE(MWA16_NOP)				/* unknown */
+	AM_RANGE(0x120000, 0x12401f) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)	/* 150, 151 */
+	AM_RANGE(0x130000, 0x130001) AM_WRITE(aburner_analog_select_w)
+	AM_RANGE(0x140002, 0x140003) AM_WRITE(aburner_motor_power_w)
+	AM_RANGE(0x140004, 0x140005) AM_WRITE(aburner_unknown_w)		/* unknown */
+	AM_RANGE(0x140006, 0x140007) AM_WRITE(aburner_lamp_w)			/* 0x06 - start lamp, warning lamp */
+	AM_RANGE(0x200000, 0x27ffff) AM_WRITE(MWA16_ROM)				/* CPU2 ROM */
+	AM_RANGE(0x29c000, 0x2a3fff) AM_WRITE(SYS16_MWA16_WORKINGRAM2) AM_BASE(&sys16_workingram2)
 
-	{ 0x2e0000, 0x2e001f, math1_product_w },
-	{ 0x2e4000, 0x2e401f, math1_quotient_w },
-	{ 0x2e8000, 0x2e801f, math1_compare_w },		/* includes sound latch! */
+	AM_RANGE(0x2e0000, 0x2e001f) AM_WRITE(math1_product_w)
+	AM_RANGE(0x2e4000, 0x2e401f) AM_WRITE(math1_quotient_w)
+	AM_RANGE(0x2e8000, 0x2e801f) AM_WRITE(math1_compare_w)		/* includes sound latch! */
 
-	{ 0x2ec000, 0x2ee001, SYS16_MWA16_ROADRAM },	/* 125,126 */
-	{ 0xff8000, 0xffffff, SYS16_MWA16_WORKINGRAM },	/* 55,60 */
-MEMORY_END
+	AM_RANGE(0x2ec000, 0x2ee001) AM_WRITE(SYS16_MWA16_ROADRAM) AM_BASE(&sys16_roadram)	/* 125,126 */
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)	/* 55,60 */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( aburner_readmem2 )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x09c000, 0x0a3fff, SYS16_MRA16_WORKINGRAM2_SHARE },
+static ADDRESS_MAP_START( aburner_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x09c000, 0x0a3fff) AM_READ(SYS16_MRA16_WORKINGRAM2_SHARE)
 
-	{ 0x0e0000, 0x0e001f, math1_product_r },
-	{ 0x0e4000, 0x0e401f, math1_quotient_r },
-	{ 0x0e8000, 0x0e801f, math1_compare_r },
+	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(math1_product_r)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(math1_quotient_r)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(math1_compare_r)
 
-	{ 0x0ec000, 0x0ee001, SYS16_MRA16_ROADRAM_SHARE },
-	{ 0x200000, 0x27ffff, MRA16_ROM }, /* mirror */
-	{ 0x29c000, 0x2a3fff, SYS16_MRA16_WORKINGRAM2_SHARE }, /* mirror */
-MEMORY_END
+	AM_RANGE(0x0ec000, 0x0ee001) AM_READ(SYS16_MRA16_ROADRAM_SHARE)
+	AM_RANGE(0x200000, 0x27ffff) AM_READ(MRA16_ROM) /* mirror */
+	AM_RANGE(0x29c000, 0x2a3fff) AM_READ(SYS16_MRA16_WORKINGRAM2_SHARE) /* mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( aburner_writemem2 )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x09c000, 0x0a3fff, SYS16_MWA16_WORKINGRAM2_SHARE },
+static ADDRESS_MAP_START( aburner_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x09c000, 0x0a3fff) AM_WRITE(SYS16_MWA16_WORKINGRAM2_SHARE)
 
-	{ 0x0e0000, 0x0e001f, math1_product_w },
-	{ 0x0e4000, 0x0e401f, math1_quotient_w },
-	{ 0x0e8000, 0x0e801f, math1_compare_w },
+	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(math1_product_w)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(math1_quotient_w)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(math1_compare_w)
 
-	{ 0x0ec000, 0x0ee001, SYS16_MWA16_ROADRAM_SHARE },
-	{ 0x29c000, 0x2a3fff, SYS16_MWA16_WORKINGRAM2_SHARE }, /* mirror */
-MEMORY_END
+	AM_RANGE(0x0ec000, 0x0ee001) AM_WRITE(SYS16_MWA16_ROADRAM_SHARE)
+	AM_RANGE(0x29c000, 0x2a3fff) AM_WRITE(SYS16_MWA16_WORKINGRAM2_SHARE) /* mirror */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( aburner_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xf0ff, SegaPCM_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( aburner_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf0ff) AM_READ(SegaPCM_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( aburner_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xf000, 0xf0ff, SegaPCM_w },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( aburner_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(SegaPCM_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( aburner_sound_readport )
-	{ 0x01, 0x01, YM2151_status_port_0_r },
-	{ 0x40, 0x40, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( aburner_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( aburner_sound_writeport )
-	{ 0x00, 0x00, YM2151_register_port_0_w },
-	{ 0x01, 0x01, YM2151_data_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( aburner_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -871,16 +871,16 @@ static MACHINE_DRIVER_START( aburner )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(aburner_readmem,aburner_writemem)
+	MDRV_CPU_PROGRAM_MAP(aburner_readmem,aburner_writemem)
 	MDRV_CPU_VBLANK_INT(aburner_interrupt,7)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(aburner_sound_readmem, aburner_sound_writemem)
-	MDRV_CPU_PORTS(aburner_sound_readport, aburner_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(aburner_sound_readmem, aburner_sound_writemem)
+	MDRV_CPU_IO_MAP(aburner_sound_readport, aburner_sound_writeport)
 
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(aburner_readmem2,aburner_writemem2)
+	MDRV_CPU_PROGRAM_MAP(aburner_readmem2,aburner_writemem2)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -13,17 +13,17 @@ VIDEO_UPDATE(grtwall)
 {
 
 }
-static MEMORY_READ16_START( grtwall_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
+static ADDRESS_MAP_START( grtwall_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( grtwall_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
+static ADDRESS_MAP_START( grtwall_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
 
 static struct GfxLayout grtwall_charlayout =
@@ -69,7 +69,7 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( grtwall )
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(grtwall_readmem,grtwall_writemem)
+	MDRV_CPU_PROGRAM_MAP(grtwall_readmem,grtwall_writemem)
 //	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

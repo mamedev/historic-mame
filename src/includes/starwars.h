@@ -7,6 +7,11 @@
 #include "driver.h"
 
 
+/*----------- defined in drivers/starwars.c -----------*/
+
+extern UINT8 starwars_is_esb;
+
+
 /*----------- defined in machine/starwars.c -----------*/
 
 WRITE_HANDLER( starwars_out_w );

@@ -467,7 +467,7 @@ DECLARE_BLITTER_SET(dma_draw)
 
 static int temp_irq_callback(int irqline)
 {
-	tms34010_set_irq_line(0, CLEAR_LINE);
+	cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 	return 0;
 }
 
@@ -477,8 +477,8 @@ static void dma_callback(int is_in_34010_context)
 	dma_register[DMA_COMMAND] &= ~0x8000; /* tell the cpu we're done */
 	if (is_in_34010_context)
 	{
-		tms34010_set_irq_callback(temp_irq_callback);
-		tms34010_set_irq_line(0, ASSERT_LINE);
+		cpunum_set_info_ptr(0, CPUINFO_PTR_IRQ_CALLBACK, (void *)temp_irq_callback);
+		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, ASSERT_LINE);
 	}
 	else
 		cpu_set_irq_line(0, 0, HOLD_LINE);
@@ -574,7 +574,7 @@ WRITE16_HANDLER( midyunit_dma_w )
 	command = dma_register[DMA_COMMAND];
 	if (!(command & 0x8000))
 	{
-		tms34010_set_irq_line(0, CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 		return;
 	}
 

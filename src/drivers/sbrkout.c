@@ -120,41 +120,41 @@ static PALETTE_INIT( sbrkout )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x001f, 0x001f, input_port_6_r }, /* paddle value */
-	{ 0x0000, 0x00ff, MRA_RAM }, /* Zero Page RAM */
-	{ 0x0100, 0x01ff, MRA_RAM }, /* ??? */
-	{ 0x0400, 0x077f, MRA_RAM }, /* Video Display RAM */
-	{ 0x0828, 0x0828, sbrkout_select1_r }, /* Select 1 */
-	{ 0x082f, 0x082f, sbrkout_select2_r }, /* Select 2 */
-	{ 0x082e, 0x082e, input_port_5_r }, /* Serve Switch */
-	{ 0x0830, 0x0833, sbrkout_read_DIPs_r }, /* DIP Switches */
-	{ 0x0840, 0x0840, input_port_1_r }, /* Coin Switches */
-	{ 0x0880, 0x0880, input_port_2_r }, /* Start Switches */
-	{ 0x08c0, 0x08c0, input_port_3_r }, /* Self Test Switch */
-	{ 0x0c00, 0x0c00, input_port_4_r }, /* Vertical Sync Counter */
-	{ 0x2c00, 0x3fff, MRA_ROM }, /* PROGRAM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x001f, 0x001f) AM_READ(input_port_6_r) /* paddle value */
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM) /* Zero Page RAM */
+	AM_RANGE(0x0100, 0x01ff) AM_READ(MRA8_RAM) /* ??? */
+	AM_RANGE(0x0400, 0x077f) AM_READ(MRA8_RAM) /* Video Display RAM */
+	AM_RANGE(0x0828, 0x0828) AM_READ(sbrkout_select1_r) /* Select 1 */
+	AM_RANGE(0x082f, 0x082f) AM_READ(sbrkout_select2_r) /* Select 2 */
+	AM_RANGE(0x082e, 0x082e) AM_READ(input_port_5_r) /* Serve Switch */
+	AM_RANGE(0x0830, 0x0833) AM_READ(sbrkout_read_DIPs_r) /* DIP Switches */
+	AM_RANGE(0x0840, 0x0840) AM_READ(input_port_1_r) /* Coin Switches */
+	AM_RANGE(0x0880, 0x0880) AM_READ(input_port_2_r) /* Start Switches */
+	AM_RANGE(0x08c0, 0x08c0) AM_READ(input_port_3_r) /* Self Test Switch */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_4_r) /* Vertical Sync Counter */
+	AM_RANGE(0x2c00, 0x3fff) AM_READ(MRA8_ROM) /* PROGRAM */
+	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM) /* PROM8 for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0011, 0x0011, sbrkout_dac_w, &sbrkout_sound }, /* Noise Generation Bits */
-	{ 0x0010, 0x0014, MWA_RAM, &sbrkout_horiz_ram }, /* Horizontal Ball Position */
-	{ 0x0018, 0x001d, MWA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
-	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
-	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
-	{ 0x0400, 0x07ff, sbrkout_videoram_w, &videoram }, /* DISPLAY */
-	{ 0x0c10, 0x0c11, sbrkout_serve_led_w }, /* Serve LED */
-	{ 0x0c30, 0x0c31, sbrkout_start_1_led_w }, /* 1 Player Start Light */
-	{ 0x0c40, 0x0c41, sbrkout_start_2_led_w }, /* 2 Player Start Light */
-	{ 0x0c50, 0x0c51, MWA_RAM }, /* NMI Pot Reading Enable */
-	{ 0x0c70, 0x0c71, MWA_RAM }, /* Coin Counter */
-	{ 0x0c80, 0x0c80, MWA_NOP }, /* Watchdog */
-	{ 0x0e00, 0x0e00, MWA_NOP }, /* IRQ Enable? */
-	{ 0x1000, 0x1000, MWA_RAM }, /* LSB of Pot Reading */
-	{ 0x2c00, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0011, 0x0011) AM_WRITE(sbrkout_dac_w) AM_BASE(&sbrkout_sound) /* Noise Generation Bits */
+	AM_RANGE(0x0010, 0x0014) AM_WRITE(MWA8_RAM) AM_BASE(&sbrkout_horiz_ram) /* Horizontal Ball Position */
+	AM_RANGE(0x0018, 0x001d) AM_WRITE(MWA8_RAM) AM_BASE(&sbrkout_vert_ram) /* Vertical Ball Position / ball picture */
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) /* WRAM */
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(MWA8_RAM) /* ??? */
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(sbrkout_videoram_w) AM_BASE(&videoram) /* DISPLAY */
+	AM_RANGE(0x0c10, 0x0c11) AM_WRITE(sbrkout_serve_led_w) /* Serve LED */
+	AM_RANGE(0x0c30, 0x0c31) AM_WRITE(sbrkout_start_1_led_w) /* 1 Player Start Light */
+	AM_RANGE(0x0c40, 0x0c41) AM_WRITE(sbrkout_start_2_led_w) /* 2 Player Start Light */
+	AM_RANGE(0x0c50, 0x0c51) AM_WRITE(MWA8_RAM) /* NMI Pot Reading Enable */
+	AM_RANGE(0x0c70, 0x0c71) AM_WRITE(MWA8_RAM) /* Coin Counter */
+	AM_RANGE(0x0c80, 0x0c80) AM_WRITE(MWA8_NOP) /* Watchdog */
+	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(MWA8_NOP) /* IRQ Enable? */
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_RAM) /* LSB of Pot Reading */
+	AM_RANGE(0x2c00, 0x3fff) AM_WRITE(MWA8_ROM) /* PROM1-PROM8 */
+ADDRESS_MAP_END
 
 
 
@@ -281,7 +281,7 @@ static MACHINE_DRIVER_START( sbrkout )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,375000) 	   /* 375 KHz? Should be 750KHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(sbrkout_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

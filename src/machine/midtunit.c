@@ -2,10 +2,6 @@
 
 	Driver for Midway T-unit games.
 
-	Hints for finding speedups:
-
-		search disassembly for ": CAF9"
-
 **************************************************************************/
 
 #include "driver.h"
@@ -24,24 +20,6 @@
 #define SOUND_ADPCM					1
 #define SOUND_ADPCM_LARGE			2
 #define SOUND_DCS					3
-
-
-/* speedup installation macros */
-#define INSTALL_SPEEDUP_1_16BIT(addr, pc, spin1, offs1, offs2) \
-	midyunit_speedup_pc = (pc); \
-	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_spin[0] = spin1; \
-	midyunit_speedup_spin[1] = offs1; \
-	midyunit_speedup_spin[2] = offs2; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_1_16bit);
-
-#define INSTALL_SPEEDUP_3(addr, pc, spin1, spin2, spin3) \
-	midyunit_speedup_pc = (pc); \
-	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_spin[0] = spin1; \
-	midyunit_speedup_spin[1] = spin2; \
-	midyunit_speedup_spin[2] = spin3; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_3);
 
 
 /* CMOS-related variables */
@@ -157,12 +135,6 @@ static WRITE16_HANDLER( mk_prot_w )
 
 		logerror("%08X:Protection W @ %05X = %04X\n", activecpu_get_pc(), offset, data);
 	}
-}
-
-static READ16_HANDLER( mk_mirror_r )
-{
-	/* probably not protection, just a bug in the code */
-	return midyunit_code_rom[offset];
 }
 
 
@@ -405,9 +377,6 @@ static void init_tunit_generic(int sound)
 	UINT8 *base;
 	int i;
 
-	/* set up code ROMs */
-	memcpy(midyunit_code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
 	/* load the graphics ROMs -- quadruples */
 	base = memory_region(REGION_GFX1);
 	for (i = 0; i < midyunit_gfx_rom_size; i += 4)
@@ -467,30 +436,17 @@ static void init_tunit_generic(int sound)
  *
  *************************************/
 
-static void init_mk_tunit_common(void)
+DRIVER_INIT( mktunit )
 {
 	/* common init */
 	init_tunit_generic(SOUND_ADPCM);
 
 	/* protection */
-	install_mem_read16_handler (0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_r);
-	install_mem_write16_handler(0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_w);
-	install_mem_read16_handler (0, TOBYTE(0x1f800000), TOBYTE(0x1fffffff), mk_mirror_r);
+	install_mem_read16_handler (0, 0x1b00000, 0x1b6ffff, mk_prot_r);
+	install_mem_write16_handler(0, 0x1b00000, 0x1b6ffff, mk_prot_w);
 
 	/* sound chip protection (hidden RAM) */
-	install_mem_write_handler(1, 0xfb9c, 0xfbc6, MWA_RAM);
-}
-
-DRIVER_INIT( mk )
-{
-	init_mk_tunit_common();
-	INSTALL_SPEEDUP_3(0x01053360, 0xffce2100, 0x104f9d0, 0x104fa10, 0x104fa30);
-}
-
-DRIVER_INIT( mkr4 )
-{
-	init_mk_tunit_common();
-	INSTALL_SPEEDUP_3(0x01053360, 0xffce2190, 0x104f9d0, 0x104fa10, 0x104fa30);
+	install_mem_write_handler(1, 0xfb9c, 0xfbc6, MWA8_RAM);
 }
 
 static void init_nbajam_common(int te_protection)
@@ -502,41 +458,33 @@ static void init_nbajam_common(int te_protection)
 	if (!te_protection)
 	{
 		nbajam_prot_table = nbajam_prot_values;
-		install_mem_read16_handler (0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_r);
-		install_mem_write16_handler(0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_w);
+		install_mem_read16_handler (0, 0x1b14020, 0x1b2503f, nbajam_prot_r);
+		install_mem_write16_handler(0, 0x1b14020, 0x1b2503f, nbajam_prot_w);
 	}
 	else
 	{
 		nbajam_prot_table = nbajamte_prot_values;
-		install_mem_read16_handler (0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_r);
-		install_mem_read16_handler (0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_r);
-		install_mem_write16_handler(0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_w);
-		install_mem_write16_handler(0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_w);
+		install_mem_read16_handler (0, 0x1b15f40, 0x1b37f5f, nbajam_prot_r);
+		install_mem_read16_handler (0, 0x1b95f40, 0x1bb7f5f, nbajam_prot_r);
+		install_mem_write16_handler(0, 0x1b15f40, 0x1b37f5f, nbajam_prot_w);
+		install_mem_write16_handler(0, 0x1b95f40, 0x1bb7f5f, nbajam_prot_w);
 	}
 
 	/* sound chip protection (hidden RAM) */
 	if (!te_protection)
-		install_mem_write_handler(1, 0xfbaa, 0xfbd4, MWA_RAM);
+		install_mem_write_handler(1, 0xfbaa, 0xfbd4, MWA8_RAM);
 	else
-		install_mem_write_handler(1, 0xfbec, 0xfc16, MWA_RAM);
+		install_mem_write_handler(1, 0xfbec, 0xfc16, MWA8_RAM);
 }
 
 DRIVER_INIT( nbajam )
 {
 	init_nbajam_common(0);
-	INSTALL_SPEEDUP_1_16BIT(0x010754c0, 0xff833480, 0x1008040, 0xd0, 0xb0);
-}
-
-DRIVER_INIT( nbajam20 )
-{
-	init_nbajam_common(0);
-	INSTALL_SPEEDUP_1_16BIT(0x010754c0, 0xff833520, 0x1008040, 0xd0, 0xb0);
 }
 
 DRIVER_INIT( nbajamte )
 {
 	init_nbajam_common(1);
-	INSTALL_SPEEDUP_1_16BIT(0x0106d480, 0xff84e480, 0x1000040, 0xd0, 0xb0);
 }
 
 DRIVER_INIT( jdreddp )
@@ -545,24 +493,19 @@ DRIVER_INIT( jdreddp )
 	init_tunit_generic(SOUND_ADPCM_LARGE);
 
 	/* looks like the watchdog needs to be disabled */
-	install_mem_write16_handler(0, TOBYTE(0x01d81060), TOBYTE(0x01d8107f), MWA16_NOP);
+	install_mem_write16_handler(0, 0x01d81060, 0x01d8107f, MWA16_NOP);
 
 	/* protection */
-	install_mem_read16_handler (0, TOBYTE(0x1b00000), TOBYTE(0x1bfffff), jdredd_prot_r);
-	install_mem_write16_handler(0, TOBYTE(0x1b00000), TOBYTE(0x1bfffff), jdredd_prot_w);
+	install_mem_read16_handler (0, 0x1b00000, 0x1bfffff, jdredd_prot_r);
+	install_mem_write16_handler(0, 0x1b00000, 0x1bfffff, jdredd_prot_w);
 
 	/* sound chip protection (hidden RAM) */
-	install_mem_write_handler(1, 0xfbcf, 0xfbf9, MWA_RAM);
-
-	/* make sure that unmapped memory returns $ffff (necessary to work around bug) */
-	memory_set_unmap_value(0xffffffff);
+	install_mem_write_handler(1, 0xfbcf, 0xfbf9, MWA8_RAM);
 
 #if ENABLE_ALL_JDREDD_LEVELS
 	/* how about the final levels? */
-	jdredd_hack = install_mem_read16_handler(0, TOBYTE(0xFFBA7FF0), TOBYTE(0xFFBA7FFf), jdredd_hack_r);
+	jdredd_hack = install_mem_read16_handler(0, 0xFFBA7FF0, 0xFFBA7FFf, jdredd_hack_r);
 #endif
-
-	/* no obvious speedups */
 }
 
 
@@ -575,38 +518,20 @@ DRIVER_INIT( jdreddp )
  *
  *************************************/
 
-static void init_mk2_common(void)
+DRIVER_INIT( mk2 )
 {
 	/* common init */
 	init_tunit_generic(SOUND_DCS);
 	midtunit_gfx_rom_large = 1;
 
 	/* protection */
-	install_mem_write16_handler(0, TOBYTE(0x00f20c60), TOBYTE(0x00f20c7f), mk2_prot_w);
-	install_mem_write16_handler(0, TOBYTE(0x00f42820), TOBYTE(0x00f4283f), mk2_prot_w);
-	install_mem_read16_handler (0, TOBYTE(0x01a190e0), TOBYTE(0x01a190ff), mk2_prot_r);
-	install_mem_read16_handler (0, TOBYTE(0x01a191c0), TOBYTE(0x01a191df), mk2_prot_shift_r);
-	install_mem_read16_handler (0, TOBYTE(0x01a3d0c0), TOBYTE(0x01a3d0ff), mk2_prot_r);
-	install_mem_read16_handler (0, TOBYTE(0x01d9d1e0), TOBYTE(0x01d9d1ff), mk2_prot_const_r);
-	install_mem_read16_handler (0, TOBYTE(0x01def920), TOBYTE(0x01def93f), mk2_prot_const_r);
-}
-
-DRIVER_INIT( mk2 )
-{
-	init_mk2_common();
-	INSTALL_SPEEDUP_3(0x01068e70, 0xff80db70, 0x105d480, 0x105d4a0, 0x105d4c0);
-}
-
-DRIVER_INIT( mk2r21 )
-{
-	init_mk2_common();
-	INSTALL_SPEEDUP_3(0x01068e40, 0xff80db70, 0x105d480, 0x105d4a0, 0x105d4c0);
-}
-
-DRIVER_INIT( mk2r14 )
-{
-	init_mk2_common();
-	INSTALL_SPEEDUP_3(0x01068de0, 0xff80d960, 0x105d480, 0x105d4a0, 0x105d4c0);
+	install_mem_write16_handler(0, 0x00f20c60, 0x00f20c7f, mk2_prot_w);
+	install_mem_write16_handler(0, 0x00f42820, 0x00f4283f, mk2_prot_w);
+	install_mem_read16_handler (0, 0x01a190e0, 0x01a190ff, mk2_prot_r);
+	install_mem_read16_handler (0, 0x01a191c0, 0x01a191df, mk2_prot_shift_r);
+	install_mem_read16_handler (0, 0x01a3d0c0, 0x01a3d0ff, mk2_prot_r);
+	install_mem_read16_handler (0, 0x01d9d1e0, 0x01d9d1ff, mk2_prot_const_r);
+	install_mem_read16_handler (0, 0x01def920, 0x01def93f, mk2_prot_const_r);
 }
 
 

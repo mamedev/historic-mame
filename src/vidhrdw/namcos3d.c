@@ -1,8 +1,10 @@
 #include "namcos3d.h"
 #include "matrix3d.h"
-#include "vidhrdw/poly.h"
 #include "includes/namcos22.h"
 #include <math.h>
+
+//#define MIN_Z (100) /* for near-plane clipping; this constant was arbitrarily chosen */
+#define MIN_Z (1)
 
 /*
 Renderer:
@@ -54,14 +56,11 @@ Mixer:
 		[O]: Constant for each object (or polygon).
 */
 
-static int mbShade;
-
-INT32 *namco_zbuffer;
+INT32 *namco_zbuffer; /* TBR: Namco System 21 and System22 use sorting, not a real ZBuffer */
 
 static data16_t *mpTextureTileMap16;
 static data8_t *mpTextureTileMapAttr;
 static data8_t *mpTextureTileData;
-
 static data8_t mXYAttrToPixel[16][16][16];
 
 static void
@@ -197,8 +196,54 @@ static unsigned texel( unsigned x, unsigned y )
 	return mpTextureTileData[(mpTextureTileMap16[offs]<<8)|mXYAttrToPixel[mpTextureTileMapAttr[offs]][x&0xf][y&0xf]];
 } /* texel */
 
+typedef void drawscanline_t( const edge *e1, const edge *e2, int sy, const struct rectangle *clip );
+
 static void
-renderscanline( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
+renderscanline_flat( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
+{
+	if( e1->x > e2->x )
+	{
+		SWAP(e1,e2);
+	}
+
+	{
+		struct mame_bitmap *pBitmap = Machine->scrbitmap;
+		UINT16 *pDest = (UINT16 *)pBitmap->line[sy];
+		INT32 *pZBuf = namco_zbuffer + pBitmap->width*sy;
+
+		int x0 = (int)e1->x;
+		int x1 = (int)e2->x;
+		int w = x1-x0;
+		if( w )
+		{
+			double z = e1->z; /* 1/z */
+			double dz = (e2->z - e1->z)/w;
+			int x, crop;
+			crop = clip->min_x - x0;
+			if( crop>0 )
+			{
+				z += crop*dz;
+				x0 = clip->min_x;
+			}
+			if( x1>clip->max_x )
+			{
+				x1 = clip->max_x;
+			}
+
+			for( x=x0; x<x1; x++ )
+			{
+				if( mZSort<pZBuf[x] )
+				{
+					pDest[x] = mColor;
+					pZBuf[x] = mZSort;
+				}
+			}
+		}
+	}
+}
+
+static void
+renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
 {
 	if( e1->x > e2->x )
 	{
@@ -247,13 +292,10 @@ renderscanline( const edge *e1, const edge *e2, int sy, const struct rectangle *
 					int r = color>>16;
 					int g = (color>>8)&0xff;
 					int b = color&0xff;
-					if( mbShade )
-					{
-						int shade = i/z;
-						r+=shade; if( r<0 ) r = 0; else if( r>0xff ) r = 0xff;
-						g+=shade; if( g<0 ) g = 0; else if( g>0xff ) g = 0xff;
-						b+=shade; if( b<0 ) b = 0; else if( b>0xff ) b = 0xff;
-					}
+					int shade = i/z;
+					r+=shade; if( r<0 ) r = 0; else if( r>0xff ) r = 0xff;
+					g+=shade; if( g<0 ) g = 0; else if( g>0xff ) g = 0xff;
+					b+=shade; if( b<0 ) b = 0; else if( b>0xff ) b = 0xff;
 					pDest[x] = (r<<16)|(g<<8)|b;
 					pZBuf[x] = mZSort;
 				}
@@ -271,7 +313,7 @@ renderscanline( const edge *e1, const edge *e2, int sy, const struct rectangle *
  * rendertri uses floating point arithmetic
  */
 static void
-rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct rectangle *clip )
+rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct rectangle *clip, drawscanline_t pdraw )
 {
 	int dy,ystart,yend,crop;
 
@@ -359,7 +401,7 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 
 			for( y=ystart; y<yend; y++ )
 			{
-				renderscanline( &e1,&e2,y, clip );
+				pdraw( &e1,&e2,y, clip );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -406,7 +448,7 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 
 			for( y=ystart; y<yend; y++ )
 			{
-				renderscanline( &e1,&e2,y, clip );
+				pdraw( &e1,&e2,y, clip );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -449,23 +491,24 @@ BlitTriHelper(
 	ProjectPoint( v1,&b,camera );
 	ProjectPoint( v2,&c,camera );
 	mColor = color;
-	rendertri( &a, &b, &c, &camera->clip );
+	rendertri( &a, &b, &c, &camera->clip, renderscanline_uvi );
 }
 
-
-#define MIN_Z (100) /* for near-plane clipping; this constant was arbitrarily chosen */
 static double
-interp( double x0, double namcos3d_y0, double x1, double namcos3d_y1 )
+interp( double x0, double ns3d_y0, double x1, double ns3d_y1 )
 {
-	double m = (namcos3d_y1-namcos3d_y0)/(x1-x0);
-	double b = namcos3d_y0 - m*x0;
+	double m = (ns3d_y1-ns3d_y0)/(x1-x0);
+	double b = ns3d_y0 - m*x0;
 	return m*MIN_Z+b;
 }
 
 static int
 VertexEqual( const struct VerTex *a, const struct VerTex *b )
 {
-	return a->x == b->x && a->y == b->y && a->z == b->z;
+	return
+		a->x == b->x &&
+		a->y == b->y &&
+		a->z == b->z;
 }
 
 /**
@@ -528,8 +571,6 @@ namcos22_BlitTri(
 		}
 	}
 #endif
-
-	mbShade = !keyboard_pressed(KEYCODE_G);
 
 	for( i=0; i<3; i++ )
 	{
@@ -602,45 +643,46 @@ namcos22_BlitTri(
 	}
 } /* BlitTri */
 
-/**
- * BlitFlatSpan is a helper function called by BlitTriFlat while drawing triangles
- */
 static void
-BlitFlatSpan(
-	UINT16 *pDest, INT32 *pZBuf, const struct poly_scanline *scan, const INT64 *deltas, unsigned color)
+Namcos21ProjectPoint( const struct VerTex *v, vertex *pv, const namcos21_camera *camera )
 {
-	INT64 z = scan->p[0];
-	INT64 dz = deltas[0];
-	INT32 x;
+	pv->x = camera->cx + v->x*camera->zoomx/v->z;
+	pv->y = camera->cy - v->y*camera->zoomy/v->z;
+}
 
-	for (x = scan->sx; x <= scan->ex; x++)
-	{
-		INT32 sz = (z >> 16);
-		if( sz<pZBuf[x] )
-		{
-			pZBuf[x] = sz;
-			pDest[x] = color;
-		}
-		z += dz;
-	}
-} /* BlitFlatSpan */
+static void
+BlitFlatTriHelper(
+		struct mame_bitmap *pBitmap,
+		const struct rectangle *cliprect,
+		const struct VerTex *v0,
+		const struct VerTex *v1,
+		const struct VerTex *v2,
+		const namcos21_camera *camera )
+{
+	vertex a,b,c;
+	Namcos21ProjectPoint( v0, &a, camera );
+	Namcos21ProjectPoint( v1, &b, camera );
+	Namcos21ProjectPoint( v2, &c, camera );
+	rendertri( &a, &b, &c, cliprect, renderscanline_flat );
+}
 
 /**
  * BlitTriFlat is used by Namco System21 to draw flat-shaded triangles.
+ *
+ * TBA: merge further with the triangle-rendering code used by Namco System22
  */
 void
-BlitTriFlat( struct mame_bitmap *pBitmap, const struct VerTex v[3], unsigned color )
+namcos21_BlitTriFlat( struct mame_bitmap *pBitmap, const struct rectangle *cliprect, const struct VerTex v[3], unsigned color, INT32 zsort, const namcos21_camera *camera )
 {
-	const struct poly_scanline_data *scans;
-	const struct poly_scanline *curscan;
-	struct poly_vertex pv[3];
-	struct rectangle cliprect;
-	INT32 y;
-	int i;
+	struct VerTex vc[3];
+	int i,j;
+	int iBad = 0, iGood = 0;
+	int bad_count = 0;
 
-	cliprect.min_x = cliprect.min_y = 0;
-	cliprect.max_x = pBitmap->width - 1;
-	cliprect.max_y = pBitmap->height - 1;
+	/* don't bother rendering a degenerate triangle */
+	if( VertexEqual(&v[0],&v[1]) ) return;
+	if( VertexEqual(&v[0],&v[2]) ) return;
+	if( VertexEqual(&v[1],&v[2]) ) return;
 
 	if( (v[2].x*((v[0].z*v[1].y)-(v[0].y*v[1].z)))+
 		(v[2].y*((v[0].x*v[1].z)-(v[0].z*v[1].x)))+
@@ -649,22 +691,63 @@ BlitTriFlat( struct mame_bitmap *pBitmap, const struct VerTex v[3], unsigned col
 		return; /* backface cull */
 	}
 
+
+	mZSort = zsort;
+	mColor = color;
+
 	for( i=0; i<3; i++ )
 	{
-		if( v[i].z <=0 ) return; /* TBA: near plane clipping */
-		/* HACK! */
-		pv[i].x = pBitmap->width/2 + v[i].x*0x248/v[i].z;
-		pv[i].y = pBitmap->height/2 - v[i].y*0x2a0/v[i].z;
-		pv[i].p[0] = v[i].z;
+		if( v[i].z<MIN_Z )
+		{
+			bad_count++;
+			iBad = i;
+		}
+		else
+		{
+			iGood = i;
+		}
 	}
-	scans = setup_triangle_1(&pv[0], &pv[1], &pv[2], &cliprect);
-	if (!scans)
-		return;
-	curscan = scans->scanline;
-	for (y = scans->sy; y <= scans->ey; y++, curscan++)
+
+	switch( bad_count )
 	{
-		UINT16 *pDest = (UINT16 *)pBitmap->line[y];
-		INT32 *pZBuf = namco_zbuffer + pBitmap->width*y;
-		BlitFlatSpan(pDest, pZBuf, curscan, scans->dp, color);
+	case 0:
+		BlitFlatTriHelper( pBitmap, cliprect, &v[0],&v[1],&v[2], camera );
+		break;
+
+	case 1:
+		vc[0] = v[0];vc[1] = v[1];vc[2] = v[2];
+
+		i = (iBad+1)%3;
+		vc[iBad].x = interp( v[i].z,v[i].x, v[iBad].z,v[iBad].x  );
+		vc[iBad].y = interp( v[i].z,v[i].y, v[iBad].z,v[iBad].y  );
+		vc[iBad].z = MIN_Z;
+		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
+
+		j = (iBad+2)%3;
+		vc[i].x = interp(v[j].z,v[j].x, v[iBad].z,v[iBad].x  );
+		vc[i].y = interp(v[j].z,v[j].y, v[iBad].z,v[iBad].y  );
+		vc[i].z = MIN_Z;
+		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
+		break;
+
+	case 2:
+		vc[0] = v[0];vc[1] = v[1];vc[2] = v[2];
+
+		i = (iGood+1)%3;
+		vc[i].x = interp(v[iGood].z,v[iGood].x, v[i].z,v[i].x  );
+		vc[i].y = interp(v[iGood].z,v[iGood].y, v[i].z,v[i].y  );
+		vc[i].z = MIN_Z;
+
+		i = (iGood+2)%3;
+		vc[i].x = interp(v[iGood].z,v[iGood].x, v[i].z,v[i].x  );
+		vc[i].y = interp(v[iGood].z,v[iGood].y, v[i].z,v[i].y  );
+		vc[i].z = MIN_Z;
+
+		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
+		break;
+
+	case 3:
+		/* wholly clipped */
+		break;
 	}
 } /* BlitTri */

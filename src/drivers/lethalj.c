@@ -53,32 +53,32 @@ static data16_t *code_rom;
  *
  *************************************/
 
-static MEMORY_READ16_START( lethalj_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MRA16_RAM },
-	{ TOBYTE(0x04000000), TOBYTE(0x0400000f), OKIM6295_status_0_lsb_r },
-	{ TOBYTE(0x04000010), TOBYTE(0x0400001f), OKIM6295_status_1_lsb_r },
-	{ TOBYTE(0x04100000), TOBYTE(0x0410000f), OKIM6295_status_2_lsb_r },
-	{ TOBYTE(0x04100010), TOBYTE(0x0410001f), MRA16_NOP },	/* read but never examined */
-	{ TOBYTE(0x04300000), TOBYTE(0x0430007f), lethalj_gun_r },
-	{ TOBYTE(0x04500010), TOBYTE(0x0450001f), input_port_0_word_r },
-	{ TOBYTE(0x04600000), TOBYTE(0x0460000f), input_port_1_word_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xfc800000), TOBYTE(0xffffffff), MRA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( lethalj_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x04000000, 0x0400000f) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x04000010, 0x0400001f) AM_READ(OKIM6295_status_1_lsb_r)
+	AM_RANGE(0x04100000, 0x0410000f) AM_READ(OKIM6295_status_2_lsb_r)
+	AM_RANGE(0x04100010, 0x0410001f) AM_READ(MRA16_NOP)	/* read but never examined */
+	AM_RANGE(0x04300000, 0x0430007f) AM_READ(lethalj_gun_r)
+	AM_RANGE(0x04500010, 0x0450001f) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x04600000, 0x0460000f) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xfc800000, 0xffffffff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( lethalj_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MWA16_RAM },
-	{ TOBYTE(0x04000000), TOBYTE(0x0400000f), OKIM6295_data_0_lsb_w },
-	{ TOBYTE(0x04000010), TOBYTE(0x0400001f), OKIM6295_data_1_lsb_w },
-	{ TOBYTE(0x04100000), TOBYTE(0x0410000f), OKIM6295_data_2_lsb_w },
-	{ TOBYTE(0x04200000), TOBYTE(0x0420001f), MWA16_NOP },	/* clocks bits through here */
-	{ TOBYTE(0x04400000), TOBYTE(0x0440000f), MWA16_NOP },	/* clocks bits through here */
-	{ TOBYTE(0x04700000), TOBYTE(0x047000ff), lethalj_blitter_w },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xc0000240), TOBYTE(0xc000025f), MWA16_NOP },		/* seems to be a bug in their code, one of many. */
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( lethalj_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x04000010, 0x0400001f) AM_WRITE(OKIM6295_data_1_lsb_w)
+	AM_RANGE(0x04100000, 0x0410000f) AM_WRITE(OKIM6295_data_2_lsb_w)
+	AM_RANGE(0x04200000, 0x0420001f) AM_WRITE(MWA16_NOP)	/* clocks bits through here */
+	AM_RANGE(0x04400000, 0x0440000f) AM_WRITE(MWA16_NOP)	/* clocks bits through here */
+	AM_RANGE(0x04700000, 0x047000ff) AM_WRITE(lethalj_blitter_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code, one of many. */
+	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
 
 
@@ -301,7 +301,7 @@ MACHINE_DRIVER_START( lethalj )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(lethalj_readmem,lethalj_writemem)
+	MDRV_CPU_PROGRAM_MAP(lethalj_readmem,lethalj_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (258 - 236)) / (60 * 258))

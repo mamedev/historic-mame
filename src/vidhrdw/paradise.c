@@ -1,6 +1,6 @@
 /***************************************************************************
 
-							  -= Paradise =-
+							  -= Paradise / Target Ball =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
@@ -40,6 +40,12 @@ WRITE_HANDLER( paradise_flipscreen_w )
 {
 	flip_screen_set(data ? 0 : 1);
 }
+
+WRITE_HANDLER( tgtball_flipscreen_w )
+{
+	flip_screen_set(data ? 1 : 0);
+}
+
 
 /* 800 bytes for red, followed by 800 bytes for green & 800 bytes for blue */
 WRITE_HANDLER( paradise_palette_w )
@@ -198,9 +204,9 @@ WRITE_HANDLER( paradise_priority_w )
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
-	for (i = 0; i < spriteram_size ; i += 32)
+	for (i = 0; i < spriteram_size ; i += spriteram_size/0x40)
 	{
-		int code	=	spriteram[i+0];	// Only 4 bytes out of 32 used?
+		int code	=	spriteram[i+0];
 		int x		=	spriteram[i+1];
 		int y		=	spriteram[i+2];
 		int attr	=	spriteram[i+3];

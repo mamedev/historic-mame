@@ -126,71 +126,71 @@ static WRITE_HANDLER( sharedram_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, sharedram_r },
-	{ 0x8820, 0x887f, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
-	{ 0x9800, 0x981f, MRA_RAM },
-	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
-	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
-	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },	/* test */
-	{ 0xb800, 0xb800, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(sharedram_r)
+	AM_RANGE(0x8820, 0x887f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)	/* video RAM */
+	AM_RANGE(0x9800, 0x981f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)	/* color RAM */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)	/* test */
+	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, sharedram_w, &sharedram },
-	{ 0x8820, 0x887f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9000, 0x93ff, seicross_videoram_w, &videoram },
-	{ 0x9800, 0x981f, MWA_RAM, &seicross_row_scroll },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram_2, &spriteram_2_size },
-	{ 0x9c00, 0x9fff, seicross_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
+	AM_RANGE(0x8820, 0x887f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(seicross_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&seicross_row_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(seicross_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x04, 0x04, AY8910_read_port_0_r },
-	{ 0x0c, 0x0c, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x08, 0x08, AY8910_control_port_0_w },
-	{ 0x09, 0x09, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_nvram_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x1000, 0x10ff, MRA_RAM },
-	{ 0x8000, 0xf7ff, MRA_ROM },
-	{ 0xf800, 0xffff, sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_nvram_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xf7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_no_nvram_readmem )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x1003, 0x1003, input_port_3_r },	/* DSW1 */
-	{ 0x1005, 0x1005, input_port_4_r },	/* DSW2 */
-	{ 0x1006, 0x1006, input_port_5_r },	/* DSW3 */
-	{ 0x8000, 0xf7ff, MRA_ROM },
-	{ 0xf800, 0xffff, sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_no_nvram_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1003, 0x1003) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0x1005, 0x1005) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0x1006, 0x1006) AM_READ(input_port_5_r)	/* DSW3 */
+	AM_RANGE(0x8000, 0xf7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_nvram_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x2000, 0x2000, DAC_0_data_w },
-	{ 0x8000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_nvram_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x8000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(sharedram_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_no_nvram_writemem )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2000, DAC_0_data_w },
-	{ 0x8000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( mcu_no_nvram_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x8000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(sharedram_w)
+ADDRESS_MAP_END
 
 
 
@@ -211,7 +211,7 @@ INPUT_PORTS_START( friskyt )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x00, "Counter Check" )
@@ -234,8 +234,8 @@ INPUT_PORTS_START( radrad )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 
@@ -244,7 +244,7 @@ INPUT_PORTS_START( radrad )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -263,28 +263,32 @@ INPUT_PORTS_START( radrad )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x06, "5" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x05, "5" )
-	PORT_DIPSETTING(    0x06, "6" )
-	PORT_DIPSETTING(    0x07, "7" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x0f, 0x01, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0f, "7 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0e, "6 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0d, "5 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
 	PORT_START	/* DSW3 */
-	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -320,7 +324,7 @@ INPUT_PORTS_START( seicross )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -339,20 +343,20 @@ INPUT_PORTS_START( seicross )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000 40000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x08, "30000 50000" )
+	PORT_DIPSETTING(    0x0c, "30000 60000 90000" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -378,7 +382,7 @@ INPUT_PORTS_START( seicross )
 	PORT_DIPNAME( 0x20, 0x20, "Debug Mode" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -442,12 +446,12 @@ static MACHINE_DRIVER_START( nvram )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("mcu", NSC8105, 6000000/4)	/* ??? */
-	MDRV_CPU_MEMORY(mcu_nvram_readmem,mcu_nvram_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_nvram_readmem,mcu_nvram_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
@@ -478,7 +482,7 @@ static MACHINE_DRIVER_START( no_nvram )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(nvram)
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(mcu_no_nvram_readmem,mcu_no_nvram_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_no_nvram_readmem,mcu_no_nvram_writemem)
 
 	MDRV_NVRAM_HANDLER(NULL)
 MACHINE_DRIVER_END

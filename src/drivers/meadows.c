@@ -382,50 +382,50 @@ static PALETTE_INIT( meadows )
  *
  *************************************/
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0c03, meadows_sound_w },
-	{ 0x0d00, 0x0d0f, meadows_spriteram_w, &spriteram },
-	{ 0x0e00, 0x0eff, MWA_RAM },
-	{ 0x1000, 0x1bff, MWA_ROM },
-	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0c00, 0x0c03) AM_WRITE(meadows_sound_w)
+	AM_RANGE(0x0d00, 0x0d0f) AM_WRITE(meadows_spriteram_w) AM_BASE(&spriteram)
+	AM_RANGE(0x0e00, 0x0eff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(meadows_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0c00, input_port_0_r },
-	{ 0x0c01, 0x0c01, input_port_1_r },
-	{ 0x0c02, 0x0c02, hsync_chain_r },
-	{ 0x0c03, 0x0c03, input_port_2_r },
-	{ 0x0e00, 0x0eff, MRA_RAM },
-	{ 0x1000, 0x1bff, MRA_ROM },
-	{ 0x1c00, 0x1fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r)
+	AM_RANGE(0x0c01, 0x0c01) AM_READ(input_port_1_r)
+	AM_RANGE(0x0c02, 0x0c02) AM_READ(hsync_chain_r)
+	AM_RANGE(0x0c03, 0x0c03) AM_READ(input_port_2_r)
+	AM_RANGE(0x0e00, 0x0eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( minferno_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x1c00, 0x1eff, meadows_videoram_w, &videoram, &videoram_size },
-	{ 0x1f00, 0x1f03, meadows_sound_w },
-MEMORY_END
+static ADDRESS_MAP_START( minferno_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1eff) AM_WRITE(meadows_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(meadows_sound_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( minferno_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x1c00, 0x1eff, MRA_RAM },
-	{ 0x1f00, 0x1f00, input_port_0_r },
-	{ 0x1f01, 0x1f01, input_port_1_r },
-	{ 0x1f02, 0x1f02, input_port_2_r },
-	{ 0x1f03, 0x1f03, input_port_3_r },
-	{ 0x1f04, 0x1f04, vsync_chain_hi_r },
-	{ 0x1f05, 0x1f05, vsync_chain_lo_r },
-MEMORY_END
+static ADDRESS_MAP_START( minferno_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x1eff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1f00, 0x1f00) AM_READ(input_port_0_r)
+	AM_RANGE(0x1f01, 0x1f01) AM_READ(input_port_1_r)
+	AM_RANGE(0x1f02, 0x1f02) AM_READ(input_port_2_r)
+	AM_RANGE(0x1f03, 0x1f03) AM_READ(input_port_3_r)
+	AM_RANGE(0x1f04, 0x1f04) AM_READ(vsync_chain_hi_r)
+	AM_RANGE(0x1f05, 0x1f05) AM_READ(vsync_chain_lo_r)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( minferno_readport )
-	{ S2650_DATA_PORT, S2650_DATA_PORT, input_port_4_r },
-PORT_END
+static ADDRESS_MAP_START( minferno_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
 
 
@@ -435,18 +435,18 @@ PORT_END
  *
  *************************************/
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0c03, sound_hardware_w },
-	{ 0x0e00, 0x0eff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0c00, 0x0c03) AM_WRITE(sound_hardware_w)
+	AM_RANGE(0x0e00, 0x0eff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0c03, sound_hardware_r },
-	{ 0x0e00, 0x0eff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0c03) AM_READ(sound_hardware_r)
+	AM_RANGE(0x0e00, 0x0eff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -638,12 +638,12 @@ static MACHINE_DRIVER_START( meadows )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
 
 	MDRV_CPU_ADD(S2650, 625000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 	/* 5MHz / 8 = 625 kHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(sound_interrupt,38)	/* 5000000/131072 interrupts per frame */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -671,8 +671,8 @@ static MACHINE_DRIVER_START( minferno )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
-	MDRV_CPU_MEMORY(minferno_readmem,minferno_writemem)
-	MDRV_CPU_PORTS(minferno_readport,0)
+	MDRV_CPU_PROGRAM_MAP(minferno_readmem,minferno_writemem)
+	MDRV_CPU_IO_MAP(minferno_readport,0)
 	MDRV_CPU_VBLANK_INT(minferno_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

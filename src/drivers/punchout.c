@@ -167,10 +167,10 @@ static READ_HANDLER( spunchout_prot_r ) {
 	switch ( offset ) {
 		case 0x00:
 			if ( prot_mode_sel == 0x0a )
-				return cpu_readmem16(0xd012);
+				return program_read_byte(0xd012);
 
 			if ( prot_mode_sel == 0x0b || prot_mode_sel == 0x23 )
-				return cpu_readmem16(0xd7c1);
+				return program_read_byte(0xd7c1);
 
 			return prot_mem[offset];
 		break;
@@ -242,12 +242,12 @@ static WRITE_HANDLER( spunchout_prot_w ) {
 	switch ( offset ) {
 		case 0x00:
 			if ( prot_mode_sel == 0x0a ) {
-				cpu_writemem16(0xd012, data);
+				program_write_byte(0xd012, data);
 				return;
 			}
 
 			if ( prot_mode_sel == 0x0b || prot_mode_sel == 0x23 ) {
-				cpu_writemem16(0xd7c1, data);
+				program_write_byte(0xd7c1, data);
 				return;
 			}
 
@@ -386,89 +386,89 @@ static WRITE_HANDLER( spunchout_prot_f_w ) {
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc3ff, MRA_RAM },
-	{ 0xd000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0xd000, 0xd7ff, MWA_RAM },
-	{ 0xdff0, 0xdff7, MWA_RAM, &punchout_bigsprite1 },
-	{ 0xdff8, 0xdffc, MWA_RAM, &punchout_bigsprite2 },
-	{ 0xdffd, 0xdffd, punchout_palettebank_w, &punchout_palettebank },
-	{ 0xd800, 0xdfff, videoram_w, &videoram, &videoram_size },
-	{ 0xe000, 0xe7ff, punchout_bigsprite1ram_w, &punchout_bigsprite1ram, &punchout_bigsprite1ram_size },
-	{ 0xe800, 0xefff, punchout_bigsprite2ram_w, &punchout_bigsprite2ram, &punchout_bigsprite2ram_size },
-	{ 0xf000, 0xf03f, MWA_RAM, &punchout_scroll },
-	{ 0xf000, 0xffff, punchout_videoram2_w, &punchout_videoram2, &punchout_videoram2_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xdff0, 0xdff7) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_bigsprite1)
+	AM_RANGE(0xdff8, 0xdffc) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_bigsprite2)
+	AM_RANGE(0xdffd, 0xdffd) AM_WRITE(punchout_palettebank_w) AM_BASE(&punchout_palettebank)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(punchout_bigsprite1ram_w) AM_BASE(&punchout_bigsprite1ram) AM_SIZE(&punchout_bigsprite1ram_size)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(punchout_bigsprite2ram_w) AM_BASE(&punchout_bigsprite2ram) AM_SIZE(&punchout_bigsprite2ram_size)
+	AM_RANGE(0xf000, 0xf03f) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_scroll)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(punchout_videoram2_w) AM_BASE(&punchout_videoram2) AM_SIZE(&punchout_videoram2_size)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, punchout_input_3_r },
-
-	/* protection ports */
-	{ 0x07, 0x07, spunchout_prot_0_r },
-	{ 0x17, 0x17, spunchout_prot_1_r },
-	{ 0x27, 0x27, spunchout_prot_2_r },
-	{ 0x37, 0x37, spunchout_prot_3_r },
-	{ 0x57, 0x57, spunchout_prot_5_r },
-	{ 0x67, 0x67, spunchout_prot_6_r },
-	{ 0x97, 0x97, spunchout_prot_9_r },
-	{ 0xa7, 0xa7, spunchout_prot_a_r },
-	{ 0xb7, 0xb7, spunchout_prot_b_r },
-	{ 0xc7, 0xc7, spunchout_prot_c_r },
-	/* { 0xf7, 0xf7, spunchout_prot_f_r }, */
-PORT_END
-
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x01, IOWP_NOP },	/* the 2A03 #1 is not present */
-	{ 0x02, 0x02, soundlatch_w },
-	{ 0x03, 0x03, soundlatch2_w },
-	{ 0x04, 0x04, VLM5030_data_w },	/* VLM5030 */
-	{ 0x05, 0x05, IOWP_NOP },	/* unused */
-	{ 0x08, 0x08, interrupt_enable_w },
-	{ 0x09, 0x09, IOWP_NOP },	/* watchdog reset, seldom used because 08 clears the watchdog as well */
-	{ 0x0a, 0x0a, IOWP_NOP },	/* ?? */
-	{ 0x0b, 0x0b, punchout_2a03_reset_w },
-	{ 0x0c, 0x0c, punchout_speech_reset_w },	/* VLM5030 */
-	{ 0x0d, 0x0d, punchout_speech_st_w    },	/* VLM5030 */
-	{ 0x0e, 0x0e, punchout_speech_vcu_w   },	/* VLM5030 */
-	{ 0x0f, 0x0f, IOWP_NOP },	/* enable NVRAM ? */
-
-	{ 0x06, 0x06, IOWP_NOP},
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(punchout_input_3_r)
 
 	/* protection ports */
-	{ 0x07, 0x07, spunchout_prot_0_w },
-	{ 0x17, 0x17, spunchout_prot_1_w },
-	{ 0x27, 0x27, spunchout_prot_2_w },
-	{ 0x37, 0x37, spunchout_prot_3_w },
-	{ 0x57, 0x57, spunchout_prot_5_w },
-	{ 0x67, 0x67, spunchout_prot_6_w },
-	{ 0xa7, 0xa7, spunchout_prot_a_w },
-	{ 0xb7, 0xb7, spunchout_prot_b_w },
-	{ 0xd7, 0xd7, spunchout_prot_d_w },
-	{ 0xf7, 0xf7, spunchout_prot_f_w },
-PORT_END
+	AM_RANGE(0x07, 0x07) AM_READ(spunchout_prot_0_r)
+	AM_RANGE(0x17, 0x17) AM_READ(spunchout_prot_1_r)
+	AM_RANGE(0x27, 0x27) AM_READ(spunchout_prot_2_r)
+	AM_RANGE(0x37, 0x37) AM_READ(spunchout_prot_3_r)
+	AM_RANGE(0x57, 0x57) AM_READ(spunchout_prot_5_r)
+	AM_RANGE(0x67, 0x67) AM_READ(spunchout_prot_6_r)
+	AM_RANGE(0x97, 0x97) AM_READ(spunchout_prot_9_r)
+	AM_RANGE(0xa7, 0xa7) AM_READ(spunchout_prot_a_r)
+	AM_RANGE(0xb7, 0xb7) AM_READ(spunchout_prot_b_r)
+	AM_RANGE(0xc7, 0xc7) AM_READ(spunchout_prot_c_r)
+	/* AM_RANGE(0xf7, 0xf7) AM_READ(spunchout_prot_f_r) */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x4016, 0x4016, soundlatch_r },
-	{ 0x4017, 0x4017, soundlatch2_r },
-	{ 0x4000, 0x4017, NESPSG_0_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(MWA8_NOP)	/* the 2A03 #1 is not present */
+	AM_RANGE(0x02, 0x02) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(soundlatch2_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(VLM5030_data_w)	/* VLM5030 */
+	AM_RANGE(0x05, 0x05) AM_WRITE(MWA8_NOP)	/* unused */
+	AM_RANGE(0x08, 0x08) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(MWA8_NOP)	/* watchdog reset, seldom used because 08 clears the watchdog as well */
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(MWA8_NOP)	/* ?? */
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(punchout_2a03_reset_w)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(punchout_speech_reset_w)	/* VLM5030 */
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(punchout_speech_st_w)	/* VLM5030 */
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(punchout_speech_vcu_w)	/* VLM5030 */
+	AM_RANGE(0x0f, 0x0f) AM_WRITE(MWA8_NOP)	/* enable NVRAM ? */
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x4000, 0x4017, NESPSG_0_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP)
+
+	/* protection ports */
+	AM_RANGE(0x07, 0x07) AM_WRITE(spunchout_prot_0_w)
+	AM_RANGE(0x17, 0x17) AM_WRITE(spunchout_prot_1_w)
+	AM_RANGE(0x27, 0x27) AM_WRITE(spunchout_prot_2_w)
+	AM_RANGE(0x37, 0x37) AM_WRITE(spunchout_prot_3_w)
+	AM_RANGE(0x57, 0x57) AM_WRITE(spunchout_prot_5_w)
+	AM_RANGE(0x67, 0x67) AM_WRITE(spunchout_prot_6_w)
+	AM_RANGE(0xa7, 0xa7) AM_WRITE(spunchout_prot_a_w)
+	AM_RANGE(0xb7, 0xb7) AM_WRITE(spunchout_prot_b_w)
+	AM_RANGE(0xd7, 0xd7) AM_WRITE(spunchout_prot_d_w)
+	AM_RANGE(0xf7, 0xf7) AM_WRITE(spunchout_prot_f_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4016, 0x4016) AM_READ(soundlatch_r)
+	AM_RANGE(0x4017, 0x4017) AM_READ(soundlatch2_r)
+	AM_RANGE(0x4000, 0x4017) AM_READ(NESPSG_0_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4017) AM_WRITE(NESPSG_0_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -774,13 +774,13 @@ static MACHINE_DRIVER_START( punchout )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 8000000/2)	/* 4 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(N2A03, N2A03_DEFAULTCLOCK)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

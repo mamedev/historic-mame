@@ -311,71 +311,49 @@ OVERLAY_END
  *
  *************************************/
 
-static MEMORY_READ_START( bzone_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
-	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
-	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-	{ 0x1800, 0x1800, mb_status_r },
-	{ 0x1810, 0x1810, mb_lo_r },
-	{ 0x1818, 0x1818, mb_hi_r },
-	{ 0x1820, 0x182f, pokey1_r },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( bzone_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(bzone_IN0_r)    /* IN0 */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(input_port_1_r)	/* DSW1 */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_2_r)	/* DSW2 */
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(bzone_coin_counter_w)
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x1800, 0x1800) AM_READ(mb_status_r)
+	AM_RANGE(0x1810, 0x1810) AM_READ(mb_lo_r)
+	AM_RANGE(0x1818, 0x1818) AM_READ(mb_hi_r)
+	AM_RANGE(0x1820, 0x182f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x1840, 0x1840) AM_WRITE(bzone_sounds_w)
+	AM_RANGE(0x1860, 0x187f) AM_WRITE(mb_go_w)
+	AM_RANGE(0x2000, 0x2fff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x3000, 0x7fff) AM_ROM
+ADDRESS_MAP_END
 
-
-static MEMORY_WRITE_START( bzone_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x1000, 0x1000, bzone_coin_counter_w },
-	{ 0x1200, 0x1200, avgdvg_go_w },
-	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1600, 0x1600, avgdvg_reset_w },
-	{ 0x1820, 0x182f, pokey1_w },
-	{ 0x1840, 0x1840, bzone_sounds_w },
-	{ 0x1860, 0x187f, mb_go_w },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_ROM },
-MEMORY_END
-
-
-static MEMORY_READ_START( redbaron_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
-	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
-	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-	{ 0x1800, 0x1800, mb_status_r },
-	{ 0x1802, 0x1802, input_port_4_r },	/* IN4 */
-	{ 0x1804, 0x1804, mb_lo_r },
-	{ 0x1806, 0x1806, mb_hi_r },
-	{ 0x1810, 0x181f, pokey1_r },
-	{ 0x1820, 0x185f, atari_vg_earom_r },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( redbaron_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
-	{ 0x1200, 0x1200, avgdvg_go_w },
-	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1600, 0x1600, avgdvg_reset_w },
-	{ 0x1808, 0x1808, redbaron_sounds_w },	/* and select joystick pot also */
-	{ 0x180a, 0x180a, MWA_NOP },			/* sound reset, yet todo */
-	{ 0x180c, 0x180c, atari_vg_earom_ctrl_w },
-	{ 0x1810, 0x181f, pokey1_w },
-	{ 0x1820, 0x185f, atari_vg_earom_w },
-	{ 0x1860, 0x187f, mb_go_w },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x5000, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( redbaron_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(bzone_IN0_r)    /* IN0 */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(input_port_1_r)	/* DSW1 */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_2_r)	/* DSW2 */
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_NOP)			/* coin out */
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x1800, 0x1800) AM_READ(mb_status_r)
+	AM_RANGE(0x1802, 0x1802) AM_READ(input_port_4_r)	/* IN4 */
+	AM_RANGE(0x1804, 0x1804) AM_READ(mb_lo_r)
+	AM_RANGE(0x1806, 0x1806) AM_READ(mb_hi_r)
+	AM_RANGE(0x1808, 0x1808) AM_WRITE(redbaron_sounds_w)	/* and select joystick pot also */
+	AM_RANGE(0x180a, 0x180a) AM_WRITE(MWA8_NOP)			/* sound reset, yet todo */
+	AM_RANGE(0x180c, 0x180c) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1810, 0x181f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x1820, 0x185f) AM_READWRITE(atari_vg_earom_r, atari_vg_earom_w)
+	AM_RANGE(0x1860, 0x187f) AM_WRITE(mb_go_w)
+	AM_RANGE(0x2000, 0x2fff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x3000, 0x7fff) AM_ROM
+ADDRESS_MAP_END
 
 
 
@@ -712,7 +690,7 @@ static MACHINE_DRIVER_START( bzone )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
-	MDRV_CPU_MEMORY(bzone_readmem,bzone_writemem)
+	MDRV_CPU_PROGRAM_MAP(bzone_map,0)
 	MDRV_CPU_VBLANK_INT(bzone_interrupt,6) /* 4.1ms */
 
 	MDRV_FRAMES_PER_SECOND(40)
@@ -748,7 +726,7 @@ static MACHINE_DRIVER_START( redbaron )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(bzone)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(redbaron_readmem,redbaron_writemem)
+	MDRV_CPU_PROGRAM_MAP(redbaron_map,0)
 	MDRV_CPU_VBLANK_INT(bzone_interrupt,4) /* 5.4ms */
 
 	MDRV_FRAMES_PER_SECOND(45)
@@ -773,14 +751,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( bzone )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "036414.01",  0x5000, 0x0800, CRC(efbc3fa0) SHA1(6d284fab34b09dde8aa0df7088711d4723f07970) )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, CRC(5d9d9111) SHA1(42638cff53a9791a0f18d316f62a0ea8eea4e194) )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, CRC(ab55cbd2) SHA1(6bbb8316d9f8588ea0893932f9174788292b8edc) )
 	ROM_LOAD( "036411.01",  0x6800, 0x0800, CRC(ad281297) SHA1(54c5e06b2e69eb731a6c9b1704e4340f493e7ea5) )
 	ROM_LOAD( "036410.01",  0x7000, 0x0800, CRC(0b7bfaa4) SHA1(33ae0f68b4e2eae9f3aecbee2d0b29003ce460b2) )
 	ROM_LOAD( "036409.01",  0x7800, 0x0800, CRC(1e14e919) SHA1(448fab30535e6fad7e0ab4427bc06bbbe075e797) )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )
 	ROM_LOAD( "036421.01",  0x3800, 0x0800, CRC(8ea8f939) SHA1(b71e0ab0e220c3e64dc2b094c701fb1a960b64e4) )
@@ -788,14 +765,13 @@ ROM_END
 
 
 ROM_START( bzone2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "036414a.01", 0x5000, 0x0800, CRC(13de36d5) SHA1(40e356ddc5c042bc1ce0b71f51e8b6de72daf1e4) )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, CRC(5d9d9111) SHA1(42638cff53a9791a0f18d316f62a0ea8eea4e194) )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, CRC(ab55cbd2) SHA1(6bbb8316d9f8588ea0893932f9174788292b8edc) )
 	ROM_LOAD( "036411.01",  0x6800, 0x0800, CRC(ad281297) SHA1(54c5e06b2e69eb731a6c9b1704e4340f493e7ea5) )
 	ROM_LOAD( "036410.01",  0x7000, 0x0800, CRC(0b7bfaa4) SHA1(33ae0f68b4e2eae9f3aecbee2d0b29003ce460b2) )
 	ROM_LOAD( "036409.01",  0x7800, 0x0800, CRC(1e14e919) SHA1(448fab30535e6fad7e0ab4427bc06bbbe075e797) )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )
 	ROM_LOAD( "036421.01",  0x3800, 0x0800, CRC(8ea8f939) SHA1(b71e0ab0e220c3e64dc2b094c701fb1a960b64e4) )
@@ -803,7 +779,7 @@ ROM_END
 
 
 ROM_START( bzonec ) /* cocktail version */
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "bz1g4800",   0x4800, 0x0800, CRC(e228dd64) SHA1(247c788b4ccadf6c1e9201ad4f31d55c0036ff0f) )
 	ROM_LOAD( "bz1f5000",   0x5000, 0x0800, CRC(dddfac9a) SHA1(e6f2761902e1ffafba437a1117e9ba40f116087d) )
 	ROM_LOAD( "bz1e5800",   0x5800, 0x0800, CRC(7e00e823) SHA1(008e491a8074dac16e56c3aedec32d4b340158ce) )
@@ -811,7 +787,6 @@ ROM_START( bzonec ) /* cocktail version */
 	ROM_LOAD( "bz1c6800",   0x6800, 0x0800, CRC(5adc64bd) SHA1(4574e4fe375d4ab3151a988235efa11e8744e2c6) )
 	ROM_LOAD( "bz1b7000",   0x7000, 0x0800, CRC(ed8a860e) SHA1(316a3c4870ba44bb3e9cb9fc5200eb081318facf) )
 	ROM_LOAD( "bz1a7800",   0x7800, 0x0800, CRC(04babf45) SHA1(a59da5ff49fc398ca4a948e28f05250af776b898) )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )	// bz3a3000
 	ROM_LOAD( "bz3b3800",   0x3800, 0x0800, CRC(76cf57f6) SHA1(1b8f3fcd664ed04ce60d94fdf27e56b20d52bdbd) )
@@ -819,7 +794,7 @@ ROM_END
 
 
 ROM_START( bradley )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "btc1.bin",   0x4000, 0x0800, CRC(0bb8e049) SHA1(158517ff9a4e8ae7270ccf7eab87bf77427a4a8c) )
 	ROM_LOAD( "btd1.bin",   0x4800, 0x0800, CRC(9e0566d4) SHA1(f14aa5c3d14136c5e9a317004f82d44a8d5d6815) )
 	ROM_LOAD( "bte1.bin",   0x5000, 0x0800, CRC(64ee6a42) SHA1(33d0713ed2a1f4c1c443dce1f053321f2c279293) )
@@ -828,7 +803,6 @@ ROM_START( bradley )
 	ROM_LOAD( "btk1.bin",   0x6800, 0x0800, CRC(f5c2904e) SHA1(f2cbf720c4f5ce0fc912dbc2f0445cb2c51ffac1) )
 	ROM_LOAD( "btlm.bin",   0x7000, 0x0800, CRC(7d0313bf) SHA1(17e3d8df62b332cf889133f1943c8f27308df027) )
 	ROM_LOAD( "btn1.bin",   0x7800, 0x0800, CRC(182c8c64) SHA1(511af60d86551291d2dc28442970b4863c62624a) )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "btb3.bin",   0x3000, 0x0800, CRC(88206304) SHA1(6a2e2ff35a929acf460f244db7968f3978b1d239) )
 	ROM_LOAD( "bta3.bin",   0x3800, 0x0800, CRC(d669d796) SHA1(ad606882320cd13612c7962d4718680fe5a35dd3) )
@@ -836,7 +810,7 @@ ROM_END
 
 
 ROM_START( redbaron )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "037587.01",  0x4800, 0x0800, CRC(60f23983) SHA1(7a9e5380bf49bf50a2d8ab0e0bd1ba3ac8efde24) )
 	ROM_CONTINUE(           0x5800, 0x0800 )
 	ROM_LOAD( "037000.01e", 0x5000, 0x0800, CRC(69bed808) SHA1(27d99efc74113cdcbbf021734b8a5a5fdb78c04c) )
@@ -844,7 +818,6 @@ ROM_START( redbaron )
 	ROM_LOAD( "036997.01e", 0x6800, 0x0800, CRC(7434acb4) SHA1(c950c4c12ab556b5051ad356ab4a0ed6b779ba1f) )
 	ROM_LOAD( "036996.01e", 0x7000, 0x0800, CRC(c0e7589e) SHA1(c1aedc95966afffd860d7e0009d5a43e8b292036) )
 	ROM_LOAD( "036995.01e", 0x7800, 0x0800, CRC(ad81d1da) SHA1(8bd66e5f34fc1c75f31eb6b168607e52aa3aa4df) )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "037006.01e", 0x3000, 0x0800, CRC(9fcffea0) SHA1(69b76655ee75742fcaa0f39a4a1cf3aa58088343) )
 	ROM_LOAD( "037007.01e", 0x3800, 0x0800, CRC(60250ede) SHA1(9c48952bd69863bee0c6dce09f3613149e0151ef) )
@@ -881,8 +854,8 @@ static DRIVER_INIT( bzone )
 
 static DRIVER_INIT( bradley )
 {
-	install_mem_read_handler(0, 0x400, 0x7ff, MRA_RAM);
-	install_mem_write_handler(0, 0x400, 0x7ff, MWA_RAM);
+	install_mem_read_handler(0, 0x400, 0x7ff, MRA8_RAM);
+	install_mem_write_handler(0, 0x400, 0x7ff, MWA8_RAM);
 
 	install_mem_read_handler(0, 0x1808, 0x1808, input_port_4_r);
 	install_mem_read_handler(0, 0x1809, 0x1809, input_port_5_r);

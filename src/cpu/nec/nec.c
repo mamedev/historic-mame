@@ -59,14 +59,14 @@ typedef UINT32 DWORD;
 
 static UINT8 nec_reg_layout[] = {
 	NEC_IP,NEC_SP,NEC_FLAGS,NEC_AW,NEC_CW,NEC_DW,NEC_BW,NEC_BP,NEC_IX,NEC_IY, -1,
-	NEC_ES,NEC_CS,NEC_SS,NEC_DS,NEC_VECTOR,NEC_NMI_STATE,NEC_IRQ_STATE, 0
+	NEC_ES,NEC_CS,NEC_SS,NEC_DS,NEC_VECTOR, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 nec_win_layout[] = {
-     0, 0,80, 2,    /* register window (top rows) */
-     0, 3,34,19,    /* disassembler window (left colums) */
-    35, 3,45, 9,    /* memory #1 window (right, upper middle) */
+     0, 0,80, 3,    /* register window (top rows) */
+     0, 4,34,18,    /* disassembler window (left colums) */
+    35, 4,45, 8,    /* memory #1 window (right, upper middle) */
     35,13,45, 9,    /* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
 };
@@ -99,7 +99,7 @@ typedef struct
 /* cpu state                                                               */
 /***************************************************************************/
 
-int nec_ICount;
+static int nec_ICount;
 
 static nec_Regs I;
 
@@ -124,7 +124,7 @@ static UINT8 parity_table[256];
 
 /***************************************************************************/
 
-void nec_reset (void *param)
+static void nec_reset (void *param)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
@@ -159,7 +159,7 @@ void nec_reset (void *param)
     }
 }
 
-void nec_exit (void)
+static void nec_exit (void)
 {
 
 }
@@ -190,7 +190,7 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
 	CHANGE_PC;
 }
 
-void nec_trap(void)
+static void nec_trap(void)
 {
 	nec_instruction[FETCHOP]();
 	nec_interrupt(1,0);
@@ -889,14 +889,13 @@ static void i_invalid(void)
 
 /*****************************************************************************/
 
-unsigned nec_get_context(void *dst)
+static void nec_get_context(void *dst)
 {
 	if( dst )
 		*(nec_Regs*)dst = I;
-    return sizeof(nec_Regs);
 }
 
-void nec_set_context(void *src)
+static void nec_set_context(void *src)
 {
 	if( src )
 	{
@@ -905,98 +904,7 @@ void nec_set_context(void *src)
 	}
 }
 
-unsigned nec_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return ((I.sregs[CS]<<4) + I.ip);
-		case NEC_IP: return I.ip;
-		case REG_SP: return (I.sregs[SS]<<4) + I.regs.w[SP];
-		case NEC_SP: return I.regs.w[SP];
-		case NEC_FLAGS: return CompressFlags();
-        case NEC_AW: return I.regs.w[AW];
-		case NEC_CW: return I.regs.w[CW];
-		case NEC_DW: return I.regs.w[DW];
-		case NEC_BW: return I.regs.w[BW];
-		case NEC_BP: return I.regs.w[BP];
-		case NEC_IX: return I.regs.w[IX];
-		case NEC_IY: return I.regs.w[IY];
-		case NEC_ES: return I.sregs[ES];
-		case NEC_CS: return I.sregs[CS];
-		case NEC_SS: return I.sregs[SS];
-		case NEC_DS: return I.sregs[DS];
-		case NEC_VECTOR: return I.int_vector;
-		case NEC_PENDING: return I.pending_irq;
-		case NEC_NMI_STATE: return I.nmi_state;
-		case NEC_IRQ_STATE: return I.irq_state;
-		case REG_PREVIOUSPC: return 0;	/* not supported */
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = (((I.sregs[SS]<<4) + I.regs.w[SP])) + 2 * (REG_SP_CONTENTS - regnum);
-				return cpu_readmem20( offset ) | ( cpu_readmem20( offset + 1) << 8 );
-			}
-	}
-	return 0;
-}
-
-void nec_set_irq_line(int irqline, int state);
-
-void nec_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-			if( val - (I.sregs[CS]<<4) < 0x10000 )
-			{
-				I.ip = val - (I.sregs[CS]<<4);
-			}
-			else
-			{
-				I.sregs[CS] = val >> 4;
-				I.ip = val & 0x0000f;
-			}
-			break;
-		case NEC_IP: I.ip = val; break;
-		case REG_SP:
-			if( val - (I.sregs[SS]<<4) < 0x10000 )
-			{
-				I.regs.w[SP] = val - (I.sregs[SS]<<4);
-			}
-			else
-			{
-				I.sregs[SS] = val >> 4;
-				I.regs.w[SP] = val & 0x0000f;
-			}
-			break;
-		case NEC_SP: I.regs.w[SP] = val; break;
-		case NEC_FLAGS: ExpandFlags(val); break;
-        case NEC_AW: I.regs.w[AW] = val; break;
-		case NEC_CW: I.regs.w[CW] = val; break;
-		case NEC_DW: I.regs.w[DW] = val; break;
-		case NEC_BW: I.regs.w[BW] = val; break;
-		case NEC_BP: I.regs.w[BP] = val; break;
-		case NEC_IX: I.regs.w[IX] = val; break;
-		case NEC_IY: I.regs.w[IY] = val; break;
-		case NEC_ES: I.sregs[ES] = val; break;
-		case NEC_CS: I.sregs[CS] = val; break;
-		case NEC_SS: I.sregs[SS] = val; break;
-		case NEC_DS: I.sregs[DS] = val; break;
-		case NEC_VECTOR: I.int_vector = val; break;
-		case NEC_PENDING: I.pending_irq = val; break;
-		case NEC_NMI_STATE: nec_set_irq_line(IRQ_LINE_NMI,val); break;
-		case NEC_IRQ_STATE: nec_set_irq_line(0,val); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = (((I.sregs[SS]<<4) + I.regs.w[SP])) + 2 * (REG_SP_CONTENTS - regnum);
-				cpu_writemem20( offset, val & 0xff );
-				cpu_writemem20( offset+1, (val >> 8) & 0xff );
-			}
-    }
-}
-
-void nec_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -1023,12 +931,7 @@ void nec_set_irq_line(int irqline, int state)
 	}
 }
 
-void nec_set_irq_callback(int (*callback)(int))
-{
-	I.irq_callback = callback;
-}
-
-unsigned nec_dasm(char *buffer, unsigned pc)
+static offs_t nec_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
     return Dasmnec(buffer,pc);
@@ -1071,9 +974,8 @@ static void nec_init(int type)
 }
 
 /* Wrappers for the different CPU types */
+#if (HAS_V20)
 void v20_init(void) { nec_init(0); }
-void v20_reset(void *param) { nec_reset(param); }
-void v20_exit(void) { nec_exit(); }
 int v20_execute(int cycles)
 {
 	nec_ICount=cycles;
@@ -1097,78 +999,10 @@ int v20_execute(int cycles)
     }
 	return cycles - nec_ICount;
 }
-unsigned v20_get_context(void *dst) { return nec_get_context(dst); }
-void v20_set_context(void *src) { nec_set_context(src); }
-unsigned v20_get_reg(int regnum) { return nec_get_reg(regnum); }
-void v20_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
-void v20_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
-void v20_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
-const char *v20_info(void *context, int regnum)
-{
-    static char buffer[32][63+1];
-    static int which = 0, flags;
-    nec_Regs *r = context;
+#endif
 
-    which = (which+1) % 32;
-    buffer[which][0] = '\0';
-    if( !context )
-        r = &I;
-
-    switch( regnum )
-    {
-        case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-        case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-        case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", CompressFlags()); break;
-        case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
-        case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
-        case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
-        case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
-        case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-        case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
-        case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
-        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-        case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
-        case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-        case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-        case CPU_INFO_FLAGS:
-            flags = CompressFlags();
-            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-                flags & 0x8000 ? 'M':'.',
-                flags & 0x4000 ? '?':'.',
-                flags & 0x2000 ? '?':'.',
-                flags & 0x1000 ? '?':'.',
-                flags & 0x0800 ? 'O':'.',
-                flags & 0x0400 ? 'D':'.',
-                flags & 0x0200 ? 'I':'.',
-                flags & 0x0100 ? 'T':'.',
-                flags & 0x0080 ? 'S':'.',
-                flags & 0x0040 ? 'Z':'.',
-                flags & 0x0020 ? '?':'.',
-                flags & 0x0010 ? 'A':'.',
-                flags & 0x0008 ? '?':'.',
-                flags & 0x0004 ? 'P':'.',
-                flags & 0x0002 ? 'N':'.',
-                flags & 0x0001 ? 'C':'.');
-            break;
-        case CPU_INFO_NAME: return "V20";
-        case CPU_INFO_FAMILY: return "NEC V-Series";
-        case CPU_INFO_VERSION: return "1.5";
-        case CPU_INFO_FILE: return __FILE__;
-        case CPU_INFO_CREDITS: return "NEC emulator v1.5 by Bryan McPhail";
-        case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
-        case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
-    }
-    return buffer[which];
-}
-unsigned v20_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
-
+#if (HAS_V30)
 void v30_init(void) { nec_init(1); }
-void v30_reset(void *param) { nec_reset(param); }
-void v30_exit(void) { nec_exit(); }
 int v30_execute(int cycles) {
 	nec_ICount=cycles;
 	cpu_type=V30;
@@ -1191,34 +1025,10 @@ int v30_execute(int cycles) {
     }
 	return cycles - nec_ICount;
 }
-unsigned v30_get_context(void *dst) { return nec_get_context(dst); }
-void v30_set_context(void *src) { nec_set_context(src); }
-unsigned v30_get_reg(int regnum) { return nec_get_reg(regnum); }
-void v30_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
-void v30_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
-void v30_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
-const char *v30_info(void *context, int regnum)
-{
-    static char buffer[32][63+1];
-    static int which = 0;
-    nec_Regs *r = context;
+#endif
 
-    which = (which+1) % 32;
-    buffer[which][0] = '\0';
-    if( !context )
-        r = &I;
-
-    switch( regnum )
-    {
-        case CPU_INFO_NAME: return "V30";
-	}
-    return v20_info(context,regnum);
-}
-unsigned v30_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
-
+#if (HAS_V33)
 void v33_init(void) { nec_init(2); }
-void v33_reset(void *param) { nec_reset(param); }
-void v33_exit(void) { nec_exit(); }
 int v33_execute(int cycles)
 {
 	nec_ICount=cycles;
@@ -1243,27 +1053,251 @@ int v33_execute(int cycles)
 
 	return cycles - nec_ICount;
 }
-unsigned v33_get_context(void *dst) { return nec_get_context(dst); }
-void v33_set_context(void *src) { nec_set_context(src); }
-unsigned v33_get_reg(int regnum) { return nec_get_reg(regnum); }
-void v33_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
-void v33_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
-void v33_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
-const char *v33_info(void *context, int regnum)
+#endif
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void nec_set_info(UINT32 state, union cpuinfo *info)
 {
-    static char buffer[32][63+1];
-    static int which = 0;
-    nec_Regs *r = context;
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
 
-    which = (which+1) % 32;
-    buffer[which][0] = '\0';
-    if( !context )
-        r = &I;
-
-    switch( regnum )
-    {
-        case CPU_INFO_NAME: return "V33";
+		case CPUINFO_INT_PC:
+			if( info->i - (I.sregs[CS]<<4) < 0x10000 )
+			{
+				I.ip = info->i - (I.sregs[CS]<<4);
+			}
+			else
+			{
+				I.sregs[CS] = info->i >> 4;
+				I.ip = info->i & 0x0000f;
+			}
+			break;
+		case CPUINFO_INT_REGISTER + NEC_IP:				I.ip = info->i;							break;
+		case CPUINFO_INT_SP:
+			if( info->i - (I.sregs[SS]<<4) < 0x10000 )
+			{
+				I.regs.w[SP] = info->i - (I.sregs[SS]<<4);
+			}
+			else
+			{
+				I.sregs[SS] = info->i >> 4;
+				I.regs.w[SP] = info->i & 0x0000f;
+			}
+			break;
+		case CPUINFO_INT_REGISTER + NEC_SP:				I.regs.w[SP] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_FLAGS:			ExpandFlags(info->i);					break;
+        case CPUINFO_INT_REGISTER + NEC_AW:				I.regs.w[AW] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_CW:				I.regs.w[CW] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_DW:				I.regs.w[DW] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_BW:				I.regs.w[BW] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_BP:				I.regs.w[BP] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_IX:				I.regs.w[IX] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_IY:				I.regs.w[IY] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_ES:				I.sregs[ES] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_CS:				I.sregs[CS] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_SS:				I.sregs[SS] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_DS:				I.sregs[DS] = info->i;					break;
+		case CPUINFO_INT_REGISTER + NEC_VECTOR:			I.int_vector = info->i;					break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
-    return v20_info(context,regnum);
 }
-unsigned v33_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void nec_get_info(UINT32 state, union cpuinfo *info)
+{
+	int flags;
+
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(I);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 80;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = (I.pending_irq & INT_IRQ) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = I.nmi_state;					break;
+
+		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
+
+		case CPUINFO_INT_PC:							info->i = ((I.sregs[CS]<<4) + I.ip);	break;
+		case CPUINFO_INT_REGISTER + NEC_IP:				info->i = I.ip;							break;
+		case CPUINFO_INT_SP:							info->i = (I.sregs[SS]<<4) + I.regs.w[SP]; break;
+		case CPUINFO_INT_REGISTER + NEC_SP:				info->i = I.regs.w[SP];					break;
+		case CPUINFO_INT_REGISTER + NEC_FLAGS:			info->i = CompressFlags();				break;
+        case CPUINFO_INT_REGISTER + NEC_AW:				info->i = I.regs.w[AW];					break;
+		case CPUINFO_INT_REGISTER + NEC_CW:				info->i = I.regs.w[CW];					break;
+		case CPUINFO_INT_REGISTER + NEC_DW:				info->i = I.regs.w[DW];					break;
+		case CPUINFO_INT_REGISTER + NEC_BW:				info->i = I.regs.w[BW];					break;
+		case CPUINFO_INT_REGISTER + NEC_BP:				info->i = I.regs.w[BP];					break;
+		case CPUINFO_INT_REGISTER + NEC_IX:				info->i = I.regs.w[IX];					break;
+		case CPUINFO_INT_REGISTER + NEC_IY:				info->i = I.regs.w[IY];					break;
+		case CPUINFO_INT_REGISTER + NEC_ES:				info->i = I.sregs[ES];					break;
+		case CPUINFO_INT_REGISTER + NEC_CS:				info->i = I.sregs[CS];					break;
+		case CPUINFO_INT_REGISTER + NEC_SS:				info->i = I.sregs[SS];					break;
+		case CPUINFO_INT_REGISTER + NEC_DS:				info->i = I.sregs[DS];					break;
+		case CPUINFO_INT_REGISTER + NEC_VECTOR:			info->i = I.int_vector;					break;
+		case CPUINFO_INT_REGISTER + NEC_PENDING:		info->i = I.pending_irq;				break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = nec_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = nec_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = nec_set_context;		break;
+		case CPUINFO_PTR_INIT:							/* set per-CPU */						break;
+		case CPUINFO_PTR_RESET:							info->reset = nec_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = nec_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						/* set per-CPU */						break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = nec_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = nec_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = nec_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "NEC"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC V-Series"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.5"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "NEC emulator v1.5 by Bryan McPhail"); break;
+
+		case CPUINFO_STR_FLAGS:
+            flags = CompressFlags();
+            sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+                flags & 0x8000 ? 'M':'.',
+                flags & 0x4000 ? '?':'.',
+                flags & 0x2000 ? '?':'.',
+                flags & 0x1000 ? '?':'.',
+                flags & 0x0800 ? 'O':'.',
+                flags & 0x0400 ? 'D':'.',
+                flags & 0x0200 ? 'I':'.',
+                flags & 0x0100 ? 'T':'.',
+                flags & 0x0080 ? 'S':'.',
+                flags & 0x0040 ? 'Z':'.',
+                flags & 0x0020 ? '?':'.',
+                flags & 0x0010 ? 'A':'.',
+                flags & 0x0008 ? '?':'.',
+                flags & 0x0004 ? 'P':'.',
+                flags & 0x0002 ? 'N':'.',
+                flags & 0x0001 ? 'C':'.');
+            break;
+
+        case CPUINFO_STR_REGISTER + NEC_IP:				sprintf(info->s = cpuintrf_temp_str(), "IP:%04X", I.ip); break;
+        case CPUINFO_STR_REGISTER + NEC_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", I.regs.w[SP]); break;
+        case CPUINFO_STR_REGISTER + NEC_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", CompressFlags()); break;
+        case CPUINFO_STR_REGISTER + NEC_AW:				sprintf(info->s = cpuintrf_temp_str(), "AW:%04X", I.regs.w[AW]); break;
+        case CPUINFO_STR_REGISTER + NEC_CW:				sprintf(info->s = cpuintrf_temp_str(), "CW:%04X", I.regs.w[CW]); break;
+        case CPUINFO_STR_REGISTER + NEC_DW:				sprintf(info->s = cpuintrf_temp_str(), "DW:%04X", I.regs.w[DW]); break;
+        case CPUINFO_STR_REGISTER + NEC_BW:				sprintf(info->s = cpuintrf_temp_str(), "BW:%04X", I.regs.w[BW]); break;
+        case CPUINFO_STR_REGISTER + NEC_BP:				sprintf(info->s = cpuintrf_temp_str(), "BP:%04X", I.regs.w[BP]); break;
+        case CPUINFO_STR_REGISTER + NEC_IX:				sprintf(info->s = cpuintrf_temp_str(), "IX:%04X", I.regs.w[IX]); break;
+        case CPUINFO_STR_REGISTER + NEC_IY:				sprintf(info->s = cpuintrf_temp_str(), "IY:%04X", I.regs.w[IY]); break;
+        case CPUINFO_STR_REGISTER + NEC_ES:				sprintf(info->s = cpuintrf_temp_str(), "ES:%04X", I.sregs[ES]); break;
+        case CPUINFO_STR_REGISTER + NEC_CS:				sprintf(info->s = cpuintrf_temp_str(), "CS:%04X", I.sregs[CS]); break;
+        case CPUINFO_STR_REGISTER + NEC_SS:				sprintf(info->s = cpuintrf_temp_str(), "SS:%04X", I.sregs[SS]); break;
+        case CPUINFO_STR_REGISTER + NEC_DS:				sprintf(info->s = cpuintrf_temp_str(), "DS:%04X", I.sregs[DS]); break;
+        case CPUINFO_STR_REGISTER + NEC_VECTOR:			sprintf(info->s = cpuintrf_temp_str(), "V:%02X", I.int_vector); break;
+	}
+}
+
+
+#if (HAS_V20)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void v20_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = v20_init;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = v20_execute;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V20"); break;
+
+		default:
+			nec_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_V30)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void v30_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = v30_init;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V30"); break;
+
+		default:
+			nec_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_V33)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void v33_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = v33_init;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = v33_execute;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V33"); break;
+
+		default:
+			nec_get_info(state, info);
+			break;
+	}
+}
+#endif

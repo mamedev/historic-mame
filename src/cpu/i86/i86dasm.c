@@ -1421,9 +1421,11 @@ unsigned DasmI86(char* buffer, unsigned pc)
 {
   	unsigned c;
 	static UINT8 map[20];
+	union cpuinfo info;
 
 	instruction_offset = pc;
-	instruction_segment = i86_get_reg(I86_CS);
+	i86_get_info(CPUINFO_INT_REGISTER + I86_CS, &info);
+	instruction_segment = info.i;
 
 	/* input buffer */
 	getbyte_map = map;
@@ -1433,10 +1435,11 @@ unsigned DasmI86(char* buffer, unsigned pc)
 	for (c = 0;c < 20;c++)
 	{
 		int pc_masked = (pc+c)&0xfffff;
-		change_pc20(pc_masked);
-		map[c] = OP_ROM[pc_masked];
+		change_pc(pc_masked);
+		map[c] = cpu_readop(pc_masked);
 	}
-	change_pc20(i86_get_reg(REG_PC));
+	i86_get_info(CPUINFO_INT_REGISTER + REG_PC, &info);
+	change_pc(info.i);
 
 	/* output buffer */
 	ubufs = buffer;
@@ -1469,12 +1472,14 @@ unsigned DasmI86(char* buffer, unsigned pc)
 unsigned DasmI186(char* buffer, unsigned pc)
 {
   	unsigned c;
+	union cpuinfo info;
 
 	instruction_offset = pc;
-	instruction_segment = i86_get_reg(I86_CS);
+	i86_get_info(CPUINFO_INT_REGISTER + I86_CS, &info);
+	instruction_segment = info.i;
 
 	/* input buffer */
-	getbyte_map = &OP_ROM[pc];
+	getbyte_map = cpu_opptr(pc);
 	getbyte_mac = 0;
 
 	/* output buffer */
@@ -1508,12 +1513,14 @@ unsigned DasmI186(char* buffer, unsigned pc)
 unsigned DasmV30(char* buffer, unsigned pc)
 {
   	unsigned c;
+	union cpuinfo info;
 
 	instruction_offset = pc;
-	instruction_segment = i86_get_reg(I86_CS);
+	i86_get_info(CPUINFO_INT_REGISTER + I86_CS, &info);
+	instruction_segment = info.i;
 
 	/* input buffer */
-	getbyte_map = &OP_ROM[pc];
+	getbyte_map = cpu_opptr(pc);
 	getbyte_mac = 0;
 
 	/* output buffer */
@@ -1548,12 +1555,14 @@ unsigned DasmV30(char* buffer, unsigned pc)
 unsigned DasmI286(char* buffer, unsigned pc)
 {
   	unsigned c;
+	union cpuinfo info;
 
 	instruction_offset = pc;
-	instruction_segment = i286_get_reg(I286_CS);
+	i86_get_info(CPUINFO_INT_REGISTER + I86_CS, &info);
+	instruction_segment = info.i;
 
 	/* input buffer */
-	getbyte_map = &OP_ROM[pc];
+	getbyte_map = cpu_opptr(pc);
 	getbyte_mac = 0;
 
 	/* output buffer */
@@ -1588,13 +1597,14 @@ unsigned DasmI286(char* buffer, unsigned pc)
 unsigned DasmI386(char* buffer, unsigned pc)
 {
   	unsigned c;
+	union cpuinfo info;
 
 	instruction_offset = pc;
-	instruction_segment = i86_get_reg(I86_CS);
-
+	i86_get_info(CPUINFO_INT_REGISTER + I86_CS, &info);
+	instruction_segment = info.i;
 
 	/* input buffer */
-	getbyte_map = &OP_ROM[pc];
+	getbyte_map = cpu_opptr(pc);
 	getbyte_mac = 0;
 
 	/* output buffer */

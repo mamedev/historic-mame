@@ -408,77 +408,78 @@ static WRITE_HANDLER( namcos86_led_w )
 
 /*******************************************************************/
 
-static MEMORY_READ_START( readmem1 )
-	{ 0x0000, 0x1fff, rthunder_videoram1_r },
-	{ 0x2000, 0x3fff, rthunder_videoram2_r },
-	{ 0x4000, 0x40ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
-	{ 0x4100, 0x413f, namcos1_sound_r }, /* PSG device, shared RAM */
-	{ 0x4000, 0x43ff, shared1_r },
-	{ 0x4400, 0x5fff, spriteram_r },
-	{ 0x6000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(rthunder_videoram1_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(rthunder_videoram2_r)
+	AM_RANGE(0x4000, 0x40ff) AM_READ(namcos1_wavedata_r) /* PSG device, shared RAM */
+	AM_RANGE(0x4100, 0x413f) AM_READ(namcos1_sound_r) /* PSG device, shared RAM */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(shared1_r)
+	AM_RANGE(0x4400, 0x5fff) AM_READ(spriteram_r)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem1 )
-	{ 0x0000, 0x1fff, rthunder_videoram1_w, &rthunder_videoram1 },
-	{ 0x2000, 0x3fff, rthunder_videoram2_w, &rthunder_videoram2 },
+static ADDRESS_MAP_START( writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(rthunder_videoram1_w) AM_BASE(&rthunder_videoram1)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(rthunder_videoram2_w) AM_BASE(&rthunder_videoram2)
 
-	{ 0x4000, 0x40ff, namcos1_wavedata_w, &namco_wavedata }, /* PSG device, shared RAM */
-	{ 0x4100, 0x413f, namcos1_sound_w, &namco_soundregs }, /* PSG device, shared RAM */
-	{ 0x4000, 0x43ff, shared1_w, &shared1 },
+	AM_RANGE(0x4000, 0x40ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata) /* PSG device, shared RAM */
+	AM_RANGE(0x4100, 0x413f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs) /* PSG device, shared RAM */
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(shared1_w) AM_BASE(&shared1)
 
-	{ 0x4400, 0x5fff, spriteram_w, &spriteram },
+	AM_RANGE(0x4400, 0x5fff) AM_WRITE(spriteram_w) AM_BASE(&spriteram)
 
-	{ 0x6000, 0x6000, namco_voice0_play_w },
-	{ 0x6200, 0x6200, namco_voice0_select_w },
-	{ 0x6400, 0x6400, namco_voice1_play_w },
-	{ 0x6600, 0x6600, namco_voice1_select_w },
-	{ 0x6800, 0x6800, bankswitch1_ext_w },
-//	{ 0x6c00, 0x6c00, MWA_NOP }, /* ??? */
-//	{ 0x6e00, 0x6e00, MWA_NOP }, /* ??? */
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(namco_voice0_play_w)
+	AM_RANGE(0x6200, 0x6200) AM_WRITE(namco_voice0_select_w)
+	AM_RANGE(0x6400, 0x6400) AM_WRITE(namco_voice1_play_w)
+	AM_RANGE(0x6600, 0x6600) AM_WRITE(namco_voice1_select_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(bankswitch1_ext_w)
+//	AM_RANGE(0x6c00, 0x6c00) AM_WRITE(MWA8_NOP) /* ??? */
+//	AM_RANGE(0x6e00, 0x6e00) AM_WRITE(MWA8_NOP) /* ??? */
 
-	{ 0x8000, 0x8000, watchdog_reset_w },
-	{ 0x8400, 0x8400, int_ack1_w }, /* IRQ acknowledge */
-	{ 0x8800, 0x8800, rthunder_tilebank_select_0_w },
-	{ 0x8c00, 0x8c00, rthunder_tilebank_select_1_w },
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8400, 0x8400) AM_WRITE(int_ack1_w) /* IRQ acknowledge */
+	AM_RANGE(0x8800, 0x8800) AM_WRITE(rthunder_tilebank_select_0_w)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(rthunder_tilebank_select_1_w)
 
-	{ 0x9000, 0x9002, rthunder_scroll0_w },	/* scroll + priority */
-	{ 0x9003, 0x9003, bankswitch1_w },
-	{ 0x9004, 0x9006, rthunder_scroll1_w },	/* scroll + priority */
+	AM_RANGE(0x9000, 0x9002) AM_WRITE(rthunder_scroll0_w)	/* scroll + priority */
+	AM_RANGE(0x9003, 0x9003) AM_WRITE(bankswitch1_w)
+	AM_RANGE(0x9004, 0x9006) AM_WRITE(rthunder_scroll1_w)	/* scroll + priority */
 
-	{ 0x9400, 0x9402, rthunder_scroll2_w },	/* scroll + priority */
+	AM_RANGE(0x9400, 0x9402) AM_WRITE(rthunder_scroll2_w)	/* scroll + priority */
+//	AM_RANGE(0x9400, 0x9402) AM_WRITE(rthunder_scroll2_w)	/* scroll + priority */
 //	{ 0x9403, 0x9403 } sub CPU rom bank select would be here
-	{ 0x9404, 0x9406, rthunder_scroll3_w },	/* scroll + priority */
+	AM_RANGE(0x9404, 0x9406) AM_WRITE(rthunder_scroll3_w)	/* scroll + priority */
 
-	{ 0xa000, 0xa000, rthunder_backcolor_w },
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(rthunder_backcolor_w)
 
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 #define CPU2_MEMORY(NAME,ADDR_SPRITE,ADDR_VIDEO1,ADDR_VIDEO2,ADDR_ROM,ADDR_BANK,ADDR_WDOG,ADDR_INT)	\
-static MEMORY_READ_START( NAME##_readmem2 )											\
-	{ ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff, MRA_RAM },							\
-	{ ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff, spriteram_r },						\
-	{ ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff, rthunder_videoram1_r },				\
-	{ ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff, rthunder_videoram2_r },				\
-	{ ADDR_ROM+0x0000, ADDR_ROM+0x1fff, MRA_BANK2 },								\
-	{ 0x8000, 0xffff, MRA_ROM },													\
-MEMORY_END																			\
+static ADDRESS_MAP_START( NAME##_readmem2, ADDRESS_SPACE_PROGRAM, 8 )											\
+	AM_RANGE(ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff) AM_READ(MRA8_RAM)							\
+	AM_RANGE(ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff) AM_READ(spriteram_r)						\
+	AM_RANGE(ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff) AM_READ(rthunder_videoram1_r)				\
+	AM_RANGE(ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff) AM_READ(rthunder_videoram2_r)				\
+	AM_RANGE(ADDR_ROM+0x0000, ADDR_ROM+0x1fff) AM_READ(MRA8_BANK2)								\
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)													\
+ADDRESS_MAP_END																			\
 																					\
-static MEMORY_WRITE_START( NAME##_writemem2 )										\
-	{ ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff, MWA_RAM },							\
-	{ ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff, spriteram_w },						\
-	{ ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff, rthunder_videoram1_w },				\
-	{ ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff, rthunder_videoram2_w },				\
+static ADDRESS_MAP_START( NAME##_writemem2, ADDRESS_SPACE_PROGRAM, 8 )										\
+	AM_RANGE(ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff) AM_WRITE(MWA8_RAM)							\
+	AM_RANGE(ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff) AM_WRITE(spriteram_w)						\
+	AM_RANGE(ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff) AM_WRITE(rthunder_videoram1_w)				\
+	AM_RANGE(ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff) AM_WRITE(rthunder_videoram2_w)				\
 /*	{ ADDR_BANK+0x00, ADDR_BANK+0x02 } layer 2 scroll registers would be here */	\
-	{ ADDR_BANK+0x03, ADDR_BANK+0x03, bankswitch2_w },								\
+	AM_RANGE(ADDR_BANK+0x03, ADDR_BANK+0x03) AM_WRITE(bankswitch2_w)								\
 /*	{ ADDR_BANK+0x04, ADDR_BANK+0x06 } layer 3 scroll registers would be here */	\
-	{ ADDR_WDOG, ADDR_WDOG, watchdog_reset_w },										\
-	{ ADDR_INT, ADDR_INT, int_ack2_w },	/* IRQ acknowledge */						\
-	{ ADDR_ROM+0x0000, ADDR_ROM+0x1fff, MWA_ROM },									\
-	{ 0x8000, 0xffff, MWA_ROM },													\
-MEMORY_END
+	AM_RANGE(ADDR_WDOG, ADDR_WDOG) AM_WRITE(watchdog_reset_w)										\
+	AM_RANGE(ADDR_INT, ADDR_INT) AM_WRITE(int_ack2_w)	/* IRQ acknowledge */						\
+	AM_RANGE(ADDR_ROM+0x0000, ADDR_ROM+0x1fff) AM_WRITE(MWA8_ROM)									\
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)													\
+ADDRESS_MAP_END
 
 #define UNUSED 0x4000
 /*                     SPRITE  VIDEO1  VIDEO2  ROM     BANK    WDOG    IRQACK */
@@ -492,38 +493,38 @@ CPU2_MEMORY( wndrmomo, 0x2000, 0x4000, 0x6000, UNUSED, UNUSED, 0xc000, 0xc800 )
 
 
 #define MCU_MEMORY(NAME,ADDR_LOWROM,ADDR_INPUT,ADDR_UNK1,ADDR_UNK2)			\
-static MEMORY_READ_START( NAME##_mcu_readmem )								\
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },						\
-	{ 0x0080, 0x00ff, MRA_RAM },											\
-	{ 0x1000, 0x10ff, namcos1_wavedata_r }, /* PSG device, shared RAM */	\
-	{ 0x1100, 0x113f, namcos1_sound_r }, /* PSG device, shared RAM */		\
-	{ 0x1000, 0x13ff, shared1_r },											\
-	{ 0x1400, 0x1fff, MRA_RAM },											\
-	{ ADDR_INPUT+0x00, ADDR_INPUT+0x01, YM2151_status_port_0_r },			\
-	{ ADDR_INPUT+0x20, ADDR_INPUT+0x20, input_port_0_r },					\
-	{ ADDR_INPUT+0x21, ADDR_INPUT+0x21, input_port_1_r },					\
-	{ ADDR_INPUT+0x30, ADDR_INPUT+0x30, dsw0_r },							\
-	{ ADDR_INPUT+0x31, ADDR_INPUT+0x31, dsw1_r },							\
-	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MRA_ROM },							\
-	{ 0x8000, 0xbfff, MRA_ROM },											\
-	{ 0xf000, 0xffff, MRA_ROM },											\
-MEMORY_END																	\
+static ADDRESS_MAP_START( NAME##_mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )								\
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)						\
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)											\
+	AM_RANGE(0x1000, 0x10ff) AM_READ(namcos1_wavedata_r) /* PSG device, shared RAM */	\
+	AM_RANGE(0x1100, 0x113f) AM_READ(namcos1_sound_r) /* PSG device, shared RAM */		\
+	AM_RANGE(0x1000, 0x13ff) AM_READ(shared1_r)											\
+	AM_RANGE(0x1400, 0x1fff) AM_READ(MRA8_RAM)											\
+	AM_RANGE(ADDR_INPUT+0x00, ADDR_INPUT+0x01) AM_READ(YM2151_status_port_0_r)			\
+	AM_RANGE(ADDR_INPUT+0x20, ADDR_INPUT+0x20) AM_READ(input_port_0_r)					\
+	AM_RANGE(ADDR_INPUT+0x21, ADDR_INPUT+0x21) AM_READ(input_port_1_r)					\
+	AM_RANGE(ADDR_INPUT+0x30, ADDR_INPUT+0x30) AM_READ(dsw0_r)							\
+	AM_RANGE(ADDR_INPUT+0x31, ADDR_INPUT+0x31) AM_READ(dsw1_r)							\
+	AM_RANGE(ADDR_LOWROM, ADDR_LOWROM+0x3fff) AM_READ(MRA8_ROM)							\
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)											\
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)											\
+ADDRESS_MAP_END																	\
 																			\
-static MEMORY_WRITE_START( NAME##_mcu_writemem )							\
-	{ 0x0000, 0x001f, hd63701_internal_registers_w },						\
-	{ 0x0080, 0x00ff, MWA_RAM },											\
-	{ 0x1000, 0x10ff, namcos1_wavedata_w }, /* PSG device, shared RAM */	\
-	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device, shared RAM */		\
-	{ 0x1000, 0x13ff, shared1_w },											\
-	{ 0x1400, 0x1fff, MWA_RAM },											\
-	{ ADDR_INPUT+0x00, ADDR_INPUT+0x00, YM2151_register_port_0_w },			\
-	{ ADDR_INPUT+0x01, ADDR_INPUT+0x01, YM2151_data_port_0_w },				\
-	{ ADDR_UNK1, ADDR_UNK1, MWA_NOP }, /* ??? written (not always) at end of interrupt */	\
-	{ ADDR_UNK2, ADDR_UNK2, MWA_NOP }, /* ??? written (not always) at end of interrupt */	\
-	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MWA_ROM },							\
-	{ 0x8000, 0xbfff, MWA_ROM },											\
-	{ 0xf000, 0xffff, MWA_ROM },											\
-MEMORY_END
+static ADDRESS_MAP_START( NAME##_mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )							\
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)						\
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)											\
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(namcos1_wavedata_w) /* PSG device, shared RAM */	\
+	AM_RANGE(0x1100, 0x113f) AM_WRITE(namcos1_sound_w) /* PSG device, shared RAM */		\
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(shared1_w)											\
+	AM_RANGE(0x1400, 0x1fff) AM_WRITE(MWA8_RAM)											\
+	AM_RANGE(ADDR_INPUT+0x00, ADDR_INPUT+0x00) AM_WRITE(YM2151_register_port_0_w)			\
+	AM_RANGE(ADDR_INPUT+0x01, ADDR_INPUT+0x01) AM_WRITE(YM2151_data_port_0_w)				\
+	AM_RANGE(ADDR_UNK1, ADDR_UNK1) AM_WRITE(MWA8_NOP) /* ??? written (not always) at end of interrupt */	\
+	AM_RANGE(ADDR_UNK2, ADDR_UNK2) AM_WRITE(MWA8_NOP) /* ??? written (not always) at end of interrupt */	\
+	AM_RANGE(ADDR_LOWROM, ADDR_LOWROM+0x3fff) AM_WRITE(MWA8_ROM)							\
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)											\
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)											\
+ADDRESS_MAP_END
 
 #define UNUSED 0x4000
 /*                    LOWROM   INPUT    UNK1    UNK2 */
@@ -541,15 +542,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static PORT_READ_START( mcu_readport )
-	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
-	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-PORT_END
+static ADDRESS_MAP_START( mcu_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_READ(input_port_4_r)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_READ(readFF)	/* leds won't work otherwise */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcu_writeport )
-	{ HD63701_PORT1, HD63701_PORT1, namcos86_coin_w },
-	{ HD63701_PORT2, HD63701_PORT2, namcos86_led_w },
-PORT_END
+static ADDRESS_MAP_START( mcu_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_WRITE(namcos86_coin_w)
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_WRITE(namcos86_led_w)
+ADDRESS_MAP_END
 
 
 /*******************************************************************/
@@ -1209,16 +1210,16 @@ static MACHINE_DRIVER_START( hopmappy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu1", M6809, 6000000/4)	/*49152000/32, rthunder doesn't work with this */
-	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_PROGRAM_MAP(readmem1,writemem1)
 	MDRV_CPU_VBLANK_INT(namco86_interrupt1,1)
 
 	MDRV_CPU_ADD_TAG("cpu2", M6809, 49152000/32)
-	MDRV_CPU_MEMORY(hopmappy_readmem2,hopmappy_writemem2)
+	MDRV_CPU_PROGRAM_MAP(hopmappy_readmem2,hopmappy_writemem2)
 	MDRV_CPU_VBLANK_INT(namco86_interrupt2,1)
 
 	MDRV_CPU_ADD_TAG("mcu", HD63701, 49152000/32)	/* or compatible 6808 with extra instructions */
-	MDRV_CPU_MEMORY(hopmappy_mcu_readmem,hopmappy_mcu_writemem)
-	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_PROGRAM_MAP(hopmappy_mcu_readmem,hopmappy_mcu_writemem)
+	MDRV_CPU_IO_MAP(mcu_readport,mcu_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -1252,10 +1253,10 @@ static MACHINE_DRIVER_START( skykiddx )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hopmappy)
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(skykiddx_readmem2,skykiddx_writemem2)
+	MDRV_CPU_PROGRAM_MAP(skykiddx_readmem2,skykiddx_writemem2)
 
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(skykiddx_mcu_readmem,skykiddx_mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(skykiddx_mcu_readmem,skykiddx_mcu_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1264,10 +1265,10 @@ static MACHINE_DRIVER_START( roishtar )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hopmappy)
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(roishtar_readmem2,roishtar_writemem2)
+	MDRV_CPU_PROGRAM_MAP(roishtar_readmem2,roishtar_writemem2)
 
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(roishtar_mcu_readmem,roishtar_mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(roishtar_mcu_readmem,roishtar_mcu_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1276,10 +1277,10 @@ static MACHINE_DRIVER_START( genpeitd )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hopmappy)
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(genpeitd_readmem2,genpeitd_writemem2)
+	MDRV_CPU_PROGRAM_MAP(genpeitd_readmem2,genpeitd_writemem2)
 
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(genpeitd_mcu_readmem,genpeitd_mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(genpeitd_mcu_readmem,genpeitd_mcu_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(gfxdecodeinfo_1024)
@@ -1291,10 +1292,10 @@ static MACHINE_DRIVER_START( rthunder )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hopmappy)
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(rthunder_readmem2,rthunder_writemem2)
+	MDRV_CPU_PROGRAM_MAP(rthunder_readmem2,rthunder_writemem2)
 
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(rthunder_mcu_readmem,rthunder_mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(rthunder_mcu_readmem,rthunder_mcu_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(gfxdecodeinfo_512)
@@ -1306,10 +1307,10 @@ static MACHINE_DRIVER_START( wndrmomo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(hopmappy)
 	MDRV_CPU_MODIFY("cpu2")
-	MDRV_CPU_MEMORY(wndrmomo_readmem2,wndrmomo_writemem2)
+	MDRV_CPU_PROGRAM_MAP(wndrmomo_readmem2,wndrmomo_writemem2)
 
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_MEMORY(wndrmomo_mcu_readmem,wndrmomo_mcu_writemem)
+	MDRV_CPU_PROGRAM_MAP(wndrmomo_mcu_readmem,wndrmomo_mcu_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(gfxdecodeinfo_512)

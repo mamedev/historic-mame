@@ -6,6 +6,9 @@
 #include "hash.h"
 #include "datafile.h"
 
+/* The size of our hardcoded BIOS ROM array */
+#define MAX_BIOS 32
+
 /* Format */
 #define SELECT(a,b) (OUTPUT_XML ? (b) : (a))
 
@@ -957,13 +960,43 @@ static void print_resource_info(int OUTPUT_XML, FILE* out, const struct GameDriv
 	fprintf(out, SELECT(L1E, "\t</" XML_TOP ">\n"));
 }
 
-/* Import the driver object and print it as a resource */
-#define PRINT_RESOURCE(format, s) \
-	{ \
-		extern struct GameDriver driver_##s; \
-		print_resource_info(format, out, &driver_##s); \
+/* Print resource info for all games */
+static void print_resources_data(int OUTPUT_XML, FILE* out, const struct GameDriver* games[])
+{
+	int i, j;
+	int total_bios=0;
+	struct GameDriver *resources[MAX_BIOS];
+	extern struct GameDriver driver_0;
+
+	/* Build a driver list containing all the NOT_A_DRIVER entries */
+	/* This won't catch clones of games with bioses, but the parent should be in games[] anyway */
+	for (i=0;drivers[i];++i)
+	{
+		if (drivers[i]->clone_of &&
+		   (drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
+		   (drivers[i]->clone_of != &driver_0))
+		{
+			for (j=0;j<total_bios;++j)
+			{
+				if (resources[j] == drivers[i]->clone_of)
+					break;
+			}
+
+			if (j == total_bios)
+				resources[total_bios++] = (struct GameDriver *)drivers[i]->clone_of;
+
+			if (total_bios == MAX_BIOS)
+			{
+				fprintf(stderr, "Too many BIOS files found. Increase size of MAX_BIOS.");
+				break;
+			}
+		}
 	}
 
+	/* print resources */
+	for(i=0;i<total_bios;++i)
+		print_resource_info(OUTPUT_XML, out, resources[i]);
+}
 #endif
 
 static void print_mame_data(int OUTPUT_XML, FILE* out, const struct GameDriver* games[])
@@ -974,23 +1007,9 @@ static void print_mame_data(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 	for(j=0;games[j];++j)
 		print_game_info(OUTPUT_XML, out, games[j]);
 
-	/* print the resources (only if linked) */
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
-	PRINT_RESOURCE(OUTPUT_XML, neogeo);
-	PRINT_RESOURCE(OUTPUT_XML, cvs);
-	PRINT_RESOURCE(OUTPUT_XML, decocass);
-	PRINT_RESOURCE(OUTPUT_XML, playch10);
-	PRINT_RESOURCE(OUTPUT_XML, pgm);
-	PRINT_RESOURCE(OUTPUT_XML, skns);
-	PRINT_RESOURCE(OUTPUT_XML, stvbios);
-	PRINT_RESOURCE(OUTPUT_XML, konamigx);
-	PRINT_RESOURCE(OUTPUT_XML, nss);
-	PRINT_RESOURCE(OUTPUT_XML, megatech);
-	PRINT_RESOURCE(OUTPUT_XML, megaplay);
-	PRINT_RESOURCE(OUTPUT_XML, cpzn1);
-	PRINT_RESOURCE(OUTPUT_XML, cpzn2);
-	PRINT_RESOURCE(OUTPUT_XML, tps);
-	PRINT_RESOURCE(OUTPUT_XML, taitofx1);
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
+	/* print resources */
+	print_resources_data(OUTPUT_XML, out, games);
 #endif
 }
 

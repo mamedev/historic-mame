@@ -56,43 +56,43 @@ WRITE_HANDLER( ltcasino_tile_atr_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xcfff, MRA_ROM },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xdfff, MRA_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM },
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM)
 
-	{ 0xec00, 0xec00, input_port_0_r },
-	{ 0xec01, 0xec01, input_port_1_r },
-	{ 0xec02, 0xec02, input_port_2_r },
-	{ 0xec03, 0xec03, input_port_3_r },
-	{ 0xec10, 0xec10, input_port_4_r },
-	{ 0xec12, 0xec12, input_port_5_r },
-	{ 0xec20, 0xec20, AY8910_read_port_0_r },
-	{ 0xec21, 0xec21, input_port_6_r }, //ltcasino -> pc: F3F3 (A in service) and F3FD (B in service)
-	{ 0xec3e, 0xec3e, MRA_NOP }, //not used
+	AM_RANGE(0xec00, 0xec00) AM_READ(input_port_0_r)
+	AM_RANGE(0xec01, 0xec01) AM_READ(input_port_1_r)
+	AM_RANGE(0xec02, 0xec02) AM_READ(input_port_2_r)
+	AM_RANGE(0xec03, 0xec03) AM_READ(input_port_3_r)
+	AM_RANGE(0xec10, 0xec10) AM_READ(input_port_4_r)
+	AM_RANGE(0xec12, 0xec12) AM_READ(input_port_5_r)
+	AM_RANGE(0xec20, 0xec20) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xec21, 0xec21) AM_READ(input_port_6_r) //ltcasino -> pc: F3F3 (A in service) and F3FD (B in service)
+	AM_RANGE(0xec3e, 0xec3e) AM_READ(MRA8_NOP) //not used
 
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xcfff, MWA_ROM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xcfff) AM_WRITE(MWA8_ROM)
 
-	{ 0xd000, 0xd7ff, ltcasino_tile_num_w, &ltcasino_tile_num_ram },
-	{ 0xd800, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, ltcasino_tile_atr_w, &ltcasino_tile_atr_ram },
-	{ 0xe800, 0xebff, MWA_RAM },
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(ltcasino_tile_num_w) AM_BASE(&ltcasino_tile_num_ram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(ltcasino_tile_atr_w) AM_BASE(&ltcasino_tile_atr_ram)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_RAM)
 
-	{ 0xec20, 0xec20, AY8910_write_port_0_w },
-	{ 0xec21, 0xec21, AY8910_control_port_0_w },
+	AM_RANGE(0xec20, 0xec20) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xec21, 0xec21) AM_WRITE(AY8910_control_port_0_w)
 
-	{ 0xec30, 0xec3f, MWA_RAM },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0xec30, 0xec3f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ltcasino )
@@ -514,7 +514,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( ltcasino )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,2000000)		 /* ? MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

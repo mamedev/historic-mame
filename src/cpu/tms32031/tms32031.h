@@ -64,28 +64,9 @@ enum
 
 
 /*###################################################################################################
-**	PUBLIC GLOBALS
-**#################################################################################################*/
-
-extern int tms32031_icount;
-
-
-/*###################################################################################################
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
-extern void tms32031_init(void);
-extern void tms32031_reset(void *param);
-extern void tms32031_exit(void);
-extern int tms32031_execute(int cycles);
-extern unsigned tms32031_get_context(void *dst);
-extern void tms32031_set_context(void *src);
-extern unsigned tms32031_get_reg(int regnum);
-extern void tms32031_set_reg(int regnum, unsigned val);
-extern void tms32031_set_irq_line(int irqline, int state);
-extern void tms32031_set_irq_callback(int (*callback)(int irqline));
-extern const char *tms32031_info(void *context, int regnum);
-
-extern unsigned tms32031_dasm(char *buffer, unsigned pc);
+extern void tms32031_get_info(UINT32 state, union cpuinfo *info);
 
 #endif /* _TMS32031_H */

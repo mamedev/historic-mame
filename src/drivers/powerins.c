@@ -5,8 +5,12 @@
 
 				driver by	Luca Elia (l.elia@tin.it)
 
-CPU:	MC68000
-Sound:	OKIM6295
+Set 1
+	CPU:    MC68000
+	Sound:  OKIM6295
+Set 2
+	CPU:    MC68000, Z80 (for sound)
+	Sound:  2x OKI6295 (Sound code supports an additional YM2203, but it's not fitted)
 
 - Note:	To enter test mode press F2 (Test)
 		Use 9 (Service Coin) to change page.
@@ -63,76 +67,120 @@ static WRITE16_HANDLER( powerins_okibank_w )
 	}
 }
 
-static WRITE16_HANDLER( powerin2_soundlatch_w )
+static WRITE_HANDLER( powerina_okibank_w )
+{
+	/* The OKI6295 ROM space is divided in four banks, each one indepentently
+	   controlled. The sample table at the beginning of the addressing space is
+	   divided in four pages as well, banked together with the sample data. */
+
+	#define TABLESIZE 0x100
+	#define BANKSIZE 0x10000
+
+	int chip	=	offset / 4;
+	int banknum	=	offset % 4;
+
+	unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
+	int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
+
+	int bankaddr		=	data * BANKSIZE;
+
+	if (Machine->sample_rate == 0)	return;
+
+	if (bankaddr >= size)
+	{
+		bankaddr %= size;
+logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",activecpu_get_pc(),chip,banknum,data);
+	}
+
+	/* copy the samples */
+	if (banknum == 0)		/* skip table */
+		memcpy(rom + banknum * BANKSIZE+0x400,rom + 0x40000 + bankaddr+0x400,BANKSIZE-0x400);
+	else
+		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
+
+	/* and also copy the samples address table (only for chip #1) */
+	rom += banknum * TABLESIZE;
+	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
+}
+
+static WRITE16_HANDLER( powerina_soundlatch_w )
 {
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0, data & 0xff);
-		cpu_set_irq_line(1,0,HOLD_LINE);
 	}
 }
+static READ_HANDLER( powerina_fake_ym2203_r )
+{
+	return 0x01;
+}
 
-static MEMORY_READ16_START( powerins_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x100000, 0x100001, input_port_0_word_r		},	// Coins + Start Buttons
-	{ 0x100002, 0x100003, input_port_1_word_r		},	// P1 + P2
-	{ 0x100008, 0x100009, input_port_2_word_r		},	// DSW 1
-	{ 0x10000a, 0x10000b, input_port_3_word_r		},	// DSW 2
-	{ 0x10003e, 0x10003f, OKIM6295_status_0_lsb_r	},	// OKI Status
-	{ 0x120000, 0x120fff, MRA16_RAM					},	// Palette
-/**/{ 0x130000, 0x130007, MRA16_RAM					},	// VRAM 0 Control
-	{ 0x140000, 0x143fff, MRA16_RAM					},	// VRAM 0
-	{ 0x170000, 0x170fff, MRA16_RAM					},	// VRAM 1
-	{ 0x180000, 0x18ffff, MRA16_RAM					},	// RAM + Sprites
-MEMORY_END
 
-static MEMORY_WRITE16_START( powerins_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM								},	// ROM
-	{ 0x100014, 0x100015, powerins_flipscreen_w					},	// Flip Screen
-	{ 0x100016, 0x100017, MWA16_NOP								},	// ? always 1
-	{ 0x100018, 0x100019, powerins_tilebank_w					},	// Tiles Banking (VRAM 0)
-	{ 0x10001e, 0x10001f, powerin2_soundlatch_w					},	// Sound Latch
-	{ 0x100030, 0x100031, powerins_okibank_w					},	// Sound
-	{ 0x10003e, 0x10003f, OKIM6295_data_0_lsb_w					},	//
-	{ 0x120000, 0x120fff, powerins_paletteram16_w, &paletteram16	},	// Palette
-	{ 0x130000, 0x130007, MWA16_RAM, &powerins_vctrl_0			},	// VRAM 0 Control
-	{ 0x140000, 0x143fff, powerins_vram_0_w, &powerins_vram_0	},	// VRAM 0
-	{ 0x170000, 0x170fff, powerins_vram_1_w, &powerins_vram_1	},	// VRAM 1
-	{ 0x171000, 0x171fff, powerins_vram_1_w						},	// Mirror of VRAM 1?
-	{ 0x180000, 0x18ffff, MWA16_RAM, &spriteram16				},	// RAM + Sprites
-MEMORY_END
+static ADDRESS_MAP_START( powerins_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r		)	// Coins + Start Buttons
+	AM_RANGE(0x100002, 0x100003) AM_READ(input_port_1_word_r		)	// P1 + P2
+	AM_RANGE(0x100008, 0x100009) AM_READ(input_port_2_word_r		)	// DSW 1
+	AM_RANGE(0x10000a, 0x10000b) AM_READ(input_port_3_word_r		)	// DSW 2
+	AM_RANGE(0x10003e, 0x10003f) AM_READ(OKIM6295_status_0_lsb_r	)	// OKI Status
+	AM_RANGE(0x120000, 0x120fff) AM_READ(MRA16_RAM				)	// Palette
+/**/AM_RANGE(0x130000, 0x130007) AM_READ(MRA16_RAM				)	// VRAM 0 Control
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM				)	// VRAM 0
+	AM_RANGE(0x170000, 0x170fff) AM_READ(MRA16_RAM				)	// VRAM 1
+	AM_RANGE(0x180000, 0x18ffff) AM_READ(MRA16_RAM				)	// RAM + Sprites
+ADDRESS_MAP_END
 
-/* There is an hidden test mode screen (set 18ff08 to 4 during test mode)
-   that calls the data writtent to $10001e "sound code".
+static ADDRESS_MAP_START( powerins_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM								)	// ROM
+	AM_RANGE(0x100014, 0x100015) AM_WRITE(powerins_flipscreen_w					)	// Flip Screen
+	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP								)	// ? always 1
+	AM_RANGE(0x100018, 0x100019) AM_WRITE(powerins_tilebank_w						)	// Tiles Banking (VRAM 0)
+	AM_RANGE(0x10001e, 0x10001f) AM_WRITE(powerina_soundlatch_w					)	// Sound Latch
+	AM_RANGE(0x100030, 0x100031) AM_WRITE(powerins_okibank_w						)	// Sound
+	AM_RANGE(0x10003e, 0x10003f) AM_WRITE(OKIM6295_data_0_lsb_w					)	//
+	AM_RANGE(0x120000, 0x120fff) AM_WRITE(powerins_paletteram16_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x130000, 0x130007) AM_WRITE(MWA16_RAM) AM_BASE(&powerins_vctrl_0			)	// VRAM 0 Control
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(powerins_vram_0_w) AM_BASE(&powerins_vram_0		)	// VRAM 0
+	AM_RANGE(0x170000, 0x170fff) AM_WRITE(powerins_vram_1_w) AM_BASE(&powerins_vram_1		)	// VRAM 1
+	AM_RANGE(0x171000, 0x171fff) AM_WRITE(powerins_vram_1_w						)	// Mirror of VRAM 1?
+	AM_RANGE(0x180000, 0x18ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16					)	// RAM + Sprites
+ADDRESS_MAP_END
+
+/* There is a hidden test mode screen (set 18ff08 to 4 during test mode)
+   that calls the data written to $10001e "sound code".
    This is a bootleg, so the original may have a sound CPU */
 
-static MEMORY_READ_START( readmem_snd )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, MRA_NOP }, // ?
-MEMORY_END
+static ADDRESS_MAP_START( readmem_snd, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_snd )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, MWA_NOP }, // ? written only once ?
-	{ 0xe001, 0xe001, MWA_NOP }, // ?
-MEMORY_END
+static ADDRESS_MAP_START( writemem_snd, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) // ? written only once ?
+//	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) // ?
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_snd )
-	{ 0x00, 0x00, soundlatch_r },
-	{ 0x01, 0x01, MRA_NOP }, // ?
-	{ 0x80, 0x80, OKIM6295_status_0_r },
-	{ 0x88, 0x88, OKIM6295_status_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport_snd, ADDRESS_SPACE_IO, 8 )
+/*	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)	Not fitted on this board */
+/*	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)		Not fitted on this board */
+	AM_RANGE(0x00, 0x00) AM_READ(powerina_fake_ym2203_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP)
+	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x88, 0x88) AM_READ(OKIM6295_status_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_snd )
-	{ 0x00, 0x00, MWA_NOP }, // ?
-	{ 0x01, 0x01, MWA_NOP }, // ?
-	{ 0x80, 0x80, OKIM6295_data_0_w },
-	{ 0x88, 0x88, OKIM6295_data_1_w },
-	{ 0x90, 0x97, MWA_NOP }, // oki bank ?
-PORT_END
+static ADDRESS_MAP_START( writeport_snd, ADDRESS_SPACE_IO, 8 )
+/*	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)	Not fitted on this board */
+/*	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)	Not fitted on this board */
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x88, 0x88) AM_WRITE(OKIM6295_data_1_w)
+	AM_RANGE(0x90, 0x97) AM_WRITE(powerina_okibank_w)
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -315,19 +363,39 @@ static struct OKIM6295interface powerins_okim6295_interface =
 	{ 100 }
 };
 
-static struct OKIM6295interface powerin2_okim6295_interface =
+static struct OKIM6295interface powerina_okim6295_interface =
 {
 	2,
-	{ 4000 },		/* 4 Mhz */
+	{ 16000000/4/165, 16000000/4/165 },		/* 4 Mhz */
 	{ REGION_SOUND1, REGION_SOUND2 },
 	{ 100, 100 }
 };
+
+/**** The Z80 sound code communicates with a YM2203, but the *****/
+/**** current supported bootleg board does not have one fitted ***/
+#if 0
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+static struct YM2203interface ym2203_interface =
+{
+	1,
+	16000000 / 4,	/* ? */
+	{ YM2203_VOL(100,100) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+#endif
 
 static MACHINE_DRIVER_START( powerins )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* ? (it affects the game's speed!) */
-	MDRV_CPU_MEMORY(powerins_readmem,powerins_writemem)
+	MDRV_CPU_PROGRAM_MAP(powerins_readmem,powerins_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -356,10 +424,13 @@ static MACHINE_DRIVER_START( powerina )
 
 	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_snd,writemem_snd)
-	MDRV_CPU_PORTS(readport_snd,writeport_snd)
+	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
+	MDRV_CPU_IO_MAP(readport_snd,writeport_snd)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 120)	// YM2203 rate is at 150??
 
-	MDRV_SOUND_REPLACE("sound", OKIM6295, powerin2_okim6295_interface)
+	MDRV_SOUND_REPLACE("sound", OKIM6295, powerina_okim6295_interface)
+/*	MDRV_SOUND_ADD(YM2203, ym2203_interface)	Sound code talks to one, but */
+/*												it's not fitted on the board */
 MACHINE_DRIVER_END
 
 
@@ -531,4 +602,4 @@ ROM_START( powerina )
 ROM_END
 
 GAME( 1993, powerins, 0,		powerins, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg) (set 1)" )
-GAMEX(1993, powerina, powerins, powerina, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg) (set 2)", GAME_NO_SOUND )
+GAME( 1993, powerina, powerins, powerina, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg) (set 2)" )

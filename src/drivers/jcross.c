@@ -92,71 +92,71 @@ static WRITE_HANDLER(jcross_vregs3_w){jcross_vregs[3]=data;}
 static WRITE_HANDLER(jcross_vregs4_w){jcross_vregs[4]=data;}
 
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000,0x87ff,MRA_RAM },
-	{ 0xa000, 0xa000, sound_command_r },
-	{ 0xc000, 0xc000, sound_nmi_ack_r },
-	MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(sound_command_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(sound_nmi_ack_r)
+	ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x3fff, MWA_ROM, &namco_wavedata },
-	{ 0x8000, 0x87ff,MWA_RAM },
-	{ 0xe000, 0xe000, AY8910_control_port_0_w },
-	{ 0xe001, 0xe001, AY8910_write_port_0_w },
-	{ 0xe002, 0xe007, snkwave_w },
-	{ 0xe008, 0xe008, AY8910_control_port_1_w },
-	{ 0xe009, 0xe009, AY8910_write_port_1_w },
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) AM_BASE(&namco_wavedata)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xe002, 0xe007) AM_WRITE(snkwave_w)
+	AM_RANGE(0xe008, 0xe008) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xe009, 0xe009) AM_WRITE(AY8910_write_port_1_w)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_CPUA )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xa000, jcross_port_0_r },
-	{ 0xa100, 0xa100, input_port_1_r },
-	{ 0xa200, 0xa200, input_port_2_r },
-	{ 0xa400, 0xa400, input_port_3_r },
-	{ 0xa500, 0xa500, input_port_4_r },
-	{ 0xa700, 0xa700, snk_cpuB_nmi_trigger_r  },
-	{ 0xd800, 0xdfff, sharedram_r },
-	{ 0xf000, 0xf3ff, jcross_text_ram_r },
-  	{ 0xe000, 0xefff, jcross_background_ram_r },
-	{ 0xf400, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(jcross_port_0_r)
+	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_1_r)
+	AM_RANGE(0xa200, 0xa200) AM_READ(input_port_2_r)
+	AM_RANGE(0xa400, 0xa400) AM_READ(input_port_3_r)
+	AM_RANGE(0xa500, 0xa500) AM_READ(input_port_4_r)
+	AM_RANGE(0xa700, 0xa700) AM_READ(snk_cpuB_nmi_trigger_r)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(sharedram_r)
+	AM_RANGE(0xf000, 0xf3ff) AM_READ(jcross_text_ram_r)
+  	AM_RANGE(0xe000, 0xefff) AM_READ(jcross_background_ram_r)
+	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_CPUA )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa300, 0xa300, sound_command_w },
-	{ 0xa600, 0xa600, jcross_palettebank_w },
-	{ 0xa700, 0xa700, snk_cpuA_nmi_ack_w},
-	{ 0xd300, 0xd300, jcross_vregs0_w},
-	{ 0xd400, 0xd400, jcross_vregs1_w},
-	{ 0xd500, 0xd500, jcross_vregs2_w},
-	{ 0xd600, 0xd600, jcross_vregs3_w},
-	{ 0xd700, 0xd700, jcross_vregs4_w},
- 	{ 0xd800, 0xdfff, sharedram_w, &jcr_sharedram },
-	{ 0xe000, 0xefff, jcross_background_ram_w, &videoram },
-	{ 0xf000, 0xf3ff, jcross_text_ram_w, &jcr_textram},
-	{ 0xf400, 0xffff, MWA_RAM },
+static ADDRESS_MAP_START( writemem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa300, 0xa300) AM_WRITE(sound_command_w)
+	AM_RANGE(0xa600, 0xa600) AM_WRITE(jcross_palettebank_w)
+	AM_RANGE(0xa700, 0xa700) AM_WRITE(snk_cpuA_nmi_ack_w)
+	AM_RANGE(0xd300, 0xd300) AM_WRITE(jcross_vregs0_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(jcross_vregs1_w)
+	AM_RANGE(0xd500, 0xd500) AM_WRITE(jcross_vregs2_w)
+	AM_RANGE(0xd600, 0xd600) AM_WRITE(jcross_vregs3_w)
+	AM_RANGE(0xd700, 0xd700) AM_WRITE(jcross_vregs4_w)
+ 	AM_RANGE(0xd800, 0xdfff) AM_WRITE(sharedram_w) AM_BASE(&jcr_sharedram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(jcross_background_ram_w) AM_BASE(&videoram)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(jcross_text_ram_w) AM_BASE(&jcr_textram)
+	AM_RANGE(0xf400, 0xffff) AM_WRITE(MWA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_CPUB )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa700, 0xa700, snk_cpuA_nmi_trigger_r },
-  	{ 0xc000, 0xc7ff, sharedram_r },
-	{ 0xc800, 0xd7ff, jcross_background_ram_r }, /* unknown ??? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa700, 0xa700) AM_READ(snk_cpuA_nmi_trigger_r)
+  	AM_RANGE(0xc000, 0xc7ff) AM_READ(sharedram_r)
+	AM_RANGE(0xc800, 0xd7ff) AM_READ(jcross_background_ram_r) /* unknown ??? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_CPUB )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa700, 0xa700, snk_cpuB_nmi_ack_w  },
-  	{ 0xc000, 0xc7ff, sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa700, 0xa700) AM_WRITE(snk_cpuB_nmi_ack_w)
+  	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(sharedram_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_sound )
-	{ 0x0000, 0x0000, MRA_NOP },
-PORT_END
+static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( jcross )
@@ -293,17 +293,17 @@ static struct GfxDecodeInfo jcross_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( jcross )
 
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_PROGRAM_MAP(readmem_CPUA,writemem_CPUA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_MEMORY(readmem_CPUB,writemem_CPUB)
+	MDRV_CPU_PROGRAM_MAP(readmem_CPUB,writemem_CPUB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_PORTS(readport_sound,0)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
+	MDRV_CPU_IO_MAP(readport_sound,0)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 244)
 
 	MDRV_FRAMES_PER_SECOND(61)

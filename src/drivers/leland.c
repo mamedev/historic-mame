@@ -51,36 +51,23 @@
  *
  *************************************/
 
-static MEMORY_READ_START( master_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xdfff, MRA_BANK2 },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf3ff, leland_gated_paletteram_r },
-MEMORY_END
+static ADDRESS_MAP_START( master_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x9fff) AM_ROMBANK(1)
+	AM_RANGE(0xa000, 0xdfff) AM_ROMBANK(2)
+	AM_RANGE(0xa000, 0xdfff) AM_WRITE(leland_battery_ram_w)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xf3ff) AM_READWRITE(leland_gated_paletteram_r, leland_gated_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_master_video_addr_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( master_writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xdfff, leland_battery_ram_w },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf3ff, leland_gated_paletteram_w, &paletteram },
-	{ 0xf800, 0xf801, leland_master_video_addr_w },
-MEMORY_END
-
-
-static PORT_READ_START( master_readport )
-    { 0xf2, 0xf2, leland_i86_response_r },
-    { 0xfd, 0xff, leland_master_analog_key_r },
-PORT_END
-
-
-static PORT_WRITE_START( master_writeport )
-	{ 0xf0, 0xf0, leland_master_alt_bankswitch_w },
-	{ 0xf2, 0xf2, leland_i86_command_lo_w },
-	{ 0xf4, 0xf4, leland_i86_command_hi_w },
-    { 0xfd, 0xff, leland_master_analog_key_w },
-PORT_END
+static ADDRESS_MAP_START( master_map_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xf0, 0xf0) AM_WRITE(leland_master_alt_bankswitch_w)
+    AM_RANGE(0xf2, 0xf2) AM_READWRITE(leland_i86_response_r, leland_i86_command_lo_w)
+	AM_RANGE(0xf4, 0xf4) AM_WRITE(leland_i86_command_hi_w)
+    AM_RANGE(0xfd, 0xff) AM_READWRITE(leland_master_analog_key_r, leland_master_analog_key_w)
+ADDRESS_MAP_END
 
 
 
@@ -90,48 +77,31 @@ PORT_END
  *
  *************************************/
 
-static MEMORY_READ_START( slave_small_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0xdfff, MRA_BANK3 },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf802, 0xf802, leland_raster_r },
-MEMORY_END
+static ADDRESS_MAP_START( slave_small_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0xdfff) AM_ROMBANK(3)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_slave_video_addr_w)
+	AM_RANGE(0xf802, 0xf802) AM_READ(leland_raster_r)
+	AM_RANGE(0xf803, 0xf803) AM_WRITE(leland_slave_small_banksw_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( slave_small_writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf800, 0xf801, leland_slave_video_addr_w },
-	{ 0xf803, 0xf803, leland_slave_small_banksw_w },
-MEMORY_END
+static ADDRESS_MAP_START( slave_large_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x4000, 0xbfff) AM_ROMBANK(3)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(leland_slave_large_banksw_w)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_slave_video_addr_w)
+	AM_RANGE(0xf802, 0xf802) AM_READ(leland_raster_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( slave_large_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0xbfff, MRA_BANK3 },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf802, 0xf802, leland_raster_r },
-MEMORY_END
+static ADDRESS_MAP_START( slave_map_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x1f) AM_READWRITE(leland_svram_port_r, leland_svram_port_w)
+	AM_RANGE(0x40, 0x5f) AM_READWRITE(leland_svram_port_r, leland_svram_port_w)
+ADDRESS_MAP_END
 
-
-static MEMORY_WRITE_START( slave_large_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc000, leland_slave_large_banksw_w },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf800, 0xf801, leland_slave_video_addr_w },
-MEMORY_END
-
-
-static PORT_READ_START( slave_readport )
-	{ 0x00, 0x1f, leland_svram_port_r },
-	{ 0x40, 0x5f, leland_svram_port_r },
-PORT_END
-
-
-static PORT_WRITE_START( slave_writeport )
-	{ 0x00, 0x1f, leland_svram_port_w },
-	{ 0x40, 0x5f, leland_svram_port_w },
-PORT_END
 
 
 /*************************************
@@ -730,13 +700,13 @@ static MACHINE_DRIVER_START( leland )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("master", Z80, 6000000)
-	MDRV_CPU_MEMORY(master_readmem,master_writemem)
-	MDRV_CPU_PORTS(master_readport,master_writeport)
+	MDRV_CPU_PROGRAM_MAP(master_map_program,0)
+	MDRV_CPU_IO_MAP(master_map_io,0)
 	MDRV_CPU_VBLANK_INT(leland_master_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("slave", Z80, 6000000)
-	MDRV_CPU_MEMORY(slave_small_readmem,slave_small_writemem)
-	MDRV_CPU_PORTS(slave_readport,slave_writeport)
+	MDRV_CPU_PROGRAM_MAP(slave_small_map_program,0)
+	MDRV_CPU_IO_MAP(slave_map_io,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
@@ -767,8 +737,8 @@ static MACHINE_DRIVER_START( redline )
 	MDRV_IMPORT_FROM(leland)
 	MDRV_CPU_ADD_TAG("sound", I186, 16000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(leland_i86_readmem,leland_i86_writemem)
-	MDRV_CPU_PORTS(leland_i86_readport,redline_i86_writeport)
+	MDRV_CPU_PROGRAM_MAP(leland_i86_map_program,0)
+	MDRV_CPU_IO_MAP(redline_i86_map_io,0)
 	
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, redline_custom_interface)
@@ -780,7 +750,7 @@ static MACHINE_DRIVER_START( quarterb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(redline)
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_PORTS(leland_i86_readport,leland_i86_writeport)
+	MDRV_CPU_IO_MAP(leland_i86_map_io,0)
 	
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, i186_custom_interface)
@@ -792,7 +762,7 @@ static MACHINE_DRIVER_START( lelandi )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(quarterb)
 	MDRV_CPU_MODIFY("slave")
-	MDRV_CPU_MEMORY(slave_large_readmem,slave_large_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_large_map_program,0)
 MACHINE_DRIVER_END
 
 
@@ -1878,31 +1848,31 @@ static void dasm_chunk(char *tag, UINT8 *base, UINT16 pc, UINT32 length, FILE *o
 {
 	extern unsigned DasmZ80(char *buffer, unsigned _pc);
 
-	UINT8 *old_rom = OP_ROM;
-	UINT8 *old_ram = OP_RAM;
+	UINT8 *old_rom = opcode_base;
+	UINT8 *old_ram = opcode_arg_base;
 	char buffer[256];
 	int count, offset, i;
 
 	fprintf(output, "\n\n\n%s:\n", tag);
-	OP_ROM = OP_RAM = &base[-pc];
+	opcode_base = opcode_arg_base = &base[-pc];
 	for (offset = 0; offset < length; offset += count)
 	{
 		count = DasmZ80(buffer, pc);
 		for (i = 0; i < 4; i++)
 			if (i < count)
-				fprintf(output, "%c", (OP_ROM[pc + i] >= 32 && OP_ROM[pc + i] < 127) ? OP_ROM[pc + i] : ' ');
+				fprintf(output, "%c", (cpu_readop(pc + i) >= 32 && cpu_readop(pc + i) < 127) ? cpu_readop(pc + i) : ' ');
 			else
 				fprintf(output, " ");
 		fprintf(output, " %04X: ", pc);
 		for (i = 0; i < 4; i++)
 			if (i < count)
-				fprintf(output, "%02X ", OP_ROM[pc++]);
+				fprintf(output, "%02X ", cpu_readop(pc++));
 			else
 				fprintf(output, "   ");
 		fprintf(output, "%s\n", buffer);
 	}
-	OP_ROM = old_rom;
-	OP_RAM = old_ram;
+	opcode_base = old_rom;
+	opcode_arg_base = old_ram;
 }
 #endif
 

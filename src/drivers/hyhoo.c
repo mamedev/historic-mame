@@ -57,15 +57,15 @@ static DRIVER_INIT( hyhoo2 )
 }
 
 
-static MEMORY_READ_START( readmem_hyhoo )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_hyhoo, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_hyhoo )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_hyhoo, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&nb1413m3_nvram) AM_SIZE(&nb1413m3_nvram_size)
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( io_hyhoo_r )
@@ -88,9 +88,9 @@ static READ_HANDLER( io_hyhoo_r )
 	}
 }
 
-static PORT_READ_START( readport_hyhoo )
-	{ 0x0000, 0xffff, io_hyhoo_r },
-PORT_END
+static ADDRESS_MAP_START( readport_hyhoo, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(io_hyhoo_r)
+ADDRESS_MAP_END
 
 static WRITE_HANDLER( io_hyhoo_w )
 {
@@ -132,9 +132,9 @@ static WRITE_HANDLER( io_hyhoo_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_hyhoo )
-	{ 0x0000, 0xffff, io_hyhoo_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_hyhoo, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_hyhoo_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( hyhoo )
@@ -322,8 +322,8 @@ static MACHINE_DRIVER_START( hyhoo )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000/1)	/* 2.50 MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem_hyhoo,writemem_hyhoo)
-	MDRV_CPU_PORTS(readport_hyhoo,writeport_hyhoo)
+	MDRV_CPU_PROGRAM_MAP(readmem_hyhoo,writemem_hyhoo)
+	MDRV_CPU_IO_MAP(readport_hyhoo,writeport_hyhoo)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 
 	MDRV_FRAMES_PER_SECOND(60)

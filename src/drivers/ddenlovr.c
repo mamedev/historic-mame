@@ -994,79 +994,79 @@ static WRITE16_HANDLER( quiz365_coincounter_w )
 }
 
 
-static MEMORY_READ16_START( quiz365_readmem )
-	{ 0x000000, 0x17ffff, MRA16_ROM					},	// ROM
-	{ 0x300286, 0x300287, ddenlovr_gfxrom_r			},	// Video Chip
-	{ 0x300270, 0x300271, unk16_r		},	// ? must be 78 on startup (not necessary in ddlover)
-	{ 0x300204, 0x300207, quiz365_input2_r		},	//
-	{ 0x300340, 0x30035f, rtc16_r				},	// 6242RTC
-	{ 0x300384, 0x300385, AY8910_read_port_0_lsb_r	},
-	{ 0x3002c0, 0x3002c1, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( quiz365_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x17ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x300286, 0x300287) AM_READ(ddenlovr_gfxrom_r			)	// Video Chip
+	AM_RANGE(0x300270, 0x300271) AM_READ(unk16_r		)	// ? must be 78 on startup (not necessary in ddlover)
+	AM_RANGE(0x300204, 0x300207) AM_READ(quiz365_input2_r		)	//
+	AM_RANGE(0x300340, 0x30035f) AM_READ(rtc16_r				)	// 6242RTC
+	AM_RANGE(0x300384, 0x300385) AM_READ(AY8910_read_port_0_lsb_r	)
+	AM_RANGE(0x3002c0, 0x3002c1) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( quiz365_writemem )
-	{ 0x000000, 0x17ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x2003ff, ddenlovr_palette_w	},	// Palette
-//	{ 0x201000, 0x2017ff, MWA16_RAM 					},	// ?
-	{ 0x300240, 0x300247, ddenlovr_palette_base_w },	// palette base for the 4 layers
-//	{ 0x300248, 0x30024f, 			},	// layer related? palette bank?
-	{ 0x300200, 0x300201, quiz365_select2_w	},	//
-	{ 0x300202, 0x300203, quiz365_coincounter_w		},	// Coin Counters + more stuff written on startup
-	{ 0x300268, 0x300269, ddenlovr_bgcolor_w },
-	{ 0x30026a, 0x30026b, ddenlovr_priority_w },
-	{ 0x30026c, 0x30026d, ddenlovr_layer_enable_w },
-	{ 0x300280, 0x300283, ddenlovr_blitter_w			},
-	{ 0x3003ca, 0x3003cb, ddenlovr_blitter_irq_ack_w	},	// Blitter irq acknowledge
-	{ 0x300300, 0x300301, YM2413_register_port_0_lsb_w	},	// Sound
-	{ 0x300302, 0x300303, YM2413_data_port_0_lsb_w		},	//
-//	{ 0x300340, 0x30035f,  					},	// 6242RTC
-	{ 0x300380, 0x300381, AY8910_control_port_0_lsb_w	},
-	{ 0x300382, 0x300383, AY8910_write_port_0_lsb_w		},
-	{ 0x3002c0, 0x3002c1, OKIM6295_data_0_lsb_w 		},	//
-	{ 0x3003c2, 0x3003c3, quiz365_oki_bank1_w },
-	{ 0x3003cc, 0x3003cd, quiz365_oki_bank2_w },
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( quiz365_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x17ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x2003ff) AM_WRITE(ddenlovr_palette_w	)	// Palette
+//	AM_RANGE(0x201000, 0x2017ff) AM_WRITE(MWA16_RAM 					)	// ?
+	AM_RANGE(0x300240, 0x300247) AM_WRITE(ddenlovr_palette_base_w)	// palette base for the 4 layers
+//	AM_RANGE(0x300248, 0x30024f) AM_WRITE(			)	// layer related? palette bank?
+	AM_RANGE(0x300200, 0x300201) AM_WRITE(quiz365_select2_w	)	//
+	AM_RANGE(0x300202, 0x300203) AM_WRITE(quiz365_coincounter_w		)	// Coin Counters + more stuff written on startup
+	AM_RANGE(0x300268, 0x300269) AM_WRITE(ddenlovr_bgcolor_w)
+	AM_RANGE(0x30026a, 0x30026b) AM_WRITE(ddenlovr_priority_w)
+	AM_RANGE(0x30026c, 0x30026d) AM_WRITE(ddenlovr_layer_enable_w)
+	AM_RANGE(0x300280, 0x300283) AM_WRITE(ddenlovr_blitter_w			)
+	AM_RANGE(0x3003ca, 0x3003cb) AM_WRITE(ddenlovr_blitter_irq_ack_w	)	// Blitter irq acknowledge
+	AM_RANGE(0x300300, 0x300301) AM_WRITE(YM2413_register_port_0_lsb_w	)	// Sound
+	AM_RANGE(0x300302, 0x300303) AM_WRITE(YM2413_data_port_0_lsb_w		)	//
+//	AM_RANGE(0x300340, 0x30035f) AM_WRITE(					)	// 6242RTC
+	AM_RANGE(0x300380, 0x300381) AM_WRITE(AY8910_control_port_0_lsb_w	)
+	AM_RANGE(0x300382, 0x300383) AM_WRITE(AY8910_write_port_0_lsb_w		)
+	AM_RANGE(0x3002c0, 0x3002c1) AM_WRITE(OKIM6295_data_0_lsb_w			)	//
+	AM_RANGE(0x3003c2, 0x3003c3) AM_WRITE(quiz365_oki_bank1_w)
+	AM_RANGE(0x3003cc, 0x3003cd) AM_WRITE(quiz365_oki_bank2_w)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( ddenlovr_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0xe00086, 0xe00087, ddenlovr_gfxrom_r			},	// Video Chip
-	{ 0xe00070, 0xe00071, unk16_r		},	// ? must be 78 on startup (not necessary in ddlover)
-	{ 0xe00100, 0xe00101, input_port_0_word_r		},	// P1?
-	{ 0xe00102, 0xe00103, input_port_1_word_r		},	// P2?
-	{ 0xe00104, 0xe00105, ddenlovr_special_r		},	// Coins + ?
-	{ 0xe00200, 0xe00201, input_port_3_word_r		},	// DSW
-	{ 0xe00500, 0xe0051f, rtc16_r 				},	// 6242RTC
-	{ 0xe00604, 0xe00605, AY8910_read_port_0_lsb_r	},
-	{ 0xe00700, 0xe00701, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( ddenlovr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xe00086, 0xe00087) AM_READ(ddenlovr_gfxrom_r			)	// Video Chip
+	AM_RANGE(0xe00070, 0xe00071) AM_READ(unk16_r		)	// ? must be 78 on startup (not necessary in ddlover)
+	AM_RANGE(0xe00100, 0xe00101) AM_READ(input_port_0_word_r		)	// P1?
+	AM_RANGE(0xe00102, 0xe00103) AM_READ(input_port_1_word_r		)	// P2?
+	AM_RANGE(0xe00104, 0xe00105) AM_READ(ddenlovr_special_r		)	// Coins + ?
+	AM_RANGE(0xe00200, 0xe00201) AM_READ(input_port_3_word_r		)	// DSW
+	AM_RANGE(0xe00500, 0xe0051f) AM_READ(rtc16_r 				)	// 6242RTC
+	AM_RANGE(0xe00604, 0xe00605) AM_READ(AY8910_read_port_0_lsb_r	)
+	AM_RANGE(0xe00700, 0xe00701) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( ddenlovr_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x300000, 0x300001, ddenlovr_oki_bank_w			},
-	{ 0xd00000, 0xd003ff, ddenlovr_palette_w	},	// Palette
-//	{ 0xd01000, 0xd017ff, MWA16_RAM 					},	// ? B0 on startup, then 00
-	{ 0xe00040, 0xe00047, ddenlovr_palette_base_w },	// palette base for the 4 layers
-//	{ 0xe00048, 0xe0004f, 			},	// layer related? palette bank? see notes at beginning of driver
-	{ 0xe00068, 0xe00069, ddenlovr_bgcolor_w },
-	{ 0xe0006a, 0xe0006b, ddenlovr_priority_w },
-	{ 0xe0006c, 0xe0006d, ddenlovr_layer_enable_w },
-	{ 0xe00080, 0xe00083, ddenlovr_blitter_w			},
-	{ 0xe00302, 0xe00303, ddenlovr_blitter_irq_ack_w	},	// Blitter irq acknowledge
-	{ 0xe00308, 0xe00309, ddenlovr_coincounter_0_w		},	// Coin Counters
-	{ 0xe0030c, 0xe0030d, ddenlovr_coincounter_1_w		},	//
-	{ 0xe00400, 0xe00401, YM2413_register_port_0_lsb_w	},	// Sound
-	{ 0xe00402, 0xe00403, YM2413_data_port_0_lsb_w		},	//
-//	{ 0xe00500, 0xe0051f, 					},	// 6242RTC
-//	{ 0xe00302, 0xe00303, MWA16_NOP						},	// ?
-	{ 0xe00600, 0xe00601, AY8910_control_port_0_lsb_w	},
-	{ 0xe00602, 0xe00603, AY8910_write_port_0_lsb_w		},
-	{ 0xe00700, 0xe00701, OKIM6295_data_0_lsb_w 		},	//
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( ddenlovr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(ddenlovr_oki_bank_w			)
+	AM_RANGE(0xd00000, 0xd003ff) AM_WRITE(ddenlovr_palette_w	)	// Palette
+//	AM_RANGE(0xd01000, 0xd017ff) MWA16_RAM 					)	// ? B0 on startup, then 00
+	AM_RANGE(0xe00040, 0xe00047) AM_WRITE(ddenlovr_palette_base_w)	// palette base for the 4 layers
+//	AM_RANGE(0xe00048, 0xe0004f) AM_WRITE(			)	// layer related? palette bank? see notes at beginning of driver
+	AM_RANGE(0xe00068, 0xe00069) AM_WRITE(ddenlovr_bgcolor_w)
+	AM_RANGE(0xe0006a, 0xe0006b) AM_WRITE(ddenlovr_priority_w)
+	AM_RANGE(0xe0006c, 0xe0006d) AM_WRITE(ddenlovr_layer_enable_w)
+	AM_RANGE(0xe00080, 0xe00083) AM_WRITE(ddenlovr_blitter_w			)
+	AM_RANGE(0xe00302, 0xe00303) AM_WRITE(ddenlovr_blitter_irq_ack_w	)	// Blitter irq acknowledge
+	AM_RANGE(0xe00308, 0xe00309) AM_WRITE(ddenlovr_coincounter_0_w		)	// Coin Counters
+	AM_RANGE(0xe0030c, 0xe0030d) AM_WRITE(ddenlovr_coincounter_1_w		)	//
+	AM_RANGE(0xe00400, 0xe00401) AM_WRITE(YM2413_register_port_0_lsb_w	)	// Sound
+	AM_RANGE(0xe00402, 0xe00403) AM_WRITE(YM2413_data_port_0_lsb_w		)	//
+//	AM_RANGE(0xe00500, 0xe0051f) AM_WRITE(					)	// 6242RTC
+//	AM_RANGE(0xe00302, 0xe00303) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0xe00600, 0xe00601) AM_WRITE(AY8910_control_port_0_lsb_w	)
+	AM_RANGE(0xe00602, 0xe00603) AM_WRITE(AY8910_write_port_0_lsb_w		)
+	AM_RANGE(0xe00700, 0xe00701) AM_WRITE(OKIM6295_data_0_lsb_w 		)	//
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+ADDRESS_MAP_END
 
 
 static READ16_HANDLER( nettoqc_special_r )
@@ -1123,41 +1123,41 @@ static WRITE16_HANDLER( nettoqc_oki_bank_w )
 		OKIM6295_set_bank_base(0, (data & 3) * 0x40000);
 }
 
-static MEMORY_READ16_START( nettoqc_readmem )
-	{ 0x000000, 0x17ffff, MRA16_ROM					},	// ROM
-	{ 0x200c02, 0x200c03, nettoqc_protection_r		},	//
-	{ 0x300070, 0x300071, unk16_r					},	// ? must be 78 on startup (not necessary in ddlover)
-	{ 0x300086, 0x300087, ddenlovr_gfxrom_r			},	// Video Chip
-	{ 0x300100, 0x30011f, rtc16_r					},	// 6242RTC
-	{ 0x300180, 0x300181, input_port_0_word_r		},	//
-	{ 0x300182, 0x300183, input_port_1_word_r		},	//
-	{ 0x300184, 0x300185, nettoqc_special_r			},	// Coins + ?
-	{ 0x300186, 0x300187, nettoqc_input_r			},	// DSW's
-	{ 0x300240, 0x300241, OKIM6295_status_0_lsb_r	},	// Sound
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( nettoqc_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x17ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x200c02, 0x200c03) AM_READ(nettoqc_protection_r		)	//
+	AM_RANGE(0x300070, 0x300071) AM_READ(unk16_r					)	// ? must be 78 on startup (not necessary in ddlover)
+	AM_RANGE(0x300086, 0x300087) AM_READ(ddenlovr_gfxrom_r			)	// Video Chip
+	AM_RANGE(0x300100, 0x30011f) AM_READ(rtc16_r					)	// 6242RTC
+	AM_RANGE(0x300180, 0x300181) AM_READ(input_port_0_word_r		)	//
+	AM_RANGE(0x300182, 0x300183) AM_READ(input_port_1_word_r		)	//
+	AM_RANGE(0x300184, 0x300185) AM_READ(nettoqc_special_r			)	// Coins + ?
+	AM_RANGE(0x300186, 0x300187) AM_READ(nettoqc_input_r			)	// DSW's
+	AM_RANGE(0x300240, 0x300241) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( nettoqc_writemem )
-	{ 0x000000, 0x17ffff, MWA16_ROM								},	// ROM
-	{ 0x200000, 0x2003ff, ddenlovr_palette_w					},	// Palette
-	{ 0x200e0a, 0x200e0d, MWA16_RAM, &nettoqc_protection_val	},	//
-	{ 0x201000, 0x2017ff, MWA16_RAM 							},	// ?
-	{ 0x300040, 0x300047, ddenlovr_palette_base_w				},	// palette base for the 4 layers
-	{ 0x300068, 0x300069, ddenlovr_bgcolor_w					},
-	{ 0x30006a, 0x30006b, ddenlovr_priority_w					},
-	{ 0x30006c, 0x30006d, ddenlovr_layer_enable_w				},
-	{ 0x300080, 0x300083, ddenlovr_blitter_w					},
-	{ 0x3000c0, 0x3000c1, YM2413_register_port_0_lsb_w			},	// Sound
-	{ 0x3000c2, 0x3000c3, YM2413_data_port_0_lsb_w				},	//
-	{ 0x300140, 0x300141, AY8910_control_port_0_lsb_w			},	//
-	{ 0x300142, 0x300143, AY8910_write_port_0_lsb_w				},	//
-	{ 0x300188, 0x300189, nettoqc_coincounter_w					},	// Coin Counters
-	{ 0x30018a, 0x30018b, nettoqc_select_w						},	//
-	{ 0x30018c, 0x30018d, nettoqc_oki_bank_w					},
-	{ 0x300240, 0x300241, OKIM6295_data_0_lsb_w 				},	//
-	{ 0x3001ca, 0x3001cb, ddenlovr_blitter_irq_ack_w			},	// Blitter irq acknowledge
-	{ 0xff0000, 0xffffff, MWA16_RAM								},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( nettoqc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x17ffff) AM_WRITE(MWA16_ROM								)	// ROM
+	AM_RANGE(0x200000, 0x2003ff) AM_WRITE(ddenlovr_palette_w					)	// Palette
+	AM_RANGE(0x200e0a, 0x200e0d) AM_WRITE(MWA16_RAM) AM_BASE(&nettoqc_protection_val	)	//
+	AM_RANGE(0x201000, 0x2017ff) AM_WRITE(MWA16_RAM 							)	// ?
+	AM_RANGE(0x300040, 0x300047) AM_WRITE(ddenlovr_palette_base_w				)	// palette base for the 4 layers
+	AM_RANGE(0x300068, 0x300069) AM_WRITE(ddenlovr_bgcolor_w					)
+	AM_RANGE(0x30006a, 0x30006b) AM_WRITE(ddenlovr_priority_w					)
+	AM_RANGE(0x30006c, 0x30006d) AM_WRITE(ddenlovr_layer_enable_w				)
+	AM_RANGE(0x300080, 0x300083) AM_WRITE(ddenlovr_blitter_w					)
+	AM_RANGE(0x3000c0, 0x3000c1) AM_WRITE(YM2413_register_port_0_lsb_w			)	// Sound
+	AM_RANGE(0x3000c2, 0x3000c3) AM_WRITE(YM2413_data_port_0_lsb_w				)	//
+	AM_RANGE(0x300140, 0x300141) AM_WRITE(AY8910_control_port_0_lsb_w			)	//
+	AM_RANGE(0x300142, 0x300143) AM_WRITE(AY8910_write_port_0_lsb_w				)	//
+	AM_RANGE(0x300188, 0x300189) AM_WRITE(nettoqc_coincounter_w					)	// Coin Counters
+	AM_RANGE(0x30018a, 0x30018b) AM_WRITE(nettoqc_select_w						)	//
+	AM_RANGE(0x30018c, 0x30018d) AM_WRITE(nettoqc_oki_bank_w					)
+	AM_RANGE(0x300240, 0x300241) AM_WRITE(OKIM6295_data_0_lsb_w 				)	//
+	AM_RANGE(0x3001ca, 0x3001cb) AM_WRITE(ddenlovr_blitter_irq_ack_w			)	// Blitter irq acknowledge
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM								)	// RAM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1191,88 +1191,88 @@ WRITE_HANDLER( rongrong_select_w )
 
 
 
-static MEMORY_READ_START( quizchq_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MRA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MRA_BANK2					},	// RAM (Banked)
-	{ 0x8000, 0xffff, MRA_BANK1					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( quizchq_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( quizchq_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MWA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MWA_BANK2					},	// RAM (Banked)
-	{ 0x8000, 0x81ff, rongrong_palette_w	},	// ROM (Banked)
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( quizchq_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w	)	// ROM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static PORT_READ_START( quizchq_readport )
-	{ 0x03, 0x03, rongrong_gfxrom_r			},	// Video Chip
+static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
 //	{ 0x1b, 0x1b,	// bit 5 = busy flag?
-	{ 0x1c, 0x1c, rongrong_input_r		},	//
-	{ 0x22, 0x23, rongrong_input2_r		},	//
-	{ 0x40, 0x40, OKIM6295_status_0_r	},	//
-	{ 0x98, 0x98, unk_r		},	// ? must be 78 on startup
-	{ 0xa0, 0xaf, rtc_r },	// 6242RTC
-PORT_END
+	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
+	AM_RANGE(0x22, 0x23) AM_READ(rongrong_input2_r		)	//
+	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r	)	//
+	AM_RANGE(0x98, 0x98) AM_READ(unk_r		)	// ? must be 78 on startup
+	AM_RANGE(0xa0, 0xaf) AM_READ(rtc_r)	// 6242RTC
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( quizchq_writeport )
-	{ 0x00, 0x01, rongrong_blitter_w	},
-	{ 0x1e, 0x1e, rongrong_select_w		},	//
-	{ 0x20, 0x20, rongrong_select2_w	},	//
-	{ 0x40, 0x40, OKIM6295_data_0_w		},	//
-	{ 0x60, 0x60, YM2413_register_port_0_w	},	// Sound
-	{ 0x61, 0x61, YM2413_data_port_0_w		},	//
-	{ 0x80, 0x83, rongrong_palette_base_w },	// palette base for the 4 layers
-	{ 0x94, 0x94, dynax_bgcolor_w },
-	{ 0x95, 0x95, dynax_priority_w },
-	{ 0x96, 0x96, dynax_layer_enable_w },
-//	{ 0xa0, 0xaf, },	// 6242RTC
-	{ 0xc0, 0xc0, quizchq_oki_bank_w },
-	{ 0xc2, 0xc2, IOWP_NOP },	// enables palette RAM at f000
-PORT_END
+static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w	)
+	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w		)	//
+	AM_RANGE(0x20, 0x20) AM_WRITE(rongrong_select2_w	)	//
+	AM_RANGE(0x40, 0x40) AM_WRITE(OKIM6295_data_0_w		)	//
+	AM_RANGE(0x60, 0x60) AM_WRITE(YM2413_register_port_0_w	)	// Sound
+	AM_RANGE(0x61, 0x61) AM_WRITE(YM2413_data_port_0_w		)	//
+	AM_RANGE(0x80, 0x83) AM_WRITE(rongrong_palette_base_w)	// palette base for the 4 layers
+	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w)
+	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w)
+//	AM_RANGE(0xa0, 0xaf)	// 6242RTC
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(quizchq_oki_bank_w)
+	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP)	// enables palette RAM at f000
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( rongrong_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MRA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MRA_BANK2					},	// RAM (Banked)
-	{ 0x8000, 0xffff, MRA_BANK1					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( rongrong_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rongrong_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MWA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MWA_BANK2					},	// RAM (Banked)
-	{ 0xf000, 0xf1ff, rongrong_palette_w	},
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( rongrong_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(rongrong_palette_w	)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static PORT_READ_START( rongrong_readport )
-	{ 0x03, 0x03, rongrong_gfxrom_r			},	// Video Chip
+static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
 //	{ 0x1b, 0x1b,	// bit 5 = busy flag?
-	{ 0x1c, 0x1c, rongrong_input_r		},	//
-	{ 0xa2, 0xa3, rongrong_input2_r		},	//
-	{ 0x40, 0x40, OKIM6295_status_0_r	},	//
-	{ 0x98, 0x98, unk_r		},	// ? must be 78 on startup
-	{ 0x20, 0x2f, rtc_r },	// 6242RTC
-PORT_END
+	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
+	AM_RANGE(0xa2, 0xa3) AM_READ(rongrong_input2_r		)	//
+	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r	)	//
+	AM_RANGE(0x98, 0x98) AM_READ(unk_r		)	// ? must be 78 on startup
+	AM_RANGE(0x20, 0x2f) AM_READ(rtc_r)	// 6242RTC
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( rongrong_writeport )
-	{ 0x00, 0x01, rongrong_blitter_w	},
-	{ 0x1e, 0x1e, rongrong_select_w		},	//
-	{ 0xa0, 0xa0, rongrong_select2_w	},	//
-	{ 0x40, 0x40, OKIM6295_data_0_w		},	//
-	{ 0x60, 0x60, YM2413_register_port_0_w	},	// Sound
-	{ 0x61, 0x61, YM2413_data_port_0_w		},	//
-	{ 0x80, 0x83, rongrong_palette_base_w },	// palette base for the 4 layers
-	{ 0x94, 0x94, dynax_bgcolor_w },
-	{ 0x95, 0x95, dynax_priority_w },
-	{ 0x96, 0x96, dynax_layer_enable_w },
-//	{ 0x20, 0x2f, },	// 6242RTC
-	{ 0xc2, 0xc2, IOWP_NOP },	// enables palette RAM at f000, and protection device at f705/f706/f601
-PORT_END
+static ADDRESS_MAP_START( rongrong_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w	)
+	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w		)	//
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(rongrong_select2_w	)	//
+	AM_RANGE(0x40, 0x40) AM_WRITE(OKIM6295_data_0_w		)	//
+	AM_RANGE(0x60, 0x60) AM_WRITE(YM2413_register_port_0_w	)	// Sound
+	AM_RANGE(0x61, 0x61) AM_WRITE(YM2413_data_port_0_w		)	//
+	AM_RANGE(0x80, 0x83) AM_WRITE(rongrong_palette_base_w)	// palette base for the 4 layers
+	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w)
+	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w)
+	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w)
+//	AM_RANGE(0x20, 0x2f)	// 6242RTC
+	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP)	// enables palette RAM at f000, and protection device at f705/f706/f601
+ADDRESS_MAP_END
 /*
 1e input select,1c input read
 	3e=dsw1	3d=dsw2
@@ -1355,92 +1355,92 @@ static READ_HANDLER( mmpanic_link_r )	{ return 0xff; }
 
 /* Main CPU */
 
-static MEMORY_READ_START( mmpanic_readmem )
-	{ 0x0051, 0x0051, magic_r					},	// ?
-	{ 0x0000, 0x5fff, MRA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MRA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MRA_BANK2					},	// RAM (Banked)
-	{ 0x8000, 0xffff, MRA_BANK1					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( mmpanic_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0051, 0x0051) AM_READ(magic_r					)	// ?
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mmpanic_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM					},	// ROM
-	{ 0x6000, 0x6fff, MWA_RAM					},	// RAM
-	{ 0x7000, 0x7fff, MWA_BANK2					},	// RAM (Banked)
-	{ 0x8000, 0x81ff, rongrong_palette_w		},	// ROM (Banked)
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM (Banked)
-MEMORY_END
+static ADDRESS_MAP_START( mmpanic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2					)	// RAM (Banked)
+	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w		)	// ROM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM (Banked)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mmpanic_readport )
-	{ 0x00, 0x0f, rtc_r					},	// 6242RTC
-	{ 0x38, 0x38, unk_r					},	// ? must be 78 on startup
-	{ 0x58, 0x58, unk_r					},	// ? must be 78 on startup
-	{ 0x63, 0x63, rongrong_gfxrom_r		},	// Video Chip
-	{ 0x6a, 0x6a, input_port_0_r		},
-	{ 0x6b, 0x6b, input_port_1_r		},
-	{ 0x6c, 0x6d, mmpanic_link_r		},	// Other cabinets?
-	{ 0x7c, 0x7c, OKIM6295_status_0_r	},	// Sound
-	{ 0x94, 0x94, input_port_2_r		},	// DSW 1
-	{ 0x98, 0x98, input_port_3_r		},	// DSW 2
-	{ 0x9c, 0x9c, input_port_4_r		},	// DSW 1&2 high bits
-PORT_END
+static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x0f) AM_READ(rtc_r					)	// 6242RTC
+	AM_RANGE(0x38, 0x38) AM_READ(unk_r					)	// ? must be 78 on startup
+	AM_RANGE(0x58, 0x58) AM_READ(unk_r					)	// ? must be 78 on startup
+	AM_RANGE(0x63, 0x63) AM_READ(rongrong_gfxrom_r		)	// Video Chip
+	AM_RANGE(0x6a, 0x6a) AM_READ(input_port_0_r		)
+	AM_RANGE(0x6b, 0x6b) AM_READ(input_port_1_r		)
+	AM_RANGE(0x6c, 0x6d) AM_READ(mmpanic_link_r		)	// Other cabinets?
+	AM_RANGE(0x7c, 0x7c) AM_READ(OKIM6295_status_0_r	)	// Sound
+	AM_RANGE(0x94, 0x94) AM_READ(input_port_2_r		)	// DSW 1
+	AM_RANGE(0x98, 0x98) AM_READ(input_port_3_r		)	// DSW 2
+	AM_RANGE(0x9c, 0x9c) AM_READ(input_port_4_r		)	// DSW 1&2 high bits
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mmpanic_writeport )
-	{ 0x00, 0x0f, IOWP_NOP					},	// 6242RTC
+static ADDRESS_MAP_START( mmpanic_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x0f) AM_WRITE(MWA8_NOP					)	// 6242RTC
 	// Layers 0-3:
-	{ 0x20, 0x23, rongrong_palette_base_w	},
-	{ 0x34, 0x34, dynax_bgcolor_w			},
-	{ 0x35, 0x35, dynax_priority_w			},
-	{ 0x36, 0x36, dynax_layer_enable_w		},
+	AM_RANGE(0x20, 0x23) AM_WRITE(rongrong_palette_base_w	)
+	AM_RANGE(0x34, 0x34) AM_WRITE(dynax_bgcolor_w			)
+	AM_RANGE(0x35, 0x35) AM_WRITE(dynax_priority_w			)
+	AM_RANGE(0x36, 0x36) AM_WRITE(dynax_layer_enable_w		)
 	// Layers 4-7:
-	{ 0x40, 0x43, dynax_palette_base2_w		},
-	{ 0x54, 0x54, dynax_bgcolor2_w			},
-	{ 0x55, 0x55, dynax_priority2_w			},
-	{ 0x56, 0x56, dynax_layer_enable2_w		},
+	AM_RANGE(0x40, 0x43) AM_WRITE(dynax_palette_base2_w		)
+	AM_RANGE(0x54, 0x54) AM_WRITE(dynax_bgcolor2_w			)
+	AM_RANGE(0x55, 0x55) AM_WRITE(dynax_priority2_w			)
+	AM_RANGE(0x56, 0x56) AM_WRITE(dynax_layer_enable2_w		)
 
-	{ 0x60, 0x61, mmpanic_blitter_w			},
-	{ 0x64, 0x65, mmpanic_blitter2_w		},
-	{ 0x68, 0x68, mmpanic_select_w			},
-	{ 0x69, 0x69, mmpanic_lockout_w			},
-	{ 0x74, 0x74, mmpanic_rombank_w			},
+	AM_RANGE(0x60, 0x61) AM_WRITE(mmpanic_blitter_w			)
+	AM_RANGE(0x64, 0x65) AM_WRITE(mmpanic_blitter2_w		)
+	AM_RANGE(0x68, 0x68) AM_WRITE(mmpanic_select_w			)
+	AM_RANGE(0x69, 0x69) AM_WRITE(mmpanic_lockout_w			)
+	AM_RANGE(0x74, 0x74) AM_WRITE(mmpanic_rombank_w			)
 
-	{ 0x78, 0x78, IOWP_NOP					},	// 0, during RST 08 (irq acknowledge?)
+	AM_RANGE(0x78, 0x78) AM_WRITE(MWA8_NOP					)	// 0, during RST 08 (irq acknowledge?)
 
-	{ 0x7c, 0x7c, OKIM6295_data_0_w			},	// Sound
-	{ 0x8c, 0x8c, mmpanic_soundlatch_w		},	//
-	{ 0x88, 0x88, mmpanic_leds_w			},	// Leds
-	{ 0x90, 0x90, IOWP_NOP					},	// written just before port 8c
-	{ 0xa6, 0xa6, mmpanic_leds2_w			},	//
-PORT_END
+	AM_RANGE(0x7c, 0x7c) AM_WRITE(OKIM6295_data_0_w			)	// Sound
+	AM_RANGE(0x8c, 0x8c) AM_WRITE(mmpanic_soundlatch_w		)	//
+	AM_RANGE(0x88, 0x88) AM_WRITE(mmpanic_leds_w			)	// Leds
+	AM_RANGE(0x90, 0x90) AM_WRITE(MWA8_NOP					)	// written just before port 8c
+	AM_RANGE(0xa6, 0xa6) AM_WRITE(mmpanic_leds2_w			)	//
+ADDRESS_MAP_END
 
 /* Sound CPU */
 
-static MEMORY_READ_START( mmpanic_sound_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM					},	// ROM
-	{ 0x6000, 0x66ff, MRA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MRA_ROM					},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( mmpanic_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x66ff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM					)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mmpanic_sound_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM					},	// ROM
-	{ 0x6000, 0x66ff, MWA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( mmpanic_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0x6000, 0x66ff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM
+ADDRESS_MAP_END
 
-static PORT_READ_START( mmpanic_sound_readport )
-	{ 0x00, 0x00, soundlatch_r		},
-	{ 0x02, 0x02, IORP_NOP			},	// read just before port 00
-	{ 0x04, 0x04, IORP_NOP			},	// read only once at the start
-PORT_END
+static ADDRESS_MAP_START( mmpanic_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r		)
+	AM_RANGE(0x02, 0x02) AM_READ(MRA8_NOP			)	// read just before port 00
+	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP			)	// read only once at the start
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mmpanic_sound_writeport )
-	{ 0x04, 0x04, IOWP_NOP					},	// 0, during NMI
-	{ 0x06, 0x06, IOWP_NOP					},	// almost always 1, sometimes 0
-	{ 0x08, 0x08, YM2413_register_port_0_w	},
-	{ 0x09, 0x09, YM2413_data_port_0_w		},
-	{ 0x0c, 0x0c, AY8910_write_port_0_w		},
-	{ 0x0e, 0x0e, AY8910_control_port_0_w	},
-PORT_END
+static ADDRESS_MAP_START( mmpanic_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(MWA8_NOP					)	// 0, during NMI
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP					)	// almost always 1, sometimes 0
+	AM_RANGE(0x08, 0x08) AM_WRITE(YM2413_register_port_0_w	)
+	AM_RANGE(0x09, 0x09) AM_WRITE(YM2413_data_port_0_w		)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(AY8910_write_port_0_w		)
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(AY8910_control_port_0_w	)
+ADDRESS_MAP_END
 
 
 
@@ -2022,7 +2022,7 @@ static MACHINE_DRIVER_START( ddenlovr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M68000,24000000 / 2)
-	MDRV_CPU_MEMORY(ddenlovr_readmem,ddenlovr_writemem)
+	MDRV_CPU_PROGRAM_MAP(ddenlovr_readmem,ddenlovr_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2048,7 +2048,7 @@ static MACHINE_DRIVER_START( quiz365 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ddenlovr)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(quiz365_readmem,quiz365_writemem)
+	MDRV_CPU_PROGRAM_MAP(quiz365_readmem,quiz365_writemem)
 MACHINE_DRIVER_END
 
 
@@ -2057,7 +2057,7 @@ static MACHINE_DRIVER_START( nettoqc )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ddenlovr)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(nettoqc_readmem,nettoqc_writemem)
+	MDRV_CPU_PROGRAM_MAP(nettoqc_readmem,nettoqc_writemem)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2078,7 +2078,7 @@ static INTERRUPT_GEN( quizchq_irq )
 	/* I haven't found a irq ack register, so I need this kludge to
 	   make sure I don't lose any interrupt generated by the blitter,
 	   otherwise quizchq would lock up. */
-	if (cpunum_get_reg(0,Z80_IRQ_STATE))
+	if (cpunum_get_info_int(0,CPUINFO_INT_IRQ_STATE + 0))
 		return;
 
 	if ((++count % 60) == 0)
@@ -2096,8 +2096,8 @@ static MACHINE_DRIVER_START( quizchq )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 8000000)	/* ? */
-	MDRV_CPU_MEMORY(quizchq_readmem,quizchq_writemem)
-	MDRV_CPU_PORTS(quizchq_readport,quizchq_writeport)
+	MDRV_CPU_PROGRAM_MAP(quizchq_readmem,quizchq_writemem)
+	MDRV_CPU_IO_MAP(quizchq_readport,quizchq_writeport)
 	MDRV_CPU_VBLANK_INT(quizchq_irq,1)
 //	MDRV_CPU_PERIODIC_INT(rtc_irq,1)
 
@@ -2124,8 +2124,8 @@ static MACHINE_DRIVER_START( rongrong )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(quizchq)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(rongrong_readmem,rongrong_writemem)
-	MDRV_CPU_PORTS(rongrong_readport,rongrong_writeport)
+	MDRV_CPU_PROGRAM_MAP(rongrong_readmem,rongrong_writemem)
+	MDRV_CPU_IO_MAP(rongrong_readport,rongrong_writeport)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2144,7 +2144,7 @@ static INTERRUPT_GEN( mmpanic_irq )
 	/* I haven't found a irq ack register, so I need this kludge to
 	   make sure I don't lose any interrupt generated by the blitter,
 	   otherwise the game would lock up. */
-	if (cpunum_get_reg(0,Z80_IRQ_STATE))
+	if (cpunum_get_info_int(0,CPUINFO_INT_IRQ_STATE + 0))
 		return;
 
 	if ((++count % 60) == 0)
@@ -2157,13 +2157,13 @@ static MACHINE_DRIVER_START( mmpanic )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 8000000)	/* ? */
-	MDRV_CPU_MEMORY(mmpanic_readmem,mmpanic_writemem)
-	MDRV_CPU_PORTS(mmpanic_readport,mmpanic_writeport)
+	MDRV_CPU_PROGRAM_MAP(mmpanic_readmem,mmpanic_writemem)
+	MDRV_CPU_IO_MAP(mmpanic_readport,mmpanic_writeport)
 	MDRV_CPU_VBLANK_INT(mmpanic_irq,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)	/* ? */
-	MDRV_CPU_MEMORY(mmpanic_sound_readmem,mmpanic_sound_writemem)
-	MDRV_CPU_PORTS(mmpanic_sound_readport,mmpanic_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(mmpanic_sound_readmem,mmpanic_sound_writemem)
+	MDRV_CPU_IO_MAP(mmpanic_sound_readport,mmpanic_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	// NMI by main cpu
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2470,7 +2470,7 @@ static DRIVER_INIT( rongrong )
 	   version of the game might be a bootleg with the protection
 	   patched.
 	 */
-	install_mem_read_handler(0, 0x60d4, 0x60d4, MRA_NOP);
+	install_mem_read_handler(0, 0x60d4, 0x60d4, MRA8_NOP);
 }
 
 

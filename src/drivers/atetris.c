@@ -174,30 +174,21 @@ static WRITE_HANDLER( nvram_enable_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x20ff, MRA_RAM },
-	{ 0x2400, 0x25ff, MRA_RAM },
-	{ 0x2800, 0x280f, pokey1_r },
-	{ 0x2810, 0x281f, pokey2_r },
-	{ 0x4000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x7fff, atetris_slapstic_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x1fff, atetris_videoram_w, &videoram, &videoram_size },
-	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
-	{ 0x2400, 0x25ff, nvram_w, &generic_nvram, &generic_nvram_size },
-	{ 0x2800, 0x280f, pokey1_w },
-	{ 0x2810, 0x281f, pokey2_w },
-	{ 0x3000, 0x3000, watchdog_reset_w },
-	{ 0x3400, 0x3400, nvram_enable_w },
-	{ 0x3800, 0x3800, irq_ack_w },
-	{ 0x3c00, 0x3c00, coincount_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_RAM
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_RAM, atetris_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x2000, 0x20ff) AM_READWRITE(MRA8_RAM, paletteram_RRRGGGBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0x2400, 0x25ff) AM_READWRITE(MRA8_RAM, nvram_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x2800, 0x280f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x2810, 0x281f) AM_READWRITE(pokey2_r, pokey2_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(nvram_enable_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(irq_ack_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(coincount_w)
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x7fff) AM_READ(atetris_slapstic_r)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
 
 
@@ -324,7 +315,7 @@ static MACHINE_DRIVER_START( atetris )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,ATARI_CLOCK_14MHz/8)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

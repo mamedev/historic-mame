@@ -901,7 +901,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		/* indirect */
 		if( (pb & 0x90) == 0x90 )
 		{
-			ea = ( cpu_readmem16( ea ) << 8 ) + cpu_readmem16( (ea+1) & 0xffff );
+			ea = ( program_read_byte_8( ea ) << 8 ) + program_read_byte_8( (ea+1) & 0xffff );
 			buffer += sprintf (buffer, "]");
 		}
 		sym2 = set_ea_info(0, ea, size, access);

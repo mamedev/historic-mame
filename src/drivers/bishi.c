@@ -80,32 +80,32 @@ static READ16_HANDLER( player2_r )	// players 2 and 4
 	return input_port_3_r(0) | (input_port_4_r(0)<<8);
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x400000, 0x407fff, MRA16_RAM },		// work RAM
-	{ 0x800000, 0x800001, control_r },
-	{ 0x800004, 0x800005, dipsw_r },
-	{ 0x800006, 0x800007, player1_r },
-	{ 0x800008, 0x800009, player2_r },
-	{ 0x880000, 0x880003, bishi_sound_r },
-	{ 0xa00000, 0xa01fff, K056832_ram_word_r },	// VRAM
-	{ 0xb00000, 0xb03fff, MRA16_RAM },
-	{ 0xb04000, 0xb047ff, bishi_mirror_r },		// bug in the ram/rom test?
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x407fff) AM_READ(MRA16_RAM)		// work RAM
+	AM_RANGE(0x800000, 0x800001) AM_READ(control_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(dipsw_r)
+	AM_RANGE(0x800006, 0x800007) AM_READ(player1_r)
+	AM_RANGE(0x800008, 0x800009) AM_READ(player2_r)
+	AM_RANGE(0x880000, 0x880003) AM_READ(bishi_sound_r)
+	AM_RANGE(0xa00000, 0xa01fff) AM_READ(K056832_ram_word_r)	// VRAM
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xb04000, 0xb047ff) AM_READ(bishi_mirror_r)		// bug in the ram/rom test?
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x400000, 0x407fff, MWA16_RAM },
-	{ 0x800000, 0x800001, control_w },
-	{ 0x820000, 0x820001, MWA16_NOP },		// lamps (see lamp test in service menu)
-	{ 0x830000, 0x83003f, K056832_word_w },
-	{ 0x840000, 0x840007, K056832_b_word_w },	// VSCCS
-	{ 0x850000, 0x85001f, K054338_word_w },		// CLTC
-	{ 0x870000, 0x8700ff, K055555_word_w },		// PCU2
-	{ 0x880000, 0x880003, bishi_sound_w },
-	{ 0xa00000, 0xa01fff, K056832_ram_word_w },	/* Graphic planes */
-	{ 0xb00000, 0xb03fff, paletteram16_xbgr_word_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x407fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(control_w)
+	AM_RANGE(0x820000, 0x820001) AM_WRITE(MWA16_NOP)		// lamps (see lamp test in service menu)
+	AM_RANGE(0x830000, 0x83003f) AM_WRITE(K056832_word_w)
+	AM_RANGE(0x840000, 0x840007) AM_WRITE(K056832_b_word_w)	// VSCCS
+	AM_RANGE(0x850000, 0x85001f) AM_WRITE(K054338_word_w)		// CLTC
+	AM_RANGE(0x870000, 0x8700ff) AM_WRITE(K055555_word_w)		// PCU2
+	AM_RANGE(0x880000, 0x880003) AM_WRITE(bishi_sound_w)
+	AM_RANGE(0xa00000, 0xa01fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes */
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(paletteram16_xbgr_word_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( bishi )
 	PORT_START
@@ -230,7 +230,7 @@ static MACHINE_DRIVER_START( bishi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 16000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(bishi_interrupt, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -120,36 +120,36 @@ MACHINE_INIT( iqblock )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x5080, 0x5083, ppi8255_0_r },
-	{ 0x5090, 0x5090, input_port_3_r },
-	{ 0x50a0, 0x50a0, input_port_4_r },
-	{ 0x7000, 0x7fff, iqblock_bgvideoram_r },
-	{ 0x8000, 0xffff, extrarom_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x5080, 0x5083) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x5090, 0x5090) AM_READ(input_port_3_r)
+	AM_RANGE(0x50a0, 0x50a0) AM_READ(input_port_4_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(iqblock_bgvideoram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(extrarom_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x2000, 0x23ff, paletteram_xBBBBBGGGGGRRRRR_split1_w },
-	{ 0x2800, 0x2bff, paletteram_xBBBBBGGGGGRRRRR_split2_w },
-	{ 0x6000, 0x603f, iqblock_fgscroll_w },
-	{ 0x6800, 0x69ff, iqblock_fgvideoram_w },	/* initialized up to 6fff... bug or larger tilemap? */
-	{ 0x7000, 0x7fff, iqblock_bgvideoram_w },
-	{ 0x5080, 0x5083, ppi8255_0_w },
-	{ 0x50b0, 0x50b0, YM2413_register_port_0_w }, // UM3567_register_port_0_w
-	{ 0x50b1, 0x50b1, YM2413_data_port_0_w }, // UM3567_data_port_0_w
-	{ 0x50c0, 0x50c0, iqblock_irqack_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split1_w)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split2_w)
+	AM_RANGE(0x6000, 0x603f) AM_WRITE(iqblock_fgscroll_w)
+	AM_RANGE(0x6800, 0x69ff) AM_WRITE(iqblock_fgvideoram_w)	/* initialized up to 6fff... bug or larger tilemap? */
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(iqblock_bgvideoram_w)
+	AM_RANGE(0x5080, 0x5083) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x50b0, 0x50b0) AM_WRITE(YM2413_register_port_0_w) // UM3567_register_port_0_w
+	AM_RANGE(0x50b1, 0x50b1) AM_WRITE(YM2413_data_port_0_w) // UM3567_data_port_0_w
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(iqblock_irqack_w)
+ADDRESS_MAP_END
 
 
 
@@ -298,8 +298,8 @@ static MACHINE_DRIVER_START( iqblock )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(iqblock_interrupt,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -325,8 +325,8 @@ static MACHINE_DRIVER_START( cabaret )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z180,12000000/2)	/* 6 MHz , appears to use Z180 instructions */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(iqblock_interrupt,16)
 
 	MDRV_FRAMES_PER_SECOND(60)

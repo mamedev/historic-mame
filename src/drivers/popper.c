@@ -157,53 +157,53 @@ static WRITE_HANDLER( popper_sharedram_w )
 	popper_sharedram[offset]=data;
 }
 
-static MEMORY_READ_START( popper_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xc000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xdfff, MRA_RAM },					//shared with sound cpu
-	{ 0xe000, 0xe007, popper_input_ports_r },
-	{ 0xe400, 0xe400, popper_soundcpu_nmi_r },
-	{ 0xf800, 0xf800, MRA_NOP },					//?? read once at startup
-	{ 0xfc00, 0xfc00, MRA_NOP },					//?? possibly watchdog
-	{ 0xffff, 0xffff, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( popper_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)					//shared with sound cpu
+	AM_RANGE(0xe000, 0xe007) AM_READ(popper_input_ports_r)
+	AM_RANGE(0xe400, 0xe400) AM_READ(popper_soundcpu_nmi_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(MRA8_NOP)					//?? read once at startup
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(MRA8_NOP)					//?? possibly watchdog
+	AM_RANGE(0xffff, 0xffff) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( popper_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xc000, 0xc1bf, MWA_RAM },
-	{ 0xc1c0, 0xc1ff, popper_ol_videoram_w, &popper_ol_videoram },
-	{ 0xc200, 0xc61f, popper_videoram_w, &popper_videoram },
-	{ 0xc620, 0xc9bf, MWA_RAM },
-	{ 0xc9c0, 0xc9ff, popper_ol_attribram_w, &popper_ol_attribram },
-	{ 0xca00, 0xce1f, popper_attribram_w, &popper_attribram },
-	{ 0xce20, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, MWA_RAM, &popper_spriteram, &popper_spriteram_size },
-	{ 0xd800, 0xdfff, MWA_RAM, &popper_sharedram },	//shared with sound cpu
-	{ 0xe000, 0xe000, interrupt_enable_w },
-	{ 0xe001, 0xe001, popper_flipscreen_w },
-	{ 0xe002, 0xe002, popper_e002_w },				//?? seems to be graphic related
-	{ 0xe003, 0xe003, popper_gfx_bank_w },
-	{ 0xe004, 0xe007, MWA_NOP },					//?? range cleared once when the SP is set
-MEMORY_END
+static ADDRESS_MAP_START( popper_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc1bf) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc1c0, 0xc1ff) AM_WRITE(popper_ol_videoram_w) AM_BASE(&popper_ol_videoram)
+	AM_RANGE(0xc200, 0xc61f) AM_WRITE(popper_videoram_w) AM_BASE(&popper_videoram)
+	AM_RANGE(0xc620, 0xc9bf) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc9c0, 0xc9ff) AM_WRITE(popper_ol_attribram_w) AM_BASE(&popper_ol_attribram)
+	AM_RANGE(0xca00, 0xce1f) AM_WRITE(popper_attribram_w) AM_BASE(&popper_attribram)
+	AM_RANGE(0xce20, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&popper_spriteram) AM_SIZE(&popper_spriteram_size)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&popper_sharedram)	//shared with sound cpu
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(popper_flipscreen_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(popper_e002_w)				//?? seems to be graphic related
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(popper_gfx_bank_w)
+	AM_RANGE(0xe004, 0xe007) AM_WRITE(MWA8_NOP)					//?? range cleared once when the SP is set
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( popper_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x8002, 0x8002, MRA_NOP },					//?? all read once at startup and the
-	{ 0x8003, 0x8003, MRA_NOP },					//?? result ignored, looks like part
-	{ 0xa002, 0xa002, MRA_NOP },					//?? of AY8910 initialisation
-	{ 0xd800, 0xdfff, popper_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( popper_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8002, 0x8002) AM_READ(MRA8_NOP)					//?? all read once at startup and the
+	AM_RANGE(0x8003, 0x8003) AM_READ(MRA8_NOP)					//?? result ignored, looks like part
+	AM_RANGE(0xa002, 0xa002) AM_READ(MRA8_NOP)					//?? of AY8910 initialisation
+	AM_RANGE(0xd800, 0xdfff) AM_READ(popper_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( popper_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ 0x8001, 0x8001, AY8910_write_port_0_w },
-	{ 0x8002, 0x8002, MWA_NOP },					//?? same writes as 0x8000 (mostly)
-	{ 0xa000, 0xa000, AY8910_control_port_1_w },
-	{ 0xa001, 0xa001, AY8910_write_port_1_w },
-	{ 0xa002, 0xa002, MWA_NOP },					//?? same writes as 0xa000
-	{ 0xd800, 0xdfff, popper_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( popper_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(MWA8_NOP)					//?? same writes as 0x8000 (mostly)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(MWA8_NOP)					//?? same writes as 0xa000
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(popper_sharedram_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( popper )
 	PORT_START	/* IN0 */
@@ -322,12 +322,12 @@ static MACHINE_DRIVER_START( popper )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)
-	MDRV_CPU_MEMORY(popper_readmem,popper_writemem)
+	MDRV_CPU_PROGRAM_MAP(popper_readmem,popper_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,18432000/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(popper_sound_readmem,popper_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(popper_sound_readmem,popper_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		//NMIs caused by the main CPU
 
 	MDRV_FRAMES_PER_SECOND(60)

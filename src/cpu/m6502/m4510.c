@@ -279,13 +279,6 @@ unsigned m4510_get_reg (int regnum)
 		case M4510_NMI_STATE: return m4510.nmi_state;
 		case M4510_IRQ_STATE: return m4510.irq_state;
 		case REG_PREVIOUSPC: return m4510.ppc.w.l;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-					return RDMEM( offset ) | ( RDMEM( offset + 1 ) << 8 );
-			}
 	}
 	return 0;
 }
@@ -316,16 +309,6 @@ void m4510_set_reg (int regnum, unsigned val)
 		case M4510_ZP: m4510.zp.b.l = val; break;
 		case M4510_NMI_STATE: m4510_set_irq_line( IRQ_LINE_NMI, val ); break;
 		case M4510_IRQ_STATE: m4510_set_irq_line( 0, val ); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-				{
-					WRMEM( offset, val & 0xfff );
-					WRMEM( offset + 1, (val >> 8) & 0xff );
-				}
-			}
 	}
 }
 

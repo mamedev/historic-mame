@@ -67,31 +67,31 @@ static READ_HANDLER( hanaawas_input_port_0_r )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x6000, 0x6fff, MRA_ROM },
-	{ 0x8000, 0x8bff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8bff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x6000, 0x6fff, MWA_ROM },
-	{ 0x8000, 0x83ff, hanaawas_videoram_w, &videoram },
-	{ 0x8400, 0x87ff, hanaawas_colorram_w, &colorram },
-	{ 0x8800, 0x8bff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(hanaawas_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(hanaawas_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, hanaawas_input_port_0_r },
-	{ 0x10, 0x10, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(hanaawas_input_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x10, 0x10, AY8910_control_port_0_w },
-	{ 0x11, 0x11, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( hanaawas )
@@ -179,8 +179,8 @@ static MACHINE_DRIVER_START( hanaawas )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

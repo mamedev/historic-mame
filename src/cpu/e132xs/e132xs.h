@@ -2,18 +2,7 @@
 #define E132XS_H
 
 /* Functions */
-extern void e132xs_init(void);
-extern void e132xs_reset(void *param);
-extern void e132xs_exit(void);
-extern int e132xs_execute(int cycles);
-extern unsigned e132xs_get_context(void *regs);
-extern void e132xs_set_context(void *regs);
-extern unsigned e132xs_get_reg(int regnum);
-extern void e132xs_set_reg(int regnum, unsigned val);
-extern void e132xs_set_irq_line(int irqline, int state);
-extern void e132xs_set_irq_callback(int (*callback)(int irqline));
-extern const char *e132xs_info(void *context, int regnum);
-extern unsigned e132xs_dasm(char *buffer, unsigned pc);
+extern void e132xs_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned dasm_e132xs(char *buffer, unsigned pc);
@@ -21,21 +10,19 @@ extern unsigned dasm_e132xs(char *buffer, unsigned pc);
 
 
 /* Variables */
-extern int e132xs_ICount;
-
 /* read byte */
-#define READ_B(addr) (cpu_readmem32bedw(addr))
+#define READ_B(addr) (program_read_byte_32be(addr))
 /* read half-word */
-#define READ_HW(addr) (cpu_readmem32bedw_word(addr))
+#define READ_HW(addr) (program_read_word_32be(addr))
 /* read word */
-#define READ_W(addr) (cpu_readmem32bedw_dword(addr))
+#define READ_W(addr) (program_read_dword_32be(addr))
 
 /* write byte */
-#define WRITE_B(addr, val) (cpu_writemem32bedw(addr, val))
+#define WRITE_B(addr, val) (program_write_byte_32be(addr, val))
 /* write half-word */
-#define WRITE_HW(addr, val) (cpu_writemem32bedw_word(addr, val))
+#define WRITE_HW(addr, val) (program_write_word_32be(addr, val))
 /* write word */
-#define WRITE_W(addr, val) (cpu_writemem32bedw_dword(addr, val))
+#define WRITE_W(addr, val) (program_write_dword_32be(addr, val))
 
 #define READ_OP(addr)	READ_HW(addr)
 //#define READ_OP(addr)	(cpu_readop16(addr))

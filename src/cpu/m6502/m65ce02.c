@@ -134,7 +134,7 @@ void m65ce02_reset (void *param)
 	m65ce02.after_cli = 0;		/* pending IRQ and last insn cleared I */
 	m65ce02.irq_callback = NULL;
 
-	change_pc16(PCD);
+	change_pc(PCD);
 }
 
 void m65ce02_exit(void)
@@ -154,7 +154,7 @@ void m65ce02_set_context (void *src)
 	if( src )
 	{
 		m65ce02 = *(m65ce02_Regs*)src;
-		change_pc16(PCD);
+		change_pc(PCD);
 	}
 }
 
@@ -177,13 +177,6 @@ unsigned m65ce02_get_reg (int regnum)
 		case M65CE02_NMI_STATE: return m65ce02.nmi_state;
 		case M65CE02_IRQ_STATE: return m65ce02.irq_state;
 		case REG_PREVIOUSPC: return m65ce02.ppc.w.l;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-					return RDMEM( offset ) | ( RDMEM( offset + 1 ) << 8 );
-			}
 	}
 	return 0;
 }
@@ -192,7 +185,7 @@ void m65ce02_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case REG_PC: PCW = val; change_pc16(PCD); break;
+		case REG_PC: PCW = val; change_pc(PCD); break;
 		case M65CE02_PC: m65ce02.pc.w.l = val; break;
 		case REG_SP: S = val; break;
 		case M65CE02_S: m65ce02.sp.w.l = val; break;
@@ -206,16 +199,6 @@ void m65ce02_set_reg (int regnum, unsigned val)
 		case M65CE02_ZP: m65ce02.zp.b.l = val; break;
 		case M65CE02_NMI_STATE: m65ce02_set_irq_line( IRQ_LINE_NMI, val ); break;
 		case M65CE02_IRQ_STATE: m65ce02_set_irq_line( 0, val ); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-				{
-					WRMEM( offset, val & 0xfff );
-					WRMEM( offset + 1, (val >> 8) & 0xff );
-				}
-			}
 	}
 }
 
@@ -234,7 +217,7 @@ INLINE void m65ce02_take_irq(void)
 		LOG(("M65ce02#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m65ce02.irq_callback) (*m65ce02.irq_callback)(0);
-		change_pc16(PCD);
+		change_pc(PCD);
 	}
 	m65ce02.pending_irq = 0;
 }
@@ -243,7 +226,7 @@ int m65ce02_execute(int cycles)
 {
 	m65ce02_ICount = cycles;
 
-	change_pc16(PCD);
+	change_pc(PCD);
 
 	do
 	{
@@ -301,7 +284,7 @@ void m65ce02_set_irq_line(int irqline, int state)
 			PCL = RDMEM(EAD);
 			PCH = RDMEM(EAD+1);
 			LOG(("M65ce02#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
-			change_pc16(PCD);
+			change_pc(PCD);
 		}
 	}
 	else

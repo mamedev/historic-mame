@@ -40,7 +40,7 @@ e040      ?
 e041      ?
 e042      ?
 e043      bit 3 = sprite RAM bank select; other bits = ?
-e044      bit 0 = nmi enable, bit 3 = flip screen, other bits = ?
+e044      bit 0-2 = interrupt control; bit 3 = flip screen
 f000      ?
 f200      SN76496 command
 f400      SN76496 trigger (write command to f200, then write to this location
@@ -50,13 +50,6 @@ f600      watchdog reset (?)
 interrupts:
 The game uses both IRQ (mode 1) and NMI.
 
-
-TODO:
-gberetb:
-- cocktail mode
-mrgoemon:
-- flickering rogue sprites
-- it resets during the first boot sequence, but works afterwards
 
 ***************************************************************************/
 
@@ -68,17 +61,34 @@ mrgoemon:
 extern unsigned char *gberet_videoram,*gberet_colorram;
 extern unsigned char *gberet_spritebank;
 extern unsigned char *gberet_scrollram;
+
 WRITE_HANDLER( gberet_videoram_w );
 WRITE_HANDLER( gberet_colorram_w );
-WRITE_HANDLER( gberet_e044_w );
 WRITE_HANDLER( gberet_scroll_w );
 WRITE_HANDLER( gberetb_scroll_w );
+
 PALETTE_INIT( gberet );
 VIDEO_START( gberet );
 VIDEO_UPDATE( gberet );
 VIDEO_UPDATE( gberetb );
 
-INTERRUPT_GEN( gberet_interrupt );
+static int enable_NMI;
+static int enable_IRQ;
+
+
+static INTERRUPT_GEN( gberet_interrupt )
+{
+	if (cpu_getiloops() == 0)
+	{
+		if (enable_IRQ)
+			cpu_set_irq_line(0, 0, HOLD_LINE);
+	}
+	if (cpu_getiloops() % 2)
+	{
+		if (enable_NMI)
+			cpu_set_nmi_line(0, PULSE_LINE);
+	}
+}
 
 
 static WRITE_HANDLER( gberet_coincounter_w )
@@ -102,80 +112,94 @@ static WRITE_HANDLER( mrgoemon_bankswitch_w )
 	cpu_setbank(1,&RAM[offs]);
 }
 
+static WRITE_HANDLER( gberet_e044_w )
+{
+	enable_NMI = data & 1;
+	enable_IRQ = data & 4;
+
+	flip_screen = data & 8;
+}
+
+static WRITE_HANDLER( mrgoemon_e044_w )
+{
+	enable_NMI = data & 1;
+	enable_IRQ = data & 2;
+
+	flip_screen = data & 8;
+}
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xe03f, MRA_RAM },
-	{ 0xf200, 0xf200, input_port_4_r },	/* DSW1 */
-	{ 0xf400, 0xf400, input_port_5_r },	/* DSW2 */
-	{ 0xf600, 0xf600, input_port_3_r },	/* DSW0 */
-	{ 0xf601, 0xf601, input_port_1_r },	/* IN1 */
-	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
-	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
-	{ 0xf800, 0xf800, MRA_NOP },	/* gberetb only - IRQ acknowledge */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xe03f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf200, 0xf200) AM_READ(input_port_4_r)	/* DSW1 */
+	AM_RANGE(0xf400, 0xf400) AM_READ(input_port_5_r)	/* DSW2 */
+	AM_RANGE(0xf600, 0xf600) AM_READ(input_port_3_r)	/* DSW0 */
+	AM_RANGE(0xf601, 0xf601) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xf602, 0xf602) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xf603, 0xf603) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xf800, 0xf800) AM_READ(MRA8_NOP)	/* gberetb only - IRQ acknowledge */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
-	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
-	{ 0xd000, 0xd0bf, MWA_RAM, &spriteram_2 },
-	{ 0xd100, 0xd1bf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd200, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe03f, gberet_scroll_w, &gberet_scrollram },
-	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
-	{ 0xe044, 0xe044, gberet_e044_w },
-	{ 0xf000, 0xf000, gberet_coincounter_w },
-	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
-	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
-//	{ 0xf600, 0xf600, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(gberet_colorram_w) AM_BASE(&gberet_colorram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gberet_videoram_w) AM_BASE(&gberet_videoram)
+	AM_RANGE(0xd000, 0xd0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xd100, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xd200, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(gberet_scroll_w) AM_BASE(&gberet_scrollram)
+	AM_RANGE(0xe043, 0xe043) AM_WRITE(MWA8_RAM) AM_BASE(&gberet_spritebank)
+	AM_RANGE(0xe044, 0xe044) AM_WRITE(gberet_e044_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(gberet_coincounter_w)
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(MWA8_NOP)		/* Loads the snd command into the snd latch */
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(SN76496_0_w)	/* This address triggers the SN chip to read the data port. */
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(MWA8_NOP)		/* Watchdog? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gberetb_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
-	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
-	{ 0xd000, 0xd0ff, MWA_RAM },
-	{ 0xd100, 0xd1ff, MWA_RAM },
-	{ 0xd200, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe03f, MWA_RAM },
-//	{ 0xe800, 0xe8ff, MWA_RAM },
-	{ 0xe900, 0xe9ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf800, 0xf800, MWA_NOP },	/* NMI acknowledge */
-	{ 0xf900, 0xf901, gberetb_scroll_w },
-//	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
-	{ 0xe044, 0xe044, gberet_e044_w },
-	{ 0xf400, 0xf400, SN76496_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( gberetb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(gberet_colorram_w) AM_BASE(&gberet_colorram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gberet_videoram_w) AM_BASE(&gberet_videoram)
+	AM_RANGE(0xd000, 0xd0ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd100, 0xd1ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd200, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe900, 0xe9ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
+	AM_RANGE(0xf900, 0xf901) AM_WRITE(gberetb_scroll_w)
+	AM_RANGE(0xe044, 0xe044) AM_WRITE(gberet_e044_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(SN76496_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mrgoemon_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xe03f, MRA_RAM },
-	{ 0xf200, 0xf200, input_port_4_r },	/* DSW1 */
-	{ 0xf400, 0xf400, input_port_5_r },	/* DSW2 */
-	{ 0xf600, 0xf600, input_port_3_r },	/* DSW0 */
-	{ 0xf601, 0xf601, input_port_1_r },	/* IN1 */
-	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
-	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
-	{ 0xf800, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( mrgoemon_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xe03f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf200, 0xf200) AM_READ(input_port_4_r)	/* DSW1 */
+	AM_RANGE(0xf400, 0xf400) AM_READ(input_port_5_r)	/* DSW2 */
+	AM_RANGE(0xf600, 0xf600) AM_READ(input_port_3_r)	/* DSW0 */
+	AM_RANGE(0xf601, 0xf601) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xf602, 0xf602) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xf603, 0xf603) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mrgoemon_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
-	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
-	{ 0xd000, 0xd0bf, MWA_RAM, &spriteram_2 },
-	{ 0xd100, 0xd1bf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd200, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe03f, gberet_scroll_w, &gberet_scrollram },
-	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
-	{ 0xe044, 0xe044, gberet_e044_w },
-	{ 0xf000, 0xf000, mrgoemon_bankswitch_w },	/* + coin counters */
-	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
-	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( mrgoemon_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(gberet_colorram_w) AM_BASE(&gberet_colorram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gberet_videoram_w) AM_BASE(&gberet_videoram)
+	AM_RANGE(0xd000, 0xd0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xd100, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xd200, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(gberet_scroll_w) AM_BASE(&gberet_scrollram)
+	AM_RANGE(0xe043, 0xe043) AM_WRITE(MWA8_RAM) AM_BASE(&gberet_spritebank)
+	AM_RANGE(0xe044, 0xe044) AM_WRITE(mrgoemon_e044_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(mrgoemon_bankswitch_w)	/* + coin counters */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(MWA8_NOP)		/* Loads the snd command into the snd latch */
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(SN76496_0_w)	/* This address triggers the SN chip to read the data port. */
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(MWA8_NOP)     /* Watchdog? */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -576,7 +600,7 @@ static MACHINE_DRIVER_START( gberet )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* X1S (generated by a custom IC) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(gberet_interrupt,32)	/* 1 IRQ + 16 NMI (generated by a custom IC) */
 
 	MDRV_FRAMES_PER_SECOND(30)
@@ -602,7 +626,7 @@ static MACHINE_DRIVER_START( gberetb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
-	MDRV_CPU_MEMORY(readmem,gberetb_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,gberetb_writemem)
 	MDRV_CPU_VBLANK_INT(gberet_interrupt,16)	/* 1 IRQ + 8 NMI */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -628,7 +652,7 @@ static MACHINE_DRIVER_START( mrgoemon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* X1S (generated by a custom IC) */
-	MDRV_CPU_MEMORY(mrgoemon_readmem,mrgoemon_writemem)
+	MDRV_CPU_PROGRAM_MAP(mrgoemon_readmem,mrgoemon_writemem)
 	MDRV_CPU_VBLANK_INT(gberet_interrupt,16)	/* 1 IRQ + 8 NMI */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -741,8 +765,8 @@ ROM_END
 
 
 
-GAME( 1985, gberet,   0,      gberet,   gberet,   0, ROT0, "Konami", "Green Beret" )
-GAME( 1985, rushatck, gberet, gberet,   gberet,   0, ROT0, "Konami", "Rush'n Attack" )
-GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  0, ROT0, "bootleg", "Green Beret (bootleg)" )
-GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, 0, ROT0, "Konami", "Mr. Goemon (Japan)" )
+GAME ( 1985, gberet,   0,      gberet,   gberet,   0, ROT0, "Konami", "Green Beret" )
+GAME ( 1985, rushatck, gberet, gberet,   gberet,   0, ROT0, "Konami", "Rush'n Attack" )
+GAMEX( 1985, gberetb,  gberet, gberetb,  gberetb,  0, ROT0, "bootleg", "Green Beret (bootleg)", GAME_NO_COCKTAIL )
+GAME ( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, 0, ROT0, "Konami", "Mr. Goemon (Japan)" )
 

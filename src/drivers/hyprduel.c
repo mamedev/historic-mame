@@ -437,71 +437,71 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 								Memory Maps
 ***************************************************************************/
 
-static MEMORY_READ16_START( hyprduel_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x400000, 0x41ffff, MRA16_RAM				},	// Layer 0
-	{ 0x420000, 0x43ffff, MRA16_RAM				},	// Layer 1
-	{ 0x440000, 0x45ffff, MRA16_RAM				},	// Layer 2
-	{ 0x460000, 0x46ffff, hyprduel_bankedrom_r	},	// Banked ROM
-	{ 0x470000, 0x473fff, MRA16_RAM				},	// Palette
-	{ 0x474000, 0x474fff, MRA16_RAM				},	// Sprites
-	{ 0x475000, 0x477fff, MRA16_RAM				},	// (only used memory test)
-	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
-	{ 0x4788a2, 0x4788a3, hyprduel_irq_cause_r	},	// IRQ Cause
-	{ 0xc00000, 0xc07fff, MRA16_RAM				},	// (sound driver controls)
-	{ 0xe00000, 0xe00001, input_port_0_word_r	},	// Inputs
-	{ 0xe00002, 0xe00003, input_port_1_word_r	},	//
-	{ 0xe00004, 0xe00005, input_port_2_word_r	},	//
-	{ 0xe00006, 0xe00007, input_port_3_word_r	},	//
-	{ 0xfe0000, 0xffffff, MRA16_RAM				},
-MEMORY_END
+static ADDRESS_MAP_START( hyprduel_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x460000, 0x46ffff) AM_READ(hyprduel_bankedrom_r	)	// Banked ROM
+	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x475000, 0x477fff) AM_READ(MRA16_RAM				)	// (only used memory test)
+	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x4788a2, 0x4788a3) AM_READ(hyprduel_irq_cause_r	)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc07fff) AM_READ(MRA16_RAM				)	// (sound driver controls)
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0xe00002, 0xe00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xe00004, 0xe00005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xe00006, 0xe00007) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA16_RAM				)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( hyprduel_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM 					},
-	{ 0x400000, 0x41ffff, hyprduel_vram_0_w, &hyprduel_vram_0	},	// Layer 0
-	{ 0x420000, 0x43ffff, hyprduel_vram_1_w, &hyprduel_vram_1	},	// Layer 1
-	{ 0x440000, 0x45ffff, hyprduel_vram_2_w, &hyprduel_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, hyprduel_paletteram_w, &paletteram16	},	// Palette
-	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
-	{ 0x475000, 0x477fff, MWA16_RAM 					},
-	{ 0x478000, 0x4787ff, MWA16_RAM, &hyprduel_tiletable, &hyprduel_tiletable_size	},	// Tiles Set
-	{ 0x478840, 0x47884d, hyprduel_blitter_w, &hyprduel_blitter_regs	},	// Tiles Blitter
-	{ 0x478860, 0x47886b, hyprduel_window_w, &hyprduel_window	},	// Tilemap Window
-	{ 0x478870, 0x47887b, hypr_scrollreg_w				},	// Scroll Regs
-	{ 0x47887c, 0x47887d, hypr_scrollreg_init_w			},	// scroll regs all sets
-	{ 0x478880, 0x478881, MWA16_NOP						},
-	{ 0x478890, 0x478891, MWA16_NOP						},
-	{ 0x4788a0, 0x4788a1, MWA16_NOP						},
-	{ 0x4788a2, 0x4788a3, hyprduel_irq_cause_w			},	// IRQ Acknowledge
-	{ 0x4788a4, 0x4788a5, MWA16_RAM, &hypr_irq_enable	},	// IRQ Enable
-	{ 0x4788aa, 0x4788ab, MWA16_RAM, &hyprduel_rombank		},	// Rom Bank
-	{ 0x4788ac, 0x4788ad, MWA16_RAM, &hyprduel_screenctrl	},	// Screen Control
-	{ 0x479700, 0x479713, MWA16_RAM, &hyprduel_videoregs	},	// Video Registers
-	{ 0x800000, 0x800001, hypr_subcpu_control_w			},
-	{ 0xc00000, 0xc07fff, MWA16_RAM, &hypr_sharedram1	},
-	{ 0xe00000, 0xe00001, MWA16_NOP						},
-	{ 0xfe0000, 0xffffff, MWA16_RAM, &hypr_sharedram2	},
-MEMORY_END
+static ADDRESS_MAP_START( hyprduel_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM 					)
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(hyprduel_vram_0_w) AM_BASE(&hyprduel_vram_0	)	// Layer 0
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(hyprduel_vram_1_w) AM_BASE(&hyprduel_vram_1	)	// Layer 1
+	AM_RANGE(0x440000, 0x45ffff) AM_WRITE(hyprduel_vram_2_w) AM_BASE(&hyprduel_vram_2	)	// Layer 2
+	AM_RANGE(0x470000, 0x473fff) AM_WRITE(hyprduel_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x474000, 0x474fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x475000, 0x477fff) AM_WRITE(MWA16_RAM 					)
+	AM_RANGE(0x478000, 0x4787ff) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_tiletable) AM_SIZE(&hyprduel_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x478840, 0x47884d) AM_WRITE(hyprduel_blitter_w) AM_BASE(&hyprduel_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x478860, 0x47886b) AM_WRITE(hyprduel_window_w) AM_BASE(&hyprduel_window	)	// Tilemap Window
+	AM_RANGE(0x478870, 0x47887b) AM_WRITE(hypr_scrollreg_w				)	// Scroll Regs
+	AM_RANGE(0x47887c, 0x47887d) AM_WRITE(hypr_scrollreg_init_w			)	// scroll regs all sets
+	AM_RANGE(0x478880, 0x478881) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x478890, 0x478891) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x4788a0, 0x4788a1) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x4788a2, 0x4788a3) AM_WRITE(hyprduel_irq_cause_w			)	// IRQ Acknowledge
+	AM_RANGE(0x4788a4, 0x4788a5) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x4788aa, 0x4788ab) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_rombank		)	// Rom Bank
+	AM_RANGE(0x4788ac, 0x4788ad) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_screenctrl	)	// Screen Control
+	AM_RANGE(0x479700, 0x479713) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_videoregs	)	// Video Registers
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(hypr_subcpu_control_w			)
+	AM_RANGE(0xc00000, 0xc07fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sharedram1	)
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sharedram2	)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( hyprduel_readmem2 )
-	{ 0x000000, 0x003fff, MRA16_RAM						},
-	{ 0x004000, 0x007fff, MRA16_RAM						},
-	{ 0x400002, 0x400003, YM2151_status_port_0_lsb_r	},
-	{ 0x400004, 0x400005, OKIM6295_status_0_lsb_r		},
-	{ 0xc00000, 0xc07fff, MRA16_RAM						},
-	{ 0xfe0000, 0xffffff, MRA16_RAM						},
-MEMORY_END
+static ADDRESS_MAP_START( hyprduel_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_READ(MRA16_RAM						)
+	AM_RANGE(0x004000, 0x007fff) AM_READ(MRA16_RAM						)
+	AM_RANGE(0x400002, 0x400003) AM_READ(YM2151_status_port_0_lsb_r	)
+	AM_RANGE(0x400004, 0x400005) AM_READ(OKIM6295_status_0_lsb_r		)
+	AM_RANGE(0xc00000, 0xc07fff) AM_READ(MRA16_RAM						)
+	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA16_RAM						)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( hyprduel_writemem2 )
-	{ 0x000000, 0x003fff, MWA16_RAM, &hypr_sub_sharedram1_2	},	// shadow ($c00000 - $c03fff : vector, write ok)
-	{ 0x004000, 0x007fff, MWA16_RAM, &hypr_sub_sharedram2_2	},	// shadow ($fe4000 - $fe7fff : read only)
-	{ 0x400000, 0x400001, YM2151_register_port_0_lsb_w	},
-	{ 0x400002, 0x400003, YM2151_data_port_0_lsb_w		},
-	{ 0x400004, 0x400005, OKIM6295_data_0_lsb_w			},
-	{ 0x800000, 0x800001, MWA16_NOP						},
-	{ 0xc00000, 0xc07fff, MWA16_RAM, &hypr_sub_sharedram1_1	},	// (sound driver)
-	{ 0xfe0000, 0xffffff, MWA16_RAM, &hypr_sub_sharedram2_1	},
-MEMORY_END
+static ADDRESS_MAP_START( hyprduel_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_2	)	// shadow ($c00000 - $c03fff : vector, write ok)
+	AM_RANGE(0x004000, 0x007fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_2	)	// shadow ($fe4000 - $fe7fff : read only)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(YM2151_register_port_0_lsb_w	)
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(YM2151_data_port_0_lsb_w		)
+	AM_RANGE(0x400004, 0x400005) AM_WRITE(OKIM6295_data_0_lsb_w			)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0xc00000, 0xc07fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_1	)	// (sound driver)
+	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_1	)
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Input Ports
@@ -660,11 +660,11 @@ static MACHINE_DRIVER_START( hyprduel )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
-	MDRV_CPU_MEMORY(hyprduel_readmem,hyprduel_writemem)
+	MDRV_CPU_PROGRAM_MAP(hyprduel_readmem,hyprduel_writemem)
 	MDRV_CPU_VBLANK_INT(hyprduel_interrupt,RASTER_LINES)
 
 	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
-	MDRV_CPU_MEMORY(hyprduel_readmem2,hyprduel_writemem2)
+	MDRV_CPU_PROGRAM_MAP(hyprduel_readmem2,hyprduel_writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

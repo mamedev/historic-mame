@@ -144,57 +144,57 @@ extern unsigned char *pengo_soundregs;
 
 
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x7000, 0x700f, digdug_customio_data_r },
-	{ 0x7100, 0x7100, digdug_customio_r },
-	{ 0x8000, 0x9fff, digdug_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x700f) AM_READ(digdug_customio_data_r)
+	AM_RANGE(0x7100, 0x7100) AM_READ(digdug_customio_r)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(digdug_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x8000, 0x9fff, digdug_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(digdug_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x8000, 0x9fff, digdug_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(digdug_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x6820, 0x6820, digdug_interrupt_enable_1_w },
-	{ 0x6821, 0x6821, digdug_interrupt_enable_2_w },
-	{ 0x6822, 0x6822, digdug_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, digdug_halt_w },
-        { 0xa007, 0xa007, digdug_flipscreen_w },
-	{ 0x6825, 0x6827, MWA_NOP },
-	{ 0x6830, 0x6830, watchdog_reset_w },
-	{ 0x7000, 0x700f, digdug_customio_data_w },
-	{ 0x7100, 0x7100, digdug_customio_w },
-	{ 0x8000, 0x9fff, digdug_sharedram_w, &digdug_sharedram },
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },   /* dirtybuffer[] handling is not needed because */
-	{ 0x8400, 0x87ff, MWA_RAM },	                          /* characters are redrawn every frame */
-	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size }, /* these three are here just to initialize */
-	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	          /* the pointers. The actual writes are */
-	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },                /* handled by digdug_sharedram_w() */
-	{ 0xa000, 0xa00f, digdug_vh_latch_w, &digdug_vlatches },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6820, 0x6820) AM_WRITE(digdug_interrupt_enable_1_w)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(digdug_interrupt_enable_2_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(digdug_interrupt_enable_3_w)
+	AM_RANGE(0x6823, 0x6823) AM_WRITE(digdug_halt_w)
+        AM_RANGE(0xa007, 0xa007) AM_WRITE(digdug_flipscreen_w)
+	AM_RANGE(0x6825, 0x6827) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(digdug_customio_data_w)
+	AM_RANGE(0x7100, 0x7100) AM_WRITE(digdug_customio_w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(digdug_sharedram_w) AM_BASE(&digdug_sharedram)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)   /* dirtybuffer[] handling is not needed because */
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(MWA8_RAM)	                          /* characters are redrawn every frame */
+	AM_RANGE(0x8b80, 0x8bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* these three are here just to initialize */
+	AM_RANGE(0x9380, 0x93ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	          /* the pointers. The actual writes are */
+	AM_RANGE(0x9b80, 0x9bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)                /* handled by digdug_sharedram_w() */
+	AM_RANGE(0xa000, 0xa00f) AM_WRITE(digdug_vh_latch_w) AM_BASE(&digdug_vlatches)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x6821, 0x6821, digdug_interrupt_enable_2_w },
-	{ 0x6830, 0x6830, watchdog_reset_w },
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
-	{ 0xa000, 0xa00f, digdug_vh_latch_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(digdug_interrupt_enable_2_w)
+	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(digdug_sharedram_w)
+	AM_RANGE(0xa000, 0xa00f) AM_WRITE(digdug_vh_latch_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x6822, 0x6822, digdug_interrupt_enable_3_w },
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(digdug_interrupt_enable_3_w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(digdug_sharedram_w)
+ADDRESS_MAP_END
 
 
 /* input from the outside world */
@@ -338,15 +338,15 @@ static MACHINE_DRIVER_START( digdug )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(digdug_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(digdug_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_VBLANK_INT(digdug_interrupt_3,2)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

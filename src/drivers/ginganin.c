@@ -71,27 +71,27 @@ VIDEO_UPDATE( ginganin );
 */
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x020000, 0x023fff, MRA16_RAM },
-	{ 0x030000, 0x0307ff, MRA16_RAM },
-	{ 0x040000, 0x0407ff, MRA16_RAM },
-	{ 0x050000, 0x0507ff, MRA16_RAM },
-	{ 0x060000, 0x06000f, MRA16_RAM },
-	{ 0x068000, 0x06bfff, MRA16_RAM },	/* bg lives in ROM */
-	{ 0x070000, 0x070001, input_port_0_word_r }, /* controls */
-	{ 0x070002, 0x070003, input_port_1_word_r }, /* DSWs */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x020000, 0x023fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x030000, 0x0307ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x040000, 0x0407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x050000, 0x0507ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x060000, 0x06000f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x068000, 0x06bfff) AM_READ(MRA16_RAM)	/* bg lives in ROM */
+	AM_RANGE(0x070000, 0x070001) AM_READ(input_port_0_word_r) /* controls */
+	AM_RANGE(0x070002, 0x070003) AM_READ(input_port_1_word_r) /* DSWs */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 /* The ROM area: 10000-13fff is written with: 0000 0000 0000 0001, at startup only. Why? */
-	{ 0x020000, 0x023fff, MWA16_RAM },
-	{ 0x030000, 0x0307ff, ginganin_txtram16_w, &ginganin_txtram16 },
-	{ 0x040000, 0x0407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x050000, 0x0507ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0x060000, 0x06000f, ginganin_vregs16_w, &ginganin_vregs16 },
-	{ 0x068000, 0x06bfff, ginganin_fgram16_w, &ginganin_fgram16 },
-MEMORY_END
+	AM_RANGE(0x020000, 0x023fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x030000, 0x0307ff) AM_WRITE(ginganin_txtram16_w) AM_BASE(&ginganin_txtram16)
+	AM_RANGE(0x040000, 0x0407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x050000, 0x0507ff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x060000, 0x06000f) AM_WRITE(ginganin_vregs16_w) AM_BASE(&ginganin_vregs16)
+	AM_RANGE(0x068000, 0x06bfff) AM_WRITE(ginganin_fgram16_w) AM_BASE(&ginganin_fgram16)
+ADDRESS_MAP_END
 
 
 /*
@@ -164,24 +164,24 @@ static WRITE_HANDLER( MC6840_write_port_1_w )
 	MC6840_register1 = data;
 }
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1800, 0x1800, soundlatch_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x1800) AM_READ(soundlatch_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0800, MC6840_control_port_0_w },	/* Takahiro Nogi. 1999/09/27 */
-	{ 0x0801, 0x0801, MC6840_control_port_1_w },	/* Takahiro Nogi. 1999/09/27 */
-	{ 0x0802, 0x0802, MC6840_write_port_0_w },		/* Takahiro Nogi. 1999/09/27 */
-	{ 0x0803, 0x0803, MC6840_write_port_1_w },		/* Takahiro Nogi. 1999/09/27 */
-	{ 0x2000, 0x2000, Y8950_control_port_0_w },
-	{ 0x2001, 0x2001, Y8950_write_port_0_w },
-	{ 0x2800, 0x2800, AY8910_control_port_0_w },
-	{ 0x2801, 0x2801, AY8910_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(MC6840_control_port_0_w)	/* Takahiro Nogi. 1999/09/27 */
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(MC6840_control_port_1_w)	/* Takahiro Nogi. 1999/09/27 */
+	AM_RANGE(0x0802, 0x0802) AM_WRITE(MC6840_write_port_0_w)		/* Takahiro Nogi. 1999/09/27 */
+	AM_RANGE(0x0803, 0x0803) AM_WRITE(MC6840_write_port_1_w)		/* Takahiro Nogi. 1999/09/27 */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(Y8950_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(Y8950_write_port_0_w)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x2801, 0x2801) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -369,12 +369,12 @@ static MACHINE_DRIVER_START( ginganin )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 6000000)	/* ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* ? (vectors 1-7 cointain the same address) */
 
 	MDRV_CPU_ADD(M6809, 1000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */ /* Takahiro Nogi. 1999/09/27 (3579545 -> 1000000) */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(ginganin_sound_interrupt,60)	/* Takahiro Nogi. 1999/09/27 (1 -> 60) */
 
 	MDRV_FRAMES_PER_SECOND(60)

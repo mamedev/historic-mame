@@ -146,8 +146,8 @@ SNK/Eastern  1985 (ACT) Gekisoh          Œƒ‘–
 #define EQUITES_ADD_SOUNDBOARD7 \
 	MDRV_CPU_ADD(8085A, 5000000) \
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) \
-	MDRV_CPU_MEMORY(equites_s_readmem, equites_s_writemem) \
-	MDRV_CPU_PORTS(0, equites_s_writeport) \
+	MDRV_CPU_PROGRAM_MAP(equites_s_readmem, equites_s_writemem) \
+	MDRV_CPU_IO_MAP(0, equites_s_writeport) \
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000) \
 	MDRV_SOUND_ADD(MSM5232, equites_5232intf) \
 	MDRV_SOUND_ADD(AY8910, equites_8910intf) \
@@ -168,29 +168,29 @@ extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
 extern struct DACinterface equites_dacintf;
 
-static MEMORY_READ_START( equites_s_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM }, // sound program
-	{ 0xc000, 0xc000, soundlatch_r },
-	{ 0xe000, 0xe0ff, MRA_RAM }, // stack and variables
-MEMORY_END
+static ADDRESS_MAP_START( equites_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM) // sound program
+	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xe0ff) AM_READ(MRA8_RAM) // stack and variables
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( equites_s_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM }, // sound program
-	{ 0xc080, 0xc08d, equites_5232_w },
-	{ 0xc0a0, 0xc0a0, equites_8910data_w },
-	{ 0xc0a1, 0xc0a1, equites_8910control_w },
-	{ 0xc0b0, 0xc0b0, MWA_NOP }, // INTR: sync with main melody
-	{ 0xc0c0, 0xc0c0, MWA_NOP }, // INTR: sync with specific beats
-	{ 0xc0d0, 0xc0d0, equites_dac0_w },
-	{ 0xc0e0, 0xc0e0, equites_dac1_w },
-	{ 0xc0f8, 0xc0fe, MWA_NOP }, // soundboard I/O, ignored
-	{ 0xc0ff, 0xc0ff, soundlatch_clear_w },
-	{ 0xe000, 0xe0ff, MWA_RAM }, // stack and variables
-MEMORY_END
+static ADDRESS_MAP_START( equites_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM) // sound program
+	AM_RANGE(0xc080, 0xc08d) AM_WRITE(equites_5232_w)
+	AM_RANGE(0xc0a0, 0xc0a0) AM_WRITE(equites_8910data_w)
+	AM_RANGE(0xc0a1, 0xc0a1) AM_WRITE(equites_8910control_w)
+	AM_RANGE(0xc0b0, 0xc0b0) AM_WRITE(MWA8_NOP) // INTR: sync with main melody
+	AM_RANGE(0xc0c0, 0xc0c0) AM_WRITE(MWA8_NOP) // INTR: sync with specific beats
+	AM_RANGE(0xc0d0, 0xc0d0) AM_WRITE(equites_dac0_w)
+	AM_RANGE(0xc0e0, 0xc0e0) AM_WRITE(equites_dac1_w)
+	AM_RANGE(0xc0f8, 0xc0fe) AM_WRITE(MWA8_NOP) // soundboard I/O, ignored
+	AM_RANGE(0xc0ff, 0xc0ff) AM_WRITE(soundlatch_clear_w)
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) // stack and variables
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( equites_s_writeport )
-	{ 0x00e0, 0x00e5, MWA_NOP }, // soundboard I/O, ignored
-PORT_END
+static ADDRESS_MAP_START( equites_s_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00e0, 0x00e5) AM_WRITE(MWA8_NOP) // soundboard I/O, ignored
+ADDRESS_MAP_END
 // Common Hardware End
 
 // Equites Hardware
@@ -316,71 +316,71 @@ static WRITE16_HANDLER(log16_w)
 // Main CPU Memory Map
 
 // Equites Hardware
-static MEMORY_READ16_START( equites_readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM }, // main program
-	{ 0x040000, 0x040fff, MRA16_RAM }, // work RAM
-	{ 0x080000, 0x080fff, MRA16_RAM }, // char RAM
-	{ 0x0c0000, 0x0c0fff, MRA16_RAM }, // scroll RAM
-	{ 0x100000, 0x100fff, equites_spriteram_r }, // sprite RAM
-	{ 0x140000, 0x1407ff, equites_8404_r }, // 8404 RAM
-	{ 0x180000, 0x180001, input_port_1_word_r }, // MSB: DIP switches
-	{ 0x1c0000, 0x1c0001, equites_joyport_r }, // joyport[2211] (shares the same addr with scrollreg)
-MEMORY_END
+static ADDRESS_MAP_START( equites_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM) // main program
+	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM) // work RAM
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM) // char RAM
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(MRA16_RAM) // scroll RAM
+	AM_RANGE(0x100000, 0x100fff) AM_READ(equites_spriteram_r) // sprite RAM
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(equites_8404_r) // 8404 RAM
+	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_1_word_r) // MSB: DIP switches
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(equites_joyport_r) // joyport[2211] (shares the same addr with scrollreg)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( equites_writemem )
-	{ 0x000000, 0x00ffff, MWA16_NOP }, // ROM area is written several times (dev system?)
-	{ 0x040000, 0x040fff, MWA16_RAM, &equites_workram },
-	{ 0x080000, 0x080fff, equites_charram_w, &videoram16 },
-	{ 0x0c0000, 0x0c0fff, MWA16_RAM, &spriteram16_2 },
-	{ 0x100000, 0x100fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x140000, 0x1407ff, MWA16_RAM, &equites_8404ram },
-	{ 0x180000, 0x180001, soundlatch_word_w }, // LSB: sound latch
-	{ 0x184000, 0x184001, equites_flip0_w }, // [MMLL] MM: normal screen, LL: use joystick 1 only
-	{ 0x188000, 0x188001, MWA16_NOP }, // 8404 control port1
-	{ 0x18c000, 0x18c001, MWA16_NOP }, // 8404 control port2
-	{ 0x1a4000, 0x1a4001, equites_flip1_w }, // [MMLL] MM: flip screen, LL: use both joysticks
-	{ 0x1a8000, 0x1a8001, MWA16_NOP }, // 8404 control port3
-	{ 0x1ac000, 0x1ac001, MWA16_NOP }, // 8404 control port4
-	{ 0x1c0000, 0x1c0001, equites_scrollreg_w }, // scroll register[XXYY]
-	{ 0x380000, 0x380001, equites_bgcolor_w }, // bg color register[CC--]
-	{ 0x780000, 0x780001, MWA16_NOP }, // watchdog
-MEMORY_END
+static ADDRESS_MAP_START( equites_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_NOP) // ROM area is written several times (dev system?)
+	AM_RANGE(0x040000, 0x040fff) AM_WRITE(MWA16_RAM) AM_BASE(&equites_workram)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(equites_charram_w) AM_BASE(&videoram16)
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(MWA16_RAM) AM_BASE(&equites_8404ram)
+	AM_RANGE(0x180000, 0x180001) AM_WRITE(soundlatch_word_w) // LSB: sound latch
+	AM_RANGE(0x184000, 0x184001) AM_WRITE(equites_flip0_w) // [MMLL] MM: normal screen, LL: use joystick 1 only
+	AM_RANGE(0x188000, 0x188001) AM_WRITE(MWA16_NOP) // 8404 control port1
+	AM_RANGE(0x18c000, 0x18c001) AM_WRITE(MWA16_NOP) // 8404 control port2
+	AM_RANGE(0x1a4000, 0x1a4001) AM_WRITE(equites_flip1_w) // [MMLL] MM: flip screen, LL: use both joysticks
+	AM_RANGE(0x1a8000, 0x1a8001) AM_WRITE(MWA16_NOP) // 8404 control port3
+	AM_RANGE(0x1ac000, 0x1ac001) AM_WRITE(MWA16_NOP) // 8404 control port4
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(equites_scrollreg_w) // scroll register[XXYY]
+	AM_RANGE(0x380000, 0x380001) AM_WRITE(equites_bgcolor_w) // bg color register[CC--]
+	AM_RANGE(0x780000, 0x780001) AM_WRITE(MWA16_NOP) // watchdog
+ADDRESS_MAP_END
 
 // Splendor Blast Hardware
-static MEMORY_READ16_START( splndrbt_readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM }, // main program
-	{ 0x040000, 0x040fff, MRA16_RAM }, // work RAM
-	{ 0x080000, 0x080001, input_port_0_word_r }, // joyport [2211]
-	{ 0x0c0000, 0x0c0001, input_port_1_word_r }, // MSB: DIP switches LSB: not used
-	{ 0x100000, 0x100001, MRA16_RAM }, // no read
-	{ 0x1c0000, 0x1c0001, MRA16_RAM }, // LSB: watchdog
-	{ 0x180000, 0x1807ff, equites_8404_r }, // 8404 RAM
-	{ 0x200000, 0x200fff, MRA16_RAM }, // char page 0
-	{ 0x201000, 0x201fff, splndrbt_bankedchar_r }, // banked char page 1, 2
-	{ 0x400000, 0x400fff, MRA16_RAM }, // scroll RAM 0,1
-	{ 0x600000, 0x6001ff, MRA16_RAM }, // sprite RAM 0,1,2
-MEMORY_END
+static ADDRESS_MAP_START( splndrbt_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM) // main program
+	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM) // work RAM
+	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r) // joyport [2211]
+	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_1_word_r) // MSB: DIP switches LSB: not used
+	AM_RANGE(0x100000, 0x100001) AM_READ(MRA16_RAM) // no read
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(MRA16_RAM) // LSB: watchdog
+	AM_RANGE(0x180000, 0x1807ff) AM_READ(equites_8404_r) // 8404 RAM
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM) // char page 0
+	AM_RANGE(0x201000, 0x201fff) AM_READ(splndrbt_bankedchar_r) // banked char page 1, 2
+	AM_RANGE(0x400000, 0x400fff) AM_READ(MRA16_RAM) // scroll RAM 0,1
+	AM_RANGE(0x600000, 0x6001ff) AM_READ(MRA16_RAM) // sprite RAM 0,1,2
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( splndrbt_writemem )
-	{ 0x000000, 0x00ffff, MWA16_NOP },
-	{ 0x040000, 0x040fff, MWA16_RAM, &equites_workram }, // work RAM
-	{ 0x0c0000, 0x0c0001, splndrbt_flip0_w }, // [MMLL] MM: bg color register, LL: normal screen
-	{ 0x0c4000, 0x0c4001, MWA16_NOP }, // 8404 control port1
-	{ 0x0c8000, 0x0c8001, MWA16_NOP }, // 8404 control port2
-	{ 0x0cc000, 0x0cc001, splndrbt_selchar0_w }, // select active char map
-	{ 0x0e0000, 0x0e0001, splndrbt_flip1_w }, // [MMLL] MM: not used, LL: flip screen
-	{ 0x0e4000, 0x0e4001, MWA16_NOP }, // 8404 control port3
-	{ 0x0e8000, 0x0e8001, MWA16_NOP }, // 8404 control port4
-	{ 0x0ec000, 0x0ec001, splndrbt_selchar1_w }, // select active char map
-	{ 0x100000, 0x100001, MWA16_RAM, &splndrbt_scrollx }, // scrollx
-	{ 0x140000, 0x140001, soundlatch_word_w }, // LSB: sound command
-	{ 0x1c0000, 0x1c0001, MWA16_RAM, &splndrbt_scrolly }, // scrolly
-	{ 0x180000, 0x1807ff, MWA16_RAM, &equites_8404ram }, // 8404 RAM
-	{ 0x200000, 0x200fff, splndrbt_charram_w, &videoram16, &videoram_size }, // char RAM page 0
-	{ 0x201000, 0x201fff, splndrbt_bankedchar_w }, // banked char RAM page 1,2
-	{ 0x400000, 0x400fff, splndrbt_scrollram_w, &spriteram16_2 }, // scroll RAM 0,1
-	{ 0x600000, 0x6001ff, MWA16_RAM, &spriteram16, &spriteram_size }, // sprite RAM 0,1,2
-MEMORY_END
+static ADDRESS_MAP_START( splndrbt_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x040000, 0x040fff) AM_WRITE(MWA16_RAM) AM_BASE(&equites_workram) // work RAM
+	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(splndrbt_flip0_w) // [MMLL] MM: bg color register, LL: normal screen
+	AM_RANGE(0x0c4000, 0x0c4001) AM_WRITE(MWA16_NOP) // 8404 control port1
+	AM_RANGE(0x0c8000, 0x0c8001) AM_WRITE(MWA16_NOP) // 8404 control port2
+	AM_RANGE(0x0cc000, 0x0cc001) AM_WRITE(splndrbt_selchar0_w) // select active char map
+	AM_RANGE(0x0e0000, 0x0e0001) AM_WRITE(splndrbt_flip1_w) // [MMLL] MM: not used, LL: flip screen
+	AM_RANGE(0x0e4000, 0x0e4001) AM_WRITE(MWA16_NOP) // 8404 control port3
+	AM_RANGE(0x0e8000, 0x0e8001) AM_WRITE(MWA16_NOP) // 8404 control port4
+	AM_RANGE(0x0ec000, 0x0ec001) AM_WRITE(splndrbt_selchar1_w) // select active char map
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&splndrbt_scrollx) // scrollx
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(soundlatch_word_w) // LSB: sound command
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(MWA16_RAM) AM_BASE(&splndrbt_scrolly) // scrolly
+	AM_RANGE(0x180000, 0x1807ff) AM_WRITE(MWA16_RAM) AM_BASE(&equites_8404ram) // 8404 RAM
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(splndrbt_charram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size) // char RAM page 0
+	AM_RANGE(0x201000, 0x201fff) AM_WRITE(splndrbt_bankedchar_w) // banked char RAM page 1,2
+	AM_RANGE(0x400000, 0x400fff) AM_WRITE(splndrbt_scrollram_w) AM_BASE(&spriteram16_2) // scroll RAM 0,1
+	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) // sprite RAM 0,1,2
+ADDRESS_MAP_END
 
 /******************************************************************************/
 // Common Port Map
@@ -706,7 +706,7 @@ static MACHINE_DRIVER_START( equites )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000/2) // OSC: 12Mhz
-	MDRV_CPU_MEMORY(equites_readmem, equites_writemem)
+	MDRV_CPU_PROGRAM_MAP(equites_readmem, equites_writemem)
 	MDRV_CPU_VBLANK_INT(equites_interrupt, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -733,7 +733,7 @@ static MACHINE_DRIVER_START( splndrbt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000/2) // OSC: 12Mhz
-	MDRV_CPU_MEMORY(splndrbt_readmem, splndrbt_writemem)
+	MDRV_CPU_PROGRAM_MAP(splndrbt_readmem, splndrbt_writemem)
 	MDRV_CPU_VBLANK_INT(splndrbt_interrupt, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)

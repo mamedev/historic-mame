@@ -114,63 +114,63 @@ static WRITE_HANDLER( ddrible_vlm5030_ctrl_w )
 }
 
 
-static MEMORY_READ_START( readmem_cpu0 )
-	{ 0x1800, 0x187f, MRA_RAM },			/* palette */
-	{ 0x2000, 0x3fff, MRA_RAM },			/* Video RAM 1 + Object RAM 1 */
-	{ 0x4000, 0x5fff, MRA_RAM },			/* shared RAM with CPU #1 */
-	{ 0x6000, 0x7fff, MRA_RAM },			/* Video RAM 2 + Object RAM 2 */
-	{ 0x8000, 0x9fff, MRA_BANK1 },			/* banked ROM */
-	{ 0xa000, 0xffff, MRA_ROM },			/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu0, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1800, 0x187f) AM_READ(MRA8_RAM)			/* palette */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)			/* Video RAM 1 + Object RAM 1 */
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)			/* shared RAM with CPU #1 */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_RAM)			/* Video RAM 2 + Object RAM 2 */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)			/* ROM */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_cpu0 )
-	{ 0x0000, 0x0004, K005885_0_w },								/* video registers (005885 #1) */
-	{ 0x0800, 0x0804, K005885_1_w },								/* video registers (005885 #2) */
-	{ 0x1800, 0x187f, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* seems wrong, MSB is used as well */
-	{ 0x2000, 0x2fff, ddrible_fg_videoram_w, &ddrible_fg_videoram },/* Video RAM 1 */
-	{ 0x3000, 0x3fff, MWA_RAM, &ddrible_spriteram_1 },				/* Object RAM 1 */
-	{ 0x4000, 0x5fff, MWA_RAM, &ddrible_sharedram },				/* shared RAM with CPU #1 */
-	{ 0x6000, 0x6fff, ddrible_bg_videoram_w, &ddrible_bg_videoram },/* Video RAM 2 */
-	{ 0x7000, 0x7fff, MWA_RAM, &ddrible_spriteram_2 },				/* Object RAM 2 + Work RAM */
-	{ 0x8000, 0x8000, ddrible_bankswitch_w },						/* bankswitch control */
-	{ 0x8000, 0xffff, MWA_ROM },									/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu0, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0004) AM_WRITE(K005885_0_w)								/* video registers (005885 #1) */
+	AM_RANGE(0x0800, 0x0804) AM_WRITE(K005885_1_w)								/* video registers (005885 #2) */
+	AM_RANGE(0x1800, 0x187f) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)/* seems wrong, MSB is used as well */
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(ddrible_fg_videoram_w) AM_BASE(&ddrible_fg_videoram)/* Video RAM 1 */
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&ddrible_spriteram_1)				/* Object RAM 1 */
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM) AM_BASE(&ddrible_sharedram)				/* shared RAM with CPU #1 */
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(ddrible_bg_videoram_w) AM_BASE(&ddrible_bg_videoram)/* Video RAM 2 */
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&ddrible_spriteram_2)				/* Object RAM 2 + Work RAM */
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(ddrible_bankswitch_w)						/* bankswitch control */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)									/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x1fff, ddrible_sharedram_r },		/* shared RAM with CPU #0 */
-	{ 0x2000, 0x27ff, ddrible_snd_sharedram_r },	/* shared RAM with CPU #2 */
-	{ 0x2800, 0x2800, input_port_3_r },				/* DSW #1 */
-	{ 0x2801, 0x2801, input_port_0_r },				/* player 1 inputs */
-	{ 0x2802, 0x2802, input_port_1_r },				/* player 2 inputs */
-	{ 0x2803, 0x2803, input_port_2_r },				/* coinsw & start */
-	{ 0x2c00, 0x2c00, input_port_4_r },				/* DSW #2 */
-	{ 0x3000, 0x3000, input_port_5_r },				/* DSW #3 */
-	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(ddrible_sharedram_r)		/* shared RAM with CPU #0 */
+	AM_RANGE(0x2000, 0x27ff) AM_READ(ddrible_snd_sharedram_r)	/* shared RAM with CPU #2 */
+	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_3_r)				/* DSW #1 */
+	AM_RANGE(0x2801, 0x2801) AM_READ(input_port_0_r)				/* player 1 inputs */
+	AM_RANGE(0x2802, 0x2802) AM_READ(input_port_1_r)				/* player 2 inputs */
+	AM_RANGE(0x2803, 0x2803) AM_READ(input_port_2_r)				/* coinsw & start */
+	AM_RANGE(0x2c00, 0x2c00) AM_READ(input_port_4_r)				/* DSW #2 */
+	AM_RANGE(0x3000, 0x3000) AM_READ(input_port_5_r)				/* DSW #3 */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x1fff, ddrible_sharedram_w },		/* shared RAM with CPU #0 */
-	{ 0x2000, 0x27ff, ddrible_snd_sharedram_w },	/* shared RAM with CPU #2 */
-	{ 0x3400, 0x3400, ddrible_coin_counter_w },		/* coin counters */
-	{ 0x3c00, 0x3c00, watchdog_reset_w },			/* watchdog reset */
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(ddrible_sharedram_w)		/* shared RAM with CPU #0 */
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(ddrible_snd_sharedram_w)	/* shared RAM with CPU #2 */
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(ddrible_coin_counter_w)		/* coin counters */
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(watchdog_reset_w)			/* watchdog reset */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x07ff, MRA_RAM },					/* shared RAM with CPU #1 */
-	{ 0x1000, 0x1000, YM2203_status_port_0_r },		/* YM2203 */
-	{ 0x1001, 0x1001, YM2203_read_port_0_r },		/* YM2203 */
-	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)					/* shared RAM with CPU #1 */
+	AM_RANGE(0x1000, 0x1000) AM_READ(YM2203_status_port_0_r)		/* YM2203 */
+	AM_RANGE(0x1001, 0x1001) AM_READ(YM2203_read_port_0_r)		/* YM2203 */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x07ff, MWA_RAM, &ddrible_snd_sharedram  },	/* shared RAM with CPU #1 */
-	{ 0x1000, 0x1000, YM2203_control_port_0_w },			/* YM2203 */
-	{ 0x1001, 0x1001, YM2203_write_port_0_w },				/* YM2203 */
-	{ 0x3000, 0x3000, VLM5030_data_w },						/* Speech data */
-	{ 0x8000, 0xffff, MWA_ROM },							/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&ddrible_snd_sharedram)	/* shared RAM with CPU #1 */
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM2203_control_port_0_w)			/* YM2203 */
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM2203_write_port_0_w)				/* YM2203 */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(VLM5030_data_w)						/* Speech data */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)							/* ROM */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( ddribble )
 	PORT_START	/* PLAYER 1 INPUTS */
@@ -339,15 +339,15 @@ static MACHINE_DRIVER_START( ddribble )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
-	MDRV_CPU_MEMORY(readmem_cpu0,writemem_cpu0)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu0,writemem_cpu0)
 	MDRV_CPU_VBLANK_INT(ddrible_interrupt_0,1)
 
 	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(ddrible_interrupt_1,1)
 
 	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -181,7 +181,7 @@ READ_HANDLER( snes_r_bank1 )
 	UINT16 address = offset & 0xffff;
 
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		return cpu_readmem24( 0x7e0000 + address );
+		return program_read_byte(0x7e0000 + address );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		return snes_r_io( address );
 	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
@@ -203,7 +203,7 @@ READ_HANDLER( snes_r_bank2 )
 	UINT16 address = offset & 0xffff;
 
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		return cpu_readmem24( 0x7e0000 + address );
+		return program_read_byte(0x7e0000 + address );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		return snes_r_io( address );
 	else if( address >= 0x6000 && address <= 0x7fff )
@@ -250,14 +250,14 @@ READ_HANDLER( snes_r_bank4 )
 	if( cart.mode == SNES_MODE_20 )
 	{
 		if( offset <= 0x5fffff )
-			return cpu_readmem24( offset );
+			return program_read_byte(offset );
 		else
 			return 0xff;
 	}
 	else	/* MODE_21 */
 	{
 		if( offset <= 0x3fffff )
-			return cpu_readmem24( offset );
+			return program_read_byte(offset );
 		else
 			return snes_ram[offset + 0x800000];
 	}
@@ -271,7 +271,7 @@ WRITE_HANDLER( snes_w_bank1 )
 	UINT16 address = offset & 0xffff;
 
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		cpu_writemem24( 0x7e0000 + address, data );
+		program_write_byte(0x7e0000 + address, data );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		snes_w_io( address, data );
 	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
@@ -286,7 +286,7 @@ WRITE_HANDLER( snes_w_bank2 )
 	UINT16 address = offset & 0xffff;
 
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		cpu_writemem24( 0x7e0000 + address, data );
+		program_write_byte(0x7e0000 + address, data );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		snes_w_io( address, data );
 	else if( address >= 0x6000 && address <= 0x7fff )
@@ -518,7 +518,7 @@ READ_HANDLER( snes_r_io )
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
 
-				value = cpu_readmem24(0x7e0000 + addr++);
+				value = program_read_byte(0x7e0000 + addr++);
 				snes_ram[WMADDH] = (addr >> 16) & 0x1;
 				snes_ram[WMADDM] = (addr >> 8) & 0xff;
 				snes_ram[WMADDL] = addr & 0xff;
@@ -1006,7 +1006,7 @@ WRITE_HANDLER( snes_w_io )
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
 
-				cpu_writemem24( 0x7e0000 + addr++, data );
+				program_write_byte(0x7e0000 + addr++, data );
 				snes_ram[WMADDH] = (addr >> 16) & 0x1;
 				snes_ram[WMADDM] = (addr >> 8) & 0xff;
 				snes_ram[WMADDL] = addr & 0xff;
@@ -1491,8 +1491,8 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
 	if( snes_ppu.beam.current_vert == 0 )
 	{	/* VBlank is over, time for a new frame */
-		cpu_writemem24( OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
-		cpu_writemem24( OAMADDH, snes_ppu.oam.address_high );
+		program_write_byte(OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
+		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
 		snes_ram[HVBJOY] &= 0x7f;		/* Clear vblank bit */
 		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
 		cpu_set_irq_line( 0, G65816_LINE_NMI, CLEAR_LINE );
@@ -1534,7 +1534,7 @@ void snes_hdma()
 				abus = (snes_ram[SNES_DMA_BASE + dma + 4] << 16) + (snes_ram[SNES_DMA_BASE + dma + 9] << 8) + snes_ram[SNES_DMA_BASE + dma + 8];
 
 				/* Get the number of lines */
-				snes_ram[SNES_DMA_BASE + dma + 0xa] = cpu_readmem24(abus);
+				snes_ram[SNES_DMA_BASE + dma + 0xa] = program_read_byte(abus);
 				if( !snes_ram[SNES_DMA_BASE + dma + 0xa] )
 				{
 					/* No more lines so clear HDMA */
@@ -1546,8 +1546,8 @@ void snes_hdma()
 				snes_ram[SNES_DMA_BASE + dma + 9] = (abus >> 8) & 0xff;
 				if( snes_ram[SNES_DMA_BASE + dma] & 0x40 )
 				{
-					snes_ram[SNES_DMA_BASE + dma + 5] = cpu_readmem24(abus++);
-					snes_ram[SNES_DMA_BASE + dma + 6] = cpu_readmem24(abus++);
+					snes_ram[SNES_DMA_BASE + dma + 5] = program_read_byte(abus++);
+					snes_ram[SNES_DMA_BASE + dma + 6] = program_read_byte(abus++);
 					snes_ram[SNES_DMA_BASE + dma + 8] = abus & 0xff;
 					snes_ram[SNES_DMA_BASE + dma + 9] = (abus >> 8) & 0xff;
 				}
@@ -1570,31 +1570,31 @@ void snes_hdma()
 			{
 				case 0:		/* 1 address */
 				{
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
 				} break;
 				case 1:		/* 2 addresses (l,h) */
 				{
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 1, cpu_readmem24(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
 				} break;
 				case 2:		/* Write twice (l,l) */
 				{
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
 				} break;
 				case 3:		/* 2 addresses/Write twice (l,l,h,h) */
 				{
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 1, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 1, cpu_readmem24(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
 				} break;
 				case 4:		/* 4 addresses (l,h,l,h) */
 				{
-					cpu_writemem24( bbus, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 1, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 2, cpu_readmem24(abus++));
-					cpu_writemem24( bbus + 3, cpu_readmem24(abus++));
+					program_write_byte(bbus, program_read_byte(abus++));
+					program_write_byte(bbus + 1, program_read_byte(abus++));
+					program_write_byte(bbus + 2, program_read_byte(abus++));
+					program_write_byte(bbus + 3, program_read_byte(abus++));
 				} break;
 				default:
 #ifdef MAME_DEBUG
@@ -1681,9 +1681,9 @@ void snes_gdma( UINT8 channels )
 					while( length-- )
 					{
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus) );
+							program_write_byte(abus, program_read_byte(bbus) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus, cpu_readmem24(abus) );
+							program_write_byte(bbus, program_read_byte(abus) );
 						abus += increment;
 					}
 				} break;
@@ -1692,16 +1692,16 @@ void snes_gdma( UINT8 channels )
 					while( length-- )
 					{
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus) );
+							program_write_byte(abus, program_read_byte(bbus) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus, cpu_readmem24(abus) );
+							program_write_byte(bbus, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 1) );
+							program_write_byte(abus, program_read_byte(bbus + 1) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 1, cpu_readmem24(abus) );
+							program_write_byte(bbus + 1, program_read_byte(abus) );
 						abus += increment;
 					}
 				} break;
@@ -1710,30 +1710,30 @@ void snes_gdma( UINT8 channels )
 					while( length-- )
 					{
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus) );
+							program_write_byte(abus, program_read_byte(bbus) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus, cpu_readmem24(abus) );
+							program_write_byte(bbus, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus) );
+							program_write_byte(abus, program_read_byte(bbus) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus, cpu_readmem24(abus) );
+							program_write_byte(bbus, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 1) );
+							program_write_byte(abus, program_read_byte(bbus + 1) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 1, cpu_readmem24(abus) );
+							program_write_byte(bbus + 1, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 1) );
+							program_write_byte(abus, program_read_byte(bbus + 1) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 1, cpu_readmem24(abus) );
+							program_write_byte(bbus + 1, program_read_byte(abus) );
 						abus += increment;
 					}
 				} break;
@@ -1742,30 +1742,30 @@ void snes_gdma( UINT8 channels )
 					while( length-- )
 					{
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus) );
+							program_write_byte(abus, program_read_byte(bbus) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus, cpu_readmem24(abus) );
+							program_write_byte(bbus, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 1) );
+							program_write_byte(abus, program_read_byte(bbus + 1) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 1, cpu_readmem24(abus) );
+							program_write_byte(bbus + 1, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 2) );
+							program_write_byte(abus, program_read_byte(bbus + 2) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 2, cpu_readmem24(abus) );
+							program_write_byte(bbus + 2, program_read_byte(abus) );
 						abus += increment;
 						if( !(length--) )
 							break;
 						if( snes_ram[SNES_DMA_BASE + dma] & 0x80 )	/* PPU->CPU */
-							cpu_writemem24( abus, cpu_readmem24(bbus + 3) );
+							program_write_byte(abus, program_read_byte(bbus + 3) );
 						else									/* CPU->PPU */
-							cpu_writemem24( bbus + 3, cpu_readmem24(abus) );
+							program_write_byte(bbus + 3, program_read_byte(abus) );
 						abus += increment;
 					}
 				} break;

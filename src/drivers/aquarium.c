@@ -25,9 +25,13 @@ AQUARF1              68000-16            6
 /* To Do (top are higher priorities)
 
 Controls + Dipswitches *done* - stephh
-Fix Sound (z80, ym2151 + m6295) (program banking, oki illegal samples etc.)
+Verify Z80 program banking
 Fix Priority Problems
 Merge with gcpinbal.c (and clean up gcpinbal.c)
+
+
+Note, a bug in the program code causes the OKI to be reset on the very
+first coin inserted.
 
 
 Stephh's notes (based on the game M68000 code and some tests) :
@@ -49,6 +53,8 @@ Stephh's notes (based on the game M68000 code and some tests) :
 #include "vidhrdw/generic.h"
 
 #define AQUARIUS_HACK	0
+
+static int aquarium_snd_ack;
 
 data16_t *aquarium_scroll, *aquarium_priority;
 data16_t *aquarium_txt_videoram;
@@ -75,14 +81,21 @@ static MACHINE_INIT( aquarium )
 }
 #endif
 
-READ16_HANDLER( aquarium_coins_r )
+static READ16_HANDLER( aquarium_coins_r )
 {
-	static int toggle = 0x0000;
-	toggle ^= 0x8000; /* sound status */
-	return (input_port_2_word_r(0,mem_mask) & 0x7fff) | toggle;	/* IN1 */
+	int data;
+	data = (input_port_2_word_r(0,mem_mask) & 0x7fff);	/* IN1 */
+	data |= aquarium_snd_ack;
+	aquarium_snd_ack = 0;
+	return data;
 }
 
-WRITE16_HANDLER( aquarium_sound_w )
+static WRITE_HANDLER( aquarium_snd_ack_w )
+{
+	aquarium_snd_ack = 0x8000;
+}
+
+static WRITE16_HANDLER( aquarium_sound_w )
 {
 //	usrintf_showmessage("sound write %04x",data);
 
@@ -98,56 +111,86 @@ static WRITE_HANDLER( aquarium_z80_bank_w )
 	cpu_setbank(1, &Z80[soundbank + 0x10000]);
 }
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0xc00000, 0xc03fff, MRA16_RAM },
-	{ 0xc80000, 0xc81fff, MRA16_RAM },	/* sprite ram */
-	{ 0xd00000, 0xd00fff, MRA16_RAM },
-	{ 0xd80080, 0xd80081, input_port_0_word_r },
-	{ 0xd80082, 0xd80083, MRA16_NOP },	/* stored but not read back ? check code at 0x01f440 */
-	{ 0xd80084, 0xd80085, input_port_1_word_r },
-	{ 0xd80086, 0xd80087, aquarium_coins_r },
-	{ 0xff0000, 0xffffff, MRA16_RAM },	/* RAM */
-MEMORY_END
+static UINT8 aquarium_snd_bitswap(UINT8 scrambled_data)
+{
+	UINT8 data = 0;
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0xc00000, 0xc00fff, aquarium_mid_videoram_w, &aquarium_mid_videoram },
-	{ 0xc01000, 0xc01fff, aquarium_bak_videoram_w, &aquarium_bak_videoram },
-	{ 0xc02000, 0xc03fff, aquarium_txt_videoram_w, &aquarium_txt_videoram },
-	{ 0xc80000, 0xc81fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd00000, 0xd00fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-	{ 0xd80014, 0xd8001f, MWA16_RAM, &aquarium_scroll },
-	{ 0xd80068, 0xd80069, MWA16_RAM, &aquarium_priority },  /* maybe not on this game? */
-	{ 0xd80088, 0xd80089, MWA16_NOP }, /* ?? */
-	{ 0xd8008a, 0xd8008b, aquarium_sound_w },
-	{ 0xff0000, 0xffffff, MWA16_RAM },
-MEMORY_END
+	data |= ((scrambled_data & 0x01) << 7);
+	data |= ((scrambled_data & 0x02) << 5);
+	data |= ((scrambled_data & 0x04) << 3);
+	data |= ((scrambled_data & 0x08) << 1);
+	data |= ((scrambled_data & 0x10) >> 1);
+	data |= ((scrambled_data & 0x20) >> 3);
+	data |= ((scrambled_data & 0x40) >> 5);
+	data |= ((scrambled_data & 0x80) >> 7);
 
-static MEMORY_READ_START( snd_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+	return data;
+}
 
-static MEMORY_WRITE_START( snd_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-MEMORY_END
+static READ_HANDLER( aquarium_oki_r )
+{
+	return (aquarium_snd_bitswap(OKIM6295_status_0_r(0)) );
+}
 
-static PORT_READ_START( snd_readport )
-	{ 0x01, 0x01, YM2151_status_port_0_r },
-	{ 0x02, 0x02, OKIM6295_status_0_r },
-	{ 0x04, 0x04, soundlatch_r },
-PORT_END
+static WRITE_HANDLER( aquarium_oki_w )
+{
+	logerror("Z80-PC:%04x Writing %04x to the OKI M6295\n",activecpu_get_previouspc(),aquarium_snd_bitswap(data));
+	OKIM6295_data_0_w( 0, (aquarium_snd_bitswap(data)) );
+}
 
-static PORT_WRITE_START( snd_writeport )
-	{ 0x00, 0x00, YM2151_register_port_0_w },
-	{ 0x01, 0x01, YM2151_data_port_0_w },
-	{ 0x02, 0x02, OKIM6295_data_0_w },
-	{ 0x06, 0x06, IOWP_NOP },	/* zero is always written here, command ack? */
-	{ 0x08, 0x08, aquarium_z80_bank_w },
-PORT_END
+
+
+
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc80000, 0xc81fff) AM_READ(MRA16_RAM)	/* sprite ram */
+	AM_RANGE(0xd00000, 0xd00fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xd80080, 0xd80081) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xd80082, 0xd80083) AM_READ(MRA16_NOP)	/* stored but not read back ? check code at 0x01f440 */
+	AM_RANGE(0xd80084, 0xd80085) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xd80086, 0xd80087) AM_READ(aquarium_coins_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)	/* RAM */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xc00000, 0xc00fff) AM_WRITE(aquarium_mid_videoram_w) AM_BASE(&aquarium_mid_videoram)
+	AM_RANGE(0xc01000, 0xc01fff) AM_WRITE(aquarium_bak_videoram_w) AM_BASE(&aquarium_bak_videoram)
+	AM_RANGE(0xc02000, 0xc03fff) AM_WRITE(aquarium_txt_videoram_w) AM_BASE(&aquarium_txt_videoram)
+	AM_RANGE(0xc80000, 0xc81fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd00000, 0xd00fff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xd80014, 0xd8001f) AM_WRITE(MWA16_RAM) AM_BASE(&aquarium_scroll)
+	AM_RANGE(0xd80068, 0xd80069) AM_WRITE(MWA16_RAM) AM_BASE(&aquarium_priority)  /* maybe not on this game? */
+	AM_RANGE(0xd80088, 0xd80089) AM_WRITE(MWA16_NOP) /* ?? video related */
+	AM_RANGE(0xd8008a, 0xd8008b) AM_WRITE(aquarium_sound_w)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( snd_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(aquarium_oki_r)
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( snd_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(aquarium_oki_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(aquarium_snd_ack_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(aquarium_z80_bank_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( aquarium )
 	PORT_START	/* DSW */
@@ -187,7 +230,7 @@ INPUT_PORTS_START( aquarium )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Flip_Screen ) )	// to be confirmed - code at 0x01f82c
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )	// to be confirmed - code at 0x0037de
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
@@ -333,23 +376,24 @@ static struct YM2151interface ym2151_interface =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
+	1,					/* 1 chip */
+	{ 8500 },			/* frequency (Hz) */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 47 }
 };
+
 
 static MACHINE_DRIVER_START( aquarium )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 32000000/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
-	MDRV_CPU_PORTS(snd_readport,snd_writeport)
+	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
+	MDRV_CPU_IO_MAP(snd_readport,snd_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -405,7 +449,7 @@ ROM_START( aquarium )
 ROM_END
 
 #if !AQUARIUS_HACK
-GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 #else
-GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 #endif

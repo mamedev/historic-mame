@@ -121,46 +121,46 @@ static WRITE_HANDLER( sspeedr_sound_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x21ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x21ff, MWA_RAM },
-	{ 0x7f00, 0x7f17, sspeedr_score_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7f00, 0x7f17) AM_WRITE(sspeedr_score_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, sspeedr_steering_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x03, 0x03, input_port_2_r },
-	{ 0x04, 0x04, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(sspeedr_steering_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_2_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x01, sspeedr_sound_w },
-	{ 0x02, 0x02, sspeedr_lamp_w },
-	{ 0x04, 0x05, sspeedr_time_w },
-	{ 0x06, 0x06, watchdog_reset_w },
-	{ 0x10, 0x10, sspeedr_driver_horz_w },
-	{ 0x11, 0x11, sspeedr_driver_pic_w },
-	{ 0x12, 0x12, sspeedr_driver_horz_2_w },
-	{ 0x13, 0x13, sspeedr_drones_horz_w },
-	{ 0x14, 0x14, sspeedr_drones_horz_2_w },
-	{ 0x15, 0x15, sspeedr_drones_mask_w },
-	{ 0x16, 0x16, sspeedr_driver_vert_w },
-	{ 0x17, 0x18, sspeedr_track_vert_w },
-	{ 0x19, 0x19, sspeedr_track_horz_w },
-	{ 0x1a, 0x1a, sspeedr_track_horz_2_w },
-	{ 0x1b, 0x1b, sspeedr_track_ice_w },
-	{ 0x1c, 0x1e, sspeedr_drones_vert_w },
-	{ 0x1f, 0x1f, sspeedr_int_ack_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(sspeedr_sound_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(sspeedr_lamp_w)
+	AM_RANGE(0x04, 0x05) AM_WRITE(sspeedr_time_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(sspeedr_driver_horz_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(sspeedr_driver_pic_w)
+	AM_RANGE(0x12, 0x12) AM_WRITE(sspeedr_driver_horz_2_w)
+	AM_RANGE(0x13, 0x13) AM_WRITE(sspeedr_drones_horz_w)
+	AM_RANGE(0x14, 0x14) AM_WRITE(sspeedr_drones_horz_2_w)
+	AM_RANGE(0x15, 0x15) AM_WRITE(sspeedr_drones_mask_w)
+	AM_RANGE(0x16, 0x16) AM_WRITE(sspeedr_driver_vert_w)
+	AM_RANGE(0x17, 0x18) AM_WRITE(sspeedr_track_vert_w)
+	AM_RANGE(0x19, 0x19) AM_WRITE(sspeedr_track_horz_w)
+	AM_RANGE(0x1a, 0x1a) AM_WRITE(sspeedr_track_horz_2_w)
+	AM_RANGE(0x1b, 0x1b) AM_WRITE(sspeedr_track_ice_w)
+	AM_RANGE(0x1c, 0x1e) AM_WRITE(sspeedr_drones_vert_w)
+	AM_RANGE(0x1f, 0x1f) AM_WRITE(sspeedr_int_ack_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( sspeedr )
@@ -231,8 +231,8 @@ static MACHINE_DRIVER_START( sspeedr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 19968000 / 8)
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
+	MDRV_CPU_IO_MAP(readport, writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert, 1)
 
 	MDRV_FRAMES_PER_SECOND(59.39)

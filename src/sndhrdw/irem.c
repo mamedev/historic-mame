@@ -119,30 +119,30 @@ struct MSM5205interface irem_msm5205_interface =
 
 
 
-MEMORY_READ_START( irem_sound_readmem )
-	{ 0x0000, 0x001f, m6803_internal_registers_r },
-	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( irem_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(m6803_internal_registers_r)
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( irem_sound_writemem )
-	{ 0x0000, 0x001f, m6803_internal_registers_w },
-	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x0800, 0x0800, MWA_NOP },    /* IACK */
-	{ 0x0801, 0x0802, irem_adpcm_w },
-	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( irem_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(m6803_internal_registers_w)
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(MWA8_NOP)    /* IACK */
+	AM_RANGE(0x0801, 0x0802) AM_WRITE(irem_adpcm_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP)    /* IACK */
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-PORT_READ_START( irem_sound_readport )
-	{ M6803_PORT1, M6803_PORT1, irem_port1_r },
-	{ M6803_PORT2, M6803_PORT2, irem_port2_r },
-PORT_END
+ADDRESS_MAP_START( irem_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(M6803_PORT1, M6803_PORT1) AM_READ(irem_port1_r)
+	AM_RANGE(M6803_PORT2, M6803_PORT2) AM_READ(irem_port2_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( irem_sound_writeport )
-	{ M6803_PORT1, M6803_PORT1, irem_port1_w },
-	{ M6803_PORT2, M6803_PORT2, irem_port2_w },
-PORT_END
+ADDRESS_MAP_START( irem_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(M6803_PORT1, M6803_PORT1) AM_WRITE(irem_port1_w)
+	AM_RANGE(M6803_PORT2, M6803_PORT2) AM_WRITE(irem_port2_w)
+ADDRESS_MAP_END
 
 
 MACHINE_DRIVER_START( irem_audio )
@@ -150,8 +150,8 @@ MACHINE_DRIVER_START( irem_audio )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6803, 3579545/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(irem_sound_readmem,irem_sound_writemem)
-	MDRV_CPU_PORTS(irem_sound_readport,irem_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(irem_sound_readmem,irem_sound_writemem)
+	MDRV_CPU_IO_MAP(irem_sound_readport,irem_sound_writeport)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, irem_ay8910_interface)

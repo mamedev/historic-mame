@@ -183,75 +183,75 @@ static WRITE_HANDLER( sound_bank_w )
 
 
 
-static MEMORY_READ16_START( gradius3_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x043fff, MRA16_RAM },
-	{ 0x080000, 0x080fff, MRA16_RAM },
-	{ 0x0c8000, 0x0c8001, input_port_0_word_r },
-	{ 0x0c8002, 0x0c8003, input_port_1_word_r },
-	{ 0x0c8004, 0x0c8005, input_port_2_word_r },
-	{ 0x0c8006, 0x0c8007, input_port_5_word_r },
-	{ 0x0d0000, 0x0d0001, input_port_3_word_r },
-	{ 0x0d0002, 0x0d0003, input_port_4_word_r },
-	{ 0x100000, 0x103fff, sharedram_r },
-	{ 0x14c000, 0x153fff, K052109_halfword_r },
-	{ 0x180000, 0x19ffff, gradius3_gfxram_r },
-MEMORY_END
+static ADDRESS_MAP_START( gradius3_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c8000, 0x0c8001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0c8002, 0x0c8003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c8004, 0x0c8005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0c8006, 0x0c8007) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x0d0000, 0x0d0001) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0d0002, 0x0d0003) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(sharedram_r)
+	AM_RANGE(0x14c000, 0x153fff) AM_READ(K052109_halfword_r)
+	AM_RANGE(0x180000, 0x19ffff) AM_READ(gradius3_gfxram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( gradius3_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x043fff, MWA16_RAM },
-	{ 0x080000, 0x080fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x0c0000, 0x0c0001, cpuA_ctrl_w },	/* halt cpu B, irq enable, priority, coin counters, other? */
-	{ 0x0d8000, 0x0d8001, cpuB_irqtrigger_w },
-	{ 0x0e0000, 0x0e0001, watchdog_reset16_w },
-	{ 0x0e8000, 0x0e8001, sound_command_w },
-	{ 0x0f0000, 0x0f0001, sound_irq_w },
-	{ 0x100000, 0x103fff, sharedram_w, &sharedram },
-	{ 0x14c000, 0x153fff, K052109_halfword_w },
-	{ 0x180000, 0x19ffff, gradius3_gfxram_w, &gradius3_gfxram },
-MEMORY_END
-
-
-static MEMORY_READ16_START( gradius3_readmem2 )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x200000, 0x203fff, sharedram_r },
-	{ 0x24c000, 0x253fff, K052109_halfword_r },
-	{ 0x280000, 0x29ffff, gradius3_gfxram_r },
-	{ 0x2c0000, 0x2c000f, K051937_halfword_r },
-	{ 0x2c0800, 0x2c0fff, K051960_halfword_r },
-	{ 0x400000, 0x5fffff, gradius3_gfxrom_r },		/* gfx ROMs are mapped here, and copied to RAM */
-MEMORY_END
-
-static MEMORY_WRITE16_START( gradius3_writemem2 )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x140000, 0x140001, cpuB_irqenable_w },
-	{ 0x200000, 0x203fff, sharedram_w },
-	{ 0x24c000, 0x253fff, K052109_halfword_w },
-	{ 0x280000, 0x29ffff, gradius3_gfxram_w },
-	{ 0x2c0000, 0x2c000f, K051937_halfword_w },
-	{ 0x2c0800, 0x2c0fff, K051960_halfword_w },
-MEMORY_END
+static ADDRESS_MAP_START( gradius3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(cpuA_ctrl_w)	/* halt cpu B, irq enable, priority, coin counters, other? */
+	AM_RANGE(0x0d8000, 0x0d8001) AM_WRITE(cpuB_irqtrigger_w)
+	AM_RANGE(0x0e0000, 0x0e0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x0e8000, 0x0e8001) AM_WRITE(sound_command_w)
+	AM_RANGE(0x0f0000, 0x0f0001) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
+	AM_RANGE(0x14c000, 0x153fff) AM_WRITE(K052109_halfword_w)
+	AM_RANGE(0x180000, 0x19ffff) AM_WRITE(gradius3_gfxram_w) AM_BASE(&gradius3_gfxram)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( gradius3_s_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf010, 0xf010, soundlatch_r },
-	{ 0xf020, 0xf02d, K007232_read_port_0_r },
-	{ 0xf031, 0xf031, YM2151_status_port_0_r },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( gradius3_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x203fff) AM_READ(sharedram_r)
+	AM_RANGE(0x24c000, 0x253fff) AM_READ(K052109_halfword_r)
+	AM_RANGE(0x280000, 0x29ffff) AM_READ(gradius3_gfxram_r)
+	AM_RANGE(0x2c0000, 0x2c000f) AM_READ(K051937_halfword_r)
+	AM_RANGE(0x2c0800, 0x2c0fff) AM_READ(K051960_halfword_r)
+	AM_RANGE(0x400000, 0x5fffff) AM_READ(gradius3_gfxrom_r)		/* gfx ROMs are mapped here, and copied to RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gradius3_s_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf000, sound_bank_w },				/* 007232 bankswitch */
-	{ 0xf020, 0xf02d, K007232_write_port_0_w },
-	{ 0xf030, 0xf030, YM2151_register_port_0_w },
-	{ 0xf031, 0xf031, YM2151_data_port_0_w },
-	{ 0xf800, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( gradius3_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(cpuB_irqenable_w)
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(sharedram_w)
+	AM_RANGE(0x24c000, 0x253fff) AM_WRITE(K052109_halfword_w)
+	AM_RANGE(0x280000, 0x29ffff) AM_WRITE(gradius3_gfxram_w)
+	AM_RANGE(0x2c0000, 0x2c000f) AM_WRITE(K051937_halfword_w)
+	AM_RANGE(0x2c0800, 0x2c0fff) AM_WRITE(K051960_halfword_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( gradius3_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf010, 0xf010) AM_READ(soundlatch_r)
+	AM_RANGE(0xf020, 0xf02d) AM_READ(K007232_read_port_0_r)
+	AM_RANGE(0xf031, 0xf031) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( gradius3_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(sound_bank_w)				/* 007232 bankswitch */
+	AM_RANGE(0xf020, 0xf02d) AM_WRITE(K007232_write_port_0_w)
+	AM_RANGE(0xf030, 0xf030) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf031, 0xf031) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -390,17 +390,17 @@ static MACHINE_DRIVER_START( gradius3 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(gradius3_readmem,gradius3_writemem)
+	MDRV_CPU_PROGRAM_MAP(gradius3_readmem,gradius3_writemem)
 	MDRV_CPU_VBLANK_INT(cpuA_interrupt,1)
 
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(gradius3_readmem2,gradius3_writemem2)
+	MDRV_CPU_PROGRAM_MAP(gradius3_readmem2,gradius3_writemem2)
 	MDRV_CPU_VBLANK_INT(cpuB_interrupt,2)	/* has three interrupt vectors, 1 2 and 4 */
 								/* 4 is triggered by cpu A, the others are unknown but */
 								/* required for the game to run. */
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(gradius3_s_readmem,gradius3_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(gradius3_s_readmem,gradius3_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -81,41 +81,41 @@ static WRITE_HANDLER( appoooh_adpcm_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xa000, 0xdfff, MRA_BANK1 },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xefff, MRA_RAM }, /* RAM ? */
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xdfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM) /* RAM ? */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, MWA_RAM }, /* RAM ? */
-	{ 0xf000, 0xf01f, MWA_RAM, &spriteram  },
-	{ 0xf020, 0xf3ff, appoooh_fg_videoram_w, &appoooh_fg_videoram },
-	{ 0xf420, 0xf7ff, appoooh_fg_colorram_w, &appoooh_fg_colorram },
-	{ 0xf800, 0xf81f, MWA_RAM, &spriteram_2 },
-	{ 0xf820, 0xfbff, appoooh_bg_videoram_w, &appoooh_bg_videoram },
-	{ 0xfc20, 0xffff, appoooh_bg_colorram_w, &appoooh_bg_colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) /* RAM ? */
+	AM_RANGE(0xf000, 0xf01f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xf020, 0xf3ff) AM_WRITE(appoooh_fg_videoram_w) AM_BASE(&appoooh_fg_videoram)
+	AM_RANGE(0xf420, 0xf7ff) AM_WRITE(appoooh_fg_colorram_w) AM_BASE(&appoooh_fg_colorram)
+	AM_RANGE(0xf800, 0xf81f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0xf820, 0xfbff) AM_WRITE(appoooh_bg_videoram_w) AM_BASE(&appoooh_bg_videoram)
+	AM_RANGE(0xfc20, 0xffff) AM_WRITE(appoooh_bg_colorram_w) AM_BASE(&appoooh_bg_colorram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },	/* IN0 */
-	{ 0x01, 0x01, input_port_1_r },	/* IN1 */
-	{ 0x03, 0x03, input_port_3_r },	/* DSW */
-	{ 0x04, 0x04, input_port_2_r },	/* IN2 */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)	/* DSW */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)	/* IN2 */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, SN76496_0_w },
-	{ 0x01, 0x01, SN76496_1_w },
-	{ 0x02, 0x02, SN76496_2_w },
-	{ 0x03, 0x03, appoooh_adpcm_w },
-	{ 0x04, 0x04, appoooh_out_w  },
-	{ 0x05, 0x05, appoooh_scroll_w }, /* unknown */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(appoooh_adpcm_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(appoooh_out_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(appoooh_scroll_w) /* unknown */
+ADDRESS_MAP_END
 
 
 
@@ -231,8 +231,8 @@ static MACHINE_DRIVER_START( appoooh )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* ??? the main xtal is 18.432 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

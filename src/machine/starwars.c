@@ -86,12 +86,12 @@ WRITE_HANDLER( starwars_out_w )
 			if (data & 0x80)
 			{
 				cpu_setbank(1, &RAM[0x10000]);
-				cpu_setbank(2, &RAM[0x1c000]);
+				if (starwars_is_esb) cpu_setbank(2, &RAM[0x1c000]);
 			}
 			else
 			{
 				cpu_setbank(1, &RAM[0x06000]);
-				cpu_setbank(2, &RAM[0x0a000]);
+				if (starwars_is_esb) cpu_setbank(2, &RAM[0x0a000]);
 			}
 			break;
 

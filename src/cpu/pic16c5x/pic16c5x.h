@@ -18,22 +18,6 @@
 #include "memory.h"
 
 
-/****************************************************************************
- *	Use these in the memory and/or IO port address fields of your driver
- *	for simplified memory and IO mapping.
- *	i.e,
- *		{ PIC16C5x_T0, PIC16C5x_T0, PIC16C5X_T0_clk_r },
- *		{ PIC16C55_MEMORY_READ },
- *		{ PIC16C55_MEMORY_WRITE },
- *		{ PIC16C57_MEMORY_READ },
- *		{ PIC16C57_MEMORY_WRITE },
- */
-
-#define PIC16C5X_DATA_OFFSET	0x0000
-#define PIC16C5X_PGM_OFFSET		0x1000
-
-
-
 /**************************************************************************
  *	Internal Clock divisor
  *
@@ -54,13 +38,6 @@ enum {
 
 
 /****************************************************************************
- *	Public Data
- */
-
-extern int pic16C5x_icount;						/* T-state count */
-
-
-/****************************************************************************
  *	Function to configure the CONFIG register. This is actually hard-wired
  *	during ROM programming, so should be called in the driver INIT, with
  *	the value if known (available in HEX dumps of the ROM).
@@ -74,42 +51,36 @@ void pic16c5x_config(int data);
  */
 
 #define PIC16C5x_T0		0x10
-#define PIC16C5x_T0_In (cpu_readport16(PIC16C5x_T0))
+#define PIC16C5x_T0_In (io_read_byte_8(PIC16C5x_T0))
 
 
 /****************************************************************************
  *	Input a word from given I/O port
  */
 
-#define PIC16C5x_In(Port) ((UINT8)cpu_readport16((Port)))
+#define PIC16C5x_In(Port) ((UINT8)io_read_byte_8((Port)))
 
 
 /****************************************************************************
  *	Output a word to given I/O port
  */
 
-#define PIC16C5x_Out(Port,Value) (cpu_writeport16((Port),Value))
+#define PIC16C5x_Out(Port,Value) (io_write_byte_8((Port),Value))
 
 
 
 /****************************************************************************
  *	Read a word from given RAM memory location
- *	The following adds 800h to the address, since MAME doesnt support
- *	RAM and ROM living in the same address space. RAM really starts at
- *	address 0 and are word entities.
  */
 
-#define PIC16C5x_RAM_RDMEM(A) ((UINT8)cpu_readmem16((A)+PIC16C5X_DATA_OFFSET))
+#define PIC16C5x_RAM_RDMEM(A) ((UINT8)data_read_byte_8(A))
 
 
 /****************************************************************************
  *	Write a word to given RAM memory location
- *	The following adds 800h to the address, since MAME doesnt support
- *	RAM and ROM living in the same address space. RAM really starts at
- *	address 0 and word entities.
  */
 
-#define PIC16C5x_RAM_WRMEM(A,V) (cpu_writemem16((A)+PIC16C5X_DATA_OFFSET,V))
+#define PIC16C5x_RAM_WRMEM(A,V) (data_write_byte_8(A,V))
 
 
 
@@ -119,7 +90,7 @@ void pic16c5x_config(int data);
  *	can be used to greatly speed up emulation
  */
 
-#define PIC16C5x_RDOP(A) (cpu_readop16(((A)<<1)+PIC16C5X_PGM_OFFSET))
+#define PIC16C5x_RDOP(A) (cpu_readop16((A)<<1))
 
 
 /****************************************************************************
@@ -128,7 +99,7 @@ void pic16c5x_config(int data);
  *	that use different encoding mechanisms for opcodes and opcode arguments
  */
 
-#define PIC16C5x_RDOP_ARG(A) (cpu_readop_arg16(((A)<<1)+PIC16C5X_PGM_OFFSET))
+#define PIC16C5x_RDOP_ARG(A) (cpu_readop_arg16((A)<<1))
 
 
 
@@ -139,29 +110,20 @@ void pic16c5x_config(int data);
  ****************************************************************************/
 #define pic16C54_icount			pic16C5x_icount
 #define PIC16C54_RESET_VECTOR	0x1ff
-#define PIC16C54_DATA_OFFSET	PIC16C5X_DATA_OFFSET
-#define PIC16C54_PGM_OFFSET		PIC16C5X_PGM_OFFSET
 
-#define PIC16C54_MEMORY_READ													\
-	  (PIC16C54_DATA_OFFSET + 0x00), (PIC16C54_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + ((0x1ff*2)+1)), MRA_ROM
+#define PIC16C54_PROGRAM_MEMORY_READ			\
+	AM_RANGE(0x000, 0x1ff) AM_READ(MRA16_ROM)
 
-#define PIC16C54_MEMORY_WRITE											 		\
-	  (PIC16C54_DATA_OFFSET + 0x00), (PIC16C54_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + ((0x1ff*2)+1)), MWA_ROM
+#define PIC16C54_PROGRAM_MEMORY_WRITE			\
+	AM_RANGE(0x000, 0x1ff) AM_WRITE(MWA16_ROM)
 
-extern void pic16C54_init(void);
-extern void pic16C54_reset(void *param);
-extern void pic16C54_exit(void);
-extern int	pic16C54_execute(int cycles);
-extern unsigned pic16C54_get_context(void *dst);
-extern void pic16C54_set_context(void *src);
-extern unsigned pic16C54_get_reg(int regnum);
-extern void pic16C54_set_reg(int regnum, unsigned val);
-extern void pic16C54_set_irq_line(int irqline, int state);
-extern void pic16C54_set_irq_callback(int (*callback)(int irqline));
-extern const char *pic16C54_info(void *context, int regnum);
-extern unsigned pic16C54_dasm(char *buffer, unsigned pc);
+#define PIC16C54_DATA_MEMORY_READ				\
+	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
+
+#define PIC16C54_DATA_MEMORY_WRITE				\
+	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
+
+void pic16C54_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);
@@ -177,29 +139,20 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
  ****************************************************************************/
 #define pic16C55_icount			pic16C5x_icount
 #define PIC16C55_RESET_VECTOR	0x1ff
-#define PIC16C55_DATA_OFFSET	PIC16C5X_DATA_OFFSET
-#define PIC16C55_PGM_OFFSET		PIC16C5X_PGM_OFFSET
 
-#define PIC16C55_MEMORY_READ													\
-	  (PIC16C55_DATA_OFFSET + 0x00), (PIC16C55_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + ((0x1ff*2)+1)), MRA_ROM
+#define PIC16C55_PROGRAM_MEMORY_READ			\
+	AM_RANGE(0x000, 0x1ff) AM_READ(MRA16_ROM)
 
-#define PIC16C55_MEMORY_WRITE													\
-	  (PIC16C55_DATA_OFFSET + 0x00), (PIC16C55_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + ((0x1ff*2)+1)), MWA_ROM
+#define PIC16C55_PROGRAM_MEMORY_WRITE			\
+	AM_RANGE(0x000, 0x1ff) AM_WRITE(MWA16_ROM)
 
-extern void pic16C55_init(void);
-extern void pic16C55_reset(void *param);
-extern void pic16C55_exit(void);
-extern int	pic16C55_execute(int cycles);
-extern unsigned pic16C55_get_context(void *dst);
-extern void pic16C55_set_context(void *src);
-extern unsigned pic16C55_get_reg(int regnum);
-extern void pic16C55_set_reg(int regnum, unsigned val);
-extern void pic16C55_set_irq_line(int irqline, int state);
-extern void pic16C55_set_irq_callback(int (*callback)(int irqline));
-extern const char *pic16C55_info(void *context, int regnum);
-extern unsigned pic16C55_dasm(char *buffer, unsigned pc);
+#define PIC16C55_DATA_MEMORY_READ				\
+	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
+
+#define PIC16C55_DATA_MEMORY_WRITE				\
+	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
+
+void pic16C55_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);
@@ -215,29 +168,20 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
  ****************************************************************************/
 #define pic16C56_icount			pic16C5x_icount
 #define PIC16C56_RESET_VECTOR	0x3ff
-#define PIC16C56_DATA_OFFSET	PIC16C5X_DATA_OFFSET
-#define PIC16C56_PGM_OFFSET		PIC16C5X_PGM_OFFSET
 
-#define PIC16C56_MEMORY_READ													\
-	  (PIC16C56_DATA_OFFSET + 0x00), (PIC16C56_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + ((0x3ff*2)+1)), MRA_ROM
+#define PIC16C56_PROGRAM_MEMORY_READ			\
+	AM_RANGE(0x000, 0x3ff) AM_READ(MRA16_ROM)
 
-#define PIC16C56_MEMORY_WRITE													\
-	  (PIC16C56_DATA_OFFSET + 0x00), (PIC16C56_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + ((0x3ff*2)+1)), MWA_ROM
+#define PIC16C56_PROGRAM_MEMORY_WRITE			\
+	AM_RANGE(0x000, 0x3ff) AM_WRITE(MWA16_ROM)
 
-extern void pic16C56_init(void);
-extern void pic16C56_reset(void *param);
-extern void pic16C56_exit(void);
-extern int	pic16C56_execute(int cycles);
-extern unsigned pic16C56_get_context(void *dst);
-extern void pic16C56_set_context(void *src);
-extern unsigned pic16C56_get_reg(int regnum);
-extern void pic16C56_set_reg(int regnum, unsigned val);
-extern void pic16C56_set_irq_line(int irqline, int state);
-extern void pic16C56_set_irq_callback(int (*callback)(int irqline));
-extern const char *pic16C56_info(void *context, int regnum);
-extern unsigned pic16C56_dasm(char *buffer, unsigned pc);
+#define PIC16C56_DATA_MEMORY_READ				\
+	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
+
+#define PIC16C56_DATA_MEMORY_WRITE				\
+	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
+
+void pic16C56_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);
@@ -253,35 +197,20 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
  ****************************************************************************/
 #define pic16C57_icount			pic16C5x_icount
 #define PIC16C57_RESET_VECTOR	0x7ff
-#define PIC16C57_DATA_OFFSET	PIC16C5X_DATA_OFFSET
-#define PIC16C57_PGM_OFFSET		PIC16C5X_PGM_OFFSET
 
-#define PIC16C57_MEMORY_READ													\
-	  (PIC16C57_DATA_OFFSET + 0x00), (PIC16C57_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x30), (PIC16C57_DATA_OFFSET + 0x3f), MRA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x50), (PIC16C57_DATA_OFFSET + 0x5f), MRA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x70), (PIC16C57_DATA_OFFSET + 0x7f), MRA_RAM },	\
-	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + ((0x7ff*2)+1)), MRA_ROM
+#define PIC16C57_PROGRAM_MEMORY_READ			\
+	AM_RANGE(0x000, 0x7ff) AM_READ(MRA16_ROM)
 
-#define PIC16C57_MEMORY_WRITE													\
-	  (PIC16C57_DATA_OFFSET + 0x00), (PIC16C57_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x30), (PIC16C57_DATA_OFFSET + 0x3f), MWA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x50), (PIC16C57_DATA_OFFSET + 0x5f), MWA_RAM },	\
-	{ (PIC16C57_DATA_OFFSET + 0x70), (PIC16C57_DATA_OFFSET + 0x7f), MWA_RAM },	\
-	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + ((0x7ff*2)+1)), MWA_ROM
+#define PIC16C57_PROGRAM_MEMORY_WRITE			\
+	AM_RANGE(0x000, 0x7ff) AM_WRITE(MWA16_ROM)
 
-extern void pic16C57_init(void);
-extern void pic16C57_reset(void *param);
-extern void pic16C57_exit(void);
-extern int	pic16C57_execute(int cycles);
-extern unsigned pic16C57_get_context(void *dst);
-extern void pic16C57_set_context(void *src);
-extern unsigned pic16C57_get_reg(int regnum);
-extern void pic16C57_set_reg(int regnum, unsigned val);
-extern void pic16C57_set_irq_line(int irqline, int state);
-extern void pic16C57_set_irq_callback(int (*callback)(int irqline));
-extern const char *pic16C57_info(void *context, int regnum);
-extern unsigned pic16C57_dasm(char *buffer, unsigned pc);
+#define PIC16C57_DATA_MEMORY_READ				\
+	AM_RANGE(0x00, 0x7f) AM_READ(MRA8_RAM)
+
+#define PIC16C57_DATA_MEMORY_WRITE				\
+	AM_RANGE(0x00, 0x7f) AM_WRITE(MWA8_RAM)
+
+void pic16C57_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);
@@ -297,35 +226,20 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
  ****************************************************************************/
 #define pic16C58_icount			pic16C5x_icount
 #define PIC16C58_RESET_VECTOR	0x7ff
-#define PIC16C58_DATA_OFFSET	PIC16C5X_DATA_OFFSET
-#define PIC16C58_PGM_OFFSET		PIC16C5X_PGM_OFFSET
 
-#define PIC16C58_MEMORY_READ													\
-	  (PIC16C58_DATA_OFFSET + 0x00), (PIC16C58_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x30), (PIC16C58_DATA_OFFSET + 0x3f), MRA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x50), (PIC16C58_DATA_OFFSET + 0x5f), MRA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x70), (PIC16C58_DATA_OFFSET + 0x7f), MRA_RAM },	\
-	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + ((0x7ff*2)+1)), MRA_ROM
+#define PIC16C57_PROGRAM_MEMORY_READ			\
+	AM_RANGE(0x000, 0x7ff) AM_READ(MRA16_ROM)
 
-#define PIC16C58_MEMORY_WRITE													\
-	  (PIC16C58_DATA_OFFSET + 0x00), (PIC16C58_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x30), (PIC16C58_DATA_OFFSET + 0x3f), MWA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x50), (PIC16C58_DATA_OFFSET + 0x5f), MWA_RAM },	\
-	{ (PIC16C58_DATA_OFFSET + 0x70), (PIC16C58_DATA_OFFSET + 0x7f), MWA_RAM },	\
-	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + ((0x7ff*2)+1)), MWA_ROM
+#define PIC16C57_PROGRAM_MEMORY_WRITE			\
+	AM_RANGE(0x000, 0x7ff) AM_WRITE(MWA16_ROM)
 
-extern void pic16C58_init(void);
-extern void pic16C58_reset(void *param);
-extern void pic16C58_exit(void);
-extern int	pic16C58_execute(int cycles);
-extern unsigned pic16C58_get_context(void *dst);
-extern void pic16C58_set_context(void *src);
-extern unsigned pic16C58_get_reg(int regnum);
-extern void pic16C58_set_reg(int regnum, unsigned val);
-extern void pic16C58_set_irq_line(int irqline, int state);
-extern void pic16C58_set_irq_callback(int (*callback)(int irqline));
-extern const char *pic16C58_info(void *context, int regnum);
-extern unsigned pic16C58_dasm(char *buffer, unsigned pc);
+#define PIC16C57_DATA_MEMORY_READ				\
+	AM_RANGE(0x00, 0x7f) AM_READ(MRA8_RAM)
+
+#define PIC16C57_DATA_MEMORY_WRITE				\
+	AM_RANGE(0x00, 0x7f) AM_WRITE(MWA8_RAM)
+
+void pic16C58_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);

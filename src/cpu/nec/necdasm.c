@@ -364,16 +364,17 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
 }
 
 /* in nec.c */
-unsigned nec_get_reg(int regnum);
+void nec_get_info(UINT32 state, union cpuinfo *info);
+static unsigned nec_get_reg(int reg) { union cpuinfo info; nec_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
 static UINT8 getopcode(void)
 {
 	UINT8 res;
 
 	int pc_masked = (instruction_offset++)&0xfffff;
-	change_pc20(pc_masked);
-	res = OP_ROM[pc_masked];
-	change_pc20(nec_get_reg(REG_PC));
+	change_pc(pc_masked);
+	res = opcode_base[pc_masked];
+	change_pc(nec_get_reg(REG_PC));
 	return res;
 }
 
@@ -381,9 +382,9 @@ static UINT8 getbyte(void) {
 	UINT8 res;
 
 	int pc_masked = (instruction_offset++)&0xfffff;
-	change_pc20(pc_masked);
-	res = OP_RAM[pc_masked];
-	change_pc20(nec_get_reg(REG_PC));
+	change_pc(pc_masked);
+	res = opcode_arg_base[pc_masked];
+	change_pc(nec_get_reg(REG_PC));
 	return res;
 }
 

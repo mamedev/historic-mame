@@ -95,67 +95,67 @@ static READ_HANDLER( gfire2_protection_r )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x0ffff, MRA_ROM },
-	{ 0x20000, 0x21fff, MRA_RAM },
-	{ 0x22000, 0x23fff, MRA_RAM },
-	{ 0x24000, 0x241ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x0ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x20000, 0x21fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x22000, 0x23fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x24000, 0x241ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x0ffff, MWA_ROM },
-	{ 0x20000, 0x21fff, MWA_RAM },
-	{ 0x22000, 0x22fff, mosaic_bgvideoram_w, &mosaic_bgvideoram },
-	{ 0x23000, 0x23fff, mosaic_fgvideoram_w, &mosaic_fgvideoram },
-	{ 0x24000, 0x241ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x0ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x20000, 0x21fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x22000, 0x22fff) AM_WRITE(mosaic_bgvideoram_w) AM_BASE(&mosaic_bgvideoram)
+	AM_RANGE(0x23000, 0x23fff) AM_WRITE(mosaic_fgvideoram_w) AM_BASE(&mosaic_fgvideoram)
+	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( gfire2_readmem )
-	{ 0x00000, 0x0ffff, MRA_ROM },
-	{ 0x10000, 0x17fff, MRA_RAM },
-	{ 0x22000, 0x23fff, MRA_RAM },
-	{ 0x24000, 0x241ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( gfire2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x0ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x10000, 0x17fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x22000, 0x23fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x24000, 0x241ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gfire2_writemem )
-	{ 0x00000, 0x0ffff, MWA_ROM },
-	{ 0x10000, 0x17fff, MWA_RAM },
-	{ 0x22000, 0x22fff, mosaic_bgvideoram_w, &mosaic_bgvideoram },
-	{ 0x23000, 0x23fff, mosaic_fgvideoram_w, &mosaic_fgvideoram },
-	{ 0x24000, 0x241ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-MEMORY_END
+static ADDRESS_MAP_START( gfire2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x0ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x10000, 0x17fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x22000, 0x22fff) AM_WRITE(mosaic_bgvideoram_w) AM_BASE(&mosaic_bgvideoram)
+	AM_RANGE(0x23000, 0x23fff) AM_WRITE(mosaic_fgvideoram_w) AM_BASE(&mosaic_fgvideoram)
+	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x30, 0x30, IORP_NOP },	/* Z180 internal registers */
-	{ 0x70, 0x70, YM2203_status_port_0_r },
-	{ 0x71, 0x71, YM2203_read_port_0_r },
-	{ 0x72, 0x72, protection_r },
-	{ 0x74, 0x74, input_port_0_r },
-	{ 0x76, 0x76, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x30, 0x30) AM_READ(MRA8_NOP)	/* Z180 internal registers */
+	AM_RANGE(0x70, 0x70) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x71, 0x71) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x72, 0x72) AM_READ(protection_r)
+	AM_RANGE(0x74, 0x74) AM_READ(input_port_0_r)
+	AM_RANGE(0x76, 0x76) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x3f, IOWP_NOP },	/* Z180 internal registers */
-	{ 0x70, 0x70, YM2203_control_port_0_w },
-	{ 0x71, 0x71, YM2203_write_port_0_w },
-	{ 0x72, 0x72, protection_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x3f) AM_WRITE(MWA8_NOP)	/* Z180 internal registers */
+	AM_RANGE(0x70, 0x70) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x71, 0x71) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x72, 0x72) AM_WRITE(protection_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( gfire2_readport )
-	{ 0x30, 0x30, IORP_NOP },	/* Z180 internal registers */
-	{ 0x70, 0x70, YM2203_status_port_0_r },
-	{ 0x71, 0x71, YM2203_read_port_0_r },
-	{ 0x72, 0x72, gfire2_protection_r },
-	{ 0x74, 0x74, input_port_0_r },
-	{ 0x76, 0x76, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( gfire2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x30, 0x30) AM_READ(MRA8_NOP)	/* Z180 internal registers */
+	AM_RANGE(0x70, 0x70) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x71, 0x71) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x72, 0x72) AM_READ(gfire2_protection_r)
+	AM_RANGE(0x74, 0x74) AM_READ(input_port_0_r)
+	AM_RANGE(0x76, 0x76) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( gfire2_writeport )
-	{ 0x00, 0x3f, IOWP_NOP },	/* Z180 internal registers */
-	{ 0x70, 0x70, YM2203_control_port_0_w },
-	{ 0x71, 0x71, YM2203_write_port_0_w },
-	{ 0x72, 0x72, gfire2_protection_w },
-PORT_END
+static ADDRESS_MAP_START( gfire2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x3f) AM_WRITE(MWA8_NOP)	/* Z180 internal registers */
+	AM_RANGE(0x70, 0x70) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x71, 0x71) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x72, 0x72) AM_WRITE(gfire2_protection_w)
+ADDRESS_MAP_END
 
 
 
@@ -287,8 +287,8 @@ static struct YM2203interface ym2203_interface =
 
 static MACHINE_DRIVER_START( mosaic )
 	MDRV_CPU_ADD_TAG("main", Z180, 7000000)	/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -311,8 +311,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gfire2 )
 	MDRV_IMPORT_FROM(mosaic)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(gfire2_readmem,gfire2_writemem)
-	MDRV_CPU_PORTS(gfire2_readport,gfire2_writeport)
+	MDRV_CPU_PROGRAM_MAP(gfire2_readmem,gfire2_writemem)
+	MDRV_CPU_IO_MAP(gfire2_readport,gfire2_writeport)
 MACHINE_DRIVER_END
 
 

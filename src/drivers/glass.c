@@ -69,19 +69,19 @@ static struct GfxDecodeInfo glass_gfxdecodeinfo[] =
 };
 
 
-static MEMORY_READ16_START( glass_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },				/* ROM */
-	{ 0x100000, 0x101fff, MRA16_RAM },				/* Video RAM */
-	{ 0x102000, 0x102fff, MRA16_RAM },				/* Extra Video RAM */
-	{ 0x200000, 0x2007ff, MRA16_RAM },				/* Palette */
-	{ 0x440000, 0x440fff, MRA16_RAM },				/* Sprite RAM */
-	{ 0x700000, 0x700001, input_port_0_word_r },	/* DIPSW #2 */
-	{ 0x700002, 0x700003, input_port_1_word_r },	/* DIPSW #1 */
-	{ 0x700004, 0x700005, input_port_2_word_r },	/* 1P Inputs */
-	{ 0x700006, 0x700007, input_port_3_word_r },	/* 2P Inputs + Button 3 */
-	{ 0x70000e, 0x70000f, OKIM6295_status_0_lsb_r },/* OKI6295 status register */
-	{ 0xfec000, 0xfeffff, MRA16_RAM },				/* Work RAM (partially shared with DS5002FP) */
-MEMORY_END
+static ADDRESS_MAP_START( glass_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)				/* ROM */
+	AM_RANGE(0x100000, 0x101fff) AM_READ(MRA16_RAM)				/* Video RAM */
+	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)				/* Extra Video RAM */
+	AM_RANGE(0x200000, 0x2007ff) AM_READ(MRA16_RAM)				/* Palette */
+	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA16_RAM)				/* Sprite RAM */
+	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r)	/* DIPSW #2 */
+	AM_RANGE(0x700002, 0x700003) AM_READ(input_port_1_word_r)	/* DIPSW #1 */
+	AM_RANGE(0x700004, 0x700005) AM_READ(input_port_2_word_r)	/* 1P Inputs */
+	AM_RANGE(0x700006, 0x700007) AM_READ(input_port_3_word_r)	/* 2P Inputs + Button 3 */
+	AM_RANGE(0x70000e, 0x70000f) AM_READ(OKIM6295_status_0_lsb_r)/* OKI6295 status register */
+	AM_RANGE(0xfec000, 0xfeffff) AM_READ(MRA16_RAM)				/* Work RAM (partially shared with DS5002FP) */
+ADDRESS_MAP_END
 
 
 static WRITE16_HANDLER( OKIM6295_bankswitch_w )
@@ -109,20 +109,20 @@ static WRITE16_HANDLER( glass_coin_w )
 	}
 }
 
-static MEMORY_WRITE16_START( glass_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },								/* ROM */
-	{ 0x100000, 0x101fff, glass_vram_w, &glass_videoram },			/* Video RAM */
-	{ 0x102000, 0x102fff, MWA16_RAM },								/* Extra Video RAM */
-	{ 0x108000, 0x108007, MWA16_RAM, &glass_vregs },				/* Video Registers */
-	{ 0x108008, 0x108009, clr_int_w },								/* CLR INT Video */
-	{ 0x200000, 0x2007ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },/*  Palette */
-	{ 0x440000, 0x440fff, MWA16_RAM, &glass_spriteram },			/* Sprite RAM */
-	{ 0x700008, 0x700009, glass_blitter_w },						/* serial blitter */
-	{ 0x70000c, 0x70000d, OKIM6295_bankswitch_w },					/* OKI6295 bankswitch */
-	{ 0x70000e, 0x70000f, OKIM6295_data_0_lsb_w },					/* OKI6295 data register */
-	{ 0x70000a, 0x70004b, glass_coin_w },							/* Coin Counters/Lockout */
-	{ 0xfec000, 0xfeffff, MWA16_RAM },								/* Work RAM (partially shared with DS5002FP) */
-MEMORY_END
+static ADDRESS_MAP_START( glass_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)								/* ROM */
+	AM_RANGE(0x100000, 0x101fff) AM_WRITE(glass_vram_w) AM_BASE(&glass_videoram)			/* Video RAM */
+	AM_RANGE(0x102000, 0x102fff) AM_WRITE(MWA16_RAM)								/* Extra Video RAM */
+	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&glass_vregs)				/* Video Registers */
+	AM_RANGE(0x108008, 0x108009) AM_WRITE(clr_int_w)								/* CLR INT Video */
+	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/*  Palette */
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&glass_spriteram)			/* Sprite RAM */
+	AM_RANGE(0x700008, 0x700009) AM_WRITE(glass_blitter_w)						/* serial blitter */
+	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(OKIM6295_bankswitch_w)					/* OKI6295 bankswitch */
+	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(OKIM6295_data_0_lsb_w)					/* OKI6295 data register */
+	AM_RANGE(0x70000a, 0x70004b) AM_WRITE(glass_coin_w)							/* Coin Counters/Lockout */
+	AM_RANGE(0xfec000, 0xfeffff) AM_WRITE(MWA16_RAM)								/* Work RAM (partially shared with DS5002FP) */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( glass )
@@ -212,7 +212,7 @@ static MACHINE_DRIVER_START( glass )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000/2)		/* 12 MHz (M680000 P12) */
-	MDRV_CPU_MEMORY(glass_readmem,glass_writemem)
+	MDRV_CPU_PROGRAM_MAP(glass_readmem,glass_writemem)
 	MDRV_CPU_VBLANK_INT(glass_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

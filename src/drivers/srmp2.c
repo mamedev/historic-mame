@@ -381,75 +381,75 @@ static WRITE_HANDLER( srmp3_rombank_w )
 **************************************************************************/
 
 
-static MEMORY_READ16_START( srmp2_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x0c0000, 0x0c3fff, MRA16_RAM },
-	{ 0x140000, 0x143fff, MRA16_RAM },				/* Sprites Code + X + Attr */
-	{ 0x180000, 0x180607, MRA16_RAM },				/* Sprites Y */
-	{ 0x900000, 0x900001, input_port_0_word_r },	/* Coinage */
-	{ 0xa00000, 0xa00001, srmp2_input_1_r },		/* I/O port 1 */
-	{ 0xa00002, 0xa00003, srmp2_input_2_r },		/* I/O port 2 */
-	{ 0xb00000, 0xb00001, srmp2_cchip_status_0_r },	/* Custom chip status ??? */
-	{ 0xb00002, 0xb00003, srmp2_cchip_status_1_r },	/* Custom chip status ??? */
-	{ 0xf00000, 0xf00001, AY8910_read_port_0_lsb_r },
-MEMORY_END
+static ADDRESS_MAP_START( srmp2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0c0000, 0x0c3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)				/* Sprites Code + X + Attr */
+	AM_RANGE(0x180000, 0x180607) AM_READ(MRA16_RAM)				/* Sprites Y */
+	AM_RANGE(0x900000, 0x900001) AM_READ(input_port_0_word_r)	/* Coinage */
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(srmp2_input_1_r)		/* I/O port 1 */
+	AM_RANGE(0xa00002, 0xa00003) AM_READ(srmp2_input_2_r)		/* I/O port 2 */
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(srmp2_cchip_status_0_r)	/* Custom chip status ??? */
+	AM_RANGE(0xb00002, 0xb00003) AM_READ(srmp2_cchip_status_1_r)	/* Custom chip status ??? */
+	AM_RANGE(0xf00000, 0xf00001) AM_READ(AY8910_read_port_0_lsb_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( srmp2_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0c0000, 0x0c3fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
-	{ 0x180000, 0x180609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
-	{ 0x1c0000, 0x1c0001, MWA16_NOP },					/* ??? */
-	{ 0x800000, 0x800001, srmp2_flags_w },				/* ADPCM bank, Color bank, etc. */
-	{ 0x900000, 0x900001, MWA16_NOP },					/* ??? */
-	{ 0xa00000, 0xa00001, srmp2_input_1_w },			/* I/O ??? */
-	{ 0xa00002, 0xa00003, srmp2_input_2_w },			/* I/O ??? */
-	{ 0xb00000, 0xb00001, srmp2_adpcm_code_w },			/* ADPCM number */
-	{ 0xc00000, 0xc00001, MWA16_NOP },					/* ??? */
-	{ 0xd00000, 0xd00001, MWA16_NOP },					/* ??? */
-	{ 0xe00000, 0xe00001, MWA16_NOP },					/* ??? */
-	{ 0xf00000, 0xf00001, AY8910_control_port_0_lsb_w },
-	{ 0xf00002, 0xf00003, AY8910_write_port_0_lsb_w },
-MEMORY_END
+static ADDRESS_MAP_START( srmp2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0c0000, 0x0c3fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)	/* Sprites Code + X + Attr */
+	AM_RANGE(0x180000, 0x180609) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* Sprites Y */
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(srmp2_flags_w)				/* ADPCM bank, Color bank, etc. */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(srmp2_input_1_w)			/* I/O ??? */
+	AM_RANGE(0xa00002, 0xa00003) AM_WRITE(srmp2_input_2_w)			/* I/O ??? */
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(srmp2_adpcm_code_w)			/* ADPCM number */
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(AY8910_control_port_0_lsb_w)
+	AM_RANGE(0xf00002, 0xf00003) AM_WRITE(AY8910_write_port_0_lsb_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( mjyuugi_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, input_port_0_word_r },	/* Coinage */
-	{ 0x100010, 0x100011, MRA16_NOP },				/* ??? */
-	{ 0x200000, 0x200001, MRA16_NOP },				/* ??? */
-	{ 0x300000, 0x300001, MRA16_NOP },				/* ??? */
-	{ 0x500000, 0x500001, input_port_8_word_r },	/* DSW 3-1 */
-	{ 0x500010, 0x500011, input_port_9_word_r },	/* DSW 3-2 */
-	{ 0x700000, 0x7003ff, paletteram16_word_r },
-	{ 0x800000, 0x800001, MRA16_NOP },				/* ??? */
-	{ 0x900000, 0x900001, srmp2_input_1_r },		/* I/O port 1 */
-	{ 0x900002, 0x900003, srmp2_input_2_r },		/* I/O port 2 */
-	{ 0xa00000, 0xa00001, srmp2_cchip_status_0_r },	/* custom chip status ??? */
-	{ 0xa00002, 0xa00003, srmp2_cchip_status_1_r },	/* custom chip status ??? */
-	{ 0xb00000, 0xb00001, AY8910_read_port_0_lsb_r },
-	{ 0xd00000, 0xd00609, MRA16_RAM },				/* Sprites Y */
-	{ 0xd02000, 0xd023ff, MRA16_RAM },				/* ??? */
-	{ 0xe00000, 0xe03fff, MRA16_RAM },				/* Sprites Code + X + Attr */
-	{ 0xffc000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( mjyuugi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)	/* Coinage */
+	AM_RANGE(0x100010, 0x100011) AM_READ(MRA16_NOP)				/* ??? */
+	AM_RANGE(0x200000, 0x200001) AM_READ(MRA16_NOP)				/* ??? */
+	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP)				/* ??? */
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_8_word_r)	/* DSW 3-1 */
+	AM_RANGE(0x500010, 0x500011) AM_READ(input_port_9_word_r)	/* DSW 3-2 */
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(paletteram16_word_r)
+	AM_RANGE(0x800000, 0x800001) AM_READ(MRA16_NOP)				/* ??? */
+	AM_RANGE(0x900000, 0x900001) AM_READ(srmp2_input_1_r)		/* I/O port 1 */
+	AM_RANGE(0x900002, 0x900003) AM_READ(srmp2_input_2_r)		/* I/O port 2 */
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(srmp2_cchip_status_0_r)	/* custom chip status ??? */
+	AM_RANGE(0xa00002, 0xa00003) AM_READ(srmp2_cchip_status_1_r)	/* custom chip status ??? */
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(AY8910_read_port_0_lsb_r)
+	AM_RANGE(0xd00000, 0xd00609) AM_READ(MRA16_RAM)				/* Sprites Y */
+	AM_RANGE(0xd02000, 0xd023ff) AM_READ(MRA16_RAM)				/* ??? */
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM)				/* Sprites Code + X + Attr */
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( mjyuugi_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x100001, mjyuugi_flags_w },			/* Coin Counter */
-	{ 0x100010, 0x100011, mjyuugi_adpcm_bank_w },		/* ADPCM bank, GFX bank */
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x900000, 0x900001, srmp2_input_1_w },			/* I/O ??? */
-	{ 0x900002, 0x900003, srmp2_input_2_w },			/* I/O ??? */
-	{ 0xa00000, 0xa00001, srmp2_adpcm_code_w },			/* ADPCM number */
-	{ 0xb00000, 0xb00001, AY8910_control_port_0_lsb_w },
-	{ 0xb00002, 0xb00003, AY8910_write_port_0_lsb_w },
-	{ 0xc00000, 0xc00001, MWA16_NOP },					/* ??? */
-	{ 0xd00000, 0xd00609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
-	{ 0xd02000, 0xd023ff, MWA16_RAM },					/* ??? only writes $00fa */
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
-	{ 0xffc000, 0xffffff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-MEMORY_END
+static ADDRESS_MAP_START( mjyuugi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(mjyuugi_flags_w)			/* Coin Counter */
+	AM_RANGE(0x100010, 0x100011) AM_WRITE(mjyuugi_adpcm_bank_w)		/* ADPCM bank, GFX bank */
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(srmp2_input_1_w)			/* I/O ??? */
+	AM_RANGE(0x900002, 0x900003) AM_WRITE(srmp2_input_2_w)			/* I/O ??? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(srmp2_adpcm_code_w)			/* ADPCM number */
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(AY8910_control_port_0_lsb_w)
+	AM_RANGE(0xb00002, 0xb00003) AM_WRITE(AY8910_write_port_0_lsb_w)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)					/* ??? */
+	AM_RANGE(0xd00000, 0xd00609) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* Sprites Y */
+	AM_RANGE(0xd02000, 0xd023ff) AM_WRITE(MWA16_RAM)					/* ??? only writes $00fa */
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)	/* Sprites Code + X + Attr */
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( srmp3_cchip_status_0_r )
@@ -558,44 +558,44 @@ static WRITE_HANDLER( srmp3_flags_w )
 }
 
 
-static MEMORY_READ_START( srmp3_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK1 },						/* rom bank */
-	{ 0xa000, 0xa7ff, MRA_RAM },						/* work ram */
-	{ 0xb000, 0xb303, MRA_RAM },						/* Sprites Y */
-	{ 0xc000, 0xdfff, MRA_RAM },						/* Sprites Code + X + Attr */
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( srmp3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)						/* rom bank */
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)						/* work ram */
+	AM_RANGE(0xb000, 0xb303) AM_READ(MRA8_RAM)						/* Sprites Y */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)						/* Sprites Code + X + Attr */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( srmp3_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_ROM },						/* rom bank */
-	{ 0xa000, 0xa7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* work ram */
-	{ 0xa800, 0xa800, MWA_NOP },						/* flag ? */
-	{ 0xb000, 0xb303, MWA_RAM, &spriteram },			/* Sprites Y */
-	{ 0xb800, 0xb800, MWA_NOP },						/* flag ? */
-	{ 0xc000, 0xdfff, MWA_RAM, &spriteram_2 },			/* Sprites Code + X + Attr */
-	{ 0xe000, 0xffff, MWA_RAM, &spriteram_3 },
-MEMORY_END
+static ADDRESS_MAP_START( srmp3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)						/* rom bank */
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* work ram */
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(MWA8_NOP)						/* flag ? */
+	AM_RANGE(0xb000, 0xb303) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)			/* Sprites Y */
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)						/* flag ? */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)			/* Sprites Code + X + Attr */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)
+ADDRESS_MAP_END
 
-static PORT_READ_START( srmp3_readport )
-	{ 0x40, 0x40, input_port_0_r },						/* coin, service */
-	{ 0xa1, 0xa1, srmp3_cchip_status_0_r },				/* custom chip status ??? */
-	{ 0xc0, 0xc0, srmp3_input_r },						/* key matrix */
-	{ 0xc1, 0xc1, srmp3_cchip_status_1_r },				/* custom chip status ??? */
-	{ 0xe2, 0xe2, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( srmp3_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_0_r)						/* coin, service */
+	AM_RANGE(0xa1, 0xa1) AM_READ(srmp3_cchip_status_0_r)				/* custom chip status ??? */
+	AM_RANGE(0xc0, 0xc0) AM_READ(srmp3_input_r)						/* key matrix */
+	AM_RANGE(0xc1, 0xc1) AM_READ(srmp3_cchip_status_1_r)				/* custom chip status ??? */
+	AM_RANGE(0xe2, 0xe2) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( srmp3_writeport )
-	{ 0x20, 0x20, IOWP_NOP },							/* elapsed interrupt signal */
-	{ 0x40, 0x40, srmp3_flags_w },						/* GFX bank, counter, lockout */
-	{ 0x60, 0x60, srmp3_rombank_w },					/* ROM bank select */
-	{ 0xa0, 0xa0, srmp3_adpcm_code_w },					/* ADPCM number */
-	{ 0xc0, 0xc0, srmp3_input_1_w },					/* I/O ??? */
-	{ 0xc1, 0xc1, srmp3_input_2_w },					/* I/O ??? */
-	{ 0xe0, 0xe0, AY8910_control_port_0_w },
-	{ 0xe1, 0xe1, AY8910_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( srmp3_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP)							/* elapsed interrupt signal */
+	AM_RANGE(0x40, 0x40) AM_WRITE(srmp3_flags_w)						/* GFX bank, counter, lockout */
+	AM_RANGE(0x60, 0x60) AM_WRITE(srmp3_rombank_w)					/* ROM bank select */
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(srmp3_adpcm_code_w)					/* ADPCM number */
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(srmp3_input_1_w)					/* I/O ??? */
+	AM_RANGE(0xc1, 0xc1) AM_WRITE(srmp3_input_2_w)					/* I/O ??? */
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xe1, 0xe1) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1122,7 +1122,7 @@ static MACHINE_DRIVER_START( srmp2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
-	MDRV_CPU_MEMORY(srmp2_readmem,srmp2_writemem)
+	MDRV_CPU_PROGRAM_MAP(srmp2_readmem,srmp2_writemem)
 	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1154,8 +1154,8 @@ static MACHINE_DRIVER_START( srmp3 )
 
 	MDRV_CPU_ADD(Z80, 3500000)		/* 3.50 MHz ? */
 	//		4000000,				/* 4.00 MHz ? */
-	MDRV_CPU_MEMORY(srmp3_readmem,srmp3_writemem)
-	MDRV_CPU_PORTS(srmp3_readport,srmp3_writeport)
+	MDRV_CPU_PROGRAM_MAP(srmp3_readmem,srmp3_writemem)
+	MDRV_CPU_IO_MAP(srmp3_readport,srmp3_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1184,7 +1184,7 @@ static MACHINE_DRIVER_START( mjyuugi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
-	MDRV_CPU_MEMORY(mjyuugi_readmem,mjyuugi_writemem)
+	MDRV_CPU_PROGRAM_MAP(mjyuugi_readmem,mjyuugi_writemem)
 	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -11,33 +11,10 @@
 #define ARM_FIRQ_LINE	1
 
 /****************************************************************************************************
- *	PUBLIC GLOBALS
- ***************************************************************************************************/
-
-extern int arm_ICount;
-
-/****************************************************************************************************
  *	PUBLIC FUNCTIONS
  ***************************************************************************************************/
 
-extern void arm_init(void);
-extern void arm_reset(void *param);
-extern void arm_exit(void);
-extern int arm_execute(int cycles);
-extern unsigned arm_get_context(void *dst);
-extern void arm_set_context(void *src);
-extern unsigned arm_get_pc(void);
-extern void arm_set_pc(unsigned val);
-extern unsigned arm_get_sp(void);
-extern void arm_set_sp(unsigned val);
-extern unsigned arm_get_reg(int regnum);
-extern void arm_set_reg(int regnum, unsigned val);
-extern void arm_interrupt( int type );
-extern void arm_set_nmi_line(int state);
-extern void arm_set_irq_line(int irqline, int state);
-extern void arm_set_irq_callback(int (*callback)(int irqline));
-extern const char *arm_info(void *context, int regnum);
-extern unsigned arm_dasm(char *buffer, unsigned pc);
+extern void arm_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern void arm_disasm( char *pBuf, data32_t pc, data32_t opcode );

@@ -29,9 +29,6 @@
 #define TMS32010_BIO			0x100		/* BIO input */
 
 
-#define TMS32010_DATA_OFFSET	0x0000
-#define TMS32010_PGM_OFFSET		0x8000
-
 #define TMS32010_INT_PENDING	0x80000000
 #define TMS32010_INT_NONE		0
 
@@ -52,30 +49,7 @@ enum {
  *	Public Functions
  */
 
-void tms32010_init(void);
-void tms32010_reset(void *param);				/* Reset processor & registers	*/
-void tms32010_exit(void);						/* Shutdown CPU core		*/
-int tms32010_execute(int cycles);				/* Execute cycles T-States	*/
-unsigned tms32010_get_context(void *dst);		/* Get registers			*/
-void tms32010_set_context(void *src);			/* Set registers			*/
-unsigned tms32010_get_reg(int regnum); 			/* Get specific register	*/
-void tms32010_set_reg(int regnum, unsigned val);/* Set specific register	*/
-void tms32010_set_irq_line(int irqline, int state);
-void tms32010_set_irq_callback(int (*callback)(int irqline));
-const char *tms32010_info(void *context, int regnum);
-unsigned tms32010_dasm(char *buffer, unsigned pc);
-
-extern int tms32010_icount;						/* T-state count */
-
-
-
-/****************************************************************************
- *	Helpers for memory ranges
- */
-
-#define TMS32010_DATA_ADDR_RANGE(start, end)	(TMS32010_DATA_OFFSET + ((start) << 1)), (TMS32010_DATA_OFFSET + ((end) << 1) + 1)
-#define TMS32010_PGM_ADDR_RANGE(start, end)		(TMS32010_PGM_OFFSET + ((start) << 1)), (TMS32010_PGM_OFFSET + ((end) << 1) + 1)
-#define TMS32010_PORT_RANGE(start, end)			((start) << 1), (((end) << 1) + 1)
+void tms32010_get_info(UINT32 state, union cpuinfo *info);
 
 
 
@@ -83,21 +57,21 @@ extern int tms32010_icount;						/* T-state count */
  *	Read the state of the BIO pin
  */
 
-#define TMS32010_BIO_In (cpu_readport16bew_word(TMS32010_BIO<<1))
+#define TMS32010_BIO_In (io_read_word_16be(TMS32010_BIO<<1))
 
 
 /****************************************************************************
  *	Input a word from given I/O port
  */
 
-#define TMS32010_In(Port) (cpu_readport16bew_word((Port)<<1))
+#define TMS32010_In(Port) (io_read_word_16be((Port)<<1))
 
 
 /****************************************************************************
  *	Output a word to given I/O port
  */
 
-#define TMS32010_Out(Port,Value) (cpu_writeport16bew_word((Port)<<1,Value))
+#define TMS32010_Out(Port,Value) (io_write_word_16be((Port)<<1,Value))
 
 
 
@@ -105,35 +79,29 @@ extern int tms32010_icount;						/* T-state count */
  *	Read a word from given ROM memory location
  */
 
-#define TMS32010_ROM_RDMEM(A) (cpu_readmem16bew_word(((A)<<1)+TMS32010_PGM_OFFSET))
+#define TMS32010_ROM_RDMEM(A) (program_read_word_16be((A)<<1))
 
 
 /****************************************************************************
  *	Write a word to given ROM memory location
  */
 
-#define TMS32010_ROM_WRMEM(A,V) (cpu_writemem16bew_word(((A)<<1)+TMS32010_PGM_OFFSET,V))
+#define TMS32010_ROM_WRMEM(A,V) (program_write_word_16be((A)<<1,V))
 
 
 
 /****************************************************************************
  *	Read a word from given RAM memory location
- *	The following adds 8000h to the address, since MAME doesnt support
- *	RAM and ROM living in the same address space. RAM really starts at
- *	address 0 and are word entities.
  */
 
-#define TMS32010_RAM_RDMEM(A) (cpu_readmem16bew_word(((A)<<1)+TMS32010_DATA_OFFSET))
+#define TMS32010_RAM_RDMEM(A) (data_read_word_16be((A)<<1))
 
 
 /****************************************************************************
  *	Write a word to given RAM memory location
- *	The following adds 8000h to the address, since MAME doesnt support
- *	RAM and ROM living in the same address space. RAM really starts at
- *	address 0 and word entities.
  */
 
-#define TMS32010_RAM_WRMEM(A,V) (cpu_writemem16bew_word(((A)<<1)+TMS32010_DATA_OFFSET,V))
+#define TMS32010_RAM_WRMEM(A,V) (data_write_word_16be((A)<<1,V))
 
 
 
@@ -143,7 +111,7 @@ extern int tms32010_icount;						/* T-state count */
  *	used to greatly speed up emulation
  */
 
-#define TMS32010_RDOP(A) (cpu_readop16(((A)<<1)+TMS32010_PGM_OFFSET))
+#define TMS32010_RDOP(A) (cpu_readop16((A)<<1))
 
 
 /****************************************************************************
@@ -152,7 +120,7 @@ extern int tms32010_icount;						/* T-state count */
  *	that use different encoding mechanisms for opcodes and opcode arguments
  */
 
-#define TMS32010_RDOP_ARG(A) (cpu_readop_arg16(((A)<<1)+TMS32010_PGM_OFFSET))
+#define TMS32010_RDOP_ARG(A) (cpu_readop_arg16((A)<<1))
 
 
 

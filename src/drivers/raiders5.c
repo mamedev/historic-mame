@@ -57,75 +57,75 @@ READ_HANDLER( raiders5_shared_workram_r )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( readmem1 )
-	{ 0x0000, 0x7fff, MRA_ROM },
+static ADDRESS_MAP_START( readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 
-	{ 0x8000, 0x87ff, spriteram_r },
-	{ 0x8800, 0x8fff, raiders5_fgram_r },
-	{ 0x9000, 0x97ff, raiders5_videoram_r },
+	AM_RANGE(0x8000, 0x87ff) AM_READ(spriteram_r)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(raiders5_fgram_r)
+	AM_RANGE(0x9000, 0x97ff) AM_READ(raiders5_videoram_r)
 
-	{ 0xc001, 0xc001, AY8910_read_port_0_r },
-	{ 0xc003, 0xc003, AY8910_read_port_1_r },
+	AM_RANGE(0xc001, 0xc001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(AY8910_read_port_1_r)
 
-	{ 0xd000, 0xd1ff, paletteram_r },
+	AM_RANGE(0xd000, 0xd1ff) AM_READ(paletteram_r)
 
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem1 )
-	{ 0x0000, 0x7fff, MWA_ROM },
+static ADDRESS_MAP_START( writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 
-	{ 0x8000, 0x87ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x8800, 0x8fff, raiders5_fgram_w, &raiders5_fgram, &raiders5_fgram_size },
-	{ 0x9000, 0x97ff, raiders5_videoram_w, &videoram, &videoram_size },
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(raiders5_fgram_w) AM_BASE(&raiders5_fgram) AM_SIZE(&raiders5_fgram_size)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(raiders5_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 
-	{ 0xa000, 0xa000, raiders5_scroll_x_w },
-	{ 0xa001, 0xa001, raiders5_scroll_y_w },
-	{ 0xa002, 0xa002, raiders5_flipscreen_w },
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(raiders5_scroll_x_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(raiders5_scroll_y_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(raiders5_flipscreen_w)
 
-	{ 0xc000, 0xc000, AY8910_control_port_0_w },
-	{ 0xc001, 0xc001, AY8910_write_port_0_w },
-	{ 0xc002, 0xc002, AY8910_control_port_1_w },
-	{ 0xc003, 0xc003, AY8910_write_port_1_w },
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(AY8910_write_port_1_w)
 
-	{ 0xd000, 0xd1ff, raiders5_paletteram_w, &paletteram },
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(raiders5_paletteram_w) AM_BASE(&paletteram)
 
-	{ 0xe000, 0xe7ff, MWA_RAM, &raiders5_shared_workram },
-MEMORY_END
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&raiders5_shared_workram)
+ADDRESS_MAP_END
 
-static PORT_READ_START ( readport1 )
-	{ 0x00, 0x00, IORP_NOP }, /* watchdog? */
-PORT_END
+static ADDRESS_MAP_START( readport1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP) /* watchdog? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 
-	{ 0x8001, 0x8001, AY8910_read_port_0_r },
-	{ 0x8003, 0x8003, AY8910_read_port_1_r },
+	AM_RANGE(0x8001, 0x8001) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(AY8910_read_port_1_r)
 
-	{ 0x9000, 0x9000, MRA_NOP }, /* unknown */
+	AM_RANGE(0x9000, 0x9000) AM_READ(MRA8_NOP) /* unknown */
 
-	{ 0xa000, 0xa7ff, raiders5_shared_workram_r },
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(raiders5_shared_workram_r)
 
-	{ 0xc000, 0xc000, MRA_NOP }, /* unknown */
-	{ 0xc800, 0xc800, MRA_NOP }, /* unknown */
-	{ 0xd000, 0xd000, MRA_NOP }, /* unknown */
-MEMORY_END
+	AM_RANGE(0xc000, 0xc000) AM_READ(MRA8_NOP) /* unknown */
+	AM_RANGE(0xc800, 0xc800) AM_READ(MRA8_NOP) /* unknown */
+	AM_RANGE(0xd000, 0xd000) AM_READ(MRA8_NOP) /* unknown */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
 
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ 0x8001, 0x8001, AY8910_write_port_0_w },
-	{ 0x8002, 0x8002, AY8910_control_port_1_w },
-	{ 0x8003, 0x8003, AY8910_write_port_1_w },
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(AY8910_write_port_1_w)
 
-	{ 0xa000, 0xa7ff, raiders5_shared_workram_w },
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(raiders5_shared_workram_w)
 
-	{ 0xe000, 0xe000, raiders5_scroll_x_w },
-	{ 0xe001, 0xe001, raiders5_scroll_y_w },
-	{ 0xe002, 0xe002, raiders5_flipscreen_w },
-MEMORY_END
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(raiders5_scroll_x_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(raiders5_scroll_y_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(raiders5_flipscreen_w)
+ADDRESS_MAP_END
 
 /****************************************************************************/
 
@@ -257,12 +257,12 @@ static MACHINE_DRIVER_START( raiders5 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz? */
-	MDRV_CPU_MEMORY(readmem1,writemem1)
-	MDRV_CPU_PORTS(readport1,0)
+	MDRV_CPU_PROGRAM_MAP(readmem1,writemem1)
+	MDRV_CPU_IO_MAP(readport1,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz? */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

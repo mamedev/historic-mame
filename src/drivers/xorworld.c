@@ -126,30 +126,30 @@ static INTERRUPT_GEN( xorworld_interrupt )
 	}
 }
 
-static MEMORY_READ16_START( xorworld_readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },						/* ROM */
-	{ 0x200000, 0x200001, input_port_1_word_r },			/* INPUT #1 */
-	{ 0x400000, 0x400001, input_port_2_word_r },			/* INPUT #2 */
-	{ 0x600000, 0x600001, xorworld_input_r },				/* DIPSW #1 + EEPROM data */
-	{ 0xffc000, 0xffc7ff, xorworld_vram_r },				/* Video RAM */
-	{ 0xffc800, 0xffc87f, MRA16_RAM },						/* Sprite RAM */
-	{ 0xffc884, 0xffffff, MRA16_RAM },						/* Work RAM */
-	{ -1 }
-};
+static ADDRESS_MAP_START( xorworld_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)						/* ROM */
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_1_word_r)			/* INPUT #1 */
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r)			/* INPUT #2 */
+	AM_RANGE(0x600000, 0x600001) AM_READ(xorworld_input_r)				/* DIPSW #1 + EEPROM data */
+	AM_RANGE(0xffc000, 0xffc7ff) AM_READ(xorworld_vram_r)				/* Video RAM */
+	AM_RANGE(0xffc800, 0xffc87f) AM_READ(MRA16_RAM)						/* Sprite RAM */
+	AM_RANGE(0xffc884, 0xffffff) AM_READ(MRA16_RAM)						/* Work RAM */
+	AM_RANGE(0xffc884, 0xffffff) AM_READ(MRA16_RAM)						/* Work RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( xorworld_writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },							/* ROM */
-	{ 0x800000, 0x800001, saa1099_write_port_0_lsb_w },			/* SAA1099 write port */
-	{ 0x800002, 0x800003, saa1099_control_port_0_lsb_w },		/* SAA1099 control port */
-	{ 0xa00008, 0xa00009, eeprom_cs_w },						/* EEPROM chip select */
-	{ 0xa0000a, 0xa0000b, eeprom_sk_w },						/* EEPROM serial clock */
-	{ 0xa0000c, 0xa0000d, eeprom_data_w },						/* EEPROM data */
-	{ 0xffc000, 0xffc7ff, xorworld_vram_w, &xorworld_videoram },/* Video RAM */
-	{ 0xffc800, 0xffc87f, MWA16_RAM, &xorworld_spriteram },		/* Sprite RAM */
-	{ 0xffc880, 0xffc883, MWA16_NOP },							/* INTs ACKs? */
-	{ 0xffc884, 0xffffff, MWA16_RAM },							/* Work RAM */
-	{ -1 }
-};
+static ADDRESS_MAP_START( xorworld_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)							/* ROM */
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(saa1099_write_port_0_lsb_w)			/* SAA1099 write port */
+	AM_RANGE(0x800002, 0x800003) AM_WRITE(saa1099_control_port_0_lsb_w)		/* SAA1099 control port */
+	AM_RANGE(0xa00008, 0xa00009) AM_WRITE(eeprom_cs_w)						/* EEPROM chip select */
+	AM_RANGE(0xa0000a, 0xa0000b) AM_WRITE(eeprom_sk_w)						/* EEPROM serial clock */
+	AM_RANGE(0xa0000c, 0xa0000d) AM_WRITE(eeprom_data_w)						/* EEPROM data */
+	AM_RANGE(0xffc000, 0xffc7ff) AM_WRITE(xorworld_vram_w) AM_BASE(&xorworld_videoram)/* Video RAM */
+	AM_RANGE(0xffc800, 0xffc87f) AM_WRITE(MWA16_RAM) AM_BASE(&xorworld_spriteram)		/* Sprite RAM */
+	AM_RANGE(0xffc880, 0xffc883) AM_WRITE(MWA16_NOP)							/* INTs ACKs? */
+	AM_RANGE(0xffc884, 0xffffff) AM_WRITE(MWA16_RAM)							/* Work RAM */
+	AM_RANGE(0xffc884, 0xffffff) AM_WRITE(MWA16_RAM)							/* Work RAM */
+ADDRESS_MAP_END
 
 static struct GfxLayout xorworld_tilelayout =
 {
@@ -239,7 +239,7 @@ static MACHINE_DRIVER_START( xorworld )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(xorworld_readmem, xorworld_writemem)
+	MDRV_CPU_PROGRAM_MAP(xorworld_readmem, xorworld_writemem)
 	MDRV_CPU_VBLANK_INT(xorworld_interrupt, 4) /* 1 IRQ2 + 1 IRQ4 + 1 IRQ6 */
 
 	MDRV_FRAMES_PER_SECOND(60)

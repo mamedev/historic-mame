@@ -1219,15 +1219,15 @@ void v60_dasm_init(void)
 }
 
 #ifdef MAME_DEBUG
-unsigned v60_dasm(char *buffer, unsigned pc)
+offs_t v60_dasm(char *buffer, offs_t pc)
 {
-	readop = cpu_readmem24lew;
+	readop = program_read_byte_16le;
 	return dasm_optable[readop(pc)](pc, pc+1, buffer);
 }
 
-unsigned v70_dasm(char *buffer, unsigned pc)
+offs_t v70_dasm(char *buffer, offs_t pc)
 {
-	readop = cpu_readmem32ledw;
+	readop = program_read_byte_32le;
 	return dasm_optable[readop(pc)](pc, pc+1, buffer);
 }
 #endif

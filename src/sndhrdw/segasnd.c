@@ -57,27 +57,27 @@ WRITE_HANDLER( sega_sh_speechboard_w )
 		sega_speechboard_t0 = 1;
 }
 
-MEMORY_READ_START( sega_speechboard_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( sega_speechboard_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( sega_speechboard_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( sega_speechboard_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-PORT_READ_START( sega_speechboard_readport )
-	{ 0x00,     0xff,     speechboard_rom_r },
-	{ I8039_p1, I8039_p1, speechboard_p1_r },
-	{ I8039_t0, I8039_t0, speechboard_t0_r },
-	{ I8039_t1, I8039_t1, speechboard_t1_r },
-PORT_END
+ADDRESS_MAP_START( sega_speechboard_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(speechboard_rom_r)
+	AM_RANGE(I8039_p1, I8039_p1) AM_READ(speechboard_p1_r)
+	AM_RANGE(I8039_t0, I8039_t0) AM_READ(speechboard_t0_r)
+	AM_RANGE(I8039_t1, I8039_t1) AM_READ(speechboard_t1_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( sega_speechboard_writeport )
-	{ 0x00,     0xff,     sp0250_w },
-	{ I8039_p1, I8039_p1, speechboard_p1_w },
-	{ I8039_p2, I8039_p2, speechboard_p2_w },
-PORT_END
+ADDRESS_MAP_START( sega_speechboard_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_WRITE(sp0250_w)
+	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(speechboard_p1_w)
+	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(speechboard_p2_w)
+ADDRESS_MAP_END
 
 struct sp0250_interface sega_sp0250_interface =
 {

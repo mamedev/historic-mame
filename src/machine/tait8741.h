@@ -13,7 +13,7 @@ struct TAITO8741interface
 	int num;
 	int mode[MAX_TAITO8741];            /* program select */
 	int serial_connect[MAX_TAITO8741];	/* serial port connection */
-	mem_read_handler portHandler_r[MAX_TAITO8741]; /* parallel port handler */
+	read8_handler portHandler_r[MAX_TAITO8741]; /* parallel port handler */
 };
 
 int  TAITO8741_start(const struct TAITO8741interface *taito8741intf);

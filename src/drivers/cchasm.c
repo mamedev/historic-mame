@@ -25,24 +25,24 @@
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM },
-	{ 0x040000, 0x04000f, cchasm_6840_r },
-	{ 0x060000, 0x060001, input_port_0_word_r },
-	{ 0xf80000, 0xf800ff, cchasm_io_r },
-	{ 0xffb000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x04000f) AM_READ(cchasm_6840_r)
+	AM_RANGE(0x060000, 0x060001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xf80000, 0xf800ff) AM_READ(cchasm_io_r)
+	AM_RANGE(0xffb000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x00ffff, MWA16_ROM },
-	{ 0x040000, 0x04000f, cchasm_6840_w },
-	{ 0x050000, 0x050001, cchasm_refresh_control_w },
-	{ 0x060000, 0x060001, cchasm_led_w },
-	{ 0x070000, 0x070001, watchdog_reset16_w },
-	{ 0xf80000, 0xf800ff, cchasm_io_w },
-	{ 0xffb000, 0xffffff, MWA16_RAM, &cchasm_ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x04000f) AM_WRITE(cchasm_6840_w)
+	AM_RANGE(0x050000, 0x050001) AM_WRITE(cchasm_refresh_control_w)
+	AM_RANGE(0x060000, 0x060001) AM_WRITE(cchasm_led_w)
+	AM_RANGE(0x070000, 0x070001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0xf80000, 0xf800ff) AM_WRITE(cchasm_io_w)
+	AM_RANGE(0xffb000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&cchasm_ram)
+ADDRESS_MAP_END
 
 
 
@@ -52,30 +52,30 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5000, 0x53ff, MRA_RAM },
-	{ 0x6000, 0x6fff, cchasm_snd_io_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(cchasm_snd_io_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x5000, 0x53ff, MWA_RAM },
-	{ 0x6000, 0x6fff, cchasm_snd_io_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(cchasm_snd_io_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x03, z80ctc_0_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READ(z80ctc_0_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x03, z80ctc_0_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_WRITE(z80ctc_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -184,12 +184,12 @@ static MACHINE_DRIVER_START( cchasm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,8000000)	/* 8 MHz (from schematics) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80,3584229)		/* 3.58  MHz (from schematics) */
 	MDRV_CPU_CONFIG(daisy_chain)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(40)
 

@@ -342,42 +342,42 @@ OVERLAY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x5c00, 0x5cff, MRA_RAM }, /* NVRAM */
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5c00, 0x5cff) AM_READ(MRA8_RAM) /* NVRAM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_ROM) /* vector rom */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
-	{ 0x4000, 0x4bff, MWA_RAM },
-	{ 0x5c00, 0x5cff, MWA_RAM, &generic_nvram, &generic_nvram_size }, /* NVRAM */
-	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
-	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) /* Omega Race tries to write there! */
+	AM_RANGE(0x4000, 0x4bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5c00, 0x5cff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* NVRAM */
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) /* vector ram */
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_ROM) /* vector rom */
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x08, 0x08, omegrace_vg_go_r },
-	{ 0x09, 0x09, watchdog_reset_r },
-	{ 0x0b, 0x0b, omegrace_vg_status_r }, /* vg_halt */
-	{ 0x10, 0x10, input_port_0_r }, /* DIP SW C4 */
-	{ 0x17, 0x17, input_port_1_r }, /* DIP SW C6 */
-	{ 0x11, 0x11, input_port_2_r }, /* Player 1 input */
-	{ 0x12, 0x12, input_port_3_r }, /* Player 2 input */
-	{ 0x15, 0x15, omegrace_spinner1_r }, /* 1st controller */
-	{ 0x16, 0x16, input_port_5_r }, /* 2nd controller (cocktail) */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_READ(omegrace_vg_go_r)
+	AM_RANGE(0x09, 0x09) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x0b, 0x0b) AM_READ(omegrace_vg_status_r) /* vg_halt */
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r) /* DIP SW C4 */
+	AM_RANGE(0x17, 0x17) AM_READ(input_port_1_r) /* DIP SW C6 */
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_2_r) /* Player 1 input */
+	AM_RANGE(0x12, 0x12) AM_READ(input_port_3_r) /* Player 2 input */
+	AM_RANGE(0x15, 0x15) AM_READ(omegrace_spinner1_r) /* 1st controller */
+	AM_RANGE(0x16, 0x16) AM_READ(input_port_5_r) /* 2nd controller (cocktail) */
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x0a, 0x0a, avgdvg_reset_w },
-	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
-	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x13, 0x13) AM_WRITE(omegrace_leds_w) /* coin counters, leds, flip screen */
+	AM_RANGE(0x14, 0x14) AM_WRITE(omegrace_soundlatch_w) /* Sound command */
+ADDRESS_MAP_END
 
 
 
@@ -387,29 +387,29 @@ PORT_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x1000, 0x13ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x1000, 0x13ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x02, 0x02, AY8910_control_port_1_w },
-	{ 0x03, 0x03, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -527,14 +527,14 @@ static MACHINE_DRIVER_START( omegrace )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)
 
 	MDRV_CPU_ADD(Z80, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,250)
 
 	MDRV_FRAMES_PER_SECOND(40)

@@ -262,119 +262,119 @@ PALETTE_INIT( battles );
 
 
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x6800, 0x6807, xevious_dsw_r },
-	{ 0x7000, 0x700f, xevious_customio_data_r },
-	{ 0x7100, 0x7100, xevious_customio_r },
-	{ 0x7800, 0xcfff, xevious_sharedram_r },
-	{ 0xf000, 0xffff, xevious_bb_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(xevious_dsw_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(xevious_customio_data_r)
+	AM_RANGE(0x7100, 0x7100) AM_READ(xevious_customio_r)
+	AM_RANGE(0x7800, 0xcfff) AM_READ(xevious_sharedram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(xevious_bb_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x6800, 0x6807, xevious_dsw_r },
-	{ 0x7800, 0xcfff, xevious_sharedram_r },
-	{ 0xf000, 0xffff, xevious_bb_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(xevious_dsw_r)
+	AM_RANGE(0x7800, 0xcfff) AM_READ(xevious_sharedram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(xevious_bb_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x7800, 0xcfff, xevious_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0xcfff) AM_READ(xevious_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x6820, 0x6820, xevious_interrupt_enable_1_w },
-	{ 0x6821, 0x6821, xevious_interrupt_enable_2_w },
-	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
-	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
-	{ 0x7000, 0x700f, xevious_customio_data_w },
-	{ 0x7100, 0x7100, xevious_customio_w },
-	{ 0x7800, 0xafff, xevious_sharedram_w, &xevious_sharedram },
-	{ 0xb000, 0xb7ff, xevious_fg_colorram_w, &xevious_fg_colorram },
-	{ 0xb800, 0xbfff, xevious_bg_colorram_w, &xevious_bg_colorram },
-	{ 0xc000, 0xc7ff, xevious_fg_videoram_w, &xevious_fg_videoram },
-	{ 0xc800, 0xcfff, xevious_bg_videoram_w, &xevious_bg_videoram },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
-	{ 0xf000, 0xffff, xevious_bs_w },
-	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
-	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
-	{ 0xa780, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },	/* the pointers */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6820, 0x6820) AM_WRITE(xevious_interrupt_enable_1_w)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(xevious_interrupt_enable_2_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(xevious_interrupt_enable_3_w)
+	AM_RANGE(0x6823, 0x6823) AM_WRITE(xevious_halt_w)			/* reset controll */
+	AM_RANGE(0x6830, 0x683f) AM_WRITE(MWA8_NOP)				/* watch dock reset */
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(xevious_customio_data_w)
+	AM_RANGE(0x7100, 0x7100) AM_WRITE(xevious_customio_w)
+	AM_RANGE(0x7800, 0xafff) AM_WRITE(xevious_sharedram_w) AM_BASE(&xevious_sharedram)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(xevious_fg_colorram_w) AM_BASE(&xevious_fg_colorram)
+	AM_RANGE(0xb800, 0xbfff) AM_WRITE(xevious_bg_colorram_w) AM_BASE(&xevious_bg_colorram)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(xevious_fg_videoram_w) AM_BASE(&xevious_fg_videoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(xevious_bg_videoram_w) AM_BASE(&xevious_bg_videoram)
+	AM_RANGE(0xd000, 0xd07f) AM_WRITE(xevious_vh_latch_w) /* ?? */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(xevious_bs_w)
+	AM_RANGE(0x8780, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* here only */
+	AM_RANGE(0x9780, 0x97ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)	/* to initialize */
+	AM_RANGE(0xa780, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* the pointers */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x6830, 0x683f, MWA_NOP },				/* watch dog reset */
-	{ 0x7800, 0xafff, xevious_sharedram_w },
-	{ 0xb000, 0xb7ff, xevious_fg_colorram_w },
-	{ 0xb800, 0xbfff, xevious_bg_colorram_w },
-	{ 0xc000, 0xc7ff, xevious_fg_videoram_w },
-	{ 0xc800, 0xcfff, xevious_bg_videoram_w },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
-	{ 0xf000, 0xffff, xevious_bs_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6830, 0x683f) AM_WRITE(MWA8_NOP)				/* watch dog reset */
+	AM_RANGE(0x7800, 0xafff) AM_WRITE(xevious_sharedram_w)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(xevious_fg_colorram_w)
+	AM_RANGE(0xb800, 0xbfff) AM_WRITE(xevious_bg_colorram_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(xevious_fg_videoram_w)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(xevious_bg_videoram_w)
+	AM_RANGE(0xd000, 0xd07f) AM_WRITE(xevious_vh_latch_w) /* ?? */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(xevious_bs_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
-	{ 0x7800, 0xcfff, xevious_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(xevious_interrupt_enable_3_w)
+	AM_RANGE(0x7800, 0xcfff) AM_WRITE(xevious_sharedram_w)
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( battles_readmem_cpu1 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x6800, 0x6807, xevious_dsw_r },
-	{ 0x7000, 0x700f, battles_customio_data0_r },
-	{ 0x7100, 0x7100, battles_customio0_r },
-	{ 0x7800, 0xcfff, xevious_sharedram_r },
-	{ 0xf000, 0xffff, xevious_bb_r },
-MEMORY_END
+static ADDRESS_MAP_START( battles_readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(xevious_dsw_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(battles_customio_data0_r)
+	AM_RANGE(0x7100, 0x7100) AM_READ(battles_customio0_r)
+	AM_RANGE(0x7800, 0xcfff) AM_READ(xevious_sharedram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(xevious_bb_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( battles_readmem_cpu4 )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x4000, 0x4000, input_port_2_r },	/* IN2 */
-	{ 0x4001, 0x4001, input_port_3_r },	/* IN3 */
-	{ 0x4002, 0x4002, input_port_4_r },	/* IN4 */
-	{ 0x4003, 0x4003, input_port_5_r },	/* IN5 */
-	{ 0x4004, 0x400f, battles_input_port_r },
-	{ 0x6000, 0x6000, battles_customio3_r },
-	{ 0x7000, 0x700f, battles_customio_data3_r },
-	{ 0x8000, 0x80ff, battles_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( battles_readmem_cpu4, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0x4001, 0x4001) AM_READ(input_port_3_r)	/* IN3 */
+	AM_RANGE(0x4002, 0x4002) AM_READ(input_port_4_r)	/* IN4 */
+	AM_RANGE(0x4003, 0x4003) AM_READ(input_port_5_r)	/* IN5 */
+	AM_RANGE(0x4004, 0x400f) AM_READ(battles_input_port_r)
+	AM_RANGE(0x6000, 0x6000) AM_READ(battles_customio3_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(battles_customio_data3_r)
+	AM_RANGE(0x8000, 0x80ff) AM_READ(battles_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( battles_writemem_cpu1 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x6820, 0x6820, xevious_interrupt_enable_1_w },
-	{ 0x6821, 0x6821, xevious_interrupt_enable_2_w },
-	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
-	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
-	{ 0x7000, 0x700f, battles_customio_data0_w },
-	{ 0x7100, 0x7100, battles_customio0_w },
-	{ 0x7800, 0xafff, xevious_sharedram_w, &xevious_sharedram },
-	{ 0xb000, 0xb7ff, xevious_fg_colorram_w, &xevious_fg_colorram },
-	{ 0xb800, 0xbfff, xevious_bg_colorram_w, &xevious_bg_colorram },
-	{ 0xc000, 0xc7ff, xevious_fg_videoram_w, &xevious_fg_videoram },
-	{ 0xc800, 0xcfff, xevious_bg_videoram_w, &xevious_bg_videoram },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
-	{ 0xf000, 0xffff, xevious_bs_w },
-	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
-	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
-	{ 0xa780, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },	/* the pointers */
-MEMORY_END
+static ADDRESS_MAP_START( battles_writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6820, 0x6820) AM_WRITE(xevious_interrupt_enable_1_w)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(xevious_interrupt_enable_2_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(xevious_interrupt_enable_3_w)
+	AM_RANGE(0x6823, 0x6823) AM_WRITE(xevious_halt_w)			/* reset controll */
+	AM_RANGE(0x6830, 0x683f) AM_WRITE(MWA8_NOP)				/* watch dock reset */
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(battles_customio_data0_w)
+	AM_RANGE(0x7100, 0x7100) AM_WRITE(battles_customio0_w)
+	AM_RANGE(0x7800, 0xafff) AM_WRITE(xevious_sharedram_w) AM_BASE(&xevious_sharedram)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(xevious_fg_colorram_w) AM_BASE(&xevious_fg_colorram)
+	AM_RANGE(0xb800, 0xbfff) AM_WRITE(xevious_bg_colorram_w) AM_BASE(&xevious_bg_colorram)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(xevious_fg_videoram_w) AM_BASE(&xevious_fg_videoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(xevious_bg_videoram_w) AM_BASE(&xevious_bg_videoram)
+	AM_RANGE(0xd000, 0xd07f) AM_WRITE(xevious_vh_latch_w) /* ?? */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(xevious_bs_w)
+	AM_RANGE(0x8780, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	/* here only */
+	AM_RANGE(0x9780, 0x97ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)	/* to initialize */
+	AM_RANGE(0xa780, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* the pointers */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( battles_writemem_cpu4 )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x4000, 0x4005, battles_CPU4_4000_w }, /* ??? */
-	{ 0x5000, 0x5000, battles_noise_sound_w },
-	{ 0x6000, 0x6000, battles_customio3_w },
-	{ 0x7000, 0x700f, battles_customio_data3_w },
-	{ 0x8000, 0x80ff, battles_sharedram_w, &battles_sharedram },
-MEMORY_END
+static ADDRESS_MAP_START( battles_writemem_cpu4, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4005) AM_WRITE(battles_CPU4_4000_w) /* ??? */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(battles_noise_sound_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(battles_customio3_w)
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(battles_customio_data3_w)
+	AM_RANGE(0x8000, 0x80ff) AM_WRITE(battles_sharedram_w) AM_BASE(&battles_sharedram)
+ADDRESS_MAP_END
 
 
 
@@ -972,15 +972,15 @@ static MACHINE_DRIVER_START( xevious )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz (?) */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -1011,19 +1011,19 @@ static MACHINE_DRIVER_START( xevios )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz (?) */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
 
 /*	MDRV_CPU_ADD(Z80, 3072000)										*/
-/*	MDRV_CPU_MEMORY(xevios_readmem_cpu4,xevios_writemem_cpu4)		*/
+/*	MDRV_CPU_PROGRAM_MAP(xevios_readmem_cpu4,xevios_writemem_cpu4)		*/
 /*	MDRV_CPU_VBLANK_INT(battles_interrupt_4,1)						*/
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -1054,19 +1054,19 @@ static MACHINE_DRIVER_START( battles )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(battles_readmem_cpu1,battles_writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(battles_readmem_cpu1,battles_writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(battles_readmem_cpu4,battles_writemem_cpu4)
+	MDRV_CPU_PROGRAM_MAP(battles_readmem_cpu4,battles_writemem_cpu4)
 	MDRV_CPU_VBLANK_INT(battles_interrupt_4,1)
 
 
@@ -1198,6 +1198,53 @@ ROM_START( xeviousb )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "4c.bin",     0x0000, 0x2000, CRC(827e7747) SHA1(d22645d71b164613834336e26e6942506a0e7eaa) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, CRC(dd35cf1c) SHA1(f8d1f8e019d8198308443c2e7e815d0d04b23d14) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, CRC(088c8b26) SHA1(9c3b61dfca2f84673a78f7f66e363777a8f47a59) )	/* foreground characters */
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, CRC(de60ba25) SHA1(32bc09be5ff8b52ee3a26e0ac3ebc2d4107badb7) )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, CRC(535cdbbc) SHA1(fb9ffe5fc43e0213231267e98d605d43c15f61e8) )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, CRC(dc2c0ecb) SHA1(19ddbd9805f77f38c9a9a1bb30dba6c720b8609f) )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, CRC(02417d19) SHA1(b5f830dd2cf25cf154308d2e640f0ecdcda5d8cd) )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, CRC(dfb587ce) SHA1(acff2bf5cde85a16cdc98a52cdea11f77fadf25a) )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, CRC(605ca889) SHA1(3bf380ef76c03822a042ecc73b5edd4543c268ce) )	/* sprite set #3, planes 0/1 */
+	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
+
+	ROM_REGION( 0x4000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, CRC(57ed9879) SHA1(3106d1aacff06cf78371bd19967141072b32b7d7) )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, CRC(ae3ba9e5) SHA1(49064b25667ffcd81137cd5e800df4b78b182a46) )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, CRC(31e244dd) SHA1(3f7eac12863697a98e1122111801606759e44b2a) )
+
+	ROM_REGION( 0x0b00, REGION_PROMS, 0 )
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, CRC(5cc2727f) SHA1(0dc1e63a47a4cb0ba75f6f1e0c15e408bb0ee2a1) ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, CRC(5c8796cc) SHA1(63015e3c0874afc6b1ca032f1ffb8f90562c77c8) ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, CRC(3cb60975) SHA1(c94d5a5dd4d8a08d6d39c051a4a722581b903f45) ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, CRC(22d98032) SHA1(ec6626828c79350417d08b98e9631ad35edd4a41) ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, CRC(3a7599f0) SHA1(a4bdf58c190ca16fc7b976c97f41087a61fdb8b8) ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, CRC(fd8b9d91) SHA1(87ddf0b9d723aabb422d6d416aa9ec6bc246bf34) ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, CRC(bf906d82) SHA1(776168a73d3b9f0ce05610acc8a623deae0a572b) ) /* sprite lookup table high bits */
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, CRC(550f06bc) SHA1(816a0fafa0b084ac11ae1af70a5186539376fc2a) )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+ROM_START( xeviousc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
+	ROM_LOAD( "xvi_u_.3p",    0x0000, 0x1000, CRC(7b203868) SHA1(3bafaa42bccddfaf8d9197e93416a731b7f8fb94) )
+	ROM_LOAD( "xv_2-2.3m",    0x1000, 0x1000, CRC(b6fe738e) SHA1(23cdf1f2c2642f9bc3f843b5c338372027032380) )
+	ROM_LOAD( "xv_2-3.2m",    0x2000, 0x1000, CRC(dbd52ff5) SHA1(eb42393720fc1fd4a1f6cdba87ac4177fd5827fe) )
+	ROM_LOAD( "xvi_u_.2l",    0x3000, 0x1000, CRC(ad12af53) SHA1(ff3a96d6f7357fb2d33cd9d77d53477b9071ffc9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "xv2_5.3f",     0x0000, 0x1000, CRC(f8cc2861) SHA1(9b02c00cff6c771d46776416295f9e12a2166cc5) )
+	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, CRC(e18cdaad) SHA1(6b79efee1a9642edb9f752101737132401248aed) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, CRC(dd35cf1c) SHA1(f8d1f8e019d8198308443c2e7e815d0d04b23d14) )
@@ -1382,8 +1429,6 @@ ROM_START( sxevious )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
 ROM_END
 
-
-
 static DRIVER_INIT( xevios )
 {
 	int A;
@@ -1411,6 +1456,7 @@ static DRIVER_INIT( xevios )
 GAME( 1982, xevious,  0,       xevious, xevious,  0,      ROT90, "Namco", "Xevious (Namco)" )
 GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 1)" )
 GAME( 1982, xeviousb, xevious, xevious, xeviousb, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 2)" )
+GAME( 1982, xeviousc, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 3)" )
 GAME( 1982, xevios,   xevious, xevios,  xevious,  xevios, ROT90, "bootleg", "Xevios" )
 GAME( 1982, battles,  xevious, battles, battles,  0,      ROT90, "bootleg", "Battles" )
 GAME( 1984, sxevious, xevious, xevious, sxevious, 0,      ROT90, "Namco", "Super Xevious" )

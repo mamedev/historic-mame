@@ -181,47 +181,47 @@ static WRITE16_HANDLER( inufuku_eeprom_w )
 
 ******************************************************************************/
 
-static MEMORY_READ16_START( inufuku_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },				// main rom
+static ADDRESS_MAP_START( inufuku_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)				// main rom
 
-	{ 0x180000, 0x180001, input_port_0_word_r },
-	{ 0x180002, 0x180003, input_port_1_word_r },
-	{ 0x180004, 0x180005, input_port_2_word_r },
-	{ 0x180006, 0x180007, input_port_3_word_r },
-	{ 0x180008, 0x180009, inufuku_eeprom_r },		// eeprom + input_port_4_word_r
-	{ 0x18000a, 0x18000b, input_port_5_word_r },
+	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x180008, 0x180009) AM_READ(inufuku_eeprom_r)		// eeprom + input_port_4_word_r
+	AM_RANGE(0x18000a, 0x18000b) AM_READ(input_port_5_word_r)
 
-	{ 0x300000, 0x301fff, MRA16_RAM },				// palette ram
-	{ 0x400000, 0x401fff, inufuku_bg_videoram_r },	// bg ram
-	{ 0x402000, 0x403fff, inufuku_text_videoram_r },// text ram
-	{ 0x580000, 0x580fff, MRA16_RAM },				// sprite table + sprite attribute
-	{ 0x600000, 0x61ffff, MRA16_RAM },				// cell table
+	AM_RANGE(0x300000, 0x301fff) AM_READ(MRA16_RAM)				// palette ram
+	AM_RANGE(0x400000, 0x401fff) AM_READ(inufuku_bg_videoram_r)	// bg ram
+	AM_RANGE(0x402000, 0x403fff) AM_READ(inufuku_text_videoram_r)// text ram
+	AM_RANGE(0x580000, 0x580fff) AM_READ(MRA16_RAM)				// sprite table + sprite attribute
+	AM_RANGE(0x600000, 0x61ffff) AM_READ(MRA16_RAM)				// cell table
 
-	{ 0x800000, 0xbfffff, MRA16_ROM },				// data rom
-	{ 0xfd0000, 0xfdffff, MRA16_RAM },				// work ram
-MEMORY_END
+	AM_RANGE(0x800000, 0xbfffff) AM_READ(MRA16_ROM)				// data rom
+	AM_RANGE(0xfd0000, 0xfdffff) AM_READ(MRA16_RAM)				// work ram
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( inufuku_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },				// main rom
+static ADDRESS_MAP_START( inufuku_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)				// main rom
 
-	{ 0x100000, 0x100007, MWA16_NOP },				// ?
-	{ 0x200000, 0x200001, inufuku_eeprom_w },		// eeprom
-	{ 0x280000, 0x280001, inufuku_soundcommand_w },	// sound command
+	AM_RANGE(0x100000, 0x100007) AM_WRITE(MWA16_NOP)				// ?
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(inufuku_eeprom_w)		// eeprom
+	AM_RANGE(0x280000, 0x280001) AM_WRITE(inufuku_soundcommand_w)	// sound command
 
-	{ 0x300000, 0x301fff, paletteram16_xGGGGGBBBBBRRRRR_word_w, &paletteram16 },		// palette ram
-	{ 0x380000, 0x3801ff, MWA16_RAM, &inufuku_bg_rasterram },							// bg raster ram
-	{ 0x400000, 0x401fff, inufuku_bg_videoram_w, &inufuku_bg_videoram },				// bg ram
-	{ 0x402000, 0x403fff, inufuku_text_videoram_w, &inufuku_text_videoram },			// text ram
-	{ 0x580000, 0x580fff, MWA16_RAM, &inufuku_spriteram1, &inufuku_spriteram1_size },	// sprite table + sprite attribute
-	{ 0x600000, 0x61ffff, MWA16_RAM, &inufuku_spriteram2 },								// cell table
+	AM_RANGE(0x300000, 0x301fff) AM_WRITE(paletteram16_xGGGGGBBBBBRRRRR_word_w) AM_BASE(&paletteram16)		// palette ram
+	AM_RANGE(0x380000, 0x3801ff) AM_WRITE(MWA16_RAM) AM_BASE(&inufuku_bg_rasterram)							// bg raster ram
+	AM_RANGE(0x400000, 0x401fff) AM_WRITE(inufuku_bg_videoram_w) AM_BASE(&inufuku_bg_videoram)				// bg ram
+	AM_RANGE(0x402000, 0x403fff) AM_WRITE(inufuku_text_videoram_w) AM_BASE(&inufuku_text_videoram)			// text ram
+	AM_RANGE(0x580000, 0x580fff) AM_WRITE(MWA16_RAM) AM_BASE(&inufuku_spriteram1) AM_SIZE(&inufuku_spriteram1_size)	// sprite table + sprite attribute
+	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(MWA16_RAM) AM_BASE(&inufuku_spriteram2)								// cell table
 
-	{ 0x780000, 0x780013, inufuku_palettereg_w },	// bg & text palettebank register
-	{ 0x7a0000, 0x7a0023, inufuku_scrollreg_w },	// bg & text scroll register
-	{ 0x7e0000, 0x7e0001, MWA16_NOP },				// ?
+	AM_RANGE(0x780000, 0x780013) AM_WRITE(inufuku_palettereg_w)	// bg & text palettebank register
+	AM_RANGE(0x7a0000, 0x7a0023) AM_WRITE(inufuku_scrollreg_w)	// bg & text scroll register
+	AM_RANGE(0x7e0000, 0x7e0001) AM_WRITE(MWA16_NOP)				// ?
 
-	{ 0x800000, 0xbfffff, MWA16_ROM },				// data rom
-	{ 0xfd0000, 0xfdffff, MWA16_RAM },				// work ram
-MEMORY_END
+	AM_RANGE(0x800000, 0xbfffff) AM_WRITE(MWA16_ROM)				// data rom
+	AM_RANGE(0xfd0000, 0xfdffff) AM_WRITE(MWA16_RAM)				// work ram
+ADDRESS_MAP_END
 
 
 /******************************************************************************
@@ -230,33 +230,33 @@ MEMORY_END
 
 ******************************************************************************/
 
-static MEMORY_READ_START( inufuku_readmem_sound )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( inufuku_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( inufuku_writemem_sound )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( inufuku_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( inufuku_readport_sound )
-	{ 0x04, 0x04, soundlatch_r },
-	{ 0x08, 0x08, YM2610_status_port_0_A_r },
-	{ 0x09, 0x09, YM2610_read_port_0_r },
-	{ 0x0a, 0x0a, YM2610_status_port_0_B_r },
-PORT_END
+static ADDRESS_MAP_START( inufuku_readport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
+	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x09, 0x09) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(YM2610_status_port_0_B_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( inufuku_writeport_sound )
-	{ 0x00, 0x00, inufuku_soundrombank_w },
-	{ 0x04, 0x04, pending_command_clear_w },
-	{ 0x08, 0x08, YM2610_control_port_0_A_w },
-	{ 0x09, 0x09, YM2610_data_port_0_A_w },
-	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
-	{ 0x0b, 0x0b, YM2610_data_port_0_B_w },
-PORT_END
+static ADDRESS_MAP_START( inufuku_writeport_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(inufuku_soundrombank_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(pending_command_clear_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(YM2610_data_port_0_B_w)
+ADDRESS_MAP_END
 
 
 /******************************************************************************
@@ -406,13 +406,13 @@ static MACHINE_DRIVER_START( inufuku )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 32000000/2)	/* 16.00 MHz */
-	MDRV_CPU_MEMORY(inufuku_readmem, inufuku_writemem)
+	MDRV_CPU_PROGRAM_MAP(inufuku_readmem, inufuku_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, 32000000/4)		/* 8.00 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(inufuku_readmem_sound, inufuku_writemem_sound)
-	MDRV_CPU_PORTS(inufuku_readport_sound, inufuku_writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(inufuku_readmem_sound, inufuku_writemem_sound)
+	MDRV_CPU_IO_MAP(inufuku_readport_sound, inufuku_writeport_sound)
 								/* IRQs are triggered by the YM2610 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -767,63 +767,63 @@ static WRITE_HANDLER( shanghai_coin_w )
 	coin_counter_w(1,data & 2);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x03fff, MRA_RAM },
-	{ 0x80000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x80000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x03fff, MWA_RAM },
-	{ 0x80000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x80000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x01, HD63484_status_r },
-	{ 0x02, 0x03, HD63484_data_r },
-	{ 0x20, 0x20, YM2203_status_port_0_r },
-	{ 0x22, 0x22, YM2203_read_port_0_r },
-	{ 0x40, 0x40, input_port_0_r },
-	{ 0x44, 0x44, input_port_1_r },
-	{ 0x48, 0x48, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_READ(HD63484_status_r)
+	AM_RANGE(0x02, 0x03) AM_READ(HD63484_data_r)
+	AM_RANGE(0x20, 0x20) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x22, 0x22) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_0_r)
+	AM_RANGE(0x44, 0x44) AM_READ(input_port_1_r)
+	AM_RANGE(0x48, 0x48) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x01, HD63484_address_w },
-	{ 0x02, 0x03, HD63484_data_w },
-	{ 0x20, 0x20, YM2203_control_port_0_w },
-	{ 0x22, 0x22, YM2203_write_port_0_w },
-	{ 0x4c, 0x4c, shanghai_coin_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(HD63484_address_w)
+	AM_RANGE(0x02, 0x03) AM_WRITE(HD63484_data_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x22, 0x22) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x4c, 0x4c) AM_WRITE(shanghai_coin_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( shangha2_readmem )
-	{ 0x00000, 0x03fff, MRA_RAM },
-	{ 0x80000, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( shangha2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x80000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( shangha2_writemem )
-	{ 0x00000, 0x03fff, MWA_RAM },
-	{ 0x04000, 0x041ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
-	{ 0x80000, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( shangha2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x04000, 0x041ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x80000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( shangha2_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x10, 0x10, input_port_1_r },
-	{ 0x20, 0x20, input_port_2_r },
-	{ 0x30, 0x31, HD63484_status_r },
-	{ 0x32, 0x33, HD63484_data_r },
-	{ 0x40, 0x40, YM2203_status_port_0_r },
-	{ 0x42, 0x42, YM2203_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( shangha2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_1_r)
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_2_r)
+	AM_RANGE(0x30, 0x31) AM_READ(HD63484_status_r)
+	AM_RANGE(0x32, 0x33) AM_READ(HD63484_data_r)
+	AM_RANGE(0x40, 0x40) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x42, 0x42) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( shangha2_writeport )
-	{ 0x30, 0x31, HD63484_address_w },
-	{ 0x32, 0x33, HD63484_data_w },
-	{ 0x40, 0x40, YM2203_control_port_0_w },
-	{ 0x42, 0x42, YM2203_write_port_0_w },
-	{ 0x50, 0x50, shanghai_coin_w },
-PORT_END
+static ADDRESS_MAP_START( shangha2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x30, 0x31) AM_WRITE(HD63484_address_w)
+	AM_RANGE(0x32, 0x33) AM_WRITE(HD63484_data_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x42, 0x42) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x50, 0x50) AM_WRITE(shanghai_coin_w)
+ADDRESS_MAP_END
 
 
 
@@ -1003,8 +1003,8 @@ static MACHINE_DRIVER_START( shanghai )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(30)
@@ -1029,8 +1029,8 @@ static MACHINE_DRIVER_START( shangha2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
-	MDRV_CPU_MEMORY(shangha2_readmem,shangha2_writemem)
-	MDRV_CPU_PORTS(shangha2_readport,shangha2_writeport)
+	MDRV_CPU_PROGRAM_MAP(shangha2_readmem,shangha2_writemem)
+	MDRV_CPU_IO_MAP(shangha2_readport,shangha2_writeport)
 	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(30)

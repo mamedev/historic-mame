@@ -53,105 +53,105 @@ WRITE_HANDLER( exctsccr_DAC_data_w )
 
 ***************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x63ff, MRA_RAM }, /* Alpha mcu (protection) */
-	{ 0x7c00, 0x7fff, MRA_RAM }, /* work ram */
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8bff, MRA_RAM }, /* ??? */
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa040, 0xa040, input_port_1_r },
-	{ 0xa080, 0xa080, input_port_3_r },
-	{ 0xa0c0, 0xa0c0, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM) /* Alpha mcu (protection) */
+	AM_RANGE(0x7c00, 0x7fff) AM_READ(MRA8_RAM) /* work ram */
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM) /* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_3_r)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x63ff, exctsccr_mcu_w, &exctsccr_mcu_ram }, /* Alpha mcu (protection) */
-	{ 0x7c00, 0x7fff, MWA_RAM }, /* work ram */
-	{ 0x8000, 0x83ff, exctsccr_videoram_w, &videoram },
-	{ 0x8400, 0x87ff, exctsccr_colorram_w, &colorram },
-	{ 0x8800, 0x8bff, MWA_RAM }, /* ??? */
-	{ 0xa000, 0xa000, MWA_NOP }, /* ??? */
-	{ 0xa001, 0xa001, MWA_NOP }, /* ??? */
-	{ 0xa002, 0xa002, exctsccr_gfx_bank_w },
-	{ 0xa003, 0xa003, exctsccr_flipscreen_w }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
-	{ 0xa006, 0xa006, exctsccr_mcu_control_w }, /* MCU control */
-	{ 0xa007, 0xa007, MWA_NOP }, /* This is also MCU control, but i dont need it */
-	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite pos */
-	{ 0xa080, 0xa080, soundlatch_w },
-	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(exctsccr_mcu_w) AM_BASE(&exctsccr_mcu_ram) /* Alpha mcu (protection) */
+	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(MWA8_RAM) /* work ram */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(exctsccr_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(exctsccr_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM) /* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(exctsccr_gfx_bank_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(exctsccr_flipscreen_w) /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
+	AM_RANGE(0xa006, 0xa006) AM_WRITE(exctsccr_mcu_control_w) /* MCU control */
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP) /* This is also MCU control, but i dont need it */
+	AM_RANGE(0xa040, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* Sprite pos */
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x8fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xc00d, 0xc00d, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x8fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc00d, 0xc00d) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x8fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xc008, 0xc009, exctsccr_DAC_data_w },
-	{ 0xc00c, 0xc00c, soundlatch_w }, /* used to clear the latch */
-	{ 0xc00f, 0xc00f, MWA_NOP }, /* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc008, 0xc009) AM_WRITE(exctsccr_DAC_data_w)
+	AM_RANGE(0xc00c, 0xc00c) AM_WRITE(soundlatch_w) /* used to clear the latch */
+	AM_RANGE(0xc00f, 0xc00f) AM_WRITE(MWA8_NOP) /* ??? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x82, 0x82, AY8910_write_port_0_w },
-	{ 0x83, 0x83, AY8910_control_port_0_w },
-	{ 0x86, 0x86, AY8910_write_port_1_w },
-	{ 0x87, 0x87, AY8910_control_port_1_w },
-	{ 0x8a, 0x8a, AY8910_write_port_2_w },
-	{ 0x8b, 0x8b, AY8910_control_port_2_w },
-	{ 0x8e, 0x8e, AY8910_write_port_3_w },
-	{ 0x8f, 0x8f, AY8910_control_port_3_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x86, 0x86) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x87, 0x87) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x8a, 0x8a) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x8b, 0x8b) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x8e, 0x8e) AM_WRITE(AY8910_write_port_3_w)
+	AM_RANGE(0x8f, 0x8f) AM_WRITE(AY8910_control_port_3_w)
+ADDRESS_MAP_END
 
 /* Bootleg */
-static MEMORY_READ_START( bl_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8fff, MRA_RAM }, /* ??? */
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa040, 0xa040, input_port_1_r },
-	{ 0xa080, 0xa080, input_port_3_r },
-	{ 0xa0c0, 0xa0c0, input_port_2_r },
-MEMORY_END
+static ADDRESS_MAP_START( bl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(MRA8_RAM) /* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
+	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_3_r)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bl_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x7000, 0x7000, AY8910_write_port_0_w },
-	{ 0x7001, 0x7001, AY8910_control_port_0_w },
-	{ 0x8000, 0x83ff, exctsccr_videoram_w, &videoram },
-	{ 0x8400, 0x87ff, exctsccr_colorram_w, &colorram },
-	{ 0x8800, 0x8fff, MWA_RAM }, /* ??? */
-	{ 0xa000, 0xa000, MWA_NOP }, /* ??? */
-	{ 0xa001, 0xa001, MWA_NOP }, /* ??? */
-	{ 0xa002, 0xa002, exctsccr_gfx_bank_w }, /* ??? */
-	{ 0xa003, 0xa003, exctsccr_flipscreen_w }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
-	{ 0xa006, 0xa006, MWA_NOP }, /* no MCU, but some leftover code still writes here */
-	{ 0xa007, 0xa007, MWA_NOP }, /* no MCU, but some leftover code still writes here */
-	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite Pos */
-	{ 0xa080, 0xa080, soundlatch_w },
-	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-MEMORY_END
+static ADDRESS_MAP_START( bl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x7001, 0x7001) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(exctsccr_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(exctsccr_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM) /* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(exctsccr_gfx_bank_w) /* ??? */
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(exctsccr_flipscreen_w) /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
+	AM_RANGE(0xa006, 0xa006) AM_WRITE(MWA8_NOP) /* no MCU, but some leftover code still writes here */
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP) /* no MCU, but some leftover code still writes here */
+	AM_RANGE(0xa040, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* Sprite Pos */
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( bl_sound_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( bl_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bl_sound_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x8000, MWA_NOP }, /* 0 = DAC sound off, 1 = DAC sound on */
-	{ 0xa000, 0xa000, soundlatch_w }, /* used to clear the latch */
-	{ 0xc000, 0xc000, exctsccr_DAC_data_w },
-	{ 0xe000, 0xe3ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( bl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP) /* 0 = DAC sound off, 1 = DAC sound on */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_w) /* used to clear the latch */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(exctsccr_DAC_data_w)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -341,12 +341,12 @@ static MACHINE_DRIVER_START( exctsccr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4123456)	/* ??? with 4 MHz, nested NMIs might happen */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000) /* 4 kHz, updates the dac */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -374,11 +374,11 @@ static MACHINE_DRIVER_START( exctsccb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
-	MDRV_CPU_MEMORY(bl_readmem,bl_writemem)
+	MDRV_CPU_PROGRAM_MAP(bl_readmem,bl_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
-	MDRV_CPU_MEMORY(bl_sound_readmem,bl_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(bl_sound_readmem,bl_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

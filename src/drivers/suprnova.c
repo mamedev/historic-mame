@@ -955,51 +955,51 @@ static WRITE32_HANDLER( skns_ymz280_w )
 		YMZ280B_data_0_w(offset,(data >> 16) & 0xff);
 }
 
-static MEMORY_READ32_START( skns_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM       }, /* BIOS ROM */
-	{ 0x00400000, 0x00400003, nova_input_port_0_r } ,
-	{ 0x00400004, 0x00400007, nova_input_port_dip_r } ,
-	{ 0x00400008, 0x0040000b, MRA32_RAM } ,
+static ADDRESS_MAP_START( skns_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_ROM) /* BIOS ROM */
+	AM_RANGE(0x00400000, 0x00400003) AM_READ(nova_input_port_0_r)
+	AM_RANGE(0x00400004, 0x00400007) AM_READ(nova_input_port_dip_r)
+	AM_RANGE(0x00400008, 0x0040000b) AM_READ(MRA32_RAM)
 	/* In between is write only */
-	{ 0x0040000c, 0x0040000f, nova_input_port_3_r } ,
-	{ 0x00800000, 0x00801fff, MRA32_RAM       }, /* 'backup' RAM */
-//	{ 0x00c00000, 0x00c00003, skns_ymz280_r   }, /* ymz280 (sound) */
-	{ 0x01000000, 0x0100000f, msm6242_r       } ,
-	{ 0x02000000, 0x02003fff, MRA32_RAM       }, /* 'spc' RAM */
-	{ 0x02100000, 0x0210003f, MRA32_RAM       }, /* 'spc' */
-	{ 0x02400000, 0x0240007f, MRA32_RAM       }, /* 'v3' */
-    { 0x02500000, 0x02507fff, MRA32_RAM       }, /* 'v3tbl' RAM */
-    { 0x02600000, 0x02607fff, MRA32_RAM       }, /* 'v3slc' RAM */
-	{ 0x02a00000, 0x02a0001f, MRA32_RAM       }, /* skns_pal_regs */
-    { 0x02a40000, 0x02a5ffff, MRA32_RAM       }, /* 'palette' RAM */
-	{ 0x02f00000, 0x02f000ff, skns_hit_r      }, /* hit */
-	{ 0x04000000, 0x041fffff, MRA32_BANK1     }, /* GAME ROM */
-	{ 0x04800000, 0x0483ffff, MRA32_RAM       }, /* 'v3t' RAM */
-	{ 0x06000000, 0x060fffff, MRA32_RAM       }, /* 'main' RAM */
-	{ 0xc0000000, 0xc0000fff, MRA32_RAM       }, /* 'cache' RAM */
-MEMORY_END
+	AM_RANGE(0x0040000c, 0x0040000f) AM_READ(nova_input_port_3_r)
+	AM_RANGE(0x00800000, 0x00801fff) AM_READ(MRA32_RAM) /* 'backup' RAM */
+//	AM_RANGE(0x00c00000, 0x00c00003) AM_READ(skns_ymz280_r) /* ymz280 (sound) */
+	AM_RANGE(0x01000000, 0x0100000f) AM_READ(msm6242_r)
+	AM_RANGE(0x02000000, 0x02003fff) AM_READ(MRA32_RAM) /* 'spc' RAM */
+	AM_RANGE(0x02100000, 0x0210003f) AM_READ(MRA32_RAM) /* 'spc' */
+	AM_RANGE(0x02400000, 0x0240007f) AM_READ(MRA32_RAM) /* 'v3' */
+    AM_RANGE(0x02500000, 0x02507fff) AM_READ(MRA32_RAM) /* 'v3tbl' RAM */
+    AM_RANGE(0x02600000, 0x02607fff) AM_READ(MRA32_RAM) /* 'v3slc' RAM */
+	AM_RANGE(0x02a00000, 0x02a0001f) AM_READ(MRA32_RAM) /* skns_pal_regs */
+    AM_RANGE(0x02a40000, 0x02a5ffff) AM_READ(MRA32_RAM) /* 'palette' RAM */
+	AM_RANGE(0x02f00000, 0x02f000ff) AM_READ(skns_hit_r) /* hit */
+	AM_RANGE(0x04000000, 0x041fffff) AM_READ(MRA32_BANK1) /* GAME ROM */
+	AM_RANGE(0x04800000, 0x0483ffff) AM_READ(MRA32_RAM) /* 'v3t' RAM */
+	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_RAM) /* 'main' RAM */
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_READ(MRA32_RAM) /* 'cache' RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( skns_writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_ROM }, /* BIOS ROM */
-	{ 0x00400000, 0x0040000f, skns_io_w }, /* I/O Write */
-	{ 0x00800000, 0x00801fff, MWA32_RAM, (data32_t **)&generic_nvram, &generic_nvram_size }, /* 'backup' RAM */
-	{ 0x00c00000, 0x00c00003, skns_ymz280_w }, /* ymz280_w (sound) */
-	{ 0x01000000, 0x0100000f, msm6242_w } ,
-	{ 0x01800000, 0x01800003, skns_hit2_w },
-	{ 0x02000000, 0x02003fff, MWA32_RAM, &spriteram32, &spriteram_size }, /* sprite ram */
-	{ 0x02100000, 0x0210003f, MWA32_RAM, &skns_spc_regs  }, /* sprite registers */
-	{ 0x02400000, 0x0240007f, skns_v3_regs_w, &skns_v3_regs }, /* tilemap registers */
-	{ 0x02500000, 0x02503fff, skns_tilemapA_w, &skns_tilemapA_ram }, /* tilemap A */
-	{ 0x02504000, 0x02507fff, skns_tilemapB_w, &skns_tilemapB_ram }, /* tilemap B */
-	{ 0x02600000, 0x02607fff, MWA32_RAM, &skns_v3slc_ram }, /* tilemap linescroll */
-	{ 0x02a00000, 0x02a0001f, skns_pal_regs_w, &skns_pal_regs },
-	{ 0x02a40000, 0x02a5ffff, skns_palette_ram_w, &skns_palette_ram },
-	{ 0x02f00000, 0x02f000ff, skns_hit_w },
-	{ 0x04000000, 0x041fffff, MWA32_ROM }, /* GAME ROM */
-	{ 0x04800000, 0x0483ffff, skns_v3t_w, &skns_v3t_ram }, /* tilemap b ram based tiles */
-	{ 0x06000000, 0x060fffff, MWA32_RAM, &skns_main_ram },
-	{ 0xc0000000, 0xc0000fff, MWA32_RAM, &skns_cache_ram }, /* 'cache' RAM */
-MEMORY_END
+static ADDRESS_MAP_START( skns_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_ROM) /* BIOS ROM */
+	AM_RANGE(0x00400000, 0x0040000f) AM_WRITE(skns_io_w) /* I/O Write */
+	AM_RANGE(0x00800000, 0x00801fff) AM_WRITE(MWA32_RAM) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* 'backup' RAM */
+	AM_RANGE(0x00c00000, 0x00c00003) AM_WRITE(skns_ymz280_w) /* ymz280_w (sound) */
+	AM_RANGE(0x01000000, 0x0100000f) AM_WRITE(msm6242_w)
+	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(skns_hit2_w)
+	AM_RANGE(0x02000000, 0x02003fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size) /* sprite ram */
+	AM_RANGE(0x02100000, 0x0210003f) AM_WRITE(MWA32_RAM) AM_BASE(&skns_spc_regs) /* sprite registers */
+	AM_RANGE(0x02400000, 0x0240007f) AM_WRITE(skns_v3_regs_w) AM_BASE(&skns_v3_regs) /* tilemap registers */
+	AM_RANGE(0x02500000, 0x02503fff) AM_WRITE(skns_tilemapA_w) AM_BASE(&skns_tilemapA_ram) /* tilemap A */
+	AM_RANGE(0x02504000, 0x02507fff) AM_WRITE(skns_tilemapB_w) AM_BASE(&skns_tilemapB_ram) /* tilemap B */
+	AM_RANGE(0x02600000, 0x02607fff) AM_WRITE(MWA32_RAM) AM_BASE(&skns_v3slc_ram) /* tilemap linescroll */
+	AM_RANGE(0x02a00000, 0x02a0001f) AM_WRITE(skns_pal_regs_w) AM_BASE(&skns_pal_regs)
+	AM_RANGE(0x02a40000, 0x02a5ffff) AM_WRITE(skns_palette_ram_w) AM_BASE(&skns_palette_ram)
+	AM_RANGE(0x02f00000, 0x02f000ff) AM_WRITE(skns_hit_w)
+	AM_RANGE(0x04000000, 0x041fffff) AM_WRITE(MWA32_ROM) /* GAME ROM */
+	AM_RANGE(0x04800000, 0x0483ffff) AM_WRITE(skns_v3t_w) AM_BASE(&skns_v3t_ram) /* tilemap b ram based tiles */
+	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_RAM) AM_BASE(&skns_main_ram)
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_WRITE(MWA32_RAM) AM_BASE(&skns_cache_ram) /* 'cache' RAM */
+ADDRESS_MAP_END
 
 /***** GFX DECODE *****/
 
@@ -1052,7 +1052,7 @@ static struct YMZ280Binterface ymz280b_intf =
 
 static MACHINE_DRIVER_START(skns)
 	MDRV_CPU_ADD(SH2,28638000)
-	MDRV_CPU_MEMORY(skns_readmem,skns_writemem)
+	MDRV_CPU_PROGRAM_MAP(skns_readmem,skns_writemem)
 	MDRV_CPU_VBLANK_INT(skns_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1081,7 +1081,7 @@ MACHINE_DRIVER_END
 static READ32_HANDLER( bios_skip_r )
 {
 #if BIOS_SKIP
-	if (activecpu_get_pc()==0x6fa) cpu_writemem32bedw(0x06000029,1);
+	if (activecpu_get_pc()==0x6fa) program_write_byte(0x06000029,1);
 #endif
 	return skns_main_ram[0x00028/4];
 }

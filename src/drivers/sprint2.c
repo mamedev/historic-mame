@@ -249,42 +249,42 @@ static WRITE_HANDLER( sprint2_lamp2_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, sprint2_wram_r },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x0818, 0x081f, sprint2_input_A_r },
-	{ 0x0828, 0x082f, sprint2_input_B_r },
-	{ 0x0830, 0x0837, sprint2_dip_r },
-	{ 0x0840, 0x087f, input_port_3_r },
-	{ 0x0880, 0x08bf, sprint2_steering1_r },
-	{ 0x08c0, 0x08ff, sprint2_steering2_r },
-	{ 0x0c00, 0x0fff, sprint2_sync_r },
-	{ 0x1000, 0x13ff, sprint2_collision1_r },
-	{ 0x1400, 0x17ff, sprint2_collision2_r },
-	{ 0x1800, 0x1800, MRA_NOP },  /* debugger ROM location? */
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(sprint2_wram_r)
+	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0818, 0x081f) AM_READ(sprint2_input_A_r)
+	AM_RANGE(0x0828, 0x082f) AM_READ(sprint2_input_B_r)
+	AM_RANGE(0x0830, 0x0837) AM_READ(sprint2_dip_r)
+	AM_RANGE(0x0840, 0x087f) AM_READ(input_port_3_r)
+	AM_RANGE(0x0880, 0x08bf) AM_READ(sprint2_steering1_r)
+	AM_RANGE(0x08c0, 0x08ff) AM_READ(sprint2_steering2_r)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ(sprint2_sync_r)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(sprint2_collision1_r)
+	AM_RANGE(0x1400, 0x17ff) AM_READ(sprint2_collision2_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(MRA8_NOP)  /* debugger ROM location? */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, sprint2_wram_w },
-	{ 0x0400, 0x07ff, sprint2_video_ram_w, &sprint2_video_ram },
-	{ 0x0c00, 0x0c0f, sprint2_attract_w },
-	{ 0x0c10, 0x0c1f, sprint2_skid1_w },
-	{ 0x0c20, 0x0c2f, sprint2_skid2_w },
-	{ 0x0c30, 0x0c3f, sprint2_lamp1_w },
-	{ 0x0c40, 0x0c4f, sprint2_lamp2_w },
-	{ 0x0c60, 0x0c6f, MWA_NOP }, /* SPARE */
-	{ 0x0c80, 0x0cff, MWA_NOP }, /* watchdog, disabled during service mode */
-	{ 0x0d00, 0x0d7f, sprint2_collision_reset1_w },
-	{ 0x0d80, 0x0dff, sprint2_collision_reset2_w },
-	{ 0x0e00, 0x0e7f, sprint2_steering_reset1_w },
-	{ 0x0e80, 0x0eff, sprint2_steering_reset2_w },
-	{ 0x0f00, 0x0f7f, sprint2_noise_reset_w },
-	{ 0x2000, 0x3fff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(sprint2_wram_w)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(sprint2_video_ram_w) AM_BASE(&sprint2_video_ram)
+	AM_RANGE(0x0c00, 0x0c0f) AM_WRITE(sprint2_attract_w)
+	AM_RANGE(0x0c10, 0x0c1f) AM_WRITE(sprint2_skid1_w)
+	AM_RANGE(0x0c20, 0x0c2f) AM_WRITE(sprint2_skid2_w)
+	AM_RANGE(0x0c30, 0x0c3f) AM_WRITE(sprint2_lamp1_w)
+	AM_RANGE(0x0c40, 0x0c4f) AM_WRITE(sprint2_lamp2_w)
+	AM_RANGE(0x0c60, 0x0c6f) AM_WRITE(MWA8_NOP) /* SPARE */
+	AM_RANGE(0x0c80, 0x0cff) AM_WRITE(MWA8_NOP) /* watchdog, disabled during service mode */
+	AM_RANGE(0x0d00, 0x0d7f) AM_WRITE(sprint2_collision_reset1_w)
+	AM_RANGE(0x0d80, 0x0dff) AM_WRITE(sprint2_collision_reset2_w)
+	AM_RANGE(0x0e00, 0x0e7f) AM_WRITE(sprint2_steering_reset1_w)
+	AM_RANGE(0x0e80, 0x0eff) AM_WRITE(sprint2_steering_reset2_w)
+	AM_RANGE(0x0f00, 0x0f7f) AM_WRITE(sprint2_noise_reset_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( sprint2 )
@@ -853,7 +853,7 @@ static MACHINE_DRIVER_START( sprint2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(sprint2, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

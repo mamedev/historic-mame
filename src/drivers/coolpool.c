@@ -283,8 +283,6 @@ static int romaddr;
 static READ16_HANDLER( dsp_rom_r )
 {
 	data8_t *rom = memory_region(REGION_USER2);
-
-//usrintf_showmessage("read rom addr %06x",romaddr);
 	return rom[romaddr & (memory_region_length(REGION_USER2)-1)];
 }
 
@@ -313,118 +311,113 @@ WRITE16_HANDLER( dsp_dac_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( amerdart_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
-	{ TOBYTE(0x05000000), TOBYTE(0x0500000f), amerdart_input_r },	// IOP
-	{ TOBYTE(0x06000000), TOBYTE(0x06007fff), MRA16_RAM },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xffb00000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( amerdart_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x05000000, 0x0500000f) AM_READ(amerdart_input_r)	// IOP
+	AM_RANGE(0x06000000, 0x06007fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xffb00000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( amerdart_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_RAM, &ram_base },
-//	{ TOBYTE(0x04000000), TOBYTE(0x0400000f), ???_w },	DSP reset, coin counters
-	{ TOBYTE(0x05000000), TOBYTE(0x0500000f), amerdart_input_w },	// IOP
-	{ TOBYTE(0x06000000), TOBYTE(0x06007fff), MWA16_RAM },	// NVRAM
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xffb00000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( amerdart_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)
+//	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(???_w)	DSP reset, coin counters
+	AM_RANGE(0x05000000, 0x0500000f) AM_WRITE(amerdart_input_w)	// IOP
+	AM_RANGE(0x06000000, 0x06007fff) AM_WRITE(MWA16_RAM)	// NVRAM
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xffb00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
 #if 0
-static MEMORY_READ16_START( io_readmem )
-	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0xffff, MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
+static ADDRESS_MAP_START( io_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x011f) AM_READ(MRA16_RAM)	/* 90h words internal RAM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA16_ROM)	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( io_writemem )
-	{ 0x0000, 0x011f, MWA16_RAM },
-	{ 0x8000, 0xffff, MWA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( io_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x011f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 #endif
 
 
-static MEMORY_READ16_START( coolpool_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
-	{ TOBYTE(0x01000000), TOBYTE(0x010000ff), tlc34076_lsb_r },	// IMSG176P-40
-	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_r },	// "IOP"
-//	{ TOBYTE(0x02000010), TOBYTE(0x0200001f), 				// "IOP"
-	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), coolpool_gfxrom_r },
-	{ TOBYTE(0x06000000), TOBYTE(0x06007fff), MRA16_RAM },	// NVRAM
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( coolpool_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x01000000, 0x010000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
+	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
+//	{ 0x02000010, 0x0200001f, 				// "IOP"
+	AM_RANGE(0x03000000, 0x03ffffff) AM_READ(coolpool_gfxrom_r)
+	AM_RANGE(0x06000000, 0x06007fff) AM_READ(MRA16_RAM)	// NVRAM
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( coolpool_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &ram_base },	// video + work ram
-	{ TOBYTE(0x01000000), TOBYTE(0x010000ff), tlc34076_lsb_w },	// IMSG176P-40
-	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_w },	// "IOP"
-	{ TOBYTE(0x03000000), TOBYTE(0x0300000f), coolpool_misc_w },	// IOP reset + other stuff
-	{ TOBYTE(0x06000000), TOBYTE(0x06007fff), MWA16_RAM },	// NVRAM
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), coolpool_34010_io_register_w },
-	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( coolpool_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)	// video + work ram
+	AM_RANGE(0x01000000, 0x010000ff) AM_WRITE(tlc34076_lsb_w)	// IMSG176P-40
+	AM_RANGE(0x02000000, 0x0200000f) AM_WRITE(coolpool_iop_w)	// "IOP"
+	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)	// IOP reset + other stuff
+	AM_RANGE(0x06000000, 0x06007fff) AM_WRITE(MWA16_RAM)	// NVRAM
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(coolpool_34010_io_register_w)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( nballsht_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
-	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_r },	// "IOP"
-//	{ TOBYTE(0x02000010), TOBYTE(0x0200001f), 				// "IOP"
-	{ TOBYTE(0x04000000), TOBYTE(0x040000ff), tlc34076_lsb_r },	// IMSG176P-40
-	{ TOBYTE(0x06000000), TOBYTE(0x0601ffff), MRA16_RAM },	// more NVRAM?
-	{ TOBYTE(0x06020000), TOBYTE(0x0603ffff), MRA16_RAM },	// NVRAM
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xff7fffff), coolpool_gfxrom_r },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( nballsht_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
+//	{ 0x02000010, 0x0200001f, 				// "IOP"
+	AM_RANGE(0x04000000, 0x040000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
+	AM_RANGE(0x06000000, 0x0601ffff) AM_READ(MRA16_RAM)	// more NVRAM?
+	AM_RANGE(0x06020000, 0x0603ffff) AM_READ(MRA16_RAM)	// NVRAM
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff000000, 0xff7fffff) AM_READ(coolpool_gfxrom_r)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( nballsht_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &ram_base },	// video + work ram
-	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_w },	// "IOP"
-	{ TOBYTE(0x03000000), TOBYTE(0x0300000f), coolpool_misc_w },	// IOP reset + other stuff
-	{ TOBYTE(0x04000000), TOBYTE(0x040000ff), tlc34076_lsb_w },
-	{ TOBYTE(0x06000000), TOBYTE(0x0601ffff), MWA16_RAM },	// more NVRAM?
-	{ TOBYTE(0x06020000), TOBYTE(0x0603ffff), MWA16_RAM },	// NVRAM
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), coolpool_34010_io_register_w },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( nballsht_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)	// video + work ram
+	AM_RANGE(0x02000000, 0x0200000f) AM_WRITE(coolpool_iop_w)	// "IOP"
+	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)	// IOP reset + other stuff
+	AM_RANGE(0x04000000, 0x040000ff) AM_WRITE(tlc34076_lsb_w)
+	AM_RANGE(0x06000000, 0x0601ffff) AM_WRITE(MWA16_RAM)	// more NVRAM?
+	AM_RANGE(0x06020000, 0x0603ffff) AM_WRITE(MWA16_RAM)	// NVRAM
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(coolpool_34010_io_register_w)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( DSP_readmem )
-	{ TMS32025_PRGM_ADDR_RANGE (0x0000, 0x7fff), MRA16_ROM }, /* External ROM */
-		/* 1000h words ROM. The real DSPs ROM is at program space address 0 */
-		/* View it at 10000h in the debugger memory windows */
+static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA16_ROM) /* External ROM */
+ADDRESS_MAP_END
 
-	{ TMS32026_INTERNAL_MEMORY_BLOCKS_READ },
-		/* $0000 - 0005  Internal memory mapped registers */
-		/* $0060 - 007F  Internal Block 2 data memory */
-		/* $0200 - 03FF  Internal Block 0 configured as data memory */
-		/* $0400 - 05FF  Internal Block 1 configured as data memory */
-		/* $0600 - 07FF  Internal Block 3 configured as data memory */
-		/* $FA00 - FBFF  Internal Block 0 configured as program memory */
-		/* $FC00 - FDFF  Internal Block 1 configured as program memory */
-		/* $FE00 - FFFF  Internal Block 3 configured as program memory */
-MEMORY_END
+static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( DSP_writemem )
-	{ TMS32025_PRGM_ADDR_RANGE (0x0000, 0x7fff), MWA16_ROM },
-	{ TMS32026_INTERNAL_MEMORY_BLOCKS_WRITE },
-MEMORY_END
+static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
+	/* only internal RAM */
+ADDRESS_MAP_END
 
-static PORT_READ16_START( DSP_readport )
-	{ TMS32025_PORT_RANGE (0x02, 0x02), dsp_cmd_r },
-	{ TMS32025_PORT_RANGE (0x04, 0x04), dsp_rom_r },
-	{ TMS32025_PORT_RANGE (0x05, 0x05), input_port_0_word_r },
-	{ TMS32025_PORT_RANGE (0x07, 0x07), input_port_1_word_r },
-	{ TMS32025_PORT_RANGE( TMS32025_BIO,  TMS32025_BIO ),  dsp_bio_line_r },
-	{ TMS32025_PORT_RANGE( TMS32025_HOLD, TMS32025_HOLD ), dsp_hold_line_r },
-PORT_END
+static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
+	/* only internal RAM */
+ADDRESS_MAP_END
 
-static PORT_WRITE16_START( DSP_writeport )
-	{ TMS32025_PORT_RANGE (0x00, 0x01), dsp_romaddr_w },
-	{ TMS32025_PORT_RANGE (0x02, 0x02), dsp_answer_w },
-	{ TMS32025_PORT_RANGE (0x03, 0x03), dsp_dac_w },
-//	{ TMS32025_PORT_RANGE( TMS32025_HOLDA, TMS32025_HOLDA ), dsp_HOLDA_signal_w },
-PORT_END
+static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0x02, 0x02) AM_READ(dsp_cmd_r)
+	AM_RANGE(0x04, 0x04) AM_READ(dsp_rom_r)
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x07, 0x07) AM_READ(input_port_1_word_r)
+	AM_RANGE(TMS32025_BIO, TMS32025_BIO) AM_READ(dsp_bio_line_r)
+	AM_RANGE(TMS32025_HOLD, TMS32025_HOLD) AM_READ(dsp_hold_line_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(dsp_romaddr_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(dsp_answer_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(dsp_dac_w)
+//	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
+ADDRESS_MAP_END
 
 
 
@@ -591,11 +584,11 @@ MACHINE_DRIVER_START( amerdart )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(amerdart_readmem,amerdart_writemem)
+	MDRV_CPU_PROGRAM_MAP(amerdart_readmem,amerdart_writemem)
 
 #if 0
 	MDRV_CPU_ADD(TMS32010, 15000000/8)
-	MDRV_CPU_MEMORY(io_readmem,io_writemem)
+	MDRV_CPU_PROGRAM_MAP(io_readmem,io_writemem)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -621,12 +614,13 @@ static MACHINE_DRIVER_START( coolpool )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(coolpool_readmem,coolpool_writemem)
+	MDRV_CPU_PROGRAM_MAP(coolpool_readmem,coolpool_writemem)
 	MDRV_CPU_VBLANK_INT(coolpool_vblank_start,1)
 
-	MDRV_CPU_ADD(TMS32025,40000000)			/* 320C26 */
-	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
-	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
+	MDRV_CPU_ADD(TMS32026,40000000)
+	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
+	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
+	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
 
 	MDRV_MACHINE_INIT(coolpool)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -652,12 +646,13 @@ static MACHINE_DRIVER_START( 9ballsht )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(nballsht_readmem,nballsht_writemem)
+	MDRV_CPU_PROGRAM_MAP(nballsht_readmem,nballsht_writemem)
 	MDRV_CPU_VBLANK_INT(coolpool_vblank_start,1)
 
-	MDRV_CPU_ADD(TMS32025,40000000)			/* 320C26 */
-	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
-	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
+	MDRV_CPU_ADD(TMS32026,40000000)
+	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
+	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
+	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
 
 	MDRV_MACHINE_INIT(coolpool)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -705,8 +700,8 @@ ROM_START( amerdart )
 	ROM_LOAD16_BYTE( "u58",  0x080000, 0x10000, CRC(f1b3d7c4) SHA1(7b897230d110be7a5eb05eda927d00561ebb9ce3) )
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 32015 code (missing) */
-	ROM_LOAD16_BYTE( "dspl",         0x08000, 0x08000, NO_DUMP )
-	ROM_LOAD16_BYTE( "dsph",         0x08001, 0x08000, NO_DUMP )
+	ROM_LOAD16_BYTE( "dspl",         0x00000, 0x08000, NO_DUMP )
+	ROM_LOAD16_BYTE( "dsph",         0x00001, 0x08000, NO_DUMP )
 
 	ROM_REGION( 0x100000, REGION_USER2, 0 )				/* 32015 data? (incl. samples?) */
 	ROM_LOAD16_WORD( "u1",   0x000000, 0x10000, CRC(3f459482) SHA1(d9d489efd0d9217fceb3bf1a3b37a78d6823b4d9) )
@@ -753,8 +748,8 @@ ROM_START( coolpool )
 	ROM_CONTINUE(                    0x1c0001, 0x20000 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* TMS320C26 */
-	ROM_LOAD16_BYTE( "u34",          0x20000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
-	ROM_LOAD16_BYTE( "u35",          0x20001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
+	ROM_LOAD16_BYTE( "u34",          0x00000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
+	ROM_LOAD16_BYTE( "u35",          0x00001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
 
 	ROM_REGION( 0x200000, REGION_USER2, 0 )	/* TMS32026 data */
 	ROM_LOAD( "u17c",         0x000000, 0x40000, CRC(ea3cc41d) SHA1(e703e789dfbcfaec878a990031ce839164c51253) )
@@ -779,8 +774,8 @@ ROM_START( 9ballsht )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* TMS320C26 */
-	ROM_LOAD16_BYTE( "u34",          0x20000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
-	ROM_LOAD16_BYTE( "u35",          0x20001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
+	ROM_LOAD16_BYTE( "u34",          0x00000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
+	ROM_LOAD16_BYTE( "u35",          0x00001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
 
 	ROM_REGION( 0x100000, REGION_USER2, 0 )	/* TMS32026 data */
 	ROM_LOAD( "u54",          0x00000, 0x80000, CRC(1be5819c) SHA1(308b5b1fe05634419d03956ae1b2e5a61206900f) )
@@ -803,8 +798,8 @@ ROM_START( 9ballsh2 )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* TMS320C26 */
-	ROM_LOAD16_BYTE( "u34",          0x20000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
-	ROM_LOAD16_BYTE( "u35",          0x20001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
+	ROM_LOAD16_BYTE( "u34",          0x00000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
+	ROM_LOAD16_BYTE( "u35",          0x00001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
 
 	ROM_REGION( 0x100000, REGION_USER2, 0 )	/* TMS32026 data */
 	ROM_LOAD( "u54",          0x00000, 0x80000, CRC(1be5819c) SHA1(308b5b1fe05634419d03956ae1b2e5a61206900f) )
@@ -823,8 +818,8 @@ ROM_START( 9ballsh3 )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* TMS320C26 */
-	ROM_LOAD16_BYTE( "u34",          0x20000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
-	ROM_LOAD16_BYTE( "u35",          0x20001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
+	ROM_LOAD16_BYTE( "u34",          0x00000, 0x08000, CRC(dc1df70b) SHA1(e42fa7e34e50e0bd2aaeea5c55d750ed3286610d) )
+	ROM_LOAD16_BYTE( "u35",          0x00001, 0x08000, CRC(ac999431) SHA1(7e4c2dcaedcb7e7c67072a179e4b8488d2bbdac7) )
 
 	ROM_REGION( 0x100000, REGION_USER2, 0 )	/* TMS32026 data */
 	ROM_LOAD( "u54",          0x00000, 0x80000, CRC(1be5819c) SHA1(308b5b1fe05634419d03956ae1b2e5a61206900f) )

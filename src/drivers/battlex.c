@@ -57,43 +57,43 @@ extern VIDEO_UPDATE( battlex );
 
 /*** MEMORY & PORT READ / WRITE **********************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM }, /* not read? */
-	{ 0x9000, 0x91ff, MRA_RAM }, /* not read? */
-	{ 0xa000, 0xa3ff, MRA_RAM },
-	{ 0xe000, 0xe03f, MRA_RAM }, /* not read? */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM) /* not read? */
+	AM_RANGE(0x9000, 0x91ff) AM_READ(MRA8_RAM) /* not read? */
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe03f) AM_READ(MRA8_RAM) /* not read? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x8fff, battlex_videoram_w, &videoram },
-	{ 0x9000, 0x91ff, MWA_RAM, &spriteram },
-	{ 0xa000, 0xa3ff, MWA_RAM }, /* main */
-	{ 0xe000, 0xe03f, battlex_palette_w }, /* probably palette */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(battlex_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x9000, 0x91ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM) /* main */
+	AM_RANGE(0xe000, 0xe03f) AM_WRITE(battlex_palette_w) /* probably palette */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x10, 0x10, battlex_flipscreen_w },
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(battlex_flipscreen_w)
 	/* verify all of these */
-	{ 0x22, 0x22, AY8910_write_port_0_w },
-	{ 0x23, 0x23, AY8910_control_port_0_w },
+	AM_RANGE(0x22, 0x22) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x23, 0x23) AM_WRITE(AY8910_control_port_0_w)
 
 	/* 0x30 looks like scroll, but can't be ? changes (increases or decreases)
 		depending on the direction your ship is facing on lev 2. at least */
-	{ 0x30, 0x30, MWA_NOP },
+	AM_RANGE(0x30, 0x30) AM_WRITE(MWA8_NOP)
 
-	{ 0x32, 0x32, battlex_scroll_x_lsb_w },
-	{ 0x33, 0x33, battlex_scroll_x_msb_w },
-MEMORY_END
+	AM_RANGE(0x32, 0x32) AM_WRITE(battlex_scroll_x_lsb_w)
+	AM_RANGE(0x33, 0x33) AM_WRITE(battlex_scroll_x_msb_w)
+ADDRESS_MAP_END
 
 /*** INPUT PORTS *************************************************************/
 
@@ -221,8 +221,8 @@ static MACHINE_DRIVER_START( battlex )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10000000/2 )		 /* 10 MHz, divided ? (Z80A CPU) */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,8) /* controls game speed? */
 
 	MDRV_FRAMES_PER_SECOND(56) /* The video syncs at 15.8k H and 56 V (www.klov.com) */

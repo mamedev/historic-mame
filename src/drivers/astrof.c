@@ -56,34 +56,34 @@ WRITE_HANDLER( astrof_sample2_w );
 extern struct Samplesinterface astrof_samples_interface;
 extern struct Samplesinterface tomahawk_samples_interface;
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa001, 0xa001, input_port_1_r },	/* IN1 */
-	{ 0xa003, 0xa003, tomahawk_protection_r },   // Only on Tomahawk
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xa003, 0xa003) AM_READ(tomahawk_protection_r)   // Only on Tomahawk
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( astrof_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x5fff, astrof_videoram_w, &videoram, &videoram_size },
-	{ 0x8003, 0x8003, MWA_RAM, &astrof_color },
-	{ 0x8004, 0x8004, astrof_video_control1_w },
-	{ 0x8005, 0x8005, astrof_video_control2_w },
-	{ 0x8006, 0x8006, astrof_sample1_w },
-	{ 0x8007, 0x8007, astrof_sample2_w },
-MEMORY_END
+static ADDRESS_MAP_START( astrof_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(astrof_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_RAM) AM_BASE(&astrof_color)
+	AM_RANGE(0x8004, 0x8004) AM_WRITE(astrof_video_control1_w)
+	AM_RANGE(0x8005, 0x8005) AM_WRITE(astrof_video_control2_w)
+	AM_RANGE(0x8006, 0x8006) AM_WRITE(astrof_sample1_w)
+	AM_RANGE(0x8007, 0x8007) AM_WRITE(astrof_sample2_w)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tomahawk_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x5fff, tomahawk_videoram_w, &videoram, &videoram_size },
-	{ 0x8003, 0x8003, MWA_RAM, &astrof_color },
-	{ 0x8004, 0x8004, astrof_video_control1_w },
-	{ 0x8005, 0x8005, tomahawk_video_control2_w },
-	{ 0x8006, 0x8006, MWA_NOP },                        // Sound triggers
-	{ 0x8007, 0x8007, MWA_RAM, &tomahawk_protection },
-MEMORY_END
+static ADDRESS_MAP_START( tomahawk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(tomahawk_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_RAM) AM_BASE(&astrof_color)
+	AM_RANGE(0x8004, 0x8004) AM_WRITE(astrof_video_control1_w)
+	AM_RANGE(0x8005, 0x8005) AM_WRITE(tomahawk_video_control2_w)
+	AM_RANGE(0x8006, 0x8006) AM_WRITE(MWA8_NOP)                        // Sound triggers
+	AM_RANGE(0x8007, 0x8007) AM_WRITE(MWA8_RAM) AM_BASE(&tomahawk_protection)
+ADDRESS_MAP_END
 
 
 
@@ -209,7 +209,7 @@ static MACHINE_DRIVER_START( astrof )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 10595000/16)	/* 0.66 MHz */
-	MDRV_CPU_MEMORY(readmem,astrof_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,astrof_writemem)
 	MDRV_CPU_VBLANK_INT(astrof_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -235,7 +235,7 @@ static MACHINE_DRIVER_START( tomahawk )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(astrof)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,tomahawk_writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,tomahawk_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32)

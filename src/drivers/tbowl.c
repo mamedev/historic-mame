@@ -94,50 +94,50 @@ static WRITE_HANDLER( tbowl_sound_command_w )
 
 /* Board B */
 
-static MEMORY_READ_START( readmem_6206B )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_RAM }, /* RAM 1 */
-	{ 0xa000, 0xbfff, MRA_RAM }, /* RAM 1 */
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf7ff, MRA_BANK1 }, /* Banked ROM */
-	{ 0xf800, 0xfbff, shared_r }, /* RAM 2 */
-	{ 0xfc00, 0xfc00, input_port_0_r }, // Player 1 inputs
-	{ 0xfc01, 0xfc01, input_port_1_r }, // Player 2 inputs
-	{ 0xfc02, 0xfc02, input_port_2_r }, // Player 3 inputs
-	{ 0xfc03, 0xfc03, input_port_3_r }, // Player 4 inputs
-//	{ 0xfc06, 0xfc06, dummy_r }, // Read During NMI
-	{ 0xfc07, 0xfc07, input_port_4_r }, // System inputs
-	{ 0xfc08, 0xfc08, input_port_5_r }, // DSW1
-	{ 0xfc09, 0xfc09, input_port_6_r }, // DSW2
-	{ 0xfc0a, 0xfc0a, input_port_7_r }, // DSW3
-MEMORY_END
+static ADDRESS_MAP_START( readmem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM) /* RAM 1 */
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_RAM) /* RAM 1 */
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_BANK1) /* Banked ROM */
+	AM_RANGE(0xf800, 0xfbff) AM_READ(shared_r) /* RAM 2 */
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(input_port_0_r) // Player 1 inputs
+	AM_RANGE(0xfc01, 0xfc01) AM_READ(input_port_1_r) // Player 2 inputs
+	AM_RANGE(0xfc02, 0xfc02) AM_READ(input_port_2_r) // Player 3 inputs
+	AM_RANGE(0xfc03, 0xfc03) AM_READ(input_port_3_r) // Player 4 inputs
+//	AM_RANGE(0xfc06, 0xfc06) AM_READ(dummy_r) // Read During NMI
+	AM_RANGE(0xfc07, 0xfc07) AM_READ(input_port_4_r) // System inputs
+	AM_RANGE(0xfc08, 0xfc08) AM_READ(input_port_5_r) // DSW1
+	AM_RANGE(0xfc09, 0xfc09) AM_READ(input_port_6_r) // DSW2
+	AM_RANGE(0xfc0a, 0xfc0a) AM_READ(input_port_7_r) // DSW3
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_6206B )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xbfff, tbowl_bg2videoram_w, &tbowl_bg2videoram },
-	{ 0xc000, 0xdfff, tbowl_bgvideoram_w, &tbowl_bgvideoram },
-	{ 0xe000, 0xefff, tbowl_txvideoram_w, &tbowl_txvideoram },
-//	{ 0xf000, 0xf000, unknown_write },* written during start-up, not again */
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xfbff, shared_w, &shared_ram }, /* check */
-	{ 0xfc00, 0xfc00, tbowlb_bankswitch_w },
-//	{ 0xfc01, 0xfc01, unknown_write }, /* written during start-up, not again */
-//	{ 0xfc02, 0xfc02, unknown_write }, /* written during start-up, not again */
-	{ 0xfc0d, 0xfc0d, tbowl_sound_command_w }, /* not sure, used quite a bit */
-//	{ 0xfc05, 0xfc05, unknown_write }, /* no idea */
-//	{ 0xfc08, 0xfc08, unknown_write }, /* hardly uesd .. */
-//	{ 0xfc0a, 0xfc0a, unknown_write }, /* hardly uesd .. */
-	{ 0xfc10, 0xfc10, tbowl_bg2xscroll_lo },
-	{ 0xfc11, 0xfc11, tbowl_bg2xscroll_hi },
-	{ 0xfc12, 0xfc12, tbowl_bg2yscroll_lo },
-	{ 0xfc13, 0xfc13, tbowl_bg2yscroll_hi },
-	{ 0xfc14, 0xfc14, tbowl_bgxscroll_lo },
-	{ 0xfc15, 0xfc15, tbowl_bgxscroll_hi },
-	{ 0xfc16, 0xfc16, tbowl_bgyscroll_lo },
-	{ 0xfc17, 0xfc17, tbowl_bgyscroll_hi },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(tbowl_bg2videoram_w) AM_BASE(&tbowl_bg2videoram)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(tbowl_bgvideoram_w) AM_BASE(&tbowl_bgvideoram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tbowl_txvideoram_w) AM_BASE(&tbowl_txvideoram)
+//	AM_RANGE(0xf000, 0xf000) AM_WRITE(unknown_write)* written during start-up, not again */
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(shared_w) AM_BASE(&shared_ram) /* check */
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(tbowlb_bankswitch_w)
+//	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(unknown_write) /* written during start-up, not again */
+//	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(unknown_write) /* written during start-up, not again */
+	AM_RANGE(0xfc0d, 0xfc0d) AM_WRITE(tbowl_sound_command_w) /* not sure, used quite a bit */
+//	AM_RANGE(0xfc05, 0xfc05) AM_WRITE(unknown_write) /* no idea */
+//	AM_RANGE(0xfc08, 0xfc08) AM_WRITE(unknown_write) /* hardly uesd .. */
+//	AM_RANGE(0xfc0a, 0xfc0a) AM_WRITE(unknown_write) /* hardly uesd .. */
+	AM_RANGE(0xfc10, 0xfc10) AM_WRITE(tbowl_bg2xscroll_lo)
+	AM_RANGE(0xfc11, 0xfc11) AM_WRITE(tbowl_bg2xscroll_hi)
+	AM_RANGE(0xfc12, 0xfc12) AM_WRITE(tbowl_bg2yscroll_lo)
+	AM_RANGE(0xfc13, 0xfc13) AM_WRITE(tbowl_bg2yscroll_hi)
+	AM_RANGE(0xfc14, 0xfc14) AM_WRITE(tbowl_bgxscroll_lo)
+	AM_RANGE(0xfc15, 0xfc15) AM_WRITE(tbowl_bgxscroll_hi)
+	AM_RANGE(0xfc16, 0xfc16) AM_WRITE(tbowl_bgyscroll_lo)
+	AM_RANGE(0xfc17, 0xfc17) AM_WRITE(tbowl_bgyscroll_hi)
+ADDRESS_MAP_END
 
 /* Board C */
 static WRITE_HANDLER ( tbowl_trigger_nmi )
@@ -146,54 +146,54 @@ static WRITE_HANDLER ( tbowl_trigger_nmi )
 	cpu_set_nmi_line(0, PULSE_LINE);
 }
 
-static MEMORY_READ_START( readmem_6206C )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM }, /* not read? */
-	{ 0xf000, 0xf7ff, MRA_BANK2 }, /* Banked ROM */
-	{ 0xf800, 0xfbff, shared_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_6206C, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) /* not read? */
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_BANK2) /* Banked ROM */
+	AM_RANGE(0xf800, 0xfbff) AM_READ(shared_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_6206C )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xd7ff, MWA_RAM },
-	{ 0xd800, 0xdfff, MWA_RAM, &tbowl_spriteram },
-	{ 0xe000, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram }, // 2x palettes, one for each monitor?
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xfbff, shared_w },
-	{ 0xfc00, 0xfc00, tbowlc_bankswitch_w },
-	{ 0xfc01, 0xfc01, MWA_NOP }, /* ? */
-	{ 0xfc02, 0xfc02, tbowl_trigger_nmi }, /* ? */
-	{ 0xfc03, 0xfc03, MWA_NOP }, /* ? */
-	{ 0xfc06, 0xfc06, MWA_NOP }, /* ? */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_6206C, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xd7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&tbowl_spriteram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_swap_w) AM_BASE(&paletteram) // 2x palettes, one for each monitor?
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(shared_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(tbowlc_bankswitch_w)
+	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(tbowl_trigger_nmi) /* ? */
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xfc06, 0xfc06) AM_WRITE(MWA8_NOP) /* ? */
+ADDRESS_MAP_END
 
 /* Board A */
 
-static MEMORY_READ_START( readmem_6206A )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe010, 0xe010, soundlatch_r },
+static ADDRESS_MAP_START( readmem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe010, 0xe010) AM_READ(soundlatch_r)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_6206A )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd000, YM3812_control_port_0_w },
-	{ 0xd001, 0xd001, YM3812_write_port_0_w },
-	{ 0xd800, 0xd800, YM3812_control_port_1_w },
-	{ 0xd801, 0xd801, YM3812_write_port_1_w },
-//	{ 0xe000, 0xe000, unknown_write },
-//	{ 0xe001, 0xe001, unknown_write },
-//	{ 0xe002, 0xe002, unknown_write },
-//	{ 0xe003, 0xe003, unknown_write },
-//	{ 0xe004, 0xe004, unknown_write },
-//	{ 0xe005, 0xe005, unknown_write },
-//	{ 0xe006, 0xe006, unknown_write },
-//	{ 0xe007, 0xe007, unknown_write },
+static ADDRESS_MAP_START( writemem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(YM3812_control_port_1_w)
+	AM_RANGE(0xd801, 0xd801) AM_WRITE(YM3812_write_port_1_w)
+//	AM_RANGE(0xe000, 0xe000) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe001, 0xe001) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe002, 0xe002) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe003, 0xe003) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe004, 0xe004) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe005, 0xe005) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe006, 0xe006) AM_WRITE(unknown_write)
+//	AM_RANGE(0xe007, 0xe007) AM_WRITE(unknown_write)
 /* rest of sound is probably similar to tecmo.c */
-MEMORY_END
+ADDRESS_MAP_END
 
 /*** Input Ports
 
@@ -546,18 +546,18 @@ static MACHINE_DRIVER_START( tbowl )
 
 	/* CPU on Board '6206B' */
 	MDRV_CPU_ADD(Z80, 8000000) /* NEC D70008AC-8 (Z80 Clone) */
-	MDRV_CPU_MEMORY(readmem_6206B,writemem_6206B)
+	MDRV_CPU_PROGRAM_MAP(readmem_6206B,writemem_6206B)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	/* CPU on Board '6206C' */
 	MDRV_CPU_ADD(Z80, 8000000) /* NEC D70008AC-8 (Z80 Clone) */
-	MDRV_CPU_MEMORY(readmem_6206C,writemem_6206C)
+	MDRV_CPU_PROGRAM_MAP(readmem_6206C,writemem_6206C)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	/* CPU on Board '6206A' */
 	MDRV_CPU_ADD(Z80, 4000000) /* Actual Z80 */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_6206A,writemem_6206A)
+	MDRV_CPU_PROGRAM_MAP(readmem_6206A,writemem_6206A)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -29,359 +29,359 @@ Notes:
 
 
 
-static MEMORY_READ_START( scramble_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x7800, 0x7800, watchdog_reset_r },
-	{ 0x8100, 0x8103, ppi8255_0_r },
-	{ 0x8110, 0x8113, ppi8255_0_r },  /* mirror for Frog */
-	{ 0x8200, 0x8203, ppi8255_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( scramble_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)	/* mirror */
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x7800, 0x7800) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8100, 0x8103) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x8110, 0x8113) AM_READ(ppi8255_0_r)  /* mirror for Frog */
+	AM_RANGE(0x8200, 0x8203) AM_READ(ppi8255_1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( scramble_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x6802, 0x6802, galaxian_coin_counter_w },
-	{ 0x6804, 0x6804, galaxian_stars_enable_w },
-	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
-	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
-	{ 0x8100, 0x8103, ppi8255_0_w },
-	{ 0x8200, 0x8203, ppi8255_1_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( explorer_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x5100, 0x51ff, MRA_NOP },	/* test mode mirror? */
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x8000, 0x8000, input_port_0_r },
-	{ 0x8001, 0x8001, input_port_1_r },
-	{ 0x8002, 0x8002, input_port_2_r },
-	{ 0x8003, 0x8003, input_port_3_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( explorer_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x5100, 0x51ff, MWA_NOP },	/* test mode mirror? */
-	{ 0x6800, 0x6800, MWA_NOP },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x6802, 0x6802, galaxian_coin_counter_w },
-	{ 0x6803, 0x6803, MWA_NOP },
-	{ 0x6804, 0x6804, galaxian_stars_enable_w },
-	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
-	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
-	{ 0x7000, 0x7000, MWA_NOP },
-	{ 0x8000, 0x8000, soundlatch_w },
-	{ 0x9000, 0x9000, explorer_sh_irqtrigger_w },
-MEMORY_END
+static ADDRESS_MAP_START( scramble_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(galaxian_videoram_w)	/* mirror address */
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0x6804, 0x6804) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x8100, 0x8103) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x8200, 0x8203) AM_WRITE(ppi8255_1_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( ckongs_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x6bff, MRA_RAM },
-	{ 0x7000, 0x7003, ppi8255_0_r },
-	{ 0x7800, 0x7803, ppi8255_1_r },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x98ff, MRA_RAM },
-	{ 0xb000, 0xb000, watchdog_reset_r },
-MEMORY_END
+static ADDRESS_MAP_START( explorer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)	/* mirror */
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5100, 0x51ff) AM_READ(MRA8_NOP)	/* test mode mirror? */
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_0_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(input_port_1_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(input_port_2_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ckongs_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x6bff, MWA_RAM },
-	{ 0x7000, 0x7003, ppi8255_0_w },
-	{ 0x7800, 0x7803, ppi8255_1_w },
-	{ 0x9000, 0x93ff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x9800, 0x983f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x9880, 0x98ff, MWA_RAM },
-	{ 0xa801, 0xa801, galaxian_nmi_enable_w },
-	{ 0xa802, 0xa802, galaxian_coin_counter_w },
-	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
-	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( mars_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x7000, 0x7000, MRA_NOP },
-	{ 0x8100, 0x810f, mars_ppi8255_0_r },
-	{ 0x8200, 0x820f, mars_ppi8255_1_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( mars_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
-	{ 0x6801, 0x6801, galaxian_stars_enable_w },
-	{ 0x6802, 0x6802, galaxian_nmi_enable_w },
-	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
-	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
-	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
-	{ 0x8100, 0x810f, mars_ppi8255_0_w },
-	{ 0x8200, 0x820f, mars_ppi8255_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( explorer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(galaxian_videoram_w)	/* mirror address */
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5100, 0x51ff) AM_WRITE(MWA8_NOP)	/* test mode mirror? */
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0x6803, 0x6803) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x6804, 0x6804) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(explorer_sh_irqtrigger_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( newsin7_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x8200, 0x820f, mars_ppi8255_1_r },
-	{ 0xa000, 0xafff, MRA_ROM },
-	{ 0xc100, 0xc10f, mars_ppi8255_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( ckongs_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x6bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7003) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x7800, 0x7803) AM_READ(ppi8255_1_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x98ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( newsin7_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
-	{ 0x6801, 0x6801, galaxian_stars_enable_w },
-	{ 0x6802, 0x6802, galaxian_nmi_enable_w },
-	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
-	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
-	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
-	{ 0x8200, 0x820f, mars_ppi8255_1_w },
-	{ 0xa000, 0xafff, MWA_ROM },
-	{ 0xc100, 0xc10f, mars_ppi8255_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( ckongs_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7000, 0x7003) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x7800, 0x7803) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x9800, 0x983f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x9840, 0x985f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x9860, 0x987f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x9880, 0x98ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa801, 0xa801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0xa802, 0xa802) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0xa806, 0xa806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0xa807, 0xa807) AM_WRITE(galaxian_flip_screen_y_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( mrkougar_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, galaxian_coin_counter_1_w },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x6808, 0x6808, galaxian_coin_counter_0_w },
-	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
-	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
-	{ 0x8100, 0x810f, mars_ppi8255_0_w },
-	{ 0x8200, 0x820f, mars_ppi8255_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( mars_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(MRA8_NOP)
+	AM_RANGE(0x8100, 0x810f) AM_READ(mars_ppi8255_0_r)
+	AM_RANGE(0x8200, 0x820f) AM_READ(mars_ppi8255_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mars_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6808, 0x6808) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0x6809, 0x6809) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x680b, 0x680b) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x8100, 0x810f) AM_WRITE(mars_ppi8255_0_w)
+	AM_RANGE(0x8200, 0x820f) AM_WRITE(mars_ppi8255_1_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( hotshock_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x8000, 0x8000, input_port_0_r },
-	{ 0x8001, 0x8001, input_port_1_r },
-	{ 0x8002, 0x8002, input_port_2_r },
-	{ 0x8003, 0x8003, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( newsin7_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8200, 0x820f) AM_READ(mars_ppi8255_1_r)
+	AM_RANGE(0xa000, 0xafff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc100, 0xc10f) AM_READ(mars_ppi8255_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( hotshock_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6000, 0x6000, galaxian_coin_counter_2_w },
-	{ 0x6002, 0x6002, galaxian_coin_counter_1_w },
-	{ 0x6004, 0x6004, hotshock_flip_screen_w },
-	{ 0x6005, 0x6005, galaxian_coin_counter_0_w },
-	{ 0x6006, 0x6006, galaxian_gfxbank_w },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x7000, 0x7000, watchdog_reset_w },
-	{ 0x8000, 0x8000, soundlatch_w },
-	{ 0x9000, 0x9000, hotshock_sh_irqtrigger_w },
-MEMORY_END
-
-
-static MEMORY_READ_START( hunchbks_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x1210, 0x1213, ppi8255_1_r },
-	{ 0x1400, 0x14ff, MRA_RAM },
-	{ 0x1500, 0x1503, ppi8255_0_r },
-	{ 0x1680, 0x1680, watchdog_reset_r },
-	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x3000, 0x3fff, hunchbks_mirror_r },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x5000, 0x5fff, hunchbks_mirror_r },
-	{ 0x6000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x7fff, hunchbks_mirror_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( hunchbks_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x1210, 0x1213, ppi8255_1_w },
-	{ 0x1400, 0x143f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x1440, 0x145f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x1460, 0x147f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x1480, 0x14ff, MWA_RAM },
-	{ 0x1500, 0x1503, ppi8255_0_w },
-	{ 0x1606, 0x1606, galaxian_flip_screen_x_w },
-	{ 0x1607, 0x1607, galaxian_flip_screen_y_w },
-	{ 0x1800, 0x1bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x1c00, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x3fff, hunchbks_mirror_w },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x5000, 0x5fff, hunchbks_mirror_w },
-	{ 0x6000, 0x6fff, MWA_ROM },
-	{ 0x7000, 0x7fff, hunchbks_mirror_w },
-MEMORY_END
+static ADDRESS_MAP_START( newsin7_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6808, 0x6808) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0x6809, 0x6809) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x680b, 0x680b) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x8200, 0x820f) AM_WRITE(mars_ppi8255_1_w)
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc100, 0xc10f) AM_WRITE(mars_ppi8255_0_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sfx_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x7000, 0x7fff, MRA_ROM },
-	{ 0x8100, 0x8103, ppi8255_0_r },
-	{ 0x8200, 0x8203, ppi8255_1_r },
-	{ 0xc000, 0xefff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( sfx_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6800, 0x6800, scramble_background_red_w },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x6802, 0x6802, galaxian_coin_counter_w },
-	{ 0x6803, 0x6803, scramble_background_blue_w },
-	{ 0x6804, 0x6804, galaxian_stars_enable_w },
-	{ 0x6805, 0x6805, scramble_background_green_w },
-	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
-	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
-	{ 0x7000, 0x7fff, MWA_ROM },
-	{ 0x8100, 0x8103, ppi8255_0_w },
-	{ 0x8200, 0x8203, ppi8255_1_w },
-	{ 0xc000, 0xefff, MWA_ROM },
-MEMORY_END
-
-static MEMORY_READ_START( sfx_sample_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( sfx_sample_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-MEMORY_END
-
-static PORT_READ_START( sfx_sample_readport )
-	{ 0x04, 0x07, ppi8255_2_r },
-MEMORY_END
-
-static PORT_WRITE_START( sfx_sample_writeport )
-	{ 0x04, 0x07, ppi8255_2_w },
-	{ 0x10, 0x10, DAC_0_signed_data_w },
-MEMORY_END
+static ADDRESS_MAP_START( mrkougar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(galaxian_videoram_w)	/* mirror address */
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6808, 0x6808) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0x6809, 0x6809) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x680b, 0x680b) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x8100, 0x810f) AM_WRITE(mars_ppi8255_0_w)
+	AM_RANGE(0x8200, 0x820f) AM_WRITE(mars_ppi8255_1_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( mimonscr_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, galaxian_videoram_r },	/* mirror address?, probably not */
-	{ 0x4400, 0x4bff, MRA_RAM },
-	{ 0x5000, 0x50ff, MRA_RAM },
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x8100, 0x8103, ppi8255_0_r },
-	{ 0x8200, 0x8203, ppi8255_1_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( hotshock_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_0_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(input_port_1_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(input_port_2_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mimonscr_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, galaxian_videoram_w },	/* mirror address?, probably not */
-	{ 0x4400, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
-	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x5080, 0x50ff, MWA_RAM },
-	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
-	{ 0x6800, 0x6802, galaxian_gfxbank_w },
-	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
-	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
-	{ 0x8100, 0x8103, ppi8255_0_w },
-	{ 0x8200, 0x8203, ppi8255_1_w },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
-
-
-static PORT_READ_START( triplep_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x02, 0x02, triplep_pip_r },
-	{ 0x03, 0x03, triplep_pap_r },
-PORT_END
-
-static PORT_WRITE_START( triplep_writeport )
-	{ 0x00, 0x00, AY8910_write_port_0_w },
-	{ 0x01, 0x01, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( hotshock_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(galaxian_coin_counter_2_w)
+	AM_RANGE(0x6002, 0x6002) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0x6004, 0x6004) AM_WRITE(hotshock_flip_screen_w)
+	AM_RANGE(0x6005, 0x6005) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0x6006, 0x6006) AM_WRITE(galaxian_gfxbank_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(hotshock_sh_irqtrigger_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( hotshock_sound_readport )
-	{ 0x20, 0x20, AY8910_read_port_0_r },
-	{ 0x40, 0x40, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( hunchbks_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1210, 0x1213) AM_READ(ppi8255_1_r)
+	AM_RANGE(0x1400, 0x14ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1500, 0x1503) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x1680, 0x1680) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(hunchbks_mirror_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(hunchbks_mirror_r)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(hunchbks_mirror_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( hotshock_sound_writeport )
-	{ 0x10, 0x10, AY8910_control_port_0_w },
-	{ 0x20, 0x20, AY8910_write_port_0_w },
-	{ 0x40, 0x40, AY8910_write_port_1_w },
-	{ 0x80, 0x80, AY8910_control_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( hunchbks_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1210, 0x1213) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0x1400, 0x143f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x1440, 0x145f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x1460, 0x147f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x1480, 0x14ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1500, 0x1503) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x1606, 0x1606) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x1607, 0x1607) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(hunchbks_mirror_w)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(hunchbks_mirror_w)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(hunchbks_mirror_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( hunchbks_readport )
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( sfx_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(galaxian_videoram_r)	/* mirror */
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8100, 0x8103) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x8200, 0x8203) AM_READ(ppi8255_1_r)
+	AM_RANGE(0xc000, 0xefff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sfx_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(galaxian_videoram_w)	/* mirror address */
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(scramble_background_red_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0x6803, 0x6803) AM_WRITE(scramble_background_blue_w)
+	AM_RANGE(0x6804, 0x6804) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6805, 0x6805) AM_WRITE(scramble_background_green_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8100, 0x8103) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x8200, 0x8203) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xc000, 0xefff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sfx_sample_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sfx_sample_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sfx_sample_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x07) AM_READ(ppi8255_2_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sfx_sample_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x07) AM_WRITE(ppi8255_2_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(DAC_0_signed_data_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( mimonscr_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(galaxian_videoram_r)	/* mirror address?, probably not */
+	AM_RANGE(0x4400, 0x4bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x50ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8100, 0x8103) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x8200, 0x8203) AM_READ(ppi8255_1_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mimonscr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(galaxian_videoram_w)	/* mirror address?, probably not */
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x5080, 0x50ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6800, 0x6802) AM_WRITE(galaxian_gfxbank_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x8100, 0x8103) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x8200, 0x8203) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( triplep_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(triplep_pip_r)
+	AM_RANGE(0x03, 0x03) AM_READ(triplep_pap_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( triplep_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hotshock_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hotshock_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_1_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hunchbks_readport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
 
@@ -514,6 +514,46 @@ INPUT_PORTS_START( explorer )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( strfbomb )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1/2  B 4/1  C 1/2" )
+	PORT_DIPSETTING(    0x02, "A 1/3  B 2/1  C 1/3" )
+	PORT_DIPSETTING(    0x04, "A 1/4  B 3/1  C 1/4" )
+	PORT_DIPSETTING(    0x06, "A 1/5  B 1/1  C 1/5" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	/* protection bit */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* protection bit */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atlantis )
@@ -1353,12 +1393,12 @@ static MACHINE_DRIVER_START( scramble )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galaxian_base)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(scramble_readmem,scramble_writemem)
+	MDRV_CPU_PROGRAM_MAP(scramble_readmem,scramble_writemem)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, 14318000/8)	/* 1.78975 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
 	MDRV_MACHINE_INIT(scramble)
 
@@ -1377,7 +1417,7 @@ static MACHINE_DRIVER_START( explorer )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(explorer_readmem,explorer_writemem)
+	MDRV_CPU_PROGRAM_MAP(explorer_readmem,explorer_writemem)
 
 	MDRV_MACHINE_INIT(explorer)
 
@@ -1402,8 +1442,8 @@ static MACHINE_DRIVER_START( froggers )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("audio")
-	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
-	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
+	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
 
 	/* video hardware */
 	MDRV_PALETTE_INIT(frogger)
@@ -1418,7 +1458,7 @@ static MACHINE_DRIVER_START( mars )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mars_readmem,mars_writemem)
+	MDRV_CPU_PROGRAM_MAP(mars_readmem,mars_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -1430,7 +1470,7 @@ static MACHINE_DRIVER_START( devilfsh )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mars_readmem,mars_writemem)
+	MDRV_CPU_PROGRAM_MAP(mars_readmem,mars_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(devilfsh_gfxdecodeinfo)
@@ -1443,7 +1483,7 @@ static MACHINE_DRIVER_START( newsin7 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(newsin7_readmem,newsin7_writemem)
+	MDRV_CPU_PROGRAM_MAP(newsin7_readmem,newsin7_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(newsin7_gfxdecodeinfo)
@@ -1457,7 +1497,7 @@ static MACHINE_DRIVER_START( mrkougar )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mars_readmem,mrkougar_writemem)
+	MDRV_CPU_PROGRAM_MAP(mars_readmem,mrkougar_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(mrkougar_gfxdecodeinfo)
@@ -1470,7 +1510,7 @@ static MACHINE_DRIVER_START( mrkougb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mars_readmem,mrkougar_writemem)
+	MDRV_CPU_PROGRAM_MAP(mars_readmem,mrkougar_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -1482,7 +1522,7 @@ static MACHINE_DRIVER_START( ckongs )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(ckongs_readmem,ckongs_writemem)
+	MDRV_CPU_PROGRAM_MAP(ckongs_readmem,ckongs_writemem)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -1495,10 +1535,10 @@ static MACHINE_DRIVER_START( hotshock )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(hotshock_readmem,hotshock_writemem)
+	MDRV_CPU_PROGRAM_MAP(hotshock_readmem,hotshock_writemem)
 
 	MDRV_CPU_MODIFY("audio")
-	MDRV_CPU_PORTS(hotshock_sound_readport,hotshock_sound_writeport)
+	MDRV_CPU_IO_MAP(hotshock_sound_readport,hotshock_sound_writeport)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -1522,12 +1562,12 @@ static MACHINE_DRIVER_START( sfx )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(sfx_readmem,sfx_writemem)
+	MDRV_CPU_PROGRAM_MAP(sfx_readmem,sfx_writemem)
 
 	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sfx_sample_readmem,sfx_sample_writemem)
-	MDRV_CPU_PORTS(sfx_sample_readport,sfx_sample_writeport)
+	MDRV_CPU_PROGRAM_MAP(sfx_sample_readmem,sfx_sample_writemem)
+	MDRV_CPU_IO_MAP(sfx_sample_readport,sfx_sample_writeport)
 
 	MDRV_MACHINE_INIT(sfx)
 
@@ -1548,7 +1588,7 @@ static MACHINE_DRIVER_START( mimonscr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mimonscr_readmem,mimonscr_writemem)
+	MDRV_CPU_PROGRAM_MAP(mimonscr_readmem,mimonscr_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_START(mimonkey)
@@ -1560,7 +1600,7 @@ static MACHINE_DRIVER_START( triplep )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(triplep_readport,triplep_writeport)
+	MDRV_CPU_IO_MAP(triplep_readport,triplep_writeport)
 
 	MDRV_CPU_REMOVE("audio")
 
@@ -1591,8 +1631,8 @@ static MACHINE_DRIVER_START( hunchbks )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_REPLACE("main", S2650, 18432000/6)
-	MDRV_CPU_MEMORY(hunchbks_readmem,hunchbks_writemem)
-	MDRV_CPU_PORTS(hunchbks_readport,0)
+	MDRV_CPU_PROGRAM_MAP(hunchbks_readmem,hunchbks_writemem)
+	MDRV_CPU_IO_MAP(hunchbks_readport,0)
 	MDRV_CPU_VBLANK_INT(hunchbks_vh_interrupt,1)
 
 	MDRV_VBLANK_DURATION(2500)
@@ -1672,6 +1712,30 @@ ROM_START( explorer )
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "5f.k",         0x0000, 0x0800, CRC(4708845b) SHA1(a8b1ad19a95a9d35050a2ab7194cc96fc5afcdc9) )
 	ROM_LOAD( "5h.k",         0x0800, 0x0800, CRC(11fd2887) SHA1(69844e48bb4d372cac7ae83c953df573c7ecbb7f) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
+ROM_START( strfbomb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1.2c",         0x0000, 0x0800, CRC(b102aaa0) SHA1(00560da7a2ded6afcdc1d46e12cc3c795654639a) )
+	ROM_LOAD( "2.2e",         0x0800, 0x0800, CRC(d4155703) SHA1(defd37df55536890456c29812340e0d6b4292b78) )
+	ROM_LOAD( "3.2f",         0x1000, 0x0800, CRC(a9568c89) SHA1(0d8e6b3af92e4933814700d54acfd43407f3ede1) )
+	ROM_LOAD( "4.2h",         0x1800, 0x0800, CRC(663b6c35) SHA1(354fb2e92f4376b20aee412ed361d59b8a2c01e1) )
+	ROM_LOAD( "5.2j",         0x2000, 0x0800, CRC(4919a91c) SHA1(9cb5861c61e4783e5fbaa3869d51195f127b1129) )
+	ROM_LOAD( "6.2l",         0x2800, 0x0800, CRC(4ec66ae3) SHA1(a74827e161212e9b2eddd980321507a377f1e30b) )
+	ROM_LOAD( "7.2m",         0x3000, 0x0800, CRC(0feb0192) SHA1(45a44bde3bf1483abf95fe1d1d5066bfcb1736df) )
+	ROM_LOAD( "8.2p",         0x3800, 0x0800, CRC(280a6142) SHA1(f17625b91eaaffa36a433be32e4e80651d94b3b9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, CRC(bcd297f0) SHA1(8ed78487d76fd0a917ab7b258937a46e2cd9800c) )
+	ROM_LOAD( "5d",           0x0800, 0x0800, CRC(de7912da) SHA1(8558b4eff5d7e63029b325edef9914feda5834c3) )
+	ROM_LOAD( "5e",           0x1000, 0x0800, CRC(ba2fa933) SHA1(1f976d8595706730e29f93027e7ab4620075c078) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "9.5f",         0x0000, 0x0800, CRC(3abeff25) SHA1(ff6de0596c849ec877fb759c1ab9c7a8ffe2edac) )
+	ROM_LOAD( "10.5h",        0x0800, 0x0800, CRC(79ecacbe) SHA1(285cb3ee0ff8d596877bb571ea8479566ab36eb9) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
@@ -2150,6 +2214,7 @@ ROM_END
 GAME( 1981, scramble, 0,        scramble, scramble, scramble,     ROT90, "Konami", "Scramble" )
 GAME( 1981, scrambls, scramble, scramble, scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
 GAME( 1981, explorer, scramble, explorer, explorer, 0,		      ROT90, "bootleg", "Explorer" )
+GAME( 1981, strfbomb, scramble, scramble, strfbomb, scramble,     ROT90, "Omni", "Strafe Bomb" )
 GAME( 1981, atlantis, 0,        scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 1)" )
 GAME( 1981, atlants2, atlantis, scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 2)" )
 GAME( 1980, theend,   0,        theend,   theend,   theend,       ROT90, "Konami", "The End" )

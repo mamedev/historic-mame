@@ -19,29 +19,29 @@ WRITE_HANDLER( cheekyms_port_40_w );
 WRITE_HANDLER( cheekyms_port_80_w );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM},
-	{ 0x3000, 0x33ff, MRA_RAM},
-	{ 0x3800, 0x3bff, MRA_RAM},	/* screen RAM */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA8_RAM)	/* screen RAM */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x33ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x20, 0x3f, cheekyms_sprite_w },
-	{ 0x40, 0x40, cheekyms_port_40_w },
-	{ 0x80, 0x80, cheekyms_port_80_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x3f) AM_WRITE(cheekyms_sprite_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(cheekyms_port_40_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(cheekyms_port_80_w)
+ADDRESS_MAP_END
 
 
 static INTERRUPT_GEN( cheekyms_interrupt )
@@ -142,8 +142,8 @@ static MACHINE_DRIVER_START( cheekyms )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,5000000/2)  /* 2.5 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(cheekyms_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -59,57 +59,57 @@ static WRITE_HANDLER( irqack_w )
 
 
 
-static MEMORY_READ_START( zero_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3000, 0x37ff, MRA_RAM },
-	{ 0x4800, 0x4800, input_port_0_r }, /* IN0 */
-	{ 0x4801, 0x4801, input_port_1_r }, /* IN1 */
-	{ 0x4802, 0x4802, input_port_2_r }, /* DSW0 */
-	{ 0x4803, 0x4803, input_port_3_r }, /* DSW1 */
-	{ 0x4000, 0x43ff, MRA_RAM },  /* video RAM */
-MEMORY_END
+static ADDRESS_MAP_START( zero_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0x4801, 0x4801) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0x4802, 0x4802) AM_READ(input_port_2_r) /* DSW0 */
+	AM_RANGE(0x4803, 0x4803) AM_READ(input_port_3_r) /* DSW1 */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)  /* video RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( zero_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x3bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
-	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
-	{ 0x5800, 0x5800, redclash_star0_w },
-	{ 0x5801, 0x5804, MWA_NOP },	/* to sound board */
-	{ 0x5805, 0x5805, redclash_star1_w },
-	{ 0x5806, 0x5806, redclash_star2_w },
-	{ 0x5807, 0x5807, redclash_flipscreen_w },
-	{ 0x7000, 0x7000, redclash_star_reset_w },
-	{ 0x7800, 0x7800, irqack_w },
-MEMORY_END
+static ADDRESS_MAP_START( zero_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(redclash_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x5000, 0x5007) AM_WRITE(MWA8_NOP)	/* to sound board */
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(redclash_star0_w)
+	AM_RANGE(0x5801, 0x5804) AM_WRITE(MWA8_NOP)	/* to sound board */
+	AM_RANGE(0x5805, 0x5805) AM_WRITE(redclash_star1_w)
+	AM_RANGE(0x5806, 0x5806) AM_WRITE(redclash_star2_w)
+	AM_RANGE(0x5807, 0x5807) AM_WRITE(redclash_flipscreen_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(redclash_star_reset_w)
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(irqack_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4800, 0x4800, input_port_0_r }, /* IN0 */
-	{ 0x4801, 0x4801, input_port_1_r }, /* IN1 */
-	{ 0x4802, 0x4802, input_port_2_r }, /* DSW0 */
-	{ 0x4803, 0x4803, input_port_3_r }, /* DSW1 */
-	{ 0x4000, 0x43ff, MRA_RAM },  /* video RAM */
-	{ 0x6000, 0x67ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0x4801, 0x4801) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0x4802, 0x4802) AM_READ(input_port_2_r) /* DSW0 */
+	AM_RANGE(0x4803, 0x4803) AM_READ(input_port_3_r) /* DSW1 */
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)  /* video RAM */
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-//	{ 0x3000, 0x3000, MWA_NOP },
-//	{ 0x3800, 0x3800, MWA_NOP },
-	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
-	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
-	{ 0x5800, 0x5800, redclash_star0_w },
-	{ 0x5801, 0x5801, redclash_gfxbank_w },
-	{ 0x5805, 0x5805, redclash_star1_w },
-	{ 0x5806, 0x5806, redclash_star2_w },
-	{ 0x5807, 0x5807, redclash_flipscreen_w },
-	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x6800, 0x6bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7000, 0x7000, redclash_star_reset_w },
-	{ 0x7800, 0x7800, irqack_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+//	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_NOP)
+//	AM_RANGE(0x3800, 0x3800) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(redclash_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x5000, 0x5007) AM_WRITE(MWA8_NOP)	/* to sound board */
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(redclash_star0_w)
+	AM_RANGE(0x5801, 0x5801) AM_WRITE(redclash_gfxbank_w)
+	AM_RANGE(0x5805, 0x5805) AM_WRITE(redclash_star1_w)
+	AM_RANGE(0x5806, 0x5806) AM_WRITE(redclash_star2_w)
+	AM_RANGE(0x5807, 0x5807) AM_WRITE(redclash_flipscreen_w)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6800, 0x6bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(redclash_star_reset_w)
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(irqack_w)
+ADDRESS_MAP_END
 
 
 
@@ -363,7 +363,7 @@ static MACHINE_DRIVER_START( zerohour )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)  /* 4 MHz */
-	MDRV_CPU_MEMORY(zero_readmem,zero_writemem)
+	MDRV_CPU_PROGRAM_MAP(zero_readmem,zero_writemem)
 	MDRV_CPU_VBLANK_INT(redclash_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -389,7 +389,7 @@ static MACHINE_DRIVER_START( redclash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)  /* 4 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(redclash_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -159,28 +159,28 @@ static WRITE_HANDLER( toratora_clear_timer_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x2fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xf04b, 0xf04b, toratora_timer_r },
-	{ 0xf0a0, 0xf0a3, pia_0_r },
-	{ 0xf0a4, 0xf0a7, pia_1_r },
-	{ 0xf0a8, 0xf0ab, pia_2_r },
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf04b, 0xf04b) AM_READ(toratora_timer_r)
+	AM_RANGE(0xf0a0, 0xf0a3) AM_READ(pia_0_r)
+	AM_RANGE(0xf0a4, 0xf0a7) AM_READ(pia_1_r)
+	AM_RANGE(0xf0a8, 0xf0ab) AM_READ(pia_2_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x2fff, MWA_ROM },
-	{ 0x8000, 0x9fff, toratora_videoram_w, &videoram },
-	{ 0xf04a, 0xf04a, toratora_clear_tv_w },
-	{ 0xf04b, 0xf04b, toratora_clear_timer_w },
-	{ 0xf0a0, 0xf0a3, pia_0_w },
-	{ 0xf0a4, 0xf0a7, pia_1_w },
-	{ 0xf0a8, 0xf0ab, pia_2_w },
-	{ 0xf800, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(toratora_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xf04a, 0xf04a) AM_WRITE(toratora_clear_tv_w)
+	AM_RANGE(0xf04b, 0xf04b) AM_WRITE(toratora_clear_timer_w)
+	AM_RANGE(0xf0a0, 0xf0a3) AM_WRITE(pia_0_w)
+	AM_RANGE(0xf0a4, 0xf0a7) AM_WRITE(pia_1_w)
+	AM_RANGE(0xf0a8, 0xf0ab) AM_WRITE(pia_2_w)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -222,7 +222,7 @@ static MACHINE_DRIVER_START( toratora )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800,500000)	/* ?????? game speed is entirely controlled by this */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(toratora_interrupt,1)
 	MDRV_CPU_PERIODIC_INT(toratora_timer,16)	/* timer counting at 16 Hz */
 

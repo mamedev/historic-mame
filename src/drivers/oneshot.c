@@ -108,53 +108,53 @@ static WRITE16_HANDLER( soundbank_w )
 
 
 
-static MEMORY_READ16_START( oneshot_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x087fff, MRA16_RAM },
-	{ 0x0c0000, 0x0c07ff, MRA16_RAM },
-	{ 0x120000, 0x120fff, MRA16_RAM },
-	{ 0x180000, 0x182fff, MRA16_RAM },
-	{ 0x190002, 0x190003, soundlatch_word_r },
-	{ 0x190026, 0x190027, oneshot_gun_x_p1_r },
-	{ 0x19002e, 0x19002f, oneshot_gun_x_p2_r },
-	{ 0x190036, 0x190037, oneshot_gun_y_p1_r },
-	{ 0x19003e, 0x19003f, oneshot_gun_y_p2_r },
-	{ 0x19c020, 0x19c021, oneshot_in0_word_r },
-	{ 0x19c024, 0x19c025, input_port_1_word_r },
-	{ 0x19c02c, 0x19c02d, input_port_2_word_r },
-	{ 0x19c030, 0x19c031, input_port_3_word_r },
-	{ 0x19c034, 0x19c035, input_port_4_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( oneshot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x087fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c0000, 0x0c07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x120fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x182fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190002, 0x190003) AM_READ(soundlatch_word_r)
+	AM_RANGE(0x190026, 0x190027) AM_READ(oneshot_gun_x_p1_r)
+	AM_RANGE(0x19002e, 0x19002f) AM_READ(oneshot_gun_x_p2_r)
+	AM_RANGE(0x190036, 0x190037) AM_READ(oneshot_gun_y_p1_r)
+	AM_RANGE(0x19003e, 0x19003f) AM_READ(oneshot_gun_y_p2_r)
+	AM_RANGE(0x19c020, 0x19c021) AM_READ(oneshot_in0_word_r)
+	AM_RANGE(0x19c024, 0x19c025) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x19c02c, 0x19c02d) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x19c030, 0x19c031) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x19c034, 0x19c035) AM_READ(input_port_4_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( oneshot_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x087fff, MWA16_RAM },
-	{ 0x0c0000, 0x0c07ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x120000, 0x120fff, MWA16_RAM, &oneshot_sprites },
-	{ 0x180000, 0x180fff, oneshot_mid_videoram_w, &oneshot_mid_videoram }, // some people , girl etc.
-	{ 0x181000, 0x181fff, oneshot_fg_videoram_w, &oneshot_fg_videoram }, // credits etc.
-	{ 0x182000, 0x182fff, oneshot_bg_videoram_w, &oneshot_bg_videoram }, // credits etc.
-	{ 0x188000, 0x18800f, MWA16_RAM, &oneshot_scroll },	// scroll registers???
-	{ 0x190010, 0x190011, soundlatch_word_w },
-	{ 0x190018, 0x190019, soundbank_w },
-MEMORY_END
+static ADDRESS_MAP_START( oneshot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x087fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x0c0000, 0x0c07ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x120000, 0x120fff) AM_WRITE(MWA16_RAM) AM_BASE(&oneshot_sprites)
+	AM_RANGE(0x180000, 0x180fff) AM_WRITE(oneshot_mid_videoram_w) AM_BASE(&oneshot_mid_videoram) // some people , girl etc.
+	AM_RANGE(0x181000, 0x181fff) AM_WRITE(oneshot_fg_videoram_w) AM_BASE(&oneshot_fg_videoram) // credits etc.
+	AM_RANGE(0x182000, 0x182fff) AM_WRITE(oneshot_bg_videoram_w) AM_BASE(&oneshot_bg_videoram) // credits etc.
+	AM_RANGE(0x188000, 0x18800f) AM_WRITE(MWA16_RAM) AM_BASE(&oneshot_scroll)	// scroll registers???
+	AM_RANGE(0x190010, 0x190011) AM_WRITE(soundlatch_word_w)
+	AM_RANGE(0x190018, 0x190019) AM_WRITE(soundbank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( snd_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8000, soundlatch_r },
-	{ 0x8001, 0x87ff, MRA_RAM },
-	{ 0xe000, 0xe000, YM3812_status_port_0_r },
-	{ 0xe010, 0xe010, OKIM6295_status_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8001, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0xe010, 0xe010) AM_READ(OKIM6295_status_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( snd_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8000, soundlatch_w },
-	{ 0x8001, 0x87ff, MWA_RAM },
-	{ 0xe000, 0xe000, YM3812_control_port_0_w },
-	{ 0xe001, 0xe001, YM3812_write_port_0_w },
-	{ 0xe010, 0xe010, OKIM6295_data_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x8001, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xe010, 0xe010) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( oneshot )
 	PORT_START	/* DSW 1	(0x19c020.l -> 0x08006c.l) */
@@ -383,11 +383,11 @@ static MACHINE_DRIVER_START( oneshot )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(oneshot_readmem,oneshot_writemem)
+	MDRV_CPU_PROGRAM_MAP(oneshot_readmem,oneshot_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(snd_readmem, snd_writemem)
+	MDRV_CPU_PROGRAM_MAP(snd_readmem, snd_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

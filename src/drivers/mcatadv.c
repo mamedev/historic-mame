@@ -104,54 +104,54 @@ static READ16_HANDLER( mcat_wd_r )
 }
 
 
-static MEMORY_READ16_START( mcatadv_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
+static ADDRESS_MAP_START( mcatadv_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
 
-	{ 0x200000, 0x200005, MRA16_RAM },
-	{ 0x300000, 0x300005, MRA16_RAM },
+	AM_RANGE(0x200000, 0x200005) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x300005) AM_READ(MRA16_RAM)
 
-//	{ 0x180018, 0x18001f, MRA16_NOP }, // ?
+//	AM_RANGE(0x180018, 0x18001f) AM_READ(MRA16_NOP) // ?
 
-	{ 0x400000, 0x401fff, MRA16_RAM }, // Tilemap 0
-	{ 0x500000, 0x501fff, MRA16_RAM }, // Tilemap 1
+	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM) // Tilemap 0
+	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM) // Tilemap 1
 
-	{ 0x600000, 0x601fff, MRA16_RAM },
-	{ 0x602000, 0x602fff, MRA16_RAM },
+	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x602000, 0x602fff) AM_READ(MRA16_RAM)
 
-	{ 0x700000, 0x707fff, MRA16_RAM }, // Sprites
-	{ 0x708000, 0x70ffff, MRA16_RAM }, // Tests more than is needed?
+	AM_RANGE(0x700000, 0x707fff) AM_READ(MRA16_RAM) // Sprites
+	AM_RANGE(0x708000, 0x70ffff) AM_READ(MRA16_RAM) // Tests more than is needed?
 
-	{ 0x800000, 0x800001, input_port_0_word_r },	// Inputs
-	{ 0x800002, 0x800003, input_port_1_word_r },	// Inputs
-	{ 0xa00000, 0xa00003, mcatadv_dsw_r },		// Dip Switches
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)	// Inputs
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)	// Inputs
+	AM_RANGE(0xa00000, 0xa00003) AM_READ(mcatadv_dsw_r)		// Dip Switches
 
-	{ 0xb00000, 0xb0000f, MRA16_RAM },
+	AM_RANGE(0xb00000, 0xb0000f) AM_READ(MRA16_RAM)
 
-	{ 0xb0001e, 0xb0001f, mcat_wd_r }, // MCAT Only
-	{ 0xc00000, 0xc00001, soundlatch2_word_r },
-MEMORY_END
+	AM_RANGE(0xb0001e, 0xb0001f) AM_READ(mcat_wd_r) // MCAT Only
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(soundlatch2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( mcatadv_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x200005, MWA16_RAM, &mcatadv_scroll },
-	{ 0x300000, 0x300005, MWA16_RAM, &mcatadv_scroll2 },
+static ADDRESS_MAP_START( mcatadv_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200005) AM_WRITE(MWA16_RAM) AM_BASE(&mcatadv_scroll)
+	AM_RANGE(0x300000, 0x300005) AM_WRITE(MWA16_RAM) AM_BASE(&mcatadv_scroll2)
 
-	{ 0x400000, 0x401fff, mcatadv_videoram1_w, &mcatadv_videoram1 }, // Tilemap 0
-	{ 0x500000, 0x501fff, mcatadv_videoram2_w, &mcatadv_videoram2 }, // Tilemap 1
+	AM_RANGE(0x400000, 0x401fff) AM_WRITE(mcatadv_videoram1_w) AM_BASE(&mcatadv_videoram1) // Tilemap 0
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(mcatadv_videoram2_w) AM_BASE(&mcatadv_videoram2) // Tilemap 1
 
-	{ 0x600000, 0x601fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },
-	{ 0x602000, 0x602fff, MWA16_RAM }, // Bigger than needs to be?
+	AM_RANGE(0x600000, 0x601fff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x602000, 0x602fff) AM_WRITE(MWA16_RAM) // Bigger than needs to be?
 
-	{ 0x700000, 0x707fff, MWA16_RAM, &spriteram16, &spriteram_size }, // Sprites, two halves for double buffering
-	{ 0x708000, 0x70ffff, MWA16_RAM }, // Tests more than is needed?
+	AM_RANGE(0x700000, 0x707fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) // Sprites, two halves for double buffering
+	AM_RANGE(0x708000, 0x70ffff) AM_WRITE(MWA16_RAM) // Tests more than is needed?
 
-//	{ 0x900000, 0x900001, mcat_coin_w }, // Lockout / Counter MCAT Only
-	{ 0xb00000, 0xb0000f, MWA16_RAM, &mcatadv_vidregs },
-	{ 0xb00018, 0xb00019, watchdog_reset16_w }, // NOST Only
-	{ 0xc00000, 0xc00001, mcat_soundlatch_w },
-MEMORY_END
+//	AM_RANGE(0x900000, 0x900001) AM_WRITE(mcat_coin_w) // Lockout / Counter MCAT Only
+	AM_RANGE(0xb00000, 0xb0000f) AM_WRITE(MWA16_RAM) AM_BASE(&mcatadv_vidregs)
+	AM_RANGE(0xb00018, 0xb00019) AM_WRITE(watchdog_reset16_w) // NOST Only
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(mcat_soundlatch_w)
+ADDRESS_MAP_END
 
 /*** Sound ***/
 
@@ -163,60 +163,60 @@ static WRITE_HANDLER ( mcatadv_sound_bw_w )
 }
 
 
-static MEMORY_READ_START( mcatadv_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM		},	// ROM
-	{ 0x4000, 0xbfff, MRA_BANK1		},	// ROM
-	{ 0xc000, 0xdfff, MRA_RAM		},	// RAM
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r		},
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r		},
-MEMORY_END
+static ADDRESS_MAP_START( mcatadv_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM		)	// ROM
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK1		)	// ROM
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM		)	// RAM
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r		)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r		)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcatadv_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM		},	// ROM
-	{ 0x4000, 0xbfff, MWA_ROM		},	// ROM
-	{ 0xc000, 0xdfff, MWA_RAM		},	// RAM
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xf000, 0xf000, mcatadv_sound_bw_w },
-MEMORY_END
+static ADDRESS_MAP_START( mcatadv_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM		)	// RAM
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(mcatadv_sound_bw_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mcatadv_sound_readport )
-	{ 0x80, 0x80, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( mcatadv_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcatadv_sound_writeport )
-	{ 0x80, 0x80, soundlatch2_w },
-PORT_END
+static ADDRESS_MAP_START( mcatadv_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_WRITE(soundlatch2_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( nost_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM		},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK1		},	// ROM
-	{ 0xc000, 0xdfff, MRA_RAM		},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( nost_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM		)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1		)	// ROM
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM		)	// RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( nost_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM		},	// ROM
-	{ 0x8000, 0xbfff, MWA_ROM		},	// ROM
-	{ 0xc000, 0xdfff, MWA_RAM		},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( nost_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM		)	// RAM
+ADDRESS_MAP_END
 
-static PORT_READ_START( nost_sound_readport )
-	{ 0x04, 0x05, YM2610_status_port_0_A_r },
-	{ 0x06, 0x07, YM2610_status_port_0_B_r },
-	{ 0x80, 0x80, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( nost_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x05) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x06, 0x07) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( nost_sound_writeport )
-	{ 0x00, 0x00, YM2610_control_port_0_A_w },
-	{ 0x01, 0x01, YM2610_data_port_0_A_w },
-	{ 0x02, 0x02, YM2610_control_port_0_B_w },
-	{ 0x03, 0x03, YM2610_data_port_0_B_w },
-	{ 0x40, 0x40, mcatadv_sound_bw_w },
-	{ 0x80, 0x80, soundlatch2_w },
-PORT_END
+static ADDRESS_MAP_START( nost_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(mcatadv_sound_bw_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(soundlatch2_w)
+ADDRESS_MAP_END
 
 /*** Inputs ***/
 
@@ -430,12 +430,12 @@ static MACHINE_DRIVER_START( mcatadv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(mcatadv_readmem,mcatadv_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcatadv_readmem,mcatadv_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 28000000/4) // Guess, 3.5MHz is too slow and CPU comms fail reporting U9 bad.
-	MDRV_CPU_MEMORY(mcatadv_sound_readmem,mcatadv_sound_writemem)
-	MDRV_CPU_PORTS(mcatadv_sound_readport,mcatadv_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(mcatadv_sound_readmem,mcatadv_sound_writemem)
+	MDRV_CPU_IO_MAP(mcatadv_sound_readport,mcatadv_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -462,8 +462,8 @@ static MACHINE_DRIVER_START( nost )
 	MDRV_IMPORT_FROM( mcatadv )
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_MEMORY(nost_sound_readmem,nost_sound_writemem)
-	MDRV_CPU_PORTS(nost_sound_readport,nost_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(nost_sound_readmem,nost_sound_writemem)
+	MDRV_CPU_IO_MAP(nost_sound_readport,nost_sound_writeport)
 MACHINE_DRIVER_END
 
 

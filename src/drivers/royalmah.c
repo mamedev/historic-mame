@@ -330,126 +330,126 @@ static WRITE_HANDLER ( dynax_bank_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },	// banked ROMs not present in royalmah
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)	// banked ROMs not present in royalmah
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x6fff, royalmah_rom_w },
-	{ 0x7000, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8000, 0xffff, royalmah_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_WRITE(royalmah_rom_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(royalmah_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( royalmah_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-PORT_END
+static ADDRESS_MAP_START( royalmah_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( royalmah_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-PORT_END
+static ADDRESS_MAP_START( royalmah_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( suzume_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x80, 0x80, suzume_dsw_r },
-PORT_END
+static ADDRESS_MAP_START( suzume_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x80, 0x80) AM_READ(suzume_dsw_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( suzume_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x81, 0x81, suzume_bank_w },
-PORT_END
+static ADDRESS_MAP_START( suzume_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(suzume_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( dondenmj_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x85, 0x85, input_port_12_r },	// DSW2
-	{ 0x86, 0x86, input_port_13_r },	// DSW3
-PORT_END
+static ADDRESS_MAP_START( dondenmj_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x85, 0x85) AM_READ(input_port_12_r)	// DSW2
+	AM_RANGE(0x86, 0x86) AM_READ(input_port_13_r)	// DSW3
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( dondenmj_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x87, 0x87, dynax_bank_w },
-PORT_END
+static ADDRESS_MAP_START( dondenmj_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x87, 0x87) AM_WRITE(dynax_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mjdiplob_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x62, 0x62, input_port_12_r },	// DSW2
-	{ 0x63, 0x63, input_port_13_r },	// DSW3
-PORT_END
+static ADDRESS_MAP_START( mjdiplob_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x62, 0x62) AM_READ(input_port_12_r)	// DSW2
+	AM_RANGE(0x63, 0x63) AM_READ(input_port_13_r)	// DSW3
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mjdiplob_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x61, 0x61, tontonb_bank_w },
-PORT_END
+static ADDRESS_MAP_START( mjdiplob_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x61, 0x61) AM_WRITE(tontonb_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( tontonb_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x46, 0x46, input_port_13_r },	// DSW2
-	{ 0x47, 0x47, input_port_12_r },	// DSW3
-PORT_END
+static ADDRESS_MAP_START( tontonb_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x46, 0x46) AM_READ(input_port_13_r)	// DSW2
+	AM_RANGE(0x47, 0x47) AM_READ(input_port_12_r)	// DSW3
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( tontonb_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x44, 0x44, tontonb_bank_w },
-PORT_END
+static ADDRESS_MAP_START( tontonb_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(tontonb_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( majs101b_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x00, 0x00, majs101b_dsw_r },
-PORT_END
+static ADDRESS_MAP_START( majs101b_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x00, 0x00) AM_READ(majs101b_dsw_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( majs101b_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, royalmah_palbank_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x00, 0x00, dynax_bank_w },
-PORT_END
+static ADDRESS_MAP_START( majs101b_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(royalmah_palbank_w)
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x00, 0x00) AM_WRITE(dynax_bank_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mjderngr_readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-//	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-	{ 0x40, 0x40, input_port_13_r },	// DSW2
-	{ 0x4c, 0x4c, input_port_12_r },	// DSW3
-PORT_END
+static ADDRESS_MAP_START( mjderngr_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
+//	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_13_r)	// DSW2
+	AM_RANGE(0x4c, 0x4c) AM_READ(input_port_12_r)	// DSW3
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mjderngr_writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x10, 0x10, mjderngr_coin_w },	// palette bank is set separately
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x20, 0x20, dynax_bank_w },
-	{ 0x60, 0x60, mjderngr_palbank_w },
-PORT_END
+static ADDRESS_MAP_START( mjderngr_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(mjderngr_coin_w)	// palette bank is set separately
+	AM_RANGE(0x11, 0x11) AM_WRITE(royalmah_input_port_select_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_bank_w)
+	AM_RANGE(0x60, 0x60) AM_WRITE(mjderngr_palbank_w)
+ADDRESS_MAP_END
 
 
 
@@ -1146,8 +1146,8 @@ static MACHINE_DRIVER_START( royalmah )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)        /* 3.00 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(royalmah_readport,royalmah_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(royalmah_readport,royalmah_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1174,8 +1174,8 @@ static MACHINE_DRIVER_START( dondenmj )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 8000000/2)	/* 4 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(dondenmj_readport,dondenmj_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(dondenmj_readport,dondenmj_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1201,35 +1201,35 @@ static MACHINE_DRIVER_START( suzume )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(suzume_readport,suzume_writeport)
+	MDRV_CPU_IO_MAP(suzume_readport,suzume_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tontonb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(tontonb_readport,tontonb_writeport)
+	MDRV_CPU_IO_MAP(tontonb_readport,tontonb_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mjdiplob )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(mjdiplob_readport,mjdiplob_writeport)
+	MDRV_CPU_IO_MAP(mjdiplob_readport,mjdiplob_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( majs101b )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(majs101b_readport,majs101b_writeport)
+	MDRV_CPU_IO_MAP(majs101b_readport,majs101b_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mjderngr )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(mjderngr_readport,mjderngr_writeport)
+	MDRV_CPU_IO_MAP(mjderngr_readport,mjderngr_writeport)
 
 	MDRV_PALETTE_LENGTH(512)
 

@@ -210,7 +210,7 @@ static void writecache_le_dword(offs_t offset, data32_t data);
 **	PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
-int	r3000_icount=50000;
+static int	r3000_icount;
 
 
 
@@ -223,14 +223,14 @@ static r3000_regs r3000;
 
 static const memory_handlers be_memory =
 {
-	cpu_readmem29bedw,  cpu_readmem29bedw_word,  cpu_readmem29bedw_dword,
-	cpu_writemem29bedw, cpu_writemem29bedw_word, cpu_writemem29bedw_dword
+	program_read_byte_32be,  program_read_word_32be,  program_read_dword_32be,
+	program_write_byte_32be,  program_write_word_32be,  program_write_dword_32be
 };
 
 static const memory_handlers le_memory =
 {
-	cpu_readmem29ledw,  cpu_readmem29ledw_word,  cpu_readmem29ledw_dword,
-	cpu_writemem29ledw, cpu_writemem29ledw_word, cpu_writemem29ledw_dword
+	program_read_byte_32le,  program_read_word_32le,  program_read_dword_32le,
+	program_write_byte_32le,  program_write_word_32le,  program_write_dword_32le
 };
 
 static const memory_handlers be_cache =
@@ -288,10 +288,7 @@ INLINE void generate_exception(int exception)
 		r3000.pc += 0x180;
 
 	/* swap to the new space */
-	if (r3000.bigendian)
-		change_pc29bedw(r3000.pc);
-	else
-		change_pc29ledw(r3000.pc);
+	change_pc(r3000.pc);
 }
 
 
@@ -313,7 +310,7 @@ static void check_irqs(void)
 }
 
 
-void r3000_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (state != CLEAR_LINE)
 		CAUSE |= 0x400 << irqline;
@@ -323,38 +320,26 @@ void r3000_set_irq_line(int irqline, int state)
 }
 
 
-void r3000_set_irq_callback(int (*callback)(int irqline))
-{
-	r3000.irq_callback = callback;
-}
-
-
 
 /*###################################################################################################
 **	CONTEXT SWITCHING
 **#################################################################################################*/
 
-unsigned r3000_get_context(void *dst)
+static void r3000_get_context(void *dst)
 {
 	/* copy the context */
 	if (dst)
 		*(r3000_regs *)dst = r3000;
-
-	/* return the context size */
-	return sizeof(r3000_regs);
 }
 
 
-void r3000_set_context(void *src)
+static void r3000_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
 		r3000 = *(r3000_regs *)src;
 
-	if (r3000.bigendian)
-		change_pc29bedw(r3000.pc);
-	else
-		change_pc29ledw(r3000.pc);
+	change_pc(r3000.pc);
 
 	/* check for IRQs */
 	check_irqs();
@@ -366,7 +351,7 @@ void r3000_set_context(void *src)
 **	INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
-void r3000_init(void)
+static void r3000_init(void)
 {
 }
 
@@ -418,24 +403,21 @@ static void r3000_reset(void *param, int bigendian)
 	r3000.nextpc = ~0;
 	r3000.cpr[0][COP0_PRId] = 0x0200;
 	r3000.cpr[0][COP0_Status] = 0x0000;
-	if (r3000.bigendian)
-		change_pc29bedw(r3000.pc);
-	else
-		change_pc29ledw(r3000.pc);
+	change_pc(r3000.pc);
 }
 
-void r3000be_reset(void *param)
+static void r3000be_reset(void *param)
 {
 	r3000_reset(param, 1);
 }
 
-void r3000le_reset(void *param)
+static void r3000le_reset(void *param)
 {
 	r3000_reset(param, 0);
 }
 
 
-void r3000_exit(void)
+static void r3000_exit(void)
 {
 	/* free cache memory */
 	if (r3000.icache)
@@ -769,16 +751,13 @@ INLINE void handle_cop3(UINT32 op)
 **	CORE EXECUTION LOOP
 **#################################################################################################*/
 
-int r3000_execute(int cycles)
+static int r3000_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	r3000_icount = cycles;
 	r3000_icount -= r3000.interrupt_cycles;
 	r3000.interrupt_cycles = 0;
-	if (r3000.bigendian)
-		change_pc29bedw(r3000.pc);
-	else
-		change_pc29bedw(r3000.pc);
+	change_pc(r3000.pc);
 
 	/* core execution loop */
 	do
@@ -799,10 +778,7 @@ int r3000_execute(int cycles)
 		{
 			r3000.pc = r3000.nextpc;
 			r3000.nextpc = ~0;
-			if (r3000.bigendian)
-				change_pc29bedw(r3000.pc);
-			else
-				change_pc29bedw(r3000.pc);
+			change_pc(r3000.pc);
 		}
 		else
 			r3000.pc += 4;
@@ -971,125 +947,6 @@ int r3000_execute(int cycles)
 
 
 /*###################################################################################################
-**	REGISTER SNOOP
-**#################################################################################################*/
-
-unsigned r3000_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-		case REG_PC:		return r3000.pc & 0x1fffffff;
-		case R3000_PC:		return r3000.pc;
-		case R3000_SR:		return SR;
-
-		case R3000_R0:		return r3000.r[0];
-		case R3000_R1:		return r3000.r[1];
-		case R3000_R2:		return r3000.r[2];
-		case R3000_R3:		return r3000.r[3];
-		case R3000_R4:		return r3000.r[4];
-		case R3000_R5:		return r3000.r[5];
-		case R3000_R6:		return r3000.r[6];
-		case R3000_R7:		return r3000.r[7];
-		case R3000_R8:		return r3000.r[8];
-		case R3000_R9:		return r3000.r[9];
-		case R3000_R10:		return r3000.r[10];
-		case R3000_R11:		return r3000.r[11];
-		case R3000_R12:		return r3000.r[12];
-		case R3000_R13:		return r3000.r[13];
-		case R3000_R14:		return r3000.r[14];
-		case R3000_R15:		return r3000.r[15];
-		case R3000_R16:		return r3000.r[16];
-		case R3000_R17:		return r3000.r[17];
-		case R3000_R18:		return r3000.r[18];
-		case R3000_R19:		return r3000.r[19];
-		case R3000_R20:		return r3000.r[20];
-		case R3000_R21:		return r3000.r[21];
-		case R3000_R22:		return r3000.r[22];
-		case R3000_R23:		return r3000.r[23];
-		case R3000_R24:		return r3000.r[24];
-		case R3000_R25:		return r3000.r[25];
-		case R3000_R26:		return r3000.r[26];
-		case R3000_R27:		return r3000.r[27];
-		case R3000_R28:		return r3000.r[28];
-		case R3000_R29:		return r3000.r[29];
-		case R3000_R30:		return r3000.r[30];
-		case REG_SP:		return r3000.r[31] & 0x1fffffff;
-		case R3000_R31:		return r3000.r[31];
-
-		case REG_PREVIOUSPC: return r3000.ppc;
-
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-//				unsigned offset = REG_SP_CONTENTS - regnum;
-//				if (offset < PC_STACK_DEPTH)
-//					return r3000.pc_stack[offset];
-			}
-	}
-	return 0;
-}
-
-
-
-/*###################################################################################################
-**	REGISTER MODIFY
-**#################################################################################################*/
-
-void r3000_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case R3000_PC:		r3000.pc = val;	break;
-		case R3000_SR:		SR = val;		break;
-
-		case R3000_R0:		r3000.r[0] = val;	break;
-		case R3000_R1:		r3000.r[1] = val;	break;
-		case R3000_R2:		r3000.r[2] = val;	break;
-		case R3000_R3:		r3000.r[3] = val;	break;
-		case R3000_R4:		r3000.r[4] = val;	break;
-		case R3000_R5:		r3000.r[5] = val;	break;
-		case R3000_R6:		r3000.r[6] = val;	break;
-		case R3000_R7:		r3000.r[7] = val;	break;
-		case R3000_R8:		r3000.r[8] = val;	break;
-		case R3000_R9:		r3000.r[9] = val;	break;
-		case R3000_R10:		r3000.r[10] = val;	break;
-		case R3000_R11:		r3000.r[11] = val;	break;
-		case R3000_R12:		r3000.r[12] = val;	break;
-		case R3000_R13:		r3000.r[13] = val;	break;
-		case R3000_R14:		r3000.r[14] = val;	break;
-		case R3000_R15:		r3000.r[15] = val;	break;
-		case R3000_R16:		r3000.r[16] = val;	break;
-		case R3000_R17:		r3000.r[17] = val;	break;
-		case R3000_R18:		r3000.r[18] = val;	break;
-		case R3000_R19:		r3000.r[19] = val;	break;
-		case R3000_R20:		r3000.r[20] = val;	break;
-		case R3000_R21:		r3000.r[21] = val;	break;
-		case R3000_R22:		r3000.r[22] = val;	break;
-		case R3000_R23:		r3000.r[23] = val;	break;
-		case R3000_R24:		r3000.r[24] = val;	break;
-		case R3000_R25:		r3000.r[25] = val;	break;
-		case R3000_R26:		r3000.r[26] = val;	break;
-		case R3000_R27:		r3000.r[27] = val;	break;
-		case R3000_R28:		r3000.r[28] = val;	break;
-		case R3000_R29:		r3000.r[29] = val;	break;
-		case R3000_R30:		r3000.r[30] = val;	break;
-		case REG_SP:
-		case R3000_R31:		r3000.r[31] = val;	break;
-
-		default:
-			if (regnum <= REG_SP_CONTENTS)
-			{
-//				unsigned offset = REG_SP_CONTENTS - regnum;
-//				if (offset < PC_STACK_DEPTH)
-//					r3000.pc_stack[offset] = val;
-			}
-    }
-}
-
-
-
-/*###################################################################################################
 **	DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
@@ -1126,78 +983,10 @@ static UINT8 r3000_win_layout[] =
 
 
 /*###################################################################################################
-**	DEBUGGER STRINGS
-**#################################################################################################*/
-
-const char *r3000_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	r3000_regs *r = context;
-
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-
-	if (!context)
-		r = &r3000;
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+R3000_PC:  	sprintf(buffer[which], "PC: %08X", r->pc); break;
-		case CPU_INFO_REG+R3000_SR:  	sprintf(buffer[which], "SR: %08X", r->cpr[0][COP0_Status]); break;
-
-		case CPU_INFO_REG+R3000_R0:		sprintf(buffer[which], "R0: %08X", r->r[0]); break;
-		case CPU_INFO_REG+R3000_R1:		sprintf(buffer[which], "R1: %08X", r->r[1]); break;
-		case CPU_INFO_REG+R3000_R2:		sprintf(buffer[which], "R2: %08X", r->r[2]); break;
-		case CPU_INFO_REG+R3000_R3:		sprintf(buffer[which], "R3: %08X", r->r[3]); break;
-		case CPU_INFO_REG+R3000_R4:		sprintf(buffer[which], "R4: %08X", r->r[4]); break;
-		case CPU_INFO_REG+R3000_R5:		sprintf(buffer[which], "R5: %08X", r->r[5]); break;
-		case CPU_INFO_REG+R3000_R6:		sprintf(buffer[which], "R6: %08X", r->r[6]); break;
-		case CPU_INFO_REG+R3000_R7:		sprintf(buffer[which], "R7: %08X", r->r[7]); break;
-		case CPU_INFO_REG+R3000_R8:		sprintf(buffer[which], "R8: %08X", r->r[8]); break;
-		case CPU_INFO_REG+R3000_R9:		sprintf(buffer[which], "R9: %08X", r->r[9]); break;
-		case CPU_INFO_REG+R3000_R10:	sprintf(buffer[which], "R10:%08X", r->r[10]); break;
-		case CPU_INFO_REG+R3000_R11:	sprintf(buffer[which], "R11:%08X", r->r[11]); break;
-		case CPU_INFO_REG+R3000_R12:	sprintf(buffer[which], "R12:%08X", r->r[12]); break;
-		case CPU_INFO_REG+R3000_R13:	sprintf(buffer[which], "R13:%08X", r->r[13]); break;
-		case CPU_INFO_REG+R3000_R14:	sprintf(buffer[which], "R14:%08X", r->r[14]); break;
-		case CPU_INFO_REG+R3000_R15:	sprintf(buffer[which], "R15:%08X", r->r[15]); break;
-		case CPU_INFO_REG+R3000_R16:	sprintf(buffer[which], "R16:%08X", r->r[16]); break;
-		case CPU_INFO_REG+R3000_R17:	sprintf(buffer[which], "R17:%08X", r->r[17]); break;
-		case CPU_INFO_REG+R3000_R18:	sprintf(buffer[which], "R18:%08X", r->r[18]); break;
-		case CPU_INFO_REG+R3000_R19:	sprintf(buffer[which], "R19:%08X", r->r[19]); break;
-		case CPU_INFO_REG+R3000_R20:	sprintf(buffer[which], "R20:%08X", r->r[20]); break;
-		case CPU_INFO_REG+R3000_R21:	sprintf(buffer[which], "R21:%08X", r->r[21]); break;
-		case CPU_INFO_REG+R3000_R22:	sprintf(buffer[which], "R22:%08X", r->r[22]); break;
-		case CPU_INFO_REG+R3000_R23:	sprintf(buffer[which], "R23:%08X", r->r[23]); break;
-		case CPU_INFO_REG+R3000_R24:	sprintf(buffer[which], "R24:%08X", r->r[24]); break;
-		case CPU_INFO_REG+R3000_R25:	sprintf(buffer[which], "R25:%08X", r->r[25]); break;
-		case CPU_INFO_REG+R3000_R26:	sprintf(buffer[which], "R26:%08X", r->r[26]); break;
-		case CPU_INFO_REG+R3000_R27:	sprintf(buffer[which], "R27:%08X", r->r[27]); break;
-		case CPU_INFO_REG+R3000_R28:	sprintf(buffer[which], "R28:%08X", r->r[28]); break;
-		case CPU_INFO_REG+R3000_R29:	sprintf(buffer[which], "R29:%08X", r->r[29]); break;
-		case CPU_INFO_REG+R3000_R30:	sprintf(buffer[which], "R30:%08X", r->r[30]); break;
-		case CPU_INFO_REG+R3000_R31:	sprintf(buffer[which], "R31:%08X", r->r[31]); break;
-
-		case CPU_INFO_NAME: return "R3000";
-		case CPU_INFO_FAMILY: return r->bigendian ? "MIPS R3000 (big-endian)" : "MIPS R3000 (little-endian)";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 2000-2002";
-		case CPU_INFO_REG_LAYOUT: return (const char *)r3000_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)r3000_win_layout;
-		case CPU_INFO_REG+10000: return "         ";
-    }
-	return buffer[which];
-}
-
-
-
-/*###################################################################################################
 **	DISASSEMBLY HOOK
 **#################################################################################################*/
 
-unsigned r3000_dasm(char *buffer, unsigned pc)
+static offs_t r3000_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	extern unsigned dasmr3k(char *, unsigned);
@@ -1400,5 +1189,250 @@ static void swr_le(UINT32 op)
 		data32_t temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0xffffff00 << shift)) | (RTVAL >> (24 - shift)));
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void r3000_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ0:		set_irq_line(R3000_IRQ0, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ1:		set_irq_line(R3000_IRQ1, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ2:		set_irq_line(R3000_IRQ2, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ3:		set_irq_line(R3000_IRQ3, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ4:		set_irq_line(R3000_IRQ4, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ5:		set_irq_line(R3000_IRQ5, info->i);		break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + R3000_PC:			r3000.pc = info->i;						break;
+		case CPUINFO_INT_REGISTER + R3000_SR:			SR = info->i;							break;
+
+		case CPUINFO_INT_REGISTER + R3000_R0:			r3000.r[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R1:			r3000.r[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R2:			r3000.r[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R3:			r3000.r[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R4:			r3000.r[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R5:			r3000.r[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R6:			r3000.r[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R7:			r3000.r[7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R8:			r3000.r[8] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R9:			r3000.r[9] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R10:			r3000.r[10] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R11:			r3000.r[11] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R12:			r3000.r[12] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R13:			r3000.r[13] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R14:			r3000.r[14] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R15:			r3000.r[15] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R16:			r3000.r[16] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R17:			r3000.r[17] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R18:			r3000.r[18] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R19:			r3000.r[19] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R20:			r3000.r[20] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R21:			r3000.r[21] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R22:			r3000.r[22] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R23:			r3000.r[23] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R24:			r3000.r[24] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R25:			r3000.r[25] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R26:			r3000.r[26] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R27:			r3000.r[27] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R28:			r3000.r[28] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R29:			r3000.r[29] = info->i;					break;
+		case CPUINFO_INT_REGISTER + R3000_R30:			r3000.r[30] = info->i;					break;
+		case CPUINFO_INT_SP:	
+		case CPUINFO_INT_REGISTER + R3000_R31:			r3000.r[31] = info->i;					break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					r3000.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void r3000_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(r3000);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 6;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 29;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ0:		info->i = (r3000.cpr[0][COP0_Cause] & 0x400) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ1:		info->i = (r3000.cpr[0][COP0_Cause] & 0x800) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ2:		info->i = (r3000.cpr[0][COP0_Cause] & 0x1000) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ3:		info->i = (r3000.cpr[0][COP0_Cause] & 0x2000) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ4:		info->i = (r3000.cpr[0][COP0_Cause] & 0x4000) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + R3000_IRQ5:		info->i = (r3000.cpr[0][COP0_Cause] & 0x8000) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = r3000.ppc;					break;
+
+		case CPUINFO_INT_PC:							info->i = r3000.pc & 0x1fffffff;		break;
+		case CPUINFO_INT_REGISTER + R3000_PC:			info->i = r3000.pc;						break;
+		case CPUINFO_INT_REGISTER + R3000_SR:			info->i = SR;							break;
+
+		case CPUINFO_INT_REGISTER + R3000_R0:			info->i = r3000.r[0];					break;
+		case CPUINFO_INT_REGISTER + R3000_R1:			info->i = r3000.r[1];					break;
+		case CPUINFO_INT_REGISTER + R3000_R2:			info->i = r3000.r[2];					break;
+		case CPUINFO_INT_REGISTER + R3000_R3:			info->i = r3000.r[3];					break;
+		case CPUINFO_INT_REGISTER + R3000_R4:			info->i = r3000.r[4];					break;
+		case CPUINFO_INT_REGISTER + R3000_R5:			info->i = r3000.r[5];					break;
+		case CPUINFO_INT_REGISTER + R3000_R6:			info->i = r3000.r[6];					break;
+		case CPUINFO_INT_REGISTER + R3000_R7:			info->i = r3000.r[7];					break;
+		case CPUINFO_INT_REGISTER + R3000_R8:			info->i = r3000.r[8];					break;
+		case CPUINFO_INT_REGISTER + R3000_R9:			info->i = r3000.r[9];					break;
+		case CPUINFO_INT_REGISTER + R3000_R10:			info->i = r3000.r[10];					break;
+		case CPUINFO_INT_REGISTER + R3000_R11:			info->i = r3000.r[11];					break;
+		case CPUINFO_INT_REGISTER + R3000_R12:			info->i = r3000.r[12];					break;
+		case CPUINFO_INT_REGISTER + R3000_R13:			info->i = r3000.r[13];					break;
+		case CPUINFO_INT_REGISTER + R3000_R14:			info->i = r3000.r[14];					break;
+		case CPUINFO_INT_REGISTER + R3000_R15:			info->i = r3000.r[15];					break;
+		case CPUINFO_INT_REGISTER + R3000_R16:			info->i = r3000.r[16];					break;
+		case CPUINFO_INT_REGISTER + R3000_R17:			info->i = r3000.r[17];					break;
+		case CPUINFO_INT_REGISTER + R3000_R18:			info->i = r3000.r[18];					break;
+		case CPUINFO_INT_REGISTER + R3000_R19:			info->i = r3000.r[19];					break;
+		case CPUINFO_INT_REGISTER + R3000_R20:			info->i = r3000.r[20];					break;
+		case CPUINFO_INT_REGISTER + R3000_R21:			info->i = r3000.r[21];					break;
+		case CPUINFO_INT_REGISTER + R3000_R22:			info->i = r3000.r[22];					break;
+		case CPUINFO_INT_REGISTER + R3000_R23:			info->i = r3000.r[23];					break;
+		case CPUINFO_INT_REGISTER + R3000_R24:			info->i = r3000.r[24];					break;
+		case CPUINFO_INT_REGISTER + R3000_R25:			info->i = r3000.r[25];					break;
+		case CPUINFO_INT_REGISTER + R3000_R26:			info->i = r3000.r[26];					break;
+		case CPUINFO_INT_REGISTER + R3000_R27:			info->i = r3000.r[27];					break;
+		case CPUINFO_INT_REGISTER + R3000_R28:			info->i = r3000.r[28];					break;
+		case CPUINFO_INT_REGISTER + R3000_R29:			info->i = r3000.r[29];					break;
+		case CPUINFO_INT_REGISTER + R3000_R30:			info->i = r3000.r[30];					break;
+		case CPUINFO_INT_SP:							info->i = r3000.r[31] & 0x1fffffff;		break;
+		case CPUINFO_INT_REGISTER + R3000_R31:			info->i = r3000.r[31];					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = r3000_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = r3000_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = r3000_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = r3000_init;				break;
+		case CPUINFO_PTR_RESET:							/* provided per-CPU */					break;
+		case CPUINFO_PTR_EXIT:							info->exit = r3000_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = r3000_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = r3000_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = r3000.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = r3000_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = r3000_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R3000"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MIPS II"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 2000-2002"); break;
+
+		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+
+		case CPUINFO_STR_REGISTER + R3000_PC:  			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", r3000.pc); break;
+		case CPUINFO_STR_REGISTER + R3000_SR:  			sprintf(info->s = cpuintrf_temp_str(), "SR: %08X", r3000.cpr[0][COP0_Status]); break;
+
+		case CPUINFO_STR_REGISTER + R3000_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", r3000.r[0]); break;
+		case CPUINFO_STR_REGISTER + R3000_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", r3000.r[1]); break;
+		case CPUINFO_STR_REGISTER + R3000_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %08X", r3000.r[2]); break;
+		case CPUINFO_STR_REGISTER + R3000_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3: %08X", r3000.r[3]); break;
+		case CPUINFO_STR_REGISTER + R3000_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4: %08X", r3000.r[4]); break;
+		case CPUINFO_STR_REGISTER + R3000_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5: %08X", r3000.r[5]); break;
+		case CPUINFO_STR_REGISTER + R3000_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6: %08X", r3000.r[6]); break;
+		case CPUINFO_STR_REGISTER + R3000_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7: %08X", r3000.r[7]); break;
+		case CPUINFO_STR_REGISTER + R3000_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8: %08X", r3000.r[8]); break;
+		case CPUINFO_STR_REGISTER + R3000_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9: %08X", r3000.r[9]); break;
+		case CPUINFO_STR_REGISTER + R3000_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", r3000.r[10]); break;
+		case CPUINFO_STR_REGISTER + R3000_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", r3000.r[11]); break;
+		case CPUINFO_STR_REGISTER + R3000_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", r3000.r[12]); break;
+		case CPUINFO_STR_REGISTER + R3000_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", r3000.r[13]); break;
+		case CPUINFO_STR_REGISTER + R3000_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", r3000.r[14]); break;
+		case CPUINFO_STR_REGISTER + R3000_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", r3000.r[15]); break;
+		case CPUINFO_STR_REGISTER + R3000_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", r3000.r[16]); break;
+		case CPUINFO_STR_REGISTER + R3000_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", r3000.r[17]); break;
+		case CPUINFO_STR_REGISTER + R3000_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", r3000.r[18]); break;
+		case CPUINFO_STR_REGISTER + R3000_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", r3000.r[19]); break;
+		case CPUINFO_STR_REGISTER + R3000_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", r3000.r[20]); break;
+		case CPUINFO_STR_REGISTER + R3000_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", r3000.r[21]); break;
+		case CPUINFO_STR_REGISTER + R3000_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", r3000.r[22]); break;
+		case CPUINFO_STR_REGISTER + R3000_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", r3000.r[23]); break;
+		case CPUINFO_STR_REGISTER + R3000_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", r3000.r[24]); break;
+		case CPUINFO_STR_REGISTER + R3000_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", r3000.r[25]); break;
+		case CPUINFO_STR_REGISTER + R3000_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", r3000.r[26]); break;
+		case CPUINFO_STR_REGISTER + R3000_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", r3000.r[27]); break;
+		case CPUINFO_STR_REGISTER + R3000_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", r3000.r[28]); break;
+		case CPUINFO_STR_REGISTER + R3000_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", r3000.r[29]); break;
+		case CPUINFO_STR_REGISTER + R3000_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", r3000.r[30]); break;
+		case CPUINFO_STR_REGISTER + R3000_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", r3000.r[31]); break;
+	}
+}
+
+
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void r3000be_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r3000be_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R3000 (big)"); break;
+
+		default:
+			r3000_get_info(state, info);
+			break;
+	}
+}
+
+
+void r3000le_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r3000le_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R3000 (little)"); break;
+
+		default:
+			r3000_get_info(state, info);
+			break;
 	}
 }

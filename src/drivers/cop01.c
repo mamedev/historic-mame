@@ -110,79 +110,79 @@ static READ_HANDLER( mightguy_dsw_r )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },	/* c000-c7ff in cop01 */
-	{ 0xd000, 0xdfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)	/* c000-c7ff in cop01 */
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },	/* c000-c7ff in cop01 */
-	{ 0xd000, 0xdfff, cop01_background_w, &cop01_bgvideoram },
-	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf3ff, cop01_foreground_w, &cop01_fgvideoram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)	/* c000-c7ff in cop01 */
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(cop01_background_w) AM_BASE(&cop01_bgvideoram)
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(cop01_foreground_w) AM_BASE(&cop01_fgvideoram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-	{ 0x04, 0x04, input_port_4_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mightguy_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x04, mightguy_dsw_r },
-PORT_END
+static ADDRESS_MAP_START( mightguy_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x04) AM_READ(mightguy_dsw_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x40, 0x43, cop01_vreg_w },
-	{ 0x44, 0x44, cop01_sound_command_w },
-	{ 0x45, 0x45, watchdog_reset_w }, /* ? */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x43) AM_WRITE(cop01_vreg_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(cop01_sound_command_w)
+	AM_RANGE(0x45, 0x45) AM_WRITE(watchdog_reset_w) /* ? */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8000, MRA_NOP },	/* irq ack? */
-	{ 0xc000, 0xc7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(MRA8_NOP)	/* irq ack? */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x06, 0x06, cop01_sound_command_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x06, 0x06) AM_READ(cop01_sound_command_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x02, 0x02, AY8910_control_port_1_w },
-	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ 0x04, 0x04, AY8910_control_port_2_w },
-	{ 0x05, 0x05, AY8910_write_port_2_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_2_w)
+ADDRESS_MAP_END
 
 /* this just gets some garbage out of the YM3526 */
 static READ_HANDLER( kludge ) { static int timer; return timer++; }
 
-static PORT_READ_START( mightguy_sound_readport )
-	{ 0x03, 0x03, kludge },		/* 1412M2? */
-	{ 0x06, 0x06, cop01_sound_command_r },
-PORT_END
+static ADDRESS_MAP_START( mightguy_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_READ(kludge)		/* 1412M2? */
+	AM_RANGE(0x06, 0x06) AM_READ(cop01_sound_command_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mightguy_sound_writeport )
-	{ 0x00, 0x00, YM3526_control_port_0_w },
-	{ 0x01, 0x01, YM3526_write_port_0_w },
-	{ 0x02, 0x02, MWA_NOP },	/* 1412M2? */
-	{ 0x03, 0x03, MWA_NOP },	/* 1412M2? */
-PORT_END
+static ADDRESS_MAP_START( mightguy_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)	/* 1412M2? */
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP)	/* 1412M2? */
+ADDRESS_MAP_END
 
 
 
@@ -429,14 +429,14 @@ static MACHINE_DRIVER_START( cop01 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -461,14 +461,14 @@ static MACHINE_DRIVER_START( mightguy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(mightguy_readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(mightguy_readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(mightguy_sound_readport,mightguy_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(mightguy_sound_readport,mightguy_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -194,41 +194,41 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe100, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, pb_videoram_w,&pb_videoram },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe100, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(pb_videoram_w) AM_BASE(&pb_videoram)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
-static PORT_READ_START( readport )
-	{ 0x0000, 0x01ff, paletteram_r },
-	{ 0x0401, 0x0401, AY8910_read_port_0_r },
-	{ 0x0408, 0x0408, data_408_r},
-	{ 0x0418, 0x0418, MRA_NOP },  //?
-	{ 0x041b, 0x041b, MRA_NOP },  //?
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(paletteram_r)
+	AM_RANGE(0x0401, 0x0401) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x0408, 0x0408) AM_READ(data_408_r)
+	AM_RANGE(0x0418, 0x0418) AM_READ(MRA8_NOP)  //?
+	AM_RANGE(0x041b, 0x041b) AM_READ(MRA8_NOP)  //?
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x0000, 0x01ff, paletteram_BBGGRRII_w },
-	{	0x0200, 0x03ff, MWA_NOP},
-	{ 0x0402, 0x0402, AY8910_write_port_0_w },
-	{ 0x0403, 0x0403, AY8910_control_port_0_w },
-	{ 0x408, 0x408, select_408_w},
-	{ 0x410, 0x410, data_410_w },
-	{ 0x41a, 0x41a, data_41a_w},
-	{ 0x419, 0x419, MWA_NOP },  //? watchdog ?
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(paletteram_BBGGRRII_w)
+	AM_RANGE(	0x0200, 0x03ff) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0402, 0x0402) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0403, 0x0403) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x408, 0x408) AM_WRITE(select_408_w)
+	AM_RANGE(0x410, 0x410) AM_WRITE(data_410_w)
+	AM_RANGE(0x41a, 0x41a) AM_WRITE(data_41a_w)
+	AM_RANGE(0x419, 0x419) AM_WRITE(MWA8_NOP)  //? watchdog ?
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( pbillian )
 
@@ -372,8 +372,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( pbillian )
 	MDRV_CPU_ADD(Z80,6000000)		 /* 6 MHz */
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 

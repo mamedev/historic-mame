@@ -453,14 +453,14 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		return 0.0;
 
 	// finally, compute refresh score
-	refresh_score = 1.0 / (1.0 + fabs((double)refresh - Machine->drv->frames_per_second));
+	refresh_score = 1.0 / (1.0 + fabs((double)refresh - Machine->refresh_rate));
 
 	// if we're looking for a particular refresh, make sure it matches
 	if (win_gfx_refresh && refresh && refresh != win_gfx_refresh)
 		return 0.0;
 
 	// if refresh is smaller than we'd like, it only scores up to 0.1
-	if ((double)refresh < Machine->drv->frames_per_second)
+	if ((double)refresh < Machine->refresh_rate)
 		refresh_score *= 0.1;
 
 	// weight size highest, followed by depth and refresh

@@ -95,26 +95,26 @@ it doesn't seem able to read from fg/bg/spr/pal ram
 
 */
 
-static MEMORY_READ16_START( kickgoal_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x900006, 0x900007, kickgoal_eeprom_r },
-	{ 0xff0000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( kickgoal_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x900006, 0x900007) AM_READ(kickgoal_eeprom_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( kickgoal_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x800004, 0x800005, soundlatch_word_w },
-	{ 0x900000, 0x900005, kickgoal_eeprom_w },
-	{ 0xa00000, 0xa03fff, kickgoal_fgram_w,  &kickgoal_fgram  }, /* FG Layer */
-	{ 0xa04000, 0xa07fff, kickgoal_bgram_w,  &kickgoal_bgram  }, /* Higher BG Layer */
-	{ 0xa08000, 0xa0bfff, kickgoal_bg2ram_w, &kickgoal_bg2ram }, /* Lower BG Layer */
-	{ 0xa10000, 0xa1000f, MWA16_RAM, &kickgoal_scrram }, /* Scroll Registers */
-	{ 0xb00000, 0xb007ff, MWA16_RAM, &spriteram16, &spriteram_size  }, /* Sprites */
-	{ 0xc00000, 0xc007ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 }, /* Palette */
-	{ 0xff0000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( kickgoal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x800004, 0x800005) AM_WRITE(soundlatch_word_w)
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(kickgoal_eeprom_w)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(kickgoal_fgram_w) AM_BASE(&kickgoal_fgram) /* FG Layer */
+	AM_RANGE(0xa04000, 0xa07fff) AM_WRITE(kickgoal_bgram_w) AM_BASE(&kickgoal_bgram) /* Higher BG Layer */
+	AM_RANGE(0xa08000, 0xa0bfff) AM_WRITE(kickgoal_bg2ram_w) AM_BASE(&kickgoal_bg2ram) /* Lower BG Layer */
+	AM_RANGE(0xa10000, 0xa1000f) AM_WRITE(MWA16_RAM) AM_BASE(&kickgoal_scrram) /* Scroll Registers */
+	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Sprites */
+	AM_RANGE(0xc00000, 0xc007ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16) /* Palette */
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /* INPUT ports ***************************************************************/
 
@@ -214,7 +214,7 @@ static MACHINE_DRIVER_START( kickgoal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
-	MDRV_CPU_MEMORY(kickgoal_readmem,kickgoal_writemem)
+	MDRV_CPU_PROGRAM_MAP(kickgoal_readmem,kickgoal_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	/* pic16c57? */

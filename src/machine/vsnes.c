@@ -316,8 +316,8 @@ DRIVER_INIT( suprmrio )
 	init_vsnormal();
 
 	/* extra ram at $6000 is enabled with bit 1 of $4016 */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_RAM );
 
 	/* now override the vidaccess callback */
 	/* we need to remap color tables */
@@ -959,8 +959,8 @@ DRIVER_INIT( MMC3 )
 	install_mem_write_handler( 0, 0x8000, 0xffff, mapper4_w );
 
 	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_RAM );
 
 	/* common init */
 	init_vsnes();
@@ -1184,8 +1184,8 @@ DRIVER_INIT( bnglngby )
 	install_mem_write_handler( 0, 0x0231, 0x0231, set_bnglngby_irq_w );
 
 	/* extra ram */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_RAM );
 
 	ret = 0;
 
@@ -1271,15 +1271,16 @@ DRIVER_INIT( vstennis )
 	install_mem_write_handler( 1, 0x4016, 0x4016, vstennis_vrom_banking );
 
 	/* shared ram at $6000 */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_BANK2 );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_BANK2 );
-	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_BANK2 );
-	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_BANK2 );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_BANK1 );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_BANK1 );
+	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_BANK1 );
+	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_BANK1 );
 
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x6000]);
 }
 
 /**********************************************************************/
-/* Wrecking Crew Init*/
+/* VS Wrecking Crew */
 
 DRIVER_INIT( wrecking )
 {
@@ -1343,8 +1344,8 @@ DRIVER_INIT( btlecity )
 DRIVER_INIT( vstetris )
 {
 	/* extra ram at $6000 is enabled with bit 1 of $4016 */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_RAM );
 
 	init_vsnes();
 	init_vsnormal();

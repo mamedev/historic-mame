@@ -134,46 +134,46 @@ static READ16_HANDLER( port1_r )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x260000, 0x26000f, port0_r },
-	{ 0x260010, 0x26001f, port1_r },
-	{ 0x260020, 0x26002f, input_port_2_word_r },
-	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
-	{ 0x3f0000, 0x3f1fff, pfram_r },
-	{ 0x3f2000, 0x3f3fff, moram_r },
-	{ 0x3f4000, 0x3f4fff, anram_r },
-	{ 0x3f5000, 0x3f7fff, shared_ram_r },
-	{ 0xff8000, 0xff9fff, pfram_r },
-	{ 0xffa000, 0xffbfff, moram_r },
-	{ 0xffc000, 0xffcfff, anram_r },
-	{ 0xffd000, 0xffffff, shared_ram_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0e0000, 0x0e0fff) AM_READ(atarigen_eeprom_r)
+	AM_RANGE(0x260000, 0x26000f) AM_READ(port0_r)
+	AM_RANGE(0x260010, 0x26001f) AM_READ(port1_r)
+	AM_RANGE(0x260020, 0x26002f) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x260030, 0x260031) AM_READ(atarigen_sound_r)
+	AM_RANGE(0x3e0000, 0x3e0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3f0000, 0x3f1fff) AM_READ(pfram_r)
+	AM_RANGE(0x3f2000, 0x3f3fff) AM_READ(moram_r)
+	AM_RANGE(0x3f4000, 0x3f4fff) AM_READ(anram_r)
+	AM_RANGE(0x3f5000, 0x3f7fff) AM_READ(shared_ram_r)
+	AM_RANGE(0xff8000, 0xff9fff) AM_READ(pfram_r)
+	AM_RANGE(0xffa000, 0xffbfff) AM_READ(moram_r)
+	AM_RANGE(0xffc000, 0xffcfff) AM_READ(anram_r)
+	AM_RANGE(0xffd000, 0xffffff) AM_READ(shared_ram_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
-	{ 0x360000, 0x360001, atarigen_scanline_int_ack_w },
-	{ 0x360010, 0x360011, MWA16_NOP },
-	{ 0x360020, 0x360021, atarigen_sound_reset_w },
-	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, vindictr_paletteram_w, &paletteram16 },
-	{ 0x3f0000, 0x3f1fff, atarigen_playfield_w, &atarigen_playfield },
-	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f4000, 0x3f4f7f, atarigen_alpha_w, &atarigen_alpha },
-	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0x3f5000, 0x3f7fff, shared_ram_w, &shared_ram },
-	{ 0xff8000, 0xff9fff, atarigen_playfield_w },
-	{ 0xffa000, 0xffbfff, atarimo_0_spriteram_w },
-	{ 0xffc000, 0xffcf7f, atarigen_alpha_w },
-	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w },
-	{ 0xffd000, 0xffffff, shared_ram_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0e0000, 0x0e0fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x1f0000, 0x1fffff) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0x2e0000, 0x2e0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(atarigen_scanline_int_ack_w)
+	AM_RANGE(0x360010, 0x360011) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x360020, 0x360021) AM_WRITE(atarigen_sound_reset_w)
+	AM_RANGE(0x360030, 0x360031) AM_WRITE(atarigen_sound_w)
+	AM_RANGE(0x3e0000, 0x3e0fff) AM_WRITE(vindictr_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3f0000, 0x3f1fff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0x3f2000, 0x3f3fff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0x3f4000, 0x3f4f7f) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0x3f4f80, 0x3f4fff) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
+	AM_RANGE(0x3f5000, 0x3f7fff) AM_WRITE(shared_ram_w) AM_BASE(&shared_ram)
+	AM_RANGE(0xff8000, 0xff9fff) AM_WRITE(atarigen_playfield_w)
+	AM_RANGE(0xffa000, 0xffbfff) AM_WRITE(atarimo_0_spriteram_w)
+	AM_RANGE(0xffc000, 0xffcf7f) AM_WRITE(atarigen_alpha_w)
+	AM_RANGE(0xffcf80, 0xffcfff) AM_WRITE(atarimo_0_slipram_w)
+	AM_RANGE(0xffd000, 0xffffff) AM_WRITE(shared_ram_w)
+ADDRESS_MAP_END
 
 
 
@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( vindictr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -492,13 +492,13 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 	{
 		logerror("%08x: %s\t(%08x-%08x)\n", pc, buffer, addr, addr_end - 1);
 
-		saved_op_rom		= OP_ROM;
-		saved_op_ram		= OP_RAM;
-		saved_op_mem_min	= OP_MEM_MIN;
-		saved_op_mem_max	= OP_MEM_MAX;
-		OP_ROM = OP_RAM = (UINT8 *) 0;
-		OP_MEM_MIN = (size_t) 0;
-		OP_MEM_MAX = (size_t) -1;
+		saved_op_rom		= opcode_base;
+		saved_op_ram		= opcode_arg_base;
+		saved_op_mem_min	= opcode_memory_min;
+		saved_op_mem_max	= opcode_memory_max;
+		opcode_base = opcode_arg_base = (UINT8 *) 0;
+		opcode_memory_min = (size_t) 0;
+		opcode_memory_max = (size_t) -1;
 
 		while(addr < addr_end)
 		{
@@ -510,10 +510,10 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 			addr += offset;
 		}
 
-		OP_ROM = saved_op_rom;
-		OP_RAM = saved_op_ram;
-		OP_MEM_MIN = saved_op_mem_min;
-		OP_MEM_MAX = saved_op_mem_max;
+		opcode_base = saved_op_rom;
+		opcode_arg_base = saved_op_ram;
+		opcode_memory_min = saved_op_mem_min;
+		opcode_memory_max = saved_op_mem_max;
 	}
 #endif
 }
@@ -583,6 +583,42 @@ static void append_out_of_cycles(struct drccore *drc)
 	_popad();														// popad
 	_ret();															// ret
 }
+
+
+
+/*------------------------------------------------------------------
+	drc_x86_get_features()
+------------------------------------------------------------------*/
+UINT32 drc_x86_get_features(void)
+{
+	UINT32 features = 0;
+#ifdef _MSC_VER
+	__asm 
+	{
+		mov eax, 1
+		xor ebx, ebx
+		xor ecx, ecx
+		xor edx, edx
+		cpuid
+		mov features, edx
+	}
+#else /* !_MSC_VER */
+	__asm__
+	(
+		"movl $1,%%eax       ; "
+		"xorl %%ebx,%%ebx    ; "
+		"xorl %%ecx,%%ecx    ; "
+		"xorl %%edx,%%edx    ; "
+		"cpuid               ; "
+		"movl %%edx,%0       ; "
+	: "=&a" (features)		/* result has to go in eax */
+	: 				/* no inputs */
+	: "%ebx", "%ecx", "%edx"	/* clobbers ebx, ecx and edx */
+	);
+#endif /* MSC_VER */
+	return features;
+}
+
 
 
 /*------------------------------------------------------------------

@@ -76,22 +76,15 @@ static PALETTE_INIT( avalnche )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_RAM }, /* RAM SEL */
-	{ 0x2000, 0x2fff, avalnche_input_r }, /* INSEL */
-	{ 0x6000, 0x7fff, MRA_ROM }, /* ROM1-ROM2 */
-	{ 0xe000, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, avalnche_videoram_w, &videoram, &videoram_size }, /* DISPLAY */
-	{ 0x3000, 0x3fff, MWA_NOP }, /* WATCHDOG */
-	{ 0x4000, 0x4fff, avalnche_output_w }, /* OUTSEL */
-	{ 0x5000, 0x5fff, avalnche_noise_amplitude_w }, /* SOUNDLVL */
-	{ 0x6000, 0x7fff, MWA_ROM }, /* ROM1-ROM2 */
-	{ 0xe000, 0xffff, MWA_ROM }, /* ROM1-ROM2 */
-MEMORY_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_RAM, avalnche_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* RAM SEL */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(avalnche_input_r) /* INSEL */
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_NOP) /* WATCHDOG */
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(avalnche_output_w) /* OUTSEL */
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(avalnche_noise_amplitude_w) /* SOUNDLVL */
+	AM_RANGE(0x6000, 0x7fff) AM_ROM /* ROM1-ROM2 */
+ADDRESS_MAP_END
 
 
 
@@ -231,7 +224,7 @@ static MACHINE_DRIVER_START( avalnche )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12096000/16)	   /* clock input is the "2H" signal divided by two */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(avalnche_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -260,18 +253,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( avalnche )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	/* Note: These are being loaded into a bogus location, */
-	/*		 They are nibble wide rom images which will be */
-	/*		 merged and loaded into the proper place by    */
-	/*		 orbit_rom_init()							   */
-	ROM_LOAD( "30612.d2",     	0x8800, 0x0800, CRC(3f975171) SHA1(afe680865da97824f1ebade4c7a2ba5d7ee2cbab) )
-	ROM_LOAD( "30613.e2",     	0x9000, 0x0800, CRC(47a224d3) SHA1(9feb7444a2e5a3d90a4fe78ae5d23c3a5039bfaa) )
-	ROM_LOAD( "30611.c2",     	0x9800, 0x0800, CRC(0ad07f85) SHA1(5a1a873b14e63dbb69ee3686ba53f7ca831fe9d0) )
-
-	ROM_LOAD( "30615.d3",     	0xa800, 0x0800, CRC(3e1a86b4) SHA1(3ff4cffea5b7a32231c0996473158f24c3bbe107) )
-	ROM_LOAD( "30616.e3",     	0xb000, 0x0800, CRC(f620f0f8) SHA1(7802b399b3469fc840796c3145b5f63781090956) )
-	ROM_LOAD( "30614.c3",     	0xb800, 0x0800, CRC(a12d5d64) SHA1(1647d7416bf9266d07f066d3797bda943e004d24) )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 32k for code */
+	ROM_LOAD_NIB_HIGH( "30612.d2",     	0x6800, 0x0800, CRC(3f975171) SHA1(afe680865da97824f1ebade4c7a2ba5d7ee2cbab) )
+	ROM_LOAD_NIB_LOW ( "30615.d3",     	0x6800, 0x0800, CRC(3e1a86b4) SHA1(3ff4cffea5b7a32231c0996473158f24c3bbe107) )
+	ROM_LOAD_NIB_HIGH( "30613.e2",     	0x7000, 0x0800, CRC(47a224d3) SHA1(9feb7444a2e5a3d90a4fe78ae5d23c3a5039bfaa) )
+	ROM_LOAD_NIB_LOW ( "30616.e3",     	0x7000, 0x0800, CRC(f620f0f8) SHA1(7802b399b3469fc840796c3145b5f63781090956) )
+	ROM_LOAD_NIB_HIGH( "30611.c2",     	0x7800, 0x0800, CRC(0ad07f85) SHA1(5a1a873b14e63dbb69ee3686ba53f7ca831fe9d0) )
+	ROM_LOAD_NIB_LOW ( "30614.c3",     	0x7800, 0x0800, CRC(a12d5d64) SHA1(1647d7416bf9266d07f066d3797bda943e004d24) )
 ROM_END
 
 
@@ -284,18 +272,6 @@ ROM_END
 
 static DRIVER_INIT( avalnche )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int i;
-
-	/* Merge nibble-wide roms together,
-	   and load them into 0x6000-0x7fff and e000-ffff */
-
-	for(i=0;i<0x2000;i++)
-	{
-		rom[0x6000+i] = (rom[0x8000+i]<<4)+rom[0xA000+i];
-		rom[0xE000+i] = (rom[0x8000+i]<<4)+rom[0xA000+i];
-	}
-	
 	artwork_set_overlay(avalnche_overlay);
 }
 

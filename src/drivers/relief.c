@@ -170,42 +170,42 @@ static WRITE16_HANDLER( ym2413_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x140010, 0x140011, adpcm_r },
-	{ 0x180000, 0x180fff, atarigen_eeprom_upper_r },
-	{ 0x260000, 0x260001, input_port_0_word_r },
-	{ 0x260002, 0x260003, input_port_1_word_r },
-	{ 0x260010, 0x260011, special_port2_r },
-	{ 0x260012, 0x260013, input_port_3_word_r },
-	{ 0x3effc0, 0x3effff, atarivc_r },
-	{ 0xfe0000, 0xfe0fff, MRA16_RAM },
-	{ 0xfeffc0, 0xfeffff, atarivc_r },
-	{ 0xff0000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x140010, 0x140011) AM_READ(adpcm_r)
+	AM_RANGE(0x180000, 0x180fff) AM_READ(atarigen_eeprom_upper_r)
+	AM_RANGE(0x260000, 0x260001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x260002, 0x260003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x260010, 0x260011) AM_READ(special_port2_r)
+	AM_RANGE(0x260012, 0x260013) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x3effc0, 0x3effff) AM_READ(atarivc_r)
+	AM_RANGE(0xfe0000, 0xfe0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfeffc0, 0xfeffff) AM_READ(atarivc_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x140000, 0x140003, ym2413_w },
-	{ 0x140010, 0x140011, adpcm_w },
-	{ 0x140020, 0x140021, audio_volume_w },
-	{ 0x140030, 0x140031, audio_control_w },
-	{ 0x180000, 0x180fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x1c0030, 0x1c0031, atarigen_eeprom_enable_w },
-	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
-	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
-	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w, &paletteram16 },
-	{ 0xfeffc0, 0xfeffff, atarivc_w },
-	{ 0xff0000, 0xff1fff, atarigen_playfield2_latched_msb_w, &atarigen_playfield2 },
-	{ 0xff2000, 0xff3fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
-	{ 0xff4000, 0xff5fff, atarigen_playfield_dual_upper_w, &atarigen_playfield_upper },
-	{ 0xff6000, 0xff67ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0xff6800, 0xff8eff, MWA16_RAM },
-	{ 0xff8f00, 0xff8f7f, MWA16_RAM, &atarivc_eof_data },
-	{ 0xff8f80, 0xff8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0xff9000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x140000, 0x140003) AM_WRITE(ym2413_w)
+	AM_RANGE(0x140010, 0x140011) AM_WRITE(adpcm_w)
+	AM_RANGE(0x140020, 0x140021) AM_WRITE(audio_volume_w)
+	AM_RANGE(0x140030, 0x140031) AM_WRITE(audio_control_w)
+	AM_RANGE(0x180000, 0x180fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x1c0030, 0x1c0031) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0x2a0000, 0x2a0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x3effc0, 0x3effff) AM_WRITE(atarivc_w) AM_BASE(&atarivc_data)
+	AM_RANGE(0xfe0000, 0xfe0fff) AM_WRITE(atarigen_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xfeffc0, 0xfeffff) AM_WRITE(atarivc_w)
+	AM_RANGE(0xff0000, 0xff1fff) AM_WRITE(atarigen_playfield2_latched_msb_w) AM_BASE(&atarigen_playfield2)
+	AM_RANGE(0xff2000, 0xff3fff) AM_WRITE(atarigen_playfield_latched_lsb_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xff4000, 0xff5fff) AM_WRITE(atarigen_playfield_dual_upper_w) AM_BASE(&atarigen_playfield_upper)
+	AM_RANGE(0xff6000, 0xff67ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xff6800, 0xff8eff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xff8f00, 0xff8f7f) AM_WRITE(MWA16_RAM) AM_BASE(&atarivc_eof_data)
+	AM_RANGE(0xff8f80, 0xff8fff) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
+	AM_RANGE(0xff9000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -359,7 +359,7 @@ static MACHINE_DRIVER_START( relief )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

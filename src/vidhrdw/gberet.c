@@ -15,8 +15,6 @@ unsigned char *gberet_videoram,*gberet_colorram;
 unsigned char *gberet_spritebank;
 unsigned char *gberet_scrollram;
 static struct tilemap *bg_tilemap;
-static int interruptenable;
-static int flipscreen;
 
 
 /***************************************************************************
@@ -145,18 +143,6 @@ WRITE_HANDLER( gberet_colorram_w )
 	}
 }
 
-WRITE_HANDLER( gberet_e044_w )
-{
-	/* bit 0 enables interrupts */
-	interruptenable = data & 1;
-
-	/* bit 3 flips screen */
-	flipscreen = data & 0x08;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	/* don't know about the other bits */
-}
-
 WRITE_HANDLER( gberet_scroll_w )
 {
 	int scroll;
@@ -179,18 +165,6 @@ WRITE_HANDLER( gberetb_scroll_w )
 }
 
 
-INTERRUPT_GEN( gberet_interrupt )
-{
-	if (cpu_getiloops() == 0)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
-	else if (cpu_getiloops() % 2)
-	{
-		if (interruptenable)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-	}
-}
-
-
 
 /***************************************************************************
 
@@ -207,7 +181,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		sr = spriteram_2;
 	else sr = spriteram;
 
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = 0;offs < 0xc0;offs += 4)
 	{
 		if (sr[offs+3])
 		{
@@ -219,7 +193,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			flipx = sr[offs+1] & 0x10;
 			flipy = sr[offs+1] & 0x20;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -257,7 +231,7 @@ static void draw_sprites_bootleg(struct mame_bitmap *bitmap, const struct rectan
 			flipx = sr[offs+3] & 0x10;
 			flipy = sr[offs+3] & 0x20;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -278,6 +252,8 @@ static void draw_sprites_bootleg(struct mame_bitmap *bitmap, const struct rectan
 
 VIDEO_UPDATE( gberet )
 {
+	tilemap_set_flip(ALL_TILEMAPS, flip_screen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
 	draw_sprites(bitmap,cliprect);

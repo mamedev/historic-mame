@@ -348,84 +348,84 @@ static INTERRUPT_GEN( xexex_interrupt )
 }
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 #if XE_SKIPIDLE
-	{ 0x080014, 0x080015, xexex_waitskip_r },		// helps sound CPU by giving back control as early as possible
+	AM_RANGE(0x080014, 0x080015) AM_READ(xexex_waitskip_r)		// helps sound CPU by giving back control as early as possible
 #endif
-	{ 0x080000, 0x08ffff, MRA16_RAM },
-	{ 0x090000, 0x097fff, MRA16_RAM },				// K053247 sprite RAM
-	{ 0x098000, 0x09ffff, spriteram16_mirror_r },	// K053247 sprite RAM mirror read
-	{ 0x0c4000, 0x0c4001, K053246_word_r },			// Passthrough to sprite roms
-	{ 0x0c6000, 0x0c7fff, K053250_0_ram_r },		// K053250 "road" RAM
-	{ 0x0c8000, 0x0c800f, K053250_0_r },
-	{ 0x0d6014, 0x0d6015, sound_status_r },
-	{ 0x0d6000, 0x0d601f, MRA16_RAM },
-	{ 0x0da000, 0x0da001, input_port_2_word_r },
-	{ 0x0da002, 0x0da003, input_port_3_word_r },
-	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
-	{ 0x0dc002, 0x0dc003, control1_r },
-	{ 0x0de000, 0x0de001, control2_r },
-	{ 0x100000, 0x17ffff, MRA16_ROM },
-	{ 0x180000, 0x181fff, K056832_ram_word_r },
-	{ 0x182000, 0x183fff, K056832_ram_word_r },
-	{ 0x190000, 0x191fff, K056832_rom_word_r },		// Passthrough to tile roms
-	{ 0x1a0000, 0x1a1fff, K053250_0_rom_r },
-	{ 0x1b0000, 0x1b1fff, MRA16_RAM },
+	AM_RANGE(0x080000, 0x08ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x090000, 0x097fff) AM_READ(MRA16_RAM)				// K053247 sprite RAM
+	AM_RANGE(0x098000, 0x09ffff) AM_READ(spriteram16_mirror_r)	// K053247 sprite RAM mirror read
+	AM_RANGE(0x0c4000, 0x0c4001) AM_READ(K053246_word_r)			// Passthrough to sprite roms
+	AM_RANGE(0x0c6000, 0x0c7fff) AM_READ(K053250_0_ram_r)		// K053250 "road" RAM
+	AM_RANGE(0x0c8000, 0x0c800f) AM_READ(K053250_0_r)
+	AM_RANGE(0x0d6014, 0x0d6015) AM_READ(sound_status_r)
+	AM_RANGE(0x0d6000, 0x0d601f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0da000, 0x0da001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0da002, 0x0da003) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0dc000, 0x0dc001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0dc002, 0x0dc003) AM_READ(control1_r)
+	AM_RANGE(0x0de000, 0x0de001) AM_READ(control2_r)
+	AM_RANGE(0x100000, 0x17ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x180000, 0x181fff) AM_READ(K056832_ram_word_r)
+	AM_RANGE(0x182000, 0x183fff) AM_READ(K056832_ram_word_r)
+	AM_RANGE(0x190000, 0x191fff) AM_READ(K056832_rom_word_r)		// Passthrough to tile roms
+	AM_RANGE(0x1a0000, 0x1a1fff) AM_READ(K053250_0_rom_r)
+	AM_RANGE(0x1b0000, 0x1b1fff) AM_READ(MRA16_RAM)
 #if XE_DEBUG
-	{ 0x0c0000, 0x0c003f, K056832_word_r },
-	{ 0x0c2000, 0x0c2007, K053246_reg_word_r },
-	{ 0x0ca000, 0x0ca01f, K054338_word_r },
-	{ 0x0cc000, 0x0cc01f, K053251_lsb_r },
-	{ 0x0d0000, 0x0d001f, K053252_word_r },
-	{ 0x0d8000, 0x0d8007, K056832_b_word_r },
+	AM_RANGE(0x0c0000, 0x0c003f) AM_READ(K056832_word_r)
+	AM_RANGE(0x0c2000, 0x0c2007) AM_READ(K053246_reg_word_r)
+	AM_RANGE(0x0ca000, 0x0ca01f) AM_READ(K054338_word_r)
+	AM_RANGE(0x0cc000, 0x0cc01f) AM_READ(K053251_lsb_r)
+	AM_RANGE(0x0d0000, 0x0d001f) AM_READ(K053252_word_r)
+	AM_RANGE(0x0d8000, 0x0d8007) AM_READ(K056832_b_word_r)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },					// main ROM
-	{ 0x080000, 0x08ffff, MWA16_RAM, &xexex_workram },	// work RAM
-	{ 0x090000, 0x097fff, MWA16_RAM, &spriteram16 },	// K053247 sprite RAM
-	{ 0x098000, 0x09ffff, spriteram16_mirror_w },		// K053247 sprite RAM mirror write
-	{ 0x0c0000, 0x0c003f, K056832_word_w },				// VACSET (K054157)
-	{ 0x0c2000, 0x0c2007, K053246_word_w },				// OBJSET1
-	{ 0x0c6000, 0x0c7fff, K053250_0_ram_w },			// K053250 "road" RAM
-	{ 0x0c8000, 0x0c800f, K053250_0_w },				// background effects generator
-	{ 0x0ca000, 0x0ca01f, K054338_word_w },				// CLTC
-	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },				// priority encoder
-	{ 0x0d0000, 0x0d001f, K053252_word_w },				// CCU
-	{ 0x0d4000, 0x0d4001, sound_irq_w },
-	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
-	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
-	{ 0x0d6000, 0x0d601f, MWA16_RAM },					// sound regs fall through
-	{ 0x0d8000, 0x0d8007, K056832_b_word_w },			// VSCCS regs
-	{ 0x0de000, 0x0de001, control2_w },
-	{ 0x100000, 0x17ffff, MWA16_ROM },
-	{ 0x180000, 0x181fff, K056832_ram_word_w }, 		// tilemap RAM
-	{ 0x182000, 0x183fff, K056832_ram_word_w }, 		// tilemap RAM mirror
-	{ 0x190000, 0x191fff, MWA16_ROM },					// tile ROM
-	{ 0x1b0000, 0x1b1fff, paletteram16_xrgb_word_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)					// main ROM
+	AM_RANGE(0x080000, 0x08ffff) AM_WRITE(MWA16_RAM) AM_BASE(&xexex_workram)	// work RAM
+	AM_RANGE(0x090000, 0x097fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	// K053247 sprite RAM
+	AM_RANGE(0x098000, 0x09ffff) AM_WRITE(spriteram16_mirror_w)		// K053247 sprite RAM mirror write
+	AM_RANGE(0x0c0000, 0x0c003f) AM_WRITE(K056832_word_w)				// VACSET (K054157)
+	AM_RANGE(0x0c2000, 0x0c2007) AM_WRITE(K053246_word_w)				// OBJSET1
+	AM_RANGE(0x0c6000, 0x0c7fff) AM_WRITE(K053250_0_ram_w)			// K053250 "road" RAM
+	AM_RANGE(0x0c8000, 0x0c800f) AM_WRITE(K053250_0_w)				// background effects generator
+	AM_RANGE(0x0ca000, 0x0ca01f) AM_WRITE(K054338_word_w)				// CLTC
+	AM_RANGE(0x0cc000, 0x0cc01f) AM_WRITE(K053251_lsb_w)				// priority encoder
+	AM_RANGE(0x0d0000, 0x0d001f) AM_WRITE(K053252_word_w)				// CCU
+	AM_RANGE(0x0d4000, 0x0d4001) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x0d600c, 0x0d600d) AM_WRITE(sound_cmd1_w)
+	AM_RANGE(0x0d600e, 0x0d600f) AM_WRITE(sound_cmd2_w)
+	AM_RANGE(0x0d6000, 0x0d601f) AM_WRITE(MWA16_RAM)					// sound regs fall through
+	AM_RANGE(0x0d8000, 0x0d8007) AM_WRITE(K056832_b_word_w)			// VSCCS regs
+	AM_RANGE(0x0de000, 0x0de001) AM_WRITE(control2_w)
+	AM_RANGE(0x100000, 0x17ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x180000, 0x181fff) AM_WRITE(K056832_ram_word_w) 		// tilemap RAM
+	AM_RANGE(0x182000, 0x183fff) AM_WRITE(K056832_ram_word_w) 		// tilemap RAM mirror
+	AM_RANGE(0x190000, 0x191fff) AM_WRITE(MWA16_ROM)					// tile ROM
+	AM_RANGE(0x1b0000, 0x1b1fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_r },
-	{ 0xec01, 0xec01, YM2151_status_port_0_r },
-	{ 0xf002, 0xf002, soundlatch_r },
-	{ 0xf003, 0xf003, soundlatch2_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_READ(K054539_0_r)
+	AM_RANGE(0xec01, 0xec01) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch_r)
+	AM_RANGE(0xf003, 0xf003) AM_READ(soundlatch2_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe22f, K054539_0_w },
-	{ 0xec00, 0xec00, YM2151_register_port_0_w },
-	{ 0xec01, 0xec01, YM2151_data_port_0_w },
-	{ 0xf000, 0xf000, soundlatch3_w },
-	{ 0xf800, 0xf800, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe22f) AM_WRITE(K054539_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xec01, 0xec01) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch3_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( xexex )
@@ -488,7 +488,7 @@ static MACHINE_DRIVER_START( xexex )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)	// 16MHz (32MHz xtal)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(xexex_interrupt,2)
 
 	// 8MHz (PCB shows one 32MHz/18.432MHz xtal, reference: www.system16.com)
@@ -496,7 +496,7 @@ static MACHINE_DRIVER_START( xexex )
 	MDRV_CPU_ADD(Z80, 8000000)
 
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_INTERLEAVE(32);
 	MDRV_FRAMES_PER_SECOND(60)

@@ -134,61 +134,61 @@ static NVRAM_HANDLER( hyperspt )
 
 
 
-static MEMORY_READ_START( hyperspt_readmem )
-	{ 0x1000, 0x10ff, MRA_RAM },
-	{ 0x1600, 0x1600, input_port_4_r }, /* DIP 2 */
-	{ 0x1680, 0x1680, input_port_0_r }, /* IO Coin */
-//	{ 0x1681, 0x1681, input_port_1_r }, /* P1 IO */
-	{ 0x1681, 0x1681, konami_IN1_r }, /* P1 IO and handle fake button for cheating */
-	{ 0x1682, 0x1682, input_port_2_r }, /* P2 IO */
-	{ 0x1683, 0x1683, input_port_3_r }, /* DIP 1 */
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( hyperspt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1600, 0x1600) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x1680, 0x1680) AM_READ(input_port_0_r) /* IO Coin */
+//	AM_RANGE(0x1681, 0x1681) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x1681, 0x1681) AM_READ(konami_IN1_r) /* P1 IO and handle fake button for cheating */
+	AM_RANGE(0x1682, 0x1682) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x1683, 0x1683) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( roadf_readmem )
-	{ 0x1000, 0x10ff, MRA_RAM },
-	{ 0x1600, 0x1600, input_port_4_r }, /* DIP 2 */
-	{ 0x1680, 0x1680, input_port_0_r }, /* IO Coin */
-	{ 0x1681, 0x1681, input_port_1_r }, /* P1 IO */
-	{ 0x1682, 0x1682, input_port_2_r }, /* P2 IO */
-	{ 0x1683, 0x1683, input_port_3_r }, /* DIP 1 */
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( roadf_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1600, 0x1600) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x1680, 0x1680) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x1681, 0x1681) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x1682, 0x1682) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x1683, 0x1683) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x1000, 0x10bf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x10C0, 0x10ff, MWA_RAM, &hyperspt_scroll },	/* Scroll amount */
-	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1480, 0x1480, hyperspt_flipscreen_w },
-	{ 0x1481, 0x1481, konami_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x1483, 0x1484, hyperspt_coin_counter_w },
-	{ 0x1487, 0x1487, interrupt_enable_w },  /* Interrupt enable */
-	{ 0x1500, 0x1500, soundlatch_w },
-	{ 0x2000, 0x27ff, hyperspt_videoram_w, &videoram },
-	{ 0x2800, 0x2fff, hyperspt_colorram_w, &colorram },
-	{ 0x3000, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x3fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x1000, 0x10bf) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x10C0, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&hyperspt_scroll)	/* Scroll amount */
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1480, 0x1480) AM_WRITE(hyperspt_flipscreen_w)
+	AM_RANGE(0x1481, 0x1481) AM_WRITE(konami_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x1483, 0x1484) AM_WRITE(hyperspt_coin_counter_w)
+	AM_RANGE(0x1487, 0x1487) AM_WRITE(interrupt_enable_w)  /* Interrupt enable */
+	AM_RANGE(0x1500, 0x1500) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x2000, 0x27ff) AM_WRITE(hyperspt_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(hyperspt_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, hyperspt_sh_timer_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(hyperspt_sh_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4fff, MWA_RAM },
-	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
-	{ 0xc000, 0xdfff, hyperspt_sound_w },	  /* speech and output control */
-	{ 0xe000, 0xe000, DAC_0_data_w },
-	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
-	{ 0xe002, 0xe002, konami_SN76496_0_w }, 	 /* This address triggers the SN chip to read the data port. */
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(VLM5030_data_w) /* speech data */
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(hyperspt_sound_w)	  /* speech and output control */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(konami_SN76496_latch_w)  /* Loads the snd command into the snd latch */
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(konami_SN76496_0_w) 	 /* This address triggers the SN chip to read the data port. */
+ADDRESS_MAP_END
 
 
 
@@ -469,12 +469,12 @@ static MACHINE_DRIVER_START( hyperspt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2048000)		/* 1.400 MHz ??? */
-	MDRV_CPU_MEMORY(hyperspt_readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(hyperspt_readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Z80 Clock is derived from a 14.31818 MHz crystal */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -502,7 +502,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( roadf )
 	MDRV_IMPORT_FROM(hyperspt)
-	MDRV_CPU_MEMORY(roadf_readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(roadf_readmem, writemem)
 	MDRV_GFXDECODE(roadf_gfxdecodeinfo)
 	MDRV_VIDEO_START(roadf)
 MACHINE_DRIVER_END

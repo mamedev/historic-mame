@@ -211,30 +211,30 @@ static MACHINE_INIT( dribling )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, MWA_RAM, &videoram },
-	{ 0x4000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, dribling_colorram_w, &colorram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(dribling_colorram_w) AM_BASE(&colorram)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x00, 0xff, ioread },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(ioread)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0xff, iowrite },
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_WRITE(iowrite)
+ADDRESS_MAP_END
 
 
 
@@ -297,8 +297,8 @@ static MACHINE_DRIVER_START( dribling )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(dribling_irq_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -95,50 +95,14 @@ struct jaguar_config
 
 
 /*###################################################################################################
-**	PUBLIC GLOBALS
+**	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
-extern int jaguar_icount;
-
-
-/*###################################################################################################
-**	PUBLIC FUNCTIONS - GPU
-**#################################################################################################*/
-
-extern void jaguargpu_init(void);
-extern void jaguargpu_reset(void *param);
-extern void jaguargpu_exit(void);
-extern int jaguargpu_execute(int cycles);
-extern unsigned jaguargpu_get_context(void *dst);
-extern void jaguargpu_set_context(void *src);
-extern unsigned jaguargpu_get_reg(int regnum);
-extern void jaguargpu_set_reg(int regnum, unsigned val);
-extern void jaguargpu_set_irq_line(int irqline, int state);
-extern void jaguargpu_set_irq_callback(int (*callback)(int irqline));
-extern const char *jaguargpu_info(void *context, int regnum);
-extern unsigned jaguargpu_dasm(char *buffer, unsigned pc);
-
+extern void jaguargpu_get_info(UINT32 state, union cpuinfo *info);
 extern void jaguargpu_ctrl_w(int cpunum, offs_t offset, data32_t data, data32_t mem_mask);
 extern data32_t jaguargpu_ctrl_r(int cpunum, offs_t offset);
 
-
-/*###################################################################################################
-**	PUBLIC FUNCTIONS - DSP
-**#################################################################################################*/
-
-extern void jaguardsp_init(void);
-extern void jaguardsp_reset(void *param);
-extern void jaguardsp_exit(void);
-extern int jaguardsp_execute(int cycles);
-extern unsigned jaguardsp_get_context(void *dst);
-extern void jaguardsp_set_context(void *src);
-extern unsigned jaguardsp_get_reg(int regnum);
-extern void jaguardsp_set_reg(int regnum, unsigned val);
-extern void jaguardsp_set_irq_line(int irqline, int state);
-extern void jaguardsp_set_irq_callback(int (*callback)(int irqline));
-extern const char *jaguardsp_info(void *context, int regnum);
-extern unsigned jaguardsp_dasm(char *buffer, unsigned pc);
-
+extern void jaguardsp_get_info(UINT32 state, union cpuinfo *info);
 extern void jaguardsp_ctrl_w(int cpunum, offs_t offset, data32_t data, data32_t mem_mask);
 extern data32_t jaguardsp_ctrl_r(int cpunum, offs_t offset);
 

@@ -76,6 +76,6 @@ int YM2151ReadStatus(int n);
 void YM2151SetIrqHandler(int n, void (*handler)(int irq));
 
 /* set port write handler on YM2151 chip number 'n'*/
-void YM2151SetPortWriteHandler(int n, mem_write_handler handler);
+void YM2151SetPortWriteHandler(int n, write8_handler handler);
 
 #endif /*_H_YM2151_*/

@@ -149,30 +149,30 @@ WRITE_HANDLER( tankbatt_sh_fire_w )
 		sample_start (0, 0, 0);
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0c00, 0x0c07, tankbatt_in0_r },
-	{ 0x0c08, 0x0c0f, tankbatt_in1_r },
-	{ 0x0c18, 0x0c1f, tankbatt_dsw_r },
-	{ 0x0200, 0x0bff, MRA_RAM },
-	{ 0x6000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0c00, 0x0c07) AM_READ(tankbatt_in0_r)
+	AM_RANGE(0x0c08, 0x0c0f) AM_READ(tankbatt_in1_r)
+	AM_RANGE(0x0c18, 0x0c1f) AM_READ(tankbatt_dsw_r)
+	AM_RANGE(0x0200, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0010, 0x01ff, MWA_RAM },
-	{ 0x0800, 0x0bff, tankbatt_videoram_w, &videoram },
-	{ 0x0000, 0x000f, MWA_RAM, &tankbatt_bulletsram, &tankbatt_bulletsram_size },
-	{ 0x0c18, 0x0c18, MWA_NOP }, /* watchdog ?? */
-	{ 0x0c00, 0x0c01, tankbatt_led_w },
-	{ 0x0c0a, 0x0c0a, tankbatt_interrupt_enable_w },
-	{ 0x0c0b, 0x0c0b, tankbatt_sh_engine_w },
-	{ 0x0c0c, 0x0c0c, tankbatt_sh_fire_w },
-	{ 0x0c0d, 0x0c0d, tankbatt_sh_expl_w },
-	{ 0x0c0f, 0x0c0f, tankbatt_demo_interrupt_enable_w },
-	{ 0x0200, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x3fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0010, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(tankbatt_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0000, 0x000f) AM_WRITE(MWA8_RAM) AM_BASE(&tankbatt_bulletsram) AM_SIZE(&tankbatt_bulletsram_size)
+	AM_RANGE(0x0c18, 0x0c18) AM_WRITE(MWA8_NOP) /* watchdog ?? */
+	AM_RANGE(0x0c00, 0x0c01) AM_WRITE(tankbatt_led_w)
+	AM_RANGE(0x0c0a, 0x0c0a) AM_WRITE(tankbatt_interrupt_enable_w)
+	AM_RANGE(0x0c0b, 0x0c0b) AM_WRITE(tankbatt_sh_engine_w)
+	AM_RANGE(0x0c0c, 0x0c0c) AM_WRITE(tankbatt_sh_fire_w)
+	AM_RANGE(0x0c0d, 0x0c0d) AM_WRITE(tankbatt_sh_expl_w)
+	AM_RANGE(0x0c0f, 0x0c0f) AM_WRITE(tankbatt_demo_interrupt_enable_w)
+	AM_RANGE(0x0200, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 INTERRUPT_GEN( tankbatt_interrupt )
 {
@@ -282,7 +282,7 @@ static MACHINE_DRIVER_START( tankbatt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)	/* 1 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(tankbatt_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

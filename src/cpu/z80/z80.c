@@ -45,7 +45,7 @@
  *	 Changes in 2.7:
  *	  - removed z80_vm specific code, it's not needed (and never was).
  *	 Changes in 2.6:
- *	  - BUSY_LOOP_HACKS needed to call change_pc16() earlier, before
+ *	  - BUSY_LOOP_HACKS needed to call change_pc() earlier, before
  *		checking the opcodes at the new address, because otherwise they
  *		might access the old (wrong or even NULL) banked memory region.
  *		Thanks to Sean Young for finding this nasty bug.
@@ -118,7 +118,7 @@ static UINT8 z80_reg_layout[] = {
 	Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
 	Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
 	Z80_R,	Z80_I,	Z80_IM, Z80_IFF1,Z80_IFF2, -1,
-	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, 0
+	Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, 0
 };
 
 static UINT8 z80_win_layout[] = {
@@ -207,7 +207,7 @@ typedef struct {
 #define _IFF2	Z80.IFF2
 #define _HALT	Z80.HALT
 
-int z80_ICount;
+static int z80_ICount;
 static Z80_Regs Z80;
 static UINT32 EA;
 static int after_EI = 0;
@@ -337,6 +337,7 @@ static const UINT8 *cc[6] = { cc_op, cc_cb, cc_ed, cc_xy, cc_xycb, cc_ex };
 #define Z80_TABLE_fd	Z80_TABLE_xy
 
 static void take_interrupt(void);
+static void z80_burn(int cycles);
 
 typedef void (*funcptr)(void);
 
@@ -582,17 +583,17 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * Input a byte from given I/O port
  ***************************************************************/
-#define IN(port)   ((UINT8)cpu_readport16(port))
+#define IN(port)   ((UINT8)io_read_byte_8(port))
 
 /***************************************************************
  * Output a byte to given I/O port
  ***************************************************************/
-#define OUT(port,value) cpu_writeport16(port,value)
+#define OUT(port,value) io_write_byte_8(port,value)
 
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#define RM(addr) (UINT8)cpu_readmem16(addr)
+#define RM(addr) (UINT8)program_read_byte_8(addr)
 
 /***************************************************************
  * Read a word from given memory location
@@ -606,7 +607,7 @@ INLINE void RM16( UINT32 addr, PAIR *r )
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(addr,value) cpu_writemem16(addr,value)
+#define WM(addr,value) program_write_byte_8(addr,value)
 
 /***************************************************************
  * Write a word to given memory location
@@ -673,7 +674,7 @@ INLINE UINT32 ARG16(void)
 #define JP {													\
 	unsigned oldpc = _PCD-1;									\
 	_PCD = ARG16();												\
-	change_pc16(_PCD);											\
+	change_pc(_PCD);											\
 	/* speed up busy loop */									\
 	if( _PCD == oldpc )											\
 	{															\
@@ -706,7 +707,7 @@ INLINE UINT32 ARG16(void)
 #else
 #define JP {													\
 	_PCD = ARG16();												\
-	change_pc16(_PCD);											\
+	change_pc(_PCD);											\
 }
 #endif
 
@@ -718,7 +719,7 @@ INLINE UINT32 ARG16(void)
 	if( cond )													\
 	{															\
 		_PCD = ARG16();											\
-		change_pc16(_PCD);										\
+		change_pc(_PCD);										\
 	}															\
 	else														\
 	{															\
@@ -733,7 +734,7 @@ INLINE UINT32 ARG16(void)
 	unsigned oldpc = _PCD-1;									\
 	INT8 arg = (INT8)ARG(); /* ARG() also increments _PC */		\
 	_PC += arg;				/* so don't do _PC += ARG() */		\
-	change_pc16(_PCD);											\
+	change_pc(_PCD);											\
 	/* speed up busy loop */									\
 	if( _PCD == oldpc )											\
 	{															\
@@ -773,7 +774,7 @@ INLINE UINT32 ARG16(void)
 		INT8 arg = (INT8)ARG(); /* ARG() also increments _PC */ \
 		_PC += arg;				/* so don't do _PC += ARG() */	\
 		CC(ex,opcode);											\
-		change_pc16(_PCD);										\
+		change_pc(_PCD);										\
 	}															\
 	else _PC++;													\
 
@@ -784,7 +785,7 @@ INLINE UINT32 ARG16(void)
 	EA = ARG16();												\
 	PUSH( PC );													\
 	_PCD = EA;													\
-	change_pc16(_PCD)
+	change_pc(_PCD)
 
 /***************************************************************
  * CALL_COND
@@ -796,7 +797,7 @@ INLINE UINT32 ARG16(void)
 		PUSH( PC );												\
 		_PCD = EA;												\
 		CC(ex,opcode);											\
-		change_pc16(_PCD);										\
+		change_pc(_PCD);										\
 	}															\
 	else														\
 	{															\
@@ -810,7 +811,7 @@ INLINE UINT32 ARG16(void)
 	if( cond )													\
 	{															\
 		POP(PC);												\
-		change_pc16(_PCD);										\
+		change_pc(_PCD);										\
 		CC(ex,opcode);											\
 	}
 
@@ -820,7 +821,7 @@ INLINE UINT32 ARG16(void)
 #define RETN	{												\
 	LOG(("Z80 #%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), _IFF1, _IFF2)); \
 	POP(PC);													\
-	change_pc16(_PCD);											\
+	change_pc(_PCD);											\
 	if( _IFF1 == 0 && _IFF2 == 1 )								\
 	{															\
 		_IFF1 = 1;												\
@@ -841,7 +842,7 @@ INLINE UINT32 ARG16(void)
 #define RETI	{												\
 	int device = Z80.service_irq;								\
 	POP(PC);													\
-	change_pc16(_PCD);											\
+	change_pc(_PCD);											\
 /* according to http://www.msxnet.org/tech/z80-documented.pdf */\
 /*	_IFF1 = _IFF2;	*/											\
 	if( device >= 0 )											\
@@ -889,7 +890,7 @@ INLINE UINT32 ARG16(void)
 #define RST(addr)												\
 	PUSH( PC );													\
 	_PCD = addr;												\
-	change_pc16(_PCD)
+	change_pc(_PCD)
 
 /***************************************************************
  * INC	r8
@@ -2859,7 +2860,7 @@ OP(dd,e6) { illegal_1(); op_e6();									} /* DB   DD		  */
 OP(dd,e7) { illegal_1(); op_e7();									} /* DB   DD		  */
 
 OP(dd,e8) { illegal_1(); op_e8();									} /* DB   DD		  */
-OP(dd,e9) { _R++; _PC = _IX; change_pc16(_PCD);						} /* JP   (IX)		  */
+OP(dd,e9) { _R++; _PC = _IX; change_pc(_PCD);						} /* JP   (IX)		  */
 OP(dd,ea) { illegal_1(); op_ea();									} /* DB   DD		  */
 OP(dd,eb) { illegal_1(); op_eb();									} /* DB   DD		  */
 OP(dd,ec) { illegal_1(); op_ec();									} /* DB   DD		  */
@@ -3150,7 +3151,7 @@ OP(fd,e6) { illegal_1(); op_e6();									} /* DB   FD		  */
 OP(fd,e7) { illegal_1(); op_e7();									} /* DB   FD		  */
 
 OP(fd,e8) { illegal_1(); op_e8();									} /* DB   FD		  */
-OP(fd,e9) { _R++; _PC = _IY; change_pc16(_PCD);						} /* JP   (IY)		  */
+OP(fd,e9) { _R++; _PC = _IY; change_pc(_PCD);						} /* JP   (IY)		  */
 OP(fd,ea) { illegal_1(); op_ea();									} /* DB   FD		  */
 OP(fd,eb) { illegal_1(); op_eb();									} /* DB   FD		  */
 OP(fd,ec) { illegal_1(); op_ec();									} /* DB   FD		  */
@@ -3842,7 +3843,7 @@ OP(op,c6) { ADD(ARG());												} /* ADD  A,n		  */
 OP(op,c7) { RST(0x00);												} /* RST  0			  */
 
 OP(op,c8) { RET_COND( _F & ZF, 0xc8 );								} /* RET  Z			  */
-OP(op,c9) { POP(PC); change_pc16(_PCD);								} /* RET			  */
+OP(op,c9) { POP(PC); change_pc(_PCD);								} /* RET			  */
 OP(op,ca) { JP_COND( _F & ZF );										} /* JP   Z,a		  */
 OP(op,cb) { _R++; EXEC(cb,ROP());									} /* **** CB xx		  */
 OP(op,cc) { CALL_COND( _F & ZF, 0xcc );								} /* CALL Z,a		  */
@@ -3878,7 +3879,7 @@ OP(op,e6) { AND(ARG());												} /* AND  n			  */
 OP(op,e7) { RST(0x20);												} /* RST  4			  */
 
 OP(op,e8) { RET_COND( _F & PF, 0xe8 );								} /* RET  PE		  */
-OP(op,e9) { _PC = _HL; change_pc16(_PCD);							} /* JP   (HL)		  */
+OP(op,e9) { _PC = _HL; change_pc(_PCD);							} /* JP   (HL)		  */
 OP(op,ea) { JP_COND( _F & PF );										} /* JP   PE,a		  */
 OP(op,eb) { EX_DE_HL;												} /* EX   DE,HL		  */
 OP(op,ec) { CALL_COND( _F & PF, 0xec );								} /* CALL PE,a		  */
@@ -3984,14 +3985,14 @@ static void take_interrupt(void)
 					break;
 			}
 		}
-		change_pc16(_PCD);
+		change_pc(_PCD);
 	}
 }
 
 /****************************************************************************
  * Processor initialization
  ****************************************************************************/
-void z80_init(void)
+static void z80_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	int i, p;
@@ -4121,7 +4122,7 @@ void z80_init(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-void z80_reset(void *param)
+static void z80_reset(void *param)
 {
 	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	memset(&Z80, 0, sizeof(Z80));
@@ -4146,10 +4147,10 @@ void z80_reset(void *param)
 		}
 	}
 
-	change_pc16(_PCD);
+	change_pc(_PCD);
 }
 
-void z80_exit(void)
+static void z80_exit(void)
 {
 #if BIG_FLAGS_ARRAY
 	if (SZHVC_add) free(SZHVC_add);
@@ -4162,7 +4163,7 @@ void z80_exit(void)
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
-int z80_execute(int cycles)
+static int z80_execute(int cycles)
 {
 	z80_ICount = cycles - Z80.extra_cycles;
 	Z80.extra_cycles = 0;
@@ -4184,7 +4185,7 @@ int z80_execute(int cycles)
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
-void z80_burn(int cycles)
+static void z80_burn(int cycles)
 {
 	if( cycles > 0 )
 	{
@@ -4198,137 +4199,26 @@ void z80_burn(int cycles)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned z80_get_context (void *dst)
+static void z80_get_context (void *dst)
 {
 	if( dst )
 		*(Z80_Regs*)dst = Z80;
-	return sizeof(Z80_Regs);
 }
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void z80_set_context (void *src)
+static void z80_set_context (void *src)
 {
 	if( src )
 		Z80 = *(Z80_Regs*)src;
-	change_pc16(_PCD);
-}
-
-/****************************************************************************
- * Get a pointer to a cycle count table
- ****************************************************************************/
-const void *z80_get_cycle_table (int which)
-{
-	if (which >= 0 && which <= Z80_TABLE_xycb)
-		return cc[which];
-	return NULL;
-}
-
-/****************************************************************************
- * Set a new cycle count table
- ****************************************************************************/
-void z80_set_cycle_table (int which, void *new_table)
-{
-	if (which >= 0 && which <= Z80_TABLE_ex)
-		cc[which] = new_table;
-}
-
-/****************************************************************************
- * Return a specific register
- ****************************************************************************/
-unsigned z80_get_reg (int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return _PCD;
-		case Z80_PC: return Z80.PC.w.l;
-		case REG_SP: return _SPD;
-		case Z80_SP: return Z80.SP.w.l;
-		case Z80_AF: return Z80.AF.w.l;
-		case Z80_BC: return Z80.BC.w.l;
-		case Z80_DE: return Z80.DE.w.l;
-		case Z80_HL: return Z80.HL.w.l;
-		case Z80_IX: return Z80.IX.w.l;
-		case Z80_IY: return Z80.IY.w.l;
-		case Z80_R: return (Z80.R & 0x7f) | (Z80.R2 & 0x80);
-		case Z80_I: return Z80.I;
-		case Z80_AF2: return Z80.AF2.w.l;
-		case Z80_BC2: return Z80.BC2.w.l;
-		case Z80_DE2: return Z80.DE2.w.l;
-		case Z80_HL2: return Z80.HL2.w.l;
-		case Z80_IM: return Z80.IM;
-		case Z80_IFF1: return Z80.IFF1;
-		case Z80_IFF2: return Z80.IFF2;
-		case Z80_HALT: return Z80.HALT;
-		case Z80_NMI_STATE: return Z80.nmi_state;
-		case Z80_IRQ_STATE: return Z80.irq_state;
-		case Z80_DC0: return Z80.int_state[0];
-		case Z80_DC1: return Z80.int_state[1];
-		case Z80_DC2: return Z80.int_state[2];
-		case Z80_DC3: return Z80.int_state[3];
-		case REG_PREVIOUSPC: return Z80.PREPC.w.l;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return RM( offset ) | ( RM( offset + 1) << 8 );
-			}
-	}
-	return 0;
-}
-
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-void z80_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC: _PC = val; change_pc16(_PCD); break;
-		case Z80_PC: Z80.PC.w.l = val; break;
-		case REG_SP: _SP = val; break;
-		case Z80_SP: Z80.SP.w.l = val; break;
-		case Z80_AF: Z80.AF.w.l = val; break;
-		case Z80_BC: Z80.BC.w.l = val; break;
-		case Z80_DE: Z80.DE.w.l = val; break;
-		case Z80_HL: Z80.HL.w.l = val; break;
-		case Z80_IX: Z80.IX.w.l = val; break;
-		case Z80_IY: Z80.IY.w.l = val; break;
-		case Z80_R: Z80.R = val; Z80.R2 = val & 0x80; break;
-		case Z80_I: Z80.I = val; break;
-		case Z80_AF2: Z80.AF2.w.l = val; break;
-		case Z80_BC2: Z80.BC2.w.l = val; break;
-		case Z80_DE2: Z80.DE2.w.l = val; break;
-		case Z80_HL2: Z80.HL2.w.l = val; break;
-		case Z80_IM: Z80.IM = val; break;
-		case Z80_IFF1: Z80.IFF1 = val; break;
-		case Z80_IFF2: Z80.IFF2 = val; break;
-		case Z80_HALT: Z80.HALT = val; break;
-		case Z80_NMI_STATE: z80_set_irq_line(IRQ_LINE_NMI,val); break;
-		case Z80_IRQ_STATE: z80_set_irq_line(0,val); break;
-		case Z80_DC0: Z80.int_state[0] = val; break;
-		case Z80_DC1: Z80.int_state[1] = val; break;
-		case Z80_DC2: Z80.int_state[2] = val; break;
-		case Z80_DC3: Z80.int_state[3] = val; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, val & 0xff );
-					WM( offset+1, (val >> 8) & 0xff );
-				}
-			}
-	}
+	change_pc(_PCD);
 }
 
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-void z80_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -4395,78 +4285,8 @@ void z80_set_irq_line(int irqline, int state)
 	}
 }
 
-/****************************************************************************
- * Set IRQ vector callback
- ****************************************************************************/
-void z80_set_irq_callback(int (*callback)(int))
-{
-	LOG(("Z80 #%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
-	Z80.irq_callback = callback;
-}
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *z80_info(void *context, int regnum)
-{
-	static char buffer[32][47+1];
-	static int which = 0;
-	Z80_Regs *r = context;
-
-	which = (which+1) % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &Z80;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+Z80_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+Z80_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-		case CPU_INFO_REG+Z80_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
-		case CPU_INFO_REG+Z80_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
-		case CPU_INFO_REG+Z80_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
-		case CPU_INFO_REG+Z80_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-		case CPU_INFO_REG+Z80_IX: sprintf(buffer[which], "IX:%04X", r->IX.w.l); break;
-		case CPU_INFO_REG+Z80_IY: sprintf(buffer[which], "IY:%04X", r->IY.w.l); break;
-		case CPU_INFO_REG+Z80_R: sprintf(buffer[which], "R:%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
-		case CPU_INFO_REG+Z80_I: sprintf(buffer[which], "I:%02X", r->I); break;
-		case CPU_INFO_REG+Z80_AF2: sprintf(buffer[which], "AF'%04X", r->AF2.w.l); break;
-		case CPU_INFO_REG+Z80_BC2: sprintf(buffer[which], "BC'%04X", r->BC2.w.l); break;
-		case CPU_INFO_REG+Z80_DE2: sprintf(buffer[which], "DE'%04X", r->DE2.w.l); break;
-		case CPU_INFO_REG+Z80_HL2: sprintf(buffer[which], "HL'%04X", r->HL2.w.l); break;
-		case CPU_INFO_REG+Z80_IM: sprintf(buffer[which], "IM:%X", r->IM); break;
-		case CPU_INFO_REG+Z80_IFF1: sprintf(buffer[which], "IFF1:%X", r->IFF1); break;
-		case CPU_INFO_REG+Z80_IFF2: sprintf(buffer[which], "IFF2:%X", r->IFF2); break;
-		case CPU_INFO_REG+Z80_HALT: sprintf(buffer[which], "HALT:%X", r->HALT); break;
-		case CPU_INFO_REG+Z80_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+Z80_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+Z80_DC0: if(Z80.irq_max >= 1) sprintf(buffer[which], "DC0:%X", r->int_state[0]); break;
-		case CPU_INFO_REG+Z80_DC1: if(Z80.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
-		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
-		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->AF.b.l & 0x80 ? 'S':'.',
-				r->AF.b.l & 0x40 ? 'Z':'.',
-				r->AF.b.l & 0x20 ? '5':'.',
-				r->AF.b.l & 0x10 ? 'H':'.',
-				r->AF.b.l & 0x08 ? '3':'.',
-				r->AF.b.l & 0x04 ? 'P':'.',
-				r->AF.b.l & 0x02 ? 'N':'.',
-				r->AF.b.l & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "Z80";
-		case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "3.5";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)z80_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned z80_dasm( char *buffer, unsigned pc )
+static offs_t z80_dasm( char *buffer, offs_t pc )
 {
 #ifdef MAME_DEBUG
 	return DasmZ80( buffer, pc );
@@ -4476,3 +4296,179 @@ unsigned z80_dasm( char *buffer, unsigned pc )
 #endif
 }
 
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void z80_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
+
+		case CPUINFO_INT_PC:							_PC = info->i; change_pc(_PCD);		break;
+		case CPUINFO_INT_REGISTER + Z80_PC:				Z80.PC.w.l = info->i;					break;
+		case CPUINFO_INT_SP:							_SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + Z80_SP:				Z80.SP.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_AF:				Z80.AF.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_BC:				Z80.BC.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_DE:				Z80.DE.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_HL:				Z80.HL.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_IX:				Z80.IX.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_IY:				Z80.IY.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_R:				Z80.R = info->i; Z80.R2 = info->i & 0x80; break;
+		case CPUINFO_INT_REGISTER + Z80_I:				Z80.I = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z80_AF2:			Z80.AF2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_BC2:			Z80.BC2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_DE2:			Z80.DE2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_HL2:			Z80.HL2.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + Z80_IM:				Z80.IM = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z80_IFF1:			Z80.IFF1 = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z80_IFF2:			Z80.IFF2 = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z80_HALT:			Z80.HALT = info->i;						break;
+		case CPUINFO_INT_REGISTER + Z80_DC0:			Z80.int_state[0] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z80_DC1:			Z80.int_state[1] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z80_DC2:			Z80.int_state[2] = info->i;				break;
+		case CPUINFO_INT_REGISTER + Z80_DC3:			Z80.int_state[3] = info->i;				break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					Z80.irq_callback = info->irqcallback;	break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_op: cc[Z80_TABLE_op] = info->p;			break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_cb: cc[Z80_TABLE_cb] = info->p;			break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ed: cc[Z80_TABLE_ed] = info->p;			break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_xy: cc[Z80_TABLE_xy] = info->p;			break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_xycb: cc[Z80_TABLE_xycb] = info->p;		break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ex: cc[Z80_TABLE_ex] = info->p;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void z80_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(Z80);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = Z80.nmi_state;				break;
+		case CPUINFO_INT_IRQ_STATE + 0:					info->i = Z80.irq_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = Z80.PREPC.w.l;				break;
+
+		case CPUINFO_INT_PC:							info->i = _PCD;							break;
+		case CPUINFO_INT_REGISTER + Z80_PC:				info->i = Z80.PC.w.l;					break;
+		case CPUINFO_INT_SP:							info->i = _SPD;							break;
+		case CPUINFO_INT_REGISTER + Z80_SP:				info->i = Z80.SP.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_AF:				info->i = Z80.AF.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_BC:				info->i = Z80.BC.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_DE:				info->i = Z80.DE.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_HL:				info->i = Z80.HL.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_IX:				info->i = Z80.IX.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_IY:				info->i = Z80.IY.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_R:				info->i = (Z80.R & 0x7f) | (Z80.R2 & 0x80); break;
+		case CPUINFO_INT_REGISTER + Z80_I:				info->i = Z80.I;						break;
+		case CPUINFO_INT_REGISTER + Z80_AF2:			info->i = Z80.AF2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_BC2:			info->i = Z80.BC2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_DE2:			info->i = Z80.DE2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_HL2:			info->i = Z80.HL2.w.l;					break;
+		case CPUINFO_INT_REGISTER + Z80_IM:				info->i = Z80.IM;						break;
+		case CPUINFO_INT_REGISTER + Z80_IFF1:			info->i = Z80.IFF1;						break;
+		case CPUINFO_INT_REGISTER + Z80_IFF2:			info->i = Z80.IFF2;						break;
+		case CPUINFO_INT_REGISTER + Z80_HALT:			info->i = Z80.HALT;						break;
+		case CPUINFO_INT_REGISTER + Z80_DC0:			info->i = Z80.int_state[0];				break;
+		case CPUINFO_INT_REGISTER + Z80_DC1:			info->i = Z80.int_state[1];				break;
+		case CPUINFO_INT_REGISTER + Z80_DC2:			info->i = Z80.int_state[2];				break;
+		case CPUINFO_INT_REGISTER + Z80_DC3:			info->i = Z80.int_state[3];				break;
+		case REG_PREVIOUSPC: return ;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = z80_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = z80_get_context;		break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = z80_set_context;		break;
+		case CPUINFO_PTR_INIT:							info->init = z80_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = z80_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = z80_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = z80_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z80_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = Z80.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z80_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z80_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z80_win_layout;				break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_op: info->p = (void *)cc[Z80_TABLE_op];	break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_cb: info->p = (void *)cc[Z80_TABLE_cb];	break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ed: info->p = (void *)cc[Z80_TABLE_ed];	break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_xy: info->p = (void *)cc[Z80_TABLE_xy];	break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_xycb: info->p = (void *)cc[Z80_TABLE_xycb]; break;
+		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ex: info->p = (void *)cc[Z80_TABLE_ex];	break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Z80"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Zilog Z80"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "3.5"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				Z80.AF.b.l & 0x80 ? 'S':'.',
+				Z80.AF.b.l & 0x40 ? 'Z':'.',
+				Z80.AF.b.l & 0x20 ? '5':'.',
+				Z80.AF.b.l & 0x10 ? 'H':'.',
+				Z80.AF.b.l & 0x08 ? '3':'.',
+				Z80.AF.b.l & 0x04 ? 'P':'.',
+				Z80.AF.b.l & 0x02 ? 'N':'.',
+				Z80.AF.b.l & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + Z80_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", Z80.PC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", Z80.SP.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_AF:				sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", Z80.AF.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_BC:				sprintf(info->s = cpuintrf_temp_str(), "BC:%04X", Z80.BC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_DE:				sprintf(info->s = cpuintrf_temp_str(), "DE:%04X", Z80.DE.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_HL:				sprintf(info->s = cpuintrf_temp_str(), "HL:%04X", Z80.HL.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_IX:				sprintf(info->s = cpuintrf_temp_str(), "IX:%04X", Z80.IX.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_IY:				sprintf(info->s = cpuintrf_temp_str(), "IY:%04X", Z80.IY.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_R:				sprintf(info->s = cpuintrf_temp_str(), "R:%02X", (Z80.R & 0x7f) | (Z80.R2 & 0x80)); break;
+		case CPUINFO_STR_REGISTER + Z80_I:				sprintf(info->s = cpuintrf_temp_str(), "I:%02X", Z80.I); break;
+		case CPUINFO_STR_REGISTER + Z80_AF2:			sprintf(info->s = cpuintrf_temp_str(), "AF'%04X", Z80.AF2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_BC2:			sprintf(info->s = cpuintrf_temp_str(), "BC'%04X", Z80.BC2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_DE2:			sprintf(info->s = cpuintrf_temp_str(), "DE'%04X", Z80.DE2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_HL2:			sprintf(info->s = cpuintrf_temp_str(), "HL'%04X", Z80.HL2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z80_IM:				sprintf(info->s = cpuintrf_temp_str(), "IM:%X", Z80.IM); break;
+		case CPUINFO_STR_REGISTER + Z80_IFF1:			sprintf(info->s = cpuintrf_temp_str(), "IFF1:%X", Z80.IFF1); break;
+		case CPUINFO_STR_REGISTER + Z80_IFF2:			sprintf(info->s = cpuintrf_temp_str(), "IFF2:%X", Z80.IFF2); break;
+		case CPUINFO_STR_REGISTER + Z80_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", Z80.HALT); break;
+		case CPUINFO_STR_REGISTER + Z80_DC0:			sprintf(info->s = cpuintrf_temp_str(), "DC0:%X", Z80.irq_max >= 1 && Z80.int_state[0]); break;
+		case CPUINFO_STR_REGISTER + Z80_DC1:			sprintf(info->s = cpuintrf_temp_str(), "DC1:%X", Z80.irq_max >= 2 && Z80.int_state[1]); break;
+		case CPUINFO_STR_REGISTER + Z80_DC2:			sprintf(info->s = cpuintrf_temp_str(), "DC2:%X", Z80.irq_max >= 3 && Z80.int_state[2]); break;
+		case CPUINFO_STR_REGISTER + Z80_DC3:			sprintf(info->s = cpuintrf_temp_str(), "DC3:%X", Z80.irq_max >= 4 && Z80.int_state[3]); break;
+	}
+}

@@ -56,44 +56,44 @@ static WRITE_HANDLER( tryout_sound_command_w )
 	cpu_set_irq_line(1, 0, PULSE_LINE );
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xcfff, MRA_ROM },
-	{ 0xe000, 0xe000, input_port_0_r },
-	{ 0xe002, 0xe002, input_port_1_r },
-	{ 0xe003, 0xe003, input_port_2_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_1_r)
+	AM_RANGE(0xe003, 0xe003) AM_READ(input_port_2_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1000, 0x17ff, tryout_videoram_w , &videoram },
-	{ 0x4000, 0xcfff, MWA_ROM },
-	{ 0xd000, 0xd7ff, MWA_RAM }, // ?
-	{ 0xe301, 0xe301, MWA_RAM },
-	{ 0xe302, 0xe302, MWA_RAM },
-	{ 0xe400, 0xe404, MWA_RAM },
-	{ 0xe410, 0xe410, MWA_RAM },
-	{ 0xe414, 0xe414, tryout_sound_command_w }, // maybe
-	{ 0xe417, 0xe417, tryout_nmi_reset_w }, // maybe
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(tryout_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) // ?
+	AM_RANGE(0xe301, 0xe301) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe302, 0xe302) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe400, 0xe404) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe410, 0xe410) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe414, 0xe414) AM_WRITE(tryout_sound_command_w) // maybe
+	AM_RANGE(0xe417, 0xe417) AM_WRITE(tryout_nmi_reset_w) // maybe
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x4000, 0x4000, YM2203_status_port_0_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x4000, 0x4000, YM2203_control_port_0_w },
-	{ 0x4001, 0x4001, YM2203_write_port_0_w },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( tryout )
 
@@ -218,12 +218,12 @@ PALETTE_INIT( tryout )
 
 static MACHINE_DRIVER_START( tryout )
 	MDRV_CPU_ADD(M6502, 2000000)		 /* ?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(tryout_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)		/* ?? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -274,10 +274,10 @@ ROM_END
 DRIVER_INIT( tryout )
 {
 	// ?
-	install_mem_write_handler( 0, 0xc800, 0xcfff, MWA_NOP );
+	install_mem_write_handler( 0, 0xc800, 0xcfff, MWA8_NOP );
 
 	// interrupt_enable_w ?
-	install_mem_write_handler( 1, 0xd000, 0xd000, MWA_NOP );
+	install_mem_write_handler( 1, 0xd000, 0xd000, MWA8_NOP );
 }
 
 GAMEX( 1985, tryout, 0, tryout, tryout, tryout, ROT90, "Data East", "Pro Yakyuu Nyuudan Test Tryout (JPN Ver.)", GAME_NOT_WORKING | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

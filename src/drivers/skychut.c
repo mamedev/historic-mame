@@ -51,52 +51,52 @@ static PALETTE_INIT( skychut )
 }
 
 
-static MEMORY_READ_START( skychut_readmem )
-	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
-	{ 0x1000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x4bff, MRA_RAM }, /* Foreground colour  */
-	{ 0x5000, 0x53ff, MRA_RAM }, /* BKgrnd colour ??? */
-	{ 0xa200, 0xa200, input_port_1_r },
-	{ 0xa300, 0xa300, input_port_0_r },
-/*	{ 0xa700, 0xa700, input_port_3_r },*/
-	{ 0xfc00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( skychut_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x02ff) AM_READ(MRA8_RAM) /* scratch ram */
+	AM_RANGE(0x1000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_READ(MRA8_RAM) /* Foreground colour  */
+	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM) /* BKgrnd colour ??? */
+	AM_RANGE(0xa200, 0xa200) AM_READ(input_port_1_r)
+	AM_RANGE(0xa300, 0xa300) AM_READ(input_port_0_r)
+/*	AM_RANGE(0xa700, 0xa700) AM_READ(input_port_3_r)*/
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( skychut_writemem )
-	{ 0x0000, 0x02ff, MWA_RAM, &memory },
-	{ 0x1000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
-	{ 0x5000, 0x53ff, MWA_RAM, &iremm15_chargen }, /* background ????? */
-//	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0xa400, 0xa400, skychut_ctrl_w },	/* line at bottom of screen?, sound, flip screen */
-	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( skychut_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x02ff) AM_WRITE(MWA8_RAM) AM_BASE(&memory)
+	AM_RANGE(0x1000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(skychut_colorram_w) AM_BASE(&colorram) /* foreground colour  */
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(MWA8_RAM) AM_BASE(&iremm15_chargen) /* background ????? */
+//	AM_RANGE(0xa100, 0xa1ff) AM_WRITE(MWA8_RAM) /* Sound writes????? */
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(skychut_ctrl_w)	/* line at bottom of screen?, sound, flip screen */
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( greenberet_readmem )
-	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
-	{ 0x1000, 0x33ff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x4bff, MRA_RAM }, /* Foreground colour  */
-	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_3_r },
-	{ 0xa200, 0xa200, input_port_1_r },
-	{ 0xa300, 0xa300, input_port_0_r },
-	{ 0xfc00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( greenberet_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x02ff) AM_READ(MRA8_RAM) /* scratch ram */
+	AM_RANGE(0x1000, 0x33ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_READ(MRA8_RAM) /* Foreground colour  */
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_3_r)
+	AM_RANGE(0xa200, 0xa200) AM_READ(input_port_1_r)
+	AM_RANGE(0xa300, 0xa300) AM_READ(input_port_0_r)
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( greenberet_writemem )
-	{ 0x0000, 0x02ff, MWA_RAM, &memory },
-	{ 0x1000, 0x33ff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
-	{ 0x5000, 0x57ff, MWA_RAM, &iremm15_chargen },
-	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0xa400, 0xa400, MWA_NOP },	/* sound, flip screen */
-	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( greenberet_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x02ff) AM_WRITE(MWA8_RAM) AM_BASE(&memory)
+	AM_RANGE(0x1000, 0x33ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(skychut_colorram_w) AM_BASE(&colorram) /* foreground colour  */
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&iremm15_chargen)
+	AM_RANGE(0xa100, 0xa1ff) AM_WRITE(MWA8_RAM) /* Sound writes????? */
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(MWA8_NOP)	/* sound, flip screen */
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
 INTERRUPT_GEN( skychut_interrupt )
@@ -184,7 +184,7 @@ static MACHINE_DRIVER_START( skychut )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,20000000/8)
-	MDRV_CPU_MEMORY(skychut_readmem,skychut_writemem)
+	MDRV_CPU_PROGRAM_MAP(skychut_readmem,skychut_writemem)
 	MDRV_CPU_VBLANK_INT(skychut_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -210,7 +210,7 @@ static MACHINE_DRIVER_START( greenberet )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,20000000/8)
-	MDRV_CPU_MEMORY(greenberet_readmem,greenberet_writemem)
+	MDRV_CPU_PROGRAM_MAP(greenberet_readmem,greenberet_writemem)
 	MDRV_CPU_VBLANK_INT(skychut_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

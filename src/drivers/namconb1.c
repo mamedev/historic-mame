@@ -558,95 +558,95 @@ static READ32_HANDLER( gunbulet_gun_r )
 	return result<<24;
 }
 
-static MEMORY_READ32_START( namconb1_readmem )
-	{ 0x000000, 0x0fffff, MRA32_ROM },
-	{ 0x100000, 0x10001f, gunbulet_gun_r },
-	{ 0x1c0000, 0x1cffff, MRA32_RAM }, /* workram */
-	{ 0x1e4000, 0x1e4003, MRA32_NOP }, /* unknown */
-	{ 0x200000, 0x23ffff, MRA32_RAM }, /* workram (shared with MCU) */
-	{ 0x240000, 0x2fffff, MRA32_RAM }, /* vshoot */
-	{ 0x400000, 0x40001f, MRA32_RAM }, /* ? */
-	{ 0x580000, 0x5807ff, MRA32_RAM }, /* nvmem */
-	{ 0x600000, 0x6141ff, namco_obj32_r },
-	{ 0x620000, 0x620007, namco_spritepos32_r },
-	{ 0x640000, 0x64ffff, MRA32_RAM }, /* videoram (4 scrolling + 2 fixed) */
-	{ 0x660000, 0x66003f, MRA32_RAM }, /* scrollram */
-	{ 0x680000, 0x68000f, MRA32_RAM }, /* spritebank */
-	{ 0x6e0000, 0x6e001f, custom_key_r },
-	{ 0x700000, 0x707fff, MRA32_RAM }, /* palette */
-MEMORY_END
+static ADDRESS_MAP_START( namconb1_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x100000, 0x10001f) AM_READ(gunbulet_gun_r)
+	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) /* workram */
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(MRA32_NOP) /* unknown */
+	AM_RANGE(0x200000, 0x23ffff) AM_READ(MRA32_RAM) /* workram (shared with MCU) */
+	AM_RANGE(0x240000, 0x2fffff) AM_READ(MRA32_RAM) /* vshoot */
+	AM_RANGE(0x400000, 0x40001f) AM_READ(MRA32_RAM) /* ? */
+	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM) /* nvmem */
+	AM_RANGE(0x600000, 0x6141ff) AM_READ(namco_obj32_r)
+	AM_RANGE(0x620000, 0x620007) AM_READ(namco_spritepos32_r)
+	AM_RANGE(0x640000, 0x64ffff) AM_READ(MRA32_RAM) /* videoram (4 scrolling + 2 fixed) */
+	AM_RANGE(0x660000, 0x66003f) AM_READ(MRA32_RAM) /* scrollram */
+	AM_RANGE(0x680000, 0x68000f) AM_READ(MRA32_RAM) /* spritebank */
+	AM_RANGE(0x6e0000, 0x6e001f) AM_READ(custom_key_r)
+	AM_RANGE(0x700000, 0x707fff) AM_READ(MRA32_RAM) /* palette */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( namconb1_writemem )
-	{ 0x000000, 0x0fffff, MWA32_ROM },
-	{ 0x1c0000, 0x1cffff, MWA32_RAM }, /* workram */
-	{ 0x200000, 0x2fffff, MWA32_RAM, &namconb1_workram32 }, /* vshoot */
-	{ 0x400000, 0x40001f, MWA32_RAM }, /* cpu control registers */
+static ADDRESS_MAP_START( namconb1_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x1c0000, 0x1cffff) AM_WRITE(MWA32_RAM) /* workram */
+	AM_RANGE(0x200000, 0x2fffff) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* vshoot */
+	AM_RANGE(0x400000, 0x40001f) AM_WRITE(MWA32_RAM) /* cpu control registers */
 	/*  400016: watchdog */
-	{ 0x580000, 0x5807ff, MWA32_RAM, &nvmem32 },
-	{ 0x600000, 0x6141ff, namco_obj32_w },
-	{ 0x618000, 0x618003, MWA32_NOP }, /* spriteram latch */
-	{ 0x620000, 0x620007, namco_spritepos32_w },
-	{ 0x640000, 0x64ffff, namconb1_videoram_w, &videoram32 },
-	{ 0x660000, 0x66003f, MWA32_RAM, &namconb1_scrollram32 },
+	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA32_RAM) AM_BASE(&nvmem32)
+	AM_RANGE(0x600000, 0x6141ff) AM_WRITE(namco_obj32_w)
+	AM_RANGE(0x618000, 0x618003) AM_WRITE(MWA32_NOP) /* spriteram latch */
+	AM_RANGE(0x620000, 0x620007) AM_WRITE(namco_spritepos32_w)
+	AM_RANGE(0x640000, 0x64ffff) AM_WRITE(namconb1_videoram_w) AM_BASE(&videoram32)
+	AM_RANGE(0x660000, 0x66003f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_scrollram32)
 	/*	660000..66001f: tilemap scroll/flip
 	 *	660020..66002f: tilemap priority
 	 *	660030..66003f: tilemap color
 	 */
-	{ 0x680000, 0x68000f, MWA32_RAM, &namconb1_spritebank32 },
-	{ 0x6e0000, 0x6e001f, MWA32_NOP }, /* custom key write */
-	{ 0x700000, 0x707fff, MWA32_RAM, &paletteram32 },
-MEMORY_END
+	AM_RANGE(0x680000, 0x68000f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
+	AM_RANGE(0x6e0000, 0x6e001f) AM_WRITE(MWA32_NOP) /* custom key write */
+	AM_RANGE(0x700000, 0x707fff) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
+ADDRESS_MAP_END
 
-static MEMORY_READ32_START( namconb2_readmem )
-	{ 0x000000, 0x0fffff, MRA32_ROM },
-	{ 0x1c0000, 0x1cffff, MRA32_RAM },	/* workram */
-	{ 0x1e4000, 0x1e4003, MRA32_NOP },	/* ? */
-//	{ 0x200000, 0x23ffff, MRA32_RAM },	/* workram (shared with MCU) */
-	{ 0x200000, 0x2fffff, MRA32_RAM },	/* workram (shared with MCU) */
-	{ 0x400000, 0x4fffff, MRA32_BANK1 },/* data ROMs */
-	{ 0x600000, 0x6023ff, MRA32_RAM }, /* ? */
-	{ 0x602400, 0x60247f, MRA32_RAM }, /* ? */
-	{ 0x602480, 0x603fff, MRA32_RAM }, /* ? */
-	{ 0x600000, 0x6141ff, namco_obj32_r },
-	{ 0x620000, 0x620007, namco_spritepos32_r },
-	{ 0x640000, 0x64000f, MRA32_RAM }, /* unknown xy offset */
-	{ 0x680000, 0x68ffff, MRA32_RAM }, /* videoram (4 scrolling + 2 fixed) */
-	{ 0x6c0000, 0x6c003f, MRA32_RAM }, /* scrollram, color, pri */
-	{ 0x700000, 0x71ffff, namco_rozvideoram32_r },
-	{ 0x740000, 0x74001f, namco_rozcontrol32_r },
-	{ 0x800000, 0x807fff, MRA32_RAM }, /* palette */
-	{ 0x900008, 0x90000f, MRA32_RAM }, /* sprite bank */
-	{ 0x940000, 0x94000f, MRA32_RAM }, /* ? */
-	{ 0x980000, 0x98000f, namco_rozbank32_r },
-	{ 0xa00000, 0xa007ff, MRA32_RAM }, /* nvmem */
-	{ 0xc00000, 0xc0001f, custom_key_r },
-	{ 0xf00000, 0xf0001f, MRA32_RAM }, /* ? */
-MEMORY_END /* namconb2_readmem */
+static ADDRESS_MAP_START( namconb2_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM)	/* workram */
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(MRA32_NOP)	/* ? */
+//	AM_RANGE(0x200000, 0x23ffff) AM_READ(MRA32_RAM)	/* workram (shared with MCU) */
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM)	/* workram (shared with MCU) */
+	AM_RANGE(0x400000, 0x4fffff) AM_READ(MRA32_BANK1)/* data ROMs */
+	AM_RANGE(0x600000, 0x6023ff) AM_READ(MRA32_RAM) /* ? */
+	AM_RANGE(0x602400, 0x60247f) AM_READ(MRA32_RAM) /* ? */
+	AM_RANGE(0x602480, 0x603fff) AM_READ(MRA32_RAM) /* ? */
+	AM_RANGE(0x600000, 0x6141ff) AM_READ(namco_obj32_r)
+	AM_RANGE(0x620000, 0x620007) AM_READ(namco_spritepos32_r)
+	AM_RANGE(0x640000, 0x64000f) AM_READ(MRA32_RAM) /* unknown xy offset */
+	AM_RANGE(0x680000, 0x68ffff) AM_READ(MRA32_RAM) /* videoram (4 scrolling + 2 fixed) */
+	AM_RANGE(0x6c0000, 0x6c003f) AM_READ(MRA32_RAM) /* scrollram, color, pri */
+	AM_RANGE(0x700000, 0x71ffff) AM_READ(namco_rozvideoram32_r)
+	AM_RANGE(0x740000, 0x74001f) AM_READ(namco_rozcontrol32_r)
+	AM_RANGE(0x800000, 0x807fff) AM_READ(MRA32_RAM) /* palette */
+	AM_RANGE(0x900008, 0x90000f) AM_READ(MRA32_RAM) /* sprite bank */
+	AM_RANGE(0x940000, 0x94000f) AM_READ(MRA32_RAM) /* ? */
+	AM_RANGE(0x980000, 0x98000f) AM_READ(namco_rozbank32_r)
+	AM_RANGE(0xa00000, 0xa007ff) AM_READ(MRA32_RAM) /* nvmem */
+	AM_RANGE(0xc00000, 0xc0001f) AM_READ(custom_key_r)
+	AM_RANGE(0xf00000, 0xf0001f) AM_READ(MRA32_RAM) /* ? */
+ADDRESS_MAP_END /* namconb2_readmem */
 
-static MEMORY_WRITE32_START( namconb2_writemem )
-	{ 0x000000, 0x0fffff, MWA32_ROM },
-	{ 0x1c0000, 0x1cffff, MWA32_RAM }, /* workram */
-	{ 0x200000, 0x2fffff, MWA32_RAM, &namconb1_workram32 },
-	{ 0x600000, 0x6141ff, namco_obj32_w },
-	{ 0x618000, 0x618003, MWA32_NOP }, /* written when spriteram has been updated */
-	{ 0x620000, 0x620007, namco_spritepos32_w },
-	{ 0x640000, 0x64000f, MWA32_RAM }, /* ? */
-	{ 0x680000, 0x68ffff, namconb1_videoram_w, &videoram32 },
-	{ 0x6c0000, 0x6c003f, MWA32_RAM, &namconb1_scrollram32 },
+static ADDRESS_MAP_START( namconb2_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x1c0000, 0x1cffff) AM_WRITE(MWA32_RAM) /* workram */
+	AM_RANGE(0x200000, 0x2fffff) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32)
+	AM_RANGE(0x600000, 0x6141ff) AM_WRITE(namco_obj32_w)
+	AM_RANGE(0x618000, 0x618003) AM_WRITE(MWA32_NOP) /* written when spriteram has been updated */
+	AM_RANGE(0x620000, 0x620007) AM_WRITE(namco_spritepos32_w)
+	AM_RANGE(0x640000, 0x64000f) AM_WRITE(MWA32_RAM) /* ? */
+	AM_RANGE(0x680000, 0x68ffff) AM_WRITE(namconb1_videoram_w) AM_BASE(&videoram32)
+	AM_RANGE(0x6c0000, 0x6c003f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_scrollram32)
 		/* 0x00..0x1f	tilemap (scrollx,scrolly) pairs
 		 * 0x20..0x2f	tilemap priority
 		 * 0x30..0x3f	tilemap color
 		 */
-	{ 0x700000, 0x71ffff, namco_rozvideoram32_w },
-	{ 0x740000, 0x74001f, namco_rozcontrol32_w },
-	{ 0x800000, 0x807fff, MWA32_RAM, &paletteram32 },
-	{ 0x900008, 0x90000f, MWA32_RAM, &namconb1_spritebank32 },
-	{ 0x940000, 0x94000f, MWA32_RAM }, /* ? */
-	{ 0x980000, 0x98000f, namco_rozbank32_w },
-	{ 0xa00000, 0xa007ff, MWA32_RAM }, /* nvmem */
-	{ 0xc00000, 0xc00003, MWA32_NOP }, /* custom key (protection) */
-	{ 0xf00000, 0xf0001f, MWA32_RAM }, /* misc cpu control registers */
-MEMORY_END /* namconb2_writemem */
+	AM_RANGE(0x700000, 0x71ffff) AM_WRITE(namco_rozvideoram32_w)
+	AM_RANGE(0x740000, 0x74001f) AM_WRITE(namco_rozcontrol32_w)
+	AM_RANGE(0x800000, 0x807fff) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
+	AM_RANGE(0x900008, 0x90000f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
+	AM_RANGE(0x940000, 0x94000f) AM_WRITE(MWA32_RAM) /* ? */
+	AM_RANGE(0x980000, 0x98000f) AM_WRITE(namco_rozbank32_w)
+	AM_RANGE(0xa00000, 0xa007ff) AM_WRITE(MWA32_RAM) /* nvmem */
+	AM_RANGE(0xc00000, 0xc00003) AM_WRITE(MWA32_NOP) /* custom key (protection) */
+	AM_RANGE(0xf00000, 0xf0001f) AM_WRITE(MWA32_RAM) /* misc cpu control registers */
+ADDRESS_MAP_END /* namconb2_writemem */
 
 static INTERRUPT_GEN( namconb1_interrupt )
 {
@@ -676,7 +676,7 @@ static MACHINE_DRIVER_START( namconb1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020,25000000/2) /* 25 MHz? */
-	MDRV_CPU_MEMORY(namconb1_readmem,namconb1_writemem)
+	MDRV_CPU_PROGRAM_MAP(namconb1_readmem,namconb1_writemem)
 	MDRV_CPU_VBLANK_INT(namconb1_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -703,7 +703,7 @@ static MACHINE_DRIVER_START( namconb2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020,25000000) /* 25 MHz? */
-	MDRV_CPU_MEMORY(namconb2_readmem,namconb2_writemem)
+	MDRV_CPU_PROGRAM_MAP(namconb2_readmem,namconb2_writemem)
 	MDRV_CPU_VBLANK_INT(namconb2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

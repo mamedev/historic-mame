@@ -8,38 +8,28 @@
 
 enum {
 	KONAMI_PC=1, KONAMI_S, KONAMI_CC ,KONAMI_A, KONAMI_B, KONAMI_U, KONAMI_X, KONAMI_Y,
-	KONAMI_DP, KONAMI_NMI_STATE, KONAMI_IRQ_STATE, KONAMI_FIRQ_STATE };
+	KONAMI_DP };
+
+enum
+{
+	CPUINFO_PTR_KONAMI_SETLINES_CALLBACK = CPUINFO_PTR_CPU_SPECIFIC
+};
 
 #define KONAMI_IRQ_LINE	0	/* IRQ line number */
 #define KONAMI_FIRQ_LINE 1   /* FIRQ line number */
 
-/* PUBLIC GLOBALS */
-extern int  konami_ICount;
-extern void (*konami_cpu_setlines_callback)( int lines ); /* callback called when A16-A23 are set */
-
 /* PUBLIC FUNCTIONS */
-extern void konami_init(void);
-extern void konami_reset(void *param);
-extern void konami_exit(void);
-extern int konami_execute(int cycles);  /* NS 970908 */
-extern unsigned konami_get_context(void *dst);
-extern void konami_set_context(void *src);
-extern unsigned konami_get_reg(int regnum);
-extern void konami_set_reg(int regnum, unsigned val);
-extern void konami_set_irq_line(int irqline, int state);
-extern void konami_set_irq_callback(int (*callback)(int irqline));
-extern const char *konami_info(void *context,int regnum);
-extern unsigned konami_dasm(char *buffer, unsigned pc);
+void konami_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************/
 /* Read a byte from given memory location									*/
 /****************************************************************************/
-#define KONAMI_RDMEM(Addr) ((unsigned)cpu_readmem16(Addr))
+#define KONAMI_RDMEM(Addr) ((unsigned)program_read_byte_8(Addr))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-#define KONAMI_WRMEM(Addr,Value) (cpu_writemem16(Addr,Value))
+#define KONAMI_WRMEM(Addr,Value) (program_write_byte_8(Addr,Value))
 
 /****************************************************************************/
 /* Z80_RDOP() is identical to Z80_RDMEM() except it is used for reading     */

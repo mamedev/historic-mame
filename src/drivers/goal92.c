@@ -52,51 +52,51 @@ static READ16_HANDLER( goal92_inputs_r )
 	return 0;
 }
 
-static MEMORY_READ16_START( goal92_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, MRA16_RAM },
-	{ 0x180000, 0x18000f, goal92_inputs_r },
-	{ 0x18001c, 0x18001d, goal92_fg_bank_r },
-MEMORY_END
+static ADDRESS_MAP_START( goal92_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(goal92_inputs_r)
+	AM_RANGE(0x18001c, 0x18001d) AM_READ(goal92_fg_bank_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( goal92_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x1007ff, MWA16_RAM },
-	{ 0x100800, 0x100fff, goal92_background_w, &goal92_back_data },
-	{ 0x101000, 0x1017ff, goal92_foreground_w, &goal92_fore_data },
-	{ 0x101800, 0x101fff, MWA16_RAM }, // it contains middle layer tiles for clouds, not sure if they should be displayed or not
-	{ 0x102000, 0x102fff, goal92_text_w, &goal92_textram },
-	{ 0x103000, 0x103fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x104000, 0x13ffff, MWA16_RAM },
-	{ 0x140000, 0x1407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x140800, 0x140801, MWA16_NOP },
-	{ 0x140802, 0x140803, MWA16_NOP },
-	{ 0x180008, 0x180009, goal92_sound_command_w },
-	{ 0x18000a, 0x18000b, MWA16_NOP },
-	{ 0x180010, 0x180017, MWA16_RAM, &goal92_scrollram16 },
-	{ 0x18001c, 0x18001d, goal92_fg_bank_w },
-MEMORY_END
+static ADDRESS_MAP_START( goal92_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x100800, 0x100fff) AM_WRITE(goal92_background_w) AM_BASE(&goal92_back_data)
+	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(goal92_foreground_w) AM_BASE(&goal92_fore_data)
+	AM_RANGE(0x101800, 0x101fff) AM_WRITE(MWA16_RAM) // it contains middle layer tiles for clouds, not sure if they should be displayed or not
+	AM_RANGE(0x102000, 0x102fff) AM_WRITE(goal92_text_w) AM_BASE(&goal92_textram)
+	AM_RANGE(0x103000, 0x103fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x104000, 0x13ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x140800, 0x140801) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x140802, 0x140803) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x180008, 0x180009) AM_WRITE(goal92_sound_command_w)
+	AM_RANGE(0x18000a, 0x18000b) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x180010, 0x180017) AM_WRITE(MWA16_RAM) AM_BASE(&goal92_scrollram16)
+	AM_RANGE(0x18001c, 0x18001d) AM_WRITE(goal92_fg_bank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe800, 0xe800, YM2203_status_port_0_r },
-	{ 0xe801, 0xe801, YM2203_read_port_0_r },
-	{ 0xec00, 0xec00, YM2203_status_port_1_r },
-	{ 0xec01, 0xec01, YM2203_read_port_1_r },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe800, 0xe800) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xe801, 0xe801) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0xec00, 0xec00) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0xec01, 0xec01) AM_READ(YM2203_read_port_1_r)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xe000, MWA_NOP },
-	{ 0xe400, 0xe400, MWA_NOP },
-	{ 0xe800, 0xe800, YM2203_control_port_0_w },
-	{ 0xe801, 0xe801, YM2203_write_port_0_w },
-	{ 0xec00, 0xec00, YM2203_control_port_1_w },
-	{ 0xec01, 0xec01, YM2203_write_port_1_w },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe400, 0xe400) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xe801, 0xe801) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xec01, 0xec01) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( goal92 )
 
@@ -299,12 +299,12 @@ static MACHINE_DRIVER_START( goal92 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,16000000) // clock should be 12 MHz, but it causes problems for an unknown reason
-	MDRV_CPU_MEMORY(goal92_readmem,goal92_writemem)
+	MDRV_CPU_PROGRAM_MAP(goal92_readmem,goal92_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(Z80, 2510000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -328,12 +328,12 @@ static MACHINE_DRIVER_START( cupsocbl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,12000000)
-	MDRV_CPU_MEMORY(goal92_readmem,goal92_writemem)
+	MDRV_CPU_PROGRAM_MAP(goal92_readmem,goal92_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(Z80, 2510000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -91,12 +91,7 @@ INTERRUPT_GEN( cvs_interrupt );
 PALETTE_INIT( cvs );
 VIDEO_UPDATE( cvs );
 VIDEO_START( cvs );
-int  s2650_get_flag(void);
 
-extern unsigned char *dirty_character;
-extern unsigned char *character_1_ram;
-extern unsigned char *character_2_ram;
-extern unsigned char *character_3_ram;
 extern unsigned char *bullet_ram;
 extern unsigned char *s2636_1_ram;
 extern unsigned char *s2636_2_ram;
@@ -119,19 +114,6 @@ READ_HANDLER( cvs_2636_2_r );
 READ_HANDLER( cvs_2636_3_r );
 READ_HANDLER( cvs_character_mode_r );
 
-/***************************************************************************
-	S2650 Memory Mirroring calls
-***************************************************************************/
-
-READ_HANDLER( cvs_mirror_r )
-{
-	return cpu_readmem16(0x1400+offset);
-}
-
-WRITE_HANDLER( cvs_mirror_w )
-{
-	cpu_writemem16(0x1400+offset,data);
-}
 
 /***************************************************************************
 	Speech Calls
@@ -252,83 +234,46 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static MEMORY_READ_START( cvs_readmem )
-	{ 0x0000, 0x13ff, MRA_ROM },
-	{ 0x2000, 0x33ff, MRA_ROM },
-	{ 0x4000, 0x53ff, MRA_ROM },
-	{ 0x6000, 0x73ff, MRA_ROM },
-    { 0x1400, 0x14ff, cvs_bullet_r },
-    { 0x1500, 0x15ff, cvs_2636_3_r },
-    { 0x1600, 0x16ff, cvs_2636_2_r },
-    { 0x1700, 0x17ff, cvs_2636_1_r },
-	{ 0x1800, 0x1bff, cvs_videoram_r },
-    { 0x1c00, 0x1fff, MRA_RAM },
-	{ 0x3400, 0x3fff, cvs_mirror_r },
-	{ 0x5400, 0x5fff, cvs_mirror_r },
-	{ 0x7400, 0x7fff, cvs_mirror_r },
-MEMORY_END
+static ADDRESS_MAP_START( cvs_cpu1_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x13ff) AM_ROM
+    AM_RANGE(0x1400, 0x14ff) AM_MIRROR(0x6000) AM_READWRITE(cvs_bullet_r, cvs_bullet_w) AM_BASE(&bullet_ram)
+    AM_RANGE(0x1500, 0x15ff) AM_MIRROR(0x6000) AM_READWRITE(cvs_2636_3_r, cvs_2636_3_w) AM_BASE(&s2636_3_ram)
+    AM_RANGE(0x1600, 0x16ff) AM_MIRROR(0x6000) AM_READWRITE(cvs_2636_2_r, cvs_2636_2_w) AM_BASE(&s2636_2_ram)
+    AM_RANGE(0x1700, 0x17ff) AM_MIRROR(0x6000) AM_READWRITE(cvs_2636_1_r, cvs_2636_1_w) AM_BASE(&s2636_1_ram)
+	AM_RANGE(0x1800, 0x1bff) AM_MIRROR(0x6000) AM_READWRITE(cvs_videoram_r, cvs_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+    AM_RANGE(0x1c00, 0x1fff) AM_MIRROR(0x6000) AM_RAM
+	AM_RANGE(0x2000, 0x33ff) AM_ROM
+	AM_RANGE(0x4000, 0x53ff) AM_ROM
+	AM_RANGE(0x6000, 0x73ff) AM_ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cvs_writemem )
-	{ 0x0000, 0x13ff, MWA_ROM },
-	{ 0x2000, 0x33ff, MWA_ROM },
-	{ 0x4000, 0x53ff, MWA_ROM },
-	{ 0x6000, 0x73ff, MWA_ROM },
-    { 0x1400, 0x14ff, cvs_bullet_w, &bullet_ram },
-    { 0x1500, 0x15ff, cvs_2636_3_w, &s2636_3_ram },
-    { 0x1600, 0x16ff, cvs_2636_2_w, &s2636_2_ram },
-    { 0x1700, 0x17ff, cvs_2636_1_w, &s2636_1_ram },
-	{ 0x1800, 0x1bff, cvs_videoram_w, &videoram, &videoram_size },
-    { 0x1c00, 0x1fff, MWA_RAM },
-	{ 0x3400, 0x3fff, cvs_mirror_w },
-	{ 0x5400, 0x5fff, cvs_mirror_w },
-	{ 0x7400, 0x7fff, cvs_mirror_w },
+static ADDRESS_MAP_START( cvs_cpu1_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+    AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_2_r)
+    AM_RANGE(0x04, 0x04) AM_READ(input_port_3_r)
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_4_r)		// Dip 1
+	AM_RANGE(0x07, 0x07) AM_READ(input_port_5_r)		// Dip 2
+    AM_RANGE(0x10, 0xff) AM_READ(cvs_character_mode_r)	// Programmable Character Settings
+	AM_RANGE(0x00, 0xff) AM_WRITE(cvs_scroll_w)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READWRITE(cvs_collision_clear, cvs_video_fx_w)
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READWRITE(cvs_collision_r, control_port_w)
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_6_r)
+ADDRESS_MAP_END
 
-    /** Not real addresses, just memory blocks **/
+static ADDRESS_MAP_START( cvs_cpu2_program, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+    AM_RANGE(0x1000, 0x107f) AM_RAM
+    AM_RANGE(0x1800, 0x1800) AM_READ(soundlatch_r)
+    AM_RANGE(0x1840, 0x1840) AM_WRITE(DAC_0_data_w)
+    AM_RANGE(0x1880, 0x1883) AM_WRITE(cvs_DAC2_w)
+    AM_RANGE(0x1884, 0x1887) AM_WRITE(MWA8_NOP)		/* Not connected to anything */
+ADDRESS_MAP_END
 
-    { 0x8000, 0x83ff, MWA_RAM, &character_1_ram },	/* same bitplane */
-    { 0x8800, 0x8bff, MWA_RAM, &character_2_ram },	/* separation as */
-    { 0x9000, 0x93ff, MWA_RAM, &character_3_ram },	/* rom character */
-	{ 0x9400, 0x97ff, MWA_RAM, &colorram },
-    { 0x9800, 0x98ff, MWA_RAM, &paletteram },
-    { 0x9900, 0x99ff, MWA_RAM, &dirty_character },
-MEMORY_END
-
-static PORT_READ_START( cvs_readport )
-	{ 0x000, 0x000, input_port_0_r },
-    { 0x002, 0x002, input_port_1_r },
-	{ 0x003, 0x003, input_port_2_r },
-    { 0x004, 0x004, input_port_3_r },
-	{ 0x006, 0x006, input_port_4_r },		// Dip 1
-	{ 0x007, 0x007, input_port_5_r },		// Dip 2
-    { 0x010, 0x0ff, cvs_character_mode_r },	// Programmable Character Settings
-	{ S2650_DATA_PORT, S2650_DATA_PORT, cvs_collision_clear },
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, cvs_collision_r },
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_6_r },
-PORT_END
-
-static PORT_WRITE_START( cvs_writeport )
-	{ 0              , 0xff           , cvs_scroll_w },
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, control_port_w },
-	{ S2650_DATA_PORT, S2650_DATA_PORT, cvs_video_fx_w },
-PORT_END
-
-static MEMORY_READ_START( cvs_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-    { 0x1000, 0x107f, MRA_RAM },
-    { 0x1800, 0x1800, soundlatch_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( cvs_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-    { 0x1000, 0x107f, MWA_RAM },
-    { 0x1840, 0x1840, DAC_0_data_w },
-    { 0x1880, 0x1883, cvs_DAC2_w },
-    { 0x1884, 0x1887, MWA_NOP },		/* Not connected to anything */
-MEMORY_END
-
-static PORT_READ_START( cvs_sound_readport )
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, CVS_393hz_Clock_r },
-PORT_END
+static ADDRESS_MAP_START( cvs_cpu2_io, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(CVS_393hz_Clock_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( cvs )
 
@@ -426,10 +371,10 @@ static struct GfxLayout s2636_character10 =
 static struct GfxDecodeInfo cvs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Rom chars */
-	{ REGION_CPU1, 0x7c00, &charlayout8colour, 0, 259 },	/* Ram chars */
-  	{ REGION_CPU1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #1  */
-  	{ REGION_CPU1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #2  */
-  	{ REGION_CPU1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #3  */
+	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Ram chars */
+  	{ REGION_GFX1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #1  */
+  	{ REGION_GFX1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #2  */
+  	{ REGION_GFX1, 0x0000, &s2636_character10, 2072, 8 },	/* s2636 #3  */
 	{ -1 } /* end of array */
 };
 
@@ -437,14 +382,14 @@ static MACHINE_DRIVER_START( cvs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650,894886.25/3)
-	MDRV_CPU_MEMORY(cvs_readmem,cvs_writemem)
-	MDRV_CPU_PORTS(cvs_readport,cvs_writeport)
+	MDRV_CPU_PROGRAM_MAP(cvs_cpu1_program,0)
+	MDRV_CPU_IO_MAP(cvs_cpu1_io,0)
 	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
 
 	MDRV_CPU_ADD(S2650,894886.25/3)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(cvs_sound_readmem,cvs_sound_writemem)
-	MDRV_CPU_PORTS(cvs_sound_readport,0)
+	MDRV_CPU_PROGRAM_MAP(cvs_cpu2_program,0)
+	MDRV_CPU_IO_MAP(cvs_cpu2_io,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000)
@@ -484,7 +429,7 @@ ROM_END
 
 ROM_START( huncholy ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "ho-gp1.bin", 0x0000, 0x0400, CRC(4f17cda7) SHA1(ae6fe495c723042c6e060d4ada50aaef1019d5eb) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -527,7 +472,7 @@ ROM_END
 
 ROM_START( darkwar ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "dw-gp1.bin", 0x0000, 0x0400, CRC(f10ccf24) SHA1(f694a9016fc935798e5342598e4fd60fbdbc2829) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -570,7 +515,7 @@ ROM_END
 
 ROM_START( 8ball ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "8b-gp1.bin", 0x0000, 0x0400, CRC(1b4fb37f) SHA1(df6dd2766a3b70eec0bde0ae1932b35abdab3735) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -613,7 +558,7 @@ ROM_END
 
 ROM_START( 8ball1 ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "8a-gp1.bin", 0x0000, 0x0400, CRC(b5d3b763) SHA1(23a01bcbd536ba7f773934ea9dedc7dd9f698100) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -656,7 +601,7 @@ ROM_END
 
 ROM_START( hunchbak ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "hb-gp1.bin", 0x0000, 0x0400, CRC(af801d54) SHA1(68e31561e98f7e2caa337dd764941d08f075b559) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -699,7 +644,7 @@ ROM_END
 
 ROM_START( wallst ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "ws-gp1.bin", 0x0000, 0x0400, CRC(bdac81b6) SHA1(6ce865d8902e815742a9ecf10d6f9495f376dede) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -742,7 +687,7 @@ ROM_END
 
 ROM_START( dazzler ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "dz-gp1.bin", 0x0000, 0x0400, CRC(2c5d75de) SHA1(d121de662e95f2fc362e367cef57e5e70bafd197) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -785,7 +730,7 @@ ROM_END
 
 ROM_START( radarzon ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "rd-gp1.bin", 0x0000, 0x0400, CRC(775786ba) SHA1(5ad0f4e774821a7ed73615118ea42132d3b5424b) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -828,7 +773,7 @@ ROM_END
 
 ROM_START( radarzn1 ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "r1-gp1.bin", 0x0000, 0x0400, CRC(7c73c21f) SHA1(1113025ea16cfcc500b9624a031f3d25290db163) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -871,7 +816,7 @@ ROM_END
 
 ROM_START( radarznt ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "rt-gp1.bin", 0x0000, 0x0400, CRC(43573974) SHA1(854fe7022e9bdd94bb119c014156e9ffdb6682fa) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -914,7 +859,7 @@ ROM_END
 
 ROM_START( outline ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "rt-gp1.bin", 0x0000, 0x0400, CRC(43573974) SHA1(854fe7022e9bdd94bb119c014156e9ffdb6682fa) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -957,7 +902,7 @@ ROM_END
 
 ROM_START( goldbug ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "gb-gp1.bin", 0x0000, 0x0400, CRC(8deb7761) SHA1(35f27fb6b5e3f76ddaf2c074b3391931e679df6e) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1000,7 +945,7 @@ ROM_END
 
 ROM_START( superbik ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "sb-gp1.bin", 0x0000, 0x0400, CRC(f0209700) SHA1(7843e8ebcbecb93814863ddd135f5acb0d481043) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1043,7 +988,7 @@ ROM_END
 
 ROM_START( hero ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "hr-gp1.bin", 0x0000, 0x0400, CRC(82f39788) SHA1(44217dc2312d10fceeb35adf3999cd6f240b60be) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1086,7 +1031,7 @@ ROM_END
 
 ROM_START( logger ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "lg-gp1.bin", 0x0000, 0x0400, CRC(0022b9ed) SHA1(4b94d2663f802a8140e8eae1b66ee78fdfa654f5) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1129,7 +1074,7 @@ ROM_END
 
 ROM_START( cosmos ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "cs-gp1.bin", 0x0000, 0x0400, CRC(7eb96ddf) SHA1(f7456ee1ace03ab98c4e8128d375464122c4df01) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1172,7 +1117,7 @@ ROM_END
 
 ROM_START( heartatk ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "ha-gp1.bin", 0x0000, 0x0400, CRC(e8297c23) SHA1(e79ae7e99f904afe90b43a54df7b0e257d65ac0b) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 
@@ -1215,7 +1160,7 @@ ROM_END
 
 ROM_START( spacefrt ) 
 	
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) 
 	ROM_LOAD( "sf-gp1.bin", 0x0000, 0x0400, CRC(1158fc3a) SHA1(c1f470324b6ec65c3061f78a6ff8620154f20c09) ) 
 	ROM_CONTINUE( 0x2000, 0x0400 ) 
 	ROM_CONTINUE( 0x4000, 0x0400 ) 

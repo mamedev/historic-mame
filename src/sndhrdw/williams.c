@@ -76,95 +76,95 @@ static WRITE_HANDLER( narc_slave_bank_select_w );
 ****************************************************************************/
 
 /* CVSD readmem/writemem structures */
-MEMORY_READ_START( williams_cvsd_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x4003, cvsd_pia_r },
-	{ 0x8000, 0xffff, MRA_BANK6 },
-MEMORY_END
+ADDRESS_MAP_START( williams_cvsd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x4000, 0x4003) AM_READ(cvsd_pia_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK6)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( williams_cvsd_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4003, cvsd_pia_w },
-	{ 0x6000, 0x6000, hc55516_0_digit_clock_clear_w },
-	{ 0x6800, 0x6800, hc55516_0_clock_set_w },
-	{ 0x7800, 0x7800, cvsd_bank_select_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_cvsd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x4000, 0x4003) AM_WRITE(cvsd_pia_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(hc55516_0_digit_clock_clear_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(hc55516_0_clock_set_w)
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(cvsd_bank_select_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
 /* ADPCM readmem/writemem structures */
-MEMORY_READ_START( williams_adpcm_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2401, 0x2401, YM2151_status_port_0_r },
-	{ 0x2c00, 0x2c00, OKIM6295_status_0_r },
-	{ 0x3000, 0x3000, adpcm_command_r },
-	{ 0x4000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_adpcm_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2401, 0x2401) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2c00, 0x2c00) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0x3000, 0x3000) AM_READ(adpcm_command_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( williams_adpcm_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, adpcm_bank_select_w },
-	{ 0x2400, 0x2400, YM2151_register_port_0_w },
-	{ 0x2401, 0x2401, YM2151_data_port_0_w },
-	{ 0x2800, 0x2800, DAC_0_data_w },
-	{ 0x2c00, 0x2c00, OKIM6295_data_0_w },
-	{ 0x3400, 0x3400, adpcm_6295_bank_select_w },
-	{ 0x3c00, 0x3c00, MWA_NOP },/*mk_sound_talkback_w }, -- talkback port? */
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_adpcm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(adpcm_bank_select_w)
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2401, 0x2401) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x2c00, 0x2c00) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(adpcm_6295_bank_select_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(MWA8_NOP)/*mk_sound_talkback_w }, -- talkback port? */
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
 /* NARC master readmem/writemem structures */
-MEMORY_READ_START( williams_narc_master_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x3000, 0x3000, MRA_NOP },
-	{ 0x3400, 0x3400, narc_command_r },
-	{ 0x4000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_narc_master_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x3000, 0x3000) AM_READ(MRA8_NOP)
+	AM_RANGE(0x3400, 0x3400) AM_READ(narc_command_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( williams_narc_master_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2800, MWA_NOP },/*mk_sound_talkback_w }, -- talkback port? */
-	{ 0x2c00, 0x2c00, narc_command2_w },
-	{ 0x3000, 0x3000, DAC_0_data_w },
-	{ 0x3800, 0x3800, narc_master_bank_select_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_narc_master_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(MWA8_NOP)/*mk_sound_talkback_w }, -- talkback port? */
+	AM_RANGE(0x2c00, 0x2c00) AM_WRITE(narc_command2_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(narc_master_bank_select_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
 /* NARC slave readmem/writemem structures */
-MEMORY_READ_START( williams_narc_slave_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x3000, 0x3000, MRA_NOP },
-	{ 0x3400, 0x3400, narc_command2_r },
-	{ 0x4000, 0xbfff, MRA_BANK5 },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_narc_slave_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(MRA8_NOP)
+	AM_RANGE(0x3400, 0x3400) AM_READ(narc_command2_r)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( williams_narc_slave_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, hc55516_0_clock_set_w },
-	{ 0x2400, 0x2400, hc55516_0_digit_clock_clear_w },
-	{ 0x3000, 0x3000, DAC_1_data_w },
-	{ 0x3800, 0x3800, narc_slave_bank_select_w },
-	{ 0x3c00, 0x3c00, MWA_NOP },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+ADDRESS_MAP_START( williams_narc_slave_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(hc55516_0_clock_set_w)
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(hc55516_0_digit_clock_clear_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(DAC_1_data_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(narc_slave_bank_select_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -244,7 +244,7 @@ static struct OKIM6295interface adpcm_6295_interface =
 MACHINE_DRIVER_START( williams_cvsd_sound )
 	MDRV_CPU_ADD_TAG("cvsd", M6809, 8000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(williams_cvsd_readmem,williams_cvsd_writemem)
+	MDRV_CPU_PROGRAM_MAP(williams_cvsd_readmem,williams_cvsd_writemem)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, cvsd_ym2151_interface)
@@ -256,7 +256,7 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( williams_adpcm_sound )
 	MDRV_CPU_ADD_TAG("adpcm", M6809, 8000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(williams_adpcm_readmem,williams_adpcm_writemem)
+	MDRV_CPU_PROGRAM_MAP(williams_adpcm_readmem,williams_adpcm_writemem)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151,  adpcm_ym2151_interface)
@@ -268,11 +268,11 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( williams_narc_sound )
 	MDRV_CPU_ADD_TAG("narc1", M6809, 8000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(williams_narc_master_readmem,williams_narc_master_writemem)
+	MDRV_CPU_PROGRAM_MAP(williams_narc_master_readmem,williams_narc_master_writemem)
 
 	MDRV_CPU_ADD_TAG("narc2", M6809, 8000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(williams_narc_slave_readmem,williams_narc_slave_writemem)
+	MDRV_CPU_PROGRAM_MAP(williams_narc_slave_readmem,williams_narc_slave_writemem)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, adpcm_ym2151_interface)

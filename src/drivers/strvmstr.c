@@ -111,30 +111,30 @@ static WRITE_HANDLER( b800_w )
 	b800_prev = data;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xb000, 0xb000, b000_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_READ(b000_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x9000, 0x9000, strvmstr_control_w },
-	{ 0x9800, 0x9800, MWA_NOP }, //always 0
-	{ 0xa000, 0xa000, a000_w }, //bit 8 and 7 always actived? bit 6 actived in message edit (c0, e0, df)
-	{ 0xb000, 0xb000, b000_w },
-	{ 0xb800, 0xb800, b800_w }, //80, 83, 84, 86, 98, 94, 81, e0, a0
-	{ 0xb801, 0xb801, MWA_NOP }, //always 0
-	{ 0xc000, 0xc7ff, strvmstr_fg_w, &fg_videoram },
-	{ 0xe000, 0xe7ff, strvmstr_bg_w, &bg_videoram },	
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(strvmstr_control_w)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(MWA8_NOP) //always 0
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(a000_w) //bit 8 and 7 always actived? bit 6 actived in message edit (c0, e0, df)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(b000_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(b800_w) //80, 83, 84, 86, 98, 94, 81, e0, a0
+	AM_RANGE(0xb801, 0xb801) AM_WRITE(MWA8_NOP) //always 0
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(strvmstr_fg_w) AM_BASE(&fg_videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(strvmstr_bg_w) AM_BASE(&bg_videoram)	
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x0000, 0xffff, strvmstr_question_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(strvmstr_question_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( strvmstr )
 	PORT_START
@@ -269,8 +269,8 @@ static INTERRUPT_GEN( strvmstr_interrupt )
 static MACHINE_DRIVER_START( strvmstr )
 	MDRV_CPU_ADD(Z80,CLOCK) //should be ok, it gives the 300 interrupts expected
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(strvmstr_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

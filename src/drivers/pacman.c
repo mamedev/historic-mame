@@ -35,6 +35,7 @@
 	0000-3fff ROM
 	4000-43ff Video RAM
 	4400-47ff Color RAM
+	4800-4bff RAM (Dream Shopper only)
 	4c00-4fff RAM
 	8000-9fff ROM (Ms Pac-Man and Ponpoko only)
 	a000-bfff ROM (Ponpoko only)
@@ -602,12 +603,12 @@ static INTERRUPT_GEN( s2650_interrupt )
 
 static READ_HANDLER( s2650_mirror_r )
 {
-	return cpu_readmem16(0x1000 + offset);
+	return program_read_byte(0x1000 + offset);
 }
 
 static WRITE_HANDLER( s2650_mirror_w )
 {
-	cpu_writemem16(0x1000 + offset, data);
+	program_write_byte(0x1000 + offset, data);
 }
 
 static READ_HANDLER( drivfrcp_port1_r )
@@ -652,241 +653,241 @@ static READ_HANDLER( porky_port1_r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac-Man / Ponpoko only */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)	/* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM)	/* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50ff) AM_READ(input_port_3_r)	/* DSW2 */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)	/* Ms. Pac-Man / Ponpoko only */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x4c00, 0x4fef, MWA_RAM },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5002, MWA_NOP },
-	{ 0x5003, 0x5003, pengo_flipscreen_w },
- 	{ 0x5004, 0x5005, pacman_leds_w },
-// 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },	this breaks many games
- 	{ 0x5007, 0x5007, pacman_coin_counter_w },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac-Man / Ponpoko only */
-	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
-	{ 0xffff, 0xffff, MWA_NOP },	/* Eyes writes to this location to simplify code */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4ff0, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x5002, 0x5002) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(pengo_flipscreen_w)
+ 	AM_RANGE(0x5004, 0x5005) AM_WRITE(pacman_leds_w)
+// 	AM_RANGE(0x5006, 0x5006) AM_WRITE(pacman_coin_lockout_global_w)	this breaks many games
+ 	AM_RANGE(0x5007, 0x5007) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)	/* Ms. Pac-Man / Ponpoko only */
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(videoram_w) /* mirror address for video ram, */
+	AM_RANGE(0xc400, 0xc7ef) AM_WRITE(colorram_w) /* used to display HIGH SCORE and CREDITS */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(MWA8_NOP)	/* Eyes writes to this location to simplify code */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( mschamp_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },		/* By Sil: Zola/Ms. Champ */
-	{ 0x4000, 0x47ff, MRA_RAM },		/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },		/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW */
-	{ 0x8000, 0x9fff, MRA_BANK2 },		/* By Sil: Zola/Ms. Champ */
-MEMORY_END
+static ADDRESS_MAP_START( mschamp_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)		/* By Sil: Zola/Ms. Champ */
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)		/* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM)		/* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK2)		/* By Sil: Zola/Ms. Champ */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( mspacman_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( mspacman_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)	/* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM)	/* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50ff) AM_READ(input_port_3_r)	/* DSW2 */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( mspacman_writemem )
-	{ 0x0000, 0x3fff, MWA_BANK1 },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x4c00, 0x4fef, MWA_RAM },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5002, MWA_NOP },
-	{ 0x5003, 0x5003, pengo_flipscreen_w },
- 	{ 0x5004, 0x5005, pacman_leds_w },
-	{ 0x5006, 0x5006, mspacman_activate_rom },	/* Not actually, just handy */
-// 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },	this breaks many games
- 	{ 0x5007, 0x5007, pacman_coin_counter_w },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0xbfff, MWA_BANK1 },	/* Ms. Pac-Man / Ponpoko only */
-	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
-	{ 0xffff, 0xffff, MWA_NOP },	/* Eyes writes to this location to simplify code */
-MEMORY_END
+static ADDRESS_MAP_START( mspacman_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_BANK1)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4ff0, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x5002, 0x5002) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(pengo_flipscreen_w)
+ 	AM_RANGE(0x5004, 0x5005) AM_WRITE(pacman_leds_w)
+	AM_RANGE(0x5006, 0x5006) AM_WRITE(mspacman_activate_rom)	/* Not actually, just handy */
+// 	AM_RANGE(0x5006, 0x5006) AM_WRITE(pacman_coin_lockout_global_w)	this breaks many games
+ 	AM_RANGE(0x5007, 0x5007) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)	/* Ms. Pac-Man / Ponpoko only */
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(videoram_w) /* mirror address for video ram, */
+	AM_RANGE(0xc400, 0xc7ef) AM_WRITE(colorram_w) /* used to display HIGH SCORE and CREDITS */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(MWA8_NOP)	/* Eyes writes to this location to simplify code */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( alibaba_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ef0-4eff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50c0, alibaba_mystery_1_r },
-	{ 0x50c1, 0x50c1, alibaba_mystery_2_r },
-	{ 0x8000, 0x8fff, MRA_ROM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0xa000, 0xa7ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( alibaba_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)	/* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM)	/* including sprite codes at 4ef0-4eff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50c0) AM_READ(alibaba_mystery_1_r)
+	AM_RANGE(0x50c1, 0x50c1) AM_READ(alibaba_mystery_2_r)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( alibaba_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x4ef0, 0x4eff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4c00, 0x4fff, MWA_RAM },
-	{ 0x5000, 0x5000, watchdog_reset_w },
- 	{ 0x5004, 0x5005, pacman_leds_w },
- 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
- 	{ 0x5007, 0x5007, pacman_coin_counter_w },
-	{ 0x5040, 0x506f, alibaba_sound_w, &pengo_soundregs },  /* the sound region is not contiguous */
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 }, /* actually at 5050-505f, here to point to free RAM */
-	{ 0x50c0, 0x50c0, pengo_sound_enable_w },
-	{ 0x50c1, 0x50c1, pengo_flipscreen_w },
-	{ 0x50c2, 0x50c2, interrupt_enable_w },
-	{ 0x8000, 0x8fff, MWA_ROM },
-	{ 0x9000, 0x93ff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_ROM },
-	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
-MEMORY_END
+static ADDRESS_MAP_START( alibaba_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4ef0, 0x4eff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
+ 	AM_RANGE(0x5004, 0x5005) AM_WRITE(pacman_leds_w)
+ 	AM_RANGE(0x5006, 0x5006) AM_WRITE(pacman_coin_lockout_global_w)
+ 	AM_RANGE(0x5007, 0x5007) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x5040, 0x506f) AM_WRITE(alibaba_sound_w) AM_BASE(&pengo_soundregs)  /* the sound region is not contiguous */
+	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) /* actually at 5050-505f, here to point to free RAM */
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x50c1, 0x50c1) AM_WRITE(pengo_flipscreen_w)
+	AM_RANGE(0x50c2, 0x50c2) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(videoram_w) /* mirror address for video ram, */
+	AM_RANGE(0xc400, 0xc7ef) AM_WRITE(colorram_w) /* used to display HIGH SCORE and CREDITS */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( theglobp_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-MEMORY_END
+static ADDRESS_MAP_START( theglobp_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)	/* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM)	/* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50ff) AM_READ(input_port_3_r)	/* DSW2 */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( vanvan_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4800, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x5000, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x5040, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x5080, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50c0, input_port_3_r },	/* DSW2 */
-	{ 0x8000, 0x8fff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( vanvan_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)	/* video and color RAM */
+	AM_RANGE(0x4800, 0x4fff) AM_READ(MRA8_RAM)	/* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x5040) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x5080) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50c0) AM_READ(input_port_3_r)	/* DSW2 */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( vanvan_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x4800, 0x4fef, MWA_RAM },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x5001, 0x5001, vanvan_bgcolor_w },
-	{ 0x5003, 0x5003, pengo_flipscreen_w },
-	{ 0x5005, 0x5006, MWA_NOP },	/* always written together with 5001 */
- 	{ 0x5007, 0x5007, pacman_coin_counter_w },
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0x5080, 0x5080, MWA_NOP },	/* ??? toggled before reading 5000 */
-	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0x8fff, MWA_ROM },
-	{ 0xb800, 0xb87f, MWA_NOP },	/* probably a leftover from development: the Sanritsu version */
+static ADDRESS_MAP_START( vanvan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4800, 0x4fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4ff0, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(vanvan_bgcolor_w)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(pengo_flipscreen_w)
+	AM_RANGE(0x5005, 0x5006) AM_WRITE(MWA8_NOP)	/* always written together with 5001 */
+ 	AM_RANGE(0x5007, 0x5007) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x5080, 0x5080) AM_WRITE(MWA8_NOP)	/* ??? toggled before reading 5000 */
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb800, 0xb87f) AM_WRITE(MWA8_NOP)	/* probably a leftover from development: the Sanritsu version */
 									/* writes the color lookup table here, while the Karateko version */
 									/* writes garbage. */
-MEMORY_END
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( acitya_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x4000, 0x47ff, MRA_RAM }, /* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM }, /* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r }, /* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r }, /* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r }, /* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r }, /* DSW2 */
-	{ 0x8000, 0xbfff, MRA_ROM }, /* Ms. Pac-Man / Ponpoko only */
-MEMORY_END
+static ADDRESS_MAP_START( acitya_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM) /* video and color RAM */
+	AM_RANGE(0x4c00, 0x4fff) AM_READ(MRA8_RAM) /* including sprite codes at 4ff0-4fff */
+	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r) /* DSW1 */
+	AM_RANGE(0x50c0, 0x50ff) AM_READ(input_port_3_r) /* DSW2 */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM) /* Ms. Pac-Man / Ponpoko only */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( bigbucks_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x4c00, 0x4fbf, MWA_RAM },
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5003, 0x5003, pengo_flipscreen_w },
-	{ 0x5007, 0x5007, MWA_NOP }, //?
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x5100, 0x5100, MWA_NOP }, //?
-	{ 0x6000, 0x6000, bigbucks_bank_w },
-	{ 0x8000, 0x9fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bigbucks_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fbf) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(pengo_flipscreen_w)
+	AM_RANGE(0x5007, 0x5007) AM_WRITE(MWA8_NOP) //?
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5100, 0x5100) AM_WRITE(MWA8_NOP) //?
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(bigbucks_bank_w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( s2650games_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x1500, 0x1500, input_port_0_r },
-	{ 0x1540, 0x1540, input_port_1_r },
-	{ 0x1580, 0x1580, input_port_2_r },
-	{ 0x1c00, 0x1fef, MRA_RAM },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x3000, 0x3fff, s2650_mirror_r },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x5000, 0x5fff, s2650_mirror_r },
-	{ 0x6000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x7fff, s2650_mirror_r },
-MEMORY_END
+static ADDRESS_MAP_START( s2650games_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1500, 0x1500) AM_READ(input_port_0_r)
+	AM_RANGE(0x1540, 0x1540) AM_READ(input_port_1_r)
+	AM_RANGE(0x1580, 0x1580) AM_READ(input_port_2_r)
+	AM_RANGE(0x1c00, 0x1fef) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(s2650_mirror_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(s2650_mirror_r)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(s2650_mirror_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( s2650games_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x1000, 0x13ff, s2650games_colorram_w },
-	{ 0x1400, 0x141f, s2650games_scroll_w },
-	{ 0x1420, 0x148f, MWA_RAM },
-	{ 0x1490, 0x149f, MWA_RAM, &sprite_bank },
-	{ 0x14a0, 0x14bf, s2650games_tilesbank_w, &tiles_bankram },
-	{ 0x14c0, 0x14ff, MWA_RAM },
-	{ 0x1500, 0x1502, MWA_NOP },
-	{ 0x1503, 0x1503, s2650games_flipscreen_w },
-	{ 0x1504, 0x1506, MWA_NOP },
-	{ 0x1507, 0x1507, pacman_coin_counter_w },
-	{ 0x1508, 0x155f, MWA_RAM },
-	{ 0x1560, 0x156f, MWA_RAM, &spriteram_2 },
-	{ 0x1570, 0x157f, MWA_RAM },
-	{ 0x1586, 0x1587, MWA_NOP },
-	{ 0x15c0, 0x15c0, watchdog_reset_w },
-	{ 0x15c7, 0x15c7, MWA_RAM },
-	{ 0x1800, 0x1bff, s2650games_videoram_w, &videoram },
-	{ 0x1c00, 0x1fef, MWA_RAM },
-	{ 0x1ff0, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x3fff, s2650_mirror_w },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x5000, 0x5fff, s2650_mirror_w },
-	{ 0x6000, 0x6fff, MWA_ROM },
-	{ 0x7000, 0x7fff, s2650_mirror_w },
-MEMORY_END
+static ADDRESS_MAP_START( s2650games_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(s2650games_colorram_w)
+	AM_RANGE(0x1400, 0x141f) AM_WRITE(s2650games_scroll_w)
+	AM_RANGE(0x1420, 0x148f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1490, 0x149f) AM_WRITE(MWA8_RAM) AM_BASE(&sprite_bank)
+	AM_RANGE(0x14a0, 0x14bf) AM_WRITE(s2650games_tilesbank_w) AM_BASE(&tiles_bankram)
+	AM_RANGE(0x14c0, 0x14ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1500, 0x1502) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1503, 0x1503) AM_WRITE(s2650games_flipscreen_w)
+	AM_RANGE(0x1504, 0x1506) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1507, 0x1507) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x1508, 0x155f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1560, 0x156f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x1570, 0x157f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1586, 0x1587) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x15c0, 0x15c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x15c7, 0x15c7) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(s2650games_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1c00, 0x1fef) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1ff0, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(s2650_mirror_w)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(s2650_mirror_w)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(s2650_mirror_w)
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -895,65 +896,65 @@ MEMORY_END
  *
  *************************************/
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, interrupt_vector_w },	/* Pac-Man only */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(interrupt_vector_w)	/* Pac-Man only */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( vanvan_writeport )
-	{ 0x01, 0x01, SN76496_0_w },
-	{ 0x02, 0x02, SN76496_1_w },
-PORT_END
+static ADDRESS_MAP_START( vanvan_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( dremshpr_writeport )
-	{ 0x06, 0x06, AY8910_write_port_0_w },
-	{ 0x07, 0x07, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( dremshpr_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( piranha_writeport )
-	{ 0x00, 0x00, piranha_interrupt_vector_w },
-PORT_END
+static ADDRESS_MAP_START( piranha_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(piranha_interrupt_vector_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( nmouse_writeport )
-	{ 0x00, 0x00, nmouse_interrupt_vector_w },
-PORT_END
+static ADDRESS_MAP_START( nmouse_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(nmouse_interrupt_vector_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( theglobp_readport )
-	{ 0x00, 0xff, theglobp_decrypt_rom },	/* Switch protection logic */
-PORT_END
+static ADDRESS_MAP_START( theglobp_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(theglobp_decrypt_rom)	/* Switch protection logic */
+ADDRESS_MAP_END
 
-static PORT_READ_START( acitya_readport )
-	{ 0x00, 0xff, acitya_decrypt_rom }, /* Switch protection logic */
-PORT_END
+static ADDRESS_MAP_START( acitya_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(acitya_decrypt_rom) /* Switch protection logic */
+ADDRESS_MAP_END
 
-static PORT_READ_START( mschamp_readport )
-	{ 0x00,0x00, mschamp_kludge_r },
-PORT_END
+static ADDRESS_MAP_START( mschamp_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(mschamp_kludge_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( bigbucks_readport )
-	{ 0x0000, 0xffff, bigbucks_question_r },
-PORT_END
+static ADDRESS_MAP_START( bigbucks_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(bigbucks_question_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( drivfrcp_readport )
-	{ 0x00, 0x00, MRA_NOP },
-	{ 0x01, 0x01, drivfrcp_port1_r },
-	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( drivfrcp_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_READ(drivfrcp_port1_r)
+	AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( _8bpm_readport )
-	{ 0x00, 0x00, MRA_NOP },
-	{ 0x01, 0x01, _8bpm_port1_r },
-	{ 0xe0, 0xe0, MRA_NOP },
-	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( _8bpm_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_READ(_8bpm_port1_r)
+	AM_RANGE(0xe0, 0xe0) AM_READ(MRA8_NOP)
+	AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START( porky_readport )
-	{ 0x01, 0x01, porky_port1_r },
-	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( porky_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(porky_port1_r)
+	AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( s2650games_writeport )
-	{ S2650_DATA_PORT, S2650_DATA_PORT, SN76496_0_w },
-PORT_END
+static ADDRESS_MAP_START( s2650games_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_WRITE(SN76496_0_w)
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -2507,8 +2508,8 @@ static MACHINE_DRIVER_START( pacman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(pacman_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -2550,7 +2551,7 @@ static MACHINE_DRIVER_START( mspacman )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mspacman_readmem,mspacman_writemem)
+	MDRV_CPU_PROGRAM_MAP(mspacman_readmem,mspacman_writemem)
 	MDRV_CPU_VBLANK_INT(mspacman_interrupt,1)
 
 	MDRV_MACHINE_INIT(mspacman)
@@ -2575,8 +2576,8 @@ static MACHINE_DRIVER_START( mschamp )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mschamp_readmem,writemem)
-	MDRV_CPU_PORTS(mschamp_readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(mschamp_readmem,writemem)
+	MDRV_CPU_IO_MAP(mschamp_readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_MACHINE_INIT(mschamp)
@@ -2592,8 +2593,8 @@ static MACHINE_DRIVER_START( theglobp )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(theglobp_readmem,writemem)
-	MDRV_CPU_PORTS(theglobp_readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(theglobp_readmem,writemem)
+	MDRV_CPU_IO_MAP(theglobp_readport,writeport)
 
 	MDRV_MACHINE_INIT(theglobp)
 MACHINE_DRIVER_END
@@ -2605,8 +2606,8 @@ static MACHINE_DRIVER_START( vanvan )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(vanvan_readmem,vanvan_writemem)
-	MDRV_CPU_PORTS(0,vanvan_writeport)
+	MDRV_CPU_PROGRAM_MAP(vanvan_readmem,vanvan_writemem)
+	MDRV_CPU_IO_MAP(0,vanvan_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_MACHINE_INIT(NULL)
@@ -2626,7 +2627,7 @@ static MACHINE_DRIVER_START( dremshpr )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(0,dremshpr_writeport)
+	MDRV_CPU_IO_MAP(0,dremshpr_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_MACHINE_INIT(NULL)
@@ -2642,7 +2643,7 @@ static MACHINE_DRIVER_START( alibaba )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(alibaba_readmem,alibaba_writemem)
+	MDRV_CPU_PROGRAM_MAP(alibaba_readmem,alibaba_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_MACHINE_INIT(NULL)
@@ -2654,8 +2655,8 @@ static MACHINE_DRIVER_START( piranha )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,piranha_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,piranha_writeport)
 
 	MDRV_MACHINE_INIT(piranha)
 MACHINE_DRIVER_END
@@ -2667,8 +2668,8 @@ static MACHINE_DRIVER_START( nmouse )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(0,nmouse_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(0,nmouse_writeport)
 
 	MDRV_MACHINE_INIT(NULL)
 MACHINE_DRIVER_END
@@ -2680,8 +2681,8 @@ static MACHINE_DRIVER_START( acitya )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(acitya_readmem,writemem)
-	MDRV_CPU_PORTS(acitya_readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(acitya_readmem,writemem)
+	MDRV_CPU_IO_MAP(acitya_readport,writeport)
 
 	MDRV_MACHINE_INIT(acitya)
 MACHINE_DRIVER_END
@@ -2694,8 +2695,8 @@ static MACHINE_DRIVER_START( bigbucks )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,bigbucks_writemem)
-	MDRV_CPU_PORTS(bigbucks_readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,bigbucks_writemem)
+	MDRV_CPU_IO_MAP(bigbucks_readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,20)
 
 	MDRV_MACHINE_INIT(NULL)
@@ -2711,7 +2712,7 @@ static MACHINE_DRIVER_START( s2650games )
 
 	MDRV_CPU_REMOVE("main")
 	MDRV_CPU_ADD_TAG("main", S2650, 18432000/6/2/3)	/* ??? */
-	MDRV_CPU_MEMORY(s2650games_readmem,s2650games_writemem)
+	MDRV_CPU_PROGRAM_MAP(s2650games_readmem,s2650games_writemem)
 	MDRV_CPU_VBLANK_INT(s2650_interrupt,1)
 
 	MDRV_SCREEN_SIZE(32*8, 32*8)
@@ -2734,7 +2735,7 @@ static MACHINE_DRIVER_START( drivfrcp )
 	MDRV_IMPORT_FROM(s2650games)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(drivfrcp_readport,s2650games_writeport)
+	MDRV_CPU_IO_MAP(drivfrcp_readport,s2650games_writeport)
 MACHINE_DRIVER_END
 
 
@@ -2744,7 +2745,7 @@ static MACHINE_DRIVER_START( 8bpm )
 	MDRV_IMPORT_FROM(s2650games)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(_8bpm_readport,s2650games_writeport)
+	MDRV_CPU_IO_MAP(_8bpm_readport,s2650games_writeport)
 MACHINE_DRIVER_END
 
 
@@ -2754,7 +2755,7 @@ static MACHINE_DRIVER_START( porky )
 	MDRV_IMPORT_FROM(s2650games)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(porky_readport,s2650games_writeport)
+	MDRV_CPU_IO_MAP(porky_readport,s2650games_writeport)
 MACHINE_DRIVER_END
 
 
@@ -3820,12 +3821,17 @@ ROM_START( alibaba )
 	ROM_LOAD( "5k",           0x0800, 0x0800, CRC(713086b3) SHA1(a1609bae637207a82920678f05bcc10a5ff096de) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "alibaba.7f",   0x0000, 0x0020, NO_DUMP )  /* missing */
-	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, NO_DUMP )
+	ROM_LOAD( "82s123.e7",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "82s129.a4",    0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+
+	// unknown, used for the mistery items ?
+	// 1ST AND 2ND HALF IDENTICAL
+	ROM_REGION( 0x1000, REGION_USER1, 0 )
+	ROM_LOAD( "7.p6",         0x000, 0x1000, CRC(d8eb7cbd) SHA1(fe482d36d81de5c5034e18b91bfa6b43111e683e) )
 ROM_END
 
 
@@ -4317,6 +4323,12 @@ static DRIVER_INIT( porky )
 
 }
 
+static DRIVER_INIT( dremshpr )
+{
+	install_mem_read_handler(0, 0x4800, 0x4bff, MRA8_RAM);
+	install_mem_write_handler(0, 0x4800, 0x4bff, MWA8_RAM);
+}
+
 
 /*************************************
  *
@@ -4369,11 +4381,11 @@ GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar 
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
 GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
 GAME( 1983, bwcasino, 0,        acitya,   bwcasino, 0,        ROT90,  "Epos Corporation", "Boardwalk Casino" )
-GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
+GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, dremshpr, ROT270, "Sanritsu", "Dream Shopper" )
 GAME( 1983, acitya,   bwcasino, acitya,   acitya,   0,        ROT90,  "Epos Corporation", "Atlantic City Action" )
 GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Sanritsu", "Van-Van Car" )
 GAME( 1983, vanvank,  vanvan,   vanvan,   vanvank,  0,        ROT270, "Karateco", "Van-Van Car (Karateco)" )
-GAMEX(1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION )
+GAMEX(1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves", GAME_UNEMULATED_PROTECTION )
 GAME( 1985, jumpshot, 0,        pacman,   jumpshot, jumpshot, ROT90,  "Bally Midway", "Jump Shot" )
 GAME( 1985, shootbul, 0,        pacman,   shootbul, jumpshot, ROT90,  "Bally Midway", "Shoot the Bull" )
 GAME( 1986, bigbucks, 0,		bigbucks, bigbucks, 0,        ROT90,  "Dynasoft Inc.", "Big Bucks" )

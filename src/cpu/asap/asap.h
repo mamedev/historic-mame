@@ -37,29 +37,9 @@ enum
 
 
 /*###################################################################################################
-**	PUBLIC GLOBALS
-**#################################################################################################*/
-
-extern int asap_icount;
-
-
-/*###################################################################################################
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
-extern void asap_init(void);
-extern void asap_reset(void *param);
-extern void asap_exit(void);
-extern int asap_execute(int cycles);
-extern unsigned asap_get_context(void *dst);
-extern void asap_set_context(void *src);
-extern unsigned asap_get_reg(int regnum);
-extern void asap_set_reg(int regnum, unsigned val);
-extern void asap_set_irq_line(int irqline, int state);
-extern void asap_set_irq_callback(int (*callback)(int irqline));
-extern const char *asap_info(void *context, int regnum);
-extern unsigned asap_dasm(char *buffer, unsigned pc);
-
-extern void asap_set_cpi(int cpi);
+extern void asap_get_info(UINT32 state, union cpuinfo *info);
 
 #endif /* _ASAP_H */

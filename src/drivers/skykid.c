@@ -134,57 +134,57 @@ WRITE_HANDLER( skykid_bankswitch_w )
 }
 
 
-static MEMORY_READ_START( skykid_readmem )
-	{ 0x0000, 0x1fff, MRA_BANK1 },				/* banked ROM */
-	{ 0x2000, 0x2fff, skykid_videoram_r },		/* Video RAM (background) */
-	{ 0x4000, 0x47ff, MRA_RAM },				/* video RAM (text layer) */
-	{ 0x4800, 0x5fff, MRA_RAM },				/* RAM + Sprite RAM */
-	{ 0x6800, 0x68ff, namcos1_wavedata_r },		/* PSG device, shared RAM */
-	{ 0x6800, 0x6bff, skykid_sharedram_r },		/* shared RAM with the MCU */
-	{ 0x7800, 0x7800, watchdog_reset_r },		/* watchdog reset */
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( skykid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1)				/* banked ROM */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(skykid_videoram_r)		/* Video RAM (background) */
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)				/* video RAM (text layer) */
+	AM_RANGE(0x4800, 0x5fff) AM_READ(MRA8_RAM)				/* RAM + Sprite RAM */
+	AM_RANGE(0x6800, 0x68ff) AM_READ(namcos1_wavedata_r)		/* PSG device, shared RAM */
+	AM_RANGE(0x6800, 0x6bff) AM_READ(skykid_sharedram_r)		/* shared RAM with the MCU */
+	AM_RANGE(0x7800, 0x7800) AM_READ(watchdog_reset_r)		/* watchdog reset */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( skykid_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },				/* banked ROM */
-	{ 0x2000, 0x2fff, skykid_videoram_w, &skykid_videoram },/* Video RAM (background) */
-	{ 0x4000, 0x47ff, MWA_RAM, &skykid_textram },/* video RAM (text layer) */
-	{ 0x4800, 0x5fff, MWA_RAM },				/* RAM + Sprite RAM */
-	{ 0x6000, 0x60ff, skykid_scroll_y_w },		/* Y scroll register map */
-	{ 0x6200, 0x63ff, skykid_scroll_x_w },		/* X scroll register map */
-	{ 0x6800, 0x68ff, namcos1_wavedata_w, &namco_wavedata },/* PSG device, shared RAM */
-	{ 0x6800, 0x6bff, skykid_sharedram_w, &sharedram },	/* shared RAM with the MCU */
-	{ 0x7000, 0x7800, skykid_irq_ctrl_w },		/* IRQ control */
-	{ 0x8000, 0x8800, skykid_halt_mcu_w },		/* MCU control */
-	{ 0x9000, 0x9800, skykid_bankswitch_w },	/* Bankswitch control */
-	{ 0xa000, 0xa001, skykid_flipscreen_w },	/* flip screen */
-	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( skykid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)				/* banked ROM */
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(skykid_videoram_w) AM_BASE(&skykid_videoram)/* Video RAM (background) */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM) AM_BASE(&skykid_textram)/* video RAM (text layer) */
+	AM_RANGE(0x4800, 0x5fff) AM_WRITE(MWA8_RAM)				/* RAM + Sprite RAM */
+	AM_RANGE(0x6000, 0x60ff) AM_WRITE(skykid_scroll_y_w)		/* Y scroll register map */
+	AM_RANGE(0x6200, 0x63ff) AM_WRITE(skykid_scroll_x_w)		/* X scroll register map */
+	AM_RANGE(0x6800, 0x68ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata)/* PSG device, shared RAM */
+	AM_RANGE(0x6800, 0x6bff) AM_WRITE(skykid_sharedram_w) AM_BASE(&sharedram)	/* shared RAM with the MCU */
+	AM_RANGE(0x7000, 0x7800) AM_WRITE(skykid_irq_ctrl_w)		/* IRQ control */
+	AM_RANGE(0x8000, 0x8800) AM_WRITE(skykid_halt_mcu_w)		/* MCU control */
+	AM_RANGE(0x9000, 0x9800) AM_WRITE(skykid_bankswitch_w)	/* Bankswitch control */
+	AM_RANGE(0xa000, 0xa001) AM_WRITE(skykid_flipscreen_w)	/* flip screen */
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( mcu_readmem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_r },/* internal registers */
-	{ 0x0080, 0x00ff, MRA_RAM },					/* built in RAM */
-	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, MRA_RAM },					/* PSG device */
-	{ 0x1000, 0x13ff, skykid_sharedram_r },			/* shared RAM with the 6809 */
-	{ 0x8000, 0xbfff, MRA_ROM },					/* MCU external ROM */
-	{ 0xc000, 0xc800, MRA_RAM },					/* RAM */
-	{ 0xf000, 0xffff, MRA_ROM },					/* MCU internal ROM */
-MEMORY_END
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)/* internal registers */
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)					/* built in RAM */
+	AM_RANGE(0x1000, 0x10ff) AM_READ(namcos1_wavedata_r)			/* PSG device, shared RAM */
+	AM_RANGE(0x1100, 0x113f) AM_READ(MRA8_RAM)					/* PSG device */
+	AM_RANGE(0x1000, 0x13ff) AM_READ(skykid_sharedram_r)			/* shared RAM with the 6809 */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)					/* MCU external ROM */
+	AM_RANGE(0xc000, 0xc800) AM_READ(MRA8_RAM)					/* RAM */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)					/* MCU internal ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mcu_writemem )
-	{ 0x0000, 0x001f, hd63701_internal_registers_w },/* internal registers */
-	{ 0x0080, 0x00ff, MWA_RAM },					/* built in RAM */
-	{ 0x1000, 0x10ff, namcos1_wavedata_w },			/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs },/* PSG device */
-	{ 0x1000, 0x13ff, skykid_sharedram_w },			/* shared RAM with the 6809 */
-	{ 0x2000, 0x2000, MWA_NOP },					/* ??? */
-	{ 0x4000, 0x4000, MWA_NOP },					/* ??? */
-	{ 0x6000, 0x6000, MWA_NOP },					/* ??? */
-	{ 0x8000, 0xbfff, MWA_ROM },					/* MCU external ROM */
-	{ 0xc000, 0xc800, MWA_RAM },					/* RAM */
-	{ 0xf000, 0xffff, MWA_ROM },					/* MCU internal ROM */
-MEMORY_END
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)/* internal registers */
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)					/* built in RAM */
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(namcos1_wavedata_w)			/* PSG device, shared RAM */
+	AM_RANGE(0x1100, 0x113f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs)/* PSG device */
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(skykid_sharedram_w)			/* shared RAM with the 6809 */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP)					/* ??? */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_NOP)					/* ??? */
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(MWA8_NOP)					/* ??? */
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)					/* MCU external ROM */
+	AM_RANGE(0xc000, 0xc800) AM_WRITE(MWA8_RAM)					/* RAM */
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)					/* MCU internal ROM */
+ADDRESS_MAP_END
 
 
 static READ_HANDLER( readFF )
@@ -192,15 +192,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static PORT_READ_START( mcu_readport )
-	{ HD63701_PORT1, HD63701_PORT1, inputport_r },			/* input ports read */
-	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-PORT_END
+static ADDRESS_MAP_START( mcu_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_READ(inputport_r)			/* input ports read */
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_READ(readFF)	/* leds won't work otherwise */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mcu_writeport )
-	{ HD63701_PORT1, HD63701_PORT1, inputport_select_w },	/* input port select */
-	{ HD63701_PORT2, HD63701_PORT2, skykid_led_w },			/* lamps */
-PORT_END
+static ADDRESS_MAP_START( mcu_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(HD63701_PORT1, HD63701_PORT1) AM_WRITE(inputport_select_w)	/* input port select */
+	AM_RANGE(HD63701_PORT2, HD63701_PORT2) AM_WRITE(skykid_led_w)			/* lamps */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( skykid )
 	PORT_START	/* DSW A */
@@ -467,12 +467,12 @@ static MACHINE_DRIVER_START( skykid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
-	MDRV_CPU_MEMORY(skykid_readmem,skykid_writemem)
+	MDRV_CPU_PROGRAM_MAP(skykid_readmem,skykid_writemem)
 	MDRV_CPU_VBLANK_INT(skykid_interrupt,1)
 
 	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
-	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
-	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+	MDRV_CPU_IO_MAP(mcu_readport,mcu_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

@@ -139,33 +139,33 @@ static READ16_HANDLER( pokey_word_r )
  *
  *************************************/
 
-MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x013fff, MRA16_ROM },
-	{ 0x018000, 0x01cfff, MRA16_RAM },
-	{ 0x800000, 0x801fff, MRA16_RAM },
-	{ 0x840000, 0x84003f, pokey_word_r },
-	{ 0x900000, 0x9001ff, MRA16_RAM },
-	{ 0x940000, 0x940001, trackball_r }, /* trackball */
-	{ 0x948000, 0x948001, switches_r },
-	{ 0x978000, 0x978001, MRA16_NOP },	/* ??? */
-MEMORY_END
+ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x013fff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x018000, 0x01cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x840000, 0x84003f) AM_READ(pokey_word_r)
+	AM_RANGE(0x900000, 0x9001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x940000, 0x940001) AM_READ(trackball_r) /* trackball */
+	AM_RANGE(0x948000, 0x948001) AM_READ(switches_r)
+	AM_RANGE(0x978000, 0x978001) AM_READ(MRA16_NOP)	/* ??? */
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x013fff, MWA16_ROM },
-	{ 0x018000, 0x01cfff, MWA16_RAM },
-	{ 0x800000, 0x801fff, MWA16_RAM, (data16_t **)&vectorram, &vectorram_size },
-	{ 0x840000, 0x84003f, pokey_word_w },
-	{ 0x900000, 0x9001ff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x950000, 0x95001f, quantum_colorram_w },
-	{ 0x958000, 0x958001, led_w },
-	{ 0x960000, 0x960001, MWA16_NOP },	/* enable NVRAM? */
-	{ 0x968000, 0x968001, avgdvg_reset_word_w },
-//	{ 0x970000, 0x970001, avgdvg_go_w },
-//	{ 0x978000, 0x978001, watchdog_reset_w },
+ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x013fff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x018000, 0x01cfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x801fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x840000, 0x84003f) AM_WRITE(pokey_word_w)
+	AM_RANGE(0x900000, 0x9001ff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x950000, 0x95001f) AM_WRITE(quantum_colorram_w)
+	AM_RANGE(0x958000, 0x958001) AM_WRITE(led_w)
+	AM_RANGE(0x960000, 0x960001) AM_WRITE(MWA16_NOP)	/* enable NVRAM? */
+	AM_RANGE(0x968000, 0x968001) AM_WRITE(avgdvg_reset_word_w)
+//	AM_RANGE(0x970000, 0x970001) AM_WRITE(avgdvg_go_w)
+//	AM_RANGE(0x978000, 0x978001) AM_WRITE(watchdog_reset_w)
 	/* the following is wrong, but it's the only way I found to fix the service mode */
-	{ 0x978000, 0x978001, avgdvg_go_word_w },
-MEMORY_END
+	AM_RANGE(0x978000, 0x978001) AM_WRITE(avgdvg_go_word_w)
+ADDRESS_MAP_END
 
 
 
@@ -257,7 +257,7 @@ static MACHINE_DRIVER_START( quantum )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,6000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,3)	/* IRQ rate = 750kHz/4096 */
 
 	MDRV_FRAMES_PER_SECOND(60)

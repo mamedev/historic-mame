@@ -55,14 +55,6 @@ enum
 
 
 /* ======================================================================== */
-/* ============================== PROTOTYPES ============================== */
-/* ======================================================================== */
-
-extern int g65816_ICount;				/* cycle count */
-
-
-
-/* ======================================================================== */
 /* ================================== API ================================= */
 /* ======================================================================== */
 
@@ -154,9 +146,6 @@ void g65816_state_save(void *file);
 /* Load a CPU state from disk */
 void g65816_state_load(void *file);
 
-/* Get a formatted string representing a register and its contents */
-const char *g65816_info(void *context, int regnum);
-
 /* Disassemble an instruction */
 unsigned g65816_dasm(char *buffer, unsigned pc);
 
@@ -167,13 +156,16 @@ unsigned g65816_dasm(char *buffer, unsigned pc);
 #include "state.h"
 #include "mamedbg.h"
 
+/* Main interface function */
+void g65816_get_info(UINT32 state, union cpuinfo *info);
+
 #undef G65816_CALL_DEBUGGER
 #define G65816_CALL_DEBUGGER CALL_MAME_DEBUG
 
-#define g65816_read_8(addr) 			cpu_readmem24(addr)
-#define g65816_write_8(addr,data)		cpu_writemem24(addr,data)
-#define g65816_read_8_immediate(A)		cpu_readmem24(A)
-#define g65816_jumping(A)				change_pc24(A)
+#define g65816_read_8(addr) 			program_read_byte_8(addr)
+#define g65816_write_8(addr,data)		program_write_byte_8(addr,data)
+#define g65816_read_8_immediate(A)		program_read_byte_8(A)
+#define g65816_jumping(A)				change_pc(A)
 #define g65816_branching(A)
 
 

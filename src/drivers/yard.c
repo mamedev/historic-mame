@@ -30,29 +30,29 @@ READ_HANDLER( mpatrol_input_port_3_r );
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },        /* Video and Color ram */
-	{ 0xd000, 0xd000, input_port_0_r },	        /* IN0 */
-	{ 0xd001, 0xd001, input_port_1_r },	        /* IN1 */
-	{ 0xd002, 0xd002, input_port_2_r },	        /* IN2 */
-	{ 0xd003, 0xd003, mpatrol_input_port_3_r },	/* DSW1 */
-	{ 0xd004, 0xd004, input_port_4_r },	        /* DSW2 */
-	{ 0xe000, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)        /* Video and Color ram */
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)	        /* IN0 */
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)	        /* IN1 */
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)	        /* IN2 */
+	AM_RANGE(0xd003, 0xd003) AM_READ(mpatrol_input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xd004, 0xd004) AM_READ(input_port_4_r)	        /* DSW2 */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x8000, 0x8fff, videoram_w, &videoram, &videoram_size },
-	{ 0x9000, 0x9fff, yard_scroll_panel_w },
-	{ 0xc820, 0xc87f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xa000, 0xa000, MWA_RAM, &yard_scroll_x_low },
-	{ 0xa200, 0xa200, MWA_RAM, &yard_scroll_x_high },
-	{ 0xa400, 0xa400, MWA_RAM, &yard_scroll_y_low },
-	{ 0xa800, 0xa800, MWA_RAM, &yard_score_panel_disabled },
-	{ 0xd000, 0xd000, irem_sound_cmd_w },
-	{ 0xd001, 0xd001, yard_flipscreen_w },	/* + coin counters */
-	{ 0xe000, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(yard_scroll_panel_w)
+	AM_RANGE(0xc820, 0xc87f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_RAM) AM_BASE(&yard_scroll_x_low)
+	AM_RANGE(0xa200, 0xa200) AM_WRITE(MWA8_RAM) AM_BASE(&yard_scroll_x_high)
+	AM_RANGE(0xa400, 0xa400) AM_WRITE(MWA8_RAM) AM_BASE(&yard_scroll_y_low)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(MWA8_RAM) AM_BASE(&yard_score_panel_disabled)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(irem_sound_cmd_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(yard_flipscreen_w)	/* + coin counters */
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -298,7 +298,7 @@ static MACHINE_DRIVER_START( yard )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)

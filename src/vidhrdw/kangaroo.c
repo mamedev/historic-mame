@@ -170,7 +170,7 @@ WRITE_HANDLER( kangaroo_blitter_w )
 		{
 			for (y = 0;y <= yb;y++)
 			{
-				cpu_writemem16(dest++, cpu_readmem16(src++));
+				program_write_byte(dest++, program_read_byte(src++));
 			}
 
 			dest = dest - (yb + 1) + 256;
@@ -185,7 +185,7 @@ WRITE_HANDLER( kangaroo_blitter_w )
 		{
 			for (y = 0;y <= yb;y++)
 			{
-				cpu_writemem16(dest++, cpu_readmem16(src++));
+				program_write_byte(dest++, program_read_byte(src++));
 			}
 
 			dest = dest - (yb + 1) + 256;

@@ -66,7 +66,7 @@ UINT8 *starfire_videoram;
 UINT8 *starfire_colorram;
 
 static UINT8 fireone_select;
-static mem_read_handler input_read;
+static read8_handler input_read;
 
 
 
@@ -192,19 +192,19 @@ static READ_HANDLER( fireone_input_r )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, starfire_scratch_r },
-	{ 0xa000, 0xbfff, starfire_colorram_r },
-	{ 0xc000, 0xffff, starfire_videoram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(starfire_scratch_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(starfire_colorram_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(starfire_videoram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, starfire_scratch_w },
-	{ 0xa000, 0xbfff, starfire_colorram_w, &starfire_colorram },
-	{ 0xc000, 0xffff, starfire_videoram_w, &starfire_videoram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(starfire_scratch_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(starfire_colorram_w) AM_BASE(&starfire_colorram)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(starfire_videoram_w) AM_BASE(&starfire_videoram)
+ADDRESS_MAP_END
 
 
 
@@ -313,7 +313,7 @@ static MACHINE_DRIVER_START( starfire )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(57)

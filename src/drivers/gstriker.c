@@ -294,62 +294,62 @@ static struct YM2610interface ym2610_interface =
 
 /*** MEMORY LAYOUTS **********************************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x140000, 0x141fff, MRA16_RAM },
-	{ 0x180000, 0x181fff, MRA16_RAM },
-	{ 0x1c0000, 0x1c0fff, MRA16_RAM },
-	{ 0xffc000, 0xffffff, MRA16_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x141fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x181fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1c0000, 0x1c0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
 
-//	{ 0x200060, 0x200061, dmmy },
-	{ 0x200080, 0x200081, input_port_1_word_r },
-	{ 0x200082, 0x200083, input_port_2_word_r },
-	{ 0x200084, 0x200085, input_port_0_word_r },
-	{ 0x200086, 0x200087, input_port_3_word_r },
-	{ 0x200088, 0x200089, input_port_4_word_r },
-	{ 0x20008e, 0x20008f, dmmy_8f },
-MEMORY_END
+//	AM_RANGE(0x200060, 0x200061) AM_READ(dmmy)
+	AM_RANGE(0x200080, 0x200081) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x200082, 0x200083) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x200084, 0x200085) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x200086, 0x200087) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x200088, 0x200089) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x20008e, 0x20008f) AM_READ(dmmy_8f)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x101fff, MB60553_0_vram_w, &MB60553_0_vram },
-	{ 0x102000, 0x103fff, gsx_videoram3_w, &gs_videoram3 },
-	{ 0x140000, 0x141fff, MWA16_RAM, &CG10103_0_vram },
-	{ 0x180000, 0x181fff, VS920A_0_vram_w, &VS920A_0_vram },
-	{ 0x1c0000, 0x1c0fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x200000, 0x20000f, MB60553_0_regs_w },
-	{ 0x200040, 0x20005f, MWA16_RAM, &gs_mixer_regs },
-	{ 0x2000a0, 0x2000a1, sound_command_w },
-	{ 0xffc000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x101fff) AM_WRITE(MB60553_0_vram_w) AM_BASE(&MB60553_0_vram)
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)
+	AM_RANGE(0x140000, 0x141fff) AM_WRITE(MWA16_RAM) AM_BASE(&CG10103_0_vram)
+	AM_RANGE(0x180000, 0x181fff) AM_WRITE(VS920A_0_vram_w) AM_BASE(&VS920A_0_vram)
+	AM_RANGE(0x1c0000, 0x1c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MB60553_0_regs_w)
+	AM_RANGE(0x200040, 0x20005f) AM_WRITE(MWA16_RAM) AM_BASE(&gs_mixer_regs)
+	AM_RANGE(0x2000a0, 0x2000a1) AM_WRITE(sound_command_w)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, YM2610_status_port_0_A_r },
-	{ 0x02, 0x02, YM2610_status_port_0_B_r },
-	{ 0x0c, 0x0c, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0x02, 0x02) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0x0c, 0x0c) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM2610_control_port_0_A_w },
-	{ 0x01, 0x01, YM2610_data_port_0_A_w },
-	{ 0x02, 0x02, YM2610_control_port_0_B_w },
-	{ 0x03, 0x03, YM2610_data_port_0_B_w },
-	{ 0x04, 0x04, gs_sh_bankswitch_w },
-	{ 0x08, 0x08, gs_sh_pending_command_clear_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(gs_sh_bankswitch_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(gs_sh_pending_command_clear_w)
+ADDRESS_MAP_END
 
 /*** INPUT PORTS *************************************************************/
 
@@ -440,13 +440,13 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( gstriker )
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(5000) /* hand-tuned, it needs a bit */

@@ -209,37 +209,37 @@ void segae_drawscanline(int line, int chips, int blank);
 
 /*-- Memory --*/
 
-static MEMORY_READ_START( segae_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },				/* Fixed ROM */
-	{ 0x8000, 0xbfff, MRA_BANK1 },				/* Banked ROM */
-	{ 0xc000, 0xffff, MRA_RAM },				/* Main RAM */
-MEMORY_END
+static ADDRESS_MAP_START( segae_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)				/* Fixed ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)				/* Banked ROM */
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)				/* Main RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( segae_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },				/* Fixed ROM */
-	{ 0x8000, 0xbfff, segae_mem_8000_w },		/* Banked VRAM */
-	{ 0xc000, 0xffff, MWA_RAM },				/* Main RAM */
-MEMORY_END
+static ADDRESS_MAP_START( segae_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)				/* Fixed ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(segae_mem_8000_w)		/* Banked VRAM */
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_RAM)				/* Main RAM */
+ADDRESS_MAP_END
 
 /*-- Ports --*/
 
-static PORT_READ_START( segae_readport )
-	{ 0x7e, 0x7f, segae_port_7e_7f_r },			/* Vertical / Horizontal Beam Position Read */
-	{ 0xba, 0xbb, segae_port_ba_bb_r },			/* Back Layer VDP */
-	{ 0xbe, 0xbf, segae_port_be_bf_r },			/* Front Layer VDP */
-	{ 0xe0, 0xe0, input_port_2_r }, /* Coins + Starts */
-	{ 0xe1, 0xe1, input_port_3_r }, /* Controls */
-	{ 0xf2, 0xf2, input_port_0_r }, /* DSW0 */
-	{ 0xf3, 0xf3, input_port_1_r }, /* DSW1 */
-PORT_END
+static ADDRESS_MAP_START( segae_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7e, 0x7f) AM_READ(segae_port_7e_7f_r)			/* Vertical / Horizontal Beam Position Read */
+	AM_RANGE(0xba, 0xbb) AM_READ(segae_port_ba_bb_r)			/* Back Layer VDP */
+	AM_RANGE(0xbe, 0xbf) AM_READ(segae_port_be_bf_r)			/* Front Layer VDP */
+	AM_RANGE(0xe0, 0xe0) AM_READ(input_port_2_r) /* Coins + Starts */
+	AM_RANGE(0xe1, 0xe1) AM_READ(input_port_3_r) /* Controls */
+	AM_RANGE(0xf2, 0xf2) AM_READ(input_port_0_r) /* DSW0 */
+	AM_RANGE(0xf3, 0xf3) AM_READ(input_port_1_r) /* DSW1 */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( segae_writeport )
-	{ 0x7b, 0x7b, SN76496_0_w }, /* Not sure which chip each is on */
-	{ 0x7f, 0x7f, SN76496_1_w }, /* Not sure which chip each is on */
-	{ 0xba, 0xbb, segae_port_ba_bb_w },			/* Back Layer VDP */
-	{ 0xbe, 0xbf, segae_port_be_bf_w },			/* Front Layer VDP */
-	{ 0xf7, 0xf7, segae_port_f7_w },			/* Banking Control */
-PORT_END
+static ADDRESS_MAP_START( segae_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7b, 0x7b) AM_WRITE(SN76496_0_w) /* Not sure which chip each is on */
+	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_1_w) /* Not sure which chip each is on */
+	AM_RANGE(0xba, 0xbb) AM_WRITE(segae_port_ba_bb_w)			/* Back Layer VDP */
+	AM_RANGE(0xbe, 0xbf) AM_WRITE(segae_port_be_bf_w)			/* Front Layer VDP */
+	AM_RANGE(0xf7, 0xf7) AM_WRITE(segae_port_f7_w)			/* Banking Control */
+ADDRESS_MAP_END
 
 /*******************************************************************************
  Read / Write Handlers
@@ -735,8 +735,8 @@ static MACHINE_DRIVER_START( segae )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10738600/2) /* correct for hangonjr, and astroflash/transformer at least  */
-	MDRV_CPU_MEMORY(segae_readmem,segae_writemem)
-	MDRV_CPU_PORTS(segae_readport,segae_writeport)
+	MDRV_CPU_PROGRAM_MAP(segae_readmem,segae_writemem)
+	MDRV_CPU_IO_MAP(segae_readport,segae_writeport)
 	MDRV_CPU_VBLANK_INT(segae_interrupt,262)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -457,6 +457,34 @@ READ16_HANDLER( f1gpstr2_vregs_r )
 	}
 }
 
+/**************************************************************************
+							Wild Pilot
+**************************************************************************/
+
+READ16_HANDLER( wildplt_vregs_r )
+{
+	if ((offset >= 0x1000/2) && (offset < 0x2000/2))
+		return megasys1_vregs[offset];
+
+	switch (offset)
+	{
+		case 0x0000/2 :	return readinputport(0); // DSW 1 & 2
+
+		case 0x0004/2 :	return readinputport(1); // Buttons
+
+		case 0x0008/2 :	return soundlatch2_r(0); // From sound cpu
+
+		case 0x0010/2 :	// X, Y
+			return readinputport(2) | (readinputport(3)<<8);
+
+		case 0x0018/2 :
+			return (f1gpstr2_ioready[0]&1) ? 0xff : 0xf0;
+
+		default: SHOW_READ_ERROR("vreg %04X read!",offset*2);
+			return megasys1_vregs[offset];
+	}
+}
+
 
 WRITE16_HANDLER( f1gpstar_vregs_w )
 {
@@ -472,7 +500,6 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 */
 		// "shudder" motors, leds
 		case 0x0004/2   :
-		case 0x0014/2   :
 			if (ACCESSING_LSB)
 			{
 	 			coin_counter_w(0,new_data & 0x01);
@@ -483,6 +510,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 				set_led_status(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
 			}
 			break;
+		case 0x0014/2   :	break;
 
 		/* Usually written in sequence, but not always */
 		case 0x0008/2   :	soundlatch_word_w(0,new_data,0);	break;

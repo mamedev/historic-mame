@@ -338,40 +338,40 @@ static READ16_HANDLER( karnov_control_r )
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( karnov_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x080000, 0x080fff, MRA16_RAM },
-	{ 0x0a0000, 0x0a07ff, MRA16_RAM },
-	{ 0x0c0000, 0x0c0007, karnov_control_r },
-MEMORY_END
+static ADDRESS_MAP_START( karnov_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c0000, 0x0c0007) AM_READ(karnov_control_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( karnov_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x060000, 0x063fff, MWA16_RAM , &karnov_ram },
-	{ 0x080000, 0x080fff, MWA16_RAM , &spriteram16, &spriteram_size },
-	{ 0x0a0000, 0x0a07ff, karnov_videoram_w , &videoram16 },
-	{ 0x0a0800, 0x0a0fff, karnov_videoram_w }, /* Wndrplnt Mirror */
-	{ 0x0a1000, 0x0a1fff, karnov_playfield_w, &karnov_pf_data },
-	{ 0x0c0000, 0x0c000f, karnov_control_w },
-MEMORY_END
+static ADDRESS_MAP_START( karnov_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM) AM_BASE(&karnov_ram)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_WRITE(karnov_videoram_w) AM_BASE(&videoram16)
+	AM_RANGE(0x0a0800, 0x0a0fff) AM_WRITE(karnov_videoram_w) /* Wndrplnt Mirror */
+	AM_RANGE(0x0a1000, 0x0a1fff) AM_WRITE(karnov_playfield_w) AM_BASE(&karnov_pf_data)
+	AM_RANGE(0x0c0000, 0x0c000f) AM_WRITE(karnov_control_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ_START( karnov_s_readmem )
-	{ 0x0000, 0x05ff, MRA_RAM},
-	{ 0x0800, 0x0800, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( karnov_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x05ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( karnov_s_writemem )
- 	{ 0x0000, 0x05ff, MWA_RAM},
-	{ 0x1000, 0x1000, YM2203_control_port_0_w }, /* OPN */
-	{ 0x1001, 0x1001, YM2203_write_port_0_w },
-	{ 0x1800, 0x1800, YM3526_control_port_0_w }, /* OPL */
-	{ 0x1801, 0x1801, YM3526_write_port_0_w },
- 	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( karnov_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x05ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM2203_control_port_0_w) /* OPN */
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(YM3526_control_port_0_w) /* OPL */
+	AM_RANGE(0x1801, 0x1801) AM_WRITE(YM3526_write_port_0_w)
+ 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -736,12 +736,12 @@ static MACHINE_DRIVER_START( karnov )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(karnov_readmem,karnov_writemem)
+	MDRV_CPU_PROGRAM_MAP(karnov_readmem,karnov_writemem)
 	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
-	MDRV_CPU_MEMORY(karnov_s_readmem,karnov_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(karnov_s_readmem,karnov_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -769,12 +769,12 @@ static MACHINE_DRIVER_START( wndrplnt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
-	MDRV_CPU_MEMORY(karnov_readmem,karnov_writemem)
+	MDRV_CPU_PROGRAM_MAP(karnov_readmem,karnov_writemem)
 	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
-	MDRV_CPU_MEMORY(karnov_s_readmem,karnov_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(karnov_s_readmem,karnov_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

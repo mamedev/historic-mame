@@ -62,14 +62,14 @@ extern void sys16_patch_z80code( int offset, int data );
 
 extern void sys16_interleave_sprite_data( int bank_size );
 
-#define SYS16_MWA16_PALETTERAM	sys16_paletteram_w, &paletteram16
+#define SYS16_MWA16_PALETTERAM	sys16_paletteram_w
 #define SYS16_MRA16_PALETTERAM	paletteram16_word_r
 
 #define SYS16_MRA16_WORKINGRAM	MRA16_RAM
-#define SYS16_MWA16_WORKINGRAM	MWA16_RAM,&sys16_workingram
+#define SYS16_MWA16_WORKINGRAM	MWA16_RAM
 
 #define SYS16_MRA16_WORKINGRAM2	MRA16_RAM
-#define SYS16_MWA16_WORKINGRAM2	MWA16_RAM,&sys16_workingram2
+#define SYS16_MWA16_WORKINGRAM2	MWA16_RAM
 
 extern READ16_HANDLER( SYS16_MRA16_WORKINGRAM2_SHARE );
 extern WRITE16_HANDLER( SYS16_MWA16_WORKINGRAM2_SHARE );
@@ -78,28 +78,28 @@ extern void (*sys16_custom_irq)(void);
 extern MACHINE_INIT( sys16_onetime );
 
 #define SYS16_MRA16_SPRITERAM		MRA16_RAM
-#define SYS16_MWA16_SPRITERAM		MWA16_RAM,&sys16_spriteram
+#define SYS16_MWA16_SPRITERAM		MWA16_RAM
 
 #define SYS16_MRA16_TILERAM		sys16_tileram_r
-#define SYS16_MWA16_TILERAM		sys16_tileram_w,&sys16_tileram
+#define SYS16_MWA16_TILERAM		sys16_tileram_w
 
 #define SYS16_MRA16_TEXTRAM		sys16_textram_r
-#define SYS16_MWA16_TEXTRAM		sys16_textram_w,&sys16_textram
+#define SYS16_MWA16_TEXTRAM		sys16_textram_w
 
 #define SYS16_MRA16_EXTRAM		MRA16_RAM
-#define SYS16_MWA16_EXTRAM		MWA16_RAM,&sys16_extraram
+#define SYS16_MWA16_EXTRAM		MWA16_RAM
 
 #define SYS16_MRA16_EXTRAM2		MRA16_RAM
-#define SYS16_MWA16_EXTRAM2		MWA16_RAM,&sys16_extraram2
+#define SYS16_MWA16_EXTRAM2		MWA16_RAM
 
 #define SYS16_MRA16_EXTRAM3		MRA16_RAM
-#define SYS16_MWA16_EXTRAM3		MWA16_RAM,&sys16_extraram3
+#define SYS16_MWA16_EXTRAM3		MWA16_RAM
 
 #define SYS16_MRA16_EXTRAM4		MRA16_RAM
-#define SYS16_MWA16_EXTRAM4		MWA16_RAM,&sys16_extraram4
+#define SYS16_MWA16_EXTRAM4		MWA16_RAM
 
 #define SYS16_MRA16_ROADRAM		MRA16_RAM
-#define SYS16_MWA16_ROADRAM		MWA16_RAM,&sys16_roadram
+#define SYS16_MWA16_ROADRAM		MWA16_RAM
 
 extern READ16_HANDLER( SYS16_MRA16_ROADRAM_SHARE );
 extern WRITE16_HANDLER( SYS16_MWA16_ROADRAM_SHARE );

@@ -124,65 +124,67 @@ static WRITE_HANDLER( mexico86_f008_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked roms */
-	{ 0xc000, 0xe7ff, shared_r },   /* shared with sound cpu */
-	{ 0xe800, 0xe8ff, MRA_RAM },    /* protection ram */
-	{ 0xe900, 0xefff, MRA_RAM },
-	{ 0xf010, 0xf010, input_port_5_r },
-	{ 0xf800, 0xffff, MRA_RAM },    /* communication ram - to connect 4 players's subboard */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)  /* banked roms */
+	AM_RANGE(0xc000, 0xe7ff) AM_READ(shared_r)   /* shared with sound cpu */
+	AM_RANGE(0xe800, 0xe8ff) AM_READ(MRA8_RAM)    /* protection ram */
+	AM_RANGE(0xe900, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf010, 0xf010) AM_READ(input_port_5_r)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)    /* communication ram - to connect 4 players's subboard */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xe7ff, shared_w, &shared },  /* shared with sound cpu */
-	//{ 0xc000, 0xcfff, MWA_RAM, &mexico86_videoram },
-	{ 0xc000, 0xd4ff, MWA_RAM, &mexico86_videoram }, //AT: corrected size
-	{ 0xd500, 0xd7ff, MWA_RAM, &mexico86_objectram, &mexico86_objectram_size },
-	{ 0xe800, 0xe8ff, MWA_RAM, &mexico86_protection_ram },  /* shared with mcu */
-	{ 0xe900, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf000, mexico86_bankswitch_w },  /* program and gfx ROM banks */
-	{ 0xf008, 0xf008, mexico86_f008_w },    /* cpu reset lines + other unknown stuff */
-	{ 0xf018, 0xf018, MWA_NOP },    // watchdog_reset_w },
-	{ 0xf800, 0xffff, MWA_RAM },    /* communication ram */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xe7ff) AM_WRITE(shared_w) AM_BASE(&shared)  /* shared with sound cpu */
+	//AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_videoram)
+	AM_RANGE(0xc000, 0xd4ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_videoram) //AT: corrected size
+	AM_RANGE(0xd500, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_objectram) AM_SIZE(&mexico86_objectram_size)
+	AM_RANGE(0xe800, 0xe8ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_protection_ram)  /* shared with mcu */
+	AM_RANGE(0xe900, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(mexico86_bankswitch_w)  /* program and gfx ROM banks */
+	AM_RANGE(0xf008, 0xf008) AM_WRITE(mexico86_f008_w)    /* cpu reset lines + other unknown stuff */
+	AM_RANGE(0xf018, 0xf018) AM_WRITE(MWA8_NOP)    // watchdog_reset_w },
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)    /* communication ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xa7ff, shared_r },
-	{ 0xa800, 0xbfff, MRA_RAM },
-	//{ 0xc000, 0xc000, YM2203_status_port_0_r },
-	{ 0xc000, 0xc000, kiki_2203_r }, //AT
-	{ 0xc001, 0xc001, YM2203_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xa7ff) AM_READ(shared_r)
+	AM_RANGE(0xa800, 0xbfff) AM_READ(MRA8_RAM)
+	//AM_RANGE(0xc000, 0xc000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(kiki_2203_r) //AT
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2203_read_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xa7ff, shared_w },
-	{ 0xa800, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc000, YM2203_control_port_0_w },
-	{ 0xc001, 0xc001, YM2203_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xa7ff) AM_WRITE(shared_w)
+	AM_RANGE(0xa800, 0xbfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( m68705_readmem )
-	{ 0x0000, 0x0000, mexico86_68705_portA_r },
-	{ 0x0001, 0x0001, mexico86_68705_portB_r },
-	{ 0x0002, 0x0002, input_port_0_r }, /* COIN */
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(mexico86_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(mexico86_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_0_r) /* COIN */
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m68705_writemem )
-	{ 0x0000, 0x0000, mexico86_68705_portA_w },
-	{ 0x0001, 0x0001, mexico86_68705_portB_w },
-	{ 0x0004, 0x0004, mexico86_68705_ddrA_w },
-	{ 0x0005, 0x0005, mexico86_68705_ddrB_w },
-	{ 0x000a, 0x000a, MWA_NOP },    /* looks like a bug in the code, writes to */
+static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(mexico86_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(mexico86_68705_portB_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(mexico86_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(mexico86_68705_ddrB_w)
+	AM_RANGE(0x000a, 0x000a) AM_WRITE(MWA8_NOP)    /* looks like a bug in the code, writes to */
 									/* 0x0a (=10dec) instead of 0x10 */
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -422,14 +424,14 @@ static MACHINE_DRIVER_START( mexico86 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M68705, 4000000/2) /* xtal is 4MHz (????) I think it's divided by 2 internally */
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

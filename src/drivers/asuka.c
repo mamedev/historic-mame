@@ -157,165 +157,165 @@ static WRITE_HANDLER( sound_bankswitch_w )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ16_START( bonzeadv_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x0fffff, MRA16_ROM },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* main RAM */
-	{ 0x200000, 0x200007, TC0110PCR_word_r },
-	{ 0x390000, 0x390001, input_port_0_word_r },
-	{ 0x3b0000, 0x3b0001, input_port_1_word_r },
-	{ 0x3d0000, 0x3d0001, MRA16_NOP },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x800000, 0x800803, bonzeadv_c_chip_r },
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( bonzeadv_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_READ(MRA16_RAM)	/* main RAM */
+	AM_RANGE(0x200000, 0x200007) AM_READ(TC0110PCR_word_r)
+	AM_RANGE(0x390000, 0x390001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x3b0000, 0x3b0001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x3d0000, 0x3d0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x800000, 0x800803) AM_READ(bonzeadv_c_chip_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0xc20000, 0xc2000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( bonzeadv_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x10c000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x200007, TC0110PCR_step1_word_w },
-	{ 0x3a0000, 0x3a0001, asuka_spritectrl_w },
-	{ 0x3c0000, 0x3c0001, watchdog_reset16_w },
-	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0x800000, 0x800c01, bonzeadv_c_chip_w },
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( bonzeadv_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200007) AM_WRITE(TC0110PCR_step1_word_w)
+	AM_RANGE(0x3a0000, 0x3a0001) AM_WRITE(asuka_spritectrl_w)
+	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x800000, 0x800c01) AM_WRITE(bonzeadv_c_chip_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0xc20000, 0xc2000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( asuka_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },	/* RAM */
-	{ 0x1076f0, 0x1076f1, MRA16_NOP },	/* Mofflott init does dummy reads here */
-	{ 0x200000, 0x20000f, TC0110PCR_word_r },
-	{ 0x3e0000, 0x3e0001, MRA16_NOP },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( asuka_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)	/* RAM */
+	AM_RANGE(0x1076f0, 0x1076f1) AM_READ(MRA16_NOP)	/* Mofflott init does dummy reads here */
+	AM_RANGE(0x200000, 0x20000f) AM_READ(TC0110PCR_word_r)
+	AM_RANGE(0x3e0000, 0x3e0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x400000, 0x40000f) AM_READ(TC0220IOC_halfword_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0xc20000, 0xc2000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( asuka_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x200000, 0x20000f, TC0110PCR_step1_word_w },
-	{ 0x3a0000, 0x3a0003, asuka_spritectrl_w },
-	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x40000f, TC0220IOC_halfword_w },
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0xc10000, 0xc103ff, MWA16_NOP },	/* error in Asuka init code */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( asuka_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(TC0110PCR_step1_word_w)
+	AM_RANGE(0x3a0000, 0x3a0003) AM_WRITE(asuka_spritectrl_w)
+	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x400000, 0x40000f) AM_WRITE(TC0220IOC_halfword_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0xc10000, 0xc103ff) AM_WRITE(MWA16_NOP)	/* error in Asuka init code */
+	AM_RANGE(0xc20000, 0xc2000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( cadash_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x0c0000, 0x0c0001, MRA16_NOP },
-	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_r },
-	{ 0x100000, 0x107fff, MRA16_RAM },	/* RAM */
-	{ 0x800000, 0x800fff, MRA16_RAM },	/* network ram */
-	{ 0x900000, 0x90000f, TC0220IOC_halfword_r },
-	{ 0xa00000, 0xa0000f, TC0110PCR_word_r },
-	{ 0xb00000, 0xb03fff, PC090OJ_word_0_r },	/* sprite ram */
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( cadash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x100000, 0x107fff) AM_READ(MRA16_RAM)	/* RAM */
+	AM_RANGE(0x800000, 0x800fff) AM_READ(MRA16_RAM)	/* network ram */
+	AM_RANGE(0x900000, 0x90000f) AM_READ(TC0220IOC_halfword_r)
+	AM_RANGE(0xa00000, 0xa0000f) AM_READ(TC0110PCR_word_r)
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0xc20000, 0xc2000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( cadash_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x080003, asuka_spritectrl_w },
-	{ 0x0c0000, 0x0c0001, taitosound_port16_lsb_w },
-	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_w },
-	{ 0x100000, 0x107fff, MWA16_RAM },
-	{ 0x800000, 0x800fff, MWA16_RAM },	/* network ram */
-	{ 0x900000, 0x90000f, TC0220IOC_halfword_w },
-	{ 0xa00000, 0xa0000f, TC0110PCR_step1_4bpg_word_w },
-	{ 0xb00000, 0xb03fff, PC090OJ_word_0_w },	/* sprite ram */
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( cadash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x080003) AM_WRITE(asuka_spritectrl_w)
+	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x100000, 0x107fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x800fff) AM_WRITE(MWA16_RAM)	/* network ram */
+	AM_RANGE(0x900000, 0x90000f) AM_WRITE(TC0220IOC_halfword_w)
+	AM_RANGE(0xa00000, 0xa0000f) AM_WRITE(TC0110PCR_step1_4bpg_word_w)
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0xc20000, 0xc2000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( eto_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10000f, TC0110PCR_word_r },
-	{ 0x200000, 0x203fff, MRA16_RAM },	/* RAM */
-	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },
-	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },	/* service mode mirror */
-	{ 0x4e0000, 0x4e0001, MRA16_NOP },
-	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_r },
-	{ 0xc00000, 0xc03fff, PC090OJ_word_0_r },	/* sprite ram */
-	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( eto_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10000f) AM_READ(TC0110PCR_word_r)
+	AM_RANGE(0x200000, 0x203fff) AM_READ(MRA16_RAM)	/* RAM */
+	AM_RANGE(0x300000, 0x30000f) AM_READ(TC0220IOC_halfword_r)
+	AM_RANGE(0x400000, 0x40000f) AM_READ(TC0220IOC_halfword_r)	/* service mode mirror */
+	AM_RANGE(0x4e0000, 0x4e0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x4e0002, 0x4e0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+	AM_RANGE(0xd00000, 0xd0ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0xd20000, 0xd2000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( eto_writemem )	/* N.B. tc100scn mirror overlaps spriteram */
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10000f, TC0110PCR_step1_word_w },
-	{ 0x200000, 0x203fff, MWA16_RAM },
-	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },
-	{ 0x4a0000, 0x4a0003, asuka_spritectrl_w },
-	{ 0x4e0000, 0x4e0001, taitosound_port16_lsb_w },
-	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_w },
-	{ 0xc00000, 0xc03fff, PC090OJ_word_0_w },	/* sprite ram */
-	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* service mode mirror */
-	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( eto_writemem, ADDRESS_SPACE_PROGRAM, 16 )	/* N.B. tc100scn mirror overlaps spriteram */
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10000f) AM_WRITE(TC0110PCR_step1_word_w)
+	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(TC0220IOC_halfword_w)
+	AM_RANGE(0x4a0000, 0x4a0003) AM_WRITE(asuka_spritectrl_w)
+	AM_RANGE(0x4e0000, 0x4e0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x4e0002, 0x4e0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* service mode mirror */
+	AM_RANGE(0xd00000, 0xd0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0xd20000, 0xd2000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************/
 
-static MEMORY_READ_START( bonzeadv_z80_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( bonzeadv_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bonzeadv_z80_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
-	{ 0xe600, 0xe600, MWA_NOP },
-	{ 0xee00, 0xee00, MWA_NOP },
-	{ 0xf000, 0xf000, MWA_NOP },
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( bonzeadv_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xe600, 0xe600) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( z80_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( z80_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
-	{ 0xc000, 0xc000, rastan_c000_w },
-	{ 0xd000, 0xd000, rastan_d000_w },
-MEMORY_END
+static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_adpcm_trigger_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_c000_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_d000_w)
+ADDRESS_MAP_END
 
 
 /***********************************************************
@@ -998,11 +998,11 @@ static MACHINE_DRIVER_START( bonzeadv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)    /* checked on PCB */
-	MDRV_CPU_MEMORY(bonzeadv_readmem,bonzeadv_writemem)
+	MDRV_CPU_PROGRAM_MAP(bonzeadv_readmem,bonzeadv_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,4000000)    /* sound CPU, also required for test mode */
-	MDRV_CPU_MEMORY(bonzeadv_z80_readmem,bonzeadv_z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(bonzeadv_z80_readmem,bonzeadv_z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1027,11 +1027,11 @@ static MACHINE_DRIVER_START( asuka )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
-	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_PROGRAM_MAP(asuka_readmem,asuka_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1057,11 +1057,11 @@ static MACHINE_DRIVER_START( cadash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(cadash_readmem,cadash_writemem)
+	MDRV_CPU_PROGRAM_MAP(cadash_readmem,cadash_writemem)
 	MDRV_CPU_VBLANK_INT(cadash_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1087,11 +1087,11 @@ static MACHINE_DRIVER_START( galmedes )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
-	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_PROGRAM_MAP(asuka_readmem,asuka_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1117,11 +1117,11 @@ static MACHINE_DRIVER_START( eto )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
-	MDRV_CPU_MEMORY(eto_readmem,eto_writemem)
+	MDRV_CPU_PROGRAM_MAP(eto_readmem,eto_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

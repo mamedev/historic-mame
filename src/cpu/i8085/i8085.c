@@ -37,17 +37,42 @@
  *	   OUT (#),A	  10	  11	 /
  *	   EX (SP),HL	  18	  19	/
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *
+ *   - This source code is released as freeware for non-commercial purposes
+ *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
+ *	   The licensing terms of MAME apply to this piece of code for the MAME
+ *	   project and derviative works, as defined by the MAME license. You
+ *	   may opt to make modifications, improvements or derivative works under
+ *	   that same conditions, and the MAME project may opt to keep
+ *	   modifications, improvements or derivatives under their terms exclusively.
+ *
+ *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *     below) to this - and only this - piece of code or your derivative works.
+ *	   Note that in no case your choice can have any impact on any other
+ *	   source code of the MAME project, or binary, or executable, be it closely
+ *	   or losely related to this piece of code.
+ *
+ *	-  At your choice you are also free to remove either licensing terms from
+ *	   this file and continue to use it under only one of the two licenses. Do this
+ *	   if you think that licenses are not compatible (enough) for you, or if you
+ *	   consider either license 'too restrictive' or 'too free'.
+ *
+ *	-  GPL (GNU General Public License)
+ *	   This program is free software; you can redistribute it and/or
+ *	   modify it under the terms of the GNU General Public License
+ *	   as published by the Free Software Foundation; either version 2
+ *	   of the License, or (at your option) any later version.
+ *
+ *	   This program is distributed in the hope that it will be useful,
+ *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	   GNU General Public License for more details.
+ *
+ *	   You should have received a copy of the GNU General Public License
+ *	   along with this program; if not, write to the Free Software
+ *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *
  * Revisions:
@@ -110,9 +135,7 @@
 /* Layout of the registers in the debugger */
 static UINT8 i8085_reg_layout[] = {
 	I8085_PC,I8085_SP,I8085_AF,I8085_BC,I8085_DE,I8085_HL, -1,
-	I8085_HALT,I8085_IM,I8085_IREQ,I8085_ISRV,I8085_VECTOR, -1,
-	I8085_TRAP_STATE,I8085_INTR_STATE,I8085_RST55_STATE,I8085_RST65_STATE,I8085_RST75_STATE,
-	0 };
+	I8085_HALT,I8085_IM,I8085_IREQ,I8085_ISRV,I8085_VECTOR,	0 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 i8085_win_layout[] = {
@@ -169,12 +192,12 @@ static UINT16 ARG16(void)
 
 static UINT8 RM(UINT32 a)
 {
-	return cpu_readmem16(a);
+	return program_read_byte_8(a);
 }
 
 static void WM(UINT32 a, UINT8 v)
 {
-	cpu_writemem16(a, v);
+	program_write_byte_8(a, v);
 }
 
 static	void illegal(void)
@@ -1033,7 +1056,7 @@ INLINE void execute_one(int opcode)
 			break;
 		case 0xe9: i8085_ICount -= 5;	/* PCHL */
 			I.PC.d = I.HL.w.l;
-			change_pc16(I.PC.d);
+			change_pc(I.PC.d);
 			break;
 		case 0xea: i8085_ICount -= 7;	/* JPE	nnnn */
 			M_JMP( I.AF.b.l & VF );
@@ -1225,7 +1248,7 @@ static void Interrupt(void)
 		case 0xc30000:	/* JMP	nnnn */
 			i8085_ICount -= 10;
 			I.PC.d = I.IRQ1 & 0xffff;
-			change_pc16(I.PC.d);
+			change_pc(I.PC.d);
 			break;
 		default:
 			switch( I.ISRV )
@@ -1239,7 +1262,7 @@ static void Interrupt(void)
 						I.PC.d = I.IRQ1;
 					else
 						I.PC.d = 0x3c;
-					change_pc16(I.PC.d);
+					change_pc(I.PC.d);
 					break;
 				default:
 					LOG(("i8085 take int $%02x\n", I.IRQ1));
@@ -1303,7 +1326,7 @@ static void init_tables (void)
 /****************************************************************************
  * Init the 8085 emulation
  ****************************************************************************/
-void i8085_init(void)
+static void i8085_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	init_tables();
@@ -1329,13 +1352,13 @@ void i8085_init(void)
 /****************************************************************************
  * Reset the 8085 emulation
  ****************************************************************************/
-void i8085_reset(void *param)
+static void i8085_reset(void *param)
 {
 	int cputype_bak = I.cputype; //AT: backup cputype(0=8080, 1=8085)
 
 	init_tables();
 	memset(&I, 0, sizeof(i8085_Regs)); //AT: this also resets I.cputype so 8085 features were never ever used!
-	change_pc16(I.PC.d);
+	change_pc(I.PC.d);
 
 	I.cputype = cputype_bak; //AT: restore cputype
 }
@@ -1343,7 +1366,7 @@ void i8085_reset(void *param)
 /****************************************************************************
  * Shut down the CPU emulation
  ****************************************************************************/
-void i8085_exit(void)
+static void i8085_exit(void)
 {
 	/* nothing to do */
 }
@@ -1351,124 +1374,28 @@ void i8085_exit(void)
 /****************************************************************************
  * Get the current 8085 context
  ****************************************************************************/
-unsigned i8085_get_context(void *dst)
+static void i8085_get_context(void *dst)
 {
 	if( dst )
 		*(i8085_Regs*)dst = I;
-	return sizeof(i8085_Regs);
 }
 
 /****************************************************************************
  * Set the current 8085 context
  ****************************************************************************/
-void i8085_set_context(void *src)
+static void i8085_set_context(void *src)
 {
 	if( src )
 	{
 		I = *(i8085_Regs*)src;
-		change_pc16(I.PC.d);
+		change_pc(I.PC.d);
 	}
-}
-
-/****************************************************************************
- * Get a specific register
- ****************************************************************************/
-unsigned i8085_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return I.PC.d;
-		case I8085_PC: return I.PC.w.l;
-		case REG_SP: return I.SP.d;
-		case I8085_SP: return I.SP.w.l;
-		case I8085_AF: return I.AF.w.l;
-		case I8085_BC: return I.BC.w.l;
-		case I8085_DE: return I.DE.w.l;
-		case I8085_HL: return I.HL.w.l;
-		case I8085_IM: return I.IM;
-		case I8085_HALT: return I.HALT;
-		case I8085_IREQ: return I.IREQ;
-		case I8085_ISRV: return I.ISRV;
-		case I8085_VECTOR: return I.INTR;
-		case I8085_TRAP_STATE: return I.nmi_state;
-		case I8085_INTR_STATE: return I.irq_state[I8085_INTR_LINE];
-		case I8085_RST55_STATE: return I.irq_state[I8085_RST55_LINE];
-		case I8085_RST65_STATE: return I.irq_state[I8085_RST65_LINE];
-		case I8085_RST75_STATE: return I.irq_state[I8085_RST75_LINE];
-		case REG_PREVIOUSPC: return 0; /* previous pc not supported */
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = I.SP.w.l + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return RM( offset ) + ( RM( offset+1 ) << 8 );
-			}
-	}
-	return 0;
-}
-
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-void i8085_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC: I.PC.w.l = val; change_pc16(I.PC.d); break;
-		case I8085_PC: I.PC.w.l = val; break;
-		case REG_SP: I.SP.w.l = val; break;
-		case I8085_SP: I.SP.w.l = val; break;
-		case I8085_AF: I.AF.w.l = val; break;
-		case I8085_BC: I.BC.w.l = val; break;
-		case I8085_DE: I.DE.w.l = val; break;
-		case I8085_HL: I.HL.w.l = val; break;
-		case I8085_IM: I.IM = val; break;
-		case I8085_HALT: I.HALT = val; break;
-		case I8085_IREQ: I.IREQ = val; break;
-		case I8085_ISRV: I.ISRV = val; break;
-		case I8085_VECTOR: I.INTR = val; break;
-		case I8085_TRAP_STATE: I.nmi_state = val; break;
-		case I8085_INTR_STATE: I.irq_state[I8085_INTR_LINE] = val; break;
-		case I8085_RST55_STATE: I.irq_state[I8085_RST55_LINE] = val; break;
-		case I8085_RST65_STATE: I.irq_state[I8085_RST65_LINE] = val; break;
-		case I8085_RST75_STATE: I.irq_state[I8085_RST75_LINE] = val; break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = I.SP.w.l + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, val&0xff );
-					WM( offset+1, (val>>8)&0xff );
-				}
-			}
-	}
-}
-
-/****************************************************************************/
-/* Set the 8085 SID input signal state										*/
-/****************************************************************************/
-void i8085_set_SID(int state)
-{
-	LOG(("i8085: SID %d\n", state));
-	if (state)
-		I.IM |= IM_SID;
-	else
-		I.IM &= ~IM_SID;
-}
-
-/****************************************************************************/
-/* Set a callback to be called at SOD output change 						*/
-/****************************************************************************/
-void i8085_set_sod_callback(void (*callback)(int state))
-{
-	I.sod_callback = callback;
 }
 
 /****************************************************************************/
 /* Set TRAP signal state													*/
 /****************************************************************************/
-void i8085_set_TRAP(int state)
+static void i8085_set_TRAP(int state)
 {
 	LOG(("i8085: TRAP %d\n", state));
 	if (state)
@@ -1487,7 +1414,7 @@ void i8085_set_TRAP(int state)
 /****************************************************************************/
 /* Set RST7.5 signal state													*/
 /****************************************************************************/
-void i8085_set_RST75(int state)
+static void i8085_set_RST75(int state)
 {
 	LOG(("i8085: RST7.5 %d\n", state));
 	if( state )
@@ -1507,7 +1434,7 @@ void i8085_set_RST75(int state)
 /****************************************************************************/
 /* Set RST6.5 signal state													*/
 /****************************************************************************/
-void i8085_set_RST65(int state)
+static void i8085_set_RST65(int state)
 {
 	LOG(("i8085: RST6.5 %d\n", state));
 	if( state )
@@ -1529,7 +1456,7 @@ void i8085_set_RST65(int state)
 /****************************************************************************/
 /* Set RST5.5 signal state													*/
 /****************************************************************************/
-void i8085_set_RST55(int state)
+static void i8085_set_RST55(int state)
 {
 	LOG(("i8085: RST5.5 %d\n", state));
 	if( state )
@@ -1551,7 +1478,7 @@ void i8085_set_RST55(int state)
 /****************************************************************************/
 /* Set INTR signal															*/
 /****************************************************************************/
-void i8085_set_INTR(int state)
+static void i8085_set_INTR(int state)
 {
 	LOG(("i8085: INTR %d\n", state));
 	if( state )
@@ -1572,7 +1499,7 @@ void i8085_set_INTR(int state)
 	}
 }
 
-void i8085_set_irq_line(int irqline, int state)
+static void i8085_set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -1612,66 +1539,8 @@ void i8085_set_irq_line(int irqline, int state)
 	}
 }
 
-void i8085_set_irq_callback(int (*callback)(int))
-{
-	I.irq_callback = callback;
-}
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *i8085_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	i8085_Regs *r = context;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+I8085_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
-		case CPU_INFO_REG+I8085_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
-		case CPU_INFO_REG+I8085_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
-		case CPU_INFO_REG+I8085_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-		case CPU_INFO_REG+I8085_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-		case CPU_INFO_REG+I8085_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+I8085_IM: sprintf(buffer[which], "IM:%02X", r->IM); break;
-		case CPU_INFO_REG+I8085_HALT: sprintf(buffer[which], "HALT:%d", r->HALT); break;
-		case CPU_INFO_REG+I8085_IREQ: sprintf(buffer[which], "IREQ:%02X", I.IREQ); break;
-		case CPU_INFO_REG+I8085_ISRV: sprintf(buffer[which], "ISRV:%02X", I.ISRV); break;
-		case CPU_INFO_REG+I8085_VECTOR: sprintf(buffer[which], "VEC:%02X", I.INTR); break;
-		case CPU_INFO_REG+I8085_TRAP_STATE: sprintf(buffer[which], "TRAP:%X", I.nmi_state); break;
-		case CPU_INFO_REG+I8085_INTR_STATE: sprintf(buffer[which], "INTR:%X", I.irq_state[I8085_INTR_LINE]); break;
-		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "RST55:%X", I.irq_state[I8085_RST55_LINE]); break;
-		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "RST65:%X", I.irq_state[I8085_RST65_LINE]); break;
-		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "RST75:%X", I.irq_state[I8085_RST75_LINE]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->AF.b.l & 0x80 ? 'S':'.',
-				r->AF.b.l & 0x40 ? 'Z':'.',
-				r->AF.b.l & 0x20 ? '?':'.',
-				r->AF.b.l & 0x10 ? 'H':'.',
-				r->AF.b.l & 0x08 ? '?':'.',
-				r->AF.b.l & 0x04 ? 'P':'.',
-				r->AF.b.l & 0x02 ? 'N':'.',
-				r->AF.b.l & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "8085A";
-		case CPU_INFO_FAMILY: return "Intel 8080";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned i8085_dasm(char *buffer, unsigned pc)
+offs_t i8085_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm8085(buffer,pc);
@@ -1689,7 +1558,7 @@ unsigned i8085_dasm(char *buffer, unsigned pc)
 /* Layout of the registers in the debugger */
 static UINT8 i8080_reg_layout[] = {
 	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,
-	I8080_HALT, I8080_IREQ, I8080_ISRV, I8080_VECTOR, I8080_TRAP_STATE, I8080_INTR_STATE,
+	I8080_HALT, I8080_IREQ, I8080_ISRV, I8080_VECTOR,
 	0 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -1723,13 +1592,6 @@ void i8080_init(void)
 	state_save_register_INT8("i8080", cpu, "irq_state", I.irq_state, 1);
 }
 
-void i8080_reset(void *param) { i8085_reset(param); }
-void i8080_exit(void) { i8085_exit(); }
-int i8080_execute(int cycles) { return i8085_execute(cycles); }
-unsigned i8080_get_context(void *dst) { return i8085_get_context(dst); }
-void i8080_set_context(void *src) { i8085_set_context(src); }
-unsigned i8080_get_reg(int regnum) { return i8085_get_reg(regnum); }
-void i8080_set_reg(int regnum, unsigned val)  { i8085_set_reg(regnum,val); }
 void i8080_set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
@@ -1751,27 +1613,190 @@ void i8080_set_irq_line(int irqline, int state)
 		}
 	}
 }
-void i8080_set_irq_callback(int (*callback)(int irqline)) { i8085_set_irq_callback(callback); }
-const char *i8080_info(void *context, int regnum)
+#endif
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void i8085_set_info(UINT32 state, union cpuinfo *info)
 {
-	switch( regnum )
+	switch (state)
 	{
-		case CPU_INFO_NAME: return "8080";
-		case CPU_INFO_VERSION: return "1.2";
-		case CPU_INFO_REG_LAYOUT: return (const char *)i8080_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)i8080_win_layout;
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	i8085_set_irq_line(I8085_INTR_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST55_LINE:	i8085_set_irq_line(I8085_RST55_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST65_LINE:	i8085_set_irq_line(I8085_RST65_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST75_LINE:	i8085_set_irq_line(I8085_RST75_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		i8085_set_irq_line(IRQ_LINE_NMI, info->i); break;
+
+		case CPUINFO_INT_PC:							I.PC.w.l = info->i; change_pc(I.PC.d); break;
+		case CPUINFO_INT_REGISTER + I8085_PC:			I.PC.w.l = info->i;						break;
+		case CPUINFO_INT_SP:							I.SP.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_SP:			I.SP.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_AF:			I.AF.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_BC:			I.BC.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_DE:			I.DE.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_HL:			I.HL.w.l = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_IM:			I.IM = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8085_HALT:			I.HALT = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_IREQ:			I.IREQ = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_ISRV:			I.ISRV = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8085_VECTOR:		I.INTR = info->i;						break;
+
+		case CPUINFO_INT_I8085_SID:						if (info->i) I.IM |= IM_SID; else I.IM &= ~IM_SID; break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
+		case CPUINFO_PTR_I8085_SOD_CALLBACK:			I.sod_callback = (void (*)(int))info->p;break;
 	}
-	return i8085_info(context,regnum);
 }
 
-unsigned i8080_dasm(char *buffer, unsigned pc)
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void i8085_get_info(UINT32 state, union cpuinfo *info)
 {
-#ifdef MAME_DEBUG
-	return Dasm8085(buffer,pc);
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(I);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 4;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST55_LINE:	info->i = (I.IREQ & IM_RST55) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST65_LINE:	info->i = (I.IREQ & IM_RST65) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + I8085_RST75_LINE:	info->i = (I.IREQ & IM_RST75) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
+
+		case CPUINFO_INT_PC:							info->i = I.PC.d;						break;
+		case CPUINFO_INT_REGISTER + I8085_PC:			info->i = I.PC.w.l;						break;
+		case CPUINFO_INT_SP:							info->i = I.SP.d;						break;
+		case CPUINFO_INT_REGISTER + I8085_SP:			info->i = I.SP.w.l;						break;
+		case CPUINFO_INT_REGISTER + I8085_AF:			info->i = I.AF.w.l;						break;
+		case CPUINFO_INT_REGISTER + I8085_BC:			info->i = I.BC.w.l;						break;
+		case CPUINFO_INT_REGISTER + I8085_DE:			info->i = I.DE.w.l;						break;
+		case CPUINFO_INT_REGISTER + I8085_HL:			info->i = I.HL.w.l;						break;
+		case CPUINFO_INT_REGISTER + I8085_IM:			info->i = I.IM;							break;
+		case CPUINFO_INT_REGISTER + I8085_HALT:			info->i = I.HALT;						break;
+		case CPUINFO_INT_REGISTER + I8085_IREQ:			info->i = I.IREQ;						break;
+		case CPUINFO_INT_REGISTER + I8085_ISRV:			info->i = I.ISRV;						break;
+		case CPUINFO_INT_REGISTER + I8085_VECTOR:		info->i = I.INTR;						break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8085_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8085_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8085_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = i8085_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8085_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8085_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8085_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8085_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8085_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8085_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8085_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "8085A"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 8080"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1999 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				I.AF.b.l & 0x80 ? 'S':'.',
+				I.AF.b.l & 0x40 ? 'Z':'.',
+				I.AF.b.l & 0x20 ? '?':'.',
+				I.AF.b.l & 0x10 ? 'H':'.',
+				I.AF.b.l & 0x08 ? '?':'.',
+				I.AF.b.l & 0x04 ? 'P':'.',
+				I.AF.b.l & 0x02 ? 'N':'.',
+				I.AF.b.l & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + I8085_AF:			sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", I.AF.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_BC:			sprintf(info->s = cpuintrf_temp_str(), "BC:%04X", I.BC.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_DE:			sprintf(info->s = cpuintrf_temp_str(), "DE:%04X", I.DE.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_HL:			sprintf(info->s = cpuintrf_temp_str(), "HL:%04X", I.HL.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", I.SP.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", I.PC.w.l); break;
+		case CPUINFO_STR_REGISTER + I8085_IM:			sprintf(info->s = cpuintrf_temp_str(), "IM:%02X", I.IM); break;
+		case CPUINFO_STR_REGISTER + I8085_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%d", I.HALT); break;
+		case CPUINFO_STR_REGISTER + I8085_IREQ:			sprintf(info->s = cpuintrf_temp_str(), "IREQ:%02X", I.IREQ); break;
+		case CPUINFO_STR_REGISTER + I8085_ISRV:			sprintf(info->s = cpuintrf_temp_str(), "ISRV:%02X", I.ISRV); break;
+		case CPUINFO_STR_REGISTER + I8085_VECTOR:		sprintf(info->s = cpuintrf_temp_str(), "VEC:%02X", I.INTR); break;
+	}
+}
+
+
+#if (HAS_8080)
+/**************************************************************************
+ * CPU-specific get_info/set_info
+ **************************************************************************/
+
+static void i8080_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + I8080_INTR_LINE:	i8080_set_irq_line(I8080_INTR_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		i8080_set_irq_line(IRQ_LINE_NMI, info->i); break;
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+
+		default:
+			i8085_set_info(state, info);
+			break;
+	}
+}
+
+void i8080_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8080_set_info;			break;
+		case CPUINFO_PTR_INIT:							info->init = i8080_init;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8080_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8080_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "8080"); break;
+
+		default:
+			i8085_get_info(state, info);
+			break;
+	}
 }
 #endif
-

@@ -85,32 +85,32 @@ INTERRUPT_GEN( yiear_nmi_interrupt )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0000, yiear_speech_r },
-	{ 0x4c00, 0x4c00, input_port_3_r },
-	{ 0x4d00, 0x4d00, input_port_4_r },
-	{ 0x4e00, 0x4e00, input_port_0_r },
-	{ 0x4e01, 0x4e01, input_port_1_r },
-	{ 0x4e02, 0x4e02, input_port_2_r },
-	{ 0x4e03, 0x4e03, input_port_5_r },
-	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(yiear_speech_r)
+	AM_RANGE(0x4c00, 0x4c00) AM_READ(input_port_3_r)
+	AM_RANGE(0x4d00, 0x4d00) AM_READ(input_port_4_r)
+	AM_RANGE(0x4e00, 0x4e00) AM_READ(input_port_0_r)
+	AM_RANGE(0x4e01, 0x4e01) AM_READ(input_port_1_r)
+	AM_RANGE(0x4e02, 0x4e02) AM_READ(input_port_2_r)
+	AM_RANGE(0x4e03, 0x4e03) AM_READ(input_port_5_r)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x4000, 0x4000, yiear_control_w },
-	{ 0x4800, 0x4800, konami_SN76496_latch_w },
-	{ 0x4900, 0x4900, konami_SN76496_0_w },
-	{ 0x4a00, 0x4a00, yiear_VLM5030_control_w },
-	{ 0x4b00, 0x4b00, VLM5030_data_w },
-	{ 0x4f00, 0x4f00, watchdog_reset_w },
-	{ 0x5000, 0x502f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5030, 0x53ff, MWA_RAM },
-	{ 0x5400, 0x542f, MWA_RAM, &spriteram_2 },
-	{ 0x5430, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5fff, yiear_videoram_w, &videoram },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(yiear_control_w)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(konami_SN76496_latch_w)
+	AM_RANGE(0x4900, 0x4900) AM_WRITE(konami_SN76496_0_w)
+	AM_RANGE(0x4a00, 0x4a00) AM_WRITE(yiear_VLM5030_control_w)
+	AM_RANGE(0x4b00, 0x4b00) AM_WRITE(VLM5030_data_w)
+	AM_RANGE(0x4f00, 0x4f00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5000, 0x502f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x5030, 0x53ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5400, 0x542f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x5430, 0x57ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5800, 0x5fff) AM_WRITE(yiear_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -270,7 +270,7 @@ static MACHINE_DRIVER_START( yiear )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,18432000/16)	/* ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* vblank */
 	MDRV_CPU_PERIODIC_INT(yiear_nmi_interrupt,500)	/* music tempo (correct frequency unknown) */
 

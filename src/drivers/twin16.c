@@ -259,115 +259,115 @@ static WRITE16_HANDLER( cuebrick_nvram_bank_w )
 
 /* Memory Maps */
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, twin16_sres_r },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xb000, 0xb00d, K007232_read_port_0_r },
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ 0xf000, 0xf000, UPD7759_0_busy_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_READ(twin16_sres_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(UPD7759_0_busy_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, twin16_sres_w },
-	{ 0xb000, 0xb00d, K007232_write_port_0_w  },
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xd000, 0xd000, UPD7759_0_port_w },
-	{ 0xe000, 0xe000, UPD7759_0_start_w },
-	{ 0xf000, 0xf000, MWA_NOP },	// ???
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(twin16_sres_w)
+	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(UPD7759_0_port_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(UPD7759_0_start_w)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP)	// ???
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_r },
-	{ 0x044000, 0x04ffff, MRA16_RAM },	// miaj
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x080000, 0x080fff, MRA16_RAM },
-	{ 0x0a0000, 0x0a001b, twin16_input_r },
-	{ 0x0b0000, 0x0b03ff, cuebrick_nvram_r },
-	{ 0x0c000e, 0x0c000f, twin16_sprite_status_r },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x104000, 0x105fff, MRA16_RAM },	// miaj
-	{ 0x120000, 0x123fff, MRA16_RAM },
-	{ 0x140000, 0x143fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_READ(COMRAM_r)
+	AM_RANGE(0x044000, 0x04ffff) AM_READ(MRA16_RAM)	// miaj
+	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a001b) AM_READ(twin16_input_r)
+	AM_RANGE(0x0b0000, 0x0b03ff) AM_READ(cuebrick_nvram_r)
+	AM_RANGE(0x0c000e, 0x0c000f) AM_READ(twin16_sprite_status_r)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x104000, 0x105fff) AM_READ(MRA16_RAM)	// miaj
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_w },
-	{ 0x044000, 0x04ffff, MWA16_RAM },	// miaj
-	{ 0x060000, 0x063fff, MWA16_RAM },
-	{ 0x080000, 0x080fff, twin16_paletteram_word_w, &paletteram16 },
-	{ 0x081000, 0x081fff, MWA16_NOP },
-	{ 0x0a0000, 0x0a0001, twin16_CPUA_register_w },
-	{ 0x0a0008, 0x0a0009, sound_command_w },
-	{ 0x0a0010, 0x0a0011, watchdog_reset16_w },
-	{ 0x0b0000, 0x0b03ff, cuebrick_nvram_w },
-	{ 0x0b0400, 0x0b0401, cuebrick_nvram_bank_w },
-	{ 0x0c0000, 0x0c000f, twin16_video_register_w },
-	{ 0x100000, 0x103fff, twin16_videoram2_w, &twin16_videoram2 },
-	{ 0x104000, 0x105fff, MWA16_RAM },	// miaj
-	{ 0x120000, 0x123fff, MWA16_RAM, &videoram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16, &spriteram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(COMRAM_w)
+	AM_RANGE(0x044000, 0x04ffff) AM_WRITE(MWA16_RAM)	// miaj
+	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(twin16_paletteram_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x081000, 0x081fff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x0a0000, 0x0a0001) AM_WRITE(twin16_CPUA_register_w)
+	AM_RANGE(0x0a0008, 0x0a0009) AM_WRITE(sound_command_w)
+	AM_RANGE(0x0a0010, 0x0a0011) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x0b0000, 0x0b03ff) AM_WRITE(cuebrick_nvram_w)
+	AM_RANGE(0x0b0400, 0x0b0401) AM_WRITE(cuebrick_nvram_bank_w)
+	AM_RANGE(0x0c0000, 0x0c000f) AM_WRITE(twin16_video_register_w)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(twin16_videoram2_w) AM_BASE(&twin16_videoram2)
+	AM_RANGE(0x104000, 0x105fff) AM_WRITE(MWA16_RAM)	// miaj
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&videoram16)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_sub )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_r },
-	{ 0x044000, 0x04ffff, MRA16_RAM },	// miaj
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x080000, 0x09ffff, extra_rom_r },
-	{ 0x400000, 0x403fff, spriteram16_r },
-	{ 0x480000, 0x483fff, videoram16_r },
-	{ 0x500000, 0x53ffff, MRA16_RAM },
-	{ 0x600000, 0x6fffff, twin16_gfx_rom1_r },
-	{ 0x700000, 0x77ffff, twin16_gfx_rom2_r },
-	{ 0x780000, 0x79ffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_READ(COMRAM_r)
+	AM_RANGE(0x044000, 0x04ffff) AM_READ(MRA16_RAM)	// miaj
+	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x09ffff) AM_READ(extra_rom_r)
+	AM_RANGE(0x400000, 0x403fff) AM_READ(spriteram16_r)
+	AM_RANGE(0x480000, 0x483fff) AM_READ(videoram16_r)
+	AM_RANGE(0x500000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6fffff) AM_READ(twin16_gfx_rom1_r)
+	AM_RANGE(0x700000, 0x77ffff) AM_READ(twin16_gfx_rom2_r)
+	AM_RANGE(0x780000, 0x79ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_sub )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_w },
-	{ 0x044000, 0x04ffff, MWA16_RAM },	// miaj
-	{ 0x060000, 0x063fff, MWA16_RAM },
-	{ 0x0a0000, 0x0a0001, twin16_CPUB_register_w },
-	{ 0x400000, 0x403fff, spriteram16_w },
-	{ 0x480000, 0x483fff, videoram16_w },
-	{ 0x500000, 0x53ffff, MWA16_RAM, &twin16_tile_gfx_ram },
-	{ 0x780000, 0x79ffff, MWA16_RAM, &twin16_sprite_gfx_ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(COMRAM_w)
+	AM_RANGE(0x044000, 0x04ffff) AM_WRITE(MWA16_RAM)	// miaj
+	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a0001) AM_WRITE(twin16_CPUB_register_w)
+	AM_RANGE(0x400000, 0x403fff) AM_WRITE(spriteram16_w)
+	AM_RANGE(0x480000, 0x483fff) AM_WRITE(videoram16_w)
+	AM_RANGE(0x500000, 0x53ffff) AM_WRITE(MWA16_RAM) AM_BASE(&twin16_tile_gfx_ram)
+	AM_RANGE(0x780000, 0x79ffff) AM_WRITE(MWA16_RAM) AM_BASE(&twin16_sprite_gfx_ram)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( fround_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_r },
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x080000, 0x080fff, MRA16_RAM },
-	{ 0x0a0000, 0x0a001b, twin16_input_r },
-	{ 0x0c000e, 0x0c000f, twin16_sprite_status_r },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x120000, 0x123fff, MRA16_RAM },
-	{ 0x140000, 0x143fff, MRA16_RAM },
-	{ 0x500000, 0x6fffff, twin16_gfx_rom1_r },
-MEMORY_END
+static ADDRESS_MAP_START( fround_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_READ(COMRAM_r)
+	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a001b) AM_READ(twin16_input_r)
+	AM_RANGE(0x0c000e, 0x0c000f) AM_READ(twin16_sprite_status_r)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x500000, 0x6fffff) AM_READ(twin16_gfx_rom1_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fround_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x043fff, COMRAM_w },
-	{ 0x060000, 0x063fff, MWA16_RAM },
-	{ 0x080000, 0x080fff, twin16_paletteram_word_w, &paletteram16 },
-	{ 0x0a0000, 0x0a0001, fround_CPU_register_w },
-	{ 0x0a0008, 0x0a0009, sound_command_w },
-	{ 0x0a0010, 0x0a0011, watchdog_reset16_w },
-	{ 0x0c0000, 0x0c000f, twin16_video_register_w },
-	{ 0x0e0000, 0x0e0001, fround_gfx_bank_w },
-	{ 0x100000, 0x103fff, twin16_videoram2_w, &twin16_videoram2 },
-	{ 0x120000, 0x123fff, MWA16_RAM, &videoram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16, &spriteram_size },
-MEMORY_END
+static ADDRESS_MAP_START( fround_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x043fff) AM_WRITE(COMRAM_w)
+	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x080000, 0x080fff) AM_WRITE(twin16_paletteram_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0a0000, 0x0a0001) AM_WRITE(fround_CPU_register_w)
+	AM_RANGE(0x0a0008, 0x0a0009) AM_WRITE(sound_command_w)
+	AM_RANGE(0x0a0010, 0x0a0011) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x0c0000, 0x0c000f) AM_WRITE(twin16_video_register_w)
+	AM_RANGE(0x0e0000, 0x0e0001) AM_WRITE(fround_gfx_bank_w)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(twin16_videoram2_w) AM_BASE(&twin16_videoram2)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&videoram16)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
 /* Input Ports */
 
@@ -969,14 +969,14 @@ static MACHINE_DRIVER_START( twin16 )
 	// basic machine hardware
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
 	MDRV_CPU_VBLANK_INT(CPUB_interrupt,1)
 
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(CPUA_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1010,10 +1010,10 @@ static MACHINE_DRIVER_START( fround )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(fround_readmem,fround_writemem)
+	MDRV_CPU_PROGRAM_MAP(fround_readmem,fround_writemem)
 	MDRV_CPU_VBLANK_INT(CPUA_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

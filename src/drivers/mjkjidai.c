@@ -96,38 +96,38 @@ void nvram_handler_mjkjidai(mame_file *file, int read_or_write)
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xf7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xf7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xdfff, MWA_RAM, &nvram, &nvram_size },	// cleared and initialized on startup if bit 6 if port 00 is 0
-	{ 0xe000, 0xe01f, MWA_RAM, &spriteram },	// shared with tilemap ram
-	{ 0xe800, 0xe81f, MWA_RAM, &spriteram_2 },	// shared with tilemap ram
-	{ 0xf000, 0xf01f, MWA_RAM, &spriteram_3 },	// shared with tilemap ram
-	{ 0xe000, 0xf7ff, mjkjidai_videoram_w, &mjkjidai_videoram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)	// cleared and initialized on startup if bit 6 if port 00 is 0
+	AM_RANGE(0xe000, 0xe01f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)	// shared with tilemap ram
+	AM_RANGE(0xe800, 0xe81f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)	// shared with tilemap ram
+	AM_RANGE(0xf000, 0xf01f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_3)	// shared with tilemap ram
+	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(mjkjidai_videoram_w) AM_BASE(&mjkjidai_videoram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, keyboard_r },
-	{ 0x01, 0x01, IORP_NOP },	// ???
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x11, 0x11, input_port_0_r },
-	{ 0x12, 0x12, input_port_1_r },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(keyboard_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP)	// ???
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_0_r)
+	AM_RANGE(0x12, 0x12) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x01, 0x02, keyboard_select_w },
-	{ 0x10, 0x10, mjkjidai_ctrl_w },	// rom bank, coin counter, flip screen etc
-	{ 0x20, 0x20, SN76496_0_w },
-	{ 0x30, 0x30, SN76496_1_w },
-	{ 0x40, 0x40, adpcm_w },
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x02) AM_WRITE(keyboard_select_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(mjkjidai_ctrl_w)	// rom bank, coin counter, flip screen etc
+	AM_RANGE(0x20, 0x20) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(adpcm_w)
+ADDRESS_MAP_END
 
 
 
@@ -307,8 +307,8 @@ static MACHINE_DRIVER_START( mjkjidai )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10000000/2)	/* 5 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -21,7 +21,7 @@ static data8_t bowler_bonus_display;
 static int helifire_mv2_offset;
 static UINT32 helifire_star_rng;
 
-static mem_write_handler videoram_w_p;
+static write8_handler videoram_w_p;
 static void (*video_update_p)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
 static WRITE_HANDLER( bw_videoram_w );

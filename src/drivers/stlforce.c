@@ -82,40 +82,40 @@ WRITE16_HANDLER( stlforce_mhigh_videoram_w );
 WRITE16_HANDLER( stlforce_mlow_videoram_w );
 WRITE16_HANDLER( stlforce_bg_videoram_w );
 
-static MEMORY_READ16_START( stlforce_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM }, /* rom */
-	{ 0x100000, 0x1007ff, MRA16_RAM }, /* bg ram */
-	{ 0x100800, 0x100fff, MRA16_RAM }, /* mlow ram */
-	{ 0x101000, 0x1017ff, MRA16_RAM }, /* mhigh ram */
-	{ 0x101800, 0x1027ff, MRA16_RAM }, /* tx ram */
-	{ 0x102800, 0x103fff, MRA16_RAM }, /* unknown / ram */
-	{ 0x104000, 0x104fff, MRA16_RAM }, /* palette */
-	{ 0x105000, 0x107fff, MRA16_RAM }, /* unknown / ram */
-	{ 0x108000, 0x108fff, MRA16_RAM }, /* sprite ram? */
-	{ 0x109000, 0x11ffff, MRA16_RAM }, /* unknown / ram */
-	{ 0x400000, 0x400001, input_port_0_word_r },
-	{ 0x400002, 0x400003, input_port_1_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( stlforce_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM) /* rom */
+	AM_RANGE(0x100000, 0x1007ff) AM_READ(MRA16_RAM) /* bg ram */
+	AM_RANGE(0x100800, 0x100fff) AM_READ(MRA16_RAM) /* mlow ram */
+	AM_RANGE(0x101000, 0x1017ff) AM_READ(MRA16_RAM) /* mhigh ram */
+	AM_RANGE(0x101800, 0x1027ff) AM_READ(MRA16_RAM) /* tx ram */
+	AM_RANGE(0x102800, 0x103fff) AM_READ(MRA16_RAM) /* unknown / ram */
+	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM) /* palette */
+	AM_RANGE(0x105000, 0x107fff) AM_READ(MRA16_RAM) /* unknown / ram */
+	AM_RANGE(0x108000, 0x108fff) AM_READ(MRA16_RAM) /* sprite ram? */
+	AM_RANGE(0x109000, 0x11ffff) AM_READ(MRA16_RAM) /* unknown / ram */
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( stlforce_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x1007ff, stlforce_bg_videoram_w, &stlforce_bg_videoram },
-	{ 0x100800, 0x100fff, stlforce_mlow_videoram_w, &stlforce_mlow_videoram },
-	{ 0x101000, 0x1017ff, stlforce_mhigh_videoram_w, &stlforce_mhigh_videoram },
-	{ 0x101800, 0x1027ff, stlforce_tx_videoram_w, &stlforce_tx_videoram },
-	{ 0x102800, 0x102fff, MWA16_RAM }, /* unknown / ram */
-	{ 0x103000, 0x1033ff, MWA16_RAM, &stlforce_bg_scrollram }, /* unknown / ram */
-	{ 0x103400, 0x1037ff, MWA16_RAM, &stlforce_mlow_scrollram }, /* unknown / ram */
-	{ 0x103800, 0x103bff, MWA16_RAM, &stlforce_mhigh_scrollram }, /* unknown / ram */
-	{ 0x103c00, 0x103fff, MWA16_RAM, &stlforce_vidattrram }, /* unknown / ram */
-	{ 0x104000, 0x104fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x105000, 0x107fff, MWA16_RAM }, /* unknown / ram */
-	{ 0x108000, 0x108fff, MWA16_RAM, &stlforce_spriteram }, /* or is this not sprite ram .. */
-	{ 0x109000, 0x11ffff, MWA16_RAM },
-//	{ 0x400010, 0x400013, MWA16_NOP },
-//	{ 0x40001E, 0x40001F, MWA16_NOP },
-	{ 0x410000, 0x410001, OKIM6295_data_0_lsb_w },
-MEMORY_END
+static ADDRESS_MAP_START( stlforce_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(stlforce_bg_videoram_w) AM_BASE(&stlforce_bg_videoram)
+	AM_RANGE(0x100800, 0x100fff) AM_WRITE(stlforce_mlow_videoram_w) AM_BASE(&stlforce_mlow_videoram)
+	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(stlforce_mhigh_videoram_w) AM_BASE(&stlforce_mhigh_videoram)
+	AM_RANGE(0x101800, 0x1027ff) AM_WRITE(stlforce_tx_videoram_w) AM_BASE(&stlforce_tx_videoram)
+	AM_RANGE(0x102800, 0x102fff) AM_WRITE(MWA16_RAM) /* unknown / ram */
+	AM_RANGE(0x103000, 0x1033ff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_bg_scrollram) /* unknown / ram */
+	AM_RANGE(0x103400, 0x1037ff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_mlow_scrollram) /* unknown / ram */
+	AM_RANGE(0x103800, 0x103bff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_mhigh_scrollram) /* unknown / ram */
+	AM_RANGE(0x103c00, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_vidattrram) /* unknown / ram */
+	AM_RANGE(0x104000, 0x104fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x105000, 0x107fff) AM_WRITE(MWA16_RAM) /* unknown / ram */
+	AM_RANGE(0x108000, 0x108fff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_spriteram) /* or is this not sprite ram .. */
+	AM_RANGE(0x109000, 0x11ffff) AM_WRITE(MWA16_RAM)
+//	AM_RANGE(0x400010, 0x400013) AM_WRITE(MWA16_NOP)
+//	AM_RANGE(0x40001E, 0x40001F) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x410000, 0x410001) AM_WRITE(OKIM6295_data_0_lsb_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( stlforce )
 	PORT_START
@@ -200,7 +200,7 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( stlforce )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000) /* guess ... it might be 15000000 or 12000000/2 ... */
-	MDRV_CPU_MEMORY(stlforce_readmem,stlforce_writemem)
+	MDRV_CPU_PROGRAM_MAP(stlforce_readmem,stlforce_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

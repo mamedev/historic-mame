@@ -543,53 +543,53 @@ static void ide_interrupt(int state)
  *
  *************************************/
 
-static MEMORY_READ32_START( readmem )
-	{ 0x000000, 0x0fffff, MRA32_ROM },		// PRG ROM
-	{ 0x400000, 0x40ffff, MRA32_RAM },		// WORK RAM
-	{ 0x480000, 0x48443f, paletteram32_r },		// COLOR RAM (tilemap)
-	{ 0x500000, 0x57ffff, sndram_r },		// SOUND RAM
-	{ 0x580000, 0x58003f, K056832_long_r },		// VIDEO REG (tilemap)
-	{ 0x5b0000, 0x5b04ff, dual539_r },		// SOUND regs
-	{ 0x5c0000, 0x5c0003, inp1_r },			// input port
-	{ 0x5c8000, 0x5c8003, inp2_r },			// input port
-	{ 0x5e0000, 0x5e0003, scratch_r },		// scratch input port
-	{ 0x600000, 0x601fff, v_rom_r },		// VIDEO ROM readthrough (for POST)
-	{ 0x801000, 0x8017ff, MRA32_RAM },		// OBJECT RAM
-	{ 0x803000, 0x80309f, obj_ctrl_r },		// OBJECT REGS
-	{ 0x803800, 0x803fff, obj_rom_r },		// OBJECT ROM readthrough (for POST)
-	{ 0xc00000, 0xc01fff, K056832_ram_long_r },	// VIDEO RAM (tilemap) (beatmania)
-	{ 0xd00000, 0xd0000f, ide_std_r },		// IDE control regs (hiphopmania)
-	{ 0xd4000c, 0xd4000f, ide_alt_r },		// IDE status control reg (hiphopmania)
-	{ 0xe00000, 0xe01fff, K056832_ram_long_r },	// VIDEO RAM (tilemap) (hiphopmania)
-	{ 0xf00000, 0xf0000f, ide_std_r },		// IDE control regs (beatmania)
-	{ 0xf4000c, 0xf4000f, ide_alt_r },		// IDE status control reg (beatmania)
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)		// PRG ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA32_RAM)		// WORK RAM
+	AM_RANGE(0x480000, 0x48443f) AM_READ(paletteram32_r)		// COLOR RAM (tilemap)
+	AM_RANGE(0x500000, 0x57ffff) AM_READ(sndram_r)		// SOUND RAM
+	AM_RANGE(0x580000, 0x58003f) AM_READ(K056832_long_r)		// VIDEO REG (tilemap)
+	AM_RANGE(0x5b0000, 0x5b04ff) AM_READ(dual539_r)		// SOUND regs
+	AM_RANGE(0x5c0000, 0x5c0003) AM_READ(inp1_r)			// input port
+	AM_RANGE(0x5c8000, 0x5c8003) AM_READ(inp2_r)			// input port
+	AM_RANGE(0x5e0000, 0x5e0003) AM_READ(scratch_r)		// scratch input port
+	AM_RANGE(0x600000, 0x601fff) AM_READ(v_rom_r)		// VIDEO ROM readthrough (for POST)
+	AM_RANGE(0x801000, 0x8017ff) AM_READ(MRA32_RAM)		// OBJECT RAM
+	AM_RANGE(0x803000, 0x80309f) AM_READ(obj_ctrl_r)		// OBJECT REGS
+	AM_RANGE(0x803800, 0x803fff) AM_READ(obj_rom_r)		// OBJECT ROM readthrough (for POST)
+	AM_RANGE(0xc00000, 0xc01fff) AM_READ(K056832_ram_long_r)	// VIDEO RAM (tilemap) (beatmania)
+	AM_RANGE(0xd00000, 0xd0000f) AM_READ(ide_std_r)		// IDE control regs (hiphopmania)
+	AM_RANGE(0xd4000c, 0xd4000f) AM_READ(ide_alt_r)		// IDE status control reg (hiphopmania)
+	AM_RANGE(0xe00000, 0xe01fff) AM_READ(K056832_ram_long_r)	// VIDEO RAM (tilemap) (hiphopmania)
+	AM_RANGE(0xf00000, 0xf0000f) AM_READ(ide_std_r)		// IDE control regs (beatmania)
+	AM_RANGE(0xf4000c, 0xf4000f) AM_READ(ide_alt_r)		// IDE status control reg (beatmania)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( writemem )
-	{ 0x000000, 0x0fffff, MWA32_ROM },		// PRG ROM
-	{ 0x400000, 0x40ffff, MWA32_RAM },		// WORK RAM
-	{ 0x480000, 0x48443f, paletteram32_w, &paletteram32 },	// COLOR RAM
-	{ 0x500000, 0x57ffff, sndram_w },		// SOUND RAM
-	{ 0x580000, 0x58003f, K056832_long_w },		// VIDEO REG (tilemap)
-	{ 0x590000, 0x590007, unknown590000_w },	// ??
-	{ 0x5a0000, 0x5a005f, K055555_long_w },		// 055555: priority encoder
-	{ 0x5b0000, 0x5b04ff, dual539_w },		// SOUND regs
-	{ 0x5d0000, 0x5d0003, light_ctrl_1_w },		// light/coin blocker control 1
-	{ 0x5d2000, 0x5d2003, light_ctrl_2_w },		// light/coin blocker control 2
-	{ 0x5d4000, 0x5d4003, v_ctrl_w },		// VIDEO control
-	{ 0x5d6000, 0x5d6003, sndram_bank_w },		// SOUND RAM bank
-	{ 0x5e0000, 0x5e0003, scratch_w },		// scratch input port
-	{ 0x801000, 0x8017ff, MWA32_RAM, &djmain_obj_ram },	// OBJECT RAM
-	{ 0x802000, 0x802fff, unknown802000_w },	// ??
-	{ 0x803000, 0x80309f, obj_ctrl_w },		// OBJECT REGS
-	{ 0xc00000, 0xc01fff, K056832_ram_long_w },	// VIDEO RAM (tilemap) (beatmania)
-	{ 0xc02000, 0xc02047, unknownc02000_w },	// ??
-	{ 0xd00000, 0xd0000f, ide_std_w },		// IDE control regs (hiphopmania)
-	{ 0xd4000c, 0xd4000f, ide_alt_w },		// IDE status control reg (hiphopmania)
-	{ 0xe00000, 0xe01fff, K056832_ram_long_w },	// VIDEO RAM (tilemap) (hiphopmania)
-	{ 0xf00000, 0xf0000f, ide_std_w },		// IDE control regs (beatmania)
-	{ 0xf4000c, 0xf4000f, ide_alt_w },		// IDE status control reg (beatmania)
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)		// PRG ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA32_RAM)		// WORK RAM
+	AM_RANGE(0x480000, 0x48443f) AM_WRITE(paletteram32_w) AM_BASE(&paletteram32)	// COLOR RAM
+	AM_RANGE(0x500000, 0x57ffff) AM_WRITE(sndram_w)		// SOUND RAM
+	AM_RANGE(0x580000, 0x58003f) AM_WRITE(K056832_long_w)		// VIDEO REG (tilemap)
+	AM_RANGE(0x590000, 0x590007) AM_WRITE(unknown590000_w)	// ??
+	AM_RANGE(0x5a0000, 0x5a005f) AM_WRITE(K055555_long_w)		// 055555: priority encoder
+	AM_RANGE(0x5b0000, 0x5b04ff) AM_WRITE(dual539_w)		// SOUND regs
+	AM_RANGE(0x5d0000, 0x5d0003) AM_WRITE(light_ctrl_1_w)		// light/coin blocker control 1
+	AM_RANGE(0x5d2000, 0x5d2003) AM_WRITE(light_ctrl_2_w)		// light/coin blocker control 2
+	AM_RANGE(0x5d4000, 0x5d4003) AM_WRITE(v_ctrl_w)		// VIDEO control
+	AM_RANGE(0x5d6000, 0x5d6003) AM_WRITE(sndram_bank_w)		// SOUND RAM bank
+	AM_RANGE(0x5e0000, 0x5e0003) AM_WRITE(scratch_w)		// scratch input port
+	AM_RANGE(0x801000, 0x8017ff) AM_WRITE(MWA32_RAM) AM_BASE(&djmain_obj_ram)	// OBJECT RAM
+	AM_RANGE(0x802000, 0x802fff) AM_WRITE(unknown802000_w)	// ??
+	AM_RANGE(0x803000, 0x80309f) AM_WRITE(obj_ctrl_w)		// OBJECT REGS
+	AM_RANGE(0xc00000, 0xc01fff) AM_WRITE(K056832_ram_long_w)	// VIDEO RAM (tilemap) (beatmania)
+	AM_RANGE(0xc02000, 0xc02047) AM_WRITE(unknownc02000_w)	// ??
+	AM_RANGE(0xd00000, 0xd0000f) AM_WRITE(ide_std_w)		// IDE control regs (hiphopmania)
+	AM_RANGE(0xd4000c, 0xd4000f) AM_WRITE(ide_alt_w)		// IDE status control reg (hiphopmania)
+	AM_RANGE(0xe00000, 0xe01fff) AM_WRITE(K056832_ram_long_w)	// VIDEO RAM (tilemap) (hiphopmania)
+	AM_RANGE(0xf00000, 0xf0000f) AM_WRITE(ide_std_w)		// IDE control regs (beatmania)
+	AM_RANGE(0xf4000c, 0xf4000f) AM_WRITE(ide_alt_w)		// IDE status control reg (beatmania)
+ADDRESS_MAP_END
 
 
 
@@ -983,7 +983,7 @@ static MACHINE_DRIVER_START( djmain )
 	// popn3 works 9.6 MHz or slower in some songs */
 	//MDRV_CPU_ADD(M68EC020, 18432000/2)	/*  9.216 MHz!? */
 	MDRV_CPU_ADD(M68EC020, 32000000/4)	/*  8.000 MHz!? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vb_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -1032,7 +1032,7 @@ ROM_START( bm1stmix )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
 	// There is an alternate image: MD5(260c9b72f4a03055e3abad61c6225324)
-	DISK_IMAGE( "753jaa11.chd", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) SHA1(71d200d1bd3f1f3a01f4daa78dc9abcca8b8a1fb) )	/* ver 1.00 JA */
+	DISK_IMAGE( "753jaa11", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) SHA1(71d200d1bd3f1f3a01f4daa78dc9abcca8b8a1fb) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bm2ndmix )
@@ -1053,7 +1053,7 @@ ROM_START( bm2ndmix )
 	ROM_LOAD16_BYTE( "853jaa10.27d", 0x100001, 0x80000, CRC(9CB92D98) SHA1(6ace4492ba0b5a8f94a9e7b4f7126b31c6254637) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "853jaa11.chd", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
+	DISK_IMAGE( "853jaa11", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bm2ndmxa )
@@ -1074,7 +1074,7 @@ ROM_START( bm2ndmxa )
 	ROM_LOAD16_BYTE( "853jaa10.27d", 0x100001, 0x80000, CRC(9CB92D98) SHA1(6ace4492ba0b5a8f94a9e7b4f7126b31c6254637) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "853jaa11.chd", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
+	DISK_IMAGE( "853jaa11", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bmcompmx )
@@ -1095,7 +1095,7 @@ ROM_START( bmcompmx )
 	ROM_LOAD16_BYTE( "858jaa10.27d", 0x100001, 0x80000, CRC(00B124EE) SHA1(435d28a327c2707833a8ddfe841104df65ffa3f8) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
+	DISK_IMAGE( "858jaa11", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( hmcompmx )
@@ -1116,7 +1116,7 @@ ROM_START( hmcompmx )
 	ROM_LOAD16_BYTE( "858uaa10.27d", 0x100001, 0x80000, CRC(20AA7145) SHA1(eeff87eb9a9864985d751f45e843ee6e73db8cfd) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
+	DISK_IMAGE( "858jaa11", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bm4thmix )
@@ -1137,7 +1137,7 @@ ROM_START( bm4thmix )
 	ROM_LOAD16_BYTE( "847jab10.27d", 0x100001, 0x80000, CRC(C78516F5) SHA1(1adf5805c808dc55de14a9a9b20c3d2cf7bf414d) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "847jaa11.chd", 0, MD5(47cb5c1b856aa11cf38f0c7ea4a7d1c3) SHA1(374d5d5340d4a8818577f9ae81021651d6ee3429) )	/* ver 1.00 JA */
+	DISK_IMAGE( "847jaa11", 0, MD5(47cb5c1b856aa11cf38f0c7ea4a7d1c3) SHA1(374d5d5340d4a8818577f9ae81021651d6ee3429) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( hmcompm2 )
@@ -1158,7 +1158,7 @@ ROM_START( hmcompm2 )
 	ROM_LOAD16_BYTE( "988uaa10.27d", 0x100001, 0x80000, CRC(DAB0F3C9) SHA1(6fd899e753e32f60262c54ab8553c686c7ef28de) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "988jaa11.chd", 0, MD5(cc21d58d6bee58f1c4baf08f345fe2c5) SHA1(9ccc04973b035d20dada83842c8ee5387472870e) )	/* ver 1.00 JA */
+	DISK_IMAGE( "988jaa11", 0, MD5(cc21d58d6bee58f1c4baf08f345fe2c5) SHA1(9ccc04973b035d20dada83842c8ee5387472870e) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bmdct )
@@ -1179,7 +1179,7 @@ ROM_START( bmdct )
 	ROM_LOAD16_BYTE( "995jaa10.27d", 0x100001, 0x80000, CRC(F9E4E9F2) SHA1(fe91badf6b0baeea690d75399d8c66fabcf6d352) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "995jaa11.chd", 0, MD5(8f5936d2b0b0914b5c88f5432c6cac21) SHA1(deed0fca533f3e56e04f9967f3f76145ca106f06) )	/* ver 1.00 JA */
+	DISK_IMAGE( "995jaa11", 0, MD5(8f5936d2b0b0914b5c88f5432c6cac21) SHA1(deed0fca533f3e56e04f9967f3f76145ca106f06) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bmcorerm )
@@ -1200,7 +1200,7 @@ ROM_START( bmcorerm )
 	ROM_LOAD16_BYTE( "a05jaa10.27d", 0x100001, 0x80000, CRC(99D75C36) SHA1(9599420863aa0a9492d3caeb03f8ac5fd4c3cdb2) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "a05jaa11.chd", 0, MD5(180f7b1b2145fab2d2ba717780f2ca26) SHA1(1a45e99667c158517d8edcd66453cd56631b5f6a) )	/* ver 1.00 JA */
+	DISK_IMAGE( "a05jaa11", 0, MD5(180f7b1b2145fab2d2ba717780f2ca26) SHA1(1a45e99667c158517d8edcd66453cd56631b5f6a) )	/* ver 1.00 JA */
 ROM_END
 
 

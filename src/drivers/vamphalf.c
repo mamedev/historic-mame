@@ -19,25 +19,25 @@
 *********************************************************************/
 #include "driver.h"
 
-static MEMORY_READ32_START( readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_RAM },
-	{ 0xfff80000, 0xffffffff, MRA32_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_RAM },
-	{ 0xfff80000, 0xffffffff, MWA32_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ32_START( xfiles_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_RAM },
-	{ 0xffc00000, 0xffffffff, MRA32_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( xfiles_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA32_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( xfiles_writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_RAM },
-	{ 0xffc00000, 0xffffffff, MWA32_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( xfiles_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( vamphalf )
 INPUT_PORTS_END
@@ -72,7 +72,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( vamphalf )
 	MDRV_CPU_ADD(E132XS,10000000)		 /* ?? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -93,7 +93,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( xfiles )
 	MDRV_CPU_ADD(E132XS,10000000)		 /* ?? */
-	MDRV_CPU_MEMORY(xfiles_readmem,xfiles_writemem)
+	MDRV_CPU_PROGRAM_MAP(xfiles_readmem,xfiles_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

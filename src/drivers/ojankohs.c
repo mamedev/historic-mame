@@ -226,119 +226,119 @@ static WRITE_HANDLER( ccasino_coinctr_w )
 }
 
 
-static MEMORY_READ_START( readmem_ojankohs )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, ojankohs_videoram_r },
-	{ 0x9000, 0x9fff, ojankohs_colorram_r },
-	{ 0xa000, 0xb7ff, MRA_RAM },
-	{ 0xb800, 0xbfff, ojankohs_palette_r },
-	{ 0xc000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_ojankohs, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(ojankohs_videoram_r)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(ojankohs_colorram_r)
+	AM_RANGE(0xa000, 0xb7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb800, 0xbfff) AM_READ(ojankohs_palette_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_ojankohs )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, ojankohs_videoram_w },
-	{ 0x9000, 0x9fff, ojankohs_colorram_w },
-	{ 0xa000, 0xb7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0xb800, 0xbfff, ojankohs_palette_w },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_ojankohs, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(ojankohs_videoram_w)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(ojankohs_colorram_w)
+	AM_RANGE(0xa000, 0xb7ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xb800, 0xbfff) AM_WRITE(ojankohs_palette_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_ojankoy )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, ojankohs_videoram_r },
-	{ 0xa000, 0xafff, ojankohs_colorram_r },
-	{ 0xb000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_ojankoy, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ(ojankohs_videoram_r)
+	AM_RANGE(0xa000, 0xafff) AM_READ(ojankohs_colorram_r)
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_ojankoy )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, ojankohs_videoram_w },
-	{ 0xa000, 0xafff, ojankohs_colorram_w },
-	{ 0xb000, 0xbfff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_ojankoy, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(ojankohs_videoram_w)
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(ojankohs_colorram_w)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_ojankoc )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_ojankoc, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_ojankoc )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x8000, 0xffff, ojankoc_videoram_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_ojankoc, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(ojankoc_videoram_w)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport_ojankohs )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, ojankohs_keymatrix_r },
-	{ 0x02, 0x02, input_port_1_r },
-	{ 0x06, 0x06, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport_ojankohs, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(ojankohs_keymatrix_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_ojankohs )
-	{ 0x00, 0x00, ojankohs_portselect_w },
-	{ 0x01, 0x01, ojankohs_rombank_w },
-	{ 0x02, 0x02, ojankohs_gfxreg_w },
-	{ 0x03, 0x03, ojankohs_adpcm_reset_w },
-	{ 0x04, 0x04, ojankohs_flipscreen_w },
-	{ 0x05, 0x05, ojankohs_msm5205_w },
-	{ 0x06, 0x06, AY8910_write_port_0_w },
-	{ 0x07, 0x07, AY8910_control_port_0_w },
-	{ 0x10, 0x10, IOWP_NOP },				// unknown
-	{ 0x11, 0x11, IOWP_NOP },				// unknown
-PORT_END
+static ADDRESS_MAP_START( writeport_ojankohs, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(ojankohs_portselect_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(ojankohs_rombank_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(ojankohs_gfxreg_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(ojankohs_adpcm_reset_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(ojankohs_flipscreen_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(ojankohs_msm5205_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP)				// unknown
+	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP)				// unknown
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_ojankoy )
-	{ 0x00, 0x00, ojankohs_portselect_w },
-	{ 0x01, 0x01, ojankoy_rombank_w },
-	{ 0x02, 0x02, ojankoy_coinctr_w },
-	{ 0x04, 0x04, ojankohs_flipscreen_w },
-	{ 0x05, 0x05, ojankohs_msm5205_w },
-	{ 0x06, 0x06, AY8910_write_port_0_w },
-	{ 0x07, 0x07, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_ojankoy, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(ojankohs_portselect_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(ojankoy_rombank_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(ojankoy_coinctr_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(ojankohs_flipscreen_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(ojankohs_msm5205_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_ccasino )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, ojankohs_keymatrix_r },
-	{ 0x02, 0x02, input_port_1_r },
-	{ 0x03, 0x03, ccasino_dipsw3_r },
-	{ 0x04, 0x04, ccasino_dipsw4_r },
-	{ 0x06, 0x06, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport_ccasino, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(ojankohs_keymatrix_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+	AM_RANGE(0x03, 0x03) AM_READ(ccasino_dipsw3_r)
+	AM_RANGE(0x04, 0x04) AM_READ(ccasino_dipsw4_r)
+	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_ccasino )
-	{ 0x00, 0x00, ojankohs_portselect_w },
-	{ 0x01, 0x01, ojankohs_rombank_w },
-	{ 0x02, 0x02, ccasino_coinctr_w },
-	{ 0x03, 0x03, ojankohs_adpcm_reset_w },
-	{ 0x04, 0x04, ojankohs_flipscreen_w },
-	{ 0x05, 0x05, ojankohs_msm5205_w },
-	{ 0x06, 0x06, AY8910_write_port_0_w },
-	{ 0x07, 0x07, AY8910_control_port_0_w },
-	{ 0x08, 0x0f, ccasino_palette_w },		// 16bit address access
-	{ 0x10, 0x10, IOWP_NOP },
-	{ 0x11, 0x11, IOWP_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport_ccasino, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(ojankohs_portselect_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(ojankohs_rombank_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(ccasino_coinctr_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(ojankohs_adpcm_reset_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(ojankohs_flipscreen_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(ojankohs_msm5205_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x08, 0x0f) AM_WRITE(ccasino_palette_w)		// 16bit address access
+	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_ojankoc )
-	{ 0xfc, 0xfd, ojankoc_keymatrix_r },
-	{ 0xff, 0xff, AY8910_read_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport_ojankoc, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xfc, 0xfd) AM_READ(ojankoc_keymatrix_r)
+	AM_RANGE(0xff, 0xff) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_ojankoc )
-	{ 0x00, 0x1f, ojankoc_palette_w },
-	{ 0xf9, 0xf9, ojankohs_msm5205_w },
-	{ 0xfb, 0xfb, ojankoc_ctrl_w },
-	{ 0xfd, 0xfd, ojankohs_portselect_w },
-	{ 0xfe, 0xfe, AY8910_write_port_0_w },
-	{ 0xff, 0xff, AY8910_control_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_ojankoc, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x1f) AM_WRITE(ojankoc_palette_w)
+	AM_RANGE(0xf9, 0xf9) AM_WRITE(ojankohs_msm5205_w)
+	AM_RANGE(0xfb, 0xfb) AM_WRITE(ojankoc_ctrl_w)
+	AM_RANGE(0xfd, 0xfd) AM_WRITE(ojankohs_portselect_w)
+	AM_RANGE(0xfe, 0xfe) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xff, 0xff) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ojankohs )
@@ -973,8 +973,8 @@ static MACHINE_DRIVER_START( ojankohs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
-	MDRV_CPU_MEMORY(readmem_ojankohs,writemem_ojankohs)
-	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankohs)
+	MDRV_CPU_PROGRAM_MAP(readmem_ojankohs,writemem_ojankohs)
+	MDRV_CPU_IO_MAP(readport_ojankohs,writeport_ojankohs)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1002,8 +1002,8 @@ static MACHINE_DRIVER_START( ojankoy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
-	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
-	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankoy)
+	MDRV_CPU_PROGRAM_MAP(readmem_ojankoy,writemem_ojankoy)
+	MDRV_CPU_IO_MAP(readport_ojankohs,writeport_ojankoy)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1032,8 +1032,8 @@ static MACHINE_DRIVER_START( ccasino )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
-	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
-	MDRV_CPU_PORTS(readport_ccasino,writeport_ccasino)
+	MDRV_CPU_PROGRAM_MAP(readmem_ojankoy,writemem_ojankoy)
+	MDRV_CPU_IO_MAP(readport_ccasino,writeport_ccasino)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1061,8 +1061,8 @@ static MACHINE_DRIVER_START( ojankoc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2)			/* 4.00 MHz */
-	MDRV_CPU_MEMORY(readmem_ojankoc,writemem_ojankoc)
-	MDRV_CPU_PORTS(readport_ojankoc,writeport_ojankoc)
+	MDRV_CPU_PROGRAM_MAP(readmem_ojankoc,writemem_ojankoc)
+	MDRV_CPU_IO_MAP(readport_ojankoc,writeport_ojankoc)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -174,52 +174,52 @@ static WRITE16_HANDLER( magmax_vreg_w )
 
 
 
-static MEMORY_READ16_START( magmax_readmem )
-	{ 0x000000, 0x013fff, MRA16_ROM },
-	{ 0x018000, 0x018fff, MRA16_RAM },
-	{ 0x020000, 0x0207ff, MRA16_RAM },
-	{ 0x028000, 0x0281ff, MRA16_RAM },
-	{ 0x030000, 0x030001, input_port_0_word_r },
-	{ 0x030002, 0x030003, input_port_1_word_r },
-	{ 0x030004, 0x030005, input_port_2_word_r },
-	{ 0x030006, 0x030007, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( magmax_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x013fff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x018000, 0x018fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x020000, 0x0207ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x028000, 0x0281ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x030000, 0x030001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x030002, 0x030003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x030004, 0x030005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x030006, 0x030007) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( magmax_writemem )
-	{ 0x000000, 0x013fff, MWA16_ROM },
-	{ 0x018000, 0x018fff, MWA16_RAM },
-	{ 0x020000, 0x0207ff, MWA16_RAM, &videoram16, &videoram_size },
-	{ 0x028000, 0x0281ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x030010, 0x030011, magmax_vreg_w },
-	{ 0x030012, 0x030013, MWA16_RAM, &magmax_scroll_x },
-	{ 0x030014, 0x030015, MWA16_RAM, &magmax_scroll_y },
-	{ 0x03001c, 0x03001d, magmax_sound_w },
-	{ 0x03001e, 0x03001f, MWA16_NOP },	/* IRQ ack */
-MEMORY_END
+static ADDRESS_MAP_START( magmax_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x013fff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x018000, 0x018fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x020000, 0x0207ff) AM_WRITE(MWA16_RAM) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x028000, 0x0281ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x030010, 0x030011) AM_WRITE(magmax_vreg_w)
+	AM_RANGE(0x030012, 0x030013) AM_WRITE(MWA16_RAM) AM_BASE(&magmax_scroll_x)
+	AM_RANGE(0x030014, 0x030015) AM_WRITE(MWA16_RAM) AM_BASE(&magmax_scroll_y)
+	AM_RANGE(0x03001c, 0x03001d) AM_WRITE(magmax_sound_w)
+	AM_RANGE(0x03001e, 0x03001f) AM_WRITE(MWA16_NOP)	/* IRQ ack */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( magmax_soundreadmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4000, magmax_sound_irq_ack },
-	{ 0x6000, 0x67ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( magmax_soundreadmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(magmax_sound_irq_ack)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( magmax_soundwritemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( magmax_soundwritemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( magmax_soundreadport )
-	{ 0x06, 0x06, magmax_sound_r },
-PORT_END
+static ADDRESS_MAP_START( magmax_soundreadport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x06, 0x06) AM_READ(magmax_sound_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( magmax_soundwriteport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x02, 0x02, AY8910_control_port_1_w },
-	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ 0x04, 0x04, AY8910_control_port_2_w },
-	{ 0x05, 0x05, AY8910_write_port_2_w },
-PORT_END
+static ADDRESS_MAP_START( magmax_soundwriteport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_2_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( magmax )
@@ -349,13 +349,13 @@ static MACHINE_DRIVER_START( magmax )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
-	MDRV_CPU_MEMORY(magmax_readmem,magmax_writemem)
+	MDRV_CPU_PROGRAM_MAP(magmax_readmem,magmax_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,10000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.5 MHz */
-	MDRV_CPU_MEMORY(magmax_soundreadmem,magmax_soundwritemem)
-	MDRV_CPU_PORTS(magmax_soundreadport,magmax_soundwriteport)
+	MDRV_CPU_PROGRAM_MAP(magmax_soundreadmem,magmax_soundwritemem)
+	MDRV_CPU_IO_MAP(magmax_soundreadport,magmax_soundwriteport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

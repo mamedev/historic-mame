@@ -96,35 +96,35 @@ static READ16_HANDLER( calendar_r )
 
 
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
-	{ 0x200000, 0x20000f, calendar_r },
-	{ 0x300004, 0x300007, othldrby_videoram_r },
-	{ 0x30000c, 0x30000d, pip },	// vblank?
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x600000, 0x600001, OKIM6295_status_0_lsb_r },
-	{ 0x700000, 0x700001, pap },	// scanline???
-	{ 0x700004, 0x700005, input_port_0_word_r },
-	{ 0x700008, 0x700009, input_port_1_word_r },
-	{ 0x70000c, 0x70000d, input_port_2_word_r },
-	{ 0x700010, 0x700011, input_port_3_word_r },
-	{ 0x70001c, 0x70001d, input_port_4_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x20000f) AM_READ(calendar_r)
+	AM_RANGE(0x300004, 0x300007) AM_READ(othldrby_videoram_r)
+	AM_RANGE(0x30000c, 0x30000d) AM_READ(pip)	// vblank?
+	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
+	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x700000, 0x700001) AM_READ(pap)	// scanline???
+	AM_RANGE(0x700004, 0x700005) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x700008, 0x700009) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x70000c, 0x70000d) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_4_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x20000f, calendar_w },
-	{ 0x300000, 0x300001, othldrby_videoram_addr_w },
-	{ 0x300004, 0x300007, othldrby_videoram_w },
-	{ 0x300008, 0x300009, othldrby_vreg_addr_w },
-	{ 0x30000c, 0x30000f, othldrby_vreg_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x600000, 0x600001, OKIM6295_data_0_lsb_w },
-	{ 0x700030, 0x700031, oki_bankswitch_w },
-	{ 0x700034, 0x700035, coinctrl_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(calendar_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(othldrby_videoram_addr_w)
+	AM_RANGE(0x300004, 0x300007) AM_WRITE(othldrby_videoram_w)
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(othldrby_vreg_addr_w)
+	AM_RANGE(0x30000c, 0x30000f) AM_WRITE(othldrby_vreg_w)
+	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x700030, 0x700031) AM_WRITE(oki_bankswitch_w)
+	AM_RANGE(0x700034, 0x700035) AM_WRITE(coinctrl_w)
+ADDRESS_MAP_END
 
 
 
@@ -255,7 +255,7 @@ static MACHINE_DRIVER_START( othldrby )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -65,44 +65,44 @@ static INTERRUPT_GEN( vulgus_interrupt )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },
-	{ 0xc000, 0xc000, input_port_0_r },
-	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc002, 0xc002, input_port_2_r },
-	{ 0xc003, 0xc003, input_port_3_r },
-	{ 0xc004, 0xc004, input_port_4_r },
-	{ 0xd000, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)
+	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)
+	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)
+	AM_RANGE(0xd000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scroll_low },
-	{ 0xc804, 0xc804, vulgus_c804_w },
-	{ 0xc805, 0xc805, vulgus_palette_bank_w },
-	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scroll_high },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd7ff, vulgus_fgvideoram_w, &vulgus_fgvideoram },
-	{ 0xd800, 0xdfff, vulgus_bgvideoram_w, &vulgus_bgvideoram },
-	{ 0xe000, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xc802, 0xc803) AM_WRITE(MWA8_RAM) AM_BASE(&vulgus_scroll_low)
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(vulgus_c804_w)
+	AM_RANGE(0xc805, 0xc805) AM_WRITE(vulgus_palette_bank_w)
+	AM_RANGE(0xc902, 0xc903) AM_WRITE(MWA8_RAM) AM_BASE(&vulgus_scroll_high)
+	AM_RANGE(0xcc00, 0xcc7f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(vulgus_fgvideoram_w) AM_BASE(&vulgus_fgvideoram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(vulgus_bgvideoram_w) AM_BASE(&vulgus_bgvideoram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ 0x8001, 0x8001, AY8910_write_port_0_w },
-	{ 0xc000, 0xc000, AY8910_control_port_1_w },
-	{ 0xc001, 0xc001, AY8910_write_port_1_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -258,12 +258,12 @@ static MACHINE_DRIVER_START( vulgus )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vulgus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_FRAMES_PER_SECOND(60)

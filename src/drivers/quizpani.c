@@ -60,35 +60,35 @@ static WRITE16_HANDLER( quizpani_oki6295_bankswitch_w )
 	memcpy(rom, rom + 0x40000 + bankaddr, TABLESIZE);
 }
 
-static MEMORY_READ16_START( quizpani_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, input_port_0_word_r },
-	{ 0x100002, 0x100003, input_port_1_word_r },
-	{ 0x100008, 0x100009, input_port_2_word_r },
-	{ 0x10000a, 0x10000b, input_port_3_word_r },
-	{ 0x104000, 0x104001, OKIM6295_status_0_lsb_r },
-	{ 0x108000, 0x1083ff, MRA16_RAM },
-	{ 0x110000, 0x113fff, MRA16_RAM },
-	{ 0x180000, 0x18ffff, MRA16_RAM },
-	{ 0x200000, 0x33ffff, MRA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( quizpani_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x100002, 0x100003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x100008, 0x100009) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x10000a, 0x10000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x104000, 0x104001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x108000, 0x1083ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x110000, 0x113fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x33ffff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( quizpani_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100014, 0x100015, MWA16_NOP },
-	{ 0x100016, 0x100017, MWA16_NOP }, /* IRQ eanble? */
-	{ 0x100018, 0x100019, quizpani_tilesbank_w },
-	{ 0x104000, 0x104001, OKIM6295_data_0_lsb_w },
-	{ 0x104020, 0x104027, quizpani_oki6295_bankswitch_w },
-	{ 0x108000, 0x1083ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-	{ 0x108400, 0x1085ff, MWA16_NOP },
-	{ 0x10c000, 0x10c007, MWA16_RAM, &quizpani_scrollreg },
-	{ 0x10c008, 0x10c403, MWA16_NOP },
-	{ 0x110000, 0x113fff, quizpani_bg_videoram_w, &quizpani_bg_videoram },
-	{ 0x11c000, 0x11ffff, quizpani_txt_videoram_w, &quizpani_txt_videoram },
-	{ 0x180000, 0x18ffff, MWA16_RAM },
-	{ 0x200000, 0x33ffff, MWA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( quizpani_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100014, 0x100015) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP) /* IRQ eanble? */
+	AM_RANGE(0x100018, 0x100019) AM_WRITE(quizpani_tilesbank_w)
+	AM_RANGE(0x104000, 0x104001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x104020, 0x104027) AM_WRITE(quizpani_oki6295_bankswitch_w)
+	AM_RANGE(0x108000, 0x1083ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x108400, 0x1085ff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x10c000, 0x10c007) AM_WRITE(MWA16_RAM) AM_BASE(&quizpani_scrollreg)
+	AM_RANGE(0x10c008, 0x10c403) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x110000, 0x113fff) AM_WRITE(quizpani_bg_videoram_w) AM_BASE(&quizpani_bg_videoram)
+	AM_RANGE(0x11c000, 0x11ffff) AM_WRITE(quizpani_txt_videoram_w) AM_BASE(&quizpani_txt_videoram)
+	AM_RANGE(0x180000, 0x18ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x33ffff) AM_WRITE(MWA16_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( quizpani )
 	PORT_START
@@ -267,7 +267,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static MACHINE_DRIVER_START( quizpani )
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(quizpani_readmem,quizpani_writemem)
+	MDRV_CPU_PROGRAM_MAP(quizpani_readmem,quizpani_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,164) // music tempo
 

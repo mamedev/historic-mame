@@ -66,27 +66,27 @@ VIDEO_UPDATE( shtrider );
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },        /* Video and Color ram */
-	{ 0xd000, 0xd000, input_port_0_r },	/* IN0 */
-	{ 0xd001, 0xd001, input_port_1_r },	/* IN1 */
-	{ 0xd002, 0xd002, input_port_2_r },	/* IN2 */
-	{ 0xd003, 0xd003, input_port_3_r },	/* DSW1 */
-	{ 0xd004, 0xd004, input_port_4_r },	/* DSW2 */
-	{ 0xe000, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)        /* Video and Color ram */
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)	/* IN2 */
+	AM_RANGE(0xd003, 0xd003) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0xd004, 0xd004) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, travrusa_videoram_w, &travrusa_videoram },
-	{ 0x9000, 0x9000, travrusa_scroll_x_low_w },
-	{ 0xa000, 0xa000, travrusa_scroll_x_high_w },
-	{ 0xc800, 0xc9ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd000, irem_sound_cmd_w },
-	{ 0xd001, 0xd001, travrusa_flipscreen_w },	/* + coin counters - not written by shtrider */
-	{ 0xe000, 0xefff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(travrusa_videoram_w) AM_BASE(&travrusa_videoram)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(travrusa_scroll_x_low_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(travrusa_scroll_x_high_w)
+	AM_RANGE(0xc800, 0xc9ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(irem_sound_cmd_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(travrusa_flipscreen_w)	/* + coin counters - not written by shtrider */
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -408,7 +408,7 @@ static MACHINE_DRIVER_START( travrusa )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(56.75)

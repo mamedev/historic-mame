@@ -47,27 +47,27 @@ extern WRITE_HANDLER( gotya_video_control_w );
 extern WRITE_HANDLER( gotya_soundlatch_w );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x6000, input_port_0_r },
-	{ 0x6001, 0x6001, input_port_1_r },
-	{ 0x6002, 0x6002, input_port_2_r },
-	{ 0xc000, 0xd3ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(input_port_0_r)
+	AM_RANGE(0x6001, 0x6001) AM_READ(input_port_1_r)
+	AM_RANGE(0x6002, 0x6002) AM_READ(input_port_2_r)
+	AM_RANGE(0xc000, 0xd3ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x5000, 0x5fff, MWA_RAM },
-	{ 0x6004, 0x6004, gotya_video_control_w },
-	{ 0x6005, 0x6005, gotya_soundlatch_w },
-	{ 0x6006, 0x6006, MWA_RAM, &gotya_scroll },
-	{ 0x6007, 0x6007, watchdog_reset_w },
-	{ 0xc000, 0xc7ff, gotya_videoram_w, &videoram },
-	{ 0xc800, 0xcfff, gotya_colorram_w, &colorram },
-	{ 0xd000, 0xd3df, MWA_RAM, &gotya_videoram2 },
-	{ 0xd3e0, 0xd3ff, MWA_RAM, &spriteram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6004, 0x6004) AM_WRITE(gotya_video_control_w)
+	AM_RANGE(0x6005, 0x6005) AM_WRITE(gotya_soundlatch_w)
+	AM_RANGE(0x6006, 0x6006) AM_WRITE(MWA8_RAM) AM_BASE(&gotya_scroll)
+	AM_RANGE(0x6007, 0x6007) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(gotya_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gotya_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd000, 0xd3df) AM_WRITE(MWA8_RAM) AM_BASE(&gotya_videoram2)
+	AM_RANGE(0xd3e0, 0xd3ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( gotya )
@@ -196,7 +196,7 @@ static MACHINE_DRIVER_START( gotya )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

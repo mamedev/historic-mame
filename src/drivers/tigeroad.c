@@ -171,68 +171,68 @@ static WRITE_HANDLER( msm5205_w )
 
 /***************************************************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0xfe0800, 0xfe0cff, MRA16_RAM },
-	{ 0xfe0d00, 0xfe1807, MRA16_RAM },
-	{ 0xfe4000, 0xfe4001, input_port_0_word_r },
-	{ 0xfe4002, 0xfe4003, input_port_1_word_r },
-	{ 0xfe4004, 0xfe4005, input_port_2_word_r },
-	{ 0xfec000, 0xfec7ff, MRA16_RAM },
-	{ 0xff8200, 0xff867f, MRA16_RAM },
-	{ 0xffc000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0xfe0800, 0xfe0cff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfe0d00, 0xfe1807) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfe4000, 0xfe4001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfe4002, 0xfe4003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfe4004, 0xfe4005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfec000, 0xfec7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff8200, 0xff867f) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0xfe0800, 0xfe0cff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xfe0d00, 0xfe1807, MWA16_RAM },  /* still part of OBJ RAM */
-	{ 0xfe4000, 0xfe4001, tigeroad_videoctrl_w },	/* char bank, coin counters, + ? */
-	/*{ 0xfe4002, 0xfe4003, tigeroad_soundcmd_w }, added by init_tigeroad() */
-	{ 0xfec000, 0xfec7ff, tigeroad_videoram_w, &videoram16 },
-	{ 0xfe8000, 0xfe8003, tigeroad_scroll_w },
-	{ 0xfe800e, 0xfe800f, MWA16_RAM },    /* fe800e = watchdog or IRQ acknowledge */
-	{ 0xff8200, 0xff867f, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0xffc000, 0xffffff, MWA16_RAM, &ram16 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xfe0800, 0xfe0cff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xfe0d00, 0xfe1807) AM_WRITE(MWA16_RAM)  /* still part of OBJ RAM */
+	AM_RANGE(0xfe4000, 0xfe4001) AM_WRITE(tigeroad_videoctrl_w)	/* char bank, coin counters, + ? */
+	/*AM_RANGE(0xfe4002, 0xfe4003) AM_WRITE(tigeroad_soundcmd_w) added by init_tigeroad() */
+	AM_RANGE(0xfec000, 0xfec7ff) AM_WRITE(tigeroad_videoram_w) AM_BASE(&videoram16)
+	AM_RANGE(0xfe8000, 0xfe8003) AM_WRITE(tigeroad_scroll_w)
+	AM_RANGE(0xfe800e, 0xfe800f) AM_WRITE(MWA16_RAM)    /* fe800e = watchdog or IRQ acknowledge */
+	AM_RANGE(0xff8200, 0xff867f) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8000, YM2203_status_port_0_r },
-	{ 0xa000, 0xa000, YM2203_status_port_1_r },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8000, YM2203_control_port_0_w },
-	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, YM2203_control_port_1_w },
-	{ 0xa001, 0xa001, YM2203_write_port_1_w },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x7f, 0x7f, soundlatch2_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7f, 0x7f) AM_WRITE(soundlatch2_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sample_readmem )
-	{ 0x0000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sample_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 /* yes, no RAM */
-static MEMORY_WRITE_START( sample_writemem )
-	{ 0x0000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sample_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sample_readport )
-	{ 0x00, 0x00, soundlatch2_r },
-PORT_END
+static ADDRESS_MAP_START( sample_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sample_writeport )
-	{ 0x01, 0x01, msm5205_w },
-PORT_END
+static ADDRESS_MAP_START( sample_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(msm5205_w)
+ADDRESS_MAP_END
 
 
 
@@ -555,13 +555,13 @@ static MACHINE_DRIVER_START( tigeroad )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 6000000) /* ? Main clock is 24MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(0,sound_writeport)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -590,8 +590,8 @@ static MACHINE_DRIVER_START( toramich )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(sample_readmem,sample_writemem)
-	MDRV_CPU_PORTS(sample_readport,sample_writeport)
+	MDRV_CPU_PROGRAM_MAP(sample_readmem,sample_writemem)
+	MDRV_CPU_IO_MAP(sample_readport,sample_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)	/* ? */
 
 	/* sound hardware */

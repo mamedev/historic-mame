@@ -82,53 +82,53 @@ static READ_HANDLER( fake_VRLE_r )
 
 static READ_HANDLER( ram_mirror_r )
 {
-	return cpu_readmem16(0x1000+offset);
+	return program_read_byte(0x1000+offset);
 }
 
 static WRITE_HANDLER( ram_mirror_w )
 {
-	cpu_writemem16(0x1000+offset,data);
+	program_write_byte(0x1000+offset,data);
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x1000, 0x10ff, MRA_RAM },
-	{ 0x1100, 0x11ff, MRA_RAM },
-	{ 0x1200, 0x12ff, MRA_RAM },
-	{ 0x1300, 0x13ff, MRA_RAM },
-	{ 0x14cb, 0x14cb, fake_VRLE_r },
-	{ 0x1400, 0x14ff, malzak_s2636_1_r },
-	{ 0x1500, 0x15ff, malzak_s2636_2_r },
-	{ 0x1600, 0x16ff, MRA_RAM },
-	{ 0x1700, 0x17ff, MRA_RAM },
-	{ 0x1800, 0x1fff, saa5050_r },  // SAA 5050 video RAM
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x3000, 0x3fff, ram_mirror_r },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x5000, 0x5fff, ram_mirror_r },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1100, 0x11ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1300, 0x13ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x14cb, 0x14cb) AM_READ(fake_VRLE_r)
+	AM_RANGE(0x1400, 0x14ff) AM_READ(malzak_s2636_1_r)
+	AM_RANGE(0x1500, 0x15ff) AM_READ(malzak_s2636_2_r)
+	AM_RANGE(0x1600, 0x16ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(saa5050_r)  // SAA 5050 video RAM
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(ram_mirror_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(ram_mirror_r)
 
-MEMORY_END
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x1000, 0x10ff, MWA_RAM },
-	{ 0x1100, 0x11ff, MWA_RAM },
-	{ 0x1200, 0x12ff, MWA_RAM },
-	{ 0x1300, 0x13ff, MWA_RAM },
-	{ 0x1400, 0x14ff, malzak_s2636_1_w }, // S2636 offset $CB bit 40 tested as collision ?
-	{ 0x1500, 0x15ff, malzak_s2636_2_w },
-	{ 0x1600, 0x16ff, playfield_w },
-	{ 0x1600, 0x16ff, MWA_RAM },
-	{ 0x1700, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, saa5050_w },  // SAA 5050 video RAM
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x3fff, ram_mirror_w },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x5000, 0x5dff, ram_mirror_w },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1100, 0x11ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1300, 0x13ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1400, 0x14ff) AM_WRITE(malzak_s2636_1_w) // S2636 offset $CB bit 40 tested as collision ?
+	AM_RANGE(0x1500, 0x15ff) AM_WRITE(malzak_s2636_2_w)
+	AM_RANGE(0x1600, 0x16ff) AM_WRITE(playfield_w)
+	AM_RANGE(0x1600, 0x16ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(saa5050_w)  // SAA 5050 video RAM
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(ram_mirror_w)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x5dff) AM_WRITE(ram_mirror_w)
 
-MEMORY_END
+ADDRESS_MAP_END
 
 static READ_HANDLER( s2650_data_r )
 {
@@ -165,19 +165,19 @@ static READ_HANDLER( collision_r )
 	return 0xd0 + counter;
 }
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, collision_r }, // returns where a collision can occur.
-    { 0x80, 0x80, input_port_0_r },  //controls
-	{ S2650_DATA_PORT, S2650_DATA_PORT, s2650_data_r },  // read upon death
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(collision_r) // returns where a collision can occur.
+    AM_RANGE(0x80, 0x80) AM_READ(input_port_0_r)  //controls
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(s2650_data_r)  // read upon death
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x40, 0x40, port40_w },  // possibly sound codes for dual SN76477s
-	{ 0x60, 0x60, port60_w },  // possibly playfield scroll X offset
-	{ 0xa0, 0xa0, MWA_NOP },  // echoes I/O port read from port 0x80
-	{ 0xc0, 0xc0, portc0_w },  // possibly playfield scroll Y offset
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_WRITE(port40_w)  // possibly sound codes for dual SN76477s
+	AM_RANGE(0x60, 0x60) AM_WRITE(port60_w)  // possibly playfield scroll X offset
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(MWA8_NOP)  // echoes I/O port read from port 0x80
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(portc0_w)  // possibly playfield scroll Y offset
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( malzak )
 
@@ -378,8 +378,8 @@ static MACHINE_DRIVER_START( malzak )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 3800000/4/3)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 //	MDRV_CPU_VBLANK_INT(malzak_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(50)
@@ -419,7 +419,7 @@ ROM_START( malzak )
 	ROM_LOAD( "malzak.1",     0x0000, 0x0800, CRC(74d5ff7b) SHA1(cae326370dc83b86542f9d070e2dc91b1b833356) )
 
 	ROM_REGION(0x01000, REGION_GFX2,0) // internal character set?
-	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BAD_DUMP CRC(78c17e3e))
+	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BAD_DUMP CRC(78c17e3e) SHA1(4e1c59dc484505de1dc0b1ba7e5f70a54b0d4ccc) )
 
 ROM_END
 

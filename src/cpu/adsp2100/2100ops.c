@@ -374,8 +374,8 @@ static void wr_ifc(INT32 val)
 	if (val & 0x800) adsp2100.irq_latch[ADSP2101_IRQ2] = 1;
 	check_irqs();
 }
-static void wr_tx0(INT32 val)	{ if (sport_tx_callback) (*sport_tx_callback)(0, val); }
-static void wr_tx1(INT32 val)	{ if (sport_tx_callback) (*sport_tx_callback)(1, val); }
+static void wr_tx0(INT32 val)	{ if (adsp2100.sport_tx_callback) (*adsp2100.sport_tx_callback)(0, val); }
+static void wr_tx1(INT32 val)	{ if (adsp2100.sport_tx_callback) (*adsp2100.sport_tx_callback)(1, val); }
 static void wr_owrctr(INT32 val) { adsp2100.cntr = val & 0x3fff; }
 static void wr_topstack(INT32 val) { pc_stack_push_val(val & 0x3fff); }
 
@@ -456,8 +456,8 @@ static INT32 rd_icntl(void) { return adsp2100.icntl; }
 static INT32 rd_cntr(void)  { return adsp2100.cntr; }
 static INT32 rd_sb(void)    { return adsp2100.core.sb.s; }
 static INT32 rd_px(void)    { return adsp2100.px; }
-static INT32 rd_rx0(void)	{ if (sport_rx_callback) return (*sport_rx_callback)(0); else return 0; }
-static INT32 rd_rx1(void)	{ if (sport_rx_callback) return (*sport_rx_callback)(1); else return 0; }
+static INT32 rd_rx0(void)	{ if (adsp2100.sport_rx_callback) return (*adsp2100.sport_rx_callback)(0); else return 0; }
+static INT32 rd_rx1(void)	{ if (adsp2100.sport_rx_callback) return (*adsp2100.sport_rx_callback)(1); else return 0; }
 static INT32 rd_stacktop(void)	{ return pc_stack_pop_val(); }
 
 #define READ_REG(grp,reg) ((*rd_reg[grp][reg])())

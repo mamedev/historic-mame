@@ -28,7 +28,7 @@
 #define M4510_MEM(addr) (m4510.mem[(addr)>>13]+(addr))
 
 #undef CHANGE_PC
-#define CHANGE_PC change_pc20(M4510_MEM(PCD))
+#define CHANGE_PC program_write_byte_8(M4510_MEM(PCD))
 
 /***************************************************************
  *  RDOP    read an opcode
@@ -46,13 +46,13 @@
  *  RDMEM   read memory
  ***************************************************************/
 #undef RDMEM
-#define RDMEM(addr) cpu_readmem20(M4510_MEM(addr))
+#define RDMEM(addr) program_read_byte_8(M4510_MEM(addr))
 
 /***************************************************************
  *  WRMEM   write memory
  ***************************************************************/
 #undef WRMEM
-#define WRMEM(addr,data) cpu_writemem20(M4510_MEM(addr),data)
+#define WRMEM(addr,data) program_write_byte_8(M4510_MEM(addr),data)
 
 /* c65 docu says transfer of axyz to the mapper register
    so no readback!? */

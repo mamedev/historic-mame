@@ -234,11 +234,11 @@ int q = I.AF.b.h+R; 											\
 
 #define M_IN													\
 	I.XX.d=ARG();												\
-	I.AF.b.h=cpu_readport16(I.XX.d);
+	I.AF.b.h=io_read_byte_8(I.XX.d);
 
 #define M_OUT													\
 	I.XX.d=ARG();												\
-	cpu_writeport16(I.XX.d,I.AF.b.h)
+	io_write_byte_8(I.XX.d,I.AF.b.h)
 
 #ifdef	X86_ASM
 #define M_DAD(R)												\
@@ -278,7 +278,7 @@ int q = I.AF.b.h+R; 											\
 	{															\
 		i8085_ICount -= 6;										\
 		M_POP(PC);												\
-		change_pc16(I.PC.d);									\
+		change_pc(I.PC.d);									\
 	}															\
 }
 
@@ -286,7 +286,7 @@ int q = I.AF.b.h+R; 											\
 	if (cc) {													\
 		i8085_ICount -= 3;										\
 		I.PC.w.l = ARG16(); 									\
-		change_pc16(I.PC.d);									\
+		change_pc(I.PC.d);									\
 	} else I.PC.w.l += 2;										\
 }
 
@@ -298,14 +298,14 @@ int q = I.AF.b.h+R; 											\
 		i8085_ICount -= 6;										\
 		M_PUSH(PC); 											\
 		I.PC.d = a; 											\
-		change_pc16(I.PC.d);									\
+		change_pc(I.PC.d);									\
 	} else I.PC.w.l += 2;										\
 }
 
 #define M_RST(nn) { 											\
 	M_PUSH(PC); 												\
 	I.PC.d = 8 * nn;											\
-	change_pc16(I.PC.d);										\
+	change_pc(I.PC.d);										\
 }
 
 #define M_DSUB() {												\

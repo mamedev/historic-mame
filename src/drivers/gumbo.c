@@ -44,25 +44,25 @@ WRITE16_HANDLER( gumbo_fg_videoram_w );
 VIDEO_START( gumbo );
 VIDEO_UPDATE( gumbo );
 
-static MEMORY_READ16_START( gumbo_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x083fff, MRA16_RAM },
-	{ 0x1b0000, 0x1b03ff, MRA16_RAM },
-	{ 0x1c0100, 0x1c0101, input_port_0_word_r },
-	{ 0x1c0200, 0x1c0201, input_port_1_word_r },
-	{ 0x1c0300, 0x1c0301, OKIM6295_status_0_lsb_r },
-	{ 0x1e0000, 0x1e0fff, MRA16_RAM },
-	{ 0x1f0000, 0x1f3fff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( gumbo_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1b0000, 0x1b03ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1c0100, 0x1c0101) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x1c0200, 0x1c0201) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x1c0300, 0x1c0301) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x1e0000, 0x1e0fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( gumbo_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x083fff, MWA16_RAM }, // main ram
-	{ 0x1c0300, 0x1c0301, OKIM6295_data_0_lsb_w },
-	{ 0x1b0000, 0x1b03ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x1e0000, 0x1e0fff, gumbo_bg_videoram_w, &gumbo_bg_videoram }, // bg tilemap
-	{ 0x1f0000, 0x1f3fff, gumbo_fg_videoram_w, &gumbo_fg_videoram }, // fg tilemap
-MEMORY_END
+static ADDRESS_MAP_START( gumbo_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM) // main ram
+	AM_RANGE(0x1c0300, 0x1c0301) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x1b0000, 0x1b03ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1e0000, 0x1e0fff) AM_WRITE(gumbo_bg_videoram_w) AM_BASE(&gumbo_bg_videoram) // bg tilemap
+	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(gumbo_fg_videoram_w) AM_BASE(&gumbo_fg_videoram) // fg tilemap
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( gumbo )
 	PORT_START	/* DSW */
@@ -148,7 +148,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static MACHINE_DRIVER_START( gumbo )
 	MDRV_CPU_ADD(M68000, 14318180 /2) // or 10mhz? ?
-	MDRV_CPU_MEMORY(gumbo_readmem,gumbo_writemem)
+	MDRV_CPU_PROGRAM_MAP(gumbo_readmem,gumbo_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) // all the same
 
 	MDRV_FRAMES_PER_SECOND(60)

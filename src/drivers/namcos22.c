@@ -809,80 +809,80 @@ static WRITE32_HANDLER( spotram_w )
 
 /* Namco Super System 22 */
 
-static MEMORY_READ32_START( namcos22s_readmem )
-	{ 0x000000, 0x3fffff, MRA32_ROM },
-	{ 0x400000, 0x40001f, namcos22_keycus_r },
-	{ 0x410000, 0x413fff, MRA32_RAM }, /* unused by Prop Cycle? */
-	{ 0x420000, 0x42000f, MRA32_RAM },
-	{ 0x430000, 0x430003, MRA32_RAM },
-	{ 0x440000, 0x440003, namcos22_dipswitch_r },
-	{ 0x450008, 0x45000b, namcos22_portbit_r },
+static ADDRESS_MAP_START( namcos22s_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x400000, 0x40001f) AM_READ(namcos22_keycus_r)
+	AM_RANGE(0x410000, 0x413fff) AM_READ(MRA32_RAM) /* unused by Prop Cycle? */
+	AM_RANGE(0x420000, 0x42000f) AM_READ(MRA32_RAM)
+	AM_RANGE(0x430000, 0x430003) AM_READ(MRA32_RAM)
+	AM_RANGE(0x440000, 0x440003) AM_READ(namcos22_dipswitch_r)
+	AM_RANGE(0x450008, 0x45000b) AM_READ(namcos22_portbit_r)
 
-	{ 0x460000, 0x463fff, MRA32_RAM }, /* unknown */
+	AM_RANGE(0x460000, 0x463fff) AM_READ(MRA32_RAM) /* unknown */
 		/* possible nvmem?
 		 */
 
-	{ 0x700000, 0x70001f, namcos22_system_controller_r },
+	AM_RANGE(0x700000, 0x70001f) AM_READ(namcos22_system_controller_r)
 
-	{ 0x800000, 0x800003, MRA32_RAM }, /* 0x08380000 (always?) */
-	{ 0x810000, 0x81000f, MRA32_RAM }, /* 00000000 00000000 44440000 00000000 */
+	AM_RANGE(0x800000, 0x800003) AM_READ(MRA32_RAM) /* 0x08380000 (always?) */
+	AM_RANGE(0x810000, 0x81000f) AM_READ(MRA32_RAM) /* 00000000 00000000 44440000 00000000 */
 
-	{ 0x810200, 0x8103ff, MRA32_RAM }, /* CZ RAM: depth cueing; fog density, near to far */
-	{ 0x810400, 0x810403, MRA32_RAM }, /* ? air combat22 */
-	{ 0x820000, 0x8202ff, MRA32_RAM },
+	AM_RANGE(0x810200, 0x8103ff) AM_READ(MRA32_RAM) /* CZ RAM: depth cueing; fog density, near to far */
+	AM_RANGE(0x810400, 0x810403) AM_READ(MRA32_RAM) /* ? air combat22 */
+	AM_RANGE(0x820000, 0x8202ff) AM_READ(MRA32_RAM)
 
-	{ 0x824000, 0x8243ff, namcos22_gamma_r }, /* GAMMA */
-	{ 0x828000, 0x83ffff, namcos22_paletteram_r }, /* PALETTE */
-	{ 0x860000, 0x860007, spotram_r },
+	AM_RANGE(0x824000, 0x8243ff) AM_READ(namcos22_gamma_r) /* GAMMA */
+	AM_RANGE(0x828000, 0x83ffff) AM_READ(namcos22_paletteram_r) /* PALETTE */
+	AM_RANGE(0x860000, 0x860007) AM_READ(spotram_r)
 
-	{ 0x880000, 0x89dfff, namcos22_cgram_r },
-	{ 0x89e000, 0x89ffff, namcos22_textram_r },
-	{ 0x8a0000, 0x8a000f, MRA32_RAM }, /* tilemap attributes */
+	AM_RANGE(0x880000, 0x89dfff) AM_READ(namcos22_cgram_r)
+	AM_RANGE(0x89e000, 0x89ffff) AM_READ(namcos22_textram_r)
+	AM_RANGE(0x8a0000, 0x8a000f) AM_READ(MRA32_RAM) /* tilemap attributes */
 		/*	+0x0000			BG Position X
 		 *	+0x0002			BG Position Y
 		 */
-	{ 0x900000, 0x90ffff, MRA32_RAM },
-	{ 0x940000, 0x94007f, MRA32_RAM },
-	{ 0x980000, 0x9affff, MRA32_RAM }, /* spriteram */
-	{ 0xa03ffc, 0xa03fff, MRA32_RAM },
-	{ 0xa04000, 0xa0bfff, namcos22_mcuram_r },
-	{ 0xc00000, 0xc3ffff, namcos22_dspram_r },
-	{ 0xe00000, 0xefffff, MRA32_RAM }, /* workram */
-MEMORY_END
+	AM_RANGE(0x900000, 0x90ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x940000, 0x94007f) AM_READ(MRA32_RAM)
+	AM_RANGE(0x980000, 0x9affff) AM_READ(MRA32_RAM) /* spriteram */
+	AM_RANGE(0xa03ffc, 0xa03fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xa04000, 0xa0bfff) AM_READ(namcos22_mcuram_r)
+	AM_RANGE(0xc00000, 0xc3ffff) AM_READ(namcos22_dspram_r)
+	AM_RANGE(0xe00000, 0xefffff) AM_READ(MRA32_RAM) /* workram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( namcos22s_writemem )
-	{ 0x000000, 0x3fffff, MWA32_ROM },
-	{ 0x400000, 0x40001f, MWA32_NOP }, /* cuskey? */
-	{ 0x410000, 0x413fff, MWA32_RAM },
-	{ 0x420000, 0x42000f, MWA32_RAM },
-	{ 0x430000, 0x430003, MWA32_RAM }, /* I/O related; bit select? */
-	{ 0x450008, 0x45000b, namcos22_portbit_w },
-	{ 0x460000, 0x463fff, MWA32_RAM },
-	{ 0x700000, 0x70001f, namcos22_system_controller_w, &namcos22_system_controller },
-	{ 0x800000, 0x800003, MWA32_RAM }, /* ? */
+static ADDRESS_MAP_START( namcos22s_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x400000, 0x40001f) AM_WRITE(MWA32_NOP) /* cuskey? */
+	AM_RANGE(0x410000, 0x413fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x420000, 0x42000f) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x430000, 0x430003) AM_WRITE(MWA32_RAM) /* I/O related; bit select? */
+	AM_RANGE(0x450008, 0x45000b) AM_WRITE(namcos22_portbit_w)
+	AM_RANGE(0x460000, 0x463fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x700000, 0x70001f) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
+	AM_RANGE(0x800000, 0x800003) AM_WRITE(MWA32_RAM) /* ? */
 	//0838
-	{ 0x810000, 0x81000f, MWA32_RAM }, /* ? */
-	{ 0x810200, 0x8103ff, MWA32_RAM }, /* depth cueing density */
-	{ 0x810400, 0x810403, MWA32_RAM }, /* ? air combat22 */
-	{ 0x820000, 0x8202ff, MWA32_RAM }, /* ? */
-	{ 0x824000, 0x8243ff, namcos22_gamma_w, &namcos22_gamma },
-	{ 0x828000, 0x83ffff, namcos22_paletteram_w, &paletteram32 },
-	{ 0x860000, 0x860007, spotram_w },
-	{ 0x880000, 0x89dfff, namcos22_cgram_w, &namcos22_cgram },
-	{ 0x89e000, 0x89ffff, namcos22_textram_w, &namcos22_textram },
-	{ 0x8a0000, 0x8a000f, MWA32_RAM }, /* tilemap attributes */
+	AM_RANGE(0x810000, 0x81000f) AM_WRITE(MWA32_RAM) /* ? */
+	AM_RANGE(0x810200, 0x8103ff) AM_WRITE(MWA32_RAM) /* depth cueing density */
+	AM_RANGE(0x810400, 0x810403) AM_WRITE(MWA32_RAM) /* ? air combat22 */
+	AM_RANGE(0x820000, 0x8202ff) AM_WRITE(MWA32_RAM) /* ? */
+	AM_RANGE(0x824000, 0x8243ff) AM_WRITE(namcos22_gamma_w) AM_BASE(&namcos22_gamma)
+	AM_RANGE(0x828000, 0x83ffff) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x860000, 0x860007) AM_WRITE(spotram_w)
+	AM_RANGE(0x880000, 0x89dfff) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
+	AM_RANGE(0x89e000, 0x89ffff) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
+	AM_RANGE(0x8a0000, 0x8a000f) AM_WRITE(MWA32_RAM) /* tilemap attributes */
 		/* 035c0000 006e0000 01ff0000 0000000 */
-	{ 0x900000, 0x90ffff, MWA32_RAM }, /* VICS(?) */
-	{ 0x940000, 0x94007f, MWA32_RAM },
-	{ 0x980000, 0x9affff, MWA32_RAM, &spriteram32 },
-	{ 0xa03ffc, 0xa03fff, MWA32_RAM },
-	{ 0xa04000, 0xa0bfff, MWA32_RAM, &namcos22_shareram }, /* MCU */
+	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(MWA32_RAM) /* VICS(?) */
+	AM_RANGE(0x940000, 0x94007f) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x980000, 0x9affff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32)
+	AM_RANGE(0xa03ffc, 0xa03fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xa04000, 0xa0bfff) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram) /* MCU */
 		/* 0xa0bd2f: 0x02 Prop Cycle: MOTOR ON */
 		/* 0xa0bd2f: 0x04 Prop Cycle: LAMP ON */
-	{ 0xc00000, 0xc3ffff, namcos22_dspram_w, &namcos22_polygonram },
-	{ 0xe00000, 0xefffff, MWA32_RAM }, /* WORK */
+	AM_RANGE(0xc00000, 0xc3ffff) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
+	AM_RANGE(0xe00000, 0xefffff) AM_WRITE(MWA32_RAM) /* WORK */
 	/* note that at least some of this is battery backed ADS RAM */
-MEMORY_END
+ADDRESS_MAP_END
 
 static void
 SimulateAlpineRacerMCU( void )
@@ -1005,7 +1005,7 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 static MACHINE_DRIVER_START( namcos22s )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020,25000000) /* 25 MHz? */
-	MDRV_CPU_MEMORY(namcos22s_readmem,namcos22s_writemem)
+	MDRV_CPU_PROGRAM_MAP(namcos22s_readmem,namcos22s_writemem)
 	MDRV_CPU_VBLANK_INT(namcos22s_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1026,53 +1026,53 @@ MACHINE_DRIVER_END
 
 /* Namco System 22 */
 
-static MEMORY_READ32_START( namcos22_readmem )
-	{ 0x00000000, 0x001fffff, MRA32_ROM },
-	{ 0x10000000, 0x1001ffff, MRA32_RAM },	/* work RAM */
-	{ 0x18000000, 0x1801ffff, MRA32_RAM },	/* work RAM */
-	{ 0x20000000, 0x2000000f, namcos22_keycus_r },
-	{ 0x20010000, 0x20013fff, MRA32_RAM },  /* C139 SCI: serial controller (TX/RX buffer) - same as System21 */
-	{ 0x20020000, 0x2002000f, namcos22_C139_SCI_r },
-	{ 0x40000000, 0x4000001f, namcos22_system_controller_r },
-	{ 0x48000000, 0x4800003f, MRA32_NOP },	/* unknown; possible for diagnostics */
-	{ 0x50000000, 0x50000003, namcos22_dipswitch_r }, /* DSW2,3 */
-	{ 0x50000008, 0x5000000b, namcos22_portbit_r },
-	{ 0x58000000, 0x58001fff, MRA32_RAM },	/* EPROM */
-	{ 0x60004000, 0x6000bfff, MRA32_RAM },	/* shareram */
-	{ 0x70000000, 0x7001ffff, namcos22_dspram_r },
-	{ 0x90010000, 0x90017fff, MRA32_RAM },	/* depth-cueing */
-	{ 0x90020000, 0x90027fff, MRA32_RAM },	/* C305 display controller */
-	{ 0x90028000, 0x9003ffff, MRA32_RAM },	/* palette */
-	{ 0x90040000, 0x9007ffff, MRA32_RAM },	/* diagnostic ROM? */
-	{ 0x90080000, 0x9009dfff, MRA32_RAM },	/* bg tiles */
-	{ 0x9009e000, 0x9009ffff, MRA32_RAM },	/* bg tilemap */
-	{ 0x900a0000, 0x900a000f, MRA32_RAM },	/* bg control register */
-MEMORY_END
+static ADDRESS_MAP_START( namcos22_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x10000000, 0x1001ffff) AM_READ(MRA32_RAM)	/* work RAM */
+	AM_RANGE(0x18000000, 0x1801ffff) AM_READ(MRA32_RAM)	/* work RAM */
+	AM_RANGE(0x20000000, 0x2000000f) AM_READ(namcos22_keycus_r)
+	AM_RANGE(0x20010000, 0x20013fff) AM_READ(MRA32_RAM)  /* C139 SCI: serial controller (TX/RX buffer) - same as System21 */
+	AM_RANGE(0x20020000, 0x2002000f) AM_READ(namcos22_C139_SCI_r)
+	AM_RANGE(0x40000000, 0x4000001f) AM_READ(namcos22_system_controller_r)
+	AM_RANGE(0x48000000, 0x4800003f) AM_READ(MRA32_NOP)	/* unknown; possible for diagnostics */
+	AM_RANGE(0x50000000, 0x50000003) AM_READ(namcos22_dipswitch_r) /* DSW2,3 */
+	AM_RANGE(0x50000008, 0x5000000b) AM_READ(namcos22_portbit_r)
+	AM_RANGE(0x58000000, 0x58001fff) AM_READ(MRA32_RAM)	/* EPROM */
+	AM_RANGE(0x60004000, 0x6000bfff) AM_READ(MRA32_RAM)	/* shareram */
+	AM_RANGE(0x70000000, 0x7001ffff) AM_READ(namcos22_dspram_r)
+	AM_RANGE(0x90010000, 0x90017fff) AM_READ(MRA32_RAM)	/* depth-cueing */
+	AM_RANGE(0x90020000, 0x90027fff) AM_READ(MRA32_RAM)	/* C305 display controller */
+	AM_RANGE(0x90028000, 0x9003ffff) AM_READ(MRA32_RAM)	/* palette */
+	AM_RANGE(0x90040000, 0x9007ffff) AM_READ(MRA32_RAM)	/* diagnostic ROM? */
+	AM_RANGE(0x90080000, 0x9009dfff) AM_READ(MRA32_RAM)	/* bg tiles */
+	AM_RANGE(0x9009e000, 0x9009ffff) AM_READ(MRA32_RAM)	/* bg tilemap */
+	AM_RANGE(0x900a0000, 0x900a000f) AM_READ(MRA32_RAM)	/* bg control register */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( namcos22_writemem )
-	{ 0x00000000, 0x001fffff, MWA32_ROM },
-	{ 0x10000000, 0x1001ffff, MWA32_RAM },	/* work RAM */
-	{ 0x18000000, 0x1801ffff, MWA32_RAM },	/* work RAM */
-	{ 0x20000000, 0x2000000f, MWA32_NOP },	/* cuskey */
-	{ 0x20010000, 0x20013fff, MWA32_RAM },	/* C139 SCI: TX/RX buffer (same as System21) */
-	{ 0x20020000, 0x2002000f, MWA32_RAM },	/* serial controller (registers) */
-	{ 0x40000000, 0x4000001f, namcos22_system_controller_w, &namcos22_system_controller },
-	{ 0x48000000, 0x4800003f, MWA32_NOP },	/* unknown; possible for diagnostics */
-	{ 0x50000000, 0x50000007, MWA32_NOP },
-	{ 0x50000008, 0x5000000b, namcos22_portbit_w },
-	{ 0x58000000, 0x58001fff, MWA32_RAM },	/* EPROM */
-	{ 0x60000000, 0x60003fff, MWA32_NOP },
-	{ 0x60004000, 0x6000bfff, MWA32_RAM, &namcos22_shareram },
-	{ 0x70000000, 0x7001ffff, namcos22_dspram_w, &namcos22_polygonram },
-	{ 0x90000000, 0x90000003, MWA32_NOP },	/* LED on PCB(?) */
-	{ 0x90010000, 0x90017fff, MWA32_RAM },	/* depth-cueing */
-	{ 0x90020000, 0x90027fff, MWA32_RAM },	/* C305 display controller */
-	{ 0x90028000, 0x9003ffff, namcos22_paletteram_w, &paletteram32 },
-	{ 0x90040000, 0x9007ffff, MWA32_RAM },	/* victory lap */
-	{ 0x90080000, 0x9009dfff, namcos22_cgram_w, &namcos22_cgram },
-	{ 0x9009e000, 0x9009ffff, namcos22_textram_w, &namcos22_textram },
-	{ 0x900a0000, 0x900a000f, MWA32_RAM },	/* bg control register */
-MEMORY_END
+static ADDRESS_MAP_START( namcos22_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x10000000, 0x1001ffff) AM_WRITE(MWA32_RAM)	/* work RAM */
+	AM_RANGE(0x18000000, 0x1801ffff) AM_WRITE(MWA32_RAM)	/* work RAM */
+	AM_RANGE(0x20000000, 0x2000000f) AM_WRITE(MWA32_NOP)	/* cuskey */
+	AM_RANGE(0x20010000, 0x20013fff) AM_WRITE(MWA32_RAM)	/* C139 SCI: TX/RX buffer (same as System21) */
+	AM_RANGE(0x20020000, 0x2002000f) AM_WRITE(MWA32_RAM)	/* serial controller (registers) */
+	AM_RANGE(0x40000000, 0x4000001f) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
+	AM_RANGE(0x48000000, 0x4800003f) AM_WRITE(MWA32_NOP)	/* unknown; possible for diagnostics */
+	AM_RANGE(0x50000000, 0x50000007) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x50000008, 0x5000000b) AM_WRITE(namcos22_portbit_w)
+	AM_RANGE(0x58000000, 0x58001fff) AM_WRITE(MWA32_RAM)	/* EPROM */
+	AM_RANGE(0x60000000, 0x60003fff) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x60004000, 0x6000bfff) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram)
+	AM_RANGE(0x70000000, 0x7001ffff) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
+	AM_RANGE(0x90000000, 0x90000003) AM_WRITE(MWA32_NOP)	/* LED on PCB(?) */
+	AM_RANGE(0x90010000, 0x90017fff) AM_WRITE(MWA32_RAM)	/* depth-cueing */
+	AM_RANGE(0x90020000, 0x90027fff) AM_WRITE(MWA32_RAM)	/* C305 display controller */
+	AM_RANGE(0x90028000, 0x9003ffff) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x90040000, 0x9007ffff) AM_WRITE(MWA32_RAM)	/* victory lap */
+	AM_RANGE(0x90080000, 0x9009dfff) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
+	AM_RANGE(0x9009e000, 0x9009ffff) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
+	AM_RANGE(0x900a0000, 0x900a000f) AM_WRITE(MWA32_RAM)	/* bg control register */
+ADDRESS_MAP_END
 
 static INTERRUPT_GEN( namcos22_interrupt )
 {
@@ -1119,7 +1119,7 @@ static INTERRUPT_GEN( namcos22_interrupt )
 static MACHINE_DRIVER_START( namcos22 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68020,25000000) /* 25 MHz? */
-	MDRV_CPU_MEMORY(namcos22_readmem,namcos22_writemem)
+	MDRV_CPU_PROGRAM_MAP(namcos22_readmem,namcos22_writemem)
 	MDRV_CPU_VBLANK_INT(namcos22_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1450,6 +1450,9 @@ ROM_START( acedrvrw )
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
 	ROM_LOAD( "ad1data.6r", 0, 0x080000, CRC(82024f74) SHA1(711ab0c4f027716aeab18e3a5d3d06fa82af8007) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "eeprom.9e",  0x0000, 0x2000, CRC(483d9237) SHA1(a696b22433a26f40f0839fa958fb26ad5cef9163) ) 
+
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "ad1wave0.10r", 0x100000*0, 0x100000,CRC(c7879a72) SHA1(ae04d664858b0944583590ed0003a9420032d5ca) )
 	ROM_LOAD( "ad1wave1.10p", 0x100000*1, 0x100000,CRC(69c1d41e) SHA1(b5cdfe7b75075c585dfd842347f8e4e692bb2781) )
@@ -1629,6 +1632,52 @@ ROM_START( ridgeraj )
 	ROM_LOAD( "rr1wav1.10p", 0x100000*1, 0x100000,CRC(35f47c8e) SHA1(7c3f9e942f532af8008fbead2a96fee6084bcde6) )
 	ROM_LOAD( "rr1wav2.10n", 0x100000*2, 0x100000,CRC(3244cb59) SHA1(b3283b30cfafbfdcbc6d482ecc4ed6a47a527ca4) )
 	ROM_LOAD( "rr1wav3.10l", 0x100000*3, 0x100000,CRC(c4cda1a7) SHA1(60bc96880ec79efdff3cc70c09e848692a40bea4) )
+ROM_END
+
+ROM_START( timecris )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_BYTE( "ts2ver-b.1", 0x00003, 0x100000, CRC(29b377f7) SHA1(21864ba964602115c1268fd5edd8006a13a86cfc) )
+	ROM_LOAD32_BYTE( "ts2ver-b.2", 0x00002, 0x100000, CRC(79512e25) SHA1(137a215ec192e76e93511456ad504481a566c9c9) )
+	ROM_LOAD32_BYTE( "ts2ver-b.3", 0x00001, 0x100000, CRC(9f4ced33) SHA1(32768b5ff263a9e3d11b7b36f6b2d7e951e07419) )
+	ROM_LOAD32_BYTE( "ts2ver-b.4", 0x00000, 0x100000, CRC(3e0cfb38) SHA1(3c56342bd73b1617ea579a0d53e19d59bb04fd99) )
+
+	ROM_REGION( 0x200000*6, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+	ROM_LOAD( "ts1scg0.12f",0x200000*0, 0x200000,CRC(14a3674d) SHA1(c5792a385572452b43bbc7eb8428335b19daa3c0) )
+	ROM_LOAD( "ts1scg1.10f",0x200000*1, 0x200000,CRC(11791dbf) SHA1(3d75b468d69a8bf398d45f310cdb8bc88b63f25c) )
+	ROM_LOAD( "ts1scg2.8f", 0x200000*2, 0x200000,CRC(d630fff9) SHA1(691394027b858702f06282f965f5b53e6fed496b) )
+	ROM_LOAD( "ts1scg3.7f", 0x200000*3, 0x200000,CRC(1a62f015) SHA1(7d09ae480ae7813391616ae0090929ba845a345a) )
+	ROM_LOAD( "ts1scg4.5f", 0x200000*4, 0x200000,CRC(511b8dd6) SHA1(936649c0a61d29f024a28e4ab64cce4b55d58f64) )
+	ROM_LOAD( "ts1scg5.3f", 0x200000*5, 0x200000,CRC(553bb246) SHA1(94659bee4fd0afe834a8bf3414d8825411cf9e86) )
+
+	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+	ROM_LOAD( "ts1cg0.8d",   0x200000*0x0, 0x200000,CRC(de07b22c) SHA1(f4d07b8840ec8be625eff634bce619e960c334a5) )
+	ROM_LOAD( "ts1cg1.10d",  0x200000*0x1, 0x200000,CRC(992d26f6) SHA1(a0b9007312804b413d4c1748527378da4d8d53b3) )
+	ROM_LOAD( "ts1cg2.12d",  0x200000*0x2, 0x200000,CRC(6273954f) SHA1(d73a43888b53e4c42fc33e8e1b38e60fd3329413) )
+	ROM_LOAD( "ts1cg3.13d",  0x200000*0x3, 0x200000,CRC(38171f24) SHA1(d04caaa5b1b377ced38501b014e4cb7fc831c41d) )
+	ROM_LOAD( "ts1cg4.14d",  0x200000*0x4, 0x200000,CRC(51f09856) SHA1(0eef421907ee813d5117e62cf0005bf00eb29c88) )
+	ROM_LOAD( "ts1cg5.16d",  0x200000*0x5, 0x200000,CRC(4cd9fd79) SHA1(0d2018ec914683a75bdec8655d678fd562eb6d15) )
+	ROM_LOAD( "ts1cg6.18d",  0x200000*0x6, 0x200000,CRC(f17f2ec9) SHA1(ed88ec524626e5bbe2e1ea6838412d3ac85671dd) )
+
+	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_LOAD( "ts1ccrl.3d",	 0x000000, 0x200000,CRC(56cad2df) SHA1(49c0e57d5cf5d5fc4c75da6969bec01d6d443259) )
+	ROM_LOAD( "ts1ccrh.1d",	 0x200000, 0x080000,CRC(a1cc3741) SHA1(7fe57924c42e287b134e5d7ad00cffdff1f18084) )
+
+	ROM_REGION( 0x80000*9, REGION_GFX4, 0 ) /* 3d model data */
+	ROM_LOAD( "ts1ptrl0.18k", 0x80000*0, 0x80000,CRC(e5f2d275) SHA1(2f5057e65ec8a3ec03f841f15f10769ae1f69139) )
+	ROM_LOAD( "ts1ptrl1.16k", 0x80000*1, 0x80000,CRC(2bba3800) SHA1(1d9c944cb06417cb0ac47a58b922dddb83387586) )
+	ROM_LOAD( "ts1ptrl2.15k", 0x80000*2, 0x80000,CRC(d4441c08) SHA1(6a6bb9cecbf35cb81b7681e220fc33df9a01d07f) )
+	ROM_LOAD( "ts1ptrm0.18j", 0x80000*3, 0x80000,CRC(8aea02ba) SHA1(44ba85ba6d59758448d17ec39dfb628882ddc684) )
+	ROM_LOAD( "ts1ptrm1.16j", 0x80000*4, 0x80000,CRC(bccf19bc) SHA1(4a6566948bdd2b0f82b7c30e57d3fe65005c26e3) )
+	ROM_LOAD( "ts1ptrm2.15j", 0x80000*5, 0x80000,CRC(7280be31) SHA1(476b7171ae855d8bbd968ccbaa55b5100d274e3b) )
+	ROM_LOAD( "ts1ptru0.18f", 0x80000*6, 0x80000,CRC(c30d6332) SHA1(a5c59d0abfe38de975fa0d606ed8500eb02008b7) )
+	ROM_LOAD( "ts1ptru1.16f", 0x80000*7, 0x80000,CRC(993cde84) SHA1(c9cdcca1d60bcc41ad881c02dda9895563963ead) )
+	ROM_LOAD( "ts1ptru2.15f", 0x80000*8, 0x80000,CRC(7cb25c73) SHA1(616eab3ac238864a584394f7ec8736ece227974a) )
+
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
+	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
+	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
+	ROM_LOAD( "ts1wavea.2l", 0x000000, 0x400000, CRC(d1123301) SHA1(4bf1fd746fef4e6befa63c61a761971d729e1573) )
+	ROM_LOAD( "ts1waveb.1l", 0x400000, 0x200000, CRC(bf4d7272) SHA1(c7c7b3620e7b3176644b6784ee36e679c9e31cc1) )
 ROM_END
 
 ROM_START( timecrsa )
@@ -2522,8 +2571,8 @@ GAMEX( 1995, alpinerd, 0,        namcos22s, alpiner,  alpiner,  ROT0, "Namco", "
 GAMEX( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.C)"             , GAME_NO_SOUND|GAME_NOT_WORKING ) /* encrypted gfx */
 GAMEX( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
 //GAMEX( 1995, dirtdshx, "Dirt Dash")
-GAMEX( 1995, timecrsa, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* locks up */
-//GAMEX( 1995, timecris, 0, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* locks up */
+GAMEX( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* locks up */
 GAMEX( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
 //GAMEX( 1996, tokyowrx, "Tokyo Wars")
 //GAMEX( 1996, alpinr2x, "Alpine Racer 2")

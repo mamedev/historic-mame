@@ -16,28 +16,28 @@ VIDEO_UPDATE( troangel );
 
 
 
-static MEMORY_READ_START( troangel_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x90ff, MRA_RAM },
-	{ 0xd000, 0xd000, input_port_0_r },
-	{ 0xd001, 0xd001, input_port_1_r },
-	{ 0xd002, 0xd002, input_port_2_r },
-	{ 0xd003, 0xd003, input_port_3_r },
-	{ 0xd004, 0xd004, input_port_4_r },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( troangel_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x90ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)
+	AM_RANGE(0xd003, 0xd003) AM_READ(input_port_3_r)
+	AM_RANGE(0xd004, 0xd004) AM_READ(input_port_4_r)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( troangel_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
-//	{ 0x8800, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x91ff, MWA_RAM, &troangel_scroll },
-	{ 0xc820, 0xc8ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd000, irem_sound_cmd_w },
-	{ 0xd001, 0xd001, troangel_flipscreen_w },	/* + coin counters */
-	{ 0xe000, 0xe7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( troangel_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+//	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x91ff) AM_WRITE(MWA8_RAM) AM_BASE(&troangel_scroll)
+	AM_RANGE(0xc820, 0xc8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(irem_sound_cmd_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(troangel_flipscreen_w)	/* + coin counters */
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -171,7 +171,7 @@ static MACHINE_DRIVER_START( troangel )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz ??? */
-	MDRV_CPU_MEMORY(troangel_readmem,troangel_writemem)
+	MDRV_CPU_PROGRAM_MAP(troangel_readmem,troangel_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)

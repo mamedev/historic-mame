@@ -157,10 +157,25 @@ static PAIR ea; 		/* effective address */
 #define EA	ea.w.l
 
 /* public globals */
-int m6800_ICount=50000;
+static int m6800_ICount;
 
 /* point of next timer event */
 static UINT32 timer_next;
+
+/* Layout of the registers in the debugger */
+static UINT8 m6800_reg_layout[] = {
+	M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
+	M6800_WAI_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 m6800_win_layout[] = {
+	27, 0,53, 4,	/* register window (top rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
 
 /* DS -- THESE ARE RE-DEFINED IN m6800.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define RM				M6800_RDMEM
@@ -387,7 +402,7 @@ static const UINT8 flags8d[256]= /* decrement */
 #define IDXWORD(w) {INDEXED;w.d=RM16(EAD);}
 
 /* Macros for branch instructions */
-#define CHANGE_PC() change_pc16(PCD)
+#define CHANGE_PC() change_pc(PCD)
 #define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);CHANGE_PC();}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
@@ -564,7 +579,7 @@ static void state_register(const char *type)
 	state_save_register_UINT8 (type, cpu, "TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
 }
 
-void m6800_init(void)
+static void m6800_init(void)
 {
 //	m6800.subtype   = SUBTYPE_M6800;
 	m6800.insn = m6800_insn;
@@ -572,7 +587,7 @@ void m6800_init(void)
 	state_register("m6800");
 }
 
-void m6800_reset(void *param)
+static void m6800_reset(void *param)
 {
 	SEI;				/* IRQ disabled */
 	PCD = RM16( 0xfffe );
@@ -599,7 +614,7 @@ void m6800_reset(void *param)
 /****************************************************************************
  * Shut down CPU emulatio
  ****************************************************************************/
-void m6800_exit(void)
+static void m6800_exit(void)
 {
 	/* nothing to do */
 }
@@ -607,18 +622,17 @@ void m6800_exit(void)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-unsigned m6800_get_context(void *dst)
+static void m6800_get_context(void *dst)
 {
 	if( dst )
 		*(m6800_Regs*)dst = m6800;
-	return sizeof(m6800_Regs);
 }
 
 
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-void m6800_set_context(void *src)
+static void m6800_set_context(void *src)
 {
 	if( src )
 		m6800 = *(m6800_Regs*)src;
@@ -627,68 +641,7 @@ void m6800_set_context(void *src)
 }
 
 
-/****************************************************************************
- * Return a specific register
- ****************************************************************************/
-unsigned m6800_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return PC;
-		case M6800_PC: return m6800.pc.w.l;
-		case REG_SP: return S;
-		case M6800_S: return m6800.s.w.l;
-		case M6800_CC: return m6800.cc;
-		case M6800_A: return m6800.d.b.h;
-		case M6800_B: return m6800.d.b.l;
-		case M6800_X: return m6800.x.w.l;
-		case M6800_NMI_STATE: return m6800.nmi_state;
-		case M6800_IRQ_STATE: return m6800.irq_state[M6800_IRQ_LINE];
-		case REG_PREVIOUSPC: return m6800.ppc.w.l;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return ( RM( offset ) << 8 ) | RM( offset+1 );
-			}
-	}
-	return 0;
-}
-
-
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
-void m6800_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC: PC = val; CHANGE_PC(); break;
-		case M6800_PC: m6800.pc.w.l = val; break;
-		case REG_SP: S = val; break;
-		case M6800_S: m6800.s.w.l = val; break;
-		case M6800_CC: m6800.cc = val; break;
-		case M6800_A: m6800.d.b.h = val; break;
-		case M6800_B: m6800.d.b.l = val; break;
-		case M6800_X: m6800.x.w.l = val; break;
-		case M6800_NMI_STATE: m6800_set_irq_line(IRQ_LINE_NMI, val); break;
-		case M6800_IRQ_STATE: m6800_set_irq_line(M6800_IRQ_LINE,val); break;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-				{
-					WM( offset, (val >> 8) & 0xff );
-					WM( offset+1, val & 0xff );
-				}
-			}
-	}
-}
-
-
-void m6800_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -732,15 +685,10 @@ void m6800_set_irq_line(int irqline, int state)
 	}
 }
 
-void m6800_set_irq_callback(int (*callback)(int irqline))
-{
-	m6800.irq_callback = callback;
-}
-
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
-int m6800_execute(int cycles)
+static int m6800_execute(int cycles)
 {
 	UINT8 ireg;
 	m6800_ICount = cycles;
@@ -1031,69 +979,7 @@ int m6800_execute(int cycles)
 	return cycles - m6800_ICount;
 }
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *m6800_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 m6800_reg_layout[] = {
-		M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
-		M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6800_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6800_Regs *r = context;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m6800;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+M6800_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+M6800_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+M6800_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
-//		case CPU_INFO_REG+M6800_TIN_STATE: sprintf(buffer[which], "TIN:%X", r->irq_state[M6800_TIN_LINE]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? '?':'.',
-				r->cc & 0x40 ? '?':'.',
-				r->cc & 0x20 ? 'H':'.',
-				r->cc & 0x10 ? 'I':'.',
-				r->cc & 0x08 ? 'N':'.',
-				r->cc & 0x04 ? 'Z':'.',
-				r->cc & 0x02 ? 'V':'.',
-				r->cc & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "M6800";
-		case CPU_INFO_FAMILY: return "Motorola 6800";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "The MAME team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)m6800_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: case 6800: return (const char *)m6800_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned m6800_dasm(char *buffer, unsigned pc)
+static offs_t m6800_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(6800,buffer,pc);
@@ -1107,7 +993,7 @@ unsigned m6800_dasm(char *buffer, unsigned pc)
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
 #if (HAS_M6801)
-void m6801_init(void)
+static void m6801_init(void)
 {
 //	m6800.subtype = SUBTYPE_M6801;
 	m6800.insn = m6803_insn;
@@ -1115,46 +1001,12 @@ void m6801_init(void)
 	state_register("m6801");
 }
 
-void m6801_reset(void *param) { m6800_reset(param); }
-void m6801_exit(void) { m6800_exit(); }
-int  m6801_execute(int cycles) { return m6803_execute(cycles); }
-unsigned m6801_get_context(void *dst) { return m6800_get_context(dst); }
-void m6801_set_context(void *src) { m6800_set_context(src); }
-unsigned m6801_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void m6801_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6801_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void m6801_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *m6801_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 m6801_reg_layout[] = {
-		M6801_PC, M6801_S, M6801_CC, M6801_A, M6801_B, M6801_X, -1,
-		M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6801_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6801";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6801_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6801_win_layout;
-	}
-	return m6800_info(context,regnum);
-}
-unsigned m6801_dasm(char *buffer, unsigned pc)
+static offs_t m6801_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(6801,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -1165,54 +1017,20 @@ unsigned m6801_dasm(char *buffer, unsigned pc)
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6802)
-void m6802_init(void)
+static void m6802_init(void)
 {
 //	m6800.subtype   = SUBTYPE_M6802;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
 	state_register("m6802");
 }
-void m6802_reset(void *param) { m6800_reset(param); }
-void m6802_exit(void) { m6800_exit(); }
-int  m6802_execute(int cycles) { return m6800_execute(cycles); }
-unsigned m6802_get_context(void *dst) { return m6800_get_context(dst); }
-void m6802_set_context(void *src) { m6800_set_context(src); }
-unsigned m6802_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void m6802_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6802_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void m6802_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *m6802_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 m6802_reg_layout[] = {
-		M6802_PC, M6802_S, M6802_CC, M6802_A, M6802_B, M6802_X, -1,
-		M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, 0
-	};
 
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6802_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6802";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6802_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6802_win_layout;
-	}
-	return m6800_info(context,regnum);
-}
-
-unsigned m6802_dasm(char *buffer, unsigned pc)
+static offs_t m6802_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(6802,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -1230,17 +1048,16 @@ void m6803_init(void)
 	m6800.cycles = cycles_6803;
 	state_register("m6803");
 }
-void m6803_reset(void *param) {	m6800_reset(param); }
-void m6803_exit(void) { m6800_exit(); }
 #endif
+
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
 #if (HAS_M6803||HAS_M6801)
-int m6803_execute(int cycles)
+static int m6803_execute(int cycles)
 {
 	UINT8 ireg;
-	m6803_ICount = cycles;
+	m6800_ICount = cycles;
 
 	CLEANUP_conters;
 	INCREMENT_COUNTER(m6803.extra_cycles);
@@ -1520,54 +1337,22 @@ int m6803_execute(int cycles)
 			}
 			INCREMENT_COUNTER(cycles_6803[ireg]);
 		}
-	} while( m6803_ICount>0 );
+	} while( m6800_ICount>0 );
 
 	INCREMENT_COUNTER(m6803.extra_cycles);
 	m6803.extra_cycles = 0;
 
-	return cycles - m6803_ICount;
+	return cycles - m6800_ICount;
 }
 #endif
 
 #if (HAS_M6803)
-unsigned m6803_get_context(void *dst) { return m6800_get_context(dst); }
-void m6803_set_context(void *src) { m6800_set_context(src); }
-unsigned m6803_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void m6803_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6803_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void m6803_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *m6803_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 m6803_reg_layout[] = {
-		M6803_PC, M6803_S, M6803_CC, M6803_A, M6803_B, M6803_X, -1,
-		M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6803_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6803";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6803_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6803_win_layout;
-	}
-	return m6800_info(context,regnum);
-}
-
-unsigned m6803_dasm(char *buffer, unsigned pc)
+static offs_t m6803_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(6803,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -1577,54 +1362,20 @@ unsigned m6803_dasm(char *buffer, unsigned pc)
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6808)
-void m6808_init(void)
+static void m6808_init(void)
 {
 //	m6800.subtype = SUBTYPE_M6808;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
 	state_register("m6808");
 }
-void m6808_reset(void *param) { m6800_reset(param); }
-void m6808_exit(void) { m6800_exit(); }
-int  m6808_execute(int cycles) { return m6800_execute(cycles); }
-unsigned m6808_get_context(void *dst) { return m6800_get_context(dst); }
-void m6808_set_context(void *src) { m6800_set_context(src); }
-unsigned m6808_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void m6808_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6808_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void m6808_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *m6808_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 m6808_reg_layout[] = {
-		M6808_PC, M6808_S, M6808_CC, M6808_A, M6808_B, M6808_X, -1,
-		M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, 0
-	};
 
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6808_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6808";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6808_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6808_win_layout;
-	}
-	return m6800_info(context,regnum);
-}
-
-unsigned m6808_dasm(char *buffer, unsigned pc)
+static offs_t m6808_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(6808,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -1634,22 +1385,20 @@ unsigned m6808_dasm(char *buffer, unsigned pc)
  * HD63701 similiar to the M6800
  ****************************************************************************/
 #if (HAS_HD63701)
-void hd63701_init(void)
+static void hd63701_init(void)
 {
 //	m6800.subtype = SUBTYPE_HD63701;
 	m6800.insn = hd63701_insn;
 	m6800.cycles = cycles_63701;
 	state_register("hd63701");
 }
-void hd63701_reset(void *param) { m6800_reset(param); }
-void hd63701_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
-int hd63701_execute(int cycles)
+static int hd63701_execute(int cycles)
 {
 	UINT8 ireg;
-	hd63701_ICount = cycles;
+	m6800_ICount = cycles;
 
 	CLEANUP_conters;
 	INCREMENT_COUNTER(hd63701.extra_cycles);
@@ -1929,48 +1678,16 @@ int hd63701_execute(int cycles)
 			}
 			INCREMENT_COUNTER(cycles_63701[ireg]);
 		}
-	} while( hd63701_ICount>0 );
+	} while( m6800_ICount>0 );
 
 	INCREMENT_COUNTER(hd63701.extra_cycles);
 	hd63701.extra_cycles = 0;
 
-	return cycles - hd63701_ICount;
-}
-
-unsigned hd63701_get_context(void *dst) { return m6800_get_context(dst); }
-void hd63701_set_context(void *src) { m6800_set_context(src); }
-unsigned hd63701_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void hd63701_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void hd63701_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void hd63701_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *hd63701_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 hd63701_reg_layout[] = {
-		HD63701_PC, HD63701_S, HD63701_CC, HD63701_A, HD63701_B, HD63701_X, -1,
-		HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 hd63701_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "HD63701";
-		case CPU_INFO_REG_LAYOUT: return (const char*)hd63701_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)hd63701_win_layout;
-	}
-	return m6800_info(context,regnum);
+	return cycles - m6800_ICount;
 }
 
 /*
-	if change_pc16() direccted these areas ,Call hd63701_trap_pc().
+	if change_pc() direccted these areas ,Call hd63701_trap_pc().
 	'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
 	mode 0,1,2,4,6 : $0000-$001f
 	mode 5         : $0000-$001f,$0200-$efff
@@ -1991,12 +1708,12 @@ WRITE_HANDLER( hd63701_internal_registers_w )
 	m6803_internal_registers_w(offset,data);
 }
 
-unsigned hd63701_dasm(char *buffer, unsigned pc)
+static offs_t hd63701_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(63701,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -2007,22 +1724,20 @@ unsigned hd63701_dasm(char *buffer, unsigned pc)
  * is at least one new opcode ($fc)
  ****************************************************************************/
 #if (HAS_NSC8105)
-void nsc8105_init(void)
+static void nsc8105_init(void)
 {
 //	m6800.subtype = SUBTYPE_NSC8105;
 	m6800.insn = nsc8105_insn;
 	m6800.cycles = cycles_nsc8105;
 	state_register("nsc8105");
 }
-void nsc8105_reset(void *param) { m6800_reset(param); }
-void nsc8105_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
-int nsc8105_execute(int cycles)
+static int nsc8105_execute(int cycles)
 {
 	UINT8 ireg;
-	nsc8105_ICount = cycles;
+	m6800_ICount = cycles;
 
 	CLEANUP_conters;
 	INCREMENT_COUNTER(nsc8105.extra_cycles);
@@ -2302,52 +2017,20 @@ int nsc8105_execute(int cycles)
 			}
 			INCREMENT_COUNTER(cycles_nsc8105[ireg]);
 		}
-	} while( nsc8105_ICount>0 );
+	} while( m6800_ICount>0 );
 
 	INCREMENT_COUNTER(nsc8105.extra_cycles);
 	nsc8105.extra_cycles = 0;
 
-	return cycles - nsc8105_ICount;
+	return cycles - m6800_ICount;
 }
 
-unsigned nsc8105_get_context(void *dst) { return m6800_get_context(dst); }
-void nsc8105_set_context(void *src) { m6800_set_context(src); }
-unsigned nsc8105_get_reg(int regnum) { return m6800_get_reg(regnum); }
-void nsc8105_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void nsc8105_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
-void nsc8105_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-const char *nsc8105_info(void *context, int regnum)
-{
-	/* Layout of the registers in the debugger */
-	static UINT8 nsc8105_reg_layout[] = {
-		NSC8105_PC, NSC8105_S, NSC8105_CC, NSC8105_A, NSC8105_B, NSC8105_X, -1,
-		NSC8105_WAI_STATE, NSC8105_NMI_STATE, NSC8105_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 nsc8105_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "NSC8105";
-		case CPU_INFO_REG_LAYOUT: return (const char*)nsc8105_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)nsc8105_win_layout;
-	}
-	return m6800_info(context,regnum);
-}
-
-unsigned nsc8105_dasm(char *buffer, unsigned pc)
+static offs_t nsc8105_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm680x(8105,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
 	return 1;
 #endif
 }
@@ -2365,10 +2048,10 @@ READ_HANDLER( m6803_internal_registers_r )
 		case 0x01:
 			return m6800.port2_ddr;
 		case 0x02:
-			return (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff))
+			return (io_read_byte_8(M6803_PORT1) & (m6800.port1_ddr ^ 0xff))
 					| (m6800.port1_data & m6800.port1_ddr);
 		case 0x03:
-			return (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff))
+			return (io_read_byte_8(M6803_PORT2) & (m6800.port2_ddr ^ 0xff))
 					| (m6800.port2_data & m6800.port2_ddr);
 		case 0x04:
 		case 0x05:
@@ -2450,10 +2133,10 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			{
 				m6800.port1_ddr = data;
 				if(m6800.port1_ddr == 0xff)
-					cpu_writeport16(M6803_PORT1,m6800.port1_data);
+					io_write_byte_8(M6803_PORT1,m6800.port1_data);
 				else
-					cpu_writeport16(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
-						| (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
+					io_write_byte_8(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+						| (io_read_byte_8(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
 			}
 			break;
 		case 0x01:
@@ -2461,10 +2144,10 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			{
 				m6800.port2_ddr = data;
 				if(m6800.port2_ddr == 0xff)
-					cpu_writeport16(M6803_PORT2,m6800.port2_data);
+					io_write_byte_8(M6803_PORT2,m6800.port2_data);
 				else
-					cpu_writeport16(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
-						| (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
+					io_write_byte_8(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+						| (io_read_byte_8(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
 
 				if (m6800.port2_ddr & 2)
 					logerror("CPU #%d PC %04x: warning - port 2 bit 1 set as output (OLVL) - not supported\n",cpu_getactivecpu(),activecpu_get_pc());
@@ -2473,19 +2156,19 @@ WRITE_HANDLER( m6803_internal_registers_w )
 		case 0x02:
 			m6800.port1_data = data;
 			if(m6800.port1_ddr == 0xff)
-				cpu_writeport16(M6803_PORT1,m6800.port1_data);
+				io_write_byte_8(M6803_PORT1,m6800.port1_data);
 			else
-				cpu_writeport16(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
-					| (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
+				io_write_byte_8(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+					| (io_read_byte_8(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
 			break;
 		case 0x03:
 			m6800.port2_data = data;
 			m6800.port2_ddr = data;
 			if(m6800.port2_ddr == 0xff)
-				cpu_writeport16(M6803_PORT2,m6800.port2_data);
+				io_write_byte_8(M6803_PORT2,m6800.port2_data);
 			else
-				cpu_writeport16(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
-					| (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
+				io_write_byte_8(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+					| (io_read_byte_8(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
 			break;
 		case 0x04:
 		case 0x05:
@@ -2559,3 +2242,281 @@ WRITE_HANDLER( m6803_internal_registers_w )
 }
 #endif
 
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void m6800_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + M6800_IRQ_LINE:set_irq_line(M6800_IRQ_LINE, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + M6800_TIN_LINE:set_irq_line(M6800_TIN_LINE, info->i);		break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:	set_irq_line(IRQ_LINE_NMI, info->i);		break;
+
+		case CPUINFO_INT_PC:							PC = info->i; CHANGE_PC();				break;
+		case CPUINFO_INT_REGISTER + M6800_PC:			m6800.pc.w.l = info->i;					break;
+		case CPUINFO_INT_SP:							S = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6800_S:			m6800.s.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + M6800_CC:			m6800.cc = info->i;						break;
+		case CPUINFO_INT_REGISTER + M6800_A:			m6800.d.b.h = info->i;					break;
+		case CPUINFO_INT_REGISTER + M6800_B:			m6800.d.b.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + M6800_X:			m6800.x.w.l = info->i;					break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					m6800.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void m6800_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6800);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 12;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + M6800_IRQ_LINE:	info->i = m6800.irq_state[M6800_IRQ_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + M6800_TIN_LINE:	info->i = m6800.irq_state[M6800_TIN_LINE]; break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6800.nmi_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = m6800.ppc.w.l;				break;
+
+		case CPUINFO_INT_PC:							info->i = PC;							break;
+		case CPUINFO_INT_REGISTER + M6800_PC:			info->i = m6800.pc.w.l;					break;
+		case CPUINFO_INT_SP:							info->i = S;							break;
+		case CPUINFO_INT_REGISTER + M6800_S:			info->i = m6800.s.w.l;					break;
+		case CPUINFO_INT_REGISTER + M6800_CC:			info->i = m6800.cc;						break;
+		case CPUINFO_INT_REGISTER + M6800_A:			info->i = m6800.d.b.h;					break;
+		case CPUINFO_INT_REGISTER + M6800_B:			info->i = m6800.d.b.l;					break;
+		case CPUINFO_INT_REGISTER + M6800_X:			info->i = m6800.x.w.l;					break;
+		case CPUINFO_INT_REGISTER + M6800_WAI_STATE:	info->i = m6800.wai_state;				break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6800_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6800_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6800_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = m6800_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = m6800_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = m6800_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6800_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6800_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6800.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6800_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6800_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6800_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6800"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6800"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "The MAME team."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				m6800.cc & 0x80 ? '?':'.',
+				m6800.cc & 0x40 ? '?':'.',
+				m6800.cc & 0x20 ? 'H':'.',
+				m6800.cc & 0x10 ? 'I':'.',
+				m6800.cc & 0x08 ? 'N':'.',
+				m6800.cc & 0x04 ? 'Z':'.',
+				m6800.cc & 0x02 ? 'V':'.',
+				m6800.cc & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + M6800_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6800.d.b.h); break;
+		case CPUINFO_STR_REGISTER + M6800_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m6800.d.b.l); break;
+		case CPUINFO_STR_REGISTER + M6800_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6800.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m6800.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", m6800.x.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6800.cc); break;
+		case CPUINFO_STR_REGISTER + M6800_WAI_STATE:	sprintf(info->s = cpuintrf_temp_str(), "WAI:%X", m6800.wai_state); break;
+	}
+}
+
+
+#if (HAS_M6801)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m6801_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m6801_init;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6803_execute;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6801_dasm;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6801"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_M6802)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m6802_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m6802_init;				break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6802_dasm;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6802"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_M6803)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m6803_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m6803_init;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6803_execute;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6803_dasm;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6803"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_M6808)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void m6808_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m6808_init;				break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6808_dasm;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6808"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_HD63701)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void hd63701_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = hd63701_init;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = hd63701_execute;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hd63701_dasm;		break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD63701"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_NSC8105)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void nsc8105_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = nsc8105_init;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = nsc8105_execute;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = nsc8105_dasm;		break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "NSC8105"); break;
+
+		default:
+			m6800_get_info(state, info);
+			break;
+	}
+}
+#endif

@@ -134,35 +134,35 @@ READ_HANDLER( triplhnt_da_latch_r )
 }
 
 
-static MEMORY_READ_START( triplhnt_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x03ff, triplhnt_zeropage_r },
-	{ 0x0c00, 0x0c00, input_port_0_r },
-	{ 0x0c08, 0x0c08, input_port_1_r },
-	{ 0x0c09, 0x0c09, input_port_2_r },
-	{ 0x0c0a, 0x0c0a, input_port_3_r },
-	{ 0x0c0b, 0x0c0b, triplhnt_input_port_4_r },
-	{ 0x0c10, 0x0c1f, triplhnt_da_latch_r },
-	{ 0x0c20, 0x0c2f, triplhnt_cmos_r },
-	{ 0x0c30, 0x0c3f, triplhnt_misc_r },
-	{ 0x0c40, 0x0c40, input_port_5_r },
-	{ 0x0c48, 0x0c48, input_port_6_r },
-	{ 0x7000, 0x7fff, MRA_ROM }, /* program */
-	{ 0xf800, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( triplhnt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x03ff) AM_READ(triplhnt_zeropage_r)
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r)
+	AM_RANGE(0x0c08, 0x0c08) AM_READ(input_port_1_r)
+	AM_RANGE(0x0c09, 0x0c09) AM_READ(input_port_2_r)
+	AM_RANGE(0x0c0a, 0x0c0a) AM_READ(input_port_3_r)
+	AM_RANGE(0x0c0b, 0x0c0b) AM_READ(triplhnt_input_port_4_r)
+	AM_RANGE(0x0c10, 0x0c1f) AM_READ(triplhnt_da_latch_r)
+	AM_RANGE(0x0c20, 0x0c2f) AM_READ(triplhnt_cmos_r)
+	AM_RANGE(0x0c30, 0x0c3f) AM_READ(triplhnt_misc_r)
+	AM_RANGE(0x0c40, 0x0c40) AM_READ(input_port_5_r)
+	AM_RANGE(0x0c48, 0x0c48) AM_READ(input_port_6_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( triplhnt_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x03ff, triplhnt_zeropage_w },
-	{ 0x0400, 0x04ff, MWA_RAM, &triplhnt_playfield_ram },
-	{ 0x0800, 0x080f, MWA_RAM, &triplhnt_vpos_ram },
-	{ 0x0810, 0x081f, MWA_RAM, &triplhnt_hpos_ram },
-	{ 0x0820, 0x082f, MWA_RAM, &triplhnt_orga_ram },
-	{ 0x0830, 0x083f, MWA_RAM, &triplhnt_code_ram },
-	{ 0x0c30, 0x0c3f, triplhnt_misc_w },
-	{ 0x7000, 0x7fff, MWA_ROM }, /* program */
-	{ 0xf800, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( triplhnt_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x03ff) AM_WRITE(triplhnt_zeropage_w)
+	AM_RANGE(0x0400, 0x04ff) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_playfield_ram)
+	AM_RANGE(0x0800, 0x080f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_vpos_ram)
+	AM_RANGE(0x0810, 0x081f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_hpos_ram)
+	AM_RANGE(0x0820, 0x082f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_orga_ram)
+	AM_RANGE(0x0830, 0x083f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_code_ram)
+	AM_RANGE(0x0c30, 0x0c3f) AM_WRITE(triplhnt_misc_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( triplhnt )
@@ -314,7 +314,7 @@ static MACHINE_DRIVER_START( triplhnt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 800000)
-	MDRV_CPU_MEMORY(triplhnt_readmem, triplhnt_writemem)
+	MDRV_CPU_PROGRAM_MAP(triplhnt_readmem, triplhnt_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

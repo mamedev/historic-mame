@@ -34,20 +34,20 @@ static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 	}
 }
 
-static MEMORY_READ16_START( splash_readmem )
-	{ 0x000000, 0x3fffff, MRA16_ROM },			/* ROM */
-	{ 0x800000, 0x83ffff, splash_pixelram_r },	/* Pixel Layer */
-	{ 0x840000, 0x840001, input_port_0_word_r },/* DIPSW #1 */
-	{ 0x840002, 0x840003, input_port_1_word_r },/* DIPSW #2 */
-	{ 0x840004, 0x840005, input_port_2_word_r },/* INPUT #1 */
-	{ 0x840006, 0x840007, input_port_3_word_r },/* INPUT #2 */
-	{ 0x880000, 0x8817ff, splash_vram_r },		/* Video RAM */
-	{ 0x881800, 0x881803, MRA16_RAM },			/* Scroll registers */
-	{ 0x881804, 0x881fff, MRA16_RAM },			/* Work RAM */
-	{ 0x8c0000, 0x8c0fff, MRA16_RAM },			/* Palette */
-	{ 0x900000, 0x900fff, MRA16_RAM },			/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MRA16_RAM },			/* Work RAM */
-MEMORY_END
+static ADDRESS_MAP_START( splash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
+	AM_RANGE(0x800000, 0x83ffff) AM_READ(splash_pixelram_r)	/* Pixel Layer */
+	AM_RANGE(0x840000, 0x840001) AM_READ(input_port_0_word_r)/* DIPSW #1 */
+	AM_RANGE(0x840002, 0x840003) AM_READ(input_port_1_word_r)/* DIPSW #2 */
+	AM_RANGE(0x840004, 0x840005) AM_READ(input_port_2_word_r)/* INPUT #1 */
+	AM_RANGE(0x840006, 0x840007) AM_READ(input_port_3_word_r)/* INPUT #2 */
+	AM_RANGE(0x880000, 0x8817ff) AM_READ(splash_vram_r)		/* Video RAM */
+	AM_RANGE(0x881800, 0x881803) AM_READ(MRA16_RAM)			/* Scroll registers */
+	AM_RANGE(0x881804, 0x881fff) AM_READ(MRA16_RAM)			/* Work RAM */
+	AM_RANGE(0x8c0000, 0x8c0fff) AM_READ(MRA16_RAM)			/* Palette */
+	AM_RANGE(0x900000, 0x900fff) AM_READ(MRA16_RAM)			/* Sprite RAM */
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)			/* Work RAM */
+ADDRESS_MAP_END
 
 WRITE16_HANDLER( splash_coin_w )
 {
@@ -65,26 +65,26 @@ WRITE16_HANDLER( splash_coin_w )
 	}
 }
 
-static MEMORY_WRITE16_START( splash_writemem )
-	{ 0x000000, 0x3fffff, MWA16_ROM },										/* ROM */
-	{ 0x800000, 0x83ffff, splash_pixelram_w, &splash_pixelram },			/* Pixel Layer */
-	{ 0x84000e, 0x84000f, splash_sh_irqtrigger_w },							/* Sound command */
-	{ 0x84000a, 0x84003b, splash_coin_w },									/* Coin Counters + Coin Lockout */
-	{ 0x880000, 0x8817ff, splash_vram_w, &splash_videoram },				/* Video RAM */
-	{ 0x881800, 0x881803, MWA16_RAM, &splash_vregs },						/* Scroll registers */
-	{ 0x881804, 0x881fff, MWA16_RAM },										/* Work RAM */
-	{ 0x8c0000, 0x8c0fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },/* Palette is xRRRRxGGGGxBBBBx */
-	{ 0x900000, 0x900fff, MWA16_RAM, &splash_spriteram },					/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MWA16_RAM },										/* Work RAM */
-MEMORY_END
+static ADDRESS_MAP_START( splash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)										/* ROM */
+	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(splash_pixelram_w) AM_BASE(&splash_pixelram)			/* Pixel Layer */
+	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)							/* Sound command */
+	AM_RANGE(0x84000a, 0x84003b) AM_WRITE(splash_coin_w)									/* Coin Counters + Coin Lockout */
+	AM_RANGE(0x880000, 0x8817ff) AM_WRITE(splash_vram_w) AM_BASE(&splash_videoram)				/* Video RAM */
+	AM_RANGE(0x881800, 0x881803) AM_WRITE(MWA16_RAM) AM_BASE(&splash_vregs)						/* Scroll registers */
+	AM_RANGE(0x881804, 0x881fff) AM_WRITE(MWA16_RAM)										/* Work RAM */
+	AM_RANGE(0x8c0000, 0x8c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)/* Palette is xRRRRxGGGGxBBBBx */
+	AM_RANGE(0x900000, 0x900fff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_spriteram)					/* Sprite RAM */
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)										/* Work RAM */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( splash_readmem_sound )
-	{ 0x0000, 0xd7ff, MRA_ROM },					/* ROM */
-	{ 0xe800, 0xe800, soundlatch_r },				/* Sound latch */
-	{ 0xf000, 0xf000, YM3812_status_port_0_r },		/* YM3812 */
-	{ 0xf800, 0xffff, MRA_RAM },					/* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( splash_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xd7ff) AM_READ(MRA8_ROM)					/* ROM */
+	AM_RANGE(0xe800, 0xe800) AM_READ(soundlatch_r)				/* Sound latch */
+	AM_RANGE(0xf000, 0xf000) AM_READ(YM3812_status_port_0_r)		/* YM3812 */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)					/* RAM */
+ADDRESS_MAP_END
 
 static int adpcm_data;
 
@@ -99,14 +99,14 @@ static void splash_msm5205_int(int data)
 }
 
 
-static MEMORY_WRITE_START( splash_writemem_sound )
-	{ 0x0000, 0xd7ff, MWA_ROM },					/* ROM */
-	{ 0xd800, 0xd800, splash_adpcm_data_w },		/* ADPCM data for the MSM5205 chip */
-//	{ 0xe000, 0xe000, MWA_NOP },					/* ??? */
-	{ 0xf000, 0xf000, YM3812_control_port_0_w },	/* YM3812 */
-	{ 0xf001, 0xf001, YM3812_write_port_0_w },		/* YM3812 */
-	{ 0xf800, 0xffff, MWA_RAM },					/* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( splash_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xd7ff) AM_WRITE(MWA8_ROM)					/* ROM */
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(splash_adpcm_data_w)		/* ADPCM data for the MSM5205 chip */
+//	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)					/* ??? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM3812_control_port_0_w)	/* YM3812 */
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM3812_write_port_0_w)		/* YM3812 */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)					/* RAM */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( splash )
@@ -233,12 +233,12 @@ static MACHINE_DRIVER_START( splash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz */
-	MDRV_CPU_MEMORY(splash_readmem,splash_writemem)
+	MDRV_CPU_PROGRAM_MAP(splash_readmem,splash_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,30000000/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz? */
-	MDRV_CPU_MEMORY(splash_readmem_sound,splash_writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
 
 	MDRV_FRAMES_PER_SECOND(60)

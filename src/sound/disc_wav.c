@@ -14,6 +14,8 @@
 /* DSS_SAWTOOTHWAVE      - Sawtooth waveform generator                  */
 /* DSS_NOISE             - Noise Source - Random source                 */
 /* DSS_LFSR_NOISE        - Linear Feedback Shift Register Noise         */
+/* DISCRETE_COUNTER      - External clock Binary Counter                */
+/* DISCRETE_COUNTER_FIX  - Fixed Frequency Binary Counter               */
 /*                                                                      */
 /************************************************************************/
 
@@ -62,9 +64,22 @@ struct dss_trianglewave_context
 
 struct dss_sawtoothwave_context
 {
-	double phase;
-	int type;
+	double	phase;
+	int	type;
 };
+
+struct dss_counter_context
+{
+	int last;		// Last clock state
+};
+
+struct dss_counterfix_context
+{
+	double sampleStep;	// time taken up by 1 audio sample
+	double tCycle;		// time period of selected frequency
+	double tLeft;		// time left sampling current frequency cycle
+};
+
 
 /************************************************************************/
 /*                                                                      */
@@ -330,7 +345,7 @@ int dss_squarewfix_init(struct node_description *node)
 	/* Allocate memory for the context array and the node execution order array */
 	if((node->context=malloc(sizeof(struct dss_squarewfix_context)))==NULL)
 	{
-		discrete_log("dss_squarewave2_init() - Failed to allocate local context memory.");
+		discrete_log("dss_squarewfix_init() - Failed to allocate local context memory.");
 		return 1;
 	}
 	else
@@ -443,7 +458,6 @@ int dss_squarewave2_init(struct node_description *node)
 /* input2    - Amplitde input value                                     */
 /* input3    - DC Bias value                                            */
 /* input4    - Initial Phase                                            */
-/* input5    - NOT USED                                                 */
 /*                                                                      */
 /************************************************************************/
 int dss_trianglewave_step(struct node_description *node)
@@ -605,8 +619,6 @@ int dss_sawtoothwave_init(struct node_description *node)
 /* input1    - Noise sample frequency                                   */
 /* input2    - Amplitude input value                                    */
 /* input3    - DC Bias value                                            */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
 /*                                                                      */
 /************************************************************************/
 int dss_noise_step(struct node_description *node)
@@ -823,7 +835,6 @@ int dss_lfsr_reset(struct node_description *node)
 	context->lfsr_reg=lfsr_desc->reset_value;
 
 	context->lfsr_reg=dss_lfsr_function(DISC_LFSR_REPLACE,0, (dss_lfsr_function(lfsr_desc->feedback_function0,0,0,0x01))<<(lfsr_desc->bitlength),((2<<(lfsr_desc->bitlength))-1));
-	discrete_log("Shift register RESET to     %#10X.\n",(context->lfsr_reg));
 
 	/* Now select and setup the output bit */
 	node->output=((context->lfsr_reg)>>(lfsr_desc->output_bit))&0x01;
@@ -876,9 +887,6 @@ int dss_lfsr_init(struct node_description *node)
 /* input0    - Enable input value                                       */
 /* input1    - Trigger value                                            */
 /* input2    - gain scaling factor                                      */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - NOT USED                                                 */
 /*                                                                      */
 /************************************************************************/
 int dss_adsrenv_step(struct node_description *node)
@@ -923,6 +931,158 @@ int dss_adsrenv_init(struct node_description *node)
 
 	/* Initialise the object */
 	dss_noise_reset(node);
+
+	return 0;
+}
+
+/************************************************************************/
+/*                                                                      */
+/* DISCRETE_COUNTER - External clock Binary Counter                     */
+/*                                                                      */
+/* input0    - Enable input value                                       */
+/* input1    - Reset input (active high)                                */
+/* input2    - Clock Input                                              */
+/* input3    - Max count                                                */
+/* input4    - Direction - 0=down, 1=up                                 */
+/* input5    - Reset Value                                              */
+/* input6    - Clock type (count on 0/1)                                */
+/*                                                                      */
+/************************************************************************/
+int dss_counter_step(struct node_description *node)
+{
+	struct dss_counter_context *context=(struct dss_counter_context*)node->context;
+	int clock = node->input[2] && node->input[2];
+	/*
+	 * We will count at the selected changeover to high/low, only when enabled.
+	 * We don't count if module is not enabled.
+	 * This has the effect of holding the output at it's current value.
+	 */
+	if ((context->last != clock) && node->input[0])
+	{
+		/* Toggled */
+		context->last = clock;
+
+		if (node->input[6] == clock)
+		{
+			/* Proper edge */
+			node->output += node->input[4] ? 1 : -1; // up/down
+			if (node->output < 0) node->output = node->input[3];
+			if (node->output > node->input[3]) node->output = 0;
+		}
+	}
+
+	/* If reset enabled then set output to the reset value. */
+	if (node->input[1]) node->output = node->input[5];
+
+	return 0;
+}
+
+int dss_counter_reset(struct node_description *node)
+{
+	struct dss_counter_context *context=(struct dss_counter_context*)node->context;
+
+	context->last = node->input[2] && node->input[2];
+	node->output = node->input[5]; /* Output starts at reset value */
+
+	return 0;
+}
+
+int dss_counter_init(struct node_description *node)
+{
+	discrete_log("dss_counter_init() - Creating node %d.",node->node-NODE_00);
+
+	/* Allocate memory for the context array and the node execution order array */
+	if((node->context=malloc(sizeof(struct dss_counter_context)))==NULL)
+	{
+		discrete_log("dss_counter_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialise memory */
+		memset(node->context,0,sizeof(struct dss_counter_context));
+	}
+
+	/* Initialise the object */
+	dss_counter_reset(node);
+
+	return 0;
+}
+
+
+/************************************************************************/
+/*                                                                      */
+/* DISCRETE_COUNTER_FIX - Fixed Frequency Binary Counter                */
+/*                                                                      */
+/* input0    - Enable input value                                       */
+/* input1    - Reset input (active high)                                */
+/* input2    - Frequency                                                */
+/* input3    - Max count                                                */
+/* input4    - Direction - 0=up, 1=down                                 */
+/* input5    - Reset Value                                              */
+/*                                                                      */
+/************************************************************************/
+int dss_counterfix_step(struct node_description *node)
+{
+	struct dss_counterfix_context *context=(struct dss_counterfix_context*)node->context;
+
+	context->tLeft -= context->sampleStep;
+
+	/* The enable input only curtails output, phase rotation still occurs. */
+	while (context->tLeft <= 0)
+	{
+
+		/*
+		 * We will count when enabled.
+		 * We don't count if module is not enabled.
+		 * This has the effect of holding the output at it's current value.
+		 */
+		if (node->input[0])
+		{
+			node->output += node->input[4] ? 1 : -1; // up/down
+			if (node->output < 0) node->output = node->input[3];
+			if (node->output > node->input[3]) node->output = 0;
+		}
+
+		context->tLeft += context->tCycle;
+	}
+
+	/* If reset enabled then set output to the reset value. */
+	if (node->input[1]) node->output = node->input[5];
+
+	return 0;
+}
+
+int dss_counterfix_reset(struct node_description *node)
+{
+	struct dss_counterfix_context *context=(struct dss_counterfix_context*)node->context;
+
+	context->sampleStep = 1.0 / Machine->sample_rate;
+	context->tCycle = 1.0 / node->input[2];
+	context->tLeft = context->tCycle;
+	node->output = node->input[5]; /* Output starts at reset value */
+
+	return 0;
+}
+
+int dss_counterfix_init(struct node_description *node)
+{
+	discrete_log("dss_counterfix_init() - Creating node %d.",node->node-NODE_00);
+
+	/* Allocate memory for the context array and the node execution order array */
+	if((node->context=malloc(sizeof(struct dss_counterfix_context)))==NULL)
+	{
+		discrete_log("dss_counterfix_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialise memory */
+		memset(node->context,0,sizeof(struct dss_counterfix_context));
+	}
+
+	/* Initialise the object */
+	dss_counterfix_reset(node);
 
 	return 0;
 }

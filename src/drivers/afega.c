@@ -72,80 +72,80 @@ WRITE16_HANDLER( afega_soundlatch_w )
  AFAIK)
 */
 
-static MEMORY_READ16_START( afega_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0x080000, 0x080001, input_port_0_word_r		},	// Buttons
-	{ 0x080002, 0x080003, input_port_1_word_r		},	// P1 + P2
-	{ 0x080004, 0x080005, input_port_2_word_r		},	// 2 x DSW
-	{ 0x080012, 0x080013, afega_unknown_r           },
-/**/{ 0x088000, 0x0885ff, MRA16_RAM					},	// Palette
-/**/{ 0x08c000, 0x08c003, MRA16_RAM					},	// Scroll
-/**/{ 0x08c004, 0x08c007, MRA16_RAM					},	//
-/**/{ 0x090000, 0x091fff, MRA16_RAM					},	// Layer 0
-/**/{ 0x092000, 0x093fff, MRA16_RAM           		},	// ?
-/**/{ 0x09c000, 0x09c7ff, MRA16_RAM					},	// Layer 1
-	{ 0x3c0000, 0x3c7fff, MRA16_RAM					},	// RAM
-	{ 0x3c8000, 0x3c8fff, MRA16_RAM					},	// Sprites
-	{ 0x3c9000, 0x3cffff, MRA16_RAM					},	// RAM
-	{ 0xff8000, 0xff8fff, MRA16_BANK1				},	// Sprites Mirror
-MEMORY_END
+static ADDRESS_MAP_START( afega_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r		)	// Buttons
+	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r		)	// P1 + P2
+	AM_RANGE(0x080004, 0x080005) AM_READ(input_port_2_word_r		)	// 2 x DSW
+	AM_RANGE(0x080012, 0x080013) AM_READ(afega_unknown_r)
+/**/AM_RANGE(0x088000, 0x0885ff) AM_READ(MRA16_RAM					)	// Palette
+/**/AM_RANGE(0x08c000, 0x08c003) AM_READ(MRA16_RAM					)	// Scroll
+/**/AM_RANGE(0x08c004, 0x08c007) AM_READ(MRA16_RAM					)	//
+/**/AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM					)	// Layer 0
+/**/AM_RANGE(0x092000, 0x093fff) AM_READ(MRA16_RAM           		)	// ?
+/**/AM_RANGE(0x09c000, 0x09c7ff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x3c0000, 0x3c7fff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x3c9000, 0x3cffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0xff8000, 0xff8fff) AM_READ(MRA16_BANK1				)	// Sprites Mirror
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( afega_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x080000, 0x08001d, MWA16_RAM						},	//
-	{ 0x08001e, 0x08001f, afega_soundlatch_w			},	// To Sound CPU
-	{ 0x080020, 0x087fff, MWA16_RAM						},	//
-	{ 0x088000, 0x0885ff, afega_palette_w, &paletteram16},	// Palette
-	{ 0x088600, 0x08bfff, MWA16_RAM						},	//
-	{ 0x08c000, 0x08c003, MWA16_RAM, &afega_scroll_0	},	// Scroll
-	{ 0x08c004, 0x08c007, MWA16_RAM, &afega_scroll_1	},	//
-	{ 0x08c008, 0x08ffff, MWA16_RAM						},	//
-	{ 0x090000, 0x091fff, afega_vram_0_w, &afega_vram_0	},	// Layer 0
-	{ 0x092000, 0x093fff, MWA16_RAM						},	// ?
-	{ 0x09c000, 0x09c7ff, afega_vram_1_w, &afega_vram_1	},	// Layer 1
-	{ 0x3c0000, 0x3c7fff, MWA16_RAM						},	// RAM
-	{ 0x3c8000, 0x3c8fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
-	{ 0x3c9000, 0x3cffff, MWA16_RAM						},	// RAM
-	{ 0xff8000, 0xff8fff, MWA16_BANK1				},	// Sprites Mirror
-MEMORY_END
+static ADDRESS_MAP_START( afega_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x080000, 0x08001d) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(afega_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x080020, 0x087fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x088000, 0x0885ff) AM_WRITE(afega_palette_w) AM_BASE(&paletteram16)	// Palette
+	AM_RANGE(0x088600, 0x08bfff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x08c000, 0x08c003) AM_WRITE(MWA16_RAM) AM_BASE(&afega_scroll_0	)	// Scroll
+	AM_RANGE(0x08c004, 0x08c007) AM_WRITE(MWA16_RAM) AM_BASE(&afega_scroll_1	)	//
+	AM_RANGE(0x08c008, 0x08ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x090000, 0x091fff) AM_WRITE(afega_vram_0_w) AM_BASE(&afega_vram_0	)	// Layer 0
+	AM_RANGE(0x092000, 0x093fff) AM_WRITE(MWA16_RAM						)	// ?
+	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(afega_vram_1_w) AM_BASE(&afega_vram_1	)	// Layer 1
+	AM_RANGE(0x3c0000, 0x3c7fff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x3c9000, 0x3cffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xff8000, 0xff8fff) AM_WRITE(MWA16_BANK1				)	// Sprites Mirror
+ADDRESS_MAP_END
 
 /* redhawk has main ram / sprites in a different location */
 
-static MEMORY_READ16_START( redhawk_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0x080000, 0x080001, input_port_0_word_r		},	// Buttons
-	{ 0x080002, 0x080003, input_port_1_word_r		},	// P1 + P2
-	{ 0x080004, 0x080005, input_port_2_word_r		},	// 2 x DSW
-/**/{ 0x088000, 0x0885ff, MRA16_RAM					},	// Palette
-/**/{ 0x08c000, 0x08c003, MRA16_RAM					},	// Scroll
-/**/{ 0x08c004, 0x08c007, MRA16_RAM					},	//
-/**/{ 0x090000, 0x091fff, MRA16_RAM					},	// Layer 0
-/**/{ 0x092000, 0x093fff, MRA16_RAM					},	// ?
-/**/{ 0x09c000, 0x09c7ff, MRA16_RAM					},	// Layer 1
-	{ 0x0c0000, 0x0c7fff, MRA16_RAM					},	// RAM
-	{ 0x0c8000, 0x0c8fff, MRA16_RAM					},	// Sprites
-	{ 0x0c9000, 0x0cffff, MRA16_RAM					},	// RAM
-	{ 0xff8000, 0xff8fff, MRA16_BANK1				},	// Sprites Mirror
-MEMORY_END
+static ADDRESS_MAP_START( redhawk_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r		)	// Buttons
+	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r		)	// P1 + P2
+	AM_RANGE(0x080004, 0x080005) AM_READ(input_port_2_word_r		)	// 2 x DSW
+/**/AM_RANGE(0x088000, 0x0885ff) AM_READ(MRA16_RAM					)	// Palette
+/**/AM_RANGE(0x08c000, 0x08c003) AM_READ(MRA16_RAM					)	// Scroll
+/**/AM_RANGE(0x08c004, 0x08c007) AM_READ(MRA16_RAM					)	//
+/**/AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM					)	// Layer 0
+/**/AM_RANGE(0x092000, 0x093fff) AM_READ(MRA16_RAM					)	// ?
+/**/AM_RANGE(0x09c000, 0x09c7ff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x0c0000, 0x0c7fff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x0c8000, 0x0c8fff) AM_READ(MRA16_RAM					)	// Sprites
+	AM_RANGE(0x0c9000, 0x0cffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0xff8000, 0xff8fff) AM_READ(MRA16_BANK1				)	// Sprites Mirror
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( redhawk_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x080000, 0x08001d, MWA16_RAM						},	//
-	{ 0x08001e, 0x08001f, afega_soundlatch_w			},	// To Sound CPU
-	{ 0x080020, 0x087fff, MWA16_RAM						},	//
-	{ 0x088000, 0x0885ff, afega_palette_w, &paletteram16},	// Palette
-	{ 0x088600, 0x08bfff, MWA16_RAM						},	//
-	{ 0x08c000, 0x08c003, MWA16_RAM, &afega_scroll_0	},	// Scroll
-	{ 0x08c004, 0x08c007, MWA16_RAM, &afega_scroll_1	},	//
-	{ 0x08c008, 0x08ffff, MWA16_RAM						},	//
-	{ 0x090000, 0x091fff, afega_vram_0_w, &afega_vram_0	},	// Layer 0
-	{ 0x092000, 0x093fff, MWA16_RAM						},	// ?
-	{ 0x09c000, 0x09c7ff, afega_vram_1_w, &afega_vram_1	},	// Layer 1
-	{ 0x0c0000, 0x0c7fff, MWA16_RAM						},	// RAM
-	{ 0x0c8000, 0x0c8fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
-	{ 0x0c9000, 0x0cffff, MWA16_RAM						},	// RAM
-	{ 0xff8000, 0xff8fff, MWA16_BANK1				},	// Sprites Mirror
-MEMORY_END
+static ADDRESS_MAP_START( redhawk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x080000, 0x08001d) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(afega_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x080020, 0x087fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x088000, 0x0885ff) AM_WRITE(afega_palette_w) AM_BASE(&paletteram16)	// Palette
+	AM_RANGE(0x088600, 0x08bfff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x08c000, 0x08c003) AM_WRITE(MWA16_RAM) AM_BASE(&afega_scroll_0	)	// Scroll
+	AM_RANGE(0x08c004, 0x08c007) AM_WRITE(MWA16_RAM) AM_BASE(&afega_scroll_1	)	//
+	AM_RANGE(0x08c008, 0x08ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x090000, 0x091fff) AM_WRITE(afega_vram_0_w) AM_BASE(&afega_vram_0	)	// Layer 0
+	AM_RANGE(0x092000, 0x093fff) AM_WRITE(MWA16_RAM						)	// ?
+	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(afega_vram_1_w) AM_BASE(&afega_vram_1	)	// Layer 1
+	AM_RANGE(0x0c0000, 0x0c7fff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x0c8000, 0x0c8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x0c9000, 0x0cffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xff8000, 0xff8fff) AM_WRITE(MWA16_BANK1				)	// Sprites Mirror
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -156,21 +156,21 @@ MEMORY_END
 
 ***************************************************************************/
 
-static MEMORY_READ_START( afega_sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MRA_RAM					},	// RAM
-	{ 0xf800, 0xf800, soundlatch_r				},	// From Main CPU
-	{ 0xf809, 0xf809, YM2151_status_port_0_r	},	// YM2151
-	{ 0xf80a, 0xf80a, OKIM6295_status_0_r		},	// M6295
-MEMORY_END
+static ADDRESS_MAP_START( afega_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r				)	// From Main CPU
+	AM_RANGE(0xf809, 0xf809) AM_READ(YM2151_status_port_0_r	)	// YM2151
+	AM_RANGE(0xf80a, 0xf80a) AM_READ(OKIM6295_status_0_r		)	// M6295
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( afega_sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM					},	// ROM
-	{ 0xf000, 0xf7ff, MWA_RAM					},	// RAM
-	{ 0xf808, 0xf808, YM2151_register_port_0_w	},	// YM2151
-	{ 0xf809, 0xf809, YM2151_data_port_0_w		},	//
-	{ 0xf80a, 0xf80a, OKIM6295_data_0_w			},	// M6295
-MEMORY_END
+static ADDRESS_MAP_START( afega_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0xf808, 0xf808) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
+	AM_RANGE(0xf809, 0xf809) AM_WRITE(YM2151_data_port_0_w		)	//
+	AM_RANGE(0xf80a, 0xf80a) AM_WRITE(OKIM6295_data_0_w			)	// M6295
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -551,12 +551,12 @@ static MACHINE_DRIVER_START( stagger1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M68000,10000000)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
+	MDRV_CPU_PROGRAM_MAP(afega_readmem,afega_writemem)
 	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(afega_sound_readmem,afega_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -584,7 +584,7 @@ static MACHINE_DRIVER_START( redhawk )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(stagger1)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(redhawk_readmem,redhawk_writemem)
+	MDRV_CPU_PROGRAM_MAP(redhawk_readmem,redhawk_writemem)
 
 MACHINE_DRIVER_END
 
@@ -592,12 +592,12 @@ static MACHINE_DRIVER_START( grdnstrm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
+	MDRV_CPU_PROGRAM_MAP(afega_readmem,afega_writemem)
 	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(afega_sound_readmem,afega_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

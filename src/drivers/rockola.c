@@ -129,124 +129,124 @@ void rockola_sh_update(void);
 
 
 
-static MEMORY_WRITE_START( sasuke_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
-	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
-	{ 0x4000, 0x97ff, MWA_ROM },
-	{ 0x3000, 0x3000, crtc6845_address_w },
-	{ 0x3001, 0x3001, crtc6845_register_w },
-	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
-	{ 0xb003, 0xb003, satansat_backcolor_w },
-MEMORY_END
+static ADDRESS_MAP_START( sasuke_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x4000, 0x97ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( satansat_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x4000, 0x97ff, MRA_ROM },
-	{ 0xb004, 0xb004, input_port_0_r }, /* IN0 */
-	{ 0xb005, 0xb005, input_port_1_r }, /* IN1 */
-	{ 0xb006, 0xb006, input_port_2_r }, /* DSW */
-	{ 0xb007, 0xb007, input_port_3_r }, /* IN2 */
-	{ 0xf800, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( satansat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x97ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r) /* DSW */
+	AM_RANGE(0xb007, 0xb007) AM_READ(input_port_3_r) /* IN2 */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( satansat_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
-	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
-	{ 0x4000, 0x97ff, MWA_ROM },
-	{ 0x3000, 0x3000, crtc6845_address_w },
-	{ 0x3001, 0x3001, crtc6845_register_w },
-	{ 0xb000, 0xb000, satansat_sound0_w },
-	{ 0xb001, 0xb001, satansat_sound1_w },
-	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
-	{ 0xb003, 0xb003, satansat_backcolor_w },
-MEMORY_END
+static ADDRESS_MAP_START( satansat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x4000, 0x97ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(satansat_sound0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(satansat_sound1_w)
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
+	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( vanguard_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x3104, 0x3104, input_port_0_r },	/* IN0 */
-	{ 0x3105, 0x3105, input_port_1_r },	/* IN1 */
-	{ 0x3106, 0x3106, input_port_2_r },	/* DSW */
-	{ 0x3107, 0x3107, input_port_3_r },	/* IN2 */
-	{ 0x4000, 0xbfff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( vanguard_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3104, 0x3104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x3105, 0x3105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x3106, 0x3106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0x3107, 0x3107) AM_READ(input_port_3_r)	/* IN2 */
+	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( vanguard_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
-	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
-	{ 0x3000, 0x3000, crtc6845_address_w },
-	{ 0x3001, 0x3001, crtc6845_register_w },
-	{ 0x3100, 0x3100, vanguard_sound0_w },
-	{ 0x3101, 0x3101, vanguard_sound1_w },
-//	{ 0x3102, 0x3102, },	/* TODO: music channels #0 and #1 volume */
-	{ 0x3103, 0x3103, rockola_flipscreen_w },
-	{ 0x3200, 0x3200, rockola_scrollx_w },
-	{ 0x3300, 0x3300, rockola_scrolly_w },
-	{ 0x4000, 0xbfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( vanguard_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0x3100, 0x3100) AM_WRITE(vanguard_sound0_w)
+	AM_RANGE(0x3101, 0x3101) AM_WRITE(vanguard_sound1_w)
+//	AM_RANGE(0x3102, 0x3102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0x3103, 0x3103) AM_WRITE(rockola_flipscreen_w)
+	AM_RANGE(0x3200, 0x3200) AM_WRITE(rockola_scrollx_w)
+	AM_RANGE(0x3300, 0x3300) AM_WRITE(rockola_scrolly_w)
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( fantasy_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2104, 0x2104, input_port_0_r },	/* IN0 */
-	{ 0x2105, 0x2105, input_port_1_r },	/* IN1 */
-	{ 0x2106, 0x2106, input_port_2_r },	/* DSW */
-	{ 0x2107, 0x2107, input_port_3_r },	/* IN2 */
-	{ 0x3000, 0xbfff, MRA_ROM },
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( fantasy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2104, 0x2104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x2105, 0x2105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x2106, 0x2106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0x2107, 0x2107) AM_READ(input_port_3_r)	/* IN2 */
+	AM_RANGE(0x3000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fantasy_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
-	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
-	{ 0x2000, 0x2000, crtc6845_address_w },
-	{ 0x2001, 0x2001, crtc6845_register_w },
-	{ 0x2100, 0x2100, fantasy_sound0_w },
-	{ 0x2101, 0x2101, fantasy_sound1_w },
-//	{ 0x2102, 0x2102, },	/* TODO: music channels #0 and #1 volume */
-	{ 0x2103, 0x2103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
-	{ 0x2200, 0x2200, rockola_scrollx_w },
-	{ 0x2300, 0x2300, rockola_scrolly_w },
-	{ 0x3000, 0xbfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( fantasy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0x2100, 0x2100) AM_WRITE(fantasy_sound0_w)
+	AM_RANGE(0x2101, 0x2101) AM_WRITE(fantasy_sound1_w)
+//	AM_RANGE(0x2102, 0x2102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0x2103, 0x2103) AM_WRITE(fantasy_sound2_w)	/* + flipscreen, gfx bank, bg color */
+	AM_RANGE(0x2200, 0x2200) AM_WRITE(rockola_scrollx_w)
+	AM_RANGE(0x2300, 0x2300) AM_WRITE(rockola_scrolly_w)
+	AM_RANGE(0x3000, 0xbfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pballoon_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x3000, 0x9fff, MRA_ROM },
-	{ 0xb104, 0xb104, input_port_0_r },	/* IN0 */
-	{ 0xb105, 0xb105, input_port_1_r },	/* IN1 */
-	{ 0xb106, 0xb106, input_port_2_r },	/* DSW */
-	{ 0xb107, 0xb107, input_port_3_r },	/* IN2 */
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pballoon_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xb104, 0xb104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xb105, 0xb105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xb106, 0xb106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xb107, 0xb107) AM_READ(input_port_3_r)	/* IN2 */
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pballoon_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
-	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
-	{ 0x3000, 0x9fff, MWA_ROM },
-	{ 0xb000, 0xb000, crtc6845_address_w },
-	{ 0xb001, 0xb001, crtc6845_register_w },
-	{ 0xb100, 0xb100, fantasy_sound0_w },
-	{ 0xb101, 0xb101, fantasy_sound1_w },
-//	{ 0xb102, 0xb102, },	/* TODO: music channels #0 and #1 volume */
-	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
-	{ 0xb200, 0xb200, rockola_scrollx_w },
-	{ 0xb300, 0xb300, rockola_scrolly_w },
-MEMORY_END
+static ADDRESS_MAP_START( pballoon_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x3000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0xb100, 0xb100) AM_WRITE(fantasy_sound0_w)
+	AM_RANGE(0xb101, 0xb101) AM_WRITE(fantasy_sound1_w)
+//	AM_RANGE(0xb102, 0xb102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0xb103, 0xb103) AM_WRITE(fantasy_sound2_w)	/* + flipscreen, gfx bank, bg color */
+	AM_RANGE(0xb200, 0xb200) AM_WRITE(rockola_scrollx_w)
+	AM_RANGE(0xb300, 0xb300) AM_WRITE(rockola_scrolly_w)
+ADDRESS_MAP_END
 
 
 
@@ -695,7 +695,7 @@ static MACHINE_DRIVER_START( sasuke )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
-	MDRV_CPU_MEMORY(satansat_readmem,sasuke_writemem)
+	MDRV_CPU_PROGRAM_MAP(satansat_readmem,sasuke_writemem)
 	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -721,7 +721,7 @@ static MACHINE_DRIVER_START( satansat )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
-	MDRV_CPU_MEMORY(satansat_readmem,satansat_writemem)
+	MDRV_CPU_PROGRAM_MAP(satansat_readmem,satansat_writemem)
 	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -749,7 +749,7 @@ static MACHINE_DRIVER_START( vanguard )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_MEMORY(vanguard_readmem,vanguard_writemem)
+	MDRV_CPU_PROGRAM_MAP(vanguard_readmem,vanguard_writemem)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -777,7 +777,7 @@ static MACHINE_DRIVER_START( fantasy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_MEMORY(fantasy_readmem,fantasy_writemem)
+	MDRV_CPU_PROGRAM_MAP(fantasy_readmem,fantasy_writemem)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -806,7 +806,7 @@ static MACHINE_DRIVER_START( pballoon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_MEMORY(pballoon_readmem,pballoon_writemem)
+	MDRV_CPU_PROGRAM_MAP(pballoon_readmem,pballoon_writemem)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -976,7 +976,7 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
 ROM_END
 
-ROM_START( fantasy )
+ROM_START( fantasyu )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic12.cpu",        0x3000, 0x1000, CRC(22cb2249) SHA1(6c43e3fa9638b6d2e069199968923e470bd5d18b) )
 	ROM_LOAD( "ic07.cpu",        0x4000, 0x1000, CRC(0e2880b6) SHA1(666d6942864eb7a90178b3b6e2b0eb23aa3c967f) )
@@ -988,6 +988,38 @@ ROM_START( fantasy )
 	ROM_LOAD( "ic15.cpu",        0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
 	ROM_LOAD( "ic16.cpu",        0xa000, 0x1000, CRC(6c2aeb6e) SHA1(fd0b913a663bf2a5f45fc3d342d7575a9c7dae46) )
 	ROM_LOAD( "ic17.cpu",        0xb000, 0x1000, CRC(f6aa5de1) SHA1(ca53cf66cc6cdb21a60760102f35a5b0745ce09b) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
+	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, CRC(361a5e99) SHA1(b9777ce658549c03971bd476482d5cc0be27d3a9) ) /* foreground colors */
+	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, CRC(33d974f7) SHA1(a6f6a531dec3f454b477bfdda8e213e9cad42748) ) /* background colors */
+
+	ROM_REGION( 0x1800, REGION_SOUND1, 0 )	/* sound ROMs */
+	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
+	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
+	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
+
+	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
+	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
+	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
+ROM_END
+
+ROM_START( fantasy )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "5.12",            0x3000, 0x1000, CRC(0968ab50) SHA1(f09d03a171349895c5cb69e684901be63d272b32) )
+	ROM_LOAD( "1.7",             0x4000, 0x1000, CRC(de83000e) SHA1(ede1dda46406b4d340f1efea3bc85b2227af9e1d) )
+	ROM_LOAD( "2.8",             0x5000, 0x1000, CRC(90499b5a) SHA1(81a9d93a5655d2ff9504036bc764d8bb81e1470d) )
+	ROM_LOAD( "3.9",             0x6000, 0x1000, CRC(6fbffeb6) SHA1(b36aeaf095da4957103c8921957ff4be658eddf5) )
+	ROM_LOAD( "4.10",            0x7000, 0x1000, CRC(02e85884) SHA1(71fa6eb375fc417f92c049ec5118818b9ad48468) )
+	ROM_LOAD( "ic14.cpu",        0x8000, 0x1000, CRC(6f1f0698) SHA1(05bd114dcd08c990d897518a8ea7965bc82279bf) )
+	ROM_RELOAD(                  0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ic15.cpu",        0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
+	ROM_LOAD( "8.16",            0xa000, 0x1000, CRC(371129fe) SHA1(c21759222aebcc9ea1292e367a41ac43a4dd3554) )
+	ROM_LOAD( "9.17",            0xb000, 0x1000, CRC(56a7c8b8) SHA1(6c417644851c7b4b5291d9c5b2c808ff4a1ad048) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
@@ -1126,7 +1158,8 @@ GAMEX( 1981, satansat, 0,        satansat, satansat, 0, ROT90, "SNK", "Satan of 
 GAMEX( 1981, zarzon,   satansat, satansat, satansat, 0, ROT90, "[SNK] (Taito America license)", "Zarzon", GAME_IMPERFECT_SOUND )
 GAMEX( 1981, vanguard, 0,        vanguard, vanguard, 0, ROT90, "SNK", "Vanguard (SNK)", GAME_IMPERFECT_SOUND )
 GAMEX( 1981, vangrdce, vanguard, vanguard, vanguard, 0, ROT90, "SNK (Centuri license)", "Vanguard (Centuri)", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, fantasy,  0,        fantasy,  fantasy,  0, ROT90, "[SNK] (Rock-ola license)", "Fantasy (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, fantasy,  0,        fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (World)", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, fantasyu, fantasy,  fantasy,  fantasy,  0, ROT90, "[SNK] (Rock-ola license)", "Fantasy (US)", GAME_IMPERFECT_SOUND )
 GAMEX( 1981, fantasyj, fantasy,  fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX( 1982, pballoon, 0,        pballoon, pballoon, 0, ROT90, "SNK", "Pioneer Balloon", GAME_IMPERFECT_SOUND )
 GAMEX( 1982, nibbler,  0,        fantasy,  nibbler,  0, ROT90, "Rock-ola", "Nibbler (set 1)", GAME_IMPERFECT_SOUND )

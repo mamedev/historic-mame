@@ -60,7 +60,7 @@ static void unimpl(void)
 	PUSH(GET_ST());
 	RESET_ST();
 	PC = RLONG(0xfffffc20);
-	change_pc29lew(TOBYTE(PC));
+	change_pc(TOBYTE(PC));
   	COUNT_UNKNOWN_CYCLES(16);
 
 	/* extra check to prevent bad things */
@@ -1371,7 +1371,7 @@ static void move1_aa (void) { MOVE_AA(1); }
 {																\
 	PUSH(PC);													\
 	PC = R##REG(R##DSTREG);										\
-	change_pc29lew(TOBYTE(PC));									\
+	change_pc(TOBYTE(PC));									\
 	COUNT_CYCLES(3);											\
 }
 static void call_a (void) { CALL(A); }
@@ -1388,7 +1388,7 @@ static void calla(void)
 {
 	PUSH(PC+0x20);
 	PC = PARAM_LONG_NO_INC();
-	change_pc29lew(TOBYTE(PC));
+	change_pc(TOBYTE(PC));
 	COUNT_CYCLES(4);
 }
 
@@ -1494,7 +1494,7 @@ static void emu(void)
 	INT32 temppc = *rd;											\
 	*rd = PC;													\
 	PC = temppc;												\
-	change_pc29lew(TOBYTE(PC));									\
+	change_pc(TOBYTE(PC));									\
 	COUNT_CYCLES(2);											\
 }
 static void exgpc_a (void) { EXGPC(A); }
@@ -1533,7 +1533,7 @@ static void getst_b (void) { GETST(B); }
 		if (TAKE)												\
 		{														\
 			PC = PARAM_LONG_NO_INC();							\
-			change_pc29lew(TOBYTE(PC));							\
+			change_pc(TOBYTE(PC));							\
 			COUNT_CYCLES(3);									\
 		}														\
 		else													\
@@ -1778,7 +1778,7 @@ static void j_NN_x(void)
 #define JUMP(R)													\
 {																\
 	PC = R##REG(R##DSTREG);										\
-	change_pc29lew(TOBYTE(PC));									\
+	change_pc(TOBYTE(PC));									\
 	COUNT_CYCLES(2);											\
 }
 static void jump_a (void) { JUMP(A); }
@@ -1808,7 +1808,7 @@ static void reti(void)
 {
 	INT32 st = POP();
 	PC = POP();
-	change_pc29lew(TOBYTE(PC));
+	change_pc(TOBYTE(PC));
 	SET_ST(st);
 	COUNT_CYCLES(11);
 }
@@ -1817,7 +1817,7 @@ static void rets(void)
 {
 	UINT32 offs;
 	PC = POP();
-	change_pc29lew(TOBYTE(PC));
+	change_pc(TOBYTE(PC));
 	offs = PARAM_N;
 	if (offs)
 	{
@@ -1844,7 +1844,7 @@ static void trap(void)
 	}
 	RESET_ST();
 	PC = RLONG(0xffffffe0-(t<<5));
-	change_pc29lew(TOBYTE(PC));
+	change_pc(TOBYTE(PC));
 	COUNT_CYCLES(16);
 }
 

@@ -77,99 +77,99 @@ static WRITE_HANDLER( quizf1_bankswitch_w )
 
 /***************************************************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x7ffff, MRA_ROM },
-	{ 0x80000, 0x8ffff, MRA_BANK1 },	/* Quiz F1 only */
-	{ 0xa0000, 0xa3fff, MRA_RAM },
-	{ 0xd0000, 0xdffff, MRA_RAM },
-	{ 0xe0000, 0xe03ff, paletteram_r },
-	{ 0xffff0, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x7ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x80000, 0x8ffff) AM_READ(MRA8_BANK1)	/* Quiz F1 only */
+	AM_RANGE(0xa0000, 0xa3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd0000, 0xdffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe0000, 0xe03ff) AM_READ(paletteram_r)
+	AM_RANGE(0xffff0, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x7ffff, MWA_ROM },
-	{ 0x80000, 0x8ffff, MWA_ROM },	/* Quiz F1 only */
-	{ 0xa0000, 0xa3fff, MWA_RAM },
-	{ 0xd0000, 0xdffff, m90_video_w, &m90_video_data },
-	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0xffff0, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x7ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x80000, 0x8ffff) AM_WRITE(MWA8_ROM)	/* Quiz F1 only */
+	AM_RANGE(0xa0000, 0xa3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd0000, 0xdffff) AM_WRITE(m90_video_w) AM_BASE(&m90_video_data)
+	AM_RANGE(0xe0000, 0xe03ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xffff0, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( bootleg_readmem )
-	{ 0x00000, 0x3ffff, MRA_ROM },
-	{ 0x60000, 0x60fff, MRA_RAM },
-	{ 0xa0000, 0xa3fff, MRA_RAM },
-	{ 0xd0000, 0xdffff, MRA_RAM },
-	{ 0xe0000, 0xe03ff, paletteram_r },
-	{ 0xffff0, 0xfffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bootleg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x3ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x60000, 0x60fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa0000, 0xa3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd0000, 0xdffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe0000, 0xe03ff) AM_READ(paletteram_r)
+	AM_RANGE(0xffff0, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( bootleg_writemem )
-	{ 0x00000, 0x3ffff, MWA_ROM },
-	{ 0x6000e, 0x60fff, MWA_RAM, &spriteram },
-	{ 0xa0000, 0xa3fff, MWA_RAM },
-//	{ 0xd0000, 0xdffff, m90_bootleg_video_w, &m90_video_data },
-	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0xffff0, 0xfffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bootleg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x3ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000e, 0x60fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xa0000, 0xa3fff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0xd0000, 0xdffff) AM_WRITE(m90_bootleg_video_w) AM_BASE(&m90_video_data)
+	AM_RANGE(0xe0000, 0xe03ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xffff0, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
-	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
-	{ 0x02, 0x02, input_port_2_r }, /* Coins */
-	{ 0x03, 0x03, MRA_NOP },		/* Unused?  High byte of above */
-	{ 0x04, 0x04, input_port_3_r }, /* Dip 1 */
-	{ 0x05, 0x05, input_port_4_r }, /* Dip 2 */
-	{ 0x06, 0x06, input_port_5_r }, /* Player 3 */
-	{ 0x07, 0x07, input_port_6_r }, /* Player 4 */
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* Player 1 */
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r) /* Player 2 */
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r) /* Coins */
+	AM_RANGE(0x03, 0x03) AM_READ(MRA8_NOP)		/* Unused?  High byte of above */
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_3_r) /* Dip 1 */
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_4_r) /* Dip 2 */
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_5_r) /* Player 3 */
+	AM_RANGE(0x07, 0x07) AM_READ(input_port_6_r) /* Player 4 */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x01, m72_sound_command_w },
-	{ 0x02, 0x03, m90_coincounter_w },
-	{ 0x04, 0x05, quizf1_bankswitch_w },
-	{ 0x80, 0x8f, m90_video_control_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(m72_sound_command_w)
+	AM_RANGE(0x02, 0x03) AM_WRITE(m90_coincounter_w)
+	AM_RANGE(0x04, 0x05) AM_WRITE(quizf1_bankswitch_w)
+	AM_RANGE(0x80, 0x8f) AM_WRITE(m90_video_control_w)
+ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( sound_readport )
-	{ 0x01, 0x01, YM2151_status_port_0_r },
-	{ 0x80, 0x80, soundlatch_r },
-	{ 0x84, 0x84, m72_sample_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
+	AM_RANGE(0x84, 0x84) AM_READ(m72_sample_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM2151_register_port_0_w },
-	{ 0x01, 0x01, YM2151_data_port_0_w },
-	{ 0x80, 0x81, rtype2_sample_addr_w },
-	{ 0x82, 0x82, m72_sample_w },
-	{ 0x83, 0x83, m72_sound_irq_ack_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x80, 0x81) AM_WRITE(rtype2_sample_addr_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(m72_sample_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(m72_sound_irq_ack_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( bbmanw_sound_readport )
-	{ 0x41, 0x41, YM2151_status_port_0_r },
-	{ 0x42, 0x42, soundlatch_r },
-//	{ 0x41, 0x41, m72_sample_r },
-PORT_END
+static ADDRESS_MAP_START( bbmanw_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x41, 0x41) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x42, 0x42) AM_READ(soundlatch_r)
+//	AM_RANGE(0x41, 0x41) AM_READ(m72_sample_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( bbmanw_sound_writeport )
-	{ 0x40, 0x40, YM2151_register_port_0_w },
-	{ 0x41, 0x41, YM2151_data_port_0_w },
-	{ 0x42, 0x42, m72_sound_irq_ack_w },
-//	{ 0x40, 0x41, rtype2_sample_addr_w },
-//	{ 0x42, 0x42, m72_sample_w },
-PORT_END
+static ADDRESS_MAP_START( bbmanw_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x42, 0x42) AM_WRITE(m72_sound_irq_ack_w)
+//	AM_RANGE(0x40, 0x41) AM_WRITE(rtype2_sample_addr_w)
+//	AM_RANGE(0x42, 0x42) AM_WRITE(m72_sample_w)
+ADDRESS_MAP_END
 
 /*****************************************************************************/
 
@@ -535,14 +535,14 @@ static MACHINE_DRIVER_START( m90 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,32000000/4)	/* 8 MHz ??????? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -577,14 +577,14 @@ static MACHINE_DRIVER_START( bombrman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,32000000/4)	/* 8 MHz ??????? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -611,14 +611,14 @@ static MACHINE_DRIVER_START( bbmanw )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,32000000/4)	/* 8 MHz ??????? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(bbmanw_sound_readport,bbmanw_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(bbmanw_sound_readport,bbmanw_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -645,14 +645,14 @@ static MACHINE_DRIVER_START( bootleg )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz */
-	MDRV_CPU_MEMORY(bootleg_readmem,bootleg_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(bootleg_readmem,bootleg_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(60)

@@ -69,7 +69,7 @@ struct dcs_state
 	int		stream;
 	UINT8	auto_ack;
 
-	UINT8 * mem;
+	UINT8 * sounddata;
 	UINT16	size;
 	UINT16	incs;
 	void  * reg_timer;
@@ -123,6 +123,9 @@ static data16_t *dcs_expanded_rom;
 
 static data16_t *dcs_polling_base;
 
+static data16_t *dcs_data_ram;
+static data32_t *dcs_program_ram;
+
 #if (LOG_DCS_TRANSFERS)
 static data16_t *transfer_dest;
 static int transfer_state;
@@ -175,85 +178,94 @@ static READ16_HANDLER( dcs_polling_r );
 ****************************************************************************/
 
 /* DCS readmem/writemem structures */
-MEMORY_READ16_START( dcs_readmem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },			/* ??? */
-	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), dcs_rombank_data_r },	/* banked roms read */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), input_latch_r },		/* soundlatch read */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },			/* internal data ram */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA32_RAM)					/* internal/external program ram */
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( dcs_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA32_RAM) AM_BASE(&dcs_program_ram) /* internal/external program ram */
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE16_START( dcs_writemem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },			/* ??? */
-	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), dcs_rombank_select_w },	/* bank selector */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), output_latch_w },		/* soundlatch write */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },			/* internal data ram */
-	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), dcs_control_w },		/* adsp control regs */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs_data_readmem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)					/* ??? */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
+	AM_RANGE(0x3400, 0x3403) AM_READ(input_latch_r)				/* soundlatch read */
+	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( dcs_data_writemem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM) AM_BASE(&dcs_data_ram)	/* ??? */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)	/* bank selector */
+	AM_RANGE(0x3400, 0x3403) AM_WRITE(output_latch_w)		/* soundlatch write */
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)			/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)		/* adsp control regs */
+ADDRESS_MAP_END
 
 
 
 /* DCS with UART readmem/writemem structures */
-MEMORY_READ16_START( dcs_uart_readmem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },			/* ??? */
-	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), dcs_rombank_data_r },	/* banked roms read */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MRA16_NOP },			/* UART (ignored) */
-	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), input_latch_r },		/* soundlatch read */
-	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MRA16_NOP },			/* UART (ignored) */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },			/* internal data ram */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs_uart_data_readmem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)					/* ??? */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
+	AM_RANGE(0x3400, 0x3402) AM_READ(MRA16_NOP)					/* UART (ignored) */
+	AM_RANGE(0x3403, 0x3403) AM_READ(input_latch_r)				/* soundlatch read */
+	AM_RANGE(0x3404, 0x3405) AM_READ(MRA16_NOP)					/* UART (ignored) */
+	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
+ADDRESS_MAP_END
 
-
-MEMORY_WRITE16_START( dcs_uart_writemem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },			/* ??? */
-	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), dcs_rombank_select_w },	/* bank selector */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MWA16_NOP },			/* UART (ignored) */
-	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), output_latch_w },		/* soundlatch write */
-	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MWA16_NOP },			/* UART (ignored) */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },			/* internal data ram */
-	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), dcs_control_w },		/* adsp control regs */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs_uart_data_writemem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM) AM_BASE(&dcs_data_ram)	/* ??? */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)	/* bank selector */
+	AM_RANGE(0x3400, 0x3402) AM_WRITE(MWA16_NOP)				/* UART (ignored) */
+	AM_RANGE(0x3403, 0x3403) AM_WRITE(output_latch_w)		/* soundlatch write */
+	AM_RANGE(0x3404, 0x3405) AM_WRITE(MWA16_NOP)				/* UART (ignored) */
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)				/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+ADDRESS_MAP_END
 
 
 
 /* DCS2-based readmem/writemem structures */
-MEMORY_READ16_START( dcs2_readmem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x03ff), MRA16_BANK20 },			/* D/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x0400, 0x0400), input_latch_r },		/* input latch read */
-	{ ADSP_DATA_ADDR_RANGE(0x0402, 0x0402), output_control_r },		/* secondary soundlatch read */
-	{ ADSP_DATA_ADDR_RANGE(0x0403, 0x0403), latch_status_r },		/* latch status read */
-	{ ADSP_DATA_ADDR_RANGE(0x0404, 0x0407), fifo_input_r },			/* FIFO input read */
-	{ ADSP_DATA_ADDR_RANGE(0x0480, 0x0480), dcs_sram_bank_r },		/* S/RAM bank */
-	{ ADSP_DATA_ADDR_RANGE(0x0481, 0x0481), MRA16_NOP },			/* LED in bit $2000 */
-	{ ADSP_DATA_ADDR_RANGE(0x0482, 0x0482), dcs_dram_bank_r },		/* D/RAM bank */
-	{ ADSP_DATA_ADDR_RANGE(0x0483, 0x0483), dcs_sdrc_asic_ver_r },	/* SDRC version number */
-	{ ADSP_DATA_ADDR_RANGE(0x0800, 0x17ff), MRA16_RAM },			/* S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x1800, 0x27ff), MRA16_BANK21 },			/* banked S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x2800, 0x37ff), MRA16_RAM },			/* S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },			/* internal data ram */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x3fff), MRA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs2_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA32_RAM)					/* internal/external program ram */
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( dcs2_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA32_RAM) AM_BASE(&dcs_program_ram) /* internal/external program ram */
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE16_START( dcs2_writemem )
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x03ff), MWA16_BANK20 },			/* D/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x0400, 0x0400), input_latch_ack_w },	/* input latch ack */
-	{ ADSP_DATA_ADDR_RANGE(0x0401, 0x0401), output_latch_w },		/* soundlatch write */
-	{ ADSP_DATA_ADDR_RANGE(0x0402, 0x0402), output_control_w },		/* secondary soundlatch write */
-	{ ADSP_DATA_ADDR_RANGE(0x0480, 0x0480), dcs_sram_bank_w },		/* S/RAM bank */
-	{ ADSP_DATA_ADDR_RANGE(0x0481, 0x0481), MWA16_NOP },			/* LED in bit $2000 */
-	{ ADSP_DATA_ADDR_RANGE(0x0482, 0x0482), dcs_dram_bank_w },		/* D/RAM bank */
-	{ ADSP_DATA_ADDR_RANGE(0x0800, 0x17ff), MWA16_RAM },			/* S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x1800, 0x27ff), MWA16_BANK21, &dcs_sram_bank0 },/* banked S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x2800, 0x37ff), MWA16_RAM },			/* S/RAM */
-	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },			/* internal data ram */
-	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), dcs_control_w },		/* adsp control regs */
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x3fff), MWA16_RAM },			/* internal/external program ram */
-MEMORY_END
+ADDRESS_MAP_START( dcs2_data_readmem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA16_BANK20)				/* D/RAM */
+	AM_RANGE(0x0400, 0x0400) AM_READ(input_latch_r)				/* input latch read */
+	AM_RANGE(0x0402, 0x0402) AM_READ(output_control_r)			/* secondary soundlatch read */
+	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
+	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
+	AM_RANGE(0x0480, 0x0480) AM_READ(dcs_sram_bank_r)			/* S/RAM bank */
+	AM_RANGE(0x0481, 0x0481) AM_READ(MRA16_NOP)					/* LED in bit $2000 */
+	AM_RANGE(0x0482, 0x0482) AM_READ(dcs_dram_bank_r)			/* D/RAM bank */
+	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
+	AM_RANGE(0x0800, 0x17ff) AM_READ(MRA16_RAM)					/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_READ(MRA16_BANK21)				/* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_READ(MRA16_RAM)					/* S/RAM */
+	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( dcs2_data_writemem, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA16_BANK20) AM_BASE(&dcs_data_ram)/* D/RAM */
+	AM_RANGE(0x0400, 0x0400) AM_WRITE(input_latch_ack_w)		/* input latch ack */
+	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)		/* soundlatch write */
+	AM_RANGE(0x0402, 0x0402) AM_WRITE(output_control_w)		/* secondary soundlatch write */
+	AM_RANGE(0x0480, 0x0480) AM_WRITE(dcs_sram_bank_w)		/* S/RAM bank */
+	AM_RANGE(0x0481, 0x0481) AM_WRITE(MWA16_NOP)				/* LED in bit $2000 */
+	AM_RANGE(0x0482, 0x0482) AM_WRITE(dcs_dram_bank_w)		/* D/RAM bank */
+	AM_RANGE(0x0800, 0x17ff) AM_WRITE(MWA16_RAM)				/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_WRITE(MWA16_BANK21) AM_BASE(&dcs_sram_bank0)/* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_WRITE(MWA16_RAM)				/* S/RAM */
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)				/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+ADDRESS_MAP_END
 
 
 
@@ -281,7 +293,8 @@ static struct CustomSound_interface dcs2_custom_interface =
 MACHINE_DRIVER_START( dcs_audio )
 	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dcs_readmem,dcs_writemem)
+	MDRV_CPU_PROGRAM_MAP(dcs_program_readmem,dcs_program_writemem)
+	MDRV_CPU_DATA_MAP(dcs_data_readmem,dcs_data_writemem)
 
 	MDRV_SOUND_ADD(CUSTOM, dcs_custom_interface)
 MACHINE_DRIVER_END
@@ -291,14 +304,15 @@ MACHINE_DRIVER_START( dcs_audio_uart )
 	MDRV_IMPORT_FROM(dcs_audio)
 
 	MDRV_CPU_MODIFY("dcs")
-	MDRV_CPU_MEMORY(dcs_uart_readmem,dcs_uart_writemem)
+	MDRV_CPU_DATA_MAP(dcs_uart_data_readmem,dcs_uart_data_writemem)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( dcs2_audio )
 	MDRV_CPU_ADD_TAG("dcs2", ADSP2115, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dcs2_readmem,dcs2_writemem)
+	MDRV_CPU_PROGRAM_MAP(dcs2_program_readmem,dcs2_program_writemem)
+	MDRV_CPU_DATA_MAP(dcs2_data_readmem,dcs2_data_writemem)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(CUSTOM, dcs2_custom_interface)
@@ -318,18 +332,16 @@ MACHINE_DRIVER_END
 
 static void dcs_boot(void)
 {
-	data8_t *src = (data8_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE);
-	data32_t *dst = (data32_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_PGM_OFFSET);
 	switch (Machine->drv->cpu[dcs_cpunum].cpu_type)
 	{
 		case CPU_ADSP2104:
-			adsp2104_load_boot_data(src + 0x2000 * ((dcs.control_regs[SYSCONTROL_REG] >> 6) & 7), dst);
+			adsp2104_load_boot_data(dcs.sounddata + 0x2000 * ((dcs.control_regs[SYSCONTROL_REG] >> 6) & 7), dcs_program_ram);
 			break;
 		case CPU_ADSP2105:
-			adsp2105_load_boot_data(src + (dcs.rombank & 0x7ff) * 0x1000, dst);
+			adsp2105_load_boot_data(dcs.sounddata + (dcs.rombank & 0x7ff) * 0x1000, dcs_program_ram);
 			break;
 		case CPU_ADSP2115:
-			adsp2115_load_boot_data(src + (dcs.rombank & 0x7ff) * 0x1000, dst);
+			adsp2115_load_boot_data(dcs.sounddata + (dcs.rombank & 0x7ff) * 0x1000, dcs_program_ram);
 			break;
 	}
 }
@@ -340,7 +352,6 @@ static void dcs_reset(void)
 	int i;
 
 	/* initialize our state structure and install the transmit callback */
-	dcs.mem = 0;
 	dcs.size = 0;
 	dcs.incs = 0;
 	dcs.ireg = 0;
@@ -355,7 +366,7 @@ static void dcs_reset(void)
 	dcs.drambank = 0;
 	if (dcs_sram_bank0)
 	{
-		cpu_setbank(20, memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE + 0x8000);
+		cpu_setbank(20, dcs.sounddata + 0x8000);
 		cpu_setbank(21, dcs_sram_bank0);
 	}
 
@@ -369,7 +380,7 @@ static void dcs_reset(void)
 	dcs.current_sample = 0;
 
 	/* initialize the ADSP Tx callback */
-	adsp2105_set_tx_callback(sound_tx_callback);
+	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
 
 	/* clear all interrupts */
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ0, CLEAR_LINE);
@@ -396,8 +407,9 @@ static void dcs_reset(void)
 
 void dcs_init(void)
 {
-	/* find the DCS CPU */
+	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs");
+	dcs.sounddata = memory_region(REGION_SOUND1);
 	
 	/* reset RAM-based variables */
 	dcs_sram_bank0 = dcs_sram_bank1 = NULL;
@@ -420,21 +432,20 @@ void dcs_init(void)
 
 void dcs2_init(offs_t polling_offset)
 {
-	UINT8 *romsrc;
 	int page, i;
 
-	/* find the DCS CPU */
+	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs2");
+	dcs.sounddata = memory_region(REGION_SOUND1);
 
 	/* borrow memory for the extra 8k */
-	dcs_sram_bank1 = (UINT16 *)(memory_region(REGION_CPU1 + dcs_cpunum) + 0x8000);
+	dcs_sram_bank1 = auto_malloc(0x1000*2);
 	
 	/* borrow memory also for the expanded ROM data and expand it */
-	romsrc = memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE;
-	dcs_expanded_rom = (UINT16 *)(memory_region(REGION_CPU1 + dcs_cpunum) + 0xc000);
+	dcs_expanded_rom = auto_malloc(0x2000*2);
 	for (page = 0; page < 8; page++)
 		for (i = 0; i < 0x400; i++)
-			dcs_expanded_rom[0x400 * page + i] = romsrc[BYTE_XOR_LE(0x1000 * page + i)];
+			dcs_expanded_rom[0x400 * page + i] = dcs.sounddata[BYTE_XOR_LE(0x1000 * page + i)];
 	
 	/* create the timer */
 	dcs.reg_timer = timer_alloc(dcs_irq);
@@ -449,7 +460,7 @@ void dcs2_init(offs_t polling_offset)
 	
 	/* install the speedup handler */
 	if (polling_offset)
-		dcs_polling_base = install_mem_read16_handler(dcs_cpunum, ADSP_DATA_ADDR_RANGE(polling_offset, polling_offset), dcs_polling_r);
+		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, dcs_polling_r);
 
 	/* reset the system */
 	dcs_reset();
@@ -529,10 +540,8 @@ static WRITE16_HANDLER( dcs_rombank_select_w )
 
 static READ16_HANDLER( dcs_rombank_data_r )
 {
-	UINT8	*banks = memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE;
-
 	offset += (dcs.rombank & 0x7ff) << 12;
-	return banks[BYTE_XOR_LE(offset)];
+	return dcs.sounddata[BYTE_XOR_LE(offset)];
 }
 
 
@@ -566,7 +575,7 @@ static READ16_HANDLER( dcs_sram_bank_r )
 static WRITE16_HANDLER( dcs_dram_bank_w )
 {
 	dcs.drambank = data;
-	cpu_setbank(20, memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE + 0x8000 + (dcs.drambank & 0x7ff) * 0x400*2);
+	cpu_setbank(20, dcs.sounddata + 0x8000 + (dcs.drambank & 0x7ff) * 0x400*2);
 }
 
 
@@ -673,7 +682,7 @@ void dcs_data_w(int data)
 			case 2:
 				transfer_start |= data;
 				transfer_state++;
-				transfer_dest = (data16_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE + 0x8000 + transfer_start*2);
+				transfer_dest = (data16_t *)(dcs.sounddata + 0x8000 + transfer_start*2);
 				logerror("Start address = %08X\n", transfer_start);
 				break;
 
@@ -1004,21 +1013,21 @@ static void dcs_irq(int state)
 	int reg = cpunum_get_reg(dcs_cpunum, ADSP2100_I0 + dcs.ireg);
 
 	/* translate into data memory bus address */
-	int source = ADSP2100_DATA_OFFSET + (reg << 1);
+	int source = reg;
 	int i;
 
 	/* copy the current data into the buffer */
 	if (!dcs.buffer2)
 	{
 		for (i = 0; i < dcs.size / 2; i += dcs.incs)
-			dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = ((UINT16 *)&dcs.mem[source])[i];
+			dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = dcs_data_ram[source + i];
 	}
 	else
 	{
 		for (i = 0; i < dcs.size / 2; i += dcs.incs * 2)
 		{
-			dcs.buffer[dcs.buffer_in & DCS_BUFFER_MASK] = ((UINT16 *)&dcs.mem[source])[i];
-			dcs.buffer2[dcs.buffer_in & DCS_BUFFER_MASK] = ((UINT16 *)&dcs.mem[source])[i + dcs.incs];
+			dcs.buffer[dcs.buffer_in & DCS_BUFFER_MASK] = dcs_data_ram[source + i];
+			dcs.buffer2[dcs.buffer_in & DCS_BUFFER_MASK] = dcs_data_ram[source + i + dcs.incs];
 			dcs.buffer_in++;
 		}
 	}
@@ -1090,9 +1099,6 @@ static void sound_tx_callback(int port, INT32 data)
 
 			/* save it as it is now */
 			dcs.ireg_base = source;
-
-			/* get the memory chunk to read the data from */
-			dcs.mem = memory_region(REGION_CPU1 + dcs_cpunum);
 
 			/* enable the dac playing */
 			dcs.enabled = 1;

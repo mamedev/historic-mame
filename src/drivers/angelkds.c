@@ -210,76 +210,76 @@ contain a level.
 
 */
 
-static MEMORY_READ_START( readmem_main )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_main, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_main )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe3ff, angelkds_bgtopvideoram_w, &angelkds_bgtopvideoram }, /* Top Half of Screen */
-	{ 0xe400, 0xe7ff, angelkds_bgbotvideoram_w, &angelkds_bgbotvideoram }, /* Bottom Half of Screen */
-	{ 0xe800, 0xebff, angelkds_txvideoram_w, &angelkds_txvideoram },
-	{ 0xec00, 0xecff, MWA_RAM, &spriteram },
-	{ 0xed00, 0xeeff, angelkds_paletteram_w, &paletteram },
-	{ 0xf000, 0xf000, angelkds_bgtopbank_write },
-	{ 0xf001, 0xf001, angelkds_bgtopscroll_write },
-	{ 0xf002, 0xf002, angelkds_bgbotbank_write },
-	{ 0xf003, 0xf003, angelkds_bgbotscroll_write },
-	{ 0xf004, 0xf004, angelkds_txbank_write },
-	{ 0xf005, 0xf005, angelkds_layer_ctrl_write },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_main, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(angelkds_bgtopvideoram_w) AM_BASE(&angelkds_bgtopvideoram) /* Top Half of Screen */
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(angelkds_bgbotvideoram_w) AM_BASE(&angelkds_bgbotvideoram) /* Bottom Half of Screen */
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(angelkds_txvideoram_w) AM_BASE(&angelkds_txvideoram)
+	AM_RANGE(0xec00, 0xecff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xed00, 0xeeff) AM_WRITE(angelkds_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(angelkds_bgtopbank_write)
+	AM_RANGE(0xf001, 0xf001) AM_WRITE(angelkds_bgtopscroll_write)
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(angelkds_bgbotbank_write)
+	AM_RANGE(0xf003, 0xf003) AM_WRITE(angelkds_bgbotscroll_write)
+	AM_RANGE(0xf004, 0xf004) AM_WRITE(angelkds_txbank_write)
+	AM_RANGE(0xf005, 0xf005) AM_WRITE(angelkds_layer_ctrl_write)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_main )
-	{ 0x40, 0x40, input_port_0_r },	/* "Coinage" Dip Switches */
-	{ 0x41, 0x41, input_port_1_r },	/* Other Dip Switches */
-	{ 0x42, 0x42, input_port_2_r },	/* Players inputs (not needed ?) */
-	{ 0x80, 0x80, input_port_3_r },	/* System inputs */
-	{ 0x81, 0x82, angelkds_input_r },	/* Players inputs */
-PORT_END
+static ADDRESS_MAP_START( readport_main, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_0_r)	/* "Coinage" Dip Switches */
+	AM_RANGE(0x41, 0x41) AM_READ(input_port_1_r)	/* Other Dip Switches */
+	AM_RANGE(0x42, 0x42) AM_READ(input_port_2_r)	/* Players inputs (not needed ?) */
+	AM_RANGE(0x80, 0x80) AM_READ(input_port_3_r)	/* System inputs */
+	AM_RANGE(0x81, 0x82) AM_READ(angelkds_input_r)	/* Players inputs */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_main )
-	{ 0x00, 0x00, MWA_NOP }, // 00 on start-up, not again
-	{ 0x42, 0x42, angelkds_cpu_bank_write },
-	{ 0x43, 0x43, MWA_NOP }, // 9a on start-up, not again
-	{ 0x83, 0x83, MWA_NOP }, // 9b on start-up, not again
-	{ 0xc0, 0xc3, angelkds_sound_w }, // 02 various points
-PORT_END
+static ADDRESS_MAP_START( writeport_main, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) // 00 on start-up, not again
+	AM_RANGE(0x42, 0x42) AM_WRITE(angelkds_cpu_bank_write)
+	AM_RANGE(0x43, 0x43) AM_WRITE(MWA8_NOP) // 9a on start-up, not again
+	AM_RANGE(0x83, 0x83) AM_WRITE(MWA8_NOP) // 9b on start-up, not again
+	AM_RANGE(0xc0, 0xc3) AM_WRITE(angelkds_sound_w) // 02 various points
+ADDRESS_MAP_END
 
 /* sub cpu */
 
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xaaa9, 0xaaa9, MRA_NOP },
-	{ 0xaaab, 0xaaab, MRA_NOP },
-	{ 0xaaac, 0xaaac, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xaaa9, 0xaaa9) AM_READ(MRA8_NOP)
+	AM_RANGE(0xaaab, 0xaaab) AM_READ(MRA8_NOP)
+	AM_RANGE(0xaaac, 0xaaac) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_sub )
-	{ 0x00, 0x00, YM2203_status_port_0_r },
-	{ 0x40, 0x40, YM2203_status_port_1_r },
-	{ 0x80, 0x83, angelkds_sound_r },
-PORT_END
+static ADDRESS_MAP_START( readport_sub, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x80, 0x83) AM_READ(angelkds_sound_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_sub)
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x40, 0x40, YM2203_control_port_1_w },
-	{ 0x41, 0x41, YM2203_write_port_1_w },
-	{ 0x80, 0x80, MWA_NOP },
-	{ 0x81, 0x81, MWA_NOP },
-	{ 0x82, 0x82, MWA_NOP },
-	{ 0x83, 0x83, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport_sub, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x81, 0x81) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x82, 0x82) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x83, 0x83) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 /* Input Ports */
@@ -506,14 +506,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( angelkds )
 	MDRV_CPU_ADD(Z80, 8000000) /* 8MHz? 6 seems too slow? */
-	MDRV_CPU_MEMORY(readmem_main,writemem_main)
-	MDRV_CPU_PORTS(readport_main,writeport_main)
+	MDRV_CPU_PROGRAM_MAP(readmem_main,writemem_main)
+	MDRV_CPU_IO_MAP(readport_main,writeport_main)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000) /* 8 MHz? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
-	MDRV_CPU_PORTS(readport_sub,writeport_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
+	MDRV_CPU_IO_MAP(readport_sub,writeport_sub)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -71,12 +71,12 @@ WORD wat_readmemw(void *a);
 #define READ_MEMW(a,b) b=wat_readmemw(a)
 #endif
 
-#define get_byte(a) cpu_readmem24bew((a)&0xffffff)
-#define get_word(a) cpu_readmem24bew_word((a)&0xffffff)
-#define get_long(a) cpu_readmem24bew_dword((a)&0xffffff)
-#define put_byte(a,b) cpu_writemem24bew((a)&0xffffff,b)
-#define put_word(a,b) cpu_writemem24bew_word((a)&0xffffff,b)
-#define put_long(a,b) cpu_writemem24bew_dword((a)&0xffffff,b)
+#define get_byte(a) program_read_byte_16be((a)&0xffffff)
+#define get_word(a) program_read_word_16be((a)&0xffffff)
+#define get_long(a) program_read_dword_16be((a)&0xffffff)
+#define put_byte(a,b) program_write_byte_16be((a)&0xffffff,b)
+#define put_word(a,b) program_write_word_16be((a)&0xffffff,b)
+#define put_long(a,b) program_write_dword_16be((a)&0xffffff,b)
 
 
 		/************************/

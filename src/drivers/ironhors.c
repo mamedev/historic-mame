@@ -52,70 +52,70 @@ static WRITE_HANDLER( ironhors_filter_w )
 }
 
 
-static MEMORY_READ_START( ironhors_readmem )
-	{ 0x0020, 0x003f, MRA_RAM },
-	{ 0x0900, 0x0900, input_port_5_r },	/* Dipswitch settings 2 */
-	{ 0x0a00, 0x0a00, input_port_3_r },	/* Dipswitch settings 0 */
-	{ 0x0b00, 0x0b00, input_port_4_r },	/* Dipswitch settings 1 */
-	{ 0x0b01, 0x0b01, input_port_2_r },	/* player 2 controls */
-	{ 0x0b02, 0x0b02, input_port_1_r },	/* player 1 controls */
-	{ 0x0b03, 0x0b03, input_port_0_r },	/* coins + selftest */
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( ironhors_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0020, 0x003f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0900, 0x0900) AM_READ(input_port_5_r)	/* Dipswitch settings 2 */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(input_port_3_r)	/* Dipswitch settings 0 */
+	AM_RANGE(0x0b00, 0x0b00) AM_READ(input_port_4_r)	/* Dipswitch settings 1 */
+	AM_RANGE(0x0b01, 0x0b01) AM_READ(input_port_2_r)	/* player 2 controls */
+	AM_RANGE(0x0b02, 0x0b02) AM_READ(input_port_1_r)	/* player 1 controls */
+	AM_RANGE(0x0b03, 0x0b03) AM_READ(input_port_0_r)	/* coins + selftest */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ironhors_writemem )
-	{ 0x0003, 0x0003, ironhors_charbank_w },
-	{ 0x0004, 0x0004, MWA_RAM, &ironhors_interrupt_enable },
-	{ 0x0020, 0x003f, MWA_RAM, &ironhors_scroll },
-	{ 0x0800, 0x0800, soundlatch_w },
-	{ 0x0900, 0x0900, ironhors_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x0a00, 0x0a00, ironhors_palettebank_w },	/* + coin counters */
-	{ 0x0b00, 0x0b00, ironhors_flipscreen_w },
-	{ 0x2000, 0x23ff, ironhors_colorram_w, &colorram },
-	{ 0x2400, 0x27ff, ironhors_videoram_w, &videoram },
-	{ 0x2800, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x30ff, MWA_RAM, &spriteram_2 },
-	{ 0x3100, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x38ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3900, 0x3fff, MWA_RAM },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( ironhors_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0003, 0x0003) AM_WRITE(ironhors_charbank_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(MWA8_RAM) AM_BASE(&ironhors_interrupt_enable)
+	AM_RANGE(0x0020, 0x003f) AM_WRITE(MWA8_RAM) AM_BASE(&ironhors_scroll)
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x0900, 0x0900) AM_WRITE(ironhors_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x0a00, 0x0a00) AM_WRITE(ironhors_palettebank_w)	/* + coin counters */
+	AM_RANGE(0x0b00, 0x0b00) AM_WRITE(ironhors_flipscreen_w)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(ironhors_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x2400, 0x27ff) AM_WRITE(ironhors_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x2800, 0x2fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x3100, 0x37ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3800, 0x38ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3900, 0x3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( ironhors_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x8000, 0x8000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( ironhors_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ironhors_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( ironhors_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( ironhors_sound_readport )
-	{ 0x00, 0x00, YM2203_status_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( ironhors_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( ironhors_sound_writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
-PORT_END
+static ADDRESS_MAP_START( ironhors_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( farwest_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x8000, 0x8000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( farwest_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( farwest_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x8000, 0x8000, YM2203_control_port_0_w },
-	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( farwest_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
+ADDRESS_MAP_END
 
 
 
@@ -421,13 +421,13 @@ static MACHINE_DRIVER_START( ironhors )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,18432000/6)        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
-	MDRV_CPU_MEMORY(ironhors_readmem,ironhors_writemem)
+	MDRV_CPU_PROGRAM_MAP(ironhors_readmem,ironhors_writemem)
 	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
 
 	MDRV_CPU_ADD_TAG("sound",Z80,18432000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
-	MDRV_CPU_MEMORY(ironhors_sound_readmem,ironhors_sound_writemem)
-	MDRV_CPU_PORTS(ironhors_sound_readport,ironhors_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(ironhors_sound_readmem,ironhors_sound_writemem)
+	MDRV_CPU_IO_MAP(ironhors_sound_readport,ironhors_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)
@@ -453,7 +453,7 @@ static MACHINE_DRIVER_START( farwest )
 	MDRV_IMPORT_FROM(ironhors)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_MEMORY(farwest_sound_readmem, farwest_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(farwest_sound_readmem, farwest_sound_writemem)
 
 	MDRV_GFXDECODE(farwest_gfxdecodeinfo)
 MACHINE_DRIVER_END

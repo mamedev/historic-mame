@@ -59,60 +59,60 @@ static WRITE_HANDLER( fantland_soundlatch_w )
 								Fantasy Land
 ***************************************************************************/
 
-static MEMORY_READ_START( fantland_readmem )
-	{ 0x00000, 0x07fff, MRA_RAM			},
-	{ 0x08000, 0x7ffff, MRA_ROM			},
-	{ 0xa2000, 0xa21ff, MRA_RAM			},	// not actually read
-	{ 0xa3000, 0xa3000, input_port_0_r	},
-	{ 0xa3001, 0xa3001, input_port_1_r	},
-	{ 0xa3002, 0xa3002, input_port_2_r	},
-	{ 0xa3003, 0xa3003, input_port_3_r	},
-	{ 0xa4000, 0xa67ff, MRA_RAM			},	// not actually read
-	{ 0xc0000, 0xc03ff, MRA_RAM			},	// ""
-	{ 0xe0000, 0xfffff, MRA_ROM			},
-MEMORY_END
+static ADDRESS_MAP_START( fantland_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_READ(MRA8_RAM			)
+	AM_RANGE(0x08000, 0x7ffff) AM_READ(MRA8_ROM			)
+	AM_RANGE(0xa2000, 0xa21ff) AM_READ(MRA8_RAM			)	// not actually read
+	AM_RANGE(0xa3000, 0xa3000) AM_READ(input_port_0_r	)
+	AM_RANGE(0xa3001, 0xa3001) AM_READ(input_port_1_r	)
+	AM_RANGE(0xa3002, 0xa3002) AM_READ(input_port_2_r	)
+	AM_RANGE(0xa3003, 0xa3003) AM_READ(input_port_3_r	)
+	AM_RANGE(0xa4000, 0xa67ff) AM_READ(MRA8_RAM			)	// not actually read
+	AM_RANGE(0xc0000, 0xc03ff) AM_READ(MRA8_RAM			)	// ""
+	AM_RANGE(0xe0000, 0xfffff) AM_READ(MRA8_ROM			)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fantland_writemem )
-	{ 0x00000, 0x07fff, MWA_RAM					},
-	{ 0x08000, 0x7ffff, MWA_ROM					},
-	{ 0xa2000, 0xa21ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram	},
-	{ 0xa3000, 0xa3000, fantland_nmi_enable_w	},
-	{ 0xa3002, 0xa3002, fantland_soundlatch_w	},
-	{ 0xa4000, 0xa67ff, MWA_RAM, &spriteram		},
-	{ 0xc0000, 0xc03ff, MWA_RAM, &spriteram_2	},
-	{ 0xe0000, 0xfffff, MWA_ROM					},
-MEMORY_END
+static ADDRESS_MAP_START( fantland_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_WRITE(MWA8_RAM					)
+	AM_RANGE(0x08000, 0x7ffff) AM_WRITE(MWA8_ROM					)
+	AM_RANGE(0xa2000, 0xa21ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram	)
+	AM_RANGE(0xa3000, 0xa3000) AM_WRITE(fantland_nmi_enable_w	)
+	AM_RANGE(0xa3002, 0xa3002) AM_WRITE(fantland_soundlatch_w	)
+	AM_RANGE(0xa4000, 0xa67ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram		)
+	AM_RANGE(0xc0000, 0xc03ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2	)
+	AM_RANGE(0xe0000, 0xfffff) AM_WRITE(MWA8_ROM					)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 								Galaxy Gunners
 ***************************************************************************/
 
-static MEMORY_READ_START( galaxygn_readmem )
-	{ 0x00000, 0x07fff, MRA_RAM			},
-	{ 0x10000, 0x2ffff, MRA_ROM			},
-	{ 0x52000, 0x521ff, MRA_RAM			},	// not actually read
-	{ 0x53000, 0x53000, input_port_0_r	},
-	{ 0x53001, 0x53001, input_port_1_r	},
-	{ 0x53002, 0x53002, input_port_2_r	},
-	{ 0x53003, 0x53003, input_port_3_r	},
-	{ 0x54000, 0x567ff, MRA_RAM			},	// not actually read
-	{ 0x60000, 0x603ff, MRA_RAM			},	// ""
-	{ 0x60000, 0x7ffff, MRA_ROM			},
-	{ 0xf0000, 0xfffff, MRA_ROM			},
-MEMORY_END
+static ADDRESS_MAP_START( galaxygn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_READ(MRA8_RAM			)
+	AM_RANGE(0x10000, 0x2ffff) AM_READ(MRA8_ROM			)
+	AM_RANGE(0x52000, 0x521ff) AM_READ(MRA8_RAM			)	// not actually read
+	AM_RANGE(0x53000, 0x53000) AM_READ(input_port_0_r	)
+	AM_RANGE(0x53001, 0x53001) AM_READ(input_port_1_r	)
+	AM_RANGE(0x53002, 0x53002) AM_READ(input_port_2_r	)
+	AM_RANGE(0x53003, 0x53003) AM_READ(input_port_3_r	)
+	AM_RANGE(0x54000, 0x567ff) AM_READ(MRA8_RAM			)	// not actually read
+	AM_RANGE(0x60000, 0x603ff) AM_READ(MRA8_RAM			)	// ""
+	AM_RANGE(0x60000, 0x7ffff) AM_READ(MRA8_ROM			)
+	AM_RANGE(0xf0000, 0xfffff) AM_READ(MRA8_ROM			)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( galaxygn_writemem )
-	{ 0x00000, 0x07fff, MWA_RAM					},
-	{ 0x10000, 0x2ffff, MWA_ROM					},
-	{ 0x52000, 0x521ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram	},
-	{ 0x53000, 0x53000, fantland_nmi_enable_w	},
-	{ 0x53002, 0x53002, fantland_soundlatch_w	},
-	{ 0x54000, 0x567ff, MWA_RAM, &spriteram		},
-	{ 0x60000, 0x603ff, MWA_RAM, &spriteram_2	},
-	{ 0x60000, 0x7ffff, MWA_ROM					},
-	{ 0xf0000, 0xfffff, MWA_ROM					},
-MEMORY_END
+static ADDRESS_MAP_START( galaxygn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_WRITE(MWA8_RAM					)
+	AM_RANGE(0x10000, 0x2ffff) AM_WRITE(MWA8_ROM					)
+	AM_RANGE(0x52000, 0x521ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram	)
+	AM_RANGE(0x53000, 0x53000) AM_WRITE(fantland_nmi_enable_w	)
+	AM_RANGE(0x53002, 0x53002) AM_WRITE(fantland_soundlatch_w	)
+	AM_RANGE(0x54000, 0x567ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram		)
+	AM_RANGE(0x60000, 0x603ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2	)
+	AM_RANGE(0x60000, 0x7ffff) AM_WRITE(MWA8_ROM					)
+	AM_RANGE(0xf0000, 0xfffff) AM_WRITE(MWA8_ROM					)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -121,28 +121,28 @@ MEMORY_END
 
 ***************************************************************************/
 
-static MEMORY_READ_START( fantland_sound_readmem )
-	{ 0x00000, 0x01fff, MRA_RAM },
-	{ 0x80000, 0x9ffff, MRA_ROM	},
-	{ 0xc0000, 0xfffff, MRA_ROM	},
-MEMORY_END
+static ADDRESS_MAP_START( fantland_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x01fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x80000, 0x9ffff) AM_READ(MRA8_ROM	)
+	AM_RANGE(0xc0000, 0xfffff) AM_READ(MRA8_ROM	)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fantland_sound_writemem )
-	{ 0x00000, 0x01fff, MWA_RAM	},
-	{ 0x80000, 0x9ffff, MWA_ROM	},
-	{ 0xc0000, 0xfffff, MWA_ROM	},
-MEMORY_END
+static ADDRESS_MAP_START( fantland_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x01fff) AM_WRITE(MWA8_RAM	)
+	AM_RANGE(0x80000, 0x9ffff) AM_WRITE(MWA8_ROM	)
+	AM_RANGE(0xc0000, 0xfffff) AM_WRITE(MWA8_ROM	)
+ADDRESS_MAP_END
 
-static PORT_READ_START( fantland_sound_readport )
-	{ 0x0080, 0x0080, soundlatch_r				},
-	{ 0x0101, 0x0101, YM2151_status_port_0_r	},
-PORT_END
+static ADDRESS_MAP_START( fantland_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0080, 0x0080) AM_READ(soundlatch_r				)
+	AM_RANGE(0x0101, 0x0101) AM_READ(YM2151_status_port_0_r	)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( fantland_sound_writeport )
-	{ 0x0100, 0x0100, YM2151_register_port_0_w	},
-	{ 0x0101, 0x0101, YM2151_data_port_0_w		},
-	{ 0x0180, 0x0180, DAC_0_data_w				},
-PORT_END
+static ADDRESS_MAP_START( fantland_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0100, 0x0100) AM_WRITE(YM2151_register_port_0_w	)
+	AM_RANGE(0x0101, 0x0101) AM_WRITE(YM2151_data_port_0_w		)
+	AM_RANGE(0x0180, 0x0180) AM_WRITE(DAC_0_data_w				)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -362,13 +362,13 @@ static struct DACinterface fantland_dac_interface =
 static MACHINE_DRIVER_START( fantland )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(I86, 8000000)        // ?
-	MDRV_CPU_MEMORY(fantland_readmem, fantland_writemem)
+	MDRV_CPU_PROGRAM_MAP(fantland_readmem, fantland_writemem)
 	MDRV_CPU_VBLANK_INT(fantland_irq,1)
 
 	MDRV_CPU_ADD(I86, 8000000)        // ?
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(fantland_sound_readmem, fantland_sound_writemem)
-	MDRV_CPU_PORTS(fantland_sound_readport,fantland_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(fantland_sound_readmem, fantland_sound_writemem)
+	MDRV_CPU_IO_MAP(fantland_sound_readport,fantland_sound_writeport)
 	MDRV_CPU_PERIODIC_INT(fantland_sound_irq,8000)
 	// NMI when soundlatch is written
 
@@ -410,13 +410,13 @@ static struct YM2151interface galaxygn_ym2151_interface =
 static MACHINE_DRIVER_START( galaxygn )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(I86, 8000000)        // ?
-	MDRV_CPU_MEMORY(galaxygn_readmem, galaxygn_writemem)
+	MDRV_CPU_PROGRAM_MAP(galaxygn_readmem, galaxygn_writemem)
 	MDRV_CPU_VBLANK_INT(fantland_irq,1)
 
 	MDRV_CPU_ADD(I86, 8000000)        // ?
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(fantland_sound_readmem, fantland_sound_writemem)
-	MDRV_CPU_PORTS(fantland_sound_readport,fantland_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(fantland_sound_readmem, fantland_sound_writemem)
+	MDRV_CPU_IO_MAP(fantland_sound_readport,fantland_sound_writeport)
 	// IRQ by YM2151, NMI when soundlatch is written
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -40,19 +40,19 @@ typedef struct ccpuRegs
     UINT8   eCState;
 } ccpuRegs;
 
-#define CCPU_FETCH(a) 		(cpu_readop(BYTE_XOR_BE(a)+CCPU_PGM_OFFSET))
-#define CCPU_READPORT(a)	(cpu_readport16bew_word(a))
-#define CCPU_WRITEPORT(a,v) (cpu_writeport16bew_word(a,v))
+#define CCPU_FETCH(a) 		(cpu_readop(a))
+#define CCPU_READPORT(a)	(io_read_word_16be((a)<<1))
+#define CCPU_WRITEPORT(a,v) (io_write_word_16be((a)<<1,v))
 
 /*
  * Read a word from given RAM memory location
  */
-#define CCPU_RAM_RDMEM(A)	(cpu_readmem16bew_word((A<<1)+CCPU_DATA_OFFSET))
+#define CCPU_RAM_RDMEM(A)	(data_read_word_16be((A)<<1))
 
 /*
  *	 Write a word to given RAM memory location
  */
-#define CCPU_RAM_WRMEM(A,V) (cpu_writemem16bew_word((A<<1)+CCPU_DATA_OFFSET,V))
+#define CCPU_RAM_WRMEM(A,V) (data_write_word_16be((A)<<1,V))
 
 
 #define RAW_VECTORS 1
@@ -64,28 +64,28 @@ typedef struct ccpuRegs
 /* This prototype was missing */
 extern void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color);
 
-int ccpu_icount = 1000;
+static int ccpu_icount;
 
 
 extern UINT16 ioSwitches;
 extern UINT16 ioInputs;
 
 
-void ccpu_init(void)
+static void ccpu_init(void)
 {
 }
 
-void ccpu_reset(void *param)
+static void ccpu_reset(void *param)
 {
 	cineReset();
 }
 
-void ccpu_exit(void)
+static void ccpu_exit(void)
 {
 	/* nothing to do ? */
 }
 
-int ccpu_execute(int cycles)
+static int ccpu_execute(int cycles)
 {
 	int newCycles;
 
@@ -94,7 +94,7 @@ int ccpu_execute(int cycles)
 }
 
 
-unsigned ccpu_get_context(void *dst)
+static void ccpu_get_context(void *dst)
 {
     if( dst )
     {
@@ -113,11 +113,10 @@ unsigned ccpu_get_context(void *dst)
         Regs->eRegP = context.eRegP;
         Regs->eCState = context.eCState;
     }
-    return sizeof(ccpuRegs);
 }
 
 
-void ccpu_set_context(void *src)
+static void ccpu_set_context(void *src)
 {
 	if( src )
 	{
@@ -139,128 +138,7 @@ void ccpu_set_context(void *src)
 }
 
 
-unsigned ccpu_get_reg(int regnum)
-{
-	CONTEXTCCPU context;
-	cGetContext (&context);
-
-	switch( regnum )
-	{
-		case CCPU_ACC: return context.accVal;
-		case CCPU_CMP: return context.cmpVal;
-		case CCPU_PA0: return context.pa0;
-		case CCPU_CFLAG: return context.cFlag;
-		case REG_PC:
-		case CCPU_PC: return context.eRegPC;
-		case CCPU_A: return context.eRegA;
-		case CCPU_B: return context.eRegB;
-		case CCPU_I: return context.eRegI;
-		case CCPU_J: return context.eRegJ;
-		case REG_SP:
-		case CCPU_P: return context.eRegP;
-		case CCPU_CSTATE: return context.eCState;
-/* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-				return 0;
-	}
-	return 0;
-}
-
-void ccpu_set_reg(int regnum, unsigned val)
-{
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-	switch( regnum )
-	{
-		case CCPU_ACC: context.accVal = val; break;
-		case CCPU_CMP: context.cmpVal = val; break;
-		case CCPU_PA0: context.pa0 = val; break;
-		case CCPU_CFLAG: context.cFlag = val; break;
-		case REG_PC:
-		case CCPU_PC: context.eRegPC = val; break;
-		case CCPU_A: context.eRegA = val; break;
-		case CCPU_B: context.eRegB = val; break;
-		case CCPU_I: context.eRegI = val; break;
-		case CCPU_J: context.eRegJ = val; break;
-		case REG_SP:
-		case CCPU_P: context.eRegP = val; break;
-		case CCPU_CSTATE: context.eCState = (CINESTATE) val; break;
-/* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = /* SP? + */ (REG_SP_CONTENTS-regnum);
-				(void)offset;
-			}
-    }
-	cSetContext (&context);
-}
-
-
-void ccpu_set_irq_line(int irqline, int state)
-{
-	/* nothing to do */
-}
-
-void ccpu_set_irq_callback(int (*callback)(int irqline))
-{
-	/* nothing to do */
-}
-
-const char *ccpu_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	CONTEXTCCPU *r = context;
-
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-	if( !context )
-	{
-        static CONTEXTCCPU tmp;
-		cGetContext(&tmp);
-		r = &tmp;
-	}
-
-    switch( regnum )
-	{
-        case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
-		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%02X", r->cFlag); break;
-        case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "S:%X", r->eCState); break;
-		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%03X", r->eRegA); break;
-		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%03X", r->eRegB); break;
-		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%03X", r->eRegI); break;
-        case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%X", r->eRegP); break;
-		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%03X", r->eRegJ); break;
-		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%03X", r->accVal); break;
-        case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%03X", r->cmpVal); break;
-        case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
-			break;
-		case CPU_INFO_FLAGS:
-			/* TODO: no idea how the flags should look like */
-			sprintf(buffer[which], "%c-%c%c%c%c",
-				(r->cFlag) ? 'C' : 'c',
-                (r->eCState == state_A || r->eCState == state_AA) ? 'A':' ',
-                (r->eCState == state_A) ? 'A':' ',
-                (r->eCState == state_B || r->eCState == state_BB) ? 'B':' ',
-                (r->eCState == state_B) ? 'B':' ');
-            break;
-		case CPU_INFO_NAME: return "CCPU";
-		case CPU_INFO_FAMILY: return "Cinematronics CPU";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore";
-		case CPU_INFO_REG_LAYOUT: return (const char *)ccpu_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)ccpu_win_layout;
-    }
-	return buffer[which];
-
-}
-
-/* TODO: hook up the disassembler */
-unsigned ccpu_dasm(char *buffer, unsigned pc)
+static offs_t ccpu_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return DasmCCPU(buffer,pc);
@@ -269,6 +147,7 @@ unsigned ccpu_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
+
 
 void ccpu_Config (int jmi, int msize, int monitor)
 {
@@ -287,6 +166,132 @@ void ccpu_SetInputs(int inputs, int switches)
 
 /* To do:
   - make RAM external */
+
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void ccpu_set_info(UINT32 state, union cpuinfo *info)
+{
+	CONTEXTCCPU context;
+
+	cGetContext(&context);
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_REGISTER + CCPU_ACC:			context.accVal = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_CMP:			context.cmpVal = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_PA0:			context.pa0 = info->i;					break;
+		case CPUINFO_INT_REGISTER + CCPU_CFLAG:			context.cFlag = info->i;				break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + CCPU_PC:			context.eRegPC = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_A:				context.eRegA = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_B:				context.eRegB = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_I:				context.eRegI = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_J:				context.eRegJ = info->i;				break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + CCPU_P:				context.eRegP = info->i;				break;
+		case CPUINFO_INT_REGISTER + CCPU_CSTATE:		context.eCState = (CINESTATE) info->i;	break;
+	}
+	cSetContext(&context);
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void ccpu_get_info(UINT32 state, union cpuinfo *info)
+{
+	CONTEXTCCPU context;
+
+	cGetContext(&context);
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(ccpuRegs);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 0;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 15;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 3;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
+
+		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
+
+		case CPUINFO_INT_REGISTER + CCPU_ACC: 			info->i = context.accVal;				break;
+		case CPUINFO_INT_REGISTER + CCPU_CMP: 			info->i = context.cmpVal;				break;
+		case CPUINFO_INT_REGISTER + CCPU_PA0: 			info->i = context.pa0;					break;
+		case CPUINFO_INT_REGISTER + CCPU_CFLAG: 		info->i = context.cFlag;				break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + CCPU_PC: 			info->i = context.eRegPC;				break;
+		case CPUINFO_INT_REGISTER + CCPU_A: 			info->i = context.eRegA;				break;
+		case CPUINFO_INT_REGISTER + CCPU_B: 			info->i = context.eRegB;				break;
+		case CPUINFO_INT_REGISTER + CCPU_I: 			info->i = context.eRegI;				break;
+		case CPUINFO_INT_REGISTER + CCPU_J: 			info->i = context.eRegJ;				break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + CCPU_P: 			info->i = context.eRegP;				break;
+		case CPUINFO_INT_REGISTER + CCPU_CSTATE: 		info->i = context.eCState;				break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = ccpu_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ccpu_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ccpu_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = ccpu_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = ccpu_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = ccpu_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ccpu_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ccpu_dasm;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ccpu_icount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ccpu_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = ccpu_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "CCPU"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Cinematronics CPU"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore"); break;
+
+		case CPUINFO_STR_FLAGS:
+			/* TODO: no idea how the flags should look like */
+			sprintf(info->s = cpuintrf_temp_str(), "%c-%c%c%c%c",
+				(context.cFlag) ? 'C' : 'c',
+                (context.eCState == state_A || context.eCState == state_AA) ? 'A':' ',
+                (context.eCState == state_A) ? 'A':' ',
+                (context.eCState == state_B || context.eCState == state_BB) ? 'B':' ',
+                (context.eCState == state_B) ? 'B':' ');
+            break;
+
+        case CPUINFO_STR_REGISTER + CCPU_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", context.eRegPC); break;
+		case CPUINFO_STR_REGISTER + CCPU_CFLAG:			sprintf(info->s = cpuintrf_temp_str(), "C:%02X", context.cFlag); break;
+        case CPUINFO_STR_REGISTER + CCPU_CSTATE:		sprintf(info->s = cpuintrf_temp_str(), "S:%X", context.eCState); break;
+		case CPUINFO_STR_REGISTER + CCPU_A:				sprintf(info->s = cpuintrf_temp_str(), "A:%03X", context.eRegA); break;
+		case CPUINFO_STR_REGISTER + CCPU_B:				sprintf(info->s = cpuintrf_temp_str(), "B:%03X", context.eRegB); break;
+		case CPUINFO_STR_REGISTER + CCPU_I:				sprintf(info->s = cpuintrf_temp_str(), "I:%03X", context.eRegI); break;
+        case CPUINFO_STR_REGISTER + CCPU_P:				sprintf(info->s = cpuintrf_temp_str(), "P:%X", context.eRegP); break;
+		case CPUINFO_STR_REGISTER + CCPU_J:				sprintf(info->s = cpuintrf_temp_str(), "J:%03X", context.eRegJ); break;
+		case CPUINFO_STR_REGISTER + CCPU_ACC:			sprintf(info->s = cpuintrf_temp_str(), "ACC:%03X", context.accVal); break;
+        case CPUINFO_STR_REGISTER + CCPU_CMP:			sprintf(info->s = cpuintrf_temp_str(), "CMP:%03X", context.cmpVal); break;
+        case CPUINFO_STR_REGISTER + CCPU_PA0:			sprintf(info->s = cpuintrf_temp_str(), "PA0:%02X", context.pa0); break;
+	}
+}
 
 
 /*============================================================================================*

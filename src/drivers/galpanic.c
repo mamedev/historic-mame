@@ -251,155 +251,155 @@ static WRITE16_HANDLER( galpanic_bgvideoram_mirror_w )
 	}
 }
 
-static MEMORY_READ16_START( galpanic_readmem )
-	{ 0x000000, 0x3fffff, MRA16_ROM },
-	{ 0x400000, 0x400001, OKIM6295_status_0_lsb_r },
-	{ 0x500000, 0x51ffff, MRA16_RAM },
-	{ 0x520000, 0x53ffff, MRA16_RAM },
-	{ 0x600000, 0x6007ff, MRA16_RAM },
-	{ 0x700000, 0x7047ff, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x800004, 0x800005, input_port_2_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( galpanic_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x400001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x7047ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( galpanic_writemem )
-	{ 0x000000, 0x3fffff, MWA16_ROM },
-	{ 0x400000, 0x400001, OKIM6295_data_0_lsb_w },
-	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x7047ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* ??? */
-	{ 0xb00000, 0xb00001, MWA16_NOP },	/* ??? */
-	{ 0xc00000, 0xc00001, MWA16_NOP },	/* ??? */
-	{ 0xd00000, 0xd00001, MWA16_NOP },	/* ??? */
-MEMORY_END
+static ADDRESS_MAP_START( galpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x7047ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( galpanib_readmem )
-	{ 0x000000, 0x3fffff, MRA16_ROM },
-	{ 0x400000, 0x400001, OKIM6295_status_0_lsb_r },
-	{ 0x500000, 0x51ffff, MRA16_RAM },
-	{ 0x520000, 0x53ffff, MRA16_RAM },
-	{ 0x600000, 0x6007ff, MRA16_RAM },
-	{ 0x700000, 0x7047ff, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x800004, 0x800005, input_port_2_word_r },
-	{ 0xe00000, 0xe00015, galpanib_calc_r },
-MEMORY_END
+static ADDRESS_MAP_START( galpanib_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x400001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x7047ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xe00000, 0xe00015) AM_READ(galpanib_calc_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( galpanib_writemem )
-	{ 0x000000, 0x3fffff, MWA16_ROM },
-	{ 0x400000, 0x400001, OKIM6295_data_0_lsb_w },
-	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x7047ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* ??? */
-	{ 0xb00000, 0xb00001, MWA16_NOP },	/* ??? */
-	{ 0xc00000, 0xc00001, MWA16_NOP },	/* ??? */
-	{ 0xd00000, 0xd00001, MWA16_NOP },	/* ??? */
-	{ 0xe00000, 0xe00015, galpanib_calc_w, &galpanib_calc_data },
-MEMORY_END
+static ADDRESS_MAP_START( galpanib_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x7047ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xe00000, 0xe00015) AM_WRITE(galpanib_calc_w) AM_BASE(&galpanib_calc_data)
+ADDRESS_MAP_END
 
 static READ16_HANDLER( kludge )
 {
 	return mame_rand() & 0x0700;
 }
 
-static MEMORY_READ16_START( comad_readmem )
-	{ 0x000000, 0x4fffff, MRA16_ROM },
-	{ 0x500000, 0x51ffff, MRA16_RAM },
-	{ 0x520000, 0x53ffff, MRA16_RAM },
-	{ 0x600000, 0x6007ff, MRA16_RAM },
-	{ 0x700000, 0x700fff, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x800004, 0x800005, input_port_2_word_r },
-//	{ 0x800006, 0x800007,  },	??
-	{ 0x80000a, 0x80000b, kludge },	/* bits 8-a = timer? palette update code waits for them to be 111 */
-	{ 0x80000c, 0x80000d, kludge },	/* missw96 bits 8-a = timer? palette update code waits for them to be 111 */
-	{ 0xc00000, 0xc0ffff, MRA16_RAM },	/* missw96 */
-	{ 0xc80000, 0xc8ffff, MRA16_RAM },	/* fantasia, newfant */
-	{ 0xf00000, 0xf00001, OKIM6295_status_0_msb_r },	/* fantasia, missw96 */
-	{ 0xf80000, 0xf80001, OKIM6295_status_0_msb_r },	/* newfant */
-MEMORY_END
+static ADDRESS_MAP_START( comad_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+//	AM_RANGE(0x800006, 0x800007)	??
+	AM_RANGE(0x80000a, 0x80000b) AM_READ(kludge)	/* bits 8-a = timer? palette update code waits for them to be 111 */
+	AM_RANGE(0x80000c, 0x80000d) AM_READ(kludge)	/* missw96 bits 8-a = timer? palette update code waits for them to be 111 */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM)	/* missw96 */
+	AM_RANGE(0xc80000, 0xc8ffff) AM_READ(MRA16_RAM)	/* fantasia, newfant */
+	AM_RANGE(0xf00000, 0xf00001) AM_READ(OKIM6295_status_0_msb_r)	/* fantasia, missw96 */
+	AM_RANGE(0xf80000, 0xf80001) AM_READ(OKIM6295_status_0_msb_r)	/* newfant */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( comad_writemem )
-	{ 0x000000, 0x4fffff, MWA16_ROM },
-	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },	/* not sure */
-	{ 0xc00000, 0xc0ffff, MWA16_RAM },	/* missw96 */
-	{ 0xc80000, 0xc8ffff, MWA16_RAM },	/* fantasia, newfant */
-	{ 0xf00000, 0xf00001, OKIM6295_data_0_msb_w },	/* fantasia, missw96 */
-	{ 0xf80000, 0xf80001, OKIM6295_data_0_msb_w },	/* newfant */
-MEMORY_END
+static ADDRESS_MAP_START( comad_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)	/* not sure */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM)	/* missw96 */
+	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM)	/* fantasia, newfant */
+	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(OKIM6295_data_0_msb_w)	/* fantasia, missw96 */
+	AM_RANGE(0xf80000, 0xf80001) AM_WRITE(OKIM6295_data_0_msb_w)	/* newfant */
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( fantsia2_readmem )
-	{ 0x000000, 0x4fffff, MRA16_ROM },
-	{ 0x500000, 0x51ffff, MRA16_RAM },
-	{ 0x520000, 0x53ffff, MRA16_RAM },
-	{ 0x600000, 0x6007ff, MRA16_RAM },
-	{ 0x700000, 0x700fff, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x800004, 0x800005, input_port_2_word_r },
-//	{ 0x800006, 0x800007,  },	??
-	{ 0x800008, 0x800009, kludge },	/* bits 8-a = timer? palette update code waits for them to be 111 */
-	{ 0xf80000, 0xf8ffff, MRA16_RAM },
-	{ 0xc80000, 0xc80001, OKIM6295_status_0_msb_r },
-MEMORY_END
+static ADDRESS_MAP_START( fantsia2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+//	AM_RANGE(0x800006, 0x800007)	??
+	AM_RANGE(0x800008, 0x800009) AM_READ(kludge)	/* bits 8-a = timer? palette update code waits for them to be 111 */
+	AM_RANGE(0xf80000, 0xf8ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc80000, 0xc80001) AM_READ(OKIM6295_status_0_msb_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fantsia2_writemem )
-	{ 0x000000, 0x4fffff, MWA16_ROM },
-	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },	/* not sure */
-	{ 0xf80000, 0xf8ffff, MWA16_RAM },
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* coin counters, + ? */
-	{ 0xc80000, 0xc80001, OKIM6295_data_0_msb_w },
-MEMORY_END
+static ADDRESS_MAP_START( fantsia2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)	/* not sure */
+	AM_RANGE(0xf80000, 0xf8ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* coin counters, + ? */
+	AM_RANGE(0xc80000, 0xc80001) AM_WRITE(OKIM6295_data_0_msb_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( galhustl_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-    { 0x500000, 0x51ffff, MRA16_RAM },
-	{ 0x580000, 0x583fff, MRA16_RAM },
-	{ 0x600000, 0x6007ff, MRA16_RAM },
-	{ 0x600800, 0x600fff, MRA16_RAM },
-	{ 0x680000, 0x68001f, MRA16_RAM },
-	{ 0x700000, 0x700fff, MRA16_RAM },
-	{ 0x780000, 0x78001f, MRA16_RAM },
-	{ 0x800000, 0x800001, input_port_0_word_r },
-	{ 0x800002, 0x800003, input_port_1_word_r },
-	{ 0x800004, 0x800005, input_port_2_word_r },
-	{ 0xd00000, 0xd00001, OKIM6295_status_0_msb_r },
-	{ 0xe80000, 0xe8ffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( galhustl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+    AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x580000, 0x583fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600800, 0x600fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x680000, 0x68001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x780000, 0x78001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(OKIM6295_status_0_msb_r)
+	AM_RANGE(0xe80000, 0xe8ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( galhustl_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-    { 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },
-	{ 0x580000, 0x583fff, galpanic_bgvideoram_mirror_w },
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x600800, 0x600fff, MWA16_RAM }, // writes only 1?
-	{ 0x680000, 0x68001f, MWA16_RAM }, // regs?
-	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x780000, 0x78001f, MWA16_RAM }, // regs?
-	{ 0xa00000, 0xa00001, MWA16_NOP }, // ?
-	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },
-	{ 0xd00000, 0xd00001, OKIM6295_data_0_msb_w },
-	{ 0xe80000, 0xe8ffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( galhustl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+    AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)
+	AM_RANGE(0x580000, 0x583fff) AM_WRITE(galpanic_bgvideoram_mirror_w)
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x600800, 0x600fff) AM_WRITE(MWA16_RAM) // writes only 1?
+	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_RAM) // regs?
+	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_RAM) // regs?
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP) // ?
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_msb_w)
+	AM_RANGE(0xe80000, 0xe8ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( galpanic )
@@ -885,7 +885,7 @@ static MACHINE_DRIVER_START( galpanic )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
-	MDRV_CPU_MEMORY(galpanic_readmem,galpanic_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpanic_readmem,galpanic_writemem)
 	MDRV_CPU_VBLANK_INT(galpanic_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -913,7 +913,7 @@ static MACHINE_DRIVER_START( galpanib )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galpanic)
 	MDRV_CPU_REPLACE("main", M68000, 10000000)
-	MDRV_CPU_MEMORY(galpanib_readmem,galpanib_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpanib_readmem,galpanib_writemem)
 
 	/* arm watchdog */
 	MDRV_MACHINE_INIT(galpanib)
@@ -925,7 +925,7 @@ static MACHINE_DRIVER_START( comad )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galpanic)
 	MDRV_CPU_REPLACE("main", M68000, 10000000)
-	MDRV_CPU_MEMORY(comad_readmem,comad_writemem)
+	MDRV_CPU_PROGRAM_MAP(comad_readmem,comad_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(comad)
@@ -937,7 +937,7 @@ static MACHINE_DRIVER_START( fantsia2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(comad)
 	MDRV_CPU_REPLACE("main", M68000, 12000000)	/* ? */
-	MDRV_CPU_MEMORY(fantsia2_readmem,fantsia2_writemem)
+	MDRV_CPU_PROGRAM_MAP(fantsia2_readmem,fantsia2_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(comad)
@@ -948,7 +948,7 @@ static MACHINE_DRIVER_START( galhustl )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(comad)
 	MDRV_CPU_REPLACE("main", M68000, 12000000)	/* ? */
-	MDRV_CPU_MEMORY(galhustl_readmem,galhustl_writemem)
+	MDRV_CPU_PROGRAM_MAP(galhustl_readmem,galhustl_writemem)
 	MDRV_CPU_VBLANK_INT(galhustl_interrupt,3)
 
 	/* video hardware */
@@ -1104,6 +1104,27 @@ ROM_START( missw96 )
 	ROM_LOAD( "mw96_02.bin",  0xc0000, 0x80000, CRC(60fa0c00) SHA1(391aa31e61663cc083a8a2320ba48a9859f3fd4e) )
 ROM_END
 
+ROM_START( missmw96 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "mmw96_10.bin",  0x000000, 0x80000, CRC(45ed1cd9) SHA1(a75b1b6cddde065e6d7f7355a746819c8268c24f) )
+	ROM_LOAD16_BYTE( "mmw96_06.bin",  0x000001, 0x80000, CRC(52ec9e5d) SHA1(20b7cc923e9d55e391b09d96248837bb8f28a176) )
+	ROM_LOAD16_BYTE( "mmw96_09.bin",  0x100000, 0x80000, CRC(6c458b05) SHA1(249490c45cdecd6496338286a9ab6a6137cefcd0) )
+	ROM_LOAD16_BYTE( "mmw96_05.bin",  0x100001, 0x80000, CRC(48159555) SHA1(a7c736f9e41915d06b7242e427282c421c4a8283) )
+	ROM_LOAD16_BYTE( "mmw96_08.bin",  0x200000, 0x80000, CRC(1dc72b07) SHA1(fdbdf8298fe98d74ed2a76abf60f60af1c27a65d) )
+	ROM_LOAD16_BYTE( "mmw96_04.bin",  0x200001, 0x80000, CRC(fc3e18fa) SHA1(b3ad254aab982dc75a10c2cf2b3815c2fdbba914) )
+	ROM_LOAD16_BYTE( "mmw96_07.bin",  0x300000, 0x80000, CRC(001572bf) SHA1(cdf59c624baaeaea70985ee6f2f2fed08a8dfa61) )
+	ROM_LOAD16_BYTE( "mmw96_03.bin",  0x300001, 0x80000, BAD_DUMP CRC(8ad14003) SHA1(4bd2ef31956f5d9d4e592ac9786cd1a17e6a9b06) ) // one of them is bad anyway ..
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "mmw96_11.bin",  0x00000, 0x80000, CRC(7d491f8c) SHA1(63f580bd65579cac70b90eaa0e7f2413ef1597b8) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
+	ROM_LOAD( "mw96_01.bin",  0x00000, 0x80000, CRC(e78a659e) SHA1(d209184c70e0d7e6d17034c6f536535cda782d42) )
+	ROM_RELOAD(               0x40000, 0x80000 )
+	ROM_LOAD( "mw96_02.bin",  0xc0000, 0x80000, CRC(60fa0c00) SHA1(391aa31e61663cc083a8a2320ba48a9859f3fd4e) )
+ROM_END
+
 ROM_START( fantsia2 )
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "prog2.g17",    0x000000, 0x80000, CRC(57c59972) SHA1(4b1da928b537cf340a67026d07bc3dfc078b0d0f) )
@@ -1149,5 +1170,6 @@ GAMEX( 1994, fantasia, 0,        comad,    fantasia, 0, ROT90, "Comad & New Japa
 GAMEX( 1995, newfant,  0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "New Fantasia", GAME_NO_COCKTAIL )
 GAMEX( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology Inc.", "Fantasy '95", GAME_NO_COCKTAIL )
 GAMEX( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
+GAMEX( 1996, missmw96, missw96,  comad,    missw96,  0, ROT0,  "Comad", "Miss Mister World '96 Nude", GAME_NO_COCKTAIL )
 GAMEX( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )
 GAME(  1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler" )

@@ -24,7 +24,7 @@
  ***************************************************************/
 #define IN(port)												\
 	(((port ^ IO_IOCR) & 0xffc0) == 0) ?						\
-		z180_readcontrol(port) : cpu_readport16(port)
+		z180_readcontrol(port) : io_read_byte_8(port)
 
 /***************************************************************
  * Output a byte to given I/O port
@@ -32,7 +32,7 @@
 #define OUT(port,value) 										\
 	if (((port ^ IO_IOCR) & 0xffc0) == 0)						\
 		z180_writecontrol(port,value);							\
-	else cpu_writeport16(port,value)
+	else io_write_byte_8(port,value)
 
 /***************************************************************
  * MMU calculate the memory managemant lookup table
@@ -68,7 +68,7 @@ INLINE void z180_mmu( void )
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#define RM(addr)	cpu_readmem20(MMU_REMAP_ADDR(addr))
+#define RM(addr)	program_read_byte_8(MMU_REMAP_ADDR(addr))
 data8_t cpu_readmemz180(offs_t offset)
 {
 	return RM(offset);
@@ -77,7 +77,7 @@ data8_t cpu_readmemz180(offs_t offset)
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(addr,value) cpu_writemem20(MMU_REMAP_ADDR(addr),value)
+#define WM(addr,value) program_write_byte_8(MMU_REMAP_ADDR(addr),value)
 void cpu_writememz180(offs_t offset, data8_t data)
 {
 	WM(offset, data);
@@ -136,7 +136,7 @@ INLINE UINT32 ARG16(void)
 /****************************************************************************
  * Change program counter - MMU lookup
  ****************************************************************************/
-#define z180_change_pc(addr) change_pc20(MMU_REMAP_ADDR(addr))
+#define z180_change_pc(addr) change_pc(MMU_REMAP_ADDR(addr))
 void cpu_setOPbasez180(int pc)
 {
 	z180_change_pc(pc);

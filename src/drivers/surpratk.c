@@ -84,35 +84,35 @@ static WRITE_HANDLER( surpratk_5fc0_w )
 
 /********************************************/
 
-static MEMORY_READ_START( surpratk_readmem )
-	{ 0x0000, 0x07ff, bankedram_r },
-	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, MRA_BANK1 },			/* banked ROM */
-	{ 0x5f8c, 0x5f8c, input_port_0_r },
-	{ 0x5f8d, 0x5f8d, input_port_1_r },
-	{ 0x5f8e, 0x5f8e, input_port_4_r },
-	{ 0x5f8f, 0x5f8f, input_port_2_r },
-	{ 0x5f90, 0x5f90, input_port_3_r },
-//	{ 0x5f91, 0x5f91, YM2151_status_port_0_r },	/* ? */
-	{ 0x5fa0, 0x5faf, K053244_r },
-	{ 0x5fc0, 0x5fc0, watchdog_reset_r },
-	{ 0x4000, 0x7fff, K052109_r },
-	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( surpratk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(bankedram_r)
+	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK1)			/* banked ROM */
+	AM_RANGE(0x5f8c, 0x5f8c) AM_READ(input_port_0_r)
+	AM_RANGE(0x5f8d, 0x5f8d) AM_READ(input_port_1_r)
+	AM_RANGE(0x5f8e, 0x5f8e) AM_READ(input_port_4_r)
+	AM_RANGE(0x5f8f, 0x5f8f) AM_READ(input_port_2_r)
+	AM_RANGE(0x5f90, 0x5f90) AM_READ(input_port_3_r)
+//	AM_RANGE(0x5f91, 0x5f91) AM_READ(YM2151_status_port_0_r)	/* ? */
+	AM_RANGE(0x5fa0, 0x5faf) AM_READ(K053244_r)
+	AM_RANGE(0x5fc0, 0x5fc0) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(K052109_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( surpratk_writemem )
-	{ 0x0000, 0x07ff, bankedram_w, &ram },
-	{ 0x0800, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3fff, MWA_ROM },					/* banked ROM */
-	{ 0x5fa0, 0x5faf, K053244_w },
-	{ 0x5fb0, 0x5fbf, K053251_w },
-	{ 0x5fc0, 0x5fc0, surpratk_5fc0_w },
-	{ 0x5fd0, 0x5fd0, YM2151_register_port_0_w },
-	{ 0x5fd1, 0x5fd1, YM2151_data_port_0_w },
-	{ 0x5fc4, 0x5fc4, surpratk_videobank_w },
-	{ 0x4000, 0x7fff, K052109_w },
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( surpratk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(bankedram_w) AM_BASE(&ram)
+	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)					/* banked ROM */
+	AM_RANGE(0x5fa0, 0x5faf) AM_WRITE(K053244_w)
+	AM_RANGE(0x5fb0, 0x5fbf) AM_WRITE(K053251_w)
+	AM_RANGE(0x5fc0, 0x5fc0) AM_WRITE(surpratk_5fc0_w)
+	AM_RANGE(0x5fd0, 0x5fd0) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x5fd1, 0x5fd1) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x5fc4, 0x5fc4) AM_WRITE(surpratk_videobank_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(K052109_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)					/* ROM */
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -240,7 +240,7 @@ static MACHINE_DRIVER_START( surpratk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(KONAMI, 3000000)	/* 053248 */
-	MDRV_CPU_MEMORY(surpratk_readmem,surpratk_writemem)
+	MDRV_CPU_PROGRAM_MAP(surpratk_readmem,surpratk_writemem)
 	MDRV_CPU_VBLANK_INT(surpratk_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -303,7 +303,7 @@ logerror("%04x: setlines %02x\n",activecpu_get_pc(),lines);
 
 static MACHINE_INIT( surpratk )
 {
-	konami_cpu_setlines_callback = surpratk_banking;
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)surpratk_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 }

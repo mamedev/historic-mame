@@ -290,64 +290,64 @@ INPUT_PORTS_END
 
 /*****************************************************************************/
 /* Main CPU */
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xd7ff, MRA_BANK1 },
-	{ 0xd800, 0xdbff, beg_sharedram_r }, /* only half of the RAM is accessible, line a10 of IC73 (6116) is GNDed */
-	{ 0xf000, 0xf0ff, bigevglf_vidram_r }, /* 41464 (64kB * 8 chips), addressed using ports 1 and 5 */
-	{ 0xf840, 0xf8ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xd800, 0xdbff) AM_READ(beg_sharedram_r) /* only half of the RAM is accessible, line a10 of IC73 (6116) is GNDed */
+	AM_RANGE(0xf000, 0xf0ff) AM_READ(bigevglf_vidram_r) /* 41464 (64kB * 8 chips), addressed using ports 1 and 5 */
+	AM_RANGE(0xf840, 0xf8ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, MWA_ROM },
-	{ 0xd800, 0xdbff, beg_sharedram_w, &beg_sharedram },
-	{ 0xe000, 0xe7ff, beg_palette_w, &paletteram },
-	{ 0xe800, 0xefff, MWA_RAM, &beg_spriteram1 }, /* sprite 'templates' */
-	{ 0xf000, 0xf0ff, bigevglf_vidram_w },
-	{ 0xf840, 0xf8ff, MWA_RAM,&beg_spriteram2 },  /* spriteram (x,y,offset in spriteram1,palette) */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(beg_sharedram_w) AM_BASE(&beg_sharedram)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(beg_palette_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&beg_spriteram1) /* sprite 'templates' */
+	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(bigevglf_vidram_w)
+	AM_RANGE(0xf840, 0xf8ff) AM_WRITE(MWA8_RAM) AM_BASE(&beg_spriteram2)  /* spriteram (x,y,offset in spriteram1,palette) */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( bigevglf_writeport )
-	{ 0x00, 0x00, IOWP_NOP }, 	/* video ram enable ???*/
-	{ 0x01, 0x01, beg_gfxcontrol_w },  /* plane select */
-	{ 0x02, 0x02, beg_banking_w },
-	{ 0x03, 0x03, beg13A_set_w },
-	{ 0x04, 0x04, beg13B_clr_w },
-	{ 0x05, 0x05, bigevglf_vidram_addr_w },	/* video banking (256 banks) for f000-f0ff area */
-PORT_END
+static ADDRESS_MAP_START( bigevglf_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) 	/* video ram enable ???*/
+	AM_RANGE(0x01, 0x01) AM_WRITE(beg_gfxcontrol_w)  /* plane select */
+	AM_RANGE(0x02, 0x02) AM_WRITE(beg_banking_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(beg13A_set_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(beg13B_clr_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(bigevglf_vidram_addr_w)	/* video banking (256 banks) for f000-f0ff area */
+ADDRESS_MAP_END
 
-static PORT_READ_START( bigevglf_readport )
-	{ 0x06,0x06, beg_status_r },
-PORT_END
+static ADDRESS_MAP_START( bigevglf_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x06, 0x06) AM_READ(beg_status_r)
+ADDRESS_MAP_END
 
 
 /*********************************************************************************/
 /* Sub CPU */
 
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x8000, 0x83ff, beg_sharedram_r }, /* shared with main CPU */
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(beg_sharedram_r) /* shared with main CPU */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x83ff, beg_sharedram_w }, /* shared with main CPU */
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(beg_sharedram_w) /* shared with main CPU */
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( bigevglf_sub_writeport )
-	{ 0x08, 0x08, IOWP_NOP }, /*coinlockout_w ???? watchdog ???? */
-	{ 0x0c, 0x0c, bigevglf_mcu_w },
-	{ 0x0e, 0x0e, IOWP_NOP }, /* 0-enable MCU, 1-keep reset line ASSERTED; D0 goes to the input of ls74 and the /Q of this ls74 goes to reset line on 68705 */
-	{ 0x10, 0x17, beg13A_clr_w },
-	{ 0x18, 0x1f, beg13B_set_w },
-	{ 0x20, 0x20, sound_command_w },
-PORT_END
+static ADDRESS_MAP_START( bigevglf_sub_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_WRITE(MWA8_NOP) /*coinlockout_w ???? watchdog ???? */
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(bigevglf_mcu_w)
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(MWA8_NOP) /* 0-enable MCU, 1-keep reset line ASSERTED; D0 goes to the input of ls74 and the /Q of this ls74 goes to reset line on 68705 */
+	AM_RANGE(0x10, 0x17) AM_WRITE(beg13A_clr_w)
+	AM_RANGE(0x18, 0x1f) AM_WRITE(beg13B_set_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(sound_command_w)
+ADDRESS_MAP_END
 
 
 
@@ -364,68 +364,70 @@ static READ_HANDLER( sub_cpu_mcu_coin_port_r )
 	return bigevglf_mcu_status_r(0) | (readinputport(1) & 3) | bit5; /* bit 0 and bit 1 - coin inputs */
 }
 
-static PORT_READ_START( bigevglf_sub_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, IORP_NOP },
-	{ 0x02, 0x02, input_port_4_r },
-	{ 0x03, 0x03, input_port_5_r },
-	{ 0x04, 0x04, sub_cpu_mcu_coin_port_r },
-	{ 0x05, 0x05, input_port_2_r },
-	{ 0x06, 0x06, input_port_3_r },
-	{ 0x07, 0x07, IORP_NOP },
-	{ 0x0b, 0x0b, bigevglf_mcu_r },
-	{ 0x20, 0x20, beg_fromsound_r },
-	{ 0x21, 0x21, beg_soundstate_r },
-PORT_END
+static ADDRESS_MAP_START( bigevglf_sub_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_4_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_5_r)
+	AM_RANGE(0x04, 0x04) AM_READ(sub_cpu_mcu_coin_port_r)
+	AM_RANGE(0x05, 0x05) AM_READ(input_port_2_r)
+	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)
+	AM_RANGE(0x07, 0x07) AM_READ(MRA8_NOP)
+	AM_RANGE(0x0b, 0x0b) AM_READ(bigevglf_mcu_r)
+	AM_RANGE(0x20, 0x20) AM_READ(beg_fromsound_r)
+	AM_RANGE(0x21, 0x21) AM_READ(beg_soundstate_r)
+ADDRESS_MAP_END
 
 
 /*********************************************************************************/
 /* Sound CPU */
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xda00, 0xda00, soundstate_r },
-	{ 0xd800, 0xd800, sound_command_r },	/* read from D800 sets bit 0 in status */
-	{ 0xe000, 0xefff, MRA_NOP },	/* space for diagnostics ROM */
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xda00, 0xda00) AM_READ(soundstate_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(sound_command_r)	/* read from D800 sets bit 0 in status */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_NOP)	/* space for diagnostics ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc800, AY8910_control_port_0_w },
-	{ 0xc801, 0xc801, AY8910_write_port_0_w },
-	{ 0xca00, 0xca0d, MSM5232_0_w },
-	{ 0xcc00, 0xcc00, MWA_NOP },
-	{ 0xce00, 0xce00, MWA_NOP },
-	{ 0xd800, 0xd800, beg_fromsound_w },	/* write to D800 sets bit 1 in status */
-	{ 0xda00, 0xda00, nmi_enable_w },
-	{ 0xdc00, 0xdc00, nmi_disable_w },
-	{ 0xde00, 0xde00, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xca00, 0xca0d) AM_WRITE(MSM5232_0_w)
+	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xce00, 0xce00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd800, 0xd800) AM_WRITE(beg_fromsound_w)	/* write to D800 sets bit 1 in status */
+	AM_RANGE(0xda00, 0xda00) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xdc00, 0xdc00) AM_WRITE(nmi_disable_w)
+	AM_RANGE(0xde00, 0xde00) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 
 /*********************************************************************************/
 /* MCU */
 
-static MEMORY_READ_START( m68705_readmem )
-	{ 0x0000, 0x0000, bigevglf_68705_portA_r },
-	{ 0x0001, 0x0001, bigevglf_68705_portB_r },
-	{ 0x0002, 0x0002, bigevglf_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(bigevglf_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(bigevglf_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(bigevglf_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m68705_writemem )
-	{ 0x0000, 0x0000, bigevglf_68705_portA_w },
-	{ 0x0001, 0x0001, bigevglf_68705_portB_w },
-	{ 0x0002, 0x0002, bigevglf_68705_portC_w },
-	{ 0x0004, 0x0004, bigevglf_68705_ddrA_w },
-	{ 0x0005, 0x0005, bigevglf_68705_ddrB_w },
-	{ 0x0006, 0x0006, bigevglf_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(bigevglf_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(bigevglf_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(bigevglf_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(bigevglf_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(bigevglf_68705_ddrB_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(bigevglf_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 static struct GfxLayout gfxlayout =
@@ -474,24 +476,24 @@ static struct MSM5232interface msm5232_interface =
 static MACHINE_DRIVER_START( bigevglf )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,10000000/2)		/* 5 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(bigevglf_readport,bigevglf_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(bigevglf_readport,bigevglf_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* vblank */
 
 	MDRV_CPU_ADD(Z80,10000000/2)		/* 5 MHz ? */
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
-	MDRV_CPU_PORTS(bigevglf_sub_readport,bigevglf_sub_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
+	MDRV_CPU_IO_MAP(bigevglf_sub_readport,bigevglf_sub_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* vblank */
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz ? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* IRQ generated by ???;
 		2 irqs/frame give good music tempo but also SOUND ERROR in test mode,
 		4 irqs/frame give SOUND OK in test mode but music seems to be running too fast */
 
 	MDRV_CPU_ADD(M68705,2000000)	/* ??? */
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -65,58 +65,58 @@ static WRITE_HANDLER( cpu_sound_command_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0010, 0x0010, input_port_0_r },		/* IN0 */
-	{ 0x0011, 0x0011, input_port_1_r },		/* IN1 */
-	{ 0x0012, 0x0012, input_port_2_r },		/* IN2 */
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0010, 0x0010) AM_READ(input_port_0_r)		/* IN0 */
+	AM_RANGE(0x0011, 0x0011) AM_READ(input_port_1_r)		/* IN1 */
+	AM_RANGE(0x0012, 0x0012) AM_READ(input_port_2_r)		/* IN2 */
 
-	{ 0x0014, 0x0014, input_port_3_r },		/* DIPSW1 */
-	{ 0x0015, 0x0015, input_port_4_r },		/* DIPSW2 */
-	{ 0x0016, 0x0016, input_port_5_r },		/* DIPSW3 */
+	AM_RANGE(0x0014, 0x0014) AM_READ(input_port_3_r)		/* DIPSW1 */
+	AM_RANGE(0x0015, 0x0015) AM_READ(input_port_4_r)		/* DIPSW2 */
+	AM_RANGE(0x0016, 0x0016) AM_READ(input_port_5_r)		/* DIPSW3 */
 
-	{ 0x0c00, 0x0cff, MRA_RAM },
-	{ 0x1000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0x0c00, 0x0cff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0007, contra_K007121_ctrl_0_w },
-	{ 0x0018, 0x0018, contra_coin_counter_w },
-	{ 0x001a, 0x001a, contra_sh_irqtrigger_w },
-	{ 0x001c, 0x001c, cpu_sound_command_w },
-	{ 0x001e, 0x001e, MWA_NOP },	/* ? */
-	{ 0x0060, 0x0067, contra_K007121_ctrl_1_w },
-	{ 0x0c00, 0x0cff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x1000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x23ff, contra_fg_cram_w, &contra_fg_cram },
-	{ 0x2400, 0x27ff, contra_fg_vram_w, &contra_fg_vram },
-	{ 0x2800, 0x2bff, contra_text_cram_w, &contra_text_cram },
-	{ 0x2c00, 0x2fff, contra_text_vram_w, &contra_text_vram },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },/* 2nd bank is at 0x5000 */
-	{ 0x3800, 0x3fff, MWA_RAM }, // second sprite buffer
-	{ 0x4000, 0x43ff, contra_bg_cram_w, &contra_bg_cram },
-	{ 0x4400, 0x47ff, contra_bg_vram_w, &contra_bg_vram },
-	{ 0x4800, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x6fff, MWA_ROM },
- 	{ 0x7000, 0x7000, contra_bankswitch_w },
-	{ 0x7001, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_WRITE(contra_K007121_ctrl_0_w)
+	AM_RANGE(0x0018, 0x0018) AM_WRITE(contra_coin_counter_w)
+	AM_RANGE(0x001a, 0x001a) AM_WRITE(contra_sh_irqtrigger_w)
+	AM_RANGE(0x001c, 0x001c) AM_WRITE(cpu_sound_command_w)
+	AM_RANGE(0x001e, 0x001e) AM_WRITE(MWA8_NOP)	/* ? */
+	AM_RANGE(0x0060, 0x0067) AM_WRITE(contra_K007121_ctrl_1_w)
+	AM_RANGE(0x0c00, 0x0cff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(contra_fg_cram_w) AM_BASE(&contra_fg_cram)
+	AM_RANGE(0x2400, 0x27ff) AM_WRITE(contra_fg_vram_w) AM_BASE(&contra_fg_vram)
+	AM_RANGE(0x2800, 0x2bff) AM_WRITE(contra_text_cram_w) AM_BASE(&contra_text_cram)
+	AM_RANGE(0x2c00, 0x2fff) AM_WRITE(contra_text_vram_w) AM_BASE(&contra_text_vram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)/* 2nd bank is at 0x5000 */
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(MWA8_RAM) // second sprite buffer
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(contra_bg_cram_w) AM_BASE(&contra_bg_cram)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(contra_bg_vram_w) AM_BASE(&contra_bg_vram)
+	AM_RANGE(0x4800, 0x5fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+ 	AM_RANGE(0x7000, 0x7000) AM_WRITE(contra_bankswitch_w)
+	AM_RANGE(0x7001, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x0000, soundlatch_r },
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x6000, 0x67ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(soundlatch_r)
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4000, MWA_NOP }, /* read triggers irq reset and latch read (in the hardware only). */
-	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_NOP) /* read triggers irq reset and latch read (in the hardware only). */
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -259,12 +259,12 @@ static MACHINE_DRIVER_START( contra )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(M6809, 1500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
  	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

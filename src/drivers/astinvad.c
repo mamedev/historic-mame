@@ -48,54 +48,54 @@ static PALETTE_INIT( astinvad )
 }
 
 
-static MEMORY_READ_START( astinvad_readmem )
-	{ 0x0000, 0x1bff, MRA_ROM },
-	{ 0x1c00, 0x3fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( astinvad_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1c00, 0x3fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( astinvad_writemem )
-	{ 0x0000, 0x1bff, MWA_ROM },
-	{ 0x1c00, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3fff, astinvad_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x4fff, MWA_NOP }, /* sloppy game code writes here */
-MEMORY_END
-
-
-static MEMORY_READ_START( spaceint_readmem )
-	{ 0x0000, 0x17ff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( spaceint_writemem )
-	{ 0x0000, 0x17ff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x4000, 0x5fff, spaceint_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( astinvad_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1bff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(astinvad_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_NOP) /* sloppy game code writes here */
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( astinvad_readport )
-	{ 0x08, 0x08, input_port_0_r },
-	{ 0x09, 0x09, input_port_1_r },
-	{ 0x0a, 0x0a, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( spaceint_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( astinvad_writeport )
-	{ 0x04, 0x04, astinvad_sound1_w },
-	{ 0x05, 0x05, astinvad_sound2_w },
-PORT_END
+static ADDRESS_MAP_START( spaceint_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(spaceint_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( spaceint_readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( astinvad_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_READ(input_port_0_r)
+	AM_RANGE(0x09, 0x09) AM_READ(input_port_1_r)
+	AM_RANGE(0x0a, 0x0a) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( spaceint_writeport )
-	{ 0x02, 0x02, spaceint_sound1_w },
-	{ 0x03, 0x03, spaceint_color_w },
-	{ 0x04, 0x04, spaceint_sound2_w },
-PORT_END
+static ADDRESS_MAP_START( astinvad_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(astinvad_sound1_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(astinvad_sound2_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( spaceint_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( spaceint_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x02, 0x02) AM_WRITE(spaceint_sound1_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(spaceint_color_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(spaceint_sound2_w)
+ADDRESS_MAP_END
 
 
 #define COMMON_INPUT_BITS \
@@ -250,8 +250,8 @@ static MACHINE_DRIVER_START( astinvad )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_MEMORY(astinvad_readmem,astinvad_writemem)
-	MDRV_CPU_PORTS(astinvad_readport,astinvad_writeport)
+	MDRV_CPU_PROGRAM_MAP(astinvad_readmem,astinvad_writemem)
+	MDRV_CPU_IO_MAP(astinvad_readport,astinvad_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)    /* two interrupts per frame */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -288,8 +288,8 @@ static MACHINE_DRIVER_START( spaceint )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)        /* 2 MHz? */
-	MDRV_CPU_MEMORY(spaceint_readmem,spaceint_writemem)
-	MDRV_CPU_PORTS(spaceint_readport,spaceint_writeport)
+	MDRV_CPU_PROGRAM_MAP(spaceint_readmem,spaceint_writemem)
+	MDRV_CPU_IO_MAP(spaceint_readport,spaceint_writeport)
 	MDRV_CPU_VBLANK_INT(spaceint_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -61,34 +61,34 @@ static READ_HANDLER(ssrj_wheel_r)
 	return retval;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, ssrj_vram1_r},
-	{ 0xc800, 0xcfff, ssrj_vram2_r},
-	{ 0xd000, 0xd7ff, MRA_RAM},
-	{ 0xd800, 0xdfff, ssrj_vram4_r},
-	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf000, input_port_0_r},
-	{ 0xf001, 0xf001, ssrj_wheel_r },
-	{ 0xf002, 0xf002, input_port_2_r},
-	{ 0xf401, 0xf401 ,AY8910_read_port_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(ssrj_vram1_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(ssrj_vram2_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(ssrj_vram4_r)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_0_r)
+	AM_RANGE(0xf001, 0xf001) AM_READ(ssrj_wheel_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(input_port_2_r)
+	AM_RANGE(0xf401, 0xf401) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, ssrj_vram1_w,&ssrj_vram1 },
-	{ 0xc800, 0xcfff, ssrj_vram2_w,&ssrj_vram2 },
-	{ 0xd000, 0xd7ff, MWA_RAM,&ssrj_vram3 },
-	{ 0xd800, 0xdfff, ssrj_vram4_w,&ssrj_vram4 },
-	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, MWA_RAM,&ssrj_scrollram },
-	{ 0xf003, 0xf003, MWA_NOP }, /* unknown */
-	{ 0xf401, 0xf401, AY8910_write_port_0_w  },
-	{ 0xf400, 0xf400, AY8910_control_port_0_w },
-	{ 0xfc00, 0xfc00, MWA_NOP }, /* unknown */
-	{ 0xf800, 0xf800, MWA_NOP }, /* wheel ? */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(ssrj_vram1_w) AM_BASE(&ssrj_vram1)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(ssrj_vram2_w) AM_BASE(&ssrj_vram2)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&ssrj_vram3)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(ssrj_vram4_w) AM_BASE(&ssrj_vram4)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&ssrj_scrollram)
+	AM_RANGE(0xf003, 0xf003) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xf401, 0xf401) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(MWA8_NOP) /* wheel ? */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( ssrj )
 
@@ -178,7 +178,7 @@ static MACHINE_DRIVER_START( ssrj )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

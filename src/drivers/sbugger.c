@@ -58,34 +58,34 @@ WRITE_HANDLER( sbugger_videoram_w );
 
 /* memory maps */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x37ff, MRA_ROM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_READ(MRA8_ROM)
 
-	{ 0xc800, 0xcfff, MRA_RAM }, /* video ram */
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* video ram */
 
-	{ 0xe000, 0xe0ff, MRA_RAM }, /* sp is set to e0ff */
+	AM_RANGE(0xe000, 0xe0ff) AM_READ(MRA8_RAM) /* sp is set to e0ff */
 
-	{ 0xf400, 0xffff, MRA_RAM },
+	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x37ff, MWA_ROM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_WRITE(MWA8_ROM)
 
-	{ 0xc800, 0xcbff, sbugger_videoram_attr_w, &sbugger_videoram_attr },
-	{ 0xcc00, 0xcfff, sbugger_videoram_w, &sbugger_videoram },
+	AM_RANGE(0xc800, 0xcbff) AM_WRITE(sbugger_videoram_attr_w) AM_BASE(&sbugger_videoram_attr)
+	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(sbugger_videoram_w) AM_BASE(&sbugger_videoram)
 
-	{ 0xe000, 0xe0ff, MWA_RAM }, /* sp is set to e0ff */
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) /* sp is set to e0ff */
 
-	{ 0xf400, 0xffff, MWA_RAM },
+	AM_RANGE(0xf400, 0xffff) AM_WRITE(MWA8_RAM)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0xe1, 0xe1, input_port_0_r },
-	{ 0xe2, 0xe2, input_port_1_r },
-	{ 0xe3, 0xe3, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xe1, 0xe1) AM_READ(input_port_0_r)
+	AM_RANGE(0xe2, 0xe2) AM_READ(input_port_1_r)
+	AM_RANGE(0xe3, 0xe3) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
 /* there are some port writes */
 
@@ -192,8 +192,8 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( sbugger )
 	MDRV_CPU_ADD(8085A, 6000000/2)        /* 3.00 MHz??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,0)
 
 
 	MDRV_FRAMES_PER_SECOND(60)

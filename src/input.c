@@ -465,7 +465,7 @@ int code_pressed_memory_repeat(InputCode code, int speed)
 			keydelay = 3;
 			counter = 0;
 		}
-		else if (++counter > keydelay * speed * Machine->drv->frames_per_second / 60)
+		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
 		{
 			keydelay = 1;
 			counter = 0;
@@ -848,7 +848,7 @@ int input_ui_pressed_repeat(int code,int speed)
 			inputdelay = 3;
 			counter = 0;
 		}
-		else if (++counter > inputdelay * speed * Machine->drv->frames_per_second / 60)
+		else if (++counter > inputdelay * speed * Machine->refresh_rate / 60)
 		{
 			inputdelay = 1;
 			counter = 0;

@@ -240,72 +240,72 @@ static WRITE16_HANDLER( jumping_sound_w )
                             MEMORY STRUCTURES
 ***************************************************************************/
 
-static MEMORY_READ16_START( rainbow_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* main RAM */
-	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
-	{ 0x201000, 0x203fff, MRA16_RAM },	/* read in initial checks */
-	{ 0x390000, 0x390003, input_port_0_word_r },
-	{ 0x3b0000, 0x3b0003, input_port_1_word_r },
-	{ 0x3e0000, 0x3e0001, MRA16_NOP },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x800000, 0x8007ff, rainbow_cchip_ram_r },
-	{ 0x800802, 0x800803, rainbow_cchip_ctrl_r },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram + other stuff */
-MEMORY_END
+static ADDRESS_MAP_START( rainbow_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_READ(MRA16_RAM)	/* main RAM */
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)	/* palette */
+	AM_RANGE(0x201000, 0x203fff) AM_READ(MRA16_RAM)	/* read in initial checks */
+	AM_RANGE(0x390000, 0x390003) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x3b0000, 0x3b0003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x3e0000, 0x3e0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_lsb_r)
+	AM_RANGE(0x800000, 0x8007ff) AM_READ(rainbow_cchip_ram_r)
+	AM_RANGE(0x800802, 0x800803) AM_READ(rainbow_cchip_ctrl_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(PC080SN_word_0_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram + other stuff */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( rainbow_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x10c000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x200fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x201000, 0x203fff, MWA16_RAM },	/* written in initial checks */
-	{ 0x3a0000, 0x3a0001, rainbow_spritectrl_w },
-	{ 0x3c0000, 0x3c0003, MWA16_NOP },	/* written very often, watchdog? */
-	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0x800000, 0x8007ff, rainbow_cchip_ram_w },
-	{ 0x800802, 0x800803, rainbow_cchip_ctrl_w },
-	{ 0x800c00, 0x800c01, rainbow_cchip_bank_w },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
-	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
-	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
-	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram + other stuff */
-MEMORY_END
+static ADDRESS_MAP_START( rainbow_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x201000, 0x203fff) AM_WRITE(MWA16_RAM)	/* written in initial checks */
+	AM_RANGE(0x3a0000, 0x3a0001) AM_WRITE(rainbow_spritectrl_w)
+	AM_RANGE(0x3c0000, 0x3c0003) AM_WRITE(MWA16_NOP)	/* written very often, watchdog? */
+	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_lsb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_lsb_w)
+	AM_RANGE(0x800000, 0x8007ff) AM_WRITE(rainbow_cchip_ram_w)
+	AM_RANGE(0x800802, 0x800803) AM_WRITE(rainbow_cchip_ctrl_w)
+	AM_RANGE(0x800c00, 0x800c01) AM_WRITE(rainbow_cchip_bank_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(PC080SN_word_0_w)
+	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(PC080SN_yscroll_word_0_w)
+	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
+	AM_RANGE(0xc50000, 0xc50003) AM_WRITE(PC080SN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram + other stuff */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( jumping_readmem )
-	{ 0x000000, 0x09ffff, MRA16_ROM },
-	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* main RAM */
-	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
-	{ 0x201000, 0x203fff, MRA16_RAM },	/* read in initial checks */
-	{ 0x400000, 0x400001, input_port_0_word_r },
-	{ 0x400002, 0x400003, input_port_1_word_r },
-	{ 0x401000, 0x401001, input_port_2_word_r },
-	{ 0x401002, 0x401003, input_port_3_word_r },
-	{ 0x420000, 0x420001, MRA16_NOP },	/* read, but result not used */
-	{ 0x440000, 0x4407ff, MRA16_RAM },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd01fff, MRA16_RAM },	/* original spriteram location, needed for Attract Mode */
-MEMORY_END
+static ADDRESS_MAP_START( jumping_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_READ(MRA16_RAM)	/* main RAM */
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)	/* palette */
+	AM_RANGE(0x201000, 0x203fff) AM_READ(MRA16_RAM)	/* read in initial checks */
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x401000, 0x401001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x401002, 0x401003) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x420000, 0x420001) AM_READ(MRA16_NOP)	/* read, but result not used */
+	AM_RANGE(0x440000, 0x4407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(PC080SN_word_0_r)
+	AM_RANGE(0xd00000, 0xd01fff) AM_READ(MRA16_RAM)	/* original spriteram location, needed for Attract Mode */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( jumping_writemem )
-	{ 0x000000, 0x09ffff, MWA16_ROM },
-	{ 0x10c000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x200fff, paletteram16_xxxxBBBBGGGGRRRR_word_w , &paletteram16 },
-	{ 0x201000, 0x203fff, MWA16_RAM },	/* written in initial checks */
-	{ 0x3a0000, 0x3a0001, jumping_spritectrl_w },
-	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog? */
-	{ 0x400006, 0x400007, jumping_sound_w },
-	{ 0x430000, 0x430003, PC080SN_yscroll_word_0_w },
-	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x800000, 0x80ffff, MWA16_NOP },	/* original c-chip location (not used) */
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
-	{ 0xc20000, 0xc20003, MWA16_NOP },	/* seems it is a leftover from rainbow: scroll y written here too */
-	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
-	{ 0xd00000, 0xd01fff, MWA16_RAM }, 	/* original spriteram location, needed for Attract Mode */
-MEMORY_END
+static ADDRESS_MAP_START( jumping_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x201000, 0x203fff) AM_WRITE(MWA16_RAM)	/* written in initial checks */
+	AM_RANGE(0x3a0000, 0x3a0001) AM_WRITE(jumping_spritectrl_w)
+	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(MWA16_NOP)	/* watchdog? */
+	AM_RANGE(0x400006, 0x400007) AM_WRITE(jumping_sound_w)
+	AM_RANGE(0x430000, 0x430003) AM_WRITE(PC080SN_yscroll_word_0_w)
+	AM_RANGE(0x440000, 0x4407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_NOP)	/* original c-chip location (not used) */
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(PC080SN_word_0_w)
+	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(MWA16_NOP)	/* seems it is a leftover from rainbow: scroll y written here too */
+	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
+	AM_RANGE(0xd00000, 0xd01fff) AM_WRITE(MWA16_RAM) 	/* original spriteram location, needed for Attract Mode */
+ADDRESS_MAP_END
 
 
 /**********************************************************
@@ -326,42 +326,42 @@ static READ_HANDLER( jumping_latch_r )
 }
 
 
-static MEMORY_READ_START( rainbow_s_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK5 },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( rainbow_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( rainbow_s_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-MEMORY_END
+static ADDRESS_MAP_START( rainbow_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( jumping_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0xb000, 0xb000, YM2203_status_port_0_r },
-	{ 0xb400, 0xb400, YM2203_status_port_1_r },
-	{ 0xb800, 0xb800, jumping_latch_r },
-	{ 0xc000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( jumping_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0xb400, 0xb400) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(jumping_latch_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( jumping_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-	{ 0xb400, 0xb400, YM2203_control_port_1_w },
-	{ 0xb401, 0xb401, YM2203_write_port_1_w },
-	{ 0xbc00, 0xbc00, MWA_NOP },	/* looks like a bankswitch, but sound works with or without it */
-MEMORY_END
+static ADDRESS_MAP_START( jumping_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0xb400, 0xb400) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0xb401, 0xb401) AM_WRITE(YM2203_write_port_1_w)
+	AM_RANGE(0xbc00, 0xbc00) AM_WRITE(MWA8_NOP)	/* looks like a bankswitch, but sound works with or without it */
+ADDRESS_MAP_END
 
 
 /***********************************************************
@@ -611,11 +611,11 @@ static MACHINE_DRIVER_START( rainbow )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(rainbow_readmem,rainbow_writemem)
+	MDRV_CPU_PROGRAM_MAP(rainbow_readmem,rainbow_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(rainbow_s_readmem,rainbow_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(rainbow_s_readmem,rainbow_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -640,11 +640,11 @@ static MACHINE_DRIVER_START( jumping )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(jumping_readmem,jumping_writemem)
+	MDRV_CPU_PROGRAM_MAP(jumping_readmem,jumping_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(jumping_sound_readmem,jumping_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(jumping_sound_readmem,jumping_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

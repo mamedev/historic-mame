@@ -33,26 +33,26 @@ static WRITE16_HANDLER( prehisle_sound16_w )
 
 /*******************************************************************************/
 
-static MEMORY_READ16_START( prehisle_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x070000, 0x073fff, MRA16_RAM },
-	{ 0x090000, 0x0907ff, MRA16_RAM },
-	{ 0x0a0000, 0x0a07ff, MRA16_RAM },
-	{ 0x0b0000, 0x0b3fff, MRA16_RAM },
-	{ 0x0d0000, 0x0d07ff, MRA16_RAM },
-	{ 0x0e0000, 0x0e00ff, prehisle_control16_r },
-MEMORY_END
+static ADDRESS_MAP_START( prehisle_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x070000, 0x073fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x090000, 0x0907ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0b0000, 0x0b3fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0d0000, 0x0d07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0e0000, 0x0e00ff) AM_READ(prehisle_control16_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( prehisle_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x070000, 0x073fff, MWA16_RAM, &prehisle_ram16 },
-	{ 0x090000, 0x0907ff, prehisle_fg_videoram16_w, &videoram16 },
-	{ 0x0a0000, 0x0a07ff, MWA16_RAM, &spriteram16 },
-	{ 0x0b0000, 0x0b3fff, prehisle_bg_videoram16_w, &prehisle_bg_videoram16 },
-	{ 0x0d0000, 0x0d07ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0x0f0070, 0x0ff071, prehisle_sound16_w },
-	{ 0x0f0000, 0x0ff0ff, prehisle_control16_w },
-MEMORY_END
+static ADDRESS_MAP_START( prehisle_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x070000, 0x073fff) AM_WRITE(MWA16_RAM) AM_BASE(&prehisle_ram16)
+	AM_RANGE(0x090000, 0x0907ff) AM_WRITE(prehisle_fg_videoram16_w) AM_BASE(&videoram16)
+	AM_RANGE(0x0a0000, 0x0a07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
+	AM_RANGE(0x0b0000, 0x0b3fff) AM_WRITE(prehisle_bg_videoram16_w) AM_BASE(&prehisle_bg_videoram16)
+	AM_RANGE(0x0d0000, 0x0d07ff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0f0070, 0x0ff071) AM_WRITE(prehisle_sound16_w)
+	AM_RANGE(0x0f0000, 0x0ff0ff) AM_WRITE(prehisle_control16_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -63,28 +63,28 @@ static WRITE_HANDLER( D7759_write_port_0_w )
 	UPD7759_start_w (0,1);
 }
 
-static MEMORY_READ_START( prehisle_sound_readmem )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( prehisle_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( prehisle_sound_writemem )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, MWA_NOP },	// ???
-MEMORY_END
+static ADDRESS_MAP_START( prehisle_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(MWA8_NOP)	// ???
+ADDRESS_MAP_END
 
-static PORT_READ_START( prehisle_sound_readport )
-	{ 0x00, 0x00, YM3812_status_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( prehisle_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( prehisle_sound_writeport )
-	{ 0x00, 0x00, YM3812_control_port_0_w },
-	{ 0x20, 0x20, YM3812_write_port_0_w },
-	{ 0x40, 0x40, D7759_write_port_0_w},
-	{ 0x80, 0x80, UPD7759_0_reset_w },
-PORT_END
+static ADDRESS_MAP_START( prehisle_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(D7759_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(UPD7759_0_reset_w)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -241,13 +241,13 @@ static MACHINE_DRIVER_START( prehisle )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(prehisle_readmem,prehisle_writemem)
+	MDRV_CPU_PROGRAM_MAP(prehisle_readmem,prehisle_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(prehisle_sound_readmem,prehisle_sound_writemem)
-	MDRV_CPU_PORTS(prehisle_sound_readport,prehisle_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(prehisle_sound_readmem,prehisle_sound_writemem)
+	MDRV_CPU_IO_MAP(prehisle_sound_readport,prehisle_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

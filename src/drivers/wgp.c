@@ -597,89 +597,89 @@ READ16_HANDLER( wgp_sound_r )
                          MEMORY STRUCTURES
 *****************************************************************/
 
-static MEMORY_READ16_START( wgp_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },	/* main CPUA ram */
-	{ 0x140000, 0x143fff, MRA16_RAM },
-	{ 0x180000, 0x18000f, TC0220IOC_halfword_byteswap_r },
-	{ 0x200000, 0x20000f, wgp_adinput_r },
-	{ 0x300000, 0x30ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0x320000, 0x32000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x400000, 0x40bfff, MRA16_RAM },	/* sprite tilemaps */
-	{ 0x40c000, 0x40dfff, MRA16_RAM },	/* sprite ram */
-	{ 0x500000, 0x501fff, MRA16_RAM },	/* unknown/unused */
-	{ 0x502000, 0x517fff, wgp_pivram_word_r },	/* piv tilemaps */
-	{ 0x520000, 0x52001f, wgp_piv_ctrl_word_r },
-	{ 0x700000, 0x701fff, paletteram16_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( wgp_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)	/* main CPUA ram */
+	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(TC0220IOC_halfword_byteswap_r)
+	AM_RANGE(0x200000, 0x20000f) AM_READ(wgp_adinput_r)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0x320000, 0x32000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+	AM_RANGE(0x400000, 0x40bfff) AM_READ(MRA16_RAM)	/* sprite tilemaps */
+	AM_RANGE(0x40c000, 0x40dfff) AM_READ(MRA16_RAM)	/* sprite ram */
+	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM)	/* unknown/unused */
+	AM_RANGE(0x502000, 0x517fff) AM_READ(wgp_pivram_word_r)	/* piv tilemaps */
+	AM_RANGE(0x520000, 0x52001f) AM_READ(wgp_piv_ctrl_word_r)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(paletteram16_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( wgp_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x140000, 0x143fff, MWA16_RAM, &sharedram, &sharedram_size },
-	{ 0x180000, 0x18000f, TC0220IOC_halfword_byteswap_w },
-	{ 0x1c0000, 0x1c0001, cpua_ctrl_w },
-	{ 0x200000, 0x20000f, wgp_adinput_w },
-	{ 0x300000, 0x30ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0x320000, 0x32000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x400000, 0x40bfff, MWA16_RAM, &wgp_spritemap, &wgp_spritemap_size },
-	{ 0x40c000, 0x40dfff, MWA16_RAM, &spriteram16, &spriteram_size  },	/* sprite ram */
-	{ 0x40fff0, 0x40fff1, MWA16_NOP },	// ?? (writes 0x8000 and 0 alternately - Wgp2 just 0)
-	{ 0x500000, 0x501fff, MWA16_RAM },	/* unknown/unused */
-	{ 0x502000, 0x517fff, wgp_pivram_word_w, &wgp_pivram },	/* piv tilemaps */
-	{ 0x520000, 0x52001f, wgp_piv_ctrl_word_w, &wgp_piv_ctrlram },
-	{ 0x600000, 0x600003, rotate_port_w },	/* rotation control ? */
-	{ 0x700000, 0x701fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-MEMORY_END
+static ADDRESS_MAP_START( wgp_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&sharedram) AM_SIZE(&sharedram_size)
+	AM_RANGE(0x180000, 0x18000f) AM_WRITE(TC0220IOC_halfword_byteswap_w)
+	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(cpua_ctrl_w)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(wgp_adinput_w)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0x320000, 0x32000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+	AM_RANGE(0x400000, 0x40bfff) AM_WRITE(MWA16_RAM) AM_BASE(&wgp_spritemap) AM_SIZE(&wgp_spritemap_size)
+	AM_RANGE(0x40c000, 0x40dfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	/* sprite ram */
+	AM_RANGE(0x40fff0, 0x40fff1) AM_WRITE(MWA16_NOP)	// ?? (writes 0x8000 and 0 alternately - Wgp2 just 0)
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(MWA16_RAM)	/* unknown/unused */
+	AM_RANGE(0x502000, 0x517fff) AM_WRITE(wgp_pivram_word_w) AM_BASE(&wgp_pivram)	/* piv tilemaps */
+	AM_RANGE(0x520000, 0x52001f) AM_WRITE(wgp_piv_ctrl_word_w) AM_BASE(&wgp_piv_ctrlram)
+	AM_RANGE(0x600000, 0x600003) AM_WRITE(rotate_port_w)	/* rotation control ? */
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( wgp_cpub_readmem )	/* LAN areas not mapped... */
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-	{ 0x140000, 0x143fff, sharedram_r },
-	{ 0x200000, 0x200003, wgp_sound_r },
-//	{ 0x380000, 0x383fff, MRA16_RAM },	// LAN RAM
-	{ 0x380000, 0x380001, lan_status_r },	// ??
+static ADDRESS_MAP_START( wgp_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )	/* LAN areas not mapped... */
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_READ(sharedram_r)
+	AM_RANGE(0x200000, 0x200003) AM_READ(wgp_sound_r)
+//	AM_RANGE(0x380000, 0x383fff) AM_READ(MRA16_RAM)	// LAN RAM
+	AM_RANGE(0x380000, 0x380001) AM_READ(lan_status_r)	// ??
 	// a lan input area is read somewhere above the status
 	// (make the status return 0 and log)...
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( wgp_cpub_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x140000, 0x143fff, sharedram_w },
-	{ 0x200000, 0x200003, wgp_sound_w },
-//	{ 0x380000, 0x383fff, MWA16_RAM },	// LAN RAM
-MEMORY_END
+static ADDRESS_MAP_START( wgp_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x143fff) AM_WRITE(sharedram_w)
+	AM_RANGE(0x200000, 0x200003) AM_WRITE(wgp_sound_w)
+//	AM_RANGE(0x380000, 0x383fff) AM_WRITE(MWA16_RAM)	// LAN RAM
+ADDRESS_MAP_END
 
 
 /***************************************************************************/
 
-static MEMORY_READ_START( z80_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK10 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( z80_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( z80_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
-	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( z80_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
 /***********************************************************
@@ -1182,15 +1182,15 @@ static MACHINE_DRIVER_START( wgp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(wgp_readmem,wgp_writemem)
+	MDRV_CPU_PROGRAM_MAP(wgp_readmem,wgp_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(wgp_cpub_readmem,wgp_cpub_writemem)
+	MDRV_CPU_PROGRAM_MAP(wgp_cpub_readmem,wgp_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(wgp_cpub_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1217,15 +1217,15 @@ static MACHINE_DRIVER_START( wgp2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(wgp_readmem,wgp_writemem)
+	MDRV_CPU_PROGRAM_MAP(wgp_readmem,wgp_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(wgp_cpub_readmem,wgp_cpub_writemem)
+	MDRV_CPU_PROGRAM_MAP(wgp_cpub_readmem,wgp_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(wgp_cpub_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

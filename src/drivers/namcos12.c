@@ -116,7 +116,7 @@ static INTERRUPT_GEN( namcos12_vblank )
 	/* kludge: protection hacks */
 	if( strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 )
 	{
-		data8_t *RAM = memory_region( REGION_CPU1 );
+		data8_t *RAM = (data8_t *)psxram;
 		if( *( (data32_t *)&RAM[ 0x2ac494 ] ) == 0x080ab125 )
 		{
 			*( (data32_t *)&RAM[ 0x2ac494 ] ) = 0;
@@ -124,7 +124,7 @@ static INTERRUPT_GEN( namcos12_vblank )
 	}
 	else if( strcmp( Machine->gamedrv->name, "pacapp" ) == 0 )
 	{
-		data8_t *RAM = memory_region( REGION_CPU1 );
+		data8_t *RAM = (data8_t *)psxram;
 		if( *( (data32_t *)&RAM[ 0x16d50 ] ) == 0x08005b54 )
 		{
 			*( (data32_t *)&RAM[ 0x16d50 ] ) = 0;
@@ -138,7 +138,7 @@ static WRITE32_HANDLER( bankoffset_w )
 {
 	m_n_bankoffset = data;
 
-	cpu_setbank( 7, memory_region( REGION_USER3 ) + ( m_n_bankoffset * 0x200000 ) );
+	cpu_setbank( 1, memory_region( REGION_USER3 ) + ( m_n_bankoffset * 0x200000 ) );
 
 	verboselog( 1, "bankoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_bankoffset );
 }
@@ -171,9 +171,9 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 		p_n_src = (data32_t *)( memory_region( REGION_USER3 ) + ( m_n_dmaoffset & 0x7fffffff ) );
 	}
 
-	p_n_dst = (data32_t *)( memory_region( REGION_CPU1 ) + n_address );
+	p_n_dst = (data32_t *)( (UINT8 *)psxram + n_address );
 
-	n_left = ( memory_region_length( REGION_CPU1 ) - n_address ) / 4;
+	n_left = ( psxramsize - n_address ) / 4;
 	if( n_size > n_left )
 	{
 		n_size = n_left;
@@ -185,72 +185,40 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 	}
 }
 
-static MEMORY_WRITE32_START( namcos12_writemem )
-	{ 0x00000000, 0x003fffff, MWA32_RAM },    /* ram */
-	{ 0x1f000000, 0x1f000003, bankoffset_w }, /* banking */
-	{ 0x1f008000, 0x1f008003, MWA32_NOP },    /* ?? */
-	{ 0x1f010000, 0x1f010003, MWA32_NOP },    /* ?? */
-	{ 0x1f018000, 0x1f018003, MWA32_NOP },    /* ?? */
-	{ 0x1f080000, 0x1f083fff, sharedram_w, &namcos12_sharedram }, /* shared ram?? */
-	{ 0x1f140000, 0x1f141fff, MWA32_RAM, (data32_t **)&generic_nvram, &generic_nvram_size }, /* flash */
-	{ 0x1f1bff08, 0x1f1bff0f, MWA32_NOP },    /* ?? */
-	{ 0x1f700000, 0x1f70ffff, dmaoffset_w },  /* dma */
-	{ 0x1f800000, 0x1f8003ff, MWA32_BANK1 },  /* scratchpad */
-	{ 0x1f801000, 0x1f801007, MWA32_NOP },
-	{ 0x1f801008, 0x1f80100b, MWA32_RAM },    /* ?? */
-	{ 0x1f80100c, 0x1f80102f, MWA32_NOP },
-	{ 0x1f801040, 0x1f80105f, psx_sio_w },
-	{ 0x1f801060, 0x1f80106f, MWA32_NOP },
-	{ 0x1f801070, 0x1f801077, psx_irq_w },
-	{ 0x1f801080, 0x1f8010ff, psx_dma_w },
-	{ 0x1f801100, 0x1f80113f, psx_counter_w },
-	{ 0x1f801810, 0x1f801817, psx_gpu_w },
-	{ 0x1f801820, 0x1f801827, psx_mdec_w },
-	{ 0x1f801c00, 0x1f801dff, MWA32_NOP },
-	{ 0x1f802020, 0x1f802033, MWA32_RAM },
-	{ 0x1f802040, 0x1f802043, MWA32_NOP },
-	{ 0x1fc00000, 0x1fffffff, MWA32_ROM },    /* bios */
-	{ 0x80000000, 0x803fffff, MWA32_BANK3 },  /* ram mirror */
-	{ 0x9fc00000, 0x9fffffff, MWA32_ROM },    /* bios */
-	{ 0xa0000000, 0xa03fffff, MWA32_BANK5 },  /* ram mirror */
-	{ 0xbfc00000, 0xbfffffff, MWA32_ROM },    /* bios */
-	{ 0xfffe0130, 0xfffe0133, MWA32_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(29) )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&psxram) AM_SIZE(&psxramsize)    /* ram */
+	AM_RANGE(0x1f000000, 0x1f000003) AM_READWRITE(MRA32_NOP, bankoffset_w)			/* banking */
+	AM_RANGE(0x1f008000, 0x1f008003) AM_WRITENOP    /* ?? */
+	AM_RANGE(0x1f010000, 0x1f010003) AM_WRITENOP    /* ?? */
+	AM_RANGE(0x1f018000, 0x1f018003) AM_WRITENOP    /* ?? */
+	AM_RANGE(0x1f080000, 0x1f083fff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos12_sharedram) /* shared ram?? */
+	AM_RANGE(0x1f140000, 0x1f141fff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* flash */
+	AM_RANGE(0x1f1bff08, 0x1f1bff0f) AM_WRITENOP    /* ?? */
+	AM_RANGE(0x1f700000, 0x1f70ffff) AM_WRITE(dmaoffset_w)  /* dma */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM			/* scratchpad */
+	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
+	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM			/* ?? */
+	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
+	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
+	AM_RANGE(0x1f801014, 0x1f801017) AM_READNOP
+	AM_RANGE(0x1f801040, 0x1f80105f) AM_READWRITE(psx_sio_r, psx_sio_w)
+	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
+	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
+	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
+	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
+	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
+	AM_RANGE(0x1f801c00, 0x1f801dff) AM_NOP
+	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM
+	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
+	AM_RANGE(0x1fa00000, 0x1fbfffff) AM_ROMBANK(1)			/* banked roms */
+	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_REGION(REGION_USER2, 0)    /* bios */
+ADDRESS_MAP_END
 
-static MEMORY_READ32_START( namcos12_readmem )
-	{ 0x00000000, 0x003fffff, MRA32_RAM },    /* ram */
-	{ 0x1f000000, 0x1f000003, MRA32_NOP },    /* banking */
-	{ 0x1f080000, 0x1f083fff, sharedram_r },  /* shared ram */
-	{ 0x1f140000, 0x1f141fff, MRA32_RAM },    /* flash */
-	{ 0x1f800000, 0x1f8003ff, MRA32_BANK1 },  /* scratchpad */
-	{ 0x1f801008, 0x1f80100b, MRA32_RAM },    /* ?? */
-	{ 0x1f801010, 0x1f801013, MRA32_NOP },
-	{ 0x1f801014, 0x1f801017, MRA32_NOP },
-	{ 0x1f801040, 0x1f80105f, psx_sio_r },
-	{ 0x1f801070, 0x1f801077, psx_irq_r },
-	{ 0x1f801080, 0x1f8010ff, psx_dma_r },
-	{ 0x1f801100, 0x1f80113f, psx_counter_r },
-	{ 0x1f801810, 0x1f801817, psx_gpu_r },
-	{ 0x1f801820, 0x1f801827, psx_mdec_r },
-	{ 0x1f801c00, 0x1f801dff, MRA32_NOP },
-	{ 0x1f802020, 0x1f802033, MRA32_RAM },
-	{ 0x1fa00000, 0x1fbfffff, MRA32_BANK7 },  /* banked roms */
-	{ 0x1fc00000, 0x1fffffff, MRA32_BANK2 },  /* bios mirror */
-	{ 0x80000000, 0x803fffff, MRA32_BANK3 },  /* ram mirror */
-	{ 0x9fc00000, 0x9fffffff, MRA32_BANK4 },  /* bios mirror */
-	{ 0xa0000000, 0xa03fffff, MRA32_BANK5 },  /* ram mirror */
-	{ 0xbfc00000, 0xbfffffff, MRA32_BANK6 },  /* bios */
-MEMORY_END
 
 static DRIVER_INIT( namcos12 )
 {
-	cpu_setbank( 1, memory_region( REGION_USER1 ) );
-	cpu_setbank( 2, memory_region( REGION_USER2 ) );
-	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
-	cpu_setbank( 4, memory_region( REGION_USER2 ) );
-	cpu_setbank( 5, memory_region( REGION_CPU1 ) );
-	cpu_setbank( 6, memory_region( REGION_USER2 ) );
-
 	psx_driver_init();
 
 	psx_dma_install_read_handler( 5, namcos12_rom_read );
@@ -276,12 +244,13 @@ static DRIVER_INIT( namcos12 )
 MACHINE_INIT( namcos12 )
 {
 	psx_machine_init();
+	bankoffset_w(0,0,0);
 }
 
 static MACHINE_DRIVER_START( coh700 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_MEMORY( namcos12_readmem, namcos12_writemem )
+	MDRV_CPU_PROGRAM_MAP( namcos12_map, 0 )
 	MDRV_CPU_VBLANK_INT( namcos12_vblank, 1 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -388,9 +357,6 @@ INPUT_PORTS_START( namcos12 )
 INPUT_PORTS_END
 
 ROM_START( aquarush )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "aq1vera.2l",  0x0000000, 0x200000, CRC(91eb9258) SHA1(30e225eb551bfe1bed6b342dd6d597345d64b677) )
 	ROM_LOAD16_BYTE( "aq1vera.2p",  0x0000001, 0x200000, CRC(a92f21aa) SHA1(bde33f1f66aaa55031c6b2972b042eef87047cce) )
@@ -407,9 +373,6 @@ ROM_START( aquarush )
 ROM_END
 
 ROM_START( ehrgeiz )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "eg3vera.2l",  0x0000000, 0x200000, CRC(64c00ff0) SHA1(fc7980bc8d98c810aed2eb6b3265d150784dfc15) )
 	ROM_LOAD16_BYTE( "eg3vera.2p",  0x0000001, 0x200000, CRC(e722c030) SHA1(4669a7861c14d97048728989708a0fa3733f83a8) )
@@ -432,9 +395,6 @@ ROM_START( ehrgeiz )
 ROM_END
 
 ROM_START( fgtlayer )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ftl1vera.2e", 0x0000000, 0x200000, CRC(f4156e79) SHA1(cedb917940be8c74fa4ddb48213ce6917444e306) )
 	ROM_LOAD16_BYTE( "ftl1vera.2j", 0x0000001, 0x200000, CRC(c65b57c0) SHA1(0051aa46d09fbe9d896ae5f534e21955373f1d46) )
@@ -457,9 +417,6 @@ ROM_START( fgtlayer )
 ROM_END
 
 ROM_START( golgo13 )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "glg1vera.2l", 0x0000000, 0x200000, CRC(aa15abfe) SHA1(e82b408746e01c50c5cb0dcef804974d1e97078a) )
 	ROM_LOAD16_BYTE( "glg1vera.2p", 0x0000001, 0x200000, CRC(37a4cf90) SHA1(b5470d44036e9de8220b669f71b50bcec42d9a18) )
@@ -487,9 +444,6 @@ ROM_START( golgo13 )
 ROM_END
 
 ROM_START( mdhorse )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "mdh1vera.2l", 0x0000000, 0x200000, CRC(fbb567b2) SHA1(899dccdfbc8dcbcdaf9b5df93e249a36f8cbf999) )
 	ROM_LOAD16_BYTE( "mdh1vera.2p", 0x0000001, 0x200000, CRC(a0f182ab) SHA1(70c789ea88248c1f810f9fdb3feaf808acbaa8cd) )
@@ -510,9 +464,6 @@ ROM_START( mdhorse )
 ROM_END
 
 ROM_START( mrdrillr )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "dri1vera.2l", 0x0000000, 0x200000, CRC(751ca21d) SHA1(1c271bba83d387c797ce8daa43885bcb6e1a51a6) )
 	ROM_LOAD16_BYTE( "dri1vera.2p", 0x0000001, 0x200000, CRC(2a2b0704) SHA1(5a8b40c6cf0adc43ca2ee0c576ec82f314aacd2c) )
@@ -529,9 +480,6 @@ ROM_START( mrdrillr )
 ROM_END
 
 ROM_START( pacapp )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ppp1vera.2l", 0x0000000, 0x200000, CRC(6e74bd05) SHA1(41a2e06538cea3bced2992f5858a3f0cd1c0b4aa) )
 	ROM_LOAD16_BYTE( "ppp1vera.2p", 0x0000001, 0x200000, CRC(b7a2f724) SHA1(820ae04ec416b8394a1d919279748bde3460cb96) )
@@ -553,9 +501,6 @@ ROM_START( pacapp )
 ROM_END
 
 ROM_START( soulclbr )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc1vera.2l", 0x0000000, 0x200000, CRC(37e0a203) SHA1(3915b5e530c8e70a07aa8ccedeb66633ae5f670e) )
 	ROM_LOAD16_BYTE( "soc1vera.2p", 0x0000001, 0x200000, CRC(7cd87a35) SHA1(5a4837b6f6a49c88126a0ddbb8059a4da77127bc) )
@@ -575,9 +520,6 @@ ROM_START( soulclbr )
 ROM_END
 
 ROM_START( sws99 )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ss91vera.2e", 0x0000000, 0x200000, CRC(4dd928d7) SHA1(d76c0f52d1a2cd101a6879e6ff57ed1c52b5e228) )
 	ROM_LOAD16_BYTE( "ss91vera.2j", 0x0000001, 0x200000, CRC(40777a48) SHA1(6e3052ddbe3943eb2418cd50102cead88b850240) )
@@ -600,9 +542,6 @@ ROM_START( sws99 )
 ROM_END
 
 ROM_START( tekken3 )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "tet1vere.2e", 0x0000000, 0x200000, CRC(8b01113b) SHA1(45fdfd58293641ed16bc59c633a85a9cf64ccbaf) )
 	ROM_LOAD16_BYTE( "tet1vere.2j", 0x0000001, 0x200000, CRC(df4c96fb) SHA1(2e223045bf5b80ccf615106e869760c5b7aa8d44) )
@@ -626,9 +565,6 @@ ROM_START( tekken3 )
 ROM_END
 
 ROM_START( tekkentt )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "teg3verb.2l", 0x0000000, 0x200000, CRC(1efb7b85) SHA1(0623bb6571caf046ff7b4f83f11ee84a92c4b462) )
 	ROM_LOAD16_BYTE( "teg3verb.2p", 0x0000001, 0x200000, CRC(7caef9b2) SHA1(5c56d69ba2f723d0a4fbe4902196efc6ba9d5094) )

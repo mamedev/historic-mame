@@ -44,7 +44,7 @@
 #define ARGBYTE(A) cpu_readop_arg(A)
 #define ARGWORD(A) cpu_readop_arg(A)+(cpu_readop_arg((A+1) & 0xffff) << 8)
 
-#define RDMEM(A)   cpu_readmem16(A)
+#define RDMEM(A)   program_read_byte_8(A)
 
 enum addr_mode {
 	non,   /* no additional arguments */
@@ -635,6 +635,11 @@ static const UINT8 opdeco16[256][3] =
  };
 #endif
 
+static unsigned m6502_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+static unsigned m6509_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+static unsigned m65ce02_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+static unsigned m4510_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
@@ -844,42 +849,42 @@ static int m6509_get_argword(int addr)
 typedef struct {
 	const UINT8 *opcode;
 	unsigned(*get_reg)(int regnum);
-	mem_read_handler readmem;
+	read8_handler readmem;
 	int(*argword)(int addr);
 } CPU_TYPE;
 
 #if 0
 static CPU_TYPE type_m6502 = {
-	(const UINT8*)op6502, m6502_get_reg, cpu_readmem16, m6502_get_argword
+	(const UINT8*)op6502, m6502_get_reg, program_read_byte_8, m6502_get_argword
 };
 #endif
 #ifdef HAS_M6510
 static CPU_TYPE type_m6510 = {
-	(const UINT8*)op6510, m6502_get_reg, cpu_readmem16, m6502_get_argword
+	(const UINT8*)op6510, m6502_get_reg, program_read_byte_8, m6502_get_argword
 };
 #endif
 #if (HAS_M6509)
 static CPU_TYPE type_m6509 = {
-	(const UINT8*)op6510, m6509_get_reg, cpu_readmem20, m6509_get_argword
+	(const UINT8*)op6510, m6509_get_reg, program_read_byte_8, m6509_get_argword
 };
 #endif
 #if 0
 static CPU_TYPE type_m65c02 = {
-	(const UINT8*)op65c02, m6502_get_reg, cpu_readmem16, m6502_get_argword
+	(const UINT8*)op65c02, m6502_get_reg, program_read_byte_8, m6502_get_argword
 };
 static CPU_TYPE type_m65sc02 = {
-	(const UINT8*)op65sc02, m6502_get_reg, cpu_readmem16, m6502_get_argword
+	(const UINT8*)op65sc02, m6502_get_reg, program_read_byte_8, m6502_get_argword
 };
 #endif
 #if (HAS_M65CE02)
 static CPU_TYPE type_m65ce02 = {
-	(const UINT8*)op65ce02, m65ce02_get_reg, cpu_readmem16, m6502_get_argword
+	(const UINT8*)op65ce02, m65ce02_get_reg, program_read_byte_8, m6502_get_argword
 };
 #endif
 #if (HAS_M4510)
 static READ_HANDLER(m4510_readmem)
 {
-	return cpu_readmem20( m4510_get_reg(M4510_MEM0+(offset>>13))+offset );
+	return program_read_byte_8( m4510_get_reg(M4510_MEM0+(offset>>13))+offset );
 }
 
 static CPU_TYPE type_m4510 = {

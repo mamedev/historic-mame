@@ -100,87 +100,87 @@ static WRITE_HANDLER( ninjemak_videoreg_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd800, 0xdbff, galivan_videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdfff, galivan_colorram_w, &colorram },
-	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe100, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(galivan_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(galivan_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe100, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ninjemak_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd800, 0xd81f, ninjemak_videoreg_w },
-	{ 0xd800, 0xdbff, galivan_videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdfff, galivan_colorram_w, &colorram },
-	{ 0xe000, 0xe1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe200, 0xffff, MWA_RAM },
-MEMORY_END
-
-
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-	{ 0x04, 0x04, input_port_4_r },
-	{ 0xc0, 0xc0, IO_port_c0_r }, /* dangar needs to return 0x58 */
-PORT_END
-
-static PORT_WRITE_START( writeport )
-	{ 0x40, 0x40, galivan_gfxbank_w },
-	{ 0x41, 0x42, galivan_scrollx_w },
-	{ 0x43, 0x44, galivan_scrolly_w },
-	{ 0x45, 0x45, galivan_sound_command_w },
-/*	{ 0x46, 0x46, IOWP_NOP }, */
-/*	{ 0x47, 0x47, IOWP_NOP }, */
-PORT_END
-
-static PORT_READ_START( ninjemak_readport )
-	{ 0x80, 0x80, input_port_0_r },
-	{ 0x81, 0x81, input_port_1_r },
-	{ 0x82, 0x82, input_port_2_r },
-	{ 0x83, 0x83, input_port_3_r },
-	{ 0x84, 0x84, input_port_4_r },
-	{ 0x85, 0x85, input_port_5_r },
-PORT_END
-
-static PORT_WRITE_START( ninjemak_writeport )
-	{ 0x80, 0x80, ninjemak_gfxbank_w },
-	{ 0x85, 0x85, galivan_sound_command_w },
-//	{ 0x86, 0x86, IOWP_NOP },			// ??
-//	{ 0x87, 0x87, IOWP_NOP },			// ??
-PORT_END
+static ADDRESS_MAP_START( ninjemak_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd800, 0xd81f) AM_WRITE(ninjemak_videoreg_w)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(galivan_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(galivan_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe200, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
+	AM_RANGE(0xc0, 0xc0) AM_READ(IO_port_c0_r) /* dangar needs to return 0x58 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x40, 0x40) AM_WRITE(galivan_gfxbank_w)
+	AM_RANGE(0x41, 0x42) AM_WRITE(galivan_scrollx_w)
+	AM_RANGE(0x43, 0x44) AM_WRITE(galivan_scrolly_w)
+	AM_RANGE(0x45, 0x45) AM_WRITE(galivan_sound_command_w)
+/*	AM_RANGE(0x46, 0x46) AM_WRITE(MWA8_NOP) */
+/*	AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ninjemak_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_READ(input_port_0_r)
+	AM_RANGE(0x81, 0x81) AM_READ(input_port_1_r)
+	AM_RANGE(0x82, 0x82) AM_READ(input_port_2_r)
+	AM_RANGE(0x83, 0x83) AM_READ(input_port_3_r)
+	AM_RANGE(0x84, 0x84) AM_READ(input_port_4_r)
+	AM_RANGE(0x85, 0x85) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ninjemak_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x80, 0x80) AM_WRITE(ninjemak_gfxbank_w)
+	AM_RANGE(0x85, 0x85) AM_WRITE(galivan_sound_command_w)
+//	AM_RANGE(0x86, 0x86) AM_WRITE(MWA8_NOP)			// ??
+//	AM_RANGE(0x87, 0x87) AM_WRITE(MWA8_NOP)			// ??
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-/*	{ 0x04, 0x04, IORP_NOP },    value read and *discarded*    */
-	{ 0x06, 0x06, galivan_sound_command_r },
-PORT_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM3526_control_port_0_w },
-	{ 0x01, 0x01, YM3526_write_port_0_w },
-	{ 0x02, 0x02, DAC_0_data_w },
-	{ 0x03, 0x03, DAC_1_data_w },
-PORT_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+/*	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP)    value read and *discarded*    */
+	AM_RANGE(0x06, 0x06) AM_READ(galivan_sound_command_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3526_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(DAC_1_data_w)
+ADDRESS_MAP_END
 
 
 /***************
@@ -564,14 +564,14 @@ static MACHINE_DRIVER_START( galivan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6 MHz? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,7250)  /* timed interrupt, ?? Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -600,14 +600,14 @@ static MACHINE_DRIVER_START( ninjemak )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)		/* 6 MHz? */
-	MDRV_CPU_MEMORY(readmem,ninjemak_writemem)
-	MDRV_CPU_PORTS(ninjemak_readport,ninjemak_writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,ninjemak_writemem)
+	MDRV_CPU_IO_MAP(ninjemak_readport,ninjemak_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,7250)	/* timed interrupt, ?? Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)

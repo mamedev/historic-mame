@@ -147,79 +147,79 @@ static READ_HANDLER( mcu_data_r2 )
 	return 0x31; //no "bad rom.", no "bad ext."
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x97ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x97ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9000, 0x97ff, bking2_playfield_w, &bking2_playfield_ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(bking2_playfield_w) AM_BASE(&bking2_playfield_ram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x01, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_3_r },
-	{ 0x04, 0x04, input_port_4_r },
-	{ 0x05, 0x05, bking2_input_port_5_r },
-	{ 0x06, 0x06, bking2_input_port_6_r },
-	{ 0x07, 0x1f, bking2_pos_r },
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
+	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
+	AM_RANGE(0x05, 0x05) AM_READ(bking2_input_port_5_r)
+	AM_RANGE(0x06, 0x06) AM_READ(bking2_input_port_6_r)
+	AM_RANGE(0x07, 0x1f) AM_READ(bking2_pos_r)
 
-	{ 0x2f, 0x2f, mcu_data_r },
-	{ 0x4f, 0x4f, mcu_status_r },
-	{ 0x60, 0x60, bk3_r },
-	{ 0x6f, 0x6f, mcu_data_r2 },
-PORT_END
+	AM_RANGE(0x2f, 0x2f) AM_READ(mcu_data_r)
+	AM_RANGE(0x4f, 0x4f) AM_READ(mcu_status_r)
+	AM_RANGE(0x60, 0x60) AM_READ(bk3_r)
+	AM_RANGE(0x6f, 0x6f) AM_READ(mcu_data_r2)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, bking2_xld1_w },
-	{ 0x01, 0x01, bking2_yld1_w },
-	{ 0x02, 0x02, bking2_xld2_w },
-	{ 0x03, 0x03, bking2_yld2_w },
-	{ 0x04, 0x04, bking2_xld3_w },
-	{ 0x05, 0x05, bking2_yld3_w },
-	{ 0x06, 0x06, bking2_msk_w },
-	{ 0x07, 0x07, watchdog_reset_w },
-	{ 0x08, 0x08, bking2_cont1_w },
-	{ 0x09, 0x09, bking2_cont2_w },
-	{ 0x0a, 0x0a, bking2_cont3_w },
-	{ 0x0b, 0x0b, bking2_soundlatch_w },
-//	{ 0x0c, 0x0c, bking2_eport2_w },   this is not shown to be connected anywhere
-	{ 0x0d, 0x0d, bking2_hitclr_w },
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(bking2_xld1_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(bking2_yld1_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(bking2_xld2_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(bking2_yld2_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(bking2_xld3_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(bking2_yld3_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(bking2_msk_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(bking2_cont1_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(bking2_cont2_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(bking2_cont3_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(bking2_soundlatch_w)
+//	AM_RANGE(0x0c, 0x0c) AM_WRITE(bking2_eport2_w)   this is not shown to be connected anywhere
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(bking2_hitclr_w)
 
-	{ 0x2f, 0x2f, mcu_data_w },
-	{ 0x4f, 0x4f, unk_w },
-	{ 0x6f, 0x6f, bk3_h_w },
-	{ 0x8f, 0x8f, bk3_l_w },
-PORT_END
+	AM_RANGE(0x2f, 0x2f) AM_WRITE(mcu_data_w)
+	AM_RANGE(0x4f, 0x4f) AM_WRITE(unk_w)
+	AM_RANGE(0x6f, 0x6f) AM_WRITE(bk3_h_w)
+	AM_RANGE(0x8f, 0x8f) AM_WRITE(bk3_l_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x2fff, MRA_ROM }, //only bking3
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4401, 0x4401, AY8910_read_port_0_r },
-	{ 0x4403, 0x4403, AY8910_read_port_1_r },
-	{ 0x4800, 0x4800, soundlatch_r },
-	{ 0x4802, 0x4802, bking2_sndnmi_disable_r },
-	{ 0xe000, 0xefff, MRA_ROM },   /* space for some other ROM???
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM) //only bking3
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4401, 0x4401) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x4403, 0x4403) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x4800, 0x4800) AM_READ(soundlatch_r)
+	AM_RANGE(0x4802, 0x4802) AM_READ(bking2_sndnmi_disable_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)   /* space for some other ROM???
 									  It's checked if there is valid code there
 									  [Probably diagnostic ROM like other early Taito games -AS]*/
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x2fff, MWA_ROM }, //only bking3
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4400, 0x4400, AY8910_control_port_0_w },
-	{ 0x4401, 0x4401, AY8910_write_port_0_w },
-	{ 0x4402, 0x4402, AY8910_control_port_1_w },
-	{ 0x4403, 0x4403, AY8910_write_port_1_w },
-	{ 0x4802, 0x4802, bking2_sndnmi_enable_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM) //only bking3
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4400, 0x4400) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x4401, 0x4401) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4402, 0x4402) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x4403, 0x4403) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x4802, 0x4802) AM_WRITE(bking2_sndnmi_enable_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( bking )
 	PORT_START  /* IN0 */
@@ -527,13 +527,13 @@ static MACHINE_DRIVER_START( bking2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 			/* interrupts (from Jungle King hardware, might be wrong): */
 			/* - no interrupts synced with vblank */
 			/* - NMI triggered by the main CPU */

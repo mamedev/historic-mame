@@ -69,44 +69,44 @@ WRITE_HANDLER( dday_sl_control_w );
 READ_HANDLER( dday_countdown_timer_r );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x5bff, MRA_RAM },
-	{ 0x5c00, 0x5fff, dday_colorram_r },
-	{ 0x6000, 0x63ff, MRA_RAM },
-	{ 0x6c00, 0x6c00, input_port_0_r },
-	{ 0x7000, 0x7000, input_port_1_r },
-	{ 0x7400, 0x7400, input_port_2_r },
-	{ 0x7800, 0x7800, dday_countdown_timer_r },
-	{ 0x7c00, 0x7c00, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5c00, 0x5fff) AM_READ(dday_colorram_r)
+	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6c00, 0x6c00) AM_READ(input_port_0_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(input_port_1_r)
+	AM_RANGE(0x7400, 0x7400) AM_READ(input_port_2_r)
+	AM_RANGE(0x7800, 0x7800) AM_READ(dday_countdown_timer_r)
+	AM_RANGE(0x7c00, 0x7c00) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, dday_sl_control_w },
-	{ 0x5000, 0x53ff, dday_textvideoram_w, &dday_textvideoram },
-	{ 0x5400, 0x57ff, dday_fgvideoram_w, &dday_fgvideoram },
-	{ 0x5800, 0x5bff, dday_bgvideoram_w, &dday_bgvideoram },
-	{ 0x5c00, 0x5fff, dday_colorram_w, &dday_colorram },
-	{ 0x6000, 0x63ff, MWA_RAM },
-	{ 0x6400, 0x6400, AY8910_control_port_0_w },
-	{ 0x6401, 0x6401, AY8910_write_port_0_w },
-	{ 0x6402, 0x6402, AY8910_control_port_0_w },
-	{ 0x6403, 0x6403, AY8910_write_port_0_w },
-	{ 0x6404, 0x6404, AY8910_control_port_0_w },
-	{ 0x6405, 0x6405, AY8910_write_port_0_w },
-	{ 0x6406, 0x6406, AY8910_control_port_0_w },
-	{ 0x6407, 0x6407, AY8910_write_port_0_w },
-	{ 0x6408, 0x6408, AY8910_control_port_0_w },
-	{ 0x6409, 0x6409, AY8910_write_port_0_w },
-	{ 0x640a, 0x640a, AY8910_control_port_0_w },
-	{ 0x640b, 0x640b, AY8910_write_port_0_w },
-	{ 0x640c, 0x640c, AY8910_control_port_0_w },
-	{ 0x640d, 0x640d, AY8910_write_port_0_w },
-	{ 0x6800, 0x6800, AY8910_control_port_1_w },
-	{ 0x6801, 0x6801, AY8910_write_port_1_w },
-	{ 0x7800, 0x7800, dday_control_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(dday_sl_control_w)
+	AM_RANGE(0x5000, 0x53ff) AM_WRITE(dday_textvideoram_w) AM_BASE(&dday_textvideoram)
+	AM_RANGE(0x5400, 0x57ff) AM_WRITE(dday_fgvideoram_w) AM_BASE(&dday_fgvideoram)
+	AM_RANGE(0x5800, 0x5bff) AM_WRITE(dday_bgvideoram_w) AM_BASE(&dday_bgvideoram)
+	AM_RANGE(0x5c00, 0x5fff) AM_WRITE(dday_colorram_w) AM_BASE(&dday_colorram)
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6400, 0x6400) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6401, 0x6401) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6402, 0x6402) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6403, 0x6403) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6404, 0x6404) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6405, 0x6405) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6406, 0x6406) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6407, 0x6407) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6408, 0x6408) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6409, 0x6409) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x640a, 0x640a) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x640b, 0x640b) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x640c, 0x640c) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x640d, 0x640d) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x7800, 0x7800) AM_WRITE(dday_control_w)
+ADDRESS_MAP_END
 
 
 
@@ -319,7 +319,7 @@ static MACHINE_DRIVER_START( dday )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)     /* 2 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -145,19 +145,19 @@
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc800, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xd000, 0xdfff, MRA_RAM },			/* sound ram */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)			/* sound ram */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xffff, sega_w, &sega_mem },
-	{ 0xe000, 0xefff, MWA_RAM, &vectorram, &vectorram_size },	/* handled by the above, */
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(sega_w) AM_BASE(&sega_mem)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)	/* handled by the above, */
 												/* here only to initialize the pointer */
-MEMORY_END
+ADDRESS_MAP_END
 
 static READ_HANDLER( sega_sh_r )
 {
@@ -167,31 +167,31 @@ static READ_HANDLER( sega_sh_r )
 	return 0x80;
 }
 
-static PORT_READ_START( readport )
-	{ 0x3f, 0x3f, sega_sh_r },
-	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_ports_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x3f, 0x3f) AM_READ(sega_sh_r)
+	AM_RANGE(0xbe, 0xbe) AM_READ(sega_mult_r)
+	AM_RANGE(0xf8, 0xfb) AM_READ(sega_ports_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0xbd, 0xbd, sega_mult1_w },
-	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xbd, 0xbd) AM_WRITE(sega_mult1_w)
+	AM_RANGE(0xbe, 0xbe) AM_WRITE(sega_mult2_w)
+	AM_RANGE(0xf8, 0xf8) AM_WRITE(sega_switch_w)
+	AM_RANGE(0xf9, 0xf9) AM_WRITE(sega_coin_counter_w) /* 0x80 = enable, 0x00 = disable */
+ADDRESS_MAP_END
 
 
 
 
-static MEMORY_READ_START( speech_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( speech_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( speech_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( speech_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*************************************
@@ -832,8 +832,8 @@ static MACHINE_DRIVER_START( elim2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3867120)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_PERIODIC_INT(sega_interrupt,40)
 
 	MDRV_FRAMES_PER_SECOND(40)
@@ -859,8 +859,8 @@ static MACHINE_DRIVER_START( zektor )
 
 	MDRV_CPU_ADD(I8035, 3120000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sega_speechboard_readmem, sega_speechboard_writemem)
-	MDRV_CPU_PORTS (sega_speechboard_readport,sega_speechboard_writeport)
+	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
+	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
@@ -892,8 +892,8 @@ static MACHINE_DRIVER_START( spacfury )
 
 	MDRV_CPU_ADD(I8035, 3120000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sega_speechboard_readmem, sega_speechboard_writemem)
-	MDRV_CPU_PORTS (sega_speechboard_readport,sega_speechboard_writeport)
+	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
+	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
@@ -911,8 +911,8 @@ static MACHINE_DRIVER_START( startrek )
 
 	MDRV_CPU_ADD(I8035, 3120000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sega_speechboard_readmem, sega_speechboard_writemem)
-	MDRV_CPU_PORTS (sega_speechboard_readport,sega_speechboard_writeport)
+	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
+	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
@@ -1153,7 +1153,7 @@ DRIVER_INIT( spacfury )
 	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
 	install_port_write_handler(0, 0x3e, 0x3e, spacfury1_sh_w);
 	install_port_write_handler(0, 0x3f, 0x3f, spacfury2_sh_w);
-	install_port_write_handler(0, 0xf8, 0xf8, IOWP_NOP);
+	install_port_write_handler(0, 0xf8, 0xf8, MWA8_NOP);
 }
 
 

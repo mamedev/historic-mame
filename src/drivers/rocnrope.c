@@ -31,35 +31,35 @@ WRITE_HANDLER( rocnrope_interrupt_vector_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x3080, 0x3080, input_port_0_r }, /* IO Coin */
-	{ 0x3081, 0x3081, input_port_1_r }, /* P1 IO */
-	{ 0x3082, 0x3082, input_port_2_r }, /* P2 IO */
-	{ 0x3083, 0x3083, input_port_3_r }, /* DSW 0 */
-	{ 0x3000, 0x3000, input_port_4_r }, /* DSW 1 */
-	{ 0x3100, 0x3100, input_port_5_r }, /* DSW 2 */
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x3080, 0x3080) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x3081, 0x3081) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x3082, 0x3082) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x3083, 0x3083) AM_READ(input_port_3_r) /* DSW 0 */
+	AM_RANGE(0x3000, 0x3000) AM_READ(input_port_4_r) /* DSW 1 */
+	AM_RANGE(0x3100, 0x3100) AM_READ(input_port_5_r) /* DSW 2 */
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x4000, 0x402f, MWA_RAM, &spriteram_2 },
-	{ 0x4400, 0x442f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, rocnrope_colorram_w, &colorram },
-	{ 0x4c00, 0x4fff, rocnrope_videoram_w, &videoram },
-	{ 0x5000, 0x5fff, MWA_RAM },
-	{ 0x8000, 0x8000, watchdog_reset_w },
-	{ 0x8080, 0x8080, rocnrope_flipscreen_w },
-	{ 0x8081, 0x8081, timeplt_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x8082, 0x8082, MWA_NOP },	/* interrupt acknowledge??? */
-	{ 0x8083, 0x8083, MWA_NOP },	/* Coin counter 1 */
-	{ 0x8084, 0x8084, MWA_NOP },	/* Coin counter 2 */
-	{ 0x8087, 0x8087, interrupt_enable_w },
-	{ 0x8100, 0x8100, soundlatch_w },
-	{ 0x8182, 0x818d, rocnrope_interrupt_vector_w },
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x4000, 0x402f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x4400, 0x442f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(rocnrope_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(rocnrope_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8080, 0x8080) AM_WRITE(rocnrope_flipscreen_w)
+	AM_RANGE(0x8081, 0x8081) AM_WRITE(timeplt_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x8082, 0x8082) AM_WRITE(MWA8_NOP)	/* interrupt acknowledge??? */
+	AM_RANGE(0x8083, 0x8083) AM_WRITE(MWA8_NOP)	/* Coin counter 1 */
+	AM_RANGE(0x8084, 0x8084) AM_WRITE(MWA8_NOP)	/* Coin counter 2 */
+	AM_RANGE(0x8087, 0x8087) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x8100, 0x8100) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x8182, 0x818d) AM_WRITE(rocnrope_interrupt_vector_w)
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( rocnrope )
@@ -225,12 +225,12 @@ static MACHINE_DRIVER_START( rocnrope )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1600000)        /* 1.6 MHz??? Attract mode depends on this to work correctly */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318180/8)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.789772727 MHz */						\
-	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(timeplt_sound_readmem,timeplt_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

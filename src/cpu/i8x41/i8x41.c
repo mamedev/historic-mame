@@ -5,17 +5,43 @@
  *
  *	 Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *
+ *   - This source code is released as freeware for non-commercial purposes
+ *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
+ *	   The licensing terms of MAME apply to this piece of code for the MAME
+ *	   project and derviative works, as defined by the MAME license. You
+ *	   may opt to make modifications, improvements or derivative works under
+ *	   that same conditions, and the MAME project may opt to keep
+ *	   modifications, improvements or derivatives under their terms exclusively.
+ *
+ *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *     below) to this - and only this - piece of code or your derivative works.
+ *	   Note that in no case your choice can have any impact on any other
+ *	   source code of the MAME project, or binary, or executable, be it closely
+ *	   or losely related to this piece of code.
+ *
+ *	-  At your choice you are also free to remove either licensing terms from
+ *	   this file and continue to use it under only one of the two licenses. Do this
+ *	   if you think that licenses are not compatible (enough) for you, or if you
+ *	   consider either license 'too restrictive' or 'too free'.
+ *
+ *	-  GPL (GNU General Public License)
+ *	   This program is free software; you can redistribute it and/or
+ *	   modify it under the terms of the GNU General Public License
+ *	   as published by the Free Software Foundation; either version 2
+ *	   of the License, or (at your option) any later version.
+ *
+ *	   This program is distributed in the hope that it will be useful,
+ *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	   GNU General Public License for more details.
+ *
+ *	   You should have received a copy of the GNU General Public License
+ *	   along with this program; if not, write to the Free Software
+ *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
  *
  *	This work is solely based on the
  *	'Intel(tm) UPI(tm)-41AH/42AH Users Manual'
@@ -102,10 +128,10 @@ static UINT8 i8x41_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-#define RM(a)	cpu_readmem16(a)
-#define WM(a,v) cpu_writemem16(a,v)
-#define RP(a)	cpu_readport16(a)
-#define WP(a,v) cpu_writeport16(a,v)
+#define RM(a)	program_read_byte_8(a)
+#define WM(a,v) program_write_byte_8(a,v)
+#define RP(a)	io_read_byte_8(a)
+#define WP(a,v) io_write_byte_8(a,v)
 #define ROP(pc) cpu_readop(pc)
 #define ROP_ARG(pc) cpu_readop_arg(pc)
 
@@ -178,6 +204,8 @@ static UINT8 i8x41_win_layout[] = {
 #define P2_HS		i8x41.p2_hs		/* Port 2 Hand Shaking */
 #define CONTROL		i8x41.control
 
+
+static void set_irq_line(int irqline, int state);
 
 
 /************************************************************************
@@ -528,7 +556,7 @@ INLINE void en_i(void)
 	{
 		ENABLE |= IBFI;		/* enable input buffer full interrupt */
 		if( STATE & IBF )	/* already got data in the buffer? */
-			i8x41_set_irq_line(I8X41_INT_IBF, HOLD_LINE);
+			set_irq_line(I8X41_INT_IBF, HOLD_LINE);
 	}
 }
 
@@ -1291,7 +1319,7 @@ static UINT8 i8x41_cycles[] = {
  *	Inits CPU emulation
  ****************************************************************************/
 
-void i8x41_init(void)
+static void i8x41_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("i8x41", cpu, "PPC",       &i8x41.ppc,      1);
@@ -1316,7 +1344,7 @@ void i8x41_init(void)
  *	Reset registers to their initial values
  ****************************************************************************/
 
-void i8x41_reset(void *param)
+static void i8x41_reset(void *param)
 {
 	memset(&i8x41, 0, sizeof(I8X41));
 	/* default to 8041 behaviour for DBBI/DBBO and extended commands */
@@ -1337,7 +1365,7 @@ void i8x41_reset(void *param)
  *	Shut down CPU emulation
  ****************************************************************************/
 
-void i8x41_exit(void)
+static void i8x41_exit(void)
 {
 	/* nothing to do */
 }
@@ -1347,7 +1375,7 @@ void i8x41_exit(void)
  *	Execute cycles - returns number of cycles actually run
  ****************************************************************************/
 
-int i8x41_execute(int cycles)
+static int i8x41_execute(int cycles)
 {
 	int inst_cycles, T1_level;
 
@@ -1997,11 +2025,10 @@ int i8x41_execute(int cycles)
  *	Get all registers in given buffer
  ****************************************************************************/
 
-unsigned i8x41_get_context(void *dst)
+static void i8x41_get_context(void *dst)
 {
 	if( dst )
 		memcpy(dst, &i8x41, sizeof(I8X41));
-	return sizeof(I8X41);
 }
 
 
@@ -2009,160 +2036,17 @@ unsigned i8x41_get_context(void *dst)
  *	Set all registers to given values
  ****************************************************************************/
 
-void i8x41_set_context(void *src)
+static void i8x41_set_context(void *src)
 {
 	if( src )
 		memcpy(&i8x41, src, sizeof(I8X41));
 }
 
 /****************************************************************************
- *	Return a specific register
- ****************************************************************************/
-
-unsigned i8x41_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-	case REG_PC:
-	case I8X41_PC:	return PC;
-	case REG_SP:
-	case I8X41_SP:	return PSW & SP;
-	case I8X41_PSW: return PSW;
-	case I8X41_A:	return A;
-	case I8X41_T:	return TIMER;
-	case I8X41_R0:	return R(0);
-	case I8X41_R1:	return R(1);
-	case I8X41_R2:	return R(2);
-	case I8X41_R3:	return R(3);
-	case I8X41_R4:	return R(4);
-	case I8X41_R5:	return R(5);
-	case I8X41_R6:	return R(6);
-	case I8X41_R7:	return R(7);
-	case I8X41_DATA:
-//		logerror("i8x41 #%d:%03x  Reading DATA DBBI %02x.  State was %02x,  ", cpu_getactivecpu(), PC, DBBO, STATE);
-			STATE &= ~OBF;	/* reset the output buffer full flag */
-			if( ENABLE & FLAGS)
-			{
-				P2_HS &= 0xef;
-				if( STATE & IBF ) P2_HS |= 0x20;
-				else P2_HS &= 0xdf;
-				WP(0x02, (P2 & P2_HS) );	/* Clear the DBBO IRQ out on P24 */
-			}
-//		logerror("STATE now %02x\n", STATE);
-			return DBBO;
-	case I8X41_DATA_DASM:	/* Same as I8X41_DATA, except this is used by the */
-							/* debugger and does not upset the flag states */
-			return DBBO;
-	case I8X41_STAT:
-		logerror("i8x41 #%d:%03x  Reading STAT %02x\n", cpu_getactivecpu(), PC, STATE);
-			return STATE;
-	case REG_PREVIOUSPC: return PPC;
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = (PSW & SP) + (REG_SP_CONTENTS - regnum);
-			if( offset < 8 )
-				return RM( M_STACK + offset ) | ( RM( M_STACK + offset + 1 ) << 8 );
-		}
-	}
-	return 0;
-}
-
-/****************************************************************************
- *	Set a specific register
- ****************************************************************************/
-
-void i8x41_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case REG_PC:
-	case I8X41_PC:	PC = val & 0x7ff; break;
-	case REG_SP:
-	case I8X41_SP:	PSW = (PSW & ~SP) | (val & SP); break;
-	case I8X41_PSW: PSW = val; break;
-	case I8X41_A:	A = val; break;
-	case I8X41_T:	TIMER = val & 0x1fff; break;
-	case I8X41_R0:	R(0) = val; break;
-	case I8X41_R1:	R(1) = val; break;
-	case I8X41_R2:	R(2) = val; break;
-	case I8X41_R3:	R(3) = val; break;
-	case I8X41_R4:	R(4) = val; break;
-	case I8X41_R5:	R(5) = val; break;
-	case I8X41_R6:	R(6) = val; break;
-	case I8X41_R7:	R(7) = val; break;
-	case I8X41_DATA:
-//		logerror("i8x41 #%d:%03x  Setting DATA DBBI to %02x. State was %02x  ", cpu_getactivecpu(), PC, val,STATE);
-			DBBI = val;
-			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
-				DBBO = val;
-			STATE &= ~F1;
-			STATE |= IBF;
-			if( ENABLE & IBFI )
-				CONTROL |= IBFI_PEND;
-			if( ENABLE & FLAGS)
-			{
-				P2_HS |= 0x20;
-				if( 0 == (STATE & OBF) ) P2_HS |= 0x10;
-				else P2_HS &= 0xef;
-				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
-			}
-//		logerror("State now %02x\n", STATE);
-			break;
-	case I8X41_DATA_DASM:	/* Same as I8X41_DATA, except this is used by the */
-							/* debugger and does not upset the flag states */
-			DBBI = val;
-			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
-				DBBO = val;
-			break;
-	case I8X41_CMND:
-//		logerror("i8x41 #%d:%03x  Setting CMND DBBI to %02x. State was %02x,  ", cpu_getactivecpu(), PC, val,STATE);
-			DBBI = val;
-			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
-				DBBO = val;
-			STATE |= F1;
-			STATE |= IBF;
-			if( ENABLE & IBFI )
-				CONTROL |= IBFI_PEND;
-			if( ENABLE & FLAGS)
-			{
-				P2_HS |= 0x20;
-				if( 0 == (STATE & OBF) ) P2_HS |= 0x10;
-				else P2_HS &= 0xef;
-				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
-			}
-//		logerror("State now %02x\n", STATE);
-			break;
-	case I8X41_CMND_DASM:	/* Same as I8X41_CMND, except this is used by the */
-							/* debugger and does not upset the flag states */
-			DBBI = val;
-			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
-				DBBO = val;
-			break;
-	case I8X41_STAT:
-		logerror("i8x41 #%d:%03x  Setting STAT DBBI to %02x\n", cpu_getactivecpu(), PC, val);
-			/* writing status.. hmm, should we issue interrupts here too? */
-			STATE = val;
-			break;
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = (PSW & SP) + (REG_SP_CONTENTS - regnum);
-			if( offset < 8 )
-			{
-				WM( M_STACK + offset, val & 0xff );
-				WM( M_STACK + offset + 1, (val >> 8) & 0xff );
-			}
-		}
-	}
-}
-
-
-/****************************************************************************
  *	Set IRQ line state
  ****************************************************************************/
 
-void i8x41_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	switch( irqline )
 	{
@@ -2208,70 +2092,8 @@ void i8x41_set_irq_line(int irqline, int state)
 	}
 }
 
-void i8x41_set_irq_callback(int (*callback)(int irqline))
-{
-	i8x41.irq_callback = callback;
-}
 
-
-/****************************************************************************
- *	Return a formatted string for a register
- ****************************************************************************/
-
-const char *i8x41_info(void *context, int regnum)
-{
-	static char buffer[8][15+1];
-	static int which = 0;
-	I8X41 *r = context;
-
-	which = (which+1) % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &i8x41;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+I8X41_PC: sprintf(buffer[which], "PC:%04X", r->pc); break;
-		case CPU_INFO_REG+I8X41_SP: sprintf(buffer[which], "S:%X", r->psw & SP); break;
-		case CPU_INFO_REG+I8X41_PSW:sprintf(buffer[which], "PSW:%02X", r->psw); break;
-		case CPU_INFO_REG+I8X41_A:	sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+I8X41_T:	sprintf(buffer[which], "T:%02X.%02X", r->timer, (r->prescaler & 0x1f) ); break;
-		case CPU_INFO_REG+I8X41_R0: sprintf(buffer[which], "R0:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 0]); break;
-		case CPU_INFO_REG+I8X41_R1: sprintf(buffer[which], "R1:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 1]); break;
-		case CPU_INFO_REG+I8X41_R2: sprintf(buffer[which], "R2:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 2]); break;
-		case CPU_INFO_REG+I8X41_R3: sprintf(buffer[which], "R3:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 3]); break;
-		case CPU_INFO_REG+I8X41_R4: sprintf(buffer[which], "R4:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 4]); break;
-		case CPU_INFO_REG+I8X41_R5: sprintf(buffer[which], "R5:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 5]); break;
-		case CPU_INFO_REG+I8X41_R6: sprintf(buffer[which], "R6:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 6]); break;
-		case CPU_INFO_REG+I8X41_R7: sprintf(buffer[which], "R7:%02X", i8x41.ram[((r->psw & BS) ? M_BANK1 : M_BANK0) + 7]); break;
-		case CPU_INFO_REG+I8X41_P1: sprintf(buffer[which], "P1:%02X", i8x41.p1); break;
-		case CPU_INFO_REG+I8X41_P2: sprintf(buffer[which], "P2:%02X", i8x41.p2); break;
-		case CPU_INFO_REG+I8X41_DATA_DASM:sprintf(buffer[which], "DBBI:%02X", i8x41.dbbi); break;
-		case CPU_INFO_REG+I8X41_CMND_DASM:sprintf(buffer[which], "DBBO:%02X", i8x41.dbbo); break;
-		case CPU_INFO_REG+I8X41_STAT:sprintf(buffer[which], "STAT:%02X", i8x41.state); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->psw & 0x80 ? 'C':'.',
-				r->psw & 0x40 ? 'A':'.',
-				r->psw & 0x20 ? '0':'.',
-				r->psw & 0x10 ? 'B':'.',
-				r->psw & 0x08 ? '?':'.',
-				r->psw & 0x04 ? 's':'.',
-				r->psw & 0x02 ? 's':'.',
-				r->psw & 0x01 ? 's':'.');
-			break;
-		case CPU_INFO_NAME: return "I8X41";
-		case CPU_INFO_FAMILY: return "Intel 8x41";
-		case CPU_INFO_VERSION: return "0.2";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i8x41_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i8x41_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned i8x41_dasm(char *buffer, unsigned pc)
+static offs_t i8x41_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm8x41( buffer, pc );
@@ -2279,4 +2101,213 @@ unsigned i8x41_dasm(char *buffer, unsigned pc)
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
+}
+
+
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void i8x41_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + I8X41_INT_IBF:		set_irq_line(I8X41_INT_IBF, info->i);	break;
+		case CPUINFO_INT_IRQ_STATE + I8X41_INT_TEST1:	set_irq_line(I8X41_INT_TEST1, info->i);	break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I8X41_PC:			PC = info->i & 0x7ff; 					break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + I8X41_SP:			PSW = (PSW & ~SP) | (info->i & SP);		break;
+		case CPUINFO_INT_REGISTER + I8X41_PSW: 			PSW = info->i; 							break;
+		case CPUINFO_INT_REGISTER + I8X41_A:			A = info->i; 							break;
+		case CPUINFO_INT_REGISTER + I8X41_T:			TIMER = info->i & 0x1fff; 				break;
+		case CPUINFO_INT_REGISTER + I8X41_R0:			R(0) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R1:			R(1) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R2:			R(2) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R3:			R(3) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R4:			R(4) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R5:			R(5) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R6:			R(6) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_R7:			R(7) = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_DATA:
+			DBBI = info->i;
+			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
+				DBBO = info->i;
+			STATE &= ~F1;
+			STATE |= IBF;
+			if( ENABLE & IBFI )
+				CONTROL |= IBFI_PEND;
+			if( ENABLE & FLAGS)
+			{
+				P2_HS |= 0x20;
+				if( 0 == (STATE & OBF) ) P2_HS |= 0x10;
+				else P2_HS &= 0xef;
+				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
+			}
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_DATA_DASM:	/* Same as I8X41_DATA, except this is used by the */
+														/* debugger and does not upset the flag states */
+			DBBI = info->i;
+			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
+				DBBO = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_CMND:
+			DBBI = info->i;
+			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
+				DBBO = info->i;
+			STATE |= F1;
+			STATE |= IBF;
+			if( ENABLE & IBFI )
+				CONTROL |= IBFI_PEND;
+			if( ENABLE & FLAGS)
+			{
+				P2_HS |= 0x20;
+				if( 0 == (STATE & OBF) ) P2_HS |= 0x10;
+				else P2_HS &= 0xef;
+				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
+			}
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_CMND_DASM:	/* Same as I8X41_CMND, except this is used by the */
+														/* debugger and does not upset the flag states */
+			DBBI = info->i;
+			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
+				DBBO = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_STAT:
+			logerror("i8x41 #%d:%03x  Setting STAT DBBI to %02x\n", cpu_getactivecpu(), PC, (UINT8)info->i);
+			/* writing status.. hmm, should we issue interrupts here too? */
+			STATE = info->i;
+			break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					i8x41.irq_callback = info->irqcallback;	break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void i8x41_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(i8x41);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = I8X41_CLOCK_DIVIDER;			break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + I8X41_INT_IBF:		info->i = (STATE & IBF) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_IRQ_STATE + I8X41_INT_TEST1:	info->i = (STATE & TEST1) ? ASSERT_LINE : CLEAR_LINE; break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I8X41_PC:			info->i = PC;							break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + I8X41_SP:			info->i = PSW & SP;						break;
+		case CPUINFO_INT_REGISTER + I8X41_PSW:			info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + I8X41_A:			info->i = A;							break;
+		case CPUINFO_INT_REGISTER + I8X41_T:			info->i = TIMER;						break;
+		case CPUINFO_INT_REGISTER + I8X41_R0:			info->i = R(0);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R1:			info->i = R(1);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R2:			info->i = R(2);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R3:			info->i = R(3);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R4:			info->i = R(4);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R5:			info->i = R(5);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R6:			info->i = R(6);							break;
+		case CPUINFO_INT_REGISTER + I8X41_R7:			info->i = R(7);							break;
+		case CPUINFO_INT_REGISTER + I8X41_DATA:
+			STATE &= ~OBF;	/* reset the output buffer full flag */
+			if( ENABLE & FLAGS)
+			{
+				P2_HS &= 0xef;
+				if( STATE & IBF ) P2_HS |= 0x20;
+				else P2_HS &= 0xdf;
+				WP(0x02, (P2 & P2_HS) );	/* Clear the DBBO IRQ out on P24 */
+			}
+			info->i = DBBO;
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_DATA_DASM:	/* Same as I8X41_DATA, except this is used by the */
+														/* debugger and does not upset the flag states */
+			info->i = DBBO;
+			break;
+		case CPUINFO_INT_REGISTER + I8X41_STAT:
+			logerror("i8x41 #%d:%03x  Reading STAT %02x\n", cpu_getactivecpu(), PC, STATE);
+			info->i = STATE;
+			break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8x41_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8x41_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8x41_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = i8x41_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8x41_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8x41_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8x41_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8x41_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = i8x41.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8x41_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8x41_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8x41_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8X41"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 8x41"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.2"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1999 Juergen Buchmueller, all rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				i8x41.psw & 0x80 ? 'C':'.',
+				i8x41.psw & 0x40 ? 'A':'.',
+				i8x41.psw & 0x20 ? '0':'.',
+				i8x41.psw & 0x10 ? 'B':'.',
+				i8x41.psw & 0x08 ? '?':'.',
+				i8x41.psw & 0x04 ? 's':'.',
+				i8x41.psw & 0x02 ? 's':'.',
+				i8x41.psw & 0x01 ? 's':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + I8X41_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", i8x41.pc); break;
+		case CPUINFO_STR_REGISTER + I8X41_SP:			sprintf(info->s = cpuintrf_temp_str(), "S:%X", i8x41.psw & SP); break;
+		case CPUINFO_STR_REGISTER + I8X41_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", i8x41.psw); break;
+		case CPUINFO_STR_REGISTER + I8X41_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", i8x41.a); break;
+		case CPUINFO_STR_REGISTER + I8X41_T:			sprintf(info->s = cpuintrf_temp_str(), "T:%02X.%02X", i8x41.timer, (i8x41.prescaler & 0x1f) ); break;
+		case CPUINFO_STR_REGISTER + I8X41_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 0]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 1]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 2]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 3]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 4]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 5]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 6]); break;
+		case CPUINFO_STR_REGISTER + I8X41_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", i8x41.ram[((i8x41.psw & BS) ? M_BANK1 : M_BANK0) + 7]); break;
+		case CPUINFO_STR_REGISTER + I8X41_P1:			sprintf(info->s = cpuintrf_temp_str(), "P1:%02X", i8x41.p1); break;
+		case CPUINFO_STR_REGISTER + I8X41_P2:			sprintf(info->s = cpuintrf_temp_str(), "P2:%02X", i8x41.p2); break;
+		case CPUINFO_STR_REGISTER + I8X41_DATA_DASM:	sprintf(info->s = cpuintrf_temp_str(), "DBBI:%02X", i8x41.dbbi); break;
+		case CPUINFO_STR_REGISTER + I8X41_CMND_DASM:	sprintf(info->s = cpuintrf_temp_str(), "DBBO:%02X", i8x41.dbbo); break;
+		case CPUINFO_STR_REGISTER + I8X41_STAT:			sprintf(info->s = cpuintrf_temp_str(), "STAT:%02X", i8x41.state); break;
+	}
 }

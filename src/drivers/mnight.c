@@ -59,64 +59,64 @@ WRITE_HANDLER( mnight_bankselect_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, input_port_2_r },
-	{ 0xf801, 0xf801, input_port_0_r },
-	{ 0xf802, 0xf802, input_port_1_r },
-	{ 0xf803, 0xf803, input_port_3_r },
-	{ 0xf804, 0xf804, input_port_4_r },
-	{ 0xfa00, 0xfa00, MRA_RAM },
-	{ 0xfa01, 0xfa01, MRA_RAM },
-	{ 0xfa02, 0xfa02, mnight_bankselect_r },
-	{ 0xfa03, 0xfa03, MRA_RAM },
-	{ 0xfa08, 0xfa09, MRA_RAM },
-	{ 0xfa0a, 0xfa0b, MRA_RAM },
-	{ 0xfa0c, 0xfa0c, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_2_r)
+	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_0_r)
+	AM_RANGE(0xf802, 0xf802) AM_READ(input_port_1_r)
+	AM_RANGE(0xf803, 0xf803) AM_READ(input_port_3_r)
+	AM_RANGE(0xf804, 0xf804) AM_READ(input_port_4_r)
+	AM_RANGE(0xfa00, 0xfa00) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfa01, 0xfa01) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfa02, 0xfa02) AM_READ(mnight_bankselect_r)
+	AM_RANGE(0xfa03, 0xfa03) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfa08, 0xfa09) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfa0a, 0xfa0b) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfa0c, 0xfa0c) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xd9ff, MWA_RAM },
-	{ 0xda00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe000, 0xe7ff, mnight_bgvideoram_w, &mnight_background_videoram, &mnight_backgroundram_size }, // VFY
-	{ 0xe800, 0xefff, mnight_fgvideoram_w, &mnight_foreground_videoram, &mnight_foregroundram_size }, //VFY
-	{ 0xf000, 0xf5ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xf600, 0xf7ff, MWA_RAM },
-	{ 0xfa00, 0xfa00, soundlatch_w },
-	{ 0xfa01, 0xfa01, MWA_RAM },		   // unknown but used
-	{ 0xfa02, 0xfa02, mnight_bankselect_w },
-	{ 0xfa03, 0xfa03, mnight_sprite_overdraw_w, &mnight_spoverdraw_ram },
-	{ 0xfa08, 0xfa09, MWA_RAM, &mnight_scrollx_ram },
-	{ 0xfa0a, 0xfa0b, MWA_RAM, &mnight_scrolly_ram },
-	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xd9ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xda00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(mnight_bgvideoram_w) AM_BASE(&mnight_background_videoram) AM_SIZE(&mnight_backgroundram_size) // VFY
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(mnight_fgvideoram_w) AM_BASE(&mnight_foreground_videoram) AM_SIZE(&mnight_foregroundram_size) //VFY
+	AM_RANGE(0xf000, 0xf5ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf600, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xfa01, 0xfa01) AM_WRITE(MWA8_RAM)		   // unknown but used
+	AM_RANGE(0xfa02, 0xfa02) AM_WRITE(mnight_bankselect_w)
+	AM_RANGE(0xfa03, 0xfa03) AM_WRITE(mnight_sprite_overdraw_w) AM_BASE(&mnight_spoverdraw_ram)
+	AM_RANGE(0xfa08, 0xfa09) AM_WRITE(MWA8_RAM) AM_BASE(&mnight_scrollx_ram)
+	AM_RANGE(0xfa0a, 0xfa0b) AM_WRITE(MWA8_RAM) AM_BASE(&mnight_scrolly_ram)
+	AM_RANGE(0xfa0c, 0xfa0c) AM_WRITE(mnight_background_enable_w) AM_BASE(&mnight_bgenable_ram)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( snd_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xefee, 0xefee, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
+	AM_RANGE(0xefee, 0xefee) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( snd_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xeff5, 0xeff6, MWA_NOP },			   /* SAMPLE FREQUENCY ??? */
-	{ 0xefee, 0xefee, MWA_NOP },			   /* CHIP COMMAND ?? */
-MEMORY_END
+static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xeff5, 0xeff6) AM_WRITE(MWA8_NOP)			   /* SAMPLE FREQUENCY ??? */
+	AM_RANGE(0xefee, 0xefee) AM_WRITE(MWA8_NOP)			   /* CHIP COMMAND ?? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( snd_writeport )
-	{ 0x0000, 0x0000, YM2203_control_port_0_w },
-	{ 0x0001, 0x0001, YM2203_write_port_0_w },
-	{ 0x0080, 0x0080, YM2203_control_port_1_w },
-	{ 0x0081, 0x0081, YM2203_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( snd_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x0080, 0x0080) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x0081, 0x0081) AM_WRITE(YM2203_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -355,13 +355,13 @@ static MACHINE_DRIVER_START( mnight )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(mnight_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
-	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
-	MDRV_CPU_PORTS(0,snd_writeport)
+	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
+	MDRV_CPU_IO_MAP(0,snd_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

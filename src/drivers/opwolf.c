@@ -123,68 +123,68 @@ static WRITE_HANDLER( sound_bankswitch_w )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ16_START( opwolf_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x0f0008, 0x0f0009, input_port_0_word_r },	/* IN0 */
-	{ 0x0f000a, 0x0f000b, input_port_1_word_r },	/* IN1 */
-	{ 0x0ff000, 0x0fffff, cchip_r },
-	{ 0x100000, 0x107fff, MRA16_RAM },	/* RAM */
-	{ 0x200000, 0x200fff, paletteram16_word_r },
-	{ 0x380000, 0x380001, input_port_2_word_r },	/* DSW A */
-	{ 0x380002, 0x380003, input_port_3_word_r },	/* DSW B */
-	{ 0x3a0000, 0x3a0003, opwolf_lightgun_r },	/* lightgun, read at $11e0/6 */
-	{ 0x3e0000, 0x3e0001, MRA16_NOP },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_msb_r },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( opwolf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x0f0008, 0x0f0009) AM_READ(input_port_0_word_r)	/* IN0 */
+	AM_RANGE(0x0f000a, 0x0f000b) AM_READ(input_port_1_word_r)	/* IN1 */
+	AM_RANGE(0x0ff000, 0x0fffff) AM_READ(cchip_r)
+	AM_RANGE(0x100000, 0x107fff) AM_READ(MRA16_RAM)	/* RAM */
+	AM_RANGE(0x200000, 0x200fff) AM_READ(paletteram16_word_r)
+	AM_RANGE(0x380000, 0x380001) AM_READ(input_port_2_word_r)	/* DSW A */
+	AM_RANGE(0x380002, 0x380003) AM_READ(input_port_3_word_r)	/* DSW B */
+	AM_RANGE(0x3a0000, 0x3a0003) AM_READ(opwolf_lightgun_r)	/* lightgun, read at $11e0/6 */
+	AM_RANGE(0x3e0000, 0x3e0001) AM_READ(MRA16_NOP)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_msb_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(PC080SN_word_0_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( opwolf_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0ff000, 0x0fffff, cchip_w },
-	{ 0x100000, 0x107fff, MWA16_RAM },
-	{ 0x200000, 0x200fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x380000, 0x380003, rainbow_spritectrl_w },	// usually 0x4, changes when you fire
-	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog ?? */
-	{ 0x3e0000, 0x3e0001, taitosound_port16_msb_w },
-	{ 0x3e0002, 0x3e0003, taitosound_comm16_msb_w },
-	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
-	{ 0xc10000, 0xc1ffff, MWA16_RAM },	/* error in init code (?) */
-	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
-	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
-	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
-MEMORY_END
+static ADDRESS_MAP_START( opwolf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x0ff000, 0x0fffff) AM_WRITE(cchip_w)
+	AM_RANGE(0x100000, 0x107fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x380000, 0x380003) AM_WRITE(rainbow_spritectrl_w)	// usually 0x4, changes when you fire
+	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(MWA16_NOP)	/* watchdog ?? */
+	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_msb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_msb_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(PC080SN_word_0_w)
+	AM_RANGE(0xc10000, 0xc1ffff) AM_WRITE(MWA16_RAM)	/* error in init code (?) */
+	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(PC080SN_yscroll_word_0_w)
+	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
+	AM_RANGE(0xc50000, 0xc50003) AM_WRITE(PC080SN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
+ADDRESS_MAP_END
 
 /***************************************************************************
 	This extra Z80 substitutes for the c-chip in the bootleg,
 	but we also use it as a fake c-chip to get the original
 	working. */
 
-static MEMORY_READ_START( sub_z80_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8800, 0x8800, z80_input1_r },	/* read at PC=$637: poked to $c004 */
-	{ 0x9800, 0x9800, z80_input2_r },	/* read at PC=$631: poked to $c005 */
-	{ 0xc000, 0xcfff, MRA_RAM },	// does upper half exist ?
-MEMORY_END
+static ADDRESS_MAP_START( sub_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(z80_input1_r)	/* read at PC=$637: poked to $c004 */
+	AM_RANGE(0x9800, 0x9800) AM_READ(z80_input2_r)	/* read at PC=$631: poked to $c005 */
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)	// does upper half exist ?
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sub_z80_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x9000, 0x9000, MWA_NOP },	/* unknown write, 0 then 1 each interrupt */
-	{ 0xa000, 0xa000, MWA_NOP },	/* unknown write, once per interrupt */
-	{ 0xc000, 0xcfff, MWA_RAM, &cchip_ram },
-MEMORY_END
+static ADDRESS_MAP_START( sub_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP)	/* unknown write, 0 then 1 each interrupt */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP)	/* unknown write, once per interrupt */
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&cchip_ram)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static MEMORY_READ_START( z80_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK10 },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, taitosound_slave_comm_r },
-MEMORY_END
+static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+ADDRESS_MAP_END
 
 static UINT8 adpcm_b[0x08];
 static UINT8 adpcm_c[0x08];
@@ -250,18 +250,18 @@ static WRITE_HANDLER( opwolf_adpcm_e_w )
 }
 
 
-static MEMORY_WRITE_START( z80_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, taitosound_slave_port_w },
-	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-	{ 0xb000, 0xb006, opwolf_adpcm_b_w },
-	{ 0xc000, 0xc006, opwolf_adpcm_c_w },
-	{ 0xd000, 0xd000, opwolf_adpcm_d_w },
-	{ 0xe000, 0xe000, opwolf_adpcm_e_w },
-MEMORY_END
+static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xb000, 0xb006) AM_WRITE(opwolf_adpcm_b_w)
+	AM_RANGE(0xc000, 0xc006) AM_WRITE(opwolf_adpcm_c_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(opwolf_adpcm_d_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(opwolf_adpcm_e_w)
+ADDRESS_MAP_END
 
 
 /***********************************************************
@@ -451,14 +451,14 @@ static MACHINE_DRIVER_START( opwolf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000 )	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(opwolf_readmem,opwolf_writemem)
+	MDRV_CPU_PROGRAM_MAP(opwolf_readmem,opwolf_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000 )	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_CPU_ADD(Z80, 4000000 )	/* fake, not present on the original board */
-	MDRV_CPU_MEMORY(sub_z80_readmem,sub_z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_z80_readmem,sub_z80_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -485,14 +485,14 @@ static MACHINE_DRIVER_START( opwolfb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(opwolf_readmem,opwolf_writemem)
+	MDRV_CPU_PROGRAM_MAP(opwolf_readmem,opwolf_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(sub_z80_readmem,sub_z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_z80_readmem,sub_z80_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -155,42 +155,42 @@ static WRITE16_HANDLER( latch_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x140000, 0x147fff, MRA16_ROM },
-	{ 0x200000, 0x21ffff, MRA16_RAM },
-	{ 0x3c0000, 0x3c07ff, MRA16_RAM },
-	{ 0x3e0000, 0x3effff, MRA16_RAM },
-	{ 0x460000, 0x460001, adpcm_r },
-	{ 0x500000, 0x500fff, atarigen_eeprom_r },
-	{ 0x640000, 0x640001, input_port_0_word_r },
-	{ 0x640002, 0x640003, input_port_1_word_r },
-	{ 0x6c0000, 0x6c0001, input_port_2_word_r },
-	{ 0x6c0002, 0x6c0003, input_port_3_word_r },
-	{ 0x6c0004, 0x6c0005, input_port_4_word_r },
-	{ 0x6c0006, 0x6c0007, input_port_5_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x140000, 0x147fff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c0000, 0x3c07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3e0000, 0x3effff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x460000, 0x460001) AM_READ(adpcm_r)
+	AM_RANGE(0x500000, 0x500fff) AM_READ(atarigen_eeprom_r)
+	AM_RANGE(0x640000, 0x640001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x640002, 0x640003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x6c0000, 0x6c0001) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x6c0002, 0x6c0003) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x6c0004, 0x6c0005) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x6c0006, 0x6c0007) AM_READ(input_port_5_word_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x140000, 0x147fff, MWA16_ROM },
-	{ 0x200000, 0x21ffff, rampart_bitmap_w, &rampart_bitmap },
-	{ 0x220000, 0x3bffff, MWA16_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
-	{ 0x3c0800, 0x3dffff, MWA16_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3e0000, 0x3e07ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3e0800, 0x3e3f3f, MWA16_RAM },
-	{ 0x3e3f40, 0x3e3f7f, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0x3e3f80, 0x3effff, MWA16_RAM },
-	{ 0x460000, 0x460001, adpcm_w },
-	{ 0x480000, 0x480003, ym2413_w },
-	{ 0x500000, 0x500fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x5a0000, 0x5affff, atarigen_eeprom_enable_w },
-	{ 0x640000, 0x640001, latch_w },
-	{ 0x720000, 0x72ffff, watchdog_reset16_w },
-	{ 0x7e0000, 0x7effff, atarigen_scanline_int_ack_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x140000, 0x147fff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(rampart_bitmap_w) AM_BASE(&rampart_bitmap)
+	AM_RANGE(0x220000, 0x3bffff) AM_WRITE(MWA16_NOP)	/* the code blasts right through this when initializing */
+	AM_RANGE(0x3c0000, 0x3c07ff) AM_WRITE(atarigen_expanded_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3c0800, 0x3dffff) AM_WRITE(MWA16_NOP)	/* the code blasts right through this when initializing */
+	AM_RANGE(0x3e0000, 0x3e07ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0x3e0800, 0x3e3f3f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x3e3f40, 0x3e3f7f) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
+	AM_RANGE(0x3e3f80, 0x3effff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x460000, 0x460001) AM_WRITE(adpcm_w)
+	AM_RANGE(0x480000, 0x480003) AM_WRITE(ym2413_w)
+	AM_RANGE(0x500000, 0x500fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x5a0000, 0x5affff) AM_WRITE(atarigen_eeprom_enable_w)
+	AM_RANGE(0x640000, 0x640001) AM_WRITE(latch_w)
+	AM_RANGE(0x720000, 0x72ffff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x7e0000, 0x7effff) AM_WRITE(atarigen_scanline_int_ack_w)
+ADDRESS_MAP_END
 
 
 
@@ -405,7 +405,7 @@ static MACHINE_DRIVER_START( rampart )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

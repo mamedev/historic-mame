@@ -68,33 +68,8 @@ enum {
 #define UPD7810_INTF2		1
 #define UPD7810_INTFE1      4
 
-extern int upd7810_icount;						/* cycle count */
-
-void upd7810_init (void);				/* Initialize save states */
-void upd7810_reset (void *param);		/* Reset registers to the initial values */
-void upd7810_exit  (void);				/* Shut down CPU core */
-int	upd7810_execute(int cycles);		/* Execute cycles - returns number of cycles actually run */
-unsigned upd7810_get_context (void *dst);/* Get registers, return context size */
-void upd7810_set_context (void *src);	/* Set registers */
-unsigned upd7810_get_reg (int regnum);
-void upd7810_set_reg (int regnum, unsigned val);
-void upd7810_set_irq_line(int irqline, int state);
-void upd7810_set_irq_callback(int (*callback)(int irqline));
-const char *upd7810_info(void *context, int regnum);
-unsigned upd7810_dasm(char *buffer, unsigned pc);
-
-#define upd7807_init upd7810_init
-void upd7807_reset (void *param);
-#define upd7807_exit upd7810_exit
-#define upd7807_execute upd7810_execute
-#define upd7807_get_context upd7810_get_context
-#define upd7807_set_context upd7810_set_context
-#define upd7807_get_reg upd7810_get_reg
-#define upd7807_set_reg upd7810_set_reg
-#define upd7807_set_irq_line upd7810_set_irq_line
-#define upd7807_set_irq_callback upd7810_set_irq_callback
-const char *upd7807_info(void *context, int regnum);
-unsigned upd7807_dasm(char *buffer, unsigned pc);
+extern void upd7810_get_info(UINT32 state, union cpuinfo *info);
+extern void upd7807_get_info(UINT32 state, union cpuinfo *info);
 
 typedef struct {
 	PAIR	ppc;	/* previous program counter */
@@ -178,8 +153,6 @@ typedef struct {
 	UPD7810_CONFIG config;
 	int (*irq_callback)(int irqline);
 }	UPD7810;
-
-extern UPD7810 upd7810;
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm7810( char *dst, unsigned pc );

@@ -23,10 +23,6 @@ enum {
 	Z180_IFF1,
 	Z180_IFF2,
 	Z180_HALT,
-	Z180_NMI_STATE,
-	Z180_INT0_STATE,
-	Z180_INT1_STATE,
-	Z180_INT2_STATE,
 	Z180_DC0,
 	Z180_DC1,
 	Z180_DC2,
@@ -107,8 +103,12 @@ enum {
 	Z180_TABLE_ex	 /* cycles counts for taken jr/jp/call and interrupt latency (rst opcodes) */
 };
 
-extern int z180_icount; 			/* T-state count */
-#define z180_ICount z180_icount
+enum
+{
+	CPUINFO_PTR_Z180_CYCLE_TABLE = CPUINFO_PTR_CPU_SPECIFIC,
+	CPUINFO_PTR_Z180_CYCLE_TABLE_LAST = CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ex
+};
+
 
 #define Z180_INT0		0			/* Execute INT1 */
 #define Z180_INT1		1			/* Execute INT1 */
@@ -126,23 +126,7 @@ extern data8_t cpu_readmemz180(offs_t offset);
 extern void cpu_writememz180(offs_t offset, data8_t data);
 extern void cpu_setOPbasez180(int pc);
 
-extern void z180_init(void);
-extern void z180_reset (void *param);
-extern void z180_exit (void);
-extern int z180_execute(int cycles);
-extern void z180_burn(int cycles);
-extern unsigned z180_get_context (void *dst);
-extern void z180_set_context (void *src);
-extern const void *z180_get_cycle_table (int which);
-extern void z180_set_cycle_table (int which, void *new_tbl);
-extern unsigned z180_get_reg (int regnum);
-extern READ_HANDLER( z180_internal_r );
-extern WRITE_HANDLER( z180_internal_w );
-extern void z180_set_reg (int regnum, unsigned val);
-extern void z180_set_irq_line(int irqline, int state);
-extern void z180_set_irq_callback(int (*irq_callback)(int));
-extern const char *z180_info(void *context, int regnum);
-extern unsigned z180_dasm(char *buffer, unsigned pc);
+extern void z180_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmZ180(char *buffer, unsigned pc);

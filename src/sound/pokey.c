@@ -194,10 +194,10 @@ struct POKEYregisters {
 	int timer_param[3];		/* computed parameters for these timers */
     void *rtimer;           /* timer for calculating the random offset */
 	void *ptimer[8];		/* pot timers */
-	mem_read_handler pot_r[8];
-	mem_read_handler allpot_r;
-	mem_read_handler serin_r;
-	mem_write_handler serout_w;
+	read8_handler pot_r[8];
+	read8_handler allpot_r;
+	read8_handler serin_r;
+	write8_handler serout_w;
 	void (*interrupt_cb)(int mask);
     UINT8 AUDF[4];          /* AUDFx (D200, D202, D204, D206) */
 	UINT8 AUDC[4];			/* AUDCx (D201, D203, D205, D207) */

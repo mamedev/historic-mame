@@ -93,32 +93,32 @@ static WRITE16_HANDLER( tickee_control_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MRA16_RAM },
-	{ TOBYTE(0x02000000), TOBYTE(0x02ffffff), MRA16_BANK1 },
-	{ TOBYTE(0x04000000), TOBYTE(0x04003fff), MRA16_RAM },
-	{ TOBYTE(0x04100000), TOBYTE(0x041000ff), tlc34076_lsb_r },
-	{ TOBYTE(0x04200000), TOBYTE(0x0420000f), AY8910_read_port_0_lsb_r },
-	{ TOBYTE(0x04200100), TOBYTE(0x0420010f), AY8910_read_port_1_lsb_r },
-	{ TOBYTE(0x04400040), TOBYTE(0x0440004f), input_port_3_word_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA16_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x02000000, 0x02ffffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0x04000000, 0x04003fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x04100000, 0x041000ff) AM_READ(tlc34076_lsb_r)
+	AM_RANGE(0x04200000, 0x0420000f) AM_READ(AY8910_read_port_0_lsb_r)
+	AM_RANGE(0x04200100, 0x0420010f) AM_READ(AY8910_read_port_1_lsb_r)
+	AM_RANGE(0x04400040, 0x0440004f) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MWA16_RAM, &tickee_vram },
-	{ TOBYTE(0x04000000), TOBYTE(0x04003fff), MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ TOBYTE(0x04100000), TOBYTE(0x041000ff), tlc34076_lsb_w },
-	{ TOBYTE(0x04200000), TOBYTE(0x0420000f), AY8910_control_port_0_lsb_w },
-	{ TOBYTE(0x04200010), TOBYTE(0x0420001f), AY8910_write_port_0_lsb_w },
-	{ TOBYTE(0x04200100), TOBYTE(0x0420010f), AY8910_control_port_1_lsb_w },
-	{ TOBYTE(0x04200110), TOBYTE(0x0420011f), AY8910_write_port_1_lsb_w },
-	{ TOBYTE(0x04400000), TOBYTE(0x0440007f), tickee_control_w, &tickee_control },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xc0000240), TOBYTE(0xc000025f), MWA16_NOP },		/* seems to be a bug in their code */
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM) AM_BASE(&tickee_vram)
+	AM_RANGE(0x04000000, 0x04003fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x04100000, 0x041000ff) AM_WRITE(tlc34076_lsb_w)
+	AM_RANGE(0x04200000, 0x0420000f) AM_WRITE(AY8910_control_port_0_lsb_w)
+	AM_RANGE(0x04200010, 0x0420001f) AM_WRITE(AY8910_write_port_0_lsb_w)
+	AM_RANGE(0x04200100, 0x0420010f) AM_WRITE(AY8910_control_port_1_lsb_w)
+	AM_RANGE(0x04200110, 0x0420011f) AM_WRITE(AY8910_write_port_1_lsb_w)
+	AM_RANGE(0x04400000, 0x0440007f) AM_WRITE(tickee_control_w) AM_BASE(&tickee_control)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code */
+	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
 
 
@@ -234,7 +234,7 @@ MACHINE_DRIVER_START( tickee )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))

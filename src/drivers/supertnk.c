@@ -237,35 +237,36 @@ INTERRUPT_GEN( supertnk_interrupt )
 
 
 
-static MEMORY_READ_START( supertnk_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },			/* Fixed ROM */
-	{ 0x0800, 0x17ff, MRA_BANK1 },			/* Banked ROM */
-	{ 0x2000, 0x3fff, supertnk_videoram_r },	/* Video RAM */
-	{ 0x1efc, 0x1efc, input_port_0_r },		/* Input ports */
-	{ 0x1efd, 0x1efd, input_port_1_r },
-	{ 0x1efe, 0x1efe, input_port_2_r },		/* DIP switch ports */
-	{ 0x1eff, 0x1eff, input_port_3_r },
-MEMORY_END
+static ADDRESS_MAP_START( supertnk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)			/* Fixed ROM */
+	AM_RANGE(0x0800, 0x17ff) AM_READ(MRA8_BANK1)			/* Banked ROM */
+	AM_RANGE(0x1800, 0x1bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(supertnk_videoram_r)	/* Video RAM */
+	AM_RANGE(0x1efc, 0x1efc) AM_READ(input_port_0_r)		/* Input ports */
+	AM_RANGE(0x1efd, 0x1efd) AM_READ(input_port_1_r)
+	AM_RANGE(0x1efe, 0x1efe) AM_READ(input_port_2_r)		/* DIP switch ports */
+	AM_RANGE(0x1eff, 0x1eff) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
 
-static MEMORY_WRITE_START( supertnk_writemem )
-	{ 0x0000, 0x17ff, MWA_ROM },
-	{ 0x1800, 0x1bff, MWA_RAM },
-	{ 0x1efe, 0x1efe, AY8910_control_port_0_w },	/* Sound chip control port */
-	{ 0x1eff, 0x1eff, AY8910_write_port_0_w },	/* Sound chip data port */
-	{ 0x2000, 0x3fff, supertnk_videoram_w },	/* Video RAM */
-MEMORY_END
+static ADDRESS_MAP_START( supertnk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1efe, 0x1efe) AM_WRITE(AY8910_control_port_0_w)	/* Sound chip control port */
+	AM_RANGE(0x1eff, 0x1eff) AM_WRITE(AY8910_write_port_0_w)	/* Sound chip data port */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(supertnk_videoram_w)	/* Video RAM */
+ADDRESS_MAP_END
 
 
 
-static PORT_WRITE_START( supertnk_writeport)
-	{ 0x000, 0x000, MWA_NOP },
-	{ 0x400, 0x401, supertnk_set_video_bitplane },
-	{ 0x402, 0x404, supertnk_bankswitch_w },
-	{ 0x406, 0x406, supertnk_intack },
-	{ 0x407, 0x407, watchdog_reset_w },
-PORT_END
+static ADDRESS_MAP_START( supertnk_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x000, 0x000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x400, 0x401) AM_WRITE(supertnk_set_video_bitplane)
+	AM_RANGE(0x402, 0x404) AM_WRITE(supertnk_bankswitch_w)
+	AM_RANGE(0x406, 0x406) AM_WRITE(supertnk_intack)
+	AM_RANGE(0x407, 0x407) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
 
 
@@ -288,8 +289,8 @@ static MACHINE_DRIVER_START( supertnk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS9980, 2598750) /* ? to which frequency is the 20.79 Mhz crystal mapped down? */
-	MDRV_CPU_MEMORY(supertnk_readmem,supertnk_writemem)
-	MDRV_CPU_PORTS(0,supertnk_writeport)
+	MDRV_CPU_PROGRAM_MAP(supertnk_readmem,supertnk_writemem)
+	MDRV_CPU_IO_MAP(0,supertnk_writeport)
 	MDRV_CPU_VBLANK_INT(supertnk_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -40,12 +40,12 @@ WRITE_HANDLER( segar_w )
 	}
 
 
-	/* MWA_ROM */
+	/* MWA8_ROM */
 	if      ((off>=0x0000) && (off<=0xC7FF))
 	{
 		;
 	}
-	/* MWA_RAM */
+	/* MWA8_RAM */
 	else if ((off>=0xC800) && (off<=0xCFFF))
 	{
 		segar_mem[off]=data;
@@ -54,7 +54,7 @@ WRITE_HANDLER( segar_w )
 	{
 		videoram_w(off - 0xE000,data);
 	}
-	/* MWA_RAM */
+	/* MWA8_RAM */
 	else if ((off>=0xE400) && (off<=0xE7FF))
 	{
 		segar_mem[off]=data;
@@ -71,7 +71,7 @@ WRITE_HANDLER( segar_w )
 	{
 		segar_bcolortable_w(off - 0xF040,data);
 	}
-	/* MWA_RAM */
+	/* MWA8_RAM */
 	else if ((off>=0xF080) && (off<=0xF7FF))
 	{
 		segar_mem[off]=data;

@@ -916,7 +916,7 @@ static void dma_scsp()
 	{
 		for(;scsp_dtlg > 0;scsp_dtlg-=2)
 		{
-			cpu_writemem24bedw_word(scsp_dmea, cpu_readmem24bedw_word(0x100000|scsp_drga));
+			program_write_word(scsp_dmea, program_read_word(0x100000|scsp_drga));
 			scsp_dmea+=2;
 			scsp_drga+=2;
 		}
@@ -925,7 +925,7 @@ static void dma_scsp()
 	{
 		for(;scsp_dtlg > 0;scsp_dtlg-=2)
 		{
-  			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
+  			program_write_word(0x100000|scsp_drga,program_read_word(scsp_dmea));
 			scsp_dmea+=2;
 			scsp_drga+=2;
 		}

@@ -292,104 +292,110 @@ WRITE_HANDLER( adpcm_soundcommand_w )
 	cpu_set_nmi_line(2, PULSE_LINE);
 }
 
-static MEMORY_READ_START( gsword_readmem )
-	{ 0x0000, 0x8fff, MRA_ROM },
-	{ 0x9000, 0x9fff, MRA_RAM },
-	{ 0xb000, 0xb7ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( gsword_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x8fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa37f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa380, 0xa3ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa400, 0xa77f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa780, 0xa7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( gsword_writemem )
-	{ 0x0000, 0x8fff, MWA_ROM },
-	{ 0x9000, 0x9fff, MWA_RAM },
-	{ 0xa380, 0xa3ff, MWA_RAM, &gsword_spritetile_ram },
-	{ 0xa780, 0xa7ff, MWA_RAM, &gsword_spritexy_ram, &gsword_spritexy_size },
-	{ 0xa980, 0xa980, gsword_charbank_w },
-	{ 0xaa80, 0xaa80, gsword_videoctrl_w },	/* flip screen, char palette bank */
-	{ 0xab00, 0xab00, gsword_scroll_w },
-	{ 0xab80, 0xabff, MWA_RAM, &gsword_spriteattrib_ram },
-	{ 0xb000, 0xb7ff, gsword_videoram_w, &videoram },
-MEMORY_END
+static ADDRESS_MAP_START( gsword_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x8fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa37f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa380, 0xa3ff) AM_WRITE(MWA8_RAM) AM_BASE(&gsword_spritetile_ram)
+	AM_RANGE(0xa400, 0xa77f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa780, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&gsword_spritexy_ram) AM_SIZE(&gsword_spritexy_size)
+	AM_RANGE(0xa980, 0xa980) AM_WRITE(gsword_charbank_w)
+	AM_RANGE(0xaa80, 0xaa80) AM_WRITE(gsword_videoctrl_w)	/* flip screen, char palette bank */
+	AM_RANGE(0xab00, 0xab00) AM_WRITE(gsword_scroll_w)
+	AM_RANGE(0xab80, 0xabff) AM_WRITE(MWA8_RAM) AM_BASE(&gsword_spriteattrib_ram)
+	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(gsword_videoram_w) AM_BASE(&videoram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x6000, 0x6000, adpcm_soundcommand_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(adpcm_soundcommand_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x8000, gsword_adpcm_data_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(gsword_adpcm_data_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x7e, 0x7f, TAITO8741_0_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7e, 0x7f) AM_READ(TAITO8741_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x7e, 0x7f, TAITO8741_0_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x7e, 0x7f) AM_WRITE(TAITO8741_0_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport_cpu2 )
-	{ 0x00, 0x01, TAITO8741_2_r },
-	{ 0x20, 0x21, TAITO8741_3_r },
-	{ 0x40, 0x41, TAITO8741_1_r },
-	{ 0x60, 0x60, gsword_fake_0_r },
-	{ 0x61, 0x61, AY8910_read_port_0_r },
-	{ 0x80, 0x80, gsword_fake_1_r },
-	{ 0x81, 0x81, AY8910_read_port_1_r },
-	{ 0xe0, 0xe0, IORP_NOP }, /* ?? */
-PORT_END
+static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_READ(TAITO8741_2_r)
+	AM_RANGE(0x20, 0x21) AM_READ(TAITO8741_3_r)
+	AM_RANGE(0x40, 0x41) AM_READ(TAITO8741_1_r)
+	AM_RANGE(0x60, 0x60) AM_READ(gsword_fake_0_r)
+	AM_RANGE(0x61, 0x61) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(gsword_fake_1_r)
+	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xe0, 0xe0) AM_READ(MRA8_NOP) /* ?? */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport_cpu2 )
-	{ 0x00, 0x01, TAITO8741_2_w },
-	{ 0x20, 0x21, TAITO8741_3_w },
-	{ 0x40, 0x41, TAITO8741_1_w },
-	{ 0x60, 0x60, gsword_AY8910_control_port_0_w },
-	{ 0x61, 0x61, AY8910_write_port_0_w },
-	{ 0x80, 0x80, gsword_AY8910_control_port_1_w },
-	{ 0x81, 0x81, AY8910_write_port_1_w },
-	{ 0xa0, 0xa0, IOWP_NOP }, /* ?? */
-	{ 0xe0, 0xe0, IOWP_NOP }, /* watch dog ?*/
-PORT_END
-
-
+static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(TAITO8741_2_w)
+	AM_RANGE(0x20, 0x21) AM_WRITE(TAITO8741_3_w)
+	AM_RANGE(0x40, 0x41) AM_WRITE(TAITO8741_1_w)
+	AM_RANGE(0x60, 0x60) AM_WRITE(gsword_AY8910_control_port_0_w)
+	AM_RANGE(0x61, 0x61) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(gsword_AY8910_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(MWA8_NOP) /* ?? */
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(MWA8_NOP) /* watch dog ?*/
+ADDRESS_MAP_END
 
 
 
-static MEMORY_READ_START( josvolly_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-//	{ 0x2000, 0x3fff, MRA_ROM }, another ROM probably, not sure which one (tested on boot)
-	{ 0x4000, 0x43ff, MRA_RAM },
-//	{ 0xa000, 0xa000, soundlatch_r },
-MEMORY_END
 
-static MEMORY_WRITE_START( josvolly_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-//	{ 0x8000, 0x8000, gsword_adpcm_data_w },
-MEMORY_END
 
-static PORT_READ_START( josvolly_sound_readport )
-	{ 0x00, 0x00, AY8910_read_port_0_r },
-	{ 0x40, 0x40, AY8910_read_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( josvolly_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+//	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM) another ROM probably, not sure which one (tested on boot)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+//	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( josvolly_sound_writeport )
-	{ 0x00, 0x00, AY8910_control_port_0_w },
-	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ 0x40, 0x40, AY8910_control_port_1_w },
-	{ 0x41, 0x41, AY8910_write_port_1_w },
-PORT_END
+static ADDRESS_MAP_START( josvolly_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+//	AM_RANGE(0x8000, 0x8000) AM_WRITE(gsword_adpcm_data_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( josvolly_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( josvolly_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x41, 0x41) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
 
 
 
@@ -581,14 +587,14 @@ static MACHINE_DRIVER_START( josvolly )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_MEMORY(gsword_readmem,gsword_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(gsword_readmem,gsword_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(josvolly_sound_readmem,josvolly_sound_writemem)
-	MDRV_CPU_PORTS(josvolly_sound_readport,josvolly_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(josvolly_sound_readmem,josvolly_sound_writemem)
+	MDRV_CPU_IO_MAP(josvolly_sound_readport,josvolly_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -616,18 +622,18 @@ static MACHINE_DRIVER_START( gsword )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_MEMORY(gsword_readmem,gsword_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(gsword_readmem,gsword_writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
 	MDRV_CPU_VBLANK_INT(gsword_snd_interrupt,4)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

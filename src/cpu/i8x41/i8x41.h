@@ -80,20 +80,7 @@ enum {
  *	Public Functions
  */
 
-extern int i8x41_ICount;				/* cycle count */
-
-extern void i8x41_init (void);					/* Initialize save states */
-extern void i8x41_reset (void *param);			/* Reset registers to the initial values */
-extern void i8x41_exit	(void); 				/* Shut down CPU core */
-extern int	i8x41_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
-extern unsigned i8x41_get_context (void *dst);	/* Get registers, return context size */
-extern void i8x41_set_context (void *src);		/* Set registers */
-extern unsigned i8x41_get_reg (int regnum);
-extern void i8x41_set_reg (int regnum, unsigned val);
-extern void i8x41_set_irq_line(int irqline, int state);
-extern void i8x41_set_irq_callback(int (*callback)(int irqline));
-extern const char *i8x41_info(void *context, int regnum);
-extern unsigned i8x41_dasm(char *buffer, unsigned pc);
+extern void i8x41_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm8x41( char *dst, unsigned pc );

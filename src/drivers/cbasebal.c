@@ -145,39 +145,39 @@ static WRITE_HANDLER( eeprom_serial_w )
 
 
 
-static MEMORY_READ_START( cbasebal_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcfff, bankedram_r },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( cbasebal_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(bankedram_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cbasebal_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, bankedram_w, &paletteram },	/* palette + vram + scrollram */
-	{ 0xe000, 0xfdff, MWA_RAM },			/* work RAM */
-	{ 0xfe00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-MEMORY_END
+static ADDRESS_MAP_START( cbasebal_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(bankedram_w) AM_BASE(&paletteram)	/* palette + vram + scrollram */
+	AM_RANGE(0xe000, 0xfdff) AM_WRITE(MWA8_RAM)			/* work RAM */
+	AM_RANGE(0xfe00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+ADDRESS_MAP_END
 
-static PORT_READ_START( cbasebal_readport )
-	{ 0x10, 0x10, input_port_0_r },
-	{ 0x11, 0x11, input_port_1_r },
-	{ 0x12, 0x12, eeprom_r },
-PORT_END
+static ADDRESS_MAP_START( cbasebal_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r)
+	AM_RANGE(0x12, 0x12) AM_READ(eeprom_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cbasebal_writeport )
-	{ 0x00, 0x00, cbasebal_bankswitch_w },
-	{ 0x01, 0x01, eeprom_cs_w },
-	{ 0x02, 0x02, eeprom_clock_w },
-	{ 0x03, 0x03, eeprom_serial_w },
-	{ 0x05, 0x05, OKIM6295_data_0_w },
-	{ 0x06, 0x06, YM2413_register_port_0_w },
-	{ 0x07, 0x07, YM2413_data_port_0_w },
-	{ 0x08, 0x09, cbasebal_scrollx_w },
-	{ 0x0a, 0x0b, cbasebal_scrolly_w },
-	{ 0x13, 0x13, cbasebal_gfxctrl_w },
-	{ 0x14, 0x14, cbasebal_coinctrl_w },
-PORT_END
+static ADDRESS_MAP_START( cbasebal_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(cbasebal_bankswitch_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(eeprom_cs_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(eeprom_clock_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(eeprom_serial_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(YM2413_register_port_0_w)
+	AM_RANGE(0x07, 0x07) AM_WRITE(YM2413_data_port_0_w)
+	AM_RANGE(0x08, 0x09) AM_WRITE(cbasebal_scrollx_w)
+	AM_RANGE(0x0a, 0x0b) AM_WRITE(cbasebal_scrolly_w)
+	AM_RANGE(0x13, 0x13) AM_WRITE(cbasebal_gfxctrl_w)
+	AM_RANGE(0x14, 0x14) AM_WRITE(cbasebal_coinctrl_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( cbasebal )
@@ -283,8 +283,8 @@ static MACHINE_DRIVER_START( cbasebal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* ??? */
-	MDRV_CPU_MEMORY(cbasebal_readmem,cbasebal_writemem)
-	MDRV_CPU_PORTS(cbasebal_readport,cbasebal_writeport)
+	MDRV_CPU_PROGRAM_MAP(cbasebal_readmem,cbasebal_writemem)
+	MDRV_CPU_IO_MAP(cbasebal_readport,cbasebal_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)

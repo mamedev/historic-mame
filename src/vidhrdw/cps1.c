@@ -178,6 +178,7 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m68000/m68kmame.h"
 #include "cps1.h"
 
 #define VERBOSE 0
@@ -759,7 +760,7 @@ DRIVER_INIT( cps2 )
 		xor[i] ^= rom[i];
 
 	memory_set_opcode_base(0,xor);
-	memory_set_encrypted_opcode_range(0,0,memory_region_length(REGION_CPU1));
+	m68k_set_encrypted_opcode_range(0,0,memory_region_length(REGION_CPU1));
 
 	cps2_gfx_decode();
 

@@ -5,6 +5,7 @@
 /* ============================== MAME STUFF ============================== */
 /* ======================================================================== */
 
+#include "driver.h"
 #include "cpuintrf.h"
 #include "memory.h"
 #include "mamedbg.h"
@@ -30,7 +31,7 @@
 #define M68K_SET_FC_CALLBACK(A)
 
 #define M68K_MONITOR_PC             OPT_SPECIFY_HANDLER
-#define M68K_SET_PC_CALLBACK(A)     (*m68k_memory_intf.changepc)(A)
+#define M68K_SET_PC_CALLBACK(A)     change_pc(A)
 
 #define M68K_INSTRUCTION_HOOK       OPT_SPECIFY_HANDLER
 #define M68K_INSTRUCTION_CALLBACK() CALL_MAME_DEBUG
@@ -50,6 +51,8 @@
 
 
 extern struct m68k_memory_interface m68k_memory_intf;
+extern offs_t m68k_encrypted_opcode_start[MAX_CPU];
+extern offs_t m68k_encrypted_opcode_end[MAX_CPU];
 
 #define m68k_read_memory_8(address)          (*m68k_memory_intf.read8)(address)
 #define m68k_read_memory_16(address)         (*m68k_memory_intf.read16)(address)
@@ -90,8 +93,8 @@ INLINE unsigned int m68kx_read_immediate_32(unsigned int address)
 
 INLINE unsigned int m68kx_read_pcrelative_8(unsigned int address)
 {
-	if (address >= encrypted_opcode_start[cpu_getactivecpu()] &&
-			address < encrypted_opcode_end[cpu_getactivecpu()])
+	if (address >= m68k_encrypted_opcode_start[cpu_getactivecpu()] &&
+			address < m68k_encrypted_opcode_end[cpu_getactivecpu()])
 		return ((m68k_read_immediate_16(address&~1)>>(8*(1-(address & 1))))&0xff);
 	else
 		return m68k_read_memory_8(address);
@@ -99,8 +102,8 @@ INLINE unsigned int m68kx_read_pcrelative_8(unsigned int address)
 
 INLINE unsigned int m68kx_read_pcrelative_16(unsigned int address)
 {
-	if (address >= encrypted_opcode_start[cpu_getactivecpu()] &&
-			address < encrypted_opcode_end[cpu_getactivecpu()])
+	if (address >= m68k_encrypted_opcode_start[cpu_getactivecpu()] &&
+			address < m68k_encrypted_opcode_end[cpu_getactivecpu()])
 		return m68k_read_immediate_16(address);
 	else
 		return m68k_read_memory_16(address);
@@ -108,8 +111,8 @@ INLINE unsigned int m68kx_read_pcrelative_16(unsigned int address)
 
 INLINE unsigned int m68kx_read_pcrelative_32(unsigned int address)
 {
-	if (address >= encrypted_opcode_start[cpu_getactivecpu()] &&
-			address < encrypted_opcode_end[cpu_getactivecpu()])
+	if (address >= m68k_encrypted_opcode_start[cpu_getactivecpu()] &&
+			address < m68k_encrypted_opcode_end[cpu_getactivecpu()])
 		return m68k_read_immediate_32(address);
 	else
 		return m68k_read_memory_32(address);
@@ -126,6 +129,9 @@ INLINE void m68kx_write_memory_32_pd(unsigned int address, unsigned int value)
 	(*m68k_memory_intf.write16)(address+2, value>>16);
 	(*m68k_memory_intf.write16)(address, value&0xffff);
 }
+
+
+void m68k_set_encrypted_opcode_range(int cpunum, offs_t start, offs_t end);
 
 
 #ifdef A68K0

@@ -403,58 +403,58 @@ static WRITE16_HANDLER( protection_bit_w )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x220000, 0x23ffff, MRA16_RAM },
-	{ 0x240000, 0x240fff, MRA16_RAM },
-	{ 0x300000, 0x300001, input_port_0_word_r },
-	{ 0x300002, 0x300003, input_port_1_word_r },
-	{ 0x300004, 0x300005, input_port_2_word_r },
-	{ 0x300006, 0x300007, input_port_3_word_r },
-	{ 0x300008, 0x300009, input_port_4_word_r },
-	{ 0x30000a, 0x30000b, special_port5_r },
-	{ 0x360000, 0x360001, OKIM6295_status_0_lsb_r },
-	{ 0x380000, 0x380007, tms_host_r },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x240000, 0x240fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300002, 0x300003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x300004, 0x300005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x300006, 0x300007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x300008, 0x300009) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x30000a, 0x30000b) AM_READ(special_port5_r)
+	AM_RANGE(0x360000, 0x360001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x380000, 0x380007) AM_READ(tms_host_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x220000, 0x23ffff, MWA16_RAM, &ram_base },
-	{ 0x240000, 0x240fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x300000, 0x300003, control_w, &control },
-	{ 0x300004, 0x300007, protection_bit_w },
-	{ 0x360000, 0x360001, OKIM6295_data_0_lsb_w },
-	{ 0x380000, 0x380007, tms_host_w },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x220000, 0x23ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)
+	AM_RANGE(0x240000, 0x240fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x300000, 0x300003) AM_WRITE(control_w) AM_BASE(&control)
+	AM_RANGE(0x300004, 0x300007) AM_WRITE(protection_bit_w)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x380000, 0x380007) AM_WRITE(tms_host_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( stonebal_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x200000, 0x27ffff, MRA16_RAM },
-	{ 0x280000, 0x280fff, MRA16_RAM },
-	{ 0x300000, 0x300001, input_port_0_word_r },
-	{ 0x300002, 0x300003, input_port_1_word_r },
-	{ 0x300004, 0x300005, input_port_2_word_r },
-	{ 0x300006, 0x300007, input_port_3_word_r },
-	{ 0x300008, 0x300009, input_port_4_word_r },
-	{ 0x30000a, 0x30000b, special_port5_r },
-	{ 0x30000c, 0x30000d, input_port_6_word_r },
-	{ 0x30000e, 0x30000f, input_port_7_word_r },
-	{ 0x340000, 0x340001, OKIM6295_status_0_lsb_r },
-	{ 0x380000, 0x380007, tms_host_r },
-MEMORY_END
+static ADDRESS_MAP_START( stonebal_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x27ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x280000, 0x280fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300002, 0x300003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x300004, 0x300005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x300006, 0x300007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x300008, 0x300009) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x30000a, 0x30000b) AM_READ(special_port5_r)
+	AM_RANGE(0x30000c, 0x30000d) AM_READ(input_port_6_word_r)
+	AM_RANGE(0x30000e, 0x30000f) AM_READ(input_port_7_word_r)
+	AM_RANGE(0x340000, 0x340001) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x380000, 0x380007) AM_READ(tms_host_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( stonebal_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x200000, 0x27ffff, MWA16_RAM },
-	{ 0x280000, 0x280fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x300000, 0x300003, control_w, &control },
-	{ 0x300004, 0x300007, protection_bit_w },
-	{ 0x340000, 0x340001, OKIM6295_data_0_lsb_w },
-	{ 0x380000, 0x380007, tms_host_w },
-MEMORY_END
+static ADDRESS_MAP_START( stonebal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x27ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x280000, 0x280fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x300000, 0x300003) AM_WRITE(control_w) AM_BASE(&control)
+	AM_RANGE(0x300004, 0x300007) AM_WRITE(protection_bit_w)
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x380000, 0x380007) AM_WRITE(tms_host_w)
+ADDRESS_MAP_END
 
 
 
@@ -474,44 +474,44 @@ static struct tms34010_config tms_config =
 };
 
 
-static MEMORY_READ16_START( tms_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
-	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MRA16_RAM },
-	{ TOBYTE(0x00800000), TOBYTE(0x0080000f), artmagic_blitter_r },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tms_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x00400000, 0x005fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x00800000, 0x0080000f) AM_READ(artmagic_blitter_r)
+	AM_RANGE(0x00c00000, 0x00c000ff) AM_READ(tlc34076_lsb_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( tms_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &artmagic_vram0 },
-	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MWA16_RAM, &artmagic_vram1 },
-	{ TOBYTE(0x00800000), TOBYTE(0x0080007f), artmagic_blitter_w },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_w },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( tms_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&artmagic_vram0)
+	AM_RANGE(0x00400000, 0x005fffff) AM_WRITE(MWA16_RAM) AM_BASE(&artmagic_vram1)
+	AM_RANGE(0x00800000, 0x0080007f) AM_WRITE(artmagic_blitter_w)
+	AM_RANGE(0x00c00000, 0x00c000ff) AM_WRITE(tlc34076_lsb_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ16_START( stonebal_tms_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
-	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MRA16_RAM },
-	{ TOBYTE(0x00800000), TOBYTE(0x0080000f), artmagic_blitter_r },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( stonebal_tms_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x00400000, 0x005fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x00800000, 0x0080000f) AM_READ(artmagic_blitter_r)
+	AM_RANGE(0x00c00000, 0x00c000ff) AM_READ(tlc34076_lsb_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( stonebal_tms_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &artmagic_vram0 },
-	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MWA16_RAM, &artmagic_vram1 },
-	{ TOBYTE(0x00800000), TOBYTE(0x0080007f), artmagic_blitter_w },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_w },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( stonebal_tms_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&artmagic_vram0)
+	AM_RANGE(0x00400000, 0x005fffff) AM_WRITE(MWA16_RAM) AM_BASE(&artmagic_vram1)
+	AM_RANGE(0x00800000, 0x0080007f) AM_WRITE(artmagic_blitter_w)
+	AM_RANGE(0x00c00000, 0x00c000ff) AM_WRITE(tlc34076_lsb_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 
 
@@ -845,11 +845,11 @@ MACHINE_DRIVER_START( artmagic )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 25000000/2)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 
 	MDRV_CPU_ADD_TAG("tms", TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(tms_config)
-	MDRV_CPU_MEMORY(tms_readmem,tms_writemem)
+	MDRV_CPU_PROGRAM_MAP(tms_readmem,tms_writemem)
 
 	MDRV_MACHINE_INIT(artmagic)
 	MDRV_FRAMES_PER_SECOND(50.27)
@@ -875,10 +875,10 @@ MACHINE_DRIVER_START( stonebal )
 	MDRV_IMPORT_FROM(artmagic)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(stonebal_readmem,stonebal_writemem)
+	MDRV_CPU_PROGRAM_MAP(stonebal_readmem,stonebal_writemem)
 
 	MDRV_CPU_MODIFY("tms")
-	MDRV_CPU_MEMORY(stonebal_tms_readmem,stonebal_tms_writemem)
+	MDRV_CPU_PROGRAM_MAP(stonebal_tms_readmem,stonebal_tms_writemem)
 MACHINE_DRIVER_END
 
 

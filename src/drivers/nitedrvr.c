@@ -95,38 +95,38 @@ static MACHINE_INIT( nitedrvr )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, nitedrvr_ram_r }, /* SCRAM */
-	{ 0x0100, 0x01ff, nitedrvr_ram_r }, /* SCRAM */
-	{ 0x0600, 0x07ff, nitedrvr_in0_r },
-	{ 0x0800, 0x09ff, nitedrvr_in1_r },
-	{ 0x8000, 0x807f, videoram_r }, /* PFR */
-	{ 0x8080, 0x80ff, videoram_r }, /* PFR */
-	{ 0x8100, 0x817f, videoram_r }, /* PFR */
-	{ 0x8180, 0x81ff, videoram_r }, /* PFR */
-	{ 0x8200, 0x827f, videoram_r }, /* PFR */
-	{ 0x8280, 0x82ff, videoram_r }, /* PFR */
-	{ 0x8300, 0x837f, videoram_r }, /* PFR */
-	{ 0x8380, 0x83ff, videoram_r }, /* PFR */
-	{ 0x8400, 0x87ff, nitedrvr_steering_reset_r },
-	{ 0x9000, 0x9fff, MRA_ROM }, /* ROM1-ROM2 */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(nitedrvr_ram_r) /* SCRAM */
+	AM_RANGE(0x0100, 0x01ff) AM_READ(nitedrvr_ram_r) /* SCRAM */
+	AM_RANGE(0x0600, 0x07ff) AM_READ(nitedrvr_in0_r)
+	AM_RANGE(0x0800, 0x09ff) AM_READ(nitedrvr_in1_r)
+	AM_RANGE(0x8000, 0x807f) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8080, 0x80ff) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8100, 0x817f) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8180, 0x81ff) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8200, 0x827f) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8280, 0x82ff) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8300, 0x837f) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8380, 0x83ff) AM_READ(videoram_r) /* PFR */
+	AM_RANGE(0x8400, 0x87ff) AM_READ(nitedrvr_steering_reset_r)
+	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_ROM) /* ROM1-ROM2 */
+	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM) /* ROM2 for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, nitedrvr_ram_w, &nitedrvr_ram }, /* SCRAM */
-	{ 0x0100, 0x01ff, nitedrvr_ram_w }, /* SCRAM */
-	{ 0x0200, 0x027f, nitedrvr_videoram_w, &videoram }, /* PFW */
-	{ 0x0280, 0x02ff, nitedrvr_videoram_w }, /* PFW */
-	{ 0x0300, 0x037f, nitedrvr_videoram_w }, /* PFW */
-	{ 0x0380, 0x03ff, nitedrvr_videoram_w }, /* PFW */
-	{ 0x0400, 0x05ff, nitedrvr_hvc_w, &nitedrvr_hvc }, /* POSH, POSV, CHAR, Watchdog */
-	{ 0x0a00, 0x0bff, nitedrvr_out0_w },
-	{ 0x0c00, 0x0dff, nitedrvr_out1_w },
-	{ 0x8400, 0x87ff, nitedrvr_steering_reset_w },
-	{ 0x9000, 0x9fff, MWA_ROM }, /* ROM1-ROM2 */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(nitedrvr_ram_w) AM_BASE(&nitedrvr_ram) /* SCRAM */
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(nitedrvr_ram_w) /* SCRAM */
+	AM_RANGE(0x0200, 0x027f) AM_WRITE(nitedrvr_videoram_w) AM_BASE(&videoram) /* PFW */
+	AM_RANGE(0x0280, 0x02ff) AM_WRITE(nitedrvr_videoram_w) /* PFW */
+	AM_RANGE(0x0300, 0x037f) AM_WRITE(nitedrvr_videoram_w) /* PFW */
+	AM_RANGE(0x0380, 0x03ff) AM_WRITE(nitedrvr_videoram_w) /* PFW */
+	AM_RANGE(0x0400, 0x05ff) AM_WRITE(nitedrvr_hvc_w) AM_BASE(&nitedrvr_hvc) /* POSH, POSV, CHAR, Watchdog */
+	AM_RANGE(0x0a00, 0x0bff) AM_WRITE(nitedrvr_out0_w)
+	AM_RANGE(0x0c00, 0x0dff) AM_WRITE(nitedrvr_out1_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(nitedrvr_steering_reset_w)
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_ROM) /* ROM1-ROM2 */
+ADDRESS_MAP_END
 
 
 
@@ -372,7 +372,7 @@ static MACHINE_DRIVER_START( nitedrvr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1000000)	   /* 1 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(57)

@@ -41,56 +41,56 @@ READ_HANDLER( markham_e004_r )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( readmem1 )
-	{ 0x0000, 0x5fff, MRA_ROM },
+static ADDRESS_MAP_START( readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
 
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, spriteram_r },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xdfff, markham_sharedram_r },
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(spriteram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(markham_sharedram_r)
 
-	{ 0xe000, 0xe000, input_port_1_r }, /* dsw 1 */
-	{ 0xe001, 0xe001, input_port_0_r }, /* dsw 2 */
-	{ 0xe002, 0xe002, input_port_2_r }, /* player1 */
-	{ 0xe003, 0xe003, input_port_3_r }, /* player2 */
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_1_r) /* dsw 1 */
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_0_r) /* dsw 2 */
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_2_r) /* player1 */
+	AM_RANGE(0xe003, 0xe003) AM_READ(input_port_3_r) /* player2 */
 
-	{ 0xe004, 0xe004, markham_e004_r }, /* from CPU2 busack */
+	AM_RANGE(0xe004, 0xe004) AM_READ(markham_e004_r) /* from CPU2 busack */
 
-	{ 0xe005, 0xe005, input_port_4_r }, /* other inputs */
+	AM_RANGE(0xe005, 0xe005) AM_READ(input_port_4_r) /* other inputs */
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem1 )
-	{ 0x0000, 0x5fff, MWA_ROM },
+static ADDRESS_MAP_START( writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
 
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd7ff, markham_videoram_w, &videoram },
-	{ 0xd800, 0xdfff, markham_sharedram_w },
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(markham_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(markham_sharedram_w)
 
-	{ 0xe008, 0xe008, MWA_NOP }, /* coin counter? */
+	AM_RANGE(0xe008, 0xe008) AM_WRITE(MWA8_NOP) /* coin counter? */
 
-	{ 0xe009, 0xe009, MWA_NOP }, /* to CPU2 busreq */
+	AM_RANGE(0xe009, 0xe009) AM_WRITE(MWA8_NOP) /* to CPU2 busreq */
 
-	{ 0xe00c, 0xe00d, markham_scroll_x_w },
-	{ 0xe00e, 0xe00e, markham_flipscreen_w },
-MEMORY_END
+	AM_RANGE(0xe00c, 0xe00d) AM_WRITE(markham_scroll_x_w)
+	AM_RANGE(0xe00e, 0xe00e) AM_WRITE(markham_flipscreen_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &markham_sharedram },
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&markham_sharedram)
 
-	{ 0xc000, 0xc000, SN76496_0_w },
-	{ 0xc001, 0xc001, SN76496_1_w },
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(SN76496_1_w)
 
-	{ 0xc002, 0xc002, MWA_NOP }, /* unknown */
-	{ 0xc003, 0xc003, MWA_NOP }, /* unknown */
-MEMORY_END
+	AM_RANGE(0xc002, 0xc002) AM_WRITE(MWA8_NOP) /* unknown */
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(MWA8_NOP) /* unknown */
+ADDRESS_MAP_END
 
 
 /****************************************************************************/
@@ -229,11 +229,11 @@ static MACHINE_DRIVER_START( markham )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_PROGRAM_MAP(readmem1,writemem1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

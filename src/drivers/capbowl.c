@@ -200,35 +200,35 @@ static WRITE_HANDLER( track_reset_w )
  *
  *************************************/
 
-static MEMORY_READ_START( capbowl_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5fff, capbowl_tms34061_r },
-	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
-	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( capbowl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5800, 0x5fff) AM_READ(capbowl_tms34061_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(track_0_r)	/* + other inputs */
+	AM_RANGE(0x7800, 0x7800) AM_READ(track_1_r)	/* + other inputs */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( bowlrama_readmem )
-	{ 0x0000, 0x001f, bowlrama_turbo_r },
-	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5fff, capbowl_tms34061_r },
-	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
-	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bowlrama_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(bowlrama_turbo_r)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5800, 0x5fff) AM_READ(capbowl_tms34061_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(track_0_r)	/* + other inputs */
+	AM_RANGE(0x7800, 0x7800) AM_READ(track_1_r)	/* + other inputs */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x001f, bowlrama_turbo_w },	/* Bowl-O-Rama only */
-	{ 0x4000, 0x4000, MWA_RAM, &capbowl_rowaddress },
-	{ 0x4800, 0x4800, capbowl_rom_select_w },
-	{ 0x5000, 0x57ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
-	{ 0x5800, 0x5fff, capbowl_tms34061_w },
-	{ 0x6000, 0x6000, capbowl_sndcmd_w },
-	{ 0x6800, 0x6800, track_reset_w },	/* + watchdog */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_WRITE(bowlrama_turbo_w)	/* Bowl-O-Rama only */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_RAM) AM_BASE(&capbowl_rowaddress)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(capbowl_rom_select_w)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x5800, 0x5fff) AM_WRITE(capbowl_tms34061_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(capbowl_sndcmd_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(track_reset_w)	/* + watchdog */
+ADDRESS_MAP_END
 
 
 
@@ -238,22 +238,22 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x1000, YM2203_status_port_0_r },
-	{ 0x1001, 0x1001, YM2203_read_port_0_r },
-	{ 0x7000, 0x7000, soundlatch_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x1001, 0x1001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x7000, 0x7000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_RAM},
-	{ 0x1000, 0x1000, YM2203_control_port_0_w },
-	{ 0x1001, 0x1001, YM2203_write_port_0_w },
-	{ 0x2000, 0x2000, MWA_NOP },  /* Not hooked up according to the schematics */
-	{ 0x6000, 0x6000, DAC_0_data_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP)  /* Not hooked up according to the schematics */
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(DAC_0_data_w)
+ADDRESS_MAP_END
 
 
 
@@ -331,12 +331,12 @@ static MACHINE_DRIVER_START( capbowl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, 2000000)
-	MDRV_CPU_MEMORY(capbowl_readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(capbowl_readmem,writemem)
 	MDRV_CPU_VBLANK_INT(capbowl_interrupt,1)
 	
 	MDRV_CPU_ADD(M6809,2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(5000)
@@ -365,7 +365,7 @@ static MACHINE_DRIVER_START( bowlrama )
 	MDRV_IMPORT_FROM(capbowl)
 	
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(bowlrama_readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(bowlrama_readmem,writemem)
 	
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 359, 0, 239)
@@ -430,6 +430,20 @@ ROM_END
 
 /*************************************
  *
+ *	Driver init
+ *
+ *************************************/
+
+static DRIVER_INIT( bowlrama )
+{
+	/* turn off the bank switcher */
+	install_mem_write_handler(0, 0x4800, 0x4800, MWA8_NOP);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
@@ -437,4 +451,4 @@ ROM_END
 GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 1)" )
 GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 2)" )
 GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Coors Light Bowling" )
-GAME( 1991, bowlrama, 0,       bowlrama, capbowl, 0, ROT270, "P&P Marketing", "Bowl-O-Rama" )
+GAME( 1991, bowlrama, 0,       bowlrama, capbowl, bowlrama, ROT270, "P&P Marketing", "Bowl-O-Rama" )

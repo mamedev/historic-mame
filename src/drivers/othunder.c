@@ -243,63 +243,63 @@ static READ16_HANDLER( othunder_sound_r )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ16_START( othunder_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
-	{ 0x090000, 0x09000f, othunder_input_bypass_r },
-	{ 0x100000, 0x100007, TC0110PCR_word_r },	/* palette */
-	{ 0x200000, 0x20ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0x220000, 0x22000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x300000, 0x300003, othunder_sound_r },
-	{ 0x400000, 0x4005ff, MRA16_RAM },	/* sprite ram */
-	{ 0x500000, 0x500007, othunder_lightgun_r },
-MEMORY_END
+static ADDRESS_MAP_START( othunder_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08ffff) AM_READ(MRA16_RAM)	/* main ram */
+	AM_RANGE(0x090000, 0x09000f) AM_READ(othunder_input_bypass_r)
+	AM_RANGE(0x100000, 0x100007) AM_READ(TC0110PCR_word_r)	/* palette */
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
+	AM_RANGE(0x220000, 0x22000f) AM_READ(TC0100SCN_ctrl_word_0_r)
+	AM_RANGE(0x300000, 0x300003) AM_READ(othunder_sound_r)
+	AM_RANGE(0x400000, 0x4005ff) AM_READ(MRA16_RAM)	/* sprite ram */
+	AM_RANGE(0x500000, 0x500007) AM_READ(othunder_lightgun_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( othunder_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x08ffff, MWA16_RAM, &othunder_ram },
-	{ 0x090000, 0x09000f, othunder_output_bypass_w },
-//	{ 0x090006, 0x090007, eeprom_w },
-//	{ 0x090008, 0x090009, MWA16_NOP },   /* coin ctr, lockout ? */
-//	{ 0x09000c, 0x09000d, MWA16_NOP },   /* ?? (keeps writing 0x77) */
-	{ 0x100000, 0x100007, TC0110PCR_step1_rbswap_word_w },	/* palette */
-	{ 0x200000, 0x20ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0x220000, 0x22000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x300000, 0x300003, othunder_sound_w },
-	{ 0x400000, 0x4005ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x500000, 0x500007, othunder_lightgun_w },
-	{ 0x600000, 0x600003, MWA16_NOP },   /* zeros written: see code at $854 */
-MEMORY_END
+static ADDRESS_MAP_START( othunder_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x08ffff) AM_WRITE(MWA16_RAM) AM_BASE(&othunder_ram)
+	AM_RANGE(0x090000, 0x09000f) AM_WRITE(othunder_output_bypass_w)
+//	AM_RANGE(0x090006, 0x090007) AM_WRITE(eeprom_w)
+//	AM_RANGE(0x090008, 0x090009) AM_WRITE(MWA16_NOP)   /* coin ctr, lockout ? */
+//	AM_RANGE(0x09000c, 0x09000d) AM_WRITE(MWA16_NOP)   /* ?? (keeps writing 0x77) */
+	AM_RANGE(0x100000, 0x100007) AM_WRITE(TC0110PCR_step1_rbswap_word_w)	/* palette */
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
+	AM_RANGE(0x220000, 0x22000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
+	AM_RANGE(0x300000, 0x300003) AM_WRITE(othunder_sound_w)
+	AM_RANGE(0x400000, 0x4005ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x500000, 0x500007) AM_WRITE(othunder_lightgun_w)
+	AM_RANGE(0x600000, 0x600003) AM_WRITE(MWA16_NOP)   /* zeros written: see code at $854 */
+ADDRESS_MAP_END
 
 
 /***************************************************************************/
 
-static MEMORY_READ_START( z80_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK10 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( z80_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( z80_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
-	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( z80_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
+ADDRESS_MAP_END
 
 
 /***********************************************************
@@ -550,12 +550,12 @@ static MACHINE_DRIVER_START( othunder )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000 )	/* 12 MHz ??? */
-	MDRV_CPU_MEMORY(othunder_readmem,othunder_writemem)
+	MDRV_CPU_PROGRAM_MAP(othunder_readmem,othunder_writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
-	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

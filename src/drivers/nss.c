@@ -37,43 +37,43 @@
 
 extern DRIVER_INIT( snes );
 
-static MEMORY_READ_START( snes_readmem )
-	{ 0x000000, 0x2fffff, snes_r_bank1 },	/* I/O and ROM (repeats for each bank) */
-	{ 0x300000, 0x3fffff, snes_r_bank2 },	/* I/O and ROM (repeats for each bank) */
-	{ 0x400000, 0x5fffff, snes_r_bank3 },	/* ROM (and reserved in Mode 20) */
-	{ 0x600000, 0x6fffff, MRA_NOP },		/* Reserved */
-	{ 0x700000, 0x77ffff, snes_r_sram },	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
-	{ 0x780000, 0x7dffff, MRA_NOP },		/* Reserved */
-	{ 0x7e0000, 0x7fffff, MRA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
-	{ 0x800000, 0xffffff, snes_r_bank4 },	/* Mirror and ROM */
-MEMORY_END
+static ADDRESS_MAP_START( snes_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x2fffff) AM_READ(snes_r_bank1)	/* I/O and ROM (repeats for each bank) */
+	AM_RANGE(0x300000, 0x3fffff) AM_READ(snes_r_bank2)	/* I/O and ROM (repeats for each bank) */
+	AM_RANGE(0x400000, 0x5fffff) AM_READ(snes_r_bank3)	/* ROM (and reserved in Mode 20) */
+	AM_RANGE(0x600000, 0x6fffff) AM_READ(MRA8_NOP)		/* Reserved */
+	AM_RANGE(0x700000, 0x77ffff) AM_READ(snes_r_sram)	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
+	AM_RANGE(0x780000, 0x7dffff) AM_READ(MRA8_NOP)		/* Reserved */
+	AM_RANGE(0x7e0000, 0x7fffff) AM_READ(MRA8_RAM)		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
+	AM_RANGE(0x800000, 0xffffff) AM_READ(snes_r_bank4)	/* Mirror and ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( snes_writemem )
-	{ 0x000000, 0x2fffff, snes_w_bank1 },	/* I/O and ROM (repeats for each bank) */
-	{ 0x300000, 0x3fffff, snes_w_bank2 },	/* I/O and ROM (repeats for each bank) */
-	{ 0x400000, 0x5fffff, MWA_ROM },		/* ROM (and reserved in Mode 20) */
-	{ 0x600000, 0x6fffff, MWA_NOP },		/* Reserved */
-	{ 0x700000, 0x77ffff, MWA_RAM },		/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
-	{ 0x780000, 0x7dffff, MWA_NOP },		/* Reserved */
-	{ 0x7e0000, 0x7fffff, MWA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
-	{ 0x800000, 0xffffff, snes_w_bank4 },	/* Mirror and ROM */
-MEMORY_END
+static ADDRESS_MAP_START( snes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x2fffff) AM_WRITE(snes_w_bank1)	/* I/O and ROM (repeats for each bank) */
+	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(snes_w_bank2)	/* I/O and ROM (repeats for each bank) */
+	AM_RANGE(0x400000, 0x5fffff) AM_WRITE(MWA8_ROM)		/* ROM (and reserved in Mode 20) */
+	AM_RANGE(0x600000, 0x6fffff) AM_WRITE(MWA8_NOP)		/* Reserved */
+	AM_RANGE(0x700000, 0x77ffff) AM_WRITE(MWA8_RAM)		/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
+	AM_RANGE(0x780000, 0x7dffff) AM_WRITE(MWA8_NOP)		/* Reserved */
+	AM_RANGE(0x7e0000, 0x7fffff) AM_WRITE(MWA8_RAM)		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
+	AM_RANGE(0x800000, 0xffffff) AM_WRITE(snes_w_bank4)	/* Mirror and ROM */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( spc_readmem )
-	{ 0x0000, 0x00ef, MRA_RAM },			/* lower 32k ram */
-	{ 0x00f0, 0x00ff, spc_io_r },			/* spc io */
-	{ 0x0100, 0x7fff, MRA_RAM },			/* lower 32k ram continued */
-	{ 0x8000, 0xffbf, MRA_RAM },			/* upper 32k ram */
-	{ 0xffc0, 0xffff, spc_bank_r },			/* upper 32k ram continued or Initial Program Loader ROM */
-MEMORY_END
+static ADDRESS_MAP_START( spc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ef) AM_READ(MRA8_RAM)			/* lower 32k ram */
+	AM_RANGE(0x00f0, 0x00ff) AM_READ(spc_io_r)			/* spc io */
+	AM_RANGE(0x0100, 0x7fff) AM_READ(MRA8_RAM)			/* lower 32k ram continued */
+	AM_RANGE(0x8000, 0xffbf) AM_READ(MRA8_RAM)			/* upper 32k ram */
+	AM_RANGE(0xffc0, 0xffff) AM_READ(spc_bank_r)			/* upper 32k ram continued or Initial Program Loader ROM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( spc_writemem )
-	{ 0x0000, 0x00ef, MWA_RAM },			/* lower 32k ram */
-	{ 0x00f0, 0x00ff, spc_io_w },			/* spc io */
-	{ 0x0100, 0x7fff, MWA_RAM },			/* lower 32k ram continued */
-	{ 0x8000, 0xffbf, MWA_RAM },			/* upper 32k ram */
-	{ 0xffc0, 0xffff, spc_bank_w },			/* upper 32k ram continued or Initial Program Loader ROM */
-MEMORY_END
+static ADDRESS_MAP_START( spc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ef) AM_WRITE(MWA8_RAM)			/* lower 32k ram */
+	AM_RANGE(0x00f0, 0x00ff) AM_WRITE(spc_io_w)			/* spc io */
+	AM_RANGE(0x0100, 0x7fff) AM_WRITE(MWA8_RAM)			/* lower 32k ram continued */
+	AM_RANGE(0x8000, 0xffbf) AM_WRITE(MWA8_RAM)			/* upper 32k ram */
+	AM_RANGE(0xffc0, 0xffff) AM_WRITE(spc_bank_w)			/* upper 32k ram continued or Initial Program Loader ROM */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( snes )
 	PORT_START  /* IN 0 : Joypad 1 - L */
@@ -220,12 +220,12 @@ static PALETTE_INIT( snes )
 static MACHINE_DRIVER_START( snes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", G65816, 2680000)	/* 2.68Mhz, also 3.58Mhz */
-	MDRV_CPU_MEMORY(snes_readmem, snes_writemem)
+	MDRV_CPU_PROGRAM_MAP(snes_readmem, snes_writemem)
 	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_NTSC)
 
 	MDRV_CPU_ADD_TAG("sound", SPC700, 2048000)	/* 2.048 Mhz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(spc_readmem, spc_writemem)
+	MDRV_CPU_PROGRAM_MAP(spc_readmem, spc_writemem)
 	MDRV_CPU_VBLANK_INT(NULL, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)

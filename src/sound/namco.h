@@ -19,7 +19,7 @@ WRITE_HANDLER( pengo_sound_w );
 WRITE_HANDLER( polepos_sound_enable_w );
 WRITE_HANDLER( polepos_sound_w );
 
-WRITE_HANDLER( mappy_sound_enable_w );
+void mappy_sound_enable(int enable);
 WRITE_HANDLER( mappy_sound_w );
 
 WRITE_HANDLER( namcos1_sound_w );

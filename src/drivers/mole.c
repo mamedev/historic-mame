@@ -123,34 +123,34 @@ READ_HANDLER( mole_prot_r ){
 	return 0x00;
 }
 
-static MEMORY_READ_START( moleattack_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x08ff, mole_prot_r },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0x8d00, 0x8d00, input_port_0_r },
-	{ 0x8d40, 0x8d40, input_port_1_r },
-	{ 0x8d80, 0x8d80, input_port_2_r },
-	{ 0x8dc0, 0x8dc0, input_port_3_r },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( moleattack_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(mole_prot_r)
+	AM_RANGE(0x5000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8d00, 0x8d00) AM_READ(input_port_0_r)
+	AM_RANGE(0x8d40, 0x8d40) AM_READ(input_port_1_r)
+	AM_RANGE(0x8d80, 0x8d80) AM_READ(input_port_2_r)
+	AM_RANGE(0x8dc0, 0x8dc0) AM_READ(input_port_3_r)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( moleattack_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x5000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, moleattack_videoram_w },
-	{ 0x8400, 0x8400, moleattack_tilesetselector_w},
-	{ 0x8c00, 0x8c00, AY8910_write_port_0_w },
-	{ 0x8c01, 0x8c01, AY8910_control_port_0_w },
-	{ 0x8d00, 0x8d00, watchdog_reset_w },
-	{ 0x8dc0, 0x8dc0, moleattack_flipscreen_w },
-	{ 0xd000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( moleattack_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(moleattack_videoram_w)
+	AM_RANGE(0x8400, 0x8400) AM_WRITE(moleattack_tilesetselector_w)
+	AM_RANGE(0x8c00, 0x8c00) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x8c01, 0x8c01) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x8d00, 0x8d00) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x8dc0, 0x8dc0) AM_WRITE(moleattack_flipscreen_w)
+	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( mole )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 4000000) /* ? */
-	MDRV_CPU_MEMORY(moleattack_readmem,moleattack_writemem)
+	MDRV_CPU_PROGRAM_MAP(moleattack_readmem,moleattack_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

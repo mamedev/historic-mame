@@ -163,73 +163,73 @@ static WRITE_HANDLER( tp84_sh_irqtrigger_w )
 
 
 /* CPU 1 read addresses */
-static MEMORY_READ_START( readmem )
-	{ 0x2800, 0x2800, input_port_0_r },
-	{ 0x2820, 0x2820, input_port_1_r },
-	{ 0x2840, 0x2840, input_port_2_r },
-	{ 0x2860, 0x2860, input_port_3_r },
-	{ 0x3000, 0x3000, input_port_4_r },
-	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x5000, 0x57ff, sharedram_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_0_r)
+	AM_RANGE(0x2820, 0x2820) AM_READ(input_port_1_r)
+	AM_RANGE(0x2840, 0x2840) AM_READ(input_port_2_r)
+	AM_RANGE(0x2860, 0x2860) AM_READ(input_port_3_r)
+	AM_RANGE(0x3000, 0x3000) AM_READ(input_port_4_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(sharedram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 /* CPU 1 write addresses */
-static MEMORY_WRITE_START( writemem )
-	{ 0x2000, 0x2000, watchdog_reset_w },
-	{ 0x2800, 0x2800, tp84_col0_w },
-	{ 0x3000, 0x3000, MWA_RAM },
-	{ 0x3004, 0x3004, tp84_flipscreen_x_w },
-	{ 0x3005, 0x3005, tp84_flipscreen_y_w },
-	{ 0x3800, 0x3800, tp84_sh_irqtrigger_w },
-	{ 0x3a00, 0x3a00, soundlatch_w },
-	{ 0x3c00, 0x3c00, tp84_scroll_x_w },
-	{ 0x3e00, 0x3e00, tp84_scroll_y_w },
-	{ 0x4000, 0x43ff, tp84_videoram_w, &videoram },
-	{ 0x4400, 0x47ff, tp84_videoram2_w, &tp84_videoram2 },
-	{ 0x4800, 0x4bff, tp84_colorram_w, &colorram },
-	{ 0x4c00, 0x4fff, tp84_colorram2_w, &tp84_colorram2 },
-	{ 0x5000, 0x57ff, sharedram_w, &sharedram },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2800, 0x2800) AM_WRITE(tp84_col0_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3004, 0x3004) AM_WRITE(tp84_flipscreen_x_w)
+	AM_RANGE(0x3005, 0x3005) AM_WRITE(tp84_flipscreen_y_w)
+	AM_RANGE(0x3800, 0x3800) AM_WRITE(tp84_sh_irqtrigger_w)
+	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(tp84_scroll_x_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(tp84_scroll_y_w)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(tp84_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4400, 0x47ff) AM_WRITE(tp84_videoram2_w) AM_BASE(&tp84_videoram2)
+	AM_RANGE(0x4800, 0x4bff) AM_WRITE(tp84_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(tp84_colorram2_w) AM_BASE(&tp84_colorram2)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /* CPU 2 read addresses */
-static MEMORY_READ_START( readmem_cpu2 )
-//	{ 0x0000, 0x0000, MRA_RAM },
-	{ 0x2000, 0x2000, tp84_scanline_r }, /* beam position */
-	{ 0x6000, 0x67ff, MRA_RAM },
-	{ 0x8000, 0x87ff, sharedram_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+//	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_READ(tp84_scanline_r) /* beam position */
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(sharedram_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 /* CPU 2 write addresses */
-static MEMORY_WRITE_START( writemem_cpu2 )
-//	{ 0x0000, 0x0000, MWA_RAM }, /* Watch dog ?*/
-	{ 0x4000, 0x4000, interrupt_enable_w }, /* IRQ enable */
-	{ 0x6000, 0x679f, MWA_RAM },
-	{ 0x67a0, 0x67ff, MWA_RAM, &spriteram, &spriteram_size },	/* REAL (multiplexed) */
-	{ 0x8000, 0x87ff, sharedram_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+//	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_RAM) /* Watch dog ?*/
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(interrupt_enable_w) /* IRQ enable */
+	AM_RANGE(0x6000, 0x679f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x67a0, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* REAL (multiplexed) */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(sharedram_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x8000, 0x8000, tp84_sh_timer_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(tp84_sh_timer_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa1ff, tp84_filter_w },
-	{ 0xc000, 0xc000, MWA_NOP },
-	{ 0xc001, 0xc001, SN76496_0_w },
-	{ 0xc003, 0xc003, SN76496_1_w },
-	{ 0xc004, 0xc004, SN76496_2_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa1ff) AM_WRITE(tp84_filter_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc001, 0xc001) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xc003, 0xc003) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xc004, 0xc004) AM_WRITE(SN76496_2_w)
+ADDRESS_MAP_END
 
 
 
@@ -461,16 +461,16 @@ static MACHINE_DRIVER_START( tp84 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1500000)	/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 1500000)	/* ??? */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(tp84_6809_interrupt,256)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

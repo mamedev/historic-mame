@@ -115,87 +115,87 @@ void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
 
 
-static MEMORY_READ_START( readmem_cpu1 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x7000, 0x700f, bosco_customio_data_1_r },
-	{ 0x7100, 0x7100, bosco_customio_1_r },
-	{ 0x7800, 0x97ff, bosco_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
+	AM_RANGE(0x7000, 0x700f) AM_READ(bosco_customio_data_1_r)
+	AM_RANGE(0x7100, 0x7100) AM_READ(bosco_customio_1_r)
+	AM_RANGE(0x7800, 0x97ff) AM_READ(bosco_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x9000, 0x900f, bosco_customio_data_2_r },
-	{ 0x9100, 0x9100, bosco_customio_2_r },
-	{ 0x7800, 0x97ff, bosco_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
+	AM_RANGE(0x9000, 0x900f) AM_READ(bosco_customio_data_2_r)
+	AM_RANGE(0x9100, 0x9100) AM_READ(bosco_customio_2_r)
+	AM_RANGE(0x7800, 0x97ff) AM_READ(bosco_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem_cpu3 )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x7800, 0x97ff, bosco_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
+	AM_RANGE(0x7800, 0x97ff) AM_READ(bosco_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu1 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
-	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, bosco_halt_w },
-	{ 0x6830, 0x6830, watchdog_reset_w },
-	{ 0x7000, 0x700f, bosco_customio_data_1_w },
-	{ 0x7100, 0x7100, bosco_customio_1_w },
+static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x6820, 0x6820) AM_WRITE(bosco_interrupt_enable_1_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(bosco_interrupt_enable_3_w)
+	AM_RANGE(0x6823, 0x6823) AM_WRITE(bosco_halt_w)
+	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x7000, 0x700f) AM_WRITE(bosco_customio_data_1_w)
+	AM_RANGE(0x7100, 0x7100) AM_WRITE(bosco_customio_1_w)
 
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, bosco_videoram2_w, &bosco_videoram2 },
-	{ 0x8800, 0x8bff, colorram_w, &colorram },
-	{ 0x8c00, 0x8fff, bosco_colorram2_w, &bosco_colorram2 },
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(bosco_videoram2_w) AM_BASE(&bosco_videoram2)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(bosco_colorram2_w) AM_BASE(&bosco_colorram2)
 
-	{ 0x7800, 0x97ff, bosco_sharedram_w, &bosco_sharedram },
+	AM_RANGE(0x7800, 0x97ff) AM_WRITE(bosco_sharedram_w) AM_BASE(&bosco_sharedram)
 
-	{ 0x83d4, 0x83df, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
-	{ 0x8bd4, 0x8bdf, MWA_RAM, &spriteram_2 },			/* the pointers. */
-	{ 0x83f4, 0x83ff, MWA_RAM, &bosco_radarx, &bosco_radarram_size },	/* ditto */
-	{ 0x8bf4, 0x8bff, MWA_RAM, &bosco_radary },
+	AM_RANGE(0x83d4, 0x83df) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* these are here just to initialize */
+	AM_RANGE(0x8bd4, 0x8bdf) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)			/* the pointers. */
+	AM_RANGE(0x83f4, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&bosco_radarx) AM_SIZE(&bosco_radarram_size)	/* ditto */
+	AM_RANGE(0x8bf4, 0x8bff) AM_WRITE(MWA8_RAM) AM_BASE(&bosco_radary)
 
-	{ 0x9810, 0x9810, bosco_scrollx_w },
-	{ 0x9820, 0x9820, bosco_scrolly_w },
-	{ 0x9830, 0x9830, bosco_starcontrol_w },
-	{ 0x9840, 0x9840, MWA_RAM, &bosco_staronoff },
-	{ 0x9870, 0x9870, bosco_flipscreen_w },
-	{ 0x9804, 0x980f, MWA_RAM, &bosco_radarattr },
-MEMORY_END
+	AM_RANGE(0x9810, 0x9810) AM_WRITE(bosco_scrollx_w)
+	AM_RANGE(0x9820, 0x9820) AM_WRITE(bosco_scrolly_w)
+	AM_RANGE(0x9830, 0x9830) AM_WRITE(bosco_starcontrol_w)
+	AM_RANGE(0x9840, 0x9840) AM_WRITE(MWA8_RAM) AM_BASE(&bosco_staronoff)
+	AM_RANGE(0x9870, 0x9870) AM_WRITE(bosco_flipscreen_w)
+	AM_RANGE(0x9804, 0x980f) AM_WRITE(MWA8_RAM) AM_BASE(&bosco_radarattr)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
+static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6821, 0x6821) AM_WRITE(bosco_interrupt_enable_2_w)
 
-	{ 0x8000, 0x83ff, videoram_w },
-	{ 0x8400, 0x87ff, bosco_videoram2_w },
-	{ 0x8800, 0x8bff, colorram_w },
-	{ 0x8c00, 0x8fff, bosco_colorram2_w },
-	{ 0x9000, 0x900f, bosco_customio_data_2_w },
-	{ 0x9100, 0x9100, bosco_customio_2_w },
-	{ 0x7800, 0x97ff, bosco_sharedram_w },
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(bosco_videoram2_w)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(bosco_colorram2_w)
+	AM_RANGE(0x9000, 0x900f) AM_WRITE(bosco_customio_data_2_w)
+	AM_RANGE(0x9100, 0x9100) AM_WRITE(bosco_customio_2_w)
+	AM_RANGE(0x7800, 0x97ff) AM_WRITE(bosco_sharedram_w)
 
-	{ 0x9810, 0x9810, bosco_scrollx_w },
-	{ 0x9820, 0x9820, bosco_scrolly_w },
-	{ 0x9830, 0x9830, bosco_starcontrol_w },
-	{ 0x9874, 0x9875, MWA_RAM, &bosco_starblink },
-MEMORY_END
+	AM_RANGE(0x9810, 0x9810) AM_WRITE(bosco_scrollx_w)
+	AM_RANGE(0x9820, 0x9820) AM_WRITE(bosco_scrolly_w)
+	AM_RANGE(0x9830, 0x9830) AM_WRITE(bosco_starcontrol_w)
+	AM_RANGE(0x9874, 0x9875) AM_WRITE(MWA8_RAM) AM_BASE(&bosco_starblink)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_cpu3 )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x6800, 0x681f, pengo_sound_w },
-	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
+static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w)
+	AM_RANGE(0x6822, 0x6822) AM_WRITE(bosco_interrupt_enable_3_w)
 
-	{ 0x8000, 0x83ff, videoram_w },
-	{ 0x8400, 0x87ff, bosco_videoram2_w },
-	{ 0x8800, 0x8bff, colorram_w },
-	{ 0x8c00, 0x8fff, bosco_colorram2_w },
-	{ 0x7800, 0x97ff, bosco_sharedram_w },
-MEMORY_END
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(bosco_videoram2_w)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(colorram_w)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(bosco_colorram2_w)
+	AM_RANGE(0x7800, 0x97ff) AM_WRITE(bosco_sharedram_w)
+ADDRESS_MAP_END
 
 
 
@@ -450,15 +450,15 @@ static MACHINE_DRIVER_START( bosco )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(bosco_interrupt_1,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(bosco_interrupt_2,1)
 
 	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
-	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 	MDRV_CPU_VBLANK_INT(bosco_interrupt_3,2)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

@@ -42,48 +42,48 @@ READ_HANDLER( ikki_e000_r )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( ikki_readmem1 )
-	{ 0x0000, 0x9fff, MRA_ROM },
+static ADDRESS_MAP_START( ikki_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
 
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, ikki_sharedram_r },
-	{ 0xd000, 0xd7ff, MRA_RAM }, /* videoram */
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(ikki_sharedram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) /* videoram */
 
-	{ 0xe000, 0xe000, ikki_e000_r },
-	{ 0xe001, 0xe001, input_port_0_r }, /* dsw 1 */
-	{ 0xe002, 0xe002, input_port_1_r }, /* dsw 2 */
-	{ 0xe003, 0xe003, input_port_4_r }, /* other inputs */
-	{ 0xe004, 0xe004, input_port_2_r }, /* player1 */
-	{ 0xe005, 0xe005, input_port_3_r }, /* player2 */
-MEMORY_END
+	AM_RANGE(0xe000, 0xe000) AM_READ(ikki_e000_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_0_r) /* dsw 1 */
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_1_r) /* dsw 2 */
+	AM_RANGE(0xe003, 0xe003) AM_READ(input_port_4_r) /* other inputs */
+	AM_RANGE(0xe004, 0xe004) AM_READ(input_port_2_r) /* player1 */
+	AM_RANGE(0xe005, 0xe005) AM_READ(input_port_3_r) /* player2 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ikki_writemem1 )
-	{ 0x0000, 0x9fff, MWA_ROM },
+static ADDRESS_MAP_START( ikki_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
 
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xcfff, ikki_sharedram_w },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(ikki_sharedram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 
-	{ 0xe008, 0xe008, ikki_scrn_ctrl_w },
-	{ 0xe009, 0xe009, MWA_NOP }, /* coin counter? */
-	{ 0xe00a, 0xe00b, ikki_scroll_w },
+	AM_RANGE(0xe008, 0xe008) AM_WRITE(ikki_scrn_ctrl_w)
+	AM_RANGE(0xe009, 0xe009) AM_WRITE(MWA8_NOP) /* coin counter? */
+	AM_RANGE(0xe00a, 0xe00b) AM_WRITE(ikki_scroll_w)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( ikki_readmem2 )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, spriteram_r },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( ikki_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(spriteram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ikki_writemem2 )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc800, 0xcfff, MWA_RAM, &ikki_sharedram },
+static ADDRESS_MAP_START( ikki_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&ikki_sharedram)
 
-	{ 0xd801, 0xd801, SN76496_0_w },
-	{ 0xd802, 0xd802, SN76496_1_w },
-MEMORY_END
+	AM_RANGE(0xd801, 0xd801) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xd802, 0xd802) AM_WRITE(SN76496_1_w)
+ADDRESS_MAP_END
 
 
 /****************************************************************************/
@@ -224,11 +224,11 @@ static MACHINE_DRIVER_START( ikki )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(ikki_readmem1,ikki_writemem1)
+	MDRV_CPU_PROGRAM_MAP(ikki_readmem1,ikki_writemem1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
-	MDRV_CPU_MEMORY(ikki_readmem2,ikki_writemem2)
+	MDRV_CPU_PROGRAM_MAP(ikki_readmem2,ikki_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

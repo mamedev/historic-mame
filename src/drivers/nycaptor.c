@@ -313,117 +313,119 @@ static WRITE_HANDLER( nycaptor_generic_control_w )
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + ((data&0x08)>>3)*0x4000 );
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xc7ff, nycaptor_videoram_r },
-	{ 0xd000, 0xd000, nycaptor_mcu_r },
-	{ 0xd002, 0xd002, nycaptor_generic_control_r },
-	{ 0xd400, 0xd400, from_snd_r },
-	{ 0xd401, 0xd401, MRA_NOP },
-	{ 0xd800, 0xd800, input_port_0_r },
-	{ 0xd801, 0xd801, input_port_1_r },
-	{ 0xd802, 0xd802, input_port_2_r },
-	{ 0xd803, 0xd803, input_port_3_r },
-	{ 0xd804, 0xd804, input_port_4_r },
-	{ 0xd805, 0xd805, nycaptor_mcu_status_r1 },
-	{ 0xd806, 0xd806, MRA_NOP }, /* unknown ?sound? */
-	{ 0xd807, 0xd807, nycaptor_mcu_status_r2 },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_r},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_r },
-	{ 0xdd00, 0xdeff, nycaptor_palette_r },
-	{ 0xdf03, 0xdf03, nycaptor_gfxctrl_r },
-	{ 0xe000, 0xffff, nycaptor_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(nycaptor_videoram_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(nycaptor_mcu_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(nycaptor_generic_control_r)
+	AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
+	AM_RANGE(0xd401, 0xd401) AM_READ(MRA8_NOP)
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r)
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)
+	AM_RANGE(0xd805, 0xd805) AM_READ(nycaptor_mcu_status_r1)
+	AM_RANGE(0xd806, 0xd806) AM_READ(MRA8_NOP) /* unknown ?sound? */
+	AM_RANGE(0xd807, 0xd807) AM_READ(nycaptor_mcu_status_r2)
+	AM_RANGE(0xdc00, 0xdc9f) AM_READ(nycaptor_spriteram_r)
+	AM_RANGE(0xdca0, 0xdcbf) AM_READ(nycaptor_scrlram_r)
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(nycaptor_palette_r)
+	AM_RANGE(0xdf03, 0xdf03) AM_READ(nycaptor_gfxctrl_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(nycaptor_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, nycaptor_videoram_w, &videoram, &videoram_size },
-	{ 0xd000, 0xd000, nycaptor_mcu_w },
-	{ 0xd001, 0xd001, sub_cpu_halt_w },
-	{ 0xd002, 0xd002, nycaptor_generic_control_w },	/* bit 3 - memory bank at 0x8000-0xbfff */
-	{ 0xd400, 0xd400, sound_command_w },
-	{ 0xd403, 0xd403, sound_cpu_reset_w },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_w},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_w, &nycaptor_scrlram },
-	{ 0xdce1, 0xdce1, MWA_NOP},
-	{ 0xdd00, 0xdeff, nycaptor_palette_w },
-	{ 0xdf03, 0xdf03, nycaptor_gfxctrl_w },
-	{ 0xe000, 0xffff, nycaptor_sharedram_w,&nycaptor_sharedram },
-MEMORY_END
-
-
-static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xd800, 0xd800, input_port_0_r },
-	{ 0xd801, 0xd801, input_port_1_r },
-	{ 0xd802, 0xd802, input_port_2_r },
-	{ 0xd803, 0xd803, input_port_3_r },
-	{ 0xd804, 0xd804, input_port_4_r },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_r},
-	{ 0xdd00, 0xdeff, nycaptor_palette_r },
-	{ 0xdf00, 0xdf00, nycaptor_bx_r },
-	{ 0xdf01, 0xdf01, nycaptor_by_r },
-	{ 0xdf02, 0xdf02, nycaptor_b_r },
-	{ 0xdf03, 0xdf03, nycaptor_gfxctrl_r },
-	{ 0xe000, 0xffff, nycaptor_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(nycaptor_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(nycaptor_mcu_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(sub_cpu_halt_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(nycaptor_generic_control_w)	/* bit 3 - memory bank at 0x8000-0xbfff */
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(sound_command_w)
+	AM_RANGE(0xd403, 0xd403) AM_WRITE(sound_cpu_reset_w)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(nycaptor_spriteram_w)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(nycaptor_scrlram_w) AM_BASE(&nycaptor_scrlram)
+	AM_RANGE(0xdce1, 0xdce1) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(nycaptor_palette_w)
+	AM_RANGE(0xdf03, 0xdf03) AM_WRITE(nycaptor_gfxctrl_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(nycaptor_sharedram_w) AM_BASE(&nycaptor_sharedram)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, nycaptor_videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_w},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_w, &nycaptor_scrlram },
-	{ 0xdd00, 0xdeff, nycaptor_palette_w },
-	{ 0xdf03, 0xdf03, MWA_NOP },/* ? gfx control ? */
-	{ 0xe000, 0xffff, nycaptor_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r)
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)
+	AM_RANGE(0xdc00, 0xdc9f) AM_READ(nycaptor_spriteram_r)
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(nycaptor_palette_r)
+	AM_RANGE(0xdf00, 0xdf00) AM_READ(nycaptor_bx_r)
+	AM_RANGE(0xdf01, 0xdf01) AM_READ(nycaptor_by_r)
+	AM_RANGE(0xdf02, 0xdf02) AM_READ(nycaptor_b_r)
+	AM_RANGE(0xdf03, 0xdf03) AM_READ(nycaptor_gfxctrl_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ(nycaptor_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd000, 0xd000, soundlatch_r },
-	{ 0xd200, 0xd200, MRA_NOP },
-	{ 0xe000, 0xefff, MRA_NOP },
-MEMORY_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc800, AY8910_control_port_0_w },
-	{ 0xc801, 0xc801, AY8910_write_port_0_w },
-	{ 0xc802, 0xc802, AY8910_control_port_1_w },
-	{ 0xc803, 0xc803, AY8910_write_port_1_w },
-	{ 0xc900, 0xc90d, MSM5232_0_w },
-	{ 0xca00, 0xca00, MWA_NOP},
-	{ 0xcb00, 0xcb00, MWA_NOP},
-	{ 0xcc00, 0xcc00, MWA_NOP},
-	{ 0xd000, 0xd000, to_main_w },
-	{ 0xd200, 0xd200, nmi_enable_w },
-	{ 0xd400, 0xd400, nmi_disable_w },
-	{ 0xd600, 0xd600, MWA_NOP},
-	{ 0xe000, 0xefff, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(nycaptor_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(nycaptor_spriteram_w)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(nycaptor_scrlram_w) AM_BASE(&nycaptor_scrlram)
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(nycaptor_palette_w)
+	AM_RANGE(0xdf03, 0xdf03) AM_WRITE(MWA8_NOP)/* ? gfx control ? */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(nycaptor_sharedram_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( m68705_readmem )
-	{ 0x0000, 0x0000, nycaptor_68705_portA_r },
-	{ 0x0001, 0x0001, nycaptor_68705_portB_r },
-	{ 0x0002, 0x0002, nycaptor_68705_portC_r },
-	{ 0x0010, 0x007f, MRA_RAM },
-	{ 0x0080, 0x07ff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
+	AM_RANGE(0xd200, 0xd200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( m68705_writemem )
-	{ 0x0000, 0x0000, nycaptor_68705_portA_w },
-	{ 0x0001, 0x0001, nycaptor_68705_portB_w },
-	{ 0x0002, 0x0002, nycaptor_68705_portC_w },
-	{ 0x0004, 0x0004, nycaptor_68705_ddrA_w },
-	{ 0x0005, 0x0005, nycaptor_68705_ddrB_w },
-	{ 0x0006, 0x0006, nycaptor_68705_ddrC_w },
-	{ 0x0010, 0x007f, MWA_RAM },
-	{ 0x0080, 0x07ff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xc801, 0xc801) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc802, 0xc802) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xc803, 0xc803) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xc900, 0xc90d) AM_WRITE(MSM5232_0_w)
+	AM_RANGE(0xca00, 0xca00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xcb00, 0xcb00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(to_main_w)
+	AM_RANGE(0xd200, 0xd200) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(nmi_disable_w)
+	AM_RANGE(0xd600, 0xd600) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(nycaptor_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_READ(nycaptor_68705_portB_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(nycaptor_68705_portC_r)
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(nycaptor_68705_portA_w)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(nycaptor_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(nycaptor_68705_portC_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(nycaptor_68705_ddrA_w)
+	AM_RANGE(0x0005, 0x0005) AM_WRITE(nycaptor_68705_ddrB_w)
+	AM_RANGE(0x0006, 0x0006) AM_WRITE(nycaptor_68705_ddrC_w)
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /* Cycle Shooting */
@@ -443,70 +445,70 @@ static WRITE_HANDLER(cyclshtg_mcu_w){}
 
 
 
-static MEMORY_READ_START( cyclshtg_readmem )
-  { 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-  { 0xc000, 0xcfff, nycaptor_videoram_r },
-  { 0xd000, 0xd000, cyclshtg_mcu_r },
-	{ 0xd002, 0xd002, nycaptor_generic_control_r },
-  { 0xd400, 0xd400, from_snd_r },
-	{ 0xd800, 0xd800, input_port_0_r },
-	{ 0xd801, 0xd801, input_port_1_r },
-	{ 0xd802, 0xd802, input_port_2_r },
-	{ 0xd803, 0xd803, input_port_3_r },
-	{ 0xd804, 0xd804, input_port_4_r },
-	{ 0xd805, 0xd805, cyclshtg_mcu_status_r },
-	{ 0xd806, 0xd806, MRA_NOP },
-	{ 0xd807, 0xd807, cyclshtg_mcu_status_r },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_r},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_r },
-	{ 0xdd00, 0xdeff, nycaptor_palette_r },
-	{ 0xdf03, 0xdf03, nycaptor_gfxctrl_r },
-  { 0xe000, 0xffff, nycaptor_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( cyclshtg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+  AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+  AM_RANGE(0xc000, 0xcfff) AM_READ(nycaptor_videoram_r)
+  AM_RANGE(0xd000, 0xd000) AM_READ(cyclshtg_mcu_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(nycaptor_generic_control_r)
+  AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r)
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)
+	AM_RANGE(0xd805, 0xd805) AM_READ(cyclshtg_mcu_status_r)
+	AM_RANGE(0xd806, 0xd806) AM_READ(MRA8_NOP)
+	AM_RANGE(0xd807, 0xd807) AM_READ(cyclshtg_mcu_status_r)
+	AM_RANGE(0xdc00, 0xdc9f) AM_READ(nycaptor_spriteram_r)
+	AM_RANGE(0xdca0, 0xdcbf) AM_READ(nycaptor_scrlram_r)
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(nycaptor_palette_r)
+	AM_RANGE(0xdf03, 0xdf03) AM_READ(nycaptor_gfxctrl_r)
+  AM_RANGE(0xe000, 0xffff) AM_READ(nycaptor_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cyclshtg_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, nycaptor_videoram_w, &videoram, &videoram_size },
-	{ 0xd000, 0xd000, cyclshtg_mcu_w },
-	{ 0xd001, 0xd001, sub_cpu_halt_w },
-	{ 0xd002, 0xd002, nycaptor_generic_control_w },
-	{ 0xd400, 0xd400, sound_command_w },
-	{ 0xd403, 0xd403, sound_cpu_reset_w },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_w},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_w, &nycaptor_scrlram },
-	{ 0xdce1, 0xdce1, MWA_NOP},
-	{ 0xdd00, 0xdeff, nycaptor_palette_w },
-	//{ 0xdf03, 0xdf03, nycaptor_gfxctrl_w },
-	{ 0xe000, 0xffff, nycaptor_sharedram_w,&nycaptor_sharedram },
-MEMORY_END
+static ADDRESS_MAP_START( cyclshtg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(nycaptor_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(cyclshtg_mcu_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(sub_cpu_halt_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(nycaptor_generic_control_w)
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(sound_command_w)
+	AM_RANGE(0xd403, 0xd403) AM_WRITE(sound_cpu_reset_w)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(nycaptor_spriteram_w)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(nycaptor_scrlram_w) AM_BASE(&nycaptor_scrlram)
+	AM_RANGE(0xdce1, 0xdce1) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(nycaptor_palette_w)
+	//AM_RANGE(0xdf03, 0xdf03) AM_WRITE(nycaptor_gfxctrl_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(nycaptor_sharedram_w) AM_BASE(&nycaptor_sharedram)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( cyclshtg_readmem_sub )
-  { 0x0000, 0xbfff, MRA_ROM },
-  { 0xd800, 0xd800, input_port_0_r },
-	{ 0xd801, 0xd801, input_port_1_r },
-	{ 0xd802, 0xd802, input_port_2_r },
-	{ 0xd803, 0xd803, input_port_3_r },
-	{ 0xd804, 0xd804, input_port_4_r },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_r},
-	{ 0xdd00, 0xdeff, nycaptor_palette_r },
-	{ 0xdf00, 0xdf00, nycaptor_bx_r },
-	{ 0xdf01, 0xdf01, nycaptor_by_r },
-	{ 0xdf02, 0xdf02, nycaptor_b_r },
-	{ 0xdf03, 0xdf03, nycaptor_gfxctrl_r },
-  { 0xe000, 0xffff, nycaptor_sharedram_r },
-MEMORY_END
+static ADDRESS_MAP_START( cyclshtg_readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+  AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+  AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r)
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)
+	AM_RANGE(0xdc00, 0xdc9f) AM_READ(nycaptor_spriteram_r)
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(nycaptor_palette_r)
+	AM_RANGE(0xdf00, 0xdf00) AM_READ(nycaptor_bx_r)
+	AM_RANGE(0xdf01, 0xdf01) AM_READ(nycaptor_by_r)
+	AM_RANGE(0xdf02, 0xdf02) AM_READ(nycaptor_b_r)
+	AM_RANGE(0xdf03, 0xdf03) AM_READ(nycaptor_gfxctrl_r)
+  AM_RANGE(0xe000, 0xffff) AM_READ(nycaptor_sharedram_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cyclshtg_writemem_sub )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, nycaptor_videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdc9f, nycaptor_spriteram_w},
-	{ 0xdca0, 0xdcbf, nycaptor_scrlram_w, &nycaptor_scrlram },
-	{ 0xdd00, 0xdeff, nycaptor_palette_w },
-	{ 0xdf03, 0xdf03, MWA_NOP },
-	{ 0xe000, 0xffff, nycaptor_sharedram_w },
-MEMORY_END
+static ADDRESS_MAP_START( cyclshtg_writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(nycaptor_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(nycaptor_spriteram_w)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(nycaptor_scrlram_w) AM_BASE(&nycaptor_scrlram)
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(nycaptor_palette_w)
+	AM_RANGE(0xdf03, 0xdf03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(nycaptor_sharedram_w)
+ADDRESS_MAP_END
 
 
 /* Cycle Shooting */
@@ -695,20 +697,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( nycaptor )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000/2)		/* ??? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ generated by ??? */
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* IRQ generated by ??? */
 
 	MDRV_CPU_ADD(M68705,2000000)
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -735,21 +737,21 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( cyclshtg )
 	MDRV_CPU_ADD(Z80,8000000/2)
 
-	MDRV_CPU_MEMORY(cyclshtg_readmem,cyclshtg_writemem)
+	MDRV_CPU_PROGRAM_MAP(cyclshtg_readmem,cyclshtg_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_MEMORY(cyclshtg_readmem_sub,cyclshtg_writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(cyclshtg_readmem_sub,cyclshtg_writemem_sub)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 #ifdef USE_MCU
 	MDRV_CPU_ADD(M68705,2000000)
-	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)

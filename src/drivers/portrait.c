@@ -133,26 +133,26 @@ static WRITE_HANDLER(a000_w)
 	}
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x91ff, MRA_RAM },
-	{ 0x9200, 0x97ff, MRA_RAM },
-	{ 0xa000, 0xafff, a000_r },
-	{ 0xffff, 0xffff, MRA_RAM }, /* unknown */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x91ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9200, 0x97ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xafff) AM_READ(a000_r)
+	AM_RANGE(0xffff, 0xffff) AM_READ(MRA8_RAM) /* unknown */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, portrait_bgvideo_write, &portrait_bgvideoram },
-	{ 0x8800, 0x8fff, portrait_fgvideo_write, &portrait_fgvideoram },
-	{ 0x9000, 0x91ff, MWA_RAM, &portrait_spriteram },
-	{ 0x9200, 0x97ff, MWA_RAM },
-	{ 0xa000, 0xafff, a000_w },
-	{ 0xb000, 0xbfff, MWA_RAM }, /* unknown */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(portrait_bgvideo_write) AM_BASE(&portrait_bgvideoram)
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(portrait_fgvideo_write) AM_BASE(&portrait_fgvideoram)
+	AM_RANGE(0x9000, 0x91ff) AM_WRITE(MWA8_RAM) AM_BASE(&portrait_spriteram)
+	AM_RANGE(0x9200, 0x97ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xafff) AM_WRITE(a000_w)
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM) /* unknown */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( portrait )
 	PORT_START		/* IN 0 */
@@ -246,7 +246,7 @@ static struct DACinterface dac_interface =
 
 static MACHINE_DRIVER_START( portrait )
 	MDRV_CPU_ADD(Z80, 4000000)     /* 4 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(50)

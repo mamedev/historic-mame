@@ -54,59 +54,59 @@ WRITE_HANDLER( ssozumo_sh_command_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x077f, MRA_RAM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x077f) AM_READ(MRA8_RAM)
 
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x3000, 0x31ff, MRA_RAM },
+	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x31ff) AM_READ(MRA8_RAM)
 
-	{ 0x4000, 0x4000, input_port_0_r },
-	{ 0x4010, 0x4010, input_port_1_r },
-	{ 0x4020, 0x4020, input_port_2_r },
-	{ 0x4030, 0x4030, input_port_3_r },
+	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_0_r)
+	AM_RANGE(0x4010, 0x4010) AM_READ(input_port_1_r)
+	AM_RANGE(0x4020, 0x4020) AM_READ(input_port_2_r)
+	AM_RANGE(0x4030, 0x4030) AM_READ(input_port_3_r)
 
-	{ 0x6000, 0xffff, MRA_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x077f, MWA_RAM },
-
-	{ 0x0780, 0x07ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, ssozumo_videoram2_w, &ssozumo_videoram2 },
-	{ 0x2400, 0x27ff, ssozumo_colorram2_w, &ssozumo_colorram2 },
-	{ 0x3000, 0x31ff, ssozumo_videoram_w, &videoram },
-	{ 0x3200, 0x33ff, ssozumo_colorram_w, &colorram },
-	{ 0x3400, 0x35ff, MWA_RAM },
-	{ 0x3600, 0x37ff, MWA_RAM },
-
-	{ 0x4000, 0x4000, ssozumo_flipscreen_w },
-	{ 0x4010, 0x4010, ssozumo_sh_command_w },
-	{ 0x4020, 0x4020, ssozumo_scroll_w },
-//	{ 0x4030, 0x4030, MWA_RAM },
-	{ 0x4050, 0x407f, ssozumo_paletteram_w, &paletteram },
-
-	{ 0x6000, 0xffff, MWA_ROM },
-MEMORY_END
+	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x2007, 0x2007, soundlatch_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x077f) AM_WRITE(MWA8_RAM)
+
+	AM_RANGE(0x0780, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(ssozumo_videoram2_w) AM_BASE(&ssozumo_videoram2)
+	AM_RANGE(0x2400, 0x27ff) AM_WRITE(ssozumo_colorram2_w) AM_BASE(&ssozumo_colorram2)
+	AM_RANGE(0x3000, 0x31ff) AM_WRITE(ssozumo_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3200, 0x33ff) AM_WRITE(ssozumo_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x3400, 0x35ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3600, 0x37ff) AM_WRITE(MWA8_RAM)
+
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(ssozumo_flipscreen_w)
+	AM_RANGE(0x4010, 0x4010) AM_WRITE(ssozumo_sh_command_w)
+	AM_RANGE(0x4020, 0x4020) AM_WRITE(ssozumo_scroll_w)
+//	AM_RANGE(0x4030, 0x4030) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4050, 0x407f) AM_WRITE(ssozumo_paletteram_w) AM_BASE(&paletteram)
+
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x2000, 0x2000, AY8910_write_port_0_w },
-	{ 0x2001, 0x2001, AY8910_control_port_0_w },
-	{ 0x2002, 0x2002, AY8910_write_port_1_w },
-	{ 0x2003, 0x2003, AY8910_control_port_1_w },
-	{ 0x2004, 0x2004, DAC_0_signed_data_w },
-	{ 0x2005, 0x2005, interrupt_enable_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2007, 0x2007) AM_READ(soundlatch_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x2004, 0x2004) AM_WRITE(DAC_0_signed_data_w)
+	AM_RANGE(0x2005, 0x2005) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( ssozumo )
@@ -253,12 +253,12 @@ static MACHINE_DRIVER_START( ssozumo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1200000)	/* 1.2 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(ssozumo_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 975000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 		/* 975 kHz ?? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)	/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)

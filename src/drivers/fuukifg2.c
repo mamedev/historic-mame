@@ -74,37 +74,37 @@ static WRITE16_HANDLER( fuuki16_sound_command_w )
 	}
 }
 
-static MEMORY_READ16_START( fuuki16_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x400000, 0x40ffff, MRA16_RAM					},	// RAM
-	{ 0x500000, 0x507fff, MRA16_RAM					},	// Layers
-	{ 0x600000, 0x601fff, spriteram16_r				},	// Sprites
-	{ 0x608000, 0x609fff, spriteram16_r				},	// Sprites (? Mirror ?)
-	{ 0x700000, 0x703fff, MRA16_RAM					},	// Palette
-	{ 0x800000, 0x800001, input_port_0_word_r		},	// Buttons (Inputs)
-	{ 0x810000, 0x810001, input_port_1_word_r		},	// P1 + P2
-	{ 0x880000, 0x880001, input_port_2_word_r		},	// 2 x DSW
-	{ 0x8c0000, 0x8c001f, MRA16_RAM					},	// Video Registers
-/**/{ 0x8d0000, 0x8d0003, MRA16_RAM, 				},	//
-/**/{ 0x8e0000, 0x8e0001, MRA16_RAM, 				},	//
-MEMORY_END
+static ADDRESS_MAP_START( fuuki16_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x500000, 0x507fff) AM_READ(MRA16_RAM					)	// Layers
+	AM_RANGE(0x600000, 0x601fff) AM_READ(spriteram16_r				)	// Sprites
+	AM_RANGE(0x608000, 0x609fff) AM_READ(spriteram16_r				)	// Sprites (? Mirror ?)
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r		)	// Buttons (Inputs)
+	AM_RANGE(0x810000, 0x810001) AM_READ(input_port_1_word_r		)	// P1 + P2
+	AM_RANGE(0x880000, 0x880001) AM_READ(input_port_2_word_r		)	// 2 x DSW
+	AM_RANGE(0x8c0000, 0x8c001f) AM_READ(MRA16_RAM					)	// Video Registers
+/**/AM_RANGE(0x8d0000, 0x8d0003) AM_READ(MRA16_RAM 				)	//
+/**/AM_RANGE(0x8e0000, 0x8e0001) AM_READ(MRA16_RAM 				)	//
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( fuuki16_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM
-	{ 0x400000, 0x40ffff, MWA16_RAM							},	// RAM
-	{ 0x500000, 0x501fff, fuuki16_vram_0_w, &fuuki16_vram_0	},	// Layers
-	{ 0x502000, 0x503fff, fuuki16_vram_1_w, &fuuki16_vram_1	},	//
-	{ 0x504000, 0x505fff, fuuki16_vram_2_w, &fuuki16_vram_2	},	//
-	{ 0x506000, 0x507fff, fuuki16_vram_3_w, &fuuki16_vram_3	},	//
-	{ 0x506000, 0x507fff, MWA16_RAM							},	//
-	{ 0x600000, 0x601fff, spriteram16_w, &spriteram16, &spriteram_size	},	// Sprites
-	{ 0x608000, 0x609fff, spriteram16_w						},	// Sprites (? Mirror ?)
-	{ 0x700000, 0x703fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x8c0000, 0x8c001f, MWA16_RAM, &fuuki16_vregs			},	// Video Registers
-	{ 0x8a0000, 0x8a0001, fuuki16_sound_command_w			},	// To Sound CPU
-	{ 0x8d0000, 0x8d0003, MWA16_RAM, &fuuki16_unknown		},	//
-	{ 0x8e0000, 0x8e0001, MWA16_RAM, &fuuki16_priority		},	//
-MEMORY_END
+static ADDRESS_MAP_START( fuuki16_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM							)	// ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(MWA16_RAM							)	// RAM
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(fuuki16_vram_0_w) AM_BASE(&fuuki16_vram_0	)	// Layers
+	AM_RANGE(0x502000, 0x503fff) AM_WRITE(fuuki16_vram_1_w) AM_BASE(&fuuki16_vram_1	)	//
+	AM_RANGE(0x504000, 0x505fff) AM_WRITE(fuuki16_vram_2_w) AM_BASE(&fuuki16_vram_2	)	//
+	AM_RANGE(0x506000, 0x507fff) AM_WRITE(fuuki16_vram_3_w) AM_BASE(&fuuki16_vram_3	)	//
+	AM_RANGE(0x506000, 0x507fff) AM_WRITE(MWA16_RAM							)	//
+	AM_RANGE(0x600000, 0x601fff) AM_WRITE(spriteram16_w) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x608000, 0x609fff) AM_WRITE(spriteram16_w						)	// Sprites (? Mirror ?)
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x8c0000, 0x8c001f) AM_WRITE(MWA16_RAM) AM_BASE(&fuuki16_vregs			)	// Video Registers
+	AM_RANGE(0x8a0000, 0x8a0001) AM_WRITE(fuuki16_sound_command_w			)	// To Sound CPU
+	AM_RANGE(0x8d0000, 0x8d0003) AM_WRITE(MWA16_RAM) AM_BASE(&fuuki16_unknown		)	//
+	AM_RANGE(0x8e0000, 0x8e0001) AM_WRITE(MWA16_RAM) AM_BASE(&fuuki16_priority		)	//
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -125,35 +125,35 @@ static WRITE_HANDLER( fuuki16_sound_rombank_w )
 	 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 }
 
-static MEMORY_READ_START( fuuki16_sound_readmem )
-	{ 0x0000, 0x5fff, MRA_ROM		},	// ROM
-	{ 0x6000, 0x7fff, MRA_RAM		},	// RAM
-	{ 0x8000, 0xffff, MRA_BANK1		},	// Banked ROM
-MEMORY_END
+static ADDRESS_MAP_START( fuuki16_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM		)	// ROM
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_RAM		)	// RAM
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1		)	// Banked ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fuuki16_sound_writemem )
-	{ 0x0000, 0x5fff, MWA_ROM		},	// ROM
-	{ 0x6000, 0x7fff, MWA_RAM		},	// RAM
-	{ 0x8000, 0xffff, MWA_ROM		},	// Banked ROM
-MEMORY_END
+static ADDRESS_MAP_START( fuuki16_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM		)	// ROM
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_RAM		)	// RAM
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM		)	// Banked ROM
+ADDRESS_MAP_END
 
-static PORT_READ_START( fuuki16_sound_readport )
-	{ 0x11, 0x11, soundlatch_r				},	// From Main CPU
-	{ 0x50, 0x50, YM3812_status_port_0_r	},	// YM3812
-	{ 0x60, 0x60, OKIM6295_status_0_r		},	// M6295
-PORT_END
+static ADDRESS_MAP_START( fuuki16_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x11, 0x11) AM_READ(soundlatch_r				)	// From Main CPU
+	AM_RANGE(0x50, 0x50) AM_READ(YM3812_status_port_0_r	)	// YM3812
+	AM_RANGE(0x60, 0x60) AM_READ(OKIM6295_status_0_r		)	// M6295
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( fuuki16_sound_writeport )
-	{ 0x00, 0x00, fuuki16_sound_rombank_w 	},	// ROM Bank
-	{ 0x11, 0x11, IOWP_NOP					},	// ? To Main CPU
-	{ 0x20, 0x20, IOWP_NOP					},	// ? 0x10, 0x32, 0x54: 2 volumes ?
-	{ 0x30, 0x30, IOWP_NOP					},	// ? In the NMI routine
-	{ 0x40, 0x40, YM2203_control_port_0_w	},	// YM2203
-	{ 0x41, 0x41, YM2203_write_port_0_w		},
-	{ 0x50, 0x50, YM3812_control_port_0_w	},	// YM3812
-	{ 0x51, 0x51, YM3812_write_port_0_w		},
-	{ 0x61, 0x61, OKIM6295_data_0_w			},	// M6295
-PORT_END
+static ADDRESS_MAP_START( fuuki16_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(fuuki16_sound_rombank_w 	)	// ROM Bank
+	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP					)	// ? To Main CPU
+	AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP					)	// ? 0x10, 0x32, 0x54: 2 volumes ?
+	AM_RANGE(0x30, 0x30) AM_WRITE(MWA8_NOP					)	// ? In the NMI routine
+	AM_RANGE(0x40, 0x40) AM_WRITE(YM2203_control_port_0_w	)	// YM2203
+	AM_RANGE(0x41, 0x41) AM_WRITE(YM2203_write_port_0_w		)
+	AM_RANGE(0x50, 0x50) AM_WRITE(YM3812_control_port_0_w	)	// YM3812
+	AM_RANGE(0x51, 0x51) AM_WRITE(YM3812_write_port_0_w		)
+	AM_RANGE(0x61, 0x61) AM_WRITE(OKIM6295_data_0_w			)	// M6295
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -556,13 +556,13 @@ static MACHINE_DRIVER_START( fuuki16 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(fuuki16_readmem,fuuki16_writemem)
+	MDRV_CPU_PROGRAM_MAP(fuuki16_readmem,fuuki16_writemem)
 	MDRV_CPU_VBLANK_INT(fuuki16_interrupt,INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
-	MDRV_CPU_MEMORY(fuuki16_sound_readmem,fuuki16_sound_writemem)
-	MDRV_CPU_PORTS(fuuki16_sound_readport,fuuki16_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(fuuki16_sound_readmem,fuuki16_sound_writemem)
+	MDRV_CPU_IO_MAP(fuuki16_sound_readport,fuuki16_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

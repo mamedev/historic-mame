@@ -146,35 +146,35 @@ static READ_HANDLER( mjsister_keys_r )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( mjsister_readmem )
-	{ 0x0000, 0x77ff, MRA_ROM },
-	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START( mjsister_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mjsister_writemem )
-	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, mjsister_videoram_w },
-MEMORY_END
+static ADDRESS_MAP_START( mjsister_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(mjsister_videoram_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( mjsister_readport )
-	{ 0x11, 0x11, AY8910_read_port_0_r },
-	{ 0x20, 0x20, mjsister_keys_r },
-	{ 0x21, 0x21, input_port_2_r },
-PORT_END
+static ADDRESS_MAP_START( mjsister_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x11, 0x11) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x20, 0x20) AM_READ(mjsister_keys_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mjsister_writeport )
-	{ 0x00, 0x01, IOWP_NOP }, /* HD46505? */
-	{ 0x10, 0x10, AY8910_control_port_0_w },
-	{ 0x12, 0x12, AY8910_write_port_0_w },
-	{ 0x30, 0x30, mjsister_banksel1_w },
-	{ 0x31, 0x31, mjsister_banksel2_w },
-	{ 0x32, 0x32, mjsister_input_sel1_w },
-	{ 0x33, 0x33, mjsister_input_sel2_w },
-	{ 0x34, 0x34, mjsister_dac_adr_s_w },
-	{ 0x35, 0x35, mjsister_dac_adr_e_w },
-PORT_END
+static ADDRESS_MAP_START( mjsister_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(MWA8_NOP) /* HD46505? */
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x12, 0x12) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x30, 0x30) AM_WRITE(mjsister_banksel1_w)
+	AM_RANGE(0x31, 0x31) AM_WRITE(mjsister_banksel2_w)
+	AM_RANGE(0x32, 0x32) AM_WRITE(mjsister_input_sel1_w)
+	AM_RANGE(0x33, 0x33) AM_WRITE(mjsister_input_sel2_w)
+	AM_RANGE(0x34, 0x34) AM_WRITE(mjsister_dac_adr_s_w)
+	AM_RANGE(0x35, 0x35) AM_WRITE(mjsister_dac_adr_e_w)
+ADDRESS_MAP_END
 
 /****************************************************************************/
 
@@ -313,8 +313,8 @@ static MACHINE_DRIVER_START( mjsister )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MCLK/2) /* 6.000 MHz */
-	MDRV_CPU_MEMORY(mjsister_readmem,mjsister_writemem)
-	MDRV_CPU_PORTS(mjsister_readport,mjsister_writeport)
+	MDRV_CPU_PROGRAM_MAP(mjsister_readmem,mjsister_writemem)
+	MDRV_CPU_IO_MAP(mjsister_readport,mjsister_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

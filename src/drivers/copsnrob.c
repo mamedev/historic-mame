@@ -93,36 +93,36 @@ OVERLAY_END
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0800, 0x08ff, MRA_RAM },
-	{ 0x0b00, 0x0bff, MRA_RAM },
-	{ 0x0c00, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1000, input_port_0_r },
-	{ 0x1002, 0x100e, copsnrob_gun_position_r},
-	{ 0x1012, 0x1012, input_port_3_r },
-	{ 0x1016, 0x1016, input_port_1_r },
-	{ 0x101a, 0x101a, input_port_2_r },
-	{ 0x1200, 0x1fff, MRA_ROM },
-	{ 0xfff8, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0b00, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+	AM_RANGE(0x1002, 0x100e) AM_READ(copsnrob_gun_position_r)
+	AM_RANGE(0x1012, 0x1012) AM_READ(input_port_3_r)
+	AM_RANGE(0x1016, 0x1016) AM_READ(input_port_1_r)
+	AM_RANGE(0x101a, 0x101a) AM_READ(input_port_2_r)
+	AM_RANGE(0x1200, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xfff8, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0500, 0x0503, MWA_RAM },
-	{ 0x0504, 0x0507, MWA_NOP },  // ???
-	{ 0x0600, 0x0600, MWA_RAM, &copsnrob_trucky },
-	{ 0x0700, 0x07ff, MWA_RAM, &copsnrob_truckram },
-	{ 0x0800, 0x08ff, MWA_RAM, &copsnrob_bulletsram },
-	{ 0x0900, 0x0903, MWA_RAM, &copsnrob_carimage },
-	{ 0x0a00, 0x0a03, MWA_RAM, &copsnrob_cary },
-	{ 0x0b00, 0x0bff, MWA_RAM },
-	{ 0x0c00, 0x0fff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x1000, 0x1003, MWA_NOP },
-	{ 0x1200, 0x1fff, MWA_ROM },
-	{ 0xfff8, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0500, 0x0503) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0504, 0x0507) AM_WRITE(MWA8_NOP)  // ???
+	AM_RANGE(0x0600, 0x0600) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_trucky)
+	AM_RANGE(0x0700, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_truckram)
+	AM_RANGE(0x0800, 0x08ff) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_bulletsram)
+	AM_RANGE(0x0900, 0x0903) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_carimage)
+	AM_RANGE(0x0a00, 0x0a03) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_cary)
+	AM_RANGE(0x0b00, 0x0bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x1000, 0x1003) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x1200, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xfff8, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -256,7 +256,7 @@ static MACHINE_DRIVER_START( copsnrob )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,14318180/16)		/* 894886.25 kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

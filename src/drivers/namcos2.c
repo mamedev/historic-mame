@@ -21,9 +21,6 @@ known issues:
 	Final Lap:
 	- sprite size bit is bogus during splash screen
 
-	Final Lap2
-	- sprite ROMs need to be (re)dumped
-
 	Final Lap 3:
 	- bad steering
 	- uses unaligned 32x32 sprites, which aren't handled correctly in vidhrdw/namcos2.c yet
@@ -611,168 +608,170 @@ static WRITE_HANDLER( namcos2_dpram_byte_w )
 */
 
 #define NAMCOS2_68K_DEFAULT_CPU_BOARD_READ \
-	{ 0x200000, 0x3fffff, namcos2_68k_data_rom_r },\
-	{ 0x400000, 0x41ffff, namcos2_68k_vram_r },\
-	{ 0x420000, 0x42003f, namcos2_68k_vram_ctrl_r }, \
-	{ 0x440000, 0x44ffff, namcos2_68k_video_palette_r }, \
-	{ 0x460000, 0x460fff, namcos2_68k_dpram_word_r }, \
-	{ 0x468000, 0x468fff, namcos2_68k_dpram_word_r }, /* mirror */ \
-	{ 0x480000, 0x483fff, namcos2_68k_serial_comms_ram_r }, \
-	{ 0x4a0000, 0x4a000f, namcos2_68k_serial_comms_ctrl_r },
+	AM_RANGE(0x200000, 0x3fffff) AM_READ(namcos2_68k_data_rom_r)\
+	AM_RANGE(0x400000, 0x41ffff) AM_READ(namcos2_68k_vram_r)\
+	AM_RANGE(0x420000, 0x42003f) AM_READ(namcos2_68k_vram_ctrl_r) \
+	AM_RANGE(0x440000, 0x44ffff) AM_READ(namcos2_68k_video_palette_r) \
+	AM_RANGE(0x460000, 0x460fff) AM_READ(namcos2_68k_dpram_word_r) \
+	AM_RANGE(0x468000, 0x468fff) AM_READ(namcos2_68k_dpram_word_r) /* mirror */ \
+	AM_RANGE(0x480000, 0x483fff) AM_READ(namcos2_68k_serial_comms_ram_r) \
+	AM_RANGE(0x4a0000, 0x4a000f) AM_READ(namcos2_68k_serial_comms_ctrl_r)
 
 #define NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE \
-	{ 0x400000, 0x41ffff, namcos2_68k_vram_w, &videoram16, &namcos2_68k_vram_size },\
-	{ 0x420000, 0x42003f, namcos2_68k_vram_ctrl_w }, \
-	{ 0x440000, 0x44ffff, namcos2_68k_video_palette_w, &namcos2_68k_palette_ram, &namcos2_68k_palette_size }, \
-	{ 0x460000, 0x460fff, namcos2_68k_dpram_word_w }, \
-	{ 0x468000, 0x468fff, namcos2_68k_dpram_word_w }, /* mirror */ \
-	{ 0x480000, 0x483fff, namcos2_68k_serial_comms_ram_w, &namcos2_68k_serial_comms_ram }, \
-	{ 0x4a0000, 0x4a000f, namcos2_68k_serial_comms_ctrl_w },
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(namcos2_68k_vram_w) AM_BASE(&videoram16) AM_SIZE(&namcos2_68k_vram_size)\
+	AM_RANGE(0x420000, 0x42003f) AM_WRITE(namcos2_68k_vram_ctrl_w) \
+	AM_RANGE(0x440000, 0x44ffff) AM_WRITE(namcos2_68k_video_palette_w) AM_BASE(&namcos2_68k_palette_ram) AM_SIZE(&namcos2_68k_palette_size) \
+	AM_RANGE(0x460000, 0x460fff) AM_WRITE(namcos2_68k_dpram_word_w) \
+	AM_RANGE(0x468000, 0x468fff) AM_WRITE(namcos2_68k_dpram_word_w) /* mirror */ \
+	AM_RANGE(0x480000, 0x483fff) AM_WRITE(namcos2_68k_serial_comms_ram_w) AM_BASE(&namcos2_68k_serial_comms_ram) \
+	AM_RANGE(0x4a0000, 0x4a000f) AM_WRITE(namcos2_68k_serial_comms_ctrl_w)
 
 /*************************************************************/
 
 #define NAMCOS2_68K_DEFAULT_GFX_BOARD_READ \
-	{ 0xc00000, 0xc03fff, namcos2_sprite_ram_r }, \
-	{ 0xc40000, 0xc40001, namcos2_gfx_ctrl_r }, \
-	{ 0xc80000, 0xc9ffff, namcos2_68k_roz_ram_r },	\
-	{ 0xcc0000, 0xcc000f, namcos2_68k_roz_ctrl_r }, \
-	{ 0xd00000, 0xd0000f, namcos2_68k_key_r },
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(namcos2_sprite_ram_r) \
+	AM_RANGE(0xc40000, 0xc40001) AM_READ(namcos2_gfx_ctrl_r) \
+	AM_RANGE(0xc80000, 0xc9ffff) AM_READ(namcos2_68k_roz_ram_r)	\
+	AM_RANGE(0xcc0000, 0xcc000f) AM_READ(namcos2_68k_roz_ctrl_r) \
+	AM_RANGE(0xd00000, 0xd0000f) AM_READ(namcos2_68k_key_r)
 
 #define NAMCOS2_68K_DEFAULT_GFX_BOARD_WRITE \
-	{ 0xc00000, 0xc03fff, namcos2_sprite_ram_w, &namcos2_sprite_ram }, \
-	{ 0xc40000, 0xc40001, namcos2_gfx_ctrl_w }, \
-	{ 0xc80000, 0xc9ffff, namcos2_68k_roz_ram_w, &namcos2_68k_roz_ram }, \
-	{ 0xcc0000, 0xcc000f, namcos2_68k_roz_ctrl_w }, \
-	{ 0xd00000, 0xd0000f, namcos2_68k_key_w },
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(namcos2_sprite_ram_w) AM_BASE(&namcos2_sprite_ram) \
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(namcos2_gfx_ctrl_w) \
+	AM_RANGE(0xc80000, 0xc9ffff) AM_WRITE(namcos2_68k_roz_ram_w) AM_BASE(&namcos2_68k_roz_ram) \
+	AM_RANGE(0xcc0000, 0xcc000f) AM_WRITE(namcos2_68k_roz_ctrl_w) \
+	AM_RANGE(0xd00000, 0xd0000f) AM_WRITE(namcos2_68k_key_w)
 
-static MEMORY_READ16_START( readmem_slave_default )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
+static ADDRESS_MAP_START( readmem_slave_default, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_slave_default )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
+static ADDRESS_MAP_START( writemem_slave_default, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_master_default )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
+static ADDRESS_MAP_START( readmem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R)
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_master_default )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
+static ADDRESS_MAP_START( writemem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W)
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
 /*************************************************************/
 
 #define NAMCOS2_68K_FINALLAP_GFX_BOARD_READ \
-	{ 0x800000, 0x80ffff, namcos2_sprite_ram_r }, \
-	{ 0x840000, 0x840001, namcos2_gfx_ctrl_r }, \
-	{ 0x880000, 0x89ffff, namco_road16_r },
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(namcos2_sprite_ram_r) \
+	AM_RANGE(0x840000, 0x840001) AM_READ(namcos2_gfx_ctrl_r) \
+	AM_RANGE(0x880000, 0x89ffff) AM_READ(namco_road16_r)
 
 #define NAMCOS2_68K_FINALLAP_GFX_BOARD_WRITE \
-	{ 0x800000, 0x80ffff, namcos2_sprite_ram_w, &namcos2_sprite_ram }, \
-	{ 0x840000, 0x840001, namcos2_gfx_ctrl_w }, \
-	{ 0x880000, 0x89ffff, namco_road16_w }, \
-	{ 0x8c0000, 0x8c0001, MWA16_NOP }, /* ? */
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(namcos2_sprite_ram_w) AM_BASE(&namcos2_sprite_ram) \
+	AM_RANGE(0x840000, 0x840001) AM_WRITE(namcos2_gfx_ctrl_w) \
+	AM_RANGE(0x880000, 0x89ffff) AM_WRITE(namco_road16_w) \
+	AM_RANGE(0x8c0000, 0x8c0001) AM_WRITE(MWA16_NOP) /* ? */
 
-static MEMORY_READ16_START( readmem_master_finallap )
-	{ 0x300000, 0x33ffff, namcos2_flap_prot_r },
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
+static ADDRESS_MAP_START( readmem_master_finallap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x300000, 0x33ffff) AM_READ(namcos2_flap_prot_r)
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R)
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_master_finallap )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
+static ADDRESS_MAP_START( writemem_master_finallap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W)
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_slave_finallap )
-	{ 0x300000, 0x33ffff, namcos2_flap_prot_r },
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
+static ADDRESS_MAP_START( readmem_slave_finallap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x300000, 0x33ffff) AM_READ(namcos2_flap_prot_r)
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_slave_finallap )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
+static ADDRESS_MAP_START( writemem_slave_finallap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 /*************************************************************/
 
 #define NAMCOS2_68K_SGUNNER_GFX_BOARD_READ \
-	{ 0x800000, 0x8141ff, namco_obj16_r }, \
-	{ 0xa00000, 0xa0000f, namcos2_68k_key_r },
+	AM_RANGE(0x800000, 0x8141ff) AM_READ(namco_obj16_r) \
+	AM_RANGE(0xa00000, 0xa0000f) AM_READ(namcos2_68k_key_r)
 
 #define NAMCOS2_68K_SGUNNER_GFX_BOARD_WRITE \
-	{ 0x800000, 0x8141ff, namco_obj16_w }, \
-	{ 0x818000, 0x818001, MWA16_NOP }, \
-	{ 0xa00000, 0xa0000f, namcos2_68k_key_w },
+	AM_RANGE(0x800000, 0x8141ff) AM_WRITE(namco_obj16_w) \
+	AM_RANGE(0x818000, 0x818001) AM_WRITE(MWA16_NOP) \
+	AM_RANGE(0xa00000, 0xa0000f) AM_WRITE(namcos2_68k_key_w)
 
-static MEMORY_READ16_START( readmem_master_sgunner )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
+static ADDRESS_MAP_START( readmem_master_sgunner, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R)
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_SGUNNER_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_master_sgunner )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
+static ADDRESS_MAP_START( writemem_master_sgunner, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W)
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_SGUNNER_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_slave_sgunner )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
+static ADDRESS_MAP_START( readmem_slave_sgunner, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_SGUNNER_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_slave_sgunner )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
+static ADDRESS_MAP_START( writemem_slave_sgunner, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_SGUNNER_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
 /*************************************************************/
+
+static data16_t *namcos2_68k_master_ram;
 
 static READ16_HANDLER( metlhawk_center_r )
 {
@@ -785,174 +784,174 @@ static READ16_HANDLER( metlhawk_center_r )
 }
 
 #define NAMCOS2_68K_METLHAWK_GFX_BOARD_READ \
-	{ 0xc00000, 0xc03fff, namcos2_sprite_ram_r }, \
-	{ 0xc40000, 0xc4ffff, namco_rozvideoram16_r }, \
-	{ 0xd00000, 0xd0001f, namco_rozcontrol16_r }, \
-	{ 0xe00000, 0xe00001, namcos2_gfx_ctrl_r },
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(namcos2_sprite_ram_r) \
+	AM_RANGE(0xc40000, 0xc4ffff) AM_READ(namco_rozvideoram16_r) \
+	AM_RANGE(0xd00000, 0xd0001f) AM_READ(namco_rozcontrol16_r) \
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(namcos2_gfx_ctrl_r)
 
 #define NAMCOS2_68K_METLHAWK_GFX_BOARD_WRITE \
-	{ 0xc00000, 0xc03fff, namcos2_sprite_ram_w, &namcos2_sprite_ram }, \
-	{ 0xc40000, 0xc4ffff, namco_rozvideoram16_w }, \
-	{ 0xd00000, 0xd0001f, namco_rozcontrol16_w }, \
-	{ 0xe00000, 0xe00001, namcos2_gfx_ctrl_w },
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(namcos2_sprite_ram_w) AM_BASE(&namcos2_sprite_ram) \
+	AM_RANGE(0xc40000, 0xc4ffff) AM_WRITE(namco_rozvideoram16_w) \
+	AM_RANGE(0xd00000, 0xd0001f) AM_WRITE(namco_rozcontrol16_w) \
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(namcos2_gfx_ctrl_w)
 
-static MEMORY_READ16_START( readmem_master_metlhawk )
-	{ 0x10ffc0, 0x10ffc9, metlhawk_center_r },
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
+static ADDRESS_MAP_START( readmem_master_metlhawk, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x10ffc0, 0x10ffc9) AM_READ(metlhawk_center_r)
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R)
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_master_metlhawk )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
+static ADDRESS_MAP_START( writemem_master_metlhawk, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W) AM_BASE(&namcos2_68k_master_ram)
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_slave_metlhawk )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
+static ADDRESS_MAP_START( readmem_slave_metlhawk, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_slave_metlhawk )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
+static ADDRESS_MAP_START( writemem_slave_metlhawk, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
 /*************************************************************/
 
 #define NAMCOS2_68K_LUCKYWLD_GFX_BOARD_READ \
-	{ 0x800000, 0x8141ff, namco_obj16_r }, \
-	{ 0x818000, 0x818001, MRA16_RAM }, \
-	{ 0x840000, 0x840001, MRA16_RAM }, \
-	{ 0xa00000, 0xa1ffff, namco_road16_r }, \
-	{ 0xc00000, 0xc0ffff, namco_rozvideoram16_r }, \
-	{ 0xd00000, 0xd0001f, namco_rozcontrol16_r }, \
-	{ 0xf00000, 0xf00007, namcos2_68k_key_r },
+	AM_RANGE(0x800000, 0x8141ff) AM_READ(namco_obj16_r) \
+	AM_RANGE(0x818000, 0x818001) AM_READ(MRA16_RAM) \
+	AM_RANGE(0x840000, 0x840001) AM_READ(MRA16_RAM) \
+	AM_RANGE(0xa00000, 0xa1ffff) AM_READ(namco_road16_r) \
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(namco_rozvideoram16_r) \
+	AM_RANGE(0xd00000, 0xd0001f) AM_READ(namco_rozcontrol16_r) \
+	AM_RANGE(0xf00000, 0xf00007) AM_READ(namcos2_68k_key_r)
 
 #define NAMCOS2_68K_LUCKYWLD_GFX_BOARD_WRITE \
-	{ 0x800000, 0x8141ff, namco_obj16_w }, \
-	{ 0x818000, 0x818001, MWA16_NOP }, /* enable? */ \
-	{ 0x81a000, 0x81a001, MWA16_NOP }, /* enable? */ \
-	{ 0x900000, 0x900007, namco_spritepos16_w }, \
-	{ 0xa00000, 0xa1ffff, namco_road16_w }, \
-	{ 0xc00000, 0xc0ffff, namco_rozvideoram16_w }, \
-	{ 0xd00000, 0xd0001f, namco_rozcontrol16_w }, \
-	{ 0xf00000, 0xf00007, namcos2_68k_key_w },
+	AM_RANGE(0x800000, 0x8141ff) AM_WRITE(namco_obj16_w) \
+	AM_RANGE(0x818000, 0x818001) AM_WRITE(MWA16_NOP) /* enable? */ \
+	AM_RANGE(0x81a000, 0x81a001) AM_WRITE(MWA16_NOP) /* enable? */ \
+	AM_RANGE(0x900000, 0x900007) AM_WRITE(namco_spritepos16_w) \
+	AM_RANGE(0xa00000, 0xa1ffff) AM_WRITE(namco_road16_w) \
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(namco_rozvideoram16_w) \
+	AM_RANGE(0xd00000, 0xd0001f) AM_WRITE(namco_rozcontrol16_w) \
+	AM_RANGE(0xf00000, 0xf00007) AM_WRITE(namcos2_68k_key_w)
 
-static MEMORY_READ16_START( readmem_master_luckywld )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
+static ADDRESS_MAP_START( readmem_master_luckywld, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R)
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_LUCKYWLD_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_master_luckywld )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
-	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
+static ADDRESS_MAP_START( writemem_master_luckywld, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W) AM_BASE(&namcos2_68k_master_ram)
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_LUCKYWLD_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( readmem_slave_luckywld )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
+static ADDRESS_MAP_START( readmem_slave_luckywld, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_LUCKYWLD_GFX_BOARD_READ
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem_slave_luckywld )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
-	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
+static ADDRESS_MAP_START( writemem_slave_luckywld, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_LUCKYWLD_GFX_BOARD_WRITE
-MEMORY_END
+ADDRESS_MAP_END
 
 /*************************************************************/
 /* 6809 SOUND CPU Memory declarations						 */
 /*************************************************************/
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0x3fff, BANKED_SOUND_ROM_R }, /* banked */
-	{ 0x4000, 0x4001, YM2151_status_port_0_r },
-	{ 0x5000, 0x6fff, C140_r },
-	{ 0x7000, 0x77ff, namcos2_dpram_byte_r },
-	{ 0x7800, 0x7fff, namcos2_dpram_byte_r },	/* mirror */
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xd000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(BANKED_SOUND_ROM_R) /* banked */
+	AM_RANGE(0x4000, 0x4001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x5000, 0x6fff) AM_READ(C140_r)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(namcos2_dpram_byte_r)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(namcos2_dpram_byte_r)	/* mirror */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, YM2151_register_port_0_w },
-	{ 0x4001, 0x4001, YM2151_data_port_0_w },
-	{ 0x5000, 0x6fff, C140_w },
-	{ 0x7000, 0x77ff, namcos2_dpram_byte_w, &namcos2_dpram },
-	{ 0x7800, 0x7fff, namcos2_dpram_byte_w },	/* mirror */
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xbfff, MWA_NOP },					/* Amplifier enable on 1st write */
-	{ 0xc000, 0xc001, namcos2_sound_bankselect_w },
-	{ 0xd001, 0xd001, MWA_NOP },					/* Watchdog */
-	{ 0xe000, 0xe000, MWA_NOP },
-	{ 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x5000, 0x6fff) AM_WRITE(C140_w)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(namcos2_dpram_byte_w) AM_BASE(&namcos2_dpram)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(namcos2_dpram_byte_w)	/* mirror */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_NOP)					/* Amplifier enable on 1st write */
+	AM_RANGE(0xc000, 0xc001) AM_WRITE(namcos2_sound_bankselect_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(MWA8_NOP)					/* Watchdog */
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 /*************************************************************/
 /* 68705 IO CPU Memory declarations 						 */
 /*************************************************************/
 
-static MEMORY_READ_START( readmem_mcu )
+static ADDRESS_MAP_START( readmem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
 	/* input ports and dips are mapped here */
 
-	{ 0x0000, 0x0000, MRA_NOP }, /* Keep logging quiet */
-	{ 0x0001, 0x0001, namcos2_input_port_0_r },
-	{ 0x0002, 0x0002, input_port_1_r },
-	{ 0x0003, 0x0003, namcos2_mcu_port_d_r },
-	{ 0x0007, 0x0007, namcos2_input_port_10_r },
-	{ 0x0010, 0x0010, namcos2_mcu_analog_ctrl_r },
-	{ 0x0011, 0x0011, namcos2_mcu_analog_port_r },
-	{ 0x0008, 0x003f, MRA_RAM }, /* Fill in register to stop logging */
-	{ 0x0040, 0x01bf, MRA_RAM },
-	{ 0x01c0, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x2000, input_port_11_r },
-	{ 0x3000, 0x3000, namcos2_input_port_12_r },
-	{ 0x3001, 0x3001, input_port_13_r },
-	{ 0x3002, 0x3002, input_port_14_r },
-	{ 0x3003, 0x3003, input_port_15_r },
-	{ 0x5000, 0x57ff, namcos2_dpram_byte_r },
-	{ 0x6000, 0x6fff, MRA_NOP }, /* watchdog */
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_NOP) /* Keep logging quiet */
+	AM_RANGE(0x0001, 0x0001) AM_READ(namcos2_input_port_0_r)
+	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_1_r)
+	AM_RANGE(0x0003, 0x0003) AM_READ(namcos2_mcu_port_d_r)
+	AM_RANGE(0x0007, 0x0007) AM_READ(namcos2_input_port_10_r)
+	AM_RANGE(0x0010, 0x0010) AM_READ(namcos2_mcu_analog_ctrl_r)
+	AM_RANGE(0x0011, 0x0011) AM_READ(namcos2_mcu_analog_port_r)
+	AM_RANGE(0x0008, 0x003f) AM_READ(MRA8_RAM) /* Fill in register to stop logging */
+	AM_RANGE(0x0040, 0x01bf) AM_READ(MRA8_RAM)
+	AM_RANGE(0x01c0, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_11_r)
+	AM_RANGE(0x3000, 0x3000) AM_READ(namcos2_input_port_12_r)
+	AM_RANGE(0x3001, 0x3001) AM_READ(input_port_13_r)
+	AM_RANGE(0x3002, 0x3002) AM_READ(input_port_14_r)
+	AM_RANGE(0x3003, 0x3003) AM_READ(input_port_15_r)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(namcos2_dpram_byte_r)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_NOP) /* watchdog */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_mcu )
-	{ 0x0003, 0x0003, namcos2_mcu_port_d_w },
-	{ 0x0010, 0x0010, namcos2_mcu_analog_ctrl_w },
-	{ 0x0011, 0x0011, namcos2_mcu_analog_port_w },
-	{ 0x0000, 0x003f, MWA_RAM }, /* Fill in register to stop logging */
-	{ 0x0040, 0x01bf, MWA_RAM },
-	{ 0x01c0, 0x1fff, MWA_ROM },
-	{ 0x5000, 0x57ff, namcos2_dpram_byte_w, &namcos2_dpram },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0003, 0x0003) AM_WRITE(namcos2_mcu_port_d_w)
+	AM_RANGE(0x0010, 0x0010) AM_WRITE(namcos2_mcu_analog_ctrl_w)
+	AM_RANGE(0x0011, 0x0011) AM_WRITE(namcos2_mcu_analog_port_w)
+	AM_RANGE(0x0000, 0x003f) AM_WRITE(MWA8_RAM) /* Fill in register to stop logging */
+	AM_RANGE(0x0040, 0x01bf) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x01c0, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(namcos2_dpram_byte_w) AM_BASE(&namcos2_dpram)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -1762,20 +1761,20 @@ via software as INT1
 
 static MACHINE_DRIVER_START( default )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_default,writemem_master_default)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_default,writemem_master_default)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_default,writemem_slave_default)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) // Sound handling
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -1801,20 +1800,20 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gollygho )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_default,writemem_master_default)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_default,writemem_master_default)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_default,writemem_slave_default)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) // Sound handling
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -1840,20 +1839,20 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( finallap )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_finallap,writemem_master_finallap)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_finallap,writemem_master_finallap)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_finallap,writemem_slave_finallap)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_finallap,writemem_slave_finallap)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) // Sound handling
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -1880,20 +1879,20 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sgunner )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_sgunner,writemem_master_sgunner)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_sgunner,writemem_master_sgunner)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_sgunner,writemem_slave_sgunner)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_sgunner,writemem_slave_sgunner)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) // Sound handling
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -1919,20 +1918,20 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( luckywld )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_luckywld,writemem_master_luckywld)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_luckywld,writemem_master_luckywld)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_luckywld,writemem_slave_luckywld)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_luckywld,writemem_slave_luckywld)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) /* Sound handling */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) /* I/O handling */
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -1958,20 +1957,20 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( metlhawk )
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_master_metlhawk,writemem_master_metlhawk)
+	MDRV_CPU_PROGRAM_MAP(readmem_master_metlhawk,writemem_master_metlhawk)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_MEMORY(readmem_slave_metlhawk,writemem_slave_metlhawk)
+	MDRV_CPU_PROGRAM_MAP(readmem_slave_metlhawk,writemem_slave_metlhawk)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) /* Sound handling */
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
 
 	MDRV_CPU_ADD(HD63705,2048000) /* I/O handling */
-	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND( (49152000.0 / 8) / (384 * 264) )
@@ -2767,15 +2766,14 @@ ROM_START( finalap2 )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, BAD_DUMP CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
-	/* WRONG! These are for Final Lap 3(!) */
-	ROM_LOAD( "fl3obj0",  0x000000, 0x80000, BAD_DUMP CRC(eab19ec6) SHA1(2859e88b94aa873f3b6ba22790f2211f3e172dd1) )
-	ROM_LOAD( "fl3obj2",  0x080000, 0x80000, BAD_DUMP CRC(2a3b7ded) SHA1(455d9d6cf7d497687f93af899fc20bbff6129391) )
-	ROM_LOAD( "fl3obj4",  0x100000, 0x80000, BAD_DUMP CRC(84aa500c) SHA1(087c0089478a270154f50f3b0f001428e80d74c7) )
-	ROM_LOAD( "fl3obj6",  0x180000, 0x80000, BAD_DUMP CRC(33118e63) SHA1(126cc034909e05da953a1a67d6c0f18f5304b407) )
-	ROM_LOAD( "fl3obj1",  0x200000, 0x80000, BAD_DUMP CRC(4ef37a51) SHA1(2f43691cfcd852773ae5e1d879f556f232bae877) )
-	ROM_LOAD( "fl3obj3",  0x280000, 0x80000, BAD_DUMP CRC(b86dc7cd) SHA1(25402d7111c1277a618b313d1244c1a567ce458a) )
-	ROM_LOAD( "fl3obj5",  0x300000, 0x80000, BAD_DUMP CRC(6a53e603) SHA1(6087c694e0e30a98c84227991d9c2e9c39c3e9ca) )
-	ROM_LOAD( "fl3obj7",  0x380000, 0x80000, BAD_DUMP CRC(b52a85e2) SHA1(1eea10eb20ae56309397238a52e9ea0756912412) )
+	ROM_LOAD( "fl2obj0",  0x000000, 0x80000, CRC(3657dd7a) SHA1(8f286ec0642b09ff42bf0dbd784ae257d4ab278a) )
+	ROM_LOAD( "fl2obj2",  0x080000, 0x80000, CRC(8ac933fd) SHA1(b158df2ec55f49ec05861075c8d7bd265361dab0) )
+	ROM_LOAD( "fl2obj4",  0x100000, 0x80000, CRC(e7b989e6) SHA1(485e8148510edd1645f5b4fbbc9a53e8bf1c3e5f) )
+	ROM_LOAD( "fl2obj6",  0x180000, 0x80000, CRC(4936583d) SHA1(0145e89fdb5db28cb8f8ce59572729e83d8fad7c) )
+	ROM_LOAD( "fl2obj1",  0x200000, 0x80000, CRC(3cebf419) SHA1(bfdf1b768920e55850173a5bcd1007608e1a4f56) )
+	ROM_LOAD( "fl2obj3",  0x280000, 0x80000, CRC(0959ed55) SHA1(00e640d449cb47da0e65baa798743395c7a1f632) )
+	ROM_LOAD( "fl2obj5",  0x300000, 0x80000, CRC(d74ae0d3) SHA1(96c9798378da7bdc127ed7d02a4dd14dfd142550) )
+	ROM_LOAD( "fl2obj7",  0x380000, 0x80000, CRC(5ca68c93) SHA1(fa326992338843ccfa458a5b85ba58537da666d0) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* Tiles */
 	ROM_LOAD( "fls2chr0",  0x000000, 0x40000, CRC(7bbda499) SHA1(cf6ff072a40063cbe41eae1f60b29447a0020926) )
@@ -2819,15 +2817,14 @@ ROM_START( finalp2j )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, BAD_DUMP CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
-	/* WRONG! These are for Final Lap 3(!) */
-	ROM_LOAD( "fl3obj0",  0x000000, 0x80000, BAD_DUMP CRC(eab19ec6) SHA1(2859e88b94aa873f3b6ba22790f2211f3e172dd1) )
-	ROM_LOAD( "fl3obj2",  0x080000, 0x80000, BAD_DUMP CRC(2a3b7ded) SHA1(455d9d6cf7d497687f93af899fc20bbff6129391) )
-	ROM_LOAD( "fl3obj4",  0x100000, 0x80000, BAD_DUMP CRC(84aa500c) SHA1(087c0089478a270154f50f3b0f001428e80d74c7) )
-	ROM_LOAD( "fl3obj6",  0x180000, 0x80000, BAD_DUMP CRC(33118e63) SHA1(126cc034909e05da953a1a67d6c0f18f5304b407) )
-	ROM_LOAD( "fl3obj1",  0x200000, 0x80000, BAD_DUMP CRC(4ef37a51) SHA1(2f43691cfcd852773ae5e1d879f556f232bae877) )
-	ROM_LOAD( "fl3obj3",  0x280000, 0x80000, BAD_DUMP CRC(b86dc7cd) SHA1(25402d7111c1277a618b313d1244c1a567ce458a) )
-	ROM_LOAD( "fl3obj5",  0x300000, 0x80000, BAD_DUMP CRC(6a53e603) SHA1(6087c694e0e30a98c84227991d9c2e9c39c3e9ca) )
-	ROM_LOAD( "fl3obj7",  0x380000, 0x80000, BAD_DUMP CRC(b52a85e2) SHA1(1eea10eb20ae56309397238a52e9ea0756912412) )
+	ROM_LOAD( "fl2obj0",  0x000000, 0x80000, CRC(3657dd7a) SHA1(8f286ec0642b09ff42bf0dbd784ae257d4ab278a) )
+	ROM_LOAD( "fl2obj2",  0x080000, 0x80000, CRC(8ac933fd) SHA1(b158df2ec55f49ec05861075c8d7bd265361dab0) )
+	ROM_LOAD( "fl2obj4",  0x100000, 0x80000, CRC(e7b989e6) SHA1(485e8148510edd1645f5b4fbbc9a53e8bf1c3e5f) )
+	ROM_LOAD( "fl2obj6",  0x180000, 0x80000, CRC(4936583d) SHA1(0145e89fdb5db28cb8f8ce59572729e83d8fad7c) )
+	ROM_LOAD( "fl2obj1",  0x200000, 0x80000, CRC(3cebf419) SHA1(bfdf1b768920e55850173a5bcd1007608e1a4f56) )
+	ROM_LOAD( "fl2obj3",  0x280000, 0x80000, CRC(0959ed55) SHA1(00e640d449cb47da0e65baa798743395c7a1f632) )
+	ROM_LOAD( "fl2obj5",  0x300000, 0x80000, CRC(d74ae0d3) SHA1(96c9798378da7bdc127ed7d02a4dd14dfd142550) )
+	ROM_LOAD( "fl2obj7",  0x380000, 0x80000, CRC(5ca68c93) SHA1(fa326992338843ccfa458a5b85ba58537da666d0) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* Tiles */
 	ROM_LOAD( "fls2chr0",  0x000000, 0x40000, CRC(7bbda499) SHA1(cf6ff072a40063cbe41eae1f60b29447a0020926) )

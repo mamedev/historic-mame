@@ -19,8 +19,7 @@
 
 enum
 {
-	SPC700_PC=1, SPC700_S, SPC700_P, SPC700_A, SPC700_X, SPC700_Y,
-	SPC700_NMI_STATE, SPC700_IRQ_STATE
+	SPC700_PC=1, SPC700_S, SPC700_P, SPC700_A, SPC700_X, SPC700_Y
 };
 
 #define SPC700_INT_NONE			0
@@ -136,14 +135,16 @@ void spc700_branching(unsigned int new_pc);
 #include "memory.h"
 #include "mamedbg.h"
 
-#define spc700_read_8(addr) cpu_readmem16(addr)
-#define spc700_write_8(addr,data) cpu_writemem16(addr,data)
+extern void spc700_get_info(UINT32 state, union cpuinfo *info);
+
+#define spc700_read_8(addr) program_read_byte_8(addr)
+#define spc700_write_8(addr,data) program_write_byte_8(addr,data)
 
 #define spc700_read_8_direct(A)     spc700_read_8(A)
 #define spc700_write_8_direct(A, V) spc700_write_8(A, V)
 #define spc700_read_instruction(A)    cpu_readop(A)
 #define spc700_read_8_immediate(A)    cpu_readop_arg(A)
-#define spc700_jumping(A)             change_pc16(A)
+#define spc700_jumping(A)             change_pc(A)
 #define spc700_branching(A)
 
 

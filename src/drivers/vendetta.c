@@ -201,17 +201,17 @@ static void vendetta_video_banking( int select )
 {
 	if ( select & 1 )
 	{
-		memory_set_bankhandler_r( 2, 0, paletteram_r );
-		memory_set_bankhandler_w( 2, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w );
-		memory_set_bankhandler_r( 3, 0, K053247_r );
-		memory_set_bankhandler_w( 3, 0, K053247_w );
+		install_mem_read_handler ( 0, 0x6000, 0x6fff, paletteram_r );
+		install_mem_write_handler( 0, 0x6000, 0x6fff, paletteram_xBBBBBGGGGGRRRRR_swap_w );
+		install_mem_read_handler ( 0, 0x4000, 0x4fff, K053247_r );
+		install_mem_write_handler( 0, 0x4000, 0x4fff, K053247_w );
 	}
 	else
 	{
-		memory_set_bankhandler_r( 2, 0, vendetta_K052109_r );
-		memory_set_bankhandler_w( 2, 0, vendetta_K052109_w );
-		memory_set_bankhandler_r( 3, 0, K052109_r );
-		memory_set_bankhandler_w( 3, 0, K052109_w );
+		install_mem_read_handler ( 0, 0x6000, 0x6fff, vendetta_K052109_r );
+		install_mem_write_handler( 0, 0x6000, 0x6fff, vendetta_K052109_w );
+		install_mem_read_handler ( 0, 0x4000, 0x4fff, K052109_r );
+		install_mem_write_handler( 0, 0x4000, 0x4fff, K052109_w );
 	}
 }
 
@@ -271,93 +271,93 @@ READ_HANDLER( vendetta_sound_r )
 
 /********************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_BANK1	},
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x5f80, 0x5f9f, K054000_r },
-	{ 0x5fc0, 0x5fc0, input_port_0_r },
-	{ 0x5fc1, 0x5fc1, input_port_1_r },
-	{ 0x5fc2, 0x5fc2, input_port_4_r },
-	{ 0x5fc3, 0x5fc3, input_port_5_r },
-	{ 0x5fd0, 0x5fd0, vendetta_eeprom_r }, /* vblank, service */
-	{ 0x5fd1, 0x5fd1, input_port_2_r },
-	{ 0x5fe4, 0x5fe4, vendetta_sound_interrupt_r },
-	{ 0x5fe6, 0x5fe7, vendetta_sound_r },
-	{ 0x5fe8, 0x5fe9, K053246_r },
-	{ 0x5fea, 0x5fea, watchdog_reset_r },
-	{ 0x4000, 0x4fff, MRA_BANK3 },
-	{ 0x6000, 0x6fff, MRA_BANK2 },
-	{ 0x4000, 0x7fff, K052109_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1	)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5f80, 0x5f9f) AM_READ(K054000_r)
+	AM_RANGE(0x5fc0, 0x5fc0) AM_READ(input_port_0_r)
+	AM_RANGE(0x5fc1, 0x5fc1) AM_READ(input_port_1_r)
+	AM_RANGE(0x5fc2, 0x5fc2) AM_READ(input_port_4_r)
+	AM_RANGE(0x5fc3, 0x5fc3) AM_READ(input_port_5_r)
+	AM_RANGE(0x5fd0, 0x5fd0) AM_READ(vendetta_eeprom_r) /* vblank, service */
+	AM_RANGE(0x5fd1, 0x5fd1) AM_READ(input_port_2_r)
+	AM_RANGE(0x5fe4, 0x5fe4) AM_READ(vendetta_sound_interrupt_r)
+	AM_RANGE(0x5fe6, 0x5fe7) AM_READ(vendetta_sound_r)
+	AM_RANGE(0x5fe8, 0x5fe9) AM_READ(K053246_r)
+	AM_RANGE(0x5fea, 0x5fea) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(K052109_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, MWA_RAM },
-	{ 0x5f80, 0x5f9f, K054000_w },
-	{ 0x5fa0, 0x5faf, K053251_w },
-	{ 0x5fb0, 0x5fb7, K053246_w },
-	{ 0x5fe0, 0x5fe0, vendetta_5fe0_w },
-	{ 0x5fe2, 0x5fe2, vendetta_eeprom_w },
-	{ 0x5fe4, 0x5fe4, z80_irq_w },
-	{ 0x5fe6, 0x5fe7, K053260_0_w },
-	{ 0x4000, 0x4fff, MWA_BANK3 },
-	{ 0x6000, 0x6fff, MWA_BANK2 },
-	{ 0x4000, 0x7fff, K052109_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5f80, 0x5f9f) AM_WRITE(K054000_w)
+	AM_RANGE(0x5fa0, 0x5faf) AM_WRITE(K053251_w)
+	AM_RANGE(0x5fb0, 0x5fb7) AM_WRITE(K053246_w)
+	AM_RANGE(0x5fe0, 0x5fe0) AM_WRITE(vendetta_5fe0_w)
+	AM_RANGE(0x5fe2, 0x5fe2) AM_WRITE(vendetta_eeprom_w)
+	AM_RANGE(0x5fe4, 0x5fe4) AM_WRITE(z80_irq_w)
+	AM_RANGE(0x5fe6, 0x5fe7) AM_WRITE(K053260_0_w)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_BANK3)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_BANK2)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(K052109_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( esckids_readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },			// 053248 64K SRAM
-	{ 0x3f80, 0x3f80, input_port_0_r },		// Player 1 Control
-	{ 0x3f81, 0x3f81, input_port_1_r },		// Player 2 Control
-	{ 0x3f82, 0x3f82, input_port_4_r }, 	// Player 3 Control ???  (But not used)
-	{ 0x3f83, 0x3f83, input_port_5_r },		// Player 4 Control ???  (But not used)
-	{ 0x3f92, 0x3f92, vendetta_eeprom_r },	// vblank, TEST SW on PCB
-	{ 0x3f93, 0x3f93, input_port_2_r },		// Start, Service
-	{ 0x3fd4, 0x3fd4, vendetta_sound_interrupt_r },		// Sound
-	{ 0x3fd6, 0x3fd7, vendetta_sound_r },				// Sound
-	{ 0x3fd8, 0x3fd9, K053246_r },			// 053246 (Sprite)
-	{ 0x2000, 0x2fff, MRA_BANK3 },			// 052109 (Tilemap) 0x0000-0x0fff
-	{ 0x4000, 0x5fff, MRA_BANK2 },			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
-	{ 0x2000, 0x5fff, K052109_r },			// 052109 (Tilemap)
-	{ 0x6000, 0x7fff, MRA_BANK1 },			// 053248 '975r01' 1M ROM (Banked)
-	{ 0x8000, 0xffff, MRA_ROM },			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
-MEMORY_END
+static ADDRESS_MAP_START( esckids_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)			// 053248 64K SRAM
+	AM_RANGE(0x3f80, 0x3f80) AM_READ(input_port_0_r)		// Player 1 Control
+	AM_RANGE(0x3f81, 0x3f81) AM_READ(input_port_1_r)		// Player 2 Control
+	AM_RANGE(0x3f82, 0x3f82) AM_READ(input_port_4_r) 	// Player 3 Control ???  (But not used)
+	AM_RANGE(0x3f83, 0x3f83) AM_READ(input_port_5_r)		// Player 4 Control ???  (But not used)
+	AM_RANGE(0x3f92, 0x3f92) AM_READ(vendetta_eeprom_r)	// vblank, TEST SW on PCB
+	AM_RANGE(0x3f93, 0x3f93) AM_READ(input_port_2_r)		// Start, Service
+	AM_RANGE(0x3fd4, 0x3fd4) AM_READ(vendetta_sound_interrupt_r)		// Sound
+	AM_RANGE(0x3fd6, 0x3fd7) AM_READ(vendetta_sound_r)				// Sound
+	AM_RANGE(0x3fd8, 0x3fd9) AM_READ(K053246_r)			// 053246 (Sprite)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_BANK3)			// 052109 (Tilemap) 0x0000-0x0fff
+	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(K052109_r)			// 052109 (Tilemap)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			// 053248 '975r01' 1M ROM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( esckids_writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },			// 053248 64K SRAM
-	{ 0x3fa0, 0x3fa7, K053246_w },			// 053246 (Sprite)
-	{ 0x3fb0, 0x3fbf, K053251_w },			// 053251 (Priority Encoder)
-	{ 0x3fc0, 0x3fcf, MWA_NOP },			// Not Emulated (053252 ???)
-	{ 0x3fd0, 0x3fd0, vendetta_5fe0_w },	// Coin Counter, 052109 RMRD, 053246 OBJCHA
-	{ 0x3fd2, 0x3fd2, vendetta_eeprom_w },	// EEPROM, Video banking
-	{ 0x3fd4, 0x3fd4, z80_irq_w },			// Sound
-	{ 0x3fd6, 0x3fd7, K053260_0_w },		// Sound
-	{ 0x3fda, 0x3fda, MWA_NOP },			// Not Emulated (Watchdog ???)
-	{ 0x2000, 0x2fff, MWA_BANK3 },			// 052109 (Tilemap) 0x0000-0x0fff
-	{ 0x4000, 0x5fff, MWA_BANK2 },			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
-	{ 0x2000, 0x5fff, K052109_w },			// 052109 (Tilemap)
-	{ 0x6000, 0x7fff, MWA_ROM },			// 053248 '975r01' 1M ROM (Banked)
-	{ 0x8000, 0xffff, MWA_ROM },			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
-MEMORY_END
+static ADDRESS_MAP_START( esckids_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)			// 053248 64K SRAM
+	AM_RANGE(0x3fa0, 0x3fa7) AM_WRITE(K053246_w)			// 053246 (Sprite)
+	AM_RANGE(0x3fb0, 0x3fbf) AM_WRITE(K053251_w)			// 053251 (Priority Encoder)
+	AM_RANGE(0x3fc0, 0x3fcf) AM_WRITE(MWA8_NOP)			// Not Emulated (053252 ???)
+	AM_RANGE(0x3fd0, 0x3fd0) AM_WRITE(vendetta_5fe0_w)	// Coin Counter, 052109 RMRD, 053246 OBJCHA
+	AM_RANGE(0x3fd2, 0x3fd2) AM_WRITE(vendetta_eeprom_w)	// EEPROM, Video banking
+	AM_RANGE(0x3fd4, 0x3fd4) AM_WRITE(z80_irq_w)			// Sound
+	AM_RANGE(0x3fd6, 0x3fd7) AM_WRITE(K053260_0_w)		// Sound
+	AM_RANGE(0x3fda, 0x3fda) AM_WRITE(MWA8_NOP)			// Not Emulated (Watchdog ???)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_BANK3)			// 052109 (Tilemap) 0x0000-0x0fff
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	AM_RANGE(0x2000, 0x5fff) AM_WRITE(K052109_w)			// 052109 (Tilemap)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)			// 053248 '975r01' 1M ROM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( readmem_sound )
-	{ 0x0000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf801, 0xf801) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xfc00, 0xfc2f) AM_READ(K053260_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_sound )
-	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, YM2151_register_port_0_w },
-	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(z80_arm_nmi_w)
+	AM_RANGE(0xfc00, 0xfc2f) AM_WRITE(K053260_0_w)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -560,12 +560,12 @@ static MACHINE_DRIVER_START( vendetta )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", KONAMI, 6000000)		/* ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vendetta_irq,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
                             /* interrupts are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -594,7 +594,7 @@ static MACHINE_DRIVER_START( esckids )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(vendetta)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(esckids_readmem,esckids_writemem)
+	MDRV_CPU_PROGRAM_MAP(esckids_readmem,esckids_writemem)
 
 	MDRV_VIDEO_START(esckids)
 
@@ -784,7 +784,7 @@ static void vendetta_banking( int lines )
 
 static MACHINE_INIT( vendetta )
 {
-	konami_cpu_setlines_callback = vendetta_banking;
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, vendetta_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 	irq_enabled = 0;

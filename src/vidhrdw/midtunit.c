@@ -82,15 +82,6 @@ static struct
 
 
 
-/* macros */
-#define TMS_SET_IRQ_LINE(x)				\
-	if (midtunit_using_34020) 			\
-		tms34020_set_irq_line(0, x); 	\
-	else 								\
-		tms34010_set_irq_line(0, x);	\
-
-
-
 /*************************************
  *
  *	Video startup
@@ -625,7 +616,7 @@ DECLARE_BLITTER_SET(dma_draw_noskip_noscale,   dma_state.bpp, EXTRACTGEN,   SKIP
 
 static int temp_irq_callback(int irqline)
 {
-	TMS_SET_IRQ_LINE(CLEAR_LINE);
+	cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 	return 0;
 }
 
@@ -635,11 +626,8 @@ static void dma_callback(int is_in_34010_context)
 	dma_register[DMA_COMMAND] &= ~0x8000; /* tell the cpu we're done */
 	if (is_in_34010_context)
 	{
-		if (midtunit_using_34020)
-			tms34020_set_irq_callback(temp_irq_callback);
-		else
-			tms34010_set_irq_callback(temp_irq_callback);
-		TMS_SET_IRQ_LINE(ASSERT_LINE);
+		cpunum_set_info_ptr(0, CPUINFO_PTR_IRQ_CALLBACK, (void *)temp_irq_callback);
+		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, ASSERT_LINE);
 	}
 	else
 		cpu_set_irq_line(0, 0, HOLD_LINE);
@@ -729,7 +717,7 @@ WRITE16_HANDLER( midtunit_dma_w )
 	command = dma_register[DMA_COMMAND];
 	if (!(command & 0x8000))
 	{
-		TMS_SET_IRQ_LINE(CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 		return;
 	}
 
@@ -850,13 +838,13 @@ skipdma:
 			dma_callback(1);
 		else
 		{
-			TMS_SET_IRQ_LINE(CLEAR_LINE);
+			cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 			timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 		}
 	}
 	else
 	{
-		TMS_SET_IRQ_LINE(CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
 		timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 	}
 

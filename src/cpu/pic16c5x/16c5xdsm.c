@@ -30,8 +30,8 @@
 #include "memory.h"
 #include "pic16c5x.h"
 #include "mamedbg.h"
-#define READOP16(A)  (cpu_readop16((A)     | PIC16C5X_PGM_OFFSET))
-#define READARG16(A) (cpu_readop_arg16((A) | PIC16C5X_PGM_OFFSET))
+#define READOP16(A)  (cpu_readop16(A))
+#define READARG16(A) (cpu_readop_arg16(A))
 #else                               /* Compile interface for standalone */
 extern unsigned char *Buffer;
 #ifdef MSB_FIRST

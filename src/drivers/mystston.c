@@ -77,33 +77,33 @@ static WRITE_HANDLER( mystston_irq_reset_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x077f, MRA_RAM },
-	{ 0x0800, 0x0fff, MRA_RAM },	/* work RAM? */
-	{ 0x1000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2000, input_port_0_r },
-	{ 0x2010, 0x2010, input_port_1_r },
-	{ 0x2020, 0x2020, input_port_2_r },
-	{ 0x2030, 0x2030, port3_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x077f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(MRA8_RAM)	/* work RAM? */
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_0_r)
+	AM_RANGE(0x2010, 0x2010) AM_READ(input_port_1_r)
+	AM_RANGE(0x2020, 0x2020) AM_READ(input_port_2_r)
+	AM_RANGE(0x2030, 0x2030) AM_READ(port3_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x077f, MWA_RAM },
-	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x07e0, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0fff, MWA_RAM },	/* work RAM? */
-	{ 0x1000, 0x17ff, &mystston_videoram_w, &videoram },
-	{ 0x1800, 0x1bff, &mystston_videoram2_w, &mystston_videoram2 },
-	{ 0x1c00, 0x1fff, MWA_RAM },	/* work RAM? This gets copied to videoram */
-	{ 0x2000, 0x2000, mystston_control_w },	/* text color, flip screen & coin counters */
-	{ 0x2010, 0x2010, mystston_irq_reset_w },
-	{ 0x2020, 0x2020, mystston_scroll_w },
-	{ 0x2030, 0x2030, mystston_soundlatch_w },
-	{ 0x2040, 0x2040, mystston_soundcontrol_w },
-	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x077f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0780, 0x07df) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x07e0, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(MWA8_RAM)	/* work RAM? */
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(&mystston_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(&mystston_videoram2_w) AM_BASE(&mystston_videoram2)
+	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM)	/* work RAM? This gets copied to videoram */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(mystston_control_w)	/* text color, flip screen & coin counters */
+	AM_RANGE(0x2010, 0x2010) AM_WRITE(mystston_irq_reset_w)
+	AM_RANGE(0x2020, 0x2020) AM_WRITE(mystston_scroll_w)
+	AM_RANGE(0x2030, 0x2030) AM_WRITE(mystston_soundlatch_w)
+	AM_RANGE(0x2040, 0x2040) AM_WRITE(mystston_soundcontrol_w)
+	AM_RANGE(0x2060, 0x2077) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( mystston )
@@ -242,7 +242,7 @@ static MACHINE_DRIVER_START( mystston )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12000000/8)	// 1.5 MHz
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(mystston_interrupt, 272)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)

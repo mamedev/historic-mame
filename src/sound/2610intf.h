@@ -18,10 +18,10 @@ struct YM2610interface
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
 	int volumeSSG[MAX_8910]; /* for SSG sound */
-	mem_read_handler portAread[MAX_8910];
-	mem_read_handler portBread[MAX_8910];
-	mem_write_handler portAwrite[MAX_8910];
-	mem_write_handler portBwrite[MAX_8910];
+	read8_handler portAread[MAX_8910];
+	read8_handler portBread[MAX_8910];
+	write8_handler portAwrite[MAX_8910];
+	write8_handler portBwrite[MAX_8910];
 	void ( *handler[MAX_8910] )( int irq );	/* IRQ handler for the YM2610 */
 	int pcmromb[MAX_2610];		/* Delta-T rom region */
 	int pcmroma[MAX_2610];		/* ADPCM   rom region */

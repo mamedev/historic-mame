@@ -211,56 +211,56 @@ static WRITE32_HANDLER( gunbustr_gun_w )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static MEMORY_READ32_START( gunbustr_readmem )
-	{ 0x000000, 0x0fffff, MRA32_ROM },
-	{ 0x200000, 0x21ffff, MRA32_RAM },	/* main CPUA ram */
-	{ 0x300000, 0x301fff, MRA32_RAM },	/* Sprite ram */
-	{ 0x390000, 0x3907ff, MRA32_RAM },	/* Sound shared ram */
-	{ 0x400000, 0x400007, gunbustr_input_r },
-	{ 0x500000, 0x500003, gunbustr_gun_r },	/* gun coord read */
-	{ 0x800000, 0x80ffff, TC0480SCP_long_r },
-	{ 0x830000, 0x83002f, TC0480SCP_ctrl_long_r },
-	{ 0x900000, 0x901fff, MRA32_RAM },	/* Palette ram */
-	{ 0xc00000, 0xc03fff, MRA32_RAM },	/* network ram ?? */
-MEMORY_END
+static ADDRESS_MAP_START( gunbustr_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA32_RAM)	/* main CPUA ram */
+	AM_RANGE(0x300000, 0x301fff) AM_READ(MRA32_RAM)	/* Sprite ram */
+	AM_RANGE(0x390000, 0x3907ff) AM_READ(MRA32_RAM)	/* Sound shared ram */
+	AM_RANGE(0x400000, 0x400007) AM_READ(gunbustr_input_r)
+	AM_RANGE(0x500000, 0x500003) AM_READ(gunbustr_gun_r)	/* gun coord read */
+	AM_RANGE(0x800000, 0x80ffff) AM_READ(TC0480SCP_long_r)
+	AM_RANGE(0x830000, 0x83002f) AM_READ(TC0480SCP_ctrl_long_r)
+	AM_RANGE(0x900000, 0x901fff) AM_READ(MRA32_RAM)	/* Palette ram */
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA32_RAM)	/* network ram ?? */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( gunbustr_writemem )
-	{ 0x000000, 0x0fffff, MWA32_ROM },
-	{ 0x200000, 0x21ffff, MWA32_RAM, &gunbustr_ram },
-	{ 0x300000, 0x301fff, MWA32_RAM, &spriteram32, &spriteram_size },
-	{ 0x380000, 0x380003, motor_control_w },	/* motor, lamps etc. */
-	{ 0x390000, 0x3907ff, MWA32_RAM, &f3_shared_ram },
-	{ 0x400000, 0x400007, gunbustr_input_w },	/* eerom etc. */
-	{ 0x500000, 0x500003, gunbustr_gun_w },	/* gun int request */
-	{ 0x800000, 0x80ffff, TC0480SCP_long_w },
-	{ 0x830000, 0x83002f, TC0480SCP_ctrl_long_w },
-	{ 0x900000, 0x901fff, gunbustr_palette_w, &paletteram32 },
-	{ 0xc00000, 0xc03fff, MWA32_RAM},	/* network ram ?? */
-MEMORY_END
+static ADDRESS_MAP_START( gunbustr_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(MWA32_RAM) AM_BASE(&gunbustr_ram)
+	AM_RANGE(0x300000, 0x301fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x380000, 0x380003) AM_WRITE(motor_control_w)	/* motor, lamps etc. */
+	AM_RANGE(0x390000, 0x3907ff) AM_WRITE(MWA32_RAM) AM_BASE(&f3_shared_ram)
+	AM_RANGE(0x400000, 0x400007) AM_WRITE(gunbustr_input_w)	/* eerom etc. */
+	AM_RANGE(0x500000, 0x500003) AM_WRITE(gunbustr_gun_w)	/* gun int request */
+	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0480SCP_long_w)
+	AM_RANGE(0x830000, 0x83002f) AM_WRITE(TC0480SCP_ctrl_long_w)
+	AM_RANGE(0x900000, 0x901fff) AM_WRITE(gunbustr_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA32_RAM)	/* network ram ?? */
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static MEMORY_READ16_START( sound_readmem )
-	{ 0x000000, 0x03ffff, MRA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_r },
-	{ 0x200000, 0x20001f, ES5505_data_0_r },
-	{ 0x260000, 0x2601ff, es5510_dsp_r },
-	{ 0x280000, 0x28001f, f3_68681_r },
-	{ 0xc00000, 0xcfffff, MRA16_BANK1 },
-	{ 0xff8000, 0xffffff, MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
+	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
+	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
+	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
+	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sound_writemem )
-	{ 0x000000, 0x03ffff, MWA16_RAM },
-	{ 0x140000, 0x140fff, f3_68000_share_w },
-	{ 0x200000, 0x20001f, ES5505_data_0_w },
-	{ 0x260000, 0x2601ff, es5510_dsp_w },
-	{ 0x280000, 0x28001f, f3_68681_w },
-	{ 0x300000, 0x30003f, f3_es5505_bank_w },
-	{ 0x340000, 0x340003, f3_volume_w }, /* 8 channel volume control */
-	{ 0xc00000, 0xcfffff, MWA16_ROM },
-	{ 0xff8000, 0xffffff, MWA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
+	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
+	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
+	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
+	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
+	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
+	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
 
 /***********************************************************
 			 INPUT PORTS (dips in eprom)
@@ -439,12 +439,12 @@ static MACHINE_DRIVER_START( gunbustr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
-	MDRV_CPU_MEMORY(gunbustr_readmem,gunbustr_writemem)
+	MDRV_CPU_PROGRAM_MAP(gunbustr_readmem,gunbustr_writemem)
 	MDRV_CPU_VBLANK_INT(gunbustr_interrupt,1) /* VBL */
 
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

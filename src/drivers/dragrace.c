@@ -169,25 +169,25 @@ READ_HANDLER( dragrace_scanline_r )
 }
 
 
-static MEMORY_READ_START( dragrace_readmem )
-	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x0800, 0x083f, dragrace_input_r },
-	{ 0x0c00, 0x0c00, dragrace_steering_r },
-	{ 0x0d00, 0x0d00, dragrace_scanline_r },
-	{ 0x1000, 0x1fff, MRA_ROM }, /* program */
-	{ 0xf800, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( dragrace_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x083f) AM_READ(dragrace_input_r)
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(dragrace_steering_r)
+	AM_RANGE(0x0d00, 0x0d00) AM_READ(dragrace_scanline_r)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( dragrace_writemem )
-	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x0900, 0x091f, dragrace_misc_w },
-	{ 0x0920, 0x093f, dragrace_misc_clear_w },
-	{ 0x0a00, 0x0aff, MWA_RAM, &dragrace_playfield_ram },
-	{ 0x0b00, 0x0bff, MWA_RAM, &dragrace_position_ram },
-	{ 0x0e00, 0x0e00, MWA_NOP }, /* watchdog (disabled in service mode) */
-	{ 0x1000, 0x1fff, MWA_ROM }, /* program */
-	{ 0xf800, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( dragrace_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0900, 0x091f) AM_WRITE(dragrace_misc_w)
+	AM_RANGE(0x0920, 0x093f) AM_WRITE(dragrace_misc_clear_w)
+	AM_RANGE(0x0a00, 0x0aff) AM_WRITE(MWA8_RAM) AM_BASE(&dragrace_playfield_ram)
+	AM_RANGE(0x0b00, 0x0bff) AM_WRITE(MWA8_RAM) AM_BASE(&dragrace_position_ram)
+	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(MWA8_NOP) /* watchdog (disabled in service mode) */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( dragrace )
@@ -520,7 +520,7 @@ static MACHINE_DRIVER_START( dragrace )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 12096000 / 12)
-	MDRV_CPU_MEMORY(dragrace_readmem, dragrace_writemem)
+	MDRV_CPU_PROGRAM_MAP(dragrace_readmem, dragrace_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)

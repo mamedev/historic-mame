@@ -107,96 +107,96 @@ INTERRUPT_GEN( xxmissio_interrupt_s )
 
 /****************************************************************************/
 
-static MEMORY_READ_START( readmem1 )
-	{ 0x0000, 0x7fff, MRA_ROM },
+static ADDRESS_MAP_START( readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 
-	{ 0x8000, 0x8000, YM2203_status_port_0_r },
-	{ 0x8001, 0x8001, YM2203_read_port_0_r },
-	{ 0x8002, 0x8002, YM2203_status_port_1_r },
-	{ 0x8003, 0x8003, YM2203_read_port_1_r },
+	AM_RANGE(0x8000, 0x8000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(YM2203_read_port_1_r)
 
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa001, 0xa001, input_port_1_r },
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)
 
-	{ 0xa002, 0xa002, xxmissio_status_r },
+	AM_RANGE(0xa002, 0xa002) AM_READ(xxmissio_status_r)
 
-	{ 0xc000, 0xc7ff, xxmissio_fgram_r },
-	{ 0xc800, 0xcfff, xxmissio_videoram_r },
-	{ 0xd000, 0xd7ff, spriteram_r },
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(xxmissio_fgram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(xxmissio_videoram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(spriteram_r)
 
-	{ 0xd800, 0xdaff, paletteram_r },
+	AM_RANGE(0xd800, 0xdaff) AM_READ(paletteram_r)
 
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem1 )
-	{ 0x0000, 0x7fff, MWA_ROM },
+static ADDRESS_MAP_START( writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 
-	{ 0x8000, 0x8000, YM2203_control_port_0_w },
-	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-	{ 0x8002, 0x8002, YM2203_control_port_1_w },
-	{ 0x8003, 0x8003, YM2203_write_port_1_w },
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(YM2203_write_port_1_w)
 
-	{ 0xa002, 0xa002, xxmissio_status_m_w },
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(xxmissio_status_m_w)
 
-	{ 0xa003, 0xa003, xxmissio_flipscreen_w },
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(xxmissio_flipscreen_w)
 
-	{ 0xc000, 0xc7ff, xxmissio_fgram_w, &xxmissio_fgram, &xxmissio_fgram_size },
-	{ 0xc800, 0xcfff, xxmissio_videoram_w, &videoram, &videoram_size },
-	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram, &spriteram_size },
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(xxmissio_fgram_w) AM_BASE(&xxmissio_fgram) AM_SIZE(&xxmissio_fgram_size)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(xxmissio_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 
-	{ 0xd800, 0xdaff, xxmissio_paletteram_w, &paletteram },
+	AM_RANGE(0xd800, 0xdaff) AM_WRITE(xxmissio_paletteram_w) AM_BASE(&paletteram)
 
-	{ 0xe000, 0xffff, MWA_RAM, &shared_workram },
-MEMORY_END
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_workram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
+static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 
-	{ 0x8000, 0x8000, YM2203_status_port_0_r },
-	{ 0x8001, 0x8001, YM2203_read_port_0_r },
-	{ 0x8002, 0x8002, YM2203_status_port_1_r },
-	{ 0x8003, 0x8003, YM2203_read_port_1_r },
+	AM_RANGE(0x8000, 0x8000) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(YM2203_read_port_1_r)
 
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa001, 0xa001, input_port_1_r },
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)
 
-	{ 0xa002, 0xa002, xxmissio_status_r },
+	AM_RANGE(0xa002, 0xa002) AM_READ(xxmissio_status_r)
 
-	{ 0xc000, 0xc7ff, xxmissio_fgram_r },
-	{ 0xc800, 0xcfff, xxmissio_videoram_r },
-	{ 0xd000, 0xd7ff, spriteram_r },
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(xxmissio_fgram_r)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(xxmissio_videoram_r)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(spriteram_r)
 
-	{ 0xd800, 0xdaff, paletteram_r },
+	AM_RANGE(0xd800, 0xdaff) AM_READ(paletteram_r)
 
-	{ 0xe000, 0xffff, shared_workram_r },
+	AM_RANGE(0xe000, 0xffff) AM_READ(shared_workram_r)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_BANK1 },
+static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_BANK1)
 
-	{ 0x8000, 0x8000, YM2203_control_port_0_w },
-	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-	{ 0x8002, 0x8002, YM2203_control_port_1_w },
-	{ 0x8003, 0x8003, YM2203_write_port_1_w },
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x8003, 0x8003) AM_WRITE(YM2203_write_port_1_w)
 
-	{ 0x8006, 0x8006, xxmissio_bank_sel_w },
+	AM_RANGE(0x8006, 0x8006) AM_WRITE(xxmissio_bank_sel_w)
 
-	{ 0xa002, 0xa002, xxmissio_status_s_w },
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(xxmissio_status_s_w)
 
-	{ 0xa003, 0xa003, xxmissio_flipscreen_w },
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(xxmissio_flipscreen_w)
 
-	{ 0xc000, 0xc7ff, xxmissio_fgram_w },
-	{ 0xc800, 0xcfff, xxmissio_videoram_w },
-	{ 0xd000, 0xd7ff, spriteram_w },
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(xxmissio_fgram_w)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(xxmissio_videoram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(spriteram_w)
 
-	{ 0xd800, 0xdaff, xxmissio_paletteram_w },
+	AM_RANGE(0xd800, 0xdaff) AM_WRITE(xxmissio_paletteram_w)
 
-	{ 0xe000, 0xffff, shared_workram_w },
-MEMORY_END
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(shared_workram_w)
+ADDRESS_MAP_END
 
 /****************************************************************************/
 
@@ -336,11 +336,11 @@ static MACHINE_DRIVER_START( xxmissio )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz */
-	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_PROGRAM_MAP(readmem1,writemem1)
 	MDRV_CPU_VBLANK_INT(xxmissio_interrupt_m,1)
 
 	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_VBLANK_INT(xxmissio_interrupt_s,2)
 
 	MDRV_FRAMES_PER_SECOND(60)

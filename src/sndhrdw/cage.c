@@ -32,8 +32,6 @@
 #define DAC_BUFFER_FRAMES_MASK	(DAC_BUFFER_FRAMES - 1)
 #define DAC_BUFFER_SAMPLES_MASK	(DAC_BUFFER_SAMPLES - 1)
 
-#define ADDR_RANGE(s,e) ((s)*4), ((e)*4+3)
-
 
 
 /*************************************
@@ -186,7 +184,7 @@ void cage_init(int boot_region, offs_t speedup)
 	buffer_in = buffer_out = 0;
 	
 	if (speedup)
-		speedup_ram = install_mem_write32_handler(cage_cpu, ADDR_RANGE(speedup, speedup), speedup_w);
+		speedup_ram = install_mem_write32_handler(cage_cpu, speedup, speedup, speedup_w);
 }
 
 
@@ -342,7 +340,7 @@ static void update_dma_state(void)
 		inc = (tms32031_io_regs[DMA_GLOBAL_CTL] >> 4) & 1;
 		for (i = 0; i < tms32031_io_regs[DMA_TRANSFER_COUNT]; i++)
 		{
-			sound_buffer[(buffer_in + i) & DAC_BUFFER_SAMPLES_MASK] = cpu_readmem26ledw_dword(addr * 4);
+			sound_buffer[(buffer_in + i) & DAC_BUFFER_SAMPLES_MASK] = program_read_dword(addr * 4);
 			addr += inc;
 		}
 		buffer_in += tms32031_io_regs[DMA_TRANSFER_COUNT];
@@ -680,48 +678,48 @@ static struct tms32031_config cage_config =
 };
 
 
-static MEMORY_READ32_START( readmem_cage )
-	{ ADDR_RANGE(0x000000, 0x00ffff), MRA32_RAM },
-	{ ADDR_RANGE(0x400000, 0x47ffff), MRA32_BANK10 },
-	{ ADDR_RANGE(0x808000, 0x8080ff), tms32031_io_r },
-	{ ADDR_RANGE(0x809800, 0x809fff), MRA32_RAM },
-	{ ADDR_RANGE(0xa00000, 0xa00000), cage_from_main_r },
-	{ ADDR_RANGE(0xc00000, 0xffffff), MRA32_BANK11 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cage, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x400000, 0x47ffff) AM_READ(MRA32_BANK10)
+	AM_RANGE(0x808000, 0x8080ff) AM_READ(tms32031_io_r)
+	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xa00000, 0xa00000) AM_READ(cage_from_main_r)
+	AM_RANGE(0xc00000, 0xffffff) AM_READ(MRA32_BANK11)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE32_START( writemem_cage )
-	{ ADDR_RANGE(0x000000, 0x00ffff), MWA32_RAM },
-	{ ADDR_RANGE(0x200000, 0x200000), MWA32_NOP },
-	{ ADDR_RANGE(0x400000, 0x47ffff), MWA32_ROM },
-	{ ADDR_RANGE(0x808000, 0x8080ff), tms32031_io_w, &tms32031_io_regs },
-	{ ADDR_RANGE(0x809800, 0x809fff), MWA32_RAM },
-	{ ADDR_RANGE(0xa00000, 0xa00000), cage_to_main_w },
-	{ ADDR_RANGE(0xc00000, 0xffffff), MWA32_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cage, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x200000, 0x200000) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x808000, 0x8080ff) AM_WRITE(tms32031_io_w) AM_BASE(&tms32031_io_regs)
+	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xa00000, 0xa00000) AM_WRITE(cage_to_main_w)
+	AM_RANGE(0xc00000, 0xffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ32_START( readmem_cage_seattle )
-	{ ADDR_RANGE(0x000000, 0x00ffff), MRA32_RAM },
-	{ ADDR_RANGE(0x400000, 0x47ffff), MRA32_BANK10 },
-	{ ADDR_RANGE(0x808000, 0x8080ff), tms32031_io_r },
-	{ ADDR_RANGE(0x809800, 0x809fff), MRA32_RAM },
-	{ ADDR_RANGE(0xa00000, 0xa00000), cage_from_main_r },
-	{ ADDR_RANGE(0xa00003, 0xa00003), cage_io_status_r },
-	{ ADDR_RANGE(0xc00000, 0xffffff), MRA32_BANK11 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_cage_seattle, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x400000, 0x47ffff) AM_READ(MRA32_BANK10)
+	AM_RANGE(0x808000, 0x8080ff) AM_READ(tms32031_io_r)
+	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xa00000, 0xa00000) AM_READ(cage_from_main_r)
+	AM_RANGE(0xa00003, 0xa00003) AM_READ(cage_io_status_r)
+	AM_RANGE(0xc00000, 0xffffff) AM_READ(MRA32_BANK11)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE32_START( writemem_cage_seattle )
-	{ ADDR_RANGE(0x000000, 0x00ffff), MWA32_RAM },
-	{ ADDR_RANGE(0x200000, 0x200000), MWA32_NOP },
-	{ ADDR_RANGE(0x400000, 0x47ffff), MWA32_ROM },
-	{ ADDR_RANGE(0x808000, 0x8080ff), tms32031_io_w, &tms32031_io_regs },
-	{ ADDR_RANGE(0x809800, 0x809fff), MWA32_RAM },
-	{ ADDR_RANGE(0xa00000, 0xa00000), cage_from_main_ack_w },
-	{ ADDR_RANGE(0xa00001, 0xa00001), cage_to_main_w },
-	{ ADDR_RANGE(0xc00000, 0xffffff), MWA32_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_cage_seattle, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x200000, 0x200000) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x808000, 0x8080ff) AM_WRITE(tms32031_io_w) AM_BASE(&tms32031_io_regs)
+	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xa00000, 0xa00000) AM_WRITE(cage_from_main_ack_w)
+	AM_RANGE(0xa00001, 0xa00001) AM_WRITE(cage_to_main_w)
+	AM_RANGE(0xc00000, 0xffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -744,7 +742,7 @@ MACHINE_DRIVER_START( cage )
 	MDRV_CPU_ADD_TAG("cage", TMS32031, 33868800)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_CONFIG(cage_config)
-	MDRV_CPU_MEMORY(readmem_cage,writemem_cage)
+	MDRV_CPU_PROGRAM_MAP(readmem_cage,writemem_cage)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -756,5 +754,5 @@ MACHINE_DRIVER_START( cage_seattle )
 	MDRV_IMPORT_FROM(cage)
 	
 	MDRV_CPU_MODIFY("cage")
-	MDRV_CPU_MEMORY(readmem_cage_seattle,writemem_cage_seattle)
+	MDRV_CPU_PROGRAM_MAP(readmem_cage_seattle,writemem_cage_seattle)
 MACHINE_DRIVER_END

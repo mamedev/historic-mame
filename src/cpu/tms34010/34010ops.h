@@ -26,20 +26,20 @@
 **	MEMORY I/O MACROS
 **#################################################################################################*/
 
-#define TMS34010_RDMEM(A)			((unsigned)cpu_readmem29lew      (A))
-#define TMS34010_RDMEM_WORD(A)		((unsigned)cpu_readmem29lew_word (A))
+#define TMS34010_RDMEM(A)			((unsigned)program_read_byte_16le (A))
+#define TMS34010_RDMEM_WORD(A)		((unsigned)program_read_word_16le (A))
 INLINE data32_t TMS34010_RDMEM_DWORD(offs_t A)
 {
-	UINT32 result = cpu_readmem29lew_word(A);
-	return result | (cpu_readmem29lew_word(A+2)<<16);
+	UINT32 result = program_read_word_16le(A);
+	return result | (program_read_word_16le(A+2)<<16);
 }
 
-#define TMS34010_WRMEM(A,V)			(cpu_writemem29lew(A,V))
-#define TMS34010_WRMEM_WORD(A,V)	(cpu_writemem29lew_word(A,V))
+#define TMS34010_WRMEM(A,V)			(program_write_byte_16le(A,V))
+#define TMS34010_WRMEM_WORD(A,V)	(program_write_word_16le(A,V))
 INLINE void TMS34010_WRMEM_DWORD(offs_t A,data32_t V)
 {
-	cpu_writemem29lew_word(A,V);
-	cpu_writemem29lew_word(A+2,V>>16);
+	program_write_word_16le(A,V);
+	program_write_word_16le(A+2,V>>16);
 }
 
 

@@ -97,14 +97,6 @@ typedef struct
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
-**#################################################################################################*/
-
-int	asap_icount=50000;
-
-
-
-/*###################################################################################################
 **	PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
@@ -112,6 +104,8 @@ static asap_regs asap;
 
 static void (**opcode)(void);
 static UINT32 *src2val;
+
+static int asap_icount;
 
 
 
@@ -279,39 +273,39 @@ static void (*conditiontable[16])(void) =
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32(pc)
-#define UPDATEPC()		change_pc32ledw(asap.pc)
+#define UPDATEPC()		change_pc(asap.pc)
 
 
 INLINE data8_t READBYTE(offs_t address)
 {
 	/* no alignment issues with bytes */
-	return cpu_readmem32ledw(address);
+	return program_read_byte_32le(address);
 }
 
 INLINE data16_t READWORD(offs_t address)
 {
 	/* aligned reads are easy */
 	if (!(address & 1))
-		return cpu_readmem32ledw_word(address);
+		return program_read_word_32le(address);
 
 	/* misaligned reads are tricky */
-	return cpu_readmem32ledw_dword(address & ~3) >> (address & 3);
+	return program_read_dword_32le(address & ~3) >> (address & 3);
 }
 
 INLINE data32_t READLONG(offs_t address)
 {
 	/* aligned reads are easy */
 	if (!(address & 3))
-		return cpu_readmem32ledw_dword(address);
+		return program_read_dword_32le(address);
 
 	/* misaligned reads are tricky */
-	return cpu_readmem32ledw_dword(address & ~3) >> (address & 3);
+	return program_read_dword_32le(address & ~3) >> (address & 3);
 }
 
 INLINE void WRITEBYTE(offs_t address, data8_t data)
 {
 	/* no alignment issues with bytes */
-	cpu_writemem32ledw(address, data);
+	program_write_byte_32le(address, data);
 }
 
 INLINE void WRITEWORD(offs_t address, data16_t data)
@@ -319,18 +313,18 @@ INLINE void WRITEWORD(offs_t address, data16_t data)
 	/* aligned writes are easy */
 	if (!(address & 1))
 	{
-		cpu_writemem32ledw_word(address, data);
+		program_write_word_32le(address, data);
 		return;
 	}
 
 	/* misaligned writes are tricky */
 	if (!(address & 2))
 	{
-		cpu_writemem32ledw(address + 1, data);
-		cpu_writemem32ledw(address + 2, data >> 8);
+		program_write_byte_32le(address + 1, data);
+		program_write_byte_32le(address + 2, data >> 8);
 	}
 	else
-		cpu_writemem32ledw(address + 1, data);
+		program_write_byte_32le(address + 1, data);
 }
 
 INLINE void WRITELONG(offs_t address, data32_t data)
@@ -338,7 +332,7 @@ INLINE void WRITELONG(offs_t address, data32_t data)
 	/* aligned writes are easy */
 	if (!(address & 3))
 	{
-		cpu_writemem32ledw_dword(address, data);
+		program_write_dword_32le(address, data);
 		return;
 	}
 
@@ -346,14 +340,14 @@ INLINE void WRITELONG(offs_t address, data32_t data)
 	switch (address & 3)
 	{
 		case 1:
-			cpu_writemem32ledw(address, data);
-			cpu_writemem32ledw_word(address + 1, data >> 8);
+			program_write_byte_32le(address, data);
+			program_write_word_32le(address + 1, data >> 8);
 			break;
 		case 2:
-			cpu_writemem32ledw_word(address, data);
+			program_write_word_32le(address, data);
 			break;
 		case 3:
-			cpu_writemem32ledw(address, data);
+			program_write_byte_32le(address, data);
 			break;
 	}
 }
@@ -396,16 +390,10 @@ INLINE void check_irqs(void)
 }
 
 
-void asap_set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
 	asap.irq_state = (state != CLEAR_LINE);
 	check_irqs();
-}
-
-
-void asap_set_irq_callback(int (*callback)(int irqline))
-{
-	asap.irq_callback = callback;
 }
 
 
@@ -414,7 +402,7 @@ void asap_set_irq_callback(int (*callback)(int irqline))
 **	CONTEXT SWITCHING
 **#################################################################################################*/
 
-unsigned asap_get_context(void *dst)
+static void asap_get_context(void *dst)
 {
 	/* copy the context */
 	if (dst)
@@ -423,13 +411,10 @@ unsigned asap_get_context(void *dst)
 			memcpy(&asap.r[0], &src2val[REGBASE], 32 * sizeof(UINT32));
 		*(asap_regs *)dst = asap;
 	}
-
-	/* return the context size */
-	return sizeof(asap_regs);
 }
 
 
-void asap_set_context(void *src)
+static void asap_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
@@ -491,12 +476,12 @@ static void init_tables(void)
 	}
 }
 
-void asap_init(void)
+static void asap_init(void)
 {
 	init_tables();
 }
 
-void asap_reset(void *param)
+static void asap_reset(void *param)
 {
 	/* initialize the state */
 	src2val[REGBASE + 0] = 0;
@@ -513,7 +498,7 @@ void asap_reset(void *param)
 }
 
 
-void asap_exit(void)
+static void asap_exit(void)
 {
 }
 
@@ -540,7 +525,7 @@ INLINE void execute_instruction(void)
 	(*opcode[asap.op.d >> 21])();
 }
 
-int asap_execute(int cycles)
+static int asap_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	asap_icount = cycles;
@@ -575,107 +560,6 @@ int asap_execute(int cycles)
 	asap_icount -= asap.interrupt_cycles;
 	asap.interrupt_cycles = 0;
 	return cycles - asap_icount;
-}
-
-
-
-/*###################################################################################################
-**	REGISTER SNOOP
-**#################################################################################################*/
-
-unsigned asap_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case ASAP_PC:		return asap.pc;
-		case ASAP_PS:		return GET_FLAGS(&asap);
-
-		case ASAP_R0:		return src2val[REGBASE + 0];
-		case ASAP_R1:		return src2val[REGBASE + 1];
-		case ASAP_R2:		return src2val[REGBASE + 2];
-		case ASAP_R3:		return src2val[REGBASE + 3];
-		case ASAP_R4:		return src2val[REGBASE + 4];
-		case ASAP_R5:		return src2val[REGBASE + 5];
-		case ASAP_R6:		return src2val[REGBASE + 6];
-		case ASAP_R7:		return src2val[REGBASE + 7];
-		case ASAP_R8:		return src2val[REGBASE + 8];
-		case ASAP_R9:		return src2val[REGBASE + 9];
-		case ASAP_R10:		return src2val[REGBASE + 10];
-		case ASAP_R11:		return src2val[REGBASE + 11];
-		case ASAP_R12:		return src2val[REGBASE + 12];
-		case ASAP_R13:		return src2val[REGBASE + 13];
-		case ASAP_R14:		return src2val[REGBASE + 14];
-		case ASAP_R15:		return src2val[REGBASE + 15];
-		case ASAP_R16:		return src2val[REGBASE + 16];
-		case ASAP_R17:		return src2val[REGBASE + 17];
-		case ASAP_R18:		return src2val[REGBASE + 18];
-		case ASAP_R19:		return src2val[REGBASE + 19];
-		case ASAP_R20:		return src2val[REGBASE + 20];
-		case ASAP_R21:		return src2val[REGBASE + 21];
-		case ASAP_R22:		return src2val[REGBASE + 22];
-		case ASAP_R23:		return src2val[REGBASE + 23];
-		case ASAP_R24:		return src2val[REGBASE + 24];
-		case ASAP_R25:		return src2val[REGBASE + 25];
-		case ASAP_R26:		return src2val[REGBASE + 26];
-		case ASAP_R27:		return src2val[REGBASE + 27];
-		case ASAP_R28:		return src2val[REGBASE + 28];
-		case ASAP_R29:		return src2val[REGBASE + 29];
-		case ASAP_R30:		return src2val[REGBASE + 30];
-		case ASAP_R31:		return src2val[REGBASE + 31];
-
-		case REG_PREVIOUSPC: return asap.ppc;
-	}
-	return 0;
-}
-
-
-
-/*###################################################################################################
-**	REGISTER MODIFY
-**#################################################################################################*/
-
-void asap_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-		case REG_PC:
-		case ASAP_PC:		asap.pc = val;					break;
-		case ASAP_PS:		SET_FLAGS(&asap, val); 			break;
-
-		case ASAP_R0:		src2val[REGBASE + 0] = val;		break;
-		case ASAP_R1:		src2val[REGBASE + 1] = val;		break;
-		case ASAP_R2:		src2val[REGBASE + 2] = val;		break;
-		case ASAP_R3:		src2val[REGBASE + 3] = val;		break;
-		case ASAP_R4:		src2val[REGBASE + 4] = val;		break;
-		case ASAP_R5:		src2val[REGBASE + 5] = val;		break;
-		case ASAP_R6:		src2val[REGBASE + 6] = val;		break;
-		case ASAP_R7:		src2val[REGBASE + 7] = val;		break;
-		case ASAP_R8:		src2val[REGBASE + 8] = val;		break;
-		case ASAP_R9:		src2val[REGBASE + 9] = val;		break;
-		case ASAP_R10:		src2val[REGBASE + 10] = val;	break;
-		case ASAP_R11:		src2val[REGBASE + 11] = val;	break;
-		case ASAP_R12:		src2val[REGBASE + 12] = val;	break;
-		case ASAP_R13:		src2val[REGBASE + 13] = val;	break;
-		case ASAP_R14:		src2val[REGBASE + 14] = val;	break;
-		case ASAP_R15:		src2val[REGBASE + 15] = val;	break;
-		case ASAP_R16:		src2val[REGBASE + 16] = val;	break;
-		case ASAP_R17:		src2val[REGBASE + 17] = val;	break;
-		case ASAP_R18:		src2val[REGBASE + 18] = val;	break;
-		case ASAP_R19:		src2val[REGBASE + 19] = val;	break;
-		case ASAP_R20:		src2val[REGBASE + 20] = val;	break;
-		case ASAP_R21:		src2val[REGBASE + 21] = val;	break;
-		case ASAP_R22:		src2val[REGBASE + 22] = val;	break;
-		case ASAP_R23:		src2val[REGBASE + 23] = val;	break;
-		case ASAP_R24:		src2val[REGBASE + 24] = val;	break;
-		case ASAP_R25:		src2val[REGBASE + 25] = val;	break;
-		case ASAP_R26:		src2val[REGBASE + 26] = val;	break;
-		case ASAP_R27:		src2val[REGBASE + 27] = val;	break;
-		case ASAP_R28:		src2val[REGBASE + 28] = val;	break;
-		case ASAP_R29:		src2val[REGBASE + 29] = val;	break;
-		case ASAP_R30:		src2val[REGBASE + 30] = val;	break;
-		case ASAP_R31:		src2val[REGBASE + 31] = val;	break;
-    }
 }
 
 
@@ -717,82 +601,10 @@ static UINT8 asap_win_layout[] =
 
 
 /*###################################################################################################
-**	DEBUGGER STRINGS
-**#################################################################################################*/
-
-const char *asap_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	asap_regs *r = context;
-	UINT32 *regbase = r->r;
-
-	which = (which+1) % 16;
-    buffer[which][0] = '\0';
-
-	if (!context)
-	{
-		r = &asap;
-		regbase = &src2val[REGBASE];
-	}
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+ASAP_PC:  sprintf(buffer[which], "PC: %08X", r->pc); break;
-		case CPU_INFO_REG+ASAP_PS:  sprintf(buffer[which], "PS: %08X", GET_FLAGS(r)); break;
-
-		case CPU_INFO_REG+ASAP_R0:	sprintf(buffer[which], "R0: %08X", regbase[0]); break;
-		case CPU_INFO_REG+ASAP_R1:	sprintf(buffer[which], "R1: %08X", regbase[1]); break;
-		case CPU_INFO_REG+ASAP_R2:	sprintf(buffer[which], "R2: %08X", regbase[2]); break;
-		case CPU_INFO_REG+ASAP_R3:	sprintf(buffer[which], "R3: %08X", regbase[3]); break;
-		case CPU_INFO_REG+ASAP_R4:	sprintf(buffer[which], "R4: %08X", regbase[4]); break;
-		case CPU_INFO_REG+ASAP_R5:	sprintf(buffer[which], "R5: %08X", regbase[5]); break;
-		case CPU_INFO_REG+ASAP_R6:	sprintf(buffer[which], "R6: %08X", regbase[6]); break;
-		case CPU_INFO_REG+ASAP_R7:	sprintf(buffer[which], "R7: %08X", regbase[7]); break;
-		case CPU_INFO_REG+ASAP_R8:	sprintf(buffer[which], "R8: %08X", regbase[8]); break;
-		case CPU_INFO_REG+ASAP_R9:	sprintf(buffer[which], "R9: %08X", regbase[9]); break;
-		case CPU_INFO_REG+ASAP_R10:	sprintf(buffer[which], "R10:%08X", regbase[10]); break;
-		case CPU_INFO_REG+ASAP_R11:	sprintf(buffer[which], "R11:%08X", regbase[11]); break;
-		case CPU_INFO_REG+ASAP_R12:	sprintf(buffer[which], "R12:%08X", regbase[12]); break;
-		case CPU_INFO_REG+ASAP_R13:	sprintf(buffer[which], "R13:%08X", regbase[13]); break;
-		case CPU_INFO_REG+ASAP_R14:	sprintf(buffer[which], "R14:%08X", regbase[14]); break;
-		case CPU_INFO_REG+ASAP_R15:	sprintf(buffer[which], "R15:%08X", regbase[15]); break;
-		case CPU_INFO_REG+ASAP_R16:	sprintf(buffer[which], "R16:%08X", regbase[16]); break;
-		case CPU_INFO_REG+ASAP_R17:	sprintf(buffer[which], "R17:%08X", regbase[17]); break;
-		case CPU_INFO_REG+ASAP_R18:	sprintf(buffer[which], "R18:%08X", regbase[18]); break;
-		case CPU_INFO_REG+ASAP_R19:	sprintf(buffer[which], "R19:%08X", regbase[19]); break;
-		case CPU_INFO_REG+ASAP_R20:	sprintf(buffer[which], "R20:%08X", regbase[20]); break;
-		case CPU_INFO_REG+ASAP_R21:	sprintf(buffer[which], "R21:%08X", regbase[21]); break;
-		case CPU_INFO_REG+ASAP_R22:	sprintf(buffer[which], "R22:%08X", regbase[22]); break;
-		case CPU_INFO_REG+ASAP_R23:	sprintf(buffer[which], "R23:%08X", regbase[23]); break;
-		case CPU_INFO_REG+ASAP_R24:	sprintf(buffer[which], "R24:%08X", regbase[24]); break;
-		case CPU_INFO_REG+ASAP_R25:	sprintf(buffer[which], "R25:%08X", regbase[25]); break;
-		case CPU_INFO_REG+ASAP_R26:	sprintf(buffer[which], "R26:%08X", regbase[26]); break;
-		case CPU_INFO_REG+ASAP_R27:	sprintf(buffer[which], "R27:%08X", regbase[27]); break;
-		case CPU_INFO_REG+ASAP_R28:	sprintf(buffer[which], "R28:%08X", regbase[28]); break;
-		case CPU_INFO_REG+ASAP_R29:	sprintf(buffer[which], "R29:%08X", regbase[29]); break;
-		case CPU_INFO_REG+ASAP_R30:	sprintf(buffer[which], "R30:%08X", regbase[30]); break;
-		case CPU_INFO_REG+ASAP_R31:	sprintf(buffer[which], "R31:%08X", regbase[31]); break;
-
-		case CPU_INFO_NAME: return "ASAP";
-		case CPU_INFO_FAMILY: return "Atari ASAP";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 2000";
-		case CPU_INFO_REG_LAYOUT: return (const char *)asap_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)asap_win_layout;
-		case CPU_INFO_REG+10000: return "         ";
-    }
-	return buffer[which];
-}
-
-
-
-/*###################################################################################################
 **	DISASSEMBLY HOOK
 **#################################################################################################*/
 
-unsigned asap_dasm(char *buffer, unsigned pc)
+static offs_t asap_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	extern unsigned dasmasap(char *, unsigned);
@@ -1908,3 +1720,190 @@ static void trapf(void)
 }
 
 
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void asap_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + ASAP_IRQ0:	set_irq_line(ASAP_IRQ0, info->i);				break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + ASAP_PC:	asap.pc = info->i;								break;
+		case CPUINFO_INT_REGISTER + ASAP_PS:	SET_FLAGS(&asap, info->i); 						break;
+
+		case CPUINFO_INT_REGISTER + ASAP_R0:	src2val[REGBASE + 0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R1:	src2val[REGBASE + 1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R2:	src2val[REGBASE + 2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R3:	src2val[REGBASE + 3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R4:	src2val[REGBASE + 4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R5:	src2val[REGBASE + 5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R6:	src2val[REGBASE + 6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R7:	src2val[REGBASE + 7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R8:	src2val[REGBASE + 8] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R9:	src2val[REGBASE + 9] = info->i;					break;
+		case CPUINFO_INT_REGISTER + ASAP_R10:	src2val[REGBASE + 10] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R11:	src2val[REGBASE + 11] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R12:	src2val[REGBASE + 12] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R13:	src2val[REGBASE + 13] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R14:	src2val[REGBASE + 14] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R15:	src2val[REGBASE + 15] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R16:	src2val[REGBASE + 16] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R17:	src2val[REGBASE + 17] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R18:	src2val[REGBASE + 18] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R19:	src2val[REGBASE + 19] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R20:	src2val[REGBASE + 20] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R21:	src2val[REGBASE + 21] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R22:	src2val[REGBASE + 22] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R23:	src2val[REGBASE + 23] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R24:	src2val[REGBASE + 24] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R25:	src2val[REGBASE + 25] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R26:	src2val[REGBASE + 26] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R27:	src2val[REGBASE + 27] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R28:	src2val[REGBASE + 28] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R29:	src2val[REGBASE + 29] = info->i;				break;
+		case CPUINFO_INT_REGISTER + ASAP_R30:	src2val[REGBASE + 30] = info->i;				break;
+		case CPUINFO_INT_SP:
+		case CPUINFO_INT_REGISTER + ASAP_R31:	src2val[REGBASE + 31] = info->i;				break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:			asap.irq_callback = info->irqcallback;			break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void asap_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(asap);					break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + ASAP_IRQ0:			info->i = asap.irq_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = asap.ppc;						break;
+
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + ASAP_PC:			info->i = asap.pc;						break;
+		case CPUINFO_INT_REGISTER + ASAP_PS:			info->i = GET_FLAGS(&asap);				break;
+
+		case CPUINFO_INT_REGISTER + ASAP_R0:			info->i = src2val[REGBASE + 0];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R1:			info->i = src2val[REGBASE + 1];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R2:			info->i = src2val[REGBASE + 2];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R3:			info->i = src2val[REGBASE + 3];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R4:			info->i = src2val[REGBASE + 4];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R5:			info->i = src2val[REGBASE + 5];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R6:			info->i = src2val[REGBASE + 6];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R7:			info->i = src2val[REGBASE + 7];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R8:			info->i = src2val[REGBASE + 8];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R9:			info->i = src2val[REGBASE + 9];			break;
+		case CPUINFO_INT_REGISTER + ASAP_R10:			info->i = src2val[REGBASE + 10];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R11:			info->i = src2val[REGBASE + 11];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R12:			info->i = src2val[REGBASE + 12];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R13:			info->i = src2val[REGBASE + 13];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R14:			info->i = src2val[REGBASE + 14];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R15:			info->i = src2val[REGBASE + 15];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R16:			info->i = src2val[REGBASE + 16];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R17:			info->i = src2val[REGBASE + 17];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R18:			info->i = src2val[REGBASE + 18];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R19:			info->i = src2val[REGBASE + 19];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R20:			info->i = src2val[REGBASE + 20];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R21:			info->i = src2val[REGBASE + 21];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R22:			info->i = src2val[REGBASE + 22];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R23:			info->i = src2val[REGBASE + 23];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R24:			info->i = src2val[REGBASE + 24];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R25:			info->i = src2val[REGBASE + 25];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R26:			info->i = src2val[REGBASE + 26];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R27:			info->i = src2val[REGBASE + 27];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R28:			info->i = src2val[REGBASE + 28];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R29:			info->i = src2val[REGBASE + 29];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R30:			info->i = src2val[REGBASE + 30];		break;
+		case CPUINFO_INT_REGISTER + ASAP_R31:			info->i = src2val[REGBASE + 31];		break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = asap_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = asap_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = asap_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = asap_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = asap_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = asap_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = asap_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = asap_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = asap.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &asap_icount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = asap_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = asap_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ASAP"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Atari ASAP"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 2000-2004"); break;
+
+		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+
+		case CPUINFO_STR_REGISTER + ASAP_PC:  			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", asap.pc); break;
+		case CPUINFO_STR_REGISTER + ASAP_PS:  			sprintf(info->s = cpuintrf_temp_str(), "PS: %08X", GET_FLAGS(&asap)); break;
+
+		case CPUINFO_STR_REGISTER + ASAP_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", asap.r[0]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", asap.r[1]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %08X", asap.r[2]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3: %08X", asap.r[3]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4: %08X", asap.r[4]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5: %08X", asap.r[5]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6: %08X", asap.r[6]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7: %08X", asap.r[7]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8: %08X", asap.r[8]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9: %08X", asap.r[9]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", asap.r[10]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", asap.r[11]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", asap.r[12]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", asap.r[13]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", asap.r[14]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", asap.r[15]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", asap.r[16]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", asap.r[17]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", asap.r[18]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", asap.r[19]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", asap.r[20]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", asap.r[21]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", asap.r[22]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", asap.r[23]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", asap.r[24]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", asap.r[25]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", asap.r[26]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", asap.r[27]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", asap.r[28]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", asap.r[29]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", asap.r[30]); break;
+		case CPUINFO_STR_REGISTER + ASAP_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", asap.r[31]); break;
+	}
+}

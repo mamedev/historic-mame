@@ -175,40 +175,40 @@ static WRITE_HANDLER( wc_b2 )
 	}
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8400, 0x87ff, MRA_RAM }, /* mirror */
-	{ 0x8800, 0x8bff, MRA_RAM }, /* mirror */
-	{ 0x8c00, 0x8fff, MRA_RAM }, /* mirror */
+	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM) /* mirror */
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM) /* mirror */
+	AM_RANGE(0x8c00, 0x8fff) AM_READ(MRA8_RAM) /* mirror */
 
-	{ 0xa000, 0xa3ff, MRA_RAM },
+	AM_RANGE(0xa000, 0xa3ff) AM_READ(MRA8_RAM)
 
-	{ 0xb000, 0xb000, input_port_0_r },
-	{ 0xb200, 0xb200, input_port_1_r },
-	{ 0xb400, 0xb400, input_port_2_r },
-	{ 0xb600, 0xb600, input_port_3_r },
-MEMORY_END
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_0_r)
+	AM_RANGE(0xb200, 0xb200) AM_READ(input_port_1_r)
+	AM_RANGE(0xb400, 0xb400) AM_READ(input_port_2_r)
+	AM_RANGE(0xb600, 0xb600) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 
-	{ 0x8000, 0x83ff, wallc_videoram_w, &videoram },	/* 2114, 2114 */
-	{ 0x8400, 0x87ff, wallc_videoram_w },	/* mirror */
-	{ 0x8800, 0x8bff, wallc_videoram_w },	/* mirror */
-	{ 0x8c00, 0x8fff, wallc_videoram_w },	/* mirror */
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(wallc_videoram_w) AM_BASE(&videoram)	/* 2114, 2114 */
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(wallc_videoram_w)	/* mirror */
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(wallc_videoram_w)	/* mirror */
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(wallc_videoram_w)	/* mirror */
 
-	{ 0xa000, 0xa3ff, MWA_RAM },		/* 2114, 2114 */
+	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM)		/* 2114, 2114 */
 
-	{ 0xb000, 0xb000, wc_b0 }, /*?*/
-	{ 0xb100, 0xb100, wc_b1 }, /*?*/
-	{ 0xb200, 0xb200, wc_b2 }, /*?*/
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(wc_b0) /*?*/
+	AM_RANGE(0xb100, 0xb100) AM_WRITE(wc_b1) /*?*/
+	AM_RANGE(0xb200, 0xb200) AM_WRITE(wc_b2) /*?*/
 
-	{ 0xb500, 0xb500, AY8910_control_port_0_w },
-	{ 0xb600, 0xb600, AY8910_write_port_0_w },
-MEMORY_END
+	AM_RANGE(0xb500, 0xb500) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb600, 0xb600) AM_WRITE(AY8910_write_port_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( wallc )
@@ -319,7 +319,7 @@ static struct AY8910interface ay8912_interface =
 static MACHINE_DRIVER_START( wallc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12288000 / 4)	/* 3.072 MHz ? */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

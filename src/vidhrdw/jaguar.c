@@ -485,7 +485,7 @@ void jaguar_set_palette(UINT16 vmode)
 
 static UINT8 *get_jaguar_memory(UINT32 offset)
 {
-	return memory_get_read_ptr(1, offset);
+	return memory_get_read_ptr(1, ADDRESS_SPACE_PROGRAM, offset);
 }
 
 

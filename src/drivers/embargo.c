@@ -107,33 +107,33 @@ static WRITE_HANDLER( embargo_input_w )
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x1e00, 0x3dff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x1e00, 0x3dff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x1e00, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3dff, embargo_videoram_w, &videoram, &videoram_size },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1e00, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x3dff) AM_WRITE(embargo_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, input_port_0_r },
-	{ 0x02, 0x02, embargo_dial_r },
-	{ S2650_DATA_PORT, S2650_DATA_PORT, input_port_2_r },
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, embargo_input_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(embargo_dial_r)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(input_port_2_r)
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READ(embargo_input_r)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( writeport )
-	{ 0x01, 0x01, embargo_port1_w },
-	{ 0x02, 0x02, embargo_port2_w },
-	{ 0x03, 0x03, IOWP_NOP }, /* always 0xFE */
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, embargo_input_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_WRITE(embargo_port1_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(embargo_port2_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP) /* always 0xFE */
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_WRITE(embargo_input_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( embargo )
@@ -174,8 +174,8 @@ static MACHINE_DRIVER_START( embargo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 625000)
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
+	MDRV_CPU_IO_MAP(readport, writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

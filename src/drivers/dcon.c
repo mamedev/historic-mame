@@ -33,38 +33,38 @@ extern data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,
 
 /***************************************************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ 0x00000, 0x7ffff, MRA16_ROM },
-	{ 0x80000, 0x8bfff, MRA16_RAM },
-	{ 0x8c000, 0x8c7ff, MRA16_RAM },
-	{ 0x8c800, 0x8cfff, MRA16_RAM },
-	{ 0x8d000, 0x8d7ff, MRA16_RAM },
-	{ 0x8d800, 0x8e7ff, MRA16_RAM },
-	{ 0x8e800, 0x8f7ff, MRA16_RAM },
-	{ 0x8f800, 0x8ffff, MRA16_RAM },
-	{ 0xa0000, 0xa000d, seibu_main_word_r },
-	{ 0xc001c, 0xc001d, dcon_control_r },
-	{ 0xe0000, 0xe0001, input_port_1_word_r },
-	{ 0xe0002, 0xe0003, input_port_2_word_r },
-	{ 0xe0004, 0xe0005, input_port_3_word_r },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000, 0x7ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x80000, 0x8bfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8c000, 0x8c7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8c800, 0x8cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8d000, 0x8d7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8d800, 0x8e7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8e800, 0x8f7ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8f800, 0x8ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xa0000, 0xa000d) AM_READ(seibu_main_word_r)
+	AM_RANGE(0xc001c, 0xc001d) AM_READ(dcon_control_r)
+	AM_RANGE(0xe0000, 0xe0001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xe0002, 0xe0003) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xe0004, 0xe0005) AM_READ(input_port_3_word_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( writemem )
-	{ 0x00000, 0x7ffff, MWA16_ROM },
-	{ 0x80000, 0x8bfff, MWA16_RAM },
-	{ 0x8c000, 0x8c7ff, dcon_background_w, &dcon_back_data },
-	{ 0x8c800, 0x8cfff, dcon_foreground_w, &dcon_fore_data },
-	{ 0x8d000, 0x8d7ff, dcon_midground_w, &dcon_mid_data },
-	{ 0x8d800, 0x8e7ff, dcon_text_w, &dcon_textram },
-	{ 0x8e800, 0x8f7ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x8f800, 0x8ffff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x9d000, 0x9d7ff, dcon_gfxbank_w },
-	{ 0xa0000, 0xa000d, seibu_main_word_w },
-	{ 0xc001c, 0xc001d, dcon_control_w },
-	{ 0xc0020, 0xc002f, MWA16_RAM, &dcon_scroll_ram },
-	{ 0xc0080, 0xc0081, MWA16_NOP },
-	{ 0xc00c0, 0xc00c1, MWA16_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000, 0x7ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x80000, 0x8bfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x8c000, 0x8c7ff) AM_WRITE(dcon_background_w) AM_BASE(&dcon_back_data)
+	AM_RANGE(0x8c800, 0x8cfff) AM_WRITE(dcon_foreground_w) AM_BASE(&dcon_fore_data)
+	AM_RANGE(0x8d000, 0x8d7ff) AM_WRITE(dcon_midground_w) AM_BASE(&dcon_mid_data)
+	AM_RANGE(0x8d800, 0x8e7ff) AM_WRITE(dcon_text_w) AM_BASE(&dcon_textram)
+	AM_RANGE(0x8e800, 0x8f7ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x8f800, 0x8ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9d000, 0x9d7ff) AM_WRITE(dcon_gfxbank_w)
+	AM_RANGE(0xa0000, 0xa000d) AM_WRITE(seibu_main_word_w)
+	AM_RANGE(0xc001c, 0xc001d) AM_WRITE(dcon_control_w)
+	AM_RANGE(0xc0020, 0xc002f) AM_WRITE(MWA16_RAM) AM_BASE(&dcon_scroll_ram)
+	AM_RANGE(0xc0080, 0xc0081) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xc00c0, 0xc00c1) AM_WRITE(MWA16_NOP)
+ADDRESS_MAP_END
 
 /******************************************************************************/
 
@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( dcon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	SEIBU_SOUND_SYSTEM_CPU(4000000) /* Perhaps 14318180/4? */
@@ -310,7 +310,7 @@ static MACHINE_DRIVER_START( sdgndmps )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
