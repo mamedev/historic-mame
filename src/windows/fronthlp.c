@@ -483,7 +483,7 @@ int frontend_help (const char *gamename)
 	{
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n\n",build_version);
+				"Copyright (C) 1997-2005 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list         for a brief list of supported games\n"

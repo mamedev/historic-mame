@@ -407,7 +407,7 @@ void namco_sh_stop(void)
 
 /********************************************************************************/
 
-/* pengo register map
+/* pacman register map
 	0x05:		ch 0	waveform select
 	0x0a:		ch 1	waveform select
 	0x0f:		ch 2	waveform select
@@ -423,12 +423,12 @@ void namco_sh_stop(void)
 	0x1f:		ch 2	volume
 */
 
-WRITE8_HANDLER( pengo_sound_enable_w )
+WRITE8_HANDLER( pacman_sound_enable_w )
 {
 	sound_enable = data;
 }
 
-WRITE8_HANDLER( pengo_sound_w )
+WRITE8_HANDLER( pacman_sound_w )
 {
 	sound_channel *voice;
 	int ch;

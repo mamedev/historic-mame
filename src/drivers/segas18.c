@@ -28,17 +28,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/segaic16.h"
 #include "system16.h"
-
-
-
-/*************************************
- *
- *	Debugging
- *
- *************************************/
-
-#define PRINT_MAPPINGS			(0)
 
 
 
@@ -56,27 +47,6 @@
 
 /*************************************
  *
- *	Types
- *
- *************************************/
-
-struct region_info
-{
-	UINT8			regbase;
-	offs_t			regoffs;
-	offs_t			length;
-	offs_t			mirror;
-	offs_t			romoffset;
-	read16_handler	read;
-	write16_handler	write;
-	data16_t **		base;
-	const char *	name;
-};
-
-
-
-/*************************************
- *
  *	Statics
  *
  *************************************/
@@ -84,7 +54,6 @@ struct region_info
 static data16_t *workram;
 
 static UINT8 rom_board;
-static UINT8 memory_control[0x20];
 static UINT8 misc_io_data[0x10];
 static UINT8 mcu_data;
 
@@ -108,15 +77,9 @@ extern void fd1094_driver_init(void);
 extern READ16_HANDLER( segac2_vdp_r );
 extern WRITE16_HANDLER( segac2_vdp_w );
 
-static void update_memory_mapping(void);
-
-static READ16_HANDLER( unmapped_r );
-static WRITE16_HANDLER( unmapped_w );
 static READ16_HANDLER( misc_io_r );
 static WRITE16_HANDLER( misc_io_w );
 static WRITE16_HANDLER( rom_5987_bank_w );
-static READ16_HANDLER( unknown_rgn2_r );
-static WRITE16_HANDLER( unknown_rgn2_w );
 
 
 
@@ -126,49 +89,49 @@ static WRITE16_HANDLER( unknown_rgn2_w );
  *
  *************************************/
 
-static struct region_info rom_171_shad_info[] =
+static const struct segaic16_memory_map_entry rom_171_shad_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
-	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, NULL,                  NULL,                  NULL,                "????" },
-	{ 0x25/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                  "I/O space" },
+	{ 0x39/2, 0x00000, 0x02000, 0xffe000,      ~0, MRA16_BANK10,          segaic16_paletteram_w, &paletteram16,         "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK11,          segaic16_tileram_0_w,  &segaic16_tileram_0,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK12,          segaic16_textram_0_w,  &segaic16_textram_0,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK13,          MWA16_BANK13,          &segaic16_spriteram_0, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK14,          MWA16_BANK14,          &workram,              "work RAM" },
+	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, NULL,                  NULL,                  NULL,                  "????" },
+	{ 0x25/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                  "VDP" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK17,          MWA16_ROM,             NULL,                  "ROM 0" },
 	{ 0 }
 };
 
-static struct region_info rom_171_5874_info[] =
+static const struct segaic16_memory_map_entry rom_171_5874_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
-	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
-	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          MWA16_ROM,             NULL,                "ROM 1" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                  "I/O space" },
+	{ 0x39/2, 0x00000, 0x02000, 0xffe000,      ~0, MRA16_BANK10,          segaic16_paletteram_w, &paletteram16,         "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK11,          segaic16_tileram_0_w,  &segaic16_tileram_0,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK12,          segaic16_textram_0_w,  &segaic16_textram_0,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK13,          MWA16_BANK13,          &segaic16_spriteram_0, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK14,          MWA16_BANK14,          &workram,              "work RAM" },
+	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                  "VDP" },
+	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK16,          MWA16_ROM,             NULL,                  "ROM 1" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK17,          MWA16_ROM,             NULL,                  "ROM 0" },
 	{ 0 }
 };
 
-static struct region_info rom_171_5987_info[] =
+static const struct segaic16_memory_map_entry rom_171_5987_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
-	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
-	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          rom_5987_bank_w,       NULL,                "ROM 1/banking" },
-	{ 0x21/2, 0x00000, 0x100000,0xf00000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                  "I/O space" },
+	{ 0x39/2, 0x00000, 0x02000, 0xffe000,      ~0, MRA16_BANK10,          segaic16_paletteram_w, &paletteram16,         "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK11,          segaic16_tileram_0_w,  &segaic16_tileram_0,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK12,          segaic16_textram_0_w,  &segaic16_textram_0,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK13,          MWA16_BANK13,          &segaic16_spriteram_0, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK14,          MWA16_BANK14,          &workram,              "work RAM" },
+	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                  "VDP" },
+	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK16,          rom_5987_bank_w,       NULL,                  "ROM 1/banking" },
+	{ 0x21/2, 0x00000, 0x100000,0xf00000, 0x00000, MRA16_BANK17,          MWA16_ROM,             NULL,                  "ROM 0" },
 	{ 0 }
 };
 
-static struct region_info *region_info_list[] =
+static const struct segaic16_memory_map_entry *region_info_list[] =
 {
 	&rom_171_shad_info[0],
 	&rom_171_5874_info[0],
@@ -183,6 +146,19 @@ static struct region_info *region_info_list[] =
  *
  *************************************/
 
+static void sound_w(data8_t data)
+{
+	soundlatch_w(0, data & 0xff);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+}
+
+
+static data8_t sound_r(void)
+{
+	return mcu_data;
+}
+
+
 static void system18_generic_init(int _rom_board)
 {
 	int rgnum;
@@ -190,13 +166,17 @@ static void system18_generic_init(int _rom_board)
 	/* set the ROM board */
 	rom_board = _rom_board;
 
-	/* loop over the regions and allocate memory */
-	for (rgnum = 0; region_info_list[rom_board][rgnum].regbase != 0; rgnum++)
-	{
-		const struct region_info *rgn = &region_info_list[rom_board][rgnum];
-		if (rgn->base)
-			*rgn->base = auto_malloc(rgn->length);
-	}
+	/* allocate memory for regions not autmatically assigned */
+	segaic16_spriteram_0 = auto_malloc(0x00800);
+	paletteram16         = auto_malloc(0x04000);
+	segaic16_tileram_0   = auto_malloc(0x10000);
+	segaic16_textram_0   = auto_malloc(0x01000);
+	workram              = auto_malloc(0x04000);
+	if (!segaic16_spriteram_0 || !paletteram16 || !segaic16_tileram_0 || !segaic16_textram_0 || !workram)
+		osd_die("Out of memory allocating RAM space\n");
+
+	/* init the memory mapper */
+	segaic16_memory_mapper_init(0, region_info_list[rom_board], sound_w, sound_r);
 
 	/* init the FD1094 */
 	fd1094_driver_init();
@@ -216,266 +196,13 @@ static void system18_generic_init(int _rom_board)
 
 MACHINE_INIT( system18 )
 {
+	segaic16_memory_mapper_reset();
+	segaic16_tilemap_reset(0);
 	fd1094_machine_init();
-	system18_reset_video();
 
 	/* if we are running with a real live 8751, we need to boost the interleave at startup */
 	if (Machine->drv->cpu[2].cpu_type == CPU_I8751)
 		cpu_boost_interleave(0, TIME_IN_MSEC(10));
-}
-
-
-
-/*************************************
- *
- *	Dynamic memory maps
- *
- *************************************/
-
-static void memory_control_w(offs_t offset, data8_t data)
-{
-	UINT8 oldval;
-
-	/* wraps every 32 words */
-	offset &= 0x1f;
-
-	/* remember the previous value and swap in the new one */
-	oldval = memory_control[offset];
-	memory_control[offset] = data;
-
-	/* switch off the offset */
-	switch (offset)
-	{
-		case 0x02:
-			/* misc commands */
-			/*   00 - resume execution after 03 */
-			/*   03 - maybe controls halt and reset lines together? */
-			if ((oldval ^ memory_control[offset]) & 3)
-			{
-				cpunum_set_input_line(0, INPUT_LINE_RESET, (memory_control[offset] & 3) == 3 ? ASSERT_LINE : CLEAR_LINE);
-				if ((memory_control[offset] & 3) == 3)
-					fd1094_machine_init();
-			}
-			break;
-
-		case 0x03:
-			soundlatch_w(0, data & 0xff);
-			cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-			break;
-
-		case 0x04:
-			/* controls IRQ lines to 68000, negative logic -- write $B to signal IRQ4 */
-			if ((memory_control[offset] & 7) != 7)
-				cpunum_set_input_line(0, (~memory_control[offset] & 7), HOLD_LINE);
-			break;
-
-		case 0x05:
-			/* read/write control */
-			/*   01 - write data latched in 00,01 to 2 * (address in 0A,0B,0C) */
-			/*   02 - read data into latches 00,01 from 2 * (address in 07,08,09) */
-			if (data == 0x01)
-			{
-				offs_t addr = (memory_control[0x0a] << 17) | (memory_control[0x0b] << 9) | (memory_control[0x0c] << 1);
-				cpuintrf_push_context(0);
-				program_write_word_16be(addr, (memory_control[0x00] << 8) | memory_control[0x01]);
-				cpuintrf_pop_context();
-			}
-			else if (data == 0x02)
-			{
-				offs_t addr = (memory_control[0x07] << 17) | (memory_control[0x08] << 9) | (memory_control[0x09] << 1);
-				data16_t result;
-				cpuintrf_push_context(0);
-				result = program_read_word_16be(addr);
-				cpuintrf_pop_context();
-				memory_control[0x00] = result >> 8;
-				memory_control[0x01] = result;
-			}
-			break;
-		
-		case 0x07:	case 0x08:	case 0x09:
-			/* writes here latch a 68000 address for writing */
-			break;
-
-		case 0x0a:	case 0x0b:	case 0x0c:
-			/* writes here latch a 68000 address for reading */
-			break;
-
-		case 0x10:	case 0x11:
-		case 0x12:	case 0x13:
-		case 0x14:	case 0x15:
-		case 0x16:	case 0x17:
-		case 0x18:	case 0x19:
-		case 0x1a:	case 0x1b:
-		case 0x1c:	case 0x1d:
-		case 0x1e:	case 0x1f:
-			if (oldval != data)
-				update_memory_mapping();
-			break;
-
-		default:
-			logerror("Unknown memory_control_w to address %02X = %02X\n", offset, data);
-			break;
-	}
-}
-
-
-static data8_t memory_control_r(offs_t offset, data8_t unmap_value)
-{
-	/* wraps every 32 words */
-	offset &= 0x1f;
-
-	/* switch off the offset */
-	switch (offset)
-	{
-		case 0x00:
-		case 0x01:
-			/* data latches - return the values latched */
-			return memory_control[offset];
-
-		case 0x02:
-			/* various input bits from the 68000 */
-			/*   01 - ???? */
-			/*   02 - ???? */
-			/*   04 - ???? */
-			/*   08 - ???? */
-			/*   40 - set if busy processing a read/write request */
-			/* Together, 01+02 == 00 if the 68000 is halted */
-			/* Together, 01+02+04+08 == 0F if the 68000 is executing */
-			return (memory_control[0x02] & 3) == 3 ? 0x00 : 0x0f;
-
-		case 0x03:
-			/* this returns data that the sound CPU writes */
-			return mcu_data;
-
-		default:
-			logerror("Unknown memory_control_r from address %02X\n", offset);
-			break;
-	}
-	return unmap_value;
-}
-
-
-static void update_memory_mapping(void)
-{
-	static const offs_t region_size_map[4] = { 0x00ffff, 0x01ffff, 0x07ffff, 0x1fffff };
-	int rgnum;
-
-	if (PRINT_MAPPINGS) printf("----\nRemapping:\n");
-
-	/* first reset everything back to the beginning */
-	memory_install_read16_handler (0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x00ffff, 0, 0, MRA16_ROM);
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x00ffff, 0, 0, (write16_handler)STATIC_UNMAP);
-	memory_install_read16_handler (0, ADDRESS_SPACE_PROGRAM, 0x010000, 0xffffff, 0, 0, unmapped_r);
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x010000, 0xffffff, 0, 0, unmapped_w);
-
-	/* loop over the regions */
-	for (rgnum = 0; region_info_list[rom_board][rgnum].regbase != 0; rgnum++)
-	{
-		const struct region_info *rgn = &region_info_list[rom_board][rgnum];
-		offs_t region_size = region_size_map[memory_control[rgn->regbase] & 3];
-		offs_t region_base = (memory_control[rgn->regbase + 1] << 16) & ~region_size;
-
-		/* only map if the base is non-zero, or if it's the base of the first ROM */
-		if (region_base != 0 || rgn->romoffset == 0)
-		{
-			offs_t region_mirror = rgn->mirror & region_size;
-			offs_t region_start = region_base + (rgn->regoffs & region_size);
-			offs_t region_end = region_start + ((rgn->length - 1 < region_size) ? rgn->length - 1 : region_size);
-			write16_handler write = rgn->write;
-			read16_handler read = rgn->read;
-			int banknum = 0;
-
-			/* check for mapping to banks */
-			if ((FPTR)read >= STATIC_BANK1 && (FPTR)read <= STATIC_BANKMAX)
-				banknum = ((FPTR)read - STATIC_BANK1) + 1;
-			if ((FPTR)write >= STATIC_BANK1 && (FPTR)write <= STATIC_BANKMAX)
-				banknum = ((FPTR)write - STATIC_BANK1) + 1;
-
-			/* ROM areas need extra clamping */
-			if (rgn->romoffset != ~0)
-			{
-				offs_t romsize = memory_region_length(REGION_CPU1);
-				if (region_start >= romsize)
-					read = NULL;
-				else if (region_start + rgn->length > romsize)
-					region_end = romsize - 1;
-			}
-
-			if (PRINT_MAPPINGS) printf("  %06X-%06X (%06X) = %s\n", region_start, region_end, region_mirror, rgn->name);
-
-			/* map it */
-			if (read)
-				memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, region_start, region_end, 0, region_mirror, read);
-			if (write)
-				memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, region_start, region_end, 0, region_mirror, write);
-
-			/* set the bank pointer */
-			if (banknum && read)
-			{
-				if (rgn->base)
-					memory_set_bankptr(banknum, *rgn->base);
-				else if (rgn->romoffset != ~0)
-					memory_set_bankptr(banknum, memory_region(REGION_CPU1) + region_start);
-			}
-		}
-	}
-}
-
-
-
-/*************************************
- *
- *	Dynamic memory map accesors
- *
- *************************************/
-
-static data16_t unmapped_memory_r(void)
-{
-	static int recurse = 0;
-	data16_t result;
-
-	/* Unmapped memory returns the last word on the data bus, which is almost always the opcode */
-	/* of the next instruction due to prefetch; however, since we may be encrypted, we actually */
-	/* need to return the encrypted opcode, not the last decrypted data. */
-
-	/* Believe it or not, this is actually important for Cotton, which has the following evil */
-	/* code: btst #0,$7038f7, which tests the low bit of an unmapped address, which thus should */
-	/* return the prefetched value. */
-
-	/* prevent recursion */
-	if (recurse)
-		return 0xffff;
-
-	/* read original encrypted memory at that address */
-	recurse = 1;
-	result = program_read_word_16be(activecpu_get_pc());
-	recurse = 0;
-	return result;
-}
-
-
-static READ16_HANDLER( unmapped_r )
-{
-	return memory_control_r(offset, unmapped_memory_r());
-}
-
-
-static WRITE16_HANDLER( unmapped_w )
-{
-	if (ACCESSING_LSB)
-		memory_control_w(offset, data & 0xff);
-}
-
-
-static READ8_HANDLER( mcu_memory_map_r )
-{
-	return memory_control_r(offset, 0xff);
-}
-
-
-static WRITE8_HANDLER( mcu_memory_map_w )
-{
-	memory_control_w(offset, data);
 }
 
 
@@ -555,7 +282,8 @@ static WRITE16_HANDLER( io_chip_w )
 		/* miscellaneous output */
 		case 0x06/2:
 			system18_set_grayscale(~data & 0x40);
-			system18_set_screen_flip(data & 0x20);
+			segaic16_tilemap_set_flip(0, data & 0x20);
+			segaic16_sprites_set_flip(0, data & 0x20);
 /* These are correct according to cgfm's docs, but mwalker and ddcrew both
    enable the lockout and never turn it off
 			coin_lockout_w(1, data & 0x08);
@@ -571,16 +299,15 @@ static WRITE16_HANDLER( io_chip_w )
 				int i;
 				for (i = 0; i < 4; i++)
 				{
-					system18_set_tile_bank(0 + i, (data & 0xf) * 4 + i);
-					system18_set_tile_bank(4 + i, ((data >> 4) & 0xf) * 4 + i);
+					segaic16_tilemap_set_bank(0, 0 + i, (data & 0xf) * 4 + i);
+					segaic16_tilemap_set_bank(0, 4 + i, ((data >> 4) & 0xf) * 4 + i);
 				}
 			}
 			break;
 
 		/* CNT register */
 		case 0x1c/2:
-			if ((old ^ data) & 2)
-				system18_set_draw_enable(data & 2);
+			segaic16_set_display_enable(data & 2);
 			if ((old ^ data) & 4)
 				system18_set_vdp_enable(data & 4);
 			break;
@@ -605,7 +332,7 @@ static READ16_HANDLER( misc_io_r )
 	if (custom_io_r)
 		return custom_io_r(offset, mem_mask);
 	logerror("%06X:misc_io_r - unknown read access to address %04X\n", activecpu_get_pc(), offset * 2);
-	return unmapped_memory_r();
+	return segaic16_open_bus_r(0,0);
 }
 
 
@@ -634,22 +361,11 @@ static WRITE16_HANDLER( misc_io_w )
 			break;
 	}
 	if (custom_io_w)
-		return custom_io_w(offset, data, mem_mask);
+	{
+		custom_io_w(offset, data, mem_mask);
+		return;
+	}
 	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
-}
-
-
-
-static READ16_HANDLER( unknown_rgn2_r )
-{
-	if (PRINT_MAPPINGS) printf("Region 2: read from %04X\n", offset * 2);
-	return unmapped_memory_r();
-}
-
-
-static WRITE16_HANDLER( unknown_rgn2_w )
-{
-	if (PRINT_MAPPINGS) printf("Region 2: write to %04X = %04X & %04X\n", offset * 2, data, mem_mask ^ 0xffff);
 }
 
 
@@ -673,7 +389,7 @@ static WRITE16_HANDLER( rom_5987_bank_w )
 		int maxbanks = Machine->gfx[0]->total_elements / 1024;
 		if (data >= maxbanks)
 			data %= maxbanks;
-		system18_set_tile_bank(offset, data);
+		segaic16_tilemap_set_bank(0, offset, data);
 	}
 
 	/* sprite banking */
@@ -682,7 +398,8 @@ static WRITE16_HANDLER( rom_5987_bank_w )
 		int maxbanks = memory_region_length(REGION_GFX2) / 0x40000;
 		if (data >= maxbanks)
 			data = 255;
-		system18_set_sprite_bank(offset - 8, data);
+		segaic16_sprites_set_bank(0, (offset - 8) * 2 + 0, data * 2 + 0);
+		segaic16_sprites_set_bank(0, (offset - 8) * 2 + 1, data * 2 + 1);
 	}
 }
 
@@ -707,7 +424,7 @@ static READ16_HANDLER( ddcrew_custom_io_r )
 		case 0x3024/2:
 			return readinputportbytag("P34START");
 	}
-	return unmapped_memory_r();
+	return segaic16_open_bus_r(0,0);
 }
 
 
@@ -731,7 +448,7 @@ static READ16_HANDLER( lghost_custom_io_r )
 			lghost_value <<= 1;
 			return result;
 	}
-	return unmapped_memory_r();
+	return segaic16_open_bus_r(0,0);
 }
 
 
@@ -754,7 +471,7 @@ static WRITE16_HANDLER( lghost_custom_io_w )
 		case 0x3016/2:
 			lghost_value = readinputportbytag(lghost_select ? "GUNX3" : "GUNX2");
 			break;
-		
+
 		case 0x3020/2:
 			lghost_select = data & 1;
 			break;
@@ -806,7 +523,7 @@ static READ16_HANDLER( wwally_custom_io_r )
 		case 0x3014/2:
 			return (readinputportbytag("TRACKY3") - wwally_last_y[2]) & 0xff;
 	}
-	return unmapped_memory_r();
+	return segaic16_open_bus_r(0,0);
 }
 
 
@@ -880,8 +597,7 @@ static NVRAM_HANDLER( system18 )
 
 static ADDRESS_MAP_START( system18_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x00ffff) AM_ROM
-	AM_RANGE(0x010000, 0xffffff) AM_WRITE(unmapped_w)
+	AM_RANGE(0x000000, 0xffffff) AM_READWRITE(segaic16_memory_mapper_lsb_r, segaic16_memory_mapper_lsb_w)
 ADDRESS_MAP_END
 
 
@@ -930,7 +646,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mcu_data_map, ADDRESS_SPACE_DATA, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x001f) AM_READWRITE(mcu_memory_map_r, mcu_memory_map_w)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(segaic16_memory_mapper_r, segaic16_memory_mapper_w)
 ADDRESS_MAP_END
 
 
@@ -1217,7 +933,7 @@ static INPUT_PORTS_START( desertbr )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
@@ -1889,8 +1605,8 @@ ROM_START( ddcrewb )
 	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
 	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	/* not dumped */
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0184.key", 0x0000, 0x2000, CRC(cee06254) SHA1(d64903055fdefb49c584cbcd84f0d4fa811bd789) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "14127.1c", 0x00000, 0x40000, CRC(2228cd88) SHA1(5774bb6a401c3da05c5f3c9d3996b20bb3713cb2) )
@@ -2198,6 +1914,35 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
+	Pontoon, Sega System 18
+	CPU: FD1094 317-0153
+	ROM Board: 171-5873B
+*/
+ROM_START( pontoon )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr13175.a6", 0x000000, 0x40000, CRC(a2a5d0f5) SHA1(e22b13f152e0edadeb0f84b4a93ad366201cbae9) )
+	ROM_LOAD16_BYTE( "epr13174.a5", 0x000001, 0x40000, CRC(db976b13) SHA1(3970968b21491beb8aac109eeb753b69ca752205) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0153.key", 0x0000, 0x2000, CRC(bcac8c7a) SHA1(1ee9db8f21a55cbfc391af9731d6a1dcf7f2d4c2) )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr13097.b1", 0x00000, 0x40000, CRC(6474b245) SHA1(af7db8ac8e74628a8ba61d0860960deeca4a3e3f) )
+	ROM_LOAD( "epr13098.b2", 0x40000, 0x40000, CRC(89fc9a9b) SHA1(d98691eb5fef8aca4ad5e416d0a3797d6ca9b012) )
+	ROM_LOAD( "epr13099.b3", 0x80000, 0x40000, CRC(790e0ac6) SHA1(a4999b7015ef27d6cbe4f53bc0d7fe05ee40d178) )
+
+	ROM_REGION16_BE( 0x80000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr13173.b11",  0x000001, 0x40000, CRC(40a0ddfa) SHA1(f3917361f627865d2f1a22791904da056ce8a93a) )
+	ROM_LOAD16_BYTE( "epr13176.a11",  0x000000, 0x40000, CRC(1184fbd2) SHA1(685ee2d7c4a0134af13ccf5d15f2e56a6b905195) )
+
+	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
+	ROM_LOAD( "epr12826a.a4", 0x10000, 0x20000, CRC(d41e2a3f) SHA1(087a6515ebefc3252a1feab5bf7b8a22bff9e379) )
+ROM_END
+
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
 	Shadow Dancer, Sega System 18
 	CPU: 68000
 	ROM Board: 171-5873B
@@ -2295,7 +2040,6 @@ ROM_END
 	CPU: FD1094 317-0197
 	ROM Board: 171-5873B
 */
-
 ROM_START( wwally )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0197a */
 	ROM_LOAD16_BYTE( "epr14730a.a4", 0x000000, 0x40000, CRC(daa7880e) SHA1(9ea83e04c3e07d84afa67097c28b3951c9db8d00) )
@@ -2329,7 +2073,6 @@ ROM_END
 	CPU: FD1094 317-????
 	ROM Board: 171-5873B
 */
-
 ROM_START( wwallyb )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0197 (?) */
 	ROM_LOAD16_BYTE( "14730", 0x000000, 0x40000, CRC(e72bc17a) SHA1(ac3b7d86571a6f510c202735134c1bc4809aa26e) )
@@ -2427,13 +2170,14 @@ GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0,   "
 GAME( 1992, desertbr, 0,        system18,      desertbr, generic_5987, ROT270, "Sega",    "Desert Breaker (FD1094 317-0196)" ) // decrypted
 GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
 GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
-GAMEX(1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)" ) // decrypted
 GAMEX(1991, ddcrewc,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
 GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (US, 317-0165)" ) // decrypted
 GAME( 1990, lghosta,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (317-0166)" ) // decrypted
 GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (World, FD1094/8751 317-0159)" ) // decrypted
 GAME( 1990, mwalka,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (US, FD1094/8751 317-0158)" ) // decrypted
 GAME( 1990, mwalkb,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (Japan, FD1094/8751 317-0157)" ) // decrypted
+GAMEX(1989, pontoon,  0,        system18,      shdancer, generic_5874, ROT0,   "Sega",    "Pontoon", GAME_NOT_WORKING )
 GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (US)"  ) // not encrypted
 GAME( 1989, shdancrj, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Japan)" ) // not encrypted
 GAME( 1989, shdancrb, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Rev.B)" ) // not encrypted

@@ -2574,8 +2574,39 @@ ROM_START( tkmmpzdm )
 	ROM_LOAD( "515a14.7g", 0x200000, 2*1024*1024, CRC(128cc944) SHA1(b0cd2ec1b9a2ac936d57b6d6c2a70f9c13dc97a5) )
 ROM_END
 
-/* Winning Spike */
+/* Winning Spike - Version EAA (Euro) */
 ROM_START( winspike )
+	/* main program */
+	ROM_REGION( 0x300000, REGION_CPU1, 0 )
+	GX_BIOS
+	ROM_LOAD32_WORD_SWAP( "705eaa02.31b", 0x200002, 512*1024, CRC(522d1bbd) SHA1(08280a90c64adacfe4d1f0abc939bbf3f8265aeb) )
+	ROM_LOAD32_WORD_SWAP( "705eaa03.27b", 0x200000, 512*1024, CRC(778de17b) SHA1(6ccf1169542259c05d16cff706f782837eeafb46) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("705a08.9c", 0x000000, 128*1024, CRC(0d531639) SHA1(14a72925f75528e7b4d6b701b2b51f4557f031f0) )
+	ROM_LOAD16_BYTE("705a09.7c", 0x000001, 128*1024, CRC(24e58845) SHA1(a01caced5bad9d98a3f33d72ca5eb9096c45e4ba) )
+
+	/* tiles: length of 1 meg each is TRUSTED by the internal checksum code */
+	/* do NOT change these to the 4 meg dumps again, those are WRONG!!!!!!! */
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 )
+    	ROM_LOAD16_BYTE( "705a19.17h", 0x000000, 0x100000, CRC(bab84b30) SHA1(8522a0dc5e37524f51d632e9d975e949a14c0dc3) )
+	ROM_LOAD16_BYTE( "705a18.22h", 0x000001, 0x100000, CRC(eb97fb5f) SHA1(13de0ad060fd6f1312fa10edde1fef6481e8df64) )
+
+	/* sprites */
+	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_ERASE00 )
+        _64_WORD_ROM_LOAD( "705a10.33g",   0x000000, 0x400000, CRC(fc4dc78b) SHA1(520cdcf9ca20ec1c84be734e06e183e7a871090b) )
+        _64_WORD_ROM_LOAD( "705a11.30g",   0x000002, 0x400000, CRC(68542ce9) SHA1(a4294da1d1026e3a9d070575e5855935389a705f) )
+        _64_WORD_ROM_LOAD( "705a13.28g",   0x000004, 0x400000, CRC(3b62584b) SHA1(69718f47ff1e8d65a11972af1ed5068db175f625) )
+        _64_WORD_ROM_LOAD( "705a17.25g",   0x000006, 0x400000, CRC(971d2812) SHA1(ee0819faf6f6c8420d5d3742cb39dfb76b9ce7a4) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "705a22.9g", 0x000000, 4*1024*1024, CRC(1a9246f6) SHA1(a40ff43310d035f7b88c4e397a4ee75151578c17) )
+ROM_END
+
+/* Winning Spike - Version JAA (Japan) */
+ROM_START( winspikj )
 	/* main program */
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
 	GX_BIOS
@@ -3367,7 +3398,7 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 	}
 
-	else if (!strcmp(Machine->gamedrv->name, "winspike"))
+	else if ((!strcmp(Machine->gamedrv->name, "winspike")) || (!strcmp(Machine->gamedrv->name, "winspikj")))
 	{
 		snd020_hack = 2;
 		konamigx_cfgport = 8;
@@ -3456,7 +3487,8 @@ GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konam
 /* protection controls player ship direction in attract mode - doesn't impact playability */
 GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (ver JAA)", GAME_IMPERFECT_GRAPHICS|GAME_UNEMULATED_PROTECTION )
 /* bad sprite colours, part of tilemap gets blanked out when a game starts (might be more protection) */
-GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver EAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, winspikj, winspike, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 
 /* this game is unplayable due to protection */
 GAMEX( 1994, fantjour, gokuparo, konamigx, gokuparo, konamigx, ROT0, "Konami", "Fantastic Journey", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )

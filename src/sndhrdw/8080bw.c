@@ -405,6 +405,8 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 /* Taito "Polaris"		                               */
 /* D.R.                                                */
 /*******************************************************/
+// The R/C values in the schematic may have no bearing in reality.
+// I have noted some differences from a real board.
 
 const struct discrete_lfsr_desc polaris_lfsr={
 	17,			/* Bit Length */
@@ -452,15 +454,19 @@ const struct discrete_op_amp_tvca_info polaris_shiphit_tvca_info =
 const struct discrete_op_amp_tvca_info polaris_exp_tvca_info =
 	{ RES_M(2.7), RES_K(680), 0, RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(.33), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
+// The schematic shows a .22uF cap but Guru's board has a 1uF
 const struct discrete_op_amp_tvca_info polaris_hit_tvca_info =
-	{ RES_M(2.7), RES_K(1360), RES_K(1360), RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(.22), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
+	{ RES_M(2.7), RES_K(1360), RES_K(1360), RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(1), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
+// The schematic shows a 1uF cap but Guru's board has a 2.2uF
 const struct discrete_integrate_info polaris_plane_integrate_info =
-	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(1), 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
+	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
 
-// A bit of a cheat.  The schematic show the cap as 47p, but that makes the frequency too high.  I will usee 220p until the proper value can be confirmed.
+// A bit of a cheat.  The schematic show the cap as 47p, but that makes the frequency too high.
+// Guru's board has a .01 cap, which would make the freq sub-sonic using the other schematic values.
+// I will use 2000p until the proper value can be confirmed.
 const struct discrete_op_amp_osc_info polaris_plane_vco_info =
-	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), RES_K(100), RES_K(10), RES_K(100), CAP_P(220), 12};
+	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), RES_K(100), RES_K(10), RES_K(100), CAP_U(0.002), 12};
 
 const struct discrete_mixer_desc polaris_mixer_vr1_desc =
 	{DISC_MIXER_IS_RESISTOR, 4,
@@ -476,8 +482,6 @@ const struct discrete_mixer_desc polaris_mixer_vr2_desc =
 		{CAP_U(1), CAP_U(1), 0,0,0,0,0,0},
 		0, RES_K(50), 0, 0, 0, 1};
 
-// Another minor cheat used.  I set cF to .05uF instead of .1uf to
-// make up for the 2k inline resistor.
 // Note: the final gain leaves the explosions (SX3) at a level
 // where they clip.  From the schematics, this is how they wanted it.
 // This makes them have more bass and distortion.
@@ -486,7 +490,7 @@ const struct discrete_mixer_desc polaris_mixer_vr4_desc =
 		{RES_K(22), RES_K(20), RES_K(22), RES_K(22),0,0,0,0},
 		{0,0,0,0,0,0,0,0},	// no variable resistors
 		{0, CAP_U(1), 0,0,0,0,0,0},
-		0, RES_K(50), CAP_U(.05), CAP_U(1), 0, 40000};
+		0, RES_K(50), 0, CAP_U(1), 0, 40000};
 
 /* Nodes - Inputs */
 #define POLARIS_MUSIC_DATA		NODE_01

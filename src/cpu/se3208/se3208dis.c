@@ -78,7 +78,7 @@ INST(LDS)
 	data32_t Offset=EXTRACT(Opcode,0,4);
 	data32_t Index=EXTRACT(Opcode,5,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=1;
 
 	if(TESTFLAG(FLAG_E))
@@ -88,7 +88,7 @@ INST(LDS)
 		sprintf(dst,"LDS   (%%R%d,0x%x),%%R%d",Index,Offset,SrcDst);
 	else
 		sprintf(dst,"LDS   (0x%x),%%R%d",Index+Offset,SrcDst);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -97,7 +97,7 @@ INST(STS)
 	data32_t Offset=EXTRACT(Opcode,0,4);
 	data32_t Index=EXTRACT(Opcode,5,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=1;
 
 	if(TESTFLAG(FLAG_E))
@@ -116,7 +116,7 @@ INST(LD)
 	data32_t Offset=EXTRACT(Opcode,0,4);
 	data32_t Index=EXTRACT(Opcode,5,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
@@ -135,7 +135,7 @@ INST(ST)
 	data32_t Offset=EXTRACT(Opcode,0,4);
 	data32_t Index=EXTRACT(Opcode,5,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
@@ -171,7 +171,7 @@ INST(LDSU)
 	data32_t Offset=EXTRACT(Opcode,0,4);
 	data32_t Index=EXTRACT(Opcode,5,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=1;
 
 	if(TESTFLAG(FLAG_E))
@@ -189,7 +189,7 @@ INST(LDSU)
 INST(LERI)
 {
 	data32_t Imm=EXTRACT(Opcode,0,13);
-	
+
 	if(TESTFLAG(FLAG_E))
 		Context.ER=(EXTRACT(Context.ER,0,17)<<14)|Imm;
 	else
@@ -205,7 +205,7 @@ INST(LDSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
@@ -220,7 +220,7 @@ INST(STSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,7);
 	data32_t SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
@@ -345,7 +345,7 @@ INST(LEASPTOSP)
 		Offset=(EXTRACT(Context.ER,0,23)<<8)|(Offset&0xff);
 	else
 		Offset=SEX(10,Offset);
-	
+
 
 	sprintf(dst,"LEA   (%%SP,0x%x),%%SP",Offset);
 
@@ -382,7 +382,7 @@ INST(LDBSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,3);
 	data32_t SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 
@@ -395,7 +395,7 @@ INST(STBSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,3);
 	data32_t SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 
@@ -413,7 +413,7 @@ INST(LDSSP)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	sprintf(dst,"LDS   (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
@@ -423,7 +423,7 @@ INST(STSSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,3);
 	data32_t SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	Offset<<=1;
 
 	if(TESTFLAG(FLAG_E))
@@ -438,7 +438,7 @@ INST(LDBUSP)
 {
 	data32_t Offset=EXTRACT(Opcode,0,3);
 	data32_t SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 
@@ -456,7 +456,7 @@ INST(LDSUSP)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	sprintf(dst,"LDSU  (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
@@ -475,7 +475,7 @@ INST(ADDI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"ADD   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -494,7 +494,7 @@ INST(SUBI)
 	sprintf(dst,"SUB   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
-	
+
 }
 
 INST(ADCI)
@@ -510,7 +510,7 @@ INST(ADCI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"ADC   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -527,7 +527,7 @@ INST(SBCI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"SBC   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -544,7 +544,7 @@ INST(ANDI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"AND   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -561,7 +561,7 @@ INST(ORI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"OR    %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -578,7 +578,7 @@ INST(XORI)
 		Imm2=SEX(4,Imm2);
 
 	sprintf(dst,"XOR   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
-	
+
 	CLRFLAG(FLAG_E);
 }
 
@@ -1155,7 +1155,7 @@ _OP DecodeOp(data16_t Opcode)
 										return CMPI;
 									case 1:
 										return TSTI;
-									case 2:	
+									case 2:
 										return LEATOSP;
 									case 3:
 										return LEAFROMSP;
@@ -1186,10 +1186,10 @@ _OP DecodeOp(data16_t Opcode)
 							return OR;
 						case 6:
 							return XOR;
-						case 7:					
+						case 7:
 							switch(EXTRACT(Opcode,0,2))
 							{
-								case 0:				
+								case 0:
 									return CMP;
 								case 1:
 									return TST;
@@ -1277,7 +1277,7 @@ _OP DecodeOp(data16_t Opcode)
 								{
 									switch(EXTRACT(Opcode,4,7))
 									{
-										case 0:							
+										case 0:
 											return EXTB;
 										case 1:
 											return EXTS;
@@ -1314,7 +1314,7 @@ _OP DecodeOp(data16_t Opcode)
 									return LSR;
 								case 2:
 									return ASL;
-								//case 3: 
+								//case 3:
 								//	return LSL;
 							}
 							break;

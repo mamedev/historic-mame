@@ -473,11 +473,8 @@ static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct recta
     my_clip.max_y = (i+1)*lines_per_block -1;
 	if (video_control&0x10)   /*flip screen*/
 	{
-		if (!(Machine->orientation & ORIENTATION_FLIP_Y))	/*only for ROT_0 games*/
-		{
-			my_clip.min_y = bitmap->height - 1 - (i+1)*lines_per_block -1;
-			my_clip.max_y = bitmap->height - 1 - i*lines_per_block;
-		}
+		my_clip.min_y = bitmap->height - 1 - (i+1)*lines_per_block -1;
+		my_clip.max_y = bitmap->height - 1 - i*lines_per_block;
 	}
     sect_rect(&my_clip, cliprect);
 
@@ -501,29 +498,6 @@ profiler_mark(PROFILER_USER1);
   priority <<= 4;
 
 
-  if (Machine->orientation & ORIENTATION_SWAP_XY)
-  {
-    int temp;
-
-    temp = myclip.min_x; myclip.min_x = myclip.min_y; myclip.min_y = temp;
-    temp = myclip.max_x; myclip.max_x = myclip.max_y; myclip.max_y = temp;
-  }
-
-  if (Machine->orientation & ORIENTATION_FLIP_X)
-  {
-    int temp;
-
-    temp = myclip.min_x; myclip.min_x = bitmap->width-1 - myclip.max_x; myclip.max_x = bitmap->width-1 - temp;
-  }
-
-  if (Machine->orientation & ORIENTATION_FLIP_Y)
-  {
-    int temp;
-
-    temp = myclip.min_y; myclip.min_y = bitmap->height-1 - myclip.max_y; myclip.max_y = bitmap->height-1 - temp;
-  }
-
-
 	if (video_control & 0x08)
 	{
 		if (priority) return;
@@ -536,14 +510,7 @@ profiler_mark(PROFILER_USER1);
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
 				UINT16 *dst;
 
-				if (!(Machine->orientation & ORIENTATION_FLIP_Y))	/*only for ROT_0 games*/
-				{
-					dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
-				}
-				else	/*for ROT_270 games */
-				{
-					dst = ((UINT16 *)bitmap->line[bitmap->height-1-y+24*8]) + myclip.max_x;
-				}
+				dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{
@@ -585,14 +552,7 @@ profiler_mark(PROFILER_USER1);
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
 				UINT16 *dst;
 
-				if (!(Machine->orientation & ORIENTATION_FLIP_Y))	/*only for ROT_0 games*/
-				{
-					dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
-				}
-				else	/*for ROT_270 games*/
-				{
-					dst = ((UINT16 *)bitmap->line[bitmap->height-1-y+24*8]) + myclip.max_x;
-				}
+				dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{

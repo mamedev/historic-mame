@@ -991,7 +991,6 @@ WRITE8_HANDLER( galaxian_stars_enable_w )
 	}
 }
 
-
 WRITE8_HANDLER( darkplnt_bullet_color_w )
 {
 	darkplnt_bullet_color = data & 0x01;

@@ -46,7 +46,7 @@ const struct discrete_dac_r1_ladder atarifb_crowd_r1_ladder =
 
 const struct discrete_op_amp_filt_info atarifb_crowd_filt =
 {
-	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56)),	// r17, r16, r14, r15, r76
+	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56)),	// r17, r16, r14, r15
 	0, 0, 0,
 	RES_K(330),	// r35
 	CAP_U(.01),	// c33
@@ -55,7 +55,7 @@ const struct discrete_op_amp_filt_info atarifb_crowd_filt =
 	5, 12, 0
 };
 
-const struct discrete_mixer_desc atarifb_crowd_mixer =
+const struct discrete_mixer_desc atarifb_mixer =
 {
 	DISC_MIXER_IS_OP_AMP, 3,
 	{RES_K(47), RES_K(47), RES_K(220)},	// r71, r70, r73
@@ -114,7 +114,7 @@ DISCRETE_SOUND_START(atarifb_discrete_interface)
 	/* clipping.                                    */
 	/* This is what the original game did.          */
 	/************************************************/
-	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ATARIFB_HIT_SND, ATARIFB_WHISTLE_SND, ATARIFB_CROWD_SND, &atarifb_crowd_mixer)
+	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ATARIFB_HIT_SND, ATARIFB_WHISTLE_SND, ATARIFB_CROWD_SND, &atarifb_mixer)
 	DISCRETE_OUTPUT(NODE_90, 70)
 DISCRETE_SOUND_END
 
@@ -138,14 +138,14 @@ const struct discrete_op_amp_filt_info abaseb_crowd_filt =
 {
 	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56) + 1.0/RES_K(1)),	// r17, r16, r14, r15, r76
 	0, 0, 0,
-	RES_K(470),	// r35
-	CAP_U(.01),	// c33
-	CAP_U(.01),	// c44
+	RES_K(470),		// r35
+	CAP_U(.01),		// c33
+	CAP_U(.022),	// c44
 	0,
 	5, 12, 0
 };
 
-const struct discrete_mixer_desc abaseb_crowd_mixer =
+const struct discrete_mixer_desc abaseb_mixer =
 {
 	DISC_MIXER_IS_OP_AMP, 3,
 	{RES_K(330), RES_K(220), RES_K(220)},	// r71, r70, r73
@@ -201,6 +201,6 @@ DISCRETE_SOUND_START(abaseb_discrete_interface)
 	/************************************************/
 	/* Mixing stage - A9                            */
 	/************************************************/
-	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ABASEB_HIT_SND, ABASEB_WHISTLE_SND, ABASEB_CROWD_SND, &abaseb_crowd_mixer)
+	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ABASEB_HIT_SND, ABASEB_WHISTLE_SND, ABASEB_CROWD_SND, &abaseb_mixer)
 	DISCRETE_OUTPUT(NODE_90, 100)
 DISCRETE_SOUND_END

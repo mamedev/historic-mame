@@ -12,6 +12,29 @@ Ernesto Corvi & Mariusz Wojcieszek
 
 #define MAX_PLANES 6 /* 0 to 6, inclusive ( but we count from 0 to 5 ) */
 
+struct amiga_machine_interface
+{
+	int (*cia_0_portA_r)(void);
+	int (*cia_0_portB_r)(void);
+	void (*cia_0_portA_w)(int data);
+	void (*cia_0_portB_w)(int data);
+
+	int (*cia_1_portA_r)(void);
+	int (*cia_1_portB_r)(void);
+	void (*cia_1_portA_w)(int data);
+	void (*cia_1_portB_w)(int data);
+
+	data16_t (*read_joy0dat)(void);
+	data16_t (*read_joy1dat)(void);
+	data16_t (*read_dskbytr)(void);
+	void (*write_dsklen)(data16_t data);
+
+	void (*interrupt_callback)(void);
+	void (*reset_callback)(void);
+};
+
+
+
 typedef struct {
 	unsigned short INTENA; /* Interrupt Enable */
 	unsigned short INTREQ; /* Interrupt Request */
@@ -88,6 +111,7 @@ typedef struct {
 
 /* prototypes */
 /* machine */
+extern void amiga_machine_config(const struct amiga_machine_interface *intf);
 extern void copper_setpc( unsigned long pc );
 extern WRITE16_HANDLER(amiga_custom_w);
 extern void amiga_reload_sprite_info( int spritenum );
@@ -103,8 +127,11 @@ extern data16_t *amiga_autoconfig_mem;
 
 /* vidhrdw */
 extern INTERRUPT_GEN(amiga_vblank_irq);
+extern INTERRUPT_GEN(amiga_irq);
 extern VIDEO_UPDATE(amiga);
 extern VIDEO_START(amiga);
 extern PALETTE_INIT(amiga);
+extern void amiga_prepare_frame(void);
+extern void amiga_render_scanline(int scanline);
 
 #endif /* __AMIGA_H__ */

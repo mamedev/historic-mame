@@ -240,12 +240,7 @@ INTERRUPT_GEN( polaris_interrupt )
 	{
 		cloud_speed = 0;
 
-		cloud_pos--;
-
-		if (cloud_pos >= 0xe0)
-		{
-			cloud_pos = 0xdf;	/* no delay for invisible region */
-		}
+		cloud_pos++;
 
 		set_vh_global_attribute(NULL,0);
 	}
@@ -365,14 +360,7 @@ static WRITE8_HANDLER( polaris_videoram_w )
 	/* bit 3 is connected to the cloud enable. bits 1 and 2 are marked 'not use' (sic)
 	   on the schematics */
 
-	if (y < cloud_pos)
-	{
-		cloud_y = y - cloud_pos - 0x20;
-	}
-	else
-	{
-		cloud_y = y - cloud_pos;
-	}
+	cloud_y = y - cloud_pos;
 
 	if ((color_map & 0x08) || (cloud_y > 64))
 	{

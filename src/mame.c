@@ -702,7 +702,6 @@ static int vh_open(void)
 	params.colors = palette_get_total_colors_with_ui();
 	params.fps = Machine->drv->frames_per_second;
 	params.video_attributes = Machine->drv->video_attributes;
-	params.orientation = Machine->orientation;
 
 #ifdef MESS
 	artcallbacks = &mess_artwork_callbacks;
@@ -903,7 +902,6 @@ static int init_game_options(void)
 	Machine->sample_rate = options.samplerate;
 
 	/* get orientation right */
-	Machine->orientation = ROT0;
 	Machine->ui_orientation = options.ui_orientation;
 
 	return 0;

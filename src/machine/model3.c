@@ -5,6 +5,7 @@
 */
 
 #include "driver.h"
+#include <time.h>
 
 static int m3_step;
 
@@ -248,7 +249,7 @@ void model3_tap_write(int tck, int tms, int tdi, int trst)
          * TCK)
          */
 
-        ir &= U64(0x3fffffffffff);
+        ir &= 0x3fffffffffff;
         current_instruction = ir;
         break;
 
@@ -282,3 +283,84 @@ void model3_machine_init(int step)
 {
 	m3_step = step;
 }
+
+/*****************************************************************************/
+/* Epson RTC-72421 */
+
+static UINT8 rtc_get_reg(int reg)
+{
+	time_t current_time;
+	struct tm* tms;
+
+	time( &current_time );
+	tms = localtime( &current_time );
+
+	switch(reg)
+	{
+		case 0:		// 1-second digit
+			return (tms->tm_sec % 10) & 0xf;
+
+		case 1:		// 10-seconds digit
+			return (tms->tm_sec / 10) & 0x7;
+
+		case 2:		// 1-minute digit
+			return (tms->tm_min % 10) & 0xf;
+
+		case 3:		// 10-minute digit
+			return (tms->tm_min / 10) & 0x7;
+
+		case 4:		// 1-hour digit
+			return (tms->tm_hour % 10) & 0xf;
+
+		case 5:		// 10-hours digit
+			return (tms->tm_hour / 10) & 0x7;
+
+		case 6:		// 1-day digit (days in month)
+			return (tms->tm_mday % 10) & 0xf;
+
+		case 7:		// 10-days digit
+			return (tms->tm_mday / 10) & 0x3;
+
+		case 8:		// 1-month digit
+			return ((tms->tm_mon + 1) % 10) & 0xf;
+
+		case 9:		// 10-months digit
+			return ((tms->tm_mon + 1) / 10) & 0x1;
+
+		case 10:	// 1-year digit
+			return (tms->tm_year % 10) & 0xf;
+
+		case 11:	// 10-years digit
+			return ((tms->tm_year % 100) / 10) & 0xf;
+
+		case 12:	// day of the week
+			return tms->tm_wday & 0x7;
+
+		case 13:
+			return 0;
+
+		case 14:
+			return 0;
+
+		case 15:
+			return 0;
+
+		default:
+			osd_die("RTC-72421: Unknown reg %02X\n", reg);
+			return 0;
+	}
+}
+
+READ32_HANDLER(rtc72421_r)
+{
+	int reg = offset;
+	UINT32 data;
+	data = rtc_get_reg(reg) << 24;
+	data |= 0x30000;	/* these bits are set to pass the battery voltage test */
+	return data;
+}
+
+WRITE32_HANDLER(rtc72421_w)
+{
+}
+

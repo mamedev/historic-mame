@@ -15,7 +15,7 @@
 #include "driver.h"
 #include "cpu/i8x41/i8x41.h"
 
-extern unsigned char *tnzs_workram;
+extern unsigned char *tnzs_sharedram;
 
 static int mcu_type;
 static int tnzs_input_select;
@@ -34,7 +34,6 @@ enum
 
 static int mcu_initializing,mcu_coinage_init,mcu_command,mcu_readcredits;
 static int mcu_reportcoin;
-static int tnzs_workram_backup;
 static unsigned char mcu_coinage[4];
 static unsigned char mcu_coinsA,mcu_coinsB,mcu_credits;
 
@@ -455,6 +454,63 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 
 
 
+/*********************************
+
+TNZS sync bug kludge
+
+In all TNZS versions there is code like this:
+
+0C5E: ld   ($EF10),a
+0C61: ld   a,($EF10)
+0C64: inc  a
+0C65: ret  nz
+0C66: jr   $0C61
+
+which is sometimes executed by the main cpu when it writes to shared RAM a
+command for the second CPU. The intended purpose of the code is to wait an
+acknowledge from the sub CPU: the sub CPU writes FF to the same location
+after reading the command.
+
+However the above code is wrong. The "ret nz" instruction means that the
+loop will be exited only when the contents of $EF10 are *NOT* $FF!!
+On the real board, this casues little harm: the main CPU will just write
+the command, read it back and, since it's not $FF, return immediately. There
+is a chance that the command might go lost, but this will cause no major
+harm, the worse that can happen is that the background tune will not change.
+
+In MAME, however, since CPU interleaving is not perfect, it can happen that
+the main CPU ends its timeslice after writing to EF10 but before reading it
+back. In the meantime, the sub CPU will run, read the command and write FF
+there - therefore causing the main CPU to enter an endless loop.
+
+Unlike the usual sync problems in MAME, which can be fixed by increasing the
+interleave factor, in this case increasing it will actually INCREASE the
+chance of entering the endless loop - because it will increase the chances of
+the main CPU ending its timeslice at the wrong moment.
+
+So what we do here is catch writes by the main CPU to the RAM location, and
+process them using a timer, in order to
+a) force a resync of the two CPUs
+b) make sure the main CPU will be the first one to run after the location is
+   changed
+
+Since the answer from the sub CPU is ignored, we don't even need to boost
+interleave.
+
+*********************************/
+
+static void kludge_callback(int param)
+{
+	tnzs_sharedram[0x0f10] = param;
+}
+
+static WRITE8_HANDLER( tnzs_sync_kludge_w )
+{
+	mame_timer_set(time_zero,data,kludge_callback);
+}
+
+
+
 DRIVER_INIT( extrmatn )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -510,9 +566,25 @@ DRIVER_INIT( tnzs )
 	/* there's code which falls through from the fixed ROM to bank #0, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+
+	/* we need to install a kludge to avoid problems with a bug in the original code */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xef10, 0xef10, 0, 0, tnzs_sync_kludge_w);
 }
 
 DRIVER_INIT( tnzsb )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	mcu_type = MCU_NONE_TNZSB;
+
+	/* there's code which falls through from the fixed ROM to bank #0, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+
+	/* we need to install a kludge to avoid problems with a bug in the original code */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xef10, 0xef10, 0, 0, tnzs_sync_kludge_w);
+}
+
+DRIVER_INIT( kabukiz )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mcu_type = MCU_NONE_TNZSB;
@@ -616,8 +688,6 @@ MACHINE_INIT( tnzs )
 			break;
 	}
 
-	tnzs_workram_backup = -1;
-
 	/* preset the banks */
 	{
 		unsigned char *RAM;
@@ -631,69 +701,17 @@ MACHINE_INIT( tnzs )
 }
 
 
-READ8_HANDLER( tnzs_workram_r )
+READ8_HANDLER( tnzs_sharedram_r )
 {
-	/* Location $EF10 workaround required to stop TNZS getting */
-	/* caught in and endless loop due to shared ram sync probs */
-
-	if ((offset == 0xf10) && ((mcu_type == MCU_TNZS) || (mcu_type == MCU_NONE_TNZSB)))
-	{
-		int tnzs_cpu0_pc;
-
-		tnzs_cpu0_pc = activecpu_get_pc();
-		switch (tnzs_cpu0_pc)
-		{
-			case 0xc66:		/* tnzs */
-			case 0xc64:		/* tnzsb */
-			case 0xab8:		/* tnzs2 */
-				tnzs_workram[offset] = (tnzs_workram_backup & 0xff);
-				return tnzs_workram_backup;
-				break;
-			default:
-				break;
-		}
-	}
-	return tnzs_workram[offset];
+	return tnzs_sharedram[offset];
 }
 
-READ8_HANDLER( tnzs_workram_sub_r )
+WRITE8_HANDLER( tnzs_sharedram_w )
 {
-	return tnzs_workram[offset];
+	tnzs_sharedram[offset] = data;
 }
 
-WRITE8_HANDLER( tnzs_workram_w )
-{
-	/* Location $EF10 workaround required to stop TNZS getting */
-	/* caught in and endless loop due to shared ram sync probs */
 
-	tnzs_workram_backup = -1;
-
-	if ((offset == 0xf10) && ((mcu_type == MCU_TNZS) || (mcu_type == MCU_NONE_TNZSB)))
-	{
-		int tnzs_cpu0_pc;
-
-		tnzs_cpu0_pc = activecpu_get_pc();
-		switch (tnzs_cpu0_pc)
-		{
-			case 0xab5:		/* tnzs2 */
-				if (activecpu_get_previouspc() == 0xab4)
-					break;  /* unfortunantly tnzsb is true here too, so stop it */
-			case 0xc63:		/* tnzs */
-			case 0xc61:		/* tnzsb */
-				tnzs_workram_backup = data;
-				break;
-			default:
-				break;
-		}
-	}
-	if (tnzs_workram_backup == -1)
-		tnzs_workram[offset] = data;
-}
-
-WRITE8_HANDLER( tnzs_workram_sub_w )
-{
-	tnzs_workram[offset] = data;
-}
 
 WRITE8_HANDLER( tnzs_bankswitch_w )
 {

@@ -397,7 +397,7 @@ static const char *teregs[16] = {
 static char *hexstring (int address)
 {
 	static char labtemp[10];
-	sprintf (labtemp, "$%04hX", address);
+	sprintf (labtemp, "$%04hX", (unsigned short)address);
 	return labtemp;
 }
 

@@ -4,6 +4,16 @@
 #include "ppc.h"
 #include "mamedbg.h"
 
+#if (HAS_PPC603)
+void ppc603_exception(int exception);
+#endif
+#if (HAS_PPC602)
+void ppc602_exception(int exception);
+#endif
+#if (HAS_PPC403)
+void ppc403_exception(int exception);
+#endif
+
 #define RD				((op >> 21) & 0x1F)
 #define RT				((op >> 21) & 0x1f)
 #define RS				((op >> 21) & 0x1f)
@@ -84,20 +94,29 @@ static UINT32		ppc_field_xlat[256];
 #define XER_OV			0x40000000
 #define XER_CA			0x20000000
 
+#define MSR_POW			0x00040000
 #define MSR_WE			0x00040000
 #define MSR_CE			0x00020000
 #define MSR_ILE			0x00010000
 #define MSR_EE			0x00008000
 #define MSR_PR			0x00004000
+#define MSR_FP			0x00002000
 #define MSR_ME			0x00001000
+#define MSR_FE0			0x00000800
+#define MSR_SE			0x00000400
+#define MSR_BE			0x00000200
 #define MSR_DE			0x00000200
+#define MSR_FE1			0x00000100
 #define MSR_IP			0x00000040
+#define MSR_IR			0x00000020
+#define MSR_DR			0x00000010
 #define MSR_PE			0x00000008
 #define MSR_PX			0x00000004
+#define MSR_RI			0x00000002
 #define MSR_LE			0x00000001
 
-#define BYTE_REVERSE16(x)	(((x >> 8) & 0xff) | ((x << 8) & 0xff00))
-#define BYTE_REVERSE32(x)	(((x >> 24) & 0xff) | ((x >> 8) & 0xff00) | ((x << 8) & 0xff0000) | ((x << 24) & 0xff000000))
+#define BYTE_REVERSE16(x)	((((x) >> 8) & 0xff) | (((x) << 8) & 0xff00))
+#define BYTE_REVERSE32(x)	((((x) >> 24) & 0xff) | (((x) >> 8) & 0xff00) | (((x) << 8) & 0xff0000) | (((x) << 24) & 0xff000000))
 
 typedef struct {
 	UINT32 cr;
@@ -123,6 +142,11 @@ typedef union {
 	double	fd;
 } FPR;
 
+typedef union {
+	UINT32 i;
+	float f;
+} FPR32;
+
 
 typedef struct {
 	UINT32 r[32];
@@ -137,8 +161,31 @@ typedef struct {
 	UINT32 pvr;
 	UINT32 srr0;
 	UINT32 srr1;
+	UINT32 hid0;
+	UINT32 hid1;
+	UINT32 sdr1;
+	UINT32 sprg[4];
 
-	UINT32 spr[1024];
+	UINT32 dsisr;
+	UINT32 dar;
+	UINT32 ear;
+
+	UINT32 ibat0l;
+	UINT32 ibat0u;
+	UINT32 ibat1l;
+	UINT32 ibat1u;
+	UINT32 ibat2l;
+	UINT32 ibat2u;
+	UINT32 ibat3l;
+	UINT32 ibat3u;
+	UINT32 dbat0l;
+	UINT32 dbat0u;
+	UINT32 dbat1l;
+	UINT32 dbat1u;
+	UINT32 dbat2l;
+	UINT32 dbat2u;
+	UINT32 dbat3l;
+	UINT32 dbat3u;
 
 	UINT32 evpr;
 	UINT32 exier;
@@ -147,6 +194,13 @@ typedef struct {
 	UINT32 besr;
 	UINT32 iocr;
 	UINT32 br[8];
+	UINT32 iabr;
+	UINT32 esr;
+	UINT32 iccr;
+	UINT32 dccr;
+	UINT32 pit;
+	UINT32 tsr;
+	UINT32 dbsr;
 
 	SPU_REGS spu;
 	DMA_REGS dma[4];
@@ -154,6 +208,8 @@ typedef struct {
 
 	int reserved;
 	UINT32 reserved_address;
+
+	int exception_pending;
 
 	UINT64 tb;			/* 56-bit timebase register */
 
@@ -167,7 +223,14 @@ typedef struct {
 	FPR	fpr[32];
 	UINT32 sr[16];
 
-	int is603;	
+	int is603;
+	int is602;
+
+	/* PowerPC 602 specific registers */
+	UINT32 lt;
+	UINT32 sp;
+	UINT32 tcr;
+	UINT32 ibr;
 } PPC_REGS;
 
 
@@ -262,60 +325,109 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 {
 	switch (spr)
 	{
-		case SPR_LR:		LR = value; break;
-		case SPR_CTR:		CTR = value; break;
-		case SPR_XER:		XER = value; break;
-		case SPR_EVPR:		EVPR = value & 0xffff0000; break;
-		case SPR_SRR0:		ppc.srr0 = value; break;
-		case SPR_SRR1:		ppc.srr1 = value; break;
-		case SPR_ESR:		ppc.spr[SPR_ESR] = value; break;
-		case SPR_TCR:		ppc.spr[SPR_TCR] = value; break;
-		case SPR_ICCR:		ppc.spr[SPR_ICCR] = value; break;
-		case SPR_DCCR:		ppc.spr[SPR_DCCR] = value; break;
-		case SPR_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; break;
-		case SPR_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; break;
-		case SPR_PIT:		ppc.spr[SPR_PIT] = value; break;
-		case SPR_SPRG0:		ppc.spr[SPR_SPRG0] = value; break;
-		case SPR_SPRG1:		ppc.spr[SPR_SPRG1] = value; break;
-		case SPR_SPRG2:		ppc.spr[SPR_SPRG2] = value; break;
-		case SPR_SPRG3:		ppc.spr[SPR_SPRG3] = value; break;
-
-		case SPR_DEC:
-
-			if((value & 0x80000000) && !(ppc.spr[SPR_DEC] & 0x80000000))
-			{
-				/* trigger interrupt */
-		
-				printf("ERROR: set_spr to DEC triggers IRQ\n");
-				exit(1);
-			}
-
-			DEC = value;
-			break;
-
-		case SPR_PVR:
-			return;
-
-		case SPR_TSR:
-			ppc.spr[spr] &= ~value; // 1 clears, 0 does nothing
-			return;
-
-		case SPR_TBL_W:
-		case SPR_TBL_R: // special 603e case
-			ppc.tb &= U64(0xFFFFFFFF00000000);
-			ppc.tb |= (UINT64)(value);
-			return;
-
-		case SPR_TBU_R:
-		case SPR_TBU_W: // special 603e case
-			osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
-			break;
-
-		default:
-			ppc.spr[spr] = value;
-			break ;
+		case SPR_LR:		LR = value; return;
+		case SPR_CTR:		CTR = value; return;
+		case SPR_XER:		XER = value; return;
+		case SPR_SRR0:		ppc.srr0 = value; return;
+		case SPR_SRR1:		ppc.srr1 = value; return;
+		case SPR_SPRG0:		ppc.sprg[0] = value; return;
+		case SPR_SPRG1:		ppc.sprg[1] = value; return;
+		case SPR_SPRG2:		ppc.sprg[2] = value; return;
+		case SPR_SPRG3:		ppc.sprg[3] = value; return;
+		case SPR_PVR:		return;
 	}
 
+#if (HAS_PPC603 || HAS_PPC602)
+	if(ppc.is603 || ppc.is602) {
+		switch(spr)
+		{
+			case SPR603E_DEC:
+				if((value & 0x80000000) && !(DEC & 0x80000000))
+				{
+					/* trigger interrupt */		
+					printf("ERROR: set_spr to DEC triggers IRQ\n");
+					exit(1);
+				}
+				DEC = value;
+				return;
+
+			case SPR603E_TBL_W:
+			case SPR603E_TBL_R: // special 603e case
+				ppc.tb &= U64(0xffffffff00000000);
+				ppc.tb |= (UINT64)(value);
+				return;
+
+			case SPR603E_TBU_R:
+			case SPR603E_TBU_W: // special 603e case
+				osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
+				return;
+
+			case SPR603E_HID0:
+				ppc.hid0 = value;
+				return;
+
+			case SPR603E_HID1:
+				ppc.hid1 = value;
+				return;
+
+			case SPR603E_IBAT0L:		ppc.ibat0l = value; return;
+			case SPR603E_IBAT0U:		ppc.ibat0u = value; return;
+			case SPR603E_IBAT1L:		ppc.ibat1l = value; return;
+			case SPR603E_IBAT1U:		ppc.ibat1u = value; return;
+			case SPR603E_IBAT2L:		ppc.ibat2l = value; return;
+			case SPR603E_IBAT2U:		ppc.ibat2u = value; return;
+			case SPR603E_IBAT3L:		ppc.ibat3l = value; return;
+			case SPR603E_IBAT3U:		ppc.ibat3u = value; return;
+			case SPR603E_DBAT0L:		ppc.dbat0l = value; return;
+			case SPR603E_DBAT0U:		ppc.dbat0u = value; return;
+			case SPR603E_DBAT1L:		ppc.dbat1l = value; return;
+			case SPR603E_DBAT1U:		ppc.dbat1u = value; return;
+			case SPR603E_DBAT2L:		ppc.dbat2l = value; return;
+			case SPR603E_DBAT2U:		ppc.dbat2u = value; return;
+			case SPR603E_DBAT3L:		ppc.dbat3l = value; return;
+			case SPR603E_DBAT3U:		ppc.dbat3u = value; return;
+		
+			case SPR603E_SDR1:
+				ppc.sdr1 = value;
+				return;
+
+			case SPR603E_IABR:			ppc.iabr = value; return;
+		}
+	}
+#endif
+
+#if (HAS_PPC602)
+	if (ppc.is602) {
+		switch(spr)
+		{
+			case SPR602_LT:			printf("ppc: LT = %08X\n", value); ppc.lt = value; return;
+			case SPR602_IBR:		printf("ppc: IBR = %08X\n", value); ppc.ibr = value; return;
+			case SPR602_SP:			printf("ppc: SP = %08X\n", value); ppc.sp = value; return;
+			case SPR602_TCR:		printf("ppc: TCR = %08X\n", value); ppc.tcr = value; return;
+		}
+	}
+#endif
+
+#if (HAS_PPC403)
+	if (!ppc.is603 && !ppc.is602) {
+		switch(spr)
+		{
+			case SPR403_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; return;
+			case SPR403_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; return;
+			case SPR403_TSR:		
+				ppc.tsr &= ~value; // 1 clears, 0 does nothing
+				return;
+			case SPR403_ESR:		ppc.esr = value; return;
+			case SPR403_TCR:		ppc.tcr = value; return;
+			case SPR403_ICCR:		ppc.iccr = value; return;
+			case SPR403_DCCR:		ppc.dccr = value; return;
+			case SPR403_EVPR:		EVPR = value & 0xffff0000; return;
+			case SPR403_PIT:		ppc.pit = value; return;
+		}
+	}
+#endif
+
+	osd_die("ppc: set_spr: unknown spr %d (%03X) !\n", spr, spr);
 }
 
 INLINE UINT32 ppc_get_spr(int spr)
@@ -325,75 +437,121 @@ INLINE UINT32 ppc_get_spr(int spr)
 		case SPR_LR:		return LR;
 		case SPR_CTR:		return CTR;
 		case SPR_XER:		return XER;
-		case SPR_EVPR:		return EVPR;
 		case SPR_SRR0:		return ppc.srr0;
 		case SPR_SRR1:		return ppc.srr1;
-		case SPR_ESR:		return ppc.spr[SPR_ESR];
-		case SPR_TCR:		return ppc.spr[SPR_TCR];
-		case SPR_ICCR:		return ppc.spr[SPR_ICCR];
-		case SPR_DCCR:		return ppc.spr[SPR_DCCR];
-		case SPR_TBHI:		return ((ppc.tb >> 32) & 0xffffff);
-		case SPR_TBLO:		return (ppc.tb & 0xffffffff);
-		case SPR_PIT:		return ppc.spr[SPR_PIT];
-		case SPR_SPRG0:		return ppc.spr[SPR_SPRG0];
-		case SPR_SPRG1:		return ppc.spr[SPR_SPRG1];
-		case SPR_SPRG2:		return ppc.spr[SPR_SPRG2];
-		case SPR_SPRG3:		return ppc.spr[SPR_SPRG3];
+		case SPR_SPRG0:		return ppc.sprg[0];
+		case SPR_SPRG1:		return ppc.sprg[1];
+		case SPR_SPRG2:		return ppc.sprg[2];
+		case SPR_SPRG3:		return ppc.sprg[3];
 		case SPR_PVR:		return ppc.pvr;
-
-		case SPR_DBSR:		return ppc.spr[SPR_DBSR];
 	}
 
 #if (HAS_PPC403)
-	if (!ppc.is603)
+	if (!ppc.is603 && !ppc.is602)
 	{
 		switch (spr)
 		{
-			case SPR_TBLO: return (ppc.tb & 0xffffffff); break;
-			case SPR_TBHI: return ((ppc.tb >> 32) & 0xffffff); break;
-			default: 
-				return(ppc.spr[spr]);
-				break;
+			case SPR403_TBLO:		return (ppc.tb & 0xffffffff);
+			case SPR403_TBHI:		return ((ppc.tb >> 32) & 0xffffff);
+			case SPR403_EVPR:		return EVPR;
+			case SPR403_ESR:		return ppc.esr;
+			case SPR403_TCR:		return ppc.tcr;
+			case SPR403_ICCR:		return ppc.iccr;
+			case SPR403_DCCR:		return ppc.dccr;
+			case SPR403_PIT:		return ppc.pit;
+			case SPR403_DBSR:		return ppc.dbsr;
 		}
 	}
 #endif
 
-#if (HAS_PPC603)
-	if (ppc.is603)
+#if (HAS_PPC602)
+	if (ppc.is602) {
+		switch(spr)
+		{
+			case SPR602_LT:			return ppc.lt;
+			case SPR602_IBR:		return ppc.ibr;
+			case SPR602_SP:			return ppc.sp;
+			case SPR602_TCR:		return ppc.tcr;
+		}
+	}
+#endif
+
+#if (HAS_PPC603 || HAS_PPC602)
+	if (ppc.is603 || ppc.is602)
 	{
 		switch (spr)
 		{
-			case SPR_TBL_R:
+			case SPR603E_TBL_R:
 				osd_die("ppc: get_spr: TBL_R \n");
 				break;
 
-			case SPR_TBU_R:
+			case SPR603E_TBU_R:
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR_TBL_W:
-				osd_die("ppc: get_spr: TBL_W \n");
-				break;
-
-			case SPR_TBU_W:
-				osd_die("ppc: get_spr: TBU_W \n");
-				break;
-
-			default: 
-				return(ppc.spr[spr]);
-				break;
+			case SPR603E_TBL_W:		return (ppc.tb & 0xffffffff);
+			case SPR603E_TBU_W:		return ((ppc.tb >> 32) & 0xffffffff);
+			case SPR603E_HID0:		return ppc.hid0;
+			case SPR603E_HID1:		return ppc.hid1;
+			case SPR603E_DEC:		return DEC;
+			case SPR603E_SDR1:		return ppc.sdr1;
+			case SPR603E_DSISR:		return ppc.dsisr;
+			case SPR603E_DAR:		return ppc.dar;
+			case SPR603E_EAR:		return ppc.ear;
+			case SPR603E_IBAT0L:	return ppc.ibat0l;
+			case SPR603E_IBAT0U:	return ppc.ibat0u;
+			case SPR603E_IBAT1L:	return ppc.ibat1l;
+			case SPR603E_IBAT1U:	return ppc.ibat1u;
+			case SPR603E_IBAT2L:	return ppc.ibat2l;
+			case SPR603E_IBAT2U:	return ppc.ibat2u;
+			case SPR603E_IBAT3L:	return ppc.ibat3l;
+			case SPR603E_IBAT3U:	return ppc.ibat3u;
+			case SPR603E_DBAT0L:	return ppc.dbat0l;
+			case SPR603E_DBAT0U:	return ppc.dbat0u;
+			case SPR603E_DBAT1L:	return ppc.dbat1l;
+			case SPR603E_DBAT1U:	return ppc.dbat1u;
+			case SPR603E_DBAT2L:	return ppc.dbat2l;
+			case SPR603E_DBAT2U:	return ppc.dbat2u;
+			case SPR603E_DBAT3L:	return ppc.dbat3l;
+			case SPR603E_DBAT3U:	return ppc.dbat3u;
 		}
 	}
 #endif
-	return 0;
+
+	osd_die("ppc: get_spr: unknown spr %d (%03X) !\n", spr, spr);
 }
 
 INLINE void ppc_set_msr(UINT32 value)
 {
-	/* TODO */
+	int i;
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
 	MSR = value;
+
+	if( value & MSR_EE ) {
+		/* check for pending interrupts */
+		for(i=0; i < 32; i++) {
+			if(ppc.exception_pending & (1 << i)) {
+				ppc.exception_pending &= ~(1 << i);
+#if (HAS_PPC603)
+				if(ppc.is603) {
+					ppc603_exception(i);
+				}
+#endif
+#if (HAS_PPC602)
+				if(ppc.is602) {
+					ppc602_exception(i);
+				}
+#endif
+#if (HAS_PPC403)
+				if(!ppc.is602 && !ppc.is603) {
+					ppc403_exception(i);
+				}
+#endif
+				break;
+			}
+		}
+	}
 }
 
 INLINE UINT32 ppc_get_msr(void)
@@ -430,6 +588,10 @@ static void (* optable[64])(UINT32);
 #include "ppc403.c"
 #endif
 
+#if (HAS_PPC602)
+#include "ppc602.c"
+#endif
+
 #if (HAS_PPC603)
 #include "ppc603.c"
 #endif
@@ -452,7 +614,7 @@ INLINE UINT16 READ16(UINT32 a)
 {
 	if (ppc.is603) {
 		if( a & 0x1 ) {
-			return (program_read_byte_64be(a+0) << 8) | (program_read_byte_64be(a+1) << 0);
+			return ((UINT16)program_read_byte_64be(a+0) << 8) | ((UINT16)program_read_byte_64be(a+1) << 0);
 		}
 		return program_read_word_64be(a);
 	}
@@ -468,8 +630,8 @@ INLINE UINT32 READ32(UINT32 a)
 {
 	if (ppc.is603) {
 		if( a & 0x3 ) {
-			return (program_read_byte_64be(a+0) << 24) | (program_read_byte_64be(a+1) << 16) |
-				   (program_read_byte_64be(a+2) << 8) | (program_read_byte_64be(a+3) << 0);
+			return ((UINT32)program_read_byte_64be(a+0) << 24) | ((UINT32)program_read_byte_64be(a+1) << 16) |
+				   ((UINT32)program_read_byte_64be(a+2) << 8) | ((UINT32)program_read_byte_64be(a+3) << 0);
 		}
 		return program_read_dword_64be(a);
 	}
@@ -533,6 +695,11 @@ INLINE void WRITE32(UINT32 a, UINT32 d)
 {
 	if (ppc.is603)
 	{
+		if( ppc.reserved ) {
+			if( a == ppc.reserved_address ) {
+				ppc.reserved = 0;
+			}
+		}
 		if( a & 0x3 ) {
 			program_write_byte_64be(a+0, (UINT8)(d >> 24));
 			program_write_byte_64be(a+1, (UINT8)(d >> 16));
@@ -753,6 +920,106 @@ static void ppc603_init(void)
 }
 
 static void ppc603_exit(void)
+{
+
+}
+
+static void ppc602_init(void)
+{
+	int i ;
+	
+	ppc_init() ;
+
+	optable[48] = ppc_lfs;
+	optable[49] = ppc_lfsu;
+	optable[50] = ppc_lfd;
+	optable[51] = ppc_lfdu;
+	optable[52] = ppc_stfs;
+	optable[53] = ppc_stfsu;
+	optable[54] = ppc_stfd;
+	optable[55] = ppc_stfdu;
+	optable31[631] = ppc_lfdux;
+	optable31[599] = ppc_lfdx;
+	optable31[567] = ppc_lfsux;
+	optable31[535] = ppc_lfsx;
+	optable31[595] = ppc_mfsr;
+	optable31[659] = ppc_mfsrin;
+	optable31[371] = ppc_mftb;
+	optable31[210] = ppc_mtsr;
+	optable31[242] = ppc_mtsrin;
+	optable31[758] = ppc_dcba;
+	optable31[759] = ppc_stfdux;
+	optable31[727] = ppc_stfdx;
+	optable31[983] = ppc_stfiwx;
+	optable31[695] = ppc_stfsux;
+	optable31[663] = ppc_stfsx;
+	optable31[370] = ppc_tlbia;
+	optable31[306] = ppc_tlbie;
+	optable31[566] = ppc_tlbsync;
+	optable31[310] = ppc_eciwx;
+	optable31[438] = ppc_ecowx;
+
+	optable63[264] = ppc_fabsx;
+	optable63[21] = ppc_faddx;
+	optable63[32] = ppc_fcmpo;
+	optable63[0] = ppc_fcmpu;
+	optable63[14] = ppc_fctiwx;
+	optable63[15] = ppc_fctiwzx;
+	optable63[18] = ppc_fdivx;
+	optable63[72] = ppc_fmrx;
+	optable63[136] = ppc_fnabsx;
+	optable63[40] = ppc_fnegx;
+	optable63[12] = ppc_frspx;
+	optable63[26] = ppc_frsqrtex;
+	optable63[22] = ppc_fsqrtx;
+	optable63[20] = ppc_fsubx;
+	optable63[583] = ppc_mffsx;
+	optable63[70] = ppc_mtfsb0x;
+	optable63[38] = ppc_mtfsb1x;
+	optable63[711] = ppc_mtfsfx;
+	optable63[134] = ppc_mtfsfix;
+	optable63[64] = ppc_mcrfs;
+
+	optable59[21] = ppc_faddsx;
+	optable59[18] = ppc_fdivsx;
+	optable59[24] = ppc_fresx;
+	optable59[22] = ppc_fsqrtsx;
+	optable59[20] = ppc_fsubsx;
+
+	for(i = 0; i < 32; i++)
+	{
+		optable63[i * 32 | 29] = ppc_fmaddx;
+		optable63[i * 32 | 28] = ppc_fmsubx;
+		optable63[i * 32 | 25] = ppc_fmulx;
+		optable63[i * 32 | 31] = ppc_fnmaddx;
+		optable63[i * 32 | 30] = ppc_fnmsubx;
+		optable63[i * 32 | 23] = ppc_fselx;
+
+		optable59[i * 32 | 29] = ppc_fmaddsx;
+		optable59[i * 32 | 28] = ppc_fmsubsx;
+		optable59[i * 32 | 25] = ppc_fmulsx;
+		optable59[i * 32 | 31] = ppc_fnmaddsx;
+		optable59[i * 32 | 30] = ppc_fnmsubsx;
+	}
+
+	for(i = 0; i < 256; i++)
+	{
+		ppc_field_xlat[i] =
+			((i & 0x80) ? 0xF0000000 : 0) |
+			((i & 0x40) ? 0x0F000000 : 0) |
+			((i & 0x20) ? 0x00F00000 : 0) |
+			((i & 0x10) ? 0x000F0000 : 0) |
+			((i & 0x08) ? 0x0000F000 : 0) |
+			((i & 0x04) ? 0x00000F00 : 0) |
+			((i & 0x02) ? 0x000000F0 : 0) |
+			((i & 0x01) ? 0x0000000F : 0);
+	}
+
+	ppc.is603 = 0;
+	ppc.is602 = 1;
+}
+
+static void ppc602_exit(void)
 {
 
 }
@@ -1097,6 +1364,49 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
+
+		default:	ppc_get_info(state, info);		break;
+	}
+}
+#endif
+
+/* PowerPC 602 */
+
+#if (HAS_PPC602)
+void ppc602_set_info(UINT32 state, union cpuinfo *info)
+{
+	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
+	{
+		ppc602_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
+		return;
+	}
+	switch(state)
+	{
+		default:	ppc_set_info(state, info);		break;
+	}
+}
+
+void ppc602_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_LINES:					info->i = 5;				break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;			break;
+
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc602_set_info;		break;
+		case CPUINFO_PTR_INIT:						info->init = ppc602_init;				break;
+		case CPUINFO_PTR_RESET:						info->reset = ppc602_reset;				break;
+		case CPUINFO_PTR_EXIT:						info->exit = ppc602_exit;				break;
+		case CPUINFO_PTR_EXECUTE:					info->execute = ppc602_execute;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC602"); break;
 
 		default:	ppc_get_info(state, info);		break;
 	}

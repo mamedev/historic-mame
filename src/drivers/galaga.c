@@ -853,7 +853,7 @@ static MACHINE_INIT( digdug )
 static ADDRESS_MAP_START( bosco_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -875,7 +875,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( galaga_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -892,7 +892,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( xevious_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)	/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -912,7 +912,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( digdug_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -1785,26 +1785,44 @@ static struct GfxDecodeInfo gfxdecodeinfo_digdug[] =
 };
 
 
-
+/* The resistance path of the namco sound is 16k compared to
+ * the 10k of the highest gain 54xx filter. Giving a 10/16 gain.
+ */
 static struct namco_interface namco_interface =
 {
 	18432000/6/32,	/* 96 kHz sample rate */
 	3,				/* number of voices */
-	100,			/* playback volume */
+	90*10/16,		/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
+/* Only used by bosco.  After filtering the 4V 52xx output,
+ * the signal is 1V, or 25%.  The relative volume between
+ * 52xx & 54xx is the same.
+ */
 static struct namco_52xx_interface namco_52xx_interface =
 {
 	18432000/12,	/* 1.536 MHz */
-	50,				/* volume */
-	REGION_SOUND2	/* memory region */
+	90,				/* volume */
+	REGION_SOUND2,	/* memory region */
+	4000,			/* Playback frequency - from 555 timer 6M */
+	80,				/* High pass filter fc */
+	0.3,			/* High pass filter Q */
+	2400,			/* Low pass filter fc */
+	0.9,			/* Low pass filter Q */
+	.25				/* Combined gain of both filters */
 };
 
 static struct namco_54xx_interface namco_54xx_interface =
 {
-	18432000/12,		/* 1.536 MHz */
-	{ 100, 100, 100 }	/* volume of the three outputs */
+	18432000/12,	/* 1.536 MHz */
+	90,				/* volume */
+	{ RES_K(100),	RES_K(47),		RES_K(150) },	/* R24, R33, R42 */
+	{ RES_K(22),	RES_K(10),		RES_K(22) },	/* R23, R34, R41 */
+	{ RES_K(220),	RES_K(150),		RES_K(470) },	/* R22, R35, R40 */
+	{ RES_K(33),	RES_K(33),		RES_K(10)},		/* R21, R36, R37 */
+	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C31, C29, C27 */
+	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C30, C28, C26 */
 };
 
 static const char *bosco_sample_names[] =
@@ -1817,7 +1835,7 @@ static const char *bosco_sample_names[] =
 static struct Samplesinterface samples_interface_bosco =
 {
 	1,	/* 3 channel1 */
-	100,	/* volume */
+	95,	/* volume */
 	bosco_sample_names
 };
 

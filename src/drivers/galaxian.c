@@ -842,6 +842,30 @@ static ADDRESS_MAP_START( harem_cpu2_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( tazzmang, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x7000, 0x7000) AM_READ(input_port_2_r) /* mirror */
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0x8800, 0x883f) AM_READWRITE(MRA8_RAM, galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x8840, 0x885f) AM_RAM AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x8860, 0x887f) AM_RAM AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x8880, 0x8bff) AM_WRITENOP
+	AM_RANGE(0x9000, 0x93ff) AM_READWRITE(MRA8_RAM, galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x9800, 0x9800) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa7ff, 0xa7ff) AM_READ(input_port_0_r) /* mirror */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r) AM_WRITE(galaxian_background_enable_w)
+	AM_RANGE(0xa803, 0xa803) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0xa805, 0xa805) AM_WRITE(galaxian_shoot_enable_w)
+	AM_RANGE(0xa806, 0xa807) AM_WRITE(galaxian_vol_w)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0xb006, 0xb006) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0xb007, 0xb007) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r) AM_WRITE(galaxian_pitch_w)
+ADDRESS_MAP_END
+
 #define GAL_IN0\
 	PORT_START_TAG("IN0")\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )\
@@ -3204,6 +3228,53 @@ INPUT_PORTS_START( harem )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( tazzmang )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 ) PORT_NAME("Start 1 / P1 and P2 Button 2")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 4C/1C  B 1C/4C" )
+	PORT_DIPSETTING(    0x02, "A 3C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x06, "A 2C/1C  B 1C/2C" )
+	PORT_DIPSETTING(    0x04, "A 1C/1C  B 1C/1C" )
+	PORT_DIPNAME( 0x08, 0x00, "3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,
@@ -3896,6 +3967,13 @@ static MACHINE_DRIVER_START( harem )
 
 	MDRV_VIDEO_START(galaxian_plain)
 	MDRV_SOUND_ADD(AY8910, harem_ay8910_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( tazzmang )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(tazzmang,0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -5531,9 +5609,8 @@ ROM_START( hunchbkg )
 ROM_END
 
 ROM_START( harem )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "p0_ic85.bin",  0x0000, 0x2000, CRC(4521b753) SHA1(9033f9c3be8fec1e5ff251e9f60faaf3848a1a1e) )
-	/* probably encrypted not bad dumped */
 	ROM_LOAD( "p1_ic87.bin",  0x8000, 0x2000, BAD_DUMP CRC(3cc5d1e8) SHA1(827e2d20de2a00ec016ead249ed3afdccd0c856c) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
@@ -5550,6 +5627,24 @@ ROM_START( harem )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "harem.clr",    0x0000, 0x0020, CRC(c9a2bf73) SHA1(dad65ebf43a5df147e334afd552e67f5fcd26df7) )
 ROM_END
+
+ROM_START( tazzmang )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "tazzm1.4k",    0x0000, 0x1000, CRC(a14480a1) SHA1(60dac6b57e8331cc4daedaf87faf3e3acc68f378) )
+	ROM_LOAD( "tazzm2.5j",    0x1000, 0x1000, CRC(5609f5db) SHA1(3fc50109ea0e012e3e310ae4f5dd0cf460bdca52) )
+	ROM_LOAD( "tazzm3.6f",    0x2000, 0x1000, CRC(fe7f7002) SHA1(ac4134c07a798328b18994010bcaf6b3f728466a) )
+	ROM_LOAD( "tazzm4.7e",    0x3000, 0x1000, CRC(c9ca1d0a) SHA1(d420ca2e926174e17215212278c86ba9bbb3d9dc) )
+	ROM_LOAD( "tazzm5.7l",    0x4000, 0x1000, CRC(f50cd8a6) SHA1(b59ca37171b9acc9854f1beae43cfa5643219a5f) )
+	ROM_LOAD( "tazzm6.7l",    0x5000, 0x1000, CRC(5cf2e7d2) SHA1(ad89e2655164e0fc5ecc9af70c5f0dd9b094d432) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "tazm8.1lk",    0x0000, 0x0800, CRC(2c5b612b) SHA1(32e3a41a9a4a8b1285b6a195213ff0d98012360a) )
+	ROM_LOAD( "tazzm7.1jh",   0x0800, 0x0800, CRC(3f5ff3ac) SHA1(bc70eef54a45b52c14e35464e5f06b5eec554eb6) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.6l",      0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
+ROM_END
+
 
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
@@ -5632,3 +5727,4 @@ GAME( 1985, drivfrcb, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "bootleg", "Dr
 GAME( 1983, bongo,    0,		bongo,    bongo,	0,		  ROT90,  "Jetsoft", "Bongo" )
 GAME( 1983, hunchbkg, hunchbak,	hunchbkg, hunchbkg, 0,		  ROT90,  "Century Electronics", "Hunchback (Galaxian hardware)" )
 GAMEX(1983, harem,    0,        harem,    harem,    0,        ROT90,  "I.G.R.", "Harem", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1982, tazzmang, tazmania,	tazzmang, tazzmang,	0,		  ROT90,  "bootleg", "Tazz-Mania (Galaxian Hardware)" )

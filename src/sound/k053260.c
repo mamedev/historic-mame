@@ -39,7 +39,7 @@ struct K053260_chip_def {
 static struct K053260_chip_def *K053260_chip;
 
 /* local copy of the interface */
-const struct K053260_interface	*intf;
+static const struct K053260_interface	*intf;
 
 static void InitDeltaTable( int chip ) {
 	int		i;

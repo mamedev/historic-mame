@@ -247,25 +247,6 @@ VIDEO_UPDATE( atarigx2 )
 		int bottom	= cliprect->max_y + 1;
 		int x, y;
 
-		/* adjust for orientation */
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			int temp = left; left = top; top = temp;
-			temp = right; right = bottom; bottom = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			int temp = left; left = right; right = temp;
-			left	= bitmap->width - left;
-			right	= bitmap->width - right;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			int temp = top; top = bottom; bottom = temp;
-			top		= bitmap->height - top;
-			bottom	= bitmap->height - bottom;
-		}
-		
 		/* now blend with the playfield */
 		for (y = top; y < bottom; y++)
 		{

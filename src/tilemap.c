@@ -39,6 +39,7 @@ struct tilemap
 
 	/* callback to interpret video RAM for the tilemap */
 	void (*tile_get_info)( int memory_offset );
+	void *user_data;
 
 	UINT32 max_memory_offset;
 	UINT32 num_tiles;
@@ -331,7 +332,6 @@ static void mappings_update( struct tilemap *tilemap )
 		int memory_offset = tilemap->get_memory_offset( logical_col, logical_row, num_logical_cols, num_logical_rows );
 		UINT32 cached_col = logical_col;
 		UINT32 cached_row = logical_row;
-		if( tilemap->orientation & ORIENTATION_SWAP_XY ) SWAP(cached_col,cached_row)
 		if( tilemap->orientation & ORIENTATION_FLIP_X ) cached_col = (num_cached_cols-1)-cached_col;
 		if( tilemap->orientation & ORIENTATION_FLIP_Y ) cached_row = (num_cached_rows-1)-cached_row;
 		cached_indx = cached_row*num_cached_cols+cached_col;
@@ -343,22 +343,6 @@ static void mappings_update( struct tilemap *tilemap )
 		int cached_flip = logical_flip;
 		if( tilemap->attributes&TILEMAP_FLIPX ) cached_flip ^= TILE_FLIPX;
 		if( tilemap->attributes&TILEMAP_FLIPY ) cached_flip ^= TILE_FLIPY;
-#ifndef PREROTATE_GFX
-		if( Machine->orientation & ORIENTATION_SWAP_XY )
-		{
-			if( Machine->orientation & ORIENTATION_FLIP_X ) cached_flip ^= TILE_FLIPY;
-			if( Machine->orientation & ORIENTATION_FLIP_Y ) cached_flip ^= TILE_FLIPX;
-		}
-		else
-		{
-			if( Machine->orientation & ORIENTATION_FLIP_X ) cached_flip ^= TILE_FLIPX;
-			if( Machine->orientation & ORIENTATION_FLIP_Y ) cached_flip ^= TILE_FLIPY;
-		}
-#endif
-		if( tilemap->orientation & ORIENTATION_SWAP_XY )
-		{
-			cached_flip = ((cached_flip&1)<<1) | ((cached_flip&2)>>1);
-		}
 		tilemap->logical_flip_to_cached_flip[logical_flip] = cached_flip;
 	}
 }
@@ -817,11 +801,6 @@ struct tilemap *tilemap_create(
 		tilemap->logical_tile_height = tile_height;
 		tilemap->logical_colscroll = calloc(num_cols*tile_width,sizeof(int));
 		tilemap->logical_rowscroll = calloc(num_rows*tile_height,sizeof(int));
-		if( Machine->orientation & ORIENTATION_SWAP_XY )
-		{
-			SWAP( num_cols, num_rows )
-			SWAP( tile_width, tile_height )
-		}
 		tilemap->num_cached_cols = num_cols;
 		tilemap->num_cached_rows = num_rows;
 		tilemap->num_tiles = num_tiles;
@@ -832,7 +811,7 @@ struct tilemap *tilemap_create(
 		tilemap->cached_height = tile_height*num_rows;
 		tilemap->tile_get_info = tile_get_info;
 		tilemap->get_memory_offset = get_memory_offset;
-		tilemap->orientation = Machine->orientation;
+		tilemap->orientation = ROT0;
 
 		/* various defaults */
 		tilemap->enable = 1;
@@ -936,7 +915,7 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 	else if( tilemap->attributes!=attributes )
 	{
 		tilemap->attributes = attributes;
-		tilemap->orientation = Machine->orientation;
+		tilemap->orientation = ROT0;
 		if( attributes&TILEMAP_FLIPY )
 		{
 			tilemap->orientation ^= ORIENTATION_FLIP_Y;
@@ -958,27 +937,13 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 void tilemap_set_scroll_cols( struct tilemap *tilemap, int n )
 {
 	tilemap->logical_scroll_cols = n;
-	if( tilemap->orientation & ORIENTATION_SWAP_XY )
-	{
-		tilemap->cached_scroll_rows = n;
-	}
-	else
-	{
-		tilemap->cached_scroll_cols = n;
-	}
+	tilemap->cached_scroll_cols = n;
 }
 
 void tilemap_set_scroll_rows( struct tilemap *tilemap, int n )
 {
 	tilemap->logical_scroll_rows = n;
-	if( tilemap->orientation & ORIENTATION_SWAP_XY )
-	{
-		tilemap->cached_scroll_cols = n;
-	}
-	else
-	{
-		tilemap->cached_scroll_rows = n;
-	}
+	tilemap->cached_scroll_rows = n;
 }
 
 /***********************************************************************************/
@@ -1054,6 +1019,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 		}
 
 		memset( &tile_info, 0x00, sizeof(tile_info) ); /* initialize defaults */
+		tile_info.user_data = tilemap->user_data;
 
 		/* walk over cached rows/cols (better to walk screen coords) */
 		for( row=0; row<tilemap->num_cached_rows; row++ )
@@ -1127,35 +1093,17 @@ void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value )
 	tilemap->logical_rowscroll[which] = value;
 	value = tilemap->scrollx_delta-value; /* adjust */
 
-	if( tilemap->orientation & ORIENTATION_SWAP_XY )
+	if( tilemap->orientation & ORIENTATION_FLIP_Y )
 	{
-		/* if xy are swapped, we are actually panning the screen bitmap vertically */
-		if( tilemap->orientation & ORIENTATION_FLIP_X )
-		{
-			/* adjust affected col */
-			which = tilemap->cached_scroll_cols-1 - which;
-		}
-		if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		{
-			/* adjust scroll amount */
-			value = screen_height-tilemap->cached_height-value;
-		}
-		tilemap->cached_colscroll[which] = value;
+		/* adjust affected row */
+		which = tilemap->cached_scroll_rows-1 - which;
 	}
-	else
+	if( tilemap->orientation & ORIENTATION_FLIP_X )
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		{
-			/* adjust affected row */
-			which = tilemap->cached_scroll_rows-1 - which;
-		}
-		if( tilemap->orientation & ORIENTATION_FLIP_X )
-		{
-			/* adjust scroll amount */
-			value = screen_width-tilemap->cached_width-value;
-		}
-		tilemap->cached_rowscroll[which] = value;
+		/* adjust scroll amount */
+		value = screen_width-tilemap->cached_width-value;
 	}
+	tilemap->cached_rowscroll[which] = value;
 }
 
 void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value )
@@ -1163,35 +1111,17 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value )
 	tilemap->logical_colscroll[which] = value;
 	value = tilemap->scrolly_delta - value; /* adjust */
 
-	if( tilemap->orientation & ORIENTATION_SWAP_XY )
+	if( tilemap->orientation & ORIENTATION_FLIP_X )
 	{
-		/* if xy are swapped, we are actually panning the screen bitmap horizontally */
-		if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		{
-			/* adjust affected row */
-			which = tilemap->cached_scroll_rows-1 - which;
-		}
-		if( tilemap->orientation & ORIENTATION_FLIP_X )
-		{
-			/* adjust scroll amount */
-			value = screen_width-tilemap->cached_width-value;
-		}
-		tilemap->cached_rowscroll[which] = value;
+		/* adjust affected col */
+		which = tilemap->cached_scroll_cols-1 - which;
 	}
-	else
+	if( tilemap->orientation & ORIENTATION_FLIP_Y )
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_X )
-		{
-			/* adjust affected col */
-			which = tilemap->cached_scroll_cols-1 - which;
-		}
-		if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		{
-			/* adjust scroll amount */
-			value = screen_height-tilemap->cached_height-value;
-		}
-		tilemap->cached_colscroll[which] = value;
+		/* adjust scroll amount */
+		value = screen_height-tilemap->cached_height-value;
 	}
+	tilemap->cached_colscroll[which] = value;
 }
 
 /***********************************************************************************/
@@ -1199,6 +1129,13 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value )
 void tilemap_set_palette_offset( struct tilemap *tilemap, int offset )
 {
 	tilemap->palette_offset = offset;
+}
+
+/***********************************************************************************/
+
+void tilemap_set_user_data( struct tilemap *tilemap, void *user_data )
+{
+	tilemap->user_data = user_data;
 }
 
 /***********************************************************************************/
@@ -1232,26 +1169,6 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 			top		= cliprect->min_y;
 			right	= cliprect->max_x+1;
 			bottom	= cliprect->max_y+1;
-
-			if( Machine->orientation & ORIENTATION_SWAP_XY )
-			{
-				SWAP(left,top)
-				SWAP(right,bottom)
-			}
-
-			if( Machine->orientation & ORIENTATION_FLIP_X )
-			{
-				SWAP(left,right)
-				left	= screen_width-left;
-				right	= screen_width-right;
-			}
-
-			if( Machine->orientation & ORIENTATION_FLIP_Y )
-			{
-				SWAP(top,bottom)
-				top		= screen_height-top;
-				bottom	= screen_height-bottom;
-			}
 		}
 		else
 		{
@@ -1267,6 +1184,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 
 		/* initialize defaults */
 		memset( &tile_info, 0x00, sizeof(tile_info) );
+		tile_info.user_data = tilemap->user_data;
 
 		/* if the whole map is dirty, mark it as such */
 		if (tilemap->all_tiles_dirty)
@@ -1849,47 +1767,6 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 		ey = bitmap->height-1;
 	}
 
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int t;
-
-		t = startx; startx = starty; starty = t;
-		t = sx; sx = sy; sy = t;
-		t = ex; ex = ey; ey = t;
-		t = incxx; incxx = incyy; incyy = t;
-		t = incxy; incxy = incyx; incyx = t;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		int w = ex - sx;
-
-		incxy = -incxy;
-		incyx = -incyx;
-		startx = widthshifted - startx - 1;
-		startx -= incxx * w;
-		starty -= incxy * w;
-
-		w = sx;
-		sx = bitmap->width-1 - ex;
-		ex = bitmap->width-1 - w;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		int h = ey - sy;
-
-		incxy = -incxy;
-		incyx = -incyx;
-		starty = heightshifted - starty - 1;
-		startx -= incyx * h;
-		starty -= incyy * h;
-
-		h = sy;
-		sy = bitmap->height-1 - ey;
-		ey = bitmap->height-1 - h;
-	}
 
 	if (incxy == 0 && incyx == 0 && !wraparound)
 	{

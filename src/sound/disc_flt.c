@@ -354,7 +354,7 @@ void dst_op_amp_filt_step(struct node_description *node)
 			case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
 				node->output = -context->a1*context->y1 - context->a2*context->y2 +
 				                context->b0*v + context->b1*context->x1 + context->b2*context->x2 +
-				                + info->vRef;
+				                info->vRef;
 				context->x2 = context->x1;
 				context->x1 = v;
 				context->y2 = context->y1;

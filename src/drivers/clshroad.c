@@ -457,6 +457,49 @@ ROM_START( clshroad )
 	ROM_LOAD( "clashrd.g7",  0x0100, 0x0100, CRC(4017a2a6) SHA1(dadef2de7a1119758c8e6d397aa42815b0218889) )	/* high 4 bits */
 ROM_END
 
+ROM_START( clshrdst )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_LOAD( "cr-3",  0x0000, 0x8000, CRC(23559df2) SHA1(41a08a4fbad3da1898226e2ca1956a9f7c8f94b0) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
+	ROM_LOAD( "clashr2.bin", 0x0000, 0x2000, CRC(e6389ec1) SHA1(6ec94d5e389e9104f40fc48df6f15674415851c0) )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
+	ROM_LOAD( "cr-12", 0x0000, 0x2000, CRC(e5aa4c46) SHA1(c0ed717e263aca2d0ec8a078f0aa3377357b9e3d) )
+	ROM_LOAD( "cr-11", 0x2000, 0x2000, CRC(7fc11c7c) SHA1(e798c4abe87fd701f250625ae6545ab00bcfbef5) )
+	ROM_LOAD( "cr-10", 0x4000, 0x2000, CRC(6b1293b7) SHA1(3219c03e87be0f53d4556a45d82278fc712f4d0b) )
+	ROM_LOAD( "cr-9",  0x6000, 0x2000, CRC(d219722c) SHA1(e68a0883113db43a878a5529fa8deb7816573e35) )
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Layer 0 */
+	ROM_LOAD( "cr-7",  0x0000, 0x2000, CRC(e8aa7ac3) SHA1(12f4f1041001ce6e77e9b0c691663f4a20969eaa) )
+	ROM_LOAD( "cr-6",  0x2000, 0x2000, CRC(037be475) SHA1(72a8c1da210239ecac96ea22e54a5d193f32ad83) )
+	ROM_LOAD( "cr-5",  0x4000, 0x2000, CRC(a4151734) SHA1(1ccf68270bbfd557cd8cca3f7f36e9e2de7e94e6) )
+	ROM_LOAD( "cr-4",  0x6000, 0x2000, CRC(5ef24757) SHA1(4c6a06fdadb0b52f62148642e0416c4f60c8048b) )
+
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* Layer 1 */
+	ROM_LOAD( "cr-13", 0x0000, 0x2000, CRC(012a6412) SHA1(ae9757e56f896e4158e6af7dc12eb6c2a3755f4d) )
+	ROM_LOAD( "cr-8",  0x2000, 0x2000, CRC(3c2b816c) SHA1(3df3d9f49475ccfbb0792d98c3d12c8fd15034bc) )
+
+	ROM_REGION( 0x0b40, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.6", 0x0000, 0x0100, CRC(38f443da) SHA1(a015217508b18eb3f1987cd5b53f31608b13de08) )	/* r */
+	ROM_LOAD( "82s129.7", 0x0100, 0x0100, CRC(977fab0c) SHA1(78e7b4f1e9891d2d9cf1e1ec0c4f59a311cef1c5) )	/* g */
+	ROM_LOAD( "82s129.8", 0x0200, 0x0100, CRC(ae7ae54d) SHA1(d7d4682e437f2f7adb7fceb813437c06f27f2711) )	/* b */
+	/* all other proms that firebatl has are missing */
+	ROM_LOAD( "clashrd.a2",  0x0900, 0x0100, CRC(4e2a2781) SHA1(7be2e066499ea0af76f6ae926fe87e02f8c36a6f) )	/* unknown */
+	ROM_LOAD( "clashrd.g4",  0x0a00, 0x0020, CRC(1afc04f0) SHA1(38207cf3e15bac7034ac06469b95708d22b57da4) )	/* timing? */
+	ROM_LOAD( "clashrd.b11", 0x0a20, 0x0020, CRC(d453f2c5) SHA1(7fdc5bf59bad9e8f00e970565ff6f6b3773541db) )	/* unknown (possibly bad dump) */
+	ROM_LOAD( "clashrd.g10", 0x0a40, 0x0100, CRC(73afefd0) SHA1(d14c5490c5b174d54043bfdf5c6fb675e67492e7) )	/* unknown (possibly bad dump) */
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "clashr1.bin", 0x0000, 0x2000, CRC(0d0a8068) SHA1(529878d0c5f078590e07ec0fffc27b212843c0ad) )	
+
+	ROM_REGION( 0x0200, REGION_SOUND2, 0 )	/* 4bit->8bit sample expansion PROMs */
+	ROM_LOAD( "clashrd.g8",  0x0000, 0x0100, CRC(bd2c080b) SHA1(9782bb5001e96db56bc29df398187f700bce4f8e) )	/* low 4 bits */
+	ROM_LOAD( "clashrd.g7",  0x0100, 0x0100, CRC(4017a2a6) SHA1(dadef2de7a1119758c8e6d397aa42815b0218889) )	/* high 4 bits */
+ROM_END
+
+
+
 static DRIVER_INIT ( firebatl )
 {
 /*
@@ -475,5 +518,6 @@ die once, it would be nice to avoid the hack however
 	ROM[0x05C8] = 0x23;
 }
 
-GAMEX( 1984, firebatl, 0, firebatl, firebatl, firebatl, ROT90, "Taito", "Fire Battle", GAME_IMPERFECT_GRAPHICS )
-GAME ( 1986, clshroad, 0, clshroad, clshroad, 0, ROT0,  "Woodplace Inc.", "Clash-Road" )
+GAMEX( 1984, firebatl, 0,        firebatl, firebatl, firebatl, ROT90, "Taito", "Fire Battle", GAME_IMPERFECT_GRAPHICS )
+GAME ( 1986, clshroad, 0,        clshroad, clshroad, 0,        ROT0,  "Woodplace Inc.", "Clash-Road" )
+GAME ( 1986, clshrdst, clshroad, clshroad, clshroad, 0,        ROT0,  "Woodplace Inc. (Status Game Corp. license)", "Clash-Road (Status license)" )

@@ -27,7 +27,7 @@ This game runs on a small cartridge-based PCB known as the 'Crystal System'
 There are only two known games running on this system, Crystal of Kings and Evolution Soccer.
 The main PCB is small (approx 6" square) and contains only a few components. All of the processing
 work is done by the large IC in the middle of the PCB. The system looks a bit like IGS's PGM System, in
-that it's housed in a plastic case and has a single slot for insertion of a game cart. However this 
+that it's housed in a plastic case and has a single slot for insertion of a game cart. However this
 system and the game carts are approx. half the size of the PGM carts.
 On bootup, the screen is black and the system outputs a vertical white line on the right side of the screen.
 The HSync is approx 20kHz, the screen is out of sync on a standard 15kHz arcade monitor.
@@ -138,6 +138,7 @@ static void *Timer0,*Timer1,*Timer2,*Timer3;
 static data32_t FlashCmd,PIO;
 static data32_t DMA0ctrl,DMA1ctrl;
 static data8_t OldPort4;
+static data32_t *ResetPatch;
 
 static void IntReq(int num)
 {
@@ -278,7 +279,7 @@ static WRITE32_HANDLER(Timer1_w)
 		double PD=(data>>8)&0xff;
 		double TCV=program_read_dword_32le(0x0180140C);
 		double freq=43000000.0/((PD+1.0)*(TCV+1.0));
-		
+
 
 		if(Timer1ctrl&2)
 			timer_adjust(Timer1,TIME_IN_HZ(freq),0,TIME_IN_HZ(freq));
@@ -386,16 +387,16 @@ static WRITE32_HANDLER(PIO_w)
 	UINT32 RST=data&0x01000000;
 	UINT32 CLK=data&0x02000000;
 	UINT32 DAT=data&0x10000000;
-		
+
 	DS1302_RST(RST?1:0);
 	DS1302_DAT(DAT?1:0);
 	DS1302_CLK(CLK?1:0);
-		
+
 	if(DS1302_RD())
 		program_write_dword_32le(0x01802008,program_read_dword_32le(0x01802008)|0x10000000);
 	else
 		program_write_dword_32le(0x01802008,program_read_dword_32le(0x01802008)&(~0x10000000));
-	
+
 	COMBINE_DATA(&PIO);
 }
 
@@ -408,7 +409,7 @@ static WRITE32_HANDLER(DMA0_w)
 {
 	if(((data^DMA0ctrl)&(1<<10)) && (data&(1<<10)))	//DMAOn
 	{
-		data32_t CTR=data; 
+		data32_t CTR=data;
 		data32_t SRC=program_read_dword_32le(0x01800804);
 		data32_t DST=program_read_dword_32le(0x01800808);
 		data32_t CNT=program_read_dword_32le(0x0180080C);
@@ -454,7 +455,7 @@ static WRITE32_HANDLER(DMA1_w)
 {
 	if(((data^DMA1ctrl)&(1<<10)) && (data&(1<<10)))	//DMAOn
 	{
-		data32_t CTR=data; 
+		data32_t CTR=data;
 		data32_t SRC=program_read_dword_32le(0x01800814);
 		data32_t DST=program_read_dword_32le(0x01800818);
 		data32_t CNT=program_read_dword_32le(0x0180081C);
@@ -498,7 +499,7 @@ static ADDRESS_MAP_START( crystal_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01200000, 0x0120000f) AM_READ(Input_r)
 	AM_RANGE(0x01280000, 0x01280003) AM_WRITE(Banksw_w)
 	AM_RANGE(0x01400000, 0x0140ffff) AM_RAM AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
-	
+
 	AM_RANGE(0x01801400, 0x01801403) AM_READ(Timer0_r) AM_WRITE(Timer0_w)
 	AM_RANGE(0x01801408, 0x0180140b) AM_READ(Timer1_r) AM_WRITE(Timer1_w)
 	AM_RANGE(0x01801410, 0x01801413) AM_READ(Timer2_r) AM_WRITE(Timer2_w)
@@ -522,8 +523,39 @@ static ADDRESS_MAP_START( crystal_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x05000000, 0x05000003) AM_READ(FlashCmd_r) AM_WRITE(FlashCmd_w)
 	AM_RANGE(0x05000000, 0x05ffffff) AM_READ(MRA32_BANK1)
 
+	AM_RANGE(0x44414F4C, 0x44414F7F) AM_RAM AM_BASE(&ResetPatch)
+
 ADDRESS_MAP_END
 
+static void PatchReset()
+{
+	//The test menu reset routine seems buggy
+	//it reads the reset vector from 0x02000000 but it should be
+	//read from 0x00000000. At 0x2000000 there is the bios signature
+	//"LOADED VER....", so it jumps to "LOAD" in hex (0x44414F4C)
+	//I'll add some code there that makes the game stay in a loop
+	//reading the flip register so the idle skip works
+
+	const data8_t Patch[]={	0x01,0xEA,0xC0,0x40,0x0A,0x40,0x06,0xE9,
+				0x20,0x2A,0xC0,0x40,0x0A,0x40,0x06,0xE9,
+				0x20,0x3A,0xD0,0xA1,0xFA,0xD4,0xF4,0xDE};
+/*
+Loop1:
+	LDI	1,%R2
+	LDI 	0x30000a6,%R1
+	STS	%R2,(%R1,0x0)
+
+loop:
+	LDI	0x30000a6,%R1
+	LDSU	(%R1,0x0),%R2
+	CMP 	%R2,0x0000
+	JNZ	loop
+
+	JMP	Loop1
+*/
+
+	memcpy(ResetPatch,Patch,sizeof(Patch));
+}
 
 static MACHINE_INIT(crystal)
 {
@@ -544,7 +576,7 @@ static MACHINE_INIT(crystal)
 	Timer1ctrl=0;
 	Timer2ctrl=0;
 	Timer3ctrl=0;
-	
+
 	Timer0=timer_alloc(Timer0cb);
 	timer_adjust(Timer0,TIME_NEVER,0,0);
 
@@ -561,6 +593,8 @@ static MACHINE_INIT(crystal)
 #ifdef IDLE_LOOP_SPEEDUP
 	FlipCntRead=0;
 #endif
+
+	PatchReset();
 }
 
 static VIDEO_START(crystal)
@@ -574,14 +608,14 @@ static void plot_pixel_rgb(struct mame_bitmap *bitmap, int x, int y , int color)
 	color=(color&0x1f)|((color>>1)&0x7fe0);
 	if (Machine->color_depth == 32)
 	{
-		UINT32 cb=(color&0x1f)<<3;	
-		UINT32 cg=(color&0x3e0)>>2;	
-		UINT32 cr=(color&0x7c00)>>7;	
+		UINT32 cb=(color&0x1f)<<3;
+		UINT32 cg=(color&0x3e0)>>2;
+		UINT32 cr=(color&0x7c00)>>7;
 		((UINT32 *)bitmap->line[y])[x] = cb | (cg<<8) | (cr<<16);
 	}
 	else
 	{
-		((UINT16 *)bitmap->line[y])[x] = color;	
+		((UINT16 *)bitmap->line[y])[x] = color;
 	}
 }
 
@@ -677,7 +711,7 @@ VIDEO_EOF(crystal)
 	{
 		if(FlipCount)
 			FlipCount--;
-		
+
 	}
 }
 
@@ -692,7 +726,7 @@ INPUT_PORTS_START(crystal)
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
@@ -702,17 +736,17 @@ INPUT_PORTS_START(crystal)
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)	
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
-	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)	
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 
 	PORT_START
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)	
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(3)
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(4)
@@ -722,19 +756,19 @@ INPUT_PORTS_START(crystal)
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(4)
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(3)
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(4)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)	
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
 
 	PORT_START
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_START2 ) 
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_START3 ) 
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_START4 ) 
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1 ) 
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2 ) 
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE1 ) 
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
 
 	PORT_START
@@ -781,7 +815,7 @@ static MACHINE_DRIVER_START( crystal )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(crystal)
-	
+
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
@@ -800,17 +834,17 @@ MACHINE_DRIVER_END
 
 ROM_START( crysbios )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) // bios
-	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9))
+	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9) SHA1(b6f6dda58d9c82273f9422c1bd623411e58982cb) )
 ROM_END
 
 ROM_START( crysking )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) // bios
-	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9))
+	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9) SHA1(b6f6dda58d9c82273f9422c1bd623411e58982cb))
 
 	ROM_REGION( 0x3000000, REGION_USER1, 0 ) // Flash
-	ROM_LOAD("bcsv0004f01.u1",  0x0000000, 0x1000000, CRC(8FEFF120))
-	ROM_LOAD("bcsv0004f02.u2",  0x1000000, 0x1000000, CRC(0E799845))
-	ROM_LOAD("bcsv0004f03.u3",  0x2000000, 0x1000000, CRC(659E2D17))
+	ROM_LOAD("bcsv0004f01.u1",  0x0000000, 0x1000000, CRC(8FEFF120) SHA1(2ea42fa893bff845b5b855e2556789f8354e9066) )
+	ROM_LOAD("bcsv0004f02.u2",  0x1000000, 0x1000000, CRC(0E799845) SHA1(419674ce043cb1efb18303f4cb7fdbbae642ee39) )
+	ROM_LOAD("bcsv0004f03.u3",  0x2000000, 0x1000000, CRC(659E2D17) SHA1(342c98f3f695ef4dea8b533612451c4d2fb58809) )
 
 	ROM_REGION( 0x10000, REGION_USER2,	0)	//Unmapped flash
 	ROM_FILL(0,0x10000,0xff)
@@ -818,12 +852,12 @@ ROM_END
 
 ROM_START( evosocc )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) // bios
-	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9))
+	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9) SHA1(b6f6dda58d9c82273f9422c1bd623411e58982cb))
 
 	ROM_REGION( 0x3000000, REGION_USER1, 0 ) // Flash
-	ROM_LOAD("bcsv0001u01",  0x0000000, 0x1000000, CRC(2581A0EA))
-	ROM_LOAD("bcsv0001u02",  0x1000000, 0x1000000, CRC(47EF1794))
-	ROM_LOAD("bcsv0001u03",  0x2000000, 0x1000000, CRC(F396A2EC))
+	ROM_LOAD("bcsv0001u01",  0x0000000, 0x1000000, CRC(2581A0EA) SHA1(ee483ac60a3ed00a21cb515974cec4af19916a7d) )
+	ROM_LOAD("bcsv0001u02",  0x1000000, 0x1000000, CRC(47EF1794) SHA1(f573706c17d1342b9b7aed9b40b8b648f0bf58db) )
+	ROM_LOAD("bcsv0001u03",  0x2000000, 0x1000000, CRC(F396A2EC) SHA1(f305eb10856fb5d4c229a6b09d6a2fb21b24ce66) )
 
 	ROM_REGION( 0x10000, REGION_USER2,	0)	//Unmapped flash
 	ROM_FILL(0,0x10000,0xff)
@@ -857,7 +891,7 @@ DRIVER_INIT(evosocc)
 
 	Rom[0x97388E/2]=0x90FC;	//PUSH R2..R7
 	Rom[0x973890/2]=0x9001;	//PUSH R0
-	
+
 	Rom[0x971058/2]=0x907C;	//PUSH R2..R6
 	Rom[0x971060/2]=0x9001; //PUSH R0
 

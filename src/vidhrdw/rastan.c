@@ -22,10 +22,10 @@ static UINT16 sprites_flipscreen = 0;
 VIDEO_START( rastan )
 {
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
-	if (PC080SN_vh_start(1,1,0,0,0,0,0))
+	if (PC080SN_vh_start(1,0,0,0,0,0,0))
 		return 1;
 
-	if (PC090OJ_vh_start(0,0,0,0))
+	if (PC090OJ_vh_start(1,0,0,0))
 		return 1;
 
 	return 0;
@@ -70,21 +70,18 @@ VIDEO_START( jumping )
 
 WRITE16_HANDLER( rastan_spritectrl_w )
 {
-	if (offset == 0)
-	{
-		/* bits 5-7 are the sprite palette bank */
-		/* bit 4 + hi byte unknown */
+	/* bits 5-7 are the sprite palette bank */
+	PC090OJ_sprite_ctrl = (data & 0xe0) >> 5;
 
-		PC090OJ_sprite_ctrl = (data & 0xe0) >> 5;
+	/* bit 4 unused */
 
-		/* bits 0 and 1 are coin lockout */
-		coin_lockout_w(1,~data & 0x01);
-		coin_lockout_w(0,~data & 0x02);
+	/* bits 0 and 1 are coin lockout */
+	coin_lockout_w(1,~data & 0x01);
+	coin_lockout_w(0,~data & 0x02);
 
-		/* bits 2 and 3 are the coin counters */
-		coin_counter_w(1,data & 0x04);
-		coin_counter_w(0,data & 0x08);
-	}
+	/* bits 2 and 3 are the coin counters */
+	coin_counter_w(1,data & 0x04);
+	coin_counter_w(0,data & 0x08);
 }
 
 WRITE16_HANDLER( rainbow_spritectrl_w )
@@ -130,14 +127,6 @@ VIDEO_UPDATE( rastan )
 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
 
 	PC090OJ_draw_sprites(bitmap,cliprect,0);
-
-#if 0
-	{
-		char buf[80];
-		sprintf(buf,"sprite_ctrl: %04x",sprite_ctrl);
-		usrintf_showmessage(buf);
-	}
-#endif
 }
 
 /***************************************************************************/

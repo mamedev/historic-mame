@@ -304,6 +304,12 @@ ROM_START( ccastles )
      ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
      ROM_LOAD( "ccastles.107", 0x0000, 0x2000, CRC(39960b7d) SHA1(82bdf764ac23e72598883283c5e957169387abd4) )
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, CRC(9d1d89fc) SHA1(01c279edee322cc28f34506c312e4a9e3363b1be) )
+
+     ROM_REGION( 0x0400, REGION_PROMS, 0 )
+     ROM_LOAD( "ccastles.108", 0x0000, 0x0100, CRC(6ed31e3b) SHA1(c3f3e4e7f313ecfd101cc52dfc44bd6b51a2ac88) ) /* Synchronous PROM I.C., not used */
+     ROM_LOAD( "ccastles.109", 0x0100, 0x0100, CRC(b3515f1a) SHA1(c1bf077242481ef2f958580602b8113532b58612) ) /* Bus PROM I.C., not used */
+     ROM_LOAD( "ccastles.110", 0x0200, 0x0100, CRC(068bdc7e) SHA1(ae155918fdafd14299bc448b43eed8ad9c1ef5ef) ) /* Write PROM I.C., not used */
+     ROM_LOAD( "ccastles.111", 0x0300, 0x0100, CRC(c29c18d9) SHA1(278bf61a290ae72ddaae2bafb4ab6739d3fb6238) ) /* Color PROM I.C., not used */
 ROM_END
 
 
@@ -318,6 +324,12 @@ ROM_START( ccastle3 )
      ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
      ROM_LOAD( "ccastles.107", 0x0000, 0x2000, CRC(39960b7d) SHA1(82bdf764ac23e72598883283c5e957169387abd4) )
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, CRC(9d1d89fc) SHA1(01c279edee322cc28f34506c312e4a9e3363b1be) )
+
+     ROM_REGION( 0x0400, REGION_PROMS, 0 )
+     ROM_LOAD( "ccastles.108", 0x0000, 0x0100, CRC(6ed31e3b) SHA1(c3f3e4e7f313ecfd101cc52dfc44bd6b51a2ac88) ) /* Synchronous PROM I.C., not used */
+     ROM_LOAD( "ccastles.109", 0x0100, 0x0100, CRC(b3515f1a) SHA1(c1bf077242481ef2f958580602b8113532b58612) ) /* Bus PROM I.C., not used */
+     ROM_LOAD( "ccastles.110", 0x0200, 0x0100, CRC(068bdc7e) SHA1(ae155918fdafd14299bc448b43eed8ad9c1ef5ef) ) /* Write PROM I.C., not used */
+     ROM_LOAD( "ccastles.111", 0x0300, 0x0100, CRC(c29c18d9) SHA1(278bf61a290ae72ddaae2bafb4ab6739d3fb6238) ) /* Color PROM I.C., not used */
 ROM_END
 
 
@@ -332,6 +344,12 @@ ROM_START( ccastle2 )
      ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
      ROM_LOAD( "ccastles.107", 0x0000, 0x2000, CRC(39960b7d) SHA1(82bdf764ac23e72598883283c5e957169387abd4) )
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, CRC(9d1d89fc) SHA1(01c279edee322cc28f34506c312e4a9e3363b1be) )
+
+     ROM_REGION( 0x0400, REGION_PROMS, 0 )
+     ROM_LOAD( "ccastles.108", 0x0000, 0x0100, CRC(6ed31e3b) SHA1(c3f3e4e7f313ecfd101cc52dfc44bd6b51a2ac88) ) /* Synchronous PROM I.C., not used */
+     ROM_LOAD( "ccastles.109", 0x0100, 0x0100, CRC(b3515f1a) SHA1(c1bf077242481ef2f958580602b8113532b58612) ) /* Bus PROM I.C., not used */
+     ROM_LOAD( "ccastles.110", 0x0200, 0x0100, CRC(068bdc7e) SHA1(ae155918fdafd14299bc448b43eed8ad9c1ef5ef) ) /* Write PROM I.C., not used */
+     ROM_LOAD( "ccastles.111", 0x0300, 0x0100, CRC(c29c18d9) SHA1(278bf61a290ae72ddaae2bafb4ab6739d3fb6238) ) /* Color PROM I.C., not used */
 ROM_END
 
 

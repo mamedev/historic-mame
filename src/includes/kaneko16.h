@@ -4,6 +4,8 @@
 
 ***************************************************************************/
 
+WRITE16_HANDLER( kaneko16_display_enable );
+
 /* Tile Layers: */
 
 extern data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;

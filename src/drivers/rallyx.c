@@ -230,7 +230,7 @@ static WRITE8_HANDLER( rallyx_latch_w )
 
 		case 0x02:	/* SOUND ON */
 			/* this doesn't work in New Rally X so I'm not supporting it */
-//			pengo_sound_enable_w(0,bit);
+//			pacman_sound_enable_w(0,bit);
 			break;
 
 		case 0x03:	/* FLIP */
@@ -306,7 +306,7 @@ static ADDRESS_MAP_START( rallyx_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_2_r)
 	AM_RANGE(0xa000, 0xa00f) AM_WRITE(MWA8_RAM) AM_BASE(&rallyx_radarattr)
 	AM_RANGE(0xa080, 0xa080) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0xa100, 0xa11f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0xa100, 0xa11f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0xa130, 0xa130) AM_WRITE(rallyx_scrollx_w)
 	AM_RANGE(0xa140, 0xa140) AM_WRITE(rallyx_scrolly_w)
 	AM_RANGE(0xa170, 0xa170) AM_WRITE(MWA8_NOP)			/* ? */

@@ -12,7 +12,6 @@ Known issues:
 - many games suffer from sys16_refreshenable register not being mapped
 - road-rendering routines need to be cleaned up or at least better described
 - logical sprite height computation isn't quite right - garbage pixels are drawn
-- screen orientation support for sprite drawing
 - sprite drawing is unoptimized
 - end-of-sprite marker support will fix some glitches
 - shadow and partial shadow sprite support
@@ -976,24 +975,6 @@ VIDEO_START( system16 ){
 	return 1;
 }
 
-VIDEO_START( hangon ){
-	int ret;
-	sys16_bg1_trans=1;
-	ret = video_start_system16();
-	if(ret) return 1;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0;
-	sys16_textlayer_hi_min=0;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_bg_priority_mode=-1;
-	sys16_bg_priority_value=0x1800;
-	sys16_fg_priority_value=0x2000;
-	return 0;
-}
-
-
 VIDEO_START( system18old ){
 	int i;
 
@@ -1433,160 +1414,65 @@ if( code_pressed( KEYCODE_S ) ){
 
 	if (Machine->scrbitmap->depth == 16) /* 16 bit */
 	{
-		if( Machine->orientation & ORIENTATION_SWAP_XY ){
-			if( Machine->orientation & ORIENTATION_FLIP_Y ){
-				dx=-1;
-				xoff=319;
-			}
-			if( Machine->orientation & ORIENTATION_FLIP_X ){
-				yflip=1;
-			}
+		for(i=cliprect->min_y;i<=cliprect->max_y;i++){ /* with each scanline */
+			if( yflip ) ypos=223-i; else ypos=i;
+			ver_data= *data_ver; /* scanline parameters */
+			/*
+				gr_ver:
+					---- -x-- ---- ----	priority
+					---- --x- ---- ---- ?
+					---- ---x ---- ---- ?
+					---- ---- xxxx xxxx ypos (source bitmap)
 
-			for(i=cliprect->min_y;i<=cliprect->max_y;i++){
-				if(yflip) ypos=223-i;
-				else ypos=i;
-				ver_data=*data_ver;
-				if((ver_data & 0x400) == priority)
-				{
-					colors[0] = paldata1[ sys16_gr_pal[(ver_data)&0xff]&0xff ];
+				gr_flip:
+					---- ---- ---- x--- flip colors
 
-					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
-					{
-						// fill line
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++)
-						{
-							line16=(UINT16 *)bitmap->line[j]+ypos;
-							*line16=colors[0];
-						}
-					}
-					else
-					{
-						// copy line
-						ver_data=ver_data & 0x00ff;
-						colorflip = (sys16_gr_flip[ver_data] >> 3) & 1;
+				gr_hor:
+					xxxx xxxx xxxx xxxx	xscroll
 
-						colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
-						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
-						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
-						colors[4] = paldata2[ sys16_gr_colorflip[colorflip][3] ];
+				gr_pal:
+					---- ---- xxxx xxxx palette
+			*/
+			if( (ver_data & 0x400) == priority ){
+				colors[0] = paldata1[ sys16_gr_pal[ver_data&0xff]&0xff ];
 
-						hor_pos = sys16_gr_hor[ver_data];
-						ver_data = ver_data << sys16_gr_bitmap_width;
-
-						if(hor_pos & 0xf000)
-						{
-							// reverse
-							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
-						}
-						else
-						{
-							// normal
-							hor_pos=(hor_pos+0x200) & 0x3ff;
-						}
-
-						source = data + hor_pos + ver_data + 18 + 8;
-
-						for(j=cliprect->min_x;j<cliprect->max_x;j++)
-						{
-							line16=(UINT16 *)bitmap->line[xoff+j*dx]+ypos;
-							*line16 = colors[*source++];
-						}
+				if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200){
+					line16 = (UINT16 *)bitmap->line[ypos]; /* dest for drawing */
+					for(j=cliprect->min_x;j<=cliprect->max_x;j++){
+						*line16++=colors[0]; /* opaque fill with background color */
 					}
 				}
-				data_ver++;
-			}
-		}
-		else
-		{ /* 16 bpp, normal screen orientation */
-			if( Machine->orientation & ORIENTATION_FLIP_X ){
-				dx=-1;
-				xoff=319;
-			}
-			if( Machine->orientation & ORIENTATION_FLIP_Y ){
-				yflip=1;
-			}
+				else {
+					// copy line
+					line16 = (UINT16 *)bitmap->line[ypos]+xoff; /* dest for drawing */
+					ver_data &= 0xff;
 
-			for(i=cliprect->min_y;i<=cliprect->max_y;i++){ /* with each scanline */
-				if( yflip ) ypos=223-i; else ypos=i;
-				ver_data= *data_ver; /* scanline parameters */
-				/*
-					gr_ver:
-						---- -x-- ---- ----	priority
-						---- --x- ---- ---- ?
-						---- ---x ---- ---- ?
-						---- ---- xxxx xxxx ypos (source bitmap)
+					colorflip = (sys16_gr_flip[ver_data] >> 3) & 1;
+					colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
+					colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
+					colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
+					colors[4] = paldata2[ sys16_gr_colorflip[colorflip][3] ];
 
-					gr_flip:
-						---- ---- ---- x--- flip colors
-
-					gr_hor:
-						xxxx xxxx xxxx xxxx	xscroll
-
-					gr_pal:
-						---- ---- xxxx xxxx palette
-				*/
-				if( (ver_data & 0x400) == priority ){
-					colors[0] = paldata1[ sys16_gr_pal[ver_data&0xff]&0xff ];
-
-					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200){
-						line16 = (UINT16 *)bitmap->line[ypos]; /* dest for drawing */
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++){
-							*line16++=colors[0]; /* opaque fill with background color */
-						}
+					hor_pos = sys16_gr_hor[ver_data];
+					if( hor_pos & 0xf000 ){ // reverse (precalculated)
+						hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
 					}
-					else {
-						// copy line
-						line16 = (UINT16 *)bitmap->line[ypos]+xoff; /* dest for drawing */
-						ver_data &= 0xff;
+					else { // normal
+						hor_pos=(hor_pos+0x200) & 0x3ff;
+					}
 
-						colorflip = (sys16_gr_flip[ver_data] >> 3) & 1;
-						colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
-						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
-						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
-						colors[4] = paldata2[ sys16_gr_colorflip[colorflip][3] ];
+					ver_data <<= sys16_gr_bitmap_width;
+					source = data + hor_pos + ver_data + 18 + 8;
 
-						hor_pos = sys16_gr_hor[ver_data];
-						if( hor_pos & 0xf000 ){ // reverse (precalculated)
-							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
-						}
-						else { // normal
-							hor_pos=(hor_pos+0x200) & 0x3ff;
-						}
-
-						ver_data <<= sys16_gr_bitmap_width;
-						source = data + hor_pos + ver_data + 18 + 8;
-
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++){
-							*line16 = colors[*source++];
-							line16+=dx;
-						}
+					for(j=cliprect->min_x;j<=cliprect->max_x;j++){
+						*line16 = colors[*source++];
+						line16+=dx;
 					}
 				}
-				data_ver++;
 			}
+			data_ver++;
 		}
 	}
-}
-
-VIDEO_UPDATE( hangon ){
-	if (!sys16_refreshenable) return;
-	if( sys16_update_proc ) sys16_update_proc();
-	update_page();
-
-	tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-	tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-	fillbitmap(priority_bitmap,0,cliprect);
-
-	render_gr(bitmap,cliprect,0); /* sky */
-	tilemap_draw( bitmap,cliprect, background, 0, 0 );
-	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
-	render_gr(bitmap,cliprect,1); /* floor */
-	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
-
-	draw_sprites( bitmap,cliprect, 0 );
 }
 
 static void render_grv2(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
@@ -1611,183 +1497,56 @@ static void render_grv2(struct mame_bitmap *bitmap,const struct rectangle *clipr
 
 	if (Machine->scrbitmap->depth == 16) /* 16 bit */
 	{
-		if( Machine->orientation & ORIENTATION_SWAP_XY )
-		{
-			if( Machine->orientation & ORIENTATION_FLIP_Y ){
-				dx=-1;
-				xoff=319;
-			}
-			if( Machine->orientation & ORIENTATION_FLIP_X ){
-				yflip=1;
-			}
-
-			for(i=cliprect->min_y;i<=cliprect->max_y;i++)
-			{
-				if(yflip) ypos=223-i;
-				else ypos=i;
-				ver_data = *data_ver;
-				if((ver_data & 0x800) == priority)
-				{
-
-					if(ver_data & 0x800) /* disable */
-					{
-						colors[0] = paldata1[ ver_data&0x3f ];
-						// fill line
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++)
-						{
-							line16=(UINT16 *)bitmap->line[j]+ypos;
-							*line16=colors[0];
-						}
-					}
-					else
-					{
-						// copy line
-						ver_data=ver_data & 0x01ff;		//???
-						colorflip_info = sys16_gr_flip[ver_data];
-
-						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
-
-						colorflip = (colorflip_info >> 3) & 1;
-
-						colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
-						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
-						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
-
-						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x200];
-
-						ver_data=ver_data>>1;
-						if( ver_data != 0 )
-						{
-							ver_data = (ver_data-1) << sys16_gr_bitmap_width;
-						}
-						source  = data + ((hor_pos +0x200) & 0x7ff) + 0x300 + ver_data + 8;
-						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 0x300 + ver_data + 8;
-
-						switch(second_road)
-						{
-							case 0:	source2=source;	break;
-							case 2:	temp=source;source=source2;source2=temp; break;
-							case 3:	source=source2;	break;
-						}
-
-						source2++;
-
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++)
-						{
-							line16=(UINT16 *)bitmap->line[xoff+j*dx]+ypos;
-							if(*source2 <= *source)
-								*line16 = colors[*source];
-							else
-								*line16 = colors[*source2];
-							source++;
-							source2++;
-						}
+		for(i=cliprect->min_y;i<=cliprect->max_y;i++){
+			if(yflip) ypos=223-i;
+			else ypos=i;
+			ver_data= *data_ver;
+			if((ver_data & 0x800) == priority){
+				if(ver_data & 0x800){
+					colors[0] = paldata1[ ver_data&0x3f ];
+					// fill line
+					line16 = (UINT16 *)bitmap->line[ypos];
+					for(j=cliprect->min_x;j<=cliprect->max_x;j++){
+						*line16++ = colors[0];
 					}
 				}
-				data_ver++;
-			}
-		}
-		else
-		{
-			if( Machine->orientation & ORIENTATION_FLIP_X ){
-				dx=-1;
-				xoff=319;
-			}
-			if( Machine->orientation & ORIENTATION_FLIP_Y ){
-				yflip=1;
-			}
-
-			for(i=cliprect->min_y;i<=cliprect->max_y;i++){
-				if(yflip) ypos=223-i;
-				else ypos=i;
-				ver_data= *data_ver;
-				if((ver_data & 0x800) == priority){
-					if(ver_data & 0x800){
-						colors[0] = paldata1[ ver_data&0x3f ];
-						// fill line
-						line16 = (UINT16 *)bitmap->line[ypos];
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++){
-							*line16++ = colors[0];
-						}
+				else {
+					// copy line
+					line16 = (UINT16 *)bitmap->line[ypos]+xoff;
+					ver_data &= 0x01ff;		//???
+					colorflip_info = sys16_gr_flip[ver_data];
+					colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
+					colorflip = (colorflip_info >> 3) & 1;
+					colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
+					colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
+					colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
+					hor_pos = sys16_gr_hor[ver_data];
+					hor_pos2= sys16_gr_hor[ver_data+0x200];
+					ver_data=ver_data>>1;
+					if( ver_data != 0 ){
+						ver_data = (ver_data-1) << sys16_gr_bitmap_width;
 					}
-					else {
-						// copy line
-						line16 = (UINT16 *)bitmap->line[ypos]+xoff;
-						ver_data &= 0x01ff;		//???
-						colorflip_info = sys16_gr_flip[ver_data];
-						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
-						colorflip = (colorflip_info >> 3) & 1;
-						colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
-						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
-						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
-						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x200];
-						ver_data=ver_data>>1;
-						if( ver_data != 0 ){
-							ver_data = (ver_data-1) << sys16_gr_bitmap_width;
-						}
-						source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
-						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
-						switch(second_road){
-							case 0:	source2=source;	break;
-							case 2:	temp=source;source=source2;source2=temp; break;
-							case 3:	source=source2;	break;
-						}
+					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
+					switch(second_road){
+						case 0:	source2=source;	break;
+						case 2:	temp=source;source=source2;source2=temp; break;
+						case 3:	source=source2;	break;
+					}
+					source2++;
+					for(j=cliprect->min_x;j<=cliprect->max_x;j++){
+						if(*source2 <= *source) *line16 = colors[*source]; else *line16 = colors[*source2];
+						source++;
 						source2++;
-						for(j=cliprect->min_x;j<=cliprect->max_x;j++){
-							if(*source2 <= *source) *line16 = colors[*source]; else *line16 = colors[*source2];
-							source++;
-							source2++;
-							line16+=dx;
-						}
+						line16+=dx;
 					}
 				}
-				data_ver++;
 			}
+			data_ver++;
 		}
 	}
 }
 
-
-VIDEO_START( outrun ){
-	int ret;
-	sys16_bg1_trans=1;
-	ret = video_start_system16();
-	if(ret) return 1;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0;
-	sys16_textlayer_hi_min=0;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_bg_priority_mode=-1;
-	sys16_bg_priority_value=0x1800;
-	sys16_fg_priority_value=0x2000;
-	return 0;
-}
-
-VIDEO_UPDATE( outrun ){
-	if( sys16_refreshenable ){
-		if( sys16_update_proc ) sys16_update_proc();
-		update_page();
-
-		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-
-		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-		render_grv2(bitmap,cliprect,1);
-		tilemap_draw( bitmap,cliprect, background, 0, 0 );
-		tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
-		render_grv2(bitmap,cliprect,0);
-
-		draw_sprites( bitmap,cliprect, 1 );
-
-		tilemap_draw( bitmap,cliprect, text_layer, 0, 0 );
-	}
-}
 
 /***************************************************************************/
 

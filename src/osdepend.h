@@ -52,7 +52,6 @@ struct osd_create_params
 	int colors;					/* colors in the palette (including UI) */
 	float fps;					/* frame rate */
 	int video_attributes;		/* video flags from driver */
-	int orientation;			/* orientation requested by the user */
 };
 
 

@@ -18,6 +18,7 @@
 	* December 02, 2003 (ES) Added DISDL register support, improves mix.
 	* April 28, 2004    (ES) Corrected envelope rates, added key-rate scaling,
 	                         added ringbuffer support.
+	* January 8, 2005   (RB) Added ability to specify region offset for RAM.
 */
 
 #include <math.h>
@@ -415,6 +416,7 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 		}
 
 		SCSPs[i].SCSPRAM = memory_region(intf->region[i]);
+		SCSPs[i].SCSPRAM += intf->roffset[i];
 	}
 
 	for(i=0;i<0x400;++i)

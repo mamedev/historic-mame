@@ -1081,6 +1081,7 @@ static struct SCSPinterface scsp_interface =
 {
 	1,
 	{ REGION_CPU2, },
+	{ 0, },
 	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) },
 	{ scsp_irq, },
 };

@@ -413,7 +413,7 @@ VIDEO_UPDATE(deroon)
 
 #if 0
 /* simulate sound commands writes here ... to test OPL3 emulator */
-	int j,trueorientation;
+	int j;
 	char buf[64];
 	static int command_data=0;
 
@@ -427,17 +427,12 @@ VIDEO_UPDATE(deroon)
 	}
 	command_data &= 0xff;
 
-	trueorientation = Machine->orientation;
-	Machine->orientation = ROT0;
-
 	sprintf(buf,"keys: Q,A and C");
 	for (j = 0;j < 16;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,20,0,TRANSPARENCY_NONE,0);
 	sprintf(buf,"command code: %2x", command_data);
 	for (j = 0;j < 16;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,40,0,TRANSPARENCY_NONE,0);
-
-	Machine->orientation = trueorientation;
 
 
 	if (code_pressed_memory(KEYCODE_C))

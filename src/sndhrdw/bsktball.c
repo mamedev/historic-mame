@@ -44,43 +44,69 @@ const struct discrete_lfsr_desc bsktball_lfsr={
 	15			/* Output bit */
 };
 
+const struct discrete_dac_r1_ladder bsktball_crowd_r1_ladder =
+{
+	4,
+	{RES_K(390), RES_K(220), RES_K(100), RES_K(56)},	// r55, r54, r53, r52
+	0, 0,		// no bias
+	RES_K(1),	// r21
+	CAP_U(0.1)	// c32
+};
+
+const struct discrete_op_amp_filt_info bsktball_crowd_filt =
+{
+	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56) + 1.0/RES_K(1)),	// r55, r54, r53, r52, r21
+	0, 0, 0,
+	RES_K(330),		// r58
+	CAP_U(.01),		// c55
+	CAP_U(.022),	// c56
+	0,
+	5, 12, 0
+};
+
+const struct discrete_mixer_desc bsktball_mixer =
+{
+	DISC_MIXER_IS_OP_AMP, 3,
+	{RES_K(47), RES_K(47), RES_K(220)},		// r56, r57, r60
+	{0},			// no rNodes
+	{CAP_U(.01), CAP_U(.01), CAP_U(.01)},	// c53, c54, c57
+	0,
+	RES_K(47),		// r61
+	CAP_U(.001),	// c58
+	CAP_U(1),
+	5,
+	7500
+};
+
+#define BSKTBALL_32H			12096000.0/4/32
+#define BSKTBALL_256H			12096000.0/768
+
 /* Nodes - Sounds */
 #define BSKTBALL_NOISE			NODE_10
-#define BSKTBALL_BOUNCE_SND		NODE_11
+#define BSKTBALL_BOUNCE_SND		BSKTBALL_BOUNCE_EN
 #define BSKTBALL_NOTE_SND		NODE_12
 #define BSKTBALL_CROWD_SND		NODE_13
 
 DISCRETE_SOUND_START(bsktball_discrete_interface)
 	/************************************************/
-	/* bsktball  Effects Relataive Gain Table       */
-	/*                                              */
-	/* Effect       V-ampIn   Gain ratio  Relative  */
-	/* Note          3.8      47/47        1000.0   */
-	/* Bounce        3.8      47/47        1000.0   */
-	/* Crowd         3.8      47/220        213.6   */
-	/************************************************/
-
-	/************************************************/
 	/* Input register mapping for bsktball          */
 	/************************************************/
-	/*              NODE                       GAIN     OFFSET  INIT */
-	DISCRETE_INPUTX_DATA  (BSKTBALL_NOTE_DATA, -1, 0xff, 0)
-	DISCRETE_INPUTX_DATA (BSKTBALL_CROWD_DATA, 213.6/15, 0,     0.0)
-	DISCRETE_INPUTX_LOGIC(BSKTBALL_BOUNCE_EN,  1000.0/2, 0,     0.0)
+	/*                    NODE                                 GAIN     OFFSET  INIT */
+	DISCRETE_INPUT_DATA  (BSKTBALL_NOTE_DATA)
+	DISCRETE_INPUT_DATA  (BSKTBALL_CROWD_DATA)
+	/* Bounce is a trigger fed directly to the amp  */
+	DISCRETE_INPUTX_LOGIC(BSKTBALL_BOUNCE_EN,    DEFAULT_TTL_V_LOGIC_1,  0,      0.0)
 	DISCRETE_INPUT_NOT   (BSKTBALL_NOISE_EN)
 
 	/************************************************/
-	/* Bounce is a trigger fed directly to the amp  */
-	/************************************************/
-	DISCRETE_CRFILTER(BSKTBALL_BOUNCE_SND, 1, BSKTBALL_BOUNCE_EN, 100000, 1.e-8)	// remove DC (C54)
-
-	/************************************************/
 	/* Crowd effect is variable amplitude, filtered */
-/* random noise.                                */
+	/* random noise.                                */
 	/* LFSR clk = 256H = 15750.0Hz                  */
 	/************************************************/
-	DISCRETE_LFSR_NOISE(BSKTBALL_NOISE, BSKTBALL_NOISE_EN, BSKTBALL_NOISE_EN, 15750.0, BSKTBALL_CROWD_DATA, 0, 0, &bsktball_lfsr)
-	DISCRETE_FILTER2(BSKTBALL_CROWD_SND, 1, BSKTBALL_NOISE, 330.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+	DISCRETE_LFSR_NOISE(BSKTBALL_NOISE, BSKTBALL_NOISE_EN, BSKTBALL_NOISE_EN, BSKTBALL_256H, 1, 0, .5, &bsktball_lfsr)
+	DISCRETE_SWITCH(NODE_20, 1, BSKTBALL_NOISE, 0, BSKTBALL_CROWD_DATA)	// enable data, gate D11
+	DISCRETE_DAC_R1(NODE_21, 1, NODE_20, DEFAULT_TTL_V_LOGIC_1, &bsktball_crowd_r1_ladder)
+	DISCRETE_OP_AMP_FILTER(BSKTBALL_CROWD_SND, 1, NODE_21, 0, DISC_OP_AMP_FILTER_IS_BAND_PASS_1M, &bsktball_crowd_filt)
 
 	/************************************************/
 	/* Note sound is created by a divider circuit.  */
@@ -95,11 +121,13 @@ DISCRETE_SOUND_START(bsktball_discrete_interface)
 	/* When there is no music, the game sets the    */
 	/* oscillator to 0Hz.  (OUT30 = FF)             */
 	/************************************************/
-	DISCRETE_ADDER2(NODE_20, 1, BSKTBALL_NOTE_DATA, 1)	/* To get values of 1 - 256 */
-	DISCRETE_DIVIDE(NODE_21, 1, 12096000.0/128/2, NODE_20)
-	DISCRETE_SQUAREWAVE(BSKTBALL_NOTE_SND, BSKTBALL_NOTE_DATA, NODE_21, 1000, 50.0, 0, 0.0)	/* NOTE=FF Disables audio */
+	DISCRETE_NOTE(NODE_30, 1, BSKTBALL_32H, BSKTBALL_NOTE_DATA, 255, 1)
+	DISCRETE_GAIN(BSKTBALL_NOTE_SND, NODE_30, DEFAULT_TTL_V_LOGIC_1)
 
-	DISCRETE_ADDER3(NODE_90, 1, BSKTBALL_BOUNCE_SND, BSKTBALL_NOTE_SND, BSKTBALL_CROWD_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0+2000.0+213.6))
-	DISCRETE_OUTPUT(NODE_91, 100)
+
+	/************************************************/
+	/* Mixing stage - B11                           */
+	/************************************************/
+	DISCRETE_MIXER3(NODE_90, 1, BSKTBALL_NOTE_SND, BSKTBALL_BOUNCE_SND, BSKTBALL_CROWD_SND, &bsktball_mixer)
+	DISCRETE_OUTPUT(NODE_90, 100)
 DISCRETE_SOUND_END

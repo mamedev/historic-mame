@@ -8,9 +8,9 @@
 
 	Known bugs:
 		* gprider hangs due to interrupt nesting
-		* loffire won't let you past the first level
-		* smgp seems to not draw some sprites near the bottom of the screen
-		* rachero kills you whenever you jump
+		* loffire usually won't let you past the first level
+		* rachero locks you to the middle of the road, worked in 0.89, maths bug?
+		* extra sound boards etc. in some smgp sets not hooked up
 
 	To do for each game:
 		* verify memory test
@@ -99,7 +99,10 @@ static void update_main_irqs(void)
 
 	/* assert the lines that are live, or clear everything if nothing is live */
 	if (irq != 0)
+	{
 		cpunum_set_input_line(0, irq, ASSERT_LINE);
+		cpu_boost_interleave(0, TIME_IN_USEC(50));
+	}
 	else
 		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
@@ -108,7 +111,7 @@ static void update_main_irqs(void)
 static void scanline_callback(int scanline)
 {
 	/* clock the timer and set the IRQ if something happened */
-	if (compare_timer_clock())
+	if (segaic16_compare_timer_clock(0))
 		timer_irq_state = 1;
 
 	/* on scanline 223 generate VBLANK for both CPUs */
@@ -167,14 +170,15 @@ static int main_irq_callback(int irq)
 MACHINE_INIT( xboard )
 {
 	fd1094_machine_init();
-	xboard_reset_video();
+	segaic16_tilemap_reset(0);
 
 	/* hook the RESET line, which resets CPU #1 */
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)xboard_reset);
 
 	cpu_set_irq_callback(0, main_irq_callback);
 
-	compare_timer_init(sound_data_w, timer_ack_callback);
+	segaic16_compare_timer_init(0, sound_data_w, timer_ack_callback);
+	segaic16_compare_timer_init(1, NULL, NULL);
 	timer_set(cpu_getscanlinetime(1), 1, scanline_callback);
 }
 
@@ -308,7 +312,7 @@ static WRITE16_HANDLER( iochip_0_w )
 				D1: (CONT) - affects sprite hardware
 				D0: Sound section reset (1= normal operation, 0= reset)
 			*/
-			xboard_set_draw_enable((data >> 5) & 1);
+			segaic16_set_display_enable((data >> 5) & 1);
 //			if ((oldval ^ data) & 2) printf("CONT = %d\n", (data >> 1) & 1);
 //			if ((oldval ^ data) & 1) cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 			break;
@@ -438,13 +442,13 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x080000, 0x083fff) AM_MIRROR(0x01c000) AM_RAM AM_SHARE(1) AM_BASE(&backupram1)
 	AM_RANGE(0x0a0000, 0x0a3fff) AM_MIRROR(0x01c000) AM_RAM AM_SHARE(2) AM_BASE(&backupram2)
-	AM_RANGE(0x0c0000, 0x0cffff) AM_READWRITE(MRA16_RAM, segaic16_tileram_w) AM_BASE(&segaic16_tileram)
-	AM_RANGE(0x0d0000, 0x0d0fff) AM_MIRROR(0x00f000) AM_READWRITE(MRA16_RAM, xboard_textram_w) AM_BASE(&segaic16_textram)
+	AM_RANGE(0x0c0000, 0x0cffff) AM_READWRITE(MRA16_RAM, segaic16_tileram_0_w) AM_BASE(&segaic16_tileram_0)
+	AM_RANGE(0x0d0000, 0x0d0fff) AM_MIRROR(0x00f000) AM_READWRITE(MRA16_RAM, segaic16_textram_0_w) AM_BASE(&segaic16_textram_0)
 	AM_RANGE(0x0e0000, 0x0e0007) AM_MIRROR(0x003ff8) AM_READWRITE(segaic16_multiply_0_r, segaic16_multiply_0_w)
 	AM_RANGE(0x0e4000, 0x0e401f) AM_MIRROR(0x003fe0) AM_READWRITE(segaic16_divide_0_r, segaic16_divide_0_w)
 	AM_RANGE(0x0e8000, 0x0e801f) AM_MIRROR(0x003fe0) AM_READWRITE(segaic16_compare_timer_0_r, segaic16_compare_timer_0_w)
-	AM_RANGE(0x100000, 0x100fff) AM_MIRROR(0x00f000) AM_RAM AM_BASE(&segaic16_spriteram)
-	AM_RANGE(0x110000, 0x11ffff) AM_WRITE(xboard_render_start_w)
+	AM_RANGE(0x100000, 0x100fff) AM_MIRROR(0x00f000) AM_RAM AM_BASE(&segaic16_spriteram_0)
+	AM_RANGE(0x110000, 0x11ffff) AM_WRITE(segaic16_sprites_draw_0_w)
 	AM_RANGE(0x120000, 0x123fff) AM_MIRROR(0x00c000) AM_READWRITE(MRA16_RAM, segaic16_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x130000, 0x13ffff) AM_READWRITE(adc_r, adc_w)
 	AM_RANGE(0x140000, 0x14ffff) AM_READWRITE(iochip_0_r, iochip_0_w)
@@ -456,8 +460,8 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x2e0000, 0x2e0007) AM_MIRROR(0x003ff8) AM_READWRITE(segaic16_multiply_1_r, segaic16_multiply_1_w)
 	AM_RANGE(0x2e4000, 0x2e401f) AM_MIRROR(0x003fe0) AM_READWRITE(segaic16_divide_1_r, segaic16_divide_1_w)
 	AM_RANGE(0x2e8000, 0x2e800f) AM_MIRROR(0x003ff0) AM_READWRITE(segaic16_compare_timer_1_r, segaic16_compare_timer_1_w)
-	AM_RANGE(0x2ec000, 0x2ecfff) AM_MIRROR(0x001000) AM_RAM AM_SHARE(5) AM_BASE(&segaic16_roadram)
-	AM_RANGE(0x2ee000, 0x2effff) AM_READWRITE(xboard_road_latch_r, xboard_road_control_w)
+	AM_RANGE(0x2ec000, 0x2ecfff) AM_MIRROR(0x001000) AM_RAM AM_SHARE(5) AM_BASE(&segaic16_roadram_0)
+	AM_RANGE(0x2ee000, 0x2effff) AM_READWRITE(segaic16_road_control_0_r, segaic16_road_control_0_w)
 	AM_RANGE(0x3f8000, 0x3fbfff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x3fc000, 0x3fffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
@@ -479,7 +483,7 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0e4000, 0x0e401f) AM_MIRROR(0x003fe0) AM_READWRITE(segaic16_divide_1_r, segaic16_divide_1_w)
 	AM_RANGE(0x0e8000, 0x0e800f) AM_MIRROR(0x003ff0) AM_READWRITE(segaic16_compare_timer_1_r, segaic16_compare_timer_1_w)
 	AM_RANGE(0x0ec000, 0x0ecfff) AM_MIRROR(0x001000) AM_RAM AM_SHARE(5)
-	AM_RANGE(0x0ee000, 0x0effff) AM_READWRITE(xboard_road_latch_r, xboard_road_control_w)
+	AM_RANGE(0x0ee000, 0x0effff) AM_READWRITE(segaic16_road_control_0_r, segaic16_road_control_0_w)
 //	AM_RANGE(0x0f0000, 0x0f3fff) AM_READWRITE(excs_r, excs_w)
 ADDRESS_MAP_END
 
@@ -941,7 +945,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
 	{ sound_cpu_irq }
 };
 
@@ -1166,7 +1170,7 @@ ROM_START( loffire )
 	ROM_LOAD( "opr12792.rom", 0x10000, 0x10000, CRC(e506723c) SHA1(d04dc29686fe348f8f715d14c027de0e508c770f) )
 	ROM_LOAD( "opr12793.rom", 0x20000, 0x10000, CRC(0ce8cce3) SHA1(1a6b1af2b0b9e8240e681f7b15e9d08595753fe6) )
 
-	ROM_REGION32_LE( 0x400000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION32_LE( 0x200000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD32_BYTE( "epr12787.rom", 0x000000, 0x20000, CRC(6431a3a6) SHA1(63a732b7dfd2b83fe7684d47fea26063c4ece099) )
 	ROM_LOAD32_BYTE( "epr12788.rom", 0x000001, 0x20000, CRC(1982a0ce) SHA1(e4756f31b0094e0e9ddb2df53a5c938ac5559230) )
 	ROM_LOAD32_BYTE( "epr12789.rom", 0x000002, 0x20000, CRC(97d03274) SHA1(b4b9921db53949bc8e91f8a2992e89c172fe8893) )
@@ -1202,9 +1206,9 @@ ROM_END
 */
 ROM_START( loffirej )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
- /* repaired using data from the loffire set since they are mostly identical
- 	when decrypted, they pass the rom check so are assumed to be ok but double
- 	checking them when possible never hurts */
+	/* repaired using data from the loffire set since they are mostly identical
+	   when decrypted, they pass the rom check so are assumed to be ok but double
+	   checking them when possible never hurts */
 	ROM_LOAD16_BYTE( "epr12794.bin", 0x000000, 0x20000, CRC(1e588992) SHA1(fe7107e83c12643e7d22fd4b4cd0c7bcff0d84c3) )
 	ROM_LOAD16_BYTE( "epr12795.bin", 0x000001, 0x20000, CRC(d43d7427) SHA1(ecbd425bab6aa65ffbd441d6a0936ac055d5f06d) )
 
@@ -1222,7 +1226,7 @@ ROM_START( loffirej )
 	ROM_LOAD( "opr12792.rom", 0x10000, 0x10000, CRC(e506723c) SHA1(d04dc29686fe348f8f715d14c027de0e508c770f) )
 	ROM_LOAD( "opr12793.rom", 0x20000, 0x10000, CRC(0ce8cce3) SHA1(1a6b1af2b0b9e8240e681f7b15e9d08595753fe6) )
 
-	ROM_REGION32_LE( 0x400000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION32_LE( 0x200000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD32_BYTE( "epr12787.rom", 0x000000, 0x20000, CRC(6431a3a6) SHA1(63a732b7dfd2b83fe7684d47fea26063c4ece099) )
 	ROM_LOAD32_BYTE( "epr12788.rom", 0x000001, 0x20000, CRC(1982a0ce) SHA1(e4756f31b0094e0e9ddb2df53a5c938ac5559230) )
 	ROM_LOAD32_BYTE( "epr12789.rom", 0x000002, 0x20000, CRC(97d03274) SHA1(b4b9921db53949bc8e91f8a2992e89c172fe8893) )
@@ -1660,7 +1664,7 @@ ROM_START( smgpc )
 	ROM_LOAD( "epr12430.153", 0x10000, 0x10000, CRC(05e00134) SHA1(8baaa80815d5dabd38dc8600e357975b96d23b95) )
 	ROM_LOAD( "epr12431.152", 0x20000, 0x10000, CRC(35572f4a) SHA1(d66456ecf7b59f81736fb873c553926b56bb3977))
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION32_LE( 0x200000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD32_BYTE( "mpr12425.90",  0x000000, 0x20000, CRC(14bf2a15) SHA1(84db3ac09e4a8fe470ac051d8d5de1814b48bc72) )
 	ROM_LOAD32_BYTE( "mpr12426.94",  0x000001, 0x20000, CRC(28b60dc0) SHA1(ad69d449434853445a076319a55a29014217a100) )
 	ROM_LOAD32_BYTE( "mpr12427.98",  0x000002, 0x20000, CRC(0a367928) SHA1(bcb558b7c23906397e66a7f046b09eb5036c0888) )
@@ -1819,7 +1823,7 @@ ROM_START( smgpe )
 	ROM_LOAD( "epr12430.153", 0x10000, 0x10000, CRC(05e00134) SHA1(8baaa80815d5dabd38dc8600e357975b96d23b95) )
 	ROM_LOAD( "epr12431.152", 0x20000, 0x10000, CRC(35572f4a) SHA1(d66456ecf7b59f81736fb873c553926b56bb3977))
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION32_LE( 0x200000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD32_BYTE( "mpr12425.90",  0x000000, 0x20000, CRC(14bf2a15) SHA1(84db3ac09e4a8fe470ac051d8d5de1814b48bc72) )
 	ROM_LOAD32_BYTE( "mpr12426.94",  0x000001, 0x20000, CRC(28b60dc0) SHA1(ad69d449434853445a076319a55a29014217a100) )
 	ROM_LOAD32_BYTE( "mpr12427.98",  0x000002, 0x20000, CRC(0a367928) SHA1(bcb558b7c23906397e66a7f046b09eb5036c0888) )

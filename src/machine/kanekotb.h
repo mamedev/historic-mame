@@ -1,3 +1,8 @@
+/***************************************************************************
+
+	TOYBOX MCU data for Bonk's Adventure
+
+***************************************************************************/
 
 // bonkadv_mcu_4_33 has 32 zeroed bytes every 64 bytes: it has been verified
 // that these zeroes are effectively written by the MCU
@@ -301,3 +306,67 @@ static data16_t bonkadv_mcu_4_16[] = { 0x0000,0x02F0,0x0000,0x0100,0x0430,0x0100
 static data16_t bonkadv_mcu_4_19[] = { 0x0000,0x03A0,0x0000,0x0100,0x04E0,0x0100 };
 static data16_t bonkadv_mcu_4_1B[] = { 0x0000,0x0460,0x0000,0x0100,0x05A0,0x0100 };
 static data16_t bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100 };
+
+
+/***************************************************************************
+
+	TOYBOX MCU data for Blood Warrior
+
+***************************************************************************/
+#if 0
+
+// unknown data: 1 per warrior
+static data16_t bloodwar_mcu_4_01[] = {};
+static data16_t bloodwar_mcu_4_02[] = {};
+static data16_t bloodwar_mcu_4_03[] = {};
+static data16_t bloodwar_mcu_4_04[] = {};
+static data16_t bloodwar_mcu_4_05[] = {};
+static data16_t bloodwar_mcu_4_06[] = {};
+static data16_t bloodwar_mcu_4_07[] = {};
+static data16_t bloodwar_mcu_4_08[] = {};
+static data16_t bloodwar_mcu_4_09[] = {};
+
+// palette data: 1 per warrior and player
+static data16_t bloodwar_mcu_4_0a[] = {};
+static data16_t bloodwar_mcu_4_0b[] = {};
+static data16_t bloodwar_mcu_4_0c[] = {};
+static data16_t bloodwar_mcu_4_0d[] = {};
+static data16_t bloodwar_mcu_4_0e[] = {};
+static data16_t bloodwar_mcu_4_0f[] = {};
+static data16_t bloodwar_mcu_4_10[] = {};
+static data16_t bloodwar_mcu_4_11[] = {};
+static data16_t bloodwar_mcu_4_12[] = {};
+static data16_t bloodwar_mcu_4_13[] = {};
+static data16_t bloodwar_mcu_4_14[] = {};
+static data16_t bloodwar_mcu_4_15[] = {};
+static data16_t bloodwar_mcu_4_16[] = {};
+static data16_t bloodwar_mcu_4_17[] = {};
+static data16_t bloodwar_mcu_4_18[] = {};
+static data16_t bloodwar_mcu_4_19[] = {};
+static data16_t bloodwar_mcu_4_1a[] = {};
+static data16_t bloodwar_mcu_4_1b[] = {};
+
+// tilemap data: 1 per warrior
+static data16_t bloodwar_mcu_4_1c[] = {};
+static data16_t bloodwar_mcu_4_1d[] = {};
+static data16_t bloodwar_mcu_4_1e[] = {};
+static data16_t bloodwar_mcu_4_1f[] = {};
+static data16_t bloodwar_mcu_4_20[] = {};
+static data16_t bloodwar_mcu_4_21[] = {};
+static data16_t bloodwar_mcu_4_22[] = {};
+static data16_t bloodwar_mcu_4_23[] = {};
+static data16_t bloodwar_mcu_4_24[] = {};
+
+// unknown long: 1 per warrior
+static data16_t bloodwar_mcu_4_25[] = {};
+static data16_t bloodwar_mcu_4_26[] = {};
+static data16_t bloodwar_mcu_4_27[] = {};
+static data16_t bloodwar_mcu_4_28[] = {};
+static data16_t bloodwar_mcu_4_29[] = {};
+static data16_t bloodwar_mcu_4_2a[] = {};
+static data16_t bloodwar_mcu_4_2b[] = {};
+static data16_t bloodwar_mcu_4_2c[] = {};
+static data16_t bloodwar_mcu_4_2d[] = {};
+
+#endif
+

@@ -285,25 +285,8 @@ static void pdraw_masked_tile(
 	int mask_pitch;
 	int x,y,temp;
 
-	if( Machine->orientation & ORIENTATION_SWAP_XY )
-	{
-		temp = sx; sx = sy; sy = temp;
-		temp = flipx; flipx = flipy; flipy = temp;
-	}
-	if( Machine->orientation & ORIENTATION_FLIP_X )
-	{
-		sx = bitmap->width - 1 - sx;
-		flipx = !flipx;
-	}
-	if( Machine->orientation & ORIENTATION_FLIP_Y )
-	{
-		sy = bitmap->height - 1 - sy;
-		flipy = !flipy;
-	}
-
 	/*
 	 *	custom blitter for drawing a masked 8x8x8BPP tile
-	 *	- doesn't yet handle screen orientation (needed particularly for F/A, a vertical game)
 	 *	- assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
 	 */
 	if( sx > -8 &&
@@ -430,22 +413,6 @@ static void pdraw_opaque_tile(
 	int ypos;
 	data8_t *pri;
 	UINT16 *dest;
-
-	if( Machine->orientation & ORIENTATION_SWAP_XY )
-	{
-		temp = sx; sx = sy; sy = temp;
-		temp = flipx; flipx = flipy; flipy = temp;
-	}
-	if( Machine->orientation & ORIENTATION_FLIP_X )
-	{
-		sx = bitmap->width - 1 - sx;
-		flipx = !flipx;
-	}
-	if( Machine->orientation & ORIENTATION_FLIP_Y )
-	{
-		sy = bitmap->height - 1 - sy;
-		flipy = !flipy;
-	}
 
 	if( sx > -8 &&
 		sy > -8 &&

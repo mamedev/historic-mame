@@ -14,16 +14,11 @@ Ernesto Corvi & Mariusz Wojcieszek
 #define LOG_CUSTOM	1
 #define LOG_CIA		0
 
-#ifdef MESS
-#include "machine/amigafdc.h"
-#else
-/* coin counters */
-static unsigned char coin_counter[2];
-#endif
-
 /* from vidhrdw */
 extern void copper_setpc( unsigned long pc );
 extern void copper_enable( void );
+
+static const struct amiga_machine_interface *amiga_intf;
 
 /***************************************************************************
 
@@ -401,7 +396,11 @@ static void blitter_proc( int param ) {
 				ptr[2] = ( custom_regs.BLTxPTH[2] << 16 ) | custom_regs.BLTxPTL[2];
 
 			if ( custom_regs.BLTCON0 & 0x100 )
+			{
 				ptr[3] = ( custom_regs.BLTxPTH[3] << 16 ) | custom_regs.BLTxPTL[3];
+				if ( ptr[3] > 0x7ffff )
+					goto done;
+			}
 
 			if ( custom_regs.BLTCON1 & 0x0002 ) { /* Descending mode */
 				blit_func = blit_func_d;
@@ -417,6 +416,7 @@ static void blitter_proc( int param ) {
 				height = 0x400;
 
 			for ( y = 0; y < height; y++ ) {
+				fc = ( custom_regs.BLTCON1 >> 2 ) & 1; /* fill carry setup */
 				for ( x = 0; x < width; x++ ) {
 					int dst_data = 0;
 
@@ -531,6 +531,7 @@ static void blitter_proc( int param ) {
 		}
 	}
 
+done:
 	custom_regs.DMACON ^= 0x4000; /* signal we're done */
 
 	if ( blt_total )
@@ -587,7 +588,7 @@ static void blitter_setup( void ) {
 
 /* required prototype */
 static void cia_fire_timer( int cia, int timer );
-static void *cia_hblank_timer;
+static mame_timer *cia_hblank_timer;
 static int cia_hblank_timer_set;
 
 typedef struct {
@@ -615,8 +616,8 @@ typedef struct {
 	int				icr;
 	int				ics;
 	/* MESS timers */
-	void			*timerA;
-	void			*timerB;
+	mame_timer		*timerA;
+	mame_timer		*timerB;
 	int				timerA_started;
 	int				timerB_started;
 } cia_8520_def;
@@ -767,72 +768,48 @@ void amiga_cia_issue_index( void ) {
 	}
 }
 
-static int cia_0_portA_r( void ) {
-	int ret = readinputport( 0 ) & 0xc0;
-
-#ifdef MESS
-	ret |= amiga_fdc_status_r();
-#else
-	ret |= 0x3f;
-#endif
-	
-	return ret; /* Gameport 1 and 0 buttons */
+static int cia_0_portA_r( void )
+{
+	return (amiga_intf->cia_0_portA_r) ? amiga_intf->cia_0_portA_r() : 0x00;
 }
 
-static int cia_0_portB_r( void ) {
-
-	/* parallel port */
-	int ret = 0;
-
-#ifndef MESS
-	ret = readinputport( 1 ) & 0x0f;
-
-	ret |= ( coin_counter[0] & 3 ) << 4;
-	ret |= ( coin_counter[1] & 3 ) << 6;
-
-	logerror( "Coin counter read at PC=%06x\n", activecpu_get_pc() );
-#endif
-	return ret;
+static int cia_0_portB_r( void )
+{
+	return (amiga_intf->cia_0_portB_r) ? amiga_intf->cia_0_portB_r() : 0x00;
 }
 
 static void cia_0_portA_w( int data ) 
 {
-	if ( (data & 1) == 1)
-	{
-		/* overlay enabled, map Amiga system ROM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK3 );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM );
-	}
-	else if ( ((data & 1) == 0))
-	{
-		/* overlay disabled, map RAM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
-	}
-
-	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
+	if (amiga_intf->cia_0_portA_w)
+		amiga_intf->cia_0_portA_w(data);
 }
 
-static void cia_0_portB_w( int data ) {
-	/* parallel port */
-	/* bit 0 = coin counter reset? */
+static void cia_0_portB_w( int data ) 
+{
+	if (amiga_intf->cia_0_portB_w)
+		amiga_intf->cia_0_portB_w(data);
 }
 
-static int cia_1_portA_r( void ) {
-	return 0x0;
+static int cia_1_portA_r( void )
+{
+	return (amiga_intf->cia_1_portA_r) ? amiga_intf->cia_1_portA_r() : 0x00;
 }
 
-static int cia_1_portB_r( void ) {
-	return 0x0;
+static int cia_1_portB_r( void )
+{
+	return (amiga_intf->cia_1_portB_r) ? amiga_intf->cia_1_portB_r() : 0x00;
 }
 
-static void cia_1_portA_w( int data ) {
+static void cia_1_portA_w( int data ) 
+{
+	if (amiga_intf->cia_1_portA_w)
+		amiga_intf->cia_1_portA_w(data);
 }
 
-static void cia_1_portB_w( int data ) {
-#ifdef MESS
-	amiga_fdc_control_w( data );
-#endif
+static void cia_1_portB_w( int data ) 
+{
+	if (amiga_intf->cia_1_portB_w)
+		amiga_intf->cia_1_portB_w(data);
 }
 
 static void cia_init( void ) {
@@ -886,7 +863,7 @@ READ16_HANDLER ( amiga_cia_r ) {
 	if ( offset >= 0x1000 )
 		cia_sel = 0;
 
-	switch ( offset & 0xffe ) {
+	switch( offset & 0xf00 ) {
 		case 0x000:
 			data = (*cia_8520[cia_sel].portA_read)();
 			mask = ~( cia_8520[cia_sel].ddra );
@@ -1153,83 +1130,11 @@ READ16_HANDLER ( amiga_custom_r )
 		break;
 		
 		case 0x000a: /* JOY0DAT */
-#ifdef MESS
-			if ( readinputport( 0 ) & 0x20 ) {
-				int input = ( readinputport( 1 ) >> 4 );
-				int	top,bot,lft,rgt;
-
-				top = ( input >> 3 ) & 1;
-				bot = ( input >> 2 ) & 1;
-				lft = ( input >> 1 ) & 1;
-				rgt = input & 1;
-
-				if ( lft ) top ^= 1;
-				if ( rgt ) bot ^= 1;
-
-				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
-			} else {
-				int input = ( readinputport( 2 ) & 0xff );
-
-				input |= ( readinputport( 3 ) & 0xff ) << 8;
-
-				return input;
-			}
-#else
-			{
-				int input = ( readinputport( 2 ) >> 4 );
-				int	top,bot,lft,rgt;
-				
-				top = ( input >> 3 ) & 1;
-				bot = ( input >> 2 ) & 1;
-				lft = ( input >> 1 ) & 1;
-				rgt = input & 1;
-
-				if ( lft ) top ^= 1;
-				if ( rgt ) bot ^= 1;
-
-				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
-			}
-#endif
+			return amiga_intf->read_joy0dat();
 		break;
 
 		case 0x000c: /* JOY1DAT */
-#ifdef MESS
-			if ( readinputport( 0 ) & 0x10 ) {
-				int input = ( readinputport( 1 ) & 0x0f );
-				int	top,bot,lft,rgt;
-
-				top = ( input >> 3 ) & 1;
-				bot = ( input >> 2 ) & 1;
-				lft = ( input >> 1 ) & 1;
-				rgt = input & 1;
-
-				if ( lft ) top ^= 1;
-				if ( rgt ) bot ^= 1;
-
-				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
-			} else {
-				int input = ( readinputport( 4 ) & 0xff );
-
-				input |= ( readinputport( 5 ) & 0xff ) << 8;
-
-				return input;
-			}
-#else
-			{
-				int input = ( readinputport( 2 ) & 0x0f );
-				int	top,bot,lft,rgt;
-				
-				top = ( input >> 3 ) & 1;
-				bot = ( input >> 2 ) & 1;
-				lft = ( input >> 1 ) & 1;
-				rgt = input & 1;
-
-				if ( lft ) top ^= 1;
-				if ( rgt ) bot ^= 1;
-				
-				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
-			}
-#endif
+			return amiga_intf->read_joy1dat();
 		break;
 
 		case 0x0010: /* ADKCONR */
@@ -1244,11 +1149,7 @@ READ16_HANDLER ( amiga_custom_r )
 		break;
 
 		case 0x001a: /* DSKBYTR */
-#ifdef MESS
-			return amiga_fdc_get_byte();
-#else
-			return 0x00;
-#endif
+			return amiga_intf->read_dskbytr ? amiga_intf->read_dskbytr() : 0x00;
 		break;
 
 				
@@ -1279,10 +1180,10 @@ READ16_HANDLER ( amiga_custom_r )
 }
 
 #define SETCLR( reg, data ) { \
-	if ( data & 0x8000 ) \
-		reg |= ( data & 0x7fff ); \
+	if ( (data) & 0x8000 ) \
+		reg |= ( (data) & 0x7fff ); \
 	else \
-		reg &= ~( data & 0x7fff ); }
+		reg &= ~( (data) & 0x7fff ); }
 
 WRITE16_HANDLER ( amiga_custom_w ) 
 {
@@ -1299,12 +1200,8 @@ WRITE16_HANDLER ( amiga_custom_w )
 		break;
 						
 		case 0x0024: /* DSKLEN */
-#ifdef MESS
-			if ( data & 0x8000 ) {
-				if ( custom_regs.DSKLEN & 0x8000 )
-					amiga_fdc_setup_dma();
-			}
-#endif
+			if (amiga_intf->write_dsklen)
+				amiga_intf->write_dsklen(data);
 			custom_regs.DSKLEN = data;
 		break;
 		
@@ -1430,7 +1327,8 @@ WRITE16_HANDLER ( amiga_custom_w )
 		break;
 			
 		case 0x0096: /* DMACON */
-			SETCLR( custom_regs.DMACON, data )
+			/* bits BBUSY (14) and BZERO (13) are read-only */
+			SETCLR( custom_regs.DMACON, data & 0x9fff )
 			copper_enable();
 		break;
 		
@@ -1607,29 +1505,22 @@ INTERRUPT_GEN(amiga_vblank_irq)
 
 	amiga_custom_w( 0x009c>>1, 0x8020, 0);
 	
-#ifndef MESS
-	/* update coin counters */
+	if (amiga_intf->interrupt_callback)
+		amiga_intf->interrupt_callback();
+}
 
-	/* check for a 0 -> 1 transition */
-	if ( readinputport( 0 ) & 0x20 ) {
-		if ( ( coin_counter[0] & 0x80 ) == 0 ) {
-			if ( coin_counter[0] < 3 )
-				coin_counter[0]++;
-			coin_counter[0] |= 0x80;
-		}
-	} else
-		coin_counter[0] = 0;
+INTERRUPT_GEN(amiga_irq)
+{
+	int scanline = 261 - cpu_getiloops();
 
-	/* check for a 0 -> 1 transition */
-	if ( readinputport( 0 ) & 0x10 ) {
-		if ( ( coin_counter[1] & 0x80 ) == 0 ) {
-			if ( coin_counter[1] < 3 )
-				coin_counter[1]++;
-			coin_counter[1] |= 0x80;
-		}
-	} else
-		coin_counter[1] = 0;
-#endif
+	if ( scanline == 0 )
+	{
+		/* vblank start */
+		amiga_prepare_frame();
+		amiga_vblank_irq();
+	}
+
+	amiga_render_scanline(scanline);
 }
 
 /***************************************************************************
@@ -1659,9 +1550,14 @@ MACHINE_INIT(amiga)
 	/* set the overlay bit */
 	amiga_cia_w( 0x1001/2, 1, 0 );
 
-#ifndef MESS
-	/* reset coin counters */
-	coin_counter[0] = coin_counter[1] = 0;
-#endif
+	if (amiga_intf->reset_callback)
+		amiga_intf->reset_callback();
 }
+
+void amiga_machine_config(const struct amiga_machine_interface *intf)
+{
+	amiga_intf = intf;
+}
+
+
 

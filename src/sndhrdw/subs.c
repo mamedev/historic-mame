@@ -113,7 +113,7 @@ DISCRETE_SOUND_START(subs_discrete_interface)
 	/* Explode filters the crash sound.             */
 	/* I'm not sure of the exact filter freq.       */
 	/************************************************/
-	DISCRETE_TRANSFORM3(NODE_30, 1, NODE_21, SUBS_CRASH_DATA, 1000.0 / 149.2, "01*2*")
+	DISCRETE_TRANSFORM3(NODE_30, 1, NODE_21, SUBS_CRASH_DATA, 1000.0 / 149.2*7.6, "01*2*")
 	DISCRETE_FILTER2(SUBS_EXPLODE_SND, SUBS_EXPLODE_EN, NODE_30, 100.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
 
 	/************************************************/

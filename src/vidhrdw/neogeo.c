@@ -395,7 +395,7 @@ static void NeoMVSDrawGfxLine(UINT16 **line,const struct GfxElement *gfx,
 	}
 	else		/* normal */
 	{
-		if (zx == 16)
+		if (zx == 0x0f)		/* fixed */
 		{
 			mydword = (fspr[0]<<0)|(fspr[1]<<8)|(fspr[2]<<16)|(fspr[3]<<24);
 			col = (mydword>> 0)&0xf; if (col) bm[ 0] = paldata[col];
@@ -505,12 +505,12 @@ profiler_mark(PROFILER_VIDEO);
 			{
 				my = 0x20;
 
-				if (sy < 248)
+				//if (sy < 248)
 					fullmode = 1;
-				else
-					/* kludge to avoid a white line in KOF94 Japan stage... */
-					/* probably indication of a subtle bug somewhere else */
-					fullmode = 0;
+				//else
+				//	/* kludge to avoid a white line in KOF94 Japan stage... */
+				//	/* probably indication of a subtle bug somewhere else */
+				//	fullmode = 0;
 			}
 			else
 				fullmode = 0;
@@ -549,10 +549,10 @@ profiler_mark(PROFILER_VIDEO);
 				{
 					if (zy)
 					{
-						zoom_line %= 2*zy;
-						if (zoom_line >= zy)
+						zoom_line %= 2*(zy+1);	/* fixed */
+						if (zoom_line >= (zy+1))	/* fixed */
 						{
-							zoom_line = 2*zy-1 - zoom_line;
+							zoom_line = 2*(zy+1)-1 - zoom_line;	/* fixed */
 							invert ^= 1;
 						}
 					}
@@ -575,8 +575,8 @@ profiler_mark(PROFILER_VIDEO);
 				if ( vhigh_tile && (tileatr & 0x20)) tileno+=0x20000;
 				if (vvhigh_tile && (tileatr & 0x40)) tileno+=0x40000;
 
-				if (tileatr & 0x08)      tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
-				else if (tileatr & 0x04) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
+				if (tileatr & 0x08) tileno=(tileno&~7)|(neogeo_frame_counter&7);	/* fixed */
+				else if (tileatr & 0x04) tileno=(tileno&~3)|(neogeo_frame_counter&3);	/* fixed */
 
 				if (tileatr & 0x02) yoffs ^= 0x0f;	/* flip y */
 

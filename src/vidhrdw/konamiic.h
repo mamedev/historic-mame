@@ -254,12 +254,6 @@ READ16_HANDLER( K054157_rom_word_r );
 READ16_HANDLER( K054157_rom_word_8000_r );
 WRITE16_HANDLER( K054157_word_w );
 WRITE16_HANDLER( K054157_b_word_w );
-READ8_HANDLER( K054157_ram_code_r );
-READ8_HANDLER( K054157_ram_attr_r );
-WRITE8_HANDLER( K054157_ram_code_w );
-WRITE8_HANDLER( K054157_ram_attr_w );
-WRITE8_HANDLER( K054157_w );
-WRITE8_HANDLER( K054157_b_w );
 
 void K054157_tilemap_update(void);
 void K054157_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
@@ -282,6 +276,14 @@ READ32_HANDLER( K056832_6bpp_rom_long_r );
 READ16_HANDLER( K056832_rom_word_r );
 WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
+READ8_HANDLER( K056832_ram_code_lo_r );
+READ8_HANDLER( K056832_ram_code_hi_r );
+READ8_HANDLER( K056832_ram_attr_r );
+WRITE8_HANDLER( K056832_ram_code_lo_w );
+WRITE8_HANDLER( K056832_ram_code_hi_w );
+WRITE8_HANDLER( K056832_ram_attr_w );
+WRITE8_HANDLER( K056832_w );
+WRITE8_HANDLER( K056832_b_w );
 void K056832_mark_plane_dirty(int num);
 void K056832_MarkAllTilemapsDirty(void);
 void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
@@ -295,6 +297,7 @@ void K056832_linemap_enable(int enable);
 int  K056832_is_IRQ_enabled(int irqline);
 void K056832_read_AVAC(int *mode, int *data);
 int  K056832_read_register(int regnum);
+int K056832_get_current_rambank(void);
 
 READ32_HANDLER( K056832_ram_long_r );
 READ32_HANDLER( K056832_rom_long_r );

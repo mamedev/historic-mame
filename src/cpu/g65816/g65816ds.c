@@ -76,7 +76,7 @@ static const char* g_opnames[] =
  "TYA", "TYX", "WAI", "WDM", "XBA", "XCE"
 };
 
-static opcode_struct g_opcodes[256] =
+static const opcode_struct g_opcodes[256] =
 {
 	{BRK, I, SIG }, {ORA, M, DXI }, {COP, I, SIG }, {ORA, M, S   },
 	{TSB, M, D   }, {ORA, M, D   }, {ASL, M, D   }, {ORA, M, DLI },
@@ -192,14 +192,15 @@ INLINE char* int_16_str(unsigned int val)
 }
 
 
-int g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, int x_flag)
+unsigned g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, int x_flag)
 {
 	unsigned int instruction;
-	opcode_struct* opcode;
+	const opcode_struct* opcode;
 	char* ptr;
 	int var;
 	int length = 1;
 	unsigned int address;
+	unsigned dasm_flags;
 
 	pb <<= 16;
 	address = pc | pb;
@@ -210,6 +211,24 @@ int g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag,
 	strcpy(buff, g_opnames[opcode->name]);
 	ptr = buff + strlen(buff);
 
+	switch(opcode->name)
+	{
+		case JSR:
+		case JSL:
+			dasm_flags = DASMFLAG_STEP_OVER;
+			break;
+
+		case RTI:
+		case RTL:
+		case RTS:
+			dasm_flags = DASMFLAG_STEP_OUT;
+			break;
+
+		default:
+			dasm_flags = 0;
+			break;
+	}
+
 	switch(opcode->ea)
 	{
 		case IMP :
@@ -218,7 +237,7 @@ int g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag,
 			sprintf(ptr, "A");
 			break;
 		case RELB:
-			var = read_8(address+1);
+			var = (INT8) read_8(address+1);
 			length++;
 			sprintf(ptr, " %06x (%s)", pb | ((pc + length + var)&0xffff), int_8_str(var));
 			break;
@@ -321,5 +340,5 @@ int g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag,
 			break;
 	}
 
-	return length;
+	return length | DASMFLAG_SUPPORTED | dasm_flags;
 }

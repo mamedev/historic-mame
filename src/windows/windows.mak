@@ -15,8 +15,10 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/winddraw.o \
 	 $(OBJ)/windows/asmblit.o $(OBJ)/windows/asmtile.o
 
-# add resource file
+# add resource file if no UI
+ifeq ($(WINUI),)
 OSOBJS += $(OBJ)/windows/mame.res
+endif
 
 ifdef NEW_DEBUGGER
 OSOBJS += $(OBJ)/windows/debugwin.o 

@@ -917,11 +917,8 @@ VIDEO_EOF( dragngun )
 static void print_debug_info()
 {
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
-	int j,trueorientation;
+	int j;
 	char buf[64];
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ROT0;
 
 	sprintf(buf,"%04X %04X %04X %04X",deco32_pf12_control[0]&0xffff,deco32_pf12_control[1]&0xffff,deco32_pf12_control[2]&0xffff,deco32_pf12_control[3]&0xffff);
 	for (j = 0;j< 16+3;j++)

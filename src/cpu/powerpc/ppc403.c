@@ -126,7 +126,7 @@ static int ppc403_execute(int cycles)
 	return cycles - ppc_icount;
 }
 
-static void ppc403_exception(int exception)
+void ppc403_exception(int exception)
 {
 	switch( exception )
 	{
@@ -145,6 +145,10 @@ static void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x0500;
+			}
+			else
+			{
+				ppc.exception_pending |= 1 << 5;
 			}
 			break;
 
@@ -361,7 +365,7 @@ static void ppc403_dma_exec(int ch)
 					printf("ppc: dma_exec: buffered DMA (peripheral to mem) not implemented (DA: %08X, CT: %08X)\n", ppc.dma[ch].da, ppc.dma[ch].ct);
 					
 					for( i=0; i < ppc.dma[ch].ct; i++ ) {
-						program_write_byte_32be(ppc.dma[ch].da++, 0);
+						program_write_byte_32be(ppc.dma[ch].da++, 0xdb);
 					}
 				}
 				else {							/* mem to peripheral */

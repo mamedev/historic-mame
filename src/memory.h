@@ -116,7 +116,7 @@ INLINE UINT64 d2u(double d)
 #endif
 
 
-	
+
 /***************************************************************************
 
 	Basic type definitions
@@ -275,17 +275,25 @@ typedef void genf(void);
 #define STATIC_BANK22			22						/* banked memory #22 */
 #define STATIC_BANK23			23						/* banked memory #23 */
 #define STATIC_BANK24			24						/* banked memory #24 */
-/* entries 25-58 are reserved for dynamically allocated internal banks */
-#define STATIC_RAM				59						/* RAM - standard reads/writes */
-#define STATIC_ROM				60						/* ROM - standard reads, no writes */
-#define STATIC_RAMROM			61						/* RAMROM - use for access in encrypted 8-bit systems */
-#define STATIC_NOP				62						/* unmapped - all unmapped memory goes here */
-#define STATIC_UNMAP			63						/* unmapped - all unmapped memory goes here */
-#define STATIC_COUNT			64						/* total number of static handlers */
+#define STATIC_BANK25			25						/* banked memory #25 */
+#define STATIC_BANK26			26						/* banked memory #26 */
+#define STATIC_BANK27			27						/* banked memory #27 */
+#define STATIC_BANK28			28						/* banked memory #28 */
+#define STATIC_BANK29			29						/* banked memory #29 */
+#define STATIC_BANK30			30						/* banked memory #30 */
+#define STATIC_BANK31			31						/* banked memory #31 */
+#define STATIC_BANK32			32						/* banked memory #32 */
+/* entries 33-66 are reserved for dynamically allocated internal banks */
+#define STATIC_RAM				67						/* RAM - standard reads/writes */
+#define STATIC_ROM				68						/* ROM - standard reads, no writes */
+#define STATIC_RAMROM			69						/* RAMROM - use for access in encrypted 8-bit systems */
+#define STATIC_NOP				70						/* unmapped - all unmapped memory goes here */
+#define STATIC_UNMAP			71						/* unmapped - all unmapped memory goes here */
+#define STATIC_COUNT			72						/* total number of static handlers */
 
 /* ----- banking constants ----- */
-#define MAX_BANKS				58						/* maximum number of banks */
-#define MAX_EXPLICIT_BANKS		24						/* maximum number of explicitly-defined banks */
+#define MAX_BANKS                66                        /* maximum number of banks */
+#define MAX_EXPLICIT_BANKS       32                        /* maximum number of explicitly-defined banks */
 #define STATIC_BANKMAX			(STATIC_RAM - 1)		/* handler constant of last bank */
 
 
@@ -296,7 +304,7 @@ typedef void genf(void);
 
 	The first 32 entries in the address lookup table are reserved for
 	"static" handlers. These are internal handlers for RAM, ROM, banks,
-	and unmapped areas in the address space. The following definitions 
+	and unmapped areas in the address space. The following definitions
 	are the properly-casted versions of the STATIC_ constants above.
 
 ***************************************************************************/
@@ -326,6 +334,14 @@ typedef void genf(void);
 #define MRA8_BANK22				((read8_handler)STATIC_BANK22)
 #define MRA8_BANK23				((read8_handler)STATIC_BANK23)
 #define MRA8_BANK24				((read8_handler)STATIC_BANK24)
+#define MRA8_BANK25				((read8_handler)STATIC_BANK25)
+#define MRA8_BANK26				((read8_handler)STATIC_BANK26)
+#define MRA8_BANK27				((read8_handler)STATIC_BANK27)
+#define MRA8_BANK28				((read8_handler)STATIC_BANK28)
+#define MRA8_BANK29				((read8_handler)STATIC_BANK29)
+#define MRA8_BANK30				((read8_handler)STATIC_BANK30)
+#define MRA8_BANK31				((read8_handler)STATIC_BANK31)
+#define MRA8_BANK32				((read8_handler)STATIC_BANK32)
 #define MRA8_NOP				((read8_handler)STATIC_NOP)
 #define MRA8_RAM				((read8_handler)STATIC_RAM)
 #define MRA8_ROM				((read8_handler)STATIC_ROM)
@@ -355,6 +371,14 @@ typedef void genf(void);
 #define MWA8_BANK22				((write8_handler)STATIC_BANK22)
 #define MWA8_BANK23				((write8_handler)STATIC_BANK23)
 #define MWA8_BANK24				((write8_handler)STATIC_BANK24)
+#define MWA8_BANK25				((write8_handler)STATIC_BANK25)
+#define MWA8_BANK26				((write8_handler)STATIC_BANK26)
+#define MWA8_BANK27				((write8_handler)STATIC_BANK27)
+#define MWA8_BANK28				((write8_handler)STATIC_BANK28)
+#define MWA8_BANK29				((write8_handler)STATIC_BANK29)
+#define MWA8_BANK30				((write8_handler)STATIC_BANK30)
+#define MWA8_BANK31				((write8_handler)STATIC_BANK31)
+#define MWA8_BANK32				((write8_handler)STATIC_BANK32)
 #define MWA8_NOP				((write8_handler)STATIC_NOP)
 #define MWA8_RAM				((write8_handler)STATIC_RAM)
 #define MWA8_ROM				((write8_handler)STATIC_ROM)
@@ -385,6 +409,14 @@ typedef void genf(void);
 #define MRA16_BANK22			((read16_handler)STATIC_BANK22)
 #define MRA16_BANK23			((read16_handler)STATIC_BANK23)
 #define MRA16_BANK24			((read16_handler)STATIC_BANK24)
+#define MRA16_BANK25			((read16_handler)STATIC_BANK25)
+#define MRA16_BANK26			((read16_handler)STATIC_BANK26)
+#define MRA16_BANK27			((read16_handler)STATIC_BANK27)
+#define MRA16_BANK28			((read16_handler)STATIC_BANK28)
+#define MRA16_BANK29			((read16_handler)STATIC_BANK29)
+#define MRA16_BANK30			((read16_handler)STATIC_BANK30)
+#define MRA16_BANK31			((read16_handler)STATIC_BANK31)
+#define MRA16_BANK32			((read16_handler)STATIC_BANK32)
 #define MRA16_NOP				((read16_handler)STATIC_NOP)
 #define MRA16_RAM				((read16_handler)STATIC_RAM)
 #define MRA16_ROM				((read16_handler)STATIC_ROM)
@@ -414,6 +446,14 @@ typedef void genf(void);
 #define MWA16_BANK22			((write16_handler)STATIC_BANK22)
 #define MWA16_BANK23			((write16_handler)STATIC_BANK23)
 #define MWA16_BANK24			((write16_handler)STATIC_BANK24)
+#define MWA16_BANK25			((write16_handler)STATIC_BANK25)
+#define MWA16_BANK26			((write16_handler)STATIC_BANK26)
+#define MWA16_BANK27			((write16_handler)STATIC_BANK27)
+#define MWA16_BANK28			((write16_handler)STATIC_BANK28)
+#define MWA16_BANK29			((write16_handler)STATIC_BANK29)
+#define MWA16_BANK30			((write16_handler)STATIC_BANK30)
+#define MWA16_BANK31			((write16_handler)STATIC_BANK31)
+#define MWA16_BANK32			((write16_handler)STATIC_BANK32)
 #define MWA16_NOP				((write16_handler)STATIC_NOP)
 #define MWA16_RAM				((write16_handler)STATIC_RAM)
 #define MWA16_ROM				((write16_handler)STATIC_ROM)
@@ -443,6 +483,14 @@ typedef void genf(void);
 #define MRA32_BANK22			((read32_handler)STATIC_BANK22)
 #define MRA32_BANK23			((read32_handler)STATIC_BANK23)
 #define MRA32_BANK24			((read32_handler)STATIC_BANK24)
+#define MRA32_BANK25			((read32_handler)STATIC_BANK25)
+#define MRA32_BANK26			((read32_handler)STATIC_BANK26)
+#define MRA32_BANK27			((read32_handler)STATIC_BANK27)
+#define MRA32_BANK28			((read32_handler)STATIC_BANK28)
+#define MRA32_BANK29			((read32_handler)STATIC_BANK29)
+#define MRA32_BANK30			((read32_handler)STATIC_BANK30)
+#define MRA32_BANK31			((read32_handler)STATIC_BANK31)
+#define MRA32_BANK32			((read32_handler)STATIC_BANK32)
 #define MRA32_NOP				((read32_handler)STATIC_NOP)
 #define MRA32_RAM				((read32_handler)STATIC_RAM)
 #define MRA32_ROM				((read32_handler)STATIC_ROM)
@@ -472,6 +520,14 @@ typedef void genf(void);
 #define MWA32_BANK22			((write32_handler)STATIC_BANK22)
 #define MWA32_BANK23			((write32_handler)STATIC_BANK23)
 #define MWA32_BANK24			((write32_handler)STATIC_BANK24)
+#define MWA32_BANK25			((write32_handler)STATIC_BANK25)
+#define MWA32_BANK26			((write32_handler)STATIC_BANK26)
+#define MWA32_BANK27			((write32_handler)STATIC_BANK27)
+#define MWA32_BANK28			((write32_handler)STATIC_BANK28)
+#define MWA32_BANK29			((write32_handler)STATIC_BANK29)
+#define MWA32_BANK30			((write32_handler)STATIC_BANK30)
+#define MWA32_BANK31			((write32_handler)STATIC_BANK31)
+#define MWA32_BANK32			((write32_handler)STATIC_BANK32)
 #define MWA32_NOP				((write32_handler)STATIC_NOP)
 #define MWA32_RAM				((write32_handler)STATIC_RAM)
 #define MWA32_ROM				((write32_handler)STATIC_ROM)
@@ -501,6 +557,14 @@ typedef void genf(void);
 #define MRA64_BANK22			((read64_handler)STATIC_BANK22)
 #define MRA64_BANK23			((read64_handler)STATIC_BANK23)
 #define MRA64_BANK24			((read64_handler)STATIC_BANK24)
+#define MRA64_BANK25			((read64_handler)STATIC_BANK25)
+#define MRA64_BANK26			((read64_handler)STATIC_BANK26)
+#define MRA64_BANK27			((read64_handler)STATIC_BANK27)
+#define MRA64_BANK28			((read64_handler)STATIC_BANK28)
+#define MRA64_BANK29			((read64_handler)STATIC_BANK29)
+#define MRA64_BANK30			((read64_handler)STATIC_BANK30)
+#define MRA64_BANK31			((read64_handler)STATIC_BANK31)
+#define MRA64_BANK32			((read64_handler)STATIC_BANK32)
 #define MRA64_NOP				((read64_handler)STATIC_NOP)
 #define MRA64_RAM				((read64_handler)STATIC_RAM)
 #define MRA64_ROM				((read64_handler)STATIC_ROM)
@@ -530,6 +594,14 @@ typedef void genf(void);
 #define MWA64_BANK22			((write64_handler)STATIC_BANK22)
 #define MWA64_BANK23			((write64_handler)STATIC_BANK23)
 #define MWA64_BANK24			((write64_handler)STATIC_BANK24)
+#define MWA64_BANK25			((write64_handler)STATIC_BANK25)
+#define MWA64_BANK26			((write64_handler)STATIC_BANK26)
+#define MWA64_BANK27			((write64_handler)STATIC_BANK27)
+#define MWA64_BANK28			((write64_handler)STATIC_BANK28)
+#define MWA64_BANK29			((write64_handler)STATIC_BANK29)
+#define MWA64_BANK30			((write64_handler)STATIC_BANK30)
+#define MWA64_BANK31			((write64_handler)STATIC_BANK31)
+#define MWA64_BANK32			((write64_handler)STATIC_BANK32)
 #define MWA64_NOP				((write64_handler)STATIC_NOP)
 #define MWA64_RAM				((write64_handler)STATIC_RAM)
 #define MWA64_ROM				((write64_handler)STATIC_ROM)
@@ -595,7 +667,7 @@ struct address_space_t
 	UINT8 *				writelookup;		/* write table lookup */
 	struct handler_data_t *readhandlers;	/* read handlers */
 	struct handler_data_t *writehandlers;	/* write handlers */
-	struct data_accessors_t *accessors;		/* pointers to the data access handlers */ 
+	struct data_accessors_t *accessors;		/* pointers to the data access handlers */
 };
 
 
@@ -764,7 +836,7 @@ data8_t program_read_byte_16be(offs_t address);
 data16_t program_read_word_16be(offs_t address);
 void program_write_byte_16be(offs_t address, data8_t data);
 void program_write_word_16be(offs_t address, data16_t data);
-   
+
 data8_t program_read_byte_16le(offs_t address);
 data16_t program_read_word_16le(offs_t address);
 void program_write_byte_16le(offs_t address, data8_t data);
@@ -776,14 +848,14 @@ data32_t program_read_dword_32be(offs_t address);
 void program_write_byte_32be(offs_t address, data8_t data);
 void program_write_word_32be(offs_t address, data16_t data);
 void program_write_dword_32be(offs_t address, data32_t data);
-   
+
 data8_t program_read_byte_32le(offs_t address);
 data16_t program_read_word_32le(offs_t address);
 data32_t program_read_dword_32le(offs_t address);
 void program_write_byte_32le(offs_t address, data8_t data);
 void program_write_word_32le(offs_t address, data16_t data);
 void program_write_dword_32le(offs_t address, data32_t data);
-   
+
 data8_t program_read_byte_64be(offs_t address);
 data16_t program_read_word_64be(offs_t address);
 data32_t program_read_dword_64be(offs_t address);
@@ -792,7 +864,7 @@ void program_write_byte_64be(offs_t address, data8_t data);
 void program_write_word_64be(offs_t address, data16_t data);
 void program_write_dword_64be(offs_t address, data32_t data);
 void program_write_qword_64be(offs_t address, data64_t data);
-   
+
 data8_t program_read_byte_64le(offs_t address);
 data16_t program_read_word_64le(offs_t address);
 data32_t program_read_dword_64le(offs_t address);
@@ -810,7 +882,7 @@ data8_t data_read_byte_16be(offs_t address);
 data16_t data_read_word_16be(offs_t address);
 void data_write_byte_16be(offs_t address, data8_t data);
 void data_write_word_16be(offs_t address, data16_t data);
-   
+
 data8_t data_read_byte_16le(offs_t address);
 data16_t data_read_word_16le(offs_t address);
 void data_write_byte_16le(offs_t address, data8_t data);
@@ -822,14 +894,14 @@ data32_t data_read_dword_32be(offs_t address);
 void data_write_byte_32be(offs_t address, data8_t data);
 void data_write_word_32be(offs_t address, data16_t data);
 void data_write_dword_32be(offs_t address, data32_t data);
-   
+
 data8_t data_read_byte_32le(offs_t address);
 data16_t data_read_word_32le(offs_t address);
 data32_t data_read_dword_32le(offs_t address);
 void data_write_byte_32le(offs_t address, data8_t data);
 void data_write_word_32le(offs_t address, data16_t data);
 void data_write_dword_32le(offs_t address, data32_t data);
-   
+
 data8_t data_read_byte_64be(offs_t address);
 data16_t data_read_word_64be(offs_t address);
 data32_t data_read_dword_64be(offs_t address);
@@ -838,7 +910,7 @@ void data_write_byte_64be(offs_t address, data8_t data);
 void data_write_word_64be(offs_t address, data16_t data);
 void data_write_dword_64be(offs_t address, data32_t data);
 void data_write_qword_64be(offs_t address, data64_t data);
-   
+
 data8_t data_read_byte_64le(offs_t address);
 data16_t data_read_word_64le(offs_t address);
 data32_t data_read_dword_64le(offs_t address);
@@ -856,7 +928,7 @@ data8_t io_read_byte_16be(offs_t address);
 data16_t io_read_word_16be(offs_t address);
 void io_write_byte_16be(offs_t address, data8_t data);
 void io_write_word_16be(offs_t address, data16_t data);
-   
+
 data8_t io_read_byte_16le(offs_t address);
 data16_t io_read_word_16le(offs_t address);
 void io_write_byte_16le(offs_t address, data8_t data);
@@ -868,14 +940,14 @@ data32_t io_read_dword_32be(offs_t address);
 void io_write_byte_32be(offs_t address, data8_t data);
 void io_write_word_32be(offs_t address, data16_t data);
 void io_write_dword_32be(offs_t address, data32_t data);
-   
+
 data8_t io_read_byte_32le(offs_t address);
 data16_t io_read_word_32le(offs_t address);
 data32_t io_read_dword_32le(offs_t address);
 void io_write_byte_32le(offs_t address, data8_t data);
 void io_write_word_32le(offs_t address, data16_t data);
 void io_write_dword_32le(offs_t address, data32_t data);
-   
+
 data8_t io_read_byte_64be(offs_t address);
 data16_t io_read_word_64be(offs_t address);
 data32_t io_read_dword_64be(offs_t address);
@@ -884,7 +956,7 @@ void io_write_byte_64be(offs_t address, data8_t data);
 void io_write_word_64be(offs_t address, data16_t data);
 void io_write_dword_64be(offs_t address, data32_t data);
 void io_write_qword_64be(offs_t address, data64_t data);
-   
+
 data8_t io_read_byte_64le(offs_t address);
 data16_t io_read_word_64le(offs_t address);
 data32_t io_read_dword_64le(offs_t address);

@@ -341,11 +341,8 @@ static UINT8 *tile_opaque_pf;
 static void print_debug_info(int t0, int t1, int t2, int t3, int c0, int c1, int c2, int c3)
 {
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
-	int j,trueorientation,l[16];
+	int j,l[16];
 	char buf[64];
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ROT0;
 
 	sprintf(buf,"%04X %04X %04X %04X",f3_control_0[0]>>22,(f3_control_0[0]&0xffff)>>6,f3_control_0[1]>>22,(f3_control_0[1]&0xffff)>>6);
 	for (j = 0;j< 16+3;j++)
@@ -454,8 +451,6 @@ static void print_debug_info(int t0, int t1, int t2, int t3, int c0, int c1, int
 	sprintf(buf,"6000: %08x %08x %08x",f3_line_ram[0x1800],f3_line_ram[0x1890],f3_line_ram[0x1910]);
 	for (j = 0;j < 16+9; j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,8*27,0,TRANSPARENCY_NONE,0);
-
-	Machine->orientation = trueorientation;
 }
 #endif	//DEBUG_F3
 

@@ -14,8 +14,9 @@
 
 struct SCSPinterface 
 {
-	int num;
-	int region[MAX_SCSP];
+	int num;					/* # of chips to emulate */
+	int region[MAX_SCSP]; 				/* region of 512k RAM */
+	int roffset[MAX_SCSP];				/* offset in the region */
 	int mixing_level[MAX_SCSP];			/* volume */
 	void (*irq_callback[MAX_SCSP])(int state);	/* irq callback */
 };

@@ -52,7 +52,7 @@ enum
 	GFXTYPE_HYBRID_12BIT,	// direct mode: 12-bit; lookup table:  8-bit
 	GFXTYPE_HYBRID_16BIT,	// direct mode: 16-bit; lookup table: 12-bit
 	GFXTYPE_PURE_16BIT,		// direct mode: 16-bit; lookup table: 16-bit
-	GFXTYPE_PURE_12BIT,		// direct mode:    n/a; lookup table: 12-bit
+	GFXTYPE_PURE_12BIT		// direct mode:    n/a; lookup table: 12-bit
 };
 
 

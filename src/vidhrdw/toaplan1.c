@@ -523,11 +523,7 @@ WRITE16_HANDLER( toaplan1_bcu_flipscreen_w )
 			scrollx_offs2 = 0x011 - 4;
 			scrollx_offs3 = 0x011 - 2;
 			scrollx_offs4 = 0x011 - 0;
-			scrolly_offs  = 0xff;
-			if ((Machine->orientation & ORIENTATION_MASK) == ROT0)
-			{
-				scrolly_offs = 0x10f;
-			}
+			scrolly_offs = 0x10f;
 		}
 		else
 		{
@@ -1081,14 +1077,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			if (fcu_flipscreen)
 			{
 				sx_base += 8;
-				if ((Machine->orientation & ORIENTATION_MASK) == ROT0)
-				{
-					sy_base -= 24;
-				}
-				else
-				{
-					sy_base += 8;
-				}
+				sy_base -= 24;
 				sx_base = 320 - sx_base;
 				sy_base = 240 - sy_base;
 			}

@@ -515,13 +515,13 @@ MACHINE_DRIVER_END
 ROM_START( pushman )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "pushman.012", 0x000000, 0x10000, CRC(330762bc) SHA1(c769b68da40183e6eb84212636bfd1265e5ed2d8) )
-	ROM_LOAD16_BYTE( "pushman.011", 0x000001, 0x10000, NO_DUMP )
+	ROM_LOAD16_BYTE( "pushman.011", 0x000001, 0x10000, CRC(62636796) SHA1(1a205c1b0efff4158439bc9a21cfe3cd8834aef9) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "pushman.013", 0x00000, 0x08000,  CRC(adfe66c1) SHA1(fa4ed13d655c664b06e9b91292d2c0a88cb5a569) )
 
-	ROM_REGION( 0x01000, REGION_CPU3, 0 )
-	ROM_LOAD( "pushman.mcu",  0x00000, 0x01000, NO_DUMP )
+	ROM_REGION( 0x01000, REGION_CPU3, 0 ) /* not from this set, check behavior is the same */
+	ROM_LOAD( "pushman.uc",  0x00000, 0x01000, BAD_DUMP CRC(d7916657) SHA1(89c14c6044f082fffe2a8f86d0a82336f4a110a2) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pushman.001",  0x00000, 0x08000, CRC(626e5865) SHA1(4ab96c8512f439d18390094d71a898f5c576399c) )
@@ -605,6 +605,6 @@ ROM_START( bballs )
 	ROM_LOAD( "bb_prom.e9",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
 ROM_END
 
-GAMEX(1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman", GAME_NOT_WORKING )
+GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea)" )
 GAME( 1990, pushmans, pushman, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman (American Sammy license)" )
 GAME( 1991, bballs,   0,       bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls" )

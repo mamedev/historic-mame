@@ -213,6 +213,7 @@ void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
 void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
 void (*hyp_cpu_write_word)(offs_t address, data32_t data);
 void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
+int hyp_type_16bit;
 
 // set C in adds/addsi/subs/sums
 #define SETCARRYS 0

@@ -22,16 +22,12 @@ void debug_print(struct mame_bitmap *bitmap)
 {
 	int i,j;
 	char buf[20];
-	int trueorientation;
-	trueorientation = Machine->orientation;
-	Machine->orientation = 0;
 	for (i = 0;i < 16;i+=2)
 	{
 		sprintf(buf,"%04X",deco16_io_ram[i+1]|(deco16_io_ram[i]<<8));
 		for (j = 0;j < 4;j++)
 			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+3*6*i+6*j,6*6,0,TRANSPARENCY_NONE,0);
 	}
-	Machine->orientation = trueorientation;
 }
 #endif
 

@@ -49,7 +49,7 @@ DISCRETE_SOUND_START(llander_discrete_interface)
 	/************************************************/
 
 	/*                        NODE             GAIN      OFFSET  INIT */
-	DISCRETE_INPUTX_DATA(LLANDER_THRUST_DATA,  600.0/7,   0,      0)
+	DISCRETE_INPUTX_DATA(LLANDER_THRUST_DATA,  600.0/7*7.6,   0,      0)
 	DISCRETE_INPUT_LOGIC(LLANDER_TONE3K_EN)
 	DISCRETE_INPUT_LOGIC(LLANDER_TONE6K_EN)
 	DISCRETE_INPUT_LOGIC(LLANDER_EXPLOD_EN)

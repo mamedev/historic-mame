@@ -78,25 +78,6 @@ static int video_start_common(void)
 		return 1;
 	memset(spritebitmap, 0, spritebitmap_width * spritebitmap_height);
 
-	/* if we're swapped in X/Y, the sprite data will be swapped */
-	/* but that's not what we want, so we swap it back here */
-	if (gfx && (Machine->orientation & ORIENTATION_SWAP_XY) && !(gfx->flags & GFX_SWAPXY))
-	{
-		UINT8 *base = gfx->gfxdata;
-		int c, x, y;
-		for (c = 0; c < gfx->total_elements; c++)
-		{
-			for (y = 0; y < gfx->height; y++)
-				for (x = y; x < gfx->width; x++)
-				{
-					int temp = base[y * gfx->line_modulo + x];
-					base[y * gfx->line_modulo + x] = base[x * gfx->line_modulo + y];
-					base[x * gfx->line_modulo + y] = temp;
-				}
-			base += gfx->char_modulo;
-		}
-	}
-
 	/* compute tile counts */
 	xtiles = Machine->drv->screen_width / 16;
 	ytiles = Machine->drv->screen_height / 16;

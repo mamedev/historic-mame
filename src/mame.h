@@ -115,9 +115,6 @@ struct RunningMachine
 	/* video color depth: 16, 15 or 32 */
 	int						color_depth;
 
-	/* video orientation; obsolete; always set to 0 */
-	int						orientation;
-
 
 	/* ----- audio-related information ----- */
 

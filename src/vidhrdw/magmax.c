@@ -19,83 +19,7 @@ static UINT32 pens_line_tab[256];
 static UINT32 *prom_tab = NULL;
 
 
-typedef void (*blit_horiz_pixel_line_proc)(struct mame_bitmap *bitmap,int x,int y, int width, UINT32* pens);
-static blit_horiz_pixel_line_proc blit_horiz_pixel_line;
-
-static void bhpl_8_nd(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT8* lineadr = &(((UINT8*)b->line[y])[x]);
-	while(w-->0)
-	{
-		*lineadr++ = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fx(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT8* lineadr = &(((UINT8*)b->line[y])[b->width-1-x]);
-	while(w-->0)
-	{
-		*lineadr-- = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[x]);
-	while(w-->0)
-	{
-		*lineadr++ = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fxy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[b->width-1-x]);
-	while(w-->0)
-	{
-		*lineadr-- = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	while(w-->0)
-	{
-		((UINT8 *)b->line[x++])[y] = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fx_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	y = b->width-1-y;
-	while(w-->0)
-	{
-		((UINT8 *)b->line[x++])[y] = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	x = b->height-1-x;
-	while(w-->0)
-	{
-		((UINT8 *)b->line[x--])[y] = (UINT8)(*pens);
-		pens++;
-	}
-}
-static void bhpl_8_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	x = b->height-1-x;
-	y = b->width-1-y;
-	while(w-->0)
-	{
-		((UINT8 *)b->line[x--])[y] = (UINT8)(*pens);
-		pens++;
-	}
-}
-
-static void bhpl_16_nd(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
+static void blit_horiz_pixel_line(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[x]);
 	while(w-->0)
@@ -104,89 +28,7 @@ static void bhpl_16_nd(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fx(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT16* lineadr = &(((UINT16*)b->line[y])[b->width-1-x]);
-	while(w-->0)
-	{
-		*lineadr-- = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_fy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[x]);
-	while(w-->0)
-	{
-		*lineadr++ = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_fxy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[b->width-1-x]);
-	while(w-->0)
-	{
-		*lineadr-- = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	while(w-->0)
-	{
-		((UINT16*)b->line[x++])[y] = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_fx_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	y = b->width-1-y;
-	while(w-->0)
-	{
-		((UINT16*)b->line[x++])[y] = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_fy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	x = b->height-1-x;
-	while(w-->0)
-	{
-		((UINT16*)b->line[x--])[y] = (UINT16)(*pens);
-		pens++;
-	}
-}
-static void bhpl_16_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
-{
-	x = b->height-1-x;
-	y = b->width-1-y;
-	while(w-->0)
-	{
-		((UINT16*)b->line[x--])[y] = (UINT16)(*pens);
-		pens++;
-	}
-}
 
-static blit_horiz_pixel_line_proc bhpls_8_nd[] =
-		{ bhpl_8_nd,   bhpl_8_nd_fx,   bhpl_8_nd_fy,   bhpl_8_nd_fxy,
-		  bhpl_8_nd_s, bhpl_8_nd_fx_s, bhpl_8_nd_fy_s, bhpl_8_nd_fxy_s };
-
-static blit_horiz_pixel_line_proc bhpls_16_nd[] =
-		{ bhpl_16_nd,   bhpl_16_nd_fx,   bhpl_16_nd_fy,   bhpl_16_nd_fxy,
-		  bhpl_16_nd_s, bhpl_16_nd_fx_s, bhpl_16_nd_fy_s, bhpl_16_nd_fxy_s };
-
-static void set_custom_blit(void)
-{
-	if (Machine->color_depth == 8)
-	{
-		blit_horiz_pixel_line = bhpls_8_nd[Machine->orientation];
-	}
-	else
-	{
-		blit_horiz_pixel_line = bhpls_16_nd[Machine->orientation];
-	}
-}
 
 /***************************************************************************
 
@@ -263,8 +105,6 @@ VIDEO_START( magmax )
 		v = (prom14D[i] << 4) + prom14D[i + 0x100];
 		prom_tab[i] = ((v&0x1f)<<8) | ((v&0x10)<<10) | ((v&0xe0)>>1); /*convert data into more useful format*/
 	}
-
-	set_custom_blit();
 
 	return 0;
 }

@@ -436,7 +436,35 @@ ROM_START( motorace )
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, CRC(76062638) SHA1(7378a26cf455d9d3df90929dc665870514c34b54) ) /* sprite lookup table */
 ROM_END
 
+/* it's probably a bootleg of the original Seibu version with the roms decrypted (no epoxy block) */
 ROM_START( shtrider )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "sr01a.bin", 0x0000, 0x2000, CRC(de76d537) SHA1(5ad90571c451b0d7b7a569556cfe075ead00fa2b) )
+	ROM_LOAD( "sr02a.bin", 0x2000, 0x2000, CRC(cd1e1bfc) SHA1(fb156b5e5a5e7a24575264b391e0f3756ef3e021) )
+	ROM_LOAD( "sr03a.bin", 0x4000, 0x2000, CRC(3ade11b9) SHA1(70b9dbd510cf6192194acf6876856d4c19bdf279) )
+	ROM_LOAD( "sr04a.bin", 0x6000, 0x2000, CRC(02b96eaa) SHA1(ba4d61cf57142192684c45dd22720234d3521241) )
+	
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "sr11a.bin", 0xe000, 0x2000, CRC(a8396b76) SHA1(614151fb1d25930e9fee4ab290a63f8fe97adbe6) )
+
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sr05a.bin", 0x0000, 0x2000, CRC(34449f79) SHA1(30aa9da07bf32282d213f63e50c564a336fd0102) )
+	ROM_LOAD( "sr06a.bin", 0x2000, 0x2000, CRC(de43653d) SHA1(a9fae236ee8e32d576123a4871ba3c46ca78ec3b) )
+	ROM_LOAD( "sr07a.bin", 0x4000, 0x2000, CRC(3445b81c) SHA1(6768d411f8c3a347b10908e757a701d5b71ca2bc) )
+
+	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sr08a.bin", 0x0000, 0x2000, CRC(4072b096) SHA1(e43482ac916a0fa259f74f99dc6ef72e86c23d9d) )
+	ROM_LOAD( "sr09a.bin", 0x2000, 0x2000, CRC(fd4cc7e6) SHA1(3852883d32354e8c90c6cf701581ebc57d830c8b) )
+	ROM_LOAD( "sr10b.bin", 0x4000, 0x2000, CRC(0a117925) SHA1(e061254428874b6153c2e9e514122373395f4da1) )
+
+	ROM_REGION( 0x0420,  REGION_PROMS, 0 )
+	ROM_LOAD( "1.bpr",   0x0000, 0x0100, CRC(e9e258e5) SHA1(b98df686e8e2afa9ed05a56e1d3acb0d7cee3888) )
+	ROM_LOAD( "2.bpr",   0x0100, 0x0100, CRC(6cf4591c) SHA1(3a5795758811f4fe3518216491ac13c0d17e842f) )
+	ROM_LOAD( "4.bpr",   0x0200, 0x0020, CRC(ee97c581) SHA1(a5d0ba5e03f3bcbdd72f89f0495a98cef2821e59) )
+	ROM_LOAD( "3.bpr",   0x0220, 0x0100, CRC(5db47092) SHA1(8e234ee88143755a4fd5ec86a03b55be5f9c5db8) )
+ROM_END
+
+ROM_START( shtridra )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "1.bin",   0x0000, 0x2000, CRC(eb51315c) SHA1(0101c008b6731cd8ec796fee645113e2be79bd08) ) /* was inside epoxy block with cpu, encrypted */
 	ROM_LOAD( "2.bin",   0x2000, 0x2000, CRC(97675d19) SHA1(774ce4d370fcbbd8a4109df023bf21db92d2e839) )
@@ -463,8 +491,6 @@ ROM_START( shtrider )
 	ROM_LOAD( "3.bpr",   0x0220, 0x0100, CRC(5db47092) SHA1(8e234ee88143755a4fd5ec86a03b55be5f9c5db8) )
 ROM_END
 
-
-
 DRIVER_INIT( motorace )
 {
 	int A,j;
@@ -486,7 +512,7 @@ DRIVER_INIT( motorace )
 	}
 }
 
-static DRIVER_INIT( shtrider )
+static DRIVER_INIT( shtridra )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -500,4 +526,5 @@ static DRIVER_INIT( shtrider )
 
 GAME( 1983, travrusa, 0,        travrusa, travrusa, 0,        ROT270, "Irem", "Traverse USA / Zippy Race" )
 GAME( 1983, motorace, travrusa, travrusa, motorace, motorace, ROT270, "Irem (Williams license)", "MotoRace USA" )
-GAME( 1984, shtrider, 0,        shtrider, shtrider, shtrider, ROT270|ORIENTATION_FLIP_X, "Seibu Kaihatsu (Sigma license)", "Shot Rider" )
+GAME( 1985, shtrider, 0,        shtrider, shtrider, 0,        ROT270|ORIENTATION_FLIP_X, "Seibu Kaihatsu", "Shot Rider" )
+GAME( 1984, shtridra, shtrider, shtrider, shtrider, shtridra, ROT270|ORIENTATION_FLIP_X, "Seibu Kaihatsu (Sigma license)", "Shot Rider (Sigma license)" )

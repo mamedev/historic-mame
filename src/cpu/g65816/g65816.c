@@ -187,7 +187,7 @@ int (*g65816i_execute[5])(int cycles) =
 /* ======================================================================== */
 
 
-void g65816_reset(void* param)
+static void g65816_reset(void* param)
 {
 		/* Start the CPU */
 		CPU_STOPPED = 0;
@@ -230,33 +230,27 @@ void g65816_reset(void* param)
 }
 
 /* Exit and clean up */
-void g65816_exit(void)
+static void g65816_exit(void)
 {
 	/* nothing to do yet */
 }
 
 /* Execute some instructions */
-int g65816_execute(int cycles)
+static int g65816_execute(int cycles)
 {
 	return FTABLE_EXECUTE(cycles);
 }
 
 
 /* Get the current CPU context */
-unsigned g65816_get_context(void *dst_context)
+static void g65816_get_context(void *dst_context)
 {
 	if(dst_context)
 		*(g65816i_cpu_struct*)dst_context = g65816i_cpu;
-	return sizeof(g65816i_cpu);
-}
-
-static void mame_g65816_get_context(void *dst_context)
-{
-	g65816_get_context(dst_context);
 }
 
 /* Set the current CPU context */
-void g65816_set_context(void *src_context)
+static void g65816_set_context(void *src_context)
 {
 	if(src_context)
 	{
@@ -266,32 +260,32 @@ void g65816_set_context(void *src_context)
 }
 
 /* Get the current Program Counter */
-unsigned g65816_get_pc(void)
+static unsigned g65816_get_pc(void)
 {
 	return REGISTER_PC;
 }
 
 /* Set the Program Counter */
-void g65816_set_pc(unsigned val)
+static void g65816_set_pc(unsigned val)
 {
 	REGISTER_PC = MAKE_UINT_16(val);
 	g65816_jumping(REGISTER_PB | REGISTER_PC);
 }
 
 /* Get the current Stack Pointer */
-unsigned g65816_get_sp(void)
+static unsigned g65816_get_sp(void)
 {
 	return REGISTER_S;
 }
 
 /* Set the Stack Pointer */
-void g65816_set_sp(unsigned val)
+static void g65816_set_sp(unsigned val)
 {
 	REGISTER_S = FLAG_E ? MAKE_UINT_8(val) | 0x100 : MAKE_UINT_16(val);
 }
 
 /* Get a register */
-unsigned g65816_get_reg(int regnum)
+static unsigned g65816_get_reg(int regnum)
 {
 	/* Set the function tables to emulation mode if the FTABLE is NULL */
 	if( FTABLE_GET_REG == NULL )
@@ -301,35 +295,19 @@ unsigned g65816_get_reg(int regnum)
 }
 
 /* Set a register */
-void g65816_set_reg(int regnum, unsigned value)
+static void g65816_set_reg(int regnum, unsigned value)
 {
 	FTABLE_SET_REG(regnum, value);
 }
 
-/* Load a CPU state */
-void g65816_state_load(void *file)
-{
-}
-
-/* Save the current CPU state */
-void g65816_state_save(void *file)
-{
-}
-
-/* Set the non-maskable interrupt line */
-void g65816_set_nmi_line(int state)
-{
-	FTABLE_SET_LINE(G65816_LINE_NMI, state);
-}
-
 /* Set an interrupt line */
-void g65816_set_irq_line(int line, int state)
+static void g65816_set_irq_line(int line, int state)
 {
 	FTABLE_SET_LINE(line, state);
 }
 
 /* Set the callback that is called when servicing an interrupt */
-void g65816_set_irq_callback(int (*callback)(int))
+static void g65816_set_irq_callback(int (*callback)(int))
 {
 	INT_ACK = callback;
 }
@@ -339,7 +317,7 @@ void g65816_set_irq_callback(int (*callback)(int))
 #ifdef MAME_DEBUG
 #include "g65816ds.h"
 #endif
-unsigned g65816_dasm(char *buffer, unsigned pc)
+static unsigned g65816_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
 	return g65816_disassemble(buffer, (pc&0xffff), REGISTER_PB>>16, FLAG_M, FLAG_X);
@@ -350,7 +328,7 @@ unsigned g65816_dasm(char *buffer, unsigned pc)
 }
 
 
-void g65816_init(void){ return; }
+static void g65816_init(void){ return; }
 
 
 /**************************************************************************
@@ -448,7 +426,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = g65816_set_info;		break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = mame_g65816_get_context;	break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = g65816_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = g65816_set_context;	break;
 		case CPUINFO_PTR_INIT:							info->init = g65816_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = g65816_reset;				break;

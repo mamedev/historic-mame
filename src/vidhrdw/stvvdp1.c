@@ -21,6 +21,7 @@ Framebuffer todo:
 
 data32_t *stv_vdp1_vram;
 data32_t *stv_vdp1_regs;
+
 extern data32_t *stv_scu;
 
 UINT16	 *stv_framebuffer;
@@ -217,7 +218,6 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 	vdp1[offset*4+2] = (data & 0x0000ff00) >> 8;
 	vdp1[offset*4+3] = (data & 0x000000ff) >> 0;
 }
-
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {
@@ -913,7 +913,7 @@ static int y2s(int v)
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
-void stv_vpd1_draw_distorded_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1330,13 +1330,13 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 				case 0x0002:
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0004:
 					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0005:
@@ -1410,7 +1410,7 @@ void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		case 0:/*Idle Mode*/
 			break;
 		case 1:/*Draw by request*/
-			SET_PTM_FROM_1_TO_0;
+			//SET_PTM_FROM_1_TO_0;//kiwames doesn't like this ATM...
 		case 2:/*Automatic Draw*/
 			stv_vdp1_process_list(bitmap,cliprect);
 			break;

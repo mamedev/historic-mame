@@ -528,21 +528,10 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 	{																		\
 		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
 		int tx = x, ty = y, temp;											\
-		if ((orientation) & ORIENTATION_SWAP_XY)							\
-		{																	\
-			temp = tx; tx = ty; ty = temp;									\
-			xadv = dy / sizeof(type);										\
-		}																	\
 		if ((orientation) & ORIENTATION_FLIP_X)								\
-		{																	\
 			tx = bitmap->width - 1 - tx;									\
-			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																	\
 		if ((orientation) & ORIENTATION_FLIP_Y)								\
-		{																	\
 			ty = bitmap->height - 1 - ty;									\
-			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
-		}																	\
 		/* can't lookup line because it may be negative! */					\
 		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
 		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
@@ -552,7 +541,7 @@ INLINE void bryan2_drawscanline(
 		struct mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
-	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
+	ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);
 	if (transparent) {
 		while (length--) {
 			UINT32 spixel = *src++;
@@ -589,7 +578,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,const struct rectangle
 	   falling through from max +ve to max -ve quite a lot in this routine */
 	int sx,x_index,x_step,x_max;
 
-	UINT32 zoomx,zoomy,rot=Machine->orientation;
+	UINT32 zoomx,zoomy;
 	UINT16 scanline[512];
 	UINT16 row_colbank,row_scroll;
 	int flipscreen = 0;	/* n/a */
@@ -685,9 +674,9 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,const struct rectangle
 		}
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-			bryan2_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			bryan2_drawscanline(bitmap,0,y,screen_width,scanline,0,ROT0,priority);
 		else
-			bryan2_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+			bryan2_drawscanline(bitmap,0,y,screen_width,scanline,1,ROT0,priority);
 
 		y_index += zoomy;
 		if (!machine_flip) y++; else y--;
@@ -776,7 +765,7 @@ VIDEO_UPDATE( wgp )
 
 	wgp_draw_sprites(bitmap,cliprect,16);
 
-/* ... then here we should apply rotation from wgp_rotate_ctrl[] to
+/* ... then here we should apply rotation from wgp_sate_ctrl[] to
    the bitmap before we draw the TC0100SCN layers on it */
 
 	layer[0] = TC0100SCN_bottomlayer(0);

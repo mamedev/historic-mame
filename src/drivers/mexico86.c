@@ -508,6 +508,9 @@ ROM_START( kicknrun )
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
 	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BAD_DUMP CRC(8e821fa0) SHA1(331f5da31d8767674e2b5bf0e7f5b5ad2535e044)  )  /* manually crafted from the Mexico '86 one */
 
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )    /* cpu for 4 player mode? (set with dipswitch) unused */
+	ROM_LOAD( "9.bin", 0x0000, 0x4000, CRC(6a2ad32f) SHA1(42d4b97b25d219902ad215793f1d2c006ffe94dc) )
+
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a87-05.bin", 0x08000, 0x08000, CRC(4eee3a8a) SHA1(2f0e4c2fb6cba48d0e2b95927fc14f0038557371) )
 	ROM_CONTINUE(           0x00000, 0x08000 )

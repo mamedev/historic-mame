@@ -334,7 +334,7 @@ void debug_view_get_property(struct debug_view *view, int property, void *value)
 			break;
 
 		case DVP_UPDATE_CALLBACK:
-			*(void **)value = (void *) view->update_func;
+			*(genf **)value = (genf *) view->update_func;
 			break;
 
 		case DVP_VIEW_DATA:

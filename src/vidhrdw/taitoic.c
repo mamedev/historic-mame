@@ -562,21 +562,10 @@ Newer version of the I/O chip ?
 	{																		\
 		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
 		int tx = x, ty = y, temp;											\
-		if ((orientation) & ORIENTATION_SWAP_XY)							\
-		{																	\
-			temp = tx; tx = ty; ty = temp;									\
-			xadv = dy / sizeof(type);										\
-		}																	\
 		if ((orientation) & ORIENTATION_FLIP_X)								\
-		{																	\
 			tx = bitmap->width - 1 - tx;									\
-			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																	\
 		if ((orientation) & ORIENTATION_FLIP_Y)								\
-		{																	\
 			ty = bitmap->height - 1 - ty;									\
-			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
-		}																	\
 		/* can't lookup line because it may be negative! */					\
 		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
 		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
@@ -586,7 +575,7 @@ INLINE void taitoic_drawscanline(
 		struct mame_bitmap *bitmap,int x,int y,
 		const UINT16 *src,int transparent,UINT32 orient,int pri, const struct rectangle *cliprect)
 {
-	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
+	ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);
 	{
 		int length=cliprect->max_x - cliprect->min_x + 1;
 		src+=cliprect->min_x;
@@ -1160,7 +1149,6 @@ static void topspeed_custom_draw(struct mame_bitmap *bitmap,const struct rectang
 	int i,y,y_index,src_y_index,row_index;
 
 	int flip = 0;
-	int rot=Machine->orientation;
 	int machine_flip = 0;	/* for  ROT 180 ? */
 
 	int min_x = cliprect->min_x;
@@ -1189,14 +1177,7 @@ static void topspeed_custom_draw(struct mame_bitmap *bitmap,const struct rectang
 		row_index = (src_y_index - PC080SN_bgscrolly[chip][layer]) &0x1ff;
 		color = color_ctrl_ram[(row_index + PC080SN_yoffs - 2) &0xff];
 
-		if ((rot &ORIENTATION_FLIP_X)==0)
-		{
-			x_index = sx - (PC080SN_bgscroll_ram[chip][layer][row_index]);
-		}
-		else	/* Orientation flip X */
-		{
-			x_index = sx + (PC080SN_bgscroll_ram[chip][layer][row_index]);
-		}
+		x_index = sx - (PC080SN_bgscroll_ram[chip][layer][row_index]);
 
 		src16 = (UINT16 *)srcbitmap->line[src_y_index];
 		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
@@ -1233,9 +1214,9 @@ static void topspeed_custom_draw(struct mame_bitmap *bitmap,const struct rectang
 		}
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-			taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
+			taitoic_drawscanline(bitmap,0,y,scanline,0,ROT0,priority,cliprect);
 		else
-			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
 
 		y_index++;
 		if (!machine_flip) y++; else y--;
@@ -1876,7 +1857,6 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 		int x_index,x_step;
 
 		int flip = TC0080VCO_flipscreen;
-		int rot=Machine->orientation;
 		int machine_flip = 0;	/* for  ROT 180 ? */
 
 		int min_x = cliprect->min_x;
@@ -1950,14 +1930,7 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 			row_index = (src_y_index &0x1ff);
 			if (flip)	row_index = 0x1ff - row_index;
 
-			if ((rot &ORIENTATION_FLIP_X)==0)
-			{
-				x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
-			}
-			else	/* Orientation flip X */
-			{
-				x_index = sx + ((TC0080VCO_bgscroll_ram[row_index] << 16));
-			}
+			x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
 
 			src16 = (UINT16 *)srcbitmap->line[src_y_index];
 			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
@@ -1993,18 +1966,14 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 //				x_index += x_step;
 //			}
 //
-//				if ((rot &ORIENTATION_FLIP_X)!=0)
-//					pdraw_scanline16(bitmap,512-(screen_width/2),y,screen_width,
-//						scanline,0,0,rot,priority);
-//				else
 //					pdraw_scanline16(bitmap,0,y,screen_width,
 //						scanline,0,0,rot,priority);
 
 /*** NEW ***/
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-				taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
+				taitoic_drawscanline(bitmap,0,y,scanline,0,ROT0,priority,cliprect);
 			else
-				taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
+				taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
 /***********/
 
 			y_index += zoomy;
@@ -3821,7 +3790,6 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 		int flip = TC0480SCP_pri_reg & 0x40;
 		int i,y,y_index,src_y_index,row_index;
 		int x_index,x_step;
-		int rot=Machine->orientation;
 		int machine_flip = 0;	/* for  ROT 180 ? */
 
 		UINT16 screen_width = 512; //cliprect->max_x - cliprect->min_x + 1;
@@ -3838,9 +3806,6 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 				+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
 			sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
 
-			if (rot &ORIENTATION_FLIP_X)	/* orientation flip X (Gunbustr) */
-				sx = -sx -((screen_width + TC0480SCP_flip_xoffs) * zoomx);
-
 			y_index = (TC0480SCP_bgscrolly[layer] << 16)
 				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
 			y_index -= (TC0480SCP_y_offs - min_y) * zoomy;
@@ -3850,9 +3815,6 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 			sx = ((-TC0480SCP_bgscrollx[layer] + 15 + layer*4 + TC0480SCP_flip_xoffs ) << 16)
 				+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
 			sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
-
-			if (rot &ORIENTATION_FLIP_X)	/* orientation flip X (untested) */
-				sx = -sx -((screen_width + TC0480SCP_flip_xoffs) * zoomx);
 
 			y_index = ((-TC0480SCP_bgscrolly[layer] + TC0480SCP_flip_yoffs) << 16)
 				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
@@ -3870,16 +3832,8 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 			row_index = src_y_index;
 			if (flip)	row_index = 0x1ff - row_index;
 
-			if ((rot &ORIENTATION_FLIP_X)==0)
-			{
-				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-			}
-			else	/* Orientation flip X (Gunbustr) */
-			{
-				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-			}
+			x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+				- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 
 			src16 = (UINT16 *)srcbitmap->line[src_y_index];
 			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
@@ -3908,9 +3862,9 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 			}
 
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-				taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
+				taitoic_drawscanline(bitmap,0,y,scanline,0,ROT0,priority,cliprect);
 			else
-				taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
+				taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
 
 			y_index += zoomy;
 			if (!machine_flip) y++; else y--;
@@ -3971,7 +3925,7 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 	UINT8 *tsrc;
 	int i,y,y_index,src_y_index,row_index,row_zoom;
 	int sx,x_index,x_step;
-	UINT32 zoomx,zoomy,rot=Machine->orientation;
+	UINT32 zoomx,zoomy;
 	UINT16 scanline[512];
 	int flipscreen = TC0480SCP_pri_reg & 0x40;
 	int machine_flip = 0;	/* for  ROT 180 ? */
@@ -3996,9 +3950,6 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 			+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
 		sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
 
-		if (rot &ORIENTATION_FLIP_X)	/* orientation flip X (Gunbustr) */
-			sx = -sx -((screen_width + TC0480SCP_flip_xoffs) * zoomx);
-
 		y_index = (TC0480SCP_bgscrolly[layer] << 16)
 			+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
 		y_index -= (TC0480SCP_y_offs - min_y) * zoomy;
@@ -4008,9 +3959,6 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 		sx = ((-TC0480SCP_bgscrollx[layer] + 15 + layer*4 + TC0480SCP_flip_xoffs ) << 16)
 			+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
 		sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
-
-		if (rot &ORIENTATION_FLIP_X)	/* orientation flip X (untested) */
-			sx = -sx -((screen_width + TC0480SCP_flip_xoffs) * zoomx);
 
 		y_index = ((-TC0480SCP_bgscrolly[layer] + TC0480SCP_flip_yoffs) << 16)
 			+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
@@ -4038,22 +3986,11 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 		else
 			row_zoom = 0;
 
-		if ((rot &ORIENTATION_FLIP_X)==0)
-		{
-			x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-				- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+		x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+			- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 
-			/* flawed calc ?? */
-			x_index -= (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-		}
-		else	/* Orientation flip X (Gunbustr) */
-		{
-			x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-				+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-
-			/* flawed calc ?? */
-			x_index += (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-		}
+		/* flawed calc ?? */
+		x_index -= (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
 
 /* We used to kludge 270 multiply factor, before adjusting x_index instead */
 
@@ -4064,12 +4001,6 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 				x_step -= ((row_zoom * 256) &0xffff);
 			else	/* Undrfire uses the hi byte, why? */
 				x_step -= (((row_zoom &0xff) * 256) &0xffff);
-
-			if ((rot &ORIENTATION_FLIP_X)!=0)
-			{
-				x_index += (screen_width + TC0480SCP_flip_xoffs) *
-					((row_zoom * 256) &0xffff);
-			}
 		}
 
 		src16 = (UINT16 *)srcbitmap->line[src_y_index];
@@ -4097,9 +4028,9 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 		}
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-			taitoic_drawscanline(bitmap,0,y,scanline,0,rot,priority,cliprect);
+			taitoic_drawscanline(bitmap,0,y,scanline,0,ROT0,priority,cliprect);
 		else
-			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
 
 		y_index += zoomy;
 		if (!machine_flip) y++; else y--;
@@ -4377,7 +4308,6 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	int left_edge,right_edge,begin,end,right_over,left_over;
 	int line_needs_drawing,draw_top_road_line,background_only;
 
-	int rot=Machine->orientation;
 	int min_x = cliprect->min_x;
 	int max_x = cliprect->max_x;
 	int min_y = cliprect->min_y;
@@ -4887,63 +4817,32 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 
 		if (line_needs_drawing)
 		{
+			dst16 = scanline;
 
-			if (rot & ORIENTATION_FLIP_X)
+			for (i=0;i<screen_width;i++)
 			{
-				dst16 = scanline + screen_width - 1;
-
-				for (i=0;i<screen_width;i++)
+				if (roada_line[i] == 0x8000)	/* road A pixel transparent */
 				{
-					if (roada_line[i] == 0x8000)	/* road A pixel transparent */
-					{
-						*dst16-- = roadb_line[i] & 0x8fff;
-					}
-					else if (roadb_line[i] == 0x8000)	/* road B pixel transparent */
-					{
-						*dst16-- = roada_line[i] & 0x8fff;
-					}
-					else	/* two competing pixels, which has highest priority... */
-					{
-						if ((roadb_line[i] & 0x7000) > (roada_line[i] & 0x7000))
-						{
-							*dst16-- = roadb_line[i] & 0x8fff;
-						}
-						else
- 						{
-							*dst16-- = roada_line[i] & 0x8fff;
-						}
-					}
+					*dst16++ = roadb_line[i] & 0x8fff;
 				}
-			}
-			else	/* standard non-flipped case */
-			{
-				dst16 = scanline;
-
-				for (i=0;i<screen_width;i++)
+				else if (roadb_line[i] == 0x8000)	/* road B pixel transparent */
 				{
-					if (roada_line[i] == 0x8000)	/* road A pixel transparent */
+					*dst16++ = roada_line[i] & 0x8fff;
+				}
+				else	/* two competing pixels, which has highest priority... */
+				{
+					if ((roadb_line[i] & 0x7000) > (roada_line[i] & 0x7000))
 					{
 						*dst16++ = roadb_line[i] & 0x8fff;
 					}
-					else if (roadb_line[i] == 0x8000)	/* road B pixel transparent */
+					else
 					{
 						*dst16++ = roada_line[i] & 0x8fff;
-					}
-					else	/* two competing pixels, which has highest priority... */
-					{
-						if ((roadb_line[i] & 0x7000) > (roada_line[i] & 0x7000))
-						{
-							*dst16++ = roadb_line[i] & 0x8fff;
-						}
-						else
- 						{
-							*dst16++ = roada_line[i] & 0x8fff;
-						}
 					}
 				}
 			}
 
-			taitoic_drawscanline(bitmap,0,y,scanline,1,rot,priority,cliprect);
+			taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
 		}
 
 		y++;

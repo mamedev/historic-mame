@@ -55,66 +55,6 @@ enum
 
 
 /* ======================================================================== */
-/* ================================== API ================================= */
-/* ======================================================================== */
-
-/* --------------------- */
-/* CPU Peek and Poke API */
-/* --------------------- */
-
-void g65816_init(void);
-
-/* Get the current CPU context */
-unsigned g65816_get_context(void *dst);
-
-/* Set the current CPU context */
-void g65816_set_context(void *src);
-
-/* Get the current Program Counter */
-unsigned g65816_get_pc(void);
-
-/* Set the current Program Counter */
-void g65816_set_pc(unsigned val);
-
-/* Get the current Stack Pointer */
-unsigned g65816_get_sp(void);
-
-/* Set the current Stack Pointer */
-void g65816_set_sp(unsigned val);
-
-/* Get a register from the core */
-unsigned g65816_get_reg(int regnum);
-
-/* Set a register in the core */
-void g65816_set_reg(int regnum, unsigned val);
-
-/* Set the callback that will be called when an interrupt is serviced */
-void g65816_set_irq_callback(int (*callback)(int));
-
-
-/* -------------------------- */
-/* CPU Hardware Interface API */
-/* -------------------------- */
-
-/* Set the RESET line on the CPU */
-void g65816_reset(void* param);
-
-/* Note about NMI:
- *   NMI is a one-shot trigger.  In order to trigger NMI again, you must
- *   clear NMI and then assert it again.
- */
-void g65816_set_nmi_line(int state);
-
-/* Assert or clear the IRQ pin */
-void g65816_set_irq_line(int line, int state);
-
-/* Execute instructions for <clocks> CPU cycles */
-int g65816_execute(int clocks);
-
-
-
-
-/* ======================================================================== */
 /* =================== Functions Implemented by the Host ================== */
 /* ======================================================================== */
 
@@ -136,19 +76,6 @@ void g65816_branching(unsigned int new_pc);
 /* ======================================================================== */
 /* ================================= MAME ================================= */
 /* ======================================================================== */
-
-/* Clean up after the emulation core - Not used in this core - */
-void g65816_exit(void);
-
-/* Save the current CPU state to disk */
-void g65816_state_save(void *file);
-
-/* Load a CPU state from disk */
-void g65816_state_load(void *file);
-
-/* Disassemble an instruction */
-unsigned g65816_dasm(char *buffer, unsigned pc);
-
 
 #include "cpuintrf.h"
 #include "memory.h"

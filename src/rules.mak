@@ -998,6 +998,17 @@ else
 CPUDEFS += -DHAS_ARM=0
 endif
 
+CPU=$(strip $(findstring ARM7@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/arm7
+CPUDEFS += -DHAS_ARM7=1
+CPUOBJS += $(OBJ)/cpu/arm7/arm7.o
+DBGOBJS += $(OBJ)/cpu/arm7/arm7dasm.o
+$(OBJ)/cpu/arm7/arm7.o: arm7.c arm7.h
+else
+CPUDEFS += -DHAS_ARM7=0
+endif
+
 CPU=$(strip $(findstring JAGUAR@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/jaguar
@@ -1451,6 +1462,17 @@ DBGOBJS += $(OBJ)/cpu/se3208/se3208dis.o
 $(OBJ)/cpu/se3208/se3208.o: se3208.c se3208.h se3208dis.c
 else
 CPUDEFS += -DHAS_SE3208=0
+endif
+
+CPU=$(strip $(findstring MC68HC11@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/mc68hc11
+CPUDEFS += -DHAS_MC68HC11=1
+CPUOBJS += $(OBJ)/cpu/mc68hc11/mc68hc11.o
+DBGOBJS += $(OBJ)/cpu/mc68hc11/hc11dasm.o
+$(OBJ)/cpu/mc68hc11/mc68hc11.o: mc68hc11.c hc11dasm.c
+else
+CPUDEFS += -DHAS_MC68HC11=0
 endif
 
 

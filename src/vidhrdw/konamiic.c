@@ -119,7 +119,7 @@ Monster Maulers /   GX170*1993   68000 054157 054156 055673 053246 055555       
   Ultimate Battler Dadandarn
 Bucky 'O Hare       GX173*1992   68000 054157 054156 053247 053246 053251        054338 (alpha blending) 054539 (sound)
 Potrio              GX174 1992
-Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054906 054539 (sound)
+Lethal Enforcers    GX191*1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054539 (sound)
 Metamorphic Force   GX224*1993   68000 054157 054157 055673 053246 055555
 Martial Champion    GX234*1993   68000 054157 054156 055673 053246 055555        053252(*) 054338 (alpha blending) 053990 054539 (sound)
 Run and Gun         GX247*1993   68000 (TTL tilemap) 055673 053246               053253(x2) 053252(*) 053936 (roz+) 054539(x2) (sound)
@@ -5432,36 +5432,6 @@ WRITE16_HANDLER( K054157_ram_half_word_w )
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, (offset & 0x7ff) + K054157_cur_offset);
 }
 
-READ8_HANDLER( K054157_ram_code_r )
-{
-	data16_t *adr = K054157_cur_rambase + offset;
-
-	return *adr & 0xff;
-}
-
-READ8_HANDLER( K054157_ram_attr_r )
-{
-	data16_t *adr = K054157_cur_rambase + offset;
-
-	return *adr>>8;
-}
-
-WRITE8_HANDLER( K054157_ram_code_w )
-{
-	data16_t *adr = K054157_cur_rambase + offset;
-
-	*adr &= 0xff00;
-	*adr |= data;
-}
-
-WRITE8_HANDLER( K054157_ram_attr_w )
-{
-	data16_t *adr = K054157_cur_rambase + offset;
-
-	*adr &= 0x00ff;
-	*adr |= data<<8;
-}
-
 WRITE16_HANDLER( K054157_word_w )
 {
 	UINT16 old = K054157_regs[offset];
@@ -5508,33 +5478,9 @@ WRITE16_HANDLER( K054157_word_w )
 	}
 }
 
-WRITE8_HANDLER( K054157_w )
-{
-	if (offset & 1)
-	{
-		K054157_word_w((offset>>1)+1, data, 0xff00);
-	}
-	else
-	{
-		K054157_word_w((offset>>1), data<<8, 0x00ff);
-	}
-}
-
 WRITE16_HANDLER( K054157_b_word_w )
 {
 	COMBINE_DATA (K054157_regsb + offset);
-}
-
-WRITE8_HANDLER( K054157_b_w )
-{
-	if (offset & 1)
-	{
-		K054157_b_word_w((offset>>1)+1, data, 0xff00);
-	}
-	else
-	{
-		K054157_b_word_w((offset>>1), data<<8, 0x00ff);
-	}
 }
 
 void K054157_tilemap_update(void)
@@ -5806,6 +5752,13 @@ static void K056832_change_rambank(void)
 	int bank = K056832_regs[0x19];
 	K056832_SelectedPage = ((bank>>1)&0xc)|(bank&3);
 	K056832_SelectedPagex4096 = K056832_SelectedPage << 12;
+}
+
+int K056832_get_current_rambank(void)
+{
+	int bank = K056832_regs[0x19];
+
+	return ((bank>>1)&0xc)|(bank&3);
 }
 
 static void K056832_change_rombank(void)
@@ -6194,6 +6147,67 @@ READ32_HANDLER( K056832_ram_long_r )
 	return(pMem[0]<<16 | pMem[1]);
 }
 
+/* special 8-bit handlers for Lethal Enforcers */
+READ8_HANDLER( K056832_ram_code_lo_r )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)+1];
+
+	return *adr & 0xff;
+}
+
+READ8_HANDLER( K056832_ram_code_hi_r )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)+1];
+
+	return *adr>>8;
+}
+
+READ8_HANDLER( K056832_ram_attr_r )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
+
+	return *adr>>8;
+}
+
+WRITE8_HANDLER( K056832_ram_code_lo_w )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)+1];
+
+	*adr &= 0xff00;
+	*adr |= data;
+
+	if (K056832_PageTileMode[K056832_SelectedPage])
+		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+	else
+		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+}
+
+WRITE8_HANDLER( K056832_ram_code_hi_w )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)+1];
+
+	*adr &= 0x00ff;
+	*adr |= data<<8;
+
+	if (K056832_PageTileMode[K056832_SelectedPage])
+		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+	else
+		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+}
+
+WRITE8_HANDLER( K056832_ram_attr_w )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
+
+	*adr &= 0x00ff;
+	*adr |= data<<8;
+
+	if (K056832_PageTileMode[K056832_SelectedPage])
+		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+	else
+		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+}
+
 WRITE16_HANDLER( K056832_ram_word_w )
 {
 	data16_t *tile_ptr;
@@ -6365,6 +6379,30 @@ WRITE32_HANDLER( K056832_long_w )
 WRITE16_HANDLER( K056832_b_word_w )
 {
 	COMBINE_DATA( &K056832_regsb[offset] );
+}
+
+WRITE8_HANDLER( K056832_w )
+{
+	if (offset & 1)
+	{
+		K056832_word_w((offset>>1), data, 0xff00);
+	}
+	else
+	{
+		K056832_word_w((offset>>1), data<<8, 0x00ff);
+	}
+}
+
+WRITE8_HANDLER( K056832_b_w )
+{
+	if (offset & 1)
+	{
+		K056832_b_word_w((offset>>1), data, 0xff00);
+	}
+	else
+	{
+		K056832_b_word_w((offset>>1), data<<8, 0x00ff);
+	}
 }
 
 WRITE32_HANDLER( K056832_b_long_w )

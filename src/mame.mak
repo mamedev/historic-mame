@@ -82,6 +82,7 @@ CPUS+=ASAP@
 CPUS+=UPD7810@
 CPUS+=UPD7807@
 CPUS+=ARM@
+CPUS+=ARM7@
 CPUS+=JAGUAR@
 CPUS+=R3000@
 CPUS+=R4600@
@@ -120,6 +121,7 @@ CPUS+=M37710@
 CPUS+=PPC403@
 CPUS+=PPC603@
 CPUS+=SE3208@
+CPUS+=MC68HC11@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -214,21 +216,21 @@ DRVLIBS = \
 	$(OBJ)/sun.a $(OBJ)/suna.a $(OBJ)/dooyong.a $(OBJ)/tong.a \
 	$(OBJ)/comad.a $(OBJ)/playmark.a $(OBJ)/pacific.a $(OBJ)/tecfri.a \
 	$(OBJ)/metro.a $(OBJ)/venture.a $(OBJ)/yunsung.a $(OBJ)/zilec.a \
-	$(OBJ)/fuuki.a $(OBJ)/unico.a $(OBJ)/afega.a $(OBJ)/esd.a $(OBJ)/dynax.a \
+	$(OBJ)/fuuki.a $(OBJ)/unico.a $(OBJ)/dynax.a \
 	$(OBJ)/sigma.a $(OBJ)/igs.a $(OBJ)/ramtek.a $(OBJ)/omori.a $(OBJ)/tch.a \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
-	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
+	$(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
 	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
-	$(OBJ)/hyprston.a $(OBJ)/crystal.a $(OBJ)/neogeo.a \
+	$(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
-	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
-	$(OBJ)/machine/pacplus.o $(OBJ)/machine/jumpshot.o \
-	$(OBJ)/machine/theglobp.o \
+	$(OBJ)/vidhrdw/pacman.o $(OBJ)/drivers/pacman.o \
+	$(OBJ)/machine/mspacman.o $(OBJ)/machine/pacplus.o \
+	$(OBJ)/machine/jumpshot.o $(OBJ)/machine/theglobp.o \
 	$(OBJ)/machine/acitya.o \
-	$(OBJ)/drivers/jrpacman.o $(OBJ)/vidhrdw/jrpacman.o \
-	$(OBJ)/vidhrdw/pengo.o $(OBJ)/drivers/pengo.o \
+	$(OBJ)/drivers/pengo.o \
+	$(OBJ)/drivers/jrpacman.o \
 
 $(OBJ)/epos.a: \
 	$(OBJ)/drivers/epos.o $(OBJ)/vidhrdw/epos.o \
@@ -238,6 +240,7 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/yamato.o \
 	$(OBJ)/vidhrdw/gomoku.o $(OBJ)/sndhrdw/gomoku.o $(OBJ)/drivers/gomoku.o \
 	$(OBJ)/vidhrdw/wiping.o $(OBJ)/sndhrdw/wiping.o $(OBJ)/drivers/wiping.o \
+	$(OBJ)/drivers/dacholer.o \
 	$(OBJ)/vidhrdw/seicross.o $(OBJ)/drivers/seicross.o \
 	$(OBJ)/vidhrdw/clshroad.o $(OBJ)/drivers/clshroad.o \
 	$(OBJ)/vidhrdw/tubep.o $(OBJ)/drivers/tubep.o \
@@ -402,7 +405,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/missb2.o \
 	$(OBJ)/machine/mexico86.o $(OBJ)/vidhrdw/mexico86.o $(OBJ)/drivers/mexico86.o \
 	$(OBJ)/vidhrdw/darius.o $(OBJ)/drivers/darius.o \
-	$(OBJ)/vidhrdw/rastan.o $(OBJ)/sndhrdw/rastan.o $(OBJ)/drivers/rastan.o \
+	$(OBJ)/vidhrdw/rastan.o $(OBJ)/drivers/rastan.o \
 	$(OBJ)/machine/rainbow.o $(OBJ)/drivers/rainbow.o \
 	$(OBJ)/drivers/opwolf.o \
 	$(OBJ)/vidhrdw/othunder.o $(OBJ)/drivers/othunder.o \
@@ -510,13 +513,15 @@ $(OBJ)/sega.a: \
 	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o $(OBJ)/machine/segaic16.o \
 	$(OBJ)/vidhrdw/segas16a.o $(OBJ)/drivers/segas16a.o \
 	$(OBJ)/vidhrdw/segas16b.o $(OBJ)/drivers/segas16b.o \
+	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
 	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
-	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
+	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o $(OBJ)/machine/fd1089.o \
 	$(OBJ)/machine/mc8123.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
-	$(OBJ)/drivers/outrun.o \
-	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
+	$(OBJ)/drivers/segaorun.o $(OBJ)/vidhrdw/segaorun.o \
+	$(OBJ)/drivers/segahang.o $(OBJ)/vidhrdw/segahang.o \
+	$(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
@@ -531,9 +536,6 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
 	$(OBJ)/machine/scudsp.o \
 	$(OBJ)/vidhrdw/stvvdp1.o $(OBJ)/vidhrdw/stvvdp2.o \
-
-$(OBJ)/deniam.a: \
-	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
 
 $(OBJ)/dataeast.a: \
 	$(OBJ)/machine/btime.o $(OBJ)/vidhrdw/btime.o $(OBJ)/drivers/btime.o \
@@ -992,6 +994,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 	$(OBJ)/drivers/macs.o \
 	$(OBJ)/drivers/srmp6.o \
+	$(OBJ)/drivers/aleck64.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
@@ -1068,12 +1071,6 @@ $(OBJ)/unico.a: \
 	$(OBJ)/vidhrdw/unico.o $(OBJ)/drivers/unico.o \
 	$(OBJ)/vidhrdw/silkroad.o $(OBJ)/drivers/silkroad.o \
 
-$(OBJ)/afega.a: \
-	$(OBJ)/vidhrdw/afega.o $(OBJ)/drivers/afega.o \
-
-$(OBJ)/esd.a: \
-	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
-
 $(OBJ)/dynax.a: \
 	$(OBJ)/drivers/royalmah.o \
 	$(OBJ)/vidhrdw/hnayayoi.o $(OBJ)/drivers/hnayayoi.o \
@@ -1091,6 +1088,7 @@ $(OBJ)/igs.a: \
 	$(OBJ)/vidhrdw/iqblock.o $(OBJ)/drivers/iqblock.o \
 	$(OBJ)/drivers/chindrag.o \
 	$(OBJ)/drivers/grtwall.o \
+	$(OBJ)/drivers/tarzan.o \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
@@ -1124,9 +1122,6 @@ $(OBJ)/sanritsu.a: \
 $(OBJ)/rare.a: \
 	$(OBJ)/vidhrdw/btoads.o $(OBJ)/drivers/btoads.o \
 	$(OBJ)/drivers/kinst.o \
-
-$(OBJ)/nihonsys.a: \
-	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
 
 $(OBJ)/alba.a: \
 	$(OBJ)/drivers/rmhaihai.o \
@@ -1184,6 +1179,8 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/dcheese.o \
 	$(OBJ)/drivers/micro3d.o \
 	$(OBJ)/drivers/pntnpuzl.o \
+	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
+	$(OBJ)/vidhrdw/afega.o $(OBJ)/drivers/afega.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \
@@ -1222,14 +1219,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/pbchmp95.o \
 	$(OBJ)/drivers/suprgolf.o \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
-
-$(OBJ)/hyprston.a: \
-	$(OBJ)/drivers/vamphalf.o \
-	$(OBJ)/drivers/dgpix.o \
-	$(OBJ)/drivers/eolith.o \
-
-$(OBJ)/crystal.a: \
-	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
+	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -1251,6 +1241,11 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/dynadice.o \
 	$(OBJ)/drivers/hotblock.o \
 	$(OBJ)/drivers/tatsumi.o $(OBJ)/vidhrdw/tatsumi.o $(OBJ)/machine/tatsumi.o \
+	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
+	$(OBJ)/drivers/vamphalf.o $(OBJ)/drivers/dgpix.o $(OBJ)/drivers/eolith.o \
+	$(OBJ)/drivers/ertictac.o \
+	$(OBJ)/drivers/ssfindo.o \
+
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

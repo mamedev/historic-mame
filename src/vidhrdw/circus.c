@@ -298,19 +298,6 @@ static void ripcord_draw_skydiver( struct mame_bitmap *bitmap )
 	src_pitch = gfx->line_modulo;
 	dst_pitch = bitmap->rowpixels;
 
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		sx = bitmap->width - sx;
-		dst_width = -dst_width;
-		edx = -edx;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		sy = bitmap->height - sy;
-		dst_pitch = -dst_pitch;
-	}
-
 	dst_lineptr = (UINT16*)bitmap->line[sy];
 	dst_pixend = (sx + dst_width) & 0xff;
 	dst_lineend = dst_lineptr + dst_pitch * dst_height;

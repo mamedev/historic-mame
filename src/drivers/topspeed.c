@@ -59,6 +59,17 @@ TODO Lists
 
 (Want to verify 68000 clocks)
 
+I don't know about the MSM5205 playback frequency, I set it to 4kHz because
+otherwise the samples plays at the beginning of a game would play past the end.
+The samples are stopped by the Z80, they don't stop automatically. So, if they
+should play at a higher frequency, the Z80 should stop them sooner - which
+would mean a higher interrupt rate, therefore a higher YM2151 clock rate.
+
+I haven't found how the second MSM5205 ROM is selected (I haven't even found
+when samples from that ROM should be played)
+
+Many unknown writes from the Z80: c000, c400, c800, cc00, d000, d200, d400, d600, b400.
+
 Accel and brake bits work differently depending on cab DSW
 Mame cannot yet support this, so accel/brake are not hooked up
 sensibly when upright cabinet is selected.
@@ -192,10 +203,6 @@ WRITE16_HANDLER( rastan_spriteflip_w );
 
 VIDEO_START( topspeed );
 VIDEO_UPDATE( topspeed );
-
-WRITE8_HANDLER( rastan_adpcm_trigger_w );
-WRITE8_HANDLER( rastan_c000_w );
-WRITE8_HANDLER( rastan_d000_w );
 
 static UINT16 cpua_ctrl = 0xff;
 static int ioc220_port = 0;
@@ -364,6 +371,37 @@ static WRITE8_HANDLER( sound_bankswitch_w )	/* assumes Z80 sandwiched between 68
 	reset_sound_region();
 }
 
+static int adpcm_pos;
+
+static void topspeed_msm5205_vck(int chip)
+{
+	static int adpcm_data = -1;
+
+	if (adpcm_data != -1)
+	{
+		MSM5205_data_w(0, adpcm_data & 0x0f);
+		adpcm_data = -1;
+	}
+	else
+	{
+		adpcm_data = memory_region(REGION_SOUND1)[adpcm_pos];
+		adpcm_pos = (adpcm_pos + 1) & 0x1ffff;
+		MSM5205_data_w(0, adpcm_data >> 4);
+	}
+}
+
+static WRITE8_HANDLER( topspeed_msm5205_address_w )
+{
+	adpcm_pos = (adpcm_pos & 0x00ff) | (data << 8);
+	MSM5205_reset_w(0, 0);
+}
+
+static WRITE8_HANDLER( topspeed_msm5205_stop_w )
+{
+	MSM5205_reset_w(0, 1);
+	adpcm_pos &= 0xff00;
+}
+
 
 /***********************************************************
                       MEMORY STRUCTURES
@@ -429,7 +467,6 @@ static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
 	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
 ADDRESS_MAP_END
 
@@ -440,9 +477,14 @@ static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_adpcm_trigger_w)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_c000_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_d000_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(topspeed_msm5205_address_w)
+//	AM_RANGE(0xb400, 0xb400) // msm5205 start? doesn't seem to work right
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(topspeed_msm5205_stop_w)
+//	AM_RANGE(0xc000, 0xc000) // ??
+//	AM_RANGE(0xc400, 0xc400) // ??
+//	AM_RANGE(0xc800, 0xc800) // ??
+//	AM_RANGE(0xcc00, 0xcc00) // ??
+//	AM_RANGE(0xd000, 0xd000) // ??
 ADDRESS_MAP_END
 
 
@@ -763,17 +805,18 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 	{ irq_handler },
 	{ sound_bankswitch_w }
 };
 
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 chip */
-	8000,       /* 8000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 60 }
+	1,						/* 1 chip */
+	384000,					/* 384 kHz */
+	{ topspeed_msm5205_vck },	/* VCK function */
+	{ MSM5205_S96_4B },		/* 4 kHz? */
+	{ 60 }					/* volume */
 };
 
 
@@ -811,7 +854,7 @@ static MACHINE_DRIVER_START( topspeed )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 

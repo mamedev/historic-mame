@@ -192,11 +192,11 @@ PALETTE_INIT( enigma2 )
 {
 	palette_set_color(0,0,0,0);
 	palette_set_color(1,0,0xff,0);
-	palette_set_color(2,0xff,0,0xff);
+	palette_set_color(2,0,0,0xff);
 	palette_set_color(3,0,0xff,0xff);
 	palette_set_color(4,0xff,0,0);
 	palette_set_color(5,0xff,0xff,0);
-	palette_set_color(6,0,0,0xff);
+	palette_set_color(6,0xff,0,0xff);
 	palette_set_color(7,0xff,0xff,0xff);
 }
 

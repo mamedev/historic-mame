@@ -186,7 +186,7 @@ logerror("unknown bank select %02x\n",data);
 
 /* Lode Runner 3 has, it seems, a poor man's protection consisting of a PAL */
 /* (I think; it's included in the ROM set) which is read at certain times, */
-/* and the game crashes if ti doesn't match the expected values. */
+/* and the game crashes if it doesn't match the expected values. */
 READ8_HANDLER( ldrun3_prot_5_r )
 {
 	return 5;
@@ -2473,6 +2473,16 @@ static DRIVER_INIT( spelunk2 )
 	state_save_register_func_postload(set_m64_bank2);
 }
 
+static DRIVER_INIT( kidniki )
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	/* in Kid Niki, bank 0 has code falling from 7fff to 8000, */
+	/* so I have to copy it there because bank switching wouldn't catch it */
+	memcpy(ROM + 0x08000, ROM + 0x10000, 0x2000);
+	init_m62();
+}
+
 GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0,        ROT0,   "Irem", "Kung-Fu Master" )
 GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
 GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem", "Spartan X (Japan)" )
@@ -2486,8 +2496,8 @@ GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0,        ROT0,   "Irem (lic
 GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
 GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
 GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0,        ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
-GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  m62,      ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
-GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  m62,      ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  kidniki,  ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
+GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
 GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
 GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, spelunk2, ROT0,   "Irem (licensed from Broderbund)", "Spelunker II" )

@@ -31,9 +31,6 @@ static void neogeo_register_sub_savestate(void);
 /* This function is called on every reset */
 MACHINE_INIT( neogeo )
 {
-#if 0
-	data16_t src, res, *mem16= (data16_t *)memory_region(REGION_USER1);
-#endif
 	time_t ltime;
 	struct tm *today;
 
@@ -42,29 +39,6 @@ MACHINE_INIT( neogeo )
 	memset (neogeo_ram16, 0, 0x10000);
 
 
-#if 0
-	/* Set up machine country */
-	src = readinputport(5);
-	res = src & 0x3;
-
-	/* Console/arcade mode */
-#ifndef CONSOLE
-	res |= 0x8000;
-#endif
-
-	/* write the ID in the system BIOS ROM */
-	mem16[0x0200] = res;
-
-	if (memcard_manager==1)
-	{
-		memcard_manager=0;
-		mem16[0x11b1a/2] = 0x500a;
-	}
-	else
-	{
-		mem16[0x11b1a/2] = 0x1b6a;
-	}
-#endif
 
 	time(&ltime);
 	today = localtime(&ltime);
@@ -194,53 +168,6 @@ DRIVER_INIT( neogeo )
 
 	mem16 = (data16_t *)memory_region(REGION_USER1);
 
-#if 0
-	if (mem16[0x11b00/2] == 0x4eba)
-	{
-		/* standard bios */
-		neogeo_has_trackball = 0;
-		/* Remove memory check for now */
-		mem16[0x11b00/2] = 0x4e71;
-		mem16[0x11b02/2] = 0x4e71;
-		mem16[0x11b16/2] = 0x4ef9;
-		mem16[0x11b18/2] = 0x00c1;
-		mem16[0x11b1a/2] = 0x1b6a;
-
-		/* Patch bios rom, for Calendar errors */
-		mem16[0x11c14/2] = 0x4e71;
-		mem16[0x11c16/2] = 0x4e71;
-		mem16[0x11c1c/2] = 0x4e71;
-		mem16[0x11c1e/2] = 0x4e71;
-
-		/* Rom internal checksum fails for now.. */
-		mem16[0x11c62/2] = 0x4e71;
-		mem16[0x11c64/2] = 0x4e71;
-	}
-	else
-	{
-		/* special bios with trackball support */
-		neogeo_has_trackball = 1;
-
-		/* TODO: check the memcard manager patch in neogeo_init_machine(), */
-		/* it probably has to be moved as well */
-		/* Remove memory check for now */
-		mem16[0x10c2a/2] = 0x4e71;
-		mem16[0x10c2c/2] = 0x4e71;
-		mem16[0x10c40/2] = 0x4ef9;
-		mem16[0x10c42/2] = 0x00c1;
-		mem16[0x10c44/2] = 0x0c94;
-
-		/* Patch bios rom, for Calendar errors */
-		mem16[0x10d3e/2] = 0x4e71;
-		mem16[0x10d40/2] = 0x4e71;
-		mem16[0x10d46/2] = 0x4e71;
-		mem16[0x10d48/2] = 0x4e71;
-
-		/* Rom internal checksum fails for now.. */
-		mem16[0x10d8c/2] = 0x4e71;
-		mem16[0x10d8e/2] = 0x4e71;
-	}
-#endif
 
 	/* irritating maze uses a trackball */
 	if (!strcmp(Machine->gamedrv->name,"irrmaze"))
@@ -686,22 +613,6 @@ static void neogeo_custom_memory(void)
 
 		mem16[0x3c36/2] = 0x4e71;
 		mem16[0x3c38/2] = 0x4e71;
-	}
-
-	{
-		//AT: Patches a common bug in the sound codes of early ADK games where DEC's
-		//    should have been INC's. Magician Lord is unaffected and ADK appeared to
-		//    to have fixed it in World Heroes and later games.
-
-// patches no longer needed, the YM2610 emulator handles the wrong calls correctly.
-
-//		data8_t *mem8 = memory_region(REGION_CPU2);
-
-//		if (!strcmp(Machine->gamedrv->name,"ncombat")) mem8[0xeb99] = 0x0c;
-//		if (!strcmp(Machine->gamedrv->name,"bjourney")) mem8[0xec7a] = 0x0c;
-//		if (!strcmp(Machine->gamedrv->name,"crsword")) mem8[0x23db] = 0x0c;
-//		if (!strcmp(Machine->gamedrv->name,"trally")) mem8[0x23e4] = 0x0c;
-//		if (!strcmp(Machine->gamedrv->name,"ncommand")) mem8[0x2456]= mem8[0x2485] = 0x0c;
 	}
 }
 

@@ -214,7 +214,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 
 
 /* prototypes for functions in ../machine/tnzs.c */
-unsigned char *tnzs_objram, *tnzs_workram;
+unsigned char *tnzs_objram, *tnzs_sharedram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram;
 DRIVER_INIT( extrmatn );
 DRIVER_INIT( arknoid2 );
@@ -222,6 +222,7 @@ DRIVER_INIT( drtoppel );
 DRIVER_INIT( chukatai );
 DRIVER_INIT( tnzs );
 DRIVER_INIT( tnzsb );
+DRIVER_INIT( kabukiz );
 DRIVER_INIT( insectx );
 DRIVER_INIT( kageki );
 READ8_HANDLER( arknoid2_sh_f000_r );
@@ -231,10 +232,8 @@ READ8_HANDLER( tnzs_port1_r );
 READ8_HANDLER( tnzs_port2_r );
 WRITE8_HANDLER( tnzs_port2_w );
 READ8_HANDLER( tnzs_mcu_r );
-READ8_HANDLER( tnzs_workram_r );
-READ8_HANDLER( tnzs_workram_sub_r );
-WRITE8_HANDLER( tnzs_workram_w );
-WRITE8_HANDLER( tnzs_workram_sub_w );
+READ8_HANDLER( tnzs_sharedram_r );
+WRITE8_HANDLER( tnzs_sharedram_w );
 WRITE8_HANDLER( tnzs_mcu_w );
 WRITE8_HANDLER( tnzs_bankswitch_w );
 WRITE8_HANDLER( tnzs_bankswitch1_w );
@@ -360,7 +359,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) /* ROM + RAM */
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_r)	/* WORK RAM (shared by the 2 z80's */
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)	/* WORK RAM (shared by the 2 z80's */
 	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)	/* VDC RAM */
 	AM_RANGE(0xf600, 0xf600) AM_READ(MRA8_NOP)	/* ? */
 	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)	/* not in extrmatn and arknoid2 (PROMs instead) */
@@ -370,7 +369,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)	/* ROM + RAM */
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objram)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_w) AM_BASE(&tnzs_workram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w) AM_BASE(&tnzs_sharedram)
 	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_vdcram)
 	AM_RANGE(0xf200, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
 	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP)	/* ? */
@@ -389,7 +388,7 @@ static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc001) AM_READ(tnzs_mcu_r)	/* plain input ports in insectx (memory handler */
 									/* changed in insectx_init() ) */
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 	AM_RANGE(0xf000, 0xf003) AM_READ(arknoid2_sh_f000_r)	/* paddles in arkanoid2/plumppop. The ports are */
 						/* read but not used by the other games, and are not read at */
 						/* all by insectx. */
@@ -402,7 +401,7 @@ static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xc000, 0xc001) AM_WRITE(tnzs_mcu_w)	/* not present in insectx */
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kageki_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -414,7 +413,7 @@ static ADDRESS_MAP_START( kageki_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -423,7 +422,7 @@ static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 ADDRESS_MAP_END
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
@@ -443,7 +442,7 @@ static ADDRESS_MAP_START( tnzsb_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
@@ -452,7 +451,7 @@ static ADDRESS_MAP_START( tnzsb_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
 	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
@@ -467,7 +466,7 @@ static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r) AM_WRITE(tnzs_sharedram_w)
 	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
@@ -2005,6 +2004,25 @@ ROM_START( kabukiz )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b50-08.1e",  0x00000, 0x08000, CRC(cb92d34c) SHA1(3a666f0e3ff9d3daa599123edee228d94eeae754) )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
+	ROM_LOAD( "b50_07.u34", 0x00000, 0x10000, CRC(fdc300c9) SHA1(1b576662b7b824c8f20a45aad6f88b90c82c5553) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b50-04.u35", 0x000000, 0x80000, CRC(04829aa9) SHA1(a501ec7c802478fc41ec8ef4270b1a6872bcbf34) )
+	ROM_LOAD( "b50-03.u39", 0x080000, 0x80000, CRC(31489a4c) SHA1(a4b7e00e2074287b47c7e16add963c1470534376) )
+	ROM_LOAD( "b50-02.u43", 0x100000, 0x80000, CRC(90b8a8e7) SHA1(a55e327307606142fbb9d500e757655b35e1f252) )
+	ROM_LOAD( "b50-01.u46", 0x180000, 0x80000, CRC(f4277751) SHA1(8f50f843f0eda30d639ba397889236ff0a3edce5) )
+ROM_END
+
+ROM_START( kabukizj )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "b50_05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "b50_06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
@@ -2050,5 +2068,6 @@ GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Cor
 GAME( 1988, tnzs,     0,        tnzsb,    tnzsb,    tnzsb,    ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, newer)" )
 GAME( 1988, tnzsj,    tnzs,     tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
 GAME( 1988, tnzso,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, older)" )
-GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation Japan", "Kabuki-Z (World)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1988, kabukizj, kabukiz,  kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )

@@ -38,6 +38,7 @@ WRITE16_HANDLER( calc3_mcu_com3_w );
 /***************************************************************************
 								TOYBOX MCU:
 
+								Bonk's Adventure
 								Blood Warrior
 								Great 1000 Miles Rally
 								...
@@ -48,5 +49,5 @@ WRITE16_HANDLER( toybox_mcu_com0_w );
 WRITE16_HANDLER( toybox_mcu_com1_w );
 WRITE16_HANDLER( toybox_mcu_com2_w );
 WRITE16_HANDLER( toybox_mcu_com3_w );
-
+READ16_HANDLER( toybox_mcu_status_r );
 

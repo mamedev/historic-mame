@@ -236,11 +236,6 @@ static WRITE8_HANDLER( anteatg_ppi8255_1_reg1_w )
 	ppi8255_1_w(1, data);
 }
 
-static WRITE8_HANDLER( anteatg_ppi8255_1_reg2_w )
-{
-	ppi8255_1_w(2, data);
-}
-
 static WRITE8_HANDLER( anteatg_ppi8255_1_reg3_w )
 {
 	ppi8255_1_w(3, data);
@@ -290,6 +285,40 @@ static ADDRESS_MAP_START( anteatg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf753, 0xf753) AM_WRITE(anteatg_ppi8255_0_reg3_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( anteatgb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0400, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x145b, 0x145b) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x4600, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6400, 0x7aff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8300, 0x98ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xa300, 0xa7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf300, 0xf303) AM_READ(ppi8255_0_r)
+	AM_RANGE(0xfe00, 0xfe03) AM_READ(ppi8255_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( anteatgb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0400, 0x0bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x1200, 0x123f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x1240, 0x125f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x1260, 0x127f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x1280, 0x12ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1171, 0x1171) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x1174, 0x1174) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x1177, 0x1177) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0x1173, 0x1173) AM_WRITE(scramble_background_enable_w)
+	AM_RANGE(0x1172, 0x1172) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0x1176, 0x1176) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x4600, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6400, 0x7aff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8300, 0x98ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa300, 0xa7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf300, 0xf303) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0xfe00, 0xfe03) AM_WRITE(ppi8255_1_w)
+ADDRESS_MAP_END
 
 static UINT8 *scobra_soundram;
 
@@ -855,6 +884,57 @@ INPUT_PORTS_START( anteatg )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( anteatgb )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START_TAG("IN1")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/5" )
+	PORT_DIPSETTING(    0x00, "Coin A 2/1 Coin B 1/3" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /* cocktail mode is N/A */
 INPUT_PORTS_START( rescue )
 	PORT_START_TAG("IN0")
@@ -1399,6 +1479,15 @@ static MACHINE_DRIVER_START( anteatg )
 	MDRV_CPU_PROGRAM_MAP(anteatg_readmem,anteatg_writemem)
 MACHINE_DRIVER_END
 
+/* same as type1 but with a strange memory map, maybe a kind of protection */
+static MACHINE_DRIVER_START( anteatgb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(type1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(anteatgb_readmem,anteatgb_writemem)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -1750,15 +1839,36 @@ ROM_START( anteatg )
 	ROM_CONTINUE(             0xa300, 0x0500 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, CRC(87300b4f) SHA1(b81b685ac1d353ff1cd40b876a7478b87b85e7a9) ) // sound1.bin
-	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, CRC(af4e5ffe) SHA1(62717a233cf9f58267af4a9e1c80479b373ab317) ) // sound2.bin
+	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, CRC(87300b4f) SHA1(b81b685ac1d353ff1cd40b876a7478b87b85e7a9) )
+	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, CRC(af4e5ffe) SHA1(62717a233cf9f58267af4a9e1c80479b373ab317) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gfx_1.bin",    0x0000, 0x0800, CRC(1e2824b1) SHA1(9527937db618505181f4d5a22bc532977a767232) )
 	ROM_LOAD( "gfx_2.bin",    0x0800, 0x0800, CRC(784319b3) SHA1(0c3612a428d0906b07b35782cc0f84fda13aab73) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, CRC(fce333c7) SHA1(f63a214dc47c5e7c80db000b0b6a261ca8da6629) ) // prom.bin
+	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, CRC(fce333c7) SHA1(f63a214dc47c5e7c80db000b0b6a261ca8da6629) )
+ROM_END
+
+ROM_START( anteatgb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */	
+	ROM_LOAD( "ant1.bin",     0x0000, 0x0400, CRC(69debc90) SHA1(2ad4c86a1cbaf86d0b76bb07b885f61bc6604009) )
+	ROM_CONTINUE(             0x4600, 0x0a00 )
+	ROM_CONTINUE(             0x6400, 0x1200 )
+	ROM_LOAD( "ant2.bin",     0x7600, 0x0500, CRC(ab352805) SHA1(858928f2b57c324a7942c13e0e6a7717a36f6ffc) )
+	ROM_CONTINUE(             0x8300, 0x1600 )
+	ROM_CONTINUE(             0xa300, 0x0500 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, CRC(87300b4f) SHA1(b81b685ac1d353ff1cd40b876a7478b87b85e7a9) )
+	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, CRC(af4e5ffe) SHA1(62717a233cf9f58267af4a9e1c80479b373ab317) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gfx_1.bin",    0x0000, 0x0800, CRC(1e2824b1) SHA1(9527937db618505181f4d5a22bc532977a767232) )
+	ROM_LOAD( "gfx_2.bin",    0x0800, 0x0800, CRC(784319b3) SHA1(0c3612a428d0906b07b35782cc0f84fda13aab73) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, CRC(fce333c7) SHA1(f63a214dc47c5e7c80db000b0b6a261ca8da6629) )
 ROM_END
 
 ROM_START( rescue )
@@ -2012,6 +2122,7 @@ GAME( 1982, tazmani2, tazmania, type2,    tazmania, tazmani2,     ROT90,  "Stern
 GAME( 1982, calipso,  0,        calipso,  calipso,  scobra,       ROT90,  "[Stern] (Tago license)", "Calipso" )
 GAME( 1982, anteater, 0,        type1,    anteater, anteater,     ROT90,  "[Stern] (Tago license)", "Anteater" )
 GAME( 1983, anteatg,  anteater, anteatg,  anteatg,  scramble_ppi, ROT90,  "TV-Tuning 2000 (F.E.G. license)", "Ameisenbaer (German)" )
+GAME( 1983, anteatgb, anteater, anteatgb, anteatgb, scramble_ppi, ROT90,  "Free Enterprise Games", "The Anteater (UK)" )
 GAME( 1982, rescue,   0,        rescue,   rescue,   rescue,       ROT90,  "Stern", "Rescue" )
 GAME( 1982, aponow,   rescue,   rescue,   rescue,   rescue,       ROT90,  "bootleg", "Apocaljpse Now" )
 GAME( 1983, minefld,  0,        minefld,  minefld,  minefld,      ROT90,  "Stern", "Minefield" )

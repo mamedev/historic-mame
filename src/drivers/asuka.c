@@ -117,10 +117,6 @@ VIDEO_START( cadash );
 VIDEO_UPDATE( asuka );
 VIDEO_UPDATE( bonzeadv );
 
-WRITE8_HANDLER( rastan_adpcm_trigger_w );
-WRITE8_HANDLER( rastan_c000_w );
-WRITE8_HANDLER( rastan_d000_w );
-
 WRITE16_HANDLER( bonzeadv_c_chip_w );
 READ16_HANDLER( bonzeadv_c_chip_r );
 
@@ -151,6 +147,44 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
+
+
+
+static int adpcm_pos;
+
+static void asuka_msm5205_vck(int chip)
+{
+	static int adpcm_data = -1;
+
+	if (adpcm_data != -1)
+	{
+		MSM5205_data_w(0, adpcm_data & 0x0f);
+		adpcm_data = -1;
+	}
+	else
+	{
+		adpcm_data = memory_region(REGION_SOUND1)[adpcm_pos];
+		adpcm_pos = (adpcm_pos + 1) & 0xffff;
+		MSM5205_data_w(0, adpcm_data >> 4);
+	}
+}
+
+static WRITE8_HANDLER( asuka_msm5205_address_w )
+{
+	adpcm_pos = (adpcm_pos & 0x00ff) | (data << 8);
+}
+
+static WRITE8_HANDLER( asuka_msm5205_start_w )
+{
+	MSM5205_reset_w(0, 0);
+}
+
+static WRITE8_HANDLER( asuka_msm5205_stop_w )
+{
+	MSM5205_reset_w(0, 1);
+	adpcm_pos &= 0xff00;
+}
+
 
 
 /***********************************************************
@@ -312,9 +346,19 @@ static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_adpcm_trigger_w)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_c000_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_d000_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(asuka_msm5205_address_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(asuka_msm5205_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(asuka_msm5205_stop_w)
+ADDRESS_MAP_END
+
+/* no MSM5205 */
+static ADDRESS_MAP_START( cadash_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
 ADDRESS_MAP_END
 
 
@@ -970,13 +1014,13 @@ static struct YM2151interface ym2151_interface =
 	{ sound_bankswitch_w }
 };
 
-
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 chip */
-	8000,       /* 8000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 60 }
+	1,						/* 1 chip */
+	384000,					/* 384 kHz */
+	{ asuka_msm5205_vck },	/* VCK function */
+	{ MSM5205_S48_4B },		/* 8 kHz */
+	{ 100 }					/* volume */
 };
 
 
@@ -1046,7 +1090,7 @@ static MACHINE_DRIVER_START( asuka )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cadash )
@@ -1057,7 +1101,7 @@ static MACHINE_DRIVER_START( cadash )
 	MDRV_CPU_VBLANK_INT(cadash_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,cadash_z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1076,10 +1120,9 @@ static MACHINE_DRIVER_START( cadash )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( galmedes )
+static MACHINE_DRIVER_START( mofflott )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
@@ -1106,7 +1149,36 @@ static MACHINE_DRIVER_START( galmedes )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( galmedes )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(asuka_readmem,asuka_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,cadash_z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)	/* only Mofflott uses full palette space */
+
+	MDRV_VIDEO_START(galmedes)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( eto )
@@ -1117,7 +1189,7 @@ static MACHINE_DRIVER_START( eto )
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(z80_readmem,cadash_z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1136,7 +1208,6 @@ static MACHINE_DRIVER_START( eto )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
 MACHINE_DRIVER_END
 
 
@@ -1276,9 +1347,6 @@ ROM_START( cadash )
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, CRC(dca495a0) SHA1(4e0f401f1b967da75f33fd7294860ad0b4bf2dce) )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	/* empty region */
-
 	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 
@@ -1306,9 +1374,6 @@ ROM_START( cadashj )
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, CRC(dca495a0) SHA1(4e0f401f1b967da75f33fd7294860ad0b4bf2dce) )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	/* empty region */
-
 	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 ROM_END
@@ -1332,9 +1397,6 @@ ROM_START( cadashu )
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, CRC(dca495a0) SHA1(4e0f401f1b967da75f33fd7294860ad0b4bf2dce) )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	/* empty region */
-
 	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 ROM_END
@@ -1355,9 +1417,6 @@ ROM_START( cadashi )
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, CRC(dca495a0) SHA1(4e0f401f1b967da75f33fd7294860ad0b4bf2dce) )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
-
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	/* empty region */
 
 	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
@@ -1380,9 +1439,6 @@ ROM_START( cadashf )
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, CRC(dca495a0) SHA1(4e0f401f1b967da75f33fd7294860ad0b4bf2dce) )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
-	/* empty region */
-
 	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 ROM_END
@@ -1403,9 +1459,6 @@ ROM_START( galmedes )
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "gm-snd.bin", 0x00000, 0x04000, CRC(d6f56c21) SHA1(ff9743448ac8ce57a2f8c33a26145e7b92cbe3c3) )
 	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
-
-	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	/* empty region */
 ROM_END
 
 ROM_START( earthjkr )
@@ -1426,9 +1479,6 @@ ROM_START( earthjkr )
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "ej_2.rom", 0x00000, 0x04000, CRC(42ba2566) SHA1(c437388684b565c7504d6bad6accd73aa000faca) )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
-
-	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	/* empty region */
 ROM_END
 
 ROM_START( eto )
@@ -1447,9 +1497,6 @@ ROM_START( eto )
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "eto-5.27", 0x00000, 0x04000, CRC(b3689da0) SHA1(812d2e0a794403df9f0a5035784f14cd070ea080) )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
-
-	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	/* empty region */
 ROM_END
 
 
@@ -1457,7 +1504,7 @@ GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporatio
 GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito America Corporation", "Bonze Adventure (US)" )
 GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)" )
 GAME( 1988, asuka,    0,        asuka,    asuka,    0, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
-GAME( 1989, mofflott, 0,        galmedes, mofflott, 0, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
+GAME( 1989, mofflott, 0,        mofflott, mofflott, 0, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
 GAME( 1989, cadash,   0,        cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (World)" )
 GAME( 1989, cadashj,  cadash,   cadash,   cadashj,  0, ROT0,   "Taito Corporation", "Cadash (Japan)" )
 GAME( 1989, cadashu,  cadash,   cadash,   cadashu,  0, ROT0,   "Taito America Corporation", "Cadash (US)" )

@@ -2715,7 +2715,7 @@ INPUT_PORTS_START( vasara2 )
 	PORT_DIPNAME( 0x0040, 0x0040, "English Subtitles" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "Secret Charater" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Secret Character" )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 

@@ -262,6 +262,20 @@ static struct help_item static_help_list[] =
 		"\n"
 	},
 	{
+		"source",
+		"\n"
+		"  source <filename>\n"
+		"\n"
+		"The source command reads in a set of debugger commands from a file and executes them one by\n"
+		"one, similar to a batch file.\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"source break_and_trace.cmd\n"
+		"  Reads in debugger commands from break_and_trace.cmd and executes them.\n"
+		"\n"
+	},
+	{
 		"quit",
 		"\n"
 		"  quit\n"

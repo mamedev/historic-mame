@@ -160,12 +160,12 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	UINT16 *cursprite;
 
 	/* first scan forward to find the end of the list */
-	for (cursprite = segaic16_spriteram; cursprite < segaic16_spriteram + 0x7fff/2; cursprite += 8)
+	for (cursprite = segaic16_spriteram_0; cursprite < segaic16_spriteram_0 + 0x7fff/2; cursprite += 8)
 		if (cursprite[2] & 0x8000)
 			break;
 
 	/* now scan backwards and render the sprites in order */
-	for (cursprite -= 8; cursprite >= segaic16_spriteram; cursprite -= 8)
+	for (cursprite -= 8; cursprite >= segaic16_spriteram_0; cursprite -= 8)
 		draw_one_sprite(bitmap, cliprect, cursprite);
 }
 
@@ -173,7 +173,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_START(yboard)
 {
-	segaic16_init_palette(0x4000);
+	segaic16_palette_init(0x4000);
 	return 0;
 }
 

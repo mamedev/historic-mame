@@ -71,7 +71,7 @@ extern void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
 extern void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
 extern void (*hyp_cpu_write_word)(offs_t address, data32_t data);
 extern void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
-int hyp_type_16bit;
+extern int hyp_type_16bit;
 
 /* Memory access */
 /* read byte */

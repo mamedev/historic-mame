@@ -586,6 +586,7 @@ ROM_START( brkthruj )
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, CRC(c309435f) SHA1(82914004c2b169a7c31aa49af83a699ebbc7b33f) )
 ROM_END
 
+/* bootleg, changed prg rom fails test, probably just the japanese version modified to have english title */
 ROM_START( forcebrk )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "1",            0x04000, 0x4000, CRC(09bd60ee) SHA1(9591a4c89bb69d5615a5d6b29c47e6b17350c007) )
@@ -670,5 +671,5 @@ ROM_END
 
 GAME( 1986, brkthru,  0,       brkthru, brkthru,  0, ROT0,   "Data East USA", "Break Thru (US)" )
 GAME( 1986, brkthruj, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
-GAME( 1986, forcebrk, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Force Break (Japan)" )
+GAME( 1986, forcebrk, brkthru, brkthru, brkthruj, 0, ROT0,   "bootleg", "Force Break (bootleg)" )
 GAME( 1986, darwin,   0,       darwin,  darwin,   0, ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )

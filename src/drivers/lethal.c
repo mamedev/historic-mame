@@ -52,14 +52,14 @@ Sound CPU:  Z80 (Zilog Z0840006PSC)
 
 Konami Custom chips:
 
-054986A
-054539
-054000
-053244A (x2)
-053245A
-054156
-054157 (x2)
-007324
+054986A (sound GLU)
+054539  (sound)
+054000  (collision/protection)
+053244A (x2) (sprites)
+053245A (sprites)
+054156 (tilemaps)
+054157 (x2) (tilemaps)
+007324 (???)
 
 All other ROMs surface mounted (not included):
 
@@ -120,7 +120,7 @@ VIDEO_UPDATE(lethalen);
 
 static int init_eeprom_count;
 static int cur_control2;
-static data8_t *le_workram, le_paletteram[0x800*4];
+static data8_t *le_workram, le_paletteram[0x800*16];
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -153,7 +153,7 @@ static NVRAM_HANDLER( lethalen )
 
 static READ8_HANDLER( control2_r )
 {
-	return 0x02 | EEPROM_read_bit();
+	return 0x02 | EEPROM_read_bit() | (input_port_1_r(0) & 0xf0);
 }
 
 static WRITE8_HANDLER( control2_w )
@@ -171,9 +171,7 @@ static WRITE8_HANDLER( control2_w )
 
 static INTERRUPT_GEN(lethalen_interrupt)
 {
-	// only IRQ is a valid interrupt - all other vectors
-	// lock up the 6309
-	cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+	if (K056832_is_IRQ_enabled(0)) cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE8_HANDLER( sound_cmd_w )
@@ -188,9 +186,6 @@ static WRITE8_HANDLER( sound_irq_w )
 
 static READ8_HANDLER( sound_status_r )
 {
-//	int result = soundlatch2_r(0);
-//	printf("Z80 result: %x\n", result);
-//	return result;
 	return 0xf;
 }
 
@@ -206,108 +201,86 @@ static WRITE8_HANDLER( le_bankswitch_w )
 	cpu_setbank(1, &prgrom[data * 0x2000]);
 }
 
-static READ8_HANDLER( le_palette_r )
-{
-	int bankofs = K054157_get_current_rambank() * 0x800;
-
-	return le_paletteram[offset + bankofs];
-}
-
-static WRITE8_HANDLER( le_palette_w )
-{
-	int bankofs = K054157_get_current_rambank() * 0x800;
-	int r,g,b, base;
-
-	le_paletteram[offset + bankofs] = data;
-
-	base = offset & 0x3;
-	r = le_paletteram[base + bankofs];
-	g = le_paletteram[base + bankofs + 1];
-	b = le_paletteram[base + bankofs + 2];
-
-//	palette_set_color(offset/4, r, g, b);
-}
-
 static READ8_HANDLER( workram_r )
 {
+	// patch (POST failure?) temporarily
+	// US version
 	if (offset == 0x1500 && activecpu_get_pc() == 0x8695)
+	{
+		return 0;
+	}
+	// japan version
+	if (offset == 0x1500 && activecpu_get_pc() == 0x86a3)
 	{
 		return 0;
 	}
 	return le_workram[offset];
 }
 
-static READ8_HANDLER( unk_r )
-{
-	return 0;
-}
-
-static READ8_HANDLER( unk_2_r )
-{
-	return 0xff;
-}
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(workram_r)		// 3500 = IRQ trigger
+static ADDRESS_MAP_START( le_main, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(workram_r) AM_WRITE(MWA8_RAM) AM_BASE(&le_workram)
+	AM_RANGE(0x4000, 0x403f) AM_WRITE(K056832_w)
+	AM_RANGE(0x4040, 0x404f) AM_WRITE(K056832_b_w)
 	AM_RANGE(0x4080, 0x4080) AM_READ(MRA8_NOP)		// watchdog
-	AM_RANGE(0x48c8, 0x48c8) AM_READ(unk_r)			// must be 0 to not hang
-	AM_RANGE(0x48ca, 0x48ca) AM_READ(sound_status_r)	// Sound latch read
-	AM_RANGE(0x40a0, 0x40a0) AM_READ(unk_r)			// read and discarded at PC=892a
-	AM_RANGE(0x40d4, 0x40d7) AM_READ(unk_2_r)
-	AM_RANGE(0x40d8, 0x40d8) AM_READ(control2_r)		// EEPROM Read
-	AM_RANGE(0x40d9, 0x40d9) AM_READ(input_port_0_r)	// Coins, dips
-	AM_RANGE(0x40db, 0x40db) AM_READ(unk_r)			// must be 0 to not hang
-	AM_RANGE(0x6000, 0x67ff) AM_READ(le_palette_r)
-	AM_RANGE(0x6800, 0x6fff) AM_READ(K054157_ram_code_r)
-	AM_RANGE(0x7000, 0x77ff) AM_READ(K054157_ram_attr_r)
-	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&le_workram)
-	AM_RANGE(0x4000, 0x403f) AM_WRITE(K054157_w)
-//	AM_RANGE(0x4040, 0x404f) AM_WRITE(K054157_b_w)
-	AM_RANGE(0x4090, 0x4090) AM_WRITE(sound_cmd_w)
-	AM_RANGE(0x40c4, 0x40c4) AM_WRITE(control2_w) 	// EEPROM Write
-	AM_RANGE(0x40c8, 0x40c8) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x40a0, 0x40a0) AM_READNOP			// gun input related?
+	AM_RANGE(0x40c4, 0x40c4) AM_WRITE(control2_w)
+	AM_RANGE(0x40d4, 0x40d7) AM_READNOP			// gun inputs?
+	AM_RANGE(0x40d8, 0x40d8) AM_READ(control2_r)
+	AM_RANGE(0x40d9, 0x40d9) AM_READ(input_port_0_r)
+	AM_RANGE(0x40db, 0x40db) AM_READNOP			// gun input related?
 	AM_RANGE(0x40dc, 0x40dc) AM_WRITE(le_bankswitch_w)
-	AM_RANGE(0x4800, 0x5fff) AM_WRITE(MWA8_RAM)	// no idea what's going on here
-	AM_RANGE(0x6000, 0x67ff) AM_WRITE(le_palette_w)
-	AM_RANGE(0x6800, 0x6fff) AM_WRITE(K054157_ram_code_w)
-	AM_RANGE(0x7000, 0x77ff) AM_WRITE(K054157_ram_attr_w)
-	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4840, 0x4846) AM_READWRITE(K053244_r, K053244_w)
+	AM_RANGE(0x48c6, 0x48c6) AM_WRITE(sound_cmd_w)
+	AM_RANGE(0x48c7, 0x48c7) AM_WRITE(sound_irq_w)
+	AM_RANGE(0x48ca, 0x48ca) AM_READ(sound_status_r)
+	AM_RANGE(0x5800, 0x5fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(K053245_r, K053245_w)
+	AM_RANGE(0x6000, 0x67ff) AM_READWRITE(K056832_ram_code_lo_r, K056832_ram_code_lo_w)
+	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(K056832_ram_code_hi_r, K056832_ram_code_hi_w)
+	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(K056832_ram_attr_r, K056832_ram_attr_w)
+	AM_RANGE(0x7800, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf800, 0xfa2f) AM_READ(K054539_0_r)
-	AM_RANGE(0xfc02, 0xfc02) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf800, 0xfa2f) AM_WRITE(K054539_0_w)
+static ADDRESS_MAP_START( le_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM
+	AM_RANGE(0xf800, 0xfa2f) AM_READWRITE(K054539_0_r, K054539_0_w)
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(soundlatch2_w)
+	AM_RANGE(0xfc02, 0xfc02) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 /* sound */
 
 INPUT_PORTS_START( lethalen )
-	PORT_START_TAG("IN0")
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE(0x08, IP_ACTIVE_LOW )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_SERVICE_NO_TOGGLE(0x08, IP_ACTIVE_LOW )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR(Language) )
+	PORT_DIPSETTING(    0x10, DEF_STR(English) )
+	PORT_DIPSETTING(    0x00, DEF_STR(Spanish) )
+	PORT_DIPNAME( 0x20, 0x00, "Game Type" )
+	PORT_DIPSETTING(    0x20, "Street" )
+	PORT_DIPSETTING(    0x00, "Arcade" )
+	PORT_DIPNAME( 0x40, 0x40, "Coin Mechanism" )
+	PORT_DIPSETTING(    0x40, "Common" )
+	PORT_DIPSETTING(    0x00, "Independent" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Sound Output" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Mono ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Stereo ) )
 INPUT_PORTS_END
 
 static struct K054539interface k054539_interface =
@@ -331,12 +304,12 @@ static MACHINE_INIT( lethalen )
 static MACHINE_DRIVER_START( lethalen )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", HD6309, 8000000)	// ???
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(le_main, 0)
 	MDRV_CPU_VBLANK_INT(lethalen_interrupt, 1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(le_sound, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -416,8 +389,8 @@ ROM_END
 
 static DRIVER_INIT( lethalen )
 {
-	konami_rom_deinterleave_4(REGION_GFX2);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
-GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ROT0, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)
-GAMEX( 1992, lethalej, lethalen, lethalen, lethalen, lethalen, ROT0, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)
+GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)
+GAMEX( 1992, lethalej, lethalen, lethalen, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)

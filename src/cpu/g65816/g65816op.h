@@ -2195,6 +2195,8 @@ TABLE_FUNCTION(void, set_reg, (int regnum, uint val))
 		case G65816_X: REGISTER_X = MAKE_UINT_16(val); break;
 		case G65816_Y: REGISTER_Y = MAKE_UINT_16(val); break;
 #endif
+		case G65816_DB: REGISTER_DB = MAKE_UINT_8(val); break;
+		case G65816_PB: REGISTER_PB = MAKE_UINT_8(val); break;
 		case G65816_NMI_STATE: FTABLE_SET_LINE(G65816_LINE_NMI, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
 		case G65816_IRQ_STATE: FTABLE_SET_LINE(G65816_LINE_IRQ, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
 	 }

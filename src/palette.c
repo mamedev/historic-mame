@@ -1049,27 +1049,21 @@ void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
 	palette_get_color - return a single palette
 	entry
 -------------------------------------------------*/
-
 void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b)
 {
-	/* special case the black pen */
-	if (pen == get_black_pen())
-		*r = *g = *b = 0;
-
 	/* record the result from the game palette */
-	else if (pen < total_colors)
+	if (pen < total_colors)
 	{
 		*r = RGB_RED(game_palette[pen]);
 		*g = RGB_GREEN(game_palette[pen]);
 		*b = RGB_BLUE(game_palette[pen]);
 	}
+	/* special case the black pen */
+	else if (pen == get_black_pen())
+		*r = *g = *b = 0;
 	else
-		usrintf_showmessage("palette_get_color() out of range");
+	usrintf_showmessage("palette_get_color() out of range");
 }
-
-
-
-
 
 /*-------------------------------------------------
 	palette_set_brightness - set the per-pen

@@ -7,7 +7,8 @@
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
-   0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
+	0.90u5| Set visual area width depending on vdp register 0x0c (HDG)
+	0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
 	0.73 | More of the Megaplay Bios Tests Pass (BR)
 	0.722| Improvements to Megaplay (BR) Added a few more Megatech sets but some are bad (DH)
 		 | --2 screens is going to cause problems with partial refresh and get_scanlines for
@@ -3950,7 +3951,8 @@ ROM_END
 ROM_START( mt_gng ) /* Ghouls and Ghosts */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mp12605.ic1", 0x000000, 0x020000, CRC(1066C6AB) SHA1(C30E4442732BDB38C96D780542F8550A94D127B0) )
-	ROM_LOAD16_WORD_SWAP( "mpr12606.ic2", 0x020000, 0x080000, CRC(D0BE7777) SHA1(A44B2A3D427F6973B5C1A3DCD8D1776366ACB9F7) )
+	ROM_LOAD16_WORD_SWAP( "mpr12606.ic2", 0x080000, 0x020000, CRC(D0BE7777) SHA1(A44B2A3D427F6973B5C1A3DCD8D1776366ACB9F7) )
+	ROM_CONTINUE(0x020000,0x60000)
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 

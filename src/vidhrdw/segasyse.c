@@ -115,8 +115,7 @@ void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct recta
 		segae_drawscanline(i,0,0);
 
 	for (i = 0;i < 192;i++)
-		draw_scanline8(bitmap,32,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
-
+		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
 }
 
 void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect )

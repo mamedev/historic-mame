@@ -130,7 +130,7 @@ static int planes_enabled[4] = {1,1,1,1}; //all enabled
 #if 0
 VIDEO_UPDATE( test_vcu )
 {
-	int j,trueorientation;
+	int j;
 	char buf[128];
 
 	UINT32 color_base=0;
@@ -209,9 +209,6 @@ VIDEO_UPDATE( test_vcu )
 
 	if (dbg_info)
 	{
-		trueorientation = Machine->orientation;
-		Machine->orientation = ROT0;
-
 		sprintf(buf,"I-info, G-gfx, C-color, V-vbank, 1-4 enable planes");
 		for (j = 0;j < 52;j++)
 			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,4,0,TRANSPARENCY_NONE,0);
@@ -242,8 +239,6 @@ VIDEO_UPDATE( test_vcu )
 					drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,6*j,30+y*8,0,TRANSPARENCY_NONE,0);
 			}
 		}
-
-		Machine->orientation = trueorientation;
 	}
 
 }

@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "state.h"
 
-struct PSXSPUinterface *intf;
+static struct PSXSPUinterface *intf;
 
 #define VERBOSE_LEVEL ( 0 )
 

@@ -3576,12 +3576,12 @@ INPUT_PORTS_START( battlega )
 	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
 //	PORT_DIPSETTING(		0x0070, "Invulnerability (Cheat)")
 	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
-	/* Bonus_Life for Non European territories */
-//	PORT_DIPSETTING(		0x0000, "Every 1000k" )
-//	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )
-	/* Bonus_Life values for European territories */
-	PORT_DIPSETTING(		0x0080, "Every 2000k" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )
+	/* Bonus_Life for Japanese territory */
+	PORT_DIPSETTING(		0x0000, "Every 1000k" )			PORT_DIPCONDITION(6,0x03,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )		PORT_DIPCONDITION(6,0x03,PORTCOND_EQUALS,0x00)
+	/* Bonus_Life values for everywhere else */
+	PORT_DIPSETTING(		0x0080, "Every 2000k" )			PORT_DIPCONDITION(6,0x03,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )		PORT_DIPCONDITION(6,0x03,PORTCOND_NOTEQUALS,0x00)
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("JMPR")

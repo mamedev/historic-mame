@@ -13,8 +13,8 @@ struct namco_interface
 int namco_sh_start(const struct MachineSound *msound);
 void namco_sh_stop(void);
 
-WRITE8_HANDLER( pengo_sound_enable_w );
-WRITE8_HANDLER( pengo_sound_w );
+WRITE8_HANDLER( pacman_sound_enable_w );
+WRITE8_HANDLER( pacman_sound_w );
 
 void polepos_sound_enable(int enable);
 WRITE8_HANDLER( polepos_sound_w );
@@ -28,7 +28,7 @@ READ8_HANDLER( namcos1_cus30_r );
 extern data8_t *namco_soundregs;
 extern data8_t *namco_wavedata;
 
-#define pengo_soundregs namco_soundregs
+#define pacman_soundregs namco_soundregs
 #define polepos_soundregs namco_soundregs
 
 #endif

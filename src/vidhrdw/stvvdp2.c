@@ -98,7 +98,8 @@ static void stv_vdp2_dynamic_res_change(void);
 static void stv_vdp2_fade_effects(void);
 static int stv_vdp2_window_process(int x,int y);
 
-#define LOG_VDP2 0
+#define LOG_VDP2 1
+#define LOG_ROZ 0
 
 /*
 
@@ -1133,6 +1134,19 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_SCRCTL ((stv_vdp2_regs[0x098/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_N1LSS  ((STV_VDP2_SCRCTL & 0x3000) >> 12)
+	#define STV_VDP2_N1LZMX ((STV_VDP2_SCRCTL & 0x0800) >> 11)
+	#define STV_VDP2_N1LSCY ((STV_VDP2_SCRCTL & 0x0400) >> 10)
+	#define STV_VDP2_N1LSCX ((STV_VDP2_SCRCTL & 0x0200) >> 9)
+	#define STV_VDP2_N1VCSC ((STV_VDP2_SCRCTL & 0x0100) >> 8)
+	#define STV_VDP2_N0LSS  ((STV_VDP2_SCRCTL & 0x0030) >> 4)
+	#define STV_VDP2_N0LZMX ((STV_VDP2_SCRCTL & 0x0008) >> 3)
+	#define STV_VDP2_N0LSCY ((STV_VDP2_SCRCTL & 0x0004) >> 2)
+	#define STV_VDP2_N0LSCX ((STV_VDP2_SCRCTL & 0x0002) >> 1)
+	#define STV_VDP2_N0VCSC ((STV_VDP2_SCRCTL & 0x0001) >> 0)
+
 /* 18009c - Vertical Cell Table Address (NBG0, NBG1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
@@ -1914,16 +1928,16 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 
 #define RP	stv_current_rotation_parameter_table
 
-	if(LOG_VDP2) logerror( "Rotation parameter table (%d)\n", rot_parameter );
-	if(LOG_VDP2) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
-	if(LOG_VDP2) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
-	if(LOG_VDP2) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
-	if(LOG_VDP2) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
-	if(LOG_VDP2) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
-	if(LOG_VDP2) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
-	if(LOG_VDP2) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
-	if(LOG_VDP2) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
-	if(LOG_VDP2) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+	if(LOG_ROZ) logerror( "Rotation parameter table (%d)\n", rot_parameter );
+	if(LOG_ROZ) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
+	if(LOG_ROZ) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
+	if(LOG_ROZ) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
+	if(LOG_ROZ) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
+	if(LOG_ROZ) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
+	if(LOG_ROZ) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
+	if(LOG_ROZ) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
+	if(LOG_ROZ) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
+	if(LOG_ROZ) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
 }
 
 #define STV_VDP2_CP_NBG0_PNMDR		0x0
@@ -2236,6 +2250,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 {
 //	if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
 //	usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
+	//usrintf_showmessage("%04x",STV_VDP2_SCRCTL);
 
 	int xsize = 0;
 	int ysize = 0;
@@ -2245,9 +2260,11 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	static UINT16 *destline;
 	UINT16 pal_color_offset = 0;
 	data8_t* gfxdatalow, *gfxdatahigh;
+	int yoffs = 0;
 
-
+	/*Window effect 1=no draw*/
 	int tw;
+
 	/*Transparency code 1=opaque,0=transparent*/
 	int t_pen;
 	if (!stv2_current_tilemap.enabled) return;
@@ -2259,6 +2276,15 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 1: xsize=512; ysize=512; break;
 		case 2: xsize=1024; ysize=256; break;
 		case 3: xsize=1024; ysize=512; break;
+	}
+
+	/*guess,myfairld has only this activated (i.e. no linescroll/vertical char
+	scroll and so on) so I think this is the only possible way to get the NBG1 enabled,
+	obviously this should be changed again when the roz effects for bitmaps will
+	be added...*/
+	if(STV_VDP2_LSMD == 3)
+	{
+		yoffs = (stv2_current_tilemap.scrolly & 1)*(ysize-1);
 	}
 
 	switch( stv2_current_tilemap.colour_depth )
@@ -2289,12 +2315,13 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	/*Enable fading bit*/
 	if(stv2_current_tilemap.fade_control & 1)
 	{
-				 /*Select fading bit*/
+		/*Select fading bit*/
 		pal_color_offset += ((stv2_current_tilemap.fade_control & 2) ? (2*2048) : (2048));
 	}
 
 	stv2_current_tilemap.bitmap_palette_number+=stv2_current_tilemap.colour_ram_address_offset;
 	stv2_current_tilemap.bitmap_palette_number&=7;//safety check
+
 	switch(stv2_current_tilemap.colour_depth)
 	{
 		/*Palette Format*/
@@ -2303,19 +2330,19 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			{
 				for (xcnt = 0; xcnt <xsize;xcnt+=2)
 				{
-					tw = stv_vdp2_window_process(xcnt,ycnt);
+					tw = stv_vdp2_window_process(xcnt+1,ycnt);
 					if(tw == 0)
 					{
 						t_pen = (((gfxdata[0] & 0x0f) >> 0) != 0) ? (1) : (0);
 						if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
-						if(t_pen) plot_pixel(bitmap,xcnt+1  ,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
+						if(t_pen) plot_pixel(bitmap,xcnt+1,ycnt+yoffs,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 					}
-					tw = stv_vdp2_window_process(xcnt+1,ycnt);
+					tw = stv_vdp2_window_process(xcnt,ycnt);
 					if(tw == 0)
 					{
 						t_pen = (((gfxdata[0] & 0xf0) >> 4) != 0) ? (1) : (0);
 						if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
-						if(t_pen) plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
+						if(t_pen) plot_pixel(bitmap,xcnt,ycnt+yoffs,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 					}
 					gfxdata++;
 					if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow;
@@ -2332,7 +2359,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					{
 						t_pen = ((gfxdata[0] & 0xff) != 0) ? (1) : (0);
 						if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
-						if(t_pen) plot_pixel(bitmap,xcnt,ycnt,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
+						if(t_pen) plot_pixel(bitmap,xcnt,ycnt+yoffs,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 					}
 					gfxdata++;
 					if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow;
@@ -2349,7 +2376,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					{
 						t_pen = ((((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)) != 0) ? (1) : (0);
 						if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
-						if(t_pen) plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff) | pal_color_offset]);
+						if(t_pen) plot_pixel(bitmap,xcnt,ycnt+yoffs,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff) | pal_color_offset]);
 					}
 
 					gfxdata+=2;
@@ -2367,7 +2394,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 3:
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
-				destline = (UINT16 *)(bitmap->line[ycnt]);
+				destline = (UINT16 *)(bitmap->line[ycnt+yoffs]);
 
 				for (xcnt = 0; xcnt <xsize;xcnt++)
 				{
@@ -2386,7 +2413,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 						if(t_pen)
 						{
 							if ( stv2_current_tilemap.transparency == TRANSPARENCY_ALPHA )
-								destline[xcnt] = alpha_blend16( destline[xcnt], b | g << 5 | r << 10 );
+								destline[xcnt] = alpha_blend16( destline[xcnt+yoffs], b | g << 5 | r << 10 );
 							else
 								destline[xcnt] = b | g << 5 | r << 10;
 						}
@@ -2407,7 +2434,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			//usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
-				destline = (UINT16 *)(bitmap->line[ycnt]);
+				destline = (UINT16 *)(bitmap->line[ycnt+yoffs]);
 
 				for (xcnt = 0; xcnt <xsize;xcnt++)
 				{
@@ -3292,7 +3319,7 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 	   Bitmap            : Possible
 	   Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
 	   Scale             : 0.25 x - 256 x
-	   Rotation          : No
+	   Rotation          : Yes
 	   Linescroll        : Yes
 	   Column Scroll     : Yes
 	   Mosaic            : Yes
@@ -3511,7 +3538,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		case 0x8/4:
 		/*H/V Counter Register*/
 								     /*H-Counter                               V-Counter                                         */
-			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
+			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
 			if(LOG_VDP2) logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 		break;
 	}
@@ -3586,6 +3613,7 @@ static void stv_vdp2_dynamic_res_change()
 	}
 
 	set_visible_area(0*8, horz-1,0*8, vert-1);
+	//if(LOG_VDP2) usrintf_showmessage("%04d %04d",horz-1,vert-1);
 }
 
 /*This is for calculating the rgb brightness*/
@@ -3647,7 +3675,7 @@ Done:
 -Basic support(w0 or w1),bitmaps only.
 
 Not Done:
--Windows on cells.
+-Windows on cells.Requires that the tilemap are converted to bitmap AFAIK...
 -w0 & w1 at the same time.
 -Window logic.
 -Line window.
@@ -3680,8 +3708,8 @@ static int stv_vdp2_window_process(int x,int y)
 			e_y = ((STV_VDP2_W0EY & 0x3ff) >> 0);
 			break;
 		case 3:
-			s_y = ((STV_VDP2_W0SY & 0x3fe) >> 1);
-			e_y = ((STV_VDP2_W0EY & 0x3fe) >> 1);
+			s_y = ((STV_VDP2_W0SY & 0x7ff) >> 0);
+			e_y = ((STV_VDP2_W0EY & 0x7ff) >> 0);
 			break;
 	}
 	switch(STV_VDP2_HRES & 6)
@@ -3749,8 +3777,8 @@ static int stv_vdp2_window_process(int x,int y)
 			e_y = ((STV_VDP2_W1EY & 0x3ff) >> 0);
 			break;
 		case 3:
-			s_y = ((STV_VDP2_W1SY & 0x3fe) >> 1);
-			e_y = ((STV_VDP2_W1EY & 0x3fe) >> 1);
+			s_y = ((STV_VDP2_W1SY & 0x3ff) >> 0);
+			e_y = ((STV_VDP2_W1EY & 0x3ff) >> 0);
 			break;
 	}
 	switch(STV_VDP2_HRES & 6)

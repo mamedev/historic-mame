@@ -540,6 +540,19 @@ const struct discrete_dac_r1_ladder montecar_bang_dac =
 	0		// no cSmoothing
 };
 
+const struct discrete_op_amp_filt_info montecar_bang_filt =
+{
+	1.0/(1.0/RES_K(8.2) + 1.0/RES_K(3.9) + 1.0/RES_K(2.2) + 1.0/RES_K(1)) + RES_K(3.3),	// R39, R42, R41, R40, r82
+	0,
+	680,			// R83
+	0,
+	RES_K(330),		// r84
+	CAP_U(.1),		// c79
+	CAP_U(.1),		// c78
+	0,
+	5, 12, 0
+};
+
 const struct discrete_schmitt_osc_desc montecar_screech_osc =
 {
 	RES_K(2.2),	// R54
@@ -561,7 +574,7 @@ const struct discrete_mixer_desc montecar_mixer =
 	0,				// No Filter
 	CAP_U(0.22),	// C6
 	5,				// vRef
-	8000	// final gain
+	5000	// final gain
 };
 
 #define MONTECAR_ATTRACT_EN		NODE_09
@@ -666,17 +679,16 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 	/*    = 15750/4                                 */
 	/* Output is binary weighted with 4 bits of     */
 	/* crash volume.                                */
-	/*                                              */
-	/* TO DO: add filtering !!!!!!!!!!!!!!!!!!!!!!! */
 	/************************************************/
 	DISCRETE_LFSR_NOISE(MONTECAR_NOISE, MONTECAR_ATTRACT_INV, MONTECAR_ATTRACT_INV,FIRETRUCK_2V , 1.0, 0, 0.5, &firetrk_lfsr)	// Same as firetrk
 
 	DISCRETE_SWITCH(NODE_50, 1, MONTECAR_NOISE, 0,	// Enable gate A9
 			MONTECAR_CRASH_DATA)		// IC J8, pins 3,6,11,14
-	DISCRETE_DAC_R1(MONTECAR_BANGSND, 1,	// Bang
+	DISCRETE_DAC_R1(NODE_51, 1,	// Bang
 			NODE_50,	// from enable gates A9
 			DEFAULT_TTL_V_LOGIC_1,
 			&montecar_bang_dac)
+	DISCRETE_OP_AMP_FILTER(MONTECAR_BANGSND, 1, NODE_51, 0, DISC_OP_AMP_FILTER_IS_BAND_PASS_1M, &montecar_bang_filt)
 
 	/************************************************/
 	/* Screech is just the noise modulating a       */

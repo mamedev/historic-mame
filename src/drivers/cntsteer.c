@@ -255,12 +255,8 @@ static int scroll=0;
 
 	int i,j;
 	char buf[20];
-	int trueorientation;
 	struct osd_bitmap *mybitmap = bitmap;
 	data8_t *RAM = memory_region(REGION_CPU1);
-
-//	trueorientation = Machine->orientation;
-//	Machine->orientation = ORIENTATION_DEFAULT;
 
 for (i = 0;i < 8;i+=2)
 {
@@ -268,10 +264,6 @@ for (i = 0;i < 8;i+=2)
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,buf[j],0,0,0,3*8*i+8*j+50,8*6,0,TRANSPARENCY_NONE,0);
 }
-
-//	Machine->orientation = trueorientation;
-
-
 }
 #endif
 

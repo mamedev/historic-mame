@@ -15,10 +15,6 @@
 static int sprite_colorbase;
 //static int layer_colorbase[4];
 static int layerpri[3];
-static int lethalen_scrolld[2][4][2] = {
- 	{{-23, 0 }, {-27, 0}, {-29, 0}, {-31, 0}},
- 	{{-23-4, 0 }, {-27, 0}, {-29, 0}, {-31, 0}}
-};
 
 static void lethalen_sprite_callback(int *code, int *color, int *priority_mask)
 {
@@ -42,21 +38,38 @@ VIDEO_START(lethalen)
 {
 	K053251_vh_start();
 
-	K054157_vh_start(REGION_GFX1, 0, lethalen_scrolld, NORMAL_PLANE_ORDER, lethalen_tile_callback);
+	K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, lethalen_tile_callback);
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER, lethalen_sprite_callback))
 		return 1;
+
+	// the US and Japanese cabinets apparently use different mirror setups
+	if (!strcmp(Machine->gamedrv->name, "lethalen"))
+	{
+ 		K056832_set_LayerOffset(0, -64, 0);
+		K056832_set_LayerOffset(1, -64, 0);
+		K056832_set_LayerOffset(2, -64, 0);
+		K056832_set_LayerOffset(3, -64, 0);
+	}
+	else
+	{
+ 		K056832_set_LayerOffset(0, 64, 0);
+		K056832_set_LayerOffset(1, 64, 0);
+		K056832_set_LayerOffset(2, 64, 0);
+		K056832_set_LayerOffset(3, 64, 0);
+	}
 
 	return 0;
 }
 
 VIDEO_UPDATE(lethalen)
 {
-//	int layers[3];
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(priority_bitmap, 0, cliprect);
 
-	K054157_tilemap_update();
+	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
+	K056832_tilemap_draw(bitmap, cliprect, 1, 0, 0);
+	K056832_tilemap_draw(bitmap, cliprect, 2, 0, 0);
+	K056832_tilemap_draw(bitmap, cliprect, 3, 0, 0);
 
-	K054157_tilemap_draw(bitmap, cliprect, 0, 0, 0);
-	K054157_tilemap_draw(bitmap, cliprect, 1, 0, 0);
-	K054157_tilemap_draw(bitmap, cliprect, 2, 0, 0);
-	K054157_tilemap_draw(bitmap, cliprect, 3, 0, 0);
+	K053245_sprites_draw(bitmap, cliprect);
 }

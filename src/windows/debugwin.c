@@ -1378,14 +1378,6 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 					SendMessage(wnd, EM_SETSEL, (WPARAM)MAX_EDIT_STRING, (LPARAM)MAX_EDIT_STRING);
 					break;
 
-				case VK_HOME:
-					SendMessage(wnd, EM_SETSEL, (WPARAM)0, (LPARAM)0);
-					break;
-
-				case VK_END:
-					SendMessage(wnd, EM_SETSEL, (WPARAM)MAX_EDIT_STRING, (LPARAM)MAX_EDIT_STRING);
-					break;
-
 				case VK_PRIOR:
 					if (info->view[0].wnd && info->view[0].vscroll)
 						SendMessage(info->view[0].wnd, WM_VSCROLL, SB_PAGELEFT, (LPARAM)info->view[0].vscroll);

@@ -66,12 +66,40 @@ example, the protection data for that game was extracted from the bootleg.
 WRITE16_HANDLER( snowbros_flipscreen_w );
 VIDEO_UPDATE( snowbros );
 VIDEO_UPDATE( wintbob );
+VIDEO_UPDATE( snowbro3 );
 
 static data16_t *hyperpac_ram;
+int sb3_music_is_playing;
+int sb3_music;
 
 static INTERRUPT_GEN( snowbros_interrupt )
 {
 	cpunum_set_input_line(0, cpu_getiloops() + 2, HOLD_LINE);	/* IRQs 4, 3, and 2 */
+}
+
+static INTERRUPT_GEN( snowbro3_interrupt )
+{
+	int status = OKIM6295_status_0_r(0);
+
+	cpunum_set_input_line(0, cpu_getiloops() + 2, HOLD_LINE);	/* IRQs 4, 3, and 2 */
+
+	if (sb3_music_is_playing)
+	{
+		if ((status&0x08)==0x00)
+		{
+			OKIM6295_data_0_w(0,0x80|sb3_music);
+			OKIM6295_data_0_w(0,0x00|0x82);
+		}
+
+	}
+	else
+	{
+		if ((status&0x08)==0x08)
+		{
+			OKIM6295_data_0_w(0,0x40);		/* Stop playing music */
+		}
+	}
+
 }
 
 
@@ -205,6 +233,141 @@ static ADDRESS_MAP_START( hyperpac_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
 //	AM_RANGE(0xf006, 0xf006) ???
 ADDRESS_MAP_END
+
+/* Same volume used for all samples at the Moment, could be right, we have no
+   way of knowing .. */
+READ16_HANDLER( sb3_sound_r )
+{
+	return 0x0003;
+}
+
+void sb3_play_music(int data)
+{
+	/* sample is actually played in interrupt function so it loops */
+	sb3_music = data;
+
+	switch (data)
+	{
+		case 0x23:
+		memcpy(memory_region(REGION_SOUND1)+0x20000, memory_region(REGION_SOUND1)+0x80000, 0x20000);
+		sb3_music_is_playing = 1;
+		break;
+
+		case 0x24:
+		memcpy(memory_region(REGION_SOUND1)+0x20000, memory_region(REGION_SOUND1)+0x80000+0x20000, 0x20000);
+		sb3_music_is_playing = 1;
+		break;
+
+		case 0x25:
+		memcpy(memory_region(REGION_SOUND1)+0x20000, memory_region(REGION_SOUND1)+0x80000+0x40000, 0x20000);
+		sb3_music_is_playing = 1;
+		break;
+
+		case 0x26:
+		memcpy(memory_region(REGION_SOUND1)+0x20000, memory_region(REGION_SOUND1)+0x80000, 0x20000);
+		sb3_music_is_playing = 1;
+		break;
+
+		case 0x27:
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		memcpy(memory_region(REGION_SOUND1)+0x20000, memory_region(REGION_SOUND1)+0x80000+0x40000, 0x20000);
+		sb3_music_is_playing = 1;
+		break;
+
+		case 0x2e:
+		sb3_music_is_playing = 0;
+		break;
+	}
+}
+
+void sb3_play_sound (int data)
+{
+	int status = OKIM6295_status_0_r(0);
+
+	if ((status&0x01)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x12);
+	}
+	else if ((status&0x02)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x22);
+	}
+	else if ((status&0x04)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x42);
+	}
+
+
+}
+
+WRITE16_HANDLER( sb3_sound_w )
+{
+	if (data == 0x00fe)
+	{
+		sb3_music_is_playing = 0;
+		OKIM6295_data_0_w(0,0x78);		/* Stop sounds */
+	}
+	else /* the alternating 0x00-0x2f or 0x30-0x5f might be something to do with the channels */
+	{
+		data = data>>8;
+
+		if (data <= 0x21)
+		{
+			sb3_play_sound(data);
+		}
+
+		if (data>=0x22 && data<=0x31)
+		{
+			sb3_play_music(data);
+		}
+
+		if ((data>=0x30) && (data<=0x51))
+		{
+			sb3_play_sound(data-0x30);
+		}
+
+		if (data>=0x52 && data<=0x5f)
+		{
+			sb3_play_music(data-0x30);
+		}
+
+	}
+}
+
+
+
+static ADDRESS_MAP_START( readmem3, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE( 0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE( 0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE( 0x300000, 0x300001) AM_READ(sb3_sound_r) // ?
+	AM_RANGE( 0x500000, 0x500001) AM_READ(input_port_0_word_r)
+	AM_RANGE( 0x500002, 0x500003) AM_READ(input_port_1_word_r)
+	AM_RANGE( 0x500004, 0x500005) AM_READ(input_port_2_word_r)
+	AM_RANGE( 0x600000, 0x6003ff) AM_READ(MRA16_RAM)
+	AM_RANGE( 0x700000, 0x7021ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem3, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE( 0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE( 0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE( 0x200000, 0x200001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE( 0x300000, 0x300001) AM_WRITE(sb3_sound_w)  // ?
+	AM_RANGE( 0x400000, 0x400001) AM_WRITE(snowbros_flipscreen_w)
+	AM_RANGE( 0x600000, 0x6003ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE (&paletteram16)
+	AM_RANGE( 0x700000, 0x7021ff) AM_WRITE(MWA16_RAM) AM_BASE( &spriteram16) AM_SIZE( &spriteram_size )
+	AM_RANGE( 0x800000, 0x800001) AM_WRITE(MWA16_NOP) 	/* IRQ 4 acknowledge? */
+	AM_RANGE( 0x900000, 0x900001) AM_WRITE(MWA16_NOP) 	/* IRQ 3 acknowledge? */
+	AM_RANGE( 0xa00000, 0xa00001) AM_WRITE(MWA16_NOP) 	/* IRQ 2 acknowledge? */
+ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
@@ -568,6 +731,28 @@ static struct GfxLayout hyperpac_tilelayout =
 	32*32
 };
 
+
+static struct GfxLayout sb3_tilebglayout =
+{
+ 	16,16,
+ 	RGN_FRAC(1,1),
+ 	8,
+ 	{8, 9,10, 11, 0, 1, 2, 3  },
+ 	{ 0, 4, 16, 20, 32, 36, 48, 52,
+ 	512+0,512+4,512+16,512+20,512+32,512+36,512+48,512+52},
+ 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+ 	1024+0*16,1024+1*64,1024+2*64,1024+3*64,1024+4*64,1024+5*64,1024+6*64,1024+7*64},
+ 	32*64
+};
+
+
+static struct GfxDecodeInfo sb3_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
+	{ REGION_GFX2, 0, &sb3_tilebglayout,  0, 2 },
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo hyperpac_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hyperpac_tilelayout,  0, 16 },
@@ -604,6 +789,14 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
 	{ 7575 },		/* 7575Hz playback? */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+
+static struct OKIM6295interface sb3_okim6295_interface =
+{
+	1,			/* 1 chip */
+	{ 8500 },		/* 7575Hz playback? */
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -681,6 +874,34 @@ static MACHINE_DRIVER_START( semiprot )
 	MDRV_MACHINE_INIT ( semiprot )
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( _4in1 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(semicom)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( snowbro3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000) /* 16mhz or 12mhz ? */
+	MDRV_CPU_PROGRAM_MAP(readmem3,writemem3)
+	MDRV_CPU_VBLANK_INT(snowbro3_interrupt,3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(sb3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_UPDATE(snowbro3)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, sb3_okim6295_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -879,6 +1100,40 @@ ROM_START( cookbib2 )
 	ROM_LOAD( "cookbib2.05", 0x000000, 0x80000, CRC(89fb38ce) SHA1(1b39dd9c2743916b8d8af590bd92fe4819c2454b) )
 	ROM_LOAD( "cookbib2.04", 0x080000, 0x80000, CRC(f240111f) SHA1(b2c3b6e3d916fc68e1fd258b1279b6c39e1f0108) )
 	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) SHA1(bede6bdd8331128b9f2b229d718133470bf407c9) )
+ROM_END
+
+ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u52",  0x00001, 0x80000, CRC(71815878) SHA1(e3868f5687c1d8ec817671c50ade6c56ee83bfa1) )
+	ROM_LOAD16_BYTE( "u74",  0x00000, 0x80000, CRC(e22d3fa2) SHA1(020ab92d8cbf37a9f8186a81934abb97088c16f9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(c894ac80) SHA1(ee896675b5205ab2dbd0cbb13db16aa145391d06) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "u78", 0x000000, 0x200000, CRC(6c1fbc9c) SHA1(067f32cae89fd4d57b90be659d2d648e557c11df) )
+ROM_END
+
+ROM_START( snowbro3 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "ur4",  0x00000, 0x20000, CRC(19c13ffd) SHA1(4f9db70354bd410b7bcafa96be4591de8dc33d90) )
+	ROM_LOAD16_BYTE( "ur3",  0x00001, 0x20000, CRC(3f32fa15) SHA1(1402c173c1df142ff9dd7b859689c075813a50e5) )
+
+	/* is sound cpu code missing or is it driven by the main cpu? */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ua5",		0x000000, 0x80000, CRC(0604e385) SHA1(96acbc65a8db89a7be100f852dc07ba9a0313167) )	/* 16x16 tiles */
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 BG Tiles */
+	ROM_LOAD( "un7",		0x000000, 0x200000, CRC(4a79da4c) SHA1(59207d116d39b9ee25c51affe520f5fdff34e536) )
+	ROM_LOAD( "un8",		0x200000, 0x200000, CRC(7a4561a4) SHA1(1dd823369c09368d1f0ec8e1cb85d700f10ff448) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "us5",     0x00000, 0x20000, CRC(7c6368ef) SHA1(53393c570c605f7582b61c630980041e2ed32e2d) )
+	ROM_CONTINUE(0x80000,0x60000)
 ROM_END
 
 READ16_HANDLER ( moremorp_0a_read )
@@ -1256,6 +1511,61 @@ static DRIVER_INIT( hyperpac )
 	hyperpac_ram[0xe086/2] = 0x3210;
 }
 
+READ16_HANDLER ( _4in1_02_read )
+{
+	return 0x0202;
+}
+
+static DRIVER_INIT(4in1boot)
+{
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_CPU1);
+	int len = memory_region_length(REGION_CPU1);
+
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			if (i&1) buffer[i] = BITSWAP8(src[i],6,7,5,4,3,2,1,0);
+			else buffer[i] = src[i];
+
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+
+	src = memory_region(REGION_CPU2);
+	len = memory_region_length(REGION_CPU2);
+
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			buffer[i] = src[i^0x4000];
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, _4in1_02_read );
+}
+
+static DRIVER_INIT(snowbro3)
+{
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_CPU1);
+	int len = memory_region_length(REGION_CPU1);
+
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,3,4,1,2,0)];
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+}
+
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
@@ -1267,6 +1577,8 @@ GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "H
 GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
 GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
 GAME( 1999, moremorp, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
+GAME( 1999, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" ) // original is 1999, bootleg 2002?
+GAMEX(2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "bootleg", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
 
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */

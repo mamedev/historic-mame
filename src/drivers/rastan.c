@@ -4,6 +4,80 @@ Rastan
 
 driver by Jarek Burczynski
 
+
+custom ICs
+----------
+PC040DA x3  video DAC
+PC050       coin I/O
+PC060HS     main/sub CPU communication
+PC080       tilemap generator
+PC090       sprite generator
+
+
+memory map
+----------
+68000:
+
+The address decoding is done by two PALs (IC11 and IC12) which haven't been
+read, so the memory map is inferred by program behaviour
+
+Address                  Dir Data             Name      Description
+------------------------ --- ---------------- --------- -----------------------
+0000000xxxxxxxxxxxxxxxx- R   xxxxxxxxxxxxxxxx ROM0      program ROM
+0000001xxxxxxxxxxxxxxxx- R   xxxxxxxxxxxxxxxx ROM1      program ROM
+0000010xxxxxxxxxxxxxxxx- R   xxxxxxxxxxxxxxxx ROM2      program ROM
+000100--11xxxxxxxxxxxxxx R/W xxxxxxxxxxxxxxxx WLRAM/WURAM work RAM
+001000------xxxxxxxxxxx- R/W xxxxxxxxxxxxxxxx CLCS      palette RAM
+0011100-------------000- R   --------xxxxxxxx IN PORT   player 1 inputs
+0011100-------------001- R   --------xxxxxxxx IN PORT   player 2 inputs
+0011100-------------010- R   --------xxxxxxxx IN PORT   extra inputs
+0011100-------------011- R   --------xxxxxxxx IN PORT   coin inputs
+0011100-------------100- R   --------xxxxxxxx IN PORT   dip SW1
+0011100-------------101- R   --------xxxxxxxx IN PORT   dip SW2
+0011100-------------110- R   ---------------- n.c.
+0011100-------------111- R   ---------------- n.c.
+0011100-----------------   W --------xxx----- OUT8-10   sprite palette bank
+0011100-----------------   W -----------x---- n.c.
+0011100-----------------   W ------------xxxx           PC050 (coin counters, coin lockout)
+0011101----------------- R   ---------------- n.c.
+0011101-----------------   W --------------x- M INT     [1]
+0011101-----------------   W ---------------x SUB RESET [1]
+0011110----------------- R   ---------------- n.c.
+0011110-----------------   W ----------------           watchdog reset
+0011111---------------x- R/W ------------xxxx SNRD/SNWR PC060HS
+0011                                          EXT       [1]
+11000xxxxxxxxxxxxxxxxxxx R/W xxxxxxxxxxxxxxxx SCN       PC080 PGA
+11010000---xxxxxxxxxxxxx R/W xxxxxxxxxxxxxxxx OBJ       PC090 PGA
+
+[1] Not used, goes to external connector, maybe provision for an MCU?
+
+
+Z80:
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+00xxxxxxxxxxxxxx R   xxxxxxxx           program ROM
+01xxxxxxxxxxxxxx R   xxxxxxxx           program ROM (banked)
+1000xxxxxxxxxxxx R/W xxxxxxxx SRAM      work RAM
+1001-----------x R/W xxxxxxxx YM2151    YM2151 [1]
+1010-----------x R/W ----xxxx PC6       PC060HS
+1011------------   W xxxxxxxx V-ST-ADRS MSM5205 start address (bits 15-8)
+1100------------   W -------- START-VCE MSM5205 start
+1101------------   W -------- STOP-VCE  MSM5205 stop
+1110------------              n.c.
+1111------------              n.c.
+
+[1] Schematics also show a YM3526 that can replace the YM2151
+
+
+Notes:
+- For sound communication, we are using code in sndhrdw/taitosnd.c, which
+  claims to be for the TC0140SYT chip. That chip is not present in Rastan,
+  the communication is handled by PC060HS, which I guess is compatible.
+
+TODO:
+- Unknown writes to 0x350008.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -12,109 +86,132 @@ driver by Jarek Burczynski
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-data16_t *rastan_ram;	/* speedup hack */
 
 WRITE16_HANDLER( rastan_spritectrl_w );
 
 VIDEO_START( rastan );
 VIDEO_UPDATE( rastan );
 
-WRITE8_HANDLER( rastan_adpcm_trigger_w );
-WRITE8_HANDLER( rastan_c000_w );
-WRITE8_HANDLER( rastan_d000_w );
-
-
-static READ16_HANDLER( rastan_cycle_r )
-{
-	if (activecpu_get_pc()==0x3b088) cpu_spinuntil_int();
-
-	return rastan_ram[0x1c10/2];
-}
-
-
-static ADDRESS_MAP_START( rastan_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x10dc10, 0x10dc11) AM_READ(rastan_cycle_r)
-	AM_RANGE(0x10c000, 0x10ffff) AM_READ(MRA16_RAM)	/* RAM */
-	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)	/* palette */
-	AM_RANGE(0x3e0000, 0x3e0001) AM_READ(MRA16_NOP)
-	AM_RANGE(0x3e0002, 0x3e0003) AM_READ(taitosound_comm16_lsb_r)
-	AM_RANGE(0x390000, 0x390001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x390002, 0x390003) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x390006, 0x390007) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x390008, 0x390009) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x39000a, 0x39000b) AM_READ(input_port_4_word_r)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(PC080SN_word_0_r)
-	AM_RANGE(0xd00000, 0xd03fff) AM_READ(PC090OJ_word_0_r)	/* sprite ram */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( rastan_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x05ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&rastan_ram)
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x350008, 0x35000b) AM_WRITE(MWA16_NOP)	/* 0 only (often) ? */
-	AM_RANGE(0x380000, 0x380003) AM_WRITE(rastan_spritectrl_w)	/* sprite palette bank, coin counters, other unknowns */
-	AM_RANGE(0x3c0000, 0x3c0003) AM_WRITE(MWA16_NOP)	/* 0000,0020,0063,0992,1753 (very often) watchdog ? */
-	AM_RANGE(0x3e0000, 0x3e0001) AM_WRITE(taitosound_port16_lsb_w)
-	AM_RANGE(0x3e0002, 0x3e0003) AM_WRITE(taitosound_comm16_lsb_w)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(PC080SN_word_0_w)
-	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(PC080SN_yscroll_word_0_w)
-	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
-	AM_RANGE(0xc50000, 0xc50003) AM_WRITE(PC080SN_ctrl_word_0_w)
-	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(PC090OJ_word_0_w)	/* sprite ram */
-ADDRESS_MAP_END
-
 
 static WRITE8_HANDLER( rastan_bankswitch_w )
 {
-	cpu_setbank( 5, memory_region(REGION_CPU2) + ((data ^1) & 0x01) * 0x4000 + 0x10000 );
+	int offs;
+
+	data &= 3;
+	if (data == 0) offs = 0x0000;
+	else offs = (data-1) * 0x4000 + 0x10000;
+
+	cpu_setbank( 1, memory_region(REGION_CPU2) + offs );
 }
 
-static ADDRESS_MAP_START( rastan_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK5)
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9001, 0x9001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x9002, 0x9100) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
+
+static int adpcm_pos;
+
+static void rastan_msm5205_vck(int chip)
+{
+	static int adpcm_data = -1;
+
+	if (adpcm_data != -1)
+	{
+		MSM5205_data_w(0, adpcm_data & 0x0f);
+		adpcm_data = -1;
+	}
+	else
+	{
+		adpcm_data = memory_region(REGION_SOUND1)[adpcm_pos];
+		adpcm_pos = (adpcm_pos + 1) & 0xffff;
+		MSM5205_data_w(0, adpcm_data >> 4);
+	}
+}
+
+static WRITE8_HANDLER( rastan_msm5205_address_w )
+{
+	adpcm_pos = (adpcm_pos & 0x00ff) | (data << 8);
+}
+
+static WRITE8_HANDLER( rastan_msm5205_start_w )
+{
+	MSM5205_reset_w(0, 0);
+}
+
+static WRITE8_HANDLER( rastan_msm5205_stop_w )
+{
+	MSM5205_reset_w(0, 1);
+	adpcm_pos &= 0xff00;
+}
+
+
+
+static ADDRESS_MAP_START( rastan_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x05ffff) AM_ROM
+	AM_RANGE(0x10c000, 0x10ffff) AM_RAM
+	AM_RANGE(0x200000, 0x200fff) AM_READWRITE(MRA16_RAM, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x350008, 0x350009) AM_WRITE(MWA16_NOP)	/* 0 only (often) ? */
+	AM_RANGE(0x380000, 0x380001) AM_WRITE(rastan_spritectrl_w)	/* sprite palette bank, coin counters & lockout */
+	AM_RANGE(0x390000, 0x390001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x390002, 0x390003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x390004, 0x390005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x390006, 0x390007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x390008, 0x390009) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x39000a, 0x39000b) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x3e0000, 0x3e0001) AM_READWRITE(MRA16_NOP, taitosound_port16_lsb_w)
+	AM_RANGE(0x3e0002, 0x3e0003) AM_READWRITE(taitosound_comm16_lsb_r, taitosound_comm16_lsb_w)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READWRITE(PC080SN_word_0_r, PC080SN_word_0_w)
+	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(PC080SN_yscroll_word_0_w)
+	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(PC080SN_xscroll_word_0_w)
+	AM_RANGE(0xc50000, 0xc50003) AM_WRITE(PC080SN_ctrl_word_0_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READWRITE(PC090OJ_word_0_r, PC090OJ_word_0_w)	/* sprite ram */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( rastan_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
+
+static ADDRESS_MAP_START( rastan_s_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE(0x8000, 0x8fff) AM_RAM
 	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
-	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_adpcm_trigger_w)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_c000_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_d000_w)
+	AM_RANGE(0xa001, 0xa001) AM_READWRITE(taitosound_slave_comm_r, taitosound_slave_comm_w)
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(rastan_msm5205_address_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(rastan_msm5205_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(rastan_msm5205_stop_w)
 ADDRESS_MAP_END
 
 
 
 INPUT_PORTS_START( rastan )
-	PORT_START	/* IN0 */
+	PORT_START_TAG( "IN0" )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	// button 3
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG( "IN1" )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	// button 3
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG( "IN2" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// P1 button 4
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// P1 button 5
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// P2 button 4
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// P2 button 5
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from PC050 (coin A gets locked if 0)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from PC050 (coin B gets locked if 0)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from PC050 (above 2 bits not checked when 0)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START_TAG( "IN3" )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
@@ -122,9 +219,9 @@ INPUT_PORTS_START( rastan )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* DSW0 */
+	PORT_START_TAG( "DSW1" )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -146,7 +243,7 @@ INPUT_PORTS_START( rastan )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG( "DSW2" )
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
@@ -171,47 +268,9 @@ INPUT_PORTS_START( rastan )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( rastsaga )		/* same as rastan, coinage is different */
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_INCLUDE( rastan )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_MODIFY( "DSW1" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
@@ -222,67 +281,41 @@ INPUT_PORTS_START( rastsaga )		/* same as rastan, coinage is different */
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "100000" )
-	PORT_DIPSETTING(    0x08, "150000" )
-	PORT_DIPSETTING(    0x04, "200000" )
-	PORT_DIPSETTING(    0x00, "250000" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
 
-static struct GfxLayout spritelayout1 =
+static struct GfxLayout tilelayout =
 {
-	8,8,	/* 8*8 sprites */
-	0x4000,	/* 16384 sprites */
-	4,	/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,2),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 0x40000*8+0 ,0x40000*8+4, 8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4 },
+	{ 0, 4, RGN_FRAC(1,2)+0 ,RGN_FRAC(1,2)+4, 8+0, 8+4, RGN_FRAC(1,2)+8+0, RGN_FRAC(1,2)+8+4 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
 };
 
-static struct GfxLayout spritelayout2 =
+static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	4096,	/* 4096 sprites */
-	4,	/* 4 bits per pixel */
+	16,16,
+	RGN_FRAC(1,2),
+	4,
 	{ 0, 1, 2, 3 },
-	{
-	0, 4, 0x40000*8+0 ,0x40000*8+4,
-	8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4,
-	16+0, 16+4, 0x40000*8+16+0, 0x40000*8+16+4,
-	24+0, 24+4, 0x40000*8+24+0, 0x40000*8+24+4
-	},
+	{ 0, 4, RGN_FRAC(1,2)+0 ,RGN_FRAC(1,2)+4, 8+0, 8+4, RGN_FRAC(1,2)+8+0, RGN_FRAC(1,2)+8+4,
+			16+0, 16+4, RGN_FRAC(1,2)+16+0, RGN_FRAC(1,2)+16+4, 24+0, 24+4, RGN_FRAC(1,2)+24+0, RGN_FRAC(1,2)+24+4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	32*16
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
-	{ REGION_GFX1, 0, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ REGION_GFX1, 0, &tilelayout,   0, 0x80 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 0x80 },
 	{ -1 } /* end of array */
 };
+
 
 
 /* handler called by the YM2151 emulator when the internal timers cause an IRQ */
@@ -300,12 +333,13 @@ static struct YM2151interface ym2151_interface =
 	{ rastan_bankswitch_w }
 };
 
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 channel */
-	8000,		/* 8000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 60 }		/* volume */
+	1,						/* 1 chip */
+	384000,					/* 384 kHz */
+	{ rastan_msm5205_vck },	/* VCK function */
+	{ MSM5205_S48_4B },		/* 8 kHz */
+	{ 60 }					/* volume */
 };
 
 
@@ -314,11 +348,11 @@ static MACHINE_DRIVER_START( rastan )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
-	MDRV_CPU_PROGRAM_MAP(rastan_readmem,rastan_writemem)
+	MDRV_CPU_PROGRAM_MAP(rastan_map,0)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_PROGRAM_MAP(rastan_s_readmem,rastan_s_writemem)
+	MDRV_CPU_PROGRAM_MAP(rastan_s_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -336,7 +370,7 @@ static MACHINE_DRIVER_START( rastan )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 
@@ -361,16 +395,16 @@ ROM_START( rastan )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )        /* 8x8 1 */
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )        /* sprites 3b */
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) ) /* samples are 4bit ADPCM */
@@ -390,19 +424,19 @@ ROM_START( rastanu )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )        /* 8x8 1 */
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )        /* sprites 3b */
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for the samples */
-	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) ) /* samples are 4bit ADPCM */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* MSM5205 samples */
+	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) )
 ROM_END
 
 ROM_START( rastanu2 )
@@ -419,19 +453,19 @@ ROM_START( rastanu2 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )        /* 8x8 1 */
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )        /* sprites 3b */
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for the samples */
-	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) ) /* samples are 4bit ADPCM */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* MSM5205 samples */
+	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) )
 ROM_END
 
 ROM_START( rastsaga )
@@ -448,20 +482,21 @@ ROM_START( rastsaga )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )        /* 8x8 1 */
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, CRC(cd30de19) SHA1(f8d158d38cd07a24cb5ddefd4ce90beec706924d) )
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, CRC(ab67e064) SHA1(5c49f0ff9221cba9f2bb8da86eb4448c73012410) )
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, CRC(54040fec) SHA1(a2bea2ce1cebd25b33be41723299ca0512d95f9e) )
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, CRC(94737e93) SHA1(3df7f085fe6468bda11fab2e86252df6f74f7a99) )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )        /* sprites 3b */
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, CRC(c22d94ac) SHA1(04f69f9af7ac4242e95dba32988afa3616d75a92) )
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, CRC(b5632a51) SHA1(da6ebe6afe245443a76b33714213549356c0c5c3) )
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, CRC(002ccf39) SHA1(fdc29f39198f9b488e298ee89b0eeb3417527733) )
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, CRC(feafca05) SHA1(9de9ff1fcf037e5ab25c181b678245041238d6ae) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for the samples */
-	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) ) /* samples are 4bit ADPCM */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* MSM5205 samples */
+	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, CRC(fd1a34cc) SHA1(b1682959521fa295769207b75cf7d839e9ec95fd) )
 ROM_END
+
 
 
 GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)")

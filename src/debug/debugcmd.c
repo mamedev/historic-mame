@@ -83,6 +83,7 @@ static void execute_dasm(int ref, int params, const char **param);
 static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
+static void execute_source(int ref, int params, const char **param);
 
 
 
@@ -157,6 +158,8 @@ void debug_command_init(void)
 	debug_console_register_command("traceover", 0, 1, 3, execute_traceover);
 
 	debug_console_register_command("snap",      0, 0, 1, execute_snap);
+
+	debug_console_register_command("source",	0, 1, 1, execute_source);
 }
 
 
@@ -1441,6 +1444,21 @@ static void execute_snap(int ref, int params, const char *param[])
 			debug_console_printf("Saved snapshot as '%s'\n", param[0]);
 		}
 	}
+}
+
+
+/*-------------------------------------------------
+	execute_source - execute the source command
+-------------------------------------------------*/
+
+static void execute_source(int ref, int params, const char *param[])
+{
+	if (debug_source_file)
+		fclose(debug_source_file);
+
+	debug_source_file = fopen(param[0], "r");
+	if (!debug_source_file)
+		debug_console_printf("Cannot open command file '%s'\n", param[0]);
 }
 
 

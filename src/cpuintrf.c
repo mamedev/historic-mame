@@ -163,6 +163,9 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
+#if (HAS_ARM7)
+#include "cpu/arm7/arm7.h"
+#endif
 #if (HAS_SH2)
 #include "cpu/sh2/sh2.h"
 #endif
@@ -202,7 +205,9 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_SE3208)
 #include "cpu/se3208/se3208.h"
 #endif
-
+#if (HAS_MC68HC11)
+#include "cpu/mc68hc11/mc68hc11.h"
+#endif
 
 #ifdef MESS
 
@@ -640,6 +645,9 @@ const struct
 #if (HAS_ARM)
 	{ CPU_ARM, arm_get_info },
 #endif
+#if (HAS_ARM7)
+	{ CPU_ARM7, arm7_get_info },
+#endif
 #if (HAS_SH2)
 	{ CPU_SH2, sh2_get_info },
 #endif
@@ -733,7 +741,9 @@ const struct
 #if (HAS_SE3208)
 	{ CPU_SE3208, SE3208_get_info },
 #endif
-
+#if (HAS_MC68HC11)
+	{ CPU_MC68HC11, mc68hc11_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)

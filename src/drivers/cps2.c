@@ -1,7 +1,461 @@
 /***************************************************************************
 
+Note: this driver is frozen until the proper decryption method has been
+figured out, please do not submit changes to it.
+
   Capcom System 2
   ===============
+
+CPS2 Hardware Overview
+Capcom, 1993-2003
+
+From 1993 to 2003 Capcom produced a generic system known as CPS2 (Capcom Play System 2). It
+comprises a base board (known as the A-Board) and a top board (known as the B-Board). Both were
+housed in separate plastic boxes and fitted together via four multi-pin connectors.
+The boxes are colour-coded for release in specific country regions:
+    Green  :  Japan
+    Blue   :  U.S.A. and Europe
+    Orange :  South America
+    Grey   :  Asia
+    Yellow :  All (Rent version; can be hired by operators for testing)
+
+Grey and orange B-Boards require an A-Board with a matching colour to work. Green A/B and Blue A/B
+boards are interchangeable. Yellow boards will fit any A-Board since they were used for renting to
+operators for testing purposes in the hope that they would buy it.
+
+The first game produced on this system was "Super Street Fighter II The New Challengers". The last
+game (so far) is "Hyper Street Fighter II : The Anniversary Edition". All up, around 50 unique
+games were developed on CPS2 hardware, with dozens of releases in different regions, totalling over
+170 variations. Over the years Capcom have produced a lot of games using the same theme, making
+numerous spin-offs of their titles with varying subtitles in an effort to prolong the life of the
+aging CPS2 hardware (one would assume).
+
+The base board contains the main CPU (a 68000), RAM, graphic generating hardware, sound hardware
+(Q-Sound and Kabuki taken from CPS1) and I/O hardware. The top board contains the software
+(EPROMS etc) and some custom ICs used to generate backgrounds and sprites.
+The CPS2 hardware is very different from most other generic arcade systems in that it uses some
+very complex encryption of the main program to combat bootleggers. The decryption key is held in
+some SRAM inside one of the custom IC's and powered by a battery. If the battery dies the system
+kills itself, showing only a blue or green screen on power-up. There are no known simple fixes so
+far so it is then unusable, but can be returned to Capcom for a repair, providing the security
+stickers have not been tampered with and the plastic box has not been opened.
+The encryption is so involved that there are no known bootlegs of any of the CPS2 games.
+The sound CPU is a standard Z80. On some PCBs a custom Z80 is used instead (called a "Kabuki"). This
+is also encrypted and is powered by a battery. When this battery dies, the chip works as a regular
+Z80 and can not decrypt the program so there is no sound, but the game continues to work. However,
+in all CPS2 games, Capcom chose not to use the Kabuki encryption since none of the CPS2 games have
+an encrypted sound program. There is a jumper pad on the PCB next to the Z80 (JP3). When this is
+shorted, it sets a pin on the Kabuki to run in encrypted mode, but it has been found not shorted on
+all CPS2 games so far. The Kabuki or a regular Z80 has been found in use for the sound CPU, so it
+is possible Capcom are using the Kabuki chips from old stock as regular Z80 CPUs.
+
+PCB Layout
+----------
+
+A-Board
+
+CAPCOM 93646A-6
+   |----------------------------------------------------------------------------------------------|
+   |SW3 SW2 SW1                    |-----------------------|     |-----------------------|        |
+|--|                               |-----------------------|     |-----------------------|     CN6|
+|                                8464    93C46(2)      CN3        CN4                             |
+|                                                                                                 |
+|                                  PAL1               |---------|                                 |
+|                                                     |CAPCOM-Q1|                                 |
+|                                  PAL2               |DL 1425  |               |---------|       |
+|J                                                    |DSP-16A  |               |CAPCOM   |       |
+|A              5863                                  |(PLCC84) |               |CPS-B-21 |       |
+|M                                  |---------------| |---------|               |DL-0921  |       |
+|M              5863                |DL-030P(or Z80)|                           |(QFP160) |       |
+|A                                  |---------------|                           |---------|       |
+|                                                    60MHz                                        |
+|            |---------|            8MHz                                                          |
+|            |CAPCOM   |                                                                          |
+|            |DL-1123  |                                                 PAL3                     |
+|    93C46(1)|I/O      |                                  |---------|                             |
+|            |(QFP136) |                                  |CAPCOM   |                             |
+|--|         |---------|                                  |CPS-A-01 |              |---------|    |
+   |                                                      |DL-0311  |              |CAPCOM   |    |
+   |                                                      |(QFP160) |              |DL-1625  |    |
+   |                                                      |---------|   16MHz      |SPB      |    |
+   |                                                                               |(QFP128) |    |
+  |-|                                                                              |---------|    |
+  | |                                                                                             |
+  | |                                    M51953B                                                  |
+  | |CN5    LM833    TC9176P   LM833                                         |-------|            |
+  | |       LM833              NE5532                                        |CAPCOM |            |
+  | |       LM833              TDA1543                 PAL4    HM658128      |DL-2227|  HM514260  |
+  |-|                                                                        |DRC    |            |
+   |            BATTERY     TC9185P                    PAL5    HM658128      |(QFP64)|  HM514260  |
+  |- CNL                                     CN1                         CN2 |-------|            |
+   |         TA8225L               |-----------------------|     |-----------------------|        |
+  |- CNR                           |-----------------------|     |-----------------------|        |
+   |----------------------------------------------------------------------------------------------|
+Notes:
+      5863      - Sony CXK5863BP-35 8K x8 SRAM (DIP28)
+      8464      - Fujitsu MB8464A-10L 8K x8 SRAM (SOP28)
+      HM514260  - Hitachi HM514260AJ8 256K x 16 DRAM (SOJ40)
+      HM658128  - Hitachi HM658128ADFP-10 128K x8 SRAM (SOP32)
+      M5195B    - Mitsubishi Electric Corp. M5195B Voltage Detection and System Reset IC (SIP5)
+      LM833     - National Semiconductor LM833 Dual Audio Operational Amplifier (DIP8)
+      TDA1543   - Philips TDA1543 Dual 16-bit DAC (DIP8)
+      NE5532    - Philips NE5532 Internally-compensated Dual Low Noise Operational Amplifier (DIP8)
+      TC9176P   - Toshiba TC9176 (purpose unknown, DIP16)
+      TC9185P   - Toshiba TC9185P Electronic Volume Control IC (DIP20)
+      TA8225L   - Toshiba TA8225L 45W BTL Audio Amplifier (ZIP17)
+      93C46(1)  - Atmel 93C46 EEPROM (SOIC8, tied to the custom I/O chip)
+      93C46(2)  - Atmel 93C46 EEPROM (SOIC8, tied to the Kabuki chip)
+      SW1       - Test Switch
+      SW2       - Volume Up
+      SW3       - Volume Down
+      CN1/2/3/4 - 96 Pin Connectors for connection of top B-board
+      CN5       - 34 Pin Connector used for (generally) extra kick buttons on fighting games
+      CN6       - 2 Pin Fan connector
+      CN L/R    - RCA Connectors for Left/Right Audio when QSound (stereo output) is enabled
+      PAL1      - MMI PAL16L8 (DIP20, stamped 'D8L1')
+      PAL2      - MMI PAL16L8 (DIP20, stamped 'BGSA4')
+      PAL3      - MMI PAL16R4 (DIP20, stamped 'BGSA5')
+      PAL4      - MMI PAL16L8 (DIP20, stamped 'BGSA1')
+      PAL5      - MMI PAL16L8 (DIP20, stamped 'BGSA2')
+      VSync     - 59.6388Hz
+
+      Custom IC's -
+                   DL-030P - KABUKI Custom encrypted Z80, running at 8.000MHz, manufactured by VLSI
+                             Technology (DIP40)
+                             On most PCB's this is a regular Zilog Z80
+                   DL-1425 - CAPCOM-Q1 QSound Processor, DSP-16A (C) 92 AT&T, clock input of
+                             60.000MHz (PLCC84)
+                   DL-0921 \
+                   DL-0311 / CPS-A/B Graphics Processors (QFP160)
+                   DL-1625 - Custom 68000 CPU, running at 16.000MHz (QFP128)
+                   DL-2227 - DRAM Refresh Controller (QFP64)
+                   DL-1123 - I/O Controller (QFP136)
+
+      Connector Pinouts -
+
+                       JAMMA Connector                                       Extra Button Connector
+                       ---------------                                       ----------------------
+                    PART SIDE    SOLDER SIDE                                       TOP    BOTTOM
+                ----------------------------                               --------------------------
+                      GND  01    A  GND                                        GND  01    02  GND
+                      GND  02    B  GND                                        +5V  03    04  +5V
+                      +5V  03    C  +5V                                       +12V  05    06  +12V
+                      +5V  04    D  +5V                                             07    08
+                       NC  05    E  NC                           Player 2 Button 4  09    10
+                     +12V  06    F  +12V                                            11    12
+                           07    H                                                  13    14
+           Coin Counter 1  08    J  NC                           Player 1 Button 4  15    16
+             Coin Lockout  09    K  Coin Lockout                 Player 1 Button 5  17    18
+               Speaker (+) 10    L  Speaker (-)                  Player 1 Button 6  19    20
+                       NC  11    M  NC                           Player 2 Button 5  21    22
+                Video Red  12    N  Video Green                  Player 2 Button 6  23    24
+               Video Blue  13    P  Video Composite Sync                            25    26
+             Video Ground  14    R  Service Switch                                  27    28
+                     Test  15    S  NC                                 Volume Down  29    30  Volume UP
+                   Coin A  16    T  Coin B                                     GND  31    32  GND
+           Player 1 Start  17    U  Player 2 Start                             GND  33    34  GND
+              Player 1 Up  18    V  Player 2 Up
+            Player 1 Down  19    W  Player 2 Down
+            Player 1 Left  20    X  Player 2 Left
+           Player 1 Right  21    Y  Player 2 Right
+        Player 1 Button 1  22    Z  Player 2 Button 1
+        Player 1 Button 2  23    a  Player 2 Button 2
+        Player 1 Button 3  24    b  Player 2 Button 3
+                       NC  25    c  NC
+                       NC  26    d  NC
+                      GND  27    e  GND
+                      GND  28    f  GND
+
+
+B-Board
+
+CAPCOM 93646B-4  \  There are small variations between board revisions; changed
+CAPCOM 93646B-6   | PALs, alternative location for an EEPROM, extra connectors
+CAPCOM 93646B-7  /  (CN9) and other diferences also.
+ |-------------------------------------------------------------------------|
+ |       CN3|-----------------------|     |-----------------------|CN4     |
+ |          |-----------------------|     |-----------------------|        |
+|-|      CN5|-----------------------|     |-----------------------|CN6     |
+| |                                                                        |
+| |  ROM1.1A                 ROM11.1E                                      |
+| |           93C46                        ROM13.1J        ROM17.1M        |
+| |  ROM2.2A                 ROM12.2E                                      |
+| |                                        ROM14.2J        ROM18.2M        |
+| |CN7                                                                     |
+| |                                        ROM15.3J        ROM19.3M        |
+| |                                                                        |
+| | 8464     |---------|   |---------|     ROM16.4J        ROM20.4M        |
+| |          |CAPCOM   |   |CAPCOM   |                                     |
+| | 8464 CN9 |DL-1827  |   |DL-1525  |                                     |
+|-|          |CIF      |   |SPA      |                                     |
+ |           |(QFP160) |   |(QFP208) |                                     |
+ |           |---------|   |---------|                                     |
+ |                                                                         |
+ |                                                                         |
+ |                                                                         |
+ |   ROM3.6A        ROM7.6D     |---------|   |---------|   |---------|    |
+ |                              |CAPCOM   |   |CAPCOM   |   |CAPCOM   |    |
+ |                              |DL-1727  |   |DL-2027  |   |DL-1927  |    |
+ |   ROM4.7A        ROM8.7D     |MIF      |   |CGD      |   |CGA      |    |
+ |                              |(QFP160) |   |(QFP120) |   |(QFP120) |    |
+ |                              |---------|   |---------|   |---------|    |
+ |   ROM5.8A        ROM9.8D                                                |
+ |                                                                         |
+ |                                    PAL1    PAL3               BATTERY   |
+ |   ROM6.9A        ROM10.9D                                               |
+ |                                    PAL2                                 |
+ |                    CN1                         CN2                      |
+ |          |-----------------------|     |-----------------------|        |
+ |          |-----------------------|     |-----------------------|        |
+ |-------------------------------------------------------------------------|
+Notes:
+      8464      - Fujitsu MB8464A-10L 8K x8 SRAM (SOP28)
+      93C46     - Atmel 93C46 EEPROM (SOIC8, not populated on revision -7 board)
+      CN1/2/3/4 - 96 Pin Connectors for connection to lower A-board (connectors below PCB)
+      CN5/6     - 96 Pin Connectors for connection to optional SIMM ROM board used on some games
+                  (connectors above PCB)
+      CN7       - 64 Pin Connector for connection of optional Communication Board
+      PAL1      - MMI PAL16L8 (DIP20, stamped 'BGSB1')
+      PAL2      - MMI PAL16L8 (DIP20, stamped 'BGSB2')
+      PAL3      - MMI PAL16L8 (DIP20, stamped 'BGSB3F' on rev -4 board, stamped 'BGSB3G' on rev -7
+                  board)
+
+      Custom IC's -
+                   DL-1827 CIF (QFP160)
+                   DL-1525 SPA (QFP208)
+                   DL-1727 MIF (QFP120)
+                   DL-2027 CGD (QFP120)
+                   DL-1927 CGA (QFP120)
+
+      ROMs -
+            Note, the ROM names shown on the above layout are generic. Each EPROM on every game has
+            a unique sticker attached to it. All of the MASKROMs are also stamped with unique names
+            for each game. The amount of EPROMs/MASKROMs used also differs per game, depending on
+            requirements. The PCB is wired for certain sized ROMs by default, but via jumpers they
+            can be reconfigured to allow accepting other sized devices.
+
+                                                                              Some example ROM names
+                                                                      (see the source below for full name details)
+                      Device     Device                                  /-----------------------------\
+            Location  Type       Size                    Use                XMen COTA    Puzz Loop 2
+            ---------------------------------------------------------------------------------------------
+            1.1A      27C010     1M                      Sound Program   XMN_01A.1A     PL2_01.1A
+            2.2A      27C010     1M                      Sound Program   XMN_02A.2A     -
+            3.6A      27C4096    4M                      Main Program    XMNE_03E.6A    PL2J_03A.6A
+            4.7A      27C4096    4M                      Main Program    XMNE_04E.7A    PL2J_04A.7A
+            5.8A      27C4096    4M                      Main Program    XMNE_05A.8A    PL2J_05A.8A
+            6.9A      27C4096    4M                      Main Program    XMNE_06A.9A    PL2J_06A.9A
+            7.6D      27C4096    4M                      Main Program    XMNE_07A.6D    -
+            8.7D      27C4096    4M                      Main Program    XMNE_08A.7D    -
+            9.8D      27C4096    4M                      Main Program    XMNE_09A.8D    -
+            10.9D     27C4096    4M                      Main Program    XMNE_010A.9D   -
+            11.1E     HN624316 (16M) or KM23C32000 (32M) QSound Samples  XMN-11M.1E
+            12.2E     HN624316 (16M) or KM23C32000 (32M) QSound Samples  XMN-12M.2E     /
+            13.1J     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-13M.1J     |
+            14.2J     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-14M.2J     |
+            15.3J     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-15M.3J     |
+            16.4J     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-16M.4J     |  Located on SIMMs
+            17.1M     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-17M.1M     |
+            18.2M     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-18M.2M     |
+            19.3M     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-19M.3M     |
+            20.4M     HN624316 (16M) or KM23C32000 (32M) Graphics        XMN-20M.4M     /
+
+	    Capcom have a unique ROM naming system for CPS-2 games as mentioned above. A typical ROM
+	    name is 'SSFA 03B' and is clearly printed on the sticker of each ROM. Each part of the
+	    label name is detailed below...
+
+            SSF -  The game title shortened to 3 characters, this game is 'Super Street Fighter 2'.
+            A   -  The region of the game, in this case 'Asia'. Known regions are...
+                   J = Japan	      E = ETC (World and Euro)
+                   U = USA            A = Asia
+                   H = Hispanic       N = Oceania
+                   B = Brazil         O = Found in yellow rent versions
+
+            03  -  Under each DIP socket is a large white number. The number on the sticker matches
+                   this number as a location identifier.
+
+            B   -  This is the revision of the ROM software. When a game is first released the
+                   initial revision will not be noted on the label. During production, the software
+                   may be updated and the sticker will then have the letter 'A/B/C/D/E' etc
+                   appended to the end to denote a changed revision of the software for that particular
+                   ROM. From the example we can see this ROM is the 3rd revision since release.
+                   When the software is revised, not all ROMs have to be updated, in many cases only
+                   some of the ROMs have a revision update, and the other ROMs will remain the same.
+
+
+ROM Daughterboards -
+                    As well as the 3 daughter boards shown below, there are other variations that
+                    exist, but due to lack of information they are not documented here.
+
+CAPCOM 93661G-2
+|-------------------------------------------------------------------------|
+|                                                                         |
+|          |-----------------------|     |-----------------------|        |
+|       CN1|-----------------------|     |-----------------------|CN2     |
+|                                                                         |
+|                                                                         |
+| PAL.1A     ROMQ1.1C      ROMQ5.1D      ROM21.1E      ROM25.1F           |
+| PAL.2A                                                                  |
+|            ROMQ2.2C      ROMQ6.2D      ROM22.2E      ROM26.2F           |
+|  93C46                                                                  |
+|            ROMQ3.4C      ROMQ7.4D      ROM23.4E      ROM27.4F           |
+|                                                                         |
+| Jumpers    ROMQ4.5C      ROMQ8.5D      ROM24.5E      ROM28.5F           |
+|                                                                         |
+|                                                                         |
+|-------------------------------------------------------------------------|
+Notes:
+      This board is known to be used with some versions of "Street Fighter Zero 2" but not all.
+      When it is used with this game, only 4 graphics ROMs are on this board (ROM21 to ROM24),
+      all the others are on the B-board.
+
+      CN1/2    - 96 Pin Connectors for connection to B-Board (the connectors are below the PCB)
+      PAL.1A   - MMI PAL16L8 (not populated)
+      PAL.2A   - MMI PAL16L8 (DIP20, stamped 'BGSG2B')
+      93C46    - Atmel 93C46 EEPROM (SOIC8, not populated)
+      Jumpers  - 16 Jumper pads
+      ROM*     - ROMQ1 to ROMQ8 are HN62344
+	         ROM21 to ROM28 are HN624116
+
+CAPCOM 93646C-3
+|-------------------------------------------------------------------------|
+|            93C46                                                        |
+|          |-----------------------|     |-----------------------|        |
+|       CN1|-----------------------|     |-----------------------|CN2     |
+|                                                                         |
+|                                                                         |
+|                ROM59.4D       ROM69.4J       ROM79.4M       ROM89.4P    |
+|                                                                         |
+|                ROM60.5D       ROM70.5J       ROM80.5M       ROM90.5P    |
+|                                                                         |
+|  ROM51.6A      ROM61.6D       ROM71.6J       ROM81.6M       ROM91.6P    |
+|                                                                         |
+|  ROM52.7A      ROM62.7D       ROM72.7J       ROM82.7M       ROM92.7P    |
+|                                                                         |
+|  ROM53.8A      ROM63.8D       ROM73.8J       ROM83.8M       ROM93.8P    |
+|                                                                         |
+|  ROM54.9A      ROM64.9D       ROM74.9J       ROM85.9M       ROM94.9P    |
+|                                                                         |
+|  ROM55.10A     ROM65.10D      ROM75.10J      ROM85.10M      ROM95.10P   |
+|                                                                         |
+|  ROM56.11A     ROM66.11D      ROM76.11J      ROM86.11M      ROM96.11P   |
+|                                                                         |
+|  ROM57.12A     ROM67.12D      ROM77.12J      ROM87.12M      ROM97.12P   |
+|                                                                         |
+|  ROM58.13A     ROM68.13D      ROM78.13J      ROM88.13M      ROM98.13P   |
+|                                                                         |
+|-------------------------------------------------------------------------|
+Notes:
+      This board is known to be used with some yellow rent versions of games but not all. When
+      it is used, no sound or graphics ROMs are used on the B-board.
+
+      CN1/2 - 96 Pin Connectors for connection to B-Board (the connectors are below the PCB)
+      93C46 - Atmel 93C46 EEPROM
+      ROM*  - All sockets are for 27C4096 devices (ROM51 to ROM58 are for sound and
+	      ROM59 to ROM98 are for graphics.
+
+
+SIMM ROM Board
+
+CAPCOM 00716C-3
+|-------------------------------------------------------------------------|
+|                                                                         |
+|          |-----------------------|     |-----------------------|        |
+|       CN1|-----------------------|     |-----------------------|CN2     |
+|                                                                         |
+|                                                                         |
+|                                                                         |
+|             SIMM5                                SIMM1                  |
+|                                                                         |
+|                                                  SIMM2                  |
+|                                                                         |
+|                                                  SIMM3                  |
+|                                                                         |
+|             SIMM6            M51953              SIMM4                  |
+|                                                                         |
+|-------------------------------------------------------------------------|
+Notes:
+      M5195B          - Mitsubishi Electric Corp. M5195B Voltage Detection & System Reset IC (SIP5)
+      CN1/2           - 96 Pin Connectors for connection to B-Board (the connectors are below the
+                        PCB)
+      SIMM1/2/3/4/5/6 - Generic 72-pin SIMM sockets (as used on early to mid 90's PC motherboards)
+                        The SIMMs themselves are custom. They're not RAM sticks, but instead hold
+                        16MBit FlashROMs of type Fujitsu 29F016 TSOP48. Some are standard pinout,
+                        some are reverse pinout. This is done to allow for easy PCB wiring on the
+                        SIMMs.
+                        So far, only SIMMs 1, 3 & 5 are used. 1 & 3 are single sided, have 4
+                        FlashROMs on them and hold graphics data that was previously located on the
+                        B-Board at locations 1J-4J & 1M-4M.
+                        SIMM 5 & 6 are double-sided (they can be populated with up to 8x 16MBit
+                        FlashROMs), but only have 2 FlashROMs on them and hold the QSound samples
+                        that were previously located on the B-Board at locations 1E & 2E.
+                        So far, the data held on the SIMMs is equal to or less than the ROM
+                        capacity of the sockets on the B-Board, so the use of SIMMs is a mystery.
+                        Some possible explanations are their use is a cost-cutting measure, or
+                        they're more easily sourced from the supplier rather than using older
+                        42-pin MASKROMs. Another possibility is they are being re-used from
+                        left-over CPS3 boards, since they're identical and are easily
+                        re-programmable. In comparision, the GFX SIMMs are the same type as used in
+                        CPS3 boards for the main program and the QSound SIMMs are the same type as
+                        used in CPS3 boards for the GFX data, but are only populated with 2
+                        FlashROMs.
+
+                        Example SIMM Layout -
+                          |----------------------------------------------------|
+                          |                                                    |
+                          |   |-------|   |-------|   |-------|   |-------|    |
+                          |   |Flash_A|   |Flash_B|   |Flash_C|   |Flash_D|    |
+                          |   |-------|   |-------|   |-------|   |-------|    |
+                          |-                                                   |
+                           |-------------------------/\------------------------|
+                           Notes:
+                                  Flash_A & Flash_C and regular pinout (Fujitsu 29F016A-90PFTN)
+                                  Flash_B & Flash_D are reverse pinout (Fujitsu 29F016A-90PFTR)
+                                  and are mounted upside down also so that pin1 lines up with
+                                  the normal pinout of FlashROMs A & C.
+                                  For the QSound SIMMs, the 2 FlashROMs are populated at location D
+                                  and C only. C is located on the other side of the SIMM also.
+
+
+Communication Board
+
+TOURNAMENT CAPCOM 93656D-3
+|-------|-|--|-|----------------------------------------------------------|
+|       |-|  |-|                                                 BATTERY  |
+|      SCN1  SCN2          SCN3                                           |
+|                                                                         |
+|                                                                         |
+|                                                                 8464    |
+|    MAX232                                                               |
+|                                                                         |
+|    PAL                                                                  |
+|                                                                         |
+|                                                                         |
+|    D71051C                                                              |
+|                                                                         |
+|                                         93C46                           |
+|                                                                         |
+|-----------------------------------------|              CN1              |
+                                          |-------------------------------|
+Notes:
+      There is sufficient space next to the B-Board to enable this board to plug into the B-Board
+      into CN7 and still be fully enclosed inside the housing. The housing has holes in it to allow
+      the TX, RX and Register connectors to be accessed without opening the case.
+      This board is known to be used with "Super Street Fighter 2 : The Tournament Battle" and some
+      yellow rent boards also have this daughter board attached.
+
+      SCN1    - Network Data IN
+      SCN2    - Network Data OUT
+      SCN3    - 8 Pin location for a 'Register' device, not populated (possibly for an online
+                register of high scores etc)
+      CN1     - 64 Pin Connector for connection to B-Board
+      8464    - Fujitsu MB8464A-10L 8K x8 SRAM (SOP28)
+      MAX232  - Maxim MAX232CPE Dual EIA-232 Driver/Receiver (DIP16)
+      PAL1    - MMI PAL16L8 (DIP20, stamped 'SFSRD')
+      D71051C - NEC uPD71051C Serial Control Unit (DIP28)
+      93C46   - Atmel 93C46 EEPROM (SOIC8)
+      BATTERY - This is a location for a battery but it is not populated
+
 
 
     Driver by Paul Leaman (paul@vortexcomputing.demon.co.uk)
@@ -6628,6 +7082,37 @@ ROM_START( xmvsfb )
 	ROM_LOAD16_WORD_SWAP( "xvs.12",   0x200000, 0x200000, CRC(7b11e460) SHA1(a581c84acaaf0ce056841c15a6f36889e88be68d) )
 ROM_END
 
+ROM_START( puzloop2 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "pl2j_03a.6a", 0x000000, 0x80000, CRC(0a751bd0) SHA1(a5a0b60387aacdafdf46ecd1acd764c9cb086b90) )
+	ROM_LOAD16_WORD_SWAP( "pl2j_04a.7a", 0x080000, 0x80000, CRC(c3f72afe) SHA1(597a302e4bba50193c53f239e715962fcc4e3e5e) )
+	ROM_LOAD16_WORD_SWAP( "pl2j_05a.8a", 0x100000, 0x80000, CRC(6ea9dbfc) SHA1(c3065e02516755e8b94a741dd2ab960c96d0ff8c) )
+	ROM_LOAD16_WORD_SWAP( "pl2j_06a.9a", 0x180000, 0x80000, CRC(0f14848d) SHA1(94a3ee00d65cd9a310b3a330e2c37467b5863c64) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "pl2jx.03a", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
+	ROMX_LOAD( "pl2_1-c.simm1",   0x0000000, 0x200000, CRC(a2db1507) SHA1(61c84c8d698a846d54a571b5f7b4824e22136db7) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_1-d.simm1",   0x0000001, 0x200000, CRC(7e80ff8e) SHA1(afcebfa995ace8b8973e75f1589980c5c4535bca) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_1-a.simm1",   0x0000002, 0x200000, CRC(cd93e6ed) SHA1(e4afce48fe481d8291ed2475d5de446afad65351) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_1-b.simm1",   0x0000003, 0x200000, CRC(137b13a7) SHA1(a1ca1bc8699ddfc54d5de1b39a9db9a5ac8b12e5) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_3-c.simm3",   0x0000004, 0x200000, CRC(a62712c3) SHA1(2abfe0209e188010a0ae969f0d9eb7d28820b3f2) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_3-d.simm3",   0x0000005, 0x200000, CRC(0f52bbca) SHA1(e76c29d445062f5e16d06bdc4ab44640ba35aaac) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_3-a.simm3",   0x0000006, 0x200000, CRC(83fef284) SHA1(ef4429f54c456d6485a7d642d49dffafef4435fe) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+	ROMX_LOAD( "pl2_3-b.simm3",   0x0000007, 0x200000, CRC(b60c9f8e) SHA1(40c7985e04463fb2bd59b3bb6aa5897328d37ff3) , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "pl2_01.1a",   0x00000, 0x08000, CRC(35697569) SHA1(13718923cffb9ec53cef9e22d8875370b5f3dd74) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "pl2_5-a.simm5",   0x000000, 0x200000, CRC(85d8fbe8) SHA1(c19d5e9084d07e610379b6e1b6be7bdf0b9b7f7f) ) // ROM on a simm
+	ROM_LOAD16_WORD_SWAP( "pl2_5-b.simm5",   0x200000, 0x200000, CRC(1ed62584) SHA1(28411f610f48cca6424a2d53e2a4ac691e826317) ) // ROM on a simm
+ROM_END
+
+
 GAME( 1993, ssf2,     0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Super Street Fighter 2: The New Challengers (World 930911)" )
 GAME( 1993, ssf2u,    ssf2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Super Street Fighter 2: The New Challengers (US 930911)" )
 GAME( 1993, ssf2a,    ssf2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Super Street Fighter 2: The New Challengers (Asia 931005)" )
@@ -6811,3 +7296,7 @@ GAMEX(2000, 1944j,    1944,    cps2, 19xx,    cps2, ROT0,   "Capcom, supported b
 GAME( 2001, progear,  0,       cps2, sgemf,   cps2, ROT0,   "Capcom, supported by Cave", "Progear (US 010117)" )
 GAME( 2001, progearj, progear, cps2, sgemf,   cps2, ROT0,   "Capcom, supported by Cave", "Progear no Arashi (Japan 010117)" )
 GAMEX(2001, progeara, progear, cps2, sgemf,   cps2, ROT0,   "Capcom, supported by Cave", "Progear (Asia 010117)", GAME_NOT_WORKING )
+
+/* Games released on CPS-2 hardware by Mitchell */
+
+GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )

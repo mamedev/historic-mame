@@ -400,7 +400,7 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6509_win_layout;				break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->p = (void *) construct_map_m6509_mem;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6509_mem;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6509"); break;

@@ -147,7 +147,7 @@ int pbillian_sh_start(const struct MachineSound *msound)
 	mixer_set_name(channel,"Samples");
 
 	/* convert 8-bit unsigned samples to 8-bit signed */
-	samplebuf = memory_region(REGION_SOUND1);
+	samplebuf = (INT8 *)memory_region(REGION_SOUND1);
 	for (i = 0;i < memory_region_length(REGION_SOUND1);i++)
 		samplebuf[i] ^= 0x80;
 

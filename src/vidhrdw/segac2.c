@@ -720,6 +720,7 @@ static void vdp_control_w(int data)
 
 static void vdp_register_w(int data)
 {
+	int scrwidth;
 	static const UINT8 is_important[32] = { 0,0,1,1,1,1,0,1,0,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 	UINT8 regnum = (data & 0x1f00) >> 8; /* ---R RRRR ---- ---- */
@@ -772,10 +773,29 @@ static void vdp_register_w(int data)
 		}
 
 		case 0x0c: /* video modes */
-			/*if (!(regdat & 1))
-				usrintf_showmessage("Video width = 256!");*/
-			/*This will change the visible area too...*/
-			window_width = regdat & 1;/*maybe bit 7?*/
+			/* HDG: taken from mess/machine/genesis.c */
+			switch (regdat&0x81)
+			{
+				case 0x00: // 32 cell
+					scrwidth=32;
+					window_width=32;
+				break;
+				case 0x01: // 40 cell corrupted
+					scrwidth=40;
+					window_width=64;
+				break;
+				case 0x80: // illegal!
+					scrwidth=40;
+					window_width=64;
+				break;
+				case 0x81: // 40 cell
+					scrwidth=40;
+					window_width=64;
+				break;
+			}
+			set_visible_area(0, scrwidth*8-1,
+				Machine->visible_area.min_y,
+				Machine->visible_area.max_y);
 			break;
 
 		case 0x0d: /* HScroll Base */
@@ -1095,7 +1115,7 @@ static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles)
 	for (column = 0; column < 40; column++)
 	{
 		/* determine the base of the tilemap row */
-		int temp = (line / 8) * ((window_width) ? 64 : 32) + column;
+		int temp = (line / 8) * window_width + column;
 		int tilebase = scrollbase + 2 * temp;
 
 		/* get the tile info */

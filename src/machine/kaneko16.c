@@ -11,6 +11,8 @@
 
 #include "kanekotb.h"	// TOYBOX MCU trojaning results
 
+#define MCU_RESPONSE(d) memcpy(&mcu_ram[mcu_offset], d, sizeof(d))
+
 data16_t *mcu_ram;
 
 /***************************************************************************
@@ -444,6 +446,7 @@ extern const struct GameDriver driver_gtmr;
 extern const struct GameDriver driver_gtmre;
 extern const struct GameDriver driver_gtmrusa;
 extern const struct GameDriver driver_gtmr2;
+extern const struct GameDriver driver_gtmr2u;
 extern const struct GameDriver driver_gtmr2a;
 
 void toybox_mcu_run(void)
@@ -462,10 +465,21 @@ void toybox_mcu_run(void)
 		 (Machine->gamedrv == &driver_gtmre)   ||
 		 (Machine->gamedrv == &driver_gtmrusa) ||
 		 (Machine->gamedrv == &driver_gtmr2)   ||
+		 (Machine->gamedrv == &driver_gtmr2u)  ||
 		 (Machine->gamedrv == &driver_gtmr2a) )
 	{
 		gtmr_mcu_run();
 	}
+}
+
+
+/*
+	bonkadv and bloodwar test bit 0
+*/
+READ16_HANDLER( toybox_mcu_status_r )
+{
+	logerror("CPU #%d (PC=%06X) : read MCU status\n", cpu_getactivecpu(), activecpu_get_previouspc());
+	return 0;
 }
 
 
@@ -479,7 +493,7 @@ void bloodwar_mcu_run(void)
 	data16_t mcu_offset		=	mcu_ram[0x0012/2] / 2;
 	data16_t mcu_data		=	mcu_ram[0x0014/2];
 
-	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+	logerror("CPU #0 (PC=%06X) : MCU executed command: %04X %04X %04X\n", activecpu_get_pc(), mcu_command, mcu_offset*2, mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -536,35 +550,37 @@ void bloodwar_mcu_run(void)
 		{
 			switch(mcu_data)
 			{
-				// unknown data
-				case 0x01:
-				case 0x02:
-				case 0x03:
-				case 0x04:
-				case 0x05:
-				case 0x06:
-				case 0x07:
-				case 0x08:
-				case 0x09:
+				// unknown data: 1 per warrior
+				case 0x01: //MCU_RESPONSE(bloodwar_mcu_4_01); break; // Warrior 1
+				case 0x02: //MCU_RESPONSE(bloodwar_mcu_4_02); break; // Warrior 2
+				case 0x03: //MCU_RESPONSE(bloodwar_mcu_4_03); break; // Warrior 3
+				case 0x04: //MCU_RESPONSE(bloodwar_mcu_4_04); break; // Warrior 4
+				case 0x05: //MCU_RESPONSE(bloodwar_mcu_4_05); break; // Warrior 5
+				case 0x06: //MCU_RESPONSE(bloodwar_mcu_4_06); break; // Warrior 6
+				case 0x07: //MCU_RESPONSE(bloodwar_mcu_4_07); break; // Warrior 7
+				case 0x08: //MCU_RESPONSE(bloodwar_mcu_4_08); break; // Warrior 8
+				case 0x09: //MCU_RESPONSE(bloodwar_mcu_4_09); break; // Warrior 9
 				break;
 
-				// palette data
-				case 0x0a:
-				case 0x0b:
-				case 0x0c:
-				case 0x0d:
-				case 0x0e:
-				case 0x0f:
-				case 0x10:
-				case 0x11:
-				case 0x12:
-				case 0x13:
-				case 0x14:
-				case 0x15:
-				case 0x16:
-				case 0x17:
-				case 0x18:
-				case 0x19:
+				// palette data: 1 per warrior and player
+				case 0x0a: //MCU_RESPONSE(bloodwar_mcu_4_0a); break; // Warrior 1 Player 1
+				case 0x0b: //MCU_RESPONSE(bloodwar_mcu_4_0b); break; // Warrior 1 Player 2
+				case 0x0c: //MCU_RESPONSE(bloodwar_mcu_4_0c); break; // Warrior 5 Player 1
+				case 0x0d: //MCU_RESPONSE(bloodwar_mcu_4_0d); break; // Warrior 5 Player 2
+				case 0x0e: //MCU_RESPONSE(bloodwar_mcu_4_0e); break; // Warrior 4 Player 2
+				case 0x0f: //MCU_RESPONSE(bloodwar_mcu_4_0f); break; // Warrior 4 Player 1
+				case 0x10: //MCU_RESPONSE(bloodwar_mcu_4_10); break; // Warrior 6 Player 1
+				case 0x11: //MCU_RESPONSE(bloodwar_mcu_4_11); break; // Warrior 6 Player 2
+				case 0x12: //MCU_RESPONSE(bloodwar_mcu_4_12); break; // Warrior 9 Player 1
+				case 0x13: //MCU_RESPONSE(bloodwar_mcu_4_13); break; // Warrior 9 Player 2
+				case 0x14: //MCU_RESPONSE(bloodwar_mcu_4_14); break; // Warrior 7 Player 1
+				case 0x15: //MCU_RESPONSE(bloodwar_mcu_4_15); break; // Warrior 7 Player 2
+				case 0x16: //MCU_RESPONSE(bloodwar_mcu_4_16); break; // Warrior 8 Player 1
+				case 0x17: //MCU_RESPONSE(bloodwar_mcu_4_17); break; // Warrior 8 Player 2
+				case 0x18: //MCU_RESPONSE(bloodwar_mcu_4_18); break; // Warrior 2 Player 2
+				case 0x19: //MCU_RESPONSE(bloodwar_mcu_4_19); break; // Warrior 2 Player 1
+				case 0x1a: //MCU_RESPONSE(bloodwar_mcu_4_1a); break; // Warrior 3 Player 1
+				case 0x1b: //MCU_RESPONSE(bloodwar_mcu_4_1b); break; // Warrior 3 Player 2
 				{
 					mcu_ram[mcu_offset + 0] = 0x0001;	// number of palettes (>=1)
 					// palette data follows (each palette is 0x200 byes long)
@@ -572,32 +588,32 @@ void bloodwar_mcu_run(void)
 				}
 				break;
 
-				// tilemap data
-				case 0x1c:
-				case 0x1d:
-				case 0x1e:
-				case 0x1f:
-				case 0x20:
-				case 0x21:
-				case 0x22:
-				case 0x23:
-				case 0x24:
+				// tilemap data: 1 per warrior
+				case 0x1c: //MCU_RESPONSE(bloodwar_mcu_4_1c); break; // Warrior 8
+				case 0x1d: //MCU_RESPONSE(bloodwar_mcu_4_1d); break; // Warrior 2
+				case 0x1e: //MCU_RESPONSE(bloodwar_mcu_4_1e); break; // Warrior 3
+				case 0x1f: //MCU_RESPONSE(bloodwar_mcu_4_1f); break; // Warrior 5
+				case 0x20: //MCU_RESPONSE(bloodwar_mcu_4_20); break; // Warrior 4
+				case 0x21: //MCU_RESPONSE(bloodwar_mcu_4_21); break; // Warrior 6
+				case 0x22: //MCU_RESPONSE(bloodwar_mcu_4_22); break; // Warrior 1
+				case 0x23: //MCU_RESPONSE(bloodwar_mcu_4_23); break; // Warrior 9
+				case 0x24: //MCU_RESPONSE(bloodwar_mcu_4_24); break; // Warrior 7
 				{
 					// tile data (ff means no tiles) followed by routine index
 					mcu_ram[mcu_offset + 0] = 0xff00;
 				}
 				break;
 
-				// unknown long
-				case 0x25:
-				case 0x26:
-				case 0x27:
-				case 0x28:
-				case 0x29:
-				case 0x2a:
-				case 0x2b:
-				case 0x2c:
-				case 0x2d:
+				// unknown long: 1 per warrior
+				case 0x25: //MCU_RESPONSE(bloodwar_mcu_4_25); break; // Warrior 1
+				case 0x26: //MCU_RESPONSE(bloodwar_mcu_4_26); break; // Warrior 2
+				case 0x27: //MCU_RESPONSE(bloodwar_mcu_4_27); break; // Warrior 3
+				case 0x28: //MCU_RESPONSE(bloodwar_mcu_4_28); break; // Warrior 4
+				case 0x29: //MCU_RESPONSE(bloodwar_mcu_4_29); break; // Warrior 5
+				case 0x2a: //MCU_RESPONSE(bloodwar_mcu_4_2a); break; // Warrior 6
+				case 0x2b: //MCU_RESPONSE(bloodwar_mcu_4_2b); break; // Warrior 7
+				case 0x2c: //MCU_RESPONSE(bloodwar_mcu_4_2c); break; // Warrior 8
+				case 0x2d: //MCU_RESPONSE(bloodwar_mcu_4_2d); break; // Warrior 9
 				{
 					mcu_ram[mcu_offset + 0] = 0x0000;
 					mcu_ram[mcu_offset + 1] = 0x0000;
@@ -639,7 +655,7 @@ void bonkadv_mcu_run(void)
 			}
 			else
 				memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
-			logerror("PC=%06X : MCU executed command: %04X %04X (load NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+			logerror("PC=%06X : MCU executed command: %04X %04X (load NVRAM settings)\n", activecpu_get_pc(), mcu_command, mcu_offset*2);
 		}
 		break;
 
@@ -651,76 +667,76 @@ void bonkadv_mcu_run(void)
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);
 			}
-			logerror("PC=%06X : MCU executed command: %04X %04X (save NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+			logerror("PC=%06X : MCU executed command: %04X %04X (save NVRAM settings)\n", activecpu_get_pc(), mcu_command, mcu_offset*2);
 		}
 		break;
 
 		case 0x43:	// Restore Default Data Set
 		{
 			memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
-			logerror("PC=%06X : MCU executed command: %04X %04X (restore default settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+			logerror("PC=%06X : MCU executed command: %04X %04X (restore default settings)\n", activecpu_get_pc(), mcu_command, mcu_offset*2);
 		}
 		break;
 
 		case 0x03:	// DSW
 		{
 			mcu_ram[mcu_offset] = readinputport(4);
-			logerror("PC=%06X : MCU executed command: %04X %04X (read DSW)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+			logerror("PC=%06X : MCU executed command: %04X %04X (read DSW)\n", activecpu_get_pc(), mcu_command, mcu_offset*2);
 		}
 		break;
 
 		case 0x04:	// Protection
 		{
-			logerror("PC=%06X : MCU executed command: %04X %04X %04X",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+			logerror("PC=%06X : MCU executed command: %04X %04X %04X\n", activecpu_get_pc(), mcu_command, mcu_offset*2, mcu_data);
 
 			switch(mcu_data)
 			{
 				// static, in this order, at boot/reset
-				case 0x34: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_34,sizeof(bonkadv_mcu_4_34)); logerror("\n"); break;
-				case 0x30: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_30,sizeof(bonkadv_mcu_4_30)); logerror("\n"); break;
-				case 0x31: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_31,sizeof(bonkadv_mcu_4_31)); logerror("\n"); break;
-				case 0x32: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_32,sizeof(bonkadv_mcu_4_32)); logerror("\n"); break;
-				case 0x33: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_33,sizeof(bonkadv_mcu_4_33)); logerror("\n"); break;
+				case 0x34: MCU_RESPONSE(bonkadv_mcu_4_34); break;
+				case 0x30: MCU_RESPONSE(bonkadv_mcu_4_30); break;
+				case 0x31: MCU_RESPONSE(bonkadv_mcu_4_31); break;
+				case 0x32: MCU_RESPONSE(bonkadv_mcu_4_32); break;
+				case 0x33: MCU_RESPONSE(bonkadv_mcu_4_33); break;
 
 				// dynamic, per-level (29), in level order
-				case 0x00: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_00,sizeof(bonkadv_mcu_4_00)); logerror("\n"); break;
-				case 0x02: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_02,sizeof(bonkadv_mcu_4_02)); logerror("\n"); break;
-				case 0x01: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_01,sizeof(bonkadv_mcu_4_01)); logerror("\n"); break;
-				case 0x05: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_05,sizeof(bonkadv_mcu_4_05)); logerror("\n"); break;
-				case 0x07: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_07,sizeof(bonkadv_mcu_4_07)); logerror("\n"); break;
-				case 0x06: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_06,sizeof(bonkadv_mcu_4_06)); logerror("\n"); break;
-				case 0x09: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_09,sizeof(bonkadv_mcu_4_09)); logerror("\n"); break;
-				case 0x0D: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0D,sizeof(bonkadv_mcu_4_0D)); logerror("\n"); break;
-				case 0x03: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_03,sizeof(bonkadv_mcu_4_03)); logerror("\n"); break;
-				case 0x08: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_08,sizeof(bonkadv_mcu_4_08)); logerror("\n"); break;
-				case 0x04: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_04,sizeof(bonkadv_mcu_4_04)); logerror("\n"); break;
-				case 0x0C: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0C,sizeof(bonkadv_mcu_4_0C)); logerror("\n"); break;
-				case 0x0A: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0A,sizeof(bonkadv_mcu_4_0A)); logerror("\n"); break;
-				case 0x0B: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0B,sizeof(bonkadv_mcu_4_0B)); logerror("\n"); break;
-				case 0x10: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_10,sizeof(bonkadv_mcu_4_10)); logerror("\n"); break;
-				case 0x0E: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0E,sizeof(bonkadv_mcu_4_0E)); logerror("\n"); break;
-				case 0x13: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_13,sizeof(bonkadv_mcu_4_13)); logerror("\n"); break;
-				case 0x0F: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0F,sizeof(bonkadv_mcu_4_0F)); logerror("\n"); break;
-				case 0x11: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_11,sizeof(bonkadv_mcu_4_11)); logerror("\n"); break;
-				case 0x14: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_14,sizeof(bonkadv_mcu_4_14)); logerror("\n"); break;
-				case 0x12: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_12,sizeof(bonkadv_mcu_4_12)); logerror("\n"); break;
-				case 0x17: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_17,sizeof(bonkadv_mcu_4_17)); logerror("\n"); break;
-				case 0x1A: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1A,sizeof(bonkadv_mcu_4_1A)); logerror("\n"); break;
-				case 0x15: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_15,sizeof(bonkadv_mcu_4_15)); logerror("\n"); break;
-				case 0x18: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_18,sizeof(bonkadv_mcu_4_18)); logerror("\n"); break;
-				case 0x16: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_16,sizeof(bonkadv_mcu_4_16)); logerror("\n"); break;
-				case 0x19: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_19,sizeof(bonkadv_mcu_4_19)); logerror("\n"); break;
-				case 0x1B: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1B,sizeof(bonkadv_mcu_4_1B)); logerror("\n"); break;
-				case 0x1C: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1C,sizeof(bonkadv_mcu_4_1C)); logerror("\n"); break;
+				case 0x00: MCU_RESPONSE(bonkadv_mcu_4_00); break;
+				case 0x02: MCU_RESPONSE(bonkadv_mcu_4_02); break;
+				case 0x01: MCU_RESPONSE(bonkadv_mcu_4_01); break;
+				case 0x05: MCU_RESPONSE(bonkadv_mcu_4_05); break;
+				case 0x07: MCU_RESPONSE(bonkadv_mcu_4_07); break;
+				case 0x06: MCU_RESPONSE(bonkadv_mcu_4_06); break;
+				case 0x09: MCU_RESPONSE(bonkadv_mcu_4_09); break;
+				case 0x0D: MCU_RESPONSE(bonkadv_mcu_4_0D); break;
+				case 0x03: MCU_RESPONSE(bonkadv_mcu_4_03); break;
+				case 0x08: MCU_RESPONSE(bonkadv_mcu_4_08); break;
+				case 0x04: MCU_RESPONSE(bonkadv_mcu_4_04); break;
+				case 0x0C: MCU_RESPONSE(bonkadv_mcu_4_0C); break;
+				case 0x0A: MCU_RESPONSE(bonkadv_mcu_4_0A); break;
+				case 0x0B: MCU_RESPONSE(bonkadv_mcu_4_0B); break;
+				case 0x10: MCU_RESPONSE(bonkadv_mcu_4_10); break;
+				case 0x0E: MCU_RESPONSE(bonkadv_mcu_4_0E); break;
+				case 0x13: MCU_RESPONSE(bonkadv_mcu_4_13); break;
+				case 0x0F: MCU_RESPONSE(bonkadv_mcu_4_0F); break;
+				case 0x11: MCU_RESPONSE(bonkadv_mcu_4_11); break;
+				case 0x14: MCU_RESPONSE(bonkadv_mcu_4_14); break;
+				case 0x12: MCU_RESPONSE(bonkadv_mcu_4_12); break;
+				case 0x17: MCU_RESPONSE(bonkadv_mcu_4_17); break;
+				case 0x1A: MCU_RESPONSE(bonkadv_mcu_4_1A); break;
+				case 0x15: MCU_RESPONSE(bonkadv_mcu_4_15); break;
+				case 0x18: MCU_RESPONSE(bonkadv_mcu_4_18); break;
+				case 0x16: MCU_RESPONSE(bonkadv_mcu_4_16); break;
+				case 0x19: MCU_RESPONSE(bonkadv_mcu_4_19); break;
+				case 0x1B: MCU_RESPONSE(bonkadv_mcu_4_1B); break;
+				case 0x1C: MCU_RESPONSE(bonkadv_mcu_4_1C); break;
 
 				default:
-					logerror(" (UNKNOWN PARAMETER %02X)\n",mcu_data);
+					logerror(" (UNKNOWN PARAMETER %02X)\n", mcu_data);
 			}
 		}
 		break;
 
 		default:
-			logerror("PC=%06X : MCU executed command: %04X %04X %04X (UNKNOWN COMMAND)\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+			logerror("PC=%06X : MCU executed command: %04X %04X %04X (UNKNOWN COMMAND)\n", activecpu_get_pc(), mcu_command, mcu_offset*2, mcu_data);
 		break;
 	}
 }
@@ -743,7 +759,7 @@ void gtmr_mcu_run(void)
 	data16_t mcu_offset		=	mcu_ram[0x0012/2] / 2;
 	data16_t mcu_data		=	mcu_ram[0x0014/2];
 
-	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n", activecpu_get_pc(), mcu_command, mcu_offset*2, mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -793,6 +809,7 @@ void gtmr_mcu_run(void)
 			else if ( (Machine->gamedrv == &driver_gtmre)  ||
 					  (Machine->gamedrv == &driver_gtmrusa) ||
 					  (Machine->gamedrv == &driver_gtmr2) ||
+					  (Machine->gamedrv == &driver_gtmr2u) ||
 					  (Machine->gamedrv == &driver_gtmr2a) )
 
 			{

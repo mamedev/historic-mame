@@ -43,6 +43,10 @@ Note:	if MAME_DEBUG is defined, pressing:
 #include "vidhrdw/generic.h"
 #include "kaneko16.h"
 
+
+data16_t kaneko16_disp_enable = 1; // default enabled for games not using it
+
+
 struct tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;
 struct tilemap *kaneko16_tmap_2, *kaneko16_tmap_3;
 data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
@@ -77,6 +81,11 @@ struct
 
 kaneko16_priority_t kaneko16_priority;
 
+
+WRITE16_HANDLER( kaneko16_display_enable )
+{
+	COMBINE_DATA(&kaneko16_disp_enable);
+}
 
 /***************************************************************************
 
@@ -931,6 +940,8 @@ if ( code_pressed(KEYCODE_Z) ||
 	if (flag!=0)	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	fillbitmap(priority_bitmap,0,cliprect);
+
+	if (!kaneko16_disp_enable) return;
 
 	if (kaneko16_tmap_2)
 	{
