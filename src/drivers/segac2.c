@@ -7,6 +7,10 @@
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
+	0.71 | Started adding Support for Megatech, first step is improving the Genesis Emulation
+		 | The rendering will also need improving to support mid-frame palette changes
+		 | (RGB_DIRECT) maybe use tilemaps if its not too messy, added Genesis sound based on
+		 | Mess code
 	0.54 | Added Ribbit! support. Recoded some of the VDP to handle vertical windows. Removed
 	     | the bitmap cache and added partial updating support.
 	0.53 | Set the Protection Read / Write buffers to be cleared at reset in init_machine, this
@@ -131,7 +135,7 @@
 #include "cpu/m68000/m68000.h"
 #include "state.h"
 #include "segac2.h"
-
+#include "machine/random.h"
 
 #define LOG_PROTECTION		0
 #define LOG_PALETTE			0
@@ -173,6 +177,16 @@ static UINT8		bloxeed_sound;		/* use kludge for bloxeed sound? */
 /* RAM pointers */
 static data16_t *	main_ram;			/* pointer to main RAM */
 
+/* Genesis based */
+unsigned int	z80_68000_latch			= 0;
+unsigned int	z80_latch_bitcount		= 0;
+static int z80running;
+static data16_t *genesis_68k_ram;
+static unsigned char *genesis_z80_ram;
+
+/* Megatech BIOS specific */
+unsigned int bios_port_ctrl;
+unsigned int bios_ctrl_inputs;
 
 
 /******************************************************************************
@@ -292,7 +306,7 @@ static void ym3438_interrupt(int state)
 
 ******************************************************************************/
 
-MACHINE_INIT( segac2 )
+static MACHINE_INIT( segac2 )
 {
 	/* set the first scanline 0 timer to go off */
 	timer_set(cpu_getscanlinetime(0) + cpu_getscanlineperiod() * (320. / 342.), 0, vdp_reload_counter);
@@ -308,6 +322,26 @@ MACHINE_INIT( segac2 )
 	swizzle_table_index = 0;
 }
 
+static MACHINE_INIT( genesis )
+{
+    /* the following ensures that the Z80 begins without running away from 0 */
+	/* 0x76 is just a forced 'halt' as soon as the CPU is initially run */
+    genesis_z80_ram[0] = 0x76;
+	genesis_z80_ram[0x38] = 0x76;
+
+	/* mirroring of ram etc. */
+	cpu_setbank(1, &genesis_z80_ram[0]);
+	cpu_setbank(2, &genesis_z80_ram[0]);
+	cpu_setbank(3, &genesis_68k_ram[0]);
+
+	cpu_set_halt_line(1, ASSERT_LINE);
+
+	z80running = 0;
+	logerror("Machine init\n");
+
+	timer_set(cpu_getscanlinetime(0) + cpu_getscanlineperiod() * (320. / 342.), 0, vdp_reload_counter);
+
+}
 
 
 /******************************************************************************
@@ -915,6 +949,668 @@ static MEMORY_WRITE16_START( puckpkmn_writemem )
 	{ 0xa11100, 0xa11101, MWA16_NOP },					/* ? */
 	{ 0xa11200, 0xa11201, MWA16_NOP },					/* ? */
 MEMORY_END
+
+/******************** Sega Genesis ******************************/
+
+/* from MESS */
+READ16_HANDLER(genesis_ctrl_r)
+{
+/*	int returnval; */
+
+/*  logerror("genesis_ctrl_r %x\n", offset); */
+	switch (offset)
+	{
+	case 0:							/* DRAM mode is write only */
+		return 0xffff;
+		break;
+	case 0x80:						/* return Z80 CPU Function Stop Accessible or not */
+		/* logerror("Returning z80 state\n"); */
+		return (z80running ? 0x0100 : 0x0);
+		break;
+	case 0x100:						/* Z80 CPU Reset - write only */
+		return 0xffff;
+		break;
+	}
+	return 0x00;
+
+}
+
+/* from MESS */
+WRITE16_HANDLER(genesis_ctrl_w)
+{
+	data &= ~mem_mask;
+
+/*	logerror("genesis_ctrl_w %x, %x\n", offset, data); */
+
+	switch (offset)
+	{
+	case 0:							/* set DRAM mode... we have to ignore this for production cartridges */
+		return;
+		break;
+	case 0x80:						/* Z80 BusReq */
+		if (data == 0x100)
+		{
+			z80running = 0;
+			cpu_set_halt_line(1, ASSERT_LINE);	/* halt Z80 */
+			/* logerror("z80 stopped by 68k BusReq\n"); */
+		}
+		else
+		{
+			z80running = 1;
+			cpu_setbank(1, &genesis_z80_ram[0]);
+
+			cpu_set_halt_line(1, CLEAR_LINE);
+			/* logerror("z80 started, BusReq ends\n"); */
+		}
+		return;
+		break;
+	case 0x100:						/* Z80 CPU Reset */
+		if (data == 0x00)
+		{
+			cpu_set_halt_line(1, ASSERT_LINE);
+			cpu_set_reset_line(1, PULSE_LINE);
+
+			cpu_set_halt_line(1, ASSERT_LINE);
+			/* logerror("z80 reset, ram is %p\n", &genesis_z80_ram[0]); */
+			z80running = 0;
+			return;
+		}
+		else
+		{
+			/* logerror("z80 out of reset\n"); */
+		}
+		return;
+
+		break;
+	}
+}
+
+static READ16_HANDLER ( genesis_68k_to_z80_r )
+{
+	offset *= 2;
+	offset &= 0x7fff;
+
+	/* Shared Ram */
+	if ((offset >= 0x0000) && (offset <= 0x3fff))
+	{
+		offset &=0x1fff;
+//		logerror("soundram_r returning %x\n",(gen_z80_shared[offset] << 8) + gen_z80_shared[offset+1]);
+		return (genesis_z80_ram[offset] << 8) + genesis_z80_ram[offset+1];
+	}
+
+	/* YM2610 */
+	if ((offset >= 0x4000) && (offset <= 0x5fff))
+	{
+		switch (offset & 3)
+		{
+		case 0:
+			if (ACCESSING_MSB)	 return YM2612_status_port_0_A_r(0) << 8;
+			else 				 return YM2612_read_port_0_r(0);
+			break;
+		case 2:
+			if (ACCESSING_MSB)	return YM2612_status_port_0_B_r(0) << 8;
+			else 				return 0;
+			break;
+		}
+	}
+
+	/* Bank Register */
+	if ((offset >= 0x6000) && (offset <= 0x60ff))
+	{
+
+	}
+
+	/* Unused / Illegal */
+	if ((offset >= 0x6100) && (offset <= 0x7eff))
+	{
+		/* nothing */
+	}
+
+	/* VDP */
+	if ((offset >= 0x7f00) && (offset <= 0x7fff))
+	{
+
+	}
+
+	return 0x0000;
+}
+
+
+static WRITE16_HANDLER ( genesis_68k_to_z80_w )
+{
+	offset *= 2;
+	offset &= 0x7fff;
+
+	/* Shared Ram */
+	if ((offset >= 0x0000) && (offset <= 0x3fff))
+	{
+		offset &=0x1fff;
+
+	if (ACCESSING_LSB) genesis_z80_ram[offset+1] = data & 0xff;
+	if (ACCESSING_MSB) genesis_z80_ram[offset] = (data >> 8) & 0xff;
+	}
+
+	/* YM2610 */
+	if ((offset >= 0x4000) && (offset <= 0x5fff))
+	{
+		switch (offset & 3)
+		{
+		case 0:
+			if (ACCESSING_MSB)	YM2612_control_port_0_A_w	(0,	(data >> 8) & 0xff);
+			else 				YM2612_data_port_0_A_w		(0,	(data >> 0) & 0xff);
+			break;
+		case 2:
+			if (ACCESSING_MSB)	YM2612_control_port_0_B_w	(0,	(data >> 8) & 0xff);
+			else 				YM2612_data_port_0_B_w		(0,	(data >> 0) & 0xff);
+			break;
+		}
+	}
+
+	/* Bank Register */
+	if ((offset >= 0x6000) && (offset <= 0x60ff))
+	{
+
+	}
+
+	/* Unused / Illegal */
+	if ((offset >= 0x6100) && (offset <= 0x7eff))
+	{
+		/* nothing */
+	}
+
+	/* VDP */
+	if ((offset >= 0x7f00) && (offset <= 0x7fff))
+	{
+		offset &= 0x1f;
+
+		if ( (offset >= 0x10) && (offset <=0x17) )
+		{
+			if (ACCESSING_LSB) SN76496_0_w(0, data & 0xff);
+			if (ACCESSING_MSB) SN76496_0_w(0, (data >>8) & 0xff);
+		}
+
+	}
+}
+
+/* Gen I/O */
+
+/*
+cgfm info
+
+$A10001 Version
+$A10003 Port A data
+$A10005 Port B data
+$A10007 Port C data
+$A10009 Port A control
+$A1000B Port B control
+$A1000D Port C control
+$A1000F Port A TxData
+$A10011 Port A RxData
+$A10013 Port A serial control
+$A10015 Port B TxData
+$A10017 Port B RxData
+$A10019 Port B serial control
+$A1001B Port C TxData
+$A1001D Port C RxData
+$A1001F Port C serial control
+
+*/
+
+data16_t *genesis_io_ram;
+
+READ16_HANDLER ( genesis_io_r )
+{
+	/* 8-bit only, data is mirrored in both halves */
+
+	UINT8 return_value = 0;
+
+	switch (offset)
+	{
+		case 0:
+		/* Charles MacDonald ( http://cgfm2.emuviews.com/ )
+		    D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
+		    D6 : Video type is 1= PAL, 0= NTSC
+		    D5 : Sega CD unit is 1= not present, 0= connected.
+		    D4 : Unused (always returns zero)
+		    D3 : Bit 3 of version number
+		    D2 : Bit 2 of version number
+		    D1 : Bit 1 of version number
+		    D0 : Bit 0 of version number
+		*/
+			return_value = 0x80; /* ? megatech is usa? */
+			break;
+
+		case 1: /* port A data (joypad 1) */
+
+			if (genesis_io_ram[offset] & 0x40) 
+			{
+				int iport = readinputport(9);
+				return_value = iport & 0x3f;
+			}
+			else 
+			{
+				int iport1 = readinputport(12);
+				int iport2 = readinputport(7) >> 1;
+				return_value = (iport1 & 0x10) + (iport2 & 0x20);
+			}
+
+			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
+			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
+			break;
+
+		case 2: /* port B data (joypad 1) */
+
+			if (genesis_io_ram[offset] & 0x40) 
+			{
+				int iport1 = (readinputport(9) & 0xc0) >> 6;
+				int iport2 = (readinputport(8) & 0x0f) << 2;
+				return_value = (iport1 + iport2) & 0x3f;
+			}
+			else
+			{
+				int iport1 = readinputport(12) << 2;
+				int iport2 = readinputport(7) >> 2;
+				return_value = (iport1 & 0x10) + (iport2 & 0x20);
+			}
+			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
+			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
+			break;
+
+		default:
+			return_value = 0x00;
+
+	}
+	return return_value | return_value << 8;
+
+
+
+}
+
+WRITE16_HANDLER ( genesis_io_w )
+{
+	logerror ("write io offset :%02x data %04x\n",offset,data);
+
+	switch (offset)
+	{
+		case 0x00:
+		/*??*/
+		break;
+
+		case 0x01:/* port A data */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x02: /* port B data */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x03: /* port B data */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x04: /* port C data */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x05: /* port A control */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x06: /* port B control */
+		genesis_io_ram[offset] = data;
+		break;
+
+		case 0x07: /* port C control */
+		genesis_io_ram[offset] = data;
+		break;
+	}
+
+}
+
+
+static MEMORY_READ16_START( genesis_readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },					/* Cartridge Program Rom */
+	{ 0xa10000, 0xa1001f, genesis_io_r },				/* Genesis Input */
+	{ 0xa00000, 0xa0ffff, genesis_68k_to_z80_r },
+	{ 0xc00000, 0xc0001f, segac2_vdp_r },				/* VDP Access */
+	{ 0xfe0000, 0xfeffff, MRA16_BANK3 },				/* Main Ram */
+	{ 0xff0000, 0xffffff, MRA16_RAM },					/* Main Ram */
+MEMORY_END
+
+static MEMORY_WRITE16_START( genesis_writemem )
+	{ 0x000000, 0x3fffff, MWA16_ROM },					/* Cartridge Program Rom */
+	{ 0xa10000, 0xa1001f, genesis_io_w, &genesis_io_ram },				/* Genesis Input */
+	{ 0xa11000, 0xa11203, genesis_ctrl_w },
+	{ 0xa00000, 0xa0ffff, genesis_68k_to_z80_w },
+	{ 0xc00000, 0xc0000f, segac2_vdp_w },				/* VDP Access */
+	{ 0xc00010, 0xc00017, sn76489_w },					/* SN76489 Access */
+	{ 0xfe0000, 0xfeffff, MWA16_BANK3 },				/* Main Ram */
+	{ 0xff0000, 0xffffff, MWA16_RAM, &genesis_68k_ram },/* Main Ram */
+MEMORY_END
+
+/* Z80 Sound Hardware - based on MESS code, to be improved, it can do some strange things */
+
+#ifdef LSB_FIRST
+	#define BYTE_XOR(a) ((a) ^ 1)
+#else
+	#define BYTE_XOR(a) (a)
+#endif
+
+
+
+static WRITE_HANDLER ( genesis_bank_select_w ) /* note value will be meaningless unless all bits are correctly set in */
+{
+	if (offset !=0 ) return;
+//	if (!z80running) logerror("undead Z80 latch write!\n");
+	if (z80_latch_bitcount == 0) z80_68000_latch = 0;
+
+	z80_68000_latch = z80_68000_latch | ((( ((unsigned char)data) & 0x01) << (15+z80_latch_bitcount)));
+ 	logerror("value %x written to latch\n", data);
+	z80_latch_bitcount++;
+	if (z80_latch_bitcount == 9)
+	{
+		z80_latch_bitcount = 0;
+		logerror("latch set, value %x\n", z80_68000_latch);
+	}
+}
+
+static READ_HANDLER ( genesis_z80_r )
+{
+	offset += 0x4000;
+
+	/* YM2610 */
+	if ((offset >= 0x4000) && (offset <= 0x5fff))
+	{
+		switch (offset & 3)
+		{
+		case 0: return YM2612_status_port_0_A_r(0);
+		case 1: return YM2612_read_port_0_r(0);
+		case 2: return YM2612_status_port_0_B_r(0);
+		case 3: return 0;
+		}
+	}
+
+	/* Bank Register */
+	if ((offset >= 0x6000) && (offset <= 0x60ff))
+	{
+
+	}
+
+	/* Unused / Illegal */
+	if ((offset >= 0x6100) && (offset <= 0x7eff))
+	{
+		/* nothing */
+	}
+
+	/* VDP */
+	if ((offset >= 0x7f00) && (offset <= 0x7fff))
+	{
+
+	}
+
+	return 0x00;
+}
+
+static WRITE_HANDLER ( genesis_z80_w )
+{
+	offset += 0x4000;
+
+	/* YM2610 */
+	if ((offset >= 0x4000) && (offset <= 0x5fff))
+	{
+		switch (offset & 3)
+		{
+		case 0: YM2612_control_port_0_A_w	(0,	data);
+			break;
+		case 1: YM2612_data_port_0_A_w		(0, data);
+			break;
+		case 2: YM2612_control_port_0_B_w	(0,	data);
+			break;
+		case 3: YM2612_data_port_0_B_w		(0,	data);
+			break;
+		}
+	}
+
+	/* Bank Register */
+	if ((offset >= 0x6000) && (offset <= 0x60ff))
+	{
+		genesis_bank_select_w(offset & 0xff, data);
+	}
+
+	/* Unused / Illegal */
+	if ((offset >= 0x6100) && (offset <= 0x7eff))
+	{
+		/* nothing */
+	}
+
+	/* VDP */
+	if ((offset >= 0x7f00) && (offset <= 0x7fff))
+	{
+
+	}
+}
+
+static READ_HANDLER ( genesis_z80_bank_r )
+{
+	int address = (z80_68000_latch) + (offset & 0x7fff);
+
+	if (!z80running) logerror("undead Z80->68000 read!\n");
+
+	if (z80_latch_bitcount != 0) logerror("reading whilst latch being set!\n");
+
+	logerror("z80 read from address %x\n", address);
+
+	/* Read the data out of the 68k ROM */
+	if (address < 0x400000) return memory_region(REGION_CPU1)[BYTE_XOR(address)];
+	/* else read the data out of the 68k RAM */
+// 	else if (address > 0xff0000) return genesis_68k_ram[BYTE_XOR(offset)];
+
+	return -1;
+}
+
+static WRITE16_HANDLER ( genesis_z80_ram_w )
+{
+	if (z80running) logerror("Z80 written whilst running!\n");
+	logerror("68000->z80 sound write, %x to %x\n", data, offset);
+
+	if (ACCESSING_LSB) genesis_z80_ram[(offset<<1)+1] = data & 0xff;
+	if (ACCESSING_MSB) genesis_z80_ram[offset<<1] = (data >> 8) & 0xff;
+}
+
+static MEMORY_READ_START(genesis_z80_readmem)
+ 	{ 0x0000, 0x1fff, MRA_BANK1 },
+ 	{ 0x2000, 0x3fff, MRA_BANK2 }, /* mirror */
+	{ 0x4000, 0x7fff, genesis_z80_r },
+	{ 0x8000, 0xffff, genesis_z80_bank_r },
+MEMORY_END
+
+static MEMORY_WRITE_START(genesis_z80_writemem)
+	{ 0x0000, 0x1fff, MWA_BANK1, &genesis_z80_ram },
+ 	{ 0x2000, 0x3fff, MWA_BANK2 }, /* mirror */
+	{ 0x4000, 0x7fff, genesis_z80_w },
+ //	{ 0x8000, 0xffff, genesis_z80_bank_w },
+MEMORY_END
+
+/* MEGATECH specific */
+
+static READ_HANDLER( instr_r )
+{
+	unsigned char* instr = memory_region(REGION_USER1);
+	unsigned char* ram = memory_region(REGION_CPU3);
+
+	if(ram[0x6404] == 0)
+		return instr[offset/2];
+	else 
+		return 0xFF;
+}
+
+unsigned char bios_ctrl[6];
+
+static READ_HANDLER( bios_ctrl_r )
+{
+	if(offset == 0)
+		return 0;
+	if(offset == 2)
+		return bios_ctrl[offset] & 0xfe;
+
+	return bios_ctrl[offset];
+}
+
+static WRITE_HANDLER( bios_ctrl_w )
+{
+	if(offset == 1)
+	{
+		bios_ctrl_inputs = data & 0x04;  // Genesis/SMS input ports disable bit
+	}
+	bios_ctrl[offset] = data;
+}
+
+
+static MEMORY_READ_START(megatech_bios_readmem)
+ 	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0x3000, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x4fff, MRA_RAM },
+	{ 0x5000, 0x5fff, MRA_RAM },
+	{ 0x6000, 0x63ff, MRA_RAM },
+	{ 0x6400, 0x6400, input_port_10_r },
+	{ 0x6401, 0x6401, input_port_11_r },
+	{ 0x6800, 0x6800, input_port_6_r },
+	{ 0x6801, 0x6801, input_port_7_r },
+	{ 0x6802, 0x6807, bios_ctrl_r },
+//	{ 0x6805, 0x6805, input_port_8_r },
+	{ 0x6808, 0x6fff, MRA_RAM },
+	{ 0x7000, 0x77ff, MRA_RAM },
+	{ 0x8000, 0xffff, instr_r },
+MEMORY_END
+
+static MEMORY_WRITE_START(megatech_bios_writemem)
+	{ 0x0000, 0x2fff, MWA_ROM },
+	{ 0x3000, 0x3fff, MWA_RAM },
+	{ 0x4000, 0x4fff, MWA_RAM },
+	{ 0x5000, 0x5fff, MWA_RAM },
+	{ 0x6000, 0x63ff, MWA_RAM },
+	{ 0x6802, 0x6807, bios_ctrl_w },
+	{ 0x6808, 0x6fff, MWA_RAM },
+	{ 0x7000, 0x77ff, MWA_RAM },
+MEMORY_END
+
+
+/* basically from src/drivers/segasyse.c */
+unsigned char segae_vdp_ctrl_r ( UINT8 chip );
+unsigned char segae_vdp_data_r ( UINT8 chip );
+void segae_vdp_ctrl_w ( UINT8 chip, UINT8 data );
+void segae_vdp_data_w ( UINT8 chip, UINT8 data );
+
+static READ_HANDLER (megatech_bios_port_be_bf_r)
+{
+	UINT8 temp = 0;
+
+	switch (offset)
+	{
+		case 0: /* port 0xbe, VDP 1 DATA Read */
+			temp = segae_vdp_data_r(0); break ;
+		case 1: /* port 0xbf, VDP 1 CTRL Read */
+			temp = segae_vdp_ctrl_r(0); break ;
+	}
+	return temp;
+}
+static WRITE_HANDLER (megatech_bios_port_be_bf_w)
+{
+	switch (offset)
+	{
+		case 0: /* port 0xbe, VDP 1 DATA Write */
+			segae_vdp_data_w(0, data); break;
+		case 1: /* port 0xbf, VDP 1 CTRL Write */
+			segae_vdp_ctrl_w(0, data); break;
+	}
+}
+
+static WRITE_HANDLER (megatech_bios_port_ctrl_w)
+{
+	bios_port_ctrl = data;
+}
+
+static READ_HANDLER (megatech_bios_port_dc_r)
+{
+	if(bios_port_ctrl == 0x55)
+		return readinputport(12);
+	else
+		return readinputport(9);
+}
+
+static READ_HANDLER (megatech_bios_port_dd_r)
+{
+	if(bios_port_ctrl == 0x55)
+		return readinputport(12);
+	else
+		return readinputport(8);
+}
+
+static WRITE_HANDLER (megatech_bios_port_7f_w)
+{
+//	usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
+}
+
+
+static PORT_READ_START( megatech_bios_readport )
+	{ 0xdc, 0xdc, megatech_bios_port_dc_r },  // player inputs
+	{ 0xdd, 0xdd, megatech_bios_port_dd_r },  // other player 2 inputs
+	{ 0xbe, 0xbf, megatech_bios_port_be_bf_r },			/* VDP */
+PORT_END
+
+static PORT_WRITE_START( megatech_bios_writeport )
+	{ 0x3f, 0x3f, megatech_bios_port_ctrl_w },
+	{ 0x7f, 0x7f, megatech_bios_port_7f_w },
+	{ 0xbe, 0xbf, megatech_bios_port_be_bf_w },			/* VDP */
+PORT_END
+
+static UINT8 hintcount;			/* line interrupt counter, decreased each scanline */
+extern UINT8 vintpending;
+extern UINT8 hintpending;
+extern UINT8 *segae_vdp_regs[];		/* pointer to vdp's registers */
+
+// Interrupt handler - from drivers/segasyse.c
+INTERRUPT_GEN (megatech_irq)
+{
+	int sline;
+	sline = 261 - cpu_getiloops();
+
+	if (sline ==0) {
+		hintcount = segae_vdp_regs[0][10];
+	}
+
+	if (sline <= 192) {
+
+//		if (sline != 192) segae_drawscanline(sline,1,1);
+
+		if (sline == 192)
+			vintpending = 1;
+
+		if (hintcount == 0) {
+			hintcount = segae_vdp_regs[0][10];
+			hintpending = 1;
+
+			if  ((segae_vdp_regs[0][0] & 0x10)) {
+				cpu_set_irq_line(2, 0, HOLD_LINE);
+				return;
+			}
+
+		} else {
+			hintcount--;
+		}
+	}
+
+	if (sline > 192) {
+		hintcount = segae_vdp_regs[0][10];
+
+		if ( (sline<0xe0) && (vintpending) ) {
+			cpu_set_irq_line(2, 0, HOLD_LINE);
+		}
+	}
+
+}
 
 
 /******************************************************************************
@@ -1739,6 +2435,201 @@ INPUT_PORTS_START( pclub ) /* Print Club Input Ports */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( genesis ) /* Genesis Input Ports */
+	PORT_START
+
+	PORT_START	/* Player 1 Controls - part 1 */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 1 Controls - part 2 */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 2 Controls - part 1 */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 2 Controls - part 2 */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
+	PORT_START
+
+
+	PORT_START	/* Player 1 Controls - part 2 */
+//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 1 Controls - part 1 */
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 )
+
+
+	PORT_START	/* Player 2 Controls - part 2 */
+//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 2 Controls - part 1 */
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER2 )
+
+	PORT_START	/* Temp - Fake dipswitch to turn on / off sms vdp display */
+//	PORT_DIPNAME( 0x01, 0x01, "SMS VDP Display (fake)" )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+
+	PORT_START
+    PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2, "Select", KEYCODE_0, JOYCODE_NONE ) 
+    PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN , "0x6800 bit 1", KEYCODE_Y, JOYCODE_NONE ) 
+    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 2", KEYCODE_U, JOYCODE_NONE ) 
+    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 3", KEYCODE_I, JOYCODE_NONE ) 
+    PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL, "Door 1", KEYCODE_K, JOYCODE_NONE ) 
+    PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL, "Door 2", KEYCODE_L, JOYCODE_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 6", KEYCODE_O, JOYCODE_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Test mode", KEYCODE_F2, JOYCODE_NONE )
+
+	PORT_START	 
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1 )  // a few coin inputs here
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1, "Service coin", KEYCODE_9, JOYCODE_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE3,"Enter", KEYCODE_MINUS, JOYCODE_NONE )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	 
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2) 
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2) 
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 4", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 5", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 6", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 7", KEYCODE_NONE, JOYCODE_NONE ) 
+
+	PORT_START	 // up, down, left, right, button 2,3, 2P up, down.
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) 	
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) 	
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) 	
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) 	
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 ) 	
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 ) 	
+
+    PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x02, 0x02, "Coin slot 3" )
+	PORT_DIPSETTING (   0x00, "Inhibit" )
+	PORT_DIPSETTING (   0x02, "Accept" )
+	PORT_DIPNAME( 0x01, 0x01, "Coin slot 4" )
+	PORT_DIPSETTING (   0x00, "Inhibit" )
+	PORT_DIPSETTING (   0x01, "Accept" )
+	PORT_DIPNAME( 0x1c, 0x1c, "Coin slot 3/4 value" )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_8C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 credits" )
+	PORT_DIPNAME( 0xe0, 0x60, "Coin slot 2 value" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, "Inhibit" )
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x0f, 0x01, "Coin Slot 1 value" )
+	PORT_DIPSETTING(    0x00, "Inhibit" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_8C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_9C ) )
+	PORT_DIPSETTING(    0x0a, "1 coin/10 credits" )
+	PORT_DIPSETTING(    0x0b, "1 coin/11 credits" )
+	PORT_DIPSETTING(    0x0c, "1 coin/12 credits" )
+	PORT_DIPSETTING(    0x0d, "1 coin/13 credits" )
+	PORT_DIPSETTING(    0x0e, "1 coin/14 credits" )
+	PORT_DIPSETTING(    0x0f, "1 coin/15 credits" )
+	PORT_DIPNAME( 0xf0, 0xa0, "Time per credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, "7:30" )
+	PORT_DIPSETTING(    0x20, "7:00" )
+	PORT_DIPSETTING(    0x30, "6:30" )
+	PORT_DIPSETTING(    0x40, "6:00" )
+	PORT_DIPSETTING(    0x50, "5:30" )
+	PORT_DIPSETTING(    0x60, "5:00" )
+	PORT_DIPSETTING(    0x70, "4:30" )
+	PORT_DIPSETTING(    0x80, "4:00" )
+	PORT_DIPSETTING(    0x90, "3:30" )
+	PORT_DIPSETTING(    0xa0, "3:00" )
+	PORT_DIPSETTING(    0xb0, "2:30" )
+	PORT_DIPSETTING(    0xc0, "2:00" )
+	PORT_DIPSETTING(    0xd0, "1:30" )
+	PORT_DIPSETTING(    0xe0, "1:00" )
+	PORT_DIPSETTING(    0xf0, "0:30" )
+
+	PORT_START	 // BIOS input ports extra
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2) 
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1) 
+//	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 4", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 5", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 6", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 7", KEYCODE_NONE, JOYCODE_NONE ) 
+
+INPUT_PORTS_END
+
+
 /******************************************************************************
 	Sound interfaces
 ******************************************************************************/
@@ -1761,6 +2652,18 @@ static struct YM2612interface ym3438_intf =
 	{ 0 },							/* port I/O */
 	{ 0 },							/* port I/O */
 	{ ym3438_interrupt }			/* IRQ handler */
+};
+
+static struct YM2612interface gen_ym3438_intf =
+{
+	1,								/* One chip */
+	MASTER_CLOCK/7,					/* Clock: 7.67 MHz */
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* Volume */
+	{ 0 },							/* port I/O */
+	{ 0 },							/* port I/O */
+	{ 0 },							/* port I/O */
+	{ 0 },							/* port I/O */
+//	{ ym3438_interrupt }			/* IRQ handler */
 };
 
 static struct SN76496interface sn76489_intf =
@@ -1844,6 +2747,57 @@ static MACHINE_DRIVER_START( puckpkmn )
 	MDRV_SOUND_ADD(OKIM6295, puckpkmn_m6295_intf)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( genesis )
+	/*basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7)
+	MDRV_CPU_MEMORY(genesis_readmem, genesis_writemem)
+	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, 53693100 / 15)
+	MDRV_CPU_MEMORY(genesis_z80_readmem, genesis_z80_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1) /* from vdp at scanline 0xe0 */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
+
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(genesis)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
+	MDRV_SCREEN_SIZE(320,224)
+	MDRV_VISIBLE_AREA(0, 319, 0, 223)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(puckpkmn)
+	MDRV_VIDEO_EOF(segac2)
+	MDRV_VIDEO_UPDATE(segac2)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2612, gen_ym3438_intf )
+	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( megatech )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( genesis )
+
+	MDRV_VIDEO_START(megatech)
+	MDRV_VIDEO_UPDATE(megatech)
+
+	MDRV_ASPECT_RATIO(4,6)
+	MDRV_SCREEN_SIZE(320,224+192) /* +192 for megatech BIOS screen/menu */
+	MDRV_VISIBLE_AREA(0, 319, 0, 223+192)
+	MDRV_PALETTE_LENGTH(2048+32) /* +32 for megatech bios vdp part */
+
+	MDRV_CPU_ADD_TAG("megatech_bios", Z80, 53693100 / 15) /* ?? */
+	MDRV_CPU_MEMORY(megatech_bios_readmem, megatech_bios_writemem)
+	MDRV_CPU_PORTS(megatech_bios_readport,megatech_bios_writeport)
+	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
+MACHINE_DRIVER_END
 
 /******************************************************************************
 	Rom Definitions
@@ -2236,6 +3190,185 @@ ROM_START( pclubjv5 ) /* Print Club vol.5 (c)1996 Atlus */
 	ROM_LOAD( "epr18169.4", 0x000000, 0x080000, CRC(5c00ccfb) )
 ROM_END
 
+/* MegaTech Games - Genesis & sms! Games with a timer */
+
+/* 12368-xx  xx is the game number? if so there are a _lot_ of carts, mt_beast is 01, mt_sonic is 52! */
+
+ROM_START( megatech )
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_beast ) /* Altered Beast */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp12538.ic1", 0x000000, 0x080000, CRC(3bea3dce) SHA1(ec72e4fde191dedeb3f148f132603ed3c23f0f86) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-01.ic2", 0x000000, 0x08000, CRC(40cb0088) SHA1(e1711532c29f395a35a1cb34d789015881b5a1ed) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_astro ) /* Astro Warrior (Sms Game!) */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	/* z80 code because this is sms based .... */
+	ROM_LOAD( "ep13817.ic2", 0x000000, 0x020000, CRC(299cbb74) SHA1(901697a3535ad70190647f34ad5b30b695d54542) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-13.ic1", 0x000000, 0x08000,  CRC(4038cbd1) SHA1(696bc1efce45d9f0052b2cf0332a232687c8d6ab) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+
+ROM_START( mt_wcsoc ) /* World Cup Soccer */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "12607.ic1", 0x000000, 0x080000, CRC(bc591b30) SHA1(55e8577171c0933eee53af1dabd0f4c6462d5fc8) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-21.ic2", 0x000000, 0x08000, CRC(028ee46b) SHA1(cd8f81d66e5ae62107eb20e0ca5db4b66d4b2987) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_gng ) /* Ghouls and Ghosts (bad dump?) */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp12605.ic1", 0x000000, 0x080000, BAD_DUMP CRC(0c6d6f25) SHA1(96c9c0e41036a23fc8e75e18ee2dad87654f200f) )
+	ROM_LOAD16_WORD_SWAP( "mpr12605.14", 0x080000, 0x020000, CRC(1066c6ab) SHA1(c30e4442732bdb38c96d780542f8550a94d127b0) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-23.ic3", 0x000000, 0x08000, CRC(7ee58546) SHA1(ad5bb0934475eacdc5e354f67c96fe0d2512d33b) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+
+ROM_START( mt_gaxe ) /* Golden Axe */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "12806.ic1", 0x000000, 0x080000, CRC(43456820) SHA1(2f7f1fcd979969ac99426f11ab99999a5494a121) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-25.ic2", 0x000000, 0x08000, CRC(1f07ed28) SHA1(9d54192f4c6c1f8a51c38a835c1dd1e4e3e8279e) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_smgp ) /* Super Monaco Grand Prix */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "13250.ic1", 0x000000, 0x080000, CRC(189b885f) SHA1(31c06ffcb48b1604989a94e584261457de4f1f46) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-39.ic2", 0x000000, 0x08000, CRC(64b3ce25) SHA1(83a9f2432d146a712b037f96f261742f7dc810bb) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_sonic ) /* Sonic */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp13913.ic1", 0x000000, 0x080000, CRC(480b4b5c) SHA1(ab1dc1f738e3b2d0898a314b123fa71182bf572e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-52.ic2", 0x0000, 0x8000,  CRC(6a69d20c) SHA1(e483b39ff6eca37dc192dc296d004049e220554a) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_gaxe2 ) /* Golden Axe 2 */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp14272.ic1", 0x000000, 0x080000, CRC(d4784cae) SHA1(b6c286027d06fd850016a2a1ee1f1aeea080c3bb) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-57.ic2", 0x000000, 0x08000, CRC(dc9b4433) SHA1(efd3a598569010cdc4bf38ecbf9ed1b4e14ffe36) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_fshrk ) /* Fire Shark */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp14341.ic1", 0x000000, 0x080000, CRC(04d65ebc) SHA1(24338aecdc52b6f416548be722ca475c83dbae96) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-53.ic2", 0x000000, 0x08000,  CRC(4fa61044) SHA1(7810deea221c10b0b2f5233443d81f4f1998ee58) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+
+ROM_START( mt_eswat ) /* E-Swat */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp13192.ic1", 0x000000, 0x080000, CRC(82f458ef) SHA1(58444b783312def71ecffc4ad021b72a609685cb) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-38.ic2", 0x000000, 0x08000, CRC(43c5529b) SHA1(104f85adea6da1612c0aa96d553efcaa387d7aaf) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+/* MegaPlay Games - Modified Genesis games, uses credits? doesn't boot yet */
+
+ROM_START( megaplay )
+	ROM_REGION( 0x20000, REGION_USER1, 0 )
+	ROM_LOAD( "ep15294.ic2", 0x000000, 0x20000, CRC(aa8dc2d8) SHA1(96771ad7b79dc9c83a1594243250d65052d23176) )
+ROM_END
+
+ROM_START( mp_sonic ) /* Sonic */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ep15177.ic2", 0x000000, 0x040000, CRC(a389b03b) SHA1(8e9e1cf3dd65ddf08757f5a1ce472130c902ea2c) )
+	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "15175-01.ic3", 0x000000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+
+	ROM_REGION( 0x20000, REGION_USER2, 0 ) /* Bios */
+	ROM_LOAD( "ep15294.ic2", 0x000000, 0x20000, CRC(aa8dc2d8) SHA1(96771ad7b79dc9c83a1594243250d65052d23176) )
+ROM_END
+
+ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ep15179b.ic2", 0x000000, 0x040000, CRC(00d97b84) SHA1(914bbf566ddf940aab67b92af237d251650ddadf) )
+	ROM_LOAD16_BYTE( "ep15178b.ic1", 0x000001, 0x040000, CRC(2ea576db) SHA1(6d96b948243533de1f488b1f80e0d5431a4f1f53) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "1517502b.ic3", 0x000000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+
+	ROM_REGION( 0x20000, REGION_USER2, 0 ) /* Bios */
+	ROM_LOAD( "ep15294.ic2", 0x000000, 0x20000, CRC(aa8dc2d8) SHA1(96771ad7b79dc9c83a1594243250d65052d23176) )
+ROM_END
+
 /******************************************************************************
 	Machine Init Functions
 *******************************************************************************
@@ -2518,7 +3651,7 @@ static DRIVER_INIT( stkclmns )
 	{
 		int i;
 		for (i = 0; i < 0x10000/2; i++)
-			main_ram[i] = rand();
+			main_ram[i] = mame_rand();
 	}
 	init_saves();
 }
@@ -2643,3 +3776,23 @@ GAMEX( 1995, pclubj,   0,        segac2, pclub,    pclub,    ROT0, "Atlus",     
 GAMEX( 1995, pclubjv2, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.2)", GAME_NOT_WORKING )
 GAMEX( 1996, pclubjv4, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.4)", GAME_NOT_WORKING )
 GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.5)", GAME_NOT_WORKING )
+
+/* Mega Tech - the menu needs emulating, genesis emulation needs finishing, some of the games are sms based! */
+/* several games can't be started, bug in i/o? haven't managed to get bios to identify carts yet either */
+GAMEX( 1989, megatech, 0,        megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Bios", NOT_A_DRIVER )
+GAMEX( 1989, mt_beast, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Altered Beast", GAME_NOT_WORKING )
+GAMEX( 1989, mt_astro, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Astro Warrior", GAME_NOT_WORKING ) /* sms! */
+GAMEX( 1989, mt_gaxe,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Golden Axe", GAME_NOT_WORKING )
+GAMEX( 1989, mt_gng,   megatech, megatech, megatech, segac2, ROT0, "Capcom / Sega",         "MegaTech: Ghouls and Ghosts", GAME_NOT_WORKING )
+GAMEX( 1990, mt_smgp,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Super Monaco Grand Prix", GAME_NOT_WORKING )
+GAMEX( 1989, mt_wcsoc, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: World Cup Soccer", GAME_NOT_WORKING )
+GAMEX( 1989, mt_sonic, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Sonic the Hedgehog", GAME_NOT_WORKING )
+GAMEX( 1989, mt_fshrk, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Fire Shark", GAME_NOT_WORKING )
+GAMEX( 1989, mt_gaxe2, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Golden Axe 2", GAME_NOT_WORKING )
+GAMEX( 1989, mt_eswat, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: E-Swat", GAME_NOT_WORKING )
+
+/* Mega Play - doesn't boot yet */
+
+GAMEX( 1989, megaplay, 0,        genesis, genesis, segac2, ROT0, "Sega",                  "MegaPlay: Bios", NOT_A_DRIVER )
+GAMEX( 1989, mp_sonic, megaplay, genesis, genesis, segac2, ROT0, "Sega",                  "MegaPlay: Sonic The Hedgehog", GAME_NOT_WORKING  )
+GAMEX( 1989, mp_gaxe2, megaplay, genesis, genesis, segac2, ROT0, "Sega",                  "MegaPlay: Golden Axe 2", GAME_NOT_WORKING  )

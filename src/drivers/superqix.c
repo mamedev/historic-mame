@@ -17,17 +17,18 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t* superqix_tilemap_ram;
 
-VIDEO_START( superqix );
-READ_HANDLER( superqix_bitmapram_r );
-WRITE_HANDLER( superqix_bitmapram_w );
-READ_HANDLER( superqix_bitmapram2_r );
-WRITE_HANDLER( superqix_bitmapram2_w );
-WRITE_HANDLER( superqix_0410_w );
-WRITE_HANDLER( superqix_tilemap_w );
-VIDEO_UPDATE( superqix );
+extern WRITE_HANDLER( superqix_videoram_w );
+extern WRITE_HANDLER( superqix_colorram_w );
+extern READ_HANDLER( superqix_bitmapram_r );
+extern WRITE_HANDLER( superqix_bitmapram_w );
+extern READ_HANDLER( superqix_bitmapram2_r );
+extern WRITE_HANDLER( superqix_bitmapram2_w );
+extern WRITE_HANDLER( superqix_0410_w );
+extern WRITE_HANDLER( superqix_flipscreen_w );
 
+extern VIDEO_START( superqix );
+extern VIDEO_UPDATE( superqix );
 
 
 static MEMORY_READ_START( readmem )
@@ -40,7 +41,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe100, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, superqix_tilemap_w, &superqix_tilemap_ram },
+	{ 0xe800, 0xebff, superqix_videoram_w, &videoram },
+	{ 0xec00, 0xefff, superqix_colorram_w, &colorram },
 	{ 0xf000, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -59,6 +61,7 @@ static PORT_WRITE_START( writeport )
 	{ 0x0403, 0x0403, AY8910_control_port_0_w },
 	{ 0x0406, 0x0406, AY8910_write_port_1_w },
 	{ 0x0407, 0x0407, AY8910_control_port_1_w },
+	{ 0x0408, 0x0408, superqix_flipscreen_w },
 	{ 0x0410, 0x0410, superqix_0410_w },	/* ROM bank, NMI enable, tile bank */
 	{ 0x0800, 0x77ff, superqix_bitmapram_w },
 	{ 0x8800, 0xf7ff, superqix_bitmapram2_w },
@@ -358,6 +361,6 @@ static DRIVER_INIT(perestro)
 }
 
 
-GAMEX( 1987, superqix, 0,        superqix, superqix, 0,        ROT90, "Taito", "Super Qix", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1987, sqixbl,   superqix, superqix, superqix, 0,        ROT90, "bootleg", "Super Qix (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1993, perestro, 0,        superqix, superqix, perestro, ROT90, "Promat / Fuuki", "Perestroika Girls", GAME_NO_COCKTAIL )
+GAMEX(1987, superqix, 0,        superqix, superqix, 0,        ROT90, "Taito", "Super Qix", GAME_NOT_WORKING )
+GAME( 1987, sqixbl,   superqix, superqix, superqix, 0,        ROT90, "bootleg", "Super Qix (bootleg)" )
+GAME( 1993, perestro, 0,        superqix, superqix, perestro, ROT90, "Promat / Fuuki", "Perestroika Girls" )

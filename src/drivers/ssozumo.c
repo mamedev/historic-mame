@@ -80,7 +80,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x3400, 0x35ff, MWA_RAM },
 	{ 0x3600, 0x37ff, MWA_RAM },
 
-	{ 0x4000, 0x4000, MWA_RAM },			// fg page select?
+	{ 0x4000, 0x4000, ssozumo_flipscreen_w },
 	{ 0x4010, 0x4010, ssozumo_sh_command_w },
 	{ 0x4020, 0x4020, ssozumo_scroll_w },
 //	{ 0x4030, 0x4030, MWA_RAM },
@@ -170,14 +170,12 @@ INPUT_PORTS_START( ssozumo )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-#if 0
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-#endif
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x00, "Controls" )
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x40, "Dual" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
@@ -342,4 +340,4 @@ ROM_END
 
 
 
-GAMEX( 1984, ssozumo, 0, ssozumo, ssozumo, 0, ROT270, "Technos", "Syusse Oozumou (Japan)", GAME_NO_COCKTAIL )
+GAME( 1984, ssozumo, 0, ssozumo, ssozumo, 0, ROT270, "Technos", "Syusse Oozumou (Japan)" )

@@ -901,7 +901,7 @@ ROM_END
 
 
 GAME( 1981, roundup,  0,        thepit,   roundup,  0, ROT90, "Amenip/Centuri", "Round-Up" )
-GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito Corp.", "Fitter" )
+GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito Corporation", "Fitter" )
 GAME( 1982, thepit,   0,        thepit,   thepit,   0, ROT90, "Centuri", "The Pit" )
 GAME( 1982, dockman,  0,        intrepid, dockman,  0, ROT90, "Taito Corporation", "Dock Man" )
 GAME( 1982, portman,  dockman,  intrepid, dockman,  0, ROT90, "Nova Games Ltd.", "Port Man" )

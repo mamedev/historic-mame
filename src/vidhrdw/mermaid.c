@@ -154,7 +154,7 @@ VIDEO_UPDATE( mermaid )
 	/* draw the front layer. They are characters, but draw them as sprites */
 	for (offs = 0; offs < videoram_size; offs ++)
 	{
-		int code,sx,sy;
+		int code,sx,sy,flipx,flipy;
 
 
 		sy = 8 * (offs / 32);
@@ -164,16 +164,25 @@ VIDEO_UPDATE( mermaid )
 
 		code = mermaid_foreground_videoram[offs] | ((mermaid_foreground_colorram[offs] & 0x30) << 4);
 
+		flipx = mermaid_foreground_colorram[offs] & 0x40;
+		flipy = mermaid_foreground_colorram[offs] & 0x80;
+
 		if (flip_screen_x)
+		{
 			sx = 31 - sx;
+			flipx = !flipx;
+		}
 
 		if (flip_screen_y)
+		{
 			sy = 248 - sy;
+			flipy = !flipy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				mermaid_foreground_colorram[offs] & 0x0f,
-				flip_screen_x,flip_screen_y,
+				flipx,flipy,
 				8*sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}

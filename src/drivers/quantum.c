@@ -101,9 +101,8 @@ static WRITE16_HANDLER( led_w )
 		set_led_status(1, data & 0x20);
 
 		/* bits 6 and 7 flip screen */
-		vector_set_flip_x (data & 0x40);
-		vector_set_flip_y (data & 0x80);
-		vector_set_swap_xy (1);	/* vertical game */
+		avg_set_flip_x (data & 0x40);
+		avg_set_flip_y (data & 0x80);
 	}
 }
 
@@ -267,7 +266,7 @@ static MACHINE_DRIVER_START( quantum )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
-	MDRV_VISIBLE_AREA(0, 600, 0, 900)
+	MDRV_VISIBLE_AREA(0, 900, 0, 600)
 	MDRV_PALETTE_LENGTH(32768)
 
 	MDRV_PALETTE_INIT(avg_multi)

@@ -2,8 +2,6 @@
 
 Stephh's notes :
 
-  - The "Cabinet" and "Flip Screen" Dip Switches are correct, but I'm not
-    really sure if the way I've handled screen flipping is accurate.
   - I don't know exactly how to call the "Free Play" Dip Switch 8(
     It's effect is the following :
       * you need to insert at least one credit and start a game
@@ -13,11 +11,11 @@ Stephh's notes :
     Credits are BCD coded on 3 bytes (0x000000-0x999999) at addresses
     0xa039 (LSB), 0xa03a and 0xa03b (MSB), but only the LSB is displayed.
 
+   - Setting the flipscreen dip to ON also hides the copyright message (?)
+
 TO DO :
 
   - missing starfield
-
-  - support screen flipping
 
   - game speed, its seems to be controlled by the IRQ's, how fast should it
     be? firing seems frustratingly inconsistant
@@ -45,16 +43,16 @@ XTAL: 10.0 MHz
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *battlex_vidram, *battlex_sprram;
 
-/* in vidhrdw/battlex.c */
-PALETTE_INIT( battlex );
-VIDEO_START( battlex );
-VIDEO_UPDATE( battlex );
-WRITE_HANDLER( battlex_palette_w );
-WRITE_HANDLER( battlex_vidram_w );
-WRITE_HANDLER( battlex_scroll_x_lsb_w );
-WRITE_HANDLER( battlex_scroll_x_msb_w );
+extern WRITE_HANDLER( battlex_palette_w );
+extern WRITE_HANDLER( battlex_videoram_w );
+extern WRITE_HANDLER( battlex_scroll_x_lsb_w );
+extern WRITE_HANDLER( battlex_scroll_x_msb_w );
+extern WRITE_HANDLER( battlex_flipscreen_w );
+
+extern PALETTE_INIT( battlex );
+extern VIDEO_START( battlex );
+extern VIDEO_UPDATE( battlex );
 
 
 /*** MEMORY & PORT READ / WRITE **********************************************/
@@ -69,8 +67,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x8000, 0x8fff, battlex_vidram_w, &battlex_vidram },
-	{ 0x9000, 0x91ff, MWA_RAM, &battlex_sprram },
+	{ 0x8000, 0x8fff, battlex_videoram_w, &videoram },
+	{ 0x9000, 0x91ff, MWA_RAM, &spriteram },
 	{ 0xa000, 0xa3ff, MWA_RAM }, /* main */
 	{ 0xe000, 0xe03f, battlex_palette_w }, /* probably palette */
 MEMORY_END
@@ -84,12 +82,13 @@ MEMORY_END
 
 
 static PORT_WRITE_START( writeport )
+	{ 0x10, 0x10, battlex_flipscreen_w },
 	/* verify all of these */
 	{ 0x22, 0x22, AY8910_write_port_0_w },
 	{ 0x23, 0x23, AY8910_control_port_0_w },
 
-/* 0x30 looks like scroll, but can't be ? changes (increases or decreases)
-   depending on the direction your ship is facing on lev 2. at least */
+	/* 0x30 looks like scroll, but can't be ? changes (increases or decreases)
+		depending on the direction your ship is facing on lev 2. at least */
 	{ 0x30, 0x30, MWA_NOP },
 
 	{ 0x32, 0x32, battlex_scroll_x_lsb_w },
@@ -120,9 +119,7 @@ INPUT_PORTS_START( battlex )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -276,9 +273,9 @@ ROM_END
 
 static DRIVER_INIT( battlex )
 {
-	data8_t *cold    = memory_region       ( REGION_USER1 );
-	data8_t *mskd    = memory_region       ( REGION_USER2 );
-	data8_t *dest    = memory_region       ( REGION_GFX1 );
+	UINT8 *cold    = memory_region       ( REGION_USER1 );
+	UINT8 *mskd    = memory_region       ( REGION_USER2 );
+	UINT8 *dest    = memory_region       ( REGION_GFX1 );
 
 	int outcount;
 
@@ -308,4 +305,4 @@ static DRIVER_INIT( battlex )
 
 /*** GAME DRIVERS ************************************************************/
 
-GAMEX( 1982, battlex, 0, battlex, battlex, battlex, ROT180, "Omori Electric", "Battle Cross", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAMEX( 1982, battlex, 0, battlex, battlex, battlex, ROT180, "Omori Electric", "Battle Cross", GAME_IMPERFECT_GRAPHICS )

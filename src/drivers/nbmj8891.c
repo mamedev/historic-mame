@@ -3068,7 +3068,7 @@ GAME( 1989, mjnanpas,  0,        mjnanpas, mjnanpas, mjnanpas, ROT0,   "BROOKS",
 GAME( 1989, mjnanpaa,  mjnanpas, mjnanpas, mjnanpaa, mjnanpas, ROT0,   "BROOKS", "Mahjong Nanpa Story (Japan 890712)" )
 GAME( 1989, mjnanpau,  mjnanpas, mjnanpas, mjnanpas, mjnanpas, ROT0,   "BROOKS", "Mahjong Nanpa Story (Ura) (Japan 890805)" )
 GAMEX(1989, pairsten,  0,        gionbana, pairsten, pairsten, ROT0,   "System Ten", "Pairs (System Ten) (Japan 890826)", GAME_IMPERFECT_SOUND )
-GAME( 1989, bananadr,  0,        bananadr, bananadr, bananadr, ROT0,   "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan 891124)" )
+GAME( 1989, bananadr,  0,        bananadr, bananadr, bananadr, ROT0,   "Digital Soft", "Mahjong Banana Dream [BET] (Japan 891124)" )
 GAME( 1990, mladyhtr,  0,        mjnanpas, mladyhtr, mladyhtr, ROT0,   "Nichibutsu", "Mahjong THE LADY HUNTER (Japan 900509)" )
 GAME( 1990, chinmoku,  0,        mjnanpas, chinmoku, chinmoku, ROT0,   "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan 900511)" )
 GAME( 1990, maiko,     0,        maiko,    maiko,    maiko,    ROT0,   "Nichibutsu", "Maikobana (Japan 900802)" )

@@ -12,7 +12,7 @@ This driver is for the dual-screen PS4 boards
  ------------------------------
  Taisen Hot Gimmick (c)1997
  Taisen Hot Gimmick Kairakuten (c)1998
- Taisen Hot Gimmick 3 Digital Surfing (c)1999 (confirmed by Japump)
+ Taisen Hot Gimmick 3 Digital Surfing (c)1999
  Taisen Hot Gimmick 4 Ever (c)2000 (confirmed by Japump)
  Lode Runner - The Dig Fight (c)2000
  Quiz de Idol! Hot Debut (c)2000
@@ -761,6 +761,36 @@ ROM_START( hgkairak )
 	ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(d8057d2f) SHA1(51d96cc4e9da81cbd1e815c652707407e6c7c3ae) )
 ROM_END
 
+ROM_START( hotgmck3 )
+	/* main program */
+	ROM_REGION( 0x300000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2.u22",   0x000000, 0x080000, CRC(3b06a4a3) SHA1(7363c2867367ca92a20fcb5ee1a5f1afbd785c63) )
+	ROM_LOAD32_WORD_SWAP( "1.u23",   0x000002, 0x080000, CRC(7aad6b24) SHA1(160dfac94002766709369aad66d3b1b11d35ee63) )
+	ROM_LOAD16_WORD_SWAP( "prog.u1", 0x100000, 0x100000, CRC(316c3356) SHA1(4664465c3f88d655379235881f1142a7954c80fc) )
+
+	ROM_REGION( 0x4000000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x400000, CRC(d4bbd035) SHA1(525739eafa4574541b217707514b256af588a996) )
+	ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x400000, CRC(e8832b0b) SHA1(aa13c264964b1c48094a303b18407a7873c60267) )
+	ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, CRC(08426cb2) SHA1(a66463a93580fa7b730df7d0b72176daf6d0a6f2) )
+	ROM_LOAD32_WORD( "1h.u12", 0x0800002, 0x400000, CRC(112c6eea) SHA1(45d00427cec4f8ba98dc2f5b1e0d13d0f7ef56d1) )
+	ROM_LOAD32_WORD( "2l.u4",  0x1000000, 0x400000, CRC(0f197cd4) SHA1(ea1f20260470a5bee1076c3c243d7f57aabdaaba) )
+	ROM_LOAD32_WORD( "2h.u13", 0x1000002, 0x400000, CRC(fc37808c) SHA1(c35c666aad123ea1a37a5b4d6d51e55204c18e02) )
+	ROM_LOAD32_WORD( "3l.u5",  0x1800000, 0x400000, CRC(c4d094dc) SHA1(bce585e41c9892be84a9fbdbb6d0f6b9baecaccf) )
+	ROM_LOAD32_WORD( "3h.u14", 0x1800002, 0x400000, CRC(ef0dad0a) SHA1(f98032a8b7c3e17b52761ba98e46bdc5e0fa032a) )
+	ROM_LOAD32_WORD( "4l.u6",  0x2000000, 0x400000, CRC(5186790f) SHA1(e2e2beb0dee856ec089c6a380442b4a1f40901d9) )
+	ROM_LOAD32_WORD( "4h.u15", 0x2000002, 0x400000, CRC(187a6f43) SHA1(eedcc58ba59ffb0ccd7925edeb4532f8de357ec1) )
+	ROM_LOAD32_WORD( "5l.u7",  0x2800000, 0x400000, CRC(ecf151f3) SHA1(56277c5d675e579e2148961aadc06019a64f3367) )
+	ROM_LOAD32_WORD( "5h.u16", 0x2800002, 0x400000, CRC(720bf4ec) SHA1(214fb544ddc229485ae2a5ec34f95af9fa423a80) )
+	ROM_LOAD32_WORD( "6l.u8",  0x3000000, 0x400000, CRC(e490404d) SHA1(dc3429ed248e7954c27eb6f29b392a35131592ba) )
+	ROM_LOAD32_WORD( "6h.u17", 0x3000002, 0x400000, CRC(7e8a141a) SHA1(3f53e422a3ad2f2a02d17b2368b2d455c614bc04) )
+	ROM_LOAD32_WORD( "7l.u9",  0x3800000, 0x400000, CRC(2ec78fb2) SHA1(194e9833ab7057c2f83c581e722b41631d99fccc) )
+	ROM_LOAD32_WORD( "7h.u18", 0x3800002, 0x400000, CRC(c1735612) SHA1(84e32d3249d57cdc8ea91780801eaa196c439895) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
+	ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(d62a0dba) SHA1(d81e2e1251b62eca8cd4d8eec2515b2cf7d7ff0a) )
+	ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(1df91fb4) SHA1(f0f2d2d717fbd16a67da9f0e21f288ceedef839f) )
+ROM_END
+
 ROM_START( loderndf )
 	ROM_REGION( 0x100000, REGION_CPU1, 0)
 	ROM_LOAD32_WORD_SWAP( "1b.u23", 0x000002, 0x080000, CRC(fae92286) SHA1(c3d3a50514fb9c0bbd3ffb5c4bfcc853dc1893d2) )
@@ -888,6 +918,7 @@ static DRIVER_INIT( hotdebut )
 
 GAMEX( 1997, hotgmck,  0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX( 1998, hgkairak, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1999, hotgmck3, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick 3 Digital Surfing (Japan)", GAME_IMPERFECT_SOUND )
 GAME ( 2000, loderndf, 0,        ps4small,  loderndf, loderndf, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B) (Japan)" )
 GAME ( 2000, loderdfa, loderndf, ps4small,  loderndf, loderdfa, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. A) (Japan)" )
 GAME ( 2000, hotdebut, 0,        ps4small,  hotdebut, hotdebut, ROT0,   "Psikyo / Moss", "Quiz de Idol! Hot Debut (Japan)" )

@@ -11,10 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-static struct mame_bitmap *tmpbitmap1;
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -133,8 +130,6 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 	}
 }
 
-
-
 PALETTE_INIT( docastle )
 {
 	convert_color_prom(colortable,color_prom,0);
@@ -145,119 +140,96 @@ PALETTE_INIT( dorunrun )
 	convert_color_prom(colortable,color_prom,1);
 }
 
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-VIDEO_START( docastle )
+WRITE_HANDLER( docastle_videoram_w )
 {
-	if (video_start_generic() != 0)
-		return 1;
-
-	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
-
+WRITE_HANDLER( docastle_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 READ_HANDLER( docastle_flipscreen_off_r )
 {
 	flip_screen_set(0);
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	return 0;
 }
 
 READ_HANDLER( docastle_flipscreen_on_r )
 {
 	flip_screen_set(1);
-	return 0;
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	return 1;
 }
 
 WRITE_HANDLER( docastle_flipscreen_off_w )
 {
 	flip_screen_set(0);
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 }
 
 WRITE_HANDLER( docastle_flipscreen_on_w )
 {
 	flip_screen_set(1);
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 8 * (colorram[tile_index] & 0x20);
+	int color = colorram[tile_index] & 0x1f;
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-/***************************************************************************
+static void get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 8 * (colorram[tile_index] & 0x20);
+	int color = (colorram[tile_index] & 0x1f) + 32;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-***************************************************************************/
-VIDEO_UPDATE( docastle )
+VIDEO_START( docastle )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 256);
+
+	return 0;
+}
+
+static void docastle_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 8*(colorram[offs] & 0x20),
-					colorram[offs] & 0x1f,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-			/* also draw the part of the character which has priority over the */
-			/* sprites in another bitmap */
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					videoram[offs] + 8*(colorram[offs] & 0x20),
-					32 + (colorram[offs] & 0x1f),
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
 	fillbitmap(priority_bitmap,1,NULL);
 
-
-	/* Draw the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,flipx,flipy,code,color;
-
 
 		if (Machine->gfx[1]->total_elements > 256)
 		{
@@ -338,8 +310,11 @@ VIDEO_UPDATE( docastle )
 				&Machine->visible_area,TRANSPARENCY_COLOR,256,
 				0x02);
 	}
+}
 
-
-	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,256);
+VIDEO_UPDATE( docastle )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	docastle_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

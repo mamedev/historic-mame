@@ -14,50 +14,37 @@ robbiex@rocketmail.com
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *tehkanwc_videoram1;
-size_t tehkanwc_videoram1_size;
-static struct mame_bitmap *tmpbitmap1 = 0;
-static unsigned char *dirtybuffer1;
-static unsigned char scroll_x[2],scroll_y;
-static unsigned char led0,led1;
+UINT8 *tehkanwc_videoram2;
+static UINT8 scroll_x[2];
+static UINT8 led0,led1;
 
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
-VIDEO_START( tehkanwc )
+WRITE_HANDLER( tehkanwc_videoram_w )
 {
-	if (video_start_generic())
-		return 1;
-
-	if ((tmpbitmap1 = auto_bitmap_alloc(2 * Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
-		return 1;
-
-	if ((dirtybuffer1 = auto_malloc(tehkanwc_videoram1_size)) == 0)
-		return 1;
-	memset(dirtybuffer1,1,tehkanwc_videoram1_size);
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
-
-
-READ_HANDLER( tehkanwc_videoram1_r )
+WRITE_HANDLER( tehkanwc_colorram_w )
 {
-	return tehkanwc_videoram1[offset];
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
-WRITE_HANDLER( tehkanwc_videoram1_w )
+WRITE_HANDLER( tehkanwc_videoram2_w )
 {
-	tehkanwc_videoram1[offset] = data;
-	dirtybuffer1[offset] = 1;
-}
-
-READ_HANDLER( tehkanwc_scroll_x_r )
-{
-	return scroll_x[offset];
-}
-
-READ_HANDLER( tehkanwc_scroll_y_r )
-{
-	return scroll_y;
+	if (tehkanwc_videoram2[offset] != data)
+	{
+		tehkanwc_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
 }
 
 WRITE_HANDLER( tehkanwc_scroll_x_w )
@@ -67,10 +54,18 @@ WRITE_HANDLER( tehkanwc_scroll_x_w )
 
 WRITE_HANDLER( tehkanwc_scroll_y_w )
 {
-	scroll_y = data;
+	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
+WRITE_HANDLER( tehkanwc_flipscreen_x_w )
+{
+	flip_screen_x_set(data & 0x40);
+}
 
+WRITE_HANDLER( tehkanwc_flipscreen_y_w )
+{
+	flip_screen_y_set(data & 0x40);
+}
 
 WRITE_HANDLER( gridiron_led0_w )
 {
@@ -79,6 +74,48 @@ WRITE_HANDLER( gridiron_led0_w )
 WRITE_HANDLER( gridiron_led1_w )
 {
 	led1 = data;
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = tehkanwc_videoram2[offs + 1];
+	int code = tehkanwc_videoram2[offs] + ((attr & 0x30) << 4);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(2, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x10) << 4);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	tile_info.priority = (attr & 0x20) ? 0 : 1;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( tehkanwc )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 16, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
 }
 
 /*
@@ -100,12 +137,12 @@ WRITE_HANDLER( gridiron_led1_w )
    bit 7 = enable (0 = display off)
  */
 
-static void gridiron_drawled(struct mame_bitmap *bitmap,unsigned char led,int player)
+static void gridiron_drawled(struct mame_bitmap *bitmap,UINT8 led,int player)
 {
 	int i;
 
 
-	static unsigned char ledvalues[] =
+	static UINT8 ledvalues[] =
 			{ 0x86, 0xdb, 0xcf, 0xe6, 0xed, 0xfd, 0x87, 0xff, 0xf3, 0xf1 };
 
 
@@ -136,94 +173,45 @@ static void gridiron_drawled(struct mame_bitmap *bitmap,unsigned char led,int pl
 else logerror("unknown LED %02x for player %d\n",led,player);
 }
 
-
-
-VIDEO_UPDATE( tehkanwc )
+static void tehkanwc_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* draw the background */
-	for (offs = tehkanwc_videoram1_size-2;offs >= 0;offs -= 2 )
-	{
-		if (dirtybuffer1[offs] || dirtybuffer1[offs + 1])
-		{
-			int sx,sy;
-
-
-			dirtybuffer1[offs] = dirtybuffer1[offs + 1] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap1,Machine->gfx[2],
-					tehkanwc_videoram1[offs] + ((tehkanwc_videoram1[offs+1] & 0x30) << 4),
-					tehkanwc_videoram1[offs+1] & 0x0f,
-					tehkanwc_videoram1[offs+1] & 0x40, tehkanwc_videoram1[offs+1] & 0x80,
-					sx*8,sy*8,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-	{
-		int scrolly = -scroll_y;
-		int scrollx = -(scroll_x[0] + 256 * scroll_x[1]);
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the foreground chars which don't have priority over sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		dirtybuffer[offs] = 0;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if ((colorram[offs] & 0x20))
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x10) << 4),
-					colorram[offs] & 0x0f,
-					colorram[offs] & 0x40, colorram[offs] & 0x80,
-					sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-
-	/* draw sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs+0] + ((spriteram[offs+1] & 0x08) << 5),
-				spriteram[offs+1] & 0x07,
-				spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
-				spriteram[offs+2] + ((spriteram[offs+1] & 0x20) << 3) - 0x80,spriteram[offs+3],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		int attr = spriteram[offs + 1];
+		int code = spriteram[offs] + ((attr & 0x08) << 5);
+		int color = attr & 0x07;
+		int flipx = attr & 0x40;
+		int flipy = attr & 0x80;
+		int sx = spriteram[offs + 2] + ((attr & 0x20) << 3) - 128;
+		int sy = spriteram[offs + 3];
+
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+
+		if (flip_screen_y)
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color, flipx, flipy, sx, sy,
+			&Machine->visible_area, TRANSPARENCY_PEN, 0);
 	}
+}
 
-
-	/* draw the foreground chars which have priority over sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		dirtybuffer[offs] = 0;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if (!(colorram[offs] & 0x20))
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x10) << 4),
-					colorram[offs] & 0x0f,
-					colorram[offs] & 0x40, colorram[offs] & 0x80,
-					sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-	gridiron_drawled(bitmap,led0,0);
-	gridiron_drawled(bitmap,led1,1);
+VIDEO_UPDATE( tehkanwc )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, scroll_x[0] + 256 * scroll_x[1]);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	tehkanwc_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 1, 0);
+	gridiron_drawled(bitmap, led0, 0);
+	gridiron_drawled(bitmap, led1, 1);
 }

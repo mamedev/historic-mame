@@ -8,11 +8,11 @@
 #include "vidhrdw/generic.h"
 #include "cloak.h"
 
+static struct mame_bitmap *tmpbitmap2;
+static UINT8 x,y,bmap;
+static UINT8 *tmpvideoram,*tmpvideoram2;
 
-static struct mame_bitmap *tmpbitmap2,*charbitmap;
-static unsigned char x,y,bmap;
-static unsigned char *tmpvideoram,*tmpvideoram2;
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -148,27 +148,44 @@ WRITE_HANDLER( graph_processor_w )
 	}
 }
 
+WRITE_HANDLER( cloak_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( cloak_flipscreen_w )
+{
+	if (flip_screen != (~data & 0x80))
+	{
+		flip_screen_set(~data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-  Start the video hardware emulation.
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
 
-***************************************************************************/
+	SET_TILE_INFO(0, code, 0, 0)
+}
 
 VIDEO_START( cloak )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
 		return 1;
 
-	if ((charbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpvideoram = auto_malloc(256*256)) == 0)
 		return 1;
@@ -179,13 +196,6 @@ VIDEO_START( cloak )
 	return 0;
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
 #if 0
 static void refresh_bitmaps(void)
 {
@@ -202,46 +212,38 @@ static void refresh_bitmaps(void)
 }
 #endif
 
-VIDEO_UPDATE( cloak )
+static void cloak_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = (spriteram_size / 4) - 1; offs >= 0; offs--)
 	{
-		if (dirtybuffer[offs])
+		int code = spriteram[offs + 64] & 0x7f;
+		int flipx = (spriteram[offs + 64] & 0x80);
+		int flipy = 0;
+		int sx = 256 - spriteram[offs + 192];
+		int sy = 240 - spriteram[offs];
+
+		if (flip_screen)
 		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(charbitmap,Machine->gfx[0],
-					videoram[offs],0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			sx -= 9;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, 0,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
 
-	/* copy the temporary bitmap to the screen */
-    copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,16);
-
-
-	/* Draw the sprites */
-	for (offs = spriteram_size/4-1; offs >= 0; offs--)
-	{
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs+64] & 0x7f,
-				0,
-				spriteram[offs+64] & 0x80,0,
-				spriteram[offs+192],240-spriteram[offs],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+VIDEO_UPDATE( cloak )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,16);
+	cloak_draw_sprites(bitmap);
 }

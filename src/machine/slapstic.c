@@ -134,6 +134,8 @@
 		137412-110	Road Blasters
 		137412-110	APB
 		137412-111	Pit Fighter
+		137412-112	Pit Fighter (Europe)
+		137412-113	Unknown (Europe)
 		137412-115	Race Drivin' DSK board
 		137412-116	Hydra
 		137412-116	Tournament Cyberball 2072
@@ -555,6 +557,60 @@ static struct slapstic_data slapstic111 =
 };
 
 
+/* slapstic 137412-112: Pit Fighter (Europe) (confirmed) */
+static struct slapstic_data slapstic112 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x002c,0x003c,0x006c,0x007c },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0014 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x29a0 },				/* 2nd mask/value in sequence */
+	{ 0x0073,0x0010 },				/* 3rd mask/value in sequence */
+	{ 0x3faf,0x002c },				/* 4th mask/value in sequence */
+	2,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x2dce },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x2dcf },				/* 2nd mask/value in sequence */
+	{ 0x3dff,0x15f2 },				/* +1 mask/value */
+	{ 0x3fff,0x15a2 },				/* +2 mask/value */
+	{ 0x3fff,0x15e2 },				/* +3 mask/value */
+	{ 0x3ffc,0x1450 }				/* final mask/value in sequence */
+};
+
+
+/* slapstic 137412-113: Uknown (Europe) (confirmed) */
+static struct slapstic_data slapstic113 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0008,0x0018,0x0028,0x0038 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0059 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x11a5 },				/* 2nd mask/value in sequence */
+	{ 0x0860,0x0800 },				/* 3rd mask/value in sequence */
+	{ 0x3fcf,0x0008 },				/* 4th mask/value in sequence */
+	3,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x049b },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x049c },				/* 2nd mask/value in sequence */
+	{ 0x3fdf,0x3ec7 },				/* +1 mask/value */
+	{ 0x3fdf,0x3fd7 },				/* +2 mask/value */
+	{ 0x3fdf,0x3ed7 },				/* +3 mask/value */
+	{ 0x3fff,0x3fb2 }				/* final mask/value in sequence */
+};
+
+
 /* slapstic 137412-115: Race Drivin' DSK board (confirmed) */
 static struct slapstic_data slapstic115 =
 {
@@ -684,8 +740,8 @@ static struct slapstic_data *slapstic_table[] =
 	&slapstic109,
 	&slapstic110,
 	&slapstic111,
-	NULL,			/* never seen */
-	NULL,			/* never seen */
+	&slapstic112,
+	&slapstic113,
 	NULL,			/* never seen */
 	&slapstic115,
 	&slapstic116,

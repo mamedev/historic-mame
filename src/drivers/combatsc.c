@@ -6,7 +6,7 @@ TODO:
 - in combasc (and more generally the 007121) the number of sprites can be
   increased from 0x40 to 0x80. There is a hack in konamiic.c to handle that,
   but it is wrong. If you don't pass the Iron Man stage, a few sprites are
-  left dangling on the screen.
+  left dangling on the screen.(*not a bug, 64 sprites are the maximum)
 - it seems that to get correct target colors in firing range III we have to
   use the WRONG lookup table (the one for tiles instead of the one for
   sprites).
@@ -15,7 +15,7 @@ TODO:
 - hook up sound in bootleg (the current sound is a hack, making use of the
   Konami ROMset)
 - understand how the trackball really works
-- YM2203 pitch is wrong. Fixing it screws up the tempo.
+- YM2203 pitch is wrong. Fixing it screws up the tempo (update:08/07/03AT).
 
 Credits:
 
@@ -101,6 +101,8 @@ e000-e001	YM2203
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+
+#define YM2203_CLOCK 2500000
 
 extern unsigned char* banked_area;
 
@@ -212,6 +214,46 @@ static WRITE_HANDLER( combasc_portA_w )
 	/* unknown. always write 0 */
 }
 
+/*
+	Wrong YM2203 muisc tempo at 2.5MHz which could be caused by a slight
+	inaccuracy in counting down timer B. The driver may use custom timer
+	routines until further testing.
+*/
+#define YM2203_FLAGB 0x02
+
+static mame_timer *combasc_timerB;
+static UINT8 combasc_2203_ctrl, combasc_2203_data, combasc_timerB_reg, combasc_timerB_status;
+
+static READ_HANDLER ( combasc_YM2203_status_port_0_r )  { return((YM2203Read(0,0)&~YM2203_FLAGB)|combasc_timerB_status); }
+static WRITE_HANDLER( combasc_YM2203_control_port_0_w ) { combasc_2203_ctrl=data; YM2203Write(0,0,data); }
+static WRITE_HANDLER( combasc_YM2203_write_port_0_w )
+{
+	double combasc_timerB_duration;
+
+	switch (combasc_2203_ctrl)
+	{
+		case 0x26: combasc_timerB_reg = data; return;
+		case 0x27:
+			if (data & 0x20) combasc_timerB_status = 0; // timer reset
+			if (data & 0x02) // timer load
+			{
+				// this yields the correct tempo
+				combasc_timerB_duration = (double)(255-combasc_timerB_reg)*1024 / YM2203_CLOCK;
+				timer_adjust(combasc_timerB, combasc_timerB_duration, YM2203_FLAGB, 0);
+			}
+			data &= ~0x2a; // strip all timer B related flags
+	}
+	YM2203Write(0, 1, data);
+}
+
+static void combasc_timerB_callback(int param) { combasc_timerB_status = param; }
+static void combasc_YM2203_init(void)
+{
+	combasc_timerB = timer_alloc(combasc_timerB_callback);
+	combasc_timerB_status = combasc_timerB_reg = combasc_2203_data = combasc_2203_ctrl = 0;
+}
+
+
 /****************************************************************************/
 
 static MEMORY_READ_START( combasc_readmem )
@@ -297,7 +339,7 @@ static MEMORY_READ_START( combasc_readmem_sound )
 	{ 0x8000, 0x87ff, MRA_RAM },					/* RAM */
 	{ 0xb000, 0xb000, UPD7759_0_busy_r },			/* UPD7759 busy? */
 	{ 0xd000, 0xd000, soundlatch_r },				/* soundlatch_r? */
-    { 0xe000, 0xe000, YM2203_status_port_0_r },		/* YM 2203 */
+	{ 0xe000, 0xe000, combasc_YM2203_status_port_0_r },	/* YM 2203 intercepted */
 MEMORY_END
 
 static MEMORY_WRITE_START( combasc_writemem_sound )
@@ -306,8 +348,8 @@ static MEMORY_WRITE_START( combasc_writemem_sound )
 	{ 0x9000, 0x9000, combasc_play_w },			/* uPD7759 play voice */
 	{ 0xa000, 0xa000, UPD7759_0_port_w },		/* uPD7759 voice select */
 	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
- 	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
-	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */
+	{ 0xe000, 0xe000, combasc_YM2203_control_port_0_w },/* YM 2203 */
+	{ 0xe001, 0xe001, combasc_YM2203_write_port_0_w },	/* YM 2203 intercepted */
 MEMORY_END
 
 
@@ -602,14 +644,13 @@ static struct GfxDecodeInfo combascb_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,							/* 1 chip */
-	3500000,					/* this is wrong but gives the correct music tempo. */
-	/* the correct value is 20MHz/8=2.5MHz, which gives correct pitch but wrong tempo */
+	1,				/* 1 chip */
+	YM2203_CLOCK,	/* the correct value is 20MHz/8=2.5MHz, which gives correct pitch but wrong tempo */
 	{ YM2203_VOL(20,20) },
 	{ 0 },
 	{ 0 },
 	{ combasc_portA_w },
-	{ 0 }
+	{ 0 },
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -637,7 +678,7 @@ static MACHINE_DRIVER_START( combasc )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10)
+	MDRV_INTERLEAVE(100)	// high interleave to keep music tempo accurate
 
 	MDRV_MACHINE_INIT(combasc)
 
@@ -672,7 +713,7 @@ static MACHINE_DRIVER_START( combascb )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10)
+	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(combasc)
 
@@ -853,6 +894,8 @@ static DRIVER_INIT( combasc )
 {
 	/* joystick instead of trackball */
 	install_mem_read_handler(0,0x0404,0x0404,input_port_4_r);
+
+	combasc_YM2203_init();
 }
 
 static DRIVER_INIT( combascb )
@@ -867,6 +910,8 @@ static DRIVER_INIT( combascb )
 	gfx = memory_region(REGION_GFX2);
 	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
 		gfx[i] = ~gfx[i];
+
+	combasc_YM2203_init();
 }
 
 

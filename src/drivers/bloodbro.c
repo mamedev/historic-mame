@@ -775,4 +775,4 @@ static DRIVER_INIT( weststry )
 
 GAMEX(1990, bloodbro, 0,        bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros.", GAME_NO_COCKTAIL )
 GAMEX(1990, weststry, bloodbro, weststry, weststry, weststry, ROT0,   "bootleg", "West Story", GAME_NO_COCKTAIL | GAME_NO_SOUND )
-GAME( 1990, skysmash, 0,        skysmash, skysmash, 0,        ROT270, "Nihon System Inc.", "Sky Smasher" )
+GAME( 1990, skysmash, 0,        skysmash, skysmash, 0,        ROT270, "Nihon System", "Sky Smasher" )

@@ -1400,7 +1400,7 @@ GAME( 1985, tsamura2, tsamurai, tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai 
 GAMEX(1985, nunchaku, 0,        tsamurai, nunchaku, 0, ROT90, "Taito", "Nunchackun", GAME_IMPERFECT_COLORS )
 GAMEX(1985, yamagchi, 0,        tsamurai, yamagchi, 0, ROT90, "Taito", "Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun", GAME_IMPERFECT_COLORS )
 
-GAME( 1986, m660,     0,        m660,     m660,     0, ROT90, "[Wood Place] Taito America Corporation", "Mission 660 (US)" )
-GAME( 1986, m660j,    m660,     m660,     m660,     0, ROT90, "[Wood Place] Taito Corporation", "Mission 660 (Japan)" )
+GAME( 1986, m660,     0,        m660,     m660,     0, ROT90, "[Woodplace Inc.] Taito America Corporation", "Mission 660 (US)" )
+GAME( 1986, m660j,    m660,     m660,     m660,     0, ROT90, "[Woodplace Inc.] Taito Corporation", "Mission 660 (Japan)" )
 GAME( 1986, m660b,    m660,     m660,     m660,     0, ROT90, "bootleg", "Mission 660 (bootleg)" )
-GAME( 1986, alphaxz,  m660,     m660,     m660,     0, ROT90, "Ed/Wood Place", "The Alphax Z (Japan)" )
+GAME( 1986, alphaxz,  m660,     m660,     m660,     0, ROT90, "Ed / Woodplace Inc.", "The Alphax Z (Japan)" )

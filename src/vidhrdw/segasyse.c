@@ -4,6 +4,14 @@
  driver by David Haywood
 
  see (drivers/segasyse.c) for additional notes
+
+ todo:
+
+ clean up megatech code, covert to rgb_direct? might be needed for megatech
+ some megatech games are also sms based so we'll need a way of supporting that
+ for now support has been quickly added while the menu system is worked out
+ megaplay has an sms vdp too
+
 *******************************************************************************/
 
 #include "driver.h"
@@ -28,6 +36,8 @@ UINT8 segae_vdp_vrambank[CHIPS];		/* Current VRAM Bank number (from writes to Po
 
 UINT8 *cache_bitmap;					/* 8bpp bitmap with raw pen values */
 
+static int segasyse_palettebase; // needed for megatech for now..
+
 /*- in (drivers/segasyse.c) -*/
 
 extern UINT8 vintpending;
@@ -43,6 +53,7 @@ void segae_vdp_setregister ( UINT8 chip, UINT16 cmd );
 
 void segae_drawtilesline(UINT8 *dest, int line, UINT8 chip, UINT8 pri);
 void segae_drawspriteline(UINT8 *dest, UINT8 chip, UINT8 line);
+void segae_drawscanline(int line, int chips, int blank);
 
 static void segae_draw8pix_solid16(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line, UINT8 flipx, UINT8 col);
 static void segae_draw8pix(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line, UINT8 flipx, UINT8 col);
@@ -55,6 +66,8 @@ static void segae_draw8pixsprite(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 lin
 VIDEO_START( segae )
 {
 	UINT8 temp;
+
+	segasyse_palettebase = 0;
 
 	for (temp=0;temp<CHIPS;temp++)
 		if (segae_vdp_start(temp)) return 1;
@@ -73,9 +86,38 @@ VIDEO_UPDATE( segae )
 	/*- Draw from cache_bitmap to screen -*/
 
 	for (i = 0;i < 192;i++)
-		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],Machine->pens,-1);
+		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
 }
 
+/* these are used by megatech */
+
+/* starts vdp for bios screen only */
+int start_megatech_video_normal(void)
+{
+	segasyse_palettebase = 0x800;
+
+	if (segae_vdp_start(0)) return 1;
+
+	cache_bitmap = auto_malloc( (16+256+16) * 192); /* 16 pixels either side to simplify drawing */
+
+	if (!cache_bitmap) return 1;
+
+	return 0;
+}
+
+void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int i;
+
+	/*- Draw from cache_bitmap to screen -*/
+
+	for (i = 0; i < 192;i++)
+		segae_drawscanline(i,0,0);
+
+	for (i = 0;i < 192;i++)
+		draw_scanline8(bitmap,32,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
+
+}
 
 /*******************************************************************************
  VDP Start / Stop Functions
@@ -122,7 +164,7 @@ int	segae_vdp_start( UINT8 chip )
 	/*- Black the Palette -*/
 
 	for (temp=0;temp<32;temp++)
-		palette_set_color(temp + 32*chip, 0, 0, 0);
+		palette_set_color(temp + 32*chip+segasyse_palettebase, 0, 0, 0);
 
 	/* Save State Stuff (based on vidhrdw/taitoic.c) */
 
@@ -230,7 +272,7 @@ void segae_vdp_data_w ( UINT8 chip, UINT8 data )
 			g = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x0c) << 4;
 			b = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x30) << 2;
 
-			palette_set_color(segae_vdp_accessaddr[chip] + 32*chip, r, g, b);
+			palette_set_color(segae_vdp_accessaddr[chip] + 32*chip+segasyse_palettebase, r, g, b);
 		}
 
 		segae_vdp_accessaddr[chip] += 1;
@@ -345,7 +387,7 @@ void segae_vdp_setregister ( UINT8 chip, UINT16 cmd )
 
 *******************************************************************************/
 
-void segae_drawscanline(int line)
+void segae_drawscanline(int line, int chips, int blank)
 {
 
 	UINT8* dest;
@@ -364,15 +406,18 @@ void segae_drawscanline(int line)
 		segae_drawtilesline (dest+16, line, 0,1);
 	}
 
-	if (segae_vdp_regs[1][1] & 0x40) {
-		segae_drawtilesline (dest+16, line, 1,0);
-		segae_drawspriteline(dest+16, 1, line);
-		segae_drawtilesline (dest+16, line, 1,1);
+	if (chips>0) /* we don't want to do this on megatech */
+	{
+		if (segae_vdp_regs[1][1] & 0x40) {
+			segae_drawtilesline (dest+16, line, 1,0);
+			segae_drawspriteline(dest+16, 1, line);
+			segae_drawtilesline (dest+16, line, 1,1);
+		}
 	}
 
-	memset(dest+16, 32+16, 8); /* Clear Leftmost column, there should be a register for this like on the SMS i imagine    */
-							   /* on the SMS this is bit 5 of register 0 (according to CMD's SMS docs) for system E this  */
-							   /* appears to be incorrect, most games need it blanked 99% of the time so we blank it      */
+	if (blank) memset(dest+16, 32+16, 8); /* Clear Leftmost column, there should be a register for this like on the SMS i imagine    */
+							   			  /* on the SMS this is bit 5 of register 0 (according to CMD's SMS docs) for system E this  */
+							   			  /* appears to be incorrect, most games need it blanked 99% of the time so we blank it      */
 
 }
 

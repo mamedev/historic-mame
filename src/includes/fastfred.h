@@ -24,4 +24,8 @@ WRITE_HANDLER( fastfred_flip_screen_x_w );
 WRITE_HANDLER( fastfred_flip_screen_y_w );
 VIDEO_UPDATE( fastfred );
 
-
+extern data8_t *imago_fg_videoram;
+VIDEO_START( imago );
+VIDEO_UPDATE( imago );
+WRITE_HANDLER( imago_fg_videoram_w );
+WRITE_HANDLER( imago_charbank_w );

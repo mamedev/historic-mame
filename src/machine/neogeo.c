@@ -522,10 +522,29 @@ static WRITE16_HANDLER( kof2000_bankswitch_w )
 	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
+
 static READ16_HANDLER( prot_9a37_r )
 {
 	return 0x9a37;
 }
+
+
+/* thanks to razoola */
+static WRITE16_HANDLER ( cthd2003_bankswitch_w )
+{
+		int bankaddress;
+		static int cthd2003_banks[8] =
+		{
+			1,0,1,0,1,0,3,2,
+		};
+
+		if (offset == 0)
+		{
+			bankaddress = 0x100000 + cthd2003_banks[data&7]*0x100000;
+			neogeo_set_cpu1_second_bank(bankaddress);
+		}
+}
+
 
 
 static void neogeo_custom_memory(void)
@@ -546,6 +565,47 @@ static void neogeo_custom_memory(void)
 
 		/* additional protection */
 		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"cthd2003"))
+	{
+		/* patches thanks to razoola */
+		int i;
+		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2ffff0, 0x2fffff, cthd2003_bankswitch_w);
+
+		// theres still a problem on the character select screen but it seems to be related to cpu core timing issues,
+		// overclocking the 68k prevents it.
+
+		// fix garbage on s1 layer over everything
+		mem16[0xf415a/2] = 0x4ef9;
+		mem16[0xf415c/2] = 0x000f;
+		mem16[0xf415e/2] = 0x4cf2;
+		// Fix corruption in attract mode before title screen
+		for (i=0x1ae290/2;i < 0x1ae8d0/2; i=i+1)
+		{
+			mem16[i] = 0x0000;
+		}
+
+		// Fix for title page
+ 		for (i=0x1f8ef0/2;i < 0x1fa1f0/2; i=i+2)
+ 		{
+			mem16[i] -= 0x7000;
+			mem16[i+1] -= 0x0010;
+ 		}
+
+		// Fix for green dots on title page
+		for (i=0xac500/2;i < 0xac520/2; i=i+1)
+		{
+			mem16[i] = 0xFFFF;
+		}
+ 		// Fix for blanks as screen change level end clear
+		mem16[0x991d0/2] = 0xdd03;
+		mem16[0x99306/2] = 0xdd03;
+		mem16[0x99354/2] = 0xdd03;
+ 		mem16[0x9943e/2] = 0xdd03;
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"garou"))
@@ -598,7 +658,7 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof97") ||
 			!strcmp(Machine->gamedrv->name,"kof97a") ||
 			!strcmp(Machine->gamedrv->name,"kof98") ||
-			!strcmp(Machine->gamedrv->name,"kof98a") ||
+			!strcmp(Machine->gamedrv->name,"kof98n") ||
 			!strcmp(Machine->gamedrv->name,"kof99") ||
 			!strcmp(Machine->gamedrv->name,"kof99a") ||
 			!strcmp(Machine->gamedrv->name,"kof99e") ||

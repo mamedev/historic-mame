@@ -53,10 +53,14 @@ write:
 #include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( crbaloon_spritectrl_w );
-WRITE_HANDLER( crbaloon_flipscreen_w );
-PALETTE_INIT( crbaloon );
-VIDEO_UPDATE( crbaloon );
+extern WRITE_HANDLER( crbaloon_videoram_w );
+extern WRITE_HANDLER( crbaloon_colorram_w );
+extern WRITE_HANDLER( crbaloon_spritectrl_w );
+extern WRITE_HANDLER( crbaloon_flipscreen_w );
+
+extern PALETTE_INIT( crbaloon );
+extern VIDEO_START( crbaloon );
+extern VIDEO_UPDATE( crbaloon );
 
 
 int val06,val08,val0a;
@@ -205,8 +209,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x53ff, colorram_w, &colorram },
+	{ 0x4800, 0x4bff, crbaloon_videoram_w, &videoram },
+	{ 0x5000, 0x53ff, crbaloon_colorram_w, &colorram },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -370,7 +374,7 @@ static MACHINE_DRIVER_START( crbaloon )
 	MDRV_COLORTABLE_LENGTH(16*2)
 
 	MDRV_PALETTE_INIT(crbaloon)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(crbaloon)
 	MDRV_VIDEO_UPDATE(crbaloon)
 
 	/* sound hardware */

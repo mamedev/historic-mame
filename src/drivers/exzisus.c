@@ -24,7 +24,6 @@ Known issues :
 ===============
  - Dip switches are not known very much.
  - Very slow due to four Z80s.
- - Cocktail mode is not supported.
 
 ****************************************************************************/
 
@@ -39,15 +38,15 @@ Known issues :
 
 ***************************************************************************/
 
-static data8_t *exzisus_sharedram_ac;
-static data8_t *exzisus_sharedram_bc;
+static UINT8 *exzisus_sharedram_ac;
+static UINT8 *exzisus_sharedram_bc;
 static int exzisus_cpua_bank = 0;
 static int exzisus_cpub_bank = 0;
 
-extern data8_t *exzisus_videoram0;
-extern data8_t *exzisus_videoram1;
-extern data8_t *exzisus_objectram0;
-extern data8_t *exzisus_objectram1;
+extern UINT8 *exzisus_videoram0;
+extern UINT8 *exzisus_videoram1;
+extern UINT8 *exzisus_objectram0;
+extern UINT8 *exzisus_objectram1;
 extern size_t  exzisus_objectram_size0;
 extern size_t  exzisus_objectram_size1;
 
@@ -71,7 +70,7 @@ VIDEO_UPDATE( exzisus );
 
 static WRITE_HANDLER( exzisus_cpua_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	if ( (data & 0x0f) != exzisus_cpua_bank )
 	{
@@ -81,11 +80,13 @@ static WRITE_HANDLER( exzisus_cpua_bankswitch_w )
 			cpu_setbank( 1, &RAM[ 0x10000 + ( (exzisus_cpua_bank - 2) * 0x4000 ) ] );
 		}
 	}
+
+	flip_screen_set(data & 0x40);
 }
 
 static WRITE_HANDLER( exzisus_cpub_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU4);
+	UINT8 *RAM = memory_region(REGION_CPU4);
 
 	if ( (data & 0x0f) != exzisus_cpub_bank )
 	{
@@ -95,6 +96,8 @@ static WRITE_HANDLER( exzisus_cpub_bankswitch_w )
 			cpu_setbank( 2, &RAM[ 0x10000 + ( (exzisus_cpub_bank - 2) * 0x4000 ) ] );
 		}
 	}
+
+	flip_screen_set(data & 0x40);
 }
 
 static WRITE_HANDLER( exzisus_coincounter_w )
@@ -134,7 +137,7 @@ static WRITE_HANDLER( exzisus_sharedram_bc_w )
 
 static DRIVER_INIT( exzisus )
 {
-	data8_t *RAM = memory_region(REGION_CPU4);
+	UINT8 *RAM = memory_region(REGION_CPU4);
 
 	/* Fix ROM 1 error */
 	RAM[0x6829] = 0x18;
@@ -181,6 +184,7 @@ static MEMORY_WRITE_START( cpua_writemem )
 	{ 0xf001, 0xf001, taitosound_comm_w },
 	{ 0xf400, 0xf400, exzisus_cpua_bankswitch_w },
 	{ 0xf402, 0xf402, exzisus_coincounter_w },
+	{ 0xf404, 0xf404, MWA_NOP }, // ??
 	{ 0xf800, 0xffff, exzisus_sharedram_ac_w },
 MEMORY_END
 
@@ -431,4 +435,4 @@ ROM_END
 
 
 /*  ( YEAR      NAME  PARENT  MACHINE    INPUT     INIT  MONITOR  COMPANY              FULLNAME ) */
-GAMEX( 1987,  exzisus,      0, exzisus, exzisus, exzisus,    ROT0, "Taito Corporation", "Exzisus (Japan)", GAME_NO_COCKTAIL )
+GAME( 1987,  exzisus,      0, exzisus, exzisus, exzisus,    ROT0, "Taito Corporation", "Exzisus (Japan)" )

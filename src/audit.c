@@ -15,7 +15,18 @@ static const struct GameDriver *hard_disk_gamedrv;
 
 void *audit_hard_disk_open(const char *filename, const char *mode)
 {
-	return mame_fopen(hard_disk_gamedrv->name, filename, FILETYPE_IMAGE, 0);
+	const struct GameDriver *drv;
+
+	/* attempt reading up the chain through the parents */
+	for (drv = hard_disk_gamedrv; drv != NULL; drv = drv->clone_of)
+	{
+		void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
+
+		if (file != NULL)
+			return file;
+	}
+
+	return NULL;
 }
 
 

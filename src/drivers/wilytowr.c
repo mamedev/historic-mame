@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Wily Towr   (c) 1984 Irem
+Wily Tower   (c) 1984 Irem
 
 driver by Nicola Salmoria
 
@@ -11,11 +11,12 @@ Notes:
   The NMI handler just handles the "Stop Mode" dip switch.
 
 TODO:
-- Flip screen (if it's like the other Irem games, the dip switch has to
-  be polled directly)
 - Sound: it's difficult to guess how the I8039 is connected... there's also a
   OKI MSM80C39RS chip.
 - One unknown ROM. Samples?
+- Sprite positioning is wacky. The electric 'bands' that go along the pipes
+  are drawn 2 pixels off in x/y directions. If you fix that, then the player
+  sprite doesn't slide in the middle of the pipes when climbing...
 
 ***************************************************************************/
 
@@ -24,9 +25,11 @@ TODO:
 #include "cpu/i8039/i8039.h"
 
 
-data8_t *wilytowr_bgvideoram,*wilytowr_fgvideoram,*wilytowr_scrollram;
+UINT8 *wilytowr_videoram2, *wilytowr_scrollram;
 
 static int pal_bank;
+
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 
 PALETTE_INIT( wilytowr )
@@ -85,75 +88,133 @@ PALETTE_INIT( wilytowr )
 	}
 }
 
+static WRITE_HANDLER( wilytowr_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+static WRITE_HANDLER( wilytowr_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static WRITE_HANDLER( wilytowr_videoram2_w )
+{
+	if (wilytowr_videoram2[offset] != data)
+	{
+		wilytowr_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 static WRITE_HANDLER( wilytwr_palbank_w )
 {
-	pal_bank = data & 1;
+	if (pal_bank != (data & 0x01))
+	{
+		pal_bank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
 }
 
+WRITE_HANDLER( wilytwr_flipscreen_w )
+{
+	if (flip_screen != (~data & 0x01))
+	{
+		flip_screen_set(~data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] | ((attr & 0x30) << 4);
+	int color = (attr & 0x0f) + (pal_bank << 4);
 
-VIDEO_UPDATE( wilytowr )
+	SET_TILE_INFO(1, code, color, 0)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = wilytowr_videoram2[tile_index];
+
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
+VIDEO_START( wilytowr )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void wilytowr_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs++)
-	{
-		int sx,sy,code,color;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-		code = wilytowr_bgvideoram[offs] | ((wilytowr_bgvideoram[0x400 + offs] & 0x30) << 4);
-		color = (wilytowr_bgvideoram[0x400 + offs] & 0x0f) + (pal_bank << 4);
-
-		drawgfx(bitmap,Machine->gfx[1],
-				code,
-				color,
-				0,0,
-				8*sx,(8*sy - wilytowr_scrollram[8*sx]) & 0xff,
-				cliprect,TRANSPARENCY_NONE,0);
-	}
-
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int sx,sy,code,color;
+		int code = spriteram[offs + 1];
+		int color = (spriteram[offs + 2] & 0x0f) + (pal_bank << 4);
+		int flipx = 0;
+		int flipy = 0;
+		int sx = spriteram[offs + 3];
+		int sy = 238 - spriteram[offs];
 
-		sx = spriteram[offs+3];
-		sy = 238 - spriteram[offs+0];
-		code = spriteram[offs+1];
-		color = (spriteram[offs+2] & 0x0f) + (pal_bank << 4);
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 238 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
-		drawgfx(bitmap,Machine->gfx[2],
-				code,
-				color,
-				0,0,
-				sx,sy,
-				cliprect,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[2],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
 
-	for (offs = 0;offs < 0x400;offs++)
-	{
-		int sx,sy;
+VIDEO_UPDATE( wilytowr )
+{
+	int col;
 
+	for (col = 0; col < 32; col++)
+		tilemap_set_scrolly(bg_tilemap, col, wilytowr_scrollram[col * 8]);
 
-		sx = offs % 32;
-		sy = offs / 32;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				wilytowr_fgvideoram[offs],
-				0,
-				0,0,
-				8*sx,8*sy,
-				cliprect,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	wilytowr_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }
 
 
 static WRITE_HANDLER( coin_w )
 {
-	coin_counter_w(offset,data & 1);
+	coin_counter_w(offset, data & 0x01);
 }
 
 
@@ -207,13 +268,15 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xe000, 0xe1ff, MWA_RAM },
 	{ 0xe200, 0xe2ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe300, 0xe3ff, MWA_RAM, &wilytowr_scrollram },
-	{ 0xe400, 0xe7ff, MWA_RAM, &wilytowr_fgvideoram },
-	{ 0xe800, 0xefff, MWA_RAM, &wilytowr_bgvideoram },
+	{ 0xe400, 0xe7ff, wilytowr_videoram2_w, &wilytowr_videoram2 },
+	{ 0xe800, 0xebff, wilytowr_videoram_w, &videoram },
+	{ 0xec00, 0xefff, wilytowr_colorram_w, &colorram },
 	{ 0xf000, 0xf000, interrupt_enable_w },	/* NMI enable */
+	{ 0xf002, 0xf002, wilytwr_flipscreen_w },
 	{ 0xf003, 0xf003, wilytwr_palbank_w },
 	{ 0xf006, 0xf007, coin_w },
 	{ 0xf800, 0xf800, soundlatch_w },
-	{ 0xf801, 0xf801, MWA_NOP },	/* unknown (cleared by NMI handler) */
+	{ 0xf801, 0xf801, watchdog_reset_w },	/* unknown (cleared by NMI handler) */
 	{ 0xf803, 0xf803, snd_irq_w },
 MEMORY_END
 
@@ -400,6 +463,7 @@ static MACHINE_DRIVER_START( wilytowr )
 	MDRV_PALETTE_LENGTH(256+4)
 
 	MDRV_PALETTE_INIT(wilytowr)
+	MDRV_VIDEO_START(wilytowr)
 	MDRV_VIDEO_UPDATE(wilytowr)
 
 	/* sound hardware */
@@ -497,5 +561,5 @@ ROM_START( atomboy )
 ROM_END
 
 
-GAMEX( 1984, wilytowr, 0,        wilytowr, wilytowr, 0, ROT180, "Irem",                    "Wily Tower", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1985, atomboy,  wilytowr, wilytowr, wilytowr, 0, ROT180, "Irem (Memetron license)", "Atomic Boy", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1984, wilytowr, 0,        wilytowr, wilytowr, 0, ROT180, "Irem",                    "Wily Tower", GAME_NO_SOUND )
+GAMEX( 1985, atomboy,  wilytowr, wilytowr, wilytowr, 0, ROT180, "Irem (Memetron license)", "Atomic Boy", GAME_NO_SOUND )

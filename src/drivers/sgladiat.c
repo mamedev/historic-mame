@@ -1,31 +1,35 @@
-/* "Gladiator"
- * (C) 1984 SNK
- */
+/*
+	"Gladiator"
+	(C) 1984 SNK
+
+
+	known issues:
+	sound/music doesn't sound good (but it might be correct)
+	cocktail support is missing
+
+Change Log
+----------
+
+AT08XX03:
+ - fixed music tempo, shadows and reduced sprite lag
+
+   The chips should be in good sync but quite a bit of lag
+   remains without overclocking CPUB. I guess you can't beat
+   a game with barrel-rolling bad guys in plate armors who
+   can outrun a horse.
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "snk.h"
 
-/* known issues:
-	sound/music doesn't sound good (but it might be correct)
-	cocktail support is missing
-*/
-
-extern PALETTE_INIT( aso );
-extern VIDEO_START( sgladiat );
-extern VIDEO_UPDATE( sgladiat );
-
-#define SNK_NMI_ENABLE	1
-#define SNK_NMI_PENDING	2
-
-static int cpuA_latch, cpuB_latch;
 static unsigned char *shared_ram, *shared_ram2;
-static int bSoundCPUBusy;
 
 static struct AY8910interface ay8910_interface = {
 	2,	/* number of chips */
 	2000000, /* 2 MHz? */
-	{ 50,50 }, /* volume */
+	{ 25,25 }, /* volume */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -85,86 +89,32 @@ static WRITE_HANDLER( shared_ram2_w )
 
 /************************************************************************/
 
-static WRITE_HANDLER( snk_soundlatch_w )
+static WRITE_HANDLER( sgladiat_soundlatch_w )
 {
-	bSoundCPUBusy = 1;
+	snk_sound_busy_bit = 0x20;
 	soundlatch_w( offset, data );
 
 	/* trigger NMI on sound CPU */
-	cpu_set_irq_line( 2, IRQ_LINE_NMI, PULSE_LINE );
+	cpu_set_nmi_line(2, ASSERT_LINE);
 }
 
-static READ_HANDLER( snk_sound_ack_r )
+static READ_HANDLER( sgladiat_soundlatch_r )
 {
-	bSoundCPUBusy = 0;
-	return 0xff;
+	snk_sound_busy_bit = 0;
+	return(soundlatch_r(0));
+}
+
+static READ_HANDLER( sgladiat_sound_nmi_ack_r )
+{
+	cpu_set_nmi_line(2, CLEAR_LINE);
+	return 0;
 }
 
 /************************************************************************/
 
-static READ_HANDLER( sgladiat_cpuA_nmi_r )
-{
-	/* trigger NMI on CPUB */
-	if( cpuB_latch & SNK_NMI_ENABLE )
-	{
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		cpuB_latch = 0;
-	}
-	else
-	{
-		cpuB_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( sgladiat_cpuA_nmi_w )
-{
-	/* enable NMI on CPUA */
-	if( cpuA_latch&SNK_NMI_PENDING )
-	{
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		cpuA_latch = 0;
-	}
-	else
-	{
-		cpuA_latch |= SNK_NMI_ENABLE;
-	}
-}
-
-static READ_HANDLER( sgladiat_cpuB_nmi_r )
-{
-	/* trigger NMI on CPUA */
-	if( cpuA_latch & SNK_NMI_ENABLE )
-	{
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		cpuA_latch = 0;
-	}
-	else
-	{
-		cpuA_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( sgladiat_cpuB_nmi_w )
-{
-	/* enable NMI on CPUB */
-	if( cpuB_latch&SNK_NMI_PENDING )
-	{
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		cpuB_latch = 0;
-	}
-	else
-	{
-		cpuB_latch |= SNK_NMI_ENABLE;
-	}
-}
-
 static READ_HANDLER( sgladiat_inp0_r )
 {
-	int result = readinputport( 0 );
-	if( bSoundCPUBusy ) result |= 0x20; /* sound CPU busy bit */
-	return result;
+	return(readinputport(0) | snk_sound_busy_bit);
 }
 
 static WRITE_HANDLER( sglatiat_flipscreen_w )
@@ -180,7 +130,7 @@ static MEMORY_READ_START( sgladiat_readmem_cpuA )
 	{ 0xa200, 0xa200, input_port_2_r }, /* joy2 */
 	{ 0xa400, 0xa400, input_port_3_r }, /* dsw1 */
 	{ 0xa500, 0xa500, input_port_4_r }, /* dsw2 */
-	{ 0xa700, 0xa700, sgladiat_cpuA_nmi_r },
+	{ 0xa700, 0xa700, snk_cpuB_nmi_trigger_r },
 	{ 0xd800, 0xdfff, MRA_RAM }, /* spriteram */
 	{ 0xe000, 0xe7ff, MRA_RAM }, /* videoram */
 	{ 0xe800, 0xefff, MRA_RAM }, /* work ram */
@@ -189,9 +139,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( sgladiat_writemem_cpuA )
 	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa300, 0xa300, snk_soundlatch_w },
+	{ 0xa300, 0xa300, sgladiat_soundlatch_w },
 	{ 0xa600, 0xa600, sglatiat_flipscreen_w },
-	{ 0xa700, 0xa700, sgladiat_cpuA_nmi_w },
+	{ 0xa700, 0xa700, snk_cpuA_nmi_ack_w },
 	{ 0xd000, 0xd7ff, MWA_RAM, &shared_ram2 },
 //		{ 0xd200, 0xd200, MWA_RAM }, /* ?0x24 */
 //		{ 0xd300, 0xd300, MWA_RAM }, /* ------xx: msb scrollx */
@@ -207,17 +157,17 @@ MEMORY_END
 
 static MEMORY_READ_START( sgladiat_readmem_cpuB )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa000, 0xa000, sgladiat_cpuB_nmi_r },
-	{ 0xc000, 0xcfff, spriteram_r }, /* 0xc800..0xffff is videoram */
+	{ 0xa000, 0xa000, snk_cpuA_nmi_trigger_r },
+	{ 0xc000, 0xcfff, spriteram_r }, /* 0xc800..0xcfff is videoram */
 	{ 0xd800, 0xdfff, shared_ram2_r },
 	{ 0xe000, 0xe7ff, shared_ram_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( sgladiat_writemem_cpuB )
 	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, sgladiat_cpuB_nmi_w },
+	{ 0xa000, 0xa000, snk_cpuB_nmi_ack_w },
 	{ 0xa600, 0xa600, sglatiat_flipscreen_w },
-	{ 0xc000, 0xcfff, spriteram_w }, /* 0xc800..0xffff is videoram */
+	{ 0xc000, 0xcfff, spriteram_w }, /* 0xc800..0xcfff is videoram */
 	{ 0xd800, 0xdfff, shared_ram2_w },
 	{ 0xe000, 0xe7ff, shared_ram_w },
 MEMORY_END
@@ -225,8 +175,8 @@ MEMORY_END
 static MEMORY_READ_START( sgladiat_readmem_sound )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xc000, 0xc000, snk_sound_ack_r },
+	{ 0xa000, 0xa000, sgladiat_soundlatch_r },
+	{ 0xc000, 0xc000, sgladiat_sound_nmi_ack_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( sgladiat_writemem_sound )
@@ -234,6 +184,7 @@ static MEMORY_WRITE_START( sgladiat_writemem_sound )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xe000, 0xe000, AY8910_control_port_0_w },
 	{ 0xe001, 0xe001, AY8910_write_port_0_w },
+	{ 0xe002, 0xe003, MWA_NOP },	// leftover wave generator ports?
 	{ 0xe004, 0xe004, AY8910_control_port_1_w },
 	{ 0xe005, 0xe005, AY8910_write_port_1_w },
 MEMORY_END
@@ -247,23 +198,23 @@ static MACHINE_DRIVER_START( sgladiat )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(sgladiat_readmem_cpuA,sgladiat_writemem_cpuA)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_MEMORY(sgladiat_readmem_cpuB,sgladiat_writemem_cpuB)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_VBLANK_INT(snk_irq_BA,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(sgladiat_readmem_sound,sgladiat_writemem_sound)
 	MDRV_CPU_PORTS(sgladiat_readport,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 244)	// Marvin's frequency, sounds ok
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(300)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8+16, 36*8-1-16, 1*8, 28*8-1)
 	MDRV_GFXDECODE(tnk3_gfxdecodeinfo)
@@ -387,4 +338,9 @@ INPUT_PORTS_START( sgladiat )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-GAMEX( 1984, sgladiat, 0, sgladiat, sgladiat, 0, 0,   "SNK", "Gladiator 1984", GAME_NO_COCKTAIL )
+static DRIVER_INIT( sgladiat )
+{
+	snk_irq_delay = 2000;
+}
+
+GAMEX( 1984, sgladiat, 0, sgladiat, sgladiat, sgladiat, 0, "SNK", "Gladiator 1984", GAME_NO_COCKTAIL )

@@ -6,8 +6,8 @@
 
 	Games supported:
 		* Area 51
-		* Maximum Force
-		* Area 51/Maximum Force Duo
+		* Maximum Force (2 Sets)
+		* Area 51/Maximum Force Duo (2 Sets)
 		* Vicious Circle
 
 	In the future:
@@ -883,9 +883,13 @@ MACHINE_DRIVER_END
  *
  *	ROM definition(s)
  *
+ *	Date Information comes from either
+ *   ROM labels or from the Self-Test
+ *   as "Main"
+ *
  *************************************/
 
-ROM_START( area51 ) /* 68020 based: Area51 v?? */
+ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
@@ -899,7 +903,7 @@ ROM_START( area51 ) /* 68020 based: Area51 v?? */
 ROM_END
 
 
-ROM_START( maxforce ) /* R3000 based: Maximum Force 5-23-97 v1.05 */
+ROM_START( maxforce ) /* R3000 based, labeled as "Maximum Force 5-23-97 v1.05" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
@@ -913,7 +917,7 @@ ROM_START( maxforce ) /* R3000 based: Maximum Force 5-23-97 v1.05 */
 ROM_END
 
 
-ROM_START( maxf_102 ) /* R3000 based: Maximum Force 2-27-97 v1.02 */
+ROM_START( maxf_102 ) /* R3000 based, labeled as "Maximum Force 2-27-97 v1.02" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
@@ -927,7 +931,7 @@ ROM_START( maxf_102 ) /* R3000 based: Maximum Force 2-27-97 v1.02 */
 ROM_END
 
 
-ROM_START( area51mx )	/* 68020 based: MAX/A51 KIT 2.0 */
+ROM_START( area51mx )	/* 68020 based, Labeled as "68020 MAX/A51 KIT 2.0" Date: Apr 22, 1998 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )  /* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE ) /* 2MB for 68020 code */
@@ -935,6 +939,20 @@ ROM_START( area51mx )	/* 68020 based: MAX/A51 KIT 2.0 */
 	ROM_LOAD32_BYTE( "area51mx.3p", 0x00001, 0x80000, CRC(a3c93684) SHA1(f6b3357bb69900a176fd6bc6b819b2f57b7d0f59) )
 	ROM_LOAD32_BYTE( "area51mx.3m", 0x00002, 0x80000, CRC(d800ac17) SHA1(3d515c8608d8101ee9227116175b3c3f1fe22e0c) )
 	ROM_LOAD32_BYTE( "area51mx.3k", 0x00003, 0x80000, CRC(0e78f308) SHA1(adc4c8e441eb8fe525d0a6220eb3a2a8791a7289) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) )
+ROM_END
+
+
+ROM_START( a51mxr3k ) /* R3000 based, Labeled as "R3K Max/A51 Kit Ver 1.0" */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
+
+	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
+	ROM_LOAD32_BYTE( "a51mxr3k.hh", 0x00000, 0x80000, CRC(a984dab2) SHA1(debb3bc11ff49e87a52e89a69533a1bab7db700e) )
+	ROM_LOAD32_BYTE( "a51mxr3k.hl", 0x00001, 0x80000, CRC(0af49d74) SHA1(c19f26056a823fd32293e9a7b3ea868640eabf49) )
+	ROM_LOAD32_BYTE( "a51mxr3k.lh", 0x00002, 0x80000, CRC(d7d94dac) SHA1(2060a74715f36a0d7f5dd0855eda48ad1f20f095) )
+	ROM_LOAD32_BYTE( "a51mxr3k.ll", 0x00003, 0x80000, CRC(ece9e5ae) SHA1(7e44402726f5afa6d1670b27aa43ad13d21c4ad9) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) )
@@ -1026,6 +1044,21 @@ static DRIVER_INIT( area51mx )
 }
 
 
+static DRIVER_INIT( a51mxr3k )
+{
+	common_init(1, 0x0c0, 0x09e);
+
+	/* patch the protection */
+	rom_base[0x220/4] = 0x03e00008;
+
+#if ENABLE_SPEEDUP_HACKS
+	/* install speedup for main CPU */
+	main_speedup_max_cycles = 120;
+	main_speedup = install_mem_read32_handler(0, 0x1000865c, 0x1000865f, cojagr3k_main_speedup_r);
+#endif
+}
+
+
 static DRIVER_INIT( vcircle )
 {
 	common_init(0, 0x5c0, 0x5a0);
@@ -1049,4 +1082,5 @@ GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Game
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05" )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02" )
 GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo v2.0" )
+GAME( 1998, a51mxr3k, area51mx, r3knarrow, area51,   a51mxr3k, ROT0, "Atari Games", "Area 51 / Maximum Force Duo (R3000)" ) /* todo: speed hack */
 GAME( 1996, vcircle,  0,        cojagr3k,  vcircle,  vcircle,  ROT0, "Atari Games", "Vicious Circle (prototype)" )

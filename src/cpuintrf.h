@@ -293,6 +293,12 @@ enum
 #if (HAS_PIC16C58)
 	CPU_PIC16C58,
 #endif
+#if (HAS_G65816)
+	CPU_G65816,
+#endif
+#if (HAS_SPC700)
+	CPU_SPC700,
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
@@ -307,9 +313,6 @@ enum
 #if (HAS_F8)
 	CPU_F8,
 #endif
-#if (HAS_G65816)
-	CPU_G65816,
-#endif
 #if (HAS_LH5801)
 	CPU_LH5801,
 #endif
@@ -321,9 +324,6 @@ enum
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,
-#endif
-#if (HAS_SPC700)
-	CPU_SPC700,
 #endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,

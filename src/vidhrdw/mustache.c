@@ -45,61 +45,60 @@ PALETTE_INIT(mustache)
   }
 }
 
-
-WRITE_HANDLER (mustache_video_control_w)
-{
-	if((control_byte^data)&8) /* tile bank  */
-	{
-		control_byte=data;
-		tilemap_mark_all_tiles_dirty(bg_tilemap);
-	}
-}
-
-WRITE_HANDLER( mustache_scroll_w )
-{
-	tilemap_set_scrollx(bg_tilemap,0,0x100-data);
-	tilemap_set_scrollx(bg_tilemap,1,0x100-data);
-	tilemap_set_scrollx(bg_tilemap,2,0x100-data);
-	tilemap_set_scrollx(bg_tilemap,3,0x100);
-}
-
 WRITE_HANDLER( mustache_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 	}
 }
 
-
-static UINT32 scan_rows_flipx( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+WRITE_HANDLER (mustache_video_control_w)
 {
-	/* logical (col,row) -> memory offset */
-	return row*num_cols + (num_cols-1) - col;
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+
+	/* tile bank */
+
+	if ((control_byte ^ data) & 0x08)
+	{
+		control_byte = data;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+WRITE_HANDLER( mustache_scroll_w )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, 0x100 - data);
+	tilemap_set_scrollx(bg_tilemap, 1, 0x100 - data);
+	tilemap_set_scrollx(bg_tilemap, 2, 0x100 - data);
+	tilemap_set_scrollx(bg_tilemap, 3, 0x100);
 }
 
 static void get_bg_tile_info(int tile_index)
 {
-	int attr = videoram[2*tile_index+1];
-	int code = videoram[2*tile_index] + ((attr&0xe0)<<3)+ ( (control_byte&8) << 7);
+	int attr = videoram[2 * tile_index + 1];
+	int code = videoram[2 * tile_index] + ((attr & 0xe0) << 3) + ((control_byte & 0x08) << 7);
+	int color = attr & 0x0f;
 
-	SET_TILE_INFO(
-			0,
-			code,
-			attr & 0xf,0)
+	SET_TILE_INFO(0, code, color, 0)
 }
-
 
 VIDEO_START( mustache )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,scan_rows_flipx,TILEMAP_OPAQUE,8,8,64,32);
-	tilemap_set_scroll_rows(bg_tilemap,4);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_x,
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
+
+	tilemap_set_scroll_rows(bg_tilemap, 4);
 
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void mustache_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	struct rectangle clip = *cliprect;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -117,25 +116,31 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 		code+=(attr&0x0c)<<6;
 
-		if((control_byte & 0xa))
+		if ((control_byte & 0xa))
 			clip.max_y = Machine->visible_area.max_y;
 		else
-			clip.max_y = Machine->visible_area.max_y - 56;
+			if (flip_screen)
+				clip.min_y = Machine->visible_area.min_y + 56;
+			else
+				clip.max_y = Machine->visible_area.max_y - 56;
+
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+		}
 
 		drawgfx(bitmap,gfx,
 				code,
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				sx,sy,
 				&clip,TRANSPARENCY_PEN,0);
 	}
 }
 
-
 VIDEO_UPDATE( mustache )
 {
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
-	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	mustache_draw_sprites(bitmap, cliprect);
 }
-
-

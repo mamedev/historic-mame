@@ -7,11 +7,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *renegade_textram;
+UINT8 *renegade_videoram2;
 int renegade_scrollx;
 static struct tilemap *bg_tilemap;
 static struct tilemap *fg_tilemap;
-static int flipscreen;
 
 WRITE_HANDLER( renegade_videoram_w )
 {
@@ -23,11 +22,11 @@ WRITE_HANDLER( renegade_videoram_w )
 	}
 }
 
-WRITE_HANDLER( renegade_textram_w )
+WRITE_HANDLER( renegade_videoram2_w )
 {
-	if( renegade_textram[offset]!=data )
+	if( renegade_videoram2[offset]!=data )
 	{
-		renegade_textram[offset] = data;
+		renegade_videoram2[offset] = data;
 		offset = offset%(32*32);
 		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
@@ -35,8 +34,7 @@ WRITE_HANDLER( renegade_textram_w )
 
 WRITE_HANDLER( renegade_flipscreen_w )
 {
-	flipscreen = !data;
-	tilemap_set_flip( ALL_TILEMAPS, flipscreen?(TILEMAP_FLIPY|TILEMAP_FLIPX):0);
+	flip_screen_set(~data & 0x01);
 }
 
 WRITE_HANDLER( renegade_scroll0_w )
@@ -62,7 +60,7 @@ static void get_bg_tilemap_info(int tile_index)
 
 static void get_fg_tilemap_info(int tile_index)
 {
-	const UINT8 *source = &renegade_textram[tile_index];
+	const UINT8 *source = &renegade_videoram2[tile_index];
 	UINT8 attributes = source[0x400];
 	SET_TILE_INFO(
 			0,
@@ -81,16 +79,13 @@ VIDEO_START( renegade )
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_scrolldx( bg_tilemap, 256, 0 );
-
-	tilemap_set_scrolldy( fg_tilemap, 0, 16 );
-	tilemap_set_scrolldy( bg_tilemap, 0, 16 );
 	return 0;
 }
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	unsigned char *source = spriteram;
-	unsigned char *finish = source+96*4;
+	UINT8 *source = spriteram;
+	UINT8 *finish = source+96*4;
 
 	while( source<finish )
 	{
@@ -106,22 +101,29 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 		    if( sx>248 ) sx -= 256;
 
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				xflip = !xflip;
+			}
+
 		    if( attributes&0x80 ){ /* big sprite */
 		        drawgfx(bitmap,Machine->gfx[sprite_bank],
 		            sprite_number+1,
 		            color,
-		            xflip,0,
-		            sx,sy+16,
+		            xflip,flip_screen,
+		            sx,sy + (flip_screen ? -16 : 16),
 		            cliprect,TRANSPARENCY_PEN,0);
 		    }
 		    else
 			{
-		        sy += 16;
+				sy += (flip_screen ? -16 : 16);
 		    }
 		    drawgfx(bitmap,Machine->gfx[sprite_bank],
 		        sprite_number,
 		        color,
-		        xflip,0,
+		        xflip,flip_screen,
 		        sx,sy,
 		        cliprect,TRANSPARENCY_PEN,0);
 		}
@@ -132,9 +134,6 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 VIDEO_UPDATE( renegade )
 {
 	tilemap_set_scrollx( bg_tilemap, 0, renegade_scrollx );
-	tilemap_set_scrolly( bg_tilemap, 0, 0 );
-	tilemap_set_scrolly( fg_tilemap, 0, 0 );
-
 	tilemap_draw( bitmap,cliprect,bg_tilemap,0 ,0);
 	draw_sprites( bitmap,cliprect );
 	tilemap_draw( bitmap,cliprect,fg_tilemap,0 ,0);

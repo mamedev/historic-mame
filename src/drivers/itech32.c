@@ -11,16 +11,17 @@
 		* Hard Yardage (2 sets)
 		* Pairs
 		* Driver's Edge (not working)
-		* World Class Bowling
+		* World Class Bowling (4 sets)
 		* Street Fighter: The Movie (3 sets)
-		* Shuffleshot
+		* Shuffleshot (2 sets)
 
 	Games not supported because IT is still selling them:
-		* Golden Tee 3D Golf
-		* Golden Tee Golf '97 (2 sets)
-		* Golden Tee Golf '98
-		* Golden Tee Golf '99
-		* Golden Tee Golf 2K
+		* World Class Bowling Deluxe
+		* Golden Tee 3D Golf  (8 sets)
+		* Golden Tee Golf '97 (6 sets)
+		* Golden Tee Golf '98 (4 sets)
+		* Golden Tee Golf '99 (3 Sets)
+		* Golden Tee Golf 2K  (2 Sets)
 		* Golden Tee Golf Classic
 
 ****************************************************************************
@@ -123,7 +124,7 @@ static INTERRUPT_GEN( generate_int1 )
 {
 	/* signal the NMI */
 	itech32_update_interrupts(1, -1, -1);
-	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------\n", cpu_getscanline());
+	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------", cpu_getscanline());
 }
 
 
@@ -312,7 +313,7 @@ static READ32_HANDLER( itech020_prot_result_r )
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	logerror("sound bank = %02x\n", data);
+	logerror("sound bank = %02x", data);
 	cpu_setbank(1, &memory_region(REGION_CPU2)[0x10000 + data * 0x4000]);
 }
 
@@ -329,7 +330,7 @@ static void delayed_sound_data_w(int data)
 	sound_data = data;
 	sound_int_state = 1;
 	cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
-	logerror("sound_data_w() = %02x\n", sound_data);
+	logerror("sound_data_w() = %02x", sound_data);
 }
 
 
@@ -349,7 +350,7 @@ static WRITE32_HANDLER( sound_data32_w )
 
 static READ_HANDLER( sound_data_r )
 {
-	logerror("sound_data_r() = %02x\n", sound_data);
+	logerror("sound_data_r() = %02x", sound_data);
 	cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 	sound_int_state = 0;
 	return sound_data;
@@ -371,7 +372,7 @@ static READ_HANDLER( sound_data_buffer_r )
 
 static WRITE_HANDLER( pia_portb_out )
 {
-	logerror("PIA port B write = %02x\n", data);
+	logerror("PIA port B write = %02x", data);
 
 	/* bit 4 controls the ticket dispenser */
 	/* bit 5 controls the coin counter */
@@ -383,7 +384,7 @@ static WRITE_HANDLER( pia_portb_out )
 
 static WRITE_HANDLER( sound_output_w )
 {
-	logerror("sound output write = %02x\n", data);
+	logerror("sound output write = %02x", data);
 
 	coin_counter_w(0, (~data & 0x20) >> 5);
 }
@@ -442,7 +443,7 @@ static WRITE_HANDLER( via6522_w )
 			break;
 
 		default:	/* log everything else */
-			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x\n", offset, data);
+			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x", offset, data);
 			break;
 	}
 
@@ -467,7 +468,7 @@ static READ_HANDLER( via6522_r )
 			break;
 	}
 
-	if (FULL_LOGGING) logerror("VIA read(%02x) = %02x\n", offset, result);
+	if (FULL_LOGGING) logerror("VIA read(%02x) = %02x", offset, result);
 	return result;
 }
 
@@ -854,7 +855,7 @@ INPUT_PORTS_START( timekill )
 	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 INPUT_PORTS_END
@@ -901,7 +902,7 @@ INPUT_PORTS_START( bloodstm )
 	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -970,7 +971,7 @@ INPUT_PORTS_START( hardyard )
 	PORT_DIPNAME( 0x0040, 0x0000, "Players" )
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPSETTING(      0x0040, "2" )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -1020,7 +1021,7 @@ INPUT_PORTS_START( pairs )
 	PORT_DIPNAME( 0x0040, 0x0000, "Modesty" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -1062,9 +1063,9 @@ INPUT_PORTS_START( wcbowl )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ) )	/* Verified */
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
@@ -1083,7 +1084,7 @@ INPUT_PORTS_START( wcbowl )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( wcbowln ) /* World Class Bowling Newer versions */
+INPUT_PORTS_START( wcbowln ) /* WCB version 1.66 supports cocktail mode */
 	PORT_START	/* 080000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
@@ -1099,7 +1100,8 @@ INPUT_PORTS_START( wcbowln ) /* World Class Bowling Newer versions */
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 180000 */
-	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 200000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1112,13 +1114,13 @@ INPUT_PORTS_START( wcbowln ) /* World Class Bowling Newer versions */
 	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	// Newer Rom sets support Cocktail mode (verified)
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	// v1.66 Rom sets support Cocktail mode (verified)
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1194,7 +1196,7 @@ INPUT_PORTS_START( drivedge )
 	PORT_DIPSETTING(      0x0050, "6" )
 	PORT_DIPSETTING(      0x0060, "7" )
 	PORT_DIPSETTING(      0x0070, "8" )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1245,10 +1247,10 @@ INPUT_PORTS_START( sftm )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0000, "Freeze" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1257,7 +1259,7 @@ INPUT_PORTS_START( sftm )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( shufshot )
+INPUT_PORTS_START( shufshot ) /* ShuffleShot version 1.39 supports cocktail mode */
 	PORT_START	/* 080000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
@@ -1273,10 +1275,8 @@ INPUT_PORTS_START( shufshot )
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 180000 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE4 ) //volume up
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE3 ) //volume down
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x00f8, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 200000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1289,13 +1289,13 @@ INPUT_PORTS_START( shufshot )
 	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	/* Verified */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1315,6 +1315,67 @@ INPUT_PORTS_START( shufshot )
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( shufbowl )
+	/*
+	Earlier versions of Shuffleshot & World Class Bowling share the same input
+	port set up. IE: "Freeze Screen" and no support for a cocktail mode
+	*/
+
+	PORT_START	/* 080000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 100000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 180000 */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 280000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ) )	/* Verified */
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+
+	PORT_START	/* 780000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
+INPUT_PORTS_END
 
 
 /*************************************
@@ -1826,6 +1887,40 @@ ROM_START( wcbwl165 )	/* Version 1.65 (PCB P/N 1082 Rev 2) */
 ROM_END
 
 
+ROM_START( wcbwl161 )	/* Version 1.61 (PCB P/N 1082 Rev 2) */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "wcb_prm0.161", 0x00000, 0x20000, CRC(b879d4a7) SHA1(8b5af3f4d3522bdb8e1d6092b2e311fbfaec2bd0) )
+	ROM_LOAD32_BYTE( "wcb_prm1.161", 0x00001, 0x20000, CRC(49f3ed6a) SHA1(6c6857bd3fbfe0cfeaf0e512bbbd795376a21472) )
+	ROM_LOAD32_BYTE( "wcb_prm2.161", 0x00002, 0x20000, CRC(47259009) SHA1(78a6e70e747030a5ed43d49384061e53f4a77675) )
+	ROM_LOAD32_BYTE( "wcb_prm3.161", 0x00003, 0x20000, CRC(e5081f85) SHA1(a5513b8dd917a35f1c8b7f833c2d5622353d39f0) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "wcb_snd.u88", 0x10000, 0x18000, CRC(194a51d7) SHA1(c67b042008ff2a2713562d3789e5bc3a312fae17) )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x880000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "wcb_grom.0_0", 0x000000, 0x080000, CRC(6fcb4246) SHA1(91fb5d18ea9494b08251d1e611c80414df3aad66) )
+	ROM_LOAD32_BYTE( "wcb_grom.0_1", 0x000001, 0x080000, CRC(2ae31f45) SHA1(85218aa9a7ca7c6870427ffbd08b78255813ff90) )
+	ROM_LOAD32_BYTE( "wcb_grom.0_2", 0x000002, 0x080000, CRC(bccc0f35) SHA1(2389662e881e86f8cdb36eb2a082923d976676c8) )
+	ROM_LOAD32_BYTE( "wcb_grom.0_3", 0x000003, 0x080000, CRC(ab1da462) SHA1(3f3a4a083483d2d95d5ef540eea077cad799fcb7) )
+	ROM_LOAD32_BYTE( "wcb_grom.1_0", 0x200000, 0x080000, CRC(bdfafd1f) SHA1(bc0e6fe83d3f8e88c2e55ba3a436875d5470de5b) )
+	ROM_LOAD32_BYTE( "wcb_grom.1_1", 0x200001, 0x080000, CRC(7d6baa2e) SHA1(c47854b064aa96d2581c23afe13cd05a36f9dae3) )
+	ROM_LOAD32_BYTE( "wcb_grom.1_2", 0x200002, 0x080000, CRC(7513d3de) SHA1(b17650ed5210860c3bde53647a30f8fce67aaa38) )
+	ROM_LOAD32_BYTE( "wcb_grom.1_3", 0x200003, 0x080000, CRC(e46877e6) SHA1(f50c904ec5b2b8cbc92f2b28641433c91ee17af5) )
+	ROM_FILL(                        0x400000, 0x480000, 0xff )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "wcb_srom.0",  0x000000, 0x080000, CRC(c3821cb5) SHA1(3c2c27d1e577201cbd0d28cc48fc80ae7747faa1) )
+	ROM_LOAD16_BYTE( "wcb_srom.1",  0x200000, 0x080000, CRC(afa24888) SHA1(169eaedd09e0214ac72c932903a11bbb2ebc5bf1) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "wcb_srom.2",  0x000000, 0x080000, CRC(f82c08fd) SHA1(8f6f47f5a4b68a31df4c2eb330dc95a9963e55c1) )
+	ROM_LOAD16_BYTE( "wcb_srom.3",  0x200000, 0x020000, CRC(1c2efdee) SHA1(d306c9e7f9c4c2662561401170439a10a9ee89ed) )
+ROM_END
+
+
 ROM_START( wcbwl12 )	/* Version 1.2 (unique Hardware, 3-tier type board) */
 	/* v1.3 & v1.5 for this platform has been confirmed, but not dumped */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -2044,6 +2139,42 @@ ROM_START( shufshot )	/* Version 1.39 (PCB P/N 1082 Rev 2) */
 ROM_END
 
 
+ROM_START( sshot137 )	/* Version 1.37 (PCB P/N 1082 Rev 2) */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "shotprm0.137", 0x00000, 0x20000, CRC(6499c76f) SHA1(60fdaefb09088ac609addd40569bd7fab12593bc) )
+	ROM_LOAD32_BYTE( "shotprm1.137", 0x00001, 0x20000, CRC(64fb47a4) SHA1(32ce9d91b16b8aaf545c0a22842ad8d806727a17) )
+	ROM_LOAD32_BYTE( "shotprm2.137", 0x00002, 0x20000, CRC(e0df3025) SHA1(edff5c5c4486981ac0783f337a0845854d0217f0) )
+	ROM_LOAD32_BYTE( "shotprm3.137", 0x00003, 0x20000, CRC(efa66ad8) SHA1(d8dc754529284e6c06b912e226c8a4520aab49fc) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "shotsnd.u88", 0x10000, 0x18000, CRC(e37d599d) SHA1(105f91e968ecf553d910a97726ddc536289bbb2b) )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "shf_grom.0_0", 0x000000, 0x80000, CRC(832a3d6a) SHA1(443328fa61b79c93ec6c9d24893b2ec38358a905) )
+	ROM_LOAD32_BYTE( "shf_grom.0_1", 0x000001, 0x80000, CRC(155e48a2) SHA1(187d65423ff9a3d6b6c34c885a1b2397fa5371cf) )
+	ROM_LOAD32_BYTE( "shf_grom.0_2", 0x000002, 0x80000, CRC(9f2b470d) SHA1(012e917856042cbe00d476e3220a7f9c841bd199) )
+	ROM_LOAD32_BYTE( "shf_grom.0_3", 0x000003, 0x80000, CRC(3855a16a) SHA1(f8c03efab87ddcb6940f657ad1f0138ceaa2118e) )
+	ROM_LOAD32_BYTE( "shf_grom.1_0", 0x200000, 0x80000, CRC(ed140389) SHA1(f438a887b44a277f81e954bef73ac478eaff58c8) )
+	ROM_LOAD32_BYTE( "shf_grom.1_1", 0x200001, 0x80000, CRC(bd2ffbca) SHA1(667692ce61a4896ceecf2a2bb37f742f175a6152) )
+	ROM_LOAD32_BYTE( "shf_grom.1_2", 0x200002, 0x80000, CRC(c6de4187) SHA1(4854604330bb14f862abe22d755e08b54e0b1a04) )
+	ROM_LOAD32_BYTE( "shf_grom.1_3", 0x200003, 0x80000, CRC(0c707aa2) SHA1(1da83523e04eeae4dbc8748a31a074331bf975d1) )
+	ROM_LOAD32_BYTE( "shf_grom.2_0", 0x400000, 0x80000, CRC(529b4259) SHA1(4f98f28c83c3f8f822ea45d31be526af4a504cbc) )
+	ROM_LOAD32_BYTE( "shf_grom.2_1", 0x400001, 0x80000, CRC(4b52ab1a) SHA1(5c438df7f2edea8f4d8734408fd94acf9d340755) )
+	ROM_LOAD32_BYTE( "shf_grom.2_2", 0x400002, 0x80000, CRC(f45fad03) SHA1(3ff062928ef5bcdce8748ddd972c5da67207227a) )
+	ROM_LOAD32_BYTE( "shf_grom.2_3", 0x400003, 0x80000, CRC(1bcb26c8) SHA1(49e730c56c4a3171a2962fa65f3b16481590c636) )
+	ROM_LOAD32_BYTE( "shf_grom.3_0", 0x600000, 0x80000, CRC(a29763db) SHA1(e2154fb3e400aba300f1a23d53504588426dfbfe) )
+	ROM_LOAD32_BYTE( "shf_grom.3_1", 0x600001, 0x80000, CRC(c757084c) SHA1(6f78ee13c68afd635aa3871cddf7207a19d4039b) )
+	ROM_LOAD32_BYTE( "shf_grom.3_2", 0x600002, 0x80000, CRC(2971cb25) SHA1(5f0508ebff1bf66ee0f78addfa09a43f8fff9a36) )
+	ROM_LOAD32_BYTE( "shf_grom.3_3", 0x600003, 0x80000, CRC(4fcbee51) SHA1(4e2ec4475986c3916c4566b2bc007f41a8c13609) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "shf_srom.0", 0x000000, 0x80000, CRC(9a3cb6c9) SHA1(2af3ce3b1cd7688199195a66cf01bb83775d42fa) )
+	ROM_LOAD16_BYTE( "shf_srom.1", 0x200000, 0x80000, CRC(8c89948a) SHA1(1054eca5de352c17f34f31ef16297ba6177a37ba) )
+ROM_END
+
 
 /*************************************
  *
@@ -2199,9 +2330,11 @@ GAME( 1994, bloods11, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incr
 GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (09/07/94)" )
 GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_NOT_WORKING )
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
-GAME( 1995, wcbwl165, wcbowl,   sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
-GAMEX(1995, wcbwl12,  wcbowl,   wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)", GAME_NO_COCKTAIL ) /* PIC 16C54 labeled as ITBWL-1 */
+GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
+GAME( 1995, wcbwl161, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.61)" ) /* PIC 16C54 labeled as ITBWL-3 */
+GAME( 1995, wcbwl12,  wcbowl,   wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)" ) /* PIC 16C54 labeled as ITBWL-1 */
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )	/* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )	/* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )	/* PIC 16C54 labeled as ITSF-1 */
-GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot" ) /* PIC 16C54 labeled as ITSHF-1 */
+GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.39)" ) /* PIC 16C54 labeled as ITSHF-1 */
+GAME( 1997, sshot137, shufshot, sftm,     shufbowl, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.37)" ) /* PIC 16C54 labeled as ITSHF-1 */

@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "png.h"
 #include "harddisk.h"
+#include "artwork.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -734,8 +735,23 @@ void end_resource_tracking(void)
 	the given filename
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds)
+void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 {
+	struct rectangle bounds;
+	struct mame_bitmap *osdcopy;
+	UINT32 saved_rgb_components[3];
+
+	/* allow the artwork system to override certain parameters */
+	bounds = Machine->visible_area;
+	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
+	artwork_override_screenshot_params(&bitmap, direct_rgb_components);
+
+	/* allow the OSD system to muck with the screenshot */
+	osdcopy = osd_override_snapshot(bitmap, &bounds);
+	if (osdcopy)
+		bitmap = osdcopy;
+
+	/* now do the actual work */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		png_write_bitmap(fp,bitmap);
 	else
@@ -743,8 +759,8 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct re
 		struct mame_bitmap *copy;
 		int sizex, sizey, scalex, scaley;
 
-		sizex = bounds->max_x - bounds->min_x + 1;
-		sizey = bounds->max_y - bounds->min_y + 1;
+		sizex = bounds.max_x - bounds.min_x + 1;
+		sizey = bounds.max_y - bounds.min_y + 1;
 
 		scalex = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_2_1) ? 2 : 1;
 		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
@@ -752,11 +768,10 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct re
 		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
 		if (copy)
 		{
-			struct rectangle temprect = *bounds;
 			int x,y,sx,sy;
 
-			sx = temprect.min_x;
-			sy = temprect.min_y;
+			sx = bounds.min_x;
+			sy = bounds.min_y;
 
 			switch (bitmap->depth)
 			{
@@ -796,6 +811,11 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct re
 			bitmap_free(copy);
 		}
 	}
+	memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
+
+	/* if the OSD system allocated a bitmap; free it */
+	if (osdcopy)
+		bitmap_free(osdcopy);
 }
 
 
@@ -804,7 +824,7 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct re
 	save_screen_snapshot - save a screen snapshot
 -------------------------------------------------*/
 
-void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds)
+void save_screen_snapshot(struct mame_bitmap *bitmap)
 {
 	char name[20];
 	mame_file *fp;
@@ -823,7 +843,7 @@ void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bou
 
 	if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
 	{
-		save_screen_snapshot_as(fp,bitmap,bounds);
+		save_screen_snapshot_as(fp, bitmap);
 		mame_fclose(fp);
 	}
 }

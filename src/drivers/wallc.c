@@ -49,9 +49,10 @@ Thanks to HIGHWAYMAN for providing info on how to get to these epoxies
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
 #include "vidhrdw/res_net.h"
+
+static struct tilemap *bg_tilemap;
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -113,46 +114,37 @@ static PALETTE_INIT( wallc )
 	}
 }
 
+static WRITE_HANDLER( wallc_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 0x100;
+	int color = 1;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( wallc )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
 
 VIDEO_UPDATE( wallc )
 {
-int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-	//	if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-	//		dirtybuffer[offs] = 0;
-
-			sx = offs / 32;
-	//		if (flipscreen[0]) sx = 31 - sx;
-			sy = 31 - (offs % 32);
-	//		if (flipscreen[1]) sy = 31 - sy;
-
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 0x100,   /* + 8 * (colorram[offs] & 0x20),*/
-					1, /* color code #1 */
-					0,0, /*flipscreen[0],flipscreen[1],*/
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	//copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-}
-
-
-
-static WRITE_HANDLER( wcrash_videoram_w )
-{
-	videoram[offset] = data;
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 }
 
 static int wcb0=-1;
@@ -183,18 +175,13 @@ static WRITE_HANDLER( wc_b2 )
 	}
 }
 
-static READ_HANDLER( wcrash_videoram_r )
-{
-	return videoram[offset];
-}
-
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 
-	{ 0x8000, 0x83ff, wcrash_videoram_r },
-	{ 0x8400, 0x87ff, wcrash_videoram_r }, /* mirror */
-	{ 0x8800, 0x8bff, wcrash_videoram_r }, /* mirror */
-	{ 0x8c00, 0x8fff, wcrash_videoram_r }, /* mirror */
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x8400, 0x87ff, MRA_RAM }, /* mirror */
+	{ 0x8800, 0x8bff, MRA_RAM }, /* mirror */
+	{ 0x8c00, 0x8fff, MRA_RAM }, /* mirror */
 
 	{ 0xa000, 0xa3ff, MRA_RAM },
 
@@ -208,10 +195,10 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },	/* 2114, 2114 */
-	{ 0x8400, 0x87ff, wcrash_videoram_w },	/* mirror */
-	{ 0x8800, 0x8bff, wcrash_videoram_w },	/* mirror */
-	{ 0x8c00, 0x8fff, wcrash_videoram_w },	/* mirror */
+	{ 0x8000, 0x83ff, wallc_videoram_w, &videoram },	/* 2114, 2114 */
+	{ 0x8400, 0x87ff, wallc_videoram_w },	/* mirror */
+	{ 0x8800, 0x8bff, wallc_videoram_w },	/* mirror */
+	{ 0x8c00, 0x8fff, wallc_videoram_w },	/* mirror */
 
 	{ 0xa000, 0xa3ff, MWA_RAM },		/* 2114, 2114 */
 
@@ -231,14 +218,14 @@ INPUT_PORTS_START( wallc )
 	PORT_DIPSETTING(	0x02, "4" )
 	PORT_DIPSETTING(	0x01, "3" )
 	PORT_DIPSETTING(	0x00, "2" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus at" )
-	PORT_DIPSETTING(	0x0c, "100/200/400/800" )
-	PORT_DIPSETTING(	0x08, "80/160/320/640" )
-	PORT_DIPSETTING(	0x04, "(x1000) 60/120/240/480" )
-	PORT_DIPSETTING(	0x00, "No Bonus" )
-	PORT_DIPNAME( 0x10, 0x00, "Curve effect" )
-	PORT_DIPSETTING(	0x10, "Normal Effect" )
-	PORT_DIPSETTING(	0x00, "More Effect" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life) )
+	PORT_DIPSETTING(	0x0c, "100K/200K/400K/800K" )
+	PORT_DIPSETTING(	0x08, "80K/160K/320K/640K" )
+	PORT_DIPSETTING(	0x04, "60K/120K/240K/480K" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x10, 0x00, "Curve Effect" )
+	PORT_DIPSETTING(	0x10, "Normal" )
+	PORT_DIPSETTING(	0x00, "More" )
 	PORT_DIPNAME( 0x60, 0x60, "Timer Speed" )
 	PORT_DIPSETTING(	0x60, "Slow" )
 	PORT_DIPSETTING(	0x40, "Normal" )
@@ -277,12 +264,8 @@ INPUT_PORTS_START( wallc )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -350,7 +333,7 @@ static MACHINE_DRIVER_START( wallc )
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(wallc)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(wallc)
 	MDRV_VIDEO_UPDATE(wallc)
 
 	/* sound hardware */

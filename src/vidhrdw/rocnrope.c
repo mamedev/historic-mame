@@ -9,11 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-static int flipscreen;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -75,69 +71,58 @@ PALETTE_INIT( rocnrope )
 		COLOR(0,i) = *(color_prom++) & 0x0f;
 }
 
-
-
-WRITE_HANDLER( rocnrope_flipscreen_w )
+WRITE_HANDLER( rocnrope_videoram_w )
 {
-	if (flipscreen != (~data & 1))
+	if (videoram[offset] != data)
 	{
-		flipscreen = ~data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( rocnrope_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( rocnrope_flipscreen_w )
+{
+	if (flip_screen != (~data & 0x01))
+	{
+		flip_screen_set(~data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-/***************************************************************************
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + 2 * (attr & 0x80);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x20) ? TILE_FLIPY : 0);
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-***************************************************************************/
-VIDEO_UPDATE( rocnrope )
+VIDEO_START( rocnrope )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+	
+	return 0;
+}
+
+static void rocnrope_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x20;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
@@ -147,4 +132,10 @@ VIDEO_UPDATE( rocnrope )
 				240-spriteram[offs],spriteram_2[offs + 1],
 				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
+}
+
+VIDEO_UPDATE( rocnrope )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	rocnrope_draw_sprites(bitmap);
 }

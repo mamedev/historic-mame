@@ -397,4 +397,4 @@ static DRIVER_INIT( funkyjet )
 /******************************************************************************/
 
 GAME( 1992, funkyjet, 0, funkyjet, funkyjet, funkyjet, ROT0, "[Data East] (Mitchell license)", "Funky Jet" )
-GAME( 1995, sotsugyo, 0, funkyjet, sotsugyo, funkyjet, ROT0, "Mitchell Corporation (Atlus license)", "Sotsugyo Shousho" )
+GAME( 1995, sotsugyo, 0, funkyjet, sotsugyo, funkyjet, ROT0, "Mitchell (Atlus license)", "Sotsugyo Shousho" )

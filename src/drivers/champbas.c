@@ -8,7 +8,6 @@ TODO:
 champbbj and champbb2 don't work due to protection - a custom mcu probably.
 The protection involves locations a006-a007 and 6000-63ff.  It pulls
 addresses to routines from there.
-Flip screen?
 
 0000-5fff ROM
 7800-7fff ROM (Champion Baseball 2 only)
@@ -45,6 +44,7 @@ The second CPU plays speech
 extern WRITE_HANDLER( champbas_videoram_w );
 extern WRITE_HANDLER( champbas_colorram_w );
 extern WRITE_HANDLER( champbas_gfxbank_w );
+extern WRITE_HANDLER( champbas_flipscreen_w );
 
 extern PALETTE_INIT( champbas );
 extern VIDEO_START( champbas );
@@ -56,7 +56,6 @@ WRITE_HANDLER( champbas_dac_w )
 {
 	DAC_signed_data_w(0,data<<2);
 }
-
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
@@ -81,6 +80,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x8ff0, 0x8fff, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa002, 0xa002, champbas_gfxbank_w },
+	{ 0xa003, 0xa003, champbas_flipscreen_w },
 	//{ 0xa006, 0xa007, champbas_protection_w },
 	{ 0xa060, 0xa06f, MWA_RAM, &spriteram_2 },
 	{ 0xa080, 0xa080, soundlatch_w },
@@ -326,6 +326,6 @@ ROM_END
 
 
 
-GAMEX(1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball", GAME_NO_COCKTAIL )
+GAME(1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
 GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan)", GAME_NOT_WORKING )
 GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball II", GAME_NOT_WORKING )

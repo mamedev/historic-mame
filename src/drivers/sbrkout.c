@@ -5,8 +5,7 @@
 	driver by Mike Balfour
 
 	Games supported:
-		* Sprint 1
-		* Sprint 2
+		* Super Breakout
 
 	Known issues:
 		* none at this time
@@ -32,7 +31,22 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
-#include "sbrkout.h"
+
+extern WRITE_HANDLER( sbrkout_serve_led_w );
+extern WRITE_HANDLER( sbrkout_start_1_led_w );
+extern WRITE_HANDLER( sbrkout_start_2_led_w );
+extern READ_HANDLER( sbrkout_read_DIPs_r );
+extern INTERRUPT_GEN( sbrkout_interrupt );
+extern READ_HANDLER( sbrkout_select1_r );
+extern READ_HANDLER( sbrkout_select2_r );
+
+extern UINT8 *sbrkout_horiz_ram;
+extern UINT8 *sbrkout_vert_ram;
+
+extern WRITE_HANDLER( sbrkout_videoram_w );
+
+extern VIDEO_START( sbrkout );
+extern VIDEO_UPDATE( sbrkout );
 
 
 /*************************************
@@ -59,7 +73,7 @@ OVERLAY_END
 
 #define TIME_4V 4.075/4
 
-static unsigned char *sbrkout_sound;
+static UINT8 *sbrkout_sound;
 
 static WRITE_HANDLER( sbrkout_dac_w )
 {
@@ -130,7 +144,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0018, 0x001d, MWA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
 	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
 	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
-	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
+	{ 0x0400, 0x07ff, sbrkout_videoram_w, &videoram }, /* DISPLAY */
 	{ 0x0c10, 0x0c11, sbrkout_serve_led_w }, /* Serve LED */
 	{ 0x0c30, 0x0c31, sbrkout_start_1_led_w }, /* 1 Player Start Light */
 	{ 0x0c40, 0x0c41, sbrkout_start_2_led_w }, /* 2 Player Start Light */
@@ -283,7 +297,7 @@ static MACHINE_DRIVER_START( sbrkout )
 	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(sbrkout)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(sbrkout)
 	MDRV_VIDEO_UPDATE(sbrkout)
 
 	/* sound hardware */

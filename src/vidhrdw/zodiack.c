@@ -54,9 +54,9 @@ WRITE_HANDLER( zodiack_attributes_w )
 
 WRITE_HANDLER( zodiack_flipscreen_w )
 {
-	if (flip_screen != (!data))
+	if (flip_screen != (~data & 0x01))
 	{
-		flip_screen_set(!data);
+		flip_screen_set(~data & 0x01);
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }

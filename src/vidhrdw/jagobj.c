@@ -830,8 +830,10 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
 	UINT32 link = (lower >> 24) | ((upper & 0x7ff) << 8);
 	int taken = 0;
 
+#ifndef MESS
 	if ((ypos & 1) && ypos != 0x7ff)
 		fprintf(stderr, "        branch cc=%d ypos=%X link=%06X - ", cc, ypos, link << 3);
+#endif
 	switch (cc)
 	{
 		/* 0: branch if ypos == vc or ypos == 0x7ff */
@@ -946,7 +948,9 @@ static void process_object_list(struct mame_bitmap *bitmap, const struct rectang
 							logerror("stop   = %08X-%08X\n", objdata[0], objdata[1]);
 						if (interrupt)
 						{
+#ifndef MESS
 							fprintf(stderr, "stop int=%d\n", interrupt);
+#endif
 							cpu_irq_state |= 4;
 							update_cpu_irq();
 						}

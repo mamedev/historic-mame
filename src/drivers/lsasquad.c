@@ -114,8 +114,8 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, YM2203_control_port_0_w },
 	{ 0xa001, 0xa001, YM2203_write_port_0_w },
-	{ 0xc000, 0xc000, YM2203_control_port_0_w },	/* actually AY8910 */
-	{ 0xc001, 0xc001, YM2203_write_port_0_w },		/* actually AY8910 */
+	{ 0xc000, 0xc000, AY8910_control_port_0_w },
+	{ 0xc001, 0xc001, AY8910_write_port_0_w },
 	{ 0xd000, 0xd000, lsasquad_sh_result_w },
 	{ 0xd400, 0xd400, lsasquad_sh_nmi_disable_w },
 	{ 0xd800, 0xd800, lsasquad_sh_nmi_enable_w },
@@ -307,15 +307,16 @@ static void irqhandler(int irq)
 
 static WRITE_HANDLER( unk )
 {
+
 }
 
 /* actually there is one AY8910 and one YM2203, but the sound core doesn't */
 /* support that so we use 2 YM2203 */
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
+	1,			/* 1 chips */
 	3000000,	/* 3 MHz???? */
-	{ YM2203_VOL(100,20), YM2203_VOL(0,20) },
+	{ YM2203_VOL(100,20) },
 	{ 0 },
 	{ 0 },
 	{ unk },
@@ -323,6 +324,16 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+static struct AY8910interface ay8910_interface =
+{
+	1, /* 1 chips */
+	3000000,	 /* 3 MHz ??? */
+	{ 20 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
 
 static MACHINE_DRIVER_START( lsasquad )
@@ -356,6 +367,7 @@ static MACHINE_DRIVER_START( lsasquad )
 	MDRV_VIDEO_UPDATE(lsasquad)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 

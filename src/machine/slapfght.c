@@ -23,7 +23,6 @@ extern unsigned char *getstar_e803;
 static unsigned char mcu_val;
 
 /* Perform basic machine initialisation */
-
 MACHINE_INIT( slapfight )
 {
 	/* MAIN CPU */
@@ -46,22 +45,6 @@ MACHINE_INIT( slapfight )
 WRITE_HANDLER( slapfight_dpram_w )
 {
     slapfight_dpram[offset]=data;
-
-//	logerror("SLAPFIGHT MAIN  CPU : Write to   $c8%02x = %02x\n",offset,slapfight_dpram[offset]);
-
-
-/*
-
-	// Synchronise CPUs
-	timer_set(TIME_NOW,0,0);       P'tit Seb 980926 Commented out because it doesn't seem to be necessary
-
-	// Now cause the interrupt
-    cpu_set_irq_line (1, IRQ_LINE_NMI, PULSE_LINE);
-
-*/
-
-
-    return;
 }
 
 READ_HANDLER( slapfight_dpram_r )
@@ -118,7 +101,6 @@ WRITE_HANDLER( slapfight_port_09_w )
 
 
 /* Status register */
-
 READ_HANDLER( slapfight_port_00_r )
 {
 	int states[3]={ 0xc7, 0x55, 0x00 };
@@ -168,6 +150,11 @@ READ_HANDLER( tigerh_e803_r )
 {
 	switch(mcu_val)
 	{
+		/*This controls the background scroll(tigerh & tigerhj only)*/
+		case 0x40:
+		case 0x41:
+		case 0x42: return 0xf0;
+		/*Protection check at start-up*/
 		case 0x73: return (mcu_val+0x10);
 		case 0xf3: return (mcu_val-0x80);
 		default:   return (mcu_val);

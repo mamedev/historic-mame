@@ -1,41 +1,36 @@
 /**
  * driver\namcos22.c
  *
- * Emulation of Namco System 22 and Namco Super System 22
- * Super System22 has a different memory map, sound system, and an additional 2d sprite layer.
- * Super System22 also presumably has more rendering "horsepower."
+ * Hardware Notes:
+ * - Serial controller is C139 SCI (same as System21).
+ * - S22 has two TI320C25 DSP (printed as C71).
+ * - Main DSP performs handling display list and matrix operation, and kicks hardware.
+ * - Sub DSP may calculates shadings and sub operations.
+ * - main CPU copies some DSP code to shared RAM on start
+ * - C74 is sound MCU, Mitsubishi M37702 MCU with mask ROM
+ * - some external subroutines for C74 is also embedded
+ * - Super System22 has a different memory map, sound system, and an additional 2d sprite layer.
  *
+ * Prop Cycle notes:
+ * - motor output: fan, blows air towards player when flying fast
+ * - lamp output: start button can light up
+ * - steering yoke should be analog
+ * - could use a new analog input port type for pedal speed
+ * - needs nvmem save
  *
- * missing rendering features:
- *	- light sources
- *	- gouraud shading (what controls this?)
- *	- depth cueing (for fog effect)
- *	- depth bias (priority for overlapping polygons)
+ *	The "dipswitch" settings are ignored - this isn't a bug.  The Prop Cycle software
+ *  explicitly clears the chunk of work RAM used to cache the 8 bit dipswitch value
+ *  immediately after populating it.  This is done to hide secret debug routines from
+ *	release versions of the game.
  *
- * known rendering issues:
- *	- all-or-nothing near-plane clipping
- *	- sprite priority and camera are hacked (yields reasonably good behavior for Prop Cycle)
- *	- some ROLT (roll-type) parameter handling is wrong
- *	- some ignored point ROM attributes
- *  - some unknown polygon control codes
- *
- * future optimizations:
- *	- unpack texel data on startup
- *	- get zbuffer working with fixed point
- *	- consider depth sort as alternative to zbuffer
- *	- consider optional hardware acceleration
+ *	When the red namco logos slides in from top right and bottom left during splash screen,
+ *	it is supposed to be translucent with respect to the polygon layer
  *
  * TBA:
- *	- fix Alpine Racer (Super System22) - different point ROM format
+ *	- fix Alpine Racer (Super System22) - encrypted point ROMs
  *	- fix Ridge Racer1/2 (System22) - interrupts/protection need work
  *	- fix Rave Racer (System22) lots of glitches
  *	- fix Victory Lap (System22) - lots of glitches
- *
- * Prop Cycle):
- * - hook up real analog controls for steering yoke
- * - need new input port type for pedal
- * - map motor output (fan, blows air towards player when flying fast)
- * - map lamp output (start button lights can light up)
  *
  * Special thanks to "team vivanonno" for System22 memory map, and insights on object list
  * parsing.
@@ -270,38 +265,50 @@ static READ32_HANDLER( namcos22_dipswitch_r )
 
 static READ32_HANDLER( namcos22_mcuram_r )
 {
-	//logerror( "pc=%08x; offs=%08x\n", activecpu_get_pc(), 0xa04000+4*offset );
 	return namcos22_shareram[offset];
 }
 
 static WRITE32_HANDLER( polyram_w)
 {
 	COMBINE_DATA( &namcos22_polygonram[offset] );
-#ifdef MAME_DEBUG
-	if( keyboard_pressed( KEYCODE_M ) )
-	{
-		logerror( "pc=%08x: polyram[%08x] = %08x\n",
-			activecpu_get_pc(), offset*4, namcos22_polygonram[offset] );
-	}
-#endif
 }
 
 static MEMORY_READ32_START( namcos22s_readmem )
 	{ 0x000000, 0x3fffff, MRA32_ROM },
 	{ 0x400000, 0x40001f, alpiner_prot_r },
-	{ 0x410000, 0x413fff, MRA32_RAM },
+	{ 0x410000, 0x413fff, MRA32_RAM }, /* unused by Prop Cycle? */
+	{ 0x430000, 0x430003, MRA32_RAM },
 	{ 0x440000, 0x440003, namcos22_dipswitch_r },
 	{ 0x450008, 0x45000b, namcos22_portbit_r },
-	{ 0x460000, 0x463fff, MRA32_RAM },
+
+	{ 0x460000, 0x463fff, MRA32_RAM }, /* unknown */
+		/* possible nvmem?
+		 */
+
 	{ 0x700000, 0x70001f, MRA32_RAM },
 		/* 0x700014r: watchdog */
-	{ 0x810200, 0x8103ff, MRA32_RAM }, /* Air Combat */	
-	{ 0x824000, 0x8243ff, MRA32_RAM }, /* GAMMA */
+
+	{ 0x800000, 0x800003, MRA32_RAM }, /* 0x08380000 (?) */
+
+	{ 0x810000, 0x81000f, MRA32_RAM }, /* always zero? */
+		/* 00000000 00000000 44440000 00000000 */
+
+	{ 0x810200, 0x8103ff, MRA32_RAM }, /* depth cueing; fog density, near to far */
+		/* 0000 0015 002a 003f 0054 0069 ...14eb */
+
+	{ 0x824000, 0x8243ff, namcos22_gamma_r }, /* GAMMA */
 	{ 0x828000, 0x83ffff, namcos22_paletteram_r }, /* PALETTE */
+	{ 0x860000, 0x860007, MRA32_RAM }, /* ? */
+
 	{ 0x880000, 0x89dfff, namcos22_cgram_r },
 	{ 0x89e000, 0x89ffff, namcos22_textram_r },
-	{ 0x8a0000, 0x8a000f, MRA32_RAM }, /* prop cycle */
+	{ 0x8a0000, 0x8a000f, MRA32_RAM },
+		/*	+0x0000			BG Position X
+		 *	+0x0002			BG Position Y
+		 */
+
 	{ 0x900000, 0x90ffff, MRA32_RAM },
+	{ 0x940000, 0x94007f, MRA32_RAM },
 	{ 0x980000, 0x9affff, MRA32_RAM }, /* spriteram */
 	{ 0xa03ffc, 0xa03fff, MRA32_RAM },
 	{ 0xa04000, 0xa0bfff, namcos22_mcuram_r },
@@ -311,25 +318,29 @@ MEMORY_END
 
 static MEMORY_WRITE32_START( namcos22s_writemem )
 	{ 0x000000, 0x3fffff, MWA32_ROM },
-	{ 0x400000, 0x40001f, MWA32_NOP },
+	{ 0x400000, 0x40001f, MWA32_NOP }, /* cuskey? */
 	{ 0x410000, 0x413fff, MWA32_RAM },
-	{ 0x430000, 0x430003, MWA32_NOP },
+	{ 0x430000, 0x430003, MWA32_RAM }, /* I/O related; bit select? */
 	{ 0x450008, 0x45000b, namcos22_portbit_w },
 	{ 0x460000, 0x463fff, MWA32_RAM },
 	{ 0x700000, 0x70001f, MWA32_RAM }, /* CPU control registers */
-	{ 0x800000, 0x800003, MWA32_NOP },
+	{ 0x800000, 0x800003, MWA32_RAM }, /* ? */
 	{ 0x810000, 0x81000f, MWA32_RAM }, /* ? */
-	{ 0x810200, 0x8103ff, MWA32_RAM }, /* prop cycle */
-	{ 0x824000, 0x8243ff, MWA32_RAM }, /* GAMMA(?) */
+	{ 0x810200, 0x8103ff, MWA32_RAM }, /* depth cueing density */
+	{ 0x824000, 0x8243ff, namcos22_gamma_w, &namcos22_gamma },
 	{ 0x828000, 0x83ffff, namcos22_paletteram_w, &paletteram32 },
+	{ 0x860000, 0x860007, MWA32_RAM }, /* ? */
 	{ 0x880000, 0x89dfff, namcos22_cgram_w, &namcos22_cgram },
 	{ 0x89e000, 0x89ffff, namcos22_textram_w, &namcos22_textram },
 	{ 0x8a0000, 0x8a000f, MWA32_RAM }, /* ? */
+		/* 035c0000 006e0000 01ff0000 0000000 */
 	{ 0x900000, 0x90ffff, MWA32_RAM }, /* VICS(?) */
 	{ 0x940000, 0x94007f, MWA32_RAM },
 	{ 0x980000, 0x9affff, MWA32_RAM, &spriteram32 },
 	{ 0xa03ffc, 0xa03fff, MWA32_RAM },
-	{ 0xa04000, 0xa0bfff, MWA32_RAM, &namcos22_shareram }, /* MCU? */
+	{ 0xa04000, 0xa0bfff, MWA32_RAM, &namcos22_shareram }, /* MCU */
+		/* 0xa0bd2f: 0x02 Prop Cycle: MOTOR ON */
+		/* 0xa0bd2f: 0x04 Prop Cycle: LAMP ON */
 	{ 0xc00000, 0xc1ffff, polyram_w, &namcos22_polygonram },
 	{ 0xe00000, 0xefffff, MWA32_RAM }, /* WORK */
 	/* note that at least some of this is battery backed ADS RAM */
@@ -385,8 +396,8 @@ SimulatePropCycleMCU( void )
 
 		if( readinputport( 2 ) & 0x10 ) pedal+=0x10;
 
-		namcos22_shareram[(0xa0bd08-0xa04000)/4] = ((UINT16)dx*0x6666);
-		namcos22_shareram[(0xa0bd0c-0xa04000)/4] = ((UINT16)dy*0x6666)<<16;
+		namcos22_shareram[(0xa0bd08-0xa04000)/4] = (UINT16)(dx*0x7fff);
+		namcos22_shareram[(0xa0bd0c-0xa04000)/4] = (dy*0x7fff)<<16;
 		namcos22_shareram[(0xa0bd1c-0xa04000)/4] = pedal<<16;
 		/*	pc=00022ffa; offs=00a0be80
 			pc=00022258; offs=00a0bd00
@@ -413,23 +424,7 @@ return;
 	if( keyboard_pressed(KEYCODE_SPACE) ) data |= 0x01000; // "view switch"
 	namcos22_shareram[(0xa0bd00 - 0xa04000)/4] = data;
 
-	data = 0;
-	if( keyboard_pressed(KEYCODE_A) ) data |= 0x0001;
-	if( keyboard_pressed(KEYCODE_S) ) data |= 0x0002;
-	if( keyboard_pressed(KEYCODE_D) ) data |= 0x0004;
-	if( keyboard_pressed(KEYCODE_F) ) data |= 0x0008;
-	if( keyboard_pressed(KEYCODE_G) ) data |= 0x0010;
-	if( keyboard_pressed(KEYCODE_H) ) data |= 0x0020;
-	if( keyboard_pressed(KEYCODE_J) ) data |= 0x0040;
-	if( keyboard_pressed(KEYCODE_K) ) data |= 0x0080;
-	if( keyboard_pressed(KEYCODE_Z) ) data |= 0x0100;
-	if( keyboard_pressed(KEYCODE_X) ) data |= 0x0200;
-	if( keyboard_pressed(KEYCODE_C) ) data |= 0x0400;
-	if( keyboard_pressed(KEYCODE_V) ) data |= 0x0800;
-	if( keyboard_pressed(KEYCODE_B) ) data |= 0x1000;
-	if( keyboard_pressed(KEYCODE_N) ) data |= 0x2000;
-	if( keyboard_pressed(KEYCODE_M) ) data |= 0x4000;
-	if( keyboard_pressed(KEYCODE_L) ) data |= 0x8000;
+	data = 0; /* ? */
 	namcos22_shareram[(0xa0bd2e - 0xa04000)/4] = data;
 }
 
@@ -481,10 +476,10 @@ static MACHINE_DRIVER_START( namcos22s )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
 	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
-	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(namcos22s)
@@ -533,8 +528,6 @@ static READ32_HANDLER( rr_prot2_r )
 
 static READ32_HANDLER( sys22_shareram_r )
 {
-//	logerror( "%08x: read(%08x)\n",
-//		activecpu_get_pc(), offset*4+0x60004000 );
 	return namcos22_shareram[offset];
 }
 
@@ -542,8 +535,9 @@ static MEMORY_READ32_START( namcos22_readmem )
 	{ 0x00000000, 0x001fffff, MRA32_ROM },
 	{ 0x10000000, 0x1001ffff, MRA32_RAM },	/* work RAM */
 	{ 0x20000000, 0x2000000f, rr_prot_r },	/* custom key? */
-	{ 0x20020000, 0x20020003, rr_prot2_r },	/* status? */
-	{ 0x40000000, 0x4000001f, MRA32_RAM },	/* unknown */
+	{ 0x20010000, 0x20013fff, MRA32_RAM },  /* C139 SCI: serial controller (TX/RX buffer) - same as System21 */
+	{ 0x20020000, 0x20020003, rr_prot2_r },	/* serial controller (registers) */
+	{ 0x40000000, 0x4000001f, MRA32_RAM },	/* interrupt controller */
 	/*	0x40000016		watchdog */
 	{ 0x48000000, 0x4800003f, MRA32_RAM },	/* unknown */
 	{ 0x50000000, 0x50000003, namcos22_dipswitch_r }, /* DSW2,3 */
@@ -563,9 +557,9 @@ MEMORY_END
 static MEMORY_WRITE32_START( namcos22_writemem )
 	{ 0x00000000, 0x001fffff, MWA32_ROM },
 	{ 0x10000000, 0x1001ffff, MWA32_RAM },
-	{ 0x20000000, 0x20000003, MWA32_NOP },	/* unknown */
-	{ 0x20010000, 0x20013fff, MWA32_NOP },	/* unknown (write only) */
-	{ 0x40000000, 0x4000001f, MWA32_RAM },	/* unknown */
+	{ 0x20010000, 0x20013fff, MWA32_RAM },  /* C139 SCI: serial controller  TX/RX buffer (same as System21) */
+	{ 0x20020000, 0x20020003, MWA32_NOP },	/* serial controller (registers) */
+	{ 0x40000000, 0x4000001f, MWA32_RAM },	/* interrupt controller */
 	{ 0x48000000, 0x4800003f, MWA32_RAM },	/* unknown */
 	{ 0x50000008, 0x5000000b, namcos22_portbit_w },
 	{ 0x58000000, 0x58001fff, MWA32_RAM },	/* EPROM */
@@ -667,10 +661,10 @@ static MACHINE_DRIVER_START( namcos22 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
 	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
-	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(namcos22s)
@@ -702,29 +696,76 @@ ROM_START( airco22b )
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "acs1ccrl.3d",	 0x000000, 0x200000,CRC(07088ba1) )
-	ROM_LOAD( "asc1ccrh.1d",	 0x200000, 0x080000,CRC(62936af6) )
+	ROM_LOAD( "acs1ccrh.1d",	 0x200000, 0x080000,CRC(62936af6) )
 
 	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "asc1ptl0.18k", 0x80000*0x0, 0x80000,CRC(bd5896c7) )
-	ROM_LOAD( "asc1ptl1.16k", 0x80000*0x1, 0x80000,CRC(e583b975) )
-	ROM_LOAD( "asc1ptl2.15k", 0x80000*0x2, 0x80000,CRC(802d737a) )
-	ROM_LOAD( "asc1ptl3.14k", 0x80000*0x3, 0x80000,CRC(fe556ecb) )
+	ROM_LOAD( "acs1ptl0.18k", 0x80000*0x0, 0x80000,CRC(bd5896c7) )
+	ROM_LOAD( "acs1ptl1.16k", 0x80000*0x1, 0x80000,CRC(e583b975) )
+	ROM_LOAD( "acs1ptl2.15k", 0x80000*0x2, 0x80000,CRC(802d737a) )
+	ROM_LOAD( "acs1ptl3.14k", 0x80000*0x3, 0x80000,CRC(fe556ecb) )
 
-	ROM_LOAD( "asc1ptm0.18j", 0x80000*0x4, 0x80000,CRC(949b6c58) )
-	ROM_LOAD( "asc1ptm1.16j", 0x80000*0x5, 0x80000,CRC(8b2b99d9) )
-	ROM_LOAD( "asc1ptm2.15j", 0x80000*0x6, 0x80000,CRC(f1515080) )
-	ROM_LOAD( "asc1ptm3.14j", 0x80000*0x7, 0x80000,CRC(e364f4aa) )
+	ROM_LOAD( "acs1ptm0.18j", 0x80000*0x4, 0x80000,CRC(949b6c58) )
+	ROM_LOAD( "acs1ptm1.16j", 0x80000*0x5, 0x80000,CRC(8b2b99d9) )
+	ROM_LOAD( "acs1ptm2.15j", 0x80000*0x6, 0x80000,CRC(f1515080) )
+	ROM_LOAD( "acs1ptm3.14j", 0x80000*0x7, 0x80000,CRC(e364f4aa) )
 
-	ROM_LOAD( "asc1ptu0.18f", 0x80000*0x8, 0x80000,CRC(746b3084) )
-	ROM_LOAD( "asc1ptu1.16f", 0x80000*0x9, 0x80000,CRC(b44f1d3b) )
-	ROM_LOAD( "asc1ptu2.15f", 0x80000*0xa, 0x80000,CRC(fdd2d778) )
-	ROM_LOAD( "asc1ptu3.14f", 0x80000*0xb, 0x80000,CRC(38b425d4) )
+	ROM_LOAD( "acs1ptu0.18f", 0x80000*0x8, 0x80000,CRC(746b3084) )
+	ROM_LOAD( "acs1ptu1.16f", 0x80000*0x9, 0x80000,CRC(b44f1d3b) )
+	ROM_LOAD( "acs1ptu2.15f", 0x80000*0xa, 0x80000,CRC(fdd2d778) )
+	ROM_LOAD( "acs1ptu3.14f", 0x80000*0xb, 0x80000,CRC(38b425d4) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
 	ROM_LOAD( "acs1data.8k", 0, 0x080000, CRC(33824bc9) )
 	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "acs1wav0.1", 0x000000, 0x400000, CRC(52fb9762) )
 	ROM_LOAD( "acs1wav1.2", 0x400000, 0x400000, CRC(b568dca2) )
+ROM_END
+
+ROM_START( alpinerc )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_BYTE( "ar2ver-c.1", 0x00003, 0x100000, CRC(61323842) )
+	ROM_LOAD32_BYTE( "ar2ver-c.2", 0x00002, 0x100000, CRC(43795b2d) )
+	ROM_LOAD32_BYTE( "ar2ver-c.3", 0x00001, 0x100000, CRC(acb3003b) )
+	ROM_LOAD32_BYTE( "ar2ver-c.4", 0x00000, 0x100000, CRC(a57b4e60) )
+
+	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,CRC(e7be830a) ) /* identical to "ar1scg0.12l" */
+	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,CRC(8f15a686) ) /* identical to "ar1scg1.10l" */
+
+	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+	ROM_LOAD( "ar1cg0.12b",  0x200000*0x0, 0x200000,CRC(93f3a9d9) ) /* identical to "ar1cg0.8d" */
+	ROM_LOAD( "ar1cg1.10d",  0x200000*0x1, 0x200000,CRC(39828c8b) ) /* identical to "ar1cg1.13b" */
+	ROM_LOAD( "ar1cg2.12d",  0x200000*0x2, 0x200000,CRC(f7b058d1) ) /* identical to "ar1cg2.14b" */
+	ROM_LOAD( "ar1cg3.13d",  0x200000*0x3, 0x200000,CRC(c28a3d2a) ) /* identical to "ar1cg3.16b" */
+	ROM_LOAD( "ar1cg4.14d",  0x200000*0x4, 0x200000,CRC(abdb161f) ) /* identical to "ar1cg4.18b" */
+	ROM_LOAD( "ar1cg5.16d",  0x200000*0x5, 0x200000,CRC(2381cfea) ) /* identical to "ar1cg5.19b" */
+	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) ) /* identical to "ar1cg6.18d" */
+	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) ) /* identical to "ar1cg7.19d" */
+
+	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) ) /* identical to "ar1ccrl.7b" */
+	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) ) /* identical to "pr1ccrh.5b" */
+
+	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
+	ROM_LOAD( "ar1ptrl0.18k", 0x80000*0x0, 0x80000,CRC(82405108) )
+	ROM_LOAD( "ar1ptrl1.16k", 0x80000*0x1, 0x80000,CRC(8739b09c) )
+	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,CRC(bda693a9) )
+	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,CRC(82797405) )
+
+	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(29d92097) )
+	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,CRC(2232f0a5) )
+	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,CRC(8ee14e6f) )
+	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,CRC(1094a970) )
+
+	ROM_LOAD( "ar1ptru0.18f", 0x80000*0x8, 0x80000,CRC(26d88467) )
+	ROM_LOAD( "ar1ptru1.16f", 0x80000*0x9, 0x80000,CRC(c5e2c208) )
+	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,CRC(1321ec59) )
+	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,CRC(139d7dc1) )
+
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
+	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) )
+	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
+	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) )
 ROM_END
 
 ROM_START( alpinerd )
@@ -1012,83 +1053,83 @@ ROM_END
 
 ROM_START( ridger2j )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "rrs1prg.ll", 0x00003, 0x80000, CRC(fbf785a2) )
-	ROM_LOAD32_BYTE( "rrs1prg.lm", 0x00002, 0x80000, CRC(562f747a) )
-	ROM_LOAD32_BYTE( "rrs1prg.um", 0x00001, 0x80000, CRC(93259fb0) )
-	ROM_LOAD32_BYTE( "rrs1prg.uu", 0x00000, 0x80000, CRC(31cdefe8) )
+	ROM_LOAD32_BYTE( "rrs1pr11.4d", 0x00003, 0x80000, CRC(fbf785a2) )
+	ROM_LOAD32_BYTE( "rrs1prlm.2d", 0x00002, 0x80000, CRC(562f747a) )
+	ROM_LOAD32_BYTE( "rrs1prum.8d", 0x00001, 0x80000, CRC(93259fb0) )
+	ROM_LOAD32_BYTE( "rrs1pruu.6d", 0x00000, 0x80000, CRC(31cdefe8) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*4, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rrs1-cg0.1a", 0x200000*0x0, 0x200000,CRC(714c0091) )
-	ROM_LOAD( "rrs1-cg1.2a", 0x200000*0x1, 0x200000,CRC(836545c1) )
-	ROM_LOAD( "rrs1-cg2.3a", 0x200000*0x2, 0x200000,CRC(00e9799d) )
-	ROM_LOAD( "rrs1-cg3.5a", 0x200000*0x3, 0x200000,CRC(3858983f) )
+	ROM_LOAD( "rrs1cg0.1a", 0x200000*0x0, 0x200000,CRC(714c0091) )
+	ROM_LOAD( "rrs1cg1.2a", 0x200000*0x1, 0x200000,CRC(836545c1) )
+	ROM_LOAD( "rrs1cg2.3a", 0x200000*0x2, 0x200000,CRC(00e9799d) )
+	ROM_LOAD( "rrs1cg3.5a", 0x200000*0x3, 0x200000,CRC(3858983f) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rrs1ccrh.bin", 0x000000, 0x080000,CRC(bd3c86ab) )
-	ROM_LOAD( "rrs1ccrl.bin", 0x200000, 0x200000,CRC(304a8b57) )
+	ROM_LOAD( "rrs1ccrl.5a", 0x000000, 0x200000,CRC(304a8b57) )
+	ROM_LOAD( "rrs1ccrh.5c", 0x200000, 0x080000,CRC(bd3c86ab) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "rrs1-pot.l0", 0x80000*0, 0x80000,CRC(9376c384) )
-	ROM_LOAD( "rrs1-pot.l1", 0x80000*1, 0x80000,CRC(094fa832) )
-	ROM_LOAD( "rrs1-pot.m0", 0x80000*2, 0x80000,CRC(b47a7f8b) )
-	ROM_LOAD( "rrs1-pot.m1", 0x80000*3, 0x80000,CRC(27260361) )
-	ROM_LOAD( "rrs1-pot.u0", 0x80000*4, 0x80000,CRC(74d6ec84) )
-	ROM_LOAD( "rrs1-pot.u1", 0x80000*5, 0x80000,CRC(f527caaa) )
+	ROM_LOAD( "rrs1pol0.5b", 0x80000*0, 0x80000,CRC(9376c384) )
+	ROM_LOAD( "rrs1pol1.4b", 0x80000*1, 0x80000,CRC(094fa832) )
+	ROM_LOAD( "rrs1pom0.5c", 0x80000*2, 0x80000,CRC(b47a7f8b) )
+	ROM_LOAD( "rrs1pom1.4c", 0x80000*3, 0x80000,CRC(27260361) )
+	ROM_LOAD( "rrs1pou0.5d", 0x80000*4, 0x80000,CRC(74d6ec84) )
+	ROM_LOAD( "rrs1pou1.4d", 0x80000*5, 0x80000,CRC(f527caaa) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS/music data? */
-	ROM_LOAD( "rrs1data.bin", 0, 0x080000, CRC(b7063aa8) )
+	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) )
 	/* 0x00000..0x001ff: data
 	 * 0x10000..0x1fc7f: music data?
 	 * 0x20000..0x2f57f: music data?
 	 * 0x30000..0x334ff: code? contains english text
 	 */
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "rrs1wav0.bin", 0x100000*0, 0x100000,CRC(99d11a2d) )
-	ROM_LOAD( "rrs1wav1.bin", 0x100000*1, 0x100000,CRC(ad28444a) )
-	ROM_LOAD( "rrs1wav2.bin", 0x100000*2, 0x100000,CRC(6f0d4619) )
-	ROM_LOAD( "rrs1wav3.bin", 0x100000*3, 0x100000,CRC(106e761f) )
+	ROM_LOAD( "rrs1wav0.10r", 0x100000*0, 0x100000,CRC(99d11a2d) )
+	ROM_LOAD( "rrs1wav1.10p", 0x100000*1, 0x100000,CRC(ad28444a) )
+	ROM_LOAD( "rrs1wav2.10n", 0x100000*2, 0x100000,CRC(6f0d4619) )
+	ROM_LOAD( "rrs1wav3.10l", 0x100000*3, 0x100000,CRC(106e761f) )
 ROM_END
 
 ROM_START( ridgeraj )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "rr1-prg.ll", 0x00003, 0x80000, CRC(4bb7fc86) )
-	ROM_LOAD32_BYTE( "rr1-prg.lm", 0x00002, 0x80000, CRC(68e13830) )
-	ROM_LOAD32_BYTE( "rr1-prg.um", 0x00001, 0x80000, CRC(705ef78a) )
-	ROM_LOAD32_BYTE( "rr1-prg.uu", 0x00000, 0x80000, CRC(c1371f96) )
+	ROM_LOAD32_BYTE( "rr1prll.4d", 0x00003, 0x80000, CRC(4bb7fc86) )
+	ROM_LOAD32_BYTE( "rr1prlm.2d", 0x00002, 0x80000, CRC(68e13830) )
+	ROM_LOAD32_BYTE( "rr1prum.8d", 0x00001, 0x80000, CRC(705ef78a) )
+	ROM_LOAD32_BYTE( "rr1pruu.6d", 0x00000, 0x80000, CRC(c1371f96) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rr1-cg0.1a", 0x200000*0x0, 0x200000,CRC(d1b0eec6) )
-	ROM_LOAD( "rr1-cg1.2a", 0x200000*0x1, 0x200000,CRC(bb695d89) )
-	ROM_LOAD( "rr1-cg2.3a", 0x200000*0x2, 0x200000,CRC(8f374c0a) )
-	ROM_LOAD( "rr1-cg3.5a", 0x200000*0x3, 0x200000,CRC(072a5c47) )
+	ROM_LOAD( "rr1cg0.1a", 0x200000*0x0, 0x200000,CRC(d1b0eec6) )
+	ROM_LOAD( "rr1cg1.2a", 0x200000*0x1, 0x200000,CRC(bb695d89) )
+	ROM_LOAD( "rr1cg2.3a", 0x200000*0x2, 0x200000,CRC(8f374c0a) )
+	ROM_LOAD( "rr1cg3.5a", 0x200000*0x3, 0x200000,CRC(072a5c47) )
 
 	ROM_REGION( 0x300000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rr1-ccrh.7c", 0x000000, 0x100000,CRC(346a1c95) )
-	ROM_LOAD( "rr1-ccrl.8c", 0x100000, 0x200000,CRC(c15cb257) )
+	ROM_LOAD( "rr1ccrl.5a", 0x000000, 0x200000,CRC(c15cb257) )
+	ROM_LOAD( "rr1ccrh.5c", 0x200000, 0x100000,CRC(346a1c95) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "rr1-pot.l0", 0x80000*0, 0x80000,CRC(3ac193e3) )
-	ROM_LOAD( "rr1-pot.l1", 0x80000*1, 0x80000,CRC(ac3ffba5) )
-	ROM_LOAD( "rr1-pot.m0", 0x80000*2, 0x80000,CRC(42a3fa08) )
-	ROM_LOAD( "rr1-pot.m1", 0x80000*3, 0x80000,CRC(1bc1ea7b) )
-	ROM_LOAD( "rr1-pot.u0", 0x80000*4, 0x80000,CRC(5e367f72) )
-	ROM_LOAD( "rr1-pot.u1", 0x80000*5, 0x80000,CRC(31d92475) )
+	ROM_LOAD( "rr1potl0.5b", 0x80000*0, 0x80000,CRC(3ac193e3) )
+	ROM_LOAD( "rr1potl1.4b", 0x80000*1, 0x80000,CRC(ac3ffba5) )
+	ROM_LOAD( "rr1potm0.5c", 0x80000*2, 0x80000,CRC(42a3fa08) )
+	ROM_LOAD( "rr1potm1.4c", 0x80000*3, 0x80000,CRC(1bc1ea7b) )
+	ROM_LOAD( "rr1potu0.5d", 0x80000*4, 0x80000,CRC(5e367f72) )
+	ROM_LOAD( "rr1potu1.4d", 0x80000*5, 0x80000,CRC(31d92475) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "rr1-data.bin", 0, 0x080000, CRC(18f5f748) )
+	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) )
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "rr1-wav.0", 0x100000*0, 0x100000,CRC(a8e85bde) )
-	ROM_LOAD( "rr1-wav.1", 0x100000*1, 0x100000,CRC(35f47c8e) )
-	ROM_LOAD( "rr1-wav.2", 0x100000*2, 0x100000,CRC(3244cb59) )
-	ROM_LOAD( "rr1-wav.3", 0x100000*3, 0x100000,CRC(c4cda1a7) )
+	ROM_LOAD( "rr1wav0.10r", 0x100000*0, 0x100000,CRC(a8e85bde) )
+	ROM_LOAD( "rr1wav1.10p", 0x100000*1, 0x100000,CRC(35f47c8e) )
+	ROM_LOAD( "rr1wav2.10n", 0x100000*2, 0x100000,CRC(3244cb59) )
+	ROM_LOAD( "rr1wav3.10l", 0x100000*3, 0x100000,CRC(c4cda1a7) )
 ROM_END
 
-ROM_START( timecris )
+ROM_START( timecrsa )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD32_WORD_SWAP( "ts2ver-a.1", 0x00002, 0x200000, CRC(d57eb74b) )
 	ROM_LOAD32_WORD_SWAP( "ts2ver-a.2", 0x00000, 0x200000, CRC(671588af) )
@@ -1217,30 +1258,30 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( propcycl )
 	PORT_START /* DIP4 */
-	PORT_DIPNAME( 0x01, 0x00, "DIP1" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIP2" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIP3" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIP4" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIP5" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "DIP6" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "DIP7" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "DIP8" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "DIP1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIP2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIP3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIP4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIP5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIP6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIP7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIP8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -1430,9 +1471,23 @@ DRIVER_INIT( alpiner )
 
 DRIVER_INIT( propcycl )
 {
-	/* disable a strange routine that locks up */
 	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+
+	/* patch out protection */
 	pROM[0x1992C/4] = 0x4E754E75;
+
+	/**
+	 * The dipswitch reading routine in Prop Cycle polls the
+	 * dipswitch value, but promptly overwrites with zero, discarding
+	 * it.
+	 *
+	 * Patch out this behavior, exposing an additional "secret" test.
+	 *
+	 * DIP5: real time display of "INST_CUNT, MODE_NUM, MODE_CUNT"
+	 */
+	pROM[0x22296/4] &= 0xffff0000;
+	pROM[0x22296/4] |= 0x00004e75;
+
 	namcos22_gametype = NAMCOS22_PROP_CYCLE;
 }
 
@@ -1466,23 +1521,33 @@ DRIVER_INIT( timecris )
 	namcos22_gametype = NAMCOS22_TIME_CRISIS;
 }
 
-/*     YEAR, NAME,    PARENT, MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME, FLAGS */
-//GAMEX( 1994,"Ace Driver")
-GAMEX( 1995, cybrcomm, 0,     namcos22,  victlap,  cybrcomm, ROT0, "Namco", "Cyber Commando (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1995, raveracw, 0,     namcos22,  victlap,  raveracw, ROT0, "Namco", "Rave Racer (World)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1993, ridgeraj, 0,     namcos22,  victlap,  ridgera,  ROT0, "Namco", "Ridge Racer (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1994, ridger2j, 0,     namcos22,  victlap,  ridgera,	 ROT0, "Namco", "Ridge Racer 2 (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1996, victlapw, 0,     namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (World)", GAME_NO_SOUND|GAME_NOT_WORKING )
+/*     YEAR, NAME,    PARENT,    MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,                                    FLAGS */
+/* System22 games */
+GAMEX( 1995, cybrcomm, 0,        namcos22,  victlap,  cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, raveracw, 0,        namcos22,  victlap,  raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1993, ridgeraj, 0,        namcos22,  victlap,  ridgera,  ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1994, ridger2j, 0,        namcos22,  victlap,  ridgera,  ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_NO_SOUND|GAME_NOT_WORKING )
 
-GAMEX( 1995, airco22b, 0,     namcos22s, victlap,  airco22,  ROT0, "Namco", "Air Combat 22", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1995, alpinerd, 0,     namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer Ver. D", GAME_NO_SOUND|GAME_NOT_WORKING )
-//GAMEX( 1996,"Alpine Racer 2")
-//GAMEX( 1996,"Alpine Surfer")
-//GAMEX( 1997,"Armidillo Racing")
-//GAMEX( 1996,"Aqua Jet")
-GAMEX( 1995, cybrcycc, 0,     namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles Ver. C (CB2Ver.C)", GAME_NO_SOUND|GAME_NOT_WORKING )
-//GAMEX( 1995,"Dirt Dash")
-//GAMEX( 199?,"Downhill Bikers")
-GAMEX( 1996, propcycl, 0,     namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle", GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, timecris, 0,     namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis", GAME_NO_SOUND|GAME_NOT_WORKING )
-//GAMEX( 1996,"Tokyo Wars")
+/* Super System22 games */
+GAMEX( 1995, airco22b, 0,        namcos22s, victlap,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, alpinerd, 0,        namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.D)"             , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.C)"             , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev. PR2 Ver.A)"                , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, timecrsa, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_NO_SOUND|GAME_NOT_WORKING )
+
+/* Not dumped yet */
+
+/* System22 games */
+//GAMEX( 1994, acedrvrx, "Ace Driver")
+
+/* Super System22 games */
+//GAMEX( 1995, dirtdshx, "Dirt Dash")
+//GAMEX( 1996, tokyowrx, "Tokyo Wars")
+//GAMEX( 1996, alpinr2x, "Alpine Racer 2")
+//GAMEX( 1996, alpinesx, "Alpine Surfer")
+//GAMEX( 1996, aquajetx, "Aqua Jet")
+//GAMEX( 1997, armdilox, "Armidillo Racing")
+//GAMEX( 199?, downhbkx, "Downhill Bikers")
+//GAMEX( 1995, timecris, 0,      namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_NO_SOUND|GAME_NOT_WORKING )

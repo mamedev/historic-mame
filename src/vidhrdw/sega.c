@@ -20,8 +20,6 @@
 #include "vector.h"
 #include <math.h>
 
-#define VEC_SHIFT 15	/* do not use a higher value. Values will overflow */
-
 static int width, height, cent_x, cent_y, min_x, min_y, max_x, max_y;
 static long *sinTable, *cosTable;
 static int intensity;
@@ -46,6 +44,10 @@ void sega_generate_vector_list (void)
 
 	symbolIndex = 0;	/* Reset vector PC to 0 */
 
+	/* Sega games are all clipped to this region at the DAC */
+	vector_add_clip((512-min_x)<<16, (max_y-1536)<<16,
+  	              (1536-min_x)<<16, (max_y-512)<<16);
+
 	/*
 	 * walk the symbol list until 'last symbol' set
 	 */
@@ -61,8 +63,8 @@ void sega_generate_vector_list (void)
 			rotate      = vectorram[symbolIndex + 6] | (vectorram[symbolIndex + 7] << 8);
 			scale       = vectorram[symbolIndex + 8];
 
-			currentX = ((currentX & 0x7ff) - min_x) << VEC_SHIFT;
-			currentY = (max_y - (currentY & 0x7ff)) << VEC_SHIFT;
+			currentX = ((currentX & 0x7ff) - min_x) << 16;
+			currentY = (max_y - (currentY & 0x7ff)) << 16;
 			vector_add_point ( currentX, currentY, 0, 0);
 			vectorIndex &= 0xfff;
 
@@ -83,8 +85,8 @@ void sega_generate_vector_list (void)
 				deltax = sinTable[angle] * scale * length;
 				deltay = cosTable[angle] * scale * length;
 
-				currentX += deltax >> 7;
-				currentY -= deltay >> 7;
+				currentX += deltax >> 6;
+				currentY -= deltay >> 6;
 
 				color = VECTOR_COLOR222((attrib >> 1) & 0x3f);
 				if ((attrib & 1) && color)
@@ -130,8 +132,6 @@ VIDEO_START( sega )
 	cent_x=(max_x+min_x)/2;
 	cent_y=(max_y+min_y)/2;
 
-	vector_set_shift (VEC_SHIFT);
-
 	/* allocate memory for the sine and cosine lookup tables ASG 080697 */
 	sinTable = auto_malloc (0x400 * sizeof (long));
 	if (!sinTable)
@@ -148,15 +148,15 @@ VIDEO_START( sega )
 
 		temp = sin (angle);
 		if (temp < 0)
-			sinTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) - 0.5);
+			sinTable[i] = (long)(temp * (double)(1 << 15) - 0.5);
 		else
-			sinTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) + 0.5);
+			sinTable[i] = (long)(temp * (double)(1 << 15) + 0.5);
 
 		temp = cos (angle);
 		if (temp < 0)
-			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) - 0.5);
+			cosTable[i] = (long)(temp * (double)(1 << 15) - 0.5);
 		else
-			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) + 0.5);
+			cosTable[i] = (long)(temp * (double)(1 << 15) + 0.5);
 	}
 
 	return video_start_vector();

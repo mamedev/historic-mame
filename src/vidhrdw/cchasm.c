@@ -17,8 +17,6 @@
 #define POSX   6
 #define LENGTH 7
 
-#define VEC_SHIFT 16
-
 data16_t *cchasm_ram;
 
 static int xcenter, ycenter;
@@ -131,9 +129,8 @@ VIDEO_START( cchasm )
 	xmax=Machine->visible_area.max_x;
 	ymax=Machine->visible_area.max_y;
 
-	xcenter=((xmax+xmin)/2) << VEC_SHIFT;
-	ycenter=((ymax+ymin)/2) << VEC_SHIFT;
+	xcenter=((xmax+xmin)/2) << 16;
+	ycenter=((ymax+ymin)/2) << 16;
 
-	vector_set_shift (VEC_SHIFT);
 	return video_start_vector();
 }

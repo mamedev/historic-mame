@@ -1,119 +1,157 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static int bg_index[4];
 
-unsigned char *exprraid_bgcontrol;
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
-
-static void drawbg(struct mame_bitmap *bitmap,int priority)
+WRITE_HANDLER( exprraid_videoram_w )
 {
-	unsigned char *map1 = &memory_region(REGION_GFX4)[0x0000];
-	unsigned char *map2 = &memory_region(REGION_GFX4)[0x4000];
-	int offs,scrolly,scrollx1,scrollx2;
-
-
-	scrolly = exprraid_bgcontrol[4];
-	/* TODO: bgcontrol[7] seems related to the y scroll as well, but I'm not sure how */
-	scrollx1 = exprraid_bgcontrol[5];
-	scrollx2 = exprraid_bgcontrol[6];
-
-	for (offs = 0x100 - 1;offs >= 0;offs--)
+	if (videoram[offset] != data)
 	{
-		int sx,sy,quadrant,base,bank;
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( exprraid_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
-		sx = 16 * (offs % 16);
-		sy = 16 * (offs / 16) - scrolly;
+WRITE_HANDLER( exprraid_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-		quadrant = 0;
-		if (sy <= -8)
+WRITE_HANDLER( exprraid_bgselect_w )
+{
+	if (bg_index[offset] != data)
+	{
+		bg_index[offset] = data;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+}
+
+WRITE_HANDLER( exprraid_scrollx_w )
+{
+	tilemap_set_scrollx(bg_tilemap, offset, data);
+}
+
+WRITE_HANDLER( exprraid_scrolly_w )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, data);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	UINT8 *tilerom = memory_region(REGION_GFX4);
+
+	int data, attr, bank, code, color, flags;
+	int quadrant = 0, offs;
+
+	int sx = tile_index % 32;
+	int sy = tile_index / 32;
+
+	if (sx >= 16) quadrant++;
+	if (sy >= 16) quadrant += 2;
+
+	offs = (sy % 16) * 16 + (sx % 16) + (bg_index[quadrant] & 0x3f) * 0x100;
+
+	data = tilerom[offs];
+	attr = tilerom[offs + 0x4000];
+	bank = (2 * (attr & 0x03) + ((data & 0x80) >> 7)) + 2;
+	code = data & 0x7f;
+	color = (attr & 0x18) >> 3;
+	flags = (attr & 0x04) ? TILE_FLIPX : 0;
+
+	tile_info.priority = ((attr & 0x80) ? 1 : 0);
+
+	SET_TILE_INFO(bank, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x07) << 8);
+	int color = (attr & 0x10) >> 4;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( exprraid )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 16, 16, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 2);
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void exprraid_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		int attr = spriteram[offs + 1];
+		int code = spriteram[offs + 3] + ((attr & 0xe0) << 3);
+		int color = (attr & 0x03) + ((attr & 0x08) >> 1);
+		int flipx = (attr & 0x04);
+		int flipy = 0;
+		int sx = ((248 - spriteram[offs + 2]) & 0xff) - 8;
+		int sy = spriteram[offs];
+
+		if (flip_screen)
 		{
-			quadrant += 2;
-			sy += 256;
-			sx -= scrollx2;
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
-		else
-			sx -= scrollx1;
 
-		if (sx <= -8)
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			0, TRANSPARENCY_PEN, 0);
+
+		/* double height */
+
+		if (attr & 0x10)
 		{
-			quadrant++;
-			sx += 256;
-		}
-
-		base = (exprraid_bgcontrol[quadrant] & 0x3f) * 0x100;
-
-		if (priority == 0 || (map2[offs+base] & 0x80))
-		{
-			bank = 2*(map2[offs+base] & 0x03)+((map1[offs+base] & 0x80) >> 7);
-
-			drawgfx(bitmap,Machine->gfx[2+bank],
-					map1[offs+base] & 0x7f,
-					(map2[offs+base] & 0x18) >> 3,
-					(map2[offs+base] & 0x04),0,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			drawgfx(bitmap,Machine->gfx[1],
+				code + 1, color,
+				flipx, flipy,
+				sx, sy + (flip_screen ? -16 : 16),
+				0, TRANSPARENCY_PEN, 0);
 		}
 	}
 }
 
-
-
 VIDEO_UPDATE( exprraid )
 {
-	int offs;
-
-
-	/* draw the background */
-	drawbg(bitmap,0);
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
-	{
-		int sx,sy,code,color,flipx;
-
-		code = spriteram[offs+3] + ( ( spriteram[offs+1] & 0xe0 ) << 3 );
-
-		sx = ((248 - spriteram[offs+2]) & 0xff) - 8;
-		sy = spriteram[offs];
-		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
-		flipx = ( spriteram[offs+1] & 0x04 );
-
-		drawgfx(bitmap,Machine->gfx[1],
-				code,
-				color,
-				flipx,0,
-				sx,sy,
-				0,TRANSPARENCY_PEN,0);
-
-		if ( spriteram[offs+1] & 0x10 ) { /* double height */
-			drawgfx(bitmap,Machine->gfx[1],
-					code + 1,
-					color,
-					flipx,0,
-					sx,sy+16,
-					0,TRANSPARENCY_PEN,0);
-		}
-	}
-
-
-	/* redraw the tiles which have priority over the sprites */
-	drawbg(bitmap,1);
-
-
-	/* draw the foreground */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + ((colorram[offs] & 7) << 8),
-				(colorram[offs] & 0x10) >> 4,
-				0,0,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	exprraid_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 1, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

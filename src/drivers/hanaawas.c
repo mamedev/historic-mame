@@ -33,10 +33,13 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-PALETTE_INIT( hanaawas );
-VIDEO_UPDATE( hanaawas );
-WRITE_HANDLER( hanaawas_portB_w );
-WRITE_HANDLER( hanaawas_colorram_w );
+extern WRITE_HANDLER( hanaawas_videoram_w );
+extern WRITE_HANDLER( hanaawas_colorram_w );
+extern WRITE_HANDLER( hanaawas_portB_w );
+
+extern PALETTE_INIT( hanaawas );
+extern VIDEO_START( hanaawas );
+extern VIDEO_UPDATE( hanaawas );
 
 
 static READ_HANDLER( hanaawas_input_port_0_r )
@@ -75,7 +78,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x4fff, MWA_ROM },
 	{ 0x6000, 0x6fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8000, 0x83ff, hanaawas_videoram_w, &videoram },
 	{ 0x8400, 0x87ff, hanaawas_colorram_w, &colorram },
 	{ 0x8800, 0x8bff, MWA_RAM },
 MEMORY_END
@@ -192,7 +195,7 @@ static MACHINE_DRIVER_START( hanaawas )
 	MDRV_COLORTABLE_LENGTH(32*8)
 
 	MDRV_PALETTE_INIT(hanaawas)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(hanaawas)
 	MDRV_VIDEO_UPDATE(hanaawas)
 
 	/* sound hardware */

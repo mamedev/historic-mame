@@ -71,6 +71,12 @@ static DWORD profiler_thread_id;
 static volatile UINT8 profiler_thread_exit;
 #endif
 
+#ifndef MESS
+static const char helpfile[] = "docs\\windows.txt";
+#else
+static const char helpfile[] = "mess.chm";
+#endif
+
 
 
 //============================================================
@@ -153,12 +159,12 @@ int main(int argc, char **argv)
 		if (button == IDYES)
 		{
 			// check if windows.txt exists
-			fp = fopen("docs\\windows.txt", "r");
+			fp = fopen(helpfile, "r");
 			if (fp) {
 				fclose(fp);
 
 				// if so, open it with the default application
-				ShellExecute(NULL, "open", "docs\\windows.txt", NULL, NULL, SW_SHOWNORMAL);
+				ShellExecute(NULL, "open", helpfile, NULL, NULL, SW_SHOWNORMAL);
 			}
 			else
 			{

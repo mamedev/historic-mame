@@ -1556,6 +1556,8 @@ VIDEO_UPDATE( batrider_0 )
 {
 	int priority;
 
+	int line;
+	struct rectangle clip;
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();
@@ -1584,7 +1586,18 @@ VIDEO_UPDATE( batrider_0 )
 			draw_sprites(bitmap,cliprect,0,priority,1);	/* consider bank select */
 	}
 
-	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
+	clip.min_y = Machine->visible_area.min_y;
+	clip.max_y = Machine->visible_area.max_y;
+
+	/* used for 'for use in' and '8ing' screen on bbakraid, raizing on batrider */
+	for (line = 0; line < 256;line++)
+	{
+		clip.min_y = clip.max_y = line;
+		tilemap_set_scrolly(tx_tilemap,0,toaplan2_txvideoram16_offs[line&0xff]-line);
+		tilemap_draw(bitmap,&clip,tx_tilemap,0,0);
+	}
 }
 
 

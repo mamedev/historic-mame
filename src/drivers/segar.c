@@ -51,6 +51,7 @@
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
+#include "sndhrdw/segasnd.h"
 #include "segar.h"
 
 
@@ -1072,20 +1073,10 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 
 static struct Samplesinterface astrob_samples_interface =
 {
-	12,    /* 12 channels */
+	11,    /* 11 channels */
 	25,    /* volume */
 	astrob_sample_names
 };
-
-
-/* TODO : someday this will become a speech synthesis interface */
-static struct CustomSound_interface astrob_custom_interface =
-{
-	astrob_speech_sh_start,
-	0,
-	astrob_speech_sh_update
-};
-
 
 static struct Samplesinterface spaceod_samples_interface =
 {
@@ -1173,12 +1164,13 @@ static MACHINE_DRIVER_START( astrob )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(segar)
 
-	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_ADD(I8035, 3120000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
+	MDRV_CPU_MEMORY(sega_speechboard_readmem, sega_speechboard_writemem)
+	MDRV_CPU_PORTS (sega_speechboard_readport,sega_speechboard_writeport)
+	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM,  astrob_custom_interface)
 	MDRV_SOUND_ADD(SAMPLES, astrob_samples_interface)
 MACHINE_DRIVER_END
 
@@ -1314,7 +1306,7 @@ ROM_START( astrob )
 	ROM_LOAD( "924a",     0x9000, 0x0800, CRC(120a39c7) SHA1(d8fdf97290725cf9ebddab9eeb34d7adba097394) ) /* U18 */
 	ROM_LOAD( "925a",     0x9800, 0x0800, CRC(790a7f4e) SHA1(16b7b8e864a8f5f59da6bf2ad17f1e4791f34abe) ) /* U19 */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code and data */
 	ROM_LOAD( "808b",     0x0000, 0x0800, CRC(5988c767) SHA1(3b91a8cd46aa7e714028cc40f700fea32287afb1) ) /* U7 */
 	ROM_LOAD( "809a",     0x0800, 0x0800, CRC(893f228d) SHA1(41c08210d322105f5446cfaa1258c194dd078a34) ) /* U6 */
 	ROM_LOAD( "810",      0x1000, 0x0800, CRC(ff0163c5) SHA1(158a12f9bf01d25c7e98f34fce56df51d49e5a85) ) /* U5 */
@@ -1346,7 +1338,7 @@ ROM_START( astrob2 )
 	ROM_LOAD( "905",      0x9000, 0x0800, CRC(4f08f9f4) SHA1(755a825b18ed50caa7bf274a0a5c3a1b00b1c070) ) /* U18 */
 	ROM_LOAD( "906",      0x9800, 0x0800, CRC(58149df1) SHA1(2bba56576a225ca47ce31a5b6dcc491546dfffec) ) /* U19 */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code and data */
 	ROM_LOAD( "808b",     0x0000, 0x0800, CRC(5988c767) SHA1(3b91a8cd46aa7e714028cc40f700fea32287afb1) ) /* U7 */
 	ROM_LOAD( "809a",     0x0800, 0x0800, CRC(893f228d) SHA1(41c08210d322105f5446cfaa1258c194dd078a34) ) /* U6 */
 	ROM_LOAD( "810",      0x1000, 0x0800, CRC(ff0163c5) SHA1(158a12f9bf01d25c7e98f34fce56df51d49e5a85) ) /* U5 */
@@ -1375,7 +1367,7 @@ ROM_START( astrob1 )
 	ROM_LOAD( "851",      0x7800, 0x0800, CRC(3d4cf9f0) SHA1(11e996f33f3a104e50d0a54a0814ea3e07735683) ) /* U15 */
 	ROM_LOAD( "852",      0x8000, 0x0800, CRC(af88a97e) SHA1(fe7993101c629b296b5da05519b0990cc2b78286) ) /* U16 */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code and data */
 	ROM_LOAD( "808b",     0x0000, 0x0800, CRC(5988c767) SHA1(3b91a8cd46aa7e714028cc40f700fea32287afb1) ) /* U7 */
 	ROM_LOAD( "809a",     0x0800, 0x0800, CRC(893f228d) SHA1(41c08210d322105f5446cfaa1258c194dd078a34) ) /* U6 */
 	ROM_LOAD( "810",      0x1000, 0x0800, CRC(ff0163c5) SHA1(158a12f9bf01d25c7e98f34fce56df51d49e5a85) ) /* U5 */
@@ -1610,7 +1602,7 @@ static DRIVER_INIT( astrob )
 	/* This game uses the 315-0062 security chip */
 	sega_security(62);
 
-	install_port_write_handler(0, 0x38, 0x38, astrob_speech_port_w);
+	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
 	install_port_write_handler(0, 0x3e, 0x3f, astrob_audio_ports_w);
 }
 

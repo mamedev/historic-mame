@@ -6,7 +6,13 @@
 		* Cloak & Dagger
 
 	Known issues:
-		* none at this time
+		* Cocktail mode: Does this game even have one? None of the cocktail
+		  inputs are shown in service mode, neither does any DIP activate
+		  them for player 2. The cocktail DIP seems to be a flip screen DIP,
+		  but entering service mode triggers the flip screen mode?!
+	    * Game says "SLAVE COM BAD" at startup, also in service mode it says
+		  that MASTER/SLAVE ROMs are bad
+		* Sprite positioning may be wrong
 
 ****************************************************************************
 
@@ -101,11 +107,19 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cloak.h"
 
-static unsigned char *enable_nvRAM;
-static unsigned char *cloak_sharedram;
+static UINT8 *enable_nvRAM;
+static UINT8 *cloak_sharedram;
 
+extern WRITE_HANDLER( cloak_videoram_w );
+extern WRITE_HANDLER( cloak_paletteram_w );
+extern WRITE_HANDLER( cloak_clearbmp_w );
+extern WRITE_HANDLER( graph_processor_w );
+extern WRITE_HANDLER( cloak_flipscreen_w );
+extern READ_HANDLER( graph_processor_r );
+
+extern VIDEO_START( cloak );
+extern VIDEO_UPDATE( cloak );
 
 
 /*************************************
@@ -168,7 +182,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size },
+	{ 0x0400, 0x07ff, cloak_videoram_w, &videoram },
 	{ 0x0800, 0x0fff, cloak_sharedram_w, &cloak_sharedram },
 	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1800, 0x180f, pokey2_w },
@@ -176,7 +190,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3200, 0x327f, cloak_paletteram_w },
 	{ 0x3800, 0x3801, cloak_coin_counter_w },
-	{ 0x3802, 0x3805, MWA_RAM },
+	{ 0x3803, 0x3803, cloak_flipscreen_w },
 	{ 0x3806, 0x3807, cloak_led_w },
 	{ 0x3a00, 0x3a00, watchdog_reset_w },
 	{ 0x3e00, 0x3e00, MWA_RAM, &enable_nvRAM },
@@ -243,15 +257,35 @@ INPUT_PORTS_START( cloak )
 	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	/*PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )*/
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* DSW0 */
-	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 

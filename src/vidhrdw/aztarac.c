@@ -8,10 +8,8 @@
 #include "vidhrdw/vector.h"
 #include "aztarac.h"
 
-#define VEC_SHIFT 16
-
 #define AVECTOR(x, y, color, intensity) \
-vector_add_point (xcenter + ((x) << VEC_SHIFT), ycenter - ((y) << VEC_SHIFT), color, intensity)
+vector_add_point (xcenter + ((x) << 16), ycenter - ((y) << 16), color, intensity)
 
 data16_t *aztarac_vectorram;
 
@@ -90,9 +88,8 @@ VIDEO_START( aztarac )
 	int xmax = Machine->visible_area.max_x;
 	int ymax = Machine->visible_area.max_y;
 
-	xcenter=((xmax + xmin) / 2) << VEC_SHIFT;
-	ycenter=((ymax + ymin) / 2) << VEC_SHIFT;
+	xcenter=((xmax + xmin) / 2) << 16;
+	ycenter=((ymax + ymin) / 2) << 16;
 
-	vector_set_shift (VEC_SHIFT);
 	return video_start_vector();
 }

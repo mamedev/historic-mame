@@ -242,8 +242,8 @@ WRITE_HANDLER( K051733_w );
 READ_HANDLER( K051733_r );
 
 int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2],
-		     int plane0,int plane1,int plane2,int plane3,
-		     void (*callback)(int, int *, int *));
+			int plane0,int plane1,int plane2,int plane3,
+			void (*callback)(int, int *, int *));
 READ16_HANDLER( K054157_ram_word_r );
 WRITE16_HANDLER( K054157_ram_word_w );
 READ16_HANDLER( K054157_ram_half_word_r );
@@ -259,8 +259,9 @@ int K054157_is_IRQ_enabled(void);
 int K054157_get_lookup(int bits);
 void K054157_set_tile_bank(int bank);	/* Asterix */
 
-int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][2], void (*callback)(int, int *, int *));
-void K056832_vh_stop(void);
+int K056832_vh_start(int gfx_memory_region, int bpp, int big,
+			int (*scrolld)[4][2],
+			void (*callback)(int, int *, int *));
 READ16_HANDLER( K056832_ram_word_r );
 WRITE16_HANDLER( K056832_ram_word_w );
 READ16_HANDLER( K056832_ram_half_word_r );
@@ -271,18 +272,19 @@ READ32_HANDLER( K056832_6bpp_rom_long_r );
 READ16_HANDLER( K056832_rom_word_r );
 WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
-void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
-void K056832_tilemap_draw_alpha(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, int alpha);
 void K056832_mark_plane_dirty(int num);
 void K056832_MarkAllTilemapsDirty(void);
-int  K056832_is_IRQ_enabled(void);
-int  K056832_get_lookup(int bits);
-void K056832_set_tile_bank(int bank);	/* Asterix */
+void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
+void K056832_tilemap_draw_dj(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int flags, UINT32 priority);
 void K056832_set_LayerAssociation(int status);
 int  K056832_get_LayerAssociation(void);
 void K056832_set_LayerOffset(int layer, int offsx, int offsy);
 void K056832_set_LSRAMPage(int logical_page, int physical_page, int physical_offset);
 void K056832_set_UpdateMode(int mode);
+void K056832_linemap_enable(int enable);
+int  K056832_is_IRQ_enabled(int irqline);
+void K056832_read_AVAC(int *mode, int *data);
+int  K056832_read_register(int regnum);
 
 READ32_HANDLER( K056832_ram_long_r );
 READ32_HANDLER( K056832_rom_long_r );
@@ -295,6 +297,7 @@ WRITE32_HANDLER( K056832_b_long_w );
 #define K056832_BPP_5	1
 #define K056832_BPP_6	2
 #define K056832_BPP_8	3
+#define K056832_BPP_4dj	4
 
 void K055555_vh_start(void); // "PCU2"
 void K055555_write_reg(data8_t regnum, data8_t regdat);

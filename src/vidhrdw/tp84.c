@@ -9,15 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-unsigned char *tp84_videoram2;
-unsigned char *tp84_colorram2;
-static struct mame_bitmap *tmpbitmap2;
-static unsigned char *dirtybuffer2;
-
-unsigned char *tp84_scrollx;
-unsigned char *tp84_scrolly;
+UINT8 *tp84_videoram2, *tp84_colorram2;
 
 int col0;
 
@@ -25,23 +17,10 @@ int col0;
 sprites are multiplexed, so we have to buffer the spriteram
 scanline by scanline.
 */
-static unsigned char *sprite_mux_buffer;
+static UINT8 *sprite_mux_buffer;
 static int scanline;
 
-
-
-static struct rectangle topvisiblearea =
-{
-	0*8, 2*8-1,
-	2*8, 30*8-1
-};
-static struct rectangle bottomvisiblearea =
-{
-	30*8, 32*8-1,
-	2*8, 30*8-1
-};
-
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /*
 -The colortable is divided in 2 part:
@@ -138,23 +117,127 @@ PALETTE_INIT( tp84 )
 }
 
 
+WRITE_HANDLER( tp84_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( tp84_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-  Start the video hardware emulation.
+WRITE_HANDLER( tp84_videoram2_w )
+{
+	if (tp84_videoram2[offset] != data)
+	{
+		tp84_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
-***************************************************************************/
+WRITE_HANDLER( tp84_colorram2_w )
+{
+	if (tp84_colorram2[offset] != data)
+	{
+		tp84_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( tp84_scroll_x_w )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, data);
+}
+
+WRITE_HANDLER( tp84_scroll_y_w )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, data);
+}
+
+WRITE_HANDLER( tp84_flipscreen_x_w )
+{
+	if (flip_screen_x != (data & 0x01))
+	{
+		flip_screen_x_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+WRITE_HANDLER( tp84_flipscreen_y_w )
+{
+	if (flip_screen_y != (data & 0x01))
+	{
+		flip_screen_y_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+/*****
+  col0 is a register to index the color Proms
+*****/
+WRITE_HANDLER( tp84_col0_w )
+{
+	if (col0 != data)
+	{
+		col0 = data;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+/* Return the current video scan line */
+READ_HANDLER( tp84_scanline_r )
+{
+	return scanline;
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int coloffs = ((col0 & 0x18) << 1) + ((col0 & 0x07) << 6);
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x30) << 4);
+	int color = (attr & 0x0f) + coloffs;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int sx = tile_index % 32;
+	int coloffs = ((col0 & 0x18) << 1) + ((col0 & 0x07) << 6);
+	int attr = tp84_colorram2[tile_index];
+	int code = (sx < 2 || sx > 29) ? tp84_videoram2[tile_index] + ((attr & 0x30) << 4) : 10;
+	int color = (attr & 0x0f) + coloffs;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0) |
+		(sx < 2 || sx > 29) ? TILE_IGNORE_TRANSPARENCY : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
 VIDEO_START( tp84 )
 {
-	if (video_start_generic() != 0)
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
 		return 1;
 
-	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer2,1,videoram_size);
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ( !fg_tilemap )
 		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
 
@@ -164,62 +247,7 @@ VIDEO_START( tp84 )
 	return 0;
 }
 
-
-
-WRITE_HANDLER( tp84_videoram2_w )
-{
-	if (tp84_videoram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		tp84_videoram2[offset] = data;
-	}
-}
-
-
-
-WRITE_HANDLER( tp84_colorram2_w )
-{
-	if (tp84_colorram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		tp84_colorram2[offset] = data;
-	}
-}
-
-
-
-/*****
-  col0 is a register to index the color Proms
-*****/
-WRITE_HANDLER( tp84_col0_w )
-{
-	if(col0 != data)
-	{
-		col0 = data;
-
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-	}
-}
-
-
-
-/* Return the current video scan line */
-READ_HANDLER( tp84_scanline_r )
-{
-	return scanline;
-}
-
-
-/***************************************************************************
-
-  Display refresh
-
-***************************************************************************/
-
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void tp84_draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	struct rectangle clip = Machine->visible_area;
@@ -231,7 +259,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	{
 		if (line >= Machine->visible_area.min_y && line <= Machine->visible_area.max_y)
 		{
-			unsigned char *sr;
+			UINT8 *sr;
 
 			sr = sprite_mux_buffer + line * spriteram_size;
 			clip.min_y = clip.max_y = line;
@@ -262,75 +290,12 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-
 VIDEO_UPDATE( tp84 )
 {
-	int offs;
-	int coloffset;
-
-
-	coloffset = ((col0&0x18) << 1) + ((col0&0x07) << 6);
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x30) << 4),
-					(colorram[offs] & 0x0f) + coloffset,
-					colorram[offs] & 0x40,colorram[offs] & 0x80,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		if (dirtybuffer2[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-		/* Skip the middle of the screen, this ram seem to be used as normal ram. */
-			if (sx < 2 || sx >= 30)
-				drawgfx(tmpbitmap2,Machine->gfx[0],
-						tp84_videoram2[offs] + ((tp84_colorram2[offs] & 0x30) << 4),
-						(tp84_colorram2[offs] & 0x0f) + coloffset,
-						tp84_colorram2[offs] & 0x40,tp84_colorram2[offs] & 0x80,
-						8*sx,8*sy,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		scrollx = -*tp84_scrollx;
-		scrolly = -*tp84_scrolly;
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	draw_sprites(bitmap);
-
-	/* Copy the frontmost playfield. */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&bottomvisiblearea,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tp84_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }
-
 
 INTERRUPT_GEN( tp84_6809_interrupt )
 {

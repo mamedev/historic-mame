@@ -1081,6 +1081,11 @@ struct mame_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap )
 	return tilemap->transparency_bitmap;
 }
 
+UINT8 *tilemap_get_transparency_data( struct tilemap * tilemap ) //*
+{
+	return tilemap->transparency_data;
+}
+
 /***********************************************************************************/
 
 static void
@@ -1653,7 +1658,7 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 		blit.draw_opaque = (blitopaque_t)pdo32;
 		blit.screen_bitmap_pitch_line /= 4;
 		break;
-	
+
 	case 15:
 		blit.draw_opaque = (blitopaque_t)pdo15;
 		blit.screen_bitmap_pitch_line /= 2;

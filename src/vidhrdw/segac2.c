@@ -11,7 +11,9 @@
 #include "state.h"
 #include "segac2.h"
 
-
+/* in vidhrdw/segasyse.c */
+int start_megatech_video_normal(void);
+void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect );
 
 /******************************************************************************
 	Macros
@@ -104,6 +106,64 @@ static UINT8		window_right;				/* window X direction */
 static UINT32		window_hpos;				/* window X position */
 
 
+#define GEN_TILEMAP_WIP			0
+
+
+#if GEN_TILEMAP_WIP
+/* tilemaps are annoying, they can change size, use ram based tiles, base address changes etc. */
+static struct tilemap *scrolla_tilemap, *scrollb_tilemap;
+
+static void get_scrolla_tile_info(int tile_index)
+{
+/*
+Scroll Name Table
+16-bits are used to Define a Tile in the Scroll Plane
+|  PRI   |  CP1   |  CP0   |  VF    |  HF    |  PT10  |  PT9   |  PT8   |
+|  PT7   |  PT6   |  PT5   |  PT4   |  PT3   |  PT2   |  PT1   |  PT0   |
+PRI = Priority, CP = Colour Palette, VF = VFlip, HF = HFlip, PT0-9 = Tile # in VRAM
+*/
+
+	int tileno = vdp_vram[(vdp_scrollabase+tile_index*2+1)&0xffff];
+	int attr   = vdp_vram[(vdp_scrollabase+tile_index*2)&0xffff];
+	int colour = ((attr & 0x60) >> 5)+ segac2_bg_palbase + segac2_palbank;
+//	int priority = (attr & 0x80);
+	int flipyx = (attr & 0x18) >> 3;
+
+	tileno = tileno + ((attr & 7) << 8) ;
+
+	SET_TILE_INFO(
+			0,
+			tileno,
+			colour,
+			TILE_FLIPYX(flipyx))
+}
+
+static void get_scrollb_tile_info(int tile_index)
+{
+/*
+Scroll Name Table
+16-bits are used to Define a Tile in the Scroll Plane
+|  PRI   |  CP1   |  CP0   |  VF    |  HF    |  PT10  |  PT9   |  PT8   |
+|  PT7   |  PT6   |  PT5   |  PT4   |  PT3   |  PT2   |  PT1   |  PT0   |
+PRI = Priority, CP = Colour Palette, VF = VFlip, HF = HFlip, PT0-9 = Tile # in VRAM
+*/
+
+	int tileno = vdp_vram[(vdp_scrollbbase+tile_index*2+1)&0xffff];
+	int attr   = vdp_vram[(vdp_scrollbbase+tile_index*2)&0xffff];
+	int colour = ((attr & 0x60) >> 5) + segac2_bg_palbase + segac2_palbank;
+//	int priority = (attr & 0x80);
+	int flipyx = (attr & 0x18) >> 3;
+
+	tileno = tileno + ((attr & 7) << 8);
+
+
+	SET_TILE_INFO(
+			0,
+			tileno,
+			colour,
+			TILE_FLIPYX(flipyx))
+}
+#endif
 
 /******************************************************************************
 	Video Start / Stop Functions
@@ -118,6 +178,19 @@ static UINT32		window_hpos;				/* window X position */
 	80bytes of VSRAM (used exclusively for storing Vertical Scroll values)
 
 ******************************************************************************/
+
+#if GEN_TILEMAP_WIP
+static struct GfxLayout genvdp_charlayout =
+{
+	8, 8,	/* 8x8 pixels */
+	2048,	/* 2048 chars */
+	4,		/* 3 bits per pixel */
+	{ 0,1,2,3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32 },
+	8*32
+};
+#endif
 
 VIDEO_START( segac2 )
 {
@@ -197,6 +270,33 @@ VIDEO_START( segac2 )
 	state_save_register_UINT8("C2_Video", 0, "Window Horz",  &window_down, 1);
 	state_save_register_UINT32("C2_Video", 0, "Window Vert",  &window_vpos, 1);
 
+
+#if GEN_TILEMAP_WIP
+	{
+
+		int gfx_index=0;
+
+		 	/* find first empty slot to decode gfx */
+		for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
+			if (Machine->gfx[gfx_index] == 0)
+				break;
+		if (gfx_index == MAX_GFX_ELEMENTS)
+			return 1;
+
+			/* create the char set (gfx will then be updated dynamically from RAM) */
+			Machine->gfx[gfx_index] = decodegfx((UINT8 *)vdp_vram,&genvdp_charlayout);
+			if (!Machine->gfx[gfx_index])
+				return 1;
+
+			/* set the color information */
+			Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+			Machine->gfx[gfx_index]->total_colors = 64;
+
+		scrolla_tilemap = tilemap_create(get_scrolla_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+		scrollb_tilemap = tilemap_create(get_scrollb_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	}
+#endif
+
 	return 0;
 
 }
@@ -210,6 +310,24 @@ VIDEO_START( puckpkmn )
 
 	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
 	display_enable = 1;
+
+	return 0;
+}
+
+
+
+VIDEO_START( megatech )
+{
+	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+
+	if (video_start_segac2())
+		return 1;
+
+	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
+	display_enable = 1;
+
+	if (start_megatech_video_normal())
+		return 1;
 
 	return 0;
 }
@@ -241,6 +359,16 @@ VIDEO_EOF( segac2 )
 
 	/* set a timer for VBLANK off */
 	timer_set(cpu_getscanlinetime(0), 0, vblank_end);
+
+#if GEN_TILEMAP_WIP
+	{
+		int tile;
+
+		for (tile = 0;tile < 2048;tile++)
+			decodechar(Machine->gfx[0],tile,(UINT8 *)vdp_vram,&genvdp_charlayout);
+	}
+#endif
+
 }
 
 
@@ -283,6 +411,18 @@ if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
 if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 #endif
 
+#if GEN_TILEMAP_WIP
+	{
+		tilemap_mark_all_tiles_dirty (scrolla_tilemap);
+		tilemap_mark_all_tiles_dirty (scrollb_tilemap);
+		/* just so they get updated .. */
+		tilemap_draw(bitmap,cliprect,scrolla_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,scrollb_tilemap,0,0);
+	}
+#endif
+
+
+
 	/* generate the final screen */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y);
@@ -291,6 +431,49 @@ if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 	segac2_sp_palbase = old_sp;
 }
 
+/* megatech, same but drawing the sms display too */
+
+/* core refresh: computes the final screen */
+VIDEO_UPDATE( megatech )
+{
+	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
+	int y;
+
+#if 0
+if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+
+if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+#endif
+
+#if GEN_TILEMAP_WIP
+	{
+		tilemap_mark_all_tiles_dirty (scrolla_tilemap);
+		tilemap_mark_all_tiles_dirty (scrollb_tilemap);
+		/* just so they get updated .. */
+		tilemap_draw(bitmap,cliprect,scrolla_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,scrollb_tilemap,0,0);
+	}
+#endif
+
+
+
+	/* generate the final screen */
+	for (y = cliprect->min_y+192; y <= cliprect->max_y; y++)
+		drawline((UINT16 *)bitmap->line[y], y-192);
+
+	segac2_bg_palbase = old_bg;
+	segac2_sp_palbase = old_sp;
+
+	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
+	   the driver is in development */
+	/*if (readinputport(5)&0x01)*/	
+		update_megatech_video_normal(bitmap, cliprect);
+
+}
 
 
 /******************************************************************************
@@ -614,7 +797,7 @@ static void vdp_register_w(int data)
 			break;
 
 		case 0x07: /* BG Colour */
-			bgcol = regdat & 0x0f;
+			bgcol = regdat & 0x3f;
 			break;
 
 		case 0x0b: /* Scroll Modes */

@@ -25,12 +25,12 @@ WRITE_HANDLER( goindol_fg_videoram_w );
 WRITE_HANDLER( goindol_bg_videoram_w );
 VIDEO_UPDATE( goindol );
 
-extern data8_t *goindol_fg_scrollx;
-extern data8_t *goindol_fg_scrolly;
-extern data8_t *goindol_fg_videoram;
-extern data8_t *goindol_bg_videoram;
-extern data8_t *spriteram_1;
-extern data8_t *spriteram_2;
+extern UINT8 *goindol_fg_scrollx;
+extern UINT8 *goindol_fg_scrolly;
+extern UINT8 *goindol_fg_videoram;
+extern UINT8 *goindol_bg_videoram;
+extern UINT8 *spriteram_1;
+extern UINT8 *spriteram_2;
 extern size_t goindol_fg_videoram_size;
 extern size_t goindol_bg_videoram_size;
 extern int goindol_char_bank;
@@ -39,7 +39,7 @@ extern int goindol_char_bank;
 WRITE_HANDLER( goindol_bankswitch_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + ((data & 3) * 0x4000);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -49,6 +49,8 @@ WRITE_HANDLER( goindol_bankswitch_w )
 		goindol_char_bank = (data & 0x10) >> 4;
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
+
+	flip_screen_set(data & 0x20);
 }
 
 
@@ -64,7 +66,7 @@ static READ_HANDLER( prot_f422_r )
 }
 
 
-static data8_t *ram;
+static UINT8 *ram;
 
 static WRITE_HANDLER( prot_fc44_w )
 {
@@ -465,7 +467,7 @@ ROM_END
 
 DRIVER_INIT( goindol )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 
 	/* I hope that's all patches to avoid protection */
@@ -494,7 +496,7 @@ DRIVER_INIT( goindol )
 
 
 
-GAMEX( 1987, goindol,  0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (World)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1987, goindolu, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (US)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1987, goindolj, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1987, homo,     goindol, goindol, homo,    0,       ROT90, "bootleg", "Homo", GAME_NO_COCKTAIL )
+GAMEX(1987, goindol,  0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1987, goindolu, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (US)",    GAME_UNEMULATED_PROTECTION )
+GAMEX(1987, goindolj, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (Japan)", GAME_UNEMULATED_PROTECTION )
+GAME( 1987, homo,     goindol, goindol, homo,    0,       ROT90, "bootleg", "Homo" )

@@ -1,3 +1,5 @@
+#define RNG_DEBUG 0
+
 /*
    Run and Gun / Slam Dunk
    (c) 1993 Konami
@@ -9,12 +11,29 @@
    scaling background done with the PSAC2 ('936).
 
    Status: Front tilemap should be complete, sprites are mostly correct, controls
-   should be fine.  Protection exists so the game is not playable.
+   should be fine.
 
-   TODO:
-   - protection and other oddities (rungun shows gameplay in attract mode, rungunu doesn't)
-   - sprite palettes are not entirely right
-   - priorities are wrong
+
+   Change Log:
+
+   (AT070703)
+   drivers\rungun.c (this file)
+     - mem maps, device settings, component communications, I/O's, sound...etc.
+
+   vidhrdw\rungun.c
+     - general clean-up, clipping, alignment
+
+   vidhrdw\konamiic.c
+     - missing sprites and priority
+
+   Known Issues:
+     - ** sound program ROM "247-a05" needs redump **
+     - no dual monitor support
+     - synchronization and other oddities (rungunu doesn't show attract mode)
+     - swapped P12 and P34 controls in 4-player mode team selectet (real puzzler)
+     - P3 and P4 coin chutes not working in 4-player mode
+     - sprite palettes are not entirely right
+     - ROZ update causes music to stutter
 */
 
 #include "driver.h"
@@ -27,16 +46,19 @@
 #include "machine/eeprom.h"
 #include "sound/k054539.h"
 
-VIDEO_START(rng);
-VIDEO_UPDATE(rng);
+VIDEO_START( rng );
+VIDEO_UPDATE( rng );
+MACHINE_INIT( rng );
 READ16_HANDLER( ttl_ram_r );
 WRITE16_HANDLER( ttl_ram_w );
+WRITE16_HANDLER( rng_936_videoram_w );
 
-data16_t* rng_936_videoram;
-WRITE16_HANDLER(rng_936_videoram_w);
+data16_t *rng_936_videoram;
 
+static data16_t *rng_sysreg;
 static int init_eeprom_count;
-static int rng_irq_control;
+static int rng_z80_control;
+static int rng_sound_status;
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -49,7 +71,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static NVRAM_HANDLER(rungun)
+static NVRAM_HANDLER( rungun )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -67,156 +89,193 @@ static NVRAM_HANDLER(rungun)
 	}
 }
 
-static WRITE16_HANDLER( rngctrl_w )
+static READ16_HANDLER( rng_sysregs_r )
 {
-	// control register:
-	// bit 3: enable IRQ 5
-	// bit 2: OBJCHA
-	// bit 1: ??? (screen on?)
-	// bit 0: ???
+	data16_t data = 0;
 
-	K053246_set_OBJCHA_line((data & 0x4) ? ASSERT_LINE : CLEAR_LINE);
-
-	rng_irq_control = data;
-}
-
-static INTERRUPT_GEN(rng_interrupt)
-{
-	if (rng_irq_control & 0x08)
+	switch (offset)
 	{
-		cpu_set_irq_line(0, MC68000_IRQ_5, HOLD_LINE);
+		case 0x00/2:
+			if (readinputport(1) & 0x20)
+				return(readinputport(2) | readinputport(4)<<8);
+			else
+			{
+				data = readinputport(2) & readinputport(4);
+				return(data<<8 | data);
+			}
+		break;
+
+		case 0x02/2:
+			if (readinputport(1) & 0x20)
+				return(readinputport(3) | readinputport(5)<<8);
+			else
+			{
+				data = readinputport(3) & readinputport(5);
+				return(data<<8 | data);
+			}
+		break;
+
+		case 0x04/2:
+			/*
+				bit0-7: coin mechs and services
+				bit8 : freeze
+				bit9 : joysticks layout(auto detect???)
+			*/
+			return(input_port_0_word_r(0, 0));
+		break;
+
+		case 0x06/2:
+			if (ACCESSING_LSB)
+			{
+				data = readinputport(1) | EEPROM_read_bit();
+
+				if (init_eeprom_count)
+				{
+					init_eeprom_count--;
+					data &= 0xf7;
+				}
+			}
+			return((rng_sysreg[0x06/2] & 0xff00) | data);
+		break;
 	}
+
+	return(rng_sysreg[offset]);
 }
 
-static READ16_HANDLER( rngplayer1_r )
+static WRITE16_HANDLER( rng_sysregs_w )
 {
-	return readinputport(2) | (readinputport(4)<<8);
-}
+	COMBINE_DATA(rng_sysreg + offset);
 
-static READ16_HANDLER( rngplayer2_r )
-{
-	return readinputport(3) | (readinputport(5)<<8);
-}
+	switch (offset)
+	{
+		case 0x08/2:
+			/*
+				bit0  : EEPROM_write_bit
+				bit1  : EEPROM_set_cs_line
+				bit2  : EEPROM_set_clock_line
+				bit3  : coin counter?
+				bit7  : set before massive memory writes
+				bit10 : IRQ5 ACK
+			*/
+			if (ACCESSING_LSB)
+			{
+				EEPROM_write_bit((data & 0x01) ? 1 : 0);
+				EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+				EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+			}
 
-static READ16_HANDLER( rngcoins_r )
-{
-	return readinputport(0);
+			if (!(data & 0x40))
+				cpu_set_irq_line(0, MC68000_IRQ_5, CLEAR_LINE);
+		break;
+
+		case 0x0c/2:
+			/*
+				bit 0 : also enables IRQ???
+				bit 1 : disable PSAC2 input?
+				bit 2 : OBJCHA
+				bit 3 : enable IRQ 5
+			*/
+			K053246_set_OBJCHA_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+		break;
+	}
 }
 
 static WRITE16_HANDLER( sound_cmd1_w )
 {
-	if(ACCESSING_MSB) {
+	if (ACCESSING_MSB)
 		soundlatch_w(0, data>>8);
-		return;
-	}
 }
 
 static WRITE16_HANDLER( sound_cmd2_w )
 {
-	if(ACCESSING_MSB)
-	{
+	if (ACCESSING_MSB)
 		soundlatch2_w(0, data>>8);
-		return;
-	}
 }
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	if (ACCESSING_MSB)
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
-static READ16_HANDLER( sound_status_r )
+static READ16_HANDLER( sound_status_msb_r )
 {
-//	int latch = soundlatch3_r(0);
+	if (ACCESSING_MSB)
+		return(rng_sound_status<<8);
 
-	return 0x3f3f;	// pass POST for now (hack - need to find NMI disable register in 54539!)
+	return(0);
 }
 
-static READ16_HANDLER( rngeeprom_r )
+static INTERRUPT_GEN(rng_interrupt)
 {
-	if (ACCESSING_LSB)
-	{
-		int res = input_port_1_word_r(0,0) | EEPROM_read_bit();
-		if (init_eeprom_count)
-		{
-			init_eeprom_count--;
-			res &= 0xf7;
-		}
-
-		return res;
-	}
-
-	return 0;
-}
-
-static WRITE16_HANDLER( rngeeprom_w )
-{
-	if (ACCESSING_LSB)
-	{
-		EEPROM_write_bit((data&0x01) ? 1 : 0);
-		EEPROM_set_cs_line((data&0x02) ? CLEAR_LINE : ASSERT_LINE);
-		EEPROM_set_clock_line((data&0x04) ? ASSERT_LINE : CLEAR_LINE);
-		return;
-	}
-
-//	fprintf(stderr, "unknown MSB write %x to eeprom\n", data);
+	if (rng_sysreg[0x0c/2] & 0x09)
+		cpu_set_irq_line(0, MC68000_IRQ_5, ASSERT_LINE);
 }
 
 static MEMORY_READ16_START( rngreadmem )
-	{ 0x000000, 0x2fffff, MRA16_ROM },	// main program + data
-	{ 0x300000, 0x3007ff, MRA16_RAM },
-	{ 0x380000, 0x39ffff, MRA16_RAM },
-	{ 0x400000, 0x43ffff, MRA16_NOP }, //K053936_0_rom_r }, // '936 ROM readback window
-	{ 0x480000, 0x480001, rngplayer1_r },	// player 1/3
-	{ 0x480002, 0x480003, rngplayer2_r },	// player 2/4
-	{ 0x480004, 0x480005, rngcoins_r },	// coins
-	{ 0x480006, 0x480007, rngeeprom_r },
-	{ 0x580014, 0x580017, sound_status_r },
+	{ 0x000000, 0x2fffff, MRA16_ROM },		// main program + data
+	{ 0x300000, 0x3007ff, MRA16_RAM },		// palette RAM
+	{ 0x380000, 0x39ffff, MRA16_RAM },		// work RAM
+	{ 0x400000, 0x43ffff, MRA16_NOP },		// K053936_0_rom_r }, // '936 ROM readback window
+	{ 0x480000, 0x48001f, rng_sysregs_r },
+	{ 0x4c0000, 0x4c001f, K053252_word_r },	// CCU (for scanline and vblank polling)
+	{ 0x580014, 0x580015, sound_status_msb_r },
+	{ 0x580000, 0x58001f, MRA16_RAM },		// sound regs read fall-through
 	{ 0x5c0000, 0x5c000d, K053246_word_r },	// 246A ROM readback window
-	{ 0x600000, 0x600fff, K053247_word_r },
-	{ 0x601000, 0x601fff, MRA16_RAM },
-	{ 0x6c0000, 0x6cffff, MRA16_RAM },
-	{ 0x700000, 0x7007ff, MRA16_RAM },
-	{ 0x740000, 0x741fff, ttl_ram_r },	// text plane RAM
+	{ 0x600000, 0x600fff, K053247_word_r },	// OBJ RAM
+	{ 0x601000, 0x601fff, MRA16_RAM },		// communication? second monitor buffer?
+	{ 0x6c0000, 0x6cffff, MRA16_RAM },		// PSAC2 render RAM
+	{ 0x700000, 0x7007ff, MRA16_RAM },		// PSAC2 line effect
+	{ 0x740000, 0x741fff, ttl_ram_r },		// text plane RAM
+#if RNG_DEBUG
+	{ 0x5c0010, 0x5c001f, K053247_reg_word_r },
+	{ 0x640000, 0x640007, K053246_reg_word_r },
+#endif
 MEMORY_END
 
 static MEMORY_WRITE16_START( rngwritemem )
 	{ 0x000000, 0x2fffff, MWA16_ROM },
 	{ 0x300000, 0x3007ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x380000, 0x39ffff, MWA16_RAM },	// work RAM
-	{ 0x480008, 0x480009, rngeeprom_w },	// eeprom control
-	{ 0x48000c, 0x48000d, rngctrl_w },
+	{ 0x380000, 0x39ffff, MWA16_RAM },		// work RAM
+	{ 0x480000, 0x48001f, rng_sysregs_w, &rng_sysreg },
+	{ 0x4c0000, 0x4c001f, K053252_word_w },	// CCU
 	{ 0x540000, 0x540001, sound_irq_w },
 	{ 0x58000c, 0x58000d, sound_cmd1_w },
 	{ 0x58000e, 0x58000f, sound_cmd2_w },
+	{ 0x580000, 0x58001f, MWA16_RAM },		// sound regs write fall-through
+	{ 0x5c0010, 0x5c001f, K053247_reg_word_w },
 	{ 0x600000, 0x600fff, K053247_word_w },	// OBJ RAM
-	{ 0x601000, 0x601fff, MWA16_RAM },
+	{ 0x601000, 0x601fff, MWA16_RAM },		// communication? second monitor buffer?
 	{ 0x640000, 0x640007, K053246_word_w },	// '246A registers
-	{ 0x680000, 0x68001f, MWA16_RAM, &K053936_0_ctrl },	// '936 registers
-	{ 0x6c0000, 0x6cffff, rng_936_videoram_w, &rng_936_videoram }, 	// PSAC2 ('936) RAM (34v + 35v)
-	{ 0x700000, 0x7007ff, MWA16_RAM, &K053936_0_linectrl },	// "Line RAM"
-	{ 0x740000, 0x741fff, ttl_ram_w },	// text plane RAM
-	{ 0x7c0000, 0x7c0001, MWA16_NOP },	// watchdog
+	{ 0x680000, 0x68001f, MWA16_RAM, &K053936_0_ctrl },				// '936 registers
+	{ 0x6c0000, 0x6cffff, rng_936_videoram_w, &rng_936_videoram },	// PSAC2 ('936) RAM (34v + 35v)
+	{ 0x700000, 0x7007ff, MWA16_RAM, &K053936_0_linectrl },			// "Line RAM"
+	{ 0x740000, 0x741fff, ttl_ram_w },		// text plane RAM
+	{ 0x7c0000, 0x7c0001, MWA16_NOP },		// watchdog
 MEMORY_END
 
 /**********************************************************************************/
 
-static int cur_sound_region;
-
-static void reset_sound_region(void)
+static WRITE_HANDLER( sound_status_w )
 {
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
+	rng_sound_status = data;
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE_HANDLER( z80ctrl_w )
 {
-	cur_sound_region = (data & 0xf);
-	reset_sound_region();
+	rng_z80_control = data;
+
+	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data & 0x07) * 0x4000);
+
+	if (data & 0x10)
+		cpu_set_nmi_line(1, CLEAR_LINE);
 }
 
 static INTERRUPT_GEN(audio_interrupt)
 {
-	cpu_set_nmi_line(1, PULSE_LINE);
+	if (rng_z80_control & 0x80) return;
+
+	cpu_set_nmi_line(1, ASSERT_LINE);
 }
 
 /* sound (this should be split into sndhrdw/xexex.c or pregx.c or so someday) */
@@ -240,9 +299,9 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe230, 0xe3ff, MWA_RAM },
 	{ 0xe400, 0xe62f, K054539_1_w },
 	{ 0xe630, 0xe7ff, MWA_RAM },
-	{ 0xf000, 0xf000, soundlatch3_w },
-	{ 0xf800, 0xf800, sound_bankswitch_w },
-	{ 0xfff1, 0xfff3, MWA_NOP },
+	{ 0xf000, 0xf000, sound_status_w },
+	{ 0xf800, 0xf800, z80ctrl_w },
+	{ 0xfff0, 0xfff3, MWA_NOP },
 MEMORY_END
 
 static struct K054539interface k054539_interface =
@@ -271,7 +330,7 @@ static struct GfxLayout bglayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &bglayout,     0x0000, 64 },
+	{ REGION_GFX1, 0, &bglayout, 0x0000, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -282,22 +341,24 @@ static MACHINE_DRIVER_START( rng )
 	MDRV_CPU_MEMORY(rngreadmem,rngwritemem)
 	MDRV_CPU_VBLANK_INT(rng_interrupt,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
+	MDRV_CPU_ADD_TAG("sound", Z80, 10000000) // 8Mhz (10Mhz is much safer in self-test due to heavy sync)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, 480)
 
+	MDRV_INTERLEAVE(100) // higher if sound stutters
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
+	MDRV_MACHINE_INIT(rng)
 	MDRV_NVRAM_HANDLER(rungun)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(11*8, 59*8-1, 3*8, 31*8-1 )
+	MDRV_VISIBLE_AREA(88, 88+384-1, 24, 24+224-1)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(rng)
@@ -316,13 +377,18 @@ INPUT_PORTS_START( rng )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE4 )
+	PORT_DIPNAME( 0x0100, 0x0000, "Freeze" )
+	PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x0100, DEF_STR( On ) )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM ready (always 1) */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPNAME( 0x10, 0x00, "Monitors" )
 	PORT_DIPSETTING(    0x00, "1" )
@@ -333,7 +399,10 @@ INPUT_PORTS_START( rng )
 	PORT_DIPNAME( 0x40, 0x00, "Sound Output" )
 	PORT_DIPSETTING(    0x40, "Mono" )
 	PORT_DIPSETTING(    0x00, "Stereo" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, "Bit2 (Unknown)" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Bit7 (Unknown)" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -391,9 +460,9 @@ ROM_START( rungunu )
 	ROM_LOAD16_BYTE( "247a02", 0x100001, 0x80000, CRC(f5ef3f45) SHA1(2e1d8f672c130dbfac4365dc1301b47beee10161) )
 
 	/* sound program */
-	ROM_REGION( 0x040000, REGION_CPU2, 0 )
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )
 	ROM_LOAD("247a05", 0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
-	ROM_RELOAD(           0x010000, 0x020000 )
+	ROM_RELOAD(        0x010000, 0x20000 )
 
 	/* '936 tiles */
 	ROM_REGION( 0x400000, REGION_GFX1, 0)
@@ -429,9 +498,12 @@ ROM_START( rungun )
 	ROM_CONTINUE(                  0x100001, 0x80000)
 
 	/* sound program */
-	ROM_REGION( 0x040000, REGION_CPU2, 0 )
-	ROM_LOAD("247-a05", 0x000000, 0x20000, CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
-	ROM_RELOAD(         0x010000, 0x020000 )
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )
+	// bad dump (higher banks and the second half of lower banks filled with 0xff)
+	ROM_LOAD("247-a05", 0x000000, 0x20000, BAD_DUMP CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
+	// borrowed from rungunu
+	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
+	ROM_RELOAD(         0x010000, 0x20000 )
 
 	/* '936 tiles */
 	ROM_REGION( 0x400000, REGION_GFX1, 0)
@@ -467,9 +539,12 @@ ROM_START( slmdunkj )
 	ROM_CONTINUE(                  0x100001, 0x80000)
 
 	/* sound program */
-	ROM_REGION( 0x040000, REGION_CPU2, 0 )
-	ROM_LOAD("247-a05", 0x000000, 0x20000, CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
-	ROM_RELOAD(         0x010000, 0x020000 )
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )
+	// bad dump (higher banks and the second half of lower banks filled with 0xff)
+	ROM_LOAD("247-a05", 0x000000, 0x20000, BAD_DUMP CRC(412fa1e0) SHA1(3fcf203cfcfb7ec9539d8613a8bf95747c76cc4f) )
+	// borrowed from rungunu
+	ROM_LOAD("247a05",  0x000000, 0x20000, CRC(64e85430) SHA1(542919c3be257c8f118fc21d3835d7b6426a22ed) )
+	ROM_RELOAD(         0x010000, 0x20000 )
 
 	/* '936 tiles */
 	ROM_REGION( 0x400000, REGION_GFX1, 0)
@@ -492,8 +567,20 @@ ROM_START( slmdunkj )
 	ROM_LOAD( "247-a07", 0x200000, 0x200000, CRC(0108142d) SHA1(4dc6a36d976dad9c0da5a5b1f01f2eb3b369c99d) )
 ROM_END
 
+static DRIVER_INIT( rng )
+{
+	K054539_init_flags(K054539_REVERSE_STEREO);
+}
 
+MACHINE_INIT( rng )
+{
+	memset(rng_sysreg, 0, 0x20);
 
-GAMEX( 1993, rungun,   0,      rng, rng, 0, ROT0, "Konami", "Run and Gun (World ver. EAA)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
-GAMEX( 1993, rungunu,  rungun, rng, rng, 0, ROT0, "Konami", "Run and Gun (US ver. UAB)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
-GAMEX( 1993, slmdunkj, rungun, rng, rng, 0, ROT0, "Konami", "Slam Dunk (Japan ver. JAA))", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
+	init_eeprom_count = 0;
+	rng_z80_control = 0;
+	rng_sound_status = 0;
+}
+
+GAMEX( 1993, rungun,   0,      rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungunu,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UAB)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, slmdunkj, rungun, rng, rng, rng, ROT0, "Konami", "Slam Dunk (Japan ver. JAA))", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

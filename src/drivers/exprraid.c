@@ -5,7 +5,7 @@ Express Raider - (c) 1986 Data East USA
 Ernesto Corvi
 ernesto@imagina.com
 
-Last Modified 20th Jan 2001
+Last Modified 14th Jul 2003
 
 Memory Map:
 Main CPU: ( 6502 )
@@ -34,7 +34,7 @@ The main 6502 cpu is a custom one. The differences with a regular 6502 is as fol
 - Extra opcode ( $4b00 ), wich i think reads an external port. VBlank irq is on bit 1 ( 0x02 ).
 - Reset, IRQ and NMI vectors are moved.
 
-Also, there was some protection circuitry wich is now emulated.
+Also, there was some protection circuitry which is now emulated.
 
 The way i dealt with the custom opcode was to change it to return memory
 position $ff (wich i verified is not used by the game). And i hacked in
@@ -64,9 +64,16 @@ sign is intact, however Credit is spelt incorrectly.
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
-/* from vidhrdw */
-extern unsigned char *exprraid_bgcontrol;
-VIDEO_UPDATE( exprraid );
+
+extern WRITE_HANDLER( exprraid_videoram_w );
+extern WRITE_HANDLER( exprraid_colorram_w );
+extern WRITE_HANDLER( exprraid_flipscreen_w );
+extern WRITE_HANDLER( exprraid_bgselect_w );
+extern WRITE_HANDLER( exprraid_scrollx_w );
+extern WRITE_HANDLER( exprraid_scrolly_w );
+
+extern VIDEO_START( exprraid );
+extern VIDEO_UPDATE( exprraid );
 
 
 /*****************************************************************************************/
@@ -75,7 +82,7 @@ VIDEO_UPDATE( exprraid );
 
 static READ_HANDLER( exprraid_prot_0_r )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	return RAM[0x02a9];
 }
@@ -104,8 +111,8 @@ static MEMORY_READ_START( readmem )
 	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see init_exprraid below */
     { 0x0000, 0x05ff, MRA_RAM },
     { 0x0600, 0x07ff, MRA_RAM }, /* sprites */
-    { 0x0800, 0x0bff, videoram_r },
-    { 0x0c00, 0x0fff, colorram_r },
+    { 0x0800, 0x0bff, MRA_RAM },
+    { 0x0c00, 0x0fff, MRA_RAM },
     { 0x1800, 0x1800, input_port_1_r }, /* DSW 0 */
     { 0x1801, 0x1801, input_port_2_r }, /* Controls */
     { 0x1802, 0x1802, input_port_3_r }, /* Coins */
@@ -118,10 +125,14 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x05ff, MWA_RAM },
     { 0x0600, 0x07ff, MWA_RAM, &spriteram, &spriteram_size }, /* sprites */
-    { 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-    { 0x0c00, 0x0fff, colorram_w, &colorram },
+    { 0x0800, 0x0bff, exprraid_videoram_w, &videoram },
+    { 0x0c00, 0x0fff, exprraid_colorram_w, &colorram },
     { 0x2001, 0x2001, sound_cpu_command_w },
-    { 0x2800, 0x2807, MWA_RAM, &exprraid_bgcontrol },
+	{ 0x2002, 0x2002, exprraid_flipscreen_w },
+    { 0x2800, 0x2803, exprraid_bgselect_w },
+    { 0x2804, 0x2804, exprraid_scrolly_w },
+    { 0x2805, 0x2806, exprraid_scrollx_w },
+    { 0x2807, 0x2807, MWA_NOP },	// Scroll related ?
     { 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -182,6 +193,12 @@ INPUT_PORTS_START( exprraid )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START /* IN 2 - 0x1802 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -337,7 +354,7 @@ static MACHINE_DRIVER_START( exprraid )
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(exprraid)
 	MDRV_VIDEO_UPDATE(exprraid)
 
 	/* sound hardware */
@@ -498,7 +515,7 @@ static void exprraid_gfx_expand(void)
 {
 	/* Expand the background rom so we can use regular decode routines */
 
-	unsigned char	*gfx = memory_region(REGION_GFX3);
+	UINT8	*gfx = memory_region(REGION_GFX3);
 	int				offs = 0x10000-0x1000;
 	int				i;
 
@@ -518,7 +535,7 @@ static void exprraid_gfx_expand(void)
 
 static DRIVER_INIT( wexpress )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 
@@ -540,7 +557,7 @@ static DRIVER_INIT( wexpress )
 
 static DRIVER_INIT( exprraid )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 
 	/* decode vectors */
@@ -570,7 +587,7 @@ static DRIVER_INIT( wexpresc )
 }
 
 
-GAMEX( 1986, exprraid, 0,        exprraid, exprraid, exprraid, ROT0, "Data East USA", "Express Raider (US)", GAME_NO_COCKTAIL )
-GAMEX( 1986, wexpress, exprraid, exprraid, exprraid, wexpress, ROT0, "Data East Corporation", "Western Express (World?)", GAME_NO_COCKTAIL )
-GAMEX( 1986, wexpresb, exprraid, exprraid, exprraid, wexpresb, ROT0, "bootleg", "Western Express (bootleg set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1986, wexpresc, exprraid, exprraid, exprraid, wexpresc, ROT0, "bootleg", "Western Express (bootleg set 2)", GAME_NO_COCKTAIL )
+GAME( 1986, exprraid, 0,        exprraid, exprraid, exprraid, ROT0, "Data East USA", "Express Raider (US)" )
+GAME( 1986, wexpress, exprraid, exprraid, exprraid, wexpress, ROT0, "Data East Corporation", "Western Express (World?)" )
+GAME( 1986, wexpresb, exprraid, exprraid, exprraid, wexpresb, ROT0, "bootleg", "Western Express (bootleg set 1)" )
+GAME( 1986, wexpresc, exprraid, exprraid, exprraid, wexpresc, ROT0, "bootleg", "Western Express (bootleg set 2)" )

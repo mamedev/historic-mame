@@ -7,18 +7,30 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *s2636ram;
+UINT8 *s2636ram;
 struct mame_bitmap *spritebitmap;
 
 int dirtychar[16];
 int CollisionBackground;
 int CollisionSprite;
 
+static struct tilemap *bg_tilemap;
+
+
 /**************************************************************/
 /* The S2636 is a standard sprite chip used by several boards */
 /* Emulation of this chip may be moved into a seperate unit   */
 /* once it's workings are fully understood.                   */
 /**************************************************************/
+
+WRITE_HANDLER( tinvader_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( zac_s2636_w )
 {
@@ -131,43 +143,33 @@ int SpriteCollision(int first,int second)
 	return Checksum;
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
 VIDEO_START( tinvader )
 {
-	video_start_generic();
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
 
 	if ((spritebitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	return 0;
 }
 
-VIDEO_UPDATE( tinvader )
+static void tinvader_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
- 			drawgfx(tmpbitmap,Machine->gfx[0],
-				    videoram[offs],
-					0,
-				    0,0,
-				    8*sx,8*sy,
-				    0, TRANSPARENCY_NONE, 0);
-		}
-	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     /* -------------------------------------------------------------- */
     /* There seems to be a strange setup with this board, in that it  */
@@ -248,4 +250,10 @@ VIDEO_UPDATE( tinvader )
     if(SpriteCollision(1,2)) CollisionSprite |= 0x04;
     if(SpriteCollision(1,4)) CollisionSprite |= 0x02;
 //  if(SpriteCollision(2,4)) CollisionSprite |= 0x01;	/* Not Used */
+}
+
+VIDEO_UPDATE( tinvader )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tinvader_draw_sprites(bitmap);
 }

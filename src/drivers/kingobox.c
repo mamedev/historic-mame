@@ -19,18 +19,27 @@ Main CPU:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern unsigned char *kingobox_videoram1;
-extern unsigned char *kingobox_colorram1;
-extern size_t kingobox_videoram1_size;
-extern unsigned char *kingobox_scroll_y;
-WRITE_HANDLER( kingofb_f800_w );
-PALETTE_INIT( kingobox );
-PALETTE_INIT( ringking );
-VIDEO_UPDATE( kingobox );
-VIDEO_UPDATE( ringking );
+extern UINT8 *kingofb_videoram2;
+extern UINT8 *kingofb_colorram2;
+extern UINT8 *kingofb_scroll_y;
 
-static unsigned char *video_shared;
-static unsigned char *sprite_shared;
+extern WRITE_HANDLER( kingofb_videoram_w );
+extern WRITE_HANDLER( kingofb_colorram_w );
+extern WRITE_HANDLER( kingofb_videoram2_w );
+extern WRITE_HANDLER( kingofb_colorram2_w );
+
+extern WRITE_HANDLER( kingofb_f800_w );
+
+extern PALETTE_INIT( kingofb );
+extern VIDEO_START( kingofb );
+extern VIDEO_UPDATE( kingofb );
+
+extern PALETTE_INIT( ringking );
+extern VIDEO_START( ringking );
+extern VIDEO_UPDATE( ringking );
+
+static UINT8 *video_shared;
+static UINT8 *sprite_shared;
 int kingofb_nmi_enable = 0;
 
 static READ_HANDLER( video_shared_r ) {
@@ -59,13 +68,14 @@ static WRITE_HANDLER( sprite_interrupt_w ) {
 
 static WRITE_HANDLER( scroll_interrupt_w ) {
 	sprite_interrupt_w( offset, data );
-	*kingobox_scroll_y = data;
+	*kingofb_scroll_y = data;
 }
 
 static WRITE_HANDLER( sound_command_w ) {
 	soundlatch_w( 0, data );
 	cpu_set_irq_line_and_vector( 3, 0, HOLD_LINE, 0xff );
 }
+
 
 static MEMORY_READ_START( main_readmem )
     { 0x0000, 0x7fff, MRA_ROM },
@@ -89,7 +99,7 @@ static MEMORY_WRITE_START( main_writemem )
     { 0xf000, 0xf7ff, MWA_RAM }, /* ???? */
     { 0xf800, 0xf800, kingofb_f800_w },	/* NMI enable, palette bank */
     { 0xf801, 0xf801, MWA_NOP }, /* ???? */
-    { 0xf802, 0xf802, MWA_RAM, &kingobox_scroll_y },
+    { 0xf802, 0xf802, MWA_RAM, &kingofb_scroll_y },
     { 0xf803, 0xf803, scroll_interrupt_w  },
     { 0xf804, 0xf804, video_interrupt_w },
     { 0xf807, 0xf807, sound_command_w }, /* sound latch */
@@ -109,10 +119,10 @@ static MEMORY_WRITE_START( video_writemem )
     { 0x0000, 0x3fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xa000, 0xa7ff, video_shared_w, &video_shared }, /* shared with main */
-    { 0xc000, 0xc0ff, videoram_w, &videoram, &videoram_size }, /* background vram */
-    { 0xc400, 0xc4ff, colorram_w, &colorram }, /* background colorram */
-    { 0xc800, 0xcbff, MWA_RAM, &kingobox_videoram1, &kingobox_videoram1_size }, /* foreground vram */
-    { 0xcc00, 0xcfff, MWA_RAM, &kingobox_colorram1 }, /* foreground colorram */
+    { 0xc000, 0xc0ff, kingofb_videoram_w, &videoram }, /* background vram */
+    { 0xc400, 0xc4ff, kingofb_colorram_w, &colorram }, /* background colorram */
+    { 0xc800, 0xcbff, kingofb_videoram2_w, &kingofb_videoram2 }, /* foreground vram */
+    { 0xcc00, 0xcfff, kingofb_colorram2_w, &kingofb_colorram2 }, /* foreground colorram */
 MEMORY_END
 
 static MEMORY_READ_START( sprite_readmem )
@@ -176,7 +186,7 @@ static MEMORY_WRITE_START( rk_main_writemem )
     { 0xd801, 0xd801, sprite_interrupt_w },
     { 0xd802, 0xd802, video_interrupt_w },
     { 0xd803, 0xd803, sound_command_w },
-    { 0xe800, 0xe800, MWA_RAM, &kingobox_scroll_y },
+    { 0xe800, 0xe800, MWA_RAM, &kingofb_scroll_y },
     { 0xf000, 0xf7ff, MWA_RAM }, /* ???? */
 MEMORY_END
 
@@ -194,10 +204,10 @@ static MEMORY_WRITE_START( rk_video_writemem )
     { 0x0000, 0x3fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xc000, 0xc7ff, video_shared_w, &video_shared }, /* shared with main */
-    { 0xa800, 0xa8ff, videoram_w, &videoram, &videoram_size }, /* background vram */
-    { 0xac00, 0xacff, colorram_w, &colorram }, /* background colorram */
-    { 0xa000, 0xa3ff, MWA_RAM, &kingobox_videoram1, &kingobox_videoram1_size }, /* foreground vram */
-    { 0xa400, 0xa7ff, MWA_RAM, &kingobox_colorram1 }, /* foreground colorram */
+    { 0xa800, 0xa8ff, kingofb_videoram_w, &videoram }, /* background vram */
+    { 0xac00, 0xacff, kingofb_colorram_w, &colorram }, /* background colorram */
+    { 0xa000, 0xa3ff, kingofb_videoram2_w, &kingofb_videoram2 }, /* foreground vram */
+    { 0xa400, 0xa7ff, kingofb_colorram2_w, &kingofb_colorram2 }, /* foreground colorram */
 MEMORY_END
 
 static MEMORY_READ_START( rk_sprite_readmem )
@@ -327,7 +337,7 @@ INPUT_PORTS_START( ringking )
     PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-    PORT_DIPNAME( 0x18, 0x10, "Difficulty(2P)" )
+    PORT_DIPNAME( 0x18, 0x10, "Difficulty (2P)" )
     PORT_DIPSETTING(    0x18, "Easy" )
     PORT_DIPSETTING(    0x10, "Medium" )
     PORT_DIPSETTING(    0x08, "Hard" )
@@ -349,14 +359,14 @@ INPUT_PORTS_START( ringking )
     PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
     PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
     PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-    PORT_DIPNAME( 0x30, 0x10, "Difficulty(1P)" )
+    PORT_DIPNAME( 0x30, 0x10, "Difficulty (1P)" )
     PORT_DIPSETTING(    0x30, "Easy" )
     PORT_DIPSETTING(    0x10, "Medium" )
     PORT_DIPSETTING(    0x20, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
     PORT_DIPNAME( 0x40, 0x40, "Boxing Match" )
-    PORT_DIPSETTING(    0x40, "2 Win,End" )
-    PORT_DIPSETTING(    0x00, "1 Win,End" )
+    PORT_DIPSETTING(    0x40, "2 Win, End" )
+    PORT_DIPSETTING(    0x00, "1 Win, End" )
     PORT_DIPNAME( 0x80, 0x80, "Freeze" )
     PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -383,7 +393,7 @@ INPUT_PORTS_START( ringking )
 
 	PORT_START /* IN 2 - 0xe004 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT ) /* Service Switch */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Sound busy??? */
@@ -542,7 +552,7 @@ static struct DACinterface dac_interface =
 	{ 25 }
 };
 
-static INTERRUPT_GEN( kingobox_interrupt ) {
+static INTERRUPT_GEN( kingofb_interrupt ) {
 
 	if ( kingofb_nmi_enable )
 		cpu_set_irq_line(cpu_getactivecpu(), IRQ_LINE_NMI, PULSE_LINE);
@@ -553,15 +563,15 @@ static MACHINE_DRIVER_START( kingofb )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(main_readmem,main_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(video_readmem,video_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(sprite_readmem,sprite_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4.0 MHz */
@@ -581,9 +591,9 @@ static MACHINE_DRIVER_START( kingofb )
 	MDRV_PALETTE_LENGTH(256+8)
 	MDRV_COLORTABLE_LENGTH(256+8*2)
 
-	MDRV_PALETTE_INIT(kingobox)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(kingobox)
+	MDRV_PALETTE_INIT(kingofb)
+	MDRV_VIDEO_START(kingofb)
+	MDRV_VIDEO_UPDATE(kingofb)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
@@ -597,15 +607,15 @@ static MACHINE_DRIVER_START( ringking )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(rk_main_readmem,rk_main_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(rk_video_readmem,rk_video_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
 	MDRV_CPU_MEMORY(rk_sprite_readmem,rk_sprite_writemem)
-	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+	MDRV_CPU_VBLANK_INT(kingofb_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4.0 MHz */
@@ -626,7 +636,7 @@ static MACHINE_DRIVER_START( ringking )
 	MDRV_COLORTABLE_LENGTH(256+8*2)
 
 	MDRV_PALETTE_INIT(ringking)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(ringking)
 	MDRV_VIDEO_UPDATE(ringking)
 
 	/* sound hardware */
@@ -794,7 +804,7 @@ ROM_START( ringkin3 )
 	ROM_LOAD( "12.8d",        0x0a000, 0x2000, NO_DUMP )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	/* we load the ringking PROMs and then expand the first to look like the kingobox ones... */
+	/* we load the ringking PROMs and then expand the first to look like the kingofb ones... */
 	ROM_LOAD( "82s135.2a",    0x0100, 0x0100, CRC(0e723a83) SHA1(51d2274be70506308b3bfa9c2d23606290f8b3b5) )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, CRC(d345cbb3) SHA1(6318022ebbbe59d4c0a207801fffed1167b98a66) )	/* blue component */
 ROM_END
@@ -803,16 +813,16 @@ ROM_END
 static DRIVER_INIT( ringkin3 )
 {
 	int i;
-	unsigned char *RAM = memory_region(REGION_PROMS);
+	UINT8 *RAM = memory_region(REGION_PROMS);
 
-	/* expand the first color PROM to look like the kingobox ones... */
+	/* expand the first color PROM to look like the kingofb ones... */
 	for (i = 0;i < 0x100;i++)
 		RAM[i] = RAM[i + 0x100] >> 4;
 }
 
 
 
-GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace Inc.", "King of Boxer (English)" )
+GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace", "King of Boxer (English)" )
 GAME( 1985, ringking, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 1)" )
 GAME( 1985, ringkin2, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 2)" )
 GAME( 1985, ringkin3, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Data East USA", "Ring King (US set 3)" )

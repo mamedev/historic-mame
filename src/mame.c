@@ -171,6 +171,16 @@ static struct performance_info performance;
 static int settingsloaded;
 static int leds_status;
 
+/* artwork callbacks */
+#ifndef MESS
+static struct artwork_callbacks mame_artwork_callbacks =
+{
+	NULL,
+	artwork_load_artwork_file
+};
+#endif
+
+
 
 
 /***************************************************************************
@@ -387,9 +397,9 @@ static int init_machine(void)
 
 #ifdef MESS
 	/* initialize the devices */
-	if (init_devices(gamedrv))
+	if (devices_init(gamedrv) || devices_initialload(gamedrv, TRUE))
 	{
-		logerror("init_devices failed\n");
+		logerror("devices_init failed\n");
 		goto cant_load_roms;
 	}
 #endif
@@ -410,6 +420,16 @@ static int init_machine(void)
 	/* call the game driver's init function */
 	if (gamedrv->driver_init)
 		(*gamedrv->driver_init)();
+
+#ifdef MESS
+	/* initialize the devices */
+	if (devices_initialload(gamedrv, FALSE))
+	{
+		logerror("devices_initialload failed\n");
+		goto cant_load_roms;
+	}
+#endif
+
 	return 0;
 
 cant_init_memory:
@@ -572,7 +592,7 @@ static void shutdown_machine(void)
 
 #ifdef MESS
 	/* close down any devices */
-	exit_devices();
+	devices_exit();
 #endif
 
 	/* release any allocated memory */
@@ -639,6 +659,7 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 static int vh_open(void)
 {
 	struct osd_create_params params;
+	struct artwork_callbacks *artcallbacks;
 	int bmwidth = Machine->drv->screen_width;
 	int bmheight = Machine->drv->screen_height;
 
@@ -676,8 +697,14 @@ static int vh_open(void)
 	params.video_attributes = Machine->drv->video_attributes;
 	params.orientation = Machine->orientation;
 
+#ifdef MESS
+	artcallbacks = &mess_artwork_callbacks;
+#else
+	artcallbacks = &mame_artwork_callbacks;
+#endif
+
 	/* initialize the display through the artwork (and eventually the OSD) layer */
-	if (artwork_create_display(&params, direct_rgb_components))
+	if (artwork_create_display(&params, direct_rgb_components, artcallbacks))
 		goto cant_create_display;
 
 	/* the create display process may update the vector width/height, so recompute */
@@ -1264,12 +1291,14 @@ static void recompute_fps(int skipped_it)
 	vfcount++;
 	if (vfcount >= (int)Machine->drv->frames_per_second)
 	{
+#ifndef MESS
 		/* from vidhrdw/avgdvg.c */
 		extern int vector_updates;
 
-		vfcount -= (int)Machine->drv->frames_per_second;
 		performance.vector_updates_last_second = vector_updates;
 		vector_updates = 0;
+#endif
+		vfcount -= (int)Machine->drv->frames_per_second;
 	}
 }
 
@@ -1538,12 +1567,22 @@ void *mame_hard_disk_open(const char *filename, const char *mode)
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
 	{
-		mame_file *file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, 0);
-		return (void *)file;
+		const struct GameDriver *drv;
+
+		/* attempt reading up the chain through the parents */
+		for (drv = Machine->gamedrv; drv != NULL; drv = drv->clone_of)
+		{
+			void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
+
+			if (file != NULL)
+				return file;
+		}
+
+		return NULL;
 	}
 
 	/* look for read/write drives in the diff area */
-	return (void *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
+	return mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
 }
 
 
@@ -1672,6 +1711,7 @@ static int validitychecks(void)
 				printf("%s: %s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
+#ifndef MESS
 			if (drivers[i]->rom && drivers[i]->rom == drivers[j]->rom
 					&& (drivers[i]->flags & NOT_A_DRIVER) == 0
 					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
@@ -1679,6 +1719,7 @@ static int validitychecks(void)
 				printf("%s: %s and %s use the same ROM set\n",drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
+#endif
 		}
 
 #ifndef MESS
@@ -1729,6 +1770,7 @@ static int validitychecks(void)
 				if (ROMENTRY_ISFILE(romp))
 				{
 					int pre,post;
+					const char *hash;
 
 					last_name = c = ROM_GETNAME(romp);
 					while (*c)
@@ -1757,6 +1799,13 @@ static int validitychecks(void)
 					if (pre > 8 || post > 4)
 					{
 						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
+						error = 1;
+					}
+
+					hash = ROM_GETHASHDATA(romp);
+					if (!hash_verify_string(hash))
+					{
+						printf("%s: rom '%s' has an invalid hash string '%s'\n", drivers[i]->name, ROM_GETNAME(romp), hash);
 						error = 1;
 					}
 				}

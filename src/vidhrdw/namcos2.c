@@ -389,7 +389,7 @@ READ16_HANDLER( namcos2_sprite_ram_r )
 }
 
 static void
-DrawSpritesDefault( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
+DrawSpritesDefault( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int pri_mask )
 {
 	struct GfxElement gfx;
 	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
@@ -437,7 +437,7 @@ DrawSpritesDefault( struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 		if((offset0&0x0200)==0) sizex>>=1;
 
-		if((sizey-1) && sizex && (offset6&0x0007)==pri)
+		if((sizey-1) && sizex && (offset6&pri_mask)==pri)
 		{
 			int color = (offset6>>4)&0x000f;
 
@@ -672,7 +672,7 @@ VIDEO_UPDATE( namcos2_default )
 		{
 			DrawROZ(bitmap,cliprect);
 		}
-		DrawSpritesDefault( bitmap,cliprect,pri );
+		DrawSpritesDefault( bitmap,cliprect,pri, 0x0007 );
 	}
 	DrawCrossshair( bitmap,cliprect );
 }
@@ -702,7 +702,7 @@ VIDEO_UPDATE( finallap )
 	{
 		DrawTilemaps( bitmap, cliprect, pri );
 		namco_road_draw( bitmap,cliprect,pri );
-		DrawSpritesDefault( bitmap,cliprect,pri );
+		DrawSpritesDefault( bitmap,cliprect,pri,0x000f );
 	}
 }
 

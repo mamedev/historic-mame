@@ -887,44 +887,64 @@ There is a small gun interface board (Number ZPT1001B) located near the 68000 wh
 another Actel A1020B chip, a 74HC14 TTL chip and a 4.9152MHz OSC.
 
 ROMS:
-ZERO1.BIN  \
-ZERO2.BIN  / Main Program 4M Mask ROMs
-ZERO3.BIN  -- Sound MX27C4000
-ZEROMSK1.BIN -\
-ZEROMSK2.BIN   \
-ZEROMSK3.BIN    \
-ZEROMSK4.BIN     \
-ZEROMSK5.BIN      - GFX,16M Mask ROMs
-ZEROMSK6.BIN     /
-ZEROMSK7.BIN    /
-ZEROMSK8.BIN  -/
+zero2.BIN  \
+zero3.BIN  / Main Program 4M Mask ROMs
+zero1.BIN  -- Sound MX27C4000
+zpobjz01.BIN -\
+zpobjz02.BIN   \
+zpobjz03.BIN    \
+zpobjz04.BIN     \
+zpscrz05.BIN      - GFX,16M Mask ROMs
+zpscrz06.BIN     /
+zpscrz07.BIN    /
+zpscrz08.BIN  -/
 
 ***************************************************************************/
 
 ROM_START( zeropnt )
-
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "zero1.bin", 0x000000, 0x080000, CRC(1e599509) SHA1(5a562a3c85700126b95fbdf21ef8c0ddd35d9037) )
-	ROM_LOAD16_BYTE( "zero2.bin", 0x000001, 0x080000, CRC(588aeef7) SHA1(0dfa22c9e7b1fe493c16160b1ac76fa4d3bb2e68) )
+	ROM_LOAD16_BYTE( "zero_2.bin", 0x000000, 0x080000, CRC(1e599509) SHA1(5a562a3c85700126b95fbdf21ef8c0ddd35d9037) )
+	ROM_LOAD16_BYTE( "zero_3.bin", 0x000001, 0x080000, CRC(588aeef7) SHA1(0dfa22c9e7b1fe493c16160b1ac76fa4d3bb2e68) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_INVERT | ROMREGION_DISPOSE )	/* 16x16x8 Sprites */
-	ROM_LOAD( "zeromsk1.bin", 0x000000, 0x200000, CRC(1f2768a3) SHA1(75c83458afc527dda47bfbd86a8e9c5ded7a5444) )
-	ROM_LOAD( "zeromsk2.bin", 0x200000, 0x200000, CRC(de34f33a) SHA1(b77c7d508942176585afaeeaea2f34f60326eeb1) )
-	ROM_LOAD( "zeromsk3.bin", 0x400000, 0x200000, CRC(d7a657f7) SHA1(f1f9e6a01eef4d0c8c4b2e161136cc4438d770e2) )
-	ROM_LOAD( "zeromsk4.bin", 0x600000, 0x200000, CRC(3aec2f8d) SHA1(6fb1cfabfb0bddf688d3bfb60f7538209efbd8f1) )
+	ROM_LOAD( "zpobjz01.bin", 0x000000, 0x200000, CRC(1f2768a3) SHA1(75c83458afc527dda47bfbd86a8e9c5ded7a5444) )
+	ROM_LOAD( "zpobjz02.bin", 0x200000, 0x200000, CRC(de34f33a) SHA1(b77c7d508942176585afaeeaea2f34f60326eeb1) )
+	ROM_LOAD( "zpobjz03.bin", 0x400000, 0x200000, CRC(d7a657f7) SHA1(f1f9e6a01eef4d0c8c4b2e161136cc4438d770e2) )
+	ROM_LOAD( "zpobjz04.bin", 0x600000, 0x200000, CRC(3aec2f8d) SHA1(6fb1cfabfb0bddf688d3bfb60f7538209efbd8f1) )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_INVERT | ROMREGION_DISPOSE )	/* 16x16x8 Layers */
-	ROM_LOAD( "zeromsk6.bin", 0x000000, 0x200000, CRC(e1e53cf0) SHA1(b440e09f6229d486d1a8be476ac8a17adde1ff7e) )
-	ROM_LOAD( "zeromsk5.bin", 0x200000, 0x200000, CRC(0d7d4850) SHA1(43f87d0461fe022b68b4e57e6c9542bcd78e301b) )
-	ROM_LOAD( "zeromsk7.bin", 0x400000, 0x200000, CRC(bb178f32) SHA1(1354f4d90a8cec58d1f2b6809985776b309b96a8) )
-	ROM_LOAD( "zeromsk8.bin", 0x600000, 0x200000, CRC(672f02e5) SHA1(8e8b28a8b2293950764d453a3c385d7083eb5a57) )
+	ROM_LOAD( "zpscrz06.bin", 0x000000, 0x200000, CRC(e1e53cf0) SHA1(b440e09f6229d486d1a8be476ac8a17adde1ff7e) )
+	ROM_LOAD( "zpscrz05.bin", 0x200000, 0x200000, CRC(0d7d4850) SHA1(43f87d0461fe022b68b4e57e6c9542bcd78e301b) )
+	ROM_LOAD( "zpscrz07.bin", 0x400000, 0x200000, CRC(bb178f32) SHA1(1354f4d90a8cec58d1f2b6809985776b309b96a8) )
+	ROM_LOAD( "zpscrz08.bin", 0x600000, 0x200000, CRC(672f02e5) SHA1(8e8b28a8b2293950764d453a3c385d7083eb5a57) )
 
 	ROM_REGION( 0x80000 * 2, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "zero3.bin", 0x000000, 0x080000, CRC(fd2384fa) SHA1(8ae83665fe952c5d03bd62d2abb507c351cf0fb5) )
+	ROM_LOAD( "zero_1.bin", 0x000000, 0x080000, CRC(fd2384fa) SHA1(8ae83665fe952c5d03bd62d2abb507c351cf0fb5) )
 	ROM_RELOAD(            0x080000, 0x080000             )
-
 ROM_END
 
+
+ROM_START( zeropnta )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "zpa2.bin", 0x000000, 0x080000, CRC(285fbca3) SHA1(61f8d48388a666ed9300c0688fbf844e316b8892) )
+	ROM_LOAD16_BYTE( "zpa3.bin", 0x000001, 0x080000, CRC(ad7b3129) SHA1(d814b5d9336d011386aa0b316b11225e5ea799fc) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_INVERT | ROMREGION_DISPOSE )	/* 16x16x8 Sprites */
+	ROM_LOAD( "zpobjz01.bin", 0x000000, 0x200000, CRC(1f2768a3) SHA1(75c83458afc527dda47bfbd86a8e9c5ded7a5444) )
+	ROM_LOAD( "zpobjz02.bin", 0x200000, 0x200000, CRC(de34f33a) SHA1(b77c7d508942176585afaeeaea2f34f60326eeb1) )
+	ROM_LOAD( "zpobjz03.bin", 0x400000, 0x200000, CRC(d7a657f7) SHA1(f1f9e6a01eef4d0c8c4b2e161136cc4438d770e2) )
+	ROM_LOAD( "zpobjz04.bin", 0x600000, 0x200000, CRC(3aec2f8d) SHA1(6fb1cfabfb0bddf688d3bfb60f7538209efbd8f1) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_INVERT | ROMREGION_DISPOSE )	/* 16x16x8 Layers */
+	ROM_LOAD( "zpscrz06.bin", 0x000000, 0x200000, CRC(e1e53cf0) SHA1(b440e09f6229d486d1a8be476ac8a17adde1ff7e) )
+	ROM_LOAD( "zpscrz05.bin", 0x200000, 0x200000, CRC(0d7d4850) SHA1(43f87d0461fe022b68b4e57e6c9542bcd78e301b) )
+	ROM_LOAD( "zpscrz07.bin", 0x400000, 0x200000, CRC(bb178f32) SHA1(1354f4d90a8cec58d1f2b6809985776b309b96a8) )
+	ROM_LOAD( "zpscrz08.bin", 0x600000, 0x200000, CRC(672f02e5) SHA1(8e8b28a8b2293950764d453a3c385d7083eb5a57) )
+
+	ROM_REGION( 0x80000 * 2, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "zero_1.bin", 0x000000, 0x080000, CRC(fd2384fa) SHA1(8ae83665fe952c5d03bd62d2abb507c351cf0fb5) )
+	ROM_RELOAD(            0x080000, 0x080000             )
+ROM_END
 
 /***************************************************************************
 
@@ -1011,22 +1031,26 @@ For cabinets with two speakers:
 	JAMMA pin L goes to left speaker (+)
 	Run a ground to the negative side of each speaker.
 
- 1PLAY: Left (Red) Gun Connector Pinout
+Using Original Unico Light Guns & connectors:
 
-   1| Gun OPTO - Blue Wire
-   2| +5 Volts - RED Wire
-   3| Trigger  - White Wire
+ 1PLAY: Left (Red) Gun Connector Pinout*
+
+   1| Gun OPTO - White Wire
+   2| +5 Volts - Red Wire
+   3| Trigger  - Green Wire
    4| Ground   - Black Wire
 
- 2PLAY: Right (Blue) Gun Connector Pinout
+ 2PLAY: Right (Blue) Gun Connector Pinout*
 
-   1| Gun OPTO - Blue Wire
-   2| +5 Volts - RED Wire
-   3| Trigger  - White Wire
+   1| Gun OPTO - White Wire
+   2| +5 Volts - Red Wire
+   3| Trigger  - Green Wire
    4| Ground   - Black Wire
 
+* This is not the same as the HAPP Controls' 4-pin standard
 
 
+DIPSW-A
 ------------------------------------------------------------------
     DipSwitch Title   | Function | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 ------------------------------------------------------------------
@@ -1040,7 +1064,8 @@ For cabinets with two speakers:
    Gun Loading Mode   |Not Reload|       |on |off|               |
                       | Reload   |       |off|on |               |
 ------------------------------------------------------------------
-  Not Used / Always Off                          |off|           |*
+      Language        | English  |               |off|           |*
+                      | Japanese |               |on |           |
 ------------------------------------------------------------------
                       | 1cn/1pl  |                   |off|off|off|*
                       | 1cn/2pl  |                   |on |off|off|
@@ -1052,13 +1077,12 @@ For cabinets with two speakers:
                       | 5cn/1pl  |                   |on |on |on |
 ------------------------------------------------------------------
 
-
-
 DIPSW-B
 ------------------------------------------------------------------
     DipSwitch Title   | Function | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 ------------------------------------------------------------------
-  Not Used / Always Off          |off|                           |*
+   Korean Language    |   Off    |off|                           |*
+                      |   On     |on |                           |
 ------------------------------------------------------------------
      Demo Sounds      |   Off    |   |off|                       |
                       |   On     |   |on |                       |*
@@ -1118,7 +1142,8 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1997, burglarx, 0, burglarx, burglarx, 0, ROT0, "Unico Electronics", "Burglar X"  )
-GAME( 1998, zeropnt,  0, zeropnt,  zeropnt,  0, ROT0, "Unico Electronics", "Zero Point" )
-GAME( 1999, zeropnt2, 0, zeropnt2, zeropnt2, 0, ROT0, "Unico Electronics", "Zero Point 2" )
+GAME( 1997, burglarx, 0,       burglarx, burglarx, 0, ROT0, "Unico", "Burglar X"  )
+GAME( 1998, zeropnt,  0,       zeropnt,  zeropnt,  0, ROT0, "Unico", "Zero Point (set 1)" )
+GAME( 1998, zeropnta, zeropnt, zeropnt,  zeropnt,  0, ROT0, "Unico", "Zero Point (set 2)" )
+GAME( 1999, zeropnt2, 0,       zeropnt2, zeropnt2, 0, ROT0, "Unico", "Zero Point 2" )
 

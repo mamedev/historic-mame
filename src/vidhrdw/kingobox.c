@@ -1,16 +1,15 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *kingobox_videoram1;
-unsigned char *kingobox_colorram1;
-size_t kingobox_videoram1_size;
-unsigned char *kingobox_scroll_y;
+UINT8 *kingofb_videoram2;
+UINT8 *kingofb_colorram2;
+UINT8 *kingofb_scroll_y;
 
 extern int kingofb_nmi_enable;
 
 static int palette_bank;
 
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -31,7 +30,7 @@ static int palette_bank;
   bit 3 --  51 ohm resistor  -- BLUE
 
 ***************************************************************************/
-PALETTE_INIT( kingobox )
+PALETTE_INIT( kingofb )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -143,7 +142,41 @@ PALETTE_INIT( ringking )
 	}
 }
 
+WRITE_HANDLER( kingofb_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( kingofb_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( kingofb_videoram2_w )
+{
+	if (kingofb_videoram2[offset] != data)
+	{
+		kingofb_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( kingofb_colorram2_w )
+{
+	if (kingofb_colorram2[offset] != data)
+	{
+		kingofb_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( kingofb_f800_w )
 {
@@ -152,174 +185,156 @@ WRITE_HANDLER( kingofb_f800_w )
 	if (palette_bank != ((data & 0x18) >> 3))
 	{
 		palette_bank = (data & 0x18) >> 3;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+
+	if (flip_screen != (data & 0x80))
+	{
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int bank = ((attr & 0x04) >> 2) + 2;
+	int code = (tile_index / 16) ? videoram[tile_index] + ((attr & 0x03) << 8) : 0;
+	int color = ((attr & 0x70) >> 4) + 8 * palette_bank;
 
+	SET_TILE_INFO(bank, code, color, 0)
+}
 
-VIDEO_UPDATE( kingobox )
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = kingofb_colorram2[tile_index];
+	int bank = (attr & 0x02) >> 1;
+	int code = kingofb_videoram2[tile_index] + ((attr & 0x01) << 8);
+	int color = (attr & 0x38) >> 3;
+
+	SET_TILE_INFO(bank, code, color, 0)
+}
+
+VIDEO_START( kingofb )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y, 
+		TILEMAP_OPAQUE, 16, 16, 16, 16);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void kingofb_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-
-	/* background */
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		if (dirtybuffer[offs])
+		int bank = (spriteram[offs + 3] & 0x04) >> 2;
+		int code = spriteram[offs + 2] + ((spriteram[offs + 3] & 0x03) << 8);
+		int color = ((spriteram[offs + 3] & 0x70) >> 4) + 8 * palette_bank;
+		int flipx = 0;		
+		int flipy = spriteram[offs + 3] & 0x80;
+		int sx = spriteram[offs+1];
+		int sy = spriteram[offs];
+
+		if (flip_screen)
 		{
-			int sx,sy,code,bank;
-
-
-			sx = offs / 16;
-			sy = 15 - offs % 16;
-
-			dirtybuffer[offs] = 0;
-
-			code = videoram[offs] + ((colorram[offs] & 0x03) << 8);
-			bank = (colorram[offs] & 0x04) >> 2;
-
-			drawgfx(tmpbitmap,Machine->gfx[2 + bank],
-					code,
-					((colorram[offs] & 0x70) >> 4) + 8 * palette_bank,
-					0,0,
-					sx*16,sy*16,
-					0,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		drawgfx(bitmap, Machine->gfx[2 + bank],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			0, TRANSPARENCY_PEN, 0);
 	}
+}
 
+VIDEO_UPDATE( kingofb )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, -(*kingofb_scroll_y));
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	kingofb_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+}
+
+/* Ring King */
+
+static void ringking_get_bg_tile_info(int tile_index)
+{
+	int code = (tile_index / 16) ? videoram[tile_index] : 0;
+	int color = ((colorram[tile_index] & 0x70) >> 4) + 8 * palette_bank;
+
+	SET_TILE_INFO(4, code, color, 0)
+}
+
+VIDEO_START( ringking )
+{
+	bg_tilemap = tilemap_create(ringking_get_bg_tile_info, tilemap_scan_cols_flip_y, 
+		TILEMAP_OPAQUE, 16, 16, 16, 16);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void ringking_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
-		int scrolly = kingobox_scroll_y[0];
+		int bank = (spriteram[offs + 1] & 0x04) >> 2;
+		int code = spriteram[offs + 3] + ((spriteram[offs + 1] & 0x03) << 8);
+		int color = ((spriteram[offs + 1] & 0x70) >> 4) + 8 * palette_bank;
+		int flipx = 0;
+		int flipy = ( spriteram[offs + 1] & 0x80 ) ? 0 : 1;
+		int sx = spriteram[offs+2];
+		int sy = spriteram[offs];
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
-
-	/* sprites */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int sx,sy,code,color,bank,flipy;
-
-
-		sx = spriteram[offs+1];
-		sy = spriteram[offs];
-
-		code = spriteram[offs + 2] + ((spriteram[offs + 3] & 0x03) << 8);
-		bank = (spriteram[offs + 3] & 0x04) >> 2;
-		color = ((spriteram[offs + 3] & 0x70) >> 4) + 8 * palette_bank,
-		flipy = spriteram[offs + 3] & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[2 + bank],
-					code,
-					color,
-					0,flipy,
-					sx,sy,
-					0,TRANSPARENCY_PEN,0);
-	}
-
-
-	/* foreground */
-	for (offs = kingobox_videoram1_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy,code,bank;
-
-
-		sx = offs / 32;
-		sy = 31 - offs % 32;
-
-		code = kingobox_videoram1[offs] + ((kingobox_colorram1[offs] & 0x01) << 8);
-		bank = (kingobox_colorram1[offs] & 0x02) >> 1;
-
-		drawgfx(bitmap,Machine->gfx[bank],
-				code,
-				(kingobox_colorram1[offs] & 0x38) >> 3,
-				0,0,
-				sx*8,sy*8,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[2 + bank],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			0, TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( ringking )
 {
-	int offs;
-
-
-
-	/* background */
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			sx = offs / 16;
-			sy = 15 - offs % 16;
-
-			dirtybuffer[offs] = 0;
-
-			drawgfx(tmpbitmap,Machine->gfx[4],
-					sx ? videoram[offs] : 0,	/* make the top row black */
-					((colorram[offs] & 0x70) >> 4 ) + 8 * palette_bank,
-					0,0,
-					sx*16,sy*16,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	{
-		int scrolly = kingobox_scroll_y[0];
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* sprites */
-	for (offs = 0; offs < spriteram_size;offs += 4)
-	{
-		int sx,sy,code,color,bank,flipy;
-
-		sx = spriteram[offs+2];
-		sy = spriteram[offs];
-
-		code = spriteram[offs + 3] + ((spriteram[offs + 1] & 0x03) << 8);
-		bank = (spriteram[offs + 1] & 0x04) >> 2;
-		color = ((spriteram[offs + 1] & 0x70) >> 4) + 8 * palette_bank,
-		flipy = ( spriteram[offs + 1] & 0x80 ) ? 0 : 1;
-
-		drawgfx(bitmap,Machine->gfx[2 + bank],
-					code,
-					color,
-					0,flipy,
-					sx,sy,
-					0,TRANSPARENCY_PEN,0);
-	}
-
-
-	/* foreground */
-	for (offs = kingobox_videoram1_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy,code,bank;
-
-
-		sx = offs / 32;
-		sy = 31 - offs % 32;
-
-		code = kingobox_videoram1[offs] + ((kingobox_colorram1[offs] & 0x01) << 8);
-		bank = (kingobox_colorram1[offs] & 0x02) >> 1;
-
-		drawgfx(bitmap,Machine->gfx[bank],
-				code,
-				(kingobox_colorram1[offs] & 0x38) >> 3,
-				0,0,
-				sx*8,sy*8,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	tilemap_set_scrolly(bg_tilemap, 0, -(*kingofb_scroll_y));
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ringking_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

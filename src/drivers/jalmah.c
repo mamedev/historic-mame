@@ -195,7 +195,7 @@ ROM_START( mjzoomin )
 	ROM_LOAD16_BYTE( "zoomin-2.bin", 0x00000, 0x20000, CRC(c7eb982c) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "zoomin-3.bin", 0x00000, 0x80000, CRC(07d7b8cd0) )
+	ROM_LOAD( "zoomin-3.bin", 0x00000, 0x80000, CRC(07d7b8cd) )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* BG0 */
 	ROM_LOAD( "zoomin14.bin", 0x00000, 0x20000, CRC(4e32aa45) )

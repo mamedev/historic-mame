@@ -78,9 +78,9 @@ quad primitives (n x 5 words) - indices of four verticies plus color code
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
 #include "namcoic.h"
-#include <math.h>
 #include <assert.h>
 #include "namcos3d.h"
+#include "matrix3d.h"
 
 #define MAX_SURFACE 64
 #define MAX_VERTEX	64
@@ -214,7 +214,7 @@ ApplyRotation( const INT16 *pSource, double M[4][4] )
 	param.thz_sin = pSource[4]/(double)0x7fff;
 	param.thz_cos = pSource[5]/(double)0x7fff;
 	param.rolt = pSource[6];
-	matrix_NamcoRot( M, &param );
+	namcos3d_Rotate( M, &param );
 } /* ApplyRotation */
 
 static void
@@ -230,8 +230,8 @@ DrawPolyObject0( struct mame_bitmap *bitmap, const INT16 *pDSPRAM, const INT16 *
 	//INT16 window = pDSPRAM[2];
 	double M[4][4];
 
-	matrix_Identity( M );
-	matrix_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
+	matrix3d_Identity( M );
+	matrix3d_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
 	ApplyCameraTransformation( pCamera, M );
 	BlitPolyObject( bitmap, code, M );
 	return 6;
@@ -244,9 +244,9 @@ DrawPolyObject1( struct mame_bitmap *bitmap, const INT16 *pDSPRAM, const INT16 *
 	//INT16 window = pDSPRAM[2];
 	double M[4][4];
 
-	matrix_Identity( M );
+	matrix3d_Identity( M );
 	ApplyRotation( &pDSPRAM[6], M );
-	matrix_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
+	matrix3d_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
 
 	if( pCamera )
 	{

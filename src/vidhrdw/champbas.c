@@ -104,6 +104,15 @@ WRITE_HANDLER( champbas_gfxbank_w )
 	}
 }
 
+WRITE_HANDLER( champbas_flipscreen_w )
+{
+	if (flip_screen != data)
+	{
+		flip_screen_set(data);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
 static void get_bg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index];
@@ -135,14 +144,6 @@ static void champbas_draw_sprites( struct mame_bitmap *bitmap )
 		int flipy = spriteram[offs] & 0x02;
 		int sx = ((256 + 16 - spriteram_2[offs + 1]) & 0xff) - 16;
 		int sy = spriteram_2[offs] - 16;
-
-		if (flip_screen)
-		{
-			sx = 240 - sx;
-			sy = 240 - sy;
-			flipx = !flipx;
-			flipy = !flipy;
-		}
 
 		drawgfx(bitmap,
 			Machine->gfx[2 + gfxbank],

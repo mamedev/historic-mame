@@ -45,16 +45,8 @@ Sound is created through two boards.
 The Astro Blaster Sound Board consists solely of sounds created through
 discrete circuitry.
 The G-80 Speech Synthesis Board consists of an 8035 and a speech synthesizer.
+It is implemented in segasnd.c.
 ***************************************************************************/
-
-/* Special temporary code for Astro Blaster Speech handling */
-#define MAX_SPEECH_QUEUE 10
-#define NOT_PLAYING     -1              /* The queue holds the sample # so -1 will indicate no sample */
-#define SPEECH_CHANNEL 11           /* Note that Astro Blaster sounds only use tracks 0-10 */
-
-static int speechQueue[MAX_SPEECH_QUEUE];
-static int speechQueuePtr = 0;
-/* End of speech code */
 
 const char *astrob_sample_names[] =
 {
@@ -65,12 +57,6 @@ const char *astrob_sample_names[] =
 
 	"pbullet.wav","ebullet.wav","eexplode.wav","pexplode.wav",
 	"deedle.wav","sonar.wav",
-
-	"01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav","08.wav",
-	"09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav","10.wav",
-	"11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav","18.wav",
-	"19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav","20.wav",
-	"22.wav","23.wav",
 	0
 };
 
@@ -80,12 +66,7 @@ enum
 	invadr3,winvadr3,invadr4,winvadr4,
 	asteroid,refuel,
 	pbullet,ebullet,eexplode,pexplode,
-	deedle,sonar,
-	v01,v02,v03,v04,v05,v06,v07,v08,
-	v09,v0a,v0b,v0c,v0d,v0e,v0f,v10,
-	v11,v12,v13,v14,v15,v16,v17,v18,
-	v19,v1a,v1b,v1c,v1d,v1e,v1f,v20,
-	v22,v23
+	deedle,sonar
 };
 
 static struct sa astrob_sa[TOTAL_SOUNDS] =
@@ -110,106 +91,6 @@ static struct sa astrob_sa[TOTAL_SOUNDS] =
 	{  9, deedle,   0, 0, 1 },      /* Line  6 - Bonus */
 	{ 10, sonar,    0, 0, 1 },      /* Line  7 - Sonar */
 };
-
-/* Special speech handling code.  Someday this will hopefully be
-   replaced with true speech synthesis. */
-int astrob_speech_sh_start(const struct MachineSound *msound)
-{
-   int i;
-
-   for (i = 0; i < MAX_SPEECH_QUEUE; i++)
-   {
-	  speechQueue[i] = NOT_PLAYING;
-   }
-   speechQueuePtr = 0;
-
-   return 0;
-}
-
-void astrob_speech_sh_update (void)
-{
-	int sound;
-
-	if( Machine->samples == 0 )
-		return;
-
-	if (speechQueue[speechQueuePtr] != NOT_PLAYING)
-	{
-		sound = speechQueue[speechQueuePtr];
-
-		if (!sample_playing(SPEECH_CHANNEL))
-		{
-			if (Machine->samples->sample[sound])
-				sample_start(SPEECH_CHANNEL, sound, 0);
-			speechQueue[speechQueuePtr] = NOT_PLAYING;
-			speechQueuePtr = ((speechQueuePtr + 1) % MAX_SPEECH_QUEUE);
-		}
-	}
-}
-
-
-static void astrob_queue_speech(int sound)
-{
-	int newPtr;
-
-	/* Queue the new sound */
-	newPtr = speechQueuePtr;
-	while (speechQueue[newPtr] != NOT_PLAYING)
-	{
-		newPtr = ((newPtr + 1) % MAX_SPEECH_QUEUE);
-		if (newPtr == speechQueuePtr)
-		{
-			 /* The queue has overflowed. Oops. */
-			logerror("*** Speech queue overflow!\n");
-			return;
-		}
-	}
-	speechQueue[newPtr] = sound;
-}
-
-WRITE_HANDLER( astrob_speech_port_w )
-{
-	if( Machine->samples == 0 )
-		return;
-
-	switch (data)
-	{
-		case 0x01:      astrob_queue_speech(v01); break;
-		case 0x02:      astrob_queue_speech(v02); break;
-		case 0x03:      astrob_queue_speech(v03); break;
-		case 0x04:      astrob_queue_speech(v04); break;
-		case 0x05:      astrob_queue_speech(v05); break;
-		case 0x06:      astrob_queue_speech(v06); break;
-		case 0x07:      astrob_queue_speech(v07); break;
-		case 0x08:      astrob_queue_speech(v08); break;
-		case 0x09:      astrob_queue_speech(v09); break;
-		case 0x0a:      astrob_queue_speech(v0a); break;
-		case 0x0b:      astrob_queue_speech(v0b); break;
-		case 0x0c:      astrob_queue_speech(v0c); break;
-		case 0x0d:      astrob_queue_speech(v0d); break;
-		case 0x0e:      astrob_queue_speech(v0e); break;
-		case 0x0f:      astrob_queue_speech(v0f); break;
-		case 0x10:      astrob_queue_speech(v10); break;
-		case 0x11:      astrob_queue_speech(v11); break;
-		case 0x12:      astrob_queue_speech(v12); break;
-		case 0x13:      astrob_queue_speech(v13); break;
-		case 0x14:      astrob_queue_speech(v14); break;
-		case 0x15:      astrob_queue_speech(v15); break;
-		case 0x16:      astrob_queue_speech(v16); break;
-		case 0x17:      astrob_queue_speech(v17); break;
-		case 0x18:      astrob_queue_speech(v18); break;
-		case 0x19:      astrob_queue_speech(v19); break;
-		case 0x1a:      astrob_queue_speech(v1a); break;
-		case 0x1b:      astrob_queue_speech(v1b); break;
-		case 0x1c:      astrob_queue_speech(v1c); break;
-		case 0x1d:      astrob_queue_speech(v1d); break;
-		case 0x1e:      astrob_queue_speech(v1e); break;
-		case 0x1f:      astrob_queue_speech(v1f); break;
-		case 0x20:      astrob_queue_speech(v20); break;
-		case 0x22:      astrob_queue_speech(v22); break;
-		case 0x23:      astrob_queue_speech(v23); break;
-	}
-}
 
 WRITE_HANDLER( astrob_audio_ports_w )
 {

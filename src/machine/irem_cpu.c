@@ -296,28 +296,219 @@ const unsigned char inthunt_decryption_table[256] = {
 
 
 const unsigned char gussun_decryption_table[256] = {
-	xxxx,xxxx,xxxx,0x36,xxxx,0x52,0xb1,0x5b, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
- 	xxxx,xxxx,0x75,xxxx,xxxx,0x83,0x33,0xe9, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xc5,xxxx, /* 10 */
-	0x5d,0xa4,xxxx,0x51,xxxx,xxxx,xxxx,xxxx ,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x03,0x5f, /* 20 */
+	0x70,xxxx,xxxx,0x36,xxxx,0x52,0xb1,0x5b, 0x68,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
+//  ????                                     ^^^^ ????
+	xxxx,xxxx,0x75,xxxx,xxxx,0x83,0x32,0xe9, xxxx,0x82,xxxx,xxxx,xxxx,xxxx,0xac,xxxx, /* 10 */
+//                                ^^^^            ^^^^                     ^^^^
+	0x5d,0xa4,xxxx,0x51,0x21,xxxx,xxxx,xxxx ,0xf8,xxxx,0x91,xxxx,xxxx,xxxx,0x03,0x5f, /* 20 */
+//                      ????                 ^^^^      ^^^^ ????
 	0x26,xxxx,xxxx,0x8b,xxxx,0x02,xxxx,xxxx, 0x8e,0xab,xxxx,xxxx,0xbc,0x90,0xb3,xxxx, /* 30 */
+//                      ????
 	xxxx,xxxx,0xc6,xxxx,xxxx,0x3a,xxxx,xxxx, xxxx,0x74,xxxx,xxxx,0x33,xxxx,xxxx,xxxx, /* 40 */
-	xxxx,0x53,xxxx,xxxx,0xc3,xxxx,0xfc,0xe7, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xba,xxxx, /* 50 */
-	0xb0,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x07, 0xb9,xxxx,xxxx,0x46,xxxx,xxxx,xxxx,xxxx, /* 60 */
-	xxxx,0xea,0x72,0x73,xxxx,0xd1,0x3b,0x5e, 0xe5,0x57,xxxx,0x0d,xxxx,xxxx,xxxx,0x3c, /* 70 */
-	xxxx,0x86,xxxx,xxxx,xxxx,0x25,0x2d,xxxx, 0x9a,0xeb,xxxx,0x0b,xxxx,0xb8,0x81,xxxx, /* 80 */
-	xxxx,xxxx,xxxx,xxxx,0xbb,xxxx,xxxx,xxxx, 0xa8,xxxx,xxxx,xxxx,0x43,0x56,xxxx,xxxx, /* 90 */
+	xxxx,0x53,xxxx,0xc0,0xc3,0x41,0xfc,0xe7, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xba,xxxx, /* 50 */
+//                 ^^^^      ^^^^
+	0xb0,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x07, 0xb9,xxxx,xxxx,0x46,0xf9,xxxx,xxxx,xxxx, /* 60 */
+//																 ^^^^
+	xxxx,0xea,0x72,0x73,0xad,0xd1,0x3b,0x5e, 0xe5,0x57,xxxx,0x0d,xxxx,xxxx,xxxx,0x3c, /* 70 */
+//                      ^^^^
+	xxxx,0x86,xxxx,xxxx,xxxx,0x25,0x2d,xxxx, 0x9a,0xeb,0x04,0x0b,xxxx,0xb8,0x81,xxxx, /* 80 */
+//													   ^^^^
+	xxxx,xxxx,0x9d,xxxx,0xbb,xxxx,xxxx,0xcb, 0xa8,0xcf,xxxx,xxxx,0x43,0x56,xxxx,xxxx, /* 90 */
+//            ^^^^                     ^^^^       ^^^^
 	xxxx,0xa3,xxxx,xxxx,xxxx,xxxx,0xfa,xxxx, xxxx,0x81,0xe6,xxxx,0x80,xxxx,xxxx,xxxx, /* a0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,0x3d,0x3e,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* b0 */
-	xxxx,0xff,xxxx,xxxx,0x55,0x1e,xxxx,0x59, 0x40,xxxx,xxxx,xxxx,0x88,0xbd,xxxx,0xb2, /* c0 */
-	xxxx,xxxx,0x06,0xc7,0x05,xxxx,0x8a,0x5a, 0x58,0xbe,xxxx,xxxx,xxxx,0x1f,0x23,xxxx, /* d0 */
-	0xe8,xxxx,0x89,0xa1,0xd0,xxxx,xxxx,0xe2, 0x38,0xfe,0x50,xxxx,xxxx,xxxx,xxxx,xxxx, /* e0 */
+	xxxx,xxxx,xxxx,xxxx,0x7d,0x3d,0x3e,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* b0 */
+//                      ^^^^
+	xxxx,0xff,0x47,xxxx,0x55,0x1e,xxxx,0x59, 0x93,xxxx,xxxx,xxxx,0x88,0xc1,xxxx,0xb2, /* c0 */
+//            ^^^^                           ^^^^                     ^^^^
+	xxxx,0x2e,0x06,0xc7,0x05,xxxx,0x8a,0x5a, 0x58,0xbe,xxxx,xxxx,xxxx,0x1f,0x23,xxxx, /* d0 */
+//       ^^^^
+	0xe8,xxxx,0x89,0xa1,0xd0,xxxx,xxxx,0xe2, 0x38,0xfe,0x50,0x9c,xxxx,xxxx,xxxx,xxxx, /* e0 */
+//                                                          ^^^^
 	xxxx,xxxx,0xf3,xxxx,xxxx,0x0f,xxxx,xxxx, xxxx,xxxx,0xf7,xxxx,0x39,xxxx,0xbf,xxxx, /* f0 */
+//  ????
 };
 //above - c8 (inc aw) guess from stos code
 //c5 (push ds) guess (pop ds soon after) right?
 //0xa9 (not 0x82 PRE) guess from 237df
 //cd total guess (wrong but 3 bytes)
 
+//AS notes:
+//0x1e is lodsb not lds,noted from 2344f
+//0x16 is xor r8,r8 not xor r16,r16
+//0xc8 not inc aw but xch bw,aw
+//0xcd is 0xc1 not 0xbd(palette at startup)
+//0x97 guess,but seems right(228c1),known to *not* be ret %Iw.
+//0x00 wrong(for sure it needs a one byte operand due to push es called at one point...)
+//0x19 guess (0x82 PRE)
+//0xc2 guess,it could be dec iy...
+/*
+e0100 palette sub-routine:
+12485: 23             push es
+12486: 27 C2          mov  es,dw
+12488: D7 C0          xor  aw,aw
+1248A: D7 FF          xor  iy,iy
+1248C: 44 00 01       mov  cw,$0100
+1248F: 81 5D          repe stosw
+12491: 95 22 06 97 39 mov  byte ss:[$3997],$FF
+12497: 3A             pop  es
+12498: 60             ret
+
+d1a86
+
+unk
+add bw,bw [d8]
+add ix,sp [e6]
+add iy,sp [e7]
+clc
+ret
+
+Unused: [2] 00	add %Eb,%Gb
+Unused: [2] 01	add %Ev,%Gv
+Unused: [2] 08	or %Eb,%Gb
+Unused: [2] 09	or %Ev,%Gv
+Unused: [2] 0a	or %Gb,%Eb
+Unused: [2] 0c	or al,%Ib
+Unused: [1] 0e	push cs
+Unused: [2] 10	adc %Eb,%Gb
+Unused: [2] 11	adc %Ev,%Gv
+Unused: [2] 12	adc %Gb,%Eb
+Unused: [2] 13	adc %Gv,%Ev
+Unused: [2] 14	adc al,%Ib
+Unused: [3] 15	adc aw,%Iv
+Unused: [1] 16	push ss
+Unused: [1] 17	pop ss
+Unused: [2] 18	sbb %Eb,%Gb
+Unused: [2] 19	sbb %Ev,%Gv
+Unused: [2] 1a	sbb %Gb,%Eb
+Unused: [2] 1b	sbb %Gv,%Ev
+Unused: [2] 1c	sbb al,%Ib
+Unused: [3] 1d	sbb aw,%Iv
+Unused: [2] 20	and %Eb,%Gb
+Unused: [2] 22	and %Gb,%Eb
+Unused: [2] 24	and al,%Ib
+Unused: [1] 27	adj4a
+Unused: [2] 28	sub %Eb,%Gb
+Unused: [2] 29	sub %Ev,%Gv
+Unused: [2] 2a	sub %Gb,%Eb
+Unused: [2] 2b	sub %Gv,%Ev
+Unused: [2] 2c	sub al,%Ib
+Unused: [1] 2f	adj4s
+Unused: [2] 30	xor %Eb,%Gb
+Unused: [2] 31	xor %Ev,%Gv
+Unused: [2] 34	xor al,%Ib
+Unused: [3] 35	xor aw,%Iv
+Unused: [1] 37	adjba
+Unused: [1] 3f	adjbs
+Unused: [1] 40	inc aw
+Unused: [1] 42	inc dw
+Unused: [1] 44	inc sp
+Unused: [1] 45	inc bp
+Unused: [1] 47	inc iy
+Unused: [1] 48	dec aw
+Unused: [1] 49	dec cw
+Unused: [1] 4a	dec dw
+Unused: [1] 4b	dec bw
+Unused: [1] 4c	dec sp
+Unused: [1] 4d	dec bp
+Unused: [1] 4e	dec ix
+Unused: [1] 54	push sp
+Unused: [1] 5c	pop sp
+Unused: [1] 60	pusha
+Unused: [1] 61	popa
+Unused: [0] 62	chkind %Gv,%Ma
+Unused: [0] 63	(null)
+Unused: [0] 64	repnc %p
+Unused: [0] 65	repc %p
+Unused: [0] 66	(null)
+Unused: [0] 67	(null)
+Unused: [0] 69	imul %Gw,%Ew,%Iw
+Unused: [0] 6a	push %Ix
+Unused: [0] 6b	imul %Gw,%Ew,%Ib
+Unused: [0] 6c	insb
+Unused: [0] 6d	insw
+Unused: [0] 6e	outsb
+Unused: [0] 6f	outsw
+Unused: [1] 71	jno %Jb
+Unused: [1] 76	jbe %Jb
+Unused: [1] 77	ja %Jb
+Unused: [1] 78	js %Jb
+Unused: [1] 79	jns %Jb
+Unused: [1] 7a	jpe %Jb
+Unused: [1] 7b	jpo %Jb
+Unused: [1] 7c	jl %Jb
+Unused: [1] 7e	jle %Jb
+Unused: [1] 7f	jg %Jb
+DUPLICATE: 81	%g0 %Ew,%Iw
+Unused: [2] 84	test %Eb,%Gb
+Unused: [2] 85	test %Ew,%Gw
+Unused: [2] 87	xch %Ew,%Gw
+Unused: [0] 8c	mov %Ew,%Sw
+Unused: [0] 8d	ldea %Gw,%M
+Unused: [0] 8f	pop %Ev
+Unused: [1] 92	xch dw,aw
+Unused: [1] 94	xch sp,aw
+Unused: [1] 95	xch bp,aw
+Unused: [1] 96	xch ix,aw
+Unused: [1] 97	xch iy,aw
+Unused: [0] 98	cvtbw
+Unused: [0] 99	cvtwl
+Unused: [0] 9b	fwait
+Unused: [0] 9e	sahf
+Unused: [0] 9f	lahf
+Unused: [0] a0	mov al,%Oc
+Unused: [0] a2	mov %Oc,al
+Unused: [0] a5	%P movsw
+Unused: [0] a6	%P cmpsb
+Unused: [0] a7	%P cmpsw
+Unused: [0] a9	test aw,%Iv
+Unused: [0] aa	%P stosb
+Unused: [0] ae	%P scasb
+Unused: [0] af	%P scasw
+Unused: [2] b4	mov ah,%Ib
+Unused: [2] b5	mov ch,%Ib
+Unused: [2] b6	mov dh,%Ib
+Unused: [2] b7	mov bh,%Ib
+Unused: [3] bd	mov bp,%Iv
+Unused: [0] c2	ret %Iw
+Unused: [0] c4	les %Gv,%Mp
+Unused: [0] c5	lds %Gv,%Mp
+Unused: [0] c8	enter %Iw,%Ib
+Unused: [0] c9	leave
+Unused: [0] ca	retf %Iw
+Unused: [0] cc	int 03
+Unused: [0] cd	int %Ib
+Unused: [0] ce	into
+Unused: [0] d2	%g1 %Eb,cl
+Unused: [0] d3	%g1 %Ev,cl
+Unused: [0] d4	aam ; %Ib
+Unused: [0] d5	aad ; %Ib
+Unused: [0] d6	(null)
+Unused: [0] d7	trans
+Unused: [0] d8	%f0
+Unused: [0] d9	%f1
+Unused: [0] da	%f2
+Unused: [0] db	%f3
+Unused: [0] dc	%f4
+Unused: [0] dd	%f5
+Unused: [0] de	%f6
+Unused: [0] df	%f7
+Unused: [0] e0	loopne %Jb
+Unused: [0] e1	loope %Jb
+Unused: [0] e3	j%j cxz %Jb
+Unused: [0] e4	in al,%Ib
+Unused: [0] ec	in al,dw
+Unused: [0] ed	in aw,dw
+Unused: [0] ee	out dw,al
+Unused: [0] ef	out dx,aw
+Unused: [0] f0	lock %p
+DUPLICATE: f1	(null)
+Unused: [0] f2	repne %p
+Unused: [0] f4	hlt
+Unused: [0] f5	not1 CY(cmc)
+Unused: [0] f6	%g2
+Unused: [1] fb	ei
+Unused: [1] fd	std
+*/
 
 const unsigned char leagueman_decryption_table[256] = {
 	xxxx,xxxx,xxxx,0x55,0xbb,xxxx,0x23,0x79, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x38,xxxx, /* 00 */

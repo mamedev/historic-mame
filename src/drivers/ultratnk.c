@@ -20,9 +20,9 @@
 #include "vidhrdw/generic.h"
 
 static int ultratnk_controls;
-static data8_t *mirror_ram;
+static UINT8 *mirror_ram;
 
-
+static struct tilemap *bg_tilemap;
 
 /*************************************
  *
@@ -55,9 +55,9 @@ static PALETTE_INIT( ultratnk )
  *
  *************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void ultratnk_draw_sprites( struct mame_bitmap *bitmap )
 {
-	const data8_t *pMem = memory_region( REGION_CPU1 );
+	const UINT8 *pMem = memory_region( REGION_CPU1 );
 
 	if( (pMem[0x93]&0x80)==0 )
 	/*	Probably wrong; game description indicates that one or both tanks can
@@ -107,40 +107,44 @@ static void draw_sprites( struct mame_bitmap *bitmap )
  *
  *************************************/
 
+static WRITE_HANDLER( ultratnk_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = videoram[tile_index];
+	int code = attr & 0x3f;
+	int color = attr >> 6;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( ultratnk )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
 VIDEO_UPDATE( ultratnk )
 {
-	int code;
-	int sx,sy;
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for( offs = 0; offs<0x400; offs++ )
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs]=0;
-			code = videoram[offs];
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-			drawgfx( tmpbitmap,
-				Machine->gfx[0],
-				code&0x3F, code>>6,
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-		}
-	}
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	draw_sprites( bitmap );
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ultratnk_draw_sprites(bitmap);
 
 	/* Weird, but we have to update our sound registers here. */
 	discrete_sound_w(2, mirror_ram[0x88] % 16);
 	discrete_sound_w(3, mirror_ram[0x8A] % 16);
 }
-
-
 
 /*************************************
  *
@@ -327,7 +331,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x00ff, MWA_RAM, &mirror_ram },
 	{ 0x0100, 0x01ff, mirror_w },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
+	{ 0x0800, 0x0bff, ultratnk_videoram_w, &videoram },
 	{ 0x0c00, 0x0cff, MWA_RAM }, /* ? */
 	{ 0x2000, 0x201f, ultratnk_attract_w }, /* attract */
 	{ 0x2020, 0x203f, MWA_NOP }, /* collision reset 1-4, 2020-21=cr1, 22-23=cr2, 24-25=cr3, 26,27=cr4 */
@@ -649,7 +653,7 @@ static MACHINE_DRIVER_START( ultratnk )
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source)/sizeof(unsigned short))
 
 	MDRV_PALETTE_INIT(ultratnk)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(ultratnk)
 	MDRV_VIDEO_UPDATE(ultratnk)
 
 	/* sound hardware */

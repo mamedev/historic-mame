@@ -31,28 +31,50 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
 static int gfxbank;
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( rmhaihai_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( rmhaihai_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + (gfxbank << 12) + ((attr & 0x07) << 8) + ((attr & 0x80) << 4);
+	int color = (gfxbank << 5) + (attr >> 3);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( rmhaihai )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
 
 VIDEO_UPDATE( rmhaihai )
 {
-	int x,y;
-
-	for (y = 0;y < 32;y++)
-	{
-		for (x = 0;x < 64;x++)
-		{
-			int code = videoram[64*y+x];
-			int attr = colorram[64*y+x];
-
-			drawgfx(bitmap,Machine->gfx[0],
-					(gfxbank << 12) + code + ((attr & 0x07) << 8) + ((attr & 0x80) << 4),
-					(gfxbank << 5) + (attr >> 3),	/* bit 7 used both for tile code and color */
-					0,0,
-					8*x,8*y,
-					cliprect,TRANSPARENCY_NONE,0);
-		}
-	}
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 }
 
 
@@ -127,11 +149,10 @@ static WRITE_HANDLER( adpcm_w )
 
 static WRITE_HANDLER( ctrl_w )
 {
+	coin_lockout_w(0, ~data & 0x04);
+	coin_counter_w(0, data & 0x08);
+
 	gfxbank = (data & 0x40) >> 6;	/* rmhaisei only */
-
-	coin_counter_w(0,data & 0x08);
-
-	/* bit 2 used, meaning unknown */
 }
 
 static WRITE_HANDLER( themj_rombank_w )
@@ -170,8 +191,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xa800, 0xafff, MWA_RAM, &colorram },
-	{ 0xb000, 0xb7ff, MWA_RAM, &videoram },
+	{ 0xa800, 0xafff, rmhaihai_colorram_w, &colorram },
+	{ 0xb000, 0xb7ff, rmhaihai_videoram_w, &videoram },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xffff, MWA_ROM },	/* rmhaisei only */
 MEMORY_END
@@ -183,19 +204,24 @@ static PORT_READ_START( readport )
 MEMORY_END
 
 static PORT_WRITE_START( writeport )
+	{ 0x8000, 0x8000, IOWP_NOP },	// ??
 	{ 0x8001, 0x8001, keyboard_w },
 	{ 0x8020, 0x8020, AY8910_control_port_0_w },
 	{ 0x8021, 0x8021, AY8910_write_port_0_w },
 	{ 0x8040, 0x8040, adpcm_w },
 	{ 0x8060, 0x8060, ctrl_w },
+	{ 0x8080, 0x8080, IOWP_NOP },	// ??
 MEMORY_END
 
+
 static PORT_WRITE_START( themj_writeport )
+	{ 0x8000, 0x8000, IOWP_NOP },	// ??
 	{ 0x8001, 0x8001, keyboard_w },
 	{ 0x8020, 0x8020, AY8910_control_port_0_w },
 	{ 0x8021, 0x8021, AY8910_write_port_0_w },
 	{ 0x8040, 0x8040, adpcm_w },
 	{ 0x8060, 0x8060, ctrl_w },
+	{ 0x8080, 0x8080, IOWP_NOP },	// ??
 	{ 0x80a0, 0x80a0, themj_rombank_w },
 MEMORY_END
 
@@ -439,6 +465,7 @@ static MACHINE_DRIVER_START( rmhaihai )
 	MDRV_PALETTE_LENGTH(0x100)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(rmhaihai)
 	MDRV_VIDEO_UPDATE(rmhaihai)
 
 	/* sound hardware */

@@ -14,17 +14,16 @@
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 
-extern unsigned char *s2636ram;
+extern UINT8 *s2636ram;
 
-VIDEO_START( tinvader );
-VIDEO_UPDATE( tinvader );
+extern WRITE_HANDLER( tinvader_videoram_w );
+extern WRITE_HANDLER( zac_s2636_w );
+extern WRITE_HANDLER( tinvader_sound_w );
+extern READ_HANDLER( zac_s2636_r );
+extern READ_HANDLER( tinvader_port_0_r );
 
-WRITE_HANDLER( zac_s2636_w );
-WRITE_HANDLER( tinvader_sound_w );
-
-READ_HANDLER( zac_s2636_r );
-READ_HANDLER( tinvader_port_0_r );
-
+extern VIDEO_START( tinvader );
+extern VIDEO_UPDATE( tinvader );
 
 #define WHITE           MAKE_ARGB(0x04,0xff,0xff,0xff)
 #define GREEN 			MAKE_ARGB(0x04,0x20,0xff,0x20)
@@ -52,7 +51,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x17FF, MWA_ROM },
-	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
+	{ 0x1800, 0x1bff, tinvader_videoram_w, &videoram },
     { 0x1D00, 0x1dff, MWA_RAM },
     { 0x1E80, 0x1E80, tinvader_sound_w },
     { 0x1F00, 0x1FFF, zac_s2636_w, &s2636ram },
@@ -343,6 +342,6 @@ static DRIVER_INIT( tinvader )
 }
 
 
-GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
-GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
+GAMEX( 1978, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
+GAMEX( 1978, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
 GAMEX( 1977, embargo,  0,       embargo,  embargo,  8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

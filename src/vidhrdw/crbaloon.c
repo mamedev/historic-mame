@@ -13,6 +13,8 @@ static int spritectrl[3];
 
 int crbaloon_collision;
 
+static struct tilemap *bg_tilemap;
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -55,75 +57,71 @@ PALETTE_INIT( crbaloon )
 	}
 }
 
+WRITE_HANDLER( crbaloon_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( crbaloon_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( crbaloon_spritectrl_w )
 {
 	spritectrl[offset] = data;
 }
 
-
-
 WRITE_HANDLER( crbaloon_flipscreen_w )
 {
-	flip_screen_set(data & 1);
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
- ***************************************************************************/
-
-VIDEO_UPDATE( crbaloon )
+static void get_bg_tile_info(int tile_index)
 {
-	int offs,x,y;
-	int bx,by;
+	int code = videoram[tile_index];
+	int color = colorram[tile_index] & 0x0f;
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
+VIDEO_START( crbaloon )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
+	if ( !bg_tilemap )
+		return 1;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
 
+	return 0;
+}
 
-			dirtybuffer[offs] = 0;
+static void crbaloon_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int x,y;
 
-			sx = offs % 32;
-			sy = offs / 32;
-			if (!flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs] & 0x0f,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-    /* Check Collision - Draw balloon in background colour, if no */
+	/* Check Collision - Draw balloon in background colour, if no */
     /* collision occured, bitmap will be same as tmpbitmap        */
 
-	bx = spritectrl[1];
-	by = spritectrl[2] - 32;
+	int bx = spritectrl[1];
+	int by = spritectrl[2] - 32;
+
+	tilemap_draw(tmpbitmap, 0, bg_tilemap, 0, 0);
 
 	if (flip_screen)
 	{
@@ -168,4 +166,10 @@ VIDEO_UPDATE( crbaloon )
 			0,0,
 			bx,by,
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
+}
+
+VIDEO_UPDATE( crbaloon )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	crbaloon_draw_sprites(bitmap);
 }

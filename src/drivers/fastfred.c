@@ -125,11 +125,46 @@ static MEMORY_WRITE_START( jumpcoas_writemem )
 	{ 0xf801, 0xf801, AY8910_write_port_0_w },
 MEMORY_END
 
+static MEMORY_READ_START( imago_readmem )
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x2000, 0x6fff, MRA_ROM },
+	{ 0xb000, 0xb3ff, MRA_RAM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd800, 0xd8ff, MRA_RAM },
+	{ 0xe000, 0xe000, input_port_0_r },
+	{ 0xe800, 0xe800, input_port_1_r },
+	{ 0xf000, 0xf000, input_port_2_r },
+	{ 0xf800, 0xf800, MRA_NOP },
+MEMORY_END
+
+static MEMORY_WRITE_START( imago_writemem )
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x2000, 0x6fff, MWA_ROM },
+	{ 0xb000, 0xb3ff, MWA_RAM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xc800, 0xcbff, imago_fg_videoram_w, &imago_fg_videoram },
+	{ 0xd000, 0xd3ff, fastfred_videoram_w, &fastfred_videoram },
+	{ 0xd800, 0xd83f, fastfred_attributes_w, &fastfred_attributesram },
+	{ 0xd840, 0xd85f, MWA_RAM, &fastfred_spriteram, &fastfred_spriteram_size },
+	{ 0xd860, 0xd8ff, MWA_RAM }, // Unused, but initialized
+	{ 0xf000, 0xf000, MWA_NOP }, // writes 1 when level starts, 0 when game over
+	{ 0xf001, 0xf001, interrupt_enable_w },
+	{ 0xf002, 0xf002, fastfred_colorbank1_w },
+	{ 0xf003, 0xf003, fastfred_colorbank2_w },
+	{ 0xf004, 0xf004, MWA_NOP }, // initialized with 0 then when written always 1
+	{ 0xf005, 0xf005, imago_charbank_w },
+	{ 0xf006, 0xf006, MWA_NOP }, // always 0
+	{ 0xf007, 0xf007, MWA_NOP }, // always 0
+	{ 0xf800, 0xf800, soundlatch_w },
+MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
+	{ 0x7000, 0x7000, MRA_NOP }, // only for Imago, read but not used
 MEMORY_END
 
 
@@ -400,6 +435,52 @@ INPUT_PORTS_START( redrobin )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )		/* monsters */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( imago )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )	
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
@@ -439,6 +520,13 @@ static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo imago_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,	 0, 32 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 32 },
+	{ REGION_GFX3, 0, &charlayout,	 0, 32 },
+	{ -1 } /* end of array */
+};
 
 #define CLOCK 18432000  /* The crystal is 18.432MHz */
 
@@ -510,6 +598,20 @@ static MACHINE_DRIVER_START( jumpcoas )
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("ay8910", AY8910, jumpcoas_ay8910_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( imago )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(fastfred)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(imago_readmem,imago_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(imago_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(imago)
+	MDRV_VIDEO_UPDATE(imago)
 MACHINE_DRIVER_END
 
 #undef CLOCK
@@ -693,6 +795,42 @@ ROM_START( redrobin )
 	ROM_LOAD( "blue.7h",      0x0200, 0x0100, CRC(85c05c18) SHA1(a609a45c593fc6c491624076f7d65da55b5e603f) )
 ROM_END
 
+ROM_START( imago )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "11",    0x0000, 0x1000, CRC(3cce69b4) SHA1(e7d52e388e09e86abb597493f5807ee088cf7a40) ) 
+	ROM_CONTINUE(	   0x2000, 0x1000 )
+	ROM_LOAD( "12",    0x3000, 0x2000, CRC(8dff98c0) SHA1(e7311d9ca4544f1263e894e6d93ca52c87fc83bf) ) 
+	ROM_LOAD( "13",    0x5000, 0x2000, CRC(f0f14b4d) SHA1(92b82080575a9c95df926c404c19875ac66c2b00) ) 
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "8",	   0x0000, 0x1000, CRC(4f77c2c9) SHA1(1e046786fbad7fb8c7c462b7bd5d80152c6b8779) ) 
+	
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "2",     0x0000, 0x1000, CRC(71354480) SHA1(f5f5e1cc336cae1778b7f6c744eb1bdc4226f138) ) 
+	ROM_LOAD( "3",     0x1000, 0x1000, CRC(7aba3d98) SHA1(5d058f39bf1339d523fe015b67083d44ff6a81d4) ) 
+	ROM_FILL(	       0x2000, 0x1000, 0 )
+	
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "4",     0x0000, 0x1000, CRC(ed987b3e) SHA1(2f88a0463b4323adb27467fb3d022144a4943793) ) 
+	ROM_LOAD( "5",     0x1000, 0x1000, CRC(77ee68ce) SHA1(a47af1bec81977d0f47463bd88e9f526fd2d6611) ) 
+	ROM_LOAD( "7",     0x2000, 0x1000, CRC(48b35190) SHA1(3a000264aad03f55fe67eed7c868acf87e804c0f) ) 
+	ROM_LOAD( "6",     0x3000, 0x1000, CRC(136990fc) SHA1(f3ecba92db25fbeb7df83c26667b7447c2d03b58) ) 
+	ROM_LOAD( "9",     0x4000, 0x1000, CRC(9efb806d) SHA1(504cc27cf071873714ec61835d9da676884fe1c8) ) 	
+	ROM_LOAD( "10",    0x5000, 0x1000, CRC(801a18d3) SHA1(f798978a47124f50be25ab4e5c6a4974d9003634) ) 
+
+	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE ) 
+	ROM_LOAD( "14",    0x0000, 0x1000, CRC(eded37f6) SHA1(c2ff5d4c1b001740ec4453467f879035db196a9b) ) 
+	ROM_FILL(		   0x1000, 0x2000, 0 )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "red",   0x0000, 0x0100, NO_DUMP )
+	ROM_LOAD( "green", 0x0100, 0x0100, NO_DUMP )
+	ROM_LOAD( "blue",  0x0200, 0x0100, NO_DUMP )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	
+	ROM_LOAD( "1",      0x0000, 0x1000, CRC(b0a1fb54) SHA1(fbc746748947a7aa35a428dc862ff4ad53516d38) ) //contains the same 2 bytes
+	ROM_LOAD( "15",     0x1000, 0x1000, CRC(85fcc195) SHA1(a76f24201c037d1e6f909fb0ea4ad59b1d6ddd57) ) //unknown
+ROM_END
 
 extern int fastfred_hardware_type;
 
@@ -722,6 +860,10 @@ static DRIVER_INIT( boggy84 )
 	fastfred_hardware_type = 2;
 }
 
+static DRIVER_INIT( imago )
+{
+	fastfred_hardware_type = 3;
+}
 
 GAMEX(1982, flyboy,   0,      fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy", GAME_NOT_WORKING )	/* protection */
 GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy (bootleg)" )
@@ -729,3 +871,4 @@ GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fas
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
 GAME( 1983, boggy84,  0,      jumpcoas, boggy84,  boggy84,  ROT90, "bootleg", "Boggy '84" )
 GAME( 1986, redrobin, 0,      fastfred, redrobin, flyboy,   ROT90, "Elettronolo", "Red Robin" )
+GAMEX(1983, imago,	  0,	  imago,	imago,	  imago,	ROT90, "Acom", "Imago", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS )

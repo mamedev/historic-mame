@@ -2751,6 +2751,62 @@ ROM_START( landmakr )
 	ROM_LOAD16_BYTE("e61-05.39", 0xc00000, 0x200000, CRC(83920d9d) SHA1(019e39ae85d1129f6d3b8460c4b1bd925f868ee2) )
 ROM_END
 
+ROM_START( landmkrp )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("mpro-3.60", 0x000000, 0x80000, CRC(f92eccd0) SHA1(88e836390be1ca08c578080662d17007a9e0bcc3) )
+	ROM_LOAD32_BYTE("mpro-2.61", 0x000001, 0x80000, CRC(5a26c9e0) SHA1(e7f09722f6b7a459248c2c8ad0a2695365cc78dc) )
+	ROM_LOAD32_BYTE("mpro-1.62", 0x000002, 0x80000, CRC(710776a8) SHA1(669aa086e7a5faedd90407e558c01bf5f0869790) )
+	ROM_LOAD32_BYTE("mpro-0.63", 0x000003, 0x80000, CRC(bc71dd2f) SHA1(ec0d07f9729a53737975547066bd1221f78563c5) )
+
+	ROM_REGION(0x800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("obj0-0.8", 0x000000, 0x080000, CRC(4b862c1b) SHA1(ef46af27d0657b95f5f3bad13629f9119958fe78) )
+	ROM_LOAD16_BYTE("obj1-0.7", 0x100000, 0x080000, CRC(90502355) SHA1(e1edc0cec8ca53fda4d42f9b9fdd385379d7a958) )
+	ROM_LOAD16_BYTE("obj2-0.6", 0x200000, 0x080000, CRC(3bffe4b2) SHA1(6e9bb8716f312cb8c81ecebfc61f9dfc8c9013dc) )
+	ROM_LOAD16_BYTE("obj3-0.5", 0x300000, 0x080000, CRC(3a0e1479) SHA1(50430c304c437caadebf04499f49ca6323ebdaba) )
+	ROM_LOAD16_BYTE("obj0-1.20",0x000001, 0x080000, CRC(1dc6e1ae) SHA1(1e8fa89b1a8846de1516ca9d2ef9227b4af07e38) )
+	ROM_LOAD16_BYTE("obj1-1.19",0x100001, 0x080000, CRC(a24edb24) SHA1(81fe77eccdd2a7ea02454e57e52b21ad57eb817e) )
+	ROM_LOAD16_BYTE("obj2-1.18",0x200001, 0x080000, CRC(1b2a87f3) SHA1(b7dc871196b92bb4f6ea31bff0717cb3a508bc05) )
+	ROM_LOAD16_BYTE("obj3-1.17",0x300001, 0x080000, CRC(c7e91180) SHA1(c8bfa43ab3b9a6c4ba08e1a7389880e964bb1d80) )
+	ROM_LOAD       ("obj0-2.32",0x600000, 0x080000, CRC(94cc01d0) SHA1(f4cf4cb237a3f2bd9df35424f85a84b70b47d402) )
+	ROM_LOAD       ("obj1-2.31",0x680000, 0x080000, CRC(c2757722) SHA1(83a921647eb0375e10c7f76c08ebe66f2a6fdcd9) )
+	ROM_LOAD       ("obj2-2.30",0x700000, 0x080000, CRC(934556ff) SHA1(aca8585680e66635b8872259cfd38edc96e92066) )
+	ROM_LOAD       ("obj3-2.29",0x780000, 0x080000, CRC(97f0f777) SHA1(787a33b91cb262cc3983a46ba259dd9b153d532a) )
+	ROM_FILL       (            0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD32_BYTE("scr0-0.7", 0x000000, 0x080000, CRC(da6ba562) SHA1(6aefd249d3491380837e04583a0069ed9c495d05) )
+	ROM_LOAD32_BYTE("scr0-1.6", 0x000002, 0x080000, CRC(8c201d27) SHA1(83147c35d03c7b5c84220a6442e99b87ba99cfbc) )
+	ROM_LOAD32_BYTE("scr0-2.5", 0x000001, 0x080000, CRC(36756b9c) SHA1(3d293b11d03fb4cdc5c041fcdade9941bf6a72d0) )
+	ROM_LOAD32_BYTE("scr0-3.4", 0x000003, 0x080000, CRC(4e0274f3) SHA1(d65378db78a310c664ef49a216f18e16c932f58d) )
+	ROM_LOAD32_BYTE("scr1-0.19",0x200000, 0x080000, CRC(2689f716) SHA1(6849e7d36aca5a678b74e1cce9e6a2381928c127) )
+	ROM_LOAD32_BYTE("scr1-1.18",0x200002, 0x080000, CRC(f3086949) SHA1(c21f5384294a9fcfb422dbb85565305520a334b5) )
+	ROM_LOAD32_BYTE("scr1-2.17",0x200001, 0x080000, CRC(7841468a) SHA1(58b60cbb4ec7e2d0d64fc42161b53b9ff5e2ca8c) )
+	ROM_LOAD32_BYTE("scr1-3.16",0x200003, 0x080000, CRC(926ad229) SHA1(4840227c184bde8d125122a90a70102bf2757ccc) )
+	ROM_LOAD16_BYTE("scr0-4.3", 0x600000, 0x080000, CRC(5b3cf564) SHA1(003f1e4c653897016c95dee67161fa3964d4f5a8) )
+	ROM_LOAD16_BYTE("scr0-5.2", 0x600001, 0x080000, CRC(8e1ea0fe) SHA1(aa815d1d67bf72be6a0c4076490dfd36f28a82ab) )
+	ROM_LOAD16_BYTE("scr1-4.15",0x700000, 0x080000, CRC(783b6d10) SHA1(eab2c7b19890c1f6c13f0062978db5b81988499b) )
+	ROM_LOAD16_BYTE("scr1-5.14",0x700001, 0x080000, CRC(24aba128) SHA1(b03804c738d86bfafc1f8fb91f8e77e878d2dc83) )
+	ROM_FILL       (            0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("spro-1.66", 0x100000, 0x40000, CRC(18961bbb) SHA1(df054def35a49c0754356c15ec15336cbf28b063) )
+	ROM_LOAD16_BYTE("spro-0.65", 0x100001, 0x40000, CRC(2c64557a) SHA1(768007162d5d2cbe650c735bc1af2c10ed13b046) )
+
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("snd-0.43", 0x000000, 0x80000, CRC(0e5ef5c8) SHA1(e2840c9cedb9361b7eb307e87ea96f3bb6225487) )
+	ROM_LOAD16_BYTE("snd-1.44", 0x100000, 0x80000, CRC(2998fd65) SHA1(192e32f9934465bb0da5c1ad116c5ea9b286f36a) )
+	ROM_LOAD16_BYTE("snd-2.45", 0x200000, 0x80000, CRC(da7477ad) SHA1(52c69e86e8f8004d616265f3c1f508e7fac19fdc) )
+	ROM_LOAD16_BYTE("snd-3.46", 0x300000, 0x80000, CRC(141670b9) SHA1(d1d75bc9c27481de68b446e397c448b0163a7916) )
+	ROM_LOAD16_BYTE("snd-8.20", 0x800000, 0x80000, CRC(d98c275e) SHA1(862f5759d2e41243b8a6a3f27ab2da2a1456d92c) )
+	ROM_LOAD16_BYTE("snd-9.21", 0x900000, 0x80000, CRC(82a76cfc) SHA1(a9bdc9b05cfb658165165c3292a698ed0e977ede) )
+	ROM_LOAD16_BYTE("snd-10.22",0xa00000, 0x80000, CRC(0345f585) SHA1(de8a9816eba7d4db73a53103479ee9d56889e127) )
+	ROM_LOAD16_BYTE("snd-11.23",0xb00000, 0x80000, CRC(4caf571a) SHA1(c209f78362442f8a952c180e3d01a5e8e9d5c71c) )
+	ROM_LOAD16_BYTE("snd-4.32", 0x800000, 0x80000, CRC(e9dc18f6) SHA1(c84920246a9967b155e137893c080bce6850db85) )
+	ROM_LOAD16_BYTE("snd-5.33", 0x800000, 0x80000, CRC(8af91ca8) SHA1(853d2a036602338539cf25e68eac1e686c0861d5) )
+	ROM_LOAD16_BYTE("snd-6.34", 0x800000, 0x80000, CRC(6f520b82) SHA1(c559c80386de08256b2f8cbf198271223a83fdb9) )
+	ROM_LOAD16_BYTE("snd-7.35", 0x800000, 0x80000, CRC(69410f0f) SHA1(ff023842383ce26818ec7361831e122737a9e94b) )
+ROM_END
+
 /******************************************************************************/
 
 static void tile_decode(int uses_5bpp_tiles)
@@ -2766,7 +2822,7 @@ static void tile_decode(int uses_5bpp_tiles)
 		Some games will only use 4 or 5 bpp sprites, and some only use 4 bpp tiles,
 		I don't believe this is software or prom controlled but simply the unused data lines
 		are tied low on the game board if unused.  This is backed up by the fact the palette
-		indexes are always related to 4 bpp data, even in 6 bpp games.
+		indices are always related to 4 bpp data, even in 6 bpp games.
 
 	*/
 	if (uses_5bpp_tiles)
@@ -3026,6 +3082,22 @@ static DRIVER_INIT( landmakr )
 	tile_decode(0);
 }
 
+static DRIVER_INIT( landmkrp )
+{
+	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
+
+	/* For some reason the least significant byte in the last 2 long words of
+	ROM is swapped.  As the roms have been verified ok, I assume this is some
+	kind of basic security on the prototype development board to prevent 'release'
+	roms running on it.  Easiest thing to do is switch the data around here */
+	RAM[0x1ffff8/4]=0xffffffff; /* From 0xffffff03 */
+	RAM[0x1ffffc/4]=0xffff0003; /* From 0xffff00ff */
+
+	install_mem_read32_handler(0, 0x400824, 0x400827, irq_speedup_r_landmakr );
+	f3_game=LANDMAKR;
+	tile_decode(0);
+}
+
 static DRIVER_INIT( pbobble3 )
 {
 	install_mem_read32_handler(0, 0x405af4, 0x405af7, irq_speedup_r_pbobble3 );
@@ -3181,3 +3253,4 @@ GAME( 1997, popnpop,  0,        f3,      f3, popnpop,  ROT0,   "Taito Corporatio
 GAME( 1997, popnpopj, popnpop,  f3,      f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Japan)" )
 GAME( 1997, popnpopu, popnpop,  f3,      f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (US)" )
 GAME( 1998, landmakr, 0,        f3,      f3, landmakr, ROT0,   "Taito Corporation",         "Land Maker (Japan)" )
+GAME( 1998, landmkrp, landmakr, f3,      f3, landmkrp, ROT0,   "Taito Corporation",         "Land Maker (World Prototype)" )

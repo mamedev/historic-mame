@@ -1,6 +1,7 @@
 /*---
 
-Pirates (c)1994 NIX  (DEC 14 1994 17:32:29 is displayed in the Test Mode)
+Pirates      (c)1994 NIX  (DEC 14 1994 17:32:29) displayed in cabinet test mode
+Genix Family (c)1994 NIX  (MAY 10 1994 14:21:20) displayed in cabinet test mode
 driver by David Haywood and Nicola Salmoria
 
 TODO:
@@ -10,6 +11,8 @@ TODO:
   See pirates_in1_r() for code which would work around the protection,
   but makes the game periodically hang for a couple of seconds; therefore,
   for now I'm just patching out the protection check.
+
+- Protection is the same in Genix Family
 
 -----
 
@@ -28,15 +31,12 @@ CPU Roms at least are the same on the Prototype board (the rest of the roms prob
 
 -----
 
-Tilemaps look a bit strange, looks like its 3 32x40 tilemaps in a 0x4000 region? not sure,
-might be more obvious once I have some valid tiles to play with.
-
 Program Roms are Scrambled (Data + Address Lines)
 P Graphic Roms (Tilemap Tiles) are Scrambled (Data + Address Lines)
 S Graphic Roms (Sprite Tiles) are Scrambled (Data + Address Lines)
 OKI Samples Rom is Scrambled (Data + Address Lines)
 
-68k interrupts
+68k interrupts (pirates)
 lev 1 : 0x64 : 0000 bf84 - vbl?
 lev 2 : 0x68 : 0000 4bc6 -
 lev 3 : 0x6c : 0000 3bda -
@@ -45,15 +45,45 @@ lev 5 : 0x74 : 0000 3c06 -
 lev 6 : 0x78 : 0000 3c1c -
 lev 7 : 0x7c : 0000 3c32 -
 
-Game Crashes at Game Over or after a while of the attract mode, it simply hangs.
 Inputs mapped by Stephh
 
 The game hanging is an interesting issue, the board owner has 2 copies of this game, one a prototype,
 on the final released version.  The roms on both boards are the same, however the prototype locks up
-just as it does in Mame at the moment.  The final board does not.  Going on things that have been
-said its possible a hardware workaround for a game bug was introduced on the final version of the
-board.  (of course it could just be something completely different like protection)
+just as it does in Mame at the moment.  The final board does not.  It would appear the prototype
+board does not have the protection hardware correctly in place
 
+
+PCB Layout (Genix Family) (by Guru)
+----------
+
+|------------------------------------------------|
+|     0.31       6116  6116             3.72     |
+|         M6295  6116  6116             4.71     |
+|                                       5.70     |
+|         6264         6116             6.69     |
+|         6264         6116                      |
+|                                                |
+|                                                |
+| 93C46       Altera  24MHz   Altera             |
+|             EPM7064         EPM7064            |
+|                                                |
+|                                                |
+|             Altera          Altera  7.34  9.35 |
+|             EPM7064         EPM7064 8.48 10.49 |
+|                                                |
+|        PAL                                     |
+|                                                |
+|        68000  1.15  62256  6264                |
+| 32MHz         2.16  62256  6264                |
+|               *                                |
+|------------------------------------------------|
+
+Notes:
+      68000 clock: 16.000MHz
+      M6295 clock: 1.33333MHz, Sample Rate: /165
+      VSync: 60Hz
+      HSync: 15.69kHz
+      *    : unknown IC (18 pin DIP, surface scratched off)
 
 ---*/
 
@@ -62,6 +92,7 @@ board.  (of course it could just be something completely different like protecti
 
 extern data16_t *pirates_tx_tileram, *pirates_spriteram;
 extern data16_t *pirates_fg_tileram,  *pirates_bg_tileram;
+extern data16_t *pirates_scroll;
 
 VIDEO_START(pirates);
 WRITE16_HANDLER( pirates_tx_tileram_w );
@@ -118,8 +149,10 @@ static READ16_HANDLER( pirates_in1_r )
 //	logerror("%06x: IN1_r\n",activecpu_get_pc());
 
 #if 0
-	/* protection workaround. It more complicated than this... see code at
+	/* Pirates protection workaround. It more complicated than this... see code at
 	   602e and 62a6 */
+	/* For Genix, see 6576 for setting values and 67c2,d3b4 and dbc2 for tests. */
+
 	if (activecpu_get_pc() == 0x6134)
 	{
 		bit = prot & 1;
@@ -160,14 +193,14 @@ static MEMORY_WRITE16_START( pirates_writemem )
 	{ 0x500000, 0x5007ff, MWA16_RAM, &pirates_spriteram },
 //	{ 0x500800, 0x50080f, MWA16_RAM },
 	{ 0x600000, 0x600001, pirates_out_w },
-	{ 0x700000, 0x700001, MWA16_NOP },	// ??
+	{ 0x700000, 0x700001, MWA16_RAM, &pirates_scroll },	// scroll reg
 	{ 0x800000, 0x803fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x900000, 0x90017f, MWA16_RAM },  // more of tilemaps ?
 	{ 0x900180, 0x90137f, pirates_tx_tileram_w, &pirates_tx_tileram },
-	{ 0x901380, 0x90257f, pirates_fg_tileram_w, &pirates_fg_tileram },
-	{ 0x902580, 0x902a7f, MWA16_RAM },  // more of tilemaps ?
-	{ 0x902a80, 0x903c7f, pirates_bg_tileram_w, &pirates_bg_tileram },
-	{ 0x903c80, 0x904187, MWA16_RAM },  // more of tilemaps ?
+	{ 0x901380, 0x902a7f, pirates_fg_tileram_w, &pirates_fg_tileram },
+//	{ 0x902580, 0x902a7f, MWA16_RAM },  // more of tilemaps ?
+	{ 0x902a80, 0x904187, pirates_bg_tileram_w, &pirates_bg_tileram },
+//	{ 0x903c80, 0x904187, MWA16_RAM },  // more of tilemaps ?
 	{ 0xa00000, 0xa00001, OKIM6295_data_0_lsb_w },
 MEMORY_END
 
@@ -200,18 +233,18 @@ INPUT_PORTS_START( pirates )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT(  0x0010, IP_ACTIVE_HIGH,IPT_SPECIAL )		// EEPROM data
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )		// seems checked in "test mode"
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )		// seems checked in "test mode"
-	PORT_BIT(  0x0080, IP_ACTIVE_HIGH,IPT_SPECIAL )		// protection? (see pirates_in1_r)
+	PORT_BIT(  0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )		// seems checked in "test mode"
+	PORT_BIT(  0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )		// seems checked in "test mode"
+	PORT_BIT(  0x0080, IP_ACTIVE_HIGH,IPT_SPECIAL )		// protection (see pirates_in1_r)
 	/* What do these bits do ? */
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0100, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -255,7 +288,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency? */
+	{ 1333333/165 },     /* measured frequency */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
@@ -263,7 +296,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 static MACHINE_DRIVER_START( pirates )
-	MDRV_CPU_ADD(M68000, 16000000) /* either 16mhz or 12mhz */
+	MDRV_CPU_ADD(M68000, 16000000) /* 16mhz */
 	MDRV_CPU_MEMORY(pirates_readmem,pirates_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
@@ -311,6 +344,26 @@ ROM_START( pirates )
 	ROM_LOAD( "s89_49d4.bin", 0x000000, 0x080000, CRC(63a739ec) SHA1(c57f657225e62b3c9c5f0c7185ad7a87794d55f4) )
 ROM_END
 
+ROM_START( genix )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code (encrypted) */
+	ROM_LOAD16_BYTE( "1.15",  0x00000, 0x80000, CRC(d26abfb0) SHA1(4a89ba7504f86cb612796c376f359ab61ec3d902) )
+	ROM_LOAD16_BYTE( "2.16",  0x00001, 0x80000, CRC(a14a25b4) SHA1(9fa64c6514bdee56b5654b001f8367283b461e8a) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "7.34", 0x000000, 0x040000, CRC(58da8aac) SHA1(bfc8449ba842f8ceac62ebdf6005d8f19d96afa6) )
+	ROM_LOAD( "9.35", 0x080000, 0x040000, CRC(96bad9a8) SHA1(4e757cca0ab157f0c935087c9702c88741bf7a79) )
+	ROM_LOAD( "8.48", 0x100000, 0x040000, CRC(0ddc58b6) SHA1(d52437607695ddebfe8494fd214efd20ba72d549) )
+	ROM_LOAD( "10.49",0x180000, 0x040000, CRC(2be308c5) SHA1(22fc0991557643c22f6763f186b74900a33a39e0) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "6.69", 0x000000, 0x040000, CRC(b8422af7) SHA1(d3290fc6ea2670c445731e2b493205874dc4b319) )
+	ROM_LOAD( "5.70", 0x080000, 0x040000, CRC(e46125c5) SHA1(73d9a51f30a9c1a8397145d2a4397696ef37f4e5) )
+	ROM_LOAD( "4.71", 0x100000, 0x040000, CRC(7a8ed21b) SHA1(f380156c44de2fc316f390adee09b6a3cd404dec) )
+	ROM_LOAD( "3.72", 0x180000, 0x040000, CRC(f78bd6ca) SHA1(c70857b8053f9a6e3e15bbc9f7d13354b0966b30) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0) /* OKI samples (encrypted) */
+	ROM_LOAD( "0.31", 0x000000, 0x080000, CRC(80d087bc) SHA1(04d1aacc273c7ffa57b48bd043d55b5b3d993f74) )
+ROM_END
 
 /* Init */
 
@@ -435,7 +488,22 @@ static DRIVER_INIT( pirates )
 	rom[0x62c0/2] = 0x6006; // beq -> bra
 }
 
+static READ16_HANDLER( genix_prot_r ) {	if(!offset)	return 0x0004; else	return 0x0000; }
+
+static DRIVER_INIT( genix )
+{
+	pirates_decrypt_68k();
+	pirates_decrypt_p();
+	pirates_decrypt_s();
+	pirates_decrypt_oki();
+
+	/* If this value is increased then something has gone wrong and the protection failed */
+	/* Write-protect it for now */
+	install_mem_read16_handler (0, 0x109e98, 0x109e9b, genix_prot_r );
+}
+
 
 /* GAME */
 
-GAME(1994, pirates, 0, pirates, pirates, pirates, 0, "NIX", "Pirates" )
+GAME( 1994, pirates, 0, pirates, pirates, pirates, 0, "NIX", "Pirates" )
+GAME( 1994, genix,   0, pirates, pirates, genix,   0, "NIX", "Genix Family" )

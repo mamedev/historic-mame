@@ -166,6 +166,17 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 	void *a1_base_mem = get_jaguar_memory(a1_base);
 	void *a2_base_mem = get_jaguar_memory(a2_base);
 
+	/* don't blit if pointer bad */
+	if (!a1_base_mem || !a2_base_mem)
+	{
+#if LOG_BAD_BLITS
+		logerror("%08X:Blit!\n", activecpu_get_previouspc());
+		logerror("  a1_base  = %08X\n", a1_base);
+		logerror("  a2_base  = %08X\n", a2_base);
+#endif
+		return;
+	}
+
 	/* determine actual xadd/yadd for A1 */
 	a1_yadd <<= 16;
 	if (A1FIXED & 0x00100000)

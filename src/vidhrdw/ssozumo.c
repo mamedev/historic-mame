@@ -122,6 +122,11 @@ WRITE_HANDLER( ssozumo_scroll_w )
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
+WRITE_HANDLER( ssozumo_flipscreen_w )
+{
+	flip_screen_set(data & 0x80);
+}
+
 static void get_bg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index] + ((colorram[tile_index] & 0x08) << 5);
@@ -139,21 +144,15 @@ static void get_fg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
-UINT32 tilemap_scan_cols_flipx( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
-{
-	/* logical (col,row) -> memory offset */
-	return (num_cols - 1 - col) * num_rows + row;
-}
-
 VIDEO_START( ssozumo )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flipx, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_x, 
 		TILEMAP_OPAQUE, 16, 16, 16, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flipx, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x, 
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )

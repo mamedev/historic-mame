@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -68,80 +69,61 @@ PALETTE_INIT( hanaawas )
 	}
 }
 
+WRITE_HANDLER( hanaawas_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( hanaawas_colorram_w )
 {
-	offs_t offs2;
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
 
-
-	colorram[offset] = data;
-
-	/* dirty both current and next offsets */
-	offs2 = (offset + (flip_screen ? -1 : 1)) & 0x03ff;
-
-	dirtybuffer[offset] = 1;
-	dirtybuffer[offs2 ] = 1;
+		/* dirty both current and next offsets */
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, (offset + (flip_screen ? -1 : 1)) & 0x03ff);
+	}
 }
-
 
 WRITE_HANDLER( hanaawas_portB_w )
 {
 	/* bit 7 is flip screen */
-	flip_screen_set(~data & 0x80);
+	if (flip_screen != (~data & 0x80))
+	{
+		flip_screen_set(~data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
-/***************************************************************************
+static void get_bg_tile_info(int tile_index)
+{
+	/* the color is determined by the current color byte, but the bank is via the previous one!!! */
+	int offset = (tile_index + (flip_screen ? 1 : -1)) & 0x3ff;
+	int attr = colorram[offset];
+	int gfxbank = (attr & 0x40) >> 6;
+	int code = videoram[tile_index] + ((attr & 0x20) << 3);
+	int color = colorram[tile_index] & 0x1f;
+	
+	SET_TILE_INFO(gfxbank, code, color, 0)
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+VIDEO_START( hanaawas )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-***************************************************************************/
+	if ( !bg_tilemap )
+		return 1;
+	
+	return 0;
+}
 
 VIDEO_UPDATE( hanaawas )
 {
-	int offs,offs_adj;
-
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer, 1, videoram_size);
-	}
-
-
-
-	offs_adj = flip_screen ? 1 : -1;
-
-	for (offs = videoram_size - 1; offs >= 0; offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,col,code,bank,offs2;
-
-			dirtybuffer[offs] = 0;
-            sx = offs % 32;
-			sy = offs / 32;
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			/* the color is determined by the current color byte, but the bank is via the
-			   previous one!!! */
-			offs2 = (offs + offs_adj) & 0x03ff;
-
-			col  = colorram[offs] & 0x1f;
-			code = videoram[offs] + ((colorram[offs2] & 0x20) << 3);
-			bank = (colorram[offs2] & 0x40) >> 6;
-
-			drawgfx(tmpbitmap,Machine->gfx[bank],
-					code,col,
-					flip_screen,flip_screen,
-					sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-        }
-	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 }

@@ -38,14 +38,17 @@ Notes:
 #include "machine/z80fmly.h"
 
 
-extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
-WRITE_HANDLER( pbaction_videoram2_w );
-WRITE_HANDLER( pbaction_colorram2_w );
-WRITE_HANDLER( pbaction_flipscreen_w );
-WRITE_HANDLER( pbaction_scroll_w );
-VIDEO_START( pbaction );
+extern UINT8 *pbaction_videoram2,*pbaction_colorram2;
 
-VIDEO_UPDATE( pbaction );
+extern WRITE_HANDLER( pbaction_videoram_w );
+extern WRITE_HANDLER( pbaction_colorram_w );
+extern WRITE_HANDLER( pbaction_videoram2_w );
+extern WRITE_HANDLER( pbaction_colorram2_w );
+extern WRITE_HANDLER( pbaction_flipscreen_w );
+extern WRITE_HANDLER( pbaction_scroll_w );
+
+extern VIDEO_START( pbaction );
+extern VIDEO_UPDATE( pbaction );
 
 
 static WRITE_HANDLER( pbaction_sh_command_w )
@@ -72,10 +75,10 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, pbaction_videoram2_w, &pbaction_videoram2 },
-	{ 0xdc00, 0xdfff, pbaction_colorram2_w, &pbaction_colorram2 },
+	{ 0xd000, 0xd3ff, pbaction_videoram2_w, &pbaction_videoram2 },
+	{ 0xd400, 0xd7ff, pbaction_colorram2_w, &pbaction_colorram2 },
+	{ 0xd800, 0xdbff, pbaction_videoram_w, &videoram },
+	{ 0xdc00, 0xdfff, pbaction_colorram_w, &colorram },
 	{ 0xe000, 0xe07f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },

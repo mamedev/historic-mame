@@ -31,15 +31,19 @@ D000      Paddle Position and Interrupt Reset
 #include "artwork.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( circus_clown_x_w );
-WRITE_HANDLER( circus_clown_y_w );
-WRITE_HANDLER( circus_clown_z_w );
+extern WRITE_HANDLER( circus_clown_x_w );
+extern WRITE_HANDLER( circus_clown_y_w );
+extern WRITE_HANDLER( circus_clown_z_w );
 
+extern WRITE_HANDLER( circus_videoram_w );
+
+extern VIDEO_START( circus );
 extern VIDEO_UPDATE( crash );
 extern VIDEO_UPDATE( circus );
-extern VIDEO_UPDATE( robotbowl );
+extern VIDEO_UPDATE( robotbwl );
 extern VIDEO_UPDATE( ripcord ); //AT
 extern VIDEO_EOF( ripcord ); //AT
+
 extern INTERRUPT_GEN( crash_interrupt );
 extern struct Samplesinterface circus_samples_interface;
 #if 0
@@ -62,14 +66,6 @@ OVERLAY_END
 
 
 
-static PALETTE_INIT( circus )
-{
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
-}
-
-
-
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x1000, 0x1fff, MRA_ROM },
@@ -87,7 +83,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2000, circus_clown_x_w },
 	{ 0x3000, 0x3000, circus_clown_y_w },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x43ff, circus_videoram_w, &videoram },
 	{ 0x8000, 0x8000, circus_clown_z_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -111,7 +107,7 @@ INPUT_PORTS_START( circus )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x10, 0x00, "Top Score" )
+	PORT_DIPNAME( 0x10, 0x00, "High Score" )
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_DIPSETTING(    0x00, "No Award" )
 	PORT_DIPNAME( 0x20, 0x00, "Bonus" )
@@ -151,8 +147,8 @@ INPUT_PORTS_START( robotbwl )
 	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, "1 Coin - 2 Players game" )
-//  PORT_DIPSETTING(    0x18, "1 Coin - 2 Players game" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+//  PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x60, 0x00, "Bowl Timer" )
 	PORT_DIPSETTING(    0x00, "3 seconds" )
 	PORT_DIPSETTING(    0x20, "5 seconds" )
@@ -180,10 +176,11 @@ INPUT_PORTS_START( crash )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
 	PORT_DIPNAME( 0x0C, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x10, 0x00, "Top Score" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, "High Score" )
 	PORT_DIPSETTING(    0x00, "No Award" )
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -209,13 +206,12 @@ INPUT_PORTS_START( ripcord )
 	PORT_DIPSETTING(    0x02, "7" )
 	PORT_DIPSETTING(    0x03, "9" )
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x04, "1 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x08, "1 Player - 2 Coin" )
-	//PORT_DIPSETTING(    0x0c, "1 Player - ? Coin" )
-	//PORT_DIPNAME( 0x10, 0x10, "Top Score" )
-	PORT_DIPNAME( 0x10, 0x00, "Top Score" ) //AT
-	PORT_DIPSETTING(    0x10, "Credit Awarded" )
+//	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, "High Score" )
+	PORT_DIPSETTING(    0x10, "Award Credit" )
 	PORT_DIPSETTING(    0x00, "No Award" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
@@ -267,7 +263,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
+static struct GfxDecodeInfo robotbwl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 1 },
 	{ REGION_GFX2, 0, &robotlayout, 0, 1 },
@@ -309,8 +305,8 @@ static MACHINE_DRIVER_START( circus )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
-	MDRV_PALETTE_INIT(circus)
-	MDRV_VIDEO_START(generic)
+	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_VIDEO_START(circus)
 	MDRV_VIDEO_UPDATE(circus)
 
 	/* sound hardware */
@@ -333,12 +329,12 @@ static MACHINE_DRIVER_START( robotbwl )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
-	MDRV_GFXDECODE(robotbowl_gfxdecodeinfo)
+	MDRV_GFXDECODE(robotbwl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
-	MDRV_PALETTE_INIT(circus)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(robotbowl)
+	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_VIDEO_START(circus)
+	MDRV_VIDEO_UPDATE(robotbwl)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
@@ -361,8 +357,8 @@ static MACHINE_DRIVER_START( crash )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
-	MDRV_PALETTE_INIT(circus)
-	MDRV_VIDEO_START(generic)
+	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_VIDEO_START(circus)
 	MDRV_VIDEO_UPDATE(crash)
 
 	/* sound hardware */
@@ -386,11 +382,9 @@ static MACHINE_DRIVER_START( ripcord )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
-	MDRV_PALETTE_INIT(circus)
-	MDRV_VIDEO_START(generic)
-	//MDRV_VIDEO_UPDATE(crash)
-	MDRV_VIDEO_UPDATE(ripcord) //AT
-	MDRV_VIDEO_EOF(ripcord) //AT
+	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_VIDEO_START(circus)
+	MDRV_VIDEO_UPDATE(ripcord)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
@@ -495,4 +489,4 @@ static DRIVER_INIT( circus )
 GAME( 1977, circus,   0, circus,   circus,   circus, ROT0, "Exidy", "Circus" )
 GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, 0,      ROT0, "Exidy", "Robot Bowl", GAME_NO_SOUND )
 GAMEX( 1979, crash,    0, crash,    crash,    0,      ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0,      ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, ripcord,  0, ripcord,  ripcord,  0,      ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

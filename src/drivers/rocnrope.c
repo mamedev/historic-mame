@@ -10,17 +10,21 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "sndhrdw/timeplt.h"
 
 
-void konami1_decode(void);
+extern void konami1_decode(void);
 
-WRITE_HANDLER( rocnrope_flipscreen_w );
-PALETTE_INIT( rocnrope );
-VIDEO_UPDATE( rocnrope );
+extern WRITE_HANDLER( rocnrope_videoram_w );
+extern WRITE_HANDLER( rocnrope_colorram_w );
+extern WRITE_HANDLER( rocnrope_flipscreen_w );
+
+extern PALETTE_INIT( rocnrope );
+extern VIDEO_START( rocnrope );
+extern VIDEO_UPDATE( rocnrope );
 
 
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 WRITE_HANDLER( rocnrope_interrupt_vector_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 
 	RAM[0xFFF2+offset] = data;
@@ -42,8 +46,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x402f, MWA_RAM, &spriteram_2 },
 	{ 0x4400, 0x442f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, colorram_w, &colorram },
-	{ 0x4c00, 0x4fff, videoram_w, &videoram, &videoram_size },
+	{ 0x4800, 0x4bff, rocnrope_colorram_w, &colorram },
+	{ 0x4c00, 0x4fff, rocnrope_videoram_w, &videoram },
 	{ 0x5000, 0x5fff, MWA_RAM },
 	{ 0x8000, 0x8000, watchdog_reset_w },
 	{ 0x8080, 0x8080, rocnrope_flipscreen_w },
@@ -62,7 +66,7 @@ INPUT_PORTS_START( rocnrope )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -240,7 +244,7 @@ static MACHINE_DRIVER_START( rocnrope )
 	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
 	MDRV_PALETTE_INIT(rocnrope)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(rocnrope)
 	MDRV_VIDEO_UPDATE(rocnrope)
 
 	/* sound hardware */
@@ -316,7 +320,7 @@ static DRIVER_INIT( rocnrope )
 	konami1_decode();
 
 	{
-		unsigned char *rom = memory_region(REGION_CPU1);
+		UINT8 *rom = memory_region(REGION_CPU1);
 		int diff = memory_region_length(REGION_CPU1) / 2;
 
 		rom[0x703d + diff] = 0x98;	/* fix one instruction */

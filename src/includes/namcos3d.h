@@ -1,38 +1,45 @@
 #include "driver.h" /* for mame_bitmap */
 
+#define NAMCOS22_SCREEN_WIDTH  640
+#define NAMCOS22_SCREEN_HEIGHT 480
+
+extern INT32 *namco_zbuffer;
+
 struct VerTex
 {
 	double x,y,z;
-	UINT32 tx,ty;
+	double u,v,i;
 };
+
+typedef struct
+{
+	double x,y,z; /* unit vector for light direction */
+	double ambient; /* 0.0..1.0 */
+	double power;	/* 0.0..1.0 */
+} namcos22_lighting;
 
 struct RotParam
 {
 	double thx_sin, thx_cos;
 	double thy_sin, thy_cos;
 	double thz_sin, thz_cos;
-	int rolt; /* 0..5 */
+	int rolt; /* rotation type: 0,1,2,3,4,5 */
 };
 
-void matrix_NamcoRot( double M[4][4], const struct RotParam *pParam );
-
-void matrix_Multiply( double A[4][4], double B[4][4] );
-void matrix_Identity( double M[4][4] );
-void matrix_Translate( double M[4][4], double x, double y, double z );
-void matrix_RotX( double M[4][4], double thx_sin, double thx_cos );
-void matrix_RotY( double M[4][4], double thy_sin, double thy_cos );
-void matrix_RotZ( double M[4][4], double thz_sin, double thz_cos );
+void namcos3d_Rotate( double M[4][4], const struct RotParam *pParam );
 
 int namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM );
 
 void namcos3d_Start( struct mame_bitmap *pBitmap );
 
-
 void BlitTri(
 	struct mame_bitmap *pBitmap,
 	const struct VerTex v[3],
 	unsigned color,
-	double zoom );
+	double zoom,
+	INT32 bias,
+	INT32 flags,
+	namcos22_lighting *lighting );
 
 void BlitTriFlat(
 	struct mame_bitmap *pBitmap,

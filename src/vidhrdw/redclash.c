@@ -9,12 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-data8_t *redclash_textram;
-
 static int star_speed;
 static int gfxbank;
 
+static struct tilemap *fg_tilemap;
 
 /***************************************************************************
 
@@ -27,7 +25,6 @@ static int gfxbank;
 PALETTE_INIT( redclash )
 {
 	int i;
-
 
 	for (i = 0;i < 32;i++)
 	{
@@ -77,15 +74,27 @@ PALETTE_INIT( redclash )
 	}
 }
 
+WRITE_HANDLER( redclash_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( redclash_gfxbank_w )
 {
-	gfxbank = data & 1;
+	if (gfxbank != (data & 0x01))
+	{
+		gfxbank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
 WRITE_HANDLER( redclash_flipscreen_w )
 {
-	flip_screen_set(data & 1);
+	flip_screen_set(data & 0x01);
 }
 
 /*
@@ -104,20 +113,30 @@ WRITE_HANDLER( redclash_star1_w ) { star_speed = (star_speed & ~2) | ((data & 1)
 WRITE_HANDLER( redclash_star2_w ) { star_speed = (star_speed & ~4) | ((data & 1) << 2); }
 WRITE_HANDLER( redclash_star_reset_w ) { }
 
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( redclash )
+static void get_fg_tile_info(int tile_index)
 {
-	int i,offs;
+	int code = videoram[tile_index];
+	int color = (videoram[tile_index] & 0x70) >> 4; // ??
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+VIDEO_START( redclash )
+{
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void redclash_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int i, offs;
 
 	for (offs = spriteram_size - 0x20;offs >= 0;offs -= 0x20)
 	{
@@ -200,42 +219,33 @@ usrintf_showmessage("unknown sprite size 0");
 			}
 		}
 	}
+}
 
-	/* bullets */
-	for (offs = 0;offs < 0x20;offs++)
+static void redclash_draw_bullets( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	for (offs = 0; offs < 0x20; offs++)
 	{
-		int sx,sy;
+//		sx = videoram[offs];
+		int sx = 8 * offs + (videoram[offs] & 0x07);	/* ?? */
+		int sy = 0xff - videoram[offs + 0x20];
 
-
-//		sx = redclash_textram[offs];
-		sx = 8*offs + (redclash_textram[offs] & 7);	/* ?? */
-		sy = 0xff - redclash_textram[offs + 0x20];
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+		}
 
 		if (sx >= Machine->visible_area.min_x && sx <= Machine->visible_area.max_x &&
 				sy >= Machine->visible_area.min_y && sy <= Machine->visible_area.max_y)
-			plot_pixel(bitmap,sx,sy,Machine->pens[0x0e]);
+			plot_pixel(bitmap, sx, sy, Machine->pens[0x0e]);
 	}
+}
 
-	for (offs = 0;offs < 0x400;offs++)
-	{
-		int sx,sy;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				redclash_textram[offs],
-				(redclash_textram[offs] & 0x70) >> 4,	/* ?? */
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-//usrintf_showmessage("%d%d%d",star2,star1,star0);
+VIDEO_UPDATE( redclash )
+{
+	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
+	redclash_draw_sprites(bitmap);
+	redclash_draw_bullets(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

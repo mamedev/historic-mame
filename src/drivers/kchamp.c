@@ -38,7 +38,7 @@ INPUT  00 = Player 1 Controls - ( ACTIVE LOW )
 INPUT  40 = Player 2 Controls - ( ACTIVE LOW )
 INPUT  80 = Coins and Start Buttons - ( ACTIVE LOW )
 INPUT  C0 = Dip Switches - ( ACTIVE LOW )
-OUTPUT 00 = Screen Flip? (There isnt a cocktail switch?) UNINMPLEMENTED
+OUTPUT 00 = Screen Flip
 OUTPUT 01 = CPU Control
                 bit 0 = external nmi enable
 OUTPUT 02 = Sound Reset
@@ -69,11 +69,12 @@ IO ports and memory map changes. Dip switches differ too.
 /* from vidhrdw */
 extern WRITE_HANDLER( kchamp_videoram_w );
 extern WRITE_HANDLER( kchamp_colorram_w );
+extern WRITE_HANDLER( kchamp_flipscreen_w );
 
 extern PALETTE_INIT( kchamp );
-extern VIDEO_START( kchampvs );
-extern VIDEO_START( kchamp1p );
+extern VIDEO_START( kchamp );
 extern VIDEO_UPDATE( kchamp );
+extern VIDEO_UPDATE( kchampvs );
 
 
 static int nmi_enable = 0;
@@ -144,7 +145,7 @@ static PORT_READ_START( readport )
 PORT_END
 
 static PORT_WRITE_START( writeport )
-	{ 0x00, 0x00, MWA_NOP },
+	{ 0x00, 0x00, kchamp_flipscreen_w },
 	{ 0x01, 0x01, control_w },
 	{ 0x02, 0x02, sound_reset_w },
 	{ 0x40, 0x40, sound_command_w },
@@ -216,7 +217,7 @@ static PORT_READ_START( kc_readport )
 PORT_END
 
 static PORT_WRITE_START( kc_writeport )
-	{ 0x80, 0x80, MWA_NOP },
+	{ 0x80, 0x80, kchamp_flipscreen_w },
 	{ 0x81, 0x81, control_w },
 	{ 0xa8, 0xa8, sound_command_w },
 PORT_END
@@ -474,8 +475,8 @@ static MACHINE_DRIVER_START( kchampvs )
 	MDRV_COLORTABLE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(kchamp)
-	MDRV_VIDEO_START(kchampvs)
-	MDRV_VIDEO_UPDATE(kchamp)
+	MDRV_VIDEO_START(kchamp)
+	MDRV_VIDEO_UPDATE(kchampvs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
@@ -513,7 +514,7 @@ static MACHINE_DRIVER_START( kchamp )
 	MDRV_COLORTABLE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(kchamp)
-	MDRV_VIDEO_START(kchamp1p)
+	MDRV_VIDEO_START(kchamp)
 	MDRV_VIDEO_UPDATE(kchamp)
 
 	/* sound hardware */
@@ -698,7 +699,7 @@ ROM_END
 
 static DRIVER_INIT( kchampvs )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
 
@@ -730,7 +731,7 @@ static DRIVER_INIT( kchampvs )
 
 
 
-GAMEX( 1984, kchamp,   0,      kchamp,   kchamp,   0,        ROT90, "Data East USA", "Karate Champ (US)", GAME_NO_COCKTAIL )
-GAMEX( 1984, karatedo, kchamp, kchamp,   kchamp,   0,        ROT90, "Data East Corporation", "Karate Dou (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)", GAME_NO_COCKTAIL )
-GAMEX( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)", GAME_NO_COCKTAIL )
+GAME( 1984, kchamp,   0,      kchamp,   kchamp,   0,        ROT90, "Data East USA", "Karate Champ (US)" )
+GAME( 1984, karatedo, kchamp, kchamp,   kchamp,   0,        ROT90, "Data East Corporation", "Karate Dou (Japan)" )
+GAME( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)" )
+GAME( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)" )

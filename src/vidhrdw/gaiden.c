@@ -378,9 +378,6 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 
 		if (attributes & 0x04)
 		{
-			if (!blend_support && (attributes & 0x20) && (cpu_getcurrentframe() & 1))
-				goto skip_sprite;
-
 			UINT32 priority = (attributes >> 6) & 3;
 			UINT32 flipx = (attributes & 1);
 			UINT32 flipy = (attributes & 2);
@@ -394,6 +391,9 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 
 			int ypos = source[3] & 0x01ff;
 			int xpos = source[4] & 0x01ff;
+
+			if (!blend_support && (attributes & 0x20) && (cpu_getcurrentframe() & 1))
+				goto skip_sprite;
 
 			color = (color >> 4) & 0x0f;
 

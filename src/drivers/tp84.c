@@ -31,8 +31,8 @@ Write
  3001      OUT2  Coin Counter 2
  3002      OUT1  Coin Counter 1
  3003      MUT
- 3004      HREV
- 3005      VREV
+ 3004      HREV	 Flip Screen X
+ 3005      VREV	 Flip Screen Y
  3006      -
  3007      GMED
  3800      SON   Sound on
@@ -85,21 +85,27 @@ C004      76489 #4 trigger
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *tp84_videoram2;
-extern unsigned char *tp84_colorram2;
-extern unsigned char *tp84_scrollx;
-extern unsigned char *tp84_scrolly;
-WRITE_HANDLER( tp84_videoram2_w );
-WRITE_HANDLER( tp84_colorram2_w );
-WRITE_HANDLER( tp84_col0_w );
-READ_HANDLER( tp84_scanline_r );
-PALETTE_INIT( tp84 );
-VIDEO_START( tp84 );
-VIDEO_UPDATE( tp84 );
-INTERRUPT_GEN( tp84_6809_interrupt );
+extern UINT8 *tp84_videoram2, *tp84_colorram2;
+
+extern WRITE_HANDLER( tp84_videoram_w );
+extern WRITE_HANDLER( tp84_colorram_w );
+extern WRITE_HANDLER( tp84_videoram2_w );
+extern WRITE_HANDLER( tp84_colorram2_w );
+extern WRITE_HANDLER( tp84_scroll_x_w );
+extern WRITE_HANDLER( tp84_scroll_y_w );
+extern WRITE_HANDLER( tp84_flipscreen_x_w );
+extern WRITE_HANDLER( tp84_flipscreen_y_w );
+extern WRITE_HANDLER( tp84_col0_w );
+extern READ_HANDLER( tp84_scanline_r );
+
+extern PALETTE_INIT( tp84 );
+extern VIDEO_START( tp84 );
+extern VIDEO_UPDATE( tp84 );
+
+extern INTERRUPT_GEN( tp84_6809_interrupt );
 
 
-static unsigned char *sharedram;
+static UINT8 *sharedram;
 
 static READ_HANDLER( sharedram_r )
 {
@@ -170,16 +176,18 @@ MEMORY_END
 
 /* CPU 1 write addresses */
 static MEMORY_WRITE_START( writemem )
-	{ 0x2000, 0x2000, MWA_RAM }, /*Watch dog?*/
+	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2800, 0x2800, tp84_col0_w },
 	{ 0x3000, 0x3000, MWA_RAM },
+	{ 0x3004, 0x3004, tp84_flipscreen_x_w },
+	{ 0x3005, 0x3005, tp84_flipscreen_y_w },
 	{ 0x3800, 0x3800, tp84_sh_irqtrigger_w },
 	{ 0x3a00, 0x3a00, soundlatch_w },
-	{ 0x3c00, 0x3c00, MWA_RAM, &tp84_scrollx }, /* Y scroll */
-	{ 0x3e00, 0x3e00, MWA_RAM, &tp84_scrolly }, /* X scroll */
-	{ 0x4000, 0x43ff, videoram_w, &videoram , &videoram_size},
+	{ 0x3c00, 0x3c00, tp84_scroll_x_w },
+	{ 0x3e00, 0x3e00, tp84_scroll_y_w },
+	{ 0x4000, 0x43ff, tp84_videoram_w, &videoram },
 	{ 0x4400, 0x47ff, tp84_videoram2_w, &tp84_videoram2 },
-	{ 0x4800, 0x4bff, colorram_w, &colorram },
+	{ 0x4800, 0x4bff, tp84_colorram_w, &colorram },
 	{ 0x4c00, 0x4fff, tp84_colorram2_w, &tp84_colorram2 },
 	{ 0x5000, 0x57ff, sharedram_w, &sharedram },
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -466,5 +474,5 @@ ROM_END
 
 
 
-GAMEX( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, tp84a, tp84, tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 2)", GAME_NO_COCKTAIL )
+GAME( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)" )
+GAME( 1984, tp84a, tp84, tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 2)" )

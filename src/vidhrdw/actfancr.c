@@ -11,7 +11,7 @@
 
 static UINT8 actfancr_control_1[0x20],actfancr_control_2[0x20];
 unsigned char *actfancr_pf1_data,*actfancr_pf2_data,*actfancr_pf1_rowscroll_data;
-static struct tilemap *pf1_tilemap,*pf1_alt_tilemap;
+static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
 static int flipscreen;
 
 static UINT32 actfancr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -62,6 +62,22 @@ static void get_trio_tile_info(int tile_index)
 			0)
 }
 
+static void get_pf2_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=actfancr_pf2_data[2*tile_index]+(actfancr_pf2_data[2*tile_index+1]<<8);
+	color=tile>>12;
+
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(
+				0,
+				tile,
+				color,
+				0)
+}
+
 /******************************************************************************/
 
 static void register_savestate(void)
@@ -74,9 +90,12 @@ VIDEO_START( actfancr )
 {
 	pf1_tilemap = tilemap_create(get_tile_info,actfancr_scan,TILEMAP_OPAQUE,16,16,256,16);
 	pf1_alt_tilemap = tilemap_create(get_tile_info,actfancr_scan2,TILEMAP_OPAQUE,16,16,128,32);
+	pf2_tilemap = tilemap_create(get_pf2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!pf1_tilemap || !pf1_alt_tilemap)
+	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(pf2_tilemap,0);
 
 	register_savestate();
 
@@ -86,9 +105,12 @@ VIDEO_START( actfancr )
 VIDEO_START( triothep )
 {
 	pf1_tilemap = tilemap_create(get_trio_tile_info,triothep_scan,TILEMAP_OPAQUE,16,16,32,32);
+	pf2_tilemap = tilemap_create(get_pf2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!pf1_tilemap)
+	if (!pf1_tilemap || !pf2_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(pf2_tilemap,0);
 
 	pf1_alt_tilemap=NULL;
 
@@ -124,6 +146,7 @@ READ_HANDLER( actfancr_pf1_data_r )
 WRITE_HANDLER( actfancr_pf2_data_w )
 {
 	actfancr_pf2_data[offset]=data;
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
 }
 
 READ_HANDLER( actfancr_pf2_data_r )
@@ -135,7 +158,7 @@ READ_HANDLER( actfancr_pf2_data_r )
 
 VIDEO_UPDATE( actfancr )
 {
-	int my,mx,offs,color,tile,mult;
+	int offs,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
 	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
@@ -210,24 +233,12 @@ VIDEO_UPDATE( actfancr )
 		}
 	}
 
-	/* Draw character tiles */
-	for (offs = 0x800 - 2;offs >= 0;offs -= 2) {
-		tile=actfancr_pf2_data[offs]+(actfancr_pf2_data[offs+1]<<8);
-		if (!tile) continue;
-		color=tile>>12;
-		tile=tile&0xfff;
-		mx = (offs/2) % 32;
-		my = (offs/2) / 32;
-		if (flipscreen) {mx=31-mx; my=31-my;}
-		drawgfx(bitmap,Machine->gfx[0],
-			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			cliprect,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 }
 
 VIDEO_UPDATE( triothep )
 {
-	int my,mx,offs,color,tile,i,mult;
+	int offs,i,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
 	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
@@ -306,17 +317,5 @@ VIDEO_UPDATE( triothep )
 		}
 	}
 
-	/* Draw character tiles */
-	for (offs = 0x800 - 2;offs >= 0;offs -= 2) {
-		tile=actfancr_pf2_data[offs]+(actfancr_pf2_data[offs+1]<<8);
-		if (!tile) continue;
-		color=tile>>12;
-		tile=tile&0xfff;
-		mx = (offs/2) % 32;
-		my = (offs/2) / 32;
-		if (flipscreen) {mx=31-mx; my=31-my;}
-		drawgfx(bitmap,Machine->gfx[0],
-			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			cliprect,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 }

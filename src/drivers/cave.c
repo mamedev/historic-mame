@@ -834,16 +834,16 @@ static MEMORY_READ16_START( pwrinst2_readmem )
 	{ 0x400000, 0x40ffff, MRA16_RAM					},	// RAM
 	{ 0x500000, 0x500001, input_port_0_word_r		},	// Inputs
 	{ 0x500002, 0x500003, input_port_1_word_r		},	//
-	{ 0x800000, 0x807fff, MRA16_RAM					},	// Layer 0
-	{ 0x880000, 0x887fff, MRA16_RAM					},	// Layer 1
-	{ 0x900000, 0x907fff, MRA16_RAM					},	// Layer 2
+	{ 0x800000, 0x807fff, MRA16_RAM					},	// Layer 2
+	{ 0x880000, 0x887fff, MRA16_RAM					},	// Layer 0
+	{ 0x900000, 0x907fff, MRA16_RAM					},	// Layer 1
 	{ 0x980000, 0x987fff, MRA16_RAM					},	// Layer 3
 	{ 0xa00000, 0xa07fff, MRA16_RAM					},	// Sprites
 	{ 0xa08000, 0xa0ffff, MRA16_RAM					},	// Sprites?
 	{ 0xa10000, 0xa1ffff, MRA16_RAM					},	// Sprites?
-/**/{ 0xb00000, 0xb00005, MRA16_RAM					},	// Layer 0 Control
-/**/{ 0xb80000, 0xb80005, MRA16_RAM					},	// Layer 1 Control
-/**/{ 0xc00000, 0xc00005, MRA16_RAM					},	// Layer 2 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM					},	// Layer 2 Control
+/**/{ 0xb80000, 0xb80005, MRA16_RAM					},	// Layer 0 Control
+/**/{ 0xc00000, 0xc00005, MRA16_RAM					},	// Layer 1 Control
 /**/{ 0xc80000, 0xc80005, MRA16_RAM					},	// Layer 3 Control
 	{ 0xa80000, 0xa8007f, donpachi_videoregs_r		},	// Video Regs
 	{ 0xd80000, 0xd80001, MRA16_NOP					},	// ? From Sound CPU
@@ -855,17 +855,17 @@ static MEMORY_WRITE16_START( pwrinst2_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
 	{ 0x400000, 0x40ffff, MWA16_RAM							},	// RAM
 	{ 0x700000, 0x700001, cave_eeprom_msb_w					},	// EEPROM
-	{ 0x800000, 0x807fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
-	{ 0x880000, 0x887fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
-	{ 0x900000, 0x907fff, cave_vram_2_w,     &cave_vram_2	},	// Layer 2
+	{ 0x800000, 0x807fff, cave_vram_2_w,     &cave_vram_2	},	// Layer 2
+	{ 0x880000, 0x887fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
+	{ 0x900000, 0x907fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
 	{ 0x980000, 0x987fff, cave_vram_3_8x8_w, &cave_vram_3	},	// Layer 3
 	{ 0xa00000, 0xa07fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0xa08000, 0xa0ffff, MWA16_RAM							},	// Sprites?
 	{ 0xa10000, 0xa1ffff, MWA16_RAM							},	// Sprites?
 	{ 0xa80000, 0xa8007f, MWA16_RAM, &cave_videoregs		},	// Video Regs
-	{ 0xb00000, 0xb00005, pwrinst2_vctrl_0_w, &cave_vctrl_0			},	// Layer 0 Control
-	{ 0xb80000, 0xb80005, pwrinst2_vctrl_1_w, &cave_vctrl_1			},	// Layer 1 Control
-	{ 0xc00000, 0xc00005, pwrinst2_vctrl_2_w, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xb00000, 0xb00005, pwrinst2_vctrl_2_w, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xb80000, 0xb80005, pwrinst2_vctrl_0_w, &cave_vctrl_0			},	// Layer 0 Control
+	{ 0xc00000, 0xc00005, pwrinst2_vctrl_1_w, &cave_vctrl_1			},	// Layer 1 Control
 	{ 0xc80000, 0xc80005, pwrinst2_vctrl_3_w, &cave_vctrl_3			},	// Layer 3 Control
 	{ 0xe00000, 0xe00001, sound_cmd_w						},	// To Sound CPU
 	{ 0xf00000, 0xf04fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
@@ -1724,10 +1724,10 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
 {
 //    REGION_GFX1										// Sprites
-	{ REGION_GFX2, 0, &layout_8x8x4,	0x1800, 0x40 }, // [0] Layer 0
-	{ REGION_GFX3, 0, &layout_8x8x4,	0x0800, 0x40 }, // [1] Layer 1
-	{ REGION_GFX4, 0, &layout_8x8x4,	0x1000, 0x40 }, // [2] Layer 2
-	{ REGION_GFX5, 0, &layout_8x8x4,	0x2000, 0x40 }, // [3] Layer 3
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x0800+0x8000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x1000+0x8000, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x4,	0x1800+0x8000, 0x40 }, // [2] Layer 2
+	{ REGION_GFX5, 0, &layout_8x8x4,	0x2000+0x8000, 0x40 }, // [3] Layer 3
 	{ -1 }
 };
 
@@ -2197,11 +2197,12 @@ static MACHINE_DRIVER_START( pwrinst2 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(0x200, 240)
-	MDRV_VISIBLE_AREA(0x72, 0x72 + 0x140-1, 0, 240-1)
+	MDRV_VISIBLE_AREA(0x70, 0x70 + 0x140-1, 0, 240-1)
 	MDRV_GFXDECODE(pwrinst2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x5000/2)
-	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+	MDRV_COLORTABLE_LENGTH(0x8000+0x2800)
 
+	MDRV_PALETTE_INIT(pwrinst2)
 	MDRV_VIDEO_START(cave_4_layers)
 	MDRV_VIDEO_UPDATE(cave)
 
@@ -2736,6 +2737,67 @@ ROM_START( espradeo )
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, CRC(f54b1cab) SHA1(34d70bb5798de85d892c062001d9ac1d6604fd9f) )
 ROM_END
 
+/*
+Gaia Crusaders
+Noise Factory, 1999
+
+PCB Layout
+----------
+
+|------------------------------------------------|
+|   YAC516    YMZ280B      XC9536      68000     |
+|          16MHz                       PRG2   PAL|
+|                          TC51832     PRG1      |
+|     SND3     SND2        TC51832   28.322MHz   |
+|              SND1        62256     16MHz       |
+|                          62256                 |
+|J 62256 62256 62256 62256 62256 62256           |
+|A                                 KM416C256     |
+|M                                      KM416C256|
+|M     -------------------  ---------------      |
+|A     |     |     |     |  |             | 62256|
+|      |     |     |     |  |             |      |
+| DSW1 |     |     |     |  |013 9918EX008| 62256|
+|      |038 9838WX003(x3)|  |             |      |
+|      -------------------  ---------------      |
+| DSW2                                           |
+|                    XC9536          OBJ2        |
+|                                                |
+|       BG2     BG3    BG1           OBJ1        |
+|                                                |
+|------------------------------------------------|
+
+Notes:
+      68000 clock  : 16.000MHz
+      YMZ280B clock: 16.000MHz
+      VSync        : 58Hz
+      HSync        : 15.40kHz
+*/
+
+ROM_START( gaia )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "prg1.127", 0x000000, 0x080000, CRC(47b904b2) SHA1(58b9b55f59cf00f70b690a0371096e86f4d723c2) )
+	ROM_LOAD16_BYTE( "prg2.128", 0x000001, 0x080000, CRC(469b7794) SHA1(502f855c51005a866900b19c3a0a170d9ea02392) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD16_BYTE( "obj1.736", 0x000001, 0x400000, CRC(f4f84e5d) SHA1(8f445dd7a5c8a996939c211e5aec5742121a6e7e) )
+	ROM_LOAD16_BYTE( "obj2.738", 0x000000, 0x400000, CRC(15c2a9ce) SHA1(631eb2968395be86ef2403733e7d4ec769a013b9) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bg1.989", 0x000000, 0x400000, CRC(013a693d) SHA1(2cc5be6f47c13febed942e1c3167946efedc5f9b) )
+
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bg2.995", 0x000000, 0x400000, CRC(783cc62f) SHA1(8b6e4212688b53be5ecc29ff2d41fd43e7d0a420) )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "bg3.998", 0x000000, 0x400000, CRC(bcd61d1c) SHA1(660a3b02a8c39e1117b00d0ad06f73221fef4ce8) )
+
+	ROM_REGION( 0xc00000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "snd1.447", 0x000000, 0x400000, CRC(92770a52) SHA1(81f6835e1b45eb0f367e4586fdda92466f02edb9) )
+	ROM_LOAD( "snd2.454", 0x400000, 0x400000, CRC(329ae1cf) SHA1(0c5e5074a5d8f4fb85ab4893bc953f192dcb301a) )
+	ROM_LOAD( "snd3.455", 0x800000, 0x400000, CRC(4048d64e) SHA1(5e4ec6d37e70484e2fcd04188385e79ef0b53026) )
+ROM_END
+
 
 /***************************************************************************
 
@@ -2966,6 +3028,44 @@ ROM_START( metmqstr )
 	ROM_CONTINUE(           0x040000, 0x100000             )
 ROM_END
 
+ROM_START( nmaster )
+	ROM_REGION( 0x280000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "bp947a_n.u25",0x000000, 0x80000, CRC(748cc514) SHA1(11d882e77a539407c314f087386e50d691a6bc0b) )
+	ROM_LOAD16_WORD_SWAP( "bp947a.u28" , 0x100000, 0x80000, CRC(8c55decf) SHA1(76c6ce4c8e621273258d31ceb9ec4442fcf1a393) )
+	ROM_LOAD16_WORD_SWAP( "bp947a.u29",  0x200000, 0x80000, CRC(cf0f3f3b) SHA1(49a3c0e7536edd53bbf09353e43e9166d736b3f4) )
+
+	ROM_REGION( 0x48000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "bp947a.u20",  0x00000, 0x08000, CRC(a4a36170) SHA1(ae55094518bd968ea0d04613a133c1421e412012) )
+	ROM_CONTINUE(            0x10000, 0x38000             )
+
+	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "bp947a.u49", 0x000000, 0x200000, CRC(09749531) SHA1(6deeed2712241611ec3202c49a66beed28698af8) )
+	ROM_LOAD( "bp947a.u50", 0x200000, 0x200000, CRC(19cea8b2) SHA1(87fb29458074f0e4852237e0184b8b3b44b0eb29) )
+	ROM_LOAD( "bp947a.u51", 0x400000, 0x200000, CRC(c19bed67) SHA1(ac664a15512c0e8c8b701833aede95f53cd46a45) )
+	ROM_LOAD( "bp947a.u52", 0x600000, 0x200000, CRC(70c64875) SHA1(1c20ab100ccfdf42c97a25e4deb9041b83f5ca8d) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bp947a.u48", 0x000000, 0x100000, CRC(04ff6a3d) SHA1(7187db436f7a2ab59a3f5c6ab297b3d740e20f1d) )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bp947a.u47", 0x000000, 0x100000, CRC(0de42827) SHA1(05d452ca11a31f941cb8a9b0cbb0b59c6b0cbdcb) )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, CRC(0f9c906e) SHA1(03872e8be28637df66373bddb04ed91de4f9db75) )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp947a.u42", 0x040000, 0x100000, CRC(2ce8ff2a) SHA1(8ef8c5b7d4a0e60c980c2962e75f7977faafa311) )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x040000, 0x100000             )
+
+	ROM_REGION( 0x140000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, CRC(c3077c8f) SHA1(0a76316a81b7de78279b859549eb5161a721ac71) )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x040000, 0x100000             )
+ROM_END
 
 /***************************************************************************
 
@@ -3001,14 +3101,14 @@ ROM_START( pwrinst2 )
 	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, CRC(becf2a36) )
 	ROM_LOAD( "g02.u67", 0xc00000, 0x200000, CRC(52fe2b8b) )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "g02.u89", 0x000000, 0x100000, CRC(373e1f73) )
-
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "g02.u78", 0x000000, 0x200000, CRC(1eca63d2) )
 
-	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "g02.u81", 0x000000, 0x100000, CRC(8a3ff685) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "g02.u89", 0x000000, 0x100000, CRC(373e1f73) )
 
 	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
 	ROM_LOAD( "g02.82a", 0x000000, 0x080000, CRC(4b3567d6) )
@@ -3350,12 +3450,35 @@ DRIVER_INIT( pwrinst2 )
 	cave_default_eeprom_length = 0;
 	cave_region_byte = -1;
 
-//	To do: Decrypt sprites
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
+	int i, j;
+
+	if ((buffer = malloc(len)))
+	{
+		 for(i=0; i<len/2; i++) 		{
+			j = BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7, 2,4,6,1,5,3, 0);
+			if(((j & 6) == 0) || ((j & 6) == 6))
+				j ^= 6;
+			buffer[j ^ 7] = (src[i] >> 4) | (src[i] << 4);
+		}
+
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
 
 	unpack_sprites();
-	cave_spritetype = 1;	// "different" sprites (no zooming?)
-	cave_kludge = 0;
+	cave_spritetype = 3;
+	cave_kludge = 4;
 	time_vblank_irq = 2000;	/**/
+
+#if 1		//ROM PATCH
+	{
+		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+		rom[0xD46C/2] = 0xD482;			// kurara dash fix  0xd400 -> 0xd482
+	}
+#endif
 }
 
 DRIVER_INIT( sailormn )
@@ -3407,11 +3530,13 @@ DRIVER_INIT( uopoko )
 
 ***************************************************************************/
 
+GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"              )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
+GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "The Ninja Master (Japan?)"               )
 GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" ) // region in eeprom
 GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" ) // region in eeprom
 GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"        ) // board was taiwan, region in eeprom
@@ -3424,6 +3549,4 @@ GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cav
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )
 GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
 GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
-
-/* Games not working properly: */
-GAMEX(1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", GAME_NOT_WORKING )
+GAMEX(1999, gaia,     0,        esprade,  cave,     esprade,  ROT0,   "Noise Factory",                        "Gaia Crusaders", GAME_NOT_WORKING )

@@ -26,12 +26,6 @@ READ_HANDLER( elim4_IN4_r );
 
 /*----------- defined in sndhrdw/sega.c -----------*/
 
-int sega_sh_start(const struct MachineSound *msound);
-void sega_sh_update(void);
-
-READ_HANDLER( sega_sh_r );
-WRITE_HANDLER( sega_sh_speech_w );
-
 WRITE_HANDLER( elim1_sh_w );
 WRITE_HANDLER( elim2_sh_w );
 WRITE_HANDLER( spacfury1_sh_w );

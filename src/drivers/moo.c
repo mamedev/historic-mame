@@ -20,8 +20,10 @@ Moo:
  - Enemies coming out of the jail cells in the last stage have wrong priority.
    Could be tile priority or the typical "small Z, big pri" sprite masking
    trick currently not supported by K053247_sprites_draw().
- - Sprite lag, misalignment and flicking should be less severe.
- - K056832 emulation is more save-state friendly.
+
+Moo (bootleg):
+ - No sprites appear, and the game never enables '246 interrupts.  Of course,
+   they're using some copy of a '246 on FPGAs, so who knows what's going on...
 
 Bucky:
  - Shadows sometimes have wrong priority. (unsupported priority modes)
@@ -43,6 +45,7 @@ Bucky:
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
 
@@ -182,6 +185,16 @@ static INTERRUPT_GEN(moo_interrupt)
 		cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
+static INTERRUPT_GEN(moobl_interrupt)
+{
+	moo_objdma(game_type);
+
+	// schedule DMA end interrupt (delay shortened to catch up with V-blank)
+	timer_set(TIME_IN_USEC(MOO_DMADELAY), 0, dmaend_callback);
+
+	// trigger V-blank interrupt
+	cpu_set_irq_line(0, 5, HOLD_LINE);
+}
 
 static WRITE16_HANDLER( sound_cmd1_w )
 {
@@ -304,6 +317,14 @@ static WRITE16_HANDLER( moo_prot_w )
 	}
 }
 
+
+static WRITE16_HANDLER( moobl_oki_bank_w )
+{
+	logerror("%x to OKI bank\n", data);
+
+	OKIM6295_set_bank_base(0, (data & 0x0f)* 0x40000);
+}
+
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
@@ -344,6 +365,44 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
 	{ 0x0d6000, 0x0d601f, MWA16_RAM },			/* sound regs fall through */
 	{ 0x0d8000, 0x0d8007, K056832_b_word_w },	/* VSCCS regs */
+	{ 0x0de000, 0x0de001, control2_w },
+	{ 0x100000, 0x17ffff, MWA16_ROM },
+	{ 0x180000, 0x18ffff, MWA16_RAM, &workram },
+	{ 0x190000, 0x19ffff, MWA16_RAM, &spriteram16 },
+	{ 0x1a0000, 0x1a1fff, K056832_ram_word_w },	/* Graphic planes */
+	{ 0x1a2000, 0x1a3fff, K056832_ram_word_w },	/* Graphic planes mirror */
+	{ 0x1c0000, 0x1c1fff, paletteram16_xrgb_word_w, &paletteram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( readmembl )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x0c2f00, 0x0c2f01, MRA16_NOP },              /* heck if I know, but it's polled constantly */
+	{ 0x0c4000, 0x0c4001, K053246_word_r },
+	{ 0x0d6ffe, 0x0d6fff, OKIM6295_status_0_lsb_r },
+	{ 0x0da000, 0x0da001, player1_r },
+	{ 0x0da002, 0x0da003, player2_r },
+	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
+	{ 0x0dc002, 0x0dc003, control1_r },
+	{ 0x0de000, 0x0de001, control2_r },
+	{ 0x100000, 0x17ffff, MRA16_ROM },
+	{ 0x180000, 0x18ffff, MRA16_RAM },              /* Work RAM */
+	{ 0x190000, 0x19ffff, MRA16_RAM },              /* Sprite RAM */
+	{ 0x1a0000, 0x1a1fff, K056832_ram_word_r },     /* Graphic planes */
+	{ 0x1a2000, 0x1a3fff, K056832_ram_word_r },	/* Graphic planes mirror */
+	{ 0x1b0000, 0x1b1fff, K056832_rom_word_r },	/* Passthrough to tile roms */
+	{ 0x1c0000, 0x1c1fff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemembl )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x0c0000, 0x0c003f, K056832_word_w },
+	{ 0x0c2000, 0x0c2007, K053246_word_w },
+	{ 0x0ca000, 0x0ca01f, K054338_word_w },         /* K054338 alpha blending engine */
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
+	{ 0x0d0000, 0x0d001f, MWA16_RAM },              /* CCU regs (ignored) */
+	{ 0x0d6ffc, 0x0d6ffd, moobl_oki_bank_w },
+	{ 0x0d6ffe, 0x0d6fff, OKIM6295_data_0_lsb_w },
+	{ 0x0d8000, 0x0d8007, K056832_b_word_w },       /* VSCCS regs */
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x18ffff, MWA16_RAM, &workram },
@@ -583,6 +642,14 @@ static struct K054539interface k054539_interface =
 	{ { 100, 100 } },
 };
 
+static struct OKIM6295interface okim6295_interface =
+{
+	1,			/* 1 chip */
+	{ 8000 },
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+
 static MACHINE_INIT( moo )
 {
 	init_nosound_count = 0;
@@ -610,9 +677,6 @@ static MACHINE_DRIVER_START( moo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	/* visrgn derived by opening it all the way up, taking snapshots,
-	   and measuring in the GIMP.  The character select screen demands this
-	   geometry or stuff gets cut off */
 	MDRV_VISIBLE_AREA(40, 40+384-1, 16, 16+224-1)
 
 	MDRV_PALETTE_LENGTH(2048)
@@ -624,6 +688,34 @@ static MACHINE_DRIVER_START( moo )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( moobl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 16100000)
+	MDRV_CPU_MEMORY(readmembl,writemembl)
+	MDRV_CPU_VBLANK_INT(moobl_interrupt, 1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1200) // should give IRQ4 sufficient time to update scroll registers
+
+	MDRV_MACHINE_INIT(moo)
+	MDRV_NVRAM_HANDLER(moo)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(40, 40+384-1, 16, 16+224-1)
+
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(moo)
+	MDRV_VIDEO_UPDATE(moo)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bucky )
@@ -780,8 +872,59 @@ static DRIVER_INIT( moo )
 	game_type = (!strcmp(Machine->gamedrv->name, "bucky") || !strcmp(Machine->gamedrv->name, "buckyua"));
 }
 
+ROM_START( moobl )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "moo03.rom", 0x000000, 0x80000, CRC(fed6a1cb) SHA1(be58e266973930d643b5e15dcc974a82e1a3ae35) )
+	ROM_LOAD16_WORD_SWAP( "moo04.rom", 0x100000, 0x80000, CRC(ec45892a) SHA1(594330cbbfbca87e61ddf519e565018b6eaf5a20) )
+
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "moo03.rom", 0x000000, 0x80000, CRC(fed6a1cb) SHA1(be58e266973930d643b5e15dcc974a82e1a3ae35) )
+	ROM_LOAD16_WORD_SWAP( "moo04.rom", 0x080000, 0x80000, CRC(ec45892a) SHA1(594330cbbfbca87e61ddf519e565018b6eaf5a20) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROM_LOAD( "moo05.rom", 0x000000, 0x080000, CRC(8c045f9c) SHA1(cde81a722a4bc2efac09a26d7e300664059ec7bb) )
+	ROM_LOAD( "moo06.rom", 0x080000, 0x080000, CRC(1261aa89) SHA1(b600916911bc0d8b6348e2ad4a16ed1a1c528261) )
+	ROM_LOAD( "moo07.rom", 0x100000, 0x080000, CRC(b9e29f50) SHA1(c2af095df0af45064d49210085370425b319b82b) )
+	ROM_LOAD( "moo08.rom", 0x180000, 0x080000, CRC(e6937229) SHA1(089b3d4af33e8d8fbc1f3abb81e047a7a590567c) )
+
+	// sprites from bootleg not included in dump, taken from original game
+	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_LOAD( "151a10", 0x000000, 0x200000, CRC(376c64f1) SHA1(eb69c5a27f9795e28f04a503955132f0a9e4de12) )
+	ROM_LOAD( "151a11", 0x200000, 0x200000, CRC(e7f49225) SHA1(1255b214f29b6507540dad5892c60a7ae2aafc5c) )
+	ROM_LOAD( "151a12", 0x400000, 0x200000, CRC(4978555f) SHA1(d9871f21d0c8a512b408e137e2e80e9392c2bf6f) )
+	ROM_LOAD( "151a13", 0x600000, 0x200000, CRC(4771f525) SHA1(218d86b6230919b5db0304dac00513eb6b27ba9a) )
+
+	ROM_REGION( 0x340000, REGION_SOUND1, 0 )
+	ROM_LOAD( "moo01.rom", 0x000000, 0x040000, CRC(3311338a) SHA1(c0b5cd16f0275b5b93a2ea4fc64013c848c5fa43) )//bank 0 lo & hi
+	ROM_CONTINUE(          0x040000+0x30000, 0x010000)//bank 1 hi
+	ROM_CONTINUE(          0x080000+0x30000, 0x010000)//bank 2 hi
+	ROM_CONTINUE(          0x0c0000+0x30000, 0x010000)//bank 3 hi
+	ROM_CONTINUE(          0x100000+0x30000, 0x010000)//bank 4 hi
+	ROM_RELOAD(            0x040000, 0x30000 )//bank 1 lo
+	ROM_RELOAD(            0x080000, 0x30000 )//bank 2 lo
+	ROM_RELOAD(            0x0c0000, 0x30000 )//bank 3 lo
+	ROM_RELOAD(            0x100000, 0x30000 )//bank 4 lo
+	ROM_RELOAD(            0x140000, 0x30000 )//bank 5 lo
+	ROM_RELOAD(            0x180000, 0x30000 )//bank 6 lo
+	ROM_RELOAD(            0x1c0000, 0x30000 )//bank 7 lo
+	ROM_RELOAD(            0x200000, 0x30000 )//bank 8 lo
+	ROM_RELOAD(            0x240000, 0x30000 )//bank 9 lo
+	ROM_RELOAD(            0x280000, 0x30000 )//bank a lo
+	ROM_RELOAD(            0x2c0000, 0x30000 )//bank b lo
+	ROM_RELOAD(            0x300000, 0x30000 )//bank c lo
+
+	ROM_LOAD( "moo02.rom", 0x140000+0x30000, 0x010000, CRC(2cf3a7c6) SHA1(06f495ba8250b34c32569d49c8b84e6edef562d3) )//bank 5 hi
+	ROM_CONTINUE(          0x180000+0x30000, 0x010000)//bank 6 hi
+	ROM_CONTINUE(          0x1c0000+0x30000, 0x010000)//bank 7 hi
+	ROM_CONTINUE(          0x200000+0x30000, 0x010000)//bank 8 hi
+	ROM_CONTINUE(          0x240000+0x30000, 0x010000)//bank 9 hi
+	ROM_CONTINUE(          0x280000+0x30000, 0x010000)//bank a hi
+	ROM_CONTINUE(          0x2c0000+0x30000, 0x010000)//bank b hi
+	ROM_CONTINUE(          0x300000+0x30000, 0x010000)//bank c hi
+ROM_END
 
 GAME( 1992, moo,     0,       moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (World version EA)")
 GAME( 1992, mooua,   moo,     moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (US version UA)")
+GAMEX( 1992, moobl,   moo,     moobl,   moo,     moo,      ROT0, "<unknown>", "Wild West C.O.W.-Boys of Moo Mesa (bootleg version AA)", GAME_NOT_WORKING)
 GAME( 1992, bucky,   0,       bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (World version EA)")
 GAME( 1992, buckyua, bucky,   bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (US version UA)")

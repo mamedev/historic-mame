@@ -534,7 +534,7 @@ INPUT_PORTS_START( scontra )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )	/* test mode calls it cabinet type, */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )		/* but this is a 2 players game */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x18, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x18, "30000 200000" )
 	PORT_DIPSETTING(	0x10, "50000 300000" )
 	PORT_DIPSETTING(	0x08, "30000" )

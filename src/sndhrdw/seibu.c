@@ -127,7 +127,7 @@ enum
 	RST18_CLEAR
 };
 
-static void setvector_callback(int param)
+static void update_irq_lines(int param)
 {
 	static int irq1,irq2;
 
@@ -154,16 +154,15 @@ static void setvector_callback(int param)
 			break;
 	}
 
-	cpu_irq_line_vector_w(sound_cpu,0,irq1 & irq2);
 	if ((irq1 & irq2) == 0xff)	/* no IRQs pending */
 		cpu_set_irq_line(sound_cpu,0,CLEAR_LINE);
 	else	/* IRQ pending */
-		cpu_set_irq_line(sound_cpu,0,ASSERT_LINE);
+		cpu_set_irq_line_and_vector(sound_cpu,0,ASSERT_LINE,irq1 & irq2);
 }
 
 WRITE_HANDLER( seibu_irq_clear_w )
 {
-	setvector_callback(VECTOR_INIT);
+	update_irq_lines(VECTOR_INIT);
 }
 
 WRITE_HANDLER( seibu_rst10_ack_w )
@@ -173,31 +172,22 @@ WRITE_HANDLER( seibu_rst10_ack_w )
 
 WRITE_HANDLER( seibu_rst18_ack_w )
 {
-	timer_set(TIME_NOW,RST18_CLEAR,setvector_callback);
+	update_irq_lines(RST18_CLEAR);
 }
 
 void seibu_ym3812_irqhandler(int linestate)
 {
-	if (linestate)
-		timer_set(TIME_NOW,RST10_ASSERT,setvector_callback);
-	else
-		timer_set(TIME_NOW,RST10_CLEAR,setvector_callback);
+	update_irq_lines(linestate ? RST10_ASSERT : RST10_CLEAR);
 }
 
 void seibu_ym2151_irqhandler(int linestate)
 {
-	if (linestate)
-		timer_set(TIME_NOW,RST10_ASSERT,setvector_callback);
-	else
-		timer_set(TIME_NOW,RST10_CLEAR,setvector_callback);
+	update_irq_lines(linestate ? RST10_ASSERT : RST10_CLEAR);
 }
 
 void seibu_ym2203_irqhandler(int linestate)
 {
-	if (linestate)
-		timer_set(TIME_NOW,RST10_ASSERT,setvector_callback);
-	else
-		timer_set(TIME_NOW,RST10_CLEAR,setvector_callback);
+	update_irq_lines(linestate ? RST10_ASSERT : RST10_CLEAR);
 }
 
 /***************************************************************************/
@@ -206,14 +196,14 @@ void seibu_ym2203_irqhandler(int linestate)
 MACHINE_INIT( seibu_sound_1 )
 {
 	sound_cpu=1;
-	setvector_callback(VECTOR_INIT);
+	update_irq_lines(VECTOR_INIT);
 }
 
 /* Use this if the sound cpu is cpu 2 */
 MACHINE_INIT( seibu_sound_2 )
 {
 	sound_cpu=2;
-	setvector_callback(VECTOR_INIT);
+	update_irq_lines(VECTOR_INIT);
 }
 
 /***************************************************************************/
@@ -284,7 +274,7 @@ WRITE16_HANDLER( seibu_main_word_w )
 				main2sub[offset] = data;
 				break;
 			case 4:
-				timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
+				update_irq_lines(RST18_ASSERT);
 				break;
 			case 6:
 				/* just a guess */
@@ -315,7 +305,7 @@ WRITE16_HANDLER( seibu_main_mustb_w )
 
 //	logerror("seibu_main_mustb_w: %x -> %x %x\n", data, main2sub[0], main2sub[1]);
 
-	timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
+	update_irq_lines(RST18_ASSERT);
 }
 
 /***************************************************************************/

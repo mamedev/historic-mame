@@ -521,6 +521,7 @@ static DRIVER_INIT( zn )
 	}
 	else if( strcmp( Machine->gamedrv->name, "sfex2" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "sg2j" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "techromn" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "kikaioh" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "sfex2p" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "shiryu2" ) == 0 )
@@ -573,7 +574,8 @@ static void player_reset( void )
 	{
 		scode = 0x0400;
 	}
-	else if( strcmp( Machine->gamedrv->name, "kikaioh" ) == 0 )
+	else if( strcmp( Machine->gamedrv->name, "techromn" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "kikaioh" ) == 0 )
 	{
 		scode = 0x8000;
 	}
@@ -1179,6 +1181,29 @@ ROM_START( cpzn2 )
 	CPZN2_BIOS
 ROM_END
 
+ROM_START( techromn )
+	CPZN2_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER2, 0 )
+	ROM_LOAD( "kiou-04",     0x0000000, 0x080000, CRC(08aca34a) SHA1(768a37f719af5d96993db5592b6505b013e0d6f4) )
+
+	ROM_REGION32_LE( 0x3000000, REGION_USER1, 0 )
+	ROM_LOAD( "kio-05m.bin", 0x0000000, 0x800000, CRC(98e9eb24) SHA1(144773296c213ab09d626c915f90bb74e24487f0) )
+	ROM_LOAD( "kio-06m.bin", 0x0800000, 0x800000, CRC(be8d7d73) SHA1(bcbbbd0b83503f2ed32527444e0da3afd774d3f7) )
+	ROM_LOAD( "kio-07m.bin", 0x1000000, 0x800000, CRC(ffd81f18) SHA1(f8387a9d45e79f97ccdffabe755638a60f80ccf5) )
+	ROM_LOAD( "kio-08m.bin", 0x1800000, 0x800000, CRC(17302226) SHA1(976ba7f48c9a52d24388cd63d02be08627cf2e30) )
+	ROM_LOAD( "kio-09m.bin", 0x2000000, 0x800000, CRC(a34f2119) SHA1(50fa992eba5324a173fcc0923227c13cad4f97e5) )
+	ROM_LOAD( "kio-10m.bin", 0x2800000, 0x800000, CRC(7400037a) SHA1(d58641e1d6bf1c6ca04f6c98d6809edaa7df75d3) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "kio-02.bin",  0x00000, 0x08000, CRC(174309b3) SHA1(b35b9c3905d2fabaa8410f70f7b382e916c89733) )
+	ROM_CONTINUE(            0x10000, 0x18000 )
+	ROM_LOAD( "kio-03.bin",  0x28000, 0x20000, CRC(0b313ae5) SHA1(0ea39305ca30f376930e39b134fd1a52200624fa) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "kio-01m.bin", 0x0000000, 0x400000, CRC(6dc5bd07) SHA1(e1755a48465f741691ea0fa1166cb2dc09210ed9) )
+ROM_END
+
 ROM_START( kikaioh )
 	CPZN2_BIOS
 
@@ -1597,7 +1622,8 @@ GAMEX( 1997, cpzn2,    0,        zn,       zn, zn,   ROT0, "Sony/Capcom", "ZN2",
 
 GAMEX( 1998, sfex2,    cpzn2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1998, sg2j,     cpzn2,    znqsound, zn, zn,   ROT0, "Capcom","Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1998, kikaioh,  cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1998, techromn, cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1998, kikaioh,  techromn, znqsound, zn, zn,   ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1999, sfex2p,   sfex2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1999, shiryu2,  cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION )
 

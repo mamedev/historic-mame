@@ -31,11 +31,6 @@ System 24      68000x2  315-5292   315-5293  315-5294  315-5242        ym2151 da
 
 #include <math.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 static int kc = -1;
 static int kk = 0;
 //static int kz = 0;

@@ -14,6 +14,7 @@ data8_t *fastfred_videoram;
 data8_t *fastfred_spriteram;
 size_t fastfred_spriteram_size;
 data8_t *fastfred_attributesram;
+data8_t *imago_fg_videoram;
 
 
 static struct rectangle spritevisiblearea =
@@ -34,7 +35,7 @@ static int flip_screen_x;
 static int flip_screen_y;
 int fastfred_hardware_type;
 static const UINT8 *fastfred_color_prom;
-static struct tilemap *bg_tilemap;
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -151,6 +152,7 @@ WRITE_HANDLER( fastfred_videoram_w )
 	if (fastfred_videoram[offset] != data)
 	{
 		fastfred_videoram[offset] = data;
+
 		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
@@ -186,7 +188,7 @@ WRITE_HANDLER( fastfred_charbank1_w )
 	if (new_data != charbank)
 	{
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
-
+	
 		charbank = new_data;
 	}
 }
@@ -198,7 +200,7 @@ WRITE_HANDLER( fastfred_charbank2_w )
 	if (new_data != charbank)
 	{
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
-
+	
 		charbank = new_data;
 	}
 }
@@ -275,12 +277,26 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		sx = fastfred_spriteram[offs + 3];
 		sy = 240 - fastfred_spriteram[offs];
 
-		if (fastfred_hardware_type == 2)
+		if (fastfred_hardware_type == 3)
+		{
+			// Imago
+
+			//fastfred_spriteram[offs + 2] & 0xf8 get only set at startup
+
+			//the code is greater than 0x3f only at startup
+			code  = (fastfred_spriteram[offs + 1]) & 0x3f;
+
+			/* To Do: find the correct bank for sprites */
+			
+			flipx = 0;
+			flipy = 0;
+		}
+		else if (fastfred_hardware_type == 2)
 		{
 			// Boggy 84
 			code  =  fastfred_spriteram[offs + 1] & 0x7f;
 			flipx =  0;
-			flipy = fastfred_spriteram[offs + 1] & 0x80;
+			flipy =  fastfred_spriteram[offs + 1] & 0x80;
 		}
 		else if (fastfred_hardware_type == 1)
 		{
@@ -324,4 +340,62 @@ VIDEO_UPDATE( fastfred )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_sprites(bitmap, cliprect);
+}
+
+
+static void imago_get_tile_info_bg(int tile_index)
+{
+	data8_t x = tile_index & 0x1f;
+
+	data16_t code = charbank * 0x100 + fastfred_videoram[tile_index];
+	data8_t color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+static void imago_get_tile_info_fg(int tile_index)
+{
+	int code = imago_fg_videoram[tile_index];
+	SET_TILE_INFO(2, code, 0, 0)
+}
+
+
+WRITE_HANDLER( imago_fg_videoram_w )
+{
+	if( imago_fg_videoram[offset] != data)
+	{
+		imago_fg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( imago_charbank_w )
+{
+	if( charbank != data )
+	{
+		charbank = data;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+}
+
+VIDEO_START( imago )
+{
+	bg_tilemap = tilemap_create(imago_get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	fg_tilemap = tilemap_create(imago_get_tile_info_fg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if( !bg_tilemap || !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+VIDEO_UPDATE( imago )
+{
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
+	draw_sprites(bitmap, cliprect);
+	
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

@@ -7,20 +7,30 @@ various early SNK games (1983-1985)
 driver by Phil Stroffolino
 
 Known Issues:
-	Mad Crasher fails the ROM test, but ROMs are verified to be good
-	Mad Crasher sound effects aren't being played
-	Vanguard II crashes under dos with sound enabled
-	Marvin's maze crashes under dos with sound enabled, hangs with sound
-disabled
+	Mad Crasher fails the ROM test, but ROMs are verified to be good (reason's unknown)
+	Mad Crasher sound effects aren't being played (fixed)
+	Vanguard II crashes under dos with sound enabled (cannot verify)
+	Marvin's maze crashes under dos with sound enabled, hangs with sound disabled (cannot verify)
+
+
+Change Log
+----------
+
+AT08XX03:
+ - added shadows
+ - fixed Mad Crasher bad background, sound effects and foreground priority.
+   (great now I can fall under the skyway like I did at Chuck'n Cheese;)
+ - fixed Vanguard2 scroll offsets
+ - tuned music tempo and wavegen frequency
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
-WRITE_HANDLER( snkwave_w );
+#include "snk.h"
 
 #define CREDITS "Phil Stroffolino\nTim Lindquist\nCarlos A. Lozano"
+
 
 /***************************************************************************
 **
@@ -28,17 +38,18 @@ WRITE_HANDLER( snkwave_w );
 **
 ***************************************************************************/
 
-READ_HANDLER( marvins_background_ram_r );
-WRITE_HANDLER( marvins_background_ram_w );
+extern READ_HANDLER( marvins_background_ram_r );
+extern WRITE_HANDLER( marvins_background_ram_w );
 
-READ_HANDLER( marvins_foreground_ram_r );
-WRITE_HANDLER( marvins_foreground_ram_w );
+extern READ_HANDLER( marvins_foreground_ram_r );
+extern WRITE_HANDLER( marvins_foreground_ram_w );
 
-READ_HANDLER( marvins_text_ram_r );
-WRITE_HANDLER( marvins_text_ram_w );
+extern READ_HANDLER( marvins_text_ram_r );
+extern WRITE_HANDLER( marvins_text_ram_w );
 
-READ_HANDLER( marvins_spriteram_r );
-WRITE_HANDLER( marvins_spriteram_w );
+extern READ_HANDLER( marvins_spriteram_r );
+extern WRITE_HANDLER( marvins_spriteram_w );
+
 
 /***************************************************************************
 **
@@ -49,7 +60,21 @@ WRITE_HANDLER( marvins_spriteram_w );
 extern VIDEO_START( marvins );
 extern VIDEO_UPDATE( marvins );
 extern VIDEO_UPDATE( madcrash );
-WRITE_HANDLER( marvins_palette_bank_w );
+
+extern WRITE_HANDLER( marvins_palette_bank_w );
+
+
+/***************************************************************************
+**
+**	Interrupt Handling
+**
+**	CPUA can trigger an interrupt on CPUB, and CPUB can trigger an interrupt
+**	on CPUA.  Each CPU must re-enable interrupts on itself.
+**
+***************************************************************************/
+
+// see drivers\snk.c
+
 
 /***************************************************************************
 **
@@ -71,62 +96,64 @@ WRITE_HANDLER( marvins_palette_bank_w );
 **
 ***************************************************************************/
 
-static int sound_cpu_busy_bit;
-static int sound_cpu_ready;
-static int sound_command;
-static int sound_fetched;
+extern WRITE_HANDLER( snkwave_w );
+
+static int sound_cpu_busy;
 
 static struct namco_interface snkwave_interface =
 {
-	24000,	/* ? (wave generator has a 8MHz clock near it) */
-	1,		/* number of voices */
-	8,		/* playback volume */
-	-1		/* memory region */
+	8000000/256,	/* (wave generator has a 8MHz clock near it) */
+	1,				/* number of voices */
+	10,				/* playback volume */
+	-1				/* memory region */
 };
 
 static struct AY8910interface ay8910_interface =
 {
-	2, /* number of chips */
-	2000000, /* 2 MHz */
-	{ 35,35 },
+	2,			/* number of chips */
+	2000000,	/* 2 MHz */
+	{ 25,25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 }
 };
 
-static void init_sound( int busy_bit ){
-	sound_cpu_busy_bit = busy_bit;
-	sound_cpu_ready = 1;
-	sound_command = 0x00;
-	sound_fetched = 1;
+static void init_sound( int busy_bit )
+{
+	snk_sound_busy_bit = busy_bit;
+	sound_cpu_busy = 0;
 }
 
-static WRITE_HANDLER( sound_command_w ){
-	if( sound_fetched==0 ){
-		logerror("missed sound command: %02x\n", sound_command );
-	}
-
-	sound_fetched = 0;
-	sound_command = data;
-	sound_cpu_ready = 0;
-	cpu_set_irq_line( 2, 0, HOLD_LINE );
+static WRITE_HANDLER( sound_command_w )
+{
+	sound_cpu_busy = snk_sound_busy_bit;
+	soundlatch_w(0, data);
+	cpu_set_irq_line(2, 0, HOLD_LINE);
 }
 
-static READ_HANDLER( sound_command_r ){
-	sound_fetched = 1;
-	return sound_command;
+static READ_HANDLER( sound_command_r )
+{
+	sound_cpu_busy = 0;
+	return(soundlatch_r(0));
 }
 
-static READ_HANDLER( sound_ack_r ){
-	sound_cpu_ready = 1;
-	return 0xff;
+static READ_HANDLER( sound_nmi_ack_r )
+{
+	cpu_set_nmi_line(2, CLEAR_LINE);
+	return 0;
+}
+
+/* this input port has one of its bits mapped to sound CPU status */
+static READ_HANDLER( marvins_port_0_r )
+{
+	return(input_port_0_r(0) | sound_cpu_busy);
 }
 
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4000, sound_command_r },
-	{ 0xa000, 0xa000, sound_ack_r },
+	{ 0xa000, 0xa000, sound_nmi_ack_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 MEMORY_END
 
@@ -140,95 +167,10 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0xe000, 0xe7ff, MWA_RAM },
 MEMORY_END
 
-/* this input port has one of its bits mapped to sound CPU status */
-static READ_HANDLER( marvins_port_0_r ){
-	int result = input_port_0_r( 0 );
-	if( !sound_cpu_ready ) result |= sound_cpu_busy_bit;
-	return result;
-}
+static PORT_READ_START( readport_sound )
+	{ 0x0000, 0x0000, MRA_NOP },
+PORT_END
 
-/***************************************************************************
-**
-**	Game Specific Initialization
-**
-**	madcrash_vreg defines an offset for the video registers which is
-**	different in Mad Crasher and Vanguard II.
-**
-**	init_sound defines the location of the polled sound CPU busy bit,
-**	which also varies across games.
-**
-***************************************************************************/
-
-int madcrash_vreg;
-
-
-/***************************************************************************
-**
-**	Interrupt Handling
-**
-**	CPUA can trigger an interrupt on CPUB, and CPUB can trigger an interrupt
-**	on CPUA.  Each CPU must re-enable interrupts on itself.
-**
-***************************************************************************/
-
-#define SNK_NMI_ENABLE	1
-#define SNK_NMI_PENDING	2
-static int CPUA_latch = 0;
-static int CPUB_latch = 0;
-
-static WRITE_HANDLER( CPUA_int_enable_w )
-{
-	if( CPUA_latch & SNK_NMI_PENDING )
-	{
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		CPUA_latch = 0;
-	}
-	else
-	{
-		CPUA_latch |= SNK_NMI_ENABLE;
-	}
-}
-
-static READ_HANDLER( CPUA_int_trigger_r )
-{
-	if( CPUA_latch&SNK_NMI_ENABLE )
-	{
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		CPUA_latch = 0;
-	}
-	else
-	{
-		CPUA_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( CPUB_int_enable_w )
-{
-	if( CPUB_latch & SNK_NMI_PENDING )
-	{
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		CPUB_latch = 0;
-	}
-	else
-	{
-		CPUB_latch |= SNK_NMI_ENABLE;
-	}
-}
-
-static READ_HANDLER( CPUB_int_trigger_r )
-{
-	if( CPUB_latch&SNK_NMI_ENABLE )
-	{
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		CPUB_latch = 0;
-	}
-	else
-	{
-		CPUB_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
 
 /***************************************************************************
 **
@@ -241,50 +183,70 @@ static READ_HANDLER( CPUB_int_trigger_r )
 **
 ***************************************************************************/
 
-static MEMORY_READ_START( readmem_CPUA )
+static MEMORY_READ_START( marvins_readmem_CPUA )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x8000, 0x8000, marvins_port_0_r },	/* coin input, start, sound CPU status */
+	{ 0x8100, 0x8100, input_port_1_r },		/* player #1 controls */
+	{ 0x8200, 0x8200, input_port_2_r },		/* player #2 controls */
+	{ 0x8400, 0x8400, input_port_3_r },		/* dipswitch#1 */
+	{ 0x8500, 0x8500, input_port_4_r },		/* dipswitch#2 */
+	{ 0x8700, 0x8700, snk_cpuB_nmi_trigger_r },
+	{ 0x8000, 0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( marvins_writemem_CPUA )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x6000, marvins_palette_bank_w },
+	{ 0x8300, 0x8300, sound_command_w },
+	{ 0x8600, 0x8600, MWA_RAM },	// video attribute
+	{ 0x8700, 0x8700, snk_cpuA_nmi_ack_w },
+	{ 0xc000, 0xcfff, MWA_RAM, &spriteram },
+	{ 0xd000, 0xdfff, marvins_background_ram_w, &spriteram_3 },
+	{ 0xe000, 0xefff, marvins_foreground_ram_w, &spriteram_2 },
+	{ 0xf000, 0xffff, marvins_text_ram_w, &videoram },
+MEMORY_END
+
+static MEMORY_READ_START( marvins_readmem_CPUB )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x8700, 0x8700, snk_cpuA_nmi_trigger_r },
+	{ 0xc000, 0xcfff, marvins_spriteram_r },
+	{ 0xd000, 0xdfff, marvins_background_ram_r },
+	{ 0xe000, 0xefff, marvins_foreground_ram_r },
+	{ 0xf000, 0xffff, marvins_text_ram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( marvins_writemem_CPUB )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x8700, 0x8700, snk_cpuB_nmi_ack_w },
+	{ 0xc000, 0xcfff, marvins_spriteram_w },
+	{ 0xd000, 0xdfff, marvins_background_ram_w },
+	{ 0xe000, 0xefff, marvins_foreground_ram_w },
+	{ 0xf000, 0xffff, marvins_text_ram_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( madcrash_readmem_CPUA )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8000, marvins_port_0_r },	/* coin input, start, sound CPU status */
 	{ 0x8100, 0x8100, input_port_1_r },		/* player #1 controls */
 	{ 0x8200, 0x8200, input_port_2_r },		/* player #2 controls */
 	{ 0x8400, 0x8400, input_port_3_r },		/* dipswitch#1 */
 	{ 0x8500, 0x8500, input_port_4_r },		/* dipswitch#2 */
-	{ 0x8700, 0x8700, CPUB_int_trigger_r },
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xffff, MRA_RAM },
+	{ 0x8700, 0x8700, snk_cpuB_nmi_trigger_r },
+	{ 0x8000, 0xffff, MRA_RAM },
 MEMORY_END
 
-static MEMORY_WRITE_START( writemem_CPUA )
-	{ 0x6000, 0x6000, marvins_palette_bank_w }, // Marvin's Maze only
+static MEMORY_WRITE_START( madcrash_writemem_CPUA )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8300, 0x8300, sound_command_w },
-	{ 0x8600, 0x8600, MWA_RAM },
-	{ 0x86f1, 0x86f1, MWA_RAM },
-	{ 0x8700, 0x8700, CPUA_int_enable_w },
+	{ 0x8600, 0x86ff, MWA_RAM },	// video attribute
+	{ 0x8700, 0x8700, snk_cpuA_nmi_ack_w },
+//	{ 0xc800, 0xc800, marvins_palette_bank_w },	// palette bank switch (c8f1 for Vanguard)
+	{ 0xc800, 0xc8ff, MWA_RAM },
 	{ 0xc000, 0xcfff, MWA_RAM, &spriteram },
-	{ 0xd000, 0xd7ff, marvins_background_ram_w, &videoram },
-	{ 0xd800, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, marvins_foreground_ram_w },
-	{ 0xe800, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf3ff, marvins_text_ram_w },
-	{ 0xf400, 0xffff, MWA_RAM },
-MEMORY_END
-
-static MEMORY_READ_START( marvins_readmem_CPUB )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8700, 0x8700, CPUA_int_trigger_r },
-	{ 0xc000, 0xcfff, marvins_spriteram_r },
-	{ 0xd000, 0xffff, marvins_background_ram_r },
-	{ 0xe000, 0xffff, marvins_foreground_ram_r },
-	{ 0xf000, 0xffff, marvins_text_ram_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( marvins_writemem_CPUB )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8700, 0x8700, CPUB_int_enable_w },
-	{ 0xc000, 0xcfff, marvins_spriteram_w },
-	{ 0xd000, 0xffff, marvins_background_ram_w },
-	{ 0xe000, 0xffff, marvins_foreground_ram_w },
-	{ 0xf000, 0xffff, marvins_text_ram_w },
+	{ 0xd000, 0xdfff, marvins_background_ram_w, &spriteram_3 },
+	{ 0xe000, 0xefff, marvins_foreground_ram_w, &spriteram_2 },
+	{ 0xf000, 0xffff, marvins_text_ram_w, &videoram },
 MEMORY_END
 
 static MEMORY_READ_START( madcrash_readmem_CPUB )
@@ -297,9 +259,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( madcrash_writemem_CPUB )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8700, 0x8700, CPUB_int_enable_w }, /* Vangaurd II */
-	{ 0x8000, 0x9fff, MWA_ROM }, /* extra ROM for Mad Crasher */
-	{ 0xa000, 0xa000, CPUB_int_enable_w }, /* Mad Crasher */
+	{ 0x8700, 0x8700, snk_cpuB_nmi_ack_w },	/* Vangaurd II */
+	{ 0x8000, 0x9fff, MWA_ROM },			/* extra ROM for Mad Crasher */
+	{ 0xa000, 0xa000, snk_cpuB_nmi_ack_w },	/* Mad Crasher */
 	{ 0xc000, 0xcfff, marvins_foreground_ram_w },
 	{ 0xd000, 0xdfff, marvins_text_ram_w },
 	{ 0xe000, 0xefff, marvins_spriteram_w },
@@ -307,12 +269,11 @@ static MEMORY_WRITE_START( madcrash_writemem_CPUB )
 MEMORY_END
 
 
-
 INPUT_PORTS_START( marvins )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -551,7 +512,6 @@ INPUT_PORTS_START( madcrash )
 INPUT_PORTS_END
 
 
-
 /***************************************************************************
 **
 **	Graphics Layout
@@ -595,6 +555,7 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 	{ -1 }
 };
 
+
 /***************************************************************************
 **
 **	Machine Driver
@@ -605,24 +566,25 @@ static MACHINE_DRIVER_START( marvins )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
-	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_MEMORY(marvins_readmem_CPUA,marvins_writemem_CPUA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
 	MDRV_CPU_MEMORY(marvins_readmem_CPUB,marvins_writemem_CPUB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* seems to be correct */
+	MDRV_CPU_PORTS(readport_sound,0)
+	MDRV_CPU_PERIODIC_INT(nmi_line_assert, 244)	// schematics show a separate 244Hz timer
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(256+32, 224)
 	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
 	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
@@ -637,28 +599,29 @@ static MACHINE_DRIVER_START( marvins )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( madcrash )
+static MACHINE_DRIVER_START( vangrd2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
-	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_ADD_TAG("main", Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(madcrash_readmem_CPUA,madcrash_writemem_CPUA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_ADD_TAG("sub", Z80, 3360000)	/* 3.336 MHz */
 	MDRV_CPU_MEMORY(madcrash_readmem_CPUB,madcrash_writemem_CPUB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* wrong? */
+	MDRV_CPU_PORTS(readport_sound,0)
+	MDRV_CPU_PERIODIC_INT(nmi_line_assert, 244)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(256+32, 224)
 	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
 	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
@@ -671,6 +634,25 @@ static MACHINE_DRIVER_START( madcrash )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( madcrash )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( vangrd2 )
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(0, 0)
+
+	MDRV_CPU_MODIFY("sub")
+	MDRV_CPU_VBLANK_INT(snk_irq_BA, 1)
+
+	MDRV_INTERLEAVE(300)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(16, 16+256-1, 0, 0+216-1)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 **
@@ -788,13 +770,13 @@ ROM_START( vangrd2 )
 	ROM_LOAD( "mb7054.5j", 0x800, 0x400, CRC(2e21a79b) SHA1(1956377c799e0bbd127bf4fae016adc148efe007) )
 ROM_END
 
+
 /*******************************************************************************************/
-
-
 
 static DRIVER_INIT( marvins )
 {
 	init_sound( 0x40 );
+	snk_gamegroup = 0;
 }
 
 static DRIVER_INIT( madcrash )
@@ -808,18 +790,17 @@ static DRIVER_INIT( madcrash )
 	mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
 */
 	init_sound( 0x20 );
-	madcrash_vreg = 0x00;
+	snk_gamegroup = 1;
+	snk_irq_delay = 1700;
 }
 
 static DRIVER_INIT( vangrd2 )
 {
 	init_sound( 0x20 );
-	madcrash_vreg = 0xf1;
+	snk_gamegroup = 2;
 }
 
 
-
 GAMEX(1983, marvins,  0, marvins,  marvins,  marvins,  ROT270, "SNK", "Marvin's Maze", GAME_NO_COCKTAIL )
-GAMEX(1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher", GAME_IMPERFECT_SOUND )
-GAMEX(1984, vangrd2,  0, madcrash, vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II", GAME_NO_COCKTAIL )
-
+GAMEX(1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1984, vangrd2,  0, vangrd2,  vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II", GAME_NO_COCKTAIL )

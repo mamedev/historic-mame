@@ -16,6 +16,8 @@
 
 static int clown_x=0,clown_y=0,clown_z=0;
 
+static struct tilemap *bg_tilemap;
+
 /***************************************************************************
 ***************************************************************************/
 
@@ -34,6 +36,15 @@ struct Samplesinterface circus_samples_interface =
 	25,	/* volume */
 	circus_sample_names
 };
+
+WRITE_HANDLER( circus_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( circus_clown_x_w )
 {
@@ -93,6 +104,24 @@ WRITE_HANDLER( circus_clown_z_w )
 //  logerror("clown Z = %02x\n",data);
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
+VIDEO_START( circus )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
 static void draw_line(struct mame_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
 {
 	/* Draws horizontal and Vertical lines only! */
@@ -143,40 +172,8 @@ static void draw_robot_box (struct mame_bitmap *bitmap, int x, int y)
 	draw_line(bitmap,x+16,y,x+16,ey,0);
 }
 
-
-VIDEO_UPDATE( circus )
+static void circus_draw_fg( struct mame_bitmap *bitmap )
 {
-	int offs;
-	int sx,sy;
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-	/* for every character in the Video RAM,        */
-	/* check if it has been modified since          */
-	/* last time and update it accordingly.         */
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sy = offs / 32;
-			sx = offs % 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
 	/* The sync generator hardware is used to   */
 	/* draw the border and diving boards        */
 
@@ -198,44 +195,18 @@ VIDEO_UPDATE( circus )
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
 }
 
+VIDEO_UPDATE( circus )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	circus_draw_fg(bitmap);
+}
 
-VIDEO_UPDATE( robotbowl )
+static void robotbwl_draw_scoreboard( struct mame_bitmap *bitmap )
 {
 	int offs;
-	int sx,sy;
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer, 1, videoram_size);
-	}
-
-	/* for every character in the Video RAM,  */
-	/* check if it has been modified since    */
-	/* last time and update it accordingly.   */
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* The sync generator hardware is used to   */
 	/* draw the bowling alley & scorecards      */
-
-	/* Scoreboards */
 
 	for(offs=15;offs<=63;offs+=24)
 	{
@@ -253,16 +224,18 @@ VIDEO_UPDATE( robotbowl )
 
 	draw_robot_box(bitmap, 39+152, 127);
 	draw_line(bitmap, 39+152,137,47+152,137,0);
+}
 
-	/* Bowling Alley */
-
+static void robotbwl_draw_bowling_alley( struct mame_bitmap *bitmap )
+{
 	draw_line(bitmap, 103,17,103,205,0);
 	draw_line(bitmap, 111,17,111,203,1);
 	draw_line(bitmap, 152,17,152,205,0);
 	draw_line(bitmap, 144,17,144,203,1);
+}
 
-	/* Draw the Ball */
-
+static void robotbwl_draw_ball( struct mame_bitmap *bitmap )
+{
 	drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
 			0,
@@ -271,51 +244,31 @@ VIDEO_UPDATE( robotbowl )
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
 }
 
-VIDEO_UPDATE( crash )
+VIDEO_UPDATE( robotbwl )
 {
-	int offs;
-	int sx,sy;
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer, 1, videoram_size);
-	}
-
-	/* for every character in the Video RAM,    */
-	/* check if it has been modified since      */
-	/* last time and update it accordingly.     */
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Draw the Car */
-	drawgfx(bitmap,Machine->gfx[1],
-			clown_z,
-			0,
-			0,0,
-			clown_y,clown_x, /* Y is horizontal position */
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	robotbwl_draw_scoreboard(bitmap);
+	robotbwl_draw_bowling_alley(bitmap);
+	robotbwl_draw_ball(bitmap);
 }
 
-//AT
-VIDEO_EOF( ripcord )
+static void crash_draw_car( struct mame_bitmap *bitmap )
+{
+	drawgfx(bitmap,Machine->gfx[1],
+		clown_z,
+		0,
+		0,0,
+		clown_y,clown_x, /* Y is horizontal position */
+		&Machine->visible_area,TRANSPARENCY_PEN,0);
+}
+
+VIDEO_UPDATE( crash )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	crash_draw_car(bitmap);
+}
+
+static void ripcord_draw_skydiver( struct mame_bitmap *bitmap )
 {
 	const struct GfxElement *gfx;
 	const struct rectangle *clip;
@@ -323,27 +276,12 @@ VIDEO_EOF( ripcord )
 	UINT8  *src_lineptr, *src_pixptr;
 	UINT16 *dst_lineptr, *dst_lineend;
 	unsigned int code, color;
-	int offs, sx, sy;
+	int sx, sy;
 	int src_pitch, dst_width, dst_height, dst_pitch, dst_pixoffs, dst_pixend;
 	int collision, eax, edx;
 
 	gfx = Machine->gfx[0];
 	clip = &Machine->visible_area;
-
-	// clear the whole screen including non-visible area
-	fillbitmap(tmpbitmap, 0, 0);
-
-	// draw background
-	for (offs=videoram_size-1; offs>=0; offs--)
-	{
-		code = videoram[offs];
-		if (code==0x0c) continue;
-
-		sx = (offs&0x1f) <<3;
-		sy = (offs >> 5) <<3;
-
-		drawgfx(tmpbitmap, gfx, code, 0, 0, 0, sx, sy, clip, TRANSPARENCY_NONE, 0);
-	}
 
 	code = clown_z;
 	color = 0;
@@ -358,22 +296,22 @@ VIDEO_EOF( ripcord )
 	pal_ptr = gfx->colortable + color * gfx->color_granularity;
 	src_lineptr = gfx->gfxdata + code * gfx->char_modulo;
 	src_pitch = gfx->line_modulo;
-	dst_pitch = tmpbitmap->rowpixels;
+	dst_pitch = bitmap->rowpixels;
 
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
-		sx = tmpbitmap->width - sx;
+		sx = bitmap->width - sx;
 		dst_width = -dst_width;
 		edx = -edx;
 	}
 
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
-		sy = tmpbitmap->height - sy;
+		sy = bitmap->height - sy;
 		dst_pitch = -dst_pitch;
 	}
 
-	dst_lineptr = (UINT16*)tmpbitmap->line[sy];
+	dst_lineptr = (UINT16*)bitmap->line[sy];
 	dst_pixend = (sx + dst_width) & 0xff;
 	dst_lineend = dst_lineptr + dst_pitch * dst_height;
 
@@ -412,6 +350,6 @@ VIDEO_EOF( ripcord )
 
 VIDEO_UPDATE( ripcord )
 {
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ripcord_draw_skydiver(bitmap);
 }
-//ZT

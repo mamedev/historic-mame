@@ -1,67 +1,152 @@
 /*
-	Hal21 (possibly bad tile gfx ROMs)
-	ASO (seems fine)
+	Hal21
+	ASO
 	Alpha Mission ('p3.6d' is a bad dump)
 
-	todo:
-	- hal21 gfx
-	- hal21 colors
-	- sound cpu status needs hooked up in both games
-	- virtualize palette (background palette is bank selected) for further speedup
 
-	Revisions:
+Change Log
+----------
 
-	xx-xx-2002 Acho A. Tang
+AT08XX03:
 
-	[HAL21]
-	- added sound
-	- rewrote background and sprite drawing
-	- improved color
-	- modified hardware profile and DIP settings
-	* When you kill a boss and happen to beat the high score or receive a 1up,
-	  the bonus tune will halt the music until the next music change.(a game bug?)
-	* The real HAL21 board has a low-pass filter to supress rings and scratches.
+[Common]
+ - cleaned and consolidated VIDEO_UPDATE()
+ - added shadows and highlights
+
+ * A.S.O and HAL21 do a lot of palette cycling therefore
+   conversion to tilemaps may be disadvantageous.
+   Cocktail mode involves changing tile offsets and sprite
+   coordinates and is still unsupported.
+
+ * Manuals show both boards have noise filters to smooth out
+   rings and scratches which are especially audible in HAL21.
+
+[HAL21]
+ - installed NMI scheduler to prevent music trashing
+
+[ASO]
+ - fixed music and sound effects being cut short
+ - fixed service mode(hold P1 start during ROM test)
+ - improved scrolling and color
+
+ * Stage 5 boss' sky and the first half of stage 6's background
+   appear to have consistent color as shown in Beep! magazine:
+
+     http://qtq.hp.infoseek.co.jp/kouryaku/aso/aso2.jpg
+     http://qtq.hp.infoseek.co.jp/kouryaku/aso/aso3.png
+
+   Compared to MAME these areas are blacked out under pens
+   0xf0-0xff. On the other hand pens 0x170-0x17f suit them
+   perfectly but they are never used in the first two loops.
+   (I played through the game and logged pen usage. Only four
+   color codes have blue pen15 so it's not difficult to tell.)
+
+   There are unknown bits embedded in RGB triplets and the whole
+   upper half of the palette is simply unused. The fact that ASO's
+   color PROMs are identical in every set dismissed bad dumps but
+   increased the likelyhood of proprietary logic which is quite
+   obvious in Touchdown Fever and HAL21.
+
+[TODO]
+ - find out what "really" messes up ASO's scrolling
+ - verify color effects in both games
 */
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "snk.h"
 
+static UINT8 *shared_ram, *shared_auxram;
+static UINT8 *hal21_vreg, *hal21_sndfifo;
 
-extern void tnk3_draw_text( struct mame_bitmap *bitmap, int bank, unsigned char *source );
-extern void tnk3_draw_status( struct mame_bitmap *bitmap, int bank, unsigned char *source );
-static int hal21_id; //AT
-static int scrollx_base; /* this is the only difference in video hardware found so far */
+/**************************************************************************/
+// Test Handlers
 
-static VIDEO_START( common ){
-	dirtybuffer = auto_malloc( 64*64 );
-	if( !dirtybuffer )
-		return 1;
-	tmpbitmap = auto_bitmap_alloc( 512, 512 );
-	if( !tmpbitmap )
-		return 1;
-	memset( dirtybuffer, 1, 64*64  );
-	return 0;
+static WRITE_HANDLER( aso_scroll_sync_w )
+{
+	if (data == 0x7f && shared_auxram[0x04d2] & 1) data++;
+
+	shared_auxram[0x04f8] = data;
 }
 
-VIDEO_START( aso ){
-	scrollx_base = -16;
-	return video_start_common();
+static void hal21_sound_scheduler(int mode, int data)
+{
+	static int busy, hold, ffcount, ffhead, fftail;
+
+	switch (mode)
+	{
+		case 0: // init
+			fftail = ffhead = ffcount = hold = busy = 0;
+		return;
+
+		case 1: // cut-through or capture
+			if (data & ~0x1f) busy = 1; else
+			if (data && busy)
+			{
+				if (ffcount < 16)
+				{
+					ffcount++;
+					hal21_sndfifo[ffhead] = data;
+					ffhead = (ffhead + 1) & 15;
+				}
+				return;
+			}
+		break;
+
+		case 2: // acknowledge
+			if (busy) { busy = 0; hold = 4; }
+		return;
+
+		case 3: // release
+			if (!busy)
+			{
+				if (hold) hold--; else
+				if (ffcount)
+				{
+					ffcount--;
+					data = hal21_sndfifo[fftail];
+					fftail = (fftail + 1) & 15;
+					break;
+				}
+			}
+		return;
+	}
+
+	snk_sound_busy_bit = 0x20;
+	soundlatch_w(0, data);
+	cpu_set_nmi_line(2, PULSE_LINE);
 }
 
-VIDEO_START( hal21 ){
-	hal21_id = 1; //AT
-	scrollx_base = -16; //AT
-	return video_start_common();
-}
+/**************************************************************************/
+
+static READ_HANDLER( hal21_videoram_r ){ return videoram[offset]; }
+static WRITE_HANDLER( hal21_videoram_w ){ videoram[offset] = data; }
+static READ_HANDLER( hal21_spriteram_r ){ return spriteram[offset]; }
+static WRITE_HANDLER( hal21_spriteram_w ){ spriteram[offset] = data; }
+
+static WRITE_HANDLER( hal21_vreg0_w ){ hal21_vreg[0] = data; }
+static WRITE_HANDLER( hal21_vreg1_w ){ hal21_vreg[1] = data; }
+static WRITE_HANDLER( hal21_vreg2_w ){ hal21_vreg[2] = data; }
+static WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
+static WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
+static WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
+static WRITE_HANDLER( hal21_vreg6_w ){ hal21_vreg[6] = data; }
+static WRITE_HANDLER( hal21_vreg7_w ){ hal21_vreg[7] = data; }
+
 
 PALETTE_INIT( aso )
 {
 	int i;
 	int num_colors = 1024;
-/* palette format is RRRG GGBB B??? the three unknown bits are used but */
-/* I'm not sure how, I'm currently using them as least significant bit but */
-/* that's most likely wrong. */
-	for( i=0; i<num_colors; i++ ){
+
+	/*
+		palette format is RRRG GGBB B??? the three unknown bits are used but
+		I'm not sure how, I'm currently using them as least significant bit but
+		that's most likely wrong.
+	*/
+	for( i=0; i<num_colors; i++ )
+	{
 		int bit0=0,bit1,bit2,bit3,r,g,b;
 
 		bit0 = (color_prom[i + 2*num_colors] >> 2) & 0x01;
@@ -84,30 +169,31 @@ PALETTE_INIT( aso )
 
 		palette_set_color(i,r,g,b);
 	}
-//AT: sprite highlights are set by the video hardware
-	if (!strcmp(Machine->gamedrv->name,"hal21") || !strcmp(Machine->gamedrv->name,"hal21j"))
-	{
-		UINT8 r, g, b;
 
-		palette_get_color(384, &r, &g, &b);
+	/* prepare shadow draw table */
+	for (i=0; i<=5; i++) gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 
-		for (i=6; i<0x80; i+=8)
-			palette_set_color(i, r, g, b);
-	}
-//ZT
+	gfx_drawmode_table[6] = DRAWMODE_SHADOW;
+	gfx_drawmode_table[7] = DRAWMODE_NONE;
 }
 
-//AT: needs verification
+VIDEO_START( aso )
+{
+	snk_blink_parity = 0;
+
+	return 0;
+}
+
+
 static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
-								   const struct GfxElement *gfx )
+								const struct GfxElement *gfx )
 {
 	static int color[2] = {8, 8};
 	struct rectangle *cliprect;
-	int c, bankbase, tile_number, x, y, dx, dy, sx, sy, offs, offsx, offsy;
+	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
 	cliprect = &Machine->visible_area;
 	bankbase = attrs<<3 & 0x100;
-
 	c = attrs & 0x0f;
 	if (c > 11) { fillbitmap(bitmap,Machine->pens[(c<<4)+8], cliprect); return; }
 	if (c<8 || color[0]<14 || bankbase)
@@ -117,19 +203,20 @@ static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int 
 		color[1] = (c & 0x08) ? c : 8;
 	}
 
-	offsx = ((scrollx>>3) + 2) & 0x3f;
-	dx = -(scrollx & 7) + 16;
+	offsx = ((scrollx>>3) + 0) & 0x3f;
+	dx = -(scrollx & 7) + 0;
 	offsy = ((scrolly>>3) + 0) & 0x3f;
 	dy = -(scrolly & 7) + 0;
 
-	for (x=0; x<33; x++)
+	for (x=2; x<35; x++)
 		for (y=0; y<28; y++)
 		{
 			offs = (((offsx+x)&0x3f)<<6) + ((offsy+y)&0x3f);
-			tile_number = bankbase + videoram[offs];
-			c = color[tile_number<0x40];
 			sx = (x<<3) + dx;
 			sy = (y<<3) + dy;
+			tile_number = bankbase + videoram[offs];
+			c = (tile_number & ~0x3f) ? color[0] : color[1];
+
 			drawgfx(bitmap, gfx,
 				tile_number, c,
 				0, 0,
@@ -138,12 +225,12 @@ static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int 
 		}
 }
 
-static void hal21_draw_sprites( struct mame_bitmap *bitmap, int xscroll, int yscroll,
+static void hal21_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
 								const struct GfxElement *gfx )
 {
-	UINT8 *sprptr, *endptr;
 	struct rectangle *cliprect;
-	int attrs, tile, x, y, color, fy ,data;
+	UINT8 *sprptr, *endptr;
+	int attrs, tile, x, y, color, fy;
 
 	cliprect = &Machine->visible_area;
 	sprptr = spriteram;
@@ -151,172 +238,119 @@ static void hal21_draw_sprites( struct mame_bitmap *bitmap, int xscroll, int ysc
 
 	for (; sprptr<endptr; sprptr+=4)
 	{
-		data = *(int*)sprptr;
-		if (data && data != -1)
-		{
-			attrs = sprptr[3];
-			tile = sprptr[1] + (attrs<<2 & 0x100);
-			color = attrs & 0x0f;
-			fy = attrs & 0x20;
-			y = (sprptr[0] + (attrs<<4 & 0x100) - yscroll) & 0x1ff;
-			x = (0x100 - (sprptr[2] + (attrs<<1 & 0x100) - xscroll)) & 0x1ff;
-			drawgfx(bitmap, gfx,
-					tile, color,
-					0, fy,
-					x, y,
-					cliprect, TRANSPARENCY_PEN, 7);
-		}
+		if (*(UINT32*)sprptr == 0 || *(UINT32*)sprptr == -1) continue;
+
+		attrs = sprptr[3];
+		tile  = sprptr[1] + (attrs<<2 & 0x100);
+		color = attrs & 0x0f;
+		fy    = attrs & 0x20;
+		y     = (sprptr[0] + (attrs<<4 & 0x100) - scrolly) & 0x1ff;
+		x     = (0x100 - (sprptr[2] + (attrs<<1 & 0x100) - scrollx)) & 0x1ff;
+		if (y > 512-16) y -= 512;
+		if (x > 512-16) x -= 512;
+
+		drawgfx(bitmap, gfx,
+				tile, color,
+				0, fy,
+				x, y,
+				cliprect, TRANSPARENCY_PEN, 7);
 	}
 }
-//ZT
 
-static void aso_draw_background(
-		struct mame_bitmap *bitmap,
-		int scrollx, int scrolly,
-		int bank, int color,
-		const struct GfxElement *gfx )
+static void aso_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
+								const struct GfxElement *gfx )
 {
-	const struct rectangle *clip = &Machine->visible_area;
-	int offs;
+	struct rectangle *cliprect;
+	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
-	static int old_bank, old_color;
+	cliprect = &Machine->visible_area;
+	bankbase = attrs<<4 & 0x300;
+	c = attrs & 0x0f;
+	if (c == 7) c = 15;
 
-	if( color!=old_color || bank!=old_bank ){
-		memset( dirtybuffer, 1, 64*64  );
-		old_bank = bank;
-		old_color = color;
-	}
+	offsx = ((scrollx>>3) + 0) & 0x3f;
+	dx = -(scrollx & 7) + 0;
+	offsy = ((scrolly>>3) + 0) & 0x3f;
+	dy = -(scrolly & 7) + 0;
 
-	for( offs=0; offs<64*64; offs++ ){
-		if( dirtybuffer[offs] ){
-			int tile_number = videoram[offs]+bank*256;
-			int sy = (offs%64)*8;
-			int sx = (offs/64)*8;
+	for (x=2; x<35; x++)
+		for (y=0; y<28; y++)
+		{
+			offs = (((offsx+x)&0x3f)<<6) + ((offsy+y)&0x3f);
+			sx = (x<<3) + dx;
+			sy = (y<<3) + dy;
+			tile_number = bankbase + videoram[offs];
 
-			drawgfx( tmpbitmap,gfx,
-				tile_number,
-				color,
-				0,0, /* no flip */
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-
-			dirtybuffer[offs] = 0;
+			drawgfx(bitmap, gfx,
+				tile_number, c,
+				0, 0,
+				sx, sy,
+				cliprect, TRANSPARENCY_NONE, 0);
 		}
-	}
-
-	copyscrollbitmap(bitmap,tmpbitmap,
-		1,&scrollx,1,&scrolly,
-		clip,
-		TRANSPARENCY_NONE,0);
 }
 
-void aso_draw_sprites(
-		struct mame_bitmap *bitmap,
-		int xscroll, int yscroll,
-		const struct GfxElement *gfx
-){
-	const unsigned char *source = spriteram;
-	const unsigned char *finish = source+60*4;
+static void aso_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
+								const struct GfxElement *gfx )
+{
+	struct rectangle *cliprect;
+	UINT8 *sprptr, *endptr;
+	int attrs, tile, x, y, color;
 
-	struct rectangle clip = Machine->visible_area;
+	cliprect = &Machine->visible_area;
+	sprptr = spriteram;
+	endptr = spriteram + 0x100;
 
-	while( source<finish ){
-		int attributes = source[3]; /* YBBX.CCCC */
-		int tile_number = source[1];
-		int sy = source[0] + ((attributes&0x10)?256:0) - yscroll;
-		int sx = source[2] + ((attributes&0x80)?256:0) - xscroll;
-		int color = attributes&0xf;
+	for (; sprptr<endptr; sprptr+=4)
+	{
+		if (*(UINT32*)sprptr == 0 || *(UINT32*)sprptr == -1) continue;
 
-		if( !(attributes&0x20) ) tile_number += 512;
-		if( attributes&0x40 ) tile_number += 256;
+		attrs = sprptr[3]; /* YBBX.CCCC */
+		tile  = sprptr[1] + (attrs<<2 & 0x100) + (~attrs<<4 & 0x200);
+		color = attrs & 0x0f;
+		y     = (sprptr[0] + (attrs<<4 & 0x100) - scrolly) & 0x1ff;
+		x     = (0x100 - (sprptr[2] + (attrs<<1 & 0x100) - scrollx)) & 0x1ff;
+		if (y > 512-16) y -= 512;
+		if (x > 512-16) x -= 512;
 
-		drawgfx(bitmap,gfx,
-			tile_number,
-			color,
-			0,0,
-			(256-sx)&0x1ff,sy&0x1ff,
-			&clip,TRANSPARENCY_PEN,7);
-
-		source+=4;
+		drawgfx(bitmap, gfx,
+				tile, color,
+				0, 0,
+				x, y,
+				cliprect, TRANSPARENCY_PEN_TABLE, 7);
 	}
 }
 
-int hal21_vreg[6];
+VIDEO_UPDATE( aso )
+{
+	UINT8 *ram = memory_region(REGION_CPU1);
+	int attr, msbs, spsy, spsx, bgsy, bgsx, bank, i;
 
-WRITE_HANDLER( hal21_vreg0_w ){ hal21_vreg[0] = data; }
-WRITE_HANDLER( hal21_vreg1_w ){ hal21_vreg[1] = data; }
-WRITE_HANDLER( hal21_vreg2_w ){ hal21_vreg[2] = data; }
-WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
-WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
-WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
+	attr = (int)hal21_vreg[0];
+	msbs = (int)hal21_vreg[1];
+	spsy = (int)hal21_vreg[2] + (msbs<<5 & 0x100) + 9;
+	spsx = (int)hal21_vreg[3] + (msbs<<8 & 0x100) + 30;
+	bgsy = (int)hal21_vreg[4] + (msbs<<4 & 0x100) - 8;
+	bgsx = (int)hal21_vreg[5] - 16;
 
-VIDEO_UPDATE( aso ){
-	unsigned char *ram = memory_region(REGION_CPU1);
-	int attributes = hal21_vreg[1];
-
+	if (snk_gamegroup)
 	{
-//AT
-#if 0 // old code
-		unsigned char bg_attrs = hal21_vreg[0];
-		int scrolly = -8+hal21_vreg[4]+((attributes&0x10)?256:0);
-		int scrollx = scrollx_base + hal21_vreg[5]+((attributes&0x02)?0:256);
+		hal21_draw_background(bitmap, bgsx+(msbs<<7 & 0x100), bgsy, attr, Machine->gfx[1]);
 
-		aso_draw_background( bitmap, -scrollx, -scrolly,
-			bg_attrs>>4, /* tile bank */
-			bg_attrs&0xf, /* color bank */
-			Machine->gfx[1]
-		);
-#endif
-		int bg_attrs, scrollx, scrolly, shiftx;
+		attr = snk_blink_parity;
+		snk_blink_parity ^= 0xdf;
+		for (i=6; i<0x80; i+=8) { palette_set_color(i, attr, attr, attr); }
 
-		bg_attrs = (int)hal21_vreg[0];
-		scrollx = scrollx_base + hal21_vreg[5];
-		scrolly = (attributes<<4 & 0x100) + hal21_vreg[4] - 8;
-		shiftx = attributes << 7;
-
-		if (hal21_id)
-		{
-			scrollx += shiftx & 0x100;
-			hal21_draw_background(bitmap, scrollx, scrolly, bg_attrs, Machine->gfx[1]);
-		}
-		else
-		{
-			scrollx += ~shiftx & 0x100;
-			aso_draw_background(bitmap, -scrollx, -scrolly, bg_attrs>>4, bg_attrs&0xf, Machine->gfx[1]);
-		}
-//ZT
+		hal21_draw_sprites(bitmap, spsx, spsy, Machine->gfx[2]);
+	}
+	else
+	{
+		aso_draw_background(bitmap, bgsx+(~msbs<<7 & 0x100), bgsy, attr, Machine->gfx[1]);
+		aso_draw_sprites(bitmap, spsx, spsy, Machine->gfx[2]);
 	}
 
-	{
-		int scrollx = 0x1e + hal21_vreg[3] + ((attributes&0x01)?256:0);
-		int scrolly = -8+0x11+hal21_vreg[2] + ((attributes&0x08)?256:0);
-		if (hal21_id) hal21_draw_sprites(bitmap, scrollx, scrolly, Machine->gfx[2]); else //AT
-		aso_draw_sprites( bitmap, scrollx, scrolly, Machine->gfx[2] );
-	}
-
-	{
-		int bank = (attributes&0x40)?1:0;
-		tnk3_draw_text( bitmap, bank, &ram[0xf800] );
-		tnk3_draw_status( bitmap, bank, &ram[0xfc00] );
-	}
-/*
-	{
-		int i;
-		for( i=0; i<6; i++ ){
-			int data = hal21_vreg[i];
-			drawgfx( bitmap, Machine->uifont,
-				"0123456789abcdef"[data>>4],0,0,0,
-				0,i*16,
-				&Machine->visible_area,
-				TRANSPARENCY_NONE,0 );
-			drawgfx( bitmap, Machine->uifont,
-				"0123456789abcdef"[data&0xf],0,0,0,
-				8,i*16,
-				&Machine->visible_area,
-				TRANSPARENCY_NONE,0 );
-		}
-	}
-*/
+	bank = msbs>>6 & 1;
+	tnk3_draw_text(bitmap, bank, &ram[0xf800]);
+	tnk3_draw_status(bitmap, bank, &ram[0xfc00]);
 }
 
 
@@ -324,11 +358,11 @@ INPUT_PORTS_START( hal21 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START /* P1 controls */
@@ -348,7 +382,7 @@ INPUT_PORTS_START( hal21 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-//AT
+
 	PORT_START  /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -395,21 +429,20 @@ INPUT_PORTS_START( hal21 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-//ZT
 INPUT_PORTS_END
 
 /**************************************************************************/
 
 INPUT_PORTS_START( aso )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_VBLANK )  /* ? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -531,94 +564,55 @@ static struct GfxDecodeInfo aso_gfxdecodeinfo[] =
 
 /**************************************************************************/
 
-#define SNK_NMI_ENABLE  1
-#define SNK_NMI_PENDING 2
+static READ_HANDLER( shared_auxram_r ) { return shared_auxram[offset]; }
+static WRITE_HANDLER( shared_auxram_w ) { shared_auxram[offset] = data; }
 
-static int snk_soundcommand = 0;
-static unsigned char *shared_ram, *shared_auxram;
+static READ_HANDLER( shared_ram_r ) { return shared_ram[offset]; }
+static WRITE_HANDLER( shared_ram_w ) { shared_ram[offset] = data; }
 
-static READ_HANDLER( shared_auxram_r ){ return shared_auxram[offset]; }
-static WRITE_HANDLER( shared_auxram_w ){ shared_auxram[offset] = data; }
+static READ_HANDLER( CPUC_ready_r ) { snk_sound_busy_bit = 0; return 0; }
 
-static READ_HANDLER( shared_ram_r ){ return shared_ram[offset]; }
-static WRITE_HANDLER( shared_ram_w ){ shared_ram[offset] = data; }
+static READ_HANDLER( hal21_input_port_0_r ) { return input_port_0_r(0) | snk_sound_busy_bit; }
 
-static int CPUA_latch = 0;
-static int CPUB_latch = 0;
+static WRITE_HANDLER( hal21_soundcommand_w ) { hal21_sound_scheduler(1, data); }
+static WRITE_HANDLER( hal21_soundack_w ) { hal21_sound_scheduler(2, data); }
 
-static WRITE_HANDLER( CPUA_int_enable_w ){
-	if( CPUA_latch & SNK_NMI_PENDING ){
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		CPUA_latch = 0;
-	}
-	else {
-		CPUA_latch |= SNK_NMI_ENABLE;
-	}
+static READ_HANDLER( hal21_soundcommand_r )
+{
+	int data = soundlatch_r(0);
+	soundlatch_clear_w(0, 0);
+	return data;
 }
 
-static READ_HANDLER( CPUA_int_trigger_r ){
-	if( CPUA_latch&SNK_NMI_ENABLE ){
-		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-		CPUA_latch = 0;
-	}
-	else {
-		CPUA_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( CPUB_int_enable_w ){
-	if( CPUB_latch & SNK_NMI_PENDING ){
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		CPUB_latch = 0;
-	}
-	else {
-		CPUB_latch |= SNK_NMI_ENABLE;
-	}
-}
-
-static READ_HANDLER( CPUB_int_trigger_r ){
-	if( CPUB_latch&SNK_NMI_ENABLE ){
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-		CPUB_latch = 0;
-	}
-	else {
-		CPUB_latch |= SNK_NMI_PENDING;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( snk_soundcommand_w ){
-	snk_soundcommand = data;
+static WRITE_HANDLER( aso_soundcommand_w )
+{
+	snk_sound_busy_bit = 0x20;
+	soundlatch_w(0, data);
 	cpu_set_irq_line( 2, 0, HOLD_LINE );
 }
 
-static READ_HANDLER( snk_soundcommand_r )
+static INTERRUPT_GEN( hal21_sound_interrupt )
 {
-	int val = snk_soundcommand;
-	snk_soundcommand = 0;
-	return val;
+	hal21_sound_scheduler(3, 0);
 }
-//AT
-static WRITE_HANDLER( hal21_soundcommand_w ){
-	soundlatch_w(0, data);
-	cpu_set_nmi_line(2, PULSE_LINE);
-}
-//ZT
+
 /**************************************************************************/
 
 static struct YM3526interface ym3526_interface ={
 	1,          /* number of chips */
 	4000000,    /* 4 MHz? (hand tuned) */
-	//{ 50 }      /* (not supported) */
-	{ 100 } //AT: 50% is too soft
+	{ 100 }
 };
 
 static MEMORY_READ_START( aso_readmem_sound )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd000, 0xd000, snk_soundcommand_r },
+	{ 0xd000, 0xd000, hal21_soundcommand_r },
+	{ 0xe000, 0xe000, CPUC_ready_r },
 	{ 0xf000, 0xf000, YM3526_status_port_0_r },
+	{ 0xf002, 0xf002, MRA_NOP }, // unknown read
+	{ 0xf004, 0xf004, MRA_NOP }, // unknown read
+	{ 0xf006, 0xf006, MRA_NOP }, // unknown read
 MEMORY_END
 
 static MEMORY_WRITE_START( aso_writemem_sound )
@@ -632,8 +626,8 @@ MEMORY_END
 
 static struct AY8910interface ay8910_interface = {
 	2, /* number of chips */
-	1500000, //AT: yields better tone
-	{ 30,50 },
+	1500000, // hand tuned
+	{ 25,40 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -643,8 +637,8 @@ static struct AY8910interface ay8910_interface = {
 static MEMORY_READ_START( hal21_readmem_sound )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r }, //AT
-	{ 0xc000, 0xc000, MRA_NOP }, // ack
+	{ 0xa000, 0xa000, hal21_soundcommand_r },
+	{ 0xc000, 0xc000, CPUC_ready_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( hal21_writemem_sound )
@@ -652,52 +646,64 @@ static MEMORY_WRITE_START( hal21_writemem_sound )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xe000, 0xe000, AY8910_control_port_0_w },
 	{ 0xe001, 0xe001, AY8910_write_port_0_w },
-	{ 0xe002, 0xe002, MWA_NOP }, //AT: unknown
+	{ 0xe002, 0xe002, hal21_soundack_w }, // bitfielded(0-5) acknowledge write, details unknown
 	{ 0xe008, 0xe008, AY8910_control_port_1_w },
 	{ 0xe009, 0xe009, AY8910_write_port_1_w },
 MEMORY_END
+
+static PORT_READ_START( hal21_readport_sound )
+	{ 0x0000, 0x0000, MRA_NOP }, // external sound ROM detection?
+PORT_END
+
+static PORT_WRITE_START( hal21_writeport_sound )
+	{ 0x0000, 0x0000, MWA_NOP }, // external sound ROM switch?
+PORT_END
 
 /**************************** ASO/Alpha Mission *************************/
 
 static MEMORY_READ_START( aso_readmem_cpuA )
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc000, input_port_0_r }, /* coin, start */
+	{ 0xc000, 0xc000, hal21_input_port_0_r }, /* coin, start */
 	{ 0xc100, 0xc100, input_port_1_r }, /* P1 */
 	{ 0xc200, 0xc200, input_port_2_r }, /* P2 */
 	{ 0xc500, 0xc500, input_port_3_r }, /* DSW1 */
 	{ 0xc600, 0xc600, input_port_4_r }, /* DSW2 */
-	{ 0xc700, 0xc700, CPUB_int_trigger_r },
-	{ 0xd000, 0xffff, MRA_RAM },
+	{ 0xc700, 0xc700, snk_cpuB_nmi_trigger_r },
+	{ 0xd800, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( aso_writemem_cpuA )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc400, 0xc400, snk_soundcommand_w },
-	{ 0xc700, 0xc700, CPUA_int_enable_w },
+	{ 0xc400, 0xc400, aso_soundcommand_w },
+	{ 0xc700, 0xc700, snk_cpuA_nmi_ack_w },
 	{ 0xc800, 0xc800, hal21_vreg1_w },
 	{ 0xc900, 0xc900, hal21_vreg2_w },
 	{ 0xca00, 0xca00, hal21_vreg3_w },
 	{ 0xcb00, 0xcb00, hal21_vreg4_w },
 	{ 0xcc00, 0xcc00, hal21_vreg5_w },
+	{ 0xcd00, 0xcd00, hal21_vreg6_w },
+	{ 0xce00, 0xce00, hal21_vreg7_w },
 	{ 0xcf00, 0xcf00, hal21_vreg0_w },
+	{ 0xdcf8, 0xdcf8, aso_scroll_sync_w },
 	{ 0xd800, 0xdfff, MWA_RAM, &shared_auxram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram },
-	{ 0xe800, 0xf7ff, videoram_w, &videoram },
+	{ 0xe800, 0xf7ff, MWA_RAM, &videoram },
 	{ 0xf800, 0xffff, MWA_RAM, &shared_ram },
 MEMORY_END
 
 static MEMORY_READ_START( aso_readmem_cpuB )
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc000, CPUA_int_trigger_r },
+	{ 0xc000, 0xc000, snk_cpuA_nmi_trigger_r },
 	{ 0xc800, 0xe7ff, shared_auxram_r },
 	{ 0xe800, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, shared_ram_r },
 MEMORY_END
+
 static MEMORY_WRITE_START( aso_writemem_cpuB )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc000, CPUB_int_enable_w },
+	{ 0xc000, 0xc000, snk_cpuB_nmi_ack_w },
 	{ 0xc800, 0xd7ff, shared_auxram_w },
-	{ 0xd800, 0xe7ff, videoram_w },
+	{ 0xd800, 0xe7ff, hal21_videoram_w },
 	{ 0xe800, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, shared_ram_w },
 MEMORY_END
@@ -706,21 +712,21 @@ MEMORY_END
 
 static MEMORY_READ_START( hal21_readmem_CPUA )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xc000, input_port_0_r }, /* coin, start */
+	{ 0xc000, 0xc000, hal21_input_port_0_r }, /* coin, start */
 	{ 0xc100, 0xc100, input_port_1_r }, /* P1 */
 	{ 0xc200, 0xc200, input_port_2_r }, /* P2 */
 	{ 0xc400, 0xc400, input_port_3_r }, /* DSW1 */
 	{ 0xc500, 0xc500, input_port_4_r }, /* DSW2 */
-	{ 0xc700, 0xc700, CPUB_int_trigger_r },
+	{ 0xc700, 0xc700, snk_cpuB_nmi_trigger_r },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( hal21_writemem_CPUA )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc300, 0xc300, hal21_soundcommand_w }, //AT
+	{ 0xc300, 0xc300, hal21_soundcommand_w },
 	{ 0xc600, 0xc600, hal21_vreg0_w },
-	{ 0xc700, 0xc700, CPUA_int_enable_w },
+	{ 0xc700, 0xc700, snk_cpuA_nmi_ack_w },
 	{ 0xd300, 0xd300, hal21_vreg1_w },
 	{ 0xd400, 0xd400, hal21_vreg2_w },
 	{ 0xd500, 0xd500, hal21_vreg3_w },
@@ -730,56 +736,71 @@ static MEMORY_WRITE_START( hal21_writemem_CPUA )
 	{ 0xf000, 0xffff, MWA_RAM, &shared_ram },
 MEMORY_END
 
-READ_HANDLER( hal21_spriteram_r ){
-	return spriteram[offset];
-}
-WRITE_HANDLER( hal21_spriteram_w ){
-	spriteram[offset] = data;
-}
-
 static MEMORY_READ_START( hal21_readmem_CPUB )
 	{ 0x0000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xcfff, hal21_spriteram_r },
-	{ 0xd000, 0xdfff, MRA_RAM }, /* background */
+	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, shared_ram_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( hal21_writemem_CPUB )
 	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, CPUB_int_enable_w },
+	{ 0xa000, 0xa000, snk_cpuB_nmi_ack_w },
 	{ 0xc000, 0xcfff, hal21_spriteram_w },
-	{ 0xd000, 0xdfff, videoram_w, &videoram },
+	{ 0xd000, 0xdfff, MWA_RAM, &videoram },
 	{ 0xe000, 0xefff, shared_ram_w },
 MEMORY_END
 
 /**************************************************************************/
 
+DRIVER_INIT( aso )
+{
+	hal21_vreg = auto_malloc(16);
+	snk_gamegroup = 0;
+}
+
+DRIVER_INIT( hal21 )
+{
+	hal21_vreg = auto_malloc(24);
+	hal21_sndfifo = hal21_vreg + 8;
+	snk_gamegroup = 1;
+}
+
+MACHINE_INIT( aso )
+{
+	memset(hal21_vreg, 0, 8);
+	hal21_sound_scheduler(0, 0);
+	snk_sound_busy_bit = 0;
+}
+
 static MACHINE_DRIVER_START( aso )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(aso_readmem_cpuA,aso_writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(aso_readmem_cpuB,aso_writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)   /* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(aso_readmem_sound,aso_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)    /* CPU slices per frame */
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
 	MDRV_GFXDECODE(aso_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_MACHINE_INIT(aso)
 
 	MDRV_PALETTE_INIT(aso)
 	MDRV_VIDEO_START(aso)
@@ -790,7 +811,7 @@ static MACHINE_DRIVER_START( aso )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hal21 )
-//AT
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(hal21_readmem_CPUA,hal21_writemem_CPUA)
@@ -803,21 +824,25 @@ static MACHINE_DRIVER_START( hal21 )
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(hal21_readmem_sound,hal21_writemem_sound)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,220) //AT: music tempo, hand tuned
-//ZT
+	MDRV_CPU_PORTS(hal21_readport_sound,hal21_writeport_sound)
+	MDRV_CPU_VBLANK_INT(hal21_sound_interrupt,1)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,220) // music tempo, hand tuned
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)    /* CPU slices per frame */
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_HIGHLIGHTS)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
 	MDRV_GFXDECODE(aso_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
+	MDRV_MACHINE_INIT(aso)
+
 	MDRV_PALETTE_INIT(aso)
-	MDRV_VIDEO_START(hal21)
+	MDRV_VIDEO_START(aso)
 	MDRV_VIDEO_UPDATE(aso)
 
 	/* sound hardware */
@@ -857,7 +882,7 @@ ROM_START( hal21 )
 	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, CRC(5c5ea945) SHA1(f9ce206cab4fad1f6478d731d4b096ec33e7b99f) )
 	ROM_RELOAD(               0x14000, 0x4000 )
 
-	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) //AT: corrected PROM order
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
 	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, CRC(605afff8) SHA1(94e80ebd574b1580dac4a2aebd57e3e767890c0d) )
 	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, CRC(c5d84225) SHA1(cc2cd32f81ed7c1bcdd68e91d00f8081cb706ce7) )
 	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, CRC(195768fc) SHA1(c88bc9552d57d52fb4b030d118f48fedccf563f4) )
@@ -894,7 +919,7 @@ ROM_START( hal21j )
 	ROM_LOAD( "hal21p15.bin", 0x10000, 0x4000, CRC(5c5ea945) SHA1(f9ce206cab4fad1f6478d731d4b096ec33e7b99f) )
 	ROM_RELOAD(               0x14000, 0x4000 )
 
-	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) //AT: corrected PROM order
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
 	ROM_LOAD( "hal21_3.prm",  0x000, 0x400, CRC(605afff8) SHA1(94e80ebd574b1580dac4a2aebd57e3e767890c0d) )
 	ROM_LOAD( "hal21_2.prm",  0x400, 0x400, CRC(c5d84225) SHA1(cc2cd32f81ed7c1bcdd68e91d00f8081cb706ce7) )
 	ROM_LOAD( "hal21_1.prm",  0x800, 0x400, CRC(195768fc) SHA1(c88bc9552d57d52fb4b030d118f48fedccf563f4) )
@@ -930,8 +955,6 @@ ROM_START( aso )
 	ROM_LOAD( "up02_f14.rom",  0x800, 0x00400, CRC(c3fd1dd3) SHA1(c48030cc458f0bebea0ffccf3d3c43260da6a7fb) )
 ROM_END
 
-
-
-GAMEX( 1985, aso,    0,     aso,   aso,   0, ROT270, "SNK", "ASO - Armored Scrum Object", GAME_IMPERFECT_SOUND )
-GAMEX( 1985, hal21,  0,     hal21, hal21, 0, ROT270, "SNK", "HAL21", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, hal21j, hal21, hal21, hal21, 0, ROT270, "SNK", "HAL21 (Japan)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, aso,    0,     aso,   aso,   aso,   ROT270, "SNK", "ASO - Armored Scrum Object", GAME_NO_COCKTAIL )
+GAMEX( 1985, hal21,  0,     hal21, hal21, hal21, ROT270, "SNK", "HAL21", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1985, hal21j, hal21, hal21, hal21, hal21, ROT270, "SNK", "HAL21 (Japan)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )

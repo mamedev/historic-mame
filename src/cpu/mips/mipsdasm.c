@@ -472,7 +472,7 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					{
 						sprintf( buffer, "nct" );
 					}
-				break;
+					break;
 				case 0x0e00013:
 					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
 					{

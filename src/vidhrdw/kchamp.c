@@ -9,14 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* prototypes */
-void kchamp_vs_draw_sprites( struct mame_bitmap *bitmap );
-void kchamp_1p_draw_sprites( struct mame_bitmap *bitmap );
-
-typedef void (*kchamp_draw_spritesproc)( struct mame_bitmap * );
-
-static kchamp_draw_spritesproc kchamp_draw_sprites;
-
 static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( kchamp )
@@ -56,6 +48,11 @@ WRITE_HANDLER( kchamp_colorram_w )
 	}
 }
 
+WRITE_HANDLER( kchamp_flipscreen_w )
+{
+	flip_screen_set(data & 0x01);
+}
+
 static void get_bg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index] + ((colorram[tile_index] & 7) << 8);
@@ -64,10 +61,8 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
-VIDEO_START( kchampvs )
+VIDEO_START( kchamp )
 {
-	kchamp_draw_sprites = kchamp_vs_draw_sprites;
-
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
@@ -77,87 +72,81 @@ VIDEO_START( kchampvs )
 	return 0;
 }
 
-VIDEO_START( kchamp1p )
+/*
+        Sprites
+        -------
+        Offset          Encoding
+            0             YYYYYYYY
+            1             TTTTTTTT
+            2             FGGTCCCC
+            3             XXXXXXXX
+*/
+
+static void kchamp_draw_sprites( struct mame_bitmap *bitmap )
 {
-	kchamp_draw_sprites = kchamp_1p_draw_sprites;
-
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
-
-	if ( !bg_tilemap )
-		return 1;
-
-	return 0;
-}
-
-void kchamp_vs_draw_sprites( struct mame_bitmap *bitmap ) {
-
 	int offs;
-	        /*
-                Sprites
-                -------
-                Offset          Encoding
-                  0             YYYYYYYY
-                  1             TTTTTTTT
-                  2             FGGTCCCC
-                  3             XXXXXXXX
-        */
 
-        for (offs = 0 ;offs < 0x100;offs+=4)
+    for (offs = 0; offs < 0x100; offs += 4)
 	{
-                int numtile = spriteram[offs+1] + ( ( spriteram[offs+2] & 0x10 ) << 4 );
-                int flipx = ( spriteram[offs+2] & 0x80 );
-                int sx, sy;
-                int gfx = 1 + ( ( spriteram[offs+2] & 0x60 ) >> 5 );
-                int color = ( spriteram[offs+2] & 0x0f );
+		int attr = spriteram[offs + 2];
+        int bank = 1 + ((attr & 0x60) >> 5);
+        int code = spriteram[offs + 1] + ((attr & 0x10) << 4);
+        int color = attr & 0x0f;
+		int flipx = 0;
+        int flipy = attr & 0x80;
+        int sx = spriteram[offs + 3] - 8;
+        int sy = 247 - spriteram[offs];
 
-                sx = spriteram[offs+3];
-                sy = 240 - spriteram[offs];
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
-                drawgfx(bitmap,Machine->gfx[gfx],
-                                numtile,
-                                color,
-                                0, flipx,
-                                sx,sy,
-                                &Machine->visible_area,TRANSPARENCY_PEN,0);
+        drawgfx(bitmap, Machine->gfx[bank], code, color, flipx, flipy, sx, sy,
+            &Machine->visible_area, TRANSPARENCY_PEN, 0);
 	}
 }
 
-void kchamp_1p_draw_sprites( struct mame_bitmap *bitmap ) {
-
+static void kchampvs_draw_sprites( struct mame_bitmap *bitmap )
+{
 	int offs;
-	        /*
-                Sprites
-                -------
-                Offset          Encoding
-                  0             YYYYYYYY
-                  1             TTTTTTTT
-                  2             FGGTCCCC
-                  3             XXXXXXXX
-        */
 
-        for (offs = 0 ;offs < 0x100;offs+=4)
+    for (offs = 0; offs < 0x100; offs += 4)
 	{
-                int numtile = spriteram[offs+1] + ( ( spriteram[offs+2] & 0x10 ) << 4 );
-                int flipx = ( spriteram[offs+2] & 0x80 );
-                int sx, sy;
-                int gfx = 1 + ( ( spriteram[offs+2] & 0x60 ) >> 5 );
-                int color = ( spriteram[offs+2] & 0x0f );
+		int attr = spriteram[offs + 2];
+        int bank = 1 + ((attr & 0x60) >> 5);
+        int code = spriteram[offs + 1] + ((attr & 0x10) << 4);
+        int color = attr & 0x0f;
+		int flipx = 0;
+        int flipy = attr & 0x80;
+        int sx = spriteram[offs + 3];
+        int sy = 240 - spriteram[offs];
 
-                sx = spriteram[offs+3] - 8;
-                sy = 247 - spriteram[offs];
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
-                drawgfx(bitmap,Machine->gfx[gfx],
-                                numtile,
-                                color,
-                                0, flipx,
-                                sx,sy,
-                                &Machine->visible_area,TRANSPARENCY_PEN,0);
+        drawgfx(bitmap, Machine->gfx[bank], code, color, flipx, flipy, sx, sy,
+            &Machine->visible_area, TRANSPARENCY_PEN, 0);
 	}
 }
+
 
 VIDEO_UPDATE( kchamp )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	(*kchamp_draw_sprites)(bitmap);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	kchamp_draw_sprites(bitmap);
+}
+
+VIDEO_UPDATE( kchampvs )
+{
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	kchampvs_draw_sprites(bitmap);
 }

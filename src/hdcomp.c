@@ -212,6 +212,7 @@ static void do_create(int argc, char *argv[])
 	header.flags = 0;
 	header.compression = HDCOMPRESSION_ZLIB;
 	header.blocksize = 8;
+	header.version = HARD_DISK_HEADER_VERSION;
 
 	/* print some info */
 	printf("Input file:   %s\n", inputfile);

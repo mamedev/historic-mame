@@ -13,9 +13,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *olibochu_videoram;
-
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( olibochu )
 {
@@ -60,70 +58,122 @@ PALETTE_INIT( olibochu )
 		COLOR(1,i) = (*(color_prom++) & 0x0f);
 }
 
-
-
-VIDEO_UPDATE( olibochu )
+WRITE_HANDLER( olibochu_videoram_w )
 {
-	int offs;
-
-	for (offs = 0;offs < 0x400;offs++)
+	if (videoram[offset] != data)
 	{
-		int sx,sy,attr,flipx,flipy;
-
-		sx = offs % 32;
-		sy = offs / 32;
-		attr = olibochu_videoram[offs + 0x400];
-		flipx = attr & 0x40;
-		flipy = attr & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				olibochu_videoram[offs] + ((attr & 0x20) << 3),
-				(attr & 0x1f) + 0x20,
-				flipx,flipy,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	/* 16x16 sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
-	{
-		int sx,sy,attr,flipx,flipy;
-
-		sx = spriteram[offs+3];
-		sy = ((spriteram[offs+2] + 8) & 0xff) - 8;
-		attr = spriteram[offs+1];
-		flipx = attr & 0x40;
-		flipy = attr & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs],
-				attr & 0x3f,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-	/* 8x8 sprites */
-	for (offs = 0;offs < spriteram_2_size;offs += 4)
-	{
-		int sx,sy,attr,flipx,flipy;
-
-		sx = spriteram_2[offs+3];
-		sy = spriteram_2[offs+2];
-		attr = spriteram_2[offs+1];
-		flipx = attr & 0x40;
-		flipy = attr & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				spriteram_2[offs],
-				attr & 0x3f,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( olibochu_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( olibochu_flipscreen_w )
+{
+	if (flip_screen != (data & 0x80))
+	{
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+
+	/* other bits are used, but unknown */
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x20) << 3);
+	int color = (attr & 0x1f) + 0x20;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( olibochu )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void olibochu_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	/* 16x16 sprites */
+
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		int attr = spriteram[offs+1];
+		int code = spriteram[offs];
+		int color = attr & 0x3f;
+		int flipx = attr & 0x40;
+		int flipy = attr & 0x80;
+		int sx = spriteram[offs+3];
+		int sy = ((spriteram[offs+2] + 8) & 0xff) - 8;
+
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
+	}
+
+	/* 8x8 sprites */
+
+	for (offs = 0;offs < spriteram_2_size;offs += 4)
+	{
+		int attr = spriteram_2[offs+1];
+		int code = spriteram_2[offs];
+		int color = attr & 0x3f;
+		int flipx = attr & 0x40;
+		int flipy = attr & 0x80;
+		int sx = spriteram_2[offs+3];
+		int sy = spriteram_2[offs+2];
+
+		if (flip_screen)
+		{
+			sx = 248 - sx;
+			sy = 248 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[0],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
+	}
+}
+
+VIDEO_UPDATE( olibochu )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	olibochu_draw_sprites(bitmap);
+}
 
 
 static WRITE_HANDLER( sound_command_w )
@@ -142,7 +192,6 @@ static WRITE_HANDLER( sound_command_w )
 }
 
 
-
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -157,9 +206,10 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &olibochu_videoram },
+	{ 0x8000, 0x83ff, olibochu_videoram_w, &videoram },
+	{ 0x8400, 0x87ff, olibochu_colorram_w, &colorram },
 	{ 0xa800, 0xa801, sound_command_w },
-	{ 0xa802, 0xa802, MWA_NOP },	/* bit 6 = enable sound? */
+	{ 0xa802, 0xa802, olibochu_flipscreen_w },	/* bit 6 = enable sound? */
 	{ 0xf000, 0xffff, MWA_RAM },
 	{ 0xf400, 0xf41f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf440, 0xf47f, MWA_RAM, &spriteram_2, &spriteram_2_size },
@@ -368,6 +418,7 @@ static MACHINE_DRIVER_START( olibochu )
 	MDRV_COLORTABLE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(olibochu)
+	MDRV_VIDEO_START(olibochu)
 	MDRV_VIDEO_UPDATE(olibochu)
 
 	/* sound hardware */
@@ -419,4 +470,4 @@ ROM_END
 
 
 
-GAMEX( 1981, olibochu, 0, olibochu, olibochu, 0, ROT270, "Irem + GDI", "Oli-Boo-Chu", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1981, olibochu, 0, olibochu, olibochu, 0, ROT270, "Irem + GDI", "Oli-Boo-Chu", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

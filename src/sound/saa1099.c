@@ -2,7 +2,7 @@
 
 	Philips SAA1099 Sound driver
 
-	This driver emulates a few of the SAA1099 functions
+	By Juergen Buchmueller and Manuel Abadia
 
 	SAA1099 register layout:
 	========================
@@ -359,7 +359,7 @@ static void saa1099_control_port_w( int chip, int reg, int data )
     if ((data & 0xff) > 0x1c)
 	{
 		/* Error! */
-		logerror("%04x: (SAA1099 #%d) Unknown register selected\n",activecpu_get_pc(), chip);
+                logerror("%04x: (SAA1099 #%d) Unknown register selected\n",activecpu_get_pc(), chip);
 	}
 
     saa->selected_reg = data & 0x1f;
@@ -482,3 +482,28 @@ WRITE_HANDLER( saa1099_write_port_1_w )
 {
 	saa1099_write_port_w(1, offset, data);
 }
+
+WRITE16_HANDLER( saa1099_control_port_0_lsb_w )
+{
+	if (ACCESSING_LSB)
+		saa1099_control_port_w(0, offset, data & 0xff);
+}
+
+WRITE16_HANDLER( saa1099_write_port_0_lsb_w )
+{
+	if (ACCESSING_LSB)
+		saa1099_write_port_w(0, offset, data & 0xff);
+}
+
+WRITE16_HANDLER( saa1099_control_port_1_lsb_w )
+{
+	if (ACCESSING_LSB)
+		saa1099_control_port_w(1, offset, data & 0xff);
+}
+
+WRITE16_HANDLER( saa1099_write_port_1_lsb_w )
+{
+	if (ACCESSING_LSB)
+		saa1099_write_port_w(1, offset, data & 0xff);
+}
+

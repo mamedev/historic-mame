@@ -9,8 +9,6 @@
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
 
-#define VEC_SHIFT 16
-
 #define RED   0x04
 #define GREEN 0x02
 #define BLUE  0x01
@@ -27,12 +25,12 @@ void CinemaVectorData(int fromx, int fromy, int tox, int toy, int color)
 	toy = cinemat_screenh - toy;
 
 	if (fromx != lastx || fromx != lasty)
-		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
+		vector_add_point (fromx << 16, fromy << 16, 0, 0);
 
     if (color_display)
-        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, VECTOR_COLOR111(color & 0x07), color & 0x08 ? 0x80: 0x40);
+        vector_add_point (tox << 16, toy << 16, VECTOR_COLOR111(color & 0x07), color & 0x08 ? 0x80: 0x40);
     else
-        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, VECTOR_COLOR111(WHITE), color * 12);
+        vector_add_point (tox << 16, toy << 16, VECTOR_COLOR111(WHITE), color * 12);
 
 	lastx = tox;
 	lasty = toy;
@@ -58,7 +56,6 @@ PALETTE_INIT( cinemat_color )
 
 VIDEO_START( cinemat )
 {
-	vector_set_shift(VEC_SHIFT);
 	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
 	return video_start_vector();
 }

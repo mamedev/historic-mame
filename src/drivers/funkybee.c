@@ -21,7 +21,7 @@ f802	  IN2
 
 write:
 e000	  row scroll
-e800	  ???
+e800	  flip screen
 e802-e803 coin counter
 e804	  ???
 e805	  gfx bank select
@@ -36,19 +36,26 @@ write
 
 AY8910 Port A = DSW
 
+
+Known issues:
+
+* skylancr fires in the same spot regardless of player position when in cocktail mode.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
+extern WRITE_HANDLER( funkybee_videoram_w );
+extern WRITE_HANDLER( funkybee_colorram_w );
+extern WRITE_HANDLER( funkybee_gfx_bank_w );
+extern WRITE_HANDLER( funkybee_scroll_w );
+extern WRITE_HANDLER( funkybee_flipscreen_w );
 
-extern unsigned char *funkyb_row_scroll;
-
-PALETTE_INIT( funkybee );
-VIDEO_UPDATE( funkybee );
-
-WRITE_HANDLER( funkybee_gfx_bank_w );
+extern PALETTE_INIT( funkybee );
+extern VIDEO_START( funkybee );
+extern VIDEO_UPDATE( funkybee );
 
 
 static READ_HANDLER( funkybee_input_port_0_r )
@@ -75,9 +82,10 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xbfff, videoram_w, &videoram, &videoram_size },
-	{ 0xc000, 0xdfff, colorram_w, &colorram },
-	{ 0xe000, 0xe000, MWA_RAM, &funkyb_row_scroll },
+	{ 0xa000, 0xbfff, funkybee_videoram_w, &videoram },
+	{ 0xc000, 0xdfff, funkybee_colorram_w, &colorram },
+	{ 0xe000, 0xe000, funkybee_scroll_w },
+	{ 0xe800, 0xe800, funkybee_flipscreen_w },
 	{ 0xe802, 0xe803, funkybee_coin_counter_w },
 	{ 0xe805, 0xe805, funkybee_gfx_bank_w },
 	{ 0xf800, 0xf800, watchdog_reset_w },
@@ -262,7 +270,7 @@ static MACHINE_DRIVER_START( funkybee )
 	MDRV_COLORTABLE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(funkybee)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(funkybee)
 	MDRV_VIDEO_UPDATE(funkybee)
 
 	/* sound hardware */
@@ -311,6 +319,5 @@ ROM_END
 
 
 
-GAMEX( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca Corporation", "Funky Bee", GAME_NO_COCKTAIL )
-GAMEX( 1983, skylancr, 0, funkybee, skylancr, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer", GAME_NO_COCKTAIL )
-
+GAME( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca", "Funky Bee" )
+GAME( 1983, skylancr, 0, funkybee, skylancr, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer" )

@@ -55,7 +55,7 @@ static int m_n_screenwidth;
 static int m_n_screenheight;
 
 #define MAX_LEVEL ( 32 )
-#define MID_LEVEL ( ( ( MAX_LEVEL - 1 ) / 2 ) << 8 )
+#define MID_LEVEL ( ( MAX_LEVEL / 2 ) << 8 )
 #define MAX_SHADE ( 0x100 )
 #define MID_SHADE ( 0x80 )
 
@@ -649,7 +649,7 @@ static void FlatPolygon( int n_points )
 			n_dx2 = (INT32)( ( COORD_X( m_packet.FlatPolygon.vertex[ n_rightpoint ].n_coord ) << 16 ) - n_cx2.d ) / n_distance;
 		}
 		n_x = n_cx1.w.h;
-		n_distance = n_cx2.w.h - n_x;
+		n_distance = (INT16)n_cx2.w.h - n_x;
 		if( n_distance > 0 && n_y >= m_n_drawarea_y1 && n_y <= m_n_drawarea_y2 )
 		{
 			if( (INT32)( m_n_drawarea_x1 - n_x ) > 0 )
@@ -913,7 +913,7 @@ static void FlatTexturedPolygon( int n_points )
 			n_dv2 = (INT32)( ( TEXTURE_V( m_packet.FlatTexturedPolygon.vertex[ n_rightpoint ].n_texture ) << 16 ) - n_cv2.d ) / n_distance;
 		}
 		n_x = n_cx1.w.h;
-		n_distance = n_cx2.w.h - n_x;
+		n_distance = (INT16)n_cx2.w.h - n_x;
 		if( n_distance > 0 && n_y >= m_n_drawarea_y1 && n_y <= m_n_drawarea_y2 )
 		{
 			n_u.d = n_cu1.d;
@@ -1245,7 +1245,7 @@ static void GouraudPolygon( int n_points )
 			n_db2 = (INT32)( ( BGR_B( m_packet.GouraudPolygon.vertex[ n_rightpoint ].n_bgr ) << 16 ) - n_cb2.d ) / n_distance;
 		}
 		n_x = n_cx1.w.h;
-		n_distance = n_cx2.w.h - n_x;
+		n_distance = (INT16)n_cx2.w.h - n_x;
 		if( n_distance > 0 && n_y >= m_n_drawarea_y1 && n_y <= m_n_drawarea_y2 )
 		{
 			n_r.d = n_cr1.d;
@@ -2262,6 +2262,7 @@ READ32_HANDLER( psxgpu_r )
 
 INTERRUPT_GEN( psx )
 {
+	m_n_gpustatus ^= ( 1L << 31 );
 	psxirq_set( 0x0001 );
 }
 

@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "mamedbg.h"
 #include "mame.h"
+#include "state.h"
 
 
 /* All post-i286 CPUs have a 16MB address space */
@@ -519,5 +520,44 @@ unsigned i286_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-void i286_init(void){ return; }
+void i286_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	const char *type = "I286";
+	state_save_register_UINT16(type, cpu, "REGS",			I.regs.w, 8);
+	state_save_register_int(   type, cpu, "AMASK",			&I.amask);
+	state_save_register_UINT32(type, cpu, "PC",				&I.pc, 1);
+	state_save_register_UINT32(type, cpu, "PREVPC",			&I.prevpc, 1);
+	state_save_register_UINT16(type, cpu, "MSW",			&I.msw, 1);
+	state_save_register_UINT32(type, cpu, "BASE",			I.base, 4);
+	state_save_register_UINT16(type, cpu, "SREGS",			I.sregs, 4);
+	state_save_register_UINT16(type, cpu, "LIMIT",			I.limit, 4);
+	state_save_register_UINT8 (type, cpu, "RIGHTS",			I.rights, 4);
+	state_save_register_UINT32(type, cpu, "GDTR_BASE",		&I.gdtr.base, 1);
+	state_save_register_UINT16(type, cpu, "GDTR_LIMIT",		&I.gdtr.limit, 1);
+	state_save_register_UINT32(type, cpu, "IDTR_BASE",		&I.idtr.base, 1);
+	state_save_register_UINT16(type, cpu, "IDTR_LIMIT",		&I.idtr.limit, 1);
+	state_save_register_UINT16(type, cpu, "LDTR_SEL",		&I.ldtr.sel, 1);
+	state_save_register_UINT32(type, cpu, "LDTR_BASE",		&I.ldtr.base, 1);
+	state_save_register_UINT16(type, cpu, "LDTR_LIMIT",		&I.ldtr.limit, 1);
+	state_save_register_UINT8 (type, cpu, "LDTR_RIGHTS",	&I.ldtr.rights, 1);
+	state_save_register_UINT16(type, cpu, "TR_SEL",			&I.tr.sel, 1);
+	state_save_register_UINT32(type, cpu, "TR_BASE",		&I.tr.base, 1);
+	state_save_register_UINT16(type, cpu, "TR_LIMIT",		&I.tr.limit, 1);
+	state_save_register_UINT8 (type, cpu, "TR_RIGHTS",		&I.tr.rights, 1);
+	state_save_register_int(   type, cpu, "AUXVAL",			&I.AuxVal);
+	state_save_register_int(   type, cpu, "OVERVAL",		&I.OverVal);
+	state_save_register_int(   type, cpu, "SIGNVAL",		&I.SignVal);
+	state_save_register_int(   type, cpu, "ZEROVAL",		&I.ZeroVal);
+	state_save_register_int(   type, cpu, "CARRYVAL",		&I.CarryVal);
+	state_save_register_int(   type, cpu, "DIRVAL",			&I.DirVal);
+	state_save_register_UINT8( type, cpu, "PARITYVAL",		&I.ParityVal, 1);
+	state_save_register_UINT8( type, cpu, "TF",				&I.TF, 1);
+	state_save_register_UINT8( type, cpu, "IF",				&I.IF, 1);
+	state_save_register_UINT8( type, cpu, "INT_VECTOR",		&I.int_vector, 1);
+	state_save_register_INT8(  type, cpu, "NMI_STATE",		&I.nmi_state, 1);
+	state_save_register_INT8(  type, cpu, "IRQ_STATE",		&I.irq_state, 1);
+	state_save_register_int(   type, cpu, "EXTRA_CYCLES",	&I.extra_cycles);
+}
+
 

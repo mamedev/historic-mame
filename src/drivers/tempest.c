@@ -235,9 +235,8 @@ static WRITE_HANDLER( tempest_coin_w )
 	coin_counter_w(0, (data & 0x01));
 	coin_counter_w(1, (data & 0x02));
 	coin_counter_w(2, (data & 0x04));
-	vector_set_flip_x(data & 0x08);
-	vector_set_flip_y(data & 0x10);
-	vector_set_swap_xy(1);	/* vertical game */
+	avg_set_flip_x(data & 0x08);
+	avg_set_flip_y(data & 0x10);
 }
 
 
@@ -433,7 +432,7 @@ static MACHINE_DRIVER_START( tempest )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
-	MDRV_VISIBLE_AREA(0, 550, 0, 580)
+	MDRV_VISIBLE_AREA(0, 580, 0, 570)
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(avg_multi)

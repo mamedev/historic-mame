@@ -187,10 +187,7 @@ $8609 - $860f    High score characters to display to screen for highest score
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* #define FASTSLAPBOOT */
-
 /* VIDHRDW */
-
 extern unsigned char *slapfight_videoram;
 extern unsigned char *slapfight_colorram;
 extern size_t slapfight_videoram_size;
@@ -206,16 +203,13 @@ WRITE_HANDLER( slapfight_videoram_w );
 WRITE_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
-
 MACHINE_INIT( slapfight );
-
 extern unsigned char *slapfight_dpram;
 extern size_t slapfight_dpram_size;
 WRITE_HANDLER( slapfight_dpram_w );
 READ_HANDLER( slapfight_dpram_r );
 
 READ_HANDLER( slapfight_port_00_r );
-
 WRITE_HANDLER( slapfight_port_00_w );
 WRITE_HANDLER( slapfight_port_01_w );
 WRITE_HANDLER( getstar_port_04_w );
@@ -224,15 +218,15 @@ WRITE_HANDLER( slapfight_port_07_w );
 WRITE_HANDLER( slapfight_port_08_w );
 WRITE_HANDLER( slapfight_port_09_w );
 
-
+/* MCU */
 READ_HANDLER( getstar_e803_r );
 READ_HANDLER( tigerh_e803_r );
 WRITE_HANDLER( tigerh_e803_w );
+
 WRITE_HANDLER( getstar_sh_intenable_w );
 INTERRUPT_GEN( getstar_interrupt );
 
 
-/* Driver structure definition */
 
 static MEMORY_READ_START( perfrman_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -273,8 +267,8 @@ static MEMORY_READ_START( readmem )
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },		/* LE 151098 */
-	{ 0xe803, 0xe803, getstar_e803_r }, /* LE 151098 */
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe803, 0xe803, getstar_e803_r },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
@@ -349,7 +343,7 @@ static MEMORY_WRITE_START( perfrman_sound_writemem )
 	{ 0xa082, 0xa082, AY8910_write_port_0_w },
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
-	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
+	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* maybe a0f0 also -LE */
 //	{ 0xa0f0, 0xa0f0, MWA_NOP },
 MEMORY_END
 
@@ -367,7 +361,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xa082, 0xa082, AY8910_write_port_0_w },
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
-	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
+	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* maybe a0f0 also -LE */
 	{ 0xc800, 0xc80f, slapfight_dpram_w },
 	{ 0xc810, 0xcfff, MWA_RAM },
 MEMORY_END
@@ -778,7 +772,7 @@ static MACHINE_DRIVER_START( perfrman )
 
 	MDRV_CPU_ADD(Z80,16000000/8)			/* 2MHz ???, 16MHz Oscillator */
 	MDRV_CPU_MEMORY(perfrman_sound_readmem,perfrman_sound_writemem)
-	MDRV_CPU_VBLANK_INT(getstar_interrupt,6)	/* p'tit Seb 980926 this way it sound much better ! */
+	MDRV_CPU_VBLANK_INT(getstar_interrupt,6)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -841,15 +835,14 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( slapfigh )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_ADD_TAG("main",Z80, 6000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_VBLANK_INT(getstar_interrupt/*nmi_line_pulse*/, 3)    /* p'tit Seb 980926 this way it sound much better ! */
-/*	MDRV_CPU_PERIODIC_INT(slapfight_sound_interrupt, 27306667) */
+	MDRV_CPU_VBLANK_INT(getstar_interrupt, 3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -878,36 +871,9 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( slapbtuk )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_IMPORT_FROM(slapfigh)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem,slapbtuk_writemem)
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 6000000)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_VBLANK_INT(getstar_interrupt/*nmi_line_pulse*/, 3)    /* p'tit Seb 980926 this way it sound much better ! */
-/*	MDRV_CPU_PERIODIC_INT(slapfight_sound_interrupt, 27306667) */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-
-	MDRV_MACHINE_INIT(slapfight)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 36*8-1, 2*8, 32*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(slapfight)
-	MDRV_VIDEO_EOF(perfrman)
-	MDRV_VIDEO_UPDATE(slapfight)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -979,7 +945,7 @@ ROM_START( tigerh )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a47_03.bin",   0x0000,  0x2000, CRC(d105260f) SHA1(f6a0e393e29354bb37fb723828f3267d030a45ea) )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing!) */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing) */
 	ROM_LOAD( "a47_14.mcu",   0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1013,7 +979,7 @@ ROM_START( tigerh2 )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a47_03.bin",   0x0000,  0x2000, CRC(d105260f) SHA1(f6a0e393e29354bb37fb723828f3267d030a45ea) )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing!) */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing) */
 	ROM_LOAD( "a47_14.mcu",   0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1047,7 +1013,7 @@ ROM_START( tigerhj )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a47_03.bin",   0x0000,  0x2000, CRC(d105260f) SHA1(f6a0e393e29354bb37fb723828f3267d030a45ea) )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing!) */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the 68705 (missing) */
 	ROM_LOAD( "a47_14.mcu",   0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1362,23 +1328,23 @@ ROM_END
 
 static DRIVER_INIT( tigerh )
 {
-	/*TODO:tigerh and tigerhj requires different memory mapped scroll registers*/
 	install_mem_read_handler(0,  0xe803, 0xe803, tigerh_e803_r );
 	install_mem_write_handler(0, 0xe803, 0xe803, tigerh_e803_w );
 }
 
+
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT    MONITOR COMPANY    FULLNAME     FLAGS ) */
 GAME ( 1985, perfrman, 0,        perfrman, perfrman, 0,    	 ROT270, "[Toaplan] Data East Corporation", "Performan (Japan)" )
 GAME ( 1985, perfrmau, perfrman, perfrman, perfrman, 0,   	 ROT270, "[Toaplan] Data East USA", 		"Performan (US)" )
-GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   tigerh, ROT270, "Taito", 	"Tiger Heli (set 1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito", 	"Tiger Heli (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito", 	"Tiger Heli (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAME ( 1985, tigerhb1, tigerh,   tigerh,   tigerh,   0, 	 ROT270, "bootleg", "Tiger Heli (bootleg 1)" )
-GAMEX( 1985, tigerhb2, tigerh,   tigerh,   tigerh,   0,      ROT270, "bootleg", "Tiger Heli (bootleg 2)", GAME_NO_COCKTAIL )
-GAMEX( 1986, slapfigh, 0,        slapfigh, slapfigh, 0,      ROT270, "Taito", 	"Slap Fight", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0,      ROT270, "bootleg", "Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0, 	 ROT270, "bootleg", "Slap Fight (English bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0, 	 ROT270, "<unknown>", "Alcon", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1986, getstar,  0,        slapfigh, getstar,  0, 	 ROT0,   "Taito", "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1986, getstarj, getstar,  slapfigh, getstar,  0, 	 ROT0,   "Taito", "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1986, getstarb, getstar,  slapfigh, getstar,  0, 	 ROT0,   "bootleg", "Get Star (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   tigerh, ROT270, "Taito America Corp.", 			"Tiger Heli (US)", GAME_NO_COCKTAIL )
+GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito Corp.", 					"Tiger Heli (Japan set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito Corp.", 					"Tiger Heli (Japan set 2)", GAME_NO_COCKTAIL )
+GAME ( 1985, tigerhb1, tigerh,   tigerh,   tigerh,   0, 	 ROT270, "bootleg", 						"Tiger Heli (bootleg set 1)" )
+GAMEX( 1985, tigerhb2, tigerh,   tigerh,   tigerh,   0,      ROT270, "bootleg", 						"Tiger Heli (bootleg set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1986, slapfigh, 0,        slapfigh, slapfigh, 0,      ROT270, "Taito", 							"Slap Fight", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0,      ROT270, "bootleg",	 						"Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0, 	 ROT270, "bootleg", 						"Slap Fight (English bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0, 	 ROT270, "<unknown>", 						"Alcon", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, getstar,  0,        slapfigh, getstar,  0, 	 ROT0,   "Taito", 							"Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, getstarj, getstar,  slapfigh, getstar,  0, 	 ROT0,   "Taito", 							"Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, getstarb, getstar,  slapfigh, getstar,  0, 	 ROT0,   "bootleg", 						"Get Star (bootleg)", GAME_NO_COCKTAIL )

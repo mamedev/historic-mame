@@ -11,14 +11,18 @@ driver by Mirko Buffoni
 #include "cpu/m6809/m6809.h"
 
 
-extern unsigned char *ironhors_scroll;
-static unsigned char *ironhors_interrupt_enable;
+extern UINT8 *ironhors_scroll;
+static UINT8 *ironhors_interrupt_enable;
 
-PALETTE_INIT( ironhors );
-WRITE_HANDLER( ironhors_palettebank_w );
-WRITE_HANDLER( ironhors_charbank_w );
-VIDEO_UPDATE( ironhors );
+extern WRITE_HANDLER( ironhors_videoram_w );
+extern WRITE_HANDLER( ironhors_colorram_w );
+extern WRITE_HANDLER( ironhors_palettebank_w );
+extern WRITE_HANDLER( ironhors_charbank_w );
+extern WRITE_HANDLER( ironhors_flipscreen_w );
 
+extern PALETTE_INIT( ironhors );
+extern VIDEO_START( ironhors );
+extern VIDEO_UPDATE( ironhors );
 
 
 static INTERRUPT_GEN( ironhors_interrupt )
@@ -48,7 +52,6 @@ static WRITE_HANDLER( ironhors_filter_w )
 }
 
 
-
 static MEMORY_READ_START( ironhors_readmem )
 	{ 0x0020, 0x003f, MRA_RAM },
 	{ 0x0900, 0x0900, input_port_5_r },	/* Dipswitch settings 2 */
@@ -69,9 +72,9 @@ static MEMORY_WRITE_START( ironhors_writemem )
 	{ 0x0800, 0x0800, soundlatch_w },
 	{ 0x0900, 0x0900, ironhors_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
 	{ 0x0a00, 0x0a00, ironhors_palettebank_w },	/* + coin counters */
-	{ 0x0b00, 0x0b00, watchdog_reset_w },
-	{ 0x2000, 0x23ff, colorram_w, &colorram },
-	{ 0x2400, 0x27ff, videoram_w, &videoram, &videoram_size },
+	{ 0x0b00, 0x0b00, ironhors_flipscreen_w },
+	{ 0x2000, 0x23ff, ironhors_colorram_w, &colorram },
+	{ 0x2400, 0x27ff, ironhors_videoram_w, &videoram },
 	{ 0x2800, 0x2fff, MWA_RAM },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram_2 },
 	{ 0x3100, 0x37ff, MWA_RAM },
@@ -211,16 +214,13 @@ INPUT_PORTS_START( ironhors )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
 	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
 	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
 	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dairesya )
@@ -317,16 +317,13 @@ INPUT_PORTS_START( dairesya )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
 	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
 	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
 	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -345,7 +342,7 @@ static struct GfxLayout ironhors_charlayout =
 static struct GfxLayout ironhors_spritelayout =
 {
 	16,16,
-	RGN_FRAC(1,1),
+	512,
 	4,
 	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -427,7 +424,7 @@ static MACHINE_DRIVER_START( ironhors )
 	MDRV_CPU_MEMORY(ironhors_readmem,ironhors_writemem)
 	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
 
-	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_ADD_TAG("sound",Z80,18432000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
 	MDRV_CPU_MEMORY(ironhors_sound_readmem,ironhors_sound_writemem)
 	MDRV_CPU_PORTS(ironhors_sound_readport,ironhors_sound_writeport)
@@ -444,7 +441,7 @@ static MACHINE_DRIVER_START( ironhors )
 	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
 	MDRV_PALETTE_INIT(ironhors)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(ironhors)
 	MDRV_VIDEO_UPDATE(ironhors)
 
 	/* sound hardware */
@@ -453,33 +450,12 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( farwest )
+	MDRV_IMPORT_FROM(ironhors)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809,18432000/6)        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
-	MDRV_CPU_MEMORY(ironhors_readmem,ironhors_writemem)
-	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(farwest_sound_readmem, farwest_sound_writemem)
 
-	MDRV_CPU_ADD(Z80,18432000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
-	MDRV_CPU_MEMORY(farwest_sound_readmem,farwest_sound_writemem)
-
-	MDRV_FRAMES_PER_SECOND(30)
-	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(farwest_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
-
-	MDRV_PALETTE_INIT(ironhors)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(ironhors)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
 
@@ -563,6 +539,6 @@ ROM_END
 
 
 
-GAMEX( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse", GAME_NO_COCKTAIL )
-GAMEX( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse" )
+GAME( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)" )
+GAMEX(1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING )

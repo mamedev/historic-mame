@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 extern data16_t *welltris_charvideoram;
@@ -126,6 +127,8 @@ WRITE16_HANDLER( welltris_palette_bank_w )
 			charpalettebank = (data & 0x03) ;
 			tilemap_mark_all_tiles_dirty(char_tilemap);
 		}
+
+		flip_screen_set(data & 0x80);
 	}
 }
 

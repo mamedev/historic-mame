@@ -16,7 +16,6 @@ NMI is used to refresh the sprites
 IRQ is used to handle coin inputs
 
 Known issues:
-- flipscreen isn't implemented for sprites
 - coin counter isn't working properly (interrupt related?)
 
 Memory Map (Preliminary):
@@ -110,10 +109,10 @@ extern VIDEO_START( renegade );
 WRITE_HANDLER( renegade_scroll0_w );
 WRITE_HANDLER( renegade_scroll1_w );
 WRITE_HANDLER( renegade_videoram_w );
-WRITE_HANDLER( renegade_textram_w );
+WRITE_HANDLER( renegade_videoram2_w );
 WRITE_HANDLER( renegade_flipscreen_w );
 
-extern unsigned char *renegade_textram;
+extern UINT8 *renegade_videoram2;
 
 /********************************************************************************************/
 
@@ -149,7 +148,7 @@ static WRITE_HANDLER( sound_w )
 */
 
 static int mcu_type;
-static const unsigned char *mcu_encrypt_table;
+static const UINT8 *mcu_encrypt_table;
 static int mcu_encrypt_table_len;
 
 static const UINT8 renegade_xor_table[0x37] = {
@@ -179,7 +178,7 @@ DRIVER_INIT( renegade )
 }
 
 #define MCU_BUFFER_MAX 6
-static unsigned char mcu_buffer[MCU_BUFFER_MAX];
+static UINT8 mcu_buffer[MCU_BUFFER_MAX];
 static size_t mcu_input_size;
 static int mcu_output_byte;
 static int mcu_key;
@@ -221,7 +220,7 @@ static void mcu_process_command( void )
 		case 0x26: /* sound code -> sound command */
 		{
 			int sound_code = mcu_buffer[1];
-			static const unsigned char sound_command_table[256] = {
+			static const UINT8 sound_command_table[256] = {
 				0xa0,0xa1,0xa2,0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8a,0x8b,0x8c,
 				0x8d,0x8e,0x8f,0x97,0x96,0x9b,0x9a,0x95,0x9e,0x98,0x90,0x93,0x9d,0x9c,0xa3,0x91,
 				0x9f,0x99,0xa6,0xae,0x94,0xa5,0xa4,0xa7,0x92,0xab,0xac,0xb0,0xb1,0xb2,0xb3,0xb4,
@@ -247,7 +246,7 @@ static void mcu_process_command( void )
 		case 0x33: /* joy bits -> joy dir */
 		{
 			int joy_bits = mcu_buffer[2];
-			static const unsigned char joy_table[0x10] = {
+			static const UINT8 joy_table[0x10] = {
 				0,3,7,0,1,2,8,0,5,4,6,0,0,0,0,0
 			};
 			mcu_buffer[0] = 1;
@@ -259,7 +258,7 @@ static void mcu_process_command( void )
 		{
 			int difficulty = mcu_buffer[2]&0x3;
 			int stage = mcu_buffer[3];
-			const unsigned char difficulty_table[4] = { 5,3,1,2 };
+			const UINT8 difficulty_table[4] = { 5,3,1,2 };
 			int result = difficulty_table[difficulty];
 			if( stage==0 ) result--;
 			result += stage/4;
@@ -361,7 +360,7 @@ static WRITE_HANDLER( bankswitch_w )
 {
 	if( (data&1)!=bank )
 	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
+		UINT8 *RAM = memory_region(REGION_CPU1);
 		bank = data&1;
 		cpu_setbank(1,&RAM[ bank?0x10000:0x4000 ]);
 	}
@@ -391,8 +390,9 @@ static INTERRUPT_GEN( renegade_interrupt )
 
 static WRITE_HANDLER( renegade_coin_counter_w )
 {
-	coin_counter_w(offset,data);
+	//coin_counter_w(offset,data);
 }
+
 
 /********************************************************************************************/
 
@@ -410,7 +410,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, renegade_textram_w, &renegade_textram },
+	{ 0x1800, 0x1fff, renegade_videoram2_w, &renegade_videoram2 },
 	{ 0x2000, 0x27ff, MWA_RAM, &spriteram },
 	{ 0x2800, 0x2fff, renegade_videoram_w, &videoram },
 	{ 0x3000, 0x30ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
@@ -421,7 +421,7 @@ static MEMORY_WRITE_START( main_writemem )
 	{ 0x3803, 0x3803, renegade_flipscreen_w },
 	{ 0x3804, 0x3804, mcu_w },
 	{ 0x3805, 0x3805, bankswitch_w },
-	{ 0x3806, 0x3806, MWA_NOP }, /* watchdog? */
+	{ 0x3806, 0x3806, MWA_NOP }, // ?? watchdog
 	{ 0x3807, 0x3807, renegade_coin_counter_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -478,7 +478,7 @@ INPUT_PORTS_START( renegade )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 	/* 68705 status */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* 68705 status */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START /* DIP1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
@@ -821,7 +821,6 @@ ROM_END
 
 
 
-GAMEX( 1986, renegade, 0,		 renegade, renegade, renegade, ROT0, "Technos (Taito America license)", "Renegade (US)", GAME_NO_COCKTAIL )
-GAMEX( 1986, kuniokun, renegade, renegade, renegade, kuniokun, ROT0, "Technos", "Nekketsu Kouha Kunio-kun (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, kuniokub, renegade, renegade, renegade, 0, 	   ROT0, "bootleg", "Nekketsu Kouha Kunio-kun (Japan bootleg)", GAME_NO_COCKTAIL )
-
+GAME( 1986, renegade, 0,		 renegade, renegade, renegade, ROT0, "Technos (Taito America license)", "Renegade (US)" )
+GAME( 1986, kuniokun, renegade, renegade, renegade, kuniokun, ROT0, "Technos", "Nekketsu Kouha Kunio-kun (Japan)" )
+GAME( 1986, kuniokub, renegade, renegade, renegade, 0, 	   ROT0, "bootleg", "Nekketsu Kouha Kunio-kun (Japan bootleg)" )

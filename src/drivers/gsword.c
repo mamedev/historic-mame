@@ -139,23 +139,22 @@ reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
 #include "cpu/z80/z80.h"
 #include "machine/tait8741.h"
 
-PALETTE_INIT( josvolly );
-PALETTE_INIT( gsword );
-VIDEO_START( gsword );
-VIDEO_UPDATE( gsword );
-WRITE_HANDLER( gs_charbank_w );
-WRITE_HANDLER( gs_videoctrl_w );
-WRITE_HANDLER( gs_videoram_w );
 
+extern WRITE_HANDLER( gsword_charbank_w );
+extern WRITE_HANDLER( gsword_videoctrl_w );
+extern WRITE_HANDLER( gsword_videoram_w );
+extern WRITE_HANDLER( gsword_scroll_w );
 
-extern size_t gs_videoram_size;
-extern size_t gs_spritexy_size;
+extern PALETTE_INIT( josvolly );
+extern PALETTE_INIT( gsword );
+extern VIDEO_START( gsword );
+extern VIDEO_UPDATE( gsword );
 
-extern unsigned char *gs_videoram;
-extern unsigned char *gs_scrolly_ram;
-extern unsigned char *gs_spritexy_ram;
-extern unsigned char *gs_spritetile_ram;
-extern unsigned char *gs_spriteattrib_ram;
+extern size_t gsword_spritexy_size;
+
+extern UINT8 *gsword_spritexy_ram;
+extern UINT8 *gsword_spritetile_ram;
+extern UINT8 *gsword_spriteattrib_ram;
 
 static int coins;
 static int fake8910_0,fake8910_1;
@@ -302,13 +301,13 @@ MEMORY_END
 static MEMORY_WRITE_START( gsword_writemem )
 	{ 0x0000, 0x8fff, MWA_ROM },
 	{ 0x9000, 0x9fff, MWA_RAM },
-	{ 0xa380, 0xa3ff, MWA_RAM, &gs_spritetile_ram },
-	{ 0xa780, 0xa7ff, MWA_RAM, &gs_spritexy_ram, &gs_spritexy_size },
-	{ 0xa980, 0xa980, gs_charbank_w },
-	{ 0xaa80, 0xaa80, gs_videoctrl_w },	/* flip screen, char palette bank */
-	{ 0xab00, 0xab00, MWA_RAM, &gs_scrolly_ram },
-	{ 0xab80, 0xabff, MWA_RAM, &gs_spriteattrib_ram },
-	{ 0xb000, 0xb7ff, gs_videoram_w, &gs_videoram, &gs_videoram_size },
+	{ 0xa380, 0xa3ff, MWA_RAM, &gsword_spritetile_ram },
+	{ 0xa780, 0xa7ff, MWA_RAM, &gsword_spritexy_ram, &gsword_spritexy_size },
+	{ 0xa980, 0xa980, gsword_charbank_w },
+	{ 0xaa80, 0xaa80, gsword_videoctrl_w },	/* flip screen, char palette bank */
+	{ 0xab00, 0xab00, gsword_scroll_w },
+	{ 0xab80, 0xabff, MWA_RAM, &gsword_spriteattrib_ram },
+	{ 0xb000, 0xb7ff, gsword_videoram_w, &videoram },
 MEMORY_END
 
 static MEMORY_READ_START( readmem_cpu2 )
@@ -735,7 +734,7 @@ ROM_END
 
 static DRIVER_INIT( gsword )
 {
-	unsigned char *ROM2 = memory_region(REGION_CPU2);
+	UINT8 *ROM2 = memory_region(REGION_CPU2);
 
 	ROM2[0x1da] = 0xc3; /* patch for rom self check */
 	ROM2[0x726] = 0;    /* patch for sound protection or time out function */

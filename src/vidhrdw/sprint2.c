@@ -1,449 +1,210 @@
 /***************************************************************************
 
-	Atari Sprint 2 hardware
+	Atari Sprint 2 video emulation
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include "sprint2.h"
 
-unsigned char *sprint2_horiz_ram;
-unsigned char *sprint2_vert_car_ram;
-unsigned char *sprint2_sound_ram;
+UINT8* sprint2_video_ram;
 
-static struct mame_bitmap *back_vid;
-static struct mame_bitmap *grey_cars_vid;
-static struct mame_bitmap *black_car_vid;
-static struct mame_bitmap *white_car_vid;
+static struct tilemap* tilemap;
+static struct mame_bitmap* helper;
 
-#define WHITE_CAR   0
-#define BLACK_CAR   1
-#define GREY_CAR1   2
-#define GREY_CAR2   3
+static int collision[2];
 
-/***************************************************************************
-***************************************************************************/
+
+static void get_tile_info(int tile_index)
+{
+	UINT8 code = sprint2_video_ram[tile_index];
+
+	SET_TILE_INFO(0, code & 0x3f, code >> 7, 0)
+}
+
 
 VIDEO_START( sprint2 )
 {
-	if (video_start_generic())
-		return 1;
+	helper = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 
-	if ((back_vid = auto_bitmap_alloc(16,8)) == 0)
+	if (helper == NULL)
+	{
 		return 1;
+	}
 
-	if ((grey_cars_vid = auto_bitmap_alloc(16,8)) == 0)
-		return 1;
+	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 
-	if ((black_car_vid = auto_bitmap_alloc(16,8)) == 0)
+	if (tilemap == NULL)
+	{
 		return 1;
-
-	if ((white_car_vid = auto_bitmap_alloc(16,8)) == 0)
-		return 1;
+	}
 
 	return 0;
 }
 
-/***************************************************************************
-sprint2_check_collision
 
-It might seem strange to put the collision-checking routine in vidhrdw.
-However, the way Sprint2 hardware collision-checking works is by sending
-the video signals for the grey cars, white car, black car, black background,
-and white background through a series of logic gates.  This effectively checks
-for collisions at a pixel-by-pixel basis.  So we'll do the same thing, but
-with a little bit of smarts - there can only be collisions where the black
-car and white car are located, so we'll base our checks on these two locations.
-
-We can't just check the color of the main bitmap at a given location, because one
-of our video signals might have overdrawn another one.  So here's what we do:
-1)  Redraw the background, grey cars, black car, and white car into separate
-bitmaps, but clip to where the white car is located.
-2)  Scan through the bitmaps, apply the logic from the logic gates and look
-for a collision (Collision1).
-3)  Redraw the background, grey cars, black car, and white car into separate
-bitmaps, but clip to where the black car is located.
-4)  Scan through the bitmaps, apply the logic from the logic gates, and look
-for a collision (Collision2).
-***************************************************************************/
-
-void sprint2_check_collision1(struct mame_bitmap *bitmap)
+READ_HANDLER( sprint2_collision1_r )
 {
-    int sx,sy,org_x,org_y;
-    struct rectangle clip;
-    int offs;
-
-    clip.min_x=0;
-    clip.max_x=15;
-    clip.min_y=0;
-    clip.max_y=7;
-
-    /* Clip in relation to the white car. */
-
-    org_x=30*8-sprint2_horiz_ram[WHITE_CAR];
-    org_y=31*8-sprint2_vert_car_ram[WHITE_CAR*2];
-
-    fillbitmap(back_vid,Machine->pens[1],&clip);
-    fillbitmap(grey_cars_vid,Machine->pens[1],&clip);
-    fillbitmap(white_car_vid,Machine->pens[1],&clip);
-    fillbitmap(black_car_vid,Machine->pens[1],&clip);
-
-    /* Draw the background - a car can overlap up to 6 background squares. */
-    /* This could be optimized by not drawing all 6 every time. */
-
-    offs=((org_y/8)*32) + ((org_x/8)%32);
-
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=((org_y/8)*32) + (((org_x+8)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=((org_y/8)*32) + (((org_x+16)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + ((org_x/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + (((org_x+8)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + (((org_x+16)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-
-    /* Grey car 1 */
-    sx=30*8-sprint2_horiz_ram[GREY_CAR1];
-    sy=31*8-sprint2_vert_car_ram[GREY_CAR1*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(grey_cars_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[GREY_CAR1*2+1]>>3), GREY_CAR1,
-            0,0,sx,sy,&clip,TRANSPARENCY_NONE,0);
-
-    /* Grey car 2 */
-    sx=30*8-sprint2_horiz_ram[GREY_CAR2];
-    sy=31*8-sprint2_vert_car_ram[GREY_CAR2*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(grey_cars_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[GREY_CAR2*2+1]>>3), GREY_CAR2,
-            0,0,sx,sy,&clip,TRANSPARENCY_COLOR,1);
-
-
-    /* Black car */
-    sx=30*8-sprint2_horiz_ram[BLACK_CAR];
-    sy=31*8-sprint2_vert_car_ram[BLACK_CAR*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(black_car_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[BLACK_CAR*2+1]>>3), BLACK_CAR,
-            0,0,sx,sy,&clip,TRANSPARENCY_NONE,0);
-
-    /* White car */
-    drawgfx(white_car_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[WHITE_CAR*2+1]>>3), WHITE_CAR,
-            0,0,0,0,&clip,TRANSPARENCY_NONE,0);
-
-    /* Now check for Collision1 */
-    for (sy=0;sy<8;sy++)
-    {
-        for (sx=0;sx<16;sx++)
-        {
-                if (read_pixel(white_car_vid, sx, sy)==Machine->pens[3])
-                {
-					int back_pixel;
-
-                    /* Condition 1 - white car = black car */
-                    if (read_pixel(black_car_vid, sx, sy)==Machine->pens[0])
-                        sprint2_collision1_data|=0x40;
-
-                    /* Condition 2 - white car = grey cars */
-                    if (read_pixel(grey_cars_vid, sx, sy)==Machine->pens[2])
-                        sprint2_collision1_data|=0x40;
-
-                    back_pixel = read_pixel(back_vid, sx, sy);
-
-                    /* Condition 3 - white car = black playfield (oil) */
-                    if (back_pixel==Machine->pens[0])
-                        sprint2_collision1_data|=0x40;
-
-                    /* Condition 4 - white car = white playfield (track) */
-                    if (back_pixel==Machine->pens[3])
-                        sprint2_collision1_data|=0x80;
-               }
-        }
-    }
-
+	return collision[0];
+}
+READ_HANDLER( sprint2_collision2_r )
+{
+	return collision[1];
 }
 
-void sprint2_check_collision2(struct mame_bitmap *bitmap)
+
+WRITE_HANDLER( sprint2_collision_reset1_w )
 {
-
-    int sx,sy,org_x,org_y;
-    struct rectangle clip;
-    int offs;
-
-    clip.min_x=0;
-    clip.max_x=15;
-    clip.min_y=0;
-    clip.max_y=7;
-
-    /* Clip in relation to the black car. */
-
-    org_x=30*8-sprint2_horiz_ram[BLACK_CAR];
-    org_y=31*8-sprint2_vert_car_ram[BLACK_CAR*2];
-
-    fillbitmap(back_vid,Machine->pens[1],&clip);
-    fillbitmap(grey_cars_vid,Machine->pens[1],&clip);
-    fillbitmap(white_car_vid,Machine->pens[1],&clip);
-    fillbitmap(black_car_vid,Machine->pens[1],&clip);
-
-    /* Draw the background - a car can overlap up to 6 background squares. */
-    /* This could be optimized by not drawing all 6 every time. */
-
-    offs=((org_y/8)*32) + ((org_x/8)%32);
-
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=((org_y/8)*32) + (((org_x+8)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=((org_y/8)*32) + (((org_x+16)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + ((org_x/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + (((org_x+8)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-    offs=(((org_y+8)/8)*32) + (((org_x+16)/8)%32);
-    sx = 8 * (offs % 32)-org_x;
-    sy = 8 * (offs / 32)-org_y;
-
-    drawgfx(back_vid,Machine->gfx[0],
-            videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
-			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
-
-
-
-
-    /* Grey car 1 */
-    sx=30*8-sprint2_horiz_ram[GREY_CAR1];
-    sy=31*8-sprint2_vert_car_ram[GREY_CAR1*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(grey_cars_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[GREY_CAR1*2+1]>>3), GREY_CAR1,
-            0,0,sx,sy,&clip,TRANSPARENCY_NONE,0);
-
-    /* Grey car 2 */
-    sx=30*8-sprint2_horiz_ram[GREY_CAR2];
-    sy=31*8-sprint2_vert_car_ram[GREY_CAR2*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(grey_cars_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[GREY_CAR2*2+1]>>3), GREY_CAR2,
-            0,0,sx,sy,&clip,TRANSPARENCY_COLOR,1);
-
-
-    /* White car */
-    sx=30*8-sprint2_horiz_ram[WHITE_CAR];
-    sy=31*8-sprint2_vert_car_ram[WHITE_CAR*2];
-    sx=sx-org_x;
-    sy=sy-org_y;
-
-    drawgfx(white_car_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[WHITE_CAR*2+1]>>3), WHITE_CAR,
-            0,0,sx,sy,&clip,TRANSPARENCY_NONE,0);
-
-    /* Black car */
-    drawgfx(black_car_vid,Machine->gfx[1],
-            (sprint2_vert_car_ram[BLACK_CAR*2+1]>>3), BLACK_CAR,
-            0,0,0,0,&clip,TRANSPARENCY_NONE,0);
-
-    /* Now check for Collision2 */
-    for (sy=0;sy<8;sy++)
-    {
-        for (sx=0;sx<16;sx++)
-        {
-                if (read_pixel(black_car_vid, sx, sy)==Machine->pens[0])
-                {
-					int back_pixel;
-
-                    /* Condition 1 - black car = white car */
-                    if (read_pixel(white_car_vid, sx, sy)==Machine->pens[3])
-                        sprint2_collision2_data|=0x40;
-
-                    /* Condition 2 - black car = grey cars */
-                    if (read_pixel(grey_cars_vid, sx, sy)==Machine->pens[2])
-                        sprint2_collision2_data|=0x40;
-
-                    back_pixel = read_pixel(back_vid, sx, sy);
-
-                    /* Condition 3 - black car = black playfield (oil) */
-                    if (back_pixel==Machine->pens[0])
-                        sprint2_collision2_data|=0x40;
-
-                    /* Condition 4 - black car = white playfield (track) */
-                    if (back_pixel==Machine->pens[3])
-                        sprint2_collision2_data|=0x80;
-               }
-        }
-    }
+	collision[0] = 0;
+}
+WRITE_HANDLER( sprint2_collision_reset2_w )
+{
+	collision[1] = 0;
 }
 
-/***************************************************************************
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-static VIDEO_UPDATE( sprint )
+WRITE_HANDLER( sprint2_video_ram_w )
 {
-	int offs,car;
-
-    /* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (data != sprint2_video_ram[offset])
 	{
-		if (dirtybuffer[offs])
+		tilemap_mark_tile_dirty(tilemap, offset);
+	}
+
+	sprint2_video_ram[offset] = data;
+}
+
+
+static UINT8 collision_check(struct rectangle* rect)
+{
+	UINT8 data = 0;
+
+	int x;
+	int y;
+
+	for (y = rect->min_y; y <= rect->max_y; y++)
+	{
+		for (x = rect->min_x; x <= rect->max_x; x++)
 		{
-			int charcode;
-			int sx,sy;
+			pen_t a = read_pixel(helper, x, y);
 
-			dirtybuffer[offs]=0;
-
-			charcode = videoram[offs] & 0x3f;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, (videoram[offs] & 0x80)>>7,
-					0,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			if (a == 0)
+			{
+				data |= 0x40;
+			}
+			if (a == 3)
+			{
+				data |= 0x80;
+			}
 		}
 	}
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Draw each one of our four cars */
-	for (car=3;car>=0;car--)
-	{
-		int sx,sy;
-
-		sx=30*8-sprint2_horiz_ram[car];
-		sy=31*8-sprint2_vert_car_ram[car*2];
-
-		drawgfx(bitmap,Machine->gfx[1],
-				(sprint2_vert_car_ram[car*2+1]>>3), car,
-				0,0,sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,1);
-	}
-
-	/* Refresh our collision detection buffers */
-	sprint2_check_collision1(bitmap);
-	sprint2_check_collision2(bitmap);
-
-	/* Weird, but we have to update our sound registers here. */
-	for (offs = 2;offs >= 0;offs--)
-	{
-		discrete_sound_w(2 + offs, sprint2_sound_ram[offs] % 16);
-	}
+	return data;
 }
 
 
-static void draw_gear_indicator(int gear, struct mame_bitmap *bitmap, int x, int color)
+static int get_sprite_code(int n)
 {
-	/* gear shift indicators - not a part of the original game!!! */
-
-	char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
-	int offs;
-
-	gear_buf[5] = 0x30 + gear;
-	for (offs = 0; offs < 6; offs++)
-		drawgfx(bitmap,Machine->gfx[0],
-				gear_buf[offs],color,
-				0,0,(x+offs)*8,28*8,
-				&Machine->visible_area,TRANSPARENCY_NONE,0);
+	return sprint2_video_ram[0x398 + 2 * n + 1] >> 3;
+}
+static int get_sprite_x(int n)
+{
+	return 2 * (248 - sprint2_video_ram[0x390 + 1 * n]);
+}
+static int get_sprite_y(int n)
+{
+	return 1 * (248 - sprint2_video_ram[0x398 + 2 * n]);
 }
 
 
 VIDEO_UPDATE( sprint2 )
 {
-	video_update_sprint(bitmap,0);
+	int i;
 
-	draw_gear_indicator(sprint2_gear1, bitmap, 25, 1);
-	draw_gear_indicator(sprint2_gear2, bitmap, 1 , 0);
+	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	
+	/* draw the sprites */
+
+	for (i = 0; i < 4; i++)
+	{
+		drawgfx(bitmap, Machine->gfx[1],
+			get_sprite_code(i),
+			i,
+			0, 0,
+			get_sprite_x(i),
+			get_sprite_y(i),
+			cliprect, TRANSPARENCY_PEN, 0);
+	}
 }
 
-VIDEO_UPDATE( sprint1 )
-{
-	video_update_sprint(bitmap,0);
 
-	draw_gear_indicator(sprint2_gear1, bitmap, 12, 1);
+VIDEO_EOF( sprint2 )
+{
+	int i;
+	int j;
+
+	/*
+	 * Collisions are detected for both player cars:
+	 *
+	 * D7 => collision w/ white playfield
+	 * D6 => collision w/ black playfield or another car
+	 *
+	 */
+
+	for (i = 0; i < 2; i++)
+	{
+		struct rectangle rect;
+
+		rect.min_x = get_sprite_x(i);
+		rect.min_y = get_sprite_y(i);
+		rect.max_x = get_sprite_x(i) + Machine->gfx[1]->width - 1;
+		rect.max_y = get_sprite_y(i) + Machine->gfx[1]->height - 1;
+
+		if (rect.min_x < Machine->visible_area.min_x)
+			rect.min_x = Machine->visible_area.min_x;
+		if (rect.min_y < Machine->visible_area.min_y)
+			rect.min_y = Machine->visible_area.min_y;
+		if (rect.max_x > Machine->visible_area.max_x)
+			rect.max_x = Machine->visible_area.max_x;
+		if (rect.max_y > Machine->visible_area.max_y)
+			rect.max_y = Machine->visible_area.max_y;
+
+		/* check for sprite-tilemap collisions */
+
+		tilemap_draw(helper, &rect, tilemap, 0, 0);
+
+		drawgfx(helper, Machine->gfx[1],
+			get_sprite_code(i),
+			0,
+			0, 0,
+			get_sprite_x(i),
+			get_sprite_y(i),
+			&rect, TRANSPARENCY_PEN, 1);
+
+		collision[i] |= collision_check(&rect);
+
+		/* check for sprite-sprite collisions */
+
+		for (j = 0; j < 4; j++)
+		{
+			if (j != i)
+			{
+				drawgfx(helper, Machine->gfx[1],
+					get_sprite_code(j),
+					1,
+					0, 0,
+					get_sprite_x(j),
+					get_sprite_y(j),
+					&rect, TRANSPARENCY_PEN, 0);
+			}
+		}
+
+		drawgfx(helper, Machine->gfx[1],
+			get_sprite_code(i),
+			0,
+			0, 0,
+			get_sprite_x(i),
+			get_sprite_y(i),
+			&rect, TRANSPARENCY_PEN, 1);
+
+		collision[i] |= collision_check(&rect);
+	}
 }

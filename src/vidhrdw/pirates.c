@@ -3,6 +3,7 @@
 
 data16_t *pirates_tx_tileram, *pirates_spriteram;
 data16_t *pirates_fg_tileram,  *pirates_bg_tileram;
+data16_t *pirates_scroll;
 
 static struct tilemap *tx_tilemap, *fg_tilemap, *bg_tilemap;
 
@@ -40,8 +41,10 @@ static void get_bg_tile_info(int tile_index)
 VIDEO_START(pirates)
 {
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,36,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,36,32);
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,36,32);
+
+	/* Not sure how big they can be, Pirates uses only 32 columns, Genix 44 */
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,32);
 
 	if (!tx_tilemap || !fg_tilemap || !bg_tilemap)
 		return 1;
@@ -109,6 +112,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE(pirates)
 {
+	tilemap_set_scrollx(bg_tilemap,0,pirates_scroll[0]);
+	tilemap_set_scrollx(fg_tilemap,0,pirates_scroll[0]);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);

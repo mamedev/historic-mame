@@ -9,12 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *ironhors_scroll;
+static int palettebank, charbank, spriterambank;
 
-
-unsigned char *ironhors_scroll;
-static int palettebank,charbank,spriterambank;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -92,166 +90,184 @@ PALETTE_INIT( ironhors )
 	}
 }
 
+WRITE_HANDLER( ironhors_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( ironhors_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( ironhors_charbank_w )
 {
-	if (charbank != (data & 3))
+	if (charbank != (data & 0x03))
 	{
-		charbank = data & 3;
-		memset(dirtybuffer,1,videoram_size);
+		charbank = data & 0x03;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
-	spriterambank = data & 8;
+	spriterambank = data & 0x08;
 
 	/* other bits unknown */
 }
 
-
-
 WRITE_HANDLER( ironhors_palettebank_w )
 {
-	if (palettebank != (data & 7))
+	if (palettebank != (data & 0x07))
 	{
-		palettebank = data & 7;
-		memset(dirtybuffer,1,videoram_size);
+		palettebank = data & 0x07;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
-	coin_counter_w(0,data & 0x10);
-	coin_counter_w(1,data & 0x20);
+	coin_counter_w(0, data & 0x10);
+	coin_counter_w(1, data & 0x20);
 
 	/* bit 6 unknown - set after game over */
 
-if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
+	if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
 }
 
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( ironhors )
+WRITE_HANDLER( ironhors_flipscreen_w )
 {
-	int offs,i;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (flip_screen != (~data & 0x08))
 	{
-		if (dirtybuffer[offs])
+		flip_screen_set(~data & 0x08);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+
+	/* other bits are used too, but unknown */
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x40) << 2) +
+		((colorram[tile_index] & 0x20) << 4) + (charbank << 10);
+	int color = (colorram[tile_index] & 0x0f) + 16 * palettebank;
+	int flags = ((colorram[tile_index] & 0x10) ? TILE_FLIPX : 0) |
+		((colorram[tile_index] & 0x20) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( ironhors )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void ironhors_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+	UINT8 *sr;
+
+	if (spriterambank != 0)
+		sr = spriteram;
+	else
+		sr = spriteram_2;
+
+	for (offs = 0;offs < spriteram_size;offs += 5)
+	{
+		int sx = sr[offs+3];
+		int sy = sr[offs+2];
+		int flipx = sr[offs+4] & 0x20;
+		int flipy = sr[offs+4] & 0x40;
+		int code = (sr[offs] << 2) + ((sr[offs+1] & 0x03) << 10) + ((sr[offs+1] & 0x0c) >> 2);
+		int color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
+	//	int mod = flip_screen ? -8 : 8;
+
+		if (flip_screen)
 		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x40)<<2) + ((colorram[offs] & 0x20)<<4) + (charbank<<10),
-					(colorram[offs] & 0x0f) + 16 * palettebank,
-					colorram[offs] & 0x10,colorram[offs] & 0x20,
-					sx,sy,
-					0,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
-	}
 
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		for (i = 0;i < 32;i++)
-			scroll[i] = -(ironhors_scroll[i]);
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. */
-	{
-		unsigned char *sr;
-
-
-		if (spriterambank != 0)
-			sr = spriteram;
-		else sr = spriteram_2;
-
-		for (offs = 0;offs < spriteram_size;offs += 5)
+		switch (sr[offs+4] & 0x0c)
 		{
-			int sx,sy,flipx,flipy,code,color;
+			case 0x00:	/* 16x16 */
+				drawgfx(bitmap,Machine->gfx[1],
+						code/4,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
+				break;
 
+			case 0x04:	/* 16x8 */
+				{
+					if (flip_screen) sy += 8; // this fixes the train wheels' position
 
-			sx = sr[offs+3];
-			sy = sr[offs+2];
-			flipx = sr[offs+4] & 0x20;
-			flipy = sr[offs+4] & 0x40;
-			code = (sr[offs] << 2) + ((sr[offs+1] & 0x03) << 10) + ((sr[offs+1] & 0x0c) >> 2);
-			color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
+					drawgfx(bitmap,Machine->gfx[2],
+							code & ~1,
+							color,
+							flipx,flipy,
+							flipx?sx+8:sx,sy,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,Machine->gfx[2],
+							code | 1,
+							color,
+							flipx,flipy,
+							flipx?sx:sx+8,sy,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+				}
+				break;
 
-			switch (sr[offs+4] & 0x0c)
-			{
-				case 0x00:	/* 16x16 */
-					drawgfx(bitmap,Machine->gfx[1],
-							code/4,
+			case 0x08:	/* 8x16 */
+				{
+					drawgfx(bitmap,Machine->gfx[2],
+							code & ~2,
+							color,
+							flipx,flipy,
+							sx,flipy?sy+8:sy,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,Machine->gfx[2],
+							code | 2,
+							color,
+							flipx,flipy,
+							sx,flipy?sy:sy+8,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+				}
+				break;
+
+			case 0x0c:	/* 8x8 */
+				{
+					drawgfx(bitmap,Machine->gfx[2],
+							code,
 							color,
 							flipx,flipy,
 							sx,sy,
 							&Machine->visible_area,TRANSPARENCY_PEN,0);
-					break;
-
-				case 0x04:	/* 16x8 */
-					{
-						drawgfx(bitmap,Machine->gfx[2],
-								code & ~1,
-								color,
-								flipx,flipy,
-								flipx?sx+8:sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0);
-						drawgfx(bitmap,Machine->gfx[2],
-								code | 1,
-								color,
-								flipx,flipy,
-								flipx?sx:sx+8,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0);
-					}
-					break;
-
-				case 0x08:	/* 8x16 */
-					{
-						drawgfx(bitmap,Machine->gfx[2],
-								code & ~2,
-								color,
-								flipx,flipy,
-								sx,flipy?sy+8:sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0);
-						drawgfx(bitmap,Machine->gfx[2],
-								code | 2,
-								color,
-								flipx,flipy,
-								sx,flipy?sy:sy+8,
-								&Machine->visible_area,TRANSPARENCY_PEN,0);
-					}
-					break;
-
-				case 0x0c:	/* 8x8 */
-					{
-						drawgfx(bitmap,Machine->gfx[2],
-								code,
-								color,
-								flipx,flipy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0);
-					}
-					break;
-			}
+				}
+				break;
 		}
 	}
+}
+
+VIDEO_UPDATE( ironhors )
+{
+	int row;
+
+	for (row = 0; row < 32; row++)
+		tilemap_set_scrollx(bg_tilemap, row, ironhors_scroll[row]);
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ironhors_draw_sprites(bitmap);
 }

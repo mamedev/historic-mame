@@ -194,6 +194,18 @@ PALETTE_INIT( sailormn )
 			colortable[color * 64 + pen + 0x4c00] = 0xc00 + (color % (64/4)) * 64 + pen;
 }
 
+PALETTE_INIT( pwrinst2 )
+{
+	int color, pen;
+
+	for( color = 0; color < 0x80; color++ )
+		for( pen = 0; pen < 16; pen++ )
+			colortable[color * 256 + pen] = color * 16 + pen;
+
+	for( color = 0x8000; color < Machine->drv->color_table_len; color++ )
+			colortable[color] = (color - 0x8000) % Machine->drv->total_colors;
+}
+
 /***************************************************************************
 
 								  Tiles Format
@@ -446,6 +458,10 @@ int cave_vh_start( int num )
 			break;
 		case 2:		/* uopoko dfeveron */
 			background_color = 0x3f00;
+			break;
+		case 4:		/* pwrinst2 */
+			background_color = 0x7f00;
+			cave_layers_offs_y++;
 	}
 
 	return 0;
@@ -654,7 +670,12 @@ static void get_sprite_info_donpachi(void)
 		attr		=		source[ 0 ];
 		code		=		source[ 1 ] + ((attr & 3) << 16);
 		x			=		source[ 2 ] & 0x3FF;
-		y			=		source[ 3 ] & 0x3FF;
+
+		if (cave_spritetype == 3)	/* pwrinst2 */
+			y = (source[ 3 ]+1) & 0x3FF;
+		else
+			y = source[ 3 ] & 0x3FF;
+
 		size		=		source[ 4 ];
 
 		sprite->tile_width		=	sprite->total_width		=	( (size >> 8) & 0x1f ) * 16;
@@ -674,10 +695,19 @@ static void get_sprite_info_donpachi(void)
 		flipx		=		attr & 0x0008;
 		flipy		=		attr & 0x0004;
 
-		sprite->priority		=	(attr & 0x0030) >> 4;
+		if (cave_spritetype == 3)	/* pwrinst2 */
+		{
+			sprite->priority		=	((attr & 0x0010) >> 4)+2;
+			sprite->pal_data		=	base_pal + (attr & 0x3f00) + 0x4000*((attr & 0x0020) >> 5);
+		}
+		else
+		{
+			sprite->priority		=	(attr & 0x0030) >> 4;
+			sprite->pal_data		=	base_pal + (attr & 0x3f00);	// first 0x4000 colors
+		}
+
 		sprite->flags			=	SPRITE_VISIBLE_CAVE;
 		sprite->line_offset		=	sprite->tile_width;
-		sprite->pal_data		=	base_pal + (attr & 0x3f00);	// first 0x4000 colors
 
 		if (glob_flipx)	{ x = max_x - x - sprite->total_width;	flipx = !flipx; }
 		if (glob_flipy)	{ y = max_y - y - sprite->total_height;	flipy = !flipy; }

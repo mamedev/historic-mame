@@ -135,6 +135,7 @@
 ****************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "machine/atarigen.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/m68000/m68000.h"
@@ -143,6 +144,7 @@
 
 
 #define LOG_BLITS			0
+#define LOG_BAD_BLITS		0
 #define LOG_BLITTER_STATS	0
 
 
@@ -475,16 +477,7 @@ void jaguar_set_palette(UINT16 vmode)
 
 static UINT8 *get_jaguar_memory(UINT32 offset)
 {
-	offset &= 0xffffff;
-	if (offset < 0x800000)
-		return (UINT8 *)jaguar_shared_ram + offset;
-	else if (offset >= 0xf03000 && offset < 0xf04000)
-		return (UINT8 *)jaguar_gpu_ram + offset - 0xf03000;
-	else if (offset >= 0xf1b000 && offset < 0xf1d000)
-		return (UINT8 *)jaguar_dsp_ram + offset - 0xf1b000;
-
-	logerror("get_jaguar_memory(%X)\n", offset);
-	return NULL;
+	return memory_get_read_ptr(1, offset);
 }
 
 
@@ -729,6 +722,12 @@ VIDEO_START( cojag )
 		return 1;
 
 	vi_timer = timer_alloc(vi_callback);
+
+	state_save_register_UINT32("cojag", 0, "pen_table",     pen_table,      65536);
+	state_save_register_UINT32("cojag", 0, "blitter_regs",  blitter_regs,   BLITTER_REGS);
+	state_save_register_UINT16("cojag", 0, "gpu_regs",      gpu_regs,       GPU_REGS);
+	state_save_register_UINT8 ("cojag", 0, "cpu_irq_state", &cpu_irq_state, 1);
+	state_save_register_func_postload(update_cpu_irq);
 	return 0;
 }
 

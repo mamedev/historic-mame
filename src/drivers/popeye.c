@@ -21,17 +21,20 @@ Notes:
 #include "cpu/z80/z80.h"
 
 
-extern data8_t *popeye_background_pos;
-extern data8_t *popeye_palettebank;
-extern data8_t *popeye_textram;
-WRITE_HANDLER( popeye_backgroundram_w );
-WRITE_HANDLER( popeye_bitmap_w );
-WRITE_HANDLER( skyskipr_bitmap_w );
-PALETTE_INIT( popeye );
-PALETTE_INIT( popeyebl );
-VIDEO_START( skyskipr );
-VIDEO_START( popeye );
-VIDEO_UPDATE( popeye );
+extern UINT8 *popeye_background_pos;
+extern UINT8 *popeye_palettebank;
+
+extern WRITE_HANDLER( popeye_videoram_w );
+extern WRITE_HANDLER( popeye_colorram_w );
+extern WRITE_HANDLER( popeye_backgroundram_w );
+extern WRITE_HANDLER( popeye_bitmap_w );
+extern WRITE_HANDLER( skyskipr_bitmap_w );
+
+extern PALETTE_INIT( popeye );
+extern PALETTE_INIT( popeyebl );
+extern VIDEO_START( skyskipr );
+extern VIDEO_START( popeye );
+extern VIDEO_UPDATE( popeye );
 
 
 
@@ -92,7 +95,8 @@ static MEMORY_WRITE_START( skyskipr_writemem )
 	{ 0x8c03, 0x8c03, MWA_RAM, &popeye_palettebank },
 	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8e80, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM, &popeye_textram },
+	{ 0xa000, 0xa3ff, popeye_videoram_w, &videoram },
+	{ 0xa400, 0xa7ff, popeye_colorram_w, &colorram },
 	{ 0xc000, 0xcfff, skyskipr_bitmap_w },
 	{ 0xe000, 0xe001, protection_w },
 MEMORY_END
@@ -114,7 +118,8 @@ static MEMORY_WRITE_START( popeye_writemem )
 	{ 0x8c03, 0x8c03, MWA_RAM, &popeye_palettebank },
 	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8e80, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM, &popeye_textram },
+	{ 0xa000, 0xa3ff, popeye_videoram_w, &videoram },
+	{ 0xa400, 0xa7ff, popeye_colorram_w, &colorram },
 	{ 0xc000, 0xdfff, popeye_bitmap_w },
 	{ 0xe000, 0xe001, protection_w },
 MEMORY_END
@@ -134,7 +139,8 @@ static MEMORY_WRITE_START( popeyebl_writemem )
 	{ 0x8c03, 0x8c03, MWA_RAM, &popeye_palettebank },
 	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8e80, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, MWA_RAM, &popeye_textram },
+	{ 0xa000, 0xa3ff, popeye_videoram_w, &videoram },
+	{ 0xa400, 0xa7ff, popeye_colorram_w, &colorram },
 	{ 0xc000, 0xcfff, skyskipr_bitmap_w },
 	{ 0xe000, 0xe01f, MWA_ROM },
 MEMORY_END
@@ -661,8 +667,8 @@ ROM_END
 
 DRIVER_INIT( skyskipr )
 {
-	unsigned char *buffer;
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *buffer;
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int len = 0x10000;
 
 	/* decrypt the program ROMs */
@@ -678,8 +684,8 @@ DRIVER_INIT( skyskipr )
 
 DRIVER_INIT( popeye )
 {
-	unsigned char *buffer;
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *buffer;
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int len = 0x10000;
 
 	/* decrypt the program ROMs */

@@ -424,7 +424,7 @@ static const struct overlay_piece *overlay_list;
 ***************************************************************************/
 
 static int artwork_prep(void);
-static int artwork_load(const struct GameDriver *gamename, int width, int height);
+static int artwork_load(const struct GameDriver *gamename, int width, int height, const struct artwork_callbacks *callbacks);
 static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rgb32_components[3]);
 static int load_bitmap(const char *gamename, struct artwork_piece *piece);
 static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original);
@@ -595,7 +595,7 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 	to osd_create_display
 -------------------------------------------------*/
 
-int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components)
+int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components, const struct artwork_callbacks *callbacks)
 {
 	int original_width = params->width;
 	int original_height = params->height;
@@ -610,9 +610,9 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 
 	/* first load the artwork; if none, quit now */
 	artwork_list = NULL;
-	if (!artwork_load(Machine->gamedrv, original_width, original_height))
+	if (!artwork_load(Machine->gamedrv, original_width, original_height, callbacks))
 		return 1;
-	if (!artwork_list)
+	if (!artwork_list && (!callbacks->activate_artwork || !callbacks->activate_artwork(params)))
 		return osd_create_display(params, rgb_components);
 
 	/* determine the game bitmap scale factor */
@@ -841,28 +841,20 @@ void artwork_update_video_and_audio(struct mame_display *display)
 
 
 /*-------------------------------------------------
-	artwork_save_snapshot - save a snapshot
+	artwork_override_screenshot_params - override
+	certain parameters when saving a screenshot
 -------------------------------------------------*/
 
-void artwork_save_snapshot(struct mame_bitmap *bitmap)
+void artwork_override_screenshot_params(struct mame_bitmap **bitmap, UINT32 *rgb_components)
 {
-	if ((bitmap == Machine->scrbitmap || bitmap == uioverlay) && artwork_list)
+	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_list)
 	{
-		struct rectangle temprect = screenrect;
-		UINT32 saved_rgb_components[3];
-
 		/* snapshots require correct direct_rgb_components */
-		memcpy(saved_rgb_components, direct_rgb_components, sizeof(saved_rgb_components));
-		direct_rgb_components[0] = 0xff << rshift;
-		direct_rgb_components[1] = 0xff << gshift;
-		direct_rgb_components[2] = 0xff << bshift;
-
-		osd_save_snapshot(final, &temprect);
-
-		memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
+		rgb_components[0] = 0xff << rshift;
+		rgb_components[1] = 0xff << gshift;
+		rgb_components[2] = 0xff << bshift;
+		*bitmap = final;
 	}
-	else
-		osd_save_snapshot(bitmap, &Machine->visible_area);
 }
 
 
@@ -1962,6 +1954,32 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 
 
 
+/*-------------------------------------------------
+	artwork_load_artwork_file - default MAME way
+	to locate an artwork file
+-------------------------------------------------*/
+
+mame_file *artwork_load_artwork_file(const struct GameDriver *driver)
+{
+	char filename[100];
+	mame_file *artfile = NULL;
+
+	while (driver)
+	{
+		if (driver->name)
+		{
+			sprintf(filename, "%s.art", driver->name);
+			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
+			if (artfile)
+				break;
+		}
+		driver = driver->clone_of;
+	}
+	return artfile;
+}
+
+
+
 #if 0
 #pragma mark -
 #pragma mark BITMAP LOADING/MANIPULATING
@@ -1972,12 +1990,11 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 	read all the bitmaps
 -------------------------------------------------*/
 
-static int artwork_load(const struct GameDriver *driver, int width, int height)
+static int artwork_load(const struct GameDriver *driver, int width, int height, const struct artwork_callbacks *callbacks)
 {
 	const struct overlay_piece *list = overlay_list;
 	struct artwork_piece *piece;
-	char filename[100];
-	mame_file *artfile = NULL;
+	mame_file *artfile;
 	int result;
 
 	/* reset the list of artwork */
@@ -1996,17 +2013,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 		return 0;
 
 	/* attempt to open the .ART file; if none, that's okay */
-	while (driver)
-	{
-		if (driver->name)
-		{
-			sprintf(filename, "%s.art", driver->name);
-			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
-			if (artfile)
-				break;
-		}
-		driver = driver->clone_of;
-	}
+	artfile = callbacks->load_artwork(driver);
 	if (!artfile && !list)
 		return 1;
 

@@ -700,7 +700,7 @@ static MACHINE_DRIVER_START( jack )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18000000/6)	/* 3 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* jack needs 1 or its too fast */
 
 	MDRV_CPU_ADD(Z80,18000000/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz */
@@ -723,6 +723,16 @@ static MACHINE_DRIVER_START( jack )
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( tripool )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jack)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2) /* tripool needs 2 or the palette is broken */
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -1030,5 +1040,5 @@ GAME( 1982, zzyzzyx2, zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics 
 GAME( 1982, brix,     zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
 GAME( 1984, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
 GAME( 1984, sucasino, 0,        jack, sucasino, jack,     ROT90, "Data Amusement", "Super Casino" )
-GAME( 1981, tripool,  0,        jack, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
-GAME( 1981, tripoola, tripool,  jack, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )
+GAME( 1981, tripool,  0,        tripool, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
+GAME( 1981, tripoola, tripool,  tripool, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )

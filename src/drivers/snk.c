@@ -3,11 +3,8 @@ snk.c
 various SNK triple Z80 games
 
 Known Issues:
-- sound glitches:
-	Psycho Soldier: some samples aren't played
 - consolidate gfx decode/drivers, if possible
 - emulate protection (get rid of patches)
-- translucency issues in Bermuda Triangle? (see brick tiles in title screen)
 
 Bryan McPhail, 27/01/00:
 
@@ -101,13 +98,83 @@ Stephh's notes (based on the games Z80 code and some tests) :
 
 
 AT042903:
-
  - fixed Psycho Soldier lyrics tempo
  - fixed char layer alignment in Fighting Golf, Athena and TNK3
  - cleaned garbage tiles in Bermuda Triangle and improved sprite priority
  - corrected tile ROM loading in Bermuda(alt)/Worldwar
  - corrected sound ROM loading and palette in Touchdown Fever
  - various sprite adjustments from MAME32 plus
+
+AT08XX03:
+ - revamped CPU handshaking, improved clipping and made changes public to
+   marvins.c, hal21.c and sgladiat.c
+ - fixed shadows in tnk3, athena, fitegolf, countryc, tdfever and ftsoccer
+ - added highlights to tdfever and ftsoccer(needs masking at team selection)
+ - notes:
+
+	Mad Crasher and Gladiator(sgladiat.c) have different memory maps but
+	their code base and port layouts are quite similar. The following are
+	some distinctive designs of these two games common to many other SNK
+	triple Z80 boards made in the mid-80's.
+
+	1) Shared RAM
+
+		The "shared" RAM in Mad Crasher is more appropriately
+		"switched" RAM. Marvin's schematics indicate selector
+		circuits and when a CPU wants to access specific part of
+		the memory it will write to the first byte of the 4k page
+		and give the selector a few cycles to settle.
+
+		It is not known what exactly happens when more than one CPU
+		try to access the same page.
+
+	2) IRQ
+
+		CPUA starts recalculating game logic and constructing
+		sprites for the next frame upon receiving IRQ0. When CPUB
+		receives its own IRQ0 it copies sprite data prepared by
+		CPUA in the previous frame to VRAM and updates scroll
+		registers. The process takes about 2ms which fits in vblank
+		nicely. However, if CPUA modifies sprite data before
+		blitting is complete sprites for the current frame may get
+		overwritten by those for the next and it creates a funny
+		rubber-band effect.
+
+		In essence CPUA's IRQ0 should fire 1-2ms later than CPUB's
+		to maintain visual stability. Increasing the delay will only
+		waste cycles in idle loops. Note that certain games may have
+		CPUA and B switched roles.
+
+	3) NMI
+
+		CPUA and B handshake through NMIs. They were implemented in
+		all SNK triple Z80 drivers as
+
+			ENABLE->SIGNAL->HOLDUP->MAKEUP->ACKNOWLEDGE
+
+		but upon close examination of the games code no evidence of
+		any game relying on this behavior to function correctly was
+		found. Sometimes it even has adverse effects by triggering
+		extra NMI's therefore handshaking has been reduced to basic
+
+			SIGNAL->ACKNOWLEDGE
+
+	4) Sound Latching
+
+		Each game has a byte-size sound command port being
+		represented by Marvin's scheme as a single unit consists
+		of one flip-flop and two latches. The flip-flop may be
+		responsible for the sound busy flag but the second latch's
+		function is unclear. HAL21 seems to have the most complex
+		soundlatch circuit and the hardware is able to report
+		playback status in six different bits.
+
+		The sound busy flag is raised when CPUA writes to the
+		soundlatch and is lowered when a designated port is read.
+		For games based on Marvin's hardware the designated port is
+		the soundlatch itself. Most games clear the flag within the
+		alerting IRQ autonomously but some like ASO and HAL21 do it
+		shortly after the sound CPU has finished modulating an effect.
 
 ****************************************************************************
 
@@ -139,34 +206,38 @@ Credits (in alphabetical order)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
-
-extern PALETTE_INIT( aso );
-extern PALETTE_INIT( snk_3bpp_shadow );
-extern PALETTE_INIT( snk_4bpp_shadow );
-extern PALETTE_INIT( tdfever );
-
-extern VIDEO_START( snk );
-
-extern VIDEO_UPDATE( tnk3 );
-extern VIDEO_UPDATE( ikari );
-extern VIDEO_UPDATE( tdfever );
-extern VIDEO_UPDATE( ftsoccer );
-extern VIDEO_UPDATE( gwar );
-// extern VIDEO_UPDATE( psychos ); /* not needed? */
+#include "snk.h"
 
 /*********************************************************************/
+// Variables and Interrupt Handlers Common to All SNK Triple Z80 Games
 
-#define SNK_NMI_ENABLE	1
-#define SNK_NMI_PENDING	2
-static int cpuA_latch, cpuB_latch;
+int snk_gamegroup = 0;
+int snk_sound_busy_bit = 0;
+int snk_irq_delay = 1500;
 
-static unsigned char *shared_ram, *io_ram, *shared_ram2;
-extern int snk_bg_tilemap_baseaddr;
+// see IRQ notes in drivers\marvins.c
+static void irq_trigger_callback(int cpu) { cpu_set_irq_line(cpu, 0, HOLD_LINE); }
+
+INTERRUPT_GEN( snk_irq_AB )
+{
+	cpu_set_irq_line(0, 0, HOLD_LINE);
+	timer_set(TIME_IN_USEC(snk_irq_delay), 1, irq_trigger_callback);
+}
+
+INTERRUPT_GEN( snk_irq_BA )
+{
+	cpu_set_irq_line(1, 0, HOLD_LINE);
+	timer_set(TIME_IN_USEC(snk_irq_delay), 0, irq_trigger_callback);
+}
+
+// NMI handshakes between CPUs are determined to be much simpler
+READ_HANDLER ( snk_cpuA_nmi_trigger_r ) { cpu_set_nmi_line(0, ASSERT_LINE); return 0; }
+WRITE_HANDLER( snk_cpuA_nmi_ack_w ) { cpu_set_nmi_line(0, CLEAR_LINE); }
+
+READ_HANDLER ( snk_cpuB_nmi_trigger_r ) { cpu_set_nmi_line(1, ASSERT_LINE); return 0; }
+WRITE_HANDLER( snk_cpuB_nmi_ack_w ) { cpu_set_nmi_line(1, CLEAR_LINE); }
 
 /*********************************************************************/
-
-static int hard_flags;
 
 #define SNK_MAX_INPUT_PORTS 13
 
@@ -180,13 +251,13 @@ typedef enum {
 	SNK_ROT12_PLAYER1, SNK_ROT12_PLAYER2
 } SNK_INPUT_PORT_TYPE;
 
+static unsigned char *shared_ram, *io_ram, *shared_ram2;
 static const SNK_INPUT_PORT_TYPE *snk_io; /* input port configuration */
 
-static int snk_sound_busy_bit;
+static int hard_flags;
 
 /*********************************************************************/
 
-static int snk_sound_register;
 /*
 	This 4 bit register is mapped at 0xf800.
 
@@ -198,6 +269,7 @@ static int snk_sound_register;
 	bit 2:	sound cpu busy
 	bit 3:	sound command pending
 */
+static int snk_sound_register;
 
 /*********************************************************************/
 
@@ -453,19 +525,11 @@ static READ_HANDLER( cpuA_io_r ){
 		case 0x400: return snk_input_port_r( 7 );	// aim3
 		case 0x480: return snk_input_port_r( 8 );	// aim4
 		case 0x500: return snk_input_port_r( 9 );	// unused by tdfever
-		case 0x580: return snk_input_port_r( 10 );// dsw
-		case 0x600: return snk_input_port_r( 11 );// dsw
-		case 0x080: return snk_input_port_r( 12 );// player start (types C and D in 'ftsoccer')
+		case 0x580: return snk_input_port_r( 10 );	// dsw
+		case 0x600: return snk_input_port_r( 11 );	// dsw
+		case 0x080: return snk_input_port_r( 12 );	// player start (types C and D in 'ftsoccer')
 
-		case 0x700:
-		if( cpuB_latch & SNK_NMI_ENABLE ){
-			cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-			cpuB_latch = 0;
-		}
-		else {
-			cpuB_latch |= SNK_NMI_PENDING;
-		}
-		return 0xff;
+		case 0x700: return(snk_cpuB_nmi_trigger_r(0));
 
 		/* "Hard Flags" */
 		case 0xe00:
@@ -490,13 +554,7 @@ static WRITE_HANDLER( cpuA_io_w ){
 		break;
 
 		case 0x700:
-		if( cpuA_latch&SNK_NMI_PENDING ){
-			cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-			cpuA_latch = 0;
-		}
-		else {
-			cpuA_latch |= SNK_NMI_ENABLE;
-		}
+		snk_cpuA_nmi_ack_w(0, 0);
 		break;
 
 		default:
@@ -508,15 +566,7 @@ static WRITE_HANDLER( cpuA_io_w ){
 static READ_HANDLER( cpuB_io_r ){
 	switch( offset ){
 		case 0x000:
-		case 0x700:
-		if( cpuA_latch & SNK_NMI_ENABLE ){
-			cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
-			cpuA_latch = 0;
-		}
-		else {
-			cpuA_latch |= SNK_NMI_PENDING;
-		}
-		return 0xff;
+		case 0x700: return(snk_cpuA_nmi_trigger_r(0));
 
 		/* "Hard Flags" they are needed here, otherwise ikarijp/b doesn't work right */
 		case 0xe00:
@@ -530,18 +580,11 @@ static READ_HANDLER( cpuB_io_r ){
 	return io_ram[offset];
 }
 
-static WRITE_HANDLER( cpuB_io_w ){
-	if( offset==0 || offset==0x700 ){
-		if( cpuB_latch&SNK_NMI_PENDING ){
-			cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
-			cpuB_latch = 0;
-		}
-		else {
-			cpuB_latch |= SNK_NMI_ENABLE;
-		}
-		return;
-	}
+static WRITE_HANDLER( cpuB_io_w )
+{
 	io_ram[offset] = data;
+
+	if (offset==0 || offset==0x700) snk_cpuB_nmi_ack_w(0, 0);
 }
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
@@ -851,25 +894,25 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( tnk3 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_readmem_sound,YM3526_writemem_sound)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2) /* ? */
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
 	MDRV_GFXDECODE(tnk3_gfxdecodeinfo)
@@ -887,25 +930,25 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( athena )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(600)
+	MDRV_INTERLEAVE(300)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
 	MDRV_GFXDECODE(athena_gfxdecodeinfo)
@@ -923,16 +966,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( ikari )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -959,16 +1002,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( victroad )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -996,16 +1039,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gwar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1033,16 +1076,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bermudat )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-//	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) -- doesn't work with this clock speed */
-	MDRV_CPU_ADD(Z80, 5000000)	/* 4.0 MHz (?) */
+	// 5MHz gives CPUB higher priority or ROM test will fail if the first NMI is triggered too early by CPUA
+	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -1071,18 +1114,18 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( psychos )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2) //*
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1108,16 +1151,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( chopper1 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1141,35 +1184,35 @@ static MACHINE_DRIVER_START( chopper1 )
 	MDRV_SOUND_ADD(Y8950, y8950_interface)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( tdfever )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
-	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(snk_irq_AB,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_VBLANK_DURATION(1000)
+	MDRV_INTERLEAVE(300)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(400,224)
 	MDRV_VISIBLE_AREA(8, 399-8, 0, 223)
 	MDRV_GFXDECODE(tdfever_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-//*	MDRV_PALETTE_INIT(snk_4bpp_shadow)
-	MDRV_PALETTE_INIT(tdfever)
+	MDRV_PALETTE_INIT(snk_4bpp_shadow)
 	MDRV_VIDEO_START(snk)
 	MDRV_VIDEO_UPDATE(tdfever)
 
@@ -1182,16 +1225,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( ftsoccer )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(Y8950_readmem_sound,Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1200,7 +1243,7 @@ static MACHINE_DRIVER_START( ftsoccer )
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(400,224)
 	MDRV_VISIBLE_AREA(8, 399-8, 0, 223)
 	MDRV_GFXDECODE(tdfever_gfxdecodeinfo)
@@ -1919,7 +1962,7 @@ ROM_START( worldwar )
 	ROM_LOAD( "ww11.bin", 0x00000, 0x10000, CRC(603ddcb5) SHA1(766d477672f7936a2b12d3aef435b59aaa77886d) )
 	ROM_LOAD( "ww12.bin", 0x10000, 0x10000, CRC(388093ff) SHA1(b449031c8225b10d7e27e3a2a0636cfd8cb4e03d) )
 	ROM_LOAD( "ww13.bin", 0x20000, 0x10000, CRC(83a7ef62) SHA1(692be1db8b0b0ff518ffe6e000fa8eb0ca7d8b06) )
-	ROM_LOAD( "ww14.bin", 0x30000, 0x10000, CRC(04c784be) SHA1(1a485eeb65dee295c791006d58e4e7305bdcf490) ) //*
+	ROM_LOAD( "ww14.bin", 0x30000, 0x10000, CRC(04c784be) SHA1(1a485eeb65dee295c791006d58e4e7305bdcf490) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
 	ROM_LOAD( "ww7.bin",  0x30000, 0x08000, CRC(53c4b24e) SHA1(5f72848f585dcee857715d6ca0020237dd23abc3) )
@@ -1966,7 +2009,7 @@ ROM_START( bermudaa )
 	ROM_LOAD( "ww11.bin", 0x00000, 0x10000, CRC(603ddcb5) SHA1(766d477672f7936a2b12d3aef435b59aaa77886d) )
 	ROM_LOAD( "ww12.bin", 0x10000, 0x10000, CRC(388093ff) SHA1(b449031c8225b10d7e27e3a2a0636cfd8cb4e03d) )
 	ROM_LOAD( "ww13.bin", 0x20000, 0x10000, CRC(83a7ef62) SHA1(692be1db8b0b0ff518ffe6e000fa8eb0ca7d8b06) )
-	ROM_LOAD( "ww14.bin", 0x30000, 0x10000, CRC(04c784be) SHA1(1a485eeb65dee295c791006d58e4e7305bdcf490) ) //*
+	ROM_LOAD( "ww14.bin", 0x30000, 0x10000, CRC(04c784be) SHA1(1a485eeb65dee295c791006d58e4e7305bdcf490) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
 	ROM_LOAD( "ww7.bin",  0x30000, 0x08000, CRC(53c4b24e) SHA1(5f72848f585dcee857715d6ca0020237dd23abc3) )
@@ -2348,7 +2391,7 @@ ROM_START( tdfever ) /* USA set */
 	ROM_LOAD( "up01_s2.rom",  0x70000, 0x10000, CRC(f6f83d63) SHA1(15780a2c1fc7c8456fe073c372f2f4828125e800) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "up02_p6.rom",  0x00000, 0x10000, CRC(04794557) SHA1(94f476e88b089ad98a133e7356fd271601119fdf) ) //*
+	ROM_LOAD( "up02_p6.rom",  0x00000, 0x10000, CRC(04794557) SHA1(94f476e88b089ad98a133e7356fd271601119fdf) )
 	ROM_LOAD( "up02_n6.rom",  0x10000, 0x10000, CRC(155e472e) SHA1(722b4625e6ab796e129daf903386b5b6b1a945cd) )
 ROM_END
 
@@ -2388,7 +2431,7 @@ ROM_START( tdfeverj )
 	ROM_LOAD( "up01_p2.rom",  0x70000, 0x10000, CRC(c8c71c7b) SHA1(7988e9e86c2dfebb0f1b5a8c42c97993a530e780) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "up02_p6.rom",  0x00000, 0x10000, CRC(04794557) SHA1(94f476e88b089ad98a133e7356fd271601119fdf) ) //*
+	ROM_LOAD( "up02_p6.rom",  0x00000, 0x10000, CRC(04794557) SHA1(94f476e88b089ad98a133e7356fd271601119fdf) )
 	ROM_LOAD( "up02_n6.rom",  0x10000, 0x10000, CRC(155e472e) SHA1(722b4625e6ab796e129daf903386b5b6b1a945cd) )
 ROM_END
 
@@ -3652,6 +3695,7 @@ static DRIVER_INIT( ikari ){
 	snk_io = ikari_io;
 	hard_flags = 1;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( ikarijp ){
@@ -3662,6 +3706,7 @@ static DRIVER_INIT( ikarijp ){
 	snk_io = ikari_io;
 	hard_flags = 1;
 	snk_bg_tilemap_baseaddr = 0xd000;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( ikarijpb ){
@@ -3672,6 +3717,7 @@ static DRIVER_INIT( ikarijpb ){
 	snk_io = ikarijpb_io;
 	hard_flags = 1;
 	snk_bg_tilemap_baseaddr = 0xd000;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( victroad ){
@@ -3690,6 +3736,7 @@ static DRIVER_INIT( victroad ){
 	snk_io = ikari_io;
 	hard_flags = 1;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( dogosoke ){
@@ -3708,6 +3755,7 @@ static DRIVER_INIT( dogosoke ){
 	snk_io = ikari_io;
 	hard_flags = 1;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( gwar ){
@@ -3715,6 +3763,7 @@ static DRIVER_INIT( gwar ){
 	snk_io = ikari_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 2;
 }
 
 static DRIVER_INIT( gwara ){
@@ -3722,6 +3771,7 @@ static DRIVER_INIT( gwara ){
 	snk_io = ikari_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 4;
 }
 
 static DRIVER_INIT( chopper ){
@@ -3729,6 +3779,7 @@ static DRIVER_INIT( chopper ){
 	snk_io = athena_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 0;
 }
 
 static DRIVER_INIT( choppera ){
@@ -3736,6 +3787,7 @@ static DRIVER_INIT( choppera ){
 	snk_io = choppera_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 2;
 }
 
 static DRIVER_INIT( bermudat ){
@@ -3750,6 +3802,7 @@ static DRIVER_INIT( bermudat ){
 	snk_io = ikari_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 0;
 }
 
 static DRIVER_INIT( worldwar ){
@@ -3757,6 +3810,7 @@ static DRIVER_INIT( worldwar ){
 	snk_io = ikari_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 0;
 }
 
 static DRIVER_INIT( tdfever ){
@@ -3764,6 +3818,8 @@ static DRIVER_INIT( tdfever ){
 	snk_io = tdfever_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = (!strcmp(Machine->gamedrv->name,"tdfeverj")) ? 5 : 3;
+	snk_irq_delay = 1000;
 }
 
 static DRIVER_INIT( ftsoccer ){
@@ -3771,6 +3827,7 @@ static DRIVER_INIT( ftsoccer ){
 	snk_io = tdfever_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 7;
 }
 
 static DRIVER_INIT( tnk3 ){
@@ -3778,6 +3835,7 @@ static DRIVER_INIT( tnk3 ){
 	snk_io = ikari_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( athena ){
@@ -3785,6 +3843,7 @@ static DRIVER_INIT( athena ){
 	snk_io = athena_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( fitegolf ){
@@ -3792,6 +3851,7 @@ static DRIVER_INIT( fitegolf ){
 	snk_io = athena_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 1;
 }
 
 static DRIVER_INIT( psychos ){
@@ -3799,6 +3859,7 @@ static DRIVER_INIT( psychos ){
 	snk_io = athena_io;
 	hard_flags = 0;
 	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = 0;
 }
 
 /*          rom       parent    machine   inp       init */
@@ -3821,11 +3882,11 @@ GAMEX( 1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270, "SNK", "B
 GAMEX( 1987, bermudao, bermudat, bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (Japan old version)", GAME_NO_COCKTAIL )
 GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270, "SNK", "Bermuda Triangle (US older version)", GAME_NO_COCKTAIL )
 GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270, "SNK", "World Wars (World)", GAME_NO_COCKTAIL )
-GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I (US set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1988, choppera, chopper,  chopper1, choppera, choppera, ROT270, "SNK", "Chopper I (US set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1988, chopperb, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I (US set 3)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, chopperb, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I (US set 3)", GAME_NO_COCKTAIL )
 GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )

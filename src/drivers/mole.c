@@ -50,6 +50,7 @@ extern VIDEO_UPDATE( moleattack );
 
 WRITE_HANDLER( moleattack_videoram_w );
 WRITE_HANDLER( moleattack_tilesetselector_w );
+WRITE_HANDLER( moleattack_flipscreen_w );
 
 static struct GfxLayout tile_layout =
 {
@@ -140,7 +141,8 @@ static MEMORY_WRITE_START( moleattack_writemem )
 	{ 0x8400, 0x8400, moleattack_tilesetselector_w},
 	{ 0x8c00, 0x8c00, AY8910_write_port_0_w },
 	{ 0x8c01, 0x8c01, AY8910_control_port_0_w },
-	{ 0x8d00, 0x8d00, MWA_NOP }, /* watchdog? */
+	{ 0x8d00, 0x8d00, watchdog_reset_w },
+	{ 0x8dc0, 0x8dc0, moleattack_flipscreen_w },
 	{ 0xd000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -246,4 +248,4 @@ INPUT_PORTS_START( mole )
 INPUT_PORTS_END
 
 
-GAMEX(1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack", GAME_NO_COCKTAIL )
+GAME(1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack" )

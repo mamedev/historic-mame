@@ -177,98 +177,6 @@ d0      crafts joining
 
 static int roarPlaying;	/* Is the ship roar noise playing? */
 
-/*
- * The speech samples are queued in the order they are received
- * in sega_sh_speech_w (). sega_sh_update () takes care of playing
- * and updating the sounds in the order they were queued.
- */
-
-#define MAX_SPEECH      16      /* Number of speech samples which can be queued */
-#define NOT_PLAYING	-1	/* Queue position empty */
-
-static int queue[MAX_SPEECH];
-static int queuePtr = 0;
-
-int sega_sh_start (const struct MachineSound *msound)
-{
-	int i;
-
-	for (i = 0; i < MAX_SPEECH; i ++)
-		queue[i] = NOT_PLAYING;
-
-	return 0;
-}
-
-READ_HANDLER( sega_sh_r )
-{
-	/* 0x80 = universal sound board ready */
-	/* 0x01 = speech ready */
-
-	if (sample_playing(0))
-		return 0x81;
-	else
-		return 0x80;
-}
-
-WRITE_HANDLER( sega_sh_speech_w )
-{
-	int sound;
-
-	sound = data & 0x7f;
-	/* The sound numbers start at 1 but the sample name array starts at 0 */
-	sound --;
-
-	if (sound < 0)	/* Can this happen? */
-		return;
-
-	if (!(data & 0x80))
-   	{
-		/* This typically comes immediately after a speech command. Purpose? */
-		return;
-	}
-   	else if (Machine->samples != 0 && Machine->samples->sample[sound] != 0)
-   	{
-		int newPtr;
-
-		/* Queue the new sound */
-		newPtr = queuePtr;
-		while (queue[newPtr] != NOT_PLAYING)
-	   	{
-			newPtr ++;
-			if (newPtr >= MAX_SPEECH)
-				newPtr = 0;
-			if (newPtr == queuePtr)
-		   	{
-				/* The queue has overflowed. Oops. */
-				logerror("*** Queue overflow! queuePtr: %02d\n", queuePtr);
-				return;
-			}
-		}
-		queue[newPtr] = sound;
-	}
-}
-
-void sega_sh_update (void)
-{
-	int sound;
-
-	/* if a sound is playing, return */
-	if (sample_playing(0)) return;
-
-	/* Check the queue position. If a sound is scheduled, play it */
-	if (queue[queuePtr] != NOT_PLAYING)
-   	{
-		sound = queue[queuePtr];
-		sample_start(0, sound, 0);
-
-		/* Update the queue pointer to the next one */
-		queue[queuePtr] = NOT_PLAYING;
-		++ queuePtr;
-		if (queuePtr >= MAX_SPEECH)
-			queuePtr = 0;
-		}
-	}
-
 int tacscan_sh_start (const struct MachineSound *msound)
 {
 	roarPlaying = 0;
@@ -465,22 +373,22 @@ WRITE_HANDLER( zektor1_sh_w )
 
 	/* Play fireball sample */
 	if (data & 0x02)
-                sample_start (0, 19, 0);
+                sample_start (0, 0, 0);
 
 	/* Play explosion samples */
 	if (data & 0x04)
-                sample_start (1, 29, 0);
+                sample_start (1, 10, 0);
  	if (data & 0x08)
-                  sample_start (1, 28, 0);
+                  sample_start (1, 9, 0);
  	if (data & 0x10)
-                  sample_start (1, 27, 0);
+                  sample_start (1, 8, 0);
 
 	/* Play bounce sample */
 	if (data & 0x20)
    	{
                 if (sample_playing(2))
                         sample_stop (2);
-                sample_start (2, 20, 0);
+                sample_start (2, 1, 0);
 	}
 
 	/* Play lazer sample */
@@ -488,7 +396,7 @@ WRITE_HANDLER( zektor1_sh_w )
    	{
 		if (sample_playing(3))
 			sample_stop (3);
-                sample_start (3, 24, 0);
+                sample_start (3, 5, 0);
 	}
 }
 
@@ -498,17 +406,17 @@ WRITE_HANDLER( zektor2_sh_w )
 
 	/* Play thrust sample */
 	if (data & 0x0f)
-            sample_start (4, 25, 0);
+            sample_start (4, 6, 0);
 	else
 		sample_stop (4);
 
 	/* Play skitter sample */
 	if (data & 0x10)
-                sample_start (5, 21, 0);
+                sample_start (5, 2, 0);
 
 	/* Play eliminator sample */
 	if (data & 0x20)
-                sample_start (6, 22, 0);
+                sample_start (6, 3, 0);
 
 	/* Play electron samples */
 	if (data & 0x40)
@@ -524,88 +432,88 @@ WRITE_HANDLER( startrek_sh_w )
 	switch (data)
    	{
 		case 0x08: /* phaser - trek1.wav */
-			sample_start (1, 0x17, 0);
+			sample_start (1, 0x00, 0);
 			break;
 		case 0x0a: /* photon - trek2.wav */
-			sample_start (1, 0x18, 0);
+			sample_start (1, 0x01, 0);
 			break;
 		case 0x0e: /* targeting - trek3.wav */
-			sample_start (1, 0x19, 0);
+			sample_start (1, 0x02, 0);
 			break;
 		case 0x10: /* dent - trek4.wav */
-			sample_start (2, 0x1a, 0);
+			sample_start (2, 0x03, 0);
 			break;
 		case 0x12: /* shield hit - trek5.wav */
-			sample_start (2, 0x1b, 0);
+			sample_start (2, 0x04, 0);
 			break;
 		case 0x14: /* enterprise hit - trek6.wav */
-			sample_start (2, 0x1c, 0);
+			sample_start (2, 0x05, 0);
 			break;
 		case 0x16: /* enterprise explosion - trek7.wav */
-			sample_start (2, 0x1d, 0);
+			sample_start (2, 0x06, 0);
 			break;
 		case 0x1a: /* klingon explosion - trek8.wav */
-			sample_start (2, 0x1e, 0);
+			sample_start (2, 0x07, 0);
 			break;
 		case 0x1c: /* dock - trek9.wav */
-			sample_start (1, 0x1f, 0);
+			sample_start (1, 0x08, 0);
 			break;
 		case 0x1e: /* starbase hit - trek10.wav */
-			sample_start (1, 0x20, 0);
+			sample_start (1, 0x09, 0);
 			break;
 		case 0x11: /* starbase red - trek11.wav */
-			sample_start (1, 0x21, 0);
+			sample_start (1, 0x0a, 0);
 			break;
 		case 0x22: /* starbase explosion - trek12.wav */
-			sample_start (2, 0x22, 0);
+			sample_start (2, 0x0b, 0);
 			break;
 		case 0x24: /* small bonus - trek13.wav */
-			sample_start (3, 0x23, 0);
+			sample_start (3, 0x0c, 0);
 			break;
 		case 0x25: /* large bonus - trek14.wav */
-			sample_start (3, 0x24, 0);
+			sample_start (3, 0x0d, 0);
 			break;
 		case 0x26: /* starbase intro - trek15.wav */
-			sample_start (1, 0x25, 0);
+			sample_start (1, 0x0e, 0);
 			break;
 		case 0x27: /* klingon intro - trek16.wav */
-			sample_start (1, 0x26, 0);
+			sample_start (1, 0x0f, 0);
 			break;
 		case 0x28: /* enterprise intro - trek17.wav */
-			sample_start (1, 0x27, 0);
+			sample_start (1, 0x10, 0);
 			break;
 		case 0x29: /* player change - trek18.wav */
-			sample_start (1, 0x28, 0);
+			sample_start (1, 0x11, 0);
 			break;
 		case 0x2e: /* klingon fire - trek19.wav */
-			sample_start (2, 0x29, 0);
+			sample_start (2, 0x12, 0);
 			break;
 		case 0x04: /* impulse start - trek20.wav */
-			sample_start (3, 0x2a, 0);
+			sample_start (3, 0x13, 0);
 			break;
 		case 0x06: /* warp start - trek21.wav */
-			sample_start (3, 0x2b, 0);
+			sample_start (3, 0x14, 0);
 			break;
 		case 0x0c: /* red alert start - trek22.wav */
-			sample_start (4, 0x2c, 0);
+			sample_start (4, 0x15, 0);
 			break;
 		case 0x18: /* warp suck - trek23.wav */
-			sample_start (4, 0x2d, 0);
+			sample_start (4, 0x16, 0);
 			break;
 		case 0x19: /* saucer exit - trek24.wav */
-			sample_start (4, 0x2e, 0);
+			sample_start (4, 0x17, 0);
 			break;
 		case 0x2c: /* nomad motion - trek25.wav */
-			sample_start (5, 0x2f, 0);
+			sample_start (0, 0x18, 0);
 			break;
 		case 0x2d: /* nomad stopped - trek26.wav */
-			sample_start (5, 0x30, 0);
+			sample_start (0, 0x19, 0);
 			break;
 		case 0x2b: /* coin drop music - trek27.wav */
-			sample_start (1, 0x31, 0);
+			sample_start (1, 0x1a, 0);
 			break;
 		case 0x2a: /* high score music - trek28.wav */
-			sample_start (1, 0x32, 0);
+			sample_start (1, 0x1b, 0);
 			break;
 	}
 }
@@ -616,13 +524,13 @@ WRITE_HANDLER( spacfury1_sh_w )
 
 	/* craft growing */
 	if (data & 0x01)
-		sample_start (1, 0x15, 0);
+		sample_start (1, 0, 0);
 
 	/* craft moving */
 	if (data & 0x02)
    	{
 		if (!sample_playing(2))
-			sample_start (2, 0x16, 1);
+			sample_start (2, 1, 1);
 	}
 	else
 		sample_stop (2);
@@ -631,18 +539,18 @@ WRITE_HANDLER( spacfury1_sh_w )
 	if (data & 0x04)
    	{
 		if (!sample_playing(3))
-			sample_start (3, 0x19, 1);
+			sample_start (3, 4, 1);
 	}
 	else
 		sample_stop (3);
 
 	/* star spin */
 	if (data & 0x40)
-		sample_start (4, 0x1d, 0);
+		sample_start (4, 8, 0);
 
 	/* partial warship? */
 	if (data & 0x80)
-		sample_start (4, 0x1e, 0);
+		sample_start (4, 9, 0);
 
 }
 
@@ -654,31 +562,31 @@ WRITE_HANDLER( spacfury2_sh_w )
 
 	/* craft joining */
 	if (data & 0x01)
-		sample_start (5, 0x17, 0);
+		sample_start (5, 2, 0);
 
 	/* ship firing */
 	if (data & 0x02)
    	{
 		if (sample_playing(6))
 			sample_stop(6);
-		sample_start(6, 0x18, 0);
+		sample_start(6, 3, 0);
 
         }
 
 	/* fireball */
 	if (data & 0x04)
-		sample_start (7, 0x1b, 0);
+		sample_start (7, 6, 0);
 
 	/* small explosion */
 	if (data & 0x08)
-		sample_start (7, 0x1b, 0);
+		sample_start (7, 6, 0);
 	/* large explosion */
 	if (data & 0x10)
-		sample_start (7, 0x1a, 0);
+		sample_start (7, 5, 0);
 
 	/* docking bang */
 	if (data & 0x20)
-		sample_start (8, 0x1c, 0);
+		sample_start (0, 7, 0);
 
 }
 

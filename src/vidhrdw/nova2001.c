@@ -34,14 +34,9 @@
 
 #include "vidhrdw/generic.h"
 
-unsigned char *nova2001_videoram,*nova2001_colorram;
-size_t nova2001_videoram_size;
+UINT8 *nova2001_videoram2, *nova2001_colorram2;
 
-static int nova2001_xscroll;
-static int nova2001_yscroll;
-static int flipscreen;
-
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 PALETTE_INIT( nova2001 )
 {
@@ -92,138 +87,127 @@ PALETTE_INIT( nova2001 )
 	}
 }
 
+WRITE_HANDLER( nova2001_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( nova2001_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( nova2001_videoram2_w )
+{
+	if (nova2001_videoram2[offset] != data)
+	{
+		nova2001_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( nova2001_colorram2_w )
+{
+	if (nova2001_colorram2[offset] != data)
+	{
+		nova2001_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( nova2001_scroll_x_w )
 {
-	nova2001_xscroll = data;
+	tilemap_set_scrollx(bg_tilemap, 0, data - (flip_screen ? 0 : 7));
 }
 
 WRITE_HANDLER( nova2001_scroll_y_w )
 {
-	nova2001_yscroll = data;
+	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
-
-
 
 WRITE_HANDLER( nova2001_flipscreen_w )
 {
-	if ((~data & 0x01) != flipscreen)
+	if (flip_screen != (~data & 0x01))
 	{
-		flipscreen = ~data & 0x01;
-		memset(dirtybuffer,1,videoram_size);
+		flip_screen_set(~data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = colorram[tile_index] & 0x0f;
 
+	SET_TILE_INFO(1, code, color, 0)
+}
 
-/***************************************************************************
+static void get_fg_tile_info(int tile_index)
+{
+	int code = nova2001_videoram2[tile_index];
+	int color = nova2001_colorram2[tile_index] & 0x0f;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-***************************************************************************/
-VIDEO_UPDATE( nova2001 )
+VIDEO_START( nova2001 )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void nova2001_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs],
-					colorram[offs] & 0x0f,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	{
-		int scrollx,scrolly;
-
-		if (flipscreen)
-		{
-			scrollx = nova2001_xscroll;
-			scrolly = nova2001_yscroll;
-		}
-		else
-		{
-			scrollx = -nova2001_xscroll+7;
-			scrolly = -nova2001_yscroll;
-		}
-
-	    copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Next, draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 32)
 	{
+		int flipx = spriteram[offs+3] & 0x10;
+		int flipy = spriteram[offs+3] & 0x20;
+		int sx = spriteram[offs+1];
+		int sy = spriteram[offs+2];
 
-			int sx,sy,flipx,flipy;
-
-
-			sx = spriteram[offs+1];
-			sy = spriteram[offs+2];
-			flipx = spriteram[offs+3] & 0x10;
-			flipy = spriteram[offs+3] & 0x20;
-			if (flipscreen)
-			{
-				sx = 240 - sx;
-				sy = 240 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[2 + ((spriteram[offs+0] & 0x80) >> 7)],
-					spriteram[offs+0] & 0x7f,
-					spriteram[offs+3] & 0x0f,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-
-	}
-
-
-	/* Finally, draw the foreground text */
-	for (offs = nova2001_videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flipscreen)
+		if (flip_screen)
 		{
-			sx = 31 - sx;
-			sy = 31 - sy;
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[0],
-				nova2001_videoram[offs],
-				nova2001_colorram[offs] & 0x0f,
-				flipscreen,flipscreen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[2 + ((spriteram[offs+0] & 0x80) >> 7)],
+			spriteram[offs+0] & 0x7f,
+			spriteram[offs+3] & 0x0f,
+			flipx,flipy,
+			sx,sy,
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+VIDEO_UPDATE( nova2001 )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	nova2001_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

@@ -26,6 +26,11 @@ WRITE_HANDLER( saa1099_write_port_0_w );
 WRITE_HANDLER( saa1099_control_port_1_w );
 WRITE_HANDLER( saa1099_write_port_1_w );
 
+WRITE16_HANDLER( saa1099_control_port_0_lsb_w );
+WRITE16_HANDLER( saa1099_write_port_0_lsb_w );
+WRITE16_HANDLER( saa1099_control_port_1_lsb_w );
+WRITE16_HANDLER( saa1099_write_port_1_lsb_w );
+
 #ifdef __cplusplus
 }
 #endif

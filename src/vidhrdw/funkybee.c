@@ -9,11 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *funkyb_row_scroll;
-
 static int gfx_bank;
-
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( funkybee )
 {
@@ -46,117 +43,147 @@ PALETTE_INIT( funkybee )
 	}
 }
 
+WRITE_HANDLER( funkybee_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( funkybee_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( funkybee_gfx_bank_w )
 {
-	if (data != (gfx_bank & 0x01))
+	if (gfx_bank != (data & 0x01))
 	{
 		gfx_bank = data & 0x01;
-		memset(dirtybuffer, 1, videoram_size);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitmap)
+WRITE_HANDLER( funkybee_scroll_w )
 {
-	int sx,sy;
+	tilemap_set_scrollx(bg_tilemap, 0, flip_screen ? -data : data);
+}
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (sy = 0x1f;sy >= 0;sy--)
+WRITE_HANDLER( funkybee_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
 	{
-		int offs;
-
-
-		offs = (sy << 8) | 0x1f;
-
-		for (sx = 0x1f;sx >= 0;sx--,offs--)
-		{
-			if (dirtybuffer[offs])
-			{
-				dirtybuffer[offs] = 0;
-
-				drawgfx(_tmpbitmap,Machine->gfx[gfx_bank],
-						videoram[offs],
-						colorram[offs] & 0x03,
-						0,0,
-						8*sx,8*sy,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int offs,scroll[32];
-
-
-		for (offs = 0;offs < 28;offs++)
-			scroll[offs] = -*funkyb_row_scroll;
-
-		for (;offs < 32;offs++)
-			scroll[offs] = 0;
-
-		copyscrollbitmap(bitmap,_tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = colorram[tile_index] & 0x03;
 
-VIDEO_UPDATE( funkybee )
+	SET_TILE_INFO(gfx_bank, code, color, 0)
+}
+
+static UINT32 funkybee_tilemap_scan( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return 256 * row + col;
+}
+
+VIDEO_START( funkybee )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, funkybee_tilemap_scan,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void funkybee_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	draw_chars(tmpbitmap, bitmap);
-
-
-	/* draw the sprites */
 	for (offs = 0x0f; offs >= 0; offs--)
 	{
-		int sx,sy,code,col,flipy,offs2;
+		int offs2 = offs + 0x1e00;
+		int attr = videoram[offs2];
+		int code = (attr >> 2) | ((attr & 2) << 5);
+		int color = colorram[offs2 + 0x10];
+		int flipx = 0;
+		int flipy = attr & 0x01;
+		int sx = videoram[offs2 + 0x10];
+		int sy = 224 - colorram[offs2];
 
-
-		offs2 = 0x1e00 + offs;
-
-		code  = videoram[offs2];
-		sx    = videoram[offs2 + 0x10];
-		sy    = 224 - colorram[offs2];
-		col   = colorram[offs2 + 0x10];
-		flipy = code & 0x01;
+		if (flip_screen)
+		{
+			sy += 32;
+			flipx = !flipx;
+		}
 
 		drawgfx(bitmap,Machine->gfx[2+gfx_bank],
-				(code >> 2) | ((code & 2) << 5),
-				col,
-				0,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
 
+static void funkybee_draw_columns( struct mame_bitmap *bitmap )
+{
+	int offs;
 
-	/* draw the two variable position columns */
 	for (offs = 0x1f;offs >= 0;offs--)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank],
-				videoram[offs+0x1c00],
-				colorram[0x1f10] & 0x03,
-				0,0,
-				videoram[0x1f10],8*offs,
-				0,TRANSPARENCY_PEN,0);
+		int code = videoram[0x1c00 + offs];
+		int color = colorram[0x1f10] & 0x03;
+		int sx = videoram[0x1f10];
+		int sy = offs * 8;
+
+		if (flip_screen)
+		{
+			sx = 248 - sx;
+			sy = 248 - sy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[gfx_bank],
-				videoram[offs+0x1d00],
-				colorram[0x1f11] & 0x03,
-				0,0,
-				videoram[0x1f11],8*offs,
+				code, color,
+				flip_screen, flip_screen,
+				sx, sy,
+				0,TRANSPARENCY_PEN,0);
+
+		code = videoram[0x1d00 + offs];
+		color = colorram[0x1f11] & 0x03;
+		sx = videoram[0x1f11];
+		sy = offs * 8;
+
+		if (flip_screen)
+		{
+			sx = 248 - sx;
+			sy = 248 - sy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[gfx_bank],
+				code, color,
+				flip_screen, flip_screen,
+				sx, sy,
 				0,TRANSPARENCY_PEN,0);
 	}
 }
 
+VIDEO_UPDATE( funkybee )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	funkybee_draw_sprites(bitmap);
+	funkybee_draw_columns(bitmap);
+}

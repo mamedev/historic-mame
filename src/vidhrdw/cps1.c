@@ -752,6 +752,10 @@ DRIVER_INIT( cps2 )
 	memory_set_encrypted_opcode_range(0,0,memory_region_length(REGION_CPU1));
 
 	cps2_gfx_decode();
+
+	scanline1 = 262;
+	scanline2 = 262;
+	scancalls = 0;
 }
 
 

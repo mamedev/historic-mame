@@ -72,7 +72,6 @@ TO DO :
   - Check MEMORY_* definitions (too many M?A_NOP areas)
   - Check sound in all games (too many messages like this in the .log file :
     'Warning: sound latch 2 written before being read')
-  - "Screen flipping" support in 'teedoff' (in src/vidhrdw/tehkanwc.c)
   - Figure out the controls in 'tehkanwc' (they are told to be better in MAME 0.34)
   - Figure out the controls in 'teedoff'
   - Confirm "Difficulty" Dip Switch in 'teedoff'
@@ -84,23 +83,23 @@ TO DO :
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *tehkanwc_videoram1;
-extern size_t tehkanwc_videoram1_size;
+extern UINT8 *tehkanwc_videoram2;
 
-/* from vidhrdw */
-VIDEO_START( tehkanwc );
-VIDEO_UPDATE( tehkanwc );
-READ_HANDLER( tehkanwc_videoram1_r );
-WRITE_HANDLER( tehkanwc_videoram1_w );
-READ_HANDLER( tehkanwc_scroll_x_r );
-READ_HANDLER( tehkanwc_scroll_y_r );
-WRITE_HANDLER( tehkanwc_scroll_x_w );
-WRITE_HANDLER( tehkanwc_scroll_y_w );
-WRITE_HANDLER( gridiron_led0_w );
-WRITE_HANDLER( gridiron_led1_w );
+extern WRITE_HANDLER( tehkanwc_videoram_w );
+extern WRITE_HANDLER( tehkanwc_colorram_w );
+extern WRITE_HANDLER( tehkanwc_videoram2_w );
+extern WRITE_HANDLER( tehkanwc_scroll_x_w );
+extern WRITE_HANDLER( tehkanwc_scroll_y_w );
+extern WRITE_HANDLER( tehkanwc_flipscreen_x_w );
+extern WRITE_HANDLER( tehkanwc_flipscreen_y_w );
+extern WRITE_HANDLER( gridiron_led0_w );
+extern WRITE_HANDLER( gridiron_led1_w );
+
+extern VIDEO_START( tehkanwc );
+extern VIDEO_UPDATE( tehkanwc );
 
 
-static unsigned char *shared_ram;
+static UINT8 *shared_ram;
 
 static READ_HANDLER( shared_r )
 {
@@ -111,19 +110,6 @@ static WRITE_HANDLER( shared_w )
 {
 	shared_ram[offset] = data;
 }
-
-
-/* To me moved in src/vidhrdw/tehkanwc.c */
-WRITE_HANDLER( flip_screen_x_w )
-{
-	flip_screen_x_set(data & 0x40);
-}
-
-WRITE_HANDLER( flip_screen_y_w )
-{
-	flip_screen_y_set(data & 0x40);
-}
-
 
 static WRITE_HANDLER( sub_cpu_halt_w )
 {
@@ -225,7 +211,7 @@ void tehkanwc_adpcm_int (int data)
 {
 	static int toggle;
 
-	unsigned char *SAMPLES = memory_region(REGION_SOUND1);
+	UINT8 *SAMPLES = memory_region(REGION_SOUND1);
 	int msm_data = SAMPLES[msm_data_offs & 0x7fff];
 
 	if (toggle == 0)
@@ -247,14 +233,14 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, videoram_r },
-	{ 0xd400, 0xd7ff, colorram_r },
-	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd400, 0xd7ff, MRA_RAM },
+	{ 0xd800, 0xddff, MRA_RAM },
 	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
-	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
+	{ 0xec00, 0xec01, MRA_RAM },
+	{ 0xec02, 0xec02, MRA_RAM },
 	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
 	{ 0xf802, 0xf802, input_port_9_r }, /* Coin & Start */
 	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
@@ -271,11 +257,11 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
+	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
 	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
 	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
@@ -286,22 +272,22 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xf820, 0xf820, sound_command_w },
 	{ 0xf840, 0xf840, sub_cpu_halt_w },
 	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
-	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
+	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
 MEMORY_END
 
 static MEMORY_READ_START( gridiron_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, videoram_r },
-	{ 0xd400, 0xd7ff, colorram_r },
-	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd400, 0xd7ff, MRA_RAM },
+	{ 0xd800, 0xddff, MRA_RAM },
 	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
-	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
+	{ 0xec00, 0xec01, MRA_RAM },
+	{ 0xec02, 0xec02, MRA_RAM },
 	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
 	{ 0xf802, 0xf802, input_port_9_r }, /* Coin & Start */
 	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
@@ -318,11 +304,11 @@ static MEMORY_WRITE_START( gridiron_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
+	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
 	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
 	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
@@ -333,22 +319,22 @@ static MEMORY_WRITE_START( gridiron_writemem )
 	{ 0xf820, 0xf820, sound_command_w },
 	{ 0xf840, 0xf840, sub_cpu_halt_w },
 	{ 0xf850, 0xf850, MWA_NOP },				/* ?? writes 0x00 or 0xff */
-	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
+	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
 MEMORY_END
 
 static MEMORY_READ_START( teedoff_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, videoram_r },
-	{ 0xd400, 0xd7ff, colorram_r },
-	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd400, 0xd7ff, MRA_RAM },
+	{ 0xd800, 0xddff, MRA_RAM },
 	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
-	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
+	{ 0xec00, 0xec01, MRA_RAM },
+	{ 0xec02, 0xec02, MRA_RAM },
 	{ 0xf800, 0xf801, tehkanwc_track_0_r }, /* track 0 x/y */
 	{ 0xf802, 0xf802, input_port_9_r }, /* Coin */
 	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
@@ -365,11 +351,11 @@ static MEMORY_WRITE_START( teedoff_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, shared_w, &shared_ram },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, tehkanwc_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, tehkanwc_colorram_w, &colorram },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
+	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w, &tehkanwc_videoram2 },
 	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
 	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
@@ -380,22 +366,22 @@ static MEMORY_WRITE_START( teedoff_writemem )
 	{ 0xf820, 0xf820, sound_command_w },
 	{ 0xf840, 0xf840, sub_cpu_halt_w },
 	{ 0xf850, 0xf850, MWA_NOP },				/* ?? Same value as in 0xf840 */
-	{ 0xf860, 0xf860, flip_screen_x_w },		/* Check if it's really X */
-	{ 0xf870, 0xf870, flip_screen_y_w },		/* Check if it's really Y */
+	{ 0xf860, 0xf860, tehkanwc_flipscreen_x_w },		/* Check if it's really X */
+	{ 0xf870, 0xf870, tehkanwc_flipscreen_y_w },		/* Check if it's really Y */
 MEMORY_END
 
 static MEMORY_READ_START( readmem_sub )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xcfff, shared_r },
-	{ 0xd000, 0xd3ff, videoram_r },
-	{ 0xd400, 0xd7ff, colorram_r },
-	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd400, 0xd7ff, MRA_RAM },
+	{ 0xd800, 0xddff, MRA_RAM },
 	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
-	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
-	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
-	{ 0xec02, 0xec02, tehkanwc_scroll_y_r },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM }, /* sprites */
+	{ 0xec00, 0xec01, MRA_RAM },
+	{ 0xec02, 0xec02, MRA_RAM },
 	{ 0xf860, 0xf860, watchdog_reset_r },
 MEMORY_END
 
@@ -403,11 +389,11 @@ static MEMORY_WRITE_START( writemem_sub )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, shared_w },
-	{ 0xd000, 0xd3ff, videoram_w },
-	{ 0xd400, 0xd7ff, colorram_w },
+	{ 0xd000, 0xd3ff, tehkanwc_videoram_w },
+	{ 0xd400, 0xd7ff, tehkanwc_colorram_w },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
-	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w },
+	{ 0xe000, 0xe7ff, tehkanwc_videoram2_w },
 	{ 0xe800, 0xebff, spriteram_w }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
 	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
@@ -687,15 +673,7 @@ INPUT_PORTS_START( teedoff )
 	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
 
 	PORT_START /* DSW2 - Active LOW */
-	PORT_DIPNAME( 0x01, 0x01, "Unused SW 3-1" )
-	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Unused SW 3-2" )
-	PORT_DIPSETTING (   0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Unused SW 3-3" )
-	PORT_DIPSETTING (   0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x18, 0x18, "Penalty (Over Par)" )		// Check table at 0x2d67
 	PORT_DIPSETTING (   0x10, "1/1/2/3/4" )				// +1 / +2 / +3 / +4 / +5 or +6
 	PORT_DIPSETTING (   0x18, "1/2/3/3/4" )
@@ -988,4 +966,4 @@ ROM_END
 
 GAME( 1985, tehkanwc, 0, tehkanwc, tehkanwc, 0,        ROT0,  "Tehkan", "Tehkan World Cup" )
 GAME( 1985, gridiron, 0, gridiron, gridiron, 0,        ROT0,  "Tehkan", "Gridiron Fight" )
-GAMEX(1986, teedoff,  0, teedoff,  teedoff,  teedoff,  ROT90, "Tecmo", "Tee'd Off (Japan)", GAME_NO_COCKTAIL )
+GAME( 1986, teedoff,  0, teedoff,  teedoff,  teedoff,  ROT90, "Tecmo", "Tee'd Off (Japan)" )

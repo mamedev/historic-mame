@@ -196,7 +196,7 @@ unsigned char segae_vdp_data_r ( UINT8 chip );
 void segae_vdp_ctrl_w ( UINT8 chip, UINT8 data );
 void segae_vdp_data_w ( UINT8 chip, UINT8 data );
 
-void segae_drawscanline(int line);
+void segae_drawscanline(int line, int chips, int blank);
 
 /*******************************************************************************
  Port & Memory Maps
@@ -684,7 +684,7 @@ INPUT_PORTS_END
 
 	if (sline <= 192) {
 
-		if (sline != 192) segae_drawscanline(sline);
+		if (sline != 192) segae_drawscanline(sline,1,1);
 
 		if (sline == 192)
 			vintpending = 1;

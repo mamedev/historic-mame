@@ -143,8 +143,8 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPNAME( 0x000e, 0x000e, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
 	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_3C ) )
@@ -152,8 +152,8 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPNAME( 0x0070, 0x0070, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
 	PORT_DIPSETTING(      0x0070, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0050, DEF_STR( 1C_3C ) )
@@ -163,32 +163,40 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
 
 	PORT_START	// IN3 - $10000a - DSW 2
-	PORT_DIPNAME( 0x0001, 0x0001, "Coin Slots" )
-	PORT_DIPSETTING(      0x0001, "1" )
-	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_DIPNAME( 0x0002, 0x0002, "2 Player Game" )
-	PORT_DIPSETTING(      0x0002, "2 Credits" )
-	PORT_DIPSETTING(      0x0000, "1 Credit" )
+	PORT_DIPNAME( 0x0001, 0x0001, "Coin Chutes" )
+	PORT_DIPSETTING(      0x0001, "1 Chute" )
+	PORT_DIPSETTING(      0x0000, "2 Chutes" )
+	PORT_DIPNAME( 0x0002, 0x0002, "Join In Mode" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+/*
+	In "Join In" mode, a second player can join even if one player has aready
+	begun to play.  Please refer to chart below:
+
+	Join In Mode	Credit			Join In		Game Over
+	-----------------------------------------------------------------------------------------------
+	Join In ON	1C per Player		Anytime		Winner of VS Plays Computer
+	Join In OFF	1C = VS Mode 2 players	Cannot		After win VS Game Over for both players
+
+*/
 	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0008, 0x0008, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Blood" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 2-5" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 2-6" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 2-7" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Blood Color" )
+	PORT_DIPSETTING(      0x0010, "Red" )
+	PORT_DIPSETTING(      0x0000, "Blue" )
+	PORT_DIPNAME( 0x0020, 0x0020, "Game Time" )
+	PORT_DIPSETTING(      0x0020, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Short" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0040, "Easy" )
+	PORT_DIPSETTING(      0x00c0, "Normal" )
+	PORT_DIPSETTING(      0x0080, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
 INPUT_PORTS_END
-
 
 
 

@@ -178,6 +178,10 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 			if (bval > 255) bval = 255;
 
 			pan = base1[0x05];
+// DJ Main: 81-87 right, 88 middle, 89-8f left
+if (pan >= 0x81 && pan <= 0x8f)
+pan -= 0x81;
+else
 			if (pan >= 0x11 && pan <= 0x1f) pan -= 0x11; else pan = 0x18 - 0x11;
 
 			gain = K054539_gain[chip][ch];

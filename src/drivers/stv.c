@@ -48,24 +48,17 @@ Preliminary Memory map:
 
 *the unused locations aren't known if they are really unused or not,needs verification...
 
-Notes:
-\-When entering into C.R.T. test,the program hangs at the following sub-routine:
-
-42a0: MOV.B @R1,R0 ;byte movement of memory location [R1] to R0.R1 is equal to 20400007
-				   ;(calculated on the previous opcode).
-42a2: TST #$03,R0  ;Test bit 1-0(0x3) with R0
-42a4: BF $000042a0 ;if R0 has bit 1 or 0 activated,jump to 42a0
-
-This causes an endless loop to this sub-routine.
-
-
-Version Log:
+Version Log(for reference,to be removed):
 25/06/2003(Angelo Salese)
 \-Added proper Color RAM format & CRMD emulation.
 \-Fixed current cell display used,adding colors and flipx/y support to it.
 \-Added some extra SMPC commands,and commented the rest.
 \-Added dates & manufacturers to the various games.
 
+23/07/2003(Angelo Salese)
+\-Fixed the C.R.T test hang by writing a preliminary I/O handling.
+\-Done some modifications to the VDP2 handling:this includes a better gfxdecode
+  handling and the addition of the N1,N2 and N3 planes.
 */
 
 #include "driver.h"
@@ -76,11 +69,12 @@ static void stv_dump_ram(void);
 static data32_t* stv_workram_l;
 static data32_t* stv_workram_h;
 static data32_t* stv_scu;
-static data32_t* stv_vram;
+static data32_t* stv_a0_vram,*stv_a1_vram,*stv_b0_vram,*stv_b1_vram;
 static data32_t* stv_cram;
 static data32_t* stv_vdp2_regs;
+static data32_t* ioga;
 
-static char stv_8x8x4_dirty[0x4000];
+static char stv_b1_dirty[0x2000],stv_b0_dirty[0x2000],stv_a1_dirty[0x2000],stv_a0_dirty[0x2000];
 
 /*SMPC stuff*/
 static unsigned char nmi_enabled;/*for NMI enable,dunno where it could be used...*/
@@ -91,7 +85,9 @@ static unsigned char nmi_enabled;/*for NMI enable,dunno where it could be used..
 /*VDP2 stuff*/
 static unsigned char 	CRMD,/*Color Mode*/
 						xxON,/*Screen display enable bit*/
-					    CHCTLN0;/*Character Control Register for N0*/
+					    CHCTLN0,/*Character Control Register for N0*/
+					    CLOFEN,/*Color Offset Enable bits*/
+					    CLOFSL;/*Color Offset Select bits*/
 static int			    PNCN0;/*Pattern Name Control Register for N0*/
 
 VIDEO_START(stv)
@@ -103,78 +99,80 @@ VIDEO_START(stv)
 /* a complete hack just to display the text graphics used in the test mode */
 VIDEO_UPDATE(stv)
 {
-//	int i;
-	data8_t *txtile_gfxregion = memory_region(REGION_GFX1);
+	int i;
+	data8_t *b1tile_gfxregion = memory_region(REGION_GFX1);
+	data8_t *b0tile_gfxregion = memory_region(REGION_GFX2);
+	data8_t *a1tile_gfxregion = memory_region(REGION_GFX3);
+	data8_t *a0tile_gfxregion = memory_region(REGION_GFX4);
+	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
 
-//	for (i = 0; i < 0x2000; i++)
-//		decodechar(Machine->gfx[1], i, (data8_t*)txtile_gfxregion, Machine->drv->gfxdecodeinfo[1].gfxlayout);
+	for(i = 0;i < 0x2000;i++)
+		if(stv_b1_dirty[i] == 1)
+		{
+			stv_b1_dirty[i] = 0;
+			decodechar(Machine->gfx[0], i, (data8_t*)b1tile_gfxregion, Machine->drv->gfxdecodeinfo[0].gfxlayout);
+		}
+
+	for(i = 0;i < 0x2000;i++)
+		if(stv_b0_dirty[i] == 1)
+		{
+			stv_b0_dirty[i] = 0;
+			decodechar(Machine->gfx[1], i, (data8_t*)b0tile_gfxregion, Machine->drv->gfxdecodeinfo[1].gfxlayout);
+		}
+
+	for(i = 0;i < 0x2000;i++)
+		if(stv_a1_dirty[i] == 1)
+		{
+			stv_a1_dirty[i] = 0;
+			decodechar(Machine->gfx[2], i, (data8_t*)a1tile_gfxregion, Machine->drv->gfxdecodeinfo[2].gfxlayout);
+		}
+
+	for(i = 0;i < 0x2000;i++)
+		if(stv_a0_dirty[i] == 1)
+		{
+			stv_a0_dirty[i] = 0;
+			decodechar(Machine->gfx[3], i, (data8_t*)a0tile_gfxregion, Machine->drv->gfxdecodeinfo[3].gfxlayout);
+		}
 
 	if ( keyboard_pressed_memory(KEYCODE_W) ) stv_dump_ram();
-
-	// bios text
-	{
-		int x,y;
-
-		for (y = 0; y < 128; y++){
-			for (x = 0; x < 32; x++){
-
-				int address;
-				int data1;
-				int data2;
-				int flipx1;
-				int flipx2;
-				int flipy1;
-				int flipy2;
-				int color1;
-				int color2;
-
-				address = 0x62000/4;
-
-				address += (x + y*32);
-
-#if 0
-				if(!(xxON & 8))
-					usrintf_showmessage("Warning: N0 currently disabled");
-				if(CHCTLN0 & 1)
-					usrintf_showmessage("Warning: 2 H x 2 V currently used");
-#endif
 
 /*N0*/
 /*Character Size                   : 1 h x 1 v*/
 /*Character Color count            : 16 colors*/
 /*Character number supplement mode : mode 0   */
-				data1=(stv_vram[address] & 0x03ff0000) >> 16;
-				data2=(stv_vram[address] & 0x000003ff) >> 0;
-				flipy1=(stv_vram[address] & 0x08000000) >> 27;
-				flipy2=(stv_vram[address] & 0x00000800) >> 11;
-				flipx1=(stv_vram[address] & 0x04000000) >> 26;
-				flipx2=(stv_vram[address] & 0x00000400) >> 10;
-				color1=(stv_vram[address] & 0xf0000000) >> 28;
-				color2=(stv_vram[address] & 0x0000f000) >> 12;
-				/*Needs better VDP2 regs support to avoid these kludges...*/
-				data1+= 0x3000;
-				data2+= 0x3000;
+	if(xxON & 8)
+	{
+		int x,y;
+
+		for (y = 0; y < 128; y++){
+			for (x = 0; x < 32; x++){
+				/*First $2000 is for gfx-decoding*/
+				address = 0x2000/4;
+
+				address += (x + y*32);
+
+#if 0
+				if(CHCTLN0 & 1)
+					usrintf_showmessage("Warning: 2 H x 2 V currently used");
+#endif
+				data1=(stv_b1_vram[address] & 0x03ff0000) >> 16;
+				data2=(stv_b1_vram[address] & 0x000003ff) >> 0;
+				flipy1=(stv_b1_vram[address] & 0x08000000) >> 27;
+				flipy2=(stv_b1_vram[address] & 0x00000800) >> 11;
+				flipx1=(stv_b1_vram[address] & 0x04000000) >> 26;
+				flipx2=(stv_b1_vram[address] & 0x00000400) >> 10;
+				color1=(stv_b1_vram[address] & 0xf0000000) >> 28;
+				color2=(stv_b1_vram[address] & 0x0000f000) >> 12;
+				/*Needs better VDP2/VDP2 regs support to avoid this kludge...*/
 				color1+=0x40;
 				color2+=0x40;
 
 /*Doesn't work???*/
-/*				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
-				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
-				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
+//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
+//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
+/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
 				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
 */
-				if (stv_8x8x4_dirty[data1])
-				{
-					stv_8x8x4_dirty[data1] = 0;
-					decodechar(Machine->gfx[0], data1, (data8_t*)txtile_gfxregion, Machine->drv->gfxdecodeinfo[0].gfxlayout);
-				}
-
-				if (stv_8x8x4_dirty[data2])
-				{
-					stv_8x8x4_dirty[data2] = 0;
-					decodechar(Machine->gfx[0], data2, (data8_t*)txtile_gfxregion, Machine->drv->gfxdecodeinfo[0].gfxlayout);
-				}
-
 				drawgfx(bitmap,Machine->gfx[0],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_NONE,0);
 				drawgfx(bitmap,Machine->gfx[0],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_NONE,0);
 
@@ -194,7 +192,7 @@ VIDEO_UPDATE(stv)
 				int data1;
 				int data2;
 
-				address = 0x40000/4;
+				address = 0x2000/4;
 
 				address += (x + y*32);
 
@@ -213,7 +211,132 @@ VIDEO_UPDATE(stv)
 
 
 	}*/
+/*N1*/
+/*Character Size                   : 1 h x 1 v*/
+/*Character Color count            : 16 colors*/
+/*Character number supplement mode : mode 0   */
+	if(xxON & 4)
+	{
+		int x,y;
 
+		for (y = 0; y < 128; y++){
+			for (x = 0; x < 32; x++){
+				/*First $2000 is for gfx-decoding*/
+				address = 0x2000/4;
+
+				address += (x + y*32);
+
+
+				data1=(stv_b0_vram[address] & 0x03ff0000) >> 16;
+				data2=(stv_b0_vram[address] & 0x000003ff) >> 0;
+				flipy1=(stv_b0_vram[address] & 0x08000000) >> 27;
+				flipy2=(stv_b0_vram[address] & 0x00000800) >> 11;
+				flipx1=(stv_b0_vram[address] & 0x04000000) >> 26;
+				flipx2=(stv_b0_vram[address] & 0x00000400) >> 10;
+				color1=(stv_b0_vram[address] & 0xf0000000) >> 28;
+				color2=(stv_b0_vram[address] & 0x0000f000) >> 12;
+				/*Needs better VDP2/VDP2 regs support to avoid this kludge...*/
+				color1+=0x40;
+				color2+=0x40;
+
+/*Doesn't work???*/
+//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
+//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
+/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
+				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
+*/
+				drawgfx(bitmap,Machine->gfx[1],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[1],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
+
+			}
+
+		}
+
+	}
+/*N2*/
+/*Character Size                   : 1 h x 1 v*/
+/*Character Color count            : 16 colors*/
+/*Character number supplement mode : mode 0   */
+	if(xxON & 2)
+	{
+		int x,y;
+
+		for (y = 0; y < 128; y++){
+			for (x = 0; x < 32; x++){
+				/*First $2000 is for gfx-decoding*/
+				address = 0x2000/4;
+
+				address += (x + y*32);
+
+				data1=(stv_a1_vram[address] & 0x03ff0000) >> 16;
+				data2=(stv_a1_vram[address] & 0x000003ff) >> 0;
+				flipy1=(stv_a1_vram[address] & 0x08000000) >> 27;
+				flipy2=(stv_a1_vram[address] & 0x00000800) >> 11;
+				flipx1=(stv_a1_vram[address] & 0x04000000) >> 26;
+				flipx2=(stv_a1_vram[address] & 0x00000400) >> 10;
+				color1=(stv_a1_vram[address] & 0xf0000000) >> 28;
+				color2=(stv_a1_vram[address] & 0x0000f000) >> 12;
+				/*Needs better VDP2/VDP2 regs support to avoid this kludge...*/
+				color1+=0x40;
+				color2+=0x40;
+
+	/*Doesn't work???*/
+	//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
+	//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
+	/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
+					color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
+	*/
+				drawgfx(bitmap,Machine->gfx[2],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[2],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
+
+			}
+
+		}
+
+	}
+
+/*N3*/
+/*Character Size                   : 1 h x 1 v*/
+/*Character Color count            : 16 colors*/
+/*Character number supplement mode : mode 0   */
+	if(xxON & 1)
+	{
+		int x,y;
+
+		for (y = 0; y < 128; y++){
+			for (x = 0; x < 32; x++){
+
+				/*First $2000 is for gfx-decoding*/
+				address = 0x2000/4;
+
+				address += (x + y*32);
+
+				data1=(stv_a0_vram[address] & 0x03ff0000) >> 16;
+				data2=(stv_a0_vram[address] & 0x000003ff) >> 0;
+				flipy1=(stv_a0_vram[address] & 0x08000000) >> 27;
+				flipy2=(stv_a0_vram[address] & 0x00000800) >> 11;
+				flipx1=(stv_a0_vram[address] & 0x04000000) >> 26;
+				flipx2=(stv_a0_vram[address] & 0x00000400) >> 10;
+				color1=(stv_a0_vram[address] & 0xf0000000) >> 28;
+				color2=(stv_a0_vram[address] & 0x0000f000) >> 12;
+				/*Needs better VDP2/VDP2 regs support to avoid this kludge...*/
+				color1+=0x40;
+				color2+=0x40;
+
+/*Doesn't work???*/
+//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
+//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
+/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
+				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
+*/
+				drawgfx(bitmap,Machine->gfx[3],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[3],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
+
+			}
+
+		}
+
+	}
 }
 
 /* SMPC
@@ -355,8 +478,11 @@ VIDEO_UPDATE(stv)
 static UINT8 stv_SMPC_r8 (int offset)
 {
 //	logerror ("8-bit SMPC Read from Offset %02x Returns %02x\n", offset, smpc_ram[offset]);
+	if (offset == 0x75)
+		return readinputport(3);//temporary kludged
+
 	if (offset == 0x77)
-		return readinputport(0);
+		return readinputport(2);
 
 	return smpc_ram[offset];
 }
@@ -532,7 +658,35 @@ static WRITE32_HANDLER ( stv_vdp2_regs_w32 )
 		/*Pattern Name Control Register*/
 			PNCN0 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
 		break;
-	}
+		/* Color Offset Enable/Select Register */
+		case 36:
+			CLOFEN = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
+			CLOFSL = ((stv_vdp2_regs[offset] & 0x0000007f) >> 0);
+		break;
+		/* Is this supposed to change when the warning msg appears?*/
+		case 37:
+		/* Color Offset Register*/
+			if(stv_vdp2_regs[offset] != 0)
+			{
+			logerror("Color offset A register set RRRRGGGG \n"
+			 		 "                            %08x\n",stv_vdp2_regs[offset]);
+			}
+		break;
+		case 38:
+			if(stv_vdp2_regs[offset] != 0)
+			{
+			logerror("Color offset A/B register set BBBBRRRR\n"
+			 		 "                              %08x\n",stv_vdp2_regs[offset]);
+			}
+		break;
+		case 39:
+			if(stv_vdp2_regs[offset] != 0)
+			{
+			logerror("Color offset B register set BBBBRRRR\n"
+			 	     "                            %08x\n",stv_vdp2_regs[offset]);
+			}
+		break;
+		}
 }
 
 static void stv_dump_ram()
@@ -557,10 +711,28 @@ static void stv_dump_ram()
 		fwrite(stv_scu, 0xd0, 1, fp);
 		fclose(fp);
 	}
-	fp=fopen("vram.dmp", "w+b");
+	fp=fopen("stv_a0_vram.dmp", "w+b");
 	if (fp)
 	{
-		fwrite(stv_vram, 0x00080000, 1, fp);
+		fwrite(stv_a0_vram, 0x00020000, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("stv_a1_vram.dmp", "w+b");
+	if (fp)
+	{
+		fwrite(stv_a1_vram, 0x00020000, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("stv_b0_vram.dmp", "w+b");
+	if (fp)
+	{
+		fwrite(stv_b0_vram, 0x00020000, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("stv_b1_vram.dmp", "w+b");
+	if (fp)
+	{
+		fwrite(stv_b1_vram, 0x00020000, 1, fp);
 		fclose(fp);
 	}
 	fp=fopen("cram.dmp", "w+b");
@@ -571,41 +743,156 @@ static void stv_dump_ram()
 	}
 
 }
+static READ32_HANDLER( a0_vdp2_r )	{ return stv_a0_vram[offset]; }
+static READ32_HANDLER( a1_vdp2_r )  { return stv_a1_vram[offset]; }
+static READ32_HANDLER( b0_vdp2_r )	{ return stv_b0_vram[offset]; }
+static READ32_HANDLER( b1_vdp2_r )	{ return stv_b1_vram[offset]; }
 
-static WRITE32_HANDLER ( stv_vram_w )
+static WRITE32_HANDLER ( b1_vdp2_w )
 {
 	data8_t *btiles = memory_region(REGION_GFX1);
 
-	COMBINE_DATA (&stv_vram[offset]);
+	COMBINE_DATA (&stv_b1_vram[offset]);
 
-	data = stv_vram[offset];
+	data = stv_b1_vram[offset];
 	/* put in gfx region for easy decoding */
 	btiles[offset*4+0] = (data & 0xff000000) >> 24;
 	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
 	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
 	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
 
-	stv_8x8x4_dirty[offset/2] = 1;
+	stv_b1_dirty[offset/2] = 1;
+}
+
+static WRITE32_HANDLER ( b0_vdp2_w )
+{
+	data8_t *btiles = memory_region(REGION_GFX2);
+
+	COMBINE_DATA (&stv_b0_vram[offset]);
+
+	data = stv_b0_vram[offset];
+	/* put in gfx region for easy decoding */
+	btiles[offset*4+0] = (data & 0xff000000) >> 24;
+	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
+	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
+	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
+
+	stv_b0_dirty[offset/2] = 1;
+}
+
+
+static WRITE32_HANDLER ( a1_vdp2_w )
+{
+	data8_t *btiles = memory_region(REGION_GFX3);
+
+	COMBINE_DATA (&stv_a1_vram[offset]);
+
+	data = stv_a1_vram[offset];
+	/* put in gfx region for easy decoding */
+	btiles[offset*4+0] = (data & 0xff000000) >> 24;
+	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
+	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
+	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
+
+	stv_a1_dirty[offset/2] = 1;
+}
+
+static WRITE32_HANDLER ( a0_vdp2_w )
+{
+	data8_t *btiles = memory_region(REGION_GFX4);
+
+	COMBINE_DATA (&stv_a0_vram[offset]);
+
+	data = stv_a0_vram[offset];
+	/* put in gfx region for easy decoding */
+	btiles[offset*4+0] = (data & 0xff000000) >> 24;
+	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
+	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
+	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
+
+	stv_a0_dirty[offset/2] = 1;
 
 }
 
 static INTERRUPT_GEN(stv_interrupt)
 {
 	/* i guess this is wrong ;-) */
-	if(cpu_getiloops() == 0)	cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE, 0x40);
-
-	else cpu_set_irq_line_and_vector(0, 0xe, HOLD_LINE, 0x41);
+	switch(cpu_getiloops())
+	{
+		case 0: cpu_set_irq_line_and_vector(0, 15, HOLD_LINE , 0x40); break;
+		case 1: cpu_set_irq_line_and_vector(0, 14, HOLD_LINE , 0x41); break;
+	}
 }
 
-READ32_HANDLER ( stv_read_jamma )
+/*
+I/O overview:
+	PORT-A  1player input
+	PORT-B  2player input
+	PORT-C  system input
+	PORT-D  system output
+	PORT-E  I/O 1
+	PORT-F  I/O 2
+	PORT-G  I/O 3
+	PORT-AD AD-Stick inputs?(Fake for now...)
+	SERIAL COM
+*/
+static unsigned char port_ad[] =
 {
-	UINT32 data;
+	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
+};
 
-	data = (readinputport(offset*2+1) << 16) | (readinputport(offset*2+2));
+READ32_HANDLER ( stv_io_r32 )
+{
+	static int i= -1;
+	//logerror("(PC=%08X): I/O r %08X & %08X\n", activecpu_get_pc(), offset*4, mem_mask);
 
-	return data;
-
+	switch(offset)
+	{
+		case 0:
+		return (readinputport(0) << 16) | (readinputport(1));
+		case 1:
+		return (readinputport(2) << 16) | (ioga[1]);
+		case 7:
+		i++;
+		if(i > 7)
+			i = 0;
+		return port_ad[i];
+		default:
+		return ioga[offset];
+	}
 }
+
+WRITE32_HANDLER ( stv_io_w32 )
+{
+	//logerror("(PC=%08X): I/O w %08X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, mem_mask);
+
+	switch(offset)
+	{
+		case 0:
+		break;
+		case 1:
+			if( (mem_mask & 0x000000ff) == 0)
+				ioga[1] = (data*0x00010000)+(data);
+		break;
+		case 2:
+			if( (mem_mask & 0x00ff0000) == 0)
+			{
+				ioga[2] = data/0x00010000;
+				ioga[3] = data;
+			}
+			if( (mem_mask & 0x000000ff) == 0)
+				ioga[2] = data*0x00010000;
+		break;
+		case 5:
+			if( (mem_mask & 0x00ff0000) == 0)
+				ioga[6] = data/0x00010000;
+		break;
+		case 7:
+			ioga[7] = data;
+		break;
+	}
+}
+
 /*
 READ32_HANDLER (read_cart)
 {
@@ -635,7 +922,7 @@ WRITE32_HANDLER( stv_palette_w )
 	int r,g,b;
 	COMBINE_DATA(&stv_cram[offset]);
 
-	switch(CRMD)
+	switch( CRMD )
 	{
 		/*Mode 2/3*/
 		case 2:
@@ -676,16 +963,12 @@ WRITE32_HANDLER( stv_scu_w32 )
 }
 
 static MEMORY_READ32_START( stv_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM }, // bios
-
-
-	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },
-
-	{ 0x00180000, 0x0018ffff, MRA32_RAM },
-
+	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
+	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
+	{ 0x00180000, 0x0018ffff, MRA32_RAM },	 /*Back up RAM*/
 
 	{ 0x00200000, 0x002fffff, MRA32_RAM },
-	{ 0x00400000, 0x0040000f, stv_read_jamma },
+	{ 0x00400000, 0x0040001f, stv_io_r32 },
 
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
 //	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
@@ -695,26 +978,30 @@ static MEMORY_READ32_START( stv_readmem )
 	{ 0x05a00000, 0x05b00ee3, MRA32_RAM },
 
 	/* VDP1 */
+	/*0x05c00000-0x05c7ffff VRAM*/
+	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
+	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
+	/*0x05d00000-0x05d7ffff VDP1 Regs */
 	{ 0x05c00000, 0x05cbffff, MRA32_RAM },
 	{ 0x05d00000, 0x05d0001f, MRA32_RAM },
 
 	/* VDP2 when VRAMSZ is 0*/
-	/*0x5e00000-0x5e1ffff A0*/
-	/*0x5e20000-0x5e3ffff A1*/
-	/*0x5e40000-0x5e5ffff B0*/
-	/*0x5e60000-0x5e7ffff B1*/
+	{ 0x5e00000 , 0x5e1ffff, a0_vdp2_r },
+	{ 0x5e20000 , 0x5e3ffff, a1_vdp2_r },
+	{ 0x5e40000 , 0x5e5ffff, b0_vdp2_r },
+	{ 0x5e60000 , 0x5e7ffff, b1_vdp2_r },
 	/* VDP2 when VRAMSZ is 1*/
 	/*0x5e00000-0x5e3ffff A0*/
 	/*0x5e40000-0x5e7ffff A1*/
 	/*0x5e80000-0x5ecffff B0*/
 	/*0x5ed0000-0x5efffff B1*/
-	{ 0x05e00000, 0x05e7ffff, MRA32_RAM }, /* VRAM */
+//	{ 0x05e00000, 0x05e7ffff, MRA32_RAM },
 	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
 	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
 
 	{ 0x06000000, 0x060fffff, MRA32_RAM },
-	{ 0x06100000, 0x07ffffff, MRA32_NOP },
+//	{ 0x06100000, 0x07ffffff, MRA32_NOP },
 MEMORY_END
 
 static MEMORY_WRITE32_START( stv_writemem )
@@ -725,6 +1012,7 @@ static MEMORY_WRITE32_START( stv_writemem )
 
 
 	{ 0x00200000, 0x002fffff, MWA32_RAM, &stv_workram_l },
+	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
 
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
 	{ 0x05000000, 0x058fffff, MWA32_RAM },
@@ -737,14 +1025,18 @@ static MEMORY_WRITE32_START( stv_writemem )
 	{ 0x05d00000, 0x05d0001f, MWA32_RAM },
 
 	/* VDP2 */
-	{ 0x05e00000, 0x05e7ffff, stv_vram_w, &stv_vram }, /* VRAM */
+	{ 0x05e00000 ,0x05e1ffff, a0_vdp2_w, &stv_a0_vram },
+	{ 0x05e20000 ,0x05e3ffff, a1_vdp2_w, &stv_a1_vram },
+	{ 0x05e40000 ,0x05e5ffff, b0_vdp2_w, &stv_b0_vram },
+	{ 0x05e60000 ,0x05e7ffff, b1_vdp2_w, &stv_b1_vram },
+//	{ 0x05e00000, 0x05e7ffff, stv_vram_w, &stv_vram }, /* VRAM */
 	{ 0x05f00000, 0x05f0ffff, stv_palette_w, &stv_cram }, /* CRAM */
 	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w32 ,&stv_vdp2_regs }, /* REGS */
 
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32, &stv_scu },
 
 	{ 0x06000000, 0x060fffff, MWA32_RAM, &stv_workram_h },
-	{ 0x06100000, 0x07ffffff, MWA32_NOP },
+//	{ 0x06100000, 0x07ffffff, MWA32_NOP },
 MEMORY_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -758,6 +1050,18 @@ MEMORY_END
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER##_n_ )
 
 INPUT_PORTS_START( stv )
+	PORT_START
+	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+/*
+	PORT_START
+	STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+*/
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "xx" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -779,19 +1083,6 @@ INPUT_PORTS_START( stv )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
-	PORT_START
-	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
-	PORT_START
-	STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
-	PORT_START
-	STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "2" )
@@ -853,7 +1144,7 @@ static struct GfxLayout tiles8x8x8_layout =
 	8,8,
 	RGN_FRAC(1,1),
 	8,
-	{ 0, 1, 2, 3, 4,5,6,7 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 8, 16, 24, 32, 40, 48, 56 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
 	64*8
@@ -864,6 +1155,9 @@ static struct GfxLayout tiles8x8x8_layout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ REGION_GFX3, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ REGION_GFX4, 0, &tiles8x8x4_layout,   0x00, 0x100  },
 	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, 0x100  },
 	{ -1 } /* end of array */
 };
@@ -873,7 +1167,7 @@ static MACHINE_DRIVER_START( stv )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_readmem,stv_writemem)
-	MDRV_CPU_VBLANK_INT(stv_interrupt,2)
+	MDRV_CPU_VBLANK_INT(stv_interrupt,3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -899,7 +1193,10 @@ ROM_START( stvbios )
 	ROM_LOAD16_WORD_SWAP( "mp17952a.s",     0x000000, 0x080000, CRC(d1be2adf) SHA1(eaf1c3e5d602e1139d2090a78d7e19f04f916794) ) // us?
 	ROM_LOAD16_WORD_SWAP( "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) // newer?
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* the roms marked as bad almost certainly aren't bad, theres some very weird
@@ -951,7 +1248,10 @@ ROM_START( astrass )
 	ROM_LOAD16_WORD_SWAP( "mpr20832.8",     0x1c00000, 0x0400000, CRC(af1b0985) SHA1(d7a0e4e0a8b0556915f924bdde8c3d14e5b3423e) ) // good (was .18s)
 	ROM_LOAD16_WORD_SWAP( "mpr20833.9",     0x2000000, 0x0400000, CRC(cb6af231) SHA1(4a2e5d7c2fd6179c19cdefa84a03f9a34fbb9e70) ) // good (was .19s)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( bakubaku )
@@ -965,7 +1265,10 @@ ROM_START( bakubaku )
 	ROM_LOAD16_WORD_SWAP( "mpr17972.4",    0x0c00000, 0x0400000, CRC(8f29815a) SHA1(e86acd8096f2aee5f5e3ddfd3abb4f5c2b11df66) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17973.5",    0x1000000, 0x0400000, CRC(5f6e0e8b) SHA1(eeb5efb5216ab8b8fdee4656774bbd5a2a5b2d42) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( colmns97 )
@@ -978,7 +1281,10 @@ ROM_START( colmns97 )
 	ROM_LOAD16_WORD_SWAP( "mpr19554.2",     0x400000, 0x400000, CRC(5a3ebcac) SHA1(46e3d1cf515a7ff8a8f97e5050b29dbbeb5060c0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19555.3",     0x800000, 0x400000, CRC(74f6e6b8) SHA1(8080860550eb770e04447e344fb337748a249761) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( cotton2 )
@@ -995,7 +1301,10 @@ ROM_START( cotton2 )
 	ROM_LOAD16_WORD_SWAP( "mpr20116.1",    0x1800000, 0x0400000, CRC(d30b0175) SHA1(2da5c3c02d68b8324948a8cdc93946d97fccdd8f) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20123.8",    0x1c00000, 0x0400000, CRC(35f1b89f) SHA1(1d6007c380f817def734fc3030d4fe56df4a15be) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( cottonbm )
@@ -1011,7 +1320,10 @@ ROM_START( cottonbm )
 	ROM_LOAD16_WORD_SWAP( "mpr21074.6",    0x1400000, 0x0400000, CRC(6a7e7a7b) SHA1(a0b1e7a85e623b59886b28797281df1d65b8a5aa) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr21069.1",    0x1800000, 0x0400000, CRC(6a28e3c5) SHA1(60454b71db49b872e0cb89fae2259fed601588bd) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( decathlt )
@@ -1026,7 +1338,10 @@ ROM_START( decathlt )
 	ROM_LOAD16_WORD_SWAP( "mpr18971.5",    0x1000000, 0x0400000, CRC(c87c443b) SHA1(f2fedb35c80e5c4855c7aebff88186397f4d51bc) ) // good (was .4)
 	ROM_LOAD16_WORD_SWAP( "mpr18972.6",    0x1400000, 0x0400000, CRC(45c64fca) SHA1(ae2f678b9885426ce99b615b7f62a451f9ef83f9) ) // good (was .5)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( diehard )
@@ -1040,7 +1355,10 @@ ROM_START( diehard )
 	ROM_LOAD16_WORD_SWAP( "mpr19117.4",    0x0c00000, 0x0400000, CRC(74520ff1) SHA1(16c1acf878664b3bd866c9b94f3695ae892ac12f) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19118.5",    0x1000000, 0x0400000, CRC(2c9702f0) SHA1(5c2c66de83f2ccbe97d3b1e8c7e65999e1fa2de1) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( dnmtdeka )
@@ -1054,7 +1372,10 @@ ROM_START( dnmtdeka )
 	ROM_LOAD16_WORD_SWAP( "mpr19117.4",    0x0c00000, 0x0400000, CRC(74520ff1) SHA1(16c1acf878664b3bd866c9b94f3695ae892ac12f) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19118.5",    0x1000000, 0x0400000, CRC(2c9702f0) SHA1(5c2c66de83f2ccbe97d3b1e8c7e65999e1fa2de1) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( ejihon )
@@ -1069,7 +1390,10 @@ ROM_START( ejihon )
 	ROM_LOAD16_WORD_SWAP( "mpr18141.5",    0x1000000, 0x0400000, CRC(b51eef36) SHA1(2745cba48dc410d6d31327b956886ec284b9eac3) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18142.6",    0x1400000, 0x0400000, CRC(cf259541) SHA1(51e2c8d16506d6074f6511112ec4b6b44bed4886) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( elandore )
@@ -1086,7 +1410,10 @@ ROM_START( elandore )
 	ROM_LOAD16_WORD_SWAP( "mpr21306.1",    0x1800000, 0x0400000, CRC(87a5929c) SHA1(b259341d7b0e1fa98959bf52d23db5c308a8efdd) ) // good (was .17)
 	ROM_LOAD16_WORD_SWAP( "mpr21308.8",    0x1c00000, 0x0400000, CRC(336ec1a4) SHA1(20d1fce050cf6132d284b91853a4dd5626372ef0) ) // good (was .18s)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( ffreveng )
@@ -1102,7 +1429,10 @@ ROM_START( ffreveng )
 	ROM_LOAD16_WORD_SWAP( "mpr21877.6",   0x1400000, 0x0400000, CRC(c22a4a75) SHA1(3276bc0628e71b432f21ba9a4f5ff7ccc8769cd9) ) // good (was .16)
 	ROM_LOAD16_WORD_SWAP( "opr21878.1",   0x1800000, 0x0200000, CRC(2ea4a64d) SHA1(928a973dce5eba0a1628d61ba56a530de990a946) ) // good (was .17)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set system to 1 player to test rom */
@@ -1123,7 +1453,10 @@ ROM_START( fhboxers )
 	ROM_LOAD16_WORD_SWAP( "mpr18539.8",    0x1c00000, 0x0400000, CRC(62b3908c) SHA1(3f00e49beb0e5575cc4250a25c41f04dc91d6ed0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18540.9",    0x2000000, 0x0400000, CRC(4c2b59a4) SHA1(4d15503fcff0e9e0d1ed3bac724278102b506da0) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set system to 1 player to test rom */
@@ -1146,7 +1479,10 @@ ROM_START( findlove )
 	ROM_LOAD16_WORD_SWAP( "mpr20435.11",   0x2800000, 0x0400000, CRC(263a2e48) SHA1(27ef4bf577d240e36dcb6e6a09b9c5f24e59ce8c) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20436.12",   0x2c00000, 0x0400000, CRC(e3823f49) SHA1(754d48635bd1d4fb01ff665bfe2a71593d92f688) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( finlarch )
@@ -1160,7 +1496,10 @@ ROM_START( finlarch )
 	ROM_LOAD16_WORD_SWAP( "mpr18259.4",    0x0c00000, 0x0400000, CRC(5cabc775) SHA1(84383a4cbe3b1a9dcc6c140cff165425666dc780) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18260.5",    0x1000000, 0x0400000, CRC(f5b92082) SHA1(806ad85a187a23a5cf867f2f3dea7d8150065b8e) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 
@@ -1177,7 +1516,10 @@ ROM_START( gaxeduel )
 	ROM_LOAD16_WORD_SWAP( "mpr17772.6",    0x1400000, 0x0400000, CRC(b3dc0e75) SHA1(fbe2790c84466d186ea3e9d41edfcb7afaf54bea) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17767.1",    0x1800000, 0x0400000, CRC(9ba1e7b1) SHA1(f297c3697d2e8ba4476d672267163f91f371b362) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( grdforce )
@@ -1192,7 +1534,10 @@ ROM_START( grdforce )
 	ROM_LOAD16_WORD_SWAP( "mpr20842.5",    0x1000000, 0x0400000, CRC(baebc506) SHA1(f5f59f9263956d0c49c729729cf6db31dc861d3b) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20843.6",    0x1400000, 0x0400000, CRC(263e49cc) SHA1(67979861ca2784b3ce39d87e7994e6e7351b40e5) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( groovef )
@@ -1210,7 +1555,10 @@ ROM_START( groovef )
 	ROM_LOAD16_WORD_SWAP( "mpr19821.8",    0x1c00000, 0x0400000, CRC(f69a76e6) SHA1(b7e41f34d8b787bf1b4d587e5d8bddb241c043a8) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19822.9",    0x2000000, 0x0200000, CRC(5e8c4b5f) SHA1(1d146fbe3d0bfa68993135ba94ef18081ab65d31) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( hanagumi )
@@ -1231,7 +1579,10 @@ ROM_START( hanagumi )
 	ROM_LOAD16_WORD_SWAP( "mpr20147.11",   0x2800000, 0x0400000, CRC(294ab997) SHA1(aeba269ae7d056f07edecf96bc138231c66c3637) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20148.12",   0x2c00000, 0x0400000, CRC(5337ccb0) SHA1(a998bb116eb10c4044410f065c5ddeb845f9dab5) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( introdon )
@@ -1248,7 +1599,10 @@ ROM_START( introdon )
 	ROM_LOAD16_WORD_SWAP( "mpr18943.6",    0x1400000, 0x0400000, CRC(d8702a9e) SHA1(960dd3cb0b9eb1f18b8d0bc0da532b600d583ceb) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18938.1",    0x1800000, 0x0400000, CRC(580ecb83) SHA1(6c59f7da408b53f9fa7aa32c1b53328b5fd6334d) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set system to 1 player to test rom */
@@ -1262,7 +1616,10 @@ ROM_START( kiwames )
 	ROM_LOAD16_WORD_SWAP( "mpr18739.3",    0x0800000, 0x0400000, CRC(eb41fa67) SHA1(d12acebb1df9eafd17aff1841087f5017225e7e7) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18740.4",    0x0c00000, 0x0200000, CRC(9ca7962f) SHA1(a09e0db2246b34ca7efa3165afbc5ba292a95398) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( maruchan )
@@ -1280,7 +1637,10 @@ ROM_START( maruchan )
 	ROM_LOAD16_WORD_SWAP( "mpr20423.8",    0x1c00000, 0x0400000, CRC(2bd55832) SHA1(1a1a510f30882d4d726b594a6541a12c552fafb4) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20443.9",    0x2000000, 0x0400000, CRC(8ac288f5) SHA1(0c08874e6ab2b07b17438721fb535434a626115f) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set system to 1 player to test rom */
@@ -1298,7 +1658,10 @@ ROM_START( myfairld )
 	ROM_LOAD16_WORD_SWAP( "mpr20994.1",    0x1800000, 0x0400000, CRC(a69243a0) SHA1(e5a1b6ec62bdd5b015ed6cf48f5a6aabaf4bd837) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr21001.8",    0x1c00000, 0x0400000, CRC(95fbe549) SHA1(8cfb48f353b2849600373d66f293f103bca700df) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( othellos )
@@ -1313,7 +1676,10 @@ ROM_START( othellos )
 	ROM_LOAD16_WORD_SWAP( "mpr20966.5",    0x1000000, 0x0400000, CRC(b94b83de) SHA1(ba1b3135d0ad057f0786f94c9d06b5e347bedea8) ) // good
 
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( pblbeach )
@@ -1327,7 +1693,10 @@ ROM_START( pblbeach )
 	ROM_LOAD16_WORD_SWAP( "mpr18855.4",    0x0c00000, 0x0400000, CRC(daf6ad0c) SHA1(2a14a6a42e4eb68abb7a427e43062dfde2d13c5c) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18856.5",    0x1000000, 0x0400000, CRC(214cef24) SHA1(f62b462170b377cff16bb6c6126cbba00b013a87) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( prikura )
@@ -1341,7 +1710,10 @@ ROM_START( prikura )
 	ROM_LOAD16_WORD_SWAP( "mpr19335.4",    0x0c00000, 0x0400000, CRC(9e000140) SHA1(9b7dc3dc7f9dc048d2fcbc2b44ae79a631ceb381) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19336.5",    0x1000000, 0x0400000, CRC(2363fa4b) SHA1(f45e53352520be4ea313eeab87bcab83f479d5a8) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( puyosun )
@@ -1359,11 +1731,14 @@ ROM_START( puyosun )
 	ROM_LOAD16_WORD_SWAP( "mpr19538.8",    0x1c00000, 0x0400000, CRC(915a723e) SHA1(96480441a69d6aad3887ed6f46b0a6bebfb752aa) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19539.9",    0x2000000, 0x0400000, CRC(72a297e5) SHA1(679987e62118dd1bf7c074f4b88678e1a1187437) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( rsgun )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_REGION( 0x1400000, REGION_CPU1, 0 ) /* SH2 code */
 	ROM_LOAD16_WORD_SWAP( "epr19730.ic8",   0x000000, 0x080000, CRC(d0e0889d) SHA1(fae53107c894e0c41c49e191dbe706c9cd6e50bd) ) /* bios */
 
 	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
@@ -1373,7 +1748,10 @@ ROM_START( rsgun )
 	ROM_LOAD16_WORD_SWAP( "mpr20961.4",   0x0c00000, 0x0400000, CRC(0e06295c) SHA1(0ec2842622f3e9dc5689abd58aeddc7e5603b97a) ) // good (was .14)
 	ROM_LOAD16_WORD_SWAP( "mpr20962.5",   0x1000000, 0x0400000, CRC(f1e6c7fc) SHA1(0ba0972f1bc7c56f4e0589d3e363523cea988bb0) ) // good (was .15)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( sandor )
@@ -1387,7 +1765,10 @@ ROM_START( sandor )
 	ROM_LOAD16_WORD_SWAP( "mpr18637.10",  0x2400000, 0x0400000, CRC(83aced0f) SHA1(6cd1702b9c2655dc4f56c666607c333f62b09fc0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18638.11",  0x2800000, 0x0400000, CRC(caab531b) SHA1(a77bdcc27d183896c0ed576eeebcc1785d93669e) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( sassisu )
@@ -1403,7 +1784,10 @@ ROM_START( sassisu )
 	ROM_LOAD16_WORD_SWAP( "mpr20548.6",    0x1400000, 0x0400000, CRC(e37534d9) SHA1(79988cbb1537ca99fdd0288a86564fe1f714d052) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20543.1",    0x1800000, 0x0400000, CRC(1f688cdf) SHA1(a90c1011119adb50e0d9d5cd3d7616a307b2d7e8) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set to 1 player to test */
@@ -1422,7 +1806,10 @@ ROM_START( seabass )
 	ROM_LOAD16_WORD_SWAP( "mpr20556.8",    0x1c00000, 0x0400000, CRC(1fd70c6c) SHA1(d9d2e362d13238216f4f7e10095fb8383bbd91e8) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20557.9",    0x2000000, 0x0400000, CRC(3c9ba442) SHA1(2e5b795cf4cdc11ab3e4887b2f77c7147c6e3eec) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( shanhigw )
@@ -1433,7 +1820,10 @@ ROM_START( shanhigw )
 	ROM_LOAD16_WORD_SWAP( "mpr18341.7",    0x0200000, 0x0200000, CRC(cc5e8646) SHA1(a733616c118140ff3887d30d595533f9a1beae06) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18340.2",    0x0400000, 0x0200000, CRC(8db23212) SHA1(85d604a5c6ab97188716dbcd77d365af12a238fe) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( shienryu )
@@ -1445,7 +1835,10 @@ ROM_START( shienryu )
 	ROM_LOAD16_WORD_SWAP( "mpr19632.2",    0x0400000, 0x0400000, CRC(985fae46) SHA1(f953bde91805b97b60d2ab9270f9d2933e064d95) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19633.3",    0x0800000, 0x0400000, CRC(e2f0b037) SHA1(97861d09e10ce5d2b10bf5559574b3f489e28077) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( sleague )
@@ -1460,7 +1853,10 @@ ROM_START( sleague )
 	ROM_LOAD16_WORD_SWAP( "mpr18781.11",   0x2800000, 0x0400000, CRC(13ee41ae) SHA1(cdbaeac4c90b5ee84233c299612f7f28280a6ba6) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18782.12",   0x2c00000, 0x0200000, CRC(9be2270a) SHA1(f2de5cd6b269f123305e30bed2b474019e4f05b8) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( sokyugrt )
@@ -1474,7 +1870,10 @@ ROM_START( sokyugrt )
 	ROM_LOAD16_WORD_SWAP( "mpr19191.4",    0x0c00000, 0x0400000, CRC(ec6eb07b) SHA1(01fe4832ece8638ea6f4060099d9105fe8092c88) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19192.5",    0x1000000, 0x0200000, CRC(cb544a1e) SHA1(eb3ba9758487d0e8c4bbfc41453fe35b35cce3bf) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set to 1 player to test */
@@ -1490,7 +1889,10 @@ ROM_START( sss )
 	ROM_LOAD16_WORD_SWAP( "mpr21492.5",    0x1000000, 0x0400000, CRC(57753894) SHA1(5c51167c158443d02a53d724a5ceb73055876c06) ) // ic5 good (was .15)
 	ROM_LOAD16_WORD_SWAP( "mpr21493.6",    0x1400000, 0x0400000, CRC(efb2d271) SHA1(a591e48206704fbda5fef3ce69ad279da1017ed6) ) // ic6 good (was .16)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( suikoenb )
@@ -1508,7 +1910,10 @@ ROM_START( suikoenb )
 	ROM_LOAD16_WORD_SWAP( "mpr17841.8",    0x1c00000, 0x0400000, CRC(f48beffc) SHA1(92f1730a206f4a0abf7fb0ee1210e083a464ad70) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17842.9",    0x2000000, 0x0400000, CRC(ac8deed7) SHA1(370eb2216b8080d3ddadbd32804db63c4ebac76f) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( twcup98 )
@@ -1522,7 +1927,10 @@ ROM_START( twcup98 )
 	ROM_LOAD16_WORD_SWAP( "mpr20823.4",    0x0c00000, 0x0400000, CRC(6e6d4e95) SHA1(c387d03ba27580c62ac0bf780915fdf41552df6f) ) // ic4 good (was .14)
 	ROM_LOAD16_WORD_SWAP( "mpr20824.5",    0x1000000, 0x0400000, CRC(4cf18a25) SHA1(310961a5f114fea8938a3f514dffd5231e910a5a) ) // ic5 good (was .15)
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( vfkids )
@@ -1541,7 +1949,10 @@ ROM_START( vfkids )
 	ROM_LOAD16_WORD_SWAP( "mpr18922.11",   0x2800000, 0x0400000, CRC(99d0ab90) SHA1(e9c82a826cc76ffbe2423913645cf5d5ba2506d6) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18923.12",   0x2c00000, 0x0400000, CRC(30a41ae9) SHA1(78a3d88b5e6cf669b660460ac967daf408038883) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( vfremix )
@@ -1557,7 +1968,10 @@ ROM_START( vfremix )
 	ROM_LOAD16_WORD_SWAP( "mpr17950.6",    0x1400000, 0x0400000, CRC(5b1f981d) SHA1(693b5744d210a2ac8b77e7c8c87f07ca859f8aed) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17945.1",    0x1800000, 0x0200000, CRC(03ede188) SHA1(849c7fab5b97e043fea3deb8df6cc195ccced0e0) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* set to 1 player to test */
@@ -1575,7 +1989,10 @@ ROM_START( vmahjong )
 	ROM_LOAD16_WORD_SWAP( "mpr19614.1",    0x1800000, 0x0400000, CRC(b83b3f03) SHA1(e5a5919ee74964633eaaf4af2fe04c38604ccf16) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19621.8",    0x1c00000, 0x0400000, CRC(f92616b3) SHA1(61a9dda92a86a02d027260e11b1bad3b0dda9f02) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( winterht )
@@ -1592,7 +2009,10 @@ ROM_START( winterht )
 	ROM_LOAD16_WORD_SWAP( "mpr20109.1",    0x1800000, 0x0400000, CRC(c1a713b8) SHA1(a7fefa6e9a1e3aecff5ead41da6fd3aec2ef502a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20115.8",    0x1c00000, 0x0400000, CRC(dd01f2ad) SHA1(3bb48dc8670d9460fea2a67400ddb573472c2f4f) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( znpwfv )
@@ -1611,7 +2031,10 @@ ROM_START( znpwfv )
 	ROM_LOAD16_WORD_SWAP( "mpr20406.9",    0x2000000, 0x0400000, CRC(b677c175) SHA1(d0de7b5a29928036df0bdfced5a8021c0999eb26) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20407.10",   0x2400000, 0x0400000, CRC(58356050) SHA1(f8fb5a14f4ec516093c785891b05d55ae345754e) ) // good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( danchih )
@@ -1625,7 +2048,10 @@ ROM_START( danchih )
 	ROM_LOAD16_WORD_SWAP( "mpr21972.4",    0x0c00000, 0x0400000, CRC(68a39090) )// good
 	ROM_LOAD16_WORD_SWAP( "mpr21973.5",    0x1000000, 0x0400000, CRC(b0f23f14) )// good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 ROM_START( mausuke )
@@ -1642,7 +2068,10 @@ ROM_START( mausuke )
 	ROM_LOAD16_WORD_SWAP( "mcj-05.1",      0x1800000, 0x0200000, CRC(a7626a82) )// good
 	ROM_LOAD16_WORD_SWAP( "mcj-06.8",      0x1c00000, 0x0200000, CRC(1ab8e90e) )// good
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 ROM_END
 
 /* acclaim game, not a standard cart ... */
@@ -1674,7 +2103,10 @@ ROM_START( batmanfr )
 	ROM_LOAD16_WORD_SWAP( "gfx5.u15",   0x2000000, 0x0400000, CRC(e201f830) )
 	ROM_LOAD16_WORD_SWAP( "gfx6.u18",   0x2c00000, 0x0400000, CRC(c6b381a3) )
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */
+	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */
+	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */
 
 	/* it also has an extra adsp sound board, i guess this isn't tested */
 	ROM_REGION( 0x080000, REGION_USER2, 0 ) /* ADSP code */

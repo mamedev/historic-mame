@@ -59,14 +59,17 @@ Known issues:
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-extern unsigned char *tankbatt_bulletsram;
+extern UINT8 *tankbatt_bulletsram;
 extern size_t tankbatt_bulletsram_size;
 
 static int tankbatt_nmi_enable; /* No need to init this - the game will set it on reset */
 static int tankbatt_sound_enable;
 
-PALETTE_INIT( tankbatt );
-VIDEO_UPDATE( tankbatt );
+extern WRITE_HANDLER( tankbatt_videoram_w );
+
+extern PALETTE_INIT( tankbatt );
+extern VIDEO_START( tankbatt );
+extern VIDEO_UPDATE( tankbatt );
 
 WRITE_HANDLER( tankbatt_led_w )
 {
@@ -158,7 +161,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0010, 0x01ff, MWA_RAM },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
+	{ 0x0800, 0x0bff, tankbatt_videoram_w, &videoram },
 	{ 0x0000, 0x000f, MWA_RAM, &tankbatt_bulletsram, &tankbatt_bulletsram_size },
 	{ 0x0c18, 0x0c18, MWA_NOP }, /* watchdog ?? */
 	{ 0x0c00, 0x0c01, tankbatt_led_w },
@@ -294,7 +297,7 @@ static MACHINE_DRIVER_START( tankbatt )
 	MDRV_COLORTABLE_LENGTH(128)
 
 	MDRV_PALETTE_INIT(tankbatt)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(tankbatt)
 	MDRV_VIDEO_UPDATE(tankbatt)
 
 	/* sound hardware */

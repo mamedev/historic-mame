@@ -134,14 +134,14 @@ INPUT_PORTS_START( skyfox )
 	PORT_DIPNAME( 0x04, 0x04, "Unknown 1-2" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20K" )
 	PORT_DIPSETTING(    0x08, "30K" )
 	PORT_DIPSETTING(    0x10, "40K" )
 	PORT_DIPSETTING(    0x18, "50K" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 1-5*" )		// used
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Medium" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -165,7 +165,7 @@ INPUT_PORTS_START( skyfox )
 
 
 	PORT_START	// IN3 - DSW
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x07, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
@@ -179,7 +179,6 @@ INPUT_PORTS_START( skyfox )
 	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 
 	PORT_START	// IN4 - Fake input port, polled every VBLANK to generate an NMI upon coin insertion
 	PORT_BIT_IMPULSE(  0x01, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -440,5 +439,5 @@ DRIVER_INIT( skyfox )
 
 
 
-GAME( 1987, skyfox,   0,      skyfox, skyfox, skyfox, ROT90, "Jaleco (Nichibutsu USA License)", "Sky Fox"  )
+GAME( 1987, skyfox,   0,      skyfox, skyfox, skyfox, ROT90, "Jaleco (Nichibutsu USA license)", "Sky Fox"  )
 GAME( 1987, exerizrb, skyfox, skyfox, skyfox, skyfox, ROT90, "Jaleco", "Exerizer (Japan) (bootleg)" )

@@ -6,21 +6,18 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
-size_t gs_videoram_size;
-size_t gs_spritexy_size;
+size_t gsword_spritexy_size;
 
-unsigned char *gs_videoram;
-unsigned char *gs_scrolly_ram;
-unsigned char *gs_spritexy_ram;
-unsigned char *gs_spritetile_ram;
-unsigned char *gs_spriteattrib_ram;
+UINT8 *gsword_scrolly_ram;
+UINT8 *gsword_spritexy_ram;
+UINT8 *gsword_spritetile_ram;
+UINT8 *gsword_spriteattrib_ram;
 
-static struct mame_bitmap 	*bitmap_bg;
-static unsigned char 	 	*dirtybuffer;
-static int charbank,charpalbank;
-static int flipscreen;
+static int charbank, charpalbank, flipscreen;
 
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( josvolly )
 {
@@ -73,7 +70,6 @@ PALETTE_INIT( josvolly )
 		COLOR(1,i) = sprite_lookup_table[*(color_prom++)];
 }
 
-
 PALETTE_INIT( gsword )
 {
 	/* sprite lookup table is not original but it is almost 98% correct */
@@ -121,42 +117,45 @@ PALETTE_INIT( gsword )
 		COLOR(1,i) = sprite_lookup_table[*(color_prom++)];
 }
 
-
-VIDEO_START( gsword )
+WRITE_HANDLER( gsword_videoram_w )
 {
-	if ((dirtybuffer = auto_malloc(gs_videoram_size)) == 0) return 1;
-	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-		return 1;
-	memset(dirtybuffer,1,gs_videoram_size);
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
 }
 
-WRITE_HANDLER( gs_charbank_w )
+WRITE_HANDLER( gsword_charbank_w )
 {
 	if (charbank != data)
 	{
 		charbank = data;
-		memset(dirtybuffer,1,gs_videoram_size);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
-WRITE_HANDLER( gs_videoctrl_w )
+WRITE_HANDLER( gsword_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
 		usrintf_showmessage("videoctrl %02x",data);
 	}
+
 	/* bits 5-6 are char palette bank */
+
 	if (charpalbank != ((data & 0x60) >> 5))
 	{
 		charpalbank = (data & 0x60) >> 5;
-		memset(dirtybuffer,1,gs_videoram_size);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
+
 	/* bit 4 is flip screen */
+
 	if (flipscreen != (data & 0x10))
 	{
 		flipscreen = data & 0x10;
-	        memset(dirtybuffer,1,gs_videoram_size);
+	    tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
 	/* bit 0 could be used but unknown */
@@ -164,70 +163,47 @@ WRITE_HANDLER( gs_videoctrl_w )
 	/* other bits unused */
 }
 
-WRITE_HANDLER( gs_videoram_w )
+WRITE_HANDLER( gsword_scroll_w )
 {
-	if (gs_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-		gs_videoram[offset] = data;
-	}
+	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
-void render_background(struct mame_bitmap *bitmap)
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((charbank & 0x03) << 8);
+	int color = ((code & 0x3c0) >> 6) + 16 * charpalbank;
+	int flags = flipscreen ? (TILE_FLIPX | TILE_FLIPY) : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( gsword )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 64);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+void gsword_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-
-	for (offs = 0; offs < gs_videoram_size ;offs++)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,tile,flipx,flipy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = 0;
-			flipy = 0;
-
-			if (flipscreen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			tile = gs_videoram[offs] + ((charbank & 0x03) << 8);
-
-			drawgfx(bitmap_bg,Machine->gfx[0],
-					tile,
-					((tile & 0x3c0) >> 6) + 16 * charpalbank,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-}
-
-
-void render_sprites(struct mame_bitmap *bitmap)
-{
-	int offs;
-
-	for (offs = 0; offs < gs_spritexy_size - 1; offs+=2)
+	for (offs = 0; offs < gsword_spritexy_size - 1; offs+=2)
 	{
 		int sx,sy,flipx,flipy,spritebank,tile;
 
-		if (gs_spritexy_ram[offs]!=0xf1)
+		if (gsword_spritexy_ram[offs]!=0xf1)
 		{
 			spritebank = 0;
-			tile = gs_spritetile_ram[offs];
-			sy = 241-gs_spritexy_ram[offs];
-			sx = gs_spritexy_ram[offs+1]-56;
-			flipx = gs_spriteattrib_ram[offs] & 0x02;
-			flipy = gs_spriteattrib_ram[offs] & 0x01;
+			tile = gsword_spritetile_ram[offs];
+			sy = 241-gsword_spritexy_ram[offs];
+			sx = gsword_spritexy_ram[offs+1]-56;
+			flipx = gsword_spriteattrib_ram[offs] & 0x02;
+			flipy = gsword_spriteattrib_ram[offs] & 0x01;
 
 			// Adjust sprites that should be far far right!
 			if (sx<0) sx+=256;
@@ -246,7 +222,7 @@ void render_sprites(struct mame_bitmap *bitmap)
 			}
 			drawgfx(bitmap,Machine->gfx[1+spritebank],
 					tile,
-					gs_spritetile_ram[offs+1] & 0x3f,
+					gsword_spritetile_ram[offs+1] & 0x3f,
 					flipx,flipy,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_COLOR, 15);
@@ -256,10 +232,6 @@ void render_sprites(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( gsword )
 {
-	int scrollx=0, scrolly=-(*gs_scrolly_ram);
-
-	render_background(bitmap_bg);
-	copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	render_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	gsword_draw_sprites(bitmap);
 }
-

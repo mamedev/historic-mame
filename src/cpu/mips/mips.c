@@ -16,13 +16,6 @@
 #include "mamedbg.h"
 #include "mips.h"
 
-#if 0
-#include "usrintrf.h"
-#define GTELOG( a ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, mipscpu.op ); usrintf_showmessage_secs( 1, "GTE" );
-#else
-#define GTELOG( a )
-#endif
-
 #define EXC_INT ( 0 )
 #define EXC_ADEL ( 4 )
 #define EXC_ADES ( 5 )
@@ -206,6 +199,15 @@ static UINT32 mips_mtc0_writemask[]=
 	0x00000000,
 	0x00000000
 };
+
+#if 0
+#include "usrintrf.h"
+#define GTELOG( a ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ) ); /* usrintf_showmessage_secs( 1, "GTE" ); */
+#define GTELOGX( a, ... ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ), ## __VA_ARGS__ ); /* usrintf_showmessage_secs( 1, "GTE" ); */
+#else
+#define GTELOG( a )
+#define GTELOGX( a, ... )
+#endif
 
 static UINT32 getcp2dr( int n_reg );
 static void setcp2dr( int n_reg, UINT32 n_value );
@@ -435,10 +437,10 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					INT64 res;
-					res = MUL_64_32_32( (INT32)mipscpu.r[ INS_RS( mipscpu.op ) ], (INT32)mipscpu.r[ INS_RT( mipscpu.op ) ] );
-					mipscpu.lo = LO32_32_64( res );
-					mipscpu.hi = HI32_32_64( res );
+					INT64 n_res;
+					n_res = MUL_64_32_32( (INT32)mipscpu.r[ INS_RS( mipscpu.op ) ], (INT32)mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					mipscpu.lo = LO32_32_64( n_res );
+					mipscpu.hi = HI32_32_64( n_res );
 					mips_advance_pc();
 				}
 				break;
@@ -449,10 +451,10 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					UINT64 res;
-					res = MUL_U64_U32_U32( (INT32)mipscpu.r[ INS_RS( mipscpu.op ) ], (INT32)mipscpu.r[ INS_RT( mipscpu.op ) ] );
-					mipscpu.lo = LO32_U32_U64( res );
-					mipscpu.hi = HI32_U32_U64( res );
+					UINT64 n_res;
+					n_res = MUL_U64_U32_U32( mipscpu.r[ INS_RS( mipscpu.op ) ], mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					mipscpu.lo = LO32_U32_U64( n_res );
+					mipscpu.hi = HI32_U32_U64( n_res );
 					mips_advance_pc();
 				}
 				break;
@@ -482,9 +484,9 @@ int mips_execute( int cycles )
 				break;
 			case FUNCT_ADD:
 				{
-					UINT32 res;
-					res = mipscpu.r[ INS_RS( mipscpu.op ) ] + mipscpu.r[ INS_RT( mipscpu.op ) ];
-					if( (INT32)( ( mipscpu.r[ INS_RS( mipscpu.op ) ] & mipscpu.r[ INS_RT( mipscpu.op ) ] & ~res ) | ( ~mipscpu.r[ INS_RS( mipscpu.op ) ] & ~mipscpu.r[ INS_RT( mipscpu.op ) ] & res ) ) < 0 )
+					UINT32 n_res;
+					n_res = mipscpu.r[ INS_RS( mipscpu.op ) ] + mipscpu.r[ INS_RT( mipscpu.op ) ];
+					if( ( ( mipscpu.r[ INS_RS( mipscpu.op ) ] ^ n_res ) & ( mipscpu.r[ INS_RT( mipscpu.op ) ] ^ n_res ) & ( 1 << 31 ) ) != 0 )
 					{
 						mips_exception( EXC_OVF );
 					}
@@ -492,7 +494,7 @@ int mips_execute( int cycles )
 					{
 						if( INS_RD( mipscpu.op ) != 0 )
 						{
-							mipscpu.r[ INS_RD( mipscpu.op ) ] = res;
+							mipscpu.r[ INS_RD( mipscpu.op ) ] = n_res;
 						}
 						mips_advance_pc();
 					}
@@ -507,9 +509,9 @@ int mips_execute( int cycles )
 				break;
 			case FUNCT_SUB:
 				{
-					UINT32 res;
-					res = mipscpu.r[ INS_RS( mipscpu.op ) ] - mipscpu.r[ INS_RT( mipscpu.op ) ];
-					if( (INT32)( ( mipscpu.r[ INS_RS( mipscpu.op ) ] & ~mipscpu.r[ INS_RT( mipscpu.op ) ] & ~res ) | ( ~mipscpu.r[ INS_RS( mipscpu.op ) ] & mipscpu.r[ INS_RT( mipscpu.op ) ] & res ) ) < 0 )
+					UINT32 n_res;
+					n_res = mipscpu.r[ INS_RS( mipscpu.op ) ] - mipscpu.r[ INS_RT( mipscpu.op ) ];
+					if( ( ( mipscpu.r[ INS_RS( mipscpu.op ) ] ^ n_res ) & ( mipscpu.r[ INS_RT( mipscpu.op ) ] ^ n_res ) & ( 1 << 31 ) ) != 0 )
 					{
 						mips_exception( EXC_OVF );
 					}
@@ -517,7 +519,7 @@ int mips_execute( int cycles )
 					{
 						if( INS_RD( mipscpu.op ) != 0 )
 						{
-							mipscpu.r[ INS_RD( mipscpu.op ) ] = res;
+							mipscpu.r[ INS_RD( mipscpu.op ) ] = n_res;
 						}
 						mips_advance_pc();
 					}
@@ -681,10 +683,11 @@ int mips_execute( int cycles )
 			break;
 		case OP_ADDI:
 			{
-				UINT32 res,imm;
-				imm = MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
-				res = mipscpu.r[ INS_RS( mipscpu.op ) ] + imm;
-				if( (INT32)( ( mipscpu.r[ INS_RS( mipscpu.op ) ] & imm & ~res ) | ( ~mipscpu.r[ INS_RS( mipscpu.op ) ] & ~imm & res ) ) < 0 )
+				UINT32 n_res;
+				UINT32 n_imm;
+				n_imm = MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
+				n_res = mipscpu.r[ INS_RS( mipscpu.op ) ] + n_imm;
+				if( ( ( mipscpu.r[ INS_RS( mipscpu.op ) ] ^ n_res ) & ( n_imm ^ n_res ) & ( 1 << 31 ) ) != 0 )
 				{
 					mips_exception( EXC_OVF );
 				}
@@ -692,7 +695,7 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = res;
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = n_res;
 					}
 					mips_advance_pc();
 				}
@@ -715,7 +718,7 @@ int mips_execute( int cycles )
 		case OP_SLTIU:
 			if( INS_RT( mipscpu.op ) != 0 )
 			{
-				mipscpu.r[ INS_RT( mipscpu.op ) ] = mipscpu.r[ INS_RS( mipscpu.op ) ] < (unsigned)MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
+				mipscpu.r[ INS_RT( mipscpu.op ) ] = mipscpu.r[ INS_RS( mipscpu.op ) ] < (UINT32)MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
 			}
 			mips_advance_pc();
 			break;
@@ -808,7 +811,7 @@ int mips_execute( int cycles )
 						{
 						case CF_RFE:
 							mips_advance_pc();
-							mips_set_cp0r( CP0_SR, ( mipscpu.cp0r[ CP0_SR ] & ~0x1f ) | ( ( mipscpu.cp0r[ CP0_SR ] >> 2 ) & 0x1f ) );
+							mips_set_cp0r( CP0_SR, ( mipscpu.cp0r[ CP0_SR ] & ~0xf ) | ( ( mipscpu.cp0r[ CP0_SR ] >> 2 ) & 0xf ) );
 							break;
 						default:
 							/* todo: */
@@ -906,7 +909,6 @@ int mips_execute( int cycles )
 				switch( INS_RS( mipscpu.op ) )
 				{
 				case RS_MFC:
-					GTELOG( "MFC2" );
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
 						mipscpu.r[ INS_RT( mipscpu.op ) ] = getcp2dr( INS_RD( mipscpu.op ) );
@@ -918,7 +920,6 @@ int mips_execute( int cycles )
 					mips_advance_pc();
 					break;
 				case RS_CFC:
-					GTELOG( "CFC2" );
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
 						mipscpu.r[ INS_RT( mipscpu.op ) ] = getcp2cr( INS_RD( mipscpu.op ) );
@@ -930,12 +931,10 @@ int mips_execute( int cycles )
 					mips_advance_pc();
 					break;
 				case RS_MTC:
-					GTELOG( "MTC2" );
 					setcp2dr( INS_RD( mipscpu.op ), mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 					break;
 				case RS_CTC:
-					GTELOG( "CTC2" );
 					setcp2cr( INS_RD( mipscpu.op ), mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 					break;
@@ -944,13 +943,11 @@ int mips_execute( int cycles )
 					{
 					case RT_BCF:
 						/* todo: */
-						GTELOG( "BCF2" );
 						mips_stop();
 						mips_advance_pc();
 						break;
 					case RT_BCT:
 						/* todo: */
-						GTELOG( "BCT2" );
 						mips_stop();
 						mips_advance_pc();
 						break;
@@ -1682,7 +1679,6 @@ int mips_execute( int cycles )
 			mips_advance_pc();
 			break;
 		case OP_LWC2:
-			GTELOG( "LWC2" );
 			if( ( mipscpu.cp0r[ CP0_SR ] & SR_CU2 ) == 0 )
 			{
 				mips_exception( EXC_CPU );
@@ -1703,7 +1699,6 @@ int mips_execute( int cycles )
 					mips_advance_pc();
 				}
 			}
-			mips_advance_pc();
 			break;
 		case OP_SWC1:
 			/* todo: */
@@ -1711,7 +1706,6 @@ int mips_execute( int cycles )
 			mips_advance_pc();
 			break;
 		case OP_SWC2:
-			GTELOG( "SWC2" );
 			if( ( mipscpu.cp0r[ CP0_SR ] & SR_CU2 ) == 0 )
 			{
 				mips_exception( EXC_CPU );
@@ -1732,7 +1726,6 @@ int mips_execute( int cycles )
 					mips_advance_pc();
 				}
 			}
-			mips_advance_pc();
 			break;
 		default:
 			mips_stop();
@@ -2271,7 +2264,7 @@ const char *mips_info( void *context, int regnum )
 	case CPU_INFO_FLAGS:		return "";
 	case CPU_INFO_NAME:			return "PSX CPU";
 	case CPU_INFO_FAMILY:		return "mipscpu";
-	case CPU_INFO_VERSION:		return "1.2";
+	case CPU_INFO_VERSION:		return "1.3";
 	case CPU_INFO_FILE:			return __FILE__;
 	case CPU_INFO_CREDITS:		return "Copyright 2003 smf";
 	case CPU_INFO_REG_LAYOUT:	return (const char*)mips_reg_layout;
@@ -2359,18 +2352,18 @@ unsigned mips_dasm( char *buffer, UINT32 pc )
 #define LZCS ( mipscpu.cp2dr[ 30 ].d )
 #define LZCR ( mipscpu.cp2dr[ 31 ].d )
 
+#define D1  ( mipscpu.cp2cr[ 0 ].d )
 #define R11 ( mipscpu.cp2cr[ 0 ].w.l )
 #define R12 ( mipscpu.cp2cr[ 0 ].w.h )
-#define D1  ( mipscpu.cp2cr[ 0 ].d )
 #define R13 ( mipscpu.cp2cr[ 1 ].w.l )
 #define R21 ( mipscpu.cp2cr[ 1 ].w.h )
+#define D2  ( mipscpu.cp2cr[ 2 ].d )
 #define R22 ( mipscpu.cp2cr[ 2 ].w.l )
 #define R23 ( mipscpu.cp2cr[ 2 ].w.h )
-#define D2  ( mipscpu.cp2cr[ 2 ].d )
 #define R31 ( mipscpu.cp2cr[ 3 ].w.l )
 #define R32 ( mipscpu.cp2cr[ 3 ].w.h )
-#define R33 ( mipscpu.cp2cr[ 4 ].w.l )
 #define D3  ( mipscpu.cp2cr[ 4 ].d )
+#define R33 ( mipscpu.cp2cr[ 4 ].w.l )
 #define TRX ( mipscpu.cp2cr[ 5 ].d )
 #define TRY ( mipscpu.cp2cr[ 6 ].d )
 #define TRZ ( mipscpu.cp2cr[ 7 ].d )
@@ -2402,7 +2395,7 @@ unsigned mips_dasm( char *buffer, UINT32 pc )
 #define OFY ( mipscpu.cp2cr[ 25 ].d )
 #define H   ( mipscpu.cp2cr[ 26 ].w.l )
 #define DQA ( mipscpu.cp2cr[ 27 ].w.l )
-#define DQB ( mipscpu.cp2cr[ 28 ].w.l )
+#define DQB ( mipscpu.cp2cr[ 28 ].d )
 #define ZSF3 ( mipscpu.cp2cr[ 29 ].w.l )
 #define ZSF4 ( mipscpu.cp2cr[ 30 ].w.l )
 #define FLAG ( mipscpu.cp2cr[ 31 ].d )
@@ -2411,21 +2404,23 @@ static UINT32 getcp2dr( int n_reg )
 {
 	if( n_reg == 1 || n_reg == 3 || n_reg == 5 || n_reg == 8 || n_reg == 9 || n_reg == 10 || n_reg == 11 )
 	{
-		mipscpu.cp2dr[ n_reg ].d = (long)(short)mipscpu.cp2dr[ n_reg ].d;
+		mipscpu.cp2dr[ n_reg ].d = (INT32)(INT16)mipscpu.cp2dr[ n_reg ].d;
 	}
 	else if( n_reg == 17 || n_reg == 18 || n_reg == 19 )
 	{
-		mipscpu.cp2dr[ n_reg ].d = (unsigned long)(unsigned short)mipscpu.cp2dr[ n_reg ].d;
+		mipscpu.cp2dr[ n_reg ].d = (UINT32)(UINT16)mipscpu.cp2dr[ n_reg ].d;
 	}
 	else if( n_reg == 29 )
 	{
-		IRGB = ( ( IR1 >> 9 ) & 0x1f ) | ( ( IR2 >> 2 ) & 0x3e0 ) | ( ( IR3 << 3 ) & 0x7c00 );
+		ORGB = ( ( IR1 >> 7 ) & 0x1f ) | ( ( IR2 >> 2 ) & 0x3e0 ) | ( ( IR3 << 3 ) & 0x7c00 );
 	}
+	GTELOGX( "get CP2DR%u=%08x", n_reg, mipscpu.cp2dr[ n_reg ].d );
 	return mipscpu.cp2dr[ n_reg ].d;
 }
 
 static void setcp2dr( int n_reg, UINT32 n_value )
 {
+	GTELOGX( "set CP2DR%u=%08x", n_reg, n_value );
 	mipscpu.cp2dr[ n_reg ].d = n_value;
 
 	if( n_reg == 15 )
@@ -2460,76 +2455,193 @@ static void setcp2dr( int n_reg, UINT32 n_value )
 
 static UINT32 getcp2cr( int n_reg )
 {
+	GTELOGX( "get CP2CR%u=%08x", n_reg, mipscpu.cp2cr[ n_reg ].d );
 	return mipscpu.cp2cr[ n_reg ].d;
 }
 
 static void setcp2cr( int n_reg, UINT32 n_value )
 {
+	GTELOGX( "set CP2CR%u=%08x", n_reg, n_value );
 	mipscpu.cp2cr[ n_reg ].d = n_value;
 }
 
-inline INT32 LIM( INT32 n_value, INT32 n_min, INT32 n_max, int n_bit )
+static inline INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, int n_bit )
 {
-	if( n_value < n_min )
+	if( n_value > n_max )
 	{
-		FLAG |= ( 1 << n_bit );
-		return n_min;
-	}
-	else if( n_value > n_max )
-	{
-		FLAG |= ( 1 << n_bit );
+		FLAG |= 0x80000000 | ( 1 << n_bit );
 		return n_max;
+	}
+	else if( n_value < n_min )
+	{
+		FLAG |= 0x80000000 | ( 1 << n_bit );
+		return n_min;
 	}
 	return n_value;
 }
 
-#define GTEMULT( a, b ) ( (INT32)(INT16)( a ) * (INT16)( b ) )
-#define NORM_1_3_12( a ) ( (INT32)( a ) / 4096 )
+static inline INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxbit, INT64 n_min, int n_minbit )
+{
+	if( n_value > n_max )
+	{
+		FLAG |= ( 1 << n_maxbit );
+	}
+	else if( n_value < n_min )
+	{
+		FLAG |= ( 1 << n_minbit );
+	}
+	return n_value;
+}
 
-#define A1( a ) ( a )
-#define A2( a ) ( a )
-#define A3( a ) ( a )
-#define	Lm_B1( a ) LIM( ( a ), -32768, 32767, 24 )
-#define	Lm_B2( a ) LIM( ( a ), -32768, 32767, 23 )
-#define	Lm_B3( a ) LIM( ( a ), -32768, 32767, 22 )
-#define F( a ) ( a )
+#define A1( a ) BOUNDS( ( a ), 0x1ffffffff, 30, -0x200000000, 27 )
+#define A2( a ) BOUNDS( ( a ), 0x1ffffffff, 29, -0x200000000, 26 )
+#define A3( a ) BOUNDS( ( a ), 0x1ffffffff, 28, -0x200000000, 25 )
+#define	Lm_B1( a ) LIM( ( a ), 0x7fff, -0x8000, 24 )
+#define	Lm_B2( a ) LIM( ( a ), 0x7fff, -0x8000, 23 )
+#define	Lm_B3( a ) LIM( ( a ), 0x7fff, -0x8000, 22 )
+#define Lm_D( a ) LIM( ( a ), 0xffff, 0x0000, 18 )
+
+static __inline UINT32 Lm_E( UINT32 n_z )
+{
+	if( n_z < H / 2 )
+	{
+		n_z = H / 2;
+		FLAG |= 0x80000000 | ( 1 << 17 );
+	}
+	if( n_z == 0 )
+	{
+		n_z = 1;
+	}
+	return n_z;
+}
+
+#define F( a ) BOUNDS( ( a ), 0x7fffffff, 16, -0x80000000, 15 )
+#define Lm_G1( a ) LIM( ( a ), 0x3ff, -0x400, 14 )
+#define Lm_H( a ) LIM( ( a ), 0xfff, 0x000, 12 )
 
 static void docop2( int gteop )
 {
+	int n_v;
+	static const UINT16 *p_n_vx[] = { &VX0, &VX1, &VX2 };
+	static const UINT16 *p_n_vy[] = { &VY0, &VY1, &VY2 };
+	static const UINT16 *p_n_vz[] = { &VZ0, &VZ1, &VZ2 };
+
 	switch( gteop )
 	{
 	case 0x1400006:
 		GTELOG( "NCLIP" );
-		MAC0 = F( NORM_1_3_12( GTEMULT( SX0, SY1 ) + GTEMULT( SX1, SY2 ) + GTEMULT( SX2, SY0 ) - GTEMULT( SX0, SY2 ) - GTEMULT( SX1, SY0 ) - GTEMULT( SX2, SY1 ) ) );
+		FLAG = 0;
+
+		MAC0 = F(
+			( (INT64)(INT16)SX0 * (INT16)SY1 ) + 
+			( (INT64)(INT16)SX1 * (INT16)SY2 ) +
+			( (INT64)(INT16)SX2 * (INT16)SY0 ) -
+			( (INT64)(INT16)SX0 * (INT16)SY2 ) -
+			( (INT64)(INT16)SX1 * (INT16)SY0 ) -
+			( (INT64)(INT16)SX2 * (INT16)SY1 ) );
 		break;
 	case 0x0486012:
 		GTELOG( "RTV0" );
-		MAC1 = A1( NORM_1_3_12( GTEMULT( R11, VX0 ) + GTEMULT( R12, VY0 ) + GTEMULT( R13, VZ0 ) ) );
-		MAC2 = A2( NORM_1_3_12( GTEMULT( R21, VX0 ) + GTEMULT( R22, VY0 ) + GTEMULT( R23, VZ0 ) ) );
-		MAC3 = A3( NORM_1_3_12( GTEMULT( R31, VX0 ) + GTEMULT( R32, VY0 ) + GTEMULT( R33, VZ0 ) ) );
 		FLAG = 0;
-		IR1 = Lm_B1( MAC1 );
-		IR2 = Lm_B2( MAC2 );
-		IR3 = Lm_B3( MAC3 );
+
+		MAC1 = A1(
+			( (INT64)(INT16)R11 * (INT16)VX0 ) +
+			( (INT64)(INT16)R12 * (INT16)VY0 ) +
+			( (INT64)(INT16)R13 * (INT16)VZ0 ) ) >> 12;
+		MAC2 = A2(
+			( (INT64)(INT16)R21 * (INT16)VX0 ) +
+			( (INT64)(INT16)R22 * (INT16)VY0 ) +
+			( (INT64)(INT16)R23 * (INT16)VZ0 ) ) >> 12;
+		MAC3 = A3(
+			( (INT64)(INT16)R31 * (INT16)VX0 ) +
+			( (INT64)(INT16)R32 * (INT16)VY0 ) +
+			( (INT64)(INT16)R33 * (INT16)VZ0 ) ) >> 12;
+		IR1 = Lm_B1( (INT32)MAC1 );
+		IR2 = Lm_B2( (INT32)MAC2 );
+		IR3 = Lm_B3( (INT32)MAC3 );
 		break;
 	case 0x0280030:
 		GTELOG( "RTPT" );
-		/* very wrong */
-		SX0 = TRX + VX0;
-		SY0 = TRY + VY0;
-		SZ0 = TRZ + VZ0;
-		SX1 = TRX + VX1;
-		SY1 = TRY + VY1;
-		SZ1 = TRZ + VZ1;
-		SX2 = TRX + VX2;
-		SY2 = TRY + VY2;
-		SZ2 = TRZ + VZ2;
-		SXP = SX2;
-		SYP = SY2;
-		SZ3 = SZ2;
+		FLAG = 0;
+
+		for( n_v = 0; n_v < 3; n_v++ )
+		{
+			MAC1 = A1(
+				( ( (INT64)(INT32)TRX ) << 12 ) +
+				( (INT64)(INT16)R11 * (INT16)*p_n_vx[ n_v ] ) +
+				( (INT64)(INT16)R12 * (INT16)*p_n_vy[ n_v ] ) +
+				( (INT64)(INT16)R13 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
+			MAC2 = A2(
+				( ( (INT64)(INT32)TRY ) << 12 ) +
+				( (INT64)(INT16)R21 * (INT16)*p_n_vx[ n_v ] ) +
+				( (INT64)(INT16)R22 * (INT16)*p_n_vy[ n_v ] ) +
+				( (INT64)(INT16)R23 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
+			MAC3 = A3(
+				( ( (INT64)(INT32)TRZ ) << 12 ) +
+				( (INT64)(INT16)R31 * (INT16)*p_n_vx[ n_v ] ) +
+				( (INT64)(INT16)R32 * (INT16)*p_n_vy[ n_v ] ) +
+				( (INT64)(INT16)R33 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
+			IR1 = Lm_B1( (INT32)MAC1 );
+			IR2 = Lm_B2( (INT32)MAC2 );
+			IR3 = Lm_B3( (INT32)MAC3 );
+			SZ0 = SZ1;
+			SZ1 = SZ2;
+			SZ2 = SZ3;
+			SZ3 = Lm_D( (INT32)MAC3 );
+			SXY0 = SXY1;
+			SXY1 = SXY2;
+			SX2 = Lm_G1( F( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+			SY2 = Lm_G1( F( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+			MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) );
+			IR0 = Lm_H( (INT32)MAC0 >> 12 );
+		}
+		break;
+	case 0x00180001:
+		GTELOG( "RTPS" );
+		FLAG = 0;
+
+		MAC1 = A1(
+			( ( (INT64)(INT32)TRX ) << 12 ) +
+			( (INT64)(INT16)R11 * (INT16)VX0 ) +
+			( (INT64)(INT16)R12 * (INT16)VY0 ) +
+			( (INT64)(INT16)R13 * (INT16)VZ0 ) ) >> 12;
+		MAC2 = A2(
+			( ( (INT64)(INT32)TRY ) << 12 ) +
+			( (INT64)(INT16)R21 * (INT16)VX0 ) +
+			( (INT64)(INT16)R22 * (INT16)VY0 ) +
+			( (INT64)(INT16)R23 * (INT16)VZ0 ) ) >> 12;
+		MAC3 = A3(
+			( ( (INT64)(INT32)TRZ ) << 12 ) +
+			( (INT64)(INT16)R31 * (INT16)VX0 ) +
+			( (INT64)(INT16)R32 * (INT16)VY0 ) +
+			( (INT64)(INT16)R33 * (INT16)VZ0 ) ) >> 12;
+		IR1 = Lm_B1( (INT32)MAC1 );
+		IR2 = Lm_B2( (INT32)MAC2 );
+		IR3 = Lm_B3( (INT32)MAC3 );
+		SZ0 = SZ1;
+		SZ1 = SZ2;
+		SZ2 = SZ3;
+		SZ3 = Lm_D( (INT32)MAC3 );
+		SXY0 = SXY1;
+		SXY1 = SXY2;
+		SX2 = Lm_G1( F( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+		SY2 = Lm_G1( F( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+		MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) );
+		IR0 = Lm_H( (INT32)MAC0 >> 12 );
+		break;
+	case 0x0168002e:
+		GTELOG( "AVSZ4" );
+		FLAG = 0;
+
+		MAC0 = F(
+			( (INT64)ZSF4 * SZ0 ) +
+			( (INT64)ZSF4 * SZ1 ) +
+			( (INT64)ZSF4 * SZ2 ) +
+			( (INT64)ZSF4 * SZ3 ) );
+		OTZ = Lm_D( (INT32)MAC0 >> 12 );
 		break;
 	default:
-		logerror( "%08x: GTE unknown op %08x\n", mipscpu.pc, mipscpu.op );
+		logerror( "%08x: GTE unknown op %08x\n", mipscpu.pc, INS_COFUN( mipscpu.op ) );
 		mips_stop();
 		break;
 	}

@@ -241,4 +241,4 @@ ROM_START( stlforce )
 	ROM_LOAD( "stlforce.u36", 0x00000, 0x40000, CRC(037dfa9f) SHA1(224f5cd1a95d55b065aef5c0bd03b50cabcb619b) )
 ROM_END
 
-GAMEX(1994, stlforce, 0, stlforce, stlforce, 0, ROT0, "Electronic Devices (Italy) / Ecogames S.L. (Spain)", "Steel Force", GAME_IMPERFECT_SOUND )
+GAMEX(1994, stlforce, 0, stlforce, stlforce, 0, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force", GAME_IMPERFECT_SOUND )

@@ -14,17 +14,17 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-PALETTE_INIT( bogeyman );
-VIDEO_UPDATE( bogeyman );
-VIDEO_START( bogeyman );
-WRITE_HANDLER( bogeyman_paletteram_w );
-WRITE_HANDLER( bogeyman_videoram_w );
+extern UINT8 *bogeyman_videoram2, *bogeyman_colorram2;
 
-/******************************************************************************/
+extern WRITE_HANDLER( bogeyman_videoram_w );
+extern WRITE_HANDLER( bogeyman_colorram_w );
+extern WRITE_HANDLER( bogeyman_videoram2_w );
+extern WRITE_HANDLER( bogeyman_colorram2_w );
+extern WRITE_HANDLER( bogeyman_paletteram_w );
 
-extern unsigned char *bogeyman_videoram;
-
-static READ_HANDLER( bogeyman_videoram_r ) { return bogeyman_videoram[offset]; }
+extern PALETTE_INIT( bogeyman );
+extern VIDEO_START( bogeyman );
+extern VIDEO_UPDATE( bogeyman );
 
 /******************************************************************************/
 
@@ -68,7 +68,7 @@ static WRITE_HANDLER( bogeyman_8910_control_w )
 static MEMORY_READ_START( bogeyman_readmem )
 	{ 0x0000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x21ff, bogeyman_videoram_r },
+	{ 0x2000, 0x21ff, MRA_RAM },
 	{ 0x2800, 0x2bff, MRA_RAM },
 	{ 0x3800, 0x3800, input_port_0_r },	/* Player 1 */
 	{ 0x3801, 0x3801, input_port_1_r },	/* Player 2 + VBL */
@@ -79,13 +79,15 @@ MEMORY_END
 
 static MEMORY_WRITE_START( bogeyman_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, MWA_RAM, &videoram, &videoram_size },
-  	{ 0x2000, 0x21ff, bogeyman_videoram_w, &bogeyman_videoram },
+	{ 0x1800, 0x1bff, bogeyman_videoram2_w, &bogeyman_videoram2 },
+	{ 0x1c00, 0x1fff, bogeyman_colorram2_w, &bogeyman_colorram2 },
+  	{ 0x2000, 0x20ff, bogeyman_videoram_w, &videoram },
+  	{ 0x2100, 0x21ff, bogeyman_colorram_w, &colorram },
 	{ 0x2800, 0x2bff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x300f, bogeyman_paletteram_w, &paletteram },
 	{ 0x3800, 0x3800, bogeyman_8910_control_w },
 	{ 0x3801, 0x3801, bogeyman_8910_latch_w },
-	{ 0x3803, 0x3803, MWA_NOP },	/* ?? */
+	{ 0x3803, 0x3803, MWA_NOP },	/* ?? This has something to do with sound */
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -151,7 +153,7 @@ INPUT_PORTS_START( bogeyman )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 INPUT_PORTS_END
 
 /******************************************************************************/

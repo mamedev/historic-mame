@@ -9,12 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-data8_t *popeye_background_pos;
-data8_t *popeye_palettebank;
-data8_t *popeye_textram;
-static data8_t *popeye_bitmapram;
+UINT8 *popeye_background_pos;
+UINT8 *popeye_palettebank;
+static UINT8 *popeye_bitmapram;
 static size_t popeye_bitmapram_size = 0x2000;
 
 static struct mame_bitmap *tmpbitmap2;
@@ -23,6 +20,8 @@ static int bitmap_type;
 enum { TYPE_SKYSKIPR, TYPE_POPEYE };
 
 #define BGRAM_SIZE 0x2000
+
+static struct tilemap *fg_tilemap;
 
 
 /***************************************************************************
@@ -152,41 +151,61 @@ PALETTE_INIT( popeyebl )
 	convert_color_prom(colortable,color_prom);
 }
 
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-VIDEO_START( skyskipr )
+static void set_background_palette(int bank)
 {
-	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
-		return 1;
+	int i;
+	UINT8 *color_prom = memory_region(REGION_PROMS) + 16 * bank;
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(1024,1024)) == 0)	/* actually 1024x512 but not rolling over vertically? */
-		return 1;
+	for (i = 0;i < 16;i++)
+	{
+		int bit0,bit1,bit2;
+		int r,g,b;
 
-	bitmap_type = TYPE_SKYSKIPR;
+		/* red component */
+		bit0 = ((*color_prom ^ invertmask) >> 0) & 0x01;
+		bit1 = ((*color_prom ^ invertmask) >> 1) & 0x01;
+		bit2 = ((*color_prom ^ invertmask) >> 2) & 0x01;
+		r = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
+		/* green component */
+		bit0 = ((*color_prom ^ invertmask) >> 3) & 0x01;
+		bit1 = ((*color_prom ^ invertmask) >> 4) & 0x01;
+		bit2 = ((*color_prom ^ invertmask) >> 5) & 0x01;
+		g = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = ((*color_prom ^ invertmask) >> 6) & 0x01;
+		bit2 = ((*color_prom ^ invertmask) >> 7) & 0x01;
+		if (bitmap_type == TYPE_SKYSKIPR)
+		{
+			/* Sky Skipper has different weights */
+			bit0 = bit1;
+			bit1 = 0;
+		}
+		b = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
 
-	return 0;
+		palette_set_color(i,r,g,b);
+
+		color_prom++;
+	}
 }
 
-VIDEO_START( popeye )
+WRITE_HANDLER( popeye_videoram_w )
 {
-	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
-		return 1;
-
-	if ((tmpbitmap2 = auto_bitmap_alloc(512,512)) == 0)
-		return 1;
-
-	bitmap_type = TYPE_POPEYE;
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
-
+WRITE_HANDLER( popeye_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( popeye_bitmap_w )
 {
@@ -239,55 +258,96 @@ WRITE_HANDLER( skyskipr_bitmap_w )
 	popeye_bitmap_w(offset,data);
 }
 
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-static void set_background_palette(int bank)
+static void get_fg_tile_info(int tile_index)
 {
-	int i;
-	UINT8 *color_prom = memory_region(REGION_PROMS) + 16 * bank;
+	int code = videoram[tile_index];
+	int color = colorram[tile_index];
 
-	for (i = 0;i < 16;i++)
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( skyskipr )
+{
+	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
+		return 1;
+
+	if ((tmpbitmap2 = auto_bitmap_alloc(1024,1024)) == 0)	/* actually 1024x512 but not rolling over vertically? */
+		return 1;
+
+	bitmap_type = TYPE_SKYSKIPR;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 16, 16, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+VIDEO_START( popeye )
+{
+	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
+		return 1;
+
+	if ((tmpbitmap2 = auto_bitmap_alloc(512,512)) == 0)
+		return 1;
+
+	bitmap_type = TYPE_POPEYE;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 16, 16, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void popeye_draw_background(struct mame_bitmap *bitmap)
+{
+	int offs;
+	static int lastflip = 0;
+
+	if (lastflip != flip_screen)
 	{
-		int bit0,bit1,bit2;
-		int r,g,b;
+		for (offs = 0;offs < popeye_bitmapram_size;offs++)
+			popeye_bitmap_w(offs,popeye_bitmapram[offs]);
 
-		/* red component */
-		bit0 = ((*color_prom ^ invertmask) >> 0) & 0x01;
-		bit1 = ((*color_prom ^ invertmask) >> 1) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 2) & 0x01;
-		r = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
-		/* green component */
-		bit0 = ((*color_prom ^ invertmask) >> 3) & 0x01;
-		bit1 = ((*color_prom ^ invertmask) >> 4) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 5) & 0x01;
-		g = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = ((*color_prom ^ invertmask) >> 6) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 7) & 0x01;
+		lastflip = flip_screen;
+	}
+
+	set_background_palette((*popeye_palettebank & 0x08) >> 3);
+
+	if (popeye_background_pos[1] == 0)	/* no background */
+	{
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	}
+	else
+	{
+		/* copy the background graphics */
+		int scrollx = 200 - popeye_background_pos[0] - 256*(popeye_background_pos[2]&1); /* ??? */
+		int scrolly = 2 * (256 - popeye_background_pos[1]);
+
 		if (bitmap_type == TYPE_SKYSKIPR)
+			scrollx = 2*scrollx - 512;
+
+		if (flip_screen)
 		{
-			/* Sky Skipper has different weights */
-			bit0 = bit1;
-			bit1 = 0;
+			if (bitmap_type == TYPE_POPEYE)
+				scrollx = -scrollx;
+			scrolly = -scrolly;
 		}
-		b = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
 
-		palette_set_color(i,r,g,b);
-
-		color_prom++;
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
-
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void popeye_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -342,65 +402,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( popeye )
 {
-	static int lastflip = 0;
-	int offs;
-
-
-	if (lastflip != flip_screen)
-	{
-		for (offs = 0;offs < popeye_bitmapram_size;offs++)
-			popeye_bitmap_w(offs,popeye_bitmapram[offs]);
-
-		lastflip = flip_screen;
-	}
-
-	set_background_palette((*popeye_palettebank & 0x08) >> 3);
-
-	if (popeye_background_pos[1] == 0)	/* no background */
-	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	}
-	else
-	{
-		/* copy the background graphics */
-		int scrollx = 200 - popeye_background_pos[0] - 256*(popeye_background_pos[2]&1); /* ??? */
-		int scrolly = 2 * (256 - popeye_background_pos[1]);
-
-		if (bitmap_type == TYPE_SKYSKIPR)
-			scrollx = 2*scrollx - 512;
-
-		if (flip_screen)
-		{
-			if (bitmap_type == TYPE_POPEYE)
-				scrollx = -scrollx;
-			scrolly = -scrolly;
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	draw_sprites(bitmap);
-
-
-	for (offs = 0;offs < 0x400;offs++)
-	{
-		int sx,sy;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				popeye_textram[offs],
-				popeye_textram[offs + 0x400],
-				flip_screen,flip_screen,
-				16*sx,16*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	popeye_draw_background(bitmap);
+	popeye_draw_sprites(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

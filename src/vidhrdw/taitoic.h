@@ -114,7 +114,7 @@ WRITE16_HANDLER( TC0100SCN_dual_screen_w );
 WRITE16_HANDLER( TC0100SCN_triple_screen_w );
 
 void TC0100SCN_tilemap_update(void);
-void TC0100SCN_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int layer,int flags,UINT32 priority);
+int TC0100SCN_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int layer,int flags,UINT32 priority);
 
 /* returns 0 or 1 depending on the lowest priority tilemap set in the internal
    register. Use this function to draw tilemaps in the correct order. */

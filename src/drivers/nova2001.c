@@ -25,20 +25,29 @@
      c00e               R        Coin Inputs, etc.
      e000 - e7ff        R/W      Work RAM
 
+ the parent set is VERY sensitive to coin inputs, if the coin isn't held down
+ long enough, or is held down too long the game will reset, likewise if coins
+ are inserted too quickly
+
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /* From vidhrdw/nova2001.c */
-extern unsigned char *nova2001_videoram,*nova2001_colorram;
-extern size_t nova2001_videoram_size;
+extern UINT8 *nova2001_videoram2, *nova2001_colorram2;
 
-PALETTE_INIT( nova2001 );
-WRITE_HANDLER( nova2001_scroll_x_w );
-WRITE_HANDLER( nova2001_scroll_y_w );
-WRITE_HANDLER( nova2001_flipscreen_w );
-VIDEO_UPDATE( nova2001 );
+extern WRITE_HANDLER( nova2001_videoram_w );
+extern WRITE_HANDLER( nova2001_colorram_w );
+extern WRITE_HANDLER( nova2001_videoram2_w );
+extern WRITE_HANDLER( nova2001_colorram2_w );
+extern WRITE_HANDLER( nova2001_scroll_x_w );
+extern WRITE_HANDLER( nova2001_scroll_y_w );
+extern WRITE_HANDLER( nova2001_flipscreen_w );
+
+extern PALETTE_INIT( nova2001 );
+extern VIDEO_START( nova2001 );
+extern VIDEO_UPDATE( nova2001 );
 
 
 
@@ -57,10 +66,10 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa3ff, MWA_RAM, &nova2001_videoram, &nova2001_videoram_size },
-	{ 0xa400, 0xa7ff, MWA_RAM, &nova2001_colorram },
-	{ 0xa800, 0xabff, videoram_w, &videoram, &videoram_size },
-	{ 0xac00, 0xafff, colorram_w, &colorram },
+	{ 0xa000, 0xa3ff, nova2001_videoram2_w, &nova2001_videoram2 },
+	{ 0xa400, 0xa7ff, nova2001_colorram2_w, &nova2001_colorram2 },
+	{ 0xa800, 0xabff, nova2001_videoram_w, &videoram },
+	{ 0xac00, 0xafff, nova2001_colorram_w, &colorram },
 	{ 0xb000, 0xb7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xbfff, 0xbfff, nova2001_flipscreen_w },
 	{ 0xc000, 0xc000, AY8910_write_port_0_w },
@@ -94,8 +103,8 @@ INPUT_PORTS_START( nova2001 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
     PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1,4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -213,13 +222,13 @@ static MACHINE_DRIVER_START( nova2001 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(32*16)
 
 	MDRV_PALETTE_INIT(nova2001)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(nova2001)
 	MDRV_VIDEO_UPDATE(nova2001)
 
 	/* sound hardware */

@@ -18,9 +18,12 @@ extern enum namcos22_gametype
 #define NAMCOS22_NUM_COLS 40
 #define NAMCOS22_ALPHA_GFX 1
 
+#define NAMCOS22_PALETTE_SIZE 0x8000
+
 extern data32_t *namcos22_cgram;
 extern data32_t *namcos22_textram;
 extern data32_t *namcos22_polygonram;
+extern data32_t *namcos22_gamma;
 
 READ32_HANDLER( namcos22_cgram_r );
 WRITE32_HANDLER( namcos22_cgram_w );
@@ -28,6 +31,8 @@ READ32_HANDLER( namcos22_paletteram_r );
 WRITE32_HANDLER( namcos22_paletteram_w );
 READ32_HANDLER( namcos22_textram_r );
 WRITE32_HANDLER( namcos22_textram_w );
+READ32_HANDLER( namcos22_gamma_r );
+WRITE32_HANDLER( namcos22_gamma_w );
 
 VIDEO_UPDATE( namcos22 );
 

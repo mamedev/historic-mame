@@ -26,19 +26,18 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-extern data8_t *redclash_textram;
+extern WRITE_HANDLER( redclash_videoram_w );
+extern WRITE_HANDLER( redclash_gfxbank_w );
+extern WRITE_HANDLER( redclash_flipscreen_w );
 
-PALETTE_INIT( redclash );
-VIDEO_UPDATE( redclash );
+extern WRITE_HANDLER( redclash_star0_w );
+extern WRITE_HANDLER( redclash_star1_w );
+extern WRITE_HANDLER( redclash_star2_w );
+extern WRITE_HANDLER( redclash_star_reset_w );
 
-WRITE_HANDLER( redclash_gfxbank_w );
-WRITE_HANDLER( redclash_flipscreen_w );
-
-WRITE_HANDLER( redclash_star0_w );
-WRITE_HANDLER( redclash_star1_w );
-WRITE_HANDLER( redclash_star2_w );
-WRITE_HANDLER( redclash_star_reset_w );
-
+extern PALETTE_INIT( redclash );
+extern VIDEO_START( redclash );
+extern VIDEO_UPDATE( redclash );
 
 /*
   This game doesn't have VBlank interrupts.
@@ -74,7 +73,7 @@ static MEMORY_WRITE_START( zero_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x3bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
 	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
 	{ 0x5800, 0x5800, redclash_star0_w },
 	{ 0x5801, 0x5804, MWA_NOP },	/* to sound board */
@@ -99,7 +98,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 //	{ 0x3000, 0x3000, MWA_NOP },
 //	{ 0x3800, 0x3800, MWA_NOP },
-	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
 	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
 	{ 0x5800, 0x5800, redclash_star0_w },
 	{ 0x5801, 0x5801, redclash_gfxbank_w },
@@ -146,15 +145,15 @@ INPUT_PORTS_START( redclash )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x10, 0x10, "High Score" )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x10, "10000" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0xc0, "3" )
@@ -207,7 +206,90 @@ INPUT_PORTS_START( redclash )
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( zerohour )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Note that there are TWO VBlank inputs, one is active low, the other active */
+	/* high. There are probably other differencies in the hardware, but emulating */
+	/* them this way is enough to get the game running. */
+	PORT_BIT( 0xc0, 0x40, IPT_VBLANK )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) 	/* all other combinations give 1C_1C */
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )	/* all other combinations give 1C_1C */
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
+	/* Coin Right an IRQ. This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
@@ -296,6 +378,7 @@ static MACHINE_DRIVER_START( zerohour )
 	MDRV_COLORTABLE_LENGTH(4*24)
 
 	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_START(redclash)
 	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */
@@ -321,6 +404,7 @@ static MACHINE_DRIVER_START( redclash )
 	MDRV_COLORTABLE_LENGTH(4*24)
 
 	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_START(redclash)
 	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */
@@ -422,6 +506,6 @@ static DRIVER_INIT( redclash )
 
 
 
-GAMEX( 1980?,zerohour, 0,        zerohour, redclash, redclash, ROT270, "Universal", "Zero Hour",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1980, zerohour, 0,        zerohour, zerohour, redclash, ROT270, "Universal", "Zero Hour",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1981, redclash, 0,        redclash, redclash, redclash, ROT270, "Tehkan",    "Red Clash",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1981, redclask, redclash, redclash, redclash, redclash, ROT270, "Kaneko",    "Red Clash (Kaneko)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
